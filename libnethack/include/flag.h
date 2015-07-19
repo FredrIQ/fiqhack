@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -217,8 +217,9 @@ struct flag {
     /* 8 bit values: enums */
     enum u_interaction_mode interaction_mode;
     enum {
-        saveenc_unencoded = 0,
-        saveenc_moverel = 1
+        saveenc_unencoded = 0,  /* relative to 0 */
+        saveenc_moverel = 1,    /* relative to moves */
+        saveenc_levelrel = 2    /* relative to level->lastmoves */
     } save_encoding;    /* allows safe conversion of old saves */
 
 # define DISCLOSE_PROMPT_DEFAULT_YES    'y'

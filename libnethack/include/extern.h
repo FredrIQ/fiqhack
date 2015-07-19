@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-19 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -845,8 +845,9 @@ extern void mimic_hit_msg(struct monst *, short);
 extern void mkmonmoney(struct monst *, long, enum rng);
 extern void bagotricks(struct obj *);
 extern boolean propagate(int, boolean, boolean);
-extern struct monst *restore_mon(struct memfile *mf);
-extern void save_mon(struct memfile *mf, const struct monst *mon);
+extern struct monst *restore_mon(struct memfile *mf, struct level *l);
+extern void save_mon(struct memfile *mf, const struct monst *mon,
+                     const struct level *l);
 
 /* ### mcastu.c ### */
 
@@ -1529,12 +1530,12 @@ extern void savelev(struct memfile *mf, xchar levnum);
 extern void freelev(xchar levnum);
 extern void savefruitchn(struct memfile *mf);
 extern void freedynamicdata(void);
-extern int8_t save_encode_8(int8_t, int);
-extern int16_t save_encode_16(int16_t, int);
-extern int32_t save_encode_32(int32_t, int);
-extern int8_t save_decode_8(int8_t, int);
-extern int16_t save_decode_16(int16_t, int);
-extern int32_t save_decode_32(int32_t, int);
+extern int8_t save_encode_8(int8_t, int, int);
+extern int16_t save_encode_16(int16_t, int, int);
+extern int32_t save_encode_32(int32_t, int, int);
+extern int8_t save_decode_8(int8_t, int, int);
+extern int16_t save_decode_16(int16_t, int, int);
+extern int32_t save_decode_32(int32_t, int, int);
 
 /* ### shk.c ### */
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1713,7 +1713,7 @@ restore_obj(struct memfile *mf)
         mread(mf, ONAME_MUTABLE(otmp), otmp->onamelth);
 
     if (otmp->oattached == OATTACHED_MONST) {
-        struct monst *mtmp = restore_mon(mf);
+        struct monst *mtmp = restore_mon(mf, NULL);
         int monlen = sizeof (struct monst) + mtmp->mnamelth + mtmp->mxlth;
 
         otmp = realloc_obj(otmp, monlen, mtmp, otmp->onamelth, ONAME(otmp));
@@ -1782,7 +1782,7 @@ save_obj(struct memfile *mf, struct obj *obj)
         mwrite(mf, ONAME(obj), obj->onamelth);
 
     if (obj->oattached == OATTACHED_MONST)
-        save_mon(mf, (struct monst *)obj->oextra);
+        save_mon(mf, (struct monst *)obj->oextra, NULL);
     else if (obj->oattached == OATTACHED_M_ID) {
         unsigned m_id;
 

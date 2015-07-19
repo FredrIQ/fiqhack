@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-07-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -255,12 +255,11 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
     count = mread32(mf);
 
     while (count--) {
-        mtmp = restore_mon(mf);
+        mtmp = restore_mon(mf, lev);
         if (!first)
             first = mtmp;
         else
             mtmp2->nmon = mtmp;
-        mtmp->dlevel = lev;
 
         if (ghostly) {
             unsigned nid = next_ident();
@@ -432,7 +431,7 @@ restore_spellbook(struct memfile *mf)
     int i;
 
     for (i = 0; i < MAXSPELL + 1; i++) {
-        spl_book[i].sp_know = save_decode_32(mread32(mf), -moves);
+        spl_book[i].sp_know = save_decode_32(mread32(mf), -moves, -moves);
         spl_book[i].sp_id = mread16(mf);
         spl_book[i].sp_lev = mread8(mf);
     }
@@ -453,7 +452,7 @@ restgamestate(struct memfile *mf)
     restore_timers(mf, lev, RANGE_GLOBAL, FALSE, 0L);
     restore_light_sources(mf, lev);
     restobjchn(mf, lev, FALSE, FALSE, &invent);
-    migrating_mons = restmonchn(mf, lev, FALSE);
+    migrating_mons = restmonchn(mf, NULL, FALSE);
     restore_mvitals(mf);
 
     restore_spellbook(mf);
@@ -551,12 +550,12 @@ restore_you(struct memfile *mf, struct you *y)
     y->mhmax = mread32(mf);
     y->mtimedone = mread32(mf);
     y->ulycn = mread32(mf);
-    y->utrap = save_decode_32(mread32(mf), -moves);
+    y->utrap = save_decode_32(mread32(mf), -moves, -moves);
     y->utraptype = mread32(mf);
-    y->uhunger = save_decode_32(mread32(mf), -moves);
+    y->uhunger = save_decode_32(mread32(mf), -moves, -moves);
     y->uhs = mread32(mf);
     y->oldcap = mread32(mf);
-    y->umconf = save_decode_32(mread32(mf), -moves);
+    y->umconf = save_decode_32(mread32(mf), -moves, -moves);
     y->nv_range = mread32(mf);
     y->bglyph = mread32(mf);
     y->cglyph = mread32(mf);
@@ -570,7 +569,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->ugangr = mread32(mf);
     y->ugifts = mread32(mf);
     y->ublessed = mread32(mf);
-    y->ublesscnt = save_decode_32(mread32(mf), -moves);
+    y->ublesscnt = save_decode_32(mread32(mf), -moves, -moves);
     y->ucleansed = mread32(mf);
     y->uinvault = mread32(mf);
     y->ugallop = mread32(mf);
@@ -612,7 +611,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->udaminc = mread8(mf);
     y->uac = mread8(mf);
     y->uspellprot = mread8(mf);
-    y->usptime = save_decode_8(mread8(mf), -moves);
+    y->usptime = save_decode_8(mread8(mf), -moves, -moves);
     y->uspmtime = mread8(mf);
     y->twoweap = mread8(mf);
     y->bashmsg = mread8(mf);
@@ -869,7 +868,7 @@ dorecover(struct memfile *mf)
     role_init();       /* Reset the initial role, race, gender, and alignment */
     pantheon_init(FALSE);
 
-    mtmp = restore_mon(mf);
+    mtmp = restore_mon(mf, NULL);
     youmonst = *mtmp;
     dealloc_monst(mtmp);
     set_uasmon();       /* fix up youmonst.data */
