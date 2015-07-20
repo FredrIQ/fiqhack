@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-19 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -369,8 +369,12 @@ mdiffflush(struct memfile *mf)
                 mf->pending_seeks, mf->pending_copies, mf->pending_edits);
         int i;
         for (i = 0; i < mf->pending_edits; i++) {
-            fprintf(debuglog, "%02x", (unsigned)(unsigned char)
-                    (mf->buf[mf->pos - mf->pending_edits + i]));
+            uint8_t newc = mf->buf[mf->pos - mf->pending_edits + i];
+            uint8_t oldc = 0;
+            if (mf->relativeto && mf->relativepos >= mf->pending_edits)
+                oldc = mf->relativeto->buf[mf->relativepos -
+                                           mf->pending_edits + i];
+            fprintf(debuglog, "%02x", (unsigned)(uint8_t)(newc - oldc));
             if (i == 3 && mf->pending_edits > 4) {
                 fprintf(debuglog, "...");
                 break;
@@ -378,7 +382,8 @@ mdiffflush(struct memfile *mf)
         }
         /* "last copy" = the copy ends just before this point (so presumably
            this point will be edited or seeked away) */
-        fprintf(debuglog, "], last copy %d:%08lx%+d\n",
+        fprintf(debuglog, "] pos %d, last copy %d:%08lx%+d\n",
+                mf->pos,
                 mf->last_tag ? mf->last_tag->tagtype : -1,
                 mf->last_tag ? mf->last_tag->tagdata : 0,
                 mf->pos - (int)mf->pending_edits -
