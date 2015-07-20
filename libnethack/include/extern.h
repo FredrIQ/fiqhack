@@ -34,6 +34,7 @@ struct memfile;
 struct mkroom;
 struct monst;
 struct musable;
+struct newgame_options;
 struct nh_autopickup_rules;
 struct nh_cmd_and_arg;
 struct nh_cmd_arg;
@@ -393,7 +394,7 @@ extern void adj_abon(struct obj *, schar);
 
 extern void initedog(struct monst *);
 extern struct monst *make_familiar(struct obj *, xchar, xchar, boolean);
-extern struct monst *makedog(void);
+extern struct monst *makedog(struct newgame_options *);
 extern void update_mlstmv(void);
 extern void losedogs(void);
 extern void mon_arrive(struct monst *, boolean);
@@ -1290,6 +1291,8 @@ extern char *nh_getenv(const char *);
 extern void initoptions(void);
 extern struct nh_option_desc *default_options(void);
 extern int fruitadd(const char *str);
+extern boolean set_option(const char *, union nh_optvalue,
+                          struct newgame_options *);
 
 /* ### pager.c ### */
 

@@ -117,7 +117,8 @@ extern struct gamestate {
         struct fruit *chain;
     } fruits;
 
-    /* Unique IDs. TODO: move flags.ident here. */
+    /* Unique IDs. TODO: move flags.ident here. TODO: Is this saved? If not, it
+       should probably be a local rather than a global. */
     struct {
         int branch;
     } unique_ids;
@@ -127,11 +128,6 @@ extern struct gamestate {
 # define dunlev_reached(z)      (find_dungeon(z).dunlev_ureached)
 
 # define MAXLINFO (MAXDUNGEON * MAXLEVEL)
-
-extern char dogname[];
-extern char catname[];
-extern char horsename[];
-extern char preferred_pet;
 
 extern struct xmalloc_block *api_blocklist;
 
@@ -262,6 +258,16 @@ extern unsigned int timer_id;
 extern char toplines[MSGCOUNT][BUFSZ];
 extern int toplines_count[MSGCOUNT];
 extern int curline;
+
+/* Some game creation options don't have their values stored anywhere else.
+   Thus, we store them in a local variable whose type is this structure while
+   nh_create_game is running, and pass that variable around. */
+struct newgame_options {
+    char dogname[PL_PSIZ];
+    char catname[PL_PSIZ];
+    char horsename[PL_PSIZ];
+    char preferred_pet;                  /* '\0', 'c', 'd', 'n' for 'none' */
+};
 
 # define add_menuitem(m, i, cap, acc, sel)      \
     add_menu_item((m), i, cap, acc, sel)

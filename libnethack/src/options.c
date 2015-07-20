@@ -90,7 +90,6 @@ static struct nh_enum_option role_spec = { NULL, 0 };
 static const struct nh_listitem pettype_list[] = {
     {'c', "cat"},
     {'d', "dog"},
-    {'h', "horse"},
     {'n', "no pet"},
     {0, "random"}
 };
@@ -406,8 +405,9 @@ initoptions(void)
 }
 
 
-static boolean
-set_option(const char *name, union nh_optvalue value)
+boolean
+set_option(const char *name, union nh_optvalue value,
+           struct newgame_options *ngo)
 {
     struct nh_option_desc *option = NULL, *options = new_opt_struct();
     boolean ret = FALSE;
@@ -484,16 +484,24 @@ set_option(const char *name, union nh_optvalue value)
            intentional */
         strncpy(flags.setseed, option->value.s, RNG_SEED_SIZE_BASE64);
     } else if (!strcmp("catname", option->name)) {
-        strncpy(catname, option->value.s, PL_PSIZ-1);
-        catname[PL_PSIZ - 1] = '\0';
+        if (!ngo)
+            panic("catname set outside newgame sequence");
+        strncpy(ngo->catname, option->value.s, PL_PSIZ-1);
+        ngo->catname[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("dogname", option->name)) {
-        strncpy(dogname, option->value.s, PL_PSIZ-1);
-        dogname[PL_PSIZ - 1] = '\0';
+        if (!ngo)
+            panic("dogname set outside newgame sequence");
+        strncpy(ngo->dogname, option->value.s, PL_PSIZ-1);
+        ngo->dogname[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("horsename", option->name)) {
-        strncpy(horsename, option->value.s, PL_PSIZ-1);
-        horsename[PL_PSIZ - 1] = '\0';
+        if (!ngo)
+            panic("horsename set outside newgame sequence");
+        strncpy(ngo->horsename, option->value.s, PL_PSIZ-1);
+        ngo->horsename[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("pettype", option->name)) {
-        preferred_pet = (char)option->value.e;
+        if (!ngo)
+            panic("preferred_pet set outside newgame sequence");
+        ngo->preferred_pet = (char)option->value.e;
     } else if (!strcmp("timezone", option->name)) {
         flags.timezone = option->value.e;
     } else if (!strcmp("polyinit", option->name)) {
@@ -521,7 +529,7 @@ nh_set_option(const char *name, union nh_optvalue value)
 
     API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(FALSE);
 
-    rv = set_option(name, value);
+    rv = set_option(name, value, NULL);
 
     API_EXIT();
     return rv;
@@ -627,35 +635,19 @@ nh_get_options(void)
             strncpy(option->value.s, flags.setseed, RNG_SEED_SIZE_BASE64);
             option->value.s[RNG_SEED_SIZE_BASE64] = '\0';
 
-        } else if (!strcmp("catname", option->name)) {
-
+        } else if (!strcmp("catname", option->name) ||
+                   !strcmp("dogname", option->name) ||
+                   !strcmp("horsename", option->name)) {
+            /* The client shouldn't be doing this, but we can't crash in
+               response because that would be exploitable. Send it a null
+               string instead. */
             if (option->value.s)
                 free(option->value.s);
-            option->value.s = malloc(PL_PSIZ);
-
-            strncpy(option->value.s, catname, PL_PSIZ-1);
-            option->value.s[PL_PSIZ - 1] = '\0';
-
-        } else if (!strcmp("dogname", option->name)) {
-
-            if (option->value.s)
-                free(option->value.s);
-            option->value.s = malloc(PL_PSIZ);
-
-            strncpy(option->value.s, dogname, PL_PSIZ-1);
-            option->value.s[PL_PSIZ - 1] = '\0';
-
-        } else if (!strcmp("horsename", option->name)) {
-
-            if (option->value.s)
-                free(option->value.s);
-            option->value.s = malloc(PL_PSIZ);
-
-            strncpy(option->value.s, horsename, PL_PSIZ-1);
-            option->value.s[PL_PSIZ - 1] = '\0';
-
+            option->value.s = malloc(1);
+            option->value.s[0] = '\0';
         } else if (!strcmp("pettype", option->name)) {
-            option->value.e = preferred_pet;
+            /* As the previous case, just we want an enum not a string. */
+            option->value.e = 0;
         } else {
             impossible("unknown option '%s'", option->name);
             memset(&option->value, 0, sizeof option->value);

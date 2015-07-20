@@ -1,12 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-19 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "edog.h"
 
-static int pet_type(void);
+static int pet_type(struct newgame_options *);
 
 void
 initedog(struct monst *mtmp)
@@ -31,15 +31,15 @@ initedog(struct monst *mtmp)
 }
 
 static int
-pet_type(void)
+pet_type(struct newgame_options *ngo)
 {
     int which_pet = rn2(2);
 
     if (urole.petnum != NON_PM)
         return urole.petnum;
-    else if (preferred_pet == 'c')
+    else if (ngo && ngo->preferred_pet == 'c')
         return PM_KITTEN;
-    else if (preferred_pet == 'd')
+    else if (ngo && ngo->preferred_pet == 'd')
         return PM_LITTLE_DOG;
     else
         return which_pet ? PM_KITTEN : PM_LITTLE_DOG;
@@ -69,7 +69,7 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
                 break;  /* mtmp is null */
             }
         } else if (!rn2(3)) {
-            pm = &mons[pet_type()];
+            pm = &mons[pet_type(NULL)];
         } else {
             pm = rndmonst(&u.uz, rng_t_create_monster);
             if (!pm) {
@@ -134,23 +134,23 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
  * the charstats RNGs.
  */
 struct monst *
-makedog(void)
+makedog(struct newgame_options *ngo)
 {
     struct monst *mtmp;
     struct obj *otmp;
     const char *petname;
     int pettype;
 
-    if (preferred_pet == 'n')
+    if (ngo->preferred_pet == 'n')
         return NULL;
 
-    pettype = pet_type();
+    pettype = pet_type(ngo);
     if (pettype == PM_LITTLE_DOG)
-        petname = dogname;
+        petname = ngo->dogname;
     else if (pettype == PM_PONY)
-        petname = horsename;
+        petname = ngo->horsename;
     else
-        petname = catname;
+        petname = ngo->catname;
 
     /* default pet names */
     if (!*petname && pettype == PM_LITTLE_DOG) {

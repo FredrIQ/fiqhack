@@ -72,12 +72,6 @@ long wailmsg;
    non-object */
 struct obj zeroobj;
 
-/* originally from dog.c */
-char dogname[PL_PSIZ];
-char catname[PL_PSIZ];
-char horsename[PL_PSIZ];
-char preferred_pet;     /* '\0', 'c', 'd', 'n' (none) */
-
 /* monsters that are moving to another dungeon level */
 struct monst *migrating_mons;
 
@@ -332,9 +326,6 @@ init_data(boolean including_program_state)
     memset(&u.quest_status, 0, sizeof (u.quest_status));
     memset(&levels, 0, sizeof (levels));
     memset(&u, 0, sizeof (u));
-    memset(dogname, 0, sizeof (dogname));
-    memset(catname, 0, sizeof (catname));
-    memset(horsename, 0, sizeof (horsename));
     memset(mvitals, 0, sizeof (mvitals));
     memset(spl_book, 0, sizeof (spl_book));
     memset(disco, 0, sizeof (disco));
@@ -355,7 +346,6 @@ init_data(boolean including_program_state)
     in_steed_dismounting = FALSE;
     wailmsg = 0;
     bhitpos.x = bhitpos.y = 0;
-    preferred_pet = 0;
     migrating_mons = NULL;
     artilist = NULL;
     gamestate.unique_ids.branch = 0;
