@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -160,8 +160,6 @@ extern int lastinvnr;
 
 extern struct obj *invent;
 extern struct obj zeroobj;      /* init'd and defined in decl.c */
-
-extern struct you u;
 
 
 extern struct monst youmonst;   /* init'd and defined in decl.c */
