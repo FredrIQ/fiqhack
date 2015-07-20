@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-26 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2339,7 +2339,7 @@ log_sync(long target_location, enum target_location_units tlu,
 {
     struct nh_game_info si;
     struct memfile bsave;
-    long sloc, loglineloc;
+    long sloc, loglineloc, last_sloc;
     char *logline;
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
@@ -2405,12 +2405,16 @@ log_sync(long target_location, enum target_location_units tlu,
 
     /* While we're still ahead of the target, try progressively earlier
        backups. */
+    last_sloc = -1;
     while (relative_to_target(program_state.binary_save_location,
                               target_location, tlu) > 0 &&
            program_state.save_backup_location >
            program_state.last_save_backup_location_location) {
 
         sloc = get_save_backup_offset(program_state.save_backup_location);
+        if (last_sloc == sloc)
+            break; /* can't get any earlier than this */
+        last_sloc = sloc;
         load_save_backup_from_offset(sloc);
     }
 

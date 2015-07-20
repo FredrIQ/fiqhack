@@ -170,7 +170,7 @@ lines, separated by newlines:
 
     These lines (and save backup lines) explicitly may not be used in any
     circumstance where a binary save would not load correctly: this includes
-    multi or occupation being set, inside a command, and similar issues.  If
+    helplessness, occupation, being inside a command, and similar issues.  If
     the save loading code observes one of these lines in an inappropriate
     context, it will calculate the contents of the new save file (in order to
     act as a base for future diffs), but not attempt to load it.
