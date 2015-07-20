@@ -335,11 +335,16 @@ init_data(boolean including_program_state)
     memset(dogname, 0, sizeof (dogname));
     memset(catname, 0, sizeof (catname));
     memset(horsename, 0, sizeof (horsename));
-    memset(&youmonst, 0, sizeof (youmonst));
     memset(mvitals, 0, sizeof (mvitals));
     memset(spl_book, 0, sizeof (spl_book));
     memset(disco, 0, sizeof (disco));
     memset(&(gamestate.inv_pos), 0, sizeof (gamestate.inv_pos));
+
+    /* (0, 0) isn't a valid mux/muy for youmonst, as that's the same location as
+       its mx/my (and thus the save code will get confused) */
+    memset(&youmonst, 0, sizeof (youmonst));
+    youmonst.mux = COLNO;
+    youmonst.muy = ROWNO;
 
     level = NULL;
     gamestate.fruits.chain = NULL;

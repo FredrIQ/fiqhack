@@ -131,7 +131,8 @@ static struct nh_autopickup_rules def_autopickup =
     { def_ap_ruleset, SIZE(def_ap_ruleset) };
 
 
-/* This is statically allocated, which means a pointer to it must never
+/*
+ * This is statically allocated, which means a pointer to it must never
  * escape this file (since nh_option_desc is supposed to be dynamically
  * allocated.
  *
