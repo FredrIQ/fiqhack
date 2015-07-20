@@ -61,7 +61,7 @@ find_lev_obj(struct level *lev)
         for (y = 0; y < ROWNO; y++)
             lev->objects[x][y] = NULL;
 
-    /* 
+    /*
      * Reverse the entire lev->objlist chain, which is necessary so that we can
      * place the objects in the proper order.  Make all obj in chain
      * OBJ_FREE so place_object will work correctly.
@@ -1217,7 +1217,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     lev->lev_traps = restore_traps(mf);
     restobjchn(mf, lev, ghostly, FALSE, &lev->objlist);
     find_lev_obj(lev);
-    /* restobjchn()'s `frozen' argument probably ought to be a callback routine 
+    /* restobjchn()'s `frozen' argument probably ought to be a callback routine
        so that we can check for objects being buried under ice */
     restobjchn(mf, lev, ghostly, FALSE, &lev->buriedobjlist);
     restobjchn(mf, lev, ghostly, FALSE, &lev->billobjs);
@@ -1230,7 +1230,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon) {
         if (mtmp->isshk)
             set_residency(mtmp, FALSE);
-        
+
         /* mtmp->mx == COLNO is a sentinel value. place_monster rejects it to
          * avoid illegal positions popping up accidentally. We don't perform
          * other checks because we would like any other value to cause an
@@ -1408,4 +1408,3 @@ reset_oattached_mids(boolean ghostly, struct level *lev)
 
 
 /*restore.c*/
-

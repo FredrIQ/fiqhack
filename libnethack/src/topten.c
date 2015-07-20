@@ -153,8 +153,8 @@ encode_carried(void)
 static unsigned long
 encode_birthoptions(void)
 {
-    /* This function encodes birth options (excluding ones that have their own xlog fields)
-       Compare to the list in options.c */
+    /* This function encodes birth options (excluding ones that have their own
+       xlog fields). Compare to the list in options.c. */
     unsigned long c = 0UL;
     if (flags.elbereth_enabled)
         c |= 0x0001UL;
