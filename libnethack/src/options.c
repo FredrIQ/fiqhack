@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -392,7 +392,7 @@ initoptions(void)
     memcpy(flags.inv_order, def_inv_order, sizeof flags.inv_order);
 
     fruitadd(obj_descr[SLIME_MOLD].oc_name);
-    strncpy(pl_fruit, obj_descr[SLIME_MOLD].oc_name, PL_FSIZ);
+    strncpy(gamestate.fruits.curname, obj_descr[SLIME_MOLD].oc_name, PL_FSIZ);
 }
 
 
@@ -431,10 +431,10 @@ set_option(const char *name, union nh_optvalue value)
     } else if (!strcmp("disclose", option->name)) {
         flags.end_disclose = option->value.e;
     } else if (!strcmp("fruit", option->name)) {
-        strncpy(pl_fruit, option->value.s, PL_FSIZ-1);
-        pl_fruit[PL_FSIZ - 1] = '\0';
+        strncpy(gamestate.fruits.curname, option->value.s, PL_FSIZ-1);
+        gamestate.fruits.curname[PL_FSIZ - 1] = '\0';
         if (objects)    /* don't do fruitadd before the game is running */
-            fruitadd(pl_fruit);
+            fruitadd(gamestate.fruits.curname);
     } else if (!strcmp("menustyle", option->name)) {
         flags.menu_style = option->value.e;
     } else if (!strcmp("movecommand", option->name)) {
@@ -555,7 +555,7 @@ nh_get_options(void)
                 free(option->value.s);
             option->value.s = malloc(PL_FSIZ);
 
-            strncpy(option->value.s, pl_fruit, PL_FSIZ-1);
+            strncpy(option->value.s, gamestate.fruits.curname, PL_FSIZ-1);
             option->value.s[PL_FSIZ - 1] = '\0';
 
         } else if (!strcmp("menustyle", option->name)) {
@@ -658,10 +658,9 @@ nh_get_options(void)
 
 
 
-/* Returns the fid of the fruit type; if that type already exists, it
- * returns the fid of that one; if it does not exist, it adds a new fruit
- * type to the chain and returns the new one.
- */
+/* Returns the fid of the fruit type; if that type already exists, it returns
+   the fid of that one; if it does not exist, it adds a new fruit type to the
+   chain and returns the new one. */
 int
 fruitadd(const char *str)
 {
@@ -670,7 +669,7 @@ fruitadd(const char *str)
     struct fruit *lastf = 0;
     int highest_fruit_id = 0;
     char buf[PL_FSIZ], *c;
-    boolean user_specified = (str == pl_fruit);
+    boolean user_specified = (str == gamestate.fruits.curname);
 
     /* if not user-specified, then it's a fruit name for a fruit on a bones
        level... */
@@ -684,12 +683,13 @@ fruitadd(const char *str)
         boolean found = FALSE, numeric = FALSE;
 
         for (i = bases[FOOD_CLASS]; objects[i].oc_class == FOOD_CLASS; i++) {
-            if (i != SLIME_MOLD && !strcmp(OBJ_NAME(objects[i]), pl_fruit)) {
+            if (i != SLIME_MOLD && !strcmp(OBJ_NAME(objects[i]),
+                                           gamestate.fruits.curname)) {
                 found = TRUE;
                 break;
             }
         }
-        for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
+        for (c = gamestate.fruits.curname; *c >= '0' && *c <= '9'; c++)
             ;
         if (isspace(*c) || *c == 0)
             numeric = TRUE;
@@ -703,12 +703,12 @@ fruitadd(const char *str)
             ((!strncmp(str + strlen(str) - 7, " corpse", 7) ||
               !strncmp(str + strlen(str) - 4, " egg", 4)) &&
              name_to_mon(str) >= LOW_PM)) {
-            strcpy(buf, pl_fruit);
-            strcpy(pl_fruit, "candied ");
-            strncat(pl_fruit + 8, buf, PL_FSIZ - 8 - 1);
+            strcpy(buf, gamestate.fruits.curname);
+            strcpy(gamestate.fruits.curname, "candied ");
+            strncat(gamestate.fruits.curname + 8, buf, PL_FSIZ - 8 - 1);
         }
     }
-    for (f = ffruit; f; f = f->nextf) {
+    for (f = gamestate.fruits.chain; f; f = f->nextf) {
         lastf = f;
         if (f->fid > highest_fruit_id)
             highest_fruit_id = f->fid;
@@ -725,16 +725,16 @@ fruitadd(const char *str)
     highest_fruit_id++;
     f = newfruit();
     memset(f, 0, sizeof (struct fruit));
-    if (ffruit)
+    if (gamestate.fruits.chain)
         lastf->nextf = f;
     else
-        ffruit = f;
+        gamestate.fruits.chain = f;
     strcpy(f->fname, str);
     f->fid = highest_fruit_id;
     f->nextf = 0;
 nonew:
     if (user_specified)
-        current_fruit = highest_fruit_id;
+        gamestate.fruits.current = highest_fruit_id;
     return f->fid;
 }
 

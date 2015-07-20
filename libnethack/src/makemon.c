@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-19 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1252,12 +1252,12 @@ create_critters(int cnt, const struct permonst *mptr)
  * return an integer in the range of 0-5.
  */
 static int
-align_shift(const d_level * dlev, const struct permonst *ptr)
+align_shift(const d_level *dlev, const struct permonst *ptr)
 {
     s_level *lev = Is_special(dlev);
     int alshift;
 
-    switch ((lev) ? lev->flags.align : dungeons[dlev->dnum].flags.align) {
+    switch ((lev) ? lev->flags.align : find_dungeon(dlev).flags.align) {
     default:   /* just in case */
     case AM_NONE:
         alshift = 0;

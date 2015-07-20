@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1343,10 +1343,11 @@ arti_invoke(struct obj *obj)
 
                 num_ok_dungeons = 0;
                 for (i = 0; i < n_dgns; i++) {
-                    if (!dungeons[i].dunlev_ureached)
+                    if (!gamestate.dungeons[i].dunlev_ureached)
                         continue;
 
-                    add_menu_item(&menu, i + 1, dungeons[i].dname, 0, FALSE);
+                    add_menu_item(&menu, i + 1, gamestate.dungeons[i].dname,
+                                  0, FALSE);
                     num_ok_dungeons++;
                     last_ok_dungeon = i;
                 }
@@ -1375,10 +1376,10 @@ arti_invoke(struct obj *obj)
                  * The closest level is either the entry or dunlev_ureached.
                  */
                 newlev.dnum = i;
-                if (dungeons[i].depth_start >= depth(&u.uz))
-                    newlev.dlevel = dungeons[i].entry_lev;
+                if (gamestate.dungeons[i].depth_start >= depth(&u.uz))
+                    newlev.dlevel = gamestate.dungeons[i].entry_lev;
                 else
-                    newlev.dlevel = dungeons[i].dunlev_ureached;
+                    newlev.dlevel = gamestate.dungeons[i].dunlev_ureached;
                 if (Uhave_amulet || In_endgame(&u.uz) || In_endgame(&newlev)
                     || newlev.dnum == u.uz.dnum) {
                     pline("You feel very disoriented for a moment.");

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -653,7 +653,7 @@ level_tele_impl(boolean wizard_tele)
            depth of the target level. we let negative values requests fall into
            the "heaven" loop. */
         if (In_quest(&u.uz) && newlev > 0)
-            newlev = newlev + dungeons[u.uz.dnum].depth_start - 1;
+            newlev = newlev + find_dungeon(&u.uz).depth_start - 1;
     } else {    /* involuntary level tele */
     random_levtport:
         newlev = random_teleport_level();
@@ -734,8 +734,8 @@ level_tele_impl(boolean wizard_tele)
         pline("You %s.", escape_by_flying);
         done(ESCAPED, "teleported to safety");
     } else if (u.uz.dnum == medusa_level.dnum &&
-               newlev >=
-               dungeons[u.uz.dnum].depth_start + dunlevs_in_dungeon(&u.uz)) {
+               newlev >= (find_dungeon(&u.uz).depth_start +
+                          dunlevs_in_dungeon(&u.uz))) {
         if (!(wizard_tele && force_dest))
             find_hell(&newlevel);
     } else {
@@ -743,12 +743,10 @@ level_tele_impl(boolean wizard_tele)
            Gehennom is forbidden. */
         if (!wizard_tele)
             if (Inhell && !u.uevent.invoked &&
-                newlev >=
-                (dungeons[u.uz.dnum].depth_start + dunlevs_in_dungeon(&u.uz) -
-                 1)) {
-                newlev =
-                    dungeons[u.uz.dnum].depth_start +
-                    dunlevs_in_dungeon(&u.uz) - 2;
+                newlev >= (find_dungeon(&u.uz).depth_start +
+                           dunlevs_in_dungeon(&u.uz) - 1)) {
+                newlev = (find_dungeon(&u.uz).depth_start +
+                          dunlevs_in_dungeon(&u.uz) - 2);
                 pline("Sorry...");
             }
         /* no teleporting out of quest dungeon */
@@ -1192,23 +1190,29 @@ random_teleport_level(void)
     if (In_endgame(&u.uz))      /* only happens in wizmode */
         return cur_depth;
 
-    /* What I really want to do is as follows: -- If in a dungeon that goes
-       down, the new level is to be restricted to [top of parent, bottom of
-       current dungeon] -- If in a dungeon that goes up, the new level is to be
-       restricted to [top of current dungeon, bottom of parent] -- If in a
-       quest dungeon or similar dungeon entered by portals, the new level is to
-       be restricted to [top of current dungeon, bottom of current dungeon] The
-       current behavior is not as sophisticated as that ideal, but is still
-       better what we used to do, which was like this for players but different
-       for monsters for no obvious reason.  Currently, we must explicitly check
-       for special dungeons.  We check for Knox above; endgame is handled in
-       the caller due to its different message ("disoriented"). --KAA 3.4.2:
-       explicitly handle quest here too, to fix the problem of monsters
-       sometimes level teleporting out of it into main dungeon. Also prevent
-       monsters reaching the Sanctum prior to invocation. */
-    min_depth = In_quest(&u.uz) ? dungeons[u.uz.dnum].depth_start : 1;
+    /*
+     * What I really want to do is as follows:
+     * -- If in a dungeon that goes down, the new level is to be restricted to
+     *    [top of parent, bottom of current dungeon]
+     * -- If in a dungeon that goes up, the new level is to be restricted to
+     *    [top of current dungeon, bottom of parent]
+     * -- If in a quest dungeon or similar dungeon entered by portals, the new
+     *    level is to be restricted to [top of current dungeon, bottom of current
+     *    dungeon]
+     *
+     * The current behavior is not as sophisticated as that ideal, but is still
+     * better what we used to do, which was like this for players but different
+     * for monsters for no obvious reason.  Currently, we must explicitly check
+     * for special dungeons.  We check for Knox above; endgame is handled in the
+     * caller due to its different message ("disoriented").
+     *
+     * -- KAA 3.4.2: explicitly handle quest here too, to fix the problem of
+     * monsters sometimes level teleporting out of it into main dungeon. Also
+     * prevent monsters reaching the Sanctum prior to invocation.
+     */
+    min_depth = In_quest(&u.uz) ? find_dungeon(&u.uz).depth_start : 1;
     max_depth =
-        dunlevs_in_dungeon(&u.uz) + (dungeons[u.uz.dnum].depth_start - 1);
+        dunlevs_in_dungeon(&u.uz) + (find_dungeon(&u.uz).depth_start - 1);
     /* can't reach the Sanctum if the invocation hasn't been performed */
     if (Inhell && !u.uevent.invoked)
         max_depth -= 1;

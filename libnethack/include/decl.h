@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-04 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,6 +10,15 @@
 # include "dungeon.h"
 # include "monsym.h"
 # include "xmalloc.h"
+# include "spell.h"
+# include "color.h"
+# include "obj.h"
+# include "role.h"
+# include "you.h"
+# include "onames.h"
+# ifndef PM_H   /* (pm.h might already have been included via youprop.h) */
+#  include "pm.h"
+# endif
 
 # define WARNCOUNT 6    /* number of different warning levels */
 
@@ -28,9 +37,10 @@ extern const char disclosure_options[];
 
 extern const schar xdir[], ydir[], zdir[];
 
-/* Dungeon topology */
+/* Dungeon topology structure.
 
-extern struct dgn_topology {    /* special dungeon levels for speed */
+   TODO: This should be in a different file, probably. */
+struct dgn_topology {    /* special dungeon levels for speed */
     d_level d_oracle_level;
     d_level d_bigroom_level;    /* unused */
     d_level d_rogue_level;
@@ -56,57 +66,68 @@ extern struct dgn_topology {    /* special dungeon levels for speed */
     xchar d_mines_dnum, d_quest_dnum;
     d_level d_qstart_level, d_qlocate_level, d_nemesis_level;
     d_level d_knox_level;
-} dungeon_topology;
+};
 
-/* macros for accesing the dungeon levels by their old names */
-# define oracle_level           (dungeon_topology.d_oracle_level)
-# define bigroom_level          (dungeon_topology.d_bigroom_level)
-# define rogue_level            (dungeon_topology.d_rogue_level)
-# define medusa_level           (dungeon_topology.d_medusa_level)
-# define stronghold_level       (dungeon_topology.d_stronghold_level)
-# define valley_level           (dungeon_topology.d_valley_level)
-# define wiz1_level             (dungeon_topology.d_wiz1_level)
-# define wiz2_level             (dungeon_topology.d_wiz2_level)
-# define wiz3_level             (dungeon_topology.d_wiz3_level)
-# define juiblex_level          (dungeon_topology.d_juiblex_level)
-# define orcus_level            (dungeon_topology.d_orcus_level)
-# define baalzebub_level        (dungeon_topology.d_baalzebub_level)
-# define asmodeus_level         (dungeon_topology.d_asmodeus_level)
-# define portal_level           (dungeon_topology.d_portal_level)
-# define sanctum_level          (dungeon_topology.d_sanctum_level)
-# define earth_level            (dungeon_topology.d_earth_level)
-# define water_level            (dungeon_topology.d_water_level)
-# define fire_level             (dungeon_topology.d_fire_level)
-# define air_level              (dungeon_topology.d_air_level)
-# define astral_level           (dungeon_topology.d_astral_level)
-# define tower_dnum             (dungeon_topology.d_tower_dnum)
-# define sokoban_dnum           (dungeon_topology.d_sokoban_dnum)
-# define mines_dnum             (dungeon_topology.d_mines_dnum)
-# define quest_dnum             (dungeon_topology.d_quest_dnum)
-# define qstart_level           (dungeon_topology.d_qstart_level)
-# define qlocate_level          (dungeon_topology.d_qlocate_level)
-# define nemesis_level          (dungeon_topology.d_nemesis_level)
-# define knox_level             (dungeon_topology.d_knox_level)
 
-extern int branch_id;
-extern coord inv_pos;
-extern dungeon dungeons[];
-extern s_level *sp_levchn;
+/* This structure is being used as part of the globals purge.
 
-# define dunlev_reached(x)      (dungeons[(x)->dnum].dunlev_ureached)
+   Current meaning: "globals associated with the player character that aren't
+   part of struct you".
 
-extern char pl_fruit[PL_FSIZ];
-extern int current_fruit;
-extern struct fruit *ffruit;
+   Eventual meaning: "values associated with a player that aren't associated
+   with a monster".
 
-extern char tune[6];
+   Ideally, we'll continuously deform one into the other. (Also, this is in the
+   wrong file; you.h would make more sense.) */
+struct youaux {
+    int unused;
+};
+
+
+/* The big gamestate structure that holds all saved data. */
+extern struct gamestate {
+
+    /* Things that describe the dungeon as a whole. */
+    dungeon dungeons[MAXDUNGEON];
+    s_level *sp_levchn;
+    struct dgn_topology topology;
+
+    /* Things that are conceptually attached to specific levels of a dungeon,
+       but for which only one such level exists, and for which the value may be
+       needed globally (and thus it makes more sense to store them as part of
+       the dungeon). These are currently saved in save_dungeon. */
+    char castle_tune[6];
+    coord inv_pos; /* TODO: use "vibrating square" trap instead */
+
+    /* Things that describe individual levels of a dungeon. */
+
+    /* Things that describe players within a dungeon.  (Eventually, this will
+       just be a single monster chain.  But that's a *long* way off at the
+       moment.) */
+    struct you us[1];
+    struct youaux us_aux[1];
+
+    /* Fruit state. Arguably should be in flags. Currently, this is attached to
+       a dungeon as a whole /or/ a bones level, which is weird enough as it is;
+       also, it's affected by options, which is even weirder. Anyone have any
+       idea how this would be expected to work in multiplayer? */
+    struct {
+        char curname[PL_FSIZ];
+        int current;
+        struct fruit *chain;
+    } fruits;
+
+    /* Unique IDs. TODO: move flags.ident here. */
+    struct {
+        int branch;
+    } unique_ids;
+} gamestate;
+
+# define find_dungeon(z)        (gamestate.dungeons[(z)->dnum])
+# define dunlev_reached(z)      (find_dungeon(z).dunlev_ureached)
 
 # define MAXLINFO (MAXDUNGEON * MAXLEVEL)
 
-
-extern int smeq[];
-
-extern const char *configfile;
 extern char dogname[];
 extern char catname[];
 extern char horsename[];
@@ -133,28 +154,19 @@ extern boolean in_steed_dismounting;
 
 extern const int shield_static[];
 
-# include "spell.h"
 extern struct spell spl_book[]; /* sized in decl.c */
 
-# include "color.h"
 
 extern const char def_oc_syms[MAXOCLASSES];     /* default class symbols */
 extern const char def_monsyms[MAXMCLASSES];     /* default class symbols */
 
-# include "obj.h"
 extern int lastinvnr;
 
 extern struct obj *invent;
 extern struct obj zeroobj;      /* init'd and defined in decl.c */
 
-# include "role.h"
-# include "you.h"
 extern struct you u;
 
-# include "onames.h"
-# ifndef PM_H   /* (pm.h has already been included via youprop.h) */
-#  include "pm.h"
-# endif
 
 extern struct monst youmonst;   /* init'd and defined in decl.c */
 extern struct monst *migrating_mons;
@@ -257,6 +269,40 @@ extern int curline;
     add_menu_txt((m), c, MI_HEADING)
 # define add_menutext(m, c)                     \
     add_menu_txt((m), c, MI_TEXT)
+
+/* Compatibility macros. */
+# define u gamestate.us[0]
+
+# define dungeon_topology       gamestate.topology
+# define oracle_level           (dungeon_topology.d_oracle_level)
+# define bigroom_level          (dungeon_topology.d_bigroom_level)
+# define rogue_level            (dungeon_topology.d_rogue_level)
+# define medusa_level           (dungeon_topology.d_medusa_level)
+# define stronghold_level       (dungeon_topology.d_stronghold_level)
+# define valley_level           (dungeon_topology.d_valley_level)
+# define wiz1_level             (dungeon_topology.d_wiz1_level)
+# define wiz2_level             (dungeon_topology.d_wiz2_level)
+# define wiz3_level             (dungeon_topology.d_wiz3_level)
+# define juiblex_level          (dungeon_topology.d_juiblex_level)
+# define orcus_level            (dungeon_topology.d_orcus_level)
+# define baalzebub_level        (dungeon_topology.d_baalzebub_level)
+# define asmodeus_level         (dungeon_topology.d_asmodeus_level)
+# define portal_level           (dungeon_topology.d_portal_level)
+# define sanctum_level          (dungeon_topology.d_sanctum_level)
+# define earth_level            (dungeon_topology.d_earth_level)
+# define water_level            (dungeon_topology.d_water_level)
+# define fire_level             (dungeon_topology.d_fire_level)
+# define air_level              (dungeon_topology.d_air_level)
+# define astral_level           (dungeon_topology.d_astral_level)
+# define tower_dnum             (dungeon_topology.d_tower_dnum)
+# define sokoban_dnum           (dungeon_topology.d_sokoban_dnum)
+# define mines_dnum             (dungeon_topology.d_mines_dnum)
+# define quest_dnum             (dungeon_topology.d_quest_dnum)
+# define qstart_level           (dungeon_topology.d_qstart_level)
+# define qlocate_level          (dungeon_topology.d_qlocate_level)
+# define nemesis_level          (dungeon_topology.d_nemesis_level)
+# define knox_level             (dungeon_topology.d_knox_level)
+
 
 # define MEMFILE_HASHTABLE_SIZE 1009
 
@@ -435,4 +481,3 @@ extern const struct nh_listitem polyinit_list[];
 extern const struct nh_enum_option polyinit_spec;
 
 #endif /* DECL_H */
-

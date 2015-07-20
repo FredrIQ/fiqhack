@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-19 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -114,7 +114,7 @@ restlevchn(struct memfile *mf)
     int cnt;
     s_level *tmplev, *x;
 
-    sp_levchn = NULL;
+    gamestate.sp_levchn = NULL;
     cnt = mread32(mf);
     for (; cnt > 0; cnt--) {
         tmplev = malloc(sizeof (s_level));
@@ -124,10 +124,10 @@ restlevchn(struct memfile *mf)
         tmplev->boneid = mread8(mf);
         tmplev->rndlevs = mread8(mf);
 
-        if (!sp_levchn)
-            sp_levchn = tmplev;
+        if (!gamestate.sp_levchn)
+            gamestate.sp_levchn = tmplev;
         else {
-            for (x = sp_levchn; x->next; x = x->next)
+            for (x = gamestate.sp_levchn; x->next; x = x->next)
                 ;
             x->next = tmplev;
         }
@@ -459,13 +459,14 @@ restgamestate(struct memfile *mf)
     restore_artifacts(mf);
     restore_oracles(mf);
 
-    mread(mf, pl_fruit, sizeof pl_fruit);
-    current_fruit = mread32(mf);
-    freefruitchn(ffruit);       /* clean up fruit(s) made by initoptions() */
+    mread(mf, gamestate.fruits.curname, sizeof gamestate.fruits.curname);
+    gamestate.fruits.current = mread32(mf);
+    /* clean up fruit(s) made by initoptions() */
+    freefruitchn(gamestate.fruits.chain);
     /* set it to NULL before loadfruitchn, otherwise loading a faulty fruit
        chain will crash in terminate -> freedynamicdata -> freefruitchn */
-    ffruit = NULL;
-    ffruit = loadfruitchn(mf);
+    gamestate.fruits.chain = NULL;
+    gamestate.fruits.chain = loadfruitchn(mf);
 
     restnames(mf);
     restore_waterlevel(mf, lev);
@@ -1249,7 +1250,11 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
         /* Now get rid of all the temp fruits... */
         freefruitchn(oldfruit), oldfruit = 0;
 
-        /* TODO: Is this dead code? I /hope/ it's dead code. */
+        /* TODO: Is this dead code? I /hope/ it's dead code.
+
+           The purpose seems to ensure that below-Medusa filler levels in bones
+           have a downstairs, no matter what. I can't think of a situation where
+           such a level wouldn't have a downstairs. */
         if (levnum > ledger_no(&medusa_level) &&
             levnum < ledger_no(&stronghold_level) &&
             !isok(lev->dnstair.sx, lev->dnstair.sy)) {

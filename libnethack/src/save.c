@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-19 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -310,8 +310,8 @@ savegamestate(struct memfile *mf)
     save_artifacts(mf);
     save_oracles(mf);
 
-    mwrite(mf, pl_fruit, sizeof pl_fruit);
-    mwrite32(mf, current_fruit);
+    mwrite(mf, gamestate.fruits.curname, sizeof gamestate.fruits.curname);
+    mwrite32(mf, gamestate.fruits.current);
     savefruitchn(mf);
     savenames(mf);
     save_waterlevel(mf);
@@ -735,11 +735,11 @@ savelevchn(struct memfile *mf)
     s_level *tmplev;
     int cnt = 0;
 
-    for (tmplev = sp_levchn; tmplev; tmplev = tmplev->next)
+    for (tmplev = gamestate.sp_levchn; tmplev; tmplev = tmplev->next)
         cnt++;
     mwrite32(mf, cnt);
 
-    for (tmplev = sp_levchn; tmplev; tmplev = tmplev->next) {
+    for (tmplev = gamestate.sp_levchn; tmplev; tmplev = tmplev->next) {
         save_d_flags(mf, tmplev->flags);
         save_dlevel(mf, tmplev->dlevel);
         mwrite(mf, tmplev->proto, sizeof (tmplev->proto));
@@ -911,10 +911,9 @@ freetrapchn(struct trap *trap)
 }
 
 /* save all the fruit names and ID's; this is used only in saving whole games
- * (not levels) and in saving bones levels.  When saving a bones level,
- * we only want to save the fruits which exist on the bones level; the bones
- * level routine marks nonexistent fruits by making the fid negative.
- */
+   (not levels) and in saving bones levels.  When saving a bones level, we only
+   want to save the fruits which exist on the bones level; the bones level
+   routine marks nonexistent fruits by making the fid negative. */
 void
 savefruitchn(struct memfile *mf)
 {
@@ -922,12 +921,12 @@ savefruitchn(struct memfile *mf)
     unsigned int count = 0;
 
     mfmagic_set(mf, FRUITCHAIN_MAGIC);
-    for (f1 = ffruit; f1; f1 = f1->nextf)
+    for (f1 = gamestate.fruits.chain; f1; f1 = f1->nextf)
         if (f1->fid >= 0)
             count++;
     mwrite32(mf, count);
 
-    for (f1 = ffruit; f1; f1 = f1->nextf) {
+    for (f1 = gamestate.fruits.chain; f1; f1 = f1->nextf) {
         if (f1->fid >= 0) {
             mtag(mf, f1->fid, MTAG_FRUIT);
             mwrite(mf, f1->fname, sizeof (f1->fname));
@@ -940,14 +939,14 @@ savefruitchn(struct memfile *mf)
 static void
 freefruitchn(void)
 {
-    struct fruit *f2, *f1 = ffruit;
+    struct fruit *f2, *f1 = gamestate.fruits.chain;
 
     while (f1) {
         f2 = f1->nextf;
         dealloc_fruit(f1);
         f1 = f2;
     }
-    ffruit = NULL;
+    gamestate.fruits.chain = NULL;
 }
 
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -322,7 +322,7 @@ put_lregion_here(struct level *lev, xchar x, xchar y, xchar nlx, xchar nly,
 }
 
 void
-makemaz(struct level *lev, const char *s)
+makemaz(struct level *lev, const char *s, int *smeq)
 {
     int x, y;
     char protofile[20];
@@ -335,28 +335,28 @@ makemaz(struct level *lev, const char *s)
                      1 + mklev_rn2((int)sp->rndlevs, lev));
         else
             strcpy(protofile, s);
-    } else if (*(dungeons[lev->z.dnum].proto)) {
+    } else if (*(find_dungeon(&lev->z).proto)) {
         if (dunlevs_in_dungeon(&lev->z) > 1) {
             if (sp && sp->rndlevs)
                 snprintf(protofile, SIZE(protofile), "%s%d-%d",
-                         dungeons[lev->z.dnum].proto,
+                         find_dungeon(&lev->z).proto,
                          dunlev(&lev->z), 1 + mklev_rn2((int)sp->rndlevs, lev));
             else
                 snprintf(protofile, SIZE(protofile), "%s%d",
-                         dungeons[lev->z.dnum].proto, dunlev(&lev->z));
+                         find_dungeon(&lev->z).proto, dunlev(&lev->z));
         } else if (sp && sp->rndlevs) {
             snprintf(protofile, SIZE(protofile), "%s-%d",
-                     dungeons[lev->z.dnum].proto,
+                     find_dungeon(&lev->z).proto,
                      1 + mklev_rn2((int)sp->rndlevs, lev));
         } else
-            strcpy(protofile, dungeons[lev->z.dnum].proto);
+            strcpy(protofile, find_dungeon(&lev->z).proto);
 
     } else
         strcpy(protofile, "");
 
     if (*protofile) {
         strcat(protofile, LEV_EXT);
-        if (load_special(lev, protofile)) {
+        if (load_special(lev, protofile, smeq)) {
             fixup_special(lev);
             /* some levels can end up with monsters on dead mon list, including 
                light source monsters */
@@ -404,7 +404,8 @@ makemaz(struct level *lev, const char *s)
             x_maze_max - x_maze_min - 2 * INVPOS_X_MARGIN - 1, y_range =
             y_maze_max - y_maze_min - 2 * INVPOS_Y_MARGIN - 1;
 
-        inv_pos.x = inv_pos.y = 0;      /* {occupied() => invocation_pos()} */
+        /* {occupied() => invocation_pos()} */
+        gamestate.inv_pos.x = gamestate.inv_pos.y = 0;
         do {
             x = mklev_rn2(x_range, lev) + x_maze_min + INVPOS_X_MARGIN + 1;
             y = mklev_rn2(y_range, lev) + y_maze_min + INVPOS_Y_MARGIN + 1;
@@ -416,10 +417,10 @@ makemaz(struct level *lev, const char *s)
                  distmin(x, y, lev->upstair.sx,
                          lev->upstair.sy) <= INVPOS_DISTANCE ||
                  !SPACE_POS(lev->locations[x][y].typ) || occupied(lev, x, y));
-        inv_pos.x = x;
-        inv_pos.y = y;
-        maketrap(lev, inv_pos.x, inv_pos.y, VIBRATING_SQUARE,
-                 rng_for_level(&lev->z));
+        gamestate.inv_pos.x = x;
+        gamestate.inv_pos.y = y;
+        maketrap(lev, gamestate.inv_pos.x, gamestate.inv_pos.y,
+                 VIBRATING_SQUARE, rng_for_level(&lev->z));
 #undef INVPOS_X_MARGIN
 #undef INVPOS_Y_MARGIN
 #undef INVPOS_DISTANCE

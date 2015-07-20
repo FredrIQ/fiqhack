@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-19 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -584,7 +584,7 @@ extern void splatter_burning_oil(int, int);
 
 /* ### extralev.c ### */
 
-extern void makeroguerooms(struct level *lev);
+extern void makeroguerooms(struct level *lev, int *);
 extern void makerogueghost(struct level *lev);
 
 /* ### files.c ### */
@@ -965,7 +965,7 @@ extern void add_room(struct level *lev, int, int, int, int, boolean, schar,
                      boolean);
 extern void add_subroom(struct level *lev, struct mkroom *, int, int, int, int,
                         boolean, schar, boolean);
-extern void makecorridors(struct level *lev);
+extern void makecorridors(struct level *lev, int *smeq);
 extern void add_door(struct level *lev, int, int, struct mkroom *);
 extern struct level *mklev(d_level * levnum);
 extern void topologize(struct level *lev, struct mkroom *croom);
@@ -986,7 +986,7 @@ extern void remove_rooms(struct level *lev, int lx, int ly, int hx, int hy);
 
 extern void wallification(struct level *lev, int x1, int y1, int x2, int y2);
 extern void walkfrom(struct level *lev, int, int);
-extern void makemaz(struct level *lev, const char *);
+extern void makemaz(struct level *lev, const char *, int *);
 extern void mazexy(struct level *lev, coord * cc);
 extern void bound_digging(struct level *lev);
 extern void mkportal(struct level *lev, xchar x, xchar y, xchar todnum,
@@ -1630,13 +1630,13 @@ extern int dotalk(const struct nh_cmd_arg *);
 extern boolean check_room(struct level *lev, xchar *, xchar *, xchar *, xchar *,
                           boolean);
 extern boolean create_room(struct level *lev, xchar, xchar, xchar, xchar, xchar,
-                           xchar, xchar, xchar);
+                           xchar, xchar, xchar, int *);
 extern void create_secret_door(struct level *lev, struct mkroom *croom,
                                xchar walls);
 extern boolean dig_corridor(struct level *lev, coord *, coord *, boolean, schar,
                             schar);
 extern void fill_room(struct level *lev, struct mkroom *, boolean);
-extern boolean load_special(struct level *lev, const char *);
+extern boolean load_special(struct level *lev, const char *, int *);
 extern void fixup_special(struct level *lev);
 
 /* ### spell.c ### */

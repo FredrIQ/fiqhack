@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -494,7 +494,7 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
     }
     if (c == 'n') {
         if (u.uevent.uheard_tune == 2 && yn("Play the passtune?") == 'y') {
-            buf = msg_from_string(tune);
+            buf = msg_from_string(gamestate.castle_tune);
         } else {
             /* Note: This is explicitly not getarglin(); we don't want
                command repeat to repeat the tune. */
@@ -511,7 +511,7 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
            conforms to what we're waiting for. */
         if (Is_stronghold(&u.uz)) {
             exercise(A_WIS, TRUE);      /* just for trying */
-            if (!strcmp(buf, tune)) {
+            if (!strcmp(buf, gamestate.castle_tune)) {
                 /* Search for the drawbridge */
                 for (y = u.uy - 1; y <= u.uy + 1; y++)
                     for (x = u.ux - 1; x <= u.ux + 1; x++)
@@ -548,13 +548,14 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
 
                     for (x = 0; x < (int)strlen(buf); x++)
                         if (x < 5) {
-                            if (buf[x] == tune[x]) {
+                            if (buf[x] == gamestate.castle_tune[x]) {
                                 gears++;
                                 matched[x] = TRUE;
                             } else
                                 for (y = 0; y < 5; y++)
-                                    if (!matched[y] && buf[x] == tune[y] &&
-                                        buf[y] != tune[y]) {
+                                    if (!matched[y] &&
+                                        buf[x] == gamestate.castle_tune[y] &&
+                                        buf[y] != gamestate.castle_tune[y]) {
                                         tumblers++;
                                         matched[y] = TRUE;
                                         break;
