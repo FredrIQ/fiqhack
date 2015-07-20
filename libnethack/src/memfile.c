@@ -96,7 +96,7 @@ mnew(struct memfile *mf, struct memfile *relativeto)
 {
     int i;
 
-    static const char diffheader[2] = {MDIFF_HEADER_0, MDIFF_HEADER_1};
+    static const char diffheader[2] = {MDIFF_HEADER_0, MDIFF_HEADER_1_BETA2};
 
     mf->buf = mf->diffbuf = NULL;
     mf->len = mf->pos = mf->difflen = mf->diffpos = mf->relativepos = 0;

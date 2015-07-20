@@ -307,13 +307,14 @@ extern int curline;
 # define MEMFILE_HASHTABLE_SIZE 1009
 
 /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): these constants are only needed to parse
-   the old diff format. */
+   the old -beta1 diff format. */
 # define MDIFFOLD_SEEK 0
 # define MDIFFOLD_EDIT 2
 # define MDIFFOLD_COPY 3
 # define MDIFFOLD_INVALID 255
 
-/* Commands in a save diff. */
+/* SAVEBREAK (4.3-beta2 -> 4.3-beta3): and these commands are only needed to
+   parse the old -beta2 diff format. */
 # define MDIFF_CMDMASK 0xE000u
 # define MDIFF_LARGE_COPYEDIT 0x8000u
 # define MDIFF_LARGE_EDIT     0xA000u
@@ -321,8 +322,53 @@ extern int curline;
 # define MDIFF_SEEK           0xE000u
 /* and the other four possibilities are all normal-sized copyedits */
 
+/* Save diff format magic numbers. */
 # define MDIFF_HEADER_0       0x01
-# define MDIFF_HEADER_1       0x40
+# define MDIFF_HEADER_1_BETA2 0x40 /* SAVEBREAK (4.3-beta2 -> 4.3-beta3) */
+# define MDIFF_HEADER_1_BETA3 0x43
+
+/* The number of bytes that save_mon most commonly outputs.
+
+   Some special-purpose commands, like mdiff_monmxy, */
+# define SAVE_SIZE_MONST      85
+
+/* Commands in a 4.3-beta3-format save diff. See saves.txt (section "4.3-beta3")
+   for full information on how the format works. Note that the order of this
+   array affects save compatibility. (Adding new items will not prevent old
+   saves being loaded correctly, although it will prevent new saves being loaded
+   correctly on old versions.) */
+enum mdiff_command {
+    /* General-purpose commands. */
+    mdiff_copyedit,         /* 12+ bits copy size; 2 bits edit size (+1); edited
+                               data is given explicitly */
+
+    /* Fallbacks, so that we can encode anything if need be. */
+    mdiff_copy,             /* 6+ bits copy size */
+    mdiff_edit,             /* 4+ bits edit size (+1); edited data is given
+                               explicitly */
+    mdiff_seek,             /* 8+ bits signed seek distance */
+    mdiff_wider,            /* prefix on a command to increase the minimum size
+                               of the varying-sized argument by 8 */
+
+    /* Special-purpose commands. */
+    mdiff_eof,              /* end of the diff; 12+ bits copy size before
+                               ending the diff */
+    mdiff_coord,            /* 1+ bits copy size in SAVE_SIZE_MONST units from
+                               the start of the last mdiff_coord or end of the
+                               last mdiff_copy (with 0 being the smallest
+                               possible such copy); then always edits 2 bytes,
+                               with their values being changed according to 3
+                               bits of movement direction (DIR_W .. DIR_SW)*/
+    mdiff_erase,            /* 7+ bits copy size; 3 bits edit size (+3); edited
+                               data is all zeroes */
+    mdiff_rle,              /* repeat previous command 2+ bits (+1) more
+                               times */
+};
+struct mdiff_command_instance {
+    enum mdiff_command command;
+    long long arg1;
+    long long arg2;
+};
 
 enum memfile_tagtype {
     MTAG_START,             /* 0 */
@@ -391,13 +437,16 @@ struct memfile {
 
     /* Working space for diff encoding. We can have both pending copies and
        pending edits (in which case the copies come first). Pending seeks are
-       mutually exclusive with anything else. We also flush once we have more
-       than 15 edits and at least one copy, or more than 33554431 copies, or
-       more than 535870911 edits. (I seriously doubt those latter cases will
-       ever come up.) */
+       mutually exclusive with anything else. We therefore flush if we need to
+       copy or edit when we have pending seeks, copy when we have pending edits
+       or seeks, or seek when we have pending edits or copies. */
     long pending_copies;
     long pending_edits;
     long pending_seeks;
+
+    /* In order to be able to encode "copy the last command", we need to know
+       what the last command was. */
+    struct mdiff_command_instance last_command;
 
     /* Tags to help in diffing. This is a hashtable for efficiency, using
        chaining in the case of collisions. */

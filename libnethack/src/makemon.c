@@ -2235,6 +2235,12 @@ save_fcorr(struct memfile *mf, const struct fakecorridor *f)
 }
 
 
+/* Warning: to avoid serious degradation of save file size, the constant
+   SAVE_SIZE_MONST in decl.h must be set to the number of bytes that this file
+   most commonly outputs when saving one monster. Thus, changing the save layout
+   of a monster may require a change to that value. Note also that changing that
+   value breaks save compatibility (but so does changing the number of bytes
+   this function writes). */
 void
 save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
 {

@@ -2000,10 +2000,14 @@ apply_save_diff(char *s, struct memfile *diff_base)
         { cmd *= 256; cmd += (uint8_t)*(bufp++); }      \
     } while(0)
 
-    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): this is unconditionally true in
-       4.3-beta2 save files, so we can remove the if statement and get rid of
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta3): this is unconditionally true in
+       4.3-beta3 save files, so we can remove the if statement and get rid of
        the rest of the function, which is backwards compatibility code. */
-    if (bufp[0] == MDIFF_HEADER_0 && bufp[1] == MDIFF_HEADER_1) {
+    if (bufp[0] == MDIFF_HEADER_0 && bufp[1] == MDIFF_HEADER_1_BETA3) {
+
+        panic("TODO");
+
+    } else if (bufp[0] == MDIFF_HEADER_0 && bufp[1] == MDIFF_HEADER_1_BETA2) {
 
         bufp += 2;
 
