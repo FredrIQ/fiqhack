@@ -71,6 +71,8 @@ enum mdiff_command {
     mdiff_copyedit1,        /* 4+ bits copy size; 0 bits edit size (+1);
                                basically a copyedit with different sizes, which
                                can lead to shorter encodings sometimes */
+    mdiff_eof_crc32,        /* end of the diff, plus consistency check; 12+ bits
+                               copy size before ending the diff, 32 bits CRC */
     mdiff_rle,              /* repeat previous command 2+ bits (+1) more
                                times */
     mdiff_command_count     /* fencepost, comes last; also means "no command" */

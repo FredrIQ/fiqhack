@@ -7,6 +7,7 @@
 #define __STDC_FORMAT_MACROS
 #include <stdint.h>
 #include <inttypes.h>
+#include <zlib.h>
 
 #ifdef IS_BIG_ENDIAN
 static unsigned short
@@ -326,17 +327,18 @@ struct mdiff_command_size {
     const char *name;
 };
 static const struct mdiff_command_size mdiff_command_sizes[] = {
-    [mdiff_copyedit]  = {12, 2, "copyedit"},
-    [mdiff_copy]      = {6,  0, "copy"},
-    [mdiff_edit]      = {4,  0, "edit"},
-    [mdiff_seek]      = {-8, 0, "seek"},
-    [mdiff_wider]     = {0,  0, "wider"},
-    [mdiff_eof]       = {12, 0, "eof"},
-    [mdiff_coord]     = {1,  3, "coord"},
-    [mdiff_erase]     = {7,  3, "erase"},
-    [mdiff_copyedit1] = {4,  0, "copyedit1"},
-    [mdiff_increment] = {12, 0, "increment"},
-    [mdiff_rle]       = {2,  0, "rle"},
+    [mdiff_copyedit]  = {12,  2, "copyedit"},
+    [mdiff_copy]      = {6,   0, "copy"},
+    [mdiff_edit]      = {4,   0, "edit"},
+    [mdiff_seek]      = {-8,  0, "seek"},
+    [mdiff_wider]     = {0,   0, "wider"},
+    [mdiff_eof]       = {12,  0, "eof"},
+    [mdiff_coord]     = {1,   3, "coord"},
+    [mdiff_erase]     = {7,   3, "erase"},
+    [mdiff_copyedit1] = {4,   0, "copyedit1"},
+    [mdiff_increment] = {12,  0, "increment"},
+    [mdiff_eof_crc32] = {12, 32, "eof_crc32"},
+    [mdiff_rle]       = {2,   0, "rle"},
 };
 
 static_assert(ARRAY_SIZE(mdiff_command_sizes) == mdiff_command_count,
@@ -582,6 +584,16 @@ mdiffflush(struct memfile *mf, boolean eof)
     struct mdiff_command_instance best[2];
     int bestlen = INT_MAX;
 
+    /* For protection against mistakes in the diff algorithm, add a checksum at
+       the end of the diff, that checksums the expected output from the
+       diff. (We can go back to using a non-checksummed diff later, once this
+       code seems to be working, if saving the extra space in the save file is
+       important; mdiff_eof has a shorter encoding and the code for it has been
+       tested.) */
+    uLong crc = 0;
+    if (eof)
+        crc = crc32(crc32(0L, Z_NULL, 0), (Bytef *)mf->buf, mf->pos);
+
     if (mf->pending_seeks) {
         best[0] = (struct mdiff_command_instance)
             {.command = mdiff_seek, .arg1 = mf->pending_seeks};
@@ -612,7 +624,7 @@ mdiffflush(struct memfile *mf, boolean eof)
                            mdiff_edit,          edits - 1, 0);
         if (eof && !edits)
             mdiff_checklen(mf, best, &bestlen, 0,
-                           mdiff_eof,           copies,    0,
+                           mdiff_eof_crc32,     copies,    crc,
                            mdiff_command_count, 0,         0);
         if (onlynul(first_edit, edits))
             mdiff_checklen(mf, best, &bestlen, 0,
@@ -659,8 +671,11 @@ mdiffflush(struct memfile *mf, boolean eof)
 
     mdiffwritecmd(mf, best + 0);
     mdiffwritecmd(mf, best + 1);
-    if (eof && best[0].command != mdiff_eof && best[1].command != mdiff_eof)
-        mdiffwritecmd(mf, &(struct mdiff_command_instance){mdiff_eof, 0, 0});
+    if (eof && best[0].command != mdiff_eof && best[1].command != mdiff_eof &&
+        best[0].command != mdiff_eof_crc32 &&
+        best[1].command != mdiff_eof_crc32)
+        mdiffwritecmd(mf, &(struct mdiff_command_instance)
+                      {mdiff_eof_crc32, 0, crc});
     if (debuglog)
         fprintf(debuglog, "\n");
 
@@ -778,6 +793,7 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             case mdiff_copy:
             case mdiff_increment:
             case mdiff_eof:
+            case mdiff_eof_crc32:
             case mdiff_erase:
                 copy = mdci.arg1;
                 break;
@@ -802,9 +818,9 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             }
 
             mfp = mmmap(new_memfile, copy, new_memfile->pos);
-            if (dbpos < 0)
+            if (dbpos < 0 && copy)
                 errfunction("diff copies from before the start of file", diff);
-            else if (dbpos + copy > diff_base->pos)
+            else if (dbpos + copy > diff_base->pos && copy)
                 errfunction("diff copies from after the end of file", diff);
             memcpy(mfp, diff_base->buf + dbpos, copy);
             dbpos += copy;
@@ -829,6 +845,7 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             case mdiff_copy:
             case mdiff_seek:
             case mdiff_eof:
+            case mdiff_eof_crc32:
                 edit = 0;
                 break;
 
@@ -879,6 +896,14 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
 
             if (mdci.command == mdiff_eof)
                 break;
+            if (mdci.command == mdiff_eof_crc32) {
+                uLong crc = crc32(crc32(0L, Z_NULL, 0),
+                                  (Bytef *)new_memfile->buf, new_memfile->pos);
+                if (crc != mdci.arg2)
+                    errfunction("diff produced output with wrong checksum",
+                                diff);
+                break;
+            }
         }
 
     } else if (bufp[0] == MDIFF_HEADER_0 && bufp[1] == MDIFF_HEADER_1_BETA2) {
