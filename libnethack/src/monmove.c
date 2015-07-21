@@ -161,9 +161,11 @@ disturb(struct monst *mtmp)
     return 0;
 }
 
-/* monster begins fleeing for the specified time, 0 means untimed flee
+/*
+ * monster begins fleeing for the specified time, 0 means untimed flee
  * if first, only adds fleetime if monster isn't already fleeing
- * if fleemsg, prints a message about new flight, otherwise, caller should */
+ * if fleemsg, prints a message about new flight, otherwise, caller should
+ */
 void
 monflee(struct monst *mtmp, int fleetime, boolean first, boolean fleemsg)
 {
