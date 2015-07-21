@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -183,7 +183,7 @@ nh_timeout(void)
     if (u.uluck != baseluck &&
         moves % (Uhave_amulet || u.ugangr ? 300 : 600) == 0) {
         /* Cursed luckstones stop bad luck from timing out; blessed luckstones
-           stop good luck from timing out; normal luckstones stop both; neither 
+           stop good luck from timing out; normal luckstones stop both; neither
            is stopped if you don't have a luckstone. Luck is based at 0
            usually, +1 if a full moon and -1 on Friday 13th */
         int time_luck = stone_luck(FALSE);
@@ -349,7 +349,7 @@ attach_egg_hatch_timeout(struct obj *egg)
     /* stop previous timer, if any */
     stop_timer(egg->olev, HATCH_EGG, egg);
 
-    /* 
+    /*
      * Decide if and when to hatch the egg.  The old hatch_it() code tried
      * once a turn from age 151 to 200 (inclusive), hatching if it rolled
      * a number x, 1<=x<=age, where x>150.  This yields a chance of
@@ -406,7 +406,7 @@ hatch_egg(void *arg, long timeout)
                                      cc.x, cc.y, NO_MINVENT))))
                     break;
                 /* tame if your own egg hatches while you're on the same
-                   dungeon level, or any dragon egg which hatches while it's in 
+                   dungeon level, or any dragon egg which hatches while it's in
                    your inventory */
                 if ((yours && !silent) ||
                     (carried(egg) && mon->data->mlet == S_DRAGON)) {
@@ -437,7 +437,7 @@ hatch_egg(void *arg, long timeout)
                            an(m_monnam(mon)));
         /* we don't learn the egg type here because learning an egg type
            requires either seeing the egg hatch or being familiar with the
-           egg already, as well as being able to see the resulting monster, 
+           egg already, as well as being able to see the resulting monster,
            checked below */
 
         switch (egg->where) {
@@ -536,7 +536,7 @@ attach_fig_transform_timeout(struct obj *figurine)
     /* stop previous timer, if any */
     stop_timer(figurine->olev, FIG_TRANSFORM, figurine);
 
-    /* 
+    /*
      * Decide when to transform the figurine.
      */
     i = rnd(9000) + 200;
@@ -559,7 +559,7 @@ slip_or_trip(void)
         otmp = 0;
 
     if (otmp && on_foot) {      /* trip over something in particular */
-        /* 
+        /*
            If there is only one item, it will have just been named during the
            move, so refer to by via pronoun; otherwise, if the top item has
            been or can be seen, refer to it by name; if not, look for rocks to
@@ -797,7 +797,7 @@ burn_object(void *arg, long timeout)
             break;
 
         default:
-            /* 
+            /*
              * Someone added fuel to the lamp while it was
              * lit.  Just fall through and let begin burn
              * handle the new age.
@@ -878,7 +878,7 @@ burn_object(void *arg, long timeout)
                         obj->known = 1;
                         break;
                     case OBJ_FLOOR:
-                        /* 
+                        /*
                            You see some wax candles consumed! You see a wax
                            candle consumed! */
                         pline("You see %s%s consumed!", many ? "some " : "",
@@ -908,7 +908,7 @@ burn_object(void *arg, long timeout)
             break;
 
         default:
-            /* 
+            /*
              * Someone added fuel (candles) to the menorah while
              * it was lit.  Just fall through and let begin burn
              * handle the new age.
@@ -1287,7 +1287,7 @@ run_timers(void)
 {
     timer_element *curr;
 
-    /* 
+    /*
      * Always use the first element.  Elements may be added or deleted at
      * any time.  The list is ordered, we are done when the first element
      * is in the future.
@@ -1451,10 +1451,12 @@ insert_timer(struct level *lev, timer_element * gnu)
     timer_element *curr, *prev;
 
     for (prev = 0, curr = lev->lev_timers; curr; prev = curr, curr = curr->next)
-        /* For most purposes, > vs. >= has little effect. Using >, however,
-         * ensures that we load timers in the same order as when they were saved
-         * to a file, which avoids desyncing the save. */
-        if (curr->timeout > gnu->timeout)
+        /* For most purposes, > vs. >= has little effect. Using >=, however,
+           ensures that we load timers in the same order as when they were saved
+           to a file, which avoids desyncing the save. (We used to use > for
+           the same reason, but timers are now loaded in reverse order in order
+           to avoid a performance bottleneck.) */
+        if (curr->timeout >= gnu->timeout)
             break;
 
     gnu->next = curr;
@@ -1723,7 +1725,13 @@ restore_timers(struct memfile *mf, struct level *lev, int range,
 
     /* restore elements */
     count = mread32(mf);
-    while (count-- > 0) {
+    if (!count)
+        return; /* don't generate a size-0 VLA */
+
+    timer_element *temp_timers[count];
+    int i = count;
+
+    while (i-- > 0) {
         curr = malloc(sizeof (timer_element));
 
         curr->tid = mread32(mf);
@@ -1736,8 +1744,21 @@ restore_timers(struct memfile *mf, struct level *lev, int range,
 
         if (ghostly)
             curr->timeout += adjust;
-        insert_timer(lev, curr);
+
+        /* The code here previously did `insert_timer(lev, curr);`. This is
+           correct in terms of code effect. However, because the timer list
+           is a linked list, and it's output front to back, and because the
+           list of timers must be maintained in order, that had quadratic
+           performance. Worse, during pudding farming, a /lot/ of timers are
+           generated (one for each pudding corpse).
+
+           Instead, we store the timers into an array temporarily, then add them
+           in the opposite order, making the performance linear rather than
+           quadratic. */
+        temp_timers[i] = curr;
     }
+    for (i = 0; i < count; i++)
+        insert_timer(lev, temp_timers[i]);
 }
 
 
@@ -1767,4 +1788,3 @@ relink_timers(boolean ghostly, struct level *lev)
 }
 
 /*timeout.c*/
-

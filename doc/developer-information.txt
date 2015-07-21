@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-07-21
+Last modified by Alex Smith, 2015-07-22
 
 Copyright (C) 2015 Alex Smith.
 
@@ -318,6 +318,7 @@ Allowed:
     GNU89);
   * Designated initializers (use these whenever they're clearer;
     they're in C11 and GNU89);
+  * VLAs (more exception-safe than malloc; in C11 and GNU89);
   * `noreturn` (defined by `compilers.h` if necessary);
   * `static_assert` (also defined by `compilers.h` if necessary);
   * `PRINTFLIKE` (nonstandard, but defined by `compilers.h`).
