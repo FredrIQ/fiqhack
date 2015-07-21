@@ -599,5 +599,12 @@ code that intend to stop the problem getting worse:
     only existing on the player's current level, but the number of
     cases like that should hopefully only decrease over time.
 
+  * If possible, new functions should try to avoid assuming that there
+    is only one player and flags can safely be set on an object or
+    monster to mark its relationship to that player.  Currently, this
+    usually isn't possible (thus fields like `mux` and `muy` in the
+    monster structure), but if you find some way to accomplish it, do
+    so.
+
 Much of the existing code is not of this form; the hope is that the
 existing code will be converted to use this code a bit at a time.
