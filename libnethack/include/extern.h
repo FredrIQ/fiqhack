@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -871,7 +871,11 @@ extern void mwrite64(struct memfile *mf, int64_t value);
 extern void store_mf(int fd, struct memfile *mf);
 extern void mtag(struct memfile *mf, long tagdata,
                  enum memfile_tagtype tagtype);
-extern void mdiffflush(struct memfile *mf);
+extern void mdiffflush(struct memfile *mf, boolean eof);
+extern void mdiffapply(char *diff, long difflen, struct memfile *diff_base,
+                       struct memfile *new_memfile,
+                       void (*errfunction)(const char *, char *));
+
 extern void mread(struct memfile *mf, void *, unsigned int);
 extern int8_t mread8(struct memfile *mf);
 extern int16_t mread16(struct memfile *mf);

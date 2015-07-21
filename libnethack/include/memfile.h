@@ -31,14 +31,17 @@
 
 /* The number of bytes that save_mon most commonly outputs.
 
-   Some special-purpose commands, like mdiff_monmxy, */
+   Some special-purpose commands, like mdiff_coord, use this to optimize the
+   representation of distances that are likely to be between a particular field
+   of one monster and the same field of another. */
 # define SAVE_SIZE_MONST      85
 
 /* Commands in a 4.3-beta3-format save diff. See saves.txt (section "4.3-beta3")
    for full information on how the format works. Note that the order of this
-   array affects save compatibility. (Adding new items will not prevent old
-   saves being loaded correctly, although it will prevent new saves being loaded
-   correctly on old versions.) */
+   array affects save compatibility. (Adding new items will just before
+   mdiff_command_count will not prevent old saves being loaded correctly,
+   although it will prevent new saves being loaded correctly on old
+   versions.) */
 enum mdiff_command {
     /* General-purpose commands. */
     mdiff_copyedit,         /* 12+ bits copy size; 2 bits edit size (+1); edited
@@ -65,11 +68,12 @@ enum mdiff_command {
                                data is all zeroes */
     mdiff_rle,              /* repeat previous command 2+ bits (+1) more
                                times */
+    mdiff_command_count     /* fencepost, comes last; also means "no command" */
 };
 struct mdiff_command_instance {
     enum mdiff_command command;
     long long arg1;
-    long long arg2;
+    unsigned long long arg2;
 };
 
 enum memfile_tagtype {
@@ -149,6 +153,9 @@ struct memfile {
     /* In order to be able to encode "copy the last command", we need to know
        what the last command was. */
     struct mdiff_command_instance last_command;
+    /* And in order to encode any commands, we need to know what order they're
+       in. */
+    enum mdiff_command mdiff_command_mru[mdiff_command_count];
 
     /* Tags to help in diffing. This is a hashtable for efficiency, using
        chaining in the case of collisions. */

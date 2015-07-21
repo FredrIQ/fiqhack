@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1167,7 +1167,7 @@ log_neutral_turnstate(void)
 
         program_state.binary_save_location = get_log_offset();
 
-        mdiffflush(&program_state.binary_save);
+        mdiffflush(&program_state.binary_save, 1);
 
         lprintf("~");
         log_binary(program_state.binary_save.diffbuf,
@@ -1954,21 +1954,24 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
     program_state.ok_to_diff = TRUE;
 }
 
+static noreturn void
+apply_save_diff_error(const char *s, char *buf)
+{
+    free(buf);
+    mfree(&program_state.binary_save);
+    program_state.binary_save_allocated = FALSE;
+    error_reading_save(s);
+}
+
 /* Decodes the given save diff into program_state.binary_save. The caller should
    check that the string actually is a representation of a save diff, is
    responsible for fixing the invariants on program_state, and must move the
-   binary save out of the way for safekeeping first.
-
-   TODO: Perhaps this function would make more sense in memfile.c (with a
-   slightly different calling convention), in case we need to apply diffs to
-   anything else. It's here because this is the only file that needs to be able
-   to apply diffs, for the time being. */
+   binary save out of the way for safekeeping first. */
 static void
 apply_save_diff(char *s, struct memfile *diff_base)
 {
-    char *buf, *bufp, *mfp;
-    long buflen, dbpos = 0;
-    int i;
+    char *buf;
+    long buflen;
 
     if (program_state.binary_save_allocated)
         panic("The caller of apply_save_diff must back up and deallocate "
@@ -1985,178 +1988,8 @@ apply_save_diff(char *s, struct memfile *diff_base)
     memset(buf, 0, buflen + 2);
     base64_decode(s, buf, buflen);
 
-    bufp = buf;
-
-#define REQUIRE_BUFP(req, m) if (bufp - buf > buflen - (req))  do {     \
-            free(buf);                                                  \
-            mfree(&program_state.binary_save);                          \
-            program_state.binary_save_allocated = FALSE;                \
-            error_reading_save("new-style binary diff ends unexpectedly: " m); \
-        } while(0)
-#define PARSE_BUFP_INTO_CMD(req) do {                   \
-        cmd = 0;                                        \
-        REQUIRE_BUFP(req, "parsing " #req " bytes");    \
-        for (i = 0; i < (req); i++)                     \
-        { cmd *= 256; cmd += (uint8_t)*(bufp++); }      \
-    } while(0)
-
-    /* SAVEBREAK (4.3-beta1 -> 4.3-beta3): this is unconditionally true in
-       4.3-beta3 save files, so we can remove the if statement and get rid of
-       the rest of the function, which is backwards compatibility code. */
-    if (bufp[0] == MDIFF_HEADER_0 && bufp[1] == MDIFF_HEADER_1_BETA3) {
-
-        panic("TODO");
-
-    } else if (bufp[0] == MDIFF_HEADER_0 && bufp[1] == MDIFF_HEADER_1_BETA2) {
-
-        bufp += 2;
-
-        for (;;) {
-            long copy = 0, edit = 0, seek = 0;
-            uint32_t cmd;
-
-            switch ((((uint16_t)bufp[0]) << 8) & MDIFF_CMDMASK) {
-
-            case MDIFF_LARGE_COPYEDIT:
-                PARSE_BUFP_INTO_CMD(4);
-                copy = cmd & 0x01FFFFFFUL;
-                edit = (cmd & 0x1E000000UL) >> 25;
-                break;
-
-            case MDIFF_LARGE_EDIT:
-                PARSE_BUFP_INTO_CMD(4);
-                edit = cmd & 0x1FFFFFFFUL;
-                break;
-
-            case MDIFF_SEEK:
-                PARSE_BUFP_INTO_CMD(2);
-                /* parse unsigned into signed */
-                if (cmd & 0x1000)
-                    seek = (int)(cmd & 0x0FFFU) - (int)0x1000;
-                else
-                    seek = cmd & 0x0FFFU;
-                break;
-
-            case MDIFF_LARGE_SEEK:
-                PARSE_BUFP_INTO_CMD(4);
-                /* as above */
-                if (cmd & 0x10000000)
-                    seek = (long)(cmd & 0x0FFFFFFFUL) - (long)0x10000000L;
-                else
-                    seek = cmd & 0x0FFFFFFFUL;
-                break;
-
-            default: /* normal-sized copyedit */
-                if (!bufp[0] && !bufp[1])
-                    goto done; /* break out of two levels of loops */
-
-                PARSE_BUFP_INTO_CMD(2);
-                copy = cmd & 0x1FFFU;
-                edit = ((cmd & 0x6FFFU) >> 13) + 1;
-                break;
-            }
-
-            dbpos -= seek;
-
-            if (copy) {
-                if (dbpos + copy > diff_base->pos) {
-                    free(buf);
-                    mfree(&program_state.binary_save);
-                    program_state.binary_save_allocated = FALSE;
-                    error_reading_save("new-style binary diff reads past EOF");
-                }
-
-                mfp = mmmap(&program_state.binary_save, copy,
-                            program_state.binary_save.pos);
-                memcpy(mfp, diff_base->buf + dbpos, copy);
-
-                dbpos += copy;
-            }
-
-            if (edit) {
-                REQUIRE_BUFP(edit, "edit data");
-
-                mfp = mmmap(&program_state.binary_save, edit,
-                            program_state.binary_save.pos);
-                memcpy(mfp, bufp, edit);
-
-                dbpos += edit;    /* can legally go past the end of diff_base */
-                bufp += edit;
-            }
-        }
-    done:;
-
-    } else {
-        /* Compatibility code for loading old saves */
-
-        while (bufp[0] || bufp[1]) {
-            /* 0x0000 means "seek 0", which is never generated, and thus works
-               as an EOF marker */
-
-            signed short n = (unsigned char)(bufp[1]) & 0x3F;
-            n *= 256;
-            n += (unsigned char)(bufp[0]);
-
-            bufp += 2;
-
-            switch ((unsigned char)(bufp[-1]) >> 6) {
-            case MDIFFOLD_SEEK:
-
-                if (n >= 0x2000)
-                    n -= 0x4000;
-
-                if (dbpos < n) {
-                    free(buf);
-                    mfree(&program_state.binary_save);
-                    error_reading_save(
-                        "binary diff seeks past start of file\n");
-                }
-
-                dbpos -= n;
-
-                break;
-
-            case MDIFFOLD_COPY:
-
-                mfp = mmmap(&program_state.binary_save, n,
-                            program_state.binary_save.pos);
-
-                if (dbpos + n > diff_base->pos) {
-                    free(buf);
-                    mfree(&program_state.binary_save);
-                    error_reading_save("binary diff reads past EOF\n");
-                }
-
-                memcpy(mfp, diff_base->buf + dbpos, n);
-                dbpos += n;
-
-                break;
-
-            case MDIFFOLD_EDIT:
-
-                mfp = mmmap(&program_state.binary_save, n,
-                            program_state.binary_save.pos);
-
-                if (bufp - buf + n > buflen) {
-                    free(buf);
-                    mfree(&program_state.binary_save);
-                    error_reading_save("binary diff ends unexpectedly\n");
-                }
-
-                memcpy(mfp, bufp, n);
-                dbpos += n;     /* can legally go past the end of diff_base! */
-                bufp += n;
-
-                break;
-
-            default:
-                free(buf);
-                mfree(&program_state.binary_save);
-                error_reading_save("unknown command in binary diff\n");
-            }
-        }
-    }
-
+    mdiffapply(buf, buflen, diff_base, &program_state.binary_save,
+               apply_save_diff_error);
     free(buf);
 }
 

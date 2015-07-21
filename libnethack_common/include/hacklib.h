@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-29 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* Copyright (c) Alex Smith, 2013.                                */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -21,6 +21,7 @@ extern int base85declen(int);
 extern int base85enc(const unsigned char *, int, char *);
 extern int base85dec(const char *, unsigned char *);
 extern boolean onlyspace(const char *);
+extern boolean onlynul(const void *, int);
 extern const char *ordin(int);
 extern int sgn(int);
 extern int rounddiv(long, int);
