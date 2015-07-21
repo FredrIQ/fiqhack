@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-05-19 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -206,9 +206,12 @@ distfleeck(struct monst *mtmp, int *inrange, int *nearby, int *scared)
     int seescaryx, seescaryy;
 
     *inrange = aware_of_u(mtmp) &&
-        dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= BOLT_LIM * BOLT_LIM;
+        ((Engulfed && mtmp == u.ustuck) ||
+         (dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy)
+          <= BOLT_LIM * BOLT_LIM));
 
-    *nearby = *inrange && monnear(mtmp, mtmp->mux, mtmp->muy);
+    *nearby = *inrange && ((Engulfed && mtmp == u.ustuck) ||
+                           monnear(mtmp, mtmp->mux, mtmp->muy));
 
     /* Note: if your image is displaced, the monster sees the Elbereth at your
        displaced position, thus never attacking your displaced position, but
@@ -355,19 +358,22 @@ dochug(struct monst *mtmp)
         if (u_helpless(hm_all))
             return 0; /* wait for you to be able to respond */
         if (!knows_ux_uy(mtmp)) {
-            pline("%s whispers at thin air.",
-                  cansee(mtmp->mux, mtmp->muy) ? Monnam(mtmp) : "It");
+            if (aware_of_u(mtmp)) {
+                pline("%s whispers at thin air.",
+                      cansee(mtmp->mux, mtmp->muy) ? Monnam(mtmp) : "It");
 
-            if (is_demon(youmonst.data)) {
-                /* "Good hunting, brother" */
-                if (!tele_restrict(mtmp))
-                    rloc(mtmp, TRUE);
-            } else {
-                mtmp->minvis = mtmp->perminvis = 0;
-                /* Why? For the same reason in real demon talk */
-                pline("%s gets angry!", Amonnam(mtmp));
-                msethostility(mtmp, TRUE, FALSE); /* TODO: reset alignment? */
-                /* since no way is an image going to pay it off */
+                if (is_demon(youmonst.data)) {
+                    /* "Good hunting, brother" */
+                    if (!tele_restrict(mtmp))
+                        rloc(mtmp, TRUE);
+                } else {
+                    mtmp->minvis = mtmp->perminvis = 0;
+                    /* Why? For the same reason in real demon talk */
+                    pline("%s gets angry!", Amonnam(mtmp));
+                    msethostility(mtmp, TRUE, FALSE);
+                    /* TODO: reset alignment? */
+                    /* since no way is an image going to pay it off */
+                }
             }
         } else if (demon_talk(mtmp))
             return 1;   /* you paid it off */
@@ -431,7 +437,8 @@ toofar:
     /* If monster is nearby you, and has to wield a weapon, do so.  This costs
        the monster a move, of course. */
     if ((!mtmp->mpeaceful || Conflict) && inrange &&
-        dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= 8 &&
+        (engulfing_u(mtmp) ||
+         dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= 8) &&
         attacktype(mdat, AT_WEAP)) {
         struct obj *mw_tmp;
 
@@ -559,7 +566,8 @@ toofar:
     if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0, 0))) {
         if (inrange && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3 &&
             aware_of_u(mtmp))
-            if (mattackq(mtmp, mtmp->mux, mtmp->muy))
+            if (engulfing_u(mtmp) ? mattackq(mtmp, u.ux, u.uy) :
+                mattackq(mtmp, mtmp->mux, mtmp->muy))
                 return 1;       /* monster died (e.g. exploded) */
 
         if (mtmp->wormno)
@@ -804,7 +812,7 @@ not_special:
         appr = 0;
 
     if ((!mtmp->mpeaceful || !rn2(10)) && (!Is_rogue_level(&u.uz))) {
-        boolean in_line = lined_up(mtmp) && aware_of_u(mtmp) &&
+        boolean in_line = lined_up(mtmp) &&
             (distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <=
              (throws_rocks(youmonst.data) ? 20 : ACURRSTR / 2 + 1));
 
@@ -971,6 +979,11 @@ not_special:
            message, partly for the changed mechanic, partly so players
            understand where the monster turn went. */
         if (nix == u.ux && niy == u.uy) {
+
+            /* Exception: the monster has you engulfed. */
+            if (engulfing_u(mtmp))
+                return 0;
+
             mtmp->mux = u.ux;
             mtmp->muy = u.uy;
 
@@ -1211,8 +1224,15 @@ set_apparxy(struct monst *mtmp)
 
     /* pet knows your smell; grabber still has hold of you */
     if (mtmp->mtame || mtmp == u.ustuck) {
-        mtmp->mux = u.ux;
-        mtmp->muy = u.uy;
+        if (engulfing_u(mtmp)) {
+            /* we don't use mux/muy for engulfers because having them set to
+               a monster's own square causes chaos in several ways */
+            mtmp->mux = COLNO;
+            mtmp->muy = ROWNO;
+        } else {
+            mtmp->mux = u.ux;
+            mtmp->muy = u.uy;
+        }
         return;
     }
 

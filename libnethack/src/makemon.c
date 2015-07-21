@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2083,8 +2083,9 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->muy = mread8(mf);
     /* SAVEBREAK (4.3-beta2alpha -> 4.3-beta2): this is for reading old saves
        that used a different encoding for mux/muy, we no longer generate saves
-       in that format */
-    if (mon->mux == mon->mx && mon->muy == mon->my) {
+       in that format; be careful not to munge the migrating monsters chain like
+       this (determinable via l being NULL) */
+    if (mon->mux == mon->mx && mon->muy == mon->my && l) {
         mon->mux = COLNO;
         mon->muy = ROWNO;
     }
