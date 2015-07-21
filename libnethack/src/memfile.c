@@ -325,16 +325,18 @@ struct mdiff_command_size {
     int arg2;
     const char *name;
 };
-static struct mdiff_command_size mdiff_command_sizes[] = {
-    [mdiff_copyedit] = {12, 2, "copyedit"},
-    [mdiff_copy]     = {6,  0, "copy"},
-    [mdiff_edit]     = {4,  0, "edit"},
-    [mdiff_seek]     = {-8, 0, "seek"},
-    [mdiff_wider]    = {0,  0, "wider"},
-    [mdiff_eof]      = {12, 0, "eof"},
-    [mdiff_coord]    = {1,  3, "coord"},
-    [mdiff_erase]    = {7,  3, "erase"},
-    [mdiff_rle]      = {2,  0, "rle"},
+static const struct mdiff_command_size mdiff_command_sizes[] = {
+    [mdiff_copyedit]  = {12, 2, "copyedit"},
+    [mdiff_copy]      = {6,  0, "copy"},
+    [mdiff_edit]      = {4,  0, "edit"},
+    [mdiff_seek]      = {-8, 0, "seek"},
+    [mdiff_wider]     = {0,  0, "wider"},
+    [mdiff_eof]       = {12, 0, "eof"},
+    [mdiff_coord]     = {1,  3, "coord"},
+    [mdiff_erase]     = {7,  3, "erase"},
+    [mdiff_copyedit1] = {4,  0, "copyedit1"},
+    [mdiff_increment] = {12, 0, "increment"},
+    [mdiff_rle]       = {2,  0, "rle"},
 };
 
 static_assert(ARRAY_SIZE(mdiff_command_sizes) == mdiff_command_count,
@@ -535,6 +537,8 @@ mdiffwritecmd(struct memfile *mf, struct mdiff_command_instance *mdci)
         editlen = mdci->arg1 + 1;
     if (mdci->command == mdiff_copyedit)
         editlen = mdci->arg2 + 1;
+    if (mdci->command == mdiff_copyedit1)
+        editlen = 1;
     if (editlen)
         mdiffwrite(mf, mf->buf + mf->pos - editlen, editlen);
 
@@ -591,11 +595,12 @@ mdiffflush(struct memfile *mf, boolean eof)
            that split an edit across two or more commands right now. */
         const int copies = mf->pending_copies;
         const int edits  = mf->pending_edits;
-        char *first_edit = mf->buf + mf->pos - mf->pending_edits;
-        char *orig_edit  = NULL;
+        uint8_t *first_edit =
+            (uint8_t *)(mf->buf + mf->pos - mf->pending_edits);
+        uint8_t *orig_edit  = NULL;
         if (mf->relativeto && mf->relativepos >= mf->pending_edits)
-            orig_edit = mf->relativeto->buf +
-                mf->relativepos - mf->pending_edits;
+            orig_edit = (uint8_t *)(mf->relativeto->buf +
+                                    mf->relativepos - mf->pending_edits);
 
         if (1)
             mdiff_checklen(mf, best, &bestlen, edits + 2 * !!eof,
@@ -612,6 +617,14 @@ mdiffflush(struct memfile *mf, boolean eof)
         if (onlynul(first_edit, edits))
             mdiff_checklen(mf, best, &bestlen, 0,
                            mdiff_erase,         copies,    edits - 3,
+                           mdiff_command_count, 0,         0);
+        if (edits == 1 && (uint8_t)(*first_edit - *orig_edit) == 1)
+            mdiff_checklen(mf, best, &bestlen, 2 * !!eof,
+                           mdiff_increment,     copies,    0,
+                           mdiff_command_count, 0,         0);
+        if (edits == 1)
+            mdiff_checklen(mf, best, &bestlen, 2 * !!eof,
+                           mdiff_copyedit1,     copies,    0,
                            mdiff_command_count, 0,         0);
 
         /* TODO: coord, rle */
@@ -761,7 +774,9 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             long long copy;
             switch (mdci.command) {
             case mdiff_copyedit:
+            case mdiff_copyedit1:
             case mdiff_copy:
+            case mdiff_increment:
             case mdiff_eof:
             case mdiff_erase:
                 copy = mdci.arg1;
@@ -800,6 +815,10 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             case mdiff_copyedit:
                 edit = mdci.arg2 + 1;
                 break;
+            case mdiff_copyedit1:
+            case mdiff_increment:
+                edit = 1;
+                break;
             case mdiff_edit:
                 edit = mdci.arg1 + 1;
                 break;
@@ -828,7 +847,8 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             }
 
             mfp = mmmap(new_memfile, edit, new_memfile->pos);
-            if (mdci.command == mdiff_edit || mdci.command == mdiff_copyedit) {
+            if (mdci.command == mdiff_edit || mdci.command == mdiff_copyedit ||
+                mdci.command == mdiff_copyedit1) {
                 if (bufp - (unsigned char *)diff >= difflen - edit) {
                     errfunction("diff ends during edit/copyedit data", diff);
                     return;
@@ -837,6 +857,14 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
                 bufp += edit;
             } else if (mdci.command == mdiff_erase) {
                 memset(mfp, 0, edit);
+            } else if (mdci.command == mdiff_increment) {
+                if (dbpos < 0)
+                    errfunction("diff increments before the start of file",
+                                diff);
+                else if (dbpos + 1 > diff_base->pos)
+                    errfunction("diff increments after the end of file",
+                                diff);
+                mfp[0] = (uint8_t)(1 + (uint8_t)diff_base->buf[dbpos]);
             }
 
             dbpos += edit;    /* can legally go past the end of diff_base */

@@ -66,6 +66,11 @@ enum mdiff_command {
                                bits of movement direction (DIR_W .. DIR_SW)*/
     mdiff_erase,            /* 7+ bits copy size; 3 bits edit size (+3); edited
                                data is all zeroes */
+    mdiff_increment,        /* 12+ bits copy size; then edits one byte,
+                               incrementing it by 1 */
+    mdiff_copyedit1,        /* 4+ bits copy size; 0 bits edit size (+1);
+                               basically a copyedit with different sizes, which
+                               can lead to shorter encodings sometimes */
     mdiff_rle,              /* repeat previous command 2+ bits (+1) more
                                times */
     mdiff_command_count     /* fencepost, comes last; also means "no command" */
