@@ -350,6 +350,9 @@ extern struct sinfo {
      * * gamestate_location points to the location in the save file that
      *   reflects the start of the line referring to the current gamestate (in
      *   u, level, etc.), except possibly while log_sync() is running.
+     * * emergency_recover_location is normally 0; if it isn't, panic() and
+     *   impossible() should recover to that location rather than trying to
+     *   find somewhere to recover to
      * * end_of_gamestate_location is the start of the line immediately after
      *   the one that gamestate_location point to.
      */
@@ -364,6 +367,7 @@ extern struct sinfo {
     long binary_save_location;               /* bytes from start of file */
     long gamestate_location;                 /* bytes from start of file */
     long end_of_gamestate_location;          /* bytes from start of file */
+    long emergency_recover_location;         /* bytes from start of file */
     boolean input_was_just_replayed;
     boolean ok_to_diff;
 } program_state;

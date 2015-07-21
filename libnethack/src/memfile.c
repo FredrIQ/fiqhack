@@ -818,10 +818,13 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             }
 
             mfp = mmmap(new_memfile, copy, new_memfile->pos);
-            if (dbpos < 0 && copy)
+            if (dbpos < 0 && copy) {
                 errfunction("diff copies from before the start of file", diff);
-            else if (dbpos + copy > diff_base->pos && copy)
+                return;
+            } else if (dbpos + copy > diff_base->pos && copy) {
                 errfunction("diff copies from after the end of file", diff);
+                return;
+            }
             memcpy(mfp, diff_base->buf + dbpos, copy);
             dbpos += copy;
 
@@ -875,12 +878,15 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             } else if (mdci.command == mdiff_erase) {
                 memset(mfp, 0, edit);
             } else if (mdci.command == mdiff_increment) {
-                if (dbpos < 0)
+                if (dbpos < 0) {
                     errfunction("diff increments before the start of file",
                                 diff);
-                else if (dbpos + 1 > diff_base->pos)
+                    return;
+                } else if (dbpos + 1 > diff_base->pos) {
                     errfunction("diff increments after the end of file",
                                 diff);
+                    return;
+                }
                 mfp[0] = (uint8_t)(1 + (uint8_t)diff_base->buf[dbpos]);
             }
 
@@ -899,9 +905,11 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             if (mdci.command == mdiff_eof_crc32) {
                 uLong crc = crc32(crc32(0L, Z_NULL, 0),
                                   (Bytef *)new_memfile->buf, new_memfile->pos);
-                if (crc != mdci.arg2)
+                if (crc != mdci.arg2) {
                     errfunction("diff produced output with wrong checksum",
                                 diff);
+                    return;
+                }
                 break;
             }
         }

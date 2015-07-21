@@ -180,6 +180,8 @@ log_recover_core(long offset, boolean canreturn, const char *message,
     struct nh_menulist menu;
     boolean ok = TRUE;
 
+    program_state.emergency_recover_location = 0;
+
     if (program_state.followmode != FM_PLAY && message) {
         program_state.in_zero_time_command = TRUE; /* so menus work */
 
@@ -860,7 +862,9 @@ get_log_last_newline(int nth)
 
 /* Returns the offset corresponding to the start of the current turn
    (technically speaking, the most recent neutral turnstate). This is
-   program_state.binary_save_location plus one line.
+   normally program_state.binary_save_location plus one line (although
+   program_state.emergency_recover_location plus one line takes precedence,
+   if it happens to be set at the time).
 
    This function assumes we have at least a read lock on the log, but that's
    always the case during normal gameplay. */
@@ -874,7 +878,11 @@ get_log_start_of_turn_offset(void)
     long rv;
     void *save_diff_line;
 
-    lseek(program_state.logfile, program_state.binary_save_location, SEEK_SET);
+    long loc = program_state.binary_save_location;
+    if (program_state.emergency_recover_location)
+        loc = program_state.emergency_recover_location;
+
+    lseek(program_state.logfile, loc, SEEK_SET);
 
     /* Move forwards one line. In the exceptional case that we have a binary save
        location without a matching binary save (which is probably impossible, but
@@ -1127,6 +1135,13 @@ log_backup_save(void)
     load_gamestate_from_binary_save(FALSE);
 }
 
+static noreturn void
+diff_error_at_neutral_turnstate(const char *message, char *diff)
+{
+    (void) diff;
+    panic("Corrupted diff added to save file: %s", message);
+}
+
 void
 log_neutral_turnstate(void)
 {
@@ -1158,6 +1173,9 @@ log_neutral_turnstate(void)
             return;
         }
 
+        program_state.emergency_recover_location =
+            program_state.binary_save_location;
+
         mnew(&program_state.binary_save, &mf);
         program_state.binary_save_location = 0;
 
@@ -1174,6 +1192,19 @@ log_neutral_turnstate(void)
                    program_state.binary_save.diffpos);
         lprintf("\x0a");
 
+        /* Verify that the diffing algorithm is working correctly; we don't
+           want to corrupt the save in a way that can't be recovered. */
+        {
+            struct memfile checkmf;
+            mnew(&checkmf, NULL);
+            mdiffapply(program_state.binary_save.diffbuf,
+                       program_state.binary_save.diffpos, &mf,
+                       &checkmf, diff_error_at_neutral_turnstate);
+            if (!mequal(&checkmf, &program_state.binary_save, NULL))
+                panic("Corrupted diff added to save file");
+            mfree(&checkmf);
+        }
+
         /* Make the new binary save absolute rather than relative, so that
            we can free the old one. */
         program_state.binary_save.relativeto = NULL;
@@ -1183,6 +1214,8 @@ log_neutral_turnstate(void)
 
         /* Check the gamestate, for the same reason as in log_backup_save(). */
         load_gamestate_from_binary_save(FALSE);
+
+        program_state.emergency_recover_location = 0;
     }
 }
 
@@ -2426,6 +2459,7 @@ log_reset(void)
     program_state.binary_save_location = 0;
     program_state.gamestate_location = 0;
     program_state.last_save_backup_location_location = 0;
+    program_state.emergency_recover_location = 0;
 }
 
 void
@@ -2463,4 +2497,7 @@ log_uninit(void)
         mfree(&program_state.binary_save);
         program_state.binary_save_allocated = 0;
     }
+
+    /* just in case we have a badly-timed panic */
+    program_state.emergency_recover_location = 0;
 }
