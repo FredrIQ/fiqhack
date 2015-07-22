@@ -642,11 +642,11 @@ mdiffflush(struct memfile *mf, boolean eof)
         /* Encodings which should be preferred in the case of a tie in length
            come first. */
         if (1)
-            mdiff_checklen(mf, best, &bestlen, edits + 2 * !!eof,
+            mdiff_checklen(mf, best, &bestlen, edits + 7 * !!eof,
                            mdiff_copyedit,      copies,    edits - 1,
                            mdiff_command_count, 0,         0);
         if (1)
-            mdiff_checklen(mf, best, &bestlen, edits + 2 * !!eof,
+            mdiff_checklen(mf, best, &bestlen, edits + 7 * !!eof,
                            mdiff_copy,          copies,    0,
                            mdiff_edit,          edits - 1, 0);
         if (eof && !edits)
@@ -659,24 +659,24 @@ mdiffflush(struct memfile *mf, boolean eof)
                            mdiff_command_count, 0,         0);
         if (arg.dir != DIR_NONE &&
             ((coord_pos - mf->coord_relative_to) % SAVE_SIZE_MONST) == 0)
-            mdiff_checklen(mf, best, &bestlen, 2 * !!eof - 2 * prefer_coord,
+            mdiff_checklen(mf, best, &bestlen, 7 * !!eof - 2 * prefer_coord,
                            mdiff_coord,         crt_large, arg.dir,
                            mdiff_command_count, 0,         0);
         if (arg.dir != DIR_NONE && crt_small != 0)
-            mdiff_checklen(mf, best, &bestlen, 2 * !!eof - 2 * prefer_coord,
+            mdiff_checklen(mf, best, &bestlen, 7 * !!eof - 2 * prefer_coord,
                            mdiff_copy,          crt_small, 0,
                            mdiff_coord,         crt_large, arg.dir);
         if (arg.dir != DIR_NONE && crt_large > 0)
-            mdiff_checklen(mf, best, &bestlen, 2 * !!eof - 2 * prefer_coord,
+            mdiff_checklen(mf, best, &bestlen, 7 * !!eof - 2 * prefer_coord,
                            mdiff_copy, SAVE_SIZE_MONST + crt_small, 0,
                            mdiff_coord,    -1 + crt_large, arg.dir);
 
         if (edits == 1 && (uint8_t)(*first_edit - *orig_edit) == 1)
-            mdiff_checklen(mf, best, &bestlen, 2 * !!eof,
+            mdiff_checklen(mf, best, &bestlen, 7 * !!eof,
                            mdiff_increment,     copies,    0,
                            mdiff_command_count, 0,         0);
         if (edits == 1)
-            mdiff_checklen(mf, best, &bestlen, 2 * !!eof,
+            mdiff_checklen(mf, best, &bestlen, 7 * !!eof,
                            mdiff_copyedit1,     copies,    0,
                            mdiff_command_count, 0,         0);
 
