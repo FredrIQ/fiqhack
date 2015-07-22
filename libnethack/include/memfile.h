@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -61,9 +61,10 @@ enum mdiff_command {
     mdiff_coord,            /* 1+ bits copy size in SAVE_SIZE_MONST units from
                                the start of the last mdiff_coord or end of the
                                last mdiff_copy (with 0 being the smallest
-                               possible such copy); then always edits 2 bytes,
-                               with their values being changed according to 3
-                               bits of movement direction (DIR_W .. DIR_SW)*/
+                               possible such copy); then edits 1 byte (for DIR_W
+                               and DIR_E) or 2 bytes (in other cases), with
+                               their values being changed according to 3 bits of
+                               movement direction (DIR_W .. DIR_SW) */
     mdiff_erase,            /* 7+ bits copy size; 3 bits edit size (+3); edited
                                data is all zeroes */
     mdiff_increment,        /* 12+ bits copy size; then edits one byte,
@@ -163,6 +164,25 @@ struct memfile {
     /* And in order to encode any commands, we need to know what order they're
        in. */
     enum mdiff_command mdiff_command_mru[mdiff_command_count];
+
+    /* The coord command is based on the end position of the last mdiff_copy, or
+       start position of the last mdiff_coord. If this field is ever lower than
+       pos, it's conceptually increased by the smallest multiple of
+       SAVE_SIZE_MONST that makes it greater than or equal to pos. In order to
+       save half the code needing to know about this, we do this update lazily
+       (luckily, it's idempotent).
+
+       This also means that updating this on mdiff_coord is pointless; because
+       that can only move the value it "should" have forwards by a multiple of
+       SAVE_SIZE_MONST anyway, we can leave it at its old value without
+       problems. Thus, the only times it needs updating are if you need an
+       up-to-date value, and when handling an mdiff_copy instruction. */
+    int coord_relative_to;
+    /* We can compress the save file better if we know, for monsters, what's an
+       x coordinate and what's a y coordinate. This stores that information;
+       it's the position of the last hinted x coordinate (the corresponding y
+       coordinate is in the byte afterwards). */
+    int mon_coord_hint;
 
     /* Tags to help in diffing. This is a hashtable for efficiency, using
        chaining in the case of collisions. */

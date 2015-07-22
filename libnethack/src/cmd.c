@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1472,12 +1472,13 @@ dir_to_delta(enum nh_direction dir, schar * dx, schar * dy, schar * dz)
     return TRUE;
 }
 
-/* The caller must verify that the delta is valid. */
+/* In case of invalid input, returns DIR_NONE. */
 void
 arg_from_delta(schar dx, schar dy, schar dz, struct nh_cmd_arg *arg)
 {
     int i;
     arg->argtype = CMD_ARG_DIR;
+    arg->dir = DIR_NONE;
 
     /* TODO: Bleh at the hardcoded 11. */
     for (i = 0; i < 11; i++) {

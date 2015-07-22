@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -109,6 +109,8 @@ mnew(struct memfile *mf, struct memfile *relativeto)
     mf->pending_edits = mf->pending_copies = mf->pending_seeks = 0;
     mf->last_command = (struct mdiff_command_instance)
         {.command = mdiff_copy, .arg1 = 0, .arg2 = 0};
+    mf->coord_relative_to = 0;
+    mf->mon_coord_hint = -2;
     for (i = 0; i < mdiff_command_count; i++) {
         mf->mdiff_command_mru[i] = i;
     }
@@ -600,20 +602,45 @@ mdiffflush(struct memfile *mf, boolean eof)
         best[1] = (struct mdiff_command_instance)
             {.command = mdiff_command_count};
     } else {
-        /* Here are the things we try.
 
-           Note: the way that mdiffwritecmd works currently means that all edits
-           must be handled by the same command, so don't write any combinations
-           that split an edit across two or more commands right now. */
-        const int copies = mf->pending_copies;
-        const int edits  = mf->pending_edits;
+        /* Work out information about what sort of commands are possible. */
+        const int copies     = mf->pending_copies;
+        const int edits      = mf->pending_edits;
+        const int first_copy = mf->pos - copies - edits;
         uint8_t *first_edit =
-            (uint8_t *)(mf->buf + mf->pos - mf->pending_edits);
+            (uint8_t *)(mf->buf + mf->pos - edits);
         uint8_t *orig_edit  = NULL;
-        if (mf->relativeto && mf->relativepos >= mf->pending_edits)
+        if (mf->relativeto && mf->relativepos >= edits)
             orig_edit = (uint8_t *)(mf->relativeto->buf +
-                                    mf->relativepos - mf->pending_edits);
+                                    mf->relativepos - edits);
 
+        /* Can we interpret the edits as a 1-square movement on a grid? If so,
+           and it's only a move in one coordinate, should we interpret it as an
+           x or y coordinate? Also establish the first location we'll update
+           (which might be one of the copies, updated by adding 0). */
+        struct nh_cmd_arg arg;
+        arg.dir = DIR_NONE;
+        int coord_pos = mf->pos - edits;
+        boolean prefer_x_to_y =
+            mf->mon_coord_hint == mf->pos - 1 ||
+            ((coord_pos - mf->coord_relative_to) % SAVE_SIZE_MONST) == 0;
+        if (edits == 2 && first_edit[1] != orig_edit[1])
+            arg_from_delta((schar)(first_edit[0] - orig_edit[0]),
+                           (schar)(first_edit[1] - orig_edit[1]), 0, &arg);
+        else if (edits == 1 && prefer_x_to_y)
+            arg_from_delta((schar)(first_edit[0] - orig_edit[0]), 0, 0, &arg);
+        else if (edits == 1 && copies >= 1) {
+            arg_from_delta(0, (schar)(first_edit[0] - orig_edit[0]), 0, &arg);
+            coord_pos--;
+        }
+        boolean prefer_coord = mf->mon_coord_hint == mf->pos -
+            (edits == 1 && prefer_x_to_y ? 1 : 2);
+
+        int crt_large = (coord_pos - first_copy) / SAVE_SIZE_MONST;
+        int crt_small = (coord_pos - first_copy) % SAVE_SIZE_MONST;
+
+        /* Encodings which should be preferred in the case of a tie in length
+           come first. */
         if (1)
             mdiff_checklen(mf, best, &bestlen, edits + 2 * !!eof,
                            mdiff_copyedit,      copies,    edits - 1,
@@ -630,6 +657,20 @@ mdiffflush(struct memfile *mf, boolean eof)
             mdiff_checklen(mf, best, &bestlen, 0,
                            mdiff_erase,         copies,    edits - 3,
                            mdiff_command_count, 0,         0);
+        if (arg.dir != DIR_NONE &&
+            ((coord_pos - mf->coord_relative_to) % SAVE_SIZE_MONST) == 0)
+            mdiff_checklen(mf, best, &bestlen, 2 * !!eof - 2 * prefer_coord,
+                           mdiff_coord,         crt_large, arg.dir,
+                           mdiff_command_count, 0,         0);
+        if (arg.dir != DIR_NONE && crt_small != 0)
+            mdiff_checklen(mf, best, &bestlen, 2 * !!eof - 2 * prefer_coord,
+                           mdiff_copy,          crt_small, 0,
+                           mdiff_coord,         crt_large, arg.dir);
+        if (arg.dir != DIR_NONE && crt_large > 0)
+            mdiff_checklen(mf, best, &bestlen, 2 * !!eof - 2 * prefer_coord,
+                           mdiff_copy, SAVE_SIZE_MONST + crt_small, 0,
+                           mdiff_coord,    -1 + crt_large, arg.dir);
+
         if (edits == 1 && (uint8_t)(*first_edit - *orig_edit) == 1)
             mdiff_checklen(mf, best, &bestlen, 2 * !!eof,
                            mdiff_increment,     copies,    0,
@@ -639,7 +680,7 @@ mdiffflush(struct memfile *mf, boolean eof)
                            mdiff_copyedit1,     copies,    0,
                            mdiff_command_count, 0,         0);
 
-        /* TODO: coord, rle */
+        /* TODO: rle */
         (void) orig_edit;
     }
 
@@ -676,12 +717,29 @@ mdiffflush(struct memfile *mf, boolean eof)
         best[1].command != mdiff_eof_crc32)
         mdiffwritecmd(mf, &(struct mdiff_command_instance)
                       {mdiff_eof_crc32, 0, crc});
+
+    /* Update coord_relative_to, if necessary. If we see it in the first
+       position, we calculate the value of pos as of the previous flush, then
+       work forwards from there. If we see it in the second position, we can
+       just use the value of pos right now. */
+    if (best[0].command == mdiff_copy)
+        mf->coord_relative_to = mf->pos - mf->pending_edits -
+            mf->pending_copies + best[0].arg1;
+    if (best[1].command == mdiff_copy)
+        mf->coord_relative_to = mf->pos;
+
     if (debuglog)
         fprintf(debuglog, "\n");
 
     mf->pending_seeks = 0;
     mf->pending_edits = 0;
     mf->pending_copies = 0;
+}
+
+void
+mhint_mon_coordinates(struct memfile *mf)
+{
+    mf->mon_coord_hint = mf->pos;
 }
 
 /* Given a diff and the memfile (diff_base) it was made against, write the file
@@ -804,8 +862,14 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
                 break;
 
             case mdiff_coord:
-                errfunction("TODO: mdiff_coord unimplemented", diff);
-                return;
+                copy = mdci.arg1 * SAVE_SIZE_MONST;
+                if ((new_memfile->pos -
+                     new_memfile->coord_relative_to) % SAVE_SIZE_MONST)
+                    copy += SAVE_SIZE_MONST -
+                        ((new_memfile->pos -
+                          new_memfile->coord_relative_to) % SAVE_SIZE_MONST);
+                break;
+
             case mdiff_rle:
                 errfunction("TODO: mdiff_rle unimplemented", diff);
                 return;
@@ -827,6 +891,8 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
             }
             memcpy(mfp, diff_base->buf + dbpos, copy);
             dbpos += copy;
+            if (mdci.command == mdiff_copy)
+                new_memfile->coord_relative_to = new_memfile->pos;
 
             /* Handle the "edit" part of a command, if any. */
             long long edit;
@@ -853,8 +919,11 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
                 break;
 
             case mdiff_coord:
-                errfunction("TODO: mdiff_coord unimplemented", diff);
-                return;
+                edit = 2;
+                if (mdci.arg2 == DIR_W || mdci.arg2 == DIR_E)
+                    edit = 1;
+                break;
+
             case mdiff_rle:
                 errfunction("TODO: mdiff_rle unimplemented", diff);
                 return;
@@ -877,17 +946,27 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
                 bufp += edit;
             } else if (mdci.command == mdiff_erase) {
                 memset(mfp, 0, edit);
-            } else if (mdci.command == mdiff_increment) {
+            } else if (mdci.command == mdiff_increment ||
+                       mdci.command == mdiff_coord) {
                 if (dbpos < 0) {
-                    errfunction("diff increments before the start of file",
+                    errfunction("diff adjustment before the start of file",
                                 diff);
                     return;
-                } else if (dbpos + 1 > diff_base->pos) {
-                    errfunction("diff increments after the end of file",
+                } else if (dbpos + edit > diff_base->pos) {
+                    errfunction("diff adjustment after the end of file",
                                 diff);
                     return;
                 }
-                mfp[0] = (uint8_t)(1 + (uint8_t)diff_base->buf[dbpos]);
+                schar dx = 1;
+                schar dy = 0;
+                schar dz;
+
+                if (mdci.command == mdiff_coord)
+                    dir_to_delta(mdci.arg2, &dx, &dy, &dz);
+
+                mfp[0] = (uint8_t)(dx + (uint8_t)diff_base->buf[dbpos]);
+                if (edit == 2)
+                    mfp[1] = (uint8_t)(dy + (uint8_t)diff_base->buf[dbpos + 1]);
             }
 
             dbpos += edit;    /* can legally go past the end of diff_base */

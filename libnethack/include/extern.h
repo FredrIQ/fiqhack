@@ -872,6 +872,7 @@ extern void mwrite64(struct memfile *mf, int64_t value);
 extern void store_mf(int fd, struct memfile *mf);
 extern void mtag(struct memfile *mf, long tagdata,
                  enum memfile_tagtype tagtype);
+extern void mhint_mon_coordinates(struct memfile *mf);
 extern void mdiffflush(struct memfile *mf, boolean eof);
 extern void mdiffapply(char *diff, long difflen, struct memfile *diff_base,
                        struct memfile *new_memfile,

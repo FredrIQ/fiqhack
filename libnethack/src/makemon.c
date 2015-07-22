@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2295,13 +2295,16 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite32(mf, mon->meating);
     mwrite8(mf, mon->xyloc);
     mwrite8(mf, mon->xyflags);
+    mhint_mon_coordinates(mf);
     mwrite8(mf, mon->xlocale);
     mwrite8(mf, mon->ylocale);
     /* SAVEBREAK (4.3-beta1 -> 4.3beta2): remove this */
     mwrite32(mf, 0);
     mwrite16(mf, mon->orig_mnum);
+    mhint_mon_coordinates(mf);
     mwrite8(mf, mon->mx);
     mwrite8(mf, mon->my);
+    mhint_mon_coordinates(mf);
     mwrite8(mf, mon->mux);
     mwrite8(mf, mon->muy);
     mwrite8(mf, mon->m_lev);
