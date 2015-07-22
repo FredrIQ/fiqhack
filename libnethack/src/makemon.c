@@ -2286,6 +2286,16 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite16(mf, mon->mxtyp);
     mwrite32(mf, idx);
     mwrite32(mf, mon->m_id);
+    /* When monsters regenerate HP, we can interpret the bottom two bytes of
+       their HP as acting like coordinates; the little-endian-first byte ("x
+       coordinate") always increases, the second ("y coordinate") sometimes
+       increases (if there's a carry), and we can encode these as though they
+       were moves east and south-east respectively.
+
+       Thus, as a happy coincidence, specifying coordinate encoding for this
+       does the right thing. (And mhint_mon_coordinates never changes whether
+       the save file can be created or not; just how efficient it is.) */
+    mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite32(mf, mon->mhp);
     mwrite32(mf, mon->mhpmax);
     mwrite32(mf, mon->mspec_used);
@@ -2295,16 +2305,16 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite32(mf, mon->meating);
     mwrite8(mf, mon->xyloc);
     mwrite8(mf, mon->xyflags);
-    mhint_mon_coordinates(mf);
+    mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite8(mf, mon->xlocale);
     mwrite8(mf, mon->ylocale);
     /* SAVEBREAK (4.3-beta1 -> 4.3beta2): remove this */
     mwrite32(mf, 0);
     mwrite16(mf, mon->orig_mnum);
-    mhint_mon_coordinates(mf);
+    mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite8(mf, mon->mx);
     mwrite8(mf, mon->my);
-    mhint_mon_coordinates(mf);
+    mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite8(mf, mon->mux);
     mwrite8(mf, mon->muy);
     mwrite8(mf, mon->m_lev);
