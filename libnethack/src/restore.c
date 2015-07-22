@@ -1,10 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "lev.h"
+#include "trietable.h"
 #include <stdint.h>
 
 static void restore_autopickup_rules(struct memfile *mf,
@@ -14,7 +15,8 @@ static void find_lev_obj(struct level *lev);
 static void restlevchn(struct memfile *mf);
 static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly);
 static void restobjchn(struct memfile *mf, struct level *lev,
-                       boolean ghostly, boolean frozen, struct obj **chain);
+                       boolean ghostly, boolean frozen, struct obj **chain,
+                       struct trietable **table);
 static struct monst *restmonchn(struct memfile *mf, struct level *lev,
                                 boolean ghostly);
 static struct fruit *loadfruitchn(struct memfile *mf);
@@ -191,7 +193,7 @@ restdamage(struct memfile *mf, struct level *lev, boolean ghostly)
 
 static void
 restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
-           boolean frozen, struct obj **chainloc)
+           boolean frozen, struct obj **chainloc, struct trietable **table)
 {
     struct obj *otmp;
     unsigned int count;
@@ -227,11 +229,15 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
         if (ghostly && !frozen && !age_is_relative(otmp))
             otmp->age = moves - lev->lastmoves + otmp->age;
 
+        /* we might need to produce an index, for speed in relinking IDs */
+        if (table)
+            trietable_add(table, otmp->o_id, otmp);
+
         /* get contents of a container or statue */
         if (Has_contents(otmp)) {
             struct obj *otmp3;
 
-            restobjchn(mf, lev, ghostly, Is_IceBox(otmp), &otmp->cobj);
+            restobjchn(mf, lev, ghostly, Is_IceBox(otmp), &otmp->cobj, table);
             /* restore container back pointers */
             for (otmp3 = otmp->cobj; otmp3; otmp3 = otmp3->nobj)
                 otmp3->ocontainer = otmp;
@@ -275,7 +281,7 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
         }
 
         if (mtmp->minvent) {
-            restobjchn(mf, lev, ghostly, FALSE, &(mtmp->minvent));
+            restobjchn(mf, lev, ghostly, FALSE, &(mtmp->minvent), NULL);
             /* restore monster back pointer */
             for (obj = mtmp->minvent; obj; obj = obj->nobj)
                 obj->ocarry = mtmp;
@@ -451,7 +457,7 @@ restgamestate(struct memfile *mf)
     /* this stuff comes after potential aborted restore attempts */
     restore_timers(mf, lev, RANGE_GLOBAL, FALSE, 0L);
     restore_light_sources(mf, lev);
-    restobjchn(mf, lev, FALSE, FALSE, &invent);
+    restobjchn(mf, lev, FALSE, FALSE, &invent, NULL);
     migrating_mons = restmonchn(mf, NULL, FALSE);
     restore_mvitals(mf);
 
@@ -478,7 +484,7 @@ restgamestate(struct memfile *mf)
     restore_history(mf);
 
     /* must come after all mons & objs are restored */
-    relink_timers(FALSE, lev);
+    relink_timers(FALSE, lev, NULL);
     relink_light_sources(FALSE, lev);
 
     if (u.ustuck) {
@@ -1118,6 +1124,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     int x, y;
     unsigned int lflags;
     struct level *lev;
+    struct trietable *table = NULL;
 
     if (ghostly)
         clear_id_mapping();
@@ -1215,12 +1222,12 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 
     rest_worm(mf, lev); /* restore worm information */
     lev->lev_traps = restore_traps(mf);
-    restobjchn(mf, lev, ghostly, FALSE, &lev->objlist);
+    restobjchn(mf, lev, ghostly, FALSE, &lev->objlist, &table);
     find_lev_obj(lev);
     /* restobjchn()'s `frozen' argument probably ought to be a callback routine
        so that we can check for objects being buried under ice */
-    restobjchn(mf, lev, ghostly, FALSE, &lev->buriedobjlist);
-    restobjchn(mf, lev, ghostly, FALSE, &lev->billobjs);
+    restobjchn(mf, lev, ghostly, FALSE, &lev->buriedobjlist, &table);
+    restobjchn(mf, lev, ghostly, FALSE, &lev->billobjs, &table);
     rest_engravings(mf, lev);
 
     /* reset level->monsters for new level */
@@ -1307,12 +1314,14 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     }
 
     /* must come after all mons & objs are restored */
-    relink_timers(ghostly, lev);
+    relink_timers(ghostly, lev, &table);
     relink_light_sources(ghostly, lev);
     reset_oattached_mids(ghostly, lev);
 
     if (ghostly)
         clear_id_mapping();
+
+    trietable_empty(&table);
 
     return lev;
 }

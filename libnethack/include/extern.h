@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -56,6 +56,7 @@ struct rm;
 struct test_move_cache;
 struct tmp_sym;
 struct trap;
+struct trietable;
 struct version_info;
 struct you;
 
@@ -1744,7 +1745,8 @@ extern void save_timers(struct memfile *mf, struct level *lev, int range);
 extern void free_timers(struct level *lev);
 extern void restore_timers(struct memfile *mf, struct level *lev, int range,
                            boolean ghostly, long adjust);
-extern void relink_timers(boolean ghostly, struct level *lev);
+extern void relink_timers(boolean ghostly, struct level *lev,
+                          struct trietable **table);
 extern int wiz_timeout_queue(const struct nh_cmd_arg *);
 
 /* ### topten.c ### */

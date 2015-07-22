@@ -5,6 +5,7 @@
 
 #include "hack.h"
 #include "lev.h"        /* for checking save modes */
+#include "trietable.h"
 #include <stdint.h>
 
 static void stoned_dialogue(void);
@@ -1762,9 +1763,9 @@ restore_timers(struct memfile *mf, struct level *lev, int range,
 }
 
 
-/* reset all timers that are marked for reseting */
+/* reset all timers that are marked for resetting */
 void
-relink_timers(boolean ghostly, struct level *lev)
+relink_timers(boolean ghostly, struct level *lev, struct trietable **table)
 {
     timer_element *curr;
     unsigned nid;
@@ -1777,7 +1778,26 @@ relink_timers(boolean ghostly, struct level *lev)
                         panic("relink_timers 1");
                 } else
                     nid = (intptr_t) curr->arg;
-                curr->arg = find_oid(nid);
+
+                /* If necessary, we'll find the object in question using
+                   find_oid. However, if we happened to cache its location in
+                   a trietable, we can use that instead and save some time.
+
+                   The semantics here are that the trietable is allowed to be
+                   missing the object in question altogether; but if the
+                   object's ID is a key in the table, the value will be the
+                   object itself.
+
+                   (This optimization is necessary; I've seen games with over
+                   7000 timers, and without the optimization, they each had
+                   to loop over all the objects on the level to find the one
+                   they were applying to. That was quadratic performance, and
+                   not irrelevantly so either.) */
+                curr->arg = NULL;
+                if (table)
+                    curr->arg = trietable_find(table, nid);
+                if (!curr->arg)
+                    curr->arg = find_oid(nid);
                 if (!curr->arg)
                     panic("cant find o_id %d", nid);
                 curr->needs_fixup = 0;
