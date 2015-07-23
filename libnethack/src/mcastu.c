@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-17 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -576,13 +576,17 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
             coord bypos;
             int quan;
 
+            /* If engulfed, the monster can be aware of you without the muxy
+               being set correctly */
+            int centered_on_muxy = aware_of_u(mtmp) && !engulfing_u(mtmp);
+
             quan = (mtmp->m_lev < 2) ? 1 : rnd((int)mtmp->m_lev / 2);
             if (quan < 3)
                 quan = 3;
             success = pm ? TRUE : FALSE;
             for (i = 0; i <= quan; i++) {
-                int spelltarget_x = aware_of_u(mtmp) ? mtmp->mux : mtmp->mx;
-                int spelltarget_y = aware_of_u(mtmp) ? mtmp->muy : mtmp->my;
+                int spelltarget_x = centered_on_muxy ? mtmp->mux : mtmp->mx;
+                int spelltarget_y = centered_on_muxy ? mtmp->muy : mtmp->my;
 
                 if (!enexto(&bypos, level,
                             spelltarget_x, spelltarget_y, mtmp->data))
@@ -741,7 +745,7 @@ mmspell_would_be_useless(struct monst *magr, struct monst *mdef,
     /* Can the aggressor see the square it thinks the defender is on? */
     int believed_mdef_mx = m_mx(mdef);
     int believed_mdef_my = m_my(mdef);
-    if (mdef == &youmonst) {
+    if (mdef == &youmonst && !engulfing_u(mdef)) {
         believed_mdef_mx = magr->mux;
         believed_mdef_my = magr->muy;
     }

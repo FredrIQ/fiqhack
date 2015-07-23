@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2015-04-01
+Last-Modified: Last modified by Alex Smith, 2015-07-22
 Comment:
  .
  This file is Copyright (C) Alex Smith 2013-2015, except as explained below
@@ -161,6 +161,10 @@ Copyright: Copyright (c) Steve Creps, 1988
 Files: libnethack/include/magic.h
 License: NGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
+
+Files: libnethack/include/memfile.h
+License: NGPL
+Copyright: Copyright (c) 2015 Alex Smith
 
 Files: libnethack/include/monattk.h
 License: NGPL
@@ -326,6 +330,12 @@ Files: libnethack/src/music.c
 License: NGPL
 Copyright: Copyright (c) 1989 by Jean-Christophe Collet
 
+Files: libnethack/src/newrng.c
+License: NGPL
+Copyright: Copyright (c) 2014 Alex Smith
+Comment:
+ Also contains some public domain source from LibTomCrypt, via AdeonRNG.
+
 Files: libnethack/src/objects.c
 License: NGPL
 Copyright: Copyright (c) Mike Threepoint, 1989
@@ -456,6 +466,10 @@ Copyright:
 Files: libnethack_common/src/xmalloc.c
 License: NGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
+
+Files: libnethack_common/src/trietable.c libnethack_common/include/trietable.h
+License: NGPL
+Copyright: Copyright (c) Alex Smith, 2015
 
 Files: libnethack_common/src/hacklib.c
 License: NGPL
@@ -790,7 +804,7 @@ Files: dist/debian/* dist/common/* dist/version-number-updates.txt
 License: NGPL
 Copyright: Copyright (c) 2013-2014 Alex Smith
 
-Files: doc/changelog.txt doc/faq.txt doc/mainloop.txt doc/philosophy.txt doc/saves.txt
+Files: doc/changelog.txt doc/faq.txt doc/mainloop.txt doc/philosophy.txt doc/saves.txt doc/developer-information.txt
 License: NGPL
 Copyright: Copyright (c) 2013-2015 Alex Smith
 

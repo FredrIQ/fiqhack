@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -850,7 +850,7 @@ display_rip(int how, long umoney, const char *killer)
                              (u.uz.dlevel < 0) ? "passed away" : ends[how]);
         } else {
             /* more conventional demise */
-            const char *where = dungeons[u.uz.dnum].dname;
+            const char *where = find_dungeon(&u.uz).dname;
 
             if (Is_astralevel(&u.uz))
                 where = "The Astral Plane";
@@ -1088,7 +1088,8 @@ terminate(enum nh_play_status playstatus)
     abort();
 }
 
-void nonfatal_dump_core(void)
+void
+nonfatal_dump_core(void)
 {
 #ifndef AIMAKE_BUILDOS_MSWin32
     if (!fork()) {

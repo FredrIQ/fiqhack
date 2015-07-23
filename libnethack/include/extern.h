@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -34,6 +34,7 @@ struct memfile;
 struct mkroom;
 struct monst;
 struct musable;
+struct newgame_options;
 struct nh_autopickup_rules;
 struct nh_cmd_and_arg;
 struct nh_cmd_arg;
@@ -55,6 +56,7 @@ struct rm;
 struct test_move_cache;
 struct tmp_sym;
 struct trap;
+struct trietable;
 struct version_info;
 struct you;
 
@@ -393,7 +395,7 @@ extern void adj_abon(struct obj *, schar);
 
 extern void initedog(struct monst *);
 extern struct monst *make_familiar(struct obj *, xchar, xchar, boolean);
-extern struct monst *makedog(void);
+extern struct monst *makedog(struct newgame_options *);
 extern void update_mlstmv(void);
 extern void losedogs(void);
 extern void mon_arrive(struct monst *, boolean);
@@ -584,7 +586,7 @@ extern void splatter_burning_oil(int, int);
 
 /* ### extralev.c ### */
 
-extern void makeroguerooms(struct level *lev);
+extern void makeroguerooms(struct level *lev, int *);
 extern void makerogueghost(struct level *lev);
 
 /* ### files.c ### */
@@ -845,8 +847,9 @@ extern void mimic_hit_msg(struct monst *, short);
 extern void mkmonmoney(struct monst *, long, enum rng);
 extern void bagotricks(struct obj *);
 extern boolean propagate(int, boolean, boolean);
-extern struct monst *restore_mon(struct memfile *mf);
-extern void save_mon(struct memfile *mf, const struct monst *mon);
+extern struct monst *restore_mon(struct memfile *mf, struct level *l);
+extern void save_mon(struct memfile *mf, const struct monst *mon,
+                     const struct level *l);
 
 /* ### mcastu.c ### */
 
@@ -869,7 +872,12 @@ extern void mwrite64(struct memfile *mf, int64_t value);
 extern void store_mf(int fd, struct memfile *mf);
 extern void mtag(struct memfile *mf, long tagdata,
                  enum memfile_tagtype tagtype);
-extern void mdiffflush(struct memfile *mf);
+extern void mhint_mon_coordinates(struct memfile *mf);
+extern void mdiffflush(struct memfile *mf, boolean eof);
+extern void mdiffapply(char *diff, long difflen, struct memfile *diff_base,
+                       struct memfile *new_memfile,
+                       void (*errfunction)(const char *, char *));
+
 extern void mread(struct memfile *mf, void *, unsigned int);
 extern int8_t mread8(struct memfile *mf);
 extern int16_t mread16(struct memfile *mf);
@@ -964,7 +972,7 @@ extern void add_room(struct level *lev, int, int, int, int, boolean, schar,
                      boolean);
 extern void add_subroom(struct level *lev, struct mkroom *, int, int, int, int,
                         boolean, schar, boolean);
-extern void makecorridors(struct level *lev);
+extern void makecorridors(struct level *lev, int *smeq);
 extern void add_door(struct level *lev, int, int, struct mkroom *);
 extern struct level *mklev(d_level * levnum);
 extern void topologize(struct level *lev, struct mkroom *croom);
@@ -985,7 +993,7 @@ extern void remove_rooms(struct level *lev, int lx, int ly, int hx, int hy);
 
 extern void wallification(struct level *lev, int x1, int y1, int x2, int y2);
 extern void walkfrom(struct level *lev, int, int);
-extern void makemaz(struct level *lev, const char *);
+extern void makemaz(struct level *lev, const char *, int *);
 extern void mazexy(struct level *lev, coord * cc);
 extern void bound_digging(struct level *lev);
 extern void mkportal(struct level *lev, xchar x, xchar y, xchar todnum,
@@ -1289,6 +1297,8 @@ extern char *nh_getenv(const char *);
 extern void initoptions(void);
 extern struct nh_option_desc *default_options(void);
 extern int fruitadd(const char *str);
+extern boolean set_option(const char *, union nh_optvalue,
+                          struct newgame_options *);
 
 /* ### pager.c ### */
 
@@ -1529,12 +1539,12 @@ extern void savelev(struct memfile *mf, xchar levnum);
 extern void freelev(xchar levnum);
 extern void savefruitchn(struct memfile *mf);
 extern void freedynamicdata(void);
-extern int8_t save_encode_8(int8_t, int);
-extern int16_t save_encode_16(int16_t, int);
-extern int32_t save_encode_32(int32_t, int);
-extern int8_t save_decode_8(int8_t, int);
-extern int16_t save_decode_16(int16_t, int);
-extern int32_t save_decode_32(int32_t, int);
+extern int8_t save_encode_8(int8_t, int, int);
+extern int16_t save_encode_16(int16_t, int, int);
+extern int32_t save_encode_32(int32_t, int, int);
+extern int8_t save_decode_8(int8_t, int, int);
+extern int16_t save_decode_16(int16_t, int, int);
+extern int32_t save_decode_32(int32_t, int, int);
 
 /* ### shk.c ### */
 
@@ -1629,13 +1639,13 @@ extern int dotalk(const struct nh_cmd_arg *);
 extern boolean check_room(struct level *lev, xchar *, xchar *, xchar *, xchar *,
                           boolean);
 extern boolean create_room(struct level *lev, xchar, xchar, xchar, xchar, xchar,
-                           xchar, xchar, xchar);
+                           xchar, xchar, xchar, int *);
 extern void create_secret_door(struct level *lev, struct mkroom *croom,
                                xchar walls);
 extern boolean dig_corridor(struct level *lev, coord *, coord *, boolean, schar,
                             schar);
 extern void fill_room(struct level *lev, struct mkroom *, boolean);
-extern boolean load_special(struct level *lev, const char *);
+extern boolean load_special(struct level *lev, const char *, int *);
 extern void fixup_special(struct level *lev);
 
 /* ### spell.c ### */
@@ -1736,7 +1746,8 @@ extern void save_timers(struct memfile *mf, struct level *lev, int range);
 extern void free_timers(struct level *lev);
 extern void restore_timers(struct memfile *mf, struct level *lev, int range,
                            boolean ghostly, long adjust);
-extern void relink_timers(boolean ghostly, struct level *lev);
+extern void relink_timers(boolean ghostly, struct level *lev,
+                          struct trietable **table);
 extern int wiz_timeout_queue(const struct nh_cmd_arg *);
 
 /* ### topten.c ### */

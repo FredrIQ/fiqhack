@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -200,7 +200,7 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed,
             if (otmp->oclass == COIN_CLASS)
                 otmp->quan = 1L;        /* to force pluralization off */
             else if (otmp->otyp == SLIME_MOLD)
-                otmp->spe = current_fruit;      /* give the fruit a type */
+                otmp->spe = gamestate.fruits.current;/* give the fruit a type */
             strcpy(buf, distant_name(otmp, xname));
             dealloc_obj(otmp);
             otmp = vobj_at(x, y);       /* make sure we don't point to the temp 

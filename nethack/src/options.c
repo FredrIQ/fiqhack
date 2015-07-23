@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-01 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,6 +14,7 @@
 enum option_lists {
     NO_LIST,
     BIRTH_OPTS,
+    CREATION_OPTS,
     GAME_OPTS,
     UI_OPTS
 };
@@ -66,7 +67,7 @@ static struct nh_listitem animation_list[] = {
     {ANIM_INSTANT, "instant"},
     {ANIM_INTERRUPTIBLE, "interruptible"},
     {ANIM_ALL, "everything"},
-    {ANIM_SLOW, "slow"},    
+    {ANIM_SLOW, "slow"},
 };
 static struct nh_enum_option animation_spec =
     { animation_list, listlen(animation_list) };
@@ -114,62 +115,65 @@ static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
 static struct nh_option_desc curses_options[] = {
-    {"alt_is_esc", "interpret Alt-letter as ESC letter", FALSE, OPTTYPE_BOOL,
-     {.b = FALSE}},
-    {"animation", "what to animate, and how fast", FALSE, OPTTYPE_ENUM,
-     {.e = ANIM_ALL}},
-    {"border", "what to draw borders around", FALSE, OPTTYPE_ENUM,
-     {.e = FRAME_ALL}},
-    {"comment", "has no effect", FALSE, OPTTYPE_STRING, {.s = NULL}},
-    {"darkgray", "try to show 'black' as dark gray instead of dark blue", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_branch", "use different renderings for different branches", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_detected", "mark detected monsters", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_rock", "make the walls of corridors visible", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
-    {"draw_stepped", "mark squares you have walked on", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_tame", "mark tame and peaceful monsters", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_terrain", "mark concealed traps and stairs", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"extmenu", "use a menu for selecting extended commands (#)", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
-    {"invweight", "show item weights in the inventory", FALSE, OPTTYPE_BOOL,
-     {.b = TRUE}},
-    {"keymap", "alter the key to command mapping", FALSE,
-     (enum nh_opttype)OPTTYPE_KEYMAP, {0}},
-    {"menu_headings", "display style for menu headings", FALSE, OPTTYPE_ENUM,
-     {.e = A_REVERSE}},
-    {"mouse", "accept mouse input (where supported)", FALSE, OPTTYPE_BOOL,
-     {.b = TRUE}},
-    {"menupaging", "scrolling behaviour of menus", FALSE, OPTTYPE_ENUM,
-     {.e = MP_LINES}},
-    {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
-    {"msghistory", "number of messages saved for prevmsg", FALSE, OPTTYPE_INT,
-     {.i = 256}},
-    {"networkmotd", "get tips and announcements from the Internet", FALSE,
-     OPTTYPE_ENUM, {.e = MOTD_ASK}},
-    {"optstyle", "option menu display style", FALSE, OPTTYPE_ENUM,
-     {.e = OPTSTYLE_FULL}},
-    {"palette", "color palette used for text", FALSE, OPTTYPE_ENUM,
-     {.e = PALETTE_DEFAULT}},
-    {"prompt_inline", "place prompts in the message window", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
-    {"scores_own", "show all your own scores in the list", FALSE, OPTTYPE_BOOL,
-     {.b = FALSE}},
-    {"scores_top", "how many top scores to show", FALSE, OPTTYPE_INT, {.i = 3}},
-    {"scores_around", "the number of scores shown around your score", FALSE,
-     OPTTYPE_INT, {.i = 2}},
-    {"sidebar", "when to draw the inventory sidebar", FALSE, OPTTYPE_ENUM,
-     {.e = AB_AUTO}},
-    {"status3", "3 line status display", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
-    {"tileset", "text or graphics for map drawing", FALSE, OPTTYPE_STRING,
-     {.s = NULL}},
-    {NULL, NULL, FALSE, OPTTYPE_BOOL, {NULL}}
-};
+    {"alt_is_esc", "interpret Alt-letter as ESC letter",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"animation", "what to animate, and how fast",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = ANIM_ALL}},
+    {"border", "what to draw borders around",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = FRAME_ALL}},
+    {"comment", "has no effect",
+     nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
+    {"darkgray", "try to show 'black' as dark gray instead of dark blue",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"draw_branch", "use different renderings for different branches",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"draw_detected", "mark detected monsters",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"draw_rock", "make the walls of corridors visible",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"draw_stepped", "mark squares you have walked on",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"draw_tame", "mark tame and peaceful monsters",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"draw_terrain", "mark concealed traps and stairs",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"extmenu", "use a menu for selecting extended commands (#)",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"invweight", "show item weights in the inventory",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"keymap", "alter the key to command mapping",
+     nh_birth_ingame, (enum nh_opttype)OPTTYPE_KEYMAP, {0}},
+    {"menu_headings", "display style for menu headings",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = A_REVERSE}},
+    {"mouse", "accept mouse input (where supported)",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"menupaging", "scrolling behaviour of menus",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = MP_LINES}},
+    {"msgheight", "message window height",
+     nh_birth_ingame, OPTTYPE_INT, {.i = 8}},
+    {"msghistory", "number of messages saved for prevmsg",
+     nh_birth_ingame, OPTTYPE_INT, {.i = 256}},
+    {"networkmotd", "get tips and announcements from the Internet",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = MOTD_ASK}},
+    {"optstyle", "option menu display style",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = OPTSTYLE_FULL}},
+    {"palette", "color palette used for text",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = PALETTE_DEFAULT}},
+    {"prompt_inline", "place prompts in the message window",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"scores_own", "show all your own scores in the list",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"scores_top", "how many top scores to show",
+     nh_birth_ingame, OPTTYPE_INT, {.i = 3}},
+    {"scores_around", "the number of scores shown around your score",
+     nh_birth_ingame, OPTTYPE_INT, {.i = 2}},
+    {"sidebar", "when to draw the inventory sidebar",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = AB_AUTO}},
+    {"status3", "3 line status display",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"tileset", "text or graphics for map drawing",
+     nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
+    {NULL, NULL, nh_birth_ingame, OPTTYPE_BOOL, {NULL}}};
 
 static struct nhlib_boolopt_map boolopt_map[] = {
     {"alt_is_esc", &settings.alt_is_esc},
@@ -446,7 +450,7 @@ print_option_string(struct nh_option_desc *option, char *buf)
 /* add a list of options to the given selection menu */
 static int
 menu_add_options(struct nh_menulist *menu, int listid,
-                 struct nh_option_desc *options, nh_bool birth_only,
+                 struct nh_option_desc *options, enum nh_optbirth birth,
                  nh_bool read_only)
 {
     int i, id;
@@ -454,7 +458,7 @@ menu_add_options(struct nh_menulist *menu, int listid,
 
     for (i = 0; options[i].name; i++) {
         id = (listid << 10) | i;
-        if (options[i].birth_option != birth_only)
+        if (options[i].birth_option != birth)
             continue;
 
         print_option_string(&options[i], optbuf);
@@ -604,6 +608,7 @@ query_new_value(struct win_menu *mdat, int idx)
 
     switch (listid) {
     case BIRTH_OPTS:
+    case CREATION_OPTS:
     case GAME_OPTS:
         optlist = curses_get_nh_opts();
         break;
@@ -623,7 +628,7 @@ query_new_value(struct win_menu *mdat, int idx)
     case OPTTYPE_BOOL:
         select_boolean_value(&optioncopy.value, &optioncopy);
         break;
-        
+
     case OPTTYPE_INT:
         if (optioncopy.i.min >= -2147483647-1 &&
             optioncopy.i.max <= 2147483647)
@@ -668,7 +673,7 @@ query_new_value(struct win_menu *mdat, int idx)
     /* getlin_option_callback NULLs out optioncopy_p to indicate that setting
        was cancelled */
     if (optioncopy_p && !curses_set_option(optioncopy.name, optioncopy.value)) {
-        char query[strlen(optioncopy.name) + 1 + 
+        char query[strlen(optioncopy.name) + 1 +
                    sizeof "new value for  rejected"];
         sprintf(query, "new value for %s rejected", optioncopy.name);
         curses_msgwin(query, krc_notification);
@@ -718,18 +723,24 @@ display_options(nh_bool change_birth_opt)
         if (!change_birth_opt) {
             /* add general game options */
             add_menu_txt(&menu, "Game options:", MI_HEADING);
-            menu_add_options(&menu, GAME_OPTS, options, FALSE, FALSE);
+            menu_add_options(&menu, GAME_OPTS, options, nh_birth_ingame, FALSE);
 
             /* add or display birth options */
             add_menu_txt(&menu, "Birth options for this game:", MI_HEADING);
-            menu_add_options(&menu, BIRTH_OPTS, options, TRUE, TRUE);
+            menu_add_options(&menu, BIRTH_OPTS, options,
+                             nh_birth_lasting, TRUE);
         } else {
             /* add or display birth options */
             add_menu_txt(&menu, "Birth options:", MI_HEADING);
-            menu_add_options(&menu, BIRTH_OPTS, options, TRUE, FALSE);
+            menu_add_options(&menu, BIRTH_OPTS, options,
+                             nh_birth_lasting, FALSE);
+
+            add_menu_txt(&menu, "Game creation options:", MI_HEADING);
+            menu_add_options(&menu, CREATION_OPTS, options,
+                             nh_birth_creation, FALSE);
 
             add_menu_txt(&menu, "Game options:", MI_HEADING);
-            menu_add_options(&menu, GAME_OPTS, options, FALSE, FALSE);
+            menu_add_options(&menu, GAME_OPTS, options, nh_birth_ingame, FALSE);
         }
 
         /* add UI specific options */
@@ -761,7 +772,16 @@ print_options(void)
 
     add_menu_txt(&menu, "Birth options:", MI_HEADING);
     for (i = 0; options[i].name; i++) {
-        if (!options[i].birth_option)
+        if (options[i].birth_option != nh_birth_lasting)
+            continue;
+        snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
+        add_menu_txt(&menu, buf, MI_TEXT);
+    }
+    add_menu_txt(&menu, "", MI_TEXT);
+
+    add_menu_txt(&menu, "Game creation options:", MI_HEADING);
+    for (i = 0; options[i].name; i++) {
+        if (options[i].birth_option != nh_birth_creation)
             continue;
         snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
         add_menu_txt(&menu, buf, MI_TEXT);
@@ -770,7 +790,7 @@ print_options(void)
 
     add_menu_txt(&menu, "Game options:", MI_HEADING);
     for (i = 0; options[i].name; i++) {
-        if (options[i].birth_option)
+        if (options[i].birth_option != nh_birth_ingame)
             continue;
         snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
         add_menu_txt(&menu, buf, MI_TEXT);
@@ -1016,7 +1036,7 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
             ar->rules =
                 realloc(ar->rules,
                         allocsize * sizeof (struct nh_autopickup_rule));
-            return; 
+            return;
         }
 
     } while (1);
@@ -1233,7 +1253,7 @@ read_config_file(const fnchar * filename)
            not read the file at all, because it's probably corrupted */
         curses_msgwin("warning: corrupted configuration file",
                       krc_notification);
-        fclose(fp);        
+        fclose(fp);
         return;
     }
     fclose(fp);
@@ -1256,7 +1276,7 @@ get_config_name(fnchar * buf, nh_bool ui)
 {
     buf[0] = '\0';
 
-    /* If running in connection-only mode, we can't get the options until we're 
+    /* If running in connection-only mode, we can't get the options until we're
        already logged into the server. */
     if (ui_flags.connection_only && !*ui_flags.username)
         return 0;

@@ -1,30 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #define IN_DECL_C
 #include "hack.h"
 
-/* Memory management, outside the game. */
-struct xmalloc_block *api_blocklist = NULL;
-
-struct nh_window_procs windowprocs;
-
-/*
- * The following structure will be initialized at startup time with
- * the level numbers of some "important" things in the game.
- */
-struct dgn_topology dungeon_topology;
-
-int smeq[MAXNROFROOMS + 1];
-
-char pl_fruit[PL_FSIZ];
-int current_fruit;
-struct fruit *ffruit;
-
-char tune[6];
-
+/* Read-only globals. */
 const char quitchars[] = " \r\n\033";
 const char vowels[] = "aeiouAEIOU";
 const char ynchars[] = "yn";
@@ -33,27 +15,32 @@ const char ynaqchars[] = "ynaq";
 
 const char disclosure_options[] = "iavgcs";
 
+const schar xdir[11] = { -1, -1, 0, 1, 1, 1, 0, -1, 0, 0, 0 };
+const schar ydir[11] = { 0, -1, -1, -1, 0, 1, 1, 1, 0, 0, 0 };
+const schar zdir[11] = { 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0 };
+
+/* Memory management, outside the game. */
+struct xmalloc_block *api_blocklist = NULL;
+
+struct nh_window_procs windowprocs;
+
+/* The major globals that store most of the data in the game. */
+struct gamestate gamestate;
+struct sinfo program_state;
+
+
 #if defined(WIN32)
 char hackdir[PATHLEN];  /* where rumors, help, record are */
 #endif
 
 
-struct sinfo program_state;
 
-const schar xdir[11] = { -1, -1, 0, 1, 1, 1, 0, -1, 0, 0, 0 };
-const schar ydir[11] = { 0, -1, -1, -1, 0, 1, 1, 1, 0, 0, 0 };
-const schar zdir[11] = { 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0 };
 
 schar tbx, tby; /* mthrowu: target */
 
 /* for xname handling of multiple shot missile volleys:
    number of shots, index of current one, validity check, shoot vs throw */
 struct multishot m_shot = { 0, 0, STRANGE_OBJECT, FALSE };
-
-int branch_id;
-dungeon dungeons[MAXDUNGEON];   /* ini'ed by init_dungeon() */
-s_level *sp_levchn;
-coord inv_pos;  /* vibrating square position */
 
 boolean in_mklev;
 boolean stoned; /* done to monsters hit by 'c' */
@@ -67,7 +54,6 @@ struct level *level;    /* level map */
 
 struct monst youmonst;
 struct flag flags;
-struct you u;
 
 struct obj *invent;
 
@@ -85,12 +71,6 @@ long wailmsg;
 /* used to zero all elements of a struct obj, also as a flag to mean a
    non-object */
 struct obj zeroobj;
-
-/* originally from dog.c */
-char dogname[PL_PSIZ];
-char catname[PL_PSIZ];
-char horsename[PL_PSIZ];
-char preferred_pet;     /* '\0', 'c', 'd', 'n' (none) */
 
 /* monsters that are moving to another dungeon level */
 struct monst *migrating_mons;
@@ -346,28 +326,29 @@ init_data(boolean including_program_state)
     memset(&u.quest_status, 0, sizeof (u.quest_status));
     memset(&levels, 0, sizeof (levels));
     memset(&u, 0, sizeof (u));
-    memset(dogname, 0, sizeof (dogname));
-    memset(catname, 0, sizeof (catname));
-    memset(horsename, 0, sizeof (horsename));
-    memset(&youmonst, 0, sizeof (youmonst));
     memset(mvitals, 0, sizeof (mvitals));
     memset(spl_book, 0, sizeof (spl_book));
     memset(disco, 0, sizeof (disco));
-    memset(&inv_pos, 0, sizeof (inv_pos));
+    memset(&(gamestate.inv_pos), 0, sizeof (gamestate.inv_pos));
+
+    /* (0, 0) isn't a valid mux/muy for youmonst, as that's the same location as
+       its mx/my (and thus the save code will get confused) */
+    memset(&youmonst, 0, sizeof (youmonst));
+    youmonst.mux = COLNO;
+    youmonst.muy = ROWNO;
 
     level = NULL;
-    ffruit = NULL;
-    current_fruit = 0;
-    sp_levchn = NULL;
+    gamestate.fruits.chain = NULL;
+    gamestate.fruits.current = 0;
+    gamestate.sp_levchn = NULL;
     in_mklev = stoned = FALSE;
     invent = NULL;
     in_steed_dismounting = FALSE;
     wailmsg = 0;
     bhitpos.x = bhitpos.y = 0;
-    preferred_pet = 0;
     migrating_mons = NULL;
     artilist = NULL;
-    branch_id = 0;
+    gamestate.unique_ids.branch = 0;
     histevents = NULL;
     histcount = 0;
     timer_id = 1;

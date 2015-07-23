@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-05-31 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -783,7 +783,7 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     m2->minvent = NULL; /* objects don't clone */
     m2->mleashed = FALSE;
     /* Max HP the same, but current HP halved for both.  The caller might want
-       to override this by halving the max HP also. When current HP is odd, the 
+       to override this by halving the max HP also. When current HP is odd, the
        original keeps the extra point. */
     m2->mhpmax = mon->mhpmax;
     m2->mhp = mon->mhp / 2;
@@ -834,8 +834,8 @@ clone_mon(struct monst *mon, xchar x, xchar y)
             replmon(m2, m3);
             m2 = m3;
         } else {
-            /* because m2 is a copy of mon it is tame but not init'ed. however, 
-               tamedog will not re-tame a tame dog, so m2 must be made non-tame 
+            /* because m2 is a copy of mon it is tame but not init'ed. however,
+               tamedog will not re-tame a tame dog, so m2 must be made non-tame
                to get initialized properly. */
             m2->mtame = 0;
             if ((m3 = tamedog(m2, NULL)) != 0) {
@@ -1234,7 +1234,7 @@ create_critters(int cnt, const struct permonst *mptr)
 
     while (cnt--) {
         x = u.ux, y = u.uy;
-        /* if in water, try to encourage an aquatic monster by finding and then 
+        /* if in water, try to encourage an aquatic monster by finding and then
            specifying another wet location */
         if (!mptr && u.uinwater && enexto(&c, level, x, y, &mons[PM_GIANT_EEL]))
             x = c.x, y = c.y;
@@ -1252,12 +1252,12 @@ create_critters(int cnt, const struct permonst *mptr)
  * return an integer in the range of 0-5.
  */
 static int
-align_shift(const d_level * dlev, const struct permonst *ptr)
+align_shift(const d_level *dlev, const struct permonst *ptr)
 {
     s_level *lev = Is_special(dlev);
     int alshift;
 
-    switch ((lev) ? lev->flags.align : dungeons[dlev->dnum].flags.align) {
+    switch ((lev) ? lev->flags.align : find_dungeon(dlev).flags.align) {
     default:   /* just in case */
     case AM_NONE:
         alshift = 0;
@@ -1526,7 +1526,7 @@ adj_lev(const d_level * dlev, const struct permonst *ptr)
     int tmp, tmp2;
 
     if (ptr == &mons[PM_WIZARD_OF_YENDOR]) {
-        /* does not depend on other strengths, but does get stronger every time 
+        /* does not depend on other strengths, but does get stronger every time
            he is killed */
         tmp = ptr->mlevel +
             (in_mklev ? 0 : mvitals[PM_WIZARD_OF_YENDOR].died);
@@ -1563,7 +1563,7 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
     if (mtmp->mhp <= 0)
         return NULL;
 
-    /* note: none of the monsters with special hit point calculations have both 
+    /* note: none of the monsters with special hit point calculations have both
        little and big forms */
     oldtype = monsndx(ptr);
     newtype = little_to_big(oldtype);
@@ -1572,7 +1572,7 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
 
     /* growth limits differ depending on method of advancement */
     if (victim) {       /* killed a monster */
-        /* 
+        /*
          * The HP threshold is the maximum number of hit points for the
          * current level; once exceeded, a level will be gained.
          * Possible bug: if somehow the hit points are already higher
@@ -1888,7 +1888,7 @@ set_mimic_sym(struct monst *mtmp, struct level *lev, enum rng rng)
         ap_type = M_AP_FURNITURE;
         if (Is_rogue_level(&lev->z))
             appear = S_ndoor;
-        /* 
+        /*
          *  If there is a wall to the left that connects to this
          *  location, then the mimic mimics a horizontal closed door.
          *  This does not allow doors to be in corners of rooms.
@@ -1929,7 +1929,7 @@ set_mimic_sym(struct monst *mtmp, struct level *lev, enum rng rng)
     } else if (rt == TEMPLE) {
         ap_type = M_AP_FURNITURE;
         appear = S_altar;
-        /* 
+        /*
          * We won't bother with beehives, morgues, barracks, throne rooms
          * since they shouldn't contain too many mimics anyway...
          */
@@ -2019,7 +2019,7 @@ restore_fcorr(struct memfile *mf, struct fakecorridor *f)
 
 
 struct monst *
-restore_mon(struct memfile *mf)
+restore_mon(struct memfile *mf, struct level *l)
 {
     struct monst *mon;
     short namelen, xtyp;
@@ -2032,6 +2032,7 @@ restore_mon(struct memfile *mf)
     namelen = mread16(mf);
     xtyp = mread16(mf);
     mon = newmonst(xtyp, namelen);
+    mon->dlevel = l;
 
     idx = mread32(mf);
     switch (idx) {
@@ -2080,8 +2081,11 @@ restore_mon(struct memfile *mf)
     mon->my = mread8(mf);
     mon->mux = mread8(mf);
     mon->muy = mread8(mf);
-    /* SAVEBREAK (4.3-beta2alpha -> 4.3-beta2): don't use a special encoding */
-    if (mon->mux == mon->mx && mon->muy == mon->my) {
+    /* SAVEBREAK (4.3-beta2alpha -> 4.3-beta2): this is for reading old saves
+       that used a different encoding for mux/muy, we no longer generate saves
+       in that format; be careful not to munge the migrating monsters chain like
+       this (determinable via l being NULL) */
+    if (mon->mux == mon->mx && mon->muy == mon->my && l) {
         mon->mux = COLNO;
         mon->muy = ROWNO;
     }
@@ -2096,7 +2100,7 @@ restore_mon(struct memfile *mf)
     mon->mappearance = mread32(mf);
     mflags = mread32(mf);
 
-    mon->mfleetim = save_decode_8(mread8(mf), -moves);
+    mon->mfleetim = save_decode_8(mread8(mf), -moves, l ? -l->lastmoves : 0);
     mon->weapon_check = mread8(mf);
     mon->misc_worn_check = mread32(mf);
     mon->wormno = mread8(mf);
@@ -2232,8 +2236,14 @@ save_fcorr(struct memfile *mf, const struct fakecorridor *f)
 }
 
 
+/* Warning: to avoid serious degradation of save file size, the constant
+   SAVE_SIZE_MONST in memfile.h must be set to the number of bytes that this
+   file most commonly outputs when saving one monster. Thus, changing the save
+   layout of a monster may require a change to that value. Note also that
+   changing that value breaks save compatibility (but so does changing the
+   number of bytes this function writes). */
 void
-save_mon(struct memfile *mf, const struct monst *mon)
+save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
 {
     int idx, i;
     unsigned int mflags;
@@ -2276,6 +2286,16 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite16(mf, mon->mxtyp);
     mwrite32(mf, idx);
     mwrite32(mf, mon->m_id);
+    /* When monsters regenerate HP, we can interpret the bottom two bytes of
+       their HP as acting like coordinates; the little-endian-first byte ("x
+       coordinate") always increases, the second ("y coordinate") sometimes
+       increases (if there's a carry), and we can encode these as though they
+       were moves east and south-east respectively.
+
+       Thus, as a happy coincidence, specifying coordinate encoding for this
+       does the right thing. (And mhint_mon_coordinates never changes whether
+       the save file can be created or not; just how efficient it is.) */
+    mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite32(mf, mon->mhp);
     mwrite32(mf, mon->mhpmax);
     mwrite32(mf, mon->mspec_used);
@@ -2285,21 +2305,18 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite32(mf, mon->meating);
     mwrite8(mf, mon->xyloc);
     mwrite8(mf, mon->xyflags);
+    mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite8(mf, mon->xlocale);
     mwrite8(mf, mon->ylocale);
     /* SAVEBREAK (4.3-beta1 -> 4.3beta2): remove this */
     mwrite32(mf, 0);
     mwrite16(mf, mon->orig_mnum);
+    mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite8(mf, mon->mx);
     mwrite8(mf, mon->my);
-    /* SAVEBREAK (4.3-beta2alpha -> 4.3-beta2): don't use a special encoding */
-    if (mon->mux == COLNO && mon->muy == ROWNO) { /* savemap: ignore */
-        mwrite8(mf, mon->mx);                     /* savemap: ignore */
-        mwrite8(mf, mon->my);                     /* savemap: ignore */
-    } else {                                      /* savemap: ignore */
-        mwrite8(mf, mon->mux);
-        mwrite8(mf, mon->muy);
-    }                                             /* savemap: ignore */
+    mhint_mon_coordinates(mf); /* savemap: ignore */
+    mwrite8(mf, mon->mux);
+    mwrite8(mf, mon->muy);
     mwrite8(mf, mon->m_lev);
     mwrite8(mf, mon->malign);
     mwrite16(mf, mon->moveoffset);
@@ -2328,7 +2345,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
         (mon->ispriest << 1) | (mon->iswiz << 0); /* savemap: ignore */
     mwrite32(mf, mflags);
 
-    mwrite8(mf, save_encode_8(mon->mfleetim, -moves));
+    mwrite8(mf, save_encode_8(mon->mfleetim, -moves, l ? -l->lastmoves : 0));
     mwrite8(mf, mon->weapon_check);
     mwrite32(mf, mon->misc_worn_check);
     mwrite8(mf, mon->wormno);
@@ -2412,4 +2429,3 @@ save_mon(struct memfile *mf, const struct monst *mon)
 }
 
 /*makemon.c*/
-

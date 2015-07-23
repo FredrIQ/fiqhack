@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -10,34 +10,29 @@
 /*
  * Mobile light sources.
  *
- * This implementation minimizes memory at the expense of extra
- * recalculations.
+ * This implementation minimizes memory at the expense of extra recalculations.
  *
- * Light sources are "things" that have a physical position and range.
- * They have a type, which gives us information about them.  Currently
- * they are only attached to objects and monsters.  Note well:  the
- * polymorphed-player handling assumes that both youmonst.m_id and
- * youmonst.mx will always remain 0.
+ * Light sources are "things" that have a physical position and range.  They
+ * have a type, which gives us information about them.  Currently they are only
+ * attached to objects and monsters.  Note well: the polymorphed-player handling
+ * assumes that youmonst.m_id will always remain 0.
  *
- * Light sources, like timers, either follow game play (RANGE_GLOBAL) or
- * stay on a level (RANGE_LEVEL).  Light sources are unique by their
- * (type, id) pair.  For light sources attached to objects, this id
- * is a pointer to the object.
+ * Light sources, like timers, either follow game play (RANGE_GLOBAL) or stay on
+ * a level (RANGE_LEVEL).  Light sources are unique by their (type, id) pair.
+ * For light sources attached to objects, this id is a pointer to the object.
  *
- * The major working function is do_light_sources(). It is called
- * when the vision system is recreating its "could see" array.  Here
- * we add a flag (TEMP_LIT) to the array for all locations that are lit
- * via a light source.  The bad part of this is that we have to
- * re-calculate the LOS of each light source every time the vision
- * system runs.  Even if the light sources and any topology (vision blocking
- * positions) have not changed.  The good part is that no extra memory
- * is used, plus we don't have to figure out how far the sources have moved,
- * or if the topology has changed.
+ * The major working function is do_light_sources(). It is called when the
+ * vision system is recreating its "could see" array.  Here we add a flag
+ * (TEMP_LIT) to the array for all locations that are lit via a light source.
+ * The bad part of this is that we have to re-calculate the LOS of each light
+ * source every time the vision system runs.  Even if the light sources and any
+ * topology (vision blocking positions) have not changed.  The good part is that
+ * no extra memory is used, plus we don't have to figure out how far the sources
+ * have moved, or if the topology has changed.
  *
- * The structure of the save/restore mechanism is amazingly similar to
- * the timer save/restore.  This is because they both have the same
- * principals of having pointers into objects that must be recalculated
- * across saves and restores.
+ * The structure of the save/restore mechanism is amazingly similar to the timer
+ * save/restore.  This is because they both have the same principals of having
+ * pointers into objects that must be recalculated across saves and restores.
  */
 
 /* flags */
@@ -184,7 +179,7 @@ do_light_sources(char **cs_rows)
 }
 
 /* (mon->mx == COLNO) implies migrating */
-#define mon_is_local(mon) ((mon)->mx != COLNO)
+#define mon_is_local(mon) ((mon) != &youmonst && (mon)->mx != COLNO)
 
 struct monst *
 find_mid(struct level *lev, unsigned nid, unsigned fmflags)

@@ -1,7 +1,7 @@
 About this document:
-Last modified by Alex Smith, 2015-03-26
+Last modified by Alex Smith, 2015-07-20
 
-Copyright (C) 2013 Alex Smith.
+Copyright (C) 2013, 2014, 2015 Alex Smith.
 
 This document is licensed under the NetHack General Public License.  See
 libnethack/dat/license for details.
@@ -143,7 +143,7 @@ lines, separated by newlines:
     prevents the size of the save file blowing up as a result of pudding
     farming or similar actions; the details are chosen to produce
     approximately the correct ratio while being fast to calculate.
-    
+
     A save backup line is also used in place of a save diff line if a
     backwards-compatible change was made to the save format while the game was
     running.  (This is for technical reasons: the game needs to know how to be
@@ -151,7 +151,7 @@ lines, separated by newlines:
     even a backwards-compatible change to the save format prevents that; the
     backwards compatibility allows new versions to read old-format save files,
     but not to write them.)
-    
+
     For the very first save backup line in the file, the number given is a
     hint as to the location of the last save backup line in the file.  It need
     not be correct (and may become incorrect as a result of recovery), so when
@@ -170,7 +170,7 @@ lines, separated by newlines:
 
     These lines (and save backup lines) explicitly may not be used in any
     circumstance where a binary save would not load correctly: this includes
-    multi or occupation being set, inside a command, and similar issues.  If
+    helplessness, occupation, being inside a command, and similar issues.  If
     the save loading code observes one of these lines in an inappropriate
     context, it will calculate the contents of the new save file (in order to
     act as a base for future diffs), but not attempt to load it.
@@ -179,7 +179,7 @@ lines, separated by newlines:
     via the fact that it starts with a lowercase letter).  If the command
     takes no argument, the line ends there.  Commands that take arguments have
     the arguments specified after a space, and separated by spaces:
-        
+
       * A direction is `D` followed by a decimal integer;
       * A position is `P` followed by two decimal integers (with a comma but
         no space separating them);
@@ -188,7 +188,7 @@ lines, separated by newlines:
       * A string is `T` followed by that string encoded in base 64;
       * A spell letter is `S` followed by that letter;
       * A limit is `L` followed by the limit (in decimal).
-      
+
   * A 'time' line starts with `+`, and contains a number of microseconds in
     hexadecimal; this is a relative offset from the previous save backup, save
     diff, or time line in the file (whichever is most recent), and lists the
@@ -225,7 +225,7 @@ lines, separated by newlines:
 
   * There are also some pseudo-user-input lines, for inputs into the gamestate
     that don't come from the user:
-  
+
     * `B!` no bones file was found, when an attempt was made to load one
     * `B`  (when followed by base 64 data) a bones file was loaded
     * `Q`  game over, the character died/quit/escaped/etc.
@@ -273,7 +273,7 @@ or not.  This gives several advantages over the previous method:
     identical to processes that would be used to play the game.  For the same
     reason, it is possible for one process to replay a game while another
     process is playing it.
-  
+
   * There is no distinction between watching and replaying a game, and
     converting between watching and playing a game is very easy (a process
     simply changes its mind about whether it's willing to write to the file or
@@ -290,7 +290,7 @@ To be able to ensure that this works correctly, processes that manipulate
 NetHack save files need to follow the following rules:
 
   * The only ways in which the save file may ever be written to are:
-  
+
      * Creating the file (together with its header information);
      * Overwriting the (fixed-length) fields containing the information about
        the current state of the game, or the location of the last save backup;
@@ -317,12 +317,12 @@ NetHack save files need to follow the following rules:
   * If a process aims to write to a file, but (after obtaining the write lock)
     determines that the file is longer than it expected, it should cancel its
     attempt to write, and ignore the input that caused it to try to write.
-  
+
   * A process should never react to user input in a way that changes the
     gamestate, unless it has first managed to log that user input to the file.
     This means that all processes will always have the same opinion about what
     the current gamestate is.
-    
+
   * If a process ever discovers that a file does not end with a newline, while
     it hold at least a read lock, it must recover it. A file is recovered via
     the following mechanism:
@@ -376,14 +376,14 @@ NetHack save files need to follow the following rules:
   * In order to establish a write lock on a file, a process should start by
     attempting to grab the lock in a non-blocking way.  If it fails, it should
     check to see which processes are blocking the lock:
-    
+
       * If there are no processes blocking the placement of the lock, it should
         try again immediately;
 
       * If there is a conflicting write lock, then the process should block on
         the placement of the lock (and complain that something is wrong after
         2 seconds);
-      
+
       * If there are one or more conflicting read locks, then the process
         should request all existing readers to relinquish their lock.  The way
         in which this is done is to send SIGRTMIN+1 to one reader, then block
@@ -404,7 +404,7 @@ NetHack save files need to follow the following rules:
     relinquish its read lock as soon as possible; then send SIGRTMIN+4 back to
     the original process. Then it should wait for a SIGRTMIN+2 signal, or for
     1 second, before re-establishing the lock.
-    
+
   * Whenever a process receives SIGRTMIN+4 (which only happens while it is
     trying to place a write lock), it should look for further processes
     holding a lock on the file, and send SIGRTMIN+1 to them (if any). This is
@@ -414,7 +414,7 @@ NetHack save files need to follow the following rules:
     SIGRTMIN+2.  Which signals are used depends on the relative values of the
     PIDs of the sender and recipient; the purpose of this mechanism is to
     provide asymmetry in order to resolve what would otherwise be deadlocks.
-    
+
     See the comments in libnethack/src/files.c for a hugely detailed
     explanation of how all this works.
 
@@ -474,13 +474,13 @@ to move its binary save location forward in the file:
     location, the binary save location is moved forward to that backup (the
     current binary save is marked as unloaded, and will be loaded from that
     save backup if it becomes relevant);
-    
+
   * Otherwise, if the next save diff in the file exists and is before the
     target location, the current binary save is loaded (causing a desync if
     the binary save cannot be loaded), then the binary save location is moved
     forwards to that diff, and the binary save is changed via applying that
     diff;
-    
+
   * Otherwise, the binary save location is in the right place; the game is
     loaded from the binary save (setting the gamestate location to the binary
     save location), then the game is replayed one step at a time via reading
@@ -489,7 +489,7 @@ to move its binary save location forward in the file:
     appears when no command is expected, or a user input line provides the
     wrong sort of input), then it's possible that the save was generated via
     a different version of the engine:
-    
+
       * If watching or replaying a game, the gamestate is reloaded from the
         current binary save, and frozen until the next save diff.  Attempts to
         reconstruct the gamestate between the diffs are done entirely from
@@ -565,26 +565,16 @@ into the following categories:
     by `makedefs`.  Because their value never changes during the course of a
     game or from game to game, they do not need to be saved.
 
-  * Game options set by the user (excluding interface options).  These are
-    stored in the `options` and `birth_options` variables.  They are saved two
-    different ways: each game has its own set of options and birth options,
-    saved in the binary file; and each user account also has its own set of
-    options and birth options, saved in dotfiles for local play and in the
-    database for server play.  At new game, the game options are initialized
-    to copies of the user account options, and thereafter do not change unless
-    the user specifically changes them (e.g. using the `O` command).  Options
-    never change except in response to a specific request by the user.
-    
-    In the NetHack 3.4 series, these were supposed to be saved in the `flags`
-    struct, but because that structure was saved via what was effectively a
-    straight `memcpy`, any changes to which options existed would break save
-    compatibility.  This lead to all sorts of hacks (the main one being the
-    addition of various state to `iflags` instead).  Options are saved by
-    name, not index, in the NetHack 4.3 series; any options that are not saved
-    in the save file will be assumed to be newly introduced options and given
-    default values, and unrecognised options will be assumed to be recently
-    deleted options and ignored.  (TODO: This description does not appear to
-    match the current reality.)
+  * The `flags` structure contains persistent state relating to the game as a
+    whole; most of this is game options (which are saved with the game, and
+    include birth options as a special case).  The values of the fields of
+    `flags` are turned back into option values by the options code when it's
+    necessary to report what a game's option values are.
+
+    This structure also contains any state that describes the previous command
+    (such as is necessary to track whether phase-of-moon updates have happened
+    since the previous command, and as is necessary for the `repeat` command
+    (default binding `Ctrl-A`) to work).
 
   * State that tracks the current progress of commands being executed, in the
     global variable `turnstate`.  This contains information about, say,
@@ -603,12 +593,10 @@ into the following categories:
     is responsible for the entire binary save.  (Birth options are saved as
     dungeon state; regular options as player state.)
 
-    While the program is running, these are stored in `gamestate`, `levels`,
-    and `us` respectively.  (`level` is a pointer into `levels`, and `u` a
-    pointer into `us`, that describe the current player's dungeon level, and
-    the current player, respectively.  Currently `us` is not implemented, and
-    the code just uses `&u` instead; this will change when multiplayer is
-    implemented.)
+    These are currently stored in global variables of their own, the main ones
+    being `u` and `levels` (but with plenty of smaller ones, such as `invent`
+    and `migrating_mons`).  Eventually, we hope to merge all these into just a
+    few globals (`u`, `levels`, and a new one for dungeon-wide information).
 
   * State involved with managing the save system (current log file descriptor,
     target location, information about whether a state is being loaded, etc.).
@@ -643,8 +631,11 @@ Save diff format
 ----------------
 
 Binary saves can be saved as-is (in a save backup line); however, more
-commonly, they're saved as a diff from the previous backup save. This section
-describes the diff format.
+commonly, they're saved as a diff from the previous backup save.  This section
+describes the diff format.  There are actual multiple diff formats in use, to
+be able to read old save files:
+
+### 4.3-beta1
 
 In 4.3-beta1, a diff consisted of a number of 16-bit commands, each of which
 could be followed by bytes of data.  The commands were little-endian numbers,
@@ -677,10 +668,14 @@ Here are the commands that were in use:
 This diff format worked quite well in practice, but there was scope for
 improvement.  The vast majority of most diffs consisted of medium-sized copies
 alternating with small edits, with the occasional very large copy.  Large
-edits and seeks were both possible, but both rare.
+edits and seeks were both possible, but both rare.  Additionally, when level
+files got larger (e.g. during farming), sometimes 14 bits was not enough to
+represent the size of a copy.
 
-4.3-beta2 introduces a new diff format that requires less space to express
-these common structures.  The same commands are used, but expressed
+### 4.3-beta2
+
+4.3-beta2 introduced a new diff format that requires less space to express
+these common structures.  The same commands were used, but expressed
 differently.  (The endianness is also different; commands are big-endian so
 that they can be variable-length.):
 
@@ -716,3 +711,154 @@ old saves from 4.3-beta1.)
 The sequence `00000000 00000000` (copy 0, edit 1) is specifically disallowed,
 so that it can be used as an EOF marker.  The runtime engine substitutes
 `10100000 00000000 00000000 00000001` instead.
+
+### 4.3-beta3
+
+4.3-beta3 makes further improvements to the save diff format, after making
+further observations about the sort of data that we're diffing.
+
+The key is to use different encodings for different parts of the file.  We
+have a large number of commands, some quite specialized.  The encodings of the
+commands change dynamically depending on how recently they've been used:
+
+        00     most recently used
+        01 2nd most recently used
+      1000 3rd most recently used
+      1001 4th most recently used
+      1010 5th most recently used
+      1011 6th most recently used
+    110000 7th most recently used
+    110001 8th most recently used
+    110010 9th most recently used
+
+The pattern continues; the general rule is that the first half of the encoding
+ends with a `0` and is otherwise made of `1`s; and the second half of the
+encoding can have arbitrary values.
+
+Each command takes one or more arguments.  (Data used for an edit isn't
+counted as an argument to the command; the argument to an edit is the size of
+the edit.)  All but one of these arguments has a fixed number of bits; the
+remaining argument has a minimum number of bits, but will be given extra bits
+if need be in order to bring the command up to a whole number of bytes.  The
+number of bits for each command are listed in `decl.h`.  For example,
+`mdiff_copyedit` is listed as having "12+ bits copy size; 2 bits edit size
+(1-5)".  It thus could be encoded as:
+
+  * `00xxyyyy yyyyyyyy` if it were the most recently used command (note that
+    the arguments are encoded in reverse order, with the flexible one coming
+    last);
+  * `1000xxyy yyyyyyyy yyyyyyyyy` if it were the third most recently used
+    command (the copy size has stretched up to 18 bits here, because 10 bits
+    wouldn't fit the requirement to be 12+, and 18 bits is the next-largest
+    number that makes the command a whole number of bytes long).
+
+In some cases, the argument we'd want to use to a command won't fit in the
+command's default size.  In such a case, we precede it with the encoding for
+the `mdiff_wider` "command", which causes one extra byte to be added to the
+flexible part of the command over what would normally be necessary.  For
+example, suppose `mdiff_copyedit` is the most recently used command, and
+`mdiff_wider` is the third most recently used command:
+
+  * `00xxyyyy yyyyyyyy` is the simplest case of a copyedit command, with 12
+    bits of copy size and 2 bits of edit size.
+  * `100001xx yyyyyyyy yyyyyyyy yyyyyyyy` is the next-simplest case of a
+    copyedit command.  The encoding of `mdiff_wider` is `1000`.  We then give
+    the `mdiff_copyedit` command immediately (without rounding up
+    `mdiff_wider` to a whole number of bytes); it's now the second most
+    recently used command, so its encoding becomes `01`.  We now need 2 bits
+    of edit size (which doesn't change, because it's a fixed-size argument),
+    and at least 20 bits of copy size (`mdiff_copyedit` normally takes at
+    least 12, but `mdiff_wider` adds on another 8 bits); this is rounded up to
+    a whole number of bytes for the whole command, which happens in this case
+    to be 24.
+  * `10000001 xxyyyyyy yyyyyyyy yyyyyyyy yyyyyyyy` is what we get if we widen
+    once more.  The encoding of `mdiff_wider` is `1000`, as before.  We then
+    give the command again to make it even wider; the encoding is now `00`,
+    because it's the most recently used command.  Then we give
+    `mdiff_copyedit`, the second most recently used command, encoded as `01`.
+    We then need to encode our 2 bits of edit size (as always), and at least
+    28 bits of copy size (12 + 8 + 8), which here rounds up to 30 in order to
+    make the command as a whole a whole number of bytes.
+
+This scheme thus allows arbitrary commands to be given arbitrarily large
+flexible arguments.  Because `mdiff_seek`, `mdiff_copy` and `mdiff_edit` are
+all provided as commands, arbitrary diffs can thus be encoded.  (A diff ends
+with an `mdiff_eof` command, and starts with a header `00000001 01000011`;
+this makes it possible to find the end of the diff, and recognise the format
+that the diff is in.)
+
+Diffs are created by starting with the same algorithm as in 4.3-beta2; this
+produces a list of copyedit and seek commands (probably with one copy command
+at the end).  Seeks are just encoded using a (potentially widened)
+`mdiff_seek`.  For copyedits, we try each possible command that could encode
+it to see which leads to the shortest encoding (the save system itself can
+also give hints).
+
+As an example, in one of the games I use to test the save system, I have the
+following copyedit instruction (which happened to decrement the byte that was
+there before):
+
+    copy 125739 edit 1
+
+Assuming the commands start in their default order, this could be encoded via
+any of the following methods:
+
+  * `mdiff_wider` + `mdiff_wider` + `mdiff_copy` 125739; `mdiff_edit` 1; 1
+    byte data
+
+           wider     size = 125739              size = 1
+              --     ----------------------     ----
+        11000000 10000001 11101011 00101011 10010000 xxxxxxxx
+        ------   ----                       ----     --------
+        wider    copy                       edit     data
+
+  * `mdiff_wider` + `mdiff_copyedit` 125739, 1; 1 byte data
+
+        copyedit    size = 125739
+              --    -----------------------
+        11000001 00000001 11101011 00101011 xxxxxxxx
+        ------   --                         --------
+        wider    edit size = 1              data
+
+    Unsurprisingly, a copyedit instruction is shorter than separate copy and
+    edit instructions on short data.
+
+  * `mdiff_copy` 23; `mdiff_wider` + `mdiff_coord` 1479, north
+
+        size = 23    coord     size = 1479
+          ------     -------   ------------
+        01010111 11011100 00010101 11000111
+        --       ----       ---
+        copy     wider      dir = north
+
+    The main purpose of `mdiff_coord` is to abbreviate the case where the only
+    thing changing with monsters is their x and y coordinates, but it can also
+    be used in other cases where individual elements are just being
+    incremented and decremented.  Because `mdiff_coord` is intended for
+    monsters, its size is given in units of 85 bytes, and measured from the
+    end of the last `mdiff_size` command or start of the last `mdiff_coord`
+    command.  This means that we need to specify the size using `mdiff_copy`
+    and `mdiff_coord` as 23 + (1479 * 85) or 125738; the next byte is
+    interpreted as an x coordinate and copied untouched; the byte after (the
+    one we want to edit) is interpreted as a y coordinate and decremented
+    while being copied (thus editing it in the way we want).
+
+In the actual file, the byte in question was in fact the y coordinate of a
+monster.  The next command was `copy 168 edit 2`, with the edits being a
+decrement and an increment in that order.  This can now be encoded as
+"`mdiff_coord` 1, south-west", which is a single byte:
+
+    dir = south-west
+       ---
+     00111001
+     --   ---
+    coord size = 1
+
+(Why does a size of 1 translate to 168 bytes copied? Because the first
+position at a multiple of 85 from the start of the previous `mdiff_coord` is a
+copy of 83, which would be a size of 0, so a size of 1 must mean 83 + 85
+= 168.)
+
+The use of specific commands to handle cases like monster movement (that are
+responsible for the bulk of the save file size in 4.3-beta2) means
+that 4.3-beta3 can encode these problematic cases much more succintly.
