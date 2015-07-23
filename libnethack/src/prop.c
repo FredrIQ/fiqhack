@@ -545,7 +545,7 @@ enlightenment(int final)
     if (Fumbling)
         enl_msg(&menu, "You fumble", "", "d", "");
     if (Wounded_legs && !u.usteed)
-        you_have(&menu, msgcat("wounded", makeplural(body_part(LEG))));;
+        you_have(&menu, msgcat("wounded ", makeplural(body_part(LEG))));;
     if (Wounded_legs && u.usteed && wizard) {
         const char *buf =
             x_monnam(u.usteed, ARTICLE_YOUR, NULL,
