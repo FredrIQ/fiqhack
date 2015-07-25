@@ -166,7 +166,10 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
        semantics of the command, but the interface used to enter it.)  We do
        this here so that we get lava protection checks against attempted moves
        into water or lava when stunned or confused, but not against randomized
-       ones; and so that we don't erode engravings, etc.. */
+       ones; and so that we don't erode engravings, etc..
+
+       Also veto moves into walls, with no message unless we can't see the
+       wall. Again, this can be overriden using "moveonly". */
     if (!last_command_was("moveonly")) {
         boolean lava = l->mem_bg == S_lava;
         boolean pool = l->mem_bg == S_pool;
@@ -182,6 +185,13 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
                 pline("As far as you can remember, it's "
                       "not safe to stand there.");
             pline("(Use the 'moveonly' command to move there anyway.)");
+            return uia_halt;
+        }
+
+        if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall) {
+            if (!cansee(x, y))
+                pline("Use the 'moveonly' command to move into a "
+                      "remembered wall.");
             return uia_halt;
         }
     }
@@ -1395,6 +1405,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         !getargdir(arg, NULL, &turnstate.move.dx, &turnstate.move.dy, &dz))
         return 0;
 
+    if (turnstate.intended_dx == 0 && turnstate.intended_dy == 0) {
+        turnstate.intended_dx = turnstate.move.dx;
+        turnstate.intended_dy = turnstate.move.dy;
+    }
+
     if (dz) {
         action_completed();
         if (dz < 0)
@@ -1596,6 +1611,10 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         while (!isok(x, y) || bad_rock(youmonst.data, x, y)) {
             if (tries++ > 50 || (!Stunned && !Confusion)) {
                 action_completed();
+                if (isok(x, y)) {
+                    feel_location(x, y);
+                    pline("Oof! You walk into something hard.");
+                }
                 return 1;
             }
             confdir(&turnstate.move.dx, &turnstate.move.dy);
