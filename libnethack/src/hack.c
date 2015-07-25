@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-07-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -363,6 +363,7 @@ moverock(schar dx, schar dy)
                         fill_pit(level, u.ux, u.uy);
                         if (cansee(rx, ry))
                             newsym(rx, ry);
+                        newsym(sx, sy);
                         continue;
                     }
                     break;
@@ -379,6 +380,7 @@ moverock(schar dx, schar dy)
                     }
                     if (mtmp && !Blind)
                         newsym(rx, ry);
+                    newsym(sx, sy);
                     continue;
                 case HOLE:
                 case TRAPDOOR:
@@ -399,6 +401,7 @@ moverock(schar dx, schar dy)
                     bury_objs(level, rx, ry);
                     if (cansee(rx, ry))
                         newsym(rx, ry);
+                    newsym(sx, sy);
                     continue;
                 case TELEP_TRAP:
                     if (u.usteed)
@@ -410,6 +413,7 @@ moverock(schar dx, schar dy)
                               the(xname(otmp)));
                     rloco(otmp);
                     seetrap(ttmp);
+                    newsym(sx, sy);
                     continue;
                 case LEVEL_TELEP:
                     if (In_endgame(&u.uz)) {
@@ -438,6 +442,7 @@ moverock(schar dx, schar dy)
                     deliver_object(otmp, dest.dnum, dest.dlevel,
                                    MIGR_RANDOM);
                     seetrap(ttmp);
+                    newsym(sx, sy);
                     continue;
                 }
             if (closed_door(level, rx, ry))
@@ -1506,9 +1511,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
            would happen if we'd called doopen directly rather than domove). */
         return doopen(&newarg);
     case uia_pushboulder:
-        if (moverock(turnstate.move.dx, turnstate.move.dy))
-            return 1;
-        /* otherwise, we fall through to a move */
+        /* try to push the boulder */
+        moverock(turnstate.move.dx, turnstate.move.dy);
+        /* whether we succeeded or not, fall through to a move */
         uia = uia_move_nopickup;
         cache.instead_of_pushing_boulder = TRUE;
         break;
