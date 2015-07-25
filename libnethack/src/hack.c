@@ -1488,6 +1488,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
 
     arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &newarg);
 
+    if (turnstate.intended_dx == 0 && turnstate.intended_dy == 0)
+        impossible("Intending to move to your own location?");
+
     /* This "move" might be something other than a move that was entered using
        the movement commands. Farm it out to the appropriate uia handler, in
        most cases. (We do this even for farmoves; in this case, we'll get an
