@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-07-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -166,7 +166,10 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
        semantics of the command, but the interface used to enter it.)  We do
        this here so that we get lava protection checks against attempted moves
        into water or lava when stunned or confused, but not against randomized
-       ones; and so that we don't erode engravings, etc.. */
+       ones; and so that we don't erode engravings, etc..
+
+       Also veto moves into walls, with no message unless we can't see the
+       wall. Again, this can be overriden using "moveonly". */
     if (!last_command_was("moveonly")) {
         boolean lava = l->mem_bg == S_lava;
         boolean pool = l->mem_bg == S_pool;
@@ -182,6 +185,13 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
                 pline("As far as you can remember, it's "
                       "not safe to stand there.");
             pline("(Use the 'moveonly' command to move there anyway.)");
+            return uia_halt;
+        }
+
+        if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall) {
+            if (!cansee(x, y))
+                pline("Use the 'moveonly' command to move into a "
+                      "remembered wall.");
             return uia_halt;
         }
     }
@@ -363,6 +373,7 @@ moverock(schar dx, schar dy)
                         fill_pit(level, u.ux, u.uy);
                         if (cansee(rx, ry))
                             newsym(rx, ry);
+                        newsym(sx, sy);
                         continue;
                     }
                     break;
@@ -379,6 +390,7 @@ moverock(schar dx, schar dy)
                     }
                     if (mtmp && !Blind)
                         newsym(rx, ry);
+                    newsym(sx, sy);
                     continue;
                 case HOLE:
                 case TRAPDOOR:
@@ -399,6 +411,7 @@ moverock(schar dx, schar dy)
                     bury_objs(level, rx, ry);
                     if (cansee(rx, ry))
                         newsym(rx, ry);
+                    newsym(sx, sy);
                     continue;
                 case TELEP_TRAP:
                     if (u.usteed)
@@ -410,6 +423,7 @@ moverock(schar dx, schar dy)
                               the(xname(otmp)));
                     rloco(otmp);
                     seetrap(ttmp);
+                    newsym(sx, sy);
                     continue;
                 case LEVEL_TELEP:
                     if (In_endgame(&u.uz)) {
@@ -438,6 +452,7 @@ moverock(schar dx, schar dy)
                     deliver_object(otmp, dest.dnum, dest.dlevel,
                                    MIGR_RANDOM);
                     seetrap(ttmp);
+                    newsym(sx, sy);
                     continue;
                 }
             if (closed_door(level, rx, ry))
@@ -1390,6 +1405,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         !getargdir(arg, NULL, &turnstate.move.dx, &turnstate.move.dy, &dz))
         return 0;
 
+    if (turnstate.intended_dx == 0 && turnstate.intended_dy == 0) {
+        turnstate.intended_dx = turnstate.move.dx;
+        turnstate.intended_dy = turnstate.move.dy;
+    }
+
     if (dz) {
         action_completed();
         if (dz < 0)
@@ -1468,6 +1488,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
 
     arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &newarg);
 
+    if (turnstate.intended_dx == 0 && turnstate.intended_dy == 0)
+        impossible("Intending to move to your own location?");
+
     /* This "move" might be something other than a move that was entered using
        the movement commands. Farm it out to the appropriate uia handler, in
        most cases. (We do this even for farmoves; in this case, we'll get an
@@ -1506,9 +1529,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
            would happen if we'd called doopen directly rather than domove). */
         return doopen(&newarg);
     case uia_pushboulder:
-        if (moverock(turnstate.move.dx, turnstate.move.dy))
-            return 1;
-        /* otherwise, we fall through to a move */
+        /* try to push the boulder */
+        moverock(turnstate.move.dx, turnstate.move.dy);
+        /* whether we succeeded or not, fall through to a move */
         uia = uia_move_nopickup;
         cache.instead_of_pushing_boulder = TRUE;
         break;
@@ -1591,6 +1614,10 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         while (!isok(x, y) || bad_rock(youmonst.data, x, y)) {
             if (tries++ > 50 || (!Stunned && !Confusion)) {
                 action_completed();
+                if (isok(x, y)) {
+                    feel_location(x, y);
+                    pline("Oof! You walk into something hard.");
+                }
                 return 1;
             }
             confdir(&turnstate.move.dx, &turnstate.move.dy);
