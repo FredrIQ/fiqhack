@@ -490,7 +490,7 @@ const struct permonst mons[] = {
         SIZ(1450, 400, 0, MS_HISS, MZ_HUMAN), 0, 0,
         M1_HUMANOID | M1_FLY | M1_SEE_INVIS | M1_OMNIVORE,
         M2_HOSTILE | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_COLLECT,
-        M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_SKILLED
+        M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_SKILLED,
         CLR_BRIGHT_MAGENTA | HI_ULINE),
 /*
  * imps & other minor demons/devils
@@ -1805,7 +1805,7 @@ const struct permonst mons[] = {
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(1600, 500, 0, MS_GRUNT, MZ_LARGE), 0, 0, M1_HUMANOID | M1_CARNIVORE,
         M2_STRONG | M2_GREEDY | M2_JEWELS | M2_COLLECT,
-        M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_BASIc, CLR_BROWN),
+        M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_BASIC, CLR_BROWN),
     MON("ogre lord", S_OGRE,
         LVL(7, 12, 3, 30, -5), (G_GENO | 2),
         A(ATTK(AT_WEAP, AD_PHYS, 2, 6),
@@ -2345,7 +2345,7 @@ const struct permonst mons[] = {
         SIZ(WT_HUMAN, 400, 0, MS_WERE, MZ_HUMAN), MR_POISON, 0,
         M1_HUMANOID | M1_POIS | M1_REGEN | M1_OMNIVORE,
         M2_NOPOLY | M2_WERE | M2_HOSTILE | M2_HUMAN | M2_COLLECT,
-        M3_INFRAVISIBLE, MP_WAND_BASIC, , CLR_GREEN | HI_ULINE),
+        M3_INFRAVISIBLE, MP_WAND_BASIC, CLR_GREEN | HI_ULINE),
     MON("elf", S_HUMAN,
         LVL(10, 12, 10, 2, -3), G_NOGEN,        /* for corpses */
         A(ATTK(AT_WEAP, AD_PHYS, 1, 8),
@@ -2377,7 +2377,7 @@ const struct permonst mons[] = {
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(WT_ELF, 350, 0, MS_HUMANOID, MZ_HUMAN), MR_SLEEP, MR_SLEEP,
         M1_HUMANOID | M1_OMNIVORE | M1_SEE_INVIS,
-        M2_ELF | M2_COLLECT, M3_INFRAVISIBLE | M3_INFRAVISION
+        M2_ELF | M2_COLLECT, M3_INFRAVISIBLE | M3_INFRAVISION,
         MP_WAND_BASIC, CLR_GRAY),
     MON("elf-lord", S_HUMAN,
         LVL(8, 12, 10, 20, -9), (G_GENO | G_SGROUP | 2),
@@ -3360,7 +3360,7 @@ const struct permonst mons[] = {
         SIZ(WT_HUMAN, 400, 0, MS_GUARDIAN, MZ_HUMAN), 0, 0,
         M1_TUNNEL | M1_NEEDPICK | M1_HUMANOID | M1_OMNIVORE,
         M2_NOPOLY | M2_HUMAN | M2_PEACEFUL | M2_STRONG | M2_COLLECT,
-        M3_INFRAVISIBLE, MP_WAND_BASIC
+        M3_INFRAVISIBLE, MP_WAND_BASIC,
         HI_GUARDIAN),
     MON("chieftain", S_HUMAN,
         LVL(5, 12, 10, 10, 0), G_NOGEN,
@@ -3482,7 +3482,7 @@ const struct permonst mons[] = {
     MON("", 0,
         LVL(0, 0, 0, 0, 0), (0),
         A(NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
-        SIZ(0, 0, 0, 0, 0), 0, 0, 0L, 0L, 0, 0)
+        SIZ(0, 0, 0, 0, 0), 0, 0, 0L, 0L, 0, 0, 0)
 };
 
 /*monst.c*/
