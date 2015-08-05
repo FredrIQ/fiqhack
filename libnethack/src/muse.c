@@ -1160,6 +1160,104 @@ mbhitm(struct monst *mtmp, struct obj *otmp)
     return 0;
 }
 
+/* Used for critical failures with wand use. Might also see
+   use if monsters learn to break wands intelligently.
+   FIXME: merge this with do_break_wand() */
+static void
+mon_break_wand(struct monst *mtmp, struct obj *otmp) {
+    static const char nothing_else_happens[] = "But nothing else happens...";
+    int i, x, y;
+    int damage;
+    int expltype;
+    int otyp;
+    boolean oseen = mon_visible(mtmp);
+    boolean affects_objects;
+
+    otyp = otmp->otyp;
+    affects_objects = FALSE;
+    otmp->ox = mtmp->mx;
+    otmp->oy = mtmp->my;
+
+    /* damage */
+    damage = otmp->spe * 4;
+    if (otyp != WAN_MAGIC_MISSILE)
+        damage *= 2;
+    if (otyp == WAN_DEATH || otyp == WAN_LIGHTNING)
+        damage *= 2;
+
+    /* explosion color */
+    if (otyp == WAN_FIRE)
+        expltype = EXPL_FIERY;
+    else if (otyp == WAN_COLD)
+        expltype = EXPL_FROSTY; 
+    else
+        expltype = EXPL_MAGICAL;
+
+    /* (non-sleep) ray explosions */
+    if (otyp == WAN_DEATH
+     || otyp == WAN_FIRE
+     || otyp == WAN_COLD
+     || otyp == WAN_LIGHTNING
+     || otyp == WAN_MAGIC_MISSILE)
+        explode(otmp->ox, otmp->oy, (otyp - WAN_MAGIC_MISSILE), dmg, WAND_CLASS,
+                expltype, NULL);
+    else {
+        if (otyp == WAN_STRIKING) {
+            if (mon_visible(mtmp))
+                pline("A wall of force smashes down around %s!",
+                      mon_nam(mtmp));
+            damage = dice(1 + otmp->otyp, 0);
+        }
+        if (otyp == WAN_STRIKING
+         || otyp == WAN_CANCELLATION
+         || otyp == WAN_POLYMORPH
+         || otyp == WAN_TELEPORTATION
+         || otyp == WAN_UNDEAD_TURNING)
+            affects_objects = TRUE;
+
+        explode(otmp->ox, otmp->oy, 0, rnd(damage), WAND_CLASS, expltype, NULL);
+
+        /* affect all tiles around the monster */
+        for (i = 0; i <= 8; i++) {
+            bhitpos.x = x = obj->ox + xdir[i];
+            bhitpos.y = y = obj->oy + ydir[i];
+            if (!isok(x, y))
+                continue;
+
+            if (otyp == WAN_DIGGING && dig_check(BY_OBJECT, FALSE, x, y)) {
+                if (IS_WALL(level->locations[x][y].typ) ||
+                    IS_DOOR(level->locations[x][y].typ)) {
+                    /* add potential shop damage for fixing */
+                    if (*in_rooms(level, x, y, SHOPBASE))
+                        add_damage(bhitpos.x, bhitpos.y, 0L);
+                }
+                digactualhole(x, y, BY_OBJECT,
+                              (rn2(otmp->spe) < 3 ||
+                               !can_dig_down(level)) ? PIT : HOLE);
+            } else if (otyp == WAN_CREATE_MONSTER) {
+                makemon(NULL, level, otmp->ox, otmp->oy, MM_CREATEMONSTER | MM_CMONSTER_U);
+            } else {
+                /* avoid telecontrol/autopickup shenanigans */
+                if (x == u.ux && y == u.uy) {
+                    if (otyp == WAN_TELEPORTATION &&
+                        level->objects[x][y]) {
+                        bhitpile(obj, bhito, x, y);
+                        bot();  /* potion effects */
+                    }
+                } else if ((mon = m_at(level, x, y)) != 0) {
+                    mbhitm(mon, obj);
+                }
+                if (affects_objects && level->objects[x][y]) {
+                    bhitpile(obj, bhito, x, y);
+                    bot();      /* potion effects */
+                }
+            }
+        }
+    }
+    if (obj->otyp == WAN_LIGHT)
+    litroom(TRUE, obj);     /* only needs to be done once */
+}
+
 /* A modified bhit() for monsters.  Based on beam_hit() in zap.c.  Unlike
  * buzz(), beam_hit() doesn't take into account the possibility of a monster
  * zapping you, so we need a special function for it.  (Unless someone wants
@@ -1264,6 +1362,7 @@ int
 use_offensive(struct monst *mtmp, struct musable *m)
 {
     int i;
+    int wandlevel;
     struct obj *otmp = m->offensive;
     boolean oseen;
 
@@ -1274,6 +1373,10 @@ use_offensive(struct monst *mtmp, struct musable *m)
     if (oseen)
         examine_object(otmp);
 
+    /* wand efficiency is determined by a monster's proficiency
+       with wands and adjusted by +/-1 based on BUC.
+       cursed + unskilled results in an effect similar to breaking
+       wands. */
     switch (m->has_offense) {
     case MUSE_WAN_DEATH:
     case MUSE_WAN_SLEEP:
@@ -1281,16 +1384,50 @@ use_offensive(struct monst *mtmp, struct musable *m)
     case MUSE_WAN_COLD:
     case MUSE_WAN_LIGHTNING:
     case MUSE_WAN_MAGIC_MISSILE:
+    case MUSE_WAN_TELEPORTATION:
+    case MUSE_WAN_STRIKING:
+        wandlevel = mprof(mtmp, MP_WANDS);
+        if (!otmp->cursed)
+            wandlevel++;
+        if (otmp->blessed)
+            wandlevel++;
+        zap_oseen = oseen;
         mzapmsg(mtmp, otmp, FALSE);
-        otmp->spe--;
+        if (wandlevel != 0)
+            otmp->spe--;
         if (oseen)
             makeknown(otmp->otyp);
         m_using = TRUE;
-        buzz((int)(-30 - (otmp->otyp - WAN_MAGIC_MISSILE)),
-             (otmp->otyp == WAN_MAGIC_MISSILE) ? 2 : 6, mtmp->mx, mtmp->my,
-             sgn(tbx), sgn(tby));
-        m_using = FALSE;
-        return (mtmp->mhp <= 0) ? 1 : 2;
+
+        if (wandlevel == 0) {
+            /* critical failure */
+            if (oseen)
+                pline("The %s breaks in two!", xname(otmp));
+            
+            mon_break_wand(mtmp, otmp);
+            m_useup(mtmp, otmp);
+            return (mtmp->mhp <= 0) ? 1 : 2;
+        }
+
+        /* FIXME: make buzz() handle any zap */
+        if (otmp->otyp == WAN_TELEPORTATION ||
+            otmp->otyp == WAN_STRIKING) {
+            zap_oseen = oseen;
+            mzapmsg(mtmp, otmp, FALSE);
+            otmp->spe--;
+            m_using = TRUE;
+            mbhit(mtmp, rn1(8, 6), mbhitm, bhito, otmp);
+            m_using = FALSE;
+            return 2;
+        } else {
+            buzz((int)(-30 - (otmp->otyp - WAN_MAGIC_MISSILE)),
+                 (otmp->otyp == WAN_MAGIC_MISSILE) ? 2 : 6, mtmp->mx, mtmp->my,
+                 sgn(tbx), sgn(tby));
+    
+            m_using = FALSE;
+            return (mtmp->mhp <= 0) ? 1 : 2;
+        }
+
     case MUSE_FIRE_HORN:
     case MUSE_FROST_HORN:
         if (oseen) {
@@ -1304,15 +1441,6 @@ use_offensive(struct monst *mtmp, struct musable *m)
              rn1(6, 6), mtmp->mx, mtmp->my, sgn(tbx), sgn(tby));
         m_using = FALSE;
         return (mtmp->mhp <= 0) ? 1 : 2;
-    case MUSE_WAN_TELEPORTATION:
-    case MUSE_WAN_STRIKING:
-        zap_oseen = oseen;
-        mzapmsg(mtmp, otmp, FALSE);
-        otmp->spe--;
-        m_using = TRUE;
-        mbhit(mtmp, rn1(8, 6), mbhitm, bhito, otmp);
-        m_using = FALSE;
-        return 2;
     case MUSE_SCR_EARTH:
         {
             /* TODO: handle steeds */

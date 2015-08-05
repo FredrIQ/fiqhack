@@ -717,5 +717,15 @@ on_fire(const struct permonst *mptr, const struct attack *mattk)
     return what;
 }
 
+
+/* check monster proficiency */
+short
+mprof(const struct monst * mon, int proficiency)
+{
+    const struct permonst *ptr = mon->data;
+    /* return the relevant bits. */
+    return (short) (((ptr)->mskill / proficiency) % 4);
+}
+
 /*mondata.c*/
 

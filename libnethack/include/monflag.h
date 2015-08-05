@@ -70,7 +70,8 @@
 # define MR2_FUMBLING       0x4000  /* clumsy */
 
 /* monster skill/proficiency, currently only wands */
-# define MP_WAND_BASIC      0x00000001L /* wands */
+# define MP_WANDS           0x00000001L
+# define MP_WAND_BASIC      0x00000001L
 # define MP_WAND_SKILLED    0x00000002L
 # define MP_WAND_EXPERT     0x00000003L
 
