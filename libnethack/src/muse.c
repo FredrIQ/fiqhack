@@ -1210,7 +1210,7 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
             if (oseen)
                 pline("A wall of force smashes down around %s!",
                       mon_nam(mtmp));
-            damage = dice(1 + otmp->otyp, 0);
+            damage = dice(1 + otmp->spe, 6);
         }
         if (otyp == WAN_STRIKING
          || otyp == WAN_CANCELLATION
