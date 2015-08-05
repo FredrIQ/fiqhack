@@ -1245,21 +1245,21 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
                 if (x == u.ux && y == u.uy) {
                     if (otyp == WAN_TELEPORTATION &&
                         level->objects[x][y]) {
-                        bhitpile(obj, bhito, x, y);
+                        bhitpile(otmp, bhito, x, y);
                         bot();  /* potion effects */
                     }
                 } else if ((mon = m_at(level, x, y)) != 0) {
-                    mbhitm(mon, obj);
+                    mbhitm(mon, otmp);
                 }
                 if (affects_objects && level->objects[x][y]) {
-                    bhitpile(obj, bhito, x, y);
+                    bhitpile(otmp, bhito, x, y);
                     bot();      /* potion effects */
                 }
             }
         }
     }
     if (obj->otyp == WAN_LIGHT)
-    litroom(TRUE, obj);     /* only needs to be done once */
+    litroom(TRUE, otmp);     /* only needs to be done once */
 }
 
 /* A modified bhit() for monsters.  Based on beam_hit() in zap.c.  Unlike
