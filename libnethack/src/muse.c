@@ -1248,10 +1248,9 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
                         bhitpile(otmp, bhito, x, y);
                         bot();  /* potion effects */
                     }
-                    damage = zapyourself(obj, FALSE);
+                    damage = zapyourself(otmp, FALSE);
                     if (damage) {
-                        buf = msgprintf("killed by a wand's explosion");
-                        losehp(damage, buf);
+                        losehp(damage, "killed by a wand's explosion");
                     }
                     bot();      /* blindness */
                 } else if ((mon = m_at(level, x, y)) != 0) {
