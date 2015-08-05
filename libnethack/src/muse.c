@@ -1258,7 +1258,7 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
             }
         }
     }
-    if (obj->otyp == WAN_LIGHT)
+    if (otyp == WAN_LIGHT)
     litroom(TRUE, otmp);     /* only needs to be done once */
 }
 
