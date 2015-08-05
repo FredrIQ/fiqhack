@@ -1163,10 +1163,14 @@ mbhitm(struct monst *mtmp, struct obj *otmp)
 /* Used for critical failures with wand use. Might also see
    use if monsters learn to break wands intelligently.
    FIXME: merge this with do_break_wand() */
+
+/* what? (investigate do_break_wand for this...) */
+#define BY_OBJECT       (NULL)
+
 static void
 mon_break_wand(struct monst *mtmp, struct obj *otmp) {
-    static const char nothing_else_happens[] = "But nothing else happens...";
     int i, x, y;
+    struct monst *mon;
     int damage;
     int expltype;
     int otyp;
@@ -1199,11 +1203,11 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
      || otyp == WAN_COLD
      || otyp == WAN_LIGHTNING
      || otyp == WAN_MAGIC_MISSILE)
-        explode(otmp->ox, otmp->oy, (otyp - WAN_MAGIC_MISSILE), dmg, WAND_CLASS,
+        explode(otmp->ox, otmp->oy, (otyp - WAN_MAGIC_MISSILE), damage, WAND_CLASS,
                 expltype, NULL);
     else {
         if (otyp == WAN_STRIKING) {
-            if (mon_visible(mtmp))
+            if (oseen)
                 pline("A wall of force smashes down around %s!",
                       mon_nam(mtmp));
             damage = dice(1 + otmp->otyp, 0);
@@ -1219,8 +1223,8 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
 
         /* affect all tiles around the monster */
         for (i = 0; i <= 8; i++) {
-            bhitpos.x = x = obj->ox + xdir[i];
-            bhitpos.y = y = obj->oy + ydir[i];
+            bhitpos.x = x = otmp->ox + xdir[i];
+            bhitpos.y = y = otmp->oy + ydir[i];
             if (!isok(x, y))
                 continue;
 

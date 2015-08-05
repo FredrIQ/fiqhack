@@ -1159,6 +1159,7 @@ extern const char *locomotion(const struct permonst *, const char *);
 extern const char *stagger(const struct permonst *, const char *);
 extern const char *on_fire(const struct permonst *, const struct attack *);
 extern const struct permonst *raceptr(struct monst *);
+extern short mprof(const struct monst *, int);
 
 /* ### monmove.c ### */
 
