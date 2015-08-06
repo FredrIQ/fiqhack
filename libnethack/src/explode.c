@@ -384,8 +384,12 @@ explode(int x, int y, int type, /* the same as in zap.c */
             if (olet == MON_EXPLODE) {
                 killer = killer_msg(death, an(str));
             } else if (type >= 0 && olet != SCROLL_CLASS) {
-                killer = msgprintf("caught %sself in %s own %s", uhim(),
-                                   uhis(), str);
+                /* check whether or not we were the source of the explosion */
+                if (!flags.mon_moving)
+                    killer = msgprintf("caught %sself in %s own %s", uhim(),
+                                       uhis(), str);
+                else
+                    killer = msgprint("killed by a %s", str);
             } else if (!strcmp(str, "burning oil")) {
                 /* This manual check hack really sucks */
                 killer = killer_msg(death, str);
