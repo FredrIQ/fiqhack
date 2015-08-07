@@ -1,10 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-07-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "lev.h"
+#include "trietable.h"
 #include <stdint.h>
 
 static void restore_autopickup_rules(struct memfile *mf,
@@ -14,7 +15,8 @@ static void find_lev_obj(struct level *lev);
 static void restlevchn(struct memfile *mf);
 static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly);
 static void restobjchn(struct memfile *mf, struct level *lev,
-                       boolean ghostly, boolean frozen, struct obj **chain);
+                       boolean ghostly, boolean frozen, struct obj **chain,
+                       struct trietable **table);
 static struct monst *restmonchn(struct memfile *mf, struct level *lev,
                                 boolean ghostly);
 static struct fruit *loadfruitchn(struct memfile *mf);
@@ -61,7 +63,7 @@ find_lev_obj(struct level *lev)
         for (y = 0; y < ROWNO; y++)
             lev->objects[x][y] = NULL;
 
-    /* 
+    /*
      * Reverse the entire lev->objlist chain, which is necessary so that we can
      * place the objects in the proper order.  Make all obj in chain
      * OBJ_FREE so place_object will work correctly.
@@ -114,7 +116,7 @@ restlevchn(struct memfile *mf)
     int cnt;
     s_level *tmplev, *x;
 
-    sp_levchn = NULL;
+    gamestate.sp_levchn = NULL;
     cnt = mread32(mf);
     for (; cnt > 0; cnt--) {
         tmplev = malloc(sizeof (s_level));
@@ -124,10 +126,10 @@ restlevchn(struct memfile *mf)
         tmplev->boneid = mread8(mf);
         tmplev->rndlevs = mread8(mf);
 
-        if (!sp_levchn)
-            sp_levchn = tmplev;
+        if (!gamestate.sp_levchn)
+            gamestate.sp_levchn = tmplev;
         else {
-            for (x = sp_levchn; x->next; x = x->next)
+            for (x = gamestate.sp_levchn; x->next; x = x->next)
                 ;
             x->next = tmplev;
         }
@@ -191,7 +193,7 @@ restdamage(struct memfile *mf, struct level *lev, boolean ghostly)
 
 static void
 restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
-           boolean frozen, struct obj **chainloc)
+           boolean frozen, struct obj **chainloc, struct trietable **table)
 {
     struct obj *otmp;
     unsigned int count;
@@ -227,11 +229,15 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
         if (ghostly && !frozen && !age_is_relative(otmp))
             otmp->age = moves - lev->lastmoves + otmp->age;
 
+        /* we might need to produce an index, for speed in relinking IDs */
+        if (table)
+            trietable_add(table, otmp->o_id, otmp);
+
         /* get contents of a container or statue */
         if (Has_contents(otmp)) {
             struct obj *otmp3;
 
-            restobjchn(mf, lev, ghostly, Is_IceBox(otmp), &otmp->cobj);
+            restobjchn(mf, lev, ghostly, Is_IceBox(otmp), &otmp->cobj, table);
             /* restore container back pointers */
             for (otmp3 = otmp->cobj; otmp3; otmp3 = otmp3->nobj)
                 otmp3->ocontainer = otmp;
@@ -255,12 +261,11 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
     count = mread32(mf);
 
     while (count--) {
-        mtmp = restore_mon(mf);
+        mtmp = restore_mon(mf, lev);
         if (!first)
             first = mtmp;
         else
             mtmp2->nmon = mtmp;
-        mtmp->dlevel = lev;
 
         if (ghostly) {
             unsigned nid = next_ident();
@@ -276,7 +281,7 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
         }
 
         if (mtmp->minvent) {
-            restobjchn(mf, lev, ghostly, FALSE, &(mtmp->minvent));
+            restobjchn(mf, lev, ghostly, FALSE, &(mtmp->minvent), NULL);
             /* restore monster back pointer */
             for (obj = mtmp->minvent; obj; obj = obj->nobj)
                 obj->ocarry = mtmp;
@@ -432,7 +437,7 @@ restore_spellbook(struct memfile *mf)
     int i;
 
     for (i = 0; i < MAXSPELL + 1; i++) {
-        spl_book[i].sp_know = save_decode_32(mread32(mf), -moves);
+        spl_book[i].sp_know = save_decode_32(mread32(mf), -moves, -moves);
         spl_book[i].sp_id = mread16(mf);
         spl_book[i].sp_lev = mread8(mf);
     }
@@ -452,21 +457,22 @@ restgamestate(struct memfile *mf)
     /* this stuff comes after potential aborted restore attempts */
     restore_timers(mf, lev, RANGE_GLOBAL, FALSE, 0L);
     restore_light_sources(mf, lev);
-    restobjchn(mf, lev, FALSE, FALSE, &invent);
-    migrating_mons = restmonchn(mf, lev, FALSE);
+    restobjchn(mf, lev, FALSE, FALSE, &invent, NULL);
+    migrating_mons = restmonchn(mf, NULL, FALSE);
     restore_mvitals(mf);
 
     restore_spellbook(mf);
     restore_artifacts(mf);
     restore_oracles(mf);
 
-    mread(mf, pl_fruit, sizeof pl_fruit);
-    current_fruit = mread32(mf);
-    freefruitchn(ffruit);       /* clean up fruit(s) made by initoptions() */
+    mread(mf, gamestate.fruits.curname, sizeof gamestate.fruits.curname);
+    gamestate.fruits.current = mread32(mf);
+    /* clean up fruit(s) made by initoptions() */
+    freefruitchn(gamestate.fruits.chain);
     /* set it to NULL before loadfruitchn, otherwise loading a faulty fruit
        chain will crash in terminate -> freedynamicdata -> freefruitchn */
-    ffruit = NULL;
-    ffruit = loadfruitchn(mf);
+    gamestate.fruits.chain = NULL;
+    gamestate.fruits.chain = loadfruitchn(mf);
 
     restnames(mf);
     restore_waterlevel(mf, lev);
@@ -478,7 +484,7 @@ restgamestate(struct memfile *mf)
     restore_history(mf);
 
     /* must come after all mons & objs are restored */
-    relink_timers(FALSE, lev);
+    relink_timers(FALSE, lev, NULL);
     relink_light_sources(FALSE, lev);
 
     if (u.ustuck) {
@@ -551,12 +557,12 @@ restore_you(struct memfile *mf, struct you *y)
     y->mhmax = mread32(mf);
     y->mtimedone = mread32(mf);
     y->ulycn = mread32(mf);
-    y->utrap = save_decode_32(mread32(mf), -moves);
+    y->utrap = save_decode_32(mread32(mf), -moves, -moves);
     y->utraptype = mread32(mf);
-    y->uhunger = save_decode_32(mread32(mf), -moves);
+    y->uhunger = save_decode_32(mread32(mf), -moves, -moves);
     y->uhs = mread32(mf);
     y->oldcap = mread32(mf);
-    y->umconf = save_decode_32(mread32(mf), -moves);
+    y->umconf = save_decode_32(mread32(mf), -moves, -moves);
     y->nv_range = mread32(mf);
     y->bglyph = mread32(mf);
     y->cglyph = mread32(mf);
@@ -570,7 +576,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->ugangr = mread32(mf);
     y->ugifts = mread32(mf);
     y->ublessed = mread32(mf);
-    y->ublesscnt = save_decode_32(mread32(mf), -moves);
+    y->ublesscnt = save_decode_32(mread32(mf), -moves, -moves);
     y->ucleansed = mread32(mf);
     y->uinvault = mread32(mf);
     y->ugallop = mread32(mf);
@@ -612,7 +618,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->udaminc = mread8(mf);
     y->uac = mread8(mf);
     y->uspellprot = mread8(mf);
-    y->usptime = save_decode_8(mread8(mf), -moves);
+    y->usptime = save_decode_8(mread8(mf), -moves, -moves);
     y->uspmtime = mread8(mf);
     y->twoweap = mread8(mf);
     y->bashmsg = mread8(mf);
@@ -869,7 +875,7 @@ dorecover(struct memfile *mf)
     role_init();       /* Reset the initial role, race, gender, and alignment */
     pantheon_init(FALSE);
 
-    mtmp = restore_mon(mf);
+    mtmp = restore_mon(mf, NULL);
     youmonst = *mtmp;
     dealloc_monst(mtmp);
     set_uasmon();       /* fix up youmonst.data */
@@ -1118,6 +1124,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     int x, y;
     unsigned int lflags;
     struct level *lev;
+    struct trietable *table = NULL;
 
     if (ghostly)
         clear_id_mapping();
@@ -1215,12 +1222,12 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 
     rest_worm(mf, lev); /* restore worm information */
     lev->lev_traps = restore_traps(mf);
-    restobjchn(mf, lev, ghostly, FALSE, &lev->objlist);
+    restobjchn(mf, lev, ghostly, FALSE, &lev->objlist, &table);
     find_lev_obj(lev);
-    /* restobjchn()'s `frozen' argument probably ought to be a callback routine 
+    /* restobjchn()'s `frozen' argument probably ought to be a callback routine
        so that we can check for objects being buried under ice */
-    restobjchn(mf, lev, ghostly, FALSE, &lev->buriedobjlist);
-    restobjchn(mf, lev, ghostly, FALSE, &lev->billobjs);
+    restobjchn(mf, lev, ghostly, FALSE, &lev->buriedobjlist, &table);
+    restobjchn(mf, lev, ghostly, FALSE, &lev->billobjs, &table);
     rest_engravings(mf, lev);
 
     /* reset level->monsters for new level */
@@ -1230,7 +1237,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon) {
         if (mtmp->isshk)
             set_residency(mtmp, FALSE);
-        
+
         /* mtmp->mx == COLNO is a sentinel value. place_monster rejects it to
          * avoid illegal positions popping up accidentally. We don't perform
          * other checks because we would like any other value to cause an
@@ -1250,7 +1257,11 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
         /* Now get rid of all the temp fruits... */
         freefruitchn(oldfruit), oldfruit = 0;
 
-        /* TODO: Is this dead code? I /hope/ it's dead code. */
+        /* TODO: Is this dead code? I /hope/ it's dead code.
+
+           The purpose seems to ensure that below-Medusa filler levels in bones
+           have a downstairs, no matter what. I can't think of a situation where
+           such a level wouldn't have a downstairs. */
         if (levnum > ledger_no(&medusa_level) &&
             levnum < ledger_no(&stronghold_level) &&
             !isok(lev->dnstair.sx, lev->dnstair.sy)) {
@@ -1303,12 +1314,14 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     }
 
     /* must come after all mons & objs are restored */
-    relink_timers(ghostly, lev);
+    relink_timers(ghostly, lev, &table);
     relink_light_sources(ghostly, lev);
     reset_oattached_mids(ghostly, lev);
 
     if (ghostly)
         clear_id_mapping();
+
+    trietable_empty(&table);
 
     return lev;
 }
@@ -1404,4 +1417,3 @@ reset_oattached_mids(boolean ghostly, struct level *lev)
 
 
 /*restore.c*/
-

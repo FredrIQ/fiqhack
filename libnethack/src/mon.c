@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-22 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1349,8 +1349,9 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
 
     /* magr or mdef as the player is a special case; not checking Conflict is
        correct, because it shouldn't suddenly warn you of peacefuls */
-    if (magr == &youmonst && !u.uconduct[conduct_killer])
-        return mdef->mpeaceful ? 0 : (ALLOW_M | ALLOW_TM);
+    if (magr == &youmonst)
+        return (mdef->mpeaceful || !u.uconduct[conduct_killer])
+            ? 0 : (ALLOW_M | ALLOW_TM);
     if (mdef == &youmonst)
         return magr->mpeaceful ? 0 : (ALLOW_M | ALLOW_TM);
 

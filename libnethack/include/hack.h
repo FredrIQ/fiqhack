@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -130,6 +130,7 @@ struct distmap_state {
     int curdist;
     int tslen;
     struct monst *mon;
+    int mmflags;
 };
 
 /* flags to control makemon() and/or goodpos() */
@@ -141,7 +142,7 @@ struct distmap_state {
 # define MM_ANGRY         0x0010 /* monster is created angry */
 # define MM_NONAME        0x0020 /* monster is not christened */
 # define MM_NOCOUNTBIRTH  0x0040 /* don't increment born counter (for
-                                  revival) */
+                                    revival) */
 # define MM_IGNOREWATER   0x0080 /* ignore water when positioning */
 # define MM_ADJACENTOK    0x0100 /* it is acceptable to use adjacent
                                     coordinates */
@@ -160,6 +161,7 @@ struct distmap_state {
 # define MM_CMONSTER_M    0x0800 /* ...created by monster, */
 # define MM_CMONSTER_U    0x1000 /* created by player, or */
 # define MM_CMONSTER_T    0x1800 /* either, but will be tamed after creation */
+# define MM_CHEWROCK      0x4000 /* allow placement on diggable walls */
 
 /* special mhpmax value when loading bones monster to flag as extinct or
    genocided */
@@ -209,7 +211,21 @@ struct distmap_state {
 # define DO_MOVE          0    /* really doing the move */
 # define TEST_MOVE        1    /* test a normal move (move there next) */
 # define TEST_TRAV        2    /* test a future travel location */
-# define TEST_TRAP        3    /* check if a future travel location is a trap */
+# define TEST_SLOW        3    /* test if we can travel through the location,
+                                  but don't want to (trap, door, etc.) */
+
+struct test_move_cache {
+    boolean blind;
+    boolean stunned;
+    boolean fumbling;
+    boolean halluc;
+    boolean passwall;
+    boolean grounded;
+
+    /* This is never set by init_test_move_cache. Setting it manually changes
+       the messages that are produced for squeezing onto a boulder. */
+    boolean instead_of_pushing_boulder;
+};
 
 /*** some utility macros ***/
 

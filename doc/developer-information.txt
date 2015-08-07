@@ -1,0 +1,611 @@
+About this document:
+Last modified by Alex Smith, 2015-07-22
+
+Copyright (C) 2015 Alex Smith.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+NetHack 4 Information for Developers
+====================================
+
+NetHack has traditionally used a mix of coding styles, both in terms
+of low-level details like "how large should indentation be", and in
+big-picture details like "what's the best way to allocate memory for
+passing it between functions".  NetHack 4 is aiming to standardise
+many of these issues.  Thus, developers should read this file to get
+an understanding of how we write code.
+
+
+Licence compliance
+------------------
+
+It is very important that we stay in compliance with NetHack's
+license, and that all code we add is legally usable by our users
+(which is a consequence of staying in compliance with NetHack's
+license, normally).  This means that all code that is linked or
+dynamically linked into the resulting `nethack4` executable must be
+under NGPL or a compatible license.
+
+Very few licenses are compatible with the NGPL.  In general, if code
+isn't NGPL itself, it must be under a highly permissive license;
+licenses believed to work (and currently used like this) include Expat
+(the most commonly seen version of the MIT license; there are others),
+and the zlib/libpng licenses (which have different wordings but are
+basically identical in their legal requirements).
+
+It is also possible to multi-license code, allowing it to be used
+under any of multiple licenses.  When writing new code that will be
+incorporated into NetHack 4, but which is written from scratch (and in
+particular, does not use any existing NetHack code), it is best to
+multilicense it under the NGPL and some more widely compatible license
+of your choice, to allow the code to be used in non-NetHack contexts.
+Which other license you choose depends on how widely you want the code
+to be usable; "NGPL, or GPL version 2 or later" will allow the code to
+be usable by most open-source roguelikes while giving good protection
+against the code being used in closed-source programs, and thus is a
+good general-purpose multi-license for roguelike use.
+
+
+The license compliance information appears at the top of each file.
+The first line is often reserved for various purposes (e.g. modeline
+or executable script information), and thus in most files, license
+information appears in the second, third and fourth lines (although if
+you have nothing to use with the first line, you can place it in the
+first, second and third lines instead).  The lines look like this:
+
+  * Second line: the date that the file was last modified, and the
+    person who modified it.  In source files, this should be a
+    comment, so in C, it would look something like this:
+
+        /* Last modified by Alex Smith, 2015-07-20 */
+
+    Please try to keep to this exact wording and date format
+    (obviously you would change the author name, and in languages
+    other than C the comment syntax); this allows the last-modified
+    dates to be updated automatically via a script, saving manual
+    effort in keeping them updated.
+
+    Maintaining this date information is a requirement of the NGPL
+    (and, following conversations with the NetHack 3 series devteam,
+    an intentional one).  If you use `git` as version control for your
+    NetHack 4 sources, you can set `git` to automatically update the
+    line for you on every commit via copying
+    `scripts/vcs-hooks/git-hooks-post-commit` (part of the NetHack 4
+    repository) to `.git/hooks/post-commit` (which is inside the
+    directory that your own repository uses to maintain its state).
+
+  * Third line: a copyright notice.  If the copyright notice states
+    someone else's name, you must leave it untouched (this is a legal
+    requirement).  When creating a file via splitting out parts of
+    existing files, you must copy the copyright notices from all the
+    files your new file was based on (this might take up multiple
+    lines, in which case the licence notice will be pushed onto future
+    lines).  When creating a file from scratch, this should contain
+    the word "Copyright", your own name, and the current year (it does
+    not have to contain the `(c)` copyright symbol, but most authors
+    like to add one anyway).  This is inconsistent in format between
+    files (and because it must be left untouched, will always be so),
+    so there's no particular style that's enforced.  I normally like
+    to write it along these lines:
+
+        Copyright (c) 2015 Alex Smith.
+
+    If the file is one which only you have worked on, it can be
+    helpful to keep the copyright dates up to date.  Don't delete any
+    existing dates; but you can add new ones with a comma:
+
+        Copyright (c) 2015, 2016, 2017 Alex Smith.
+
+  * Fourth (or later if here are multiple copyright notices) line: a
+    license notice.  If basing your code on existing files, just use
+    their license notice.  By far the most popular "this is NGPL"
+    license notice is a one-liner:
+
+        NetHack may be freely redistributed.  See license for details.
+
+    In newly written files, you might want to use a clearer notice
+    (and will have to change the wording if multi-licensing the file;
+    see `libuncursed/src/libuncursed.c` for a good example of an
+    NGPL-or-GPLv2+ multi-license notice).
+
+When adding a new file, someone also needs to update `copyright` (and
+sometimes also `binary-copyright.pod` if the changes are large enough
+that they affect the overall copyright status of the resulting
+binaries; the most common change of this form is adding a new
+tileset).  Doing this yourself will save effort for the maintainer,
+but it's historically been the maintainer's job.
+
+
+The `libnethack/dat/history` file is used to credit all the
+contributors who worked on NetHack 4.  Our current policy is that the
+list at the end contains everyone who authored anything in the source
+repository (even if it's just a few lines of code); people who make
+major contributions in other ways (such as playtesting) can be
+credited in the prose higher up in the file.
+
+
+Code formatting
+---------------
+
+The formatting guidelines for C code (and code in related languages
+like yacc) were based on looking through existing code, and trying to
+figure out what the most commonly used style was.  All existing code
+has been adjusted to the following rules (see `.indent.pro` for a
+machine-readable version of these):
+
+  * One indentation level is 4 columns onscreen, and encoded using 4
+    spaces.
+
+  * Tabs should not appear in a source file.  If one somehow does,
+    however, it should be interpreted as moving to the next multiple
+    of 8 spaces.  (This is because this is how tabs are interpreted by
+    almost every program other than editors; most terminals, browsers,
+    etc. interpret tabs like this.  Thus, it leads to huge problems if
+    any other interpretation of tabs is assumed.)
+
+  * In most cases, the leading brace of a block is on the same line as
+    the control flow command that introduces it, the closing brace is
+    on a line of its own and at the same level indentation as that
+    control flow command, and the contents of the block are indented
+    one level past where the braces are:
+
+        if (...) {
+            ...
+        }
+
+    One exception to this general is `else`: this appears on the same
+    line as a trailing brace from the matching `if` statement, if
+    there is one:
+
+        if (...) {
+            ...
+        } else if (...) {
+            ...
+        } else {
+            ...
+        }
+
+    You don't need to introduce a block to contain just a single
+    statement; just write a single statement, indented.  If you want
+    the body of a loop to contain zero statements, use a null
+    statement (i.e. just a semicolon on its own), in the same place
+    where a single statement would be.
+
+    Another exception along similar lines is in `struct` definitions,
+    initializers, and similar situations which need to be followed by
+    a semicolon.  In the case of initializers, the whole thing can be
+    written on one line if it fits:
+
+        struct coord c = {5, 6};
+
+    but in any case, the semicolon appears with the closing brace:
+
+        struct example {
+            int x;
+            char y;
+        };
+
+    The other exception is function definitions, which are
+    intentionally indented differently so that automated tools like
+    `ctags` can identify them without needing to be able to parse C.
+    There is always an extra newline added directly before the
+    function name, and the brace introducing the function body is on a
+    line of its own.  So a simple case looks like:
+
+        int
+        main(void)
+        {
+            ...
+        }
+
+    and a complex case might look like
+
+        void (*
+        function_returning_function(int arg))(void)
+        {
+            ...
+        }
+
+    i.e. the newline is placed directly before the function name even
+    if the syntax of C requires it to be inside parentheses or the
+    like.
+
+  * If you have to use a `goto` label, indent it one space negatively.
+    The same applies to `case` labels (which are much more commonly
+    used) and `default`:
+
+        int
+        main(void)
+        {
+            switch (getchar()) {
+            case 'q':
+                goto end;
+            default:
+                return 1;
+            }
+        end:
+            return 0;
+        }
+
+  * Keywords (apart from type names in parentheses) should normally be
+    followed by a space, regardless of which keyword it is.  When a
+    keyword takes an argument (e.g. `sizeof` or `return`), don't
+    parenthesize the argument unless it's required by the syntax of
+    the language or you feel the code would be very unclear otherwise.
+    Some examples:
+
+        if (...)
+        sizeof (int) + sizeof a
+        return a + b;
+
+  * Single-line comments should be written in C89 style, using `/*`
+    and `*/`.  There are two ways to format multi-line comments:
+
+        /*
+         * This is a multi-line comment that should not be rewrapped.
+         *
+         * Use this if you need to present tabular data, ASCII art,
+         * or the like:
+         *
+         * NW N NE
+         *  W   E
+         * SW S SE
+         *
+         * There is a column of *s down the left hand side, and the
+         * begin and end comment markers are on lines of their own.
+         */
+
+        /* This is a multi-line comment that can be rewrapped. Each
+           paragraph is separated by two newlines.
+
+           The paragraph break above will be preserved by rewrapping.
+           The begin and end command markers are on the same line as
+           the text, and there are no *s down the side. */
+
+    In general, rewrappable comments should be preferred unless you
+    need to present tabular data.  Please try not to mix the two
+    styles: that leaves tools for automatically rewrapping comments
+    (such as `indent(1)`) very confused.  That said, sufficiently many
+    developers do it anyway that we've pretty much given up on comment
+    rewrapping at this point; this rule is not one that's enforced
+    right now.
+
+In C files, the first line of the file is a _modeline_, which
+communicates as many of these rules as possible to typical editors.
+When creating a new C file, just copy a modeline from an existing C
+file.  This will cause Emacs and vim, as well as any editor that can
+parse either of their modeline formats, to try to respect these rules
+in their automatic indenters.
+
+
+Language standard
+-----------------
+
+NetHack is written in C, and NetHack 4 follows in this tradition.
+(There is a very small amount of C++ used in order to access linker
+functionality that could not portably be accessed any other way; C++
+files in NetHack 4 must be very small wrappers that are written almost
+entirely in the common subset of C and C++, apart from the specific
+functionality that requires C++ to be used.  The build system is
+written in Perl, but is not really part of NetHack 4.)
+
+There are multiple versions of the C language standard, and some
+people will not be able to compile some newer features.  Thus, we
+restrict ourselves to the common subset of the following languages:
+
+  * ISO C11 (at the time of writing, the newest C standard); and
+  * C89 with `gcc` extensions (known as GNU89).
+
+In other words, you can use features that postdate C89, but only if
+`gcc` has supported them as extensions for sufficiently long that
+people with old distributions can be expected to be able to compile
+them via using `gcc` in extensions mode.
+
+Additionally, the file `libnethack_common/include/compilers.h`
+contains compatibility macros that allow some newer C features to work
+on older compilers (perhaps via using compiler extensions, or via
+omitting a compiler hint).  Anything defined by this file can be used
+even if it isn't part of the relevant standards.
+
+Some examples of allowed and disallowed language features:
+
+Allowed:
+
+  * Anonymous unions (these are preferable to using `#defines` to
+    create aliases for struct fields, and are supported in C11 and
+    GNU89);
+  * Designated initializers (use these whenever they're clearer;
+    they're in C11 and GNU89);
+  * VLAs (more exception-safe than malloc; in C11 and GNU89);
+  * `noreturn` (defined by `compilers.h` if necessary);
+  * `static_assert` (also defined by `compilers.h` if necessary);
+  * `PRINTFLIKE` (nonstandard, but defined by `compilers.h`).
+
+Disallowed:
+
+  * Declarations inside a `for` loop initializer (disallowed by
+    GNU89).
+
+There are a couple of special cases:
+
+  * `//` comments would be usable under these requirements, but are
+    currently avoided in NetHack 4.  They've taken on a separate role:
+    being used to mark the location of debug code that should not be
+    committed.  (Thus, searching for `//` comments can be used to find
+    and remove debug code before a commit.)
+    
+  * Some language features, such as `snprintf`, are (despite being
+    standard) buggy on Windows and thus need to be avoided on that
+    basis.  (You should probably be using `msgprintf` in NetHack 4
+    anyway, though; see the section on memory management below.)
+
+It's rare that you'll need to write platform-specific code in
+`libnethack` or `nethack` (although it can happen, e.g. in `newrng.c`,
+which needs access to entropy from the OS).  Most platform-specific
+code should be abstracted out via `libuncursed` plugins.  If you do
+need to write platform-specific code for some reason, check aimake's
+platform macros, e.g. `AIMAKE_BUILDOS_linux`; these will be defined on
+the platform in question and undefined on the others.
+
+You can assume that `int` is at least 32 bits wide (this assumption is
+far too baked into the code at this point).  Don't make
+assumptions about the size of `long`.  If the exact size of something
+matters, use exact-sized types like `int32_t`.
+
+
+Memory management
+-----------------
+
+Traditionally, NetHack has used an ad-hoc mix of global and static
+variables to store most of its information.  This is currently seen as
+quite a major problem, and one we're working towards improving over
+time.  Thus, this section explains how we want things to be, but not
+necessarily how things are right now.  It also mostly concentrates on
+`libnethack`: other parts of the codebase have their own memory
+management mechanisms, and most `libnethack`-related machinery will be
+unavailable.
+
+All data that's saved in the save file are (or will eventually be)
+stored in the `gamestate` structure.  Presently, this is global, and
+functions that shouldn't use parts of it simply refrain from looking
+at those parts.  Eventually, it may get passed around from function to
+function; this could prove that functions that shouldn't be looking at
+certain parts of gamestate (e.g. level creation code at the player's
+stats) did in fact avoid looking at those parts of the gamestate, by
+only passing them the parts they're allowed to look at.
+
+Some sorts of data can be placed in `gamestate` directly:
+
+  * Information about the dungeon graph (e.g. `dungeons`, `sp_levchn`,
+    `topology`);
+  * Information that affects how specific points in the game
+    generates, but is needed elsewhere, such as the Castle tune (the
+    difference between this and level data is that it might be needed
+    before the level in question has generated; thus its generated
+    first into `gamestate` and subsequently used by the level in
+    question);
+  * Anything that's so weird it can't be placed elsewhere
+    (e.g. fruitnames);
+  * Bookkeeping information: monster death counts, RNG state, the
+    counter used to generate globally unique IDs, and the like.
+
+Most data are placed indirectly in `gamestate`, via the following
+structures:
+
+  * `levels`: anything that's conceptually part of a single dungeon
+    level;
+  * `us`, `us_aux`: anything that conceptually belongs to a single
+    player (the distinction between these is currently fuzzy, but
+    eventually `us` will hold the part of the player stats common to
+    monsters and players, and `us_aux` the part that's specific to
+    players);
+      * `flags` is (or will be) part of `us_aux`, and contains
+        information about the choices made by a player.  This includes
+        both options, and recent historical information needed for
+        things like command repeat to work correctly.
+
+When adding data to `gamestate`, you need to write initialization,
+save, and restore code for them; if any dynamic allocation is
+involved, you also need to write deallocation code for them.  The save
+code can go in `savegamestate` if nowhere more specific is possible
+(with a matching `restgamestate` for restoring it).  Initialization
+code goes in `init_data`.  Deallocation code goes in
+`freedynamicdata`.
+
+
+The game contains many dynamically-allocated things such as monsters
+and objects that can move between parts of a save file.  For example,
+an object (i.e. item) can belong to a monster, be on the floor of a
+level (and thus be stored via `levels`), or be in the player's
+inventory (and thus be stored via `us`).  The memory management
+properties of such things are that at any given time, each is owned by
+a _chain_, a linked list starting somewhere indirectly in `gamestate`
+or `turnstate`.  Except for a few lines of code (that clearly cannot
+do any UI calls and have no error conditions) in the functions that
+move objects between chains, all objects must be on a chain at all
+times; this allows them to be deallocated correctly in the case of an
+error, turn restart, or the like.  To move an object from one place to
+another, you first remove it from its previous chain using
+`obj_extract_self` (which places it on a special "floating objects"
+chain in `turnstate`), and then place it in its new location using an
+appropriate function (e.g. `addinv` to place it in player inventory).
+
+In general, all dynamic allocations in `libnethack` should work using
+the "chain starting at `program_state`, `gamestate` or `turnstate`"
+rule, although in many cases this will be much simpler than the case
+of objects, e.g. there is only one chain for fruitnames and thus there
+is never a need to move them between chains.
+
+
+For data that do not go in the save file, you would normally use local
+variables (perhaps passed around between functions).  If the data need
+to be global for visibility reasons (or to put it another way: if the
+way the code is currently structured means that you have the choice of
+making the data global or rewriting 50% of the game in order to make
+it possible to make it local), there are two main structures:
+
+  * The `program_state` structure holds information that isn't saved
+    because it exists "outside" the game as a whole.  Some variables
+    that fall into this category:
+
+      * Bookkeeping information for the save file itself (its file
+        descriptor number, locking information, locations of
+        interesting things within the save file, etc.).
+      * Variables that are only set in cases where the current
+        gamestate is unrecoverable, either due to an error or due to
+        the death of the character.  (Past this point we aren't saving
+        anything, so don't have to worry about saving these variables
+        correctly).  Note that `in_impossible` counts as part of this;
+        if we somehow save in an `impossible` situation we'd want the
+        `in_impossible` indication to turn off on the reload.
+      * `in_zero_time_command`, which is possibly a little misnamed;
+        its purpose is to mark things that are currently happening as
+        not interesting to save because they have no affect on the
+        gameplay.
+
+  * The `turnstate` structure holds data that's only being tracked for
+    the duration of one command, and becomes meaningless before the
+    command finishes running.  Because the game does not save in the
+    middle of a command, there's thus no need to place this
+    information into the save file.  This includes things like prayer
+    status, helplessness, and migrations that are delayed until the
+    end of a turn.
+
+    "Neutral turnstate" is the state between commands at which
+    turnstate is expected to have returned to its original value.  The
+    function `neutral_turnstate_tasks` must be changed whenever adding
+    a new variable to `turnstate`, in order to verify this.  That is,
+    the rules are that any code that uses `turnstate` must put it back
+    again before that code stops running.
+
+Some variables, like `program_state.gameover`, could conceptually
+exist in either `program_state` or `turnstate`; in such cases,
+`program_state` is used because `turnstate` requires more bookkeeping.
+
+
+In general, you should aim to allow strings to have an arbitrary
+length within `libnethack` (you can place a limit on them for gameplay
+reasons, but don't consider that a reason to use a fixed-size buffer).
+Fixed-size buffers are still currently used on the API boundary, until
+someone wants to rewrite that.  Most of the use of strings in NetHack
+is to construct messages to show to the player, in which case the
+strings are short-lived and can safely be stored in a chain in
+`turnstate`.  A family of functions with names starting `msg`, such as
+`msgcat`, `msgprintf`, etc., is provided for this purpose.  These
+return objects known as _messages_; a message has type `const char *`,
+and is either a pointer into the _message chain_ in turnstate, or else
+a string literal (you shouldn't care which a given message is).  If
+you have a string in some other form, you can convert it to a message
+using `msg_from_string`.  Messages must be considered read-only, and
+not deallocated outside `neutral_turnstate_tasks`, which will
+deallocate them evry time it runs.
+
+Note that as long as the game is running and you aren't currently
+inside `neutral_turnstate_tasks`, calling functions like the monster
+naming functions that output messages from a debugger is safe and
+won't interfere with the currently running code.  You can thus use
+functions like `xname` and `noit_mon_nam` in order to quickly see what
+an object or monster is in a debugger.
+
+For strings that last longer than a turn, use an owned pointer
+(effectively a chain of length 1): design things so that if the
+pointer in question is not NULL, it's always allocated and freed when
+the structure containing it is allocated and freed.
+
+
+Error handling
+--------------
+
+You have two basic error-reporting functions in `libnethack`:
+`impossible`/`panic`, or `raw_printf`/`terminate`.
+
+`raw_printf` is the lowest-level function: it outputs an error message
+to the user without trying to do any special handling of the game (it
+tries to print to the user's screen, and also to the `stdout` or
+`stderr` from which the game was opened, which can be different if not
+using a terminal, or not using it in the usual way).  Use this if the
+user badly needs to see a message, and things are too screwed-up to
+handle errors the normal way.  After calling it, you should call
+`terminate`, which will call `freedynamicdata` and then try to find a
+suitable place from which to continue the program (normally, the API
+boundary).  `terminate` itself is used for both normal and abnormal
+cleanup, and takes an argument that specifies what to do next (in
+particular, whether to attempt to continue the game, which will be
+done via reloading the save file from a backup and then reconstructing
+events up to the point of the exit).
+
+At a higher level, you have `panic` and `impossible`.  These are both
+wrappers around `log_recover_core` (which has a rather more complex
+calling convention; the wrappers exist to prevent you worrying about
+it).  They will prompt the user for information about what to do.
+
+`panic` gives the user two options.  The "leave the save file to be
+recovered manually" option calls `terminate`, telling the game to exit
+to the main loop (and not attempt to restart it).  When reloading the
+game, everything that happened so far will be replayed (via loading
+the save as of the last save diff, and then replaying all user input);
+this will typically cause the same problem to happen again.  The
+"automatically recover the save file" option will rewind to the state
+of the last save diff, and allow the user to make different choices
+(in an attempt to avoid the same error happening).
+
+`impossible` gives the user the same two options, plus a third,
+"attempt to repair the gamestate".  This option **causes the error
+handler to return normally** (`panic` never returns normally).  Thus,
+when using `impossible`, you will have to write code to substitute
+valid data over the data that caused the error in the first place.
+Most commonly, the simplest way to do this is to cause the function
+you're in to return with a "nothing happened" return value, causing
+whatever part of the code couldn't run to be ignored instead.
+Depending on what caused the error, you might need to do something
+else instead.
+
+(Note also the function `pline`, which is the general function for
+giving messages to the user.  You'd use it if the error isn't an error
+with the NetHack code itself, but with something the user is trying to
+do; i.e. it's the function for "you can't do that" responses.)
+
+
+Avoiding code duplication
+-------------------------
+
+NetHack's codebase has traditionally required several parts of the
+code to be repeated several times in slightly different ways, which
+causes a lot of trouble.  There are thus some rules that apply to new
+code that intend to stop the problem getting worse:
+
+  * Any new functions that could conceptually apply to either a
+    monster or player must take that monster/player as an argument
+    (rather than being written as two functions, one for monsters and
+    one for players, or four if they take two such arguments).  For
+    the time being, the argument used to indicate "the player, not a
+    monster" is `&youmonst`.  Eventually, this will be an element of
+    `us`, but those elements currently have the wrong type.
+
+    The minimum to comply with this rule is just to start off with an
+    `if` statement that checks to see if the argument is a monster and
+    player, with a separate implementation for each.  However, it's
+    better to try to use existing such functions all the way down, if
+    you can.  There's a range of accessor macros starting `m_m` that
+    will let you access corresponding fields of the player and monster
+    structures in the interim.
+
+  * If possible, new functions should aim to avoid making assumptions
+    about which dungeon level things are happening on (and should
+    instead take a level as argument, or look at the backreferences to
+    a level from a monster structure they take as argument).  This
+    currently isn't always possible due to things like the FOV array
+    only existing on the player's current level, but the number of
+    cases like that should hopefully only decrease over time.
+
+  * If possible, new functions should try to avoid assuming that there
+    is only one player and flags can safely be set on an object or
+    monster to mark its relationship to that player.  Currently, this
+    usually isn't possible (thus fields like `mux` and `muy` in the
+    monster structure), but if you find some way to accomplish it, do
+    so.
+
+Much of the existing code is not of this form; the hope is that the
+existing code will be converted to use this code a bit at a time.

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-07-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -171,7 +171,36 @@ open_datafile(const char *filename, int oflags, int prefix)
         return -1;
 
     filename = fqname(filename, prefix, prefix == TROUBLEPREFIX ? 3 : 0);
+
+    /* If the file doesn't exist, we want to create it with the permissions
+       that it would have had if the installer created it.
+
+       For the files that we open via open_datafile and fopen_datafile:
+
+       u+r permissions:
+           nhdat       (DATAPREFIX)
+
+       u+rw permissions:
+           dump files  (DUMPPREFIX)
+
+       ug+rw permissions:
+           paniclog    (TROUBLEPREFIX)
+           logfile     (SCOREPREFIX)
+           xlogfile    (SCOREPREFIX)
+           record      (SCOREPREFIX)
+
+       nhdat can't meaningfully be created, so we only have to worry about
+       the others.
+    */
+
+#ifdef S_IRGRP   /* the OS has per-group permissions */
+    if (prefix == SCOREPREFIX || prefix == TROUBLEPREFIX)
+        fd = open(filename, oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    else
+        fd = open(filename, oflags, S_IRUSR | S_IWUSR);
+#else            /* the OS doesn't have per-group permissions */
     fd = open(filename, oflags, S_IRUSR | S_IWUSR);
+#endif
     return fd;
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -154,8 +154,8 @@ is_worn_by_type(const struct obj * otmp)
 }
 
 /*
- * Have the hero pick things from the ground
- * or a monster's inventory if swallowed.
+ * Have the hero pick up things from the ground or a monster's inventory if
+ * swallowed. Autopickup might be vetoed, based on the interaction mode.
  *
  * Arg what:
  *      >0  autopickup
@@ -184,7 +184,7 @@ pickup(int what, enum u_interaction_mode uim)
 
         /* no auto-pick if no-pick move, nothing there, or in a pool */
         if (autopickup &&
-            (!ITEM_INTERACTIVE(uim) || !OBJ_AT(u.ux, u.uy) ||
+            (uim == uim_nointeraction || !OBJ_AT(u.ux, u.uy) ||
              (is_pool(level, u.ux, u.uy) && !Underwater) ||
              is_lava(level, u.ux, u.uy))) {
             read_engr_at(u.ux, u.uy);
@@ -355,6 +355,8 @@ autopick(struct obj *olist,     /* the object list */
     /* first count the number of eligible items */
     for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow)) {
         examine_object(curr);
+        if (curr->was_dropped)
+            continue;
         if ((flags.pickup_thrown && curr->was_thrown) ||
             autopickup_match(curr))
             n++;
@@ -362,13 +364,16 @@ autopick(struct obj *olist,     /* the object list */
 
     if (n) {
         *pick_list = pi = malloc(sizeof (struct object_pick) * n);
-        for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow))
+        for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow)) {
+            if (curr->was_dropped)
+                continue;
             if ((flags.pickup_thrown && curr->was_thrown) ||
                 autopickup_match(curr)) {
                 pi[n].obj = curr;
                 pi[n].count = curr->quan;
                 n++;
             }
+        }
     }
     return n;
 }

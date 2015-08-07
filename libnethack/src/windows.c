@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-16 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -165,6 +165,8 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
         flags.last_arg.dir = dir;
     }
 
+    turnstate.intended_dx = *dx;
+    turnstate.intended_dy = *dy;
     if (!*dz && (Stunned || (Confusion && !rn2(5))))
         confdir(dx, dy);
 
@@ -197,6 +199,8 @@ query_key(const char *query, enum nh_query_key_flags qkflags, int *count)
 
     if (count && qkr.count != -1)
         pline_nomore("<%s: %d %c>", query, qkr.count, qkr.key);
+    else if (count && strchr(quitchars, qkr.key))
+        pline_nomore("<%s: cancelled>", query);
     else
         pline_nomore("<%s: %c>", query, qkr.key);
 
@@ -353,8 +357,9 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
                  j < menu_copy.icount && item_copy[j].id != dmcd.results[0];
                  j++) {}
             buf = item_copy[j].caption;
-        } else if (dmcd.nresults > 1)
+        } else if (dmcd.nresults > 1) {
             buf = msgprintf("(%d selected)", dmcd.nresults);
+        }
 
         pline_nomore("<%s: %s>", title ? title : "Untitled menu", buf);
     }
@@ -367,6 +372,7 @@ display_objects(struct nh_objlist *objlist, const char *title, int how,
                 int placement_hint, const struct nh_objresult **results)
 {
     struct display_objects_callback_data docd;
+    int i, j;
 
     /* Memory management: we need a stack-allocated copy of the menu items in
        case terminate() gets called, and because we need to be able to refer to
@@ -407,15 +413,31 @@ display_objects(struct nh_objlist *objlist, const char *title, int how,
         log_time_line();
         pline_nomore("<%s: cancelled>", title ? title : "List of objects");
     } else {
-        const char *buf = "(none selected)";
+        const char *buf = "no selections";
 
         log_record_menu(TRUE, &docd);
         log_time_line();
 
-        /* TODO: Show the object letters that were selected. */
-        if (docd.nresults >= 1)
-            buf = msgprintf("(%d selected)", docd.nresults);
+        char selected[docd.nresults + 1];
+        char *sp = selected;
+        for (j = 0; j < docd.nresults; j++) {
+            for (i = 0; i < menu_copy.icount; i++) {
+                if (menu_copy.items[i].id == docd.results[j].id) {
+                    if (!menu_copy.items[i].accel) {
+                        buf = msgprintf("(%d selected)", docd.nresults);
+                        goto no_inventory_letters;
+                    }
+                    *(sp++) = menu_copy.items[i].accel;
+                    break; /* don't buffer overflow on ID clash */
+                }
+            }
+        }
+        *sp = 0;
 
+        if (docd.nresults >= 1)
+            buf = msg_from_string(selected);
+
+    no_inventory_letters:
         pline_nomore("<%s: %s>", title ? title : "Untitled menu", buf);
     }
 

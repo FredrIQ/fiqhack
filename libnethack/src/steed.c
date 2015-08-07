@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-07-25 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -139,7 +139,7 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
         if (otmp->owornmask)
             remove_worn_item(otmp, FALSE);
         freeinv(otmp);
-        /* mpickobj may free otmp it if merges, but we have already checked for 
+        /* mpickobj may free otmp it if merges, but we have already checked for
            a saddle above, so no merger should happen */
         mpickobj(mtmp, otmp);
         mtmp->misc_worn_check |= W_MASK(os_saddle);
@@ -203,9 +203,9 @@ mount_steed(struct monst * mtmp,        /* The animal */
         return FALSE;
     }
     /* While riding Wounded_legs refers to the steed's, not the hero's legs.
-       That opens up a potential abuse where the player can mount a steed, then 
+       That opens up a potential abuse where the player can mount a steed, then
        dismount immediately to heal leg damage, because leg damage is always
-       healed upon dismount (Wounded_legs context switch). By preventing a hero 
+       healed upon dismount (Wounded_legs context switch). By preventing a hero
        with Wounded_legs from mounting a steed, the potential for abuse is
        minimized, if not eliminated altogether. */
     if (Wounded_legs) {
@@ -237,10 +237,13 @@ mount_steed(struct monst * mtmp,        /* The animal */
         pline("I see nobody there.");
         return FALSE;
     }
+
+    struct test_move_cache cache;
+    init_test_move_cache(&cache);
+
     if (Engulfed || u.ustuck || u.utrap || Punished ||
         !test_move(u.ux, u.uy, mtmp->mx - u.ux, mtmp->my - u.uy, 0,
-                   TEST_MOVE, uim_standard, !!Blind, !!Stunned, !!Fumbling,
-                   !!Hallucination, !!Passes_walls, !!Ground_based)) {
+                   TEST_MOVE, &cache)) {
         if (Punished || !(Engulfed || u.ustuck || u.utrap))
             pline("You are unable to swing your %s over.", body_part(LEG));
         else
@@ -567,10 +570,10 @@ dismount_steed(int reason)
                individually and include an attempt to look at or pick up the
                objects on the floor: teleds() --> spoteffects() --> pickup()
                float_down() --> pickup() We use this kludge to make sure there
-               is only one such attempt. Clearly this is not the best way to do 
+               is only one such attempt. Clearly this is not the best way to do
                it.  A full fix would involve having these functions not call
-               pickup() at all, instead calling them first and calling pickup() 
-               afterwards.  But it would take a lot of work to keep this change 
+               pickup() at all, instead calling them first and calling pickup()
+               afterwards.  But it would take a lot of work to keep this change
                from having any unforseen side effects (for instance, you would
                no longer be able to walk onto a square with a hole, and
                autopickup before falling into the hole). */
@@ -627,7 +630,13 @@ place_monster(struct monst *mon, int x, int y)
         mon->dlevel->monsters[x][y] = mon;
     else
         impossible("placing monster on invalid spot (%d,%d)", x, y);
+
+    /* If a monster's moved to the location it believes the player to be on,
+       it'll learn the player isn't there. */
+    if (mon->mux == mon->mx && mon->muy == mon->my) {
+        mon->mux = COLNO;
+        mon->muy = ROWNO;
+    }
 }
 
 /*steed.c*/
-

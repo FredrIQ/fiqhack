@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-29 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -32,6 +32,7 @@
         int             base85enc       (const unsigned char *, int, char *)
         int             base85dec       (const char *, unsigned char *)
         boolean         onlyspace       (const char *)
+        boolean         onlynul         (const void *, int)
         char *          tabexpand       (char *)
         char *          visctrl         (char)
         const char *    ordin           (int)
@@ -239,6 +240,16 @@ onlyspace(const char *s)
 {       /* is a string entirely whitespace? */
     for (; *s; s++)
         if (*s != ' ' && *s != '\t')
+            return FALSE;
+    return TRUE;
+}
+
+boolean
+onlynul(const void *s, int size)
+{       /* is a memory region entirely zeroes? */
+    int i = 0;
+    for (i = 0; i < size; i++)
+        if (((const char *)s)[i] != 0)
             return FALSE;
     return TRUE;
 }

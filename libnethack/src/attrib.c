@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,7 +15,6 @@ static
 const char *const plusattr[] = {
     "strong", "smart", "wise", "agile", "tough", "charismatic"
 }, *const minusattr[] = {
-
     "weak", "stupid", "foolish", "clumsy", "fragile", "repulsive"
 };
 

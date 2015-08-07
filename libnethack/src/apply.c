@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-05-19 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,21 +35,6 @@ static boolean uhave_graystone(void);
 
 static const char no_elbow_room[] =
     "You don't have enough elbow-room to maneuver.";
-
-/* The appropriate interaction mode for an "attack" made via applying an
-   object. Also handles kicks.
-
-   The main rule here is that this must never select a mode that would allow
-   the user to chat to a monster, etc.; it's attack, or nothing. */
-enum u_interaction_mode
-apply_interaction_mode(void)
-{
-    if (flags.interaction_mode >= uim_indiscriminate)
-        return flags.interaction_mode;
-    if (!UIM_AGGRESSIVE(flags.interaction_mode))
-        return uim_nointeraction;
-    return uim_attackonly;
-}
 
 static int
 use_camera(struct obj *obj, const struct nh_cmd_arg *arg)
@@ -2254,9 +2239,8 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 
     if (Engulfed) {
         enum attack_check_status attack_status =
-            attack(u.ustuck, dx, dy, apply_interaction_mode());
+            attack(u.ustuck, dx, dy, FALSE);
         return attack_status != ac_cancel;
-
     } else if (Underwater) {
         pline("There is too much resistance to flick your bullwhip.");
 
@@ -2333,7 +2317,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                 wrapped_what = mon_nam(mtmp);
             } else if (proficient) {
                 enum attack_check_status attack_status =
-                    attack(mtmp, dx, dy, apply_interaction_mode());
+                    attack(mtmp, dx, dy, FALSE);
                 if (attack_status == ac_continue)
                     pline("%s", msg_snap);
                 else
@@ -2440,7 +2424,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                 pline("You flick your bullwhip towards %s.", mon_nam(mtmp));
             if (proficient) {
                 enum attack_check_status attack_status =
-                    attack(mtmp, dx, dy, apply_interaction_mode());
+                    attack(mtmp, dx, dy, FALSE);
                 if (attack_status == ac_continue)
                     pline("%s", msg_snap);
                 else
@@ -2525,13 +2509,9 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
     /* Attack the monster there */
     if ((mtmp = m_at(level, cc.x, cc.y)) != NULL) {
         int oldhp = mtmp->mhp;
-        enum attack_check_status attack_status;
 
-        attack_status =
-            attack_checks(mtmp, obj, cc.x, cc.y, apply_interaction_mode());
-
-        if (attack_status != ac_continue)
-            return attack_status != ac_cancel;
+        if (resolve_uim(flags.interaction_mode, TRUE, cc.x, cc.y) == uia_halt)
+            return 0;
 
         bhitpos = cc;
         check_caitiff(mtmp);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-05 */
+/* Last modified by Alex Smith, 2015-07-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,11 +9,10 @@
 #include "hungerstatus.h"
 
 static void maybe_wail(void);
-static int moverock(schar dx, schar dy);
+static boolean moverock(schar dx, schar dy);
 static int still_chewing(xchar, xchar);
 static void dosinkfall(void);
-static boolean findtravelpath(boolean(*)(int, int), schar *, schar *,
-                              enum u_interaction_mode);
+static boolean findtravelpath(boolean(*)(int, int), schar *, schar *);
 static struct monst *monstinroom(const struct permonst *, int);
 static boolean check_interrupt(struct monst *mtmp);
 static boolean couldsee_func(int, int);
@@ -21,6 +20,210 @@ static boolean couldsee_func(int, int);
 static void move_update(boolean);
 
 #define IS_SHOP(x) (level->rooms[x].rtype >= SHOPBASE)
+
+/* If the user hypothetically presses a direction key towards (x, y) on level z,
+   with a given uim, what are they attempting to do? If weird_attack is set,
+   instead check what would happen for an intentional attack which doesn't have
+   an implicit confirmation (such as applying a polearm); this can only be
+   uia_halt or uia_attack.
+
+   Sensible values for uim:
+   flags.interaction_mode      The movement commands, directly
+   uim_nointeraction           Long-distance movement commands (cautious)
+   exploration_interaction_status()
+                               Long-distance movement commands (incautious)
+   uim_forcefight              A confirmed intentional attack (e.g. F)
+
+   Only works on the current level, because it requires vision calculations.
+   Can perform UI requests, in cases where we might want a non-prefix
+   confirmation (e.g. uim_standard attacking a maybe-peaceful). In the case
+   where this returns uia_halt, will pline a message. Otherwise, the caller
+   must print a message.
+
+   This never does anything that would take in-game time itself (although the
+   return value often indicates that you should spend in-game time), and is
+   based entirely on character knowledge.
+
+   In the case of stunning/confusion, call this /before/ randomizing the
+   direction.
+*/
+enum u_interaction_attempt
+resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
+{
+    if (!isok(x, y)) {
+        /* Can happen on a few quest levels */
+        pline("You pull back. That's the end of the world!");
+        return uia_halt;
+    }
+
+    struct rm *l = &(level->locations[x][y]);
+
+    /* uim_forcefight is a special case: we attack even if there's no reason
+       to think there's a monster there. */
+    if (uim == uim_forcefight)
+        return uia_attack;
+
+    /* Do we think there's a monster there? */
+    struct monst *mtmp = m_at(level, x, y);
+    if (mtmp && !knownwormtail(x, y) &&
+        !(msensem(&youmonst, mtmp) & (MSENSE_ANYDETECT | MSENSE_ANYVISION |
+                                      MSENSE_WARNING)))
+        mtmp = NULL;    /* ignore the monster, the player can't perceive it */
+
+    if (mtmp || l->mem_invis || weird_attack) {
+        /* Note: this spoils whether monsters seen via warning are hostile; this
+           doesn't matter at current because nonhostile monsters don't show up
+           on warning, but take care when adding new partial-sense options to
+           the list above */
+        int peaceful = 0; /* how peaceful is the monster? */
+
+        if (mtmp && !Hallucination && canclassifymon(mtmp)) {
+            if (mtmp->mtame)
+                peaceful = 3;
+            else if (mtmp->mpeaceful)
+                peaceful = always_peaceful(mtmp->data) ? 2 : 1;
+        } /* otherwise treat the monster as hostile */
+
+        switch (uim) {
+        case uim_indiscriminate:
+        case uim_forcefight:
+            return uia_attack;
+        case uim_traditional:
+            if (peaceful > 1)
+                peaceful = 1;
+            /* then fall through */
+        case uim_standard:
+            if (peaceful == 1) { /* implies mtmp != NULL */
+                if (yn(msgprintf("Really attack %s?", mon_nam(mtmp))) != 'y')
+                    return uia_halt;
+                else
+                    return uia_attack;
+            }
+            /* otherwise fall through */
+        case uim_attackhostile:
+            if (peaceful == 0)
+                return uia_attack;
+            /* otherwise fall through */
+        case uim_pacifist:
+            if (!weird_attack && peaceful == 2) {
+                /* Special case for priests: don't chat to those because it can
+                   have side effects, but don't attack them either; peaceful > 0
+                   implies canclassifymon(mtmp), so we can use its actual
+                   species safely */
+                if (mtmp->data->msound == MS_PRIEST) {
+                    pline("The priest%s mutters a prayer.",
+                          mtmp->female ? "ess" : "");
+                    return uia_halt;
+                }
+                return uia_chat;
+            }
+            /* otherwise fall through */
+        case uim_displace:
+            if (!weird_attack && peaceful == 3)
+                return uia_displace;
+            /* otherwise fall through */
+        case uim_onlyitems:
+        case uim_nointeraction:
+            if (mtmp && canclassifymon(mtmp)) {
+                /* ADVENT reference */
+                if (!Hallucination && monsndx(mtmp->data) == PM_GREEN_DRAGON)
+                    pline("A huge green fierce dragon bars the way!");
+                else if (!Hallucination &&
+                         monsndx(mtmp->data) == PM_GARTER_SNAKE)
+                    /* have to paraphrase a little, green snakes in NetHack are
+                       MZ_TINY */
+                    pline("A tiny green fierce snake bars the way!");
+                else
+                    pline("%s blocks your way.", mtmp->mtame ?
+                          msgupcasefirst(y_monnam(mtmp)) : Amonnam(mtmp));
+                return uia_halt;
+            } else if (mtmp) { /* e.g. sensed via warning */
+                pline("You sense something in the way.");
+                return uia_halt;
+            }
+
+            /* We sensed an invisible monster in the past. We don't want to
+               interact with it, but we still want to be able to force-move onto
+               the square (because it might have moved away). However, we should
+               halt the action if it isn't a move, but instead some weird sort
+               of attack. */
+            if (weird_attack) {
+                pline("You stop; you don't want to risk attacking something.");
+                return uia_halt;
+            }
+
+            /* If we forced a move onto the square (uim_nointeraction), move
+               there. Otherwise, search to see if the monster is still there
+               (This will clear the 'I' if it isn't.) */
+            return uim == uim_nointeraction ? uia_move_nopickup : uia_search;
+        }
+    }
+
+    /* If we get here, the player isn't aware of a monster on the square. */
+
+    /* If not using 'moveonly', veto dangerous moves. (This uses
+       last_command_was, not uim, because the relevant factor is not the
+       semantics of the command, but the interface used to enter it.)  We do
+       this here so that we get lava protection checks against attempted moves
+       into water or lava when stunned or confused, but not against randomized
+       ones; and so that we don't erode engravings, etc..
+
+       Also veto moves into walls, with no message unless we can't see the
+       wall. Again, this can be overriden using "moveonly". */
+    if (!last_command_was("moveonly")) {
+        boolean lava = l->mem_bg == S_lava;
+        boolean pool = l->mem_bg == S_pool;
+
+        if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
+            (lava || (pool && !HSwimming)) &&
+            !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy)) {
+
+            if (cansee(x, y))
+                pline(is_pool(level, x, y) ? "You never learned to swim!" :
+                      "That lava looks rather dangerous...");
+            else
+                pline("As far as you can remember, it's "
+                      "not safe to stand there.");
+            pline("(Use the 'moveonly' command to move there anyway.)");
+            return uia_halt;
+        }
+
+        if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall) {
+            if (!cansee(x, y))
+                pline("Use the 'moveonly' command to move into a "
+                      "remembered wall.");
+            return uia_halt;
+        }
+    }
+
+    if (uim == uim_nointeraction)
+        return uia_move_nopickup;
+
+    /* If the player's aware of a boulder on the square, they'll push it.  The
+       old code checked sobj_at, but that isn't correct; if blind, it could be
+       that the player tries to move into a boulder they're unaware of (in which
+       case the correct reaction is to bump into it, but sobj_at will return
+       true). Note that mem_obj has an offset of 1. */
+    if (l->mem_obj == BOULDER + 1) {
+        return uia_pushboulder;
+    }
+
+    /* We automatically open doors in most modes too (not counting nointeraction
+       and forcefight, which have already been checked). Exception:
+       uim_traditional. Note: we can't use IS_DOOR here; that checks against a
+       background code (i.e. what is really there), not a cmap code (i.e. what
+       the character believes is there), and the two use different values.
+       Another exception: if the door is /known/ to be locked. */
+    if ((l->mem_bg == S_hcdoor || l->mem_bg == S_vcdoor) &&
+        uim != uim_traditional &&
+        (!l->mem_door_l || (IS_DOOR(l->typ) && !(l->doormask & D_LOCKED))))
+        return uia_opendoor;
+
+    /* This is an interactive mode (so autopicking up items is OK if autopickup
+       is on), and we don't have any reason to do something special, so just
+       move. */
+    return uia_move_pickup;
+}
 
 void
 clear_travel_direction(void)
@@ -66,7 +269,12 @@ revive_nasty(int x, int y, const char *msg)
     return revived;
 }
 
-static int
+/* Attempts to push a boulder next to us in a given direction.
+
+   Returns TRUE if there was at least one boulder on the square originally, but
+   we moved all of them off. Returns FALSE if there were no boulders, or if at
+   least one boulder couldn't be moved from the square. */
+static boolean
 moverock(schar dx, schar dy)
 {
     xchar rx, ry, sx, sy;
@@ -74,9 +282,13 @@ moverock(schar dx, schar dy)
     struct trap *ttmp;
     struct monst *mtmp;
 
+    boolean anyboulders = FALSE;
+
     sx = u.ux + dx;
     sy = u.uy + dy;     /* boulder starting position */
     while ((otmp = sobj_at(BOULDER, level, sx, sy)) != 0) {
+        anyboulders = TRUE;
+
         /* There's a boulder at (sx, sy), so make sure the point stays blocked.
            This should only happen where there's multiple boulders on a tile. */
 #ifdef INVISIBLE_OBJECTS
@@ -97,13 +309,13 @@ moverock(schar dx, schar dy)
             pline("You don't have enough leverage to push %s.",
                   the(xname(otmp)));
             /* Give them a chance to climb over it? */
-            return -1;
+            return FALSE;
         }
         if (verysmall(youmonst.data) && !u.usteed) {
             if (Blind)
                 feel_location(sx, sy);
             pline("You're too small to push that %s.", xname(otmp));
-            goto cannot_push;
+            return FALSE;
         }
         if (isok(rx, ry) && !IS_ROCK(level->locations[rx][ry].typ) &&
             level->locations[rx][ry].typ != IRONBARS &&
@@ -120,11 +332,11 @@ moverock(schar dx, schar dy)
                     feel_location(sx, sy);
                 pline("%s won't roll diagonally on this %s.", The(xname(otmp)),
                       surface(sx, sy));
-                goto cannot_push;
+                return FALSE;
             }
 
             if (revive_nasty(rx, ry, "You sense movement on the other side."))
-                return -1;
+                return FALSE;
 
             if (mtmp && !noncorporeal(mtmp->data) &&
                 (!mtmp->mtrapped ||
@@ -141,7 +353,7 @@ moverock(schar dx, schar dy)
                 if (flags.verbose)
                     pline("Perhaps that's why %s cannot move it.",
                           u.usteed ? y_monnam(u.usteed) : "you");
-                goto cannot_push;
+                return FALSE;
             }
 
             if (ttmp)
@@ -161,6 +373,7 @@ moverock(schar dx, schar dy)
                         fill_pit(level, u.ux, u.uy);
                         if (cansee(rx, ry))
                             newsym(rx, ry);
+                        newsym(sx, sy);
                         continue;
                     }
                     break;
@@ -177,6 +390,7 @@ moverock(schar dx, schar dy)
                     }
                     if (mtmp && !Blind)
                         newsym(rx, ry);
+                    newsym(sx, sy);
                     continue;
                 case HOLE:
                 case TRAPDOOR:
@@ -197,6 +411,7 @@ moverock(schar dx, schar dy)
                     bury_objs(level, rx, ry);
                     if (cansee(rx, ry))
                         newsym(rx, ry);
+                    newsym(sx, sy);
                     continue;
                 case TELEP_TRAP:
                     if (u.usteed)
@@ -208,6 +423,7 @@ moverock(schar dx, schar dy)
                               the(xname(otmp)));
                     rloco(otmp);
                     seetrap(ttmp);
+                    newsym(sx, sy);
                     continue;
                 case LEVEL_TELEP:
                     if (In_endgame(&u.uz)) {
@@ -236,6 +452,7 @@ moverock(schar dx, schar dy)
                     deliver_object(otmp, dest.dnum, dest.dlevel,
                                    MIGR_RANDOM);
                     seetrap(ttmp);
+                    newsym(sx, sy);
                     continue;
                 }
             if (closed_door(level, rx, ry))
@@ -290,39 +507,10 @@ moverock(schar dx, schar dy)
                 pline("You try to move %s, but in vain.", the(xname(otmp)));
             if (Blind)
                 feel_location(sx, sy);
-        cannot_push:
-            if (throws_rocks(youmonst.data)) {
-                if (u.usteed && P_SKILL(P_RIDING) < P_BASIC) {
-                    pline("You aren't skilled enough to %s %s from %s.",
-                          (flags.pickup && !In_sokoban(&u.uz))
-                          ? "pick up" : "push aside", the(xname(otmp)),
-                          y_monnam(u.usteed));
-                } else {
-                    pline("However, you can easily %s.",
-                          (flags.pickup && !In_sokoban(&u.uz))
-                          ? "pick it up" : "push it aside");
-                    if (In_sokoban(&u.uz))
-                        change_luck(-1);        /* Sokoban guilt */
-                    break;
-                }
-                break;
-            }
-
-            if (!u.usteed &&
-                (((!invent || inv_weight() <= -850) &&
-                  (!dx || !dy || (IS_ROCK(level->locations[u.ux][sy].typ)
-                                  && IS_ROCK(level->locations[sx][u.uy].typ))))
-                 || verysmall(youmonst.data))) {
-                pline
-                    ("However, you can squeeze yourself into a small opening.");
-                if (In_sokoban(&u.uz))
-                    change_luck(-1);    /* Sokoban guilt */
-                break;
-            } else
-                return -1;
+            return FALSE;
         }
     }
-    return 0;
+    return anyboulders;
 }
 
 /*
@@ -492,21 +680,20 @@ dosinkfall(void)
     }
 }
 
+/* note: returns TRUE on non-walls; you should probably only call it on walls,
+   in most cases */
 boolean
 may_dig(struct level *lev, xchar x, xchar y)
-/* intended to be called only on ROCKs */
 {
-    return (!
-            (IS_STWALL(lev->locations[x][y].typ) &&
-             (lev->locations[x][y].wall_info & W_NONDIGGABLE)));
+    return !(IS_STWALL(lev->locations[x][y].typ) &&
+             (lev->locations[x][y].wall_info & W_NONDIGGABLE));
 }
 
 boolean
 may_passwall(struct level * lev, xchar x, xchar y)
 {
-    return (!
-            (IS_STWALL(lev->locations[x][y].typ) &&
-             (lev->locations[x][y].wall_info & W_NONPASSWALL)));
+    return !(IS_STWALL(lev->locations[x][y].typ) &&
+             (lev->locations[x][y].wall_info & W_NONPASSWALL));
 }
 
 
@@ -523,8 +710,18 @@ bad_rock(const struct permonst * mdat, xchar x, xchar y)
 boolean
 invocation_pos(const d_level * dlev, xchar x, xchar y)
 {
-    return (boolean) (Invocation_lev(dlev) && x == inv_pos.x && y == inv_pos.y);
+    return (boolean) (Invocation_lev(dlev) &&
+                      x == gamestate.inv_pos.x &&
+                      y == gamestate.inv_pos.y);
 }
+
+
+int
+dofight(const struct nh_cmd_arg *arg)
+{
+    return domove(arg, uim_forcefight, occ_none);
+}
+
 
 static void
 autoexplore_msg(const char *text, int mode)
@@ -541,16 +738,30 @@ travelling(void)
         flags.occupation == occ_autoexplore;
 }
 
+/* Repeatedly recalculating extrinsics takes too much time and causes the
+   program to run noticeably slowly, so we cache them. */
+void
+init_test_move_cache(struct test_move_cache *cache)
+{
+    cache->blind = !!Blind;
+    cache->stunned = !!Stunned;
+    cache->fumbling = !!Fumbling;
+    cache->halluc = !!Hallucination;
+    cache->passwall = !!Passes_walls;
+    cache->grounded = !!Ground_based;
+
+    cache->instead_of_pushing_boulder = FALSE;
+}
+
 /* Return TRUE if (dx,dy) is an OK place to move. Mode is one of DO_MOVE,
-   TEST_MOVE, TEST_TRAV or TEST_TRAP.
+   TEST_MOVE, TEST_TRAV or TEST_SLOW.
 
    This function takes the values of Blind, Stunned, Fumbling, Hallucination,
    Passes_walls, and Ground_based as arguments; repeatedly recalculating them
    was taking up 34% of the runtime of the entire program before this change. */
 boolean
 test_move(int ux, int uy, int dx, int dy, int dz, int mode,
-          enum u_interaction_mode uim, boolean blind, boolean stunned,
-          boolean fumbling, boolean halluc, boolean passwall, boolean grounded)
+          const struct test_move_cache *cache)
 {
     int x = ux + dx;
     int y = uy + dy;
@@ -561,12 +772,12 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
      *  Check for physical obstacles.  First, the place we are going.
      */
     if (IS_ROCK(tmpr->typ) || tmpr->typ == IRONBARS) {
-        if (blind && mode == DO_MOVE)
+        if (cache->blind && mode == DO_MOVE)
             feel_location(x, y);
-        if (passwall && may_passwall(level, x, y)) {
+        if (cache->passwall && may_passwall(level, x, y)) {
             ;   /* do nothing */
         } else if (tmpr->typ == IRONBARS) {
-            if (!(passwall || passes_bars(youmonst.data)))
+            if (!(cache->passwall || passes_bars(youmonst.data)))
                 return FALSE;
         } else if (tunnels(youmonst.data) && !needspick(youmonst.data)) {
             /* Eat the rock. */
@@ -576,7 +787,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
             if (mode == DO_MOVE) {
                 if (Is_stronghold(&u.uz) && is_db_wall(x, y))
                     pline("The drawbridge is up!");
-                if (passwall && !may_passwall(level, x, y) &&
+                if (cache->passwall && !may_passwall(level, x, y) &&
                     In_sokoban(&u.uz))
                     pline("The Sokoban walls resist your ability.");
             }
@@ -584,9 +795,9 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
         }
     } else if (IS_DOOR(tmpr->typ)) {
         if (closed_door(level, x, y)) {
-            if (blind && mode == DO_MOVE)
+            if (cache->blind && mode == DO_MOVE)
                 feel_location(x, y);
-            if (passwall)
+            if (cache->passwall)
                 ; /* do nothing */
             else if (can_ooze(&youmonst)) {
                 if (mode == DO_MOVE)
@@ -603,7 +814,8 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                               "squeeze your possessions through.",
                               can_reach_floor() ? "under" : "around");
                     else if (x == ux || y == uy) {
-                        if (blind || stunned || ACURR(A_DEX) < 10 || fumbling) {
+                        if (cache->blind || cache->stunned ||
+                            ACURR(A_DEX) < 10 || cache->fumbling) {
                             if (u.usteed) {
                                 pline("You can't lead %s through that closed "
                                       "door.",
@@ -615,20 +827,22 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                         } else
                             pline("That door is closed.");
                     }
-                } else if (mode == TEST_TRAV || mode == TEST_TRAP)
+                } else if (mode == TEST_TRAV || mode == TEST_SLOW)
                     goto testdiag;
                 return FALSE;
             }
         } else {
         testdiag:
-            if (dx && dy && !passwall && ((tmpr->doormask & ~D_BROKEN)
-                                          || Is_rogue_level(&u.uz)
-                                          || block_door(x, y))) {
+            if (dx && dy && !cache->passwall &&
+                ((tmpr->doormask & ~D_BROKEN) || Is_rogue_level(&u.uz) ||
+                 block_door(x, y))) {
                 /* Diagonal moves into a door are not allowed. */
-                if (blind && mode == DO_MOVE)
+                if (cache->blind && mode == DO_MOVE)
                     feel_location(x, y);
                 return FALSE;
             }
+            if (mode == TEST_SLOW)
+                return TRUE;
         }
     }
     if (dx && dy && bad_rock(youmonst.data, ux, y) &&
@@ -659,7 +873,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
         struct trap *t = t_at(level, x, y);
 
         if ((t && t->tseen) ||
-            (grounded &&
+            (cache->grounded &&
              (level->locations[x][y].mem_bg == S_pool ||
               level->locations[x][y].mem_bg == S_lava))) {
             if (mode == DO_MOVE) {
@@ -670,73 +884,96 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                 if (travelling())
                     return FALSE;
             }
-            return mode == TEST_TRAP || mode == DO_MOVE;
+            return mode == TEST_SLOW || mode == DO_MOVE;
         }
     }
-
-    if (mode == TEST_TRAP)
-        return FALSE;   /* not a move through a trap/water/lava */
 
     ust = &level->locations[ux][uy];
 
     /* Now see if other things block our way. */
-    if (dx && dy && !passwall &&
+    if (dx && dy && !cache->passwall &&
         (IS_DOOR(ust->typ) && ((ust->doormask & ~D_BROKEN)
                                || Is_rogue_level(&u.uz)
-                               || block_entry(x, y))
-        )) {
+                               || block_entry(x, y)))) {
         /* Can't move at a diagonal out of a doorway with door. */
         if (mode == DO_MOVE)
             autoexplore_msg("the doorway", mode);
         return FALSE;
     }
 
-    if (sobj_at(BOULDER, level, x, y) && (In_sokoban(&u.uz) || !passwall)) {
-        if (!(blind || halluc) && !ITEM_INTERACTIVE(uim) &&
-            mode != TEST_TRAV) {
-            if (sobj_at(BOULDER, level, x, y) && mode == DO_MOVE)
-                autoexplore_msg("a boulder", mode);
-            return FALSE;
-        }
-        if (mode == DO_MOVE) {
-            /* tunneling monsters will chew before pushing */
-            if (tunnels(youmonst.data) && !needspick(youmonst.data) &&
-                !In_sokoban(&u.uz)) {
-                if (still_chewing(x, y))
-                    return FALSE;
-            } else if (moverock(dx, dy) < 0)
+    /* Can we be blocked by a boulder? */
+    if (!throws_rocks(youmonst.data) &&
+        !(verysmall(youmonst.data) && !u.usteed) &&
+        !((!invent || inv_weight() <= -850) && !u.usteed)) {
+        /* We assume we can move boulders when we're at a distance from them.
+           When it comes to actually do the move, resolve_uim() may replace the
+           move with a #pushboulder command. If it doesn't, the move fails
+           (unless we're somehow able to move onto a boulder square). Thus, this
+           is checking sobj_at (what's actually there), not memory. */
+        if (mode == DO_MOVE && sobj_at(BOULDER, level, x, y) &&
+            (In_sokoban(&u.uz) || !cache->passwall)) {
+            if (!tunnels(youmonst.data) || needspick(youmonst.data) ||
+                In_sokoban(&u.uz) || still_chewing(x, y)) {
+                if (!cache->instead_of_pushing_boulder)
+                    pline("There isn't space to move around the boulder.");
+                /* otherwise we've already printed a message */
                 return FALSE;
-        } else if (mode == TEST_TRAV) {
-            struct obj *obj;
-
-            /* never travel through boulders in Sokoban */
-            if (In_sokoban(&u.uz))
-                return FALSE;
-
-            /* don't pick two boulders in a row, unless there's a way thru */
-            if (sobj_at(BOULDER, level, ux, uy) && !In_sokoban(&u.uz)) {
-                if (!passwall &&
-                    !(tunnels(youmonst.data) && !needspick(youmonst.data)) &&
-                    !carrying(PICK_AXE) && !carrying(DWARVISH_MATTOCK) &&
-                    !((obj = carrying(WAN_DIGGING)) &&
-                      !objects[obj->otyp].oc_name_known))
-                    return FALSE;
             }
         }
-        /* assume you'll be able to push it when you get there... */
+
+        /* Exceptions: we can't move boulders while travelling in Sokoban, and
+           can't travel through two boulders in a row. (The code previously
+           checked for a pickaxe, mattock, or identified wand of digging in main
+           inventory; that check has been removed because digging through
+           boulders can be time-consuming, and it's more intuitive if travel
+           always picks the same path.) */
+        if (mode == TEST_TRAV && level->locations[x][y].mem_obj == BOULDER + 1) {
+            if (In_sokoban(&u.uz))
+                return FALSE;
+            if (level->locations[ux][uy].mem_obj == BOULDER + 1 &&
+                !cache->passwall &&
+                !(tunnels(youmonst.data) && !needspick(youmonst.data)))
+                return FALSE;
+        }
+
+        /* Avoid travel onto boulders, if we can. */
+        if (mode == TEST_SLOW && level->locations[x][y].mem_obj == BOULDER + 1) {
+            return TRUE;
+        }
+    } else {
+        if (mode == DO_MOVE && sobj_at(BOULDER, level, x, y)) {
+            if (u.usteed && P_SKILL(P_RIDING) < P_BASIC) {
+                pline("You aren't skilled enough to move past boulders "
+                      "from %s.", y_monnam(u.usteed));
+                return FALSE;
+            }
+
+            /* Print a message when moving onto a boulder in a form that lets
+               us move past them. */
+            pline("You %s the boulder%s%s.",
+                  throws_rocks(youmonst.data) ? "push" :
+                  verysmall(youmonst.data) ? "slip under" : "squeeze past",
+                  throws_rocks(youmonst.data) ? " aside" : "",
+                  cache->instead_of_pushing_boulder ? " instead" : "");
+
+            if (In_sokoban(&u.uz))
+                change_luck(-1);    /* Sokoban guilt */
+        }
     }
+
+    if (mode == TEST_SLOW)
+        return FALSE;   /* not a move through a trap/door/boulder/water/lava */
 
     /* OK, it is a legal place to move. */
     return TRUE;
 }
 
-/* Returns whether a square might be interesting to autoexplore onto.
-   This is done purely in terms of the memory of the square, i.e.
-   information the player knows already, to avoid leaking
-   information. The algorithm is taken from TAEB: "step on any item we
-   haven't stepped on, or any square we haven't stepped on adjacent to
-   stone that isn't adjacent to a square that has been stepped on;
-   however, never step on a boulder this way". */
+/* Returns whether a square might be interesting to autoexplore onto. This is
+   done purely in terms of the memory of the square, i.e. information the player
+   knows already, to avoid leaking information. The algorithm is taken from
+   TAEB: "step on any item we haven't stepped on, or any square we haven't
+   stepped on adjacent to stone that isn't adjacent to a square that has been
+   stepped on; however, never step on a boulder this way". */
 static boolean
 unexplored(int x, int y)
 {
@@ -843,6 +1080,13 @@ distmap_init(struct distmap_state *ds, int x1, int y1, struct monst *mtmp)
     ds->travelstepy[0][0] = y1;
 
     ds->mon = mtmp;
+    ds->mmflags = MM_IGNOREMONST | MM_IGNOREDOORS;
+
+    struct obj *monwep = MON_WEP(ds->mon);
+    if (tunnels(ds->mon->data) && (!needspick(ds->mon->data) ||
+                                   (monwep && is_pick(monwep))))
+        ds->mmflags |= MM_CHEWROCK;
+
 }
 
 int
@@ -870,7 +1114,7 @@ distmap(struct distmap_state *ds, int x2, int y2)
                     if (!isok(x + dx, y + dy))
                         continue;
                     if (!goodpos(ds->mon->dlevel, x + dx, y + dy,
-                                 ds->mon, MM_IGNOREMONST | MM_IGNOREDOORS))
+                                 ds->mon, ds->mmflags))
                         continue;
 
                     ds->travelstepx[(ds->curdist + 1) % 2][ds->tslen] = x + dx;
@@ -895,27 +1139,21 @@ distmap(struct distmap_state *ds, int x2, int y2)
  * Returns TRUE if a path was found.
  */
 static boolean
-findtravelpath(boolean(*guess) (int, int), schar *dx, schar *dy,
-               enum u_interaction_mode uim)
+findtravelpath(boolean(*guess) (int, int), schar *dx, schar *dy)
 {
-    /* Property caches; recalculating these took up a really noticeable amount
-       of time, according to the profiler. */
-    boolean blind = !!Blind;
-    boolean stunned = !!Stunned;
-    boolean fumbling = !!Fumbling;
-    boolean halluc = !!Hallucination;
-    boolean passwall = !!Passes_walls;
-    boolean grounded = !!Ground_based;
+    struct test_move_cache cache;
+    init_test_move_cache(&cache);
     /* If a travel command is sent to an adjacent, reachable location
        (i.e. continue_message is TRUE, meaning that this isn't an implicitly
-       continued action), use normal movement rules (and reset the interaction
-       mode). This is for mouse-driven ports, to allow clicking on an adjacent
-       square to move there. */
+       continued action), use normal movement rules. This is for mouse-driven
+       ports, to allow clicking on an adjacent square to move there.
+
+       Note: at current, this doesn't go via resolve_uim (meaning that the uim
+       is effectively stuck at uim_nointeraction). Do we want this? */
     if (!guess && turnstate.continue_message &&
         distmin(u.ux, u.uy, u.tx, u.ty) == 1) {
-        if (test_move(u.ux, u.uy, u.tx - u.ux, u.ty - u.uy,
-                      0, TEST_MOVE, flags.interaction_mode,
-                      blind, stunned, fumbling, halluc, passwall, grounded)) {
+        if (test_move(u.ux, u.uy, u.tx - u.ux, u.ty - u.uy, 0,
+                      TEST_MOVE, &cache)) {
             *dx = u.tx - u.ux;
             *dy = u.ty - u.uy;
             action_completed();
@@ -1010,12 +1248,7 @@ findtravelpath(boolean(*guess) (int, int), schar *dx, schar *dy,
                         (guess == couldsee_func && !guess(nx, ny)))
                         continue;
 
-                    if ((!passwall && !can_ooze(&youmonst) &&
-                         closed_door(level, nx, ny)) ||
-                        sobj_at(BOULDER, level, nx, ny) ||
-                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAP, uim,
-                                  blind, stunned, fumbling, halluc,
-                                  passwall, grounded)) {
+                    if (test_move(x, y, nx - x, ny - y, 0, TEST_SLOW, &cache)) {
                         /* closed doors and boulders usually cause a delay, so
                            prefer another path */
                         if ((int)travel[x][y] > radius - 5) {
@@ -1029,14 +1262,10 @@ findtravelpath(boolean(*guess) (int, int), schar *dx, schar *dy,
                             continue;
                         }
                     }
-                    if (test_move(x, y, nx - x, ny - y, 0, TEST_TRAP, uim,
-                                  blind, stunned, fumbling, halluc,
-                                  passwall, grounded) ||
-                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAV, uim,
-                                  blind, stunned, fumbling, halluc,
-                                  passwall, grounded)) {
+                    if (test_move(x, y, nx - x, ny - y, 0, TEST_SLOW, &cache) ||
+                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAV, &cache)) {
                         if ((level->locations[nx][ny].seenv ||
-                             (!blind && couldsee(nx, ny)))) {
+                             (!cache.blind && couldsee(nx, ny)))) {
                             if (nx == ux && ny == uy) {
                                 if (!guess) {
                                     *dx = x - ux;
@@ -1109,9 +1338,7 @@ findtravelpath(boolean(*guess) (int, int), schar *dx, schar *dy,
                     action_completed();
                     return FALSE;
                 }
-                if (test_move(u.ux, u.uy, *dx, *dy, 0, TEST_MOVE, uim,
-                              blind, stunned, fumbling, halluc,
-                              passwall, grounded))
+                if (test_move(u.ux, u.uy, *dx, *dy, 0, TEST_MOVE, &cache))
                     return TRUE;
                 goto found;
             }
@@ -1158,6 +1385,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     boolean cause_delay = FALSE;        /* dragging ball will skip a move */
     const char *predicament, *killer = 0;
     schar dz = 0;
+    enum u_interaction_attempt uia;
+    struct test_move_cache cache;
+    struct nh_cmd_arg newarg;
+
+    init_test_move_cache(&cache);
 
     /* If we're running, mark the current space to avoid infinite loops. */
     if (thismove == occ_move)
@@ -1165,20 +1397,26 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
 
     /* If we already have values for dx and dy, it means we're running.
        We don't want to overwrite them in that case, or else turning corners
-       breaks. Exception: we could have aborted a run into a walk. */
+       breaks. Exception: we could have aborted a run into a walk.
+
+       TODO: This code looks suspect, and there have been bug reports that
+       might be related. */
     if (((!turnstate.move.dx && !turnstate.move.dy) || thismove != occ_move) &&
         !getargdir(arg, NULL, &turnstate.move.dx, &turnstate.move.dy, &dz))
         return 0;
 
+    if (turnstate.intended_dx == 0 && turnstate.intended_dy == 0) {
+        turnstate.intended_dx = turnstate.move.dx;
+        turnstate.intended_dy = turnstate.move.dy;
+    }
+
     if (dz) {
         action_completed();
         if (dz < 0)
-            return doup(uim);
+            return doup();
         else
-            return dodown(uim);
+            return dodown(TRUE);
     }
-
-    u_wipe_engr(rnd(5));
 
     /* Don't allow running, travel or autoexplore when stunned or confused. */
     if (Stunned || Confusion) {
@@ -1219,20 +1457,25 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             u.tx = u.ux;
             u.ty = u.uy;
             if (!findtravelpath(unexplored, &turnstate.move.dx,
-                &turnstate.move.dy, uim)) {
+                                &turnstate.move.dy)) {
                 pline
                     ("Nowhere else around here can be automatically explored.");
             }
         } else if (!findtravelpath(NULL, &turnstate.move.dx,
-                   &turnstate.move.dy, uim)) {
+                                   &turnstate.move.dy)) {
             findtravelpath(couldsee_func, &turnstate.move.dx,
-                           &turnstate.move.dy, uim);
+                           &turnstate.move.dy);
         }
 
         if (turnstate.move.dx == 0 && turnstate.move.dy == 0) {
             action_completed();
             return 0;
         }
+
+        /* Check the legality of the move using the computed direction,
+           rather than using (0, 0). */
+        turnstate.intended_dx = turnstate.move.dx;
+        turnstate.intended_dy = turnstate.move.dy;
     }
 
     /* Travel hit an obstacle, or domove() was called with dx, dy and dz all
@@ -1243,6 +1486,64 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         return 0;
     }
 
+    arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &newarg);
+
+    if (turnstate.intended_dx == 0 && turnstate.intended_dy == 0)
+        impossible("Intending to move to your own location?");
+
+    /* This "move" might be something other than a move that was entered using
+       the movement commands. Farm it out to the appropriate uia handler, in
+       most cases. (We do this even for farmoves; in this case, we'll get an
+       appropriate uia for the type of farmove, and want to do it so as to be
+       able to handle things like autopickup correctly.)
+
+       There are two uia values we handle ourself, plus three we partially
+       handle ourself. uia_move_* is telling us to keep doing what we're doing
+       (and whether to veto autopickup or not). uia_displace is handled by this
+       function, because it's code-wise very similar to a move. uia_pushboulder
+       is not handled by this function, /but/ if the boulder can't be pushed, we
+       fall through to a move. uia_attack can fall through to a move when
+       attacking leprechauns, and shares many of the same checks for burden,
+       etc., as movement does.
+
+       When engulfed, all movement is interpreted as "non-confirming attack",
+       rather than "movement attempt", and onto the current square (which is
+       where the engulfing monster is). */
+    uia = resolve_uim(uim, !!Engulfed,
+                      Engulfed ? u.ux : u.ux + turnstate.intended_dx,
+                      Engulfed ? u.uy : u.uy + turnstate.intended_dy);
+
+    switch (uia) {
+    case uia_move_nopickup:
+        break;
+    case uia_move_pickup:
+        break;
+    case uia_displace:
+        break;
+    case uia_attack:
+        break;
+    case uia_opendoor:
+        /* Potential weirdness here: if stunned, we can intend to open one door
+           and end up closing a different door that's adjacent to us. This seems
+           at least a reasonable interpretation of the effect (as the same thing
+           would happen if we'd called doopen directly rather than domove). */
+        return doopen(&newarg);
+    case uia_pushboulder:
+        /* try to push the boulder */
+        moverock(turnstate.move.dx, turnstate.move.dy);
+        /* whether we succeeded or not, fall through to a move */
+        uia = uia_move_nopickup;
+        cache.instead_of_pushing_boulder = TRUE;
+        break;
+    case uia_chat:
+        return dotalk(&newarg);
+    case uia_search:
+        return dosearch(&newarg);
+    case uia_halt:
+        return 0;
+    }
+
+    u_wipe_engr(rnd(5));
     if (((wtcap = near_capacity()) >= OVERLOADED ||
          (wtcap > SLT_ENCUMBER && (Upolyd ? (u.mh < 5 && u.mh != u.mhmax)
                                    : (u.uhp < 10 && u.uhp != u.uhpmax))))
@@ -1275,6 +1576,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 exercise(A_DEX, TRUE);
                 break;
             }
+            action_completed();
             return 1;
         }
 
@@ -1299,22 +1601,31 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         if (!on_ice && (HFumbling & FROMOUTSIDE))
             HFumbling &= ~FROMOUTSIDE;
 
+        /* Ensure the move is to a valid direction. If not stunned or confused,
+           abort invalid moves. Otherwise, re-randomize them.
+
+           Note that this is a bugfix from 4.3-beta2, which effectively rolled
+           the randomization chance on confusion twice (once here, once in
+           getargdir). To avoid this, even if confused, if we have a valid
+           direction, we use it. */
         x = u.ux + turnstate.move.dx;
         y = u.uy + turnstate.move.dy;
-        if (Stunned || (Confusion && !rn2(5))) {
-            int tries = 0;
-
-            do {
-                if (tries++ > 50) {
-                    action_completed();
-                    return 1;
+        int tries = 0;
+        while (!isok(x, y) || bad_rock(youmonst.data, x, y)) {
+            if (tries++ > 50 || (!Stunned && !Confusion)) {
+                action_completed();
+                if (isok(x, y)) {
+                    feel_location(x, y);
+                    pline("Oof! You walk into something hard.");
                 }
-                confdir(&turnstate.move.dx, &turnstate.move.dy);
-                x = u.ux + turnstate.move.dx;
-                y = u.uy + turnstate.move.dy;
-            } while (!isok(x, y) || bad_rock(youmonst.data, x, y));
+                return 1;
+            }
+            confdir(&turnstate.move.dx, &turnstate.move.dy);
+            x = u.ux + turnstate.move.dx;
+            y = u.uy + turnstate.move.dy;
         }
-        /* turbulence might alter your actual destination */
+
+        /* In water, turbulence might alter your actual destination. */
         if (u.uinwater) {
             water_friction(&turnstate.move.dx, &turnstate.move.dy);
             if (!turnstate.move.dx && !turnstate.move.dy) {
@@ -1323,10 +1634,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             }
             x = u.ux + turnstate.move.dx;
             y = u.uy + turnstate.move.dy;
-        }
-        if (!isok(x, y)) {
-            action_completed();
-            return 0;
+
+            if (!isok(x, y)) {
+                action_completed();
+                return 0;
+            }
         }
 
         /* Traps can only be entered via the single-step movement commands.
@@ -1341,6 +1653,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 action_completed();
         }
 
+        /* When moving or attacking while held, there's a rejection chance. */
         if (u.ustuck && (x != u.ustuck->mx || y != u.ustuck->my)) {
             if (distu(u.ustuck->mx, u.ustuck->my) > 2) {
                 /* perhaps it fled (or was teleported or ... ) */
@@ -1381,11 +1694,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         }
 
         mtmp = m_at(level, x, y);
-        /* Checks for confirm, autoexplore have moved to attack_checks(). */
+        /* Checks for confirm, autoexplore have moved to resolve_uim(). */
     }
 
     /* Call lookaround here if running, because we need to know whether to
-     * change directions to round a corner. */
+       change directions to round a corner. */
     if (last_command_was("run")) {
         lookaround(uim_displace);
         if (flags.interrupted) {
@@ -1401,39 +1714,33 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     bhitpos.y = y;
     tmpr = &level->locations[x][y];
 
-    /* If the character remembers an invisible monster on the square, then
-       if they're a pacifist they're not going to risk attacking it. */
-    if (level->locations[x][y].mem_invis && !UIM_AGGRESSIVE(uim)) {
-        pline("You don't want to risk attacking something.");
-        return 0;
-    }
+    /* Special case: monsters that are hiding on the ceiling don't block
+       movement and aren't attacked; they'll move off their square in
+       spoteffects(). */
+    if (mtmp && m_mhiding(mtmp))
+        mtmp = NULL;
 
-    /* There's a monster here. Do we try to attack it?
-
-       The logic here has been simplified from previous via not duplicating half
-       of attack_checks(). For anyone wondering where the forcefight checks
-       went, they're in is_safepet and attack_checks now. */
     if (mtmp) {
-        enum attack_check_status attack_status = ac_continue;
-
-        if (!is_safepet(mtmp, uim)) {
-            attack_status = attack_checks(mtmp, uwep, turnstate.move.dx,
-                                          turnstate.move.dy, uim);
-            action_completed();
+        if (uia != uia_attack && uia != uia_displace) {
+            /* There's a monster here, but we weren't trying to interact with a
+               monster. We'll end up bumping into it instead. Also reveal the
+               monster (with an 'I', if necessary). */
+            boolean was_mimic = mtmp->m_ap_type &&
+                !Protection_from_shape_changers;
+            if (reveal_monster_at(x, y, TRUE))
+                if (was_mimic)
+                    stumble_onto_mimic(mtmp, turnstate.move.dx,
+                                       turnstate.move.dy);
+                else
+                    pline("Wait!  There's something there you can't see!");
+            else
+                pline("You bump into %s.", mon_nam(mtmp));
+            return 1;
         }
 
-        if (attack_status != ac_continue)
-            return attack_status != ac_cancel;
-
-        /* attack_checks said "Sure, go ahead with the attack attempt", so at
-           this point, we know that the character has a pretty good idea that
-           there's a monster there (enough that the attack will be definitely
-           attempted at this point). Exception: for safepet, we use the same
-           process, even moving into the attack, but attack() rejects the
-           attack. This causes displacement to have the same nutrition/exertion
-           penalties as attacking, which is 3.4.3 behaviour; it may well have
-           been an accident, but players have grown to expect it. */
-
+        /* Attacking and displacing a monster share the same nutrition
+           penalties.  This might originally have been a bug, but players have
+           grown to expect it. */
         gethungry();
         if (wtcap >= HVY_ENCUMBER && moves % 3) {
             if (Upolyd && u.mh > 1) {
@@ -1449,32 +1756,12 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         if (u_helpless(hm_all))
             return 1;       /* we just fainted */
 
-        if (!is_safepet(mtmp, uim)) {
+        if (uia == uia_displace) {
+            /* Normally we fall through to a move in this case, but there are
+               sanity checks first. There's a pretty detailed comment for these
+               in the 3.4.3 code, so I'll preserve it:
 
-            /* Try to perform the attack itself. We've already established that
-               the player's willing to perform the attack, so we crank the
-               interaction mode all the way up to "indiscriminate". This is
-               necessary to avoid double peaceful prompts (and also in the
-               dubious situation where there's an invisible-monster I over a
-               peaceful mimic). Don't downgrade "forcefight", in case there's no
-               visible monster there at all. */
-            attack_status = attack(mtmp, turnstate.move.dx,
-                                   turnstate.move.dy,
-                                   uim == uim_forcefight ? uim :
-                                   uim_indiscriminate);
-            if (attack_status != ac_continue)
-                return attack_status != ac_cancel;
-
-            /* This point is only reached if the monster dodged. It used to be
-               that you could cheese stumbling when dodged via always using an
-               explicit F when attacking leprechauns, but that makes no sense,
-               so force forcefight off in such cases, and give a message. */
-            pline("You miss wildly and stumble forwards.");
-            if (uim == uim_forcefight)
-                uim = uim_indiscriminate;
-
-        } else {
-            /* This section of code provides protection against accidentally
+               This section of code provides protection against accidentally
                hitting peaceful (like '@') and tame (like 'd') monsters.
                Protection is provided as long as player is not: blind, confused,
                hallucinating or stunned.
@@ -1492,6 +1779,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                worm (unless someone does better). There's also a chance of
                displacing a "frozen" monster. Sleeping monsters might magically
                walk in their sleep. */
+
             boolean foo = (Punished || !rn2(7) ||
                            is_longworm(mtmp->data)), inshop = FALSE;
             char *p;
@@ -1515,25 +1803,40 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 pline("%s doesn't seem to move!", Monnam(mtmp));
                 action_completed();
                 return 1;
+            } else if (!mtmp->mtame) {
+                /* can happen through stun/confusion */
+                pline("You bump into %s.  "
+                      "%s's apparently unwilling to swap places.",
+                      mon_nam(mtmp), msgupcasefirst(mhe(mtmp)));
             }
+        } else {
+            /* Try to perform the attack itself. We've already established that
+               the player's willing to perform the attack. */
+            enum attack_check_status attack_status =
+                attack(mtmp, turnstate.move.dx, turnstate.move.dy, TRUE);
+            if (attack_status != ac_continue)
+                return attack_status != ac_cancel;
+
+            /* This point is only reached if the monster dodged. It used to be
+               that you could cheese stumbling when dodged via always using an
+               explicit F when attacking leprechauns, but that makes no sense,
+               so force forcefight off in such cases, and give a message. */
+            pline("You miss wildly and stumble forwards.");
+            uia = uia_move_nopickup;
         }
     }
-
-    struct nh_cmd_arg newarg;
-    arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &newarg);
-
-    boolean was_mem_invis = level->locations[x][y].mem_invis;
 
     /* Regardless of whether the player was trying to attack or to move onto the
        square, they're going to interact with the square, and will discover if
        it contains a monster as a result. */
     reveal_monster_at(x, y, TRUE);
 
-    /* Either there isn't (any more) a monster there, or there is a safepet
-       there. Does the character try to attack the square? They will if there's
-       a remembered-monster 'I' and they aren't using a pacifist style of
-       movement, or if they were force-fighting. */
-    if (uim == uim_forcefight || (was_mem_invis && UIM_AGGRESSIVE(uim))) {
+    /* Is the player trying to attack? There isn't a monster there (displacing
+       implies not attacking, and we've handled all non-displacement effects of
+       attacking at this point), but the command can still be given (either
+       intentionally with 'F', or accidentally through stun/confusion or
+       mem_invis). */
+    if (uia == uia_attack) {
         boolean expl = (Upolyd && attacktype(youmonst.data, AT_EXPL));
         boolean hitsomething = FALSE, ouch = FALSE;
         struct obj *boulder = (sobj_at(BOULDER, level, x, y));
@@ -1560,17 +1863,15 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             }
             /* TODO: Possibly make the player hurtle after striking. */
         }
-        struct rm *levloc = &(level->locations[x][y]);
         if (!hitsomething &&
-            ((levloc->typ == STAIRS) ||
-             ((levloc->typ == LADDER) && (levloc->ladder != LA_DOWN)) ||
-             IS_STWALL(levloc->typ) || IS_TREE(levloc->typ) ||
-             (levloc->typ == DOOR &&
-              !!(levloc->doormask & (D_CLOSED|D_LOCKED)))))
-        {
+            ((tmpr->typ == STAIRS) ||
+             ((tmpr->typ == LADDER) && (tmpr->ladder != LA_DOWN)) ||
+             IS_STWALL(tmpr->typ) || IS_TREE(tmpr->typ) ||
+             (tmpr->typ == DOOR &&
+              !!(tmpr->doormask & (D_CLOSED|D_LOCKED))))) {
             hitsomething = TRUE;
-            if (uwep && ((is_pick(uwep) && !IS_TREE(levloc->typ)) ||
-                         (is_axe(uwep) && IS_TREE(levloc->typ))) &&
+            if (uwep && ((is_pick(uwep) && !IS_TREE(tmpr->typ)) ||
+                         (is_axe(uwep) && IS_TREE(tmpr->typ))) &&
                 use_pick_axe(uwep, &newarg))
                 return 1;
             else {
@@ -1579,16 +1880,16 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                       uwep && objects[uwep->otyp].oc_material == IRON ?
                       "Sparks fly as you" : "You",
                       uwep ? "whack" : Role_if(PM_MONK) ? "strike" : "bash",
-                      IS_TREE(levloc->typ) ? "tree" :
-                      levloc->typ == STAIRS ? "stairs" :
-                      levloc->typ == LADDER ? "ladder" :
-                      levloc->typ == DOOR ? "door" : "wall");
+                      IS_TREE(tmpr->typ) ? "tree" :
+                      tmpr->typ == STAIRS ? "stairs" :
+                      tmpr->typ == LADDER ? "ladder" :
+                      tmpr->typ == DOOR ? "door" : "wall");
                 killer = msgprintf(
                     "hitting %s",
-                    IS_TREE(levloc->typ) ? "tree" :
-                    levloc->typ == STAIRS ? "the stairs" :
-                    levloc->typ == LADDER ? "a ladder" :
-                    levloc->typ == DOOR ? "a door" : "a wall");
+                    IS_TREE(tmpr->typ) ? "tree" :
+                    tmpr->typ == STAIRS ? "the stairs" :
+                    tmpr->typ == LADDER ? "a ladder" :
+                    tmpr->typ == DOOR ? "a door" : "a wall");
             }
         }
         if (ouch) {
@@ -1727,22 +2028,10 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         return 1;
     }
 
-    /* If moving into a door, open it. */
-    if (IS_DOOR(tmpr->typ) && tmpr->doormask != D_BROKEN &&
-        tmpr->doormask != D_NODOOR && tmpr->doormask != D_ISOPEN &&
-        ITEM_INTERACTIVE(uim)) {
-        if (!doopen(&newarg)) {
-            action_completed();
-            return 0;
-        }
-        return 1;
-    }
-
     if (!test_move(u.ux, u.uy, turnstate.move.dx, turnstate.move.dy, dz,
-                   DO_MOVE, uim, !!Blind, !!Stunned, !!Fumbling,
-                   !!Hallucination, !!Passes_walls, !!Ground_based)) {
+                   DO_MOVE, &cache)) {
         /* We can't move there... but maybe we can dig. */
-        if (flags.autodig && ITEM_INTERACTIVE(uim) &&
+        if (flags.autodig && uim != uim_nointeraction &&
             thismove != occ_move && uwep && is_pick(uwep)) {
             /* MRKR: Automatic digging when wielding the appropriate tool */
             return use_pick_axe(uwep, &newarg);
@@ -1751,65 +2040,47 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         return 0;
     }
 
-    /* If not using 'moveonly', veto dangerous moves. (This uses
-       last_command_was, not uim, because the relevant factor is not the
-       semantics of the command, but the interface used to enter it.) */
-    if (!last_command_was("moveonly")) {
-        boolean lava = level->locations[x][y].mem_bg == S_lava;
-        boolean pool = level->locations[x][y].mem_bg == S_pool;
-
-        if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
-            !Stunned && !Confusion && (lava || (pool && !HSwimming)) &&
-            !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy)) {
-
-            if (cansee(x, y))
-                pline(is_pool(level, x, y) ? "You never learned to swim!" :
-                      "That lava looks rather dangerous...");
-            else
-                pline("As far as you can remember, it's "
-                      "not safe to stand there.");
-            pline("(Use the 'moveonly' command to move there anyway.)");
-            action_completed();
-            return 0;
-        }
-    }
-
-    /* Move ball and chain.  */
+    /* Move ball and chain. */
     if (Punished)
-        if (!drag_ball
-            (x, y, &bc_control, &ballx, &bally, &chainx, &chainy, &cause_delay,
-             TRUE))
+        if (!drag_ball(x, y, &bc_control, &ballx, &bally,
+                       &chainx, &chainy, &cause_delay, TRUE))
             return 1;
 
-    /* Check regions entering/leaving */
+    /* Check to see if entering/leaving the region is legal. */
     if (!in_out_region(level, x, y))
         return 1;       /* unable to enter the region but trying took time */
 
-    /* now move the hero */
+    /* Now move the hero. */
     mtmp = m_at(level, x, y);
     u.ux += turnstate.move.dx;
     u.uy += turnstate.move.dy;
-    /* Move your steed, too */
+    /* Move your steed, too. */
     if (u.usteed) {
         u.usteed->mx = u.ux;
         u.usteed->my = u.uy;
         exercise_steed();
     }
 
+    if (!mtmp && uia == uia_displace)
+        uia = uia_move_nopickup; /* nothing to displace */
+
     /*
-     * If safepet at destination then move the pet to the hero's
-     * previous location using the same conditions as in attack().
-     * there are special extenuating circumstances:
+     * If displacing a pet, then move the pet to the hero's previous
+     * location. (With uia_displace set, we don't reach this point unless the
+     * monster is happy to swap places. That doesn't mean it's /able/ to check
+     * places; we check that here.)
+     *
+     * There are special extenuating circumstances:
      * (1) if the pet dies then your god angers,
      * (2) if the pet gets trapped then your god may disapprove,
      * (3) if the pet was already trapped and you attempt to free it
-     * not only do you encounter the trap but you may frighten your
-     * pet causing it to go wild!  moral: don't abuse this privilege.
+     *     not only do you encounter the trap but you may frighten your
+     *     pet causing it to go wild!  moral: don't abuse this privilege.
      *
-     * Ceiling-hiding pets are skipped by this section of code, to
-     * be caught by the normal falling-monster code.
+     * Ceiling-hiding pets are skipped by this section of code, to be caught by
+     * the normal falling-monster code.
      */
-    if (is_safepet(mtmp, uim) && !(is_hider(mtmp->data) && mtmp->mundetected)) {
+    if (uia == uia_displace && mtmp && !(m_mhiding(mtmp))) {
         /* if trapped, there's a chance the pet goes wild */
         if (mtmp->mtrapped) {
             if (!rn2(mtmp->mtame)) {
@@ -1828,6 +2099,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         else if (!mtmp->mtame)
             newsym(mtmp->mx, mtmp->my);
 
+        /* TODO: this code is a little suspect because it doesn't move the steed
+           back. I'm not sure if there's any cases where that matters, but if
+           someone finds one, it should be reported to the NH3 devteam. */
         if (mtmp->mtrapped && (trap = t_at(level, mtmp->mx, mtmp->my)) != 0 &&
             (trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) &&
             sobj_at(BOULDER, level, trap->tx, trap->ty)) {
@@ -1877,8 +2151,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 break;
             }
         }
+
+        uia = uia_move_nopickup;
     }
 
+    /* Work out whether to stop a farmove. */
     reset_occupations(TRUE);
     if (thismove == occ_move) {
         if (IS_DOOR(tmpr->typ) || IS_ROCK(tmpr->typ) ||
@@ -1896,19 +2173,19 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         if (isok(u.ux - 1, u.uy))
             wallcount +=
                 IS_ROCK(level->locations[u.ux - 1][u.uy].typ) +
-                ! !sobj_at(BOULDER, level, u.ux - 1, u.uy) * 3;
+                !!sobj_at(BOULDER, level, u.ux - 1, u.uy) * 3;
         if (isok(u.ux + 1, u.uy))
             wallcount +=
                 IS_ROCK(level->locations[u.ux + 1][u.uy].typ) +
-                ! !sobj_at(BOULDER, level, u.ux + 1, u.uy) * 3;
+                !!sobj_at(BOULDER, level, u.ux + 1, u.uy) * 3;
         if (isok(u.ux, u.uy - 1))
             wallcount +=
                 IS_ROCK(level->locations[u.ux][u.uy - 1].typ) +
-                ! !sobj_at(BOULDER, level, u.ux, u.uy - 1) * 3;
+                !!sobj_at(BOULDER, level, u.ux, u.uy - 1) * 3;
         if (isok(u.ux, u.uy + 1))
             wallcount +=
                 IS_ROCK(level->locations[u.ux][u.uy + 1].typ) +
-                ! !sobj_at(BOULDER, level, u.ux, u.uy + 1) * 3;
+                !!sobj_at(BOULDER, level, u.ux, u.uy + 1) * 3;
         if (wallcount >= 3)
             action_completed();
         /*
@@ -1956,6 +2233,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     if (Punished)       /* put back ball and chain */
         move_bc(0, bc_control, ballx, bally, chainx, chainy);
 
+    /* We always call spoteffects after moving. We especially need to call it
+       here, because it'll remove any monster that might be on the player's
+       square. */
     spoteffects(TRUE);
 
     /* delay next move because of ball dragging */
@@ -2442,13 +2722,12 @@ dopickup(const struct nh_cmd_arg *arg)
    each of 1, 2, 3, and 8.)
 
    The new calculation treats aggressive farmove like the former "1", travel
-   like the former "8", and otherwise acts like 2 if the last command wasn't
-   "go2" or 3 otherwise. This preserves the previous behaviour almost perfectly,
-   although is still quite unintuitive. We may want to consider removing one of
-   "go" and "go2"; the commands are noticeably different from aggressive farmove
-   (and widely used), but players tend to use them interchangeably.
+   like the former "8", and otherwise acts like 2 or 3 depending on the new
+   "corridorbranch" option ("go" and "go2" have been merged, because it's rare
+   for any individual player to use both).
 */
-/* Look around you.
+/*
+ * Look around you.
  * Look around you.
  * Just look around you.
  * Have you worked out what we're looking for?
@@ -2480,7 +2759,7 @@ lookaround(enum u_interaction_mode uim)
     boolean farmoving = travelling() || flags.occupation == occ_move;
     /* aggressive_farmoving: I'm... not actually sure when this is true in any
        case that would matter.  Tempted to delete it with prejudice. */
-    boolean aggressive_farmoving = ITEM_INTERACTIVE(uim) && !travelling();
+    boolean aggressive_farmoving = uim != uim_nointeraction && !travelling();
 
     /* We need to do three things here.  First, make a few checks that are
        independent of the surrounding terrain.  Second, check whether the
@@ -2717,7 +2996,8 @@ monster_nearby(void)
     return 0;
 }
 
-
+/* TODO: wailmsg is not namespaced correctly, and isn't saved correctly
+   either! */
 static void
 maybe_wail(void)
 {
@@ -2926,21 +3206,18 @@ exploration_interaction_status(void)
     if (uim <= uim_displace)
         return flags.interaction_mode;
 
-    if (uim == uim_pacifist || uim == uim_standard)
-        return uim_displace;
+    /* OK, I admit it: this is a pretty absurd case. However, it's one that
+       the user could conceivably send us into.
 
-    if (ITEM_INTERACTIVE(uim))
-        return uim_onlyitems;
+       (The other possibility is to outright cancel the action.) */
+    if (uim == uim_forcefight)
+        return uim_nointeraction;
 
-    return uim_nointeraction;
+    if (uim == uim_traditional)
+        return uim_onlyitems;    /* because it doesn't displace monsters */
+
+    return uim_displace;
 }
-
-int
-dofight(const struct nh_cmd_arg *arg)
-{
-    return domove(arg, uim_forcefight, occ_none);
-}
-
 
 /* This is used by commands that need occupation-like behaviour when given a
    numeric prefix. For instance, if the user sends "20s", they should get a "You
@@ -3010,4 +3287,3 @@ dogo(const struct nh_cmd_arg *arg)
 }
 
 /*hack.c*/
-

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -304,6 +304,8 @@ merged(struct obj **potmp, struct obj **pobj)
 /*
   Adjust hero intrinsics as if this object was being added to the hero's
   inventory.  Called _before_ the object has been added to the hero's inventory.
+  (TODO: The previous sentence appears to be incorrect. Are there any bugs
+  caused by this?)
 
   This is called when adding objects to the hero's inventory normally (via
   addinv) or when an object in the hero's inventory has been polymorphed
@@ -329,10 +331,8 @@ addinv_stats(struct obj *obj)
     }
 }
 
-/*
-Add obj to the hero's inventory.  Make sure the object is "free".
-Adjust hero attributes as necessary.
-*/
+/* Add obj to the hero's inventory.  Make sure the object is "free".
+   Adjust hero attributes as necessary. */
 struct obj *
 addinv(struct obj *obj)
 {
@@ -346,6 +346,7 @@ addinv(struct obj *obj)
 
     obj->no_charge = 0; /* not meaningful for invent */
     obj->was_thrown = 0;
+    obj->was_dropped = 0;
 
     examine_object(obj);
 
@@ -969,6 +970,17 @@ getobj(const char *let, const char *word, boolean isarg)
             case OBJECT_USABLE:
                 *ap++ = *bp++ = otmp->invlet;
                 buflen++;
+                break;
+            }
+        } else if (allowall) {
+            switch (object_selection_checks(otmp, word)) {
+            case CURRENTLY_NOT_USABLE:
+            case IMPOSSIBLE_USE:
+                break;
+
+            case OBJECT_USABLE:
+            case NONSENSIBLE_USE:
+                *ap++ = otmp->invlet;
                 break;
             }
         }

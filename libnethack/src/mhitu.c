@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-05-19 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -223,9 +223,14 @@ mattacku(struct monst *mtmp)
        long worm attacking. */
     boolean youseeit = canseemon(mtmp);
 
-    /* The monster knows your location now, even if it didn't before. */
-    mtmp->mux = u.ux;
-    mtmp->muy = u.uy;
+    /* The monster knows your location now, even if it didn't before.
+
+       Exception: the monster has you engulfed, in which case we want to avoid
+       setting mux and muy to the monster's own square. */
+    if (mtmp->mx != u.ux || mtmp->my != u.uy) {
+        mtmp->mux = u.ux;
+        mtmp->muy = u.uy;
+    }
 
     /* Might be attacking your image around the corner, or invisible, or you
        might be blind... so we require !ranged to ensure you're aware of it. */
@@ -1551,6 +1556,8 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         win_pause_output(P_MESSAGE);
         vision_recalc(2);       /* hero can't see anything */
         Engulfed = 1;
+        mtmp->mux = COLNO;      /* don't let the muxy equal the mxy */
+        mtmp->muy = ROWNO;
         if (Punished)
             placebc();
         /* u.uswldtim always set > 1 */

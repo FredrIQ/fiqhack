@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-02 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -231,12 +231,12 @@ distant_name(const struct obj *obj, const char *(*func) (const struct obj *))
 const char *
 fruitname(boolean juice)
 {
-    const char *fruit_nam = strstri(pl_fruit, " of ");
+    const char *fruit_nam = strstri(gamestate.fruits.curname, " of ");
 
     if (fruit_nam)
         fruit_nam += 4; /* skip past " of " */
     else
-        fruit_nam = pl_fruit;   /* use it as is */
+        fruit_nam = gamestate.fruits.curname;   /* use it as is */
 
     return msgprintf("%s%s", makesingular(fruit_nam), juice ? " juice" : "");
 }
@@ -386,7 +386,7 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
         if (typ == SLIME_MOLD) {
             struct fruit *f;
 
-            for (f = ffruit; f; f = f->nextf) {
+            for (f = gamestate.fruits.chain; f; f = f->nextf) {
                 if (f->fid == obj->spe) {
                     buf = msg_from_string(f->fname);
                     break;
@@ -1789,7 +1789,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     int islit, unlabeled, ishistoric, isdiluted;
     const struct alt_spellings *as = spellings;
     struct fruit *f;
-    int ftype = current_fruit;
+    int ftype = gamestate.fruits.current;
     const char *fruitbuf;
 
     /* Fruits may not mess up the ability to wish for real objects (since you
@@ -2316,7 +2316,7 @@ srch:
             fp += l;
         }
 
-        for (f = ffruit; f; f = f->nextf) {
+        for (f = gamestate.fruits.chain; f; f = f->nextf) {
             const char *f1 = f->fname, *f2 = makeplural(f->fname);
 
             if (!strncmp(fp, f1, strlen(f1)) || !strncmp(fp, f2, strlen(f2))) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-05 */
+/* Last modified by Alex Smith, 2015-07-25 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>      /* for vsnprintf, this file does no I/O */
+#include <stdbool.h>
 
 #define UNCURSED_MAIN_PROGRAM
 #include "uncursed.h"
@@ -574,6 +575,7 @@ int COLOR_PAIRS = 32767;        /* externally visible; must fit into 15 bits */
 
 static uncursed_color (*pair_content_list)[2] = 0;   /* dynamically allocated */
 static uncursed_color pair_content_alloc_count = -1;
+static bool need_noutwin_recolor = true;
 
 int
 start_color(void)
@@ -651,6 +653,8 @@ init_pair(uncursed_color pairnum,
 
     pair_content_list[pairnum][0] = fgcolor;
     pair_content_list[pairnum][1] = bgcolor;
+
+    need_noutwin_recolor = true;
 
     return OK;
 }
@@ -1653,6 +1657,10 @@ copywin(const WINDOW *from, const WINDOW *to, int from_miny, int from_minx,
                 if (fc->chars[0] != 32) {
                     *tc = *fc;
                     *tr = *fr;
+
+                    if (to == nout_win)
+                        tc->color_on_screen =
+                            color_on_screen_for_attr(tc->attr);
                 }
 
                 /* Dead-reckon these pointers for performance. This function is
@@ -1669,6 +1677,13 @@ copywin(const WINDOW *from, const WINDOW *to, int from_miny, int from_minx,
                when we could copy as opaque objects (which is even faster). */
             memcpy(tc, fc, irange * sizeof *tc);
             memcpy(tr, fr, irange * sizeof *tr);
+
+            if (to == nout_win)
+                for (i = 0; i < irange; i++) {
+                    tc->color_on_screen =
+                        color_on_screen_for_attr(tc->attr);
+                    tc++;
+                }
         }
     }
     return OK;
@@ -2476,7 +2491,8 @@ doupdate(void)
         for (i = 0; i <= nout_win->maxx; i++) {
             int k;
 
-            p->color_on_screen = color_on_screen_for_attr(p->attr);
+            if (need_noutwin_recolor)
+                p->color_on_screen = color_on_screen_for_attr(p->attr);
 
             if (p->color_on_screen != q->color_on_screen ||
                 *rp != *rq || *rq == &invalid_region)
@@ -2495,6 +2511,7 @@ doupdate(void)
 
     uncursed_hook_positioncursor(nout_win->y, nout_win->x);
     uncursed_hook_flush();
+    need_noutwin_recolor = false;
     return OK;
 }
 

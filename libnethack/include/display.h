@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -74,12 +74,17 @@
    behaviour is preserved and symmetrised for 4.3. */
 # define MSENSE_GOLDSMELL     0x00000100u
 
+/* Scent. Works over a radius-root-5 range, and requires that the source and
+   target are either both underwater or both out of water. The source must have
+   the M3_SCENT flag. TODO: make stinking clouds block this. */
+# define MSENSE_SCENT         0x00000200u
+
 
 # define MSENSE_ANYVISION     (MSENSE_VISION | MSENSE_INFRAVISION |  \
                                MSENSE_SEEINVIS | MSENSE_XRAY)
 # define MSENSE_ANYDETECT     (MSENSE_TELEPATHY | MSENSE_MONDETECT | \
                                MSENSE_WARNOFMON | MSENSE_COVETOUS |  \
-                               MSENSE_GOLDSMELL)
+                               MSENSE_GOLDSMELL | MSENSE_SCENT)
 
 /* Flags that alert us to a monster's existence, but not full details. */
 
@@ -162,20 +167,6 @@
                                (!m_at(level, (x), (y))->minvis ||  \
                                 See_invisible))
 
-
-/*
- * is_safepet(mon)
- *
- * A special case check used in attack() and domove().  Placing the
- * definition here is convenient.
- */
-# define is_safepet(mon, uim)                           \
-    ((mon) && (mon)->mtame && canspotmon(mon) &&        \
-     ((uim) == uim_pacifist || (uim) == uim_standard || \
-      (uim) == uim_displace) &&                         \
-     !Confusion && !Hallucination && !Stunned)
-
-
 /*
  * canseeself()
  * senseself()
@@ -222,7 +213,7 @@
  */
 # define what_obj(obj, xx, yy, rng)  \
     (Hallucination ? isok(xx, yy) && level->locations[xx][yy].mem_obj ? \
-     level->locations[xx][yy].mem_obj : random_object(rng) : obj)
+     level->locations[xx][yy].mem_obj - 1 : random_object(rng) : obj)
 # define what_mon(mon, xx, yy, rng)  (Hallucination ? random_monster(rng) : mon)
 # define what_trap(trp, xx, yy, rng) \
     (Hallucination ? isok(xx, yy) && level->locations[xx][yy].mem_trap ? \

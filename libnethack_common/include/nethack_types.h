@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-07-20 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -464,13 +464,18 @@ union nh_optvalue {
     struct nh_autopickup_rules *ar;
 };
 
+enum nh_optbirth {
+    nh_birth_ingame  = 0,  /* not a birth option; changable in game */
+    nh_birth_lasting = 1,  /* birth option; has effects in game */
+    nh_birth_creation = 2, /* game creation option; no effect from turn 1 on */
+};
+
 /* This structure and all its contents should always be dynamically allocated
- * so that they can safely be freed with nhlib_free_optlist.
- */
+   so that they can safely be freed with nhlib_free_optlist. */
 struct nh_option_desc {
     const char *name;
     const char *helptxt;
-    nh_bool birth_option;
+    enum nh_optbirth birth_option;
     enum nh_opttype type;
     union nh_optvalue value;
     union {

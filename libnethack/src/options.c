@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-01 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -48,7 +48,7 @@ static const struct nh_listitem movecommand_list[] = {
     {uim_onlyitems, "onlyitems"},
     {uim_displace, "displace"},
     {uim_pacifist, "pacifist"},
-    {uim_attackonly, "attackonly"},
+    {uim_attackhostile, "attackhostile"},
     {uim_traditional, "traditional"},
     {uim_standard, "standard"},
     {uim_indiscriminate, "indiscriminate"},
@@ -90,7 +90,6 @@ static struct nh_enum_option role_spec = { NULL, 0 };
 static const struct nh_listitem pettype_list[] = {
     {'c', "cat"},
     {'d', "dog"},
-    {'h', "horse"},
     {'n', "no pet"},
     {0, "random"}
 };
@@ -131,7 +130,8 @@ static struct nh_autopickup_rules def_autopickup =
     { def_ap_ruleset, SIZE(def_ap_ruleset) };
 
 
-/* This is statically allocated, which means a pointer to it must never
+/*
+ * This is statically allocated, which means a pointer to it must never
  * escape this file (since nh_option_desc is supposed to be dynamically
  * allocated.
  *
@@ -139,89 +139,98 @@ static struct nh_autopickup_rules def_autopickup =
  * dynamically-allocated copy and go from there.
  */
 static const struct nh_option_desc const_options[] = {
-    {"autodig", "dig if moving and wielding digging tool", FALSE, OPTTYPE_BOOL,
-     {.b = FALSE}},
-    {"autodigdown", "autodig downwards tries to create a pit or hole", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
-    {"autopickup", "automatically pick up objects you move over", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
+    {"autodig", "dig if moving and wielding digging tool",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"autodigdown", "autodig downwards tries to create a pit or hole",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"autopickup", "automatically pick up objects you move over",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"autopickup_rules",
-     "rules to decide what to autopickup if autopickup is on", FALSE,
-     OPTTYPE_AUTOPICKUP_RULES, {.ar = &def_autopickup}},
+     "rules to decide what to autopickup if autopickup is on",
+     nh_birth_ingame, OPTTYPE_AUTOPICKUP_RULES, {.ar = &def_autopickup}},
     {"autoquiver",
-     "when firing with an empty quiver, select something suitable", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
-    {"corridorbranch", "branching corridors do not stop farmove", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"disclose", "whether to disclose information at end of game", FALSE,
-     OPTTYPE_ENUM, {.e = DISCLOSE_PROMPT_DEFAULT_YES}},
-    {"fruit", "the name of a fruit you enjoy eating", FALSE, OPTTYPE_STRING,
-     {.s = NULL}},
-    {"menustyle", "user interface for object selection", FALSE, OPTTYPE_ENUM,
-     {.e = MENU_FULL}},
-    {"movecommand", "what the movement keys do", FALSE, OPTTYPE_ENUM,
-     {.e = uim_standard}},
-    {"multistage_equip", "equipping items can imply unequipping others", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"packorder", "the inventory order of the items in your pack", FALSE,
-     OPTTYPE_STRING, {.s = NULL}},
-    {"pickup_burden", "maximum burden picked up before prompt", FALSE,
-     OPTTYPE_ENUM, {.e = MOD_ENCUMBER}},
-    {"pickup_thrown", "autopickup items you threw or fired", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"prayconfirm", "use confirmation prompt when #pray command issued", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"pushweapon", "offhand the old weapon when wielding a new one", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
-    {"show_uncursed", "always show uncursed status", FALSE, OPTTYPE_BOOL,
-     {.b = FALSE}},
-    {"showrace", "show yourself by your race rather than by role", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
-    {"sortpack", "group similar kinds of objects in inventory", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
+     "when firing with an empty quiver, select something suitable",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"corridorbranch", "branching corridors do not stop farmove",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"disclose", "whether to disclose information at end of game",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = DISCLOSE_PROMPT_DEFAULT_YES}},
+    {"fruit", "the name of a fruit you enjoy eating",
+     nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
+    {"menustyle", "user interface for object selection",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = MENU_FULL}},
+    {"movecommand", "what the movement keys do", nh_birth_ingame,
+     OPTTYPE_ENUM, {.e = uim_standard}},
+    {"multistage_equip", "equipping items can imply unequipping others",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"packorder", "the inventory order of the items in your pack",
+     nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
+    {"pickup_burden", "maximum burden picked up before prompt",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = MOD_ENCUMBER}},
+    {"pickup_thrown", "autopickup items you threw or fired",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"prayconfirm", "use confirmation prompt when #pray command issued",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"pushweapon", "offhand the old weapon when wielding a new one",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"show_uncursed", "always show uncursed status",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"showrace", "show yourself by your race rather than by role",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"sortpack", "group similar kinds of objects in inventory",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"sparkle", "display sparkly effect for resisted magical attacks",
-     OPTTYPE_BOOL, FALSE, {.b = TRUE}},
-    {"tombstone", "print tombstone when you die", FALSE, OPTTYPE_BOOL,
-     {.b = TRUE}},
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"tombstone", "print tombstone when you die",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"travel_interrupt", "interrupt travel (_) when a hostile is in sight",
-     FALSE, OPTTYPE_BOOL, {.b = TRUE}},
-    {"verbose", "print more commentary during the game", FALSE, OPTTYPE_BOOL,
-     {.b = TRUE}},
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+    {"verbose", "print more commentary during the game",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
 
-    {"name", "character name", TRUE, OPTTYPE_STRING, {.s = NULL}},
-    {"mode", "game mode", TRUE, OPTTYPE_ENUM, {.e = MODE_NORMAL}},
+    {"name", "character name",
+     nh_birth_lasting, OPTTYPE_STRING, {.s = NULL}},
+    {"mode", "game mode",
+     nh_birth_lasting, OPTTYPE_ENUM, {.e = MODE_NORMAL}},
     {"seed", "if nonblank, replay a given dungeon (non-scoring)",
-     TRUE, OPTTYPE_STRING, {.s = NULL}},
+     nh_birth_lasting, OPTTYPE_STRING, {.s = NULL}},
     {"timezone", "time zone to use for time-dependent effects",
-     TRUE, OPTTYPE_ENUM, {.e = 0}},
-    {"elbereth", "difficulty: the E-word repels monsters", TRUE, OPTTYPE_BOOL,
-     {.b = TRUE}},
-    {"reincarnation", "Special Rogue-like levels", TRUE, OPTTYPE_BOOL,
-     {.b = TRUE}},
-    {"seduction", "certain monsters may seduce you", TRUE, OPTTYPE_BOOL,
-     {.b = TRUE}},
-    {"bones", "allow bones levels", TRUE, OPTTYPE_BOOL, {.b = TRUE}},
-    {"permablind", "spend the whole game blind", TRUE, OPTTYPE_BOOL,
-     {.b = FALSE}},
-    {"permahallu", "spend the whole game hallucinating", TRUE, OPTTYPE_BOOL,
-     {.b = FALSE}},
-    {"polyinit", "play in monster form (non-scoring)", TRUE, OPTTYPE_ENUM,
-     {.e = -1}},
-    {"legacy", "print introductory message", TRUE, OPTTYPE_BOOL, {.b = TRUE}},
-    {"align", "your starting alignment", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
-    {"gender", "your starting gender", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
-    {"race", "your starting race", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
-    {"role", "your starting role", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
-    {"catname", "the name of your (first) cat", TRUE, OPTTYPE_STRING,
-     {.s = NULL}},
-    {"dogname", "the name of your (first) dog", TRUE, OPTTYPE_STRING,
-     {.s = NULL}},
-    {"horsename", "the name of your (first) horse", TRUE, OPTTYPE_STRING,
-     {.s = NULL}},
-    {"pettype", "your preferred initial pet type", TRUE, OPTTYPE_ENUM,
-     {.e = 0}},
+     nh_birth_lasting, OPTTYPE_ENUM, {.e = 0}},
+    {"elbereth", "difficulty: the E-word repels monsters",
+     nh_birth_lasting, OPTTYPE_BOOL, {.b = TRUE}},
+    {"reincarnation", "Special Rogue-like levels",
+     nh_birth_lasting, OPTTYPE_BOOL, {.b = TRUE}},
+    {"seduction", "certain monsters may seduce you",
+     nh_birth_lasting, OPTTYPE_BOOL, {.b = TRUE}},
+    {"bones", "allow bones levels",
+     nh_birth_lasting, OPTTYPE_BOOL, {.b = TRUE}},
+    {"permablind", "spend the whole game blind",
+     nh_birth_lasting, OPTTYPE_BOOL, {.b = FALSE}},
+    {"permahallu", "spend the whole game hallucinating",
+     nh_birth_lasting, OPTTYPE_BOOL, {.b = FALSE}},
+    {"polyinit", "play in monster form (non-scoring)",
+     nh_birth_lasting, OPTTYPE_ENUM, {.e = -1}},
 
-    {NULL, NULL, FALSE, OPTTYPE_BOOL, {.s = NULL}}
+    {"legacy", "print introductory message",
+     nh_birth_creation, OPTTYPE_BOOL, {.b = TRUE}},
+    {"align", "your starting alignment",
+     nh_birth_creation, OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"gender", "your starting gender",
+     nh_birth_creation, OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"race", "your starting race",
+     nh_birth_creation, OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"role", "your starting role",
+     nh_birth_creation, OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"catname", "the name of your (first) cat",
+     nh_birth_creation, OPTTYPE_STRING, {.s = NULL}},
+    {"dogname", "the name of your (first) dog",
+     nh_birth_creation, OPTTYPE_STRING, {.s = NULL}},
+    {"horsename", "the name of your (first) horse",
+     nh_birth_creation, OPTTYPE_STRING, {.s = NULL}},
+    {"pettype", "your preferred initial pet type",
+     nh_birth_creation, OPTTYPE_ENUM, {.e = 0}},
+
+    {NULL, NULL, nh_birth_ingame, OPTTYPE_BOOL, {.s = NULL}}
 };
 
 
@@ -392,12 +401,13 @@ initoptions(void)
     memcpy(flags.inv_order, def_inv_order, sizeof flags.inv_order);
 
     fruitadd(obj_descr[SLIME_MOLD].oc_name);
-    strncpy(pl_fruit, obj_descr[SLIME_MOLD].oc_name, PL_FSIZ);
+    strncpy(gamestate.fruits.curname, obj_descr[SLIME_MOLD].oc_name, PL_FSIZ);
 }
 
 
-static boolean
-set_option(const char *name, union nh_optvalue value)
+boolean
+set_option(const char *name, union nh_optvalue value,
+           struct newgame_options *ngo)
 {
     struct nh_option_desc *option = NULL, *options = new_opt_struct();
     boolean ret = FALSE;
@@ -431,10 +441,10 @@ set_option(const char *name, union nh_optvalue value)
     } else if (!strcmp("disclose", option->name)) {
         flags.end_disclose = option->value.e;
     } else if (!strcmp("fruit", option->name)) {
-        strncpy(pl_fruit, option->value.s, PL_FSIZ-1);
-        pl_fruit[PL_FSIZ - 1] = '\0';
+        strncpy(gamestate.fruits.curname, option->value.s, PL_FSIZ-1);
+        gamestate.fruits.curname[PL_FSIZ - 1] = '\0';
         if (objects)    /* don't do fruitadd before the game is running */
-            fruitadd(pl_fruit);
+            fruitadd(gamestate.fruits.curname);
     } else if (!strcmp("menustyle", option->name)) {
         flags.menu_style = option->value.e;
     } else if (!strcmp("movecommand", option->name)) {
@@ -474,16 +484,24 @@ set_option(const char *name, union nh_optvalue value)
            intentional */
         strncpy(flags.setseed, option->value.s, RNG_SEED_SIZE_BASE64);
     } else if (!strcmp("catname", option->name)) {
-        strncpy(catname, option->value.s, PL_PSIZ-1);
-        catname[PL_PSIZ - 1] = '\0';
+        if (!ngo)
+            panic("catname set outside newgame sequence");
+        strncpy(ngo->catname, option->value.s, PL_PSIZ-1);
+        ngo->catname[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("dogname", option->name)) {
-        strncpy(dogname, option->value.s, PL_PSIZ-1);
-        dogname[PL_PSIZ - 1] = '\0';
+        if (!ngo)
+            panic("dogname set outside newgame sequence");
+        strncpy(ngo->dogname, option->value.s, PL_PSIZ-1);
+        ngo->dogname[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("horsename", option->name)) {
-        strncpy(horsename, option->value.s, PL_PSIZ-1);
-        horsename[PL_PSIZ - 1] = '\0';
+        if (!ngo)
+            panic("horsename set outside newgame sequence");
+        strncpy(ngo->horsename, option->value.s, PL_PSIZ-1);
+        ngo->horsename[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("pettype", option->name)) {
-        preferred_pet = (char)option->value.e;
+        if (!ngo)
+            panic("preferred_pet set outside newgame sequence");
+        ngo->preferred_pet = (char)option->value.e;
     } else if (!strcmp("timezone", option->name)) {
         flags.timezone = option->value.e;
     } else if (!strcmp("polyinit", option->name)) {
@@ -511,7 +529,7 @@ nh_set_option(const char *name, union nh_optvalue value)
 
     API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(FALSE);
 
-    rv = set_option(name, value);
+    rv = set_option(name, value, NULL);
 
     API_EXIT();
     return rv;
@@ -555,7 +573,7 @@ nh_get_options(void)
                 free(option->value.s);
             option->value.s = malloc(PL_FSIZ);
 
-            strncpy(option->value.s, pl_fruit, PL_FSIZ-1);
+            strncpy(option->value.s, gamestate.fruits.curname, PL_FSIZ-1);
             option->value.s[PL_FSIZ - 1] = '\0';
 
         } else if (!strcmp("menustyle", option->name)) {
@@ -617,35 +635,19 @@ nh_get_options(void)
             strncpy(option->value.s, flags.setseed, RNG_SEED_SIZE_BASE64);
             option->value.s[RNG_SEED_SIZE_BASE64] = '\0';
 
-        } else if (!strcmp("catname", option->name)) {
-
+        } else if (!strcmp("catname", option->name) ||
+                   !strcmp("dogname", option->name) ||
+                   !strcmp("horsename", option->name)) {
+            /* The client shouldn't be doing this, but we can't crash in
+               response because that would be exploitable. Send it a null
+               string instead. */
             if (option->value.s)
                 free(option->value.s);
-            option->value.s = malloc(PL_PSIZ);
-
-            strncpy(option->value.s, catname, PL_PSIZ-1);
-            option->value.s[PL_PSIZ - 1] = '\0';
-
-        } else if (!strcmp("dogname", option->name)) {
-
-            if (option->value.s)
-                free(option->value.s);
-            option->value.s = malloc(PL_PSIZ);
-
-            strncpy(option->value.s, dogname, PL_PSIZ-1);
-            option->value.s[PL_PSIZ - 1] = '\0';
-
-        } else if (!strcmp("horsename", option->name)) {
-
-            if (option->value.s)
-                free(option->value.s);
-            option->value.s = malloc(PL_PSIZ);
-
-            strncpy(option->value.s, horsename, PL_PSIZ-1);
-            option->value.s[PL_PSIZ - 1] = '\0';
-
+            option->value.s = malloc(1);
+            option->value.s[0] = '\0';
         } else if (!strcmp("pettype", option->name)) {
-            option->value.e = preferred_pet;
+            /* As the previous case, just we want an enum not a string. */
+            option->value.e = 0;
         } else {
             impossible("unknown option '%s'", option->name);
             memset(&option->value, 0, sizeof option->value);
@@ -658,10 +660,9 @@ nh_get_options(void)
 
 
 
-/* Returns the fid of the fruit type; if that type already exists, it
- * returns the fid of that one; if it does not exist, it adds a new fruit
- * type to the chain and returns the new one.
- */
+/* Returns the fid of the fruit type; if that type already exists, it returns
+   the fid of that one; if it does not exist, it adds a new fruit type to the
+   chain and returns the new one. */
 int
 fruitadd(const char *str)
 {
@@ -670,7 +671,7 @@ fruitadd(const char *str)
     struct fruit *lastf = 0;
     int highest_fruit_id = 0;
     char buf[PL_FSIZ], *c;
-    boolean user_specified = (str == pl_fruit);
+    boolean user_specified = (str == gamestate.fruits.curname);
 
     /* if not user-specified, then it's a fruit name for a fruit on a bones
        level... */
@@ -684,12 +685,13 @@ fruitadd(const char *str)
         boolean found = FALSE, numeric = FALSE;
 
         for (i = bases[FOOD_CLASS]; objects[i].oc_class == FOOD_CLASS; i++) {
-            if (i != SLIME_MOLD && !strcmp(OBJ_NAME(objects[i]), pl_fruit)) {
+            if (i != SLIME_MOLD && !strcmp(OBJ_NAME(objects[i]),
+                                           gamestate.fruits.curname)) {
                 found = TRUE;
                 break;
             }
         }
-        for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
+        for (c = gamestate.fruits.curname; *c >= '0' && *c <= '9'; c++)
             ;
         if (isspace(*c) || *c == 0)
             numeric = TRUE;
@@ -703,12 +705,12 @@ fruitadd(const char *str)
             ((!strncmp(str + strlen(str) - 7, " corpse", 7) ||
               !strncmp(str + strlen(str) - 4, " egg", 4)) &&
              name_to_mon(str) >= LOW_PM)) {
-            strcpy(buf, pl_fruit);
-            strcpy(pl_fruit, "candied ");
-            strncat(pl_fruit + 8, buf, PL_FSIZ - 8 - 1);
+            strcpy(buf, gamestate.fruits.curname);
+            strcpy(gamestate.fruits.curname, "candied ");
+            strncat(gamestate.fruits.curname + 8, buf, PL_FSIZ - 8 - 1);
         }
     }
-    for (f = ffruit; f; f = f->nextf) {
+    for (f = gamestate.fruits.chain; f; f = f->nextf) {
         lastf = f;
         if (f->fid > highest_fruit_id)
             highest_fruit_id = f->fid;
@@ -725,16 +727,16 @@ fruitadd(const char *str)
     highest_fruit_id++;
     f = newfruit();
     memset(f, 0, sizeof (struct fruit));
-    if (ffruit)
+    if (gamestate.fruits.chain)
         lastf->nextf = f;
     else
-        ffruit = f;
+        gamestate.fruits.chain = f;
     strcpy(f->fname, str);
     f->fid = highest_fruit_id;
     f->nextf = 0;
 nonew:
     if (user_specified)
-        current_fruit = highest_fruit_id;
+        gamestate.fruits.current = highest_fruit_id;
     return f->fid;
 }
 
@@ -772,4 +774,3 @@ change_inv_order(const char *op)
 }
 
 /*options.c*/
-

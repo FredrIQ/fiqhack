@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-07-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,7 +29,9 @@
    Commands are able to override the interaction mode downwards, but not
    upwards; overrides are often needed due to the semantics of the command
    (e.g. farmove shouldn't stay in place trying to attack monsters). The
-   exception is the F command, which overrides absolutely anything. */
+   exception is the F command, which overrides absolutely anything.
+
+   When changing this list, update resolve_uim in hack.c. */
 enum u_interaction_mode {
     /* from approximate order of least interactive to most interactive: */
     uim_nointeraction,  /* Do not interact with anything, monster or item. Used
@@ -44,12 +46,12 @@ enum u_interaction_mode {
     uim_pacifist,       /* Cancel attacks on monsters. Anything other than an
                            attack is OK (e.g. chat, displace). User-specified
                            only. Intended for "normal" pacifist play. */
-    uim_attackonly,     /* Attack if hostile. Prompt about whether to attack
-                           peacefuls. Don't interact in any way other than
-                           attacking, and ignore items. Used by commands like
-                           "apply" on a weaponish item (that might hit a monster
-                           or an item; such commands ignore item interaction
-                           mode anyway, caring only about monsters). */
+    uim_attackhostile,  /* Attack hostile monsters. Always cancel attacks on
+                           peacefuls (always-peacefuls are chatted to, like
+                           normal). Interact with items as normal. This is
+                           user-specified only, and designed for regular use for
+                           players who dislike attacking peacefuls, and for
+                           anyone trying to achieve moral conduct. */
     uim_traditional,    /* Attack if hostile. Prompt about whether to attack
                            peacefuls. Interact with monsters only by attacking,
                            but with items as normal. This is user-specified only,
@@ -71,11 +73,22 @@ enum u_interaction_mode {
                            they can be set as high as this too. */
 };
 
-#define ITEM_INTERACTIVE(uim)                                     \
-    ((uim) == uim_onlyitems  || (uim) == uim_displace    ||       \
-     (uim) == uim_pacifist   || (uim) == uim_traditional ||       \
-     (uim) == uim_standard)
-#define UIM_AGGRESSIVE(uim) ((uim) >= uim_attackonly)
+/* The various functions of the movement keys. The uim chooses which of these we
+   use. This list is for what the player believes that they're doing. If
+   they're impaired, or when monsters are hiding, the option listed here might
+   not be possible. */
+enum u_interaction_attempt {
+    uia_move_nopickup, /* move to the square, don't do anything else */
+    uia_move_pickup,   /* move to the square, and run autopickup as normal */
+    uia_opendoor,      /* open a door on the square */
+    uia_pushboulder,   /* push a boulder on the square */
+    uia_chat,          /* chat to a monster on the square */
+    uia_displace,      /* swap places with a monster on the square */
+    uia_attack,        /* attack a monster on the square */
+    uia_search,        /* search the square (e.g. checking mem_invis) */
+    uia_halt,          /* do nothing / cancel the action */
+};
+
 
 enum pray_type {
     pty_invalid = 0,
@@ -119,7 +132,7 @@ enum pray_trouble {
     ptr_hallucinating,
     ptr_last_minor = ptr_hallucinating,
 };
-    
+
 
 /* Information that is reset every time the user has a chance to give commands
    (from default_turnstate).  This is never saved in a binary save; if it needs
@@ -164,6 +177,14 @@ struct turnstate {
         enum pray_type type;
     } pray;
 
+    /* When the character is stunned or confused, they can end up going in a
+       direction they didn't intend. In such cases, the direction-prompt
+       commands will randomize their output. However, we record the direction
+       that the character was /trying/ to move in for the purpose of things
+       like working out whether they're trying to move or attack. */
+    schar intended_dx;
+    schar intended_dy;
+
     /* State for farmove-related stuff. */
     struct move_info {
         /* which direction we're going */
@@ -196,8 +217,9 @@ struct flag {
     /* 8 bit values: enums */
     enum u_interaction_mode interaction_mode;
     enum {
-        saveenc_unencoded = 0,
-        saveenc_moverel = 1
+        saveenc_unencoded = 0,  /* relative to 0 */
+        saveenc_moverel = 1,    /* relative to moves */
+        saveenc_levelrel = 2    /* relative to level->lastmoves */
     } save_encoding;    /* allows safe conversion of old saves */
 
 # define DISCLOSE_PROMPT_DEFAULT_YES    'y'
@@ -309,4 +331,3 @@ struct flag {
 extern struct flag flags;
 
 #endif /* FLAG_H */
-

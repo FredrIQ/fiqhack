@@ -1,12 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-22 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "edog.h"
 
-static int pet_type(void);
+static int pet_type(struct newgame_options *);
 
 void
 initedog(struct monst *mtmp)
@@ -31,15 +31,15 @@ initedog(struct monst *mtmp)
 }
 
 static int
-pet_type(void)
+pet_type(struct newgame_options *ngo)
 {
     int which_pet = rn2(2);
 
     if (urole.petnum != NON_PM)
         return urole.petnum;
-    else if (preferred_pet == 'c')
+    else if (ngo && ngo->preferred_pet == 'c')
         return PM_KITTEN;
-    else if (preferred_pet == 'd')
+    else if (ngo && ngo->preferred_pet == 'd')
         return PM_LITTLE_DOG;
     else
         return which_pet ? PM_KITTEN : PM_LITTLE_DOG;
@@ -69,7 +69,7 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
                 break;  /* mtmp is null */
             }
         } else if (!rn2(3)) {
-            pm = &mons[pet_type()];
+            pm = &mons[pet_type(NULL)];
         } else {
             pm = rndmonst(&u.uz, rng_t_create_monster);
             if (!pm) {
@@ -134,23 +134,23 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
  * the charstats RNGs.
  */
 struct monst *
-makedog(void)
+makedog(struct newgame_options *ngo)
 {
     struct monst *mtmp;
     struct obj *otmp;
     const char *petname;
     int pettype;
 
-    if (preferred_pet == 'n')
+    if (ngo->preferred_pet == 'n')
         return NULL;
 
-    pettype = pet_type();
+    pettype = pet_type(ngo);
     if (pettype == PM_LITTLE_DOG)
-        petname = dogname;
+        petname = ngo->dogname;
     else if (pettype == PM_PONY)
-        petname = horsename;
+        petname = ngo->horsename;
     else
-        petname = catname;
+        petname = ngo->catname;
 
     /* default pet names */
     if (!*petname && pettype == PM_LITTLE_DOG) {
@@ -264,8 +264,8 @@ mon_arrive(struct monst *mtmp, boolean with_you)
         return; /* don't place steed on the map */
     if (with_you) {
         /* When a monster accompanies you, sometimes it will arrive at your
-           intended destination and you'll end up next to that spot.  This code 
-           doesn't control the final outcome; goto_level(do.c) decides who ends 
+           intended destination and you'll end up next to that spot.  This code
+           doesn't control the final outcome; goto_level(do.c) decides who ends
            up at your target spot when there is a monster there too. */
         if (!MON_AT(level, u.ux, u.uy) &&
             !rn2(mtmp->mtame ? 10 : mtmp->mpeaceful ? 5 : 2))
@@ -274,7 +274,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
             mnexto(mtmp);
         return;
     }
-    /* 
+    /*
      * The monster arrived on this level independently of the player.
      * Its coordinate fields were overloaded for use as flags that
      * specify its final destination.
@@ -507,7 +507,7 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
 }
 
 
-/* called when you move to another level 
+/* called when you move to another level
  * pets_only: true for ascension or final escape */
 void
 keepdogs(boolean pets_only)
@@ -525,7 +525,7 @@ keepdogs(boolean pets_only)
             continue;
         if (((monnear(mtmp, u.ux, u.uy) && levl_follower(mtmp)) ||
              (mtmp == u.usteed) ||
-             /* the wiz will level t-port from anywhere to chase the amulet; if 
+             /* the wiz will level t-port from anywhere to chase the amulet; if
                 you don't have it, will chase you only if in range. -3. */
              (Uhave_amulet && mtmp->iswiz))
             && ((!mtmp->msleeping && mtmp->mcanmove)
@@ -590,7 +590,7 @@ keepdogs(boolean pets_only)
             mtmp->nmon = turnstate.migrating_pets;
             turnstate.migrating_pets = mtmp;
         } else if (mtmp->iswiz) {
-            /* we want to be able to find him when his next resurrection chance 
+            /* we want to be able to find him when his next resurrection chance
                comes up, but have him resume his present location if player
                returns to this level before that time */
             migrate_to_level(mtmp, ledger_no(&u.uz), MIGR_EXACT_XY, NULL);
@@ -642,6 +642,11 @@ migrate_to_level(struct monst *mtmp, xchar tolev,       /* destination level */
     migrating_mons = mtmp;
     if (mtmp->dlevel == level)
         newsym(mtmp->mx, mtmp->my);
+
+    /* The dlevel pointer is meaningless for a migrating monster. Set it to NULL
+       so that any uses of it are detected quickly via the resulting
+       segfault. */
+    mtmp->dlevel = NULL;
 
     new_lev.dnum = ledger_to_dnum((xchar) tolev);
     new_lev.dlevel = ledger_to_dlev((xchar) tolev);
@@ -969,4 +974,3 @@ abuse_dog(struct monst *mtmp)
 }
 
 /*dog.c*/
-

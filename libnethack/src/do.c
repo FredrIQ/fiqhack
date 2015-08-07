@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -30,6 +30,7 @@ dodrop(const struct nh_cmd_arg *arg)
     obj = getargobj(arg, &drop_types[i], "drop");
     if (!obj)
         return 0;
+    obj->was_dropped = 1;
     result = drop(obj);
     if (*u.ushops)
         sellobj_state(SELL_NORMAL);
@@ -633,6 +634,7 @@ menu_drop(int retry)
     if (drop_everything) {
         for (otmp = invent; otmp; otmp = otmp2) {
             otmp2 = otmp->nobj;
+            otmp->was_dropped = 1;
             n_dropped += drop(otmp);
         }
     } else {
@@ -653,6 +655,7 @@ menu_drop(int retry)
                     } else
                         otmp = splitobj(otmp, cnt);
                 }
+                otmp->was_dropped = 1;
                 n_dropped += drop(otmp);
             }
             free(obj_pick_list);
@@ -668,7 +671,7 @@ drop_done:
 static boolean at_ladder = FALSE;
 
 int
-dodown(enum u_interaction_mode uim)
+dodown(boolean autodig_ok)
 {
     struct trap *trap = 0;
     boolean stairs_down =
@@ -723,7 +726,7 @@ dodown(enum u_interaction_mode uim)
              && trap->ttyp != SPIKED_PIT)
             || (!can_fall_thru(level) && can_fall) || !trap->tseen) {
 
-            if (flags.autodig && ITEM_INTERACTIVE(uim) && flags.autodigdown &&
+            if (flags.autodig && autodig_ok && flags.autodigdown &&
                 flags.occupation == occ_none && uwep && is_pick(uwep)) {
                 struct nh_cmd_arg arg;
                 arg_from_delta(0, 0, 1, &arg);
@@ -762,8 +765,8 @@ dodown(enum u_interaction_mode uim)
     if (trap) {
         if (trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) {
             if (u.utrap && (u.utraptype == TT_PIT)) {
-                if (flags.autodig && ITEM_INTERACTIVE(uim) && flags.autodigdown
-                    && flags.occupation == occ_none && uwep && is_pick(uwep)) {
+                if (flags.autodig && autodig_ok && flags.autodigdown &&
+                    flags.occupation == occ_none && uwep && is_pick(uwep)) {
                     struct nh_cmd_arg arg;
                     arg_from_delta(0, 0, 1, &arg);
                     return use_pick_axe(uwep, &arg);
@@ -796,7 +799,7 @@ dodown(enum u_interaction_mode uim)
 }
 
 int
-doup(enum u_interaction_mode uim)
+doup(void)
 {
     if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy)
         && (u.ux != level->upladder.sx || u.uy != level->upladder.sy)
@@ -999,7 +1002,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     /* If the entry level is the top level, then the dungeon goes down.
        Otherwise it goes up. */
-    if (dungeons[u.uz.dnum].entry_lev == 1) {
+    if (find_dungeon(&u.uz).entry_lev == 1) {
         if (dunlev_reached(&u.uz) < dunlev(&u.uz))
             dunlev_reached(&u.uz) = dunlev(&u.uz);
     } else {

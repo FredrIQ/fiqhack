@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-07-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -321,7 +321,7 @@ strategy(struct monst *mtmp, boolean magical_target)
 
         /* An escaping pet instead moves towards the player, if it can.
            (dog_move will reverse this direction if fleeing in a panic.) */
-        if (mtmp->mtame && aware_of_u(mtmp)) {
+        if (mtmp->mtame && aware_of_u(mtmp) && !engulfing_u(mtmp)) {
             mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
             return;
         }
@@ -333,7 +333,7 @@ strategy(struct monst *mtmp, boolean magical_target)
            reason to be afraid of the player in particular (if the player had
            taken an aggressive action, they'd no longer be flagged as
            peaceful). */
-        if (!mtmp->mpeaceful && aware_of_u(mtmp))
+        if (!mtmp->mpeaceful && aware_of_u(mtmp) && !engulfing_u(mtmp))
             mtmp->mstrategy = STRAT(STRAT_ESCAPE, mtmp->mux, mtmp->muy, 0);
 
         /* Does the monster already have a valid square to escape from? */
@@ -407,7 +407,7 @@ strategy(struct monst *mtmp, boolean magical_target)
        is), and not escaping, it's going to hunt you down. Likewise, tame
        monsters will try to follow. Shopkeeper strategy is determined as if the
        shopkeeper is angry; it won't be used in other situations. */
-    if (aware_of_u(mtmp) && chases_player) {
+    if (aware_of_u(mtmp) && !engulfing_u(mtmp) && chases_player) {
         mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
         return;
     }
@@ -702,7 +702,7 @@ nasty(struct monst *mcast)
     if (!mcast) {
         bypos.x = u.ux;
         bypos.y = u.uy;
-    } else if (aware_of_u(mcast)) {
+    } else if (aware_of_u(mcast) && !engulfing_u(mcast)) {
         bypos.x = mcast->mux;
         bypos.y = mcast->muy;
     } else {
@@ -726,7 +726,7 @@ nasty(struct monst *mcast)
                 } while (mcast && attacktype(&mons[makeindex], AT_MAGC) &&
                          monstr[makeindex] >= monstr[monsndx(mcast->data)]);
                 /* do this after picking the monster to place */
-                if (mcast && aware_of_u(mcast) &&
+                if (mcast && aware_of_u(mcast) && !engulfing_u(mcast) &&
                     !enexto(&bypos, level, mcast->mux, mcast->muy,
                             &mons[makeindex]))
                     continue;

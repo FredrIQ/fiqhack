@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,7 +20,7 @@ static void savedamage(struct memfile *mf, struct level *lev);
 static void freedamage(struct level *lev);
 static void saveobjchn(struct memfile *mf, struct obj *);
 static void free_objchn(struct obj *otmp);
-static void savemonchn(struct memfile *mf, struct monst *);
+static void savemonchn(struct memfile *mf, struct monst *, struct level *lev);
 static void free_monchn(struct monst *mon);
 static void savetrapchn(struct memfile *mf, struct trap *, struct level *lev);
 static void freetrapchn(struct trap *trap);
@@ -52,31 +52,33 @@ static void freefruitchn(void);
  * information even if val does something weird.
  */
 
-#define GEN_SAVE_ENCODE(bw, rmax)                            \
-    int##bw##_t                                              \
-    save_encode_##bw(int##bw##_t val, int rel) {             \
-        if (!val || !flags.save_encoding) return val;        \
-        uint##bw##_t rotamount = ((uint32_t) rel) % rmax;    \
-        uint##bw##_t out = val - 1;                          \
-        if (out >= rotamount) out -= rotamount;              \
-        else out += rmax - rotamount;                        \
-        return out + 1;                                      \
+#define GEN_SAVE_ENCODE(bw, rmax)                                       \
+    int##bw##_t                                                         \
+    save_encode_##bw(int##bw##_t val, int rel, int rel2) {              \
+        if (!val || !flags.save_encoding) return val;                   \
+        if (flags.save_encoding == saveenc_levelrel) rel = rel2;        \
+        uint##bw##_t rotamount = ((uint32_t) rel) % rmax;               \
+        uint##bw##_t out = val - 1;                                     \
+        if (out >= rotamount) out -= rotamount;                         \
+        else out += rmax - rotamount;                                   \
+        return out + 1;                                                 \
     }
 
 GEN_SAVE_ENCODE(8, 0xFF)
 GEN_SAVE_ENCODE(16, 0xFFFF)
 GEN_SAVE_ENCODE(32, 0xFFFFFFFF)
 
-#define GEN_SAVE_DECODE(bw, rmax)                            \
-    int##bw##_t                                              \
-    save_decode_##bw(int##bw##_t val, int rel) {             \
-        if (!val || !flags.save_encoding) return val;        \
-        uint##bw##_t rotamount = ((uint32_t) rel) % rmax;    \
-        rotamount = rmax - rotamount;                        \
-        uint##bw##_t out = val - 1;                          \
-        if (out >= rotamount) out -= rotamount;              \
-        else out += rmax - rotamount;                        \
-        return out + 1;                                      \
+#define GEN_SAVE_DECODE(bw, rmax)                                       \
+    int##bw##_t                                                         \
+    save_decode_##bw(int##bw##_t val, int rel, int rel2) {              \
+        if (!val || !flags.save_encoding) return val;                   \
+        if (flags.save_encoding == saveenc_levelrel) rel = rel2;        \
+        uint##bw##_t rotamount = ((uint32_t) rel) % rmax;               \
+        rotamount = rmax - rotamount;                                   \
+        uint##bw##_t out = val - 1;                                     \
+        if (out >= rotamount) out -= rotamount;                         \
+        else out += rmax - rotamount;                                   \
+        return out + 1;                                                 \
     }
 
 GEN_SAVE_DECODE(8, 0xFF)
@@ -102,7 +104,7 @@ savegame(struct memfile *mf)
     mwrite32(mf, moves);
     save_flags(mf); /* note: cannot use save encoding until after save_flags */
     save_you(mf, &u);
-    save_mon(mf, &youmonst);
+    save_mon(mf, &youmonst, NULL);
 
     /* store dungeon layout */
     save_dungeon(mf);
@@ -283,7 +285,7 @@ save_spellbook(struct memfile *mf)
                                     helps when debugging */
 
     for (i = 0; i < MAXSPELL + 1; i++) {
-        mwrite32(mf, save_encode_32(spl_book[i].sp_know, -moves));
+        mwrite32(mf, save_encode_32(spl_book[i].sp_know, -moves, -moves));
         mwrite16(mf, spl_book[i].sp_id);
         mwrite8(mf, spl_book[i].sp_lev);
     }
@@ -301,15 +303,15 @@ savegamestate(struct memfile *mf)
     save_light_sources(mf, level, RANGE_GLOBAL);
 
     saveobjchn(mf, invent);
-    savemonchn(mf, migrating_mons);
+    savemonchn(mf, migrating_mons, NULL);
     save_mvitals(mf);
 
     save_spellbook(mf);
     save_artifacts(mf);
     save_oracles(mf);
 
-    mwrite(mf, pl_fruit, sizeof pl_fruit);
-    mwrite32(mf, current_fruit);
+    mwrite(mf, gamestate.fruits.curname, sizeof gamestate.fruits.curname);
+    mwrite32(mf, gamestate.fruits.current);
     savefruitchn(mf);
     savenames(mf);
     save_waterlevel(mf);
@@ -428,12 +430,12 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->mhmax);
     mwrite32(mf, y->mtimedone);
     mwrite32(mf, y->ulycn);
-    mwrite32(mf, save_encode_32(y->utrap, -moves));
+    mwrite32(mf, save_encode_32(y->utrap, -moves, -moves));
     mwrite32(mf, y->utraptype);
-    mwrite32(mf, save_encode_32(y->uhunger, -moves));
+    mwrite32(mf, save_encode_32(y->uhunger, -moves, -moves));
     mwrite32(mf, y->uhs);
     mwrite32(mf, y->oldcap);
-    mwrite32(mf, save_encode_32(y->umconf, -moves));
+    mwrite32(mf, save_encode_32(y->umconf, -moves, -moves));
     mwrite32(mf, y->nv_range);
     mwrite32(mf, y->bglyph);
     mwrite32(mf, y->cglyph);
@@ -447,7 +449,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->ugangr);
     mwrite32(mf, y->ugifts);
     mwrite32(mf, y->ublessed);
-    mwrite32(mf, save_encode_32(y->ublesscnt, -moves));
+    mwrite32(mf, save_encode_32(y->ublesscnt, -moves, -moves));
     mwrite32(mf, y->ucleansed);
     mwrite32(mf, y->uinvault);
     mwrite32(mf, y->ugallop);
@@ -490,7 +492,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->udaminc);
     mwrite8(mf, y->uac);
     mwrite8(mf, y->uspellprot);
-    mwrite8(mf, save_encode_8(y->usptime, -moves));
+    mwrite8(mf, save_encode_8(y->usptime, -moves, -moves));
     mwrite8(mf, y->uspmtime);
     mwrite8(mf, y->twoweap);
     mwrite8(mf, y->bashmsg);
@@ -684,7 +686,7 @@ savelev(struct memfile *mf, xchar levnum)
     save_timers(mf, lev, RANGE_LEVEL);
     save_light_sources(mf, lev, RANGE_LEVEL);
 
-    savemonchn(mf, lev->monlist);
+    savemonchn(mf, lev->monlist, lev);
     save_worm(mf, lev); /* save worm information */
     savetrapchn(mf, lev->lev_traps, lev);
     saveobjchn(mf, lev->objlist);
@@ -733,11 +735,11 @@ savelevchn(struct memfile *mf)
     s_level *tmplev;
     int cnt = 0;
 
-    for (tmplev = sp_levchn; tmplev; tmplev = tmplev->next)
+    for (tmplev = gamestate.sp_levchn; tmplev; tmplev = tmplev->next)
         cnt++;
     mwrite32(mf, cnt);
 
-    for (tmplev = sp_levchn; tmplev; tmplev = tmplev->next) {
+    for (tmplev = gamestate.sp_levchn; tmplev; tmplev = tmplev->next) {
         save_d_flags(mf, tmplev->flags);
         save_dlevel(mf, tmplev->dlevel);
         mwrite(mf, tmplev->proto, sizeof (tmplev->proto));
@@ -844,7 +846,7 @@ free_monchn(struct monst *mon)
 
 
 static void
-savemonchn(struct memfile *mf, struct monst *mtmp)
+savemonchn(struct memfile *mf, struct monst *mtmp, struct level *l)
 {
     struct monst *mtmp2;
     unsigned int count = 0;
@@ -856,7 +858,7 @@ savemonchn(struct memfile *mf, struct monst *mtmp)
 
     while (mtmp) {
         mtmp2 = mtmp->nmon;
-        save_mon(mf, mtmp);
+        save_mon(mf, mtmp, l);
 
         if (mtmp->minvent)
             saveobjchn(mf, mtmp->minvent);
@@ -909,10 +911,9 @@ freetrapchn(struct trap *trap)
 }
 
 /* save all the fruit names and ID's; this is used only in saving whole games
- * (not levels) and in saving bones levels.  When saving a bones level,
- * we only want to save the fruits which exist on the bones level; the bones
- * level routine marks nonexistent fruits by making the fid negative.
- */
+   (not levels) and in saving bones levels.  When saving a bones level, we only
+   want to save the fruits which exist on the bones level; the bones level
+   routine marks nonexistent fruits by making the fid negative. */
 void
 savefruitchn(struct memfile *mf)
 {
@@ -920,12 +921,12 @@ savefruitchn(struct memfile *mf)
     unsigned int count = 0;
 
     mfmagic_set(mf, FRUITCHAIN_MAGIC);
-    for (f1 = ffruit; f1; f1 = f1->nextf)
+    for (f1 = gamestate.fruits.chain; f1; f1 = f1->nextf)
         if (f1->fid >= 0)
             count++;
     mwrite32(mf, count);
 
-    for (f1 = ffruit; f1; f1 = f1->nextf) {
+    for (f1 = gamestate.fruits.chain; f1; f1 = f1->nextf) {
         if (f1->fid >= 0) {
             mtag(mf, f1->fid, MTAG_FRUIT);
             mwrite(mf, f1->fname, sizeof (f1->fname));
@@ -938,14 +939,14 @@ savefruitchn(struct memfile *mf)
 static void
 freefruitchn(void)
 {
-    struct fruit *f2, *f1 = ffruit;
+    struct fruit *f2, *f1 = gamestate.fruits.chain;
 
     while (f1) {
         f2 = f1->nextf;
         dealloc_fruit(f1);
         f1 = f2;
     }
-    ffruit = NULL;
+    gamestate.fruits.chain = NULL;
 }
 
 
@@ -992,8 +993,8 @@ freedynamicdata(void)
     free_objchn(invent);
     free_monchn(migrating_mons);
     /* this should normally be NULL between turns, but might not be due to
-     * the game ending where pets can follow (e.g. ascension or dungeon escape)
-     * or due to panicing. */
+       the game ending where pets can follow (e.g. ascension or dungeon escape)
+       or due to panicing. */
     free_monchn(turnstate.migrating_pets);
     free_animals();
     free_oracles();

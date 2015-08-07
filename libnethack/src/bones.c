@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-07-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,7 +17,7 @@ make_bones_id(char *buf, d_level * dlev)
 {
     s_level *sptr;
 
-    sprintf(buf, "%c%s", dungeons[dlev->dnum].boneid,
+    sprintf(buf, "%c%s", find_dungeon(dlev).boneid,
             In_quest(dlev) ? urole.filecode : "0");
     if ((sptr = Is_special(dlev)) != 0)
         sprintf(buf + 2, ".%c", sptr->boneid);
@@ -34,7 +34,7 @@ no_bones_level(d_level * lev)
     s_level *sptr;
 
     return (boolean) (((sptr = Is_special(lev)) != 0 && !sptr->boneid)
-                      || !dungeons[lev->dnum].boneid
+                      || !find_dungeon(lev).boneid
                       /* no bones on the last or multiway branch levels */
                       /* in any dungeon (level 1 isn't multiway).  */
                       || Is_botlevel(lev)
@@ -50,16 +50,15 @@ no_bones_level(d_level * lev)
 
 
 /* Call this function for each fruit object saved in the bones level: it marks
- * that particular type of fruit as existing (the marker is that that type's
- * ID is positive instead of negative).  This way, when we later save the
- * chain of fruit types, we know to only save the types that exist.
- */
+   that particular type of fruit as existing (the marker is that that type's ID
+   is positive instead of negative). This way, when we later save the chain of
+   fruit types, we know to only save the types that exist. */
 static void
 goodfruit(int id)
 {
     struct fruit *f;
 
-    for (f = ffruit; f; f = f->nextf) {
+    for (f = gamestate.fruits.chain; f; f = f->nextf) {
         if (f->fid == -id) {
             f->fid = id;
             return;
@@ -96,6 +95,7 @@ resetobjs(struct obj *ochain, boolean restore)
             otmp->invlet = 0;
             otmp->no_charge = 0;
             otmp->was_thrown = 0;
+            otmp->was_dropped = 0;
 
             if (otmp->otyp == SLIME_MOLD)
                 goodfruit(otmp->spe);
@@ -282,7 +282,7 @@ make_bones:
 
     /* mark all fruits as nonexistent; when we come to them we'll mark them as
        existing (using goodfruit()) */
-    for (f = ffruit; f; f = f->nextf)
+    for (f = gamestate.fruits.chain; f; f = f->nextf)
         f->fid = -f->fid;
 
     /* dispose of your possessions, usually cursed */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-07-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,7 +20,7 @@ static const char *const copyright_banner[] =
 
 static void pre_move_tasks(boolean, boolean);
 
-static void newgame(microseconds birthday);
+static void newgame(microseconds birthday, struct newgame_options *ngo);
 
 static void handle_lava_trap(boolean didmove);
 
@@ -292,13 +292,15 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
     init_data(TRUE);
     startup_common(TRUE);
 
+    struct newgame_options ngo;
+
     /* Set defaults in case list of options from client was incomplete. */
     struct nh_option_desc *defaults = default_options();
     for (i = 0; defaults[i].name; i++)
-        nh_set_option(defaults[i].name, defaults[i].value);
+        set_option(defaults[i].name, defaults[i].value, &ngo);
     nhlib_free_optlist(defaults);
     for (i = 0; opts[i].name; i++)
-        nh_set_option(opts[i].name, opts[i].value);
+        set_option(opts[i].name, opts[i].value, &ngo);
 
     /* Initialize the random number generator. This can use any algorithm we
        like, and is not constrained by timing rules, so we use the entropy
@@ -332,7 +334,7 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
     log_inited = 1;
     log_newgame(birthday);
 
-    newgame(birthday);
+    newgame(birthday, &ngo);
 
     /* Handle the polyinit option. */
     if (flags.polyinit_mnum != -1) {
@@ -824,8 +826,6 @@ you_moved(void)
             /* most turn boundary effects should be below here */
             /***************************************************/
 
-            if (flags.bypasses)
-                clear_bypasses();
             if (Glib)
                 glibr();
             nh_timeout();
@@ -1015,7 +1015,7 @@ you_moved(void)
 
     /* We can only port to a new version of the save code when the player takes
        time (otherwise, the desync detector rightly gets confused). */
-    flags.save_encoding = saveenc_moverel;
+    flags.save_encoding = saveenc_levelrel;
 }
 
 
@@ -1101,6 +1101,9 @@ pre_move_tasks(boolean didmove, boolean loading_game)
        travel direction. */
     if (flags.interrupted || !last_command_was("run"))
         clear_travel_direction();
+
+    turnstate.intended_dx = 0;
+    turnstate.intended_dy = 0;
 
     /* Handle realtime change now. If we just loaded a save, always print the
        messages. Otherwise, print them only on change. */
@@ -1400,6 +1403,12 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     if (turnstate.vision_full_recalc)
         vision_recalc(0);       /* vision! */
 
+    /* We must do this /before/ the monsters get their turn, to prevent bypass
+       flags persisting from one action to the next. (TODO: The bypass system
+       could really do with an overhaul.) */
+    if (flags.bypasses)
+        clear_bypasses();
+
     if (didmove)
         you_moved();
 
@@ -1413,7 +1422,7 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
 
 
 static void
-newgame(microseconds birthday)
+newgame(microseconds birthday, struct newgame_options *ngo)
 {
     int i;
 
@@ -1454,7 +1463,7 @@ newgame(microseconds birthday)
         mnexto(m_at(level, u.ux, u.uy));
 
     /* This can clobber the charstars RNGs, so call it late */
-    makedog();
+    makedog(ngo);
 
     /* Stop autoexplore revisiting the entrance stairs (or position). */
     level->locations[u.ux][u.uy].mem_stepped = 1;
