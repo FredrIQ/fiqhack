@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by FIQ, 2015-08-07 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -389,7 +389,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     killer = msgprintf("caught %sself in %s own %s", uhim(),
                                        uhis(), str);
                 else
-                    killer = msgprint("killed by a %s", str);
+                    killer = msgprintf("killed by a %s", str);
             } else if (!strcmp(str, "burning oil")) {
                 /* This manual check hack really sucks */
                 killer = killer_msg(death, str);
