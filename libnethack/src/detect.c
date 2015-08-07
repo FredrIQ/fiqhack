@@ -1224,7 +1224,7 @@ reveal_monster_at(int x, int y, boolean unhide)
     }
 
     if (unhide)
-        wakeup(mon, TRUE);
+        mon->msleeping = 0; /* wakeup() angers mon */
 
     if (!canspotmon(mon) && !knownwormtail(x, y))
         map_invisible(x, y);
