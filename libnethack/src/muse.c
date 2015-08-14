@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Fredrik Ljungdahl, 2015-08-14 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -46,6 +46,7 @@ static int
 precheck(struct monst *mon, struct obj *obj, struct musable *m)
 {
     boolean vis;
+    int wandlevel;
 
     if (!obj)
         return 0;
@@ -128,22 +129,25 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
             return 2;
         }
     }
-    if (obj->oclass == WAND_CLASS && obj->cursed && !rn2(100)) {
-        int dam = dice(obj->spe + 2, 6);
-
-        if (canhear()) {
-            if (vis)
-                pline("%s zaps %s, which suddenly explodes!", Monnam(mon),
-                      an(xname(obj)));
-            else
-                You_hear("a zap and an explosion in the distance.");
+    if (obj->oclass == WAND_CLASS) {
+        wandlevel = mprof(mtmp, MP_WANDS);
+        if (!otmp->cursed)
+            wandlevel++;
+        if (otmp->blessed)
+            wandlevel++;
+        if (wandlevel == 0) {
+            /* critical failure */
+            if (canhear()) {
+                if (vis)
+                    pline("%s zaps %s, which suddenly explodes!", Monnam(mon),
+                          an(xname(obj)));
+                else
+                    You_hear("a zap and an explosion in the distance.");
+            }
+            mon_break_wand(mon, obj);
+            m_useup(mtmp, otmp);
+            return (mon->mhp <= 0) ? 1 : 2;
         }
-        m_useup(mon, obj);
-        if (mon->mhp <= dam) {
-            monkilled(mon, "", AD_RBRE);
-            return 1;
-        } else
-            mon->mhp -= dam;
         m->has_defense = m->has_offense = m->has_misc = MUSE_NONE;
         /* Only one needed to be set to MUSE_NONE but the others are harmless */
     }
@@ -1403,21 +1407,10 @@ use_offensive(struct monst *mtmp, struct musable *m)
             wandlevel++;
         zap_oseen = oseen;
         mzapmsg(mtmp, otmp, FALSE);
-        if (wandlevel != 0)
-            otmp->spe--;
+        otmp->spe--;
         if (oseen)
             makeknown(otmp->otyp);
         m_using = TRUE;
-
-        if (wandlevel == 0) {
-            /* critical failure */
-            if (oseen)
-                pline("The %s breaks in two!", xname(otmp));
-            
-            mon_break_wand(mtmp, otmp);
-            m_useup(mtmp, otmp);
-            return (mtmp->mhp <= 0) ? 1 : 2;
-        }
 
         /* FIXME: make buzz() handle any zap */
         if (otmp->otyp == WAN_TELEPORTATION ||
