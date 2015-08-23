@@ -3339,7 +3339,6 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy, int raylevel)
                 pline("The missiles bounce off!");
             }
         } else {
-            pline("!vulnerable!");
             dam = dice(nd, 6);
             exercise(A_STR, FALSE);
         }
