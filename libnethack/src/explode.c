@@ -449,6 +449,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     Antimagic ||
                     raylevel == P_UNSKILLED)
                     losexp("drained by a death field",FALSE);
+                    damu = 0;
                 else {
                     done(DIED, "killed by a death field");
                     damu = 0; /* lifesaved */
