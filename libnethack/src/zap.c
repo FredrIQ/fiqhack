@@ -268,7 +268,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             /* natural shapechangers aren't affected by system shock (unless
                protection from shapechangers is interfering with their
                metabolism...) */
-            if (mtmp->cham == CHAM_ORDINARY && !rn2(25) && !tame && wandlevel >= P_EXPERT) {
+            if (mtmp->cham == CHAM_ORDINARY && !rn2(25) && (!tame || wandlevel < P_EXPERT)) {
                 if (canseemon(mtmp)) {
                     pline("%s shudders!", Monnam(mtmp));
                 }
