@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1160,13 +1160,16 @@ mdig_tunnel(struct monst *mtmp)
 
    dig for digdepth positions; also down on request of Lennart Augustsson. */
 void
-zap_dig(schar dx, schar dy, schar dz)
+zap_dig(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
 {
     struct rm *room;
     struct monst *mtmp;
     struct obj *otmp;
     struct tmp_sym *tsym;
     int zx, zy, digdepth;
+    int wandlevel = 0;
+    if (obj->oclass == WAND_CLASS)
+        wandlevel = getwandlevel(mon, obj);
     boolean shopdoor, shopwall, maze_dig;
 
     /* swallowed */
@@ -1217,7 +1220,8 @@ zap_dig(schar dx, schar dy, schar dz)
 
     /* normal case: digging across the level */
     shopdoor = shopwall = FALSE;
-    maze_dig = level->flags.is_maze_lev && !Is_earthlevel(&u.uz);
+    maze_dig = (level->flags.is_maze_lev && !Is_earthlevel(&u.uz) && wandlevel != P_MASTER) ||
+               wandlevel == P_UNSKILLED;
     zx = u.ux + dx;
     zy = u.uy + dy;
     digdepth = rn1(18, 8);

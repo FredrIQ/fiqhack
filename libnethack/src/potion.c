@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1167,7 +1167,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             }
             break;
         case POT_POLYMORPH:
-            bhitm(mon, obj);
+            bhitm(&youmonst, mon, obj);
             break;
 /*
         case POT_GAIN_LEVEL:
@@ -1815,7 +1815,7 @@ more_dips:
         /* Turn off engine before fueling, turn off fuel too :-) */
         if (obj->lamplit || potion->lamplit) {
             useup(potion);
-            explode(u.ux, u.uy, 11, dice(6, 6), 0, EXPL_FIERY, NULL);
+            explode(u.ux, u.uy, 11, dice(6, 6), 0, EXPL_FIERY, NULL, 0);
             exercise(A_WIS, FALSE);
             return 1;
         }

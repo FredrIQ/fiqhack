@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -57,22 +57,23 @@
 
 /* Spell Skills added by Larry Stewart-Zerba */
 # define P_ATTACK_SPELL      30
-# define P_HEALING_SPELL        31
-# define P_DIVINATION_SPELL     32
-# define P_ENCHANTMENT_SPELL    33
-# define P_CLERIC_SPELL         34
-# define P_ESCAPE_SPELL         35
-# define P_MATTER_SPELL         36
-# define P_FIRST_SPELL          P_ATTACK_SPELL
-# define P_LAST_SPELL           P_MATTER_SPELL
+# define P_HEALING_SPELL     31
+# define P_DIVINATION_SPELL  32
+# define P_ENCHANTMENT_SPELL 33
+# define P_CLERIC_SPELL      34
+# define P_ESCAPE_SPELL      35
+# define P_MATTER_SPELL      36
+# define P_FIRST_SPELL       P_ATTACK_SPELL
+# define P_LAST_SPELL        P_MATTER_SPELL
 
 /* Other types of combat */
 # define P_BARE_HANDED_COMBAT   37
 # define P_MARTIAL_ARTS         P_BARE_HANDED_COMBAT    /* Role distinguishes */
 # define P_TWO_WEAPON_COMBAT    38      /* Finally implemented */
 # define P_RIDING               39      /* How well you control your steed */
-# define P_LAST_H_TO_H          P_RIDING
+# define P_WANDS                40
 # define P_FIRST_H_TO_H         P_BARE_HANDED_COMBAT
+# define P_LAST_H_TO_H          P_WANDS
 
 # define P_NUM_SKILLS           (P_LAST_H_TO_H+1)
 
@@ -88,11 +89,12 @@
  * a value of 0 needed.
  */
 # define P_ISRESTRICTED         0
+# define P_FAILURE              0       /* cursed+unskilled wands */
 # define P_UNSKILLED            1
 # define P_BASIC                2
 # define P_SKILLED              3
 # define P_EXPERT               4
-# define P_MASTER               5       /* Unarmed combat/martial arts only */
+# define P_MASTER               5       /* Unarmed combat/wands */
 # define P_GRAND_MASTER         6       /* Unarmed combat/martial arts only */
 
 # define practice_needed_to_advance(level) ((level)*(level)*20)

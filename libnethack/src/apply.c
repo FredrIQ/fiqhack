@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -861,7 +861,7 @@ use_bell(struct obj **optr)
             }
 
         } else {        /* uncursed */
-            if (findit() != 0)
+            if (findit(BOLT_LIM) != 0)
                 learno = TRUE;
             else
                 pline("Nothing happens.");
@@ -2695,7 +2695,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
 
 /* return 1 if the wand is broken, hence some time elapsed */
 int
-do_break_wand(struct obj *obj)
+do_break_wand(struct obj *obj, boolean intentional)
 {
     static const char nothing_else_happens[] = "But nothing else happens...";
     int i, x, y;
@@ -2706,23 +2706,24 @@ do_break_wand(struct obj *obj)
     int expltype = EXPL_MAGICAL;
     const char *confirm, *the_wand, *buf;
 
-    the_wand = yname(obj);
-    confirm = msgprintf("Are you really sure you want to break %s?",
-                        safe_qbuf("", sizeof
-                                  "Are you really sure you want to break ?",
-                                  the_wand, ysimple_name(obj), "the wand"));
-    if (yn(confirm) == 'n')
-        return 0;
-
-    if (nohands(youmonst.data)) {
-        pline("You can't break %s without hands!", the_wand);
-        return 0;
-    } else if (ACURR(A_STR) < 10 || obj->oartifact) {
-        pline("You don't have the strength to break %s!", the_wand);
-        return 0;
+    if (intentional) {
+	the_wand = yname(obj);
+    	confirm = msgprintf("Are you really sure you want to break %s?",
+                             safe_qbuf("", sizeof
+                                       "Are you really sure you want to break ?",
+                                       the_wand, ysimple_name(obj), "the wand"));
+	if (yn(confirm) == 'n')
+            return 0;
+        if (nohands(youmonst.data)) {
+            pline("You can't break %s without hands!", the_wand);
+            return 0;
+        } else if (ACURR(A_STR) < 10 || obj->oartifact) {
+            pline("You don't have the strength to break %s!", the_wand);
+            return 0;
+        }
+        pline("Raising %s high above your %s, you break it in two!", the_wand,
+              body_part(HEAD));
     }
-    pline("Raising %s high above your %s, you break it in two!", the_wand,
-          body_part(HEAD));
 
     /* [ALI] Do this first so that wand is removed from bill. Otherwise, the
        freeinv() below also hides it from setpaid() which causes problems. */
@@ -2767,7 +2768,7 @@ do_break_wand(struct obj *obj)
     case WAN_MAGIC_MISSILE:
     wanexpl:
         explode(u.ux, u.uy, (obj->otyp - WAN_MAGIC_MISSILE), dmg, WAND_CLASS,
-                expltype, NULL);
+                expltype, NULL, 0);
         makeknown(obj->otyp);   /* explode described the effect */
         goto discard_broken_wand;
     case WAN_STRIKING:
@@ -2785,7 +2786,7 @@ do_break_wand(struct obj *obj)
     }
 
     /* magical explosion and its visual effect occur before specific effects */
-    explode(obj->ox, obj->oy, 0, rnd(dmg), WAND_CLASS, EXPL_MAGICAL, NULL);
+    explode(obj->ox, obj->oy, 0, rnd(dmg), WAND_CLASS, EXPL_MAGICAL, NULL, 0);
 
     /* this makes it hit us last, so that we can see the action first */
     for (i = 0; i <= 8; i++) {
@@ -2830,7 +2831,7 @@ do_break_wand(struct obj *obj)
                 }
                 bot();      /* blindness */
             } else if ((mon = m_at(level, x, y)) != 0) {
-                bhitm(mon, obj);
+                bhitm(&youmonst, mon, obj);
                 /* bot(); */
             }
             if (affects_objects && level->objects[x][y]) {

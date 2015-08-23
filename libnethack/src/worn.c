@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -129,8 +129,8 @@ obj_worn_on(struct obj *obj, enum objslot slot)
 void
 mon_set_minvis(struct monst *mon)
 {
-    mon->perminvis = 1;
     if (!mon->invis_blkd) {
+        mon->perminvis = 1;
         mon->minvis = 1;
         if (mon->dlevel == level)
             newsym(mon->mx, mon->my);       /* make it disappear */
@@ -335,6 +335,9 @@ maybe_blocks:
 int
 find_mac(struct monst *mon)
 {
+    if (mon == &youmonst)
+        return get_player_ac();
+
     struct obj *obj;
     int base = mon->data->ac;
     long mwflags = mon->misc_worn_check;

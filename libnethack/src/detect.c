@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1049,13 +1049,9 @@ findone(int zx, int zy, void *num)
         magic_map_background(zx, zy, 0);
         newsym(zx, zy);
         (*(int *)num)++;
-    } else if ((ttmp = t_at(level, zx, zy)) != 0) {
-        if (!ttmp->tseen && ttmp->ttyp != STATUE_TRAP) {
-            ttmp->tseen = 1;
-            newsym(zx, zy);
-            (*(int *)num)++;
-        }
-    } else if ((mtmp = m_at(level, zx, zy)) != 0) {
+    } else if ((ttmp = t_at(level, zx, zy)) != 0)
+        sense_trap(ttmp, 0, 0, 0);
+    else if (cansee(zx, zy) && (mtmp = m_at(level, zx, zy)) != 0) {
         if (mtmp->m_ap_type && !level->locations[zx][zy].mem_invis) {
             map_invisible(zx, zy);
             (*(int *)num)++;
@@ -1129,13 +1125,20 @@ openone(int zx, int zy, void *num)
 }
 
 int
-findit(void)
+findit(int radius)
 {       /* returns number of things found */
     int num = 0;
 
     if (Engulfed)
         return 0;
-    do_clear_area(u.ux, u.uy, BOLT_LIM, findone, &num);
+    if (radius == -1) {
+        int x, y;
+
+        for (x = 0; x < COLNO; x++)
+            for (y = 0; y < ROWNO; y++)
+                findone(x, y, &num);
+    } else
+        do_clear_area(u.ux, u.uy, radius, findone, &num);
     return num;
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1212,7 +1212,7 @@ doinvoke(const struct nh_cmd_arg *arg)
 
     if (!oart || !oart->inv_prop) {
         if (obj->oclass == WAND_CLASS)
-            return do_break_wand(obj);
+            return do_break_wand(obj, TRUE);
         else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
                  obj->otyp == BRASS_LANTERN)
             return dorub(&(struct nh_cmd_arg){.argtype = CMD_ARG_OBJ,

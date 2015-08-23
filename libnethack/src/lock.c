@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -834,6 +834,10 @@ doorlock(struct obj * otmp, int x, int y)
     struct rm *door = &level->locations[x][y];
     boolean res = TRUE;
     int loudness = 0;
+    int wandlevel = 0;
+    if (otmp->oclass == WAND_CLASS)
+        wandlevel = getwandlevel(&youmonst, otmp); /* Not completely right, but works
+                                                      since monsters wont use knock/wizlock */
     const char *msg = NULL;
     const char *dustcloud = "A cloud of dust";
     const char *quickly_dissipates = "quickly dissipates";
@@ -892,6 +896,12 @@ doorlock(struct obj * otmp, int x, int y)
             pline("%s springs up in the doorway, but %s.", dustcloud,
                   quickly_dissipates);
             return FALSE;
+        }
+        if (wandlevel == P_MASTER) {
+            pline("%s springs up in the doorway and conceals it!", dustcloud);
+            door->typ = SDOOR;
+            newsym(x, y);
+            return TRUE;
         }
 
         switch (door->doormask & ~D_TRAPPED) {

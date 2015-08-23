@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-07 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,6 +12,26 @@ static const int explosion[3][3] = {
     {E_explode3, E_explode6, E_explode9}
 };
 
+/* "Chained" explosions, used by skilled wand users
+   FIXME: make skilled casting of fireball/cone of cold use this */
+void
+chain_explode(int x, int y, int type,
+              int dam, char olet, int expltype,
+              const char *descr, int raylevel, int amount)
+{
+    int ex = x;
+    int ey = y;
+    while (amount--) {
+        ex = x + rnd(3) - 2;
+        ey = y + rnd(3) - 2;
+        if (!isok(ex, ey) || IS_STWALL(level->locations[ex][ey].typ)) {
+            ex = x;
+            ey = y;
+        }
+        explode(ex, ey, type, dam, olet, expltype, descr, raylevel);
+    }
+}
+
 /* Note: I had to choose one of three possible kinds of "type" when writing
  * this function: a wand type (like in zap.c), an adtyp, or an object type.
  * Wand types get complex because they must be converted to adtyps for
@@ -22,13 +42,15 @@ static const int explosion[3][3] = {
  *
  * The descr argument should be used to describe the explosion. It should be
  * a string suitable for use with an().
+ * raylevel is used for explosions caused by skilled wand usage (0=no wand)
  */
 void
 explode(int x, int y, int type, /* the same as in zap.c */
-        int dam, char olet, int expltype, const char *descr)
+        int dam, char olet, int expltype, const char *descr, int raylevel)
 {
     int i, j, k, damu = dam;
-    boolean visible, any_shield;
+    boolean visible, any_shield, resist_death;
+    resist_death = FALSE;
     int uhurt = 0;      /* 0=unhurt, 1=items damaged, 2=you and items damaged */
     const char *str;
     const char *dispbuf = "";   /* lint suppression; I think the code's OK */
@@ -41,6 +63,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
     /* 0=normal explosion, 1=do shieldeff, 2=do nothing */
     boolean shopdamage = FALSE;
 
+#if 0
+    /* Damage reduction from wand explosions */
     if (olet == WAND_CLASS)     /* retributive strike */
         switch (Role_switch) {
         case PM_PRIEST:
@@ -55,7 +79,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
         default:
             break;
         }
-
+#endif
     if (olet == MON_EXPLODE) {
         str = descr;
         adtyp = AD_PHYS;
@@ -90,6 +114,9 @@ explode(int x, int y, int type, /* the same as in zap.c */
             break;
         case 2:
             str = "ball of cold";
+            break;
+        case 3:
+            str = "sleeping gas";
             break;
         case 4:
             str = (olet == WAND_CLASS) ? "death field" : "disintegration field";
@@ -132,7 +159,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     explmask[i][j] = 0;
                     break;
                 case AD_MAGM:
-                    explmask[i][j] = !!Antimagic;
+                    explmask[i][j] = !!(raylevel >= P_EXPERT || Antimagic);
                     break;
                 case AD_FIRE:
                     explmask[i][j] = !!Fire_resistance;
@@ -140,10 +167,22 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 case AD_COLD:
                     explmask[i][j] = !!Cold_resistance;
                     break;
+                case AD_SLEE:
+                    explmask[i][j] = !!Sleep_resistance;
+                    break;
                 case AD_DISN:
+                    if (raylevel == P_UNSKILLED && Drain_resistance)
+                        resist_death = TRUE;
+                    /* why MR doesn't resist general deathfields is beyond me, but... */
+                    if (nonliving(youmonst.data) ||
+                        is_demon(youmonst.data))
+                        resist_death = TRUE;
+                    if (raylevel && Antimagic)
+                        resist_death = TRUE;
+                    if (raylevel >= P_EXPERT && !Drain_resistance)
+                        resist_death = FALSE;
                     explmask[i][j] =
-                        (olet == WAND_CLASS) ? !!(nonliving(youmonst.data) ||
-                                                  is_demon(youmonst.data)) :
+                        (olet == WAND_CLASS) ? !!resist_death :
                         !!Disint_resistance;
                     break;
                 case AD_ELEC:
@@ -172,7 +211,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     case AD_PHYS:
                         break;
                     case AD_MAGM:
-                        explmask[i][j] |= resists_magm(mtmp);
+                        explmask[i][j] |= (raylevel >= 4 || resists_magm(mtmp));
                         break;
                     case AD_FIRE:
                         explmask[i][j] |= resists_fire(mtmp);
@@ -180,10 +219,20 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     case AD_COLD:
                         explmask[i][j] |= resists_cold(mtmp);
                         break;
+                    case AD_SLEE:
+                        explmask[i][j] |= resists_sleep(mtmp);
                     case AD_DISN:
+                        if (raylevel == P_UNSKILLED && resists_drli(mtmp))
+                        resist_death = TRUE;
+                        if (nonliving(mtmp->data) ||
+                            is_demon(mtmp->data))
+                            resist_death = TRUE;
+                        if (raylevel && resists_magm(mtmp))
+                            resist_death = TRUE;
+                        if (raylevel >= P_EXPERT && !resists_drli(mtmp))
+                            resist_death = FALSE;
                         explmask[i][j] |=
-                            (olet == WAND_CLASS) ? (nonliving(mtmp->data) ||
-                                                    is_demon(mtmp->data)) :
+                            (olet == WAND_CLASS) ? resist_death :
                             resists_disint(mtmp);
                         break;
                     case AD_ELEC:
@@ -333,6 +382,32 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         mdam *= 2;
                     else if (resists_fire(mtmp) && adtyp == AD_COLD)
                         mdam *= 2;
+                    if (adtyp == AD_MAGM && raylevel >= P_EXPERT && resists_magm(mtmp))
+                        mdam = (mdam + 1) / 2;
+                    if (adtyp == AD_SLEE && raylevel) {
+                        sleep_monst(mtmp, mdam, WAND_CLASS);
+                        mdam = 0;
+                    }
+                    if (adtyp == AD_DISN && raylevel) {
+                        if (nonliving(mtmp->data) ||
+                            is_demon(mtmp->data) ||
+                            resists_magm(mtmp) ||
+                            raylevel == P_UNSKILLED) {
+                            /* monster is deathresistant or raylevel==unskilled,
+                               since monster apparently failed to resist earlier,
+                               monster must be vulnerable to drli */
+                            /* FIXME: make a generic losexp() for monsters */
+                            mdam = dice(2, 6);
+                            if (cansee(i + x - 1, j + y - 1))
+                                pline("%s suddenly seems weaker!", Monnam(mtmp));
+                            mtmp->mhpmax -= mdam;
+                            if (mtmp->m_lev == 0)
+                                mdam = mtmp->mhp;
+                            else
+                                mtmp->m_lev--;
+                        } else
+                            mdam = mtmp->mhp; /* instadeath */
+                    }
                     mtmp->mhp -= mdam;
                     mtmp->mhp -= (idamres + idamnonres);
                 }
@@ -361,6 +436,25 @@ explode(int x, int y, int type, /* the same as in zap.c */
             pline("You are unharmed!");
         } else if (Half_physical_damage && adtyp == AD_PHYS)
             damu = (damu + 1) / 2;
+        else if (raylevel) {
+            if (adtyp == AD_MAGM && Antimagic)
+                damu = (damu + 1) / 2;
+            if (adtyp == AD_SLEE) {
+                helpless(damu, hr_asleep, "sleeping", NULL);
+                damu = 0;
+            }
+            if (adtyp == AD_DISN) {
+                if (nonliving(youmonst.data) ||
+                    is_demon(youmonst.data) ||
+                    Antimagic ||
+                    raylevel == P_UNSKILLED)
+                    losexp("drained by a death field",FALSE);
+                else {
+                    done(DIED, "killed by a death field");
+                    damu = 0; /* lifesaved */
+                }
+            }
+        }
         if (adtyp == AD_FIRE)
             burnarmor(&youmonst);
         destroy_item(SCROLL_CLASS, (int)adtyp);
@@ -620,7 +714,7 @@ splatter_burning_oil(int x, int y)
 {
 /* ZT_SPELL(ZT_FIRE) = ZT_SPELL(AD_FIRE-1) = 10+(2-1) = 11 */
 #define ZT_SPELL_O_FIRE 11      /* value kludge, see zap.c */
-    explode(x, y, ZT_SPELL_O_FIRE, dice(4, 4), BURNING_OIL, EXPL_FIERY, NULL);
+    explode(x, y, ZT_SPELL_O_FIRE, dice(4, 4), BURNING_OIL, EXPL_FIERY, NULL, 0);
 }
 
 /*explode.c*/

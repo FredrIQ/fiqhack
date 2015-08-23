@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1138,7 +1138,7 @@ seffects(struct obj *sobj, boolean *known)
             burn_away_slime();
         }
         explode(u.ux, u.uy, 11, (2 * (rn1(3, 3) + 2 * cval) + 1) / 3,
-                SCROLL_CLASS, EXPL_FIERY, NULL);
+                SCROLL_CLASS, EXPL_FIERY, NULL, 0);
         return 1;
     case SCR_EARTH:
         /* TODO: handle steeds */
@@ -1325,6 +1325,23 @@ litroom(boolean on, struct obj *obj)
 {
     char is_lit;        /* value is irrelevant; we use its address as a `not
                            null' flag for set_lit() */
+    int wandlevel = 0;
+    if (obj && obj->oclass == WAND_CLASS)
+        wandlevel = getwandlevel(&youmonst, obj);
+    /* In case monsters ever uses a light creation spell, wandlevel
+       check must be fixed -- perform a deliberate crash */
+    if (flags.mon_moving)
+        impossible("monster tries to create light?");
+    int lightradius = 5;
+    if (obj && obj->oclass == SCROLL_CLASS && obj->blessed)
+        lightradius = 9;
+    else if (wandlevel)
+        lightradius = (wandlevel == P_UNSKILLED ? 3  :
+                       wandlevel == P_BASIC     ? 5  :
+                       wandlevel == P_SKILLED   ? 9  :
+                       wandlevel == P_EXPERT    ? 15 :
+                       wandlevel == P_MASTER    ? -1 :
+                       1);
 
     /* first produce the text (provided you're not blind) */
     if (!on) {
@@ -1391,10 +1408,16 @@ do_it:
             level->rooms[rnum].rlit = on;
         }
         /* hallways remain dark on the rogue level */
-    } else
-        do_clear_area(u.ux, u.uy,
-                      (obj && obj->oclass == SCROLL_CLASS &&
-                       obj->blessed) ? 9 : 5, set_lit, (on ? &is_lit : NULL));
+    } else {
+        if (lightradius == -1) { /* entire floor */
+            int x, y;
+
+            for (x = 0; x < COLNO; x++)
+                for (y = 0; y < ROWNO; y++)
+                    set_lit(x, y, (on ? &is_lit : NULL));
+        } else
+            do_clear_area(u.ux, u.uy, lightradius, set_lit, (on ? &is_lit : NULL));
+    }
 
     /* 
      *  If we are not blind, then force a redraw on all positions in sight

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-22 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,7 +98,7 @@ extern void use_unicorn_horn(struct obj *);
 extern boolean tinnable(const struct obj *);
 extern void fig_transform(void *, long);
 extern int unfixable_trouble_count(boolean);
-extern int do_break_wand(struct obj *);
+extern int do_break_wand(struct obj *, boolean);
 
 /* ### artifact.c ### */
 
@@ -239,7 +239,7 @@ extern void use_crystal_ball(struct obj *);
 extern void do_mapping(void);
 extern void do_vicinity_map(void);
 extern void cvt_sdoor_to_door(struct rm *loc, const d_level * dlev);
-extern int findit(void);
+extern int findit(int);
 extern int openit(void);
 extern void find_trap(struct trap *);
 extern boolean reveal_monster_at(int, int, boolean);
@@ -256,7 +256,7 @@ extern void digactualhole(int, int, struct monst *, int);
 extern int use_pick_axe(struct obj *, const struct nh_cmd_arg *);
 extern boolean mdig_tunnel(struct monst *);
 extern void watch_warn(struct monst *, xchar, xchar, boolean);
-extern void zap_dig(schar, schar, schar);
+extern void zap_dig(struct monst *, struct obj *, schar, schar, schar);
 extern void bury_objs(struct level *, int, int);
 extern void unearth_objs(struct level *lev, int x, int y);
 extern void rot_organic(void *, long);
@@ -580,7 +580,8 @@ extern long newuexp(int);
 
 /* ### explode.c ### */
 
-extern void explode(int, int, int, int, char, int, const char *);
+extern void chain_explode(int, int, int, int, char, int, const char *, int, int);
+extern void explode(int, int, int, int, char, int, const char *, int);
 extern long scatter(int, int, int, unsigned int, struct obj *);
 extern void splatter_burning_oil(int, int);
 
@@ -1992,7 +1993,7 @@ extern int dowrite(struct obj *, const struct nh_cmd_arg *);
 
 /* ### zap.c ### */
 
-extern int bhitm(struct monst *, struct obj *);
+extern int bhitm(struct monst *, struct monst *, struct obj *);
 extern void probe_monster(struct monst *);
 extern boolean get_obj_location(const struct obj *, xchar *, xchar *, int);
 extern boolean get_mon_location(struct monst *, xchar *, xchar *, int);
@@ -2020,12 +2021,12 @@ extern const char *exclam(int force);
 extern void hit(const char *, struct monst *, const char *);
 extern void miss(const char *, struct monst *);
 extern struct monst *beam_hit(int, int, int, int,
-                              int (*)(struct monst *, struct obj *),
+                              int (*)(struct monst *, struct monst *, struct obj *),
                               int (*)(struct obj *, struct obj *), struct obj *,
                               boolean *);
 extern struct monst *boomhit(int, int);
 extern int burn_floor_paper(struct level *, int, int, boolean, boolean);
-extern void buzz(int, int, xchar, xchar, int, int);
+extern void buzz(int, int, xchar, xchar, int, int, int);
 extern void melt_ice(struct level *, xchar, xchar);
 extern int zap_over_floor(xchar, xchar, int, boolean *);
 extern void fracture_rock(struct obj *);
@@ -2034,6 +2035,7 @@ extern void destroy_item(int, int);
 extern int destroy_mitem(struct monst *, int, int);
 extern int resist(struct monst *, char, int, int);
 extern void makewish(void);
+extern int getwandlevel(struct monst *, struct obj *);
 
 #endif /* EXTERN_H */
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by FIQ, 2015-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,17 +15,18 @@
 #define PN_BARE_HANDED       (-1)       /* includes martial arts */
 #define PN_TWO_WEAPONS       (-2)
 #define PN_RIDING            (-3)
-#define PN_POLEARMS          (-4)
-#define PN_SABER             (-5)
-#define PN_HAMMER            (-6)
-#define PN_WHIP              (-7)
-#define PN_ATTACK_SPELL      (-8)
-#define PN_HEALING_SPELL     (-9)
-#define PN_DIVINATION_SPELL  (-10)
-#define PN_ENCHANTMENT_SPELL (-11)
-#define PN_CLERIC_SPELL      (-12)
-#define PN_ESCAPE_SPELL      (-13)
-#define PN_MATTER_SPELL      (-14)
+#define PN_WANDS             (-4)
+#define PN_POLEARMS          (-5)
+#define PN_SABER             (-6)
+#define PN_HAMMER            (-7)
+#define PN_WHIP              (-8)
+#define PN_ATTACK_SPELL      (-9)
+#define PN_HEALING_SPELL     (-10)
+#define PN_DIVINATION_SPELL  (-11)
+#define PN_ENCHANTMENT_SPELL (-12)
+#define PN_CLERIC_SPELL      (-13)
+#define PN_ESCAPE_SPELL      (-14)
+#define PN_MATTER_SPELL      (-15)
 
 static void give_may_advance_msg(int);
 
@@ -43,7 +44,7 @@ static const short skill_names_indices[P_NUM_SKILLS] = {
     PN_CLERIC_SPELL, PN_ESCAPE_SPELL,
     PN_MATTER_SPELL,
     PN_BARE_HANDED, PN_TWO_WEAPONS,
-    PN_RIDING
+    PN_RIDING, PN_WANDS
 };
 
 /* note: entry [0] isn't used */
@@ -52,6 +53,7 @@ static const char *const odd_skill_names[] = {
     "bare hands",       /* use barehands_or_martial[] instead */
     "two weapon combat",
     "riding",
+    "wands",
     "polearms",
     "saber",
     "hammer",
@@ -1441,6 +1443,10 @@ skill_init(const struct def_skill *class_skill)
         P_SKILL(P_ATTACK_SPELL) = P_BASIC;
         P_SKILL(P_ENCHANTMENT_SPELL) = P_BASIC;
     }
+    
+    /* set wand skills */
+    if (!Role_if(PM_BARBARIAN) && !Role_if(PM_CAVEMAN))
+        P_SKILL(P_WANDS) = P_BASIC;
 
     /* walk through array to set skill maximums */
     for (; class_skill->skill != P_NONE; class_skill++) {
