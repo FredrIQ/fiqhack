@@ -510,7 +510,7 @@ angrygods(aligntyp resp_god)
 {
     int maxanger;
 
-    if (Inhell)
+    if (Inhell && (!uarmh || uarmh->oartifact != ART_MITRE_OF_HOLINESS))
         resp_god = A_NONE;
     u.ublessed = 0;
 
@@ -1233,7 +1233,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 adjalign(-5);
                 u.ugangr += 3;
                 adjattrib(A_WIS, -1, TRUE);
-                if (!Inhell)
+                if (!(Inhell && (!uarmh || uarmh->oartifact != ART_MITRE_OF_HOLINESS)))
                     angrygods(u.ualign.type);
                 change_luck(-5);
             } else
@@ -1619,14 +1619,16 @@ can_pray(boolean praying)
             turnstate.pray.type = pty_favour;
     }
 
-    if (is_undead(youmonst.data) && !Inhell &&
+    if (is_undead(youmonst.data) &&
+        !(Inhell && (!uarmh || uarmh->oartifact != ART_MITRE_OF_HOLINESS)) &&
         (align == A_LAWFUL || (align == A_NEUTRAL && !rn2(10))))
         turnstate.pray.type = pty_smite_undead;
     /* Note: when !praying, the random factor for neutrals makes the return
        value a non-deterministic approximation for enlightenment. This case
        should be uncommon enough to live with... */
 
-    return !praying ? turnstate.pray.type == pty_favour && !Inhell : TRUE;
+    return !praying ? turnstate.pray.type == pty_favour &&
+           !(Inhell && (!uarmh || uarmh->oartifact != ART_MITRE_OF_HOLINESS)) : TRUE;
 }
 
 int
@@ -1657,7 +1659,8 @@ dopray(const struct nh_cmd_arg *arg)
         }
     }
 
-    if (turnstate.pray.type == pty_favour && !Inhell) {
+    if (turnstate.pray.type == pty_favour &&
+        !(Inhell && (!uarmh || uarmh->oartifact != ART_MITRE_OF_HOLINESS))) {
         /* if you've been true to your god you can't die while you pray */
         if (!Blind)
             pline("You are surrounded by a shimmering light.");
