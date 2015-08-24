@@ -1601,10 +1601,11 @@ find_misc(struct monst * mtmp, struct musable * m)
     boolean ranged_stuff = FALSE;
 
     struct monst *target = mfind_target(mtmp, TRUE); /* zaps here is helpful */
-    const struct permonst *tdat = target->data;
-
-    if (target)
+    const struct permonst *tdat = NULL;
+    if (target) {
+        tdat = target->data;
         ranged_stuff = TRUE;
+    }
 
     m->misc = NULL;
     m->has_misc = 0;
@@ -1669,6 +1670,7 @@ find_misc(struct monst * mtmp, struct musable * m)
             (!attacktype(mtmp->data, AT_GAZE) || mtmp->mcan)) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_MAKE_INVISIBLE_SELF;
+            continue;
         }
         nomore(MUSE_POT_INVISIBILITY);
         if (obj->otyp == POT_INVISIBILITY && !mtmp->minvis && !mtmp->invis_blkd
@@ -1690,6 +1692,7 @@ find_misc(struct monst * mtmp, struct musable * m)
             mtmp->mspeed != MFAST && !mtmp->isgd) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_SPEED_MONSTER_SELF;
+            continue;
         }
         nomore(MUSE_POT_SPEED);
         if (obj->otyp == POT_SPEED && mtmp->mspeed != MFAST && !mtmp->isgd) {
@@ -1707,6 +1710,7 @@ find_misc(struct monst * mtmp, struct musable * m)
             monstr[monsndx(mdat)] < 6) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_POLYMORPH_SELF;
+            continue;
         }
         nomore(MUSE_POT_POLYMORPH);
         if (obj->otyp == POT_POLYMORPH && !mtmp->cham &&

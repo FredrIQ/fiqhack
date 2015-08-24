@@ -292,7 +292,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             if (wandlevel == P_MASTER)
                 tries++;
             while (tries-- > 0) {
-                if (!newcham(mtmp, NULL, (otyp != POT_POLYMORPH), FALSE))
+                if (!newcham(mtmp, NULL, (otyp != POT_POLYMORPH || selfzap), FALSE))
                     tries = 0;
                 else {
                     polymorphed = TRUE;
