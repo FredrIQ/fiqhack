@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by FIQ, 2015-08-24 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1686,7 +1686,7 @@ prayer_done(void)
         rehumanize(DIED, NULL);
         losehp(rnd(20), killer_msg(DIED, "an residual undead turning effect"));
         exercise(A_CON, FALSE);
-    } else if (Inhell) {
+    } else if (Inhell && (!uarmh || uarmh->oartifact != ART_MITRE_OF_HOLINESS)) {
         pline("Since you are in Gehennom, %s won't help you.",
               align_gname(alignment));
         /* haltingly aligned is least likely to anger */
@@ -1763,7 +1763,7 @@ doturn(const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    if (Inhell) {
+    if (Inhell && (!uarmh || uarmh->oartifact != ART_MITRE_OF_HOLINESS)) {
         pline("Since you are in Gehennom, %s won't help you.", u_gname());
         aggravate();
         return 0;
@@ -1823,7 +1823,8 @@ doturn(const struct nh_cmd_arg *arg)
             }
         }
     }
-    helpless(5, hr_busy, "trying to turn the monsters", NULL);
+    if ((5 - (u.ulevel / 6)) > 0)
+        helpless((5 - (u.ulevel / 6)), hr_busy, "trying to turn the monsters", NULL);
     return 1;
 }
 

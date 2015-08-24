@@ -1318,7 +1318,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
     if (otmp && otmp->oclass == WAND_CLASS)
         wandlevel = getwandlevel(mtmp, otmp);
     boolean oseen;
-    boolean isray;
+    boolean isray = FALSE;
 
     /* offensive potions are not drunk, they're thrown */
     if (otmp->oclass != POTION_CLASS && (i = precheck(mtmp, otmp, m)) != 0)
