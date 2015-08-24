@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,7 @@
 #include "mfndpos.h"    /* ALLOW_M */
 
 static int drop_throw(struct obj *, boolean, int, int);
-static boolean qlined_up(struct monst *mtmp, int ax, int ay, boolean breath);
+static boolean qlined_up(struct monst *mtmp, int ax, int ay, boolean breath, boolean helpful);
 
 #define URETREATING(x,y) (distmin(u.ux,u.uy,x,y) > distmin(u.ux0,u.uy0,x,y))
 
@@ -555,7 +555,7 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
         return;
     }
 
-    if (!qlined_up(mtmp, xdef, ydef, FALSE) ||
+    if (!qlined_up(mtmp, xdef, ydef, FALSE, FALSE) ||
         !ai_use_at_range(BOLT_LIM - distmin(mtmp->mx, mtmp->my, xdef, ydef)))
         return;
 
@@ -631,24 +631,26 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
     action_interrupted();
 }
 
-/* Is a monster willing to attack with a compass beam in a given direction?
+/* Is a monster willing to fire with a compass beam in a given direction?
 
    Returns TRUE and sets *mdef to a monster if there's a monster it wants to
-   attack (and no monster it doesn't want to attack). *mdef can be &youmonst.
+   target (and no monster it doesn't want to attack). *mdef can be &youmonst.
 
    If mdef is non-NULL, also set the tbx/tby globals for backwards compatibility
    (clobbered on a *mdef == NULL return, appropriately otherwise). TODO: get rid
    of these, they're really spaghetti.
 
-   Returns TRUE and sets *mdef to NULL if there's no reason it wants to attack
-   in that direction, but no reason it dislikes attacking in that direction
+   Returns TRUE and sets *mdef to NULL if there's no reason it wants to fire
+   in that direction, but no reason it dislikes firing in that direction
    either.
 
-   Returns FALSE if the monster refuses to attack in that direction. In this
-   case, *mdef will be a monster that we don't want to attack (possibly
-   &youmonst). */
+   Returns FALSE if the monster refuses to fire in that direction. In this
+   case, *mdef will be a monster that we don't want to target (possibly
+   &youmonst).
+   
+   helpful determines whether or not a beam gives a positive effect */
 boolean
-m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef)
+m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef, boolean helpful)
 {
     int x = magr->mx;
     int y = magr->my;
@@ -683,8 +685,11 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef)
                     tby = y - magr->my;
                 }
 
-                if (magr->mpeaceful && !Conflict)
+                if (!Conflict) {
+                    if ((!helpful && magr->mpeaceful) ||
+                        (helpful && !magr->mpeaceful))
                     return FALSE;
+                }
             }
         }
 
@@ -693,7 +698,7 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef)
         /* special case: make sure we don't hit the quest leader with stray
            beams, as it can make the game unwinnable; do this regardless of LOS
            or hostility or Conflict or confusion or anything like that */
-        if (mat && mat->data->msound == MS_LEADER) {
+        if (mat && mat->data->msound == MS_LEADER && !helpful) {
             if (mdef)
                 *mdef = mat;
             return FALSE;
@@ -715,14 +720,14 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef)
                     tbx = x - magr->mx;
                     tby = y - magr->my;
                 }
-            } else if (mm_aggression(magr, mat) & ALLOW_M) {
-                /* we want to attack this monster */
+            } else if (mm_aggression(magr, mat) & ALLOW_M && !helpful) {
+                /* we want to target this monster */
                 if (mdef) {
                     *mdef = mat;
                     tbx = x - magr->mx;
                     tby = y - magr->my;
                 }
-            } else if (magr->mpeaceful || mat->mpeaceful) {
+            } else if (!helpful && (magr->mpeaceful || mat->mpeaceful)) {
                 /* we don't want to attack this monster; peacefuls (including
                    pets) should avoid collateral damage; also handles the
                    pet_attacks_up_to_difficulty checks; symmetrised so that
@@ -730,6 +735,17 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef)
                 if (mdef)
                     *mdef = mat;
                 return FALSE;
+            } else if (helpful &&
+                       ((magr->mpeaceful && mat->mpeaceful) ||
+                        (!magr->mpeaceful && !mat->mpeaceful))) {
+                /* helpful beam, hostile-hostile or peaceful/tame-peaceful/tame
+                   is OK; the peaceful checks aren't redundant with above since
+                   pet_attacks_up_to_difficulty is a thing */
+                if (mdef) {
+                    *mdef = mat;
+                    tbx = x - magr->mx;
+                    tby = y - magr->my;
+                }
             }
         }
     }
@@ -739,7 +755,7 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef)
 
 /* Find a target for a ranged attack. */
 struct monst *
-mfind_target(struct monst *mtmp)
+mfind_target(struct monst *mtmp, boolean helpful)
 {
     int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 },
         diry[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
@@ -748,16 +764,16 @@ mfind_target(struct monst *mtmp)
 
     struct monst *mret;
 
-    if (!mtmp->mpeaceful && lined_up(mtmp))
+    if (!helpful && mtmp->mpeaceful && lined_up(mtmp))
         return &youmonst;     /* kludge - attack the player first if possible */
 
     for (dir = rn2(8); dir != origdir; dir = ((dir + 1) % 8)) {
         if (origdir < 0)
             origdir = dir;
 
-        if (m_beam_ok(mtmp, dirx[dir], diry[dir], &mret) && mret) {
+        if (m_beam_ok(mtmp, dirx[dir], diry[dir], &mret, helpful) && mret) {
             /* also check for a bounce */
-            if (m_beam_ok(mtmp, -dirx[dir], -diry[dir], NULL))
+            if (m_beam_ok(mtmp, -dirx[dir], -diry[dir], NULL, helpful))
                 return mret;
         }
     }
@@ -779,7 +795,7 @@ spitmq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
                   s_suffix(mon_nam(mtmp)));
         return 0;
     }
-    boolean linedup = qlined_up(mtmp, xdef, ydef, FALSE);
+    boolean linedup = qlined_up(mtmp, xdef, ydef, FALSE, FALSE);
     if (linedup && ai_use_at_range(
             BOLT_LIM - distmin(mtmp->mx, mtmp->my, xdef, ydef))) {
         switch (mattk->adtyp) {
@@ -819,7 +835,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
     if (!youdef && distmin(mtmp->mx, mtmp->my, xdef, ydef) < 3)
         return 0;
 
-    boolean linedup = qlined_up(mtmp, xdef, ydef, TRUE);
+    boolean linedup = qlined_up(mtmp, xdef, ydef, TRUE, FALSE);
 
     if (linedup) {
         if (mtmp->mcan) {
@@ -876,7 +892,7 @@ linedup(xchar ax, xchar ay, xchar bx, xchar by)
 
 /* TODO: Merge code with mfind_target */
 static boolean
-qlined_up(struct monst *mtmp, int ax, int ay, boolean breath)
+qlined_up(struct monst *mtmp, int ax, int ay, boolean breath, boolean helpful)
 {
     boolean lined_up = linedup(ax, ay, mtmp->mx, mtmp->my);
 
@@ -887,8 +903,8 @@ qlined_up(struct monst *mtmp, int ax, int ay, boolean breath)
 
     /* Ensure that this is a reasonable direction to attack in. We check in
        front of the monster, and also behind in case of bounces. */
-    if (!m_beam_ok(mtmp, dx, dy, NULL) ||
-        (breath && !m_beam_ok(mtmp, -dx, -dy, NULL)))
+    if (!m_beam_ok(mtmp, dx, dy, NULL, helpful) ||
+        (breath && !m_beam_ok(mtmp, -dx, -dy, NULL, helpful)))
         return FALSE;
     /* We should really check for right-angle bounces too, but that's pretty
        difficult given the code. (Monsters never intentionally bounce attacks

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-24 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -219,7 +219,13 @@ find_defensive(struct monst *mtmp, struct musable *m)
     struct level *lev = mtmp->dlevel;
     boolean stuck = (mtmp == u.ustuck);
     boolean immobile = (mtmp->data->mmove == 0);
+    boolean ranged_stuff = FALSE;
     int fraction;
+    
+    struct monst *target = mfind_target(mtmp, FALSE);
+
+    if (target)
+        ranged_stuff = TRUE;
 
     if (is_animal(mtmp->data) || mindless(mtmp->data))
         return FALSE;
@@ -427,6 +433,8 @@ find_defensive(struct monst *mtmp, struct musable *m)
                they'll know about teleport traps. */
             if (!lev->flags.noteleport ||
                 !(mtmp->mtrapseen & (1 << (TELEP_TRAP - 1)))) {
+                if (mon_has_amulet(mtmp) && !ranged_stuff)
+                    continue;
                 m->defensive = obj;
                 m->has_defense = (mon_has_amulet(mtmp))
                     ? MUSE_WAN_TELEPORTATION : MUSE_WAN_TELEPORTATION_SELF;
@@ -496,9 +504,10 @@ int
 use_defensive(struct monst *mtmp, struct musable *m)
 {
     int i, fleetim, how = 0;
-    int wandlevel;
+    int wandlevel = 0;
     struct obj *otmp = m->defensive;
-    wandlevel = getwandlevel(mtmp, otmp);
+    if (otmp && otmp->oclass == WAND_CLASS)
+        wandlevel = getwandlevel(mtmp, otmp);
     boolean vis, vismon, oseen;
     const char *mcsa = "%s can see again.";
 
@@ -957,14 +966,19 @@ find_offensive(struct monst *mtmp, struct musable *m)
     boolean reflection_skip = FALSE;
     struct obj *helmet = which_armor(mtmp, os_armh);
 
-    struct monst *target = mfind_target(mtmp);
+    struct monst *target = mfind_target(mtmp, FALSE);
 
     if (target) {
         ranged_stuff = TRUE;
         if (target == &youmonst)
             reflection_skip = Reflecting && rn2(2);
-    } else
-        return FALSE;   /* nothing to attack */
+        else
+            reflection_skip = mon_reflects(target, NULL) && rn2(2);
+        /* Skilled wand users bypass reflection. Cursed wands reduce skill,
+           but monsters don't recognize BUC at the moment. */
+        if (mprof(mtmp, MP_WANDS) >= MP_WAND_SKILLED)
+            reflection_skip = FALSE;
+    }
 
     m->offensive = NULL;
     m->has_offense = 0;
@@ -981,58 +995,73 @@ find_offensive(struct monst *mtmp, struct musable *m)
     }
 
     if (!ranged_stuff)
-        return FALSE;
+        return FALSE; /* nothing to do */
 #define nomore(x) if (m->has_offense==x) continue;
     for (obj = mtmp->minvent; obj; obj = obj->nobj) {
-        /* nomore(MUSE_WAN_DEATH); */
+        if (obj->oclass == WAND_CLASS && obj->spe < 1)
+            continue;
         if (!reflection_skip) {
-            if (obj->otyp == WAN_DEATH && obj->spe > 0) {
+            nomore(MUSE_WAN_DEATH);
+            if (obj->otyp == WAN_DEATH) {
                 m->offensive = obj;
                 m->has_offense = MUSE_WAN_DEATH;
             }
             nomore(MUSE_WAN_SLEEP);
-            if (obj->otyp == WAN_SLEEP && obj->spe > 0 &&
-                !u_helpless(hm_paralyzed | hm_unconscious)) {
+            if (obj->otyp == WAN_SLEEP &&
+               ((target == &youmonst && !u_helpless(hm_paralyzed | hm_unconscious)) ||
+                (target != &youmonst && target->mcanmove))) {
                 m->offensive = obj;
                 m->has_offense = MUSE_WAN_SLEEP;
             }
             nomore(MUSE_WAN_FIRE);
-            if (obj->otyp == WAN_FIRE && obj->spe > 0) {
+            if (obj->otyp == WAN_FIRE) {
                 m->offensive = obj;
                 m->has_offense = MUSE_WAN_FIRE;
             }
             nomore(MUSE_FIRE_HORN);
-            if (obj->otyp == FIRE_HORN && obj->spe > 0 &&
+            if (obj->otyp == FIRE_HORN &&
                 can_blow_instrument(mtmp->data)) {
                 m->offensive = obj;
                 m->has_offense = MUSE_FIRE_HORN;
             }
             nomore(MUSE_WAN_COLD);
-            if (obj->otyp == WAN_COLD && obj->spe > 0) {
+            if (obj->otyp == WAN_COLD) {
                 m->offensive = obj;
                 m->has_offense = MUSE_WAN_COLD;
             }
             nomore(MUSE_FROST_HORN);
-            if (obj->otyp == FROST_HORN && obj->spe > 0 &&
+            if (obj->otyp == FROST_HORN &&
                 can_blow_instrument(mtmp->data)) {
                 m->offensive = obj;
                 m->has_offense = MUSE_FROST_HORN;
             }
             nomore(MUSE_WAN_LIGHTNING);
-            if (obj->otyp == WAN_LIGHTNING && obj->spe > 0) {
+            if (obj->otyp == WAN_LIGHTNING) {
                 m->offensive = obj;
                 m->has_offense = MUSE_WAN_LIGHTNING;
             }
             nomore(MUSE_WAN_MAGIC_MISSILE);
-            if (obj->otyp == WAN_MAGIC_MISSILE && obj->spe > 0) {
+            if (obj->otyp == WAN_MAGIC_MISSILE) {
                 m->offensive = obj;
                 m->has_offense = MUSE_WAN_MAGIC_MISSILE;
             }
         }
         nomore(MUSE_WAN_STRIKING);
-        if (obj->otyp == WAN_STRIKING && obj->spe > 0) {
+        if (obj->otyp == WAN_STRIKING) {
             m->offensive = obj;
             m->has_offense = MUSE_WAN_STRIKING;
+        }
+        nomore(MUSE_WAN_UNDEAD_TURNING);
+        if (obj->otyp == WAN_UNDEAD_TURNING && is_undead(target->data)) {
+            m->offensive = obj;
+            m->has_offense = MUSE_WAN_UNDEAD_TURNING;
+        }
+        nomore(MUSE_WAN_SLOW_MONSTER);
+        if (obj->otyp == MUSE_WAN_SLOW_MONSTER &&
+           ((target == &youmonst && (HFast | (TIMEOUT|INTRINSIC))) ||
+            (target != &youmonst && target->mspeed != MSLOW))) {
+            m->offensive = obj;
+            m->has_offense = MUSE_WAN_SLOW_MONSTER;
         }
         nomore(MUSE_POT_PARALYSIS);
         if (obj->otyp == POT_PARALYSIS &&
@@ -1284,10 +1313,12 @@ int
 use_offensive(struct monst *mtmp, struct musable *m)
 {
     int i;
-    int wandlevel;
+    int wandlevel = 0;
     struct obj *otmp = m->offensive;
-    wandlevel = getwandlevel(mtmp, otmp);
+    if (otmp && otmp->oclass == WAND_CLASS)
+        wandlevel = getwandlevel(mtmp, otmp);
     boolean oseen;
+    boolean isray;
 
     /* offensive potions are not drunk, they're thrown */
     if (otmp->oclass != POTION_CLASS && (i = precheck(mtmp, otmp, m)) != 0)
@@ -1307,8 +1338,11 @@ use_offensive(struct monst *mtmp, struct musable *m)
     case MUSE_WAN_COLD:
     case MUSE_WAN_LIGHTNING:
     case MUSE_WAN_MAGIC_MISSILE:
+        isray = TRUE;
     case MUSE_WAN_TELEPORTATION:
     case MUSE_WAN_STRIKING:
+    case MUSE_WAN_UNDEAD_TURNING:
+    case MUSE_WAN_SLOW_MONSTER:
         mzapmsg(mtmp, otmp, FALSE);
         otmp->spe--;
         if (oseen)
@@ -1316,11 +1350,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
         m_using = TRUE;
 
         /* FIXME: make buzz() handle any zap */
-        if (otmp->otyp == WAN_TELEPORTATION ||
-            otmp->otyp == WAN_STRIKING) {
-            mzapmsg(mtmp, otmp, FALSE);
-            otmp->spe--;
-            m_using = TRUE;
+        if (!isray) {
             mbhit(mtmp, rn1(8, 6), otmp);
             m_using = FALSE;
             return 2;
@@ -1568,6 +1598,13 @@ find_misc(struct monst * mtmp, struct musable * m)
     int xx, yy;
     boolean immobile = (mdat->mmove == 0);
     boolean stuck = (mtmp == u.ustuck);
+    boolean ranged_stuff = FALSE;
+
+    struct monst *target = mfind_target(mtmp, TRUE); /* zaps here is helpful */
+    const struct permonst *tdat = target->data;
+
+    if (target)
+        ranged_stuff = TRUE;
 
     m->misc = NULL;
     m->has_misc = 0;
@@ -1608,6 +1645,8 @@ find_misc(struct monst * mtmp, struct musable * m)
 
 #define nomore(x) if (m->has_misc==x) continue;
     for (obj = mtmp->minvent; obj; obj = obj->nobj) {
+        if (obj && obj->oclass == WAND_CLASS && obj->spe < 1)
+            continue;
         /* Monsters shouldn't recognize cursed items; this kludge is */
         /* necessary to prevent serious problems though... */
         if (obj->otyp == POT_GAIN_LEVEL &&
@@ -1624,12 +1663,12 @@ find_misc(struct monst * mtmp, struct musable * m)
         }
         /* Note: peaceful/tame monsters won't make themselves invisible unless
            you can see them.  Not really right, but... */
-        nomore(MUSE_WAN_MAKE_INVISIBLE);
-        if (obj->otyp == WAN_MAKE_INVISIBLE && obj->spe > 0 && !mtmp->minvis &&
+        nomore(MUSE_WAN_MAKE_INVISIBLE_SELF);
+        if (obj->otyp == WAN_MAKE_INVISIBLE && !mtmp->minvis &&
             !mtmp->invis_blkd && (!mtmp->mpeaceful || See_invisible) &&
             (!attacktype(mtmp->data, AT_GAZE) || mtmp->mcan)) {
             m->misc = obj;
-            m->has_misc = MUSE_WAN_MAKE_INVISIBLE;
+            m->has_misc = MUSE_WAN_MAKE_INVISIBLE_SELF;
         }
         nomore(MUSE_POT_INVISIBILITY);
         if (obj->otyp == POT_INVISIBILITY && !mtmp->minvis && !mtmp->invis_blkd
@@ -1638,28 +1677,49 @@ find_misc(struct monst * mtmp, struct musable * m)
             m->misc = obj;
             m->has_misc = MUSE_POT_INVISIBILITY;
         }
-        nomore(MUSE_WAN_SPEED_MONSTER);
-        if (obj->otyp == WAN_SPEED_MONSTER && obj->spe > 0 &&
+        nomore(MUSE_WAN_MAKE_INVISIBLE);
+        if (ranged_stuff && obj->otyp == WAN_MAKE_INVISIBLE &&
+            !target->minvis && !mtmp->invis_blkd &&
+            (!mtmp->mpeaceful || See_invisible) &&
+            (!attacktype(target->data, AT_GAZE) || target->mcan)) {
+            m->misc = obj;
+            m->has_misc = MUSE_WAN_MAKE_INVISIBLE;
+        }
+        nomore(MUSE_WAN_SPEED_MONSTER_SELF);
+        if (obj->otyp == WAN_SPEED_MONSTER &&
             mtmp->mspeed != MFAST && !mtmp->isgd) {
             m->misc = obj;
-            m->has_misc = MUSE_WAN_SPEED_MONSTER;
+            m->has_misc = MUSE_WAN_SPEED_MONSTER_SELF;
         }
         nomore(MUSE_POT_SPEED);
         if (obj->otyp == POT_SPEED && mtmp->mspeed != MFAST && !mtmp->isgd) {
             m->misc = obj;
             m->has_misc = MUSE_POT_SPEED;
         }
-        nomore(MUSE_WAN_POLYMORPH);
-        if (obj->otyp == WAN_POLYMORPH && obj->spe > 0 && !mtmp->cham &&
+        nomore(MUSE_WAN_SPEED_MONSTER);
+        if (ranged_stuff && obj->otyp == WAN_SPEED_MONSTER &&
+            target->mspeed != MFAST && !target->isgd) {
+            m->misc = obj;
+            m->has_misc = MUSE_WAN_SPEED_MONSTER;
+        }
+        nomore(MUSE_WAN_POLYMORPH_SELF);
+        if (obj->otyp == WAN_POLYMORPH && !mtmp->cham &&
             monstr[monsndx(mdat)] < 6) {
             m->misc = obj;
-            m->has_misc = MUSE_WAN_POLYMORPH;
+            m->has_misc = MUSE_WAN_POLYMORPH_SELF;
         }
         nomore(MUSE_POT_POLYMORPH);
         if (obj->otyp == POT_POLYMORPH && !mtmp->cham &&
             monstr[monsndx(mdat)] < 6) {
             m->misc = obj;
             m->has_misc = MUSE_POT_POLYMORPH;
+        }
+        nomore(MUSE_WAN_POLYMORPH);
+        if (ranged_stuff && obj->otyp == WAN_POLYMORPH && !target->cham &&
+            (monstr[monsndx(tdat)] < 6 ||
+            mprof(mtmp, MP_WANDS) == MP_WAND_EXPERT)) {
+            m->misc = obj;
+            m->has_misc = MUSE_WAN_POLYMORPH;
         }
         nomore(MUSE_SCR_REMOVE_CURSE);
         if (obj->otyp == SCR_REMOVE_CURSE) {
@@ -1708,6 +1768,24 @@ use_misc(struct monst *mtmp, struct musable *m)
     oseen = otmp && vismon;
 
     switch (m->has_misc) {
+    case MUSE_WAN_MAKE_INVISIBLE:
+    case MUSE_WAN_SPEED_MONSTER:
+    case MUSE_WAN_POLYMORPH:
+        mzapmsg(mtmp, otmp, FALSE);
+        otmp->spe--;
+        m_using = TRUE;
+        mbhit(mtmp, rn1(8, 6), otmp);
+        m_using = FALSE;
+        return 2;
+    case MUSE_WAN_MAKE_INVISIBLE_SELF:
+    case MUSE_WAN_SPEED_MONSTER_SELF:
+    case MUSE_WAN_POLYMORPH_SELF:
+        mzapmsg(mtmp, otmp, TRUE);
+        otmp->spe--;
+        m_using = TRUE;
+        bhitm(mtmp, mtmp, otmp);
+        m_using = FALSE;
+        return 2;
     case MUSE_POT_GAIN_LEVEL:
         mquaffmsg(mtmp, otmp);
         if (otmp->cursed) {
@@ -1750,7 +1828,6 @@ use_misc(struct monst *mtmp, struct musable *m)
             return 1;
         /* grew into genocided monster */
         return 2;
-    case MUSE_WAN_MAKE_INVISIBLE:
     case MUSE_POT_INVISIBILITY:
         if (otmp->otyp == WAN_MAKE_INVISIBLE) {
             mzapmsg(mtmp, otmp, TRUE);
@@ -1779,11 +1856,6 @@ use_misc(struct monst *mtmp, struct musable *m)
             m_useup(mtmp, otmp);
         }
         return 2;
-    case MUSE_WAN_SPEED_MONSTER:
-        mzapmsg(mtmp, otmp, TRUE);
-        otmp->spe--;
-        mon_adjust_speed(mtmp, 1, otmp);
-        return 2;
     case MUSE_POT_SPEED:
         mquaffmsg(mtmp, otmp);
         /* note difference in potion effect due to substantially different
@@ -1792,13 +1864,6 @@ use_misc(struct monst *mtmp, struct musable *m)
            permanently */
         mon_adjust_speed(mtmp, 1, otmp);
         m_useup(mtmp, otmp);
-        return 2;
-    case MUSE_WAN_POLYMORPH:
-        mzapmsg(mtmp, otmp, TRUE);
-        otmp->spe--;
-        newcham(mtmp, muse_newcham_mon(mtmp), TRUE, FALSE);
-        if (oseen)
-            makeknown(WAN_POLYMORPH);
         return 2;
     case MUSE_POT_POLYMORPH:
         mquaffmsg(mtmp, otmp);

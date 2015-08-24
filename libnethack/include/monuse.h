@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by FIQ, 2015-08-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,6 +47,8 @@ enum monuse {
     MUSE_WAN_LIGHTNING,
     MUSE_WAN_MAGIC_MISSILE,
     MUSE_WAN_STRIKING,
+    MUSE_WAN_UNDEAD_TURNING,
+    MUSE_WAN_SLOW_MONSTER,
     MUSE_SCR_FIRE,
     MUSE_POT_PARALYSIS,
     MUSE_POT_BLINDNESS,
@@ -61,11 +63,14 @@ enum monuse {
     /* misc items */
     MUSE_POT_GAIN_LEVEL,
     MUSE_WAN_MAKE_INVISIBLE,
+    MUSE_WAN_MAKE_INVISIBLE_SELF,
     MUSE_POT_INVISIBILITY,
     MUSE_POLY_TRAP,
     MUSE_WAN_POLYMORPH,
+    MUSE_WAN_POLYMORPH_SELF,
     MUSE_POT_SPEED,
     MUSE_WAN_SPEED_MONSTER,
+    MUSE_WAN_SPEED_MONSTER_SELF,
     MUSE_BULLWHIP,
     MUSE_POT_POLYMORPH,
     MUSE_SCR_REMOVE_CURSE,
