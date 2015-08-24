@@ -1680,7 +1680,8 @@ find_misc(struct monst * mtmp, struct musable * m)
             m->has_misc = MUSE_POT_INVISIBILITY;
         }
         nomore(MUSE_WAN_MAKE_INVISIBLE);
-        if (ranged_stuff && obj->otyp == WAN_MAKE_INVISIBLE &&
+        if (ranged_stuff && target != &youmonst &&
+            obj->otyp == WAN_MAKE_INVISIBLE &&
             !target->minvis && !mtmp->invis_blkd &&
             (!mtmp->mpeaceful || See_invisible) &&
             (!attacktype(target->data, AT_GAZE) || target->mcan)) {
@@ -1701,7 +1702,8 @@ find_misc(struct monst * mtmp, struct musable * m)
         }
         nomore(MUSE_WAN_SPEED_MONSTER);
         if (ranged_stuff && obj->otyp == WAN_SPEED_MONSTER &&
-            target->mspeed != MFAST && !target->isgd) {
+            ((target != &youmonst && target->mspeed != MFAST &&
+            !target->isgd) || (target == &youmonst && !(HFast & INTRINSIC)))) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_SPEED_MONSTER;
         }
@@ -1719,9 +1721,9 @@ find_misc(struct monst * mtmp, struct musable * m)
             m->has_misc = MUSE_POT_POLYMORPH;
         }
         nomore(MUSE_WAN_POLYMORPH);
-        if (ranged_stuff && obj->otyp == WAN_POLYMORPH && !target->cham &&
-            (monstr[monsndx(tdat)] < 6 ||
-            mprof(mtmp, MP_WANDS) == MP_WAND_EXPERT)) {
+        if (ranged_stuff && target != &youmonst &&
+            obj->otyp == WAN_POLYMORPH && !target->cham && !resists_magm(target) &&
+            (monstr[monsndx(tdat)] < 6 || mprof(mtmp, MP_WANDS) == MP_WAND_EXPERT)) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_POLYMORPH;
         }
