@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-07-20
+Last modified by Alex Smith, 2015-08-25
 
 Copyright (C) 2013, 2014, 2015 Alex Smith.
 
@@ -170,10 +170,10 @@ lines, separated by newlines:
 
     These lines (and save backup lines) explicitly may not be used in any
     circumstance where a binary save would not load correctly: this includes
-    helplessness, occupation, being inside a command, and similar issues.  If
-    the save loading code observes one of these lines in an inappropriate
-    context, it will calculate the contents of the new save file (in order to
-    act as a base for future diffs), but not attempt to load it.
+    helplessness, being inside a command, and similar issues.  If the save
+    loading code observes one of these lines in an inappropriate context,
+    it will calculate the contents of the new save file (in order to act as a
+    base for future diffs), but not attempt to load it.
 
   * A 'command' line starts with the name of a game command (and is recognised
     via the fact that it starts with a lowercase letter).  If the command
@@ -836,7 +836,7 @@ any of the following methods:
     be used in other cases where individual elements are just being
     incremented and decremented.  Because `mdiff_coord` is intended for
     monsters, its size is given in units of 85 bytes, and measured from the
-    end of the last `mdiff_size` command or start of the last `mdiff_coord`
+    end of the last `mdiff_copy` command or start of the last `mdiff_coord`
     command.  This means that we need to specify the size using `mdiff_copy`
     and `mdiff_coord` as 23 + (1479 * 85) or 125738; the next byte is
     interpreted as an x coordinate and copied untouched; the byte after (the
