@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -468,13 +468,13 @@ intrinsic_possible(int type, const struct permonst *ptr)
         return ptr->mconveys & MR_POISON;
 
     case TELEPORT:
-        return can_teleport(ptr);
+        return ptr->mflags1 & M1_TPORT;
 
     case TELEPORT_CONTROL:
-        return control_teleport(ptr);
+        return ptr->mflags1 & M1_TPORT_CNTRL;
 
     case TELEPAT:
-        return telepathic(ptr);
+        return ptr->mflags2 & M2_TELEPATHIC;
 
     default:
         return FALSE;
@@ -1352,8 +1352,9 @@ eataccessory(struct obj *otmp)
             case RIN_SEE_INVISIBLE:
                 set_mimic_blocking();
                 see_monsters(FALSE);
+                /* FIXME: why is this checking polyform data? */
                 if (Invis && !oldprop && !worn_extrinsic(SEE_INVIS) &&
-                    !perceives(youmonst.data) && !Blind) {
+                    !(see_invisible(&youmonst) & W_MASK(os_polyform)) && !Blind) {
                     newsym(u.ux, u.uy);
                     pline("Suddenly you can see yourself.");
                     makeknown(typ);

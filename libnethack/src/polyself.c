@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -38,7 +38,7 @@ set_uasmon(void)
 
     if (!Upolyd)
         pm = u.ufemale ? &pm_you_female : &pm_you_male;
-    set_mon_data(&youmonst, pm, 0);
+    set_mon_data(&youmonst, pm);
 }
 
 /* make a (new) human out of the player */
@@ -343,7 +343,7 @@ made_change:
                              &youmonst);
     }
     if (is_pool(level, u.ux, u.uy) && was_floating && !(Levitation || Flying) &&
-        !breathless(youmonst.data) && !amphibious(youmonst.data) && !Swimming)
+        !unbreathing(&youmonst) && !Swimming)
         drown();
 }
 
@@ -1277,6 +1277,7 @@ static int
 domindblast(void)
 {
     struct monst *mtmp, *nmon;
+    int dmg;
 
     if (u.uen < 10) {
         pline("You concentrate but lack the energy to maintain doing so.");
@@ -1296,13 +1297,16 @@ domindblast(void)
             continue;
         if (mtmp->mpeaceful)
             continue;
-        u_sen = telepathic(mtmp->data) && !mtmp->mcansee;
-        if (u_sen || (telepathic(mtmp->data) && rn2(2)) || !rn2(10)) {
+        u_sen = msensem(mtmp, &youmonst);
+        if (u_sen || (telepathic(mtmp) && rn2(2)) || !rn2(10)) {
             pline("You lock in on %s %s.", s_suffix(mon_nam(mtmp)),
                   u_sen ? "telepathy" :
-                  telepathic(mtmp->data) ? "latent telepathy" :
+                  telepathic(mtmp) ? "latent telepathy" :
                   "mind");
-            mtmp->mhp -= rnd(15);
+            dmg = rnd(15);
+            if (half_spell_dam(mtmp))
+                dmg = (dmg + 1) / 2;
+            mtmp->mhp -= dmg;
             if (mtmp->mhp <= 0)
                 killed(mtmp);
         }

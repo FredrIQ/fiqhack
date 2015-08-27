@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -63,7 +63,7 @@ mkcavepos(xchar x, xchar y, int dist, boolean waslit, boolean rockit)
             return;     /* don't cover the portal */
         if ((mtmp = m_at(level, x, y)) != 0)    /* make sure crucial monsters
                                                    survive */
-            if (!passes_walls(mtmp->data))
+            if (!phasing(mtmp))
                 rloc(mtmp, FALSE);
     } else if (loc->typ == ROOM)
         return;
@@ -574,10 +574,10 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
             if (oldobjs != newobjs)     /* something unearthed */
                 pickup(1, flags.interaction_mode);      /* detects pit */
         } else if (mtmp) {
-            if (is_flyer(mtmp->data) || is_floater(mtmp->data)) {
+            if (flying(mtmp) || levitates(mtmp)) {
                 if (canseemon(mtmp))
                     pline("%s %s over the pit.", Monnam(mtmp),
-                          (is_flyer(mtmp->data)) ? "flies" : "floats");
+                          (levitates(mtmp)) ? "floats" : "flies");
             } else if (mtmp != madeby)
                 mintrap(mtmp);
         }
@@ -636,7 +636,7 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
                but the code sort-of implise there are others. */
             if (mtmp) {
                 /* [don't we need special sokoban handling here?] */
-                if (is_flyer(mtmp->data) || is_floater(mtmp->data) ||
+                if (flying(mtmp) || levitates(mtmp) ||
                     mtmp->data == &mons[PM_WUMPUS] ||
                     (mtmp->wormno && count_wsegs(mtmp) > 5) ||
                     mtmp->data->msize >= MZ_HUGE)

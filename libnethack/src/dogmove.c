@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-24 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -730,9 +730,9 @@ dog_move(struct monst *mtmp, int after)
         return 0;
 
     allowflags = ALLOW_TRAPS | ALLOW_SSM | ALLOW_SANCT;
-    if (passes_walls(mtmp->data))
+    if (phasing(mtmp))
         allowflags |= (ALLOW_ROCK | ALLOW_WALL);
-    if (passes_bars(mtmp->data))
+    if (passes_bars(mtmp))
         allowflags |= ALLOW_BARS;
     if (throws_rocks(mtmp->data))
         allowflags |= ALLOW_ROCK;
@@ -1019,7 +1019,7 @@ newdogpos:
 static boolean
 could_reach_item(struct monst *mon, xchar nx, xchar ny)
 {
-    if ((!is_pool(level, nx, ny) || is_swimmer(mon->data)) &&
+    if ((!is_pool(level, nx, ny) || swims(mon) || unbreathing(mon)) &&
         (!is_lava(level, nx, ny) || likes_lava(mon->data)) &&
         (!sobj_at(BOULDER, level, nx, ny) || throws_rocks(mon->data)))
         return TRUE;
@@ -1051,7 +1051,7 @@ can_reach_location(struct monst *mon, xchar mx, xchar my, xchar fx, xchar fy)
                 continue;
             if (dist2(i, j, fx, fy) >= dist)
                 continue;
-            if (IS_ROCK(level->locations[i][j].typ) && !passes_walls(mon->data)
+            if (IS_ROCK(level->locations[i][j].typ) && !phasing(mon)
                 && (!may_dig(level, i, j) || !tunnels(mon->data)))
                 continue;
             if (IS_DOOR(level->locations[i][j].typ) &&

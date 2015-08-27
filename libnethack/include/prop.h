@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-16 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -70,7 +70,7 @@ enum youprop {
     SICK_RES                 = 53,
     DRAIN_RES                = 54,
     WARN_UNDEAD              = 55,
-    /* 56 unused for numbering, was a broken duplicate of u.uinvulnerable */
+    CANCELLED                = 56,
     FREE_ACTION              = 57,
     SWIMMING                 = 58,
     SLIMED                   = 59,
@@ -83,6 +83,8 @@ enum youprop {
     WARN_OF_MON              = 66,
     XRAY_VISION              = 67,
     DETECT_MONSTERS          = 68,
+    SLOW                     = 69,
+/*  DEATH_RES                = 70, TODO */
     LAST_PROP                = DETECT_MONSTERS,
 };
 

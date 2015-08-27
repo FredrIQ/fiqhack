@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-24 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -317,7 +317,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
 
     if (lev->locations[x][y].typ == STAIRS && !stuck && !immobile) {
         if (x == lev->dnstair.sx && y == lev->dnstair.sy &&
-            !is_floater(mtmp->data))
+            !levitates(mtmp))
             m->has_defense = MUSE_DOWNSTAIRS;
         if (x == lev->upstair.sx && y == lev->upstair.sy &&
             ledger_no(&u.uz) != 1)
@@ -328,7 +328,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
         if (x == lev->upladder.sx && y == lev->upladder.sy)
             m->has_defense = MUSE_UP_LADDER;
         if (x == lev->dnladder.sx && y == lev->dnladder.sy &&
-            !is_floater(mtmp->data))
+            !levitates(mtmp))
             m->has_defense = MUSE_DN_LADDER;
     } else if (lev->sstairs.sx == x && lev->sstairs.sy == y) {
         m->has_defense = MUSE_SSTAIRS;
@@ -346,12 +346,12 @@ find_defensive(struct monst *mtmp, struct musable *m)
                                 if ((t = t_at(lev, xx, yy)) != 0)
                                     if ((verysmall(mtmp->data) ||
                                          throws_rocks(mtmp->data) ||
-                                         passes_walls(mtmp->data)) ||
+                                         phasing(mtmp)) ||
                                         !sobj_at(BOULDER, lev, xx, yy))
                                         if (!onscary(xx, yy, mtmp)) {
                                             if ((t->ttyp == TRAPDOOR ||
                                                  t->ttyp == HOLE)
-                                                && !is_floater(mtmp->data)
+                                                && !levitates(mtmp)
                                                 && !mtmp->isshk && !mtmp->isgd
                                                 && !mtmp->ispriest &&
                                                 can_fall_thru(lev)) {
@@ -412,7 +412,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
             break;
         if (obj->otyp == WAN_DIGGING && obj->spe > 0 && !stuck && !t &&
             !mtmp->isshk && !mtmp->isgd && !mtmp->ispriest &&
-            !is_floater(mtmp->data)
+            !levitates(mtmp)
             /* monsters digging in Sokoban can ruin things */
             && !In_sokoban(&u.uz)
             /* digging wouldn't be effective; assume they know that */
@@ -441,7 +441,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
             }
         }
         nomore(MUSE_SCR_TELEPORTATION);
-        if (obj->otyp == SCR_TELEPORTATION && mtmp->mcansee &&
+        if (obj->otyp == SCR_TELEPORTATION && !blind(mtmp) &&
             haseyes(mtmp->data)
             && (!obj->cursed || (!(mtmp->isshk && inhishop(mtmp))
                                  && !mtmp->isgd && !mtmp->ispriest))) {
@@ -653,7 +653,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
                 pline("%s has made a hole in the %s.", Monnam(mtmp),
                       surface(mtmp->mx, mtmp->my));
                 pline("%s %s through...", Monnam(mtmp),
-                      is_flyer(mtmp->data) ? "dives" : "falls");
+                      flying(mtmp) ? "dives" : "falls");
             } else
                 You_hear("something crash through the %s.",
                          surface(mtmp->mx, mtmp->my));
@@ -947,7 +947,7 @@ try_again:
         return (mtmp->data !=
                 &mons[PM_PESTILENCE]) ? POT_FULL_HEALING : POT_SICKNESS;
     case 7:
-        if (is_floater(pm) || mtmp->isshk || mtmp->isgd || mtmp->ispriest)
+        if (levitates(mtmp) || mtmp->isshk || mtmp->isgd || mtmp->ispriest)
             return 0;
         else
             return WAN_DIGGING;
@@ -976,7 +976,7 @@ find_offensive(struct monst *mtmp, struct musable *m)
             reflection_skip = mon_reflects(target, NULL) && rn2(2);
         /* Skilled wand users bypass reflection. Cursed wands reduce skill,
            but monsters don't recognize BUC at the moment. */
-        if (mprof(mtmp, MP_WANDS) >= MP_WAND_SKILLED)
+        if (mprof(mtmp, MP_WANDS) >= P_SKILLED)
             reflection_skip = FALSE;
     }
 
@@ -1095,11 +1095,11 @@ find_offensive(struct monst *mtmp, struct musable *m)
         nomore(MUSE_SCR_EARTH);
         if (obj->otyp == SCR_EARTH &&
             ((helmet && is_metallic(helmet)) || mtmp->mconf ||
-             amorphous(mtmp->data) || passes_walls(mtmp->data) ||
+             amorphous(mtmp->data) || phasing(mtmp) ||
              noncorporeal(mtmp->data) || unsolid(mtmp->data) || !rn2(10))
             && aware_of_u(mtmp) && !engulfing_u(mtmp)
             && dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= 2
-            && mtmp->mcansee && haseyes(mtmp->data)
+            && !blind(mtmp) && haseyes(mtmp->data)
             && !Is_rogue_level(&u.uz)
             && (!In_endgame(&u.uz) || Is_earthlevel(&u.uz))) {
             m->offensive = obj;
@@ -1424,7 +1424,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
                         /* Find the monster here (might be same as mtmp) */
                         mtmp2 = m_at(level, x, y);
                         if (mtmp2 && !amorphous(mtmp2->data) &&
-                            !passes_walls(mtmp2->data) &&
+                            !phasing(mtmp2) &&
                             !noncorporeal(mtmp2->data) &&
                             !unsolid(mtmp2->data)) {
                             struct obj *helmet = which_armor(mtmp2, os_armh);
@@ -1558,7 +1558,7 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
             struct obj *helmet = which_armor(mtmp, os_armh);
 
             if ((helmet && is_metallic(helmet)) || amorphous(pm) ||
-                passes_walls(pm) || noncorporeal(pm) || unsolid(pm))
+                phasing(mtmp) || noncorporeal(pm) || unsolid(pm))
                 return SCR_EARTH;
         }       /* fall through */
     case 1:
@@ -1623,7 +1623,7 @@ find_misc(struct monst * mtmp, struct musable * m)
 
     if (!stuck && !immobile && !mtmp->cham && monstr[monsndx(mdat)] < 6) {
         boolean ignore_boulders = (verysmall(mdat) || throws_rocks(mdat) ||
-                                   passes_walls(mdat));
+                                   phasing(mtmp));
         for (xx = x - 1; xx <= x + 1; xx++)
             for (yy = y - 1; yy <= y + 1; yy++)
                 if (isok(xx, yy) && (xx != u.ux || yy != u.uy))
@@ -1723,7 +1723,7 @@ find_misc(struct monst * mtmp, struct musable * m)
         nomore(MUSE_WAN_POLYMORPH);
         if (ranged_stuff && target != &youmonst &&
             obj->otyp == WAN_POLYMORPH && !target->cham && !resists_magm(target) &&
-            (monstr[monsndx(tdat)] < 6 || mprof(mtmp, MP_WANDS) == MP_WAND_EXPERT)) {
+            (monstr[monsndx(tdat)] < 6 || mprof(mtmp, MP_WANDS) == P_EXPERT)) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_POLYMORPH;
         }
@@ -2069,7 +2069,7 @@ searches_for_item(struct monst *mon, struct obj *obj)
         if (obj->spe <= 0)
             return FALSE;
         if (typ == WAN_DIGGING)
-            return (boolean) (!is_floater(mon->data));
+            return (boolean) (!levitates(mon));
         if (typ == WAN_POLYMORPH)
             return (boolean) (monstr[monsndx(mon->data)] < 6);
         if (objects[typ].oc_dir == RAY || typ == WAN_STRIKING ||

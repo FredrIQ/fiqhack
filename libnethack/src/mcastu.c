@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -549,7 +549,6 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
             if (!reflects) {
                 if (Half_spell_damage) dmg = (dmg + 1) / 2;
                 destroy_item(WAND_CLASS, AD_ELEC);
-                destroy_item(RING_CLASS, AD_ELEC);
             }
             if (!resists_blnd(&youmonst)) {
                 pline("You are blinded by the flash!");
@@ -1501,10 +1500,8 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                 dmg = 0;
             } else
                 dmg = dice(8, 6);
-            if (!reflects) {
+            if (!reflects)
                 destroy_mitem(mtmp, WAND_CLASS, AD_ELEC);
-                destroy_mitem(mtmp, RING_CLASS, AD_ELEC);
-            }
             if (!resists_blnd(mtmp)) {
                 unsigned rnd_tmp = rnd(50);
                 mtmp->mcansee = 0;

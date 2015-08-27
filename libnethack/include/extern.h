@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-24 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1139,18 +1139,16 @@ extern long mm_aggression(const struct monst *, const struct monst *);
 
 /* ### mondata.c ### */
 
-extern void set_mon_data(struct monst *, const struct permonst *, int);
+extern void set_mon_data(struct monst *, const struct permonst *);
 extern const struct attack *attacktype_fordmg(const struct permonst *, int,
                                               int);
 extern boolean attacktype(const struct permonst *, int);
 extern boolean poly_when_stoned(const struct permonst *);
-extern boolean resists_drli(const struct monst *);
-extern boolean resists_magm(const struct monst *);
 extern boolean resists_blnd(const struct monst *);
 extern boolean can_blnd(struct monst *, struct monst *, uchar, struct obj *);
 extern boolean ranged_attk(const struct permonst *);
 extern boolean hates_silver(const struct permonst *);
-extern boolean passes_bars(const struct permonst *);
+extern boolean passes_bars(const struct monst *);
 extern boolean can_track(const struct permonst *);
 extern boolean breakarm(const struct permonst *);
 extern boolean sliparm(const struct permonst *);
@@ -1429,12 +1427,14 @@ extern void restpriest(struct monst *, boolean);
 
 /* ### prop.c ### */
 
+extern unsigned levitates_at_will(const struct monst *, boolean, boolean);
 extern unsigned m_has_property(const struct monst *, enum youprop,
                                unsigned, boolean);
 extern unsigned u_have_property(enum youprop, unsigned, boolean);
 extern boolean m_helpless(const struct monst *, enum helpless_mask mask);
 extern boolean u_helpless(enum helpless_mask mask);
 extern unsigned msensem(const struct monst *, const struct monst *);
+extern void enlighten_mon(struct monst *, int);
 extern void enlightenment(int);
 extern void unspoilered_intrinsics(void);
 extern void show_conduct(int);

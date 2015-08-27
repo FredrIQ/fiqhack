@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -88,7 +88,7 @@ struct monst {
     aligntyp malign;    /* alignment of this monster, relative to the player
                            (positive = good to kill) */
     short moveoffset;   /* how this monster's actions map onto turns */
-    unsigned short mintrinsics; /* low 8 correspond to mresists */
+    unsigned short mintrinsics;  /* low 8 correspond to mresists */
     schar mtame;        /* level of tameness, implies peaceful */
     uchar m_ap_type;    /* what mappearance is describing: */
 # define M_AP_NOTHING   0       /* mappearance is unused -- monster appears as
@@ -143,6 +143,8 @@ struct monst {
     unsigned isgd:1;    /* is guard */
     unsigned ispriest:1;        /* is a priest */
     unsigned iswiz:1;   /* is the Wizard of Yendor */
+    
+    uint64_t mspells;  /* known monster spells */
 
     uchar mfleetim;     /* timeout for mflee */
     uchar wormno;       /* at most 31 worms on any level */
@@ -229,7 +231,7 @@ enum monster_awareness_reasons {
 };
 # define awareness_reason(mon) (!aware_of_u(mon) ? mar_unaware :        \
                                 knows_ux_uy(mon) ? mar_aware :          \
-                                ((Invis && !perceives(mon->data)) ||    \
+                                ((Invis && !see_invisible(mon)) ||    \
                                  !((mon)->mcansee)) ?                   \
                                 mar_guessing_invis :                    \
                                 Displaced ? mar_guessing_displaced :    \

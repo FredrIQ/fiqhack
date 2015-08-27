@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by FIQ, 2015-08-27 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -813,7 +813,7 @@ create_monster(struct level *lev, monster * m, struct mkroom *croom)
         if (croom)
             get_room_loc(lev, &x, &y, croom);
         else {
-            if (!pm || !is_swimmer(pm))
+            if (!pm || !pm_swims(pm))
                 get_location(lev, &x, &y, DRY);
             else if (pm->mlet == S_EEL)
                 get_location(lev, &x, &y, WET);

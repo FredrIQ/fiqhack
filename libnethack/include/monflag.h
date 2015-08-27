@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-07 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -76,8 +76,10 @@
 # define MR2_STRENGTH    0x2000         /* gauntlets of power */
 # define MR2_FUMBLING    0x4000         /* clumsy */
 
-
+/* proficiencies */
 # define MP_WANDS        0x00000001L
+
+/* seperate levels */
 # define MP_WAND_BASIC   0x00000001L
 # define MP_WAND_SKILLED 0x00000002L
 # define MP_WAND_EXPERT  0x00000003L
@@ -131,6 +133,8 @@
 # define M2_PRINCE       0x00000800L    /* is an overlord to its kind */
 # define M2_MINION       0x00001000L    /* is a minion of a deity */
 # define M2_GIANT        0x00002000L    /* is a giant */
+# define M2_TELEPATHIC   0x00004000L    /* is telepathic */
+# define M2_STUNNED      0x00008000L    /* permanently stunned */
 # define M2_MALE         0x00010000L    /* always male */
 # define M2_FEMALE       0x00020000L    /* always female */
 # define M2_NEUTER       0x00040000L    /* neither male nor female */

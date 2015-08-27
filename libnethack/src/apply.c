@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -748,14 +748,14 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
         if (!tele_restrict(mtmp))
             rloc(mtmp, TRUE);
     } else if (!is_unicorn(mtmp->data) && !humanoid(mtmp->data) &&
-               (!mtmp->minvis || perceives(mtmp->data)) && rn2(5)) {
+               (!mtmp->minvis || see_invisible(mtmp)) && rn2(5)) {
         if (vis)
             pline("%s is frightened by its reflection.", Monnam(mtmp));
         monflee(mtmp, dice(2, 4), FALSE, FALSE);
     } else if (!Blind) {
         if (mtmp->minvis && !See_invisible)
             ;
-        else if ((mtmp->minvis && !perceives(mtmp->data))
+        else if ((mtmp->minvis && !see_invisible(mtmp))
                  || !haseyes(mtmp->data))
             pline("%s doesn't seem to notice its reflection.", Monnam(mtmp));
         else
@@ -1800,14 +1800,14 @@ figurine_location_checks(struct obj *obj, coord * cc, boolean quietly)
         return FALSE;
     }
     if (IS_ROCK(level->locations[x][y].typ) &&
-        !(passes_walls(&mons[obj->corpsenm]) && may_passwall(level, x, y))) {
+        !(pm_phasing(&mons[obj->corpsenm]) && may_passwall(level, x, y))) {
         if (!quietly)
             pline("You cannot place a figurine in %s!",
                   IS_TREE(level->
                           locations[x][y].typ) ? "a tree" : "solid rock");
         return FALSE;
     }
-    if (sobj_at(BOULDER, level, x, y) && !passes_walls(&mons[obj->corpsenm])
+    if (sobj_at(BOULDER, level, x, y) && !pm_phasing(&mons[obj->corpsenm])
         && !throws_rocks(&mons[obj->corpsenm])) {
         if (!quietly)
             pline("You cannot fit the figurine on the boulder.");

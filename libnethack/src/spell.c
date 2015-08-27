@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -719,9 +719,8 @@ supernatural_ability_available(int spid)
     case SPID_TURN: /* 3.4.3 doturn: "Knights & Priest(esse)s only please" */
         return Role_if(PM_PRIEST) || Role_if(PM_KNIGHT);
     case SPID_RLOC:
-        return Teleportation &&
-            (u.ulevel >= (Role_if(PM_WIZARD) ? 8 : 12) ||
-             can_teleport(youmonst.data));
+        return teleportitis(&youmonst) &&
+            (u.ulevel >= (Role_if(PM_WIZARD) ? 8 : 12));
     case SPID_JUMP:
         return Jumping;
     case SPID_MONS:

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -346,10 +346,10 @@ minliquid(struct monst *mtmp)
 {
     boolean inpool, inlava, infountain;
 
-    inpool = is_pool(level, mtmp->mx, mtmp->my) && !is_flyer(mtmp->data) &&
-        !is_floater(mtmp->data);
-    inlava = is_lava(level, mtmp->mx, mtmp->my) && !is_flyer(mtmp->data) &&
-        !is_floater(mtmp->data);
+    inpool = is_pool(level, mtmp->mx, mtmp->my) && !flying(mtmp) &&
+        !levitates(mtmp);
+    inlava = is_lava(level, mtmp->mx, mtmp->my) && !flying(mtmp) &&
+        !levitates(mtmp);
     infountain = IS_FOUNTAIN(level->locations[mtmp->mx][mtmp->my].typ);
 
     /* Flying and levitation keeps our steed out of the liquid */
@@ -425,7 +425,7 @@ minliquid(struct monst *mtmp)
            water damage to dead monsters' inventory, but survivors need to be
            handled here.  Swimmers are able to protect their stuff... */
         if (!is_clinger(mtmp->data)
-            && !is_swimmer(mtmp->data) && !amphibious(mtmp->data)) {
+            && !swims(mtmp) && !unbreathing(mtmp)) {
             if (cansee(mtmp->mx, mtmp->my)) {
                 pline("%s drowns.", Monnam(mtmp));
             }
@@ -936,7 +936,7 @@ mpickstuff(struct monst *mtmp)
             if (is_pool(level, mtmp->mx, mtmp->my))
                 continue;
 #ifdef INVISIBLE_OBJECTS
-            if (otmp->oinvis && !perceives(mtmp->data))
+            if (otmp->oinvis && !see_invisible(mtmp))
                 continue;
 #endif
             if (cansee(mtmp->mx, mtmp->my) && flags.verbose)
@@ -1065,9 +1065,9 @@ mfndpos(struct monst *mon, coord * poss,        /* coord poss[9] */
 
     nodiag = (mdat == &mons[PM_GRID_BUG]);
     wantpool = mdat->mlet == S_EEL;
-    poolok = is_flyer(mdat) || is_clinger(mdat) ||
-        (is_swimmer(mdat) && !wantpool);
-    lavaok = is_flyer(mdat) || is_clinger(mdat) || likes_lava(mdat);
+    poolok = flying(mon) || is_clinger(mdat) ||
+        (swims(mon) && !wantpool);
+    lavaok = flying(mon) || is_clinger(mdat) || likes_lava(mdat);
     thrudoor = ((flag & (ALLOW_WALL | BUSTDOOR)) != 0L);
     if (flag & ALLOW_DIG) {
         struct obj *mw_tmp;
@@ -1210,7 +1210,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         continue;
                     info[cnt] |= ALLOW_ROCK;
                 }
-                if (mon->mcansee && (!Invis || perceives(mdat)) &&
+                if (mon->mcansee && (!Invis || see_invisible(mon)) &&
                     onlineu(nx, ny)) {
                     if (flag & NOTONL)
                         continue;
@@ -1241,17 +1241,18 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                             && ttmp->ttyp != STATUE_TRAP &&
                             ((ttmp->ttyp != PIT && ttmp->ttyp != SPIKED_PIT &&
                               ttmp->ttyp != TRAPDOOR && ttmp->ttyp != HOLE)
-                             || (!is_flyer(mdat)
-                                 && !is_floater(mdat)
+                             || (!flying(mon)
+                                 && !levitates(mon)
                                  && !is_clinger(mdat))
                              || In_sokoban(&u.uz))
                             && (ttmp->ttyp != SLP_GAS_TRAP ||
                                 !resists_sleep(mon))
                             && (ttmp->ttyp != BEAR_TRAP ||
                                 (mdat->msize > MZ_SMALL && !amorphous(mdat) &&
-                                 !is_flyer(mdat)))
+                                 !flying(mon)))
                             && (ttmp->ttyp != FIRE_TRAP || !resists_fire(mon))
-                            && (ttmp->ttyp != SQKY_BOARD || !is_flyer(mdat))
+                            && (ttmp->ttyp != SQKY_BOARD || !flying(mon) ||
+                                !levitates(mon))
                             && (ttmp->ttyp != WEB ||
                                 (!amorphous(mdat) && !webmaker(mdat)))
                             ) {
@@ -1674,13 +1675,13 @@ mondead(struct monst *mtmp)
     mptr = mtmp->data;  /* save this for m_detach() */
     /* restore chameleon, lycanthropes to true form at death */
     if (mtmp->cham)
-        set_mon_data(mtmp, &mons[cham_to_pm[mtmp->cham]], -1);
+        set_mon_data(mtmp, &mons[cham_to_pm[mtmp->cham]]);
     else if (mtmp->data == &mons[PM_WEREJACKAL])
-        set_mon_data(mtmp, &mons[PM_HUMAN_WEREJACKAL], -1);
+        set_mon_data(mtmp, &mons[PM_HUMAN_WEREJACKAL]);
     else if (mtmp->data == &mons[PM_WEREWOLF])
-        set_mon_data(mtmp, &mons[PM_HUMAN_WEREWOLF], -1);
+        set_mon_data(mtmp, &mons[PM_HUMAN_WEREWOLF]);
     else if (mtmp->data == &mons[PM_WERERAT])
-        set_mon_data(mtmp, &mons[PM_HUMAN_WERERAT], -1);
+        set_mon_data(mtmp, &mons[PM_HUMAN_WERERAT]);
 
     /* if MAXMONNO monsters of a given type have died, and it can be done,
        extinguish that monster. mvitals[].died does double duty as total number
@@ -2762,7 +2763,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
         mtmp->mhpmax = 1;
 
     /* take on the new form... */
-    set_mon_data(mtmp, mdat, 0);
+    set_mon_data(mtmp, mdat);
 
     if (emits_light(olddata) != emits_light(mtmp->data)) {
         /* used to give light, now doesn't, or vice versa, or light's range has
@@ -2773,9 +2774,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
             new_light_source(mtmp->dlevel, mtmp->mx, mtmp->my,
                              emits_light(mtmp->data), LS_MONSTER, mtmp);
     }
-    if (!mtmp->perminvis || pm_invisible(olddata))
-        mtmp->perminvis = pm_invisible(mdat);
-    mtmp->minvis = mtmp->invis_blkd ? 0 : mtmp->perminvis;
+    mtmp->minvis = mtmp->invis_blkd ? 0 : (mtmp->perminvis || pm_invisible(mdat));
     if (!(hides_under(mdat) && OBJ_AT_LEV(mtmp->dlevel, mtmp->mx, mtmp->my)) &&
         !(mdat->mlet == S_EEL && is_pool(level, mtmp->mx, mtmp->my)))
         mtmp->mundetected = 0;

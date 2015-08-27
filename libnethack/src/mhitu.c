@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -400,7 +400,7 @@ mattacku(struct monst *mtmp)
     tmp += mtmp->m_lev;
     if (u_helpless(hm_all))
         tmp += 4;
-    if ((Invis && !perceives(mdat)) || !mtmp->mcansee)
+    if ((Invis && !see_invisible(mtmp)) || !mtmp->mcansee)
         tmp -= 2;
     if (mtmp->mtrapped)
         tmp -= 2;
@@ -866,8 +866,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             }
             if ((int)mtmp->m_lev > rn2(20))
                 destroy_item(WAND_CLASS, AD_ELEC);
-            if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(RING_CLASS, AD_ELEC);
         } else
             dmg = 0;
         break;
@@ -1972,7 +1970,7 @@ could_seduce(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         defperc = (See_invisible != 0);
         gendef = poly_gender();
     } else {
-        defperc = perceives(mdef->data);
+        defperc = see_invisible(mdef);
         gendef = gender(mdef);
     }
 
@@ -2358,7 +2356,7 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
                 if (!rn2(4))
                     tmp = 127;
                 if (mtmp->mcansee && haseyes(mtmp->data) && rn2(3) &&
-                    (perceives(mtmp->data) || !Invis)) {
+                    (see_invisible(mtmp) || !Invis)) {
                     if (Blind)
                         pline("As a blind %s, you cannot defend yourself.",
                               youmonst.data->mname);

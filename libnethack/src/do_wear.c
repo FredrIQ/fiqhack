@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -194,7 +194,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     boolean redundant_extrinsic = !!(worn_extrinsic(prop) & ~W_MASK(slot));
     /* TODO: Effects that are redundant to racial properties. I'm not sure if
        this can actually come up, but we should handle it anyway. */
-    boolean redundant = redundant_extrinsic || u.uintrinsic[prop];
+    boolean redundant = !!(has_property(&youmonst, prop) & ~W_MASK(slot));
     redundant = redundant && !worn_blocked(prop);
     boolean destroyed = FALSE;
     boolean already_blind = Blind; /* for blindfold tracking */
@@ -490,7 +490,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 #endif
         }
 
-        if (Invis && !redundant && !perceives(youmonst.data) && !Blind) {
+        if (Invis && !redundant && !Blind) {
             newsym(u.ux, u.uy);
             pline(equipping ? "Suddenly you are transparent, but there!" :
                   "Suddenly you cannot see yourself.");

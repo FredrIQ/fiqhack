@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -17,12 +17,19 @@
    player/monster might have the given property, limited by "reasons", an object
    slot mask (W_EQUIP, INTRINSIC, and ANY_PROPERTY are the most likely values
    here, but you can specify slots individually if you like). */
+   
+/* The "os_polyform" checks used to not be accurate at all. They are now,
+   hopefully */
+
 unsigned
 m_has_property(const struct monst *mon, enum youprop property,
                unsigned reasons, boolean even_if_blocked)
 {
     unsigned rv = 0;
     struct obj *otmp;
+    const struct permonst *mdat = mon->data;
+    uchar mfromrace = mdat->mresists;
+    uint64_t mfromoutside = mon->mintrinsics;
 
     /* The general case for equipment */
     rv |= mworn_extrinsic(mon, property);
@@ -42,22 +49,23 @@ m_has_property(const struct monst *mon, enum youprop property,
             rv |= W_MASK(os_birthopt);
 
     } else {
-        /* Monster tempraries are boolean flags.
-
-           TODO: Monsters with no eyes are not considered blind. This doesn't
-           make much sense. However, changing it would be a major balance
-           change (due to Elbereth), and so it has been left alone for now. */
-        if (property == BLINDED && (!mon->mcansee || mon->mblinded))
+        /* Monster temporaries are boolean flags. */
+        if (property == BLINDED && mon->mblinded)
             rv |= W_MASK(os_timeout);
-        if (property == FAST && mon->mspeed == MFAST)
+        else if (property == FAST && mon->mspeed == MFAST)
             rv |= (mon->permspeed == FAST ?
                    W_MASK(os_polyform) : W_MASK(os_outside));
-        if (property == INVIS && mon->perminvis && !pm_invisible(mon->data))
+        else if (property == INVIS && mon->perminvis)
             rv |= W_MASK(os_outside);
-        if (property == STUNNED && mon->mstun)
+        else if (property == STUNNED && mon->mstun)
             rv |= W_MASK(os_timeout);
-        if (property == CONFUSION && mon->mconf)
+        else if (property == CONFUSION && mon->mconf)
             rv |= W_MASK(os_timeout);
+        /* it is not possible to contain all possible properties in a 64bit
+           but there is barely any missing ones... if those are later needed,
+           the redundant ones can be special cased */
+        else if (property < 65 && (mfromoutside & (1 << (property - 1))))
+            rv |= W_MASK(os_outside);
     }
 
 
@@ -66,37 +74,41 @@ m_has_property(const struct monst *mon, enum youprop property,
        giant switch statement or ternary chain to get useful information from
        it. We use a ternary chain here because it cuts down on repetitive code
        and so is easier to read. */
-    if (property == FIRE_RES     ? resists_fire(mon)                     :
-        property == COLD_RES     ? resists_cold(mon)                     :
-        property == SLEEP_RES    ? resists_sleep(mon)                    :
-        property == DISINT_RES   ? resists_disint(mon)                   :
-        property == SHOCK_RES    ? resists_elec(mon)                     :
-        property == POISON_RES   ? resists_poison(mon)                   :
-        property == DRAIN_RES    ? resists_drli(mon)                     :
-        property == SICK_RES     ? mon->data->mlet == S_FUNGUS ||
-                                   mon->data == &mons[PM_GHOUL]          :
-        property == ANTIMAGIC    ? resists_magm(mon)                     :
-        property == ACID_RES     ? resists_acid(mon)                     :
-        property == STONE_RES    ? resists_ston(mon)                     :
-        property == STUNNED      ? u.umonnum == PM_STALKER ||
-                                   mon->data->mlet == S_BAT              :
-        property == BLINDED      ? !haseyes(mon->data)                   :
-        property == HALLUC       ? Upolyd && dmgtype(mon->data, AD_HALU) :
-        property == SEE_INVIS    ? perceives(mon->data)                  :
-        property == TELEPAT      ? telepathic(mon->data)                 :
-        property == INFRAVISION  ? infravision(mon->data)                :
+    if (property == FIRE_RES     ? mfromrace & MR_FIRE                       :
+        property == COLD_RES     ? mfromrace & MR_COLD                       :
+        property == SLEEP_RES    ? mfromrace & MR_SLEEP                      :
+        property == DISINT_RES   ? mfromrace & MR_DISINT                     :
+        property == SHOCK_RES    ? mfromrace & MR_ELEC                       :
+        property == POISON_RES   ? mfromrace & MR_POISON                     :
+        property == DRAIN_RES    ? is_undead(mdat) || is_demon(mdat) ||
+                                   is_were(mdat) || mdat == &mons[PM_DEATH] :
+        property == SICK_RES     ? mdat->mlet == S_FUNGUS ||
+                                   mdat == &mons[PM_GHOUL]                   :
+        property == ANTIMAGIC    ? dmgtype(mdat, AD_MAGM) ||
+                                   dmgtype(mdat, AD_RBRE) ||
+                                   mdat == &mons[PM_BABY_GRAY_DRAGON]        :
+        property == ACID_RES     ? mfromrace & MR_ACID                       :
+        property == STONE_RES    ? mfromrace & MR_STONE                      :
+        property == STUNNED      ? mdat->mflags2 & M2_STUNNED                :
+        /* Note: haseyes() overrides blindness, making this check have no
+           effect. See overrides below */
+        property == BLINDED      ? !haseyes(mon->data)                       :
+        property == HALLUC       ? Upolyd && dmgtype(mon->data, AD_HALU)     :
+        property == SEE_INVIS    ? mdat->mflags1 & M1_SEE_INVIS              :
+        property == TELEPAT      ? mdat->mflags2 & M2_TELEPATHIC             :
+        property == INFRAVISION  ? pm_infravision(mdat)                      :
         /* Note: This one assumes that there's no way to permanently turn
            visible when you're in stalker form (i.e. mummy wrappings only). */
-        property == INVIS        ? pm_invisible(mon->data)               :
-        property == TELEPORT     ? can_teleport(mon->data)               :
-        property == LEVITATION   ? is_floater(mon->data)                 :
-        property == FLYING       ? is_flyer(mon->data)                   :
-        property == SWIMMING     ? is_swimmer(mon->data)                 :
-        property == PASSES_WALLS ? passes_walls(mon->data)               :
-        property == REGENERATION ? regenerates(mon->data)                :
-        property == REFLECTING   ? mon->data == &mons[PM_SILVER_DRAGON]  :
-        property == TELEPORT_CONTROL  ? control_teleport(mon->data)      :
-        property == MAGICAL_BREATHING ? amphibious(mon->data)            :
+        property == INVIS        ? pm_invisible(mdat)                        :
+        property == TELEPORT     ? mdat->mflags1 & M1_TPORT                  :
+        property == LEVITATION   ? is_floater(mdat)                          :
+        property == FLYING       ? mdat->mflags1 & M1_FLY                    :
+        property == SWIMMING     ? mdat->mflags1 & M1_SWIM                   :
+        property == PASSES_WALLS ? mdat->mflags1 & M1_WALLWALK               :
+        property == REGENERATION ? mdat->mflags1 & M1_REGEN                  :
+        property == REFLECTING   ? mon->data == &mons[PM_SILVER_DRAGON]      :
+        property == TELEPORT_CONTROL  ? mdat->mflags1 & M1_TPORT_CNTRL     :
+        property == MAGICAL_BREATHING ? amphibious(mon->data)                :
         0)
         rv |= W_MASK(os_polyform);
 
@@ -108,11 +120,15 @@ m_has_property(const struct monst *mon, enum youprop property,
         /* Riding */
         if (property == FLYING && u.usteed && is_flyer(u.usteed->data))
             rv |= W_MASK(os_saddle);
-        if (property == SWIMMING && u.usteed && is_swimmer(u.usteed->data))
+        if (property == SWIMMING && u.usteed && pm_swims(u.usteed->data))
             rv |= W_MASK(os_saddle);
     }
 
-    /* Overrides */
+    /* Overrides
+
+    TODO: Monsters with no eyes are not considered blind. This doesn't
+    make much sense. However, changing it would be a major balance
+    change (due to Elbereth), and so it has been left alone for now. */
     if (!even_if_blocked) {
         if (property == BLINDED) {
             for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
@@ -120,6 +136,8 @@ m_has_property(const struct monst *mon, enum youprop property,
                     otmp->owornmask & W_MASK(os_tool))
                     rv &= (unsigned)(W_MASK(os_circumstance) |
                                      W_MASK(os_birthopt));
+            if (!haseyes(mdat))
+                rv &= (unsigned)(W_MASK(os_birthopt));
         }
 
         if (property == WWALKING && Is_waterlevel(m_mz(mon)))
@@ -129,6 +147,49 @@ m_has_property(const struct monst *mon, enum youprop property,
     }
 
     return rv & reasons;
+}
+
+/* Checks whether or not a monster has controlled levitation.
+   "Controlled" levitation here means that the monster can
+   end it on its' own accord. include_extrinsic also includes
+   extrinsics. "why" makes this function return the reason
+   for the uncontrolled levitation or 0 if it is, in fact,
+   controlled (or non-existent). */
+unsigned
+levitates_at_will(const struct monst *mon, boolean include_extrinsic,
+    boolean why)
+{
+    unsigned lev = levitates(mon);
+    unsigned lev_worn = mworn_extrinsic(mon, LEVITATION);
+
+    /* polyform */
+    if (is_floater(mon->data))
+        return (why ? W_MASK(os_polyform) : 0);
+
+    /* uncontrolled intrinsic levitation */
+    if ((lev & lev_worn) && !(lev & FROMOUTSIDE))
+        return (why ? (lev & lev_worn) : 0);
+
+    /* has extrinsic */
+    if (!(lev & lev_worn) && !include_extrinsic)
+        return (why ? lev_worn : 0);
+
+    if (lev_worn) { /* armor/ring/slotless levitation active */
+        struct obj *chain = m_minvent(mon);
+        int warntype;
+        long itemtype;
+        
+        while (chain) {
+            /* worn item or slotless unremoveable item */
+            itemtype = item_provides_extrinsic(chain, LEVITATION, &warntype);
+            if (itemtype && chain->cursed && (chain->owornmask ||
+                (itemtype == W_MASK(os_carried) && chain->otyp == LOADSTONE)))
+                return (why ? itemtype : 0);
+            chain = chain->nobj;
+        }
+    }
+    
+    return lev;
 }
 
 unsigned
@@ -233,7 +294,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
           ((!!m_underwater(viewee)) ^ (!!m_underwater(viewer))) ||
           m_mhiding(viewee));
 
-    boolean invisible = !!m_has_property(viewee, INVIS, ANY_PROPERTY, 0);
+    boolean invisible = !!invisible(viewee);
 
     /* For normal vision, one necessary condition is that the target must be
        adjacent or on a lit square (we assume there's just enough light in the
@@ -250,12 +311,11 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
     /* TODO: Maybe infravision (and perhaps even infravisibility) should be
        properties? */
-    boolean infravision_ok = infravision(viewer->data) &&
-        infravisible(viewee->data);
+    boolean infravision_ok = pm_infravision(viewer->data) &&
+        pm_infravisible(viewee->data);
 
-    boolean blinded = !!m_has_property(viewer, BLINDED, ANY_PROPERTY, 0);
-    boolean see_invisible =
-        !!m_has_property(viewer, SEE_INVIS, ANY_PROPERTY, 0);
+    boolean blinded = !!blind(viewer);
+    boolean see_invisible = !!see_invisible(viewer);
 
     if (loe && vertical_loe && !blinded) {
         if (!invisible && target_lit)
@@ -269,8 +329,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     /* Telepathy. The viewee needs a mind; the viewer needs either to be blind,
        or for the telepathy to be extrinsic and the viewer within BOLT_LIM. */
     if (!mindless(viewee->data) && !m_helpless(viewer, hm_unconscious)) {
-        unsigned telepathy_reason =
-            m_has_property(viewer, TELEPAT, ANY_PROPERTY, 0);
+        unsigned telepathy_reason = telepathic(viewer);
         if ((telepathy_reason && blinded) ||
             (telepathy_reason & (W_EQUIP | W_ARTIFACT) &&
              distance <= BOLT_LIM * BOLT_LIM))
@@ -281,8 +340,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        an LOE check. It's unclear whether this pierces blindness, because the
        only item that gives astral vision also gives blindness immunity; this
        code assumes not. */
-    boolean xray = m_has_property(viewer, XRAY_VISION, ANY_PROPERTY, 0) &&
-        (!invisible || see_invisible);
+    boolean xray = astral_vision(viewer) && (!invisible || see_invisible);
     if (vertical_loe && distance <= XRAY_RANGE * XRAY_RANGE && xray &&
         (target_lit || infravision_ok)) {
         sensemethod |= MSENSE_XRAY;
@@ -437,7 +495,408 @@ enlght_combatinc(const char *inctyp, int incamt, int final)
     return msgprintf("%s %s %s", an(modif), bonus, inctyp);
 }
 
+void
+enlighten_mon(struct monst *mon, int final)
+    /* final: 0 => still in progress; 1 => over, survived; 2 => dead */
+{
+    int ltmp;
+    const char *title;
+    const char *buf;
+    struct nh_menulist menu;
+    
+    init_menulist(&menu);
+    title = final ? "Final Attributes:" : "Current Attributes:";
+    
+    const char *monname = (mon == &youmonst ? "You" : Monnam(mon));
+    const char *is = (mon == &youmonst ? " are " : " is ");
+    const char *was = (mon == &youmonst ? " were " : " was ");
+    const char *has = (mon == &youmonst ? " have " : " has ");
+    const char *had = " had ";
+    const char *can = " can ";
+    const char *could = " could ";
+    const char *see = (mon == &youmonst ? " see " : " sees ");
+    const char *saw = " saw";
 
+#define mon_is(menu,mon,attr)         enl_msg(menu,monname,is,was,attr)
+#define mon_has(menu,mon,attr)        enl_msg(menu,monname,has,had,attr)
+#define mon_can(menu,mon,attr)        enl_msg(menu,monname,can,could,attr)
+#define mon_sees(menu,mon,attr)       enl_msg(menu,monname,see,saw,attr)
+#define mon_x(menu,mon,attr)          enl_msg(menu,monname,"","d",attr)
+    
+    if (mon == &youmonst && flags.elbereth_enabled &&
+        u.uevent.uhand_of_elbereth) {
+        static const char *const hofe_titles[3] = {
+            "the Hand of Elbereth",
+            "the Envoy of Balance",
+            "the Glory of Arioch"
+        };
+        mon_is(&menu, mon, hofe_titles[u.uevent.uhand_of_elbereth - 1]);
+        if (u.ualign.record >= 20)
+            mon_is(&menu, mon, "piously aligned");
+        else if (u.ualign.record > 13)
+            mon_is(&menu, mon, "devoutly aligned");
+        else if (u.ualign.record > 8)
+            mon_is(&menu, mon, "fervently aligned");
+        else if (u.ualign.record > 3)
+            mon_is(&menu, mon, "stridently aligned");
+        else if (u.ualign.record == 3)
+            mon_is(&menu, mon, "aligned");
+        else if (u.ualign.record > 0)
+            mon_is(&menu, mon, "haltingly aligned");
+        else if (u.ualign.record == 0)
+            mon_is(&menu, mon, "nominally aligned");
+        else if (u.ualign.record >= -3)
+            mon_is(&menu, mon, "strayed");
+        else if (u.ualign.record >= -8)
+            mon_is(&menu, mon, "sinned");
+        else
+            mon_is(&menu, mon, "transgressed");
+        if (wizard) {
+            buf = msgprintf(" %d", u.uhunger);
+            enl_msg(&menu, "Hunger level ", "is", "was", buf);
+
+            buf = msgprintf(" %d / %ld", u.ualign.record, ALIGNLIM);
+            enl_msg(&menu, "Your alignment ", "is", "was", buf);
+        }
+    }
+
+
+        /*** Resistances to troubles ***/
+    if (resists_fire(mon))
+        mon_is(&menu, mon, "fire resistant");
+    if (resists_cold(mon))
+        mon_is(&menu, mon, "cold resistant");
+    if (resists_sleep(mon))
+        mon_is(&menu, mon, "sleep resistant");
+    if (resists_disint(mon))
+        mon_is(&menu, mon, "disintegration-resistant");
+    if (resists_elec(mon))
+        mon_is(&menu, mon, "shock resistant");
+    if (resists_poison(mon))
+        mon_is(&menu, mon, "poison resistant");
+    if (resists_magm(mon))
+        mon_is(&menu, mon, "magic resistant");
+    if (resists_drli(mon))
+        mon_is(&menu, mon, "level-drain resistant");
+    if (resists_sick(mon))
+        mon_is(&menu, mon, "immune to sickness");
+    if (resists_acid(mon))
+        mon_is(&menu, mon, "acid resistant");
+    if (resists_ston(mon))
+        mon_is(&menu, mon, "petrification resistant");
+    if (resists_hallu(mon))
+        mon_is(&menu, mon, "hallucination resistant");
+    if (mon == &youmonst && u.uinvulnerable)
+        mon_is(&menu, mon, "invulnerable");
+    if ((mon == &youmonst && u.uedibility) ||
+        (mon != &youmonst && mon->mtame))
+        mon_can(&menu, mon, "recognize detrimental food");
+
+    /*** Troubles ***/
+    if (hallucinating(mon))
+        mon_is(&menu, mon, "hallucinating");
+    if (stunned(mon))
+        mon_is(&menu, mon, "stunned");
+    if (confused(mon))
+        mon_is(&menu, mon, "confused");
+    if (blind(mon))
+        mon_is(&menu, mon, "blinded");
+    if (sick(mon)) {
+        if (mon == &youmonst && (u.usick_type & SICK_VOMITABLE))
+            mon_is(&menu, mon, "sick from food poisoning");
+        else
+            mon_is(&menu, mon, "sick from illness");
+    }
+    if (petrifying(mon))
+        mon_is(&menu, mon, "turning to stone");
+    if (sliming(mon))
+        mon_is(&menu, mon, "turning into slime");
+    if (strangled(mon))
+        mon_is(&menu, mon, (u.uburied) ? "buried" : "being strangled");
+    if (slippery_fingers(mon))
+        mon_has(&menu, mon, msgcat("slippery ", makeplural(body_part(FINGER))));
+    if (fumbling(mon))
+        mon_x(&menu, mon, "fumble");
+    if (mon == &youmonst && Wounded_legs && !u.usteed)
+        mon_has(&menu, mon, msgcat("wounded", makeplural(body_part(LEG))));;
+    if (mon == &youmonst && Wounded_legs && u.usteed && wizard) {
+        buf = x_monnam(u.usteed, ARTICLE_YOUR, NULL, SUPPRESS_SADDLE |
+                       SUPPRESS_HALLUCINATION, FALSE);
+        enl_msg(&menu, msgupcasefirst(buf), " has", " had", " wounded legs");
+    }
+
+    if (restful_sleep(mon))
+        mon_has(&menu, mon, "restful sleep");
+    if (hunger(mon))
+        mon_has(&menu, mon, "fast metabolism");
+
+        /*** Vision and senses ***/
+    if (see_invisible(mon))
+        mon_sees(&menu, mon, "invisible");
+    if (telepathic(mon))
+        mon_is(&menu, mon, "telepathic");
+    if (warned(mon))
+        mon_is(&menu, mon, "warned");
+    if (warned_of_mon(mon)) {
+        int warntype = mworn_warntype(mon);
+        buf = msgcat("aware of the presence of ",
+                    (warntype & M2_ORC) ? "orcs" :
+                    (warntype & M2_DEMON) ? "demons" :
+                    "something");
+        mon_is(&menu, mon, buf);
+    }
+    if (warned_of_undead(mon))
+        mon_is(&menu, mon, "warned of undead");
+    if (searching(mon))
+        mon_has(&menu, mon, "automatic searching");
+    if (clairvoyant(mon))
+        mon_is(&menu, mon, "clairvoyant");
+    if (infravision(mon))
+        mon_has(&menu, mon, "infravision");
+    if (detects_monsters(mon))
+        mon_is(&menu, mon, "sensing the presence of monsters");
+    if (mon == &youmonst && u.umconf)
+        mon_is(&menu, mon, "going to confuse monsters");
+
+        /*** Appearance and behavior ***/
+    if (adorned(mon)) {
+        int adorn = 0;
+
+        /* BUG: this does the wrong thing for monsters */
+        if (uleft && uleft->otyp == RIN_ADORNMENT)
+            adorn += uleft->spe;
+        if (uright && uright->otyp == RIN_ADORNMENT)
+            adorn += uright->spe;
+        if (adorn < 0)
+            mon_is(&menu, mon, "poorly adorned");
+        else
+            mon_is(&menu, mon, "adorned");
+    }
+    if (invisible(mon))
+        mon_is(&menu, mon, "invisible");
+    else if (invisible(mon) && see_invisible(mon))
+        mon_is(&menu, mon, "invisible to others");
+    /* ordinarily "visible" is redundant; this is a special case for the
+       situation when invisibility would be an expected attribute */
+    else if (m_has_property(mon, INVIS, ANY_PROPERTY, TRUE) &&
+             !invisible(mon))
+        mon_is(&menu, mon, "visible");
+    if (displaced(mon))
+        mon_is(&menu, mon, "displaced");
+    if (stealthy(mon))
+        mon_is(&menu, mon, "stealthy");
+    if (aggravating(mon))
+        mon_x(&menu, mon, "aggravate");
+    if (conflicting(mon))
+        mon_is(&menu, mon, "conflicting");
+
+        /*** Transportation ***/
+    if (jumps(mon))
+        mon_can(&menu, mon, "jump");
+    if (teleportitis(mon)) {
+        if (mon == &youmonst &&
+            supernatural_ability_available(SPID_RLOC))
+            mon_can(&menu, mon, "teleport at will");
+        else if (mon != &youmonst && (mon->m_lev == 12 ||
+                (mon->data->mflags1 & M1_TPORT)))
+            mon_can(&menu, mon, "teleport at will");
+        else
+            mon_can(&menu, mon, "teleport");
+    }
+    if (teleport_control(mon))
+        mon_has(&menu, mon, "teleport control");
+    if (levitates_at_will(mon, FALSE, FALSE))
+        mon_is(&menu, mon, "levitating, at will");
+    else if (levitates(mon))
+        mon_is(&menu, mon, "levitating");   /* without control */
+    else if (flying(mon))
+        mon_can(&menu, mon, "fly");
+    if (waterwalks(mon))
+        mon_can(&menu, mon, "walk on water");
+    if (swims(mon))
+        mon_can(&menu, mon, "swim");
+    if (mon->data->mflags1 & M1_AMPHIBIOUS)
+        mon_can(&menu, mon, "breathe water");
+    else if (unbreathing(mon))
+        mon_can(&menu, mon, "survive without air");
+    if (phasing(mon))
+        mon_can(&menu, mon, "walk through walls");
+
+    /* FIXME: This is printed even if you die in a riding accident. */
+    if (mon == &youmonst && u.usteed)
+        mon_is(&menu, mon, msgcat("riding ", y_monnam(u.usteed)));
+    if (mon == &youmonst && Engulfed)
+        mon_is(&menu, mon, msgcat("swallowed by ", a_monnam(u.ustuck)));
+    else if (u.ustuck && (mon == u.ustuck || mon == &youmonst)) {
+        if (mon == &youmonst)
+            buf = msgprintf("%s %s",
+                  (Upolyd && sticks(youmonst.data)) ?
+                  "holding" : "held by", a_monnam(u.ustuck));
+        else
+            buf = msgprintf("%s %s",
+                  (Upolyd && sticks(youmonst.data)) ?
+                  "held by" : "holding", "you");
+        mon_is(&menu, mon, buf);
+    }
+
+    /*** Physical attributes ***/
+    if (mon == &youmonst) {
+        if (u.uhitinc)
+            mon_has(&menu, mon, enlght_combatinc("to hit", u.uhitinc, final));
+        if (u.udaminc)
+            mon_has(&menu, mon, enlght_combatinc("damage", u.udaminc, final));
+    }
+    if (slow_digestion(mon))
+        mon_has(&menu, mon, "slower digestion");
+    if (regenerates(mon))
+        mon_x(&menu, mon, "regenerate");
+    if (mon == &youmonst && (u.uspellprot || Protection)) {
+        int prot = 0;
+
+        if (uleft && uleft->otyp == RIN_PROTECTION)
+            prot += uleft->spe;
+        if (uright && uright->otyp == RIN_PROTECTION)
+            prot += uright->spe;
+        if (HProtection & INTRINSIC)
+            prot += u.ublessed;
+        prot += u.uspellprot;
+
+        if (prot < 0)
+            mon_is(&menu, mon, "ineffectively protected");
+        else
+            mon_is(&menu, mon, "protected");
+    }
+    if (shapeshift_prot(mon))
+        mon_is(&menu, mon, "protected from shape changers");
+    if (polymorphitis(mon))
+        mon_is(&menu, mon, "polymorphing");
+    if (polymorph_control(mon))
+        mon_has(&menu, mon, "polymorph control");
+    if ((mon == &youmonst && u.ulycn >= LOW_PM) || is_were(mon->data))
+        mon_is(&menu, mon, an(mons[u.ulycn].mname));
+    if (mon == &youmonst && Upolyd) {
+        const char *buf;
+        if (u.umonnum == u.ulycn)
+            buf = "in beast form";
+        else
+            buf = msgprintf("%spolymorphed into %s",
+                            flags.polyinit_mnum == -1 ? "" : "permanently ",
+                            an(youmonst.data->mname));
+        if (wizard)
+            buf = msgprintf("%s (%d)", buf, u.mtimedone);
+        mon_is(&menu, mon, buf);
+    }
+    if (unchanging(mon))
+        mon_can(&menu, mon, "not change form");
+    if (fast(mon))
+        mon_is(&menu, mon, "fast");
+    else if (slow(mon))
+        mon_is(&menu, mon, "slow");
+    if (reflecting(mon))
+        mon_has(&menu, mon, "reflection");
+    if (free_action(mon))
+        mon_has(&menu, mon, "free action");
+    if (fixed_abilities(mon))
+        mon_has(&menu, mon, "fixed abilities");
+    if (will_be_lifesaved(mon))
+        mon_is(&menu, mon, "life saving");
+    if (mon == &youmonst && u.twoweap)
+        mon_is(&menu, mon, "wielding two weapons at once");
+
+        /*** Miscellany ***/
+    if (mon == &youmonst) {
+        if (Luck) {
+            ltmp = abs((int)Luck);
+            const char *buf = msgprintf(
+                "%s%slucky",
+                ltmp >= 10 ? "extremely " : ltmp >= 5 ? "very " : "",
+                Luck < 0 ? "un" : "");
+            if (wizard)
+                buf = msgprintf("%s (%d)", buf, Luck);
+            you_are(&menu, buf);
+        } else if (mon == &youmonst && wizard)
+            enl_msg(&menu, "Your luck ", "is", "was", " zero");
+        if (u.moreluck > 0)
+            you_have(&menu, "extra luck");
+        else if (u.moreluck < 0)
+            you_have(&menu, "reduced luck");
+        if (carrying(LUCKSTONE) || stone_luck(TRUE)) {
+            ltmp = stone_luck(FALSE);
+            if (ltmp <= 0)
+                enl_msg(&menu, "Bad luck ", "does", "did", " not time out for you");
+            if (ltmp >= 0)
+                enl_msg(&menu, "Good luck ", "does", "did",
+                        " not time out for you");
+        }
+
+        if (u.ugangr) {
+            const char *buf = msgprintf(
+                " %sangry with you",
+                u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
+            if (wizard)
+                buf = msgprintf("%s (%d)", buf, u.ugangr);
+            enl_msg(&menu, u_gname(), " is", " was", buf);
+        } else if (!final) {
+            /*
+            * We need to suppress this when the game is over, because death
+            * can change the value calculated by can_pray(), potentially
+            * resulting in a false claim that you could have prayed safely.
+            */
+            const char *buf = msgprintf(
+                "%ssafely pray", can_pray(FALSE) ? "" : "not ");
+            /* can_pray sets some turnstate that needs to be reset. */
+            turnstate.pray.align = A_NONE;
+            turnstate.pray.type = pty_invalid;
+            turnstate.pray.trouble = ptr_invalid;
+            if (wizard)
+                buf = msgprintf("%s (%d)", buf, u.ublesscnt);
+            you_can(&menu, buf);
+        }
+
+        const char *p, *buf = "";
+
+        if (final < 2) {       /* still in progress, or quit/escaped/ascended */
+            p = "survived after being killed ";
+            switch (u.umortality) {
+            case 0:
+                p = !final ? NULL : "survived";
+                break;
+            case 1:
+                buf = "once";
+                break;
+            case 2:
+                buf = "twice";
+                break;
+            case 3:
+                buf = "thrice";
+                break;
+            default:
+                buf = msgprintf("%d times", u.umortality);
+                break;
+            }
+        } else {        /* game ended in character's death */
+            p = "are dead";
+            switch (u.umortality) {
+            case 0:
+                impossible("dead without dying?");
+            case 1:
+                break;  /* just "are dead" */
+            default:
+                buf = msgprintf(" (%d%s time!)", u.umortality,
+                                ordin(u.umortality));
+                break;
+            }
+        }
+        if (p)
+            enl_msg(&menu, You_, "have been killed ", p, buf);
+
+    }
+    display_menu(&menu, title, PICK_NONE, PLHINT_ANYWHERE,
+                NULL);
+    return;
+}
+
+/* TODO: replace with enlighten_mon() */
 void
 enlightenment(int final)
     /* final: 0 => still in progress; 1 => over, survived; 2 => dead */

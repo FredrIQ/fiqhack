@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-22 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -104,7 +104,7 @@ wrong_elem_type(const struct d_level *dlev, const struct permonst *ptr)
         /* no restrictions? */
     } else if (Is_waterlevel(dlev)) {
         /* just monsters that can swim */
-        if (!is_swimmer(ptr))
+        if (!pm_swims(ptr))
             return TRUE;
     } else if (Is_firelevel(dlev)) {
         if (!pm_resistance(ptr, MR_FIRE))
@@ -1000,7 +1000,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     mtmp->nmon = lev->monlist;
     lev->monlist = mtmp;
     mtmp->m_id = next_ident();
-    set_mon_data(mtmp, ptr, 0);
+    set_mon_data(mtmp, ptr);
 
     if (mtmp->data->msound == MS_LEADER)
         u.quest_status.leader_m_id = mtmp->m_id;
@@ -1623,11 +1623,11 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
                 pline("As %s grows up into %s, %s %s!", mon_nam(mtmp),
                       an(ptr->mname), mhe(mtmp),
                       nonliving(ptr) ? "expires" : "dies");
-            set_mon_data(mtmp, ptr, -1);        /* keep mvitals[] accurate */
+            set_mon_data(mtmp, ptr);        /* keep mvitals[] accurate */
             mondied(mtmp);
             return NULL;
         }
-        set_mon_data(mtmp, ptr, 1);      /* preserve intrinsics */
+        set_mon_data(mtmp, ptr);      /* preserve intrinsics */
         if (mtmp->dlevel == level)
             newsym(mtmp->mx, mtmp->my);     /* color may change */
         lev_limit = (int)mtmp->m_lev;   /* never undo increment */
@@ -2074,8 +2074,6 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->xyflags = mread8(mf);
     mon->xlocale = mread8(mf);
     mon->ylocale = mread8(mf);
-    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): remove this */
-    (void) mread32(mf);
     mon->orig_mnum = mread16(mf);
     mon->mx = mread8(mf);
     mon->my = mread8(mf);
@@ -2099,6 +2097,8 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->mblinded = mread8(mf);
     mon->mappearance = mread32(mf);
     mflags = mread32(mf);
+    
+    mon->mspells = mread64(mf);
 
     mon->mfleetim = save_decode_8(mread8(mf), -moves, l ? -l->lastmoves : 0);
     mon->weapon_check = mread8(mf);
@@ -2308,8 +2308,6 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite8(mf, mon->xlocale);
     mwrite8(mf, mon->ylocale);
-    /* SAVEBREAK (4.3-beta1 -> 4.3beta2): remove this */
-    mwrite32(mf, 0);
     mwrite16(mf, mon->orig_mnum);
     mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite8(mf, mon->mx);
@@ -2344,6 +2342,8 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
         (mon->isminion << 3) | (mon->isgd << 2) |
         (mon->ispriest << 1) | (mon->iswiz << 0); /* savemap: ignore */
     mwrite32(mf, mflags);
+    
+    mwrite64(mf, mon->mspells);
 
     mwrite8(mf, save_encode_8(mon->mfleetim, -moves, l ? -l->lastmoves : 0));
     mwrite8(mf, mon->weapon_check);

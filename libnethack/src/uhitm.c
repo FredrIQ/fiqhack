@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1394,8 +1394,8 @@ damageum(struct monst *mdef, const struct attack *mattk)
                 }
             } else if (u.ustuck == mdef) {
                 /* Monsters don't wear amulets of magical breathing */
-                if (is_pool(level, u.ux, u.uy) && !is_swimmer(mdef->data) &&
-                    !amphibious(mdef->data)) {
+                if (is_pool(level, u.ux, u.uy) && !swims(mdef) &&
+                    !unbreathing(mdef)) {
                     pline("You drown %s...", mon_nam(mdef));
                     tmp = mdef->mhp;
                 } else if (mattk->aatyp == AT_HUGS)
@@ -1646,7 +1646,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
             case AD_PHYS:
                 if (youmonst.data == &mons[PM_FOG_CLOUD]) {
                     pline("%s is laden with your moisture.", Monnam(mdef));
-                    if (amphibious(mdef->data) && !flaming(mdef->data)) {
+                    if (unbreathing(mdef) && !flaming(mdef->data)) {
                         dam = 0;
                         pline("%s seems unharmed.", Monnam(mdef));
                     }

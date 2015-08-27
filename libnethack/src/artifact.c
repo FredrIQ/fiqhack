@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -596,20 +596,20 @@ spec_applies(const struct artifact *weap, const struct monst *mtmp)
             return FALSE;
         switch (weap->attk.adtyp) {
         case AD_FIRE:
-            return !(yours ? Fire_resistance : resists_fire(mtmp));
+            return !resists_fire(mtmp);
         case AD_COLD:
-            return !(yours ? Cold_resistance : resists_cold(mtmp));
+            return !resists_cold(mtmp);
         case AD_ELEC:
-            return !(yours ? Shock_resistance : resists_elec(mtmp));
+            return !resists_elec(mtmp);
         case AD_MAGM:
         case AD_STUN:
-            return !(yours ? Antimagic : (rn2(100) < ptr->mr));
+            return !resists_magm(mtmp);
         case AD_DRST:
-            return !(yours ? Poison_resistance : resists_poison(mtmp));
+            return !resists_poison(mtmp);
         case AD_DRLI:
-            return !(yours ? Drain_resistance : resists_drli(mtmp));
+            return !resists_drli(mtmp);
         case AD_STON:
-            return !(yours ? Stone_resistance : resists_ston(mtmp));
+            return !resists_ston(mtmp);
         default:
             impossible("Weird weapon special attack.");
         }

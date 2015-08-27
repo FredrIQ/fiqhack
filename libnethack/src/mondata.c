@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -13,17 +13,9 @@ static const struct attack *dmgtype_fromattack(const struct permonst *, int,
 /* These routines provide basic data for any type of monster. */
 
 void
-set_mon_data(struct monst *mon, const struct permonst *ptr, int flag)
+set_mon_data(struct monst *mon, const struct permonst *ptr)
 {
     mon->data = ptr;
-    if (flag == -1)
-        return; /* "don't care" */
-
-    if (flag == 1)
-        mon->mintrinsics |= (ptr->mresists & 0x00FF);
-    else
-        mon->mintrinsics = (ptr->mresists & 0x00FF);
-    return;
 }
 
 
@@ -53,42 +45,6 @@ poly_when_stoned(const struct permonst * ptr)
             (is_golem(ptr) && ptr != &mons[PM_STONE_GOLEM] &&
              !(mvitals[PM_STONE_GOLEM].mvflags & G_GENOD)));
     /* allow G_EXTINCT */
-}
-
-/* returns TRUE if monster is drain-life resistant */
-boolean
-resists_drli(const struct monst * mon)
-{
-    const struct permonst *ptr = mon->data;
-    struct obj *wep = ((mon == &youmonst) ? uwep : MON_WEP(mon));
-
-    return (boolean) (is_undead(ptr) || is_demon(ptr) || is_were(ptr) ||
-                      ptr == &mons[PM_DEATH] || (wep && wep->oartifact &&
-                                                 defends(AD_DRLI, wep)));
-}
-
-/* TRUE if monster is magic-missile resistant */
-boolean
-resists_magm(const struct monst * mon)
-{
-    const struct permonst *ptr = mon->data;
-    struct obj *o;
-
-    /* as of 3.2.0: gray dragons, Angels, Oracle, Yeenoghu */
-    if (dmgtype(ptr, AD_MAGM) || ptr == &mons[PM_BABY_GRAY_DRAGON] ||
-        dmgtype(ptr, AD_RBRE))    /* Chromatic Dragon */
-        return TRUE;
-    /* check for magic resistance granted by wielded weapon */
-    o = (mon == &youmonst) ? uwep : MON_WEP(mon);
-    if (o && o->oartifact && defends(AD_MAGM, o))
-        return TRUE;
-    /* check for magic resistance granted by worn or carried items */
-    o = (mon == &youmonst) ? invent : mon->minvent;
-    for (; o; o = o->nobj)
-        if ((o->owornmask && objects[o->otyp].oc_oprop == ANTIMAGIC) ||
-            (o->oartifact && protects(AD_MAGM, o)))
-            return TRUE;
-    return FALSE;
 }
 
 /* TRUE iff monster is resistant to light-induced blindness */
@@ -240,9 +196,10 @@ hates_silver(const struct permonst * ptr)
 
 /* true iff the type of monster pass through iron bars */
 boolean
-passes_bars(const struct permonst * mptr)
+passes_bars(const struct monst * mon)
 {
-    return (boolean) (passes_walls(mptr) || amorphous(mptr) || is_whirly(mptr)
+    const struct permonst *mptr = mon->data;
+    return (boolean) (phasing(mon) || amorphous(mptr) || is_whirly(mptr)
                       || verysmall(mptr) || (slithy(mptr) && !bigmonst(mptr)));
 }
 
@@ -649,6 +606,7 @@ static const char *const immobile[4] =
     { "wiggle", "Wiggle", "pulsate", "Pulsate" };
 static const char *const crawl[4] = { "crawl", "Crawl", "falter", "Falter" };
 
+/* BUG: this doesn't check current monster properties (ex: ring of levitation) */
 const char *
 locomotion(const struct permonst *ptr, const char *def)
 {
@@ -724,7 +682,7 @@ mprof(const struct monst * mon, int proficiency)
 {
     const struct permonst *ptr = mon->data;
     /* return the relevant bits. */
-    return (short) (((ptr)->mskill / proficiency) % 4);
+    return (short) ((((ptr)->mskill / proficiency) % 4) + 1);
 }
 
 /*mondata.c*/

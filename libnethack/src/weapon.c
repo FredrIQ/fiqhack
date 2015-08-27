@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -129,7 +129,7 @@ hitval(struct obj *otmp, struct monst *mon)
         tmp += 2;
 
     /* trident is highly effective against swimmers */
-    if (otmp->otyp == TRIDENT && is_swimmer(ptr)) {
+    if (otmp->otyp == TRIDENT && ((ptr)->mflags1 & M1_SWIM)) {
         if (is_pool(level, mon->mx, mon->my))
             tmp += 4;
         else if (ptr->mlet == S_EEL || ptr->mlet == S_SNAKE)
@@ -137,12 +137,12 @@ hitval(struct obj *otmp, struct monst *mon)
     }
 
     /* Picks used against xorns and earth elementals */
-    if (is_pick(otmp) && (passes_walls(ptr) && thick_skinned(ptr)))
+    if (is_pick(otmp) && (phasing(mon) && thick_skinned(ptr)))
         tmp += 2;
 
 #ifdef INVISIBLE_OBJECTS
     /* Invisible weapons against monsters who can't see invisible */
-    if (otmp->oinvis && !perceives(ptr))
+    if (otmp->oinvis && !see_invisible(mon))
         tmp += 3;
 #endif
 

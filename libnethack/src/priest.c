@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,7 +45,7 @@ move_special(struct monst *mtmp, boolean in_his_shop, schar appr,
         allowflags = ALLOW_SSM;
     else
         allowflags = ALLOW_SSM | ALLOW_SANCT;
-    if (passes_walls(mtmp->data))
+    if (phasing(mtmp))
         allowflags |= (ALLOW_ROCK | ALLOW_WALL);
     if (throws_rocks(mtmp->data))
         allowflags |= ALLOW_ROCK;

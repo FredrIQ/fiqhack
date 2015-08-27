@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -300,7 +300,8 @@ do_earthquake(int force)
                        chasm... */
 
                     if (mtmp) {
-                        if (!is_flyer(mtmp->data) && !is_clinger(mtmp->data)) {
+                        if (!flying(mtmp) && !levitates(mtmp) &&
+                            !is_clinger(mtmp->data)) {
                             mtmp->mtrapped = 1;
                             if (cansee(x, y))
                                 pline("%s falls into a chasm!", Monnam(mtmp));

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-25 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -697,6 +697,8 @@ may_passwall(struct level * lev, xchar x, xchar y)
 }
 
 
+/* FIXME: check for general phasing, not merely your polyform
+   (or the monster's form) */
 boolean
 bad_rock(const struct permonst * mdat, xchar x, xchar y)
 {
@@ -704,7 +706,7 @@ bad_rock(const struct permonst * mdat, xchar x, xchar y)
                       (IS_ROCK(level->locations[x][y].typ)
                        && (!tunnels(mdat) || needspick(mdat) ||
                            !may_dig(level, x, y))
-                       && !(passes_walls(mdat) && may_passwall(level, x, y))));
+                       && !(pm_phasing(mdat) && may_passwall(level, x, y))));
 }
 
 boolean
@@ -777,7 +779,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
         if (cache->passwall && may_passwall(level, x, y)) {
             ;   /* do nothing */
         } else if (tmpr->typ == IRONBARS) {
-            if (!(cache->passwall || passes_bars(youmonst.data)))
+            if (!(cache->passwall || passes_bars(&youmonst)))
                 return FALSE;
         } else if (tunnels(youmonst.data) && !needspick(youmonst.data)) {
             /* Eat the rock. */
@@ -1588,8 +1590,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             if (!skates)
                 skates = find_skates();
             if ((uarmf && uarmf->otyp == skates)
-                || resists_cold(&youmonst) || Flying ||
-                is_floater(youmonst.data) || is_clinger(youmonst.data)
+                || Flying || is_clinger(youmonst.data)
                 || is_whirly(youmonst.data))
                 on_ice = FALSE;
             else if (!rn2(Cold_resistance ? 3 : 2)) {
@@ -1792,7 +1793,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
 
             if (inshop || foo ||
                 (IS_ROCK(level->locations[u.ux][u.uy].typ) &&
-                 !passes_walls(mtmp->data))) {
+                 !phasing(mtmp))) {
                 monflee(mtmp, rnd(6), FALSE, FALSE);
                 pline("You stop.  %s is in the way!",
                       msgupcasefirst(y_monnam(mtmp)));
@@ -2318,8 +2319,8 @@ stillinwater:
     if (!Levitation && !u.ustuck && !Flying) {
         /* limit recursive calls through teleds() */
         if (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) {
-            if (u.usteed && !is_flyer(u.usteed->data) &&
-                !is_floater(u.usteed->data) && !is_clinger(u.usteed->data)) {
+            if (u.usteed && !flying(u.usteed) &&
+                !levitates(u.usteed) && !is_clinger(u.usteed->data)) {
                 dismount_steed(Underwater ? DISMOUNT_FELL : DISMOUNT_GENERIC);
                 /* dismount_steed() -> float_down() -> pickup() */
                 if (!Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz))
@@ -2649,8 +2650,8 @@ dopickup(const struct nh_cmd_arg *arg)
         }
     }
     if (is_pool(level, u.ux, u.uy)) {
-        if (Wwalking || is_floater(youmonst.data) || is_clinger(youmonst.data)
-            || (Flying && !Breathless)) {
+        if (Wwalking || is_clinger(youmonst.data)
+            || (flying(&youmonst) && !Breathless)) {
             pline("You cannot dive into the water to pick things up.");
             return 0;
         } else if (!Underwater) {
@@ -2660,7 +2661,7 @@ dopickup(const struct nh_cmd_arg *arg)
         }
     }
     if (is_lava(level, u.ux, u.uy)) {
-        if (Wwalking || is_floater(youmonst.data) || is_clinger(youmonst.data)
+        if (Wwalking || is_clinger(youmonst.data)
             || (Flying && !Breathless)) {
             pline("You can't reach the bottom to pick things up.");
             return 0;

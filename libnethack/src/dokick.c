@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -203,7 +203,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
         return attack_status;
     }
 
-    if (Levitation && !rn2(3) && verysmall(mon->data) && !is_flyer(mon->data)) {
+    if (Levitation && !rn2(3) && verysmall(mon->data) && !flying(mon)) {
         pline("Floating in the air, you miss wildly!");
         exercise(A_DEX, FALSE);
         passive(mon, FALSE, 1, AT_KICK);
@@ -236,7 +236,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
 doit:
     pline("You kick %s.", mon_nam(mon));
     if (!enexto(&bypos, level, u.ux, u.uy, mon->data) ||
-        !((can_teleport(mon->data) && !level->flags.noteleport) ||
+        !((teleportitis(mon) && !level->flags.noteleport) ||
           ((abs(bypos.x - u.ux) <= 1) && (abs(bypos.y - u.uy) <= 1))))
         canmove = FALSE;
     if (!rn2(clumsy ? 3 : 4) && (clumsy || !bigmonst(mon->data)) && mon->mcansee
@@ -255,10 +255,10 @@ doit:
                 reveal_monster_at(x, y, TRUE);
                 /* TODO: This should probably use locomotion(). */
                 pline("%s %s, %s evading your %skick.", Monnam(mon),
-                      (can_teleport(mon->data) &&
+                      (teleportitis(mon) &&
                        !level->flags.noteleport ? "teleports" :
-                       is_floater(mon->data) ? "floats" :
-                       is_flyer(mon->data) ? "swoops" :
+                       levitates(mon) ? "floats" :
+                       flying(mon) ? "swoops" :
                        (nolimbs(mon->data) || slithy(mon->data)) ? "slides" :
                        "jumps"), clumsy ? "easily" : "nimbly",
                       clumsy ? "clumsy " : "");

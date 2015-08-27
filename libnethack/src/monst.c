@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-07 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -328,7 +328,8 @@ const struct permonst mons[] = {
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(10, 10, 0, MS_SILENT, MZ_SMALL), 0, 0,
         M1_FLY | M1_AMPHIBIOUS | M1_NOLIMBS | M1_NOHEAD | M1_NOTAKE,
-        M2_HOSTILE | M2_NEUTER, M3_INFRAVISIBLE, 0, CLR_BLUE),
+        M2_HOSTILE | M2_NEUTER | M2_TELEPATHIC,
+        M3_INFRAVISIBLE, 0, CLR_BLUE),
     MON("freezing sphere", S_EYE,
         LVL(6, 13, 4, 0, 0), (G_NOCORPSE | G_NOHELL | G_GENO | 2),
         A(ATTK(AT_EXPL, AD_COLD, 4, 6),
@@ -483,8 +484,8 @@ const struct permonst mons[] = {
           NO_ATTK, NO_ATTK),
         SIZ(1450, 400, 0, MS_HISS, MZ_HUMAN), 0, 0,
         M1_HUMANOID | M1_FLY | M1_SEE_INVIS | M1_OMNIVORE,
-        M2_HOSTILE | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_COLLECT,
-        M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_BASIC,
+        M2_HOSTILE | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_COLLECT |
+        M2_TELEPATHIC, M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_BASIC,
         CLR_BRIGHT_MAGENTA),
     MON("master mind flayer", S_HUMANOID,
         LVL(13, 12, 0, 90, -8), (G_GENO | 1),
@@ -493,8 +494,8 @@ const struct permonst mons[] = {
           ATTK(AT_TENT, AD_DRIN, 2, 1), ATTK(AT_TENT, AD_DRIN, 2, 1)),
         SIZ(1450, 400, 0, MS_HISS, MZ_HUMAN), 0, 0,
         M1_HUMANOID | M1_FLY | M1_SEE_INVIS | M1_OMNIVORE,
-        M2_HOSTILE | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_COLLECT,
-        M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_SKILLED,
+        M2_HOSTILE | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_COLLECT |
+        M2_TELEPATHIC, M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_SKILLED,
         CLR_BRIGHT_MAGENTA | HI_ULINE),
 /*
  * imps & other minor demons/devils
@@ -1067,7 +1068,7 @@ const struct permonst mons[] = {
         | MR_STONE, 0,
         M1_FLY | M1_BREATHLESS | M1_AMORPHOUS | M1_NOEYES | M1_NOLIMBS |
         M1_NOHEAD | M1_MINDLESS | M1_UNSOLID | M1_NOTAKE,
-        M2_HOSTILE | M2_NEUTER, M3_INFRAVISIBLE, 0, CLR_YELLOW),
+        M2_HOSTILE | M2_NEUTER | M2_STUNNED, M3_INFRAVISIBLE, 0, CLR_YELLOW),
     MON("black light", S_LIGHT,
         LVL(5, 15, 0, 0, 0), (G_NOCORPSE | G_GENO | 2),
         A(ATTK(AT_EXPL, AD_HALU, 10, 12),
@@ -1077,7 +1078,7 @@ const struct permonst mons[] = {
         | MR_STONE, 0,
         M1_FLY | M1_BREATHLESS | M1_AMORPHOUS | M1_NOEYES | M1_NOLIMBS |
         M1_NOHEAD | M1_MINDLESS | M1_UNSOLID | M1_SEE_INVIS | M1_NOTAKE,
-        M2_HOSTILE | M2_NEUTER, 0, 0, CLR_BLACK),
+        M2_HOSTILE | M2_NEUTER | M2_STUNNED, 0, 0, CLR_BLACK),
 /*
  * zruty
  */
@@ -1148,8 +1149,8 @@ const struct permonst mons[] = {
         A(ATTK(AT_BITE, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(20, 20, 0, MS_SQEEK, MZ_TINY), 0, 0,
-        M1_FLY | M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE, M2_WANDER,
-        M3_INFRAVISIBLE,
+        M1_FLY | M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE, M2_WANDER |
+        M2_STUNNED, M3_INFRAVISIBLE,
         0, CLR_BROWN),
     MON("giant bat", S_BAT,
         LVL(2, 22, 7, 0, 0), (G_GENO | 2),
@@ -1157,14 +1158,16 @@ const struct permonst mons[] = {
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(30, 30, 0, MS_SQEEK, MZ_SMALL), 0, 0,
         M1_FLY | M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE,
-        M2_WANDER | M2_HOSTILE, M3_INFRAVISIBLE, 0, CLR_RED),
+        M2_WANDER | M2_HOSTILE | M2_STUNNED, M3_INFRAVISIBLE,
+        0, CLR_RED),
     MON("raven", S_BAT,
         LVL(4, 20, 6, 0, 0), (G_GENO | 2),
         A(ATTK(AT_BITE, AD_PHYS, 1, 6), ATTK(AT_CLAW, AD_BLND, 1, 6),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(40, 20, 0, MS_SQAWK, MZ_SMALL), 0, 0,
         M1_FLY | M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE,
-        M2_WANDER | M2_HOSTILE, M3_INFRAVISIBLE, 0, CLR_BLACK),
+        M2_WANDER | M2_HOSTILE, M3_INFRAVISIBLE,
+        0, CLR_BLACK),
     MON("vampire bat", S_BAT,
         LVL(5, 20, 6, 0, 0), (G_GENO | 2),
         A(ATTK(AT_BITE, AD_PHYS, 1, 6), ATTK(AT_BITE, AD_DRST, 0, 0),
@@ -1372,8 +1375,8 @@ const struct permonst mons[] = {
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(900, 400, 0, MS_SILENT, MZ_LARGE), 0, 0,
         M1_ANIMAL | M1_HUMANOID | M1_FLY | M1_SEE_INVIS,
-        M2_WANDER | M2_STALK | M2_HOSTILE | M2_STRONG, M3_INFRAVISION,
-        MP_WAND_BASIC, CLR_WHITE),
+        M2_WANDER | M2_STALK | M2_HOSTILE | M2_STRONG | M2_STUNNED,
+        M3_INFRAVISION, MP_WAND_BASIC, CLR_WHITE),
     MON("air elemental", S_ELEMENTAL,
         LVL(8, 36, 2, 30, 0), (G_NOCORPSE | 1),
         A(ATTK(AT_ENGL, AD_PHYS, 1, 10),

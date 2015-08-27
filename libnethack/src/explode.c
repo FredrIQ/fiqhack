@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-24 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -359,7 +359,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 idamres += destroy_mitem(mtmp, SPBOOK_CLASS, (int)adtyp);
                 idamnonres += destroy_mitem(mtmp, POTION_CLASS, (int)adtyp);
                 idamnonres += destroy_mitem(mtmp, WAND_CLASS, (int)adtyp);
-                idamnonres += destroy_mitem(mtmp, RING_CLASS, (int)adtyp);
 
                 if (explmask[i][j] == 1) {
                     golemeffects(mtmp, (int)adtyp, dam + idamres);
@@ -461,7 +460,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
         destroy_item(SCROLL_CLASS, (int)adtyp);
         destroy_item(SPBOOK_CLASS, (int)adtyp);
         destroy_item(POTION_CLASS, (int)adtyp);
-        destroy_item(RING_CLASS, (int)adtyp);
         destroy_item(WAND_CLASS, (int)adtyp);
 
         ugolemeffects((int)adtyp, damu);

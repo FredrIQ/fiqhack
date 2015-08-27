@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1824,7 +1824,7 @@ mintrap(struct monst *mtmp)
             break;
 
         case SQKY_BOARD:
-            if (is_flyer(mptr))
+            if (flying(mtmp))
                 break;
             /* stepped on a squeaky board */
             if (in_sight) {
@@ -1837,8 +1837,8 @@ mintrap(struct monst *mtmp)
             break;
 
         case BEAR_TRAP:
-            if (mptr->msize > MZ_SMALL && !amorphous(mptr) && !is_flyer(mptr) &&
-                !is_whirly(mptr) && !unsolid(mptr)) {
+            if (mptr->msize > MZ_SMALL && !amorphous(mptr) && !flying(mtmp) &&
+                !levitates(mtmp) && !is_whirly(mptr) && !unsolid(mptr)) {
                 mtmp->mtrapped = 1;
                 if (in_sight) {
                     pline("%s is caught in %s bear trap!", Monnam(mtmp),
@@ -1995,13 +1995,13 @@ mintrap(struct monst *mtmp)
         case PIT:
         case SPIKED_PIT:
             fallverb = "falls";
-            if (is_flyer(mptr) || is_floater(mptr) ||
+            if (flying(mtmp) || levitates(mtmp) ||
                 (mtmp->wormno && count_wsegs(mtmp) > 5) || is_clinger(mptr)) {
                 if (!inescapable)
                     break;      /* avoids trap */
                 fallverb = "is dragged";        /* sokoban pit */
             }
-            if (!passes_walls(mptr))
+            if (!phasing(mtmp))
                 mtmp->mtrapped = 1;
             if (in_sight) {
                 pline("%s %s into %s pit!", Monnam(mtmp), fallverb,
@@ -2022,7 +2022,7 @@ mintrap(struct monst *mtmp)
                            trapexplain[tt - 1]);
                 break;  /* don't activate it after all */
             }
-            if (is_flyer(mptr) || is_floater(mptr) || mptr == &mons[PM_WUMPUS]
+            if (flying(mtmp) || levitates(mtmp) || mptr == &mons[PM_WUMPUS]
                 || (mtmp->wormno && count_wsegs(mtmp) > 5) ||
                 mptr->msize >= MZ_HUGE) {
                 if (inescapable) {      /* sokoban hole */
@@ -2149,7 +2149,7 @@ mintrap(struct monst *mtmp)
             {
                 if (rn2(3))
                     break;      /* monsters usually don't set it off */
-                if (is_flyer(mptr)) {
+                if (flying(mtmp)) {
                     boolean already_seen = trap->tseen;
 
                     if (in_sight && !already_seen) {
@@ -2205,7 +2205,7 @@ mintrap(struct monst *mtmp)
             break;
 
         case ROLLING_BOULDER_TRAP:
-            if (!is_flyer(mptr)) {
+            if (!flying(mtmp) && !levitates(mtmp)) {
                 int style = ROLL | (in_sight ? 0 : LAUNCH_UNSEEN);
 
                 if (lev == level)
@@ -2343,7 +2343,7 @@ float_up(void)
         pline("You gain control over your movements.");
     else
         pline("You start to float in the air!");
-    if (u.usteed && !is_floater(u.usteed->data) && !is_flyer(u.usteed->data)) {
+    if (u.usteed && !levitates(u.usteed) && !flying(u.usteed)) {
         if (Lev_at_will)
             pline("%s magically floats up!", Monnam(u.usteed));
         else {
@@ -3024,7 +3024,7 @@ drown(void)
         return FALSE;
     }
     /* TODO: Isn't this u_helpless check backwards? */
-    if ((Teleportation || can_teleport(youmonst.data)) &&
+    if ((Teleportation) &&
         u_helpless(hm_unconscious) && (Teleport_control || rn2(3) < Luck + 2)) {
         pline("You attempt a teleport spell."); /* utcsri!carroll */
         if (!level->flags.noteleport) {
@@ -3902,7 +3902,6 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                     dmg = 0;
                 } else
                     dmg = dice(4, 4);
-                destroy_item(RING_CLASS, AD_ELEC);
                 destroy_item(WAND_CLASS, AD_ELEC);
                 if (dmg)
                     losehp(dmg, killer_msg(DIED, "an electric shock"));

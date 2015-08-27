@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-24 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -351,11 +351,18 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         wake = FALSE;
         reveal_invis = TRUE;
         probe_monster(mtmp);
+        if (wandlevel >= P_SKILLED)
+            enlighten_mon(mtmp, 0);
         known = TRUE;
         break;
     case WAN_OPENING:
     case SPE_KNOCK:
         wake = FALSE;   /* don't want immediate counterattack */
+        if (mtmp->mspells != 1)
+            pline("not used");
+        else
+            pline("used");
+        mtmp->mspells = 1; /* TEMPORARY */
         if (Engulfed && mtmp == u.ustuck) {
             if (is_animal(mtmp->data)) {
                 if (Blind)
@@ -2120,7 +2127,6 @@ zapyourself(struct obj *obj, boolean ordinary)
             ugolemeffects(AD_ELEC, dice(12, 6));
         }
         destroy_item(WAND_CLASS, AD_ELEC);
-        destroy_item(RING_CLASS, AD_ELEC);
         if (!resists_blnd(&youmonst)) {
             pline(blinded_by_the_flash);
             make_blinded((long)rnd(100), FALSE);
@@ -3155,6 +3161,8 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp, int rayleve
     case ZT_FIRE:
         if (resists_fire(mon)) {
             sho_shieldeff = TRUE;
+            if (oseen)
+                pline("%s seems unharmed.", Monnam(mon));
             break;
         }
         tmp = dice(nd, 6);
@@ -3175,6 +3183,8 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp, int rayleve
     case ZT_COLD:
         if (resists_cold(mon)) {
             sho_shieldeff = TRUE;
+            if (oseen)
+                pline("%s seems unharmed.", Monnam(mon));
             break;
         }
         tmp = dice(nd, 6);
@@ -3204,7 +3214,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp, int rayleve
                     if (resists_drli(mon) || raylevel <= P_SKILLED) {
                         sho_shieldeff = TRUE;
                         if (oseen)
-                            pline("%s seem unaffected.", Monnam(mon));
+                            pline("%s seems unaffected.", Monnam(mon));
                     } else {
                         tmp = dice(2, 6);
                         if (oseen)
@@ -3269,6 +3279,8 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp, int rayleve
     case ZT_LIGHTNING:
         if (resists_elec(mon)) {
             sho_shieldeff = TRUE;
+            if (oseen)
+                pline("%s seems unharmed.", Monnam(mon));
             tmp = 0;
             /* can still blind the monster */
         } else
@@ -3287,13 +3299,12 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp, int rayleve
         }
         if (!rn2(3))
             destroy_mitem(mon, WAND_CLASS, AD_ELEC);
-        /* not actually possible yet */
-        if (!rn2(3))
-            destroy_mitem(mon, RING_CLASS, AD_ELEC);
         break;
     case ZT_POISON_GAS:
         if (resists_poison(mon)) {
             sho_shieldeff = TRUE;
+            if (oseen)
+                pline("%s seems unharmed.", Monnam(mon));
             break;
         }
         tmp = dice(nd, 6);
@@ -3301,6 +3312,8 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp, int rayleve
     case ZT_ACID:
         if (resists_acid(mon)) {
             sho_shieldeff = TRUE;
+            if (oseen)
+                pline("%s seems unharmed.", Monnam(mon));
             break;
         }
         tmp = dice(nd, 6);
@@ -3317,6 +3330,8 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp, int rayleve
     if (tmp > 0 && type >= 0 &&
         resist(mon, type < ZT_SPELL(0) ? WAND_CLASS : '\0', 0, NOTELL))
         tmp /= 2;
+    if (half_spell_dam(mon))
+        tmp = (tmp + 1) / 2;
     if (tmp < 0)
         tmp = 0;        /* don't allow negative damage */
     if (raylevel == P_UNSKILLED && tmp > ((mon->mhpmax * 40) / 100))
@@ -3446,8 +3461,6 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy, int raylevel)
         if (raylevel != P_UNSKILLED) {
             if (!rn2(3))
                 destroy_item(WAND_CLASS, AD_ELEC);
-            if (!rn2(3))
-                destroy_item(RING_CLASS, AD_ELEC);
         }
         break;
     case ZT_POISON_GAS:
@@ -3647,9 +3660,10 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                 mon->mstrategy &= ~STRAT_WAITMASK;
         buzzmonst:
             if (zap_hit_check(find_mac(mon), spell_type)) {
+                if (cansee(mon->mx, mon->my))
+                    hit(fltxt, mon, "!");
                 if (mon_reflects(mon, NULL)) {
                     if (cansee(mon->mx, mon->my)) {
-                        hit(fltxt, mon, exclam(0));
                         shieldeff(mon->mx, mon->my);
                         if (raylevel >= P_SKILLED)
                             mon_reflects(mon, "But it is disrupted by %s %s!");
@@ -3673,7 +3687,6 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                     if (is_rider(mon->data) &&
                         abs(type) == ZT_BREATH(ZT_DEATH)) {
                         if (canseemon(mon)) {
-                            hit(fltxt, mon, ".");
                             pline("%s disintegrates.", Monnam(mon));
                             pline("%s body reintegrates before your %s!",
                                   s_suffix(Monnam(mon)),
@@ -3687,7 +3700,6 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                     }
                     if (mon->data == &mons[PM_DEATH] && abstype == ZT_DEATH) {
                         if (canseemon(mon)) {
-                            hit(fltxt, mon, ".");
                             pline("%s absorbs the deadly %s!", Monnam(mon),
                                   type ==
                                   ZT_BREATH(ZT_DEATH) ? "blast" : "ray");
@@ -3702,8 +3714,6 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                         if (canseemon(mon)) {
                             if (!m_amulet)
                                 pline("%s is disintegrated!", Monnam(mon));
-                            else
-                                hit(fltxt, mon, "!");
                         }
 
 /* note: worn amulet of life saving must be preserved in order to operate */
@@ -3735,10 +3745,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                         else
                             killed(mon);
                     } else {
-                        if (!otmp) {
-                            /* normal non-fatal hit */
-                            hit(fltxt, mon, exclam(tmp));
-                        } else {
+                        if (otmp) {
                             int dummy;
                             /* some armor was destroyed; no damage done */
                             if (canseemon(mon))
@@ -3755,7 +3762,8 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                 }
                 range -= 2;
             } else {
-                miss(fltxt, mon);
+                if (cansee(mon->mx, mon->my))
+                    miss(fltxt, mon);
             }
         } else if (sx == u.ux && sy == u.uy && range >= 0) {
             action_interrupted();
@@ -4021,7 +4029,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
                 /* probably ought to do some hefty damage to any non-ice
                    creature caught in freezing water; at a minimum, eels are
                    forced out of hiding */
-                if (is_swimmer(mon->data) && mon->mundetected) {
+                if (swims(mon) && mon->mundetected) {
                     mon->mundetected = 0;
                     newsym(x, y);
                 }
@@ -4171,7 +4179,6 @@ struct destroy_message destroy_messages[num_destroy_msgs] = {
     {"boils and explodes", "boil and explode", "boiling potion"},
     {"catches fire and burns", "catch fire and burn", "burning scroll"},
     {"catches fire and burns", "catch fire and burn", "burning book"},
-    {"turns to dust and vanishes", "turn to dust and vanish", ""},
     {"breaks apart and explodes", "break apart and explode", "exploding wand"},
 };
 
@@ -4239,14 +4246,6 @@ destroy_item(int osym, int dmgtyp)
             xresist = (Shock_resistance && obj->oclass != RING_CLASS);
             quan = obj->quan;
             switch (osym) {
-            case RING_CLASS:
-                if (obj->otyp == RIN_SHOCK_RESISTANCE) {
-                    skip++;
-                    break;
-                }
-                dindx = destroy_msg_ring_elec;
-                dmg = 0;
-                break;
             case WAND_CLASS:
                 if (obj->otyp == WAN_LIGHTNING) {
                     skip++;
@@ -4375,13 +4374,6 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
         case AD_ELEC:
             quan = obj->quan;
             switch (osym) {
-            case RING_CLASS:
-                if (obj->otyp == RIN_SHOCK_RESISTANCE) {
-                    skip++;
-                    break;
-                }
-                dindx = destroy_msg_ring_elec;
-                break;
             case WAND_CLASS:
                 if (obj->otyp == WAN_LIGHTNING) {
                     skip++;
@@ -4547,21 +4539,19 @@ getwandlevel(struct monst *user, struct obj *obj) {
     int wandlevel;
     if (user == &youmonst) {
         wandlevel = P_SKILL(P_WANDS);
-        if (wandlevel) /* restricted users would return a 0 already */
-            wandlevel--;
+        if (!wandlevel) /* restricted users would return a 0 */
+            wandlevel++;
     } else
         wandlevel = mprof(user, MP_WANDS);
 
-    /* wandlevel is 0-5 depending on skill + BUC combination
-       note that since mprof() returns 0, increase if noncursed,
-       and again if blessed */
+    /* wandlevel is 0-5 depending on skill + BUC combination */
     if (!obj || obj->oclass != WAND_CLASS) {
         impossible("getwandlevel() with no wand obj?");
         return 0;
     }
-    if (!obj->cursed)
-        wandlevel++;
-    if (obj->blessed)
+    if (obj->cursed)
+        wandlevel--;
+    else if (obj->blessed)
         wandlevel++;
     return wandlevel;
 }

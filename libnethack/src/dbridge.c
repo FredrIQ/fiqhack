@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -347,17 +347,15 @@ e_survives_at(struct entity *etmp, int x, int y)
     if (noncorporeal(etmp->edata))
         return TRUE;
     if (is_pool(level, x, y))
-        return (boolean) ((is_u(etmp) &&
-                           (Wwalking || Amphibious || Swimming || Flying ||
-                            Levitation)) || is_swimmer(etmp->edata) ||
-                          is_flyer(etmp->edata) || is_floater(etmp->edata));
+        return (boolean) (waterwalks(etmp->emon) || unbreathing(etmp->emon) ||
+                          swims(etmp->emon) || flying(etmp->emon) ||
+                          levitates(etmp->emon));
     /* must force call to lava_effects in e_died if is_u */
     if (is_lava(level, x, y))
-        return (boolean) ((is_u(etmp) && (Levitation || Flying)) ||
-                          likes_lava(etmp->edata) || is_flyer(etmp->edata));
+        return (boolean) (likes_lava(etmp->edata) || flying(etmp->emon) ||
+                          levitates(etmp->emon));
     if (is_db_wall(x, y))
-        return ((boolean)
-                (is_u(etmp) ? Passes_walls : passes_walls(etmp->edata)));
+        return !!phasing(etmp->emon);
     return TRUE;
 }
 
@@ -417,7 +415,7 @@ e_died(struct entity *etmp, int dest, int how, const char *killer)
 static boolean
 automiss(struct entity *etmp)
 {
-    return (boolean) ((is_u(etmp) ? Passes_walls : passes_walls(etmp->edata)) ||
+    return (boolean) (phasing(etmp->emon) ||
                       noncorporeal(etmp->edata));
 }
 
@@ -432,12 +430,12 @@ e_missed(struct entity *etmp, boolean chunks)
     if (automiss(etmp))
         return TRUE;
 
-    if (is_flyer(etmp->edata) &&
+    if (flying(etmp->emon) &&
         (is_u(etmp) ? !Sleeping
          : (etmp->emon->mcanmove && !etmp->emon->msleeping)))
         /* flying requires mobility */
         misses = 5;     /* out of 8 */
-    else if (is_floater(etmp->edata) || (is_u(etmp) && Levitation))
+    else if (levitates(etmp->emon) || (is_u(etmp) && Levitation))
         /* doesn't require mobility */
         misses = 3;
     else if (chunks && is_pool(level, etmp->ex, etmp->ey))
@@ -612,7 +610,7 @@ do_entity(struct entity *etmp)
         if (is_pool(level, etmp->ex, etmp->ey) && !e_inview)
             You_hear("a splash.");
         if (e_survives_at(etmp, etmp->ex, etmp->ey)) {
-            if (e_inview && !is_flyer(etmp->edata) && !is_floater(etmp->edata))
+            if (e_inview && !flying(etmp->emon) && !levitates(etmp->emon))
                 pline("%s from the bridge.", E_phrase(etmp, "fall"));
             return;
         }

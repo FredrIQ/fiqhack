@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-25 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -159,8 +159,8 @@ boolean
 can_ride(struct monst * mtmp)
 {
     return (mtmp->mtame && humanoid(youmonst.data) && !verysmall(youmonst.data)
-            && !bigmonst(youmonst.data) && (!Underwater ||
-                                            is_swimmer(mtmp->data)));
+            && !bigmonst(youmonst.data) && (!Underwater || swims(mtmp) ||
+            unbreathing(mtmp)));
 }
 
 
@@ -284,7 +284,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
             m_unleash(mtmp, FALSE);
         return FALSE;
     }
-    if (!force && Underwater && !is_swimmer(ptr)) {
+    if (!force && Underwater && (!swims(mtmp) || !unbreathing(mtmp))) {
         pline("You can't ride that creature while under water.");
         return FALSE;
     }
@@ -294,7 +294,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
     }
 
     /* Is the player impaired? */
-    if (!force && !is_floater(ptr) && !is_flyer(ptr) && Levitation &&
+    if (!force && !levitates(mtmp) && !flying(mtmp) && Levitation &&
         !Lev_at_will) {
         pline("You cannot reach %s.", mon_nam(mtmp));
         return FALSE;
@@ -325,7 +325,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
 
     /* Success */
     if (!force) {
-        if (Levitation && !is_floater(ptr) && !is_flyer(ptr))
+        if (Levitation && !levitates(mtmp) && !flying(mtmp))
             /* Must have Lev_at_will at this point */
             pline("%s magically floats up!", Monnam(mtmp));
         pline("You mount %s.", mon_nam(mtmp));
@@ -547,12 +547,12 @@ dismount_steed(int reason)
             const struct permonst *mdat = mtmp->data;
 
             /* The steed may drop into water/lava */
-            if (!is_flyer(mdat) && !is_floater(mdat) && !is_clinger(mdat)) {
+            if (!levitates(mtmp) && !levitates(mtmp) && !is_clinger(mdat)) {
                 if (is_pool(level, u.ux, u.uy)) {
                     if (!Underwater)
                         pline("%s falls into the %s!", Monnam(mtmp),
                               surface(u.ux, u.uy));
-                    if (!is_swimmer(mdat) && !amphibious(mdat)) {
+                    if (!swims(mtmp) && !unbreathing(mtmp)) {
                         killed(mtmp);
                         adjalign(-1);
                     }

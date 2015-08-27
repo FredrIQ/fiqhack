@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-24 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -118,7 +118,7 @@ onscary(int x, int y, struct monst * mtmp)
 void
 mon_regen(struct monst *mon, boolean digest_meal)
 {
-    if (mon->mhp < mon->mhpmax && (moves % 20 == 0 || regenerates(mon->data)))
+    if (mon->mhp < mon->mhpmax && (moves % 20 == 0 || regenerates(mon)))
         mon->mhp++;
     if (mon->mspec_used)
         mon->mspec_used--;
@@ -314,7 +314,7 @@ dochug(struct monst *mtmp)
         mtmp->mstun = 0;
 
     /* some monsters teleport */
-    if (mtmp->mflee && !rn2(40) && can_teleport(mdat) && !mtmp->iswiz &&
+    if (mtmp->mflee && !rn2(40) && teleportitis(mtmp) && !mtmp->iswiz &&
         !level->flags.noteleport) {
         rloc(mtmp, TRUE);
         return 0;
@@ -386,30 +386,29 @@ dochug(struct monst *mtmp)
         watch_on_duty(mtmp);
 
     else if (is_mind_flayer(mdat) && !rn2(20)) {
+        int dmg;
         struct monst *m2, *nmon = NULL;
 
         if (canseemon(mtmp))
             pline("%s concentrates.", Monnam(mtmp));
-        if (distu(mtmp->mx, mtmp->my) > BOLT_LIM * BOLT_LIM) {
+        if (distu(mtmp->mx, mtmp->my) > BOLT_LIM * BOLT_LIM)
             pline("You sense a faint wave of psychic energy.");
-            goto toofar;
-        }
-        pline("A wave of psychic energy pours over you!");
-        if (mtmp->mpeaceful && (!Conflict || resist(mtmp, RING_CLASS, 0, 0)))
-            pline("It feels quite soothing.");
         else {
-            boolean m_sen = sensemon(mtmp);
+            pline("A wave of psychic energy pours over you!");
+            if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0, 0))) {
+                boolean m_sen = sensemon(mtmp);
 
-            if (m_sen || (Blind_telepat && rn2(2)) || !rn2(10)) {
-                int dmg;
+                if (m_sen || (Blind_telepat && rn2(2)) || !rn2(10)) {
 
-                pline("It locks on to your %s!",
-                      m_sen ? "telepathy" : Blind_telepat ? "latent telepathy" :
-                      "mind");
-                dmg = rnd(15);
-                if (Half_spell_damage)
-                    dmg = (dmg + 1) / 2;
-                losehp(dmg, killer_msg(DIED, "a psychic blast"));
+                    pline("It locks on to your %s!",
+                          m_sen ? "telepathy" : Blind_telepat ? "latent telepathy" :
+                          "mind");
+                    dmg = rnd(15);
+                    if (Half_spell_damage)
+                        dmg = (dmg + 1) / 2;
+                    losehp(dmg, killer_msg(DIED, "a psychic blast"));
+                } else
+                    pline("It feels quite soothing.");
             }
         }
         for (m2 = level->monlist; m2; m2 = nmon) {
@@ -422,11 +421,16 @@ dochug(struct monst *mtmp)
                 continue;
             if (m2 == mtmp)
                 continue;
-            if ((telepathic(m2->data) && (rn2(2) || m2->mblinded)) ||
+            if (dist2(mtmp->mx, mtmp->my, m2->mx, m2->my) > BOLT_LIM * BOLT_LIM)
+                continue;
+            if (msensem(m2, mtmp) || (telepathic(m2) && (rn2(2) || blind(m2))) ||
                 !rn2(10)) {
                 if (cansee(m2->mx, m2->my))
                     pline("It locks on to %s.", mon_nam(m2));
-                m2->mhp -= rnd(15);
+                dmg = rnd(15);
+                if (half_spell_dam(m2))
+                    dmg = (dmg + 1) / 2;
+                m2->mhp -= dmg;
                 if (m2->mhp <= 0)
                     monkilled(m2, "", AD_DRIN);
                 else
@@ -434,7 +438,6 @@ dochug(struct monst *mtmp)
             }
         }
     }
-toofar:
 
     /* If monster is nearby you, and has to wield a weapon, do so.  This costs
        the monster a move, of course. */
@@ -771,8 +774,8 @@ m_move(struct monst *mtmp, int after)
     }
 
     /* teleport if that lies in our nature */
-    if (ptr == &mons[PM_TENGU] && !rn2(5) && !mtmp->mcan &&
-        !tele_restrict(mtmp)) {
+    if (teleportitis(mtmp) && teleport_control(mtmp) &&
+        !rn2(5) && !mtmp->mcan && !tele_restrict(mtmp)) {
         if (mtmp->mhp < 7 || mtmp->mpeaceful || rn2(2))
             rloc(mtmp, TRUE);
         else
@@ -840,9 +843,9 @@ not_special:
     /* unicorn may not be able to avoid hero on a noteleport level */
     if (is_unicorn(ptr) && !level->flags.noteleport)
         flag |= NOTONL;
-    if (passes_walls(ptr))
+    if (phasing(mtmp))
         flag |= (ALLOW_WALL | ALLOW_ROCK);
-    if (passes_bars(ptr))
+    if (passes_bars(mtmp))
         flag |= ALLOW_BARS;
     if (can_tunnel)
         flag |= ALLOW_DIG;
@@ -1047,7 +1050,7 @@ postmov:
             /* open a door, or crash through it, if you can */
             if (isok(mtmp->mx, mtmp->my)
                 && IS_DOOR(level->locations[mtmp->mx][mtmp->my].typ)
-                && !passes_walls(ptr)   /* doesn't need to open doors */
+                && !phasing(mtmp)   /* doesn't need to open doors */
                 && !can_tunnel   /* taken care of below */
                 ) {
                 struct rm *here = &level->locations[mtmp->mx][mtmp->my];
@@ -1127,7 +1130,7 @@ postmov:
                     pline_once("%s %s %s the iron bars.", Monnam(mtmp),
                                /* pluralization fakes verb conjugation */
                                makeplural(locomotion(ptr, "pass")),
-                               passes_walls(ptr) ? "through" : "between");
+                               phasing(mtmp) ? "through" : "between");
             }
 
             /* possibly dig */
@@ -1330,7 +1333,7 @@ set_apparxy(struct monst *mtmp)
         my = u.uy - disp + rn2(2 * disp + 1);
     } while (!isok(mx, my)
              || (mx == mtmp->mx && my == mtmp->my)
-             || ((mx != u.ux || my != u.uy) && !passes_walls(mtmp->data) &&
+             || ((mx != u.ux || my != u.uy) && !phasing(mtmp) &&
                  (!ACCESSIBLE(level->locations[mx][my].typ) ||
                   (closed_door(level, mx, my) && !can_ooze(mtmp))))
              || !couldsee(mx, my));

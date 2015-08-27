@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-05-19 */
+/* Last modified by FIQ, 2015-08-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -515,7 +515,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         pline("%s gazes at %s...", Monnam(magr), mon_nam(mdef));
     }
 
-    if (magr->mcan || !magr->mcansee || (magr->minvis && !perceives(mdef->data))
+    if (magr->mcan || !magr->mcansee || (magr->minvis && !see_invisible(mdef))
         || !mdef->mcansee || mdef->msleeping) {
         if (vis)
             pline("but nothing happens.");
@@ -531,7 +531,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     mon_reflects(magr, "The gaze is reflected away by %s %s.");
                 return MM_MISS;
             }
-            if (mdef->minvis && !perceives(magr->data)) {
+            if (mdef->minvis && !see_invisible(magr)) {
                 if (canseemon(magr)) {
                     pline("%s doesn't seem to notice that %s gaze was "
                           "reflected.", Monnam(magr), mhis(magr));
@@ -1463,7 +1463,7 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                 if (!rn2(4))
                     tmp = 127;
                 if (magr->mcansee && haseyes(madat) && mdef->mcansee &&
-                    (perceives(madat) || !mdef->minvis)) {
+                    (see_invisible(magr) || !mdef->minvis)) {
                     const char *buf;
                     buf = msgprintf("%s gaze is reflected by %%s %%s.",
                                     s_suffix(mon_nam(mdef)));
