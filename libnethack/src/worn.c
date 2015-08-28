@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by FIQ, 2015-08-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -563,6 +563,141 @@ outer_break:
 
 #undef RACE_EXCEPTION
 
+/* Performs equipment prechecks. If stuff needs to be taken off first,
+   it will end up removing said equipment instead of the given object. */
+unsigned
+equip(const struct monst *mon, struct obj *obj,
+               boolean on, boolean verbose)
+{
+    boolean tell = (verbose && canseemon(mon));
+    int slot = which_slot(obj);
+
+    if (!!obj->owornmask == on) /* object already on/off */
+        return 0;
+
+    /* check for stuff in the way */
+    if (is_shirt(obj) || is_suit(obj)) {
+        if (mon->misc_worn_check & W_MASK(os_armc))
+            return do_equip(mon, which_armor(mon, os_armc), FALSE, verbose);
+        else if (is_shirt(obj) && (mon->misc_worn_check & W_MASK(os_arm)))
+            return do_equip(mon, which_armor(mon, os_arm), FALSE, verbose);
+    }
+    
+    if (obj->oclass == RING_CLASS) {
+        /* For rings, normally gloves are bypassed. However, rings can't be
+           put on/off if the gloves are cursed, so we need to check for this
+           seperately */
+        if (mon->misc_worn_check & W_MASK(os_armg))) {
+            struct obj *gloves = which_armor(mon, os_armg);
+            if (gloves->cursed) {
+                if (tell)
+                    pline("%s tries to take off %s, but it is cursed.",
+                        Monnam(mon), an(xname(gloves)));
+                return 0;
+            }
+        }
+    }
+    
+    /* slot taken by something else */
+    if (mon->misc_worn_check & W_MASK(slot)) {
+        if (obj->oclass == RING_CLASS) {
+            if ((mon->misc_worn_check & W_MASK(os_ringl)) &&
+                (mon->misc_worn_check & W_MASK(os_ringr)) &&
+                on) {
+                /* Since we can't determine what ring the monster wants to
+                    unequip, code has to do that before calling equip() */
+                impossible("monster is equipping a ring, but is out of slots");
+                return 0;
+            } else
+                return do_equip(mon, obj, on, verbose);
+        } else
+            return do_equip(mon, which_armor(mon, W_MASK(slot)),
+                            FALSE, verbose);
+    }
+    
+    return do_equip(mon, obj, on, verbose);
+}
+
+unsigned
+do_equip(const struct monst *mon, struct obj *obj,
+               boolean on, boolean verbose)
+{
+    boolean tell = (verbose && canseemon(mon));
+    int prop = objects[otyp].oc_oprop;
+    int slot = which_slot(obj);
+    boolean redundant = !!(has_property(mon, prop) & ~W_MASK(slot));
+    redundant = redundant && !mworn_blocked(mon, prop);
+    if (!on && obj->cursed) {
+        if (tell)
+            pline("%s tries to take off %s, but it is cursed.",
+                    Monnam(mon), an(xname(gloves)));
+        return 0;
+    }
+    if (!on) {
+        if (tell)
+            pline("%s takes off %s.", Monnam(mon), an(xname(obj)));
+        mon->misc_worn_check &= obj->owornmask;
+        obj->owornmask = 0L;
+    } else {
+        if (obj->oclass == RING_CLASS) {
+            if (mon->misc_worn_check & W_MASK(os_ringl)
+                obj->owornmask = W_MASK(os_ringr);
+            else
+                obj->owornmask = W_MASK(os_ringl);
+        } else
+            obj->owornmask = W_MASK(slot);
+        if (tell)
+            pline("%s puts on %s.", Monnam(mon), an(xname(obj)));
+        mon->misc_worn_check |= obj->owornmask;
+    }
+    if (!redundant) {
+        if (update_property(mon, prop))
+            makeknown(obj->otyp);
+        if (!mon->mhp) /* died (lost a critical property) */
+            return 2;
+    }
+
+    if (uwep && !uarmg && uwep->otyp == CORPSE &&
+        touch_petrifies(&mons[uwep->corpsenm])) {
+    if (!on && slot == os_armg && mon->mw && mon->mw->otyp == CORPSE &&
+        touch_petrifies(&mons[mon->mw->corpsenm]) &&
+        !resists_ston(mon)) {
+        if (tell)
+            pline("%s wields the %s in %s bare 
+    
+    mon->mfrozen += objects[obj->otyp].oc_delay;
+    if (mon->mfrozen)
+        mon->mcanmove = 0;
+    
+}
+
+/* What kind of slot this item goes into */
+unsigned
+which_slot(struct obj *obj)
+{
+    if (is_suit(otmp))
+        slot = os_arm;
+    else if (is_cloak(otmp))
+        slot = os_armc;
+    else if (is_helmet(otmp))
+        slot = os_armh;
+    else if (is_shield(otmp))
+        slot = os_arms;
+    else if (is_gloves(otmp))
+        slot = os_armg;
+    else if (is_boots(otmp))
+        slot = os_armf;
+    else if (is_shirt(otmp))
+        slot = os_armu;
+    else if (otmp->oclass == AMULET_CLASS)
+        slot = os_amul;
+    else if (otmp->oclass == RING_CLASS || otmp->otyp == MEAT_RING)
+        slot = (os_ringl | os_ringr);
+    else if (otmp->otyp == BLINDFOLD || otmp->otyp == LENSES ||
+             otmp->otyp == TOWEL)
+        slot = os_tool;
+    return slot;
+}
 /* The centralised function for finding equipment; given an equipment slot,
    finds worn armor in that slot for the player (mon == &youmonst) or a
    monster. */
@@ -640,7 +775,7 @@ mon_break_armor(struct monst *mon, boolean polyspot)
     struct obj *otmp;
     const struct permonst *mdat = mon->data;
     boolean show_msg = (lev == level);
-    boolean vis = (lev == level && cansee(mon->mx, mon->my));
+    boolean vis = (lev == level && canseemon(mon));
     boolean handless_or_tiny = (nohands(mdat) || verysmall(mdat));
     const char *pronoun = vis ? mhim(mon) : NULL,
         *ppronoun = vis ? mhis(mon) : NULL;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-08-28 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -156,7 +156,7 @@ m_has_property(const struct monst *mon, enum youprop property,
    for the uncontrolled levitation or 0 if it is, in fact,
    controlled (or non-existent). */
 unsigned
-levitates_at_will(const struct monst *mon, boolean include_extrinsic,
+levitating_at_will(const struct monst *mon, boolean include_extrinsic,
     boolean why)
 {
     unsigned lev = levitates(mon);
@@ -190,6 +190,80 @@ levitates_at_will(const struct monst *mon, boolean include_extrinsic,
     }
     
     return lev;
+}
+
+/* Used when monsters need to abort levitation for some reason.
+   (0=no turn spent, 1=turn spent, 2=died) */
+unsigned
+mon_remove_levitation(struct monst *mon, boolean forced)
+{
+    unsigned lev_source = levitating_at_will(mon, TRUE, FALSE);
+    if (!lev_source) {
+        lev_source = levitates(mon)
+        if (!forced)
+            return 0;
+    }
+
+    /* equavilent to cancelling levi with > as player */
+    if (lev_source & FROMOUTSIDE) {
+        unsigned survived = set_mon_intrinsic(mon, LEVITATION, -2, !forced);
+        lev_source = levitates(mon)
+        if (!forced)
+            return survived;
+    }
+
+    /* monster levitation comes from an extrinsic */
+    struct obj *chain = m_minvent(mon);
+    int warntype;
+    long itemtype;
+    int slot;
+    boolean dropped; /* Monsters can drop several items in a single turn,
+                        but if it drops any items, it can't do stuff
+                        beyond that */
+    while (chain) {
+        itemtype = item_provides_extrinsic(chain, LEVITATION, &warntype);
+        if (itemtype) {
+            if (chain->owornmask && (!dropped || forced)) {
+                slot = chain->owornmask;
+                if (forced)
+                    chain->owornmask = 0;
+                    mon->misc_worn_check &= W_MASK(slot);
+                else
+                    return equip(mon, chain, FALSE, TRUE);
+            } if (itemtype == W_MASK(os_carried)) {
+                if (forced)
+                    mdrop_obj(mon, chain, FALSE);
+                else if (chain->otyp == LOADSTONE && chain->cursed)
+                    return 0;
+                else {
+                    mdrop_obj(mon, chain, TRUE);
+                    dropped = TRUE;
+                }
+            }
+        }
+        chain = chain->nobj;
+    }
+    
+    if (!forced || levitates(mon)) {
+        /* at this point, only polyform levitation is left */
+        if (forced) {
+            if (cansee(mon->mx, mon->my))
+                pline("%s wobbles unsteadily for a moment.", Monnam(mon));
+        }
+        return dropped ? 1 : 0;
+    }
+    
+    if (cansee(mon->mx, mon->my))
+        pline("%s crashes to the floor!", Monnam(mon));
+    
+    mon->mhp -= rn1(8, 14); /* same as for player with 11 Con */
+    if (mon->mhp < 0) {
+        if (cansee(mon->mx, mon->my))
+            pline("%s dies!", Monnam(mon));
+        else if (mon->mtame)
+            pline("You have a sad feeling for a moment, then it passes.");
+        mondied(mon);
+    }
 }
 
 unsigned
@@ -705,7 +779,7 @@ enlighten_mon(struct monst *mon, int final)
     }
     if (teleport_control(mon))
         mon_has(&menu, mon, "teleport control");
-    if (levitates_at_will(mon, FALSE, FALSE))
+    if (levitating_at_will(mon, FALSE, FALSE))
         mon_is(&menu, mon, "levitating, at will");
     else if (levitates(mon))
         mon_is(&menu, mon, "levitating");   /* without control */

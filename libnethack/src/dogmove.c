@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-08-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -903,10 +903,13 @@ dog_move(struct monst *mtmp, int after)
         /* (minion isn't interested; `cursemsg' stays FALSE) */
         if (has_edog)
             for (obj = level->objects[nx][ny]; obj; obj = obj->nexthere) {
-                if (obj->cursed)
+                /* levitating monsters will not touch the cursed object */
+                if (obj->cursed && !levitates(mtmp))
                     cursemsg[i] = TRUE;
                 else if ((otyp = dogfood(mtmp, obj)) < MANFOOD &&
-                         (otyp < ACCFOOD || edog->hungrytime <= moves)) {
+                         (otyp < ACCFOOD || edog->hungrytime <= moves) &&
+                         (!levitates(mtmp) ||
+                         levitating_at_will(mtmp, TRUE, FALSE))) {
                     /* Note: our dog likes the food so much that he might eat
                        it even when it conceals a cursed object */
                     nix = nx;
@@ -976,6 +979,12 @@ newdogpos:
            moving it, but it can't eat until after being moved.  Thus the
            do_eat flag. */
         if (do_eat) {
+            if (levitates(mtmp)) {
+                if (levitating_at_will(mtmp, TRUE, FALSE))
+                    mon_remove_levi(mtmp);
+                else
+                    impossible("do_eat with uncontrolled levitation?");
+                return 2;
             if (dog_eat(mtmp, obj, omx, omy, FALSE) == 2)
                 return 2;
         }
