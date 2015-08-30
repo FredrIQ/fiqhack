@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Fredrik Ljungdahl, 2015-08-30 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -79,12 +79,22 @@
    the M3_SCENT flag. TODO: make stinking clouds block this. */
 # define MSENSE_SCENT         0x00000200u
 
+/* Cooperative telepathy. Friendly monsters reveal themselves to each other
+   with telepathy. If one has telepathy, that one's telepathy determines how
+   easily they sense each other. If both has, they can be seen everywhere */
+# define MSENSE_TEAMTELEPATHY 0x00000400u
 
-# define MSENSE_ANYVISION     (MSENSE_VISION | MSENSE_INFRAVISION |  \
+/* Aggravate monster. If a monster has the aggravate monster property,
+   every monster on the level can sense it everywhere */
+# define MSENSE_AGGRAVATE     0x00000800u
+
+
+# define MSENSE_ANYVISION     (MSENSE_VISION | MSENSE_INFRAVISION |     \
                                MSENSE_SEEINVIS | MSENSE_XRAY)
-# define MSENSE_ANYDETECT     (MSENSE_TELEPATHY | MSENSE_MONDETECT | \
-                               MSENSE_WARNOFMON | MSENSE_COVETOUS |  \
-                               MSENSE_GOLDSMELL | MSENSE_SCENT)
+# define MSENSE_ANYDETECT     (MSENSE_TELEPATHY | MSENSE_MONDETECT |    \
+                               MSENSE_WARNOFMON | MSENSE_COVETOUS |     \
+                               MSENSE_GOLDSMELL | MSENSE_SCENT |        \
+                               MSENSE_TEAMTELEPATHY | MSENSE_AGGRAVATE)
 
 /* Flags that alert us to a monster's existence, but not full details. */
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-08-30 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -206,7 +206,7 @@ mon_remove_levitation(struct monst *mon, boolean forced)
 
     /* equavilent to cancelling levi with > as player */
     if (lev_source & FROMOUTSIDE) {
-        unsigned survived = set_mon_intrinsic(mon, LEVITATION, -2, !forced);
+        unsigned survived = set_property(mon, LEVITATION, -2, !forced);
         lev_source = levitates(mon)
         if (!forced)
             return survived;
@@ -266,6 +266,527 @@ mon_remove_levitation(struct monst *mon, boolean forced)
     }
 }
 
+/* Called to give any eventual messages and perform checks in case
+   e.g. mon lost levitation (drowning), stone res (wielding trice).
+   Currently only in use for monsters.
+   TODO: some of the status problem message logic is a mess, fix it */
+boolean
+update_property(struct monst *mon, enum youprop prop,
+                enum objslot slot)
+{
+    boolean vis = canseemon(mon);
+    /* Used when the updating is related to monster invisibility
+       since canseemon() wont work if the monster just turned
+       itself invisible */
+    boolean vis_invis = cansee(mon->mx, mon->my);
+    boolean extrinsic = (slot <= os_last_slot);
+    boolean lost = !(has_property(mon, prop) & W_MASK(slot));
+    if (slot == os_newtimeout)
+        lost = FALSE;
+    /* Whether or not a monster has it elsewhere */
+    boolean redundant = (has_property(mon, prop) & ~W_MASK(slot));
+    /* Hallu checks *your* hallucination since it's used for special
+       messages */
+    boolean hallu = hallucinating(&youmonst);
+    boolean you = (mon == &youmonst);
+    /* if something was said about the situation */
+    boolean effect = FALSE;
+    const char *you_feel;
+
+    switch (prop) {
+    case FIRE_RES:
+        if (!extrinsic && you) {
+            pline(lost ? "You feel warmer." :
+                  hallu ? "You be chillin'." :
+                  "You feel a momentary chill.");
+            effect = TRUE;
+        }
+        /* BUG: shouldn't there be a check for lava here?
+        if (lost && !redundant) {
+        } */
+        break;
+    case COLD_RES:
+        if (!extrinsic && you) {
+            pline(lost ? "You feel cooler." :
+                  "You feel full of hot air.");
+            effect = TRUE;
+        }
+        break;
+    case SLEEP_RES:
+        if (!extrinsic && you) {
+            pline(lost ? "You feel tired!" :
+                  "You feel wide awake.");
+            effect = TRUE;
+        }
+        break;
+    case DISINT_RES:
+        if (!extrinsic && you) {
+            pline(lost ? "You feel less firm." :
+                  hallu ? "You feel totally together, man." :
+                  "You feel very firm.");
+            effect = TRUE;
+        }
+        break;
+    case SHOCK_RES:
+        if (!extrinsic && you) {
+            pline(lost ? "You feel conductive." :
+                  hallu ? "You feel grounded in reality." :
+                  "Your health currently feels amplified!");
+            effect = TRUE;
+        }
+        break;
+    case POISON_RES:
+        if (!extrinsic && you) {
+            pline(lost ? "You feel a little sick!" :
+                  mworn_extrinsic(mon, prop) ?
+                  "You feel especially healthy." :
+                  "You feel healthy.");
+            effect = TRUE;
+        }
+        break;
+    case ACID_RES:
+        break;
+    case STONE_RES:
+        struct obj *weapon = m_mwep(mon);
+        if (lost && !redundant && weapon &&
+            weapon->otyp == CORPSE &&
+            touch_petrifies(&mons[weapon->corpsenm])) {
+            const char *buf;
+            if (!you)
+                mselftouch(mon, "No longer petrify-resistant, ",
+                           !flags.mon_moving);
+            else
+                const char *kbuf;
+                kbuf = msgprintf("losing stone resistance while wielding",
+                                 urace.adj);
+                selftouch("No longer petrify-resistant, you", kbuf);
+            if (!resists_ston(mon)) { /* lifesaved */
+                if (!you) {
+                    setmnotwielded(mon, mw_tmp);
+                    MON_NOWEP(mon);
+                } else
+                    uwepgone();
+            }
+            if (you || vis)
+                effect = TRUE;
+        }
+        break;
+    case ADORNED:
+    case REGENERATION:
+    case SEARCHING:
+        break;
+    case SEE_INVIS:
+        if (you) {
+            if (!extrinsic && lost) {
+                pline(hallu ? "You tawt you taw a puttie tat!" :
+                      "You thought you saw something!");
+                effect = TRUE;
+            }
+            set_mimic_blocking();       /* do special mimic handling */
+            see_monsters(FALSE);        /* see invisible monsters */
+            newsym(u.ux, u.uy);         /* see yourself! */
+            if (!redundant && invisible(mon)) {
+                pline(lost ? "Your body seems to fade out." :
+                      "You can see yourself, but remain transparent");
+                effect = TRUE;
+            }
+        }
+        break;
+    case INVIS:
+        if (you) {
+            if (slot == os_outside) {
+                pline(lost ? "You feel paranoid." :
+                      "You feel hidden!");
+                effect = TRUE;
+            } else if (!redundant) {
+                if (lost)
+                    pline("Your body seems to unfade...");
+                else
+                    self_invis_message();
+                effect = TRUE;
+            }
+            newsym(u.ux, u.uy);
+        } else if (!redundant && vis_invis) {
+            if (see_invisible(&youmonst)) {
+                pline(lost ? "%s body seems to unfade..." :
+                      "%s body turns transparent!",
+                      s_suffix(Monnam(mon)));
+            } else {
+                pline(lost ? "%s appears!" :
+                      "%s suddenly disappears!",
+                      Monnam(mon));
+                set_mimic_blocking();       /* do special mimic handling */
+                see_monsters(FALSE);        /* see invisible monsters */
+            }
+            effect = TRUE;
+        }
+        break;
+    case TELEPORT:
+        if (you)
+            if (!extrinsic) {
+                pline(lost ? "You feel less jumpy." :
+                      hallu ? "You feel diffuse." :
+                      "You feel very jumpy.");
+                effect = TRUE;
+            }
+            update_supernatural_abilities();
+        break;
+    case TELEPORT_CONTROL:
+        if (!extrinsic && you) {
+            pline(hallu ? "You feel centered in your personal space." :
+                  "You feel in control of yourself.");
+            effect = TRUE;
+        }
+        break;
+    case POLYMORPH:
+    case POLYMORPH_CONTROL:
+        break;
+    case LEVITATION:
+        if (!redundant) {
+            if (!lost)
+                float_up(mon);
+            else
+                float_down(mon);
+            if (vis || you)
+                effect = TRUE;
+        }
+        break;
+    case STEALTH:
+        if (you && !extrinsic && lost) {
+            pline("You feel clumsy.");
+            effect = TRUE;
+        }
+        if (slot == os_armf && !redundant &&
+            !levitates(mon) && !flying(mon)) {
+            if (you)
+                pline(lost ? "You sure are noisy." :
+                      "You walk very quietly");
+            else if (vis)
+                pline(lost ? "%s sure is noisy." :
+                      "%s walks very quietly.",
+                      Monnam(mon));
+            effect = TRUE;
+        }
+        break;
+    case AGGRAVATE_MONSTER:
+        if (you && !extrinsic && lost) {
+            pline("You feel less attractive.");
+            effect = TRUE;
+        }
+        if (!you && !redundant) {
+            you_aggravate(mon);
+            see_monsters(FALSE);
+        }
+        break;
+    case CONFLICT:
+        /* Monsters should not be causing conflict. Just
+           in case it happens anyway, alert the player. */
+        if (!you) {
+            pline(lost ? "You feel as if a conflict disappeared." :
+                  "You feel as if someone is causing conflict.");
+            effect = TRUE;
+        }
+        break;
+    case PROTECTION:
+        if (you && slot == os_armc && !lost)
+            /* kludge to auto-ID [oP */
+            effect = TRUE;
+        break;
+    case PROT_FROM_SHAPE_CHANGERS:
+        if (!redundant && lost)
+            restartcham();
+        else
+            resistcham();
+        break;
+    case WARNING:
+        if (you)
+            see_monsters(FALSE);
+        break;
+    case TELEPAT:
+        if (!extrinsic && you) {
+            pline(lost ? "Your senses fail!" :
+                  hallu ? "You feel in touch with the cosmos." :
+                  "You feel a strange mental acuity.");
+            effect = TRUE;
+        }
+        /* no harm in calling this unconditionally, and it is needed
+           in a lot of cases */
+        see_monsters(FALSE);
+        break;
+    case FAST:
+        if (slot == os_outside) {
+            if (you) {
+                if (!redundant)
+                    pline(lost ? "You slow down." :
+                          "You speed up");
+                else
+                    pline(lost ? "Your quickness feels less natural." :
+                          "Your quickness feels more natural.");
+                effect = TRUE;
+            } else if (!redundant && vis) {
+                pline(lost ? "%s slow down." :
+                      "%s speed up",
+                      Monnam(mon));
+                effect = TRUE;
+            }
+        } else {
+            /* Special case: we need to check if this speed increase is
+               redundant, but "redundant" wont be enough, because if
+               the only redundancy is from os_outside, there is still a
+               partial speed up going on. */
+            if (!(has_intrinsic(mon, FAST) &
+                (W_MASK(os_outside) | W_MASK(slot)))) {
+                /* if "redundant" is set at this point, it is pointing
+                   at intrinsic speed only */
+                if (you) {
+                    pline("You are suddenly moving %s%s",
+                          (redundant ? "" : "much "),
+                          (lost ? "slower" : "faster"));
+                    effect = TRUE;
+                } else if (vis) {
+                    pline("%s seems to be moving %s%s",
+                          Monnam(mon),
+                          (redundant ? "" : "much "),
+                          (lost ? "slower" : "faster"));
+                    effect = TRUE;
+                }
+            }
+        }
+        break;
+    case STUNNED:
+        if (you) {
+            if (redundant)
+                pline(hallu ? "You feel like wobbling some more." :
+                      "You struggle to keep your balance.");
+            else if (!lost) {
+                pline("You %s...",
+                      hallu ? "wobble" : stagger(mon->data));
+            } else
+                pline("You feel %s now.",
+                      hallu ? "less wobbly" :
+                      "a bit steadier");
+            effect = TRUE;
+        } else if (vis) {
+            if (redundant)
+                pline("%s struggles to keep %s balance.",
+                      Monnam(mon), mhis(mon));
+            else if (!lost) {
+                pline("%s %ss...",
+                      Monnam(mon), stagger(mon->data));
+            } else
+                pline("%s looks a bit steadier now.",
+                      Monnam(mon));
+            effect = TRUE;
+        }
+        break;
+    case CONFUSION:
+        if (you) {
+            if (!lost)
+                pline(hallu ? "What a trippy feeling!" :
+                      redundant ? "You are even more confused..." :
+                      "Huh, What?  Where am I?");
+            else
+                pline(hallu ? "You feel less trippy." :
+                      "You are no longer confused.");
+            effect = TRUE;
+        } else if (vis) {
+            pline(lost ? "looks less confused now." :
+                  "looks rather confused...");
+            effect = TRUE;
+        }
+    case SICK:
+        if (you) {
+            pline(redundant ? "You feel even worse." :
+                  lost ? "What a relief!" :
+                  "You feel deathly sick.");
+            effect = TRUE;
+        } else if (vis) {
+            pline(redundant ? "%s looks even worse." :
+                  lost ? "%s looks relieved." :
+                  "%s looks deathly sick.");
+            effect = TRUE;
+        }
+        break;
+    case BLINDED:
+        if (you && slot == os_tool) {
+            if (lost &&
+                m_has_property(mon, BLINDED, ANY_PROPERTY, TRUE)) {
+                pline("You can see!");
+                effect = TRUE;
+            } else if (!lost && !redundant) {
+                pline("You can't see any more.");
+                effect = TRUE;
+            } else if (lost) {
+                pline(redundant ? "You still can't see..." :
+                      "You can see again.");
+                effect = TRUE;
+            }
+            turnstate.vision_full_recalc = TRUE;
+            see_monsters(FALSE);
+        } else if (you) {
+            boolean eoto;
+            if (!redundant &&
+                m_has_property(mon, BLINDED, ANY_PROPERTY, TRUE))
+                eoto = TRUE;
+            if (redundant && !eoto) {
+                if (!lost)
+                    eyepline("itches", "itch");
+                else
+                    eyepline("twitches", "twitch");
+            } else if (eoto)
+                pline(vismsg, lost ? "dim" : "brighten",
+                      hallu ?
+                      (lost ? "happier" : "sadder") :
+                      "normal");
+            else {
+                if (lost)
+                    pline(hallu ?
+                          "Oh, bummer!  Everything is dark!  Help!" :
+                          "A cloud of darkness falls upon you.");
+                else
+                    pline(hallu ? "Far out!  A light show!" :
+                          "You can see again.");
+            }
+            effect = TRUE;
+            turnstate.vision_full_recalc = TRUE;
+            see_monsters(FALSE);
+        }
+        break;
+    case SLEEPING: /* actually restful sleep */
+    case LWOUNDED_LEGS:
+    case RWOUNDED_LEGS:
+    case STONED:
+    case STRANGLED:
+        break;
+    case HALLUC:
+        if (you) {
+            boolean grays;
+            if (!redundant &&
+                m_has_property(mon, HALLUC, ANY_PROPERTY, TRUE))
+                grays = TRUE;
+            if (lost && grays)
+                pline(vismsg, "flatten", "normal");
+            else if (lost && blind(mon))
+                eyepline("itches", "itch");
+            else if (lost)
+                pline("Everything looks SO boring now.");
+            else /* BUG[?]: no grayswandir msg for getting hallu? */
+                pline("Oh wow!  Everything %s so cosmic!",
+                      blind(mon) ? "feels" : "looks");
+            effect = TRUE;
+            see_monsters(TRUE);
+            see_objects(TRUE);
+            see_traps(TRUE);
+        } else
+            impossible("Monster got hallucination?");
+        break;
+    case HALLUC_RES:
+        if (you) {
+            see_monsters(TRUE);
+            see_objects(TRUE);
+            see_traps(TRUE);
+        }
+        break;
+    case FUMBLING:
+        break;
+    case JUMPING:
+        if (you && slot == os_armf) {
+            pline("Your %s feel %s.", makeplural(body_part(LEG)),
+                  lost ? "shorter" : "longer");
+            effect = TRUE;
+        }
+        break;
+    case WWALKING:
+        spoteffects(mon, TRUE);
+        break;
+    case HUNGER:
+        break;
+    case GLIB:
+        if (you && lost && !redundant) {
+            pline("Your %s feels less slippery",
+                  makeplural(body_part(FINGER)));
+            effect = TRUE;
+        }
+        break;
+    case REFLECTING:
+    case LIFESAVED:
+    case ANTIMAGIC:
+        break;
+    case DISPLACED:
+        if (you && !redundant) {
+            pline(lost ? "You stop shimmering" :
+                  "Your outline shimmers and shifts");
+            effect = TRUE;
+        }
+        break;
+    case CLAIRVOYANT:
+    case VOMITING:
+    case ENERGY_REGENERATION:
+    case MAGICAL_BREATHING:
+    case HALF_SPDAM:
+    case HALF_PHDAM:
+    case SICK_RES:
+    case DRAIN_RES:
+        break;
+    case WARN_UNDEAD:
+        if (you)
+            see_monsters(FALSE);
+        break;
+    case CANCELLED:
+        if (you && !redundant) {
+            pline(lost ? "Your magic returns" :
+                  "You feel devoid of magic!");
+            effect = TRUE;
+        }
+        break;
+    case FREE_ACTION:
+        break;
+    case SWIMMING:
+        spoteffects(mon, TRUE);
+        break;
+    case SLIMED:
+    case FIXED_ABIL:
+        break;
+    case FLYING:
+        spoteffects(mon, TRUE);
+        break;
+    case UNCHANGING:
+        set_property(mon, SLIMED, -2, TRUE);
+        break;
+    case PASSES_WALLS:
+    case SLOW_DIGESTION:
+    case INFRAVISION:
+        break;
+    case WARN_OF_MON:
+        if (you)
+            see_monsters(FALSE);
+        break;
+    case XRAY_VISION:
+        if (you) {
+            turnstate.vision_full_recalc = TRUE;
+            see_monsters(FALSE);
+        }
+        break;
+    case DETECT_MONSTERS:
+        if (you)
+            see_monsters(FALSE);
+        break;
+    case SLOW:
+        if (you && !redundant) {
+            pline(lost ? "Your speed returns" :
+                  "You feel abnormally slow");
+            effect = TRUE;
+        } else if (vis && !redundant) {
+            pline(lost ? "%s speeds up" :
+                  "%s slows down abnormally");
+            effect = TRUE;
+        }
+        break;
+    }
+    if (effect)
+        return TRUE;
+    return FALSE;
+}
 unsigned
 u_have_property(enum youprop property, unsigned reasons,
                 boolean even_if_blocked)
@@ -429,7 +950,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
     /* Monster detection. All that is needed (apart from same-level, which was
        checked earlier) is the property itself. */
-    if (m_has_property(viewer, DETECT_MONSTERS, ANY_PROPERTY, 0))
+    if (detects_monsters(viewer))
         sensemethod |= MSENSE_MONDETECT;
 
     /* Warning versus monster class. (Actually implemented as monster
@@ -448,6 +969,24 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        inventory. */
     if (viewer->data == &mons[PM_XORN] && money_cnt(m_minvent(viewee)))
         sensemethod |= MSENSE_GOLDSMELL;
+
+    /* Cooperative telepathy. Friendly monsters reveal themselves to each other
+       with telepathy. If one has telepathy, that one's telepathy determines how
+       easily they sense each other. If both has, they can be seen everywhere */
+    if (!mindless(viewer->data) && !m_helpless(viewer, hm_unconscious)) {
+        unsigned telepathy_reason = telepathic(viewee);
+        if ((telepathy_reason && blinded) ||
+            (telepathy_reason & (W_EQUIP | W_ARTIFACT) &&
+             distance <= BOLT_LIM * BOLT_LIM))
+            sensemethod |= MSENSE_TEAMTELEPATHY;
+        if (telepathic(viewer) && telepathic(viewee))
+            sensemethod |= MSENSE_TEAMTELEPATHY;
+    }
+
+    /* Aggravate monster. If a monster has the aggravate monster property,
+       every monster on the level can sense it everywhere */
+    if (aggravating(viewee))
+        sensemethod |= MSENSE_AGGRAVATE;
 
     /* Warning. This partial-senses monsters that are hostile to the viewer, and
        have a level of 4 or greater, and a distance of 100 or less. */

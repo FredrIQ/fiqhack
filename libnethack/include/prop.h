@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-08-30 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -85,7 +85,7 @@ enum youprop {
     DETECT_MONSTERS          = 68,
     SLOW                     = 69,
 /*  DEATH_RES                = 70, TODO */
-    LAST_PROP                = DETECT_MONSTERS,
+    LAST_PROP                = SLOW,
 };
 
 /* This enum holds all the equipment that is tracked indirectly in struct you;
@@ -136,6 +136,7 @@ enum objslot {
     os_polyform,       /* does not appear in intrinsic or extrinsic field */
     os_birthopt,       /* from a birth option / difficulty level */
     os_circumstance,   /* currently only blindness from unconciousness */
+    os_newtimeout,     /* increased timeout (for message purposes) */
 
 /* these numbers are for numerical compatibility with 3.4.3, in order to keep
    caps the same as before; do not change them without also changing the code
