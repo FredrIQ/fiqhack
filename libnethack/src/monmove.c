@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,8 +26,9 @@ mb_trapped(struct monst *mtmp)
             You_hear("a distant explosion.");
     }
     wake_nearto(mtmp->mx, mtmp->my, 7 * 7);
-    mtmp->mstun = 1;
-    mtmp->mhp -= rnd(15);
+    int dmg = rnd(15);
+    set_property(mtmp, STUNNED, dmg, TRUE);
+    mtmp->mhp -= dmg;
     if (mtmp->mhp <= 0) {
         mondied(mtmp);
         if (mtmp->mhp > 0)      /* lifesaved */
@@ -47,7 +48,7 @@ watch_on_duty(struct monst *mtmp)
 {
     int x, y;
 
-    if (mtmp->mpeaceful && in_town(u.ux, u.uy) && mtmp->mcansee &&
+    if (mtmp->mpeaceful && in_town(u.ux, u.uy) && !blind(mtmp) &&
         m_canseeu(mtmp) && !rn2(3)) {
 
         /* If you're digging, or if you're picking a lock (chests are OK), the
@@ -101,7 +102,7 @@ dochugw(struct monst *mtmp)
 boolean
 onscary(int x, int y, struct monst * mtmp)
 {
-    if (mtmp->isshk || mtmp->isgd || mtmp->iswiz || !mtmp->mcansee ||
+    if (mtmp->isshk || mtmp->isgd || mtmp->iswiz || blind(mtmp) ||
         mtmp->mpeaceful || mtmp->data->mlet == S_HUMAN || is_lminion(mtmp) ||
         mtmp->data == &mons[PM_ANGEL] || is_rider(mtmp->data) ||
         mtmp->data == &mons[PM_MINOTAUR])
@@ -305,14 +306,6 @@ dochug(struct monst *mtmp)
     /* not frozen or sleeping: wipe out texts written in the dust */
     wipe_engr_at(mtmp->dlevel, mtmp->mx, mtmp->my, 1);
 
-    /* confused monsters get unconfused with small probability */
-    if (mtmp->mconf && !rn2(50))
-        mtmp->mconf = 0;
-
-    /* stunned monsters get un-stunned with larger probability */
-    if (mtmp->mstun && !rn2(10))
-        mtmp->mstun = 0;
-
     /* some monsters teleport */
     if (mtmp->mflee && !rn2(40) && teleportitis(mtmp) && !mtmp->iswiz &&
         !level->flags.noteleport) {
@@ -369,7 +362,7 @@ dochug(struct monst *mtmp)
                     if (!tele_restrict(mtmp))
                         rloc(mtmp, TRUE);
                 } else {
-                    mtmp->minvis = mtmp->perminvis = 0;
+                    set_property(mtmp, INVIS, -2, FALSE);
                     /* Why? For the same reason in real demon talk */
                     pline("%s gets angry!", Amonnam(mtmp));
                     msethostility(mtmp, TRUE, FALSE);
@@ -492,11 +485,11 @@ dochug(struct monst *mtmp)
        For the fallthroughs to work correctly, the "don't attack" branch comes
        first, and we decide to use it via this rather large if statement. */
 
-    if (!nearby || mtmp->mflee || scared || mtmp->mconf || mtmp->mstun ||
-        (mtmp->minvis && !rn2(3)) ||
+    if (!nearby || mtmp->mflee || scared || confused(mtmp) || stunned(mtmp) ||
+        (invisible(mtmp) && !rn2(3)) ||
         (mdat->mlet == S_LEPRECHAUN && !ygold &&
          (lepgold || rn2(2))) || (is_wanderer(mdat) && !rn2(4)) ||
-        (Conflict && !mtmp->iswiz) || (!mtmp->mcansee && !rn2(4)) ||
+        (Conflict && !mtmp->iswiz) || (blind(mtmp) && !rn2(4)) ||
         mtmp->mpeaceful) {
         /* Possibly cast an undirected spell if not attacking you */
         /* note that most of the time castmu() will pick a directed spell and
@@ -583,7 +576,7 @@ dochug(struct monst *mtmp)
         quest_talk(mtmp);
     /* extra emotional attack for vile monsters */
     if (inrange && mtmp->data->msound == MS_CUSS && !mtmp->mpeaceful &&
-        couldsee(mtmp->mx, mtmp->my) && !mtmp->minvis && !rn2(5))
+        couldsee(mtmp->mx, mtmp->my) && !invisible(mtmp) && !rn2(5))
         cuss(mtmp);
 
     return tmp == 2;
@@ -775,7 +768,7 @@ m_move(struct monst *mtmp, int after)
 
     /* teleport if that lies in our nature */
     if (teleportitis(mtmp) && teleport_control(mtmp) &&
-        !rn2(5) && !mtmp->mcan && !tele_restrict(mtmp)) {
+        !rn2(5) && !cancelled(mtmp) && !tele_restrict(mtmp)) {
         if (mtmp->mhp < 7 || mtmp->mpeaceful || rn2(2))
             rloc(mtmp, TRUE);
         else
@@ -807,7 +800,7 @@ not_special:
     /* Calculate whether the monster wants to move towards or away from the goal
        (or neither). */
     appr = (mtmp->mflee || mtmp->mstrategy & STRAT_ESCAPE) ? -1 : 1;
-    if (mtmp->mconf || (Engulfed && mtmp == u.ustuck) ||
+    if (confused(mtmp) || (Engulfed && mtmp == u.ustuck) ||
         mtmp->mstrategy & STRAT_NONE)
         appr = 0;
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-28 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1368,6 +1368,7 @@ extern void ugolemeffects(int, int);
 
 /* ### potion.c ### */
 
+extern void eyepline(const char *, const char *);
 extern void set_itimeout(unsigned int *which, long val);
 extern void incr_itimeout(unsigned int *which, long incr);
 extern void make_confused(long, boolean);
@@ -1382,7 +1383,7 @@ extern int peffects(struct obj *);
 extern void healup(int, int, boolean, boolean);
 extern void strange_feeling(struct obj *, const char *);
 extern void potionhit(struct monst *, struct obj *, boolean);
-extern void potionbreathe(struct obj *);
+extern void potionbreathe(struct monst *, struct obj *);
 extern int dodip(const struct nh_cmd_arg *);
 extern void djinni_from_bottle(struct obj *);
 extern struct monst *split_mon(struct monst *, struct monst *);
@@ -1427,7 +1428,13 @@ extern void restpriest(struct monst *, boolean);
 
 /* ### prop.c ### */
 
-extern unsigned levitating_at_will(const struct monst *, boolean, boolean);
+extern int mon_prop2mt(enum youprop);
+extern int mon_mt2prop(enum mt_prop);
+extern unsigned levitates_at_will(const struct monst *, boolean, boolean);
+extern unsigned mon_remove_levitation(struct monst *, boolean);
+extern void gremlin_curse(struct monst *);
+extern boolean set_property(struct monst *, enum youprop, int, boolean);
+extern boolean update_property(struct monst *, enum youprop, enum objslot);
 extern unsigned m_has_property(const struct monst *, enum youprop,
                                unsigned, boolean);
 extern unsigned u_have_property(enum youprop, unsigned, boolean);
@@ -1673,6 +1680,7 @@ extern void remove_worn_item(struct obj *, boolean);
 extern int steal(struct monst *, const char **);
 extern int mpickobj(struct monst *, struct obj *);
 extern void stealamulet(struct monst *);
+extern void mdrop_obj(struct monst *, struct obj *, boolean);
 extern void mdrop_special_objs(struct monst *);
 extern void relobj(struct monst *, int, boolean);
 extern struct obj *findgold(struct obj *);
@@ -1785,9 +1793,9 @@ extern void instapetrify(const char *);
 extern void minstapetrify(struct monst *, boolean);
 extern void selftouch(const char *, const char *);
 extern void mselftouch(struct monst *, const char *, boolean);
-extern void float_up(void);
+extern boolean float_up(struct monst *);
 extern void fill_pit(struct level *lev, int x, int y);
-extern int float_down(long);
+extern int float_down(struct monst *);
 extern int fire_damage(struct obj *, boolean, boolean, xchar, xchar);
 extern void acid_damage(struct obj *);
 extern int water_damage(struct obj *, const char *, boolean);
@@ -1976,8 +1984,9 @@ extern int mworn_warntype(const struct monst *);
 
 extern void mon_set_minvis(struct monst *);
 extern void mon_adjust_speed(struct monst *, int, struct obj *);
-extern void update_mon_intrinsics(struct monst *, struct obj *, boolean,
-                                  boolean);
+
+extern unsigned equip(struct monst *, struct obj *, boolean, boolean);
+extern unsigned which_slot(const struct obj *);
 extern int find_mac(struct monst *);
 extern void m_dowear(struct monst *, boolean);
 extern struct obj *which_armor(const struct monst *, enum objslot);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -55,11 +55,7 @@ resists_blnd(const struct monst * mon)
     boolean is_you = (mon == &youmonst);
     struct obj *o;
 
-    if (is_you ? Blind
-        : (mon->mblinded || !mon->mcansee || !haseyes(ptr) ||
-           /* BUG: temporary sleep sets mfrozen, but since paralysis does too,
-              we can't check it */
-           mon->msleeping))
+    if (blind(mon) || mon->msleeping)
         return TRUE;
     /* yellow light, Archon; !dust vortex, !cobra, !raven */
     if (dmgtype_fromattack(ptr, AD_BLND, AT_EXPL) ||
@@ -97,7 +93,7 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
     case AT_MAGC:
     case AT_BREA:      /* assumed to be lightning */
         /* light-based attacks may be cancelled or resisted */
-        if (magr && magr->mcan)
+        if (magr && cancelled(magr))
             return FALSE;
         return !resists_blnd(mdef);
 
@@ -140,7 +136,7 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
     case AT_TUCH:
     case AT_STNG:
         /* some physical, blind-inducing attacks can be cancelled */
-        if (magr && magr->mcan)
+        if (magr && cancelled(magr))
             return FALSE;
         break;
 

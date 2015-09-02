@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-08-30 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,6 +14,7 @@
    new numbers at the end); this is needed to keep the xlogfile usable between
    versions. */
 enum youprop {
+    NO_PROP                  = 0,
     FIRE_RES                 = 1,
     COLD_RES                 = 2,
     SLEEP_RES                = 3,
@@ -86,6 +87,23 @@ enum youprop {
     SLOW                     = 69,
 /*  DEATH_RES                = 70, TODO */
     LAST_PROP                = SLOW,
+    INVALID_PROP             = -1,
+};
+
+/* Timed intrinsics (monsters only) */
+enum mt_prop {
+    mt_seeinvis = 0,
+    mt_invis,
+    mt_levi,
+    mt_fast,
+    mt_stun,
+    mt_conf,
+    mt_blind,
+    mt_detectmon,
+    mt_slow,
+    mt_firstprop = mt_seeinvis,
+    mt_lastprop = mt_slow,
+    mt_invalid = -1,
 };
 
 /* This enum holds all the equipment that is tracked indirectly in struct you;

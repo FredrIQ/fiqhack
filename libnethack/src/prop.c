@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-08-30 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -20,6 +20,60 @@
    
 /* The "os_polyform" checks used to not be accurate at all. They are now,
    hopefully */
+
+int
+mon_prop2mt(enum youprop prop)
+{
+    switch (prop) {
+    case SEE_INVIS:
+        return mt_seeinvis;
+    case INVIS:
+        return mt_invis;
+    case LEVITATION:
+        return mt_levi;
+    case FAST:
+        return mt_fast;
+    case STUNNED:
+        return mt_stun;
+    case CONFUSION:
+        return mt_conf;
+    case BLINDED:
+        return mt_blind;
+    case DETECT_MONSTERS:
+        return mt_detectmon;
+    case SLOW:
+        return mt_slow;
+    default:
+        return -1;
+    }
+}
+
+int
+mon_mt2prop(enum mt_prop mt)
+{
+    switch (mt) {
+    case mt_seeinvis:
+        return SEE_INVIS;
+    case mt_invis:
+        return INVIS;
+    case mt_levi:
+        return LEVITATION;
+    case mt_fast:
+        return FAST;
+    case mt_stun:
+        return STUNNED;
+    case mt_conf:
+        return CONFUSION;
+    case mt_blind:
+        return BLINDED;
+    case mt_detectmon:
+        return DETECT_MONSTERS;
+    case mt_slow:
+        return SLOW;
+    default:
+        return -1;
+    }
+}        
 
 unsigned
 m_has_property(const struct monst *mon, enum youprop property,
@@ -49,22 +103,13 @@ m_has_property(const struct monst *mon, enum youprop property,
             rv |= W_MASK(os_birthopt);
 
     } else {
-        /* Monster temporaries are boolean flags. */
-        if (property == BLINDED && mon->mblinded)
-            rv |= W_MASK(os_timeout);
-        else if (property == FAST && mon->mspeed == MFAST)
-            rv |= (mon->permspeed == FAST ?
-                   W_MASK(os_polyform) : W_MASK(os_outside));
-        else if (property == INVIS && mon->perminvis)
-            rv |= W_MASK(os_outside);
-        else if (property == STUNNED && mon->mstun)
-            rv |= W_MASK(os_timeout);
-        else if (property == CONFUSION && mon->mconf)
+        enum mt_prop mt = mon_prop2mt(property);
+        if (mt != mt_invalid && mon->mt_prop[mt])
             rv |= W_MASK(os_timeout);
         /* it is not possible to contain all possible properties in a 64bit
            but there is barely any missing ones... if those are later needed,
            the redundant ones can be special cased */
-        else if (property < 65 && (mfromoutside & (1 << (property - 1))))
+        if (property < 65 && (mfromoutside & (1 << (property - 1))))
             rv |= W_MASK(os_outside);
     }
 
@@ -156,7 +201,7 @@ m_has_property(const struct monst *mon, enum youprop property,
    for the uncontrolled levitation or 0 if it is, in fact,
    controlled (or non-existent). */
 unsigned
-levitating_at_will(const struct monst *mon, boolean include_extrinsic,
+levitates_at_will(const struct monst *mon, boolean include_extrinsic,
     boolean why)
 {
     unsigned lev = levitates(mon);
@@ -197,19 +242,19 @@ levitating_at_will(const struct monst *mon, boolean include_extrinsic,
 unsigned
 mon_remove_levitation(struct monst *mon, boolean forced)
 {
-    unsigned lev_source = levitating_at_will(mon, TRUE, FALSE);
+    unsigned lev_source = levitates_at_will(mon, TRUE, FALSE);
     if (!lev_source) {
-        lev_source = levitates(mon)
+        lev_source = levitates(mon);
         if (!forced)
             return 0;
     }
 
     /* equavilent to cancelling levi with > as player */
     if (lev_source & FROMOUTSIDE) {
-        unsigned survived = set_property(mon, LEVITATION, -2, !forced);
-        lev_source = levitates(mon)
+        set_property(mon, LEVITATION, -2, forced);
+        lev_source = levitates(mon);
         if (!forced)
-            return survived;
+            return (mon->mhp <= 0 ? 2 : 1);
     }
 
     /* monster levitation comes from an extrinsic */
@@ -225,10 +270,10 @@ mon_remove_levitation(struct monst *mon, boolean forced)
         if (itemtype) {
             if (chain->owornmask && (!dropped || forced)) {
                 slot = chain->owornmask;
-                if (forced)
+                if (forced) {
                     chain->owornmask = 0;
-                    mon->misc_worn_check &= W_MASK(slot);
-                else
+                    mon->misc_worn_check &= ~W_MASK(slot);
+                } else
                     return equip(mon, chain, FALSE, TRUE);
             } if (itemtype == W_MASK(os_carried)) {
                 if (forced)
@@ -264,6 +309,106 @@ mon_remove_levitation(struct monst *mon, boolean forced)
             pline("You have a sad feeling for a moment, then it passes.");
         mondied(mon);
     }
+    return 0;
+}
+
+/* Gremlin attack. Removes a random intrinsic. */
+void
+gremlin_curse(struct monst *mon)
+{
+    int i;
+    enum youprop prop;
+    for (i = 0; i < 200; i++) {
+        prop = rnd(64);
+        if (m_has_property(mon, prop, W_MASK(os_outside), TRUE)) {
+            set_property(mon, prop, -2, FALSE);
+            return;
+        }
+    }
+    if (mon == &youmonst || canseemon(mon))
+        pline("But nothing happens.");
+    return;
+}
+
+/* Sets a property.
+   type>0: Set (or increase) a timeout
+   type=0: Set os_outside
+   type-1: Remove os_outside
+   type-2: Remove os_outside and the timer
+   forced will bypass update_property(). It is used
+   when a special case is needed, and code will have
+   to handle the work related to the property itself */
+boolean
+set_property(struct monst *mon, enum youprop prop,
+             int type, boolean forced)
+{
+    boolean increased = FALSE;
+
+    /* check for redundant usage */
+    if (type == 0 && m_has_property(mon, prop, W_MASK(os_outside), TRUE))
+        return FALSE;
+    if (type == -1 && !m_has_property(mon, prop, W_MASK(os_outside), TRUE))
+        return FALSE;
+    if (type == -2 &&
+        !m_has_property(mon, prop, (W_MASK(os_outside) | W_MASK(os_timeout)), TRUE))
+        return FALSE;
+
+    if (type > 0) {
+        if (mon != &youmonst) {
+            enum mt_prop mt = mon_prop2mt(prop);
+            if (mt == mt_invalid) {
+                impossible("Trying to set invalid timed property!");
+                return FALSE;
+            }
+            if (mon->mt_prop[mt] > 0)
+                increased = TRUE;
+            mon->mt_prop[mt] = min(255, mon->mt_prop[mt] + type);
+            /* reset "levitation wary" flag for monsters */
+            if (prop == LEVITATION)
+                mon->levi_wary = 0;
+        } else {
+            if ((u.uintrinsic[prop] & TIMEOUT) > 0)
+                increased = TRUE;
+            long val = (long)type;
+            long old = (u.uintrinsic[prop] & TIMEOUT);
+            val += old;
+            if (val > TIMEOUT)
+                val = TIMEOUT;
+            u.uintrinsic[prop] &= TIMEOUT;
+            u.uintrinsic[prop] += val;
+        }
+    } else if (type == 0) {
+        if (mon != &youmonst && prop < 65)
+            mon->mintrinsics |= (1 << (prop - 1));
+        else
+            u.uintrinsic[prop] |= FROMOUTSIDE;
+    } else {
+        if (mon != &youmonst && prop < 65)
+            mon->mintrinsics &= (1 << (prop - 1));
+        else if (mon == &youmonst)
+            u.uintrinsic[prop] &= FROMOUTSIDE;
+        if (type == -2) {
+            if (mon != &youmonst) {
+                enum mt_prop mt = mon_prop2mt(prop);
+                if (mt == mt_invalid) {
+                    impossible("Trying to set invalid timed property!");
+                    return FALSE;
+                }
+                mon->mt_prop[mt] = 0;
+            } else
+                u.uintrinsic[prop] &= TIMEOUT;
+        }
+    }
+    if (!forced) {
+        if (type > 0 || type == -2) {
+            if (increased)
+                return update_property(mon, prop, os_newtimeout);
+            else
+                return update_property(mon, prop, os_timeout);
+        } else
+            return update_property(mon, prop, os_outside);
+    }
+    return FALSE;
 }
 
 /* Called to give any eventual messages and perform checks in case
@@ -274,6 +419,9 @@ boolean
 update_property(struct monst *mon, enum youprop prop,
                 enum objslot slot)
 {
+    /* Items call update_property() when lost, whether or not it had a property */
+    if (prop == NO_PROP)
+        return FALSE;
     boolean vis = canseemon(mon);
     /* Used when the updating is related to monster invisibility
        since canseemon() wont work if the monster just turned
@@ -284,14 +432,14 @@ update_property(struct monst *mon, enum youprop prop,
     if (slot == os_newtimeout)
         lost = FALSE;
     /* Whether or not a monster has it elsewhere */
-    boolean redundant = (has_property(mon, prop) & ~W_MASK(slot));
+    boolean redundant = !!(has_property(mon, prop) & ~W_MASK(slot));
     /* Hallu checks *your* hallucination since it's used for special
        messages */
     boolean hallu = hallucinating(&youmonst);
     boolean you = (mon == &youmonst);
     /* if something was said about the situation */
     boolean effect = FALSE;
-    const char *you_feel;
+    struct obj *weapon;
 
     switch (prop) {
     case FIRE_RES:
@@ -347,22 +495,22 @@ update_property(struct monst *mon, enum youprop prop,
     case ACID_RES:
         break;
     case STONE_RES:
-        struct obj *weapon = m_mwep(mon);
+        weapon = m_mwep(mon);
         if (lost && !redundant && weapon &&
             weapon->otyp == CORPSE &&
             touch_petrifies(&mons[weapon->corpsenm])) {
-            const char *buf;
             if (!you)
                 mselftouch(mon, "No longer petrify-resistant, ",
                            !flags.mon_moving);
-            else
+            else {
                 const char *kbuf;
-                kbuf = msgprintf("losing stone resistance while wielding",
+                kbuf = msgprintf("losing stone resistance while wielding %s",
                                  urace.adj);
                 selftouch("No longer petrify-resistant, you", kbuf);
+            }
             if (!resists_ston(mon)) { /* lifesaved */
                 if (!you) {
-                    setmnotwielded(mon, mw_tmp);
+                    setmnotwielded(mon, mon->mw);
                     MON_NOWEP(mon);
                 } else
                     uwepgone();
@@ -443,7 +591,7 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case LEVITATION:
         if (!redundant) {
-            if (!lost)
+            if (!lost && slot != os_newtimeout)
                 float_up(mon);
             else
                 float_down(mon);
@@ -524,8 +672,8 @@ update_property(struct monst *mon, enum youprop prop,
                           "Your quickness feels more natural.");
                 effect = TRUE;
             } else if (!redundant && vis) {
-                pline(lost ? "%s slow down." :
-                      "%s speed up",
+                pline(lost ? "%s slows down." :
+                      "%s speeds up",
                       Monnam(mon));
                 effect = TRUE;
             }
@@ -534,8 +682,8 @@ update_property(struct monst *mon, enum youprop prop,
                redundant, but "redundant" wont be enough, because if
                the only redundancy is from os_outside, there is still a
                partial speed up going on. */
-            if (!(has_intrinsic(mon, FAST) &
-                (W_MASK(os_outside) | W_MASK(slot)))) {
+            if (slot != os_newtimeout && !(has_property(mon, FAST) &
+                ~(W_MASK(os_outside) | W_MASK(slot)))) {
                 /* if "redundant" is set at this point, it is pointing
                    at intrinsic speed only */
                 if (you) {
@@ -550,6 +698,10 @@ update_property(struct monst *mon, enum youprop prop,
                           (lost ? "slower" : "faster"));
                     effect = TRUE;
                 }
+            } else if (slot == os_newtimeout && you) {
+                pline("Your %s get new energy.",
+                      makeplural(body_part(LEG)));
+                effect = TRUE;
             }
         }
         break;
@@ -560,7 +712,7 @@ update_property(struct monst *mon, enum youprop prop,
                       "You struggle to keep your balance.");
             else if (!lost) {
                 pline("You %s...",
-                      hallu ? "wobble" : stagger(mon->data));
+                      hallu ? "wobble" : stagger(mon->data, "stagger"));
             } else
                 pline("You feel %s now.",
                       hallu ? "less wobbly" :
@@ -572,7 +724,7 @@ update_property(struct monst *mon, enum youprop prop,
                       Monnam(mon), mhis(mon));
             else if (!lost) {
                 pline("%s %ss...",
-                      Monnam(mon), stagger(mon->data));
+                      Monnam(mon), stagger(mon->data, "stagger"));
             } else
                 pline("%s looks a bit steadier now.",
                       Monnam(mon));
@@ -603,7 +755,8 @@ update_property(struct monst *mon, enum youprop prop,
         } else if (vis) {
             pline(redundant ? "%s looks even worse." :
                   lost ? "%s looks relieved." :
-                  "%s looks deathly sick.");
+                  "%s looks deathly sick.",
+                  Monnam(mon));
             effect = TRUE;
         }
         break;
@@ -634,7 +787,8 @@ update_property(struct monst *mon, enum youprop prop,
                 else
                     eyepline("twitches", "twitch");
             } else if (eoto)
-                pline(vismsg, lost ? "dim" : "brighten",
+                pline("Your vision seems to %s for a moment but is %s now",
+                      lost ? "dim" : "brighten",
                       hallu ?
                       (lost ? "happier" : "sadder") :
                       "normal");
@@ -665,7 +819,8 @@ update_property(struct monst *mon, enum youprop prop,
                 m_has_property(mon, HALLUC, ANY_PROPERTY, TRUE))
                 grays = TRUE;
             if (lost && grays)
-                pline(vismsg, "flatten", "normal");
+                pline("Your vision seems to %s for a moment but is %s now",
+                      "flatten", "normal");
             else if (lost && blind(mon))
                 eyepline("itches", "itch");
             else if (lost)
@@ -697,7 +852,8 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case WWALKING:
-        spoteffects(mon, TRUE);
+        if (mon == &youmonst)
+            spoteffects(TRUE);
         break;
     case HUNGER:
         break;
@@ -742,13 +898,15 @@ update_property(struct monst *mon, enum youprop prop,
     case FREE_ACTION:
         break;
     case SWIMMING:
-        spoteffects(mon, TRUE);
+        if (mon == &youmonst)
+            spoteffects(TRUE);
         break;
     case SLIMED:
     case FIXED_ABIL:
         break;
     case FLYING:
-        spoteffects(mon, TRUE);
+        if (mon == &youmonst)
+            spoteffects(TRUE);
         break;
     case UNCHANGING:
         set_property(mon, SLIMED, -2, TRUE);
@@ -773,14 +931,18 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case SLOW:
         if (you && !redundant) {
-            pline(lost ? "Your speed returns" :
-                  "You feel abnormally slow");
+            pline(lost ? "Your speed returns." :
+                  "You feel abnormally slow.");
             effect = TRUE;
         } else if (vis && !redundant) {
-            pline(lost ? "%s speeds up" :
-                  "%s slows down abnormally");
+            pline(lost ? "%s speeds up." :
+                  "%s slows down abnormally.",
+                  Monnam(mon));
             effect = TRUE;
         }
+        break;
+    default:
+        impossible("Unknown property: %u", prop);
         break;
     }
     if (effect)
@@ -1318,7 +1480,7 @@ enlighten_mon(struct monst *mon, int final)
     }
     if (teleport_control(mon))
         mon_has(&menu, mon, "teleport control");
-    if (levitating_at_will(mon, FALSE, FALSE))
+    if (levitates_at_will(mon, FALSE, FALSE))
         mon_is(&menu, mon, "levitating, at will");
     else if (levitates(mon))
         mon_is(&menu, mon, "levitating");   /* without control */
@@ -1401,9 +1563,11 @@ enlighten_mon(struct monst *mon, int final)
     }
     if (unchanging(mon))
         mon_can(&menu, mon, "not change form");
-    if (fast(mon))
+    if (very_fast(mon))
+        mon_is(&menu, mon, "very fast");
+    else if (fast(mon))
         mon_is(&menu, mon, "fast");
-    else if (slow(mon))
+    if (slow(mon))
         mon_is(&menu, mon, "slow");
     if (reflecting(mon))
         mon_has(&menu, mon, "reflection");

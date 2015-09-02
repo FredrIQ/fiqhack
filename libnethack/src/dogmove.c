@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-28 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -330,7 +330,7 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
             nutrit = (nutrit * 3) / 4;
     }
     edog->hungrytime += nutrit;
-    mtmp->mconf = 0;
+    set_property(mtmp, CONFUSION, -2, FALSE);
     if (edog->mhpmax_penalty) {
         /* no longer starving */
         mtmp->mhpmax += edog->mhpmax_penalty;
@@ -371,7 +371,7 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
     if (mtmp->data == &mons[PM_RUST_MONSTER] && obj->oerodeproof) {
         /* The object's rustproofing is gone now */
         obj->oerodeproof = 0;
-        mtmp->mstun = 1;
+        set_property(mtmp, STUNNED, dice(4, 4), FALSE);
         if (canseemon(mtmp) && flags.verbose) {
             pline("%s spits %s out in disgust!", Monnam(mtmp),
                   distant_name(obj, doname));
@@ -437,7 +437,7 @@ dog_hunger(struct monst *mtmp, struct edog *edog)
             /* starving pets are limited in healing */
             int newmhpmax = mtmp->mhpmax / 3;
 
-            mtmp->mconf = 1;
+            set_property(mtmp, CONFUSION, 255, TRUE);
             edog->mhpmax_penalty = mtmp->mhpmax - newmhpmax;
             mtmp->mhpmax = newmhpmax;
             if (mtmp->mhp > mtmp->mhpmax)
@@ -490,7 +490,7 @@ dog_invent(struct monst *mtmp, struct edog *edog, int udist)
     if (DROPPABLES(mtmp)) {
         if (!rn2(udist + 1) || !rn2(edog->apport))
             if (rn2(10) < edog->apport) {
-                relobj(mtmp, (int)mtmp->minvis, TRUE);
+                relobj(mtmp, (int)invisible(mtmp), TRUE);
                 if (edog->apport > 1)
                     edog->apport--;
                 edog->dropdist = udist; /* hpscdi!jon */
@@ -644,7 +644,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
         }
     } else
         appr = 1;       /* gtyp != UNDEF */
-    if (mtmp->mconf)
+    if (confused(mtmp))
         appr = 0;
 
     /* If aiming for the master, locate them using strategy if possible.
@@ -760,7 +760,7 @@ dog_move(struct monst *mtmp, int after)
 
         }
     }
-    if (!Conflict && !mtmp->mconf && mtmp == u.ustuck &&
+    if (!Conflict && !confused(mtmp) && mtmp == u.ustuck &&
         !sticks(youmonst.data)) {
         unstuck(mtmp);  /* swallowed case handled above */
         pline("You get released!");
@@ -909,7 +909,7 @@ dog_move(struct monst *mtmp, int after)
                 else if ((otyp = dogfood(mtmp, obj)) < MANFOOD &&
                          (otyp < ACCFOOD || edog->hungrytime <= moves) &&
                          (!levitates(mtmp) ||
-                         levitating_at_will(mtmp, TRUE, FALSE))) {
+                         levitates_at_will(mtmp, TRUE, FALSE))) {
                     /* Note: our dog likes the food so much that he might eat
                        it even when it conceals a cursed object */
                     nix = nx;
@@ -980,12 +980,14 @@ newdogpos:
            do_eat flag. */
         if (do_eat) {
             if (levitates(mtmp)) {
-                if (levitating_at_will(mtmp, TRUE, FALSE))
-                    mon_remove_levi(mtmp);
-                else
-                    impossible("do_eat with uncontrolled levitation?");
-                return 2;
-            if (dog_eat(mtmp, obj, omx, omy, FALSE) == 2)
+                if (levitates_at_will(mtmp, TRUE, FALSE)) {
+                    int cancel_levi = mon_remove_levitation(mtmp, FALSE);
+                    if (cancel_levi)
+                        return cancel_levi;
+                    else
+                        impossible("remove levitation performed no action?");
+                }
+            } else if (dog_eat(mtmp, obj, omx, omy, FALSE) == 2)
                 return 2;
         }
     } else if (mtmp->mleashed && distu(omx, omy) > 4) {

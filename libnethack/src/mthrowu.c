@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -239,13 +239,9 @@ int ohitmon(struct monst *mtmp, /* accidental target */
             (NULL, mtmp,
              (uchar) (otmp->otyp == BLINDING_VENOM ? AT_SPIT : AT_WEAP),
              otmp)) {
-            if (vis && mtmp->mcansee)
+            if (vis && !blind(mtmp))
                 pline("%s is blinded by %s.", Monnam(mtmp), the(xname(otmp)));
-            mtmp->mcansee = 0;
-            tmp = (int)mtmp->mblinded + rnd(25) + 20;
-            if (tmp > 127)
-                tmp = 127;
-            mtmp->mblinded = tmp;
+            set_property(mtmp, BLINDED, rn1(25,21), TRUE);
         }
 
         if (is_pole(otmp))
@@ -490,7 +486,9 @@ m_useup(struct monst *mon, struct obj *obj)
         possibly_unwield(mon, FALSE);
         if (obj->owornmask) {
             mon->misc_worn_check &= ~obj->owornmask;
-            update_mon_intrinsics(mon, obj, FALSE, FALSE);
+            if (obj->otyp == SADDLE && mon == u.usteed)
+                dismount_steed(DISMOUNT_FELL);
+            update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
         }
         obfree(obj, NULL);
     }
@@ -565,7 +563,7 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
     /* Multishot calculations */
     multishot = 1;
     if ((ammo_and_launcher(otmp, mwep) || skill == P_DAGGER || skill == -P_DART
-         || skill == -P_SHURIKEN) && !mtmp->mconf) {
+         || skill == -P_SHURIKEN) && !confused(mtmp)) {
         /* Assumes lords are skilled, princes are expert */
         if (is_prince(mtmp->data))
             multishot += 2;
@@ -678,7 +676,7 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef, boolean helpf
            player with a beam. */
         if ((x == magr->mux && y == magr->muy && msensem(magr, &youmonst)) ||
             (magr->mtame && x == u.ux && y == u.uy)) {
-            if (!Engulfed && !magr->mconf) {
+            if (!Engulfed && !confused(magr)) {
                 if (mdef) {
                     *mdef = &youmonst;
                     tbx = x - magr->mx;
@@ -708,7 +706,8 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef, boolean helpf
            because they don't have full control of their actions. Monsters won't
            intentionally aim at or to avoid a monster they can't see (apart from
            the above MS_LEADER case). */
-        if (mat && (msensem(magr, mat) & ~MSENSE_ITEMMIMIC) && !magr->mconf) {
+        if (mat && (msensem(magr, mat) & ~MSENSE_ITEMMIMIC) &&
+            !confused(magr)) {
             /* Note: the couldsee() here is an LOE check and has nothing to
                do with vision; it determines conflict radius */
             if (Conflict && !resist(magr, RING_CLASS, 0, 0) &&
@@ -789,7 +788,7 @@ spitmq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
 {
     struct obj *otmp;
 
-    if (mtmp->mcan) {
+    if (cancelled(mtmp)) {
         if (canhear())
             pline("A dry rattle comes from %s throat.",
                   s_suffix(mon_nam(mtmp)));
@@ -838,7 +837,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
     boolean linedup = qlined_up(mtmp, xdef, ydef, TRUE, FALSE);
 
     if (linedup) {
-        if (mtmp->mcan) {
+        if (cancelled(mtmp)) {
             if (canhear()) {
                 if (mon_visible(mtmp))
                     pline("%s coughs.", Monnam(mtmp));

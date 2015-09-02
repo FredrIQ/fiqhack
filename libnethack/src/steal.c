@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,7 +8,6 @@
 #include "edog.h"
 
 static const char *equipname(struct obj *);
-static void mdrop_obj(struct monst *, struct obj *, boolean);
 
 
 static const char *
@@ -389,7 +388,7 @@ stealamulet(struct monst *mtmp)
 
 
 /* drop one object taken from a (possibly dead) monster's inventory */
-static void
+void
 mdrop_obj(struct monst *mon, struct obj *obj, boolean verbosely)
 {
     int omx = mon->mx, omy = mon->my;
@@ -398,7 +397,7 @@ mdrop_obj(struct monst *mon, struct obj *obj, boolean verbosely)
         /* perform worn item handling if the monster is still alive */
         if (mon->mhp > 0) {
             mon->misc_worn_check &= ~obj->owornmask;
-            update_mon_intrinsics(mon, obj, FALSE, TRUE);
+            update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
             /* obj_no_longer_held(obj); -- done by place_object */
             if (obj->owornmask & W_MASK(os_wep))
                 setmnotwielded(mon, obj);

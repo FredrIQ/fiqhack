@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1047,7 +1047,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     mtmp->dlevel = lev;
     place_monster(mtmp, x, y);
-    mtmp->mcansee = mtmp->mcanmove = TRUE;
+    mtmp->mcanmove = TRUE;
     mtmp->mpeaceful = (mmflags & MM_ANGRY) ? FALSE : peace_minded(ptr);
 
     /* Calculate the monster's movement offset. The number of movement points a
@@ -1081,13 +1081,6 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         if (hides_under(ptr) && OBJ_AT_LEV(lev, x, y))
             mtmp->mundetected = TRUE;
         break;
-    case S_LIGHT:
-    case S_ELEMENTAL:
-        if (mndx == PM_STALKER || mndx == PM_BLACK_LIGHT) {
-            mtmp->perminvis = TRUE;
-            mtmp->minvis = TRUE;
-        }
-        break;
     case S_EEL:
         if (is_pool(lev, x, y))
             mtmp->mundetected = TRUE;
@@ -1112,8 +1105,10 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
             mtmp->mpeaceful = TRUE;
         break;
     case S_BAT:
-        if (In_hell(&lev->z) && is_bat(ptr))
-            mon_adjust_speed(mtmp, 2, NULL);
+        if (In_hell(&lev->z) && is_bat(ptr)) {
+            set_property(mtmp, FAST, 0, TRUE);
+            set_property(mtmp, FAST, 255, TRUE);
+        }
         break;
     }
     if ((ct = emits_light(mtmp->data)) > 0)
@@ -1168,7 +1163,8 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         }
     }
     if (is_dprince(ptr) && ptr->msound == MS_BRIBE) {
-        mtmp->mpeaceful = mtmp->minvis = mtmp->perminvis = 1;
+        mtmp->mpeaceful = 1;
+        mtmp->mintrinsics = (1 << (INVIS - 1));
         mtmp->mavenge = 0;
         if (uwep && uwep->oartifact == ART_EXCALIBUR)
             mtmp->mpeaceful = mtmp->mtame = FALSE;
@@ -1905,7 +1901,7 @@ set_mimic_sym(struct monst *mtmp, struct level *lev, enum rng rng)
         else
             appear = S_vcdoor;
 
-        if (!mtmp->minvis || See_invisible)
+        if (!invisible(mtmp) || see_invisible(&youmonst))
             block_point(mx, my);        /* vision */
     } else if (lev->flags.is_maze_lev && !above_pit && rn2_on_rng(2, rng)) {
         ap_type = M_AP_OBJECT;
@@ -1913,7 +1909,7 @@ set_mimic_sym(struct monst *mtmp, struct level *lev, enum rng rng)
     } else if ((roomno < 0) && !above_pit) {
         ap_type = M_AP_OBJECT;
         appear = BOULDER;
-        if (!mtmp->minvis || See_invisible)
+        if (!invisible(mtmp) || see_invisible(&youmonst))
             block_point(mx, my);        /* vision */
     } else if (rt == ZOO || rt == VAULT) {
         ap_type = M_AP_OBJECT;
@@ -2090,20 +2086,23 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->m_lev = mread8(mf);
     mon->malign = mread8(mf);
     mon->moveoffset = mread16(mf);
-    mon->mintrinsics = mread16(mf);
     mon->mtame = mread8(mf);
     mon->m_ap_type = mread8(mf);
     mon->mfrozen = mread8(mf);
-    mon->mblinded = mread8(mf);
     mon->mappearance = mread32(mf);
-    mflags = mread32(mf);
     
-    mon->mspells = mread64(mf);
 
     mon->mfleetim = save_decode_8(mread8(mf), -moves, l ? -l->lastmoves : 0);
     mon->weapon_check = mread8(mf);
     mon->misc_worn_check = mread32(mf);
     mon->wormno = mread8(mf);
+    mflags = mread32(mf);
+    mon->mintrinsics = mread64(mf);
+    mon->mspells = mread64(mf);
+    enum mt_prop mt;
+    for (mt = mt_firstprop; mt <= mt_lastprop; mt++) {
+        mon->mt_prop[mt] = mread8(mf);
+    }
 
     /* just mark the pointers for later restoration */
     mon->minvent = mread8(mf) ? (void *)1 : NULL;
@@ -2182,29 +2181,21 @@ restore_mon(struct memfile *mf, struct level *l)
         break;
     }
 
-    mon->female = (mflags >> 31) & 1;
-    mon->minvis = (mflags >> 30) & 1;
-    mon->invis_blkd = (mflags >> 29) & 1;
-    mon->perminvis = (mflags >> 28) & 1;
-    mon->cham = (mflags >> 25) & 7;
-    mon->mundetected = (mflags >> 24) & 1;
-    mon->mcan = (mflags >> 23) & 1;
-    mon->mburied = (mflags >> 22) & 1;
-    mon->mspeed = (mflags >> 20) & 3;
-    mon->permspeed = (mflags >> 18) & 3;
-    mon->mrevived = (mflags >> 17) & 1;
-    mon->mavenge = (mflags >> 16) & 1;
-    mon->mflee = (mflags >> 15) & 1;
-    mon->mcansee = (mflags >> 14) & 1;
-    mon->mcanmove = (mflags >> 13) & 1;
-    mon->msleeping = (mflags >> 12) & 1;
-    mon->mstun = (mflags >> 11) & 1;
-    mon->mconf = (mflags >> 10) & 1;
-    mon->mpeaceful = (mflags >> 9) & 1;
-    mon->mtrapped = (mflags >> 8) & 1;
-    mon->mleashed = (mflags >> 7) & 1;
-    mon->msuspicious = (mflags >> 6) & 1;
-    /* 1 free bit */
+    /* 11 free bits... */
+    mon->levi_wary = (mflags >> 20) & 1;
+    mon->female = (mflags >> 19) & 1;
+    mon->cham = (mflags >> 16) & 7;
+    mon->mundetected = (mflags >> 15) & 1;
+    mon->mburied = (mflags >> 14) & 1;
+    mon->mrevived = (mflags >> 13) & 1;
+    mon->mavenge = (mflags >> 12) & 1;
+    mon->mflee = (mflags >> 11) & 1;
+    mon->mcanmove = (mflags >> 10) & 1;
+    mon->msleeping = (mflags >> 9) & 1;
+    mon->mpeaceful = (mflags >> 8) & 1;
+    mon->mtrapped = (mflags >> 7) & 1;
+    mon->mleashed = (mflags >> 6) & 1;
+    mon->msuspicious = (mflags >> 5) & 1;
     mon->isshk = (mflags >> 4) & 1;
     mon->isminion = (mflags >> 3) & 1;
     mon->isgd = (mflags >> 2) & 1;
@@ -2318,37 +2309,35 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite8(mf, mon->m_lev);
     mwrite8(mf, mon->malign);
     mwrite16(mf, mon->moveoffset);
-    mwrite16(mf, mon->mintrinsics);
     mwrite8(mf, mon->mtame);
     mwrite8(mf, mon->m_ap_type);
     mwrite8(mf, mon->mfrozen);
-    mwrite8(mf, mon->mblinded);
     mwrite32(mf, mon->mappearance);
-
-    mflags =
-        (mon->female << 31) | (mon->minvis << 30) |
-        (mon->invis_blkd << 29) | (mon->perminvis << 28) |
-        (mon->cham << 25) | (mon->mundetected << 24) |
-        (mon->mcan << 23) | (mon->mburied << 22) |
-        (mon->mspeed << 20) | (mon->permspeed << 18) |
-        (mon->mrevived << 17) | (mon->mavenge << 16) |
-        (mon->mflee << 15) | (mon->mcansee << 14) |
-        (mon->mcanmove << 13) | (mon->msleeping << 12) |
-        (mon->mstun << 11) | (mon->mconf << 10) | (mon->mpeaceful << 9) |
-        (mon->mtrapped << 8) | (mon->mleashed << 7) |
-        (mon->msuspicious << 6) |
-        /* 1 free bit */
-        (mon->isshk << 4) |
-        (mon->isminion << 3) | (mon->isgd << 2) |
-        (mon->ispriest << 1) | (mon->iswiz << 0); /* savemap: ignore */
-    mwrite32(mf, mflags);
-    
-    mwrite64(mf, mon->mspells);
 
     mwrite8(mf, save_encode_8(mon->mfleetim, -moves, l ? -l->lastmoves : 0));
     mwrite8(mf, mon->weapon_check);
     mwrite32(mf, mon->misc_worn_check);
     mwrite8(mf, mon->wormno);
+
+    mflags =
+        (mon->levi_wary << 20) |
+        (mon->female << 19) | (mon->cham << 16) |
+        (mon->mundetected << 15) | (mon->mburied << 14) |
+        (mon->mrevived << 13) | (mon->mavenge << 12) |
+        (mon->mflee << 11) | (mon->mcanmove << 10) |
+        (mon->msleeping << 9) | (mon->mpeaceful << 8) |
+        (mon->mtrapped << 7) | (mon->mleashed << 6) |
+        (mon->msuspicious << 5) | (mon->isshk << 4) |
+        (mon->isminion << 3) | (mon->isgd << 2) |
+        (mon->ispriest << 1) | (mon->iswiz << 0);
+    mwrite32(mf, mflags);
+    mwrite64(mf, mon->mintrinsics);
+    mwrite64(mf, mon->mspells);
+    enum mt_prop mt;
+    for (mt = mt_firstprop; mt <= mt_lastprop; mt++) {
+        mwrite8(mf, mon->mt_prop[mt]);
+    }
+    
 
     /* just mark that the pointers had values */
     mwrite8(mf, mon->minvent ? 1 : 0);

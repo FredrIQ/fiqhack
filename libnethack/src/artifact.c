@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -885,7 +885,7 @@ magicbane_hit(struct monst *magr,   /* attacker */
         if (youdefend)
             make_stunned((HStun + 3), FALSE);
         else
-            mdef->mstun = 1;
+            set_property(mdef, STUNNED, 3, FALSE);
         /* avoid extra stun message below if we used mb_verb["stun"] above */
         if (attack_indx == MB_INDEX_STUN)
             do_stun = FALSE;
@@ -896,7 +896,7 @@ magicbane_hit(struct monst *magr,   /* attacker */
         if (youdefend)
             make_confused(HConfusion + 4, FALSE);
         else
-            mdef->mconf = 1;
+            set_property(mdef, CONFUSION, 4, FALSE);
     }
 
     if (youattack || youdefend || vis) {
@@ -1456,10 +1456,13 @@ arti_invoke(struct obj *obj)
             break;
         case LEVITATION:
             if (on) {
-                float_up();
+                /* first is to override the timer since it kills any
+                   intrinsic levi */
+                set_property(&youmonst, LEVITATION, -2, TRUE);
+                set_property(&youmonst, LEVITATION, 0, FALSE);
                 spoteffects(FALSE);
             } else
-                float_down(I_SPECIAL | TIMEOUT);
+                set_property(&youmonst, LEVITATION, -2, FALSE);
             break;
         case INVIS:
             if (BInvis || Blind)

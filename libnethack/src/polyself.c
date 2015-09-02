@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1181,8 +1181,8 @@ dogaze(void)
                    /something/. */
                 setmangry(mtmp);
 
-                if (!mtmp->mcanmove || mtmp->mstun || mtmp->msleeping ||
-                    !mtmp->mcansee || !haseyes(mtmp->data)) {
+                if (!mtmp->mcanmove || stunned(mtmp) || mtmp->msleeping ||
+                    blind(mtmp) || !haseyes(mtmp->data)) {
                     looked--;
                     continue;
                 }
@@ -1190,12 +1190,12 @@ dogaze(void)
                 /* No reflection check for consistency with when a monster
                    gazes at *you*--only medusa gaze gets reflected then. */
                 if (adtyp == AD_CONF) {
-                    if (!mtmp->mconf)
+                    if (!confused(mtmp))
                         pline("Your gaze confuses %s!", mon_nam(mtmp));
                     else
                         pline("%s is getting more and more confused.",
                               Monnam(mtmp));
-                    mtmp->mconf = 1;
+                    set_property(mtmp, CONFUSION, dice(3, 8), FALSE);
                 } else if (adtyp == AD_FIRE) {
                     int dmg = dice(2, 6);
 
@@ -1218,7 +1218,7 @@ dogaze(void)
                 /* For consistency with passive() in uhitm.c, this only affects
                    you if the monster is still alive. */
                 if (!DEADMONSTER(mtmp) && (mtmp->data == &mons[PM_FLOATING_EYE])
-                    && !mtmp->mcan) {
+                    && !cancelled(mtmp)) {
                     if (!Free_action) {
                         pline("You are frozen by %s gaze!",
                               s_suffix(mon_nam(mtmp)));
@@ -1237,7 +1237,7 @@ dogaze(void)
                    the monster's turn, but for it to *not* have an effect would
                    be too weird. */
                 if (!DEADMONSTER(mtmp) && (mtmp->data == &mons[PM_MEDUSA]) &&
-                    !mtmp->mcan) {
+                    !cancelled(mtmp)) {
                     pline("Gazing at the awake %s is not a very good idea.",
                           l_monnam(mtmp));
                     /* as if gazing at a sleeping anything is fruitful... */

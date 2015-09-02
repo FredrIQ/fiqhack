@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -37,7 +37,7 @@ hitmsg(struct monst *mtmp, const struct attack *mattk)
     /* Note: if opposite gender, "seductively" */
     /* If same gender, "engagingly" for nymph, normal msg for others */
     if ((compat = could_seduce(mtmp, &youmonst, mattk))
-        && !mtmp->mcan && !mtmp->mspec_used) {
+        && !cancelled(mtmp) && !mtmp->mspec_used) {
         pline("%s %s you %s.", Monnam(mtmp), Blind ? "talks to" : "smiles at",
               compat == 2 ? "engagingly" : "seductively");
     } else
@@ -78,7 +78,7 @@ missmu(struct monst *mtmp, boolean nearmiss, const struct attack *mattk)
     if (!canspotmon(mtmp))
         map_invisible(mtmp->mx, mtmp->my);
 
-    if (could_seduce(mtmp, &youmonst, mattk) && !mtmp->mcan)
+    if (could_seduce(mtmp, &youmonst, mattk) && !cancelled(mtmp))
         pline("%s pretends to be friendly.", Monnam(mtmp));
     else {
         if (!flags.verbose || !nearmiss)
@@ -400,7 +400,7 @@ mattacku(struct monst *mtmp)
     tmp += mtmp->m_lev;
     if (u_helpless(hm_all))
         tmp += 4;
-    if ((Invis && !see_invisible(mtmp)) || !mtmp->mcansee)
+    if ((invisible(&youmonst) && !see_invisible(mtmp)) || blind(mtmp))
         tmp -= 2;
     if (mtmp->mtrapped)
         tmp -= 2;
@@ -408,8 +408,8 @@ mattacku(struct monst *mtmp)
         tmp = 1;
 
     /* make eels visible the moment they hit/miss us */
-    if (mdat->mlet == S_EEL && mtmp->minvis && cansee(mtmp->mx, mtmp->my)) {
-        mtmp->minvis = 0;
+    if (mdat->mlet == S_EEL && invisible(mtmp) && cansee(mtmp->mx, mtmp->my)) {
+        set_property(mtmp, INVIS, -2, FALSE); /* FIXME: why? */
         newsym(mtmp->mx, mtmp->my);
     }
 
@@ -460,7 +460,7 @@ mattacku(struct monst *mtmp)
         case AT_BUTT:
         case AT_TENT:
             if (!range2 &&
-                (!MON_WEP(mtmp) || mtmp->mconf || Conflict ||
+                (!MON_WEP(mtmp) || confused(mtmp) || Conflict ||
                  !touch_petrifies(youmonst.data))) {
                 if (tmp > (j = rnd(20 + i))) {
                     if (mattk->aatyp != AT_KICK ||
@@ -748,7 +748,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
        takes into account certain armor's special magic protection.  Otherwise just
        use !mtmp->mcan. */
     armpro = magic_negation(&youmonst);
-    uncancelled = !mtmp->mcan && ((rn2(3) >= armpro) || !rn2(50));
+    uncancelled = !cancelled(mtmp) && ((rn2(3) >= armpro) || !rn2(50));
 
     permdmg = 0;
 
@@ -999,7 +999,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 pline("%s tries to reach your %s %s!", Monnam(mtmp), sidestr,
                       body_part(LEG));
                 dmg = 0;
-            } else if (mtmp->mcan) {
+            } else if (cancelled(mtmp)) {
                 pline("%s nuzzles against your %s %s!", Monnam(mtmp), sidestr,
                       body_part(LEG));
                 dmg = 0;
@@ -1032,7 +1032,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         hitmsg(mtmp, mattk);
         boolean stiffen = !rn2_on_rng(10,rng_slow_stoning);
         if (!rn2(3)) {
-            if (mtmp->mcan)
+            if (cancelled(mtmp))
                 You_hear("a cough from %s!", mon_nam(mtmp));
             else {
                 You_hear("%s hissing!", s_suffix(mon_nam(mtmp)));
@@ -1058,7 +1058,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             u.ustuck = mtmp;
         break;
     case AD_WRAP:
-        if ((!mtmp->mcan || u.ustuck == mtmp) && !sticks(youmonst.data)) {
+        if ((!cancelled(mtmp) || u.ustuck == mtmp) && !sticks(youmonst.data)) {
             boolean drownable = is_pool(level, mtmp->mx, mtmp->my) &&
                 !Swimming && !Amphibious;
             if (!u.ustuck &&
@@ -1104,7 +1104,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         hitmsg(mtmp, mattk);
         if (youmonst.data->mlet == mdat->mlet)
             break;
-        if (!mtmp->mcan)
+        if (!cancelled(mtmp))
             stealgold(mtmp);
         break;
 
@@ -1112,7 +1112,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_SEDU:
         if (is_animal(mtmp->data)) {
             hitmsg(mtmp, mattk);
-            if (mtmp->mcan)
+            if (cancelled(mtmp))
                 break;
             /* Continue below */
         } else if (dmgtype(youmonst.data, AD_SEDU)
@@ -1125,7 +1125,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             if (!tele_restrict(mtmp))
                 rloc(mtmp, TRUE);
             return 3;
-        } else if (mtmp->mcan) {
+        } else if (cancelled(mtmp)) {
             if (!Blind) {
                 pline("%s tries to %s you, but you seem %s.",
                       Adjmonnam(mtmp, "plain"),
@@ -1163,7 +1163,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
 
     case AD_SSEX:
-        if (could_seduce(mtmp, &youmonst, mattk) == 1 && !mtmp->mcan)
+        if (could_seduce(mtmp, &youmonst, mattk) == 1 && !cancelled(mtmp))
             if (doseduce(mtmp))
                 return 3;
         break;
@@ -1187,7 +1187,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_RUST:
         hitmsg(mtmp, mattk);
-        if (mtmp->mcan)
+        if (cancelled(mtmp))
             break;
         if (u.umonnum == PM_IRON_GOLEM) {
             pline("You rust!");
@@ -1198,13 +1198,13 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_CORR:
         hitmsg(mtmp, mattk);
-        if (mtmp->mcan)
+        if (cancelled(mtmp))
             break;
         hurtarmor(&youmonst, ERODE_CORRODE);
         break;
     case AD_DCAY:
         hitmsg(mtmp, mattk);
-        if (mtmp->mcan)
+        if (cancelled(mtmp))
             break;
         if (u.umonnum == PM_WOOD_GOLEM || u.umonnum == PM_LEATHER_GOLEM) {
             pline("You rot!");
@@ -1215,7 +1215,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_HEAL:
         /* a cancelled nurse is just an ordinary monster */
-        if (mtmp->mcan) {
+        if (cancelled(mtmp)) {
             hitmsg(mtmp, mattk);
             break;
         }
@@ -1278,7 +1278,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         hitmsg(mtmp, mattk);
         if (!night() && mdat == &mons[PM_GREMLIN])
             break;
-        if (!mtmp->mcan && !rn2(10)) {
+        if (!cancelled(mtmp) && !rn2(10)) {
             if (canhear()) {
                 if (Blind)
                     You_hear("laughter.");
@@ -1295,14 +1295,14 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_STUN:
         hitmsg(mtmp, mattk);
-        if (!mtmp->mcan && !rn2(4)) {
+        if (!cancelled(mtmp) && !rn2(4)) {
             make_stunned(HStun + dmg, TRUE);
             dmg /= 2;
         }
         break;
     case AD_ACID:
         hitmsg(mtmp, mattk);
-        if (!mtmp->mcan && !rn2(3))
+        if (!cancelled(mtmp) && !rn2(3))
             if (Acid_resistance) {
                 pline("You're covered in acid, but it seems harmless.");
                 dmg = 0;
@@ -1325,7 +1325,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_CONF:
         hitmsg(mtmp, mattk);
-        if (!mtmp->mcan && !rn2(4) && !mtmp->mspec_used) {
+        if (!cancelled(mtmp) && !rn2(4) && !mtmp->mspec_used) {
             mtmp->mspec_used = mtmp->mspec_used + (dmg + rn2(6));
             if (Confusion)
                 pline("You are getting even more confused.");
@@ -1636,7 +1636,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_ELEC:
-        if (!mtmp->mcan && rn2(2)) {
+        if (!cancelled(mtmp) && rn2(2)) {
             pline("The air around you crackles with electricity.");
             if (Shock_resistance) {
                 shieldeff(u.ux, u.uy);
@@ -1648,7 +1648,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
             tmp = 0;
         break;
     case AD_COLD:
-        if (!mtmp->mcan && rn2(2)) {
+        if (!cancelled(mtmp) && rn2(2)) {
             if (Cold_resistance) {
                 shieldeff(u.ux, u.uy);
                 pline("You feel mildly chilly.");
@@ -1660,7 +1660,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
             tmp = 0;
         break;
     case AD_FIRE:
-        if (!mtmp->mcan && rn2(2)) {
+        if (!cancelled(mtmp) && rn2(2)) {
             if (Fire_resistance) {
                 shieldeff(u.ux, u.uy);
                 pline("You feel mildly hot.");
@@ -1708,7 +1708,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
 static int
 explmu(struct monst *mtmp, const struct attack *mattk)
 {
-    if (mtmp->mcan)
+    if (cancelled(mtmp))
         return 0;
 
     int tmp = dice((int)mattk->damn, (int)mattk->damd);
@@ -1796,12 +1796,12 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
 {
     switch (mattk->adtyp) {
     case AD_STON:
-        if (mtmp->mcan || !mtmp->mcansee) {
+        if (cancelled(mtmp) || blind(mtmp)) {
             if (!canseemon(mtmp))
                 break;  /* silently */
             pline("%s %s.", Monnam(mtmp),
                   (mtmp->data == &mons[PM_MEDUSA] &&
-                   mtmp->mcan) ? "doesn't look all that ugly" :
+                   cancelled(mtmp)) ? "doesn't look all that ugly" :
                   "gazes ineffectually");
             break;
         }
@@ -1841,8 +1841,8 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
         }
         break;
     case AD_CONF:
-        if (!mtmp->mcan && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            mtmp->mcansee && !mtmp->mspec_used && rn2(5)) {
+        if (!cancelled(mtmp) && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
+            !blind(mtmp) && !mtmp->mspec_used && rn2(5)) {
             int conf = dice(3, 4);
 
             mtmp->mspec_used = mtmp->mspec_used + (conf + rn2(6));
@@ -1855,8 +1855,8 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
         }
         break;
     case AD_STUN:
-        if (!mtmp->mcan && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            mtmp->mcansee && !mtmp->mspec_used && rn2(5)) {
+        if (!cancelled(mtmp) && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
+            !blind(mtmp) && !mtmp->mspec_used && rn2(5)) {
             int stun = dice(2, 6);
 
             mtmp->mspec_used = mtmp->mspec_used + (stun + rn2(6));
@@ -1866,7 +1866,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
         }
         break;
     case AD_BLND:
-        if (!mtmp->mcan && canseemon(mtmp) && !resists_blnd(&youmonst)
+        if (!cancelled(mtmp) && canseemon(mtmp) && !resists_blnd(&youmonst)
             && distu(mtmp->mx, mtmp->my) <= BOLT_LIM * BOLT_LIM) {
             int blnd = dice((int)mattk->damn, (int)mattk->damd);
 
@@ -1882,8 +1882,8 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
         }
         break;
     case AD_FIRE:
-        if (!mtmp->mcan && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            mtmp->mcansee && !mtmp->mspec_used && rn2(5)) {
+        if (!cancelled(mtmp) && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
+            !blind(mtmp) && !mtmp->mspec_used && rn2(5)) {
             int dmg = dice(2, 6);
 
             pline("%s attacks you with a fiery gaze!", Monnam(mtmp));
@@ -1905,16 +1905,16 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
         break;
 #ifdef PM_BEHOLDER      /* work in progress */
     case AD_SLEE:
-        if (!mtmp->mcan && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            mtmp->mcansee && !u_helpless(hm_all) && !rn2(5) &&
+        if (!cancelled(mtmp) && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
+            !blind(mtmp) && !u_helpless(hm_all) && !rn2(5) &&
             !Sleep_resistance) {
             helpless(rnd(10), hr_asleep, "sleeping", NULL);
             pline("%s gaze makes you very sleepy...", s_suffix(Monnam(mtmp)));
         }
         break;
     case AD_SLOW:
-        if (!mtmp->mcan && canseemon(mtmp) && mtmp->mcansee &&
-            (HFast & (INTRINSIC | TIMEOUT)) && !defends(AD_SLOW, uwep) &&
+        if (!cancelled(mtmp) && canseemon(mtmp) && !blind(mtmp) &&
+            (ifast(&youmonst)) && !defends(AD_SLOW, uwep) &&
             !rn2(4))
 
             u_slow_down();
@@ -1963,7 +1963,7 @@ could_seduce(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         genagr = poly_gender();
     } else {
         pagr = magr->data;
-        agrinvis = magr->minvis;
+        agrinvis = invisible(magr);
         genagr = gender(magr);
     }
     if (mdef == &youmonst) {
@@ -1997,9 +1997,9 @@ doseduce(struct monst *mon)
     boolean fem = (mon->data == &mons[PM_SUCCUBUS]);    /* otherwise incubus */
     const char *qbuf;
 
-    if (mon->mcan || mon->mspec_used) {
+    if (cancelled(mon) || mon->mspec_used) {
         pline("%s acts as though %s has got a %sheadache.", Monnam(mon),
-              mhe(mon), mon->mcan ? "severe " : "");
+              mhe(mon), cancelled(mon) ? "severe " : "");
         return 0;
     }
 
@@ -2227,7 +2227,7 @@ doseduce(struct monst *mon)
         }
     }
     if (!rn2_on_rng(25, rng_foocubus_results))
-        mon->mcan = 1;  /* monster is worn out */
+        set_property(mon, CANCELLED, 0, FALSE);
     if (!tele_restrict(mon))
         rloc(mon, TRUE);
     return 1;
@@ -2355,8 +2355,8 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
             if (u.umonnum == PM_FLOATING_EYE) {
                 if (!rn2(4))
                     tmp = 127;
-                if (mtmp->mcansee && haseyes(mtmp->data) && rn2(3) &&
-                    (see_invisible(mtmp) || !Invis)) {
+                if (!blind(mtmp) && haseyes(mtmp->data) && rn2(3) &&
+                    (see_invisible(mtmp) || !invisible(&youmonst))) {
                     if (Blind)
                         pline("As a blind %s, you cannot defend yourself.",
                               youmonst.data->mname);
@@ -2393,11 +2393,9 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
                 split_mon(&youmonst, mtmp);
             break;
         case AD_STUN:  /* Yellow mold */
-            if (!mtmp->mstun) {
-                mtmp->mstun = 1;
-                pline("%s %s.", Monnam(mtmp),
-                      makeplural(stagger(mtmp->data, "stagger")));
-            }
+            set_property(mtmp, STUNNED, tmp, TRUE);
+            pline("%s %s.", Monnam(mtmp),
+                  makeplural(stagger(mtmp->data, "stagger")));
             tmp = 0;
             break;
         case AD_FIRE:  /* Red mold */

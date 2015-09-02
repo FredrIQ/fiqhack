@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -196,8 +196,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
        this can actually come up, but we should handle it anyway. */
     boolean redundant = !!(has_property(&youmonst, prop) & ~W_MASK(slot));
     redundant = redundant && !worn_blocked(prop);
-    boolean destroyed = FALSE;
-    boolean already_blind = Blind; /* for blindfold tracking */
+    boolean destroyed = 0;
     int which, old_attrib;
 
     /* Change the item in the slot. */
@@ -242,46 +241,19 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 
        WARNING: Some of these can destroy objects. That includes the object
        we're trying to equip! Thus, o and otmp should not be used after this
-       switch returns. (Checking EQUIP(slot) is fine, though.) */
+       switch returns. (Checking EQUIP(slot) is fine, though.)
+
+       Property-related side effects has been moved to update_property. -FIQ */
     switch (otyp) {
         /* Boots */
     case LOW_BOOTS:
     case IRON_SHOES:
     case HIGH_BOOTS:
     case KICKING_BOOTS:
-        break;
     case JUMPING_BOOTS:
-        /* jumping is obvious no matter what the situation */
-        makeknown(otyp);
-        pline("Your %s feel %s.", makeplural(body_part(LEG)),
-              equipping ? "longer" : "shorter");
-        break;
     case WATER_WALKING_BOOTS:
-        if (is_pool(level, u.ux, u.uy) && !Levitation && !Flying &&
-            !is_clinger(youmonst.data)) {
-            makeknown(otyp);
-            spoteffects(TRUE);
-        } else if (u.uinwater)
-            spoteffects(TRUE);
-        break;
     case SPEED_BOOTS:
-        /* Speed boots are still better than intrinsic speed, though not better
-           than potion speed */
-        if (!redundant_extrinsic && !(HFast & ~INTRINSIC)) {
-            makeknown(otyp);
-            pline("You feel yourself %s%s.",
-                  equipping ? "speed up" : "slow down",
-                  (redundant) ? " slightly" : "");
-        }
-        break;
     case ELVEN_BOOTS:
-        if (!redundant) {
-            makeknown(otyp);
-            if (equipping)
-                pline("You walk very quietly.");
-            else
-                pline("You sure are noisy.");
-        }
         break;
     case FUMBLE_BOOTS:
     case GAUNTLETS_OF_FUMBLING:
@@ -298,37 +270,14 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case ELVEN_CLOAK:
     case CLOAK_OF_PROTECTION:
     case CLOAK_OF_DISPLACEMENT:
-        makeknown(otyp);
-        break;
     case ORCISH_CLOAK:
     case DWARVISH_CLOAK:
     case CLOAK_OF_MAGIC_RESISTANCE:
     case ROBE:
     case LEATHER_CLOAK:
     case ALCHEMY_SMOCK:
-        break;
     case MUMMY_WRAPPING:
-        /* Note: while equipping, the mummy wrapping is already worn, so we
-           can't just use Invis directly. */
-        if (u_have_property(INVIS, ANY_PROPERTY, TRUE) && !Blind) {
-            newsym(u.ux, u.uy);
-            pline("You can %s!",
-                  equipping ?
-                  (See_invisible ? "no longer see through yourself" :
-                   see_yourself) :
-                  (See_invisible ? "see through yourself" :
-                   "no longer see yourself"));
-        }
-        break;
     case CLOAK_OF_INVISIBILITY:
-        if (!redundant && !Blind) {
-            makeknown(otyp);
-            newsym(u.ux, u.uy);
-            pline("Suddenly you can%s yourself.",
-                  equipping ?
-                  (See_invisible ? " see through" : "not see") :
-                  (See_invisible ? " no longer see through" : " see"));
-        }
         break;
     case OILSKIN_CLOAK:
         if (equipping) {
@@ -407,17 +356,12 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 
         /* Amulets */
     case AMULET_OF_ESP:
-        see_monsters(FALSE);
-        break;
     case AMULET_OF_LIFE_SAVING:
     case AMULET_VERSUS_POISON:
     case AMULET_OF_REFLECTION:
     case AMULET_OF_MAGICAL_BREATHING:
     case FAKE_AMULET_OF_YENDOR:
-        break;
     case AMULET_OF_UNCHANGING:
-        if (Slimed && equipping)
-            Slimed = 0;
         break;
     case AMULET_OF_CHANGE:
         if (equipping) {
@@ -476,49 +420,11 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case RIN_SLOW_DIGESTION:
     case RIN_SUSTAIN_ABILITY:
     case MEAT_RING:
-        break;
     case RIN_WARNING:
-        see_monsters(FALSE);
-        break;
     case RIN_SEE_INVISIBLE:
-        /* can now see invisible monsters */
-        if (!redundant) {
-            set_mimic_blocking();   /* do special mimic handling */
-            see_monsters(FALSE);
-#ifdef INVISIBLE_OBJECTS
-            see_objects(FALSE);
-#endif
-        }
-
-        if (Invis && !redundant && !Blind) {
-            newsym(u.ux, u.uy);
-            pline(equipping ? "Suddenly you are transparent, but there!" :
-                  "Suddenly you cannot see yourself.");
-            makeknown(otyp);
-        }
-        break;
     case RIN_INVISIBILITY:
-        if (!redundant && !BInvis && !Blind) {
-            makeknown(otyp);
-            newsym(u.ux, u.uy);
-            if (equipping)
-                self_invis_message();
-            else
-                pline("Your body seems to unfade%s.",
-                      See_invisible ? " completely" : "..");
-        }
-        break;
     case LEVITATION_BOOTS: /* moved from the boots section */
     case RIN_LEVITATION:
-        if (!redundant) {
-            if (equipping) {
-                float_up();
-                spoteffects(FALSE); /* for sinks */
-            } else {
-                float_down(0L);
-            }
-            makeknown(otyp);
-        }
         break;
     case RIN_GAIN_STRENGTH:
         which = A_STR;
@@ -567,19 +473,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case BLINDFOLD:
     case TOWEL:
     case LENSES:
-        if (Blind && !already_blind) {
-            if (flags.verbose)
-                pline("You can't see any more.");
-            /* set ball&chain variables before the hero goes blind */
-            if (Punished)
-                set_bc(0);
-        } else if (already_blind && !Blind) {
-            /* "You are now wearing the Eyes of the Overworld." */
-            pline("You can see!");
-        }
-        if (Blind_telepat || Infravision)
-            see_monsters(FALSE);
-        turnstate.vision_full_recalc = TRUE; /* recalc vision limits */
         break;
 
         /* Shields, shirts, body armor: no special cases! */
@@ -615,6 +508,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         uswapwepgone(); /* lifesaved still doesn't allow touching cockatrice */
     }
 
+    update_property(&youmonst, prop, slot);
     return destroyed;
 }
 

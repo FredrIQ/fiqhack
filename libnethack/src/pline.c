@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-04 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -243,13 +243,13 @@ mstatusline(struct monst *mtmp)
         info = msgcat(info, ", peaceful");
     if (mtmp->meating)
         info = msgcat(info, ", eating");
-    if (mtmp->mcan)
+    if (cancelled(mtmp))
         info = msgcat(info, ", cancelled");
-    if (mtmp->mconf)
+    if (confused(mtmp))
         info = msgcat(info, ", confused");
-    if (mtmp->mblinded || !mtmp->mcansee)
+    if (blind(mtmp))
         info = msgcat(info, ", blind");
-    if (mtmp->mstun)
+    if (stunned(mtmp))
         info = msgcat(info, ", stunned");
     if (mtmp->msleeping)
         info = msgcat(info, ", asleep");
@@ -262,13 +262,15 @@ mstatusline(struct monst *mtmp)
         info = msgcat(info, ", scared");
     if (mtmp->mtrapped)
         info = msgcat(info, ", trapped");
-    if (mtmp->mspeed)
+    if (fast(mtmp))
         info = msgcat(info,
-                      mtmp->mspeed == MFAST ? ", fast" :
-                      mtmp->mspeed == MSLOW ? ", slow" : ", ???? speed");
+                      very_fast(mtmp) ? ", very fast" :
+                      fast(mtmp) ? ", fast" : ", fast somehow");
+    if (slow(mtmp))
+        info = msgcat(info, ", slowed");
     if (mtmp->mundetected)
         info = msgcat(info, ", concealed");
-    if (mtmp->minvis)
+    if (invisible(mtmp))
         info = msgcat(info, ", invisible");
     if (mtmp == u.ustuck)
         info = msgcat(info,

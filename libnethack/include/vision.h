@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -33,7 +33,7 @@
  *                aiming for the player's location, or the square's).
  */
 # define m_cansee(mtmp,x2,y2) \
-    (mtmp->mcansee && \
+    (!blind(mtmp) &&                                            \
      clear_path((mtmp)->mx,(mtmp)->my,(x2),(y2),viz_array))
 
 /*

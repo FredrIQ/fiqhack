@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -330,7 +330,7 @@ make_corpse(struct monst *mtmp)
 
 #ifdef INVISIBLE_OBJECTS
     /* Invisible monster ==> invisible corpse */
-    obj->oinvis = mtmp->minvis;
+    obj->oinvis = invisible(mtmp);
 #endif
 
     stackobj(obj);
@@ -531,11 +531,14 @@ mcalcmove(struct monst *mon)
 
     /* Note: MSLOW's `+ 1' prevents slowed speed 1 getting reduced to 0;
        MFAST's `+ 2' prevents hasted speed 1 from becoming a no-op; both
-       adjustments have negligible effect on higher speeds. */
-    if (mon->mspeed == MSLOW)
-        mmove = (2 * mmove + 1) / 3;
-    else if (mon->mspeed == MFAST)
+       adjustments have negligible effect on higher speeds.
+       "Very fast" needs +1 to avoid noop on speed 1 as well. */
+    if (very_fast(mon))
+        mmove = (5 * mmove + 1) / 3;
+    else if (fast(mon))
         mmove = (4 * mmove + 2) / 3;
+    if (slow(mon))
+        mmove = (2 * mmove + 1) / 3;
 
     if (mon == u.usteed) {
         /* This used to have a flags.mv check, but that has been conclusively
@@ -582,9 +585,28 @@ mcalcdistress(void)
             newcham(mtmp, NULL, FALSE, FALSE);
         were_change(mtmp);
 
-        /* gradually time out temporary problems */
-        if (mtmp->mblinded && !--mtmp->mblinded)
-            mtmp->mcansee = 1;
+        /* time out mt properties */
+        enum mt_prop mt;
+        for (mt = mt_firstprop; mt <= mt_lastprop; mt++) {
+            if (mtmp->mt_prop[mt]) {
+                mtmp->mt_prop[mt]--;
+                if (mt == mt_levi) {
+                    /* Monsters with temporary levitation might get wary */
+                    if (!rn2(40))
+                        mtmp->levi_wary = 1;
+                    if (mtmp->mt_prop[mt] == 0)
+                        /* "intrinsic" levitation is, in fact, merely used
+                           to see if it is controlled or not. */
+                        set_property(mtmp, LEVITATION, -1, TRUE);
+                }
+                if (mtmp->mt_prop[mt] == 0)
+                    update_property(mtmp, mon_mt2prop(mt), os_timeout);
+            }
+        }
+                
+
+        /* ... and other timers.
+           FIXME: what about meating? */
         if (mtmp->mfrozen && !--mtmp->mfrozen)
             mtmp->mcanmove = 1;
         if (mtmp->mfleetim && !--mtmp->mfleetim)
@@ -648,7 +670,7 @@ movemon(void)
         }
 
         /* continue if the monster died fighting */
-        if (Conflict && !mtmp->iswiz && mtmp->mcansee) {
+        if (Conflict && !mtmp->iswiz && !blind(mtmp)) {
             /* Note: Conflict does not take effect in the first round.
                Therefore, A monster when stepping into the area will get to
                swing at you.  The call to fightm() must be _last_.  The monster
@@ -712,7 +734,7 @@ meatmetal(struct monst *mtmp)
                 }
                 /* The object's rustproofing is gone now */
                 otmp->oerodeproof = 0;
-                mtmp->mstun = 1;
+                set_property(mtmp, STUNNED, dice(4, 4), FALSE);
                 if (canseemon(mtmp) && flags.verbose) {
                     pline("%s spits %s out in disgust!", Monnam(mtmp),
                           distant_name(otmp, doname));
@@ -873,7 +895,7 @@ meatobj(struct monst *mtmp)
             mpickobj(mtmp, otmp);       /* slurp */
         }
         /* Engulf & devour is instant, so don't set meating */
-        if (mtmp->minvis && mtmp->dlevel == level)
+        if (invisible(mtmp) && mtmp->dlevel == level)
             newsym(mtmp->mx, mtmp->my);
     }
     if (ecount > 0) {
@@ -1092,11 +1114,11 @@ mfndpos(struct monst *mon, coord * poss,        /* coord poss[9] */
 
 nexttry:       /* eels prefer the water, but if there is no water nearby, they
                    will crawl over land */
-    if (mon->mconf) {
+    if (confused(mon)) {
         flag |= ALLOW_ALL;
         flag &= ~NOTONL;
     }
-    if (!mon->mcansee)
+    if (blind(mon))
         flag |= ALLOW_SSM;
     maxx = min(x + 1, COLNO - 1);
     maxy = min(y + 1, ROWNO - 1);
@@ -1210,8 +1232,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         continue;
                     info[cnt] |= ALLOW_ROCK;
                 }
-                if (mon->mcansee && (!Invis || see_invisible(mon)) &&
-                    onlineu(nx, ny)) {
+                if (blind(mon) && (!invisible(&youmonst) ||
+                    see_invisible(mon)) && onlineu(nx, ny)) {
                     if (flag & NOTONL)
                         continue;
                     info[cnt] |= NOTONL;
@@ -1367,7 +1389,7 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
            see invisible (can /you/ determine whether a floating eye can see
            invisible by looking at it?) */
         if (md == &mons[PM_FLOATING_EYE] && rn2(10) &&
-            magr->mcansee && haseyes(ma))
+            !blind(magr) && haseyes(ma))
             return 0;
         if (md == &mons[PM_GELATINOUS_CUBE] && rn2(10))
             return 0;
@@ -1666,7 +1688,7 @@ mondead(struct monst *mtmp)
         dismount_steed(DISMOUNT_GENERIC);
 
     /* monster should no longer block vision */
-    if ((!mtmp->minvis || See_invisible) &&
+    if ((!invisible(mtmp) || see_invisible(&youmonst)) &&
         ((mtmp->m_ap_type == M_AP_FURNITURE &&
           (mtmp->mappearance == S_vcdoor || mtmp->mappearance == S_hcdoor)) ||
          (mtmp->m_ap_type == M_AP_OBJECT && mtmp->mappearance == BOULDER)))
@@ -1815,7 +1837,7 @@ mongone(struct monst *mdef)
         dismount_steed(DISMOUNT_GENERIC);
 
     /* monster should no longer block vision */
-    if ((!mdef->minvis || See_invisible) &&
+    if ((!invisible(mdef) || see_invisible(&youmonst)) &&
         ((mdef->m_ap_type == M_AP_FURNITURE &&
           (mdef->mappearance == S_vcdoor || mdef->mappearance == S_hcdoor)) ||
          (mdef->m_ap_type == M_AP_OBJECT && mdef->mappearance == BOULDER)))
@@ -1853,7 +1875,7 @@ monstone(struct monst *mdef)
         while ((obj = mdef->minvent) != 0) {
             obj_extract_self(obj);
             if (obj->owornmask)
-                update_mon_intrinsics(mdef, obj, FALSE, TRUE);
+                update_property(mdef, objects[obj->otyp].oc_oprop, which_slot(obj));
             obj_no_longer_held(obj);
             if (obj->owornmask & W_MASK(os_wep))
                 setmnotwielded(mdef, obj);
@@ -2552,7 +2574,7 @@ restore_cham(struct monst *mon)
 static boolean
 restrap(struct monst *mtmp)
 {
-    if (mtmp->cham || mtmp->mcan || mtmp->m_ap_type ||
+    if (mtmp->cham || cancelled(mtmp) || mtmp->m_ap_type ||
         cansee(mtmp->mx, mtmp->my) || rn2(3) || (mtmp == u.ustuck) ||
         (sensemon(mtmp) && distu(mtmp->mx, mtmp->my) <= 2))
         return FALSE;
@@ -2774,7 +2796,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
             new_light_source(mtmp->dlevel, mtmp->mx, mtmp->my,
                              emits_light(mtmp->data), LS_MONSTER, mtmp);
     }
-    mtmp->minvis = mtmp->invis_blkd ? 0 : (mtmp->perminvis || pm_invisible(mdat));
+
     if (!(hides_under(mdat) && OBJ_AT_LEV(mtmp->dlevel, mtmp->mx, mtmp->my)) &&
         !(mdat->mlet == S_EEL && is_pool(level, mtmp->mx, mtmp->my)))
         mtmp->mundetected = 0;
@@ -2994,10 +3016,8 @@ golemeffects(struct monst *mon, int damtype, int dam)
     } else {
         return;
     }
-    if (slow) {
-        if (mon->mspeed != MSLOW)
-            mon_adjust_speed(mon, -1, NULL);
-    }
+    if (slow)
+        set_property(mon, SLOW, dice(3, 8), FALSE);
     if (heal) {
         if (mon->mhp < mon->mhpmax) {
             mon->mhp += dam;

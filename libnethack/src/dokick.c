@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -60,8 +60,9 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
     /* in AceHack, floating eyes are immune to kicks if their passive would
        fire, just like they're immune to other melee damage. "it" here because
        the floating eye has been named already in the previous message. */
-    if (mon->data == &mons[PM_FLOATING_EYE] && canseemon(mon) && !Free_action &&
-        !Reflecting && mon->mcansee) {
+    if (mon->data == &mons[PM_FLOATING_EYE] && canseemon(mon) &&
+        !free_action(&youmonst) && !reflecting(&youmonst) &&
+        !blind(mon)) {
         pline("But it glares at you, making your kick go wild!");
         return;
     }
@@ -239,10 +240,10 @@ doit:
         !((teleportitis(mon) && !level->flags.noteleport) ||
           ((abs(bypos.x - u.ux) <= 1) && (abs(bypos.y - u.uy) <= 1))))
         canmove = FALSE;
-    if (!rn2(clumsy ? 3 : 4) && (clumsy || !bigmonst(mon->data)) && mon->mcansee
-        && !mon->mtrapped && !thick_skinned(mon->data) &&
+    if (!rn2(clumsy ? 3 : 4) && (clumsy || !bigmonst(mon->data)) &&
+        !blind(mon) && !mon->mtrapped && !thick_skinned(mon->data) &&
         mon->data->mlet != S_EEL && haseyes(mon->data) && mon->mcanmove &&
-        !mon->mstun && !mon->mconf && !mon->msleeping &&
+        !stunned(mon) && !confused(mon) && !mon->msleeping &&
         mon->data->mmove >= 12) {
         if (!canmove || (!nohands(mon->data) && !rn2(martial()? 5 : 3))) {
             pline("%s blocks your %skick.", Monnam(mon),

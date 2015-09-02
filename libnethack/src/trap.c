@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2261,10 +2261,6 @@ minstapetrify(struct monst *mon, boolean byplayer)
         return;
     }
 
-    /* give a "<mon> is slowing down" message and also remove intrinsic speed
-       (comparable to similar effect on the hero) */
-    mon_adjust_speed(mon, -3, NULL);
-
     if (cansee(mon->mx, mon->my))
         pline("%s turns to stone.", Monnam(mon));
     if (byplayer) {
@@ -2313,37 +2309,69 @@ mselftouch(struct monst *mon, const char *arg, boolean byplayer)
     }
 }
 
-void
-float_up(void)
+boolean
+float_up(struct monst *mon)
 {
-    if (u.utrap) {
-        if (u.utraptype == TT_PIT) {
-            u.utrap = 0;
-            pline("You float up, out of the pit!");
-            turnstate.vision_full_recalc = TRUE;     /* vision limits change */
-            fill_pit(level, u.ux, u.uy);
-        } else if (u.utraptype == TT_INFLOOR) {
-            pline("Your body pulls upward, but your %s are still stuck.",
-                  makeplural(body_part(LEG)));
-        } else {
-            pline("You float up, only your %s is still stuck.", body_part(LEG));
+    boolean vis = canseemon(mon);
+    boolean you = (mon == &youmonst);
+    if ((you && u.utrap) ||
+        (!you && mon->mtrapped)) {
+        struct trap *ttmp;
+        ttmp = t_at(level, m_mx(mon), m_my(mon));
+        if (!ttmp) {
+            panic("Levitating out of non-existent trap?");
+            return FALSE;
         }
-    } else if (Is_waterlevel(&u.uz))
+        int ttyp = ttmp->ttyp;
+
+        if (ttyp == PIT || ttyp == SPIKED_PIT) {
+            if (mon == &youmonst)
+                u.utrap = 0;
+            else
+                mon->mtrapped = 0;
+            if (mon == &youmonst || vis)
+                pline("%s float%s up, out of the pit!",
+                      mon == &youmonst ? "You" : Monnam(mon),
+                      mon == &youmonst ? "" : "s");
+            turnstate.vision_full_recalc = TRUE;     /* vision limits change */
+            fill_pit(level, m_mx(mon), m_my(mon));
+        } else if (ttyp == WEB) {
+            if (you)
+                pline("Your body pulls upward, but your %s are still stuck.",
+                      makeplural(body_part(LEG)));
+            else if (vis)
+                pline("%s body pulls upward, but %s %s are still stuck.",
+                      s_suffix(Monnam(mon)), mhis(mon),
+                      makeplural(mbodypart(mon, LEG)));
+        } else {
+            if (you)
+                pline("You float up, only your %s is still stuck.", body_part(LEG));
+            else if (vis)
+                pline("%s floats up, only %s %s is still stuck.",
+                      s_suffix(Monnam(mon)), mhis(mon),
+                      mbodypart(mon, LEG));
+        }
+    } else if (Is_waterlevel(&u.uz) && you)
         pline("It feels as though you've lost some weight.");
-    else if (u.uinwater)
+    else if (you && u.uinwater)
         spoteffects(TRUE);
-    else if (Engulfed)
+    else if (you && Engulfed)
         pline(is_animal(u.ustuck->data) ? "You float away from the %s." :
               "You spiral up into %s.",
               is_animal(u.ustuck->data) ? surface(u.ux, u.uy) :
               mon_nam(u.ustuck));
-    else if (Hallucination)
+    else if (you && Hallucination)
         pline("Up, up, and awaaaay!  You're walking on air!");
-    else if (Is_airlevel(&u.uz))
-        pline("You gain control over your movements.");
-    else
-        pline("You start to float in the air!");
-    if (u.usteed && !levitates(u.usteed) && !flying(u.usteed)) {
+    else if (Is_airlevel(m_mz(mon)) && (you || vis))
+        pline("%s gain%s control over %s movements.",
+              you ? "You" : Monnam(mon),
+              you ? "" : "s",
+              you ? "your" : mhis(mon));
+    else if (you || vis)
+        pline("%s start%s to float in the air!",
+              you ? "You" : Monnam(mon),
+              you ? "" : "s");
+    if (you && u.usteed && !levitates(u.usteed) && !flying(u.usteed)) {
         if (Lev_at_will)
             pline("%s magically floats up!", Monnam(u.usteed));
         else {
@@ -2351,7 +2379,7 @@ float_up(void)
             dismount_steed(DISMOUNT_GENERIC);
         }
     }
-    return;
+    return (you || vis);
 }
 
 void
@@ -2368,17 +2396,15 @@ fill_pit(struct level *lev, int x, int y)
 }
 
 int
-float_down(long hmask)
-{       /* might cancel timeout */
-    struct trap *trap = NULL;
-    d_level current_dungeon_level;
+float_down(struct monst *mon)
+{
+    boolean vis = canseemon(mon);
+    boolean you = (mon == &youmonst);
     boolean no_msg = FALSE;
+    struct trap *trap = t_at(level, m_mx(mon), m_my(mon));
+    d_level current_dungeon_level;
 
-    HLevitation &= ~hmask;
-
-    if (Levitation)
-        return 0;       /* maybe another ring/potion/boots */
-    if (Engulfed) {
+    if (you && Engulfed) {
         pline((Flying) ? "You feel less buoyant, but you are still %s." :
               "You float down, but you are still %s.",
               is_animal(u.ustuck->data) ? "swallowed" : "engulfed");
@@ -2386,10 +2412,10 @@ float_down(long hmask)
     }
 
     /* Don't print "you float gently..." if it's actually violent. */
-    if (IS_SINK(level->locations[u.ux][u.uy].typ))
+    if (you && IS_SINK(level->locations[u.ux][u.uy].typ))
         no_msg = TRUE;
 
-    if (Punished && !carried(uball) &&
+    if (you && Punished && !carried(uball) &&
         (is_pool(level, uball->ox, uball->oy) ||
          ((trap = t_at(level, uball->ox, uball->oy)) &&
           ((trap->ttyp == PIT) || (trap->ttyp == SPIKED_PIT) ||
@@ -2403,14 +2429,18 @@ float_down(long hmask)
         turnstate.vision_full_recalc = TRUE; /* in case the hero moved. */
     }
     /* check for falling into pool - added by GAN 10/20/86 */
-    if (!Flying) {
-        if (!Engulfed && u.ustuck) {
+    if (!flying(mon)) {
+        if (!Engulfed && u.ustuck && (you || u.ustuck == mon)) {
             if (sticks(youmonst.data))
-                pline("You aren't able to maintain your hold on %s.",
-                      mon_nam(u.ustuck));
+                pline("%s aren't able to maintain your hold on %s%s",
+                      you ? "You" : "Startled, you",
+                      mon_nam(u.ustuck),
+                      you ? "." : "!");
             else
-                pline("Startled, %s can no longer hold you!",
-                      mon_nam(u.ustuck));
+                pline("%s%s can no longer hold you%s",
+                      you ? "Startled, " : "",
+                      you ? mon_nam(u.ustuck) : Monnam(u.ustuck),
+                      you ? "!" : ".");
             u.ustuck = 0;
         }
         /* kludge alert: drown() and lava_effects() print various messages
@@ -2418,58 +2448,86 @@ float_down(long hmask)
            message below.  Thus, we want to avoid printing confusing, duplicate
            or out-of-order messages. Use knowledge of the two routines as a
            hack -- this should really be handled differently -dlc */
-        if (is_pool(level, u.ux, u.uy) && !Wwalking && !Swimming && !u.uinwater)
-            no_msg = drown();
+        if (is_pool(level, m_mx(mon), m_my(mon)) && !waterwalks(mon) && !swims(mon))
+            no_msg = (you ? drown() : minliquid(mon));
 
-        if (is_lava(level, u.ux, u.uy)) {
-            lava_effects();
+        if (is_lava(level, m_mx(mon), m_my(mon))) {
+            if (you)
+                lava_effects();
+            else
+                minliquid(mon);
             no_msg = TRUE;
         }
     }
-    if (!trap) {
-        trap = t_at(level, u.ux, u.uy);
+    if ((you && !u.utrap) || (!you && !mon->mtrapped)) {
+        trap = t_at(level, m_mx(mon), m_my(mon));
         if (Is_airlevel(&u.uz)) {
-            if (Flying)
+            if (you && flying(mon))
                 pline("You feel less buoyant.");
-            else
+            else if (you)
                 pline("You begin to tumble in place.");
-        } else if (Is_waterlevel(&u.uz) && !no_msg)
+            else if (!flying(mon))
+                pline("%s begins to tumble in place.",
+                      Monnam(mon));
+        } else if (you && Is_waterlevel(&u.uz) && !no_msg)
             pline("You feel heavier.");
         /* u.uinwater msgs already in spoteffects()/drown() */
-        else if (!u.uinwater && !no_msg) {
-            if (!in_steed_dismounting) {
-                boolean sokoban_trap = (In_sokoban(&u.uz) && trap);
+        else if ((!you || !u.uinwater) && !no_msg) {
+            if (!you || !in_steed_dismounting) {
+                boolean sokoban_trap = (In_sokoban(m_mz(mon)) && trap);
 
-                if (Hallucination)
-                    pline("Bummer!  You've %s.",
-                          is_pool(level, u.ux,
-                                  u.uy) ? "splashed down" : sokoban_trap ?
-                          "crashed" : "hit the ground");
-                else {
+                if ((you || vis) && hallucinating(&youmonst)) {
+                    if (you)
+                        pline("Bummer!  You've %s.",
+                              is_pool(level, u.ux,
+                                      u.uy) ? "splashed down" : sokoban_trap ?
+                              "crashed" : "hit the ground");
+                    else
+                        pline("Bummer!  %s has %s.", Monnam(mon),
+                              is_pool(level, mon->mx, mon->my) ? "splashed down" :
+                              sokoban_trap ? "crashed" : "hit the ground");
+                } else if (you || vis) {
                     if (!sokoban_trap) {
-                        if (Flying)
-                            pline("You feel less buoyant.");
-                        else
-                            pline("You float gently to the %s.",
-                                  surface(u.ux, u.uy));
+                        if (flying(mon)) {
+                            if (you)
+                                pline("You feel less buoyant.");
+                        } else
+                            pline("%s float%s gently to the %s.",
+                                  you ? "You" : Monnam(mon),
+                                  you ? "s" : "",
+                                  surface(m_mx(mon), m_my(mon)));
                     } else {
                         /* Justification elsewhere for Sokoban traps is based
                            on air currents. This is consistent with that. The
                            unexpected additional force of the air currents once
                            leviation ceases knocks you off your feet. */
-                        pline("You fall over.");
-                        losehp(rnd(2), killer_msg(DIED, "dangerous winds"));
-                        if (u.usteed)
-                            dismount_steed(DISMOUNT_FELL);
-                        selftouch("As you fall, you", "being blown into");
+                        if (you) {
+                            pline("You fall over.");
+                            losehp(rnd(2), killer_msg(DIED, "dangerous winds"));
+                            if (u.usteed)
+                                dismount_steed(DISMOUNT_FELL);
+                            selftouch("As you fall, you", "being blown into");
+                        } else {
+                            pline("%s falls over.", Monnam(mon));
+                            mon->mhp -= rnd(2);
+                            if (mon->mhp < 0) {
+                                if (!flags.mon_moving)
+                                    killed(mon);
+                                else
+                                    monkilled(mon, "", AD_RBRE);
+                            }
+                            mselftouch(mon, "Falling, ", !flags.mon_moving);
+                        }
                     }
                 }
             }
         }
-        action_interrupted();
+        if (you)
+            action_interrupted();
     }
 
-    assign_level(&current_dungeon_level, &u.uz);
+    if (you)
+        assign_level(&current_dungeon_level, &u.uz);
 
     if (trap)
         switch (trap->ttyp) {
@@ -2477,20 +2535,22 @@ float_down(long hmask)
             break;
         case HOLE:
         case TRAPDOOR:
-            if (!can_fall_thru(level) || u.ustuck)
+            if (!can_fall_thru(level) || (u.ustuck && (you || u.ustuck == mon)))
                 break;
             /* fall into next case */
         default:
-            if (!u.utrap)       /* not already in the trap */
+            if ((you && !u.utrap) || (!you && !mon->mtrapped)) /* not already in the trap */
                 dotrap(trap, 0);
         }
 
-    if (!Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz) && !Engulfed &&
+    if (you && !Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz) && !Engulfed &&
         /* falling through trap door calls goto_level, and goto_level does its
            own pickup() call */
         on_level(&u.uz, &current_dungeon_level))
         pickup(1, flags.interaction_mode);
-    return 1;
+    if (you || vis)
+        return 1;
+    return 0;
 }
 
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -159,49 +159,40 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         break;
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
-        if (mtmp == &youmonst && (HFast & (TIMEOUT | INTRINSIC))) {
-            u_slow_down();
-            known = TRUE;
-        } else if (!resist(mtmp, otmp->oclass, 0, NOTELL)) {
-            mon_adjust_speed(mtmp, -1, otmp);
+        if (wandlevel)
+            set_property(mtmp, SLOW, rn1((4 * wandlevel), (6 * wandlevel)), FALSE);
+        else
+            set_property(mtmp, SLOW, dice(3, 8), FALSE);
+        if (wandlevel == P_MASTER)
+            set_property(mtmp, FAST, -2, TRUE);
+        else if (wandlevel >= P_SKILLED)
+            set_property(mtmp, FAST, -1, TRUE);
+        if (mtmp != &youmonst)
             m_dowear(mtmp, FALSE);      /* might want speed boots */
-            if (Engulfed && (mtmp == u.ustuck) && is_whirly(mtmp->data)) {
-                if (yours)
-                    pline("You disrupt %s!", mon_nam(mtmp));
-                else
-                    pline("%s is disrupted!", Monnam(mtmp));
-                pline("A huge hole opens up...");
-                expels(mtmp, mtmp->data, TRUE);
-                known = TRUE;
-            }
+        if (Engulfed && (mtmp == u.ustuck) && is_whirly(mtmp->data)) {
+            if (yours)
+                pline("You disrupt %s!", mon_nam(mtmp));
+            else
+                pline("%s is disrupted!", Monnam(mtmp));
+            pline("A huge hole opens up...");
+            expels(mtmp, mtmp->data, TRUE);
+            known = TRUE;
         }
         break;
     case WAN_SPEED_MONSTER:
-        if (mtmp == &youmonst) {
-            if (!Very_fast) {
-                pline("You are suddenly moving %sfaster.", Fast ? "" : "much ");
-                known = TRUE;
-            } else
-                pline("Your %s get new energy.", makeplural(body_part(LEG)));
-            dmg = dice(2, 20);
-            if (wandlevel >= P_BASIC)
-                dmg += 20;
-            if (wandlevel >= P_EXPERT)
-                dmg += 30;
-            if (wandlevel == P_MASTER) {
-                dmg += 50;
-                dmg += dice(3, 20);
-            }
-            incr_itimeout(&HFast, dmg);
-            if (wandlevel >= P_SKILLED && !(HFast & INTRINSIC)) {
-                pline("Your quickness feels more natural.");
-                known = TRUE;
-                exercise(A_DEX, TRUE);
-                HFast |= FROMOUTSIDE;
-            }
-        } else {
-            mon_adjust_speed(mtmp, 1, otmp);
-            m_dowear(mtmp, FALSE);      /* might want speed boots */
+        dmg = dice(2, 20);
+        if (wandlevel >= P_BASIC)
+            dmg += 20;
+        if (wandlevel >= P_EXPERT)
+            dmg += 30;
+        if (wandlevel == P_MASTER) {
+            dmg += 50;
+            dmg += dice(3, 20);
+        }
+        known = set_property(mtmp, FAST, dmg, FALSE);
+        if (wandlevel >= P_SKILLED) {
+            set_property(mtmp, FAST, 0, FALSE);
+            exercise(A_DEX, TRUE);
         }
         break;
     case WAN_UNDEAD_TURNING:
@@ -231,13 +222,16 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             } else if ((wandlevel < P_SKILLED && !resist(mtmp, otmp->oclass, 0, NOTELL)) ||
                        (wandlevel >= P_SKILLED && resist(mtmp, otmp->oclass, 0, NOTELL))) {
                 if (tseen) {
-                    if (mtmp->mstun)
+                    if (stunned(mtmp))
                         pline("%s struggles to keep %s balance.", Monnam(mtmp),
                               mhis(mtmp));
                     else
                         pline("%s reels...", Monnam(mtmp));
                 }
-                mtmp->mstun = 1;
+                dmg = dice(6, 4);
+                if (half_spell_dam(mtmp))
+                        dmg = (dmg + 1) / 2;
+                set_property(mtmp, STUNNED, dmg, TRUE);
                 monflee(mtmp, 0, FALSE, TRUE);
             } else if (wandlevel >= P_SKILLED) {
                 mtmp->mhp = -1;
@@ -322,24 +316,12 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         break;
     case WAN_MAKE_INVISIBLE:
         {
-            int oldinvis = mtmp->minvis;
-            /* format monster's name before altering its visibility */
-            const char *nambuf = Monnam(mtmp);
-
-            if (wandlevel >= P_SKILLED && mtmp->minvis) {
-                mtmp->perminvis = 0;
-                if (!mworn_extrinsic(mtmp, INVIS))
-                    mtmp->minvis = 0;
-                if (mtmp->dlevel == level)
-                    newsym(mtmp->mx, mtmp->my);
-                if (mtmp->wormno)
-                    see_wsegs(mtmp);
-            } else
-                mon_set_minvis(mtmp);
-            if (!oldinvis && knowninvisible(mtmp)) {
-                pline("%s turns transparent!", nambuf);
-                known = TRUE;
-            }
+            if (wandlevel >= P_SKILLED && invisible(mtmp))
+                known = set_property(mtmp, INVIS, -2, FALSE);
+            else if (wandlevel == P_UNSKILLED)
+                known = set_property(mtmp, INVIS, rnd(50), FALSE);
+            else
+                known = set_property(mtmp, INVIS, 0, FALSE);
             break;
         }
     case WAN_NOTHING:
@@ -373,8 +355,9 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             expels(mtmp, mtmp->data, TRUE);
         } else if (! !(obj = which_armor(mtmp, os_saddle))) {
             mtmp->misc_worn_check &= ~obj->owornmask;
-            update_mon_intrinsics(mtmp, obj, FALSE, FALSE);
             obj->owornmask = 0L;
+            if (mtmp == u.usteed)
+                dismount_steed(DISMOUNT_FELL);
             obj_extract_self(obj);
             place_object(obj, level, mtmp->mx, mtmp->my);
             /* call stackobj() if we ever drop anything that can merge */
@@ -389,10 +372,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             mtmp->mhp += dice(6, otyp == SPE_EXTRA_HEALING ? 8 : 4);
             if (mtmp->mhp > mtmp->mhpmax)
                 mtmp->mhp = mtmp->mhpmax;
-            if (mtmp->mblinded) {
-                mtmp->mblinded = 0;
-                mtmp->mcansee = 1;
-            }
+            set_property(mtmp, BLINDED, -2, FALSE);
             if (canseemonoritem(mtmp)) {
                 if (disguised_mimic) {
                     if (mtmp->m_ap_type == M_AP_OBJECT &&
@@ -645,6 +625,11 @@ montraits(struct obj *obj, coord * cc)
         mtmp2->mfleetim = mtmp->mfleetim;
         mtmp2->mlstmv = mtmp->mlstmv;
         mtmp2->m_ap_type = mtmp->m_ap_type;
+        mtmp2->mspells = mtmp->mspells;
+        mtmp2->mintrinsics = mtmp->mintrinsics;
+        enum mt_prop mt;
+        for (mt = mt_firstprop; mt <= mt_lastprop; mt++)
+            mtmp2->mt_prop[mt] = mtmp->mt_prop[mt];
         /* set these ones explicitly */
         mtmp2->mavenge = 0;
         mtmp2->meating = 0;
@@ -653,14 +638,6 @@ montraits(struct obj *obj, coord * cc)
         mtmp2->msleeping = 0;
         mtmp2->mfrozen = 0;
         mtmp2->mcanmove = 1;
-        /* most cancelled monsters return to normal, but some need to stay
-           cancelled */
-        if (!dmgtype(mtmp2->data, AD_SEDU) && !dmgtype(mtmp2->data, AD_SSEX))
-            mtmp2->mcan = 0;
-        mtmp2->mcansee = 1;     /* set like in makemon */
-        mtmp2->mblinded = 0;
-        mtmp2->mstun = 0;
-        mtmp2->mconf = 0;
         /* the corpse may have been moved, set the monster's location from the
            corpse's location */
         mtmp2->dlevel = object_dlevel(obj);
@@ -774,7 +751,7 @@ revive(struct obj *obj)
             mtmp = makemon(&mons[montype], level, x, y, NO_MINVENT | MM_NOWAIT);
             if (mtmp) {
                 mtmp->mhp = mtmp->mhpmax = 100;
-                mon_adjust_speed(mtmp, 2, NULL);        /* MFAST */
+                set_property(mtmp, FAST, 0, TRUE);
             }
         } else {
             if (obj->oxlth && (obj->oattached == OATTACHED_MONST)) {
@@ -840,7 +817,7 @@ revive(struct obj *obj)
                     }
                 }
                 /* was ghost, now alive, it's all very confusing */
-                mtmp->mconf = 1;
+                set_property(mtmp, CONFUSION, dice(3, 8), FALSE);
             }
 
             switch (obj->where) {
@@ -2474,7 +2451,7 @@ cancel_monst(struct monst * mdef, struct obj * obj, boolean youattack,
                 rehumanize(DIED, NULL);
         }
     } else {
-        mdef->mcan = TRUE;
+        set_property(mdef, CANCELLED, 0, FALSE);
 
         if (is_were(mdef->data) && mdef->data->mlet != S_HUMAN)
             were_change(mdef);
@@ -2958,7 +2935,7 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
                    keep on going. Note that we use mtmp->minvis not
                    canspotmon() because it makes no difference whether the hero
                    can see the monster or not. */
-                if (mtmp->minvis) {
+                if (invisible(mtmp)) {
                     obj->ox = u.ux, obj->oy = u.uy;
                     flash_hits_mon(mtmp, obj);
                 } else {
@@ -3291,11 +3268,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp, int rayleve
         if (!resists_blnd(mon) && !(type > 0 && Engulfed && mon == u.ustuck)) {
             unsigned rnd_tmp = rnd(50);
 
-            mon->mcansee = 0;
-            if ((mon->mblinded + rnd_tmp) > 127)
-                mon->mblinded = 127;
-            else
-                mon->mblinded += rnd_tmp;
+            set_property(mon, BLINDED, rnd_tmp, FALSE);
         }
         if (!rn2(3))
             destroy_mitem(mon, WAND_CLASS, AD_ELEC);
@@ -3727,9 +3700,11 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                             if (!oresist_disintegration(otmp)) {
                                 /* update the monsters intrinsics and saddle in
                                    case it is lifesaved. */
-                                if (otmp->owornmask && otmp->otyp == SADDLE)
+                                if (otmp->owornmask && otmp->otyp == SADDLE) {
                                     mon->misc_worn_check &= ~W_MASK(os_saddle);
-                                update_mon_intrinsics(mon, otmp, FALSE, TRUE);
+                                    if (mon == u.usteed)
+                                        dismount_steed(DISMOUNT_FELL);
+                                }
                                 obj_extract_self(otmp);
                                 obfree(otmp, NULL);
                             }
@@ -4281,7 +4256,7 @@ destroy_item(int osym, int dmgtyp)
                   : destroy_messages[dindx].plural);
             if (osym == POTION_CLASS && dmgtyp != AD_COLD) {
                 if (!breathless(youmonst.data) || haseyes(youmonst.data))
-                    potionbreathe(obj);
+                    potionbreathe(&youmonst, obj);
             }
             setunequip(obj);
 

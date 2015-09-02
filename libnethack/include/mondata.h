@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -36,6 +36,8 @@
 # define searching(mon)         (has_property(mon, SEARCHING))
 # define see_invisible(mon)     (has_property(mon, SEE_INVIS))
 # define invisible(mon)         (has_property(mon, INVIS))
+/* binvisible: invisibility blocked */
+# define binvisible(mon)        (mworn_blocked(mon, INVIS))
 # define teleportitis(mon)      (has_property(mon, TELEPORT))
 # define teleport_control(mon)  (has_property(mon, TELEPORT_CONTROL))
 # define polymorphitis(mon)     (has_property(mon, POLYMORPH))
@@ -49,6 +51,10 @@
 # define warned(mon)            (has_property(mon, WARNING))
 # define telepathic(mon)        (has_property(mon, TELEPAT))
 # define fast(mon)              (has_property(mon, FAST))
+/* ifast: whether or not you have intrinsic fast in particular */
+# define ifast(mon)             (m_has_property(mon, FAST, (W_MASK(os_outside) | \
+                                W_MASK(os_timeout)), FALSE))
+# define very_fast(mon)         (m_has_property(mon, FAST, ~W_MASK(os_outside), FALSE))
 # define stunned(mon)           (has_property(mon, STUNNED))
 # define confused(mon)          (has_property(mon, CONFUSION))
 # define sick(mon)              (has_property(mon, SICK))

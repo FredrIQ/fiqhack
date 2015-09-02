@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-09 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -545,7 +545,7 @@ x_monnam(const struct monst *mtmp,
         article = ARTICLE_THE;
 
     do_hallu = Hallucination && !(suppress & SUPPRESS_HALLUCINATION);
-    do_invis = mtmp->minvis && !(suppress & SUPPRESS_INVISIBLE);
+    do_invis = invisible(mtmp) && !(suppress & SUPPRESS_INVISIBLE);
     do_it = !canclassifymon(mtmp) && article != ARTICLE_YOUR &&
         !program_state.gameover && mtmp != u.usteed &&
         !(Engulfed && mtmp == u.ustuck) &&
@@ -567,7 +567,7 @@ x_monnam(const struct monst *mtmp,
 
         /* when true name is wanted, explicitly block Hallucination */
         if (!do_invis)
-            priestmon->minvis = 0;
+            set_property(priestmon, INVIS, -2, FALSE);
         name = priestname(priestmon, !do_hallu);
 
         if (article == ARTICLE_NONE && !strncmp(name, "the ", 4))
@@ -794,7 +794,7 @@ k_monnam(const struct monst *mtmp) {
         article = TRUE;
     }
 
-    if (mtmp->minvis)
+    if (invisible(mtmp))
         buf = msgcat(buf, "invisible ");
     if (distorted)
         buf = msgcat(buf, "hallucinogen-distorted ");
@@ -1060,7 +1060,7 @@ coyotename(const struct monst *mtmp)
 {
     return msgprintf("%s - %s",
                      x_monnam(mtmp, ARTICLE_NONE, NULL, 0, TRUE),
-                     mtmp->mcan ? coynames[SIZE(coynames) - 1] :
+                     cancelled(mtmp) ? coynames[SIZE(coynames) - 1] :
                      coynames[rn2_on_display_rng(SIZE(coynames) - 1)]);
 }
 

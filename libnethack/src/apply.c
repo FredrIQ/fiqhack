@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -700,21 +700,22 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
         if (vis)
             pline("%s is too tired to look at your %s.", Monnam(mtmp),
                   simple_typename(obj->otyp));
-    } else if (!mtmp->mcansee) {
+    } else if (blind(mtmp)) {
         if (vis)
             pline("%s can't see anything right now.", Monnam(mtmp));
         /* some monsters do special things */
     } else if (mlet == S_VAMPIRE || noncorporeal(mtmp->data)) {
         if (vis)
             pline("%s doesn't have a reflection.", Monnam(mtmp));
-    } else if (!mtmp->mcan && !mtmp->minvis && mtmp->data == &mons[PM_MEDUSA]) {
+    } else if (!cancelled(mtmp) && !invisible(mtmp) &&
+               mtmp->data == &mons[PM_MEDUSA]) {
         if (mon_reflects(mtmp, "The gaze is reflected away by %s %s!"))
             return 1;
         if (vis)
             pline("%s is turned to stone!", Monnam(mtmp));
         stoned = TRUE;
         killed(mtmp);
-    } else if (!mtmp->mcan && !mtmp->minvis &&
+    } else if (!cancelled(mtmp) && !invisible(mtmp) &&
                mtmp->data == &mons[PM_FLOATING_EYE]) {
         int tmp = dice((int)mtmp->m_lev, (int)mtmp->data->mattk[0].damd);
 
@@ -729,12 +730,12 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
             mtmp->mfrozen = 127;
         else
             mtmp->mfrozen += tmp;
-    } else if (!mtmp->mcan && !mtmp->minvis &&
+    } else if (!cancelled(mtmp) && !invisible(mtmp) &&
                mtmp->data == &mons[PM_UMBER_HULK]) {
         if (vis)
             pline("%s confuses itself!", Monnam(mtmp));
-        mtmp->mconf = 1;
-    } else if (!mtmp->mcan && !mtmp->minvis &&
+        set_property(mtmp, CONFUSION, dice(3, 8), FALSE);
+    } else if (!cancelled(mtmp) && !invisible(mtmp) &&
                (mlet == S_NYMPH || mtmp->data == &mons[PM_SUCCUBUS])) {
         if (vis) {
             pline("%s admires herself in your %s.", Monnam(mtmp),
@@ -748,14 +749,14 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
         if (!tele_restrict(mtmp))
             rloc(mtmp, TRUE);
     } else if (!is_unicorn(mtmp->data) && !humanoid(mtmp->data) &&
-               (!mtmp->minvis || see_invisible(mtmp)) && rn2(5)) {
+               (!invisible(mtmp) || see_invisible(mtmp)) && rn2(5)) {
         if (vis)
             pline("%s is frightened by its reflection.", Monnam(mtmp));
         monflee(mtmp, dice(2, 4), FALSE, FALSE);
     } else if (!Blind) {
-        if (mtmp->minvis && !See_invisible)
+        if (invisible(mtmp) && !see_invisible(&youmonst))
             ;
-        else if ((mtmp->minvis && !see_invisible(mtmp))
+        else if ((invisible(mtmp) && !see_invisible(mtmp))
                  || !haseyes(mtmp->data))
             pline("%s doesn't seem to notice its reflection.", Monnam(mtmp));
         else
@@ -803,7 +804,7 @@ use_bell(struct obj **optr)
                 default:
                     break;
                 case 1:
-                    mon_adjust_speed(mtmp, 2, NULL);
+                    set_property(mtmp, FAST, 0, TRUE);
                     break;
                 case 2:
                     pline("You freeze for a moment in surprise.");
@@ -1302,7 +1303,7 @@ get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
         pline("This calls for swimming, not jumping!");
         return 0;
     } else if (u.ustuck) {
-        if (u.ustuck->mtame && !Conflict && !u.ustuck->mconf) {
+        if (u.ustuck->mtame && !Conflict && !confused(u.ustuck)) {
             pline("You pull free from %s.", mon_nam(u.ustuck));
             u.ustuck = 0;
             return 1;

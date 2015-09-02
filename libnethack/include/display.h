@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-08-30 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -170,12 +170,12 @@
 
 /* not quite the same as the above, but it can do with centralizing; only use
    on the current level; assumes that long worms aren't infravisible */
-# define knownwormtail(x, y)  (cansee((x), (y)) &&                 \
-                               MON_AT(level, (x), (y)) &&          \
-                               (m_at(level, (x), (y))->mx != x ||  \
-                                m_at(level, (x), (y))->my != y) && \
-                               (!m_at(level, (x), (y))->minvis ||  \
-                                See_invisible))
+# define knownwormtail(x, y)  (cansee((x), (y)) &&                    \
+                               MON_AT(level, (x), (y)) &&             \
+                               (m_at(level, (x), (y))->mx != x ||     \
+                                m_at(level, (x), (y))->my != y) &&    \
+                               (!invisible(m_at(level, (x), (y))) ||  \
+                                see_invisible(&youmonst)))
 
 /*
  * canseeself()

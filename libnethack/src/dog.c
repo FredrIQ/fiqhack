@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -177,7 +177,6 @@ makedog(struct newgame_options *ngo)
         otmp->dknown = otmp->bknown = otmp->rknown = 1;
         otmp->owornmask = W_MASK(os_saddle);
         otmp->leashmon = mtmp->m_id;
-        update_mon_intrinsics(mtmp, otmp, TRUE, TRUE);
     }
 
     if (*petname)
@@ -426,11 +425,11 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
 
     /* might stop being afraid, blind or frozen */
     /* set to 1 and allow final decrement in movemon() */
-    if (mtmp->mblinded) {
-        if (imv >= (int)mtmp->mblinded)
-            mtmp->mblinded = 1;
+    if (mtmp->mt_prop[mt_blind]) {
+        if (imv >= (int)mtmp->mt_prop[mt_blind])
+            mtmp->mt_prop[mt_blind] = 1;
         else
-            mtmp->mblinded -= imv;
+            mtmp->mt_prop[mt_blind] -= imv;
     }
     if (mtmp->mfrozen) {
         if (imv >= (int)mtmp->mfrozen)
@@ -448,10 +447,6 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
     /* might recover from temporary trouble */
     if (mtmp->mtrapped && rn2(imv + 1) > 40 / 2)
         mtmp->mtrapped = 0;
-    if (mtmp->mconf && rn2(imv + 1) > 50 / 2)
-        mtmp->mconf = 0;
-    if (mtmp->mstun && rn2(imv + 1) > 10 / 2)
-        mtmp->mstun = 0;
 
     /* might finish eating or be able to use special ability again */
     if (imv > mtmp->meating)
@@ -810,7 +805,7 @@ tamedog(struct monst *mtmp, struct obj *obj)
     if (mtmp->mtame && obj) {
         int tasty;
 
-        if (mtmp->mcanmove && !mtmp->mconf && !mtmp->meating &&
+        if (mtmp->mcanmove && !confused(mtmp) && !mtmp->meating &&
             ((tasty = dogfood(mtmp, obj)) == DOGFOOD ||
              (tasty <= ACCFOOD && CONST_EDOG(mtmp)->hungrytime <= moves))) {
             /* pet will "catch" and eat this thrown food */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-08-30 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,6 +8,7 @@
 static long find_extrinsic(struct obj *, int, int *, boolean *);
 static void m_lose_armor(struct monst *, struct obj *);
 static void m_dowear_type(struct monst *, enum objslot, boolean, boolean);
+static unsigned do_equip(struct monst *, struct obj *, boolean, boolean);
 
 /* This only allows for one blocked property per item */
 #define w_blocks(o,m) \
@@ -126,212 +127,6 @@ obj_worn_on(struct obj *obj, enum objslot slot)
     return obj && obj->owornmask & W_MASK(slot) && obj == EQUIP(slot);
 }
 
-void
-mon_set_minvis(struct monst *mon)
-{
-    if (!mon->invis_blkd) {
-        mon->perminvis = 1;
-        mon->minvis = 1;
-        if (mon->dlevel == level)
-            newsym(mon->mx, mon->my);       /* make it disappear */
-        if (mon->wormno)
-            see_wsegs(mon);     /* and any tail too */
-    }
-}
-
-void
-mon_adjust_speed(struct monst *mon, int adjust, /* positive => increase speed,
-                                                   negative => decrease */
-                 struct obj *obj)
-{       /* item to make known if effect can be seen */
-    struct obj *otmp;
-    boolean give_msg = !in_mklev, petrify = FALSE;
-    unsigned int oldspeed = mon->mspeed;
-    int oldmoverate = mcalcmove(mon);
-
-    switch (adjust) {
-    case 2:
-        mon->permspeed = MFAST;
-        give_msg = FALSE;       /* special case monster creation */
-        break;
-    case 1:
-        if (mon->permspeed == MSLOW)
-            mon->permspeed = 0;
-        else
-            mon->permspeed = MFAST;
-        break;
-    case 0:    /* just check for worn speed boots */
-        break;
-    case -1:
-        if (mon->permspeed == MFAST)
-            mon->permspeed = 0;
-        else
-            mon->permspeed = MSLOW;
-        break;
-    case -2:
-        mon->permspeed = MSLOW;
-        give_msg = FALSE;       /* (not currently used) */
-        break;
-    case -3:   /* petrification */
-        /* take away intrinsic speed but don't reduce normal speed */
-        if (mon->permspeed == MFAST)
-            mon->permspeed = 0;
-        petrify = TRUE;
-        break;
-    }
-
-    for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
-        if (otmp->owornmask && objects[otmp->otyp].oc_oprop == FAST)
-            break;
-    if (otmp)   /* speed boots */
-        mon->mspeed = MFAST;
-    else
-        mon->mspeed = mon->permspeed;
-
-    if (give_msg && (mon->mspeed != oldspeed || petrify) && canseemon(mon)) {
-        /* fast to slow (skipping intermediate state) or vice versa */
-        const char *howmuch =
-            (mon->mspeed + oldspeed == MFAST + MSLOW) ? "much " : "";
-
-        if (petrify) {
-            /* mimic the player's petrification countdown; "slowing down" even
-               if fast movement rate retained via worn speed boots */
-            if (flags.verbose)
-                pline("%s is slowing down.", Monnam(mon));
-        } else if (adjust > 0 || mon->mspeed == MFAST)
-            pline("%s is suddenly moving %sfaster.", Monnam(mon), howmuch);
-        else
-            pline("%s seems to be moving %sslower.", Monnam(mon), howmuch);
-
-        /* might discover an object if we see the speed change happen, but
-           avoid making possibly forgotten book known when casting its spell */
-        if (obj != 0 && obj->dknown &&
-            objects[obj->otyp].oc_class != SPBOOK_CLASS)
-            makeknown(obj->otyp);
-    }
-
-    adjust_move_offset(mon, oldmoverate, mcalcmove(mon));
-}
-
-/* armor put on or taken off; might be magical variety */
-void
-update_mon_intrinsics(struct monst *mon, struct obj *obj, boolean on,
-                      boolean silently)
-{
-    int unseen;
-    uchar mask;
-    struct obj *otmp;
-    int which = (int)objects[obj->otyp].oc_oprop;
-
-    unseen = silently || !canseemon(mon);
-    if (!which)
-        goto maybe_blocks;
-
-    if (on) {
-        switch (which) {
-        case INVIS:
-            mon->minvis = !mon->invis_blkd;
-            break;
-        case FAST:
-            {
-                boolean save_in_mklev = in_mklev;
-
-                if (silently)
-                    in_mklev = TRUE;
-                mon_adjust_speed(mon, 0, obj);
-                in_mklev = save_in_mklev;
-                break;
-            }
-            /* properties handled elsewhere */
-        case ANTIMAGIC:
-        case REFLECTING:
-            break;
-            /* properties which have no effect for monsters */
-        case CLAIRVOYANT:
-        case STEALTH:
-        case TELEPAT:
-            break;
-            /* properties which should have an effect but aren't implemented */
-        case LEVITATION:
-        case WWALKING:
-            break;
-            /* properties which maybe should have an effect but don't */
-        case DISPLACED:
-        case FUMBLING:
-        case JUMPING:
-        case PROTECTION:
-            break;
-        default:
-            if (which <= 8) {   /* 1 thru 8 correspond to MR_xxx mask values */
-                /* FIRE,COLD,SLEEP,DISINT,SHOCK,POISON,ACID,STONE */
-                mask = (uchar) (1 << (which - 1));
-                mon->mintrinsics |= (unsigned short)mask;
-            }
-            break;
-        }
-    } else {    /* off */
-        switch (which) {
-        case INVIS:
-            mon->minvis = mon->perminvis;
-            break;
-        case FAST:
-            {
-                boolean save_in_mklev = in_mklev;
-
-                if (silently)
-                    in_mklev = TRUE;
-                mon_adjust_speed(mon, 0, obj);
-                in_mklev = save_in_mklev;
-                break;
-            }
-        case FIRE_RES:
-        case COLD_RES:
-        case SLEEP_RES:
-        case DISINT_RES:
-        case SHOCK_RES:
-        case POISON_RES:
-        case ACID_RES:
-        case STONE_RES:
-            mask = (uchar) (1 << (which - 1));
-            /* If the monster doesn't have this resistance intrinsically, check 
-               whether any other worn item confers it.  Note that we don't
-               currently check for anything conferred via simply carrying an
-               object. */
-            if (!(mon->data->mresists & mask)) {
-                for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
-                    if (otmp->owornmask &&
-                        (int)objects[otmp->otyp].oc_oprop == which)
-                        break;
-                if (!otmp)
-                    mon->mintrinsics &= ~((unsigned short)mask);
-            }
-            break;
-        default:
-            break;
-        }
-    }
-
-maybe_blocks:
-    /* obj->owornmask has been cleared by this point, so we can't use it.
-       However, since monsters don't wield armor, we don't have to guard
-       against that and can get away with a blanket worn-mask value. */
-    switch (w_blocks(obj, ~0L)) {
-    case INVIS:
-        mon->invis_blkd = on ? 1 : 0;
-        mon->minvis = on ? 0 : mon->perminvis;
-        break;
-    default:
-        break;
-    }
-
-    if (!on && mon == u.usteed && obj->otyp == SADDLE)
-        dismount_steed(DISMOUNT_FELL);
-
-    /* if couldn't see it but now can, or vice versa, update display */
-    if (!silently && (unseen ^ !canseemon(mon)) && mon->dlevel == level)
-        newsym(mon->mx, mon->my);
-}
-
 int
 find_mac(struct monst *mon)
 {
@@ -427,14 +222,11 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
 {
     struct obj *old, *best, *obj;
     int m_delay = 0;
-    boolean unseen = creation ? 1 : !canseemon(mon);
-    const char *nambuf;
 
     if (mon->mfrozen)
         return; /* probably putting previous item on */
 
     /* Get a copy of monster's name before altering its visibility */
-    nambuf = creation ? NULL : See_invisible ? Monnam(mon) : mon_nam(mon);
 
     old = which_armor(mon, slot);
     if (old && old->cursed)
@@ -546,19 +338,12 @@ outer_break:
         }
         curse(best);
     }
-    if (old)
-        update_mon_intrinsics(mon, old, FALSE, creation);
+    if (old && update_property(mon, objects[old->otyp].oc_oprop, slot))
+        makeknown(old->otyp);
     mon->misc_worn_check |= W_MASK(slot);
     best->owornmask |= W_MASK(slot);
-    update_mon_intrinsics(mon, best, TRUE, creation);
-    /* if couldn't see it but now can, or vice versa, */
-    if (!creation && (unseen ^ !canseemon(mon))) {
-        if (mon->minvis && !See_invisible) {
-            pline("Suddenly you cannot see %s.", nambuf);
-            makeknown(best->otyp);
-        }       /* else if (!mon->minvis) pline("%s suddenly appears!",
-                   Amonnam(mon)); */
-    }
+    if (update_property(mon, objects[best->otyp].oc_oprop, slot))
+        makeknown(best->otyp);
 }
 
 #undef RACE_EXCEPTION
@@ -566,7 +351,7 @@ outer_break:
 /* Performs equipment prechecks. If stuff needs to be taken off first,
    it will end up removing said equipment instead of the given object. */
 unsigned
-equip(const struct monst *mon, struct obj *obj,
+equip(struct monst *mon, struct obj *obj,
                boolean on, boolean verbose)
 {
     boolean tell = (verbose && canseemon(mon));
@@ -587,7 +372,7 @@ equip(const struct monst *mon, struct obj *obj,
         /* For rings, normally gloves are bypassed. However, rings can't be
            put on/off if the gloves are cursed, so we need to check for this
            seperately */
-        if (mon->misc_worn_check & W_MASK(os_armg))) {
+        if (mon->misc_worn_check & W_MASK(os_armg)) {
             struct obj *gloves = which_armor(mon, os_armg);
             if (gloves->cursed) {
                 if (tell)
@@ -619,33 +404,33 @@ equip(const struct monst *mon, struct obj *obj,
 }
 
 unsigned
-do_equip(const struct monst *mon, struct obj *obj,
+do_equip(struct monst *mon, struct obj *obj,
                boolean on, boolean verbose)
 {
     boolean tell = (verbose && canseemon(mon));
-    int prop = objects[otyp].oc_oprop;
+    int prop = objects[obj->otyp].oc_oprop;
     int slot = which_slot(obj);
     boolean redundant = !!(has_property(mon, prop) & ~W_MASK(slot));
     redundant = redundant && !mworn_blocked(mon, prop);
     if (!on && obj->cursed) {
         if (tell)
             pline("%s tries to take off %s, but it is cursed.",
-                    Monnam(mon), an(xname(gloves)));
+                    Monnam(mon), an(xname(obj)));
         return 0;
     }
     if (!on) {
         if (tell)
             pline("%s takes off %s.", Monnam(mon), an(xname(obj)));
-        mon->misc_worn_check &= obj->owornmask;
+        mon->misc_worn_check &= ~obj->owornmask;
         obj->owornmask = 0L;
     } else {
         if (obj->oclass == RING_CLASS) {
-            if (mon->misc_worn_check & W_MASK(os_ringl)
-                obj->owornmask = W_MASK(os_ringr);
+            if (mon->misc_worn_check & W_MASK(os_ringl))
+                obj->owornmask |= W_MASK(os_ringr);
             else
-                obj->owornmask = W_MASK(os_ringl);
+                obj->owornmask |= W_MASK(os_ringl);
         } else
-            obj->owornmask = W_MASK(slot);
+            obj->owornmask |= W_MASK(slot);
         if (tell)
             pline("%s puts on %s.", Monnam(mon), an(xname(obj)));
         mon->misc_worn_check |= obj->owornmask;
@@ -667,8 +452,9 @@ do_equip(const struct monst *mon, struct obj *obj,
 
 /* What kind of slot this item goes into */
 unsigned
-which_slot(struct obj *obj)
+which_slot(const struct obj *otmp)
 {
+    enum objslot slot = os_invalid;
     if (is_suit(otmp))
         slot = os_arm;
     else if (is_cloak(otmp))
@@ -690,6 +476,8 @@ which_slot(struct obj *obj)
     else if (otmp->otyp == BLINDFOLD || otmp->otyp == LENSES ||
              otmp->otyp == TOWEL)
         slot = os_tool;
+    else if (otmp->otyp == SADDLE)
+        slot = os_saddle;
     return slot;
 }
 /* The centralised function for finding equipment; given an equipment slot,
@@ -714,7 +502,7 @@ m_lose_armor(struct monst *mon, struct obj *obj)
 
     mon->misc_worn_check &= ~obj->owornmask;
     if (obj->owornmask)
-        update_mon_intrinsics(mon, obj, FALSE, FALSE);
+        update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
     obj->owornmask = 0L;
 
     obj_extract_self(obj);
@@ -941,7 +729,7 @@ int
 extra_pref(const struct monst *mon, struct obj *obj)
 {
     if (obj) {
-        if (obj->otyp == SPEED_BOOTS && mon->permspeed != MFAST)
+        if (obj->otyp == SPEED_BOOTS && !very_fast(mon))
             return 20;
     }
     return 0;

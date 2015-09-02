@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -86,7 +86,7 @@ missmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (magr->m_ap_type)
             seemimic(magr);
         fmt = (could_seduce(magr, mdef, mattk) &&
-               !magr->mcan) ? "%s pretends to be friendly to" : "%s misses";
+               !cancelled(magr)) ? "%s pretends to be friendly to" : "%s misses";
         buf = msgprintf(fmt, Monnam(magr));
         pline("%s %s.", buf, mon_nam_too(mdef, magr));
     } else
@@ -225,7 +225,7 @@ mattackm(struct monst *magr, struct monst *mdef)
     /* Calculate the armor class differential. */
     tmp = find_mac(mdef) + magr->m_lev;
 
-    if (mdef->mconf || !mdef->mcanmove || mdef->msleeping) {
+    if (confused(mdef) || !mdef->mcanmove || mdef->msleeping) {
         tmp += 4;
         mdef->msleeping = 0;
     }
@@ -312,7 +312,7 @@ mattackm(struct monst *magr, struct monst *mdef)
             /* Monsters won't attack cockatrices physically if they have a
                weapon instead.  This instinct doesn't work for players, or
                under conflict or confusion. */
-            if (!magr->mconf && !Conflict && otmp && mattk->aatyp != AT_WEAP &&
+            if (!confused(magr) && !Conflict && otmp && mattk->aatyp != AT_WEAP &&
                 touch_petrifies(mdef->data)) {
                 strike = 0;
                 break;
@@ -327,7 +327,7 @@ mattackm(struct monst *magr, struct monst *mdef)
                 if ((mdef->data == &mons[PM_BLACK_PUDDING] ||
                      mdef->data == &mons[PM_BROWN_PUDDING])
                     && otmp && objects[otmp->otyp].oc_material == IRON &&
-                    mdef->mhp > 1 && !mdef->mcan) {
+                    mdef->mhp > 1 && !cancelled(mdef)) {
                     if (clone_mon(mdef, 0, 0)) {
                         if (vis) {
                             pline("%s divides as %s hits it!",
@@ -467,9 +467,9 @@ hitmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             seemimic(mdef);
         if (magr->m_ap_type)
             seemimic(magr);
-        if ((compat = could_seduce(magr, mdef, mattk)) && !magr->mcan) {
+        if ((compat = could_seduce(magr, mdef, mattk)) && !cancelled(magr)) {
             pline("%s %s %s %s.", Monnam(magr),
-                  mdef->mcansee ? "smiles at" : "talks to", mon_nam(mdef),
+                  !blind(mdef) ? "smiles at" : "talks to", mon_nam(mdef),
                   compat == 2 ? "engagingly" : "seductively");
         } else {
             const char *buf = Monnam(magr);
@@ -515,8 +515,8 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         pline("%s gazes at %s...", Monnam(magr), mon_nam(mdef));
     }
 
-    if (magr->mcan || !magr->mcansee || (magr->minvis && !see_invisible(mdef))
-        || !mdef->mcansee || mdef->msleeping) {
+    if (cancelled(magr) || blind(magr) || (invisible(magr) && !see_invisible(mdef))
+        || !blind(mdef) || mdef->msleeping) {
         if (vis)
             pline("but nothing happens.");
         return MM_MISS;
@@ -525,13 +525,13 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     if (magr->data == &mons[PM_MEDUSA] && mon_reflects(mdef, NULL)) {
         if (canseemon(mdef))
             mon_reflects(mdef, "The gaze is reflected away by %s %s.");
-        if (mdef->mcansee) {
+        if (!blind(mdef)) {
             if (mon_reflects(magr, NULL)) {
                 if (canseemon(magr))
                     mon_reflects(magr, "The gaze is reflected away by %s %s.");
                 return MM_MISS;
             }
-            if (mdef->minvis && !see_invisible(magr)) {
+            if (!invisible(mdef) && !see_invisible(magr)) {
                 if (canseemon(magr)) {
                     pline("%s doesn't seem to notice that %s gaze was "
                           "reflected.", Monnam(magr), mhis(magr));
@@ -619,7 +619,7 @@ explmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
     int result;
 
-    if (magr->mcan)
+    if (cancelled(magr))
         return MM_MISS;
 
     if (cansee(magr->mx, magr->my))
@@ -681,7 +681,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
     /* cancellation factor is the same as when attacking the hero */
     armpro = magic_negation(mdef);
-    cancelled = magr->mcan || !((rn2(3) >= armpro) || !rn2(50));
+    cancelled = cancelled(magr) || !((rn2(3) >= armpro) || !rn2(50));
 
     switch (mattk->adtyp) {
     case AD_DGST:
@@ -737,15 +737,15 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_STUN:
-        if (magr->mcan)
+        if (cancelled(magr))
             break;
         if (canseemon(mdef))
             pline("%s %s for a moment.", Monnam(mdef),
                   makeplural(stagger(mdef->data, "stagger")));
-        mdef->mstun = 1;
+        set_property(mdef, STUNNED, tmp, TRUE);
         goto physical;
     case AD_LEGS:
-        if (magr->mcan) {
+        if (cancelled(magr)) {
             tmp = 0;
             break;
         }
@@ -845,7 +845,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         tmp += destroy_mitem(mdef, RING_CLASS, AD_ELEC);
         break;
     case AD_ACID:
-        if (magr->mcan) {
+        if (cancelled(magr)) {
             tmp = 0;
             break;
         }
@@ -864,7 +864,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             acid_damage(MON_WEP(mdef));
         break;
     case AD_RUST:
-        if (magr->mcan)
+        if (cancelled(magr))
             break;
         if (pd == &mons[PM_IRON_GOLEM]) {
             if (vis)
@@ -881,14 +881,14 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_CORR:
-        if (magr->mcan)
+        if (cancelled(magr))
             break;
         hurtarmor(mdef, ERODE_CORRODE);
         mdef->mstrategy &= ~STRAT_WAITFORU;
         tmp = 0;
         break;
     case AD_DCAY:
-        if (magr->mcan)
+        if (cancelled(magr))
             break;
         if (pd == &mons[PM_WOOD_GOLEM] || pd == &mons[PM_LEATHER_GOLEM]) {
             if (vis)
@@ -905,7 +905,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_STON:
-        if (magr->mcan)
+        if (cancelled(magr))
             break;
     do_stone:
         /* may die from the acid if it eats a stone-curing corpse */
@@ -960,23 +960,19 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_SLOW:
-        if (!cancelled && mdef->mspeed != MSLOW) {
-            unsigned int oldspeed = mdef->mspeed;
-
-            mon_adjust_speed(mdef, -1, NULL);
+        if (!cancelled) {
+            set_property(mdef, SLOW, tmp, FALSE);
             mdef->mstrategy &= ~STRAT_WAITFORU;
-            if (mdef->mspeed != oldspeed && vis)
-                pline("%s slows down.", Monnam(mdef));
         }
         break;
     case AD_CONF:
         /* Since confusing another monster doesn't have a real time limit,
            setting spec_used would not really be right (though we still should
            check for it). */
-        if (!magr->mcan && !mdef->mconf && !magr->mspec_used) {
+        if (!cancelled(magr) && !magr->mspec_used) {
             if (vis)
                 pline("%s looks confused.", Monnam(mdef));
-            mdef->mconf = 1;
+            set_property(mdef, CONFUSION, tmp, TRUE);
             mdef->mstrategy &= ~STRAT_WAITFORU;
         }
         break;
@@ -984,23 +980,19 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (can_blnd(magr, mdef, mattk->aatyp, NULL)) {
             unsigned rnd_tmp;
 
-            if (vis && mdef->mcansee)
+            if (vis && !blind(mdef))
                 pline("%s is blinded.", Monnam(mdef));
             rnd_tmp = dice((int)mattk->damn, (int)mattk->damd);
-            if ((rnd_tmp += mdef->mblinded) > 127)
-                rnd_tmp = 127;
-            mdef->mblinded = rnd_tmp;
-            mdef->mcansee = 0;
-            mdef->mstrategy &= ~STRAT_WAITFORU;
+            set_property(mdef, BLINDED, rnd_tmp, TRUE);
         }
         tmp = 0;
         break;
     case AD_HALU:
-        if (!magr->mcan && haseyes(pd) && mdef->mcansee) {
+        if (!cancelled(magr) && haseyes(pd) && !blind(mdef)) {
             if (vis)
                 pline("%s looks %sconfused.", Monnam(mdef),
-                      mdef->mconf ? "more " : "");
-            mdef->mconf = 1;
+                      confused(mdef) ? "more " : "");
+            set_property(mdef, CONFUSION, tmp, TRUE);
             mdef->mstrategy &= ~STRAT_WAITFORU;
         }
         tmp = 0;
@@ -1008,11 +1000,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_CURS:
         if (!night() && (pa == &mons[PM_GREMLIN]))
             break;
-        if (!magr->mcan && !rn2(10)) {
-            mdef->mcan = 1;     /* cancelled regardless of lifesave */
-            mdef->mstrategy &= ~STRAT_WAITFORU;
-            if (is_were(pd) && pd->mlet != S_HUMAN)
-                were_change(mdef);
+        if (!cancelled(magr) && !rn2(10)) {
             if (pd == &mons[PM_CLAY_GOLEM]) {
                 if (vis) {
                     pline("Some writing vanishes from %s head!",
@@ -1025,18 +1013,20 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 else if (mdef->mtame && !vis)
                     pline(brief_feeling, "strangely sad");
                 return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
-            }
-            if (canhear()) {
-                if (!vis)
-                    You_hear("laughter.");
-                else
-                    pline("%s chuckles.", Monnam(magr));
+            } else {
+                if (canhear()) {
+                    if (!vis)
+                        You_hear("laughter.");
+                    else
+                        pline("%s chuckles.", Monnam(magr));
+                }
+                gremlin_curse(mdef);
             }
         }
         break;
     case AD_SGLD: {
         tmp = 0;
-        if (magr->mcan)
+        if (cancelled(magr))
             break;
         /* technically incorrect; no check for stealing gold from between
            mdef's feet... */
@@ -1076,7 +1066,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_SSEX:
     case AD_SITM:      /* for now these are the same */
     case AD_SEDU:
-        if (magr->mcan)
+        if (cancelled(magr))
             break;
         /* find an object to steal, non-cursed if magr is tame */
         for (obj = mdef->minvent; obj; obj = obj->nobj)
@@ -1099,7 +1089,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 if (otmp->owornmask & W_MASK(os_wep))
                     setmnotwielded(mdef, otmp);
                 otmp->owornmask = 0L;
-                update_mon_intrinsics(mdef, otmp, FALSE, FALSE);
+                update_property(mdef, objects[otmp->otyp].oc_oprop, which_slot(otmp));
             }
 
             /* add_to_minv() might free otmp [if it merges] */
@@ -1176,7 +1166,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         tmp += rnd(10); /* fakery, since monsters lack INT scores */
         if (magr->mtame && !magr->isminion) {
             EDOG(magr)->hungrytime += rnd(60);
-            magr->mconf = 0;
+            set_property(mdef, CONFUSION, dice(3, 8), FALSE);
         }
         if (tmp >= mdef->mhp && vis)
             pline("%s last thought fades away...", s_suffix(Monnam(mdef)));
@@ -1260,7 +1250,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             tmp = 0;
         break;
     case AD_WRAP:      /* monsters cannot grab one another, it's too hard */
-        if (magr->mcan)
+        if (cancelled(magr))
             tmp = 0;
         break;
     case AD_ENCH:
@@ -1365,7 +1355,7 @@ mrustm(struct monst *magr, struct monst *mdef, struct obj *obj)
     else
         return;
 
-    if (mdef->mcan)
+    if (cancelled(mdef))
         return;
 
     erode_obj(obj, NULL, type, TRUE, TRUE);
@@ -1442,7 +1432,7 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
         }
         break;
     case AD_ENCH:      /* KMH -- remove enchantment (disenchanter) */
-        if (mhit && !mdef->mcan && otmp) {
+        if (mhit && !cancelled(mdef) && otmp) {
             drain_item(otmp);
             /* No message */
         }
@@ -1450,7 +1440,7 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
     default:
         break;
     }
-    if (mdead || mdef->mcan)
+    if (mdead || cancelled(mdef))
         return mdead | mhit;
 
     /* These affect the enemy only if defender is still alive */
@@ -1462,8 +1452,8 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
             if (mddat == &mons[PM_FLOATING_EYE]) {
                 if (!rn2(4))
                     tmp = 127;
-                if (magr->mcansee && haseyes(madat) && mdef->mcansee &&
-                    (see_invisible(magr) || !mdef->minvis)) {
+                if (!blind(magr) && haseyes(madat) && !blind(mdef) &&
+                    (see_invisible(magr) || !invisible(mdef))) {
                     const char *buf;
                     buf = msgprintf("%s gaze is reflected by %%s %%s.",
                                     s_suffix(mon_nam(mdef)));
@@ -1502,12 +1492,14 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                 split_mon(mdef, magr);
             break;
         case AD_STUN:
-            if (!magr->mstun) {
-                magr->mstun = 1;
-                if (canseemon(magr))
-                    pline("%s %s...", Monnam(magr),
-                          makeplural(stagger(magr->data, "stagger")));
+            if (canseemon(magr)) {
+                if (stunned(magr))
+                    pline("%s struggles to keep %s balance.", Monnam(magr),
+                            mhis(magr));
+                else
+                    pline("%s staggers...", Monnam(magr));
             }
+            set_property(magr, STUNNED, tmp, TRUE);
             tmp = 0;
             break;
         case AD_FIRE:

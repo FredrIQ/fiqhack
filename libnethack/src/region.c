@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-19 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -738,9 +738,8 @@ inside_gas_cloud(void *p1, void *p2)
             if (cansee(mtmp->mx, mtmp->my))
                 pline("%s coughs!", Monnam(mtmp));
             setmangry(mtmp);
-            if (haseyes(mtmp->data) && mtmp->mcansee) {
-                mtmp->mblinded = 1;
-                mtmp->mcansee = 0;
+            if (haseyes(mtmp->data) && !blind(mtmp)) {
+                set_property(mtmp, BLINDED, 1, FALSE);
             }
             if (resists_poison(mtmp))
                 return FALSE;

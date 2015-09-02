@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -150,7 +150,7 @@ static const char vismsg[] =
     "Your vision seems to %s for a moment but is %s now.";
 static const char eyemsg[] = "Your %s momentarily %s.";
 
-static void
+void
 eyepline(const char *verb_one_eye, const char *verb_two_eyes)
 {
     if (eyecount(youmonst.data) == 1)
@@ -743,14 +743,8 @@ peffects(struct obj *otmp)
             break;
         }       /* and fall through */
     case SPE_HASTE_SELF:
-        if (!Very_fast) /* wwf@doe.carleton.ca */
-            pline("You are suddenly moving %sfaster.", Fast ? "" : "much ");
-        else {
-            pline("Your %s get new energy.", makeplural(body_part(LEG)));
-            unkn++;
-        }
         exercise(A_DEX, TRUE);
-        incr_itimeout(&HFast, rn1(10, 100 + 60 * bcsign(otmp)));
+        set_property(&youmonst, FAST, rn1(10, 100 + 60 * bcsign(otmp)), FALSE);
         break;
     case POT_BLINDNESS:
         if (Blind)
@@ -821,34 +815,29 @@ peffects(struct obj *otmp)
         break;
     case POT_LEVITATION:
     case SPE_LEVITATION:
-        if (otmp->cursed)
-            HLevitation &= ~I_SPECIAL;
-        if (!Levitation) {
-            /* kludge to ensure proper operation of float_up() */
-            HLevitation = 1;
-            float_up();
-            /* reverse kludge */
-            HLevitation = 0;
-            if (otmp->cursed && !Is_waterlevel(&u.uz)) {
-                if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy) &&
-                    (u.ux != level->sstairs.sx ||
-                     u.uy != level->sstairs.sy || !level->sstairs.up) &&
-                    (u.ux != level->upladder.sx ||
-                     u.uy != level->upladder.sy)) {
-                    pline("You hit your %s on the %s.", body_part(HEAD),
-                          ceiling(u.ux, u.uy));
-                    losehp(uarmh ? 1 : rnd(10),
-                           killer_msg(DIED, "colliding with the ceiling"));
-                } else
-                    doup();
-            }
-        } else
+        if (levitates(&youmonst) && !otmp->cursed)
             nothing++;
+        if (otmp->cursed)
+            /* TRUE to avoid float_down() */
+            set_property(&youmonst, LEVITATION, -1, TRUE);
         if (otmp->blessed) {
-            incr_itimeout(&HLevitation, rn1(50, 250));
-            HLevitation |= I_SPECIAL;
+            set_property(&youmonst, LEVITATION, 0, FALSE);
+            set_property(&youmonst, LEVITATION, rn1(50, 250), FALSE);
         } else
-            incr_itimeout(&HLevitation, rn1(140, 10));
+            set_property(&youmonst, LEVITATION, rn1(140, 10), FALSE);
+        if (otmp->cursed && !Is_waterlevel(&u.uz)) {
+            if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy) &&
+                (u.ux != level->sstairs.sx ||
+                 u.uy != level->sstairs.sy || !level->sstairs.up) &&
+                (u.ux != level->upladder.sx ||
+                 u.uy != level->upladder.sy)) {
+                pline("You hit your %s on the %s.", body_part(HEAD),
+                      ceiling(u.ux, u.uy));
+                losehp(uarmh ? 1 : rnd(10),
+                       killer_msg(DIED, "colliding with the ceiling"));
+            } else
+                doup();
+        }
         spoteffects(FALSE);     /* for sinks */
         break;
     case POT_GAIN_ENERGY:      /* M. Stephenson */
@@ -1075,11 +1064,11 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
         case POT_CONFUSION:
         case POT_BOOZE:
             if (!resist(mon, POTION_CLASS, 0, NOTELL))
-                mon->mconf = TRUE;
+                set_property(mon, CONFUSION, dice(3, 8), FALSE);
             break;
         case POT_INVISIBILITY:
             angermon = FALSE;
-            mon_set_minvis(mon);
+            set_property(mon, INVIS, rn1(15, 31), FALSE);
             break;
         case POT_SLEEPING:
             /* wakeup() doesn't rouse victims of temporary sleep */
@@ -1098,16 +1087,15 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             break;
         case POT_SPEED:
             angermon = FALSE;
-            mon_adjust_speed(mon, 1, obj);
+            set_property(mon, FAST, rn1(10, 100 + 60 * bcsign(obj)), FALSE);
             break;
         case POT_BLINDNESS:
             if (haseyes(mon->data)) {
                 int btmp = 64 + rn2(32) + rn2(32) *
                   !resist(mon, POTION_CLASS, 0, NOTELL);
 
-                btmp += mon->mblinded;
-                mon->mblinded = min(btmp, 127);
-                mon->mcansee = 0;
+                if (btmp)
+                    set_property(mon, BLINDED, btmp, FALSE);
             }
             break;
         case POT_WATER:
@@ -1187,7 +1175,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
     /* Note: potionbreathe() does its own docall() */
     if ((distance == 0 || ((distance < 3) && rn2(5))) &&
         (!breathless(youmonst.data) || haseyes(youmonst.data)))
-        potionbreathe(obj);
+        potionbreathe(&youmonst, obj);
     else if (obj->dknown && !objects[obj->otyp].oc_name_known &&
              !objects[obj->otyp].oc_uname && cansee(mon->mx, mon->my))
         docall(obj);
@@ -1208,14 +1196,17 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 
 /* vapors are inhaled or get in your eyes */
 void
-potionbreathe(struct obj *obj)
+potionbreathe(struct monst *mon, struct obj *obj)
 {
+    boolean vis = canseemon(mon);
+    boolean you = (mon == &youmonst);
+    boolean pestilence = (!you && mon->data == &mons[PM_PESTILENCE]);
     int i, ii, isdone, kn = 0;
 
     switch (obj->otyp) {
     case POT_RESTORE_ABILITY:
     case POT_GAIN_ABILITY:
-        if (obj->cursed) {
+        if (you && obj->cursed) {
             if (!breathless(youmonst.data))
                 pline("Ulch!  That potion smells terrible!");
             else if (haseyes(youmonst.data)) {
@@ -1227,111 +1218,183 @@ potionbreathe(struct obj *obj)
                       (numeyes == 1) ? "s" : "");
             }
             break;
-        } else {
-            i = rn2(A_MAX);     /* start at a random point */
-            for (isdone = ii = 0; !isdone && ii < A_MAX; ii++) {
-                if (ABASE(i) < AMAX(i)) {
-                    ABASE(i)++;
-                    /* only first found if not blessed */
-                    isdone = !(obj->blessed);
+        } else if (!obj->cursed) {
+            if (you) {
+                i = rn2(A_MAX);     /* start at a random point */
+                for (isdone = ii = 0; !isdone && ii < A_MAX; ii++) {
+                    if (ABASE(i) < AMAX(i)) {
+                        ABASE(i)++;
+                        /* only first found if not blessed */
+                        isdone = !(obj->blessed);
+                    }
                 }
                 if (++i >= A_MAX)
                     i = 0;
+            } else {
+                if (mon->mhp < mon->mhpmax)
+                    mon->mhp++;
             }
         }
         break;
     case POT_FULL_HEALING:
-        if (Upolyd && u.mh < u.mhmax)
-            u.mh++;
-        if (u.uhp < u.uhpmax)
-            u.uhp++;
+        if (you) {
+            if (Upolyd && u.mh < u.mhmax)
+                u.mh++;
+            if (u.uhp < u.uhpmax)
+                u.uhp++;
+        } else if (!pestilence) {
+            if (mon->mhp < mon->mhpmax)
+                mon->mhp++;
+        } else {
+            mon->mhp--;
+            if (!mon->mhp)
+                mon->mhp = 1;
+        }
         /* FALL THROUGH */
     case POT_EXTRA_HEALING:
-        if (Upolyd && u.mh < u.mhmax)
-            u.mh++;
-        if (u.uhp < u.uhpmax)
-            u.uhp++;
+        if (you) {
+            if (Upolyd && u.mh < u.mhmax)
+                u.mh++;
+            if (u.uhp < u.uhpmax)
+                u.uhp++;
+        } else if (!pestilence) {
+            if (mon->mhp < mon->mhpmax)
+                mon->mhp++;
+        } else {
+            mon->mhp--;
+            if (!mon->mhp)
+                mon->mhp = 1;
+        }
         /* FALL THROUGH */
     case POT_HEALING:
-        if (Upolyd && u.mh < u.mhmax)
-            u.mh++;
-        if (u.uhp < u.uhpmax)
-            u.uhp++;
-        exercise(A_CON, TRUE);
+        if (you) {
+            if (Upolyd && u.mh < u.mhmax)
+                u.mh++;
+            if (u.uhp < u.uhpmax)
+                u.uhp++;
+        } else if (!pestilence) {
+            if (mon->mhp < mon->mhpmax)
+                mon->mhp++;
+        } else {
+            mon->mhp--;
+            if (!mon->mhp)
+                mon->mhp = 1;
+        }
+        if (you)
+            exercise(A_CON, TRUE);
         break;
     case POT_SICKNESS:
-        if (!Role_if(PM_HEALER)) {
-            if (Upolyd) {
-                if (u.mh <= 5)
-                    u.mh = 1;
-                else
-                    u.mh -= 5;
+        if (!pestilence && mon->data != &mons[PM_HEALER]) {
+            if (you) {
+                if (Upolyd) {
+                    if (u.mh <= 5)
+                        u.mh = 1;
+                    else
+                        u.mh -= 5;
+                } else {
+                    if (u.uhp <= 5)
+                        u.uhp = 1;
+                    else
+                        u.uhp -= 5;
+                }
+                exercise(A_CON, FALSE);
             } else {
-                if (u.uhp <= 5)
-                    u.uhp = 1;
+                if (mon->mhp <= 5)
+                    mon->mhp = 1;
                 else
-                    u.uhp -= 5;
+                    mon->mhp -= 5;
             }
-            exercise(A_CON, FALSE);
+        } else if (pestilence) {
+            /* equavilent to full healing */
+            mon->mhp += 3;
+            if (mon->mhp > mon->mhpmax)
+                mon->mhp = mon->mhpmax;
         }
         break;
     case POT_HALLUCINATION:
-        kn++;
-        pline("You have a momentary vision.");
+        if (you) {
+            pline("You have a momentary vision.");
+            kn++;
+        }
         break;
     case POT_CONFUSION:
     case POT_BOOZE:
-        if (!Confusion)
-            pline("You feel somewhat dizzy.");
-        make_confused(itimeout_incr(HConfusion, rnd(5)), FALSE);
+        set_property(mon, CONFUSION, rnd(5), FALSE);
         break;
     case POT_INVISIBILITY:
-        if (!Blind && !Invis) {
+        if (!blind(&youmonst) && !invisible(mon) && (you || vis)) {
             kn++;
-            pline("For an instant you %s!",
-                  See_invisible ? "could see right through yourself" :
-                  "couldn't see yourself");
+            if (you)
+                pline("For an instant you %s!",
+                      See_invisible ? "could see right through yourself" :
+                      "couldn't see yourself");
+            else
+                pline("%s %s for a moment!", Monnam(mon),
+                      see_invisible(&youmonst) ? "turns transparent" : "disappears");
         }
         break;
     case POT_PARALYSIS:
-        kn++;
-        if (!Free_action) {
-            pline("Something seems to be holding you.");
-            helpless(5, hr_paralyzed, "frozen by potion vapours", NULL);
-            exercise(A_DEX, FALSE);
-        } else
-            pline("You stiffen momentarily.");
+        if (you || vis) {
+            kn++;
+            if (!free_action(mon)) {
+                pline("Something seems to be holding %s.",
+                      you ? "you" : mon_nam(mon));
+                if (you) {
+                    helpless(5, hr_paralyzed, "frozen by potion vapours", NULL);
+                    exercise(A_DEX, FALSE);
+                } else {
+                    mon->mfrozen += 5;
+                    if (mon->mfrozen)
+                        mon->mcanmove = 0;
+                }
+            } else
+                pline("%s stiffen%s momentarily.",
+                      you ? "You" : Monnam(mon),
+                      you ? "" : "s");
+        }
         break;
     case POT_SLEEPING:
-        kn++;
-        if (!Free_action && !Sleep_resistance) {
-            pline("You feel rather tired.");
-            helpless(5, hr_asleep, "sleeping off potion vapours", NULL);
-            exercise(A_DEX, FALSE);
-        } else
-            pline("You yawn.");
+        if (you || vis) {
+            kn++;
+            if (!free_action(mon) && !resists_sleep(mon)) {
+                if (you) {
+                    pline("You feel rather tired.");
+                    helpless(5, hr_asleep, "sleeping off potion vapours", NULL);
+                    exercise(A_DEX, FALSE);
+                } else {
+                    pline("%s falls asleep.", Monnam(mon));
+                    mon->mfrozen += 5;
+                    if (mon->mfrozen)
+                        mon->mcanmove = 0;
+                }
+            } else
+                pline("%s yawn%s.",
+                      you ? "You" : Monnam(mon),
+                      you ? "" : "s");
+        }
         break;
     case POT_SPEED:
-        if (!Fast) {
+        if (you && !fast(mon)) {
             pline("Your knees seem more flexible now.");
             kn++;
         }
-        incr_itimeout(&HFast, rnd(5));
-        exercise(A_DEX, TRUE);
+        set_property(mon, FAST, 5, TRUE);
+        if (you)
+            exercise(A_DEX, TRUE);
         break;
     case POT_BLINDNESS:
-        if (!Blind) {
+        if (you && !blind(mon)) {
             kn++;
             pline("It suddenly gets dark.");
         }
-        make_blinded(itimeout_incr(Blinded, rnd(5)), FALSE);
-        if (!Blind)
+        set_property(mon, BLINDED, rnd(5), FALSE);
+        if (you && !blind(mon))
             pline("Your vision quickly clears.");
         break;
     case POT_WATER:
-        if (u.umonnum == PM_GREMLIN) {
-            split_mon(&youmonst, NULL);
-        } else if (u.ulycn >= LOW_PM) {
+        if (mon->data == &mons[PM_GREMLIN]) {
+            split_mon(mon, NULL);
+        } else if (you && u.ulycn >= LOW_PM) {
             /* vapor from [un]holy water will trigger transformation but won't
                cure lycanthropy */
             if (obj->blessed && youmonst.data == &mons[u.ulycn])
@@ -1342,17 +1405,20 @@ potionbreathe(struct obj *obj)
         break;
     case POT_ACID:
         /* Acid damage handled elsewhere. */
-        if (!Acid_resistance)
+        if ((you || vis) && !resists_acid(mon))
             kn++;
-        exercise(A_CON, FALSE);
+        if (you)
+            exercise(A_CON, FALSE);
         break;
     case POT_POLYMORPH:
         /* Potion of polymorph always gives a unique message, even if
            unchanging. */
-        kn++;
-        exercise(A_CON, FALSE);
+        if (you || vis)
+            kn++;
+        if (you)
+            exercise(A_CON, FALSE);
         break;
-/*
+/*  why are these commented out? -FIQ
     case POT_GAIN_LEVEL:
     case POT_LEVITATION:
     case POT_FRUIT_JUICE:
@@ -1635,7 +1701,7 @@ dodip(const struct nh_cmd_arg *arg)
             wake_nearby(FALSE);
             exercise(A_STR, FALSE);
             if (!breathless(youmonst.data) || haseyes(youmonst.data))
-                potionbreathe(obj);
+                potionbreathe(&youmonst, obj);
             useup(obj);
             useup(potion);
             losehp(rnd(10), killer_msg(DIED, "an alchemic blast"));

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1324,11 +1324,9 @@ static void
 eataccessory(struct obj *otmp)
 {
     int typ = otmp->otyp;
-    long oldprop;
 
     /* Note: rings are not so common that this is unbalancing. */
     /* (How often do you even _find_ 3 rings of polymorph in a game?) */
-    oldprop = u.uintrinsic[objects[typ].oc_oprop];
     if (otmp == uleft || otmp == uright) {
         setunequip(otmp);
         if (u.uhp <= 0)
@@ -1343,45 +1341,9 @@ eataccessory(struct obj *otmp)
             if (!objects[typ].oc_oprop)
                 break;  /* should never happen */
 
-            if (!(u.uintrinsic[objects[typ].oc_oprop] & FROMOUTSIDE))
+            if (set_property(&youmonst, objects[typ].oc_oprop, 0, FALSE))
                 accessory_has_effect(otmp);
 
-            u.uintrinsic[objects[typ].oc_oprop] |= FROMOUTSIDE;
-
-            switch (typ) {
-            case RIN_SEE_INVISIBLE:
-                set_mimic_blocking();
-                see_monsters(FALSE);
-                /* FIXME: why is this checking polyform data? */
-                if (Invis && !oldprop && !worn_extrinsic(SEE_INVIS) &&
-                    !(see_invisible(&youmonst) & W_MASK(os_polyform)) && !Blind) {
-                    newsym(u.ux, u.uy);
-                    pline("Suddenly you can see yourself.");
-                    makeknown(typ);
-                }
-                break;
-            case RIN_INVISIBILITY:
-                if (!oldprop && !worn_extrinsic(INVIS) &&
-                    !worn_blocked(INVIS) && !See_invisible && !Blind) {
-                    newsym(u.ux, u.uy);
-                    pline("Your body takes on a %s transparency...",
-                          Hallucination ? "normal" : "strange");
-                    makeknown(typ);
-                }
-                break;
-            case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
-                resistcham();
-                break;
-            case RIN_LEVITATION:
-                /* undo the `.intrinsic |= FROMOUTSIDE' done above */
-                u.uintrinsic[LEVITATION] = oldprop;
-                if (!Levitation) {
-                    float_up();
-                    incr_itimeout(&HLevitation, dice(10, 20));
-                    makeknown(typ);
-                }
-                break;
-            }
             break;
         case RIN_ADORNMENT:
             accessory_has_effect(otmp);
@@ -1411,14 +1373,6 @@ eataccessory(struct obj *otmp)
             HProtection |= FROMOUTSIDE;
             u.uac -= otmp->spe;
             break;
-        case RIN_FREE_ACTION:
-            /* Give sleep resistance instead */
-            if (!(HSleep_resistance & FROMOUTSIDE))
-                accessory_has_effect(otmp);
-            if (!Sleep_resistance)
-                pline("You feel wide awake.");
-            HSleep_resistance |= FROMOUTSIDE;
-            break;
         case AMULET_OF_CHANGE:
             accessory_has_effect(otmp);
             makeknown(typ);
@@ -1443,10 +1397,9 @@ eataccessory(struct obj *otmp)
                 accessory_has_effect(otmp);
             HSleeping = FROMOUTSIDE | rnd(100);
             break;
-        case RIN_SUSTAIN_ABILITY:
         case AMULET_OF_LIFE_SAVING:
         case AMULET_OF_REFLECTION:     /* nice try */
-            /* can't eat Amulet of Yendor or fakes, and no oc_prop even if you
+            /* can't eat Amulet of Yendor or fakes, and no oc_oprop even if you
                could -3. */
             break;
         }

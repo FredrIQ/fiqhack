@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -519,7 +519,7 @@ domonnoise(struct monst *mtmp)
             pline_msg = "howls.";
         } else if (mtmp->mpeaceful) {
             if (mtmp->mtame &&
-                (mtmp->mconf || mtmp->mflee || mtmp->mtrapped ||
+                (confused(mtmp) || mtmp->mflee || mtmp->mtrapped ||
                  moves > EDOG(mtmp)->hungrytime || mtmp->mtame < 5))
                 pline_msg = "whines.";
             else if (mtmp->mtame && EDOG(mtmp)->hungrytime > moves + 1000)
@@ -535,7 +535,8 @@ domonnoise(struct monst *mtmp)
         break;
     case MS_MEW:
         if (mtmp->mtame) {
-            if (mtmp->mconf || mtmp->mflee || mtmp->mtrapped || mtmp->mtame < 5)
+            if (confused(mtmp) || mtmp->mflee ||
+                mtmp->mtrapped || mtmp->mtame < 5)
                 pline_msg = "yowls.";
             else if (moves > EDOG(mtmp)->hungrytime)
                 pline_msg = "meows.";
@@ -654,9 +655,9 @@ domonnoise(struct monst *mtmp)
             pline_msg = "wants nothing to do with you.";
         else if (mtmp->mhp < mtmp->mhpmax / 4)
             pline_msg = "moans.";
-        else if (mtmp->mconf || mtmp->mstun)
+        else if (confused(mtmp) || stunned(mtmp))
             verbl_msg = !rn2(3) ? "Huh?" : rn2(2) ? "What?" : "Eh?";
-        else if (!mtmp->mcansee)
+        else if (blind(mtmp))
             verbl_msg = "I can't see!";
         else if (mtmp->mtrapped) {
             struct trap *t = t_at(level, mtmp->mx, mtmp->my);

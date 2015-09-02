@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -464,10 +464,10 @@ e_jumps(struct entity *etmp)
            || etmp->emon->wormno))
         return FALSE;
 
-    if (is_u(etmp) ? Confusion : etmp->emon->mconf)
+    if (confused(etmp->emon))
         tmp -= 2;
 
-    if (is_u(etmp) ? Stunned : etmp->emon->mstun)
+    if (stunned(etmp->emon))
         tmp -= 3;
 
     if (is_db_wall(etmp->ex, etmp->ey))

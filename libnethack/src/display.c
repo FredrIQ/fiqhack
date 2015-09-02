@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1169,7 +1169,7 @@ set_mimic_blocking(void)
     for (mon = level->monlist; mon; mon = mon->nmon) {
         if (DEADMONSTER(mon))
             continue;
-        if (mon->minvis &&
+        if (invisible(mon) &&
             ((mon->m_ap_type == M_AP_FURNITURE &&
               (mon->mappearance == S_vcdoor || mon->mappearance == S_hcdoor)) ||
              (mon->m_ap_type == M_AP_OBJECT && mon->mappearance == BOULDER))) {

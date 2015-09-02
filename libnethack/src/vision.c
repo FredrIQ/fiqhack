@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -157,7 +157,7 @@ does_block(struct level *lev, int x, int y)
         return 1;
 
     /* Mimics mimicing a door or boulder block light. */
-    if ((mon = m_at(lev, x, y)) && (!mon->minvis || See_invisible) &&
+    if ((mon = m_at(lev, x, y)) && (!invisible(mon) || see_invisible(&youmonst)) &&
         ((mon->m_ap_type == M_AP_FURNITURE &&
           (mon->mappearance == S_hcdoor || mon->mappearance == S_vcdoor)) ||
          (mon->m_ap_type == M_AP_OBJECT && mon->mappearance == BOULDER)))

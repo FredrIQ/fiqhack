@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -227,7 +227,7 @@ castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
        necessarily knows_ux_uy, a stronger condition) */
 
     /* monster unable to cast spells? */
-    if (mtmp->mcan || (mtmp->mspec_used && !casting_elemental) || !ml) {
+    if (cancelled(mtmp) || (mtmp->mspec_used && !casting_elemental) || !ml) {
         cursetxt(mtmp, !casting_directed);
         return 0;
     }
@@ -252,7 +252,7 @@ castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
 
     action_interrupted();
 
-    if (rn2(ml * 10) < (mtmp->mconf ? 100 : 20)) {      /* fumbled attack */
+    if (confused(mtmp) || rn2(ml * 10) <  20) {      /* fumbled attack */
         if (canseemon(mtmp) && canhear())
             pline("The air crackles around %s.", mon_nam(mtmp));
         return 0;
@@ -438,14 +438,7 @@ cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
         dmg = 0;
         break;
     case MGC_DISAPPEAR:        /* makes self invisible */
-        if (!mtmp->minvis && !mtmp->invis_blkd) {
-            if (canseemon(mtmp))
-                pline("%s suddenly %s!", Monnam(mtmp),
-                      !See_invisible ? "disappears" : "becomes transparent");
-            mon_set_minvis(mtmp);
-            dmg = 0;
-        } else
-            impossible("no reason for monster to cast disappear spell?");
+        set_property(mtmp, INVIS, rn1(15, 31), FALSE);
         break;
     case MGC_STUN_YOU:
         if (Antimagic || Free_action) {
@@ -464,7 +457,7 @@ cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
         dmg = 0;
         break;
     case MGC_HASTE_SELF:
-        mon_adjust_speed(mtmp, 1, NULL);
+        set_property(mtmp, FAST, rn1(10, 100), FALSE);
         dmg = 0;
         break;
     case MGC_CURE_SELF:
@@ -766,23 +759,18 @@ mmspell_would_be_useless(struct monst *magr, struct monst *mdef,
              spellnum == MGC_CLONE_WIZ))
             return TRUE;
         /* haste self when already fast */
-        if (m_has_property(magr, FAST, ANY_PROPERTY, TRUE) &&
+        if (!very_fast(magr) &&
             spellnum == MGC_HASTE_SELF)
             return TRUE;
         /* invisibility when already invisible */
-        if (m_has_property(magr, INVIS, ANY_PROPERTY, TRUE) &&
+        if ((invisible(magr) || binvisible(magr)) &&
             spellnum == MGC_DISAPPEAR)
-            return TRUE;
-        /* invisibility when wearing a mummy wrapping */
-        if (spellnum == MGC_DISAPPEAR &&
-            ((magr == &youmonst && BInvis) ||
-             (magr != &youmonst && magr->invis_blkd)))
             return TRUE;
         /* peaceful monster won't cast invisibility if you can't see invisible,
            same as when monsters drink potions of invisibility.  This doesn't
            really make a lot of sense, but lets the player avoid hitting
            peaceful monsters by mistake */
-        if (magr != &youmonst && magr_peaceful && !See_invisible &&
+        if (magr != &youmonst && magr_peaceful && !see_invisible(&youmonst) &&
             spellnum == MGC_DISAPPEAR)
             return TRUE;
         /* healing when already healed */
@@ -836,7 +824,7 @@ buzzmu(struct monst *mtmp, const struct attack *mattk)
     if (mattk->adtyp > AD_SPC2)
         return 0;
 
-    if (mtmp->mcan) {
+    if (cancelled(mtmp)) {
         cursetxt(mtmp, FALSE);
         return 0;
     }
@@ -882,7 +870,7 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
     }
 
     /* monster unable to cast spells? */
-    if (mtmp->mcan || mtmp->mspec_used || !ml) {
+    if (cancelled(mtmp) || mtmp->mspec_used || !ml) {
         if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my)) {
             if (is_undirected_spell(mattk->adtyp, spellnum))
                 pline("%s points all around, then curses.", Monnam(mtmp));
@@ -903,7 +891,7 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
             mtmp->mspec_used = 2;
     }
 
-    if (rn2(ml * 10) < (mtmp->mconf ? 100 : 20)) {      /* fumbled attack */
+    if (confused(mtmp) || rn2(ml * 10) < 20) {      /* fumbled attack */
         if (canseemon(mtmp) && canhear())
             pline("The air crackles around %s.", mon_nam(mtmp));
         return (0);
@@ -1378,13 +1366,16 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         } else {
 
             if (yours || canseemon(mtmp)) {
-                if (mtmp->mstun)
+                if (stunned(mtmp))
                     pline("%s struggles to keep %s balance.", Monnam(mtmp),
                           mhis(mtmp));
                 else
                     pline("%s reels...", Monnam(mtmp));
             }
-            mtmp->mstun = 1;
+            dmg = dice(6, 4);
+            if (half_spell_dam(mtmp))
+                dmg = (dmg + 1) / 2;
+            set_property(mtmp, STUNNED, dmg, TRUE);
         }
         dmg = 0;
         break;
@@ -1393,9 +1384,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             impossible("ucast haste but not yours?");
             return;
         }
-        if (!(HFast & INTRINSIC))
-            pline("You are suddenly moving faster.");
-        HFast |= INTRINSIC;
+        set_property(mtmp, FAST, rn1(10, 100), FALSE);
         dmg = 0;
         break;
     case MGC_CURE_SELF:
@@ -1504,11 +1493,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                 destroy_mitem(mtmp, WAND_CLASS, AD_ELEC);
             if (!resists_blnd(mtmp)) {
                 unsigned rnd_tmp = rnd(50);
-                mtmp->mcansee = 0;
-                if((mtmp->mblinded + rnd_tmp) > 127)
-                    mtmp->mblinded = 127;
-                else
-                    mtmp->mblinded += rnd_tmp;
+                set_property(mtmp, BLINDED, rnd_tmp, FALSE);
             }
             break;
         }
@@ -1586,14 +1571,14 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             return;
         }
         /* note: resists_blnd() doesn't apply here */
-        if (!mtmp->mblinded && haseyes(mtmp->data)) {
+        if (!blind(mtmp) && haseyes(mtmp->data)) {
             if (!resists_blnd(mtmp)) {
                 int num_eyes = eyecount(mtmp->data);
 
                 pline("Scales cover %s %s!", s_suffix(mon_nam(mtmp)),
                       (num_eyes == 1) ? "eye" : "eyes");
 
-                mtmp->mblinded = 127;
+                set_property(mtmp, BLINDED, 127, TRUE);
             }
             dmg = 0;
 
@@ -1630,8 +1615,14 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         } else {
             if (yours || canseemon(mtmp))
                 pline("%s seems %sconfused!", Monnam(mtmp),
-                      mtmp->mconf ? "more " : "");
-            mtmp->mconf = 1;
+                      confused(mtmp) ? "more " : "");
+            if (yours)
+                dmg = u.ulevel;
+            else
+                dmg = mattk->m_lev;
+            if (half_spell_dam(mtmp))
+                dmg = (dmg + 1) / 2;
+            set_property(mtmp, CONFUSION, dmg, FALSE);
         }
         dmg = 0;
         break;

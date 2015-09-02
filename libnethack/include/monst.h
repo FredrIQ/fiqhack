@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-08-30 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,6 +8,7 @@
 
 # include "global.h"
 # include "coord.h"
+# include "prop.h"
 
 /* The weapon_check flag is used two ways:
  * 1) When calling mon_wield_item, is 2-6 depending on what is desired.
@@ -65,7 +66,6 @@
 
 struct monst {
     struct monst *nmon; /* next monster in the level monster list */
-    struct monst *ncmon; /* next monster causing conflict (when applicable) */
     const struct permonst *data;
     struct level *dlevel;       /* pointer to the level this monster is on */
     struct obj *minvent;
@@ -89,7 +89,6 @@ struct monst {
     aligntyp malign;    /* alignment of this monster, relative to the player
                            (positive = good to kill) */
     short moveoffset;   /* how this monster's actions map onto turns */
-    unsigned short mintrinsics;  /* low 8 correspond to mresists */
     schar mtame;        /* level of tameness, implies peaceful */
     uchar m_ap_type;    /* what mappearance is describing: */
 # define M_AP_NOTHING   0       /* mappearance is unused -- monster appears as
@@ -99,14 +98,11 @@ struct monst {
 # define M_AP_MONSTER   3       /* a monster */
 
     uchar mfrozen;
-    uchar mblinded;     /* cansee 0, temp.blinded n, blind 0 */
 
     unsigned int mappearance;   /* for undetected mimics and the wiz */
 
+    unsigned levi_wary:1; /* worried about levi timing out */
     unsigned female:1;  /* is female */
-    unsigned minvis:1;  /* currently invisible */
-    unsigned invis_blkd:1;      /* invisibility blocked */
-    unsigned perminvis:1;       /* intrinsic minvis value */
     unsigned cham:3;    /* shape-changer */
 /* note: lycanthropes are handled elsewhere */
 # define CHAM_ORDINARY          0       /* not a shapechanger */
@@ -120,19 +116,13 @@ struct monst {
     /* implies one of M1_CONCEAL or M1_HIDE, but not mimic (that is, snake,
        spider, trapper, piercer, eel) */
 
-    unsigned mcan:1;    /* has been cancelled */
     unsigned mburied:1; /* has been buried */
-    unsigned mspeed:2;  /* current speed */
-    unsigned permspeed:2;       /* intrinsic mspeed value */
     unsigned mrevived:1;        /* has been revived from the dead */
     unsigned mavenge:1; /* did something to deserve retaliation */
 
     unsigned mflee:1;   /* fleeing */
-    unsigned mcansee:1; /* cansee 1, temp.blinded 0, blind 0 */
     unsigned mcanmove:1;        /* paralysis, similar to mblinded */
     unsigned msleeping:1;       /* asleep until woken */
-    unsigned mstun:1;   /* stunned (off balance) */
-    unsigned mconf:1;   /* confused */
     unsigned mpeaceful:1;       /* does not attack unprovoked */
     unsigned mtrapped:1;        /* trapped in a pit, web or bear trap */
 
@@ -145,7 +135,9 @@ struct monst {
     unsigned ispriest:1;        /* is a priest */
     unsigned iswiz:1;   /* is the Wizard of Yendor */
     
-    uint64_t mspells;  /* known monster spells */
+    uint64_t mspells;           /* known monster spells */
+    uint64_t mintrinsics;       /* monster intrinsics */
+    uchar mt_prop[mt_lastprop + 1]; /* intrinsics that time out */
 
     uchar mfleetim;     /* timeout for mflee */
     uchar wormno;       /* at most 31 worms on any level */
@@ -189,7 +181,7 @@ struct monst {
 # define NAME_MUTABLE(mtmp) (((char *)(mtmp)->mextra) + (mtmp)->mxlth)
 
 # define MON_WEP(mon)     (m_mwep(mon))
-# define MON_NOWEP(mon)   ((m_mwep(mon)) = NULL)
+# define MON_NOWEP(mon)   ((mon)->mw = NULL)
 
 # define DEADMONSTER(mon) ((mon)->mhp < 1)
 
@@ -212,7 +204,7 @@ struct monst {
 # define m_mhp(mon) ((mon) == &youmonst ? u.uhp : (mon)->mhp)
 # define m_mhpmax(mon) ((mon) == &youmonst ? u.uhpmax : (mon)->mhpmax)
 # define m_mlev(mon) (Upolyd ? mons[u.umonnum].mlevel : (mon)->data->mlevel)
-# define m_mwep(mon) ((mon) == &youmonst ? u.uwep : (mon)->mw);
+# define m_mwep(mon) ((mon) == &youmonst ? uwep : (mon)->mw)
 
 /* Does a monster know where the player character is? Does it think it does? */
 # define engulfing_u(mon) (Engulfed && (mon) == u.ustuck)
@@ -234,7 +226,7 @@ enum monster_awareness_reasons {
 # define awareness_reason(mon) (!aware_of_u(mon) ? mar_unaware :        \
                                 knows_ux_uy(mon) ? mar_aware :          \
                                 ((Invis && !see_invisible(mon)) ||    \
-                                 !((mon)->mcansee)) ?                   \
+                                 (blind(mon))) ?                       \
                                 mar_guessing_invis :                    \
                                 Displaced ? mar_guessing_displaced :    \
                                 mar_guessing_other)

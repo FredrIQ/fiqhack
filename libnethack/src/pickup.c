@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1457,7 +1457,7 @@ loot_mon(struct monst *mtmp, int *passed_info, boolean * prev_loot)
             if ((unwornmask = otmp->owornmask) != 0L) {
                 mtmp->misc_worn_check &= ~unwornmask;
                 otmp->owornmask = 0L;
-                update_mon_intrinsics(mtmp, otmp, FALSE, FALSE);
+                update_property(mtmp, objects[otmp->otyp].oc_oprop, which_slot(otmp));
             }
             hold_another_object(otmp, "You drop %s!", doname(otmp), NULL);
             timepassed = rnd(3);

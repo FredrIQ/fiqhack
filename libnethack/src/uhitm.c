@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -60,7 +60,7 @@ find_roll_to_hit(struct monst *mtmp)
 
 /* Adjust vs. (and possibly modify) monster state.         */
 
-    if (mtmp->mstun)
+    if (stunned(mtmp))
         tmp += 2;
     if (mtmp->mflee)
         tmp += 2;
@@ -172,8 +172,8 @@ attack(struct monst *mtmp, schar dx, schar dy, boolean confirmed)
 
     /* Is the "it died" check actually correct? */
     if (mdat->mlet == S_LEPRECHAUN &&
-        !mtmp->mfrozen && !mtmp->msleeping && !mtmp->mconf &&
-        mtmp->mcansee && !rn2(7) && (m_move(mtmp, 0) == 2 || /* it died */
+        !mtmp->mfrozen && !mtmp->msleeping && !confused(mtmp) &&
+        !blind(mtmp) && !rn2(7) && (m_move(mtmp, 0) == 2 || /* it died */
                                      mtmp->mx != u.ux + dx ||
                                      mtmp->my != u.uy + dy)) /* it moved */
         return ac_continue;
@@ -199,7 +199,7 @@ known_hitum(struct monst *mon, int *mhit, const struct attack *uattk, schar dx,
        can see it, and you don't have free action; this is considerably less
        evil to the player than the vanilla alternative. */
     if (mon->data == &mons[PM_FLOATING_EYE] && canseemon(mon) && !Free_action &&
-        !Reflecting && mon->mcansee) {
+        !Reflecting && !blind(mon)) {
         *mhit = 0;
         pline("%s glares at you.", Monnam(mon));
         /* can't keep this short enough to be a oneliner, it seems; so no need
@@ -617,7 +617,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                                   CREAM_PIE ? "Splat!" : "Splash!");
                         } else if (obj->otyp == BLINDING_VENOM) {
                             pline("The venom blinds %s%s!", mon_nam(mon),
-                                  mon->mcansee ? "" : " further");
+                                  !blind(mon) ? "" : " further");
                         } else {
                             const char *whom = mon_nam(mon);
                             const char *what = The(xname(obj));
@@ -634,12 +634,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                                   vtense(what, "splash"), whom);
                         }
                         setmangry(mon);
-                        mon->mcansee = 0;
-                        tmp = rn1(25, 21);
-                        if (((int)mon->mblinded + tmp) > 127)
-                            mon->mblinded = 127;
-                        else
-                            mon->mblinded += tmp;
+                        set_property(mon, BLINDED, tmp, FALSE);
                     } else {
                         pline(obj->otyp == CREAM_PIE ? "Splat!" : "Splash!");
                         setmangry(mon);
@@ -812,7 +807,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     }
     if ((mdat == &mons[PM_BLACK_PUDDING] || mdat == &mons[PM_BROWN_PUDDING])
         && obj && obj == uwep && objects[obj->otyp].oc_material == IRON &&
-        mon->mhp > 1 && !thrown && !mon->mcan
+        mon->mhp > 1 && !thrown && !cancelled(mon)
         /* && !destroyed -- guaranteed by mhp > 1 */ ) {
         if (clone_mon(mon, 0, 0)) {
             pline("%s divides as you hit it!", Monnam(mon));
@@ -868,9 +863,9 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
             killed(mon);        /* takes care of most messages */
     } else if (u.umconf && !thrown) {
         nohandglow(mon);
-        if (!mon->mconf && !resist(mon, SPBOOK_CLASS, 0, NOTELL)) {
-            mon->mconf = 1;
-            if (!mon->mstun && mon->mcanmove && !mon->msleeping &&
+        if (!resist(mon, SPBOOK_CLASS, 0, NOTELL)) {
+            set_property(mon, CONFUSION, dice(3, 8), TRUE);
+            if (!stunned(mon) && mon->mcanmove && !mon->msleeping &&
                 canseemon(mon))
                 pline("%s appears confused.", Monnam(mon));
         }
@@ -1057,7 +1052,7 @@ steal_it(struct monst *mdef, const struct attack *mattk)
                 MON_NOWEP(mdef);
             }
             otmp->owornmask = 0L;
-            update_mon_intrinsics(mdef, otmp, FALSE, FALSE);
+            update_property(mdef, objects[otmp->otyp].oc_oprop, which_slot(otmp));
 
             if (otmp == stealoid)       /* special message for final item */
                 pline("%s finishes taking off %s suit.", Monnam(mdef),
@@ -1112,7 +1107,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
         if (!Blind)
             pline("%s %s for a moment.", Monnam(mdef),
                   makeplural(stagger(mdef->data, "stagger")));
-        mdef->mstun = 1;
+        set_property(mdef, STUNNED, tmp, TRUE);
         goto physical;
     case AD_LEGS:
         /* if (u.ucancelled) { */
@@ -1255,27 +1250,23 @@ damageum(struct monst *mdef, const struct attack *mattk)
         break;
     case AD_BLND:
         if (can_blnd(&youmonst, mdef, mattk->aatyp, NULL)) {
-            if (!Blind && mdef->mcansee)
+            if (!blind(&youmonst) && !blind(mdef))
                 pline("%s is blinded.", Monnam(mdef));
-            mdef->mcansee = 0;
-            tmp += mdef->mblinded;
-            if (tmp > 127)
-                tmp = 127;
-            mdef->mblinded = tmp;
+            set_property(mdef, BLINDED, tmp, TRUE); /* avoid messages */
         }
         tmp = 0;
         break;
     case AD_CURS:
-        if (night() && !rn2(10) && !mdef->mcan) {
+        if (night() && !rn2(10) && !cancelled(mdef)) {
             if (mdef->data == &mons[PM_CLAY_GOLEM]) {
-                if (!Blind)
+                if (!blind(&youmonst))
                     pline("Some writing vanishes from %s head!",
                           s_suffix(mon_nam(mdef)));
                 xkilled(mdef, 0);
                 /* Don't return yet; keep hp<1 and tmp=0 for pet msg */
             } else {
-                mdef->mcan = 1;
                 pline("You chuckle.");
+                gremlin_curse(mdef);
             }
         }
         tmp = 0;
@@ -1439,20 +1430,12 @@ damageum(struct monst *mdef, const struct attack *mattk)
         /* if (negated) break; */
         break;
     case AD_SLOW:
-        if (!negated && mdef->mspeed != MSLOW) {
-            unsigned int oldspeed = mdef->mspeed;
-
-            mon_adjust_speed(mdef, -1, NULL);
-            if (mdef->mspeed != oldspeed && canseemon(mdef))
-                pline("%s slows down.", Monnam(mdef));
+        if (!negated) {
+            set_property(mdef, SLOW, tmp, FALSE);
         }
         break;
     case AD_CONF:
-        if (!mdef->mconf) {
-            if (canseemon(mdef))
-                pline("%s looks confused.", Monnam(mdef));
-            mdef->mconf = 1;
-        }
+        set_property(mdef, CONFUSION, tmp, FALSE);
         break;
     default:
         tmp = 0;
@@ -1487,14 +1470,13 @@ explum(struct monst *mdef, const struct attack *mattk)
     case AD_BLND:
         if (!resists_blnd(mdef)) {
             pline("%s is blinded by your flash of light!", Monnam(mdef));
-            mdef->mblinded = min((int)mdef->mblinded + tmp, 127);
-            mdef->mcansee = 0;
+            set_property(mdef, BLINDED, tmp, TRUE);
         }
         break;
     case AD_HALU:
-        if (haseyes(mdef->data) && mdef->mcansee) {
+        if (haseyes(mdef->data) && !blind(mdef)) {
             pline("%s is affected by your flash of light!", Monnam(mdef));
-            mdef->mconf = 1;
+            set_property(mdef, CONFUSION, tmp, TRUE);
         }
         break;
     case AD_COLD:
@@ -1662,13 +1644,9 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                 break;
             case AD_BLND:
                 if (can_blnd(&youmonst, mdef, mattk->aatyp, NULL)) {
-                    if (mdef->mcansee)
+                    if (!blind(mdef))
                         pline("%s can't see in there!", Monnam(mdef));
-                    mdef->mcansee = 0;
-                    dam += mdef->mblinded;
-                    if (dam > 127)
-                        dam = 127;
-                    mdef->mblinded = dam;
+                    set_property(mdef, BLINDED, dam, TRUE);
                 }
                 dam = 0;
                 break;
@@ -1808,7 +1786,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
 
                 if (!Engulfed &&
                     (compat = could_seduce(&youmonst, mon, mattk))) {
-                    pline("You %s %s %s.", mon->mcansee && haseyes(mon->data)
+                    pline("You %s %s %s.", !blind(mon) && haseyes(mon->data)
                           ? "smile at" : "talk to", mon_nam(mon),
                           compat == 2 ? "engagingly" : "seductively");
                     /* doesn't anger it; no wakeup() */
@@ -2017,7 +1995,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         }
         break;
     case AD_RUST:
-        if (mhit && !mon->mcan) {
+        if (mhit && !cancelled(mon)) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
                     erode_obj(uarmf, xname(uarmf), ERODE_RUST, TRUE, TRUE);
@@ -2027,7 +2005,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         }
         break;
     case AD_CORR:
-        if (mhit && !mon->mcan) {
+        if (mhit && !cancelled(mon)) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
                     erode_obj(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
@@ -2067,7 +2045,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 
     /* These only affect you if they still live */
 
-    if (malive && !mon->mcan && rn2(3)) {
+    if (malive && !cancelled(mon) && rn2(3)) {
 
         switch (ptr->mattk[i].adtyp) {
 
@@ -2076,11 +2054,11 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
                 if (!canseemon(mon)) {
                     break;
                 }
-                if (mon->mcansee) {
+                if (!blind(mon)) {
                     if (ureflects("%s gaze is reflected by your %s.",
                                   s_suffix(Monnam(mon))))
                         ;
-                    else if (Free_action)
+                    else if (free_action(&youmonst))
                         pline("You momentarily stiffen under %s gaze!",
                               s_suffix(mon_nam(mon)));
                     else {
@@ -2093,7 +2071,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
                     if (!rn2(500))
                         change_luck(-1);
                 }
-            } else if (Free_action) {
+            } else if (free_action(&youmonst)) {
                 pline("You momentarily stiffen.");
             } else {    /* gelatinous cube */
                 pline("You are frozen by %s!", mon_nam(mon));
@@ -2194,17 +2172,17 @@ passive_obj(struct monst *mon, /* could be youmonst */
         }
         break;
     case AD_RUST:
-        if (!mon->mcan) {
+        if (!cancelled(mon)) {
             erode_obj(obj, NULL, ERODE_RUST, TRUE, TRUE);
         }
         break;
     case AD_CORR:
-        if (!mon->mcan) {
+        if (!cancelled(mon)) {
             erode_obj(obj, NULL, ERODE_CORRODE, TRUE, TRUE);
         }
         break;
     case AD_ENCH:
-        if (!mon->mcan) {
+        if (!cancelled(mon)) {
             if (drain_item(obj) && carried(obj) &&
                 (obj->known || obj->oclass == ARMOR_CLASS)) {
                 pline("Your %s less effective.", aobjnam(obj, "seem"));
@@ -2243,7 +2221,7 @@ stumble_onto_mimic(struct monst *mtmp, schar dx, schar dy)
 
         /* cloned Wiz starts out mimicking some other monster and might make
            himself invisible before being revealed */
-        if (mtmp->minvis && !See_invisible)
+        if (invisible(mtmp) && !see_invisible(&youmonst))
             what = generic;
         else
             what = a_monnam(mtmp);
@@ -2259,7 +2237,7 @@ nohandglow(struct monst *mon)
 {
     const char *hands = makeplural(body_part(HAND));
 
-    if (!u.umconf || mon->mconf)
+    if (!u.umconf || confused(mon))
         return;
     if (u.umconf == 1) {
         if (Blind)
@@ -2319,8 +2297,7 @@ flash_hits_mon(struct monst *mtmp, struct obj *otmp)
                     else
                         monflee(mtmp, 0, FALSE, TRUE);
                 }
-                mtmp->mcansee = 0;
-                mtmp->mblinded = (tmp < 3) ? 0 : rnd(1 + 50 / tmp);
+                set_property(mtmp, BLINDED, tmp, FALSE);
             }
         }
     }

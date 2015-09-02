@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-02 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -192,7 +192,7 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
                           (SUPPRESS_IT | SUPPRESS_INVISIBLE | SUPPRESS_SADDLE),
                           FALSE), onambuf);
 
-    if (mtmp->mconf)
+    if (confused(mtmp))
         pline("Being confused, %s mispronounces the magic words...",
               vismon ? mon_nam(mtmp) : mhe(mtmp));
 }
@@ -240,7 +240,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
 
     /* since unicorn horns don't get used up, the monster would look silly
        trying to use the same cursed horn round after round */
-    if (mtmp->mconf || mtmp->mstun || !mtmp->mcansee) {
+    if (confused(mtmp) || stunned(mtmp) || blind(mtmp)) {
         if (!is_unicorn(mtmp->data) && !nohands(mtmp->data)) {
             for (obj = mtmp->minvent; obj; obj = obj->nobj)
                 if (obj->otyp == UNICORN_HORN && !obj->cursed)
@@ -253,7 +253,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
         }
     }
 
-    if (mtmp->mconf) {
+    if (confused(mtmp)) {
         for (obj = mtmp->minvent; obj; obj = obj->nobj) {
             if (obj->otyp == CORPSE && obj->corpsenm == PM_LIZARD) {
                 m->defensive = obj;
@@ -270,7 +270,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
        there is that doesn't involve fleeing. These would be hard to combine
        because of the control flow. Pestilence won't use healing even when
        blind. */
-    if (!mtmp->mcansee && !nohands(mtmp->data) &&
+    if (blind(mtmp) && !nohands(mtmp->data) &&
         mtmp->data != &mons[PM_PESTILENCE]) {
         if ((obj = m_carrying(mtmp, POT_FULL_HEALING)) != 0) {
             m->defensive = obj;
@@ -509,7 +509,6 @@ use_defensive(struct monst *mtmp, struct musable *m)
     if (otmp && otmp->oclass == WAND_CLASS)
         wandlevel = getwandlevel(mtmp, otmp);
     boolean vis, vismon, oseen;
-    const char *mcsa = "%s can see again.";
 
     if ((i = precheck(mtmp, otmp, m)) != 0)
         return i;
@@ -533,17 +532,9 @@ use_defensive(struct monst *mtmp, struct musable *m)
             else
                 pline("The tip of %s's horn glows!", mon_nam(mtmp));
         }
-        if (!mtmp->mcansee) {
-            mtmp->mcansee = 1;
-            mtmp->mblinded = 0;
-            if (vismon)
-                pline(mcsa, Monnam(mtmp));
-        } else if (mtmp->mconf || mtmp->mstun) {
-            mtmp->mconf = mtmp->mstun = 0;
-            if (vismon)
-                pline("%s seems steadier now.", Monnam(mtmp));
-        } else
-            impossible("No need for unicorn horn?");
+        set_property(mtmp, BLINDED, -2, FALSE);
+        set_property(mtmp, CONFUSION, -2, FALSE);
+        set_property(mtmp, STUNNED, -2, FALSE);
         return 2;
     case MUSE_BUGLE:
         if (vismon)
@@ -598,7 +589,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
             mreadmsg(mtmp, otmp);
             m_useup(mtmp, otmp);        /* otmp might be free'ed */
             how = SCR_TELEPORTATION;
-            if (obj_is_cursed || mtmp->mconf) {
+            if (obj_is_cursed || confused(mtmp)) {
                 int nlev;
                 d_level flev;
 
@@ -696,9 +687,9 @@ use_defensive(struct monst *mtmp, struct musable *m)
 
             if (!rn2(73))
                 cnt += rnd(4);
-            if (mtmp->mconf || otmp->cursed)
+            if (confused(mtmp) || otmp->cursed)
                 cnt += 12;
-            if (mtmp->mconf)
+            if (confused(mtmp))
                 pm = fish = &mons[PM_ACID_BLOB];
             else if (is_pool(level, mtmp->mx, mtmp->my))
                 fish = &mons[u.uinwater ? PM_GIANT_EEL : PM_CROCODILE];
@@ -847,12 +838,8 @@ use_defensive(struct monst *mtmp, struct musable *m)
         mtmp->mhp += i;
         if (mtmp->mhp > mtmp->mhpmax)
             mtmp->mhp = ++mtmp->mhpmax;
-        if (!otmp->cursed && !mtmp->mcansee) {
-            mtmp->mcansee = 1;
-            mtmp->mblinded = 0;
-            if (vismon)
-                pline(mcsa, Monnam(mtmp));
-        }
+        if (!otmp->cursed)
+            set_property(mtmp, BLINDED, -2, FALSE);
         if (vismon)
             pline("%s looks better.", Monnam(mtmp));
         if (oseen)
@@ -865,12 +852,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
         mtmp->mhp += i;
         if (mtmp->mhp > mtmp->mhpmax)
             mtmp->mhp = (mtmp->mhpmax += (otmp->blessed ? 5 : 2));
-        if (!mtmp->mcansee) {
-            mtmp->mcansee = 1;
-            mtmp->mblinded = 0;
-            if (vismon)
-                pline(mcsa, Monnam(mtmp));
-        }
+        set_property(mtmp, BLINDED, -2, FALSE);
         if (vismon)
             pline("%s looks much better.", Monnam(mtmp));
         if (oseen)
@@ -882,12 +864,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
         if (otmp->otyp == POT_SICKNESS)
             unbless(otmp);      /* Pestilence */
         mtmp->mhp = (mtmp->mhpmax += (otmp->blessed ? 8 : 4));
-        if (!mtmp->mcansee && otmp->otyp != POT_SICKNESS) {
-            mtmp->mcansee = 1;
-            mtmp->mblinded = 0;
-            if (vismon)
-                pline(mcsa, Monnam(mtmp));
-        }
+        set_property(mtmp, BLINDED, -2, FALSE);
         if (vismon)
             pline("%s looks completely healed.", Monnam(mtmp));
         if (oseen)
@@ -1057,9 +1034,7 @@ find_offensive(struct monst *mtmp, struct musable *m)
             m->has_offense = MUSE_WAN_UNDEAD_TURNING;
         }
         nomore(MUSE_WAN_SLOW_MONSTER);
-        if (obj->otyp == MUSE_WAN_SLOW_MONSTER &&
-           ((target == &youmonst && (HFast | (TIMEOUT|INTRINSIC))) ||
-            (target != &youmonst && target->mspeed != MSLOW))) {
+        if (obj->otyp == MUSE_WAN_SLOW_MONSTER && !slow(target)) {
             m->offensive = obj;
             m->has_offense = MUSE_WAN_SLOW_MONSTER;
         }
@@ -1094,7 +1069,7 @@ find_offensive(struct monst *mtmp, struct musable *m)
          */
         nomore(MUSE_SCR_EARTH);
         if (obj->otyp == SCR_EARTH &&
-            ((helmet && is_metallic(helmet)) || mtmp->mconf ||
+            ((helmet && is_metallic(helmet)) || confused(mtmp) ||
              amorphous(mtmp->data) || phasing(mtmp) ||
              noncorporeal(mtmp->data) || unsolid(mtmp->data) || !rn2(10))
             && aware_of_u(mtmp) && !engulfing_u(mtmp)
@@ -1382,7 +1357,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
             int x, y;
 
             /* don't use monster fields after killing it */
-            boolean confused = (mtmp->mconf ? TRUE : FALSE);
+            boolean confused = (confused(mtmp) ? TRUE : FALSE);
             int mmx = mtmp->mx, mmy = mtmp->my;
 
             mreadmsg(mtmp, otmp);
@@ -1665,45 +1640,46 @@ find_misc(struct monst * mtmp, struct musable * m)
         /* Note: peaceful/tame monsters won't make themselves invisible unless
            you can see them.  Not really right, but... */
         nomore(MUSE_WAN_MAKE_INVISIBLE_SELF);
-        if (obj->otyp == WAN_MAKE_INVISIBLE && !mtmp->minvis &&
-            !mtmp->invis_blkd && (!mtmp->mpeaceful || See_invisible) &&
-            (!attacktype(mtmp->data, AT_GAZE) || mtmp->mcan)) {
+        if (obj->otyp == WAN_MAKE_INVISIBLE &&
+            !m_has_property(mtmp, INVIS, os_outside, TRUE) &&
+            (!mtmp->mpeaceful || see_invisible(&youmonst)) &&
+            (!attacktype(mtmp->data, AT_GAZE) || cancelled(mtmp))) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_MAKE_INVISIBLE_SELF;
             continue;
         }
         nomore(MUSE_POT_INVISIBILITY);
-        if (obj->otyp == POT_INVISIBILITY && !mtmp->minvis && !mtmp->invis_blkd
-            && (!mtmp->mpeaceful || See_invisible) &&
-            (!attacktype(mtmp->data, AT_GAZE) || mtmp->mcan)) {
+        if (obj->otyp == POT_INVISIBILITY &&
+            !m_has_property(mtmp, INVIS, os_outside, TRUE) &&
+            (!mtmp->mpeaceful || see_invisible(&youmonst)) &&
+            (!attacktype(mtmp->data, AT_GAZE) || cancelled(mtmp))) {
             m->misc = obj;
             m->has_misc = MUSE_POT_INVISIBILITY;
         }
         nomore(MUSE_WAN_MAKE_INVISIBLE);
         if (ranged_stuff && target != &youmonst &&
             obj->otyp == WAN_MAKE_INVISIBLE &&
-            !target->minvis && !mtmp->invis_blkd &&
-            (!mtmp->mpeaceful || See_invisible) &&
-            (!attacktype(target->data, AT_GAZE) || target->mcan)) {
+            !m_has_property(target, INVIS, os_outside, TRUE) &&
+            (!mtmp->mpeaceful || see_invisible(&youmonst)) &&
+            (!attacktype(target->data, AT_GAZE) || cancelled(target))) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_MAKE_INVISIBLE;
         }
         nomore(MUSE_WAN_SPEED_MONSTER_SELF);
         if (obj->otyp == WAN_SPEED_MONSTER &&
-            mtmp->mspeed != MFAST && !mtmp->isgd) {
+            !very_fast(mtmp) && !mtmp->isgd) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_SPEED_MONSTER_SELF;
             continue;
         }
         nomore(MUSE_POT_SPEED);
-        if (obj->otyp == POT_SPEED && mtmp->mspeed != MFAST && !mtmp->isgd) {
+        if (obj->otyp == POT_SPEED && !very_fast(mtmp) && !mtmp->isgd) {
             m->misc = obj;
             m->has_misc = MUSE_POT_SPEED;
         }
         nomore(MUSE_WAN_SPEED_MONSTER);
         if (ranged_stuff && obj->otyp == WAN_SPEED_MONSTER &&
-            ((target != &youmonst && target->mspeed != MFAST &&
-            !target->isgd) || (target == &youmonst && !(HFast & INTRINSIC)))) {
+            !very_fast(target) && !target->isgd) {
             m->misc = obj;
             m->has_misc = MUSE_WAN_SPEED_MONSTER;
         }
@@ -1766,7 +1742,6 @@ use_misc(struct monst *mtmp, struct musable *m)
     int i;
     struct obj *otmp = m->misc;
     boolean vismon, oseen;
-    const char *nambuf;
 
     if ((i = precheck(mtmp, otmp, m)) != 0)
         return i;
@@ -1835,40 +1810,22 @@ use_misc(struct monst *mtmp, struct musable *m)
         /* grew into genocided monster */
         return 2;
     case MUSE_POT_INVISIBILITY:
-        if (otmp->otyp == WAN_MAKE_INVISIBLE) {
-            mzapmsg(mtmp, otmp, TRUE);
-            otmp->spe--;
-        } else
-            mquaffmsg(mtmp, otmp);
-        /* format monster's name before altering its visibility */
-        nambuf = (See_invisible || tp_sensemon(mtmp)) ?
-            Monnam(mtmp) : mon_nam(mtmp);
-        mon_set_minvis(mtmp);
-        if (vismon && mtmp->minvis) {   /* was seen, now invisible */
-            if (See_invisible)
-                pline("%s body takes on a %s transparency.", s_suffix(nambuf),
-                      Hallucination ? "normal" : "strange");
-            else if (tp_sensemon(mtmp))
-                pline("%s disappears, but you can still %s.", nambuf,
-                      Hallucination ? "see its aura" : "sense its thoughts");
-            else
-                pline("Suddenly you cannot see %s.", nambuf);
-            if (oseen)
-                makeknown(otmp->otyp);
+        mquaffmsg(mtmp, otmp);
+        boolean effect;
+        if (otmp->blessed)
+            effect = set_property(mtmp, INVIS, 0, FALSE);
+        else
+            effect = set_property(mtmp, INVIS, rn1(15, 31), FALSE);
+        newsym(mtmp->mx, mtmp->my);  /* update position */
+        if (otmp->cursed) {
+            you_aggravate(mtmp);
         }
-        if (otmp->otyp == POT_INVISIBILITY) {
-            if (otmp->cursed)
-                you_aggravate(mtmp);
-            m_useup(mtmp, otmp);
-        }
+        if (effect)
+            makeknown(otmp->otyp);
         return 2;
     case MUSE_POT_SPEED:
         mquaffmsg(mtmp, otmp);
-        /* note difference in potion effect due to substantially different
-           methods of maintaining speed ratings: player's character becomes
-           "very fast" temporarily; monster becomes "one stage faster"
-           permanently */
-        mon_adjust_speed(mtmp, 1, otmp);
+        set_property(mtmp, FAST, rn1(10, 100 + 60 * bcsign(otmp)), FALSE);
         m_useup(mtmp, otmp);
         return 2;
     case MUSE_POT_POLYMORPH:
@@ -1961,7 +1918,7 @@ use_misc(struct monst *mtmp, struct musable *m)
     case MUSE_SCR_REMOVE_CURSE:
         mreadmsg(mtmp, otmp);
         if (canseemon(mtmp)) {
-            if (mtmp->mconf)
+            if (confused(mtmp))
                 pline("You feel as if %s needs some help.", mon_nam(mtmp));
             else
                 pline("You feel like someone is helping %s.", mon_nam(mtmp));
@@ -1978,7 +1935,7 @@ use_misc(struct monst *mtmp, struct musable *m)
                     continue;
                 if (otmp->blessed || otmp->owornmask ||
                     obj->otyp == LOADSTONE) {
-                    if (mtmp->mconf)
+                    if (confused(mtmp))
                         blessorcurse(obj, 2, rng_main);
                     else
                         uncurse(obj);
@@ -2058,22 +2015,25 @@ searches_for_item(struct monst *mon, struct obj *obj)
         mon->data == &mons[PM_GHOST])
         return FALSE;
 
-    if (typ == WAN_MAKE_INVISIBLE || typ == POT_INVISIBILITY)
-        return (boolean) (!mon->minvis && !mon->invis_blkd &&
+    /* discharged wands/magical horns */
+    if ((obj->oclass == WAND_CLASS ||
+        typ == FROST_HORN || typ == FIRE_HORN) && obj->spe <= 0)
+        return FALSE;
+    if (typ == POT_INVISIBILITY)
+        return (boolean) (!m_has_property(mon, INVIS, W_MASK(os_outside), TRUE) &&
                           !attacktype(mon->data, AT_GAZE));
-    if (typ == WAN_SPEED_MONSTER || typ == POT_SPEED)
-        return (boolean) (mon->mspeed != MFAST);
+    if (typ == POT_SPEED)
+        return (boolean) (!ifast(mon));
 
     switch (obj->oclass) {
     case WAND_CLASS:
-        if (obj->spe <= 0)
-            return FALSE;
         if (typ == WAN_DIGGING)
             return (boolean) (!levitates(mon));
-        if (typ == WAN_POLYMORPH)
-            return (boolean) (monstr[monsndx(mon->data)] < 6);
         if (objects[typ].oc_dir == RAY || typ == WAN_STRIKING ||
-            typ == WAN_TELEPORTATION || typ == WAN_CREATE_MONSTER)
+            typ == WAN_TELEPORTATION || typ == WAN_CREATE_MONSTER ||
+            typ == WAN_SLOW_MONSTER || typ == WAN_UNDEAD_TURNING ||
+            typ == WAN_MAKE_INVISIBLE || typ == WAN_SPEED_MONSTER ||
+            typ == WAN_POLYMORPH)
             return TRUE;
         break;
     case POTION_CLASS:
@@ -2234,8 +2194,11 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
 
     /* give a "<mon> is slowing down" message and also remove intrinsic speed
        (comparable to similar effect on the hero) */
-    if (stoning)
-        mon_adjust_speed(mon, -3, NULL);
+    if (stoning) {
+        if (canseemon(mon))
+            pline("%s is slowing down.", Monnam(mon));
+        set_property(mon, FAST, -1, TRUE);
+    }
 
     if (mon_visible(mon)) {
         long save_quan = obj->quan;
@@ -2268,10 +2231,8 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
         else
             pline("%s seems limber!", Monnam(mon));
     }
-    if (obj->otyp == CORPSE && obj->corpsenm == PM_LIZARD && mon->mconf) {
-        mon->mconf = 0;
-        if (canseemon(mon))
-            pline("%s seems steadier now.", Monnam(mon));
+    if (obj->otyp == CORPSE && obj->corpsenm == PM_LIZARD && confused(mon)) {
+        set_property(mon, CONFUSION, -2, FALSE);
     }
     if (mon->mtame && !mon->isminion && nutrit > 0) {
         struct edog *edog = EDOG(mon);
@@ -2279,7 +2240,6 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
         if (edog->hungrytime < moves)
             edog->hungrytime = moves;
         edog->hungrytime += nutrit;
-        mon->mconf = 0;
     }
     mon->mlstmv = moves;        /* it takes a turn */
     m_useup(mon, obj);
