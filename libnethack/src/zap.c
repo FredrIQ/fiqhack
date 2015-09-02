@@ -315,15 +315,13 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         }
         break;
     case WAN_MAKE_INVISIBLE:
-        {
-            if (wandlevel >= P_SKILLED && invisible(mtmp))
-                known = set_property(mtmp, INVIS, -2, FALSE);
-            else if (wandlevel == P_UNSKILLED)
-                known = set_property(mtmp, INVIS, rnd(50), FALSE);
-            else
-                known = set_property(mtmp, INVIS, 0, FALSE);
-            break;
-        }
+        if (wandlevel >= P_SKILLED && invisible(mtmp))
+            known = set_property(mtmp, INVIS, -2, FALSE);
+        else if (wandlevel == P_UNSKILLED)
+            known = set_property(mtmp, INVIS, rnd(50), FALSE);
+        else
+            known = set_property(mtmp, INVIS, 0, FALSE);
+        break;
     case WAN_NOTHING:
     case WAN_LOCKING:
     case SPE_WIZARD_LOCK:
@@ -2074,6 +2072,8 @@ int
 zapyourself(struct obj *obj, boolean ordinary)
 {
     int damage = 0;
+    int wandlevel = getwandlevel(&youmonst, obj);
+    boolean known = FALSE;
 
     switch (obj->otyp) {
     case WAN_STRIKING:
@@ -2160,10 +2160,9 @@ zapyourself(struct obj *obj, boolean ordinary)
             pline("Idiot!  You've shot yourself!");
         }
         break;
-
     case WAN_POLYMORPH:
         if (!Unchanging)
-            makeknown(WAN_POLYMORPH);
+            polyself(FALSE);
     case SPE_POLYMORPH:
         if (!Unchanging)
             polyself(FALSE);
@@ -2183,39 +2182,33 @@ zapyourself(struct obj *obj, boolean ordinary)
         damage = 0;     /* No additional damage */
         break;
 
-    case WAN_MAKE_INVISIBLE:{
-            /* have to test before changing HInvis but must change HInvis
-               before doing newsym(). */
-            int msg = !Invis && !Blind && !BInvis;
-
-            if (BInvis && uarmc->otyp == MUMMY_WRAPPING) {
-                /* A mummy wrapping absorbs it and protects you */
-                pline("You feel rather itchy under your %s.", xname(uarmc));
-                break;
-            }
-            if (ordinary || !rn2(10)) { /* permanent */
-                HInvis |= FROMOUTSIDE;
-            } else {    /* temporary */
-                incr_itimeout(&HInvis, dice(obj->spe, 250));
-            }
-            if (msg) {
-                makeknown(WAN_MAKE_INVISIBLE);
-                newsym(u.ux, u.uy);
-                self_invis_message();
-            }
-            break;
-        }
+    case WAN_MAKE_INVISIBLE:
+        if (wandlevel >= P_SKILLED && invisible(&youmonst))
+            known = set_property(&youmonst, INVIS, -2, FALSE);
+        else if (wandlevel == P_UNSKILLED)
+            known = set_property(&youmonst, INVIS, rnd(50), FALSE);
+        else
+            known = set_property(&youmonst, INVIS, 0, FALSE);
+        break;
 
     case WAN_SPEED_MONSTER:
-        if (!(HFast & INTRINSIC)) {
-            if (!Fast)
-                pline("You speed up.");
-            else
-                pline("Your quickness feels more natural.");
-            makeknown(WAN_SPEED_MONSTER);
+       damage = dice(2, 20);
+        if (ordinary) {
+            if (wandlevel >= P_BASIC)
+                damage += 20;
+            if (wandlevel >= P_EXPERT)
+                damage += 30;
+            if (wandlevel == P_MASTER) {
+                damage += 50;
+                damage += dice(3, 20);
+            }
+        }
+        known = set_property(&youmonst, FAST, damage, FALSE);
+        if (ordinary && wandlevel >= P_SKILLED) {
+            set_property(&youmonst, FAST, 0, FALSE);
             exercise(A_DEX, TRUE);
         }
-        HFast |= FROMOUTSIDE;
+        damage = 0;
         break;
 
     case WAN_SLEEP:
@@ -2348,6 +2341,8 @@ zapyourself(struct obj *obj, boolean ordinary)
         impossible("object %d used?", obj->otyp);
         break;
     }
+    if (known)
+        makeknown(obj->otyp);
     return damage;
 }
 
@@ -2634,7 +2629,11 @@ void
 weffects(struct obj *obj, schar dx, schar dy, schar dz)
 {
     int otyp = obj->otyp;
-    int wandlevel = getwandlevel(&youmonst, obj);
+    int wandlevel = 0;
+    if (obj->oclass == WAND_CLASS)
+        wandlevel = getwandlevel(&youmonst, obj);
+    if (wandlevel)
+        use_skill(P_WANDS, wandlevel); /* successful wand use exercises */
     boolean disclose = FALSE, was_unkn = !objects[otyp].oc_name_known;
 
     exercise(A_WIS, TRUE);
