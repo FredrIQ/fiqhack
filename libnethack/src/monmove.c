@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by FIQ, 2015-09-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -76,6 +76,9 @@ watch_on_duty(struct monst *mtmp)
 int
 dochugw(struct monst *mtmp)
 {
+    /* BUG[?]: cansee() will not work on tiles seen by xray, thus check for
+       previous seen by xray seperately. */
+    boolean already_saw_xray = !!(sensemon(mtmp) & MSENSE_XRAY);
     int x = mtmp->mx, y = mtmp->my;
     boolean already_saw_mon = canspotmon(mtmp);
     int rd = dochug(mtmp);
@@ -86,7 +89,7 @@ dochugw(struct monst *mtmp)
         /* it's close enough to be a threat */
         distu(mtmp->mx, mtmp->my) <= (BOLT_LIM + 1) * (BOLT_LIM + 1) &&
         /* and either couldn't see it before, or it was too far away */
-        (!already_saw_mon || !couldsee(x, y) ||
+        (!already_saw_mon || (!couldsee(x, y) && !already_saw_xray) ||
          distu(x, y) > (BOLT_LIM + 1) * (BOLT_LIM + 1)) &&
         /* can see it now, or sense it and would normally see it
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by FIQ, 2015-09-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -516,7 +516,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     }
 
     if (cancelled(magr) || blind(magr) || (invisible(magr) && !see_invisible(mdef))
-        || !blind(mdef) || mdef->msleeping) {
+        || blind(mdef) || mdef->msleeping) {
         if (vis)
             pline("but nothing happens.");
         return MM_MISS;

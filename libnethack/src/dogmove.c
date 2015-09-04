@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-03 */
+/* Last modified by FIQ, 2015-09-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -505,7 +505,10 @@ dog_invent(struct monst *mtmp, struct edog *edog, int udist)
                             /* starving pet is more aggressive about eating */
                             (edog->mhpmax_penalty && edible == ACCFOOD)) &&
             could_reach_item(mtmp, obj->ox, obj->oy)) {
-            return dog_eat(mtmp, obj, omx, omy, FALSE);
+            if (levitates_at_will(mtmp, TRUE, FALSE))
+                return mon_remove_levitation(mtmp, FALSE);
+            else if (!levitates(mtmp))
+                return dog_eat(mtmp, obj, omx, omy, FALSE);
         }
 
         if (can_carry(mtmp, obj) && !obj->cursed &&
@@ -987,7 +990,8 @@ newdogpos:
                     else
                         impossible("remove levitation performed no action?");
                 }
-            } else if (dog_eat(mtmp, obj, omx, omy, FALSE) == 2)
+            }
+            if (dog_eat(mtmp, obj, omx, omy, FALSE) == 2)
                 return 2;
         }
     } else if (mtmp->mleashed && distu(omx, omy) > 4) {
@@ -1030,7 +1034,8 @@ newdogpos:
 static boolean
 could_reach_item(struct monst *mon, xchar nx, xchar ny)
 {
-    if ((!is_pool(level, nx, ny) || swims(mon) || unbreathing(mon)) &&
+    if (!levitates_at_will(mon, TRUE, FALSE) &&
+        (!is_pool(level, nx, ny) || swims(mon) || unbreathing(mon)) &&
         (!is_lava(level, nx, ny) || likes_lava(mon->data)) &&
         (!sobj_at(BOULDER, level, nx, ny) || throws_rocks(mon->data)))
         return TRUE;
