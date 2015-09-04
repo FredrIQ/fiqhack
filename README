@@ -460,4 +460,3 @@ connect to a server with it.
 This only really works properly on Linux, at present; on Mac OS X, it may be
 possible to get a partially working server, but functionality is missing due
 to that operating system's lack of support for realtime signals.
-
