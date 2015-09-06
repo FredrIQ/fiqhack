@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-04 */
+/* Last modified by FIQ, 2015-09-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -78,7 +78,7 @@ dochugw(struct monst *mtmp)
 {
     /* BUG[?]: cansee() will not work on tiles seen by xray, thus check for
        previous seen by xray seperately. */
-    boolean already_saw_xray = !!(sensemon(mtmp) & MSENSE_XRAY);
+    boolean already_saw_xray = !!((sensemon(mtmp)) & MSENSE_XRAY);
     int x = mtmp->mx, y = mtmp->my;
     boolean already_saw_mon = canspotmon(mtmp);
     int rd = dochug(mtmp);
@@ -122,10 +122,23 @@ onscary(int x, int y, struct monst * mtmp)
 void
 mon_regen(struct monst *mon, boolean digest_meal)
 {
-    if (mon->mhp < mon->mhpmax && (moves % 20 == 0 || regenerates(mon)))
-        mon->mhp++;
-    if (mon->mspec_used)
-        mon->mspec_used--;
+    /* Same HP regeneration speed as a player with 12 Con */
+    if (mon->mhp < mon->mhpmax) {
+        if (mon->m_lev > 9 && (moves % 3))
+            mon->mhp += min((mon->m_lev - 9), rnd(12));
+        else if (regenerates(mon) || (mon->m_lev <= 9 && !(moves % (42 / (mon->m_lev + 2) + 1))))
+            mon->mhp++;
+        if (mon->mhp > mon->mhpmax)
+            mon->mhp = mon->mhpmax;
+    }
+    if (mon->mspec_used) {
+        if (pw_regenerates(mon)) /* energy regeneration */
+            mon->mspec_used -= 5;
+        else
+            mon->mspec_used--;
+        if (mon->mspec_used < 0)
+            mon->mspec_used = 0;
+    }
     if (digest_meal) {
         if (mon->meating)
             mon->meating--;

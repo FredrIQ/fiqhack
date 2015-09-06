@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by FIQ, 2015-09-06 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -1275,6 +1275,7 @@ enlighten_mon(struct monst *mon, int final)
     /* final: 0 => still in progress; 1 => over, survived; 2 => dead */
 {
     int ltmp;
+    int n;
     const char *title;
     const char *buf;
     struct nh_menulist menu;
@@ -1291,6 +1292,7 @@ enlighten_mon(struct monst *mon, int final)
     const char *could = " could ";
     const char *see = (mon == &youmonst ? " see " : " sees ");
     const char *saw = " saw";
+    n = menu.icount;
 
 #define mon_is(menu,mon,attr)         enl_msg(menu,monname,is,was,attr)
 #define mon_has(menu,mon,attr)        enl_msg(menu,monname,has,had,attr)
@@ -1668,6 +1670,9 @@ enlighten_mon(struct monst *mon, int final)
             enl_msg(&menu, You_, "have been killed ", p, buf);
 
     }
+    if (n == menu.icount)
+        mon_has(&menu, mon, "no special properties");
+
     display_menu(&menu, title, PICK_NONE, PLHINT_ANYWHERE,
                 NULL);
     return;

@@ -1,0 +1,3 @@
+--- TODO: This changelog is currently incomplete ---
+* Monsters with energy regeneration regenerate "Pw" (the monster version of it) much faster
+* Monsters regenerate HP at the same speed as players with 12 constitution
