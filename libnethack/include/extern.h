@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by FIQ, 2015-09-09 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1430,6 +1430,7 @@ extern void restpriest(struct monst *, boolean);
 
 extern int mon_prop2mt(enum youprop);
 extern int mon_mt2prop(enum mt_prop);
+extern boolean teleport_at_will(const struct monst *);
 extern unsigned levitates_at_will(const struct monst *, boolean, boolean);
 extern unsigned mon_remove_levitation(struct monst *, boolean);
 extern void gremlin_curse(struct monst *);
@@ -1440,6 +1441,8 @@ extern unsigned m_has_property(const struct monst *, enum youprop,
 extern unsigned u_have_property(enum youprop, unsigned, boolean);
 extern boolean m_helpless(const struct monst *, enum helpless_mask mask);
 extern boolean u_helpless(enum helpless_mask mask);
+extern unsigned msensem_xy(struct monst *, struct monst *,
+                           xchar, xchar);
 extern unsigned msensem(const struct monst *, const struct monst *);
 extern void enlighten_mon(struct monst *, int);
 extern void enlightenment(int);
@@ -1722,6 +1725,8 @@ extern void tele_trap(struct trap *);
 extern void level_tele_trap(struct trap *);
 extern void rloc_to(struct monst *, int, int);
 extern boolean rloc(struct monst *, boolean);
+extern boolean tele_wary(const struct monst *);
+extern boolean mon_tele(struct monst *, boolean);
 extern boolean tele_restrict(struct monst *);
 extern void mtele_trap(struct monst *, struct trap *, int);
 extern int mlevel_tele_trap(struct monst *, struct trap *, boolean, int);

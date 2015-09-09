@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -924,6 +924,231 @@ rloc_to(struct monst *mtmp, int x, int y)
         make_angry_shk(mtmp, oldx, oldy);
 }
 
+/* Check if current level is noteleport and the monster is aware of it */
+boolean
+tele_wary(const struct monst *mon)
+{
+    return (mon->dlevel->flags.noteleport &&
+            (mon->mtrapseen & (1 << (TELEP_TRAP - 1))));
+}
+/* Perform monster teleportation. If monsters lack teleport control, this is random.
+   If the monster does have teleport control, the monster decides location based on
+   a number of factors:
+     Stat:        Effect
+     Scared       away from targets
+     objective    If a monster has a current goal square in mind, go there
+     Covetous     to items it covet, or monsters holding said items
+     Peaceful     random
+     Tame         next to you if it can see you
+     Ranged       to a spot where it can attack the target at range
+     Otherwise    next to a target
+   Note that teleport control is decided by "free will". In most cases, this is passed
+   as !!teleport_control(x), but it allows potential to control teleport for monsters
+   not normally having teleport control (for example: master wands of teleport)
+
+   Returns TRUE on success, FALSE on failure */
+boolean
+mon_tele(struct monst *mon, boolean free_will)
+{
+    struct monst *m2, *nmon = NULL;
+    xchar ox = mon->mx;
+    xchar oy = mon->my;
+    xchar tx, ty;
+    long strat = mon->mstrategy;
+    int i;
+
+    /* level is noteleport (The Wizard cheats) */
+    if (!mon->iswiz && tele_restrict(mon))
+        return FALSE;
+
+    /* the Amulet and Wizard's Tower occasionally block teleportation
+       TODO: while this technically works, the On_W_... check might fail
+       if &u.uz ever points to a location where the monster isn't present */
+    if ((mon_has_amulet(mon) || (On_W_tower_level(&u.uz))) && !rn2(3)) {
+        pline("%s seems very disoriented for a monent.", Monnam(mon));
+        return FALSE;
+    }
+
+    /* uncontrolled teleport */
+    if (!free_will)
+        return rloc(mon, TRUE);
+
+    /* at this point, we will teleport at least once, but if it for some reason
+       fails, bail out early */
+    if (!rloc(mon, TRUE))
+        return FALSE;
+
+    /* monster is fleeing */
+    if ((strat & STRAT_ESCAPE) && (!mon->mpeaceful || mon->mtame)) {
+        /* ensure that we weren't already standing on stairs --
+           in that case, we don't want to move from them */
+        if ((ox == level->upstair.sx && oy == level->upstair.sy) ||
+            (ox == level->dnstair.sx && oy == level->dnstair.sy)) {
+            mon->mx = ox;
+            mon->my = oy;
+            return TRUE;
+        }
+        boolean found_hostile = FALSE;
+        for (i = 0; i < 20; i++) {
+            rloc(mon, TRUE);
+            /* For the first attempt, check if up- or downstairs are OK spots.
+               If they are, go there and ignore presence of possible trouble.
+               The reason for this is simple: if we get into even bigger trouble,
+               we can escape up- or downstairs.
+               In most cases, this will be the final location. If the monster
+               can sense something on the up- or downstair, the monster will not
+               even bother trying to go there (the below logic). However, if
+               there is something on the stairs and the monster doesn't know about
+               it, it will still try to go there, fail, and end up in a random
+               location (similar to what happens if the hero tries to teleport
+               onto a monster). */
+            if (!i) {
+                struct monst *smon;
+                if (isok(level->upstair.sx, level->upstair.sy)) {
+                    /* we kinda like our place already */
+                    if (mon->mx == level->upstair.sx &&
+                        mon->my == level->upstair.sy)
+                        return TRUE;
+                    smon = m_at(level, level->upstair.sx,
+                                level->upstair.sy);
+                    /* we had no idea this monster blocked the stairs... oops! */
+                    if (smon && !msensem_xy(mon, smon, ox, oy))
+                        return TRUE; /* rloc was performed above */
+                    else if (!smon) {
+                        /* teleport here */
+                        mnearto(mon, level->upstair.sx, level->upstair.sy, TRUE);
+                        return TRUE;
+                    }
+                } else if (isok(level->dnstair.sx, level->dnstair.sy)) {
+                    if (mon->mx == level->dnstair.sx &&
+                        mon->my == level->dnstair.sy)
+                        return TRUE;
+                    smon = m_at(level, level->dnstair.sx,
+                                level->dnstair.sy);
+                    if (smon && !msensem_xy(mon, smon, ox, oy))
+                        return TRUE;
+                    else if (!smon) {
+                        mnearto(mon, level->dnstair.sx, level->dnstair.sy, TRUE);
+                        return TRUE;
+                    }
+                }
+            }
+            /* Check if the hero, or any other monster (below) is hostile to it.
+               Also check if monster could know about the monster before teleporting,
+               because monsters shouldn't be able to change their mind about the
+               destination if they didn't know there was something hostile there
+               before */
+            if (!mon->mtame &&
+                (msensem(mon, &youmonst) & MSENSE_ANYVISION) &&
+                msensem_xy(mon, &youmonst, ox, oy))
+                continue;
+            for (m2 = level->monlist; m2; m2 = nmon) {
+                nmon = m2->nmon;
+                if ((mon->mtame && !m2->mpeaceful) || (!mon->mtame && m2->mtame)) {
+                    if ((msensem(mon, m2) & MSENSE_ANYVISION) &&
+                        msensem_xy(mon, m2, ox, oy)) {
+                        found_hostile = TRUE;
+                        break;
+                    }
+                }
+            }
+            /* at least one hostile was found at our target -- try again */
+            if (found_hostile) {
+                found_hostile = FALSE;
+                continue;
+            }
+            /* we found a good spot (or didn't know of any targets we did end up seeing) */
+            break;
+        }
+        return TRUE;
+    }
+
+    /* has a goal in mind */
+    if (strat & STRAT_GOAL) {
+        tx = STRAT_GOALX(strat);
+        ty = STRAT_GOALY(strat);
+        mnearto(mon, tx, ty, FALSE);
+        return TRUE;
+    }
+
+    /* general covetous pestering */
+    if (is_covetous(mon->data) &&
+        ((strat & STRAT_STRATMASK) == STRAT_NONE)) {
+        for (m2 = level->monlist; m2; m2 = nmon) {
+            nmon = m2->nmon;
+            if ((mon->mtame && !m2->mpeaceful) || (!mon->mpeaceful && m2->mtame)) {
+                if (msensem_xy(mon, m2, ox, oy)) {
+                    tx = m2->mx;
+                    ty = m2->my;
+                    mnearto(mon, tx, ty, FALSE);
+                    break;
+                }
+            }
+        }
+        return TRUE;
+    }
+
+    /* now that covetous is out of the way, peacefuls have no other considerations
+       of places to go */
+    if (mon->mpeaceful && !mon->mtame)
+        return TRUE; /* rloc() was performed above */
+
+    /* if a tame monster knows where you are, it desires to teleport to you */
+    if (mon->mtame && msensem_xy(mon, &youmonst, ox, oy)) {
+        mnexto(mon);
+        return TRUE;
+    }
+
+    /* we are fairly healthy and have no other desires above -- go for the offensive */
+    /* first, check for monster being aware of the hero */
+    struct monst *tmon = NULL;
+    if (!mon->mpeaceful && msensem_xy(mon, &youmonst, ox, oy)) {
+        tx = u.ux;
+        ty = u.uy;
+        tmon = &youmonst;
+    } else {
+        for (m2 = level->monlist; m2; m2 = nmon) {
+            nmon = m2->nmon;
+            /* monster is hostile to us */
+            if ((mon->mtame && !m2->mpeaceful) || (!mon->mpeaceful && m2->mtame)) {
+                /* can we sense it? */
+                if (msensem_xy(mon, m2, ox, oy)) {
+                    tx = m2->mx;
+                    ty = m2->my;
+                    tmon = m2;
+                    break;
+                }
+            }
+        }
+    }
+
+    /* we didn't find anything interesting, bail out */
+    if (!tmon)
+        return TRUE;
+
+    /* we found a target, let's pester it */
+    /* are we a ranged user? */
+    if ((attacktype(mon->data, AT_BREA) ||
+         attacktype(mon->data, AT_GAZE) ||
+         attacktype(mon->data, AT_SPIT) ||
+         (attacktype(mon->data, AT_WEAP) && select_rwep(mon)))) {
+        /* try to place ourselves in a location where we can see our target
+           and attack at range. */
+        for (i = 0; i < 100; i++) {
+            rloc(mon, TRUE);
+            if ((msensem(mon, tmon) & MSENSE_ANYVISION) &&
+                mfind_target(mon, FALSE))
+                return TRUE;
+        }
+        /* we didn't find a suitable spot... fallthrough */
+    }
+    /* we aren't a ranged user, or we failed to find a suitable ranged spot, just
+       go next to the monster (or as close as possible to it) */
+    mnearto(mon, tx, ty, FALSE);
+    return TRUE;
+}
+
+
 /* place a monster at a random location, typically due to teleport */
 /* return TRUE if successful, FALSE if not */
 boolean
@@ -1007,6 +1232,16 @@ tele_restrict(struct monst * mon)
         if (canseemon(mon))
             pline("A mysterious force prevents %s from teleporting!",
                   mon_nam(mon));
+        /* Notify everyone that saw it happen (including the monster itself)
+           that the level is noteleport. This is done by setting the
+           TELEP_TRAP bit. Yes, this means that monsters switching level
+           will know where teleport traps are located. */
+        struct monst *mon2;
+        for (mon2 = level->monlist; mon2; mon2 = mon2->nmon)
+            if (mon2 &&
+                (mon == mon2 ||
+                 (msensem(mon2, mon) & MSENSE_ANYVISION)))
+                mon2->mtrapseen |= (1 << (TELEP_TRAP - 1));
         return TRUE;
     }
     return FALSE;

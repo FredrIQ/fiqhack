@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-06 */
+/* Last modified by FIQ, 2015-09-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -782,15 +782,22 @@ m_move(struct monst *mtmp, int after)
         mmoved = 0;
     }
 
-    /* teleport if that lies in our nature */
-    if (teleportitis(mtmp) && teleport_control(mtmp) &&
-        !rn2(5) && !cancelled(mtmp) && !tele_restrict(mtmp)) {
-        if (mtmp->mhp < 7 || mtmp->mpeaceful || rn2(2))
-            rloc(mtmp, TRUE);
-        else
-            mnexto(mtmp);
-        mmoved = 1;
-        goto postmov;
+    /* teleportitis procs */
+    if (teleportitis(mtmp) && !rn2(100))
+        mon_tele(mtmp, !!teleport_control(mtmp));
+
+    /* check if there is a good reason to teleport at will, or occasioally
+       do it anyway */
+    if (teleport_at_will(mtmp) && !mtmp->mspec_used && !cancelled(mtmp) &&
+        !tele_wary(mtmp)) {
+        if (mtmp->mstrategy & STRAT_ESCAPE || mtmp->mstrategy & STRAT_GOAL ||
+            !rn2(25)) {
+            mtmp->mspec_used += 25;
+            mmoved = 1;
+            mon_tele(mtmp, !!teleport_control(mtmp));
+        }
+        if (mmoved)
+            goto postmov;
     }
 not_special:
 

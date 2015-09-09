@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-06 */
+/* Last modified by FIQ, 2015-09-09 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -194,6 +194,34 @@ m_has_property(const struct monst *mon, enum youprop property,
     return rv & reasons;
 }
 
+/* Can this monster teleport at will?
+   Any monster who has reached XL12 or more can teleport at will if they have teleportitis.
+   If the monster has teleportitis in their natural form, they can always teleport at will.
+   If the monster is a wizard, they can teleport at will from XL8 with teleportitis. */
+boolean
+teleport_at_will(const struct monst *mon)
+{
+    if (!teleportitis(mon))
+        return FALSE;
+    if (teleportitis(mon) & W_MASK(os_polyform))
+        return TRUE;
+    int level;
+    if (mon == &youmonst)
+        level = u.ulevel;
+    else
+        level = mon->m_lev;
+    if (level >= 12)
+        return TRUE;
+    if (level >= 8) {
+        if (mon == &youmonst && Race_if(PM_WIZARD))
+            return TRUE;
+        if (mon != &youmonst && attacktype(mon->data, AT_MAGC))
+            return TRUE;
+        return FALSE;
+    }
+    return FALSE;
+}
+    
 /* Checks whether or not a monster has controlled levitation.
    "Controlled" levitation here means that the monster can
    end it on its' own accord. include_extrinsic also includes
@@ -994,6 +1022,22 @@ m_helpless(const struct monst *mon, enum helpless_mask mask)
     return FALSE;
 }
 
+/* Hack: check if a monster could sense someone else at specific X/Y coords.
+   This is implemented by temporary changing mx/my to the destination, call msensem,
+   and then revert mx/my to its' old values */
+unsigned
+msensem_xy(struct monst *viewer, struct monst *viewee,
+           xchar tx, xchar ty)
+{
+    xchar ox = viewer->mx;
+    xchar oy = viewer->my;
+    viewer->mx = tx;
+    viewer->my = ty;
+    unsigned sensed = msensem(viewer, viewee);
+    viewer->mx = ox;
+    viewer->my = oy;
+    return sensed;
+}
 
 /* Returns the bitwise OR of all MSENSE_ values that explain how "viewer" can
    see "viewee". &youmonst is accepted as either argument. If both arguments

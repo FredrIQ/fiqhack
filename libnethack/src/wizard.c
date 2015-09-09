@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by FIQ, 2015-09-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -316,7 +316,7 @@ strategy(struct monst *mtmp, boolean magical_target)
        Note that a monster's reaction to STRAT_ESCAPE is not necessarily to run
        away from the target square; it might also heal up, use escape items,
        etc.. */
-    if (mtmp->mhp * (mtmp->data == &mons[PM_WIZARD_OF_YENDOR] ? 4 : 2) <
+    if (mtmp->mhp * (mtmp->data == &mons[PM_WIZARD_OF_YENDOR] ? 3 : 2) <
         mtmp->mhpmax || mtmp->mflee || lepescape) {
 
         /* An escaping pet instead moves towards the player, if it can.
