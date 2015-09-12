@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by FIQ, 2015-09-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -565,85 +565,7 @@ givit(int type, const struct permonst *ptr, int scalefactor)
 
     }
 
-    switch (type) {
-    case FIRE_RES:
-        if (!(HFire_resistance & FROMOUTSIDE)) {
-            pline(Hallucination ? "You be chillin'." :
-                  "You feel a momentary chill.");
-            HFire_resistance |= FROMOUTSIDE;
-        }
-        break;
-
-    case SLEEP_RES:
-        if (!(HSleep_resistance & FROMOUTSIDE)) {
-            pline("You feel wide awake.");
-            HSleep_resistance |= FROMOUTSIDE;
-        }
-        break;
-
-    case COLD_RES:
-        if (!(HCold_resistance & FROMOUTSIDE)) {
-            pline("You feel full of hot air.");
-            HCold_resistance |= FROMOUTSIDE;
-        }
-        break;
-
-    case DISINT_RES:
-        if (!(HDisint_resistance & FROMOUTSIDE)) {
-            pline(Hallucination ? "You feel totally together, man." :
-                  "You feel very firm.");
-            HDisint_resistance |= FROMOUTSIDE;
-        }
-        break;
-
-    case SHOCK_RES:    /* shock (electricity) resistance */
-        if (!(HShock_resistance & FROMOUTSIDE)) {
-            if (Hallucination)
-                pline("You feel grounded in reality.");
-            else
-                pline("Your health currently feels amplified!");
-            HShock_resistance |= FROMOUTSIDE;
-        }
-        break;
-
-    case POISON_RES:
-        if (!(HPoison_resistance & FROMOUTSIDE)) {
-            pline(Poison_resistance ? "You feel especially healthy." :
-                  "You feel healthy.");
-            HPoison_resistance |= FROMOUTSIDE;
-        }
-        break;
-
-    case TELEPORT:
-        if (!(HTeleportation & FROMOUTSIDE)) {
-            pline(Hallucination ? "You feel diffuse." : "You feel very jumpy.");
-            HTeleportation |= FROMOUTSIDE;
-            update_supernatural_abilities();
-        }
-        break;
-
-    case TELEPORT_CONTROL:
-        if (!(HTeleport_control & FROMOUTSIDE)) {
-            pline(Hallucination ? "You feel centered in your personal space." :
-                  "You feel in control of yourself.");
-            HTeleport_control |= FROMOUTSIDE;
-        }
-        break;
-
-    case TELEPAT:
-        if (!(HTelepat & FROMOUTSIDE)) {
-            pline(Hallucination ? "You feel in touch with the cosmos." :
-                  "You feel a strange mental acuity.");
-            HTelepat |= FROMOUTSIDE;
-            /* If blind, make sure monsters show up. */
-            if (Blind)
-                see_monsters(FALSE);
-        }
-        break;
-
-    default:
-        break;
-    }
+    set_property(&youmonst, type, 0, FALSE);
 }
 
 static void

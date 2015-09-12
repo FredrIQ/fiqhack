@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by FIQ, 2015-09-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -423,40 +423,23 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
     else
         imv = (int)nmv;
 
-    /* might stop being afraid, blind or frozen */
-    /* set to 1 and allow final decrement in movemon() */
-    if (mtmp->mt_prop[mt_blind]) {
-        if (imv >= (int)mtmp->mt_prop[mt_blind])
-            mtmp->mt_prop[mt_blind] = 1;
-        else
-            mtmp->mt_prop[mt_blind] -= imv;
-    }
-    if (mtmp->mfrozen) {
-        if (imv >= (int)mtmp->mfrozen)
-            mtmp->mfrozen = 1;
-        else
-            mtmp->mfrozen -= imv;
-    }
-    if (mtmp->mfleetim) {
-        if (imv >= (int)mtmp->mfleetim)
-            mtmp->mfleetim = 1;
-        else
-            mtmp->mfleetim -= imv;
-    }
+    /* Decrease monster-related timers */
+    enum mt_prop mt;
+    for (mt = mt_firstprop; mt <= mt_lastprop; mt++)
+        mtmp->mt_prop[mt] -= min(imv, mtmp->mt_prop[mt] - 1);
+    if (mtmp->mfrozen)
+        mtmp->mfrozen -= min(imv, mtmp->mfrozen - 1);
+    if (mtmp->mfleetim)
+        mtmp->mfleetim -= min(imv, mtmp->mfleetim - 1);
 
     /* might recover from temporary trouble */
     if (mtmp->mtrapped && rn2(imv + 1) > 40 / 2)
         mtmp->mtrapped = 0;
 
     /* might finish eating or be able to use special ability again */
-    if (imv > mtmp->meating)
-        mtmp->meating = 0;
-    else
-        mtmp->meating -= imv;
-    if (imv > mtmp->mspec_used)
-        mtmp->mspec_used = 0;
-    else
-        mtmp->mspec_used -= imv;
+    mtmp->meating -= min(imv, mtmp->meating);
+    mtmp->mspec_used -= min(pw_regenerates(mtmp) ? imv :
+                            imv * 5, mtmp->mspec_used);
 
     /* reduce tameness for every 150 moves you are separated */
     if (mtmp->mtame) {
