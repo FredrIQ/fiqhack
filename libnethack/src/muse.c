@@ -404,8 +404,8 @@ mon_makewish(struct monst *mtmp)
     if (wishtyp == CORPSE) {
         /* trice */
         wishobj->corpsenm = PM_CHICKATRICE;
-        if (!(mons[wishobj->corpsenm].geno & G_UNIQ) &&
-            !(mvitals[wishobj->corpsenm].mvflags & G_NOCORPSE))
+        if ((mons[wishobj->corpsenm].geno & G_UNIQ) ||
+            (mvitals[wishobj->corpsenm].mvflags & G_NOCORPSE))
             wishobj->corpsenm = PM_COCKATRICE;
         /* partly eaten */
         wishobj->oeaten = mons[wishobj->corpsenm].cnutrit;
