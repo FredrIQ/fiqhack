@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-09 */
+/* Last modified by FIQ, 2015-09-13 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -107,6 +107,7 @@ extern void init_artifacts(void);
 extern void save_artifacts(struct memfile *mf);
 extern void restore_artifacts(struct memfile *mf);
 extern const char *artiname(int);
+extern int artityp(int);
 extern struct obj *mk_artifact(struct level *lev, struct obj *, aligntyp,
                                enum rng);
 extern const char *artifact_name(const char *, short *);
@@ -1520,6 +1521,7 @@ extern boolean lookup_id_mapping(unsigned, unsigned *);
 
 /* ### role.c ### */
 
+extern short role_quest_artifact(int);
 extern int str2role(char *);
 extern int str2race(char *);
 extern int str2gend(char *);

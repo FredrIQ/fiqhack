@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by FIQ, 2015-09-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2710,7 +2710,8 @@ typfnd:
         otmp = oname(otmp, name);
         if (otmp->oartifact) {
             otmp->quan = 1L;
-            break_conduct(conduct_artiwish);      /* KMH, conduct */
+            if (!flags.mon_moving)
+                break_conduct(conduct_artiwish);      /* KMH, conduct */
         }
     }
 
@@ -2722,8 +2723,10 @@ typfnd:
         artifact_exists(otmp, ONAME(otmp), FALSE);
         obfree(otmp, NULL);
         otmp = &zeroobj;
-        pline("For a moment, you feel something in your %s, but it disappears!",
-              makeplural(body_part(HAND)));
+        /* monsters currently doesn't wish for artifacts -- but just in case */
+        if (!flags.mon_moving)
+            pline("For a moment, you feel something in your %s, but it disappears!",
+                  makeplural(body_part(HAND)));
     }
 
     if (halfeaten && otmp->oclass == FOOD_CLASS) {

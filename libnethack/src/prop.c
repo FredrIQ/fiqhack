@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-09 */
+/* Last modified by FIQ, 2015-09-13 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -715,12 +715,12 @@ update_property(struct monst *mon, enum youprop prop,
                 /* if "redundant" is set at this point, it is pointing
                    at intrinsic speed only */
                 if (you) {
-                    pline("You are suddenly moving %s%s",
+                    pline("You are suddenly moving %s%s.",
                           (redundant ? "" : "much "),
                           (lost ? "slower" : "faster"));
                     effect = TRUE;
                 } else if (vis) {
-                    pline("%s seems to be moving %s%s",
+                    pline("%s seems to be moving %s%s.",
                           Monnam(mon),
                           (redundant ? "" : "much "),
                           (lost ? "slower" : "faster"));
@@ -770,8 +770,8 @@ update_property(struct monst *mon, enum youprop prop,
                       "You are no longer confused.");
             effect = TRUE;
         } else if (vis) {
-            pline(lost ? "looks less confused now." :
-                  "looks rather confused...");
+            pline(lost ? "%s looks less confused now." :
+                  "%s looks rather confused...", Monnam(mon));
             effect = TRUE;
         }
     case SICK:

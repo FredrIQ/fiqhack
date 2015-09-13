@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by FIQ, 2015-09-13 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -25,6 +25,7 @@ static int precheck(struct monst *mon, struct obj *obj, struct musable *m);
 static void mzapmsg(struct monst *, struct obj *, boolean);
 static void mreadmsg(struct monst *, struct obj *);
 static void mquaffmsg(struct monst *, struct obj *);
+static boolean mon_makewish(struct monst *);
 static void mbhit(struct monst *, int, struct obj *);
 static void mon_break_wand(struct monst *, struct obj *);
 static void mon_consume_unstone(struct monst *, struct obj *, boolean, boolean);
@@ -94,6 +95,7 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
         if (potion_descr && !strcmp(potion_descr, "smoky") &&
             flags.djinni_count < MAXMONNO &&
             !rn2(POTION_OCCUPANT_CHANCE(flags.djinni_count))) {
+            int blessed = obj->blessed, cursed = obj->cursed;
             if (!enexto(&cc, level, mon->mx, mon->my, &mons[PM_DJINNI]))
                 return 0;
             mquaffmsg(mon, obj);
@@ -103,20 +105,48 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
                 if (vis)
                     pline("%s", empty);
             } else {
+                /* GruntHack used rnl() here. I don't know why, but smoky djinnis
+                   aren't affected by luck if players do it, so it shouldn't be
+                   if monsters do it either. */
+                int what = rn2(5);
+                if (blessed && rn2(5))
+                    what = 0;
+                else if (cursed && rn2(5))
+                    what = 4;
+
                 if (vis)
                     pline("In a cloud of smoke, %s emerges!", a_monnam(mtmp));
                 if (canhear())
                     pline("%s speaks.", vis ? Monnam(mtmp) : "Something");
-                /* I suspect few players will be upset that monsters */
-                /* can't wish for wands of death here.... */
-                if (rn2(2)) {
+                switch (what) {
+                case 0:
+                    verbalize("I am in your debt.  I will grant one wish!");
+                    mon_makewish(mon);
+                    mongone(mtmp);
+                    break;
+                case 1:
+                    verbalize("Thank you for freeing me!");
+                    mtmp->mpeaceful = mon->mpeaceful;
+                    if (mon->mtame)
+                        tamedog(mtmp, NULL);
+                    break;
+                case 2:
                     verbalize("You freed me!");
-                    msethostility(mtmp, FALSE, TRUE);
-                } else {
-                    verbalize("It is about time.");
+                    mtmp->mpeaceful = 1;
+                    break;
+                case 3:
+                    verbalize("It is about time!");
                     if (vis)
                         pline("%s vanishes.", Monnam(mtmp));
                     mongone(mtmp);
+                    break;
+                case 4:
+                    verbalize("You disturbed me, fool!");
+                    mtmp->mpeaceful = !mtmp->mpeaceful;
+                    /* TODO: allow monster specific grudges */
+                    if (!mon->mpeaceful)
+                        tamedog(mtmp, NULL);
+                    break;
                 }
             }
             return 2;
@@ -207,6 +237,242 @@ mquaffmsg(struct monst *mtmp, struct obj *otmp)
         You_hear("a chugging sound.");
 }
 
+
+/* Monster wishes (currently only from smoky potions).
+   Balance considerations: Undead wishing can only be performed latergame
+   since only V and L are undead *and* able to wish. Player monsters are
+   either undead turned, reverse-genocided or on Astral. Mines inhabitants
+   wishing for gems should be rarer than finding *actual* gems in there
+   and can be a nice bonus and makes flavour sense as well. As arti-wishing
+   makes flavour sense, and they are occasionally generated with said
+   artifacts anyway. Rodney is Rodney, and guards knowing what they're doing
+   makes sense. The general wishes are neither overpowered early or too harsh. */
+#define FIRST_GEM    DILITHIUM_CRYSTAL
+static boolean
+mon_makewish(struct monst *mtmp)
+{
+    if (canseemon(mtmp) && (msensem(mtmp, &youmonst) & MSENSE_ANYVISION) &&
+        mtmp->mtame) {
+        /* for tame monsters, redirect the wish if hero is in view */
+        pline("%s looks at you curiously.", Monnam(mtmp));
+        makewish();
+        return TRUE;
+    }
+    const struct permonst *mdat = mtmp->data;
+    int pm = monsndx(mdat);
+    struct obj *wishobj;
+    short wishtyp = 0;
+    short wisharti = 0;
+
+    /* Fleeing monsters wish for the best escape item there is */
+    if (mtmp->mflee)
+        wishtyp = POT_GAIN_LEVEL;
+    else if (is_gnome(mdat) || is_dwarf(mdat))
+        wishtyp = rn1((LAST_GEM - FIRST_GEM) + 1, FIRST_GEM);
+    else if (is_undead(mdat))
+        wishtyp = WAN_DEATH;
+    else if (is_mplayer(mdat) && !Role_if(monsndx(mdat)))
+        wisharti = role_quest_artifact(pm);
+    else if (mdat->mlet == S_ANGEL && (!mtmp->mw || !mtmp->mw->oartifact))
+        wisharti = rn2(2) ? ART_SUNSWORD : ART_DEMONBANE;
+    else if (mtmp->iswiz) {
+        /* magic resistance */
+        if (!resists_magm(mtmp)) {
+            if (!exist_artifact(AMULET_OF_ESP, artiname(ART_EYE_OF_THE_AETHIOPICA)))
+                wisharti = ART_EYE_OF_THE_AETHIOPICA;
+            else if (!exist_artifact(CREDIT_CARD, artiname(ART_YENDORIAN_EXPRESS_CARD)))
+                wisharti = ART_YENDORIAN_EXPRESS_CARD;
+            else if (!exist_artifact(LENSES, artiname(ART_EYES_OF_THE_OVERWORLD)))
+                wisharti = ART_EYES_OF_THE_OVERWORLD;
+            else if (!exist_artifact(MIRROR, artiname(ART_MAGIC_MIRROR_OF_MERLIN)))
+                wisharti = ART_MAGIC_MIRROR_OF_MERLIN;
+            else if (!exist_artifact(MACE, artiname(ART_SCEPTRE_OF_MIGHT)))
+                wisharti = ART_SCEPTRE_OF_MIGHT;
+            else if (!exist_artifact(CRYSTAL_BALL, artiname(ART_ORB_OF_DETECTION)))
+                wisharti = ART_ORB_OF_DETECTION;
+        }
+        if (!wisharti)
+            wishtyp = WAN_DEATH;
+        else if (wisharti == role_quest_artifact(monsndx((&youmonst)->data))) {
+            /* rare occurence, since it only happens if the wizard is messed with before
+               you did your quest */
+            wisharti = 0;
+            wishtyp = POT_FULL_HEALING;
+        }
+    } else if (is_mercenary(mdat)) {
+        /* mercenaries, being experienced warriors, knows the good stuff
+           (Inspired from GruntHack's monster wishlist) */
+        switch (rnd(6)) {
+        case 1:
+            /* don't replace DSM */
+            if (!((reflecting(mtmp) | resists_magm(mtmp)) & W_MASK(os_arm))) {
+                if (!reflecting(mtmp))
+                    wishtyp = SILVER_DRAGON_SCALE_MAIL;
+                else
+                    wishtyp = GRAY_DRAGON_SCALE_MAIL;
+                break;
+            }
+            /* fallthrough */
+        case 2:
+            if (!very_fast(mtmp)) {
+                if (!(mtmp->misc_worn_check & W_MASK(os_armf)))
+                    wishtyp = SPEED_BOOTS;
+                else
+                    wishtyp = WAN_SPEED_MONSTER;
+                break;
+            }
+            /* fallthrough */
+        case 3:
+            if (!(mons[PM_CHICKATRICE].geno & G_UNIQ) &&
+                !(mvitals[PM_CHICKATRICE].mvflags & G_NOCORPSE) &&
+                !(mons[PM_COCKATRICE].geno & G_UNIQ) &&
+                !(mvitals[PM_COCKATRICE].mvflags & G_NOCORPSE) &&
+                !(mtmp->mw && mtmp->mw->otyp == CORPSE) &&
+                (mtmp->misc_worn_check & W_MASK(os_armg))) {
+                wishtyp = CORPSE;
+                break;
+            }
+            /* fallthrough */
+        case 4:
+            if (!resists_magm(mtmp))
+                wishtyp = CLOAK_OF_MAGIC_RESISTANCE;
+            else if (!((protected(mtmp) | resists_magm(mtmp)) & W_MASK(os_armc)))
+                wishtyp = CLOAK_OF_PROTECTION;
+            if (wishtyp)
+                break;
+            /* fallthrough */
+        case 5:
+            if (!(mtmp->misc_worn_check & W_MASK(os_amul))) {
+                /* 50% of the time, give "oLS anyway */
+                if (!reflecting(mtmp))
+                    wishtyp = AMULET_OF_LIFE_SAVING;
+                else
+                    wishtyp = (rn2(2) ? AMULET_OF_REFLECTION :
+                               AMULET_OF_LIFE_SAVING);
+                break;
+            }
+            /* fallthrough */
+        case 6:
+            wishtyp = WAN_DEATH;
+        }
+    } else if ((likes_gold(mdat) && !rn2(5)) || mtmp->isshk)
+        wishtyp = GOLD_PIECE;
+
+    if (wisharti) {
+        wishtyp = artityp(wisharti);
+        /* 1/5 of the time, try anyway! */
+        if (rn2(5) && exist_artifact(wishtyp, artiname(wisharti))) {
+            wisharti = 0;
+            /* wand of death is OK because only player monsters
+               or As will end up here */
+            wishtyp = rn2(2) ? WAN_DEATH : AMULET_OF_LIFE_SAVING;
+        }
+    }
+
+    /* Generic wishing for everything else */
+    if (!wishtyp) {
+        if (!(mtmp->misc_worn_check & W_MASK(os_amul)))
+            wishtyp = AMULET_OF_LIFE_SAVING;
+        else /* Not wand of death, that might be too harsh */
+            wishtyp = WAN_CREATE_MONSTER;
+    }
+
+    /* Wish decided -- perform the wish
+       TODO: check luck */
+    wishobj = mksobj(mtmp->dlevel, wishtyp, TRUE, FALSE, rng_main);
+
+    /* I kind of want to allow the wizard to cheat the artifact counter.
+       However, this could lead to cases where the players deliberately
+       donate a stack of smoky potions to the wizard, waiting until he
+       eventually performs a guranteed artiwish... */
+    if (wisharti) {
+        wishobj = oname(wishobj, artiname(wisharti));
+        wishobj->quan = 1L;
+        if (is_quest_artifact(wishobj) ||
+             (wishobj->oartifact &&
+              rn2(nartifact_exist()) > 1)) {
+            artifact_exists(wishobj, ONAME(wishobj), FALSE);
+            obfree(wishobj, NULL);
+            wishobj = &zeroobj;
+            if (canseemon(mtmp))
+                pline("For a moment, you see something in %s %s, but it disappears!",
+                      s_suffix(mon_nam(mtmp)), makeplural(mbodypart(mtmp, HAND)));
+            return FALSE;
+        }
+    }
+
+    if (wishtyp == CORPSE) {
+        /* trice */
+        wishobj->corpsenm = PM_CHICKATRICE;
+        if (!(mons[wishobj->corpsenm].geno & G_UNIQ) &&
+            !(mvitals[wishobj->corpsenm].mvflags & G_NOCORPSE))
+            wishobj->corpsenm = PM_COCKATRICE;
+        /* partly eaten */
+        wishobj->oeaten = mons[wishobj->corpsenm].cnutrit;
+    }
+    if (wishtyp == GOLD_PIECE) {
+        /* 1-5000 gold, shopkeepers always wish for 5000 */
+        if (!mtmp->isshk)
+            wishobj->quan = rnd(5000);
+        else
+            wishobj->quan = 5000;
+    } else {
+        /* greased partly eaten very holy fireproof burnt boots of speed of spinach */
+        wishobj->blessed = 1;
+        /* Undead/demons prefer nonblessed objects. However, wands get significantly
+           more potent blessed */
+        if (wishobj->oclass != WAND_CLASS && (is_demon(mdat) || is_undead(mdat)))
+            wishobj->blessed = 0;
+        wishobj->cursed = 0;
+        if (wishtyp == POT_GAIN_LEVEL) {
+            /* only fleeing monsters do this */
+            wishobj->blessed = 0;
+            wishobj->cursed = 1;
+        }
+        wishobj->greased = 1;
+        wishobj->oerodeproof = 1;
+        if (wishobj->oclass == ARMOR_CLASS ||
+             wishobj->oclass == WEAPON_CLASS) {
+            /* greedy monsters go for +5, others go for +2 or +3 */
+            if (likes_gold(mdat))
+                wishobj->spe = 5;
+            else
+                wishobj->spe = rn2(2) ? 2 : 3;
+            /* convert to +0 when applicable */
+            if (rnd(5) < wishobj->spe)
+                wishobj->spe = 0;
+        }
+        if (!wishobj->oartifact &&
+            (wishobj->oclass == POTION_CLASS ||
+             wishobj->oclass == SCROLL_CLASS ||
+             wishobj->oclass == GEM_CLASS)) {
+            if (likes_gold(mdat))
+                wishobj->quan = 5L;
+            else
+                wishobj->quan = rn2(2) ? 2L : 3L;
+            if (rnd(5) < wishobj->quan)
+                wishobj->quan = 1L;
+        }
+    }
+
+    if (wishobj && canseemon(mtmp))
+        pline("%s appears in %s %s!",
+              distant_name(wishobj, Doname2),
+              s_suffix(mon_nam(mtmp)),
+              makeplural(mbodypart(mtmp, HAND)));
+    if (mpickobj(mtmp, wishobj))
+        wishobj = m_carrying(mtmp, wishtyp);
+    if (!wishobj) {
+        impossible("monster wished-for object disappeared?");
+        return FALSE;
+    }
+    /* wear new equipment */
+    if (wishobj->oclass == ARMOR_CLASS ||
+        wishobj->oclass == AMULET_CLASS)
+        m_dowear(mtmp, FALSE);
+
+    return TRUE;
+}
 
 /* Select a defensive item/action for a monster.  Returns TRUE iff one is
    found. */
@@ -314,6 +580,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
         }
         return FALSE;
     }
+
 
     if (lev->locations[x][y].typ == STAIRS && !stuck && !immobile) {
         if (x == lev->dnstair.sx && y == lev->dnstair.sy &&
@@ -1595,6 +1862,11 @@ find_misc(struct monst * mtmp, struct musable * m)
     if (!aware_of_u(mtmp) || engulfing_u(mtmp) ||
         dist2(x, y, mtmp->mux, mtmp->muy) > 36)
         return FALSE;
+    /* FIXME BUG TODO: remove after testing! */
+    if (!rn2(4)) {
+        m->has_misc = MUSE_WISH;
+        return TRUE;
+    }
 
     if (!stuck && !immobile && !mtmp->cham && monstr[monsndx(mdat)] < 6) {
         boolean ignore_boulders = (verysmall(mdat) || throws_rocks(mdat) ||
@@ -1749,6 +2021,9 @@ use_misc(struct monst *mtmp, struct musable *m)
     oseen = otmp && vismon;
 
     switch (m->has_misc) {
+    case MUSE_WISH:
+        mon_makewish(mtmp);
+        return 2;
     case MUSE_WAN_MAKE_INVISIBLE:
     case MUSE_WAN_SPEED_MONSTER:
     case MUSE_WAN_POLYMORPH:
@@ -1822,6 +2097,7 @@ use_misc(struct monst *mtmp, struct musable *m)
         }
         if (effect)
             makeknown(otmp->otyp);
+        m_useup(mtmp, otmp);
         return 2;
     case MUSE_POT_SPEED:
         mquaffmsg(mtmp, otmp);
