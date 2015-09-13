@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-25 */
+/* Last modified by FIQ, 2015-09-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -994,6 +994,8 @@ you_moved(void)
     /* Lava */
     if (u.utrap && u.utraptype == TT_LAVA)
         handle_lava_trap(TRUE);
+    /* last turn visited for level */
+    level->lastmoves = moves;
 
     /* Record which properties the character has ever used.
 
