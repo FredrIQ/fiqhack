@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-13 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -423,8 +423,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
 
     /* Do your injury last */
     if (uhurt) {
-        if ((type >= 0 || adtyp == AD_PHYS) &&  /* gas spores */
-            flags.verbose && olet != SCROLL_CLASS)
+        if (flags.verbose && olet != SCROLL_CLASS)
             pline("You are caught in %s%s!", expl_needs_the ? "the " : "",
                   dispbuf);
         /* do property damage first, in case we end up leaving bones */
