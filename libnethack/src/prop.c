@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-13 */
+/* Last modified by FIQ, 2015-09-14 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -85,8 +85,10 @@ m_has_property(const struct monst *mon, enum youprop property,
     uchar mfromrace = mdat->mresists;
     uint64_t mfromoutside = mon->mintrinsics;
 
-    /* The general case for equipment */
-    rv |= mworn_extrinsic(mon, property);
+    /* The general case for equipment. Abort during binary load,
+       since monster inventory chains might be missing*/ 
+    if (!program_state.restoring_binary_save && m_minvent(mon))
+        rv |= mworn_extrinsic(mon, property);
 
     if (mon == &youmonst) {
         /* Intrinsics */
