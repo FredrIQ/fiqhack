@@ -1862,11 +1862,6 @@ find_misc(struct monst * mtmp, struct musable * m)
     if (!aware_of_u(mtmp) || engulfing_u(mtmp) ||
         dist2(x, y, mtmp->mux, mtmp->muy) > 36)
         return FALSE;
-    /* FIXME BUG TODO: remove after testing! */
-    if (!rn2(4)) {
-        m->has_misc = MUSE_WISH;
-        return TRUE;
-    }
 
     if (!stuck && !immobile && !mtmp->cham && monstr[monsndx(mdat)] < 6) {
         boolean ignore_boulders = (verysmall(mdat) || throws_rocks(mdat) ||
@@ -2021,9 +2016,6 @@ use_misc(struct monst *mtmp, struct musable *m)
     oseen = otmp && vismon;
 
     switch (m->has_misc) {
-    case MUSE_WISH:
-        mon_makewish(mtmp);
-        return 2;
     case MUSE_WAN_MAKE_INVISIBLE:
     case MUSE_WAN_SPEED_MONSTER:
     case MUSE_WAN_POLYMORPH:

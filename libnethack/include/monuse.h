@@ -74,7 +74,6 @@ enum monuse {
     MUSE_BULLWHIP,
     MUSE_POT_POLYMORPH,
     MUSE_SCR_REMOVE_CURSE,
-    MUSE_WISH, /* remove! */
 };
 
 
