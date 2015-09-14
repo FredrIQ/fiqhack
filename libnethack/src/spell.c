@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by FIQ, 2015-09-14 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -44,8 +44,8 @@ spellname(int spell)
     (((slet) >= 'a' && (slet) <= 'z') ? slet - 'a' :            \
      ((slet) >= 'A' && (slet) <= 'Z') ? slet - 'A' + 26 : -1)
 
-static boolean cursed_book(struct obj *bp);
-static boolean confused_book(struct obj *);
+static boolean cursed_book(struct monst *, struct obj *bp);
+static boolean confused_book(struct monst *, struct obj *);
 static int learn(void);
 static boolean getspell(int *);
 static boolean dospellmenu(const char *, int, int *);
@@ -113,34 +113,46 @@ static const char explodes[] = "radiates explosive energy";
 
 /* TRUE: book should be destroyed by caller */
 static boolean
-cursed_book(struct obj *bp)
+cursed_book(struct monst *mon, struct obj *bp)
 {
     int lev = objects[bp->otyp].oc_level;
     boolean was_inuse;
+    boolean you = (mon == &youmonst);
 
     switch (rn2(lev)) {
     case 0:
-        pline("You feel a wrenching sensation.");
-        tele(); /* teleport him */
+        if (you) {
+            pline("You feel a wrenching sensation.");
+            tele(); /* teleport him */
+        } else
+            mon_tele(mon, !!teleport_control(mon));
         break;
     case 1:
-        pline("You feel threatened.");
-        aggravate();
+        if (you) {
+            pline("You feel threatened.");
+            aggravate();
+        } else
+            you_aggravate(mon);
         break;
     case 2:
-        make_blinded(Blinded + rn1(100, 250), TRUE);
+        set_property(mon, BLINDED, rn1(100, 250), FALSE);
         break;
     case 3:
-        take_gold();
+        /* TODO: make a take_gold() for monsters */
+        if (you)
+            take_gold();
         break;
     case 4:
-        pline("These runes were just too much to comprehend.");
-        make_confused(HConfusion + rn1(7, 16), FALSE);
+        if (you)
+            pline("These runes were just too much to comprehend.");
+        set_property(mon, CONFUSION, rn1(7, 16), you); /* show msg if !you */
         break;
     case 5:
-        pline("The book was coated with contact poison!");
-        if (uarmg) {
-            erode_obj(uarmg, "gloves", ERODE_CORRODE, TRUE, TRUE);
+        if (you)
+            pline("The book was coated with contact poison!");
+        if (which_armor(mon, os_armg)) {
+            erode_obj(which_armor(mon, os_armg), "gloves",
+                      ERODE_CORRODE, TRUE, TRUE);
             break;
         }
         /* Temporarily disable in_use; death should not destroy the book.
@@ -151,24 +163,47 @@ cursed_book(struct obj *bp)
            someone might unintentionally add one.) */
         was_inuse = bp->in_use;
         bp->in_use = FALSE;
-        losestr(Poison_resistance ? rn1(2, 1) : rn1(4, 3), DIED,
-                killer_msg(DIED, "a contact-poisoned spellbook"), NULL);
-        losehp(rnd(Poison_resistance ? 6 : 10),
-               killer_msg(DIED, "a contact-poisoned spellbook"));
+        if (you) {
+            losestr(Poison_resistance ? rn1(2, 1) : rn1(4, 3), DIED,
+                    killer_msg(DIED, "a contact-poisoned spellbook"), NULL);
+            losehp(rnd(Poison_resistance ? 6 : 10),
+                   killer_msg(DIED, "a contact-poisoned spellbook"));
+        } else {
+            /* do a bit more damage since monsters can't lose str */
+            mon->mhp -= resists_poison(mon) ? 10 : 15;
+            if (mon->mhp < 1)
+                mondied(mon);
+        }
         bp->in_use = was_inuse;
         break;
     case 6:
-        if (Antimagic) {
+        if (resists_magm(mon)) {
             shieldeff(u.ux, u.uy);
-            pline("The book %s, but you are unharmed!", explodes);
+            if (you)
+                pline("The book %s, but you are unharmed!", explodes);
+            else if (canseemon(mon))
+                pline("The book %s, but %s is unharmed!", explodes, mon_nam(mon));
         } else {
-            pline("As you read the book, it %s in your %s!", explodes,
-                  body_part(FACE));
-            losehp(2 * rnd(10) + 5, killer_msg(DIED, "an exploding rune"));
+            if (you)
+                pline("As you read the book, it %s in your %s!", explodes,
+                      body_part(FACE));
+            else if (canseemon(mon))
+                pline("As %s reads the book, it %s in %s %s!", mon_nam(mon),
+                      explodes, mhis(mon), mbodypart(mon, FACE));
+            if (you)
+                losehp(2 * rnd(10) + 5, killer_msg(DIED, "an exploding rune"));
+            else {
+                mon->mhp -= 2 * rnd(10) + 5;
+                if (mon->mhp < 1)
+                    mondied(mon);
+            }
         }
         return TRUE;
     default:
-        rndcurse();
+        if (you)
+            rndcurse();
+        else
+            mrndcurse(mon);
         break;
     }
     return FALSE;
@@ -176,25 +211,37 @@ cursed_book(struct obj *bp)
 
 /* study while confused: returns TRUE if the book is destroyed */
 static boolean
-confused_book(struct obj *spellbook)
+confused_book(struct monst *mon, struct obj *spellbook)
 {
     boolean gone = FALSE;
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
 
     if (!rn2(3) && spellbook->otyp != SPE_BOOK_OF_THE_DEAD) {
         spellbook->in_use = TRUE;       /* in case called from learn */
-        pline("Being confused you have difficulties in controlling your "
-              "actions.");
+        if (you || vis)
+            pline("Being confused, %s %s difficulties in controlling %s "
+                  "actions.", you ? "you" : mon_nam(mon),
+                  you ? "have" : "has",
+                  you ? "your" : mhis(mon));
         win_pause_output(P_MESSAGE);
-        pline("You accidentally tear the spellbook to pieces.");
-        if (!objects[spellbook->otyp].oc_name_known &&
+        if (you || vis)
+            pline("%s accidentally tear%s the spellbook to pieces!",
+                  you ? "You" : Monnam(mon), you ? "" : "s");
+        if ((you || vis) &&
+            !objects[spellbook->otyp].oc_name_known &&
             !objects[spellbook->otyp].oc_uname)
             docall(spellbook);
-        useup(spellbook);
+        if (you)
+            useup(spellbook);
+        else
+            m_useup(mon, spellbook);
         gone = TRUE;
-    } else {
+    } else if (you) {
         pline("You find yourself reading the %s line over and over again.",
               spellbook == u.utracked[tos_book] ? "next" : "first");
-    }
+    } else if (vis)
+        pline("%s seems lost in %s reading.", Monnam(mon), mhis(mon));
     return gone;
 }
 
@@ -378,7 +425,7 @@ learn(void)
         ublindf && ublindf->otyp == LENSES && rn2(2))
         u.uoccupation_progress[tos_book]++;
     if (Confusion) {    /* became confused while learning */
-        confused_book(u.utracked[tos_book]);
+        confused_book(&youmonst, u.utracked[tos_book]);
         u.utracked[tos_book] = 0;       /* no longer studying */
         helpless(-u.uoccupation_progress[tos_book], hr_busy,
                  "absorbed in a spellbook",
@@ -547,7 +594,7 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
         }
 
         if (too_hard) {
-            boolean gone = cursed_book(spellbook);
+            boolean gone = cursed_book(&youmonst, spellbook);
 
             helpless(-u.uoccupation_progress[tos_book], hr_paralyzed,
                      "frozen by a spellbook", NULL);
@@ -563,7 +610,7 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
                 spellbook->in_use = FALSE;
             return 1;
         } else if (confused) {
-            if (!confused_book(spellbook)) {
+            if (!confused_book(&youmonst, spellbook)) {
                 spellbook->in_use = FALSE;
             }
             helpless(-u.uoccupation_progress[tos_book], hr_busy,
