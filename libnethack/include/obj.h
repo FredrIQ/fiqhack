@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -67,10 +67,14 @@ struct obj {
     unsigned blessed:1;
     unsigned unpaid:1;          /* on some bill */
     unsigned no_charge:1;       /* if shk shouldn't charge for this */
+    /* player knows ID */
     unsigned known:1;           /* exact nature known */
     unsigned dknown:1;          /* color or text known */
     unsigned bknown:1;          /* blessing or curse known */
     unsigned rknown:1;          /* rustproof or not known */
+    /* monster knows ID (applies to all monsters) */
+    unsigned mknown:1;          /* enchantment/charge known */
+    unsigned mbknown:1;         /* monster BUC known */
 
     unsigned oeroded:2;         /* rusted/burnt weapon/armor */
     unsigned oeroded2:2;        /* corroded/rotted weapon/armor */

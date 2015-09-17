@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1708,6 +1708,8 @@ restore_obj(struct memfile *mf)
     otmp->was_thrown = (oflags >> 7) & 1;
     otmp->bypass = (oflags >> 6) & 1;
     otmp->was_dropped = (oflags >> 5) & 1;
+    otmp->mknown = (oflags >> 4) & 1;
+    otmp->mbknown = (oflags >> 3) & 1;
 
     if (otmp->onamelth)
         mread(mf, ONAME_MUTABLE(otmp), otmp->onamelth);
@@ -1749,7 +1751,7 @@ save_obj(struct memfile *mf, struct obj *obj)
         (obj->recharged << 13) | (obj->lamplit << 12) |
         (obj->greased << 11) | (obj->oattached << 9) |
         (obj->in_use << 8) | (obj->was_thrown << 7) | (obj->bypass << 6) |
-        (obj->was_dropped << 5);
+        (obj->was_dropped << 5) | (obj->mknown << 4) | (obj->mbknown << 3);
 
     mfmagic_set(mf, OBJ_MAGIC);
     mtag(mf, obj->o_id, MTAG_OBJ);

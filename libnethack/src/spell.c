@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-14 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -49,10 +49,12 @@ static boolean confused_book(struct monst *, struct obj *);
 static int learn(void);
 static boolean getspell(int *);
 static boolean dospellmenu(const char *, int, int *);
-static int percent_success(int);
+static int percent_success(const struct monst *, int);
 static int throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg);
 static void cast_protection(void);
 static void spell_backfire(int);
+
+static int mspell_skilltype(int);
 static const char *spelltypemnemonic(int);
 
 /* The roles[] table lists the role-specific values for tuning
@@ -808,6 +810,31 @@ spell_skilltype(int booktype)
     return objects[booktype].oc_skill;
 }
 
+/* P_* -> MP_* conversion */
+static int
+mspell_skilltype(int booktype)
+{
+    int pskill = spell_skilltype(booktype);
+    switch (pskill) {
+    case P_ATTACK_SPELL:
+        return MP_SATTK;
+    case P_ESCAPE_SPELL:
+        return MP_SESCA;
+    case P_CLERIC_SPELL:
+        return MP_SCLRC;
+    case P_DIVINATION_SPELL:
+        return MP_SDIVN;
+    case P_MATTER_SPELL:
+        return MP_SMATR;
+    case P_ENCHANTMENT_SPELL:
+        return MP_SENCH;
+    case P_HEALING_SPELL:
+        return MP_SHEAL;
+    }
+    impossible("invalid monster proficiency: %d", pskill);
+    return 0;
+}
+
 static void
 cast_protection(void)
 {
@@ -900,6 +927,201 @@ spell_backfire(int spell)
         break;
     }
     return;
+}
+
+
+/* Monster spellcasting. Currently it is not possible to reuse spelleffects()
+   because a lot of things it does relies on your command argument(s).
+   TODO: reuse spelleffects() */
+int
+m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
+{
+    int energy, chance, n;
+    int skill, role_skill;
+    boolean confused = !!confused(mon);
+    boolean vis = canseemon(mon);
+    boolean dummy;
+    coord cc;
+    boolean ray = FALSE;
+    struct obj *pseudo;
+    skill = mspell_skilltype(spellid(spell));
+    role_skill = mprof(mon, skill);;
+
+    if (vis)
+        pline("%s casts a spell!", Monnam(mon));
+
+    /* Monsters use up less Pw (really mspec_used) from spellcasting.
+       The reason behind this is that mspec_used is a cooldown, and this
+       allows them to cast fairly often. Once mspec_used is replaced by
+       a real energy reserve, revert this to * 5 like for players */
+    energy = (spellev(spell) * 3);
+    if (mon_has_amulet(mon)) {
+        /* since monsters either have the mspec to cast or not,
+           make the amulet occasionally make the spell fail. */
+        if (rn2(5)) {
+                if (vis)
+                    pline("The amulet drains %s energy away...",
+                          s_suffix(mon_nam(mon)));
+                energy += 2 * rnd(energy);
+        } else {
+            if (vis)
+                pline("But the amulet drained %s spell...",
+                      s_suffix(mon_nam(mon)));
+            return 0;
+        }
+    }
+
+    /* can't cast -- energy is used up! */
+    if (mon->mspec_used) {
+        if (vis)
+            pline("But %s lacks the energy to cast the spell.",
+                  mon_nam(mon));
+        return 0;
+    }
+
+    chance = percent_success(mon, spell);
+    if (confused || (rnd(100) > chance)) {
+        pline("But %s fails to cast the spell correctly.",
+              mon_nam(mon));
+        mon->mspec_used += energy / 2;
+        return 1;
+    }
+
+    mon->mspec_used += energy;
+    /* pseudo is a temporary "false" object containing the spell stats */
+    pseudo = mktemp_sobj(level, spellid(spell));
+    pseudo->blessed = pseudo->cursed = 0;
+    pseudo->quan = 20L; /* do not let useup get it */
+
+    switch (pseudo->otyp) {
+    case SPE_CONE_OF_COLD:
+    case SPE_FIREBALL:
+        if (role_skill >= P_SKILLED) {
+            cc.x = dx;
+            cc.y = dy;
+            n = rnd(8) + 1;
+            while (n--) {
+                explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
+                        u.ulevel / 2 + 1 + spell_damage_bonus(), 0,
+                        (pseudo->otyp ==
+                         SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
+                        NULL, 0);
+                dx = cc.x + rnd(3) - 2;
+                dy = cc.y + rnd(3) - 2;
+                if (!isok(dx, dy) || !cansee(dx, dy) ||
+                    IS_STWALL(level->locations[dx][dy].typ)) {
+                    /* Spell is reflected back to center */
+                    dx = cc.x;
+                    dy = cc.y;
+                }
+            }
+            break;
+        }
+
+        /* else fall through... */
+        /* these spells are all duplicates of wand effects */
+        ray = TRUE;
+    case SPE_MAGIC_MISSILE:
+    case SPE_SLEEP:
+    case SPE_FINGER_OF_DEATH:
+    case SPE_FORCE_BOLT:
+    case SPE_KNOCK:
+    case SPE_SLOW_MONSTER:
+    case SPE_WIZARD_LOCK:
+    case SPE_DIG:
+    case SPE_TURN_UNDEAD:
+    case SPE_POLYMORPH:
+    case SPE_TELEPORT_AWAY:
+    case SPE_CANCELLATION:
+    case SPE_LIGHT:
+    case SPE_DETECT_UNSEEN:
+    case SPE_HEALING:
+    case SPE_EXTRA_HEALING:
+    case SPE_DRAIN_LIFE:
+    case SPE_STONE_TO_FLESH:
+        if (objects[pseudo->otyp].oc_dir != NODIR) {
+            if (!dx && !dy && !dz)
+                bhitm(mon, mon, pseudo);
+            else if (ray)
+                buzz(-10 - (pseudo->otyp - SPE_MAGIC_MISSILE),
+                     mon->m_lev / 2 + 1, mon->mx, mon->my,
+                     dx, dy, 0);
+            else if (pseudo->otyp == SPE_DIG)
+                zap_dig(mon, pseudo, dx, dy, dz);
+            else
+                mbhit(mon, rn1(8, 6), pseudo);
+        } else {
+            impossible("Monster tried to use non-directional wand-based spell?");
+            break;
+        }
+        break;
+
+        /* these are all duplicates of scroll effects */
+    case SPE_REMOVE_CURSE:
+    case SPE_CONFUSE_MONSTER:
+    case SPE_DETECT_FOOD:
+    case SPE_CAUSE_FEAR:
+        /* high skill yields effect equivalent to blessed scroll */
+        if (role_skill >= P_SKILLED)
+            pseudo->blessed = 1;
+        /* fall through */
+    case SPE_CHARM_MONSTER:
+    case SPE_MAGIC_MAPPING:
+    case SPE_CREATE_MONSTER:
+    case SPE_IDENTIFY:
+        seffects(mon, pseudo, &dummy);
+        break;
+
+        /* these are all duplicates of potion effects */
+    case SPE_HASTE_SELF:
+    case SPE_DETECT_TREASURE:
+    case SPE_DETECT_MONSTERS:
+    case SPE_LEVITATION:
+    case SPE_RESTORE_ABILITY:
+        /* high skill yields effect equivalent to blessed potion */
+        if (role_skill >= P_SKILLED)
+            pseudo->blessed = 1;
+        /* fall through */
+    case SPE_INVISIBILITY:
+        peffects(pseudo);
+        break;
+
+    case SPE_CURE_BLINDNESS:
+        healup(0, 0, FALSE, TRUE);
+        break;
+    case SPE_CURE_SICKNESS:
+        if (Sick)
+            pline("You are no longer ill.");
+        if (Slimed) {
+            pline("The slime disappears!");
+            Slimed = 0;
+        }
+        healup(0, 0, TRUE, FALSE);
+        break;
+    case SPE_CREATE_FAMILIAR:
+        make_familiar(NULL, u.ux, u.uy, FALSE);
+        break;
+    case SPE_CLAIRVOYANCE:
+        if (!BClairvoyant)
+            do_vicinity_map();
+        /* at present, only one thing blocks clairvoyance */
+        else if (uarmh && uarmh->otyp == CORNUTHAUM)
+            pline("You sense a pointy hat on top of your %s.", body_part(HEAD));
+        break;
+    case SPE_PROTECTION:
+        cast_protection();
+        break;
+    case SPE_JUMPING:
+        jump_to_coords(&cc);
+        break;
+    default:
+        impossible("Unknown or nonimplemented monster spell %d attempted.", spell);
+        obfree(pseudo, NULL);
+        return 0;
+    }
+
+    obfree(pseudo, NULL);       /* now, get rid of it */
+    return 1;
 }
 
 int
@@ -1077,7 +1299,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         }
     }
 
-    chance = percent_success(spell);
+    chance = percent_success(&youmonst, spell);
     if (confused || (rnd(100) > chance)) {
         pline("You fail to cast the spell correctly.");
         u.uen -= energy / 2;
@@ -1175,7 +1397,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     case SPE_MAGIC_MAPPING:
     case SPE_CREATE_MONSTER:
     case SPE_IDENTIFY:
-        seffects(pseudo, &dummy);
+        seffects(&youmonst, pseudo, &dummy);
         break;
 
         /* these are all duplicates of potion effects */
@@ -1329,7 +1551,7 @@ dospellmenu(const char *prompt,
             msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
                       spellknow(i) ? " " : "*",
                       spelltypemnemonic(spell_skilltype(spellid(i))),
-                      100 - percent_success(i),
+                      100 - percent_success(&youmonst, i),
                       (spellknow(i) * 100 + (KEEN - 1)) / KEEN) :
             msgprintf("%s\t--\t%s\t?\t--", spellname(i),
                       (spellid(i) == SPID_PRAY || spellid(i) == SPID_TURN) ?
@@ -1377,39 +1599,71 @@ dump_spells(void)
 
 /* Note: only gives sensible results if SPELL_IS_FROM_SPELLBOOK(spell)
    Potentially we could expand this to prayer and the like, but that'd need a
-   rewrite of the prayer success code (and mathematical analysis of rnz) */
+   rewrite of the prayer success code (and mathematical analysis of rnz)
+   TODO: this formula is stupid, look into a potential rework of it
+   TODO: this completely break As spawning with shields of reflection, making
+   them unable to cast sanely due to an unwieldy shield, figure out a fix... */
 static int
-percent_success(int spell)
+percent_success(const struct monst *mon, int spell)
 {
     /* Intrinsic and learned ability are combined to calculate the probability
        of player's success at cast a given spell. */
     int chance, splcaster, special, statused;
     int difficulty;
     int skill;
+    boolean you = (mon == &youmonst);
 
     /* Calculate intrinsic ability (splcaster) */
 
-    splcaster = urole.spelbase;
-    special = urole.spelheal;
-    statused = ACURR(urole.spelstat);
+    if (you) {
+        splcaster = urole.spelbase;
+        special = urole.spelheal;
+        statused = ACURR(urole.spelstat);
+    } else if (!mon->iswiz) {
+        splcaster = attacktype(mon->data, AT_MAGC) ? 3 : 8;
+        special = mon->data == &mons[PM_NURSE] ? -3 : -1;
+        statused = attacktype(mon->data, AT_MAGC) ? 18 : 11;
+    } else {
+        /* Wizard of Yendor has superior spellcasting skills */
+        splcaster = 1;
+        special = -3;
+        statused = 20;
+    }
+    struct obj *arm = which_armor(mon, os_arm);
+    struct obj *armc = which_armor(mon, os_armc);
+    struct obj *arms = which_armor(mon, os_arms);
+    struct obj *armh = which_armor(mon, os_armh);
+    struct obj *armg = which_armor(mon, os_armg);
+    struct obj *armf = which_armor(mon, os_armf);
+    int spelarmr = you ? urole.spelarmr : 10;
+    int spelshld = you ? urole.spelshld : 1;
 
-    if (uarm && is_metallic(uarm))
-        splcaster += (uarmc &&
-                      uarmc->otyp ==
-                      ROBE) ? urole.spelarmr / 2 : urole.spelarmr;
-    else if (uarmc && uarmc->otyp == ROBE)
-        splcaster -= urole.spelarmr;
-    if (uarms)
-        splcaster += urole.spelshld;
+    if (arm && is_metallic(arm))
+        splcaster += (armc &&
+                      armc->otyp ==
+                      ROBE) ? spelarmr / 2 : spelarmr;
+    else if (armc && armc->otyp == ROBE)
+        splcaster -= spelarmr;
+    if (arms)
+        splcaster += spelshld;
 
-    if (uarmh && is_metallic(uarmh) && uarmh->otyp != HELM_OF_BRILLIANCE)
-        splcaster += uarmhbon;
-    if (uarmg && is_metallic(uarmg))
+    if (armh && is_metallic(armh)) {
+        if (armh->otyp != HELM_OF_BRILLIANCE)
+            splcaster += uarmhbon;
+        else if (!you) { /* HoB boost was not factored in above if !you */
+            statused += armh->spe;
+            if (statused > 25)
+                statused = 25;
+            else if (statused < 3)
+                statused = 3;
+        }
+    }
+    if (armg && is_metallic(armg))
         splcaster += uarmgbon;
-    if (uarmf && is_metallic(uarmf))
+    if (armf && is_metallic(armf))
         splcaster += uarmfbon;
 
-    if (spellid(spell) == urole.spelspec)
+    if (you && spellid(spell) == urole.spelspec)
         splcaster += urole.spelsbon;
 
 
@@ -1435,9 +1689,12 @@ percent_success(int spell)
      * The difficulty is based on the hero's level and their skill level
      * in that spell type.
      */
-    skill = P_SKILL(spell_skilltype(spellid(spell)));
+    if (you)
+        skill = P_SKILL(spell_skilltype(spellid(spell)));
+    else
+        skill = mprof(mon, mspell_skilltype(spellid(spell)));
     skill = max(skill, P_UNSKILLED) - 1;        /* unskilled => 0 */
-    difficulty = (spellev(spell) - 1) * 4 - ((skill * 6) + (u.ulevel / 3) + 1);
+    difficulty = (spellev(spell) - 1) * 4 - ((skill * 6) + (m_mlev(mon) / 3) + 1);
 
     if (difficulty > 0) {
         /* Player is too low level or unskilled. */
@@ -1462,8 +1719,8 @@ percent_success(int spell)
     /* Wearing anything but a light shield makes it very awkward to cast a
        spell.  The penalty is not quite so bad for the player's role-specific
        spell. */
-    if (uarms && weight(uarms) > (int)objects[SMALL_SHIELD].oc_weight) {
-        if (spellid(spell) == urole.spelspec) {
+    if (arms && weight(arms) > (int)objects[SMALL_SHIELD].oc_weight) {
+        if (you && spellid(spell) == urole.spelspec) {
             chance /= 2;
         } else {
             chance /= 4;

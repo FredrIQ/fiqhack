@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-14 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1279,7 +1279,7 @@ arti_invoke(struct obj *obj)
                 struct obj *pseudo = mktemp_sobj(NULL, SCR_TAMING);
                 boolean unused_known;
 
-                seffects(pseudo, &unused_known);
+                seffects(&youmonst, pseudo, &unused_known);
                 obfree(pseudo, NULL);
                 break;
             }
@@ -1339,7 +1339,7 @@ arti_invoke(struct obj *obj)
                 }
                 b_effect = obj->blessed && (Role_switch == oart->role ||
                                             !oart->role);
-                recharge(otmp, b_effect ? 1 : obj->cursed ? -1 : 0);
+                recharge(&youmonst, otmp, b_effect ? 1 : obj->cursed ? -1 : 0);
                 update_inventory();
                 break;
             }

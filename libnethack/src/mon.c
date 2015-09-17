@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,6 +12,7 @@ static boolean restrap(struct monst *);
 static int pick_animal(void);
 static int select_newcham_form(struct monst *);
 static void kill_eggs(struct obj *);
+static int do_grudge(const struct permonst *, const struct permonst *);
 
 #define LEVEL_SPECIFIC_NOCORPSE(mdat) \
          (Is_rogue_level(&u.uz) || \
@@ -1350,6 +1351,42 @@ pet_attacks_up_to_difficulty(const struct monst *mtmp)
     return ((mtmp->m_lev + 3) * mtmp->mhp) / mtmp->mhpmax;
 }
 
+/* Grudging monsters -- monsters who despise each other */
+boolean
+grudge(const struct permonst *ma, const struct permonst *md)
+{
+    return (do_grudge(ma, md) || (do_grudge(md, ma) == 1));
+}
+
+/* Returns 1 if both monsters grudge each other,
+   2 if aggressor -> defender only */
+static int
+do_grudge(const struct permonst *pm1, const struct permonst *pm2)
+{
+    /* Symmetrical */
+    /* elves vs orcs */
+    if (is_elf(pm1) && is_orc(pm2))
+        return 1;
+    /* angels vs. demons */
+    if (pm1->mlet == S_ANGEL && is_demon(pm2))
+        return 1;
+    /* dogs vs cats */
+    if (is_domestic(pm1) && is_domestic(pm2) &&
+        pm1->mlet == S_DOG && pm2->mlet == S_FELINE)
+        return 1;
+
+    /* Asymmetrical */
+    /* purple worms eat shriekers */
+    if (pm1 == &mons[PM_PURPLE_WORM] && pm2 == &mons[PM_SHRIEKER])
+        return 2;
+    /* woodchucks vs. The Oracle */
+    if (pm1 == &mons[PM_WOODCHUCK] && pm2 == &mons[PM_ORACLE])
+        return 2;
+    /* ravens like eyes */
+    if (pm1 == &mons[PM_RAVEN] && pm2 == &mons[PM_FLOATING_EYE])
+        return 2;
+    return 0;
+}
 
 /* Monster against monster special attacks; for the specified monster
    combinations, this allows one monster to attack another adjacent one in the
@@ -1422,19 +1459,6 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     }
     /* end anti-stupidity checks */
 
-    /* supposedly purple worms are attracted to shrieking because they like to
-       eat shriekers, so attack the latter when feasible */
-    if (ma == &mons[PM_PURPLE_WORM] && md == &mons[PM_SHRIEKER])
-        return ALLOW_M | ALLOW_TM;
-
-    /* pets attack hostile monsters */
-    if (magr->mtame && !mdef->mpeaceful)
-        return ALLOW_M | ALLOW_TM;
-
-    /* and vice versa */
-    if (mdef->mtame && !magr->mpeaceful)
-        return ALLOW_M | ALLOW_TM;
-
     /* Since the quest guardians are under siege, it makes sense to have them
        fight hostiles.  (But don't put the quest leader in danger.) */
     if (ma->msound == MS_GUARDIAN && mdef->mpeaceful == FALSE)
@@ -1443,35 +1467,8 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     if (md->msound == MS_GUARDIAN && magr->mpeaceful == FALSE)
         return ALLOW_M | ALLOW_TM;
 
-    /* elves vs. orcs */
-    if (is_elf(ma) && is_orc(md))
-        return ALLOW_M | ALLOW_TM;
-    /* ... and vice versa */
-    if (is_elf(md) && is_orc(ma))
-        return ALLOW_M | ALLOW_TM;
-
-    /* angels vs. demons */
-    if (ma->mlet == S_ANGEL && is_demon(md))
-        return ALLOW_M | ALLOW_TM;
-    /* ... and vice versa */
-    if (md->mlet == S_ANGEL && is_demon(ma))
-        return ALLOW_M | ALLOW_TM;
-
-    /* domestic dogs vs. domestic cats, unless both are tame */
-    if (!(magr->mtame && mdef->mtame) && is_domestic(ma) && is_domestic(md)) {
-        if (ma->mlet == S_DOG && md->mlet == S_FELINE)
-            return ALLOW_M | ALLOW_TM;
-        /* ... and vice versa, for dog/cat symmetry reasons */
-        if (md->mlet == S_DOG && ma->mlet == S_FELINE)
-            return ALLOW_M | ALLOW_TM;
-    }
-
-    /* woodchucks vs. The Oracle */
-    if (ma == &mons[PM_WOODCHUCK] && md == &mons[PM_ORACLE])
-        return ALLOW_M | ALLOW_TM;
-
-    /* ravens like eyes */
-    if (ma == &mons[PM_RAVEN] && md == &mons[PM_FLOATING_EYE])
+    /* Grudges */
+    if (grudge(ma, md))
         return ALLOW_M | ALLOW_TM;
 
     return 0L;

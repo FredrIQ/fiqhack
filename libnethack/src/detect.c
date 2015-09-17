@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -149,16 +149,21 @@ clear_stale_map(char oclass, unsigned material)
 
 /* look for gold, on the floor or in monsters' possession */
 int
-gold_detect(struct obj *sobj, boolean * scr_known)
+gold_detect(struct monst *mon, struct obj *sobj, boolean * scr_known)
 {
     struct obj *obj;
     struct monst *mtmp;
     int uw = u.uinwater;
     struct obj *temp;
     boolean stale;
+    boolean you = (mon == &youmonst);
 
     *scr_known = stale = clear_stale_map(COIN_CLASS, sobj->blessed ? GOLD : 0);
 
+    if (!you) {
+        impossible("monster using gold detection?");
+        return 0;
+    }
     /* look for gold carried by monsters (might be in a container) */
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
@@ -664,7 +669,7 @@ sense_trap(struct trap *trap, xchar x, xchar y, int src_cursed)
 /* returns 1 if nothing was detected            */
 /* returns 0 if something was detected          */
 int
-trap_detect(struct obj *sobj)
+trap_detect(struct monst *mon, struct obj *sobj)
 /* sobj is null if crystal ball, *scroll if gold detection scroll */
 {
     struct trap *ttmp;
@@ -673,16 +678,24 @@ trap_detect(struct obj *sobj)
     int uw = u.uinwater;
     boolean found = FALSE;
     coord cc;
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    /* Whether or not to reveal traps (or fake gold) -- happens for you, or
+       if a monster you can see is tame. The reason tame monsters share the
+       information (unlike hostiles to each other) is because tame monsters'
+       trap memory is in fact equavilent to yours. */
+    boolean reveal = (you || (vis && mon->mtame && (!sobj || !sobj->cursed)));
+    boolean mreveal = (!you && (!sobj || !sobj->cursed));
 
     for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap) {
-        if (ttmp->tx != u.ux || ttmp->ty != u.uy)
+        if (ttmp->tx != m_mx(mon) || ttmp->ty != m_my(mon))
             goto outtrapmap;
         else
             found = TRUE;
     }
     for (obj = level->objlist; obj; obj = obj->nobj) {
         if ((obj->otyp == LARGE_BOX || obj->otyp == CHEST) && obj->otrapped) {
-            if (obj->ox != u.ux || obj->oy != u.uy)
+            if (obj->ox != m_mx(mon) || obj->oy != m_my(mon))
                 goto outtrapmap;
             else
                 found = TRUE;
@@ -691,7 +704,7 @@ trap_detect(struct obj *sobj)
     for (door = 0; door < level->doorindex; door++) {
         cc = level->doors[door];
         if (level->locations[cc.x][cc.y].doormask & D_TRAPPED) {
-            if (cc.x != u.ux || cc.y != u.uy)
+            if (cc.x != m_mx(mon) || cc.y != m_my(mon))
                 goto outtrapmap;
             else
                 found = TRUE;
@@ -701,22 +714,36 @@ trap_detect(struct obj *sobj)
         char buf[42];
 
         snprintf(buf, SIZE(buf), "Your %s stop itching.", makeplural(body_part(TOE)));
-        strange_feeling(sobj, buf);
+        if (you)
+            strange_feeling(sobj, buf);
+        else if (vis)
+            pline("%s was unable to gain any insights.", Monnam(mon));
         return 1;
     }
     /* traps exist, but only under me - no separate display required */
-    pline("Your %s itch.", makeplural(body_part(TOE)));
+    if (you)
+        pline("Your %s itch.", makeplural(body_part(TOE)));
+    else if (vis)
+        pline("%s looks momentarily itchy for some reason.", Monnam(mon));
     return 0;
 outtrapmap:
-    cls();
+    if (reveal)
+        cls();
 
-    u.uinwater = 0;
-    for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap)
-        sense_trap(ttmp, 0, 0, sobj && sobj->cursed);
+    /* FIXME: why the water reset? */
+    if (reveal)
+        u.uinwater = 0;
+    for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap) {
+        if (reveal)
+            sense_trap(ttmp, 0, 0, sobj && sobj->cursed);
+        if (mreveal)
+            mon->mtrapseen |= (1 << (ttmp->ttyp - 1));
+    }
 
     for (obj = level->objlist; obj; obj = obj->nobj)
         if ((obj->otyp == LARGE_BOX || obj->otyp == CHEST) && obj->otrapped)
-            sense_trap(NULL, obj->ox, obj->oy, sobj && sobj->cursed);
+            if (reveal)
+                sense_trap(NULL, obj->ox, obj->oy, sobj && sobj->cursed);
 
     for (door = 0; door < level->doorindex; door++) {
         cc = level->doors[door];
@@ -724,21 +751,29 @@ outtrapmap:
            memory */
         if (!sobj || !sobj->cursed) {
             if (level->locations[cc.x][cc.y].doormask & D_TRAPPED) {
-                level->locations[cc.x][cc.y].mem_door_t = 1;
-                map_background(cc.x, cc.y, TRUE);
+                if (reveal) {
+                    level->locations[cc.x][cc.y].mem_door_t = 1;
+                    map_background(cc.x, cc.y, TRUE);
+                }
             }
         }
     }
 
-    newsym(u.ux, u.uy);
-    pline("You feel %s.", sobj && sobj->cursed ? "very greedy" : "entrapped");
-    win_pause_output(P_MAP);
-    doredraw();
-    u.uinwater = uw;
-    if (Underwater)
-        under_water(2);
-    if (u.uburied)
-        under_ground(2);
+    if (reveal) {
+        newsym(u.ux, u.uy);
+        if (you)
+            pline("You feel %s.", sobj && sobj->cursed ? "very greedy" : "entrapped");
+        else
+            pline("%s is granted an insight, and shares it with you!", Monnam(mon));
+        win_pause_output(P_MAP);
+        doredraw();
+        u.uinwater = uw;
+        if (Underwater)
+            under_water(2);
+        if (u.uburied)
+            under_ground(2);
+    } else if (mreveal)
+        pline("%s is granted an insight!", Monnam(mon));
     return 0;
 }
 
@@ -921,7 +956,7 @@ use_crystal_ball(struct obj *obj)
         else
             switch (ch) {
             case '^':
-                ret = trap_detect(NULL);
+                ret = trap_detect(&youmonst, NULL);
                 break;
             default:
                 {

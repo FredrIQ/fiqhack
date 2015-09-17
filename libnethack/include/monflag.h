@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -78,13 +78,48 @@
 
 /* proficiencies */
 # define MP_WANDS        0x00000001L
+# define MP_SATTK        0x00000004L
+# define MP_SHEAL        0x00000010L
+# define MP_SDIVN        0x00000040L
+# define MP_SENCH        0x00000100L
+# define MP_SCLRC        0x00000400L
+# define MP_SESCA        0x00001000L
+# define MP_SMATR        0x00004000L
 
 /* seperate levels */
 # define MP_WAND_BASIC   0x00000001L
 # define MP_WAND_SKILLED 0x00000002L
 # define MP_WAND_EXPERT  0x00000003L
 
+# define MP_SATK_BASIC   0x00000004L
+# define MP_SATK_SKILLED 0x00000008L
+# define MP_SATK_EXPERT  0x0000000cL
 
+# define MP_SHEA_BASIC   0x00000010L
+# define MP_SHEA_SKILLED 0x00000020L
+# define MP_SHEA_EXPERT  0x00000030L
+
+# define MP_SDIV_BASIC   0x00000040L
+# define MP_SDIV_SKILLED 0x00000080L
+# define MP_SDIV_EXPERT  0x000000c0L
+
+# define MP_SENC_BASIC   0x00000100L
+# define MP_SENC_SKILLED 0x00000200L
+# define MP_SENC_EXPERT  0x00000300L
+
+# define MP_SCLC_BASIC   0x00000400L
+# define MP_SCLC_SKILLED 0x00000800L
+# define MP_SCLC_EXPERT  0x00000c00L
+
+# define MP_SESC_BASIC   0x00001000L
+# define MP_SESC_SKILLED 0x00002000L
+# define MP_SESC_EXPERT  0x00003000L
+
+# define MP_SMAT_BASIC   0x00004000L
+# define MP_SMAT_SKILLED 0x00008000L
+# define MP_SMAT_EXPERT  0x0000c000L
+
+/* mflags */
 # define M1_FLY          0x00000001L    /* can fly or float */
 # define M1_SWIM         0x00000002L    /* can traverse water */
 # define M1_AMORPHOUS    0x00000004L    /* can flow under doors */

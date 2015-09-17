@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1997,57 +1997,69 @@ doequip(const struct nh_cmd_arg *arg)
 
 /* hit by destroy armor scroll/black dragon breath/monster spell */
 int
-destroy_arm(struct obj *atmp)
+destroy_arm(struct monst *mon, struct obj *obj)
 {
-    struct obj *otmp;
+    /* Sanity checks: atmp exist and is worn */
+    if (!obj)
+        return 0;
+    if (!obj->owornmask)
+        return 0;
 
-#define DESTROY_ARM(o) ((otmp = (o)) != 0 && otmp != uskin() &&    \
-                        (!atmp || atmp == otmp) &&                 \
-                        (!obj_resists(otmp, 0, 90)))
+    boolean you = mon == &youmonst;
+    boolean vis = canseemon(mon);
+    enum objslot slot = which_slot(obj);
+    const char *your = you ? "Your" : s_suffix(Monnam(mon));
 
-    /* For anyone confused by the following code: DESTROY_ARM sets otmp as a
-       side effect. Yes, it's confusing. */
-    if (DESTROY_ARM(uarmc)) {
-        pline("Your %s crumbles and turns to dust!", cloak_simple_name(uarmc));
-        setunequip(otmp);
-        useup(otmp);
-    } else if (DESTROY_ARM(uarm)) {
-        pline("Your armor turns to dust and falls to the %s!",
-              surface(u.ux, u.uy));
-        setunequip(otmp);
-        useup(otmp);
-    } else if (DESTROY_ARM(uarmu)) {
-        pline("Your shirt crumbles into tiny threads and falls apart!");
-        setunequip(otmp);
-        useup(otmp);
-    } else if (DESTROY_ARM(uarmh)) {
-        pline("Your helmet turns to dust and is blown away!");
-        setunequip(otmp);
-        useup(otmp);
-    } else if (DESTROY_ARM(uarmg)) {
+    if (you || vis) {
+        switch (slot) {
+        case os_armc:
+            pline("%s %s crumbles and turns to dust!", your, cloak_simple_name(obj));
+            break;
+        case os_arm:
+            pline("%s armor turns to dust and falls to the %s!", your,
+                  surface(m_mx(mon), m_my(mon)));
+            break;
+        case os_armu:
+            pline("%s shirt crumbles into tiny threads and falls apart!", your);
+            break;
+        case os_armh:
+            pline("%s helmet turns to dust and is blown away!", your);
+            break;
+        case os_armg:
+            pline("%s gloves vanish!", your);
+            break;
+        case os_armf:
+            pline("%s boots disintegrate!", your);
+            break;
+        case os_arms:
+            pline("%s shield crumbles away!", your);
+            break;
+        default:
+            return 0;
+        }
+    }
+    if (you) {
         const char *kbuf;
 
         kbuf = msgprintf("losing %s gloves while wielding", uhis());
-        pline("Your gloves vanish!");
-        setunequip(otmp);
-        useup(otmp);
-        selftouch("You", kbuf);
-    } else if (DESTROY_ARM(uarmf)) {
-        pline("Your boots disintegrate!");
-        setunequip(otmp);
-        useup(otmp);
-    } else if (DESTROY_ARM(uarms)) {
-        pline("Your shield crumbles away!");
-        setunequip(otmp);
-        useup(otmp);
+        setunequip(obj);
+        useup(obj);
+        if (slot == os_armg)
+            selftouch("You", kbuf);
+        action_interrupted();
     } else {
-        return 0;       /* could not destroy anything */
+        mon->misc_worn_check &= ~obj->owornmask;
+        m_useup(mon, obj);
+        struct obj *weapon;
+        weapon = m_mwep(mon);
+        if (weapon && weapon->otyp == CORPSE &&
+            touch_petrifies(&mons[weapon->corpsenm]))
+            mselftouch(mon, "Losing gloves, ",
+                       !flags.mon_moving);
     }
-
-#undef DESTROY_ARM
-    action_interrupted();
     return 1;
 }
+
 
 void
 adj_abon(struct obj *otmp, schar delta)

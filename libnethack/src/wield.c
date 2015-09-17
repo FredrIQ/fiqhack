@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -532,97 +532,121 @@ untwoweapon(void)
 
 
 int
-chwepon(struct obj *otmp, int amount)
+chwepon(struct monst *mon, struct obj *otmp, int amount)
 {
     const char *color = hcolor((amount < 0) ? "black" : "blue");
     const char *xtime;
     int otyp = STRANGE_OBJECT;
+    boolean you = mon == &youmonst;
+    boolean vis = canseemon(mon);
+    const char *your = you ? "Your" : s_suffix(Monnam(mon));
+    struct obj *twep = (m_mwep(mon));
 
-    if (!uwep || (uwep->oclass != WEAPON_CLASS && !is_weptool(uwep))) {
+    if (!twep || (twep->oclass != WEAPON_CLASS && !is_weptool(twep))) {
         const char *buf = msgprintf(
-            "Your %s %s.", makeplural(body_part(HAND)),
+            "%s %s %s.", your, makeplural(mbodypart(mon, HAND)),
             (amount >= 0) ? "twitch" : "itch");
-        strange_feeling(otmp, buf);
-        exercise(A_DEX, (boolean) (amount >= 0));
+        if (you) {
+            strange_feeling(otmp, buf);
+            exercise(A_DEX, (boolean) (amount >= 0));
+        } else
+            pline(buf);
         return 0;
     }
 
     if (otmp && otmp->oclass == SCROLL_CLASS)
         otyp = otmp->otyp;
 
-    if (uwep->otyp == WORM_TOOTH && amount >= 0) {
-        uwep->otyp = CRYSKNIFE;
-        uwep->oerodeproof = 0;
-        pline("Your weapon seems sharper now.");
-        uwep->cursed = 0;
-        if (otyp != STRANGE_OBJECT)
+    if (twep->otyp == WORM_TOOTH && amount >= 0) {
+        twep->otyp = CRYSKNIFE;
+        twep->oerodeproof = 0;
+        if (you || vis)
+            pline("%s weapon seems sharper now.", your);
+        twep->cursed = 0;
+        if ((you || vis) && otyp != STRANGE_OBJECT)
             makeknown(otyp);
         goto weapon_unpaid_fixup;
     }
 
-    if (uwep->otyp == CRYSKNIFE && amount < 0) {
-        if (uwep->unpaid)
-            costly_damage_obj(uwep);
-        uwep->otyp = WORM_TOOTH;
-        uwep->oerodeproof = 0;
-        pline("Your weapon seems duller now.");
-        if (otyp != STRANGE_OBJECT && otmp->bknown)
+    if (twep->otyp == CRYSKNIFE && amount < 0) {
+        if (you && twep->unpaid)
+            costly_damage_obj(twep);
+        twep->otyp = WORM_TOOTH;
+        twep->oerodeproof = 0;
+        pline("%s weapon seems duller now.", your);
+        if ((you || vis) && otyp != STRANGE_OBJECT && otmp->bknown)
             makeknown(otyp);
         return 1;
     }
 
-    if (amount < 0 && uwep->oartifact && restrict_name(uwep, ONAME(uwep))) {
-        if (!Blind)
-            pline("Your %s %s.", aobjnam(uwep, "faintly glow"), color);
+    if (amount < 0 && twep->oartifact && restrict_name(twep, ONAME(twep))) {
+        if (!Blind && (you || vis))
+            pline("%s %s %s.", your, aobjnam(uwep, "faintly glow"), color);
         return 1;
     }
-    if (amount < 0 && uwep->unpaid)
+    if (you && amount < 0 && twep->unpaid)
         costly_damage_obj(uwep);
-    /* there is a (soft) upper and lower limit to uwep->spe */
-    if (((uwep->spe > 5 && amount >= 0) || (uwep->spe < -5 && amount < 0))
+    /* there is a (soft) upper and lower limit to twep->spe */
+    if (((twep->spe > 5 && amount >= 0) || (twep->spe < -5 && amount < 0))
         && rn2(3)) {
-        if (!Blind)
-            pline("Your %s %s for a while and then %s.",
+        if (!Blind && (you || vis))
+            pline("%s %s %s for a while and then %s.", your,
                   aobjnam(uwep, "violently glow"), color,
                   otense(uwep, "evaporate"));
-        else
+        else if (you)
             pline("Your %s.", aobjnam(uwep, "evaporate"));
 
-        useupall(uwep); /* let all of them disappear */
+        if (you)
+            useupall(twep); /* let all of them disappear */
+        else {
+            obj_extract_self(twep);
+            possibly_unwield(mon, FALSE);
+            if (twep->owornmask) {
+                mon->misc_worn_check &= ~twep->owornmask;
+                if (twep->otyp == SADDLE && mon == u.usteed)
+                    dismount_steed(DISMOUNT_FELL);
+                update_property(mon, objects[twep->otyp].oc_oprop, which_slot(twep));
+            }
+            obfree(twep, NULL);
+        }
         return 1;
     }
-    if (!Blind) {
+    if (!Blind && (you || vis)) {
         xtime = (amount * amount == 1) ? "moment" : "while";
-        pline("Your %s %s for a %s.",
-              aobjnam(uwep, amount == 0 ? "violently glow" : "glow"), color,
+        pline("%s %s %s for a %s.", your,
+              aobjnam(twep, amount == 0 ? "violently glow" : "glow"), color,
               xtime);
-        if (otyp != STRANGE_OBJECT && uwep->known &&
+        if (you && otyp != STRANGE_OBJECT && uwep->known &&
             (amount > 0 || (amount < 0 && otmp->bknown)))
             makeknown(otyp);
     }
-    uwep->spe += amount;
+    twep->spe += amount;
     if (amount > 0)
-        uwep->cursed = 0;
+        twep->cursed = 0;
 
     /* 
      * Enchantment, which normally improves a weapon, has an
      * addition adverse reaction on Magicbane whose effects are
      * spe dependent.  Give an obscure clue here.
      */
-    if (uwep->oartifact == ART_MAGICBANE && uwep->spe >= 0) {
-        pline("Your right %s %sches!", body_part(HAND),
-              (((amount > 1) && (uwep->spe > 1)) ? "flin" : "it"));
+    if (twep->oartifact == ART_MAGICBANE && twep->spe >= 0) {
+        if (you)
+            pline("Your right %s %sches!", body_part(HAND),
+                  (((amount > 1) && (twep->spe > 1)) ? "flin" : "it"));
+        else if (vis)
+            pline("%s weapon momentarily vibrates violently!",
+                  s_suffix(Monnam(mon)));
     }
 
     /* an elven magic clue, cookie@keebler */
     /* elven weapons vibrate warningly when enchanted beyond a limit */
-    if ((uwep->spe > 5)
-        && (is_elven_weapon(uwep) || uwep->oartifact || !rn2(7)))
-        pline("Your %s unexpectedly.", aobjnam(uwep, "suddenly vibrate"));
+    if ((twep->spe > 5)
+        && (is_elven_weapon(twep) || twep->oartifact || !rn2(7)))
+        pline("%s %s unexpectedly.", your, aobjnam(twep, "suddenly vibrate"));
 
 weapon_unpaid_fixup:
-    if (uwep->unpaid && (amount >= 0)) {
-        adjust_bill_val(uwep);
+    if (you && twep->unpaid && (amount >= 0)) {
+        adjust_bill_val(twep);
     }
 
     return 1;

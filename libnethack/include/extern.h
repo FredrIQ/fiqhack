@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -231,11 +231,11 @@ extern void init_data(boolean);
 
 /* ### detect.c ### */
 
-extern int gold_detect(struct obj *sobj, boolean * scr_known);
+extern int gold_detect(struct monst *, struct obj *, boolean * scr_known);
 extern int food_detect(struct obj *sobj, boolean * scr_known);
 extern int object_detect(struct obj *, int);
 extern int monster_detect(struct obj *, int);
-extern int trap_detect(struct obj *);
+extern int trap_detect(struct monst *, struct obj *);
 extern void use_crystal_ball(struct obj *);
 extern void do_mapping(void);
 extern void do_vicinity_map(void);
@@ -389,7 +389,7 @@ extern void glibr(void);
 extern struct obj *some_armor(struct monst *);
 extern struct obj *stuck_ring(struct obj *, int);
 extern struct obj *unchanger(void);
-extern int destroy_arm(struct obj *);
+extern int destroy_arm(struct monst *, struct obj *);
 extern void adj_abon(struct obj *, schar);
 
 /* ### dog.c ### */
@@ -703,7 +703,7 @@ extern struct obj *getobj(const char *let, const char *word, boolean isarg);
 extern boolean validate_object(struct obj *obj, const char *lets,
                                const char *word);
 extern void fully_identify_obj(struct obj *);
-extern void identify_pack(int);
+extern void identify_pack(struct monst *, int);
 extern void prinv(const char *, struct obj *, long);
 extern const char *xprname(
     struct obj *, const char *, char, boolean, long, long);
@@ -1137,6 +1137,7 @@ extern void golemeffects(struct monst *, int, int);
 extern boolean angry_guards(boolean);
 extern void pacify_guards(void);
 extern long mm_aggression(const struct monst *, const struct monst *);
+extern boolean grudge(const struct permonst *, const struct permonst *);
 
 /* ### mondata.c ### */
 
@@ -1475,12 +1476,14 @@ extern const struct permonst *qt_montype(const d_level *, enum rng);
 
 extern int doread(const struct nh_cmd_arg *);
 extern boolean is_chargeable(struct obj *);
-extern void recharge(struct obj *, int);
+extern int mon_choose_stinktarget(struct monst *, struct obj *, coord *);
+extern struct obj *mon_choose_recharge(struct monst *, int);
+extern void recharge(struct monst *, struct obj *, int);
 extern void forget_objects(int);
-extern int seffects(struct obj *scroll, boolean * known);
-extern void litroom(boolean, struct obj *);
+extern int seffects(struct monst *, struct obj *scroll, boolean * known);
+extern void litroom(struct monst *, boolean, struct obj *);
 extern void do_level_genocide(void);
-extern void do_genocide(int);
+extern void do_genocide(struct monst *, int);
 extern void punish(struct obj *);
 extern void unpunish(void);
 extern boolean cant_create(int *, boolean);
@@ -1671,6 +1674,7 @@ extern void update_supernatural_abilities(void);
 extern boolean supernatural_ability_available(int);
 extern int docast(const struct nh_cmd_arg *);
 extern int spell_skilltype(int);
+extern int m_spelleffects(struct monst *, int, schar, schar, schar);
 extern int spelleffects(int, boolean, const struct nh_cmd_arg *);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
@@ -1721,7 +1725,8 @@ extern int tele(void);
 extern int tele_impl(boolean wizard_tele, boolean next_to_u);
 extern int dotele(const struct nh_cmd_arg *);
 extern void level_tele(void);
-extern void level_tele_impl(boolean wizard_tele);
+extern void mon_level_tele(struct monst *mon);
+extern void level_tele_impl(struct monst *, boolean wizard_tele);
 extern void domagicportal(struct trap *);
 extern void tele_trap(struct trap *);
 extern void level_tele_trap(struct trap *);
@@ -1922,7 +1927,7 @@ extern void uwepgone(void);
 extern void uswapwepgone(void);
 extern void uqwepgone(void);
 extern void untwoweapon(void);
-extern int chwepon(struct obj *, int);
+extern int chwepon(struct monst *, struct obj *, int);
 extern int welded(struct obj *);
 extern void weldmsg(struct obj *);
 extern void setmnotwielded(struct monst *, struct obj *);
@@ -1949,6 +1954,8 @@ extern void win_list_items(struct nh_objlist *, boolean invent);
 extern void amulet(void);
 extern int mon_has_amulet(struct monst *);
 extern int mon_has_special(struct monst *);
+extern boolean mon_has_arti(const struct monst *, short);
+extern boolean target_on(int, struct monst *);
 extern int tactics(struct monst *);
 extern void strategy(struct monst *, boolean);
 extern boolean covetous_sense(const struct monst *, const struct monst *);
@@ -2036,6 +2043,7 @@ extern int spell_damage_bonus(void);
 extern const char *exclam(int force);
 extern void hit(const char *, struct monst *, const char *);
 extern void miss(const char *, struct monst *);
+extern void mbhit(struct monst *, int, struct obj *);
 extern struct monst *beam_hit(int, int, int, int,
                               int (*)(struct monst *, struct monst *, struct obj *),
                               int (*)(struct obj *, struct obj *), struct obj *,

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-14 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,6 +7,7 @@
 
 static boolean tele_jump_ok(int, int, int, int);
 static boolean teleok(int, int, boolean, boolean wizard_tele);
+static int mon_choose_level(struct monst *);
 static void vault_tele(void);
 static boolean rloc_pos_ok(int, int, struct monst *);
 static void mvault_tele(struct monst *);
@@ -415,7 +416,7 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
     /* Disable teleportation in stronghold && Vlad's Tower */
     if (level->flags.noteleport) {
         if (!wizard_tele) {
-            pline("A mysterious force prevents you from teleporting!");
+            tele_restrict(&youmonst);
             return 1;
         }
     }
@@ -557,24 +558,36 @@ dotele(const struct nh_cmd_arg *arg)
 void
 level_tele(void)
 {
-    level_tele_impl(FALSE);
+    mon_level_tele(&youmonst);
 }
 
 void
-level_tele_impl(boolean wizard_tele)
+mon_level_tele(struct monst *mon)
+{
+    level_tele_impl(mon, FALSE);
+}
+
+void
+level_tele_impl(struct monst *mon, boolean wizard_tele)
 {
     int newlev;
     d_level newlevel;
     const char *escape_by_flying = 0;   /* when surviving dest of -N */
     boolean force_dest = FALSE;
     const char *buf, *killer = NULL;
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    boolean avoid_current = FALSE;
 
-    if ((Uhave_amulet || In_endgame(&u.uz) || In_sokoban(&u.uz))
-        && !wizard_tele) {
-        pline("You feel very disoriented for a moment.");
+    if ((mon_has_amulet(mon) || In_endgame(m_mz(mon)) || In_sokoban(m_mz(mon))) &&
+        !wizard_tele) {
+        if (you || vis)
+            pline("%s %s very disoriented for a moment.",
+                  you ? "You" : Monnam(mon),
+                  you ? "feel" : "seems");
         return;
     }
-    if ((Teleport_control && !Stunned) || wizard_tele) {
+    if ((you && teleport_control(mon) && !stunned(mon)) || wizard_tele) {
         int trycnt = 0;
         const char *qbuf = "To what level do you want to teleport?";
         do {
@@ -659,14 +672,46 @@ level_tele_impl(boolean wizard_tele)
            teleport request is likely to be relativized to the status line, and
            consequently it should be incremented to the value of the logical
            depth of the target level. we let negative values requests fall into
-           the "heaven" loop. */
-        if (In_quest(&u.uz) && newlev > 0)
+           the "heaven" loop.
+           Added by FIQ 09/16/15: made the above apply only for levels 1-6,
+           because if you specify numbers above that, you probably mean the
+           effective level */
+        if (In_quest(&u.uz) && 0 < newlev && newlev <= 6)
             newlev = newlev + find_dungeon(&u.uz).depth_start - 1;
+    } else if (!you && teleport_control(mon) && !stunned(mon)) {
+        if (vis)
+            pline("%s tries to control the destination...", Monnam(mon));
+        newlev = mon_choose_level(mon);
+        if (confused(mon) && rn2(5)) {
+            if (vis)
+                pline("but fails due to confusion.");
+            newlev = 0;
+        }
+        if (newlev == 0)
+            goto random_levtport;
+        if (newlev == -1) {
+            avoid_current = TRUE;
+            goto random_levtport;
+        }
     } else {    /* involuntary level tele */
+        int i;
+        if (stunned(mon) && teleport_control(mon) && (you || vis))
+            pline("Being stunned, %s %s unable to control the destination.",
+                  you ? "you" : mon_nam(mon),
+                  you ? "are" : "is");
     random_levtport:
-        newlev = random_teleport_level();
-        if (newlev == depth(&u.uz)) {
-            pline("You shudder for a moment.");
+        for (i = 0; i < 10; i++) {
+            newlev = random_teleport_level();
+            if (newlev == depth(m_mz(mon))) {
+                if (avoid_current)
+                    continue;
+            }
+        }
+        if (newlev == depth(m_mz(mon))) {
+            if (you || vis)
+                pline("%s shudder%s for a moment.",
+                      you ? "You" : Monnam(mon),
+                      you ? "" : "s");
             return;
         }
     }
@@ -676,7 +721,7 @@ level_tele_impl(boolean wizard_tele)
         return;
     }
 
-    if (In_endgame(&u.uz)) {    /* must already be wizard */
+    if (you && In_endgame(&u.uz)) {    /* must already be wizard */
         int llimit = dunlevs_in_dungeon(&u.uz);
 
         if (newlev >= 0 || newlev <= -llimit) {
@@ -690,6 +735,10 @@ level_tele_impl(boolean wizard_tele)
     }
 
     if (newlev < 0 && !force_dest) {
+        if (!you) {
+            impossible("monster tried to suicide/escape by levelport?");
+            return;
+        }
         if (*u.ushops0) {
             /* take unpaid inventory items off of shop bills */
             in_mklev = TRUE;    /* suppress map update */
@@ -741,34 +790,42 @@ level_tele_impl(boolean wizard_tele)
     if (escape_by_flying) {
         pline("You %s.", escape_by_flying);
         done(ESCAPED, "teleported to safety");
-    } else if (u.uz.dnum == medusa_level.dnum &&
-               newlev >= (find_dungeon(&u.uz).depth_start +
-                          dunlevs_in_dungeon(&u.uz))) {
+    } else if ((m_mz(mon))->dnum == medusa_level.dnum &&
+               newlev >= (find_dungeon(m_mz(mon)).depth_start +
+                          dunlevs_in_dungeon(m_mz(mon)))) {
         if (!(wizard_tele && force_dest))
             find_hell(&newlevel);
     } else {
         /* if invocation did not yet occur, teleporting into the last level of
            Gehennom is forbidden. */
         if (!wizard_tele)
-            if (Inhell && !u.uevent.invoked &&
+            if (In_hell(m_mz(mon)) && !u.uevent.invoked &&
                 newlev >= (find_dungeon(&u.uz).depth_start +
                            dunlevs_in_dungeon(&u.uz) - 1)) {
                 newlev = (find_dungeon(&u.uz).depth_start +
                           dunlevs_in_dungeon(&u.uz) - 2);
-                pline("Sorry...");
+                if (you)
+                    pline("Sorry...");
+                else if (vis) /* give a hint towards what mon just tried */
+                    pline("Moloch prevents %s from reaching the sanctum!",
+                          mon_nam(mon));
             }
         /* no teleporting out of quest dungeon */
-        if (In_quest(&u.uz) && newlev < depth(&qstart_level))
+        if (In_quest(m_mz(mon)) && newlev < depth(&qstart_level))
             newlev = depth(&qstart_level);
         /* the player thinks of levels purely in logical terms, so we must
            translate newlev to a number relative to the current dungeon. */
         if (!(wizard_tele && force_dest))
             get_level(&newlevel, newlev);
     }
-    schedule_goto(&newlevel, FALSE, FALSE, 0, NULL, NULL);
+    if (you)
+        schedule_goto(&newlevel, FALSE, FALSE, 0, NULL, NULL);
+    else
+        migrate_to_level(mon, ledger_no(&newlevel), MIGR_RANDOM, NULL);
+
     /* in case player just read a scroll and is about to be asked to call it
        something, we can't defer until the end of the turn */
-    if (!flags.mon_moving)
+    if (you && !flags.mon_moving)
         deferred_goto();
 }
 
@@ -945,12 +1002,78 @@ tele_wary(const struct monst *mon)
     return (mon->dlevel->flags.noteleport &&
             (mon->mtrapseen & (1 << (TELEP_TRAP - 1))));
 }
+/* Allows monsters to choose destination level for level teleportation
+     Stat:        Effect:
+     Tame         to the hero
+     Scared       teleports to a random level like usual, but tries to avoid the current level
+     Wiz-amulet   to the sanctum if not generated
+     Covetous1    stays if obj is here
+     Gnome/Dwarf  if outside the mines, teleport to where the entrance is
+     Vlad         to his tower
+     Covetous2    somewhere random
+     Peaceful     stays on level
+     Otherwise    to a random level
+     Once a destination is figured out, return the level -- the actual teleportation is performed
+     in level_tele_impl
+     Returns 0 if the monster intends to choose a random level, -1 if random except current
+     (monsters will never attempt to suicide/escape).
+*/
+static int
+mon_choose_level(struct monst *mon)
+{
+    int cur_level = (int)depth(m_mz(mon));
+    /* Tame monsters try to teleport to hero */
+    if (mon->mtame)
+        return (int)depth(&u.uz);
+
+    /* Scared monsters don't care, as long as it isn't the current level */
+    if (mon->mstrategy & STRAT_ESCAPE)
+        return -1;
+
+    /* Wizard of Yendor teleports to the Amulet */
+    if (mon->iswiz && !flags.made_amulet)
+            return 99;
+
+    /* Covetous monsters stay if obj is here */
+    if (is_covetous(mon->data) && target_on(mon->data->mflags3 & M3_COVETOUS, mon))
+        return cur_level;
+
+    /* Gnomes/dwarves want to head to the mines if not there */
+    if (is_gnome(mon->data) || is_dwarf(mon->data)) {
+        if (In_mines(m_mz(mon)))
+            return cur_level;
+        /* TODO: make a function to avoid having to access lowlevel dnum stuff
+           directly */
+        return (gamestate.dungeons[mines_dnum].depth_start - 1);
+    }
+
+    /* Vlad */
+    if (mon->data == &mons[PM_VLAD_THE_IMPALER]) {
+        /* if lacking candelabrum, look for it */
+        if (!mon_has_arti(mon, CANDELABRUM_OF_INVOCATION))
+            return -1;
+        if (In_V_tower(m_mz(mon)))
+            return cur_level;
+        return (gamestate.dungeons[tower_dnum].depth_start + 3);
+    }
+
+    /* If covetous and nothing present here that the monster covets, levelport away */
+    if (is_covetous(mon->data))
+        return -1;
+
+    /* Peaceful */
+    if (mon->mpeaceful)
+        return cur_level;
+
+    /* No desired level in particular -- don't use teleport control */
+    return 0;
+}
 /* Perform monster teleportation. If monsters lack teleport control, this is random.
    If the monster does have teleport control, the monster decides location based on
    a number of factors:
-     Stat:        Effect
+     Stat:        Effect:
      Scared       away from targets
-     objective    If a monster has a current goal square in mind, go there
+     objective    if a monster has a current goal square in mind, go there
      Covetous     to items it covet, or monsters holding said items
      Peaceful     random
      Tame         next to you if it can see you
@@ -964,6 +1087,13 @@ tele_wary(const struct monst *mon)
 boolean
 mon_tele(struct monst *mon, boolean free_will)
 {
+    if (mon == &youmonst) {
+        if (free_will)
+            tele();
+        else if (!tele_restrict(mon))
+            safe_teleds(FALSE);
+        return TRUE;
+    }
     struct monst *m2, *nmon = NULL;
     xchar ox = mon->mx;
     xchar oy = mon->my;
@@ -1242,10 +1372,12 @@ mvault_tele(struct monst *mtmp)
 boolean
 tele_restrict(struct monst * mon)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
     if (level->flags.noteleport) {
-        if (canseemon(mon))
+        if (you || vis)
             pline("A mysterious force prevents %s from teleporting!",
-                  mon_nam(mon));
+                  you ? "you" : mon_nam(mon));
         /* Notify everyone that saw it happen (including the monster itself)
            that the level is noteleport. This is done by setting the
            TELEP_TRAP bit. Yes, this means that monsters switching level

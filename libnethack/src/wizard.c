@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-09 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,7 +15,6 @@
 extern const int monstr[];
 
 static short which_arti(int);
-static boolean mon_has_arti(const struct monst *, short);
 static struct monst *other_mon_has_arti(struct monst *, short);
 static struct obj *on_ground(short);
 static boolean you_have(int);
@@ -90,7 +89,7 @@ mon_has_amulet(struct monst *mtmp)
 {
     struct obj *otmp;
 
-    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+    for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj)
         if (otmp->otyp == AMULET_OF_YENDOR)
             return 1;
     return 0;
@@ -142,7 +141,7 @@ which_arti(int mask)
  * since bell, book, candle, and amulet are all objects, not really
  * artifacts right now.    [MRS]
  */
-static boolean
+boolean
 mon_has_arti(const struct monst *mtmp, short otyp)
 {
     struct obj *otmp;
@@ -229,7 +228,7 @@ you_have(int mask)
     return 0;
 }
 
-static boolean
+boolean
 target_on(int mask, struct monst *mtmp)
 {
     short otyp;

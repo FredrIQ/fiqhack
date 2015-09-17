@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,7 +20,7 @@ static struct obj *find_unpaid(struct obj *, struct obj **);
 static void menu_identify(int);
 static boolean tool_in_use(struct obj *);
 static char obj_to_let(struct obj *);
-static int identify(struct obj *);
+static int identify(struct monst *, struct obj *);
 static const char *dfeature_at(int, int);
 
 static void addinv_stats(struct obj *);
@@ -1201,10 +1201,18 @@ fully_identify_obj(struct obj *otmp)
 
 /* ggetobj callback routine; identify an object and give immediate feedback */
 int
-identify(struct obj *otmp)
+identify(struct monst *mon, struct obj *otmp)
 {
-    fully_identify_obj(otmp);
-    prinv(NULL, otmp, 0L);
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    if (you || (vis && mon->mtame)) {
+        fully_identify_obj(otmp);
+        prinv(NULL, otmp, 0L);
+    }
+    if (!you) {
+        otmp->mknown = 1;
+        otmp->mbknown = 1;
+    }
     return 1;
 }
 
@@ -1229,7 +1237,7 @@ menu_identify(int id_limit)
             if (n > id_limit)
                 n = id_limit;
             for (i = 0; i < n; i++, id_limit--)
-                identify(pick_list[i].obj);
+                identify(&youmonst, pick_list[i].obj);
             free(pick_list);
         } else {
             if (n < 0)
@@ -1242,36 +1250,60 @@ menu_identify(int id_limit)
 
 /* dialog with user to identify a given number of items; 0 means all */
 void
-identify_pack(int id_limit)
+identify_pack(struct monst *mon, int id_limit)
 {
     struct obj *obj, *the_obj;
     int n, unid_cnt;
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
 
     unid_cnt = 0;
     the_obj = 0;        /* if unid_cnt ends up 1, this will be it */
-    for (obj = invent; obj; obj = obj->nobj)
-        if (not_fully_identified(obj))
+    for (obj = m_minvent(mon); obj; obj = obj->nobj)
+        if ((you && not_fully_identified(obj)) ||
+            (!you && (!obj->mknown || !obj->mbknown)))
             ++unid_cnt, the_obj = obj;
 
     if (!unid_cnt) {
-        pline("You have already identified all of your possessions.");
+        if (you)
+            pline("You have already identified all of your possessions.");
+        else
+            pline("%s has already identified all of %s possessions.",
+                  Monnam(mon), mhis(mon));
     } else if (!id_limit) {
+        if (!you && vis && mon->mtame)
+            pline("%s shares newly learned object%s from %s inventory:",
+                  Monnam(mon), mhis(mon), unid_cnt == 1 ? "" : "s");
         /* identify everything */
         if (unid_cnt == 1) {
-            identify(the_obj);
+            identify(mon, the_obj);
         } else {
 
             /* TODO: use fully_identify_obj and cornline/menu/whatever here */
-            for (obj = invent; obj; obj = obj->nobj)
-                if (not_fully_identified(obj))
-                    identify(obj);
+            for (obj = m_minvent(mon); obj; obj = obj->nobj)
+                if ((you && not_fully_identified(obj)) ||
+                    (!you && (!obj->mknown || !obj->mbknown)))
+                    identify(mon, obj);
 
         }
     } else {
-        /* identify up to `id_limit' items */
-        n = 0;
-        if (n == 0 || n < -1)
-            menu_identify(id_limit);
+        if (!you) {
+            if (vis && mon->mtame)
+                pline("%s shares newly learned object%s from %s inventory:",
+                      Monnam(mon), mhis(mon), unid_cnt == 1 ? "" : "s");
+            n = 0;
+            for (obj = m_minvent(mon); obj && n < id_limit; obj = obj->nobj) {
+                if (!obj->mknown || !obj->mbknown) {
+                    identify(mon, obj);
+                    n++;
+                }
+            }
+        } else {
+            /* identify up to `id_limit' items */
+            n = 0;
+            if (n == 0 || n < -1)
+                menu_identify(id_limit);
+        }
     }
     update_inventory();
 }

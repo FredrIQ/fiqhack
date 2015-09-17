@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-24 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -471,14 +471,14 @@ god_zaps_you(aligntyp resp_god)
             !(worn_extrinsic(REFLECTING) & W_MASK(slot))        \
             && !(worn_extrinsic(DISINT_RES) & W_MASK(slot))
         if (slot_affected(os_arms))
-            destroy_arm(uarms);
+            destroy_arm(&youmonst, uarms);
         if (slot_affected(os_armc))
-            destroy_arm(uarmc);
+            destroy_arm(&youmonst, uarmc);
         if (slot_affected(os_arm) && !uarmc && !uskin())
-            destroy_arm(uarm);
+            destroy_arm(&youmonst, uarm);
 #undef slot_affected
         if (uarmu && !uarm && !uarmc)
-            destroy_arm(uarmu);
+            destroy_arm(&youmonst, uarmu);
         if (!Disint_resistance)
             fry_by_god(resp_god);
         else {

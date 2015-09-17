@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -26,7 +26,6 @@ static void mzapmsg(struct monst *, struct obj *, boolean);
 static void mreadmsg(struct monst *, struct obj *);
 static void mquaffmsg(struct monst *, struct obj *);
 static boolean mon_makewish(struct monst *);
-static void mbhit(struct monst *, int, struct obj *);
 static void mon_break_wand(struct monst *, struct obj *);
 static void mon_consume_unstone(struct monst *, struct obj *, boolean, boolean);
 
@@ -1456,97 +1455,9 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
         }
     }
     if (otyp == WAN_LIGHT)
-    litroom(TRUE, otmp);     /* only needs to be done once */
+        litroom(mtmp, TRUE, otmp);     /* only needs to be done once */
 }
 
-/* A modified bhit() for monsters.  Based on beam_hit() in zap.c.  Unlike
- * buzz(), beam_hit() doesn't take into account the possibility of a monster
- * zapping you, so we need a special function for it.  (Unless someone wants
- * to merge the two functions...)
- */
-static void
-mbhit(struct monst *mon, int range, struct obj *obj) {
-    struct monst *mtmp;
-    struct obj *otmp;
-    uchar typ;
-    int ddx, ddy;
-
-    bhitpos.x = mon->mx;
-    bhitpos.y = mon->my;
-    ddx = sgn(tbx);
-    ddy = sgn(tby);
-
-    while (range-- > 0) {
-        int x, y;
-
-        bhitpos.x += ddx;
-        bhitpos.y += ddy;
-        x = bhitpos.x;
-        y = bhitpos.y;
-
-        if (!isok(x, y)) {
-            bhitpos.x -= ddx;
-            bhitpos.y -= ddy;
-            break;
-        }
-        if (find_drawbridge(&x, &y))
-            switch (obj->otyp) {
-            case WAN_STRIKING:
-                destroy_drawbridge(x, y);
-            }
-        /* modified by GAN to hit all objects */
-        int hitanything = 0;
-        struct obj *next_obj;
-
-        for (otmp = level->objects[bhitpos.x][bhitpos.y]; otmp;
-                otmp = next_obj) {
-            /* Fix for polymorph bug, Tim Wright */
-            next_obj = otmp->nexthere;
-            hitanything += bhito(otmp, obj);
-        }
-        if (hitanything)
-            range--;
-        if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
-            bhitm(mon, &youmonst, obj);
-            range -= 3;
-        } else if (MON_AT(level, bhitpos.x, bhitpos.y)) {
-            mtmp = m_at(level, bhitpos.x, bhitpos.y);
-            if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp))
-                map_invisible(bhitpos.x, bhitpos.y);
-            bhitm(mon, mtmp, obj);
-            range -= 3;
-        }
-        typ = level->locations[bhitpos.x][bhitpos.y].typ;
-        if (IS_DOOR(typ) || typ == SDOOR) {
-            switch (obj->otyp) {
-                /* note: monsters don't use opening or locking magic at
-                   present, but keep these as placeholders */
-            case WAN_OPENING:
-            case WAN_LOCKING:
-            case WAN_STRIKING:
-                if (doorlock(obj, bhitpos.x, bhitpos.y)) {
-                    makeknown(obj->otyp);
-                    /* if a shop door gets broken, add it to the shk's fix list 
-                       (no cost to player) */
-                    if (level->locations[bhitpos.x][bhitpos.y].doormask ==
-                        D_BROKEN &&
-                        *in_rooms(level, bhitpos.x, bhitpos.y, SHOPBASE))
-                        add_damage(bhitpos.x, bhitpos.y, 0L);
-                }
-                break;
-            }
-        }
-        if (!ZAP_POS(typ) ||
-            (IS_DOOR(typ) &&
-             (level->locations[bhitpos.x][bhitpos.y].
-              doormask & (D_LOCKED | D_CLOSED)))
-            ) {
-            bhitpos.x -= ddx;
-            bhitpos.y -= ddy;
-            break;
-        }
-    }
-}
 
 /* Perform an offensive action for a monster.  Must be called immediately
  * after find_offensive().  Return values are same as use_defensive().
