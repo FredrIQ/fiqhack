@@ -222,7 +222,7 @@ mon_choose_stinktarget(struct monst *mon, struct obj *obj, coord *cc)
                          mon->mpeaceful == mtmp->mpeaceful))
                         tilescore -= 10;
 
-                    tilescore /= (abs(x - xx) + abs(y - yy));
+                    tilescore /= (abs(x - xx) + abs(y - yy) + 1);
                 }
             }
 
@@ -394,7 +394,7 @@ mon_choose_recharge(struct monst *mon, int bcsign)
                 default: /* other wands are unusable */
                     /* penalty for wands with charges left */
                     if (obj->spe >= 0)
-                        score /= obj->spe;
+                        score /= (obj->spe + 1);
                     /* major penalty for overcharged wands */
                     if (obj->spe >= 6) {
                         score -= 20;
