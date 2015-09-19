@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-08-22 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1402,12 +1402,19 @@ void
 write_nh_config(void)
 {
     FILE *fp;
-    fnchar filename[BUFSZ];
+    fnchar filename[BUFSZ] = {0};
 
     if (get_config_name(filename, FALSE) &&
         (fp = open_config_file(filename))) {
         write_config_options(fp, nh_options);
         fclose(fp);
+    } else {
+#ifndef WIN32
+        char buf[BUFSZ * 2];
+        snprintf(buf, sizeof buf, "warning: could not write options (to \"%s\"",
+                 filename);
+        curses_msgwin(buf, krc_notification);
+#endif
     }
 }
 
@@ -1416,11 +1423,18 @@ void
 write_ui_config(void)
 {
     FILE *fp;
-    fnchar filename[BUFSZ];
+    fnchar filename[BUFSZ] = {0};
 
     if (get_config_name(filename, TRUE) &&
         (fp = open_config_file(filename))) {
         write_config_options(fp, curses_options);
         fclose(fp);
+    } else {
+#ifndef WIN32
+        char buf[BUFSZ * 2];
+        snprintf(buf, sizeof buf, "warning: could not write options (to \"%s\"",
+                 filename);
+        curses_msgwin(buf, krc_notification);
+#endif
     }
 }
