@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1381,7 +1381,7 @@ extern void make_vomiting(long, boolean);
 extern boolean make_hallucinated(long, boolean);
 extern int dodrink(const struct nh_cmd_arg *);
 extern int dopotion(struct obj *);
-extern int peffects(struct obj *);
+extern int peffects(struct monst *, struct obj *);
 extern void healup(int, int, boolean, boolean);
 extern void strange_feeling(struct obj *, const char *);
 extern void potionhit(struct monst *, struct obj *, boolean);
@@ -1436,6 +1436,7 @@ extern boolean teleport_at_will(const struct monst *);
 extern unsigned levitates_at_will(const struct monst *, boolean, boolean);
 extern unsigned mon_remove_levitation(struct monst *, boolean);
 extern void gremlin_curse(struct monst *);
+extern int property_timeout(struct monst *, enum youprop);
 extern boolean set_property(struct monst *, enum youprop, int, boolean);
 extern boolean update_property(struct monst *, enum youprop, enum objslot);
 extern unsigned m_has_property(const struct monst *, enum youprop,
@@ -1907,6 +1908,7 @@ extern void new_were(struct monst *);
 extern int were_summon(struct monst *, int *, const char **);
 extern void you_were(void);
 extern void you_unwere(boolean);
+extern void mon_unwere(struct monst *, boolean, boolean);
 
 /* ### wield.c ### */
 

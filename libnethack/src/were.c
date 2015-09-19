@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -169,6 +169,38 @@ you_unwere(boolean purify)
     }
     if (!Unchanging && is_were(youmonst.data) &&
         (!Polymorph_control || yn("Remain in beast form?") == 'n'))
+        rehumanize(DIED, NULL);
+}
+
+void
+mon_unwere(struct monst *mon, boolean purify, boolean quiet)
+{
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    const struct permonst *ptr;
+    if (purify) {
+        if (!quiet && (you || vis))
+            pline("%s %s purified.", you ? "You" : Monnam(mon),
+                  you ? "feel" : "is");
+        if (you)
+            u.ulycn = NON_PM;
+        else {
+            ptr = &mons[PM_HUMAN];
+            if (!newcham(mon, &mons[PM_HUMAN], FALSE, FALSE)) {
+                if (mvitals[PM_HUMAN].mvflags & G_GENOD) {
+                    pline("As %s is purified, %s dies!", mon_nam(mon), mhe(mon));
+                    ptr = &mons[PM_HUMAN];
+                    set_mon_data(mon, ptr); /* ensure "oLS is handled correctly */
+                    mondied(mon);
+                } else
+                    impossible("failed to purify monster?");
+            } else
+                set_mon_data(mon, ptr);
+        }
+    }
+    
+    if (you && !unchanging(mon) && is_were(youmonst.data) &&
+        (!polymorph_control(mon) || yn("Remain in beast form?") == 'n'))
         rehumanize(DIED, NULL);
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1083,7 +1083,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
             pseudo->blessed = 1;
         /* fall through */
     case SPE_INVISIBILITY:
-        peffects(pseudo);
+        peffects(mon, pseudo);
         break;
 
     case SPE_CURE_BLINDNESS:
@@ -1411,7 +1411,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             pseudo->blessed = 1;
         /* fall through */
     case SPE_INVISIBILITY:
-        peffects(pseudo);
+        peffects(&youmonst, pseudo);
         break;
 
     case SPE_CURE_BLINDNESS:

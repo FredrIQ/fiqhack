@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -196,6 +196,16 @@ m_has_property(const struct monst *mon, enum youprop property,
     return rv & reasons;
 }
 
+int
+property_timeout(struct monst *mon, enum youprop property)
+{
+    if (!(has_property(mon, property) & W_MASK(os_timeout)))
+        return 0;
+    if (mon == &youmonst)
+        return (u.uintrinsic[property] & TIMEOUT);
+    else
+        return mon->mt_prop[mon_prop2mt(property)];
+}
 /* Can this monster teleport at will?
    Any monster who has reached XL12 or more can teleport at will if they have teleportitis.
    If the monster has teleportitis in their natural form, they can always teleport at will.
@@ -956,8 +966,28 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case DETECT_MONSTERS:
-        if (you)
+        if (you && !redundant) {
             see_monsters(FALSE);
+            /* did we just get the property */
+            if (!lost) {
+                int x, y;
+                int found_monsters = 0;
+                for (x = 0; x < COLNO; x++) {
+                    for (y = 0; y < ROWNO; y++) {
+                        if (level->locations[x][y].mem_invis) {
+                            /* don't clear object memory from below monsters */
+                            level->locations[x][y].mem_invis = FALSE;
+                            newsym(x, y);
+                        }
+                        if (MON_AT(level, x, y))
+                            found_monsters++;
+                    }
+                }
+                if (!found_monsters)
+                    pline("You feel lonely");
+                effect = TRUE; /* either lonely or detected stuff */
+            }
+        }
         break;
     case SLOW:
         if (you && !redundant) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -538,8 +538,8 @@ mcalcmove(struct monst *mon)
         mmove = (5 * mmove + 1) / 3;
     else if (fast(mon))
         mmove = (4 * mmove + 2) / 3;
-    if (slow(mon))
-        mmove = (2 * mmove + 1) / 3;
+    if (slow(mon) && mmove != 0) /* don't speed up speed 0 monsters */
+        mmove = mmove / 2 + 1;
 
     if (mon == u.usteed) {
         /* This used to have a flags.mv check, but that has been conclusively

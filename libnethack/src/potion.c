@@ -1,9 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "edog.h"
+#include "epri.h"
+#include "emin.h"
 
 boolean notonhead = FALSE;
 
@@ -391,7 +394,7 @@ dopotion(struct obj *otmp)
 
     otmp->in_use = TRUE;
     nothing = unkn = 0;
-    if ((retval = peffects(otmp)) >= 0)
+    if ((retval = peffects(&youmonst, otmp)) >= 0)
         return retval;
 
     if (nothing) {
@@ -412,18 +415,76 @@ dopotion(struct obj *otmp)
 
 
 int
-peffects(struct obj *otmp)
+peffects(struct monst *mon, struct obj *otmp)
 {
     int i, ii, lim;
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    int dmg = 0;
+    int heal = 0;
+    int healmax = 0;
+    /* For nutrition */
+    struct edog *edog;
+    edog = (!you && mon->mtame && !mon->isminion) ? EDOG(mon) : 0;
+    enum youprop prop;
+    aligntyp alignment;
+    /* Dynamic strings based on whether it was you or the monster */
+    const char *Mon;
+    Mon = you ? "You" : Monnam(mon);
+    const char *Mons;
+    Mons = you ? "Your" : s_suffix(Monnam(mon));
+    const char *looks;
+    looks = you ? "feel" : "looks";
+    const char *his;
+    his = you ? "your" : mhis(mon);
+
+    if (you)
+        alignment = u.ualign.type;
+    else if (mon->ispriest || (mon->isminion && roamer_type(mon->data)))
+        alignment = CONST_EPRI(mon)->shralign;
+    else if (mon->isminion)
+        alignment = EMIN(mon)->min_align;
+    else {
+        alignment = mon->data->maligntyp;
+        alignment =
+            (alignment > 0) ? A_LAWFUL :
+            (alignment == -128) ? A_NONE :
+            (alignment < 0) ? A_CHAOTIC : A_NEUTRAL;
+    }
 
     switch (otmp->otyp) {
     case POT_RESTORE_ABILITY:
     case SPE_RESTORE_ABILITY:
-        unkn++;
         if (otmp->cursed) {
-            pline("Ulch!  This makes you feel mediocre!");
+            if (you)
+                pline("Ulch!  This makes you feel mediocre!");
+            else if (vis)
+                pline("%s looks strangely mediocre.", Monnam(mon));
             break;
         } else {
+            if (!you) {
+                /* Raise max HP depending on how far from current level's HP cap the monster is
+                   If the potion is uncursed, only do a single raise.
+                   Equavilent to what "drain strength" does against monsters (but in reverse).
+                */
+                if (!vis)
+                    unkn++;
+                else
+                    pline("%s looks %s!", Monnam(mon), otmp->blessed ? "great" : "better");
+                if (mon->mhpmax > (mon->m_lev * 8 - 8))
+                    break;
+                int raised_maxhp = 0;
+                for (i = 0; i < (mon->m_lev - (mon->mhpmax / 8 - 1)); i++) {
+                    raised_maxhp += rnd(8);
+                    if (!otmp->blessed)
+                        break;
+                }
+                if (raised_maxhp) {
+                    mon->mhpmax += raised_maxhp;
+                    mon->mhp += raised_maxhp;
+                }
+                break;
+            }
             pline("Wow!  This makes you feel %s!",
                   (otmp->blessed) ? (unfixable_trouble_count(FALSE) ? "better" :
                                      "great")
@@ -445,284 +506,387 @@ peffects(struct obj *otmp)
         }
         break;
     case POT_HALLUCINATION:
-        if (Hallucination || Halluc_resistance)
+        /* Hallu doesn't exist for monsters, but black lights cause monster confusion so...
+           Also, should these things really last for 600-1100 (!) turns? */
+        prop = you ? HALLUC : CONFUSION;
+        /* we can't simply use set_property's return var, because monster hallu -> confusion, thus
+           we need to see if the monster had the property before by hand, and only then, give a message */
+        if (!has_property(mon, prop)) {
+            if (you && !resists_hallu(mon))
+                pline("Oh wow!  Great stuff!");
+            else if (vis)
+                pline("%s looks strangely crazed!", Monnam(mon));
+        } else {
+            unkn++;
             nothing++;
-        make_hallucinated(itimeout_incr
-                          (HHallucination, rn1(200, 600 - 300 * bcsign(otmp))),
-                          TRUE);
+        }
+        set_property(mon, prop, rn1(200, 600 - 300 * bcsign(otmp)), TRUE);
         break;
     case POT_WATER:
         if (!otmp->blessed && !otmp->cursed) {
-            pline("This tastes like water.");
-            u.uhunger += rnd(10);
-            newuhs(FALSE);
+            if (you)
+                pline("This tastes like water.");
+            else
+                unkn++;
+            if (you) {
+                u.uhunger += rnd(10);
+                newuhs(FALSE);
+            } else if (edog)
+                dog_eat(mon, otmp, mon->mx, mon->my, FALSE);
             break;
         }
-        unkn++;
-        if (is_undead(youmonst.data) || is_demon(youmonst.data) ||
-            u.ualign.type == A_CHAOTIC) {
+        if (!you && !vis)
+            unkn++;
+        if (is_undead(mon->data) || is_demon(mon->data) ||
+            alignment == A_CHAOTIC) {
             if (otmp->blessed) {
-                pline("This burns like acid!");
-                exercise(A_CON, FALSE);
-                if (u.ulycn >= LOW_PM) {
-                    pline("Your affinity to %s disappears!",
-                          makeplural(mons[u.ulycn].mname));
-                    if (youmonst.data == &mons[u.ulycn])
-                        you_unwere(FALSE);
-                    u.ulycn = NON_PM;   /* cure lycanthropy */
+                if (you) {
+                    pline("This burns like acid!");
+                    exercise(A_CON, FALSE);
+                } else if (vis)
+                    pline("%s shrieks in pain!", Monnam(mon));
+                if ((you && u.ulycn >= LOW_PM) || is_were(mon->data)) {
+                    if (you || vis)
+                        pline("%s affinity to %s disappears!", Mons,
+                              makeplural(you ? mons[u.ulycn].mname : mon_nam(mon)));
+                    mon_unwere(mon, TRUE, FALSE);
                 }
-                losehp(dice(2, 6), killer_msg(DIED, "a potion of holy water"));
+                if (you)
+                    losehp(dice(2, 6), killer_msg(DIED, "a potion of holy water"));
+                else {
+                    mon->mhp -= dice(2, 6);
+                    if (mon->mhp < 1)
+                        mondied(mon);
+                }
             } else if (otmp->cursed) {
-                pline("You feel quite proud of yourself.");
-                healup(dice(2, 6), 0, 0, 0);
-                if (u.ulycn >= LOW_PM && !Upolyd)
-                    you_were();
-                exercise(A_CON, TRUE);
+                if (you || vis)
+                    pline("%s %s quite proud of %sself.", Mon, looks,
+                          you ? "your" : mhim(mon));
+                if (you) {
+                    healup(dice(2, 6), 0, 0, 0);
+                    exercise(A_CON, TRUE);
+                } else
+                    mon->mhp += min(mon->mhp + dice(2, 6), mon->mhpmax);
+                if ((you && u.ulycn >= LOW_PM && !Upolyd) ||
+                    (!you && is_human(mon->data) && is_were(mon->data))) {
+                    if (you)
+                        you_were();
+                    else
+                        new_were(mon);
+                }
             }
         } else {
             if (otmp->blessed) {
-                pline("You feel full of awe.");
-                make_sick(0L, NULL, TRUE, SICK_ALL);
-                exercise(A_WIS, TRUE);
-                exercise(A_CON, TRUE);
-                if (u.ulycn >= LOW_PM)
-                    you_unwere(TRUE);   /* "Purified" */
-                /* make_confused(0L,TRUE); */
+                if (you || vis)
+                    pline("%s %s full of awe.", Mon, looks);
+                set_property(mon, SICK, -2, FALSE);
+                if (you) {
+                    exercise(A_WIS, TRUE);
+                    exercise(A_CON, TRUE);
+                }
+                if (is_were(mon->data))
+                    mon_unwere(mon, TRUE, TRUE);
             } else {
-                if (u.ualign.type == A_LAWFUL) {
-                    pline("This burns like acid!");
-                    losehp(dice(2, 6),
-                           killer_msg(DIED, "a potion of unholy water"));
-                } else
+                if (alignment == A_LAWFUL) {
+                    if (you)
+                        pline("This burns like acid!");
+                    else if (vis)
+                        pline("%s shrieks in pain!", Monnam(mon));
+                    if (you)
+                        losehp(dice(2, 6),
+                               killer_msg(DIED, "a potion of unholy water"));
+                    else {
+                        mon->mhp -= dice(2, 6);
+                        if (mon->mhp < 1)
+                            mondied(mon);
+                    }
+                } else if (you)
                     pline("You feel full of dread.");
-                if (u.ulycn >= LOW_PM && !Upolyd)
-                    you_were();
-                exercise(A_CON, FALSE);
+                else if (vis)
+                    pline("%s looks dreaded.", Monnam(mon));
+                if ((you && u.ulycn >= LOW_PM && !Upolyd) ||
+                    (!you && is_human(mon->data) && is_were(mon->data))) {
+                    if (you)
+                        you_were();
+                    else
+                        new_were(mon);
+                }
+                if (you)
+                    exercise(A_CON, FALSE);
             }
         }
         break;
     case POT_BOOZE:
-        unkn++;
-        pline("Ooph!  This tastes like %s%s!",
-              otmp->odiluted ? "watered down " : "",
-              Hallucination ? "dandelion wine" : "liquid fire");
+        if (!you && !vis)
+            unkn++;
+        if (you)
+            pline("Ooph!  This tastes like %s%s!",
+                  otmp->odiluted ? "watered down " : "",
+                  Hallucination ? "dandelion wine" : "liquid fire");
+        else if (vis)
+            pline("%s looks less coordinated.", Monnam(mon));
         if (!otmp->blessed)
-            make_confused(itimeout_incr(HConfusion, dice(3, 8)), FALSE);
+            set_property(mon, CONFUSION, dice(3, 8), TRUE);
         /* the whiskey makes us feel better */
-        if (!otmp->odiluted)
-            healup(1, 0, FALSE, FALSE);
-        u.uhunger += 10 * (2 + bcsign(otmp));
-        newuhs(FALSE);
-        exercise(A_WIS, FALSE);
+        if (!otmp->odiluted) {
+            if (you)
+                healup(1, 0, FALSE, FALSE);
+            else
+                mon->mhp = min(mon->mhp + 1, mon->mhpmax);
+        }
+        if (you) {
+            u.uhunger += 10 * (2 + bcsign(otmp));
+            newuhs(FALSE);
+            exercise(A_WIS, FALSE);
+        } else if (edog)
+            dog_eat(mon, otmp, mon->mx, mon->my, FALSE);
         if (otmp->cursed) {
-            pline("You pass out.");
-            helpless(rnd(15), hr_fainted, "drunk",
-                     "You awake with a headache.");
-            see_monsters(FALSE);
-            see_objects(FALSE);
-            turnstate.vision_full_recalc = TRUE;
+            if (you || vis)
+                pline("%s pass%s out!", Mon,
+                      you ? "" : "es");
+            if (you) {
+                helpless(rnd(15), hr_fainted, "drunk",
+                         "You awake with a headache.");
+                see_monsters(FALSE);
+                see_objects(FALSE);
+                turnstate.vision_full_recalc = TRUE;
+            } else {
+                mon->mcanmove = 0;
+                mon->mfrozen += rnd(15);
+            }
         }
         break;
     case POT_ENLIGHTENMENT:
         if (otmp->cursed) {
             unkn++;
-            pline("You have an uneasy feeling...");
-            exercise(A_WIS, FALSE);
+            if (you) {
+                pline("You have an uneasy feeling.");
+                exercise(A_WIS, FALSE);
+            } else
+                pline("%s looks uneasy.", Monnam(mon));
         } else {
-            if (otmp->blessed) {
+            if (you && otmp->blessed) {
                 adjattrib(A_INT, 1, FALSE);
                 adjattrib(A_WIS, 1, FALSE);
             }
-            pline("You feel self-knowledgeable...");
-            win_pause_output(P_MESSAGE);
-            enlightenment(0);
-            pline("The feeling subsides.");
-            exercise(A_WIS, TRUE);
+            pline("%s %s self-knowledgeable...", Mon, looks);
+            /* no real effect on monsters at the moment */
+            if (you) {
+                win_pause_output(P_MESSAGE);
+                enlightenment(0);
+                pline("The feeling subsides.");
+                exercise(A_WIS, TRUE);
+            }
         }
         break;
     case SPE_INVISIBILITY:
         /* spell cannot penetrate mummy wrapping */
-        if (BInvis && uarmc->otyp == MUMMY_WRAPPING) {
-            pline("You feel rather itchy under your %s.", xname(uarmc));
+        if (binvisible(mon)) {
+            if (you || vis)
+                pline("%s %s rather itchy under %s %s.", Mon, looks, his,
+                      xname(which_armor(mon, os_armc)));
             break;
         }
         /* FALLTHRU */
     case POT_INVISIBILITY:
-        if (Invis || Blind || BInvis) {
+        if (blind(&youmonst) || (!you && !vis))
+            unkn++;
+        if (invisible(mon) || (blind(&youmonst) && you))
             nothing++;
-        } else {
-            self_invis_message();
-        }
-        if (otmp->blessed)
-            HInvis |= FROMOUTSIDE;
-        else
-            incr_itimeout(&HInvis, rn1(15, 31));
-        newsym(u.ux, u.uy);     /* update position */
+        set_property(mon, INVIS, otmp->blessed ? 0 : rn1(15, 31), FALSE);
+        newsym(m_mx(mon), m_my(mon));     /* update position */
         if (otmp->cursed) {
-            pline("For some reason, you feel your presence is known.");
-            aggravate();
+            if (you) {
+                pline("For some reason, you feel your presence is known.");
+                aggravate();
+            } else
+                you_aggravate(mon);
         }
         break;
     case POT_SEE_INVISIBLE:
         /* tastes like fruit juice in Rogue */
     case POT_FRUIT_JUICE:
         {
-            int msg = Invisible && !Blind;
-
             unkn++;
-            if (otmp->cursed)
+            if (otmp->cursed && you)
                 pline("Yecch!  This tastes %s.",
                       Hallucination ? "overripe" : "rotten");
-            else
+            else if (you)
                 pline(Hallucination ?
                       "This tastes like 10%% real %s%s all-natural beverage." :
                       "This tastes like %s%s.",
                       otmp->odiluted ? "reconstituted " : "", fruitname(TRUE));
             if (otmp->otyp == POT_FRUIT_JUICE) {
-                u.uhunger += (otmp->odiluted ? 5 : 10) * (2 + bcsign(otmp));
-                newuhs(FALSE);
+                if (you) {
+                    u.uhunger += (otmp->odiluted ? 5 : 10) * (2 + bcsign(otmp));
+                    newuhs(FALSE);
+                } else if (edog)
+                    dog_eat(mon, otmp, mon->mx, mon->my, FALSE);
                 break;
             }
-            if (!otmp->cursed) {
-                /* Tell them they can see again immediately, which will help
-                   them identify the potion... */
-                make_blinded(0L, TRUE);
-            }
-            if (otmp->blessed)
-                HSee_invisible |= FROMOUTSIDE;
-            else
-                incr_itimeout(&HSee_invisible, rn1(100, 750));
-            set_mimic_blocking();       /* do special mimic handling */
-            see_monsters(FALSE);        /* see invisible monsters */
-            newsym(u.ux, u.uy);         /* see yourself! */
-            if (msg && !Blind) {        /* Blind possible if polymorphed */
-                pline("You can see through yourself, but you are visible!");
+            if (!otmp->cursed)
+                set_property(mon, BLINDED, -2, FALSE);
+            if (set_property(mon, SEE_INVIS, otmp->blessed ? 0 : rn1(100, 750), FALSE) &&
+                you)
                 unkn--;
-            }
             break;
         }
     case POT_PARALYSIS:
-        if (Free_action)
-            pline("You stiffen momentarily.");
-        else {
-            if (Levitation || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz))
-                pline("You are motionlessly suspended.");
-            else if (u.usteed)
+        if (free_action(mon)) {
+            if (you || vis)
+                pline("%s stiffen%s momentarily.", Mon, you ? "" : "s");
+            break;
+        }
+        if (you || vis) {
+            if (levitates(mon) || Is_airlevel(m_mz(mon)) || Is_waterlevel(m_mz(mon)))
+                pline("%s %s motionlessly suspended.", Mon, you ? "are" : "is");
+            else if (you && u.usteed)
                 pline("You are frozen in place!");
             else
-                pline("Your %s are frozen to the %s!",
-                      makeplural(body_part(FOOT)), surface(u.ux, u.uy));
+                pline("%s %s are frozen to the %s!", Mons,
+                      makeplural(mbodypart(mon, FOOT)), surface(m_mx(mon), m_my(mon)));
+        }
+        if (you) {
             helpless(rn1(10, 25 - 12 * bcsign(otmp)), hr_paralyzed,
                      "frozen by a potion", NULL);
             exercise(A_DEX, FALSE);
+        } else {
+            mon->mcanmove = 0;
+            mon->mfrozen += rn1(10, 25 - 12 * bcsign(otmp));
         }
         break;
     case POT_SLEEPING:
-        if (Sleep_resistance || Free_action)
-            pline("You yawn.");
-        else {
-            pline("You suddenly fall asleep!");
+        if (resists_sleep(mon) || free_action(mon)) {
+            if (you || vis)
+                pline("%s yawn%s", Mon, you ? "" : "s");
+            break;
+        }
+        if (you || vis)
+            pline("%s suddenly %s asleep!", Mon, you ? "" : "s");
+        if (you)
             helpless(rn1(10, 25 - 12 * bcsign(otmp)), hr_asleep, "sleeping",
                      NULL);
+        else {
+            mon->mcanmove = 0;
+            mon->mfrozen += rn1(10, 25 - 12 * bcsign(otmp));
         }
         break;
     case POT_MONSTER_DETECTION:
     case SPE_DETECT_MONSTERS:
         if (otmp->blessed) {
-            int x, y;
-
-            if (Detect_monsters)
+            if (detects_monsters(mon)) {
                 nothing++;
-            unkn++;
+                unkn++;
+            } else if (!you)
+                unkn++;
             /* after a while, repeated uses become less effective */
-            if (HDetect_monsters >= 300L)
+            if (property_timeout(mon, DETECT_MONSTERS) >= 300)
                 i = 1;
             else
                 i = rn1(40, 21);
-            incr_itimeout(&HDetect_monsters, i);
-            for (x = 0; x < COLNO; x++) {
-                for (y = 0; y < ROWNO; y++) {
-                    if (level->locations[x][y].mem_invis) {
-                        /* don't clear object memory from below monsters */
-                        level->locations[x][y].mem_invis = FALSE;
-                        newsym(x, y);
-                    }
-                    if (MON_AT(level, x, y))
-                        unkn = 0;
-                }
-            }
-            see_monsters(FALSE);
-            if (unkn)
-                pline("You feel lonely.");
+            set_property(mon, DETECT_MONSTERS, i, FALSE);
             break;
         }
-        if (monster_detect(otmp, 0))
+        /* TODO: uncursed (or unskilled/basic spell) for monsters */
+        if (!you) {
+            unkn++;
+            if (vis)
+                pline("%s is granted an insight!", Mon);
+        } else if (you && monster_detect(otmp, 0))
             return 1;   /* nothing detected */
-        exercise(A_WIS, TRUE);
+        if (you)
+            exercise(A_WIS, TRUE);
         break;
     case POT_OBJECT_DETECTION:
     case SPE_DETECT_TREASURE:
-        if (object_detect(otmp, 0))
+        if (!you) {
+            unkn++;
+            if (vis)
+                pline("%s is granted an insight!", Mon);
+        } else if (object_detect(otmp, 0))
             return 1;   /* nothing detected */
-        exercise(A_WIS, TRUE);
+        if (you)
+            exercise(A_WIS, TRUE);
         break;
     case POT_SICKNESS:
-        pline("Yecch!  This stuff tastes like poison.");
+        if (you)
+            pline("Yecch!  This stuff tastes like poison.");
+        else if (vis)
+            pline("%s looks %ssick.", Mon, otmp->blessed ? "slightly" : "");
         if (otmp->blessed) {
-            pline("(But in fact it was mildly stale %s.)", fruitname(TRUE));
-            if (!Poison_resistance && !Role_if(PM_HEALER)) {
+            if (you)
+                pline("(But in fact it was mildly stale %s.)", fruitname(TRUE));
+            if (!resists_poison(mon))
                 /* NB: blessed otmp->fromsink is not possible */
                 losehp(1, killer_msg(DIED, "a mildly contaminated potion"));
-            }
         } else {
-            if (Poison_resistance)
-                pline("(But in fact it was biologically contaminated %s.)",
-                      fruitname(TRUE));
-            if (Role_if(PM_HEALER))
-                pline("Fortunately, you have been immunized.");
-            else {
+            if (you) {
+                if (resists_poison(mon))
+                    pline("(But in fact it was biologically contaminated %s.)",
+                          fruitname(TRUE));
+                if (Role_if(PM_HEALER))
+                    pline("Fortunately, you have been immunized.");
+            }
+            if ((you && !Role_if(PM_HEALER)) ||
+                monsndx(mon->data) != PM_HEALER) {
                 int typ = rn2(A_MAX);
-
-                if (!Fixed_abil) {
-                    poisontell(typ);
-                    adjattrib(typ, Poison_resistance ? -1 : -rn1(4, 3), TRUE);
+                if (!fixed_abilities(mon)) {
+                    if (you) {
+                        poisontell(typ);
+                        adjattrib(typ, resists_poison(mon) ? -1 : -rn1(4, 3), TRUE);
+                    } else {
+                        int dmg = resists_poison(mon) ? -1 : -rn1(4, 3);
+                        dmg = dice(dmg, 8);
+                        mon->mhpmax -= dmg;
+                        mon->mhp -= dmg;
+                        if (mon->mhpmax < 1)
+                            mon->mhpmax = 1; /* avoid strange issues if mon gets lifesaved */
+                        if (mon->mhp < 1) {
+                            mondied(mon);
+                            break;
+                        }
+                    }
                 }
-                if (!Poison_resistance) {
-                    if (otmp->fromsink)
+                if (resists_poison(mon)) {
+                    if (you && otmp->fromsink)
                         losehp(rnd(10) + 5 * ! !(otmp->cursed),
                                killer_msg(DIED, "contaminated tap water"));
-                    else
+                    else if (you)
                         losehp(rnd(10) + 5 * ! !(otmp->cursed),
                                killer_msg(DIED, "contaminated potion"));
+                    else {
+                        mon->mhp -= rnd(10) + 5;
+                        if (mon->mhp < 1)
+                            mondied(mon);
+                    }
                 }
-                exercise(A_CON, FALSE);
+                if (you)
+                    exercise(A_CON, FALSE);
             }
         }
-        if (Hallucination) {
-            pline("You are shocked back to your senses!");
-            make_hallucinated(0L, FALSE);
+        if (hallucinating(mon)) {
+            if (you || vis)
+                pline("%s %s shocked back to %s senses!", Mon,
+                      you ? "are" : "is", his);
+            set_property(mon, HALLUC, -2, TRUE);
         }
         break;
     case POT_CONFUSION:
-        if (!Confusion)
-            if (Hallucination) {
-                pline("What a trippy feeling!");
-                unkn++;
-            } else
-                pline("Huh, What?  Where am I?");
-        else
+        if (confused(mon))
             nothing++;
-        make_confused(itimeout_incr(HConfusion, rn1(7, 16 - 8 * bcsign(otmp))),
-                      FALSE);
+        set_property(mon, CONFUSION, rn1(7, 16 - 8 * bcsign(otmp)), FALSE);
         break;
     case POT_GAIN_ABILITY:
         if (otmp->cursed) {
-            pline("Ulch!  That potion tasted foul!");
+            if (you)
+                pline("Ulch!  That potion tasted foul!");
             unkn++;
-        } else if (Fixed_abil) {
+            break;
+        } else if (fixed_abilities(mon)) {
             nothing++;
-        } else {        /* If blessed, increase all; if not, try up to */
-            int itmp;   /* 6 times to find one which can be increased. */
+            break;
+        } else if (you) { /* If blessed, increase all; if not, try up to */
+            int itmp;     /* 6 times to find one which can be increased. */
 
             i = -1;     /* increment to 0 */
             for (ii = A_MAX; ii > 0; ii--) {
@@ -733,171 +897,276 @@ peffects(struct obj *otmp)
                 if (adjattrib(i, 1, itmp) && !otmp->blessed)
                     break;
             }
+            break;
+        }
+        /* FALLTHROUGH for monsters -- make gain level/ability equavilent for noncursed*/
+    case POT_GAIN_LEVEL:
+        if (otmp->cursed) {
+            unkn++;
+            /* they went up a level */
+            if ((ledger_no(m_mz(mon)) == 1 && mon_has_amulet(mon)) ||
+                Can_rise_up(m_mx(mon), m_my(mon), m_mz(mon))) {
+                const char *riseup = "%s rise%s up, through the %s!";
+
+                if (ledger_no(m_mz(mon)) == 1) {
+                    pline(riseup, Mon, you ? "" : "s",
+                          ceiling(m_mx(mon), m_my(mon)));
+                    if (you)
+                        goto_level(&earth_level, FALSE, FALSE, FALSE);
+                    else { /* ouch... */
+                        migrate_to_level(mon, ledger_no(&earth_level), MIGR_NEAR_PLAYER, NULL);
+                        if (vis) {
+                            pline("Congratulations, %s!", mortal_or_creature(mon->data, TRUE));
+                            pline("But now thou must face the final Test...");
+                        }
+                        pline("%s managed to get to the Planes with the Amulet...",
+                              Monnam(mon));
+                        pline("You feel a sense of despair as you realize that all is lost.");
+                        const char *ebuf;
+                        ebuf = msgprintf("lost the Amulet as %s escaped with it", k_monnam(mon));
+                        done(ESCAPED, ebuf);
+                    }
+                } else {
+                    int newlev = depth(m_mz(mon)) - 1;
+                    d_level newlevel;
+
+                    get_level(&newlevel, newlev);
+                    if (on_level(&newlevel, m_mz(mon))) {
+                        if (you)
+                            pline("It tasted bad.");
+                        break;
+                    } else
+                        pline(riseup, ceiling(u.ux, u.uy));
+                    if (you)
+                        goto_level(&newlevel, FALSE, FALSE, FALSE);
+                    else
+                        migrate_to_level(mon, ledger_no(&newlevel), MIGR_RANDOM, NULL);
+                }
+            } else if (you)
+                pline("You have an uneasy feeling.");
+            else if (vis)
+                pline("%s looks uneasy.", Monnam(mon));
+            break;
+        }
+        if (you) {
+            pluslvl(FALSE);
+            if (otmp->blessed)
+                /* blessed potions place you at a random spot in the middle of the
+                   new level instead of the low point */
+                u.uexp = rndexp(TRUE);
+        } else {
+            if (!vis)
+                unkn++;
+            else {
+                if (otmp->otyp == POT_GAIN_LEVEL)
+                    pline("%s seems more experienced.", Mon);
+                else
+                    pline("%s abilities looks improved.", Mons);
+            }
+            if (!grow_up(mon, NULL))
+                return unkn;
         }
         break;
     case POT_SPEED:
-        if (Wounded_legs && !otmp->cursed && !u.usteed
+        if (you && Wounded_legs && !otmp->cursed && !u.usteed
             /* heal_legs() would heal steeds legs */ ) {
             heal_legs(Wounded_leg_side);
             unkn++;
             break;
         }       /* and fall through */
     case SPE_HASTE_SELF:
-        exercise(A_DEX, TRUE);
-        set_property(&youmonst, FAST, rn1(10, 100 + 60 * bcsign(otmp)), FALSE);
+        if (you)
+            exercise(A_DEX, TRUE);
+        set_property(mon, FAST, rn1(10, 100 + 60 * bcsign(otmp)), FALSE);
         break;
     case POT_BLINDNESS:
-        if (Blind)
+        if (blind(mon))
             nothing++;
-        make_blinded(itimeout_incr(Blinded, rn1(200, 250 - 125 * bcsign(otmp))),
-                     (boolean) ! Blind);
-        break;
-    case POT_GAIN_LEVEL:
-        if (otmp->cursed) {
-            unkn++;
-            /* they went up a level */
-            if ((ledger_no(&u.uz) == 1 && Uhave_amulet) ||
-                Can_rise_up(u.ux, u.uy, &u.uz)) {
-                const char *riseup = "You rise up, through the %s!";
-
-                if (ledger_no(&u.uz) == 1) {
-                    pline(riseup, ceiling(u.ux, u.uy));
-                    goto_level(&earth_level, FALSE, FALSE, FALSE);
-                } else {
-                    int newlev = depth(&u.uz) - 1;
-                    d_level newlevel;
-
-                    get_level(&newlevel, newlev);
-                    if (on_level(&newlevel, &u.uz)) {
-                        pline("It tasted bad.");
-                        break;
-                    } else
-                        pline(riseup, ceiling(u.ux, u.uy));
-                    goto_level(&newlevel, FALSE, FALSE, FALSE);
-                }
-            } else
-                pline("You have an uneasy feeling.");
-            break;
-        }
-        pluslvl(FALSE);
-        if (otmp->blessed)
-            /* blessed potions place you at a random spot in the middle of the
-               new level instead of the low point */
-            u.uexp = rndexp(TRUE);
-        break;
-    case POT_HEALING:
-        pline("You feel better.");
-        healup(dice(6 + 2 * bcsign(otmp), 4), !otmp->cursed ? 1 : 0,
-               ! !otmp->blessed, !otmp->cursed);
-        exercise(A_CON, TRUE);
-        break;
-    case POT_EXTRA_HEALING:
-        pline("You feel much better.");
-        healup(dice(6 + 2 * bcsign(otmp), 8),
-               otmp->blessed ? 5 : !otmp->cursed ? 2 : 0, !otmp->cursed, TRUE);
-        make_hallucinated(0L, TRUE);
-        exercise(A_CON, TRUE);
-        exercise(A_STR, TRUE);
+        set_property(mon, BLINDED, rn1(200, 250 - 125 * bcsign(otmp)), FALSE);
         break;
     case POT_FULL_HEALING:
-        pline("You feel completely healed.");
-        healup(400, 4 + 4 * bcsign(otmp), !otmp->cursed, TRUE);
-        /* Restore one lost level if blessed */
-        if (otmp->blessed && u.ulevel < u.ulevelmax) {
-            /* when multiple levels have been lost, drinking multiple potions
-               will only get half of them back */
-            u.ulevelmax -= 1;
+        heal = 400;
+        healmax = otmp->blessed ? 8 : 4;
+        if (you || vis)
+            pline("%s %s fully healed", Mon, looks);
+        /* Increase level if you lost some/many */
+        if (you && otmp->blessed && u.ulevel < u.ulevelmax)
             pluslvl(FALSE);
+        /* fallthrough */
+    case POT_EXTRA_HEALING:
+        if (!heal) {
+            heal = dice(6 + 2 * bcsign(otmp), 8);
+            healmax = otmp->blessed ? 5 : 2;
+            if (you || vis)
+                pline("%s %s much better", Mon, looks);
         }
-        make_hallucinated(0L, TRUE);
-        exercise(A_STR, TRUE);
-        exercise(A_CON, TRUE);
+        set_property(mon, HALLUC, -2, FALSE);
+        if (you)
+            exercise(A_STR, TRUE);
+    case POT_HEALING:
+        if (!heal) {
+            heal = dice(6 + 2 * bcsign(otmp), 4);
+            healmax = 1;
+            if (you || vis)
+                pline("%s %s better.", Mon, looks);
+        }
+        /* cure blindness for EH/FH or noncursed H */
+        if (healmax > 1 || !otmp->cursed)
+            set_property(mon, BLINDED, -2, FALSE);
+        /* cure sickness for noncursed EX/FH or blessed H */
+        if (otmp->blessed || (healmax > 1 && !otmp->cursed))
+            set_property(mon, SICK, -2, FALSE);
+        /* cursed potions give no max HP gains */
+        if (otmp->cursed)
+            healmax = 0;
+        if (you) {
+            healup(heal, healmax, FALSE, FALSE);
+            exercise(A_CON, TRUE);
+        } else {
+            mon->mhp += heal;
+            if (mon->mhp >= mon->mhpmax) {
+                if (otmp->blessed)
+                    mon->mhpmax += healmax;
+                mon->mhp = mon->mhpmax;
+            }
+        }
         break;
     case POT_LEVITATION:
     case SPE_LEVITATION:
-        if (levitates(&youmonst) && !otmp->cursed)
+        if (levitates(mon) && !otmp->cursed)
             nothing++;
-        if (otmp->cursed)
+        if (otmp->cursed) /* convert controlled->uncontrolled levi */
             /* TRUE to avoid float_down() */
-            set_property(&youmonst, LEVITATION, -1, TRUE);
+            set_property(mon, LEVITATION, -1, TRUE);
         if (otmp->blessed) {
-            set_property(&youmonst, LEVITATION, 0, FALSE);
-            set_property(&youmonst, LEVITATION, rn1(50, 250), FALSE);
+            set_property(mon, LEVITATION, 0, FALSE);
+            set_property(mon, LEVITATION, rn1(50, 250), FALSE);
         } else
-            set_property(&youmonst, LEVITATION, rn1(140, 10), FALSE);
-        if (otmp->cursed && !Is_waterlevel(&u.uz)) {
-            if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy) &&
-                (u.ux != level->sstairs.sx ||
-                 u.uy != level->sstairs.sy || !level->sstairs.up) &&
-                (u.ux != level->upladder.sx ||
-                 u.uy != level->upladder.sy)) {
-                pline("You hit your %s on the %s.", body_part(HEAD),
-                      ceiling(u.ux, u.uy));
-                losehp(uarmh ? 1 : rnd(10),
-                       killer_msg(DIED, "colliding with the ceiling"));
-            } else
+            set_property(mon, LEVITATION, rn1(140, 10), FALSE);
+        if (otmp->cursed && !Is_waterlevel(m_mz(mon))) {
+            if ((m_mx(mon) != level->upstair.sx || m_my(mon) != level->upstair.sy) &&
+                (m_mx(mon) != level->sstairs.sx ||
+                 m_my(mon) != level->sstairs.sy || !level->sstairs.up) &&
+                (m_mx(mon) != level->upladder.sx ||
+                 m_my(mon) != level->upladder.sy)) {
+                if (you || vis)
+                    pline("%s hit%s %s %s on the %s.", Mon, you ? "" : "s", his,
+                          mbodypart(mon, HEAD), ceiling(m_mx(mon), m_my(mon)));
+                dmg = which_armor(mon, os_armh) ? 1 : rnd(10);
+                if (you)
+                    losehp(dmg, killer_msg(DIED, "colliding with the ceiling"));
+                else {
+                    mon->mhp -= dmg;
+                    if (mon->mhp < 1)
+                        mondied(mon);
+                }
+            } else if (you)
                 doup();
         }
-        spoteffects(FALSE);     /* for sinks */
+        if (you)
+            spoteffects(FALSE); /* for sinks */
         break;
     case POT_GAIN_ENERGY:      /* M. Stephenson */
-        {
-            int num;
-
-            if (otmp->cursed)
-                pline("You feel lackluster.");
-            else
-                pline("Magical energies course through your body.");
-            num = rnd(5) + 5 * otmp->blessed + 1;
+        if (otmp->cursed) {
+            if (you || vis)
+                pline("%s %s lackluster.", Mon, looks);
+        } else {
+            if (you || vis)
+                pline("Magical energies course through %s body.",
+                      you ? "your" : s_suffix(mon_nam(mon)));
+            set_property(mon, CANCELLED, -2, FALSE);
+        }
+        int num;
+        num = rnd(5) + 5 * otmp->blessed + 1;
+        if (you) {
             u.uenmax += (otmp->cursed) ? -num : num;
             u.uen += (otmp->cursed) ? -num : num;
             if (u.uenmax <= 0)
                 u.uenmax = 0;
             if (u.uen <= 0)
                 u.uen = 0;
-            exercise(A_WIS, TRUE);
+            exercise(A_WIS, otmp->cursed ? FALSE : TRUE);
         }
+        if (otmp->cursed)
+            mon->mspec_used += num * 5;
+        else
+            mon->mspec_used = 0;
         break;
     case POT_OIL:      /* P. Winner */
         {
             boolean good_for_you = FALSE;
 
             if (otmp->lamplit) {
-                if (likes_fire(youmonst.data)) {
-                    pline("Ahh, a refreshing drink.");
+                if (likes_fire(mon->data)) {
+                    if (you)
+                        pline("Ahh, a refreshing drink.");
+                    else if (vis)
+                        pline("%s looks refreshed.", Monnam(mon));
                     good_for_you = TRUE;
                 } else {
-                    pline("You burn your %s.", body_part(FACE));
-                    losehp(dice(Fire_resistance ? 1 : 3, 4),
-                           killer_msg(DIED, "a burning potion of oil"));
+                    pline("%s burn%s %s %s.", Mon, you ? "" : "s", his,
+                          mbodypart(mon, FACE));
+                    dmg = dice(resists_fire(mon) ? 1 : 3, 4);
+                    if (you)
+                        losehp(dmg, killer_msg(DIED, "a burning potion of oil"));
+                    else {
+                        mon->mhp -= dmg;
+                        if (mon->mhp < 1)
+                            mondied(mon);
+                    }
                 }
-            } else if (otmp->cursed)
-                pline("This tastes like castor oil.");
-            else
-                pline("That was smooth!");
-            exercise(A_WIS, good_for_you);
+            } else if (you) {
+                if (otmp->cursed)
+                    pline("This tastes like castor oil.");
+                else
+                    pline("That was smooth!");
+                exercise(A_WIS, good_for_you);
+            } else
+                unkn++;
         }
         break;
     case POT_ACID:
-        if (Acid_resistance)
-            /* Not necessarily a creature who _likes_ acid */
-            pline("This tastes %s.", Hallucination ? "tangy" : "sour");
-        else {
-            pline("This burns%s!",
-                  otmp->blessed ? " a little" : otmp->
-                  cursed ? " a lot" : " like acid");
-            losehp(dice(otmp->cursed ? 2 : 1, otmp->blessed ? 4 : 8),
-                   killer_msg(DIED, "drinking acid"));
-            exercise(A_CON, FALSE);
+        if (resists_acid(mon)) {
+            if (you)
+                /* Not necessarily a creature who _likes_ acid */
+                pline("This tastes %s.", Hallucination ? "tangy" : "sour");
+        } else {
+            if (you)
+                pline("This burns%s!",
+                      otmp->blessed ? " a little" : otmp->
+                      cursed ? " a lot" : " like acid");
+            else if (vis)
+                pline("%s shrieks in pain!", Monnam(mon));
+            dmg = dice(otmp->cursed ? 2 : 1, otmp->blessed ? 4 : 8);
+            if (you) {
+                losehp(dmg, killer_msg(DIED, "drinking acid"));
+                exercise(A_CON, FALSE);
+            } else {
+                mon->mhp -= dmg;
+                if (mon->mhp < 1)
+                    mondied(mon);
+            }
         }
-        if (Stoned)
+        if (you && Stoned) /* FIXME: move monster unstone here as well */
             fix_petrification();
         unkn++; /* holy/unholy water can burn like acid too */
         break;
     case POT_POLYMORPH:
-        pline("You feel a little %s.", Hallucination ? "normal" : "strange");
-        if (!Unchanging)
-            polyself(FALSE);
+        if (you || vis) {
+            if (you)
+                pline("You feel a little %s.", Hallucination ? "normal" : "strange");
+            else if (vis && !unchanging(mon))
+                pline("%s suddenly mutates!", Mon);
+            else if (vis)
+                pline("%s looks a little %s.", Mon,
+                      hallucinating(&youmonst) ? "normal" : "strange");
+        }
+        if (!unchanging(mon)) {
+            if (you)
+                polyself(FALSE);
+            else
+                newcham(mon, NULL, FALSE, FALSE);
+        }
         break;
     default:
         impossible("What a funny potion! (%u)", otmp->otyp);
