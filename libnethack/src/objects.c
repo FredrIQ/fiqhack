@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -794,8 +794,8 @@ const struct objclass const_objects[] = {
  * default letter that's either lowercase, or an uppercase letter that isn't in
  * the last SPID_COUNT (those letters are reserved for supernatural abilities)
  *
- * Currently used: aABcCdDeEfFgGhHiIjkKlLmMnoOpPrRsStTuUvwxz
- *         unused: bJNqQy
+ * Currently used: aABcCdDefFgGhHiIjkKlLmMnNoOpPqrRsStTuUvwxyz
+ *         unused: bEJQ
  *       reserved: VWXYZ
  *
  * Reasoning:
@@ -819,7 +819,7 @@ const struct objclass const_objects[] = {
           RAY, HI_PAPER, 'd'),
     SPELL("magic missile", "vellum", P_ATTACK_SPELL, 45, 2, 2, 1,
           RAY, HI_PAPER, 'm'),
-    SPELL("fireball", "ragged", P_ATTACK_SPELL, 20, 4, 4, 1,
+    SPELL("fireball", "ragged", P_ATTACK_SPELL, 10, 4, 4, 1,
           RAY, HI_PAPER, 'f'),
     SPELL("cone of cold", "dog eared", P_ATTACK_SPELL, 10, 7, 4, 1,
           RAY, HI_PAPER, 'o'),
@@ -849,8 +849,6 @@ const struct objclass const_objects[] = {
           IMMEDIATE, CLR_GREEN, 'w'),
     SPELL("create monster", "turquoise", P_CLERIC_SPELL, 35, 3, 2, 1,
           NODIR, CLR_BRIGHT_CYAN, 'O'),
-    SPELL("detect food", "cyan", P_DIVINATION_SPELL, 30, 3, 2, 1,
-          NODIR, CLR_CYAN, 'E'),
     SPELL("cause fear", "light blue", P_ENCHANTMENT_SPELL, 25, 3, 3, 1,
           NODIR, CLR_BRIGHT_BLUE, 'c'),
     SPELL("clairvoyance", "dark blue", P_DIVINATION_SPELL, 15, 3, 3, 1,
@@ -879,22 +877,30 @@ const struct objclass const_objects[] = {
           NODIR, HI_PAPER, 'M'),
     SPELL("identify", "bronze", P_DIVINATION_SPELL, 20, 6, 3, 1,
           NODIR, HI_COPPER, 'I'),
+    SPELL("cancellation", "shining", P_MATTER_SPELL, 15, 8, 6, 1,
+          IMMEDIATE, CLR_WHITE, 'C'),
     SPELL("turn undead", "copper", P_CLERIC_SPELL, 16, 8, 6, 1,
           IMMEDIATE, HI_COPPER, 'T'),
-    SPELL("polymorph", "silver", P_MATTER_SPELL, 10, 8, 6, 1,
-          IMMEDIATE, HI_SILVER, 'P'),
-    SPELL("teleport away", "gold", P_ESCAPE_SPELL, 15, 6, 6, 1,
+    SPELL("teleport away", "gold", P_ESCAPE_SPELL, 15, 6, 5, 1,
           IMMEDIATE, HI_GOLD, 't'),
-    SPELL("create familiar", "glittering", P_CLERIC_SPELL, 10, 7, 6, 1,
+    SPELL("create familiar", "glittering", P_CLERIC_SPELL, 20, 4, 3, 1,
           NODIR, CLR_WHITE, 'A'),
-    SPELL("cancellation", "shining", P_MATTER_SPELL, 15, 8, 7, 1,
-          IMMEDIATE, CLR_WHITE, 'C'),
-    SPELL("protection", "dull", P_CLERIC_SPELL, 18, 3, 1, 1,
+    SPELL("polymorph", "silver", P_MATTER_SPELL, 8, 8, 7, 1,
+          IMMEDIATE, HI_SILVER, 'P'),
+    SPELL("protection", "dull", P_CLERIC_SPELL, 20, 3, 1, 1,
           NODIR, HI_PAPER, 'p'),
     SPELL("jumping", "thin", P_ESCAPE_SPELL, 20, 3, 1, 1,
           IMMEDIATE, HI_PAPER, 'j'),
     SPELL("stone to flesh", "thick", P_HEALING_SPELL, 15, 1, 3, 1,
           IMMEDIATE, HI_PAPER, 'S'),
+    SPELL("charging", "cyan", P_ENCHANTMENT_SPELL, 7, 10, 7, 1,
+          NODIR, CLR_CYAN, 'g'),
+    SPELL("astral eyesight", "canvas", P_DIVINATION_SPELL, 10, 4, 7, 1,
+          NODIR, CLR_BROWN, 'y'),
+    SPELL("summon nasty", "hardcover", P_CLERIC_SPELL, 3, 12, 7, 1,
+          NODIR, CLR_BROWN, 'N'),
+    SPELL("phase", "ochre", P_ESCAPE_SPELL, 10, 6, 7, 1,
+          NODIR, CLR_YELLOW, 'q'),
 /* blank spellbook must come last because it retains its description */
     SPELL("blank paper", "plain", P_NONE, 18, 0, 0, 0, 0, HI_PAPER, 0),
 /* a special, one of a kind, spellbook */

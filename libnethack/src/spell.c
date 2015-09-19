@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -50,7 +50,7 @@ static int learn(void);
 static boolean getspell(int *);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(const struct monst *, int);
-static int throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg);
+static int throwspell(boolean, schar *dx, schar *dy, const struct nh_cmd_arg *arg);
 static void cast_protection(void);
 static void spell_backfire(int);
 
@@ -945,16 +945,17 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     boolean ray = FALSE;
     struct obj *pseudo;
     skill = mspell_skilltype(spellid(spell));
-    role_skill = mprof(mon, skill);;
+    role_skill = mprof(mon, skill);
+    int count = 0;
 
     if (vis)
         pline("%s casts a spell!", Monnam(mon));
 
-    /* Monsters use up less Pw (really mspec_used) from spellcasting.
-       The reason behind this is that mspec_used is a cooldown, and this
-       allows them to cast fairly often. Once mspec_used is replaced by
-       a real energy reserve, revert this to * 5 like for players */
-    energy = (spellev(spell) * 3);
+    /* highlevel casters can cast more than lowlevel ones */
+    int cooldown = 7 - (mon->m_lev / 5);
+    if (cooldown < 2)
+        cooldown = 2;
+    energy = (spellev(spell) * cooldown);
     if (mon_has_amulet(mon)) {
         /* since monsters either have the mspec to cast or not,
            make the amulet occasionally make the spell fail. */
@@ -1059,7 +1060,6 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
         /* these are all duplicates of scroll effects */
     case SPE_REMOVE_CURSE:
     case SPE_CONFUSE_MONSTER:
-    case SPE_DETECT_FOOD:
     case SPE_CAUSE_FEAR:
         /* high skill yields effect equivalent to blessed scroll */
         if (role_skill >= P_SKILLED)
@@ -1069,6 +1069,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     case SPE_MAGIC_MAPPING:
     case SPE_CREATE_MONSTER:
     case SPE_IDENTIFY:
+    case SPE_CHARGING:
         seffects(mon, pseudo, &dummy);
         break;
 
@@ -1101,6 +1102,15 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     case SPE_CREATE_FAMILIAR:
         make_familiar(NULL, u.ux, u.uy, FALSE);
         break;
+    case SPE_SUMMON_NASTY:
+        cc.x = dx;
+        cc.y = dy;
+        count = nasty(mon, cc);
+        if (count) {
+            pline("%s from nowhere!", count > 1 ? "Monsters appear" :
+                  "A monster appears");
+        }
+        break;
     case SPE_CLAIRVOYANCE:
         if (!BClairvoyant)
             do_vicinity_map();
@@ -1113,6 +1123,12 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
         break;
     case SPE_JUMPING:
         jump_to_coords(&cc);
+        break;
+    case SPE_ASTRAL_EYESIGHT:
+        set_property(mon, XRAY_VISION, rn1(20, 11), FALSE);
+        break;
+    case SPE_PHASE:
+        set_property(mon, PASSES_WALLS, rn1(40, 21), FALSE);
         break;
     default:
         impossible("Unknown or nonimplemented monster spell %d attempted.", spell);
@@ -1134,6 +1150,8 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     boolean dummy;
     coord cc;
     schar dx = 0, dy = 0, dz = 0;
+    boolean thrownasty = FALSE;
+    int count = 0; /* for nasty */
 
     if (!SPELL_IS_FROM_SPELLBOOK(spell)) {
         /* At the moment, we implement this via calling the code for the
@@ -1170,11 +1188,13 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     switch (spellid(spell)) {
 
     /* These spells ask the user to target a specific space. */
+    case SPE_SUMMON_NASTY:
+        thrownasty = TRUE;
     case SPE_CONE_OF_COLD:
     case SPE_FIREBALL:
         /* If Skilled or better, get a specific space. */
         if (role_skill >= P_SKILLED) {
-            if (throwspell(&dx, &dy, arg)) {
+            if (throwspell(thrownasty, &dx, &dy, arg)) {
                 dz = 0;
                 break;
             }
@@ -1239,7 +1259,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     }
     energy = (spellev(spell) * 5);      /* 5 <= energy <= 35 */
 
-    if (u.uhunger <= 10 && spellid(spell) != SPE_DETECT_FOOD) {
+    if (u.uhunger <= 10) {
         pline("You are too hungry to cast that spell.");
         return 0;
     } else if (ACURR(A_STR) < 4) {
@@ -1262,41 +1282,39 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         pline("You don't have enough energy to cast that spell.");
         return 0;
     } else {
-        if (spellid(spell) != SPE_DETECT_FOOD) {
-            int hungr = energy * 2;
+        int hungr = energy * 2;
 
-            /*
-             * If hero is a wizard, their current intelligence
-             * (bonuses + temporary + current)
-             * affects hunger reduction in casting a spell.
-             * 1. int = 17-18 no reduction
-             * 2. int = 16    1/4 hungr
-             * 3. int = 15    1/2 hungr
-             * 4. int = 1-14  normal reduction
-             * The reason for this is:
-             * a) Intelligence affects the amount of exertion
-             * in thinking.
-             * b) Wizards have spent their life at magic and
-             * understand quite well how to cast spells.
-             */
-            intell = acurr(A_INT);
-            if (!Role_if(PM_WIZARD))
-                intell = 10;
-            if (intell >= 17)
-                hungr = 0;
-            else if (intell == 16)
-                hungr /= 4;
-            else if (intell == 15)
-                hungr /= 2;
+        /*
+         * If hero is a wizard, their current intelligence
+         * (bonuses + temporary + current)
+         * affects hunger reduction in casting a spell.
+         * 1. int = 17-18 no reduction
+         * 2. int = 16    1/4 hungr
+         * 3. int = 15    1/2 hungr
+         * 4. int = 1-14  normal reduction
+         * The reason for this is:
+         * a) Intelligence affects the amount of exertion
+         * in thinking.
+         * b) Wizards have spent their life at magic and
+         * understand quite well how to cast spells.
+         */
+        intell = acurr(A_INT);
+        if (!Role_if(PM_WIZARD))
+            intell = 10;
+        if (intell >= 17)
+            hungr = 0;
+        else if (intell == 16)
+            hungr /= 4;
+        else if (intell == 15)
+            hungr /= 2;
 
-            /* don't put player (quite) into fainting from casting a spell,
-               particularly since they might not even be hungry at the
-               beginning; however, this is low enough that they must eat before
-               casting anything else except detect food */
-            if (hungr > u.uhunger - 3)
-                hungr = u.uhunger - 3;
-            morehungry(hungr);
-        }
+        /* don't put player (quite) into fainting from casting a spell,
+           particularly since they might not even be hungry at the
+           beginning; however, this is low enough that they must eat before
+           casting anything else except detect food */
+        if (hungr > u.uhunger - 3)
+            hungr = u.uhunger - 3;
+        morehungry(hungr);
     }
 
     chance = percent_success(&youmonst, spell);
@@ -1387,7 +1405,6 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         /* these are all duplicates of scroll effects */
     case SPE_REMOVE_CURSE:
     case SPE_CONFUSE_MONSTER:
-    case SPE_DETECT_FOOD:
     case SPE_CAUSE_FEAR:
         /* high skill yields effect equivalent to blessed scroll */
         if (role_skill >= P_SKILLED)
@@ -1397,6 +1414,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     case SPE_MAGIC_MAPPING:
     case SPE_CREATE_MONSTER:
     case SPE_IDENTIFY:
+    case SPE_CHARGING:
         seffects(&youmonst, pseudo, &dummy);
         break;
 
@@ -1429,6 +1447,24 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     case SPE_CREATE_FAMILIAR:
         make_familiar(NULL, u.ux, u.uy, FALSE);
         break;
+    case SPE_SUMMON_NASTY:
+        cc.x = dx;
+        cc.y = dy;
+        count = nasty(&youmonst, cc);
+        if (count) {
+            pline("%s from nowhere!", count > 1 ? "Monsters appear" :
+                  "A monster appears");
+        } else
+            pline("You feel lonely.");
+        /* summoning aggravates the target */
+        struct monst *mtmp = m_at(level, cc.x, cc.y);
+        if (mtmp) {
+            if (mtmp->mtame)
+                abuse_dog(mtmp);
+            else if (mtmp->mpeaceful)
+                setmangry(mtmp);
+        }
+        break;
     case SPE_CLAIRVOYANCE:
         if (!BClairvoyant)
             do_vicinity_map();
@@ -1441,6 +1477,12 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         break;
     case SPE_JUMPING:
         jump_to_coords(&cc);
+        break;
+    case SPE_ASTRAL_EYESIGHT:
+        set_property(&youmonst, XRAY_VISION, rn1(20, 11), FALSE);
+        break;
+    case SPE_PHASE:
+        set_property(&youmonst, PASSES_WALLS, rn1(40, 21), FALSE);
         break;
     default:
         impossible("Unknown spell %d attempted.", spell);
@@ -1455,21 +1497,25 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     return 1;
 }
 
-/* Choose location where spell takes effect. */
+/* Choose location where spell takes effect.
+   Fireball/CoC and summon nasty have different conditions. */
 static int
-throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg)
+throwspell(boolean nasty, schar *dx, schar *dy, const struct nh_cmd_arg *arg)
 {
     coord cc;
 
-    if (u.uinwater) {
+    if (!nasty && u.uinwater) {
         pline("You're joking! In this weather?");
         return 0;
-    } else if (Is_waterlevel(&u.uz)) {
+    } else if (!nasty && Is_waterlevel(&u.uz)) {
         pline("You had better wait for the sun to come out.");
         return 0;
     }
 
-    pline("Where do you want to cast the spell?");
+    if (nasty)
+        pline("What monster do you want to target?");
+    else
+        pline("Where do you want to cast the spell?");
     cc.x = u.ux;
     cc.y = u.uy;
     if (getargpos(arg, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
@@ -1484,6 +1530,11 @@ throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg)
         *dx = 0;
         *dy = 0;
         return 1;
+    } else if (nasty && cc.x != u.ux && cc.y != u.uy &&
+               (!MON_AT(level, cc.x, cc.y) ||
+                !canspotmon(m_at(level, cc.x, cc.y)))) {
+        pline("You fail to sense a monster there!");
+        return 0;
     } else
         if ((!cansee(cc.x, cc.y) &&
              (!MON_AT(level, cc.x, cc.y) ||
@@ -1637,6 +1688,7 @@ percent_success(const struct monst *mon, int spell)
     struct obj *armf = which_armor(mon, os_armf);
     int spelarmr = you ? urole.spelarmr : 10;
     int spelshld = you ? urole.spelshld : 1;
+    int xl = you ? u.ulevel : mon->m_lev;
 
     if (arm && is_metallic(arm))
         splcaster += (armc &&
@@ -1694,7 +1746,7 @@ percent_success(const struct monst *mon, int spell)
     else
         skill = mprof(mon, mspell_skilltype(spellid(spell)));
     skill = max(skill, P_UNSKILLED) - 1;        /* unskilled => 0 */
-    difficulty = (spellev(spell) - 1) * 4 - ((skill * 6) + (m_mlev(mon) / 3) + 1);
+    difficulty = (spellev(spell) - 1) * 4 - ((skill * 6) + (xl / 3) + 1);
 
     if (difficulty > 0) {
         /* Player is too low level or unskilled. */

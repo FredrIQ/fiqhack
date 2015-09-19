@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1964,7 +1964,7 @@ extern boolean covetous_sense(const struct monst *, const struct monst *);
 extern void aggravate(void);
 extern void clonewiz(void);
 extern int pick_nasty(void);
-extern int nasty(struct monst *);
+extern int nasty(struct monst *, coord);
 extern void resurrect(void);
 extern void intervene(void);
 extern void wizdead(void);

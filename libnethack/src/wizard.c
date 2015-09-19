@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -690,30 +690,44 @@ pick_nasty(void)
 /* create some nasty monsters, aligned or neutral with the caster */
 /* a null caster defaults to a chaotic caster (e.g. the wizard) */
 int
-nasty(struct monst *mcast)
+nasty(struct monst *mcast, coord bypos)
 {
     struct monst *mtmp;
+    struct monst *mtarget = m_at(level, bypos.x, bypos.y);
+    /* m_at doesn't work on you */
+    if (bypos.x == u.ux && bypos.y == u.uy)
+        mtarget = &youmonst;
     int i, j, tmp;
     int castalign = (mcast ? mcast->data->maligntyp : -1);
-    coord bypos;
     int count = 0;
-
-    if (!mcast) {
-        bypos.x = u.ux;
-        bypos.y = u.uy;
-    } else if (aware_of_u(mcast) && !engulfing_u(mcast)) {
-        bypos.x = mcast->mux;
-        bypos.y = mcast->muy;
-    } else {
-        bypos.x = mcast->mx;
-        bypos.y = mcast->my;
+    boolean you = (mcast && mcast == &youmonst);
+    if (you)
+        castalign = u.ualign.type;
+    boolean tame = (you || (mcast && mcast->mtame));
+    if (mtarget && (!mtarget->mpeaceful || mtarget->mtame)) {
+        /* create monsters hostile to the target */
+        tame = TRUE;
+        if (mtarget == &youmonst || mtarget->mpeaceful)
+            tame = FALSE;
     }
 
     if (!rn2(10) && Inhell) {
-        msummon(NULL, &level->z);       /* summons like WoY */
+        if (tame)
+            demonpet();
+        else
+            msummon(mcast, &level->z);       /* summons like WoY */
         count++;
     } else {
-        tmp = (u.ulevel > 3) ? u.ulevel / 3 : 1;       /* just in case -- rph */
+        if (!mcast) /* WoY harassment */
+            tmp = (u.ulevel > 3) ? u.ulevel / 3 : 1; /* just in case -- rph */
+        else {
+            if (you)
+                tmp = u.ulevel / 5;
+            else
+                tmp = mcast->m_lev / 5;
+            if (tmp < 1)
+                tmp = 1;
+        }
         for (i = rnd(tmp); i > 0; --i)
             for (j = 0; j < 20; j++) {
                 int makeindex;
@@ -725,19 +739,32 @@ nasty(struct monst *mcast)
                 } while (mcast && attacktype(&mons[makeindex], AT_MAGC) &&
                          monstr[makeindex] >= monstr[monsndx(mcast->data)]);
                 /* do this after picking the monster to place */
-                if (mcast && aware_of_u(mcast) && !engulfing_u(mcast) &&
-                    !enexto(&bypos, level, mcast->mux, mcast->muy,
+                if (!enexto(&bypos, level, bypos.x, bypos.y,
                             &mons[makeindex]))
                     continue;
-                if (((mtmp = makemon(&mons[makeindex], level, bypos.x, bypos.y,
-                                     NO_MM_FLAGS))) != 0) {
-                    mtmp->msleeping = 0;
+                mtmp = makemon(&mons[makeindex], level, bypos.x, bypos.y,
+                               tame ? MM_EDOG : NO_MM_FLAGS);
+                if (!mtmp) {
+                    /* probably genocided, try a random monster */
+                    mtmp = makemon(NULL, level, bypos.x, bypos.y,
+                                   tame ? MM_EDOG : NO_MM_FLAGS);
+                    if (!mtmp) /* failed again? */
+                        continue;
+                }
+                mtmp->msleeping = 0;
+                if (tame) {
+                    initedog(mtmp);
+                    set_malign(mtmp);
+                    /* tame monsters drop items, ensure they don't drop weapon selection */
+                    if (mtmp->mtame && attacktype(mtmp->data, AT_WEAP)) {
+                        mtmp->weapon_check = NEED_HTH_WEAPON;
+                        mon_wield_item(mtmp);
+                    }
+                } else
                     msethostility(mtmp, TRUE, TRUE);
-                } else  /* GENOD? */
-                    mtmp = makemon(NULL, level, bypos.x, bypos.y, NO_MM_FLAGS);
-                if (mtmp &&
-                    (mtmp->data->maligntyp == 0 ||
-                     sgn(mtmp->data->maligntyp) == sgn(castalign))) {
+                newsym(mtmp->mx, mtmp->my);
+                if (mtmp->data->maligntyp == 0 ||
+                    sgn(mtmp->data->maligntyp) == sgn(castalign)) {
                     count++;
                     break;
                 }
@@ -804,6 +831,7 @@ intervene(void)
 {
     int which = Is_astralevel(&u.uz) ?
         1 + rn2_on_rng(4, rng_intervention) : rn2_on_rng(6, rng_intervention);
+    coord cc;
 
     /* cases 0 and 5 don't apply on the Astral level */
     switch (which) {
@@ -820,7 +848,9 @@ intervene(void)
         aggravate();
         break;
     case 4:
-        nasty(NULL);
+        cc.x = u.ux;
+        cc.y = u.uy;
+        nasty(NULL, cc);
         break;
     case 5:
         resurrect();
