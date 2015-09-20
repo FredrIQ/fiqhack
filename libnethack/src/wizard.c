@@ -728,47 +728,55 @@ nasty(struct monst *mcast, coord bypos)
             if (tmp < 1)
                 tmp = 1;
         }
-        for (i = rnd(tmp); i > 0; --i)
-            for (j = 0; j < 20; j++) {
-                int makeindex;
+        for (i = rnd(tmp); i > 0; --i) {
+            int makeindex;
 
-                /* Don't create more spellcasters of the monsters' level or
-                   higher--avoids chain summoners filling up the level. */
-                do {
-                    makeindex = pick_nasty();
-                } while (mcast && attacktype(&mons[makeindex], AT_MAGC) &&
-                         monstr[makeindex] >= monstr[monsndx(mcast->data)]);
-                /* do this after picking the monster to place */
-                if (!enexto(&bypos, level, bypos.x, bypos.y,
-                            &mons[makeindex]))
-                    continue;
-                mtmp = makemon(&mons[makeindex], level, bypos.x, bypos.y,
+            /* Summon selection choice:
+                 - Don't generate higher-level spellcasters to avoid
+                   chain summoning
+                 - Don't generate lawful if chaotic or vice versa
+                 - Also re-roll if the target is genocided
+               Only re-roll like this 20 times. If our target still
+               fails creation (only possible when genocided), generate
+               a random monster instead */
+            j = 0;
+            do {
+                makeindex = pick_nasty();
+                j++;
+            } while (((mcast && attacktype(&mons[makeindex], AT_MAGC) &&
+                       monstr[makeindex] >= monstr[monsndx(mcast->data)]) ||
+                      (mons[makeindex].maligntyp &&
+                       sgn(mons[makeindex].maligntyp) == -sgn(castalign)) ||
+                      (mvitals[makeindex].mvflags & G_GENOD)) && j < 20);
+            /* do this after picking the monster to place */
+            if (!enexto(&bypos, level, bypos.x, bypos.y,
+                        &mons[makeindex]))
+                continue;
+            mtmp = makemon(&mons[makeindex], level, bypos.x, bypos.y,
+                           tame ? MM_EDOG : NO_MM_FLAGS);
+            if (!mtmp) {
+                /* probably genocided, try a random monster */
+                mtmp = makemon(NULL, level, bypos.x, bypos.y,
                                tame ? MM_EDOG : NO_MM_FLAGS);
-                if (!mtmp) {
-                    /* probably genocided, try a random monster */
-                    mtmp = makemon(NULL, level, bypos.x, bypos.y,
-                                   tame ? MM_EDOG : NO_MM_FLAGS);
-                    if (!mtmp) /* failed again? */
-                        continue;
-                }
-                mtmp->msleeping = 0;
-                if (tame) {
-                    initedog(mtmp);
-                    set_malign(mtmp);
-                    /* tame monsters drop items, ensure they don't drop weapon selection */
-                    if (mtmp->mtame && attacktype(mtmp->data, AT_WEAP)) {
-                        mtmp->weapon_check = NEED_HTH_WEAPON;
-                        mon_wield_item(mtmp);
-                    }
-                } else
-                    msethostility(mtmp, TRUE, TRUE);
-                newsym(mtmp->mx, mtmp->my);
-                if (mtmp->data->maligntyp == 0 ||
-                    sgn(mtmp->data->maligntyp) == sgn(castalign)) {
-                    count++;
-                    break;
-                }
+                if (!mtmp) /* failed again? */
+                    continue;
             }
+            mtmp->msleeping = 0;
+            if (tame) {
+                initedog(mtmp);
+                set_malign(mtmp);
+                /* tame monsters drop items, ensure they don't drop weapon selection */
+                if (mtmp->mtame && attacktype(mtmp->data, AT_WEAP)) {
+                    mtmp->weapon_check = NEED_HTH_WEAPON;
+                    mon_wield_item(mtmp);
+                }
+            } else
+                msethostility(mtmp, TRUE, TRUE);
+            newsym(mtmp->mx, mtmp->my);
+            /* Give number of seen monsters to return later */
+            if (canseemon(mtmp))
+                count++;
+        }
     }
     return count;
 }
