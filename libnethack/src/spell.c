@@ -51,7 +51,7 @@ static boolean getspell(int *);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(const struct monst *, int);
 static int throwspell(boolean, schar *dx, schar *dy, const struct nh_cmd_arg *arg);
-static void cast_protection(void);
+static void cast_protection(struct monst *);
 static void spell_backfire(int);
 
 static int mspell_skilltype(int);
@@ -836,11 +836,13 @@ mspell_skilltype(int booktype)
 }
 
 static void
-cast_protection(void)
+cast_protection(struct monst *mon)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
     int loglev = 0;
-    int l = u.ulevel;
-    int natac = get_player_ac() - u.uspellprot;
+    int l = you ? u.ulevel : mon->m_lev;
+    int natac = find_mac(mon) - m_mspellprot(mon);
     int gain;
 
     /* loglev=log2(u.ulevel)+1 (1..5) */
@@ -852,6 +854,7 @@ cast_protection(void)
     /*
      * The more u.uspellprot you already have, the less you get,
      * and the better your natural ac, the less you get.
+     * 31-63 is only reachable by monsters
      *
      *	LEVEL AC    SPELLPROT from sucessive SPE_PROTECTION casts
      *      1     10    0,  1,  2,  3,  4
@@ -870,31 +873,59 @@ cast_protection(void)
      *     16-30  10    0,  5,  9, 12, 14, 16, 17, 18, 19, 20
      *     16-30   0    0,  5,  9, 11, 13, 14, 15
      *     16-30 -10    0,  5,  8,  9, 10
+     *     31-63  10    0,  6, 11, 15, 18, 20, 21, 22, 23, 24
+     *     31-63   0    0,  6, 10, 13, 15, 16, 17, 18
+     *     31-63 -10    0,  6,  9, 11, 12
      */
-    gain = loglev - (int)u.uspellprot / (4 - min(3, (10 - natac) / 10));
+    gain = loglev - (int)m_mspellprot(mon) / (4 - min(3, (10 - natac) / 10));
 
     if (gain > 0) {
-        if (!Blind) {
+        if (!blind(&youmonst) && (you || vis)) {
             const char *hgolden = hcolor("golden");
 
-            if (u.uspellprot)
-                pline("The %s haze around you becomes more dense.", hgolden);
+            if (m_mspellprot(mon))
+                pline("The %s haze around %s becomes more dense.", hgolden,
+                      you ? "you" : mon_nam(mon));
             else
-                pline("The %s around you begins to shimmer with %s haze.",
+                pline("The %s around %s begins to shimmer with %s haze.",
                       (Underwater || Is_waterlevel(&u.uz)) ? "water" :
                       Engulfed ? mbodypart(u.ustuck, STOMACH) :
                       IS_STWALL(level->locations[u.ux][u.uy].typ) ? "stone" :
-                      "air",
+                      "air", you ? "you" : mon_nam(mon),
                       an(hgolden));
+        } else if (you) {
+            if (m_mspellprot(mon))
+                pline("Your skin begins feeling warmer.");
+            else
+                pline("Your skin feels even hotter.");
         }
-        u.uspellprot += gain;
-        u.uspmtime =
-            P_SKILL(spell_skilltype(SPE_PROTECTION)) == P_EXPERT ? 20 : 10;
-        if (!u.usptime)
-            u.usptime = u.uspmtime;
-    } else {
+        if (you) {
+            u.uspellprot += gain;
+            u.uspmtime =
+                P_SKILL(spell_skilltype(SPE_PROTECTION)) == P_EXPERT ? 20 : 10;
+            if (!u.usptime)
+                u.usptime = u.uspmtime;
+        } else {
+            /* Monster's "golden haze" instead works by increasing a mt_prop for
+               the PROTECTION property. monspellprot() then converts this into
+               an AC bonus. */
+            int cur_prot = m_mspellprot(mon);
+            cur_prot += gain;
+            cur_prot *= 10;
+            mon->mt_prop[mt_protection] = cur_prot;
+            /* mt_protection is special cased to only decrease 50% of the time
+               on Expert. */
+        }
+    } else if (you) {
         pline("Your skin feels warm for a moment.");
     }
+}
+
+/* monster golden haze level */
+int
+monspellprot(struct monst *mon)
+{
+    return ((mon->mt_prop[mt_protection] + 9) / 10);
 }
 
 /* attempting to cast a forgotten spell will cause disorientation */
@@ -1021,10 +1052,10 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
 
         /* else fall through... */
         /* these spells are all duplicates of wand effects */
-        ray = TRUE;
     case SPE_MAGIC_MISSILE:
     case SPE_SLEEP:
     case SPE_FINGER_OF_DEATH:
+        ray = TRUE;
     case SPE_FORCE_BOLT:
     case SPE_KNOCK:
     case SPE_SLOW_MONSTER:
@@ -1088,19 +1119,14 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
         break;
 
     case SPE_CURE_BLINDNESS:
-        healup(0, 0, FALSE, TRUE);
+        set_property(mon, BLINDED, -2, FALSE);
         break;
     case SPE_CURE_SICKNESS:
-        if (Sick)
-            pline("You are no longer ill.");
-        if (Slimed) {
-            pline("The slime disappears!");
-            Slimed = 0;
-        }
-        healup(0, 0, TRUE, FALSE);
+        set_property(mon, SICK, -2, FALSE);
+        set_property(mon, SLIMED, -2, FALSE);
         break;
     case SPE_CREATE_FAMILIAR:
-        make_familiar(NULL, u.ux, u.uy, FALSE);
+        make_familiar(mon, NULL, m_mx(mon), m_my(mon), FALSE);
         break;
     case SPE_SUMMON_NASTY:
         cc.x = dx;
@@ -1112,14 +1138,11 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
         }
         break;
     case SPE_CLAIRVOYANCE:
-        if (!BClairvoyant)
-            do_vicinity_map();
-        /* at present, only one thing blocks clairvoyance */
-        else if (uarmh && uarmh->otyp == CORNUTHAUM)
-            pline("You sense a pointy hat on top of your %s.", body_part(HEAD));
+        if (!bclairvoyant(mon))
+            /*do_vicinity_map(); wont work on monsters */
         break;
     case SPE_PROTECTION:
-        cast_protection();
+        cast_protection(mon);
         break;
     case SPE_JUMPING:
         jump_to_coords(&cc);
@@ -1445,7 +1468,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         healup(0, 0, TRUE, FALSE);
         break;
     case SPE_CREATE_FAMILIAR:
-        make_familiar(NULL, u.ux, u.uy, FALSE);
+        make_familiar(&youmonst, NULL, u.ux, u.uy, FALSE);
         break;
     case SPE_SUMMON_NASTY:
         cc.x = dx;
@@ -1473,7 +1496,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             pline("You sense a pointy hat on top of your %s.", body_part(HEAD));
         break;
     case SPE_PROTECTION:
-        cast_protection();
+        cast_protection(&youmonst);
         break;
     case SPE_JUMPING:
         jump_to_coords(&cc);
@@ -1530,7 +1553,7 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct nh_cmd_arg *arg)
         *dx = 0;
         *dy = 0;
         return 1;
-    } else if (nasty && cc.x != u.ux && cc.y != u.uy &&
+    } else if (nasty && (cc.x != u.ux || cc.y != u.uy) &&
                (!MON_AT(level, cc.x, cc.y) ||
                 !canspotmon(m_at(level, cc.x, cc.y)))) {
         pline("You fail to sense a monster there!");

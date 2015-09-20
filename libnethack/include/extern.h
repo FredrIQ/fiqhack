@@ -395,7 +395,7 @@ extern void adj_abon(struct obj *, schar);
 /* ### dog.c ### */
 
 extern void initedog(struct monst *);
-extern struct monst *make_familiar(struct obj *, xchar, xchar, boolean);
+extern struct monst *make_familiar(struct monst *, struct obj *, xchar, xchar, boolean);
 extern struct monst *makedog(struct newgame_options *);
 extern void update_mlstmv(void);
 extern void losedogs(void);
@@ -1675,6 +1675,7 @@ extern void update_supernatural_abilities(void);
 extern boolean supernatural_ability_available(int);
 extern int docast(const struct nh_cmd_arg *);
 extern int spell_skilltype(int);
+extern int monspellprot(struct monst *);
 extern int m_spelleffects(struct monst *, int, schar, schar, schar);
 extern int spelleffects(int, boolean, const struct nh_cmd_arg *);
 extern void losespells(void);

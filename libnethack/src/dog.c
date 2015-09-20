@@ -46,11 +46,14 @@ pet_type(struct newgame_options *ngo)
 }
 
 struct monst *
-make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
+make_familiar(struct monst *mon, struct obj *otmp, xchar x, xchar y, boolean quietly)
 {
     const struct permonst *pm;
     struct monst *mtmp = 0;
     int chance, trycnt = 100;
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    boolean tame = (you || mon->mtame);
 
     do {
         if (otmp) {     /* figurine; otherwise spell */
@@ -71,7 +74,7 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
         } else /* create familiar */
             pm = &mons[pet_type(NULL)];
 
-        mtmp = makemon(pm, level, x, y, MM_EDOG | MM_IGNOREWATER |
+        mtmp = makemon(pm, level, x, y, (tame ? MM_EDOG : 0) | MM_IGNOREWATER |
                        (otmp ? 0 : (MM_CREATEMONSTER | MM_CMONSTER_T)));
         if (otmp && !mtmp) {    /* monster was genocided or square occupied */
             if (!quietly)
@@ -86,20 +89,30 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
     if (is_pool(level, mtmp->mx, mtmp->my) && minliquid(mtmp))
         return NULL;
 
-    initedog(mtmp);
+    if (tame)
+        initedog(mtmp);
+    else if (mon->mpeaceful)
+        mtmp->mpeaceful = 1;
+    else
+        msethostility(mtmp, TRUE, TRUE);
     mtmp->msleeping = 0;
     if (otmp) { /* figurine; resulting monster might not become a pet */
-        chance = rn2_on_rng(10, rng_figurine_effect);
+        chance = rn2_on_rng(10, you ? rng_figurine_effect : rng_main);
         /* 0: tame, 1: peaceful, 2: hostile, 3+: matching BCU; this gives
            an 80% chance of the desired effect, 10% of each other effect */
         if (chance > 2)
             chance = otmp->blessed ? 0 : !otmp->cursed ? 1 : 2;
         if (chance > 0) {
             mtmp->mtame = 0;    /* not tame after all */
+            mtmp->mpeaceful = 1;
             if (chance == 2) {  /* hostile (cursed figurine) */
-                if (!quietly)
-                    pline("You get a bad feeling about this.");
-                msethostility(mtmp, TRUE, TRUE);
+                if (!quietly && (you || vis))
+                    pline("You get a %s feeling about this.",
+                          tame ? "bad" : "good");
+                if (tame)
+                    msethostility(mtmp, TRUE, TRUE);
+                else
+                    initedog(mtmp);
             }
         }
         /* if figurine has been named, give same name to the monster */
@@ -418,9 +431,15 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
 
     /* Decrease monster-related timers */
     enum mt_prop mt;
-    for (mt = mt_firstprop; mt <= mt_lastprop; mt++)
-        if (mtmp->mt_prop[mt])
-            mtmp->mt_prop[mt] -= min(imv, mtmp->mt_prop[mt] - 1);
+    for (mt = mt_firstprop; mt <= mt_lastprop; mt++) {
+        if (mtmp->mt_prop[mt]) {
+            if (mt != mt_protection ||
+                mprof(mtmp, MP_SCLRC) < P_EXPERT)
+                mtmp->mt_prop[mt] -= min(imv, mtmp->mt_prop[mt] - 1);
+            else
+                mtmp->mt_prop[mt] -= min(imv / 2, mtmp->mt_prop[mt] - 1);
+        }
+    }
     if (mtmp->mfrozen)
         mtmp->mfrozen -= min(imv, mtmp->mfrozen - 1);
     if (mtmp->mfleetim)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -43,6 +43,8 @@ mon_prop2mt(enum youprop prop)
         return mt_detectmon;
     case SLOW:
         return mt_slow;
+    case PROTECTION:
+        return mt_protection;
     default:
         return -1;
     }
@@ -70,6 +72,8 @@ mon_mt2prop(enum mt_prop mt)
         return DETECT_MONSTERS;
     case mt_slow:
         return SLOW;
+    case mt_protection:
+        return PROTECTION;
     default:
         return -1;
     }

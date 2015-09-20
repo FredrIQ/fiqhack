@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1719,7 +1719,7 @@ fig_transform(void *arg, long timeout)
     }
 
     cansee_spot = cansee(cc.x, cc.y);
-    mtmp = make_familiar(figurine, cc.x, cc.y, TRUE);
+    mtmp = make_familiar(&youmonst, figurine, cc.x, cc.y, TRUE);
     if (mtmp) {
         monnambuf = msgprintf("%s", an(m_monnam(mtmp)));
         switch (figurine->where) {
@@ -1851,7 +1851,7 @@ use_figurine(struct obj **objp, const struct nh_cmd_arg *arg)
           "release the figurine" :
           (dz < 0 ? "toss the figurine into the air" :
            "set the figurine on the ground"));
-    make_familiar(obj, cc.x, cc.y, FALSE);
+    make_familiar(&youmonst, obj, cc.x, cc.y, FALSE);
     stop_timer(obj->olev, FIG_TRANSFORM, obj);
     useup(obj);
     *objp = NULL;

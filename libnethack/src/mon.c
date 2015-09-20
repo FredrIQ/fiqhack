@@ -590,6 +590,19 @@ mcalcdistress(void)
         enum mt_prop mt;
         for (mt = mt_firstprop; mt <= mt_lastprop; mt++) {
             if (mtmp->mt_prop[mt]) {
+                /* Special case protection -- Expert users lose golden haziness
+                   half as fast */
+                if (mt == mt_protection) {
+                    if ((moves % 2) ||
+                        mprof(mtmp, MP_SCLRC) < P_EXPERT) {
+                        mtmp->mt_prop[mt]--;
+                        if (!(mtmp->mt_prop[mt] % 10) && canseemon(mtmp))
+                            pline("The %s haze around %s %s.", hcolor("golden"),
+                                  mon_nam(mtmp),
+                                  m_mspellprot(mtmp) ? "becomes less dense" : "disappears");
+                    }
+                    continue;
+                }
                 mtmp->mt_prop[mt]--;
                 if (mt == mt_levi) {
                     /* Monsters with temporary levitation might get wary */
