@@ -842,7 +842,7 @@ cast_protection(struct monst *mon)
     boolean vis = canseemon(mon);
     int loglev = 0;
     int l = you ? u.ulevel : mon->m_lev;
-    int natac = find_mac(mon) - m_mspellprot(mon);
+    int natac = find_mac(mon) + m_mspellprot(mon);
     int gain;
 
     /* loglev=log2(u.ulevel)+1 (1..5) */
