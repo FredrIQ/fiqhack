@@ -1440,8 +1440,10 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         }
         return 1;
 
-    case SCR_CHARGING:
     case SPE_CHARGING:
+        cval = 0;
+        goto charge;
+    case SCR_CHARGING:
         if (confused) {
             if (you || vis)
                 pline("%s %s charged up!", you ? "You" : Monnam(mon),
@@ -1467,9 +1469,10 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             useup(sobj);
         else
             m_useup(mon, sobj);
-        if (you) {
+        if (you)
             makeknown(SCR_CHARGING);
-
+    charge:
+        if (you) {
             otmp = getobj(all_count, "charge", FALSE);
             if (!otmp)
                 return 1;
