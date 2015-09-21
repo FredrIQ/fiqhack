@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-21 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1669,6 +1669,7 @@ extern void fixup_special(struct level *lev);
 /* ### spell.c ### */
 
 extern void deadbook(struct obj *book2, boolean invoked);
+extern int mon_study_book(struct monst *, struct obj *);
 extern int study_book(struct obj *, const struct nh_cmd_arg *);
 extern void age_spells(void);
 extern void update_supernatural_abilities(void);
@@ -1676,6 +1677,7 @@ extern boolean supernatural_ability_available(int);
 extern int docast(const struct nh_cmd_arg *);
 extern int spell_skilltype(int);
 extern int monspellprot(struct monst *);
+extern boolean mon_castable(struct monst *, int);
 extern int m_spelleffects(struct monst *, int, schar, schar, schar);
 extern int spelleffects(int, boolean, const struct nh_cmd_arg *);
 extern void losespells(void);

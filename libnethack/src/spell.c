@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-21 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -518,6 +518,131 @@ learn(void)
     return 0;
 }
 
+/* Monster book studying works a bit differently.
+   The spellbook delay is currently ignored and replaced with
+   a delay of 5 if the reading succeeds. This is due to current
+   lack of functionality for "safe" multi-turn actions for monsters.
+   A monster's spell memory is binary -- either they know the spell,
+   or they don't. If they learn something, it will stay forever, with the
+   theoretical exception of amnesia -- something monsters don't read at present.
+   Cursed books still retain their original delay and behaviour, and confused
+   books retain their behaviour. Returns 0 if nothing happened, -1 if turn
+   was wasted with no spell learned, spell id otherwise. */
+int
+mon_study_book(struct monst *mon, struct obj *spellbook)
+{
+    int booktype = spellbook->otyp;
+    boolean confused = confused(mon);
+    boolean too_hard = FALSE;
+    boolean vis = canseemon(mon);
+    int delay = 0;
+    int level = 0;
+    boolean spellcaster = FALSE;
+    boolean intel = 11;
+    struct obj *eyewear = which_armor(mon, os_tool);
+
+    if (attacktype(mon->data, AT_MAGC))
+        spellcaster = TRUE;
+    if (spellcaster)
+        intel = 18;
+    if (mon->iswiz)
+        intel = 20;
+
+    if (booktype == SPE_BLANK_PAPER) {
+        if (vis) {
+            pline("%s attempts to read a blank spellbook.", Monnam(mon));
+            makeknown(SPE_BLANK_PAPER);
+        }
+        return 0;
+    }
+    /* Spellbook delay multiplier. 1 for level 1-2, 2-3 for level 3-4, 5-6 for level 5-6, 8 for level 7 */
+    level = objects[booktype].oc_level;
+    switch (level) {
+    case 1:
+    case 2:
+        level = 1;
+        break;
+    case 3:
+    case 4:
+        level -= 1;
+        break;
+    case 7:
+        level = 8;
+        break;
+    default:
+        break;
+    }
+    delay = level * objects[booktype].oc_delay;
+    if (booktype == SPE_BOOK_OF_THE_DEAD) {
+        impossible("Monster reading Book of the Dead?");
+        return 0;
+    }
+    if (spellbook->cursed)
+        too_hard = TRUE;
+    else if (!spellbook->blessed) {
+        /* uncursed - chance to fail */
+        int read_ability =
+            intel + 4 + mon->m_lev / 2 -
+            2 * objects[booktype].oc_level +
+            ((eyewear && eyewear->otyp == LENSES) ? 2 : 0);
+        /* only wizards know if a spell is too difficult */
+        if (wizard) {
+            if (read_ability < 12) {
+                if (vis)
+                    pline("%s realizes the difficulty of the book and puts it down.", Monnam(mon));
+                return 0;
+            }
+        }
+        /* it's up to random luck now */
+        if (rnd(20) > read_ability) {
+            too_hard = TRUE;
+        }
+    }
+
+    if (too_hard) {
+        if (vis)
+            pline("%s tries to read a spellbook, but fails!", Monnam(mon));
+
+        boolean gone = cursed_book(mon, spellbook);
+        /* update vis in case mon teleported */
+        boolean vis_old = vis;
+        vis = canseemon(mon);
+
+        mon->mcanmove = 0;
+        mon->mfrozen = delay;
+        if (gone || !rn2(3)) {
+            if (!gone && vis) {
+                if (vis_old)
+                    pline("The spellbook crumbles to dust!");
+                else /* a monster appeared out of nowhere */
+                    pline("A spellbook that %s is holding crumbles to dust!", mon_nam(mon));
+            }
+            if (!objects[spellbook->otyp].oc_name_known &&
+                !objects[spellbook->otyp].oc_uname && vis)
+                docall(spellbook);
+            m_useup(mon, spellbook);
+        } 
+        return -1;
+    } else if (confused) {
+        if (!confused_book(mon, spellbook)) {
+            spellbook->in_use = FALSE;
+        }
+        mon->mcanmove = 0;
+        mon->mfrozen = delay;
+        return -1;
+    }
+
+    if (vis)
+        pline("%s begins to memorize some spellbook runes.", Monnam(mon));
+    mon->mcanmove = 0;
+    mon->mfrozen = 5; /* see comment above function. TODO: allow safe helplessness for monsters */
+
+    /* FIXME: don't rely on a certain spell being first */
+    int mspellid = (booktype - SPE_DIG);
+    mon->mspells |= (1 << mspellid);
+    return mspellid;
+}
+
 int
 study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
 {
@@ -960,6 +1085,31 @@ spell_backfire(int spell)
     return;
 }
 
+/* Can a monster cast a specific spell? If the monster doesn't even know the spell
+   in first place, this will always return FALSE. Otherwise, it will return TRUE
+   based on the percentage success of the spell. The side effect is that monsters
+   with a 80% failure rate on a spell will only return TRUE 1/5 of the time, meaning
+   that monsters will generally (try to) cast those spells much more rarely. This is
+   by design. */
+boolean
+mon_castable(struct monst *mon, int spell)
+{
+    /* FIXME: don't rely on spell order */
+    int mspellid = spell - SPE_DIG;
+
+    /* is the spell part of the monster's spell list */
+    if (!(mon->mspells & (1 << mspellid)))
+        return FALSE;
+
+    /* calculate fail rate */
+    /* Confusion also makes spells fail 100% of the time,
+       but don't make monsters savvy about that for now.
+       (percentage_success is actually a *fail* rate) */
+    int chance = percent_success(mon, spell);
+    if (rnd(100) > chance)
+        return FALSE;
+    return TRUE;
+}
 
 /* Monster spellcasting. Currently it is not possible to reuse spelleffects()
    because a lot of things it does relies on your command argument(s).
@@ -975,7 +1125,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     coord cc;
     boolean ray = FALSE;
     struct obj *pseudo;
-    skill = mspell_skilltype(spellid(spell));
+    skill = mspell_skilltype(spell);
     role_skill = mprof(mon, skill);
     int count = 0;
 
@@ -1021,7 +1171,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
 
     mon->mspec_used += energy;
     /* pseudo is a temporary "false" object containing the spell stats */
-    pseudo = mktemp_sobj(level, spellid(spell));
+    pseudo = mktemp_sobj(level, spell);
     pseudo->blessed = pseudo->cursed = 0;
     pseudo->quan = 20L; /* do not let useup get it */
 
@@ -1034,7 +1184,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
             n = rnd(8) + 1;
             while (n--) {
                 explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
-                        u.ulevel / 2 + 1 + spell_damage_bonus(), 0,
+                        mon->m_lev / 2 + 1 + spell_damage_bonus(), 0,
                         (pseudo->otyp ==
                          SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
                         NULL, 0);
@@ -1340,7 +1490,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         morehungry(hungr);
     }
 
-    chance = percent_success(&youmonst, spell);
+    chance = percent_success(&youmonst, spellid(spell));
     if (confused || (rnd(100) > chance)) {
         pline("You fail to cast the spell correctly.");
         u.uen -= energy / 2;
@@ -1625,7 +1775,7 @@ dospellmenu(const char *prompt,
             msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
                       spellknow(i) ? " " : "*",
                       spelltypemnemonic(spell_skilltype(spellid(i))),
-                      100 - percent_success(&youmonst, i),
+                      100 - percent_success(&youmonst, spellid(i)),
                       (spellknow(i) * 100 + (KEEN - 1)) / KEEN) :
             msgprintf("%s\t--\t%s\t?\t--", spellname(i),
                       (spellid(i) == SPID_PRAY || spellid(i) == SPID_TURN) ?
@@ -1738,16 +1888,17 @@ percent_success(const struct monst *mon, int spell)
     if (armf && is_metallic(armf))
         splcaster += uarmfbon;
 
-    if (you && spellid(spell) == urole.spelspec)
+    if (you && spell == urole.spelspec)
         splcaster += urole.spelsbon;
 
 
     /* `healing spell' bonus */
-    if (spellid(spell) == SPE_HEALING || spellid(spell) == SPE_EXTRA_HEALING ||
-        spellid(spell) == SPE_CURE_BLINDNESS ||
-        spellid(spell) == SPE_CURE_SICKNESS ||
-        spellid(spell) == SPE_RESTORE_ABILITY ||
-        spellid(spell) == SPE_REMOVE_CURSE)
+    if (spell == SPE_HEALING ||
+        spell == SPE_EXTRA_HEALING ||
+        spell == SPE_CURE_BLINDNESS ||
+        spell == SPE_CURE_SICKNESS ||
+        spell == SPE_RESTORE_ABILITY ||
+        spell == SPE_REMOVE_CURSE)
         splcaster += special;
 
     if (splcaster > 20)
@@ -1765,9 +1916,9 @@ percent_success(const struct monst *mon, int spell)
      * in that spell type.
      */
     if (you)
-        skill = P_SKILL(spell_skilltype(spellid(spell)));
+        skill = P_SKILL(spell_skilltype(spell));
     else
-        skill = mprof(mon, mspell_skilltype(spellid(spell)));
+        skill = mprof(mon, mspell_skilltype(spell));
     skill = max(skill, P_UNSKILLED) - 1;        /* unskilled => 0 */
     difficulty = (spellev(spell) - 1) * 4 - ((skill * 6) + (xl / 3) + 1);
 
@@ -1795,7 +1946,7 @@ percent_success(const struct monst *mon, int spell)
        spell.  The penalty is not quite so bad for the player's role-specific
        spell. */
     if (arms && weight(arms) > (int)objects[SMALL_SHIELD].oc_weight) {
-        if (you && spellid(spell) == urole.spelspec) {
+        if (you && spell == urole.spelspec) {
             chance /= 2;
         } else {
             chance /= 4;
