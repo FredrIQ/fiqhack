@@ -639,7 +639,7 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
 
     /* FIXME: don't rely on a certain spell being first */
     int mspellid = (booktype - SPE_DIG);
-    mon->mspells |= (1 << mspellid);
+    mon->mspells |= (uint64_t)(1 << mspellid);
     return mspellid;
 }
 
@@ -967,6 +967,9 @@ cast_protection(struct monst *mon)
     boolean vis = canseemon(mon);
     int loglev = 0;
     int l = you ? u.ulevel : mon->m_lev;
+    /* Monsters can be level 0, ensure that no oddities occur if that is the case. */
+    if (l == 0)
+        l = 1;
     int natac = find_mac(mon) + m_mspellprot(mon);
     int gain;
 
@@ -979,12 +982,12 @@ cast_protection(struct monst *mon)
     /*
      * The more u.uspellprot you already have, the less you get,
      * and the better your natural ac, the less you get.
-     * 31-63 is only reachable by monsters
+     * 0, 31-63 is only reachable by monsters
      *
      *	LEVEL AC    SPELLPROT from sucessive SPE_PROTECTION casts
-     *      1     10    0,  1,  2,  3,  4
-     *      1      0    0,  1,  2,  3
-     *      1    -10    0,  1,  2
+     *      0-1   10    0,  1,  2,  3,  4
+     *      0-1    0    0,  1,  2,  3
+     *      0-1  -10    0,  1,  2
      *      2-3   10    0,  2,  4,  5,  6,  7,  8
      *      2-3    0    0,  2,  4,  5,  6
      *      2-3  -10    0,  2,  3,  4
@@ -1098,14 +1101,16 @@ mon_castable(struct monst *mon, int spell)
     int mspellid = spell - SPE_DIG;
 
     /* is the spell part of the monster's spell list */
-    if (!(mon->mspells & (1 << mspellid)))
+    pline("check castable %ld", mon->mspells);
+    if (!(mon->mspells & (uint64_t)(1 << mspellid)))
         return FALSE;
 
+    pline("is castable!");
     /* calculate fail rate */
     /* Confusion also makes spells fail 100% of the time,
-       but don't make monsters savvy about that for now.
-       (percentage_success is actually a *fail* rate) */
+       but don't make monsters savvy about that for now. */
     int chance = percent_success(mon, spell);
+    pline("fail rate: %d", 100 - chance);
     if (rnd(100) > chance)
         return FALSE;
     return TRUE;
@@ -1136,7 +1141,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     int cooldown = 7 - (mon->m_lev / 5);
     if (cooldown < 2)
         cooldown = 2;
-    energy = (spellev(spell) * cooldown);
+    energy = (objects[spell].oc_level * cooldown);
     if (mon_has_amulet(mon)) {
         /* since monsters either have the mspec to cast or not,
            make the amulet occasionally make the spell fail. */
@@ -1156,8 +1161,8 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     /* can't cast -- energy is used up! */
     if (mon->mspec_used) {
         if (vis)
-            pline("But %s lacks the energy to cast the spell.",
-                  mon_nam(mon));
+            pline("But %s lacks the energy to cast the spell (en: %d).",
+                  mon_nam(mon), mon->mspec_used);
         return 0;
     }
 
@@ -1920,7 +1925,7 @@ percent_success(const struct monst *mon, int spell)
     else
         skill = mprof(mon, mspell_skilltype(spell));
     skill = max(skill, P_UNSKILLED) - 1;        /* unskilled => 0 */
-    difficulty = (spellev(spell) - 1) * 4 - ((skill * 6) + (xl / 3) + 1);
+    difficulty = (objects[spell].oc_level - 1) * 4 - ((skill * 6) + (xl / 3) + 1);
 
     if (difficulty > 0) {
         /* Player is too low level or unskilled. */
@@ -1929,7 +1934,7 @@ percent_success(const struct monst *mon, int spell)
         /* Player is above level.  Learning continues, but the law of
            diminishing returns sets in quickly for low-level spells.  That is,
            a player quickly gains no advantage for raising level. */
-        int learning = 15 * -difficulty / spellev(spell);
+        int learning = 15 * -difficulty / objects[spell].oc_level;
 
         chance += learning > 20 ? 20 : learning;
     }

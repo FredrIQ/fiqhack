@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -338,11 +338,12 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     case WAN_OPENING:
     case SPE_KNOCK:
         wake = FALSE;   /* don't want immediate counterattack */
-        if (mtmp->mspells != 1)
-            pline("not used");
-        else
-            pline("used");
-        mtmp->mspells = 1; /* TEMPORARY */
+        /* TODO: remove debug stuff when done */
+        if (!mtmp->mspells || mtmp->mspells == 1) {
+            pline("Made %s learn all spells.", mon_nam(mtmp));
+            mtmp->mspells |= (uint64_t)0x00000fffffffffffLL; /* 44 spells */
+            pline("Learned spells: %ld", mtmp->mspells);
+        }
         if (Engulfed && mtmp == u.ustuck) {
             if (is_animal(mtmp->data)) {
                 if (Blind)
@@ -2809,6 +2810,7 @@ mbhit(struct monst *mon, int range, struct obj *obj) {
         if (find_drawbridge(&x, &y))
             switch (obj->otyp) {
             case WAN_STRIKING:
+            case SPE_FORCE_BOLT:
                 destroy_drawbridge(x, y);
             }
         /* modified by GAN to hit all objects */
@@ -2841,6 +2843,7 @@ mbhit(struct monst *mon, int range, struct obj *obj) {
             case WAN_OPENING:
             case WAN_LOCKING:
             case WAN_STRIKING:
+            case SPE_FORCE_BOLT:
                 if (doorlock(obj, bhitpos.x, bhitpos.y)) {
                     makeknown(obj->otyp);
                     /* if a shop door gets broken, add it to the shk's fix list 

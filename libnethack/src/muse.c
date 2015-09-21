@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-21 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1239,6 +1239,12 @@ find_offensive(struct monst *mtmp, struct musable *m)
 
     if (!ranged_stuff)
         return FALSE; /* nothing to do */
+
+    /* force bolt spell test */
+    if (mon_castable(mtmp, SPE_PROTECTION)) {
+        m->has_offense = MUSE_SPE_FORCE_BOLT;
+    }
+
 #define nomore(x) if (m->has_offense==x) continue;
     for (obj = mtmp->minvent; obj; obj = obj->nobj) {
         if (obj->oclass == WAND_CLASS && obj->spe < 1)
@@ -1474,10 +1480,10 @@ use_offensive(struct monst *mtmp, struct musable *m)
     boolean isray = FALSE;
 
     /* offensive potions are not drunk, they're thrown */
-    if (otmp->oclass != POTION_CLASS && (i = precheck(mtmp, otmp, m)) != 0)
+    if (otmp && otmp->oclass != POTION_CLASS && (i = precheck(mtmp, otmp, m)) != 0)
         return i;
     oseen = mon_visible(mtmp);
-    if (oseen)
+    if (oseen && otmp)
         examine_object(otmp);
 
     /* wand efficiency is determined by a monster's proficiency
@@ -1485,6 +1491,11 @@ use_offensive(struct monst *mtmp, struct musable *m)
        cursed + unskilled results in an effect similar to breaking
        wands. */
     switch (m->has_offense) {
+    case MUSE_SPE_FORCE_BOLT:
+        /* This technically doesn't do the right thing, but works due to
+           side effects. Only for testing purposes right now. */
+        m_spelleffects(mtmp, SPE_PROTECTION, tbx, tby, 0);
+        return 2;
     case MUSE_WAN_DEATH:
     case MUSE_WAN_SLEEP:
     case MUSE_WAN_FIRE:
