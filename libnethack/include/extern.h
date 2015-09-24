@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-21 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1213,14 +1213,11 @@ extern boolean hits_bars(struct obj **, int, int, int, int);
 
 /* ### muse.c ### */
 
-extern boolean find_defensive(struct monst *mon, struct musable *m);
-extern int use_defensive(struct monst *mon, struct musable *m);
+extern boolean find_item(struct monst *mon, struct musable *m);
+extern int use_item(struct monst *mon, struct musable *m);
+extern boolean mon_makewish(struct monst *);
 extern int rnd_defensive_item(struct monst *, enum rng rng);
-extern boolean find_offensive(struct monst *mon, struct musable *m);
-extern int use_offensive(struct monst *mon, struct musable *m);
 extern int rnd_offensive_item(struct monst *, enum rng rng);
-extern boolean find_misc(struct monst *mon, struct musable *m);
-extern int use_misc(struct monst *mon, struct musable *m);
 extern int rnd_misc_item(struct monst *mon, enum rng rng);
 extern boolean searches_for_item(struct monst *, struct obj *);
 extern boolean mon_reflects(struct monst *, const char *);
@@ -1477,7 +1474,7 @@ extern const struct permonst *qt_montype(const d_level *, enum rng);
 
 extern int doread(const struct nh_cmd_arg *);
 extern boolean is_chargeable(struct obj *);
-extern int mon_choose_stinktarget(struct monst *, struct obj *, coord *);
+extern int mon_choose_spectarget(struct monst *, struct obj *, coord *);
 extern struct obj *mon_choose_recharge(struct monst *, int);
 extern void recharge(struct monst *, struct obj *, int);
 extern void forget_objects(int);
@@ -2038,17 +2035,17 @@ extern int bhitpile(struct obj *, int (*)(struct obj *, struct obj *), int,
                     int);
 extern int wrestable(struct obj *wand);
 extern int zappable(struct obj *);
-extern void zapnodir(struct obj *);
+extern void zapnodir(struct monst *, struct obj *);
 extern int dozap(const struct nh_cmd_arg *);
 extern int zapyourself(struct obj *, boolean);
 extern boolean cancel_monst(struct monst *, struct obj *, boolean, boolean,
                             boolean);
-extern void weffects(struct obj *, schar, schar, schar);
+extern void weffects(struct monst *, struct obj *, schar, schar, schar);
 extern int spell_damage_bonus(void);
 extern const char *exclam(int force);
 extern void hit(const char *, struct monst *, const char *);
 extern void miss(const char *, struct monst *);
-extern void mbhit(struct monst *, int, struct obj *);
+extern void mbhit(struct monst *, int, int, int, struct obj *);
 extern struct monst *beam_hit(int, int, int, int,
                               int (*)(struct monst *, struct monst *, struct obj *),
                               int (*)(struct obj *, struct obj *), struct obj *,

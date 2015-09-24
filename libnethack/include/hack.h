@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -97,7 +97,6 @@
 extern coord bhitpos;   /* place where throw or zap hits or stops */
 
 /* types of calls to bhit() */
-# define ZAPPED_WAND    0
 # define THROWN_WEAPON  1
 # define KICKED_WEAPON  2
 # define FLASHED_LIGHT  3

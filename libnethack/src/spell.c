@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-21 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1097,20 +1097,19 @@ spell_backfire(int spell)
 boolean
 mon_castable(struct monst *mon, int spell)
 {
+    if (mon->mspec_used)
+        return FALSE;
+
     /* FIXME: don't rely on spell order */
     int mspellid = spell - SPE_DIG;
 
-    /* is the spell part of the monster's spell list */
-    pline("check castable %ld", mon->mspells);
     if (!(mon->mspells & (uint64_t)(1 << mspellid)))
         return FALSE;
 
-    pline("is castable!");
     /* calculate fail rate */
     /* Confusion also makes spells fail 100% of the time,
        but don't make monsters savvy about that for now. */
     int chance = percent_success(mon, spell);
-    pline("fail rate: %d", 100 - chance);
     if (rnd(100) > chance)
         return FALSE;
     return TRUE;
@@ -1128,7 +1127,6 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     boolean vis = canseemon(mon);
     boolean dummy;
     coord cc;
-    boolean ray = FALSE;
     struct obj *pseudo;
     skill = mspell_skilltype(spell);
     role_skill = mprof(mon, skill);
@@ -1210,7 +1208,6 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     case SPE_MAGIC_MISSILE:
     case SPE_SLEEP:
     case SPE_FINGER_OF_DEATH:
-        ray = TRUE;
     case SPE_FORCE_BOLT:
     case SPE_KNOCK:
     case SPE_SLOW_MONSTER:
@@ -1226,21 +1223,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     case SPE_EXTRA_HEALING:
     case SPE_DRAIN_LIFE:
     case SPE_STONE_TO_FLESH:
-        if (objects[pseudo->otyp].oc_dir != NODIR) {
-            if (!dx && !dy && !dz)
-                bhitm(mon, mon, pseudo);
-            else if (ray)
-                buzz(-10 - (pseudo->otyp - SPE_MAGIC_MISSILE),
-                     mon->m_lev / 2 + 1, mon->mx, mon->my,
-                     dx, dy, 0);
-            else if (pseudo->otyp == SPE_DIG)
-                zap_dig(mon, pseudo, dx, dy, dz);
-            else
-                mbhit(mon, rn1(8, 6), pseudo);
-        } else {
-            impossible("Monster tried to use non-directional wand-based spell?");
-            break;
-        }
+        weffects(mon, pseudo, dx, dy, dz);
         break;
 
         /* these are all duplicates of scroll effects */
@@ -1567,16 +1550,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     case SPE_EXTRA_HEALING:
     case SPE_DRAIN_LIFE:
     case SPE_STONE_TO_FLESH:
-        if (objects[pseudo->otyp].oc_dir != NODIR) {
-            if (!dx && !dy && !dz) {
-                if ((damage = zapyourself(pseudo, TRUE)) != 0) {
-                    losehp(damage, msgprintf("zapped %sself with a spell",
-                                             uhim()));
-                }
-            } else
-                weffects(pseudo, dx, dy, dz);
-        } else
-            weffects(pseudo, 0, 0, 0);
+        weffects(&youmonst, pseudo, dx, dy, dz);
         update_inventory();     /* spell may modify inventory */
         break;
 

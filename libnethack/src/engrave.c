@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -651,7 +651,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             case WAN_CREATE_MONSTER:
             case WAN_WISHING:
             case WAN_ENLIGHTENMENT:
-                zapnodir(otmp);
+                zapnodir(&youmonst, otmp);
                 break;
 
                 /* IMMEDIATE wands */

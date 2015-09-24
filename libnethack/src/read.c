@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -171,9 +171,15 @@ doread(const struct nh_cmd_arg *arg)
    if it's worth using a stinking cloud scroll or not).
 */
 int
-mon_choose_stinktarget(struct monst *mon, struct obj *obj, coord *cc)
+mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
 {
-    int range = (obj->mbknown ? 3 + bcsign(obj) : 3);
+    boolean stink = obj->otyp == SCR_STINKING_CLOUD ? TRUE : FALSE;
+    int globrange = 10;
+    if (stink)
+        globrange = 5;
+    int range = 2;
+    if (stink)
+        range = (obj->mbknown ? 2 + bcsign(obj) : 2);
     int tilescore = 0;
     int score = 0;
     int score_best = 0;
@@ -181,8 +187,8 @@ mon_choose_stinktarget(struct monst *mon, struct obj *obj, coord *cc)
     int x_best = 0;
     int y_best = 0;
     struct monst *mtmp;
-    for (x = mon->mx; x <= mon->mx + 5; x++) {
-        for (y = mon->my; y <= mon->my + 5; y++) {
+    for (x = mon->mx - globrange; x <= mon->mx + globrange; x++) {
+        for (y = mon->my - globrange; y <= mon->my + globrange; y++) {
             score = 0;
 
             /* Invalid targets */
@@ -190,25 +196,28 @@ mon_choose_stinktarget(struct monst *mon, struct obj *obj, coord *cc)
                 continue;
             if (!m_cansee(mon, x, y))
                 continue;
-            if (dist2(mon->mx, mon->my, x, y) > 32)
+            if (dist2(mon->mx, mon->my, x, y) > (globrange * globrange))
                 continue;
 
             /* Check what is hit here */
             for (xx = x - range; xx <= x + range; xx++) {
                 for (yy = y - range; yy <= y + range; yy++) {
                     tilescore = 0;
-                    /* out of stinking range */
-                    if ((abs(x - xx) + abs(y - yy)) > range)
-                        continue;
                     /* invalid tile */
                     if (!isok(xx, yy))
+                        continue;
+                    /* out of stinking range */
+                    if (distmin(x, y, xx, yy) > range && stink)
                         continue;
 
                     mtmp = m_at(mon->dlevel, xx, yy);
                     if (!mtmp)
                         continue;
                     /* self harm */
-                    if (mon == mtmp && !resists_poison(mon))
+                    if (mon == mtmp &&
+                        ((stink && !resists_poison(mon)) ||
+                         (obj->otyp == SPE_FIREBALL && !resists_fire(mon)) ||
+                         (obj->otyp == SPE_CONE_OF_COLD && !resists_cold(mon))))
                         tilescore -= 40;
                     /* monster doesn't know of the target */
                     else if (!msensem(mon, mtmp))
@@ -222,7 +231,7 @@ mon_choose_stinktarget(struct monst *mon, struct obj *obj, coord *cc)
                          mon->mpeaceful == mtmp->mpeaceful))
                         tilescore -= 10;
 
-                    tilescore /= (abs(x - xx) + abs(y - yy) + 1);
+                    tilescore /= (distmin(x, y, xx, yy) + 1);
                 }
             }
 
@@ -1800,7 +1809,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                     return 0;
                 }
             } else {
-                if (!mon_choose_stinktarget(mon, sobj, &cc))
+                if (!mon_choose_spectarget(mon, sobj, &cc))
                     return 0;
             }
 

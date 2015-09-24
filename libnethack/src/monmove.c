@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-09 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -355,11 +355,8 @@ dochug(struct monst *mtmp)
     /* check distance and scariness of attacks */
     distfleeck(mtmp, &inrange, &nearby, &scared);
 
-    if (find_defensive(mtmp, &musable)) {
-        if (use_defensive(mtmp, &musable) != 0)
-            return 1;
-    } else if (find_misc(mtmp, &musable)) {
-        if (use_misc(mtmp, &musable) != 0)
+    if (find_item(mtmp, &musable)) {
+        if (use_item(mtmp, &musable) != 0)
             return 1;
     }
 
@@ -546,9 +543,6 @@ dochug(struct monst *mtmp)
             /* Maybe it stepped on a trap and fell asleep... */
             if (mtmp->msleeping || !mtmp->mcanmove)
                 return 0;
-            if (!nearby &&
-                (ranged_attk(mdat) || find_offensive(mtmp, &musable)))
-                break;
             else if (Engulfed && mtmp == u.ustuck) {
                 /* a monster that's digesting you can move at the same time
                    -dlc */

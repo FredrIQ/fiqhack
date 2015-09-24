@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -792,22 +792,8 @@ dog_move(struct monst *mtmp, int after)
  * We haven't moved yet, so search for monsters to attack from a
  * distance and attack them if it's plausible.
  */
-    if (find_offensive(mtmp, &m)) {
-        int ret = use_offensive(mtmp, &m);
-
-        if (ret == 1)
-            return 2;   /* died */
-        if (ret == 2)
-            return 1;   /* did something */
-    } else if (find_defensive(mtmp, &m)) {
-        int ret = use_defensive(mtmp, &m);
-
-        if (ret == 1)
-            return 2;   /* died */
-        if (ret == 2)
-            return 1;   /* did something */
-    } else if (find_misc(mtmp, &m)) {
-        int ret = use_misc(mtmp, &m);
+    if (find_item(mtmp, &m)) {
+        int ret = use_item(mtmp, &m);
 
         if (ret == 1)
             return 2;   /* died */
