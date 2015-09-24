@@ -1068,7 +1068,6 @@ find_item(struct monst *mon, struct musable *m)
                 obj_save = obj;
                 obj = mktemp_sobj(level, SPE_IDENTIFY);
                 otyp = obj->otyp;
-                continue;
             }
             good = TRUE;
         }
