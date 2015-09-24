@@ -226,6 +226,7 @@ mstatusline(struct monst *mtmp)
         alignment = mtmp->data->maligntyp;
         alignment =
             (alignment > 0) ? A_LAWFUL :
+            (alignment == A_NONE) ? A_NONE :
             (alignment < 0) ? A_CHAOTIC : A_NEUTRAL;
     }
 
