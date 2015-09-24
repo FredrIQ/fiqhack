@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -232,10 +232,10 @@ mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
                         tilescore -= 10;
 
                     tilescore /= (distmin(x, y, xx, yy) + 1);
+                    score += tilescore;
                 }
             }
 
-            score += tilescore;
             if (score > score_best) {
                 x_best = x;
                 y_best = y;
@@ -243,7 +243,7 @@ mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
             }
         }
     }
-    if (score <= 0)
+    if (score_best <= 0)
         return 0;
     cc->x = x_best;
     cc->y = y_best;

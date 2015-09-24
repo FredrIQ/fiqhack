@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -367,11 +367,17 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         reveal_invis = TRUE;
         if (mtmp->data != &mons[PM_PESTILENCE]) {
             wake = FALSE;       /* wakeup() makes the target angry */
-            mtmp->mhp += dice(6, otyp == SPE_EXTRA_HEALING ? 8 : 4);
-            if (mtmp->mhp > mtmp->mhpmax)
-                mtmp->mhp = mtmp->mhpmax;
-            set_property(mtmp, BLINDED, -2, FALSE);
-            if (canseemonoritem(mtmp)) {
+            if (mtmp == &youmonst)
+                healup(dice(6, otyp == SPE_EXTRA_HEALING ? 8 : 4), 0, FALSE,
+                       (otyp == SPE_EXTRA_HEALING));
+            else {
+                mtmp->mhp += dice(6, otyp == SPE_EXTRA_HEALING ? 8 : 4);
+                if (mtmp->mhp > mtmp->mhpmax)
+                    mtmp->mhp = mtmp->mhpmax;
+            }
+            if (!selfzap)
+                set_property(mtmp, BLINDED, -2, FALSE);
+            if (mtmp == &youmonst || canseemonoritem(mtmp)) {
                 if (disguised_mimic) {
                     if (mtmp->m_ap_type == M_AP_OBJECT &&
                         mtmp->mappearance == STRANGE_OBJECT) {
@@ -381,7 +387,9 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                     } else
                         mimic_hit_msg(mtmp, otyp);
                 } else
-                    pline("%s looks%s better.", Monnam(mtmp),
+                    pline("%s %s%s better.",
+                          mtmp == &youmonst ? "You" : Monnam(mtmp),
+                          mtmp == &youmonst ? "feel" : "looks",
                           otyp == SPE_EXTRA_HEALING ? " much" : "");
             }
             if (yours && (mtmp->mtame || mtmp->mpeaceful)) {

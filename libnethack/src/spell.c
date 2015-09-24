@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -956,7 +956,7 @@ mspell_skilltype(int booktype)
     case P_HEALING_SPELL:
         return MP_SHEAL;
     }
-    impossible("invalid monster proficiency: %d", pskill);
+    impossible("invalid monster proficiency: %d for obj %d", pskill, booktype);
     return 0;
 }
 
@@ -1132,8 +1132,10 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     role_skill = mprof(mon, skill);
     int count = 0;
 
-    if (vis)
+    if (vis) {
         pline("%s casts a spell!", Monnam(mon));
+        pline("Spell: %s", OBJ_NAME(objects[spell]));
+    }
 
     /* highlevel casters can cast more than lowlevel ones */
     int cooldown = 7 - (mon->m_lev / 5);

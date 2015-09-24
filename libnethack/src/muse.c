@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -25,6 +25,8 @@ static void mzapmsg(struct monst *, struct obj *, boolean);
 static void mreadmsg(struct monst *, struct obj *);
 static void mquaffmsg(struct monst *, struct obj *);
 static void mon_break_wand(struct monst *, struct obj *);
+static int find_item_score(struct monst *, struct obj *, coord *);
+static int find_item_single(struct monst *, struct obj *, boolean, struct musable *, boolean);
 static boolean mon_allowed(int);
 static void mon_consume_unstone(struct monst *, struct obj *, boolean, boolean);
 
@@ -499,19 +501,71 @@ mon_allowed(int otyp)
     return FALSE;
 }
 
+static int
+find_item_score(struct monst *mon, struct obj *obj, coord *tc)
+{
+    int otyp = obj->otyp;
+    int score = 0;
+    struct monst *mtmp;
+    tc->x = 0;
+    tc->y = 0;
+    if (otyp == SCR_STINKING_CLOUD ||
+        ((otyp == SPE_FIREBALL ||
+          otyp == SPE_CONE_OF_COLD) &&
+         mprof(mon, MP_SATTK) >= P_SKILLED))
+        score = mon_choose_spectarget(mon, obj, tc);
+    else if (otyp == SPE_CHARM_MONSTER ||
+             otyp == BULLWHIP) {
+        int x, y;
+        for (x = mon->mx - 1; x <= mon->mx + 1; x++) {
+            for (y = mon->my - 1; y <= mon->my + 1; y++) {
+                if (!isok(x, y))
+                    continue;
+                mtmp = m_at(mon->dlevel, x, y);
+                if (!mtmp) {
+                    mtmp = &youmonst;
+                    if (x != u.ux || y != u.uy)
+                        continue;
+                }
+                if (!mm_aggression(mon, mtmp))
+                    continue;
+                if (otyp == BULLWHIP && m_mwep(mtmp)) {
+                    tc->x = x;
+                    tc->y = y;
+                    score = 20;
+                }
+                if (otyp == SPE_CHARM_MONSTER && mtmp != &youmonst)
+                    score += 20;
+            }
+        }
+    } else {
+        /* TODO: improve direction targeting logic */
+        mtmp = mfind_target(mon, (otyp == WAN_POLYMORPH ||
+                                  otyp == SPE_POLYMORPH ||
+                                  otyp == WAN_SPEED_MONSTER ||
+                                  otyp == WAN_MAKE_INVISIBLE ||
+                                  otyp == SPE_HEALING ||
+                                  otyp == SPE_EXTRA_HEALING) ? TRUE : FALSE);
+        if (mtmp) {
+            tc->x = sgn(m_mx(mtmp) - mon->mx);
+            tc->y = sgn(m_my(mtmp) - mon->my);
+            score = 30;
+        }
+    }
+    return score;
+}    
+
 /* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in pathfinding),
    it makes no sense to have it here */
 boolean
 find_item(struct monst *mon, struct musable *m)
 {
     struct obj *obj = NULL;
-    struct obj *otmp = NULL;
     struct trap *t;
     int x = mon->mx, y = mon->my;
     struct level *lev = mon->dlevel;
     boolean stuck = (mon == u.ustuck && sticks(youmonst.data));
     boolean immobile = (mon->data->mmove == 0);
-    boolean directional = FALSE;
     coord tc;
     int fraction;
     m->x = 0;
@@ -535,16 +589,18 @@ find_item(struct monst *mon, struct musable *m)
     }
 
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (msensem(mon, mtmp)) {
-            hostsense++;
-            if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
-                m_cansee(mon, mtmp->mx, mtmp->my)) {
-                hostvis++;
-                if (!hostrange ||
-                    hostrange > dist2(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
-                    hostrange = dist2(mon->mx, mon->my, mtmp->mx, mtmp->my);
-                    mclose = mtmp;
-                }
+        if (DEADMONSTER(mtmp) ||
+            !msensem(mon, mtmp) ||
+            !mm_aggression(mon, mtmp))
+            continue;
+        hostsense++;
+        if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
+            m_cansee(mon, mtmp->mx, mtmp->my)) {
+            hostvis++;
+            if (!hostrange ||
+                hostrange > dist2(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
+                hostrange = dist2(mon->mx, mon->my, mtmp->mx, mtmp->my);
+                mclose = mtmp;
             }
         }
     }
@@ -552,12 +608,6 @@ find_item(struct monst *mon, struct musable *m)
     /* range of 100 is the cap on fireball, cone of cold and summon nasty */
     if (mclose && hostrange > 100)
         mclose = NULL; /* no close targets */
-
-    /* Figure out if there is any valid directional target */
-    struct monst *target = mfind_target(mtmp, FALSE);
-
-    if (target)
-        directional = TRUE;
 
     if (is_animal(mon->data) || mindless(mon->data))
         return FALSE;
@@ -684,7 +734,9 @@ find_item(struct monst *mon, struct musable *m)
             if (x == lev->upstair.sx && y == lev->upstair.sy &&
                 ledger_no(&u.uz) != 1)
                 /* Unfair to let the monsters leave the dungeon with the Amulet
-                   (or go to the endlevel since you also need it, to get there) */
+                   (or go to the endlevel since you also need it, to get there)
+
+                   unfair how? it's avoidable if you aren't silly -FIQ */
                 m->use = MUSE_UPSTAIRS;
         } else if (lev->locations[x][y].typ == LADDER && !stuck && !immobile) {
             if (x == lev->upladder.sx && y == lev->upladder.sy)
@@ -763,446 +815,98 @@ find_item(struct monst *mon, struct musable *m)
     if (m->use) /* stairs, trap door or tele-trap, bugle alert */
         return TRUE;
 
-    /* kludge to cut down on trap destruction (particularly portals) */
-    t = t_at(lev, x, y);
-    if (t &&
-        (t->ttyp == PIT || t->ttyp == SPIKED_PIT || t->ttyp == WEB ||
-         t->ttyp == BEAR_TRAP))
-        t = 0;  /* ok for monster to dig here */
-
     int randcount = 1; /* for randomizing inventory usage */
-    boolean good = FALSE; /* for random usage of items with no special preferences */
-    boolean offcheck = FALSE; /* extra checks for target items */
     /* For figuring out the best use of target based stuff in particular */
     struct obj *obj_best = NULL;
-    /* Old object if obj was replaced with a target for recharge/whatnot */
-    struct obj *obj_save = NULL;
+    int spell_best = 0;
     int score = 0;
     int score_best = 0;
-    int wandlevel = 0;
-    int spell = 1;
-    int otyp = 0;
+    int spell;
     coord tc_best;
-    for (;;) {
-        /* do it this way to sanely allow iterating of spells as well */
-        if (spell) {
-            /* free up old obj */
-            if (obj)
-                obfree(obj, NULL);
-            obj = mktemp_sobj(level, SPE_DIG + spell - 1);
-            if (obj->otyp == SPE_BLANK_PAPER) {
-                spell = 0;
-                obfree(obj, NULL);
-                obj = NULL;
-                /* If we can cast a spell and did choose one, usually do so */
-                if (m->spell && !rn2(2))
-                    return TRUE;
-            } else
-                spell++;
-            if (!mon_castable(mon, obj->otyp))
-                continue;
-        }
-        if (!spell) {
-            /* Things without hands can still cast spells, but not use items otherwise */
-            if (nohands(mon->data))
-                break;
-            obj = obj ? obj->nobj : mon->minvent;
-            if (!obj)
-                break;
-        }
+    tc_best.x = 0;
+    tc_best.y = 0;
+    struct musable m2; /* for find_item_single */
+    int usable = 0;
 
-        if (!spell && obj->cursed && obj->mbknown &&
-            (obj->owornmask || obj->otyp == LOADSTONE)) {
-            obj_save = obj;
-            obj = NULL;
-            if (mon_castable(mon, SPE_REMOVE_CURSE))
-                obj = mktemp_sobj(level, SPE_REMOVE_CURSE);
-            else { /* can't use m_carrying, we need to verify it isn't knowningly cursed */
-                for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
-                    if (otmp->otyp == SCR_REMOVE_CURSE) {
-                        /* blessed > uncursed > cursed */
-                        if (!obj)
-                            obj = otmp;
-                        if (!otmp->cursed || !otmp->mbknown)
-                            obj = otmp;
-                        if (otmp->blessed && otmp->mbknown)
-                            break;
-                    }
-                }
-            }
-            if (!obj) {
-                obj = obj_save;
-                obj_save = NULL;
-                continue;
-            }
-            /* obj is a means of curse removal at this point */
-            otyp = obj->otyp;
-        }
-
-        /* TODO: book reading (if obj_save is set, we are dealing with
-           SPE_REMOVE_CURSE) */
-        if (!spell && obj->oclass == SPBOOK_CLASS && !obj_save)
+    for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
+        if (!mon_castable(mon, spell))
             continue;
 
-        otyp = obj->otyp;
-        good = FALSE;
-        offcheck = FALSE;
-        wandlevel = 0;
-        tc.x = 0;
-        tc.y = 0;
-        if (obj->oclass == WAND_CLASS) {
-            wandlevel = mprof(mon, MP_WANDS);
-            /* If monster knows BUC, apply net wandlevel */
-            if (obj->mbknown)
-                wandlevel = getwandlevel(mon, obj);
-            /* Don't blow up wands */
-            if (!wandlevel)
-                continue;
-        }
+        obj = mktemp_sobj(level, spell);
+        /* when adding more spells where this matters, change this */
+        if (obj->otyp == SPE_REMOVE_CURSE && mprof(mon, MP_SCLRC))
+            obj->blessed = 1;
 
-        /* Is there a need to recharge something? */
-        if ((obj->oclass == WAND_CLASS ||
-             (obj->oclass == TOOL_CLASS &&
-              objects[otyp].oc_charged &&
-              !is_weptool(obj))) && obj->spe <= 0 && obj->mknown) {
-            if ((obj->otyp != WAN_WISHING && obj->otyp != MAGIC_MARKER) ||
-                !obj->recharged) {
-                if (obj->oclass != WAND_CLASS || obj->recharged != 7) {
-                    obj_save = obj;
-                    obj = NULL;
-                    /* blessed-charging > spe-charging > scr-charging */
-                    for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
-                        if (otmp->otyp == SCR_CHARGING && (!otmp->cursed || !otmp->mbknown))
-                            obj = otmp;
-                        if (otmp->blessed && otmp->mbknown)
-                            break;
-                    }
-                    /* even if blessed charging was the result, the monster may not know that */
-                    if (!obj || !obj->blessed || !obj->mbknown) {
-                        if (mon_castable(mon, SPE_CHARGING))
-                            obj = mktemp_sobj(level, SPE_CHARGING);
-                    }
-
-                    if (obj) {
-                        /* don't uncursed-charge wands of wishing, but if blessed charge is available,
-                           perform this charge unconditionally */
-                        if (obj_save->otyp == WAN_WISHING) {
-                            if (obj->otyp == SCR_CHARGING &&
-                                obj->blessed && obj->mbknown) {
-                                m->obj = obj;
-                                m->use = MUSE_SCR;
-                                return TRUE;
-                            }
-                            obj = obj_save;
-                            obj_save = NULL;
-                            continue;
-                        } else {
-                            good = TRUE;
-                            otyp = obj->otyp;
-                        }
-                    } else { /* no charging present, and we are not going to wrest unless 1:0 WoW (below) */
-                        obj = obj_save;
-                        obj_save = NULL;
-                        continue;
-                    }
-                }
-            } else if (mclose || otyp != WAN_WISHING) /* Ignore unless 1:0 /oW and we're safe */
-                continue;
-        }
-
-        /* If this is a scroll and we can't read it, perform an identify check */
-        if (obj->oclass == SCROLL_CLASS && !obj->mknown &&
-            (blind(mon) || !haseyes(mon->data))) {
-            obj_save = obj;
-            obj = NULL;
-            if (mon_castable(mon, SPE_IDENTIFY))
-                obj = mktemp_sobj(level, SPE_IDENTIFY);
-            else if (!(obj = m_carrying(mon, SCR_IDENTIFY))) {
-                obj = obj_save;
-                obj_save = NULL;
-                continue;
-            }
-            /* obj is a means of ID at this point */
-            otyp = obj->otyp;
-            good = TRUE;
-        }
-
-        /* Defensive only */
-        if (fraction < 35) {
-            if ((otyp == WAN_DIGGING || otyp == SPE_DIG) && !stuck && !t &&
-                !mon->isshk && !mon->isgd && !mon->ispriest &&
-                !levitates(mon)
-                /* monsters digging in Sokoban can ruin things */
-                && !In_sokoban(m_mz(mon))
-                /* digging wouldn't be effective; assume they know that */
-                && !(lev->locations[x][y].wall_info & W_NONDIGGABLE)
-                && !(Is_botlevel(&u.uz) || In_endgame(m_mz(mon)))
-                && !(is_ice(lev, x, y) || is_pool(lev, x, y) || is_lava(lev, x, y))
-                && (!(mon->data == &mons[PM_VLAD_THE_IMPALER]
-                      || In_V_tower(m_mz(mon))))) {
-                m->z = 1; /* digging down */
-                if (spell)
-                    m->spell = SPE_DIG;
-                else
-                    m->obj = obj;
-                m->use = spell ? MUSE_SPE : MUSE_WAN;
-                return TRUE;
-            }
-
-            /* c!oGL is pretty much reverse digging */
-            if (otyp == POT_GAIN_LEVEL && obj->cursed && obj->mbknown &&
-                !mon->isshk && !mon->isgd && !mon->ispriest &&
-                !In_sokoban(m_mz(mon)) &&
-                !In_endgame(m_mz(mon))) {
-                m->obj = obj;
-                m->use = MUSE_POT;
-                return TRUE;
-            }
-            if (mon->data != &mons[PM_PESTILENCE]) {
-                /* Always heal if possible */
-                if (otyp == POT_FULL_HEALING ||
-                    otyp == POT_EXTRA_HEALING ||
-                    otyp == POT_HEALING) {
-                    /* !FH -> !EH -> !H */
-                    if ((obj = m_carrying(mon, POT_FULL_HEALING)) ||
-                        (obj = m_carrying(mon, POT_EXTRA_HEALING)) ||
-                        (obj = m_carrying(mon, POT_HEALING)))
-                    m->obj = obj;
-                    m->use = MUSE_POT;
-                    return TRUE;
-                }
-                if (otyp == SPE_EXTRA_HEALING ||
-                    otyp == SPE_HEALING) {
-                    /* EH takes priority */
-                    m->spell = mon_castable(mon, SPE_EXTRA_HEALING) ?
-                        SPE_EXTRA_HEALING : otyp;
-                    m->use = MUSE_SPE;
-                    return TRUE;
-                }
-            } else {        /* Pestilence */
-                if (otyp == POT_SICKNESS) {
-                    m->obj = obj;
-                    m->use = MUSE_POT;
-                    return TRUE;
-                }
-            }
-
-            if (otyp == SPE_PHASE && !phasing(mon))
-                good = TRUE;
-            
-            /* Only when hostiles are near */
-            if (mclose) {
-                if (otyp == WAN_TELEPORTATION || otyp == SPE_TELEPORT_AWAY) {
-                    if (!tele_wary(mon) && (!mon_has_amulet(mon) || directional)) {
-                        if (mon_has_amulet(mon))
-                            offcheck = TRUE;
-                        else
-                            good = TRUE;
-                    }
-                }
-
-                if (otyp == SCR_TELEPORTATION &&
-                    (!obj->cursed || (!(mon->isshk && inhishop(mon))
-                                      && !mon->isgd && !mon->ispriest))) {
-                    if (!tele_wary(mon) || (obj->cursed && obj->mbknown))
-                        good = TRUE;
-                }
-
-                if (otyp == SCR_GENOCIDE)
-                    good = TRUE;
-            }
-        }
-
-        /* Primarily offensive */
-        if (fraction >= 35 || !rn2(4)) {
-            /* Targeting needs extra checks */
-            if ((otyp == WAN_FIRE ||
-                 otyp == SPE_FIREBALL ||
-                 otyp == FIRE_HORN ||
-                 otyp == WAN_COLD ||
-                 otyp == SPE_CONE_OF_COLD ||
-                 otyp == FROST_HORN ||
-                 otyp == WAN_LIGHTNING ||
-                 otyp == SPE_MAGIC_MISSILE ||
-                 otyp == WAN_MAGIC_MISSILE ||
-                 otyp == SPE_FORCE_BOLT ||
-                 otyp == WAN_STRIKING ||
-                 otyp == SPE_DRAIN_LIFE ||
-                 otyp == SCR_STINKING_CLOUD ||
-                 otyp == WAN_UNDEAD_TURNING ||
-                 otyp == SPE_TURN_UNDEAD ||
-                 otyp == WAN_SLOW_MONSTER ||
-                 otyp == SPE_SLOW_MONSTER ||
-                 otyp == WAN_CANCELLATION ||
-                 otyp == SPE_CANCELLATION ||
-                 otyp == SPE_CONFUSE_MONSTER ||
-                 otyp == SPE_CHARM_MONSTER ||
-                 otyp == SPE_STONE_TO_FLESH ||
-                 otyp == POT_BLINDNESS ||
-                 otyp == POT_CONFUSION ||
-                 otyp == POT_ACID) &&
-                mclose)
-                offcheck = TRUE;
-        }
-
-        /* use wands of wishing above everything else apart from a couple of defensive actions above */
-        if (otyp == WAN_WISHING) {
-            /* there is serious concerns about balance here, so do an explicit check if this is OK */
-            if (mon_allowed(otyp)) {
-                m->obj = obj;
-                m->use = MUSE_WAN;
-                return TRUE;
-            }
-        }
-
-        /* If there is partial protection already, cast it only 50% of the time to avoid this essentially being the default
-           (Protection is a level 1 spell -- the monster can afford occasionally wasting a few casts to avoid this code being
-           far more complex) */
-        if (otyp == SPE_PROTECTION && (!mon->mt_prop[mt_protection] || !rn2(2)))
-            good = TRUE;
-
-        /* Neither offensive or defensive */
-        if (otyp == POT_GAIN_LEVEL) {
-            /* If we can check BUC first, do that */
-            if (mon_castable(mon, SPE_IDENTIFY)) {
-                obj_save = obj;
-                obj = mktemp_sobj(level, SPE_IDENTIFY);
-                otyp = obj->otyp;
-            }
-            good = TRUE;
-        }
-
-        if ((otyp == WAN_MAKE_INVISIBLE ||
-             otyp == SPE_INVISIBILITY ||
-             otyp == POT_INVISIBILITY) &&
-            !invisible(mon) && !binvisible(mon) &&
-            (!mon->mpeaceful || see_invisible(&youmonst)) &&
-            (!attacktype(mon->data, AT_GAZE) || cancelled(mon)))
-            good = TRUE;
-
-        if ((otyp == WAN_POLYMORPH ||
-             otyp == SPE_POLYMORPH ||
-             otyp == POT_POLYMORPH) && !mon->cham &&
-            monstr[monsndx(mon->data)] < 6)
-            good = TRUE;
-
-        if ((otyp == WAN_SPEED_MONSTER ||
-             otyp == SPE_HASTE_SELF ||
-             otyp == POT_SPEED) && !very_fast(mon))
-            good = TRUE;
-
-        if (otyp == BULLWHIP && mclose && m_mwep(mclose) && hostrange == 1 && !rn2(2)) {
-            m->obj = obj;
-            m->use = MUSE_BULLWHIP;
-            m->x = m_mx(mclose);
-            m->y = m_my(mclose);
-            return TRUE;
-        }
-
-        if (otyp == SPE_DETECT_MONSTERS && !detects_monsters(mon))
-            good = TRUE;
-
-        if (otyp == SPE_PHASE && !phasing(mon))
-            good = TRUE;
-
-        if (otyp == SCR_ENCHANT_WEAPON && mon->mw && objects[mon->mw->otyp].oc_charged &&
-            mon->mw->spe < 6 && (!obj->cursed || !obj->mbknown))
-            good = TRUE;
-
-        if ((otyp == SCR_ENCHANT_ARMOR || otyp == SCR_DESTROY_ARMOR)  &&
-            (!obj->cursed || !obj->mbknown)) {
-            /* find armor */
-            for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
-                if (mon->mw && mon->mw == otmp)
-                    continue;
-                if (otmp->owornmask) {
-                    /* destroy cursed armor which is +0 or worse only */
-                    if (otyp == SCR_DESTROY_ARMOR && (!otmp->cursed || otmp->spe > 0)) {
-                        good = FALSE;
-                        break;
-                    }
-                    good = TRUE;
-                    /* avoid enchanting if there's something >= +3 */
-                    if (otyp == SCR_ENCHANT_ARMOR && otmp->spe > 3) {
-                        good = FALSE;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if ((otyp == WAN_CREATE_MONSTER ||
-             otyp == SPE_CREATE_MONSTER ||
-             otyp == SCR_CREATE_MONSTER ||
-             otyp == SPE_CREATE_FAMILIAR ||
-             otyp == SPE_SUMMON_NASTY) &&
-            mclose)
-            good = TRUE;
-
-        if ((otyp == WAN_MAKE_INVISIBLE ||
-             otyp == WAN_POLYMORPH ||
-             otyp == SPE_POLYMORPH ||
-             otyp == WAN_SPEED_MONSTER ||
-             otyp == SPE_HEALING ||
-             otyp == SPE_EXTRA_HEALING ||
-             otyp == WAN_DEATH ||
-             otyp == SPE_FINGER_OF_DEATH ||
-             otyp == WAN_MAGIC_MISSILE ||
-             otyp == SPE_MAGIC_MISSILE ||
-             otyp == WAN_SLEEP ||
-             otyp == SPE_SLEEP ||
-             otyp == POT_PARALYSIS ||
-             otyp == POT_SLEEPING) &&
-            mclose)
-            offcheck = TRUE;
-
-        /* item is currently forbidden for balance reasons */
-        if (!mon_allowed(otyp)) {
-            good = FALSE;
-            offcheck = FALSE;
-        }
-        if (good || offcheck) {
-            /* "good" means it doesn't involve resistance checks/etc. All of these
-               are to be used on yourself, except for summon nasty */
-            if (good) {
-                /* Distribute usable items randomly */
+        usable = find_item_single(mon, obj, TRUE, &m2, mclose ? TRUE : FALSE);
+        if (usable && mon_allowed(spell)) {
+            if (usable == 1) {
                 if (!rn2(randcount)) {
                     randcount++;
-                    if (spell)
-                        m->spell = otyp;
-                    else
-                        m->obj = obj;
-                    m->use = (obj->oclass == SPBOOK_CLASS ? MUSE_SPE :
-                              obj->oclass == WAND_CLASS   ? MUSE_WAN :
+                    m->spell = spell;
+                    m->x = m2.x;
+                    m->y = m2.y;
+                    m->z = m2.z;
+                    if (spell == SPE_SUMMON_NASTY) {
+                        if (!mclose) {
+                            impossible("Monster casting summon nasties when there is no target");
+                            return FALSE;
+                        }
+                        m->x = m_mx(mclose);
+                        m->y = m_my(mclose);
+                    }
+                    m->use = MUSE_SPE;
+                }
+            } else {
+                score = find_item_score(mon, obj, &tc);
+                if (score > score_best) {
+                    tc_best = tc;
+                    spell_best = spell;
+                    score_best = score;
+                }
+            }
+        }
+        obfree(obj, NULL);
+    }
+
+    /* if we can cast a spell, do so 3/4 of the time */
+    if (rn2(4) && (m->use || spell_best)) {
+        if (spell_best && (score_best > 20 ? rn2(3) : !rn2(3))) {
+            m->x = tc_best.x;
+            m->y = tc_best.y;
+            m->z = 0;
+            m->use = MUSE_SPE;
+            m->spell = spell_best;
+            return TRUE;
+        }
+        return TRUE;
+    }
+
+    /* reset stuff */
+    score_best = 0;
+    m->use = 0;
+    m->spell = 0;
+    m->x = 0;
+    m->y = 0;
+    m->z = 0;
+    randcount = 1;
+    spell = 0;
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
+        usable = find_item_single(mon, obj, FALSE, &m2, mclose ? TRUE : FALSE);
+        if (usable && mon_allowed(obj->otyp)) {
+            if (usable == 1) {
+                if (!rn2(randcount)) {
+                    randcount++;
+                    m->obj = obj;
+                    m->x = m2.x;
+                    m->y = m2.y;
+                    m->z = m2.z;
+                    m->use = (obj->oclass == WAND_CLASS   ? MUSE_WAN :
                               obj->oclass == SCROLL_CLASS ? MUSE_SCR :
                               obj->oclass == POTION_CLASS ? MUSE_POT :
-                              0);
+                              0);;
                 }
-
-                /* for summon nasty, get appropriate coordinates */
-                if (otyp == SPE_SUMMON_NASTY) {
-                    m->x = m_mx(mclose);
-                    m->y = m_my(mclose);
-                }
-            } else { /* to be used on a target */
-                if (otyp == SCR_STINKING_CLOUD ||
-                    ((otyp == SPE_FIREBALL ||
-                      otyp == SPE_CONE_OF_COLD) &&
-                     mprof(mon, MP_SATTK) >= P_SKILLED))
-                    score = mon_choose_spectarget(mon, obj, &tc);
-                else if (otyp == SPE_CHARM_MONSTER && hostrange == 1 && mclose != &youmonst)
-                    score = 20;
-                else {
-                    /* TODO: improve direction targeting logic */
-                    mclose = mfind_target(mon, (otyp == WAN_POLYMORPH ||
-                                                otyp == SPE_POLYMORPH ||
-                                                otyp == WAN_SPEED_MONSTER ||
-                                                otyp == WAN_MAKE_INVISIBLE ||
-                                                otyp == SPE_HEALING ||
-                                                otyp == SPE_EXTRA_HEALING) ? TRUE : FALSE);
-                    if (mclose)
-                        score = 30;
-                }
+            } else {
+                score = find_item_score(mon, obj, &tc);
                 if (score > score_best) {
                     tc_best = tc;
                     obj_best = obj;
@@ -1210,43 +914,290 @@ find_item(struct monst *mon, struct musable *m)
                 }
             }
         }
-        /* fall back to normal obj loop */
-        if (obj_save) {
-            /* Free up pseudo-object if it was made as a spelltyp */
-            if (!spell && obj->oclass == SPBOOK_CLASS)
-                obfree(obj, NULL);
-            obj = obj_save;
-            obj_save = NULL;
-        }
     }
-
-    if (obj_best) {
-        /* If there is already a non-directional thing to do, override it unless it's a spell and this isn't,
-           or if the scoring was particurly bad */
-        if (m->use) {
-            if (obj_best->oclass != SPBOOK_CLASS && m->use == MUSE_SPE && rn2(3))
-                return TRUE;
-            if (score_best <= 30 && rn2(2))
-                return TRUE;
-        }
-        if (obj_best->oclass == SPBOOK_CLASS)
-            m->spell = obj_best->otyp;
-        else
-            m->obj = obj_best;
-        m->use = (obj_best->oclass == SPBOOK_CLASS ? MUSE_SPE :
-                  obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
-                  obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
-                  0);
+        
+    if (obj_best && (score_best > 20 ? rn2(3) : !rn2(3))) {
         m->x = tc_best.x;
         m->y = tc_best.y;
+        m->z = 0;
+        m->use = (obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
+                  obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
+                  obj_best->otyp == BULLWHIP       ? MUSE_BULLWHIP :
+                  0);
+        m->obj = obj_best;
+        return TRUE;
     }
-    return (boolean) (! !m->use);
+    return !!m->use;
 }
 
-/* Perform a defensive action for a monster.  Must be called immediately
- * after find_defensive().  Return values are 0: did something, 1: died,
- * 2: did something and can't attack again (i.e. teleported).
- */
+/* Check a single item or spell if it's usable.
+   Returns:
+   2: perform a scoring for target logic
+   1: usable
+   0: non-usable
+   TODO: maybe make this into a switch statement */
+
+static int
+find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musable *m, boolean close)
+{
+    boolean stuck = (mon == u.ustuck && sticks(youmonst.data));
+    int x = mon->mx, y = mon->my;
+    struct level *lev = mon->dlevel;
+    m->x = 0;
+    m->y = 0;
+    m->z = 0;
+
+    /* kludge to cut down on trap destruction (particularly portals) */
+    struct trap *t = t_at(lev, x, y);
+    if (t &&
+        (t->ttyp == PIT || t->ttyp == SPIKED_PIT || t->ttyp == WEB ||
+         t->ttyp == BEAR_TRAP))
+        t = NULL;  /* ok for monster to dig here */
+    int fraction = 100 * mon->mhp / mon->mhpmax;
+    int otyp = obj->otyp;
+    int oclass = obj->oclass;
+    int spe = 1;
+    int recharged = 0;
+    boolean cursed = FALSE;
+    boolean blessed = TRUE;
+    if (obj->mknown) {
+        spe = obj->spe;
+        recharged = obj->recharged;
+    }
+    if (obj->mbknown) {
+        cursed = obj->cursed;
+        blessed = obj->blessed;
+    }
+
+    if (spell && !mon_castable(mon, otyp))
+        return 0;
+
+    struct obj *otmp;
+
+    if (otyp == SPE_REMOVE_CURSE ||
+        (otyp == SCR_REMOVE_CURSE && !cursed))
+        for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
+            if (otmp->cursed && otmp->mbknown &&
+                (otmp->owornmask || otmp->otyp == LOADSTONE || blessed))
+                return 1;
+
+    if (!spell && oclass == SPBOOK_CLASS)
+        return 0; /* TODO: read books if caster */
+
+    /* this wand would explode on use */
+    if (oclass == WAND_CLASS && mprof(mon, MP_WANDS) == P_UNSKILLED && cursed)
+        return 0;
+
+    /* discharged wand/tool */
+    if ((oclass == WAND_CLASS ||
+         (oclass == TOOL_CLASS &&
+          !is_weptool(obj) && objects[otyp].oc_charged)) &&
+        spe <= 0 &&
+        (otyp != WAN_WISHING || !recharged))
+        return 0;
+
+    if (otyp == SPE_CHARGING ||
+        (otyp == SCR_CHARGING && !cursed)) {
+        for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
+            if (otmp->mknown &&
+                ((otmp->oclass == WAND_CLASS ||
+                  (otmp->oclass == TOOL_CLASS &&
+                   !is_weptool(otmp) && objects[otyp].oc_charged)) &&
+                 spe <= 0)) {
+                if ((otmp->otyp == WAN_WISHING || otmp->otyp == MAGIC_MARKER) &&
+                    (otmp->recharged && otmp->mbknown))
+                    continue;
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    if (oclass == SCROLL_CLASS && !obj->mknown &&
+        (blind(mon) || !haseyes(mon->data)))
+        return 0;
+
+    if (otyp == SPE_IDENTIFY ||
+        otyp == SCR_IDENTIFY)
+        for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
+            if (otmp->otyp != GOLD_PIECE && (!otmp->mknown || !otmp->mbknown))
+                return 1;
+
+    /* Defensive only */
+    if (fraction < 35) {
+        if ((otyp == WAN_DIGGING || otyp == SPE_DIG) && !stuck && !t &&
+            !mon->isshk && !mon->isgd && !mon->ispriest &&
+            !levitates(mon)
+            /* monsters digging in Sokoban can ruin things */
+            && !In_sokoban(m_mz(mon))
+            /* digging wouldn't be effective; assume they know that */
+            && !(lev->locations[x][y].wall_info & W_NONDIGGABLE)
+            && !(Is_botlevel(m_mz(mon)) || In_endgame(m_mz(mon)))
+            && !(is_ice(lev, x, y) || is_pool(lev, x, y) || is_lava(lev, x, y))
+            && (!(mon->data == &mons[PM_VLAD_THE_IMPALER]
+                  || In_V_tower(m_mz(mon))))) {
+            m->z = 1; /* digging down */
+            return 1;
+        }
+
+        /* c!oGL is pretty much reverse digging */
+        if (otyp == POT_GAIN_LEVEL && obj->cursed && obj->mbknown &&
+            !mon->isshk && !mon->isgd && !mon->ispriest &&
+            !In_sokoban(m_mz(mon)) &&
+            !In_endgame(m_mz(mon)) && mon_allowed(otyp))
+            return 1;
+
+        if (mon->data != &mons[PM_PESTILENCE]) {
+            if (otyp == POT_FULL_HEALING ||
+                otyp == POT_EXTRA_HEALING ||
+                otyp == POT_HEALING ||
+                otyp == SPE_EXTRA_HEALING ||
+                otyp == SPE_HEALING)
+                return 1;
+        } else {        /* Pestilence */
+            if (otyp == POT_SICKNESS)
+                return 1;
+        }
+
+        /* Only when hostiles are near */
+        if (close) {
+            if ((otyp == WAN_TELEPORTATION ||
+                 otyp == SPE_TELEPORT_AWAY ||
+                 (otyp == SCR_TELEPORTATION &&
+                  (!cursed || (!(mon->isshk && inhishop(mon)) && !mon->isgd && !mon->ispriest)))) &&
+                !tele_wary(mon))
+                if (!mon_has_amulet(mon) || (otyp != SCR_TELEPORTATION && mfind_target(mon, FALSE)))
+                    return mon_has_amulet(mon) ? 2 : 1;
+
+            if (otyp == SCR_GENOCIDE)
+                return 1;
+        }
+    }
+
+    /* Primarily offensive */
+    if (fraction >= 35 || !rn2(4)) {
+        /* Targeting needs extra checks */
+        if ((otyp == WAN_FIRE ||
+             otyp == SPE_FIREBALL ||
+             otyp == FIRE_HORN ||
+             otyp == WAN_COLD ||
+             otyp == SPE_CONE_OF_COLD ||
+             otyp == FROST_HORN ||
+             otyp == WAN_LIGHTNING ||
+             otyp == SPE_MAGIC_MISSILE ||
+             otyp == WAN_MAGIC_MISSILE ||
+             otyp == SPE_FORCE_BOLT ||
+             otyp == WAN_STRIKING ||
+             otyp == SPE_DRAIN_LIFE ||
+             otyp == SCR_STINKING_CLOUD ||
+             otyp == WAN_UNDEAD_TURNING ||
+             otyp == SPE_TURN_UNDEAD ||
+             otyp == WAN_SLOW_MONSTER ||
+             otyp == SPE_SLOW_MONSTER ||
+             otyp == WAN_CANCELLATION ||
+             otyp == SPE_CANCELLATION ||
+             otyp == SPE_CONFUSE_MONSTER ||
+             otyp == SPE_CHARM_MONSTER ||
+             otyp == SPE_STONE_TO_FLESH ||
+             otyp == POT_BLINDNESS ||
+             otyp == POT_CONFUSION ||
+             otyp == POT_ACID) &&
+            close)
+            return 2;
+    }
+
+    if (otyp == WAN_WISHING)
+        return 1;
+
+    /* If there is partial protection already, cast it only 50% of the time to avoid this essentially being the default
+       (Protection is a level 1 spell -- the monster can afford occasionally wasting a few casts to avoid this code being
+       far more complex) */
+    if (otyp == SPE_PROTECTION && (!mon->mt_prop[mt_protection] || !rn2(4)))
+        return 1;
+
+    if (otyp == POT_GAIN_LEVEL && !cursed)
+        return 1;
+
+    if ((otyp == WAN_MAKE_INVISIBLE ||
+         otyp == SPE_INVISIBILITY ||
+         otyp == POT_INVISIBILITY) &&
+        !invisible(mon) && !binvisible(mon) &&
+        (!mon->mpeaceful || see_invisible(&youmonst)) &&
+        (!attacktype(mon->data, AT_GAZE) || cancelled(mon)))
+        return 1;
+
+    if ((otyp == WAN_POLYMORPH ||
+         otyp == SPE_POLYMORPH ||
+         otyp == POT_POLYMORPH) && !mon->cham &&
+        monstr[monsndx(mon->data)] < 6)
+        return 1;
+
+    if ((otyp == WAN_SPEED_MONSTER ||
+         otyp == SPE_HASTE_SELF ||
+         otyp == POT_SPEED) && !very_fast(mon))
+        return 1;
+
+    if (otyp == BULLWHIP && !rn2(2) && close)
+        return 2;
+
+    if (otyp == SPE_DETECT_MONSTERS && !detects_monsters(mon)) {
+        if (mprof(mon, MP_SDIVN) >= P_SKILLED)
+            return 1;
+    }
+
+    if (otyp == SCR_ENCHANT_WEAPON && mon->mw && objects[mon->mw->otyp].oc_charged &&
+        mon->mw->spe < 6 && !cursed)
+        return 1;
+
+    if ((otyp == SCR_ENCHANT_ARMOR || otyp == SCR_DESTROY_ARMOR) && !cursed) {
+        /* find armor */
+        int ret = 0;
+        for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
+            if (mon->mw && mon->mw == otmp)
+                continue;
+            if (!otmp->owornmask)
+                continue;
+            /* only use destroy armor if all worn armor is cursed */
+            if (otyp == SCR_DESTROY_ARMOR && (!otmp->cursed || otmp->spe > 0))
+                return 0;
+            ret = 1;
+            /* avoid enchanting if there's something >= +3 */
+            if (otyp == SCR_ENCHANT_ARMOR && otmp->spe > 3)
+                return 0;
+        }
+        return ret;
+    }
+
+    if ((((otyp == WAN_CREATE_MONSTER ||
+           otyp == SPE_CREATE_MONSTER ||
+           otyp == SCR_CREATE_MONSTER ||
+           otyp == SPE_CREATE_FAMILIAR) &&
+          !mon->mpeaceful) ||
+         otyp == SPE_SUMMON_NASTY) &&
+        close)
+        return 1;
+
+    if ((otyp == WAN_MAKE_INVISIBLE ||
+         otyp == WAN_POLYMORPH ||
+         otyp == SPE_POLYMORPH ||
+         otyp == WAN_SPEED_MONSTER ||
+         otyp == SPE_HEALING ||
+         otyp == SPE_EXTRA_HEALING ||
+         otyp == WAN_DEATH ||
+         otyp == SPE_FINGER_OF_DEATH ||
+         otyp == WAN_MAGIC_MISSILE ||
+         otyp == SPE_MAGIC_MISSILE ||
+         otyp == WAN_SLEEP ||
+         otyp == SPE_SLEEP ||
+         otyp == POT_PARALYSIS ||
+         otyp == POT_SLEEPING) &&
+        close)
+        return 2;
+    return 0;
+}
+
+/* Use item or dungeon feature (TODO: make it only items).
+   Returns 0: can act again, 1: died, 2: can not act again */
 int
 use_item(struct monst *mon, struct musable *m)
 {
@@ -1287,6 +1238,7 @@ use_item(struct monst *mon, struct musable *m)
             mzapmsg(mon, obj, TRUE);
         else
             mzapmsg(mon, obj, FALSE);
+        obj->spe--;
         weffects(mon, obj, m->x, m->y, m->z);
         return mon->mhp < 1 ? 1 : 2;
     case MUSE_POT_THROW:
