@@ -26,6 +26,7 @@ static void mreadmsg(struct monst *, struct obj *);
 static void mquaffmsg(struct monst *, struct obj *);
 static void mon_break_wand(struct monst *, struct obj *);
 static int find_item_score(struct monst *, struct obj *, coord *);
+static boolean find_item_obj(struct monst *, struct obj *, struct musable *, boolean);
 static int find_item_single(struct monst *, struct obj *, boolean, struct musable *, boolean);
 static boolean mon_allowed(int);
 static void mon_consume_unstone(struct monst *, struct obj *, boolean, boolean);
@@ -817,7 +818,6 @@ find_item(struct monst *mon, struct musable *m)
 
     int randcount = 1; /* for randomizing inventory usage */
     /* For figuring out the best use of target based stuff in particular */
-    struct obj *obj_best = NULL;
     int spell_best = 0;
     int score = 0;
     int score_best = 0;
@@ -828,13 +828,19 @@ find_item(struct monst *mon, struct musable *m)
     struct musable m2; /* for find_item_single */
     int usable = 0;
 
+    /* Spell handling */
     for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
         if (!mon_castable(mon, spell))
             continue;
 
         obj = mktemp_sobj(level, spell);
+        obj->blessed = obj->cursed = 0;
+        obj->quan = 20L;
         /* when adding more spells where this matters, change this */
-        if (obj->otyp == SPE_REMOVE_CURSE && mprof(mon, MP_SCLRC))
+        if (((obj->otyp == SPE_DETECT_MONSTERS) &&
+             mprof(mon, MP_SDIVN)) ||
+            ((obj->otyp == SPE_REMOVE_CURSE) &&
+             mprof(mon, MP_SCLRC)))
             obj->blessed = 1;
 
         usable = find_item_single(mon, obj, TRUE, &m2, mclose ? TRUE : FALSE);
@@ -868,8 +874,9 @@ find_item(struct monst *mon, struct musable *m)
         obfree(obj, NULL);
     }
 
-    /* if we can cast a spell, do so 3/4 of the time */
-    if (rn2(4) && (m->use || spell_best)) {
+    /* if we can cast a spell, do so 3/4 of the time unless it's the only
+       thing we can do (read: we lack hands) */
+    if ((rn2(4) || nohands(mon->data)) && (m->use || spell_best)) {
         if (spell_best && (score_best > 20 ? rn2(3) : !rn2(3))) {
             m->x = tc_best.x;
             m->y = tc_best.y;
@@ -881,17 +888,134 @@ find_item(struct monst *mon, struct musable *m)
         return TRUE;
     }
 
-    /* reset stuff */
-    score_best = 0;
+    /* at this point, if we lack hands, there's nothing we can do */
+    if (nohands(mon->data))
+        return FALSE;
+
+    /* Object handling. find_item_obj is given an object chain,
+       and if containers are found, those are checked recursively.
+       Deeper objects are not considered before objects in the current
+       chain. */
     m->use = 0;
     m->spell = 0;
+    m->obj = NULL;
     m->x = 0;
     m->y = 0;
     m->z = 0;
-    randcount = 1;
-    spell = 0;
-    for (obj = mon->minvent; obj; obj = obj->nobj) {
-        usable = find_item_single(mon, obj, FALSE, &m2, mclose ? TRUE : FALSE);
+    if (find_item_obj(mon, mon->minvent, m, mclose ? TRUE : FALSE))
+        return TRUE; /* find_item_obj handles musable */
+
+    /* If we are here, there was no relevant objects found.
+       Stash fragile objects in our open inventory in a container.
+       To avoid potential oscillation if an item is only borderline
+       usable, ignore this action 4/5 of the time */
+    if (rn2(5) && !mclose)
+        return FALSE;
+
+    struct obj *container = NULL;
+    for (container = mon->minvent; container; container = container->nobj) {
+        /* This check might seem backwards, but this way monsters can stash
+           cancellation even if the first container happens to be a BoH */
+        if (container->otyp == SACK ||
+            container->otyp == OILSKIN_SACK ||
+            (container->otyp == BAG_OF_HOLDING &&
+             (!container->cursed || !container->mbknown))) {
+            for (obj = mon->minvent; obj; obj = obj->nobj) {
+                if ((obj->oclass == SPBOOK_CLASS ||
+                     obj->oclass == SCROLL_CLASS ||
+                     obj->oclass == POTION_CLASS ||
+                     obj->oclass == WAND_CLASS) &&
+                    ((obj->otyp != WAN_CANCELLATION &&
+                      obj->otyp != BAG_OF_TRICKS && /* should never happen in current code */
+                      obj->otyp != BAG_OF_HOLDING) ||
+                     container->otyp != BAG_OF_HOLDING)) {
+                    m->obj = container;
+                    m->use = MUSE_CONTAINER;
+                    return TRUE;
+                }
+            }
+        }
+        continue;
+    }
+
+    /* found nothing to do */
+    return FALSE;
+}
+
+static boolean
+find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean close)
+{
+    if (!chain)
+        /* monster inventory is empty, or checked container is */
+        return FALSE;
+    int randcount = 1;
+    int usable;
+    int score = 0;
+    int score_best = 0;
+    coord tc;
+    coord tc_best;
+    struct obj *obj;
+    struct musable m2;
+    struct obj *obj_best = NULL;
+
+    /* if this isn't the main inventory, mark the object as mknown to note
+       that the monster now knows the content */
+    if (chain != mon->minvent)
+        chain->mknown = 1;
+
+    for (obj = chain; obj; obj = obj->nobj) {
+        /* Containers */
+        if ((obj->otyp == SACK ||
+             obj->otyp == OILSKIN_SACK ||
+             obj->otyp == BAG_OF_HOLDING) &&
+            !m->use) {
+            /* check for cursed bag of holding */
+            if (obj->otyp == BAG_OF_HOLDING && obj->cursed) {
+                if (obj->mbknown)
+                    continue; /* monster knows it's cursed, ignore it */
+                /* only make stuff vanish if it isn't chained inside
+                   another bag */
+                if (chain == mon->minvent) {
+                    int vanish = 0;
+                    struct obj *otmp;
+                    for (otmp = obj->cobj; otmp; otmp = otmp->nobj) {
+                        if (rn2(13))
+                            continue;
+                        /* something vanished, monster knows BUC now... */
+                        obj->mbknown = 1;
+                        obj_extract_self(otmp);
+                        obfree(otmp, NULL);
+                        vanish++;
+                    }
+                    obj->owt = weight(obj); /* if anything disappeared */
+                    if (vanish && canseemon(mon)) {
+                        pline("You barely notice %s item%s disappearing from %s bag!",
+                              vanish > 5 ? "several" :
+                              vanish > 1 ? "a few" :
+                              "an", vanish != 1 ? "s" : "",
+                              mon_nam(mon));
+                        obj->bknown = 1;
+                        makeknown(obj->otyp);
+                    }
+                }
+            }
+
+            /* This container is inside another, and the monster doesn't
+               know what is present. inside. Take it out if we're safe. */
+            if (!obj->mknown && chain != mon->minvent && !close) {
+                m->use = MUSE_CONTAINER;
+                m->obj = obj;
+            } else if (find_item_obj(mon, obj->cobj, m, close)) {
+                /* Check if there's something interesting in it */
+                m->use = MUSE_CONTAINER; /* take the object out */
+
+                /* if this bag is inside another, point to the bag itself */
+                if (chain != mon->minvent)
+                    m->obj = obj;
+            }
+            continue;
+        }
+        usable = find_item_single(mon, obj, FALSE, &m2, close);
         if (usable && mon_allowed(obj->otyp)) {
             if (usable == 1) {
                 if (!rn2(randcount)) {
@@ -916,18 +1040,21 @@ find_item(struct monst *mon, struct musable *m)
         }
     }
         
-    if (obj_best && (score_best > 20 ? rn2(3) : !rn2(3))) {
-        m->x = tc_best.x;
-        m->y = tc_best.y;
-        m->z = 0;
-        m->use = (obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
-                  obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
-                  obj_best->otyp == BULLWHIP       ? MUSE_BULLWHIP :
-                  0);
-        m->obj = obj_best;
+    if (m->use) {
+        if (obj_best && (score_best > 20 ? rn2(3) : !rn2(3))) {
+            m->x = tc_best.x;
+            m->y = tc_best.y;
+            m->z = 0;
+            m->use = (obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
+                      obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
+                      obj_best->otyp == BULLWHIP       ? MUSE_BULLWHIP :
+                      0);
+            m->obj = obj_best;
+            return TRUE;
+        }
         return TRUE;
     }
-    return !!m->use;
+    return FALSE;
 }
 
 /* Check a single item or spell if it's usable.
@@ -964,7 +1091,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
         spe = obj->spe;
         recharged = obj->recharged;
     }
-    if (obj->mbknown) {
+    if (spell || obj->mbknown) {
         cursed = obj->cursed;
         blessed = obj->blessed;
     }
@@ -1140,10 +1267,11 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
     if (otyp == BULLWHIP && !rn2(2) && close)
         return 2;
 
-    if (otyp == SPE_DETECT_MONSTERS && !detects_monsters(mon)) {
-        if (mprof(mon, MP_SDIVN) >= P_SKILLED)
-            return 1;
-    }
+    if ((otyp == SPE_DETECT_MONSTERS ||
+         otyp == POT_MONSTER_DETECTION) &&
+        !detects_monsters(mon) &&
+        blessed)
+        return 1;
 
     if (otyp == SCR_ENCHANT_WEAPON && mon->mw && objects[mon->mw->otyp].oc_charged &&
         mon->mw->spe < 6 && !cursed)
@@ -1203,15 +1331,19 @@ use_item(struct monst *mon, struct musable *m)
 {
     struct obj *obj = m->obj;
     int i;
-    /* MUSE_POT_THROW should not be scrutinized by precheck,
-       thrown potions never give ghost/djinn */
-    if (obj && m->use != MUSE_SPE && m->use != MUSE_POT_THROW && (i = precheck(mon, obj, m)))
+    if (obj &&
+        m->use != MUSE_SPE &&       /* MUSE_SPE deals with m->spell, not m->obj */
+        m->use != MUSE_POT_THROW && /* thrown potions never release ghosts/djinni */
+        m->use != MUSE_CONTAINER && /* BoH vanish logic is performed in find_item_obj */
+        (i = precheck(mon, obj, m)))
         return i;
     boolean vis = cansee(mon->mx, mon->my);
     boolean vismon = mon_visible(mon);
     boolean oseen = obj && vismon;
     boolean known; /* for *effects */
     struct monst *mtmp = NULL;
+    struct obj *otmp = NULL;
+    struct obj *container = NULL; /* for contained objects */
 
     if (oseen)
         examine_object(obj);
@@ -1249,6 +1381,53 @@ use_item(struct monst *mon, struct musable *m)
         m_throw(mon, mon->mx, mon->my, m->x, m->y,
                 distmin(mon->mx, mon->my, m->x, m->y), obj, TRUE);
         return 2;
+    case MUSE_CONTAINER:
+        for (container = mon->minvent; container; container = container->nobj) {
+            /* if we find a "root" container as target, the intention is to bag fragile stuff */
+            if (container == obj) {
+                int contained = 0;
+                for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
+                    if ((otmp->oclass == SPBOOK_CLASS ||
+                         otmp->oclass == SCROLL_CLASS ||
+                         otmp->oclass == POTION_CLASS ||
+                         otmp->oclass == WAND_CLASS) &&
+                        ((otmp->otyp != WAN_CANCELLATION &&
+                          otmp->otyp != BAG_OF_TRICKS && /* should never happen in current code */
+                          otmp->otyp != BAG_OF_HOLDING) ||
+                         container->otyp != BAG_OF_HOLDING)) {
+                        obj_extract_self(otmp);
+                        add_to_container(container, otmp);
+                        contained++;
+                    }
+                }
+                if (contained) {
+                    if (vismon)
+                        pline("%s stashes %s item%s in %s %s.", Monnam(mon),
+                              contained > 5 ? "several" :
+                              contained > 1 ? "a few" :
+                              "an", contained != 1 ? "s" : "", mhis(mon), xname(obj));
+                    return 2;
+                }
+                impossible("monster wanted to stash objects, but there was nothing to stash?");
+                return 0;
+            } else if (Has_contents(container)) {
+                /* We don't need to do this recursively, because find_item_obj ensures that in case the object
+                   desired is nested, it will point to the container where the desired object is. */
+                for (otmp = container->cobj; otmp; otmp = otmp->nobj) {
+                    if (otmp != obj)
+                        continue;
+                    obj_extract_self(otmp);
+                    mpickobj(mon, otmp);
+                    if (vismon)
+                        pline("%s removes %s from %s %s.", Monnam(mon), an(xname(obj)),
+                              mhis(mon), xname(container));
+                    return 2;
+                }
+            }
+            continue;
+        }
+        impossible("monster didn't find what it was looking for in a container?");
+        return 0;
     case MUSE_UNICORN_HORN:
         if (vismon) {
             if (obj)
@@ -1449,7 +1628,7 @@ use_item(struct monst *mon, struct musable *m)
         }
         const char *The_whip = vismon ? "The bullwhip" : "A whip";
         int where_to = rn2(4);
-        struct obj *otmp = m_mwep(mtmp);
+        otmp = m_mwep(mtmp);
         if (!otmp) {
             panic("Monster targeting something without a weapon!");
             return 0;
@@ -1795,7 +1974,7 @@ searches_for_item(struct monst *mon, struct obj *obj)
         return (boolean) (!m_has_property(mon, INVIS, W_MASK(os_outside), TRUE) &&
                           !attacktype(mon->data, AT_GAZE));
     if (typ == POT_SPEED)
-        return (boolean) (!ifast(mon));
+        return (boolean) (!very_fast(mon));
 
     switch (obj->oclass) {
     case WAND_CLASS:
