@@ -143,7 +143,7 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
                     break;
                 case 4:
                     verbalize("You disturbed me, fool!");
-                    mtmp->mpeaceful = !mtmp->mpeaceful;
+                    mtmp->mpeaceful = !mon->mpeaceful;
                     /* TODO: allow monster specific grudges */
                     if (!mon->mpeaceful)
                         tamedog(mtmp, NULL);
