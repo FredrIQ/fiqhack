@@ -1119,7 +1119,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
     if ((oclass == WAND_CLASS ||
          (oclass == TOOL_CLASS &&
           !is_weptool(obj) && objects[otyp].oc_charged)) &&
-        spe <= 0 &&
+        spe <= 0 && obj->mknown &&
         (otyp != WAN_WISHING || !recharged))
         return 0;
 
@@ -1224,6 +1224,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
              otyp == WAN_CANCELLATION ||
              otyp == SPE_CANCELLATION ||
              otyp == SPE_CONFUSE_MONSTER ||
+             otyp == SCR_TAMING ||
              otyp == SPE_CHARM_MONSTER ||
              otyp == SPE_STONE_TO_FLESH ||
              otyp == POT_BLINDNESS ||
@@ -1298,9 +1299,9 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
 
     if ((((otyp == WAN_CREATE_MONSTER ||
            otyp == SPE_CREATE_MONSTER ||
-           otyp == SCR_CREATE_MONSTER ||
-           otyp == SPE_CREATE_FAMILIAR) &&
-          !mon->mpeaceful) ||
+           otyp == SCR_CREATE_MONSTER) &&
+          !mon->mpeaceful) || /* create monster makes no sense for peacefuls */
+         otyp == SPE_CREATE_FAMILIAR ||
          otyp == SPE_SUMMON_NASTY) &&
         close)
         return 1;
