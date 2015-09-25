@@ -1410,7 +1410,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             return 1;   /* nothing detected */
         break;
     case SPE_IDENTIFY:
-        cval = rn2_on_rng(25, rng_id_count) / 5;
+        cval = rn2_on_rng(25, you ? rng_id_count : rng_main) / 5;
         goto id;
     case SCR_IDENTIFY:
         /* known = TRUE; */
