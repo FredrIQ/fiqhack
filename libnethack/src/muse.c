@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -493,6 +493,8 @@ mon_allowed(int otyp)
     case SCR_IDENTIFY:
     case SCR_ENCHANT_ARMOR:
     case SCR_ENCHANT_WEAPON:
+    case WAN_CANCELLATION: /* currently not implemented in a good way */
+    case SPE_CANCELLATION:
         return FALSE;
         break;
     default:
@@ -536,10 +538,15 @@ find_item_score(struct monst *mon, struct obj *obj, coord *tc)
                     tc->y = y;
                     score = 20;
                 }
-                if ((otyp == SPE_CHARM_MONSTER ||
-                     otyp == SCR_TAMING) &&
-                    mtmp != &youmonst)
+                if (otyp == SPE_CHARM_MONSTER ||
+                    otyp == SCR_TAMING) {
+                    if (mtmp == &youmonst)
+                        continue;
+                    if (mon->mpeaceful == mtmp->mpeaceful)
+                        /* targeting monsters we grudge with charm spells will do no good... */
+                        continue;
                     score += 20;
+                }
             }
         }
     } else {
