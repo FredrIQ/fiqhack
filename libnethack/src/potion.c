@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -919,11 +919,12 @@ peffects(struct monst *mon, struct obj *otmp)
                             pline("Congratulations, %s!", mortal_or_creature(mon->data, TRUE));
                             pline("But now thou must face the final Test...");
                         }
-                        pline("%s managed to get to the Planes with the Amulet...",
+                        pline("%s managed to enter the Planes with the Amulet...",
                               Monnam(mon));
                         pline("You feel a sense of despair as you realize that all is lost.");
                         const char *ebuf;
-                        ebuf = msgprintf("lost the Amulet as %s escaped with it", k_monnam(mon));
+                        ebuf = msgprintf("lost the Amulet as %s entered the Planes with it",
+                                         k_monnam(mon));
                         done(ESCAPED, ebuf);
                     }
                 } else {
