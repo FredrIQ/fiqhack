@@ -47,7 +47,7 @@ livelog_write_string(const char *buffer) {
     if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
         livelogfile = fdopen(fd, "a");
 
-        fprintf(livelogfile, buffer);
+        fprintf(livelogfile, "%s", buffer);
         fprintf(livelogfile, "\n");
 
         change_fd_lock(fd, FALSE, LT_NONE, 0);
