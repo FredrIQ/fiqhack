@@ -516,6 +516,7 @@ find_item_score(struct monst *mon, struct obj *obj, coord *tc)
          mprof(mon, MP_SATTK) >= P_SKILLED))
         score = mon_choose_spectarget(mon, obj, tc);
     else if (otyp == SPE_CHARM_MONSTER ||
+             otyp == SCR_TAMING ||
              otyp == BULLWHIP) {
         int x, y;
         for (x = mon->mx - 1; x <= mon->mx + 1; x++) {
@@ -535,7 +536,9 @@ find_item_score(struct monst *mon, struct obj *obj, coord *tc)
                     tc->y = y;
                     score = 20;
                 }
-                if (otyp == SPE_CHARM_MONSTER && mtmp != &youmonst)
+                if ((otyp == SPE_CHARM_MONSTER ||
+                     otyp == SCR_TAMING) &&
+                    mtmp != &youmonst)
                     score += 20;
             }
         }
