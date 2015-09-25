@@ -1427,7 +1427,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                 pline("%s is granted an insight!", Monnam(mon));
         }
 
-        cval = rn2_on_rng(25, rng_id_count);
+        cval = rn2_on_rng(25, you ? rng_id_count : rng_main);
         if (sobj->cursed || (!sobj->blessed && cval % 5))
             cval = 1;  /* cursed 100%, uncursed 80% chance of 1 */
         else if (you && sobj->blessed && cval / 5 == 1 && Luck > 0)
