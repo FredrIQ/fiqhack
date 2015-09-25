@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -140,20 +140,20 @@ calm_nymphs(int distance)
 void
 awaken_soldiers(void)
 {
-    struct monst *mtmp = level->monlist;
+    struct monst *mtmp;
 
-    while (mtmp) {
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         if (!DEADMONSTER(mtmp) && is_mercenary(mtmp->data) &&
-            mtmp->data != &mons[PM_GUARD]) {
+            !mtmp->isgd) {
             mtmp->mfrozen = 0;
             msethostility(mtmp, TRUE, FALSE);
             mtmp->mcanmove = 1;
+            mtmp->msleeping = 0;
             if (canseemon(mtmp))
                 pline("%s is now ready for battle!", Monnam(mtmp));
             else
                 pline_once("You hear the rattle of battle gear being readied.");
         }
-        mtmp = mtmp->nmon;
     }
 }
 
