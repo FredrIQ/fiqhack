@@ -1256,7 +1256,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
     if (otyp == POT_GAIN_LEVEL && !cursed)
         return 1;
 
-    if (otyp == POT_SEE_INVISIBLE && !see_invisible(mon))
+    if (otyp == POT_SEE_INVISIBLE && !see_invisible(mon) && !cursed)
         return 1;
 
     if ((otyp == WAN_MAKE_INVISIBLE ||
