@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1148,6 +1148,9 @@ extern boolean attacktype(const struct permonst *, int);
 extern boolean poly_when_stoned(const struct permonst *);
 extern boolean resists_blnd(const struct monst *);
 extern boolean can_blnd(struct monst *, struct monst *, uchar, struct obj *);
+extern int mon_hitbon(struct monst *);
+extern int mon_dambon(struct monst *);
+extern int mon_protbon(struct monst *);
 extern boolean ranged_attk(const struct permonst *);
 extern boolean hates_silver(const struct permonst *);
 extern boolean passes_bars(const struct monst *);

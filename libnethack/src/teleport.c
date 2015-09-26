@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1400,6 +1400,10 @@ mtele_trap(struct monst *mtmp, struct trap *trap, int in_sight)
 
     if (tele_restrict(mtmp))
         return;
+    if (resists_magm(mtmp)) {
+        shieldeff(m_mx(mtmp), m_my(mtmp));
+        return; /* MR protects vs teleport traps */
+    }
     if (teleport_pet(mtmp, FALSE)) {
         /* save name with pre-movement visibility */
         monname = Monnam(mtmp);
@@ -1409,7 +1413,7 @@ mtele_trap(struct monst *mtmp, struct trap *trap, int in_sight)
         if (trap->once)
             mvault_tele(mtmp);
         else
-            rloc(mtmp, TRUE);
+            mon_tele(mtmp, !!teleport_control(mtmp));
 
         if (in_sight) {
             if (canseemon(mtmp))
@@ -1431,6 +1435,10 @@ mlevel_tele_trap(struct monst *mtmp, struct trap *trap, boolean force_it,
 
     if (mtmp == u.ustuck)       /* probably a vortex */
         return 0;       /* temporary? kludge */
+    if (resists_magm(mtmp) && tt == LEVEL_TELEP) {
+        shieldeff(m_mx(mtmp), m_my(mtmp));
+        return 0; /* MR prevents level teleport traps from working */
+    }
     if (teleport_pet(mtmp, force_it)) {
         d_level tolevel;
         int migrate_typ = MIGR_RANDOM;
@@ -1459,22 +1467,9 @@ mlevel_tele_trap(struct monst *mtmp, struct trap *trap, boolean force_it,
                 assign_level(&tolevel, &trap->dst);
                 migrate_typ = MIGR_PORTAL;
             }
-        } else {        /* (tt == LEVEL_TELEP) */
-            int nlev;
-
-            if (mon_has_amulet(mtmp) || In_endgame(&u.uz)) {
-                if (in_sight)
-                    pline("%s seems very disoriented for a moment.",
-                          Monnam(mtmp));
-                return 0;
-            }
-            nlev = random_teleport_level();
-            if (nlev == depth(&u.uz)) {
-                if (in_sight)
-                    pline("%s shudders for a moment.", Monnam(mtmp));
-                return 0;
-            }
-            get_level(&tolevel, nlev);
+        } else {
+            mon_level_tele(mtmp);
+            return 0;
         }
 
         if (in_sight) {

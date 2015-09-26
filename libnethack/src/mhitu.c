@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -406,6 +406,7 @@ mattacku(struct monst *mtmp)
         tmp -= 2;
     if (tmp <= 0)
         tmp = 1;
+    tmp += mon_hitbon(mtmp);
 
     /* make eels visible the moment they hit/miss us */
     if (mdat->mlet == S_EEL && invisible(mtmp) && cansee(mtmp->mx, mtmp->my)) {
@@ -743,6 +744,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     dmg = dice((int)mattk->damn, (int)mattk->damd);
     if (is_undead(mdat) && midnight())
         dmg += dice((int)mattk->damn, (int)mattk->damd); /* extra damage */
+    dmg += mon_dambon(mtmp);
 
     /* Next a cancellation factor. Use uncancelled when the cancellation factor
        takes into account certain armor's special magic protection.  Otherwise just
@@ -1574,7 +1576,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
     if (mtmp != u.ustuck)
         return 0;
     if (u.uswldtim > 0)
-        u.uswldtim -= 1;
+        u.uswldtim -= 1; /* what about slow digestion? */
 
     switch (mattk->adtyp) {
 
@@ -1967,7 +1969,7 @@ could_seduce(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         genagr = gender(magr);
     }
     if (mdef == &youmonst) {
-        defperc = (See_invisible != 0);
+        defperc = (see_invisible(&youmonst));
         gendef = poly_gender();
     } else {
         defperc = see_invisible(mdef);

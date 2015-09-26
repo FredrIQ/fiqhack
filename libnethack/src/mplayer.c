@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -286,6 +286,26 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 mk_mplayer_armor(mtmp, rnd_class(LOW_BOOTS,
                                                  LEVITATION_BOOTS, rng), rng);
             m_dowear(mtmp, TRUE);
+
+            /* done after wearing the dragon mail so the resists checks work */
+            if (rn2(8) || monsndx(ptr) == PM_WIZARD) {
+                int i, ring;
+                for (i=0;i<2 && (rn2(2) || monsndx(ptr) == PM_WIZARD);i++) {
+                    do ring = (!rn2(9) ? RIN_INVISIBILITY :
+                               !rn2(8) ? RIN_TELEPORT_CONTROL :
+                               !rn2(7) ? RIN_FIRE_RESISTANCE :
+                               !rn2(6) ? RIN_COLD_RESISTANCE :
+                               !rn2(5) ? RIN_SHOCK_RESISTANCE :
+                               !rn2(4) ? RIN_POISON_RESISTANCE :
+                               !rn2(3) ? RIN_INCREASE_ACCURACY :
+                               !rn2(2) ? RIN_INCREASE_DAMAGE :
+                               RIN_PROTECTION);
+                    while (ring != RIN_PROTECTION && ring != RIN_INCREASE_DAMAGE &&
+                           ring != RIN_INCREASE_ACCURACY &&
+                           m_has_property(mtmp, objects[ring].oc_oprop, ANY_PROPERTY, TRUE));
+                    mk_mplayer_armor(mtmp, ring, rng);
+                }
+            }
 
             quan = rn2_on_rng(3, rng) ?
                 rn2_on_rng(3, rng) : rn2_on_rng(16, rng);

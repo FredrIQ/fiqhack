@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2108,6 +2108,10 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->minvent = mread8(mf) ? (void *)1 : NULL;
     mon->mw = mread8(mf) ? (void *)1 : NULL;
 
+    mon->mhitinc = mread8(mf);
+    mon->mdaminc = mread8(mf);
+    mon->mblessed = mread8(mf);
+
     if (mon->mnamelth)
         mread(mf, NAME_MUTABLE(mon), mon->mnamelth);
 
@@ -2342,6 +2346,10 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     /* just mark that the pointers had values */
     mwrite8(mf, mon->minvent ? 1 : 0);
     mwrite8(mf, mon->mw ? 1 : 0);
+
+    mwrite8(mf, mon->mhitinc);
+    mwrite8(mf, mon->mdaminc);
+    mwrite8(mf, mon->mblessed);
 
     if (mon->mnamelth)
         mwrite(mf, NAME(mon), mon->mnamelth);

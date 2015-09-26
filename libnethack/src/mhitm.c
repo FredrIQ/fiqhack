@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-04 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -175,12 +175,14 @@ fightm(struct monst *mtmp)
  *
  * This function returns a result bitfield:
  *
- *          --------- aggressor died
- *         /  ------- defender died
- *        /  /  ----- defender was hit
- *       /  /  /
- *      x  x  x
+ *           ----------- defender was "hurriedly expelled"
+ *          /  --------- aggressor died
+ *         /  /  ------- defender died
+ *        /  /  /  ----- defender was hit
+ *       /  /  /  /
+ *      x  x  x  x
  *
+ *      0x8     MM_EXPELLED
  *      0x4     MM_AGR_DIED
  *      0x2     MM_DEF_DIED
  *      0x1     MM_HIT
@@ -229,6 +231,7 @@ mattackm(struct monst *magr, struct monst *mdef)
         tmp += 4;
         mdef->msleeping = 0;
     }
+    tmp += mon_hitbon(magr);
 
     /* undetect monsters become un-hidden if they are attacked */
     if (mdef->mundetected &&
@@ -602,9 +605,12 @@ gulpmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         place_monster(mdef, dx, dy);
         newsym(dx, dy);
     } else {    /* both alive, put them back */
-        if (cansee(dx, dy))
+        if (cansee(dx, dy)) {
             pline("%s is regurgitated!", Monnam(mdef));
-
+            if (status & MM_EXPELLED)
+                pline("Obviously, %s doesn't like %s taste.",
+                      mon_nam(magr), s_suffix(mon_nam(mdef)));
+        }
         place_monster(magr, ax, ay);
         place_monster(mdef, dx, dy);
         newsym(ax, ay);
@@ -678,6 +684,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             return MM_AGR_DIED;
         }
     }
+    tmp += mon_dambon(magr);
 
     /* cancellation factor is the same as when attacking the hero */
     armpro = magic_negation(mdef);
@@ -685,6 +692,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
     switch (mattk->adtyp) {
     case AD_DGST:
+        if (slow_digestion(mdef))
+            return (MM_HIT | MM_EXPELLED);
         /* eating a Rider or its corpse is fatal */
         if (is_rider(mdef->data)) {
             if (vis)
@@ -988,7 +997,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_HALU:
-        if (!cancelled(magr) && haseyes(pd) && !blind(mdef)) {
+        if (!cancelled(magr) && haseyes(pd) && !blind(mdef) &&
+            !resists_hallu(mdef)) {
             if (vis)
                 pline("%s looks %sconfused.", Monnam(mdef),
                       confused(mdef) ? "more " : "");

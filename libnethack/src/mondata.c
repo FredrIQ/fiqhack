@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,6 +45,47 @@ poly_when_stoned(const struct permonst * ptr)
             (is_golem(ptr) && ptr != &mons[PM_STONE_GOLEM] &&
              !(mvitals[PM_STONE_GOLEM].mvflags & G_GENOD)));
     /* allow G_EXTINCT */
+}
+
+/* BUG: currently does the wrong thing for players */
+int
+mon_hitbon(struct monst *mon)
+{
+    int ret = 0;
+    struct obj *otmp;
+    for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
+        if (otmp->owornmask && otmp->otyp == RIN_INCREASE_ACCURACY)
+            ret += otmp->spe;
+
+    ret += m_mhitinc(mon);
+    return ret;
+}
+
+/* BUG: currently does the wrong thing for players */
+int
+mon_dambon(struct monst *mon)
+{
+    int ret = 0;
+    struct obj *otmp;
+    for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
+        if (otmp->owornmask && otmp->otyp == RIN_INCREASE_DAMAGE)
+            ret += otmp->spe;
+
+    ret += m_mdaminc(mon);
+    return ret;
+}
+
+int
+mon_protbon(struct monst *mon)
+{
+    int ret = 0;
+    struct obj *otmp;
+    for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
+        if (otmp->owornmask && otmp->otyp == RIN_PROTECTION)
+            ret += otmp->spe;
+
+    ret += m_mblessed(mon);
+    return ret;
 }
 
 /* TRUE iff monster is resistant to light-induced blindness */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -303,15 +303,17 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         break;
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
-        if (wandlevel != P_MASTER && tele_restrict(mtmp)) { /* noteleport */
-            known = TRUE;
-            /* monster learns that teleportation isn't useful here */
-            if (level->flags.noteleport)
-                mtmp->mtrapseen |= (1 << (TELEP_TRAP - 1));
-        } else {
-            reveal_invis = !u_teleport_mon(mtmp, TRUE);
-            known = TRUE; /* this might not reveal the wand if teleported outside LOS -- intended */
+        known = TRUE;
+        if ((wandlevel != P_MASTER || selfzap) && tele_restrict(mtmp)) /* noteleport */
+            break;
+        if (level->flags.noteleport) {
+            if (mtmp == &youmonst)
+                safe_teleds(FALSE);
+            else
+                rloc(mtmp, TRUE);
+            break;
         }
+        reveal_invis = !mon_tele(mtmp, (level->flags.noteleport ? FALSE : !!teleport_control(mtmp)));
         break;
     case WAN_MAKE_INVISIBLE:
         if (wandlevel >= P_SKILLED && invisible(mtmp))

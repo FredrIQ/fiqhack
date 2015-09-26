@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -151,6 +151,9 @@ struct monst {
                            permonst.h) */
     short mxlth;        /* length of following data */
     int meating;        /* monster is eating timeout */
+    schar mhitinc;      /* monster intrinsic to-hit bonus/penalty */
+    schar mdaminc;      /* monster intrinsic damage bonus/penalty */
+    schar mblessed;     /* monster AC bonus/penalty */
     void *mextra[];     /* monster dependent info */
 };
 
@@ -206,6 +209,9 @@ struct monst {
 # define m_mlev(mon) (Upolyd ? mons[u.umonnum].mlevel : (mon)->data->mlevel)
 # define m_mwep(mon) ((mon) == &youmonst ? uwep : (mon)->mw)
 # define m_mspellprot(mon) ((mon) == &youmonst ? u.uspellprot : monspellprot(mon))
+# define m_mhitinc(mon) ((mon) == &youmonst ? u.uhitinc : (mon)->mhitinc)
+# define m_mdaminc(mon) ((mon) == &youmonst ? u.udaminc : (mon)->mdaminc)
+# define m_mblessed(mon) ((mon) == &youmonst ? u.ublessed : (mon)->mblessed)
 
 /* Does a monster know where the player character is? Does it think it does? */
 # define engulfing_u(mon) (Engulfed && (mon) == u.ustuck)

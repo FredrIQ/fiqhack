@@ -2037,6 +2037,13 @@ searches_for_item(struct monst *mon, struct obj *obj)
         if (typ == EGG)
             return (boolean) (touch_petrifies(&mons[obj->corpsenm]));
         break;
+    case RING_CLASS:
+        /* Should match the list in m_dowear_type */
+        if (typ == RIN_PROTECTION ||
+            typ == RIN_INCREASE_DAMAGE ||
+            typ == RIN_INCREASE_ACCURACY)
+            return (obj->spe > 0);
+        return (m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));
     default:
         break;
     }

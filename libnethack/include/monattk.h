@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* NetHack may be freely redistributed.  See license for details. */
 /* Copyright 1988, M. Stephenson */
 
@@ -96,6 +96,7 @@
 # define MM_HIT         0x1     /* aggressor hit defender */
 # define MM_DEF_DIED    0x2     /* defender died */
 # define MM_AGR_DIED    0x4     /* aggressor died */
+# define MM_EXPELLED    0x8     /* defender was saved by slow digestion */
 
 /* Return value from functions that handle attack-like actions (anything that
    can hit and damage an adjacent monster). Note that "ac_continue" varies a

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -138,7 +138,7 @@ find_mac(struct monst *mon)
     long mwflags = mon->misc_worn_check;
 
     for (obj = mon->minvent; obj; obj = obj->nobj) {
-        if (obj->owornmask & mwflags)
+        if ((obj->owornmask & mwflags) && (obj->oclass != RING_CLASS))
             base -= ARM_BONUS(obj);
         /* since ARM_BONUS is positive, subtracting it increases AC */
     }
@@ -153,11 +153,12 @@ find_mac(struct monst *mon)
     }
 
     base -= monspellprot(mon);
+    base -= mon_protbon(mon);
 
     return base;
 }
 
-/* weapons are handled separately; rings and eyewear aren't used by monsters */
+/* weapons are handled separately; eyewear aren't used by monsters */
 
 /* Wear the best object of each type that the monster has.  During creation,
  * the monster can put everything on at once; otherwise, wearing takes time.
@@ -199,6 +200,8 @@ m_dowear(struct monst *mon, boolean creation)
     if (mon->data == &mons[PM_KI_RIN] || mon->data == &mons[PM_COUATL])
         return;
 
+    /* TODO: handle cursed equipment better (can't put on suit if cursed cloak, etc),
+       it is currently not handled at all */
     /* can't put on shirt if already wearing suit */
     if (!cantweararm(mon->data) || (mon->misc_worn_check & W_MASK(os_arm)))
         m_dowear_type(mon, os_armu, creation, FALSE);
@@ -209,6 +212,8 @@ m_dowear(struct monst *mon, boolean creation)
     m_dowear_type(mon, os_armh, creation, FALSE);
     if (!MON_WEP(mon) || !bimanual(MON_WEP(mon)))
         m_dowear_type(mon, os_arms, creation, FALSE);
+    m_dowear_type(mon, os_ringl, creation, FALSE);
+    m_dowear_type(mon, os_ringr, creation, FALSE);
     m_dowear_type(mon, os_armg, creation, FALSE);
     if (!slithy(mon->data) && mon->data->mlet != S_CENTAUR)
         m_dowear_type(mon, os_armf, creation, FALSE);
@@ -246,6 +251,32 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
                 continue;
             best = obj;
             goto outer_break;   /* no such thing as better amulets */
+        case os_ringl:
+        case os_ringr:
+            /* Monsters can put on only the following rings. */
+            if (obj->oclass != RING_CLASS ||
+                (obj->otyp != RIN_INCREASE_ACCURACY &&
+                 obj->otyp != RIN_INCREASE_DAMAGE &&
+                 obj->otyp != RIN_PROTECTION &&
+                 obj->otyp != RIN_REGENERATION &&
+              /* obj->otyp != RIN_LEVITATION && TODO */
+                 obj->otyp != RIN_HUNGER &&
+                 obj->otyp != RIN_AGGRAVATE_MONSTER &&
+                 obj->otyp != RIN_WARNING &&
+                 obj->otyp != RIN_POISON_RESISTANCE &&
+                 obj->otyp != RIN_FIRE_RESISTANCE &&
+                 obj->otyp != RIN_COLD_RESISTANCE &&
+                 obj->otyp != RIN_SHOCK_RESISTANCE &&
+                 obj->otyp != RIN_FREE_ACTION &&
+                 obj->otyp != RIN_SLOW_DIGESTION &&
+                 obj->otyp != RIN_TELEPORTATION &&
+                 obj->otyp != RIN_TELEPORT_CONTROL &&
+                 obj->otyp != RIN_POLYMORPH &&
+                 obj->otyp != RIN_POLYMORPH_CONTROL &&
+                 obj->otyp != RIN_INVISIBILITY &&
+                 obj->otyp != RIN_SEE_INVISIBLE))
+                continue;
+            break;
         case os_armu:
             if (!is_shirt(obj))
                 continue;
@@ -325,6 +356,8 @@ outer_break:
                 buf = "";
             pline("%s%s puts on %s.", Monnam(mon), buf,
                   distant_name(best, doname));
+            /* we know enchantment now */
+            best->mknown = 1;
         }       /* can see it */
         m_delay += objects[best->otyp].oc_delay;
         mon->mfrozen = m_delay;
@@ -337,9 +370,17 @@ outer_break:
         if (!creation && canseemon(mon)) {
             pline("%s %s for a moment.", Tobjnam(best, "glow"),
                   hcolor("black"));
+            best->bknown = 1; /* player learned that the object is cursed */
+            best->mbknown = 1; /* monster did too */
         }
         curse(best);
     }
+
+    /* if the hero puts on a cursed object, he gets "Oops, that felt deathly cold."
+       and IDs the cursed state. Let monsters do so as well */
+    if (best->cursed)
+        best->mbknown = 1;
+
     if (old && update_property(mon, objects[old->otyp].oc_oprop, slot))
         makeknown(old->otyp);
     mon->misc_worn_check |= W_MASK(slot);
@@ -474,7 +515,7 @@ which_slot(const struct obj *otmp)
     else if (otmp->oclass == AMULET_CLASS)
         slot = os_amul;
     else if (otmp->oclass == RING_CLASS || otmp->otyp == MEAT_RING)
-        slot = (os_ringl | os_ringr);
+        slot = os_ringl;
     else if (otmp->otyp == BLINDFOLD || otmp->otyp == LENSES ||
              otmp->otyp == TOWEL)
         slot = os_tool;
@@ -724,15 +765,72 @@ mon_break_armor(struct monst *mon, boolean polyspot)
     return;
 }
 
-/* bias a monster's preferences towards armor that has special benefits. */
-/* currently only does speed boots, but might be expanded if monsters get to
-   use more armor abilities */
+/* Bias a monster's preferences towards armor that has special benefits.
+   Currently does speed boots and various rings. */
 int
 extra_pref(const struct monst *mon, struct obj *obj)
 {
+    /* Check for speed boots */
     if (obj) {
         if (obj->otyp == SPEED_BOOTS && !very_fast(mon))
             return 20;
+    }
+
+    /* Check for rings below this */
+    if (obj->oclass != RING_CLASS)
+        return 0;
+
+    /* Charge-based rings (increase X/protection) is seperate */
+    if (obj->otyp == RIN_INCREASE_ACCURACY ||
+        obj->otyp == RIN_INCREASE_DAMAGE ||
+        obj->otyp == RIN_PROTECTION) {
+        if (obj->spe <= 0 && obj->mknown)
+            return 0;
+        if (!obj->mknown && !obj->mbknown)
+            return 13;
+        if (obj->mbknown && obj->cursed)
+            return 0; /* we don't know +N, but we know it's cursed, so avoid it */
+        return (10 + 3*(obj->spe));
+    }
+
+    /* If a ring gives a redundant property, abort. BUG: this makes monsters wear duplicates */
+    if (m_has_property(mon, objects[obj->otyp].oc_oprop,
+                       ~(W_MASK(os_ringl) | W_MASK(os_ringr)), TRUE))
+        return 0;
+
+    switch (obj->otyp) {
+    case RIN_FREE_ACTION:
+    case RIN_SLOW_DIGESTION: /* only way for monsters to avoid digestion instadeath */
+        return 50;
+    case RIN_POISON_RESISTANCE:
+    case RIN_REGENERATION:
+        return 40;
+    case RIN_SEE_INVISIBLE:
+        return 30;
+    case RIN_FIRE_RESISTANCE:
+    case RIN_COLD_RESISTANCE:
+    case RIN_SHOCK_RESISTANCE:
+        return 20;
+    case RIN_HUNGER:
+    case RIN_AGGRAVATE_MONSTER:
+        return 0; /* not desirable -- but the side effect is that monsters will still wear them if they lack better */
+    case RIN_WARNING:
+        /* Ring of warning is an OK replacement for see invis */
+        return (see_invisible(mon) ? 5 : 25);
+    case RIN_INVISIBILITY:
+        if (!see_invisible(&youmonst)) {
+            if (mon->mtame || mon->mpeaceful)
+                return 0;
+        }
+        return 30;
+    case RIN_TELEPORT_CONTROL:
+        return (teleportitis(mon) ? 20 : 5);
+    case RIN_POLYMORPH_CONTROL:
+        return (polymorphitis(mon) ? 40 : 5);
+    case RIN_TELEPORTATION:
+        return (teleport_control(mon) ? 30 : 15);
+    case RIN_POLYMORPH:
+        return (polymorph_control(mon) ? 30 : 0);
     }
     return 0;
 }
