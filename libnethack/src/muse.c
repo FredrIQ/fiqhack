@@ -1256,6 +1256,9 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
     if (otyp == POT_GAIN_LEVEL && !cursed)
         return 1;
 
+    if (otyp == POT_SEE_INVISIBLE && !see_invisible(mon))
+        return 1;
+
     if ((otyp == WAN_MAKE_INVISIBLE ||
          otyp == SPE_INVISIBILITY ||
          otyp == POT_INVISIBILITY) &&
@@ -2043,7 +2046,7 @@ searches_for_item(struct monst *mon, struct obj *obj)
             typ == RIN_INCREASE_DAMAGE ||
             typ == RIN_INCREASE_ACCURACY)
             return (obj->spe > 0);
-        return (m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));
+        return (!m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));
     default:
         break;
     }
