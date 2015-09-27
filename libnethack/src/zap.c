@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1935,16 +1935,24 @@ wrestable(struct obj *wand)
  * added by GAN 11/03/86
  */
 int
-zappable(struct obj *wand)
+zappable(struct monst *mon, struct obj *wand)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
     if (wand->spe < 0 || (wand->spe == 0 && rn2(121))) {
-        pline("You feel an absence of magical power.");
-        wand->known = 1;        /* we know the :0 */
+        if (you || vis) {
+            pline("You feel an absence of magical power.");
+            wand->known = 1; /* we know the :0 */
+        }
+        if (!you)
+            wand->mknown = 1; /* monster learns charge count */
         return 0;
     }
 
     if (wand->spe == 0)
-        pline("You wrest one last charge from the worn-out wand.");
+        if (you || vis)
+            pline("%s wrest%s one last charge from the worn-out wand.",
+                  you ? "You" : Monnam(mon), you ? "" : "s");
     wand->spe--;
     return 1;
 }
@@ -2075,7 +2083,7 @@ dozap(const struct nh_cmd_arg *arg)
         return 1;
 
     /* zappable addition done by GAN 11/03/86 */
-    if (!zappable(obj)) {       /* zappable prints the message itself */
+    if (!zappable(&youmonst, obj)) {       /* zappable prints the message itself */
     } else if (!wandlevel) {
         backfire(obj);  /* the wand blows up in your face! */
         exercise(A_STR, FALSE);

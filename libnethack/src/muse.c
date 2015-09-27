@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-28 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1397,8 +1397,13 @@ use_item(struct monst *mon, struct musable *m)
             mzapmsg(mon, obj, TRUE);
         else
             mzapmsg(mon, obj, FALSE);
-        obj->spe--;
-        weffects(mon, obj, m->x, m->y, m->z);
+        if (zappable(mon, obj))
+            weffects(mon, obj, m->x, m->y, m->z);
+        if (obj && obj->spe < 0) {
+            if (oseen)
+                pline("%s to dust.", Tobjnam(obj, "turn"));
+            m_useup(mon, obj);
+        }
         return mon->mhp < 1 ? 1 : 2;
     case MUSE_POT_THROW:
         if (cansee(mon->mx, mon->my)) {
