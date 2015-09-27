@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -523,11 +523,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                               an(mons[obj->corpsenm].mname),
                               (obj->quan > 1) ? makeplural(withwhat) :
                               withwhat);
-                        if (!munstone(mon, TRUE))
-                            minstapetrify(mon, TRUE);
-                        if (resists_ston(mon))
-                            break;
-                        /* note: hp may be <= 0 even if munstoned==TRUE */
+                        mstiffen(mon);
                         return (boolean) (mon->mhp > 0);
                     }
                     tmp =
@@ -564,10 +560,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                                   mname : "petrifying", plur(cnt));
                             obj->known = 1;     /* (not much point...) */
                             useup_eggs(obj);
-                            if (!munstone(mon, TRUE))
-                                minstapetrify(mon, TRUE);
-                            if (resists_ston(mon))
-                                break;
+                            mstiffen(mon);
                             return (boolean) (mon->mhp > 0);
                         } else {        /* ordinary egg(s) */
                             const char *eggp =
@@ -1200,11 +1193,8 @@ damageum(struct monst *mdef, const struct attack *mattk)
             tmp = 0;
         break;
     case AD_STON:
-        if (!munstone(mdef, TRUE))
-            minstapetrify(mdef, TRUE);
-        tmp = 0;
+        mstiffen(mdef);
         break;
-
     case AD_SSEX:
     case AD_SEDU:
     case AD_SITM:
@@ -1419,9 +1409,8 @@ damageum(struct monst *mdef, const struct attack *mattk)
         if (negated)
             break;      /* physical damage only */
         if (!rn2(4) && !flaming(mdef->data) && !unsolid(mdef->data) &&
-            mdef->data != &mons[PM_GREEN_SLIME]) {
-            pline("You turn %s into slime.", mon_nam(mdef));
-            newcham(mdef, &mons[PM_GREEN_SLIME], FALSE, FALSE);
+            mdef->data != &mons[PM_GREEN_SLIME] && !unchanging(mdef)) {
+            set_property(mdef, SLIMED, 10, FALSE);
             tmp = 0;
         }
         break;

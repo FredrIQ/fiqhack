@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -101,6 +101,10 @@ struct monst {
 
     unsigned int mappearance;   /* for undetected mimics and the wiz */
 
+    /* Whether a delayed instadeath for a monster was caused by you */
+    unsigned usicked:1;
+    unsigned uslimed:1;
+    unsigned ustoned:1;
     unsigned levi_wary:1; /* worried about levi timing out */
     unsigned female:1;  /* is female */
     unsigned cham:3;    /* shape-changer */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1181,7 +1181,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
         if (otyp == POT_GAIN_LEVEL && obj->cursed && obj->mbknown &&
             !mon->isshk && !mon->isgd && !mon->ispriest &&
             !In_sokoban(m_mz(mon)) &&
-            !In_endgame(m_mz(mon)) && mon_allowed(otyp))
+            !In_endgame(m_mz(mon)))
             return 1;
 
         if (mon->data != &mons[PM_PESTILENCE]) {
@@ -1247,7 +1247,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
     if (otyp == WAN_WISHING)
         return 1;
 
-    /* If there is partial protection already, cast it only 50% of the time to avoid this essentially being the default
+    /* If there is partial protection already, cast it only 25% of the time to avoid this essentially being the default
        (Protection is a level 1 spell -- the monster can afford occasionally wasting a few casts to avoid this code being
        far more complex) */
     if (otyp == SPE_PROTECTION && (!mon->mt_prop[mt_protection] || !rn2(4)))
@@ -1298,6 +1298,9 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
             if (mon->mw && mon->mw == otmp)
                 continue;
             if (!otmp->owornmask)
+                continue;
+            /* Rings will not get destroyed by destroy armor */
+            if (otmp->owornmask & (W_MASK(os_ringl) | W_MASK(os_ringr)))
                 continue;
             /* only use destroy armor if all worn armor is cursed */
             if (otyp == SCR_DESTROY_ARMOR && (!otmp->cursed || otmp->spe > 0))
@@ -1354,7 +1357,7 @@ use_item(struct monst *mon, struct musable *m)
     boolean vis = cansee(mon->mx, mon->my);
     boolean vismon = mon_visible(mon);
     boolean oseen = obj && vismon;
-    boolean known; /* for *effects */
+    boolean known = FALSE; /* for *effects */
     struct monst *mtmp = NULL;
     struct obj *otmp = NULL;
     struct obj *container = NULL; /* for contained objects */
@@ -1368,10 +1371,20 @@ use_item(struct monst *mon, struct musable *m)
         return mon->mhp < 1 ? 1 : 2;
     case MUSE_SCR:
         mreadmsg(mon, obj);
-        seffects(mon, obj, &known);
-        if (known)
-            makeknown(obj->otyp);
-        m_useup(mon, obj);
+        obj->in_use = TRUE;
+        if (!seffects(mon, obj, &known)) {
+            if (!objects[obj->otyp].oc_name_known) {
+                if (known) {
+                    makeknown(obj->otyp);
+                    more_experienced(0, 10);
+                } else if (!objects[obj->otyp].oc_uname)
+                    docall(obj);
+            }
+            if (obj->otyp != SCR_BLANK_PAPER)
+                m_useup(mon, obj);
+            else
+                obj->in_use = FALSE;
+        }
         return mon->mhp < 1 ? 1 : 2;
     case MUSE_POT:
         mquaffmsg(mon, obj);
@@ -1396,8 +1409,18 @@ use_item(struct monst *mon, struct musable *m)
                 distmin(mon->mx, mon->my, m->x, m->y), obj, TRUE);
         return 2;
     case MUSE_CONTAINER:
+        /* for picking stuff from containers */
+        if (obj->where == OBJ_CONTAINED) {
+            container = obj->ocontainer;
+            obj_extract_self(obj);
+            mpickobj(mon, obj);
+            if (cansee(mon->mx, mon->my))
+                pline("%s removes %s from %s %s.", Monnam(mon),
+                      an(xname(obj)), mhis(mon), xname(container));
+            return 2;
+        }
+        /* for stashing stuff */
         for (container = mon->minvent; container; container = container->nobj) {
-            /* if we find a "root" container as target, the intention is to bag fragile stuff */
             if (container == obj) {
                 int contained = 0;
                 for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
@@ -1424,23 +1447,9 @@ use_item(struct monst *mon, struct musable *m)
                 }
                 impossible("monster wanted to stash objects, but there was nothing to stash?");
                 return 0;
-            } else if (Has_contents(container)) {
-                /* We don't need to do this recursively, because find_item_obj ensures that in case the object
-                   desired is nested, it will point to the container where the desired object is. */
-                for (otmp = container->cobj; otmp; otmp = otmp->nobj) {
-                    if (otmp != obj)
-                        continue;
-                    obj_extract_self(otmp);
-                    mpickobj(mon, otmp);
-                    if (vismon)
-                        pline("%s removes %s from %s %s.", Monnam(mon), an(xname(obj)),
-                              mhis(mon), xname(container));
-                    return 2;
-                }
             }
-            continue;
         }
-        impossible("monster didn't find what it was looking for in a container?");
+        impossible("container for monster not found?");
         return 0;
     case MUSE_UNICORN_HORN:
         if (vismon) {
@@ -1980,39 +1989,77 @@ searches_for_item(struct monst *mon, struct obj *obj)
         mon->data == &mons[PM_GHOST])
         return FALSE;
 
+    /* don't pickup blacklisted items */
+    if (!mon_allowed(typ))
+        return FALSE;
+
     /* discharged wands/magical horns */
     if ((obj->oclass == WAND_CLASS ||
-        typ == FROST_HORN || typ == FIRE_HORN) && obj->spe <= 0)
+        typ == FROST_HORN || typ == FIRE_HORN) && obj->spe <= 0 && obj->mknown)
         return FALSE;
+
     if (typ == POT_INVISIBILITY)
         return (boolean) (!m_has_property(mon, INVIS, W_MASK(os_outside), TRUE) &&
                           !attacktype(mon->data, AT_GAZE));
     if (typ == POT_SPEED)
         return (boolean) (!very_fast(mon));
 
+    if (typ == POT_SEE_INVISIBLE)
+        return !see_invisible(mon);
+
     switch (obj->oclass) {
     case WAND_CLASS:
         if (typ == WAN_DIGGING)
             return (boolean) (!levitates(mon));
-        if (objects[typ].oc_dir == RAY || typ == WAN_STRIKING ||
-            typ == WAN_TELEPORTATION || typ == WAN_CREATE_MONSTER ||
-            typ == WAN_SLOW_MONSTER || typ == WAN_UNDEAD_TURNING ||
-            typ == WAN_MAKE_INVISIBLE || typ == WAN_SPEED_MONSTER ||
-            typ == WAN_POLYMORPH)
+        /* locking/opening magic is TODO */
+        if (typ == WAN_LOCKING ||
+            typ == WAN_MAGIC_MISSILE ||
+            typ == WAN_MAKE_INVISIBLE ||
+            typ == WAN_OPENING ||
+            typ == WAN_SLOW_MONSTER ||
+            typ == WAN_SPEED_MONSTER ||
+            typ == WAN_STRIKING ||
+            typ == WAN_UNDEAD_TURNING ||
+            typ == WAN_COLD ||
+            typ == WAN_FIRE ||
+            typ == WAN_LIGHTNING ||
+            typ == WAN_SLEEP ||
+            typ == WAN_CANCELLATION ||
+            typ == WAN_CREATE_MONSTER ||
+            typ == WAN_POLYMORPH ||
+            typ == WAN_TELEPORTATION ||
+            typ == WAN_DEATH ||
+            typ == WAN_WISHING)
             return TRUE;
         break;
     case POTION_CLASS:
-        if (typ == POT_HEALING || typ == POT_EXTRA_HEALING ||
-            typ == POT_FULL_HEALING || typ == POT_POLYMORPH ||
-            typ == POT_GAIN_LEVEL || typ == POT_PARALYSIS || typ == POT_SLEEPING
-            || typ == POT_ACID || typ == POT_CONFUSION)
+        if (typ == POT_HEALING ||
+            typ == POT_EXTRA_HEALING ||
+            typ == POT_FULL_HEALING ||
+            typ == POT_POLYMORPH ||
+            typ == POT_GAIN_LEVEL ||
+            typ == POT_MONSTER_DETECTION ||
+            typ == POT_PARALYSIS ||
+            typ == POT_SLEEPING ||
+            typ == POT_ACID ||
+            typ == POT_CONFUSION)
             return TRUE;
         if (typ == POT_BLINDNESS && !attacktype(mon->data, AT_GAZE))
             return TRUE;
         break;
     case SCROLL_CLASS:
-        if (typ == SCR_TELEPORTATION || typ == SCR_CREATE_MONSTER ||
-            typ == SCR_EARTH || typ == SCR_REMOVE_CURSE)
+        if (typ == SCR_IDENTIFY ||
+            typ == SCR_ENCHANT_WEAPON ||
+            typ == SCR_ENCHANT_ARMOR ||
+            typ == SCR_REMOVE_CURSE ||
+            typ == SCR_DESTROY_ARMOR ||
+            typ == SCR_FIRE || /* for curing sliming only */
+            typ == SCR_TELEPORTATION ||
+            typ == SCR_CREATE_MONSTER ||
+            typ == SCR_TAMING ||
+            typ == SCR_CHARGING ||
+            typ == SCR_GENOCIDE ||
+            typ == SCR_STINKING_CLOUD)
             return TRUE;
         break;
     case AMULET_CLASS:
@@ -2026,8 +2073,12 @@ searches_for_item(struct monst *mon, struct obj *obj)
             return (boolean) needspick(mon->data);
         if (typ == UNICORN_HORN)
             return (boolean) (!obj->cursed && !is_unicorn(mon->data));
+        if (typ == SACK ||
+            typ == OILSKIN_SACK ||
+            typ == BAG_OF_HOLDING)
+            return TRUE;
         if (typ == FROST_HORN || typ == FIRE_HORN)
-            return (obj->spe > 0) && can_blow_instrument(mon->data);
+            return can_blow_instrument(mon->data);
         break;
     case FOOD_CLASS:
         if (typ == CORPSE)
@@ -2058,22 +2109,24 @@ boolean
 mon_reflects(struct monst * mon, const char *str)
 {
     struct obj *orefl = which_armor(mon, os_arms);
+    const char *mon_s;
+    mon_s = (mon == &youmonst) ? "your" : s_suffix(mon_nam(mon));
 
     if (orefl && orefl->otyp == SHIELD_OF_REFLECTION) {
         if (str) {
-            pline(str, s_suffix(mon_nam(mon)), "shield");
+            pline(str, mon_s, "shield");
             makeknown(SHIELD_OF_REFLECTION);
         }
         return TRUE;
     } else if (arti_reflects(MON_WEP(mon))) {
         /* due to wielded artifact weapon */
         if (str)
-            pline(str, s_suffix(mon_nam(mon)), "weapon");
+            pline(str, mon_s, "weapon");
         return TRUE;
     } else if ((orefl = which_armor(mon, os_amul)) &&
                orefl->otyp == AMULET_OF_REFLECTION) {
         if (str) {
-            pline(str, s_suffix(mon_nam(mon)), "amulet");
+            pline(str, mon_s, "amulet");
             makeknown(AMULET_OF_REFLECTION);
         }
         return TRUE;
@@ -2081,13 +2134,13 @@ mon_reflects(struct monst * mon, const char *str)
                (orefl->otyp == SILVER_DRAGON_SCALES ||
                 orefl->otyp == SILVER_DRAGON_SCALE_MAIL)) {
         if (str)
-            pline(str, s_suffix(mon_nam(mon)), "armor");
+            pline(str, mon_s, "armor");
         return TRUE;
     } else if (mon->data == &mons[PM_SILVER_DRAGON] ||
                mon->data == &mons[PM_CHROMATIC_DRAGON]) {
         /* Silver dragons only reflect when mature; babies do not */
         if (str)
-            pline(str, s_suffix(mon_nam(mon)), "scales");
+            pline(str, mon_s, "scales");
         return TRUE;
     }
     return FALSE;
@@ -2130,47 +2183,12 @@ ureflects(const char *fmt, const char *str)
     return FALSE;
 }
 
-
-/* TRUE if the monster ate something */
-boolean
-munstone(struct monst * mon, boolean by_you)
-{
-    struct obj *obj;
-
-    if (resists_ston(mon))
-        return FALSE;
-    if (mon->meating || !mon->mcanmove || mon->msleeping)
-        return FALSE;
-
-    for (obj = mon->minvent; obj; obj = obj->nobj) {
-        /* Monsters can also use potions of acid */
-        if ((obj->otyp == POT_ACID) ||
-            (obj->otyp == CORPSE &&
-             (obj->corpsenm == PM_LIZARD ||
-              (acidic(&mons[obj->corpsenm]) &&
-               obj->corpsenm != PM_GREEN_SLIME)))) {
-            mon_consume_unstone(mon, obj, by_you, TRUE);
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
 static void
 mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
                     boolean stoning)
 {
     int nutrit = (obj->otyp == CORPSE) ? dog_nutrition(mon, obj) : 0;
-
     /* also sets meating */
-
-    /* give a "<mon> is slowing down" message and also remove intrinsic speed
-       (comparable to similar effect on the hero) */
-    if (stoning) {
-        if (canseemon(mon))
-            pline("%s is slowing down.", Monnam(mon));
-        set_property(mon, FAST, -1, TRUE);
-    }
 
     if (mon_visible(mon)) {
         long save_quan = obj->quan;

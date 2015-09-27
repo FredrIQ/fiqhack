@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1120,7 +1120,8 @@ omon_adj(struct monst *mon, struct obj *obj, boolean mon_notices)
     /* ditto for immobilized target */
     if (!mon->mcanmove || !mon->data->mmove) {
         tmp += 4;
-        if (mon_notices && mon->data->mmove && !rn2(10)) {
+        if (mon_notices && mon->data->mmove && !rn2(10) &&
+            !(property_timeout(mon, STONED) <= 3)) {
             mon->mcanmove = 1;
             mon->mfrozen = 0;
         }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -518,7 +518,6 @@ extern boolean can_sacrifice(const struct obj *);
 extern struct obj *floorfood(const char *, const struct nh_cmd_arg *);
 extern void vomit(void);
 extern int eaten_stat(int, struct obj *);
-extern void fix_petrification(void);
 
 /* ### end.c ### */
 
@@ -1225,7 +1224,6 @@ extern int rnd_misc_item(struct monst *mon, enum rng rng);
 extern boolean searches_for_item(struct monst *, struct obj *);
 extern boolean mon_reflects(struct monst *, const char *);
 extern boolean ureflects(const char *, const char *);
-extern boolean munstone(struct monst *, boolean);
 extern void you_aggravate(struct monst *);
 
 /* ### music.c ### */
@@ -1807,6 +1805,7 @@ extern void seetrap(struct trap *);
 extern int mintrap(struct monst *);
 extern void instapetrify(const char *);
 extern void minstapetrify(struct monst *, boolean);
+extern void mstiffen(struct monst *);
 extern void selftouch(const char *, const char *);
 extern void mselftouch(struct monst *, const char *, boolean);
 extern boolean float_up(struct monst *);

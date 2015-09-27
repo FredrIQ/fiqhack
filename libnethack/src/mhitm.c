@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -918,23 +918,12 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             break;
     do_stone:
         /* may die from the acid if it eats a stone-curing corpse */
-        if (munstone(mdef, FALSE))
-            goto post_stone;
-        if (poly_when_stoned(pd)) {
-            mon_to_stone(mdef);
-            tmp = 0;
-            break;
-        }
-        if (!resists_ston(mdef)) {
-            if (vis)
-                pline("%s turns to stone!", Monnam(mdef));
-            monstone(mdef);
-        post_stone:if (mdef->mhp > 0)
-                return 0;
-            else if (mdef->mtame && !vis)
-                pline(brief_feeling, "peculiarly sad");
-            return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
-        }
+        mstiffen(mdef);
+        if (mdef->mhp > 0)
+            return 0;
+        else if (mdef->mtame && !vis)
+            pline(brief_feeling, "peculiarly sad");
+        return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
         tmp = (mattk->adtyp == AD_STON ? 0 : 1);
         break;
     case AD_TLPT:
@@ -1250,7 +1239,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             break;      /* physical damage only */
         if (!rn2(4) && !flaming(mdef->data) && !unsolid(mdef->data) &&
             mdef->data != &mons[PM_GREEN_SLIME]) {
-            newcham(mdef, &mons[PM_GREEN_SLIME], FALSE, vis);
+            set_property(mdef, SLIMED, 10, FALSE);
             mdef->mstrategy &= ~STRAT_WAITFORU;
             tmp = 0;
         }
@@ -1290,8 +1279,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                to provide better message ordering */
             if (mdef->cham != CHAM_ORDINARY) {
                 newcham(magr, NULL, FALSE, TRUE);
-            } else if (mdef->data == &mons[PM_GREEN_SLIME]) {
-                newcham(magr, &mons[PM_GREEN_SLIME], FALSE, TRUE);
+            } else if (mdef->data == &mons[PM_GREEN_SLIME] && !unchanging(magr)) {
+                set_property(magr, SLIMED, 5, FALSE);
             } else if (mdef->data == &mons[PM_WRAITH]) {
                 grow_up(magr, NULL);
                 /* don't grow up twice */
@@ -1323,19 +1312,26 @@ noattacks(const struct permonst *ptr)
 int
 sleep_monst(struct monst *mon, int amt, int how)
 {
-    if (resists_sleep(mon) || (how >= 0 && resist(mon, (char)how, 0, NOTELL))) {
-        shieldeff(mon->mx, mon->my);
-    } else if (mon->mcanmove) {
-        amt += (int)mon->mfrozen;
-        if (amt > 0) {  /* sleep for N turns */
-            mon->mcanmove = 0;
-            mon->mfrozen = min(amt, 127);
-        } else {        /* sleep until awakened */
-            mon->msleeping = 1;
-        }
+    if (resists_sleep(mon) || (how >= 0 && mon != &youmonst &&
+                               resist(mon, (char)how, 0, NOTELL))) {
+        shieldeff(m_mx(mon), m_my(mon));
+        return 0;
+    }
+    if (mon == &youmonst) {
+        helpless(amt, hr_asleep, "sleeping", NULL);
         return 1;
     }
-    return 0;
+    if (!mon->mcanmove)
+        return 0;
+
+    amt += (int)mon->mfrozen;
+    if (amt > 0) {  /* sleep for N turns */
+        mon->mcanmove = 0;
+        mon->mfrozen = min(amt, 127);
+    } else {        /* sleep until awakened */
+        mon->msleeping = 1;
+    }
+    return 1;
 }
 
 /* sleeping grabber releases, engulfer doesn't; don't use for paralysis! */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -13,14 +13,12 @@
    are rather hard to iterate over, and make it even harder to work with the
    game's logic. */
 
-/* Returns an object slot mask giving all the reasons why the given
-   player/monster might have the given property, limited by "reasons", an object
-   slot mask (W_EQUIP, INTRINSIC, and ANY_PROPERTY are the most likely values
-   here, but you can specify slots individually if you like). */
-   
-/* The "os_polyform" checks used to not be accurate at all. They are now,
-   hopefully */
+static boolean is_green(struct monst *);
 
+
+/* These are starting to getting quite populated. Maybe consider simply giving
+   monsters a 16bit "mintrinsics" equavilent
+   (15 bits for timeout, 1 for os_outside) */
 int
 mon_prop2mt(enum youprop prop)
 {
@@ -47,6 +45,14 @@ mon_prop2mt(enum youprop prop)
         return mt_protection;
     case PASSES_WALLS:
         return mt_phasing;
+    case STONED:
+        return mt_petrify;
+    case SLIMED:
+        return mt_slime;
+    case SICK:
+        return mt_sick;
+    case STRANGLED:
+        return mt_strangled;
     default:
         return -1;
     }
@@ -78,11 +84,25 @@ mon_mt2prop(enum mt_prop mt)
         return PROTECTION;
     case mt_phasing:
         return PASSES_WALLS;
+    case mt_petrify:
+        return STONED;
+    case mt_slime:
+        return SLIMED;
+    case mt_sick:
+        return SICK;
+    case mt_strangled:
+        return STRANGLED;
     default:
         return -1;
     }
 }        
 
+/* Returns an object slot mask giving all the reasons why the given
+   player/monster might have the given property, limited by "reasons", an object
+   slot mask (W_EQUIP, INTRINSIC, and ANY_PROPERTY are the most likely values
+   here, but you can specify slots individually if you like).
+   The "os_polyform" checks used to not be accurate at all. They are now,
+   hopefully */
 unsigned
 m_has_property(const struct monst *mon, enum youprop property,
                unsigned reasons, boolean even_if_blocked)
@@ -450,7 +470,7 @@ set_property(struct monst *mon, enum youprop prop,
     if (!forced) {
         if (type > 0 || type == -2) {
             if (increased)
-                return update_property(mon, prop, os_newtimeout);
+                return update_property(mon, prop, os_inctimeout);
             else
                 return update_property(mon, prop, os_timeout);
         } else
@@ -477,7 +497,7 @@ update_property(struct monst *mon, enum youprop prop,
     boolean vis_invis = cansee(mon->mx, mon->my);
     boolean extrinsic = (slot <= os_last_slot);
     boolean lost = !(has_property(mon, prop) & W_MASK(slot));
-    if (slot == os_newtimeout)
+    if (slot == os_inctimeout)
         lost = FALSE;
     /* Whether or not a monster has it elsewhere */
     boolean redundant = !!(has_property(mon, prop) & ~W_MASK(slot));
@@ -487,6 +507,7 @@ update_property(struct monst *mon, enum youprop prop,
     boolean you = (mon == &youmonst);
     /* if something was said about the situation */
     boolean effect = FALSE;
+    int timer = property_timeout(mon, prop);
     struct obj *weapon;
 
     switch (prop) {
@@ -639,7 +660,7 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case LEVITATION:
         if (!redundant) {
-            if (!lost && slot != os_newtimeout)
+            if (!lost && slot != os_inctimeout)
                 float_up(mon);
             else
                 float_down(mon);
@@ -730,7 +751,7 @@ update_property(struct monst *mon, enum youprop prop,
                redundant, but "redundant" wont be enough, because if
                the only redundancy is from os_outside, there is still a
                partial speed up going on. */
-            if (slot != os_newtimeout && !(has_property(mon, FAST) &
+            if (slot != os_inctimeout && !(has_property(mon, FAST) &
                 ~(W_MASK(os_outside) | W_MASK(slot)))) {
                 /* if "redundant" is set at this point, it is pointing
                    at intrinsic speed only */
@@ -746,7 +767,7 @@ update_property(struct monst *mon, enum youprop prop,
                           (lost ? "slower" : "faster"));
                     effect = TRUE;
                 }
-            } else if (slot == os_newtimeout && you) {
+            } else if (slot == os_inctimeout && you) {
                 pline("Your %s get new energy.",
                       makeplural(body_part(LEG)));
                 effect = TRUE;
@@ -807,6 +828,8 @@ update_property(struct monst *mon, enum youprop prop,
                   Monnam(mon));
             effect = TRUE;
         }
+        if (!you && !redundant)
+            mon->usicked = lost || !flags.mon_moving ? 0 : 1;
         break;
     case BLINDED:
         if (you && slot == os_tool) {
@@ -858,7 +881,125 @@ update_property(struct monst *mon, enum youprop prop,
     case LWOUNDED_LEGS:
     case RWOUNDED_LEGS:
     case STONED:
+        if (lost) {
+            if (you || vis) {
+                if (hallu)
+                    pline("What a pity - %s just ruined a piece of %sart!",
+                          you ? "you" : mon_nam(mon),
+                          ((you && ACURR(A_CHA) > 15) ||
+                           mon->data == &mons[PM_SUCCUBUS] || /* Foocubi has 18 cha */
+                           mon->data == &mons[PM_INCUBUS]) ? "fine " : "");
+                else
+                    pline("%s %s more limber!",
+                          you ? "You" : Monnam(mon),
+                          you ? "feel" : "looks");
+                if (!you)
+                    mon->ustoned = 0;
+                else
+                    set_delayed_killer(STONING, NULL);
+                effect = TRUE;
+            }
+        } else {
+            if (you || vis) {
+                /* kludge - set timers 1 above what they actually should be, because
+                   property timers decrease at the end of the turn later on */
+                if (timer == 5)
+                    pline("%s %s slowing down.",
+                          you ? "You" : Monnam(mon),
+                          you ? "are" : "is");
+                else if (timer == 4)
+                    pline("%s limbs are stiffening.",
+                          you ? "Your" : s_suffix(Monnam(mon)));
+                else if (timer == 3)
+                    pline("%s limbs have turned to stone.",
+                          you ? "Your" : s_suffix(Monnam(mon)));
+                else if (timer == 2)
+                    pline("%s %s turned to stone.",
+                          you ? "You" : Monnam(mon),
+                          you ? "have" : "has");
+                else if (timer == 1)
+                    pline("%s %s a statue.",
+                          you ? "You" : Monnam(mon),
+                          you ? "are" : "is");
+                effect = TRUE;
+            }
+            /* remove intrinsic speed, even if mon re-acquired it */
+            set_property(mon, FAST, -1, TRUE);
+
+            if (timer == 5) {
+                if (!you && !flags.mon_moving)
+                    mon->ustoned = 1;
+            } else if (timer == 3) {
+                if (you)
+                    helpless(3, hr_paralyzed, "unable to move due to turning to stone",
+                             NULL);
+                else {
+                    mon->mcanmove = 0;
+                    mon->mfrozen = 3;
+                }
+            } else if (timer == 1) {
+                if (you)
+                    done(STONING, delayed_killer(STONING));
+                else
+                    monstone(mon);
+            }
+        }
+        break;
     case STRANGLED:
+        if (lost) {
+            if (you || vis) { /* TODO: give a suitable message if unbreathing */
+                pline("%s can breathe more easily!",
+                      you ? "You" : Monnam(mon));
+                effect = TRUE;
+            }
+        } else {
+            if (timer == 1) {
+                if (you || vis)
+                    pline("%s suffocate%s.",
+                          you ? "You" : Monnam(mon),
+                          you ? "" : "s");
+                effect = TRUE;
+                if (you)
+                    done(SUFFOCATION, killer_msg(SUFFOCATION,
+                                                 u.uburied ? "suffocation" : "strangulation"));
+                else
+                    mondied(mon);
+                break;
+            }
+            if (you || vis) {
+                if (unbreathing(mon) || !rn2(50)) {
+                    if (timer == 5)
+                        pline("%s %s is becoming constricted.",
+                              you ? "Your" : s_suffix(Monnam(mon)),
+                              mbodypart(mon, NECK));
+                    else if (timer == 4)
+                        pline("%s blood is having trouble reaching %s brain.",
+                              you ? "Your" : s_suffix(Monnam(mon)),
+                              you ? "your" : s_suffix(mon_nam(mon)));
+                    else if (timer == 3)
+                        pline("The pressure on %s %s increases.",
+                              you ? "your" : s_suffix(mon_nam(mon)),
+                              mbodypart(mon, NECK));
+                    else if (timer == 2)
+                        pline("%s consciousness is fading.",
+                              you ? "Your" : s_suffix(Monnam(mon)));
+                } else {
+                    if (timer == 5)
+                        pline("%s find%s it hard to breathe.",
+                              you ? "You" : Monnam(mon), you ? "" : "s");
+                    else if (timer == 4)
+                        pline("%s %s gasping for air.",
+                              you ? "You" : Monnam(mon), you ? "are" : "is");
+                    else if (timer == 3)
+                        pline("%s can no longer breathe.",
+                              you ? "You" : Monnam(mon));
+                    else if (timer == 2)
+                        pline("%s %s turning %s.", you ? "You" : Monnam(mon),
+                              you ? "are" : "is", hcolor("blue"));
+                }
+                effect = TRUE;
+            }
+        }
         break;
     case HALLUC:
         if (you) {
@@ -950,6 +1091,75 @@ update_property(struct monst *mon, enum youprop prop,
             spoteffects(TRUE);
         break;
     case SLIMED:
+        if (lost) {
+            if (you || vis) {
+                pline("The slime on %s disappears!",
+                      you ? "you" : mon_nam(mon));
+                effect = TRUE;
+            }
+            if (!you)
+                mon->uslimed = 0;
+        } else {
+            /* if slimes are genocided at any point during this process, immediately remove sliming */
+            if (mvitals[PM_GREEN_SLIME].mvflags & G_GENOD) {
+                return set_property(mon, SLIMED, -2, FALSE);
+            }
+
+            int idx = rndmonidx();
+            const char *turninto = (hallu ? (monnam_is_pname(idx)
+                                             ? monnam_for_index(idx)
+                                             : (idx < SPECIAL_PM &&
+                                                (mons[idx].geno & G_UNIQ))
+                                             ? the(monnam_for_index(idx))
+                                             : an(monnam_for_index(idx)))
+                                    : "a green slime");
+
+            /* remove intrinsic speed at "oozy", even if mon re-acquired it */
+            if (timer <= 6)
+                set_property(mon, FAST, -1, TRUE);
+            if (you || vis) {
+                if (timer == 10)
+                    pline("%s %s %s very well.",
+                          you ? "You" : Monnam(mon),
+                          you ? "don't" : "doesn't",
+                          you ? "feel" : "look");
+                else if (timer == 9)
+                    pline("%s %s turning a %s %s.",
+                          you ? "You" : Monnam(mon),
+                          you ? "are" : "is",
+                          is_green(mon) && !hallu ? "more vivid shade of" : "little",
+                          hcolor("green"));
+                else if (timer == 7)
+                    pline("%s limbs are getting oozy.",
+                          you ? "Your" : s_suffix(Monnam(mon)));
+                else if (timer == 5)
+                    pline("%s skin begins to peel away.",
+                          you ? "Your" : s_suffix(Monnam(mon)));
+                else if (timer == 3)
+                    pline("%s %s turning into %s.",
+                          you ? "You" : Monnam(mon),
+                          you ? "are" : "is",
+                          turninto);
+                else if (timer == 1)
+                    pline("%s %s become %s.",
+                          you ? "You" : Monnam(mon),
+                          you ? "have" : "has",
+                          turninto);
+                effect = TRUE;
+            }
+            if (timer == 10) {
+                if (!you && !flags.mon_moving)
+                    mon->uslimed = 1;
+            } else if (timer == 1) {
+                if (you)
+                    done(TURNED_SLIME, delayed_killer(TURNED_SLIME));
+                else {
+                    newcham(mon, &mons[PM_GREEN_SLIME], FALSE, FALSE);
+                    set_property(mon, SLIMED, -2, TRUE);
+                }
+            }
+        }
+        break;
     case FIXED_ABIL:
         break;
     case FLYING:
@@ -1017,7 +1227,36 @@ update_property(struct monst *mon, enum youprop prop,
         return TRUE;
     return FALSE;
 }
-unsigned
+
+static boolean
+is_green(struct monst *mon)
+{
+    if (mon->data == &mons[PM_GREMLIN] || mon->data == &mons[PM_LEPRECHAUN] ||
+        /* Are wood nymphs green? */
+        mon->data == &mons[PM_BABY_GREEN_DRAGON] ||
+        mon->data == &mons[PM_GREEN_DRAGON] ||
+        /* Are NetHack's lichens green?  Some real lichens are, some not.
+         * What about guardian nagas and their hatchlings?  Their default
+         * representation is green, but that's also true of hobbits, among
+         * other things... */
+        mon->data == &mons[PM_GARTER_SNAKE] || /* usually green and black */
+        mon->data == &mons[PM_GREEN_MOLD] ||
+        /* Green elves are not green; etymology is they live in forests. */
+        mon->data == &mons[PM_GECKO] || mon->data == &mons[PM_IGUANA] ||
+        /* Lizards come in a variety of colors.  What about crocodiles?
+         * I grew up thinking crocodiles and aligators are green, but
+         * Google Images seems to suggest they're more often gray/brown. */
+        /* The ones below this comment are currently not relevant, since
+         * you can't be slimed while polymorphed into them. */
+        mon->data == &mons[PM_MEDUSA] || mon->data == &mons[PM_JUIBLEX] ||
+        mon->data == &mons[PM_NEFERET_THE_GREEN] ||
+        mon->data == &mons[PM_GREEN_SLIME]) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+    unsigned
 u_have_property(enum youprop property, unsigned reasons,
                 boolean even_if_blocked)
 {

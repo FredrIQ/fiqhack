@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -613,7 +613,11 @@ mcalcdistress(void)
                            to see if it is controlled or not. */
                         set_property(mtmp, LEVITATION, -1, TRUE);
                 }
-                if (mtmp->mt_prop[mt] == 0)
+                /* Delayed instadeaths with special messages also requires update_property() each turn */
+                if (mt == mt_petrify ||
+                    mt == mt_slime ||
+                    mt == mt_strangled ||
+                    mtmp->mt_prop[mt] == 0)
                     update_property(mtmp, mon_mt2prop(mt), os_timeout);
             }
         }
@@ -1869,6 +1873,19 @@ mongone(struct monst *mdef)
     m_detach(mdef, mdef->data);
 }
 
+void
+mstiffen(struct monst *mon)
+{
+    if (resists_ston(mon))
+        return;
+    if (poly_when_stoned(mon->data)) {
+        mon_to_stone(mon);
+        return;
+    }
+
+    set_property(mon, STONED, 5, FALSE);
+}
+
 /* drop a statue or rock and remove monster */
 void
 monstone(struct monst *mdef)
@@ -3020,6 +3037,7 @@ void
 golemeffects(struct monst *mon, int damtype, int dam)
 {
     int heal = 0, slow = 0;
+    boolean you = (mon == &youmonst);
 
     if (mon->data == &mons[PM_FLESH_GOLEM]) {
         if (damtype == AD_ELEC)
@@ -3037,8 +3055,11 @@ golemeffects(struct monst *mon, int damtype, int dam)
     if (slow)
         set_property(mon, SLOW, dice(3, 8), FALSE);
     if (heal) {
-        if (mon->mhp < mon->mhpmax) {
-            mon->mhp += dam;
+        if (you && u.mh < u.mhmax) {
+            healup(heal, 0, FALSE, FALSE);
+            pline("Strangely, you feel better than before.");
+        } else if (!you && mon->mhp < mon->mhpmax) {
+            mon->mhp += heal;
             if (mon->mhp > mon->mhpmax)
                 mon->mhp = mon->mhpmax;
             if (cansee(mon->mx, mon->my))
