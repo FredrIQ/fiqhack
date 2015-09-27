@@ -5,13 +5,6 @@
 
 #include "hack.h"
 
-/* Disintegration rays have special treatment; corpses are never left.
- * But the routine which calculates the damage is separate from the routine
- * which kills the monster.  The damage routine returns this cookie to
- * indicate that the monster should be disintegrated.
- */
-#define MAGIC_COOKIE 1000
-
 static int poly_zapped;
 
 static void costly_cancel(struct obj *);
@@ -3355,8 +3348,8 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                     pline("It seems even stronger than before.");
                 }
                 mon->mhpmax += mon->mhpmax / 2;
-                if (mon->mhpmax >= MAGIC_COOKIE)
-                    mon->mhpmax = MAGIC_COOKIE - 1;
+                if (mon->mhpmax > 999) /* arbitrary -- cap HP at 999 */
+                    mon->mhpmax = 999;
                 mon->mhp = mon->mhpmax;
                 tmp = 0;
                 break;
