@@ -4245,6 +4245,7 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
     long i, cnt, quan;
     enum destroy_msg_type dindx;
     boolean vis;
+    const char *mult;
 
     if (mtmp == &youmonst) {    /* this simplifies artifact_hit() */
         destroy_item(osym, dmgtyp);
@@ -4324,8 +4325,14 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
 
             if (!cnt)
                 continue;
+            if (cnt == quan)
+                mult = "";
+            else
+                mult = (cnt == 1L) ? "One of " : "Some of ";
             if (vis)
-                pline("%s %s %s!", s_suffix(Monnam(mtmp)), xname(obj),
+                pline("%s%s %s %s!", mult,
+                      s_suffix(cnt == quan ? Monnam(mtmp) : mon_nam(mtmp)),
+                      xname(obj),
                       (cnt > 1L) ? destroy_messages[dindx].singular
                       : destroy_messages[dindx].plural);
             for (i = 0; i < cnt; i++)
