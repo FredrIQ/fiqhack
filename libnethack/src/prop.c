@@ -1256,7 +1256,7 @@ is_green(struct monst *mon)
     return FALSE;
 }
 
-    unsigned
+unsigned
 u_have_property(enum youprop property, unsigned reasons,
                 boolean even_if_blocked)
 {

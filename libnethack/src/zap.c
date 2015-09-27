@@ -3211,7 +3211,7 @@ boomhit(int dx, int dy)
             i = 0;
         boom = (boom == E_boomleft) ? E_boomright : E_boomleft;
         tmpsym_change(tsym, dbuf_effect(E_MISC, boom)); /* change glyph */
-       dx = xdir[i];
+        dx = xdir[i];
         dy = ydir[i];
         bhitpos.x += dx;
         bhitpos.y += dy;
