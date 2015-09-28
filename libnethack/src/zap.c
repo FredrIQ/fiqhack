@@ -3339,8 +3339,6 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
         break;
     case ZT_DEATH:     /* death/disintegration */
         ztyp = "dead";
-
-        /* Rider special handling */
         if (!disintegrated) { /* death */
             if (mon->data == &mons[PM_DEATH]) {
                 if (canseemon(mon)) {
