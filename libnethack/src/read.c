@@ -19,7 +19,7 @@
 static const char readable[] = { ALL_CLASSES, 0 };
 static const char all_count[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
 
-static void wand_explode(struct obj *);
+static void wand_explode(struct monst *, struct obj *);
 static void do_class_genocide(struct monst *);
 static int mon_choose_genocide(struct monst *, boolean, int);
 static int maybe_target_class(boolean, int);
@@ -508,7 +508,7 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
         n = (int)obj->recharged;
         if (n > 0 && (obj->otyp == WAN_WISHING ||
                       (n * n * n > rn2(7 * 7 * 7)))) {      /* recharge_limit */
-            wand_explode(obj);
+            wand_explode(mon, obj);
             return;
         }
         /* didn't explode, so increment the recharge count */
@@ -530,7 +530,7 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
             else
                 obj->spe++;
             if (obj->otyp == WAN_WISHING && obj->spe > 3) {
-                wand_explode(obj);
+                wand_explode(mon, obj);
                 return;
             }
             if (you || vis) {
@@ -1836,13 +1836,27 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
 }
 
 static void
-wand_explode(struct obj *obj)
+wand_explode(struct monst *mon, struct obj *obj)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
     obj->in_use = TRUE; /* in case losehp() is fatal */
-    pline("Your %s vibrates violently, and explodes!", xname(obj));
-    losehp(rnd(2 * (u.uhpmax + 1) / 3), killer_msg(DIED, "an exploding wand"));
-    useup(obj);
-    exercise(A_STR, FALSE);
+    if (you || vis)
+        pline("%s %s vibrates violently, and explodes!",
+              you ? "Your" : s_suffix(Monnam(mon)), xname(obj));
+    if (you)
+        losehp(rnd(2 * ((Upolyd ? u.mhmax : u.uhpmax) + 1) / 3),
+               killer_msg(DIED, "an exploding wand"));
+    else {
+        m_useup(mon, obj);
+        mon->mhp -= rnd(2 * (mon->mhpmax + 1) / 3);
+        if (mon->mhp < 1)
+            mondied(mon);
+    }
+    if (you) {
+        useup(obj);
+        exercise(A_STR, FALSE);
+    }
 }
 
 /*
