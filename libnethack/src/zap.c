@@ -3267,7 +3267,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
     boolean spellcaster = is_hero_spell(type);  /* maybe get a bonus! */
     int buzztyp = (type <= -30 ? abstype : abs(type));
     boolean yours = (type >= 0);
-    boolean disintegrated = (abs(type) == ZT_BREATH(ZT_DEATH));
+    boolean disintegrated = (buzztyp == ZT_BREATH(ZT_DEATH));
     struct obj *otmp;
 
     fltxt = flash_types[buzztyp];
@@ -3611,10 +3611,12 @@ zap_hit_check(int ac, int type)
 /* type == -20 to -29 : monster breathing at you */
 /* type == -30 to -39 : monster shooting a wand */
 /* called with dx = dy = 0 with vertical bolts */
+/* buzztyp gives a consistent number for kind of ray, "yours" can be used combined
+   with this to determine source+kind without unneccessary arithmetic */
 void
 buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
 {
-    int range, abstype = abs(type) % 10;
+    int range;
     int expltype;
     struct rm *loc;
     xchar lsx, lsy;
@@ -3624,7 +3626,9 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
     const char *fltxt;
     struct tmp_sym *tsym;
     int spell_type;
-    int buzztyp = (type <= -30) ? abstype : abs(type);
+    int buzztyp = abs(type) % 30; /* % 30 to catch -30-39 */
+    /* has nothing to do with absolute value. TODO: give this var a better name */
+    int abstype = buzztyp % 10;
     /* you = buzz hits you, vis = you can see mon, yours = you created the buzz */
     boolean you = FALSE;
     boolean vis = FALSE;
@@ -3693,7 +3697,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                     hit(fltxt, mon, "!");
                 if (mon_reflects(mon, NULL)) {
                     if (you || vis) {
-                        shieldeff(mon->mx, mon->my);
+                        shieldeff(sx, sy);
                         if (raylevel >= P_SKILLED) {
                             if (blind(&youmonst))
                                 pline("%s is disrupted by something!", The(fltxt));
