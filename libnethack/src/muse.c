@@ -641,6 +641,16 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                     if (obj->otyp == SPE_STONE_TO_FLESH &&
                         mtmp->data == &mons[PM_STONE_GOLEM])
                         helpful = FALSE;
+                    /* Deathzapping Death will do no good. However, while a deathzap against him
+                       would technically be helpful, declaring it as so would encourage monsters
+                       to FoD/WoD him if hostile, which would be a huge pain. Thus, he always get
+                       a scoring penalty */
+                    if ((obj->otyp == WAN_DEATH ||
+                         obj->otyp == SPE_FINGER_OF_DEATH) &&
+                        mtmp->data == &mons[PM_DEATH]) {
+                        score -= 10;
+                        continue;
+                    }
                     /* flesh to stone vs flesh golems is helpful */
                     if (obj->otyp == EGG && /* trice */
                         mtmp->data == &mons[PM_FLESH_GOLEM])
