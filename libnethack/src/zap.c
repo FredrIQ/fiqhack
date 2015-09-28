@@ -3436,10 +3436,10 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
             done(DIED, killer_msg(DIED, an(fltxt)));
         } else {
             mon->mhp = -1;
-            if (flags.mon_moving)
-                monkilled(mon, NULL, disintegrated ? -AD_RBRE : AD_RBRE);
-            else
+            if (yours)
                 xkilled(mon, disintegrated ? 2 : 1);
+            else
+                monkilled(mon, NULL, disintegrated ? -AD_RBRE : AD_RBRE);
         }
         return; /* lifesaved */
     case ZT_LIGHTNING:
