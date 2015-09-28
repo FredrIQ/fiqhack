@@ -1215,6 +1215,8 @@ extern boolean hits_bars(struct obj **, int, int, int, int);
 
 /* ### muse.c ### */
 
+extern int mon_choose_dirtarget(struct monst *, struct obj *, coord *);
+extern int mon_choose_spectarget(struct monst *, struct obj *, coord *);
 extern boolean find_item(struct monst *mon, struct musable *m);
 extern int use_item(struct monst *mon, struct musable *m);
 extern boolean mon_makewish(struct monst *);
@@ -1434,6 +1436,8 @@ extern boolean teleport_at_will(const struct monst *);
 extern unsigned levitates_at_will(const struct monst *, boolean, boolean);
 extern unsigned mon_remove_levitation(struct monst *, boolean);
 extern void gremlin_curse(struct monst *);
+extern boolean obj_affects(struct monst *, struct monst *, struct obj *);
+extern boolean prop_wary(struct monst *, struct monst *, enum youprop);
 extern int property_timeout(struct monst *, enum youprop);
 extern boolean set_property(struct monst *, enum youprop, int, boolean);
 extern boolean update_property(struct monst *, enum youprop, enum objslot);

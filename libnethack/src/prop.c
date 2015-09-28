@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-28 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -222,6 +222,148 @@ m_has_property(const struct monst *mon, enum youprop property,
     }
 
     return rv & reasons;
+}
+
+/* Check if an object/spell/whatever would have any effect on a target */
+boolean
+obj_affects(struct monst *user, struct monst *target, struct obj *obj)
+{
+    int wandlevel;
+    switch (obj->otyp) {
+    case WAN_FIRE:
+    case SPE_FIREBALL:
+    case SCR_FIRE:
+        return (!prop_wary(user, target, FIRE_RES) ||
+                prop_wary(user, target, SLIMED));
+    case WAN_COLD:
+    case SPE_CONE_OF_COLD:
+        return !prop_wary(user, target, COLD_RES);
+    case POT_SLEEPING:
+        if (!prop_wary(user, target, FREE_ACTION))
+            return TRUE;
+        /* fallthrough */
+    case WAN_SLEEP:
+    case SPE_SLEEP:
+        return !prop_wary(user, target, SLEEP_RES);
+    case WAN_LIGHTNING:
+        return !prop_wary(user, target, SHOCK_RES);
+    case SCR_STINKING_CLOUD:
+        /* technically also cause blindness, but for like 3 turns... */
+    case POT_SICKNESS:
+        return !prop_wary(user, target, POISON_RES);
+    case POT_ACID:
+        return !prop_wary(user, target, ACID_RES);
+    case SPE_STONE_TO_FLESH:
+        return (prop_wary(user, target, STONED) ||
+                target->data == &mons[PM_STONE_GOLEM]);
+    case EGG:
+        /* trice eggs only */
+        if (!touch_petrifies(&mons[obj->corpsenm]))
+            return FALSE;
+        return (!prop_wary(user, target, STONE_RES) ||
+                target->data == &mons[PM_FLESH_GOLEM]);
+    case WAN_MAKE_INVISIBLE:
+        return !prop_wary(user, target, INVIS);
+    case WAN_POLYMORPH:
+    case SPE_POLYMORPH:
+    case POT_POLYMORPH:
+        return !(prop_wary(user, target, UNCHANGING) ||
+                 prop_wary(user, target, ANTIMAGIC));
+    case WAN_STRIKING:
+    case SPE_FORCE_BOLT:
+        return !prop_wary(user, target, ANTIMAGIC);
+    case WAN_MAGIC_MISSILE:
+    case SPE_MAGIC_MISSILE:
+        if (!prop_wary(user, target, ANTIMAGIC))
+            return TRUE;
+        if (!user)
+            return FALSE;
+        wandlevel = 0;
+        if (obj->oclass == WAND_CLASS) {
+            wandlevel = mprof(user, MP_WANDS);
+            if (obj->mknown)
+                wandlevel = getwandlevel(user, obj);
+            if (wandlevel >= P_SKILLED)
+                return TRUE;
+        }
+        return FALSE;
+    case WAN_SLOW_MONSTER:
+    case SPE_SLOW_MONSTER:
+        return !prop_wary(user, target, SLOW);
+    case WAN_SPEED_MONSTER:
+        /* a monster might not know if a target is fast, but
+           if not, he'd find that out rather fast */
+        return !very_fast(target);
+    case WAN_UNDEAD_TURNING:
+    case SPE_TURN_UNDEAD:
+        return is_undead(target->data);
+    case WAN_CANCELLATION:
+    case SPE_CANCELLATION:
+        return !prop_wary(user, target, CANCELLED);
+    case WAN_DEATH:
+    case SPE_FINGER_OF_DEATH:
+        if (!(prop_wary(user, target, ANTIMAGIC) ||
+              is_undead(target->data) ||
+              is_demon(target->data)))
+            return TRUE;
+        if (!user)
+            return FALSE;
+        wandlevel = 0;
+        if (obj->oclass == WAND_CLASS) {
+            wandlevel = mprof(user, MP_WANDS);
+            if (obj->mknown)
+                wandlevel = getwandlevel(user, obj);
+            if (wandlevel >= P_EXPERT)
+                return !prop_wary(user, target, DRAIN_RES);
+        }
+        return FALSE;
+    case POT_PARALYSIS:
+        return !prop_wary(user, target, FREE_ACTION);
+    case POT_CONFUSION:
+        return !prop_wary(user, target, CONFUSION);
+    case POT_BLINDNESS:
+        return !prop_wary(user, target, BLINDED);
+    case SPE_HEALING:
+    case SPE_EXTRA_HEALING:
+        /* healing/extra healing cures blindness unless selfzapped */
+        if ((!user || user != target) &&
+            prop_wary(user, target, BLINDED))
+            return TRUE;
+        if (target == &youmonst && Upolyd)
+            return (u.mh < u.mhmax);
+        return (m_mhp(target) < m_mhpmax(target));
+    case SPE_DRAIN_LIFE:
+        return !prop_wary(user, target, DRAIN_RES);
+    }
+    return TRUE;
+}
+
+boolean
+prop_wary(struct monst *mon, struct monst *target, enum youprop prop)
+{
+    /* If !mon, or for some properties that is always announced,
+       or for allies/peacefuls, or for WoY, always be accurate */
+    if (!mon ||
+        prop == INVIS || /* "the invisible X" */
+        prop == AGGRAVATE_MONSTER || /* "seen: aggravate monster" */
+        (target == &youmonst && mon->mpeaceful) ||
+        (target != &youmonst && mon->mpeaceful == target->mpeaceful) ||
+        mon->iswiz || mon == target)
+        return (m_has_property(target, prop, ANY_PROPERTY, TRUE));
+    /* Monsters always know properties gained from those */
+    if (m_has_property(target, prop,
+                       (W_MASK(os_polyform) | W_MASK(os_birthopt) |
+                        W_MASK(os_role) | W_MASK(os_race)), TRUE))
+        return TRUE;
+
+    /* avoid monsters trying something futile */
+    if (mworn_blocked(target, prop))
+        return TRUE;
+
+    /* TODO: make monsters learn properties properly */
+    if (!rn2(2))
+        return (has_property(target, prop));
+    return FALSE;
 }
 
 int

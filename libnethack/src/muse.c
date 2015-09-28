@@ -504,6 +504,290 @@ mon_allowed(int otyp)
     return FALSE;
 }
 
+/* Monster directional targeting. The monster will check through all
+   directions, scoring based on what would be hit and their
+   resistances/etc. The monster assumes perfect accuracy. Potions will
+   only be scored based on first hit target (since the monster assumes
+   perfect accuracy, a potion would simply be destroyed on the first
+   target). */
+int
+mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
+{
+    int oc_dir = objects[obj->otyp].oc_dir;
+    int wandlevel = mprof(mon, MP_WANDS);
+    int range;
+    int score = 0;
+    int score_best = 0;
+    int dx, dy; /* directions */
+    int cx, cy; /* current directions (can change for bounces) */
+    int sx, sy; /* specific coords */
+    int lsx, lsy; /* last value of sx/sy (bounce logic needs it) */
+    cc->x = 0;
+    cc->y = 0;
+    boolean self = FALSE;
+    boolean wand = (obj->oclass == WAND_CLASS);
+    boolean spell = (obj->oclass == SPBOOK_CLASS);
+    boolean helpful = FALSE;
+    /* if monsters know BUC, apply real wandlevel for wands */
+    if (obj->mbknown && wand) {
+        wandlevel = getwandlevel(mon, obj);
+        if (!wandlevel) /* cursed wand is going to blow up */
+            return 0;
+    } else if (!wand)
+        wandlevel = 0;
+    struct monst *mtmp;
+    struct rm *loc;
+    for (dx = -1; dx <= 1; dx++) {
+        for (dy = -1; dy <= 1; dy++) {
+            self = FALSE;
+            range = BOLT_LIM;
+            score = 0;
+            sx = mon->mx;
+            sy = mon->my;
+            cx = dx;
+            cy = dy;
+            /* x/y = 0 -> selfzap */
+            if (!dx && !dy)
+                self = TRUE;
+            if (self && !wand && !spell)
+                continue; /* only wands and spells can be selfzapped */
+            /* TODO: implement monsters throwing stuff upwards */
+            if (self)
+                range = 1;
+            while (range-- > 0) {
+                helpful = FALSE;
+                /* following objects are usually helpful */
+                if (obj->otyp == SPE_HEALING ||
+                    obj->otyp == SPE_EXTRA_HEALING ||
+                    obj->otyp == SPE_STONE_TO_FLESH ||
+                    obj->otyp == WAN_SPEED_MONSTER ||
+                    obj->otyp == WAN_MAKE_INVISIBLE)
+                    helpful = TRUE;
+                /* ls* is for bounce purposes */
+                lsx = sx;
+                lsy = sy;
+                sx += cx;
+                sy += cy;
+                if (!isok(sx, sy) || !(loc = &level->locations[sx][sy])->typ ||
+                    !ZAP_POS(loc->typ) || closed_door(level, sx, sy)) {
+                    range--;
+                    if ((!wand && !spell) || oc_dir != RAY || obj->otyp == SPE_FIREBALL)
+                        break;
+                    if (range > 0) { /* bounce */
+                        /* TODO: maybe only allow some monsters to bounce rays? */
+                        int bounce = 0;
+                        uchar rmn;
+                        if (!cx || !cy || !rn2(20)) {
+                            cx = -cx;
+                            cy = -cy;
+                        } else {
+                            if (isok(sx, lsy) &&
+                                ZAP_POS(rmn = level->locations[sx][lsy].typ) &&
+                                !closed_door(level, sx, lsy) &&
+                                (IS_ROOM(rmn) ||
+                                 (isok(sx + dx, lsy) &&
+                                  ZAP_POS(level->locations[sx + dx][lsy].typ))))
+                                bounce = 1;
+                            if (isok(lsx, sy) &&
+                                ZAP_POS(rmn = level->locations[lsx][sy].typ) &&
+                                !closed_door(level, lsx, sy) &&
+                                (IS_ROOM(rmn) ||
+                                 (isok(lsx, sy + dy) &&
+                                  ZAP_POS(level->locations[lsx][sy + dy].typ))))
+                                if (!bounce || rn2(2))
+                                    bounce = 2;
+                            switch (bounce) {
+                            case 0:
+                                cx = -cx;   /* fall into... */
+                            case 1:
+                                cy = -cy;
+                                break;
+                            case 2:
+                                cx = -cx;
+                                break;
+                            }
+                        }
+                    }
+                    continue;
+                }
+                mtmp = m_at(mon->dlevel, sx, sy);
+                if (!mtmp && sx == u.ux && sy == u.uy)
+                    mtmp = &youmonst;
+                if (mon == mtmp)
+                    self = TRUE;
+                /* ignore monsters that we can't sense */
+                if (!msensem(mon, mtmp))
+                    mtmp = NULL;
+                if (mtmp) {
+                    range -= 2; /* buzz */
+                    if (wand && oc_dir == IMMEDIATE)
+                        range -= 1; /* -3 for beam wands */
+                    if (!wand || obj->otyp == SPE_FIREBALL)
+                        range = 0; /* fireballs hits 1st target only */
+                    if (oc_dir == RAY && wandlevel < P_SKILLED &&
+                        prop_wary(mon, mtmp, REFLECTING)) {
+                        cx = -cx;
+                        cy = -cy;
+                        continue; /* reflecting a ray has no effect on monster */
+                    }
+                    if (!obj_affects(mon, mtmp, obj))
+                        continue; /* object has no effect */
+                    /* curing slime is helpful */
+                    if ((obj->otyp == WAN_FIRE ||
+                         obj->otyp == SPE_FIREBALL) &&
+                        prop_wary(mon, mtmp, SLIMED))
+                        helpful = TRUE;
+                    /* stone to flesh vs stone golems is harmful */
+                    if (obj->otyp == SPE_STONE_TO_FLESH &&
+                        mtmp->data == &mons[PM_STONE_GOLEM])
+                        helpful = FALSE;
+                    /* flesh to stone vs flesh golems is helpful */
+                    if (obj->otyp == EGG && /* trice */
+                        mtmp->data == &mons[PM_FLESH_GOLEM])
+                        helpful = TRUE;
+                    if (self) /* -40 or +40 depending on helpfulness */
+                        score += (helpful ? 40 : -40);
+                    /* target is hostile */
+                    else if (mm_aggression(mon, mtmp))
+                        score += (helpful ? -10 : 20);
+                    /* ally/peaceful */
+                    else if ((mtmp == &youmonst && mon->mpeaceful) ||
+                             (mtmp != &youmonst &&
+                              mon->mpeaceful == mtmp->mpeaceful)) {
+                        score += (helpful ? 20 : -10);
+                        /* tame monsters like zapping friends and dislike collateral damage */
+                        if (mon->mtame) {
+                            score *= 2;
+                            /* never hit allies with deathzaps */
+                            if (obj->otyp == SPE_FINGER_OF_DEATH ||
+                                obj->otyp == WAN_DEATH)
+                                score *= 10;
+                        }
+                    }
+                    /* cure stiffening ASAP */
+                    if (obj->otyp == SPE_STONE_TO_FLESH)
+                        score *= 10;
+                }
+            }
+            /* kludge: for deathzaps, avoid zapping you if tame to avoid YAAD */
+            if (obj->otyp == SPE_FINGER_OF_DEATH &&
+                obj->otyp == WAN_DEATH &&
+                mon->mtame) {
+                range = BOLT_LIM;
+                while (--range) {
+                    sx += cx;
+                    sy += cy;
+                    if (sx == u.ux && sy == u.uy)
+                        score = 0;
+                }
+            }
+            if (score > score_best) {
+                cc->x = dx;
+                cc->y = dy;
+                score_best = score;
+            }
+        }
+    }
+    return score_best;
+}
+
+/* Monster specific position targeting. This works the following:
+   The monster will check through all valid targets, assigning points based
+   on what it will hit like this on each tile the spell/etc would hit:
+   Enemy: +20
+   Ally: -10
+   Self if not resistant: -40
+   The result is then divided by the range, and that makes up for that tile's
+   score. The sum is the total score of all hit tiles.
+   The winning score is the target. If there is no (positive) scoring targets,
+   return 0, otherwise return best score (so it can be used to determine
+   if it's worth using a scroll/spell/etc or not).
+*/
+int
+mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
+{
+    boolean stink = obj->otyp == SCR_STINKING_CLOUD ? TRUE : FALSE;
+    int globrange = 10;
+    if (stink)
+        globrange = 5;
+    int range = 2;
+    if (stink)
+        range = (obj->mbknown ? 2 + bcsign(obj) : 2);
+    int tilescore = 0;
+    int score = 0;
+    int score_best = 0;
+    int x, y, xx, yy;
+    int x_best = 0;
+    int y_best = 0;
+    struct monst *mtmp;
+    for (x = mon->mx - globrange; x <= mon->mx + globrange; x++) {
+        for (y = mon->my - globrange; y <= mon->my + globrange; y++) {
+            score = 0;
+
+            /* Invalid targets */
+            if (!isok(x, y))
+                continue;
+            if (!m_cansee(mon, x, y))
+                continue;
+            if (dist2(mon->mx, mon->my, x, y) > (globrange * globrange))
+                continue;
+
+            /* Check what is hit here */
+            for (xx = x - range; xx <= x + range; xx++) {
+                for (yy = y - range; yy <= y + range; yy++) {
+                    tilescore = 0;
+                    /* invalid tile */
+                    if (!isok(xx, yy))
+                        continue;
+                    /* out of stinking range */
+                    if (distmin(x, y, xx, yy) > range && stink)
+                        continue;
+
+                    mtmp = m_at(mon->dlevel, xx, yy);
+                    if (!mtmp) {
+                        if (xx == u.ux && yy == u.uy)
+                            mtmp = &youmonst;
+                        if (!mtmp)
+                            continue;
+                    }
+                    if (!obj_affects(mon, mtmp, obj))
+                        continue;
+                    /* self harm */
+                    if (mon == mtmp && (!sliming(mon) || obj->otyp != SPE_FIREBALL))
+                        tilescore -= 40;
+                    else if (mon == mtmp) /* cure slime */
+                        tilescore += 40;
+                    /* monster doesn't know of the target */
+                    else if (!msensem(mon, mtmp))
+                        continue;
+                    /* target is hostile */
+                    else if (mm_aggression(mon, mtmp))
+                        tilescore += 20;
+                    /* ally/peaceful */
+                    else if ((mtmp == &youmonst && mon->mpeaceful) ||
+                        (mtmp != &youmonst &&
+                         mon->mpeaceful == mtmp->mpeaceful))
+                        tilescore -= 10;
+
+                    tilescore /= (distmin(x, y, xx, yy) + 1);
+                    score += tilescore;
+                }
+            }
+
+            if (score > score_best) {
+                x_best = x;
+                y_best = y;
+                score_best = score;
+            }
+        }
+    }
+    if (score_best <= 0)
+        return 0;
+    cc->x = x_best;
+    cc->y = y_best;
+    return score_best;
+}
+
 static int
 find_item_score(struct monst *mon, struct obj *obj, coord *tc)
 {
@@ -512,14 +796,9 @@ find_item_score(struct monst *mon, struct obj *obj, coord *tc)
     struct monst *mtmp;
     tc->x = 0;
     tc->y = 0;
-    if (otyp == SCR_STINKING_CLOUD ||
-        ((otyp == SPE_FIREBALL ||
-          otyp == SPE_CONE_OF_COLD) &&
-         mprof(mon, MP_SATTK) >= P_SKILLED))
-        score = mon_choose_spectarget(mon, obj, tc);
-    else if (otyp == SPE_CHARM_MONSTER ||
-             otyp == SCR_TAMING ||
-             otyp == BULLWHIP) {
+    if (otyp == SPE_CHARM_MONSTER ||
+        otyp == SCR_TAMING ||
+        otyp == BULLWHIP) {
         int x, y;
         for (x = mon->mx - 1; x <= mon->mx + 1; x++) {
             for (y = mon->my - 1; y <= mon->my + 1; y++) {
@@ -549,20 +828,13 @@ find_item_score(struct monst *mon, struct obj *obj, coord *tc)
                 }
             }
         }
-    } else {
-        /* TODO: improve direction targeting logic */
-        mtmp = mfind_target(mon, (otyp == WAN_POLYMORPH ||
-                                  otyp == SPE_POLYMORPH ||
-                                  otyp == WAN_SPEED_MONSTER ||
-                                  otyp == WAN_MAKE_INVISIBLE ||
-                                  otyp == SPE_HEALING ||
-                                  otyp == SPE_EXTRA_HEALING) ? TRUE : FALSE);
-        if (mtmp) {
-            tc->x = sgn(m_mx(mtmp) - mon->mx);
-            tc->y = sgn(m_my(mtmp) - mon->my);
-            score = 30;
-        }
-    }
+    } else if (otyp == SCR_STINKING_CLOUD ||
+        ((otyp == SPE_FIREBALL ||
+          otyp == SPE_CONE_OF_COLD) &&
+         mprof(mon, MP_SATTK) >= P_SKILLED))
+        score = mon_choose_spectarget(mon, obj, tc);
+    else
+        score = mon_choose_dirtarget(mon, obj, tc);
     return score;
 }    
 
