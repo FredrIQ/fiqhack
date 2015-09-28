@@ -3332,7 +3332,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
             resisted = 1;
         else {
             sleep_monst(mon, dice(nd, 25),
-                        type == ZT_WAND(ZT_SLEEP) ? WAND_CLASS : '\0');
+                        buzztyp == ZT_WAND(ZT_SLEEP) ? WAND_CLASS : '\0');
             if (!you)
                 slept_monst(mon);
         }
@@ -3351,8 +3351,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                 if (mon->mhpmax > 999) /* arbitrary -- cap HP at 999 */
                     mon->mhpmax = 999;
                 mon->mhp = mon->mhpmax;
-                tmp = 0;
-                break;
+                return;
             }
             if ((nonliving(mon->data) || is_demon(mon->data) || resists_magm(mon)) ||
                 raylevel == P_UNSKILLED) {
@@ -3376,9 +3375,8 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                             mon->m_lev--;
                     }
                 }
-                break;
+                return;
             }
-            type = -1;  /* so they don't get saving throws */
         } else {
             if (is_rider(mon->data)) {
                 if (canseemon(mon)) {
@@ -3391,7 +3389,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                     pline("%s resurrects!", Monnam(mon));
                 }
                 mon->mhp = mon->mhpmax;
-                break;  /* Out of while loop */
+                return;
             }
             int dummy;
             /* Destroy shield first, then suit, then monster.
@@ -3410,7 +3408,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
 
                 if (!item_provides_extrinsic(otmp, DISINT_RES, &dummy))
                     destroy_arm(&youmonst, otmp);
-                break;
+                return;
             }
 
             if ((otmp = which_armor(mon, os_armc)) &&
@@ -3426,7 +3424,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                     pline("%s %s not disintegrated.",
                           you ? "You" : Monnam(mon),
                           you ? "are" : "is");
-                break;
+                return;
             }
             pline("%s %s disintegrated!",
                   you ? "You" : Monnam(mon),
@@ -3503,11 +3501,9 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
         tmp += spell_damage_bonus();
     if (is_hero_spell(type) && (Role_if(PM_KNIGHT) && Uhave_questart))
         tmp *= 2;
-    if (tmp > 0 && type >= 0 &&
-        resist(mon, type < ZT_SPELL(0) ? WAND_CLASS : '\0', 0, NOTELL))
+    if (tmp > 0 && resist(mon, buzztyp < ZT_SPELL(0) ? WAND_CLASS : '\0', 0, NOTELL))
         tmp /= 2;
-    if (half_spell_dam(mon) && tmp && buzztyp < 20 && buzztyp > 29)
-        /* not breath */
+    if (half_spell_dam(mon) && tmp && buzztyp < ZT_BREATH(0))
         tmp = (tmp + 1) / 2;
     if (tmp < 0)
         tmp = 0;        /* don't allow negative damage */
@@ -3525,9 +3521,9 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
         mon->mhp -= tmp;
         if (mon->mhp < 1) {
             if (yours)
-                monkilled(mon, fltxt, AD_RBRE);
-            else
                 killed(mon);
+            else
+                monkilled(mon, fltxt, AD_RBRE);
         }
     }
     return;
