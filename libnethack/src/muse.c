@@ -518,6 +518,7 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
     int range;
     int score = 0;
     int score_best = 0;
+    int tilescore = 0;
     int dx, dy; /* directions */
     int cx, cy; /* current directions (can change for bounces) */
     int sx, sy; /* specific coords */
@@ -555,7 +556,9 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
             if (self)
                 range = 1;
             while (range-- > 0) {
+                tilescore = 0;
                 helpful = FALSE;
+                self = FALSE;
                 /* following objects are usually helpful */
                 if (obj->otyp == SPE_HEALING ||
                     obj->otyp == SPE_EXTRA_HEALING ||
@@ -613,12 +616,18 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                 mtmp = m_at(mon->dlevel, sx, sy);
                 if (!mtmp && sx == u.ux && sy == u.uy)
                     mtmp = &youmonst;
-                if (mon == mtmp)
-                    self = TRUE;
-                /* ignore monsters that we can't sense */
-                if (!msensem(mon, mtmp))
-                    mtmp = NULL;
+                if (sobj_at(BOULDER, level, sx, sy) &&
+                    (obj->otyp == WAN_STRIKING ||
+                     obj->otyp == SPE_FORCE_BOLT))
+                    /* Boulders generally make the life harder for monsters, because they have pretty much no control over them.
+                       Thus, give a scoring bonus if they're nearby (but not for sokoban boulders!). */
+                    tilescore += In_sokoban(m_mz(mon)) ? -20 : +20;
                 if (mtmp) {
+                    if (mon == mtmp)
+                        self = TRUE;
+                    /* ignore monsters that we can't sense */
+                    if (!self && !msensem(mon, mtmp))
+                        mtmp = NULL;
                     range -= 2; /* buzz */
                     if (wand && oc_dir == IMMEDIATE)
                         range -= 1; /* -3 for beam wands */
@@ -641,6 +650,10 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                     if (obj->otyp == SPE_STONE_TO_FLESH &&
                         mtmp->data == &mons[PM_STONE_GOLEM])
                         helpful = FALSE;
+                    /* flesh to stone vs flesh golems is helpful */
+                    if (obj->otyp == EGG && /* trice */
+                        mtmp->data == &mons[PM_FLESH_GOLEM])
+                        helpful = TRUE;
                     /* Deathzapping Death will do no good. However, while a deathzap against him
                        would technically be helpful, declaring it as so would encourage monsters
                        to FoD/WoD him if hostile, which would be a huge pain. Thus, he always get
@@ -648,38 +661,36 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                     if ((obj->otyp == WAN_DEATH ||
                          obj->otyp == SPE_FINGER_OF_DEATH) &&
                         mtmp->data == &mons[PM_DEATH]) {
-                        score -= 10;
+                        tilescore -= 10;
                         continue;
                     }
-                    /* flesh to stone vs flesh golems is helpful */
-                    if (obj->otyp == EGG && /* trice */
-                        mtmp->data == &mons[PM_FLESH_GOLEM])
-                        helpful = TRUE;
                     if (self) /* -40 or +40 depending on helpfulness */
-                        score += (helpful ? 40 : -40);
+                        tilescore += (helpful ? 40 : -40);
                     /* target is hostile */
                     else if (mm_aggression(mon, mtmp))
-                        score += (helpful ? -10 : 20);
+                        tilescore += (helpful ? -10 : 20);
                     /* ally/peaceful */
                     else if ((mtmp == &youmonst && mon->mpeaceful) ||
                              (mtmp != &youmonst &&
                               mon->mpeaceful == mtmp->mpeaceful)) {
-                        score += (helpful ? 20 : -10);
+                        tilescore += (helpful ? 20 : -10);
                         /* tame monsters like zapping friends and dislike collateral damage */
                         if (mon->mtame) {
-                            score *= 2;
+                            tilescore *= 2;
                             /* never hit allies with deathzaps */
                             if (obj->otyp == SPE_FINGER_OF_DEATH ||
                                 obj->otyp == WAN_DEATH)
-                                score *= 10;
+                                tilescore *= 10;
                         }
                     }
                     /* cure stiffening ASAP */
                     if (obj->otyp == SPE_STONE_TO_FLESH)
-                        score *= 10;
+                        tilescore *= 10;
                 }
+                score += tilescore;
             }
             /* kludge: for deathzaps, avoid zapping you if tame to avoid YAAD */
+            /* no bounce handling here -- it simplifies the code, and bouncing here is an edge case */
             if (obj->otyp == SPE_FINGER_OF_DEATH &&
                 obj->otyp == WAN_DEATH &&
                 mon->mtame) {
@@ -1200,8 +1211,9 @@ find_item(struct monst *mon, struct musable *m)
     /* If we are here, there was no relevant objects found.
        Stash fragile objects in our open inventory in a container.
        To avoid potential oscillation if an item is only borderline
-       usable, ignore this action 4/5 of the time */
-    if (rn2(5) && !mclose)
+       usable, ignore this action 19/20 of the time if hostiles are
+       present */
+    if (rn2(20) && mclose)
         return FALSE;
 
     struct obj *container = NULL;
@@ -1227,7 +1239,6 @@ find_item(struct monst *mon, struct musable *m)
                 }
             }
         }
-        continue;
     }
 
     /* found nothing to do */
@@ -1249,11 +1260,6 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean c
     struct obj *obj;
     struct musable m2;
     struct obj *obj_best = NULL;
-
-    /* if this isn't the main inventory, mark the object as mknown to note
-       that the monster now knows the content */
-    if (chain != mon->minvent)
-        chain->mknown = 1;
 
     for (obj = chain; obj; obj = obj->nobj) {
         /* Containers */
@@ -1297,7 +1303,8 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean c
             if (!obj->mknown && chain != mon->minvent && !close) {
                 m->use = MUSE_CONTAINER;
                 m->obj = obj;
-            } else if (find_item_obj(mon, obj->cobj, m, close)) {
+            } else if ((obj->mknown = 1) && find_item_obj(mon, obj->cobj, m, close)) {
+                /* obj->mknown = 1 to mark the container as recognized -- monster knows what's inside */
                 /* Check if there's something interesting in it */
                 m->use = MUSE_CONTAINER; /* take the object out */
 
@@ -1332,8 +1339,8 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean c
         }
     }
         
-    if (m->use) {
-        if (obj_best && (score_best > 20 ? rn2(3) : !rn2(3))) {
+    if (m->use || obj_best) {
+        if (!m->use || (obj_best && (score_best > 20 ? rn2(3) : !rn2(3)))) {
             m->x = tc_best.x;
             m->y = tc_best.y;
             m->z = 0;
@@ -1709,8 +1716,10 @@ use_item(struct monst *mon, struct musable *m)
         /* for stashing stuff */
         for (container = mon->minvent; container; container = container->nobj) {
             if (container == obj) {
+                struct obj *nobj;
                 int contained = 0;
-                for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
+                for (otmp = mon->minvent; otmp; otmp = nobj) {
+                    nobj = otmp->nobj;
                     if ((otmp->oclass == SPBOOK_CLASS ||
                          otmp->oclass == SCROLL_CLASS ||
                          otmp->oclass == POTION_CLASS ||
