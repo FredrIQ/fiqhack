@@ -348,7 +348,7 @@ prop_wary(struct monst *mon, struct monst *target, enum youprop prop)
         prop == AGGRAVATE_MONSTER || /* "seen: aggravate monster" */
         (target == &youmonst && mon->mpeaceful) ||
         (target != &youmonst && mon->mpeaceful == target->mpeaceful) ||
-        mon->iswiz || mon == target)
+        mon->iswiz || mon == target || mon->mtame)
         return (m_has_property(target, prop, ANY_PROPERTY, TRUE));
     /* Monsters always know properties gained from those */
     if (m_has_property(target, prop,
