@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -158,17 +158,17 @@ doread(const struct nh_cmd_arg *arg)
     return 1;
 }
 
-/* Monster target choice for stinking clouds. This works the following:
+/* Monster specific position targeting. This works the following:
    The monster will check through all valid targets, assigning points based
-   on what it will hit like this on each tile the cloud would hit:
+   on what it will hit like this on each tile the spell/etc would hit:
    Enemy: +20
    Ally: -10
-   Self if not poison resistant: -40
+   Self if not resistant: -40
    The result is then divided by the range, and that makes up for that tile's
    score. The sum is the total score of all hit tiles.
    The winning score is the target. If there is no (positive) scoring targets,
    return 0, otherwise return best score (so it can be used to determine
-   if it's worth using a stinking cloud scroll or not).
+   if it's worth using a scroll/spell/etc or not).
 */
 int
 mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
