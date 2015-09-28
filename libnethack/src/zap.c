@@ -3344,7 +3344,8 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
         if (!disintegrated) { /* death */
             if (mon->data == &mons[PM_DEATH]) {
                 if (canseemon(mon)) {
-                    pline("%s absorbs the deadly ray!", Monnam(mon));
+                    pline("%s absorbs the deadly %s!", Monnam(mon),
+                          buzztyp < ZT_SPELL(0) ? "ray" : "spell");
                     pline("It seems even stronger than before.");
                 }
                 mon->mhpmax += mon->mhpmax / 2;
@@ -3353,10 +3354,10 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                 mon->mhp = mon->mhpmax;
                 return;
             }
-            if ((nonliving(mon->data) || is_demon(mon->data) || resists_magm(mon)) ||
+            if (nonliving(mon->data) || is_demon(mon->data) || resists_magm(mon) ||
                 raylevel == P_UNSKILLED) {
                 if (resists_drli(mon) || raylevel <= P_SKILLED) {
-                    resisted = 2;
+                    shieldeff(m_mx(mon), m_my(mon));
                     if (oseen)
                         pline("%s %s unaffected.",
                               you ? "You" : Monnam(mon),
@@ -3377,7 +3378,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                 }
                 return;
             }
-        } else {
+        } else { /* disintegration */
             if (is_rider(mon->data)) {
                 if (canseemon(mon)) {
                     pline("%s disintegrates.", Monnam(mon));
@@ -3419,7 +3420,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                 destroy_arm(mon, otmp);
 
             if (resists_disint(mon)) {
-                resisted = 2;
+                shieldeff(m_mx(mon), m_my(mon));
                 if (oseen)
                     pline("%s %s not disintegrated.",
                           you ? "You" : Monnam(mon),
