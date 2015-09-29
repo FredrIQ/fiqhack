@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-30 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1639,7 +1639,7 @@ use_item(struct monst *mon, struct musable *m)
     int i;
     if (obj &&
         m->use != MUSE_SPE &&       /* MUSE_SPE deals with m->spell, not m->obj */
-        m->use != MUSE_POT_THROW && /* thrown potions never release ghosts/djinni */
+        m->use != MUSE_THROW && /* thrown potions never release ghosts/djinni */
         m->use != MUSE_CONTAINER && /* BoH vanish logic is performed in find_item_obj */
         (i = precheck(mon, obj, m)))
         return i;
@@ -1694,7 +1694,7 @@ use_item(struct monst *mon, struct musable *m)
             m_useup(mon, obj);
         }
         return mon->mhp < 1 ? 1 : 2;
-    case MUSE_POT_THROW:
+    case MUSE_THROW:
         if (cansee(mon->mx, mon->my)) {
             obj->dknown = 1;
             pline("%s hurls %s!", Monnam(mon), singular(obj, doname));
