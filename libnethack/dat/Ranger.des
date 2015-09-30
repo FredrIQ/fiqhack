@@ -1,4 +1,4 @@
-# Last modified by Sean Hunt, 2014-02-16
+# Last modified by Fredrik Ljungdahl, 2015-09-30
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1991 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -12,40 +12,41 @@ MAZE: "Ran-strt",'.'
 FLAGS: noteleport,hardfloor,arboreal
 INIT_MAP:'.','.',true,true,lit,false
 GEOMETRY:left,center
-#1234567890123456789012345678901234567890123456789012345678901234567890
+###########1#########2#########3#########4#########5#########6#########7#####
+#0123456789012345678901234567890123456789012345678901234567890123456789012345
 MAP
-                                       ..
-   ...................................  .
-  ..                                 ..  
- ..  ...............F...............  .. 
- .  ..             .F.             ..  . 
- . ..  .............F.............  .. . 
- . .  ..                         ..  . . 
- . . ..  .......................  .. ... 
- . . .  ..                     ..  .     
- ... . ..  .|..................... ......
- FFF . .  ..S..................          
- ... . ..  .|.................  .... ... 
- . . .  ..                     ..  . . . 
- . . ..  .......................  .. . . 
- . .  ..                         ..  . . 
- . ..  .............F.............  .. . 
- .  ..             .F.             ..  . 
- ..  ...............F...............  .. 
-  ..                                 ..  
-   ...................................  .
-                                       ..
+TTTTT..TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT...............}...................
+TTTT....TTTTTTTT..TTT.........TT......TTTT...TT.........}....T..............
+TTT..TTTTTT..TTTT..T..TT...TT....TTT....TT.....T...TT....}.............T....
+T.TT....TTT....TTT...TT.......TT.TT.....TTT........TT....}.................T
+TT...TT.....TT..TT..TTT..TT..TTT.......TTTT.............}.}.T...............
+TTT..TTTT.T.............TTTT......T...TTTTT.............}.}..TT.............
+TT....TT..TTTTTT........TTT.....TT......TTTT.............}..................
+T..TT..T...TTTT..TTT...TTT....TTTTT......TTT.......T......}.................
+T..TT..T.TTTTTTFFTTTFFFTTTFFTTTTTTTTT.....TT...............}................
+TT.TTTTTTT .|.................TTT.TTTT.....................}.....T..........
+TT.....TTT..S.......(.............TTTTTT..TT...............}................
+TT..TTTTTT .|.................TT...TTTTTTTTT.....T..........}...............
+TTT...TTTTTTTTTFFTTTFFFTTTFFTTTT....TTT...TT..............TT.}..............
+TTTT....TTTTTTT..TTTT...TT...TTT.....TT...TT..............TT.}.......TT.....
+TTT..........T...TTT....T..T..T...T...TT..T..................}.......TTT....
+TT...TT..TTT...T..T..T.....TT...TTTT..TT.TT........T........}...............
+TT..TTTTTTTT.TTTT....TT...TTT....TTTT....TT................}.}......T.......
+TT.....TTT..TTTT.....TTTTTTT.......T....TT....T...........}...}}...TT.......
+TTT.....TT..TTTT..TT....TT....TT......TTTT................}.....}}..........
+TTTTTT..TTTTTTTTTTTTTT......TTTTT...TTTTT...............T}........}}}...TTT.
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT...............}............}......
 ENDMAP
 # Dungeon Description
-REGION:(00,00,40,20),lit,"ordinary"
+REGION:(01,01,75,16),lit,"ordinary"
 # Stairs
 STAIR:(10,10),down
 # Portal arrival point; just about anywhere on the right hand side of the map
-BRANCH:levregion(50,2,76,18),(0,0,40,20)
+BRANCH:levregion(66,03,75,12),(1,1,40,19)
 # Orion
 MONSTER:'@',"Orion",(20,10)
-# The treasure of Orion
-OBJECT:'(',"chest",(20,10)
+# The treasure of Orion is now a magic chest.
+# OBJECT:'(',"chest",(20,10)
 # Guards for the audience chamber
 MONSTER:'@',"hunter",(19,09)
 MONSTER:'@',"hunter",(20,09)
@@ -56,11 +57,11 @@ MONSTER:'@',"hunter",(19,11)
 MONSTER:'@',"hunter",(20,11)
 MONSTER:'@',"hunter",(21,11)
 # Non diggable walls
-NON_DIGGABLE:(00,00,40,20)
+NON_DIGGABLE:(01,01,73,16)
 # Traps
-TRAP:"arrow",(30,09)
+TRAP:"arrow",(32,10)
 TRAP:"arrow",(30,10)
-TRAP:"pit",(40,09)
+TRAP:"pit",(43,09)
 TRAP:"spiked pit",random
 TRAP:"bear",random
 TRAP:"bear",random
@@ -69,21 +70,21 @@ MONSTER: 'H',"minotaur",(33,09),hostile,asleep
 MONSTER: 'C',"forest centaur",(19,03),hostile
 MONSTER: 'C',"forest centaur",(19,04),hostile
 MONSTER: 'C',"forest centaur",(19,05),hostile
-MONSTER: 'C',"forest centaur",(21,03),hostile
-MONSTER: 'C',"forest centaur",(21,04),hostile
+MONSTER: 'C',"forest centaur",(21,01),hostile
+MONSTER: 'C',"forest centaur",(21,02),hostile
 MONSTER: 'C',"forest centaur",(21,05),hostile
-MONSTER: 'C',"forest centaur",(01,09),hostile
+MONSTER: 'C',"forest centaur",(01,08),hostile
 MONSTER: 'C',"forest centaur",(02,09),hostile
-MONSTER: 'C',"forest centaur",(03,09),hostile
-MONSTER: 'C',"forest centaur",(01,11),hostile
+MONSTER: 'C',"forest centaur",(03,10),hostile
+MONSTER: 'C',"forest centaur",(04,12),hostile
 MONSTER: 'C',"forest centaur",(02,11),hostile
 MONSTER: 'C',"forest centaur",(03,11),hostile
 MONSTER: 'C',"forest centaur",(19,15),hostile
 MONSTER: 'C',"forest centaur",(19,16),hostile
 MONSTER: 'C',"forest centaur",(19,17),hostile
-MONSTER: 'C',"forest centaur",(21,15),hostile
-MONSTER: 'C',"forest centaur",(21,16),hostile
-MONSTER: 'C',"forest centaur",(21,17),hostile
+MONSTER: 'C',"forest centaur",(21,14),hostile
+MONSTER: 'C',"forest centaur",(21,13),hostile
+MONSTER: 'C',"forest centaur",(21,18),hostile
 MONSTER: 'C',"plains centaur",random,hostile
 MONSTER: 'C',"plains centaur",random,hostile
 MONSTER: 'C',"plains centaur",random,hostile
@@ -186,37 +187,44 @@ MONSTER:'s',random,random,hostile
 
 MAZE: "Ran-goal", ' '
 GEOMETRY:center,center
+#         1         2             3         4         5                 6             7
+#123456789012345678901234567890123456789012345678901234567890123456789012345
 MAP
-                                                                            
-  ...                                                                  ...  
- .......................................................................... 
-  ...                                +                                 ...  
-   .     ............     .......    .                   .......        .   
-   .  .............................  .       ........   .........S..    .   
-   .   ............    .  ......     .       .      .    .......   ..   .   
-   .     .........     .   ....      +       . ...  .               ..  .   
-   .        S          .         .........   .S.    .S...............   .   
-   .  ...   .     ...  .         .........          .                   .   
-   . ........    .....S.+.......+....\....+........+.                   .   
-   .  ...         ...    S       .........           ..      .....      .   
-   .                    ..       .........            ..      ......    .   
-   .      .......     ...            +       ....    ....    .......... .   
-   . ..............  ..              .      ......  ..  .............   .   
-   .     .............               .     ..........          ......   .   
-  ...                                +                                 ...  
- .......................................................................... 
-  ...                                                                  ...  
-                                                                            
+}}}}}}}}}}}}}}}}}}}}}}}}...........T...................................TTTTT
+}}}}}}}}}}}}}}}}}}}}}}............T...T..................................TTT
+}}}}}}}}}}}}}}}}.................T.T......................................TT
+}}}}}}}}}}}}}}}}}}}}}.            T  +                .TTTTTTTTTTTTTTTT...TT
+}}}}}}}}}}...........     .......    .                .TT.......TTTTTTTT.TTT
+}}}}}}.............................  .       ........ .T.........F..TTTT.TTT
+}}}}}}}............    .  ......     .       .      . .TT.......TTT..TTT.TTT
+}}}}}}}}}.........}}}} .   ....      +       . ...  . .TTTTTTTTTTTTT..TT.TTT
+}}}}}}}}}}}}}}}}}}}}}} .         .........   .S.    .S...............TTT.TTT
+}}}}}}}}}}}}}}}}  ...  .         .........          . .TTTTTTTTTTTTTTTTT.TTT
+}}}}}}}}}}}}}}}} .....S.+.......+.........+........+. .TTTTTTTTTTTTTTTTT.TTT
+}}}}}}}}}}}}}}}}  ...}   S       .........           ..TTTTTT.....TTTTTT.TTT
+}}}}}}}}}}}}}}}}}}}}}}}}..       .........            ..TTTTTT......TTTT.TTT
+}}}}}}}}}}}}}}}}}}}}}}...            +     TT....TTTT....TTTT..........T.TTT
+}}}}}}}}}}}}}}}}}}}}}..              .     T......TT...T.............TTT.TTT
+}}}}}}}}}}}}}}}}}}}...               .     .......... .TTTTTTTT......TTT.TTT
+}}}}}}}}}}}}}}}}}}}}.                +                .TTTTTTTTTTTTTTTT..TTT
+}}}}}}}}}}}}}}}}}}}}}.............................T......................TTT
+}}}}}}}}}}}}}}}}}}}}}...........................T....TTTTTTTT.......TTTTTTTT
+}}}}}}}}}}}}}}}}}}}}}}.............................TTTTTTTTTTTT...TTTTTTTTTT
 ENDMAP
+#123456789012345678901234567890123456789012345678901234567890123456789012345
+#         1         2             3         4         5                 6             7
+RANDOM_PLACES:(49,07),(47,15),(57,06),(61,11)
 # Dungeon Description
 REGION:(00,00,75,19),lit,"ordinary"
+# Altar to Apollo
+ALTAR:(37,10),law,altar
 # Stairs
 STAIR:(19,10),up
 # Non diggable walls
 NON_DIGGABLE:(00,00,75,19)
 # Objects
-OBJECT:')',"bow",(37,10),blessed,0,"The Longbow of Diana"
-OBJECT:'(',"chest",(37,10)
+OBJECT:')',"bow",place[0],blessed,0,"The Longbow of Diana"
+OBJECT:'(',"chest",place[0]
 OBJECT:random,random,(36,09)
 OBJECT:random,random,(36,10)
 OBJECT:random,random,(36,11)
@@ -238,7 +246,6 @@ TRAP:random,random
 TRAP:random,random
 TRAP:random,random
 # doors
-DOOR:locked,(12,08)
 DOOR:closed,(22,10)
 DOOR:locked,(24,10)
 DOOR:closed,(25,11)
@@ -251,38 +258,38 @@ DOOR:closed,(42,10)
 DOOR:locked,(46,08)
 DOOR:closed,(51,10)
 DOOR:locked,(53,08)
-DOOR:closed,(65,05)
 # Random monsters.
-MONSTER:'s',"Scorpius",(37,10),hostile
-MONSTER:'C',"forest centaur",(36,09),hostile
-MONSTER:'C',"forest centaur",(36,10),hostile
-MONSTER:'C',"forest centaur",(36,11),hostile
-MONSTER:'C',"forest centaur",(37,09),hostile
-MONSTER:'C',"forest centaur",(37,11),hostile
-MONSTER:'C',"forest centaur",(38,09),hostile
-MONSTER:'C',"mountain centaur",(38,10),hostile
-MONSTER:'C',"mountain centaur",(38,11),hostile
-MONSTER:'C',"mountain centaur",(02,02),hostile
-MONSTER:'C',"mountain centaur",(71,02),hostile
-MONSTER:'C',"mountain centaur",(02,16),hostile
-MONSTER:'C',"mountain centaur",(71,16),hostile
+MONSTER:'s',"Scorpius",place[0],hostile
+MONSTER:'C',"forest centaur",random,hostile
+MONSTER:'C',"forest centaur",random,hostile
+MONSTER:'C',"forest centaur",random,hostile
+MONSTER:'C',"forest centaur",random,hostile
+MONSTER:'C',"forest centaur",random,hostile
+MONSTER:'C',"forest centaur",random,hostile
+MONSTER:'C',"mountain centaur",random,hostile
+MONSTER:'C',"mountain centaur",random,hostile
+MONSTER:'C',"mountain centaur",random,hostile
+MONSTER:'C',"mountain centaur",random,hostile
+MONSTER:'C',"mountain centaur",random,hostile
+MONSTER:'C',"mountain centaur",random,hostile
 MONSTER:'C',"forest centaur",random,hostile
 MONSTER:'C',"forest centaur",random,hostile
 MONSTER:'C',"mountain centaur",random,hostile
 MONSTER:'C',"mountain centaur",random,hostile
 MONSTER:'C',random,random,hostile
 MONSTER:'C',random,random,hostile
-MONSTER:'s',"scorpion",(03,02),hostile
-MONSTER:'s',"scorpion",(72,02),hostile
-MONSTER:'s',"scorpion",(03,17),hostile
-MONSTER:'s',"scorpion",(72,17),hostile
-MONSTER:'s',"scorpion",(41,10),hostile
-MONSTER:'s',"scorpion",(33,09),hostile
+MONSTER:'s',"scorpion",place[0],hostile
+MONSTER:'s',"scorpion",place[0],hostile
+MONSTER:'s',"scorpion",place[0],hostile
+MONSTER:'s',"scorpion",place[0],hostile
+MONSTER:'s',"scorpion",place[0],hostile
+MONSTER:'s',"scorpion",place[0],hostile
 MONSTER:'s',"scorpion",random,hostile
 MONSTER:'s',"scorpion",random,hostile
 MONSTER:'s',random,random,hostile
 
 WALLIFY
+
 
 #
 #	The "fill" levels for the quest.
