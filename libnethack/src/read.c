@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1125,9 +1125,15 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
     case SCR_REMOVE_CURSE:
     case SPE_REMOVE_CURSE:
         if (confused) {
-            if (you && Hallucination)
-                pline("You feel the power of the Force against you!");
-            else if (you || vis)
+            if (Hallucination) {
+                if (you)
+                    pline("You feel the power of the Force against you!");
+                else if (vis)
+                    pline("You feel the Force conspiring against %s!",
+                          mon_nam(mon));
+                else
+                    pline("You sense a disturbance in the Force...");
+            } else if (you || vis)
                 pline("You feel as if %s need%s some help.",
                       you ? "you" : mon_nam(mon), you ? "" : "s");
         } else if (you && Hallucination)

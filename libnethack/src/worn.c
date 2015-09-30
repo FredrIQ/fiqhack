@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-09-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -793,11 +793,15 @@ extra_pref(const struct monst *mon, struct obj *obj)
         return (10 + 3*(obj->spe));
     }
 
-    /* If a ring gives a redundant property, abort. BUG: this makes monsters wear duplicates */
-    if (m_has_property(mon, objects[obj->otyp].oc_oprop,
-                       ~(W_MASK(os_ringl) | W_MASK(os_ringr)), TRUE))
+    /* If a ring gives a redundant property, abort. */
+    if (m_has_property(mon, objects[obj->otyp].oc_oprop, ~W_RING, TRUE))
         return 0;
 
+    /* If we already have an equipped ring of the same type on the left slot (not chargeable
+       rings), ignore it. This introduces oddities when reorganizing rings, but is better
+       than wearing duplicates (that would happen otherwise) */
+    if (which_armor(mon, os_ringl) && obj->otyp == (which_armor(mon, os_ringl))->otyp)
+        return 0;
     switch (obj->otyp) {
     case RIN_FREE_ACTION:
     case RIN_SLOW_DIGESTION: /* only way for monsters to avoid digestion instadeath */
