@@ -802,7 +802,7 @@ k_monnam(const struct monst *mtmp) {
     if (mtmp->data == &mons[PM_GHOST]) {
         buf = msgcat(buf, "ghost");
         if (mtmp->mnamelth)
-            buf = msgprintf("%sof %s", buf, NAME(mtmp));
+            buf = msgprintf("%s of %s", buf, NAME(mtmp));
     } else if (mtmp->isshk) {
         buf = msgprintf("%s%s %s, the shopkeeper", buf,
                         (mtmp->female ? "Ms." : "Mr."), shkname(mtmp));
