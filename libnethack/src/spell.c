@@ -637,8 +637,14 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
     mon->mcanmove = 0;
     mon->mfrozen = 5; /* see comment above function. TODO: allow safe helplessness for monsters */
 
+    return mon_addspell(mon, booktype);
+}
+
+int
+mon_addspell(struct monst *mon, int typ)
+{
     /* FIXME: don't rely on a certain spell being first */
-    int mspellid = (booktype - SPE_DIG);
+    int mspellid = (typ - SPE_DIG);
     mon->mspells |= (uint64_t)(1 << mspellid);
     return mspellid;
 }
@@ -1098,6 +1104,10 @@ boolean
 mon_castable(struct monst *mon, int spell)
 {
     if (mon->mspec_used)
+        return FALSE;
+    /* Ghosts aren't allowed their former spellcasting abilities, if any. However,
+       bones saved as ordinary players, or the occasional vampire/etc, is allowed to */
+    if (mon->data == &mons[PM_GHOST])
         return FALSE;
 
     /* FIXME: don't rely on spell order */

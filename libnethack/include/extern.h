@@ -1666,6 +1666,7 @@ extern void fixup_special(struct level *lev);
 
 extern void deadbook(struct obj *book2, boolean invoked);
 extern int mon_study_book(struct monst *, struct obj *);
+extern int mon_addspell(struct monst *, int);
 extern int study_book(struct obj *, const struct nh_cmd_arg *);
 extern void age_spells(void);
 extern void update_supernatural_abilities(void);

@@ -1,10 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "lev.h"
+#include "spell.h"
 
 static boolean no_bones_level(d_level *);
 static void goodfruit(int);
@@ -254,8 +255,10 @@ savebones(struct obj *corpse, boolean take_items)
             if (yn("Bones file already exists.  Replace it?") == 'y') {
                 if (delete_bonesfile(bonesid))
                     goto make_bones;
-                else
+                else {
                     pline("Cannot unlink old bones.");
+                    win_pause_output(P_MESSAGE);
+                }
             }
         }
         return;
@@ -295,7 +298,8 @@ make_bones:
         if (!statue)
             return;     /* couldn't make statue */
         mtmp = NULL;
-    } else if (u.ugrave_arise < LOW_PM) {
+    } else if (u.ugrave_arise < LOW_PM && rn2(4)) {
+        /* 25% of the time, Rodney shows up, undeadturns you and charms you to do his bidding */
         /* drop everything */
         drop_upon_death(NULL, NULL);
         /* trick makemon() into allowing monster creation on your location */
@@ -308,6 +312,15 @@ make_bones:
         if (corpse)
             corpse = obj_attach_mid(corpse, mtmp->m_id);
     } else {
+        boolean charmed = FALSE;
+        if (u.ugrave_arise < LOW_PM) { /* rn2/4) call above failed */
+            pline("For some reason, you think that you can almost hear the Wizard laugh manically...");
+            if (unchanging(&youmonst))
+                u.ugrave_arise = u.umonnum; /* retain the polymorph as base form on polymorph if unchanging */
+            else
+                u.ugrave_arise = u.umonster;
+            charmed = TRUE;
+        }
         /* give your possessions to the monster you become */
         in_mklev = TRUE;
         mtmp = makemon(&mons[u.ugrave_arise], level, u.ux, u.uy, NO_MM_FLAGS);
@@ -318,8 +331,9 @@ make_bones:
         }
         mtmp = christen_monst(mtmp, u.uplname);
         newsym(u.ux, u.uy);
-        pline("Your body rises from the dead as %s...",
-              an(mons[u.ugrave_arise].mname));
+        if (!charmed)
+            pline("Your body rises from the dead as %s...",
+                  an(mons[u.ugrave_arise].mname));
         win_pause_output(P_MESSAGE);
         drop_upon_death(mtmp, NULL);
         m_dowear(mtmp, TRUE);
@@ -329,6 +343,31 @@ make_bones:
         mtmp->mhp = mtmp->mhpmax = u.uhpmax;
         mtmp->female = u.ufemale;
         mtmp->msleeping = 1;
+
+        /* set intrinsics */
+        int i;
+        int propmask;
+        for (i = 1; i <= LAST_PROP; i++) {
+            if (!(propmask = m_has_property(&youmonst, i, ANY_PROPERTY, TRUE)))
+                continue;
+            if ((propmask & W_MASK(os_outside)) && i <= 64)
+                set_property(mtmp, i, 0, TRUE);
+            /* arguably timeouts should be set, but those are likely gone already */
+        }
+        mtmp->mhitinc = u.uhitinc;
+        mtmp->mdaminc = u.udaminc;
+        mtmp->mblessed = u.ublessed;
+
+        /* retain spells */
+        for (i = 0; i < MAXSPELL; i++) {
+            if (spellid(i) == NO_SPELL)
+                continue;
+            if (!SPELL_IS_FROM_SPELLBOOK(i))
+                continue;
+            if (!spellknow(i))
+                continue;
+            mon_addspell(mtmp, spellid(i));
+        }
     }
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         resetobjs(mtmp->minvent, FALSE);
