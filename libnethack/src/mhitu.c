@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1813,11 +1813,13 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
             boolean useeit = canseemon(mtmp);
 
             if (useeit)
-                ureflects("%s gaze is reflected by your %s.",
-                          s_suffix(Monnam(mtmp)));
-            if (mon_reflects
-                (mtmp, !useeit ? NULL : "The gaze is reflected away by %s %s!"))
+                mon_reflects(&youmonst, "%s gaze is reflected by %s %s.",
+                             s_suffix(Monnam(mtmp)));
+            if (reflecting(mtmp)) {
+                if (useeit)
+                    mon_reflects(mtmp, "%s gaze is reflected further by %s %s!", s_suffix(Monnam(mtmp)));
                 break;
+            }
             if (!m_canseeu(mtmp)) {     /* probably you're invisible */
                 if (useeit)
                     pline("%s doesn't seem to notice that %s gaze was "
@@ -2363,8 +2365,7 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
                         pline("As a blind %s, you cannot defend yourself.",
                               youmonst.data->mname);
                     else {
-                        if (mon_reflects
-                            (mtmp, "Your gaze is reflected by %s %s."))
+                        if (mon_reflects(mtmp, "%s gaze is reflected by %s %s.", "Your"))
                             return 1;
                         pline("%s is frozen by your gaze!", Monnam(mtmp));
                         mtmp->mcanmove = 0;

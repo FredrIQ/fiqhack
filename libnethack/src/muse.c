@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -29,7 +29,6 @@ static int find_item_score(struct monst *, struct obj *, coord *);
 static boolean find_item_obj(struct monst *, struct obj *, struct musable *, boolean);
 static int find_item_single(struct monst *, struct obj *, boolean, struct musable *, boolean);
 static boolean mon_allowed(int);
-static void mon_consume_unstone(struct monst *, struct obj *, boolean, boolean);
 
 static int trapx, trapy;
 
@@ -970,7 +969,7 @@ find_item(struct monst *mon, struct musable *m)
         for (obj = mon->minvent; obj; obj = obj->nobj) {
             if (obj->otyp == CORPSE && obj->corpsenm == PM_LIZARD) {
                 m->obj = obj;
-                m->use = MUSE_LIZARD_CORPSE;
+                m->use = MUSE_EAT;
                 return TRUE;
             }
         }
@@ -1702,6 +1701,9 @@ use_item(struct monst *mon, struct musable *m)
         m_throw(mon, mon->mx, mon->my, m->x, m->y,
                 distmin(mon->mx, mon->my, m->x, m->y), obj, TRUE);
         return 2;
+    case MUSE_EAT:
+        dog_eat(mon, obj, mon->mx, mon->my, FALSE);
+        return mon->mhp < 1 ? 1 : 2;
     case MUSE_CONTAINER:
         /* for picking stuff from containers */
         if (obj->where == OBJ_CONTAINED) {
@@ -1921,10 +1923,6 @@ use_item(struct monst *mon, struct musable *m)
         newsym(trapx, trapy);
 
         newcham(mon, NULL, FALSE, FALSE);
-        return 2;
-    case MUSE_LIZARD_CORPSE:
-        /* not actually called for its unstoning effect */
-        mon_consume_unstone(mon, obj, FALSE, FALSE);
         return 2;
     case MUSE_DIRHORN:
         if (oseen) {
@@ -2368,7 +2366,7 @@ searches_for_item(struct monst *mon, struct obj *obj)
         if (typ == PICK_AXE)
             return (boolean) needspick(mon->data);
         if (typ == UNICORN_HORN)
-            return (boolean) (!obj->cursed && !is_unicorn(mon->data));
+            return (boolean) ((!obj->cursed || !obj->mbknown) && !is_unicorn(mon->data));
         if (typ == SACK ||
             typ == OILSKIN_SACK ||
             typ == BAG_OF_HOLDING)
@@ -2392,7 +2390,7 @@ searches_for_item(struct monst *mon, struct obj *obj)
         if (typ == RIN_PROTECTION ||
             typ == RIN_INCREASE_DAMAGE ||
             typ == RIN_INCREASE_ACCURACY)
-            return (obj->spe > 0);
+            return (obj->spe > 0 || !obj->mknown);
         return (!m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));
     default:
         break;
@@ -2402,137 +2400,31 @@ searches_for_item(struct monst *mon, struct obj *obj)
 }
 
 boolean
-mon_reflects(struct monst * mon, const char *str)
-{
-    struct obj *orefl = which_armor(mon, os_arms);
-    const char *mon_s;
-    mon_s = (mon == &youmonst) ? "your" : s_suffix(mon_nam(mon));
-
-    if (orefl && orefl->otyp == SHIELD_OF_REFLECTION) {
-        if (str) {
-            pline(str, mon_s, "shield");
-            makeknown(SHIELD_OF_REFLECTION);
-        }
-        return TRUE;
-    } else if (arti_reflects(MON_WEP(mon))) {
-        /* due to wielded artifact weapon */
-        if (str)
-            pline(str, mon_s, "weapon");
-        return TRUE;
-    } else if ((orefl = which_armor(mon, os_amul)) &&
-               orefl->otyp == AMULET_OF_REFLECTION) {
-        if (str) {
-            pline(str, mon_s, "amulet");
-            makeknown(AMULET_OF_REFLECTION);
-        }
-        return TRUE;
-    } else if ((orefl = which_armor(mon, os_arm)) &&
-               (orefl->otyp == SILVER_DRAGON_SCALES ||
-                orefl->otyp == SILVER_DRAGON_SCALE_MAIL)) {
-        if (str)
-            pline(str, mon_s, "armor");
-        return TRUE;
-    } else if (mon->data == &mons[PM_SILVER_DRAGON] ||
-               mon->data == &mons[PM_CHROMATIC_DRAGON]) {
-        /* Silver dragons only reflect when mature; babies do not */
-        if (str)
-            pline(str, mon_s, "scales");
-        return TRUE;
-    }
-    return FALSE;
-}
-
-boolean
-ureflects(const char *fmt, const char *str)
+mon_reflects(struct monst *mon, const char *fmt, const char *str)
 {
     /* Check from outermost to innermost objects */
-    unsigned reflect_reason = u_have_property(REFLECTING, ANY_PROPERTY, FALSE);
-    if (reflect_reason & W_MASK(os_arms)) {
-        if (fmt && str) {
-            pline(fmt, str, "shield");
-            makeknown(SHIELD_OF_REFLECTION);
-        }
-        return TRUE;
-    } else if (reflect_reason & W_MASK(os_wep)) {
-        /* Due to wielded artifact weapon */
+    unsigned reflect_reason = has_property(mon, REFLECTING);
+    const char *mon_s;
+    mon_s = (mon == &youmonst) ? "your" : s_suffix(mon_nam(mon));
+    if (reflect_reason) {
+#define refl(slot) (reflect_reason & W_MASK(slot))
         if (fmt && str)
-            pline(fmt, str, "weapon");
-        return TRUE;
-    } else if (reflect_reason & W_MASK(os_amul)) {
-        if (fmt && str) {
-            pline(fmt, str, "medallion");
-            makeknown(AMULET_OF_REFLECTION);
-        }
-        return TRUE;
-    } else if (reflect_reason & W_MASK(os_arm)) {
-        if (fmt && str)
-            pline(fmt, str, "armor");
-        return TRUE;
-    } else if (reflect_reason & W_MASK(os_polyform)) {
-        if (fmt && str)
-            pline(fmt, str, "scales");
-        return TRUE;
-    } else if (reflect_reason) {
-        impossible("Reflecting for unknown reason");
+            pline(fmt, str, mon_s,
+                  refl(os_arms)     ? "shield" :
+                  refl(os_wep)      ? "weapon" :
+                  refl(os_amul)     ? "amulet" :
+                  refl(os_arm)      ? "armor"  :
+                  refl(os_polyform) ? "scales" :
+                  "something weird");
+        /* TODO: when object properties is a thing, change this */
+        if (refl(os_arms))
+            makeknown((which_armor(&youmonst, os_arms))->otyp);
+        else if (refl(os_amul))
+            makeknown((which_armor(&youmonst, os_amul))->otyp);
+#undef refl
         return TRUE;
     }
     return FALSE;
-}
-
-static void
-mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
-                    boolean stoning)
-{
-    int nutrit = (obj->otyp == CORPSE) ? dog_nutrition(mon, obj) : 0;
-    /* also sets meating */
-
-    if (mon_visible(mon)) {
-        long save_quan = obj->quan;
-
-        obj->quan = 1L;
-        pline("%s %ss %s.", Monnam(mon),
-              (obj->otyp == POT_ACID) ? "quaff" : "eat", distant_name(obj,
-                                                                      doname));
-        obj->quan = save_quan;
-    } else
-        You_hear("%s.", (obj->otyp == POT_ACID) ? "drinking" : "chewing");
-    if (((obj->otyp == POT_ACID) || acidic(&mons[obj->corpsenm])) &&
-        !resists_acid(mon)) {
-        mon->mhp -= rnd(15);
-        pline("%s has a very bad case of stomach acid.", Monnam(mon));
-    }
-    if (mon->mhp <= 0) {
-        pline("%s dies!", Monnam(mon));
-        m_useup(mon, obj);
-        if (by_you)
-            xkilled(mon, 0);
-        else
-            mondead(mon);
-        return;
-    }
-    if (stoning && canseemon(mon)) {
-        if (Hallucination)
-            pline("What a pity - %s just ruined a future piece of art!",
-                  mon_nam(mon));
-        else
-            pline("%s seems limber!", Monnam(mon));
-    }
-    if (obj->otyp == CORPSE && obj->corpsenm == PM_LIZARD && confused(mon)) {
-        if (property_timeout(mon, CONFUSION) >= 2) {
-            set_property(mon, CONFUSION, -2, TRUE);
-            set_property(mon, CONFUSION, 2, TRUE);
-        }
-    }
-    if (mon->mtame && !mon->isminion && nutrit > 0) {
-        struct edog *edog = EDOG(mon);
-
-        if (edog->hungrytime < moves)
-            edog->hungrytime = moves;
-        edog->hungrytime += nutrit;
-    }
-    mon->mlstmv = moves;        /* it takes a turn */
-    m_useup(mon, obj);
 }
 
 /*muse.c*/
-

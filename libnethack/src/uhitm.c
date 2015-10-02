@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2044,9 +2044,9 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
                     break;
                 }
                 if (!blind(mon)) {
-                    if (ureflects("%s gaze is reflected by your %s.",
-                                  s_suffix(Monnam(mon))))
-                        ;
+                    if (mon_reflects(&youmonst,
+                                     "%s gaze is reflected by %s %s.",
+                                     s_suffix(Monnam(mon))));
                     else if (free_action(&youmonst))
                         pline("You momentarily stiffen under %s gaze!",
                               s_suffix(mon_nam(mon)));

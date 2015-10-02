@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -511,6 +511,8 @@ extern int dooverview(const struct nh_cmd_arg *);
 extern boolean is_edible(const struct obj *, boolean);
 extern void init_uhunger(void);
 extern int doeat(const struct nh_cmd_arg *);
+extern int eatcorpse(struct monst *, struct obj *);
+extern void eatspecial(struct monst *, int, struct obj *);
 extern void gethungry(void);
 extern void morehungry(int);
 extern void newuhs(boolean);
@@ -1224,8 +1226,7 @@ extern int rnd_defensive_item(struct monst *, enum rng rng);
 extern int rnd_offensive_item(struct monst *, enum rng rng);
 extern int rnd_misc_item(struct monst *mon, enum rng rng);
 extern boolean searches_for_item(struct monst *, struct obj *);
-extern boolean mon_reflects(struct monst *, const char *);
-extern boolean ureflects(const char *, const char *);
+extern boolean mon_reflects(struct monst *, const char *, const char *);
 extern void you_aggravate(struct monst *);
 
 /* ### music.c ### */
@@ -1807,8 +1808,8 @@ extern struct monst *activate_statue_trap(struct trap *, xchar, xchar, boolean);
 extern void dotrap(struct trap *, unsigned);
 extern void seetrap(struct trap *);
 extern int mintrap(struct monst *);
-extern void instapetrify(const char *);
-extern void minstapetrify(struct monst *, boolean);
+extern int instapetrify(const char *);
+extern int minstapetrify(struct monst *, boolean);
 extern void mstiffen(struct monst *);
 extern void selftouch(const char *, const char *);
 extern void mselftouch(struct monst *, const char *, boolean);
@@ -1911,6 +1912,7 @@ extern boolean would_prefer_rwep(const struct monst *, struct obj *);
 
 extern void were_change(struct monst *);
 extern void new_were(struct monst *);
+extern int counter_were(int);
 extern int were_summon(struct monst *, int *, const char **);
 extern void you_were(void);
 extern void you_unwere(boolean);

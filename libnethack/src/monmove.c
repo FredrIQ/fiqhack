@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -355,6 +355,7 @@ dochug(struct monst *mtmp)
     /* check distance and scariness of attacks */
     distfleeck(mtmp, &inrange, &nearby, &scared);
 
+    /* item usage logic */
     if (find_item(mtmp, &musable)) {
         if (use_item(mtmp, &musable) != 0)
             return 1;
@@ -775,10 +776,6 @@ m_move(struct monst *mtmp, int after)
             goto postmov;
         mmoved = 0;
     }
-
-    /* teleportitis procs */
-    if (teleportitis(mtmp) && !rn2(100))
-        mon_tele(mtmp, !!teleport_control(mtmp));
 
     /* check if there is a good reason to teleport at will, or occasioally
        do it anyway */

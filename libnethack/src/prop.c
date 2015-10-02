@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -139,7 +139,7 @@ m_has_property(const struct monst *mon, enum youprop property,
         /* it is not possible to contain all possible properties in a 64bit
            but there is barely any missing ones... if those are later needed,
            the redundant ones can be special cased */
-        if (property < 65 && (mfromoutside & (uint64_t)(1 << (property - 1))))
+        if (property < 65 && (mfromoutside & ((uint64_t)1 << (property - 1))))
             rv |= W_MASK(os_outside);
     }
 
@@ -589,12 +589,12 @@ set_property(struct monst *mon, enum youprop prop,
         }
     } else if (type == 0) {
         if (mon != &youmonst && prop < 65)
-            mon->mintrinsics |= (uint64_t)(1 << (prop - 1));
+            mon->mintrinsics |= ((uint64_t)1 << (prop - 1));
         else
             u.uintrinsic[prop] |= FROMOUTSIDE;
     } else {
         if (mon != &youmonst && prop < 65)
-            mon->mintrinsics &= (uint64_t)~(1 << (prop - 1));
+            mon->mintrinsics &= ~((uint64_t)1 << (prop - 1));
         else if (mon == &youmonst)
             u.uintrinsic[prop] &= FROMOUTSIDE;
         if (type == -2) {

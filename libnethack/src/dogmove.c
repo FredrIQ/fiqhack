@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -314,10 +314,10 @@ int
 dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 {
     struct edog *edog = EDOG(mtmp);
-    boolean poly = FALSE, grow = FALSE, heal = FALSE, was_starving = FALSE;
+    boolean was_starving = FALSE;
     int nutrit;
 
-    if (edog->hungrytime < moves)
+    if (edog && edog->hungrytime < moves)
         edog->hungrytime = moves;
     if (obj->oclass != POTION_CLASS)
         nutrit = dog_nutrition(mtmp, obj);
@@ -337,30 +337,29 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
             break;
         }
     }
-    poly = polyfodder(obj);
-    grow = mlevelgain(obj);
-    heal = mhealup(obj);
     if (devour) {
         if (mtmp->meating > 1)
             mtmp->meating /= 2;
         if (nutrit > 1)
             nutrit = (nutrit * 3) / 4;
     }
-    edog->hungrytime += nutrit;
-    set_property(mtmp, CONFUSION, -2, FALSE);
-    if (edog->mhpmax_penalty) {
-        /* no longer starving */
-        mtmp->mhpmax += edog->mhpmax_penalty;
-        edog->mhpmax_penalty = 0;
-        was_starving = TRUE;
-    }
-    if (mtmp->mflee && mtmp->mfleetim > 1)
-        mtmp->mfleetim /= 2;
-    if (mtmp->mtame < 20)
-        mtmp->mtame++;
-    if (x != mtmp->mx || y != mtmp->my) {       /* moved & ate on same turn */
-        newsym(x, y);
-        newsym(mtmp->mx, mtmp->my);
+    if (edog) {
+        edog->hungrytime += nutrit;
+        set_property(mtmp, CONFUSION, -2, FALSE);
+        if (edog->mhpmax_penalty) {
+            /* no longer starving */
+            mtmp->mhpmax += edog->mhpmax_penalty;
+            edog->mhpmax_penalty = 0;
+            was_starving = TRUE;
+        }
+        if (mtmp->mflee && mtmp->mfleetim > 1)
+            mtmp->mfleetim /= 2;
+        if (mtmp->mtame < 20)
+            mtmp->mtame++;
+        if (x != mtmp->mx || y != mtmp->my) {       /* moved & ate on same turn */
+            newsym(x, y);
+            newsym(mtmp->mx, mtmp->my);
+        }
     }
 
     if (obj->oclass == POTION_CLASS)
@@ -383,11 +382,14 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 
     /* It's a reward if it's DOGFOOD and the player dropped/threw it. */
     /* We know the player had it if invlet is set -dlc */
-    if (dogfood(mtmp, obj) == DOGFOOD && obj->invlet)
-        edog->apport +=
-            (int)(200L / ((long)edog->dropdist + moves - edog->droptime));
+    if (edog) {
+        if (dogfood(mtmp, obj) == DOGFOOD && obj->invlet)
+            edog->apport +=
+                (int)(200L / ((long)edog->dropdist + moves - edog->droptime));
+    }
 
-    if (mtmp->data == &mons[PM_RUST_MONSTER] && obj->oerodeproof) {
+    if (mtmp->data == &mons[PM_RUST_MONSTER] && obj->oerodeproof &&
+        is_metallic(obj)) {
         /* The object's rustproofing is gone now */
         obj->oerodeproof = 0;
         set_property(mtmp, STUNNED, dice(4, 4), FALSE);
@@ -395,28 +397,21 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
             pline("%s spits %s out in disgust!", Monnam(mtmp),
                   distant_name(obj, doname));
         }
-    } else if (obj == uball) {
-        unpunish();
-        delobj(obj);
-    } else if (obj == uchain)
-        unpunish();
-    else if (obj->quan > 1L && obj->oclass == FOOD_CLASS) {
+    }
+    if (obj->oclass != FOOD_CLASS) {
+        eatspecial(mtmp, nutrit, obj);
+        if (mtmp->mhp < 1)
+            return 2;
+        return 1;
+    } else if (obj->otyp == CORPSE)
+        eatcorpse(mtmp, obj); /* performs useup/etc */
+    else if (obj->quan > 1L) {
         obj->quan--;
         obj->owt = weight(obj);
     } else
         delobj(obj);
 
-    if (poly) {
-        newcham(mtmp, NULL, FALSE, cansee(mtmp->mx, mtmp->my));
-    }
-    /* limit "instant" growth to prevent potential abuse */
-    if (grow && (int)mtmp->m_lev < (int)mtmp->data->mlevel + 15) {
-        if (!grow_up(mtmp, NULL))
-            return 2;
-    }
-    if (heal)
-        mtmp->mhp = mtmp->mhpmax;
-    return 1;
+    return mtmp->mhp < 1 ? 2 : 1;
 }
 
 

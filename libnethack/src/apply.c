@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -709,7 +709,7 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
             pline("%s doesn't have a reflection.", Monnam(mtmp));
     } else if (!cancelled(mtmp) && !invisible(mtmp) &&
                mtmp->data == &mons[PM_MEDUSA]) {
-        if (mon_reflects(mtmp, "The gaze is reflected away by %s %s!"))
+        if (mon_reflects(mtmp, "%s gaze is reflected away by %s %s!", "The"))
             return 1;
         if (vis)
             pline("%s is turned to stone!", Monnam(mtmp));

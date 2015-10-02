@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -536,7 +536,7 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
             boolean reflects;
 
             pline("A bolt of lightning strikes down at you from above!");
-            reflects = ureflects("It bounces off your %s%s.", "");
+            reflects = mon_reflects(&youmonst, "It bounces off %s%s %s.", "");
             if (reflects || Shock_resistance) {
                 shieldeff(u.ux, u.uy);
                 dmg = 0;
@@ -1486,7 +1486,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             if (yours || canseemon(mtmp))
                 pline("A bolt of lightning strikes down at %s from above!",
                       mon_nam(mtmp));
-            reflects = mon_reflects(mtmp, "It bounces off %s %s.");
+            reflects = mon_reflects(mtmp, "%s bounces off %s %s.", "It");
             if (reflects || resists_elec(mtmp)) {
                 shieldeff(u.ux, u.uy);
                 dmg = 0;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,19 +15,17 @@ static void nutrition_calculations(struct obj *, unsigned *,
                                    unsigned *, unsigned *);
 static void touchfood(void);
 static void done_eating(boolean);
-static void cprefx(int);
+static void cprefx(struct monst *, int);
 static int intrinsic_possible(int, const struct permonst *);
-static void givit(int, const struct permonst *ptr, int);
-static void cpostfx(int);
+static void givit(struct monst *, int, const struct permonst *ptr, int);
+static void cpostfx(struct monst *, int);
 static boolean start_tin(struct obj *);
-static int eatcorpse(void);
 static void fprefx(struct obj *);
-static void accessory_has_effect(struct obj *);
+static void accessory_has_effect(struct monst *, struct obj *);
 static void fpostfx(struct obj *);
 static int edibility_prompts(struct obj *);
 static int rottenfood(struct obj *);
-static void eatspecial(int, struct obj *);
-static void eataccessory(struct obj *);
+static void eataccessory(struct monst *, struct obj *);
 static const char *foodword(struct obj *);
 static boolean maybe_cannibal(int, boolean);
 static void lesshungry(int, struct obj *);
@@ -333,7 +331,7 @@ done_eating(boolean message)
         pline("You finish eating %s.", food_xname(otmp, TRUE));
 
     if (otmp->otyp == CORPSE)
-        cpostfx(otmp->corpsenm);
+        cpostfx(&youmonst, otmp->corpsenm);
     else
         fpostfx(otmp);
 
@@ -360,22 +358,23 @@ maybe_cannibal(int pm, boolean allowmsg)
 }
 
 static void
-cprefx(int pm)
+cprefx(struct monst *mon, int pm)
 {
-    maybe_cannibal(pm, TRUE);
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    if (you)
+        maybe_cannibal(pm, TRUE);
     /* Note: can't use touched_monster here, Medusa acts differently on touching
        and eating */
-    if (touch_petrifies(&mons[pm]) || pm == PM_MEDUSA) {
-        if (!Stone_resistance && !(poly_when_stoned(youmonst.data) &&
-                                   polymon(PM_STONE_GOLEM, TRUE))) {
-            pline("You turn to stone.");
-            done(STONING,
-                 killer_msg(STONING,
-                            msgcat_many("tasting ", mons[pm].mname,
-                                        " meat", NULL)));
-            return;     /* lifesaved */
-        }
+    enlighten_mon(mon, 0);
+    if ((touch_petrifies(&mons[pm]) || pm == PM_MEDUSA) &&
+        ((you && !instapetrify(killer_msg(STONING,
+                                          msgcat_many("tasting ", mons[pm].mname,
+                                                      " meat", NULL)))) ||
+         (!you && minstapetrify(mon, FALSE)))) {
+        return; /* abort if died or lifesaved */
     }
+    enlighten_mon(mon, 0);
 
     switch (pm) {
     case PM_LITTLE_DOG:
@@ -384,10 +383,12 @@ cprefx(int pm)
     case PM_KITTEN:
     case PM_HOUSECAT:
     case PM_LARGE_CAT:
-        if (!CANNIBAL_ALLOWED()) {
-            pline("You feel that eating the %s was a bad idea.",
-                  mons[pm].mname);
-            HAggravate_monster |= FROMOUTSIDE;
+        if (you) { /* only player can be cannibal for now */
+            if (!CANNIBAL_ALLOWED()) {
+                pline("You feel that eating the %s was a bad idea.",
+                      mons[pm].mname);
+                HAggravate_monster |= FROMOUTSIDE;
+            }
         }
         break;
     case PM_LIZARD:
@@ -397,27 +398,28 @@ cprefx(int pm)
     case PM_PESTILENCE:
     case PM_FAMINE:
         {
-            pline("Eating that is instantly fatal.");
-            done(DIED, msgcat("unwisely ate the body of ", mons[pm].mname));
+            if (you || vis)
+                pline("Eating that is instantly fatal.");
+            if (you)
+                done(DIED, msgcat("unwisely ate the body of ", mons[pm].mname));
+            else
+                mondied(mon);
             /* It so happens that since we know these monsters cannot appear in
                tins, u.utracked[tos_food] will always be what we want, which is
                not generally true. */
-            if (revive_corpse(u.utracked[tos_food]))
+            if (you && revive_corpse(u.utracked[tos_food]))
                 u.utracked[tos_food] = NULL;
             return;
         }
     case PM_GREEN_SLIME:
-        if (!Slimed && !Unchanging && !flaming(youmonst.data) &&
-            !unsolid(youmonst.data) &&
-            level->locations[u.ux][u.uy].typ != LAVAPOOL &&
-            youmonst.data != &mons[PM_GREEN_SLIME]) {
-            pline("You don't feel very well.");
-            Slimed = 10L;
-        }
-        /* Fall through */
+        if (!sliming(mon) && !unchanging(mon) && !flaming(mon->data) &&
+            !unsolid(mon->data) && mon->data != &mons[PM_GREEN_SLIME] &&
+            level->locations[m_mx(mon)][m_my(mon)].typ != LAVAPOOL)
+            set_property(mon, SLIMED, 11, TRUE);
+       /* Fall through */
     default:
         if (acidic(&mons[pm]))
-            set_property(&youmonst, STONED, -2, FALSE);
+            set_property(mon, STONED, -2, FALSE);
         break;
     }
 }
@@ -487,8 +489,9 @@ intrinsic_possible(int type, const struct permonst *ptr)
    endgame quality, and monsters that grant disintegration resistance tend not
    to grant anything else. */
 static void
-givit(int type, const struct permonst *ptr, int scalefactor)
+givit(struct monst *mon, int type, const struct permonst *ptr, int scalefactor)
 {
+    boolean you = (mon == &youmonst);
     if (type != DISINT_RES && type != TELEPAT) {
         /* Calculate the probability of gaining the intrinsic, and the
            appropriate RNG. Some intrinsics are easier to get than others. */
@@ -506,6 +509,10 @@ givit(int type, const struct permonst *ptr, int scalefactor)
             impossible("Trying to confer unknown intrinsic %d", type);
             return;
         }
+
+        /* Don't use custom RNG if it's for monster intrinsics */
+        if (!you)
+            rng = rng_main;
 
         int ml = ptr->mlevel * 6;
 
@@ -552,73 +559,75 @@ givit(int type, const struct permonst *ptr, int scalefactor)
 
     }
 
-    set_property(&youmonst, type, 0, FALSE);
+    pline("property: %d", type);
+    set_property(mon, type, 0, FALSE);
 }
 
 static void
-cpostfx(int pm)
+cpostfx(struct monst *mon, int pm)
 {       /* called after completely consuming a corpse */
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
     int tmp = 0;
     boolean catch_lycanthropy = FALSE;
 
     switch (pm) {
     case PM_NEWT:
         /* MRKR: "eye of newt" may give small magical energy boost */
-        if (rn2_on_rng(3, rng_newt_pw_boost) || 3 * u.uen <= 2 * u.uenmax) {
-            int old_uen = u.uen;
-            boolean can_boost_max = !rn2_on_rng(3, rng_newt_pw_boost);
+        if (rn2_on_rng(3, you ? rng_newt_pw_boost : rng_main)
+            || ((you && 3 * u.uen <= 2 * u.uenmax) ||
+                (!you && mon->mspec_used > rn2(5)))) {
+            if (you) {
+                int old_uen = u.uen;
+                boolean can_boost_max = !rn2_on_rng(3, rng_newt_pw_boost);
 
-            u.uen += 1 + rn2_on_rng(3, rng_newt_pw_boost);
-            if (u.uen > u.uenmax) {
-                if (can_boost_max)
-                    u.uenmax++;
-                u.uen = u.uenmax;
+                u.uen += 1 + rn2_on_rng(3, rng_newt_pw_boost);
+                if (u.uen > u.uenmax) {
+                    if (can_boost_max)
+                        u.uenmax++;
+                    u.uen = u.uenmax;
+                }
+                if (old_uen != u.uen)
+                    pline("You feel a mild buzz.");
+            } else {
+                mon->mspec_used -= min(mon->mspec_used, rnd(3));
+                if (vis)
+                    pline("You sense a mild buzz coming from %s.",
+                          mon_nam(mon));
             }
-            if (old_uen != u.uen)
-                pline("You feel a mild buzz.");
         }
         break;
     case PM_WRAITH:
-        pluslvl(FALSE);
+        if (you)
+            pluslvl(FALSE);
+        else
+            grow_up(mon, NULL);
         break;
     case PM_HUMAN_WERERAT:
-        catch_lycanthropy = TRUE;
-        u.ulycn = PM_WERERAT;
-        break;
     case PM_HUMAN_WEREJACKAL:
-        catch_lycanthropy = TRUE;
-        u.ulycn = PM_WEREJACKAL;
-        break;
     case PM_HUMAN_WEREWOLF:
-        catch_lycanthropy = TRUE;
-        u.ulycn = PM_WEREWOLF;
+        if (you) { /* TODO: improve monster lycantropy */
+            catch_lycanthropy = TRUE;
+            u.ulycn = counter_were(pm);
+        }
         break;
     case PM_NURSE:
-        if (Upolyd)
-            u.mh = u.mhmax;
-        else
-            u.uhp = u.uhpmax;
+        if (you) {
+            if (Upolyd)
+                u.mh = u.mhmax;
+            else
+                u.uhp = u.uhpmax;
+        } else
+            mon->mhp = mon->mhpmax;
         break;
     case PM_STALKER:
-        if (!Invis) {
-            set_itimeout(&HInvis, (long)rn1(100, 50));
-            if (!Blind && !BInvis)
-                self_invis_message();
-        } else {
-            if (!(HInvis & INTRINSIC))
-                pline("You feel hidden!");
-            HInvis |= FROMOUTSIDE;
-            HSee_invisible |= FROMOUTSIDE;
-        }
-        newsym(u.ux, u.uy);
-        /* fall into next case */
-    case PM_YELLOW_LIGHT:
+        set_property(mon, INVIS, invisible(mon) ? 0 : rn1(100, 50), FALSE);
         /* fall into next case */
     case PM_GIANT_BAT:
-        make_stunned(HStun + 30, FALSE);
+        set_property(mon, STUNNED, 30, TRUE);
         /* fall into next case */
     case PM_BAT:
-        make_stunned(HStun + 30, FALSE);
+        set_property(mon, STUNNED, 30, TRUE);
         break;
     case PM_GIANT_MIMIC:
         tmp += 10;
@@ -628,7 +637,8 @@ cpostfx(int pm)
         /* fall into next case */
     case PM_SMALL_MIMIC:
         tmp += 20;
-        if (youmonst.data->mlet != S_MIMIC && !Unchanging) {
+        if (you && mon->data->mlet != S_MIMIC && !Unchanging) {
+            /* TODO: make monsters do this too */
             const char *buf;
 
             pline("You can't resist the temptation to mimic %s...",
@@ -651,40 +661,52 @@ cpostfx(int pm)
         }
         break;
     case PM_QUANTUM_MECHANIC:
-        pline("Your velocity suddenly seems very uncertain!");
-        if (HFast & INTRINSIC) {
-            HFast &= ~INTRINSIC;
-            pline("You seem slower.");
-        } else {
-            HFast |= FROMOUTSIDE;
-            pline("You seem faster.");
+        set_property(mon, FAST, ifast(mon) ? -1 : 0, TRUE);
+        if (you || vis) {
+            pline("%s velocity suddenly seems very uncertain!",
+                  s_suffix(you ? "You" : Monnam(mon)));
+            pline("%s seem%s %ser.",
+                  you ? "You" : Monnam(mon),
+                  you ? "" : "s",
+                  ifast(mon) ? "fast" : "slow");
         }
         break;
     case PM_LIZARD:
-        if (HStun > 2)
-            make_stunned(2L, FALSE);
-        if (HConfusion > 2)
-            make_confused(2L, FALSE);
+        if (property_timeout(mon, STUNNED) > 2) {
+            set_property(mon, STUNNED, -2, TRUE);
+            set_property(mon, STUNNED, 2, FALSE);
+        }
+        if (property_timeout(mon, CONFUSION) > 2) {
+            set_property(mon, CONFUSION, -2, TRUE);
+            set_property(mon, CONFUSION, 2, FALSE);
+        }
         break;
     case PM_CHAMELEON:
     case PM_DOPPELGANGER:
         /* case PM_SANDESTIN: */
-        if (!Unchanging) {
-            pline("You feel a change coming over you.");
-            polyself(FALSE);
+        if (!unchanging(mon)) {
+            if (you) {
+                pline("You feel a change coming over you.");
+                polyself(FALSE);
+            } else {
+                if (vis)
+                    pline("%s suddenly mutates!", Monnam(mon));
+                newcham(mon, NULL, FALSE, vis);
+            }
         }
         break;
     case PM_MIND_FLAYER:
     case PM_MASTER_MIND_FLAYER:
         if (ABASE(A_INT) < ATTRMAX(A_INT)) {
-            if (!rn2_on_rng(2, rng_50percent_a_int)) {
-                pline("Yum! That was real brain food!");
-                adjattrib(A_INT, 1, FALSE);
-                break;  /* don't give them telepathy, too */
+            if (you) {
+                if (!rn2_on_rng(2, rng_50percent_a_int)) {
+                    pline("Yum! That was real brain food!");
+                    adjattrib(A_INT, 1, FALSE);
+                    break;  /* don't give them telepathy, too */
+                }
             }
-        } else {
+        } else if (you)
             pline("For some reason, that tasted bland.");
-        }
         /* fall through to default case */
     default:{
             const struct permonst *ptr = &mons[pm];
@@ -692,10 +714,13 @@ cpostfx(int pm)
 
             if (dmgtype(ptr, AD_STUN) || dmgtype(ptr, AD_HALU) ||
                 pm == PM_VIOLET_FUNGUS) {
-                pline("Oh wow!  Great stuff!");
-                make_hallucinated(HHallucination + 200, FALSE);
+                if (you)
+                    pline("Oh wow!  Great stuff!");
+                else if (vis)
+                    pline("%s seems cross-eyed!", Monnam(mon));
+                set_property(mon, you ? HALLUC : CONFUSION, 200, TRUE);
             }
-            if (is_giant(ptr))
+            if (is_giant(ptr) && you)
                 gainstr(NULL, 0);
 
             /* Check the monster for all of the intrinsics. If this monster can
@@ -719,12 +744,12 @@ cpostfx(int pm)
 
             for (i = 1; i <= LAST_PROP; i++)
                 if (intrinsic_possible(i, ptr))
-                    givit(i, ptr, count);
+                    givit(mon, i, ptr, count);
         }
         break;
     }
 
-    if (catch_lycanthropy && defends(AD_WERE, uwep)) {
+    if (you && catch_lycanthropy && defends(AD_WERE, uwep)) {
         if (!touch_artifact(uwep, &youmonst)) {
             struct obj *obj = uwep;
             unwield_silently(uwep);
@@ -861,11 +886,11 @@ eat_tin_one_turn(void)
             break_conduct(conduct_vegetarian);
 
         u.utracked[tos_tin]->dknown = u.utracked[tos_tin]->known = TRUE;
-        cprefx(u.utracked[tos_tin]->corpsenm);
+        cprefx(&youmonst, u.utracked[tos_tin]->corpsenm);
         /* We call action_completed() here directly, so that the action is not
          * interruped if the player becomes helpless due to cpostfx. */
         action_completed();
-        cpostfx(u.utracked[tos_tin]->corpsenm);
+        cpostfx(&youmonst, u.utracked[tos_tin]->corpsenm);
 
         /* charge for one at pre-eating cost */
         costly_tin(NULL);
@@ -1018,22 +1043,26 @@ rottenfood(struct obj *obj)
 }
 
 /* called when a corpse is selected as food */
-static int
-eatcorpse(void)
+int
+eatcorpse(struct monst *mon, struct obj *otmp)
 {
-    struct obj *otmp = u.utracked[tos_food];
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
     int tp = 0, mnum = otmp->corpsenm;
     long rotted = 0L;
     boolean uniq = ! !(mons[mnum].geno & G_UNIQ);
     int retcode = 0;
-    boolean stoneable = (touch_petrifies(&mons[mnum]) && !Stone_resistance &&
-                         !poly_when_stoned(youmonst.data));
+    boolean stoneable = (touch_petrifies(&mons[mnum]) &&
+                         !resists_ston(mon) &&
+                         !poly_when_stoned(mon->data));
 
     /* KMH, conduct */
-    if (!vegan(&mons[mnum]))
-        break_conduct(conduct_vegan);
-    if (!vegetarian(&mons[mnum]))
-        break_conduct(conduct_vegetarian);
+    if (you) {
+        if (!vegan(&mons[mnum]))
+            break_conduct(conduct_vegan);
+        if (!vegetarian(&mons[mnum]))
+            break_conduct(conduct_vegetarian);
+    }
 
     if (mnum != PM_LIZARD && mnum != PM_LICHEN) {
         long age = peek_at_iced_corpse_age(otmp);
@@ -1046,21 +1075,25 @@ eatcorpse(void)
     }
 
     if (mnum != PM_ACID_BLOB && !stoneable && rotted > 5L) {
-        boolean cannibal = maybe_cannibal(mnum, FALSE);
+        boolean cannibal = FALSE;
+        if (you)
+            cannibal = maybe_cannibal(mnum, FALSE);
 
-        pline("Ulch!  That %s was tainted%s!",
-              mons[mnum].mlet ==
-              S_FUNGUS ? "fungoid vegetation" : !vegetarian(&mons[mnum]) ?
-              "meat" : "protoplasm", cannibal ? "; you cannibal" : "");
-        if (Sick_resistance) {
-            pline("It doesn't seem at all sickening, though...");
-        } else {
+        if (you) {
+            pline("Ulch!  That %s was tainted%s!",
+                  mons[mnum].mlet ==
+                  S_FUNGUS ? "fungoid vegetation" : !vegetarian(&mons[mnum]) ?
+                  "meat" : "protoplasm", cannibal ? "; you cannibal" : "");
+            if (resists_sick(mon))
+                pline("It doesn't seem at all sickening, though...");
+        }
+        if (!resists_sick(mon)) {
             const char *buf;
             long sick_time;
 
-            sick_time = rn2_on_rng(10, rng_ddeath_d10p9) + 9;
+            sick_time = rn2_on_rng(10, you ? rng_ddeath_d10p9 : rng_main) + 9;
             /* make sure new ill doesn't result in improvement */
-            if (Sick && (sick_time > Sick))
+            if (sick(mon) && (sick_time > property_timeout(mon, SICK)))
                 sick_time = (Sick > 1L) ? Sick - 1L : 1L;
             if (!uniq)
                 buf = msgprintf("a rotted %s", corpse_xname(otmp, TRUE));
@@ -1068,61 +1101,105 @@ eatcorpse(void)
                 buf = msgprintf("the rotted corpse of %s%s",
                                 !type_is_pname(&mons[mnum]) ? "the " : "",
                                 mons[mnum].mname);
-            make_sick(sick_time, buf, TRUE, SICK_VOMITABLE);
+            if (you)
+                make_sick(sick_time, buf, TRUE, SICK_VOMITABLE);
+            else { /* TODO: wont actually do anything at present */
+                set_property(mon, SICK, sick_time, FALSE);
+            }
         }
-        if (carried(otmp))
+        if (mcarried(otmp))
+            m_useup(mon, otmp);
+        else if (carried(otmp))
             useup(otmp);
         else
             useupf(otmp, 1L);
         return 2;
     } else if (acidic(&mons[mnum]) && !Acid_resistance) {
         tp++;
-        pline("You have a very bad case of stomach acid.");
+        if (you || vis)
+            pline("%s %s a very bad case of stomach acid.",
+                  you ? "You" : Monnam(mon),
+                  you ? "have" : "has");
         /* not body_part() */
-        losehp(rnd(15), killer_msg(DIED, "an acidic corpse"));
+        if (you)
+            losehp(rnd(15), killer_msg(DIED, "an acidic corpse"));
+        else {
+            mon->mhp -= rnd(15);
+            if (mon->mhp < 1) {
+                mondied(mon);
+                retcode = 2;
+            }
+        }
     } else if (poisonous(&mons[mnum]) && rn2(5)) {
         tp++;
-        pline("Ecch - that must have been poisonous!");
-        if (!Poison_resistance) {
-            losestr(rnd(4), DIED, killer_msg(DIED, "a poisonous corpse"), NULL);
-            losehp(rnd(15), killer_msg(DIED, "a poisonous corpse"));
-        } else
-            pline("You seem unaffected by the poison.");
+        if (you)
+            pline("Ecch - that must have been poisonous!");
+        else if (vis)
+            pline("%s was poisoned by %s meal!", Monnam(mon), mhis(mon));
+        if (!resists_poison(mon)) {
+            if (you) {
+                losestr(rnd(4), DIED, killer_msg(DIED, "a poisonous corpse"), NULL);
+                losehp(rnd(15), killer_msg(DIED, "a poisonous corpse"));
+            } else {
+                mon->mhp -= rnd(15);
+                if (mon->mhp < 1) {
+                    mondied(mon);
+                    retcode = 2;
+                }
+            }
+        } else if (you || vis)
+            pline("%s seem%s unaffected by the poison.",
+                  you ? "You" : Monnam(mon),
+                  you ? "" : "s");
         /* now any corpse left too long will make you mildly ill */
     } else if ((rotted > 5L || (rotted > 3L && rn2(5)))
-               && !Sick_resistance) {
+               && !resists_sick(mon)) {
         tp++;
-        pline("You feel %ssick.", (Sick) ? "very " : "");
-        losehp(rnd(8), killer_msg(DIED, "a cadaver"));
+        if (you || vis)
+            pline("%s %s %ssick.",
+                  you ? "You" : Monnam(mon),
+                  you ? "feel" : "looks",
+                  (sick(mon)) ? "very " : "");
+        if (you)
+            losehp(rnd(8), killer_msg(DIED, "a cadaver"));
+        else {
+            mon->mhp -= rnd(8);
+            if (mon->mhp < 1) {
+                mondied(mon);
+                retcode = 2;
+            }
+        }
     }
 
     if (!tp && mnum != PM_LIZARD && mnum != PM_LICHEN &&
         (otmp->orotten || !rn2(7))) {
-        touchfood();
-        if (rottenfood(otmp)) {
-            if (!u.utracked[tos_food])
-                return 2;
+        if (you) { /* TODO: rotting for monsters */
+            touchfood();
+            if (rottenfood(otmp)) {
+                if (!u.utracked[tos_food])
+                    return 2;
 
-            otmp = u.utracked[tos_food];
-            retcode = 1;
-        }
-        if (u.utracked[tos_food])
-            u.utracked[tos_food]->orotten = TRUE;
-
-        if (!mons[otmp->corpsenm].cnutrit) {
-            /* no nutrution: rots away, no message if you passed out */
-            if (u.utracked[tos_food]) {
                 otmp = u.utracked[tos_food];
-                if (!retcode)
-                    pline("The corpse rots away completely.");
-                if (carried(otmp))
-                    useup(otmp);
-                else
-                    useupf(otmp, 1L);
+                retcode = 1;
             }
-            retcode = 2;
+            if (u.utracked[tos_food])
+                u.utracked[tos_food]->orotten = TRUE;
+
+            if (!mons[otmp->corpsenm].cnutrit) {
+                /* no nutrution: rots away, no message if you passed out */
+                if (u.utracked[tos_food]) {
+                    otmp = u.utracked[tos_food];
+                    if (!retcode)
+                        pline("The corpse rots away completely.");
+                    if (carried(otmp))
+                        useup(otmp);
+                    else
+                        useupf(otmp, 1L);
+                }
+                retcode = 2;
+            }
         }
-    } else {
+    } else if (you) {
         pline("%s%s %s!",
               !uniq ? "This " : !type_is_pname(&mons[mnum]) ? "The " : "",
               food_xname(otmp, FALSE), (vegan(&mons[mnum])
@@ -1133,8 +1210,17 @@ eatcorpse(void)
               ? "is delicious" : "tastes terrible");
     }
 
-    if (!retcode)
-        cprefx(mnum);
+    if (!retcode) {
+        cprefx(mon, mnum);
+        /* If it was a monster's food, it will be done right away */
+        if (!you) {
+            cpostfx(mon, mnum);
+            if (mcarried(otmp))
+                m_useup(mon, otmp);
+            else
+                useupf(otmp, 1L);
+        }
+    }
 
     return retcode;
 }
@@ -1223,15 +1309,28 @@ fprefx(struct obj *otmp)
 }
 
 static void
-accessory_has_effect(struct obj *otmp)
+accessory_has_effect(struct monst *mon, struct obj *otmp)
 {
-    pline("Magic spreads through your body as you digest the %s.",
-          otmp->oclass == RING_CLASS ? "ring" : "amulet");
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+
+    if (you)
+        pline("Magic spreads through your body as you digest the %s.",
+              otmp->oclass == RING_CLASS ? "ring" : "amulet");
+    else if (vis)
+        pline("%s seem to radiate magic for a while.", Monnam(mon));
 }
 
 static void
-eataccessory(struct obj *otmp)
+eataccessory(struct monst *mon, struct obj *otmp)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    int rng_ring = rng_intrinsic_ring;
+    int rng_amulet = rng_intrinsic_amulet;
+    if (!you) {
+        rng_ring = rng_amulet = rng_main;
+    }
     int typ = otmp->otyp;
 
     /* Note: rings are not so common that this is unbalancing. */
@@ -1241,70 +1340,107 @@ eataccessory(struct obj *otmp)
         if (u.uhp <= 0)
             return;     /* died from sink fall */
     }
-    otmp->known = otmp->dknown = 1;     /* by taste */
+    if (you)
+        otmp->known = otmp->dknown = 1; /* by taste */
     if (otmp->oclass == RING_CLASS ?
-        !rn2_on_rng(3, rng_intrinsic_ring) :
-        !rn2_on_rng(5, rng_intrinsic_amulet)) {
+        !rn2_on_rng(3, rng_ring) :
+        !rn2_on_rng(5, rng_amulet)) {
         switch (otmp->otyp) {
         default:
             if (!objects[typ].oc_oprop)
                 break;  /* should never happen */
 
-            if (set_property(&youmonst, objects[typ].oc_oprop, 0, FALSE))
-                accessory_has_effect(otmp);
+            /* disallow conflict for monsters */
+            if (typ == RIN_CONFLICT && !you)
+                break;
+
+            if (set_property(mon, objects[typ].oc_oprop, 0, FALSE))
+                accessory_has_effect(mon, otmp);
 
             break;
         case RIN_ADORNMENT:
-            accessory_has_effect(otmp);
-            if (adjattrib(A_CHA, otmp->spe, -1))
-                makeknown(typ);
+            if (you) { /* monsters don't have attributes */
+                accessory_has_effect(mon, otmp);
+                if (adjattrib(A_CHA, otmp->spe, -1))
+                    makeknown(typ);
+            }
             break;
         case RIN_GAIN_STRENGTH:
-            accessory_has_effect(otmp);
-            if (adjattrib(A_STR, otmp->spe, -1))
-                makeknown(typ);
+            if (you) {
+                accessory_has_effect(mon, otmp);
+                if (adjattrib(A_STR, otmp->spe, -1))
+                    makeknown(typ);
+            }
             break;
         case RIN_GAIN_CONSTITUTION:
-            accessory_has_effect(otmp);
-            if (adjattrib(A_CON, otmp->spe, -1))
-                makeknown(typ);
+            if (you) {
+                accessory_has_effect(mon, otmp);
+                if (adjattrib(A_CON, otmp->spe, -1))
+                    makeknown(typ);
+            }
             break;
         case RIN_INCREASE_ACCURACY:
-            accessory_has_effect(otmp);
-            u.uhitinc += otmp->spe;
+            accessory_has_effect(mon, otmp);
+            if (you)
+                u.uhitinc += otmp->spe;
+            else
+                mon->mhitinc += otmp->spe;
             break;
         case RIN_INCREASE_DAMAGE:
-            accessory_has_effect(otmp);
-            u.udaminc += otmp->spe;
+            accessory_has_effect(mon, otmp);
+            if (you)
+                u.udaminc += otmp->spe;
+            else
+                mon->mdaminc += otmp->spe;
             break;
         case RIN_PROTECTION:
-            accessory_has_effect(otmp);
-            HProtection |= FROMOUTSIDE;
-            u.uac -= otmp->spe;
+            accessory_has_effect(mon, otmp);
+            set_property(mon, PROTECTION, 0, FALSE);
+            if (you)
+                u.uac -= otmp->spe;
+            else
+                mon->mblessed += otmp->spe;
             break;
         case AMULET_OF_CHANGE:
-            accessory_has_effect(otmp);
-            makeknown(typ);
-            change_sex();
-            pline("You are suddenly very %s!",
-                  u.ufemale ? "feminine" : "masculine");
+            accessory_has_effect(mon, otmp);
+            if (you || vis)
+                makeknown(typ);
+            if (you)
+                change_sex();
+            else
+                mon->female = mon->female ? 0 : 1;
+            if (you)
+                pline("You are suddenly very %s!",
+                      u.ufemale ? "feminine" : "masculine");
+            else if (vis)
+                pline("%s suddenly looks very %s!", Monnam(mon),
+                      mon->female ? "feminine" : "masculine");
             break;
         case AMULET_OF_UNCHANGING:
             /* un-change: it's a pun */
-            if (!Unchanging && Upolyd) {
-                accessory_has_effect(otmp);
-                makeknown(typ);
-                rehumanize(DIED, NULL);
+            if (you) {
+                if (!Unchanging && Upolyd) {
+                    accessory_has_effect(mon, otmp);
+                    makeknown(typ);
+                    rehumanize(DIED, NULL);
+                }
+            } else {
+                /* TODO: monster unpolymorph */
             }
             break;
         case AMULET_OF_STRANGULATION:  /* bad idea! */
             /* no message--this gives no permanent effect */
-            choke(otmp);
+            if (you)
+                choke(otmp);
+            /* TODO: monster choking */
             break;
         case AMULET_OF_RESTFUL_SLEEP:  /* another bad idea! */
-            if (!(HSleeping & FROMOUTSIDE))
-                accessory_has_effect(otmp);
-            HSleeping = FROMOUTSIDE | rnd(100);
+            if (you) {
+                if (!(HSleeping & FROMOUTSIDE))
+                    accessory_has_effect(mon, otmp);
+                HSleeping = FROMOUTSIDE | rnd(100);
+            }
+            /* TODO: monster restful sleep */
             break;
         case AMULET_OF_LIFE_SAVING:
         case AMULET_OF_REFLECTION:     /* nice try */
@@ -1316,10 +1452,14 @@ eataccessory(struct obj *otmp)
 }
 
 /* Called after eating non-food. */
-static void
-eatspecial(int nutrition, struct obj *otmp)
+void
+eatspecial(struct monst *mon, int nutrition, struct obj *otmp)
 {
-    lesshungry(nutrition, otmp);
+    boolean you = (mon == &youmonst);
+
+    /* TODO: move monster nutrition logic to eat.c too */
+    if (you)
+        lesshungry(nutrition, otmp);
 
     if (otmp->oclass == COIN_CLASS) {
         if (otmp->where == OBJ_FREE)
@@ -1330,37 +1470,52 @@ eatspecial(int nutrition, struct obj *otmp)
     }
 
     if (otmp->oclass == POTION_CLASS) {
+        if (!you) {
+            impossible("unhandled monster potion eating?");
+            return;
+        }
         otmp->quan++;   /* dopotion() does a useup() */
         dopotion(otmp);
     }
 
     if (otmp->oclass == RING_CLASS || otmp->oclass == AMULET_CLASS)
-        eataccessory(otmp);
+        eataccessory(mon, otmp);
     else if (otmp->otyp == LEASH && otmp->leashmon)
         o_unleash(otmp);
 
     /* KMH -- idea by "Tommy the Terrorist" */
-    if ((otmp->otyp == TRIDENT) && !otmp->cursed) {
+    if (you && (otmp->otyp == TRIDENT) && !otmp->cursed) {
         pline(Hallucination ? "Four out of five dentists agree." :
               "That was pure chewing satisfaction!");
         exercise(A_WIS, TRUE);
     }
-    if ((otmp->otyp == FLINT) && !otmp->cursed) {
+    if (you && (otmp->otyp == FLINT) && !otmp->cursed) {
         pline("Yabba-dabba delicious!");
         exercise(A_CON, TRUE);
     }
 
-    if (otmp == uwep && otmp->quan == 1L)
-        uwepgone();
-    if (otmp == uquiver && otmp->quan == 1L)
-        uqwepgone();
-    if (otmp == uswapwep && otmp->quan == 1L)
-        uswapwepgone();
+    if (otmp == m_mwep(mon) && otmp->quan == 1L) {
+        if (!you) {
+            setmnotwielded(mon, mon->mw);
+            MON_NOWEP(mon);
+        } else
+            uwepgone();
+    }
+
+    /* only players have quivers/alternate weapons */
+    if (you) {
+        if (otmp == uquiver && otmp->quan == 1L)
+            uqwepgone();
+        if (otmp == uswapwep && otmp->quan == 1L)
+            uswapwepgone();
+    }
 
     if (otmp == uball)
         unpunish();
     if (otmp == uchain)
         unpunish();     /* but no useup() */
+    else if (mcarried(otmp))
+        m_useup(mon, otmp);
     else if (carried(otmp))
         useup(otmp);
     else
@@ -1706,7 +1861,7 @@ doeat(const struct nh_cmd_arg *arg)
             return 1;
         }
 
-        /* Note: gold weighs 1 pt. for each 1000 pieces (see pickup.c) so gold
+        /* Note: gold weighs 1 pt. for each 100 pieces (see pickup.c) so gold
         and non-gold is consistent. */
         if (otmp->oclass == COIN_CLASS)
             basenutrit =
@@ -1741,7 +1896,7 @@ doeat(const struct nh_cmd_arg *arg)
                   otmp->oclass == COIN_CLASS ? foodword(otmp) :
                   singular(otmp, xname));
 
-        eatspecial(basenutrit, otmp);
+        eatspecial(&youmonst, basenutrit, otmp);
         return 1;
     }
 
@@ -1794,7 +1949,7 @@ doeat(const struct nh_cmd_arg *arg)
         u.utracked[tos_food] = otmp;
 
         if (otmp->otyp == CORPSE) {
-            int tmp = eatcorpse();
+            int tmp = eatcorpse(&youmonst, otmp);
 
             if (tmp == 2) {
                 /* used up */

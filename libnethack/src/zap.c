@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3662,7 +3662,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
             mon = m_at(level, sx, sy);
             if (!mon && sx == u.ux && sy == u.uy) {
                 mon = &youmonst;
-                if (u.usteed && !rn2(3) && !mon_reflects(u.usteed, NULL))
+                if (u.usteed && !rn2(3) && !reflecting(u.usteed))
                     mon = u.usteed;
                 you = (mon == &youmonst);
             }
@@ -3697,21 +3697,22 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                 range -= 2;
                 if (yours || you || vis)
                     hit(fltxt, mon, "!");
-                if (mon_reflects(mon, NULL)) {
+                if (reflecting(mon)) {
                     if (you || vis) {
                         shieldeff(sx, sy);
                         if (raylevel >= P_SKILLED) {
                             if (blind(&youmonst))
                                 pline("%s is disrupted by something!", The(fltxt));
                             else
-                                mon_reflects(mon, "But it is disrupted by %s %s!");
+                                mon_reflects(mon, "%s is disrupted by %s %s!",
+                                             The(fltxt));
                         } else {
                             if (blind(&youmonst))
                                 pline("For some reason, %s %s not affected.",
                                       you ? "you" : mon_nam(mon),
                                       you ? "are" : "is");
                             else
-                                mon_reflects(mon, "But it reflects from %s %s!");
+                                mon_reflects(mon, "But the %s reflects from %s %s!", fltxt);
                         }
                     }
                     if (raylevel >= P_SKILLED) {

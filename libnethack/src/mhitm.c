@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -525,13 +525,13 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         return MM_MISS;
     }
     /* call mon_reflects 2x, first test, then, if visible, print message */
-    if (magr->data == &mons[PM_MEDUSA] && mon_reflects(mdef, NULL)) {
+    if (magr->data == &mons[PM_MEDUSA] && reflecting(mdef)) {
         if (canseemon(mdef))
-            mon_reflects(mdef, "The gaze is reflected away by %s %s.");
+            mon_reflects(mdef, "%s gaze is reflected away by %s %s.", s_suffix(Monnam(magr)));
         if (!blind(mdef)) {
-            if (mon_reflects(magr, NULL)) {
+            if (reflecting(magr)) {
                 if (canseemon(magr))
-                    mon_reflects(magr, "The gaze is reflected away by %s %s.");
+                    mon_reflects(magr, "%s gaze is reflected further by %s %s.", s_suffix(Monnam(magr)));
                 return MM_MISS;
             }
             if (!invisible(mdef) && !see_invisible(magr)) {
@@ -1460,11 +1460,11 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                     tmp = 127;
                 if (!blind(magr) && haseyes(madat) && !blind(mdef) &&
                     (see_invisible(magr) || !invisible(mdef))) {
-                    const char *buf;
-                    buf = msgprintf("%s gaze is reflected by %%s %%s.",
-                                    s_suffix(mon_nam(mdef)));
-                    if (mon_reflects(magr, canseemon(magr) ? buf : NULL))
+                    if (reflecting(magr)) {
+                        if (canseemon(magr))
+                            mon_reflects(magr, "%s gaze is reflected by %s %s.", s_suffix(Monnam(mdef)));
                         return mdead | mhit;
+                    }
                     if (canseemon(magr))
                         pline("%s is frozen by %s gaze!", Monnam(magr),
                               s_suffix(mon_nam(mdef)));

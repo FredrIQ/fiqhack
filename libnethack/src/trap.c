@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2240,25 +2240,26 @@ mintrap(struct monst *mtmp)
 
 
 /* Combine cockatrice checks into single functions to avoid repeating code. */
-void
+int
 instapetrify(const char *str)
 {
-    if (Stone_resistance)
-        return;
+    if (resists_ston(&youmonst))
+        return 0;
     if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM, TRUE))
-        return;
+        return 0;
     pline("You turn to stone...");
     done(STONING, str);
+    return 1;
 }
 
-void
+int
 minstapetrify(struct monst *mon, boolean byplayer)
 {
     if (resists_ston(mon))
-        return;
+        return 0;
     if (poly_when_stoned(mon->data)) {
         mon_to_stone(mon);
-        return;
+        return 0;
     }
 
     if (cansee(mon->mx, mon->my))
@@ -2268,6 +2269,7 @@ minstapetrify(struct monst *mon, boolean byplayer)
         xkilled(mon, 0);
     } else
         monstone(mon);
+    return 1;
 }
 
 void

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -445,7 +445,7 @@ god_zaps_you(aligntyp resp_god)
             if (Blind)
                 pline("For some reason you're unaffected.");
             else
-                ureflects("%s reflects from your %s.", "It");
+                mon_reflects(&youmonst, "%s reflects from %s %s.", "It");
         } else if (Shock_resistance) {
             shieldeff(u.ux, u.uy);
             pline("It seems not to affect you.");
