@@ -10,7 +10,7 @@
 static boolean no_bones_level(d_level *);
 static void goodfruit(int);
 static void resetobjs(struct obj *, boolean);
-static void drop_upon_death(struct monst *, struct obj *);
+static void drop_upon_death(struct monst *, struct obj *, boolean);
 
 
 static char *
@@ -134,7 +134,7 @@ resetobjs(struct obj *ochain, boolean restore)
 
 
 static void
-drop_upon_death(struct monst *mtmp, struct obj *cont)
+drop_upon_death(struct monst *mtmp, struct obj *cont, boolean charmed)
 {
     struct obj *otmp;
 
@@ -166,8 +166,9 @@ drop_upon_death(struct monst *mtmp, struct obj *cont)
         if ((cont || artifact_light(otmp)) && obj_is_burning(otmp))
             end_burn(otmp, TRUE);       /* smother in statue */
 
-        if (rn2(5))
-            curse(otmp);
+        /* Only curse items if it wasn't a 25% charm roll */
+        if (rn2(5) && !charmed)
+            curse(otmp); /* Don't curse items if it was a normal player monster */
         if (mtmp)
             add_to_minv(mtmp, otmp);
         else if (cont)
@@ -294,14 +295,14 @@ make_bones:
         statue = mk_named_object(STATUE, &mons[u.umonnum], u.ux, u.uy,
                                  u.uplname);
 
-        drop_upon_death(NULL, statue);
+        drop_upon_death(NULL, statue, FALSE);
         if (!statue)
             return;     /* couldn't make statue */
         mtmp = NULL;
     } else if (u.ugrave_arise < LOW_PM && rn2(4)) {
         /* 25% of the time, Rodney shows up, undeadturns you and charms you to do his bidding */
         /* drop everything */
-        drop_upon_death(NULL, NULL);
+        drop_upon_death(NULL, NULL, FALSE);
         /* trick makemon() into allowing monster creation on your location */
         in_mklev = TRUE;
         mtmp = makemon(&mons[PM_GHOST], level, u.ux, u.uy, MM_NONAME);
@@ -326,7 +327,7 @@ make_bones:
         mtmp = makemon(&mons[u.ugrave_arise], level, u.ux, u.uy, NO_MM_FLAGS);
         in_mklev = FALSE;
         if (!mtmp) {
-            drop_upon_death(NULL, NULL);
+            drop_upon_death(NULL, NULL, FALSE);
             return;
         }
         mtmp = christen_monst(mtmp, u.uplname);
@@ -335,7 +336,7 @@ make_bones:
             pline("Your body rises from the dead as %s...",
                   an(mons[u.ugrave_arise].mname));
         win_pause_output(P_MESSAGE);
-        drop_upon_death(mtmp, NULL);
+        drop_upon_death(mtmp, NULL, charmed);
         m_dowear(mtmp, TRUE);
     }
     if (mtmp) {
