@@ -653,6 +653,21 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                     if (obj->otyp == EGG && /* trice */
                         mtmp->data == &mons[PM_FLESH_GOLEM])
                         helpful = TRUE;
+                    /* polymorph is special */
+                    if (obj->otyp == WAN_POLYMORPH ||
+                        obj->otyp == SPE_POLYMORPH) {
+                        helpful = TRUE;
+                        /* Polymorphing nasties is considered harmful */
+                        if (extra_nasty(mtmp->data))
+                            helpful = FALSE;
+                        /* Otherwise, hit dice OR player level if not polymorphed decides */
+                        if (mtmp == &youmonst && !Upolyd && u.ulevel >= 14)
+                            helpful = FALSE;
+                        if (mtmp == &youmonst && Upolyd && mtmp->data->mlevel >= 14)
+                            helpful = FALSE;
+                        if (mtmp != &youmonst && mtmp->data->mlevel >= 14)
+                            helpful = FALSE;
+                    }
                     /* Deathzapping Death will do no good. However, while a deathzap against him
                        would technically be helpful, declaring it as so would encourage monsters
                        to FoD/WoD him if hostile, which would be a huge pain. Thus, he always get
@@ -663,6 +678,13 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                         tilescore -= 10;
                         continue;
                     }
+                    /* Special case: make invisible and polymorph is always considered harmful if zapped
+                       at player by tame or peaceful monster */
+                    if ((obj->otyp == WAN_MAKE_INVISIBLE ||
+                         obj->otyp == WAN_POLYMORPH ||
+                         obj->otyp == SPE_POLYMORPH) &&
+                        mtmp == &youmonst && mon->mpeaceful && !Conflict)
+                        helpful = FALSE;
                     if (self) /* -40 or +40 depending on helpfulness */
                         tilescore += (helpful ? 40 : -40);
                     /* target is hostile */
@@ -674,7 +696,7 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                               mon->mpeaceful == mtmp->mpeaceful)) {
                         tilescore += (helpful ? 20 : -10);
                         /* tame monsters like zapping friends and dislike collateral damage */
-                        if (mon->mtame) {
+                        if (mon->mtame && !self) {
                             tilescore *= 2;
                             /* never hit allies with deathzaps */
                             if (obj->otyp == SPE_FINGER_OF_DEATH ||
@@ -686,8 +708,9 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                     if (obj->otyp == SPE_STONE_TO_FLESH)
                         tilescore *= 10;
 
-                    /* adjust extra healing priority sometimes to vary between heal/extraheal */
-                    if (obj->otyp == SPE_EXTRA_HEALING) {
+                    /* adjust (extra) healing priority sometimes to vary between heal/extraheal */
+                    if (obj->otyp == SPE_HEALING ||
+                        obj->otyp == SPE_EXTRA_HEALING) {
                         if (rn2(2))
                             tilescore *= 2;
                         if (rn2(2))
@@ -1040,7 +1063,7 @@ find_item(struct monst *mon, struct musable *m)
     if (fraction < 35) {
         if (lev->locations[x][y].typ == STAIRS && !stuck && !immobile) {
             if (x == lev->dnstair.sx && y == lev->dnstair.sy &&
-                !levitates(mtmp))
+                !levitates(mon))
                 m->use = MUSE_DOWNSTAIRS;
             if (x == lev->upstair.sx && y == lev->upstair.sy &&
                 ledger_no(&u.uz) != 1)
@@ -1053,7 +1076,7 @@ find_item(struct monst *mon, struct musable *m)
             if (x == lev->upladder.sx && y == lev->upladder.sy)
                 m->use = MUSE_UP_LADDER;
             if (x == lev->dnladder.sx && y == lev->dnladder.sy &&
-                !levitates(mtmp))
+                !levitates(mon))
                 m->use = MUSE_DN_LADDER;
         } else if (lev->sstairs.sx == x && lev->sstairs.sy == y) {
             m->use = MUSE_SSTAIRS;

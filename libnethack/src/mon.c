@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1262,8 +1262,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         continue;
                     info[cnt] |= NOTONL;
                 }
-                if (nx != x && ny != y && bad_rock(mdat, x, ny)
-                    && bad_rock(mdat, nx, y)
+                if (nx != x && ny != y && bad_rock(mon, x, ny)
+                    && bad_rock(mon, nx, y)
                     && ((bigmonst(mdat) && !can_ooze(mon)) ||
                         (curr_mon_load(mon) > 600)))
                     continue;

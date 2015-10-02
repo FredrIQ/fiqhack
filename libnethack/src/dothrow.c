@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -472,8 +472,8 @@ hurtle_step(void *arg, int x, int y)
                    killer_msg(DIED, "touching the edge of the universe"));
             return FALSE;
         }
-        if ((u.ux - x) && (u.uy - y) && bad_rock(youmonst.data, u.ux, y) &&
-            bad_rock(youmonst.data, x, u.uy)) {
+        if ((u.ux - x) && (u.uy - y) && bad_rock(&youmonst, u.ux, y) &&
+            bad_rock(&youmonst, x, u.uy)) {
             boolean too_much = (invent && (inv_weight() + weight_cap() > 600));
 
             /* Move at a diagonal. */
@@ -492,8 +492,8 @@ hurtle_step(void *arg, int x, int y)
         wakeup(mon, TRUE);
         return FALSE;
     }
-    if ((u.ux - x) && (u.uy - y) && bad_rock(youmonst.data, u.ux, y) &&
-        bad_rock(youmonst.data, x, u.uy)) {
+    if ((u.ux - x) && (u.uy - y) && bad_rock(&youmonst, u.ux, y) &&
+        bad_rock(&youmonst, x, u.uy)) {
         /* Move at a diagonal. */
         if (In_sokoban(&u.uz)) {
             pline("You come to an abrupt halt!");

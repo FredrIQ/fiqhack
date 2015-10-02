@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -188,7 +188,8 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
             return uia_halt;
         }
 
-        if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall) {
+        if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall && bad_rock(&youmonst, x, y) &&
+            (!uwep || !is_pick(uwep))) {
             if (!cansee(x, y))
                 pline("Use the 'moveonly' command to move into a "
                       "remembered wall.");
@@ -696,17 +697,15 @@ may_passwall(struct level * lev, xchar x, xchar y)
              (lev->locations[x][y].wall_info & W_NONPASSWALL));
 }
 
-
-/* FIXME: check for general phasing, not merely your polyform
-   (or the monster's form) */
 boolean
-bad_rock(const struct permonst * mdat, xchar x, xchar y)
+bad_rock(const struct monst *mon, xchar x, xchar y)
 {
+    const struct permonst *mdat = mon->data;
     return (boolean) ((In_sokoban(&u.uz) && sobj_at(BOULDER, level, x, y)) ||
                       (IS_ROCK(level->locations[x][y].typ)
                        && (!tunnels(mdat) || needspick(mdat) ||
                            !may_dig(level, x, y))
-                       && !(pm_phasing(mdat) && may_passwall(level, x, y))));
+                       && !(phasing(mon) && may_passwall(level, x, y))));
 }
 
 boolean
@@ -847,8 +846,8 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                 return TRUE;
         }
     }
-    if (dx && dy && bad_rock(youmonst.data, ux, y) &&
-        bad_rock(youmonst.data, x, uy)) {
+    if (dx && dy && bad_rock(&youmonst, ux, y) &&
+        bad_rock(&youmonst, x, uy)) {
         /* Move at a diagonal. */
         if (In_sokoban(&u.uz)) {
             if (mode == DO_MOVE)
@@ -1612,7 +1611,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         x = u.ux + turnstate.move.dx;
         y = u.uy + turnstate.move.dy;
         int tries = 0;
-        while (!isok(x, y) || bad_rock(youmonst.data, x, y)) {
+        while ((!isok(x, y) || bad_rock(&youmonst, x, y)) && uia != uia_attack &&
+               (!uwep || !is_pick(uwep))) {
             if (tries++ > 50 || (!Stunned && !Confusion)) {
                 action_completed();
                 if (isok(x, y)) {
@@ -2108,8 +2108,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             sobj_at(BOULDER, level, trap->tx, trap->ty)) {
             /* can't swap places with pet pinned in a pit by a boulder */
             u.ux = u.ux0, u.uy = u.uy0; /* didn't move after all */
-        } else if (u.ux0 != x && u.uy0 != y && bad_rock(mtmp->data, x, u.uy0) &&
-                   bad_rock(mtmp->data, u.ux0, y) &&
+        } else if (u.ux0 != x && u.uy0 != y && bad_rock(mtmp, x, u.uy0) &&
+                   bad_rock(mtmp, u.ux0, y) &&
                    (bigmonst(mtmp->data) || (curr_mon_load(mtmp) > 600))) {
             /* can't swap places when pet won't fit thru the opening */
             u.ux = u.ux0, u.uy = u.uy0; /* didn't move after all */
