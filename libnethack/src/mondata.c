@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -131,7 +131,6 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
     case AT_EXPL:
     case AT_BOOM:
     case AT_GAZE:
-    case AT_MAGC:
     case AT_BREA:      /* assumed to be lightning */
         /* light-based attacks may be cancelled or resisted */
         if (magr && cancelled(magr))
@@ -207,8 +206,8 @@ ranged_attk(const struct permonst * ptr)
     long atk_mask = (1L << AT_BREA) | (1L << AT_SPIT) | (1L << AT_GAZE);
 
     /* was: (attacktype(ptr, AT_BREA) || attacktype(ptr, AT_WEAP) ||
-       attacktype(ptr, AT_SPIT) || attacktype(ptr, AT_GAZE) || attacktype(ptr,
-       AT_MAGC)); but that's too slow -dlc */
+       attacktype(ptr, AT_SPIT) || attacktype(ptr, AT_GAZE));
+       but that's too slow -dlc */
     for (i = 0; i < NATTK; i++) {
         atyp = ptr->mattk[i].aatyp;
         if (atyp >= AT_WEAP)

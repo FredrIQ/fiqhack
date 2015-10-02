@@ -1548,7 +1548,6 @@ attk_protection(int aatyp)
     case AT_BOOM:
     case AT_GAZE:
     case AT_BREA:
-    case AT_MAGC:
         w_mask = ~0L;   /* special case; no defense needed */
         break;
     case AT_CLAW:

@@ -2502,7 +2502,7 @@ cancel_monst(struct monst * mdef, struct obj * obj, boolean youattack,
                 if (youattack)
                     killed(mdef);
                 else
-                    monkilled(mdef, "", AD_SPEL);
+                    monkilled(mdef, "", AD_RBRE);
             }
         }
     }

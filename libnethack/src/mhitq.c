@@ -215,9 +215,6 @@ mattackq(struct monst *mtmp, int x, int y)
             }
             break;
 
-        case AT_MAGC:
-            break;
-
         default:       /* no attack */
             break;
         }

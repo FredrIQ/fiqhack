@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* NetHack may be freely redistributed.  See license for details. */
 /* Copyright 1988, M. Stephenson */
 
@@ -79,9 +79,7 @@
 # define AD_ENCH 41     /* remove enchantment (disenchanter) */
 # define AD_CORR 42     /* corrode armor (black pudding) */
 
-# define AD_CLRC 240    /* random clerical spell */
-# define AD_SPEL 241    /* random magic spell */
-# define AD_RBRE 242    /* random breath weapon */
+# define AD_RBRE 240    /* random breath weapon */
 
 # define AD_SAMU 252    /* hits, may steal Amulet (Wizard) */
 # define AD_CURS 253    /* random curse (ex. gremlin) */

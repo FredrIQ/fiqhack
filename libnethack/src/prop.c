@@ -397,7 +397,7 @@ teleport_at_will(const struct monst *mon)
     if (level >= 8) {
         if (mon == &youmonst && Race_if(PM_WIZARD))
             return TRUE;
-        if (mon != &youmonst && attacktype(mon->data, AT_MAGC))
+        if (mon != &youmonst && spellcaster(mon->data))
             return TRUE;
         return FALSE;
     }

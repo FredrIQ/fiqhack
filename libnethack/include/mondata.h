@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -202,6 +202,7 @@
 # define pm_infravision(ptr)    ((ptr->mflags3 & M3_INFRAVISION) != 0L)
 # define pm_infravisible(ptr)   ((ptr->mflags3 & M3_INFRAVISIBLE) != 0L)
 # define has_scent(ptr)         ((ptr->mflags3 & M3_SCENT) != 0L)
+# define spellcaster(ptr)       (((ptr)->mflags3 & M3_SPELLCASTER) != 0L)
 # define is_mplayer(ptr)        (((ptr) >= &mons[PM_ARCHEOLOGIST]) && \
                                  ((ptr) <= &mons[PM_WIZARD]))
 # define is_rider(ptr)          ((ptr) == &mons[PM_DEATH] || \

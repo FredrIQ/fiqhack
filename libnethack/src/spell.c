@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -541,7 +541,7 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
     boolean intel = 11;
     struct obj *eyewear = which_armor(mon, os_tool);
 
-    if (attacktype(mon->data, AT_MAGC))
+    if (spellcaster(mon->data))
         spellcaster = TRUE;
     if (spellcaster)
         intel = 18;
@@ -1825,9 +1825,9 @@ percent_success(const struct monst *mon, int spell)
         special = urole.spelheal;
         statused = ACURR(urole.spelstat);
     } else if (!mon->iswiz) {
-        splcaster = attacktype(mon->data, AT_MAGC) ? 3 : 8;
+        splcaster = spellcaster(mon->data) ? 3 : 8;
         special = mon->data == &mons[PM_NURSE] ? -3 : -1;
-        statused = attacktype(mon->data, AT_MAGC) ? 18 : 11;
+        statused = spellcaster(mon->data) ? 18 : 11;
     } else {
         /* Wizard of Yendor has superior spellcasting skills */
         splcaster = 1;

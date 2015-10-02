@@ -1751,7 +1751,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
                 return (boolean) (nsum != 0);
             /* Do not print "You hit" message, since known_hitum already did
                it. */
-            if (dhit && mattk->adtyp != AD_SPEL && mattk->adtyp != AD_PHYS)
+            if (dhit && mattk->adtyp != AD_PHYS)
                 sum[i] = damageum(mon, mattk);
             break;
         case AT_CLAW:
@@ -1930,8 +1930,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             if (aatyp == AT_KICK) {
                 if (uarmf && !rn2(6))
                     erode_obj(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
-            } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
-                       || aatyp == AT_TUCH)
+            } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
         }
         exercise(A_STR, FALSE);
@@ -1939,11 +1938,6 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
     case AD_STON:
         if (mhit) {     /* successful attack */
             long protector = attk_protection((int)aatyp);
-
-            /* hero using monsters' AT_MAGC attack is hitting hand to hand
-               rather than casting a spell */
-            if (aatyp == AT_MAGC)
-                protector = W_MASK(os_armg);
 
             if (protector == 0L ||      /* no protection */
                 (protector == W_MASK(os_armg) && !uarmg && !uwep) ||
@@ -1972,8 +1966,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             if (aatyp == AT_KICK) {
                 if (uarmf)
                     erode_obj(uarmf, xname(uarmf), ERODE_RUST, TRUE, TRUE);
-            } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
-                       || aatyp == AT_TUCH)
+            } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
         }
         break;
@@ -1982,8 +1975,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             if (aatyp == AT_KICK) {
                 if (uarmf)
                     erode_obj(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
-            } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
-                       || aatyp == AT_TUCH)
+            } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
         }
         break;
