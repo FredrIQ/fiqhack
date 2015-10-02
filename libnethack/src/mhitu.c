@@ -815,6 +815,17 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         if (!diseasemu(mdat))
             dmg = 0;
         break;
+    case AD_MAGM:
+        hitmsg(mtmp, mattk);
+        if (uncancelled) {
+            pline("You're hit by a shower of missiles!");
+            if (resists_magm(&youmonst)) {
+                pline("The missiles bounce off!");
+                dmg = 0;
+            }
+        } else
+            dmg = 0;
+        break;
     case AD_FIRE:
         hitmsg(mtmp, mattk);
         if (uncancelled) {

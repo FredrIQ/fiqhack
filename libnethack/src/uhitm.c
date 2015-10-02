@@ -1127,6 +1127,21 @@ damageum(struct monst *mdef, const struct attack *mattk)
             }
         }
         break;
+    case AD_MAGM:
+        if (negated) {
+            tmp = 0;
+            break;
+        }
+        if (!Blind)
+            pline("%s is hit by a shower of missiles!", Monnam(mdef));
+        if (resists_magm(mdef)) {
+            shieldeff(mdef->mx, mdef->my);
+            if (!Blind)
+                pline("The missiles bounce off!");
+            golemeffects(mdef, AD_COLD, tmp);
+            tmp = 0;
+        }
+        break;
     case AD_FIRE:
         if (negated) {
             tmp = 0;

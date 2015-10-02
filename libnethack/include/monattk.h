@@ -27,7 +27,6 @@
 # define AT_TENT 16     /* tentacles */
 
 # define AT_WEAP 254    /* uses weapon */
-# define AT_MAGC 255    /* uses magic spell(s) */
 
 /*      Add new damage types below.
  *

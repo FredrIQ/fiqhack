@@ -778,6 +778,21 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 tmp = mdef->mhp - 1;
         }
         break;
+    case AD_MAGM:
+        if (cancelled) {
+            tmp = 0;
+            break;
+        }
+        if (vis)
+            pline("%s is hit by a shower of missiles!", Monnam(mdef));
+        if (resists_magm(mdef)) {
+            if (vis)
+                pline("The missiles bounce off!");
+            shieldeff(mdef->mx, mdef->my);
+            golemeffects(mdef, AD_COLD, tmp);
+            tmp = 0;
+        }
+        break;
     case AD_FIRE:
         if (cancelled) {
             tmp = 0;
