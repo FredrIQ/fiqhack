@@ -366,7 +366,6 @@ cprefx(struct monst *mon, int pm)
         maybe_cannibal(pm, TRUE);
     /* Note: can't use touched_monster here, Medusa acts differently on touching
        and eating */
-    enlighten_mon(mon, 0);
     if ((touch_petrifies(&mons[pm]) || pm == PM_MEDUSA) &&
         ((you && !instapetrify(killer_msg(STONING,
                                           msgcat_many("tasting ", mons[pm].mname,
@@ -374,7 +373,6 @@ cprefx(struct monst *mon, int pm)
          (!you && minstapetrify(mon, FALSE)))) {
         return; /* abort if died or lifesaved */
     }
-    enlighten_mon(mon, 0);
 
     switch (pm) {
     case PM_LITTLE_DOG:
@@ -559,7 +557,6 @@ givit(struct monst *mon, int type, const struct permonst *ptr, int scalefactor)
 
     }
 
-    pline("property: %d", type);
     set_property(mon, type, 0, FALSE);
 }
 
