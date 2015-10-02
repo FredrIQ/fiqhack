@@ -1855,22 +1855,6 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
                 missum(mon, mattk);
             break;
 
-        case AT_MAGC:
-            /* No check for uwep; if wielding nothing we want to do the normal
-               1-2 points bare hand damage... */
-            /*
-               if (i==0 && (youmonst.data->mlet==S_KOBOLD ||
-               youmonst.data->mlet==S_ORC || youmonst.data->mlet==S_GNOME ))
-               goto use_weapon; */
-            sum[i] = castum(mon, mattk);
-            /* allow enemy passives here, these spells are mostly flavoured as
-               melee attacks anyway (to do this properly, we'd need to get
-               castum to return a value that indicated whether a touch attack
-               was used); note that we can't disallow them via "continue"
-               because then, killing the monster will kill it twice and throw
-               off dead monster accounting */
-            break;
-
         case AT_NONE:
         case AT_BOOM:
             continue;

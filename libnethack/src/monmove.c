@@ -447,7 +447,8 @@ dochug(struct monst *mtmp)
     }
 
     /* If monster is nearby you, and has to wield a weapon, do so.  This costs
-       the monster a move, of course. */
+       the monster a move unless the monster already wields a weapon (similar
+       to players being able to switch weapon for free with x) */
     if ((!mtmp->mpeaceful || Conflict) && inrange &&
         (engulfing_u(mtmp) ||
          dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= 8) &&
@@ -505,25 +506,6 @@ dochug(struct monst *mtmp)
          (lepgold || rn2(2))) || (is_wanderer(mdat) && !rn2(4)) ||
         (Conflict && !mtmp->iswiz) || (blind(mtmp) && !rn2(4)) ||
         mtmp->mpeaceful) {
-        /* Possibly cast an undirected spell if not attacking you */
-        /* note that most of the time castmu() will pick a directed spell and
-           do nothing, so the monster moves normally */
-        /* arbitrary distance restriction to keep monster far away from you
-           from having cast dozens of sticks-to-snakes or similar spells by the
-           time you reach it */
-        if (dist2(mtmp->mx, mtmp->my, u.ux, u.uy) <= 49 && !mtmp->mspec_used) {
-            const struct attack *a;
-
-            for (a = &mdat->mattk[0]; a < &mdat->mattk[NATTK]; a++) {
-                if (a->aatyp == AT_MAGC &&
-                    (a->adtyp == AD_SPEL || a->adtyp == AD_CLRC)) {
-                    if (castmu(mtmp, a, 0)) {
-                        break;
-                    }
-                }
-            }
-        }
-
         tmp = m_move(mtmp, 0);
         distfleeck(mtmp, &inrange, &nearby, &scared);   /* recalc */
 

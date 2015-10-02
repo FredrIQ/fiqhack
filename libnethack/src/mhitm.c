@@ -410,18 +410,6 @@ mattackm(struct monst *magr, struct monst *mdef)
             }
             break;
 
-        case AT_MAGC:
-            if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
-                strike = 0;
-                break;
-            }
-
-            res[i] = castmm(magr, mdef, mattk);
-            if (res[i] & MM_DEF_DIED)
-                return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
-            strike = 0; /* waking up handled by spell code */
-            break;
-
         default:       /* no attack */
             strike = 0;
             attk = 0;

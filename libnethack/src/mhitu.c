@@ -541,12 +541,6 @@ mattacku(struct monst *mtmp)
                     tmp -= hittmp;
             }
             break;
-        case AT_MAGC:
-            if (range2)
-                sum[i] = buzzmu(mtmp, mattk);
-            else
-                sum[i] = castmu(mtmp, mattk, 1);
-            break;
 
         default:       /* no attack */
             break;

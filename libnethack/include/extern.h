@@ -854,13 +854,6 @@ extern struct monst *restore_mon(struct memfile *mf, struct level *l);
 extern void save_mon(struct memfile *mf, const struct monst *mon,
                      const struct level *l);
 
-/* ### mcastu.c ### */
-
-extern int castmu(struct monst *, const struct attack *, int);
-extern int buzzmu(struct monst *, const struct attack *);
-extern int castmm(struct monst *, struct monst *, const struct attack *);
-extern int castum(struct monst *, const struct attack *);
-
 /* ### memfile.c ### */
 
 extern void mnew(struct memfile *mf, struct memfile *relativeto);

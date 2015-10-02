@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -348,13 +348,6 @@ made_change:
 }
 
 static int
-docast_at_magc(void)
-{
-    return castum((struct monst *)NULL,
-                  attacktype_fordmg(youmonst.data, AT_MAGC, AD_ANY));
-}
-
-static int
 dogremlin_multiply(void)
 {
     if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ)) {
@@ -426,10 +419,6 @@ has_polyform_ability(const struct permonst *pm,
         pa->description = "spit venom";
         pa->directed = TRUE;
         pa->handler_directed = dospit;
-    } else if (attacktype(pm, AT_MAGC)) {
-        pa->description = "monster magic";
-        pa->directed = FALSE;
-        pa->handler_undirected = docast_at_magc;
     } else if (pm->mlet == S_NYMPH) {
         pa->description = "remove iron ball";
         pa->directed = FALSE;

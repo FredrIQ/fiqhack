@@ -685,6 +685,14 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                     /* cure stiffening ASAP */
                     if (obj->otyp == SPE_STONE_TO_FLESH)
                         tilescore *= 10;
+
+                    /* adjust extra healing priority sometimes to vary between heal/extraheal */
+                    if (obj->otyp == SPE_EXTRA_HEALING) {
+                        if (rn2(2))
+                            tilescore *= 2;
+                        if (rn2(2))
+                            tilescore /= 2;
+                    }
                 }
                 score += tilescore;
             }
@@ -1523,7 +1531,6 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
              otyp == SPE_CONFUSE_MONSTER ||
              otyp == SCR_TAMING ||
              otyp == SPE_CHARM_MONSTER ||
-             otyp == SPE_STONE_TO_FLESH ||
              otyp == POT_BLINDNESS ||
              otyp == POT_CONFUSION ||
              otyp == POT_ACID) &&
@@ -1586,8 +1593,8 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
                 continue;
             if (!otmp->owornmask)
                 continue;
-            /* Rings will not get destroyed by destroy armor */
-            if (otmp->owornmask & (W_MASK(os_ringl) | W_MASK(os_ringr)))
+            /* Enchant/destroy armor doesn't affect rings */
+            if (otmp->owornmask & W_RING)
                 continue;
             /* only use destroy armor if all worn armor is cursed */
             if (otyp == SCR_DESTROY_ARMOR && (!otmp->cursed || otmp->spe > 0))
@@ -1615,6 +1622,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
          otyp == WAN_SPEED_MONSTER ||
          otyp == SPE_HEALING ||
          otyp == SPE_EXTRA_HEALING ||
+         otyp == SPE_STONE_TO_FLESH ||
          otyp == WAN_DEATH ||
          otyp == SPE_FINGER_OF_DEATH ||
          otyp == WAN_MAGIC_MISSILE ||
