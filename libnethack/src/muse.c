@@ -704,10 +704,18 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                                 tilescore *= 10;
                         }
                     }
+                    /* If monster is peaceful/tame and you don't see invisible, reveal invisible things and
+                       don't make things invisible */
+                    if (obj->otyp == WAN_MAKE_INVISIBLE && mon->mpeaceful && !see_invisible(&youmonst)) {
+                        if (wandlevel >= P_SKILLED &&
+                            m_has_property(mtmp, INVIS, (W_MASK(os_outside) | W_MASK(os_timeout)), TRUE))
+                            tilescore = 30;
+                        else
+                            tilescore = 0;
+                    }
                     /* cure stiffening ASAP */
                     if (obj->otyp == SPE_STONE_TO_FLESH)
                         tilescore *= 10;
-
                     /* adjust (extra) healing priority sometimes to vary between heal/extraheal */
                     if (obj->otyp == SPE_HEALING ||
                         obj->otyp == SPE_EXTRA_HEALING) {
