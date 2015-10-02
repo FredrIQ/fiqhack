@@ -1361,7 +1361,6 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean c
    1: usable
    0: non-usable
    TODO: maybe make this into a switch statement */
-
 static int
 find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musable *m, boolean close)
 {
@@ -1384,7 +1383,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
     int spe = 1;
     int recharged = 0;
     boolean cursed = FALSE;
-    boolean blessed = TRUE;
+    boolean blessed = FALSE;
     if (obj->mknown) {
         spe = obj->spe;
         recharged = obj->recharged;
@@ -1623,7 +1622,8 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
          otyp == WAN_SLEEP ||
          otyp == SPE_SLEEP ||
          otyp == POT_PARALYSIS ||
-         otyp == POT_SLEEPING) &&
+         otyp == POT_SLEEPING ||
+         otyp == EGG) && /* trice */
         close)
         return 2;
     return 0;
