@@ -314,7 +314,7 @@ make_bones:
             corpse = obj_attach_mid(corpse, mtmp->m_id);
     } else {
         boolean charmed = FALSE;
-        if (u.ugrave_arise < LOW_PM) { /* rn2/4) call above failed */
+        if (u.ugrave_arise < LOW_PM) { /* rn2(4) call above failed */
             pline("For some reason, you think that you can almost hear the Wizard laugh manically...");
             if (unchanging(&youmonst))
                 u.ugrave_arise = u.umonnum; /* retain the polymorph as base form on polymorph if unchanging */
