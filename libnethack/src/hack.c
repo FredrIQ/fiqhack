@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-25 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -188,7 +188,8 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
             return uia_halt;
         }
 
-        if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall) {
+        if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall &&
+            bad_rock(youmonst.data, x, y) && (!uwep || !is_pick(uwep))) {
             if (!cansee(x, y))
                 pline("Use the 'moveonly' command to move into a "
                       "remembered wall.");
@@ -1611,7 +1612,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         x = u.ux + turnstate.move.dx;
         y = u.uy + turnstate.move.dy;
         int tries = 0;
-        while (!isok(x, y) || bad_rock(youmonst.data, x, y)) {
+        while ((!isok(x, y) || bad_rock(youmonst.data, x, y)) &&
+               (uia != uia_attack) && (!uwep || !is_pick(uwep))) {
             if (tries++ > 50 || (!Stunned && !Confusion)) {
                 action_completed();
                 if (isok(x, y)) {
