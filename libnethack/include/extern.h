@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-04 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -832,7 +832,7 @@ extern boolean is_home_elemental(const struct d_level *dlev,
 extern struct monst *clone_mon(struct monst *, xchar, xchar);
 extern struct monst *makemon(const struct permonst *, struct level *lev, int,
                              int, int);
-extern boolean create_critters(int, const struct permonst *);
+extern boolean create_critters(int, const struct permonst *, int, int);
 extern const struct permonst *rndmonst(const d_level *, enum rng);
 extern void reset_rndmonst(int);
 extern void save_rndmonst_state(struct memfile *mf);

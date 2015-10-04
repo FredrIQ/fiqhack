@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-04 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1364,6 +1364,7 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean c
                     m->use = (obj->oclass == WAND_CLASS   ? MUSE_WAN :
                               obj->oclass == SCROLL_CLASS ? MUSE_SCR :
                               obj->oclass == POTION_CLASS ? MUSE_POT :
+                              obj->oclass == TOOL_CLASS   ? MUSE_BAG_OF_TRICKS :
                               0);;
                 }
             } else {
@@ -1640,7 +1641,8 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
 
     if ((((otyp == WAN_CREATE_MONSTER ||
            otyp == SPE_CREATE_MONSTER ||
-           otyp == SCR_CREATE_MONSTER) &&
+           otyp == SCR_CREATE_MONSTER ||
+           otyp == BAG_OF_TRICKS) &&
           !mon->mpeaceful) || /* create monster makes no sense for peacefuls */
          otyp == SPE_CREATE_FAMILIAR ||
          otyp == SPE_SUMMON_NASTY) &&
@@ -1818,12 +1820,36 @@ use_item(struct monst *mon, struct musable *m)
             set_property(mon, STUNNED, -2, FALSE);
         }
         return 2;
+    case MUSE_DIRHORN:
+        if (oseen) {
+            makeknown(obj->otyp);
+            pline("%s plays a %s!", Monnam(mon), xname(obj));
+        } else
+            You_hear("a horn being played.");
+        obj->spe--;
+        buzz(-30 - ((obj->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1),
+             rn1(6, 6), mon->mx, mon->my, m->x, m->y, 0);
+        return (mtmp->mhp < 1 ? 1 : 2);
     case MUSE_BUGLE:
         if (vismon)
             pline("%s plays %s!", Monnam(mon), doname(obj));
         else
             You_hear("a bugle playing reveille!");
         awaken_soldiers();
+        return 2;
+    case MUSE_BAG_OF_TRICKS:
+        if (vismon)
+            pline("%s reaches into %s!", Monnam(mon),
+                  an(doname(obj)));
+        if (obj->spe < 1) {
+            if (vismon)
+                pline("But nothing happens...");
+            obj->mknown = 1; /* monster learns it's discharged */
+            return 2;
+        }
+        obj->spe--;
+        if (create_critters(1, NULL, mon->mx, mon->my))
+            makeknown(BAG_OF_TRICKS);
         return 2;
     case MUSE_TRAPDOOR:
         /* trap doors on "bottom" levels of dungeons are rock-drop trap doors,
@@ -1963,16 +1989,6 @@ use_item(struct monst *mon, struct musable *m)
 
         newcham(mon, NULL, FALSE, FALSE);
         return 2;
-    case MUSE_DIRHORN:
-        if (oseen) {
-            makeknown(obj->otyp);
-            pline("%s plays a %s!", Monnam(mon), xname(obj));
-        } else
-            You_hear("a horn being played.");
-        obj->spe--;
-        buzz(-30 - ((obj->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1),
-             rn1(6, 6), mon->mx, mon->my, m->x, m->y, 0);
-        return (mtmp->mhp < 1 ? 1 : 2);
     case MUSE_BULLWHIP:
         mtmp = m_at(mon->dlevel, m->x, m->y);
         if (!mtmp) {
@@ -2408,9 +2424,11 @@ searches_for_item(struct monst *mon, struct obj *obj)
             return (boolean) ((!obj->cursed || !obj->mbknown) && !is_unicorn(mon->data));
         if (typ == SACK ||
             typ == OILSKIN_SACK ||
-            typ == BAG_OF_HOLDING)
+            typ == BAG_OF_HOLDING ||
+            typ == BAG_OF_TRICKS)
             return TRUE;
-        if (typ == FROST_HORN || typ == FIRE_HORN)
+        if (typ == FROST_HORN ||
+            typ == FIRE_HORN)
             return can_blow_instrument(mon->data);
         break;
     case FOOD_CLASS:

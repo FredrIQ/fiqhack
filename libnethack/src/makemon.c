@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1221,18 +1221,17 @@ mbirth_limit(int mndx)
 /* used for wand/scroll/spell of create monster zapped/read by player */
 /* returns TRUE iff you know monsters have been created */
 boolean
-create_critters(int cnt, const struct permonst *mptr)
+create_critters(int cnt, const struct permonst *mptr, int x, int y)
 {       /* usually null; used for confused reading */
     coord c;
-    int x, y;
     struct monst *mon;
     boolean known = FALSE;
 
     while (cnt--) {
-        x = u.ux, y = u.uy;
         /* if in water, try to encourage an aquatic monster by finding and then
            specifying another wet location */
-        if (!mptr && u.uinwater && enexto(&c, level, x, y, &mons[PM_GIANT_EEL]))
+        if (!mptr && is_pool(level, x, y) &&
+            enexto(&c, level, x, y, &mons[PM_GIANT_EEL]))
             x = c.x, y = c.y;
 
         mon = makemon(mptr, level, x, y, MM_CREATEMONSTER | MM_CMONSTER_U);
@@ -1977,19 +1976,8 @@ bagotricks(struct obj *bag)
     } else if (bag->spe < 1) {
         pline("Nothing happens.");
     } else {
-        boolean gotone = FALSE;
-        int cnt = 1;
-
         consume_obj_charge(bag, TRUE);
-
-        if (!rn2(23))
-            cnt += rn1(7, 1);
-        while (cnt-- > 0) {
-            if (makemon(NULL, level, u.ux, u.uy,
-                        MM_CREATEMONSTER | MM_CMONSTER_U))
-                gotone = TRUE;
-        }
-        if (gotone)
+        if (create_critters(!rn2(23) ? rn1(7, 2) : 1, NULL, u.ux, u.uy))
             makeknown(BAG_OF_TRICKS);
     }
 }
