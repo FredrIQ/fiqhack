@@ -1717,9 +1717,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     tmpr = &level->locations[x][y];
 
     /* Special case: monsters that are hiding on the ceiling don't block
-       movement and aren't attacked; they'll move off their square in
-       spoteffects(). */
-    if (mtmp && m_mhiding(mtmp))
+       movement; they'll move off their square in spoteffects(). This doesn't
+       apply if the player can suspect something there, or is forcefighting. */
+    if (mtmp && m_mhiding(mtmp) && !cansuspectmon(mtmp) && uia != uia_attack)
         mtmp = NULL;
 
     if (mtmp) {
