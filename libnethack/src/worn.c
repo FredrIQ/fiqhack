@@ -304,7 +304,7 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
                 continue;
             break;
         case os_armf:
-            if (!is_boots(obj))
+            if (!is_boots(obj) || obj->otyp == LEVITATION_BOOTS) /* levi is TODO */
                 continue;
             break;
         case os_arm:
@@ -773,11 +773,16 @@ mon_break_armor(struct monst *mon, boolean polyspot)
 int
 extra_pref(const struct monst *mon, struct obj *obj)
 {
+    if (!obj)
+        return 0;
+
     /* Check for speed boots */
-    if (obj) {
-        if (obj->otyp == SPEED_BOOTS && !very_fast(mon))
-            return 20;
-    }
+    if (obj->otyp == SPEED_BOOTS && !very_fast(mon))
+        return 20;
+
+    /* Don't wear boots of levitation for now */
+    if (obj->otyp == LEVITATION_BOOTS)
+        return -80;
 
     /* Check for rings below this */
     if (obj->oclass != RING_CLASS)
