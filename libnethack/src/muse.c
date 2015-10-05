@@ -2022,14 +2022,6 @@ use_item(struct monst *mon, struct musable *m)
         if (mon->wormno)
             worm_move(mon);
         newsym(trapx, trapy);
-
-        if (tele_restrict(mon)) /* mysterious force... */
-            return 2;
-        if ((On_W_tower_level(&u.uz)) && !rn2(3)) {
-            if (vismon)
-                pline("%s seems disoriented for a moment.", Monnam(mon));
-            return 2;
-        }
         mon_tele(mon, !!teleport_control(mon));
         return 2;
     case MUSE_POLY_TRAP:
