@@ -413,7 +413,10 @@ dochug(struct monst *mtmp)
                     dmg = rnd(15);
                     if (Half_spell_damage)
                         dmg = (dmg + 1) / 2;
-                    losehp(dmg, killer_msg(DIED, "a psychic blast"));
+                    if (u.uinvulnerable)
+                        pline("The blast doesn't harm you.");
+                    else
+                        losehp(dmg, killer_msg(DIED, "a psychic blast"));
                 } else
                     pline("It feels quite soothing.");
             }
