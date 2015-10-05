@@ -1105,20 +1105,20 @@ find_item(struct monst *mon, struct musable *m)
                 !levitates(mon))
                 m->use = MUSE_DOWNSTAIRS;
             if (x == lev->upstair.sx && y == lev->upstair.sy &&
-                ledger_no(&u.uz) != 1)
+                (ledger_no(&u.uz) != 1 || !mon_has_special(mon)))
                 /* Unfair to let the monsters leave the dungeon with the Amulet
                    (or go to the endlevel since you also need it, to get there)
 
                    unfair how? it's avoidable if you aren't silly -FIQ */
                 m->use = MUSE_UPSTAIRS;
+            if (lev->sstairs.sx == x && lev->sstairs.sy == y)
+                m->use = MUSE_SSTAIRS;
         } else if (lev->locations[x][y].typ == LADDER && !stuck && !immobile) {
             if (x == lev->upladder.sx && y == lev->upladder.sy)
                 m->use = MUSE_UP_LADDER;
             if (x == lev->dnladder.sx && y == lev->dnladder.sy &&
                 !levitates(mon))
                 m->use = MUSE_DN_LADDER;
-        } else if (lev->sstairs.sx == x && lev->sstairs.sy == y) {
-            m->use = MUSE_SSTAIRS;
         }
     }
     if (!stuck && !immobile && !m->use) { /* FIXME: cleanup */
@@ -1185,8 +1185,10 @@ find_item(struct monst *mon, struct musable *m)
     }
 
     /* use immediate physical escape prior to attempting magic */
-    if (m->use) /* stairs, trap door or tele-trap, bugle alert */
+    if (m->use) { /* stairs, trap door or tele-trap, bugle alert */
+        pline("1");
         return TRUE;
+    }
 
     int randcount = 1; /* for randomizing inventory usage */
     /* For figuring out the best use of target based stuff in particular */
