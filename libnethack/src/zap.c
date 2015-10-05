@@ -2478,6 +2478,7 @@ cancel_monst(struct monst * mdef, struct obj * obj, boolean youattack,
 
     /* now handle special cases */
     if (youdefend) {
+        set_property(mdef, CANCELLED, 0, FALSE);
         if (Upolyd) {
             if ((u.umonnum == PM_CLAY_GOLEM) && !Blind)
                 pline(writing_vanishes, your);
