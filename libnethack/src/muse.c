@@ -825,8 +825,9 @@ mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
                     /* monster doesn't know of the target */
                     else if (!msensem(mon, mtmp))
                         continue;
-                    /* target is hostile */
-                    else if (mm_aggression(mon, mtmp))
+                    /* target is hostile or we're conflicted */
+                    else if (mm_aggression(mon, mtmp) ||
+                             (Conflict && !resist(mon, RING_CLASS, 0, 0)))
                         tilescore += 20;
                     /* ally/peaceful */
                     else if ((mtmp == &youmonst && mon->mpeaceful) ||
