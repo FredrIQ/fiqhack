@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -683,7 +683,7 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef, boolean helpf
                     tby = y - magr->my;
                 }
 
-                if (!Conflict) {
+                if (!Conflict || resist(magr, RING_CLASS, 0, 0)) {
                     if ((!helpful && magr->mpeaceful) ||
                         (helpful && !magr->mpeaceful))
                     return FALSE;

@@ -681,18 +681,22 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                         continue;
                     }
                     /* Special case: make invisible and polymorph is always considered harmful if zapped
-                       at player by tame or peaceful monster */
+                       at player by tame or peaceful monster, unless conflicted */
                     if ((obj->otyp == WAN_MAKE_INVISIBLE ||
                          obj->otyp == WAN_POLYMORPH ||
                          obj->otyp == SPE_POLYMORPH) &&
-                        mtmp == &youmonst && mon->mpeaceful && !Conflict)
+                        mtmp == &youmonst && mon->mpeaceful &&
+                        (!Conflict || resist(mon, RING_CLASS, 0, 0)))
                         helpful = FALSE;
                     if (self) /* -40 or +40 depending on helpfulness */
                         tilescore += (helpful ? 40 : -40);
-                    /* target is hostile */
-                    else if (mm_aggression(mon, mtmp))
+                    /* target is hostile, or we are conflicted */
+                    else if (mm_aggression(mon, mtmp) ||
+                             (Conflict && !resist(mon, RING_CLASS, 0, 0)))
                         tilescore += (helpful ? -10 : 20);
-                    /* ally/peaceful */
+                    /* ally/peaceful -- we can't just perform "else" here, because it
+                       would mess with conflict behaviour and pets would heal hostiles
+                       that are too dangerous for it to target.  */
                     else if ((mtmp == &youmonst && mon->mpeaceful) ||
                              (mtmp != &youmonst &&
                               mon->mpeaceful == mtmp->mpeaceful)) {
