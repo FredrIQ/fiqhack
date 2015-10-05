@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -660,6 +660,7 @@ m_move(struct monst *mtmp, int after)
     long flag;
     int omx = mtmp->mx, omy = mtmp->my;
     struct obj *mw_tmp;
+    struct musable unlocker;
 
     if (mtmp->mtrapped) {
         int i = mintrap(mtmp);
@@ -689,8 +690,9 @@ m_move(struct monst *mtmp, int after)
     if (!Is_rogue_level(&u.uz))
         can_tunnel = tunnels(ptr);
     can_open = !(nohands(ptr) || verysmall(ptr));
-    can_unlock = ((can_open && m_carrying(mtmp, SKELETON_KEY)) || mtmp->iswiz ||
-                  is_rider(ptr));
+    can_unlock = (mtmp->iswiz || is_rider(ptr));
+    if (!can_unlock) /* Use muse logic to find knock, opening or keys */
+        can_unlock = (can_open && find_unlocker(mtmp, &unlocker));
     doorbuster = is_giant(ptr);
     if (mtmp->wormno)
         goto not_special;
@@ -1007,6 +1009,46 @@ not_special:
 
         if (!m_in_out_region(mtmp, nix, niy))
             return 3;
+
+        /* Check for door at target location */
+        /* TODO: simplify */
+
+        if ((can_unlock || can_open) &&
+            IS_DOOR(level->locations[nix][niy].typ) &&
+            !mtmp->iswiz && !is_rider(mtmp->data) && /* cheats */
+            !phasing(mtmp) && !amorphous(mtmp->data)) { /* bypass doors */
+            struct rm *door = &level->locations[nix][niy];
+            boolean btrapped = (door->doormask & D_TRAPPED);
+            if ((door->doormask & D_LOCKED) && can_unlock) {
+                /* doorbusters are taken care of in postmov */
+                unlocker.x = nix - mtmp->mx;
+                unlocker.y = niy - mtmp->my;
+                if (use_item(mtmp, &unlocker) == 1) /* died */
+                    return 2;
+                return 3;
+            }
+            if (door->doormask == D_CLOSED && can_open) {
+                if (btrapped) {
+                    door->doormask = D_NODOOR;
+                    newsym(nix, niy);
+                    unblock_point(nix, niy);      /* vision */
+                    if (mb_trapped(mtmp))
+                        return 2;
+                } else {
+                    if (flags.verbose) {
+                        if (cansee(nix, niy))
+                            pline("You see a door open.");
+                        else
+                            You_hear("a door open.");
+                    }
+                    door->doormask = D_ISOPEN;
+                    newsym(nix, niy);
+                    unblock_point(nix, niy);
+                }
+                return 3;
+            }
+            /* doorbusters are taken care of in postmov */
+        }
         remove_monster(level, omx, omy);
         place_monster(mtmp, nix, niy);
 

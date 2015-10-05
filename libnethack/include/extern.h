@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-04 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1212,6 +1212,7 @@ extern boolean hits_bars(struct obj **, int, int, int, int);
 
 extern int mon_choose_dirtarget(struct monst *, struct obj *, coord *);
 extern int mon_choose_spectarget(struct monst *, struct obj *, coord *);
+extern boolean find_unlocker(struct monst *, struct musable *);
 extern boolean find_item(struct monst *mon, struct musable *m);
 extern int use_item(struct monst *mon, struct musable *m);
 extern boolean mon_makewish(struct monst *);
@@ -1674,7 +1675,7 @@ extern boolean supernatural_ability_available(int);
 extern int docast(const struct nh_cmd_arg *);
 extern int spell_skilltype(int);
 extern int monspellprot(struct monst *);
-extern boolean mon_castable(struct monst *, int);
+extern int mon_castable(struct monst *, int, boolean);
 extern int m_spelleffects(struct monst *, int, schar, schar, schar);
 extern int spelleffects(int, boolean, const struct nh_cmd_arg *);
 extern void losespells(void);

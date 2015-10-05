@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1095,34 +1095,35 @@ spell_backfire(int spell)
 }
 
 /* Can a monster cast a specific spell? If the monster doesn't even know the spell
-   in first place, this will always return FALSE. Otherwise, it will return TRUE
-   based on the percentage success of the spell. The side effect is that monsters
-   with a 80% failure rate on a spell will only return TRUE 1/5 of the time, meaning
-   that monsters will generally (try to) cast those spells much more rarely. This is
-   by design. */
-boolean
-mon_castable(struct monst *mon, int spell)
+   in first place, this will always return 0. Otherwise, it will return a value
+   based on the percentage success of the spell, if it first passes a random check.
+   The side effect is that monsters with a 80% failure rate on a spell will only
+   return nonzero 1/5 of the time, meaning that monsters will generally (try to)
+   cast those spells much more rarely. This is by design.
+   If theoretical is true, bypass the random check and mspec_used */
+int
+mon_castable(struct monst *mon, int spell, boolean theoretical)
 {
-    if (mon->mspec_used)
-        return FALSE;
+    if (mon->mspec_used && !theoretical)
+        return 0;
     /* Ghosts aren't allowed their former spellcasting abilities, if any. However,
        bones saved as ordinary players, or the occasional vampire/etc, is allowed to */
     if (mon->data == &mons[PM_GHOST])
-        return FALSE;
+        return 0;
 
     /* FIXME: don't rely on spell order */
     int mspellid = spell - SPE_DIG;
 
     if (!(mon->mspells & (uint64_t)(1 << mspellid)))
-        return FALSE;
+        return 0;
 
     /* calculate fail rate */
     /* Confusion also makes spells fail 100% of the time,
        but don't make monsters savvy about that for now. */
     int chance = percent_success(mon, spell);
-    if (rnd(100) > chance)
-        return FALSE;
-    return TRUE;
+    if (rnd(100) > chance && !theoretical)
+        return 0;
+    return chance;
 }
 
 /* Monster spellcasting. Currently it is not possible to reuse spelleffects()

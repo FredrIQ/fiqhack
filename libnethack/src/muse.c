@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-04 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -26,8 +26,9 @@ static void mreadmsg(struct monst *, struct obj *);
 static void mquaffmsg(struct monst *, struct obj *);
 static void mon_break_wand(struct monst *, struct obj *);
 static int find_item_score(struct monst *, struct obj *, coord *);
-static boolean find_item_obj(struct monst *, struct obj *, struct musable *, boolean);
-static int find_item_single(struct monst *, struct obj *, boolean, struct musable *, boolean);
+static boolean find_item_obj(struct monst *, struct obj *, struct musable *, boolean, int);
+static int find_item_single(struct monst *, struct obj *, boolean, struct musable *,
+                            boolean, boolean);
 static boolean mon_allowed(int);
 
 static int trapx, trapy;
@@ -616,6 +617,7 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                 if (!mtmp && sx == u.ux && sy == u.uy)
                     mtmp = &youmonst;
                 if (sobj_at(BOULDER, level, sx, sy) &&
+                    !throws_rocks(mon->data) &&
                     (obj->otyp == WAN_STRIKING ||
                      obj->otyp == SPE_FORCE_BOLT))
                     /* Boulders generally make the life harder for monsters, because they have pretty much no control over them.
@@ -895,7 +897,32 @@ find_item_score(struct monst *mon, struct obj *obj, coord *tc)
     else
         score = mon_choose_dirtarget(mon, obj, tc);
     return score;
-}    
+}
+
+/* Find an unlocking tool */
+boolean
+find_unlocker(struct monst *mon, struct musable *m)
+{
+    struct obj *obj = NULL;
+
+    /* look for keys */
+    if ((obj = m_carrying(mon, SKELETON_KEY))) {
+        m->obj = obj;
+        m->use = MUSE_KEY;
+        return TRUE;
+    }
+
+    /* check if we can cast knock, only accepting
+       80%+ success rate */
+    if (mon_castable(mon, SPE_KNOCK, TRUE) >= 80) {
+        m->spell = SPE_KNOCK;
+        m->use = MUSE_SPE;
+        return TRUE;
+    }
+
+    /* look for good wands of opening */
+    return find_item_obj(mon, mon->minvent, m, FALSE, WAN_OPENING);
+}
 
 /* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in pathfinding),
    it makes no sense to have it here */
@@ -960,7 +987,7 @@ find_item(struct monst *mon, struct musable *m)
 
     /* Fix slime */
     if (sliming(mon)) {
-        if (mon_castable(mon, SPE_CURE_SICKNESS)) {
+        if (mon_castable(mon, SPE_CURE_SICKNESS, FALSE)) {
             m->spell = SPE_CURE_SICKNESS;
             m->use = MUSE_SPE;
             return TRUE;
@@ -977,7 +1004,7 @@ find_item(struct monst *mon, struct musable *m)
             m->use = MUSE_WAN;
             return TRUE;
         }
-        if (mon_castable(mon, SPE_FIREBALL)) {
+        if (mon_castable(mon, SPE_FIREBALL, FALSE)) {
             m->spell = SPE_FIREBALL;
             m->use = MUSE_SPE;
             if (mprof(mon, MP_SATTK) >= P_SKILLED) {
@@ -1023,7 +1050,7 @@ find_item(struct monst *mon, struct musable *m)
        blind. */
     if (blind(mon) && !nohands(mon->data) &&
         mon->data != &mons[PM_PESTILENCE] && !telepathic(mon)) {
-        if (mon_castable(mon, SPE_CURE_BLINDNESS)) {
+        if (mon_castable(mon, SPE_CURE_BLINDNESS, FALSE)) {
             m->spell = SPE_CURE_BLINDNESS;
             m->use = MUSE_SPE;
             return TRUE;
@@ -1049,12 +1076,12 @@ find_item(struct monst *mon, struct musable *m)
                 return TRUE;
             }
 
-            if (mon_castable(mon, SPE_EXTRA_HEALING)) {
+            if (mon_castable(mon, SPE_EXTRA_HEALING, FALSE)) {
                 m->spell = SPE_EXTRA_HEALING;
                 m->use = MUSE_SPE;
                 return TRUE;
             }
-            if (mon_castable(mon, SPE_HEALING)) {
+            if (mon_castable(mon, SPE_HEALING, FALSE)) {
                 m->spell = SPE_HEALING;
                 m->use = MUSE_SPE;
                 return TRUE;
@@ -1171,7 +1198,7 @@ find_item(struct monst *mon, struct musable *m)
 
     /* Spell handling */
     for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
-        if (!mon_castable(mon, spell))
+        if (!mon_castable(mon, spell, FALSE))
             continue;
 
         obj = mktemp_sobj(level, spell);
@@ -1184,7 +1211,7 @@ find_item(struct monst *mon, struct musable *m)
              mprof(mon, MP_SCLRC)))
             obj->blessed = 1;
 
-        usable = find_item_single(mon, obj, TRUE, &m2, mclose ? TRUE : FALSE);
+        usable = find_item_single(mon, obj, TRUE, &m2, mclose ? TRUE : FALSE, FALSE);
         if (usable && mon_allowed(spell)) {
             if (usable == 1) {
                 if (!rn2(randcount)) {
@@ -1243,7 +1270,7 @@ find_item(struct monst *mon, struct musable *m)
     m->x = 0;
     m->y = 0;
     m->z = 0;
-    if (find_item_obj(mon, mon->minvent, m, mclose ? TRUE : FALSE))
+    if (find_item_obj(mon, mon->minvent, m, mclose ? TRUE : FALSE, 0))
         return TRUE; /* find_item_obj handles musable */
 
     /* If we are here, there was no relevant objects found.
@@ -1284,8 +1311,11 @@ find_item(struct monst *mon, struct musable *m)
 }
 
 static boolean
-find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean close)
+find_item_obj(struct monst *mon, struct obj *chain, struct musable *m,
+              boolean close, int specobj)
 {
+    /* If specobj is nonzero (an object type), only look for that object, performing
+       only sanity checks (not discharged, can read if scroll, etc) */
     if (!chain)
         /* monster inventory is empty, or checked container is */
         return FALSE;
@@ -1341,7 +1371,8 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean c
             if (!obj->mknown && chain != mon->minvent && !close) {
                 m->use = MUSE_CONTAINER;
                 m->obj = obj;
-            } else if ((obj->mknown = 1) && find_item_obj(mon, obj->cobj, m, close)) {
+            } else if ((obj->mknown = 1) &&
+                       find_item_obj(mon, obj->cobj, m, close, specobj)) {
                 /* obj->mknown = 1 to mark the container as recognized -- monster knows what's inside */
                 /* Check if there's something interesting in it */
                 m->use = MUSE_CONTAINER; /* take the object out */
@@ -1352,7 +1383,9 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean c
             }
             continue;
         }
-        usable = find_item_single(mon, obj, FALSE, &m2, close);
+        if (specobj && obj->otyp != specobj)
+            continue;
+        usable = find_item_single(mon, obj, FALSE, &m2, close, !!specobj);
         if (usable && mon_allowed(obj->otyp)) {
             if (usable == 1) {
                 if (!rn2(randcount)) {
@@ -1364,7 +1397,8 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean c
                     m->use = (obj->oclass == WAND_CLASS   ? MUSE_WAN :
                               obj->oclass == SCROLL_CLASS ? MUSE_SCR :
                               obj->oclass == POTION_CLASS ? MUSE_POT :
-                              obj->oclass == TOOL_CLASS   ? MUSE_BAG_OF_TRICKS :
+                              obj->otyp == SKELETON_KEY   ? MUSE_KEY :
+                              obj->otyp == BAG_OF_TRICKS  ? MUSE_BAG_OF_TRICKS :
                               0);;
                 }
             } else {
@@ -1400,9 +1434,11 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m, boolean c
    2: perform a scoring for target logic
    1: usable
    0: non-usable
-   TODO: maybe make this into a switch statement */
+   TODO: maybe make this into a switch statement
+   If specific is true, only perform sanity checks, return true after */
 static int
-find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musable *m, boolean close)
+find_item_single(struct monst *mon, struct obj *obj, boolean spell,
+                 struct musable *m, boolean close, boolean specific)
 {
     boolean stuck = (mon == u.ustuck && sticks(youmonst.data));
     int x = mon->mx, y = mon->my;
@@ -1432,18 +1468,12 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
         cursed = obj->cursed;
         blessed = obj->blessed;
     }
-
-    if (spell && !mon_castable(mon, otyp))
-        return 0;
-
     struct obj *otmp;
 
-    if (otyp == SPE_REMOVE_CURSE ||
-        (otyp == SCR_REMOVE_CURSE && !cursed))
-        for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
-            if (otmp->cursed && otmp->mbknown &&
-                (otmp->owornmask || otmp->otyp == LOADSTONE || blessed))
-                return 1;
+    /* BEGIN SANITY CHECKS */
+
+    if (spell && !mon_castable(mon, otyp, specific))
+        return 0;
 
     if (!spell && oclass == SPBOOK_CLASS)
         return 0; /* TODO: read books if caster */
@@ -1459,6 +1489,14 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
         spe <= 0 && obj->mknown &&
         (otyp != WAN_WISHING || !recharged))
         return 0;
+
+    if (oclass == SCROLL_CLASS && !obj->mknown &&
+        (blind(mon) || !haseyes(mon->data)))
+        return 0;
+
+    /* END SANITY CHECKS */
+    if (specific)
+        return 1;
 
     if (otyp == SPE_CHARGING ||
         (otyp == SCR_CHARGING && !cursed)) {
@@ -1477,9 +1515,12 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell, struct musab
         return 0;
     }
 
-    if (oclass == SCROLL_CLASS && !obj->mknown &&
-        (blind(mon) || !haseyes(mon->data)))
-        return 0;
+    if (otyp == SPE_REMOVE_CURSE ||
+        (otyp == SCR_REMOVE_CURSE && !cursed))
+        for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
+            if (otmp->cursed && otmp->mbknown &&
+                (otmp->owornmask || otmp->otyp == LOADSTONE || blessed))
+                return 1;
 
     if (otyp == SPE_IDENTIFY ||
         otyp == SCR_IDENTIFY)
@@ -1690,6 +1731,9 @@ use_item(struct monst *mon, struct musable *m)
     struct monst *mtmp = NULL;
     struct obj *otmp = NULL;
     struct obj *container = NULL; /* for contained objects */
+    struct rm *door; /* for muse_key */
+    boolean btrapped;
+    int x, y;
 
     if (oseen)
         examine_object(obj);
@@ -1850,6 +1894,21 @@ use_item(struct monst *mon, struct musable *m)
         obj->spe--;
         if (create_critters(1, NULL, mon->mx, mon->my))
             makeknown(BAG_OF_TRICKS);
+        return 2;
+    case MUSE_KEY:
+        x = mon->mx + m->x; /* revert from delta */
+        y = mon->my + m->y;
+        door = &level->locations[x][y];
+        btrapped = (door->doormask & D_TRAPPED);
+        if (vismon)
+            pline("%s unlocks a door.", Monnam(mon));
+        else
+            You_hear("a door unlock.");
+        door->doormask = btrapped ? D_NODOOR : D_CLOSED;
+        newsym(x, y);
+        unblock_point(x, y); /* vision */
+        if (btrapped && mb_trapped(mon))
+            return 1;
         return 2;
     case MUSE_TRAPDOOR:
         /* trap doors on "bottom" levels of dungeons are rock-drop trap doors,
@@ -2425,7 +2484,8 @@ searches_for_item(struct monst *mon, struct obj *obj)
         if (typ == SACK ||
             typ == OILSKIN_SACK ||
             typ == BAG_OF_HOLDING ||
-            typ == BAG_OF_TRICKS)
+            typ == BAG_OF_TRICKS ||
+            typ == SKELETON_KEY)
             return TRUE;
         if (typ == FROST_HORN ||
             typ == FIRE_HORN)
