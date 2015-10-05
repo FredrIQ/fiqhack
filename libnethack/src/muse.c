@@ -1185,10 +1185,8 @@ find_item(struct monst *mon, struct musable *m)
     }
 
     /* use immediate physical escape prior to attempting magic */
-    if (m->use) { /* stairs, trap door or tele-trap, bugle alert */
-        pline("1");
+    if (m->use) /* stairs, trap door or tele-trap, bugle alert */
         return TRUE;
-    }
 
     int randcount = 1; /* for randomizing inventory usage */
     /* For figuring out the best use of target based stuff in particular */
