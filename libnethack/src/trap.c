@@ -2770,10 +2770,10 @@ domagictrap(struct monst *mon)
                     adjattrib(A_CHA, 1, FALSE);
                 for (i = -1; i <= 1; i++)
                     for (j = -1; j <= 1; j++) {
-                        if (!isok(u.ux + i, u.uy + j))
+                        if (!isok(m_mx(mon) + i, m_my(mon) + j))
                             continue;
-                        mtmp = m_at(level, u.ux + i, u.uy + j);
-                        if (mtmp) {
+                        mtmp = m_at(level, m_mx(mon) + i, m_my(mon) + j);
+                        if (mtmp && mtmp != &youmonst) {
                             if (you || mon->mtame)
                                 tamedog(mtmp, NULL);
                             else
