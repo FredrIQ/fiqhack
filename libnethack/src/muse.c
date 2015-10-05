@@ -903,14 +903,9 @@ find_item_score(struct monst *mon, struct obj *obj, coord *tc)
 boolean
 find_unlocker(struct monst *mon, struct musable *m)
 {
-    struct obj *obj = NULL;
-
     /* look for keys */
-    if ((obj = m_carrying(mon, SKELETON_KEY))) {
-        m->obj = obj;
-        m->use = MUSE_KEY;
+    if (find_item_obj(mon, mon->minvent, m, FALSE, SKELETON_KEY))
         return TRUE;
-    }
 
     /* check if we can cast knock, only accepting
        80%+ success rate */
