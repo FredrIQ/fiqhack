@@ -2036,6 +2036,7 @@ extern boolean obj_resists(struct obj *, int, int);
 extern int bhito(struct obj *, struct obj *);
 extern int bhitpile(struct obj *, int (*)(struct obj *, struct obj *), int,
                     int);
+extern void backfire(struct obj *);
 extern int wrestable(struct obj *wand);
 extern int zappable(struct monst *, struct obj *);
 extern void zapnodir(struct monst *, struct obj *);

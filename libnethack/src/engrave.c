@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -864,6 +864,13 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     }
 
     /* End of implement setup */
+
+    /* If engraving with wand, blow up the wand if cursed+unskilled */
+    if (zapwand && !getwandlevel(&youmonst, otmp)) {
+        backfire(otmp);
+        exercise(A_STR, FALSE);
+        return 1;
+    }
 
     /* Identify stylus */
     if (doknown) {
