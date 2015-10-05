@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -494,6 +494,11 @@ dotele(const struct nh_cmd_arg *arg)
     if (!trap) {
         boolean castit = FALSE;
         int sp_no = 0, energy = 0;
+
+        if (cancelled(&youmonst)) {
+            pline("You cannot teleport at will, because you are cancelled.");
+            return 0;
+        }
 
         if (!supernatural_ability_available(SPID_RLOC)) {
             /* Try to use teleport away spell. */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1088,7 +1088,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
 
     armpro = magic_negation(mdef);
     /* since hero can't be cancelled, only defender's armor applies */
-    negated = !((rn2(3) >= armpro) || !rn2(50));
+    negated = !(!cancelled(&youmonst) && (rn2(3) >= armpro || !rn2(50)));
 
     if (is_demon(youmonst.data) && !rn2(13) && !uwep && u.umonnum != PM_SUCCUBUS
         && u.umonnum != PM_INCUBUS && u.umonnum != PM_BALROG) {
@@ -1208,17 +1208,21 @@ damageum(struct monst *mdef, const struct attack *mattk)
             tmp = 0;
         break;
     case AD_STON:
-        mstiffen(mdef);
+        if (cancelled(&youmonst))
+            pline("You cough!");
+        else
+            mstiffen(mdef);
         break;
     case AD_SSEX:
     case AD_SEDU:
     case AD_SITM:
-        steal_it(mdef, mattk);
+        if (!cancelled(&youmonst))
+            steal_it(mdef, mattk);
         tmp = 0;
         break;
     case AD_SGLD:
         /* This you as a leprechaun, so steal real gold only, no lesser coins */
-        {
+        if (!cancelled(&youmonst)) {
             struct obj *mongold = findgold(mdef->minvent);
 
             if (mongold) {
@@ -1232,8 +1236,8 @@ damageum(struct monst *mdef, const struct attack *mattk)
                     dropy(mongold);
                 }
             }
+            exercise(A_DEX, TRUE);
         }
-        exercise(A_DEX, TRUE);
         tmp = 0;
         break;
     case AD_TLPT:
@@ -1262,7 +1266,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_CURS:
-        if (night() && !rn2(10) && !cancelled(mdef)) {
+        if (night() && !rn2(10) && !cancelled(&youmonst)) {
             if (mdef->data == &mons[PM_CLAY_GOLEM]) {
                 if (!blind(&youmonst))
                     pline("Some writing vanishes from %s head!",
@@ -1380,7 +1384,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
             u.ustuck = mdef;    /* it's now stuck to you */
         break;
     case AD_WRAP:
-        if (!sticks(mdef->data)) {
+        if (!sticks(mdef->data) && !cancelled(&youmonst)) {
             if (!u.ustuck && !rn2(10)) {
                 if (m_slips_free(mdef, mattk)) {
                     tmp = 0;
@@ -1430,8 +1434,15 @@ damageum(struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_ENCH:      /* KMH -- remove enchantment (disenchanter) */
-        /* there's no msomearmor() function, so just do damage */
-        /* if (negated) break; */
+        if (negated)
+            break;
+        struct obj *obj = some_armor(mdef);
+
+        if (drain_item(obj)) {
+            pline("%s %s less effective.", s_suffix(Monnam(mdef)),
+                  aobjnam(obj, "seem"));
+        }
+        tmp = 0;
         break;
     case AD_SLOW:
         if (!negated) {
@@ -1439,7 +1450,8 @@ damageum(struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_CONF:
-        set_property(mdef, CONFUSION, tmp, FALSE);
+        if (!cancelled(&youmonst))
+            set_property(mdef, CONFUSION, tmp, FALSE);
         break;
     default:
         tmp = 0;
@@ -1640,11 +1652,14 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                     pline("%s is pummeled with your debris!", Monnam(mdef));
                 break;
             case AD_ACID:
-                pline("%s is covered with your goo!", Monnam(mdef));
-                if (resists_acid(mdef)) {
-                    pline("It seems harmless to %s.", mon_nam(mdef));
+                if (!cancelled(&youmonst)) {
+                    pline("%s is covered with your goo!", Monnam(mdef));
+                    if (resists_acid(mdef)) {
+                        pline("It seems harmless to %s.", mon_nam(mdef));
+                        dam = 0;
+                    }
+                } else
                     dam = 0;
-                }
                 break;
             case AD_BLND:
                 if (can_blnd(&youmonst, mdef, mattk->aatyp, NULL)) {
@@ -1655,7 +1670,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                 dam = 0;
                 break;
             case AD_ELEC:
-                if (rn2(2)) {
+                if (!cancelled(&youmonst) && rn2(2)) {
                     pline("The air around %s crackles with electricity.",
                           mon_nam(mdef));
                     if (resists_elec(mdef)) {
@@ -1667,7 +1682,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                     dam = 0;
                 break;
             case AD_COLD:
-                if (rn2(2)) {
+                if (!cancelled(&youmonst) && rn2(2)) {
                     if (resists_cold(mdef)) {
                         pline("%s seems mildly chilly.", Monnam(mdef));
                         dam = 0;
@@ -1678,7 +1693,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                     dam = 0;
                 break;
             case AD_FIRE:
-                if (rn2(2)) {
+                if (!cancelled(&youmonst) && rn2(2)) {
                     if (resists_fire(mdef)) {
                         pline("%s seems mildly hot.", Monnam(mdef));
                         dam = 0;

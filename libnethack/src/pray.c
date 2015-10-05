@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -136,6 +136,9 @@ in_trouble(void)
     }
     if (Blindfolded && ublindf->cursed)
         return ptr_blindfold;
+
+    if (cancelled(&youmonst))
+        return ptr_cancelled;
 
     /* 
      * minor troubles
@@ -330,10 +333,15 @@ fix_worst_trouble(int trouble)
     case ptr_blindfold:
         otmp = ublindf;
         goto decurse;
+    case ptr_cancelled:
+        pline("Your magic returns.");
+        set_property(&youmonst, CANCELLED, -2, TRUE);
+        break;
     case ptr_lycanthrope:
         you_unwere(TRUE);
         break;
         /* 
+         * begin minor troubles
          */
     case ptr_punished:
         pline("Your chain disappears.");

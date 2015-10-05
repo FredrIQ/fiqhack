@@ -1135,6 +1135,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     int energy, chance, n;
     int skill, role_skill;
     boolean confused = !!confused(mon);
+    boolean cancelled = !!cancelled(mon);
     boolean vis = canseemon(mon);
     boolean dummy;
     coord cc;
@@ -1175,6 +1176,12 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
             pline("But %s lacks the energy to cast the spell (en: %d).",
                   mon_nam(mon), mon->mspec_used);
         return 0;
+    }
+
+    if (cancelled) {
+        if (vis)
+            pline("Being cancelled, %s cannot cast the spell.", mon_nam(mon));
+        return 1;
     }
 
     chance = percent_success(mon, spell);
@@ -1320,6 +1327,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     int energy, damage, chance, n, intell;
     int skill, role_skill;
     boolean confused = (Confusion != 0);
+    boolean cancelled = cancelled(&youmonst);
     struct obj *pseudo;
     boolean dummy;
     coord cc;
@@ -1446,6 +1454,11 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     } else if (!freehand()) {
         pline("Your arms are not free to cast!");
         return 0;
+    }
+
+    if (cancelled) {
+        pline("Being cancelled, you cannot cast the spell.");
+        return 1;
     }
 
     if (Uhave_amulet) {

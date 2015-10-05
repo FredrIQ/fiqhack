@@ -6,7 +6,7 @@
 #include "hack.h"
 
 static void dofiretrap(struct obj *);
-static void domagictrap(void);
+static void domagictrap(struct monst *);
 static boolean emergency_disrobe(boolean *);
 static int untrap_prob(struct trap *ttmp);
 static void move_into_trap(struct trap *);
@@ -1088,15 +1088,19 @@ dotrap(struct trap *trap, unsigned trflags)
 
     case MAGIC_TRAP:   /* A magic trap. */
         seetrap(trap);
-        if (!rn2(30)) {
+        if (!rn2(30) || (cancelled(&youmonst) && !rn2(5))) {
             deltrap(level, trap);
             newsym(u.ux, u.uy); /* update position */
             pline("You are caught in a magical explosion!");
             losehp(rnd(10), killer_msg(DIED, "a magical explosion"));
             pline("Your body absorbs some of the magical energy!");
             u.uen = (u.uenmax += 2);
+            if (cancelled(&youmonst)) {
+                set_property(&youmonst, CANCELLED, -2, TRUE);
+                pline("You regain your magic capabilities!");
+            }
         } else
-            domagictrap();
+            domagictrap(&youmonst);
         steedintrap(trap, NULL);
         break;
 
@@ -2142,9 +2146,27 @@ mintrap(struct monst *mtmp)
             break;
 
         case MAGIC_TRAP:
-            /* A magic trap.  Monsters usually immune. */
-            if (!rn2(21))
-                goto mfiretrap;
+            if (!rn2(30) || (cancelled(mtmp) && !rn2(5))) {
+                deltrap(level, trap);
+                newsym(mtmp->mx, mtmp->my); /* update position */
+                pline("%s is caught in a magical explosion!", Monnam(mtmp));
+                thitm(0, mtmp, NULL, rnd(10), FALSE);
+                pline("%s body absorbs some of the magical energy!",
+                      s_suffix(Monnam(mtmp)));
+                mtmp->mspec_used = 0;
+                if (cancelled(mtmp)) {
+                    set_property(mtmp, CANCELLED, -2, TRUE);
+                    pline("%s regains %s magic capabilities!", Monnam(mtmp),
+                          mhis(mtmp));
+                }
+            } else {
+                /* TODO: rewrite this to make traps work the same for monsters and players...
+                   the below fire trap check is a kludge because domagictrap() currently calls
+                   dofiretrap() that only works on players... */
+                if (!rn2(20))
+                    goto mfiretrap;
+                domagictrap(mtmp);
+            }
             break;
         case ANTI_MAGIC:
             break;
@@ -2651,9 +2673,13 @@ dofiretrap(struct obj *box)
 }
 
 static void
-domagictrap(void)
+domagictrap(struct monst *mon)
 {
-    int fate = rnd(20);
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    int fate = rnd(you ? 20 : 19);
+    if (fate >= 12 && !you)
+        fate++; /* kludge -- see mintrap() magic trap routine */
 
     /* What happened to the poor sucker? */
 
@@ -2661,12 +2687,14 @@ domagictrap(void)
         /* Most of the time, it creates some monsters. */
         int cnt = rnd(4);
 
-        if (!resists_blnd(&youmonst)) {
-            pline("You are momentarily blinded by a flash of light!");
-            make_blinded((long)rn1(5, 10), FALSE);
-            if (!Blind)
+        if (!resists_blnd(mon)) {
+            if (you || vis)
+                pline("%s %s momentarily blinded by a flash of light!",
+                      you ? "You" : Monnam(mon), you ? "are" : "is");
+            set_property(mon, BLINDED, rn1(5, 10), TRUE);
+            if (you && !blind(&youmonst))
                 pline("Your vision quickly clears.");
-        } else if (!Blind) {
+        } else if (!blind(&youmonst) && (you || vis)) {
             pline("You see a flash of light!");
         } else
             You_hear("a deafening roar!");
@@ -2674,8 +2702,13 @@ domagictrap(void)
            other option is the "random monster generation on this level" RNG,
            but I don't like that one as much; it's rather about what we want to
            keep consistency with */
-        while (cnt--)
-            makemon(NULL, level, u.ux, u.uy, MM_CREATEMONSTER | MM_CMONSTER_M);
+        while (cnt--) {
+            /* Only create monsters if it was by you or a tame monster */
+            /* TODO: if/when temporary summons are implemented, make these temporary,
+               and set hostility based on who triggered it */
+            if (you || mon->mtame)
+                makemon(NULL, level, u.ux, u.uy, MM_CREATEMONSTER | MM_CMONSTER_M);
+        }
     } else
         switch (fate) {
 
@@ -2684,37 +2717,45 @@ domagictrap(void)
             /* sometimes nothing happens */
             break;
         case 12:       /* a flash of fire */
-            dofiretrap(NULL);
+            if (you) /* monster fire traps are handled in the monster trap function */
+                dofiretrap(NULL);
             break;
 
             /* odd feelings */
         case 13:
-            pline("A shiver runs up and down your %s!", body_part(SPINE));
+            if (you)
+                pline("A shiver runs up and down your %s!", body_part(SPINE));
             break;
         case 14:
-            You_hear(Hallucination ? "the moon howling at you." :
-                     "distant howling.");
+            if (you)
+                You_hear(Hallucination ? "the moon howling at you." :
+                         "distant howling.");
             break;
         case 15:
-            if (on_level(&u.uz, &qstart_level))
-                pline("You feel %slike the prodigal son.",
-                      (u.ufemale ||
-                       (Upolyd && is_neuter(youmonst.data))) ? "oddly " : "");
-            else
-                pline("You suddenly yearn for %s.",
-                      Hallucination ? "Cleveland" :
-                      (In_quest(&u.uz) || at_dgn_entrance(&u.uz, "The Quest")) ?
-                      "your nearby homeland" : "your distant homeland");
+            if (you) {
+                if (on_level(&u.uz, &qstart_level))
+                    pline("You feel %slike the prodigal son.",
+                          (u.ufemale ||
+                           (Upolyd && is_neuter(youmonst.data))) ? "oddly " : "");
+                else
+                    pline("You suddenly yearn for %s.",
+                          Hallucination ? "Cleveland" :
+                          (In_quest(&u.uz) || at_dgn_entrance(&u.uz, "The Quest")) ?
+                          "your nearby homeland" : "your distant homeland");
+            }
             break;
         case 16:
-            pline("Your pack shakes violently!");
+            if (you)
+                pline("Your pack shakes violently!");
             break;
         case 17:
-            pline(Hallucination ? "You smell hamburgers." :
-                  "You smell charred flesh.");
+            if (you)
+                pline(Hallucination ? "You smell hamburgers." :
+                      "You smell charred flesh.");
             break;
         case 18:
-            pline("You feel tired.");
+            if (you)
+                pline("You feel tired.");
             break;
 
             /* very occasionally something nice happens. */
@@ -2725,14 +2766,19 @@ domagictrap(void)
                 int i, j;
                 struct monst *mtmp;
 
-                adjattrib(A_CHA, 1, FALSE);
+                if (you)
+                    adjattrib(A_CHA, 1, FALSE);
                 for (i = -1; i <= 1; i++)
                     for (j = -1; j <= 1; j++) {
                         if (!isok(u.ux + i, u.uy + j))
                             continue;
                         mtmp = m_at(level, u.ux + i, u.uy + j);
-                        if (mtmp)
-                            tamedog(mtmp, NULL);
+                        if (mtmp) {
+                            if (you || mon->mtame)
+                                tamedog(mtmp, NULL);
+                            else
+                                msethostility(mtmp, mon->mpeaceful, FALSE);
+                        }
                     }
                 break;
             }
@@ -2742,11 +2788,11 @@ domagictrap(void)
             {
                 struct obj *pseudo = mktemp_sobj(NULL, SCR_REMOVE_CURSE);
                 boolean dummy;
-                long save_conf = HConfusion;
+                long save_conf = property_timeout(mon, CONFUSION);
 
-                HConfusion = 0L;
-                seffects(&youmonst, pseudo, &dummy);
-                HConfusion = save_conf;
+                set_property(mon, CONFUSION, -2, TRUE);
+                seffects(mon, pseudo, &dummy);
+                set_property(mon, CONFUSION, save_conf, TRUE);
 
                 obfree(pseudo, NULL);
                 break;
