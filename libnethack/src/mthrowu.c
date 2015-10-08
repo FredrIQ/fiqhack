@@ -137,13 +137,14 @@ drop_throw(struct obj *obj, boolean ohit, int x, int y)
 
 /* an object launched by someone/thing other than player attacks a monster;
    return 1 if the object has stopped moving (hit or its range used up) */
-int ohitmon(struct monst *mtmp, /* accidental target */
-            struct obj *otmp,   /* missile; might be destroyed by drop_throw */
-            int range,  /* how much farther will object travel if it misses */
-            /* Use -1 to signify to keep going even after hit, */
-            /* unless its gone (used for rolling_boulder_traps) */
-            boolean verbose) {  /* give message(s) even when you can't see what
-                                   happened */
+int
+ohitmon(struct monst *mtmp, /* accidental target */
+        struct obj *otmp,   /* missile; might be destroyed by drop_throw */
+        int range,  /* how much farther will object travel if it misses */
+        /* Use -1 to signify to keep going even after hit, unless it's gone
+           (used for rolling_boulder_traps) */
+        boolean verbose) {  /* give message(s) even when you can't see what
+                               happened */
     int damage, tmp;
     boolean vis, ismimic;
     int objgone = 1;

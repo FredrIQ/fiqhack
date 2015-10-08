@@ -935,14 +935,11 @@ static const struct skill_range {
     {"Spellcasting Skills", P_FIRST_SPELL, P_LAST_SPELL}
 };
 
-/*
- * The `#enhance' extended command.  What we _really_ would like is
- * to keep being able to pick things to advance until we couldn't any
- * more.  This is currently not possible -- the menu code has no way
- * to call us back for instant action.  Even if it did, we would also need
- * to be able to update the menu since selecting one item could make
- * others unselectable.
- */
+/* The `#enhance' extended command.  What we _really_ would like is to keep
+   being able to pick things to advance until we couldn't any more.  This is
+   currently not possible -- the menu code has no way to call us back for
+   instant action.  Even if it did, we would also need to be able to update the
+   menu since selecting one item could make others unselectable. */
 int
 enhance_weapon_skill(const struct nh_cmd_arg *arg)
 {
