@@ -617,7 +617,7 @@ feel_location(xchar x, xchar y)
             }
         }
     }
-    /* draw monster on top if we can sense it -- displaced images override */
+    /* draw monster on top if we can sense it */
     if ((x != u.ux || y != u.uy) && (mon = m_at(level, x, y)) && sensemon(mon))
         display_monster(x, y, mon,
                         (tp_sensemon(mon) ||
