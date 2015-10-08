@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -88,6 +88,11 @@
    every monster on the level can sense it everywhere */
 # define MSENSE_AGGRAVATE     0x00000800u
 
+/* Displaced. If this is defined, the monster should see the target as a
+   displaced image. Needed in case the displaced image is out of range,
+   where the normal position takes over, or if the normal position is out of
+   range, where the displaced image isn't seen either. */
+# define MSENSE_DISPLACED     0x00001000u
 
 # define MSENSE_ANYVISION     (MSENSE_VISION | MSENSE_INFRAVISION |     \
                                MSENSE_SEEINVIS | MSENSE_XRAY)

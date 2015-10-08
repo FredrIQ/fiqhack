@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -625,7 +625,7 @@ gd_move(struct monst *grd)
             }
             remove_monster(level, grd->mx, grd->my);
             newsym(grd->mx, grd->my);
-            place_monster(grd, m, n);
+            place_monster(grd, m, n, TRUE);
             mpickgold(grd);     /* does a newsym */
         }
         if (cansee(m, n)) {
@@ -639,7 +639,7 @@ gd_move(struct monst *grd)
         if (x != grd->mx || y != grd->my) {
             remove_monster(level, grd->mx, grd->my);
             newsym(grd->mx, grd->my);
-            place_monster(grd, x, y);
+            place_monster(grd, x, y, TRUE);
             newsym(x, y);
         }
         if (!grd->mpeaceful)
@@ -781,7 +781,7 @@ newpos:
     egrd->ogx = grd->mx;        /* update old positions */
     egrd->ogy = grd->my;
     remove_monster(level, grd->mx, grd->my);
-    place_monster(grd, nx, ny);
+    place_monster(grd, nx, ny, TRUE);
     newsym(grd->mx, grd->my);
     restfakecorr(grd);
     return 1;

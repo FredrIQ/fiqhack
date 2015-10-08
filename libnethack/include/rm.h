@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -469,6 +469,7 @@ struct level {
     struct rm locations[COLNO][ROWNO];
     struct obj *objects[COLNO][ROWNO];
     struct monst *monsters[COLNO][ROWNO];
+    struct monst *dmonsters[COLNO][ROWNO]; /* displacement */
     struct obj *objlist;
     struct obj *buriedobjlist;
     struct obj *billobjs;       /* objects not yet paid for */
@@ -519,9 +520,10 @@ extern struct level *level;             /* pointer to an entry in levels */
 # define MON_BURIED_AT(x,y) \
              (level->monsters[x][y] != NULL && level->monsters[x][y]->mburied)
 # define place_worm_seg(m,x,y)   (m)->dlevel->monsters[x][y] = m
-# define remove_monster(lev,x,y) (lev)->monsters[x][y] = NULL
 # define m_at(lev,x,y) \
              (MON_AT(lev,x,y) ? (lev)->monsters[x][y] : NULL)
+# define dm_at(lev,x,y) \
+             ((lev)->dmonsters[x][y])
 # define m_buried_at(x,y) \
              (MON_BURIED_AT(x,y) ? level->monsters[x][y] : NULL)
 

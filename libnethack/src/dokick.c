@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -121,7 +121,7 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
             if (m_in_out_region(mon, mdx, mdy)) {
                 remove_monster(level, mon->mx, mon->my);
                 newsym(mon->mx, mon->my);
-                place_monster(mon, mdx, mdy);
+                place_monster(mon, mdx, mdy, TRUE);
                 newsym(mon->mx, mon->my);
                 set_apparxy(mon);
                 if (mintrap(mon) == 2)

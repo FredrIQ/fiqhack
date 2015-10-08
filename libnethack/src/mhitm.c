@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -573,7 +573,7 @@ gulpmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
      *  ender's position.
      */
     remove_monster(level, ax, ay);
-    place_monster(magr, dx, dy);
+    place_monster(magr, dx, dy, TRUE);
     newsym(ax, ay);     /* erase old position */
     newsym(dx, dy);     /* update new position */
 
@@ -587,10 +587,10 @@ gulpmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
          *  magr from level->monsters[mdef->mx][mdef->my].  We need to
          *  put it back and display it.     -kd
          */
-        place_monster(magr, dx, dy);
+        place_monster(magr, dx, dy, TRUE);
         newsym(dx, dy);
     } else if (status & MM_AGR_DIED) {  /* agressor died */
-        place_monster(mdef, dx, dy);
+        place_monster(mdef, dx, dy, TRUE);
         newsym(dx, dy);
     } else {    /* both alive, put them back */
         if (cansee(dx, dy)) {
@@ -599,8 +599,8 @@ gulpmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline("Obviously, %s doesn't like %s taste.",
                       mon_nam(magr), s_suffix(mon_nam(mdef)));
         }
-        place_monster(magr, ax, ay);
-        place_monster(mdef, dx, dy);
+        place_monster(magr, ax, ay, TRUE);
+        place_monster(mdef, dx, dy, TRUE);
         newsym(ax, ay);
         newsym(dx, dy);
     }
@@ -1270,7 +1270,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (m_at(level, mdef->mx, mdef->my) == magr) {  /* see gulpmm() */
             remove_monster(level, mdef->mx, mdef->my);
             mdef->mhp = 1;      /* otherwise place_monster will complain */
-            place_monster(mdef, mdef->mx, mdef->my);
+            place_monster(mdef, mdef->mx, mdef->my, TRUE);
             mdef->mhp = 0;
         }
         monkilled(mdef, "", (int)mattk->adtyp);

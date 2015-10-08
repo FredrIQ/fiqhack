@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -285,7 +285,7 @@ mattacku(struct monst *mtmp)
             if (enexto(&cc, level, u.ux, u.uy, youmonst.data)) {
                 remove_monster(level, mtmp->mx, mtmp->my);
                 newsym(mtmp->mx, mtmp->my);
-                place_monster(mtmp, u.ux, u.uy);
+                place_monster(mtmp, u.ux, u.uy, TRUE);
                 if (mtmp->wormno)
                     worm_move(mtmp);
                 teleds(cc.x, cc.y, TRUE);
@@ -1516,7 +1516,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
             unplacebc();        /* ball&chain go away */
         remove_monster(level, mtmp->mx, mtmp->my);
         mtmp->mtrapped = 0;     /* no longer on old trap */
-        place_monster(mtmp, u.ux, u.uy);
+        place_monster(mtmp, u.ux, u.uy, TRUE);
         u.ustuck = mtmp;
         newsym(mtmp->mx, mtmp->my);
 
@@ -1548,7 +1548,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         if (touch_petrifies(youmonst.data) && !resists_ston(mtmp)) {
             expels(mtmp, mtmp->data, FALSE);
             remove_monster(level, mtmp->mx, mtmp->my);
-            place_monster(mtmp, u.ux, u.uy);
+            place_monster(mtmp, u.ux, u.uy, TRUE);
             if (Punished)
                 placebc();
             minstapetrify(mtmp, TRUE);
@@ -1788,7 +1788,7 @@ explmu(struct monst *mtmp, const struct attack *mattk)
         ugolemeffects((int)mattk->adtyp, tmp);
     }
 
-    place_monster(mtmp, mtmp->mx, mtmp->my);
+    place_monster(mtmp, mtmp->mx, mtmp->my, TRUE);
     mondead(mtmp);
     wake_nearto(mtmp->mx, mtmp->my, 7 * 7);
     if (mtmp->mhp > 0)

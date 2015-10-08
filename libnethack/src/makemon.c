@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-04 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -800,7 +800,7 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     if (mon->ispriest)
         m2->ispriest = FALSE;
     m2->mxlth = 0;
-    place_monster(m2, m2->mx, m2->my);
+    place_monster(m2, m2->mx, m2->my, FALSE);
     if (emits_light(m2->data))
         new_light_source(m2->dlevel, m2->mx, m2->my, emits_light(m2->data),
                          LS_MONSTER, m2);
@@ -1046,7 +1046,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         mtmp->mtrapseen |= (1L << (MAGIC_PORTAL - 1));
 
     mtmp->dlevel = lev;
-    place_monster(mtmp, x, y);
+    place_monster(mtmp, x, y, FALSE);
     mtmp->mcanmove = TRUE;
     mtmp->mpeaceful = (mmflags & MM_ANGRY) ? FALSE : peace_minded(ptr);
 
@@ -1207,6 +1207,11 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     if (!in_mklev && lev == level)
         newsym(mtmp->mx, mtmp->my);     /* make sure the mon shows up */
+
+    mtmp->dx = COLNO;
+    mtmp->dy = ROWNO;
+    mtmp->mspells = 0;
+    mtmp->mintrinsics = 0;
 
     return mtmp;
 }
@@ -2061,6 +2066,8 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->orig_mnum = mread16(mf);
     mon->mx = mread8(mf);
     mon->my = mread8(mf);
+    mon->dx = mread8(mf);
+    mon->dy = mread8(mf);
     mon->mux = mread8(mf);
     mon->muy = mread8(mf);
     /* SAVEBREAK (4.3-beta2alpha -> 4.3-beta2): this is for reading old saves
@@ -2299,6 +2306,8 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite8(mf, mon->mx);
     mwrite8(mf, mon->my);
     mhint_mon_coordinates(mf); /* savemap: ignore */
+    mwrite8(mf, mon->dx);
+    mwrite8(mf, mon->dy);
     mwrite8(mf, mon->mux);
     mwrite8(mf, mon->muy);
     mwrite8(mf, mon->m_lev);

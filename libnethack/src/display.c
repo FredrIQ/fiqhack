@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -617,7 +617,7 @@ feel_location(xchar x, xchar y)
             }
         }
     }
-    /* draw monster on top if we can sense it */
+    /* draw monster on top if we can sense it -- displaced images override */
     if ((x != u.ux || y != u.uy) && (mon = m_at(level, x, y)) && sensemon(mon))
         display_monster(x, y, mon,
                         (tp_sensemon(mon) ||
@@ -671,10 +671,24 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
             return;
     }
 
+    /* First, check if there is a displaced image we see on the location, which overrides
+       other monsters present. Then, if there was no displaced image, or we aren't affected
+       by it, check for monsters normally */
     msense_status = 0;
-    mon = m_at(level, x, y);
-    if (mon)
+    mon = dm_at(level, x, y);
+    if (mon) {
         msense_status = msensem(&youmonst, mon);
+        if (!(msense_status & MSENSE_DISPLACED)) {
+            mon = NULL;
+            msense_status = 0;
+        }
+    }
+
+    if (!mon) {
+        mon = m_at(level, x, y);
+        if (mon)
+            msense_status = msensem(&youmonst, mon);
+    }
 
     /* Can physically see the location. */
     if (cansee(x, y)) {

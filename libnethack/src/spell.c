@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1111,6 +1111,9 @@ mon_castable(struct monst *mon, int spell, boolean theoretical)
     if (mon->data == &mons[PM_GHOST])
         return 0;
 
+    if (cancelled(mon))
+        return 0;
+
     /* FIXME: don't rely on spell order */
     int mspellid = spell - SPE_DIG;
 
@@ -1135,7 +1138,6 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     int energy, chance, n;
     int skill, role_skill;
     boolean confused = !!confused(mon);
-    boolean cancelled = !!cancelled(mon);
     boolean vis = canseemon(mon);
     boolean dummy;
     coord cc;
@@ -1178,7 +1180,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
         return 0;
     }
 
-    if (cancelled) {
+    if (cancelled(mon)) {
         if (vis)
             pline("Being cancelled, %s cannot cast the spell.", mon_nam(mon));
         return 1;
@@ -1327,7 +1329,6 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     int energy, damage, chance, n, intell;
     int skill, role_skill;
     boolean confused = (Confusion != 0);
-    boolean cancelled = cancelled(&youmonst);
     struct obj *pseudo;
     boolean dummy;
     coord cc;
@@ -1456,7 +1457,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    if (cancelled) {
+    if (cancelled(&youmonst)) {
         pline("Being cancelled, you cannot cast the spell.");
         return 1;
     }
@@ -1950,7 +1951,8 @@ percent_success(const struct monst *mon, int spell)
     /* Wearing anything but a light shield makes it very awkward to cast a
        spell.  The penalty is not quite so bad for the player's role-specific
        spell. */
-    if (arms && weight(arms) > (int)objects[SMALL_SHIELD].oc_weight) {
+    if (arms && weight(arms) > (int)objects[SMALL_SHIELD].oc_weight &&
+        mon->data->mlet != S_ANGEL) {
         if (you && spell == urole.spelspec) {
             chance /= 2;
         } else {

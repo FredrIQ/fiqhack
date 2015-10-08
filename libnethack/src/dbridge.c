@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -580,7 +580,7 @@ do_entity(struct entity *etmp)
                                                  */
         if (!is_u(etmp)) {
             remove_monster(level, etmp->ex, etmp->ey);
-            place_monster(etmp->emon, newx, newy);
+            place_monster(etmp->emon, newx, newy, TRUE);
             update_monster_region(etmp->emon);
         } else {
             u.ux = newx;

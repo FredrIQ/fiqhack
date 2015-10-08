@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -422,11 +422,11 @@ levitates_at_will(const struct monst *mon, boolean include_extrinsic,
         return (why ? W_MASK(os_polyform) : 0);
 
     /* uncontrolled intrinsic levitation */
-    if ((lev & lev_worn) && !(lev & FROMOUTSIDE))
+    if ((lev & lev_worn) && !(lev & W_MASK(os_outside)))
         return (why ? (lev & lev_worn) : 0);
 
     /* has extrinsic */
-    if (!(lev & lev_worn) && !include_extrinsic)
+    if ((lev & lev_worn) && !include_extrinsic)
         return (why ? lev_worn : 0);
 
     if (lev_worn) { /* armor/ring/slotless levitation active */
@@ -584,7 +584,7 @@ set_property(struct monst *mon, enum youprop prop,
             val += old;
             if (val > TIMEOUT)
                 val = TIMEOUT;
-            u.uintrinsic[prop] &= TIMEOUT;
+            u.uintrinsic[prop] &= ~TIMEOUT;
             u.uintrinsic[prop] += val;
         }
     } else if (type == 0) {
@@ -801,6 +801,8 @@ update_property(struct monst *mon, enum youprop prop,
     case POLYMORPH_CONTROL:
         break;
     case LEVITATION:
+        if (lost && slot == os_timeout && !extrinsic)
+            set_property(mon, LEVITATION, -1, TRUE);
         if (!redundant) {
             if (!lost && slot != os_inctimeout)
                 float_up(mon);
@@ -1490,9 +1492,11 @@ msensem(const struct monst *viewer, const struct monst *viewee)
         lev = viewer->dlevel;
 
     int sx = m_mx(viewer), sy = m_my(viewer),
-        tx = m_mx(viewee), ty = m_my(viewee);
+        tx = m_mx(viewee), ty = m_my(viewee),
+        dx = m_dx(viewee), dy = m_dy(viewee);
 
     int distance = dist2(sx, sy, tx, ty);
+    int distance_displaced = (displaced(viewee) ? dist2(sx, sy, dx, dy) : 500);
 
     /* Special case: if either endpoint is an engulfing monster, then we want
        LOE to the square specifically, ignoring players on that square (because
@@ -1505,6 +1509,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        player to be at either endpoint. (If the player happens to be at one of
        the endpoints, it just calls couldsee() directly.) */
     boolean loe = clear_path(sx, sy, tx, ty, msensem_vizarray);
+    /* Equavilent, but for a monster's displaced image if relevant */
+    boolean loe_displaced = (displaced(viewee) &&
+                             clear_path(sx, sy, dx, dy, msensem_vizarray));
 
     /* A special case for many vision methods: water or the ground blocking
        vision. A hiding target is also included in these, because hiding is
@@ -1530,22 +1537,35 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        run lighting calculations off-level. */
     boolean target_lit = distance <= 2 || (lev == level && templit(tx, ty)) ||
         lev->locations[tx][ty].lit;
+    boolean target_lit_displaced = FALSE;
+    if (displaced(viewee))
+        target_lit_displaced = (distance_displaced <= 2 ||
+                                (lev == level && templit(dx, dy)) ||
+                                lev->locations[dx][dy].lit);
 
-    /* TODO: Maybe infravision (and perhaps even infravisibility) should be
-       properties? */
-    boolean infravision_ok = pm_infravision(viewer->data) &&
+    /* TODO: Maybe infravisibility should be a property? */
+    boolean infravision_ok = infravision(viewer) &&
         pm_infravisible(viewee->data);
 
     boolean blinded = !!blind(viewer);
     boolean see_invisible = !!see_invisible(viewer);
 
     if (loe && vertical_loe && !blinded) {
-        if (!invisible && target_lit)
+        if (!invisible && target_lit) {
             sensemethod |= MSENSE_VISION;
-        if (!invisible && infravision_ok)
+            if (loe_displaced && target_lit_displaced)
+                sensemethod |= MSENSE_DISPLACED;
+        }
+        if (!invisible && infravision_ok) {
             sensemethod |= MSENSE_INFRAVISION;
-        if (invisible && (target_lit || infravision_ok) && see_invisible)
+            if (loe_displaced)
+                sensemethod |= MSENSE_DISPLACED;
+        }
+        if (invisible && (target_lit || infravision_ok) && see_invisible) {
             sensemethod |= MSENSE_SEEINVIS | MSENSEF_KNOWNINVIS;
+            if (loe_displaced && (target_lit_displaced || infravision_ok))
+                sensemethod |= MSENSE_DISPLACED;
+        }
     }
 
     /* Telepathy. The viewee needs a mind; the viewer needs either to be blind,
@@ -1566,6 +1586,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     if (vertical_loe && distance <= XRAY_RANGE * XRAY_RANGE && xray &&
         (target_lit || infravision_ok)) {
         sensemethod |= MSENSE_XRAY;
+        if (distance_displaced <= XRAY_RANGE * XRAY_RANGE && xray &&
+            (target_lit_displaced || infravision_ok))
+            sensemethod |= MSENSE_DISPLACED;
         if (invisible && see_invisible)
             sensemethod |= MSENSEF_KNOWNINVIS;
     }
@@ -1619,8 +1642,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        have a level of 4 or greater, and a distance of 100 or less. */
     if (distance <= 100 && m_mlev(viewee) >= 4 &&
         warned(viewer) &&
-        mm_aggression(viewee, viewer) & ALLOW_M)
+        mm_aggression(viewee, viewer) & ALLOW_M) {
         sensemethod |= MSENSE_WARNING;
+    }
 
     /* Deducing the existence of a long worm via seeing a segment.
 
@@ -1669,6 +1693,16 @@ msensem(const struct monst *viewer, const struct monst *viewee)
         sensemethod &= ~MSENSE_ANYVISION;
         sensemethod |= MSENSE_ITEMMIMIC;
     }
+
+    /* Displacement is set unconditionally where relevant for normal vision methods
+       earlier. However, if the viewer sense the method through other vision methods,
+       we need to disable the displacement flag since it only affects monsters who
+       sense another with only normal/invis/infra/xray and where the displaced image
+       isn't on the monster itself */
+    if ((sensemethod & MSENSE_DISPLACED) &&
+        ((sensemethod & ~MSENSE_ANYVISION) ||
+         (dx == m_mx(viewer) && dy == m_my(viewer))))
+        sensemethod &= ~MSENSE_DISPLACED;
 
     return sensemethod;
 }
@@ -1855,6 +1889,8 @@ enlighten_mon(struct monst *mon, int final)
         mon_is(&menu, mon, "turning into slime");
     if (strangled(mon))
         mon_is(&menu, mon, (u.uburied) ? "buried" : "being strangled");
+    if (cancelled(mon))
+        mon_is(&menu, mon, "cancelled");
     if (slippery_fingers(mon))
         mon_has(&menu, mon, msgcat("slippery ", makeplural(body_part(FINGER))));
     if (fumbling(mon))
@@ -1923,7 +1959,7 @@ enlighten_mon(struct monst *mon, int final)
     else if (m_has_property(mon, INVIS, ANY_PROPERTY, TRUE) &&
              !invisible(mon))
         mon_is(&menu, mon, "visible");
-    if (displaced(mon))
+    if (displacement(mon))
         mon_is(&menu, mon, "displaced");
     if (stealthy(mon))
         mon_is(&menu, mon, "stealthy");
@@ -2246,6 +2282,8 @@ enlightenment(int final)
         you_are(&menu, "turning into slime");
     if (Strangled)
         you_are(&menu, (u.uburied) ? "buried" : "being strangled");
+    if (cancelled(&youmonst))
+        you_are(&menu, "cancelled");
     if (Glib)
         you_have(&menu, msgcat("slippery ", makeplural(body_part(FINGER))));
     if (Fumbling)

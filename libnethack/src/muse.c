@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -493,8 +493,6 @@ mon_allowed(int otyp)
     case SCR_IDENTIFY:
     case SCR_ENCHANT_ARMOR:
     case SCR_ENCHANT_WEAPON:
-    case WAN_CANCELLATION: /* currently not implemented in a good way */
-    case SPE_CANCELLATION:
         return FALSE;
         break;
     default:
@@ -1936,7 +1934,7 @@ use_item(struct monst *mon, struct musable *m)
         /* don't use rloc_to() because worm tails must "move" */
         remove_monster(level, mon->mx, mon->my);
         newsym(mon->mx, mon->my);     /* update old location */
-        place_monster(mon, trapx, trapy);
+        place_monster(mon, trapx, trapy, TRUE);
         if (mon->wormno)
             worm_move(mon);
         newsym(trapx, trapy);
@@ -2018,7 +2016,7 @@ use_item(struct monst *mon, struct musable *m)
         /* don't use rloc_to() because worm tails must "move" */
         remove_monster(level, mon->mx, mon->my);
         newsym(mon->mx, mon->my);     /* update old location */
-        place_monster(mon, trapx, trapy);
+        place_monster(mon, trapx, trapy, TRUE);
         if (mon->wormno)
             worm_move(mon);
         newsym(trapx, trapy);
@@ -2037,7 +2035,7 @@ use_item(struct monst *mon, struct musable *m)
         /* don't use rloc() due to worms */
         remove_monster(level, mon->mx, mon->my);
         newsym(mon->mx, mon->my);
-        place_monster(mtmp, trapx, trapy);
+        place_monster(mtmp, trapx, trapy, TRUE);
         if (mon->wormno)
             worm_move(mon);
         newsym(trapx, trapy);

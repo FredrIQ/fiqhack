@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1559,7 +1559,7 @@ replmon(struct monst *mtmp, struct monst *mtmp2)
 
     /* finish adding its replacement */
     if (mtmp != u.usteed)       /* don't place steed onto the map */
-        place_monster(mtmp2, mtmp2->mx, mtmp2->my);
+        place_monster(mtmp2, mtmp2->mx, mtmp2->my, TRUE);
     if (mtmp2->wormno)  /* update level->monsters[wseg->wx][wseg->wy] */
         place_wsegs(mtmp2);     /* locations to mtmp2 not mtmp. */
     if (emits_light(mtmp2->data)) {
@@ -2242,6 +2242,125 @@ mnexto(struct monst *mtmp)
     return;
 }
 
+void
+remove_monster(struct level *lev, xchar x, xchar y)
+{
+    struct monst *mon = m_at(lev, x, y);
+    if (!mon)
+        return;
+
+    /* remove the map->monster reference */
+    lev->monsters[x][y] = NULL;
+
+    /* remove displaced image */
+    if (displaced(mon))
+        unset_displacement(mon);
+}
+
+/* updatedisplacement: set to FALSE to avoid a displacement position update.
+   Used to avoid restoring from save updating it, and by makemon to avoid issues
+   checking displacement state */
+void
+place_monster(struct monst *mon, xchar x, xchar y, boolean updatedisplacement)
+{
+    if (mon == u.usteed || DEADMONSTER(mon) ) {
+        impossible("placing %s onto map?",
+                   (mon == u.usteed) ? "steed" : "defunct monster");
+        return;
+    }
+    mon->mx = x;
+    mon->my = y;
+    if (isok(x, y))
+        mon->dlevel->monsters[x][y] = mon;
+    else
+        impossible("placing monster on invalid spot (%d,%d)", x, y);
+
+    /* Update displacement position */
+    if (updatedisplacement)
+        update_displacement(mon);
+
+    set_displacement(mon);
+
+    /* If a monster's moved to the location it believes the player to be on,
+       it'll learn the player isn't there. */
+    if (mon->mux == mon->mx && mon->muy == mon->my) {
+        mon->mux = COLNO;
+        mon->muy = ROWNO;
+    }
+}
+
+void
+update_displacement(struct monst *mon)
+{
+    /* Unset previous displacement */
+    unset_displacement(mon);
+
+    /* If the monster doesn't have displacement (anymore), bail out */
+    if (!displacement(mon))
+        return;
+
+    /* Find a suitable displacement position. A displaced image is placed within
+       a 5x5 area centered on the monster (same as candle radius + corners).
+       Several displaced monsters cannot occupy the same square since it would
+       result in oddities, mostly regarding one monster being invisible and the
+       other not. However, displaced monsters *can* occupy the same square as
+       other monsters' real position.
+       This is a bit different from how displacement works for players in 3.4.3,
+       mostly since now every monster see the image in the same place, which
+       makes more sense */
+    int x;
+    int y;
+    int i;
+    struct level *lev = (mon == &youmonst ? level : mon->dlevel);
+    for (i = 0; i < 100; i++) {
+        x = (rn1(5, m_mx(mon)) - 2);
+        y = (rn1(5, m_my(mon)) - 2);
+
+        /* is the position sane */
+        if (!isok(x, y)) /* valid */
+            continue;
+        if (!ACCESSIBLE(lev->locations[x][y].typ) && !phasing(mon)) /* accessible */
+            continue;
+        if (closed_door(lev, x, y) && !can_ooze(mon)) /* not a closed door */
+            continue;
+        if (lev->dmonsters[x][y]) /* claimed by someone else */
+            continue;
+        break; /* valid pos found */
+    }
+    if (i == 100) { /* out of tries */
+        x = COLNO;
+        y = ROWNO;
+    }
+    if (mon == &youmonst) {
+        u.dx = x;
+        u.dy = y;
+    } else {
+        mon->dx = x;
+        mon->dy = y;
+    }
+}
+
+void
+unset_displacement(struct monst *mon)
+{
+    if (displaced(mon))
+        mon->dlevel->dmonsters[m_dx(mon)][m_dy(mon)] = NULL;
+    if (mon != &youmonst) {
+        mon->dx = COLNO;
+        mon->dy = ROWNO;
+    } else {
+        u.dx = COLNO;
+        u.dy = ROWNO;
+    }
+}
+
+void
+set_displacement(struct monst *mon)
+{
+    if (displaced(mon))
+        mon->dlevel->dmonsters[m_dx(mon)][m_dy(mon)] = mon;
+}
+
 /* mnearto()
  * Put monster near (or at) location if possible.
  * Returns:
@@ -2794,7 +2913,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
 
     if (mtmp->wormno) { /* throw tail away */
         wormgone(mtmp);
-        place_monster(mtmp, mtmp->mx, mtmp->my);
+        place_monster(mtmp, mtmp->mx, mtmp->my, TRUE);
     }
 
     hpn = mtmp->mhp;

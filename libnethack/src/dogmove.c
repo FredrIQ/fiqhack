@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -975,7 +975,7 @@ newdogpos:
         }
         /* insert a worm_move() if worms ever begin to eat things */
         remove_monster(level, omx, omy);
-        place_monster(mtmp, nix, niy);
+        place_monster(mtmp, nix, niy, TRUE);
         if (cursemsg[chi] && (cansee(omx, omy) || cansee(nix, niy)))
             pline("%s moves only reluctantly.", Monnam(mtmp));
         /* We have to know if the pet's gonna do a combined eat and move before
@@ -1023,7 +1023,7 @@ newdogpos:
         if (!m_in_out_region(mtmp, nix, niy))
             return 1;
         remove_monster(level, mtmp->mx, mtmp->my);
-        place_monster(mtmp, cc.x, cc.y);
+        place_monster(mtmp, cc.x, cc.y, TRUE);
         newsym(cc.x, cc.y);
         set_apparxy(mtmp);
     }

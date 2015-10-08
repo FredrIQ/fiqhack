@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1109,6 +1109,11 @@ extern void xkilled(struct monst *, int);
 extern void mon_to_stone(struct monst *);
 extern void mnexto(struct monst *);
 extern boolean mnearto(struct monst *, xchar, xchar, boolean);
+extern void remove_monster(struct level *, xchar, xchar);
+extern void place_monster(struct monst *, xchar, xchar, boolean);
+extern void update_displacement(struct monst *);
+extern void unset_displacement(struct monst *);
+extern void set_displacement(struct monst *);
 extern void poisontell(int);
 extern void poisoned(const char *, int, const char *, int);
 extern void m_respond(struct monst *);
@@ -1706,7 +1711,6 @@ extern int doride(const struct nh_cmd_arg *);
 extern void exercise_steed(void);
 extern void kick_steed(void);
 extern void dismount_steed(int);
-extern void place_monster(struct monst *mon, int x, int y);
 
 /* ### symclass.c ### */
 

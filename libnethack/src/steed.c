@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -541,7 +541,7 @@ dismount_steed(int reason)
         return;
     }
     if (!DEADMONSTER(mtmp)) {
-        place_monster(mtmp, u.ux, u.uy);
+        place_monster(mtmp, u.ux, u.uy, TRUE);
         if (!Engulfed && !u.ustuck && have_spot) {
             const struct permonst *mdat = mtmp->data;
 
@@ -612,30 +612,6 @@ dismount_steed(int reason)
     if (uwep && is_pole(uwep))
         u.bashmsg = FALSE;
     return;
-}
-
-
-void
-place_monster(struct monst *mon, int x, int y)
-{
-    if (mon == u.usteed || DEADMONSTER(mon) ) {
-        impossible("placing %s onto map?",
-                   (mon == u.usteed) ? "steed" : "defunct monster");
-        return;
-    }
-    mon->mx = x;
-    mon->my = y;
-    if (isok(x, y))
-        mon->dlevel->monsters[x][y] = mon;
-    else
-        impossible("placing monster on invalid spot (%d,%d)", x, y);
-
-    /* If a monster's moved to the location it believes the player to be on,
-       it'll learn the player isn't there. */
-    if (mon->mux == mon->mx && mon->muy == mon->my) {
-        mon->mux = COLNO;
-        mon->muy = ROWNO;
-    }
 }
 
 /*steed.c*/
