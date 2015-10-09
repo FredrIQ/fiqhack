@@ -903,15 +903,12 @@ could_advance(int skill)
           && u.skills_advanced < P_SKILL_LIMIT));
 }
 
-/* return true if this skill has reached its maximum and there's been enough
-   practice to become eligible for the next step if that had been possible */
+/* return true if this skill has reached its maximum */
 static boolean
 peaked_skill(int skill)
 {
     return !P_RESTRICTED(skill)
-        && P_SKILL(skill) >= P_MAX_SKILL(skill) &&
-        ((P_ADVANCE(skill) >=
-          (unsigned)practice_needed_to_advance(P_SKILL(skill))));
+        && P_SKILL(skill) >= P_MAX_SKILL(skill);
 }
 
 static void
