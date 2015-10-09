@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -636,6 +636,10 @@ mcalcdistress(void)
         if (mtmp->mfleetim && !--mtmp->mfleetim)
             mtmp->mflee = 0;
 
+        /* Update displaced images */
+        if (displacement(mtmp))
+            update_displacement(mtmp);
+        set_displacement(mtmp);
         /* FIXME: mtmp->mlstmv ought to be updated here */
     }
 }
@@ -2343,8 +2347,12 @@ update_displacement(struct monst *mon)
 void
 unset_displacement(struct monst *mon)
 {
-    if (displaced(mon))
-        mon->dlevel->dmonsters[m_dx(mon)][m_dy(mon)] = NULL;
+    struct level *lev = (mon == &youmonst ? level : mon->dlevel);
+    if (displaced(mon)) {
+        lev->dmonsters[m_dx(mon)][m_dy(mon)] = NULL;
+        if (level)
+            newsym(m_dx(mon), m_dy(mon));
+    }
     if (mon != &youmonst) {
         mon->dx = COLNO;
         mon->dy = ROWNO;
@@ -2357,8 +2365,12 @@ unset_displacement(struct monst *mon)
 void
 set_displacement(struct monst *mon)
 {
-    if (displaced(mon))
-        mon->dlevel->dmonsters[m_dx(mon)][m_dy(mon)] = mon;
+    struct level *lev = (mon == &youmonst ? level : mon->dlevel);
+    if (displaced(mon)) {
+        lev->dmonsters[m_dx(mon)][m_dy(mon)] = mon;
+        if (level)
+            newsym(m_dx(mon), m_dy(mon));
+    }
 }
 
 /* mnearto()
