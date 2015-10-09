@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-22 */
+/* Last modified by Alex Smith, 2015-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2287,14 +2287,14 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite32(mf, idx);
     mwrite32(mf, mon->m_id);
     /* When monsters regenerate HP, we can interpret the bottom two bytes of
-       their HP as acting like coordinates; the little-endian-first byte ("x
+       their HP as acting like coordinates: the little-endian-first byte ("x
        coordinate") always increases, the second ("y coordinate") sometimes
        increases (if there's a carry), and we can encode these as though they
        were moves east and south-east respectively.
 
        Thus, as a happy coincidence, specifying coordinate encoding for this
        does the right thing. (And mhint_mon_coordinates never changes whether
-       the save file can be created or not; just how efficient it is.) */
+       the save file can be created or not: just how efficient it is.) */
     mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite32(mf, mon->mhp);
     mwrite32(mf, mon->mhpmax);
