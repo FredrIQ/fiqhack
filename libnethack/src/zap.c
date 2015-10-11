@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -155,7 +155,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
                 dmg += spell_damage_bonus();
             flags.bypasses = TRUE;      /* for make_corpse() */
             if (!resist(mtmp, otmp->oclass, dmg, NOTELL)) {
-                if (mtmp->mhp > 0)
+                if (!DEADMONSTER(mtmp))
                     monflee(mtmp, 0, FALSE, TRUE);
             }
         }
@@ -313,7 +313,8 @@ bhitm(struct monst *mtmp, struct obj *otmp)
             dmg += spell_damage_bonus();
         if (resists_drli(mtmp))
             shieldeff(mtmp->mx, mtmp->my);
-        else if (!resist(mtmp, otmp->oclass, dmg, NOTELL) && mtmp->mhp > 0) {
+        else if (!resist(mtmp, otmp->oclass, dmg, NOTELL) &&
+                 !DEADMONSTER(mtmp)) {
             mtmp->mhp -= dmg;
             mtmp->mhpmax -= dmg;
             if (mtmp->mhp <= 0 || mtmp->mhpmax <= 0 || mtmp->m_lev < 1)
@@ -330,7 +331,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
         break;
     }
     if (wake) {
-        if (mtmp->mhp > 0) {
+        if (!DEADMONSTER(mtmp)) {
             wakeup(mtmp, FALSE);
             m_respond(mtmp);
             if (mtmp->isshk && !*u.ushops)
@@ -342,7 +343,8 @@ bhitm(struct monst *mtmp, struct obj *otmp)
        reveal_invis will be false.  We can't use mtmp->mx, my since it might be
        an invisible worm hit on the tail. */
     if (reveal_invis) {
-        if (mtmp->mhp > 0 && cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp))
+        if (!DEADMONSTER(mtmp) && cansee(bhitpos.x, bhitpos.y) &&
+            !canspotmon(mtmp))
             map_invisible(bhitpos.x, bhitpos.y);
     }
     return 0;
@@ -3492,7 +3494,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
                             monkilled(mon, NULL, -AD_RBRE);
                         else
                             xkilled(mon, 2);
-                    } else if (mon->mhp < 1) {
+                    } else if (mon->mhp <= 0) {
                         if (type < 0)
                             monkilled(mon, fltxt, AD_RBRE);
                         else
@@ -4201,7 +4203,7 @@ resist(struct monst *mtmp, char oclass, int damage, int domsg)
 
     if (damage) {
         mtmp->mhp -= damage;
-        if (mtmp->mhp < 1) {
+        if (mtmp->mhp <= 0) {
             if (m_using)
                 monkilled(mtmp, "", AD_RBRE);
             else

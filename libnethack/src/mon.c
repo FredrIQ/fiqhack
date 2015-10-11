@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -375,7 +375,7 @@ minliquid(struct monst *mtmp)
             mtmp->mhpmax -= dam;
         if (mtmp->mhp < 1) {
             mondead(mtmp);
-            if (mtmp->mhp < 1)
+            if (DEADMONSTER(mtmp))
                 return 1;
         }
         water_damage_chain(mtmp->minvent, FALSE);
@@ -408,7 +408,7 @@ minliquid(struct monst *mtmp)
                         pline("%s burns slightly.", Monnam(mtmp));
                 }
             }
-            if (mtmp->mhp > 0) {
+            if (!DEADMONSTER(mtmp)) {
                 fire_damage(mtmp->minvent, FALSE, FALSE, mtmp->mx, mtmp->my);
                 if (alive_means_lifesaved) {
                     rloc(mtmp, TRUE);
@@ -436,7 +436,7 @@ minliquid(struct monst *mtmp)
                       Monnam(mtmp));
             }
             mondead(mtmp);
-            if (mtmp->mhp > 0) {
+            if (!DEADMONSTER(mtmp)) {
                 rloc(mtmp, TRUE);
                 water_damage_chain(mtmp->minvent, FALSE);
                 minliquid(mtmp);
@@ -447,7 +447,7 @@ minliquid(struct monst *mtmp)
     } else {
         /* but eels have a difficult time outside */
         if (mtmp->data->mlet == S_EEL && !Is_waterlevel(&u.uz)) {
-            if (mtmp->mhp > 1)
+            if (mtmp->mhp >= 2)
                 mtmp->mhp--;
             monflee(mtmp, 2, FALSE, FALSE);
         }
@@ -1474,7 +1474,7 @@ dmonsfree(struct level *lev)
     int count = 0;
 
     for (mtmp = &lev->monlist; *mtmp;) {
-        if ((*mtmp)->mhp <= 0) {
+        if (DEADMONSTER(*mtmp)) {
             struct monst *freetmp = *mtmp;
 
             *mtmp = (*mtmp)->nmon;
@@ -1582,6 +1582,11 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
         shkgone(mtmp);
     if (mtmp->wormno)
         wormgone(mtmp);
+
+    if (!DEADMONSTER(mtmp)) {
+        impossible("Monster detached without dying?");
+        mtmp->deadmonster = 1;
+    }
     mtmp->dlevel->flags.purge_monsters++;
 }
 
@@ -1637,10 +1642,13 @@ lifesaved_monster(struct monst *mtmp)
         if (mvitals[monsndx(mtmp->data)].mvflags & G_GENOD) {
             if (cansee(mtmp->mx, mtmp->my))
                 pline("Unfortunately %s is still genocided...", mon_nam(mtmp));
-        } else
+        } else {
+            mtmp->deadmonster = 0; /* paranoia */
             return;
+        }
     }
     mtmp->mhp = 0;
+    mtmp->deadmonster = 1; /* flag as dead in the monster list */
 }
 
 void
@@ -1657,7 +1665,7 @@ mondead(struct monst *mtmp)
             return;
     }
     lifesaved_monster(mtmp);
-    if (mtmp->mhp > 0)
+    if (!DEADMONSTER(mtmp))
         return;
 
     /* Player is thrown from his steed when it dies */
@@ -1761,7 +1769,7 @@ corpse_chance(struct monst *mon,
                     magr->mhp -= tmp;
                     if (magr->mhp < 1)
                         mondied(magr);
-                    if (magr->mhp < 1) {        /* maybe lifesaved */
+                    if (DEADMONSTER(magr)) {        /* i.e. not lifesaved */
                         if (canseemon(magr))
                             pline("%s rips open!", Monnam(magr));
                     } else if (canseemon(magr))
@@ -1796,7 +1804,7 @@ void
 mondied(struct monst *mdef)
 {
     mondead(mdef);
-    if (mdef->mhp > 0)
+    if (!DEADMONSTER(mdef))
         return; /* lifesaved */
 
     if (corpse_chance(mdef, NULL, FALSE) &&
@@ -1808,10 +1816,20 @@ mondied(struct monst *mdef)
 void
 mongone(struct monst *mdef)
 {
-    mdef->mhp = 0;      /* can skip some inventory bookkeeping */
     /* Player is thrown from his steed when it disappears */
     if (mdef == u.usteed)
         dismount_steed(DISMOUNT_GENERIC);
+
+    mdef->mhp = 0;         /* can skip some inventory bookkeeping */
+
+    /* The monster death code is somewhat spaghetti and could do with being
+       merged into fewer functions. For now, it's worth noting that m_detach
+       must be called if and only if deadmonster is set to 1.
+
+       mdrop_special_objs also looks at this flag to know where it's being
+       called from, which is potentially quite dubious; that's something to
+       look at in the future. */
+    mdef->deadmonster = 1;
 
     /* monster should no longer block vision */
     if ((!mdef->minvis || See_invisible) &&
@@ -1840,7 +1858,7 @@ monstone(struct monst *mdef)
        inventory in it, and we have to check for lifesaving before making the
        statue.... */
     lifesaved_monster(mdef);
-    if (mdef->mhp > 0)
+    if (!DEADMONSTER(mdef))
         return;
 
     mdef->mtrapped = 0; /* (see m_detach) */
@@ -1917,16 +1935,12 @@ monkilled(struct monst *mdef, const char *fltxt, int how)
        because this monster is in the process of dying, temporarily mark it as
        alive */
 
-    int save_mhp = mdef->mhp;
-
-    mdef->mhp = 1;
     if (fltxt && canseemon(mdef))
         pline("%s is %s%s%s!", Monnam(mdef),
               nonliving(mdef->data) ? "destroyed" : "killed",
               *fltxt ? " by the " : "", fltxt);
     else
         be_sad = (mdef->mtame != 0);
-    mdef->mhp = save_mhp;
 
     /* no corpses if digested or disintegrated */
     if (how == AD_DGST || how == -AD_RBRE)
@@ -1934,7 +1948,7 @@ monkilled(struct monst *mdef, const char *fltxt, int how)
     else
         mondied(mdef);
 
-    if (be_sad && mdef->mhp <= 0)
+    if (be_sad && DEADMONSTER(mdef))
         pline("You have a sad feeling for a moment, then it passes.");
 }
 
@@ -1980,15 +1994,14 @@ xkilled(struct monst *mtmp, int dest)
     boolean redisp = FALSE;
     boolean wasinside = Engulfed && (u.ustuck == mtmp);
 
+    mtmp->mhp = -1; /* assumed by this code in 3.4.3; paranoia that some
+                       similar assumptions still exist in the code */
 
     /* KMH, conduct */
     break_conduct(conduct_killer);
 
     if (dest & 1) {
         const char *verb = nonliving(mtmp->data) ? "destroy" : "kill";
-
-        int save_mhp = mtmp->mhp;
-        mtmp->mhp = 1;
 
         if (!wasinside && mtmp != u.usteed && !canclassifymon(mtmp))
             pline("You %s it!", verb);
@@ -1999,8 +2012,6 @@ xkilled(struct monst *mtmp, int dest)
                            ARTICLE_THE, "poor", mtmp-> mnamelth ?
                            SUPPRESS_SADDLE : 0, FALSE));
         }
-
-        mtmp->mhp = save_mhp;
     }
 
     if (mtmp->mtrapped && (t = t_at(level, x, y)) != 0 &&
@@ -2023,7 +2034,7 @@ xkilled(struct monst *mtmp, int dest)
     else
         mondead(mtmp);
 
-    if (mtmp->mhp > 0) {        /* monster lifesaved */
+    if (!DEADMONSTER(mtmp)) {        /* monster lifesaved */
         /* Cannot put the non-visible lifesaving message in lifesaved_monster()
            since the message appears only when you kill it (as opposed to
            visible lifesaving which always appears). */

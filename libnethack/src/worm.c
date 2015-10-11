@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -304,7 +304,7 @@ cutoff(struct monst *worm, struct wseg *tail)
     else
         pline("You cut part of the tail off of %s.", mon_nam(worm));
     toss_wsegs(level, tail, TRUE);
-    if (worm->mhp > 1)
+    if (worm->mhp >= 2)
         worm->mhp /= 2;
 }
 

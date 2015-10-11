@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -978,14 +978,14 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
             break;
         }
     }
-    if (dmg > 0 && mdef->mhp > 0) {
+    if (dmg > 0 && !DEADMONSTER(mdef)) {
         mdef->mhp -= dmg;
         if (mdef->mhp < 1)
             monkilled(mdef, "", mattk->adtyp);
     }
-    if (mdef && mdef->mhp < 1)
+    if (DEADMONSTER(mdef))
         return 2;
-    return (ret);
+    return ret;
 }
 
 /* return values:
@@ -1020,7 +1020,7 @@ castum(struct monst *mtmp, const struct attack *mattk)
             else
                 spellnum = choose_clerical_spell(spellnum);
             /* not trying to attack? don't allow directed spells */
-            if (!mtmp || mtmp->mhp < 1) {
+            if (!mtmp || DEADMONSTER(mtmp)) {
                 if (is_undirected_spell(mattk->adtyp, spellnum) &&
                     !mmspell_would_be_useless(&youmonst, mtmp,
                                               mattk->adtyp, spellnum)) {
@@ -1126,12 +1126,12 @@ castum(struct monst *mtmp, const struct attack *mattk)
         }
     }
 
-    if (dmg > 0 && mtmp->mhp > 0) {
+    if (dmg > 0 && !DEADMONSTER(mtmp)) {
         mtmp->mhp -= dmg;
         if (mtmp->mhp < 1)
             killed(mtmp);
     }
-    if (mtmp && mtmp->mhp < 1)
+    if (mtmp && DEADMONSTER(mtmp))
         return 2;
 
     return ret;
@@ -1160,14 +1160,14 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         return;
     }
 
-    if (mtmp && mtmp->mhp < 1) {
+    if (mtmp && DEADMONSTER(mtmp)) {
         impossible("monster already dead?");
         return;
     }
 
     switch (spellnum) {
     case MGC_DEATH_TOUCH:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("touch of death with no mtmp");
             return;
         }
@@ -1280,7 +1280,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             break;
         }
     case MGC_AGGRAVATION:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             pline("You feel lonely.");
             return;
         }
@@ -1288,7 +1288,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         dmg = 0;
         break;
     case MGC_CURSE_ITEMS:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("curse spell with no mtmp");
             return;
         }
@@ -1298,7 +1298,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         dmg = 0;
         break;
     case MGC_DESTRY_ARMR:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("destroy spell with no mtmp");
             return;
         }
@@ -1329,7 +1329,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         dmg = 0;
         break;
     case MGC_WEAKEN_YOU:       /* drain strength */
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("weaken spell with no mtmp");
             return;
         }
@@ -1337,15 +1337,11 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             shieldeff(mtmp->mx, mtmp->my);
             pline("%s looks momentarily weakened.", Monnam(mtmp));
         } else {
-            if (mtmp->mhp < 1) {
-                impossible("trying to drain monster that's already dead");
-                return;
-            }
             if (yours || canseemon(mtmp))
                 pline("%s suddenly seems weaker!", Monnam(mtmp));
             /* monsters don't have strength, so drain max hp instead */
             mtmp->mhpmax -= dmg;
-            if ((mtmp->mhp -= dmg) <= 0) {
+            if (((mtmp->mhp -= dmg)) <= 0) {
                 if (yours)
                     killed(mtmp);
                 else
@@ -1368,7 +1364,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             impossible("no reason for player to cast disappear spell?");
         break;
     case MGC_STUN_YOU:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("stun spell with no mtmp");
             return;
         }
@@ -1410,7 +1406,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         }
         break;
     case MGC_PSI_BOLT:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("psibolt spell with no mtmp");
             return;
         }
@@ -1449,7 +1445,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         return;
     }
 
-    if (mtmp && mtmp->mhp < 1) {
+    if (mtmp && DEADMONSTER(mtmp)) {
         impossible("monster already dead?");
         return;
     }
@@ -1457,7 +1453,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
     switch (spellnum) {
     case CLC_GEYSER:
         /* this is physical damage, not magical damage */
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("geyser spell with no mtmp");
             return;
         }
@@ -1466,7 +1462,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         dmg = dice(8, 6);
         break;
     case CLC_FIRE_PILLAR:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("firepillar spell with no mtmp");
             return;
         }
@@ -1487,7 +1483,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         {
             boolean reflects;
 
-            if (!mtmp || mtmp->mhp < 1) {
+            if (!mtmp) {
                 impossible("lightning spell with no mtmp");
                 return;
             }
@@ -1516,7 +1512,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             break;
         }
     case CLC_CURSE_ITEMS:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("curse spell with no mtmp");
             return;
         }
@@ -1537,7 +1533,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             coord bypos;
             int quan;
 
-            if (!mtmp || mtmp->mhp < 1) {
+            if (!mtmp) {
                 impossible("insect spell with no mtmp");
                 return;
             }
@@ -1584,7 +1580,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             break;
         }
     case CLC_BLIND_YOU:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("blindness spell with no mtmp");
             return;
         }
@@ -1604,7 +1600,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             impossible("no reason for monster to cast blindness spell?");
         break;
     case CLC_PARALYZE:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("paralysis spell with no mtmp");
             return;
         }
@@ -1622,7 +1618,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         dmg = 0;
         break;
     case CLC_CONFUSE_YOU:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("confusion spell with no mtmp");
             return;
         }
@@ -1648,7 +1644,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         dmg = 0;
         break;
     case CLC_OPEN_WOUNDS:
-        if (!mtmp || mtmp->mhp < 1) {
+        if (!mtmp) {
             impossible("wound spell with no mtmp");
             return;
         }

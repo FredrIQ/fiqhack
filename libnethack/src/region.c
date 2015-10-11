@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-19 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -326,7 +326,7 @@ run_regions(struct level *lev)
                 struct monst *mtmp =
                     find_mid(lev, lev->regions[i]->monsters[j], FM_FMON);
 
-                if (!mtmp || mtmp->mhp <= 0 ||
+                if (!mtmp || DEADMONSTER(mtmp) ||
                     (*callbacks[f_indx]) (lev->regions[i], mtmp)) {
                     /* The monster died, remove it from list */
                     k = (lev->regions[i]->n_monst -= 1);
@@ -750,7 +750,7 @@ inside_gas_cloud(void *p1, void *p2)
                     killed(mtmp);
                 else
                     monkilled(mtmp, "gas cloud", AD_DRST);
-                if (mtmp->mhp <= 0) {   /* not lifesaved */
+                if (DEADMONSTER(mtmp)) {   /* not lifesaved */
                     return TRUE;
                 }
             }

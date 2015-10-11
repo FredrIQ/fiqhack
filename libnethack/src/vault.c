@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,10 +28,10 @@ clear_fcorr(struct monst *grd, boolean forceshow)
     while ((fcbeg = EGD(grd)->fcbeg) < EGD(grd)->fcend) {
         fcx = EGD(grd)->fakecorr[fcbeg].fx;
         fcy = EGD(grd)->fakecorr[fcbeg].fy;
-        if ((grd->mhp <= 0 || !in_fcorridor(grd, u.ux, u.uy)) &&
+        if ((DEADMONSTER(grd) || !in_fcorridor(grd, u.ux, u.uy)) &&
             EGD(grd)->gddone)
             forceshow = TRUE;
-        if ((u.ux == fcx && u.uy == fcy && grd->mhp > 0)
+        if ((u.ux == fcx && u.uy == fcy && !DEADMONSTER(grd))
             || (!forceshow && couldsee(fcx, fcy)))
             return FALSE;
 
@@ -65,7 +65,7 @@ clear_fcorr(struct monst *grd, boolean forceshow)
         map_location(fcx, fcy, 1, FALSE);      /* bypass vision */
         EGD(grd)->fcbeg++;
     }
-    if (grd->mhp <= 0) {
+    if (DEADMONSTER(grd)) {
         if (showmsg) {
             if (!Blind)
                 pline("The corridor disappears.");
@@ -489,7 +489,7 @@ gd_move(struct monst *grd)
     boolean goldincorridor = FALSE, u_in_vault =
         vault_occupied(u.urooms) ? TRUE : FALSE, grd_in_vault =
         *in_rooms(level, grd->mx, grd->my, VAULT) ? TRUE : FALSE;
-    boolean disappear_msg_seen = FALSE, semi_dead = (grd->mhp <= 0);
+    boolean disappear_msg_seen = FALSE, semi_dead = DEADMONSTER(grd);
     long umoney = money_cnt(invent);
     boolean u_carry_gold = ((umoney + hidden_gold()) > 0L);
     boolean see_guard;

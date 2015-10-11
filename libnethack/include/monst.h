@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -144,9 +144,12 @@ struct monst {
     unsigned ispriest:1;        /* is a priest */
     unsigned iswiz:1;   /* is the Wizard of Yendor */
 
+    /* turnstate; doesn't count against bitfield bit count */
+    unsigned deadmonster:1;     /* always 0 at neutral turnstate */
+
     uchar mfleetim;     /* timeout for mflee */
     uchar wormno;       /* at most 31 worms on any level */
-# define MAX_NUM_WORMS  32      /* wormno could hold larger worm ids, but 32 is 
+# define MAX_NUM_WORMS  32      /* wormno could hold larger worm ids, but 32 is
                                    (still) fine */
     xchar weapon_check;
     int misc_worn_check;
@@ -188,7 +191,7 @@ struct monst {
 # define MON_WEP(mon)     ((mon)->mw)
 # define MON_NOWEP(mon)   ((mon)->mw = NULL)
 
-# define DEADMONSTER(mon) ((mon)->mhp < 1)
+# define DEADMONSTER(mon) ((mon)->deadmonster)
 
 # define onmap(mon) (isok((mon)->mx, (mon)->my))
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-09-25 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -30,7 +30,7 @@ mb_trapped(struct monst *mtmp)
     mtmp->mhp -= rnd(15);
     if (mtmp->mhp <= 0) {
         mondied(mtmp);
-        if (mtmp->mhp > 0)      /* lifesaved */
+        if (!DEADMONSTER(mtmp))      /* i.e. it lifesaved */
             return FALSE;
         else
             return TRUE;
@@ -323,7 +323,7 @@ dochug(struct monst *mtmp)
         m_respond(mtmp);
     if (mdat == &mons[PM_MEDUSA] && couldsee(mtmp->mx, mtmp->my))
         m_respond(mtmp);
-    if (mtmp->mhp <= 0)
+    if (DEADMONSTER(mtmp))
         return 1;       /* m_respond gaze can kill medusa */
 
     /* fleeing monsters might regain courage */
@@ -523,7 +523,7 @@ toofar:
             /* for pets, case 0 and 3 are equivalent */
             /* vault guard might have vanished */
             if (mtmp->isgd &&
-                (mtmp->mhp < 1 || (mtmp->mx == COLNO && mtmp->my == ROWNO)))
+                (DEADMONSTER(mtmp) || (mtmp->mx == COLNO && mtmp->my == ROWNO)))
                 return 1;       /* behave as if it died */
             /* During hallucination, monster appearance should still change -
                even if it doesn't move. */

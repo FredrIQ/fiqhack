@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-05-19 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -276,9 +276,9 @@ mattackm(struct monst *magr, struct monst *mdef)
                     res[i] = MM_HIT;
                 else
                     res[i] = MM_MISS;
-                if (mdef->mhp < 1)
+                if (DEADMONSTER(mdef))
                     res[i] = MM_DEF_DIED;
-                if (magr->mhp < 1)
+                if (DEADMONSTER(magr))
                     res[i] = MM_AGR_DIED;
                 strike = 0;
                 break;
@@ -327,7 +327,7 @@ mattackm(struct monst *magr, struct monst *mdef)
                 if ((mdef->data == &mons[PM_BLACK_PUDDING] ||
                      mdef->data == &mons[PM_BROWN_PUDDING])
                     && otmp && objects[otmp->otyp].oc_material == IRON &&
-                    mdef->mhp > 1 && !mdef->mcan) {
+                    mdef->mhp >= 2 && !mdef->mcan) {
                     if (clone_mon(mdef, 0, 0)) {
                         if (vis) {
                             pline("%s divides as %s hits it!",
@@ -352,9 +352,9 @@ mattackm(struct monst *magr, struct monst *mdef)
                 res[i] = MM_HIT;
             else
                 res[i] = MM_MISS;
-            if (mdef->mhp < 1)
+            if (DEADMONSTER(mdef))
                 res[i] = MM_DEF_DIED;
-            if (magr->mhp < 1)
+            if (DEADMONSTER(magr))
                 res[i] = MM_AGR_DIED;
             strike = 0; /* waking up handled by m_throw() */
             break;
@@ -365,9 +365,9 @@ mattackm(struct monst *magr, struct monst *mdef)
                 res[i] = MM_HIT;
             else
                 res[i] = MM_MISS;
-            if (mdef->mhp < 1)
+            if (DEADMONSTER(mdef))
                 res[i] = MM_DEF_DIED;
-            if (magr->mhp < 1)
+            if (DEADMONSTER(magr))
                 res[i] = MM_AGR_DIED;
             strike = 0; /* waking up handled by m_throw() */
             break;
@@ -542,7 +542,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (canseemon(magr))
                 pline("%s is turned to stone!", Monnam(magr));
             monstone(magr);
-            if (magr->mhp > 0)
+            if (!DEADMONSTER(magr))
                 return MM_MISS;
             return MM_AGR_DIED;
         }
@@ -632,7 +632,7 @@ explmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     /* Kill off agressor if it didn't die. */
     if (!(result & MM_AGR_DIED)) {
         mondead(magr);
-        if (magr->mhp > 0)
+        if (!DEADMONSTER(magr))
             return result;      /* life saved */
         result |= MM_AGR_DIED;
     }
@@ -671,7 +671,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline("%s turns to stone!", Monnam(magr));
             monstone(magr);
-            if (magr->mhp > 0)
+            if (!DEADMONSTER(magr))
                 return 0;
             else if (magr->mtame && !vis)
                 pline(brief_feeling, "peculiarly sad");
@@ -696,7 +696,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                       "coughs spasmodically and collapses" :
                       "vomits violently and drops dead");
             mondied(magr);
-            if (magr->mhp > 0)
+            if (!DEADMONSTER(magr))
                 return 0;       /* lifesaved */
             else if (magr->mtame && !vis)
                 pline(brief_feeling, "queasy");
@@ -706,11 +706,11 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             verbalize("Burrrrp!");
         tmp = mdef->mhp;
         /* Use up amulet of life saving */
-        if (! !(obj = mlifesaver(mdef)))
+        if ((obj = mlifesaver(mdef)))
             m_useup(mdef, obj);
 
         /* Is a corpse for nutrition possible? It may kill magr */
-        if (!corpse_chance(mdef, magr, TRUE) || magr->mhp < 1)
+        if (!corpse_chance(mdef, magr, TRUE) || DEADMONSTER(magr))
             break;
 
         /* Pets get nutrition from swallowing monster whole. No nutrition from
@@ -764,7 +764,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 tmp += dmgval(otmp, mdef);
                 if (otmp->oartifact) {
                     artifact_hit(magr, mdef, otmp, &tmp, dieroll);
-                    if (mdef->mhp <= 0)
+                    if (DEADMONSTER(mdef))
                         return (MM_DEF_DIED |
                                 (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
                 }
@@ -792,7 +792,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline("%s burns completely!", Monnam(mdef));
             mondied(mdef);
-            if (mdef->mhp > 0)
+            if (!DEADMONSTER(mdef))
                 return 0;
             else if (mdef->mtame && !vis)
                 pline("May %s roast in peace.", mon_nam(mdef));
@@ -870,7 +870,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline("%s falls to pieces!", Monnam(mdef));
             mondied(mdef);
-            if (mdef->mhp > 0)
+            if (!DEADMONSTER(mdef))
                 return 0;
             else if (mdef->mtame && !vis)
                 pline("May %s rust in peace.", mon_nam(mdef));
@@ -894,7 +894,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline("%s falls to pieces!", Monnam(mdef));
             mondied(mdef);
-            if (mdef->mhp > 0)
+            if (!DEADMONSTER(mdef))
                 return 0;
             else if (mdef->mtame && !vis)
                 pline("May %s rot in peace.", mon_nam(mdef));
@@ -920,7 +920,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline("%s turns to stone!", Monnam(mdef));
             monstone(mdef);
-        post_stone:if (mdef->mhp > 0)
+        post_stone:
+            if (!DEADMONSTER(mdef))
                 return 0;
             else if (mdef->mtame && !vis)
                 pline(brief_feeling, "peculiarly sad");
@@ -1020,7 +1021,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     pline("%s is destroyed!", Monnam(mdef));
                 }
                 mondied(mdef);
-                if (mdef->mhp > 0)
+                if (!DEADMONSTER(mdef))
                     return 0;
                 else if (mdef->mtame && !vis)
                     pline(brief_feeling, "strangely sad");
@@ -1117,7 +1118,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             possibly_unwield(mdef, FALSE);
             mdef->mstrategy &= ~STRAT_WAITFORU;
             mselftouch(mdef, NULL, FALSE);
-            if (mdef->mhp <= 0)
+            if (DEADMONSTER(mdef))
                 return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
             if (magr->data->mlet == S_NYMPH && !tele_restrict(magr)) {
                 rloc(magr, TRUE);
@@ -1196,7 +1197,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         case 17:
             if (!resist(mdef, 0, 0, 0)) {
                 monkilled(mdef, "", AD_DETH);
-                if (mdef->mhp <= 0)             /* did it lifesave? */
+                if (DEADMONSTER(mdef))            /* did it lifesave? */
                     return MM_DEF_DIED;
 
                 tmp = 0;
@@ -1282,7 +1283,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             mdef->mhp = 0;
         }
         monkilled(mdef, "", (int)mattk->adtyp);
-        if (mdef->mhp > 0)
+        if (!DEADMONSTER(mdef))
             return 0;   /* mdef lifesaved */
 
         if (mattk->adtyp == AD_DGST) {
@@ -1295,7 +1296,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             } else if (mdef->data == &mons[PM_WRAITH]) {
                 grow_up(magr, NULL);
                 /* don't grow up twice */
-                return MM_DEF_DIED | (magr->mhp > 0 ? 0 : MM_AGR_DIED);
+                return MM_DEF_DIED | (DEADMONSTER(magr) ? MM_AGR_DIED : 0);
             } else if (mdef->data == &mons[PM_NURSE]) {
                 magr->mhp = magr->mhpmax;
             }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -578,8 +578,8 @@ monster_detect(struct obj *otmp,        /* detecting object (if any) */
 
     /* Note: This used to just check level->monlist for a non-zero value but in
        versions since 3.3.0 level->monlist can test TRUE due to the presence of
-       dmons, so we have to find at least one with positive hit-points to know
-       for sure. */
+       dmons, so we have to find at least one that's still alive to know for
+       sure. */
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
         if (!DEADMONSTER(mtmp)) {
             mcnt++;
