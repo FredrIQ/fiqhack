@@ -201,6 +201,8 @@ struct monst {
    DEFERRED: mburied appears to be a deferred feature, it's not set anywhere in
    the code. */
 # define m_mburied(mon) ((mon) == &youmonst ? u.uburied : (mon)->mburied)
+# define m_mundetected(mon) ((mon) == &youmonst ? u.uundetected : \
+                             (mon)->mundetected)
 # define m_mhiding(mon) ((mon) == &youmonst ? u.uundetected :   \
                          is_hider(mon->data) && (mon)->mundetected)
 # define m_underwater(mon) ((mon) == &youmonst ? Underwater :           \
