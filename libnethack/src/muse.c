@@ -1751,6 +1751,8 @@ use_misc(struct monst *mtmp, struct musable *m)
         mzapmsg(mtmp, otmp, TRUE);
         otmp->spe--;
         mon_adjust_speed(mtmp, 1, otmp);
+        if (oseen)
+            makeknown(otmp->otyp);
         return 2;
     case MUSE_POT_SPEED:
         mquaffmsg(mtmp, otmp);
@@ -1760,6 +1762,8 @@ use_misc(struct monst *mtmp, struct musable *m)
            permanently */
         mon_adjust_speed(mtmp, 1, otmp);
         m_useup(mtmp, otmp);
+        if (oseen)
+            makeknown(otmp->otyp);
         return 2;
     case MUSE_WAN_POLYMORPH:
         mzapmsg(mtmp, otmp, TRUE);
