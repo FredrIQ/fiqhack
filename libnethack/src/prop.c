@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-14 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -773,7 +773,7 @@ update_property(struct monst *mon, enum youprop prop,
             } else {
                 pline(lost ? "%s appears!" :
                       "%s suddenly disappears!",
-                      Monnam(mon));
+                      noit_Monnam(mon)); /* noit avoids "It suddenly disappears!" */
                 set_mimic_blocking();       /* do special mimic handling */
                 see_monsters(FALSE);        /* see invisible monsters */
             }
@@ -1700,7 +1700,8 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        sense another with only normal/invis/infra/xray and where the displaced image
        isn't on the monster itself */
     if ((sensemethod & MSENSE_DISPLACED) &&
-        ((sensemethod & ~(MSENSE_ANYVISION | MSENSE_DISPLACED)) ||
+        ((sensemethod & ~(MSENSE_ANYVISION | MSENSE_DISPLACED |
+                          MSENSEF_KNOWNINVIS)) ||
          (dx == m_mx(viewer) && dy == m_my(viewer)))) {
         sensemethod &= ~MSENSE_DISPLACED;
     }
