@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-04 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2224,11 +2224,11 @@ do_genocide(struct monst *mon, int how)
                             pline("%s gave up on trying to genocide something.", Monnam(mon));
                     }
                     if (!(how & REALLY)) {
-                        if (vis)
-                            pline("But wait...");
                         ptr = rndmonst(&u.uz, rng_main);
                         if (!ptr)
                             return; /* no message, like normal case */
+                        if (vis)
+                            pline("But wait...");
                         mndx = monsndx(ptr);
                         break;      /* remaining checks don't apply */
                     } else
