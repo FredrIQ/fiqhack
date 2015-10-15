@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1260,7 +1260,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 
             pline("The %s crashes on %s and breaks into shards.", botlnam, buf);
         }
-        if (rn2(5) && mon->mhp > 1)
+        if (rn2(5) && mon->mhp >= 2)
             mon->mhp--;
     }
 
@@ -1377,7 +1377,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                         aggravate();
                     mon->mhp -= dice(2, 6);
                     /* should only be by you */
-                    if (mon->mhp < 1)
+                    if (mon->mhp <= 0)
                         killed(mon);
                     else if (is_were(mon->data) && !is_human(mon->data))
                         new_were(mon);  /* revert to human */
@@ -1400,7 +1400,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                     pline("%s rusts.", Monnam(mon));
                 mon->mhp -= dice(1, 6);
                 /* should only be by you */
-                if (mon->mhp < 1)
+                if (mon->mhp <= 0)
                     killed(mon);
             }
             break;
@@ -1415,7 +1415,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                 if (!is_silent(mon->data))
                     aggravate();
                 mon->mhp -= dice(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8);
-                if (mon->mhp < 1) {
+                if (mon->mhp <= 0) {
                     if (your_fault)
                         killed(mon);
                     else

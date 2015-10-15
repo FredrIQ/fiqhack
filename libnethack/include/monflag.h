@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -66,15 +66,6 @@
 # define MR_STONE        0x80           /* resists petrification */
 /* other resistances: magic, sickness */
 /* other conveyances: teleport, teleport control, telepathy */
-
-/* individual resistances */
-# define MR2_SEE_INVIS   0x0100         /* see invisible */
-# define MR2_LEVITATE    0x0200         /* levitation */
-# define MR2_WATERWALK   0x0400         /* water walking */
-# define MR2_MAGBREATH   0x0800         /* magical breathing */
-# define MR2_DISPLACED   0x1000         /* displaced */
-# define MR2_STRENGTH    0x2000         /* gauntlets of power */
-# define MR2_FUMBLING    0x4000         /* clumsy */
 
 /* proficiencies */
 # define MP_WANDS        0x00000001L

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -224,7 +224,6 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                 set_property(mtmp, STUNNED, dmg, TRUE);
                 monflee(mtmp, 0, FALSE, TRUE);
             } else if (wandlevel >= P_SKILLED) {
-                mtmp->mhp = -1;
                 if (yours)
                     killed(mtmp);
                 else
@@ -432,7 +431,8 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             dmg += spell_damage_bonus();
         if (resists_drli(mtmp))
             shieldeff(mtmp->mx, mtmp->my);
-        else if (!resist(mtmp, otmp->oclass, dmg, NOTELL) && mtmp->mhp > 0) {
+        else if (!resist(mtmp, otmp->oclass, dmg, NOTELL) &&
+                 !DEADMONSTER(mtmp)) {
             mtmp->mhp -= dmg;
             mtmp->mhpmax -= dmg;
             if (mtmp->mhp <= 0 || mtmp->mhpmax <= 0 || mtmp->m_lev < 1)
@@ -449,7 +449,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         break;
     }
     if (wake) {
-        if (mtmp->mhp > 0) {
+        if (!DEADMONSTER(mtmp)) {
             if (yours) {
                 wakeup(mtmp, FALSE);
                 m_respond(mtmp);
@@ -464,7 +464,8 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
        reveal_invis will be false.  We can't use mtmp->mx, my since it might be
        an invisible worm hit on the tail. */
     if (reveal_invis) {
-        if (mtmp->mhp > 0 && cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp))
+        if (!DEADMONSTER(mtmp) && cansee(bhitpos.x, bhitpos.y) &&
+            !canspotmon(mtmp))
             map_invisible(bhitpos.x, bhitpos.y);
     }
     if (known && useen && tseen && (otmp->oclass == WAND_CLASS || otmp->oclass == POTION_CLASS))
@@ -2592,7 +2593,7 @@ zap_updown(struct monst *mon,struct obj *obj, schar dz)
                        killer_msg(DIED, "smashing up the ceiling"));
             else {
                 mon->mhp -= rnd((armh && is_metallic(armh)) ? 2 : 6);
-                if (mon->mhp < 1)
+                if (mon->mhp <= 0)
                     mondied(mon);
             }
             if ((otmp = mksobj_at(ROCK, level, x, y, FALSE, FALSE, rng_main))) {
@@ -3364,20 +3365,22 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                               you ? "You" : Monnam(mon),
                               you ? "are" : "seems");
                 } else {
-                    if (you)
+                    if (you) {
                         losexp("drained by a wand of death", FALSE);
-                    else {
+                        return;
+                    } else {
                         tmp = dice(2, 6);
                         if (oseen)
                             pline("%s suddenly seems weaker!", Monnam(mon));
                         mon->mhpmax -= tmp;
-                        if (mon->m_lev == 0)
-                            tmp = mon->mhp;
-                        else
+                        mon->mhp -= tmp;
+                        if (mon->m_lev > 0) {
                             mon->m_lev--;
+                            return;
+                        }
+                        /* level 0 monsters are killed below */
                     }
                 }
-                return;
             }
         } else { /* disintegration */
             if (is_rider(mon->data)) {
@@ -3520,7 +3523,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
         losehp(tmp, killer_msg(DIED, an(fltxt)));
     else {
         mon->mhp -= tmp;
-        if (mon->mhp < 1) {
+        if (mon->mhp <= 0) {
             if (yours)
                 killed(mon);
             else
@@ -4386,7 +4389,7 @@ resist(struct monst *mtmp, char oclass, int damage, int domsg)
 
     if (damage) {
         mtmp->mhp -= damage;
-        if (mtmp->mhp < 1) {
+        if (mtmp->mhp <= 0) {
             if (flags.mon_moving)
                 monkilled(mtmp, "", AD_RBRE);
             else

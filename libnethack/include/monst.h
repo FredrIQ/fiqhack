@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -144,9 +144,12 @@ struct monst {
     uint64_t mintrinsics;       /* monster intrinsics */
     uchar mt_prop[mt_lastprop + 1]; /* intrinsics that time out */
 
+    /* turnstate; doesn't count against bitfield bit count */
+    unsigned deadmonster:1;     /* always 0 at neutral turnstate */
+
     uchar mfleetim;     /* timeout for mflee */
     uchar wormno;       /* at most 31 worms on any level */
-# define MAX_NUM_WORMS  32      /* wormno could hold larger worm ids, but 32 is 
+# define MAX_NUM_WORMS  32      /* wormno could hold larger worm ids, but 32 is
                                    (still) fine */
     xchar weapon_check;
     int misc_worn_check;
@@ -191,7 +194,7 @@ struct monst {
 # define MON_WEP(mon)     (m_mwep(mon))
 # define MON_NOWEP(mon)   ((mon)->mw = NULL)
 
-# define DEADMONSTER(mon) ((mon)->mhp < 1)
+# define DEADMONSTER(mon) ((mon)->deadmonster)
 
 # define onmap(mon) (isok((mon)->mx, (mon)->my))
 
@@ -203,8 +206,8 @@ struct monst {
 # define m_mburied(mon) ((mon) == &youmonst ? u.uburied : (mon)->mburied)
 # define m_mundetected(mon) ((mon) == &youmonst ? u.uundetected : \
                              (mon)->mundetected)
-# define m_mhiding(mon) (((mon) == &youmonst ? u.uundetected :          \
-                          is_hider(mon->data)) && (mon)->mundetected)
+# define m_mhiding(mon) ((mon) == &youmonst ? u.uundetected :   \
+                         is_hider(mon->data) && (mon)->mundetected)
 # define m_underwater(mon) ((mon) == &youmonst ? Underwater :           \
                             (mon)->data->mlet == S_EEL && (mon)->mundetected)
 # define m_minvent(mon) ((mon) == &youmonst ? invent : (mon)->minvent)

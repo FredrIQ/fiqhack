@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1283,6 +1283,11 @@ steedintrap(struct trap *trap, struct obj *otmp)
         break;
     case PIT:
     case SPIKED_PIT:
+        /* Note: in the case of the steed being hit recursively by a landmine,
+           the steed may be on zero/negative HP but not dead yet, I think?  This
+           code is quite hard to follow, and I'm not convinced that ignoring the
+           return value from this function is correct in that case (even though
+           it's what happens at current). */
         if (mtmp->mhp <= 0 ||
             thitm(0, mtmp, NULL, rnd((tt == PIT) ? 6 : 10), FALSE))
             trapkilled = TRUE;
@@ -1931,7 +1936,7 @@ mintrap(struct monst *mtmp)
                     else if (mtmp->mtame)
                         pline("May %s rust in peace.", mon_nam(mtmp));
                     mondied(mtmp);
-                    if (mtmp->mhp <= 0)
+                    if (DEADMONSTER(mtmp))
                         trapkilled = TRUE;
                 } else if (mptr == &mons[PM_GREMLIN] && rn2(3)) {
                     split_mon(mtmp, NULL);
@@ -2019,7 +2024,7 @@ mintrap(struct monst *mtmp)
                 seetrap(trap);
             }
             mselftouch(mtmp, "Falling, ", FALSE);
-            if (mtmp->mhp <= 0 ||
+            if (DEADMONSTER(mtmp) ||
                 thitm(0, mtmp, NULL, rnd((tt == PIT) ? 6 : 10), FALSE))
                 trapkilled = TRUE;
             break;
@@ -2214,7 +2219,7 @@ mintrap(struct monst *mtmp)
                     fill_pit(lev, mtmp->mx, mtmp->my);
                 else if (!DEADMONSTER(mtmp))
                     minliquid(mtmp);
-                if (mtmp->mhp <= 0)
+                if (DEADMONSTER(mtmp))
                     trapkilled = TRUE;
                 cancel_helplessness(hm_unconscious,
                                     "The explosion awakens you!");
@@ -2244,7 +2249,7 @@ mintrap(struct monst *mtmp)
                      trap->launch2.y, style)) {
                     if (in_sight)
                         trap->tseen = TRUE;
-                    if (mtmp->mhp <= 0)
+                    if (DEADMONSTER(mtmp))
                         trapkilled = TRUE;
                 } else {
                     deltrap(lev, trap);
@@ -4169,7 +4174,7 @@ thitm(int tlev, struct monst *mon, struct obj *obj, int d_override,
             int yy = mon->my;
 
             monkilled(mon, "", nocorpse ? -AD_RBRE : AD_PHYS);
-            if (mon->mhp <= 0) {
+            if (DEADMONSTER(mon)) {
                 newsym(xx, yy);
                 trapkilled = TRUE;
             }

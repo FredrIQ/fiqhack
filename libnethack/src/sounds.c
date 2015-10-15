@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Alex Smith, 2015-10-11 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -682,9 +682,8 @@ domonnoise(struct monst *mtmp)
         else
             switch (monsndx(ptr)) {
             case PM_HOBBIT:
-                pline_msg =
-                    (mtmp->mhpmax - mtmp->mhp >=
-                     10) ? "complains about unpleasant dungeon conditions." :
+                pline_msg = (mtmp->mhpmax - mtmp->mhp >= 10) ?
+                    "complains about unpleasant dungeon conditions." :
                     "asks you about the One Ring.";
                 break;
             case PM_ARCHEOLOGIST:

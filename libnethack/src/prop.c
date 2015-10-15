@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -1521,7 +1521,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     boolean vertical_loe =
         !(m_mburied(viewer) || m_mburied(viewee) ||
           ((!!m_underwater(viewee)) ^ (!!m_underwater(viewer))) ||
-          m_mhiding(viewee));
+          m_mundetected(viewee));
 
     boolean invisible = !!invisible(viewee);
 
@@ -2291,7 +2291,7 @@ enlightenment(int final)
     if (Fumbling)
         enl_msg(&menu, "You fumble", "", "d", "");
     if (Wounded_legs && !u.usteed)
-        you_have(&menu, msgcat("wounded", makeplural(body_part(LEG))));;
+        you_have(&menu, msgcat("wounded ", makeplural(body_part(LEG))));;
     if (Wounded_legs && u.usteed && wizard) {
         const char *buf =
             x_monnam(u.usteed, ARTICLE_YOUR, NULL,

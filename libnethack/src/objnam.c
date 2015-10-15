@@ -816,7 +816,7 @@ doname_base(const struct obj *obj, boolean with_price)
         if (obj->otyp == CORPSE) {
             if (mons[obj->corpsenm].geno & G_UNIQ) {
                 prefix = msgcat_many(
-                    prefix, (type_is_pname(&mons[obj->corpsenm]) ? "" : "the "),
+                    (type_is_pname(&mons[obj->corpsenm]) ? "" : "the "),
                     s_suffix(mons[obj->corpsenm].mname), " ", NULL);
                 if (obj->oeaten)
                     prefix = msgcat(prefix, "partly eaten ");

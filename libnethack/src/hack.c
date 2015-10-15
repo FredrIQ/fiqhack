@@ -188,8 +188,8 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
             return uia_halt;
         }
 
-        if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall && bad_rock(&youmonst, x, y) &&
-            (!uwep || !is_pick(uwep))) {
+        if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall &&
+            bad_rock(youmonst.data, x, y) && (!uwep || !is_pick(uwep))) {
             if (!cansee(x, y))
                 pline("Use the 'moveonly' command to move into a "
                       "remembered wall.");

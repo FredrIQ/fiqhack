@@ -752,7 +752,7 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     }
 
     /* may be too weak or have been extinguished for population control */
-    if (mon->mhp <= 1 || (mvitals[monsndx(mon->data)].mvflags & G_EXTINCT))
+    if (mon->mhp < 2 || (mvitals[monsndx(mon->data)].mvflags & G_EXTINCT))
         return NULL;
 
     if (x == 0) {
@@ -1560,7 +1560,7 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
 
     /* monster died after killing enemy but before calling this function */
     /* currently possible if killing a gas spore */
-    if (mtmp->mhp <= 0)
+    if (DEADMONSTER(mtmp))
         return NULL;
 
     /* note: none of the monsters with special hit point calculations have both
@@ -2196,6 +2196,9 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->ispriest = (mflags >> 1) & 1;
     mon->iswiz = (mflags >> 0) & 1;
 
+    /* turnstate has a fixed value on save */
+    mon->deadmonster = 0;
+
     return mon;
 }
 
@@ -2416,6 +2419,10 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
             save_fcorr(mf, &CONST_EGD(mon)->fakecorr[i]);
         break;
     }
+
+    /* verify turnstate */
+    if (mon->deadmonster)
+        panic("attempting to save a dead monster");
 }
 
 /*makemon.c*/

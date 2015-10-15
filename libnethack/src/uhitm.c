@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -436,7 +436,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 
                 if (obj->oartifact &&
                     artifact_hit(&youmonst, mon, obj, &tmp, dieroll)) {
-                    if (mon->mhp <= 0)  /* artifact killed monster */
+                    if (DEADMONSTER(mon))  /* artifact killed monster */
                         return FALSE;
                     if (tmp == 0)
                         return TRUE;
@@ -476,7 +476,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                 setuwep(NULL);
             obj_extract_self(obj);
             potionhit(mon, obj, TRUE);
-            if (mon->mhp <= 0)
+            if (DEADMONSTER(mon))
                 return FALSE;   /* killed */
             hittxt = TRUE;
             /* in case potion effect causes transformation */
@@ -524,7 +524,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                               (obj->quan > 1) ? makeplural(withwhat) :
                               withwhat);
                         mstiffen(mon);
-                        return (boolean) (mon->mhp > 0);
+                        return !DEADMONSTER(mon);
                     }
                     tmp =
                         (obj->corpsenm >=
@@ -561,7 +561,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                             obj->known = 1;     /* (not much point...) */
                             useup_eggs(obj);
                             mstiffen(mon);
-                            return (boolean) (mon->mhp > 0);
+                            return !DEADMONSTER(mon);
                         } else {        /* ordinary egg(s) */
                             const char *eggp =
                                 (obj->corpsenm != NON_PM &&
@@ -800,7 +800,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     }
     if ((mdat == &mons[PM_BLACK_PUDDING] || mdat == &mons[PM_BROWN_PUDDING])
         && obj && obj == uwep && objects[obj->otyp].oc_material == IRON &&
-        mon->mhp > 1 && !thrown && !cancelled(mon)
+        mon->mhp >= 2 && !thrown && !cancelled(mon)
         /* && !destroyed -- guaranteed by mhp > 1 */ ) {
         if (clone_mon(mon, 0, 0)) {
             pline("%s divides as you hit it!", Monnam(mon));
@@ -1069,7 +1069,7 @@ steal_it(struct monst *mdef, const struct attack *mattk)
             possibly_unwield(mdef, FALSE);
         } else if (unwornmask & W_MASK(os_armg)) {    /* stole worn gloves */
             mselftouch(mdef, NULL, TRUE);
-            if (mdef->mhp <= 0) /* it's now a statue */
+            if (DEADMONSTER(mdef)) /* it's now a statue */
                 return; /* can't continue stealing */
         }
 
@@ -1459,7 +1459,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
     }
 
     mdef->mstrategy &= ~STRAT_WAITFORU; /* in case player is very fast */
-    if ((mdef->mhp -= tmp) < 1) {
+    if ((mdef->mhp -= tmp) <= 0) {
         if (mdef->mtame && !cansee(mdef->mx, mdef->my)) {
             pline("You feel embarrassed for a moment.");
             if (tmp)
@@ -1609,7 +1609,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
 
                 newuhs(FALSE);
                 xkilled(mdef, 2);
-                if (mdef->mhp > 0) {    /* monster lifesaved */
+                if (!DEADMONSTER(mdef)) {    /* monster lifesaved */
                     pline("You hurriedly regurgitate the sizzling in your %s.",
                           body_part(STOMACH));
                 } else {
@@ -1707,7 +1707,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
             end_engulf(mdef);
             if ((mdef->mhp -= dam) <= 0) {
                 killed(mdef);
-                if (mdef->mhp <= 0)     /* not lifesaved */
+                if (DEADMONSTER(mdef))     /* not lifesaved */
                     return 2;
             }
             pline("You %s %s!",
@@ -2283,7 +2283,7 @@ flash_hits_mon(struct monst *mtmp, struct obj *otmp)
                     map_invisible(mtmp->mx, mtmp->my);
                 }
             }
-            if (mtmp->mhp > 0) {
+            if (!DEADMONSTER(mtmp)) {
                 if (!flags.mon_moving)
                     setmangry(mtmp);
                 if (tmp < 9 && !mtmp->isshk && rn2(4)) {

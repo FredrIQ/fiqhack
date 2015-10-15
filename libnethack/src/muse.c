@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -168,7 +168,7 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
             m_useup(mon, obj);
             m->use = MUSE_NONE;
             /* Only one needed to be set to MUSE_NONE but the others are harmless */
-            return (mon->mhp <= 0) ? 1 : 2;
+            return DEADMONSTER(mon) ? 1 : 2;
         }
     }
     return 0;
@@ -1743,7 +1743,7 @@ use_item(struct monst *mon, struct musable *m)
     switch (m->use) {
     case MUSE_SPE:
         m_spelleffects(mon, m->spell, m->x, m->y, m->z);
-        return mon->mhp < 1 ? 1 : 2;
+        return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_SCR:
         mreadmsg(mon, obj);
         obj->in_use = TRUE;
@@ -1760,12 +1760,12 @@ use_item(struct monst *mon, struct musable *m)
             else
                 obj->in_use = FALSE;
         }
-        return mon->mhp < 1 ? 1 : 2;
+        return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_POT:
         mquaffmsg(mon, obj);
         peffects(mon, obj);
         m_useup(mon, obj);
-        return mon->mhp < 1 ? 1 : 2;
+        return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_WAN:
         if (objects[obj->otyp].oc_dir != NODIR &&
             !m->x && !m->y && !m->z)
@@ -1779,7 +1779,7 @@ use_item(struct monst *mon, struct musable *m)
                 pline("%s to dust.", Tobjnam(obj, "turn"));
             m_useup(mon, obj);
         }
-        return mon->mhp < 1 ? 1 : 2;
+        return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_THROW:
         if (cansee(mon->mx, mon->my)) {
             obj->dknown = 1;
@@ -1790,7 +1790,7 @@ use_item(struct monst *mon, struct musable *m)
         return 2;
     case MUSE_EAT:
         dog_eat(mon, obj, mon->mx, mon->my, FALSE);
-        return mon->mhp < 1 ? 1 : 2;
+        return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_CONTAINER:
         /* for picking stuff from containers */
         if (obj->where == OBJ_CONTAINED) {
@@ -1875,7 +1875,7 @@ use_item(struct monst *mon, struct musable *m)
         obj->spe--;
         buzz(-30 - ((obj->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1),
              rn1(6, 6), mon->mx, mon->my, m->x, m->y, 0);
-        return (mtmp->mhp < 1 ? 1 : 2);
+        return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_BUGLE:
         if (vismon)
             pline("%s plays %s!", Monnam(mon), doname(obj));
@@ -2183,7 +2183,6 @@ try_again:
 
 /* what? (investigate do_break_wand for this...) */
 #define BY_OBJECT       (NULL)
-
 static void
 mon_break_wand(struct monst *mtmp, struct obj *otmp) {
     int i, x, y;
