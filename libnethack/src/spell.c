@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -173,7 +173,7 @@ cursed_book(struct monst *mon, struct obj *bp)
         } else {
             /* do a bit more damage since monsters can't lose str */
             mon->mhp -= resists_poison(mon) ? 10 : 15;
-            if (mon->mhp < 1)
+            if (mon->mhp <= 0)
                 mondied(mon);
         }
         bp->in_use = was_inuse;
@@ -196,7 +196,7 @@ cursed_book(struct monst *mon, struct obj *bp)
                 losehp(2 * rnd(10) + 5, killer_msg(DIED, "an exploding rune"));
             else {
                 mon->mhp -= 2 * rnd(10) + 5;
-                if (mon->mhp < 1)
+                if (mon->mhp <= 0)
                     mondied(mon);
             }
         }

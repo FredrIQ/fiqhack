@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -478,7 +478,7 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
             } else {
                 m_useup(mon, obj);
                 mon->mhp -= s;
-                if (mon->mhp < 1)
+                if (mon->mhp <= 0)
                     mondied(mon);
             }
         } else {
@@ -1529,7 +1529,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                     losehp(1, killer_msg(DIED, "a scroll of fire"));
                 else {
                     mon->mhp -= 1;
-                    if (mon->mhp < 1)
+                    if (mon->mhp <= 0)
                         mondied(mon);
                 }
             }
@@ -1765,7 +1765,7 @@ wand_explode(struct monst *mon, struct obj *obj)
     else {
         m_useup(mon, obj);
         mon->mhp -= rnd(2 * (mon->mhpmax + 1) / 3);
-        if (mon->mhp < 1)
+        if (mon->mhp <= 0)
             mondied(mon);
     }
     if (you) {

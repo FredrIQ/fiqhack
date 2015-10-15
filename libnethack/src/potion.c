@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -555,7 +555,7 @@ peffects(struct monst *mon, struct obj *otmp)
                     losehp(dice(2, 6), killer_msg(DIED, "a potion of holy water"));
                 else {
                     mon->mhp -= dice(2, 6);
-                    if (mon->mhp < 1)
+                    if (mon->mhp <= 0)
                         mondied(mon);
                 }
             } else if (otmp->cursed) {
@@ -597,7 +597,7 @@ peffects(struct monst *mon, struct obj *otmp)
                                killer_msg(DIED, "a potion of unholy water"));
                     else {
                         mon->mhp -= dice(2, 6);
-                        if (mon->mhp < 1)
+                        if (mon->mhp <= 0)
                             mondied(mon);
                     }
                 } else if (you)
@@ -841,7 +841,7 @@ peffects(struct monst *mon, struct obj *otmp)
                         mon->mhp -= dmg;
                         if (mon->mhpmax < 1)
                             mon->mhpmax = 1; /* avoid strange issues if mon gets lifesaved */
-                        if (mon->mhp < 1) {
+                        if (mon->mhp <= 0) {
                             mondied(mon);
                             break;
                         }
@@ -856,7 +856,7 @@ peffects(struct monst *mon, struct obj *otmp)
                                killer_msg(DIED, "contaminated potion"));
                     else {
                         mon->mhp -= rnd(10) + 5;
-                        if (mon->mhp < 1)
+                        if (mon->mhp <= 0)
                             mondied(mon);
                     }
                 }
@@ -1058,7 +1058,7 @@ peffects(struct monst *mon, struct obj *otmp)
                     losehp(dmg, killer_msg(DIED, "colliding with the ceiling"));
                 else {
                     mon->mhp -= dmg;
-                    if (mon->mhp < 1)
+                    if (mon->mhp <= 0)
                         mondied(mon);
                 }
             } else if (you)
@@ -1112,7 +1112,7 @@ peffects(struct monst *mon, struct obj *otmp)
                         losehp(dmg, killer_msg(DIED, "a burning potion of oil"));
                     else {
                         mon->mhp -= dmg;
-                        if (mon->mhp < 1)
+                        if (mon->mhp <= 0)
                             mondied(mon);
                     }
                 }
@@ -1144,7 +1144,7 @@ peffects(struct monst *mon, struct obj *otmp)
                 exercise(A_CON, FALSE);
             } else {
                 mon->mhp -= dmg;
-                if (mon->mhp < 1)
+                if (mon->mhp <= 0)
                     mondied(mon);
             }
         }

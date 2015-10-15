@@ -374,7 +374,7 @@ minliquid(struct monst *mtmp)
         mtmp->mhp -= dam;
         if (mtmp->mhpmax > dam)
             mtmp->mhpmax -= dam;
-        if (mtmp->mhp < 1) {
+        if (mtmp->mhp <= 0) {
             mondead(mtmp);
             if (DEADMONSTER(mtmp))
                 return 1;
@@ -399,7 +399,7 @@ minliquid(struct monst *mtmp)
                           "burns to a crisp");
                 mondead(mtmp);
             } else {
-                if (--mtmp->mhp < 1) {
+                if (--mtmp->mhp <= 0) {
                     if (cansee(mtmp->mx, mtmp->my))
                         pline("%s surrenders to the fire.", Monnam(mtmp));
                     mondead(mtmp);
@@ -1822,7 +1822,7 @@ corpse_chance(struct monst *mon,
                 } else {
                     You_hear("an explosion.");
                     magr->mhp -= tmp;
-                    if (magr->mhp < 1)
+                    if (magr->mhp <= 0)
                         mondied(magr);
                     if (DEADMONSTER(magr)) {        /* i.e. not lifesaved */
                         if (canseemon(magr))

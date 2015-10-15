@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -400,7 +400,7 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
     }
     if (obj->oclass != FOOD_CLASS) {
         eatspecial(mtmp, nutrit, obj);
-        if (mtmp->mhp < 1)
+        if (DEADMONSTER(mtmp))
             return 2;
         return 1;
     } else if (obj->otyp == CORPSE)
@@ -411,7 +411,7 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
     } else
         delobj(obj);
 
-    return mtmp->mhp < 1 ? 2 : 1;
+    return DEADMONSTER(mtmp) ? 2 : 1;
 }
 
 
@@ -456,7 +456,7 @@ dog_hunger(struct monst *mtmp, struct edog *edog)
             mtmp->mhpmax = newmhpmax;
             if (mtmp->mhp > mtmp->mhpmax)
                 mtmp->mhp = mtmp->mhpmax;
-            if (mtmp->mhp < 1)
+            if (mtmp->mhp <= 0)
                 goto dog_died;
             if (cansee(mtmp->mx, mtmp->my))
                 pline("%s is confused from hunger.", Monnam(mtmp));
@@ -465,7 +465,7 @@ dog_hunger(struct monst *mtmp, struct edog *edog)
             else
                 pline("You feel worried about %s.", y_monnam(mtmp));
             action_interrupted();
-        } else if (moves > edog->hungrytime + 750 || mtmp->mhp < 1) {
+        } else if (moves > edog->hungrytime + 750 || mtmp->mhp <= 0) {
         dog_died:
             if (mtmp->mleashed && mtmp != u.usteed)
                 pline("Your leash goes slack.");

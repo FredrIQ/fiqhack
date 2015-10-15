@@ -512,7 +512,7 @@ mon_remove_levitation(struct monst *mon, boolean forced)
         pline("%s crashes to the floor!", Monnam(mon));
     
     mon->mhp -= rn1(8, 14); /* same as for player with 11 Con */
-    if (mon->mhp < 0) {
+    if (mon->mhp <= 0) {
         if (cansee(mon->mx, mon->my))
             pline("%s dies!", Monnam(mon));
         else if (mon->mtame)

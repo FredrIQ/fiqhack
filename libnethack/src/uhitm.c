@@ -792,7 +792,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
        artifact has already done to max HP */
     if (mon->mhp > mon->mhpmax)
         mon->mhp = mon->mhpmax;
-    if (mon->mhp < 1)
+    if (mon->mhp <= 0)
         destroyed = TRUE;
     if (mon->mtame && (!mon->mflee || mon->mfleetim) && tmp > 0) {
         abuse_dog(mon);
