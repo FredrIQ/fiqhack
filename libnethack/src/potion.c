@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -372,7 +372,7 @@ dodrink(const struct nh_cmd_arg *arg)
                    flags.djinni_count < MAXMONNO &&
                    !rn2_on_rng(POTION_OCCUPANT_CHANCE(flags.djinni_count),
                                rng_smoky_potion)) {
-            djinni_from_bottle(potion);
+            djinni_from_bottle(&youmonst, potion);
             useup(potion);
             return 1;
         }
@@ -2239,32 +2239,48 @@ more_dips:
 
 
 void
-djinni_from_bottle(struct obj *obj)
+djinni_from_bottle(struct monst *mon, struct obj *obj)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
     struct monst *mtmp;
 
     if (!(mtmp = makemon(&mons[PM_DJINNI], level, u.ux, u.uy, NO_MM_FLAGS))) {
-        pline("It turns out to be empty.");
+        if (you || vis)
+            pline("It turns out to be empty.");
         return;
     }
 
-    if (!Blind) {
-        pline("In a cloud of smoke, %s emerges!", a_monnam(mtmp));
-        pline("%s speaks.", Monnam(mtmp));
-    } else {
-        pline("You smell acrid fumes.");
-        pline("Something speaks.");
+    /* only hear the djinni if there is clear LOE to the monster... */
+    boolean speak = FALSE;
+    if (you || couldsee(mon->mx, mon->my)) {
+        if (!blind(&youmonst))
+            pline("In a cloud of smoke, %s emerges!", a_monnam(mtmp));
+        else
+            pline("You smell acrid fumes.");
+        if (canhear()) {
+            speak = TRUE;
+            pline("%s speaks.", Monnam(mtmp));
+        }
     }
 
     int dieroll;
     /* The wish has the largest balance implications; use wish_available to
        balance it against other wish sources with the same probability; also
        find out what the dieroll was so that the non-wish results will be
-       consistent if the only 80%/20%/5% wish sources so far were djinn */
-    if (wish_available(obj->blessed ? 80 : obj->cursed ? 5 : 20, &dieroll)) {
+       consistent if the only 80%/20%/5% wish sources so far were djinn.
+       If you wasn't the one drinking the potion, perform rng checks on
+       rng_main instead */
+    if ((you && wish_available(obj->blessed ? 80 : obj->cursed ? 5 : 20, &dieroll)) ||
+        (!you &&
+         ((dieroll = rn2(100)) < (obj->blessed ? 80 : obj->cursed ? 5 : 20)))) {
         msethostility(mtmp, FALSE, TRUE); /* show as peaceful while wishing */
-        verbalize("I am in your debt.  I will grant one wish!");
-        makewish();
+        if (speak)
+            verbalize("I am in your debt.  I will grant one wish!");
+        if (you)
+            makewish();
+        else
+            mon_makewish(mon);
         mongone(mtmp);
         return;
     }
@@ -2276,20 +2292,30 @@ djinni_from_bottle(struct obj *obj)
 
     switch (dieroll % 4) {
     case 0:
-        verbalize("You disturbed me, fool!");
-        msethostility(mtmp, TRUE, TRUE);
+        if (speak)
+            verbalize("You disturbed me, fool!");
+        mtmp->mpeaceful = (you ? 0 : !mon->mpeaceful);
+        /* TODO: allow monster specific grudges */
+        if (!you && !mon->mpeaceful)
+            tamedog(mtmp, NULL);
         break;
     case 1:
-        verbalize("Thank you for freeing me!");
-        tamedog(mtmp, NULL);
+        if (speak)
+            verbalize("Thank you for freeing me!");
+        mtmp->mpeaceful = (you || mon->mpeaceful);
+        if (you || mon->mtame)
+            tamedog(mtmp, NULL);
         break;
     case 2:
-        verbalize("You freed me!");
+        if (speak)
+            verbalize("You freed me!");
         msethostility(mtmp, FALSE, TRUE);
         break;
     case 3:
-        verbalize("It is about time!");
-        pline("%s vanishes.", Monnam(mtmp));
+        if (speak)
+            verbalize("It is about time!");
+        if (you || canseemon(mtmp))
+            pline("%s vanishes.", Monnam(mtmp));
         mongone(mtmp);
         break;
     }

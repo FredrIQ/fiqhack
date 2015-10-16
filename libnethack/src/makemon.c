@@ -1215,6 +1215,9 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     mtmp->dx = COLNO;
     mtmp->dy = ROWNO;
     mtmp->mintrinsics = 0;
+    mtmp->mhitinc = 0;
+    mtmp->mdaminc = 0;
+    mtmp->mblessed = 0;
 
     return mtmp;
 }

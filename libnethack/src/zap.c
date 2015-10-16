@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -628,11 +628,6 @@ montraits(struct obj *obj, coord * cc)
         mtmp2->mfleetim = mtmp->mfleetim;
         mtmp2->mlstmv = mtmp->mlstmv;
         mtmp2->m_ap_type = mtmp->m_ap_type;
-        mtmp2->mspells = mtmp->mspells;
-        mtmp2->mintrinsics = mtmp->mintrinsics;
-        enum mt_prop mt;
-        for (mt = mt_firstprop; mt <= mt_lastprop; mt++)
-            mtmp2->mt_prop[mt] = mtmp->mt_prop[mt];
         /* set these ones explicitly */
         mtmp2->mavenge = 0;
         mtmp2->meating = 0;
@@ -2023,7 +2018,7 @@ zapnodir(struct monst *mon, struct obj *obj)
             exercise(A_WIS, TRUE);
         } else if (vis) {
             known = TRUE;
-            pline("%s is enlightened.", Monnam(mon));
+            pline("%s looks self-knowledgeable...", Monnam(mon));
             /* TODO: id unknown magical objects */
         }
         break;

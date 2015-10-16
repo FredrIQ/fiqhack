@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -303,12 +303,16 @@ make_corpse(struct monst *mtmp)
         break;
     default_1:
     default:
-        if (mvitals[mndx].mvflags & G_NOCORPSE)
-            return NULL;
-        else    /* preserve the unique traits of some creatures */
+        /* Spellcasters, monsters with intrinsics and "special" monsters
+           retain their monst struct */
+        if (mtmp->mspells || mtmp->mintrinsics || mtmp->mblessed ||
+            mtmp->mdaminc || mtmp->mhitinc ||
+            (!(mvitals[mndx].mvflags & G_NOCORPSE)))
             obj =
                 mkcorpstat(CORPSE, KEEPTRAITS(mtmp) ? mtmp : 0, mdat, level, x,
                            y, TRUE, rng_main);
+        else
+            return NULL;
         break;
     }
     /* All special cases should precede the G_NOCORPSE check */
@@ -530,8 +534,8 @@ mcalcmove(struct monst *mon)
         return u.moveamt;
     }
 
-    /* Note: MSLOW's `+ 1' prevents slowed speed 1 getting reduced to 0;
-       MFAST's `+ 2' prevents hasted speed 1 from becoming a no-op; both
+    /* Note: slow's `+ 1' prevents slowed speed 1 getting reduced to 0;
+       fast's `+ 2' prevents hasted speed 1 from becoming a no-op; both
        adjustments have negligible effect on higher speeds.
        "Very fast" needs +1 to avoid noop on speed 1 as well. */
     if (very_fast(mon))

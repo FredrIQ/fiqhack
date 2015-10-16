@@ -300,7 +300,7 @@ make_bones:
             return;     /* couldn't make statue */
         mtmp = NULL;
     } else if (u.ugrave_arise < LOW_PM && (rn2(3) || !corpse)) {
-        /* 25% of the time, Rodney shows up, undeadturns you and charms you to do his bidding */
+        /* 33% of the time, Rodney shows up, undeadturns you and charms you to do his bidding */
         /* drop everything */
         drop_upon_death(NULL, NULL, FALSE);
         /* trick makemon() into allowing monster creation on your location */

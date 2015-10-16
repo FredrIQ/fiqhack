@@ -96,60 +96,9 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
         if (potion_descr && !strcmp(potion_descr, "smoky") &&
             flags.djinni_count < MAXMONNO &&
             !rn2(POTION_OCCUPANT_CHANCE(flags.djinni_count))) {
-            int blessed = obj->blessed, cursed = obj->cursed;
-            if (!enexto(&cc, level, mon->mx, mon->my, &mons[PM_DJINNI]))
-                return 0;
             mquaffmsg(mon, obj);
+            djinni_from_bottle(mon, obj);
             m_useup(mon, obj);
-            mtmp = makemon(&mons[PM_DJINNI], level, cc.x, cc.y, NO_MM_FLAGS);
-            if (!mtmp) {
-                if (vis)
-                    pline("%s", empty);
-            } else {
-                /* GruntHack used rnl() here. I don't know why, but smoky djinnis
-                   aren't affected by luck if players do it, so it shouldn't be
-                   if monsters do it either. */
-                int what = rn2(5);
-                if (blessed && rn2(5))
-                    what = 0;
-                else if (cursed && rn2(5))
-                    what = 4;
-
-                if (vis)
-                    pline("In a cloud of smoke, %s emerges!", a_monnam(mtmp));
-                if (canhear())
-                    pline("%s speaks.", vis ? Monnam(mtmp) : "Something");
-                switch (what) {
-                case 0:
-                    verbalize("I am in your debt.  I will grant one wish!");
-                    mon_makewish(mon);
-                    mongone(mtmp);
-                    break;
-                case 1:
-                    verbalize("Thank you for freeing me!");
-                    mtmp->mpeaceful = mon->mpeaceful;
-                    if (mon->mtame)
-                        tamedog(mtmp, NULL);
-                    break;
-                case 2:
-                    verbalize("You freed me!");
-                    mtmp->mpeaceful = 1;
-                    break;
-                case 3:
-                    verbalize("It is about time!");
-                    if (vis)
-                        pline("%s vanishes.", Monnam(mtmp));
-                    mongone(mtmp);
-                    break;
-                case 4:
-                    verbalize("You disturbed me, fool!");
-                    mtmp->mpeaceful = !mon->mpeaceful;
-                    /* TODO: allow monster specific grudges */
-                    if (!mon->mpeaceful)
-                        tamedog(mtmp, NULL);
-                    break;
-                }
-            }
             return 2;
         }
     }
@@ -485,6 +434,9 @@ mon_makewish(struct monst *mtmp)
 static boolean
 mon_allowed(int otyp)
 {
+    /* Initial Release Test: free for all item using */
+    return TRUE;
+
     /* The corresponding spells (when relevant) are OK */
     switch (otyp) {
     case WAN_WISHING: /* was controversial in GruntHack */
@@ -752,6 +704,14 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
             }
         }
     }
+
+    /* If the monster is stunned or 20% of the time if confused,
+       scramble the direction */
+    if (stunned(mon) || (confused(mon) && !rn2(5))) {
+        int rand = rn2(9);
+        cc->x = (rand / 3) - 1;
+        cc->y = (rand % 3) - 1;
+    }
     return score_best;
 }
 
@@ -992,6 +952,56 @@ find_item(struct monst *mon, struct musable *m)
     m->spell = 0;
     m->use = 0;
 
+    /* Fix petrification */
+    if (petrifying(mon)) {
+        /* look for lizard */
+        for (obj = mon->minvent; obj; obj = obj->nobj) {
+            if (obj->otyp == CORPSE && obj->corpsenm == PM_LIZARD) {
+                m->obj = obj;
+                m->use = MUSE_EAT;
+                return TRUE;
+            }
+        }
+
+        /* cast s->f on self */
+        if (mon_castable(mon, SPE_STONE_TO_FLESH, FALSE)) {
+            m->spell = SPE_STONE_TO_FLESH;
+            m->use = MUSE_SPE;
+            return TRUE;
+        }
+
+        /* look for acidic corpses */
+        for (obj = mon->minvent; obj; obj = obj->nobj) {
+            if (obj->otyp == CORPSE && acidic(&mons[obj->corpsenm]) &&
+                (obj->corpsenm != PM_GREEN_SLIME ||
+                 likes_fire(mon->data) ||
+                 mon->data == &mons[PM_GREEN_SLIME])) {
+                m->obj = obj;
+                m->use = MUSE_EAT;
+                return TRUE;
+            }
+        }
+
+        /* look for potions of acid */
+        if (!nohands(mon->data)) {
+            if (find_item_obj(mon, mon->minvent, m, FALSE, POT_ACID))
+                return TRUE;
+        }
+
+        /* polyself */
+        if (mon_castable(mon, SPE_POLYMORPH, FALSE)) {
+            m->spell = SPE_POLYMORPH;
+            m->use = MUSE_SPE;
+            return TRUE;
+        }
+        if (!nohands(mon->data)) {
+            if (find_item_obj(mon, mon->minvent, m, FALSE, POT_POLYMORPH))
+                return TRUE;
+            if (find_item_obj(mon, mon->minvent, m, FALSE, WAN_POLYMORPH))
+                return TRUE;
+        }
+    }
+
     /* Fix slime */
     if (sliming(mon)) {
         if (mon_castable(mon, SPE_CURE_SICKNESS, FALSE)) {
@@ -1048,6 +1058,8 @@ find_item(struct monst *mon, struct musable *m)
         }
     }
 
+    if (blind(mon) && find_item_obj(mon, mon->minvent, m, FALSE, CARROT))
+        return TRUE;
     /* It so happens there are two unrelated cases when we might want to check
        specifically for healing alone.  The first is when the monster is blind
        (healing cures blindness).  The second is when the monster is peaceful;
@@ -1652,7 +1664,9 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell,
          otyp == POT_SPEED) && !very_fast(mon))
         return 1;
 
-    if (otyp == BULLWHIP && !rn2(2) && close)
+    if (otyp == BULLWHIP && !rn2(2) && close &&
+        (!mon->mw || !(mon->mw)->cursed ||
+         !(mon->mw)->mbknown || mon->mw == obj))
         return 2;
 
     if ((otyp == SPE_DETECT_MONSTERS ||
@@ -2050,17 +2064,52 @@ use_item(struct monst *mon, struct musable *m)
     case MUSE_BULLWHIP:
         mtmp = m_at(mon->dlevel, m->x, m->y);
         if (!mtmp) {
-            if (m->x != u.ux || m->y != u.uy) {
-                panic("Monster flicking bullwhip towards nothing!");
+            if (m->x == u.ux && m->y == u.uy)
+                mtmp = &youmonst;
+        }
+        if (!mon->mw || mon->mw != obj) {
+            if (mon->mw && (mon->mw)->cursed) {
+                if (vis)
+                    pline("%s tries to wield a bullwhip, "
+                          "but %s weapon is welded to %s hand!",
+                          Monnam(mon), s_suffix(mon_nam(mon)),
+                          mhis(mon));
+                (mon->mw)->mbknown = 1;
                 return 0;
             }
-            mtmp = &youmonst;
+            /* FIXME: the below is duplicated from weapon.c, allow one to
+               specify what weapon to make a monster wield */
+            struct obj *mw_tmp = mon->mw;
+            mon->mw = obj;  /* wield obj */
+            if (mw_tmp)
+                setmnotwielded(mon, mw_tmp);
+            mon->weapon_check = NEED_WEAPON;
+            if (mon_visible(mon)) {
+                pline("%s wields %s%s", Monnam(mon), singular(obj, doname),
+                      mon->mtame ? "." : "!");
+                if (obj->cursed && obj->otyp != CORPSE) {
+                    pline("%s %s to %s %s!", Tobjnam(obj, "weld"),
+                          is_plural(obj) ? "themselves" : "itself",
+                          s_suffix(mon_nam(mon)), mbodypart(mon, HAND));
+                    obj->bknown = 1;
+                    obj->mbknown = 1;
+                }
+            }
         }
+
+        if (!mtmp) {
+            /* can happen if a monster is confused or is trying to hit
+               something invisible/displaced */
+            if (vis)
+                pline("%s flicks a whip at thin air!", Monnam(mon));
+            return 1;
+        }
+
         const char *The_whip = vismon ? "The bullwhip" : "A whip";
         int where_to = rn2(4);
         otmp = m_mwep(mtmp);
         if (!otmp) {
-            panic("Monster targeting something without a weapon!");
+            impossible("Monster targeting something without a weapon!");
             return 0;
         }
         const char *hand;
@@ -2399,9 +2448,21 @@ searches_for_item(struct monst *mon, struct obj *obj)
     if (!mon_allowed(typ))
         return FALSE;
 
-    /* discharged wands/magical horns */
+    /* discharged wands/magical horns/bag of tricks */
     if ((obj->oclass == WAND_CLASS ||
-        typ == FROST_HORN || typ == FIRE_HORN) && obj->spe <= 0 && obj->mknown)
+         typ == FROST_HORN ||
+         typ == FIRE_HORN ||
+         typ == BAG_OF_TRICKS) &&
+        obj->spe <= 0 &&
+        obj->mknown &&
+        typ != WAN_WISHING)
+        return FALSE;
+
+    /* discharged lamps */
+    if ((typ == OIL_LAMP ||
+         typ == BRASS_LANTERN) &&
+        obj->age <= 0 &&
+        obj->mknown)
         return FALSE;
 
     if (typ == POT_INVISIBILITY)
@@ -2417,8 +2478,9 @@ searches_for_item(struct monst *mon, struct obj *obj)
     case WAND_CLASS:
         if (typ == WAN_DIGGING)
             return (boolean) (!levitates(mon));
-        /* locking/opening magic is TODO */
-        if (typ == WAN_LOCKING ||
+        /* locking magic is TODO */
+        if (typ == WAN_LIGHT ||
+            typ == WAN_LOCKING ||
             typ == WAN_MAGIC_MISSILE ||
             typ == WAN_MAKE_INVISIBLE ||
             typ == WAN_OPENING ||
@@ -2479,10 +2541,16 @@ searches_for_item(struct monst *mon, struct obj *obj)
             return (boolean) needspick(mon->data);
         if (typ == UNICORN_HORN)
             return (boolean) ((!obj->cursed || !obj->mbknown) && !is_unicorn(mon->data));
+        if (typ == BRASS_LANTERN ||
+            typ == OIL_LAMP ||
+            typ == TALLOW_CANDLE ||
+            typ == WAX_CANDLE)
+            return (mon_castable(mon, SPE_JUMPING, TRUE) >= 80);
         if (typ == SACK ||
             typ == OILSKIN_SACK ||
             typ == BAG_OF_HOLDING ||
             typ == BAG_OF_TRICKS ||
+            typ == MAGIC_LAMP ||
             typ == SKELETON_KEY)
             return TRUE;
         if (typ == FROST_HORN ||

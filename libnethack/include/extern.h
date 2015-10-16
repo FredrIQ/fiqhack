@@ -1387,7 +1387,7 @@ extern void strange_feeling(struct obj *, const char *);
 extern void potionhit(struct monst *, struct obj *, boolean);
 extern void potionbreathe(struct monst *, struct obj *);
 extern int dodip(const struct nh_cmd_arg *);
-extern void djinni_from_bottle(struct obj *);
+extern void djinni_from_bottle(struct monst *, struct obj *);
 extern struct monst *split_mon(struct monst *, struct monst *);
 extern const char *bottlename(void);
 
