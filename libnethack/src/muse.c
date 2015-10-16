@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -793,7 +793,11 @@ mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
             /* Invalid targets */
             if (!isok(x, y))
                 continue;
-            if (!m_cansee(mon, x, y))
+            if (!m_cansee(mon, x, y) ||
+                (!stink && ((x == u.ux && y == u.uy &&
+                            msensem(mon, &youmonst)) ||
+                            ((mtmp = m_at(level, x, y)) &&
+                             msensem(mon, mtmp)))))
                 continue;
             if (dist2(mon->mx, mon->my, x, y) > (globrange * globrange))
                 continue;
@@ -962,7 +966,8 @@ find_item(struct monst *mon, struct musable *m)
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp) ||
             !msensem(mon, mtmp) ||
-            (!mm_aggression(mon, mtmp) && !conflicted))
+            (!mm_aggression(mon, mtmp) &&
+             (!conflicted || mon == mtmp)))
             continue;
         hostsense++;
         if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
