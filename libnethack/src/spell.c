@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,7 +54,6 @@ static int throwspell(boolean, schar *dx, schar *dy, const struct nh_cmd_arg *ar
 static void cast_protection(struct monst *);
 static void spell_backfire(int);
 
-static int mspell_skilltype(int);
 static const char *spelltypemnemonic(int);
 
 /* The roles[] table lists the role-specific values for tuning
@@ -942,7 +941,7 @@ spell_skilltype(int booktype)
 }
 
 /* P_* -> MP_* conversion */
-static int
+int
 mspell_skilltype(int booktype)
 {
     int pskill = spell_skilltype(booktype);
@@ -1188,8 +1187,9 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
 
     chance = percent_success(mon, spell);
     if (confused || (rnd(100) > chance)) {
-        pline("But %s fails to cast the spell correctly.",
-              mon_nam(mon));
+        if (vis)
+            pline("But %s fails to cast the spell correctly.",
+                  mon_nam(mon));
         mon->mspec_used += energy / 2;
         return 1;
     }

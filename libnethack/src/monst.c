@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2440,7 +2440,9 @@ const struct permonst mons[] = {
         SIZ(WT_HUMAN, 400, MX_ESHK, MS_SELL, MZ_HUMAN), 0, 0,
         M1_HUMANOID | M1_OMNIVORE,
         M2_NOPOLY | M2_HUMAN | M2_PEACEFUL | M2_STRONG | M2_COLLECT | M2_MAGIC,
-        M3_INFRAVISIBLE, MP_WAND_EXPERT, CLR_BRIGHT_CYAN),
+        M3_INFRAVISIBLE,
+        MP_WAND_EXPERT | MP_SATK_BASIC | MP_SDIV_SKILLED | MP_SMAT_BASIC,
+        CLR_BRIGHT_CYAN),
     MON("guard", S_HUMAN,
         LVL(12, 12, 10, 40, 10), G_NOGEN,
         A(ATTK(AT_WEAP, AD_PHYS, 4, 10),

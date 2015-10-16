@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,6 +25,7 @@ static void m_initgrp(struct monst *, struct level *lev, int, int, int, int);
 static void m_initthrow(struct monst *, int, int, enum rng);
 static void m_initweap(struct level *lev, struct monst *, enum rng);
 static void m_initinv(struct monst *, enum rng);
+static void assign_spells(struct monst *, enum rng);
 
 struct monst zeromonst; /* only address matters, value is irrelevant */
 
@@ -1164,7 +1165,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     }
     if (is_dprince(ptr) && ptr->msound == MS_BRIBE) {
         mtmp->mpeaceful = 1;
-        mtmp->mintrinsics = (1 << (INVIS - 1));
+        set_property(mtmp, INVIS, 0, TRUE);
         mtmp->mavenge = 0;
         if (uwep && uwep->oartifact == ART_EXCALIBUR)
             mtmp->mpeaceful = mtmp->mtame = FALSE;
@@ -1186,6 +1187,9 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
                 m_initsgrp(mtmp, lev, mtmp->mx, mtmp->my, mmflags);
         }
     }
+
+    mtmp->mspells = 0;
+    assign_spells(mtmp, stats_rng);
 
     if (allow_minvent) {
         if (is_armed(ptr))
@@ -1210,7 +1214,6 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     mtmp->dx = COLNO;
     mtmp->dy = ROWNO;
-    mtmp->mspells = 0;
     mtmp->mintrinsics = 0;
 
     return mtmp;
@@ -1244,6 +1247,184 @@ create_critters(int cnt, const struct permonst *mptr, int x, int y)
             known = TRUE;
     }
     return known;
+}
+
+/* Assign spells based on proficiencies */
+static void
+assign_spells(struct monst *mon, enum rng rng)
+{
+    if (!mon) {
+        impossible("assign_spells with no mon?");
+        return;
+    }
+
+    /* Some monsters get unique spell lists */
+    switch (monsndx(mon->data)) {
+    case PM_MINOTAUR:
+        if (!rn2_on_rng(5, rng))
+            mon_addspell(mon, SPE_DIG);
+        return;
+    case PM_NAZGUL:
+        mon_addspell(mon, SPE_SLOW_MONSTER);
+        /* fallthrough */
+    case PM_BARROW_WIGHT:
+        mon_addspell(mon, SPE_SLEEP);
+        return;
+    case PM_SHOPKEEPER:
+        if (rn2_on_rng(3, rng))
+            mon_addspell(mon, SPE_FORCE_BOLT);
+        else
+            mon_addspell(mon, SPE_MAGIC_MISSILE);
+        mon_addspell(mon, SPE_IDENTIFY);
+        mon_addspell(mon, SPE_KNOCK);
+        return;
+    case PM_ALIGNED_PRIEST:
+    case PM_HIGH_PRIEST:
+    case PM_GRAND_MASTER:
+    case PM_ARCH_PRIEST:
+        mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_IDENTIFY);
+        if (rn2_on_rng(4, rng))
+            mon_addspell(mon, SPE_CONFUSE_MONSTER);
+        else
+            mon_addspell(mon, SPE_SLOW_MONSTER);
+        mon_addspell(mon, SPE_PROTECTION);
+        mon_addspell(mon, SPE_CREATE_MONSTER);
+        mon_addspell(mon, SPE_REMOVE_CURSE);
+        mon_addspell(mon, SPE_CREATE_FAMILIAR);
+        mon_addspell(mon, SPE_TURN_UNDEAD);
+        if (monsndx(mon->data) != PM_ALIGNED_PRIEST) {
+            mon_addspell(mon, SPE_SUMMON_NASTY);
+            mon_addspell(mon, SPE_HASTE_SELF);
+            mon_addspell(mon, SPE_INVISIBILITY);
+        }
+        return;
+    case PM_ANGEL:
+    case PM_YEENOGHU:
+        mon_addspell(mon, SPE_MAGIC_MISSILE);
+        return;
+    case PM_ASMODEUS:
+        mon_addspell(mon, SPE_CONE_OF_COLD);
+        return;
+    case PM_ORCUS:
+        mon_addspell(mon, SPE_DRAIN_LIFE);
+        mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_DETECT_MONSTERS);
+        mon_addspell(mon, SPE_SLOW_MONSTER);
+        mon_addspell(mon, SPE_CHARGING);
+        mon_addspell(mon, SPE_CREATE_MONSTER);
+        mon_addspell(mon, SPE_TURN_UNDEAD);
+        mon_addspell(mon, SPE_SUMMON_NASTY);
+        return;
+    case PM_DISPATER:
+        mon_addspell(mon, SPE_FORCE_BOLT);
+        mon_addspell(mon, SPE_DRAIN_LIFE);
+        mon_addspell(mon, SPE_MAGIC_MISSILE);
+        mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_EXTRA_HEALING);
+        mon_addspell(mon, SPE_CURE_SICKNESS);
+        mon_addspell(mon, SPE_STONE_TO_FLESH);
+        mon_addspell(mon, SPE_SLEEP);
+        mon_addspell(mon, SPE_PROTECTION);
+        mon_addspell(mon, SPE_CREATE_MONSTER);
+        mon_addspell(mon, SPE_JUMPING);
+        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_INVISIBILITY);
+        mon_addspell(mon, SPE_TELEPORT_AWAY);
+        mon_addspell(mon, SPE_PHASE);
+        mon_addspell(mon, SPE_DIG);
+        mon_addspell(mon, SPE_CANCELLATION);
+        mon_addspell(mon, SPE_POLYMORPH);
+        return;
+    case PM_DEMOGORGON:
+        mon_addspell(mon, SPE_EXTRA_HEALING);
+        mon_addspell(mon, SPE_SLOW_MONSTER);
+        mon_addspell(mon, SPE_CREATE_MONSTER);
+        mon_addspell(mon, SPE_HASTE_SELF);
+        return;
+    case PM_MINION_OF_HUHETOTL:
+        mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_SLEEP);
+        mon_addspell(mon, SPE_PROTECTION);
+        mon_addspell(mon, SPE_INVISIBILITY);
+        return;
+    case PM_THOTH_AMON:
+    case PM_DARK_ONE:
+        mon_addspell(mon, SPE_FORCE_BOLT);
+        mon_addspell(mon, SPE_MAGIC_MISSILE);
+        mon_addspell(mon, SPE_FIREBALL);
+        mon_addspell(mon, SPE_CONE_OF_COLD);
+        mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_DETECT_MONSTERS);
+        mon_addspell(mon, SPE_SLEEP);
+        mon_addspell(mon, SPE_SLOW_MONSTER);
+        mon_addspell(mon, SPE_PROTECTION);
+        mon_addspell(mon, SPE_TURN_UNDEAD);
+        mon_addspell(mon, SPE_SUMMON_NASTY);
+        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_INVISIBILITY);
+        mon_addspell(mon, SPE_CANCELLATION);
+        return;
+    case PM_CHROMATIC_DRAGON:
+        mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_SLEEP);
+        mon_addspell(mon, SPE_HASTE_SELF);
+        return;
+    case PM_IXOTH:
+        mon_addspell(mon, SPE_DETECT_MONSTERS);
+        mon_addspell(mon, SPE_PROTECTION);
+        mon_addspell(mon, SPE_SUMMON_NASTY);
+        mon_addspell(mon, SPE_HASTE_SELF);
+        return;
+    case PM_MASTER_KAEN:
+        mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_PHASE);
+        return;
+    case PM_NALZOK:
+        mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_PROTECTION);
+        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_PHASE);
+        return;
+    default:
+        break;
+    }
+
+    /* Failsafe: if the monster has at least Basic in attack school,
+       give force bolt for free */
+    if (mprof(mon, MP_SATTK))
+        mon_addspell(mon, SPE_FORCE_BOLT);
+
+    /* Randomize an amount of spells based on hit dice for monster.
+       Add the spell (with potential redundancy) if the monster
+       has proficiency in the school and passes a random check like
+       this:
+       Level    Skill
+       1        U( 50%), B(100%), S(100%), E(100%)
+       2        U( 33%), B( 83%), S(100%), E(100%)
+       3        U( 16%), B( 66%), S(100%), E(100%)
+       4        U(  0%), B( 50%), S(100%), E(100%)
+       5        U(  0%), B( 33%), S( 83%), E(100%)
+       6        U(  0%), B( 16%), S( 66%), E(100%)
+       7        U(  0%), B(  0%), S( 50%), E(100%) */
+    int addspell_prob = 0;
+    int spell = 0;
+    int i = rn2_on_rng(mon->m_lev + 5, rng) + 10;
+    if (!spellcaster(mon->data))
+        i = rn2_on_rng(min(mon->m_lev, 3) / 3, rng);
+    while (i--) {
+        /* FIXME: make first_spell/etc... */
+        spell = rn1(SPE_BLANK_PAPER - SPE_DIG, SPE_DIG);
+        addspell_prob = mprof(mon, mspell_skilltype(spell));
+        addspell_prob *= 3;
+        addspell_prob -= objects[spell].oc_level;
+        if (rn2_on_rng(6, rng) <= addspell_prob) {
+            mon_addspell(mon, spell);
+            if (!rn2_on_rng(20, rng))
+                mongets(mon, spell, rng);
+        }
+    }
 }
 
 /*
