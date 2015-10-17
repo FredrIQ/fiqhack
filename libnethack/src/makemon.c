@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1415,7 +1415,7 @@ assign_spells(struct monst *mon, enum rng rng)
     int spell = 0;
     int i = rn2_on_rng(mon->m_lev + 5, rng) + 10;
     if (!spellcaster(mon->data))
-        i = rn2_on_rng(min(mon->m_lev, 3) / 3, rng);
+        i = rn2_on_rng(max(mon->m_lev / 3, 1), rng);
     while (i--) {
         /* FIXME: make first_spell/etc... */
         spell = rn1(SPE_BLANK_PAPER - SPE_DIG, SPE_DIG);

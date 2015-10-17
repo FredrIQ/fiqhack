@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-17 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -872,6 +872,14 @@ find_item_score(struct monst *mon, struct obj *obj, coord *tc)
 boolean
 find_unlocker(struct monst *mon, struct musable *m)
 {
+    /* Initialize musable */
+    m->x = 0;
+    m->y = 0;
+    m->z = 0;
+    m->obj = NULL;
+    m->spell = 0;
+    m->use = 0;
+
     /* look for keys */
     if (find_item_obj(mon, mon->minvent, m, FALSE, SKELETON_KEY))
         return TRUE;
@@ -1338,6 +1346,7 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m,
     if (!chain)
         /* monster inventory is empty, or checked container is */
         return FALSE;
+
     int randcount = 1;
     int usable;
     int score = 0;
@@ -1430,8 +1439,8 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m,
             }
         }
     }
-        
-    if (m->use || obj_best) {
+
+    if (obj_best || m->use) {
         if (!m->use || (obj_best && (score_best > 20 ? rn2(3) : !rn2(3)))) {
             m->x = tc_best.x;
             m->y = tc_best.y;
