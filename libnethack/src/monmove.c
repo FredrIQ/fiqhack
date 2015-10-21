@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-10-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1226,7 +1226,7 @@ set_apparxy(struct monst *mtmp)
 
     /* pet knows your smell; grabber still has hold of you */
     if (mtmp->mtame || mtmp == u.ustuck) {
-        if (engulfing_u(mtmp)) {
+        if (engulfing_u(mtmp) || mtmp == u.usteed) {
             /* we don't use mux/muy for engulfers because having them set to
                a monster's own square causes chaos in several ways */
             mtmp->mux = COLNO;
