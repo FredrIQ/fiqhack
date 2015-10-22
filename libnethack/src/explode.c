@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -359,12 +359,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 idamres += destroy_mitem(mtmp, SPBOOK_CLASS, (int)adtyp);
                 idamnonres += destroy_mitem(mtmp, POTION_CLASS, (int)adtyp);
                 idamnonres += destroy_mitem(mtmp, WAND_CLASS, (int)adtyp);
-                if (adtyp == AD_FIRE && sliming(mtmp)) {
-                    if (cansee(i + x - 1, j + y - 1))
-                        pline("The slime on %s burns away!", mon_nam(mtmp));
-                    mtmp->uslimed = 0;
-                    set_property(mtmp, SLIMED, -2, TRUE);
-                }
+                burn_away_slime(mtmp);
 
                 if (explmask[i][j] == 1) {
                     golemeffects(mtmp, (int)adtyp, dam + idamres);
@@ -434,7 +429,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                   dispbuf);
         /* do property damage first, in case we end up leaving bones */
         if (adtyp == AD_FIRE)
-            burn_away_slime();
+            burn_away_slime(&youmonst);
         if (u.uinvulnerable) {
             damu = 0;
             pline("You are unharmed!");

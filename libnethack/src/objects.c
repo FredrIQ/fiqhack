@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -345,6 +345,7 @@ const struct objclass const_objects[] = {
     DRGN_ARMR("gray dragon scale mail", 1, ANTIMAGIC, 1200, 1, CLR_GRAY),
     DRGN_ARMR("silver dragon scale mail", 1, REFLECTING, 1200, 1,
               DRAGON_SILVER),
+    DRGN_ARMR("shimmering dragon scale mail", 1, DISPLACED, 1200, 1, CLR_CYAN),
     DRGN_ARMR("red dragon scale mail", 1, FIRE_RES, 900, 1, CLR_RED),
     DRGN_ARMR("white dragon scale mail", 1, COLD_RES, 900, 1, CLR_WHITE),
     DRGN_ARMR("orange dragon scale mail", 1, SLEEP_RES, 900, 1, CLR_ORANGE),
@@ -358,6 +359,7 @@ const struct objclass const_objects[] = {
    magical properties but are produced "naturally" */
     DRGN_ARMR("gray dragon scales", 0, ANTIMAGIC, 700, 7, CLR_GRAY),
     DRGN_ARMR("silver dragon scales", 0, REFLECTING, 700, 7, DRAGON_SILVER),
+    DRGN_ARMR("shimmering dragon scales", 0, DISPLACED, 700, 7, CLR_CYAN),
     DRGN_ARMR("red dragon scales", 0, FIRE_RES, 500, 7, CLR_RED),
     DRGN_ARMR("white dragon scales", 0, COLD_RES, 500, 7, CLR_WHITE),
     DRGN_ARMR("orange dragon scales", 0, SLEEP_RES, 500, 7, CLR_ORANGE),

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,9 +23,9 @@ static const char *const breathwep[] = {
     "sleep gas",
     "a disintegration blast",
     "lightning",
-    "poison gas",
+    "a poisonous cloud",
     "acid",
-    "strange breath #8",
+    "a disorienting blast",
     "strange breath #9"
 };
 
@@ -828,7 +828,7 @@ int
 breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
 {
     /* if new breath types are added, change AD_ACID to max type */
-    int typ = (mattk->adtyp == AD_RBRE) ? rnd(AD_ACID) : mattk->adtyp;
+    int typ = (mattk->adtyp == AD_RBRE) ? rnd(AD_STUN) : mattk->adtyp;
 
     boolean youdef = u.ux == xdef && u.uy == ydef;
 
@@ -848,7 +848,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
             return 0;
         }
         if (!mtmp->mspec_used && rn2(3)) {
-            if ((typ >= AD_MAGM) && (typ <= AD_ACID)) {
+            if ((typ >= AD_MAGM) && (typ <= AD_STUN)) {
                 if (mon_visible(mtmp)) {
                     pline("%s breathes %s!", Monnam(mtmp), breathwep[typ - 1]);
                     action_interrupted();

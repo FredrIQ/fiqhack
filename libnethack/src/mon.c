@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -175,7 +175,11 @@ static const short cham_to_pm[] = {
                          is_reviver((mon)->data) ||                     \
                          /* normally leader the will be unique, */      \
                          /* but he might have been polymorphed  */      \
-                         (mon)->m_id == u.quest_status.leader_m_id ||     \
+                         (mon)->m_id == u.quest_status.leader_m_id ||   \
+                         /* intrinsics or spells */                     \
+                         (mon)->mspells || (mon)->mintrinsics ||        \
+                         (mon)->mhitinc || (mon)->mdaminc ||            \
+                         (mon)->mblessed ||                             \
                          /* special cancellation handling for these */  \
                          (dmgtype((mon)->data, AD_SEDU) ||              \
                           dmgtype((mon)->data, AD_SSEX)))
@@ -303,16 +307,10 @@ make_corpse(struct monst *mtmp)
         break;
     default_1:
     default:
-        /* Spellcasters, monsters with intrinsics and "special" monsters
-           retain their monst struct */
-        if (mtmp->mspells || mtmp->mintrinsics || mtmp->mblessed ||
-            mtmp->mdaminc || mtmp->mhitinc ||
-            (!(mvitals[mndx].mvflags & G_NOCORPSE)))
-            obj =
-                mkcorpstat(CORPSE, KEEPTRAITS(mtmp) ? mtmp : 0, mdat, level, x,
-                           y, TRUE, rng_main);
-        else
+        if (mvitals[mndx].mvflags & G_NOCORPSE)
             return NULL;
+        obj = mkcorpstat(CORPSE, KEEPTRAITS(mtmp) ? mtmp : 0, mdat, level, x,
+                         y, TRUE, rng_main);
         break;
     }
     /* All special cases should precede the G_NOCORPSE check */
@@ -394,6 +392,7 @@ minliquid(struct monst *mtmp)
          * protect their stuff. Fire resistant monsters can only protect
          * themselves  --ALI
          */
+        burn_away_slime(mtmp);
         if (!is_clinger(mtmp->data) && !likes_lava(mtmp->data)) {
             if (!resists_fire(mtmp)) {
                 if (cansee(mtmp->mx, mtmp->my))
@@ -2287,7 +2286,9 @@ remove_monster(struct level *lev, xchar x, xchar y)
 void
 place_monster(struct monst *mon, xchar x, xchar y, boolean updatedisplacement)
 {
-    if (mon == u.usteed || DEADMONSTER(mon) ) {
+    if (!mon)
+        panic("Placing non-existing monster?!");
+    if (mon == u.usteed || DEADMONSTER(mon)) {
         impossible("placing %s onto map?",
                    (mon == u.usteed) ? "steed" : "defunct monster");
         return;

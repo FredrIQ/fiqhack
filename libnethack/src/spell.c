@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -139,9 +139,7 @@ cursed_book(struct monst *mon, struct obj *bp)
         set_property(mon, BLINDED, rn1(100, 250), FALSE);
         break;
     case 3:
-        /* TODO: make a take_gold() for monsters */
-        if (you)
-            take_gold();
+        take_gold(mon);
         break;
     case 4:
         if (you)
@@ -179,7 +177,7 @@ cursed_book(struct monst *mon, struct obj *bp)
         break;
     case 6:
         if (resists_magm(mon)) {
-            shieldeff(u.ux, u.uy);
+            shieldeff(m_mx(mon), m_my(mon));
             if (you)
                 pline("The book %s, but you are unharmed!", explodes);
             else if (canseemon(mon))
@@ -517,6 +515,31 @@ learn(void)
     return 0;
 }
 
+/* spellbook read success rate */
+int
+study_rate(struct monst *mon, struct obj *spellbook)
+{
+    struct obj *eyewear = which_armor(mon, os_tool);
+    int intel = 11;
+    boolean you = (mon == &youmonst);
+    boolean spellcaster = FALSE;
+    if ((!you && spellcaster(mon->data)) ||
+        (you && Role_if(PM_WIZARD)))
+        spellcaster = TRUE;
+    if (spellcaster)
+        intel = 18;
+    if (mon->iswiz)
+        intel = 20;
+    if (you)
+        intel = ACURR(A_INT);
+    int level = you ? u.ulevel : mon->m_lev;
+    int read_ability =
+        intel + 4 + level / 2 -
+        2 * objects[spellbook->otyp].oc_level +
+        ((eyewear && eyewear->otyp == LENSES) ? 2 : 0);
+    return read_ability;
+}
+
 /* Monster book studying works a bit differently.
    The spellbook delay is currently ignored and replaced with
    a delay of 5 if the reading succeeds. This is due to current
@@ -537,15 +560,9 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
     int delay = 0;
     int level = 0;
     boolean spellcaster = FALSE;
-    boolean intel = 11;
-    struct obj *eyewear = which_armor(mon, os_tool);
 
     if (spellcaster(mon->data))
         spellcaster = TRUE;
-    if (spellcaster)
-        intel = 18;
-    if (mon->iswiz)
-        intel = 20;
 
     if (booktype == SPE_BLANK_PAPER) {
         if (vis) {
@@ -580,15 +597,13 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
         too_hard = TRUE;
     else if (!spellbook->blessed) {
         /* uncursed - chance to fail */
-        int read_ability =
-            intel + 4 + mon->m_lev / 2 -
-            2 * objects[booktype].oc_level +
-            ((eyewear && eyewear->otyp == LENSES) ? 2 : 0);
+        int read_ability = study_rate(mon, spellbook);
         /* only wizards know if a spell is too difficult */
-        if (wizard) {
+        if (spellcaster(mon->data)) {
             if (read_ability < 12) {
                 if (vis)
                     pline("%s realizes the difficulty of the book and puts it down.", Monnam(mon));
+                spellbook->mknown = 1; /* they learn it's difficult */
                 return 0;
             }
         }
@@ -609,6 +624,7 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
 
         mon->mcanmove = 0;
         mon->mfrozen = delay;
+
         if (gone || !rn2(3)) {
             if (!gone && vis) {
                 if (vis_old)
@@ -633,9 +649,27 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
 
     if (vis)
         pline("%s begins to memorize some spellbook runes.", Monnam(mon));
-    mon->mcanmove = 0;
-    mon->mfrozen = 5; /* see comment above function. TODO: allow safe helplessness for monsters */
+    /* see comment above function. TODO: allow safe helplessness for monsters */
+    mon->mfrozen = min(delay, 5);
+    mon->mcanmove = !mon->mfrozen; /* in case delay is 0 */
 
+    if (spellbook->spestudied > MAX_SPELL_STUDY) {
+        if (vis)
+            pline("But %s book is too faint to be read any more.",
+                  s_suffix(mon_nam(mon)));
+        spellbook->otyp = SPE_BLANK_PAPER;
+        return -1;
+    }
+
+    if (vis) {
+        if (mon->mspells)
+            pline("%s adds the spell to %s repertoire.",
+                  Monnam(mon), mhis(mon));
+        else
+            pline("%s learns a spell!", Monnam(mon));
+    }
+
+    spellbook->spestudied++;
     return mon_addspell(mon, booktype);
 }
 
@@ -702,10 +736,7 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
                 too_hard = TRUE;
             } else {
                 /* uncursed - chance to fail */
-                int read_ability =
-                    ACURR(A_INT) + 4 + u.ulevel / 2 -
-                    2 * objects[booktype].oc_level +
-                    ((ublindf && ublindf->otyp == LENSES) ? 2 : 0);
+                int read_ability = study_rate(&youmonst, spellbook);
                 /* only wizards know if a spell is too difficult */
                 if (Role_if(PM_WIZARD) && read_ability < 20 && !confused) {
                     const char *qbuf;
@@ -1125,6 +1156,10 @@ mon_castable(struct monst *mon, int spell, boolean theoretical)
     int chance = percent_success(mon, spell);
     if (rnd(100) > chance && !theoretical)
         return 0;
+    /* for theoretical, return a minrate of 1% to mark the spell as known */
+    if (theoretical)
+        return max(chance, 1);
+
     return chance;
 }
 

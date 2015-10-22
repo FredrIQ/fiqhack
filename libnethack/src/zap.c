@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,7 +29,8 @@ static int spell_hit_bonus(int);
 #define ZT_LIGHTNING            (AD_ELEC-1)
 #define ZT_POISON_GAS           (AD_DRST-1)
 #define ZT_ACID                 (AD_ACID-1)
-/* 8 and 9 are currently unassigned */
+#define ZT_STUN                 (AD_STUN-1)
+/* 9 is currently unassigned */
 
 #define ZT_WAND(x)              (x)
 #define ZT_SPELL(x)             (10+(x))
@@ -57,9 +58,9 @@ const char *const flash_types[] = {   /* also used in buzzmu(mcastu.c) */
     "sleep ray",
     "finger of death",
     "bolt of lightning",        /* There is no spell, used for retribution */
-    "",
-    "",
-    "",
+    "noxious energy",
+    "acid stream",
+    "stun ray",
     "",
 
     "blast of missiles",        /* Dragon breath equivalents 20-29 */
@@ -68,9 +69,9 @@ const char *const flash_types[] = {   /* also used in buzzmu(mcastu.c) */
     "blast of sleep gas",
     "blast of disintegration",
     "blast of lightning",
-    "blast of poison gas",
+    "poison cloud",
     "blast of acid",
-    "",
+    "blast of disorientation",
     ""
 };
 
@@ -86,6 +87,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     boolean useen = (user == &youmonst || canseemon(user));
     boolean tseen = (mtmp == &youmonst || canseemon(mtmp));
     boolean yours = (user == &youmonst);
+    boolean hityou = (mtmp == &youmonst);
     boolean selfzap = (user == mtmp);
     int dmg, otyp = otmp->otyp;
     const char *zap_type_text = "spell";
@@ -114,19 +116,19 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     if (Engulfed && mtmp == u.ustuck)
         reveal_invis = FALSE;
 
-    if (mtmp == &youmonst)
+    if (hityou)
         action_interrupted();
 
     switch (otyp) {
     case WAN_STRIKING:
     case SPE_FORCE_BOLT:
         reveal_invis = TRUE;
-        if ((mtmp == &youmonst && Antimagic) || resists_magm(mtmp)) {
+        if (resists_magm(mtmp)) {
             shieldeff(mtmp->mx, mtmp->my);
-            if (tseen)
+            if (hityou || tseen)
                 pline("Boing!");
             break;      /* skip makeknown */
-        } else if ((user == &youmonst && Engulfed) ||
+        } else if ((yours && Engulfed) ||
                    wandlevel || rnd(20) < 10 + find_mac(mtmp)) {
             dmg = dice(2, 12);
             if (wandlevel == P_MASTER)
@@ -139,7 +141,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                 dmg += spell_damage_bonus();
             if (useen || tseen)
                 hit(zap_type_text, mtmp, exclam(dmg));
-            if (mtmp == &youmonst)
+            if (hityou)
                 losehp(dmg, killer_msg(DIED, "a force bolt"));
             else
                 resist(mtmp, otmp->oclass, dmg, TELL);
@@ -157,7 +159,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             set_property(mtmp, FAST, -2, TRUE);
         else if (wandlevel >= P_SKILLED)
             set_property(mtmp, FAST, -1, TRUE);
-        if (mtmp != &youmonst)
+        if (!hityou)
             m_dowear(mtmp, FALSE);      /* might want speed boots */
         if (Engulfed && (mtmp == u.ustuck) && is_whirly(mtmp->data)) {
             if (yours)
@@ -195,7 +197,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             wake = TRUE;
             known = TRUE;
             flags.bypasses = TRUE;      /* for make_corpse() */
-            if (mtmp == &youmonst) {
+            if (hityou) {
                 if (wandlevel < P_SKILLED) {
                     pline(Stunned ? "You struggle to keep your balance." :
                           "You reel...");
@@ -234,19 +236,16 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     case WAN_POLYMORPH:
     case SPE_POLYMORPH:
     case POT_POLYMORPH:
-        if ((mtmp == &youmonst && ((Antimagic && !selfzap) || Unchanging)) ||
-            (resists_magm(mtmp) && !selfzap)) {
+        if (unchanging(mtmp) || (resists_magm(mtmp) && !selfzap)) {
             /* magic resistance protects from polymorph traps, so make it guard
                against involuntary polymorph attacks too... */
             shieldeff(mtmp->mx, mtmp->my);
-            if (tseen) {
-                if (mtmp == &youmonst)
-                    pline("You feel momentarily different.");
-                else
-                    pline("%s looks momentarily different.", Monnam(mtmp));
-            }
+            if (tseen)
+                pline("%s %s momentarily different.",
+                      hityou ? "You" : Monnam(mtmp),
+                      hityou ? "feel" : "looks");
             known = TRUE;
-        } else if (mtmp == &youmonst) {
+        } else if (hityou) {
             polyself(FALSE); /* FIXME: make skilled users able to affect the outcome */
             known = TRUE;
         } else if (!resist(mtmp, otmp->oclass, 0, NOTELL)) {
@@ -409,19 +408,48 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         known = TRUE;
         break;
     case SPE_STONE_TO_FLESH:
+        wake = FALSE;
         if (monsndx(mtmp->data) == PM_STONE_GOLEM) {
-            const char *name = Monnam(mtmp);
-
-            /* turn into flesh golem */
-            if (newcham(mtmp, &mons[PM_FLESH_GOLEM], FALSE, FALSE)) {
-                if (canseemon(mtmp))
-                    pline("%s turns to flesh!", name);
-            } else {
-                if (canseemon(mtmp))
-                    pline("%s looks rather fleshy for a moment.", name);
+            wake = TRUE;
+            if (hityou)
+                polymon(PM_FLESH_GOLEM, TRUE);
+            else {
+                const char *name = Monnam(mtmp);
+                if (newcham(mtmp, &mons[PM_FLESH_GOLEM], FALSE, FALSE)) {
+                    if (canseemon(mtmp))
+                        pline("%s turns to flesh!", name);
+                } else {
+                    if (canseemon(mtmp))
+                        pline("%s looks rather fleshy for a moment.", name);
+                }
             }
-        } else
-            wake = FALSE;
+        }
+
+        wake = set_property(mtmp, STONED, -2, FALSE); /* saved! */
+        /* but at a cost.. */
+        if (selfzap) {
+            struct obj *otemp;
+            struct obj *onext;
+            boolean didmerge;
+            for (otemp = m_minvent(mtmp); otemp; otemp = onext) {
+                onext = otemp->nobj;
+                bhito(otemp, otmp);
+            }
+            /*
+             * It is possible that we can now merge some inventory.
+             * Do a higly paranoid merge.  Restart from the beginning
+             * until no merges.
+             */
+            do {
+                didmerge = FALSE;
+                for (otemp = invent; !didmerge && otemp; otemp = otemp->nobj)
+                    for (onext = otemp->nobj; onext; onext = onext->nobj)
+                        if (merged(&otemp, &onext)) {
+                            didmerge = TRUE;
+                            break;
+                        }
+            } while (didmerge);
+        }
         break;
     case SPE_DRAIN_LIFE:
         dmg = rnd(8);
@@ -429,15 +457,27 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             dmg *= 2;
         if (otyp == SPE_DRAIN_LIFE)
             dmg += spell_damage_bonus();
-        if (resists_drli(mtmp))
+        if (half_spell_dam(mtmp))
+            dmg = dmg / 2 + 1;
+        if (resists_drli(mtmp)) {
             shieldeff(mtmp->mx, mtmp->my);
+            if (hityou || canseemon(mtmp))
+                pline("%s %sn't drained.",
+                      hityou ? "You" : Monnam(mtmp),
+                      hityou ? "are" : "is");
+        } else if (hityou)
+            losexp(msgcat_many("drained by %s spell", s_suffix(k_monnam(user)), NULL),
+                   FALSE);
         else if (!resist(mtmp, otmp->oclass, dmg, NOTELL) &&
                  !DEADMONSTER(mtmp)) {
             mtmp->mhp -= dmg;
             mtmp->mhpmax -= dmg;
-            if (mtmp->mhp <= 0 || mtmp->mhpmax <= 0 || mtmp->m_lev < 1)
-                xkilled(mtmp, 1);
-            else {
+            if (mtmp->mhp <= 0 || mtmp->mhpmax <= 0 || mtmp->m_lev < 1) {
+                if (yours)
+                    killed(mtmp);
+                else
+                    monkilled(mtmp, "", AD_RBRE);
+            } else {
                 mtmp->m_lev--;
                 if (canseemon(mtmp))
                     pline("%s suddenly seems weaker!", Monnam(mtmp));
@@ -475,20 +515,26 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
 
 
 void
-probe_monster(struct monst *mtmp)
+probe_monster(struct monst *mon)
 {
+    boolean you = (mon == &youmonst);
     struct obj *otmp;
 
-    mstatusline(mtmp);
-    if (notonhead)
+    mstatusline(mon);
+    if (!you && notonhead)
         return; /* don't show minvent for long worm tail */
 
-    if (mtmp->minvent) {
-        for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+    if (m_minvent(mon)) {
+        for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
             otmp->dknown = 1;   /* treat as "seen" */
-        display_minventory(mtmp, MINV_ALL, NULL);
+        if (you)
+            display_inventory(NULL, FALSE);
+        else
+            display_minventory(mon, MINV_ALL, NULL);
     } else {
-        pline("%s is not carrying anything.", noit_Monnam(mtmp));
+        pline("%s %s not carrying anything.",
+              you ? "You" : noit_Monnam(mon),
+              you ? "are" : "is");
     }
 }
 
@@ -2165,7 +2211,7 @@ zapyourself(struct obj *obj, boolean ordinary)
             pline("You've set yourself afire!");
             damage = dice(12, 6);
         }
-        burn_away_slime();
+        burn_away_slime(&youmonst);
         burnarmor(&youmonst);
         destroy_item(SCROLL_CLASS, AD_FIRE);
         destroy_item(POTION_CLASS, AD_FIRE);
@@ -2337,13 +2383,6 @@ zapyourself(struct obj *obj, boolean ordinary)
     case WAN_NOTHING:
     case WAN_LOCKING:
     case SPE_WIZARD_LOCK:
-        break;
-    case WAN_PROBING:
-        for (obj = invent; obj; obj = obj->nobj)
-            obj->dknown = 1;
-        /* note: `obj' reused; doesn't point at wand anymore */
-        makeknown(WAN_PROBING);
-        ustatusline();
         break;
     case SPE_STONE_TO_FLESH:
         {
@@ -3302,8 +3341,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
         }
         if (resists_cold(mon))
             tmp += dice(nd, 3);
-        if (you)
-            burn_away_slime();
+        burn_away_slime(mon);
         golemeffects(mon, AD_FIRE, tmp);
         if (raylevel != P_UNSKILLED && burnarmor(mon)) {
             if (!rn2(3))
@@ -3486,6 +3524,13 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
             acid_damage(uswapwep);
         if (!rn2(6))
             hurtarmor(mon, ERODE_CORRODE);
+        break;
+    case ZT_STUN:
+        ztyp = "stunned";
+        if (you)
+            exercise(A_DEX, FALSE);
+        set_property(mon, STUNNED, tmp, FALSE);
+        tmp = 0;
         break;
     }
     if (resisted) {

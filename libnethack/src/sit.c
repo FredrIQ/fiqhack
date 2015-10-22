@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,22 +7,30 @@
 #include "artifact.h"
 
 void
-take_gold(void)
+take_gold(struct monst *mon)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
     struct obj *otmp, *nobj;
     int lost_money = 0;
 
-    for (otmp = invent; otmp; otmp = nobj) {
+    for (otmp = m_minvent(mon); otmp; otmp = nobj) {
         nobj = otmp->nobj;
         if (otmp->oclass == COIN_CLASS) {
             lost_money = 1;
             delobj(otmp);
         }
     }
-    if (!lost_money)
-        pline("You feel a strange sensation.");
-    else
-        pline("You notice you have no money!");
+    if (!lost_money) {
+        if (you)
+            pline("You feel a strange sensation.");
+        /* no noticed effect on monsters */
+    } else {
+        if (you)
+            pline("You notice you have no money!");
+        else if (vis)
+            pline("%s money disappears!", s_suffix(Monnam(mon)));
+    }
 }
 
 int
@@ -139,7 +147,7 @@ dosit(const struct nh_cmd_arg *arg)
 
         /* must be WWalking */
         pline(sit_message, "lava");
-        burn_away_slime();
+        burn_away_slime(&youmonst);
         if (likes_lava(youmonst.data)) {
             pline("The lava feels warm.");
             return 1;
@@ -194,7 +202,7 @@ dosit(const struct nh_cmd_arg *arg)
                     heal_legs(Wounded_leg_side);
                 break;
             case 5:
-                take_gold();
+                take_gold(&youmonst);
                 break;
             case 6:
                 if (u.uluck + rn2(5) < 0) {

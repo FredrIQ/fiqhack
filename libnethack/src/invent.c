@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1207,7 +1207,10 @@ identify(struct monst *mon, struct obj *otmp)
     boolean vis = canseemon(mon);
     if (you || (vis && mon->mtame)) {
         fully_identify_obj(otmp);
-        prinv(NULL, otmp, 0L);
+        if (you)
+            prinv(NULL, otmp, 0L);
+        else
+            pline("%s", doname(otmp));
     }
     if (!you) {
         otmp->mknown = 1;
@@ -1272,8 +1275,9 @@ identify_pack(struct monst *mon, int id_limit)
                   Monnam(mon), mhis(mon));
     } else if (!id_limit) {
         if (!you && vis && mon->mtame)
-            pline("%s shares newly learned object%s from %s inventory:",
-                  Monnam(mon), mhis(mon), unid_cnt == 1 ? "" : "s");
+            pline("%s shares %snewly identified object%s from %s inventory:",
+                  Monnam(mon), unid_cnt == 1 ? "a " : "",
+                  unid_cnt == 1 ? "" : "s", mhis(mon));
         /* identify everything */
         if (unid_cnt == 1) {
             identify(mon, the_obj);
@@ -1289,8 +1293,9 @@ identify_pack(struct monst *mon, int id_limit)
     } else {
         if (!you) {
             if (vis && mon->mtame)
-                pline("%s shares newly learned object%s from %s inventory:",
-                      Monnam(mon), mhis(mon), unid_cnt == 1 ? "" : "s");
+                pline("%s shares %snewly learned object%s from %s inventory:",
+                      Monnam(mon), unid_cnt == 1 ? "a " : "",
+                      unid_cnt == 1 ? "" : "s", mhis(mon));
             n = 0;
             for (obj = m_minvent(mon); obj && n < id_limit; obj = obj->nobj) {
                 if (!obj->mknown || !obj->mbknown) {

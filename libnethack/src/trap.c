@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1991,6 +1991,7 @@ mintrap(struct monst *mtmp)
                        mhpmax) check is needed here */
                     mtmp->mhpmax -= rn2(num + 1);
             }
+            burn_away_slime(mtmp);
             if (burnarmor(mtmp) || rn2(3)) {
                 destroy_mitem(mtmp, SCROLL_CLASS, AD_FIRE);
                 destroy_mitem(mtmp, SPBOOK_CLASS, AD_FIRE);
@@ -2646,7 +2647,7 @@ dofiretrap(struct obj *box)
         pline("You are uninjured.");
     else
         losehp(num, killer_msg(DIED, an(tower_of_flame)));
-    burn_away_slime();
+    burn_away_slime(&youmonst);
 
     if (burnarmor(&youmonst) || rn2(3)) {
         destroy_item(SCROLL_CLASS, AD_FIRE);
@@ -4197,7 +4198,7 @@ lava_effects(void)
     struct obj *obj, *obj2;
     int dmg;
 
-    burn_away_slime();
+    burn_away_slime(&youmonst);
     if (likes_lava(youmonst.data))
         return FALSE;
 

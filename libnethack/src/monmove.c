@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -322,12 +322,6 @@ dochug(struct monst *mtmp)
     /* not frozen or sleeping: wipe out texts written in the dust */
     wipe_engr_at(mtmp->dlevel, mtmp->mx, mtmp->my, 1);
 
-    /* some monsters teleport */
-    if (mtmp->mflee && !rn2(40) && teleportitis(mtmp) && !mtmp->iswiz &&
-        !level->flags.noteleport) {
-        rloc(mtmp, TRUE);
-        return 0;
-    }
     if (mdat->msound == MS_SHRIEK && !um_dist(mtmp->mx, mtmp->my, 1))
         m_respond(mtmp);
     if (mdat == &mons[PM_MEDUSA] && couldsee(mtmp->mx, mtmp->my))

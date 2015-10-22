@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1237,6 +1237,7 @@ create_critters(int cnt, const struct permonst *mptr, int x, int y)
     coord c;
     struct monst *mon;
     boolean known = FALSE;
+    boolean you = (x == u.ux && y == u.uy);
 
     while (cnt--) {
         /* if in water, try to encourage an aquatic monster by finding and then
@@ -1245,7 +1246,10 @@ create_critters(int cnt, const struct permonst *mptr, int x, int y)
             enexto(&c, level, x, y, &mons[PM_GIANT_EEL]))
             x = c.x, y = c.y;
 
-        mon = makemon(mptr, level, x, y, MM_CREATEMONSTER | MM_CMONSTER_U);
+        mon = makemon(mptr, level, x, y,
+                      MM_CREATEMONSTER |
+                      (you ? MM_CMONSTER_U : MM_CMONSTER_M) |
+                      (you ? 0 : MM_ADJACENTOK));
         if (mon && cansuspectmon(mon))
             known = TRUE;
     }
@@ -1416,7 +1420,7 @@ assign_spells(struct monst *mon, enum rng rng)
     int i = rn2_on_rng(mon->m_lev + 5, rng) + 10;
     if (!spellcaster(mon->data))
         i = rn2_on_rng(max(mon->m_lev / 3, 1), rng);
-    while (i--) {
+    while (i-- > 0) {
         /* FIXME: make first_spell/etc... */
         spell = rn1(SPE_BLANK_PAPER - SPE_DIG, SPE_DIG);
         addspell_prob = mprof(mon, mspell_skilltype(spell));

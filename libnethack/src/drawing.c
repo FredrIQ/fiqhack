@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -274,7 +274,8 @@ const struct nh_symdef zaptypes[NUM_ZAP] = {
     {0, "death", CLR_BLACK},
     {0, "lightning", CLR_WHITE},
     {0, "poison gas", CLR_YELLOW},
-    {0, "acid", CLR_GREEN}
+    {0, "acid", CLR_GREEN},
+    {0, "stun", CLR_BROWN}
 };
 
 const struct nh_symdef effectsyms[] = {

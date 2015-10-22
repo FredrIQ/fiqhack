@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1230,6 +1230,7 @@ extern void you_aggravate(struct monst *);
 
 /* ### music.c ### */
 
+extern void awaken_monsters(struct monst *, int);
 extern void awaken_soldiers(void);
 extern int do_play_instrument(struct obj *, const struct nh_cmd_arg *);
 
@@ -1638,7 +1639,7 @@ extern int get_shop_item(int, enum rng);
 
 /* ### sit.c ### */
 
-extern void take_gold(void);
+extern void take_gold(struct monst *);
 extern int dosit(const struct nh_cmd_arg *);
 extern void rndcurse(void);
 extern void mrndcurse(struct monst *);
@@ -1671,6 +1672,7 @@ extern void fixup_special(struct level *lev);
 /* ### spell.c ### */
 
 extern void deadbook(struct obj *book2, boolean invoked);
+extern int study_rate(struct monst *, struct obj *);
 extern int mon_study_book(struct monst *, struct obj *);
 extern int mon_addspell(struct monst *, int);
 extern int study_book(struct obj *, const struct nh_cmd_arg *);
@@ -1751,7 +1753,7 @@ extern boolean u_teleport_mon(struct monst *, boolean);
 
 /* ### timeout.c ### */
 
-extern void burn_away_slime(void);
+extern void burn_away_slime(struct monst *);
 extern void nh_timeout(void);
 extern void attach_egg_hatch_timeout(struct obj *);
 extern void attach_fig_transform_timeout(struct obj *);

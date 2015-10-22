@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-08-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -112,6 +112,12 @@ mon_vision_summary(const struct monst *mtmp, char *outbuf)
         append_str_comma(outbuf, &outbufp, "see invisible");
     if (msense_status & MSENSE_INFRAVISION)
         append_str_comma(outbuf, &outbufp, "infravision");
+    /* can't use MSENSE_DISPLACED, it would spoil whether or
+       not it is a displaceed image */
+    if (displaced(mtmp) &&
+        (msense_status & ~(MSENSE_ANYVISION | MSENSE_DISPLACED |
+                           MSENSEF_KNOWNINVIS)))
+        append_str_comma(outbuf, &outbufp, "displacement");
     if (msense_status & MSENSE_TELEPATHY)
         append_str_comma(outbuf, &outbufp, "telepathy");
     if (msense_status & MSENSE_XRAY)

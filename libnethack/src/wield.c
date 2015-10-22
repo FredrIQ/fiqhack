@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -549,8 +549,9 @@ chwepon(struct monst *mon, struct obj *otmp, int amount)
         if (you) {
             strange_feeling(otmp, buf);
             exercise(A_DEX, (boolean) (amount >= 0));
-        } else
-            pline(buf);
+        } else if (vis)
+            pline("%s %s %s", your, makeplural(mbodypart(mon, HAND)),
+                  (amount >= 0) ? "twitch" : "itch");
         return 0;
     }
 

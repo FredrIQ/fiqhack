@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -213,17 +213,20 @@ align_str(aligntyp alignment)
 }
 
 void
-mstatusline(struct monst *mtmp)
+mstatusline(struct monst *mon)
 {
+    boolean you = (mon == &youmonst);
     aligntyp alignment;
     const char *info, *monnambuf;
 
-    if (mtmp->ispriest || (mtmp->isminion && roamer_type(mtmp->data)))
-        alignment = CONST_EPRI(mtmp)->shralign;
-    else if (mtmp->isminion)
-        alignment = EMIN(mtmp)->min_align;
+    if (you)
+        alignment = u.ualign.type;
+    else if (mon->ispriest || (mon->isminion && roamer_type(mon->data)))
+        alignment = CONST_EPRI(mon)->shralign;
+    else if (mon->isminion)
+        alignment = EMIN(mon)->min_align;
     else {
-        alignment = mtmp->data->maligntyp;
+        alignment = mon->data->maligntyp;
         alignment =
             (alignment > 0) ? A_LAWFUL :
             (alignment == A_NONE) ? A_NONE :
@@ -231,149 +234,123 @@ mstatusline(struct monst *mtmp)
     }
 
     info = "";
-    if (mtmp->mtame) {
+    if (mon->mtame) {
         info = msgcat(info, ", tame");
         if (wizard) {
-            info = msgprintf("%s (%d", info, mtmp->mtame);
-            if (!mtmp->isminion)
+            info = msgprintf("%s (%d", info, mon->mtame);
+            if (!mon->isminion)
                 info = msgprintf("%s; hungry %u; apport %d", info,
-                                 EDOG(mtmp)->hungrytime, EDOG(mtmp)->apport);
+                                 EDOG(mon)->hungrytime, EDOG(mon)->apport);
             info = msgcat(info, ")");
         }
-    } else if (mtmp->mpeaceful)
+    } else if (mon->mpeaceful)
         info = msgcat(info, ", peaceful");
-    if (mtmp->meating)
+    if (!you && mon->meating)
         info = msgcat(info, ", eating");
-    if (cancelled(mtmp))
+    if (sick(mon)) {
+        if (mon == &youmonst) {
+            info = msgcat(info, ", dying from");
+            if (u.usick_type & SICK_VOMITABLE)
+                info = msgcat(info, " food poisoning");
+            if (u.usick_type & SICK_NONVOMITABLE) {
+                if (u.usick_type & SICK_VOMITABLE)
+                    info = msgcat(info, " and");
+                info = msgcat(info, " illness");
+            }
+        } else
+            info = msgcat(info, ", dying from illness");
+    }
+    if (petrifying(mon))
+        info = msgcat(info, ", solidifying");
+    if (sliming(mon))
+        info = msgcat(info, ", becoming slimy");
+    if (strangled(mon))
+        info = msgcat(info, ", being strangled");
+    if (vomiting(mon))
+        info = msgcat(info, ", nauseated");    /* !"nauseous" */
+    if (cancelled(mon))
         info = msgcat(info, ", cancelled");
-    if (confused(mtmp))
+    if (confused(mon))
         info = msgcat(info, ", confused");
-    if (blind(mtmp))
+    if (blind(mon))
         info = msgcat(info, ", blind");
-    if (stunned(mtmp))
+    if (you && u.ucreamed) {
+        if ((long)u.ucreamed < Blinded || Blindfolded ||
+            !haseyes(mon->data) || !blind(mon))
+            /* !blind means eyes of the overworld */
+            info = msgcat(info, ", cover");
+        info = msgcat(info, "ed by sticky goop");
+    } /* note: "goop" == "glop"; variation is intentional */
+    if (stunned(mon))
         info = msgcat(info, ", stunned");
-    if (mtmp->msleeping)
-        info = msgcat(info, ", asleep");
-    else if (mtmp->mfrozen || !mtmp->mcanmove)
-        info = msgcat(info, ", can't move");
-    /* [arbitrary reason why it isn't moving] */
-    else if (mtmp->mstrategy & STRAT_WAITMASK)
-        info = msgcat(info, ", meditating");
-    else if (mtmp->mflee)
-        info = msgcat(info, ", scared");
-    if (mtmp->mtrapped)
+    if (you) {
+        if (!u.usteed && Wounded_legs) {
+            const char *what = body_part(LEG);
+
+            if (LWounded_legs && RWounded_legs)
+                what = makeplural(what);
+            info = msgcat_many(info, ", injured ", what, NULL);
+        }
+        if (Glib)
+            info = msgcat_many(info, ", slippery ",
+                               makeplural(body_part(HAND)), NULL);
+    } else {
+        if (mon->msleeping)
+            info = msgcat(info, ", asleep");
+        else if (mon->mfrozen || !mon->mcanmove)
+            info = msgcat(info, ", can't move");
+        /* [arbitrary reason why it isn't moving] */
+        else if (mon->mstrategy & STRAT_WAITMASK)
+            info = msgcat(info, ", meditating");
+        else if (mon->mflee)
+            info = msgcat(info, ", scared");
+    }
+    if ((you && u.utrap) || (!you && mon->mtrapped))
         info = msgcat(info, ", trapped");
-    if (fast(mtmp))
+    if (fast(mon))
         info = msgcat(info,
-                      very_fast(mtmp) ? ", very fast" :
-                      fast(mtmp) ? ", fast" : ", fast somehow");
-    if (slow(mtmp))
+                      very_fast(mon) ? ", very fast" :
+                      fast(mon) ? ", fast" : ", fast somehow");
+    if (slow(mon))
         info = msgcat(info, ", slowed");
-    if (mtmp->mundetected)
+    if (m_mundetected(mon))
         info = msgcat(info, ", concealed");
-    if (invisible(mtmp))
+    if (invisible(mon))
         info = msgcat(info, ", invisible");
-    if (mtmp == u.ustuck)
+    if (!you && mon == u.ustuck)
         info = msgcat(info,
                       (sticks(youmonst.data)) ? ", held by you" : Engulfed
                       ? (is_animal(u.ustuck->data) ? ", swallowed you" :
                          ", engulfed you") : ", holding you");
-    if (mtmp == u.usteed)
-        info = msgcat(info, ", carrying you");
-
-    /* avoid "Status of the invisible newt ..., invisible" */
-    /* and unlike a normal mon_nam, use "saddled" even if it has a name */
-    monnambuf = x_monnam(mtmp, ARTICLE_THE, NULL,
-                         (SUPPRESS_IT | SUPPRESS_INVISIBLE), FALSE);
-
-    pline("Status of %s (%s):  Level %d  HP %d(%d)  Def %d%s.", monnambuf,
-          align_str(alignment), mtmp->m_lev, mtmp->mhp, mtmp->mhpmax,
-          10 - find_mac(mtmp), info);
-}
-
-void
-ustatusline(void)
-{
-    const char *info = "";
-
-    if (Sick) {
-        info = msgcat(info, ", dying from");
-        if (u.usick_type & SICK_VOMITABLE)
-            info = msgcat(info, " food poisoning");
-        if (u.usick_type & SICK_NONVOMITABLE) {
-            if (u.usick_type & SICK_VOMITABLE)
-                info = msgcat(info, " and");
-            info = msgcat(info, " illness");
-        }
-    }
-    if (Stoned)
-        info = msgcat(info, ", solidifying");
-    if (Slimed)
-        info = msgcat(info, ", becoming slimy");
-    if (Strangled)
-        info = msgcat(info, ", being strangled");
-    if (Vomiting)
-        info = msgcat(info, ", nauseated");    /* !"nauseous" */
-    if (Confusion)
-        info = msgcat(info, ", confused");
-    if (Blind) {
-        info = msgcat(info, ", blind");
-        if (u.ucreamed) {
-            if ((long)u.ucreamed < Blinded || Blindfolded ||
-                !haseyes(youmonst.data))
-                info = msgcat(info, ", cover");
-            info = msgcat(info, "ed by sticky goop");
-        }       /* note: "goop" == "glop"; variation is intentional */
-    }
-    if (Stunned)
-        info = msgcat(info, ", stunned");
-    if (!u.usteed && Wounded_legs) {
-        const char *what = body_part(LEG);
-
-        if (LWounded_legs && RWounded_legs)
-            what = makeplural(what);
-        info = msgcat_many(info, ", injured ", what, NULL);
-    }
-    if (Glib)
-        info = msgcat_many(info, ", slippery ",
-                           makeplural(body_part(HAND)), NULL);
-    if (u.utrap)
-        info = msgcat(info, ", trapped");
-    if (Fast)
-        info = msgcat(info, Very_fast ? ", very fast" : ", fast");
-    if (u.uundetected)
-        info = msgcat(info, ", concealed");
-    if (Invis)
-        info = msgcat(info, ", invisible");
-    if (u.ustuck) {
+    else if (you && u.ustuck) {
         if (sticks(youmonst.data))
             info = msgcat(info, ", holding ");
         else
             info = msgcat(info, ", held by ");
         info = msgcat(info, mon_nam(u.ustuck));
     }
+    if (mon == u.usteed)
+        info = msgcat(info, ", carrying you");
 
-    pline("Status of %s (%s%s):  Level %d  HP %d(%d)  Def %d%s.", u.uplname,
+    /* avoid "Status of the invisible newt ..., invisible" */
+    /* and unlike a normal mon_nam, use "saddled" even if it has a name */
+    monnambuf = (you ? u.uplname :
+                 x_monnam(mon, ARTICLE_THE, NULL,
+                          (SUPPRESS_IT | SUPPRESS_INVISIBLE), FALSE));
+
+    pline("Status of %s (%s%s):  Level %d  HP %d(%d)  Def %d%s.", monnambuf,
+          (!you || u.ualign.record == 3) ? "" :
           (u.ualign.record >= 20) ? "piously " :
           (u.ualign.record > 13) ? "devoutly " :
           (u.ualign.record > 8) ? "fervently " :
           (u.ualign.record > 3) ? "stridently " :
-          (u.ualign.record == 3) ? "" :
           (u.ualign.record >= 1) ? "haltingly " :
           (u.ualign.record == 0) ? "nominally " : "insufficiently ",
-          align_str(u.ualign.type), Upolyd ? mons[u.umonnum].mlevel : u.ulevel,
-          Upolyd ? u.mh : u.uhp, Upolyd ? u.mhmax : u.uhpmax,
-          10 - get_player_ac(), info);
-}
-
-void
-self_invis_message(void)
-{
-    pline("%s %s.",
-          Hallucination ? "Far out, man!  You" : "Gee!  All of a sudden, you",
-          See_invisible ? "can see right through yourself" :
-          "can't see yourself");
+          align_str(alignment),
+          you && Upolyd ? mons[u.umonnum].mlevel : you ? u.ulevel : mon->m_lev,
+          you && Upolyd ? u.mh : m_mhp(mon),
+          you && Upolyd ? u.mhmax : m_mhpmax(mon),
+          10 - find_mac(mon), info);
 }
 
 /*pline.c*/
-

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* NetHack may be freely redistributed.  See license for details. */
 /* Copyright 1988, M. Stephenson */
 
@@ -43,40 +43,39 @@
 # define AD_ELEC 6      /* shock damage */
 # define AD_DRST 7      /* drains str (poison) */
 # define AD_ACID 8      /* acid damage */
-# define AD_SPC1 9      /* for extension of buzz() */
-# define AD_SPC2 10     /* for extension of buzz() */
+# define AD_STUN 9      /* stuns */
+# define AD_SPC1 10     /* for extension of buzz() */
 # define AD_BLND 11     /* blinds (yellow light) */
-# define AD_STUN 12     /* stuns */
-# define AD_SLOW 13     /* slows */
-# define AD_PLYS 14     /* paralyses */
-# define AD_DRLI 15     /* drains life levels (Vampire) */
-# define AD_DREN 16     /* drains magic energy */
-# define AD_LEGS 17     /* damages legs (xan) */
-# define AD_STON 18     /* petrifies (Medusa, cockatrice) */
-# define AD_STCK 19     /* sticks to you (mimic) */
-# define AD_SGLD 20     /* steals gold (leppie) */
-# define AD_SITM 21     /* steals item (nymphs) */
-# define AD_SEDU 22     /* seduces & steals multiple items */
-# define AD_TLPT 23     /* teleports you (Quantum Mech.) */
-# define AD_RUST 24     /* rusts armor (Rust Monster) */
-# define AD_CONF 25     /* confuses (Umber Hulk) */
-# define AD_DGST 26     /* digests opponent (trapper, etc.) */
-# define AD_HEAL 27     /* heals opponent's wounds (nurse) */
-# define AD_WRAP 28     /* special "stick" for eels */
-# define AD_WERE 29     /* confers lycanthropy */
-# define AD_DRDX 30     /* drains dexterity (quasit) */
-# define AD_DRCO 31     /* drains constitution */
-# define AD_DRIN 32     /* drains intelligence (mind flayer) */
-# define AD_DISE 33     /* confers diseases */
-# define AD_DCAY 34     /* decays organics (brown Pudding) */
-# define AD_SSEX 35     /* Succubus seduction (extended) */
-# define AD_HALU 36     /* causes hallucination */
-# define AD_DETH 37     /* for Death only */
-# define AD_PEST 38     /* for Pestilence only */
-# define AD_FAMN 39     /* for Famine only */
-# define AD_SLIM 40     /* turns you into green slime */
-# define AD_ENCH 41     /* remove enchantment (disenchanter) */
-# define AD_CORR 42     /* corrode armor (black pudding) */
+# define AD_SLOW 12     /* slows */
+# define AD_PLYS 13     /* paralyses */
+# define AD_DRLI 14     /* drains life levels (Vampire) */
+# define AD_DREN 15     /* drains magic energy */
+# define AD_LEGS 16     /* damages legs (xan) */
+# define AD_STON 17     /* petrifies (Medusa, cockatrice) */
+# define AD_STCK 18     /* sticks to you (mimic) */
+# define AD_SGLD 19     /* steals gold (leppie) */
+# define AD_SITM 20     /* steals item (nymphs) */
+# define AD_SEDU 21     /* seduces & steals multiple items */
+# define AD_TLPT 22     /* teleports you (Quantum Mech.) */
+# define AD_RUST 23     /* rusts armor (Rust Monster) */
+# define AD_CONF 24     /* confuses (Umber Hulk) */
+# define AD_DGST 25     /* digests opponent (trapper, etc.) */
+# define AD_HEAL 26     /* heals opponent's wounds (nurse) */
+# define AD_WRAP 27     /* special "stick" for eels */
+# define AD_WERE 28     /* confers lycanthropy */
+# define AD_DRDX 29     /* drains dexterity (quasit) */
+# define AD_DRCO 30     /* drains constitution */
+# define AD_DRIN 31     /* drains intelligence (mind flayer) */
+# define AD_DISE 32     /* confers diseases */
+# define AD_DCAY 33     /* decays organics (brown Pudding) */
+# define AD_SSEX 34     /* Succubus seduction (extended) */
+# define AD_HALU 35     /* causes hallucination */
+# define AD_DETH 36     /* for Death only */
+# define AD_PEST 37     /* for Pestilence only */
+# define AD_FAMN 38     /* for Famine only */
+# define AD_SLIM 39     /* turns you into green slime */
+# define AD_ENCH 40     /* remove enchantment (disenchanter) */
+# define AD_CORR 41     /* corrode armor (black pudding) */
 
 # define AD_RBRE 240    /* random breath weapon */
 

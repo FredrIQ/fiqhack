@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1148,8 +1148,8 @@ artifact_hit(struct monst * magr, struct monst * mdef, struct obj * otmp,
             destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
         if (!rn2(7))
             destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
-        if (youdefend && Slimed)
-            burn_away_slime();
+        if (sliming(mdef))
+            burn_away_slime(mdef);
         return realizes_damage;
     }
     if (attacks(AD_COLD, otmp)) {

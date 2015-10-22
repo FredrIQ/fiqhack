@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -810,6 +810,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline("May %s roast in peace.", mon_nam(mdef));
             return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
         }
+        burn_away_slime(mdef);
         tmp += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
         tmp += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
         if (resists_fire(mdef)) {
@@ -1507,6 +1508,7 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
             tmp = 0;
             break;
         case AD_FIRE:
+            burn_away_slime(magr);
             if (resists_fire(magr)) {
                 if (canseemon(magr)) {
                     pline("%s is mildly warmed.", Monnam(magr));

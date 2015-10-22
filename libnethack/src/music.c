@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,7 +29,6 @@
 
 #include "hack.h"
 
-static void awaken_monsters(int);
 static void put_monsters_to_sleep(int);
 static void charm_snakes(int);
 static void calm_nymphs(int);
@@ -37,37 +36,57 @@ static void charm_monsters(int);
 static void do_earthquake(int);
 static int do_improvisation(struct obj *, const struct nh_cmd_arg *);
 
-/*
- * Wake every monster in range...
- */
-
-static void
-awaken_monsters(int distance)
+/* Wake every monster in range... */
+void
+awaken_monsters(struct monst *mon, int distance)
 {
-    struct monst *mtmp = level->monlist;
+    struct monst *mtmp;
     int distm;
 
-    while (mtmp) {
-        if (!DEADMONSTER(mtmp)) {
-            distm = distu(mtmp->mx, mtmp->my);
-            if (distm < distance) {
-                mtmp->msleeping = 0;
-                mtmp->mcanmove = 1;
-                mtmp->mfrozen = 0;
-                /* May scare some monsters */
-                if (distm < distance / 3 &&
-                    !resist(mtmp, TOOL_CLASS, 0, NOTELL))
-                    monflee(mtmp, 0, FALSE, TRUE);
-            }
-        }
-        mtmp = mtmp->nmon;
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp))
+            continue;
+
+        distm = dist2(m_mx(mon), m_my(mon), mtmp->mx, mtmp->my);
+        if (distm >= distance || mon == mtmp)
+            continue;
+
+        mtmp->msleeping = 0;
+        mtmp->mcanmove = 1;
+        mtmp->mfrozen = 0;
+
+        /* May scare some monsters */
+        if (distm >= distance / 3 ||
+            resist(mtmp, TOOL_CLASS, 0, NOTELL))
+            continue;
+
+        monflee(mtmp, 0, FALSE, TRUE);
     }
+
+    /* affect the player */
+    distm = dist2(m_mx(mon), m_my(mon), u.ux, u.uy);
+    if (distm >= distance || mon == &youmonst)
+        return;
+
+    cancel_helplessness(hm_unconscious,
+                        "Surprised, you are jolted into full consciousness!");
+
+    if (distm >= distance / 3)
+        return;
+
+    /* there is no real player scare effect, so make it work similar to potion
+       ghosts, except only 2 turns. Until an actual player scared effect can
+       be made, monsters utilizing the paralyzation "intelligently" isn't
+       fair game -- it currently only happens if a monster is about to discover
+       that a magical instrument horn is out of charges */
+    pline("The loud noise frightens you momentarily and you are unable to move!");
+    helpless(2, hr_afraid, "being frightened",
+             "You regain your composure.");
 }
 
 /*
  * Make monsters fall asleep.  Note that they may resist the spell.
  */
-
 static void
 put_monsters_to_sleep(int distance)
 {
@@ -411,7 +430,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
         }       /* else FALLTHRU */
     case TOOLED_HORN:  /* Awaken or scare monsters */
         pline("You produce a frightful, grave sound.");
-        awaken_monsters(u.ulevel * 30);
+        awaken_monsters(&youmonst, u.ulevel * 30);
         exercise(A_WIS, FALSE);
         break;
     case BUGLE:        /* Awaken & attract soldiers */
@@ -444,13 +463,13 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             pline("The entire dungeon is shaking around you!");
             do_earthquake((u.ulevel - 1) / 3 + 1);
             /* shake up monsters in a much larger radius... */
-            awaken_monsters(ROWNO * COLNO);
+            awaken_monsters(&youmonst, ROWNO * COLNO);
             makeknown(DRUM_OF_EARTHQUAKE);
             break;
         }       /* else FALLTHRU */
     case LEATHER_DRUM: /* Awaken monsters */
         pline("You beat a deafening row!");
-        awaken_monsters(u.ulevel * 40);
+        awaken_monsters(&youmonst, u.ulevel * 40);
         exercise(A_WIS, FALSE);
         break;
     default:

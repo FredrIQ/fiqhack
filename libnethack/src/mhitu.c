@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -846,7 +846,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 destroy_item(POTION_CLASS, AD_FIRE);
             if ((int)mtmp->m_lev > rn2(25))
                 destroy_item(SPBOOK_CLASS, AD_FIRE);
-            burn_away_slime();
+            burn_away_slime(&youmonst);
         } else
             dmg = 0;
         break;
@@ -1675,7 +1675,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
                 tmp = 0;
             } else
                 pline("You are burning to a crisp!");
-            burn_away_slime();
+            burn_away_slime(&youmonst);
         } else
             tmp = 0;
         break;
@@ -1745,7 +1745,7 @@ explmu(struct monst *mtmp, const struct attack *mattk)
                     pline("You get blasted!");
             }
             if (mattk->adtyp == AD_FIRE)
-                burn_away_slime();
+                burn_away_slime(&youmonst);
             if (Half_physical_damage)
                 tmp = (tmp + 1) / 2;
             mdamageu(mtmp, tmp);
@@ -1901,7 +1901,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
                 pline("The fire doesn't feel hot!");
                 dmg = 0;
             }
-            burn_away_slime();
+            burn_away_slime(&youmonst);
             if ((int)mtmp->m_lev > rn2(20))
                 destroy_item(SCROLL_CLASS, AD_FIRE);
             if ((int)mtmp->m_lev > rn2(20))

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -627,7 +627,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                                   vtense(what, "splash"), whom);
                         }
                         setmangry(mon);
-                        set_property(mon, BLINDED, tmp, FALSE);
+                        set_property(mon, BLINDED, rnd(25), FALSE);
                     } else {
                         pline(obj->otyp == CREAM_PIE ? "Splat!" : "Splash!");
                         setmangry(mon);
@@ -1157,6 +1157,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
             break;
             /* Don't return yet; keep hp<1 and tmp=0 for pet msg */
         }
+        burn_away_slime(mdef);
         tmp += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
         tmp += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
         if (resists_fire(mdef)) {
@@ -1700,6 +1701,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                     } else
                         pline("%s is burning to a crisp!", Monnam(mdef));
                     golemeffects(mdef, (int)mattk->adtyp, dam);
+                    burn_away_slime(mdef);
                 } else
                     dam = 0;
                 break;

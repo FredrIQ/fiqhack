@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1233,9 +1233,9 @@ find_item(struct monst *mon, struct musable *m)
         obj->quan = 20L;
         /* when adding more spells where this matters, change this */
         if (((obj->otyp == SPE_DETECT_MONSTERS) &&
-             mprof(mon, MP_SDIVN)) ||
+             mprof(mon, MP_SDIVN) >= P_SKILLED) ||
             ((obj->otyp == SPE_REMOVE_CURSE) &&
-             mprof(mon, MP_SCLRC)))
+             mprof(mon, MP_SCLRC) >= P_SKILLED))
             obj->blessed = 1;
 
         usable = find_item_single(mon, obj, TRUE, &m2, mclose ? TRUE : FALSE, FALSE);
@@ -1422,10 +1422,11 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m,
                     m->x = m2.x;
                     m->y = m2.y;
                     m->z = m2.z;
-                    m->use = (obj->oclass == WAND_CLASS   ? MUSE_WAN :
-                              obj->oclass == SCROLL_CLASS ? MUSE_SCR :
-                              obj->oclass == POTION_CLASS ? MUSE_POT :
-                              obj->otyp == SKELETON_KEY   ? MUSE_KEY :
+                    m->use = (obj->oclass == WAND_CLASS   ? MUSE_WAN  :
+                              obj->oclass == SCROLL_CLASS ? MUSE_SCR  :
+                              obj->oclass == POTION_CLASS ? MUSE_POT  :
+                              obj->oclass == SPBOOK_CLASS ? MUSE_BOOK :
+                              obj->otyp == SKELETON_KEY   ? MUSE_KEY  :
                               obj->otyp == BAG_OF_TRICKS  ? MUSE_BAG_OF_TRICKS :
                               0);;
                 }
@@ -1503,8 +1504,32 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell,
     if (spell && !mon_castable(mon, otyp, specific))
         return 0;
 
-    if (!spell && oclass == SPBOOK_CLASS)
-        return 0; /* TODO: read books if caster */
+    if (!spell && oclass == SPBOOK_CLASS) {
+        /* don't bother with those */
+        if (otyp == SPE_BLANK_PAPER || otyp == SPE_BOOK_OF_THE_DEAD)
+            return 0;
+
+        /* spellcasters or monsters min. XL14 only */
+        if (!spellcaster(mon->data) && mon->m_lev < 14)
+            return 0;
+
+        /* avoid cursed books */
+        if (cursed)
+            return 0;
+
+        /* monsters don't know how hard a book is unless mknown is set
+           (from the identify spell or a spellcaster trying earlier).
+           If they do, only read books with min. success rate 15 */
+        if (study_rate(mon, obj) < 15 && obj->mknown && !blessed)
+            return 0;
+
+        /* we know the spell already */
+        if (mon_castable(mon, otyp, TRUE))
+            return 0;
+
+        /* try it */
+        return 1;
+    }
 
     /* this wand would explode on use */
     if (oclass == WAND_CLASS && mprof(mon, MP_WANDS) == P_UNSKILLED && cursed)
@@ -1534,8 +1559,13 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell,
                   (otmp->oclass == TOOL_CLASS &&
                    !is_weptool(otmp) && objects[otyp].oc_charged)) &&
                  spe <= 0)) {
+                /* only blessed-charge /oW */
+                if (otmp->otyp == WAN_WISHING && !blessed)
+                    continue;
+
+                /* don't charge these if we know it's 1:x */
                 if ((otmp->otyp == WAN_WISHING || otmp->otyp == MAGIC_MARKER) &&
-                    (otmp->recharged && otmp->mbknown))
+                    (otmp->recharged && otmp->mknown))
                     continue;
                 return 1;
             }
@@ -1574,7 +1604,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell,
         }
 
         /* c!oGL is pretty much reverse digging */
-        if (otyp == POT_GAIN_LEVEL && obj->cursed && obj->mbknown &&
+        if (otyp == POT_GAIN_LEVEL && cursed &&
             !mon->isshk && !mon->isgd && !mon->ispriest &&
             !In_sokoban(m_mz(mon)) &&
             !In_endgame(m_mz(mon)))
@@ -1639,16 +1669,21 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell,
             return 2;
     }
 
-    if (otyp == WAN_WISHING)
+    /* tame monsters wont zap wishing */
+    if (otyp == WAN_WISHING && !mon->mtame)
         return 1;
 
-    /* If there is partial protection already, cast it only 25% of the time to avoid this essentially being the default
+    /* If there is partial protection already, cast it only 12% of the time to avoid this essentially being the default
        (Protection is a level 1 spell -- the monster can afford occasionally wasting a few casts to avoid this code being
        far more complex) */
-    if (otyp == SPE_PROTECTION && (!mon->mt_prop[mt_protection] || !rn2(4)))
+    if (otyp == SPE_PROTECTION && (!mon->mt_prop[mt_protection] || !rn2(8)))
         return 1;
 
-    if (otyp == POT_GAIN_LEVEL && !cursed)
+    /* only quaff unIDed !oGL if we can't ID it somehow (prevents shopkeepers/priests from quaffing c!oGL mostly) */
+    if (otyp == POT_GAIN_LEVEL && !cursed &&
+        (obj->mbknown ||
+         (mon_castable(mon, SPE_IDENTIFY, TRUE) < 50 &&
+          !m_carrying(mon, SCR_IDENTIFY))))
         return 1;
 
     if (otyp == POT_SEE_INVISIBLE && !see_invisible(mon) && !cursed)
@@ -1819,6 +1854,11 @@ use_item(struct monst *mon, struct musable *m)
     case MUSE_EAT:
         dog_eat(mon, obj, mon->mx, mon->my, FALSE);
         return DEADMONSTER(mon) ? 1 : 2;
+    case MUSE_BOOK:
+        /* reading a book, not casting a spell, that is MUSE_SPE */
+        if (!mon_study_book(mon, obj))
+            return 0;
+        return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_CONTAINER:
         /* for picking stuff from containers */
         if (obj->where == OBJ_CONTAINED) {
@@ -1892,15 +1932,24 @@ use_item(struct monst *mon, struct musable *m)
             set_property(mon, BLINDED, -2, FALSE);
             set_property(mon, CONFUSION, -2, FALSE);
             set_property(mon, STUNNED, -2, FALSE);
+            set_property(mon, SICK, -2, FALSE);
         }
         return 2;
     case MUSE_DIRHORN:
-        if (oseen) {
-            makeknown(obj->otyp);
+        if (oseen)
             pline("%s plays a %s!", Monnam(mon), xname(obj));
-        } else
+        else
             You_hear("a horn being played.");
+        if (obj->spe < 1) {
+            if (vismon)
+                pline("%s produces a frightful, grave sound.", Monnam(mon));
+            awaken_monsters(mon, mon->m_lev * 30);
+            obj->mknown = 1;
+            return 2;
+        }
         obj->spe--;
+        if (oseen)
+            makeknown(obj->otyp);
         buzz(-30 - ((obj->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1),
              rn1(6, 6), mon->mx, mon->my, m->x, m->y, 0);
         return DEADMONSTER(mon) ? 1 : 2;
@@ -1922,7 +1971,8 @@ use_item(struct monst *mon, struct musable *m)
             return 2;
         }
         obj->spe--;
-        if (create_critters(1, NULL, mon->mx, mon->my))
+        if (create_critters(!rn2(23) ? rn1(7, 2) : 1,
+                            NULL, mon->mx, mon->my))
             makeknown(BAG_OF_TRICKS);
         return 2;
     case MUSE_KEY:
@@ -2063,7 +2113,7 @@ use_item(struct monst *mon, struct musable *m)
         /* don't use rloc() due to worms */
         remove_monster(level, mon->mx, mon->my);
         newsym(mon->mx, mon->my);
-        place_monster(mtmp, trapx, trapy, TRUE);
+        place_monster(mon, trapx, trapy, TRUE);
         if (mon->wormno)
             worm_move(mon);
         newsym(trapx, trapy);
@@ -2537,6 +2587,12 @@ searches_for_item(struct monst *mon, struct obj *obj)
             typ == SCR_CHARGING ||
             typ == SCR_GENOCIDE ||
             typ == SCR_STINKING_CLOUD)
+            return TRUE;
+        break;
+    case SPBOOK_CLASS:
+        if (typ != SPE_BOOK_OF_THE_DEAD &&
+            typ != SPE_BLANK_PAPER &&
+            !mon_castable(mon, typ, TRUE))
             return TRUE;
         break;
     case AMULET_CLASS:

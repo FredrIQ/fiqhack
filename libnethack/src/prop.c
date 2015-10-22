@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -182,7 +182,8 @@ m_has_property(const struct monst *mon, enum youprop property,
         property == PASSES_WALLS ? mdat->mflags1 & M1_WALLWALK               :
         property == REGENERATION ? mdat->mflags1 & M1_REGEN                  :
         property == REFLECTING   ? mon->data == &mons[PM_SILVER_DRAGON]      :
-        property == TELEPORT_CONTROL  ? mdat->mflags1 & M1_TPORT_CNTRL     :
+        property == DISPLACED    ? mdat->mflags3 & M3_DISPLACED              :
+        property == TELEPORT_CONTROL  ? mdat->mflags1 & M1_TPORT_CNTRL       :
         property == MAGICAL_BREATHING ? amphibious(mon->data)                :
         0)
         rv |= W_MASK(os_polyform);
@@ -639,6 +640,7 @@ update_property(struct monst *mon, enum youprop prop,
     boolean vis_invis = cansee(mon->mx, mon->my);
     boolean extrinsic = (slot <= os_last_slot);
     boolean lost = !(has_property(mon, prop) & W_MASK(slot));
+    boolean blocked = mworn_blocked(mon, prop);
     if (slot == os_inctimeout)
         lost = FALSE;
     /* Whether or not a monster has it elsewhere */
@@ -761,7 +763,12 @@ update_property(struct monst *mon, enum youprop prop,
                 if (lost)
                     pline("Your body seems to unfade...");
                 else
-                    self_invis_message();
+                    pline("%s %s.",
+                          hallu ? "Far out, man!  You" :
+                          "Gee!  All of a sudden, you",
+                          see_invisible(&youmonst) ?
+                          "can see right through yourself" :
+                          "can't see yourself");
                 effect = TRUE;
             }
             newsym(u.ux, u.uy);
@@ -771,9 +778,13 @@ update_property(struct monst *mon, enum youprop prop,
                       "%s body turns transparent!",
                       s_suffix(Monnam(mon)));
             } else {
+                /* call x_monnam directly to get rid of "The invisible ..." */
                 pline(lost ? "%s appears!" :
                       "%s suddenly disappears!",
-                      noit_Monnam(mon)); /* noit avoids "It suddenly disappears!" */
+                      msgupcasefirst(x_monnam(mon, ARTICLE_THE, NULL,
+                                              (mon->mnamelth ? SUPPRESS_SADDLE : 0) |
+                                              SUPPRESS_IT | SUPPRESS_INVISIBLE,
+                                              FALSE)));
                 set_mimic_blocking();       /* do special mimic handling */
                 see_monsters(FALSE);        /* see invisible monsters */
             }
@@ -792,13 +803,22 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case TELEPORT_CONTROL:
         if (!extrinsic && you) {
-            pline(hallu ? "You feel centered in your personal space." :
+            pline(lost ? "You feel uncontrolled." :
+                  hallu ? "You feel centered in your personal space." :
                   "You feel in control of yourself.");
             effect = TRUE;
         }
         break;
     case POLYMORPH:
+        if (!extrinsic && you)
+            pline(lost && hallu ? "You no longer feel like a chameleon." :
+                  lost ? "You are no longer shapeshifting" :
+                  hallu ? "You feel like a chameleon!" :
+                  "Your body begins to shapeshift.");
+        break;
     case POLYMORPH_CONTROL:
+        if (!extrinsic && you && lost)
+            pline("You feel no longer in control of your shapeshifting.");
         break;
     case LEVITATION:
         if (lost && slot == os_timeout && !extrinsic)
@@ -992,20 +1012,16 @@ update_property(struct monst *mon, enum youprop prop,
             turnstate.vision_full_recalc = TRUE;
             see_monsters(FALSE);
         } else if (you) {
-            boolean eoto;
-            if (!redundant &&
-                m_has_property(mon, BLINDED, ANY_PROPERTY, TRUE))
-                eoto = TRUE;
-            if (redundant && !eoto) {
+            if (redundant && !blocked) {
                 if (!lost)
                     eyepline("itches", "itch");
                 else
                     eyepline("twitches", "twitch");
-            } else if (eoto)
+            } else if (blocked)
                 pline("Your vision seems to %s for a moment but is %s now",
-                      lost ? "dim" : "brighten",
+                      lost ? "brighten" : "dim",
                       hallu ?
-                      (lost ? "happier" : "sadder") :
+                      (lost ? "sadder" : "happier") :
                       "normal");
             else {
                 if (lost)
@@ -1147,11 +1163,7 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case HALLUC:
         if (you) {
-            boolean grays;
-            if (!redundant &&
-                m_has_property(mon, HALLUC, ANY_PROPERTY, TRUE))
-                grays = TRUE;
-            if (lost && grays)
+            if (lost && blocked)
                 pline("Your vision seems to %s for a moment but is %s now",
                       "flatten", "normal");
             else if (lost && blind(mon))

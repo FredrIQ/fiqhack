@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1226,6 +1226,13 @@ const struct permonst mons[] = {
         SIZ(1500, 500, 0, MS_ROAR, MZ_HUGE), 0, 0,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_CARNIVORE,
         M2_HOSTILE | M2_STRONG | M2_GREEDY | M2_JEWELS, 0, 0, DRAGON_SILVER),
+    MON("baby shimmering dragon", S_DRAGON,
+        LVL(12, 9, 2, 10, 0), G_GENO,
+        A(ATTK(AT_BITE, AD_PHYS, 2, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1500, 500, 0, MS_ROAR, MZ_HUGE), 0, 0,
+        M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_CARNIVORE,
+        M2_HOSTILE | M2_STRONG | M2_GREEDY | M2_JEWELS, M3_DISPLACED, 0, CLR_CYAN),
     MON("baby red dragon", S_DRAGON,
         LVL(12, 9, 2, 10, 0), G_GENO,
         A(ATTK(AT_BITE, AD_PHYS, 2, 6),
@@ -1299,6 +1306,16 @@ const struct permonst mons[] = {
         M1_CARNIVORE,
         M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
         0, 0, DRAGON_SILVER | HI_ULINE),
+    MON("shimmering dragon", S_DRAGON,
+        LVL(15, 9, -1, 20, 4), (G_GENO | 1),
+        A(ATTK(AT_BREA, AD_STUN, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
+          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          NO_ATTK, NO_ATTK),
+        SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), 0, 0,
+        M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
+        M1_CARNIVORE,
+        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
+        M3_DISPLACED, 0, CLR_CYAN | HI_ULINE),
     MON("red dragon", S_DRAGON,
         LVL(15, 9, -1, 20, -4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_FIRE, 6, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
