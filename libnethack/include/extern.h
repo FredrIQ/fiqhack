@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1487,7 +1487,7 @@ extern void forget_objects(int);
 extern int seffects(struct monst *, struct obj *scroll, boolean * known);
 extern void litroom(struct monst *, boolean, struct obj *);
 extern void do_level_genocide(void);
-extern void do_genocide(struct monst *, int);
+extern void do_genocide(struct monst *, int, boolean);
 extern void punish(struct obj *);
 extern void unpunish(void);
 extern boolean cant_create(int *, boolean);

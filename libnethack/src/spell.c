@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -593,6 +593,8 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
         impossible("Monster reading Book of the Dead?");
         return 0;
     }
+
+    spellbook->mknown = 1; /* they learn its' difficulty */
     if (spellbook->cursed)
         too_hard = TRUE;
     else if (!spellbook->blessed) {
@@ -603,7 +605,6 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
             if (read_ability < 12) {
                 if (vis)
                     pline("%s realizes the difficulty of the book and puts it down.", Monnam(mon));
-                spellbook->mknown = 1; /* they learn it's difficult */
                 return 0;
             }
         }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -21,6 +21,7 @@ static const char all_count[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
 
 static void wand_explode(struct monst *, struct obj *);
 static void do_class_genocide(struct monst *);
+static int mon_choose_reverse_genocide(struct monst *);
 static int mon_choose_genocide(struct monst *, boolean, int);
 static int maybe_target_class(boolean, int);
 static void stripspe(struct monst *, struct obj *);
@@ -1286,7 +1287,8 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (sobj->blessed)
             do_class_genocide(mon);
         else
-            do_genocide(mon, (!sobj->cursed) | (2 * ! !Confusion));
+            do_genocide(mon, (!sobj->cursed) | (2 * ! !Confusion),
+                        (sobj->cursed && sobj->mbknown));
         break;
     case SCR_LIGHT:
         if (!Blind)
@@ -2151,8 +2153,9 @@ do_level_genocide(void)
 /*      1 = normal genocide */
 /*      3 = forced genocide of player */
 /*      5 (4 | 1) = normal genocide from throne */
+/* known_cursed is if a monster is fully aware that it is doing a revgeno */
 void
-do_genocide(struct monst *mon, int how)
+do_genocide(struct monst *mon, int how, boolean known_cursed)
 {
     const char *buf;
     int i, killplayer = 0;
@@ -2215,7 +2218,10 @@ do_genocide(struct monst *mon, int how)
                 mndx = name_to_mon(buf);
             } else {
                 buf = "kitten"; /* yeah, screw those kittens (fallback in case buf is read after this point) */
-                mndx = mon_choose_genocide(mon, FALSE, i);
+                if (known_cursed)
+                    mndx = mon_choose_reverse_genocide(mon);
+                else
+                    mndx = mon_choose_genocide(mon, FALSE, i);
                 if (mndx) {
                     if (vis) {
                         if (!i)
@@ -2359,6 +2365,30 @@ do_genocide(struct monst *mon, int how)
         else
             pline("Nothing happens.");
     }
+}
+
+/* Returns a mndx for the monster to REVERSE genocide (cursed scroll) */
+static int
+mon_choose_reverse_genocide(struct monst *mon)
+{
+    /* if the monster is hostile, revgeno nasty things */
+    if (!mon->mpeaceful) {
+        int i;
+        int nasty;
+        for (i = 0; i < 10; i++) { /* try to pick a suitable nasty 10 times */
+            nasty = pick_nasty();
+            if (mvitals[nasty].mvflags & G_GENOD) /* genocided, try again */
+                continue;
+            /* we found a suitable nasty, return it */
+            return nasty;
+        }
+        /* found no suitable nasty, return self */
+        return monsndx(mon->data);
+    }
+
+    /* peacefuls/tame should not do this */
+    impossible("peaceful monster doing a deliberate reverse-genocide?");
+    return monsndx(mon->data); /* just return self */
 }
 
 /* Returns a class on class genocide, a mndx otherwise */

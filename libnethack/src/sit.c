@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -227,7 +227,7 @@ dosit(const struct nh_cmd_arg *arg)
                 pline("A voice echoes:");
                 verbalize("By thy Imperious order, %s...",
                           u.ufemale ? "Dame" : "Sire");
-                do_genocide(&youmonst, 5); /* REALLY|ONTHRONE, see do_genocide() */
+                do_genocide(&youmonst, 5, FALSE); /* REALLY|ONTHRONE, see do_genocide() */
                 break;
             case 9:
                 pline("A voice echoes:");
