@@ -2857,7 +2857,7 @@ enlightenment(int final)
         enl_msg(&menu, "You fumble", "", "d", "");
     if (leg_hurt(&youmonst))
         you_have(&menu, msgcat("wounded ", makeplural(body_part(LEG))));;
-    if (Sleeping)
+    if (restful_sleep(&youmonst))
         enl_msg(&menu, "You ", "fall", "fell", " asleep");
     if (Hunger)
         enl_msg(&menu, "You hunger", "", "ed", " rapidly");

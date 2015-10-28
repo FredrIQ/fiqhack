@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -431,7 +431,7 @@ e_missed(struct entity *etmp, boolean chunks)
         return TRUE;
 
     if (flying(etmp->emon) &&
-        (is_u(etmp) ? !Sleeping
+        (is_u(etmp) ? !u_helpless(hm_all)
          : (etmp->emon->mcanmove && !etmp->emon->msleeping)))
         /* flying requires mobility */
         misses = 5;     /* out of 8 */
@@ -459,9 +459,10 @@ e_jumps(struct entity *etmp)
 {
     int tmp = 4;        /* out of 10 */
 
-    if (is_u(etmp) ? (Sleeping || Fumbling)
-        : (!etmp->emon->mcanmove || etmp->emon->msleeping || !etmp->edata->mmove
-           || etmp->emon->wormno))
+    if (fumbling(etmp->emon) ||
+        (is_u(etmp) ? u_helpless(hm_all) :
+         (etmp->emon->mcanmove || etmp->emon->msleeping ||
+          !etmp->edata->mmove || etmp->emon->wormno)))
         return FALSE;
 
     if (confused(etmp->emon))

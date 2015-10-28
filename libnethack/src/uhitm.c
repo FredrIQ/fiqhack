@@ -2107,7 +2107,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             break;
         case AD_FIRE:
             if (monnear(mon, u.ux, u.uy)) {
-                if (Fire_resistance) {
+                if (resists_fire(&youmonst)) {
                     shieldeff(u.ux, u.uy);
                     pline("You feel mildly warm.");
                     ugolemeffects(AD_FIRE, tmp);
@@ -2118,7 +2118,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             }
             break;
         case AD_ELEC:
-            if (Shock_resistance) {
+            if (resists_elec(&youmonst)) {
                 shieldeff(u.ux, u.uy);
                 pline("You feel a mild tingle.");
                 ugolemeffects(AD_ELEC, tmp);
