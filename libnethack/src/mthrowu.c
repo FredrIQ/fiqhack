@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -57,7 +57,7 @@ thitu(int tlev, int dam, struct obj *obj, const char *name)
       (obj && obj->quan > 1L) ? name : an(name);
     is_acid = (obj && obj->otyp == ACID_VENOM);
 
-    if (get_player_ac() + tlev <= rnd(20)) {
+    if (find_mac(&youmonst) + tlev <= rnd(20)) {
         if (Blind || !flags.verbose)
             pline("It misses.");
         else
@@ -431,8 +431,14 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 }
             }
             if (hitu && singleobj->otyp == EGG) {
-                if (touched_monster(singleobj->corpsenm))
-                    Stoned = 5;
+                if (!petrifying(&youmonst) &&
+                    touched_monster(singleobj->corpsenm)) {
+                    set_property(&youmonst, STONED, 5, TRUE);
+                    const char *kbuf;
+                    kbuf = msgcat(s_suffix(k_monnam(mon)), " ");
+                    kbuf = msgcat(kbuf, xname(singleobj));
+                    set_delayed_killer(STONING, killer_msg(STONING, kbuf));
+                }
             }
             action_interrupted();
             if (hitu || !range) {
@@ -466,8 +472,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
 
     if (blindinc) {
         u.ucreamed += blindinc;
-        make_blinded(Blinded + (long)blindinc, FALSE);
-        if (!Blind)
+        if (!blind(&youmonst))
             pline("Your vision quickly clears.");
         else if (flags.verbose)
             pline("Use the command #wipe to clean your %s.", body_part(FACE));

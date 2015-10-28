@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -57,7 +57,7 @@ mon_hitbon(struct monst *mon)
         if (otmp->owornmask && otmp->otyp == RIN_INCREASE_ACCURACY)
             ret += otmp->spe;
 
-    ret += m_mhitinc(mon);
+    ret += mon->mhitinc;
     return ret;
 }
 
@@ -71,7 +71,7 @@ mon_dambon(struct monst *mon)
         if (otmp->owornmask && otmp->otyp == RIN_INCREASE_DAMAGE)
             ret += otmp->spe;
 
-    ret += m_mdaminc(mon);
+    ret += mon->mdaminc;
     return ret;
 }
 
@@ -84,7 +84,7 @@ mon_protbon(struct monst *mon)
         if (otmp->owornmask && otmp->otyp == RIN_PROTECTION)
             ret += otmp->spe;
 
-    ret += m_mblessed(mon);
+    ret += mon->mac;
     return ret;
 }
 
@@ -142,7 +142,7 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
     case AT_NONE:
         /* an object is used (thrown/spit/other) */
         if (obj && (obj->otyp == CREAM_PIE)) {
-            if (is_you && Blindfolded)
+            if (blind(mdef) & W_MASK(os_tool))
                 return FALSE;
         } else if (obj && (obj->otyp == BLINDING_VENOM)) {
             /* all ublindf, including LENSES, protect, cream-pies too */
@@ -158,7 +158,8 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
         break;
 
     case AT_ENGL:
-        if (is_you && (Blindfolded || u_helpless(hm_asleep) || u.ucreamed))
+        if (is_you && ((blind(&youmonst) & W_MASK(os_tool)) ||
+                       u_helpless(hm_asleep) || u.ucreamed))
             return FALSE;
         if (!is_you && mdef->msleeping)
             return FALSE;

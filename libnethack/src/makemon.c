@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1214,10 +1214,10 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     mtmp->dx = COLNO;
     mtmp->dy = ROWNO;
-    mtmp->mintrinsics = 0;
+    memset(mtmp->mintrinsic, 0, sizeof (mtmp->mintrinsic));
     mtmp->mhitinc = 0;
     mtmp->mdaminc = 0;
-    mtmp->mblessed = 0;
+    mtmp->mac = 0;
 
     return mtmp;
 }
@@ -2272,12 +2272,21 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->misc_worn_check = mread32(mf);
     mon->wormno = mread8(mf);
     mflags = mread32(mf);
-    mon->mintrinsics = mread64(mf);
-    mon->mspells = mread64(mf);
-    enum mt_prop mt;
-    for (mt = mt_firstprop; mt <= mt_lastprop; mt++) {
-        mon->mt_prop[mt] = mread8(mf);
+    /* Intrinsics have 15 bits for timeout and 1 for FROMOUTSIDE(_RAW). Since
+       save_encode optimize size significantly, this is used for the timeouts,
+       but since they are in the same field, save/restore them seperately. */
+    enum youprop prop;
+    for (prop = 0; prop <= LAST_PROP; prop++) /* timeouts */
+        mon->mintrinsic[prop] = save_decode_16(mread16(mf), -moves, l ? -l->lastmoves : 0);
+    /* outside -- padded to an octet */
+    xchar octet = 0;
+    for (prop = 0; prop <= LAST_PROP; prop++) {
+        if (!(prop % 8))
+            octet = mread8(mf);
+        if (octet >> (prop % 8))
+            mon->mintrinsic[prop] |= FROMOUTSIDE_RAW;
     }
+    mon->mspells = mread64(mf);
 
     /* just mark the pointers for later restoration */
     mon->minvent = mread8(mf) ? (void *)1 : NULL;
@@ -2285,7 +2294,7 @@ restore_mon(struct memfile *mf, struct level *l)
 
     mon->mhitinc = mread8(mf);
     mon->mdaminc = mread8(mf);
-    mon->mblessed = mread8(mf);
+    mon->mac = mread8(mf);
 
     if (mon->mnamelth)
         mread(mf, NAME_MUTABLE(mon), mon->mnamelth);
@@ -2519,13 +2528,20 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
         (mon->isminion << 3) | (mon->isgd << 2) |
         (mon->ispriest << 1) | (mon->iswiz << 0);
     mwrite32(mf, mflags);
-    mwrite64(mf, mon->mintrinsics);
-    mwrite64(mf, mon->mspells);
-    enum mt_prop mt;
-    for (mt = mt_firstprop; mt <= mt_lastprop; mt++) {
-        mwrite8(mf, mon->mt_prop[mt]);
+    enum youprop prop;
+    /* see monster restoration for why this code looks more complicated than it should be */
+    for (prop = 0; prop <= LAST_PROP; prop++)
+        mwrite16(mf, save_encode_16(mon->mintrinsic[prop] & TIMEOUT,
+                                    -moves, l ? -l->lastmoves : 0));
+    xchar octet = 0;
+    for (prop = 0; (prop <= LAST_PROP || prop % 8); prop++) {
+        if (prop && !(prop % 8)) {
+            mwrite8(mf, octet);
+            octet = 0;
+        }
+        octet |= ((mon->mintrinsic[prop] & FROMOUTSIDE_RAW) << (prop % 8));
     }
-    
+    mwrite64(mf, mon->mspells);
 
     /* just mark that the pointers had values */
     mwrite8(mf, mon->minvent ? 1 : 0);
@@ -2533,7 +2549,7 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
 
     mwrite8(mf, mon->mhitinc);
     mwrite8(mf, mon->mdaminc);
-    mwrite8(mf, mon->mblessed);
+    mwrite8(mf, mon->mac);
 
     if (mon->mnamelth)
         mwrite(mf, NAME(mon), mon->mnamelth);

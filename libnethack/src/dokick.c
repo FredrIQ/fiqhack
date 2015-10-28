@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -97,7 +97,7 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
         dmg += rnd(4);
     if (uarmf)
         dmg += uarmf->spe;
-    dmg += u.udaminc;   /* add ring(s) of increase damage */
+    dmg += mon_dambon(&youmonst);   /* add ring(s) of increase damage */
 
     /* Do passive counterattacks before damaging the monster. Otherwise, we get
        a dmonsfree crash if the monster and player kill each other
@@ -688,6 +688,19 @@ dokick(const struct nh_cmd_arg *arg)
     } else if (verysmall(youmonst.data)) {
         pline("You are too small to do any kicking.");
         no_kick = TRUE;
+    } else if (leg_hurt(&youmonst)) {
+        /* moved before steed check -- since steeds can have
+           wounded legs now, checking your legs actually works */
+        const char *bp = body_part(LEG);
+
+        if (leg_hurtl(&youmonst) && leg_hurtr(&youmonst))
+            bp = makeplural(bp);
+        pline("Your %s%s %s in no shape for kicking.",
+              (!leg_hurtr(&youmonst)) ? "left " :
+              (!leg_hurtl(&youmonst)) ? "right " : "",
+              bp, (leg_hurtl(&youmonst) && leg_hurtr(&youmonst)) ?
+              "are" : "is");
+        no_kick = TRUE;
     } else if (u.usteed) {
         if (yn_function("Kick your steed?", ynchars, 'y') == 'y') {
             pline("You kick %s.", mon_nam(u.usteed));
@@ -696,17 +709,6 @@ dokick(const struct nh_cmd_arg *arg)
         } else {
             return 0;
         }
-    } else if (Wounded_legs) {
-        /* note: jump() has similar code */
-        const char *bp = body_part(LEG);
-
-        if (LWounded_legs && RWounded_legs)
-            bp = makeplural(bp);
-        pline("Your %s%s %s in no shape for kicking.",
-              (!RWounded_legs) ? "left " :
-              (!LWounded_legs) ? "right " : "",
-              bp, (LWounded_legs && RWounded_legs) ? "are" : "is");
-        no_kick = TRUE;
     } else if (near_capacity() > SLT_ENCUMBER) {
         pline("Your load is too heavy to balance yourself for a kick.");
         no_kick = TRUE;
@@ -1101,7 +1103,7 @@ dokick(const struct nh_cmd_arg *arg)
                 maploc = &level->locations[x][y];
             }
             if (!rn2(3))
-                set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
+                set_wounded_legs(&youmonst, RIGHT_SIDE, rn1(6, 5));
             losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5),
                    killer_msg(DIED, kickstr(kickobj)));
             if (Is_airlevel(&u.uz) || Levitation)
@@ -1122,7 +1124,7 @@ dokick(const struct nh_cmd_arg *arg)
         } else {
             pline("Dumb move!  You strain a muscle.");
             exercise(A_STR, FALSE);
-            set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
+            set_wounded_legs(&youmonst, RIGHT_SIDE, rn1(6, 5));
         }
         if ((Is_airlevel(&u.uz) || Levitation) && rn2(2))
             hurtle(-dx, -dy, 1, TRUE);

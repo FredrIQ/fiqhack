@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,6 +12,7 @@
 # define pm_resistance(ptr,typ) (((ptr)->mresists & (typ)) != 0)
 
 # define has_property(mon,prop) (m_has_property(mon, prop, ANY_PROPERTY, FALSE))
+# define ihas_property(mon,prop) (has_property(mon, prop) & INTRINSIC)
 
 /* Any properties */
 # define resists_fire(mon)      (has_property(mon, FIRE_RES))
@@ -54,16 +55,18 @@
 # define telepathic(mon)        (has_property(mon, TELEPAT))
 # define fast(mon)              (has_property(mon, FAST))
 /* ifast: whether or not you have intrinsic fast in particular */
-# define ifast(mon)             (m_has_property(mon, FAST, (W_MASK(os_outside) | \
-                                W_MASK(os_timeout)), FALSE))
-# define very_fast(mon)         (m_has_property(mon, FAST, ~W_MASK(os_outside), FALSE))
+# define ifast(mon)             (fast(mon) & INTRINSIC)
+# define very_fast(mon)         (fast(mon) & ~INTRINSIC)
 # define stunned(mon)           (has_property(mon, STUNNED))
 # define confused(mon)          (has_property(mon, CONFUSION))
 # define sick(mon)              (has_property(mon, SICK))
 # define blind(mon)             (has_property(mon, BLINDED))
 # define restful_sleep(mon)     (has_property(mon, SLEEPING))
-# define wounded_left_leg(mon)  (has_property(mon, LWOUNDED_LEGS))
-# define wounded_right_leg(mon) (has_property(mon, RWOUNDED_LEGS))
+# define leg_hurtl(mon)         (has_property(mon, LWOUNDED_LEGS))
+# define leg_hurtr(mon)         (has_property(mon, RWOUNDED_LEGS))
+# define leg_hurt(mon)          (leg_hurtl(mon) | leg_hurtr(mon))
+# define leg_hurtsides(mon)     ((leg_hurtl(mon) ? LEFT_SIDE : 0) | \
+                                 (leg_hurtr(mon) ? RIGHT_SIDE : 0))
 # define petrifying(mon)        (has_property(mon, STONED))
 # define strangled(mon)         (has_property(mon, STRANGLED))
 # define hallucinating(mon)     (has_property(mon, HALLUC))

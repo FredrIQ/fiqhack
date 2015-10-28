@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -177,12 +177,9 @@ static const short cham_to_pm[] = {
                          /* but he might have been polymorphed  */      \
                          (mon)->m_id == u.quest_status.leader_m_id ||   \
                          /* intrinsics or spells */                     \
-                         (mon)->mspells || (mon)->mintrinsics ||        \
+                         (mon)->mspells || (mon)->mintrinsic ||         \
                          (mon)->mhitinc || (mon)->mdaminc ||            \
-                         (mon)->mblessed ||                             \
-                         /* special cancellation handling for these */  \
-                         (dmgtype((mon)->data, AD_SEDU) ||              \
-                          dmgtype((mon)->data, AD_SSEX)))
+                         (mon)->mac)
 
 /* Creates a monster corpse, a "special" corpse, or nothing if it doesn't
  * leave corpses.  Monsters which leave "special" corpses should have
@@ -596,41 +593,10 @@ mcalcdistress(void)
             mon_tele(mtmp, !!teleport_control(mtmp));
 
         /* time out mt properties */
-        enum mt_prop mt;
-        for (mt = mt_firstprop; mt <= mt_lastprop; mt++) {
-            if (mtmp->mt_prop[mt]) {
-                /* Special case protection -- Expert users lose golden haziness
-                   half as fast */
-                if (mt == mt_protection) {
-                    if ((moves % 2) ||
-                        mprof(mtmp, MP_SCLRC) < P_EXPERT) {
-                        mtmp->mt_prop[mt]--;
-                        if (!(mtmp->mt_prop[mt] % 10) && canseemon(mtmp))
-                            pline("The %s haze around %s %s.", hcolor("golden"),
-                                  mon_nam(mtmp),
-                                  m_mspellprot(mtmp) ? "becomes less dense" : "disappears");
-                    }
-                    continue;
-                }
-                mtmp->mt_prop[mt]--;
-                if (mt == mt_levi) {
-                    /* Monsters with temporary levitation might get wary */
-                    if (!rn2(40))
-                        mtmp->levi_wary = 1;
-                    if (mtmp->mt_prop[mt] == 0)
-                        /* "intrinsic" levitation is, in fact, merely used
-                           to see if it is controlled or not. */
-                        set_property(mtmp, LEVITATION, -1, TRUE);
-                }
-                /* Delayed instadeaths with special messages also requires update_property() each turn */
-                if (mt == mt_petrify ||
-                    mt == mt_slime ||
-                    mt == mt_strangled ||
-                    mtmp->mt_prop[mt] == 0)
-                    update_property(mtmp, mon_mt2prop(mt), os_timeout);
-            }
-        }
-                
+        decrease_property_timers(mtmp);
+        if (levitates(mtmp) && !rn2(40) &&
+            !(has_property(mtmp, LEVITATION) & ~W_MASK(os_timeout)))
+            mtmp->levi_wary = 1;
 
         /* ... and other timers.
            FIXME: what about meating? */
@@ -2174,7 +2140,7 @@ cleanup:
     if (is_human(mdat) && (!always_hostile(mdat) && mtmp->malign <= 0) &&
         (mndx < PM_ARCHEOLOGIST || mndx > PM_WIZARD) &&
         u.ualign.type != A_CHAOTIC) {
-        HTelepat &= ~INTRINSIC;
+        set_property(&youmonst, TELEPAT, -1, TRUE);
         change_luck(-2);
         pline("You murderer!");
         if (Blind && !Blind_telepat)

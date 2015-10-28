@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,7 +32,7 @@ find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
         mask |= item_provides_extrinsic(chain, extrinsic, warntype);
         if (extrinsic == w_blocks(chain, chain->owornmask) ||
             (extrinsic == HALLUC && Halluc_resistance))
-            *blocked = TRUE;
+             *blocked = TRUE;
         chain = chain->nobj;
     }
     if (*blocked) return 0L;
@@ -130,20 +130,19 @@ obj_worn_on(struct obj *obj, enum objslot slot)
 int
 find_mac(struct monst *mon)
 {
-    if (mon == &youmonst)
-        return get_player_ac();
-
     struct obj *obj;
     int base = mon->data->ac;
-    long mwflags = mon->misc_worn_check;
 
-    for (obj = mon->minvent; obj; obj = obj->nobj) {
-        if ((obj->owornmask & mwflags) && (obj->oclass != RING_CLASS))
+    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+        /* Armor transformed into dragon skin gives no AC bonus */
+        if (mon == &youmonst && obj == uskin())
+            continue;
+        if (obj->owornmask <= W_MASK(os_last_armor))
             base -= ARM_BONUS(obj);
         /* since ARM_BONUS is positive, subtracting it increases AC */
     }
 
-    if (mon->mtame) {
+    if (mon != &youmonst && mon->mtame) {
         /* Hopefully, this codepath never runs; badly injured tame monsters
            aren't meant to be attacked. This is a fallback to keep the pets
            alive in the case that some hostile monster isn't calling
@@ -152,8 +151,18 @@ find_mac(struct monst *mon)
             base -= 20;
     }
 
-    base -= monspellprot(mon);
+    base -= m_mspellprot(mon);
     base -= mon_protbon(mon);
+
+    /* Add divine protection */
+    if (mon == &youmonst)
+        base -= u.ublessed;
+
+    /* Trim to valid schar range. */
+    if (base < -128)
+        base = -128;
+    if (base > 127)
+        base = 127;
 
     return base;
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -380,10 +380,8 @@ savelife(int how)
         newuhs(FALSE);
     }
     /* cure impending doom of sickness hero won't have time to fix */
-    if ((Sick & TIMEOUT) == 1) {
-        u.usick_type = 0;
-        Sick = 0;
-    }
+    if (property_timeout(&youmonst, SICK) == 1)
+        set_property(&youmonst, SICK, -2, FALSE);
     if (how == CHOKING)
         init_uhunger();
 
@@ -395,7 +393,6 @@ savelife(int how)
     if (u.utrap && u.utraptype == TT_LAVA)
         u.utrap = 0;
     u.ugrave_arise = NON_PM;
-    HUnchanging = 0L;
     flush_screen();
 }
 

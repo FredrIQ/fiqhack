@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,8 +47,6 @@ polyman(const char *fmt, const char *arg)
 {
     boolean sticky = sticks(youmonst.data) && u.ustuck &&
         !Engulfed;
-    boolean could_pass_walls = Passes_walls;
-    boolean was_blind = ! !Blind;
 
     if (Upolyd) {
         u.acurr = u.macurr;     /* restore old attribs */
@@ -56,6 +54,7 @@ polyman(const char *fmt, const char *arg)
         u.umonnum = u.umonster;
         u.ufemale = u.mfemale;
     }
+    update_property_polymorph(&youmonst, u.umonster);
     set_uasmon();
 
     u.mh = u.mhmax = 0;
@@ -83,28 +82,9 @@ polyman(const char *fmt, const char *arg)
     if (u.twoweap && !could_twoweap(youmonst.data))
         untwoweapon();
 
-    if (u.utraptype == TT_PIT) {
-        if (could_pass_walls) { /* player forms cannot pass walls */
-            u.utrap = rn1(6, 2);
-        }
-    }
-    if (was_blind && !Blind) {  /* reverting from eyeless */
-        Blinded = 1L;
-        make_blinded(0L, TRUE); /* remove blindness */
-    }
-
-    if (!Levitation && !u.ustuck &&
-        (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)))
-        spoteffects(TRUE);
-
+    spoteffects(TRUE);
     see_monsters(FALSE);
     update_supernatural_abilities();
-
-    if (!uarmg) {
-        const char *kbuf = msgprintf("returning to %s form while wielding",
-                                     urace.adj);
-        selftouch("No longer petrify-resistant, you", kbuf);
-    }
 }
 
 void
@@ -190,10 +170,9 @@ newman(void)
 
     redist_attr();
     u.uhunger = rn1(500, 500);
-    if (Sick)
-        make_sick(0L, NULL, FALSE, SICK_ALL);
-    Stoned = 0;
-    set_delayed_killer(STONING, NULL);
+    if (sick(&youmonst))
+        make_sick(&youmonst, 0L, NULL, FALSE, SICK_ALL);
+    set_property(&youmonst, STONED, -2, FALSE);
     if (u.uhp <= 0 || u.uhpmax <= 0) {
         if (Polymorph_control) {
             if (u.uhp <= 0)
@@ -214,9 +193,9 @@ newman(void)
             (u.ufemale &&
              urace.individual.f) ? urace.individual.f :
             (urace.individual.m) ? urace.individual.m : urace.noun);
-    if (Slimed) {
+    if (sliming(&youmonst)) {
         pline("Your body transforms, but there is still slime on you.");
-        Slimed = 10L;
+        set_property(&youmonst, SLIMED, 10, FALSE);
     }
     see_monsters(FALSE);
     encumber_msg();
@@ -491,8 +470,7 @@ int
 polymon(int mntmp, boolean noisy)
 {
     boolean sticky = sticks(youmonst.data) && u.ustuck &&
-        !Engulfed, was_blind = ! !Blind, dochange = FALSE;
-    boolean could_pass_walls = Passes_walls;
+        !Engulfed, dochange = FALSE;
     int mlvl;
 
     if (mvitals[mntmp].mvflags & G_GENOD) {     /* allow G_EXTINCT */
@@ -501,6 +479,10 @@ polymon(int mntmp, boolean noisy)
         exercise(A_WIS, TRUE);
         return 0;
     }
+
+    int new_polymon = update_property_polymorph(&youmonst, mntmp);
+    if (new_polymon) /* update_property_polymorph polymorphed you again, bail out */
+        return 1; /* the player was polymorphed, even if it wasn't the target form */
 
     if (noisy)
         break_conduct(conduct_polyself);     /* KMH, conduct */
@@ -543,14 +525,6 @@ polymon(int mntmp, boolean noisy)
         else
             pline("You feel like a new %s!", mons[mntmp].mname);
     }
-    if (Stoned && poly_when_stoned(&mons[mntmp])) {
-        /* poly_when_stoned already checked stone golem genocide */
-        if (noisy)
-            pline("You turn to stone!");
-        mntmp = PM_STONE_GOLEM;
-        Stoned = 0;
-        set_delayed_killer(STONING, NULL);
-    }
 
     u.mtimedone = rn1(500, 500);
     u.umonnum = mntmp;
@@ -560,36 +534,6 @@ polymon(int mntmp, boolean noisy)
        only strength gets changed. */
     if (strongmonst(&mons[mntmp]))
         ABASE(A_STR) = AMAX(A_STR) = STR18(100);
-
-    if (Stone_resistance && Stoned) {   /* parnes@eniac.seas.upenn.edu */
-        Stoned = 0;
-        set_delayed_killer(STONING, NULL);
-        if (noisy)
-            pline("You no longer seem to be petrifying.");
-    }
-    if (Sick_resistance && Sick) {
-        make_sick(0L, NULL, FALSE, SICK_ALL);
-        if (noisy)
-            pline("You no longer feel sick.");
-    }
-    if (Slimed) {
-        if (flaming(youmonst.data)) {
-            if (noisy)
-                pline("The slime burns away!");
-            Slimed = 0L;
-        } else if (mntmp == PM_GREEN_SLIME || unsolid(youmonst.data)) {
-            /* do it silently */
-            Slimed = 0L;
-        }
-    }
-    if (nohands(youmonst.data))
-        Glib = 0;
-
-    if (Passes_walls && u.utraptype == TT_PIT) {
-        u.utraptype = 0;
-        u.utrap = 0;
-        turnstate.vision_full_recalc = TRUE;
-    }
 
     /* mlvl = adj_lev(&mons[mntmp]);
 
@@ -626,17 +570,6 @@ polymon(int mntmp, boolean noisy)
     else
         u.uundetected = 0;
 
-    if (u.utraptype == TT_PIT) {
-        if (could_pass_walls && !Passes_walls) {
-            u.utrap = rn1(6, 2);
-        } else if (!could_pass_walls && Passes_walls) {
-            u.utrap = 0;
-        }
-    }
-    if (was_blind && !Blind) {  /* previous form was eyeless */
-        Blinded = 1L;
-        make_blinded(0L, TRUE); /* remove blindness */
-    }
     newsym(u.ux, u.uy); /* Change symbol */
 
     if (!sticky && !Engulfed && u.ustuck && sticks(youmonst.data))
@@ -644,13 +577,6 @@ polymon(int mntmp, boolean noisy)
     else if (sticky && !sticks(youmonst.data))
         uunstick();
     if (u.usteed) {
-        if (touch_petrifies(u.usteed->data) && !Stone_resistance && rnl(3)) {
-            if (noisy)
-                pline("No longer petrifying-resistant, you touch %s.",
-                      mon_nam(u.usteed));
-            instapetrify(killer_msg(STONING,
-                msgcat("riding ", an(u.usteed->data->mname))));
-        }
         if (!can_ride(u.usteed))
             dismount_steed(DISMOUNT_POLY);
     }
@@ -676,10 +602,8 @@ polymon(int mntmp, boolean noisy)
         /* make queen bees recognize killer bee eggs */
         learn_egg_type(egg_type_from_parent(u.umonnum, TRUE));
     }
-    if ((!Levitation && !u.ustuck && !Flying &&
-         (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy))) ||
-        (Underwater && !Swimming))
-        spoteffects(TRUE);
+
+    spoteffects(TRUE);
     if (Passes_walls && u.utrap && u.utraptype == TT_INFLOOR) {
         u.utrap = 0;
         if (noisy)
@@ -725,14 +649,14 @@ polymon(int mntmp, boolean noisy)
    numbered mnum, or its corpse. Normally returns FALSE. Returns TRUE if the
    player touched a *trice and wasn't saved via stone resistance or golem
    transformation, in which case the caller should print appropriate messages
-   and then either call instapetrify(), or set Stoned and the delayed killer as
+   and then either call instapetrify(), or set STONED and the delayed killer as
    appropriate.
 
    Also called when the player eats or is hit by an mnum egg. */
 boolean
 touched_monster(int mnum)
 {
-    return touch_petrifies(mons + mnum) && !Stone_resistance &&
+    return touch_petrifies(mons + mnum) && !resists_ston(&youmonst) &&
         !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM, TRUE));
 }
 
@@ -920,7 +844,7 @@ dobreathe(const struct nh_cmd_arg *arg)
     const struct attack *mattk;
     schar dx, dy, dz;
 
-    if (Strangled) {
+    if (strangled(&youmonst)) {
         pline("You can't breathe.  Sorry.");
         return 0;
     }

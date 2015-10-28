@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -894,22 +894,15 @@ magicbane_hit(struct monst *magr,   /* attacker */
     }
     /* stun if that was selected and a worse effect didn't occur */
     if (do_stun) {
-        if (youdefend)
-            make_stunned((HStun + 3), FALSE);
-        else
-            set_property(mdef, STUNNED, 3, FALSE);
+        inc_timeout(mdef, STUNNED, 3, TRUE);
         /* avoid extra stun message below if we used mb_verb["stun"] above */
         if (attack_indx == MB_INDEX_STUN)
             do_stun = FALSE;
     }
     /* lastly, all this magic can be confusing... */
     do_confuse = !rn2(12);
-    if (do_confuse) {
-        if (youdefend)
-            make_confused(HConfusion + 4, FALSE);
-        else
-            set_property(mdef, CONFUSION, 4, FALSE);
-    }
+    if (do_confuse)
+        inc_timeout(mdef, CONFUSION, 4, TRUE);
 
     if (youattack || youdefend || vis) {
         hittee = msgupcasefirst(hittee);
@@ -946,7 +939,7 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
     boolean youdefend = (mdef == &youmonst);
     boolean vis = (!youattack && magr && cansee(magr->mx, magr->my))
         || (!youdefend && cansee(mdef->mx, mdef->my))
-        || (youattack && Engulfed && mdef == u.ustuck && !Blind);
+        || (youattack && Engulfed && mdef == u.ustuck && !blind(&youmonst));
     const char *wepdesc;
     const char *hittee = youdefend ? "you" : mon_nam(mdef);
 
@@ -1285,11 +1278,11 @@ arti_invoke(struct obj *obj)
             }
         case HEALING:{
                 int healamt = (u.uhpmax + 1 - u.uhp) / 2;
-                long creamed = (long)u.ucreamed;
 
                 if (Upolyd)
                     healamt = (u.mhmax + 1 - u.mh) / 2;
-                if (healamt || Sick || Slimed || Blinded > creamed)
+                if (healamt || sick(&youmonst) || sliming(&youmonst) ||
+                    property_timeout(&youmonst, BLINDED))
                     pline("You feel better.");
                 else
                     goto nothing_special;
@@ -1299,12 +1292,12 @@ arti_invoke(struct obj *obj)
                     else
                         u.uhp += healamt;
                 }
-                if (Sick)
-                    make_sick(0L, NULL, FALSE, SICK_ALL);
-                if (Slimed)
-                    Slimed = 0L;
-                if (Blinded > creamed)
-                    make_blinded(creamed, FALSE);
+                if (sick(&youmonst))
+                    set_property(&youmonst, SICK, -2, FALSE);
+                if (sliming(&youmonst))
+                    set_property(&youmonst, SLIMED, -2, FALSE);
+                if (blind(&youmonst))
+                    set_property(&youmonst, BLINDED, -2, FALSE);
                 break;
             }
         case ENERGY_BOOST:{
@@ -1434,8 +1427,8 @@ arti_invoke(struct obj *obj)
     } else {
         /* on is true if invoked prop is about to be set */
         boolean on = !(obj->owornmask & W_MASK(os_invoked));
-        boolean redundant = u.uintrinsic[oart->inv_prop] ||
-            worn_extrinsic(oart->inv_prop) & ~W_MASK(os_invoked);
+        boolean redundant = m_has_property(&youmonst, oart->inv_prop,
+                                           ANY_PROPERTY, TRUE);
 
         if (on && obj->age > moves) {
             /* the artifact is tired :-) */

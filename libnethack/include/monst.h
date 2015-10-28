@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -62,36 +62,63 @@
 # define STRAT_GOAL     0x000000ffL
 # define STRAT_GOALX(s) ((xchar)((s & STRAT_XMASK) >> 16))
 # define STRAT_GOALY(s) ((xchar)((s & STRAT_YMASK) >> 8))
-#define STRAT(w, x, y, typ) (w | ((long)(x)<<16) | ((long)(y)<<8) | (long)typ)
+# define STRAT(w, x, y, typ) (w | ((long)(x)<<16) | ((long)(y)<<8) | (long)typ)
+
+#if 0
+/* TODO */
+/* Monster strategies */
+enum monstrat {
+    st_none,
+    st_close,                           /* idle until player adjacant */
+    st_waiting,                         /* idle until player in LOS */
+    st_firstwait = st_close,
+    st_lastwait = st_waiting,
+    st_mon,                             /* chasing a monster */
+    st_obj,                             /* take an item */
+    st_trap,                            /* going to a trap */
+    st_square,                          /* chasing a square in general */
+    st_wander,                          /* wandering aimlessy */
+    st_firsttarget = st_mon,
+    st_lasttarget = st_wander,
+    st_escape,                          /* escaping from STRAT_GOAL[XY] */
+    st_heal,                            /* heal up self (covetous) */
+}
+#endif
 
 struct monst {
     struct monst *nmon; /* next monster in the level monster list */
     const struct permonst *data;
     struct level *dlevel;       /* pointer to the level this monster is on */
     struct obj *minvent;
-    struct obj *mw;     /* weapon */
+    struct obj *mw;             /* weapon */
     unsigned int m_id;
     int mhp, mhpmax;
-    int mspec_used;     /* monster's special ability attack timeout */
+    int mspec_used;             /* monster's special ability attack timeout */
     unsigned int mtrapseen;     /* bitmap of traps we've been trapped in */
     unsigned int mlstmv;        /* for catching up with lost time */
 
-    int mstrategy;      /* for monsters with mflag3: current strategy */
+    /* TODO: improve mstrategy */
+    int mstrategy;              /* Current monster strategy */
+    xchar sx, sy;               /* Monster strategy coordinates */
+    xchar mstratprio;           /* strategy priority -- what the monster is willing to afford */
 
     /* migration */
     uchar xyloc, xyflags, xlocale, ylocale;
 
-    short orig_mnum;    /* monster number at monster creation */
-    uchar m_lev;        /* adjusted difficulty level of monster */
-    xchar mx, my;       /* monster location */
-    xchar dx, dy;       /* monster's displaced image, COLNO/ROWNO if none */
-    xchar mux, muy;     /* where the monster thinks you are; if it doesn't know
-                           where you are, this is (COLNO, ROWNO) */
-    aligntyp malign;    /* alignment of this monster, relative to the player
-                           (positive = good to kill) */
-    short moveoffset;   /* how this monster's actions map onto turns */
-    schar mtame;        /* level of tameness, implies peaceful */
-    uchar m_ap_type;    /* what mappearance is describing: */
+    short orig_mnum;            /* monster ID pre-polyself */
+    int orig_hp;                /* monster HP pre-polyself */
+    int orig_hpmax;             /* monster maxHP pre-polyself */
+    uchar polyself_timer;       /* polyelf timer (0-255, decreases at 1/4 turnspeed) */
+    uchar m_lev;                /* adjusted difficulty level of monster */
+    xchar mx, my;               /* monster location */
+    xchar dx, dy;               /* monster's displaced image, COLNO/ROWNO if none */
+    xchar mux, muy;             /* where the monster thinks you are; if it doesn't know
+                                   where you are, this is (COLNO, ROWNO) */
+    aligntyp malign;            /* alignment of this monster, relative to the player
+                                   (positive = good to kill) */
+    short moveoffset;           /* how this monster's actions map onto turns */
+    schar mtame;                /* level of tameness, implies peaceful */
+    uchar m_ap_type;            /* what mappearance is describing: */
 # define M_AP_NOTHING   0       /* mappearance is unused -- monster appears as
                                    itself */
 # define M_AP_FURNITURE 1       /* stairs, a door, an altar, etc. */
@@ -106,9 +133,9 @@ struct monst {
     unsigned usicked:1;
     unsigned uslimed:1;
     unsigned ustoned:1;
-    unsigned levi_wary:1; /* worried about levi timing out */
-    unsigned female:1;  /* is female */
-    unsigned cham:3;    /* shape-changer */
+    unsigned levi_wary:1;       /* worried about levi timing out */
+    unsigned female:1;          /* is female */
+    unsigned cham:3;            /* shape-changer */
 /* note: lycanthropes are handled elsewhere */
 # define CHAM_ORDINARY          0       /* not a shapechanger */
 # define CHAM_CHAMELEON         1       /* animal */
@@ -121,11 +148,11 @@ struct monst {
     /* implies one of M1_CONCEAL or M1_HIDE, but not mimic (that is, snake,
        spider, trapper, piercer, eel) */
 
-    unsigned mburied:1; /* has been buried */
+    unsigned mburied:1;         /* has been buried */
     unsigned mrevived:1;        /* has been revived from the dead */
-    unsigned mavenge:1; /* did something to deserve retaliation */
+    unsigned mavenge:1;         /* did something to deserve retaliation */
 
-    unsigned mflee:1;   /* fleeing */
+    unsigned mflee:1;           /* fleeing */
     unsigned mcanmove:1;        /* paralysis, similar to mblinded */
     unsigned msleeping:1;       /* asleep until woken */
     unsigned mpeaceful:1;       /* does not attack unprovoked */
@@ -134,15 +161,15 @@ struct monst {
     unsigned mleashed:1;        /* monster is on a leash */
     unsigned msuspicious:1;     /* monster is suspicious of the player */
     /* 1 spare bit */
-    unsigned isshk:1;   /* is shopkeeper */
+    unsigned isshk:1;           /* is shopkeeper */
     unsigned isminion:1;        /* is a minion */
-    unsigned isgd:1;    /* is guard */
+    unsigned isgd:1;            /* is guard */
     unsigned ispriest:1;        /* is a priest */
-    unsigned iswiz:1;   /* is the Wizard of Yendor */
+    unsigned iswiz:1;           /* is the Wizard of Yendor */
     
     uint64_t mspells;           /* known monster spells */
-    uint64_t mintrinsics;       /* monster intrinsics */
-    uchar mt_prop[mt_lastprop + 1]; /* intrinsics that time out */
+    short mintrinsic[LAST_PROP + 1]; /* monster intrinsics */
+    /* intrinsic format: os_outside:1, os_spec:1, os_spc2:1, os_timeout:13 */
 
     /* turnstate; doesn't count against bitfield bit count */
     unsigned deadmonster:1;     /* always 0 at neutral turnstate */
@@ -161,7 +188,7 @@ struct monst {
     int meating;        /* monster is eating timeout */
     schar mhitinc;      /* monster intrinsic to-hit bonus/penalty */
     schar mdaminc;      /* monster intrinsic damage bonus/penalty */
-    schar mblessed;     /* monster AC bonus/penalty */
+    schar mac;          /* monster AC bonus/penalty */
     void *mextra[];     /* monster dependent info */
 };
 
@@ -216,10 +243,7 @@ struct monst {
 # define m_mhpmax(mon) ((mon) == &youmonst ? u.uhpmax : (mon)->mhpmax)
 # define m_mlev(mon) (Upolyd ? mons[u.umonnum].mlevel : (mon)->data->mlevel)
 # define m_mwep(mon) ((mon) == &youmonst ? uwep : (mon)->mw)
-# define m_mspellprot(mon) ((mon) == &youmonst ? u.uspellprot : monspellprot(mon))
-# define m_mhitinc(mon) ((mon) == &youmonst ? u.uhitinc : (mon)->mhitinc)
-# define m_mdaminc(mon) ((mon) == &youmonst ? u.udaminc : (mon)->mdaminc)
-# define m_mblessed(mon) ((mon) == &youmonst ? u.ublessed : (mon)->mblessed)
+# define m_mspellprot(mon) ((property_timeout(mon, PROTECTION) + 9) / 10)
 
 /* Does a monster know where the player character is? Does it think it does? */
 # define engulfing_u(mon) (Engulfed && (mon) == u.ustuck)
@@ -240,8 +264,8 @@ enum monster_awareness_reasons {
 };
 # define awareness_reason(mon) (!aware_of_u(mon) ? mar_unaware :        \
                                 knows_ux_uy(mon) ? mar_aware :          \
-                                ((Invis && !see_invisible(mon)) ||    \
-                                 (blind(mon))) ?                       \
+                                ((Invis && !see_invisible(mon)) ||      \
+                                 (blind(mon))) ?                        \
                                 mar_guessing_invis :                    \
                                 Displaced ? mar_guessing_displaced :    \
                                 mar_guessing_other)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -275,26 +275,20 @@ mstatusline(struct monst *mon)
     if (blind(mon))
         info = msgcat(info, ", blind");
     if (you && u.ucreamed) {
-        if ((long)u.ucreamed < Blinded || Blindfolded ||
-            !haseyes(mon->data) || !blind(mon))
-            /* !blind means eyes of the overworld */
+        if (blind(mon) != W_MASK(os_special))
             info = msgcat(info, ", cover");
         info = msgcat(info, "ed by sticky goop");
     } /* note: "goop" == "glop"; variation is intentional */
     if (stunned(mon))
         info = msgcat(info, ", stunned");
-    if (you) {
-        if (!u.usteed && Wounded_legs) {
-            const char *what = body_part(LEG);
+    if (leg_hurt(mon)) {
+        const char *what = mbodypart(mon, LEG);
 
-            if (LWounded_legs && RWounded_legs)
-                what = makeplural(what);
-            info = msgcat_many(info, ", injured ", what, NULL);
-        }
-        if (Glib)
-            info = msgcat_many(info, ", slippery ",
-                               makeplural(body_part(HAND)), NULL);
-    } else {
+        if (leg_hurtl(mon) && leg_hurtr(mon))
+            what = makeplural(what);
+        info = msgcat_many(info, ", injured ", what, NULL);
+    }
+    if (!you) {
         if (mon->msleeping)
             info = msgcat(info, ", asleep");
         else if (mon->mfrozen || !mon->mcanmove)
@@ -305,6 +299,9 @@ mstatusline(struct monst *mon)
         else if (mon->mflee)
             info = msgcat(info, ", scared");
     }
+    if (slippery_fingers(mon))
+        info = msgcat_many(info, ", slippery ",
+                           makeplural(body_part(HAND)), NULL);
     if ((you && u.utrap) || (!you && mon->mtrapped))
         info = msgcat(info, ", trapped");
     if (fast(mon))

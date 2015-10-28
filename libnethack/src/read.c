@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1454,10 +1454,10 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         pline("A map coalesces in your mind!");
         cval = (sobj->cursed && !confused);
         if (cval)
-            HConfusion = 1;     /* to screw up map */
+            set_property(&youmonst, CONFUSION, 1, TRUE);
         do_mapping();
         if (cval) {
-            HConfusion = 0;     /* restore */
+            set_property(&youmonst, CONFUSION, -2, TRUE);
             pline("Unfortunately, you can't grasp the details.");
         }
         break;

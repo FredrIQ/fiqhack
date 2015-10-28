@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -89,15 +89,15 @@ in_trouble(void)
     /* 
      * major troubles
      */
-    if (Stoned)
+    if (petrifying(&youmonst))
         return ptr_stoned;
-    if (Slimed)
+    if (sliming(&youmonst))
         return ptr_slimed;
-    if (Strangled)
+    if (strangled(&youmonst))
         return ptr_strangled;
     if (u.utrap && u.utraptype == TT_LAVA)
         return ptr_lava;
-    if (Sick)
+    if (sick(&youmonst))
         return ptr_sick;
     if (u.uhs >= WEAK)
         return ptr_starving;
@@ -134,7 +134,7 @@ in_trouble(void)
             (!Unchanging || ((otmp = unchanger()) != 0 && otmp->cursed)))
             return ptr_hands;
     }
-    if (Blindfolded && ublindf->cursed)
+    if ((blind(&youmonst) & W_MASK(os_tool)) && ublindf->cursed)
         return ptr_blindfold;
 
     if (cancelled(&youmonst))
@@ -156,18 +156,18 @@ in_trouble(void)
             return ptr_saddle;
     }
 
-    if (Blinded > 1 && haseyes(youmonst.data))
+    if (property_timeout(&youmonst, BLINDED) > 1 && haseyes(youmonst.data))
         return ptr_blind;
     for (i = 0; i < A_MAX; i++)
         if (ABASE(i) < AMAX(i))
             return ptr_poisoned;
-    if (Wounded_legs && !u.usteed)
+    if (leg_hurt(&youmonst))
         return ptr_wounded_legs;
     if (u.uhs >= HUNGRY)
         return ptr_hungry;
-    if (HStun)
+    if (ihas_property(&youmonst, STUNNED))
         return ptr_stunned;
-    if (HConfusion)
+    if (ihas_property(&youmonst, CONFUSION))
         return ptr_confused;
     if (Hallucination)
         return ptr_hallucinating;
@@ -244,22 +244,17 @@ fix_worst_trouble(int trouble)
 
     switch (trouble) {
     case ptr_stoned:
-        pline("You feel more limber.");
-        Stoned = 0;
-        set_delayed_killer(STONING, NULL);
+        set_property(&youmonst, STONED, -2, FALSE);
         break;
     case ptr_slimed:
-        pline("The slime disappears.");
-        Slimed = 0;
-        set_delayed_killer(TURNED_SLIME, NULL);
+        set_property(&youmonst, SLIMED, -2, FALSE);
         break;
     case ptr_strangled:
         if (uamul && uamul->otyp == AMULET_OF_STRANGULATION) {
             pline("Your amulet vanishes!");
             useup(uamul);
         }
-        pline("You can breathe again.");
-        Strangled = 0;
+        set_property(&youmonst, STRANGLED, -2, FALSE);
         break;
     case ptr_lava:
         pline("You are back on solid ground.");
@@ -276,7 +271,7 @@ fix_worst_trouble(int trouble)
         break;
     case ptr_sick:
         pline("You feel better.");
-        make_sick(0L, NULL, FALSE, SICK_ALL);
+        make_sick(&youmonst, 0L, NULL, FALSE, SICK_ALL);
         break;
     case ptr_hit:
         /* "fix all troubles" will keep trying if hero has 5 or less hit
@@ -392,21 +387,21 @@ fix_worst_trouble(int trouble)
                   (num_eyes == 1) ? eye : makeplural(eye),
                   (num_eyes == 1) ? "s" : "");
             u.ucreamed = 0;
-            make_blinded(0L, FALSE);
+            set_property(&youmonst, BLINDED, -2, TRUE);
             break;
         }
     case ptr_wounded_legs:
-        heal_legs(Wounded_leg_side);
+        heal_legs(&youmonst, leg_hurtsides(&youmonst));
         break;
     case ptr_stunned:
-        make_stunned(0L, TRUE);
+        set_property(&youmonst, STUNNED, -2, FALSE);
         break;
     case ptr_confused:
-        make_confused(0L, TRUE);
+        set_property(&youmonst, CONFUSION, -2, FALSE);
         break;
     case ptr_hallucinating:
         pline("Looks like you are back in Kansas.");
-        make_hallucinated(0L, FALSE);
+        set_property(&youmonst, HALLUC, -2, TRUE);
         break;
     case ptr_saddle:
         otmp = which_armor(u.usteed, os_saddle);
@@ -608,12 +603,12 @@ gcrownu(void)
     short class_gift;
     int sp_no;
 
-    HSee_invisible |= FROMOUTSIDE;
-    HFire_resistance |= FROMOUTSIDE;
-    HCold_resistance |= FROMOUTSIDE;
-    HShock_resistance |= FROMOUTSIDE;
-    HSleep_resistance |= FROMOUTSIDE;
-    HPoison_resistance |= FROMOUTSIDE;
+    set_property(&youmonst, SEE_INVIS, 0, FALSE);
+    set_property(&youmonst, FIRE_RES, 0, TRUE);
+    set_property(&youmonst, COLD_RES, 0, TRUE);
+    set_property(&youmonst, SHOCK_RES, 0, TRUE);
+    set_property(&youmonst, SLEEP_RES, 0, TRUE);
+    set_property(&youmonst, POISON_RES, 0, TRUE);
     godvoice(u.ualign.type, NULL);
 
     obj = ok_wep(uwep) ? uwep : 0;
@@ -919,7 +914,7 @@ pleased(aligntyp g_align)
                 init_uhunger();
             if (u.uluck < 0)
                 u.uluck = 0;
-            make_blinded(0L, TRUE);
+            set_property(&youmonst, BLINDED, -2, FALSE);
             break;
         case 4:{
                 struct obj *otmp;
@@ -950,20 +945,20 @@ pleased(aligntyp g_align)
 
                 godvoice(u.ualign.type,
                          "Thou hast pleased me with thy progress,");
-                if (!(HTelepat & INTRINSIC)) {
-                    HTelepat |= FROMOUTSIDE;
+                if (!ihas_property(&youmonst, TELEPAT)) {
+                    set_property(&youmonst, TELEPAT, 0, TRUE);
                     pline(msg, "Telepathy");
                     if (Blind)
                         see_monsters(FALSE);
-                } else if (!(HFast & INTRINSIC)) {
-                    HFast |= FROMOUTSIDE;
+                } else if (!ihas_property(&youmonst, FAST)) {
+                    set_property(&youmonst, FAST, 0, TRUE);
                     pline(msg, "Speed");
-                } else if (!(HStealth & INTRINSIC)) {
-                    HStealth |= FROMOUTSIDE;
+                } else if (!ihas_property(&youmonst, STEALTH)) {
+                    set_property(&youmonst, STEALTH, 0, TRUE);
                     pline(msg, "Stealth");
                 } else {
-                    if (!(HProtection & INTRINSIC)) {
-                        HProtection |= FROMOUTSIDE;
+                    if (!ihas_property(&youmonst, PROTECTION)) {
+                        set_property(&youmonst, PROTECTION, 0, TRUE);
                         if (!u.ublessed)
                             u.ublessed = 2 +
                                 rn2_on_rng(3, rng_first_protection);
@@ -1259,7 +1254,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
             pline("So this is how you repay loyalty?");
             adjalign(-3);
             value = -1;
-            HAggravate_monster |= FROMOUTSIDE;
+            set_property(&youmonst, AGGRAVATE_MONSTER, 0, FALSE);
         } else if (is_undead(ptr)) {    /* Not demons--no demon corpses */
             if (u.ualign.type != A_CHAOTIC)
                 value += 1;

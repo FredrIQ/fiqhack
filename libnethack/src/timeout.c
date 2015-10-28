@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,156 +8,12 @@
 #include "trietable.h"
 #include <stdint.h>
 
-static void stoned_dialogue(void);
-static void vomiting_dialogue(void);
-static void choke_dialogue(void);
-static void slime_dialogue(void);
-static void slip_or_trip(void);
 static void see_lamp_flicker(struct obj *, const char *);
 static void lantern_message(struct obj *);
 static void cleanup_burn(void *, long);
 static void hatch_egg(void *, long);
 static void burn_object(void *, long);
 
-
-/* He is being petrified - dialogue by inmet!tower */
-static const char *const stoned_texts[] = {
-    "You are slowing down.",    /* 5 */
-    "Your limbs are stiffening.",       /* 4 */
-    "Your limbs have turned to stone.", /* 3 */
-    "You have turned to stone.",        /* 2 */
-    "You are a statue." /* 1 */
-};
-
-static void
-stoned_dialogue(void)
-{
-    long i = (Stoned & TIMEOUT);
-
-    if (i > 0L && i <= SIZE(stoned_texts)) {
-        pline("%s", stoned_texts[SIZE(stoned_texts) - i]);
-        /* ensure the player is able to act on this message */
-        action_interrupted();
-    }
-    if (i == 5L)
-        HFast = 0L;
-    if (i == 3L)
-        helpless(3, hr_paralyzed, "unable to move due to turning to stone",
-                 NULL);
-    exercise(A_DEX, FALSE);
-}
-
-/* He is getting sicker and sicker prior to vomiting */
-static const char *const vomiting_texts[] = {
-    "You are feeling mildly nauseated.",        /* 14 */
-    "You feel slightly confused.",      /* 11 */
-    "You can't seem to think straight.",        /* 8 */
-    "You feel incredibly sick.",        /* 5 */
-    "You suddenly vomit!"       /* 2 */
-};
-
-static void
-vomiting_dialogue(void)
-{
-    long i = (Vomiting & TIMEOUT) / 3L;
-
-    if ((((Vomiting & TIMEOUT) % 3L) == 2) && (i >= 0)
-        && (i < SIZE(vomiting_texts)))
-        pline("%s", vomiting_texts[SIZE(vomiting_texts) - i - 1]);
-
-    switch ((int)i) {
-    case 0:
-        vomit();
-        morehungry(20);
-        break;
-    case 2:
-        make_stunned(HStun + dice(2, 4), FALSE);
-        /* fall through */
-    case 3:
-        make_confused(HConfusion + dice(2, 4), FALSE);
-        break;
-    }
-    exercise(A_CON, FALSE);
-}
-
-static const char *const choke_texts[] = {
-    "You find it hard to breathe.",
-    "You're gasping for air.",
-    "You can no longer breathe.",
-    "You're turning %s.",
-    "You suffocate."
-};
-
-static const char *const choke_texts2[] = {
-    "Your %s is becoming constricted.",
-    "Your blood is having trouble reaching your brain.",
-    "The pressure on your %s increases.",
-    "Your consciousness is fading.",
-    "You suffocate."
-};
-
-static void
-choke_dialogue(void)
-{
-    long i = (Strangled & TIMEOUT);
-
-    if (i > 0 && i <= SIZE(choke_texts)) {
-        if (Breathless || !rn2(50))
-            pline(choke_texts2[SIZE(choke_texts2) - i], body_part(NECK));
-        else {
-            const char *str = choke_texts[SIZE(choke_texts) - i];
-
-            if (strchr(str, '%'))
-                pline(str, hcolor("blue"));
-            else
-                pline("%s", str);
-        }
-    }
-    exercise(A_STR, FALSE);
-}
-
-static const char *const slime_texts[] = {
-    "You are turning a little %s.",     /* 5 */
-    "Your limbs are getting oozy.",     /* 4 */
-    "Your skin begins to peel away.",   /* 3 */
-    "You are turning into %s.", /* 2 */
-    "You have become %s."       /* 1 */
-};
-
-static void
-slime_dialogue(void)
-{
-    long i = (Slimed & TIMEOUT) / 2L;
-
-    if (((Slimed & TIMEOUT) % 2L) && i >= 0L && i < SIZE(slime_texts)) {
-        const char *str = slime_texts[SIZE(slime_texts) - i - 1L];
-
-        if (strchr(str, '%')) {
-            if (i == 4L) {      /* "you are turning green" */
-                if (!Blind)     /* [what if you're already green?] */
-                    pline(str, hcolor("green"));
-            } else {
-                if (Hallucination) {
-                    int idx = rndmonidx();
-
-                    pline(str, monnam_is_pname(idx)
-                          ? monnam_for_index(idx)
-                          : (idx < SPECIAL_PM && (mons[idx].geno & G_UNIQ))
-                          ? the(monnam_for_index(idx))
-                          : an(monnam_for_index(idx)));
-                } else {
-                    pline(str, "a green slime");
-                }
-            }
-        } else
-            pline("%s", str);
-    }
-    if (i == 3L) {      /* limbs becoming oozy */
-        HFast = 0L;     /* lose intrinsic speed */
-        action_interrupted();
-    }
-    exercise(A_DEX, FALSE);
-}
 
 void
 burn_away_slime(struct monst *mon)
@@ -175,13 +31,9 @@ burn_away_slime(struct monst *mon)
     return;
 }
 
-
-
 void
 nh_timeout(void)
 {
-    unsigned *upp;
-    int sleeptime;
     int baseluck = (flags.moonphase == FULL_MOON) ? 1 : 0;
 
     if (flags.friday13)
@@ -203,14 +55,7 @@ nh_timeout(void)
     }
     if (u.uinvulnerable)
         return; /* things past this point could kill you */
-    if (Stoned)
-        stoned_dialogue();
-    if (Slimed)
-        slime_dialogue();
-    if (Vomiting)
-        vomiting_dialogue();
-    if (Strangled)
-        choke_dialogue();
+
     if (u.mtimedone && !--u.mtimedone) {
         if (Unchanging)
             u.mtimedone = rnd(100 * youmonst.data->mlevel + 1);
@@ -220,129 +65,12 @@ nh_timeout(void)
     if (u.ucreamed)
         u.ucreamed--;
 
-    /* Dissipate spell-based protection. */
-    if (u.usptime) {
-        if (--u.usptime == 0 && u.uspellprot) {
-            u.usptime = u.uspmtime;
-            u.uspellprot--;
-            if (!Blind)
-                pline_once("The %s haze around you %s.", hcolor("golden"),
-                           u.uspellprot ? "becomes less dense" : "disappears");
-        }
-    }
-
     if (u.ugallop) {
         if (--u.ugallop == 0L && u.usteed)
             pline("%s stops galloping.", Monnam(u.usteed));
     }
 
-    for (upp = u.uintrinsic; upp < u.uintrinsic + SIZE(u.uintrinsic); upp++)
-        if ((*upp & TIMEOUT) && !(--*upp & TIMEOUT)) {
-            switch (upp - u.uintrinsic) {
-            case STONED:
-                done(STONING, delayed_killer(STONING));
-                break;
-            case SLIMED:
-                done(TURNED_SLIME, delayed_killer(TURNED_SLIME));
-                break;
-            case VOMITING:
-                make_vomiting(0L, TRUE);
-                break;
-            case SICK:
-                pline("You die from your illness.");
-                done(POISONING, delayed_killer(POISONING));
-                break;
-            case FAST:
-                if (!Very_fast)
-                    pline("You feel yourself slowing down%s.",
-                          Fast ? " a bit" : "");
-                break;
-            case CONFUSION:
-                HConfusion = 1; /* So make_confused works properly */
-                make_confused(0L, TRUE);
-                action_interrupted();
-                break;
-            case STUNNED:
-                HStun = 1;
-                make_stunned(0L, TRUE);
-                action_interrupted();
-                break;
-            case BLINDED:
-                Blinded = 1;
-                make_blinded(0L, TRUE);
-                action_interrupted();
-                break;
-            case INVIS:
-                newsym(u.ux, u.uy);
-                if (!Invis && !BInvis && !Blind) {
-                    pline(!See_invisible ? "You are no longer invisible." :
-                          "You can no longer see through yourself.");
-                    action_interrupted();
-                }
-                break;
-            case SEE_INVIS:
-                set_mimic_blocking();   /* do special mimic handling */
-                see_monsters(FALSE);    /* make invis mons appear */
-                newsym(u.ux, u.uy);     /* make self appear */
-                action_interrupted();
-                break;
-            case LWOUNDED_LEGS:
-                heal_legs(LEFT_SIDE);
-                action_interrupted();
-                break;
-            case RWOUNDED_LEGS:
-                heal_legs(RIGHT_SIDE);
-                action_interrupted();
-                break;
-            case HALLUC:
-                HHallucination = 1;
-                make_hallucinated(0L, TRUE);
-                action_interrupted();
-                break;
-            case SLEEPING:
-                if (u_helpless(hm_unconscious) || Sleep_resistance)
-                    HSleeping += rnd(100);
-                else if (Sleeping) {
-                    pline("You fall asleep.");
-                    sleeptime = rnd(20);
-                    helpless(sleeptime, hr_asleep, "sleeping", NULL);
-                    HSleeping += sleeptime + rnd(100);
-                }
-                break;
-            case LEVITATION:
-                update_property(&youmonst, LEVITATION, os_timeout);
-                break;
-            case STRANGLED:
-                done(SUFFOCATION, killer_msg(
-                         SUFFOCATION, u.uburied ?
-                         "suffocation" : "strangulation"));
-                break;
-            case FUMBLING:
-                /* call this only when a move took place.  */
-                /* otherwise handle fumbling msgs locally. */
-                if (u.umoved && !Levitation) {
-                    slip_or_trip();
-                    helpless(2, hr_moving, "fumbling", "");
-                    /* The more you are carrying the more likely you are to
-                       make noise when you fumble.  Adjustments to this number
-                       must be thoroughly play tested. */
-                    if ((inv_weight() > -500)) {
-                        pline("You make a lot of noise!");
-                        wake_nearby(FALSE);
-                    }
-                }
-                /* from outside means slippery ice; don't reset counter if
-                   that's the only fumble reason */
-                HFumbling &= ~FROMOUTSIDE;
-                if (Fumbling)
-                    HFumbling += rnd(20);
-                break;
-            case DETECT_MONSTERS:
-                see_monsters(FALSE);
-                break;
-            }
-        }
-
+    decrease_property_timers(&youmonst);
     run_timers();
 }
 
@@ -549,85 +277,6 @@ attach_fig_transform_timeout(struct obj *figurine)
     i = rnd(9000) + 200;
     /* figurine will transform */
     start_timer(figurine->olev, (long)i, TIMER_OBJECT, FIG_TRANSFORM, figurine);
-}
-
-/* give a fumble message */
-static void
-slip_or_trip(void)
-{
-    struct obj *otmp = vobj_at(u.ux, u.uy);
-    const char *what, *pronoun;
-    boolean on_foot = TRUE;
-
-    if (u.usteed)
-        on_foot = FALSE;
-
-    if (otmp && on_foot && !u.uinwater && is_pool(level, u.ux, u.uy))
-        otmp = 0;
-
-    if (otmp && on_foot) {      /* trip over something in particular */
-        /*
-           If there is only one item, it will have just been named during the
-           move, so refer to by via pronoun; otherwise, if the top item has
-           been or can be seen, refer to it by name; if not, look for rocks to
-           trip over; trip over anonymous "something" if there aren't any
-           rocks. */
-        pronoun = otmp->quan == 1L ? "it" : Hallucination ? "they" : "them";
-        what = !otmp->nexthere ? pronoun :
-            (otmp->dknown || !Blind) ? doname(otmp) :
-            ((otmp = sobj_at(ROCK, level, u.ux, u.uy)) == 0 ? "something" :
-             (otmp-> quan == 1L ? "a rock" : "some rocks"));
-        if (Hallucination) {
-            pline("Egads!  %s bite%s your %s!", msgupcasefirst(what),
-                  (!otmp || otmp->quan == 1L) ? "s" : "", body_part(FOOT));
-        } else {
-            pline("You trip over %s.", what);
-        }
-    } else if (rn2(3) && is_ice(level, u.ux, u.uy)) {
-        pline("%s %s%s on the ice.",
-              u.usteed ?
-              msgupcasefirst(x_monnam(u.usteed,
-                                      u.usteed->mnamelth ?
-                                      ARTICLE_NONE : ARTICLE_THE, NULL,
-                                      SUPPRESS_SADDLE, FALSE)) : "You",
-              rn2(2) ? "slip" : "slide", on_foot ? "" : "s");
-    } else {
-        if (on_foot) {
-            switch (rn2(4)) {
-            case 1:
-                pline("You trip over your own %s.",
-                      Hallucination ? "elbow" : makeplural(body_part(FOOT)));
-                break;
-            case 2:
-                pline("You slip %s.",
-                      Hallucination ? "on a banana peel" : "and nearly fall");
-                break;
-            case 3:
-                pline("You flounder.");
-                break;
-            default:
-                pline("You stumble.");
-                break;
-            }
-        } else {
-            switch (rn2(4)) {
-            case 1:
-                pline("Your %s slip out of the stirrups.",
-                      makeplural(body_part(FOOT)));
-                break;
-            case 2:
-                pline("You let go of the reins.");
-                break;
-            case 3:
-                pline("You bang into the saddle-horn.");
-                break;
-            default:
-                pline("You slide to one side of the saddle.");
-                break;
-            }
-            dismount_steed(DISMOUNT_FELL);
-        }
-    }
 }
 
 /* Print a lamp flicker message with tailer. */

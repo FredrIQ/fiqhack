@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1577,26 +1577,10 @@ dowipe(const struct nh_cmd_arg *arg)
         u.ucreamed = 0;
     else
         u.ucreamed -= 4;
-    if (Blinded < 4)
-        Blinded = 0;
-    else
-        Blinded -= 4;
-
-    if (!Blinded) {
-
-        pline("You've got the glop off.");
-        u.ucreamed = 0;
-        Blinded = 1;
-        make_blinded(0L, TRUE);
-        return 1;
-
-    } else if (!u.ucreamed) {
-
+    if (!u.ucreamed) {
         pline("Your %s feels clean now.", body_part(FACE));
         return 1;
-
     } else {
-
         const char *buf = msgprintf("wiping off your %s", body_part(FACE));
         action_incomplete(buf, occ_wipe);
         return 1;
@@ -1604,60 +1588,62 @@ dowipe(const struct nh_cmd_arg *arg)
 }
 
 void
-set_wounded_legs(long side, int timex)
+set_wounded_legs(struct monst *mon, long side, int timex)
 {
-    /* KMH If you are riding, your steed gets the wounded legs instead. You
-       still call this function, but don't lose hp. Caller is also responsible
-       for adjusting messages. */
-
-    if (!Wounded_legs)
+    boolean you = (mon == &youmonst);
+    if (you && !leg_hurt(mon))
         ATEMP(A_DEX)--;
 
     if (side & LEFT_SIDE)
-        if (!LWounded_legs || (LWounded_legs & TIMEOUT))
-            LWounded_legs = timex;
-
+        inc_timeout(mon, LWOUNDED_LEGS, timex, FALSE);
     if (side & RIGHT_SIDE)
-        if (!RWounded_legs || (RWounded_legs & TIMEOUT))
-            RWounded_legs = timex;
+        inc_timeout(mon, RWOUNDED_LEGS, timex, FALSE);
 
-    encumber_msg();
+    if (you || mon == u.usteed)
+        encumber_msg();
 }
 
 /* Note: call only if the legs are/were actually wounded. This function can
-   be called after the LWounded_legs/RWounded_legs functions time out to
-   zero, so it can't check the variables themselves; the caller has to do
-   that, if it didn't just decrement them.
+   be called after the properties time out to zero, so it can't check the
+   variables themselves; the caller has to do that, if it didn't just
+   decrement them.
 
+   TODO: while this is now functional on monsters, consider reworking the
+   logic to work correctly by simply calling set_property() -- the only
+   real showstopper is to give proper messages with both legs hurt->healed.
    Argument is LEFT_SIDE, RIGHT_SIDE, or LEFT_SIDE|RIGHT_SIDE. */
 void
-heal_legs(int side)
+heal_legs(struct monst *mon, int side)
 {
-    if ((!(side & LEFT_SIDE) && LWounded_legs) ||
-        (!(side & RIGHT_SIDE) && RWounded_legs)) {
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+
+    if ((!(side & LEFT_SIDE) && leg_hurtl(mon)) ||
+        (!(side & RIGHT_SIDE) && leg_hurtr(mon))) {
         /* Heal one leg. */
-        if (!u.usteed)
-            pline("One of your %s feels somewhat better.",
-                  makeplural(body_part(LEG)));
-        if (side == LEFT_SIDE) LWounded_legs = 0;
-        if (side == RIGHT_SIDE) RWounded_legs = 0;
+        if (you || vis)
+            pline("One of %s %s feels somewhat better.",
+                  you ? "your" : s_suffix(mon_nam(mon)),
+                  makeplural(mbodypart(mon, LEG)));
+        set_property(mon, side == LEFT_SIDE ? LWOUNDED_LEGS : RWOUNDED_LEGS,
+                     -2, TRUE);
         return;
     }
 
     /* Heal both legs. */
 
-    if (ATEMP(A_DEX) < 0)
+    if (you && ATEMP(A_DEX) < 0)
         ATEMP(A_DEX)++;
 
-    if (!u.usteed) {
-        /* KMH, intrinsics patch */
-        if (side == (LEFT_SIDE | RIGHT_SIDE)) {
-            pline("Your %s feel somewhat better.",
-                  makeplural(body_part(LEG)));
-        } else {
-            pline("Your %s feels somewhat better.", body_part(LEG));
-        }
-    }
-    LWounded_legs = RWounded_legs = 0;
-    encumber_msg();
+    if (you || vis)
+        pline("%s %s feel somewhat better.",
+              you ? "Your" : s_suffix(mon_nam(mon)),
+              side == (LEFT_SIDE | RIGHT_SIDE) ?
+              makeplural(mbodypart(mon, LEG)) :
+              mbodypart(mon, LEG));
+    set_property(mon, LWOUNDED_LEGS, -2, TRUE);
+    set_property(mon, RWOUNDED_LEGS, -2, TRUE);
+
+    if (you || mon == u.usteed)
+        encumber_msg();
 }

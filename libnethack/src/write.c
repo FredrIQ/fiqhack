@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -75,7 +75,7 @@ dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
     if (nohands(youmonst.data)) {
         pline("You need hands to be able to write!");
         return 0;
-    } else if (Glib) {
+    } else if (slippery_fingers(&youmonst)) {
         pline("%s from your %s.", Tobjnam(pen, "slip"),
               makeplural(body_part(FINGER)));
         unwield_silently(pen);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -60,8 +60,8 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
            thus, we can't check general properties for now... */
         if (is_pool(lev, x, y) && !ignorewater) {
             if (mtmp == &youmonst)
-                return !!(HLevitation || Flying || Wwalking || Swimming ||
-                          Amphibious);
+                return !!(Levitation || Flying || Wwalking || Swimming ||
+                          Breathless);
             else
                 return (is_flyer(mdat) || pm_swims(mdat) || is_clinger(mdat));
             /* return (levitates(mtmp) || swims(mtmp) || flying(mtmp) ||
@@ -71,7 +71,7 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
             return FALSE;
         else if (is_lava(lev, x, y)) {
             if (mtmp == &youmonst)
-                return ! !HLevitation;
+                return !!Levitation;
             else
                 return is_flyer(mdat) || likes_lava(mdat);
             /* return (!!levitates(mtmp) || !!flying(mtmp) ||
@@ -420,10 +420,6 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
             return 1;
         }
     }
-
-    /* don't show trap if "Sorry..." */
-    if (!Blinded)
-        make_blinded(0L, FALSE);
 
     /* when it happens at all, happens too often to be worth a custom RNG */
     if ((Uhave_amulet || On_W_tower_level(&u.uz)) && !rn2(3)) {

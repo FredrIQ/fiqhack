@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -153,7 +153,6 @@ extern void adjabil(int, int);
 extern int newhp(void);
 extern schar acurr(int);
 extern schar acurrstr(void);
-extern schar get_player_ac(void);
 extern void adjalign(int);
 extern void calc_attr_bonus(void);
 extern const char *beautiful(void);
@@ -336,8 +335,8 @@ extern boolean revive_corpse(struct obj *);
 extern void revive_mon(void *, long);
 extern int donull(const struct nh_cmd_arg *);
 extern int dowipe(const struct nh_cmd_arg *);
-extern void set_wounded_legs(long, int);
-extern void heal_legs(int);
+extern void set_wounded_legs(struct monst *, long, int);
+extern void heal_legs(struct monst *, int);
 
 /* ### do_name.c ### */
 
@@ -518,7 +517,7 @@ extern void morehungry(int);
 extern void newuhs(boolean);
 extern boolean can_sacrifice(const struct obj *);
 extern struct obj *floorfood(const char *, const struct nh_cmd_arg *);
-extern void vomit(void);
+extern void vomit(struct monst *);
 extern int eaten_stat(int, struct obj *);
 
 /* ### end.c ### */
@@ -934,7 +933,6 @@ extern int mattackq(struct monst *, int, int);
 /* ### mhitu.c ### */
 
 extern const char *mpoisons_subj(struct monst *, const struct attack *);
-extern void u_slow_down(void);
 extern struct monst *cloneu(void);
 extern void expels(struct monst *, const struct permonst *, boolean);
 extern const struct attack *getmattk(const struct permonst *, int, int *,
@@ -1372,14 +1370,7 @@ extern void ugolemeffects(int, int);
 /* ### potion.c ### */
 
 extern void eyepline(const char *, const char *);
-extern void set_itimeout(unsigned int *which, long val);
-extern void incr_itimeout(unsigned int *which, long incr);
-extern void make_confused(long, boolean);
-extern void make_stunned(long, boolean);
-extern void make_blinded(long, boolean);
-extern void make_sick(long, const char *, boolean, int);
-extern void make_vomiting(long, boolean);
-extern boolean make_hallucinated(long, boolean);
+extern void make_sick(struct monst *, long, const char *, boolean, int);
 extern int dodrink(const struct nh_cmd_arg *);
 extern int dopotion(struct obj *);
 extern int peffects(struct monst *, struct obj *);
@@ -1431,8 +1422,6 @@ extern void restpriest(struct monst *, boolean);
 
 /* ### prop.c ### */
 
-extern int mon_prop2mt(enum youprop);
-extern int mon_mt2prop(enum mt_prop);
 extern boolean teleport_at_will(const struct monst *);
 extern unsigned levitates_at_will(const struct monst *, boolean, boolean);
 extern unsigned mon_remove_levitation(struct monst *, boolean);
@@ -1440,8 +1429,13 @@ extern void gremlin_curse(struct monst *);
 extern boolean obj_affects(struct monst *, struct monst *, struct obj *);
 extern boolean prop_wary(struct monst *, struct monst *, enum youprop);
 extern int property_timeout(struct monst *, enum youprop);
+extern void decrease_property_timers(struct monst *);
+extern boolean inc_timeout(struct monst *, enum youprop, int, boolean);
 extern boolean set_property(struct monst *, enum youprop, int, boolean);
+extern int update_property_polymorph(struct monst *, int);
+extern void update_xl_properties(struct monst *, int);
 extern boolean update_property(struct monst *, enum youprop, enum objslot);
+extern int pm_has_property(const struct permonst *, enum youprop);
 extern unsigned m_has_property(const struct monst *, enum youprop,
                                unsigned, boolean);
 extern unsigned u_have_property(enum youprop, unsigned, boolean);
@@ -1643,7 +1637,6 @@ extern void take_gold(struct monst *);
 extern int dosit(const struct nh_cmd_arg *);
 extern void rndcurse(void);
 extern void mrndcurse(struct monst *);
-extern void attrcurse(void);
 
 /* ### sounds.c ### */
 

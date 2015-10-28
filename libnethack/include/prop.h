@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -90,28 +90,6 @@ enum youprop {
     INVALID_PROP             = -1,
 };
 
-/* Timed intrinsics (monsters only) */
-enum mt_prop {
-    mt_seeinvis = 0,
-    mt_invis,
-    mt_levi,
-    mt_fast,
-    mt_stun,
-    mt_conf,
-    mt_blind,
-    mt_detectmon,
-    mt_slow,
-    mt_protection,
-    mt_phasing,
-    mt_petrify,
-    mt_slime,
-    mt_sick,
-    mt_strangled,
-    mt_firstprop = mt_seeinvis,
-    mt_lastprop = mt_strangled,
-    mt_invalid = -1,
-};
-
 /* This enum holds all the equipment that is tracked indirectly in struct you;
    that is, u.uequip is an array of pointers into other chains. These objects
    are recalculated from owornmask during game restore, rather than being saved
@@ -154,29 +132,30 @@ enum objslot {
 
     os_last_slot = os_invoked,
 
-/* "slot" codes that aren't extrinsics at all, but give reasons why you
-   might have a property */
+/* "slot" codes that aren't extrinsics at all, but intrinsics to give a reason
+   as to why you have something */
     os_timeout,        /* from potion, etc. */
     os_polyform,       /* does not appear in intrinsic or extrinsic field */
     os_birthopt,       /* from a birth option / difficulty level */
-    os_circumstance,   /* currently only blindness from unconciousness */
-    os_inctimeout,     /* increased timeout (for message purposes) */
+    os_circumstance,   /* blindness from unconciousness, fumbling from ice */
+    os_role,           /* from role + level combination */
+    os_race,           /* from race + level combination */
+    os_outside,        /* conferred or granted (corpse, throne, etc.) */
+    os_special,        /* only for blindness by creaming for now */
+    os_blocked,        /* property is blocked (only returned with allow_blocked) */
 
-/* these numbers are for numerical compatibility with 3.4.3, in order to keep
-   caps the same as before; do not change them without also changing the code
-   for intrinsics that time out */
-    os_role = 24,      /* from role + level combination */
-    os_race = 25,      /* from race + level combination */
-    os_outside = 26,   /* conferred or granted (corpse, throne, etc.) */
+/* pseudo-slots for update_property() to give proper messages */
+    os_inctimeout,     /* increased timeout */
+    os_dectimeout,     /* decreased timeout by decrease_property_timers() */
+    os_newpolyform,    /* new polymorph */
 
-    os_special = 28,   /* magic number used for controlled levitation */
+    os_last = os_newpolyform,
 
     os_invalid = -1,
 };
 
-static_assert(os_circumstance < os_role, "Too many equipment slots!");
-static_assert(os_special < sizeof (unsigned) * CHAR_BIT,
-              "NetHack requires 32-bit integers.");
+static_assert(os_last < sizeof (unsigned) * CHAR_BIT,
+              "Integer overflow in objslot.");
 
 enum equipmsg {
     em_silent,    /* no messages; used for theft, etc. */
@@ -292,18 +271,20 @@ enum tracked_location {
    compatibility. */
 
 /* Timed properties */
-# define TIMEOUT      0x00ffffffU      /* Up to 16 million turns */
+# define TIMEOUT      0x7fffU      /* Up to 32767 turns */
+/* FROMOUTSIDE can no longer be made to refer to mintrinsic directly,
+   because there is too many slots for that. Thus, FROMOUTSIDE_RAW
+   can be used to directly refer to the os_outside bit on mintrinsic.
+   This should only be used if you cannot use set_property or similar
+   for some reason. */
+# define FROMOUTSIDE_RAW 0x8000
 /* Permanent properties */
-# define FROMEXPER    ((unsigned)W_MASK(os_role))
+# define FROMROLE     ((unsigned)W_MASK(os_role))
 # define FROMRACE     ((unsigned)W_MASK(os_race))
 # define FROMOUTSIDE  ((unsigned)W_MASK(os_outside))
-# define INTRINSIC    (FROMOUTSIDE|FROMRACE|FROMEXPER)
+# define INTRINSIC    (FROMOUTSIDE|FROMRACE|FROMROLE)
 /* Control flags */
 # define I_SPECIAL    ((unsigned)W_MASK(os_special))
 # define ANY_PROPERTY ((unsigned)-1)
 
-/* Just to make sure there are no arithmetic mistakes... */
-static_assert(TIMEOUT == FROMEXPER-1, "Bad intrinsic timeout");
-
 #endif /* PROP_H */
-

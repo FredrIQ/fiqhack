@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,142 +15,60 @@ static const char beverages_and_fountains[] =
     { ALLOW_NONE, NONE_ON_COMMA, POTION_CLASS, 0 };
 static const char beverages[] = { POTION_CLASS, 0 };
 
-static long itimeout(long);
-static long itimeout_incr(long, int);
 static void ghost_from_bottle(void);
 static short mixtype(struct obj *, struct obj *);
 
-/* force `val' to be within valid range for intrinsic timeout value */
-static long
-itimeout(long val)
-{
-    if (val >= TIMEOUT)
-        val = TIMEOUT;
-    else if (val < 1)
-        val = 0;
-
-    return val;
-}
-
-/* increment `old' by `incr' and force result to be valid intrinsic timeout */
-static long
-itimeout_incr(long old, int incr)
-{
-    return itimeout((old & TIMEOUT) + (long)incr);
-}
-
-/* set the timeout field of intrinsic `which' */
-void
-set_itimeout(unsigned int *which, long val)
-{
-    *which &= ~TIMEOUT;
-    *which |= itimeout(val);
-}
-
-/* increment the timeout field of intrinsic `which' */
-void
-incr_itimeout(unsigned int *which, long incr)
-{
-    set_itimeout(which, itimeout_incr(*which, incr));
-}
-
 
 void
-make_confused(long xtime, boolean talk)
+make_sick(struct monst *mon, long xtime, const char *cause,
+          boolean talk, int type)
 {
-    long old = HConfusion;
-
-    if (!xtime && old) {
-        if (talk)
-            pline("You feel less %s now.",
-                  Hallucination ? "trippy" : "confused");
-    }
-
-    set_itimeout(&HConfusion, xtime);
-}
-
-
-void
-make_stunned(long xtime, boolean talk)
-{
-    long old = HStun;
-
-    if (!xtime && old) {
-        if (talk)
-            pline("You feel %s now.",
-                  Hallucination ? "less wobbly" : "a bit steadier");
-    }
-    if (xtime && !old) {
-        if (talk) {
-            if (u.usteed)
-                pline("You wobble in the saddle.");
-            else
-                pline("You %s...", stagger(youmonst.data, "stagger"));
-        }
-    }
-
-    set_itimeout(&HStun, xtime);
-}
-
-
-void
-make_sick(long xtime, const char *cause, boolean talk, int type)
-{
-    long old = Sick;
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    int old = property_timeout(mon, SICK);
 
     if (xtime > 0L) {
-        if (Sick_resistance)
+        if (resists_sick(mon))
             return;
-        if (!old) {
-            /* newly sick */
-            pline("You feel deathly sick.");
-        } else {
-            /* already sick */
-            if (talk)
-                pline("You feel %s worse.",
-                      xtime <= Sick / 2L ? "much" : "even");
+        if (talk && (you || vis))
+            pline(!old ? "%s %s deathly sick." :
+                  xtime <= old / 2L ? "%s %s much worse" :
+                  "%s %s even worse", you ? "You" : Monnam(mon),
+                  you ? "feel" : "looks");
+        if (old) {
+            xtime = old;
+            if (type == SICK_VOMITABLE)
+                xtime--;
+            else
+                xtime /= 3;
+            if (xtime < 1)
+                xtime = 1;
         }
-        set_itimeout(&Sick, xtime);
-        u.usick_type |= type;
-    } else if (old && (type & u.usick_type)) {
+
+        set_property(mon, SICK, xtime, TRUE);
+        if (you) {
+            exercise(A_CON, FALSE);
+            u.usick_type |= type;
+            set_delayed_killer(POISONING,
+                               cause ? killer_msg(POISONING, cause) : NULL);
+        } else if (!flags.mon_moving) /* you made the monster sick */
+            mon->usicked = 1;
+    } else if (old && (!you || (type & u.usick_type))) {
+        /* TODO: usick_type equavilent for monsters */
         /* was sick, now not */
-        u.usick_type &= ~type;
-        if (u.usick_type) {     /* only partly cured */
-            if (talk)
-                pline("You feel somewhat better.");
-            set_itimeout(&Sick, Sick * 2);      /* approximation */
-        } else {
-            if (talk)
-                pline("What a relief!");
-            Sick = 0L;  /* set_itimeout(&Sick, 0L) */
-        }
-    }
-
-    if (Sick) {
-        exercise(A_CON, FALSE);
-        if (cause) {
-            set_delayed_killer(POISONING, killer_msg(POISONING, cause));
+        if (you)
+            u.usick_type &= ~type;
+        if (you && u.usick_type) { /* only partly cured */
+            if (talk && (you || vis))
+                pline("%s %s somewhat better.", you ? "You" : Monnam(mon),
+                      you ? "feel" : "looks");
+            inc_timeout(mon, SICK, old, TRUE);
         } else
-            set_delayed_killer(POISONING, NULL);
-    } else
-        set_delayed_killer(POISONING, NULL);
+            set_property(mon, SICK, -2, FALSE);
+    }
 }
 
 
-void
-make_vomiting(long xtime, boolean talk)
-{
-    long old = Vomiting;
-
-    if (!xtime && old)
-        if (talk)
-            pline("You feel much less nauseated now.");
-
-    set_itimeout(&Vomiting, xtime);
-}
-
-static const char vismsg[] =
-    "Your vision seems to %s for a moment but is %s now.";
 static const char eyemsg[] = "Your %s momentarily %s.";
 
 void
@@ -160,124 +78,6 @@ eyepline(const char *verb_one_eye, const char *verb_two_eyes)
         pline(eyemsg, body_part(EYE), verb_one_eye);
     else
         pline(eyemsg, makeplural(body_part(EYE)), verb_two_eyes);
-}
-
-void
-make_blinded(long xtime, boolean talk)
-{
-    long old = Blinded;
-    boolean u_could_see, can_see_now;
-
-    /* we need to probe ahead in case the Eyes of the Overworld are or will be
-       overriding blindness */
-    u_could_see = !Blind;
-    Blinded = xtime ? 1L : 0L;
-    can_see_now = !Blind;
-    Blinded = old;      /* restore */
-
-    if (u_helpless(hm_unconscious))
-        talk = FALSE;
-
-    if (can_see_now && !u_could_see) {  /* regaining sight */
-        if (talk) {
-            if (Hallucination)
-                pline("Far out!  A light show!");
-            else
-                pline("You can see again.");
-        }
-    } else if (old && !xtime) {
-        /* clearing temporary blindness without toggling blindness */
-        if (talk) {
-            if (!haseyes(youmonst.data)) {
-                strange_feeling(NULL, NULL);
-            } else if (Blindfolded) {
-                eyepline("itches", "itch");
-            } else {    /* Eyes of the Overworld */
-                pline(vismsg, "brighten", Hallucination ? "sadder" : "normal");
-            }
-        }
-    }
-
-    if (u_could_see && !can_see_now) {  /* losing sight */
-        if (talk) {
-            if (Hallucination)
-                pline("Oh, bummer!  Everything is dark!  Help!");
-            else
-                pline("A cloud of darkness falls upon you.");
-        }
-        /* Before the hero goes blind, set the ball&chain variables. */
-        if (Punished)
-            set_bc(0);
-    } else if (!old && xtime) {
-        /* setting temporary blindness without toggling blindness */
-        if (talk) {
-            if (!haseyes(youmonst.data)) {
-                strange_feeling(NULL, NULL);
-            } else if (Blindfolded) {
-                eyepline("twitches", "twitch");
-            } else {    /* Eyes of the Overworld */
-                pline(vismsg, "dim", Hallucination ? "happier" : "normal");
-            }
-        }
-    }
-
-    set_itimeout(&Blinded, xtime);
-
-    if (u_could_see ^ can_see_now) {    /* one or the other but not both */
-        turnstate.vision_full_recalc = TRUE; /* blindness just got toggled */
-        if (Blind_telepat || Infravision)
-            see_monsters(FALSE);
-    }
-}
-
-
-boolean
-make_hallucinated(long xtime,   /* nonzero if this is an attempt to turn on
-                                   hallucination */
-                  boolean talk)
-{       /* nonzero if resistance status should change by mask */
-    long old = HHallucination;
-    boolean changed = 0;
-    const char *message, *verb;
-
-    message =
-        (!xtime) ? "Everything %s SO boring now." :
-        "Oh wow!  Everything %s so cosmic!";
-    verb = (!Blind) ? "looks" : "feels";
-
-    if (!Halluc_resistance && (! !HHallucination != ! !xtime))
-        changed = TRUE;
-    set_itimeout(&HHallucination, xtime);
-
-    /* clearing temporary hallucination without toggling vision */
-    if (!changed && !HHallucination && old && talk) {
-        if (!haseyes(youmonst.data)) {
-            strange_feeling(NULL, NULL);
-        } else if (Blind) {
-            eyepline("itches", "itch");
-        } else {    /* Grayswandir */
-            pline(vismsg, "flatten", "normal");
-        }
-    }
-
-    if (changed && !program_state.suppress_screen_updates) {
-        if (Engulfed) {
-            swallowed(0);       /* redraw swallow display */
-        } else {
-            /* The see_* routines should be called *before* the pline. */
-            see_monsters(TRUE);
-            see_objects(TRUE);
-            see_traps(TRUE);
-        }
-
-        /* for perm_inv and anything similar (eg. Qt windowport's equipped
-           items display) */
-        update_inventory();
-
-        if (talk)
-            pline(message, verb);
-    }
-    return changed;
 }
 
 
@@ -323,7 +123,7 @@ dodrink(const struct nh_cmd_arg *arg)
     const char *potion_descr;
     void (*terrain) (void) = 0;
 
-    if (Strangled) {
+    if (strangled(&youmonst)) {
         pline("If you can't breathe air, how can you drink liquid?");
         return 0;
     }
@@ -969,10 +769,8 @@ peffects(struct monst *mon, struct obj *otmp)
         }
         break;
     case POT_SPEED:
-        if (you && Wounded_legs && !otmp->cursed && !u.usteed
-            /* heal_legs() would heal steeds legs */ ) {
-            heal_legs(Wounded_leg_side);
-            unkn++;
+        if (leg_hurt(mon) && !otmp->cursed) {
+            heal_legs(mon, leg_hurtsides(mon));
             break;
         }       /* and fall through */
     case SPE_HASTE_SELF:
@@ -1121,9 +919,10 @@ peffects(struct monst *mon, struct obj *otmp)
                     pline("This tastes like castor oil.");
                 else
                     pline("That was smooth!");
-                exercise(A_WIS, good_for_you);
             } else
                 unkn++;
+            if (you)
+                exercise(A_WIS, good_for_you);
         }
         break;
     case POT_ACID:
@@ -1190,9 +989,9 @@ healup(int nhp, int nxtra, boolean curesick, boolean cureblind)
         }
     }
     if (cureblind)
-        make_blinded(0L, TRUE);
+        set_property(&youmonst, BLINDED, -2, FALSE);
     if (curesick)
-        make_sick(0L, NULL, TRUE, SICK_ALL);
+        make_sick(&youmonst, 0L, NULL, TRUE, SICK_ALL);
     return;
 }
 
@@ -2114,7 +1913,7 @@ dodip(const struct nh_cmd_arg *arg)
         } else if (potion->cursed) {
             pline("The potion spills and covers your %s with oil.",
                   makeplural(body_part(FINGER)));
-            incr_itimeout(&Glib, dice(2, 10));
+            inc_timeout(&youmonst, GLIB, dice(2, 10), TRUE);
         } else if (obj->oclass != WEAPON_CLASS && !is_weptool(obj)) {
             /* the following cases apply only to weapons */
             goto more_dips;

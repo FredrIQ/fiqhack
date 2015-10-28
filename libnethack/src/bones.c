@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -359,9 +359,9 @@ make_bones:
                 set_property(mtmp, i, 0, TRUE);
             /* arguably timeouts should be set, but those are likely gone already */
         }
-        mtmp->mhitinc = u.uhitinc;
-        mtmp->mdaminc = u.udaminc;
-        mtmp->mblessed = u.ublessed;
+        mtmp->mhitinc = youmonst.mhitinc;
+        mtmp->mdaminc = youmonst.mdaminc;
+        mtmp->mac = youmonst.mac;
 
         /* retain spells */
         for (i = 0; i < MAXSPELL; i++) {

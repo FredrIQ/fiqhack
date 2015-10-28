@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -175,7 +175,7 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
         boolean pool = l->mem_bg == S_pool;
 
         if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
-            (lava || (pool && !HSwimming)) &&
+            (lava || (pool && !Swimming)) &&
             !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy)) {
 
             if (cansee(x, y))
@@ -539,7 +539,7 @@ still_chewing(xchar x, xchar y)
         u.utracked_location[tl_dig].y = y;
         /* solid rock takes more work & time to dig through */
         u.uoccupation_progress[tos_dig] =
-            (IS_ROCK(loc->typ) && !IS_TREE(loc->typ) ? 30 : 60) + u.udaminc;
+            (IS_ROCK(loc->typ) && !IS_TREE(loc->typ) ? 30 : 60) + mon_dambon(&youmonst);
         pline("You start chewing %s %s.",
               (boulder ||
                IS_TREE(loc->typ)) ? "on a" : "a hole in the",
@@ -547,7 +547,7 @@ still_chewing(xchar x, xchar y)
               "tree" : IS_ROCK(loc->typ) ? "rock" : "door");
         watch_warn(NULL, x, y, FALSE);
         return 1;
-    } else if ((u.uoccupation_progress[tos_dig] += (30 + u.udaminc)) <= 100) {
+    } else if ((u.uoccupation_progress[tos_dig] += (30 + mon_dambon(&youmonst))) <= 100) {
         if (flags.verbose)
             pline("You continue chewing on the %s.",
                   boulder ? "boulder" : IS_TREE(loc->typ) ?
@@ -653,7 +653,7 @@ dosinkfall(void)
     struct obj *obj;
 
     /* Turn off levitation before printing messages */
-    HLevitation &= ~(I_SPECIAL | TIMEOUT);
+    set_property(&youmonst, LEVITATION, -2, TRUE);
     if (uleft && uleft->otyp == RIN_LEVITATION)
         setequip(os_ringl, NULL, em_magical);
     if (uright && uright->otyp == RIN_LEVITATION)
@@ -665,7 +665,7 @@ dosinkfall(void)
             uninvoke_artifact(obj);
     }
 
-    if (is_floater(youmonst.data) || (HLevitation & FROMOUTSIDE)) {
+    if (is_floater(youmonst.data)) {
         pline("You wobble unsteadily for a moment.");
     } else {
         pline("You crash to the floor!");
@@ -1081,13 +1081,16 @@ distmap_init(struct distmap_state *ds, int x1, int y1, struct monst *mtmp)
     ds->travelstepy[0][0] = y1;
 
     ds->mon = mtmp;
-    ds->mmflags = MM_IGNOREMONST | MM_IGNOREDOORS;
+    ds->mmflags = MM_IGNOREMONST;
+
+    if (flying(mtmp) || levitates(mtmp) || waterwalks(mtmp) ||
+        unbreathing(mtmp))
+        ds->mmflags |= MM_IGNOREWATER;
 
     struct obj *monwep = MON_WEP(ds->mon);
     if (tunnels(ds->mon->data) && (!needspick(ds->mon->data) ||
                                    (monwep && is_pick(monwep))))
         ds->mmflags |= MM_CHEWROCK;
-
 }
 
 int
@@ -1380,7 +1383,6 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     xchar x, y;
     struct trap *trap;
     int wtcap;
-    boolean on_ice;
     xchar chainx = -1, chainy = -1, ballx = -1, bally = -1;
     int bc_control = 0;     /* control for ball&chain */
     boolean cause_delay = FALSE;        /* dragging ball will skip a move */
@@ -1581,24 +1583,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         }
 
         /* check slippery ice */
-        on_ice = !Levitation && is_ice(level, u.ux, u.uy);
-        if (on_ice) {
-            static int skates = 0;
-
-            if (!skates)
-                skates = find_skates();
-            if ((uarmf && uarmf->otyp == skates)
-                || Flying || is_clinger(youmonst.data)
-                || is_whirly(youmonst.data))
-                on_ice = FALSE;
-            else if (!rn2(Cold_resistance ? 3 : 2)) {
-                HFumbling |= FROMOUTSIDE;
-                HFumbling &= ~TIMEOUT;
-                HFumbling += 1; /* slip on next move */
-            }
-        }
-        if (!on_ice && (HFumbling & FROMOUTSIDE))
-            HFumbling &= ~FROMOUTSIDE;
+        if (fumbling(&youmonst) & W_MASK(os_circumstance))
+            set_property(&youmonst, FUMBLING, 1, TRUE);
 
         /* Ensure that if we're stunned/confused, the random move was valid.
            If not, re-randomize.
@@ -2364,7 +2350,7 @@ stillinwater:
                 ;
             else if (uarmh && is_metallic(uarmh))
                 pline("Its blow glances off your %s.", helmet_name(uarmh));
-            else if (get_player_ac() + 3 <= rnd(20))
+            else if (find_mac(&youmonst) + 3 <= rnd(20))
                 pline("You are almost hit by %s!",
                       x_monnam(mtmp, ARTICLE_A, "falling", 0, TRUE));
             else {
@@ -3026,7 +3012,7 @@ maybe_wail(void)
             pline("%s is about to die.", who);
         } else {
             for (i = 0, powercnt = 0; i < SIZE(powers); ++i)
-                if (u.uintrinsic[powers[i]])
+                if (has_property(&youmonst, powers[i]))
                     ++powercnt;
 
             pline(powercnt >=
@@ -3092,9 +3078,9 @@ weight_cap(void)
         if (carrcap > MAX_CARR_CAP)
             carrcap = MAX_CARR_CAP;
         if (!Flying) {
-            if (LWounded_legs)
+            if (leg_hurtl(u.usteed ? u.usteed : &youmonst))
                 carrcap -= 100;
-            if (RWounded_legs)
+            if (leg_hurtr(u.usteed ? u.usteed : &youmonst))
                 carrcap -= 100;
         }
         if (carrcap < 0)

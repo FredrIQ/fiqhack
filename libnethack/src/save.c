@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -488,12 +488,6 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->ualignbase[1]);
     mwrite8(mf, y->uluck);
     mwrite8(mf, y->moreluck);
-    mwrite8(mf, y->uhitinc);
-    mwrite8(mf, y->udaminc);
-    mwrite8(mf, y->uac);
-    mwrite8(mf, y->uspellprot);
-    mwrite8(mf, save_encode_8(y->usptime, -moves, -moves));
-    mwrite8(mf, y->uspmtime);
     mwrite8(mf, y->twoweap);
     mwrite8(mf, y->bashmsg);
     mwrite8(mf, y->moveamt);
@@ -529,9 +523,6 @@ save_you(struct memfile *mf, struct you *y)
     for (i = 0; i < num_conducts; i++) {
         mwrite32(mf, y->uconduct[i]);
         mwrite32(mf, y->uconduct_time[i]);
-    }
-    for (i = 0; i <= LAST_PROP; i++) {
-        mwrite32(mf, y->uintrinsic[i]);
     }
     for (i = 0; i < P_NUM_SKILLS; i++) {
         mwrite8(mf, y->weapon_skills[i].skill);

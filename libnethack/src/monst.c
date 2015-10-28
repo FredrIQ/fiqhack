@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -445,7 +445,7 @@ const struct permonst mons[] = {
         M1_HUMANOID | M1_OMNIVORE, M2_COLLECT, M3_INFRAVISIBLE | M3_INFRAVISION,
         0, CLR_GREEN),
     MON("dwarf", S_HUMANOID,
-        LVL(2, 6, 10, 10, 4), (G_GENO | 3),
+        LVL(2, 6, 10, 10, 4), 3,
         A(ATTK(AT_WEAP, AD_PHYS, 1, 8),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(900, 300, 0, MS_HUMANOID, MZ_HUMAN), 0, 0,
@@ -686,7 +686,7 @@ const struct permonst mons[] = {
         M3_INFRAVISIBLE | M3_INFRAVISION, 0, CLR_BROWN),
     /* plain "orc" for zombie corpses only; not created at random */
     MON("orc", S_ORC,
-        LVL(1, 9, 10, 0, -3), (G_GENO | G_NOGEN | G_LGROUP),
+        LVL(1, 9, 10, 0, -3), (G_NOGEN | G_LGROUP),
         A(ATTK(AT_WEAP, AD_PHYS, 1, 8),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(850, 150, 0, MS_ORC, MZ_HUMAN), 0, 0, M1_HUMANOID | M1_OMNIVORE,
@@ -1496,7 +1496,7 @@ const struct permonst mons[] = {
  * Gnomes
  */
     MON("gnome", S_GNOME,
-        LVL(1, 6, 10, 4, 0), (G_GENO | G_SGROUP | 1),
+        LVL(1, 6, 10, 4, 0), (G_SGROUP | 1),
         A(ATTK(AT_WEAP, AD_PHYS, 1, 6),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(650, 100, 0, MS_ORC, MZ_SMALL), 0, 0,
@@ -3056,7 +3056,8 @@ const struct permonst mons[] = {
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(WT_HUMAN, 400, 0, MS_HUMANOID, MZ_HUMAN), 0, 0,
         M1_HUMANOID | M1_OMNIVORE,
-        M2_NOPOLY | M2_HUMAN | M2_STRONG | M2_COLLECT, M3_INFRAVISIBLE,
+        M2_NOPOLY | M2_HUMAN | M2_STRONG | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_JUMPS,
         MP_WAND_SKILLED, HI_DOMESTIC3),
     MON("monk", S_HUMAN,
         LVL(10, 12, 10, 2, 0), G_NOGEN,

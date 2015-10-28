@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -614,12 +614,6 @@ restore_you(struct memfile *mf, struct you *y)
     y->ualignbase[1] = mread8(mf);
     y->uluck = mread8(mf);
     y->moreluck = mread8(mf);
-    y->uhitinc = mread8(mf);
-    y->udaminc = mread8(mf);
-    y->uac = mread8(mf);
-    y->uspellprot = mread8(mf);
-    y->usptime = save_decode_8(mread8(mf), -moves, -moves);
-    y->uspmtime = mread8(mf);
     y->twoweap = mread8(mf);
     y->bashmsg = mread8(mf);
     y->moveamt = mread8(mf);
@@ -653,9 +647,6 @@ restore_you(struct memfile *mf, struct you *y)
     for (i = 0; i < num_conducts; i++) {
         y->uconduct[i] = mread32(mf);
         y->uconduct_time[i] = mread32(mf);
-    }
-    for (i = 0; i <= LAST_PROP; i++) {
-        y->uintrinsic[i] = mread32(mf);
     }
     for (i = 0; i < P_NUM_SKILLS; i++) {
         y->weapon_skills[i].skill = mread8(mf);

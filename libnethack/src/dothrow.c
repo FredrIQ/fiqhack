@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -740,8 +740,7 @@ toss_up(struct obj *obj, boolean hitsroof)
                 if (otyp == BLINDING_VENOM && !Blind)
                     pline("It blinds you!");
                 u.ucreamed += blindinc;
-                make_blinded(Blinded + (long)blindinc, FALSE);
-                if (!Blind)
+                if (!blind(&youmonst))
                     pline("Your vision quickly clears.");
                 else if (flags.verbose)
                     pline("Use the command #wipe to clean your %s.",
@@ -773,7 +772,7 @@ toss_up(struct obj *obj, boolean hitsroof)
         if (dmg > 1 && less_damage)
             dmg = 1;
         if (dmg > 0)
-            dmg += u.udaminc;
+            dmg += mon_dambon(&youmonst);
         if (dmg < 0)
             dmg = 0;    /* beware negative rings of increase damage */
         if (Half_physical_damage)
@@ -1187,7 +1186,7 @@ thitmonst(struct monst *mon, struct obj *obj)
        affected by traps, etc. Certain items which don't in themselves do
        damage ignore tmp. Distance and monster size affect chance to hit. */
     tmp =
-        -1 + Luck + find_mac(mon) + u.uhitinc +
+        -1 + Luck + find_mac(mon) + mon_hitbon(&youmonst) +
         maybe_polyd(youmonst.data->mlevel, u.ulevel);
     if (ACURR(A_DEX) < 4)
         tmp -= 3;

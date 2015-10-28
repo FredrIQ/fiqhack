@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -251,10 +251,6 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     } else
         mtmp->wormno = 0;
 
-    /* some monsters might need to do something special upon arrival _after_
-       the current level has been fully set up; see dochug() */
-    mtmp->mstrategy |= STRAT_ARRIVE;
-
     xyloc = mtmp->xyloc;
     xyflags = mtmp->xyflags;
     xlocale = mtmp->xlocale;
@@ -430,14 +426,15 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
         return;
 
     /* Decrease monster-related timers */
-    enum mt_prop mt;
-    for (mt = mt_firstprop; mt <= mt_lastprop; mt++) {
-        if (mtmp->mt_prop[mt]) {
-            if (mt != mt_protection ||
+    enum youprop prop;
+    int dec = imv;
+    for (prop = 0; prop <= LAST_PROP; prop++) {
+        if (mtmp->mintrinsic[prop] & TIMEOUT) {
+            dec = imv;
+            if (prop == PROTECTION &&
                 mprof(mtmp, MP_SCLRC) < P_EXPERT)
-                mtmp->mt_prop[mt] -= min(imv, mtmp->mt_prop[mt] - 1);
-            else
-                mtmp->mt_prop[mt] -= min(imv / 2, mtmp->mt_prop[mt] - 1);
+                dec /= 2;
+            mtmp->mintrinsic[prop] -= min(dec, mtmp->mintrinsic[prop] - 1);
         }
     }
     if (mtmp->mfrozen)

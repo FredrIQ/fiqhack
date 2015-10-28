@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -217,11 +217,12 @@ distant_name(const struct obj *obj, const char *(*func) (const struct obj *))
 {
     const char *str;
 
-    long save_Blinded = Blinded;
+    /* TODO: fix this, EotO screws it up */
+    long save_Blinded = property_timeout(&youmonst, BLINDED);
 
-    Blinded = 1;
+    set_property(&youmonst, BLINDED, 1, TRUE);
     str = (*func) (obj);
-    Blinded = save_Blinded;
+    set_property(&youmonst, BLINDED, save_Blinded ? save_Blinded : -2, TRUE);
     return str;
 }
 

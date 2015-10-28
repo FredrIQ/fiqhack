@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -89,18 +89,19 @@ use_towel(struct obj *obj)
 
         switch (rn2(3)) {
         case 2:
-            old = Glib;
-            Glib += rn1(10, 3);
+            old = slippery_fingers(&youmonst);
+            inc_timeout(&youmonst, GLIB, rn1(10, 3), TRUE);
             pline("Your %s %s!", makeplural(body_part(HAND)),
                   (old ? "are filthier than ever" : "get slimy"));
             return 1;
         case 1:
             if (!ublindf) {
-                old = u.ucreamed;
-                u.ucreamed += rn1(10, 3);
+                old = blind(&youmonst);
                 pline("Yecch! Your %s %s gunk on it!", body_part(FACE),
-                      (old ? "has more" : "now has"));
-                make_blinded(Blinded + (long)u.ucreamed - old, TRUE);
+                      (u.ucreamed ? "has more" : "now has"));
+                u.ucreamed += rn1(10, 3);
+                if (blind(&youmonst) && !old)
+                    pline("You can't see any more.");
             } else {
                 const char *what =
                     (ublindf->otyp == LENSES) ? "lenses" : "blindfold";
@@ -121,21 +122,18 @@ use_towel(struct obj *obj)
         }
     }
 
-    if (Glib) {
-        Glib = 0;
+    if (slippery_fingers(&youmonst)) {
+        set_property(&youmonst, GLIB, -2, TRUE);
         pline("You wipe off your %s.", makeplural(body_part(HAND)));
         return 1;
     } else if (u.ucreamed) {
-        Blinded -= u.ucreamed;
+        boolean wasblind = blind(&youmonst);
         u.ucreamed = 0;
-
-        if (!Blinded) {
+        if (wasblind && !blind(&youmonst)) {
             pline("You've got the glop off.");
-            Blinded = 1;
-            make_blinded(0L, TRUE);
-        } else {
+            pline("You can see again.");
+        } else
             pline("Your %s feels clean now.", body_part(FACE));
-        }
         return 1;
     }
 
@@ -653,10 +651,10 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
                 pline("You don't have a reflection.");
             else if (u.umonnum == PM_UMBER_HULK) {
                 pline("Huh?  That doesn't look like you!");
-                make_confused(HConfusion + dice(3, 4), FALSE);
+                inc_timeout(&youmonst, CONFUSION, dice(3, 4), TRUE);
             } else if (Hallucination)
                 pline(look_str, hcolor(NULL));
-            else if (Sick)
+            else if (sick(&youmonst))
                 pline(look_str, "peaked");
             else if (u.uhs >= WEAK)
                 pline(look_str, "undernourished");
@@ -1288,6 +1286,8 @@ dojump(const struct nh_cmd_arg *arg)
 int
 get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
 {
+    /* Used to point at the right monster for wounded legs */
+    struct monst *maybe_steed = u.usteed ? u.usteed : &youmonst;
     if (!magic && (nolimbs(youmonst.data) || slithy(youmonst.data))) {
         /* normally (nolimbs || slithy) implies !Jumping, but that isn't
            necessarily the case for knights */
@@ -1319,18 +1319,19 @@ get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
     } else if (!magic && (u.uhunger <= 100 || ACURR(A_STR) < 6)) {
         pline("You lack the strength to jump!");
         return 0;
-    } else if (Wounded_legs) {
+    } else if (leg_hurt(maybe_steed)) {
         const char *bp = body_part(LEG);
 
-        if (LWounded_legs && RWounded_legs)
+        if (leg_hurtl(maybe_steed) && leg_hurtr(maybe_steed))
             bp = makeplural(bp);
         if (u.usteed)
             pline("%s is in no shape for jumping.", Monnam(u.usteed));
         else
             pline("Your %s%s %s in no shape for jumping.",
-                  (!RWounded_legs) ? "left " :
-                  (!LWounded_legs) ? "right " : "",
-                  bp, (LWounded_legs && RWounded_legs) ? "are" : "is");
+                  (!leg_hurtr(maybe_steed)) ? "left " :
+                  (!leg_hurtl(maybe_steed)) ? "right " : "",
+                  bp, (leg_hurtl(maybe_steed) &&
+                       leg_hurtr(maybe_steed)) ? "are" : "is");
         return 0;
     } else if (u.usteed && u.utrap) {
         pline("%s is stuck in a trap.", Monnam(u.usteed));
@@ -1367,8 +1368,16 @@ get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
                     long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
 
                     pline("You rip yourself free of the bear trap!  Ouch!");
-                    losehp(rnd(10), killer_msg(DIED, "jumping out of a bear trap"));
-                    set_wounded_legs(side, rn1(1000, 500));
+                    if (!u.usteed)
+                        losehp(rnd(10), killer_msg(DIED, "jumping out of a bear trap"));
+                    else {
+                        u.usteed->mhp -= rnd(10);
+                        if (u.usteed->mhp <= 0)
+                            killed(u.usteed);
+                    }
+
+                    set_wounded_legs(u.usteed ? u.usteed : &youmonst,
+                                     side, rn1(1000, 500));
                     break;
                 }
             case TT_PIT:
@@ -1386,8 +1395,8 @@ get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
                 pline
                     ("You strain your %s, but you're still stuck in the floor.",
                      makeplural(body_part(LEG)));
-                set_wounded_legs(LEFT_SIDE, rn1(10, 11));
-                set_wounded_legs(RIGHT_SIDE, rn1(10, 11));
+                set_wounded_legs(&youmonst, LEFT_SIDE, rn1(10, 11));
+                set_wounded_legs(&youmonst, RIGHT_SIDE, rn1(10, 11));
             }
         }
     }
@@ -1476,7 +1485,7 @@ use_tinning_kit(struct obj *obj)
         return 0;
     }
     if (touch_petrifies(&mons[corpse->corpsenm])
-        && !Stone_resistance && !uarmg) {
+        && !resists_ston(&youmonst) && !uarmg) {
         if (poly_when_stoned(youmonst.data))
             pline("You tin %s without wearing gloves.",
                   an(mons[corpse->corpsenm].mname));
@@ -1537,27 +1546,26 @@ use_unicorn_horn(struct obj *obj)
 
         switch (rn2_on_rng(6, rng_cursed_unihorn)) {
         case 0:
-            make_sick(Sick ? Sick / 3L + 1L
-                           : (unsigned long)rn1(ACURR(A_CON), 20),
+            make_sick(&youmonst, (unsigned long)rn1(ACURR(A_CON), 20),
                       killer_xname(obj), TRUE, SICK_NONVOMITABLE);
             break;
         case 1:
-            make_blinded(Blinded + lcount, TRUE);
+            inc_timeout(&youmonst, BLINDED, lcount, FALSE);
             break;
         case 2:
             if (!Confusion)
                 pline("You suddenly feel %s.",
                       Hallucination ? "trippy" : "confused");
-            make_confused(HConfusion + lcount, TRUE);
+            inc_timeout(&youmonst, CONFUSION, lcount, TRUE);
             break;
         case 3:
-            make_stunned(HStun + lcount, TRUE);
+            inc_timeout(&youmonst, STUNNED, lcount, FALSE);
             break;
         case 4:
             adjattrib(rn2(A_MAX), -1, FALSE);
             break;
         case 5:
-            make_hallucinated(HHallucination + lcount, TRUE);
+            inc_timeout(&youmonst, HALLUC, lcount, FALSE);
             break;
         }
         return;
@@ -1574,17 +1582,17 @@ use_unicorn_horn(struct obj *obj)
     trouble_count = did_prop = did_attr = 0;
 
     /* collect property troubles */
-    if (Sick)
+    if (sick(&youmonst))
         prop_trouble(SICK);
-    if (Blinded > (unsigned long)u.ucreamed)
+    if (ihas_property(&youmonst, BLINDED))
         prop_trouble(BLINDED);
-    if (HHallucination)
+    if (ihas_property(&youmonst, HALLUC)) /* black light polyself */
         prop_trouble(HALLUC);
-    if (Vomiting)
+    if (vomiting(&youmonst))
         prop_trouble(VOMITING);
-    if (HConfusion)
+    if (confused(&youmonst))
         prop_trouble(CONFUSION);
-    if (HStun)
+    if (ihas_property(&youmonst, STUNNED)) /* some polyforms are stunned */
         prop_trouble(STUNNED);
 
     unfixable_trbl = unfixable_trouble_count(TRUE);
@@ -1639,27 +1647,27 @@ use_unicorn_horn(struct obj *obj)
 
         switch (idx) {
         case prop2trbl(SICK):
-            make_sick(0L, NULL, TRUE, SICK_ALL);
+            set_property(&youmonst, SICK, -2, FALSE);
             did_prop++;
             break;
         case prop2trbl(BLINDED):
-            make_blinded((long)u.ucreamed, TRUE);
+            set_property(&youmonst, BLINDED, -2, FALSE);
             did_prop++;
             break;
         case prop2trbl(HALLUC):
-            make_hallucinated(0L, TRUE);
+            set_property(&youmonst, HALLUC, -2, FALSE);
             did_prop++;
             break;
         case prop2trbl(VOMITING):
-            make_vomiting(0L, TRUE);
+            set_property(&youmonst, VOMITING, -2, FALSE);
             did_prop++;
             break;
         case prop2trbl(CONFUSION):
-            make_confused(0L, TRUE);
+            set_property(&youmonst, CONFUSION, -2, FALSE);
             did_prop++;
             break;
         case prop2trbl(STUNNED):
-            make_stunned(0L, TRUE);
+            set_property(&youmonst, STUNNED, -2, FALSE);
             did_prop++;
             break;
         default:
@@ -1869,7 +1877,7 @@ use_grease(struct obj *obj)
     struct obj *otmp;
     int res = 0;
 
-    if (Glib) {
+    if (slippery_fingers(&youmonst)) {
         pline("%s from your %s.", Tobjnam(obj, "slip"),
               makeplural(body_part(FINGER)));
         unwield_silently(obj);
@@ -1910,12 +1918,12 @@ use_grease(struct obj *obj)
             pline("You cover %s with a thick layer of grease.", yname(otmp));
             otmp->greased = 1;
             if (obj->cursed && !nohands(youmonst.data)) {
-                incr_itimeout(&Glib, rnd(15));
+                inc_timeout(&youmonst, GLIB, rnd(15), TRUE);
                 pline("Some of the grease gets all over your %s.",
                       makeplural(body_part(HAND)));
             }
         } else {
-            Glib += rnd(15);
+            inc_timeout(&youmonst, GLIB, rnd(15), TRUE);
             pline("You coat your %s with grease.",
                   makeplural(body_part(FINGER)));
         }
@@ -2281,7 +2289,8 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
         losehp(dam, buf);
         return 1;
 
-    } else if ((Fumbling || Glib) && !obj->cursed && !rn2(5)) {
+    } else if ((fumbling(&youmonst) || slippery_fingers(&youmonst)) &&
+               !obj->cursed && !rn2(5)) {
         pline("The bullwhip slips out of your %s.", body_part(HAND));
         unwield_silently(obj);
         dropx(obj);
@@ -2532,7 +2541,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 static int
 use_cream_pie(struct obj **objp)
 {
-    boolean wasblind = Blind;
+    boolean wasblind = !!blind(&youmonst);
     boolean wascreamed = u.ucreamed;
     boolean several = FALSE;
     struct obj *obj = *objp;
@@ -2548,14 +2557,11 @@ use_cream_pie(struct obj **objp)
               several ? "one of " : "",
               several ? makeplural(the(xname(obj))) : the(xname(obj)));
     if (can_blnd(NULL, &youmonst, AT_WEAP, obj)) {
-        int blindinc = rnd(25);
-
-        u.ucreamed += blindinc;
-        make_blinded(Blinded + (long)blindinc, FALSE);
-        if (!Blind || (Blind && wasblind))
+        u.ucreamed += rnd(25);
+        if (wasblind == !!blind(&youmonst)) /* was blind, or didn't become */
             pline("There's %ssticky goop all over your %s.",
                   wascreamed ? "more " : "", body_part(FACE));
-        else    /* Blind && !wasblind */
+        else
             pline("You can't see through all the sticky goop on your %s.",
                   body_part(FACE));
         if (flags.verbose)
@@ -3129,13 +3135,13 @@ unfixable_trouble_count(boolean is_horn)
 {
     int unfixable_trbl = 0;
 
-    if (Stoned)
+    if (petrifying(&youmonst))
         unfixable_trbl++;
-    if (Strangled)
+    if (strangled(&youmonst))
         unfixable_trbl++;
-    if (Wounded_legs && !u.usteed)
+    if (leg_hurt(&youmonst))
         unfixable_trbl++;
-    if (Slimed)
+    if (sliming(&youmonst))
         unfixable_trbl++;
     /* lycanthropy is not desirable, but it doesn't actually make you feel
        bad */
@@ -3143,15 +3149,15 @@ unfixable_trouble_count(boolean is_horn)
     /* we'll assume that intrinsic stunning from being a bat/stalker doesn't
        make you feel bad */
     if (!is_horn) {
-        if (Confusion)
+        if (confused(&youmonst))
             unfixable_trbl++;
-        if (Sick)
+        if (sick(&youmonst))
             unfixable_trbl++;
-        if (HHallucination)
+        if (hallucinating(&youmonst))
             unfixable_trbl++;
-        if (Vomiting)
+        if (vomiting(&youmonst))
             unfixable_trbl++;
-        if (HStun)
+        if (ihas_property(&youmonst, STUNNED))
             unfixable_trbl++;
     }
     return unfixable_trbl;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -115,18 +115,6 @@ mpoisons_subj(struct monst *mtmp, const struct attack *mattk)
             (mattk->aatyp == AT_GAZE) ? "gaze" :
             (mattk->aatyp == AT_BITE) ? "bite" : "sting";
     }
-}
-
-/* called when your intrinsic speed is taken away */
-void
-u_slow_down(void)
-{
-    HFast = 0L;
-    if (!Fast)
-        pline("You slow down.");
-    else        /* speed boots */
-        pline("Your quickness feels less natural.");
-    exercise(A_DEX, FALSE);
 }
 
 
@@ -396,7 +384,7 @@ mattacku(struct monst *mtmp)
     }
 
     /* Work out the armor class differential   */
-    tmp = AC_VALUE(get_player_ac()) + 10; /* tmp ~= 0 - 20 */
+    tmp = AC_VALUE(find_mac(&youmonst)) + 10; /* tmp ~= 0 - 20 */
     tmp += mtmp->m_lev;
     if (u_helpless(hm_all))
         tmp += 4;
@@ -615,12 +603,11 @@ hurtarmor(struct monst *mdef, enum erode_type type)
 static boolean
 diseasemu(const struct permonst *mdat)
 {
-    if (Sick_resistance) {
+    if (resists_sick(&youmonst)) {
         pline("You feel a slight illness.");
         return FALSE;
     } else {
-        make_sick(Sick ? Sick / 3L + 1L :
-                  20 + rn2_on_rng(ACURR(A_CON), rng_ddeath_dconp20),
+        make_sick(&youmonst, 20 + rn2_on_rng(ACURR(A_CON), rng_ddeath_dconp20),
                   mdat->mname, TRUE, SICK_NONVOMITABLE);
         return TRUE;
     }
@@ -771,7 +758,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     dmg = 1;
                     pline("%s hits you with the %s corpse.", Monnam(mtmp),
                           mons[otmp->corpsenm].mname);
-                    if (!Stoned)
+                    if (!petrifying(&youmonst))
                         goto do_stone;
                 }
                 dmg += dmgval(otmp, &youmonst);
@@ -787,15 +774,15 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     hitmsg(mtmp, mattk);
                 if (!dmg)
                     break;
-                if (u.mh > 1 && u.mh > ((get_player_ac() > 0) ?
-                                            dmg : dmg + get_player_ac()) &&
+                if (u.mh > 1 && u.mh > ((find_mac(&youmonst) > 0) ?
+                                            dmg : dmg + find_mac(&youmonst)) &&
                     objects[otmp->otyp].oc_material == IRON &&
                     (u.umonnum == PM_BLACK_PUDDING ||
                      u.umonnum == PM_BROWN_PUDDING)) {
                     /* This redundancy necessary because you have to take the
                        damage _before_ being cloned. */
-                    if (get_player_ac() < 0)
-                        dmg += get_player_ac();
+                    if (find_mac(&youmonst) < 0)
+                        dmg += find_mac(&youmonst);
                     if (dmg < 1)
                         dmg = 1;
                     if (dmg > 1)
@@ -892,8 +879,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         if (can_blnd(mtmp, &youmonst, mattk->aatyp, NULL)) {
             if (!Blind)
                 pline("%s blinds you!", Monnam(mtmp));
-            make_blinded(Blinded + (long)dmg, FALSE);
-            if (!Blind)
+            set_property(&youmonst, BLINDED, dmg, TRUE);
+            if (!blind(&youmonst))
                 pline("Your vision quickly clears.");
         }
         dmg = 0;
@@ -1028,7 +1015,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 } else
                     pline("%s pricks your %s %s!", Monnam(mtmp), sidestr,
                           body_part(LEG));
-                set_wounded_legs(side, rnd(60 - ACURR(A_DEX)));
+                set_wounded_legs(&youmonst, side, rnd(60 - ACURR(A_DEX)));
                 exercise(A_STR, FALSE);
                 exercise(A_DEX, FALSE);
             }
@@ -1046,10 +1033,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 if (stiffen ||
                     (flags.moonphase == NEW_MOON && !have_lizard())) {
                 do_stone:
-                    if (!Stoned && !Stone_resistance &&
+                    if (!petrifying(&youmonst) && !resists_ston(&youmonst) &&
                         !(poly_when_stoned(youmonst.data) &&
                           polymon(PM_STONE_GOLEM, TRUE))) {
-                        Stoned = 5;
+                        set_property(&youmonst, STONED, 5, TRUE);
                         set_delayed_killer(STONING,
                                            killer_msg_mon(STONING, mtmp));
                         return 1;
@@ -1067,7 +1054,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_WRAP:
         if ((!cancelled(mtmp) || u.ustuck == mtmp) && !sticks(youmonst.data)) {
             boolean drownable = is_pool(level, mtmp->mx, mtmp->my) &&
-                !Swimming && !Amphibious;
+                !Swimming && !Breathless;
             if (!u.ustuck &&
                 !rn2_on_rng(10, drownable ? rng_eel_drowning : rng_main)) {
                 if (u_slip_free(mtmp, mattk)) {
@@ -1259,8 +1246,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 exercise(A_STR, TRUE);
             if (!rn2(3))
                 exercise(A_CON, TRUE);
-            if (Sick)
-                make_sick(0L, NULL, FALSE, SICK_ALL);
+            if (sick(&youmonst))
+                make_sick(&youmonst, 0L, NULL, FALSE, SICK_ALL);
             if (goaway) {
                 mongone(mtmp);
                 return 2;
@@ -1297,13 +1284,13 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 rehumanize(DIED, msgcat("deactivated by ", k_monnam(mtmp)));
                 break;
             }
-            attrcurse();
+            gremlin_curse(&youmonst);
         }
         break;
     case AD_STUN:
         hitmsg(mtmp, mattk);
         if (!cancelled(mtmp) && !rn2(4)) {
-            make_stunned(HStun + dmg, TRUE);
+            inc_timeout(&youmonst, STUNNED, dmg, FALSE);
             dmg /= 2;
         }
         break;
@@ -1321,8 +1308,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_SLOW:
         hitmsg(mtmp, mattk);
-        if (uncancelled && HFast && !defends(AD_SLOW, uwep) && !rn2(4))
-            u_slow_down();
+        if (uncancelled && !defends(AD_SLOW, uwep) && !rn2(4))
+            inc_timeout(&youmonst, SLOW, dmg, FALSE);
         break;
     case AD_DREN:
         hitmsg(mtmp, mattk);
@@ -1338,7 +1325,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 pline("You are getting even more confused.");
             else
                 pline("You are getting confused.");
-            make_confused(HConfusion + dmg, FALSE);
+            inc_timeout(&youmonst, CONFUSION, dmg, TRUE);
         }
         dmg = 0;
         break;
@@ -1397,9 +1384,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                    youmonst.data == &mons[PM_GREEN_SLIME]) {
             pline("You are unaffected.");
             dmg = 0;
-        } else if (!Slimed) {
-            pline("You don't feel very well.");
-            Slimed = 10L;
+        } else if (!sliming(&youmonst)) {
+            set_property(&youmonst, SLIMED, 10, FALSE);
             set_delayed_killer(TURNED_SLIME,
                                killer_msg_mon(TURNED_SLIME, mtmp));
         } else
@@ -1429,8 +1415,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
     /* Negative armor class reduces damage done instead of fully protecting
        against hits. */
-    if (dmg && get_player_ac() < 0) {
-        dmg -= rnd(-get_player_ac());
+    if (dmg && find_mac(&youmonst) < 0) {
+        dmg -= rnd(-find_mac(&youmonst));
         if (dmg < 1)
             dmg = 1;
     }
@@ -1571,7 +1557,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
             tim_tmp = rnd(tim_tmp) / 2;
         else if (tim_tmp < 0)
             tim_tmp = -(rnd(-tim_tmp) / 2);
-        tim_tmp += -get_player_ac() + 10;
+        tim_tmp += -find_mac(&youmonst) + 10;
         u.uswldtim = (unsigned)((tim_tmp < 2) ? 2 : tim_tmp);
         swallowed(1);
         for (otmp2 = invent; otmp2; otmp2 = otmp2->nobj)
@@ -1609,8 +1595,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
                   Breathless ? "find it mildly uncomfortable." :
                   amphibious(youmonst.data) ? "feel comforted." :
                   "can barely breathe!");
-            /* NB: Amphibious includes Breathless */
-            if (Amphibious && !flaming(youmonst.data))
+            if (Breathless && !flaming(youmonst.data))
                 tmp = 0;
         } else {
             pline("You are pummeled with debris!");
@@ -1631,14 +1616,12 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_BLND:
         if (can_blnd(mtmp, &youmonst, mattk->aatyp, NULL)) {
-            if (!Blind) {
+            if (!blind(&youmonst))
                 pline("You can't see in here!");
-                make_blinded((long)tmp, FALSE);
-                if (!Blind)
-                    pline("Your vision quickly clears.");
-            } else
-                /* keep him blind until disgorged */
-                make_blinded(Blinded + 1, FALSE);
+            inc_timeout(&youmonst, BLINDED,
+                        blind(&youmonst) ? 1 : tmp, TRUE);
+            if (!blind(&youmonst))
+                pline("Your vision quickly clears.");
         }
         tmp = 0;
         break;
@@ -1758,8 +1741,8 @@ explmu(struct monst *mtmp, const struct attack *mattk)
             /* sometimes you're affected even if it's invisible */
             if (mon_visible(mtmp) || (rnd(tmp /= 2) > u.ulevel)) {
                 pline("You are blinded by a blast of light!");
-                make_blinded((long)tmp, FALSE);
-                if (!Blind)
+                inc_timeout(&youmonst, BLINDED, tmp, TRUE);
+                if (!blind(&youmonst))
                     pline("Your vision quickly clears.");
             } else if (flags.verbose)
                 pline("You get the impression it was not terribly bright.");
@@ -1767,16 +1750,17 @@ explmu(struct monst *mtmp, const struct attack *mattk)
         break;
 
     case AD_HALU:
-        not_affected |= Blind || (u.umonnum == PM_BLACK_LIGHT ||
-                                  u.umonnum == PM_VIOLET_FUNGUS ||
-                                  dmgtype(youmonst.data, AD_STUN));
+        not_affected |= (blind(&youmonst) ||
+                         u.umonnum == PM_BLACK_LIGHT ||
+                         u.umonnum == PM_VIOLET_FUNGUS ||
+                         dmgtype(youmonst.data, AD_STUN));
         if (!not_affected) {
-            boolean chg;
-
             if (!Hallucination)
                 pline("You are caught in a blast of kaleidoscopic light!");
-            chg = make_hallucinated(HHallucination + (long)tmp, FALSE);
-            pline("You %s.", chg ? "are freaked out" : "seem unaffected");
+            pline("You %s.",
+                  !hallucinating(&youmonst) ?
+                  "are freaked out" : "seem unaffected");
+            inc_timeout(&youmonst, HALLUC, tmp, TRUE);
         }
         break;
 
@@ -1841,7 +1825,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
             return 2;
         }
         if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            !Stone_resistance) {
+            !resists_ston(&youmonst)) {
             pline("You meet %s gaze.", s_suffix(mon_nam(mtmp)));
             action_interrupted();
             instapetrify(killer_msg(
@@ -1859,7 +1843,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
                 pline("%s gaze confuses you!", s_suffix(Monnam(mtmp)));
             else
                 pline("You are getting more and more confused.");
-            make_confused(HConfusion + conf, FALSE);
+            inc_timeout(&youmonst, CONFUSION, conf, TRUE);
             action_interrupted();
         }
         break;
@@ -1870,7 +1854,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
 
             mtmp->mspec_used = mtmp->mspec_used + (stun + rn2(6));
             pline("%s stares piercingly at you!", Monnam(mtmp));
-            make_stunned(HStun + stun, TRUE);
+            inc_timeout(&youmonst, STUNNED, stun, FALSE);
             action_interrupted();
         }
         break;
@@ -1880,14 +1864,14 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
             int blnd = dice((int)mattk->damn, (int)mattk->damd);
 
             pline("You are blinded by %s radiance!", s_suffix(mon_nam(mtmp)));
-            make_blinded((long)blnd, FALSE);
+            set_property(&youmonst, BLINDED, blnd, TRUE);
             action_interrupted();
             /* not blind at this point implies you're wearing the Eyes of the
                Overworld; make them block this particular stun attack too */
-            if (!Blind)
+            if (!blind(&youmonst))
                 pline("Your vision quickly clears.");
             else
-                make_stunned((long)dice(1, 3), TRUE);
+                inc_timeout(&youmonst, STUNNED, dice(1, 3), FALSE);
         }
         break;
     case AD_FIRE:
@@ -1923,10 +1907,8 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_SLOW:
         if (!cancelled(mtmp) && canseemon(mtmp) && !blind(mtmp) &&
-            (ifast(&youmonst)) && !defends(AD_SLOW, uwep) &&
-            !rn2(4))
-
-            u_slow_down();
+            !defends(AD_SLOW, uwep) && !rn2(4))
+            inc_timeout(&youmonst, SLOW, rnd(10), FALSE);
         action_interrupted();
         break;
 #endif

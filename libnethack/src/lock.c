@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1001,12 +1001,15 @@ chest_shatter_msg(struct obj *otmp)
             potionbreathe(&youmonst, otmp);
         return;
     }
-    /* We have functions for distant and singular names, but not one */
-    /* which does _both_... */
-    save_Blinded = Blinded;
-    Blinded = 1;
+    /* We have functions for distant and singular names, but not one
+       which does _both_...
+       TODO: fix this blindness kludge (it doesn't even work -- see eoto) */
+    save_Blinded = property_timeout(&youmonst, BLINDED);
+    set_property(&youmonst, BLINDED, 1, TRUE);
     thing = singular(otmp, xname);
-    Blinded = save_Blinded;
+    if (save_Blinded)
+        set_property(&youmonst, BLINDED, save_Blinded, TRUE);
+
     switch (objects[otmp->otyp].oc_material) {
     case PAPER:
         disposition = "is torn to shreds";

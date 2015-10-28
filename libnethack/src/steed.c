@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -120,7 +120,8 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
         chance += 30;
         break;
     }
-    if (Confusion || Fumbling || Glib)
+    if (confused(&youmonst) || fumbling(&youmonst) ||
+        slippery_fingers(&youmonst))
         chance -= 20;
     else if (uarmg && (s = OBJ_DESCR(objects[uarmg->otyp])) != NULL &&
              !strncmp(s, "riding ", 7))
@@ -200,20 +201,6 @@ mount_steed(struct monst * mtmp,        /* The animal */
     if (Hallucination && !force) {
         pline("Maybe you should find a designated driver.");
         return FALSE;
-    }
-    /* While riding Wounded_legs refers to the steed's, not the hero's legs.
-       That opens up a potential abuse where the player can mount a steed, then
-       dismount immediately to heal leg damage, because leg damage is always
-       healed upon dismount (Wounded_legs context switch). By preventing a hero
-       with Wounded_legs from mounting a steed, the potential for abuse is
-       minimized, if not eliminated altogether. */
-    if (Wounded_legs) {
-        pline("Your %s are in no shape for riding.",
-              makeplural(body_part(LEG)));
-        if (force && wizard && yn("Heal your legs?") == 'y')
-            LWounded_legs = RWounded_legs = 0;
-        else
-            return FALSE;
     }
 
     if (Upolyd &&
@@ -304,7 +291,9 @@ mount_steed(struct monst * mtmp,        /* The animal */
         return FALSE;
     }
     if (!force &&
-        (Confusion || Fumbling || Glib || Wounded_legs || otmp->cursed ||
+        (confused(&youmonst) || fumbling(&youmonst) ||
+         slippery_fingers(&youmonst) || leg_hurt(&youmonst) ||
+         otmp->cursed ||
          (u.ulevel + mtmp->mtame < rnd(MAXULEV / 2 + 5)))) {
         if (Levitation) {
             pline("%s slips away from you.", Monnam(mtmp));
@@ -464,7 +453,6 @@ dismount_steed(int reason)
     struct obj *otmp;
     coord cc;
     const char *verb = "fall";
-    boolean repair_leg_damage = TRUE;
     unsigned save_utrap = u.utrap;
     boolean have_spot = landing_spot(&cc, reason, 0);
 
@@ -483,9 +471,8 @@ dismount_steed(int reason)
         if (!have_spot)
             have_spot = landing_spot(&cc, reason, 1);
         losehp(rn1(10, 10), "killed in a riding accident");
-        set_wounded_legs(LEFT_SIDE, (int)LWounded_legs + rn1(5, 5));
-        set_wounded_legs(RIGHT_SIDE, (int)RWounded_legs + rn1(5, 5));
-        repair_leg_damage = FALSE;
+        set_wounded_legs(&youmonst, LEFT_SIDE, rn1(5, 5));
+        set_wounded_legs(&youmonst, RIGHT_SIDE, rn1(5, 5));
         break;
     case DISMOUNT_POLY:
         pline("You can no longer ride %s.", mon_nam(u.usteed));
@@ -521,10 +508,6 @@ dismount_steed(int reason)
         } else
             pline("You dismount %s.", mon_nam(mtmp));
     }
-    /* While riding these refer to the steed's legs so after dismounting they
-       refer to the player's legs once again. */
-    if (repair_leg_damage)
-        LWounded_legs = RWounded_legs = 0;
 
     /* Release the steed and saddle */
     u.usteed = 0;

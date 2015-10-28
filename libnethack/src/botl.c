@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -235,7 +235,7 @@ make_player_info(struct nh_player_info *pi)
 
     pi->en = u.uen;
     pi->enmax = u.uenmax;
-    pi->ac = get_player_ac();
+    pi->ac = find_mac(&youmonst);
 
     pi->gold = money_cnt(invent);
     pi->coinsym = def_oc_syms[COIN_CLASS];
@@ -271,7 +271,7 @@ make_player_info(struct nh_player_info *pi)
     if (Confusion)      /* 2 */
         strncpy(pi->statusitems[pi->nr_items++], "Conf", ITEMLEN);
 
-    if (Sick) { /* 3 */
+    if (sick(&youmonst)) { /* 3 */
         if (u.usick_type & SICK_VOMITABLE)
             strncpy(pi->statusitems[pi->nr_items++], "FoodPois", ITEMLEN);
         if (u.usick_type & SICK_NONVOMITABLE)
@@ -279,23 +279,23 @@ make_player_info(struct nh_player_info *pi)
     }
     if (Blind)  /* 4 */
         strncpy(pi->statusitems[pi->nr_items++], "Blind", ITEMLEN);
-    if (Glib)   /* 5 */
+    if (slippery_fingers(&youmonst))   /* 5 */
         strncpy(pi->statusitems[pi->nr_items++], "Greasy", ITEMLEN);
-    if (Wounded_legs)   /* 6 */
+    if (leg_hurt(&youmonst))       /* 6 */
         strncpy(pi->statusitems[pi->nr_items++], "Lame", ITEMLEN);
-    if (Stunned)        /* 7 */
+    if (stunned(&youmonst))        /* 7 */
         strncpy(pi->statusitems[pi->nr_items++], "Stun", ITEMLEN);
-    if (Hallucination)  /* 8 */
+    if (hallucinating(&youmonst))  /* 8 */
         strncpy(pi->statusitems[pi->nr_items++], "Hallu", ITEMLEN);
-    if (Strangled)      /* 9 */
+    if (strangled(&youmonst))      /* 9 */
         strncpy(pi->statusitems[pi->nr_items++], "Strangle", ITEMLEN);
-    if (Slimed) /* 10 */
+    if (sliming(&youmonst))        /* 10 */
         strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
-    if (Stoned) /* 11 */
+    if (petrifying(&youmonst))     /* 11 */
         strncpy(pi->statusitems[pi->nr_items++], "Petrify", ITEMLEN);
     if (u.ustuck && !Engulfed && !sticks(youmonst.data))      /* 12 */
         strncpy(pi->statusitems[pi->nr_items++], "Held", ITEMLEN);
-    if (enc_stat[cap])  /* 13 */
+    if (enc_stat[cap]           )  /* 13 */
         strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);
     if (cancelled(&youmonst))
         strncpy(pi->statusitems[pi->nr_items++], "Cancelled", ITEMLEN);

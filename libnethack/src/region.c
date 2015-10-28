@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -717,8 +717,8 @@ inside_gas_cloud(void *p1, void *p2)
         /* If you will unblind next turn, extend the blindness so that you do
          * not get a "You can see again!" message immediately before being
          * blinded again. */
-        if (!Blind || Blinded == 1)
-            make_blinded(2L, FALSE);
+        if (property_timeout(&youmonst, BLINDED) < 2)
+            inc_timeout(&youmonst, BLINDED, 2, TRUE);
         if (Breathless)
             return FALSE;
         if (!Poison_resistance) {

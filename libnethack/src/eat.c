@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -151,7 +151,7 @@ choke(struct obj *food)
     /* Whatever you were doing, you're going to get rather distracted... */
     action_interrupted();
 
-    if (Breathless || (!Strangled && !rn2(20))) {
+    if (Breathless || (!strangled(&youmonst) && !rn2(20))) {
         /* choking by eating AoS doesn't involve stuffing yourself */
         if (food && food->otyp == AMULET_OF_STRANGULATION) {
             pline("You choke, but recover your composure.");
@@ -159,7 +159,7 @@ choke(struct obj *food)
         }
         pline("You stuff yourself and then vomit voluminously.");
         morehungry(1000);       /* you just got *very* sick! */
-        vomit();
+        vomit(&youmonst);
     } else {
         const char *killer;
         if (food) {
@@ -350,7 +350,7 @@ maybe_cannibal(int pm, boolean allowmsg)
                 pline("You have a bad feeling deep inside.");
             pline("You cannibal!  You will regret this!");
         }
-        HAggravate_monster |= FROMOUTSIDE;
+        set_property(&youmonst, AGGRAVATE_MONSTER, 0, FALSE);
         change_luck(-rn1(4, 2));        /* -5..-2 */
         return TRUE;
     }
@@ -385,7 +385,7 @@ cprefx(struct monst *mon, int pm)
             if (!CANNIBAL_ALLOWED()) {
                 pline("You feel that eating the %s was a bad idea.",
                       mons[pm].mname);
-                HAggravate_monster |= FROMOUTSIDE;
+                set_property(mon, AGGRAVATE_MONSTER, 0, FALSE);
             }
         }
         break;
@@ -893,14 +893,15 @@ eat_tin_one_turn(void)
         costly_tin(NULL);
 
         /* check for vomiting added by GAN 01/16/87 */
-        if (tintxts[r].nut < 0)
-            make_vomiting((long)rn1(15, 10), FALSE);
+        if (tintxts[r].nut < 0 && !vomiting(&youmonst))
+            set_property(&youmonst, VOMITING, rn1(15, 10), FALSE);
         else
             lesshungry(tintxts[r].nut, u.utracked[tos_tin]);
 
         if (r == 0 || r == FRENCH_FRIED_TIN) {
-            /* Assume !Glib, because you can't open tins when Glib. */
-            incr_itimeout(&Glib, rnd(15));
+            /* Assume nonslippery fingers, because you can't open tins with
+               slippery fingers. */
+            inc_timeout(&youmonst, GLIB, rnd(15), TRUE);
             pline("Eating deep fried food made your %s very slippery.",
                   makeplural(body_part(FINGER)));
         }
@@ -981,7 +982,7 @@ start_tin(struct obj *otmp)
     } else {
     no_opener:
         pline("It is not so easy to open this tin.");
-        if (Glib) {
+        if (slippery_fingers(&youmonst)) {
             pline("The tin slips from your %s.", makeplural(body_part(FINGER)));
             if (otmp->quan > 1L) {
                 otmp = splitobj(otmp, 1L);
@@ -1013,11 +1014,11 @@ rottenfood(struct obj *obj)
             pline("You feel rather trippy.");
         else
             pline("You feel rather %s.", body_part(LIGHT_HEADED));
-        make_confused(HConfusion + dice(2, 4), FALSE);
+        inc_timeout(&youmonst, CONFUSION, dice(2, 4), TRUE);
     } else if (!rn2(4) && !Blind) {
         pline("Everything suddenly goes dark.");
-        make_blinded((long)dice(2, 10), FALSE);
-        if (!Blind)
+        inc_timeout(&youmonst, BLINDED, dice(2, 10), TRUE);
+        if (!blind(&youmonst))
             pline("Your vision quickly clears.");
     } else if (!rn2(3)) {
         const char *what, *where;
@@ -1090,19 +1091,13 @@ eatcorpse(struct monst *mon, struct obj *otmp)
 
             sick_time = rn2_on_rng(10, you ? rng_ddeath_d10p9 : rng_main) + 9;
             /* make sure new ill doesn't result in improvement */
-            if (sick(mon) && (sick_time > property_timeout(mon, SICK)))
-                sick_time = (Sick > 1L) ? Sick - 1L : 1L;
             if (!uniq)
                 buf = msgprintf("a rotted %s", corpse_xname(otmp, TRUE));
             else
                 buf = msgprintf("the rotted corpse of %s%s",
                                 !type_is_pname(&mons[mnum]) ? "the " : "",
                                 mons[mnum].mname);
-            if (you)
-                make_sick(sick_time, buf, TRUE, SICK_VOMITABLE);
-            else { /* TODO: wont actually do anything at present */
-                set_property(mon, SICK, sick_time, FALSE);
-            }
+            make_sick(mon, sick_time, buf, TRUE, SICK_VOMITABLE);
         }
         if (mcarried(otmp))
             m_useup(mon, otmp);
@@ -1250,7 +1245,8 @@ fprefx(struct obj *otmp)
             if (rn2(2) && !CANNIBAL_ALLOWED()) {
                 unsigned reqtime;
                 nutrition_calculations(otmp, NULL, &reqtime, NULL);
-                make_vomiting(rn1(reqtime, 14), FALSE);
+                if (!vomiting(&youmonst))
+                    set_property(&youmonst, VOMITING, rn1(reqtime, 14), FALSE);
             }
         }
         break;
@@ -1264,7 +1260,8 @@ fprefx(struct obj *otmp)
         if (is_undead(youmonst.data)) {
             unsigned reqtime;
             nutrition_calculations(otmp, NULL, &reqtime, NULL);
-            make_vomiting(rn1(reqtime, 5), FALSE);
+            if (!vomiting(&youmonst))
+                set_property(&youmonst, VOMITING, rn1(reqtime, 5), FALSE);
             break;
         }
         /* Fall through otherwise */
@@ -1293,7 +1290,8 @@ fprefx(struct obj *otmp)
 #endif
         if (otmp->otyp == EGG && stale_egg(otmp)) {
             pline("Ugh.  Rotten egg."); /* perhaps others like it */
-            make_vomiting(Vomiting + dice(10, 4), TRUE);
+            if (!vomiting(&youmonst))
+                set_property(&youmonst, VOMITING, dice(10, 4), FALSE);
         } else
         give_feedback:
             pline("This %s is %s", singular(otmp, xname),
@@ -1378,25 +1376,16 @@ eataccessory(struct monst *mon, struct obj *otmp)
             break;
         case RIN_INCREASE_ACCURACY:
             accessory_has_effect(mon, otmp);
-            if (you)
-                u.uhitinc += otmp->spe;
-            else
-                mon->mhitinc += otmp->spe;
+            mon->mhitinc += otmp->spe;
             break;
         case RIN_INCREASE_DAMAGE:
             accessory_has_effect(mon, otmp);
-            if (you)
-                u.udaminc += otmp->spe;
-            else
-                mon->mdaminc += otmp->spe;
+            mon->mdaminc += otmp->spe;
             break;
         case RIN_PROTECTION:
             accessory_has_effect(mon, otmp);
             set_property(mon, PROTECTION, 0, FALSE);
-            if (you)
-                u.uac -= otmp->spe;
-            else
-                mon->mblessed += otmp->spe;
+            mon->mac += otmp->spe;
             break;
         case AMULET_OF_CHANGE:
             accessory_has_effect(mon, otmp);
@@ -1430,14 +1419,6 @@ eataccessory(struct monst *mon, struct obj *otmp)
             if (you)
                 choke(otmp);
             /* TODO: monster choking */
-            break;
-        case AMULET_OF_RESTFUL_SLEEP:  /* another bad idea! */
-            if (you) {
-                if (!(HSleeping & FROMOUTSIDE))
-                    accessory_has_effect(mon, otmp);
-                HSleeping = FROMOUTSIDE | rnd(100);
-            }
-            /* TODO: monster restful sleep */
             break;
         case AMULET_OF_LIFE_SAVING:
         case AMULET_OF_REFLECTION:     /* nice try */
@@ -1540,6 +1521,7 @@ foodword(struct obj *otmp)
 }
 
 /* called after consuming (non-corpse) food */
+/* TODO: make this work on monsters */
 static void
 fpostfx(struct obj *otmp)
 {
@@ -1549,7 +1531,7 @@ fpostfx(struct obj *otmp)
             you_unwere(TRUE);
         break;
     case CARROT:
-        make_blinded((long)u.ucreamed, TRUE);
+        set_property(&youmonst, BLINDED, -2, FALSE);
         break;
     case FORTUNE_COOKIE:
         outrumor(bcsign(otmp), BY_COOKIE);
@@ -1579,21 +1561,20 @@ fpostfx(struct obj *otmp)
                      killer_msg(POISONING, "a rotten lump of royal jelly"));
             }
         }
-        if (!otmp->cursed && (LWounded_legs || RWounded_legs))
-            heal_legs(Wounded_leg_side);
+        if (!otmp->cursed && leg_hurt(&youmonst))
+            heal_legs(&youmonst, leg_hurtsides(&youmonst));
         break;
     case EGG:
-        if (touched_monster(otmp->corpsenm)) {
-            if (!Stoned)
-                Stoned = 5;
+        if (!petrifying(&youmonst) && touched_monster(otmp->corpsenm)) {
+            set_property(&youmonst, STONED, 5, TRUE);
             set_delayed_killer(STONING, killer_msg_obj(STONING, otmp));
         }
         break;
     case EUCALYPTUS_LEAF:
-        if (Sick && !otmp->cursed)
-            make_sick(0L, NULL, TRUE, SICK_ALL);
-        if (Vomiting && !otmp->cursed)
-            make_vomiting(0L, TRUE);
+        if (!otmp->cursed) {
+            set_property(&youmonst, SICK, -2, FALSE);
+            set_property(&youmonst, VOMITING, -2, FALSE);
+        }
         break;
     }
     return;
@@ -1781,7 +1762,7 @@ doeat(const struct nh_cmd_arg *arg)
     boolean dont_start = FALSE;
     struct obj *otmp;
 
-    if (Strangled) {
+    if (strangled(&youmonst)) {
         pline("If you can't breathe air, how can you consume solids?");
         return 0;
     }
@@ -1826,7 +1807,7 @@ doeat(const struct nh_cmd_arg *arg)
         pline("Ulch!  That %s was rustproofed!", xname(otmp));
         /* The regurgitated object's rustproofing is gone now */
         otmp->oerodeproof = 0;
-        make_stunned(HStun + rn2(10), TRUE);
+        inc_timeout(&youmonst, STUNNED, rn2(10), FALSE);
         pline("You spit %s out onto the %s.", the(xname(otmp)),
               surface(u.ux, u.uy));
         if (carried(otmp)) {
@@ -2313,10 +2294,15 @@ skipfloor:
 /* Side effects of vomiting */
 /* added helplessness (MRS) - it makes sense, you're too busy being sick! */
 void
-vomit(void)
+vomit(struct monst *mon)
 {       /* A good idea from David Neves */
-    make_sick(0L, NULL, TRUE, SICK_VOMITABLE);
-    helpless(2, hr_busy, "vomiting", "You're done throwing up.");
+    make_sick(mon, 0L, NULL, TRUE, SICK_VOMITABLE);
+    if (mon == &youmonst)
+        helpless(2, hr_busy, "vomiting", "You're done throwing up.");
+    else {
+        mon->mcanmove = 0;
+        mon->mfrozen += 2;
+    }
 }
 
 int

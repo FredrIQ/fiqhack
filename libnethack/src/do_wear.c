@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -189,7 +189,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     int equipsgn = equipping ? 1 : -1;
     int otyp = o->otyp;
     int prop = objects[otyp].oc_oprop;
-    boolean redundant_extrinsic = !!(worn_extrinsic(prop) & ~W_MASK(slot));
     /* TODO: Effects that are redundant to racial properties. I'm not sure if
        this can actually come up, but we should handle it anyway. */
     boolean redundant = !!(has_property(&youmonst, prop) & ~W_MASK(slot));
@@ -200,6 +199,12 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     /* Change the item in the slot. */
     if (equipping) {
         setworn(o, W_MASK(slot));
+        /* There is a redundant update_property when taken off.
+           The reason this is performed at this point is to give
+           the identified description if update_property identifies
+           the item */
+        if (update_property(&youmonst, prop, slot))
+            makeknown(o->otyp);
         if (msgtype != em_silent)
             on_msg(o);
         if (o->cursed && !o->bknown) {
@@ -229,6 +234,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
                   body_part(FINGER) :
                   slot == os_amul ? body_part(NECK) :
                   slot == os_tool ? body_part(FACE) : "body");
+        if (update_property(&youmonst, prop, slot))
+            makeknown(o->otyp);
     }
 
     /* Equipping armor makes its enchantment obvious. */
@@ -239,9 +246,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 
        WARNING: Some of these can destroy objects. That includes the object
        we're trying to equip! Thus, o and otmp should not be used after this
-       switch returns. (Checking EQUIP(slot) is fine, though.)
-
-       Property-related side effects has been moved to update_property. -FIQ */
+       switch returns. (Checking EQUIP(slot) is fine, though.) */
     switch (otyp) {
         /* Boots */
     case LOW_BOOTS:
@@ -252,18 +257,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case WATER_WALKING_BOOTS:
     case SPEED_BOOTS:
     case ELVEN_BOOTS:
-        break;
     case FUMBLE_BOOTS:
     case GAUNTLETS_OF_FUMBLING:
-        if (!redundant_extrinsic && !(HFumbling & ~TIMEOUT)) {
-            if (equipping)
-                incr_itimeout(&HFumbling, rnd(20));
-            else
-                HFumbling = 0;
-        }
-        break;
-        /* levitation boots handled the same way as levitation rings */
-
         /* Cloaks */
     case ELVEN_CLOAK:
     case CLOAK_OF_PROTECTION:
@@ -383,19 +378,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         }
         break;
     case AMULET_OF_STRANGULATION:
-        makeknown(otyp);
-        if (equipping && !Strangled) {
-            pline("It constricts your throat!");
-            Strangled = 6;
-        } else if (Strangled) {
-            pline("You can breathe more easily!");
-            Strangled = 0;
-        }
-        break;
     case AMULET_OF_RESTFUL_SLEEP:
-        if (!redundant_extrinsic && !(HSleeping & INTRINSIC))
-            HSleeping = equipping ? rnd(100) : 0;
-        break;
     case AMULET_OF_YENDOR:
         break;
 
@@ -423,6 +406,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case RIN_INVISIBILITY:
     case LEVITATION_BOOTS: /* moved from the boots section */
     case RIN_LEVITATION:
+    case RIN_INCREASE_ACCURACY:
+    case RIN_INCREASE_DAMAGE:
         break;
     case RIN_GAIN_STRENGTH:
         which = A_STR;
@@ -447,17 +432,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             update_inventory();
         }
         break;
-    case RIN_INCREASE_ACCURACY:        /* KMH */
-        u.uhitinc += equipsgn * o->spe;
-        break;
-    case RIN_INCREASE_DAMAGE:
-        u.udaminc += equipsgn * o->spe;
-        break;
     case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
-        if (equipping)
-            resistcham();
-        else
-            restartcham();
         break;
     case RIN_PROTECTION:
         if (o->spe || objects[otyp].oc_name_known) {
@@ -506,7 +481,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         uswapwepgone(); /* lifesaved still doesn't allow touching cockatrice */
     }
 
-    update_property(&youmonst, prop, slot);
     return destroyed;
 }
 
@@ -1648,7 +1622,7 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
                 uwep->bknown = TRUE;
             }
             return FALSE;
-        } else if (Glib) {
+        } else if (slippery_fingers(&youmonst)) {
             if (noisy)
                 pline("You can't take off the slippery gloves "
                       "with your slippery %s.", makeplural(body_part(FINGER)));

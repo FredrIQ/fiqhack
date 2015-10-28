@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -66,8 +66,6 @@ struct you {
     unsigned uhs;       /* hunger state - see eat.c */
 
     int oldcap;         /* carry cap on previous turn */
-
-    unsigned uintrinsic[LAST_PROP + 1];     /* uses defines from prop.h */
 
     struct obj *utracked[tos_last_slot + 1];      /* occupation objects */
     int uoccupation_progress[tos_last_slot + 1];  /* time spent on occupation */
@@ -151,13 +149,6 @@ struct you {
 # define LUCKMAX        10
     /* on moonlit nights 11 */
 # define LUCKMIN        (-10)
-    schar uhitinc;
-    schar udaminc;
-    schar uac;          /* Intrinsic armor class.
-                           DO NOT use for AC; use get_player_ac() */
-    uchar uspellprot;   /* protection by SPE_PROTECTION */
-    uchar usptime;      /* #moves until uspellprot-- */
-    uchar uspmtime;     /* #moves between uspellprot-- */
     int uhp, uhpmax;
     int uen, uenmax;    /* magical energy - M. Stephenson */
     int ugangr; /* if the gods are angry at you */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,7 +47,7 @@ find_roll_to_hit(struct monst *mtmp)
     int tmp2;
 
     tmp =
-        1 + Luck + abon() + find_mac(mtmp) + u.uhitinc +
+        1 + Luck + abon() + find_mac(mtmp) + mon_hitbon(&youmonst) +
         maybe_polyd(youmonst.data->mlevel, u.ulevel);
 
     check_caitiff(mtmp);
@@ -684,7 +684,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
          *      *OR* if attacking bare-handed!! */
 
     if (get_dmg_bonus && tmp > 0) {
-        tmp += u.udaminc;
+        tmp += mon_dambon(&youmonst);
         /* If you throw using a propellor, you don't get a strength bonus but
            you do get an increase-damage bonus. */
         if (!thrown || !obj || !uwep || !ammo_and_launcher(obj, uwep))
@@ -1337,9 +1337,11 @@ damageum(struct monst *mdef, const struct attack *mattk)
             tmp = 0;
             if (!Unchanging && !unsolid(youmonst.data) &&
                 mdef->data == &mons[PM_GREEN_SLIME]) {
-                if (!Slimed && level->locations[u.ux][u.uy].typ != LAVAPOOL) {
+                if (!sliming(&youmonst) && level->locations[u.ux][u.uy].typ != LAVAPOOL) {
                     pline("You suck in some slime and don't feel very well.");
-                    Slimed = 10L;
+                    set_property(&youmonst, SLIMED, 10, TRUE);
+                    set_delayed_killer(TURNED_SLIME,
+                                       killer_msg(TURNED_SLIME, "sucking in some slime"));
                 }
             }
             break;
@@ -1356,8 +1358,9 @@ damageum(struct monst *mdef, const struct attack *mattk)
 
         pline("You eat %s brain!", s_suffix(mon_nam(mdef)));
         break_conduct(conduct_food);
-        if (touch_petrifies(mdef->data) && !Stone_resistance && !Stoned) {
-            Stoned = 5;
+        if (touch_petrifies(mdef->data) && !resists_ston(&youmonst) &&
+            !petrifying(&youmonst)) {
+            set_property(&youmonst, STONED, 5, TRUE);
             set_delayed_killer(STONING,
                                killer_msg(STONING,
                                           msgcat("eating the brain of ",
@@ -1635,7 +1638,9 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                               The(mdef->data->mname));
                         if (!Unchanging && !unsolid(youmonst.data) &&
                             level->locations[u.ux][u.uy].typ != LAVAPOOL) {
-                            Slimed = 5L;
+                            set_property(&youmonst, SLIMED, 5, TRUE);
+                            set_delayed_killer(TURNED_SLIME,
+                                               killer_msg(TURNED_SLIME, "digested green slime"));
                         }
                     } else
                         exercise(A_CON, TRUE);
@@ -1878,8 +1883,8 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
                     if (sum[i] == 2 &&
                         (mon->data->mlet == S_ZOMBIE ||
                          mon->data->mlet == S_MUMMY) && rn2(5) &&
-                        !Sick_resistance) {
-                        pline("You feel %ssick.", (Sick) ? "very " : "");
+                        !resists_sick(&youmonst)) {
+                        pline("You feel %ssick.", (sick(&youmonst)) ? "very " : "");
                         mdamageu(mon, rnd(8));
                     }
                 }
@@ -2098,7 +2103,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             break;
         case AD_STUN:  /* specifically yellow mold */
             if (!Stunned)
-                make_stunned((long)tmp, TRUE);
+                inc_timeout(&youmonst, STUNNED, tmp, FALSE);
             break;
         case AD_FIRE:
             if (monnear(mon, u.ux, u.uy)) {

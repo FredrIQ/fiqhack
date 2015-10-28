@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -299,7 +299,7 @@ drinkfountain(void)
                 pline("You see an image of someone stalking you.");
                 pline("But it disappears.");
             }
-            HSee_invisible |= FROMOUTSIDE;
+            set_property(&youmonst, SEE_INVIS, 0, FALSE);
             newsym(u.ux, u.uy);
             exercise(A_WIS, TRUE);
             break;
@@ -359,7 +359,7 @@ drinkfountain(void)
         case 28:       /* Foul water; lose gold in dipfountain */
             pline("The water is foul!  You gag and vomit.");
             morehungry(rn1(20, 11));
-            vomit();
+            vomit(&youmonst);
             break;
             /* 29 is gain money in dipfountain */
         default:
@@ -600,7 +600,7 @@ drinksink(void)
     case 9:
         pline("Gaggg... this tastes like sewage!  You vomit.");
         morehungry(rn1(30 - ACURR(A_CON), 11));
-        vomit();
+        vomit(&youmonst);
         break;
     case 10:
         pline("This water contains toxic wastes!");

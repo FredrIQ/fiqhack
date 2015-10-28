@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1707,7 +1707,7 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell,
     /* If there is partial protection already, cast it only 12% of the time to avoid this essentially being the default
        (Protection is a level 1 spell -- the monster can afford occasionally wasting a few casts to avoid this code being
        far more complex) */
-    if (otyp == SPE_PROTECTION && (!mon->mt_prop[mt_protection] || !rn2(8)))
+    if (otyp == SPE_PROTECTION && (!(protected(mon) & TIMEOUT) || !rn2(8)))
         return 1;
 
     /* only quaff unIDed !oGL if we can't ID it somehow (prevents shopkeepers/priests from quaffing c!oGL mostly) */

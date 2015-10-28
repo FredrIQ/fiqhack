@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -152,9 +152,9 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
         if (wandlevel)
-            set_property(mtmp, SLOW, rn1((4 * wandlevel), (6 * wandlevel)), FALSE);
+            inc_timeout(mtmp, SLOW, rn1((4 * wandlevel), (6 * wandlevel)), FALSE);
         else
-            set_property(mtmp, SLOW, dice(3, 8), FALSE);
+            inc_timeout(mtmp, SLOW, dice(3, 8), FALSE);
         if (wandlevel == P_MASTER)
             set_property(mtmp, FAST, -2, TRUE);
         else if (wandlevel >= P_SKILLED)
@@ -181,7 +181,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             dmg += 50;
             dmg += dice(3, 20);
         }
-        known = set_property(mtmp, FAST, dmg, FALSE);
+        known = inc_timeout(mtmp, FAST, dmg, FALSE);
         if (wandlevel >= P_SKILLED) {
             set_property(mtmp, FAST, 0, FALSE);
             exercise(A_DEX, TRUE);
@@ -204,7 +204,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                     dmg = dice(ACURR(A_DEX) < 12 ? 6 : 4, 4);
                     if (Half_spell_damage)
                         dmg = (dmg + 1) / 2;
-                    make_stunned(HStun + dmg, FALSE);
+                    inc_timeout(&youmonst, STUNNED, dmg, TRUE);
                 } else {
                     if (Upolyd)
                         rehumanize(DIED, "destroyed by a turn undead effect");
@@ -223,7 +223,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                 dmg = dice(6, 4);
                 if (half_spell_dam(mtmp))
                         dmg = (dmg + 1) / 2;
-                set_property(mtmp, STUNNED, dmg, TRUE);
+                inc_timeout(mtmp, STUNNED, dmg, TRUE);
                 monflee(mtmp, 0, FALSE, TRUE);
             } else if (wandlevel >= P_SKILLED) {
                 if (yours)
@@ -308,7 +308,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         if (wandlevel >= P_SKILLED && invisible(mtmp))
             known = set_property(mtmp, INVIS, -2, FALSE);
         else if (wandlevel == P_UNSKILLED)
-            known = set_property(mtmp, INVIS, rnd(50), FALSE);
+            known = inc_timeout(mtmp, INVIS, rnd(50), FALSE);
         else
             known = set_property(mtmp, INVIS, 0, FALSE);
         break;
@@ -864,7 +864,7 @@ revive(struct obj *obj)
                     }
                 }
                 /* was ghost, now alive, it's all very confusing */
-                set_property(mtmp, CONFUSION, dice(3, 8), FALSE);
+                inc_timeout(mtmp, CONFUSION, dice(3, 8), FALSE);
             }
 
             switch (obj->where) {
@@ -1004,14 +1004,6 @@ cancel_item(struct obj *obj)
         if (obj_worn_as_ring)
             ABON(A_CHA) -= obj->spe;
         break;
-    case RIN_INCREASE_ACCURACY:
-        if (obj_worn_as_ring)
-            u.uhitinc -= obj->spe;
-        break;
-    case RIN_INCREASE_DAMAGE:
-        if (obj_worn_as_ring)
-            u.udaminc -= obj->spe;
-        break;
     case GAUNTLETS_OF_DEXTERITY:
         if (obj_worn_on(obj, os_armg))
             ABON(A_DEX) -= obj->spe;
@@ -1110,14 +1102,6 @@ drain_item(struct obj * obj)
     case RIN_ADORNMENT:
         if (obj_worn_as_ring)
             ABON(A_CHA)--;
-        break;
-    case RIN_INCREASE_ACCURACY:
-        if (obj_worn_as_ring)
-            u.uhitinc--;
-        break;
-    case RIN_INCREASE_DAMAGE:
-        if (obj_worn_as_ring)
-            u.udaminc--;
         break;
     case HELM_OF_BRILLIANCE:
         if (obj_worn_on(obj, os_armh))
@@ -2190,8 +2174,8 @@ zapyourself(struct obj *obj, boolean ordinary)
         destroy_item(WAND_CLASS, AD_ELEC);
         if (!resists_blnd(&youmonst)) {
             pline(blinded_by_the_flash);
-            make_blinded((long)rnd(100), FALSE);
-            if (!Blind)
+            inc_timeout(&youmonst, BLINDED, rnd(100), TRUE);
+            if (!blind(&youmonst))
                 pline("Your vision quickly clears.");
         }
         break;
@@ -2270,7 +2254,7 @@ zapyourself(struct obj *obj, boolean ordinary)
         if (wandlevel >= P_SKILLED && invisible(&youmonst))
             known = set_property(&youmonst, INVIS, -2, FALSE);
         else if (wandlevel == P_UNSKILLED)
-            known = set_property(&youmonst, INVIS, rnd(50), FALSE);
+            known = inc_timeout(&youmonst, INVIS, rnd(50), FALSE);
         else
             known = set_property(&youmonst, INVIS, 0, FALSE);
         break;
@@ -2287,7 +2271,7 @@ zapyourself(struct obj *obj, boolean ordinary)
                 damage += dice(3, 20);
             }
         }
-        known = set_property(&youmonst, FAST, damage, FALSE);
+        known = inc_timeout(&youmonst, FAST, damage, FALSE);
         if (ordinary && wandlevel >= P_SKILLED) {
             set_property(&youmonst, FAST, 0, FALSE);
             exercise(A_DEX, TRUE);
@@ -2309,12 +2293,9 @@ zapyourself(struct obj *obj, boolean ordinary)
 
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
-        if (HFast & (TIMEOUT | INTRINSIC)) {
-            u_slow_down();
+        if (inc_timeout(&youmonst, SLOW, dice(3, 8), FALSE))
             makeknown(obj->otyp);
-        }
         break;
-
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         tele();
@@ -2345,7 +2326,7 @@ zapyourself(struct obj *obj, boolean ordinary)
         if (is_undead(youmonst.data)) {
             pline("You feel frightened and %sstunned.",
                   Stunned ? "even more " : "");
-            make_stunned(HStun + rnd(30), FALSE);
+            inc_timeout(&youmonst, STUNNED, rnd(30), TRUE);
         } else
             pline("You shudder in dread.");
         break;
@@ -2363,9 +2344,9 @@ zapyourself(struct obj *obj, boolean ordinary)
         damage += rnd(25);
         if (!resists_blnd(&youmonst)) {
             pline(blinded_by_the_flash);
-            make_blinded((long)damage, FALSE);
+            inc_timeout(&youmonst, BLINDED, damage, TRUE);
             makeknown(obj->otyp);
-            if (!Blind)
+            if (!blind(&youmonst))
                 pline("Your vision quickly clears.");
         }
         damage = 0;     /* reset */
@@ -2391,8 +2372,7 @@ zapyourself(struct obj *obj, boolean ordinary)
 
             if (u.umonnum == PM_STONE_GOLEM)
                 polymon(PM_FLESH_GOLEM, TRUE);
-            if (Stoned)
-                set_property(&youmonst, STONED, -2, FALSE);  /* saved! */
+            set_property(&youmonst, STONED, -2, FALSE);  /* saved! */
             /* but at a cost.. */
             for (otemp = invent; otemp; otemp = onext) {
                 onext = otemp->nobj;
@@ -3491,7 +3471,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
                 pline("%s %s blinded by the flash!",
                       you ? "You" : Monnam(mon),
                       you ? "are" : "is");
-            set_property(mon, BLINDED, rnd(50), TRUE);
+            inc_timeout(mon, BLINDED, rnd(50), TRUE);
             if (!blind(mon))
                 pline("%s vision quickly clears.",
                       you ? "Your" : s_suffix(Monnam(mon)));
@@ -3529,7 +3509,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
         ztyp = "stunned";
         if (you)
             exercise(A_DEX, FALSE);
-        set_property(mon, STUNNED, tmp, FALSE);
+        inc_timeout(mon, STUNNED, tmp, FALSE);
         tmp = 0;
         break;
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,7 +11,6 @@
 
 static int disturb(struct monst *);
 static void distfleeck(struct monst *, int *, int *, int *);
-static int m_arrival(struct monst *);
 static void watch_on_duty(struct monst *);
 
 
@@ -257,16 +256,6 @@ distfleeck(struct monst *mtmp, int *inrange, int *nearby, int *scared)
 
 }
 
-/* perform a special one-time action for a monster; returns -1 if nothing
-   special happened, 0 if monster uses up its turn, 1 if monster is killed */
-static int
-m_arrival(struct monst *mon)
-{
-    mon->mstrategy &= ~STRAT_ARRIVE;    /* always reset */
-
-    return -1;
-}
-
 /* returns 1 if monster died moving, 0 otherwise */
 /* The whole dochugw/m_move/distfleeck/mfndpos section is serious spaghetti
  * code. --KAA
@@ -283,13 +272,6 @@ dochug(struct monst *mtmp)
     /* Pre-movement adjustments */
 
     mdat = mtmp->data;
-
-    if (mtmp->mstrategy & STRAT_ARRIVE) {
-        int res = m_arrival(mtmp);
-
-        if (res >= 0)
-            return res;
-    }
 
     /* check for waitmask status change */
     if ((mtmp->mstrategy & STRAT_WAITFORU) &&
@@ -811,6 +793,8 @@ not_special:
 
         if (appr != 1 || !in_line)
             setlikes = TRUE;
+        if (setlikes && mpickstuff(mtmp))
+            return 3;
     }
 
     /* don't tunnel if hostile and close enough to prefer a weapon */
@@ -862,6 +846,8 @@ not_special:
         cnt = mfndpos(mtmp, poss, info, flag);
         chcnt = 0;
         chi = -1;
+        if (flag & OPENDOOR)
+            ds.mmflags |= MM_IGNOREDOORS;
         nidist = distmap(&ds, omx, omy);
 
         if (is_unicorn(ptr) && level->flags.noteleport) {
@@ -1187,7 +1173,7 @@ postmov:
             } else if (isok(mtmp->mx, mtmp->my))
                 newsym(mtmp->mx, mtmp->my);
         }
-        if (isok(mtmp->mx, mtmp->my) && setlikes &&
+        if (isok(mtmp->mx, mtmp->my) &&
             OBJ_AT(mtmp->mx, mtmp->my) && mtmp->mcanmove) {
 
             /* Maybe a rock mole just ate some metal object */

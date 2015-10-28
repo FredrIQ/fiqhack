@@ -1,10 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-/* #define DEBUG *//* uncomment for debugging */
 
 #include <stdbool.h>
 #include <string.h>
@@ -375,18 +374,20 @@ static int
 wiz_map(const struct nh_cmd_arg *arg)
 {
     struct trap *t;
-    long save_Hconf = HConfusion, save_Hhallu = HHallucination;
+    int oldconf = property_timeout(&youmonst, CONFUSION);
+    int oldhallu = property_timeout(&youmonst, HALLUC);
 
     (void) arg;
 
-    HConfusion = HHallucination = 0L;
+    set_property(&youmonst, CONFUSION, -2, TRUE);
+    set_property(&youmonst, HALLUC, -2, TRUE);
     for (t = level->lev_traps; t != 0; t = t->ntrap) {
         t->tseen = 1;
         map_trap(t, TRUE, FALSE);
     }
     do_mapping();
-    HConfusion = save_Hconf;
-    HHallucination = save_Hhallu;
+    set_property(&youmonst, CONFUSION, oldconf, TRUE);
+    set_property(&youmonst, HALLUC, oldhallu, TRUE);
 
     return 0;
 }

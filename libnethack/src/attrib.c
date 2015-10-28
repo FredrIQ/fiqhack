@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,8 +7,6 @@
 
 #include "hack.h"
 #include "hungerstatus.h"
-
-/* #define DEBUG *//* uncomment for debugging info */
 
 /* part of the output on gain or loss of attribute */
 static
@@ -19,115 +17,7 @@ const char *const plusattr[] = {
 };
 
 
-struct innate {
-    schar ulevel;
-    unsigned int *ability;
-    const char *gainstr, *losestr;
-};
-
-static const struct innate arc_abil[] = {
-    {1, &(HStealth), "", ""},
-    {1, &(HFast), "", ""},
-    {10, &(HSearching), "perceptive", ""},
-    {0, 0, 0, 0}
-};
-
-static const struct innate bar_abil[] = {
-    {1, &(HPoison_resistance), "", ""},
-    {7, &(HFast), "quick", "slow"},
-    {15, &(HStealth), "stealthy", ""},
-    {0, 0, 0, 0}
-};
-
-static const struct innate cav_abil[] = {
-    {7, &(HFast), "quick", "slow"},
-    {15, &(HWarning), "sensitive", ""},
-    {0, 0, 0, 0}
-};
-
-static const struct innate hea_abil[] = {
-    {1, &(HPoison_resistance), "", ""},
-    {15, &(HWarning), "sensitive", ""},
-    {0, 0, 0, 0}
-};
-
-static const struct innate kni_abil[] = {
-    {7, &(HFast), "quick", "slow"},
-    {0, 0, 0, 0}
-};
-
-static const struct innate mon_abil[] = {
-    {1, &(HFast), "", ""},
-    {1, &(HSleep_resistance), "", ""},
-    {1, &(HSee_invisible), "", ""},
-    {3, &(HPoison_resistance), "healthy", ""},
-    {5, &(HStealth), "stealthy", ""},
-    {7, &(HWarning), "sensitive", ""},
-    {9, &(HSearching), "perceptive", "unaware"},
-    {11, &(HFire_resistance), "cool", "warmer"},
-    {13, &(HCold_resistance), "warm", "cooler"},
-    {15, &(HShock_resistance), "insulated", "conductive"},
-    {17, &(HTeleport_control), "controlled", "uncontrolled"},
-    {0, 0, 0, 0}
-};
-
-static const struct innate pri_abil[] = {
-    {15, &(HWarning), "sensitive", ""},
-    {20, &(HFire_resistance), "cool", "warmer"},
-    {0, 0, 0, 0}
-};
-
-static const struct innate ran_abil[] = {
-    {1, &(HSearching), "", ""},
-    {7, &(HStealth), "stealthy", ""},
-    {15, &(HSee_invisible), "", ""},
-    {0, 0, 0, 0}
-};
-
-static const struct innate rog_abil[] = {
-    {1, &(HStealth), "", ""},
-    {10, &(HSearching), "perceptive", ""},
-    {0, 0, 0, 0}
-};
-
-static const struct innate sam_abil[] = {
-    {1, &(HFast), "", ""},
-    {15, &(HStealth), "stealthy", ""},
-    {0, 0, 0, 0}
-};
-
-static const struct innate tou_abil[] = {
-    {10, &(HSearching), "perceptive", ""},
-    {20, &(HPoison_resistance), "hardy", ""},
-    {0, 0, 0, 0}
-};
-
-static const struct innate val_abil[] = {
-    {1, &(HCold_resistance), "", ""},
-    {1, &(HStealth), "", ""},
-    {7, &(HFast), "quick", "slow"},
-    {0, 0, 0, 0}
-};
-
-static const struct innate wiz_abil[] = {
-    {15, &(HWarning), "sensitive", ""},
-    {17, &(HTeleport_control), "controlled", "uncontrolled"},
-    {0, 0, 0, 0}
-};
-
-/* Intrinsics conferred by race */
-static const struct innate elf_abil[] = {
-    {4, &(HSleep_resistance), "awake", "tired"},
-    {0, 0, 0, 0}
-};
-
-static const struct innate orc_abil[] = {
-    {1, &(HPoison_resistance), "", ""},
-    {0, 0, 0, 0}
-};
-
 static void exerper(void);
-static void postadjabil(unsigned int *);
 
 /* adjust an attribute; return TRUE if change is made, FALSE otherwise
 
@@ -397,15 +287,16 @@ exerper(void)
 
     /* status checks */
     if (!(moves % 5)) {
-        if ((HClairvoyant & (INTRINSIC | TIMEOUT)) && !BClairvoyant)
+        if (clairvoyant(&youmonst) & (INTRINSIC | TIMEOUT))
             exercise(A_WIS, TRUE);
-        if (HRegeneration)
+        if (regenerates(&youmonst))
             exercise(A_STR, TRUE);
-        if (Sick || Vomiting)
+        if (sick(&youmonst) || vomiting(&youmonst))
             exercise(A_CON, FALSE);
-        if (Confusion || Hallucination)
+        if (confused(&youmonst) || hallucinating(&youmonst))
             exercise(A_WIS, FALSE);
-        if ((Wounded_legs && !u.usteed) || Fumbling || HStun)
+        if (leg_hurt(&youmonst) || fumbling(&youmonst) ||
+            stunned(&youmonst))
             exercise(A_DEX, FALSE);
     }
 }
@@ -560,120 +451,12 @@ redist_attr(void)
     encumber_msg();
 }
 
-static void
-postadjabil(unsigned int *ability)
-{
-    if (!ability)
-        return;
-    if (ability == &(HWarning) || ability == &(HSee_invisible))
-        see_monsters(FALSE);
-}
-
 void
 adjabil(int oldlevel, int newlevel)
 {
-    const struct innate *abil, *rabil;
-    long mask = FROMEXPER;
-
-    switch (Role_switch) {
-    case PM_ARCHEOLOGIST:
-        abil = arc_abil;
-        break;
-    case PM_BARBARIAN:
-        abil = bar_abil;
-        break;
-    case PM_CAVEMAN:
-        abil = cav_abil;
-        break;
-    case PM_HEALER:
-        abil = hea_abil;
-        break;
-    case PM_KNIGHT:
-        abil = kni_abil;
-        break;
-    case PM_MONK:
-        abil = mon_abil;
-        break;
-    case PM_PRIEST:
-        abil = pri_abil;
-        break;
-    case PM_RANGER:
-        abil = ran_abil;
-        break;
-    case PM_ROGUE:
-        abil = rog_abil;
-        break;
-    case PM_SAMURAI:
-        abil = sam_abil;
-        break;
-    case PM_TOURIST:
-        abil = tou_abil;
-        break;
-    case PM_VALKYRIE:
-        abil = val_abil;
-        break;
-    case PM_WIZARD:
-        abil = wiz_abil;
-        break;
-    default:
-        abil = 0;
-        break;
-    }
-
-    switch (Race_switch) {
-    case PM_ELF:
-        rabil = elf_abil;
-        break;
-    case PM_ORC:
-        rabil = orc_abil;
-        break;
-    case PM_HUMAN:
-    case PM_DWARF:
-    case PM_GNOME:
-    default:
-        rabil = 0;
-        break;
-    }
-
-    while (abil || rabil) {
-        long prevabil;
-
-        /* Have we finished with the intrinsics list? */
-        if (!abil || !abil->ability) {
-            /* Try the race intrinsics */
-            if (!rabil || !rabil->ability)
-                break;
-            abil = rabil;
-            rabil = 0;
-            mask = FROMRACE;
-        }
-        prevabil = *(abil->ability);
-        if (oldlevel < abil->ulevel && newlevel >= abil->ulevel) {
-            /* Abilities gained at level 1 can never be lost via level loss,
-               only via means that remove _any_ sort of ability.  A "gain" of
-               such an ability from an outside source is devoid of meaning, so
-               we set FROMOUTSIDE to avoid such gains. */
-            if (abil->ulevel == 1)
-                *(abil->ability) |= (mask | FROMOUTSIDE);
-            else
-                *(abil->ability) |= mask;
-            if (!(*(abil->ability) & INTRINSIC & ~mask)) {
-                if (*(abil->gainstr))
-                    pline("You feel %s!", abil->gainstr);
-            }
-        } else if (oldlevel >= abil->ulevel && newlevel < abil->ulevel) {
-            *(abil->ability) &= ~mask;
-            if (!(*(abil->ability) & INTRINSIC)) {
-                if (*(abil->losestr))
-                    pline("You feel %s!", abil->losestr);
-                else if (*(abil->gainstr))
-                    pline("You feel less %s!", abil->gainstr);
-            }
-        }
-        if (prevabil != *(abil->ability))       /* it changed */
-            postadjabil(abil->ability);
-        abil++;
-    }
+    /* Level-based extrinsics */
+    if (oldlevel)
+        update_xl_properties(&youmonst, oldlevel);
 
     if (oldlevel > 0) {
         if (newlevel > oldlevel)
@@ -777,59 +560,6 @@ acurrstr(void)
         return (schar) (19 + str / 50); /* map to 19-21 */
     else
         return (schar) (str - 100);
-}
-
-/* Returns the player's effective AC rating. Use in place of u.uac. */
-schar
-get_player_ac(void)
-{
-    /*
-     * Do internal AC calculations with int instead of schar to prevent
-     * overflow.
-     * Return schar because that's what everything expects to see.
-     * Start with intrinsic AC, which might not be 10 from eating rings.
-     */
-    int player_ac = (int)u.uac;
-
-    /* If polymorphed, get the AC bonus from that. */
-    player_ac -= (10 - mons[u.umonnum].ac);
-
-    /* If wearing rings of protection, get the AC bonus from them. */
-    if (uleft && uleft->otyp == RIN_PROTECTION)
-        player_ac -= uleft->spe;
-    if (uright && uright->otyp == RIN_PROTECTION)
-        player_ac -= uright->spe;
-
-    /* If casting Protection, get the AC bonus from that. */
-    player_ac -= u.uspellprot;
-
-    /* If the player has divine protection, get the AC bonus from that. */
-    player_ac -= u.ublessed;
-
-    /* Armor transformed into dragon skin gives no AC bonus. TODO: Should it at
-       least give a bonus/penalty from its enchantment? */
-    if (uarm && !uskin())
-        player_ac -= ARM_BONUS(uarm);
-    if (uarmc)
-        player_ac -= ARM_BONUS(uarmc);
-    if (uarmh)
-        player_ac -= ARM_BONUS(uarmh);
-    if (uarmf)
-        player_ac -= ARM_BONUS(uarmf);
-    if (uarms)
-        player_ac -= ARM_BONUS(uarms);
-    if (uarmg)
-        player_ac -= ARM_BONUS(uarmg);
-    if (uarmu)
-        player_ac -= ARM_BONUS(uarmu);
-
-    /* Trim to valid schar range. */
-    if (player_ac < -128)
-        player_ac = -128;
-    if (player_ac > 127)
-        player_ac = 127;
-
-    return (schar)player_ac;
 }
 
 /* Avoid possible problems with alignment overflow, and provide a centralized

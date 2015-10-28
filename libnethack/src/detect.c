@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -579,7 +579,8 @@ monster_detect(struct obj *otmp,        /* detecting object (if any) */
        of turns after the detection. Mostly, this is so that ASCII players who
        don't use the mouse can get an opportunity to farlook the monsters they
        detected. */
-    incr_itimeout(&HDetect_monsters, 3);
+    if (property_timeout(&youmonst, DETECT_MONSTERS) < 300)
+        inc_timeout(&youmonst, DETECT_MONSTERS, 3, FALSE);
 
     /* Note: This used to just check level->monlist for a non-zero value but in
        versions since 3.3.0 level->monlist can test TRUE due to the presence of
@@ -866,13 +867,13 @@ use_crystal_ball(struct obj *obj)
             break;
         case 1:
             pline("%s you!", Tobjnam(obj, "confuse"));
-            make_confused(HConfusion + rnd(100), FALSE);
+            inc_timeout(&youmonst, CONFUSION, rnd(100), TRUE);
             break;
         case 2:
             if (!resists_blnd(&youmonst)) {
                 pline("%s your vision!", Tobjnam(obj, "damage"));
-                make_blinded(Blinded + rnd(100), FALSE);
-                if (!Blind)
+                inc_timeout(&youmonst, BLINDED, rnd(100), TRUE);
+                if (!blind(&youmonst))
                     pline("Your vision quickly clears.");
             } else {
                 pline("%s your vision.", Tobjnam(obj, "assault"));
@@ -881,7 +882,7 @@ use_crystal_ball(struct obj *obj)
             break;
         case 3:
             pline("%s your mind!", Tobjnam(obj, "zap"));
-            make_hallucinated(HHallucination + rnd(100), FALSE);
+            inc_timeout(&youmonst, HALLUC, rnd(100), TRUE);
             break;
         case 4:
             pline("%s!", Tobjnam(obj, "explode"));

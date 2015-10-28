@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -196,10 +196,10 @@ dosit(const struct nh_cmd_arg *arg)
                 if (u.uhp >= (u.uhpmax - 5))
                     u.uhpmax += 4;
                 u.uhp = u.uhpmax;
-                make_blinded(0L, TRUE);
-                make_sick(0L, NULL, FALSE, SICK_ALL);
-                if (LWounded_legs || RWounded_legs)
-                    heal_legs(Wounded_leg_side);
+                set_property(&youmonst, BLINDED, -2, FALSE);
+                make_sick(&youmonst, 0L, NULL, FALSE, SICK_ALL);
+                if (leg_hurt(&youmonst))
+                    heal_legs(&youmonst, leg_hurtsides(&youmonst));
                 break;
             case 5:
                 take_gold(&youmonst);
@@ -233,23 +233,23 @@ dosit(const struct nh_cmd_arg *arg)
                 pline("A voice echoes:");
                 verbalize("A curse upon thee for sitting upon this most holy "
                           "throne!");
-                if (Luck > 0) {
-                    make_blinded(Blinded + rn1(100, 250), TRUE);
-                } else
+                if (Luck > 0)
+                    inc_timeout(&youmonst, BLINDED, rn1(100, 250), FALSE);
+                else
                     rndcurse();
                 break;
             case 10:
-                if (Luck < 0 || (HSee_invisible & INTRINSIC)) {
+                if (Luck < 0 || see_invisible(&youmonst)) {
                     if (level->flags.nommap) {
                         pline("A terrible drone fills your head!");
-                        make_confused(HConfusion + rnd(30), FALSE);
+                        inc_timeout(&youmonst, CONFUSION, rnd(30), TRUE);
                     } else {
                         pline("An image forms in your mind.");
                         do_mapping();
                     }
                 } else {
                     pline("Your vision becomes clear.");
-                    HSee_invisible |= FROMOUTSIDE;
+                    set_property(&youmonst, SEE_INVIS, 0, FALSE);
                     newsym(u.ux, u.uy);
                 }
                 break;
@@ -273,7 +273,7 @@ dosit(const struct nh_cmd_arg *arg)
                 break;
             case 13:
                 pline("Your mind turns into a pretzel!");
-                make_confused(HConfusion + rn1(7, 16), FALSE);
+                inc_timeout(&youmonst, CONFUSION, rn1(7, 16), TRUE);
                 break;
             default:
                 impossible("throne effect");
@@ -466,88 +466,4 @@ mrndcurse(struct monst *mtmp)
     }
 }
 
-/* remove a random INTRINSIC ability */
-void
-attrcurse(void)
-{
-    /* probably too rare to benefit from a custom RNG */
-    switch (rnd(11)) {
-    case 1:
-        if (HFire_resistance & INTRINSIC) {
-            HFire_resistance &= ~INTRINSIC;
-            pline("You feel warmer.");
-            break;
-        }
-    case 2:
-        if (HTeleportation & INTRINSIC) {
-            HTeleportation &= ~INTRINSIC;
-            pline("You feel less jumpy.");
-            update_supernatural_abilities();
-            break;
-        }
-    case 3:
-        if (HPoison_resistance & INTRINSIC) {
-            HPoison_resistance &= ~INTRINSIC;
-            pline("You feel a little sick!");
-            break;
-        }
-    case 4:
-        if (HTelepat & INTRINSIC) {
-            HTelepat &= ~INTRINSIC;
-            if (Blind && !Blind_telepat)
-                see_monsters(FALSE); /* Can't sense mons anymore! */
-            pline("Your senses fail!");
-            break;
-        }
-    case 5:
-        if (HCold_resistance & INTRINSIC) {
-            HCold_resistance &= ~INTRINSIC;
-            pline("You feel cooler.");
-            break;
-        }
-    case 6:
-        if (HInvis & INTRINSIC) {
-            HInvis &= ~INTRINSIC;
-            pline("You feel paranoid.");
-            break;
-        }
-    case 7:
-        if (HSee_invisible & INTRINSIC) {
-            HSee_invisible &= ~INTRINSIC;
-            pline("You %s!",
-                  Hallucination ? "tawt you taw a puttie tat" :
-                  "thought you saw something");
-            break;
-        }
-    case 8:
-        if (HFast & INTRINSIC) {
-            HFast &= ~INTRINSIC;
-            pline("You feel slower.");
-            break;
-        }
-    case 9:
-        if (HStealth & INTRINSIC) {
-            HStealth &= ~INTRINSIC;
-            pline("You feel clumsy.");
-            break;
-        }
-    case 10:
-        if (HProtection & INTRINSIC) {
-            HProtection &= ~INTRINSIC;
-            pline("You feel vulnerable.");
-            u.ublessed = 0;
-            break;
-        }
-    case 11:
-        if (HAggravate_monster & INTRINSIC) {
-            HAggravate_monster &= ~INTRINSIC;
-            pline("You feel less attractive.");
-            break;
-        }
-    default:
-        break;
-    }
-}
-
 /*sit.c*/
-

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1179,8 +1179,10 @@ dotrap(struct trap *trap, unsigned trflags)
                 steedintrap(trap, NULL);
                 recursive_mine = FALSE;
                 saddle = sobj_at(SADDLE, level, u.ux, u.uy);
-                set_wounded_legs(LEFT_SIDE, rn1(35, 41));
-                set_wounded_legs(RIGHT_SIDE, rn1(35, 41));
+                set_wounded_legs(u.usteed ? u.usteed : &youmonst,
+                                 LEFT_SIDE, rn1(35, 41));
+                set_wounded_legs(u.usteed ? u.usteed : &youmonst,
+                                 RIGHT_SIDE, rn1(35, 41));
                 exercise(A_DEX, FALSE);
             }
             blow_up_landmine(trap);
@@ -3081,7 +3083,7 @@ drown(void)
 
     /* happily wading in the same contiguous pool */
     if (u.uinwater && (!u.umoved || is_pool(level, u.ux0, u.uy0)) &&
-        (Swimming || Amphibious)) {
+        (Swimming || Breathless)) {
         /* water effects on objects every now and then */
         if (!rn2(5))
             inpool_ok = TRUE;
@@ -3091,7 +3093,7 @@ drown(void)
 
     if (!u.uinwater) {
         pline("You %s into the water%c",
-              Is_waterlevel(&u.uz) ? "plunge" : "fall", Amphibious ||
+              Is_waterlevel(&u.uz) ? "plunge" : "fall", Breathless ||
               Swimming ? '.' : '!');
         if (!Swimming && !Is_waterlevel(&u.uz))
             pline("You sink like %s.",
@@ -3120,8 +3122,8 @@ drown(void)
         unleash_all();
     }
 
-    if (Amphibious || Swimming) {
-        if (Amphibious) {
+    if (Breathless || Swimming) {
+        if (Breathless) {
             if (flags.verbose)
                 pline("But you aren't drowning.");
             if (!Is_waterlevel(&u.uz)) {
@@ -4051,8 +4053,8 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                     pline("You %s and your vision blurs...",
                           stagger(youmonst.data, "stagger"));
             }
-            make_stunned(HStun + rn1(7, 16), FALSE);
-            make_hallucinated(HHallucination + rn1(5, 16), FALSE);
+            inc_timeout(&youmonst, STUNNED, rn1(7, 16), TRUE);
+            inc_timeout(&youmonst, HALLUC, rn1(5, 16), TRUE);
             break;
         default:
             impossible("bad chest trap");
@@ -4134,7 +4136,7 @@ b_trapped(const char *item, int bodypart)
     exercise(A_STR, FALSE);
     if (bodypart)
         exercise(A_CON, FALSE);
-    make_stunned(HStun + dmg, TRUE);
+    inc_timeout(&youmonst, STUNNED, dmg, FALSE);
 }
 
 /* Monster is hit by trap. */

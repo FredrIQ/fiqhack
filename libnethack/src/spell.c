@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-23 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -559,10 +559,6 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
     boolean vis = canseemon(mon);
     int delay = 0;
     int level = 0;
-    boolean spellcaster = FALSE;
-
-    if (spellcaster(mon->data))
-        spellcaster = TRUE;
 
     if (booktype == SPE_BLANK_PAPER) {
         if (vis) {
@@ -1017,8 +1013,8 @@ cast_protection(struct monst *mon)
     }
 
     /*
-     * The more u.uspellprot you already have, the less you get,
-     * and the better your natural ac, the less you get.
+     * The more mspellprot the monster already has, the less it gets,
+     * and the better its' natural ac, the less it gets.
      * 0, 31-63 is only reachable by monsters
      *
      *	LEVEL AC    SPELLPROT from sucessive SPE_PROTECTION casts
@@ -1064,33 +1060,18 @@ cast_protection(struct monst *mon)
             else
                 pline("Your skin feels even hotter.");
         }
-        if (you) {
-            u.uspellprot += gain;
-            u.uspmtime =
-                P_SKILL(spell_skilltype(SPE_PROTECTION)) == P_EXPERT ? 20 : 10;
-            if (!u.usptime)
-                u.usptime = u.uspmtime;
-        } else {
-            /* Monster's "golden haze" instead works by increasing a mt_prop for
-               the PROTECTION property. monspellprot() then converts this into
-               an AC bonus. */
-            int cur_prot = m_mspellprot(mon);
-            cur_prot += gain;
-            cur_prot *= 10;
-            mon->mt_prop[mt_protection] = cur_prot;
-            /* mt_protection is special cased to only decrease 50% of the time
-               on Expert. */
-        }
+        /* Monster's "golden haze" works by increasing the timeout for the
+           PROTECTION property. m_mspellprot() then converts this into
+           an AC bonus. */
+        int cur_prot = m_mspellprot(mon);
+        cur_prot += gain;
+        cur_prot *= 10;
+        set_property(mon, PROTECTION, cur_prot, TRUE);
+        /* protection is special cased to only decrease 50% of the time
+           on Expert. */
     } else if (you) {
         pline("Your skin feels warm for a moment.");
     }
-}
-
-/* monster golden haze level */
-int
-monspellprot(struct monst *mon)
-{
-    return ((mon->mt_prop[mt_protection] + 9) / 10);
 }
 
 /* attempting to cast a forgotten spell will cause disorientation */
@@ -1098,31 +1079,17 @@ static void
 spell_backfire(int spell)
 {
     long duration = (long)((spellev(spell) + 1) * 3);   /* 6..24 */
-
-    /* prior to 3.4.1, the only effect was confusion; it still predominates */
-    switch (rn2(10)) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-        make_confused(duration, FALSE); /* 40% */
-        break;
-    case 4:
-    case 5:
-    case 6:
-        make_confused(2L * duration / 3L, FALSE);       /* 30% */
-        make_stunned(duration / 3L, FALSE);
-        break;
-    case 7:
-    case 8:
-        make_stunned(2L * duration / 3L, FALSE);        /* 20% */
-        make_confused(duration / 3L, FALSE);
-        break;
-    case 9:
-        make_stunned(duration, FALSE);  /* 10% */
-        break;
-    }
-    return;
+    int rand = rnd(10);
+    inc_timeout(&youmonst, CONFUSION,
+                rand <= 4 ? duration :
+                rand <= 7 ? (2 * duration / 3) :
+                rand <= 9 ? (duration / 3) :
+                0, TRUE);
+    inc_timeout(&youmonst, STUNNED,
+                rand <= 4 ? 0 :
+                rand <= 7 ? (duration / 3) :
+                rand <= 9 ? (2 * duration / 3) :
+                duration, TRUE);
 }
 
 /* Can a monster cast a specific spell? If the monster doesn't even know the spell
@@ -1651,13 +1618,8 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         healup(0, 0, FALSE, TRUE);
         break;
     case SPE_CURE_SICKNESS:
-        if (Sick)
-            pline("You are no longer ill.");
-        if (Slimed) {
-            pline("The slime disappears!");
-            Slimed = 0;
-        }
-        healup(0, 0, TRUE, FALSE);
+        set_property(&youmonst, SICK, -2, FALSE);
+        set_property(&youmonst, SLIMED, -2, FALSE);
         break;
     case SPE_CREATE_FAMILIAR:
         make_familiar(&youmonst, NULL, u.ux, u.uy, FALSE);
