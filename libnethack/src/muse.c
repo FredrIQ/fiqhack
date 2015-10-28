@@ -2627,12 +2627,6 @@ searches_for_item(const struct monst *mon, struct obj *obj)
             !mon_castable(mon, typ, TRUE))
             return TRUE;
         break;
-    case AMULET_CLASS:
-        if (typ == AMULET_OF_LIFE_SAVING)
-            return (boolean) (!nonliving(mon->data));
-        if (typ == AMULET_OF_REFLECTION)
-            return TRUE;
-        break;
     case TOOL_CLASS:
         if (typ == PICK_AXE)
             return (boolean) needspick(mon->data);
@@ -2665,6 +2659,10 @@ searches_for_item(const struct monst *mon, struct obj *obj)
         if (typ == EGG)
             return (boolean) (touch_petrifies(&mons[obj->corpsenm]));
         break;
+    case AMULET_CLASS:
+        if (typ == AMULET_OF_LIFE_SAVING) /* LS isn't desirable if nonliving */
+            return (boolean) (!nonliving(mon->data));
+        return (!m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));
     case RING_CLASS:
         /* Should match the list in m_dowear_type */
         if (typ == RIN_PROTECTION ||

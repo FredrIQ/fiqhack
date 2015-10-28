@@ -257,14 +257,15 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
         switch (slot) {
         case os_amul:
             if (obj->oclass != AMULET_CLASS ||
-                (obj->otyp != AMULET_OF_LIFE_SAVING &&
-                 obj->otyp != AMULET_OF_REFLECTION))
+                (obj->otyp != AMULET_OF_ESP &&
+                 obj->otyp != AMULET_OF_LIFE_SAVING &&
+                 obj->otyp != AMULET_OF_MAGICAL_BREATHING &&
+                 obj->otyp != AMULET_OF_REFLECTION &&
+                 obj->otyp != AMULET_OF_RESTFUL_SLEEP &&
+                 obj->otyp != AMULET_OF_UNCHANGING &&
+                 obj->otyp != AMULET_VERSUS_POISON))
                 continue;
-            if (obj->otyp == AMULET_OF_LIFE_SAVING &&
-                nonliving(mon->data))
-                continue;
-            best = obj;
-            goto outer_break;   /* no such thing as better amulets */
+            break;
         case os_ringl:
         case os_ringr:
             /* Monsters can put on only the following rings. */
@@ -340,7 +341,6 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
             continue;
         best = obj;
     }
-outer_break:
     if (!best || best == old)
         return;
 
@@ -795,8 +795,9 @@ extra_pref(const struct monst *mon, struct obj *obj)
     if (obj->otyp == LEVITATION_BOOTS)
         return -80;
 
-    /* Check for rings below this */
-    if (obj->oclass != RING_CLASS)
+    /* Check for rings or amulets below this */
+    if (obj->oclass != RING_CLASS &&
+        obj->oclass != AMULET_CLASS)
         return 0;
 
     /* Charge-based rings (increase X/protection) is seperate */
@@ -812,8 +813,12 @@ extra_pref(const struct monst *mon, struct obj *obj)
         return (10 + 3*(obj->spe));
     }
 
-    /* If a ring gives a redundant property, abort. */
-    if (m_has_property(mon, objects[obj->otyp].oc_oprop, ~W_RING, TRUE))
+    /* If something gives a redundant property, abort. */
+    if ((obj->oclass == RING_CLASS &&
+         m_has_property(mon, objects[obj->otyp].oc_oprop, ~W_RING, TRUE)) ||
+        (obj->oclass != RING_CLASS &&
+         m_has_property(mon, objects[obj->otyp].oc_oprop,
+                        ~W_MASK(which_slot(obj)), TRUE)))
         return 0;
 
     /* If we already have an equipped ring of the same type on the left slot (not chargeable
@@ -827,15 +832,21 @@ extra_pref(const struct monst *mon, struct obj *obj)
         return 50;
     case RIN_POISON_RESISTANCE:
     case RIN_REGENERATION:
+    case AMULET_OF_REFLECTION:
         return 40;
     case RIN_SEE_INVISIBLE:
+    case AMULET_VERSUS_POISON:
+    case AMULET_OF_ESP:
         return 30;
     case RIN_FIRE_RESISTANCE:
     case RIN_COLD_RESISTANCE:
     case RIN_SHOCK_RESISTANCE:
+    case AMULET_OF_MAGICAL_BREATHING:
+    case AMULET_OF_UNCHANGING:
         return 20;
     case RIN_HUNGER:
     case RIN_AGGRAVATE_MONSTER:
+    case AMULET_OF_RESTFUL_SLEEP:
         return 0; /* not desirable -- but the side effect is that monsters will still wear them if they lack better */
     case RIN_WARNING:
         /* Ring of warning is an OK replacement for see invis */
@@ -854,6 +865,8 @@ extra_pref(const struct monst *mon, struct obj *obj)
         return (teleport_control(mon) ? 30 : 15);
     case RIN_POLYMORPH:
         return (polymorph_control(mon) ? 30 : 0);
+    case AMULET_OF_LIFE_SAVING:
+        return (nonliving(mon->data) ? 0 : 50);
     }
     return 0;
 }
