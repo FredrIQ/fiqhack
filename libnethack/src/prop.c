@@ -292,7 +292,6 @@ m_has_property(const struct monst *mon, enum youprop property,
         return 0;
 
     unsigned rv = 0;
-    struct obj *otmp;
     const struct permonst *mdat_role = NULL;
     const struct permonst *mdat_race = NULL;
     const struct permonst *mdat_poly = NULL;
@@ -308,7 +307,7 @@ m_has_property(const struct monst *mon, enum youprop property,
         rv |= W_MASK(os_outside);
 
     /* Polyform / role / race properties */
-    register const struct propxl *pmprop;
+    const struct propxl *pmprop;
     for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
          pmprop++) {
         if (pmprop->prop == property &&
@@ -366,25 +365,20 @@ m_has_property(const struct monst *mon, enum youprop property,
        TODO: Monsters with no eyes are not considered blind. This doesn't
        make much sense. However, changing it would be a major balance
        change (due to Elbereth), and so it has been left alone for now. */
-    if (property == BLINDED) {
-        for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
-            if (otmp->oartifact == ART_EYES_OF_THE_OVERWORLD &&
-                otmp->owornmask & W_MASK(os_tool))
-                rv |= (unsigned)(W_MASK(os_blocked));
-        if (!haseyes(mon->data))
-            rv |= (unsigned)(W_MASK(os_blocked));
-    }
-
+    if (property == BLINDED && !haseyes(mon->data))
+        rv |= (unsigned)(W_MASK(os_blocked));
+    if (property == HALLUC && resists_hallu(mon))
+        rv |= (unsigned)(W_MASK(os_blocked));
     if (property == WWALKING && Is_waterlevel(m_mz(mon)))
         rv |= (unsigned)(W_MASK(os_blocked));
     if (mworn_blocked(mon, property))
         rv |= (unsigned)(W_MASK(os_blocked));
 
     /* If a property is blocked, turn off all flags except circumstance/blocked,
-       unless allow_blocked is TRUE */
-    if (rv & W_MASK(os_blocked))
+       unless even_if_blocked is TRUE */
+    if ((rv & W_MASK(os_blocked)) && !even_if_blocked)
         rv &= (unsigned)(W_MASK(os_circumstance) |
-                         W_MASK(os_blocked));
+                         W_MASK(os_birthopt));
     return rv & reasons;
 }
 
@@ -2853,23 +2847,23 @@ enlightenment(int final)
         you_are(&menu, "cancelled");
     if (slippery_fingers(&youmonst))
         you_have(&menu, msgcat("slippery ", makeplural(body_part(FINGER))));
-    if (Fumbling)
+    if (fumbling(&youmonst))
         enl_msg(&menu, "You fumble", "", "d", "");
     if (leg_hurt(&youmonst))
         you_have(&menu, msgcat("wounded ", makeplural(body_part(LEG))));;
     if (restful_sleep(&youmonst))
         enl_msg(&menu, "You ", "fall", "fell", " asleep");
-    if (Hunger)
+    if (hunger(&youmonst))
         enl_msg(&menu, "You hunger", "", "ed", " rapidly");
 
         /*** Vision and senses ***/
-    if (See_invisible)
+    if (see_invisible(&youmonst))
         enl_msg(&menu, You_, "see", "saw", " invisible");
-    if (Blind_telepat)
+    if (telepathic(&youmonst))
         you_are(&menu, "telepathic");
-    if (Warning)
+    if (warned(&youmonst))
         you_are(&menu, "warned");
-    if (Warn_of_mon) {
+    if (warned_of_mon(&youmonst)) {
         int warntype = worn_warntype();
         const char *buf = msgcat(
             "aware of the presence of ",
@@ -2877,7 +2871,7 @@ enlightenment(int final)
             (warntype & M2_DEMON) ? "demons" : "something");
         you_are(&menu, buf);
     }
-    if (Undead_warning)
+    if (warned_of_undead(&youmonst))
         you_are(&menu, "warned of undead");
     if (Searching)
         you_have(&menu, "automatic searching");

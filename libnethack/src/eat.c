@@ -2017,7 +2017,7 @@ gethungry(void)
         if (near_capacity() > SLT_ENCUMBER)
             u.uhunger--;
     } else {    /* even turns */
-        if (Hunger)
+        if (hunger(&youmonst))
             u.uhunger--;
         /* Conflict uses up food too */
         if (u_have_property(CONFLICT, ~(W_ARTIFACT | W_MASK(os_wep)), FALSE))

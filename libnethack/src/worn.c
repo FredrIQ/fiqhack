@@ -11,8 +11,11 @@ static void m_dowear_type(struct monst *, enum objslot, boolean, boolean);
 static unsigned do_equip(struct monst *, struct obj *, boolean, boolean);
 
 /* This only allows for one blocked property per item */
+/* TODO: maybe make this into a real function */
 #define w_blocks(o,m) \
     ((o->otyp == MUMMY_WRAPPING && ((m) & W_MASK(os_armc))) ? INVIS :   \
+     (o->oartifact == ART_EYES_OF_THE_OVERWORLD &&                      \
+      ((m) & W_MASK(os_tool))) ? BLINDED :                              \
      (o->otyp == CORNUTHAUM && ((m) & W_MASK(os_armh)) &&               \
       !Role_if (PM_WIZARD)) ? CLAIRVOYANT : 0)
                 /* note: monsters don't have clairvoyance, so your role has no
@@ -30,8 +33,7 @@ find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
     *blocked = FALSE;
     while (chain) {
         mask |= item_provides_extrinsic(chain, extrinsic, warntype);
-        if (extrinsic == w_blocks(chain, chain->owornmask) ||
-            (extrinsic == HALLUC && Halluc_resistance))
+        if (extrinsic == w_blocks(chain, chain->owornmask))
              *blocked = TRUE;
         chain = chain->nobj;
     }

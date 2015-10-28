@@ -60,8 +60,6 @@
 # define Hallucination          u_any_property(HALLUC)
 # define Halluc_resistance      u_any_property(HALLUC_RES)
 # define Fumbling               u_any_property(FUMBLING)
-# define Sleeping               u_any_property(SLEEPING)
-# define Hunger                 u_any_property(HUNGER)
 
 /*** Vision and senses ***/
 # define See_invisible          u_any_property(SEE_INVIS)
