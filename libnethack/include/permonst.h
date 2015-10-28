@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -66,8 +66,7 @@ struct permonst {
     uchar msound;       /* noise it makes (6 bits) */
     uchar msize;        /* physical size (3 bits) */
     unsigned int mflags1,       /* boolean bitflags */
-        mflags2;        /* more boolean bitflags */
-    unsigned short mflags3;     /* yet more boolean bitflags */
+        mflags2, mflags3;       /* more boolean bitflags */
     unsigned int mskill;        /* proficiency bitflags */
     uchar mresists;     /* resistances */
     uchar mconveys;     /* conveyed by eating */

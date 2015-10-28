@@ -190,12 +190,15 @@
 # define M3_COVETOUS     0x001f         /* wants something */
 # define M3_WAITMASK     0x00c0         /* waiting... */
 
-# define M3_INFRAVISION  0x0100         /* has infravision */
-# define M3_INFRAVISIBLE 0x0200         /* visible by infravision */
-# define M3_SCENT        0x0400         /* can pinpoint monsters by smell */
-# define M3_SPELLCASTER  0x0800         /* spellcasting bonuses */
-# define M3_DISPLACED    0x1000         /* intrinsic displacement */
-# define M3_JUMPS        0x2000         /* intrinsic jumping */
+# define M3_INFRAVISION  0x00100        /* has infravision */
+# define M3_INFRAVISIBLE 0x00200        /* visible by infravision */
+# define M3_SCENT        0x00400        /* can pinpoint monsters by smell */
+# define M3_SPELLCASTER  0x00800        /* spellcasting bonuses */
+# define M3_DISPLACED    0x01000        /* intrinsic displacement */
+# define M3_JUMPS        0x02000        /* intrinsic jumping */
+# define M3_STEALTHY     0x04000        /* stealthy (no effect on monsters atm) */
+# define M3_FAST         0x08000        /* intrinsic fast */
+# define M3_SEARCH       0x10000        /* intrinsic searching */
 
 # define MZ_TINY         0              /* < 2' */
 # define MZ_SMALL        1              /* 2-4' */

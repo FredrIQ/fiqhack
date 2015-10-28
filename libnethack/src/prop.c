@@ -226,6 +226,9 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
         property == DISPLACED         ? mdat->mflags3 & M3_DISPLACED         :
         property == TELEPORT_CONTROL  ? mdat->mflags1 & M1_TPORT_CNTRL       :
         property == MAGICAL_BREATHING ? amphibious(mdat)                     :
+        property == STEALTH           ? mdat->mflags3 & M3_STEALTHY          :
+        property == FAST              ? mdat->mflags3 & M3_FAST              :
+        property == SEARCHING         ? mdat->mflags3 & M3_SEARCH            :
         0)
         return 1;
     return 0;
