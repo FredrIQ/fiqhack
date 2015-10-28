@@ -1583,7 +1583,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         }
 
         /* check slippery ice */
-        if (fumbling(&youmonst) & W_MASK(os_circumstance))
+        if ((fumbling(&youmonst) & W_MASK(os_circumstance)) &&
+            !rn2(resists_cold(&youmonst) ? 3 : 2))
             set_property(&youmonst, FUMBLING, 1, TRUE);
 
         /* Ensure that if we're stunned/confused, the random move was valid.
