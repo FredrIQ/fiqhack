@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -93,66 +93,43 @@ is_better_armor(const struct monst *mtmp, struct obj *otmp)
 static boolean
 could_use_item(const struct monst *mtmp, struct obj *otmp)
 {
-    boolean can_use =
-        /* make sure this is an intelligent monster */
-        (mtmp && !is_animal(mtmp->data) && !mindless(mtmp->data) &&
-         !nohands(mtmp->data) && otmp &&
-         /* food */
-         ((dogfood(mtmp, otmp) < APPORT) ||
-          /* better weapons */
-          (attacktype(mtmp->data, AT_WEAP) &&
-           (otmp->oclass == WEAPON_CLASS || is_weptool(otmp)) &&
-           (would_prefer_hwep(mtmp, otmp) || would_prefer_rwep(mtmp, otmp))) ||
-          /* better armor */
-          (otmp->oclass == ARMOR_CLASS && is_better_armor(mtmp, otmp)) ||
-          /* useful amulets */
-          otmp->otyp == AMULET_OF_LIFE_SAVING ||
-          otmp->otyp == AMULET_OF_REFLECTION ||
-          /* scrolls */
-          otmp->otyp == SCR_TELEPORTATION ||
-          otmp->otyp == SCR_EARTH ||
-          otmp->otyp == SCR_REMOVE_CURSE ||
-          /* wands */
-          otmp->otyp == WAN_DEATH ||
-          otmp->otyp == WAN_DIGGING ||
-          otmp->otyp == WAN_FIRE ||
-          otmp->otyp == WAN_COLD ||
-          otmp->otyp == WAN_LIGHTNING ||
-          otmp->otyp == WAN_MAGIC_MISSILE ||
-          otmp->otyp == WAN_STRIKING ||
-          otmp->otyp == WAN_TELEPORTATION ||
-          otmp->otyp == WAN_UNDEAD_TURNING ||
-          otmp->otyp == WAN_SLOW_MONSTER ||
-          otmp->otyp == WAN_SPEED_MONSTER ||
-          /* potions */
-          otmp->otyp == POT_HEALING ||
-          otmp->otyp == POT_EXTRA_HEALING ||
-          otmp->otyp == POT_FULL_HEALING ||
-          otmp->otyp == POT_PARALYSIS ||
-          otmp->otyp == POT_BLINDNESS ||
-          otmp->otyp == POT_CONFUSION ||
-          otmp->otyp == POT_ACID ||
-          /* instruments */
-          otmp->otyp == FROST_HORN ||
-          otmp->otyp == FIRE_HORN));
+    /* make sure this is an intelligent monster */
+    if (!mtmp || is_animal(mtmp->data) || mindless(mtmp->data) ||
+        nohands(mtmp->data))
+        return FALSE;
+
+    /* Common items pet/non-pet-wise */
+    boolean can_use = monster_would_take_item(mtmp, otmp);
+
+    /* food, weapons, armor */
+    if (dogfood(mtmp, otmp) < APPORT ||
+        (attacktype(mtmp->data, AT_WEAP) &&
+         (otmp->oclass == WEAPON_CLASS || is_weptool(otmp)) &&
+         (would_prefer_hwep(mtmp, otmp) || would_prefer_rwep(mtmp, otmp))) ||
+        (otmp->oclass == ARMOR_CLASS && is_better_armor(mtmp, otmp)))
+        can_use = TRUE;
 
     if (can_use) {
         /* arbitrary - greedy monsters keep any item you can use */
         if (likes_gold(mtmp->data))
             return TRUE;
 
-        if (otmp->oclass == ARMOR_CLASS) {
+        if (otmp->oclass == ARMOR_CLASS)
             return !is_better_armor(&youmonst, otmp);
-        } else if ((otmp->oclass == WAND_CLASS || otmp->otyp == FROST_HORN ||
-                   otmp->otyp == FIRE_HORN) && otmp->spe <= 0)
-            return FALSE;       /* used charges or was cancelled? */
         else {
-            /* Check if you've got one. If you don't, don't hoard it. */
-            struct obj *otmp2;
+            /* For bags, any container the player has is OK. Otherwise,
+               only hoard items if the player has any of the same type.
+               Never hoard wish items. */
+            if (otmp->otyp == WAN_WISHING || otmp->otyp == MAGIC_LAMP)
+                return FALSE;
 
-            for (otmp2 = invent; otmp2; otmp2 = otmp2->nobj)
-                if (otmp->otyp == otmp2->otyp)
-                    return TRUE;
+            if (otmp->otyp == SACK || otmp->otyp == BAG_OF_HOLDING ||
+                otmp->otyp == OILSKIN_SACK)
+                return (carrying(SACK) || carrying(OILSKIN_SACK) ||
+                        carrying(BAG_OF_HOLDING));
+
+            if (m_carrying_recursive(&youmonst, invent, otmp->otyp, TRUE))
+                return TRUE;
         }
     }
 

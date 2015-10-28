@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -629,16 +629,11 @@ sobj_at(int otyp, struct level *lev, int x, int y)
     return NULL;
 }
 
-
+/* TODO: this should be a macro, just need to figure out where to place it... */
 struct obj *
 carrying(int type)
 {
-    struct obj *otmp;
-
-    for (otmp = invent; otmp; otmp = otmp->nobj)
-        if (otmp->otyp == type)
-            return otmp;
-    return NULL;
+    return m_carrying(&youmonst, type);
 }
 
 struct obj *

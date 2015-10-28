@@ -1100,7 +1100,7 @@ spell_backfire(int spell)
    cast those spells much more rarely. This is by design.
    If theoretical is true, bypass the random check and mspec_used */
 int
-mon_castable(struct monst *mon, int spell, boolean theoretical)
+mon_castable(const struct monst *mon, int spell, boolean theoretical)
 {
     if (mon->mspec_used && !theoretical)
         return 0;

@@ -977,7 +977,7 @@ mpickstuff(struct monst *mtmp)
 
 
 int
-curr_mon_load(struct monst *mtmp)
+curr_mon_load(const struct monst *mtmp)
 {
     int curload = 0;
     struct obj *obj;
@@ -991,7 +991,7 @@ curr_mon_load(struct monst *mtmp)
 }
 
 int
-max_mon_load(struct monst *mtmp)
+max_mon_load(const struct monst *mtmp)
 {
     long maxload;
 

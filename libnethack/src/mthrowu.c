@@ -937,14 +937,27 @@ lined_up(struct monst *mtmp)
 
 /* Check if a monster is carrying a particular item. */
 struct obj *
-m_carrying(const struct monst *mtmp, int type)
+m_carrying(const struct monst *mon, int type)
+{
+    return m_carrying_recursive(mon, m_minvent(mon),
+                                type, FALSE);
+}
+
+/* Check if a monster is carrying a particular item, recursively. */
+struct obj *
+m_carrying_recursive(const struct monst *mon, struct obj *chain,
+                     int type, boolean recursive)
 {
     struct obj *otmp;
+    struct obj *cotmp = NULL;
 
-    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+    for (otmp = chain; otmp; otmp = otmp->nobj) {
+        if (Has_contents(otmp) && recursive)
+            cotmp = m_carrying_recursive(mon, otmp->cobj, type, recursive);
         if (otmp->otyp == type)
             return otmp;
-    return NULL;
+    }
+    return cotmp ? cotmp : NULL;
 }
 
 /* TRUE iff thrown/kicked/rolled object doesn't pass through iron bars */

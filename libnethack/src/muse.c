@@ -2526,7 +2526,7 @@ rnd_misc_item(struct monst *mtmp, enum rng rng)
 }
 
 boolean
-searches_for_item(struct monst *mon, struct obj *obj)
+searches_for_item(const struct monst *mon, struct obj *obj)
 {
     int typ = obj->otyp;
 

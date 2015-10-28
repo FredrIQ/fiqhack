@@ -562,7 +562,7 @@ static const char magical[] = {
 };
 
 boolean
-monster_would_take_item(struct monst *mtmp, struct obj *otmp)
+monster_would_take_item(const struct monst *mtmp, struct obj *otmp)
 {
     int pctload = (curr_mon_load(mtmp) * 100) / max_mon_load(mtmp);
 
