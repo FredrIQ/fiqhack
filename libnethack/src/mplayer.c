@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-29 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -265,15 +265,44 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 otmp->greased = 1;
             if (special && rn2_on_rng(2, rng))
                 otmp = mk_artifact(lev, otmp, A_NONE, rng);
+            if (otmp->oartifact) /* likely wished for or gifted, make erodeproof */
+                otmp->oerodeproof = 1;
             /* mplayers knew better than to overenchant Magicbane */
             if (otmp->oartifact == ART_MAGICBANE)
-                otmp->spe = 1 + rn2_on_rng(4, rng);
+                /* +2 magicbane is generally regarded as the best enchantment,
+                   this is debatable but since this is a *player* monster... */
+                otmp->spe = rn2_on_rng(3, rng) ? 2 : 1 + rn2_on_rng(4, rng);
             mpickobj(mtmp, otmp);
         }
 
         if (special) {
             if (!rn2_on_rng(10, rng))
                 mongets(mtmp, rn2_on_rng(3, rng) ? LUCKSTONE : LOADSTONE, rng);
+            if (rn2_on_rng(3, rng)) /* unihorns are nice */
+                mongets(mtmp, UNICORN_HORN, rng);
+
+            /* give random intrinsics */
+            int intrinsics[] = {
+                POISON_RES, FIRE_RES, COLD_RES, SHOCK_RES, SLEEP_RES, DISINT_RES,
+                TELEPAT, INVIS, SEE_INVIS, PROTECTION /* blessed */
+            };
+            int i = 5 + rn2_on_rng(6, rng);
+            /* some will probably end up redundant, but keep it at that */
+            while (i--)
+                set_property(mtmp,
+                             intrinsics[rn2_on_rng(SIZE(intrinsics),
+                                                   rng)], 0, TRUE);
+            /* sometimes, you just make a small oopsie! [cannibalism] */
+            if (!rn2_on_rng(40, rng) &&
+                mtmp->data != &mons[PM_CAVEMAN] &&
+                mtmp->data != &mons[PM_CAVEWOMAN])
+                set_property(mtmp, AGGRAVATE_MONSTER, 0, TRUE);
+            /* there is no "mblessed", so if the protection property was
+               randomized, just give a boost to base AC */
+            if (protected(mtmp) & INTRINSIC)
+                mtmp->mac += 2 + rn2_on_rng(8, rng);
+
+            /* give armor */
             mk_mplayer_armor(mtmp, armor, rng);
             mk_mplayer_armor(mtmp, cloak, rng);
             mk_mplayer_armor(mtmp, helm, rng);
@@ -287,23 +316,32 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                                                  LEVITATION_BOOTS, rng), rng);
             m_dowear(mtmp, TRUE);
 
+            /* if the player lacks reflection for whatever reason,
+               maybe give an amulet of reflection or life saving */
+            if (!reflecting(mtmp) && rn2_on_rng(3, rng))
+                mk_mplayer_armor(mtmp, rn2_on_rng(2, rng) ?
+                                 AMULET_OF_REFLECTION :
+                                 AMULET_OF_LIFE_SAVING, rng);
             /* done after wearing the dragon mail so the resists checks work */
-            if (rn2(8) || monsndx(ptr) == PM_WIZARD) {
-                int i, ring;
-                for (i=0;i<2 && (rn2(2) || monsndx(ptr) == PM_WIZARD);i++) {
-                    do ring = (!rn2(9) ? RIN_INVISIBILITY :
-                               !rn2(8) ? RIN_TELEPORT_CONTROL :
-                               !rn2(7) ? RIN_FIRE_RESISTANCE :
-                               !rn2(6) ? RIN_COLD_RESISTANCE :
-                               !rn2(5) ? RIN_SHOCK_RESISTANCE :
-                               !rn2(4) ? RIN_POISON_RESISTANCE :
-                               !rn2(3) ? RIN_INCREASE_ACCURACY :
-                               !rn2(2) ? RIN_INCREASE_DAMAGE :
-                               RIN_PROTECTION);
+            int ring;
+            int rings[] = {
+                RIN_INVISIBILITY, RIN_TELEPORT_CONTROL,
+                RIN_FIRE_RESISTANCE, RIN_COLD_RESISTANCE,
+                RIN_SHOCK_RESISTANCE, RIN_POISON_RESISTANCE,
+                RIN_INCREASE_ACCURACY, RIN_INCREASE_DAMAGE,
+                RIN_PROTECTION, RIN_SEE_INVISIBLE,
+                RIN_REGENERATION, RIN_SLOW_DIGESTION,
+                RIN_FREE_ACTION, RIN_POLYMORPH_CONTROL,
+            };
+            if (rn2_on_rng(8, rng) || monsndx(ptr) == PM_WIZARD) {
+                for (i=0; i<2 && (rn2_on_rng(2, rng) ||
+                                  monsndx(ptr) == PM_WIZARD); i++) {
+                    do ring = rings[rn2_on_rng(SIZE(rings), rng)];
                     while (ring != RIN_PROTECTION && ring != RIN_INCREASE_DAMAGE &&
                            ring != RIN_INCREASE_ACCURACY &&
                            m_has_property(mtmp, objects[ring].oc_oprop, ANY_PROPERTY, TRUE));
                     mk_mplayer_armor(mtmp, ring, rng);
+                    m_dowear(mtmp, TRUE);
                 }
             }
 
@@ -317,6 +355,28 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             quan = rn2_on_rng(10, rng);
             while (quan--)
                 mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE, rng));
+            /* if the monster acquired polymorph control as part of the
+               randomness, then maybe they did some ring eating... */
+            if (m_carrying_recursive(mtmp, m_minvent(mtmp),
+                                     RIN_POLYMORPH_CONTROL, TRUE) &&
+                !rn2_on_rng(3, rng)) {
+                for (i = rn2_on_rng(5, rng); i > 0; i--) {
+                    ring = rings[rn2_on_rng(SIZE(rings), rng)];
+                    if (ring == RIN_SLOW_DIGESTION ||
+                        (objects[ring].oc_material != WOOD &&
+                         objects[ring].oc_material < IRON &&
+                         objects[ring].oc_material > MITHRIL))
+                        continue;
+                    if (ring == RIN_INCREASE_ACCURACY)
+                        mtmp->mhitinc += rn2_on_rng(5, rng);
+                    else if (ring == RIN_INCREASE_DAMAGE)
+                        mtmp->mdaminc += rn2_on_rng(5, rng);
+                    else if (ring == RIN_PROTECTION)
+                        mtmp->mac += rn2_on_rng(5, rng);
+                    else
+                        set_property(mtmp, objects[ring].oc_oprop, 0, TRUE);
+                }
+            }
         }
         quan = 1 + rn2_on_rng(3, rng);
         while (quan--)
