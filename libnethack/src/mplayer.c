@@ -276,9 +276,9 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         }
 
         if (special) {
-            if (!rn2_on_rng(10, rng))
-                mongets(mtmp, rn2_on_rng(3, rng) ? LUCKSTONE : LOADSTONE, rng);
-            if (rn2_on_rng(3, rng)) /* unihorns are nice */
+            if (!rn2_on_rng(5, rng))
+                mongets(mtmp, rn2_on_rng(5, rng) ? LUCKSTONE : LOADSTONE, rng);
+            if (rn2_on_rng(4, rng)) /* unihorns are nice */
                 mongets(mtmp, UNICORN_HORN, rng);
 
             /* give random intrinsics */
@@ -317,11 +317,12 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             m_dowear(mtmp, TRUE);
 
             /* if the player lacks reflection for whatever reason,
-               maybe give an amulet of reflection or life saving */
-            if (!reflecting(mtmp) && rn2_on_rng(3, rng))
-                mk_mplayer_armor(mtmp, rn2_on_rng(2, rng) ?
-                                 AMULET_OF_REFLECTION :
-                                 AMULET_OF_LIFE_SAVING, rng);
+               maybe give some amulets */
+            if (!reflecting(mtmp) && rn2_on_rng(3, rng)) {
+                mk_mplayer_armor(mtmp, AMULET_OF_REFLECTION, rng);
+                for (i = rn2_on_rng(5, rng); i; i--)
+                    mk_mplayer_armor(mtmp, AMULET_OF_LIFE_SAVING, rng);
+            }
             /* done after wearing the dragon mail so the resists checks work */
             int ring;
             int rings[] = {
@@ -360,7 +361,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             if (m_carrying_recursive(mtmp, m_minvent(mtmp),
                                      RIN_POLYMORPH_CONTROL, TRUE) &&
                 !rn2_on_rng(3, rng)) {
-                for (i = rn2_on_rng(5, rng); i > 0; i--) {
+                for (i = rn2_on_rng(11, rng); i; i--) {
                     ring = rings[rn2_on_rng(SIZE(rings), rng)];
                     if (ring == RIN_SLOW_DIGESTION ||
                         (objects[ring].oc_material != WOOD &&
