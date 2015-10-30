@@ -275,7 +275,7 @@ rndmonnum(const d_level *dlev, enum rng rng)
     do {
         i = LOW_PM + rn2_on_rng(SPECIAL_PM - LOW_PM, rng);
         ptr = &mons[i];
-    } while ((ptr->geno & G_NOGEN) ||
+    } while ((ptr->geno & G_NOGEN) || is_mplayer(ptr) ||
              (!In_hell(dlev) && (ptr->geno & G_HELL)));
 
     return i;
