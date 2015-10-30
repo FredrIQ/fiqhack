@@ -5,7 +5,7 @@
 
 #include "hack.h"
 
-static void dofiretrap(struct obj *);
+static void dofiretrap(struct monst *, struct obj *);
 static void domagictrap(struct monst *);
 static boolean emergency_disrobe(boolean *);
 static int untrap_prob(struct trap *ttmp);
@@ -31,7 +31,6 @@ static int launch_obj(short, int, int, int, int, int);
 static const char *const a_your[2] = { "a", "your" };
 static const char *const A_Your[2] = { "A", "Your" };
 
-static const char tower_of_flame[] = "tower of flame";
 static const char *const A_gush_of_water_hits = "A gush of water hits";
 static const char *const blindgas[6] =
     { "humid", "odorless", "pungent", "chilling", "acrid", "biting" };
@@ -879,7 +878,7 @@ dotrap(struct trap *trap, unsigned trflags)
 
     case FIRE_TRAP:
         seetrap(trap);
-        dofiretrap(NULL);
+        dofiretrap(&youmonst, NULL);
         break;
 
     case PIT:
@@ -1946,68 +1945,10 @@ mintrap(struct monst *mtmp)
                 break;
             }
         case FIRE_TRAP:
-        mfiretrap:
-            if (in_sight)
-                pline("A %s erupts from the %s under %s!", tower_of_flame,
-                      surface(mtmp->mx, mtmp->my), mon_nam(mtmp));
-            else if (see_it)    /* evidently `mtmp' is invisible */
-                pline("You see a %s erupt from the %s!", tower_of_flame,
-                      surface(mtmp->mx, mtmp->my));
-
-            if (resists_fire(mtmp)) {
-                if (in_sight) {
-                    shieldeff(mtmp->mx, mtmp->my);
-                    pline("%s is uninjured.", Monnam(mtmp));
-                }
-            } else {
-                int num = dice(2, 4), alt;
-                boolean immolate = FALSE;
-
-                /* paper burns very fast, assume straw is tightly packed and
-                   burns a bit slower */
-                switch (monsndx(mtmp->data)) {
-                case PM_PAPER_GOLEM:
-                    immolate = TRUE;
-                    alt = mtmp->mhpmax;
-                    break;
-                case PM_STRAW_GOLEM:
-                    alt = mtmp->mhpmax / 2;
-                    break;
-                case PM_WOOD_GOLEM:
-                    alt = mtmp->mhpmax / 4;
-                    break;
-                case PM_LEATHER_GOLEM:
-                    alt = mtmp->mhpmax / 8;
-                    break;
-                default:
-                    alt = 0;
-                    break;
-                }
-                if (alt > num)
-                    num = alt;
-
-                if (thitm(0, mtmp, NULL, num, immolate))
-                    trapkilled = TRUE;
-                else
-                    /* we know mhp is at least `num' below mhpmax, so no (mhp >
-                       mhpmax) check is needed here */
-                    mtmp->mhpmax -= rn2(num + 1);
-            }
-            burn_away_slime(mtmp);
-            if (burnarmor(mtmp) || rn2(3)) {
-                destroy_mitem(mtmp, SCROLL_CLASS, AD_FIRE);
-                destroy_mitem(mtmp, SPBOOK_CLASS, AD_FIRE);
-                destroy_mitem(mtmp, POTION_CLASS, AD_FIRE);
-            }
-            if (burn_floor_paper(lev, mtmp->mx, mtmp->my, see_it, FALSE) &&
-                !see_it && distu(mtmp->mx, mtmp->my) <= 3 * 3)
-                pline("You smell smoke.");
-            if (is_ice(mtmp->dlevel, mtmp->mx, mtmp->my))
-                melt_ice(mtmp->dlevel, mtmp->mx, mtmp->my);
             if (see_it)
                 seetrap(trap);
+            dofiretrap(mtmp, NULL);
             break;
-
         case PIT:
         case SPIKED_PIT:
             fallverb = "falls";
@@ -2154,6 +2095,8 @@ mintrap(struct monst *mtmp)
             break;
 
         case MAGIC_TRAP:
+            if (see_it)
+                seetrap(trap);
             if (!rn2(30) || (cancelled(mtmp) && !rn2(5))) {
                 deltrap(level, trap);
                 newsym(mtmp->mx, mtmp->my); /* update position */
@@ -2167,14 +2110,8 @@ mintrap(struct monst *mtmp)
                     pline("%s regains %s magic capabilities!", Monnam(mtmp),
                           mhis(mtmp));
                 }
-            } else {
-                /* TODO: rewrite this to make traps work the same for monsters and players...
-                   the below fire trap check is a kludge because domagictrap() currently calls
-                   dofiretrap() that only works on players... */
-                if (!rn2(20))
-                    goto mfiretrap;
+            } else
                 domagictrap(mtmp);
-            }
             break;
         case ANTI_MAGIC:
             break;
@@ -2592,45 +2529,64 @@ float_down(struct monst *mon)
 
 /* box: null for floor trap */
 static void
-dofiretrap(struct obj *box)
+dofiretrap(struct monst *mon, struct obj *box)
 {
-    struct level *lev = box ? box->olev : level;
-    boolean see_it = !Blind;
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    struct level *lev = box ? box->olev : you ? level : mon->dlevel;
+    boolean see_it = (!blind(&youmonst) && (you ||
+                                            cansee(m_mx(mon), m_my(mon))));
     int num, alt;
 
 /* Bug: for box case, the equivalent of burn_floor_paper() ought
  * to be done upon its contents.
  */
 
-    if ((box && !carried(box)) ? is_pool(level, box->ox, box->oy)
-                               : Underwater) {
-        pline("A cascade of steamy bubbles erupts from %s!",
-              the(box ? xname(box) : surface(u.ux, u.uy)));
-        if (Fire_resistance)
-            pline("You are uninjured.");
-        else
-            losehp(rnd(3), killer_msg(DIED, "boiling water"));
+    /* If the chest or trap is underwater */
+    if (is_pool(lev, box ? box->ox : m_mx(mon),
+                box ? box->oy : m_my(mon)) &&
+        (!box || !(you ? carried(box) : mcarried(box)) ||
+         (!levitates(mon) && !flying(mon) && !waterwalks(mon)))) {
+        if (you || vis || (!box && see_it))
+            pline("A cascade of steamy bubbles erupts from %s!",
+                  the(box ? xname(box) : surface(m_mx(mon), m_my(mon))));
+        if (resists_fire(mon)) {
+            if (you || vis)
+                pline("%s %s uninjured.", you ? "You" : Monnam(mon),
+                      you ? "are" : "is");
+        } else {
+            if (you)
+                losehp(rnd(3), killer_msg(DIED, "boiling water"));
+            else {
+                mon->mhp -= rnd(3);
+                if (mon->mhp <= 0)
+                    mondied(mon);
+            }
+        }
         return;
     }
-    pline("A %s %s from %s!", tower_of_flame, box ? "bursts" : "erupts",
-          the(box ? xname(box) : surface(u.ux, u.uy)));
-    if (Fire_resistance) {
-        shieldeff(u.ux, u.uy);
+    if (you || vis || see_it)
+        pline("A tower of flame %s from %s!", box ? "bursts" : "erupts",
+              the(box ? xname(box) : surface(u.ux, u.uy)));
+    if (resists_fire(mon)) {
+        if (you || vis)
+            shieldeff(m_mx(mon), m_my(mon));
         num = rn2(2);
-    } else if (Upolyd) {
+    } else if (Upolyd || !you) {
         num = dice(2, 4);
-        switch (u.umonnum) {
+        alt = you ? u.mhmax : mon->mhpmax;
+        switch (monsndx(mon->data)) {
         case PM_PAPER_GOLEM:
-            alt = u.mhmax;
+            /* keep alt at max */
             break;
         case PM_STRAW_GOLEM:
-            alt = u.mhmax / 2;
+            alt /= 2;
             break;
         case PM_WOOD_GOLEM:
-            alt = u.mhmax / 4;
+            alt /= 4;
             break;
         case PM_LEATHER_GOLEM:
-            alt = u.mhmax / 8;
+            alt /= 8;
             break;
         default:
             alt = 0;
@@ -2638,46 +2594,47 @@ dofiretrap(struct obj *box)
         }
         if (alt > num)
             num = alt;
-        if (u.mhmax > mons[u.umonnum].mlevel)
-            u.mhmax -= rn2(min(u.mhmax, num + 1));
+        if (you) {
+            if (u.mhmax > mons[u.umonnum].mlevel)
+                u.mhmax -= rn2(min(u.mhmax, num + 1));
+        } else if (mon->mhpmax > mon->m_lev)
+            mon->mhpmax -= rn2(min(mon->mhpmax, num + 1));
     } else {
         num = dice(2, 4);
         if (u.uhpmax > u.ulevel)
             u.uhpmax -= rn2(min(u.uhpmax, num + 1));
     }
-    if (!num)
-        pline("You are uninjured.");
-    else
-        losehp(num, killer_msg(DIED, an(tower_of_flame)));
-    burn_away_slime(&youmonst);
-
-    if (burnarmor(&youmonst) || rn2(3)) {
-        destroy_item(SCROLL_CLASS, AD_FIRE);
-        destroy_item(SPBOOK_CLASS, AD_FIRE);
-        destroy_item(POTION_CLASS, AD_FIRE);
-    }
-    if (!box && burn_floor_paper(level, u.ux, u.uy, see_it, TRUE) && !see_it)
-        pline("You smell paper burning.");
-    if (is_ice(lev, u.ux, u.uy)) {
-        struct trap *tt = NULL;
-        int xbak = 0, ybak = 0;
-
-        if (!box) {
-            tt = t_at(level, u.ux, u.uy);
-            if (tt) {
-                xbak = tt->tx;
-                ybak = tt->ty;
-                tt->tx = tt->ty = 0;
-            } else {
-                impossible("dofiretrap: no tt and no box?");
+    if (!num) {
+        if (you || vis)
+            pline("%s %s uninjured.", you ? "You" : Monnam(mon),
+                  you ? "are" : "is");
+    } else {
+        if (you)
+            losehp(num, killer_msg(DIED, "a tower of flame"));
+        else {
+            mon->mhp -= num;
+            if (mon->mhp <= 0) {
+                mondied(mon);
+                if (DEADMONSTER(mon)) /* unless it lifesaved, bail out */
+                    return;
             }
         }
-        melt_ice(lev, u.ux, u.uy);
-        if (tt) {
-            tt->tx = xbak;
-            tt->ty = ybak;
-        }
     }
+    burn_away_slime(mon);
+
+    if (burnarmor(mon) || rn2(3)) {
+        destroy_mitem(mon, SCROLL_CLASS, AD_FIRE);
+        destroy_mitem(mon, SPBOOK_CLASS, AD_FIRE);
+        destroy_mitem(mon, POTION_CLASS, AD_FIRE);
+    }
+    /* smell should be able to pass corners, but not walls,
+       but that requires pathfinding... */
+    if (!box && burn_floor_paper(level, m_mx(mon), m_my(mon),
+                                 see_it, TRUE) &&
+        !see_it && (you || couldsee(m_mx(mon), m_my(mon))))
+        pline("You smell paper burning.");
+    if (is_ice(lev, m_mx(mon), m_my(mon)))
+        melt_ice(lev, m_mx(mon), m_my(mon));
 }
 
 static void
@@ -2725,8 +2682,7 @@ domagictrap(struct monst *mon)
             /* sometimes nothing happens */
             break;
         case 12:       /* a flash of fire */
-            if (you) /* monster fire traps are handled in the monster trap function */
-                dofiretrap(NULL);
+            dofiretrap(mon, NULL);
             break;
 
             /* odd feelings */
@@ -4042,8 +3998,7 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
         case 11:
         case 10:
         case 9:
-            if (you) /* TODO */
-                dofiretrap(obj);
+            dofiretrap(mon, obj);
             break;
         case 8:
         case 7:
