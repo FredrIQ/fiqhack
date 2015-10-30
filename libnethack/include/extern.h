@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1081,7 +1081,7 @@ extern int movemon(void);
 extern int meatmetal(struct monst *);
 extern int meatobj(struct monst *);
 extern void mpickgold(struct monst *);
-extern boolean mpickstuff(struct monst *);
+extern boolean mpickstuff(struct monst *, boolean);
 extern int curr_mon_load(const struct monst *);
 extern int max_mon_load(const struct monst *);
 extern boolean can_carry(struct monst *, struct obj *);
@@ -1218,8 +1218,10 @@ extern boolean hits_bars(struct obj **, int, int, int, int);
 extern int mon_choose_dirtarget(struct monst *, struct obj *, coord *);
 extern int mon_choose_spectarget(struct monst *, struct obj *, coord *);
 extern boolean find_unlocker(struct monst *, struct musable *);
-extern boolean find_item(struct monst *mon, struct musable *m);
-extern int use_item(struct monst *mon, struct musable *m);
+extern boolean find_item(struct monst *, struct musable *);
+extern boolean find_item_obj(struct monst *, struct obj *, struct musable *,
+                             boolean, int);
+extern int use_item(struct monst *, struct musable *);
 extern boolean mon_makewish(struct monst *);
 extern int rnd_defensive_item(struct monst *, enum rng rng);
 extern int rnd_offensive_item(struct monst *, enum rng rng);
@@ -1821,7 +1823,7 @@ extern boolean drown(void);
 extern void drain_en(int);
 extern int dountrap(const struct nh_cmd_arg *);
 extern int untrap(const struct nh_cmd_arg *, boolean);
-extern boolean chest_trap(struct obj *, int, boolean);
+extern boolean chest_trap(struct monst *, struct obj *, int, boolean);
 extern void deltrap(struct level *, struct trap *);
 extern boolean delfloortrap(struct level *, struct trap *);
 extern struct trap *t_at(struct level *lev, int x, int y);

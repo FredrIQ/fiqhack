@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3793,7 +3793,7 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
                         if (!force &&
                             (confused || Fumbling ||
                              rnd(75 + level_difficulty(&u.uz) / 2) > ch)) {
-                            chest_trap(otmp, FINGER, TRUE);
+                            chest_trap(&youmonst, otmp, FINGER, TRUE);
                         } else {
                             pline("You disarm it!");
                             otmp->otrapped = 0;
@@ -3877,8 +3877,13 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
 
 /* only called when the player is doing something to the chest directly */
 boolean
-chest_trap(struct obj * obj, int bodypart, boolean disarm)
+chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    int mluck = Luck; /* TODO: monster luck */
+    if (!you)
+        mluck = 0; /* for now */
     struct obj *otmp = obj, *otmp2;
     char buf[80];
     const char *msg;
@@ -3889,9 +3894,11 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
 
     otmp->otrapped = 0; /* trap is one-shot; clear flag first in case chest
                            kills you and ends up in bones file */
-    pline(disarm ? "You set it off!" : "You trigger a trap!");
+    if (you || vis)
+        pline(disarm ? "%s set%s it off!" : "%s trigger%s a trap!",
+              you ? "You" : Monnam(mon), you ? "" : "s");
     win_pause_output(P_MESSAGE);
-    if (Luck > -13 && rn2(13 + Luck) > 7) {     /* saved by luck */
+    if (mluck > -13 && rn2(13 + mluck) > 7) {     /* saved by luck */
         /* trap went off, but good luck prevents damage */
         switch (rn2(13)) {
         case 12:
@@ -3922,10 +3929,11 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
             msg = NULL;
             break;
         }
-        if (msg)
-            pline("But luckily the %s!", msg);
+        if (msg && (you || vis))
+            pline("But luckily%s%s the %s!",
+                  you ? "" : "for ", you ? "" : mon_nam(mon), msg);
     } else {
-        switch (rn2(20) ? ((Luck >= 13) ? 0 : rn2(13 - Luck)) : rn2(26)) {
+        switch (rn2(20) ? ((mluck >= 13) ? 0 : rn2(13 - mluck)) : rn2(26)) {
         case 25:
         case 24:
         case 23:
@@ -3937,7 +3945,7 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                 xchar ox = obj->ox, oy = obj->oy;
 
                 /* the obj location need not be that of player */
-                costly = (costly_spot(ox, oy) &&
+                costly = (costly_spot(ox, oy) && you &&
                           (shkp =
                            shop_keeper(level,
                                        *in_rooms(level, ox, oy,
@@ -3945,7 +3953,8 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                 insider = (*u.ushops && inside_shop(level, u.ux, u.uy) &&
                            *in_rooms(level, ox, oy, SHOPBASE) == *u.ushops);
 
-                pline("%s!", Tobjnam(obj, "explode"));
+                if (you || vis)
+                    pline("%s!", Tobjnam(obj, "explode"));
                 snprintf(buf, SIZE(buf), "exploding %s", xname(obj));
 
                 if (costly)
@@ -3971,9 +3980,18 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                                          (boolean) shkp->mpeaceful, TRUE);
                     delobj(otmp);
                 }
-                wake_nearby(FALSE);
-                losehp(dice(6, 6), killer_msg(DIED, an(buf)));
-                exercise(A_STR, FALSE);
+                if (you) /* TODO: make this work on monsters */
+                    wake_nearby(FALSE);
+                if (you)
+                    losehp(dice(6, 6), killer_msg(DIED, an(buf)));
+                else {
+                    mon->mhp -= dice(6, 6);
+                    if (mon->mhp <= 0)
+                        mondied(mon);
+                }
+
+                if (you)
+                    exercise(A_STR, FALSE);
                 if (costly && loss) {
                     if (insider)
                         pline("You owe %ld %s for objects destroyed.", loss,
@@ -3990,71 +4008,120 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
         case 19:
         case 18:
         case 17:
-            pline("A cloud of noxious gas billows from %s.", the(xname(obj)));
-            poisoned("gas cloud", A_STR,
-                     killer_msg(DIED, "a cloud of poison gas"), 15);
-            exercise(A_CON, FALSE);
+            if (you || vis)
+                pline("A cloud of noxious gas billows from %s.", the(xname(obj)));
+            if (you) {
+                poisoned("gas cloud", A_STR,
+                         killer_msg(DIED, "a cloud of poison gas"), 15);
+                exercise(A_CON, FALSE);
+            } else {
+                mon->mhp -= rnd(20);
+                if (mon->mhp <= 0)
+                    mondied(mon);
+            }
             break;
         case 16:
         case 15:
         case 14:
         case 13:
-            pline("You feel a needle prick your %s.", body_part(bodypart));
-            poisoned("needle", A_CON,
-                     killer_msg(DIED, "a poisoned needle"), 10);
-            exercise(A_CON, FALSE);
+            if (you) {
+                pline("You feel a needle prick your %s.", body_part(bodypart));
+                poisoned("needle", A_CON,
+                         killer_msg(DIED, "a poisoned needle"), 10);
+                exercise(A_CON, FALSE);
+            } else {
+                if (vis)
+                    pline("You see a needle prick %s %s.",
+                          s_suffix(mon_nam(mon)), mbodypart(mon, bodypart));
+                mon->mhp -= rnd(15);
+                if (mon->mhp <= 0)
+                    mondied(mon);
+            }
             break;
         case 12:
         case 11:
         case 10:
         case 9:
-            dofiretrap(obj);
+            if (you) /* TODO */
+                dofiretrap(obj);
             break;
         case 8:
         case 7:
         case 6:{
                 int dmg;
 
-                pline("You are jolted by a surge of electricity!");
-                if (Shock_resistance) {
-                    shieldeff(u.ux, u.uy);
-                    pline("You don't seem to be affected.");
+                if (you || vis)
+                    pline("%s %s jolted by a surge of electricity!",
+                          you ? "You" : Monnam(mon), you ? "are" : "is");
+                if (resists_elec(mon)) {
+                    if (you || vis) {
+                        shieldeff(m_mx(mon), m_my(mon));
+                        pline("%s do%sn't seem to be affected.",
+                              you ? "You" : Monnam(mon), you ? "" : "es");
+                    }
                     dmg = 0;
                 } else
                     dmg = dice(4, 4);
-                destroy_item(WAND_CLASS, AD_ELEC);
-                if (dmg)
-                    losehp(dmg, killer_msg(DIED, "an electric shock"));
+                if (you)
+                    destroy_item(WAND_CLASS, AD_ELEC);
+                else
+                    destroy_mitem(mon, WAND_CLASS, AD_ELEC);
+                if (dmg) {
+                    if (you)
+                        losehp(dmg, killer_msg(DIED, "an electric shock"));
+                    else {
+                        mon->mhp -= dmg;
+                        if (mon->mhp <= 0)
+                            mondied(mon);
+                    }
+                }
                 break;
             }
         case 5:
         case 4:
         case 3:
-            if (!Free_action) {
-                pline("Suddenly you are frozen in place!");
-                helpless(dice(5, 6), hr_paralyzed, "frozen by a trap", NULL);
-                exercise(A_DEX, FALSE);
-            } else
-                pline("You momentarily stiffen.");
+            if (!free_action(mon)) {
+                if (you || vis)
+                pline("Suddenly %s %s frozen in place!", you ? "you" : mon_nam(mon),
+                      you ? "are" : "is");
+                if (you) {
+                    helpless(dice(5, 6), hr_paralyzed, "frozen by a trap", NULL);
+                    exercise(A_DEX, FALSE);
+                } else {
+                    mon->mcanmove = 0;
+                    mon->mfrozen += dice(5, 6);
+                }
+            } else if (you || vis)
+                pline("%s momentarily stiffen%s.", you ? "You" : Monnam(mon),
+                      you ? "" : "s");
             break;
         case 2:
         case 1:
         case 0:
-            pline("A cloud of %s gas billows from %s.",
-                  Blind ? blindgas[rn2(SIZE(blindgas))] : rndcolor(),
-                  the(xname(obj)));
-            if (!Stunned) {
-                if (Hallucination)
-                    pline("What a groovy feeling!");
-                else if (Blind)
+            if (you || vis)
+                pline("A cloud of %s gas billows from %s.",
+                      Blind ? blindgas[rn2(SIZE(blindgas))] : rndcolor(),
+                      the(xname(obj)));
+            if (!stunned(mon)) {
+                if (Hallucination) {
+                    if (you)
+                        pline("What a groovy feeling!");
+                    else if (vis)
+                        pline("%s looks groovy!", Monnam(mon));
+                } else if (you && blind(&youmonst))
                     pline("You %s and get dizzy...",
                           stagger(youmonst.data, "stagger"));
-                else
-                    pline("You %s and your vision blurs...",
-                          stagger(youmonst.data, "stagger"));
+                else if (you || (vis && !blind(&youmonst))) {
+                    if (you)
+                        pline("You %s and your vision blurs...",
+                              stagger(youmonst.data, "stagger"));
+                    else
+                        pline("%s %s...", Monnam(mon),
+                              stagger(mon->data, "stagger"));
+                }
             }
-            inc_timeout(&youmonst, STUNNED, rn1(7, 16), TRUE);
-            inc_timeout(&youmonst, HALLUC, rn1(5, 16), TRUE);
+            inc_timeout(mon, STUNNED, rn1(7, 16), TRUE);
+            inc_timeout(mon, HALLUC, rn1(5, 16), TRUE);
             break;
         default:
             impossible("bad chest trap");

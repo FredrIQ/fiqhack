@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,6 +11,7 @@
 static boolean restrap(struct monst *);
 static int pick_animal(void);
 static int select_newcham_form(struct monst *);
+static boolean mpickstuff_dopickup(struct monst *, struct obj *, boolean);
 static void kill_eggs(struct obj *);
 static int do_grudge(const struct permonst *, const struct permonst *);
 
@@ -925,51 +926,256 @@ mpickgold(struct monst *mtmp)
     }
 }
 
-
+/* Monster item pickup prechecks. autopickup is to prevent doing
+   anything that isn't picking things up from the ground, used
+   when monsters move + pick things up in a single turn */
 boolean
-mpickstuff(struct monst *mtmp)
+mpickstuff(struct monst *mon, boolean autopickup)
 {
-    struct obj *otmp, *otmp2;
+    struct obj *otmp;
 
     /* prevent shopkeepers from leaving the door of their shop */
-    if (mtmp->isshk && inhishop(mtmp))
+    if (mon->isshk && inhishop(mon))
+        return FALSE;
+
+    /* can't pickup objects if we are levitating */
+    if (levitates(mon) &&
+        (!levitates_at_will(mon, TRUE, FALSE) || autopickup))
+        return FALSE;
+
+    /* objects underwater can't be taken if flying, levitating
+       or waterwalking */
+    if (is_pool(mon->dlevel, mon->mx, mon->my) &&
+        (levitates(mon) || flying(mon) || waterwalks(mon)))
         return FALSE;
 
     /* non-tame monsters normally don't go shopping */
-    if (*in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE) && rn2(25))
+    if (*in_rooms(mon->dlevel, mon->mx, mon->my, SHOPBASE) && rn2(25))
         return FALSE;
 
-    for (otmp = level->objects[mtmp->mx][mtmp->my]; otmp; otmp = otmp2) {
-        otmp2 = otmp->nexthere;
-        /* Nymphs take everything.  Most monsters don't pick up corpses. */
-        if (monster_would_take_item(mtmp, otmp)) {
-            if (otmp->otyp == CORPSE && mtmp->data->mlet != S_NYMPH &&
-                /* let a handful of corpse types thru to can_carry() */
-                !touch_petrifies(&mons[otmp->corpsenm]) &&
-                otmp->corpsenm != PM_LIZARD && !acidic(&mons[otmp->corpsenm]))
-                continue;
-            if (!touch_artifact(otmp, mtmp))
-                continue;
-            if (!can_carry(mtmp, otmp))
-                continue;
-            if (is_pool(level, mtmp->mx, mtmp->my))
-                continue;
+    /* check unknown containers first, and try to investigate them before
+       messing with them directly -- this allows levitating monsters to
+       remain in air if there turns out to be nothing of interest in the
+       chest (or if it's trapped) */
+    struct musable boxuse;
+    boxuse.x = 0;
+    boxuse.y = 0;
+    boxuse.z = 0;
+    boxuse.obj = NULL;
+    boxuse.tobj = NULL;
+    boxuse.spell = 0;
+    boxuse.use = 0;
+    for (otmp = level->objects[mon->mx][mon->my]; otmp;
+         otmp = otmp->nexthere) {
+        if (autopickup) /* only pickup from ground... */
+            break;
+        if (!Is_box(otmp) && otmp->otyp != ICE_BOX)
+            continue;
+        /* we are dealing with a box, check if it has been inspected */
+        if (otmp->mknown)
+            continue; /* handle this later */
 #ifdef INVISIBLE_OBJECTS
-            if (otmp->oinvis && !see_invisible(mtmp))
-                continue;
+        if (obj->oinvis && !see_invisible(mtmp))
+            continue;
 #endif
-            if (cansee(mtmp->mx, mtmp->my) && flags.verbose)
-                pline("%s picks up %s.", Monnam(mtmp),
-                      (distu(mtmp->mx, mtmp->my) <=
-                       5) ? doname(otmp) : distant_name(otmp, doname));
-            obj_extract_self(otmp);
+        if (!otmp->mbknown && otmp->otyp != ICE_BOX) {
+            /* we don't know if it is trapped or not, use SDD or detect
+               unseen if we can */
+            if (mon_castable(mon, SPE_DETECT_UNSEEN, TRUE) > 80) {
+                boxuse.spell = SPE_DETECT_UNSEEN;
+                boxuse.use = MUSE_SPE;
+            } else
+                find_item_obj(mon, mon->minvent, &boxuse,
+                              FALSE, WAN_SECRET_DOOR_DETECTION);
+            if (boxuse.use)
+                return !!use_item(mon, &boxuse);
+        }
+        if (otmp->mbknown && otmp->otrapped) /* container is trapped */
+            continue; /* no untrapping for now */
+        /* if we're levitating at will, probe the chest for good stuff */
+        if (levitates(mon) && levitates_at_will(mon, TRUE, FALSE)) {
+            /* find and use probing if we can */
+            if (find_item_obj(mon, mon->minvent, &boxuse,
+                              FALSE, WAN_PROBING)) {
+                boxuse.z = 1; /* zap downwards */
+                return !!use_item(mon, &boxuse);
+            }
+        }
+        /* now, use the usual item pickup routines */
+    }
+    return mpickstuff_dopickup(mon, NULL, autopickup);
+}
+
+/* Monster item pickups -- actual pickups. This is called recursively once for
+   containers (but wont dig deeper than one for now) */
+static boolean
+mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup)
+{
+    struct obj *obj, *nobj; /* object iterators */
+    int picked; /* amount of already picked up items */
+    struct obj *pickobj; /* used for messages (potion of X, several potions, etc) */
+    int vanish; /* amount of vanished items from a cursed BoH */
+    if (!container || !mon->dlevel->objects[mon->mx][mon->my])
+        return FALSE;
+
+    boolean bag;
+    boolean cursed_boh = FALSE; /* maybe zap cancellation later */
+    struct musable muse; /* unlocking tool, or cancellation for cursed BoH */
+    muse.x = 0;
+    muse.y = 0;
+    muse.z = 0;
+    muse.obj = NULL;
+    muse.tobj = NULL;
+    muse.spell = 0;
+    muse.use = 0;
+
+    for (obj = (container ? (Has_contents(container) ? container->cobj : NULL) :
+                mon->dlevel->objects[mon->mx][mon->my]); obj; obj = nobj) {
+        nobj = container ? obj->nobj : obj->nexthere;
+        /* if this is a cursed BoH, 1/13 of the items vanishes, but only
+           if the monster isn't levitating (otherwise it will unlevi before
+           looting the bag) */
+        if (container && container->otyp == BAG_OF_HOLDING && container->cursed &&
+            !levitates(mon) && !rn2(13)) {
+            obj_extract_self(obj);
+            obfree(obj, NULL);
+            vanish++;
+            container->mbknown = 1; /* monster knows BUC now... */
+            cursed_boh = TRUE;
+            if (canseemon(mon)) {
+                makeknown(BAG_OF_HOLDING);
+                container->bknown = 1; /* and so do you, if you saw it happen */
+            }
+            continue;
+        }
+#ifdef INVISIBLE_OBJECTS
+        if (obj->oinvis && !see_invisible(mtmp))
+            continue;
+#endif
+        /* For bags, monsters only loot them if they aren't already interested in
+           picking the bag up instead */
+        bag = (obj->otyp == SACK || obj->otyp == OILSKIN_SACK ||
+               obj->otyp == BAG_OF_HOLDING); /* not tricks */
+        if ((Is_box(obj) || obj->otyp == ICE_BOX || bag) &&
+            !autopickup) {
+            if (picked)
+                continue; /* can't do container work if we are picking up items already */
+            if (container)
+                continue; /* prevent looting of containers inside other ones for now... */
+            if (is_animal(mon->data) || mindless(mon->data) || nohands(mon->data))
+                continue; /* only "intelligent" monsters loot containers */
+            if (obj->mbknown &&
+                ((obj->otyp == BAG_OF_HOLDING && obj->cursed) ||
+                 (!bag && obj->otrapped))) {
+                if (bag)
+                    cursed_boh = TRUE;
+                continue; /* avoid known trapped chests or cursed bags of holding */
+            }
+            /* try to use the chest */
+            if (!bag || !monster_would_take_item(mon, obj) ||
+                !can_carry(mon, obj)) {
+                if (mpickstuff_dopickup(mon, obj, autopickup))
+                    return TRUE;
+                continue; /* ignore the container */
+            }
+        }
+        /* Nymphs take everything.  Most monsters don't pick up corpses. */
+        if (monster_would_take_item(mon, obj)) {
+            if (obj->otyp == CORPSE && mon->data->mlet != S_NYMPH &&
+                /* let a handful of corpse types thru to can_carry() */
+                !touch_petrifies(&mons[obj->corpsenm]) &&
+                obj->corpsenm != PM_LIZARD && !acidic(&mons[obj->corpsenm]))
+                continue;
+            if (!touch_artifact(obj, mon))
+                continue;
+            if (!can_carry(mon, obj))
+                continue;
+            if (!picked)
+                pickobj = obj;
+            else if (pickobj->oclass != obj->oclass)
+                pickobj = NULL; /* sentinel value for "several item classes */
+            /* allow "(several/etc) corpses by letting other food override corpses */
+            else if (obj->otyp != pickobj->otyp &&
+                     (pickobj->otyp == CORPSE || obj->otyp == CORPSE))
+                pickobj = (obj->otyp == CORPSE ? pickobj : obj);
+            picked++;
+            /* if we are levitating, or dealing with a locked/trapped chest,
+               we aren't actually managing objects yet */
+            if (levitates(mon) ||
+                (container && (container->olocked || container->otrapped)))
+                continue;
+            obj_extract_self(obj);
             /* unblock point after extract, before pickup */
-            if (otmp->otyp == BOULDER)
-                unblock_point(otmp->ox, otmp->oy);      /* vision */
-            mpickobj(mtmp, otmp);       /* may merge and free otmp */
-            m_dowear(mtmp, FALSE);
-            newsym(mtmp->mx, mtmp->my);
-            return TRUE;        /* pick only one object */
+            if (obj->otyp == BOULDER)
+                unblock_point(obj->ox, obj->oy); /* vision */
+            mpickobj(mon, obj); /* may merge and free obj */
+            newsym(mon->mx, mon->my);
+        }
+    }
+    if (vanish) {
+        if (canseemon(mon))
+            pline("You barely notice %s item%s disappearing!",
+                  vanish > 5 ? "several" :
+                  vanish > 1 ? "a few" :
+                  "an", vanish != 1 ? "s" : "");
+        obj->owt = weight(obj);
+    }
+    if (picked || (container && !container->mknown)) {
+        if (levitates(mon) && levitates_at_will(mon, TRUE, FALSE))
+            return !!mon_remove_levitation(mon, FALSE);
+        if (container && container->olocked) {
+            if (find_unlocker(mon, &muse)) {
+                muse.z = 1; /* use downwards */
+                muse.tobj = obj; /* for MUSE_KEY to figure out what container to open */
+                return !!use_item(mon, &muse);
+            }
+            /* can't open chest, so ignore it, but set mknown to prevent pathfinding to
+               the chest in the future w/o a key */
+            obj->mknown = 1;
+            return FALSE;
+        }
+        if (container && container->otrapped) {
+            if (canseemon(mon))
+                pline("%s carefully opens %s...", Monnam(mon),
+                      distant_name(container, doname));
+            chest_trap(mon, container, FINGER, FALSE);
+            return TRUE; /* waste a turn */
+        }
+        if (container)
+            container->mknown = 1; /* monster knows content now */
+        if (picked) {
+            /* TODO: maybe make the oclass/etc checks into a common function */
+            if (canseemon(mon))
+                pline("%s picks up %s%s from %s.", Monnam(mon),
+                      picked > 5 ? "several" :
+                      picked > 1 ? "a few" : "",
+                      picked == 1 ? distant_name(pickobj, doname) :
+                      !pickobj ? "items" :
+                      pickobj->oclass == WEAPON_CLASS ? "weapons" :
+                      pickobj->oclass == ARMOR_CLASS ? "equipment" :
+                      pickobj->oclass == SCROLL_CLASS ? "scrolls" :
+                      pickobj->oclass == POTION_CLASS ? "potions" :
+                      pickobj->otyp == CORPSE ? "corpses" :
+                      pickobj->oclass == FOOD_CLASS ? "comestibles" :
+                      pickobj->oclass == RING_CLASS ? "rings" :
+                      pickobj->oclass == SPBOOK_CLASS ? "spellbooks" :
+                      pickobj->oclass == AMULET_CLASS ? "amulets" :
+                      "items", container ? distant_name(container, doname) :
+                      "the floor");
+            return TRUE; /* picking up items takes time */
+        }
+    }
+    if (cursed_boh) { /* there is a cursed BoH here, maybe we can cancel it */
+        if (find_item_obj(mon, mon->minvent, &muse,
+                          FALSE, WAN_CANCELLATION)) {
+            muse.z = 1;
+            return use_item(mon, &muse);
+        }
+        if (mon_castable(mon, SPE_CANCELLATION, TRUE) > 80) {
+            muse.z = 1;
+            muse.spell = SPE_CANCELLATION;
+            muse.use = MUSE_SPE;
+            return use_item(mon, &muse);
         }
     }
     return FALSE;

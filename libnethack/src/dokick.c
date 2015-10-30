@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -552,14 +552,14 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
                 kickobj->olocked = 0;
                 kickobj->obroken = 1;
                 if (otrp)
-                    chest_trap(kickobj, LEG, FALSE);
+                    chest_trap(&youmonst, kickobj, LEG, FALSE);
                 return 1;
             }
         } else {
             if (!rn2(3) || (martial() && !rn2(2))) {
                 pline("The lid slams open, then falls shut.");
                 if (otrp)
-                    chest_trap(kickobj, LEG, FALSE);
+                    chest_trap(&youmonst, kickobj, LEG, FALSE);
                 return 1;
             }
         }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -26,7 +26,6 @@ static void mreadmsg(struct monst *, struct obj *);
 static void mquaffmsg(struct monst *, struct obj *);
 static void mon_break_wand(struct monst *, struct obj *);
 static int find_item_score(struct monst *, struct obj *, coord *);
-static boolean find_item_obj(struct monst *, struct obj *, struct musable *, boolean, int);
 static int find_item_single(struct monst *, struct obj *, boolean, struct musable *,
                             boolean, boolean);
 static boolean mon_allowed(int);
@@ -164,9 +163,13 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
     Role_switch = saverole;
     otmp->bknown = savebknown;
 
-    if (vismon)
-        pline("%s reads %s!", Monnam(mtmp), onambuf);
-    else
+    if (vismon) {
+        if (blind(mtmp) || !haseyes(mtmp->data))
+            pline("%s pronounces the formula on %s!",
+                  Monnam(mtmp), onambuf);
+        else
+            pline("%s reads %s!", Monnam(mtmp), onambuf);
+    } else
         You_hear("%s reading %s.",
                  x_monnam(mtmp, ARTICLE_A, NULL,
                           (SUPPRESS_IT | SUPPRESS_INVISIBLE | SUPPRESS_SADDLE),
@@ -903,6 +906,7 @@ find_unlocker(struct monst *mon, struct musable *m)
     m->y = 0;
     m->z = 0;
     m->obj = NULL;
+    m->tobj = NULL;
     m->spell = 0;
     m->use = 0;
 
@@ -1363,7 +1367,7 @@ find_item(struct monst *mon, struct musable *m)
     return FALSE;
 }
 
-static boolean
+boolean
 find_item_obj(struct monst *mon, struct obj *chain, struct musable *m,
               boolean close, int specobj)
 {
@@ -1422,9 +1426,12 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m,
 
             /* This container is inside another, and the monster doesn't
                know what is present. inside. Take it out if we're safe. */
-            if (!obj->mknown && chain != mon->minvent && !close) {
-                m->use = MUSE_CONTAINER;
-                m->obj = obj;
+            if (!obj->mknown && chain != mon->minvent) {
+                if (!close) {
+                    m->use = MUSE_CONTAINER;
+                    m->obj = obj;
+                } else /* we aren't safe, ignore the chained bag for now */
+                    continue;
             } else if ((obj->mknown = 1) &&
                        find_item_obj(mon, obj->cobj, m, close, specobj)) {
                 /* obj->mknown = 1 to mark the container as recognized -- monster knows what's inside */
@@ -1567,16 +1574,24 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell,
          (oclass == TOOL_CLASS &&
           !is_weptool(obj) && objects[otyp].oc_charged)) &&
         spe <= 0 && obj->mknown &&
-        (otyp != WAN_WISHING || !recharged))
+        (otyp != WAN_WISHING || !recharged || close)) /* wrest wishing if safe */
         return 0;
 
-    if (oclass == SCROLL_CLASS && !obj->mknown &&
+    /* mknown -> monster knows appearance (only allows scrolls, not books,
+       similar to players) */
+    if (((oclass == SCROLL_CLASS && !obj->mknown) ||
+         (!spell && oclass == SPBOOK_CLASS)) &&
         (blind(mon) || !haseyes(mon->data)))
         return 0;
 
     /* END SANITY CHECKS */
     if (specific)
         return 1;
+
+    /* set mknown on scrolls if we aren't blind (to mark known appearance).
+       TODO: figure out a better place to do it */
+    if (oclass == SCROLL_CLASS && !blind(mon) && haseyes(mon->data))
+        obj->mknown = 1;
 
     /* spellbooks for spells we haven't learned yet */
     if (!spell && oclass == SPBOOK_CLASS)
@@ -1720,6 +1735,8 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell,
     if (otyp == POT_SEE_INVISIBLE && !see_invisible(mon) && !cursed)
         return 1;
 
+    /* If peaceful, only selfinvis if hero can't see invisible.
+       There is a similar check in choose_dirtarget. */
     if ((otyp == WAN_MAKE_INVISIBLE ||
          otyp == SPE_INVISIBILITY ||
          otyp == POT_INVISIBILITY) &&
@@ -1760,18 +1777,16 @@ find_item_single(struct monst *mon, struct obj *obj, boolean spell,
         for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
             if (mon->mw && mon->mw == otmp)
                 continue;
-            if (!otmp->owornmask)
-                continue;
-            /* Enchant/destroy armor doesn't affect rings */
-            if (otmp->owornmask & W_RING)
+            /* Enchant/destroy armor only affects worn armor */
+            if (!(otmp->owornmask & W_ARMOR))
                 continue;
             /* only use destroy armor if all worn armor is cursed */
             if (otyp == SCR_DESTROY_ARMOR && (!otmp->cursed || otmp->spe > 0))
                 return 0;
-            ret = 1;
-            /* avoid enchanting if there's something >= +3 */
+            /* avoid enchanting if there's something > +3 */
             if (otyp == SCR_ENCHANT_ARMOR && otmp->spe > 3)
                 return 0;
+            ret = 1;
         }
         return ret;
     }
