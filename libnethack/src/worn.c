@@ -270,7 +270,8 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
         case os_ringr:
             /* Monsters can put on only the following rings. */
             if (obj->oclass != RING_CLASS ||
-                (obj->otyp != RIN_INCREASE_ACCURACY &&
+                (obj->otyp != RIN_GAIN_CONSTITUTION &&
+                 obj->otyp != RIN_INCREASE_ACCURACY &&
                  obj->otyp != RIN_INCREASE_DAMAGE &&
                  obj->otyp != RIN_PROTECTION &&
                  obj->otyp != RIN_REGENERATION &&
@@ -800,17 +801,33 @@ extra_pref(const struct monst *mon, struct obj *obj)
         obj->oclass != AMULET_CLASS)
         return 0;
 
-    /* Charge-based rings (increase X/protection) is seperate */
-    if (obj->otyp == RIN_INCREASE_ACCURACY ||
+    /* Charge-based rings (increase X/protection) is seperate.
+       Monsters currently don't use adornment or gain strength. */
+    if (obj->otyp == RIN_ADORNMENT ||
+        obj->otyp == RIN_GAIN_STRENGTH ||
+        obj->otyp == RIN_GAIN_CONSTITUTION ||
+        obj->otyp == RIN_INCREASE_ACCURACY ||
         obj->otyp == RIN_INCREASE_DAMAGE ||
         obj->otyp == RIN_PROTECTION) {
-        if (obj->spe <= 0 && obj->mknown)
+        int desire = 10;
+        /* attribute rings are lower priority */
+        if (obj->otyp == RIN_ADORNMENT ||
+            obj->otyp == RIN_GAIN_STRENGTH ||
+            obj->otyp == RIN_GAIN_CONSTITUTION)
+            desire -= 5;
+        /* nymphs or foocubi like adornment */
+        if (obj->otyp == RIN_ADORNMENT &&
+            (mon->data->mlet == S_NYMPH ||
+             monsndx(mon->data) == PM_SUCCUBUS ||
+             monsndx(mon->data) == PM_INCUBUS))
+            desire += 20;
+        else if (obj->spe <= 0 && obj->mknown) /* even if they're badly enchanted */
             return 0;
         if (!obj->mknown && !obj->mbknown)
-            return 13;
-        if (obj->mbknown && obj->cursed)
+            return desire + 3;
+        if (!obj->mknown && obj->mbknown && obj->cursed)
             return 0; /* we don't know +N, but we know it's cursed, so avoid it */
-        return (10 + 3*(obj->spe));
+        return (desire + 3*(obj->spe));
     }
 
     /* If something gives a redundant property, abort. */

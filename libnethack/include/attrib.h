@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright 1988, Mike Stephenson                                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -21,9 +21,8 @@
 # define A_MAX      6   /* used in rn2() selection of attrib */
 
 # define ABASE(x)   (u.acurr.a[x])
-# define ABON(x)    (u.abon.a[x])
 # define AEXE(x)    (u.aexe.a[x])
-# define ACURR(x)   (acurr(x))
+# define ACURR(x)   (acurr(&youmonst, x))
 # define ACURRSTR   (acurrstr())
 /* should be: */
 /* #define ACURR(x) (ABON(x) + ATEMP(x) + (Upolyd  ? MBASE(x) : ABASE(x)) */
@@ -32,7 +31,7 @@
 # define MMAX(x)    (u.mamax.a[x])
 
 # define ATEMP(x)   (u.atemp.a[x])
-# define ATIME(x)   (u.atime.a[x])
+# define ATIME(x)   (u.atime.a[x]) /* TODO: is this actually used? */
 
 /* KMH -- Conveniences when dealing with strength constants */
 # define STR18(x)   (18+(x))    /* 18/xx */

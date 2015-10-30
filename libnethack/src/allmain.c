@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -708,7 +708,6 @@ you_moved(void)
 
     do {        /* hero can't move this turn loop */
         wtcap = encumber_msg();
-        calc_attr_bonus();
 
         flags.mon_moving = TRUE;
         do {
@@ -1071,9 +1070,6 @@ special_vision_handling(void)
 static void
 pre_move_tasks(boolean didmove, boolean loading_game)
 {
-    /* recalc attribute bonuses from items */
-    calc_attr_bonus();
-
     /* we need to do this before vision handling; clairvoyance can set
        vision_full_recalc */
     if (didmove && Clairvoyant && !In_endgame(&u.uz) && !(moves % 15) &&

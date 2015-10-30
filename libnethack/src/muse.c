@@ -2680,9 +2680,10 @@ searches_for_item(const struct monst *mon, struct obj *obj)
         return (!m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));
     case RING_CLASS:
         /* Should match the list in m_dowear_type */
-        if (typ == RIN_PROTECTION ||
+        if (typ == RIN_GAIN_CONSTITUTION ||
+            typ == RIN_INCREASE_ACCURACY ||
             typ == RIN_INCREASE_DAMAGE ||
-            typ == RIN_INCREASE_ACCURACY)
+            typ == RIN_PROTECTION)
             return (obj->spe > 0 || !obj->mknown);
         return (!m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));
     default:

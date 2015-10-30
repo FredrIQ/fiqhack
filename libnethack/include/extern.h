@@ -151,7 +151,7 @@ extern void init_attr(int);
 extern void redist_attr(void);
 extern void adjabil(int, int);
 extern int newhp(void);
-extern schar acurr(int);
+extern schar acurr(const struct monst *, int);
 extern schar acurrstr(void);
 extern void adjalign(int);
 extern void calc_attr_bonus(void);
@@ -389,7 +389,6 @@ extern struct obj *some_armor(struct monst *);
 extern struct obj *stuck_ring(struct obj *, int);
 extern struct obj *unchanger(void);
 extern int destroy_arm(struct monst *, struct obj *);
-extern void adj_abon(struct obj *, schar);
 
 /* ### dog.c ### */
 

@@ -121,10 +121,10 @@ onscary(int x, int y, struct monst * mtmp)
 void
 mon_regen(struct monst *mon, boolean digest_meal)
 {
-    /* Same HP regeneration speed as a player with 12 Con */
+    /* Monster constitution is counted as 12 + ring bonuses/etc */
     if (mon->mhp < mon->mhpmax) {
         if (mon->m_lev > 9 && (moves % 3))
-            mon->mhp += min((mon->m_lev - 9), rnd(12));
+            mon->mhp += min((mon->m_lev - 9), rnd(acurr(mon, A_CON)));
         else if (regenerates(mon) || (mon->m_lev <= 9 && !(moves % (42 / (mon->m_lev + 2) + 1))))
             mon->mhp++;
         if (mon->mhp > mon->mhpmax)

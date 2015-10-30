@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -988,33 +988,7 @@ void
 cancel_item(struct obj *obj)
 {
     boolean holy = (obj->otyp == POT_WATER && (obj->blessed || obj->cursed));
-    boolean obj_worn_as_ring =
-        obj_worn_on(obj, os_ringl) || obj_worn_on(obj, os_ringr);
 
-    switch (obj->otyp) {
-    case RIN_GAIN_STRENGTH:
-        if (obj_worn_as_ring)
-            ABON(A_STR) -= obj->spe;
-        break;
-    case RIN_GAIN_CONSTITUTION:
-        if (obj_worn_as_ring)
-            ABON(A_CON) -= obj->spe;
-        break;
-    case RIN_ADORNMENT:
-        if (obj_worn_as_ring)
-            ABON(A_CHA) -= obj->spe;
-        break;
-    case GAUNTLETS_OF_DEXTERITY:
-        if (obj_worn_on(obj, os_armg))
-            ABON(A_DEX) -= obj->spe;
-        break;
-    case HELM_OF_BRILLIANCE:
-        if (obj_worn_on(obj, os_armh))
-            ABON(A_INT) -= obj->spe;
-            ABON(A_WIS) -= obj->spe;
-        break;
-        /* case RIN_PROTECTION: not needed */
-    }
     if (objects[obj->otyp].oc_magic ||
         (obj->spe &&
          (obj->oclass == ARMOR_CLASS || obj->oclass == WEAPON_CLASS ||
@@ -1071,9 +1045,6 @@ cancel_item(struct obj *obj)
 boolean
 drain_item(struct obj * obj)
 {
-    boolean obj_worn_as_ring =
-        obj_worn_on(obj, os_ringl) || obj_worn_on(obj, os_ringr);
-
     /* Is this a charged/enchanted object? */
     if (!obj ||
         (!objects[obj->otyp].oc_charged && obj->oclass != WEAPON_CLASS &&
@@ -1090,29 +1061,6 @@ drain_item(struct obj * obj)
     /* Drain the object and any implied effects */
     obj->spe--;
 
-    switch (obj->otyp) {
-    case RIN_GAIN_STRENGTH:
-        if (obj_worn_as_ring)
-            ABON(A_STR)--;
-        break;
-    case RIN_GAIN_CONSTITUTION:
-        if (obj_worn_as_ring)
-            ABON(A_CON)--;
-        break;
-    case RIN_ADORNMENT:
-        if (obj_worn_as_ring)
-            ABON(A_CHA)--;
-        break;
-    case HELM_OF_BRILLIANCE:
-        if (obj_worn_on(obj, os_armh))
-            ABON(A_INT)--;
-            ABON(A_WIS)--;
-        break;
-    case GAUNTLETS_OF_DEXTERITY:
-        if (obj_worn_on(obj, os_armg))
-            ABON(A_DEX)--;
-        break;
-    }
     if (carried(obj))
         update_inventory();
     return TRUE;

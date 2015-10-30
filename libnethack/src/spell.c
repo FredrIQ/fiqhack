@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -520,21 +520,10 @@ int
 study_rate(struct monst *mon, struct obj *spellbook)
 {
     struct obj *eyewear = which_armor(mon, os_tool);
-    int intel = 11;
     boolean you = (mon == &youmonst);
-    boolean spellcaster = FALSE;
-    if ((!you && spellcaster(mon->data)) ||
-        (you && Role_if(PM_WIZARD)))
-        spellcaster = TRUE;
-    if (spellcaster)
-        intel = 18;
-    if (mon->iswiz)
-        intel = 20;
-    if (you)
-        intel = ACURR(A_INT);
     int level = you ? u.ulevel : mon->m_lev;
     int read_ability =
-        intel + 4 + level / 2 -
+        acurr(mon, A_INT) + 4 + level / 2 -
         2 * objects[spellbook->otyp].oc_level +
         ((eyewear && eyewear->otyp == LENSES) ? 2 : 0);
     return read_ability;
@@ -1489,7 +1478,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
          * b) Wizards have spent their life at magic and
          * understand quite well how to cast spells.
          */
-        intell = acurr(A_INT);
+        intell = ACURR(A_INT);
         if (!Role_if(PM_WIZARD))
             intell = 10;
         if (intell >= 17)
@@ -1843,19 +1832,17 @@ percent_success(const struct monst *mon, int spell)
 
     /* Calculate intrinsic ability (splcaster) */
 
+    statused = acurr(mon, you ? urole.spelstat : A_INT);
     if (you) {
         splcaster = urole.spelbase;
         special = urole.spelheal;
-        statused = ACURR(urole.spelstat);
     } else if (!mon->iswiz) {
         splcaster = spellcaster(mon->data) ? 3 : 8;
         special = mon->data == &mons[PM_NURSE] ? -3 : -1;
-        statused = spellcaster(mon->data) ? 18 : 11;
     } else {
         /* Wizard of Yendor has superior spellcasting skills */
         splcaster = 1;
         special = -3;
-        statused = 20;
     }
     struct obj *arm = which_armor(mon, os_arm);
     struct obj *armc = which_armor(mon, os_armc);
@@ -1876,17 +1863,9 @@ percent_success(const struct monst *mon, int spell)
     if (arms)
         splcaster += spelshld;
 
-    if (armh && is_metallic(armh)) {
+    if (armh && is_metallic(armh))
         if (armh->otyp != HELM_OF_BRILLIANCE)
             splcaster += uarmhbon;
-        else if (!you) { /* HoB boost was not factored in above if !you */
-            statused += armh->spe;
-            if (statused > 25)
-                statused = 25;
-            else if (statused < 3)
-                statused = 3;
-        }
-    }
     if (armg && is_metallic(armg))
         splcaster += uarmgbon;
     if (armf && is_metallic(armf))

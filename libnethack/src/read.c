@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -968,7 +968,6 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                 otmp->blessed = sobj->blessed;
             if (s) {
                 otmp->spe += s;
-                adj_abon(otmp, s);
                 *known = otmp->known;
             }
 
@@ -1016,17 +1015,9 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                     pline("%s %s %s.", your, xname(otmp), otense(otmp, "vibrate"));
                 if (otmp->spe >= -6) {
                     otmp->spe--;
-                    if (you) {
-                        if (otmp->otyp == HELM_OF_BRILLIANCE) {
-                            ABON(A_INT)--;
-                            ABON(A_WIS)--;
-                            makeknown(otmp->otyp);
-                        }
-                        if (otmp->otyp == GAUNTLETS_OF_DEXTERITY) {
-                            ABON(A_DEX)--;
-                            makeknown(otmp->otyp);
-                        }
-                    }
+                    if (you && (otmp->otyp == HELM_OF_BRILLIANCE ||
+                                otmp->otyp == GAUNTLETS_OF_DEXTERITY))
+                        makeknown(otmp->otyp);
                 }
                 set_property(mon, STUNNED, rn1(10, 10), FALSE);
             }

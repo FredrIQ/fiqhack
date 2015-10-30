@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,7 +16,7 @@ const char *const plusattr[] = {
     "weak", "stupid", "foolish", "clumsy", "fragile", "repulsive"
 };
 
-
+static int attr_bonus(const struct monst *, int);
 static void exerper(void);
 
 /* adjust an attribute; return TRUE if change is made, FALSE otherwise
@@ -523,25 +523,45 @@ newhp(void)
     return (hp <= 0) ? 1 : hp;
 }
 
+/* This works on monsters, but since monsters lack proper attributes,
+   should be used sparingly. */
 schar
-acurr(int x)
+acurr(const struct monst *mon, int x)
 {
-    int tmp = (u.abon.a[x] + u.atemp.a[x] + u.acurr.a[x]);
+    boolean you = (mon == &youmonst);
+    int tmp = 0;
+    if (you) {
+        tmp += u.atemp.a[x];
+        tmp += u.acurr.a[x];
+    } else {
+        tmp = 11;
+        if (x == A_STR && strongmonst(mon->data))
+            tmp = STR18(100);
+        if (x == A_CON)
+            tmp++; /* more HP regeneration */
+        if (x == A_INT && spellcaster(mon->data))
+            tmp = 18;
+        if (mon->iswiz && (x == A_INT || x == A_WIS))
+            tmp = 20;
+    }
+    tmp += attr_bonus(mon, x);
 
     if (x == A_STR) {
-        if (uarmg && uarmg->otyp == GAUNTLETS_OF_POWER)
+        struct obj *armg = which_armor(mon, os_armg);
+        if (armg && armg->otyp == GAUNTLETS_OF_POWER)
             return 125;
         else
             return (schar) ((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
     } else if (x == A_CHA) {
         if (tmp < 18 &&
-            (youmonst.data->mlet == S_NYMPH || u.umonnum == PM_SUCCUBUS ||
-             u.umonnum == PM_INCUBUS))
+            (mon->data->mlet == S_NYMPH || monsndx(mon->data) == PM_SUCCUBUS ||
+             monsndx(mon->data) == PM_INCUBUS))
             return 18;
     } else if (x == A_INT || x == A_WIS) {
+        struct obj *armh = which_armor(mon, os_armh);
         /* yes, this may raise int/wis if player is sufficiently stupid.  there
            are lower levels of cognition than "dunce". */
-        if (uarmh && uarmh->otyp == DUNCE_CAP)
+        if (armh && armh->otyp == DUNCE_CAP)
             return 6;
     }
     return (schar) ((tmp >= 25) ? 25 : (tmp <= 3) ? 3 : tmp);
@@ -594,54 +614,42 @@ beautiful(void)
         (poly_gender() == 1 ? "beautiful" : "handsome") : "ugly";
 }
 
-/* make sure u.abon is correct; it is dead-reckoned during the move,
- * but this produces some incorrect edge cases. */
-void
-calc_attr_bonus(void)
+/* Calculate attribute bonus from worn armor/rings/etc. */
+static int
+attr_bonus(const struct monst *mon, int attrib)
 {
-    int i, spe;
+    boolean you = (mon == &youmonst);
+    int ascore = 0;
+    struct obj *obj;
+    int otyp;
 
-    struct obj *abon_items[] = {        /* item slots that might affect abon */
-        uarmh /* helmet */ ,
-        uarmg /* gloves */ ,
-        uright /* right ring */ ,
-        uleft /* left ring */ ,
-    };
-
-    memset(u.abon.a, 0, sizeof (u.abon.a));
-
-    for (i = 0; i < SIZE(abon_items); i++) {
-        if (!abon_items[i])
+    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+        /* is it worn properly */
+        if (!(obj->owornmask & W_WORN))
             continue;
-
-        spe = abon_items[i]->spe;
-        switch (abon_items[i]->otyp) {
-        case RIN_GAIN_STRENGTH:
-            ABON(A_STR) += spe;
-            break;
-
-        case RIN_GAIN_CONSTITUTION:
-            ABON(A_CON) += spe;
-            break;
-
-        case RIN_ADORNMENT:
-            ABON(A_CHA) += spe;
-            break;
-
-        case GAUNTLETS_OF_DEXTERITY:
-            ABON(A_DEX) += spe;
-            break;
-
-        case HELM_OF_BRILLIANCE:
-            ABON(A_INT) += spe;
-            ABON(A_WIS) += spe;
-            break;
-
-        case CORNUTHAUM:
-            ABON(A_CHA) += (Role_if(PM_WIZARD) ? 1 : -1);
-            break;
-        }
+        otyp = obj->otyp;
+        /* check if the equipment grants any bonus */
+        if ((attrib == A_STR &&
+             (otyp == RIN_GAIN_STRENGTH)) ||
+            (attrib == A_CON &&
+             (otyp == RIN_GAIN_CONSTITUTION)) ||
+            (attrib == A_CHA &&
+             (otyp == RIN_ADORNMENT)) ||
+            (attrib == A_DEX &&
+             (otyp == GAUNTLETS_OF_DEXTERITY)) ||
+            (attrib == A_INT &&
+             (otyp == HELM_OF_BRILLIANCE)) ||
+            (attrib == A_WIS &&
+             (otyp == HELM_OF_BRILLIANCE)))
+            ascore += obj->spe;
+        /* cornuthaums give +1/-1 cha depending on
+           if you're a spellcaster or not */
+        if (attrib == A_CHA && otyp == CORNUTHAUM)
+            ascore += ((you && Role_if(PM_WIZARD)) ||
+                       (!you && spellcaster(mon->data))) ?
+                1 : -1;
     }
+    return ascore;
 }
 
 /*attrib.c*/

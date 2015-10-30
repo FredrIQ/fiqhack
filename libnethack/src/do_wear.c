@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -186,7 +186,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     if (!o)
         return FALSE; /* nothing to do */
     boolean equipping = otmp && otmp != &zeroobj;
-    int equipsgn = equipping ? 1 : -1;
     int otyp = o->otyp;
     int prop = objects[otyp].oc_oprop;
     /* TODO: Effects that are redundant to racial properties. I'm not sure if
@@ -194,7 +193,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     boolean redundant = !!(has_property(&youmonst, prop) & ~W_MASK(slot));
     redundant = redundant && !worn_blocked(prop);
     boolean destroyed = 0;
-    int which, old_attrib;
 
     /* Change the item in the slot. */
     if (equipping) {
@@ -288,14 +286,11 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case ORCISH_HELM:
     case HELM_OF_TELEPATHY:
         break;
-    case HELM_OF_BRILLIANCE:
-        adj_abon(o, equipsgn * o->spe);
-        break;
     case CORNUTHAUM:
         /* people think marked wizards know what they're talking about, but it
            takes trained arrogance to pull it off, and the actual enchantment
-           of the hat is irrelevant. */
-        ABON(A_CHA) += equipsgn * (Role_if(PM_WIZARD) ? 1 : -1);
+           of the hat is irrelevant.
+           This increases (Wizards) or decrease charisma, so auto-ID it */
         makeknown(otyp);
         break;
     case HELM_OF_OPPOSITE_ALIGNMENT:
@@ -325,8 +320,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         } else if (equipping && otyp == DUNCE_CAP) {
             pline("You feel %s.",       /* track INT change; ignore WIS */
                   ACURR(A_INT) <=
-                  (ABASE(A_INT) + ABON(A_INT) +
-                   ATEMP(A_INT)) ? "like sitting in a corner" : "giddy");
+                  (ABASE(A_INT) + ATEMP(A_INT)) ?
+                  "like sitting in a corner" : "giddy");
         } else if (otyp == HELM_OF_OPPOSITE_ALIGNMENT) {
             pline("Your mind oscillates briefly.");
         }
@@ -340,11 +335,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case GAUNTLETS_OF_POWER:
         makeknown(otyp);
         encumber_msg();
-        break;
-    case GAUNTLETS_OF_DEXTERITY:
-        if (o->spe)
-            makeknown(otyp);
-        adj_abon(o, equipsgn * o->spe);
         break;
 
         /* Amulets */
@@ -409,37 +399,19 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case RIN_INCREASE_ACCURACY:
     case RIN_INCREASE_DAMAGE:
         break;
+    case HELM_OF_BRILLIANCE:
+    case GAUNTLETS_OF_DEXTERITY:
     case RIN_GAIN_STRENGTH:
-        which = A_STR;
-        goto adjust_attrib;
     case RIN_GAIN_CONSTITUTION:
-        which = A_CON;
-        goto adjust_attrib;
     case RIN_ADORNMENT:
-        which = A_CHA;
-    adjust_attrib:
-        old_attrib = ACURR(which);
-        ABON(which) += equipsgn * o->spe;
-        if (ACURR(which) != old_attrib) {
-            makeknown(otyp);
-            if (ACURR(which) != 3 && ACURR(which) != 25)
-                o->known = 1;
-            update_inventory();
-        } else if (objects[otyp].oc_name_known &&
-                   old_attrib != 3 && old_attrib != 25) {
-            /* The player knows it's +0 */
+    case RIN_PROTECTION:
+        if (o->spe || objects[otyp].oc_name_known) {
+            makeknown(o->otyp);
             o->known = 1;
             update_inventory();
         }
         break;
     case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
-        break;
-    case RIN_PROTECTION:
-        if (o->spe || objects[otyp].oc_name_known) {
-            makeknown(RIN_PROTECTION);
-            o->known = 1;
-            update_inventory();
-        }
         break;
 
         /* tools */
@@ -2032,21 +2004,4 @@ destroy_arm(struct monst *mon, struct obj *obj)
     return 1;
 }
 
-
-void
-adj_abon(struct obj *otmp, schar delta)
-{
-    if (uarmg && uarmg == otmp && otmp->otyp == GAUNTLETS_OF_DEXTERITY &&
-        delta) {
-        makeknown(uarmg->otyp);
-        ABON(A_DEX) += (delta);
-    }
-    if (uarmh && uarmh == otmp && otmp->otyp == HELM_OF_BRILLIANCE && delta) {
-        makeknown(uarmh->otyp);
-        ABON(A_INT) += (delta);
-        ABON(A_WIS) += (delta);
-    }
-}
-
 /*do_wear.c*/
-
