@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -322,7 +322,7 @@ leader_speaks(struct monst *mtmp)
     /* maybe you attacked leader? */
     if (!mtmp->mpeaceful) {
         Qstat(pissed_off) = TRUE;
-        mtmp->mstrategy &= ~STRAT_WAITMASK;     /* end the inaction */
+        mtmp->mstrategy = st_none;
     }
     /* the quest leader might have passed through the portal into the regular
        dungeon; if so, mustn't perform "backwards expulsion" */
@@ -380,12 +380,12 @@ static void
 prisoner_speaks(struct monst *mtmp)
 {
     if (mtmp->data == &mons[PM_PRISONER] &&
-        (mtmp->mstrategy & STRAT_WAITMASK)) {
+        idle(mtmp)) {
         /* Awaken the prisoner */
         if (canseemon(mtmp))
             pline("%s speaks:", Monnam(mtmp));
         verbalize("I'm finally free!");
-        mtmp->mstrategy &= ~STRAT_WAITMASK;
+        mtmp->mstrategy = st_none;
         msethostility(mtmp, FALSE, FALSE); /* TODO: reset alignment? */
 
         /* Your god is happy... */

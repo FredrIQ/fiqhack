@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -42,30 +42,6 @@
 #  include "align.h"
 # endif
 
-/* strategy flags for mstrategy */
-# define STRAT_ARRIVE   0x40000000L     /* just arrived on current level */
-# define STRAT_WAITFORU 0x20000000L     /* do nothing until player disturbs */
-# define STRAT_CLOSE    0x10000000L     /* do nothing until player adjacent */
-# define STRAT_WAITMASK 0x30000000L     /* do nothing until something */
-# define STRAT_ESCAPE   0x08000000L     /* heal, or avoid STRAT_GOAL[XY] */
-
-/* strategies where you move to STRAT_GOAL[XY] for the following reasons: */
-# define STRAT_GROUND   0x04000000L     /* take an item, or just random moves */
-# define STRAT_MONSTR   0x02000000L     /* chase down / attack a monster */
-# define STRAT_PLAYER   0x01000000L     /* chase down / attack the player */
-# define STRAT_TARGMASK 0x07000000L     /* any of the three above cases */
-
-# define STRAT_NONE     0x00000000L     /* tied to a location or random walk */
-# define STRAT_STRATMASK 0x0f000000L
-# define STRAT_XMASK    0x00ff0000L
-# define STRAT_YMASK    0x0000ff00L
-# define STRAT_GOAL     0x000000ffL
-# define STRAT_GOALX(s) ((xchar)((s & STRAT_XMASK) >> 16))
-# define STRAT_GOALY(s) ((xchar)((s & STRAT_YMASK) >> 8))
-# define STRAT(w, x, y, typ) (w | ((long)(x)<<16) | ((long)(y)<<8) | (long)typ)
-
-#if 0
-/* TODO */
 /* Monster strategies */
 enum monstrat {
     st_none,
@@ -77,13 +53,13 @@ enum monstrat {
     st_obj,                             /* take an item */
     st_trap,                            /* going to a trap */
     st_square,                          /* chasing a square in general */
+    st_ascend,                          /* monster is trying to ascend */
     st_wander,                          /* wandering aimlessy */
     st_firsttarget = st_mon,
     st_lasttarget = st_wander,
     st_escape,                          /* escaping from STRAT_GOAL[XY] */
     st_heal,                            /* heal up self (covetous) */
-}
-#endif
+};
 
 struct monst {
     struct monst *nmon; /* next monster in the level monster list */
@@ -97,7 +73,6 @@ struct monst {
     unsigned int mtrapseen;     /* bitmap of traps we've been trapped in */
     unsigned int mlstmv;        /* for catching up with lost time */
 
-    /* TODO: improve mstrategy */
     int mstrategy;              /* Current monster strategy */
     xchar sx, sy;               /* Monster strategy coordinates */
     xchar mstratprio;           /* strategy priority -- what the monster is willing to afford */
@@ -237,8 +212,6 @@ struct monst {
 # define m_mx(mon) ((mon) == &youmonst ? u.ux : (mon)->mx)
 # define m_my(mon) ((mon) == &youmonst ? u.uy : (mon)->my)
 # define m_mz(mon) ((mon) == &youmonst ? &u.uz : &((mon)->dlevel->z))
-# define m_dx(mon) ((mon) == &youmonst ? u.dx : (mon)->dx)
-# define m_dy(mon) ((mon) == &youmonst ? u.dy : (mon)->dy)
 # define m_mhp(mon) ((mon) == &youmonst ? u.uhp : (mon)->mhp)
 # define m_mhpmax(mon) ((mon) == &youmonst ? u.uhpmax : (mon)->mhpmax)
 # define m_mlev(mon) (Upolyd ? mons[u.umonnum].mlevel : (mon)->data->mlevel)
@@ -250,6 +223,15 @@ struct monst {
 # define knows_ux_uy(mon) (((mon)->mux == u.ux && (mon)->muy == u.uy) || \
                            engulfing_u(mon))
 # define aware_of_u(mon)  (isok((mon)->mux, (mon)->muy) || engulfing_u(mon))
+
+/* Strategy helpers */
+# define idle(mon) ((mon)->mstrategy >= st_firstwait && \
+                    (mon)->mstrategy <= st_lastwait)
+# define st_target(mon) ((mon)->sx != COLNO && \
+                         (mon)->mstrategy >= st_firsttarget && \
+                         (mon)->mstrategy <= st_lasttarget)
+# define is_goal(mon, x, y) (st_target(mon) && (mon)->sx == (x) && \
+                             (mon)->sy == (y))
 
 /* More detail on why a monster doesn't sense you: typically used for messages
    that describe where a monster is aiming; also used to determine whether a

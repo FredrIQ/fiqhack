@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,7 +32,7 @@
 # define half_phys_dam(mon)     (has_property(mon, HALF_PHDAM))
 # define displacement(mon)      (has_property(mon, DISPLACED))
 /* displaced: displacement is active right now */
-# define displaced(mon)         (m_dx(mon) != COLNO)
+# define displaced(mon)         (mon->dx != COLNO)
 # define adorned(mon)           (has_property(mon, ADORNED))
 # define regenerates(mon)       (has_property(mon, REGENERATION))
 # define pw_regenerates(mon)    (has_property(mon, ENERGY_REGENERATION))

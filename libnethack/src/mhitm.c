@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -890,14 +890,16 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
         }
         hurtarmor(mdef, ERODE_RUST);
-        mdef->mstrategy &= ~STRAT_WAITFORU;
+        if (mdef->mstrategy == st_waiting)
+            mdef->mstrategy = st_none;
         tmp = 0;
         break;
     case AD_CORR:
         if (cancelled(magr))
             break;
         hurtarmor(mdef, ERODE_CORRODE);
-        mdef->mstrategy &= ~STRAT_WAITFORU;
+        if (mdef->mstrategy == st_waiting)
+            mdef->mstrategy = st_none;
         tmp = 0;
         break;
     case AD_DCAY:
@@ -914,7 +916,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
         }
         hurtarmor(mdef, ERODE_ROT);
-        mdef->mstrategy &= ~STRAT_WAITFORU;
+        if (mdef->mstrategy == st_waiting)
+            mdef->mstrategy = st_none;
         tmp = 0;
         break;
     case AD_STON:
@@ -931,7 +934,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             /* save the name before monster teleports, otherwise we'll get "it" 
                in the suddenly disappears message */
 
-            mdef->mstrategy &= ~STRAT_WAITFORU;
+            if (mdef->mstrategy == st_waiting)
+                mdef->mstrategy = st_none;
             rloc(mdef, TRUE);
             if (vis && !canspotmon(mdef) && mdef != u.usteed)
                 pline("%s suddenly disappears!", mdef_Monnam);
@@ -942,7 +946,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline("%s is put to sleep by %s.", Monnam(mdef), mon_nam(magr));
 
-            mdef->mstrategy &= ~STRAT_WAITFORU;
+            if (mdef->mstrategy == st_waiting)
+                mdef->mstrategy = st_none;
             slept_monst(mdef);
         }
         break;
@@ -953,13 +958,15 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
             mdef->mcanmove = 0;
             mdef->mfrozen = rnd(10);
-            mdef->mstrategy &= ~STRAT_WAITFORU;
+            if (mdef->mstrategy == st_waiting)
+                mdef->mstrategy = st_none;
         }
         break;
     case AD_SLOW:
         if (!cancelled) {
             set_property(mdef, SLOW, tmp, FALSE);
-            mdef->mstrategy &= ~STRAT_WAITFORU;
+            if (mdef->mstrategy == st_waiting)
+                mdef->mstrategy = st_none;
         }
         break;
     case AD_CONF:
@@ -970,7 +977,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline("%s looks confused.", Monnam(mdef));
             set_property(mdef, CONFUSION, tmp, TRUE);
-            mdef->mstrategy &= ~STRAT_WAITFORU;
+            if (mdef->mstrategy == st_waiting)
+                mdef->mstrategy = st_none;
         }
         break;
     case AD_BLND:
@@ -991,7 +999,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline("%s looks %sconfused.", Monnam(mdef),
                       confused(mdef) ? "more " : "");
             set_property(mdef, CONFUSION, tmp, TRUE);
-            mdef->mstrategy &= ~STRAT_WAITFORU;
+            if (mdef->mstrategy == st_waiting)
+                mdef->mstrategy = st_none;
         }
         tmp = 0;
         break;
@@ -1036,7 +1045,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             obj_extract_self(gold);
             add_to_minv(magr, gold);
         }
-        mdef->mstrategy &= ~STRAT_WAITFORU;
+        if (mdef->mstrategy == st_waiting)
+            mdef->mstrategy = st_none;
         const char *magr_Monnam = Monnam(magr); /* name pre-rloc() */
 
         if (vis)
@@ -1103,7 +1113,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             }
 
             possibly_unwield(mdef, FALSE);
-            mdef->mstrategy &= ~STRAT_WAITFORU;
+            if (mdef->mstrategy == st_waiting)
+                mdef->mstrategy = st_none;
             mselftouch(mdef, NULL, FALSE);
             if (DEADMONSTER(mdef))
                 return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
@@ -1239,7 +1250,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (!rn2(4) && !flaming(mdef->data) && !unsolid(mdef->data) &&
             mdef->data != &mons[PM_GREEN_SLIME]) {
             set_property(mdef, SLIMED, 10, FALSE);
-            mdef->mstrategy &= ~STRAT_WAITFORU;
+            if (mdef->mstrategy == st_waiting)
+                mdef->mstrategy = st_none;
             tmp = 0;
         }
         break;

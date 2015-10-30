@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -274,9 +274,9 @@ dochug(struct monst *mtmp)
     mdat = mtmp->data;
 
     /* check for waitmask status change */
-    if ((mtmp->mstrategy & STRAT_WAITFORU) &&
+    if (mtmp->mstrategy == st_waiting &&
         (m_canseeu(mtmp) || mtmp->mhp < mtmp->mhpmax))
-        mtmp->mstrategy &= ~STRAT_WAITFORU;
+        mtmp->mstrategy = st_none;
 
     /* update quest status flags */
     quest_stat_check(mtmp);
@@ -285,10 +285,10 @@ dochug(struct monst *mtmp)
        displacement, but that's not only more of a balance change than I'm
        comfortable with, it also seems likely to introduce weird bugs. So this
        uses monnear and your real location. */
-    if (!mtmp->mcanmove || (mtmp->mstrategy & STRAT_WAITMASK)) {
+    if (!mtmp->mcanmove || idle(mtmp)) {
         if (Hallucination)
             newsym(mtmp->mx, mtmp->my);
-        if (mtmp->mcanmove && (mtmp->mstrategy & STRAT_CLOSE) &&
+        if (mtmp->mcanmove && mtmp->mstrategy == st_close &&
             !mtmp->msleeping && monnear(mtmp, u.ux, u.uy))
             quest_talk(mtmp);   /* give the leaders a chance to speak */
         return 0;       /* other frozen monsters can't do anything */
@@ -708,20 +708,18 @@ m_move(struct monst *mtmp, int after)
        that all the code is in m_move or dochug, not both. (I prefer m_move.)
        The current situation allows (in fact, forces) the Wizard of Yendor to
        teleport before moving. */
-    if (is_covetous(ptr) && mtmp->mstrategy & STRAT_TARGMASK &&
-        mtmp->mstrategy & STRAT_GOAL) {
-        xchar tx = STRAT_GOALX(mtmp->mstrategy), ty =
-            STRAT_GOALY(mtmp->mstrategy);
-        struct monst *intruder = m_at(level, tx, ty);
+    if (is_covetous(ptr) && st_target(mtmp)) {
+        struct monst *intruder = m_at(level, mtmp->sx, mtmp->sy);
 
         /*
          * if there's a monster on the object or in possession of it,
          * attack it.
          */
-        if ((dist2(mtmp->mx, mtmp->my, tx, ty) < 2) && intruder &&
-            (intruder != mtmp)) {
+        if ((dist2(mtmp->mx, mtmp->my, mtmp->sx, mtmp->sy) < 2) &&
+            intruder && (intruder != mtmp)) {
 
-            notonhead = (intruder->mx != tx || intruder->my != ty);
+            notonhead = (intruder->mx != mtmp->sx ||
+                         intruder->my != mtmp->sy);
             if (mattackm(mtmp, intruder) == 2)
                 return 2;
             mmoved = 1;
@@ -744,7 +742,7 @@ m_move(struct monst *mtmp, int after)
        do it anyway */
     if (teleport_at_will(mtmp) && !mtmp->mspec_used && !cancelled(mtmp) &&
         !tele_wary(mtmp)) {
-        if (mtmp->mstrategy & STRAT_ESCAPE || mtmp->mstrategy & STRAT_GOAL ||
+        if (mtmp->mstrategy == st_escape || st_target(mtmp) ||
             !rn2(25)) {
             mtmp->mspec_used += 25;
             mmoved = 1;
@@ -766,9 +764,9 @@ not_special:
         panic("monster AI run with an off-level monster: %s (%d, %d)",
               k_monnam(mtmp), omx, omy);
 
-    if (mtmp->mstrategy & (STRAT_TARGMASK | STRAT_ESCAPE)) {
-        gx = STRAT_GOALX(mtmp->mstrategy);
-        gy = STRAT_GOALY(mtmp->mstrategy);
+    if (mtmp->mstrategy == st_escape || st_target(mtmp)) {
+        gx = mtmp->sx;
+        gy = mtmp->sy;
     } else {
         gx = mtmp->mx;
         gy = mtmp->my;
@@ -776,9 +774,9 @@ not_special:
 
     /* Calculate whether the monster wants to move towards or away from the goal
        (or neither). */
-    appr = (mtmp->mflee || mtmp->mstrategy & STRAT_ESCAPE) ? -1 : 1;
+    appr = (mtmp->mflee || mtmp->mstrategy == st_escape) ? -1 : 1;
     if (confused(mtmp) || (Engulfed && mtmp == u.ustuck) ||
-        mtmp->mstrategy & STRAT_NONE)
+        mtmp->mstrategy == st_none)
         appr = 0;
 
     /* monsters with limited control of their actions */
@@ -896,7 +894,7 @@ not_special:
     int actual_appr = dist2(omx, omy, gx, gy) - dist2(nix, niy, gx, gy);
     if (((actual_appr >= 0 && appr < 0) || (actual_appr <= 0 && appr > 0)) &&
         mmoved && rn2(2)) {
-        mtmp->mstrategy = STRAT_NONE;
+        mtmp->mstrategy = st_none;
         strategy(mtmp, FALSE);
     }
 

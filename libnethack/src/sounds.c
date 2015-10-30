@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -902,7 +902,7 @@ dotalk(const struct nh_cmd_arg *arg)
     }
 
     /* if this monster is waiting for something, prod it into action */
-    mtmp->mstrategy &= ~STRAT_WAITMASK;
+    mtmp->mstrategy = st_none;
 
     if (mtmp->mtame && mtmp->meating) {
         if (!canspotmon(mtmp))

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -2065,7 +2065,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
     int sx = m_mx(viewer), sy = m_my(viewer),
         tx = m_mx(viewee), ty = m_my(viewee),
-        dx = m_dx(viewee), dy = m_dy(viewee);
+        dx = viewee->dx, dy = viewee->dy;
 
     int distance = dist2(sx, sy, tx, ty);
     int distance_displaced = (displaced(viewee) ? dist2(sx, sy, dx, dy) : 500);

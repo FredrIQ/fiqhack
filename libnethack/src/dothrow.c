@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1246,7 +1246,8 @@ thitmonst(struct monst *mon, struct obj *obj)
     if (quest_arti_hits_leader(obj, mon)) {
         /* not wakeup(), which angers non-tame monsters */
         mon->msleeping = 0;
-        mon->mstrategy &= ~STRAT_WAITMASK;
+        if (idle(mon))
+            mon->mstrategy = st_none;
 
         if (mon->mcanmove) {
             pline("%s catches %s.", Monnam(mon), the(xname(obj)));
@@ -1393,7 +1394,8 @@ thitmonst(struct monst *mon, struct obj *obj)
             /* not tmiss(), which angers non-tame monsters */
             miss(xname(obj), mon);
             mon->msleeping = 0;
-            mon->mstrategy &= ~STRAT_WAITMASK;
+            if (idle(mon))
+                mon->mstrategy = st_none;
         }
     } else if (guaranteed_hit) {
         /* this assumes that guaranteed_hit is due to swallowing */

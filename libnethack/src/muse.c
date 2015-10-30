@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2583,13 +2583,15 @@ searches_for_item(const struct monst *mon, struct obj *obj)
     switch (obj->oclass) {
     case WAND_CLASS:
         if (typ == WAN_DIGGING)
-            return (boolean) (!levitates(mon));
-        /* locking magic is TODO */
+            return (boolean) (!levitates(mon) || levitates_at_will(mon, TRUE, FALSE));
+        /* locking is TODO */
         if (typ == WAN_LIGHT ||
             typ == WAN_LOCKING ||
             typ == WAN_MAGIC_MISSILE ||
             typ == WAN_MAKE_INVISIBLE ||
             typ == WAN_OPENING ||
+            typ == WAN_PROBING ||
+            typ == WAN_SECRET_DOOR_DETECTION ||
             typ == WAN_SLOW_MONSTER ||
             typ == WAN_SPEED_MONSTER ||
             typ == WAN_STRIKING ||

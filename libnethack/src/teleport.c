@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1028,7 +1028,7 @@ mon_choose_level(struct monst *mon)
         return (int)depth(&u.uz);
 
     /* Scared monsters don't care, as long as it isn't the current level */
-    if (mon->mstrategy & STRAT_ESCAPE)
+    if (mon->mstrategy == st_escape)
         return -1;
 
     /* Wizard of Yendor teleports to the Amulet */
@@ -1124,7 +1124,7 @@ mon_tele(struct monst *mon, boolean free_will)
         return FALSE;
 
     /* monster is fleeing */
-    if ((strat & STRAT_ESCAPE) && (!mon->mpeaceful || mon->mtame)) {
+    if (strat == st_escape && (!mon->mpeaceful || mon->mtame)) {
         /* ensure that we weren't already standing on stairs --
            in that case, we don't want to move from them */
         if ((ox == level->upstair.sx && oy == level->upstair.sy) ||
@@ -1209,16 +1209,13 @@ mon_tele(struct monst *mon, boolean free_will)
     }
 
     /* has a goal in mind */
-    if (strat & STRAT_GOAL) {
-        tx = STRAT_GOALX(strat);
-        ty = STRAT_GOALY(strat);
-        mnearto(mon, tx, ty, FALSE);
+    if (st_target(mon)) {
+        mnearto(mon, mon->sx, mon->sy, FALSE);
         return TRUE;
     }
 
     /* general covetous pestering */
-    if (is_covetous(mon->data) &&
-        ((strat & STRAT_STRATMASK) == STRAT_NONE)) {
+    if (is_covetous(mon->data) && strat == st_none) {
         for (m2 = level->monlist; m2; m2 = nmon) {
             nmon = m2->nmon;
             if ((mon->mtame && !m2->mpeaceful) || (!mon->mpeaceful && m2->mtame)) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,7 +16,7 @@ extern const int monstr[];
 
 static short which_arti(int);
 static struct monst *other_mon_has_arti(struct monst *, short);
-static struct obj *on_ground(short);
+static struct obj *on_ground(short, xchar, xchar, const struct monst *);
 static boolean you_have(int);
 
 static const int nasties[] = {
@@ -195,16 +195,27 @@ other_mon_has_arti(struct monst *mtmp, short otyp)
 }
 
 static struct obj *
-on_ground(short otyp)
+on_ground(short otyp, xchar x, xchar y, const struct monst *mtmp)
 {
     struct obj *otmp;
 
-    for (otmp = level->objlist; otmp; otmp = otmp->nobj)
-        if (otyp) {
-            if (otmp->otyp == otyp)
+    if (otyp) {
+        for (otmp = level->objlist; otmp; otmp = otmp->nobj)
+            if (otyp) {
+                if (otmp->otyp == otyp)
+                    return otmp;
+            } else if (is_quest_artifact(otmp))
                 return otmp;
-        } else if (is_quest_artifact(otmp))
+        return NULL;
+    }
+    for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere) {
+        if ((otmp->otyp == AMULET_OF_YENDOR && M_Wants(M3_WANTSAMUL)) ||
+            (otmp->otyp == BELL_OF_OPENING && M_Wants(M3_WANTSBELL)) ||
+            (otmp->otyp == CANDELABRUM_OF_INVOCATION && M_Wants(M3_WANTSCAND)) ||
+            (otmp->otyp == SPE_BOOK_OF_THE_DEAD && M_Wants(M3_WANTSBOOK)) ||
+            (is_quest_artifact(otmp) && M_Wants(M3_WANTSARTI)))
             return otmp;
+    }
     return NULL;
 }
 
@@ -240,18 +251,25 @@ target_on(int mask, struct monst *mtmp)
 
     otyp = which_arti(mask);
     if (!mon_has_arti(mtmp, otyp)) {
-        if (you_have(mask))
-            mtmp->mstrategy = STRAT(STRAT_PLAYER, u.ux, u.uy, mask);
-        else if ((otmp = on_ground(otyp))) {
+        if (you_have(mask)) {
+            mtmp->mstrategy = st_mon;
+            mtmp->sx = u.ux;
+            mtmp->sy = u.uy;
+        } else if ((otmp = on_ground(otyp, COLNO, ROWNO, NULL))) {
             /* Special case: if a meditating monster is standing on the item,
                act like that item hasn't spawned. Otherwise randomly generated
                liches will try to beat up the Wizard of Yendor. */
             mtmp2 = m_at(level, otmp->ox, otmp->oy);
-            if (!mtmp2 || !(mtmp2->mstrategy & STRAT_WAITMASK))
-                mtmp->mstrategy = STRAT(STRAT_GROUND, otmp->ox, otmp->oy, mask);
-        } else if ((mtmp2 = other_mon_has_arti(mtmp, otyp)))
-            mtmp->mstrategy = STRAT(STRAT_MONSTR, mtmp2->mx, mtmp2->my, mask);
-        else
+            if (!mtmp2 || !idle(mtmp2)) {
+                mtmp->mstrategy = st_obj;
+                mtmp->sx = otmp->ox;
+                mtmp->sy = otmp->oy;
+            }
+        } else if ((mtmp2 = other_mon_has_arti(mtmp, otyp))) {
+            mtmp->mstrategy = st_mon;
+            mtmp->sx = mtmp2->mx;
+            mtmp->sy = mtmp2->my;
+        } else
             return FALSE;
         return TRUE;
     }
@@ -287,7 +305,7 @@ strategy(struct monst *mtmp, boolean magical_target)
     set_apparxy(mtmp);
 
     /* Is the monster waiting for something? */
-    if (mtmp->mstrategy & STRAT_WAITMASK)
+    if (idle(mtmp))
         return;
 
     /* Leprechaun special AI considerations, moved here from m_move.  These give
@@ -306,13 +324,13 @@ strategy(struct monst *mtmp, boolean magical_target)
        goal coordinates are the square that the monster is trying to get away
        from, not the square it's running towards.
 
-       STRAT_ESCAPE (escaping) is not the same as mflee (fleeing). Escaping is
+       st_escape (escaping) is not the same as mflee (fleeing). Escaping is
        basically a case of "heal up, or get out of here"; it's a rational
        approach to being on low HP. Fleeing is running away in a blind panic,
        e.g. as a result of being hit by a scare monster spell, although it can
        also happen by nonmagical means (some monsters just like panicking).
 
-       Note that a monster's reaction to STRAT_ESCAPE is not necessarily to run
+       Note that a monster's reaction to st_escape is not necessarily to run
        away from the target square; it might also heal up, use escape items,
        etc.. */
     if (mtmp->mhp * (mtmp->data == &mons[PM_WIZARD_OF_YENDOR] ? 3 : 2) <
@@ -321,7 +339,9 @@ strategy(struct monst *mtmp, boolean magical_target)
         /* An escaping pet instead moves towards the player, if it can.
            (dog_move will reverse this direction if fleeing in a panic.) */
         if (mtmp->mtame && aware_of_u(mtmp) && !engulfing_u(mtmp)) {
-            mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
+            mtmp->mstrategy = st_mon;
+            mtmp->sx = mtmp->mux;
+            mtmp->sy = mtmp->muy;
             return;
         }
 
@@ -332,11 +352,14 @@ strategy(struct monst *mtmp, boolean magical_target)
            reason to be afraid of the player in particular (if the player had
            taken an aggressive action, they'd no longer be flagged as
            peaceful). */
-        if (!mtmp->mpeaceful && aware_of_u(mtmp) && !engulfing_u(mtmp))
-            mtmp->mstrategy = STRAT(STRAT_ESCAPE, mtmp->mux, mtmp->muy, 0);
+        if (!mtmp->mpeaceful && aware_of_u(mtmp) && !engulfing_u(mtmp)) {
+            mtmp->mstrategy = st_escape;
+            mtmp->sx = mtmp->mux;
+            mtmp->sy = mtmp->muy;
+        }
 
         /* Does the monster already have a valid square to escape from? */
-        if (mtmp->mstrategy & STRAT_ESCAPE)
+        if (mtmp->mstrategy == st_escape)
             return;
 
         /* The monster has just started to escape; however, it doesn't know what
@@ -345,7 +368,9 @@ strategy(struct monst *mtmp, boolean magical_target)
            another monster, because it stepped on a trap, and possibly other
            reasons. Escaping from its current location makes sense in all those
            cases. */
-        mtmp->mstrategy = STRAT(STRAT_ESCAPE, mtmp->mx, mtmp->my, 0);
+        mtmp->mstrategy = st_escape;
+        mtmp->sx = mtmp->mx;
+        mtmp->sy = mtmp->my;
         return;
     }
 
@@ -381,7 +406,9 @@ strategy(struct monst *mtmp, boolean magical_target)
 
     /* Aggravated monsters are all attracted to the player's real location. */
     if (magical_target && chases_player) {
-        mtmp->mstrategy = STRAT(STRAT_PLAYER, u.ux, u.uy, 0);
+        mtmp->mstrategy = st_mon;
+        mtmp->mstrategy = u.ux;
+        mtmp->mstrategy = u.uy;
         return;
     }
 
@@ -407,7 +434,9 @@ strategy(struct monst *mtmp, boolean magical_target)
        monsters will try to follow. Shopkeeper strategy is determined as if the
        shopkeeper is angry; it won't be used in other situations. */
     if (aware_of_u(mtmp) && !engulfing_u(mtmp) && chases_player) {
-        mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
+        mtmp->mstrategy = st_mon;
+        mtmp->sx = mtmp->mux;
+        mtmp->sy = mtmp->muy;
         return;
     }
 
@@ -448,21 +477,19 @@ strategy(struct monst *mtmp, boolean magical_target)
         
         cp = gettrack(mtmp->mx, mtmp->my);
         if (cp) {
-            mtmp->mstrategy = STRAT(STRAT_PLAYER, cp->x, cp->y, 0);
+            mtmp->mstrategy = st_mon;
+            mtmp->sx = cp->x;
+            mtmp->sy = cp->y;
             return;
         }
     }
 
-    /* If the monster was previously escaping, or if it couldn't find a
-       strategy, or if it had a target square and has now reached it (with
-       nothing obvious happening), or with a very small random chance otherwise
-       (to prevent monsters getting stuck), we pick a new strategy. */
-    if (mtmp->mstrategy & STRAT_ESCAPE || !rn2(200) ||
-        mtmp->mstrategy == STRAT_NONE ||
-        (mtmp->mstrategy & STRAT_TARGMASK &&
-         mtmp->mx == STRAT_GOALX(mtmp->mstrategy) &&
-         mtmp->my == STRAT_GOALY(mtmp->mstrategy))) {
-
+    /* If the monster is escaping, had nothing to do or reached its' goal but nothing
+       interesting happened, pick a new strategy. However, if it is wandering aimlessy
+       (st_wander), look for nearby objects to pickup since that is significantly more
+       interesting than wandering around for no reason. */
+    if (mtmp->mstrategy == st_escape || mtmp->mstrategy == st_none ||
+        mtmp->mstrategy == st_wander) {
         struct distmap_state ds;
         distmap_init(&ds, mtmp->mx, mtmp->my, mtmp);
         
@@ -470,74 +497,79 @@ strategy(struct monst *mtmp, boolean magical_target)
            want. (This code was moved from monmove.c, and slightly edited;
            previously, monsters would interrupt chasing the player to look for
            an item through rock.) */
-#define SQSRCHRADIUS    5
-        {
-            int minr = SQSRCHRADIUS;        /* not too far away */
-            struct obj *otmp;
-            struct monst *mtoo;
-            int gx = COLNO, gy = ROWNO;
+#define SQSRCHRADIUS    8
+        int minr = SQSRCHRADIUS;        /* not too far away */
+        struct obj *otmp;
+        struct monst *mtoo;
+        int gx = COLNO, gy = ROWNO;
 
-            /* guards shouldn't get too distracted */
-            if (!mtmp->mpeaceful && is_mercenary(mtmp->data))
-                minr = 1;
+        /* guards shouldn't get too distracted */
+        if (!mtmp->mpeaceful && is_mercenary(mtmp->data))
+            minr = 1;
 
-            if (!*in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE) ||
-                (!rn2(25) && !mtmp->isshk)) {
-                for (otmp = mtmp->dlevel->objlist; otmp; otmp = otmp->nobj) {
-                    /* monsters may pick rocks up, but won't go out of their way
-                       to grab them; this might hamper sling wielders, but it
-                       cuts down on move overhead by filtering out most common
-                       item */
-                    if (otmp->otyp == ROCK)
+        if (!*in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE) ||
+            (!rn2(25) && !mtmp->isshk)) {
+            for (otmp = mtmp->dlevel->objlist; otmp; otmp = otmp->nobj) {
+                /* monsters may pick rocks up, but won't go out of their way
+                   to grab them; this might hamper sling wielders, but it
+                   cuts down on move overhead by filtering out most common
+                   item */
+                if (otmp->otyp == ROCK)
+                    continue;
+                if (distmap(&ds, otmp->ox, otmp->oy) <= minr) {
+                    /* don't get stuck circling around an object that's
+                       underneath an immobile or hidden monster; paralysis
+                       victims excluded */
+                    if ((mtoo = m_at(mtmp->dlevel, otmp->ox, otmp->oy)) != 0
+                        && (mtoo->msleeping || mtoo->mundetected ||
+                            (mtoo->mappearance && !mtoo->iswiz) ||
+                            !mtoo->data->mmove))
                         continue;
-                    if (distmap(&ds, otmp->ox, otmp->oy) <= minr) {
-                        /* don't get stuck circling around an object that's
-                           underneath an immobile or hidden monster; paralysis
-                           victims excluded */
-                        if ((mtoo = m_at(mtmp->dlevel, otmp->ox, otmp->oy)) != 0
-                            && (mtoo->msleeping || mtoo->mundetected ||
-                                (mtoo->mappearance && !mtoo->iswiz) ||
-                                !mtoo->data->mmove))
-                            continue;
 
-                        if (monster_would_take_item(mtmp, otmp) &&
-                            can_carry(mtmp, otmp) &&
-                            (throws_rocks(mtmp->data) ||
-                             !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
-                            !(onscary(otmp->ox, otmp->oy, mtmp))) {
-                            minr = distmap(&ds, otmp->ox, otmp->oy) - 1;
-                            gx = otmp->ox;
-                            gy = otmp->oy;
-                        }
+                    if (monster_would_take_item(mtmp, otmp) &&
+                        can_carry(mtmp, otmp) &&
+                        (throws_rocks(mtmp->data) ||
+                         !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
+                        !(onscary(otmp->ox, otmp->oy, mtmp))) {
+                        minr = distmap(&ds, otmp->ox, otmp->oy) - 1;
+                        gx = otmp->ox;
+                        gy = otmp->oy;
                     }
                 }
             }
-
-            if (gx != COLNO) {
-                mtmp->mstrategy = STRAT(STRAT_GROUND, gx, gy, 0);
-                return;
-            }
         }
 
-        /* Try up to ten locations on the level, and pick the most distant
-           reachable one. If we haven't found one by then, try another 20. */
-        int trycount = 0;
-        int dist = 0;
-        long strat = STRAT_NONE;
-        do {
-            int x = rn2(COLNO);
-            int y = rn2(ROWNO);
-            if (goodpos(mtmp->dlevel, x, y, mtmp, 0)) {
-                int distm = distmap(&ds, x, y);
-                if (distm > dist && distm < COLNO * ROWNO) {
-                    distm = dist;
-                    strat = STRAT(STRAT_GROUND, x, y, 0);
-                }
-            }
-        } while (++trycount < (dist ? 10 : 30));
+        if (gx != COLNO) {
+            mtmp->mstrategy = st_obj;
+            mtmp->sx = gx;
+            mtmp->sy = gy;
+            return;
+        }
 
-        mtmp->mstrategy = strat;
-        return;
+        /* If we are actually heading somewhere, don't pick a new target, unless
+           we reached it with nothing happenening or passed a 1% check... */
+        if (!st_target(mtmp) || !rn2(100) ||
+            (mtmp->mx == mtmp->sx && mtmp->my == mtmp->sy)) {
+            /* Try up to ten locations on the level, and pick the most distant
+               reachable one. If we haven't found one by then, try another 20. */
+            int trycount = 0;
+            int dist = 0;
+            mtmp->mstrategy = st_none;
+            do {
+                int x = rn2(COLNO);
+                int y = rn2(ROWNO);
+                if (goodpos(mtmp->dlevel, x, y, mtmp, 0)) {
+                    int distm = distmap(&ds, x, y);
+                    if (distm > dist && distm < COLNO * ROWNO) {
+                        dist = distm;
+                        mtmp->mstrategy = st_wander;
+                        mtmp->sx = x;
+                        mtmp->sy = y;
+                    }
+                }
+            } while (++trycount < (dist ? 10 : 30));
+            return;
+        }
     }
 
     /* And otherwise, we just stick with the previous strategy, whatever it
@@ -557,8 +589,8 @@ tactics(struct monst *mtmp)
 {
     long strat = mtmp->mstrategy;
 
-    switch (strat & STRAT_STRATMASK) {
-    case STRAT_ESCAPE:   /* hide and recover */
+    switch (strat) {
+    case st_escape:   /* hide and recover */
         /* if wounded, hole up on or near the stairs (to block them) */
         /* unless, of course, there are no stairs (e.g. endlevel) */
         mtmp->mavenge = 1;      /* covetous monsters attack while fleeing */
@@ -587,21 +619,18 @@ tactics(struct monst *mtmp)
             return 0;
         }
 
-    case STRAT_NONE:   /* harrass */
+    case st_none:   /* harrass */
         if (!rn2(!mtmp->mflee ? 5 : 33))
             mnexto(mtmp);
         return 0;
 
     default:   /* kill, maim, pillage! */
         {
-            long where = (strat & STRAT_STRATMASK);
-            xchar tx = STRAT_GOALX(strat), ty = STRAT_GOALY(strat);
-            int targ = strat & STRAT_GOAL;
+            xchar tx = mtmp->sx, ty = mtmp->sy;
             struct obj *otmp;
 
-            if (!targ) {        /* simply wants you to close */
+            if (!st_target(mtmp)) /* simply wants you to close */
                 return 0;
-            }
 
             /* teleport as near to the desired square as possible */
             mnearto(mtmp, tx, ty, FALSE);
@@ -611,13 +640,13 @@ tactics(struct monst *mtmp)
             if (u.ux == tx && u.uy == ty)
                 return 0;
 
-            if (where == STRAT_GROUND) {
+            if (strat == st_obj) {
                 if (!MON_AT(level, tx, ty) ||
                     (mtmp->mx == tx && mtmp->my == ty)) {
                     /* teleport to it and pick it up */
                     rloc_to(mtmp, tx, ty);      /* clean old pos */
 
-                    if ((otmp = on_ground(which_arti(targ))) != 0) {
+                    if ((otmp = on_ground(0, tx, ty, mtmp)) != 0) {
                         if (cansee(mtmp->mx, mtmp->my))
                             pline("%s picks up %s.", Monnam(mtmp),
                                   (distu(mtmp->mx, mtmp->my) <= 5) ?

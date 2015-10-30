@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1204,9 +1204,9 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     }
     if ((ptr->mflags3 & M3_WAITMASK) && !(mmflags & MM_NOWAIT)) {
         if (ptr->mflags3 & M3_WAITFORU)
-            mtmp->mstrategy |= STRAT_WAITFORU;
+            mtmp->mstrategy = st_waiting;
         if (ptr->mflags3 & M3_CLOSE)
-            mtmp->mstrategy |= STRAT_CLOSE;
+            mtmp->mstrategy = st_close;
     }
 
     if (!in_mklev && lev == level)
@@ -2247,7 +2247,9 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->mspec_used = mread32(mf);
     mon->mtrapseen = mread32(mf);
     mon->mlstmv = mread32(mf);
-    mon->mstrategy = mread32(mf);
+    mon->mstrategy = mread8(mf);
+    mon->sx = mread8(mf);
+    mon->sy = mread8(mf);
     mon->meating = mread32(mf);
     mon->xyloc = mread8(mf);
     mon->xyflags = mread8(mf);
@@ -2488,7 +2490,9 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite32(mf, mon->mspec_used);
     mwrite32(mf, mon->mtrapseen);
     mwrite32(mf, mon->mlstmv);
-    mwrite32(mf, mon->mstrategy);
+    mwrite8(mf, mon->mstrategy);
+    mwrite8(mf, mon->sx);
+    mwrite8(mf, mon->sy);
     mwrite32(mf, mon->meating);
     mwrite8(mf, mon->xyloc);
     mwrite8(mf, mon->xyflags);

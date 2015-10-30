@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1020,6 +1020,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
 
     boolean bag;
     boolean cursed_boh = FALSE; /* maybe zap cancellation later */
+    boolean found_castle_wand; /* only ignore the first wishing wand in the castle chest */
     struct musable muse; /* unlocking tool, or cancellation for cursed BoH */
     muse.x = 0;
     muse.y = 0;
@@ -1090,6 +1091,12 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
                 continue;
             if (!can_carry(mon, obj))
                 continue;
+            /* avoid taking the castle wand... */
+            if (obj->otyp == WAN_WISHING && container && Is_stronghold(m_mz(mon)) &&
+                container->spe == 2 && !found_castle_wand) {
+                found_castle_wand = TRUE;
+                continue;
+            }
             if (!picked)
                 pickobj = obj;
             else if (pickobj->oclass != obj->oclass)
@@ -2465,11 +2472,20 @@ place_monster(struct monst *mon, xchar x, xchar y, boolean updatedisplacement)
                    (mon == u.usteed) ? "steed" : "defunct monster");
         return;
     }
-    mon->mx = x;
-    mon->my = y;
-    if (isok(x, y))
-        mon->dlevel->monsters[x][y] = mon;
-    else
+
+    boolean you = (mon == &youmonst);
+    if (!you) {
+        mon->mx = x;
+        mon->my = y;
+    } else {
+        u.ux = x;
+        u.uy = y;
+    }
+
+    if (isok(x, y)) {
+        if (!you) /* Too much in the game relies on the player not existing as a m_at... */
+            mon->dlevel->monsters[x][y] = mon;
+    } else
         impossible("placing monster on invalid spot (%d,%d)", x, y);
 
     /* Update displacement position */
@@ -2480,7 +2496,7 @@ place_monster(struct monst *mon, xchar x, xchar y, boolean updatedisplacement)
 
     /* If a monster's moved to the location it believes the player to be on,
        it'll learn the player isn't there. */
-    if (mon->mux == mon->mx && mon->muy == mon->my) {
+    if (!you && mon->mux == mon->mx && mon->muy == mon->my) {
         mon->mux = COLNO;
         mon->muy = ROWNO;
     }
@@ -2528,13 +2544,8 @@ update_displacement(struct monst *mon)
         x = COLNO;
         y = ROWNO;
     }
-    if (mon == &youmonst) {
-        u.dx = x;
-        u.dy = y;
-    } else {
-        mon->dx = x;
-        mon->dy = y;
-    }
+    mon->dx = x;
+    mon->dy = y;
 }
 
 void
@@ -2542,17 +2553,12 @@ unset_displacement(struct monst *mon)
 {
     struct level *lev = (mon == &youmonst ? level : mon->dlevel);
     if (displaced(mon)) {
-        lev->dmonsters[m_dx(mon)][m_dy(mon)] = NULL;
+        lev->dmonsters[mon->dx][mon->dy] = NULL;
         if (level)
-            newsym(m_dx(mon), m_dy(mon));
+            newsym(mon->dx, mon->dy);
     }
-    if (mon != &youmonst) {
-        mon->dx = COLNO;
-        mon->dy = ROWNO;
-    } else {
-        u.dx = COLNO;
-        u.dy = ROWNO;
-    }
+    mon->dx = COLNO;
+    mon->dy = ROWNO;
 }
 
 void
@@ -2560,9 +2566,9 @@ set_displacement(struct monst *mon)
 {
     struct level *lev = (mon == &youmonst ? level : mon->dlevel);
     if (displaced(mon)) {
-        lev->dmonsters[m_dx(mon)][m_dy(mon)] = mon;
+        lev->dmonsters[mon->dx][mon->dy] = mon;
         if (level)
-            newsym(m_dx(mon), m_dy(mon));
+            newsym(mon->dx, mon->dy);
     }
 }
 
@@ -2755,7 +2761,8 @@ msethostility(struct monst *mtmp, boolean hostile, boolean adjust_malign)
 void
 setmangry(struct monst *mtmp)
 {
-    mtmp->mstrategy &= ~STRAT_WAITMASK;
+    if (idle(mtmp))
+        mtmp->mstrategy = st_none;
     if (!mtmp->mpeaceful)
         return;
     if (mtmp->mtame)
@@ -2841,8 +2848,11 @@ wake_nearto(int x, int y, int distance)
             mtmp->msleeping = 0;
             /* monsters are curious as to what caused the noise, and don't
                necessarily consider it to have been the player */
-            if (!(mtmp->mstrategy & STRAT_WAITMASK))
-                mtmp->mstrategy = STRAT(STRAT_GROUND, x, y, 0);
+            if (!idle(mtmp)) {
+                mtmp->mstrategy = st_square;
+                mtmp->sx = x;
+                mtmp->sy = y;
+            }
         }
 }
 

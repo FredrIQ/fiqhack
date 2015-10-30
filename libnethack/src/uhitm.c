@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -134,7 +134,8 @@ attack(struct monst *mtmp, schar dx, schar dy, boolean confirmed)
         /* certain "pacifist" monsters don't attack */
         if (noattacks(youmonst.data)) {
             pline("You have no way to attack monsters physically.");
-            mtmp->mstrategy &= ~STRAT_WAITMASK;
+            if (idle(mtmp))
+                mtmp->mstrategy = st_none;
             return ac_cancel;
         }
     }
@@ -183,7 +184,8 @@ attack(struct monst *mtmp, schar dx, schar dy, boolean confirmed)
         hmonas(mtmp, tmp, dx, dy);
     else
         hitum(mtmp, tmp, youmonst.data->mattk, dx, dy);
-    mtmp->mstrategy &= ~STRAT_WAITMASK;
+    if (idle(mtmp))
+        mtmp->mstrategy = st_none;
 
     return ac_monsterhit;
 }
@@ -1462,7 +1464,9 @@ damageum(struct monst *mdef, const struct attack *mattk)
         break;
     }
 
-    mdef->mstrategy &= ~STRAT_WAITFORU; /* in case player is very fast */
+    /* in case player is fast */
+    if (mdef->mstrategy == st_waiting)
+        mdef->mstrategy = st_none;
     if ((mdef->mhp -= tmp) <= 0) {
         if (mdef->mtame && !cansee(mdef->mx, mdef->my)) {
             pline("You feel embarrassed for a moment.");
