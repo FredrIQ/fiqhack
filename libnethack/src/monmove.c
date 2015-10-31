@@ -422,9 +422,12 @@ dochug(struct monst *mtmp)
                         pline("The blast doesn't harm you.");
                     else
                         losehp(dmg, killer_msg(DIED, "a psychic blast"));
-                } else
-                    pline("It feels quite soothing.");
+                }
+                else
+                    pline("But it fails to lock onto you.");
             }
+            else
+                pline("It feels quite soothing.");
         }
         for (m2 = level->monlist; m2; m2 = nmon) {
             nmon = m2->nmon;
