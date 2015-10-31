@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -44,6 +44,7 @@ static int wiz_show_seenv(const struct nh_cmd_arg *);
 static int wiz_show_vision(const struct nh_cmd_arg *);
 static int wiz_mon_list(const struct nh_cmd_arg *);
 static int wiz_mon_polycontrol(const struct nh_cmd_arg *);
+static int wiz_toggledetect(const struct nh_cmd_arg *);
 static int wiz_togglegen(const struct nh_cmd_arg *);
 static int wiz_show_wmodes(const struct nh_cmd_arg *);
 static int wiz_show_stats(const struct nh_cmd_arg *);
@@ -239,7 +240,7 @@ const struct cmd_desc cmdlist[] = {
 
     {"desync", "(DEBUG) corrupt the save file", 0, 0, TRUE, wiz_desync,
      CMD_DEBUG | CMD_EXT},
-    {"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect,
+    {"detect", "(DEBUG) detect unseen", 0, 0, TRUE, wiz_detect,
      CMD_DEBUG | CMD_EXT},
     {"genesis", "(DEBUG) create a monster", 0, 0, TRUE, wiz_genesis,
      CMD_DEBUG | CMD_ARG_LIMIT | CMD_ARG_STR | CMD_EXT},
@@ -277,6 +278,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"timeout", "(DEBUG) look at timeout queue", 0, 0, TRUE, wiz_timeout_queue,
      CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+    {"toggledetect", "(DEBUG) toggle intrinsic monster detection", 0, 0, TRUE,
+     wiz_toggledetect, CMD_DEBUG | CMD_EXT},
     {"togglegen", "(DEBUG) toggle monster generation", 0, 0, TRUE,
      wiz_togglegen, CMD_DEBUG | CMD_EXT},
     {"vision", "(DEBUG) show vision array", 0, 0, TRUE, wiz_show_vision,
@@ -469,16 +472,13 @@ wiz_level_tele(const struct nh_cmd_arg *arg)
     return 0;
 }
 
-/* #monlist - show a list of monsters on the level */
+/* #monlist command - show a list of monsters on the level */
 static int
 wiz_mon_list(const struct nh_cmd_arg *arg)
 {
     struct monst *mon;
-    for (mon = level->monlist; mon; mon = mon->nmon) {
-        pline("%s at %d,%d strat %d, stratgoal %d,%d displaced %d,%d :::",
-              k_monnam(mon), mon->mx, mon->my, mon->mstrategy,
-              mon->sx, mon->sy, mon->dx, mon->dy);
-    }
+    for (mon = level->monlist; mon; mon = mon->nmon)
+        pline("at %d,%d: %s", mon->mx, mon->my, k_monnam(mon));
 
     return 0;
 }
@@ -493,6 +493,17 @@ wiz_mon_polycontrol(const struct nh_cmd_arg *arg)
 
     pline("Monster polymorph control is %s.",
           flags.mon_polycontrol ? "on" : "off");
+
+    return 0;
+}
+
+/* #toggledetect command - toggle intrinsic monster detection */
+static int
+wiz_toggledetect(const struct nh_cmd_arg *arg)
+{
+    set_property(&youmonst, DETECT_MONSTERS,
+                 ihas_property(&youmonst, DETECT_MONSTERS) ? -1 : 0,
+                 FALSE);
 
     return 0;
 }

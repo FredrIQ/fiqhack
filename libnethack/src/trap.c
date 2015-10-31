@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2100,15 +2100,18 @@ mintrap(struct monst *mtmp)
             if (!rn2(30) || (cancelled(mtmp) && !rn2(5))) {
                 deltrap(level, trap);
                 newsym(mtmp->mx, mtmp->my); /* update position */
-                pline("%s is caught in a magical explosion!", Monnam(mtmp));
+                if (see_it)
+                    pline("%s is caught in a magical explosion!", Monnam(mtmp));
                 thitm(0, mtmp, NULL, rnd(10), FALSE);
-                pline("%s body absorbs some of the magical energy!",
-                      s_suffix(Monnam(mtmp)));
+                if (see_it)
+                    pline("%s body absorbs some of the magical energy!",
+                          s_suffix(Monnam(mtmp)));
                 mtmp->mspec_used = 0;
                 if (cancelled(mtmp)) {
                     set_property(mtmp, CANCELLED, -2, TRUE);
-                    pline("%s regains %s magic capabilities!", Monnam(mtmp),
-                          mhis(mtmp));
+                    if (see_it)
+                        pline("%s regains %s magic capabilities!", Monnam(mtmp),
+                              mhis(mtmp));
                 }
             } else
                 domagictrap(mtmp);
