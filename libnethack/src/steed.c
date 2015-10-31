@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-25 */
+/* Last modified by Alex Smith, 2015-10-21 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -336,6 +336,8 @@ mount_steed(struct monst * mtmp,        /* The animal */
     u.usteed = mtmp;
     remove_monster(level, mtmp->mx, mtmp->my);
     teleds(mtmp->mx, mtmp->my, TRUE);
+    mtmp->mux = COLNO;
+    mtmp->muy = ROWNO;
     return TRUE;
 }
 
