@@ -1138,7 +1138,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             }
             /* can't open chest, so ignore it, but set mknown to prevent pathfinding to
                the chest in the future w/o a key */
-            obj->mknown = 1;
+            container->mknown = 1;
             return FALSE;
         }
         if (container && container->otrapped) {

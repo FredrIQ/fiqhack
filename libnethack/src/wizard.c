@@ -545,7 +545,9 @@ strategy(struct monst *mtmp, boolean magical_target)
                     if (((monster_would_take_item(mtmp, otmp) &&
                           can_carry(mtmp, otmp)) ||
                          ((Is_box(otmp) || otmp->otyp == ICE_BOX) &&
-                          !otmp->mknown)) &&
+                          !otmp->mknown && !nohands(mtmp->data) &&
+                          !is_animal(mtmp->data) &&
+                          !mindless(mtmp->data))) &&
                         (throws_rocks(mtmp->data) ||
                          !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
                         !(onscary(otmp->ox, otmp->oy, mtmp))) {
