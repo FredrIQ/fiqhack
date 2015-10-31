@@ -2287,7 +2287,7 @@ restore_mon(struct memfile *mf, struct level *l)
     for (prop = 0; prop <= LAST_PROP; prop++) {
         if (!(prop % 8))
             octet = mread8(mf);
-        if (octet >> (prop % 8))
+        if ((octet >> (prop % 8)) & 1)
             mon->mintrinsic[prop] |= FROMOUTSIDE_RAW;
     }
     mon->mspells = mread64(mf);
@@ -2540,13 +2540,14 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
         mwrite16(mf, save_encode_16(mon->mintrinsic[prop] & TIMEOUT,
                                     -moves, l ? -l->lastmoves : 0));
     xchar octet = 0;
-    for (prop = 0; (prop <= LAST_PROP || prop % 8); prop++) {
+    for (prop = 0; prop <= LAST_PROP; prop++) {
         if (prop && !(prop % 8)) {
             mwrite8(mf, octet);
             octet = 0;
         }
         octet |= ((mon->mintrinsic[prop] & FROMOUTSIDE_RAW) << (prop % 8));
     }
+    mwrite8(mf, octet);
     mwrite64(mf, mon->mspells);
 
     /* just mark that the pointers had values */

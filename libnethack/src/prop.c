@@ -1232,6 +1232,7 @@ update_property(struct monst *mon, enum youprop prop,
                   "%s looks rather confused.", Monnam(mon));
             effect = TRUE;
         }
+        break;
     case SICK:
         if (lost && slot == os_dectimeout) {
             if (you || vis) {
