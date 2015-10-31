@@ -504,7 +504,7 @@ strategy(struct monst *mtmp, boolean magical_target)
        (st_wander), look for nearby objects to pickup since that is significantly more
        interesting than wandering around for no reason. */
     if (mtmp->mstrategy == st_escape || mtmp->mstrategy == st_none ||
-        mtmp->mstrategy == st_wander || !randcheck) {
+        mtmp->mstrategy == st_wander || randcheck) {
         struct distmap_state ds;
         distmap_init(&ds, mtmp->mx, mtmp->my, mtmp);
         
@@ -566,7 +566,7 @@ strategy(struct monst *mtmp, boolean magical_target)
 
         /* If we are actually heading somewhere, don't pick a new target, unless
            we reached it with nothing happenening or passed a 1% check... */
-        if (!st_target(mtmp) || !randcheck ||
+        if (!st_target(mtmp) || randcheck ||
             (mtmp->mx == mtmp->sx && mtmp->my == mtmp->sy)) {
             /* Try up to ten locations on the level, and pick the most distant
                reachable one. If we haven't found one by then, try another 20. */
