@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -42,6 +42,7 @@ static int wiz_level_tele(const struct nh_cmd_arg *);
 static int wiz_level_change(const struct nh_cmd_arg *);
 static int wiz_show_seenv(const struct nh_cmd_arg *);
 static int wiz_show_vision(const struct nh_cmd_arg *);
+static int wiz_mon_list(const struct nh_cmd_arg *);
 static int wiz_mon_polycontrol(const struct nh_cmd_arg *);
 static int wiz_togglegen(const struct nh_cmd_arg *);
 static int wiz_show_wmodes(const struct nh_cmd_arg *);
@@ -256,6 +257,8 @@ const struct cmd_desc cmdlist[] = {
      wiz_light_sources, CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"levelteleport", "(DEBUG) telport to a different level", C('v'), 0, TRUE,
      wiz_level_tele, CMD_DEBUG},
+    {"monlist", "(DEBUG) show monster list", 0, 0, TRUE,
+     wiz_mon_list, CMD_DEBUG | CMD_EXT},
     {"monpolycontrol", "(DEBUG) control monster polymorphs", 0, 0, TRUE,
      wiz_mon_polycontrol, CMD_DEBUG | CMD_EXT},
     {"panic", "(DEBUG) test fatal error handling", 0, 0, TRUE,
@@ -462,6 +465,20 @@ wiz_level_tele(const struct nh_cmd_arg *arg)
     (void) arg;
 
     level_tele_impl(&youmonst, TRUE);
+
+    return 0;
+}
+
+/* #monlist - show a list of monsters on the level */
+static int
+wiz_mon_list(const struct nh_cmd_arg *arg)
+{
+    struct monst *mon;
+    for (mon = level->monlist; mon; mon = mon->nmon) {
+        pline("%s at %d,%d strat %d, stratgoal %d,%d displaced %d,%d :::",
+              k_monnam(mon), mon->mx, mon->my, mon->mstrategy,
+              mon->sx, mon->sy, mon->dx, mon->dy);
+    }
 
     return 0;
 }

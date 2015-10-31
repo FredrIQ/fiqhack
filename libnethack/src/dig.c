@@ -495,38 +495,39 @@ fillholetyp(int x, int y)
 }
 
 void
-digactualhole(int x, int y, struct monst *madeby, int ttyp)
+digactualhole(int x, int y, struct monst *mon, int ttyp)
 {
+    boolean yours = (mon == &youmonst);
+    boolean vis = (mon && canseemon(mon));
+    boolean byobj = !mon;
+    struct level *lev = ((yours || byobj) ? level : mon->dlevel);
+    struct monst *target = m_at(lev, x, y);
+    boolean hityou = (target == &youmonst);
     struct obj *oldobjs, *newobjs;
     struct trap *ttmp;
     const char *surface_type;
-    struct rm *loc = &level->locations[x][y];
+    struct rm *loc = &lev->locations[x][y];
     boolean shopdoor;
-    struct monst *mtmp = m_at(level, x, y);     /* may be madeby */
-    boolean madeby_u = (madeby == BY_YOU);
-    boolean madeby_obj = (madeby == BY_OBJECT);
-    boolean at_u = (x == u.ux) && (y == u.uy);
-    boolean wont_fall = Levitation || Flying;
+    boolean wont_fall = (target && (levitates(target) || flying(target)));
 
-    if (u.utrap && u.utraptype == TT_INFLOOR)
+    if (hityou && u.utrap && u.utraptype == TT_INFLOOR)
         u.utrap = 0;
 
     /* these furniture checks were in dighole(), but wand breaking bypasses
        that routine and calls us directly */
     if (IS_FOUNTAIN(loc->typ)) {
         dogushforth(FALSE);
-        SET_FOUNTAIN_WARNED(x, y);      /* force dryup */
-        dryup(x, y, madeby_u);
+        if (yours)
+            SET_FOUNTAIN_WARNED(x, y);      /* force dryup */
+        dryup(x, y, yours);
         return;
     } else if (IS_SINK(loc->typ)) {
         breaksink(x, y);
         return;
     } else if (loc->typ == DRAWBRIDGE_DOWN || (is_drawbridge_wall(x, y) >= 0)) {
-        int bx = x, by = y;
-
         /* if under the portcullis, the bridge is adjacent */
-        find_drawbridge(&bx, &by);
-        destroy_drawbridge(bx, by);
+        find_drawbridge(&x, &y);
+        destroy_drawbridge(x, y);
         return;
     }
 
@@ -542,29 +543,29 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
         surface_type = "grave";
     else
         surface_type = surface(x, y);
-    shopdoor = IS_DOOR(loc->typ) && *in_rooms(level, x, y, SHOPBASE);
-    oldobjs = level->objects[x][y];
-    ttmp = maketrap(level, x, y, ttyp, rng_main);
+    shopdoor = IS_DOOR(loc->typ) && *in_rooms(lev, x, y, SHOPBASE);
+    oldobjs = lev->objects[x][y];
+    ttmp = maketrap(lev, x, y, ttyp, rng_main);
     if (!ttmp)
         return;
-    newobjs = level->objects[x][y];
-    ttmp->tseen = (madeby_u || cansee(x, y));
-    ttmp->madeby_u = madeby_u;
+    newobjs = lev->objects[x][y];
+    ttmp->tseen = (yours || cansee(x, y));
+    ttmp->madeby_u = yours;
     newsym(ttmp->tx, ttmp->ty);
 
     if (ttyp == PIT) {
         /* Assume that long worms can't dig pits. */
 
-        if (madeby_u) {
+        if (yours) {
             pline("You dig a pit in the %s.", surface_type);
             if (shopdoor)
                 pay_for_damage("ruin", FALSE);
-        } else if (!madeby_obj && canseemon(madeby))
-            pline("%s digs a pit in the %s.", Monnam(madeby), surface_type);
+        } else if (!byobj && vis)
+            pline("%s digs a pit in the %s.", Monnam(mon), surface_type);
         else if (cansee(x, y) && flags.verbose)
             pline("A pit appears in the %s.", surface_type);
 
-        if (at_u) {
+        if (hityou) {
             if (!wont_fall) {
                 if (!Passes_walls)
                     u.utrap = rn1(4, 2);
@@ -574,25 +575,24 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
                 u.utrap = 0;
             if (oldobjs != newobjs)     /* something unearthed */
                 pickup(1, flags.interaction_mode);      /* detects pit */
-        } else if (mtmp) {
-            if (flying(mtmp) || levitates(mtmp)) {
-                if (canseemon(mtmp))
-                    pline("%s %s over the pit.", Monnam(mtmp),
-                          (levitates(mtmp)) ? "floats" : "flies");
-            } else if (mtmp != madeby)
-                mintrap(mtmp);
+        } else if (target) {
+            if (flying(target) || levitates(target)) {
+                if (canseemon(target))
+                    pline("%s %s over the pit.", Monnam(target),
+                          (levitates(target)) ? "floats" : "flies");
+                mintrap(target);
+            }
         }
     } else {    /* was TRAPDOOR now a HOLE */
-
-        if (madeby_u)
+        if (yours)
             pline("You dig a hole through the %s.", surface_type);
-        else if (!madeby_obj && canseemon(madeby))
-            pline("%s digs a hole through the %s.", Monnam(madeby),
+        else if (!byobj && vis)
+            pline("%s digs a hole through the %s.", Monnam(mon),
                   surface_type);
         else if (cansee(x, y) && flags.verbose)
             pline("A hole appears in the %s.", surface_type);
 
-        if (at_u) {
+        if (hityou) {
             if (!u.ustuck && !wont_fall && !next_to_u()) {
                 pline("You are jerked back by your pet!");
                 wont_fall = TRUE;
@@ -606,16 +606,17 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
                     impact_drop(NULL, x, y, 0);
                 if (oldobjs != newobjs)
                     pickup(1, flags.interaction_mode);
-                if (shopdoor && madeby_u)
+                if (shopdoor && yours)
                     pay_for_damage("ruin", FALSE);
 
             } else {
                 d_level newlevel;
 
-                if (*u.ushops && madeby_u)
+                if (*u.ushops && yours)
                     shopdig(1); /* shk might snatch pack */
-                /* handle earlier damage, eg breaking wand of digging */
-                else if (!madeby_u)
+                else if (!flags.mon_moving)
+                    add_damage(x, y, 0L);
+                else /* handle earlier damage, eg breaking wand of digging */
                     pay_for_damage("dig into", TRUE);
 
                 pline("You fall through...");
@@ -628,40 +629,44 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
                 spoteffects(FALSE);
             }
         } else {
-            if (shopdoor && madeby_u)
-                pay_for_damage("ruin", FALSE);
+            if (shopdoor) {
+                if (yours || !flags.mon_moving)
+                    pay_for_damage("ruin", FALSE);
+            }
             if (newobjs)
                 impact_drop(NULL, x, y, 0);
             /* TODO: Figure out when this is called. Digging down while engulfed
                is one potential case (although I'm not sure that's possible),
                but the code sort-of implise there are others. */
-            if (mtmp) {
+            if (target) {
                 /* [don't we need special sokoban handling here?] */
-                if (flying(mtmp) || levitates(mtmp) ||
-                    mtmp->data == &mons[PM_WUMPUS] ||
-                    (mtmp->wormno && count_wsegs(mtmp) > 5) ||
-                    mtmp->data->msize >= MZ_HUGE)
+                if (flying(target) || levitates(target) ||
+                    target->data == &mons[PM_WUMPUS] ||
+                    (target->wormno && count_wsegs(target) > 5) ||
+                    target->data->msize >= MZ_HUGE)
                     return;
-                if (mtmp == u.ustuck)   /* probably a vortex */
+                if (target == u.ustuck)   /* probably a vortex */
                     return;     /* temporary? kludge */
 
-                if (teleport_pet(mtmp, FALSE)) {
+                if (teleport_pet(target, FALSE)) {
                     d_level tolevel;
 
-                    if (Is_stronghold(&u.uz)) {
+                    if (Is_stronghold(m_mz(target))) {
                         assign_level(&tolevel, &valley_level);
                     } else if (Is_botlevel(&u.uz)) {
                         /* TODO: I can't figure out what this does or if the
                            canseemon() is the correct check. */
-                        if (canseemon(mtmp))
-                            pline("%s avoids the trap.", Monnam(mtmp));
+                        if (canseemon(target))
+                            pline("%s avoids the trap.", Monnam(target));
                         return;
                     } else {
-                        get_level(&tolevel, depth(&u.uz) + 1);
+                        get_level(&tolevel, depth(m_mz(mon)) + 1);
                     }
-                    if (mtmp->isshk)
-                        make_angry_shk(mtmp, 0, 0);
-                    migrate_to_level(mtmp, ledger_no(&tolevel), MIGR_RANDOM,
+                    if (target->isshk && (yours || !flags.mon_moving))
+                        make_angry_shk(target, 0, 0);
+                    if (yours || canseemon(target))
+                        pline("%s falls through...", Monnam(target));
+                    migrate_to_level(target, ledger_no(&tolevel), MIGR_RANDOM,
                                      NULL);
                 }
             }

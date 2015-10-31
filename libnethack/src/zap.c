@@ -342,7 +342,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                     pline("%s opens its mouth!", Monnam(mtmp));
             }
             expels(mtmp, mtmp->data, TRUE);
-        } else if (! !(obj = which_armor(mtmp, os_saddle))) {
+        } else if ((obj = which_armor(mtmp, os_saddle))) {
             mtmp->misc_worn_check &= ~obj->owornmask;
             obj->owornmask = 0L;
             if (mtmp == u.usteed)

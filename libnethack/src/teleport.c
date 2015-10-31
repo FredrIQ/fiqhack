@@ -1466,8 +1466,9 @@ mlevel_tele_trap(struct monst *mtmp, struct trap *trap, boolean force_it,
                 migrate_typ = MIGR_PORTAL;
             }
         } else {
+            const struct level *lev = mtmp->dlevel;
             mon_level_tele(mtmp);
-            return 0;
+            return (lev != mtmp->dlevel ? 3 : 0);
         }
 
         if (in_sight) {

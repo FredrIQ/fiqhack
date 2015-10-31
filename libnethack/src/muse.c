@@ -2322,7 +2322,7 @@ use_item(struct monst *mon, struct musable *m)
             break;
         case 2:    /* onto floor beneath you */
             pline("%s yanks %s to the %s!", Monnam(mtmp), the_weapon,
-                  surface(u.ux, u.uy));
+                  surface(m_mx(mon), m_my(mon)));
             place_object(otmp, level, m_mx(mtmp), m_my(mtmp));
             break;
         case 3:    /* into mon's inventory */
