@@ -522,8 +522,9 @@ strategy(struct monst *mtmp, boolean magical_target)
         if (!mtmp->mpeaceful && is_mercenary(mtmp->data))
             minr = 1;
 
-        if (!*in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE) ||
-            (!rn2(25) && !mtmp->isshk)) {
+        if ((!mtmp->mpeaceful || mtmp->mtame) &&
+            (!*in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE) ||
+             (!rn2(25) && !mtmp->isshk))) {
             for (otmp = mtmp->dlevel->objlist; otmp; otmp = otmp->nobj) {
                 /* monsters may pick rocks up, but won't go out of their way
                    to grab them; this might hamper sling wielders, but it
@@ -541,8 +542,10 @@ strategy(struct monst *mtmp, boolean magical_target)
                             !mtoo->data->mmove))
                         continue;
 
-                    if (monster_would_take_item(mtmp, otmp) &&
-                        can_carry(mtmp, otmp) &&
+                    if (((monster_would_take_item(mtmp, otmp) &&
+                          can_carry(mtmp, otmp)) ||
+                         ((Is_box(otmp) || otmp->otyp == ICE_BOX) &&
+                          !otmp->mknown)) &&
                         (throws_rocks(mtmp->data) ||
                          !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
                         !(onscary(otmp->ox, otmp->oy, mtmp))) {
