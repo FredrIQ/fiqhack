@@ -1154,8 +1154,8 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             /* TODO: maybe make the oclass/etc checks into a common function */
             if (canseemon(mon))
                 pline("%s picks up %s%s from %s.", Monnam(mon),
-                      picked > 5 ? "several" :
-                      picked > 1 ? "a few" : "",
+                      picked > 5 ? "several " :
+                      picked > 1 ? "a few " : "",
                       picked == 1 ? distant_name(pickobj, doname) :
                       !pickobj ? "items" :
                       pickobj->oclass == WEAPON_CLASS ? "weapons" :
