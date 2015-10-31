@@ -320,11 +320,11 @@ m_has_property(const struct monst *mon, enum youprop property,
                 rv |= W_MASK(os_polyform);
         }
     }
-    if (pm_has_property(mdat_role, property))
+    if (pm_has_property(mdat_role, property) > 0)
         rv |= W_MASK(os_role);
-    if (mdat_race && pm_has_property(mdat_race, property))
+    if (mdat_race && pm_has_property(mdat_race, property) > 0)
         rv |= W_MASK(os_race);
-    if (mdat_poly && pm_has_property(mdat_poly, property))
+    if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
         rv |= W_MASK(os_polyform);
 
     /* External circumstances */
@@ -891,7 +891,7 @@ update_property(struct monst *mon, enum youprop prop,
        if we're dealing with (inc|dec)timeout */
     if (slot == os_inctimeout || slot == os_dectimeout) {
         redundant = !!has_property(mon, prop);
-        redundant_intrinsic = (has_property(mon, prop) & ~INTRINSIC);
+        redundant_intrinsic = !!(has_property(mon, prop) & ~INTRINSIC);
     }
 
     /* Hallu checks *your* hallucination since it's used for special
@@ -1091,7 +1091,8 @@ update_property(struct monst *mon, enum youprop prop,
         if (you && slot == os_armc && !lost) {
             pline("Your cloak feels unusually protective.");
             effect = TRUE;
-        } else if (slot == os_dectimeout && timer % 10 && (you || vis)) {
+        } else if (slot == os_dectimeout && !(timer % 10) &&
+                   (you || vis)) {
             pline("The %s haze around %s %s.", hcolor("golden"),
                   you ? "you" : mon_nam(mon),
                   m_mspellprot(mon) ? "becomes less dense" : "disappears");
@@ -1301,7 +1302,8 @@ update_property(struct monst *mon, enum youprop prop,
                     effect = TRUE;
                 }
             } else if (redundant) {
-                if (you) {
+                if (you && (slot != os_dectimeout ||
+                            lost)) {
                     eyepline(lost ? "twitches" : "itches",
                              lost ? "twitch" : "itch");
                     effect = TRUE;
@@ -1868,10 +1870,10 @@ slip_or_trip(struct monst *mon)
         pctload = (inv_weight() * 100) / weight_cap();
 
     if (!you && !vis) {
-        if (pctload > 50)
-            verbalize("You hear fumbling %s.",
-                      dist2(u.ux, u.uy, mon->mx, mon->my) > BOLT_LIM * BOLT_LIM ?
-                      "in the distance" : "nearby");
+        if (pctload > 50 && canhear())
+            pline("You hear fumbling %s.",
+                  dist2(u.ux, u.uy, mon->mx, mon->my) > BOLT_LIM * BOLT_LIM ?
+                  "in the distance" : "nearby");
         return FALSE; /* can't see the target anyway */
     }
 

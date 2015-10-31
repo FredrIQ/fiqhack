@@ -1012,10 +1012,10 @@ static boolean
 mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup)
 {
     struct obj *obj, *nobj; /* object iterators */
-    int picked; /* amount of already picked up items */
-    struct obj *pickobj; /* used for messages (potion of X, several potions, etc) */
-    int vanish; /* amount of vanished items from a cursed BoH */
-    if (!container || !mon->dlevel->objects[mon->mx][mon->my])
+    int picked = 0; /* amount of already picked up items */
+    struct obj *pickobj = NULL; /* used for messages (potion of X, several potions, etc) */
+    int vanish = 0; /* amount of vanished items from a cursed BoH */
+    if (!mon->dlevel->objects[mon->mx][mon->my])
         return FALSE;
 
     boolean bag;
@@ -1099,10 +1099,10 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             }
             if (!picked)
                 pickobj = obj;
-            else if (pickobj->oclass != obj->oclass)
+            else if (pickobj && pickobj->oclass != obj->oclass)
                 pickobj = NULL; /* sentinel value for "several item classes */
             /* allow "(several/etc) corpses by letting other food override corpses */
-            else if (obj->otyp != pickobj->otyp &&
+            else if (pickobj && obj->otyp != pickobj->otyp &&
                      (pickobj->otyp == CORPSE || obj->otyp == CORPSE))
                 pickobj = (obj->otyp == CORPSE ? pickobj : obj);
             picked++;

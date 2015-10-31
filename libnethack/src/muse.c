@@ -916,14 +916,32 @@ find_unlocker(struct monst *mon, struct musable *m)
 
     /* check if we can cast knock, only accepting
        80%+ success rate */
-    if (mon_castable(mon, SPE_KNOCK, TRUE) >= 80) {
+    if (mon_castable(mon, SPE_KNOCK, TRUE) >= 80 &&
+        (mon->mstrategy != st_ascend ||
+         mon_castable(mon, SPE_KNOCK, FALSE))) {
         m->spell = SPE_KNOCK;
         m->use = MUSE_SPE;
         return TRUE;
     }
 
     /* look for good wands of opening */
-    return find_item_obj(mon, mon->minvent, m, FALSE, WAN_OPENING);
+    if (find_item_obj(mon, mon->minvent, m, FALSE, WAN_OPENING))
+        return TRUE;
+    /* if we are on the ascension run, accept dig/striking as well */
+    if (mon->mstrategy == st_ascend) {
+        if (find_item_obj(mon, mon->minvent, m, FALSE, WAN_DIGGING) ||
+            find_item_obj(mon, mon->minvent, m, FALSE, WAN_STRIKING))
+            return TRUE;
+        if (mon_castable(mon, SPE_FORCE_BOLT, FALSE))
+            m->spell = SPE_FORCE_BOLT;
+        else if (mon_castable(mon, SPE_DIG, FALSE))
+            m->spell = SPE_DIG;
+        if (m->spell) {
+            m->use = MUSE_SPE;
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 /* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in pathfinding),
