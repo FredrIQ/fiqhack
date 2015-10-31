@@ -990,6 +990,12 @@ find_item(struct monst *mon, struct musable *m)
     m->spell = 0;
     m->use = 0;
 
+    /* Ascend */
+    if (mon->sx == mon->mx && mon->sy == mon->my && mon->mstrategy == st_ascend) {
+        m->use = MUSE_ASCEND;
+        return TRUE;
+    }
+
     /* Fix petrification */
     if (petrifying(mon)) {
         /* look for lizard */
@@ -1315,6 +1321,13 @@ find_item(struct monst *mon, struct musable *m)
 
     /* at this point, if we lack hands, there's nothing we can do */
     if (nohands(mon->data))
+        return FALSE;
+
+    /* If the monster is heading for ascension, ignore nonspecific items
+       2/3 of the time. This prevents monsters wasting valuable turns.
+       Using spells is still OK since monsters only cast spells when they
+       are able to anyway */
+    if (mon->mstrategy == st_ascend && rn2(3))
         return FALSE;
 
     /* Object handling. find_item_obj is given an object chain,
@@ -2037,6 +2050,25 @@ use_item(struct monst *mon, struct musable *m)
         if (btrapped && mb_trapped(mon))
             return 1;
         return 2;
+    case MUSE_ASCEND:
+        /* give full messaging unconditionally -- the player has lost at this point */
+        if (!canseemon(mon))
+            pline("You notice a ritual going on nearby...");
+        pline("%s offers the Amulet of Yendor to %s...", Monnam(mon),
+              a_gname_at(mon->mx, mon->my));
+        pline("An invisible choir sings, and %s is bathed in radiance...",
+              mon_nam(mon));
+        pline("A voice booms out...");
+        pline("Congratulations, %s!", mortal_or_creature(mon->data, TRUE));
+        pline("In return for thy service, I grant thee the gift of %s!",
+              nonliving(mon->data) ? "Eternal Power" : "Immortality");
+        pline("%s ascends to the status of Demogod%s...", Monnam(mon),
+              mon->female ? "des" : "");
+        const char *ebuf;
+        ebuf = msgprintf("was beaten to the ascension by %s.",
+                         k_monnam(mon));
+        done(ESCAPED, ebuf);
+        return 2;
     case MUSE_TRAPDOOR:
         /* trap doors on "bottom" levels of dungeons are rock-drop trap doors,
            not holes in the floor.  We check here for safety. */
@@ -2677,6 +2709,8 @@ searches_for_item(const struct monst *mon, struct obj *obj)
             return (boolean) (touch_petrifies(&mons[obj->corpsenm]));
         break;
     case AMULET_CLASS:
+        if (typ == AMULET_OF_YENDOR) /* covetous is checked elsewhere */
+            return is_mplayer(mon->data);
         if (typ == AMULET_OF_LIFE_SAVING) /* LS isn't desirable if nonliving */
             return (boolean) (!nonliving(mon->data));
         return (!m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));

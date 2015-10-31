@@ -315,6 +315,35 @@ dochug(struct monst *mtmp)
     if (mtmp->mflee && !mtmp->mfleetim && mtmp->mhp == mtmp->mhpmax && !rn2(25))
         mtmp->mflee = 0;
 
+    /* if a player monster gets the amulet, it wants to ascend */
+    /* TODO: make this work outside Astral (in which the monster heads there) */
+    if (is_mplayer(mtmp->data) && mon_has_amulet(mtmp) &&
+        Is_astralevel(m_mz(mtmp)) && mtmp->mstrategy != st_ascend) {
+        mtmp->mstrategy = st_ascend;
+        mtmp->sx = COLNO;
+        mtmp->sy = ROWNO;
+        int x, y;
+        /* find coaligned altar */
+        for (x = 0; x < COLNO; x++) {
+            for (y = 0; y < ROWNO; y++) {
+                if (mtmp->dlevel->locations[x][y].typ == ALTAR) {
+                    int mask = mtmp->dlevel->locations[x][y].altarmask;
+                    int alignment = mtmp->data->maligntyp;
+                    if ((mask & AM_LAWFUL && alignment > 0) ||
+                        (mask & AM_NEUTRAL && alignment == 0) ||
+                        (mask & AM_CHAOTIC && alignment < 0)) {
+                        mtmp->sx = x;
+                        mtmp->sy = y;
+                        break;
+                    }
+                }
+            }
+        }
+        if (mtmp->sx == COLNO) { /* no altar...? */
+            impossible("No coaligned altar on astral for player monster?");
+            mtmp->mstrategy = st_none;
+        }
+    }
     strategy(mtmp, FALSE); /* calls set_apparxy */
     /* Must be done after you move and before the monster does.  The
        set_apparxy() call in m_move() doesn't suffice since the variables
@@ -454,7 +483,7 @@ dochug(struct monst *mtmp)
     if ((attacktype(mtmp->data, AT_BREA) || attacktype(mtmp->data, AT_GAZE) ||
          attacktype(mtmp->data, AT_SPIT) ||
          (attacktype(mtmp->data, AT_WEAP) && select_rwep(mtmp) != 0)) &&
-        mtmp->mlstmv != moves) {
+        mtmp->mlstmv != moves && mtmp->mstrategy != st_ascend) {
         struct monst *mtmp2 = mfind_target(mtmp, FALSE);
 
         if (mtmp2 && mtmp2 != &youmonst) {
@@ -484,7 +513,7 @@ dochug(struct monst *mtmp)
         (mdat->mlet == S_LEPRECHAUN && !ygold &&
          (lepgold || rn2(2))) || (is_wanderer(mdat) && !rn2(4)) ||
         (Conflict && !mtmp->iswiz) || (blind(mtmp) && !rn2(4)) ||
-        mtmp->mpeaceful) {
+        mtmp->mpeaceful || mtmp->mstrategy == st_ascend) {
         tmp = m_move(mtmp, 0);
         distfleeck(mtmp, &inrange, &nearby, &scared);   /* recalc */
 
@@ -741,7 +770,7 @@ m_move(struct monst *mtmp, int after)
     /* check if there is a good reason to teleport at will, or occasioally
        do it anyway */
     if (teleport_at_will(mtmp) && !mtmp->mspec_used && !cancelled(mtmp) &&
-        !tele_wary(mtmp)) {
+        !tele_wary(mtmp) && mtmp->mstrategy != st_ascend) {
         if (mtmp->mstrategy == st_escape || st_target(mtmp) ||
             !rn2(25)) {
             mtmp->mspec_used += 25;
@@ -816,7 +845,7 @@ not_special:
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
         flag |= ALLOW_MUXY;
-    if (is_minion(ptr) || is_rider(ptr))
+    if (is_minion(ptr) || is_rider(ptr) || is_mplayer(ptr))
         flag |= ALLOW_SANCT;
     /* unicorn may not be able to avoid hero on a noteleport level */
     if (is_unicorn(ptr) && !level->flags.noteleport)

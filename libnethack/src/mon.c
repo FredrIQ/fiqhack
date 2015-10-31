@@ -1676,6 +1676,10 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     if (mdef->mtame && !magr->mpeaceful)
         return ALLOW_M | ALLOW_TM;
 
+    /* Player monsters heading for ascension attacks anything in its' way */
+    if (magr->mstrategy == st_ascend)
+        return ALLOW_M | ALLOW_TM;
+
     /* Since the quest guardians are under siege, it makes sense to have them
        fight hostiles.  (But don't put the quest leader in danger.) */
     if (ma->msound == MS_GUARDIAN && mdef->mpeaceful == FALSE)

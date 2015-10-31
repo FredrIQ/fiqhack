@@ -308,6 +308,20 @@ strategy(struct monst *mtmp, boolean magical_target)
     if (idle(mtmp))
         return;
 
+    /* If the monster is heading for ascension, don't change the mind for anything
+       but losing the amulet */
+    if (mtmp->mstrategy == st_ascend) {
+        if (mon_has_amulet(mtmp)) {
+            /* regain courage immediately */
+            mtmp->mflee = 0;
+            mtmp->mfleetim = 0;
+            return;
+        } else {
+            /* reset strategy */
+            mtmp->mstrategy = st_none;
+        }
+    }
+
     /* Leprechaun special AI considerations, moved here from m_move.  These give
        an "escaping" status; like fleeing but it wears off the instant the
        conditions that caused it aren't met. */
@@ -484,12 +498,13 @@ strategy(struct monst *mtmp, boolean magical_target)
         }
     }
 
+    boolean randcheck = !rn2(100);
     /* If the monster is escaping, had nothing to do or reached its' goal but nothing
        interesting happened, pick a new strategy. However, if it is wandering aimlessy
        (st_wander), look for nearby objects to pickup since that is significantly more
        interesting than wandering around for no reason. */
     if (mtmp->mstrategy == st_escape || mtmp->mstrategy == st_none ||
-        mtmp->mstrategy == st_wander) {
+        mtmp->mstrategy == st_wander || !randcheck) {
         struct distmap_state ds;
         distmap_init(&ds, mtmp->mx, mtmp->my, mtmp);
         
@@ -548,7 +563,7 @@ strategy(struct monst *mtmp, boolean magical_target)
 
         /* If we are actually heading somewhere, don't pick a new target, unless
            we reached it with nothing happenening or passed a 1% check... */
-        if (!st_target(mtmp) || !rn2(100) ||
+        if (!st_target(mtmp) || !randcheck ||
             (mtmp->mx == mtmp->sx && mtmp->my == mtmp->sy)) {
             /* Try up to ten locations on the level, and pick the most distant
                reachable one. If we haven't found one by then, try another 20. */
