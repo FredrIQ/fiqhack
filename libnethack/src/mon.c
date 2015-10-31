@@ -2833,10 +2833,17 @@ wakeup(struct monst *mtmp, boolean force_detected)
 void
 wake_nearby(boolean intentional)
 {
-    wake_nearto(u.ux, u.uy, Aggravate_monster ? COLNO * COLNO + ROWNO * ROWNO :
-                intentional ? u.ulevel * 20 :
-                600 / (u.ulevel * (Role_if(PM_ROGUE) ? 2 : 1) *
-                       (Stealth ? 2 : 1)));
+    /* TODO: find a good place to have this as a macro */
+    mwake_nearby(&youmonst, intentional);
+}
+
+void mwake_nearby(const struct monst *mon, boolean intentional)
+{
+    wake_nearto(m_mx(mon), m_my(mon), aggravating(mon) ? COLNO * COLNO + ROWNO * ROWNO :
+                intentional ? m_mlev(mon) * 20 :
+                600 / (m_mlev(mon) *
+                       ((mon == &youmonst ? Role_if(PM_ROGUE) : mon->data == &mons[PM_ROGUE]) ?
+                        2 : 1) * (stealthy(mon) ? 2 : 1)));
 }
 
 /* Produce noise at a particular location. Monsters in the given dist2 radius

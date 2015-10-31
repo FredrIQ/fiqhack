@@ -214,7 +214,7 @@ struct monst {
 # define m_mz(mon) ((mon) == &youmonst ? &u.uz : &((mon)->dlevel->z))
 # define m_mhp(mon) ((mon) == &youmonst ? u.uhp : (mon)->mhp)
 # define m_mhpmax(mon) ((mon) == &youmonst ? u.uhpmax : (mon)->mhpmax)
-# define m_mlev(mon) (Upolyd ? mons[u.umonnum].mlevel : (mon)->data->mlevel)
+# define m_mlev(mon) ((mon) == &youmonst ? u.ulevel : (mon)->m_lev)
 # define m_mwep(mon) ((mon) == &youmonst ? uwep : (mon)->mw)
 # define m_mspellprot(mon) ((property_timeout(mon, PROTECTION) + 9) / 10)
 

@@ -2545,7 +2545,7 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
             mwrite8(mf, octet);
             octet = 0;
         }
-        octet |= ((mon->mintrinsic[prop] & FROMOUTSIDE_RAW) << (prop % 8));
+        octet |= (!!(mon->mintrinsic[prop] & FROMOUTSIDE_RAW) << (prop % 8));
     }
     mwrite8(mf, octet);
     mwrite64(mf, mon->mspells);
