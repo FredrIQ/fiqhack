@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -706,11 +706,11 @@ peffects(struct monst *mon, struct obj *otmp)
             /* they went up a level */
             if ((ledger_no(m_mz(mon)) == 1 && mon_has_amulet(mon)) ||
                 Can_rise_up(m_mx(mon), m_my(mon), m_mz(mon))) {
-                const char *riseup = "%s rise%s up, through the %s!";
-
-                if (ledger_no(m_mz(mon)) == 1) {
-                    pline(riseup, Mon, you ? "" : "s",
+                if (you || vis)
+                    pline("%s rise%s up, through the %s!",
+                          Mon, you ? "" : "s",
                           ceiling(m_mx(mon), m_my(mon)));
+                if (ledger_no(m_mz(mon)) == 1) {
                     if (you)
                         goto_level(&earth_level, FALSE, FALSE, FALSE);
                     else { /* ouch... */
@@ -733,11 +733,9 @@ peffects(struct monst *mon, struct obj *otmp)
 
                     get_level(&newlevel, newlev);
                     if (on_level(&newlevel, m_mz(mon))) {
-                        if (you)
-                            pline("It tasted bad.");
+                        impossible("can rise up, but invalid newlevel?");
                         break;
-                    } else
-                        pline(riseup, ceiling(u.ux, u.uy));
+                    }
                     if (you)
                         goto_level(&newlevel, FALSE, FALSE, FALSE);
                     else

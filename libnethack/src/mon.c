@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1082,11 +1082,6 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
         }
         /* Nymphs take everything.  Most monsters don't pick up corpses. */
         if (monster_would_take_item(mon, obj)) {
-            if (obj->otyp == CORPSE && mon->data->mlet != S_NYMPH &&
-                /* let a handful of corpse types thru to can_carry() */
-                !touch_petrifies(&mons[obj->corpsenm]) &&
-                obj->corpsenm != PM_LIZARD && !acidic(&mons[obj->corpsenm]))
-                continue;
             if (!touch_artifact(obj, mon))
                 continue;
             if (!can_carry(mon, obj))
@@ -1259,6 +1254,10 @@ can_carry(struct monst *mtmp, struct obj *otmp)
         return FALSE;
     /* otherwise players might find themselves obligated to violate their
        alignment if the monster takes something they need */
+
+    /* cross-aligned artifacts */
+    if (!touch_artifact(otmp, mtmp))
+        return FALSE;
 
     /* special--boulder throwers carry unlimited amounts of boulders */
     if (throws_rocks(mdat) && otyp == BOULDER)

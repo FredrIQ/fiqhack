@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -536,11 +536,13 @@ strategy(struct monst *mtmp, boolean magical_target)
                     /* don't get stuck circling around an object that's
                        underneath an immobile or hidden monster; paralysis
                        victims excluded */
-                    if ((mtoo = m_at(mtmp->dlevel, otmp->ox, otmp->oy)) != 0
-                        && (mtoo->msleeping || mtoo->mundetected ||
-                            (mtoo->mappearance && !mtoo->iswiz) ||
-                            !mtoo->data->mmove))
+                    if ((mtoo = m_at(mtmp->dlevel, otmp->ox, otmp->oy)) &&
+                        (mtoo->msleeping || mtoo->mundetected ||
+                         (mtoo->mappearance && !mtoo->iswiz) ||
+                         !mtoo->data->mmove)) {
+                        pline("something is in the way...");
                         continue;
+                    }
 
                     if (((monster_would_take_item(mtmp, otmp) &&
                           can_carry(mtmp, otmp)) ||
@@ -560,6 +562,7 @@ strategy(struct monst *mtmp, boolean magical_target)
         }
 
         if (gx != COLNO) {
+            pline("found obj: %d,%d", gx, gy);
             mtmp->mstrategy = st_obj;
             mtmp->sx = gx;
             mtmp->sy = gy;
