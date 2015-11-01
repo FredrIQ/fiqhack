@@ -412,12 +412,12 @@ dog_hunger(struct monst *mtmp, struct edog *edog)
                 obest = otmp;
             }
         }
-        if (obest != (struct obj *)0) {
+        if (obest) {
             obj_extract_self(obest);
             place_object(obest, level, mtmp->mx, mtmp->my);
             if (dog_eat(mtmp, obest, mtmp->mx, mtmp->my, FALSE) == 2)
-                return (TRUE);
-            return (FALSE);
+                return TRUE;
+            return FALSE;
         }
     }
     if (moves > edog->hungrytime + 500) {
@@ -496,10 +496,12 @@ dog_invent(struct monst *mtmp, struct edog *edog, int udist)
                             /* starving pet is more aggressive about eating */
                             (edog->mhpmax_penalty && edible == ACCFOOD)) &&
             could_reach_item(mtmp, obj->ox, obj->oy)) {
-            if (levitates(mtmp) && levitates_at_will(mtmp, TRUE, FALSE))
-                return mon_remove_levitation(mtmp, FALSE);
-            else if (edog->hungrytime < moves + DOG_SATIATED)
-                return dog_eat(mtmp, obj, omx, omy, FALSE);
+            if (edog->hungrytime < moves + DOG_SATIATED) {
+                if (levitates(mtmp) && levitates_at_will(mtmp, TRUE, FALSE))
+                    return mon_remove_levitation(mtmp, FALSE);
+                else if (!levitates(mtmp))
+                    return dog_eat(mtmp, obj, omx, omy, FALSE);
+            }
         }
 
         if (can_carry(mtmp, obj) && !obj->cursed &&
