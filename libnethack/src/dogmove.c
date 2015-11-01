@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -496,9 +496,9 @@ dog_invent(struct monst *mtmp, struct edog *edog, int udist)
                             /* starving pet is more aggressive about eating */
                             (edog->mhpmax_penalty && edible == ACCFOOD)) &&
             could_reach_item(mtmp, obj->ox, obj->oy)) {
-            if (levitates_at_will(mtmp, TRUE, FALSE))
+            if (levitates(mtmp) && levitates_at_will(mtmp, TRUE, FALSE))
                 return mon_remove_levitation(mtmp, FALSE);
-            else if (!levitates(mtmp))
+            else if (edog->hungrytime < moves + DOG_SATIATED)
                 return dog_eat(mtmp, obj, omx, omy, FALSE);
         }
 
@@ -888,6 +888,7 @@ dog_move(struct monst *mtmp, int after)
                     cursemsg[i] = TRUE;
                 else if ((otyp = dogfood(mtmp, obj)) < MANFOOD &&
                          (otyp < ACCFOOD || edog->hungrytime <= moves) &&
+                         edog->hungrytime < moves + DOG_SATIATED &&
                          (!levitates(mtmp) ||
                          levitates_at_will(mtmp, TRUE, FALSE))) {
                     /* Note: our dog likes the food so much that he might eat
@@ -967,8 +968,7 @@ newdogpos:
                     else
                         impossible("remove levitation performed no action?");
                 }
-            }
-            if (dog_eat(mtmp, obj, omx, omy, FALSE) == 2)
+            } else if (dog_eat(mtmp, obj, omx, omy, FALSE) == 2)
                 return 2;
         }
     } else if (mtmp->mleashed && distu(omx, omy) > 4) {

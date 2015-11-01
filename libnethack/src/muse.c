@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -682,7 +682,7 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
                               mon->mpeaceful == mtmp->mpeaceful)) {
                         tilescore += (helpful ? 20 : -10);
                         /* tame monsters like zapping friends and dislike collateral damage */
-                        if (mon->mtame && !self) {
+                        if (mon->mtame) {
                             tilescore *= 2;
                             /* never hit allies with deathzaps */
                             if (obj->otyp == SPE_FINGER_OF_DEATH ||
