@@ -3101,7 +3101,8 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
             /* polyok rules out all M2_PNAME and M2_WERE's; select_newcham_form
                might deliberately pick a player character type, so we can't
                arbitrarily rule out all human forms any more */
-            if (is_mplayer(mdat) || (!is_human(mdat) && polyok(mdat)))
+            if ((is_mplayer(mdat) && mtmp->cham == CHAM_DOPPELGANGER) ||
+                (!is_human(mdat) && polyok(mdat)))
                 break;
         }
         if (tryct > 100)

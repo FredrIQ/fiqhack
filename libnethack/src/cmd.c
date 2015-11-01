@@ -392,8 +392,10 @@ wiz_map(const struct nh_cmd_arg *arg)
         map_trap(t, TRUE, FALSE);
     }
     do_mapping();
-    set_property(&youmonst, CONFUSION, oldconf, TRUE);
-    set_property(&youmonst, HALLUC, oldhallu, TRUE);
+    if (oldconf)
+        set_property(&youmonst, CONFUSION, oldconf, TRUE);
+    if (oldhallu)
+        set_property(&youmonst, HALLUC, oldhallu, TRUE);
 
     return 0;
 }
