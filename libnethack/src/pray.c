@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -379,17 +379,8 @@ fix_worst_trouble(int trouble)
         encumber_msg();
         break;
     case ptr_blind:
-        {
-            int num_eyes = eyecount(youmonst.data);
-            const char *eye = body_part(EYE);
-
-            pline("Your %s feel%s better.",
-                  (num_eyes == 1) ? eye : makeplural(eye),
-                  (num_eyes == 1) ? "s" : "");
-            u.ucreamed = 0;
-            set_property(&youmonst, BLINDED, -2, TRUE);
-            break;
-        }
+        set_property(&youmonst, BLINDED, -2, FALSE);
+        break;
     case ptr_wounded_legs:
         heal_legs(&youmonst, leg_hurtsides(&youmonst));
         break;

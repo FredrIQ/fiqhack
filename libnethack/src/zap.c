@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2801,9 +2801,9 @@ exclam(int force)
 void
 hit(const char *str, struct monst *mtmp, const char *force)
 {       /* usually either "." or "!" */
-    if ((!cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp) &&
-         !(Engulfed && mtmp == u.ustuck))
-        || !flags.verbose)
+    if (((!cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp) &&
+          !(Engulfed && mtmp == u.ustuck))
+         || !flags.verbose) && mtmp != &youmonst)
         pline("%s %s it.", The(str), vtense(str, "hit"));
     else
         pline("%s %s %s%s", The(str), vtense(str, "hit"),
@@ -2814,8 +2814,10 @@ void
 miss(const char *str, struct monst *mtmp)
 {
     pline("%s %s %s.", The(str), vtense(str, "miss"),
-          ((cansee(bhitpos.x, bhitpos.y) || canspotmon(mtmp))
-           && flags.verbose) ? mon_nam(mtmp) : "it");
+          ((cansee(bhitpos.x, bhitpos.y) || canspotmon(mtmp) ||
+            mtmp == &youmonst)
+           && flags.verbose) ?
+          (mtmp == &youmonst ? "you" : mon_nam(mtmp)) : "it");
 }
 
 
