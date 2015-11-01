@@ -539,10 +539,8 @@ strategy(struct monst *mtmp, boolean magical_target)
                     if ((mtoo = m_at(mtmp->dlevel, otmp->ox, otmp->oy)) &&
                         (mtoo->msleeping || mtoo->mundetected ||
                          (mtoo->mappearance && !mtoo->iswiz) ||
-                         !mtoo->data->mmove)) {
-                        pline("something is in the way...");
+                         !mtoo->data->mmove))
                         continue;
-                    }
 
                     if (((monster_would_take_item(mtmp, otmp) &&
                           can_carry(mtmp, otmp)) ||
@@ -562,7 +560,6 @@ strategy(struct monst *mtmp, boolean magical_target)
         }
 
         if (gx != COLNO) {
-            pline("found obj: %d,%d", gx, gy);
             mtmp->mstrategy = st_obj;
             mtmp->sx = gx;
             mtmp->sy = gy;
