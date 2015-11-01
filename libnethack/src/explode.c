@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -214,13 +214,13 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         explmask[i][j] |= (raylevel >= 4 || resists_magm(mtmp));
                         break;
                     case AD_FIRE:
-                        explmask[i][j] |= resists_fire(mtmp);
+                        explmask[i][j] |= !!resists_fire(mtmp);
                         break;
                     case AD_COLD:
-                        explmask[i][j] |= resists_cold(mtmp);
+                        explmask[i][j] |= !!resists_cold(mtmp);
                         break;
                     case AD_SLEE:
-                        explmask[i][j] |= resists_sleep(mtmp);
+                        explmask[i][j] |= !!resists_sleep(mtmp);
                     case AD_DISN:
                         if (raylevel == P_UNSKILLED && resists_drli(mtmp))
                         resist_death = TRUE;
@@ -232,17 +232,17 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         if (raylevel >= P_EXPERT && !resists_drli(mtmp))
                             resist_death = FALSE;
                         explmask[i][j] |=
-                            (olet == WAND_CLASS) ? resist_death :
-                            resists_disint(mtmp);
+                            !!((olet == WAND_CLASS) ? resist_death :
+                               resists_disint(mtmp));
                         break;
                     case AD_ELEC:
-                        explmask[i][j] |= resists_elec(mtmp);
+                        explmask[i][j] |= !!resists_elec(mtmp);
                         break;
                     case AD_DRST:
-                        explmask[i][j] |= resists_poison(mtmp);
+                        explmask[i][j] |= !!resists_poison(mtmp);
                         break;
                     case AD_ACID:
-                        explmask[i][j] |= resists_acid(mtmp);
+                        explmask[i][j] |= !!resists_acid(mtmp);
                         break;
                     default:
                         impossible("explosion type %d?", adtyp);

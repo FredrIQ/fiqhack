@@ -1201,7 +1201,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
             n = rnd(8) + 1;
             while (n--) {
                 explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
-                        mon->m_lev / 2 + 1 + spell_damage_bonus(), 0,
+                        mon->m_lev / 2 + 1, 0,
                         (pseudo->otyp ==
                          SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
                         NULL, 0);
