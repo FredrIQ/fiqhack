@@ -864,11 +864,16 @@ update_property(struct monst *mon, enum youprop prop,
     /* Items call update_property() when lost, whether or not it had a property */
     if (prop == NO_PROP)
         return FALSE;
-    boolean vis = canseemon(mon);
+
+    /* update_property() can run for monsters wearing armor during level creation,
+       or potentially off-level, so level can be non-existent or outright wrong,
+       take this into account when messing with this function */
+    boolean offlevel = (!level || level != mon->dlevel);
+    boolean vis = !offlevel && canseemon(mon);
     /* Used when the updating is related to monster invisibility
        since canseemon() wont work if the monster just turned
        itself invisible */
-    boolean vis_invis = cansee(mon->mx, mon->my);
+    boolean vis_invis = !offlevel && cansee(mon->mx, mon->my);
     /* if slot is inctimeout or newpolyform, point real_slot to
        timeout or polyform respectively -- new* is to give proper messages */
     int real_slot = (slot == os_inctimeout  ? os_timeout  :
@@ -2054,7 +2059,8 @@ msensem(const struct monst *viewer, const struct monst *viewee)
         if (!onmap(viewee) || DEADMONSTER(viewee))
             return 0;
     if (!level) {
-        impossible("vision calculations during level creation");
+        impossible("vision calculations during level creation: %s->%s",
+                   k_monnam(viewer), k_monnam(viewee));
         return 0;
     }
 
