@@ -267,7 +267,8 @@ init_permonsts(const struct monst *mon, const struct permonst **role,
         if (racenum)
             *race = &mons[racenum];
     }
-    if (*role != mon->data) { /* polymorphed */
+    if (*role != mon->data &&
+        (mon != &youmonst || Upolyd)) { /* polymorphed */
         *poly = mon->data;
         *race = NULL; /* polymorph grants the polyform's race */
         racenum = race_from_pm(*poly);
