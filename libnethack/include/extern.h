@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1669,7 +1669,7 @@ extern void fixup_special(struct level *lev);
 /* ### spell.c ### */
 
 extern void deadbook(struct obj *book2, boolean invoked);
-extern int study_rate(struct monst *, struct obj *);
+extern int study_rate(const struct monst *, struct obj *);
 extern int mon_study_book(struct monst *, struct obj *);
 extern int mon_addspell(struct monst *, int);
 extern int study_book(struct obj *, const struct nh_cmd_arg *);

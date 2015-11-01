@@ -2691,6 +2691,9 @@ searches_for_item(const struct monst *mon, struct obj *obj)
     case SPBOOK_CLASS:
         if (typ != SPE_BOOK_OF_THE_DEAD &&
             typ != SPE_BLANK_PAPER &&
+            (study_rate(mon, obj) >= 15 || /* pickup unless we can't study it */
+             !obj->mknown || (obj->mbknown && obj->blessed)) &&
+            !obj->mknown &&
             !mon_castable(mon, typ, TRUE))
             return TRUE;
         break;

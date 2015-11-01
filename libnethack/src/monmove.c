@@ -828,7 +828,7 @@ not_special:
         if (appr != 1 || !in_line)
             setlikes = TRUE;
         /* Chest traps can kill */
-        if (setlikes && mpickstuff(mtmp, FALSE))
+        if (setlikes && !mtmp->mtame && mpickstuff(mtmp, FALSE))
             return DEADMONSTER(mtmp) ? 2 : 3;
     }
 
@@ -1231,7 +1231,7 @@ postmov:
             }
 
             if (!*in_rooms(level, mtmp->mx, mtmp->my, SHOPBASE) &&
-                mpickstuff(mtmp, TRUE))
+                !mtmp->mtame && mpickstuff(mtmp, TRUE))
                 mmoved = 3;
 
             /* We can't condition this on being invisible any more; maybe a
