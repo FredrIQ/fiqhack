@@ -1,20 +1,23 @@
-Source: nethack4
+Source: fiqhack
 Section: games
 Priority: optional
-Maintainer: Alex Smith <ais523@nethack4.org>
+Maintainer: Fredrik Ljungdahl <fredde1994@gmail.com>
 Build-Depends: debhelper (>= 9.0.0), libz-dev, libjansson-dev, bison, flex, libsdl2-dev, libpng-dev, perl (>= 5.8.1)
 Standards-Version: 3.9.5
-Homepage: http://nethack4.org
-Vcs-Git: http://nethack4.org/media/nethack4.git -b master
+Homepage: http://fiq.se
+Vcs-Git: git://github.com/FredrIQ/fiqhack.git
 
-Package: nethack4
+Package: fiqhack
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: modernized version of the classic roguelike
- NetHack 4 is a modernized version of the classic game NetHack. It adds a
- completely new user interface, numerous bugfixes, and much more. It also tries
- to avoid killing the player with the interface - its authors feel that player
+Description: modernized version of the classic roguelike NetHack
+ FIQHack is a modernized version of the classic game NetHack, based off
+ NetHack4's codebase, itself based on NetHack 3.4.3, but adds a completely new
+ user interface, numberous bug fixes. It also tries to make the user interface
+ less hostile and less willing to kill the player - its authors feel that player
  deaths should be the result of their actions, not their typos.
+ On top of that, FIQHack does a few balance adjustments, tries to improve the
+ monster AI and to make things more consistent between monsters and players.
  .
  NetHack itself is perhaps the best-known "roguelike" game: a screen-oriented
  dungeon crawler in which levels are randomly generated, giving a different

@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-04-01
+Last modified by Fredrik Ljungdahl, 2015-11-03
 
 Copyright (C) 2013 Alex Smith.
 
@@ -16,8 +16,8 @@ that have been asked less often but I expect to be asked and thus need
 to be answered pre-emptively, together with their answers.
 
 
-About the NetHack 4 project
-===========================
+About FIQHack
+=============
 
 What is NetHack?
 ----------------
@@ -42,6 +42,25 @@ flexibility in its gameplay; if it seems like you should be able to do
 something, you probably can, and unlike many roguelikes, the emphasis is on
 allowing you to build the character you want to play, rather than on trying to
 make do with a limited number of tools.
+
+
+What is FIQHack?
+----------------
+
+FIQHack is a derivative (fork) of NetHack4. It is similar to NetHack4, but
+has a few original balance changes after the author's liking, as well as some
+significant internal changes to the codebase.
+
+
+Why FIQHack?
+------------
+
+FIQHack was made because the author wanted to improve NetHack's monster AI,
+both on an internal level and gameplay-wise, which is infamous for having a
+borderline impenetrable source code, as well as being rather buggy and strange
+behaviour in a lot of different cirumstances. Over time, it incorporated
+additional changes to the author's liking and experimentation and became its'
+own thing.
 
 
 What is NetHack 4?
@@ -157,11 +176,8 @@ we couldn't stop spambots using it.)
 What about playing in tournaments?
 ----------------------------------
 
-NetHack 4 is one of the games featured in the annual
-[Junethack tournament][5], which looks at the future of NetHack by allowing
-competition on the various forks and variants (as well as 3.4.3).  As the name
-might suggest, it runs in June every year.  See the tournament site for more
-details.
+FIQHack has currently not had any tournaments of sorts, but may or may not show
+up in the annual [Junethack tournament][5] in June 2016.
 
 
 What license is the code under?

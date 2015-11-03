@@ -1,7 +1,7 @@
 (This file itself is Copyright (C) 2013, 2014, 2015 Alex Smith, and
 may be freely redistributed. See license for details.)
 
-NetHack 4 is licensed under the the NetHack General Public License
+FIQHack is licensed under the the NetHack General Public License
 (see libnethack/dat/license for the license terms). The license is
 similar to old versions of the GPL (both the GPL and the NGPL were
 based on the same license, the BISON general public license).
@@ -24,7 +24,7 @@ copy of version 3 of the GPL inside aimake's source code; it can most
 conveniently be viewed via "./aimake --license", or else you can read
 it via opening the source code of aimake in a text editor.
 
-libjansson is not part of NetHack 4, although it is compiled into it
+libjansson is not part of FIQHack, although it is compiled into it
 during a static build (and used as a shared library during a dynamic
 build), and is distributed under the Expat license. (See the
 "copyright" file for details.)
@@ -33,9 +33,11 @@ The art in the "tilesets/" directories has its own licenses. View the
 files themselves, or the "copyright" file, for full details.
 
 For full, machine-readable detail on the licenses of all the source
-files that make up NetHack 4, see the "copyright" file.  The licenses
+files that make up FIQHack, see the "copyright" file.  The licenses
 to the files included in a binary distribution (either compiled from
 the source, or copied from elsewhere) are listed in the
 "binary-copyright.rtf" file.
 
-NetHack 4 DOES NOT COME WITH ANY SORT OF WARRANTY.
+Please note:
+
+FIQHack DOES NOT COME WITH ANY SORT OF WARRANTY.

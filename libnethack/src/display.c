@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1341,7 +1341,7 @@ static struct nh_dbuf_entry dbuf[ROWNO][COLNO];
    assumption that a fake would try to be realistic.
 
    To find equal-appearance objects, the simplest method is to search for "s 0"
-   in the nethack4.map file that is produced by the tiles code; it lists all the
+   in the fiqhack.map file that is produced by the tiles code; it lists all the
    objects in the game (among other things), using "s" and a number to
    distinguish between equal-appearance objects.  This list is maintained in
    tiles order in order to make finding missing entries easier. */

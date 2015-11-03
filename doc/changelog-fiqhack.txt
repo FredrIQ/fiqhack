@@ -1,0 +1,110 @@
+About this document:
+Written 2015 by Fredrik Ljungdahl.
+
+This document (i.e., this specific file, changelog-fourk.txt) is in
+the public domain.  The author has specifically released it to the
+public, choosing to waive any exclusivity rights that he might
+otherwise have under copyright law, reserving none of them.  You may
+read, modify, distribute, or otherwise use this document in any manner
+that you deem appropriate.  Attribution is not required (except
+insofar as it may be required for reasons entirely unrelated to
+copyright, e.g., if you use the document in an academic context where
+failure to cite sources is frowned upon, the author of this document
+does not have the authority to suspend those rules).
+
+At your option, you may choose instead to treat this document as being
+under the NetHack General Public License.  In that case, see further
+details about that license in libnethack/dat/license.
+
+Changes in 4.3.0.0:
+-------------------
+
+ * Mitre of Holiness has been buffed, it now allows you to pray or
+   turn undead within Gehennom
+
+ * Turn undead (the knight/priest ability) helplessness now depends on
+   your experience level
+
+ * Wands has been rebalanced. Each player now have a wand skill that
+   is exercised by zapping wands. This skill affects the power of a
+   wand zap. Apart from barbarians, who are restricted, everyone can
+   get at least basic in this new skill. Zapping a cursed wand counts
+   as a skill level less than your usual one and zapping a blessed one
+   counts as a skill level more. Zapping a cursed wand at unskilled
+   causes an explosion, even if you zap it by engraving with it. Rays
+   from at least skilled wand usage generally ignores reflection
+
+ * Intrinsics and extrinsics now work the same for monsters and
+   players. This entails the following.
+   + Petrification, sliming and sickness are now gradual processes for
+     monsters, and some other temporary properties (invisibility,
+     speed) can time out
+   + Monsters can now be very fast, have polymorphitis, aggravate
+     monster, be displaced, etc...
+   + Players can now be cancelled, which prevents using any skill that
+     requires usage of energy. Curable with gain energy, confused
+     charging or stepping on magic traps
+   + Player monsters get intrinsics as they level up
+   + Eating corpses or jewelry now confers intrinsics for monsters
+
+ * Added shimmering dragons, along with the baby
+
+ * Being slow is now a temporary intrinsic and can now affect players
+   as well. There is no cure, but it wears off with time.
+
+ * Added 4 new level 7 spells
+   + Spellbook of phase -- gives intrinsic phasing for a while
+   + Spellbook of charging -- allow you to "uncursed"-charge objects
+   + Spellbook of astral eyesight -- gives temporary X-Ray vision
+   + Spellbook of summon nasty -- summons one or more "nasty" monsters
+
+ * Monsters now cast from the player list of spells
+   + Includes all spells that they could possibly make use of
+   + They can read books to learn new spells
+   + Monster have no spell memory, if they know a spell they will
+     never forget it
+
+ * Improved the monster AI when it come to using items
+   + They now use almost every wand, scroll, potion, spell
+   + They will now try to avoid friendly fire unless they know that
+     the spell/etc is resisted
+   + They can use bags now (containers and tricks)
+   + They now have a concept of knowing BUC and/or enchantment on an
+     item and will use them accordingly. As a result, removed some
+     cases of monsters cheating but also made them use certain items
+     differently depending on BUC. For example, a monster now needs
+     to zap a wand at :0 to discover that it is :0, but it can also
+     know to only use cursed gain level as an escape tool
+   + They can now wish for items. Yes, including with a wand of
+     wishing, but also from smoky potions
+   + They now use keys/etc and wands of opening/knock spell to unlock
+     doors, and possibly to unlock chests and loot them (They will
+     not loot the castle wand)
+
+ * Several bug fixes, both for vanilla bugs and some NetHack4 ones
+
+ * Tweaked Ranger quest levels
+   + Added Khor's ranger quest home
+   + Added Chris_ANG's ranger quest goal
+
+ * Bones are more interesting -- 33% of the time if you would leave
+   a corpse on death, you are revived and charmed by the Wizard, and
+   are thus a force to be reckoned with by those who find your bones.
+   However, as a trade off, if this happens, your items wont be cursed
+   (Synergy with monsters using bags is by design). Your ghost --
+   undead turned or not -- will also retain all your intrinsics, IN
+   ADDITION to the perks of being a ghost
+
+ * Monsters now have proficiencies
+   + Unlike players, these are static per-monster-type
+   + Monsters only have proficiency in wands and spell schools
+
+ * Player monsters who acquire the Amulet turns all their focus on
+   ascending the game. In the event that they succeed, you lose
+   (counted as an escape)
+
+ * Monsters now wear rings, and wear most amulets now
+
+ * Player monsters can now spawn very rarely in the dungeon
+
+ * Player monsters' ascension kit on Astral Plane has been buffed

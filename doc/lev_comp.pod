@@ -1,5 +1,5 @@
 =for comment
-Last modified by Alex Smith, 2015-03-10
+Last modified by Fredrik Ljungdahl, 2015-11-03
 NetHack may be freely redistributed.  See license for details.
 
 =encoding utf8
@@ -558,7 +558,7 @@ Jean-Christophe Collet, David Cohrs.
 
 =head1 SEE ALSO
 
-L<dgn_comp(6)>, L<nethack(6)>, L<nethack4(6)>
+L<dgn_comp(6)>, L<nethack(6)>, L<nethack4(6)>, L<fiqhack(6)>
 
 =head1 BUGS
 

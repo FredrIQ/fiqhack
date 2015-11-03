@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -64,34 +64,34 @@ static struct nh_menuitem mainmenu_items_noclient[] = {
 };
 
 const char *nhlogo_small[11] = {        /* created using pbmtoascii */
-    "                                                       oo               _d#,   ",
-    "MMM,   MM            oo    MM     MM                   MM             ,HMMP'   ",
-    "MMMM   MM            MM    MM     MM                   MM           ,HMMMM     ",
-    "MMMM|  MM    ,oo,   oMMoo  MM     MM   ,ooo      ,ooo  MM   oo,   .dMM*MMM     ",
-    "MM`MH  MM   dMMMMb  #MM##  MM     MM  |MMMMM,   dMM#M| MM  dMP   ,MMH' MMM     ",
-    "MM TM, MM  |MM' 9Mb  MM    MM#####MM  `'  `Mb  |MH' `' MM dMP  ,HMM?   ]MM##HMH",
-    "MM `Mb MM  MMboodMM  MM    MM\"\"\"\"\"MM    ,ooMM  MM'     MMMMP  ?MMMH##MMMMMH*\"'\"",
-    "MM  HM.MM  MMH#####  MM    MM     MM  .HMH#MM  MM      MMMMb  *###\"\"\"\"\"9MM|    ",
-    "MM  |MMMM  9Mb       MM    MM     MM  HM' .MM  9M?     MM 9Mb          |MM|    ",
-    "MM   MMMM  `MMbood|  MMoo  MM     MM  HMbdMMM  `MMb_d| MM `MMb          MMb    ",
-    "MM   `MMM   `9MMMP'  `MMM  MM     MM  `*MM'MM   `9MMM' MM  `MMb         ?MH    ",
+    "8888888888 8888888 .d88888b.  888    888                   888     ",
+    "888          888  d88P' 'Y88b 888    888                   888     ",
+    "888          888  888     888 888    888                   888     ",
+    "8888888      888  888     888 8888888888  8888b.   .d8888b 888  888",
+    "888          888  888     888 888    888     '88b d88P'    888 .88P",
+    "888          888  888 Y8b 888 888    888 .d888888 888      888888K ",
+    "888          888  Y88b.Y8b88P 888    888 888  888 Y88b.    888 '88b",
+    "888        8888888 'Y888888'  888    888 'Y888888  'Y8888P 888  888",
+    "                        Y8b                                        ",
+    "                                                                   ",
+    "                         a NetHack4 variant                        ",
 };
 
 const char *nhlogo_large[14] = {
-    "                                                                     ooo                   .##.    ",
-    "####     ##b                      ###     ###                        MMM                 dMMMM'    ",
-    "MMMMb    MMM              MMM     MMM     MMM                        MMM              .dHMMMM'     ",
-    "MMMMM.   MMM              MMM     MMM     MMM                        MMM             oHMMMMMT      ",
-    "MMMMM|   MMM     ooo,    oMMMoo,  MMM     MMM    ,oooo        oooo,  MMM   ooo,    .dMMH*MMM|      ",
-    "MMM\"MH|  MMM   JMMMMMM.  MMMMMM|  MMM     MMM   dMMMMMM_    _MMMMMM  MMM  JMM|    JMMMH  MMM|      ",
-    "MMM 9M|  MMM  |MMM\"\"MMH   MMM     MMMoooooMMM  |MP\"\"\"TMM   |MMP' \"9  MMM |MMT   oHMMP\"   9MMbooo##b",
-    "MMM |MM  MMM  dMM'  |MMM  MMM     MMMMMMMMMMM         MMH  MMH'      MMMdMM\"  .dMMMR:_,ooHMMMMMMM##",
-    "MMM `MM| MMM  MMM###HMMM  MMM     MMM\"\"\"\"\"MMM    .o###MMM  MM|       MMMMMT  ,dMMMMMMMMMMMMMH*'\"\"  ",
-    "MMM  HML MMM  MMM#######  MMM     MMM     MMM   ,MMM##MMM  MM|       MMMMMb  `*###*\"\"\"'  9MMM      ",
-    "MMM  |MMMMMM  HMM.        MMM     MMM     MMM  ,MM*'  MMM  MMH       MMM|HMM.            |MMM|     ",
-    "MMM   |MMMMM  |MMH    ?b  MMM     MMM     MMM  |MM\\ ,dMMM  TMMb,  d  MMM |MMH            `MMM|     ",
-    "MMM   `MMMMM   9MMMMMMMH  `MMMM|  MMM     MMM  `9MMMMPMMM   \"MMM#MM  MMM  9MMb,           #MMM     ",
-    "###    ?####   `\"#####'    ?###|  ###     ###    `##' ###    \"####?  ###  `###b            *#*     ",
+    "                                                                   ",
+    "                                                                   ",
+    "8888888888 8888888 .d88888b.  888    888                   888     ",
+    "888          888  d88P' 'Y88b 888    888                   888     ",
+    "888          888  888     888 888    888                   888     ",
+    "8888888      888  888     888 8888888888  8888b.   .d8888b 888  888",
+    "888          888  888     888 888    888     '88b d88P'    888 .88P",
+    "888          888  888 Y8b 888 888    888 .d888888 888      888888K ",
+    "888          888  Y88b.Y8b88P 888    888 888  888 Y88b.    888 '88b",
+    "888        8888888 'Y888888'  888    888 'Y888888  'Y8888P 888  888",
+    "                        Y8b                                        ",
+    "                                                                   ",
+    "                                                                   ",
+    "                         a NetHack4 variant                        ",
 };
 
 

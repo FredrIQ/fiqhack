@@ -1,0 +1,9 @@
+language: c
+script:
+    - mkdir build installdir
+    - cd build
+    - ../aimake -i ../installdir --without=gui
+notifications:
+    - irc:
+          channels:
+	      - "chat.freenode.net#fiqhack"

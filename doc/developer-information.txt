@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-07-22
+Last modified by Fredrik Ljungdahl, 2015-11-03
 
 Copyright (C) 2015 Alex Smith.
 
@@ -25,7 +25,7 @@ It is very important that we stay in compliance with NetHack's
 license, and that all code we add is legally usable by our users
 (which is a consequence of staying in compliance with NetHack's
 license, normally).  This means that all code that is linked or
-dynamically linked into the resulting `nethack4` executable must be
+dynamically linked into the resulting `fiqhack` executable must be
 under NGPL or a compatible license.
 
 Very few licenses are compatible with the NGPL.  In general, if code

@@ -1,7 +1,7 @@
-# Last modified by Alex Smith, 2015-05-22
+# Last modified by Fredrik Ljungdahl, 2015-11-03
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
-# NetHack 4: aimake configuration.
+# FIQHack: aimake configuration.
 
 # There's a maximum combined length on the executable info structure.
 # So this is written concisely, so as to be able to fit everything in.
@@ -15,10 +15,10 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
 
 {
     options => {
-        packagename      => 'nethack4',
-        packagename_text => 'NetHack 4',
-        packageversion   => '4.3.beta3',
-        companyname      => 'NetHack 4 DevTeam',
+        packagename      => 'fiqhack',
+        packagename_text => 'FIQHack',
+        packageversion   => '4.3.beta1',
+        companyname      => 'FIQHack DevTeam',
 
         AM_CPPFLAGS => '-DNETCLIENT -D_REENTRANT',
         CFLAGS      => '-Wall -Wextra -fdiagnostics-show-option -O2 -g',
@@ -53,10 +53,10 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
         },
         jansson => {
             description => "Use the provided rather than system libjansson",
-            long_description => "NetHack 4 can build either using a copy of ".
+            long_description => "FIQHack can build either using a copy of ".
                                 "libjansson that already exists on your ".
                                 "system, or a copy that ships with the ".
-                                "NetHack 4 source. Set this to false if you ".
+                                "FIQHack source. Set this to false if you ".
                                 "already have libjansson development headers ".
                                 "installed, or true otherwise.",
             object => qr=^path:libjansson/=,
@@ -79,7 +79,7 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             # it, and we can choose not to build the documentation.
             description => "Tileset compiler",
             long_description => "Installs a command-line tool for changing ".
-                                "the tilesets that ship with NetHack 4 (both ".
+                                "the tilesets that ship with FIQHack (both ".
                                 "graphical tiles, and sets of character/color ".
                                 "pairs used for rendering in a terminal).",
             object => qr=^bpath:doc/tilecompile.pod$=,
@@ -433,7 +433,7 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             command => ["intcmd:writefile",
 "optstring:This_directory_stores_dumplogs_produced_during_server_play.",
 "optstring:When_you_play_locally,_dumplogs_are_saved_in_the_same_place_as_your",
-"optstring:save_files_(e.g._~/.config/NetHack4/dumps_on_Linux).",
+"optstring:save_files_(e.g._~/.config/FIQHack/dumps_on_Linux).",
                         "optpath::bpath:readme-dumps"],
             output => "bpath:readme-dumps",
         },
@@ -441,27 +441,27 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             command => ["intcmd:writefile",
 "optstring:This_directory_stores_data_shared_between_all_users.",
 "optstring:When_you_play_locally,_your_save_files_are_stored_in_your_home",
-"optstring:directory_(e.g._~/.config/NetHack4/saves_on_Linux).",
+"optstring:directory_(e.g._~/.config/FIQHack/saves_on_Linux).",
                         "optpath::bpath:readme-saves"],
             output => "bpath:readme-saves",
         },
 
-        # We need a symlink from "nethack4-sdl" to "nethack4". Thus we
-        # add a second symlink from "nethack4" to "main" so that if
+        # We need a symlink from "fiqhack-sdl" to "fiqhack". Thus we
+        # add a second symlink from "fiqhack" to "main" so that if
         # symlinks are implemented by copying, nothing breaks.
 
         _sdl_link_preparation => {
             object => "bpath:nethack/src/main.c/main$exeext",
             command => ["intcmd:symlink", "optpath::",
-                        "optpath:-o:bpath:nethack/src/main.c/nethack4$exeext",
+                        "optpath:-o:bpath:nethack/src/main.c/fiqhack$exeext",
                         "bpath:tilesets/dat/fonts/font14.png"],
             output_from_optpath => '-o',
             verb => 'symlinked',
         },
         _sdl_link => {
-            object => "bpath:nethack/src/main.c/nethack4$exeext",
+            object => "bpath:nethack/src/main.c/fiqhack$exeext",
             command => ["intcmd:symlink", "optpath::",
-                        "optpath:-o:bpath:nethack/src/main.c/nethack4-sdl$exeext",
+                        "optpath:-o:bpath:nethack/src/main.c/fiqhack-sdl$exeext",
                         "bpath:tilesets/dat/fonts/font14.png"],
             output_from_optpath => '-o',
             verb => 'symlinked',
@@ -469,9 +469,9 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
 
         _man_sdl_symlink => {
             command => ["intcmd:symlink",
-                        "optpath:-o:bpath:doc/nethack4-sdl.6",
-                        "optpath::bpath:doc/nethack4.6",
-                        "bpath:doc/nethack4.6",
+                        "optpath:-o:bpath:doc/fiqhack-sdl.6",
+                        "optpath::bpath:doc/fiqhack.6",
+                        "bpath:doc/fiqhack.6",
                         "bpath:tilesets/dat/fonts/font14.png"],
             output_from_optpath => '-o',
             verb => 'symlinked',
@@ -516,23 +516,23 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             object => "bpath:nethack/src/main.c/main$exeext",
             install_dir => "gamesbindir",
             install_elevation => "games",
-            install_name => "nethack4$exeext",
+            install_name => "fiqhack$exeext",
             exeparams => {
                 icon => qr/^path:dist\/common\/icon.*\.png$/,
                 copyright => $copyright,
-                name => "NetHack 4 (console)",
+                name => "FIQHack (console)",
                 description => "Dungeon exploration game (text interface)",
                 terminal => 1,
             },
         },
         _install_sdl => {
-            object => "bpath:nethack/src/main.c/nethack4-sdl$exeext",
+            object => "bpath:nethack/src/main.c/fiqhack-sdl$exeext",
             install_dir => "gamesbindir",
             install_elevation => "games",
             exeparams => {
                 icon => qr/^path:dist\/common\/icon.*\.png$/,
                 copyright => $copyright,
-                name => "NetHack 4 (GUI)",
+                name => "FIQHack (GUI)",
                 description => "Dungeon exploration game (graphical interface)",
                 terminal => 0,
             },
@@ -543,7 +543,7 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             install_dir => "gamesbindir",
             exeparams => {
                 copyright => $tilecompile_copyright,
-                name => "NetHack 4 Tile Compiler",
+                name => "FIQHack Tile Compiler",
                 terminal => 1,
                 interactive => 0,
             },
@@ -554,8 +554,8 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             install_dir => "gamesbindir",
             exeparams => {
                 copyright => $dlb_copyright,
-                name => "NetHack 4 Data Librarian",
-                description => "Archiver/unarchiver for NetHack 4's 'nhdat' file",
+                name => "FIQHack Data Librarian",
+                description => "Archiver/unarchiver for FIQHack's 'nhdat' file",
                 interactive => 0,
             },
             install_feature => 'playfield_utils',
@@ -566,8 +566,8 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             install_dir => "gamesbindir",
             exeparams => {
                 copyright => $dgn_copyright,
-                name => "NetHack 4 Dungeon Compiler",
-                description => "Compiler for NetHack 4 dungeon descriptions",
+                name => "FIQHack Dungeon Compiler",
+                description => "Compiler for FIQHack dungeon descriptions",
                 interactive => 0,
             },
             install_feature => 'playfield_utils',
@@ -578,8 +578,8 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             install_dir => "gamesbindir",
             exeparams => {
                 copyright => $lev_copyright,
-                name => "NetHack 4 Level Compiler",
-                description => "Compiler for NetHack 4 level descriptions",
+                name => "FIQHack Level Compiler",
+                description => "Compiler for FIQHack level descriptions",
                 interactive => 0,
             },
             install_feature => 'playfield_utils',
@@ -588,13 +588,13 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
         _install_server => {
             object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
             install_dir => "gamesbindir",
-            install_name => "nethack4-server$exeext",
+            install_name => "fiqhack-server$exeext",
             install_permission => "games",
             install_readable => 1,
             exeparams => {
                 copyright => $copyright,
-                name => "NetHack 4 Server",
-                description => "NetHack 4 server daemon",
+                name => "FIQHack Server",
+                description => "FIQHack server daemon",
                 interactive => 0,
             },
             install_feature => "server",
@@ -635,11 +635,11 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
         install_manuals => undef, # these are feature-gated at install time
 
         _install_manpage => {
-            object => qr=^bpath:doc/nethack4\.6.*=,
+            object => qr=^bpath:doc/fiqhack\.6.*=,
             install_dir => "mandir",
         },
         _install_sdl_manpage => {
-            object => qr=^bpath:doc/nethack4-sdl\.6.*=,
+            object => qr=^bpath:doc/fiqhack-sdl\.6.*=,
             install_dir => "mandir",
             install_feature => "gui",
         },
@@ -654,7 +654,7 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             install_feature => "playfield_utils",
         },
         _install_docs => {
-            object => qr=^path:doc/(?:changelog|faq|philosophy)\.txt=,
+            object => qr=^path:doc/(?:changelog|changelog-fiqhack|faq|philosophy)\.txt=,
             install_dir => "docdir",
         },
         _install_copyright => {
@@ -700,13 +700,13 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
         _install_server_config => {
             object => "sys:ensure_exists",
             install_dir => "configdir",
-            install_name => "nethack4.conf",
+            install_name => "fiqhack.conf",
             install_feature => "server",
         },
         _install_server_logfile => {
             object => "sys:ensure_exists",
             install_dir => "logdir",
-            install_name => "nethack4.log",
+            install_name => "fiqhack.log",
             install_permission => "games",
             install_feature => "server",
         },

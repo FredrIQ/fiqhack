@@ -1,12 +1,16 @@
 About this document:
-Last modified by Alex Smith, 2015-09-04
+Last modified by Fredrik Ljungdahl, 2015-11-03
 
-Copyright (C) 2013 Alex Smith.
+Copyright (C) 2015 Fredrik Ljungdahl.
 
 This README file is licensed under the NetHack General Public License.  See
 libnethack/dat/license for details.
 
-NetHack 4 is free software, and has no warranty of any sort. For more
+
+Overview
+========
+
+NetHack is free software, and has no warranty of any sort. For more
 information on the license situation, read `COPYING` (a summary), or
 `copyright` (full details).
 
@@ -26,6 +30,41 @@ choice, rather than the choice they enjoy most or a choice they want to try).
 See the file `doc/philosophy.txt` for more information on NetHack 4's
 philosophy.
 
+
+FIQHack
+=======
+
+FIQHack is a fork of NetHack4, aimed at improving balance at places, test out
+new things, improving the codebase with internal changes and to promote
+consistency between how players and monsters work, and to improve the monster AI.
+
+
+This repository
+===============
+
+With the exception of initial tweaks before a first release, in which everything
+is worked on in master directly, the following guidelines are in place for this
+repository.
+
+ * A master branch exist where changes are worked on directly. The only
+   restriction is that master are not allowed to perform a "savebreak", where a
+   change results in earlier save files being incompatible.
+
+ * A stable branch, which contains the last release. With the exception of
+   critical bug fixes, commits are not made here except when a new release is
+   made.
+
+ * A savebreak branch, in case there is currently worked on changes that break
+   save compatibility.
+
+ * Branches representing a certain version, used to push changes specific to a
+   certain version. With the exception of critical bug fixes, changes are only
+   pushed to the latest of the versions.
+
+
+History
+=======
+
 NetHack 4 was originally produced by merging two forks, Alex Smith's AceHack,
 and Daniel Thaler's NitroHack.  Since then it has incorporated changes from
 numerous other forks (especially the fertile sources of bugfixes that are
@@ -41,9 +80,10 @@ style, but doing so would be close to an impossible project.  Our continuous
 changes of NetHack from the inside will eventually accomplish a similar goal,
 but in a more realistic manner.
 
-This README file describes NetHack 4.3, which focuses mostly on improvements
-to the game's internals, rather than gameplay changes.  We are planning to
-make more substantial gameplay changes in 4.4.
+The information about NetHack 4 in this README file mainly describes
+version 4.3, which focuses mostly on improvements to the game's
+internals, rather than gameplay changes.  The NetHack 4 developers are
+planning to make more substantial gameplay changes in 4.4.
 
 
 Frequently Asked Questions
@@ -56,9 +96,12 @@ documentation directory in an installed version).
 Contact
 =======
 
-Bugs in NetHack 4 can be reported at http://trac.nethack4.org, our bug
-tracker.  The homepage for NetHack 4 itself is http://nethack4.org, and
-contains many other resources about the game and its community.
+Bugs in FIQHack can be reported in the issues tab on the GitHub page for this
+repository, or to #fiqhack in irc.freenode.net. In case that there is likely
+probability of the bug existing in upstream (NetHack 4), you can also report
+the bug to the NetHack4 DevTeam at #nethack4 in irc.freenode.net, or its'
+bugtracker. Reporting FIQHack specific bugs within NetHack4's bug tracking is
+not recommended since it is unlikely to lead anywhere but annoyance.
 
 You can discuss NetHack 4 on IRC.  irc:irc.freenode.net/nethack4 is the
 specific channel for NetHack 4, and typically discusses development.  For
@@ -70,6 +113,9 @@ you put `[NetHack 4]` in the subject line to make it clear that you aren't
 talking about NetHack 3).
 
 If you want to contact the developers directly, you can use IRC, or email;
+`FIQ` (Fredrik Ljungdahl) can receive email, at fredde1994 #at# gmail (dot) com.
+
+or, for NetHack4;
 `ais523` (Alex Smith) can receive email using that username, at nethack4.org.
 
 
@@ -296,12 +342,12 @@ need) via running the command
 UNIX/Linux/Mac OS X
 -------------------
 
-You will need to install NetHack 4's dependencies: zlib (which is probably
+You will need to install FIQHack's dependencies: zlib (which is probably
 installed already, but you may need to get its development headers from your
 package manager), and (if you want a working server binary) inetd, postgresql
 and pgcrypto.  You also need development headers for the libraries listed.
 
-NetHack 4 also requires a working libjansson library (available from
+FIQHack also requires a working libjansson library (available from
 http://www.digip.org/jansson), and its development headers.  However, both of
 those ship with NetHack 4, and will be used by default or if you explicitly
 specify `--with=jansson` as an option to `aimake`.  (If you have installed
@@ -321,12 +367,12 @@ specify `--without=gui` as an option to `aimake` to build just the console
 port (which is built either way), and disable the tiles ports.  Note that the
 tiles ports do not currently work on Mac OS X.
 
-Assuming you just want to run NetHack 4 from your home directory, from the top
+Assuming you just want to run FIQHack from your home directory, from the top
 source directory, run:
 
     mkdir build
     cd build
-    ../aimake -i ~/nethack4 .. # or wherever you want
+    ../aimake -i ~/fiqhack .. # or wherever you want
 
 If you want to install for all users, you will need to tell `aimake` which
 location to install it into, and how to elevate its permissions:
@@ -341,8 +387,8 @@ no normal users, in order to ensure security of the bones files and high score
 tables.  This is the case on most Linux distributions, but not on all, and may
 not be the case on UNIX.
 
-To run the console port, use `nethack4`.  For the tiles/faketerm ports, use
-`nethack4-sdl`.
+To run the console port, use `fiqhack`.  For the tiles/faketerm ports, use
+`fiqhack-sdl`.
 
 
 Windows

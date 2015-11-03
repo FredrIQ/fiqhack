@@ -32,14 +32,14 @@
 
 =for aimake eula
 
-=head1 NetHack 4 License Information
+=head1 FIQHack License Information
 
-The NetHack 4 engine and interface are licensed under the NetHack
+The FIQHack engine and interface are licensed under the NetHack
 General Public License (NGPL). This license gives you the right to
 redistribute and modify it, so long as you obey certain terms and
 conditions. The full text of the NGPL is given later in this document.
 
-NetHack 4 also uses certain libraries: libuncursed, zlib, libjansson,
+FIQHack also uses certain libraries: libuncursed, zlib, libjansson,
 and (if you install the GUI support) SDL2 and libpng. (libpng is also
 used by the tileset compiler.) libuncursed is multi-licensed, offering
 the NGPL as one possible license, and is used here under the NGPL. The
@@ -57,11 +57,11 @@ existing licenses verbatim), and © Alex Smith 2013, 2014, 2015.
 
 For a more detailed version of this document, including the individual
 copyright status of every source file, see the "copyright-details.txt"
-file after installation (in the "nethack4\doc" subdirectory of your
+file after installation (in the "fiqhack\doc" subdirectory of your
 Program Files directory). You can find this file as "license.rtf" in
 the same subdirectory after installation.
 
-There is B<no warranty> for NetHack 4 or any of its component parts.
+There is B<no warranty> for FIQHack or any of its component parts.
 
 =head2 NetHack General Public License
 
@@ -352,7 +352,7 @@ Suite 300, San Francisco, California 94105, USA.
 
 =head2 Copyright of the RLTiles Tileset
 
-The version of the RLTiles tileset in NetHack 4 was produced by Raz in
+The version of the RLTiles tileset in FIQHack was produced by Raz in
 2014 and 2015, with some coding by Alex Smith. It was derived from the
 original version of RLTiles, which had the following license
 information:
