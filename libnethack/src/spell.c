@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1136,11 +1136,10 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     skill = mspell_skilltype(spell);
     role_skill = mprof(mon, skill);
     int count = 0;
+    boolean amulet = FALSE;
 
-    if (vis) {
-        pline("%s casts a spell!", Monnam(mon));
-        pline("Spell: %s", OBJ_NAME(objects[spell]));
-    }
+    if (vis && wizard)
+        pline("%s wants to cast: %s", Monnam(mon), OBJ_NAME(objects[spell]));
 
     /* highlevel casters can cast more than lowlevel ones */
     int cooldown = 7 - (mon->m_lev / 5);
@@ -1148,44 +1147,35 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
         cooldown = 2;
     energy = (objects[spell].oc_level * cooldown);
     if (mon_has_amulet(mon)) {
-        /* since monsters either have the mspec to cast or not,
-           make the amulet occasionally make the spell fail. */
-        if (rn2(5)) {
-                if (vis)
-                    pline("The amulet drains %s energy away...",
-                          s_suffix(mon_nam(mon)));
-                energy += 2 * rnd(energy);
-        } else {
+        amulet = TRUE;
+        if (!rn2(5)) {
             if (vis)
-                pline("But the amulet drained %s spell...",
-                      s_suffix(mon_nam(mon)));
+                pline("%s tries to cast a spell, but the Amulet of Yendor drains it!",
+                      Monnam(mon));
             return 0;
         }
+        energy += 2 * rnd(energy);
     }
-
+            
     /* can't cast -- energy is used up! */
     if (mon->mspec_used) {
         if (vis)
-            pline("But %s lacks the energy to cast the spell (en: %d).",
-                  mon_nam(mon), mon->mspec_used);
+            pline("%s tries to cast a spell, but is out of energy!",
+                  Monnam(mon));
         return 0;
     }
 
-    if (cancelled(mon)) {
-        if (vis)
-            pline("Being cancelled, %s cannot cast the spell.", mon_nam(mon));
-        return 1;
-    }
-
     chance = percent_success(mon, spell);
-    if (confused || (rnd(100) > chance)) {
+    if (cancelled(mon) || confused || (rnd(100) > chance)) {
         if (vis)
-            pline("But %s fails to cast the spell correctly.",
-                  mon_nam(mon));
-        mon->mspec_used += energy / 2;
+            pline("%s tries, but fails, to cast a spell.", Monnam(mon));
         return 1;
     }
 
+    if (vis)
+        pline("%s casts a spell!", Monnam(mon));
+    if (amulet)
+        pline("The amulet drains %s energy away...", s_suffix(mon_nam(mon)));
     mon->mspec_used += energy;
     /* pseudo is a temporary "false" object containing the spell stats */
     pseudo = mktemp_sobj(level, spell);
