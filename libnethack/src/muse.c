@@ -604,6 +604,10 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                     /* Boulders generally make the life harder for monsters, because they have pretty much no control over them.
                        Thus, give a scoring bonus if they're nearby (but not for sokoban boulders!). */
                     tilescore += In_sokoban(m_mz(mon)) ? -20 : +20;
+                if (sobj_at(CORPSE, level, sx, sy) &&
+                    (obj->otyp == WAN_UNDEAD_TURNING ||
+                     obj->otyp == SPE_TURN_UNDEAD))
+                    tilescore += (mtmp->mpeaceful ? -20 : +30);
                 if (mtmp) {
                     if (mon == mtmp)
                         self = TRUE;
