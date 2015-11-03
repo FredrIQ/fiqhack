@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1177,7 +1177,7 @@ extern boolean itsstuck(struct monst *);
 extern boolean mb_trapped(struct monst *);
 extern void mon_regen(struct monst *, boolean);
 extern int dochugw(struct monst *);
-extern boolean onscary(int, int, struct monst *);
+extern boolean onscary(int, int, const struct monst *);
 extern void monflee(struct monst *, int, boolean, boolean);
 extern boolean monster_would_take_item(const struct monst *, struct obj *);
 extern int dochug(struct monst *);
@@ -1201,10 +1201,9 @@ extern int ohitmon(struct monst *, struct obj *, int, boolean);
 extern void thrwmq(struct monst *, int, int);
 extern int spitmq(struct monst *, int, int, const struct attack *);
 extern int breamq(struct monst *, int, int, const struct attack *);
-extern struct monst *mfind_target(struct monst *, boolean);
-extern boolean m_beam_ok(struct monst *, int, int, struct monst **, boolean);
+extern struct monst *mfind_target(const struct monst *, boolean);
 extern boolean linedup(xchar, xchar, xchar, xchar);
-extern boolean lined_up(struct monst *);
+extern boolean lined_up(const struct monst *);
 extern struct obj *m_carrying(const struct monst *, int);
 extern struct obj *m_carrying_recursive(const struct monst *, struct obj *,
                                         int, boolean);
@@ -1215,20 +1214,21 @@ extern boolean hits_bars(struct obj **, int, int, int, int);
 
 /* ### muse.c ### */
 
-extern int mon_choose_dirtarget(struct monst *, struct obj *, coord *);
-extern int mon_choose_spectarget(struct monst *, struct obj *, coord *);
-extern boolean find_unlocker(struct monst *, struct musable *);
-extern boolean find_item(struct monst *, struct musable *);
-extern boolean find_item_obj(struct monst *, struct obj *, struct musable *,
-                             boolean, int);
+extern int mon_choose_dirtarget(const struct monst *, struct obj *, coord *);
+extern int mon_choose_spectarget(const struct monst *, struct obj *, coord *);
+extern boolean find_unlocker(const struct monst *, struct musable *);
+extern boolean find_item(const struct monst *, struct musable *);
+extern boolean find_item_obj(const struct monst *, struct obj *,
+                             struct musable *, boolean, int);
 extern int use_item(struct monst *, struct musable *);
 extern boolean mon_makewish(struct monst *);
 extern int rnd_defensive_item(struct monst *, enum rng rng);
 extern int rnd_offensive_item(struct monst *, enum rng rng);
 extern int rnd_misc_item(struct monst *mon, enum rng rng);
 extern boolean searches_for_item(const struct monst *, struct obj *);
-extern boolean mon_reflects(struct monst *, const char *, const char *);
-extern void you_aggravate(struct monst *);
+extern boolean mon_reflects(const struct monst *, const char *,
+                            const char *);
+extern void you_aggravate(const struct monst *);
 
 /* ### music.c ### */
 
@@ -1430,8 +1430,8 @@ extern boolean teleport_at_will(const struct monst *);
 extern unsigned levitates_at_will(const struct monst *, boolean, boolean);
 extern unsigned mon_remove_levitation(struct monst *, boolean);
 extern void gremlin_curse(struct monst *);
-extern boolean obj_affects(struct monst *, struct monst *, struct obj *);
-extern boolean prop_wary(struct monst *, struct monst *, enum youprop);
+extern boolean obj_affects(const struct monst *, struct monst *, struct obj *);
+extern boolean prop_wary(const struct monst *, struct monst *, enum youprop);
 extern int property_timeout(struct monst *, enum youprop);
 extern void decrease_property_timers(struct monst *);
 extern boolean inc_timeout(struct monst *, enum youprop, int, boolean);
@@ -1478,7 +1478,6 @@ extern const struct permonst *qt_montype(const d_level *, enum rng);
 
 extern int doread(const struct nh_cmd_arg *);
 extern boolean is_chargeable(struct obj *);
-extern int mon_choose_spectarget(struct monst *, struct obj *, coord *);
 extern struct obj *mon_choose_recharge(struct monst *, int);
 extern void recharge(struct monst *, struct obj *, int);
 extern void forget_objects(int);
@@ -1580,7 +1579,7 @@ extern void remote_burglary(xchar, xchar);
 extern void u_entered_shop(char *);
 extern boolean same_price(struct obj *, struct obj *);
 extern void shopper_financial_report(void);
-extern int inhishop(struct monst *);
+extern int inhishop(const struct monst *);
 extern struct monst *shop_keeper(struct level *lev, char rmno);
 extern boolean tended_shop(struct mkroom *);
 extern void delete_contents(struct obj *);
@@ -1961,8 +1960,8 @@ extern void win_list_items(struct nh_objlist *, boolean invent);
 /* ### wizard.c ### */
 
 extern void amulet(void);
-extern int mon_has_amulet(struct monst *);
-extern int mon_has_special(struct monst *);
+extern int mon_has_amulet(const struct monst *);
+extern int mon_has_special(const struct monst *);
 extern boolean mon_has_arti(const struct monst *, short);
 extern boolean target_on(int, struct monst *);
 extern int tactics(struct monst *);
@@ -2067,9 +2066,9 @@ extern void fracture_rock(struct obj *);
 extern boolean break_statue(struct obj *);
 extern void destroy_item(int, int);
 extern int destroy_mitem(struct monst *, int, int);
-extern int resist(struct monst *, char, int, int);
+extern int resist(const struct monst *, char, int);
 extern void makewish(void);
-extern int getwandlevel(struct monst *, struct obj *);
+extern int getwandlevel(const struct monst *, struct obj *);
 
 #endif /* EXTERN_H */
 

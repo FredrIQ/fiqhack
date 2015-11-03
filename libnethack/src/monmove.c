@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -102,7 +102,7 @@ dochugw(struct monst *mtmp)
 
 
 boolean
-onscary(int x, int y, struct monst * mtmp)
+onscary(int x, int y, const struct monst *mtmp)
 {
     if (mtmp->isshk || mtmp->isgd || mtmp->iswiz || blind(mtmp) ||
         mtmp->mpeaceful || mtmp->data->mlet == S_HUMAN || is_lminion(mtmp) ||
@@ -407,7 +407,7 @@ dochug(struct monst *mtmp)
             pline("You sense a faint wave of psychic energy.");
         else {
             pline("A wave of psychic energy pours over you!");
-            if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0, 0))) {
+            if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0))) {
                 boolean m_sen = sensemon(mtmp);
 
                 if (m_sen || (Blind_telepat && rn2(2)) || !rn2(10)) {
@@ -565,7 +565,7 @@ dochug(struct monst *mtmp)
        make sure that the monster's physically capable of attacking the square,
        and that the monster hasn't used its turn already (tmp == 3). */
 
-    if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0, 0))) {
+    if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0))) {
         if (nearby && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3 &&
             aware_of_u(mtmp))
             if (engulfing_u(mtmp) ? mattackq(mtmp, u.ux, u.uy) :
@@ -848,7 +848,7 @@ not_special:
     nix = omx;
     niy = omy;
     flag = 0L;
-    if (mtmp->mpeaceful && (!Conflict || resist(mtmp, RING_CLASS, 0, 0)))
+    if (mtmp->mpeaceful && (!Conflict || resist(mtmp, RING_CLASS, 0)))
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
         flag |= ALLOW_MUXY;

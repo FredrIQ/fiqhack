@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -775,6 +775,8 @@ peffects(struct monst *mon, struct obj *otmp)
         if (you)
             exercise(A_DEX, TRUE);
         set_property(mon, FAST, rn1(10, 100 + 60 * bcsign(otmp)), FALSE);
+        if (otmp->blessed)
+            set_property(mon, FAST, 0, FALSE);
         break;
     case POT_BLINDNESS:
         if (blind(mon))
@@ -1118,9 +1120,9 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                 break;
             }
         do_illness:
-            if ((mon->mhpmax > 3) && !resist(mon, POTION_CLASS, 0, NOTELL))
+            if ((mon->mhpmax > 3) && !resist(mon, POTION_CLASS, NOTELL))
                 mon->mhpmax /= 2;
-            if ((mon->mhp > 2) && !resist(mon, POTION_CLASS, 0, NOTELL))
+            if ((mon->mhp > 2) && !resist(mon, POTION_CLASS, NOTELL))
                 mon->mhp /= 2;
             if (mon->mhp > mon->mhpmax)
                 mon->mhp = mon->mhpmax;
@@ -1129,7 +1131,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             break;
         case POT_CONFUSION:
         case POT_BOOZE:
-            if (!resist(mon, POTION_CLASS, 0, NOTELL))
+            if (!resist(mon, POTION_CLASS, NOTELL))
                 set_property(mon, CONFUSION, dice(3, 8), FALSE);
             break;
         case POT_INVISIBILITY:
@@ -1158,7 +1160,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
         case POT_BLINDNESS:
             if (haseyes(mon->data)) {
                 int btmp = 64 + rn2(32) + rn2(32) *
-                  !resist(mon, POTION_CLASS, 0, NOTELL);
+                  !resist(mon, POTION_CLASS, NOTELL);
 
                 if (btmp)
                     set_property(mon, BLINDED, btmp, FALSE);
@@ -1206,7 +1208,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                 splatter_burning_oil(mon->mx, mon->my);
             break;
         case POT_ACID:
-            if (!resists_acid(mon) && !resist(mon, POTION_CLASS, 0, NOTELL)) {
+            if (!resists_acid(mon) && !resist(mon, POTION_CLASS, NOTELL)) {
                 pline("%s %s in pain!", Monnam(mon),
                       is_silent(mon->data) ? "writhes" : "shrieks");
                 if (!is_silent(mon->data))

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -657,7 +657,7 @@ shopper_financial_report(void)
 
 
 int
-inhishop(struct monst *mtmp)
+inhishop(const struct monst *mtmp)
 {
     return (strchr
             (in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE),
@@ -3132,7 +3132,7 @@ shk_move(struct monst *shkp)
 
     if ((udist = distu(omx, omy)) < 3 &&
         (shkp->data != &mons[PM_GRID_BUG] || (omx == u.ux || omy == u.uy))) {
-        if (ANGRY(shkp) || (Conflict && !resist(shkp, RING_CLASS, 0, 0))) {
+        if (ANGRY(shkp) || (Conflict && !resist(shkp, RING_CLASS, 0))) {
             if (Displaced)
                 pline("Your displaced image doesn't fool %s!", mon_nam(shkp));
             mattacku(shkp);

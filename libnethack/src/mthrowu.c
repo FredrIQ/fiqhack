@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,10 @@
 #include "mfndpos.h"    /* ALLOW_M */
 
 static int drop_throw(struct obj *, boolean, int, int);
-static boolean qlined_up(struct monst *mtmp, int ax, int ay, boolean breath, boolean helpful);
+static boolean qlined_up(const struct monst *mtmp, int ax, int ay,
+                         boolean breath, boolean helpful);
+static boolean m_beam_ok(const struct monst *, int, int, struct monst **,
+                         boolean);
 
 #define URETREATING(x,y) (distmin(u.ux,u.uy,x,y) > distmin(u.ux0,u.uy0,x,y))
 
@@ -653,8 +656,9 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
    &youmonst).
    
    helpful determines whether or not a beam gives a positive effect */
-boolean
-m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef, boolean helpful)
+static boolean
+m_beam_ok(const struct monst *magr, int dx, int dy,
+          struct monst **mdef, boolean helpful)
 {
     int x = magr->mx;
     int y = magr->my;
@@ -689,7 +693,7 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef, boolean helpf
                     tby = y - magr->my;
                 }
 
-                if (!Conflict || resist(magr, RING_CLASS, 0, 0)) {
+                if (!Conflict || resist(magr, RING_CLASS, 0)) {
                     if ((!helpful && magr->mpeaceful) ||
                         (helpful && !magr->mpeaceful))
                     return FALSE;
@@ -716,7 +720,7 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef, boolean helpf
             !confused(magr)) {
             /* Note: the couldsee() here is an LOE check and has nothing to
                do with vision; it determines conflict radius */
-            if (Conflict && !resist(magr, RING_CLASS, 0, 0) &&
+            if (Conflict && !resist(magr, RING_CLASS, 0) &&
                 couldsee(magr->mx, magr->my) &&
                 distu(magr->mx, magr->my) <= BOLT_LIM * BOLT_LIM) {
                 /* we're conflicted, anything is a valid target */
@@ -760,7 +764,7 @@ m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef, boolean helpf
 
 /* Find a target for a ranged attack. */
 struct monst *
-mfind_target(struct monst *mtmp, boolean helpful)
+mfind_target(const struct monst *mtmp, boolean helpful)
 {
     int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 },
         diry[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
@@ -897,7 +901,8 @@ linedup(xchar ax, xchar ay, xchar bx, xchar by)
 
 /* TODO: Merge code with mfind_target */
 static boolean
-qlined_up(struct monst *mtmp, int ax, int ay, boolean breath, boolean helpful)
+qlined_up(const struct monst *mtmp, int ax, int ay, boolean breath,
+          boolean helpful)
 {
     boolean lined_up = linedup(ax, ay, mtmp->mx, mtmp->my);
 
@@ -924,7 +929,7 @@ qlined_up(struct monst *mtmp, int ax, int ay, boolean breath, boolean helpful)
    Note: this checks aware_of_u, not msensem; a monster is happy to aim a
    ranged attack at the guessed location of a player. */
 boolean
-lined_up(struct monst *mtmp)
+lined_up(const struct monst *mtmp)
 {
     if (engulfing_u(mtmp))
         return FALSE; /* can't ranged-attack someone inside you */

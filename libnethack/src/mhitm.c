@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -111,7 +111,7 @@ fightm(struct monst *mtmp)
     int result, has_u_swallowed;
 
     /* perhaps the monster will resist Conflict */
-    if (resist(mtmp, RING_CLASS, 0, 0))
+    if (resist(mtmp, RING_CLASS, 0))
         return 0;
 
     if (u.ustuck == mtmp) {
@@ -1193,7 +1193,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         case 19:
         case 18:
         case 17:
-            if (!resist(mdef, 0, 0, 0)) {
+            if (!resist(mdef, 0, 0)) {
                 monkilled(mdef, "", AD_DETH);
                 if (DEADMONSTER(mdef))            /* did it lifesave? */
                     return MM_DEF_DIED;
@@ -1224,9 +1224,9 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (vis)
             pline("%s reaches out, and %s looks rather ill.", Monnam(magr),
                   mon_nam(mdef));
-        if ((mdef->mhpmax > 3) && !resist(mdef, 0, 0, NOTELL))
+        if ((mdef->mhpmax > 3) && !resist(mdef, 0, NOTELL))
             mdef->mhpmax /= 2;
-        if ((mdef->mhp > 2) && !resist(mdef, 0, 0, NOTELL))
+        if ((mdef->mhp > 2) && !resist(mdef, 0, NOTELL))
             mdef->mhp /= 2;
         if (mdef->mhp > mdef->mhpmax)
             mdef->mhp = mdef->mhpmax;
@@ -1324,7 +1324,7 @@ int
 sleep_monst(struct monst *mon, int amt, int how)
 {
     if (resists_sleep(mon) || (how >= 0 && mon != &youmonst &&
-                               resist(mon, (char)how, 0, NOTELL))) {
+                               resist(mon, (char)how, NOTELL))) {
         shieldeff(m_mx(mon), m_my(mon));
         return 0;
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -25,9 +25,9 @@ static void mzapmsg(struct monst *, struct obj *, boolean);
 static void mreadmsg(struct monst *, struct obj *);
 static void mquaffmsg(struct monst *, struct obj *);
 static void mon_break_wand(struct monst *, struct obj *);
-static int find_item_score(struct monst *, struct obj *, coord *);
-static int find_item_single(struct monst *, struct obj *, boolean, struct musable *,
-                            boolean, boolean);
+static int find_item_score(const struct monst *, struct obj *, coord *);
+static int find_item_single(const struct monst *, struct obj *, boolean,
+                            struct musable *, boolean, boolean);
 static boolean mon_allowed(int);
 
 static int trapx, trapy;
@@ -490,7 +490,7 @@ mon_allowed(int otyp)
    perfect accuracy, a potion would simply be destroyed on the first
    target). */
 int
-mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
+mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
 {
     int oc_dir = objects[obj->otyp].oc_dir;
     int wandlevel = mprof(mon, MP_WANDS);
@@ -508,7 +508,7 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
     boolean wand = (obj->oclass == WAND_CLASS);
     boolean spell = (obj->oclass == SPBOOK_CLASS);
     boolean helpful = FALSE;
-    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0, 0) &&
+    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     /* if monsters know BUC, apply real wandlevel for wands */
     if (obj->mbknown && wand) {
@@ -757,7 +757,7 @@ mon_choose_dirtarget(struct monst *mon, struct obj *obj, coord *cc)
    if it's worth using a scroll/spell/etc or not).
 */
 int
-mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
+mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
 {
     boolean stink = obj->otyp == SCR_STINKING_CLOUD ? TRUE : FALSE;
     int globrange = 10;
@@ -772,7 +772,7 @@ mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
     int x, y, xx, yy;
     int x_best = 0;
     int y_best = 0;
-    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0, 0) &&
+    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     struct monst *mtmp;
     for (x = mon->mx - globrange; x <= mon->mx + globrange; x++) {
@@ -848,7 +848,7 @@ mon_choose_spectarget(struct monst *mon, struct obj *obj, coord *cc)
 }
 
 static int
-find_item_score(struct monst *mon, struct obj *obj, coord *tc)
+find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
 {
     int otyp = obj->otyp;
     int score = 0;
@@ -899,7 +899,7 @@ find_item_score(struct monst *mon, struct obj *obj, coord *tc)
 
 /* Find an unlocking tool */
 boolean
-find_unlocker(struct monst *mon, struct musable *m)
+find_unlocker(const struct monst *mon, struct musable *m)
 {
     /* Initialize musable */
     m->x = 0;
@@ -910,8 +910,11 @@ find_unlocker(struct monst *mon, struct musable *m)
     m->spell = 0;
     m->use = 0;
 
-    /* look for keys */
-    if (find_item_obj(mon, mon->minvent, m, FALSE, SKELETON_KEY))
+    /* look for keys
+       TODO: lockpicks should require an occupation timer */
+    if (find_item_obj(mon, mon->minvent, m, FALSE, SKELETON_KEY) ||
+        find_item_obj(mon, mon->minvent, m, FALSE, LOCK_PICK) ||
+        find_item_obj(mon, mon->minvent, m, FALSE, CREDIT_CARD))
         return TRUE;
 
     /* check if we can cast knock, only accepting
@@ -947,7 +950,7 @@ find_unlocker(struct monst *mon, struct musable *m)
 /* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in pathfinding),
    it makes no sense to have it here */
 boolean
-find_item(struct monst *mon, struct musable *m)
+find_item(const struct monst *mon, struct musable *m)
 {
     struct obj *obj = NULL;
     struct trap *t;
@@ -955,7 +958,7 @@ find_item(struct monst *mon, struct musable *m)
     struct level *lev = mon->dlevel;
     boolean stuck = (mon == u.ustuck && sticks(youmonst.data));
     boolean immobile = (mon->data->mmove == 0);
-    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0, 0) &&
+    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     coord tc;
     int fraction;
@@ -1399,7 +1402,7 @@ find_item(struct monst *mon, struct musable *m)
 }
 
 boolean
-find_item_obj(struct monst *mon, struct obj *chain, struct musable *m,
+find_item_obj(const struct monst *mon, struct obj *chain, struct musable *m,
               boolean close, int specobj)
 {
     /* If specobj is nonzero (an object type), only look for that object, performing
@@ -1534,7 +1537,7 @@ find_item_obj(struct monst *mon, struct obj *chain, struct musable *m,
    if BUC is unknown. This is by design. Otherwise, they always try
    to use items semi-"intelligently" */
 static int
-find_item_single(struct monst *mon, struct obj *obj, boolean spell,
+find_item_single(const struct monst *mon, struct obj *obj, boolean spell,
                  struct musable *m, boolean close, boolean specific)
 {
     boolean stuck = (mon == u.ustuck && sticks(youmonst.data));
@@ -2056,10 +2059,29 @@ use_item(struct monst *mon, struct musable *m)
     case MUSE_KEY:
         x = mon->mx + m->x; /* revert from delta */
         y = mon->my + m->y;
+        if (m->tobj) { /* monster unlocking a container */
+            struct obj *otmp = m->tobj;
+            /* sanity check */
+            if (otmp->ox != x || otmp->oy != y) {
+                impossible("monster unlocking box at bogus location?");
+                return 0;
+            }
+            otmp->olocked = 0;
+            if (vismon)
+                pline("%s %s %s.", Monnam(mon),
+                      otmp->otyp == SKELETON_KEY ? "unlocks" :
+                      "succeeds in picking the lock on",
+                      an(xname(otmp)));
+            if (otmp->otrapped)
+                chest_trap(mon, container, FINGER, FALSE);
+            return DEADMONSTER(mon) ? 1 : 2; /* in case chest trap killed */
+        }
         door = &level->locations[x][y];
         btrapped = (door->doormask & D_TRAPPED);
         if (vismon)
-            pline("%s unlocks a door.", Monnam(mon));
+            pline("%s %s a door.", Monnam(mon),
+                  otmp->otyp == SKELETON_KEY ? "unlocks" :
+                  "succeeds in picking the lock on");
         else
             You_hear("a door unlock.");
         door->doormask = btrapped ? D_NODOOR : D_CLOSED;
@@ -2080,8 +2102,8 @@ use_item(struct monst *mon, struct musable *m)
         pline("Congratulations, %s!", mortal_or_creature(mon->data, TRUE));
         pline("In return for thy service, I grant thee the gift of %s!",
               nonliving(mon->data) ? "Eternal Power" : "Immortality");
-        pline("%s ascends to the status of Demogod%s...", Monnam(mon),
-              mon->female ? "des" : "");
+        pline("%s ascends to the status of Demigod%s...", Monnam(mon),
+              mon->female ? "dess" : "");
         const char *ebuf;
         ebuf = msgprintf("was beaten to the ascension by %s.",
                          k_monnam(mon));
@@ -2540,7 +2562,7 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
 }
 
 void
-you_aggravate(struct monst *mtmp)
+you_aggravate(const struct monst *mtmp)
 {
     pline("For some reason, %s presence is known to you.",
           s_suffix(noit_mon_nam(mtmp)));
@@ -2594,6 +2616,7 @@ boolean
 searches_for_item(const struct monst *mon, struct obj *obj)
 {
     int typ = obj->otyp;
+    struct musable dummy; /* for find_item_obj */
 
     /* don't loot bones piles */
     if (is_animal(mon->data) || mindless(mon->data) ||
@@ -2611,7 +2634,9 @@ searches_for_item(const struct monst *mon, struct obj *obj)
          typ == BAG_OF_TRICKS) &&
         obj->spe <= 0 &&
         obj->mknown &&
-        typ != WAN_WISHING)
+        typ != WAN_WISHING &&
+        mon_castable(mon, SPE_CHARGING, TRUE) < 80 &&
+        !find_item_obj(mon, mon->minvent, &dummy, FALSE, SCR_CHARGING))
         return FALSE;
 
     /* discharged lamps */
@@ -2632,6 +2657,8 @@ searches_for_item(const struct monst *mon, struct obj *obj)
 
     switch (obj->oclass) {
     case WAND_CLASS:
+        /* one can argue that this check is redundant since monsters can't pickup
+           items while levitating in first place... but what if they could? */
         if (typ == WAN_DIGGING)
             return (boolean) (!levitates(mon) || levitates_at_will(mon, TRUE, FALSE));
         /* locking is TODO */
@@ -2711,7 +2738,9 @@ searches_for_item(const struct monst *mon, struct obj *obj)
             typ == BAG_OF_HOLDING ||
             typ == BAG_OF_TRICKS ||
             typ == MAGIC_LAMP ||
-            typ == SKELETON_KEY)
+            typ == SKELETON_KEY ||
+            typ == LOCK_PICK ||
+            typ == CREDIT_CARD)
             return TRUE;
         if (typ == FROST_HORN ||
             typ == FIRE_HORN)
@@ -2750,7 +2779,7 @@ searches_for_item(const struct monst *mon, struct obj *obj)
 }
 
 boolean
-mon_reflects(struct monst *mon, const char *fmt, const char *str)
+mon_reflects(const struct monst *mon, const char *fmt, const char *str)
 {
     /* Check from outermost to innermost objects */
     unsigned reflect_reason = has_property(mon, REFLECTING);

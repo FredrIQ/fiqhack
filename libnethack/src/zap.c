@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -143,8 +143,17 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                 hit(zap_type_text, mtmp, exclam(dmg));
             if (hityou)
                 losehp(dmg, killer_msg(DIED, "a force bolt"));
-            else
-                resist(mtmp, otmp->oclass, dmg, TELL);
+            else {
+                if (resist(mtmp, otmp->oclass, TELL))
+                    dmg = dmg / 2 + 1;
+                mtmp->mhp -= dmg;
+                if (mtmp->mhp <= 0) {
+                    if (yours)
+                        killed(mtmp);
+                    else
+                        monkilled(mtmp, "", AD_RBRE);
+                }
+            }
         } else
             miss(zap_type_text, mtmp);
         known = TRUE;
@@ -211,8 +220,8 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                     else
                         done(DIED, "destroyed by a turn undead effect");
                 }
-            } else if ((wandlevel < P_SKILLED && !resist(mtmp, otmp->oclass, 0, NOTELL)) ||
-                       (wandlevel >= P_SKILLED && resist(mtmp, otmp->oclass, 0, NOTELL))) {
+            } else if ((wandlevel < P_SKILLED && !resist(mtmp, otmp->oclass, NOTELL)) ||
+                       (wandlevel >= P_SKILLED && resist(mtmp, otmp->oclass, NOTELL))) {
                 if (tseen) {
                     if (stunned(mtmp))
                         pline("%s struggles to keep %s balance.", Monnam(mtmp),
@@ -248,7 +257,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         } else if (hityou) {
             polyself(FALSE); /* FIXME: make skilled users able to affect the outcome */
             known = TRUE;
-        } else if (!resist(mtmp, otmp->oclass, 0, NOTELL)) {
+        } else if (!resist(mtmp, otmp->oclass, NOTELL)) {
             /* natural shapechangers aren't affected by system shock (unless
                protection from shapechangers is interfering with their
                metabolism...) */
@@ -356,19 +365,19 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     case SPE_HEALING:
     case SPE_EXTRA_HEALING:
         reveal_invis = TRUE;
+        dmg = dice(6, otyp == SPE_EXTRA_HEALING ? 8 : 4);
         if (mtmp->data != &mons[PM_PESTILENCE]) {
             wake = FALSE;       /* wakeup() makes the target angry */
             if (mtmp == &youmonst)
-                healup(dice(6, otyp == SPE_EXTRA_HEALING ? 8 : 4), 0, FALSE,
-                       (otyp == SPE_EXTRA_HEALING));
+                healup(dmg, 0, FALSE, FALSE);
             else {
-                mtmp->mhp += dice(6, otyp == SPE_EXTRA_HEALING ? 8 : 4);
+                mtmp->mhp += dmg;
                 if (mtmp->mhp > mtmp->mhpmax)
                     mtmp->mhp = mtmp->mhpmax;
             }
-            if (!selfzap)
+            if (!selfzap) /* only cure blindness if zapped by someone else */
                 set_property(mtmp, BLINDED, -2, FALSE);
-            if (mtmp == &youmonst || canseemonoritem(mtmp)) {
+            if (mtmp != &youmonst && canseemonoritem(mtmp)) {
                 if (disguised_mimic) {
                     if (mtmp->m_ap_type == M_AP_OBJECT &&
                         mtmp->mappearance == STRANGE_OBJECT) {
@@ -388,8 +397,15 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             }
         } else {        /* Pestilence */
             /* Pestilence will always resist; damage is half of 3d{4,8} */
-            resist(mtmp, otmp->oclass,
-                   dice(3, otyp == SPE_EXTRA_HEALING ? 8 : 4), TELL);
+            if (resist(mtmp, otmp->oclass, TELL))
+                dmg = dmg / 2 + 1;
+            mtmp->mhp -= dmg;
+            if (mtmp->mhp <= 0) {
+                if (yours)
+                    killed(mtmp);
+                else
+                    monkilled(mtmp, "", AD_RBRE);
+            }
         }
         break;
     case WAN_LIGHT:    /* (broken wand) */
@@ -468,8 +484,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         } else if (hityou)
             losexp(msgcat_many("drained by %s spell", s_suffix(k_monnam(user)), NULL),
                    FALSE);
-        else if (!resist(mtmp, otmp->oclass, dmg, NOTELL) &&
-                 !DEADMONSTER(mtmp)) {
+        else if (!resist(mtmp, otmp->oclass, TELL)) {
             mtmp->mhp -= dmg;
             mtmp->mhpmax -= dmg;
             if (mtmp->mhp <= 0 || mtmp->mhpmax <= 0 || mtmp->m_lev < 1) {
@@ -2428,7 +2443,7 @@ cancel_monst(struct monst * mdef, struct obj * obj, boolean youattack,
     static const char your[] = "your";  /* should be extern */
 
     if (youdefend ? (!youattack && Antimagic)
-        : resist(mdef, obj->oclass, 0, NOTELL))
+        : resist(mdef, obj->oclass, NOTELL))
         return FALSE;   /* resisted cancellation */
 
     if (self_cancel) {  /* 1st cancel inventory */
@@ -3476,7 +3491,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, int raylevel)
         tmp += spell_damage_bonus();
     if (is_hero_spell(type) && (Role_if(PM_KNIGHT) && Uhave_questart))
         tmp *= 2;
-    if (tmp > 0 && resist(mon, buzztyp < ZT_SPELL(0) ? WAND_CLASS : '\0', 0, NOTELL))
+    if (tmp > 0 && resist(mon, buzztyp < ZT_SPELL(0) ? WAND_CLASS : '\0', NOTELL))
         tmp /= 2;
     if (half_spell_dam(mon) && tmp && buzztyp < ZT_BREATH(0))
         tmp = (tmp + 1) / 2;
@@ -4312,7 +4327,7 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
 
 
 int
-resist(struct monst *mtmp, char oclass, int damage, int domsg)
+resist(const struct monst *mtmp, char oclass, int domsg)
 {
     int resisted;
     int alev, dlev;
@@ -4354,18 +4369,8 @@ resist(struct monst *mtmp, char oclass, int damage, int domsg)
             shieldeff(mtmp->mx, mtmp->my);
             pline("%s resists!", Monnam(mtmp));
         }
-        damage = (damage + 1) / 2;
     }
 
-    if (damage) {
-        mtmp->mhp -= damage;
-        if (mtmp->mhp <= 0) {
-            if (flags.mon_moving)
-                monkilled(mtmp, "", AD_RBRE);
-            else
-                killed(mtmp);
-        }
-    }
     return resisted;
 }
 
@@ -4436,7 +4441,7 @@ retry:
 
 
 int
-getwandlevel(struct monst *user, struct obj *obj) {
+getwandlevel(const struct monst *user, struct obj *obj) {
     int wandlevel;
     if (user == &youmonst) {
         wandlevel = P_SKILL(P_WANDS);

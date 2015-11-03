@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -154,7 +154,7 @@ pri_move(struct monst *priest)
     gx += rn1(3, -1);   /* mill around the altar */
     gy += rn1(3, -1);
 
-    if (!priest->mpeaceful || (Conflict && !resist(priest, RING_CLASS, 0, 0))) {
+    if (!priest->mpeaceful || (Conflict && !resist(priest, RING_CLASS, 0))) {
         if (monnear(priest, u.ux, u.uy)) {
             if (Displaced)
                 pline("Your displaced image doesn't fool %s!", mon_nam(priest));

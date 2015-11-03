@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1296,7 +1296,7 @@ steedintrap(struct trap *trap, struct obj *otmp)
         break;
     case POLY_TRAP:
         if (!resists_magm(mtmp)) {
-            if (!resist(mtmp, WAND_CLASS, 0, NOTELL)) {
+            if (!resist(mtmp, WAND_CLASS, NOTELL)) {
                 newcham(mtmp, NULL, FALSE, FALSE);
                 if (!can_saddle(mtmp) || !can_ride(mtmp)) {
                     dismount_steed(DISMOUNT_POLY);
@@ -2171,7 +2171,7 @@ mintrap(struct monst *mtmp)
         case POLY_TRAP:
             if (resists_magm(mtmp)) {
                 shieldeff(mtmp->mx, mtmp->my);
-            } else if (!resist(mtmp, WAND_CLASS, 0, NOTELL)) {
+            } else if (!resist(mtmp, WAND_CLASS, NOTELL)) {
                 newcham(mtmp, NULL, FALSE, FALSE);
                 if (in_sight)
                     seetrap(trap);

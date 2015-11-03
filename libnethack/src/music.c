@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -57,7 +57,7 @@ awaken_monsters(struct monst *mon, int distance)
 
         /* May scare some monsters */
         if (distm >= distance / 3 ||
-            resist(mtmp, TOOL_CLASS, 0, NOTELL))
+            resist(mtmp, TOOL_CLASS, NOTELL))
             continue;
 
         monflee(mtmp, 0, FALSE, TRUE);
@@ -185,7 +185,7 @@ charm_monsters(int distance)
     struct monst *mtmp, *mtmp2;
 
     if (Engulfed) {
-        if (!resist(u.ustuck, TOOL_CLASS, 0, NOTELL))
+        if (!resist(u.ustuck, TOOL_CLASS, NOTELL))
             tamedog(u.ustuck, NULL);
     } else {
         for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
@@ -194,7 +194,7 @@ charm_monsters(int distance)
                 continue;
 
             if (distu(mtmp->mx, mtmp->my) <= distance) {
-                if (!resist(mtmp, TOOL_CLASS, 0, NOTELL))
+                if (!resist(mtmp, TOOL_CLASS, NOTELL))
                     tamedog(mtmp, NULL);
             }
         }

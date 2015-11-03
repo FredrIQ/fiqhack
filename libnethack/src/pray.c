@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1791,7 +1791,7 @@ doturn(const struct nh_cmd_arg *arg)
                 mtmp->mflee = 0;
                 mtmp->mfrozen = 0;
                 mtmp->mcanmove = 1;
-            } else if (!resist(mtmp, '\0', 0, TELL)) {
+            } else if (!resist(mtmp, '\0', TELL)) {
                 xlev = 6;
                 switch (mtmp->data->mlet) {
                     /* this is intentional, lichs are tougher than zombies. */
@@ -1806,7 +1806,7 @@ doturn(const struct nh_cmd_arg *arg)
                 case S_MUMMY:
                     xlev += 2; /*FALLTHRU*/
                 case S_ZOMBIE:
-                    if (u.ulevel >= xlev && !resist(mtmp, '\0', 0, NOTELL)) {
+                    if (u.ulevel >= xlev && !resist(mtmp, '\0', NOTELL)) {
                         if (u.ualign.type == A_CHAOTIC)
                             msethostility(mtmp, FALSE, TRUE);
                         else
