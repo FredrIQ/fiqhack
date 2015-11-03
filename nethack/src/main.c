@@ -16,7 +16,7 @@
 # include <unistd.h>
 #endif
 
-#define DEFAULT_NETHACKDIR "/usr/share/NetHack4/"
+#define DEFAULT_NETHACKDIR "/usr/share/FIQHack/"
 
 static void process_args(int, char **);
 void append_slash(char *name);

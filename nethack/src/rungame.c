@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -61,7 +61,7 @@ get_gamedir(enum game_dirs dirtype, wchar_t *buf)
     }
 
     if (!override_userdir)
-        snwprintf(nhPath, MAX_PATH, L"%s\\NetHack4", appPath);
+        snwprintf(nhPath, MAX_PATH, L"%s\\FIQHack", appPath);
     _wmkdir(nhPath);
 
     snwprintf(buf, BUFSZ, L"%s%s", nhPath, subdir);
@@ -110,7 +110,7 @@ get_gamedirA(enum game_dirs dirtype, char *buf)
     }
 
     if (!override_userdir)
-        snprintf(nhPath, MAX_PATH, "%s\\NetHack4", appPath);
+        snprintf(nhPath, MAX_PATH, "%s\\FIQHack", appPath);
     mkdir(nhPath);
 
     snprintf(buf, BUFSZ, "%s%s", nhPath, subdir);
@@ -153,12 +153,12 @@ get_gamedir(enum game_dirs dirtype, char *buf)
         /* look in regular location */
         envval = getenv("XDG_CONFIG_HOME");
         if (envval)
-            snprintf(buf, BUFSZ, "%s/NetHack4/%s", envval, subdir);
+            snprintf(buf, BUFSZ, "%s/FIQHack/%s", envval, subdir);
         else {
             envval = getenv("HOME");
             if (!envval)        /* HOME not set? just give up... */
                 return FALSE;
-            snprintf(buf, BUFSZ, "%s/.config/NetHack4/%s", envval, subdir);
+            snprintf(buf, BUFSZ, "%s/.config/FIQHack/%s", envval, subdir);
         }
     }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-08-22 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1315,10 +1315,10 @@ get_config_name(fnchar * buf, nh_bool ui)
 
     fnncat(buf, ui_flags.connection_only ? usernamew :
                 ui ? FN("curses.conf") :
-                FN("NetHack4.conf"),
+                FN("FIQHack.conf"),
            BUFSZ - fnlen(buf) - 1);
     if (ui_flags.connection_only)
-        fnncat(buf, ui ? FN(".curses.rc") : FN(".NetHack4.rc"),
+        fnncat(buf, ui ? FN(".curses.rc") : FN(".FIQHack.rc"),
                BUFSZ - fnlen(buf) - 1);
 
     return 1;
