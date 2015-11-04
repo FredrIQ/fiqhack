@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -799,7 +799,7 @@ dowelcome(const struct nh_cmd_arg *arg)
          (ROLE_MALE | ROLE_FEMALE) : currentgend != u.initgend))
         buf = msgprintf("%s %s", buf, genders[currentgend].adj);
 
-    pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s." :
+    pline(new_game ? "%s %s, welcome to FIQHack!  You are a%s %s %s." :
           "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL),
           u.uplname, buf, urace.adj,
           (currentgend && urole.name.f) ? urole.name.f : urole.name.m);

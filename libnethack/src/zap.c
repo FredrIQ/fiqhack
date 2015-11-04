@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -90,7 +90,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     boolean hityou = (mtmp == &youmonst);
     boolean selfzap = (user == mtmp);
     int dmg, otyp = otmp->otyp;
-    const char *zap_type_text = "spell";
+    const char *zap_type_text = "force bolt";
     struct obj *obj;
     int wandlevel = 0;
     if (otmp->oclass == WAND_CLASS) {
@@ -128,7 +128,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             if (hityou || tseen)
                 pline("Boing!");
             break;      /* skip makeknown */
-        } else if ((yours && Engulfed) ||
+        } else if (selfzap || (yours && Engulfed) ||
                    wandlevel || rnd(20) < 10 + find_mac(mtmp)) {
             dmg = dice(2, 12);
             if (wandlevel == P_MASTER)
@@ -137,13 +137,16 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                 dmg = dice(wandlevel, 12);
             if (dbldam)
                 dmg *= 2;
-            if (otyp == SPE_FORCE_BOLT)
+            if (otyp == SPE_FORCE_BOLT && yours)
                 dmg += spell_damage_bonus();
             if (useen || tseen)
                 hit(zap_type_text, mtmp, exclam(dmg));
-            if (hityou)
-                losehp(dmg, killer_msg(DIED, "a force bolt"));
-            else {
+            if (hityou) {
+                const char *kbuf;
+                kbuf = msgprintf("%s%s %s", yours ? mhis(user) : s_suffix(k_monnam(user)),
+                                yours ? " own" : "", zap_type_text);
+                losehp(dmg, killer_msg(DIED, kbuf));
+            } else {
                 if (resist(mtmp, otmp->oclass, TELL))
                     dmg = dmg / 2 + 1;
                 mtmp->mhp -= dmg;
@@ -216,9 +219,9 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                     inc_timeout(&youmonst, STUNNED, dmg, TRUE);
                 } else {
                     if (Upolyd)
-                        rehumanize(DIED, "destroyed by a turn undead effect");
+                        rehumanize(DIED, "a turn undead effect");
                     else
-                        done(DIED, "destroyed by a turn undead effect");
+                        done(DIED, "a turn undead effect");
                 }
             } else if ((wandlevel < P_SKILLED && !resist(mtmp, otmp->oclass, NOTELL)) ||
                        (wandlevel >= P_SKILLED && resist(mtmp, otmp->oclass, NOTELL))) {
@@ -248,7 +251,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         if (unchanging(mtmp) || (resists_magm(mtmp) && !selfzap)) {
             /* magic resistance protects from polymorph traps, so make it guard
                against involuntary polymorph attacks too... */
-            shieldeff(mtmp->mx, mtmp->my);
+            shieldeff(m_mx(mtmp), m_my(mtmp));
             if (tseen)
                 pline("%s %s momentarily different.",
                       hityou ? "You" : Monnam(mtmp),
