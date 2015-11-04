@@ -340,12 +340,6 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     case WAN_OPENING:
     case SPE_KNOCK:
         wake = FALSE;   /* don't want immediate counterattack */
-        /* TODO: remove debug stuff when done */
-        if (!mtmp->mspells || mtmp->mspells == 1) {
-            pline("Made %s learn all spells.", mon_nam(mtmp));
-            mtmp->mspells |= (uint64_t)0x00000fffffffffffLL; /* 44 spells */
-            pline("Learned spells: %ld", mtmp->mspells);
-        }
         if (Engulfed && mtmp == u.ustuck) {
             if (is_animal(mtmp->data)) {
                 if (Blind)
