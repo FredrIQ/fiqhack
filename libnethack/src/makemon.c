@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1400,7 +1400,7 @@ assign_spells(struct monst *mon, enum rng rng)
 
     /* Failsafe: if the monster has at least Basic in attack school,
        give force bolt for free */
-    if (mprof(mon, MP_SATTK))
+    if (mprof(mon, MP_SATTK) >= P_BASIC)
         mon_addspell(mon, SPE_FORCE_BOLT);
 
     /* Randomize an amount of spells based on hit dice for monster.
