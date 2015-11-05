@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-05 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -153,6 +153,8 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_INT, {.i = 8}},
     {"msghistory", "number of messages saved for prevmsg",
      nh_birth_ingame, OPTTYPE_INT, {.i = 256}},
+    {"msgnomerge", "messages always start on new lines", FALSE, OPTTYPE_BOOL,
+     {.b = FALSE}},
     {"networkmotd", "get tips and announcements from the Internet",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MOTD_ASK}},
     {"optstyle", "option menu display style",
@@ -187,6 +189,7 @@ static struct nhlib_boolopt_map boolopt_map[] = {
     {"extmenu", &settings.extmenu},
     {"invweight", &settings.invweight},
     {"mouse", &settings.mouse},
+    {"msgnomerge", &settings.msgnomerge},
     {"prompt_inline", &settings.prompt_inline},
     {"scores_own", &settings.end_own},
     {"status3", &settings.status3},
@@ -341,8 +344,9 @@ curses_set_option(const char *name, union nh_optvalue value)
     } else if (!strcmp(option->name, "msghistory")) {
         settings.msghistory = option->value.i;
         alloc_hist_array();
-    }
-    else
+    } else if (!strcmp(option->name, "msgnomerge")) {
+        settings.msgnomerge = option->value.b;
+    } else
         return FALSE;
 
     return TRUE;
