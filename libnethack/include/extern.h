@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-22 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -890,27 +890,6 @@ extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
 
 /* ### messages.c ### */
 
-extern const char *msg_from_string(const char *string) USE_RETVAL;
-extern const char *msgvprintf(const char *fmt, va_list args,
-                              boolean sanitize_whitespace)
-    USE_RETVAL PRINTFLIKE(1,0);
-extern const char *msgprintf(const char *fmt, ...)
-    USE_RETVAL PRINTFLIKE(1,2);
-extern const char *msgstrftime(const char *fmt, const struct tm *tm)
-    USE_RETVAL STRFTIMELIKE(1,0);
-extern const char *msgcat(const char *first, const char *second)
-    USE_RETVAL;
-extern const char *msgcat_many(const char *first, ...) USE_RETVAL SENTINEL;
-extern const char *msgkitten(const char *first, char second) USE_RETVAL;
-extern const char *msgchop(const char *message, int count) USE_RETVAL;
-extern const char *msgtitlecase(const char *message) USE_RETVAL;
-extern const char *msgmungspaces(const char *message) USE_RETVAL;
-extern const char *msgupcasefirst(const char *message) USE_RETVAL;
-extern const char *msglowercase(const char *message) USE_RETVAL;
-extern const char *msgcaseconv(const char *message,
-                               char (*firstcharcaseconv)(char),
-                               char (*insidewordcaseconv)(char),
-                               char (*wordstartcaseconv)(char)) USE_RETVAL;
 extern void msg_request_command_callback(const struct nh_cmd_and_arg *cmd,
                                          void *ncaa_to_fill);
 extern void msg_getlin_callback(const char *str, void *msg_to_fill);
@@ -1334,16 +1313,10 @@ extern const char *safe_qbuf(const char *, unsigned, const char *, const char *,
                              const char *);
 
 /* ### pline.c ### */
+/* See also message.h. */
 
-extern void pline(const char *, ...) PRINTFLIKE(1,2);
-extern void pline_nomore(const char *, ...) PRINTFLIKE(1,2);
-extern void pline_once(const char *, ...) PRINTFLIKE(1,2);
-extern void pline_once_nomore(const char *, ...) PRINTFLIKE(1,2);
 extern void impossible_core(const char *, int, const char *, ...)
     PRINTFLIKE(3,4);
-extern void You_hear(const char *, ...) PRINTFLIKE(1,2);
-extern void verbalize(const char *, ...) PRINTFLIKE(1,2);
-extern void raw_printf(const char *, ...) PRINTFLIKE(1,2);
 extern const char *align_str(aligntyp);
 extern void mstatusline(struct monst *);
 extern void ustatusline(void);
