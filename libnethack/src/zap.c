@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-04 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2917,6 +2917,9 @@ mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
                 bhitm(mon, mtmp, obj);
                 range -= 3;
             }
+        } else if ((mtmp = vismon_at(level, bhitpos.x, bhitpos.y))) {
+            pline("The beam fires through %s displaced image!",
+                  mtmp == &youmonst ? "your" : s_suffix(mon_nam(mtmp)));
         }
         if (you && obj->otyp == WAN_PROBING &&
             level->locations[bhitpos.x][bhitpos.y].mem_invis) {
@@ -3716,7 +3719,11 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                       you ? "you" : mon_nam(mon));
             if (you)
                 action_interrupted();
-        }
+        } else if ((mon = vismon_at(level, sx, sy)) &&
+                   (yours || cansee(sx, sy)))
+            pline("%s whizzes by %s displaced image!", The(fltxt),
+                  you ? "your" : s_suffix(mon_nam(mon)));
+            
 
         if (!ZAP_POS(loc->typ) ||
             (closed_door(level, sx, sy) && (range >= 0))) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -494,6 +494,36 @@ display_monster(xchar x, xchar y,       /* display position */
     }
 }
 
+/* Helper function that extends m_at() to give the monster which is
+   actually seen there -- matters for displacement, in which a
+   displaced image may override what is actually there, and cancel
+   out their real location */
+struct monst *
+vismon_at(struct level *lev, xchar x, xchar y)
+{
+    return mvismon_at(&youmonst, lev, x, y);
+}
+
+struct monst *
+mvismon_at(struct monst *mon, struct level *lev, xchar x, xchar y)
+{
+    struct monst *mtmp = dm_at(lev, x, y);
+
+    /* If a monster is displaced at this location, return it if the
+       viewer is seeing the displaced image */
+    if (mtmp && (msensem(mon, mtmp) & MSENSE_DISPLACED))
+        return mtmp;
+
+    /* otherwise, return the monster here unless the viewer see it
+       displaced somewhere else */
+    mtmp = m_at(lev, x, y);
+    if (mtmp && !(msensem(mon, mtmp) & MSENSE_DISPLACED))
+        return mtmp;
+
+    /* otherwise return nothing */
+    return NULL;
+}
+
 /*
  * display_warning()
  *
@@ -636,7 +666,8 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
     struct monst *mon;
     struct rm *loc = &(level->locations[x][y]);
     unsigned msense_status;
-    xchar mx, my; /* mx/my for monsters usually, dx/dy if it is displaced */
+    xchar mx = COLNO; /* mx/my for monsters usually, dx/dy if it is displaced */
+    xchar my = ROWNO;
 
     if (!isok(x, y)) {
         impossible("Trying to create new symbol at position: (%d,%d)", x, y);
@@ -672,33 +703,16 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
             return;
     }
 
-    /* First, check if there is a displaced image we see on the location, which overrides
-       other monsters present. Then, if there was no displaced image, or we aren't affected
-       by it, check for monsters normally */
     msense_status = 0;
-    mon = dm_at(level, x, y);
+    mon = vismon_at(level, x, y);
     if (mon) {
         msense_status = msensem(&youmonst, mon);
-        mx = mon->dx;
-        my = mon->dy;
-        if (!(msense_status & MSENSE_DISPLACED)) {
-            mon = NULL;
-            msense_status = 0;
-            mx = ROWNO;
-            my = COLNO;
-        }
-    }
-
-    if (!mon) {
-        mon = m_at(level, x, y);
-        if (mon) {
-            msense_status = msensem(&youmonst, mon);
-            mx = mon->mx;
-            my = mon->my;
-            if (msense_status & MSENSE_DISPLACED) {
-                mon = NULL;
-                msense_status = 0;
-            }
+        mx = mon->mx;
+        my = mon->my;
+        if ((msense_status & MSENSE_DISPLACED)) {
+            /* the monster is displaced, so set mxy to the monster's d[xy] */
+            mx = mon->dx;
+            my = mon->dy;
         }
     }
 

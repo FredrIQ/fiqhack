@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -64,7 +64,7 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
         return uia_attack;
 
     /* Do we think there's a monster there? */
-    struct monst *mtmp = m_at(level, x, y);
+    struct monst *mtmp = vismon_at(level, x, y);
     if (mtmp && !knownwormtail(x, y) &&
         !(msensem(&youmonst, mtmp) & (MSENSE_ANYDETECT | MSENSE_ANYVISION |
                                       MSENSE_WARNING)))
@@ -1720,13 +1720,16 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                monster (with an 'I', if necessary). */
             boolean was_mimic = mtmp->m_ap_type &&
                 !Protection_from_shape_changers;
-            if (reveal_monster_at(x, y, TRUE))
+            boolean was_displaced = !!(msensem(&youmonst, mtmp) & MSENSE_DISPLACED);
+            if (reveal_monster_at(x, y, TRUE)) {
                 if (was_mimic)
                     stumble_onto_mimic(mtmp, turnstate.move.dx,
                                        turnstate.move.dy);
+                else if (was_displaced)
+                    pline("You uncover %s true location!", s_suffix(mon_nam(mtmp)));
                 else
                     pline("Wait!  There's something there you can't see!");
-            else
+            } else
                 pline("You bump into %s.", mon_nam(mtmp));
             return 1;
         }
@@ -1833,9 +1836,16 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         boolean expl = (Upolyd && attacktype(youmonst.data, AT_EXPL));
         boolean hitsomething = FALSE, ouch = FALSE;
         struct obj *boulder = (sobj_at(BOULDER, level, x, y));
+        /* displaced image */
+        if ((mtmp = vismon_at(level, x, y))) {
+            hitsomething = TRUE;
+            pline("You %s %s displaced image!",
+                  expl ? "explode at" : "attack",
+                  s_suffix(mon_nam(mtmp)));
+        }
         if (!boulder)
             boulder = sobj_at(STATUE, level, x, y);
-        if (boulder) {
+        if (!hitsomething && boulder) {
             hitsomething = TRUE;
             if (uwep && (is_pick(uwep) || is_axe(uwep)) &&
                 use_pick_axe(uwep, &newarg));

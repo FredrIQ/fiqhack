@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -156,7 +156,7 @@ in_trouble(void)
             return ptr_saddle;
     }
 
-    if (property_timeout(&youmonst, BLINDED) > 1 && haseyes(youmonst.data))
+    if (property_timeout(&youmonst, BLINDED))
         return ptr_blind;
     for (i = 0; i < A_MAX; i++)
         if (ABASE(i) < AMAX(i))
@@ -165,11 +165,11 @@ in_trouble(void)
         return ptr_wounded_legs;
     if (u.uhs >= HUNGRY)
         return ptr_hungry;
-    if (ihas_property(&youmonst, STUNNED))
+    if (property_timeout(&youmonst, STUNNED))
         return ptr_stunned;
-    if (ihas_property(&youmonst, CONFUSION))
+    if (property_timeout(&youmonst, CONFUSION))
         return ptr_confused;
-    if (Hallucination)
+    if (property_timeout(&youmonst, HALLUC))
         return ptr_hallucinating;
     return ptr_invalid;
 }

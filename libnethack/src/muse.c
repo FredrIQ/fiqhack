@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-04 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2245,11 +2245,6 @@ use_item(struct monst *mon, struct musable *m)
         newcham(mon, NULL, FALSE, FALSE);
         return 2;
     case MUSE_BULLWHIP:
-        mtmp = m_at(mon->dlevel, m->x, m->y);
-        if (!mtmp) {
-            if (m->x == u.ux && m->y == u.uy)
-                mtmp = &youmonst;
-        }
         if (!mon->mw || mon->mw != obj) {
             if (mon->mw && (mon->mw)->cursed) {
                 if (vis)
@@ -2280,11 +2275,21 @@ use_item(struct monst *mon, struct musable *m)
             }
         }
 
+        mtmp = m_at(mon->dlevel, m->x, m->y);
+        if (!mtmp) {
+            if (m->x == u.ux && m->y == u.uy)
+                mtmp = &youmonst;
+        }
         if (!mtmp) {
             /* can happen if a monster is confused or is trying to hit
                something invisible/displaced */
+            mtmp = mvismon_at(mon, mon->dlevel, m->x, m->y);
             if (vis)
-                pline("%s flicks a whip at thin air!", Monnam(mon));
+                pline("%s flicks a whip at %s%s!", Monnam(mon),
+                      !mtmp ? "thin air" :
+                      mtmp == &youmonst ? "your" :
+                      s_suffix(mon_nam(mtmp)),
+                      mtmp ? " displaced image" : "");
             return 1;
         }
 

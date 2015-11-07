@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -275,6 +275,9 @@ extern void map_object(struct obj *, int, boolean);
 extern void map_invisible(xchar, xchar);
 extern void unmap_object(int, int);
 extern void map_location(int, int, int, boolean);
+extern struct monst *vismon_at(struct level *, xchar, xchar);
+extern struct monst *mvismon_at(struct monst *, struct level *,
+                                xchar, xchar);
 extern void feel_location(xchar, xchar);
 extern void newsym(int, int);
 extern void shieldeff(xchar, xchar);

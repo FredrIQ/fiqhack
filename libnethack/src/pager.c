@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -112,11 +112,7 @@ mon_vision_summary(const struct monst *mtmp, char *outbuf)
         append_str_comma(outbuf, &outbufp, "see invisible");
     if (msense_status & MSENSE_INFRAVISION)
         append_str_comma(outbuf, &outbufp, "infravision");
-    /* can't use MSENSE_DISPLACED, it would spoil whether or
-       not it is a displaceed image */
-    if (displaced(mtmp) &&
-        (msense_status & ~(MSENSE_ANYVISION | MSENSE_DISPLACED |
-                           MSENSEF_KNOWNINVIS)))
+    if (msense_status & MSENSE_DISPLACED)
         append_str_comma(outbuf, &outbufp, "displacement");
     if (msense_status & MSENSE_TELEPATHY)
         append_str_comma(outbuf, &outbufp, "telepathy");
@@ -271,7 +267,7 @@ describe_mon(int x, int y, int monnum, char *buf)
     const char *name;
     boolean accurate = !Hallucination;
     char steedbuf[BUFSZ];
-    struct monst *mtmp;
+    struct monst *mtmp = NULL;
     char visionbuf[BUFSZ], temp_buf[BUFSZ];
 
     static const int maximum_output_len = 78;
@@ -322,78 +318,86 @@ describe_mon(int x, int y, int monnum, char *buf)
         monnum -= NUMMONS;
         if (monnum < WARNCOUNT)
             strcat(buf, warnexplain[monnum]);
+    }
 
-    } else if ((mtmp = m_at(level, x, y))) {
-        bhitpos.x = x;
-        bhitpos.y = y;
+    mtmp = vismon_at(level, x, y);
+    if (!mtmp)
+        return;
 
-        if (mtmp->data == &mons[PM_COYOTE] && accurate && !mtmp->mpeaceful)
-            name = an(coyotename(mtmp));
-        else
-            name = distant_monnam(
-                mtmp, (mtmp->mtame && accurate) ? "tame" :
-                (mtmp->mpeaceful && accurate) ? "peaceful" : NULL,
-                ARTICLE_A);
+    bhitpos.x = x;
+    bhitpos.y = y;
 
-        boolean spotted = canspotmon(mtmp);
+    if (mtmp->data == &mons[PM_COYOTE] && accurate && !mtmp->mpeaceful)
+        name = an(coyotename(mtmp));
+    else
+        name = distant_monnam(
+            mtmp, (mtmp->mtame && accurate) ? "tame" :
+            (mtmp->mpeaceful && accurate) ? "peaceful" : NULL,
+            ARTICLE_A);
 
-        if (!spotted && (mtmp->mx != x || mtmp->my != y))
-            name = "an unseen long worm";
-        else if (!spotted)
-            /* we can't safely impossible/panic from this point in the code;
-               well, we /could/, but as it's called on every mouse movement,
-               it'd quickly get very confusing and possibly lead to recursive
-               panics; just put up an obvious message instead */
-            name = "a <BUG: monster both seen and unseen>";
+    boolean spotted = canspotmon(mtmp);
 
-        snprintf(buf, BUFSZ-1, "%s%s",
-                (mtmp->mx != x || mtmp->my != y) ? "tail of " : "", name);
-        buf[BUFSZ-1] = '\0';
-        if (u.ustuck == mtmp)
-            strcat(buf,
-                   (Upolyd &&
-                    sticks(youmonst.data)) ? ", being held" : ", holding you");
-        if (mtmp->mleashed)
-            strcat(buf, ", leashed to you");
+    if (!spotted && (mtmp->mx != x || mtmp->my != y) &&
+        (mtmp->dx != x || mtmp->dy != y))
+        name = "an unseen long worm";
+    else if (!spotted)
+        /* we can't safely impossible/panic from this point in the code;
+           well, we /could/, but as it's called on every mouse movement,
+           it'd quickly get very confusing and possibly lead to recursive
+           panics; just put up an obvious message instead */
+        name = "a <BUG: monster both seen and unseen>";
 
-        if (mtmp->mtrapped && cansee(mtmp->mx, mtmp->my)) {
-            struct trap *t = t_at(level, mtmp->mx, mtmp->my);
-            int tt = t ? t->ttyp : NO_TRAP;
+    snprintf(buf, BUFSZ-1, "%s%s",
+             ((mtmp->mx != x || mtmp->my != y) &&
+              (mtmp->dx != x || mtmp->dy != y)) ? "tail of " : "", name);
+    buf[BUFSZ-1] = '\0';
+    if (u.ustuck == mtmp)
+        strcat(buf,
+               (Upolyd &&
+                sticks(youmonst.data)) ? ", being held" : ", holding you");
+    if (mtmp->mleashed)
+        strcat(buf, ", leashed to you");
 
-            /* newsym lets you know of the trap, so mention it here */
-            if (tt == BEAR_TRAP || tt == PIT || tt == SPIKED_PIT || tt == WEB)
-                sprintf(buf + strlen(buf),
-                        ", trapped in %s", an(trapexplain[tt - 1]));
-        }
+    if (mtmp->mtrapped && cansee(mtmp->mx, mtmp->my)) {
+        struct trap *t = t_at(level, mtmp->mx, mtmp->my);
+        int tt = t ? t->ttyp : NO_TRAP;
 
-        if (wizard) {
-            snprintf(temp_buf, SIZE(temp_buf),
-                     " (%s), target %02x,%02x, muxy %02x%02x",
-                     mtmp->mstrategy == st_none ? "none" :
-                     mtmp->mstrategy == st_close ? "waits until close" :
-                     mtmp->mstrategy == st_waiting ? "waiting" :
-                     mtmp->mstrategy == st_mon ? "chasing mon" :
-                     mtmp->mstrategy == st_obj ? "chasing obj" :
-                     mtmp->mstrategy == st_trap ? "chasing trap" :
-                     mtmp->mstrategy == st_square ? "chasing square" :
-                     mtmp->mstrategy == st_ascend ? "seeking high altar" :
-                     mtmp->mstrategy == st_wander ? "wandering" :
-                     mtmp->mstrategy == st_escape ? "escaping" :
-                     mtmp->mstrategy == st_heal ? "healing" : "unknown",
-                     (int)mtmp->sx, (int)mtmp->sy,
-                     (int)mtmp->mux, (int)mtmp->muy);
+        /* newsym lets you know of the trap, so mention it here */
+        if (tt == BEAR_TRAP || tt == PIT || tt == SPIKED_PIT || tt == WEB)
+            sprintf(buf + strlen(buf),
+                    ", trapped in %s", an(trapexplain[tt - 1]));
+    }
+
+#ifdef DEBUG_AI
+    if (wizard) {
+        snprintf(temp_buf, SIZE(temp_buf),
+                 " (%s), target %02x,%02x, muxy %02x%02x",
+                 mtmp->mstrategy == st_none ? "none" :
+                 mtmp->mstrategy == st_close ? "waits until close" :
+                 mtmp->mstrategy == st_waiting ? "waiting" :
+                 mtmp->mstrategy == st_mon ? "chasing mon" :
+                 mtmp->mstrategy == st_obj ? "chasing obj" :
+                 mtmp->mstrategy == st_trap ? "chasing trap" :
+                 mtmp->mstrategy == st_square ? "chasing square" :
+                 mtmp->mstrategy == st_ascend ? "seeking high altar" :
+                 mtmp->mstrategy == st_wander ? "wandering" :
+                 mtmp->mstrategy == st_escape ? "escaping" :
+                 mtmp->mstrategy == st_heal ? "healing" : "unknown",
+                 (int)mtmp->sx, (int)mtmp->sy,
+                 (int)mtmp->mux, (int)mtmp->muy);
+        strncat(buf, temp_buf, maximum_output_len - strlen(buf) - 1);
+    }
+#endif
+
+    /* Don't mention how a long worm tail is seen; msensem() only works on
+       monster heads. (Probably, the only unusual way to see a long worm
+       tail is see invisible, anyway.) */
+    if ((mtmp->mx == x && mtmp->my == y) ||
+        (mtmp->dx == x && mtmp->dy == y)) {
+        mon_vision_summary(mtmp, visionbuf);
+        if (visionbuf[0]) {
+            snprintf(temp_buf, SIZE(temp_buf), " [seen: %s]", visionbuf);
             strncat(buf, temp_buf, maximum_output_len - strlen(buf) - 1);
-        }
-
-        /* Don't mention how a long worm tail is seen; msensem() only works on
-           monster heads. (Probably, the only unusual way to see a long worm
-           tail is see invisible, anyway.) */
-        if (mtmp->mx == x && mtmp->my == y) {
-            mon_vision_summary(mtmp, visionbuf);
-            if (visionbuf[0]) {
-                snprintf(temp_buf, SIZE(temp_buf), " [seen: %s]", visionbuf);
-                strncat(buf, temp_buf, maximum_output_len - strlen(buf) - 1);
-            }
         }
     }
 }

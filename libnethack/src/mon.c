@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1748,7 +1748,7 @@ replmon(struct monst *mtmp, struct monst *mtmp2)
 
     /* finish adding its replacement */
     if (mtmp != u.usteed)       /* don't place steed onto the map */
-        place_monster(mtmp2, mtmp2->mx, mtmp2->my, TRUE);
+        place_monster(mtmp2, mtmp2->mx, mtmp2->my, FALSE);
     if (mtmp2->wormno)  /* update level->monsters[wseg->wx][wseg->wy] */
         place_wsegs(mtmp2);     /* locations to mtmp2 not mtmp. */
     if (emits_light(mtmp2->data)) {
@@ -2557,8 +2557,12 @@ unset_displacement(struct monst *mon)
     struct level *lev = (mon == &youmonst ? level : mon->dlevel);
     if (displaced(mon)) {
         lev->dmonsters[mon->dx][mon->dy] = NULL;
-        if (level)
+        if (level) {
+            /* update mxy symbol as well in case the newly placed image
+               isn't seen by hero */
+            newsym(mon->mx, mon->my);
             newsym(mon->dx, mon->dy);
+        }
     }
     mon->dx = COLNO;
     mon->dy = ROWNO;
@@ -2570,8 +2574,10 @@ set_displacement(struct monst *mon)
     struct level *lev = (mon == &youmonst ? level : mon->dlevel);
     if (displaced(mon)) {
         lev->dmonsters[mon->dx][mon->dy] = mon;
-        if (level)
+        if (level) {
+            newsym(mon->mx, mon->my);
             newsym(mon->dx, mon->dy);
+        }
     }
 }
 

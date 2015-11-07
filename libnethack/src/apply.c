@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1584,15 +1584,15 @@ use_unicorn_horn(struct obj *obj)
     /* collect property troubles */
     if (sick(&youmonst))
         prop_trouble(SICK);
-    if (ihas_property(&youmonst, BLINDED))
+    if (property_timeout(&youmonst, BLINDED))
         prop_trouble(BLINDED);
-    if (ihas_property(&youmonst, HALLUC)) /* black light polyself */
+    if (property_timeout(&youmonst, HALLUC)) /* black light polyself */
         prop_trouble(HALLUC);
     if (vomiting(&youmonst))
         prop_trouble(VOMITING);
     if (confused(&youmonst))
         prop_trouble(CONFUSION);
-    if (ihas_property(&youmonst, STUNNED)) /* some polyforms are stunned */
+    if (property_timeout(&youmonst, STUNNED)) /* some polyforms are stunned */
         prop_trouble(STUNNED);
 
     unfixable_trbl = unfixable_trouble_count(TRUE);
@@ -3146,22 +3146,21 @@ unfixable_trouble_count(boolean is_horn)
     /* lycanthropy is not desirable, but it doesn't actually make you feel
        bad */
 
-    /* we'll assume that intrinsic stunning from being a bat/stalker doesn't
-       make you feel bad */
+    /* Intrinsics doesn't make you feel bad
+       (stun in bat form, halluc as light, etc) */
     if (!is_horn) {
-        if (confused(&youmonst))
+        if (confused(&youmonst) & ~INTRINSIC)
             unfixable_trbl++;
-        if (sick(&youmonst))
+        if (sick(&youmonst) & ~INTRINSIC)
             unfixable_trbl++;
-        if (hallucinating(&youmonst))
+        if (hallucinating(&youmonst) & ~INTRINSIC)
             unfixable_trbl++;
-        if (vomiting(&youmonst))
+        if (vomiting(&youmonst) & ~INTRINSIC)
             unfixable_trbl++;
-        if (ihas_property(&youmonst, STUNNED))
+        if (stunned(&youmonst) & ~INTRINSIC)
             unfixable_trbl++;
     }
     return unfixable_trbl;
 }
 
 /*apply.c*/
-
