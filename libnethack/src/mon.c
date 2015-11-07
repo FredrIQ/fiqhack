@@ -178,7 +178,7 @@ static const short cham_to_pm[] = {
                          /* but he might have been polymorphed  */      \
                          (mon)->m_id == u.quest_status.leader_m_id ||   \
                          /* intrinsics or spells */                     \
-                         (mon)->mspells || (mon)->mintrinsic ||         \
+                         (mon)->mspells || any_property(mon) ||         \
                          (mon)->mhitinc || (mon)->mdaminc ||            \
                          (mon)->mac)
 

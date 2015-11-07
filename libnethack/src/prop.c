@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -171,6 +171,21 @@ static const struct propxl prop_from_experience[] = {
     {PM_ELF, 4, SLEEP_RES},
     {NON_PM, 0, 0}
 };
+
+
+/* Checks if a monster has any intrinsic at all in mintrinsic.
+   Used to determine if a monster should be saved in the corpse data.
+   TODO: probably hacklib material, since it's basically "is this array
+   only consisting of zeroes" */
+boolean
+any_property(struct monst *mon)
+{
+    int i;
+    for (i = 0; i <= LAST_PROP; i++)
+        if (mon->mintrinsic[i])
+            return TRUE;
+    return FALSE;
+}
 
 
 /* Intrinsics for a certain monster form.

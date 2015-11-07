@@ -1442,6 +1442,7 @@ extern boolean set_property(struct monst *, enum youprop, int, boolean);
 extern int update_property_polymorph(struct monst *, int);
 extern void update_xl_properties(struct monst *, int);
 extern boolean update_property(struct monst *, enum youprop, enum objslot);
+extern boolean any_property(struct monst *);
 extern int pm_has_property(const struct permonst *, enum youprop);
 extern unsigned m_has_property(const struct monst *, enum youprop,
                                unsigned, boolean);
