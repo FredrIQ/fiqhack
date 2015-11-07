@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -33,9 +33,11 @@ wildmiss(struct monst *mtmp, const struct attack *mattk)
             /* monsters may miss especially on water level where bubbles shake
                the player here and there */
             if (compat)
-                pline("%s reaches towards your distorted image.", Monnam(mtmp));
+                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                      "%s reaches towards your distorted image.", Monnam(mtmp));
             else
-                pline("%s is fooled by water reflections and misses!",
+                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                      "%s is fooled by water reflections and misses!",
                       Monnam(mtmp));
             break;
         }
@@ -51,25 +53,30 @@ wildmiss(struct monst *mtmp, const struct attack *mattk)
                                  nolimbs(mtmp->data)) ? "lunges" : "swings";
 
         if (compat)
-            pline("%s tries to touch you and misses!", Monnam(mtmp));
+            pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                  "%s tries to touch you and misses!", Monnam(mtmp));
         else
             switch (rn2(3)) {
             case 0:
-                pline("%s %s wildly and misses!", Monnam(mtmp), swings);
+                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                      "%s %s wildly and misses!", Monnam(mtmp), swings);
                 break;
             case 1:
-                pline("%s attacks a spot beside you.", Monnam(mtmp));
+                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                      "%s attacks a spot beside you.", Monnam(mtmp));
                 break;
             case 2:
                 /* Note: mar_guessing_invis implies that the muxy is a) valid,
                    and b) wrong (from the monster's point of view). So we can
                    print this without needing any further sanity checks. */
-                pline("%s strikes at %s!", Monnam(mtmp),
+                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                      "%s strikes at %s!", Monnam(mtmp),
                       level->locations[mtmp->mux][mtmp->muy].typ ==
                       WATER ? "empty water" : "thin air");
                 break;
             default:
-                pline("%s %s wildly!", Monnam(mtmp), swings);
+                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                      "%s %s wildly!", Monnam(mtmp), swings);
                 break;
             }
 
@@ -78,11 +85,13 @@ wildmiss(struct monst *mtmp, const struct attack *mattk)
     case mar_guessing_displaced:
 
         if (compat)
-            pline("%s smiles %s at your %sdisplaced image...", Monnam(mtmp),
+            pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                  "%s smiles %s at your %sdisplaced image...", Monnam(mtmp),
                   compat == 2 ? "engagingly" : "seductively",
                   Invis ? "invisible " : "");
         else
-            pline("%s strikes at your %sdisplaced image and misses you!",
+            pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                  "%s strikes at your %sdisplaced image and misses you!",
                   /* Note: if you're both invisible and displaced, only
                      monsters which see invisible will attack your displaced
                      image, since the displaced image is also invisible. */
@@ -168,11 +177,13 @@ mattackq(struct monst *mtmp, int x, int y)
 
         case AT_GAZE:
             if (canseemon(mtmp))
-                pline("%s gazes into the distance.", Monnam(mtmp));
+                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                      "%s gazes into the distance.", Monnam(mtmp));
             break;
 
         case AT_EXPL:
-            pline("%s explodes at a spot in %s!",
+            pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                  "%s explodes at a spot in %s!",
                   canseemon(mtmp) ? Monnam(mtmp) : "It",
                   level->locations[x][y].typ == WATER ?
                   "empty water" : "thin air");
@@ -185,12 +196,14 @@ mattackq(struct monst *mtmp, int x, int y)
 
         case AT_ENGL:
             if (is_animal(mtmp->data)) {
-                pline("%s gulps some air!", Monnam(mtmp));
+                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                      "%s gulps some air!", Monnam(mtmp));
             } else {
                 if (canseemon(mtmp))
-                    pline("%s lunges forward and recoils!", Monnam(mtmp));
+                    pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                          "%s lunges forward and recoils!", Monnam(mtmp));
                 else
-                    You_hear("a %s nearby.",
+                    You_hear(msgc_levelsound, "a %s nearby.",
                              is_whirly(mtmp->data) ? "rushing noise" : "splat");
             }
             break;
@@ -277,31 +290,35 @@ mpreattack(struct monst *mtmp, boolean range2)
 
             numhelp = were_summon(mtmp, &numseen, &genericwere);
             if (canseemon(mtmp)) {
-                pline("%s summons help!", Monnam(mtmp));
                 if (numhelp > 0) {
+                    pline(combat_msgc(mtmp, NULL, cr_hit),
+                          "%s summons help!", Monnam(mtmp));
                     if (numseen == 0)
-                        pline("You feel hemmed in.");
+                        pline(msgc_levelwarning, "You feel hemmed in.");
                 } else
-                    pline("But none comes.");
+                    pline(combat_msgc(mtmp, NULL, cr_miss),
+                          "%s summons help, but none comes.", Monnam(mtmp));
             } else {
                 const char *from_nowhere;
 
                 if (canhear()) {
-                    pline("Something %s!", makeplural(growl_sound(mtmp)));
+                    pline(msgc_levelwarning, "Something %s!",
+                          makeplural(growl_sound(mtmp)));
                     from_nowhere = "";
                 } else
                     from_nowhere = " from nowhere";
 
                 if (numhelp > 0) {
                     if (numseen < 1)
-                        pline("You feel hemmed in.");
+                        pline(msgc_levelwarning, "You feel hemmed in.");
                     else {
                         if (numseen == 1)
                             buf = msgprintf("%s appears", an(genericwere));
                         else
                             buf = msgprintf("%s appear",
                                             makeplural(genericwere));
-                        pline("%s%s!", msgupcasefirst(buf), from_nowhere);
+                        pline(msgc_levelwarning, "%s%s!",
+                              msgupcasefirst(buf), from_nowhere);
                     }
                 }
                 /* else no help came; but you didn't know it tried */

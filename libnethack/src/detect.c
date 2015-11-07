@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -149,7 +149,7 @@ clear_stale_map(char oclass, unsigned material)
 
 /* look for gold, on the floor or in monsters' possession */
 int
-gold_detect(struct obj *sobj, boolean * scr_known)
+gold_detect(struct obj *sobj, boolean *scr_known)
 {
     struct obj *obj;
     struct monst *mtmp;
@@ -207,7 +207,8 @@ gold_detect(struct obj *sobj, boolean * scr_known)
     /* only under me - no separate display required */
     if (stale)
         doredraw();
-    pline("You notice some gold between your %s.", makeplural(body_part(FOOT)));
+    pline(msgc_youdiscover, "You notice some gold between your %s.",
+          makeplural(body_part(FOOT)));
     return 0;
 
 outgoldmap:
@@ -256,7 +257,7 @@ outgoldmap:
     }
 
     newsym(u.ux, u.uy);
-    pline("You feel very greedy, and sense gold!");
+    pline(msgc_youdiscover, "You feel very greedy, and sense gold!");
     exercise(A_WIS, TRUE);
     win_pause_output(P_MAP);
     doredraw();
@@ -303,10 +304,11 @@ food_detect(struct obj *sobj, boolean * scr_known)
         *scr_known = stale && !confused;
         if (stale) {
             doredraw();
-            pline("You sense a lack of %s nearby.", what);
+            pline(msgc_notarget, "You sense a lack of %s nearby.", what);
             if (sobj && sobj->blessed) {
                 if (!u.uedibility)
-                    pline("Your %s starts to tingle.", body_part(NOSE));
+                    pline(msgc_statusgood, "Your %s starts to tingle.",
+                          body_part(NOSE));
                 u.uedibility = 1;
             }
         } else if (sobj) {
@@ -329,10 +331,12 @@ food_detect(struct obj *sobj, boolean * scr_known)
         return !stale;
     } else if (!ct) {
         *scr_known = TRUE;
-        pline("You %s %s nearby.", sobj ? "smell" : "sense", what);
+        pline(msgc_youdiscover, "You %s %s nearby.",
+              sobj ? "smell" : "sense", what);
         if (sobj && sobj->blessed) {
             if (!u.uedibility)
-                pline("Your %s starts to tingle.", body_part(NOSE));
+                pline(msgc_statusgood, "Your %s starts to tingle.",
+                      body_part(NOSE));
             u.uedibility = 1;
         }
     } else {
@@ -362,14 +366,15 @@ food_detect(struct obj *sobj, boolean * scr_known)
         newsym(u.ux, u.uy);
         if (sobj) {
             if (sobj->blessed) {
-                pline("Your %s %s to tingle and you smell %s.", body_part(NOSE),
+                pline(u.uedibility ? msgc_youdiscover : msgc_statusgood,
+                      "Your %s %s to tingle and you smell %s.", body_part(NOSE),
                       u.uedibility ? "continues" : "starts", what);
                 u.uedibility = 1;
             } else
-                pline("Your %s tingles and you smell %s.", body_part(NOSE),
-                      what);
+                pline(msgc_youdiscover, "Your %s tingles and you smell %s.",
+                      body_part(NOSE), what);
         } else
-            pline("You sense %s.", what);
+            pline(msgc_youdiscover, "You sense %s.", what);
         win_pause_output(P_MAP);
         exercise(A_WIS, TRUE);
         doredraw();
@@ -463,7 +468,7 @@ object_detect(struct obj *detector,     /* object doing the detecting */
             return 1;
         }
 
-        pline("You sense %s nearby.", stuff);
+        pline(msgc_youdiscover, "You sense %s nearby.", stuff);
         return 0;
     }
 
@@ -541,7 +546,8 @@ object_detect(struct obj *detector,     /* object doing the detecting */
     }
 
     newsym(u.ux, u.uy);
-    pline("You detect the %s of %s.", ct ? "presence" : "absence", stuff);
+    pline(ct ? msgc_youdiscover : msgc_notarget, "You detect the %s of %s.",
+          ct ? "presence" : "absence", stuff);
     win_pause_output(P_MAP);
     /*
      * What are we going to do when the hero does an object detect while blind
@@ -616,9 +622,9 @@ monster_detect(struct obj *otmp,        /* detecting object (if any) */
             }
         }
         display_self();
-        pline("You sense the presence of monsters.");
+        pline(msgc_youdiscover, "You sense the presence of monsters.");
         if (woken)
-            pline("Monsters sense the presence of you.");
+            pline(msgc_statusbad, "Monsters sense the presence of you.");
         win_pause_output(P_MAP);
         doredraw();
         if (Underwater)
@@ -698,14 +704,14 @@ trap_detect(struct obj *sobj)
         }
     }
     if (!found) {
-        char buf[42];
+        char buf[42]; /* TODO: convert to msgprintf */
 
         snprintf(buf, SIZE(buf), "Your %s stop itching.", makeplural(body_part(TOE)));
         strange_feeling(sobj, buf);
         return 1;
     }
     /* traps exist, but only under me - no separate display required */
-    pline("Your %s itch.", makeplural(body_part(TOE)));
+    pline(msgc_youdiscover, "Your %s itch.", makeplural(body_part(TOE)));
     return 0;
 outtrapmap:
     cls();
@@ -731,7 +737,8 @@ outtrapmap:
     }
 
     newsym(u.ux, u.uy);
-    pline("You feel %s.", sobj && sobj->cursed ? "very greedy" : "entrapped");
+    pline(msgc_youdiscover, "You feel %s.",
+          sobj && sobj->cursed ? "very greedy" : "entrapped");
     win_pause_output(P_MAP);
     doredraw();
     u.uinwater = uw;
@@ -802,7 +809,7 @@ use_crystal_ball(struct obj *obj)
     int oops;
 
     if (Blind) {
-        pline("Too bad you can't see %s.", the(xname(obj)));
+        pline(msgc_cancelled1, "Too bad you can't see %s.", the(xname(obj)));
         return;
     }
 
@@ -823,29 +830,32 @@ use_crystal_ball(struct obj *obj)
 
         switch (oops_result) {
         case 0:
-            pline("%s too much to comprehend!", Tobjnam(obj, "are"));
+            pline(msgc_failrandom, "%s too much to comprehend!",
+                  Tobjnam(obj, "are"));
             break;
         case 1:
-            pline("%s you!", Tobjnam(obj, "confuse"));
+            /* also msgc_substitute, but statusbad takes precedence */
+            pline(msgc_statusbad, "%s you!", Tobjnam(obj, "confuse"));
             make_confused(HConfusion + rnd(100), FALSE);
             break;
         case 2:
             if (!resists_blnd(&youmonst)) {
-                pline("%s your vision!", Tobjnam(obj, "damage"));
+                pline(msgc_statusbad, "%s your vision!",
+                      Tobjnam(obj, "damage"));
                 make_blinded(Blinded + rnd(100), FALSE);
                 if (!Blind)
-                    pline("Your vision quickly clears.");
+                    pline(msgc_statusheal, "Your vision quickly clears.");
             } else {
-                pline("%s your vision.", Tobjnam(obj, "assault"));
-                pline("You are unaffected!");
+                pline(msgc_playerimmune, "%s your vision.  You are unaffected!",
+                      Tobjnam(obj, "assault"));
             }
             break;
         case 3:
-            pline("%s your mind!", Tobjnam(obj, "zap"));
+            pline(msgc_statusbad, "%s your mind!", Tobjnam(obj, "zap"));
             make_hallucinated(HHallucination + rnd(100), FALSE);
             break;
         case 4:
-            pline("%s!", Tobjnam(obj, "explode"));
+            pline(msgc_substitute, "%s!", Tobjnam(obj, "explode"));
             useup(obj);
             obj = 0;    /* it's gone */
             losehp(rnd(30), killer_msg(DIED, "an exploding crystal ball"));
@@ -858,29 +868,33 @@ use_crystal_ball(struct obj *obj)
 
     if (Hallucination) {
         if (!obj->spe) {
-            pline("All you see is funky %s haze.", hcolor(NULL));
+            pline(obj->known ? msgc_cancelled1 : msgc_failcurse,
+                  "All you see is funky %s haze.", hcolor(NULL));
+            obj->known = TRUE;
         } else {
             switch (rnd(6)) {
             case 1:
-                pline("You grok some groovy globs of incandescent lava.");
+                pline(msgc_yafm,
+                      "You grok some groovy globs of incandescent lava.");
                 break;
             case 2:
-                pline("Whoa!  Psychedelic colors, %s!",
+                pline(msgc_yafm, "Whoa!  Psychedelic colors, %s!",
                       poly_gender() == 1 ? "babe" : "dude");
                 break;
             case 3:
-                pline("The crystal pulses with sinister %s light!",
+                pline(msgc_yafm, "The crystal pulses with sinister %s light!",
                       hcolor(NULL));
                 break;
             case 4:
-                pline("You see goldfish swimming above fluorescent rocks.");
+                pline(msgc_yafm,
+                      "You see goldfish swimming above fluorescent rocks.");
                 break;
             case 5:
-                pline ("You see tiny snowflakes spinning around a miniature "
-                       "farmhouse.");
+                pline(msgc_yafm, "You see tiny snowflakes spinning around "
+                      "a miniature farmhouse.");
                 break;
             default:
-                pline("Oh wow... like a kaleidoscope!");
+                pline(msgc_yafm, "Oh wow... like a kaleidoscope!");
                 break;
             }
             consume_obj_charge(obj, TRUE);
@@ -888,21 +902,24 @@ use_crystal_ball(struct obj *obj)
         return;
     }
 
+    /* This was treated like msgc_controlhelp in 3.4.3, but uiprompt seems to
+       fit better. Not sure yet, it depends on whether uiprompts generally turn
+       out to be obvious enough that we can turn them off with !verbose. */
+    pline(msgc_uiprompt, "You may look for an object or monster symbol.");
     /* read a single character */
-    if (flags.verbose)
-        pline("You may look for an object or monster symbol.");
     ch = query_key("What do you look for?", NQKF_SYMBOL, NULL);
     if (strchr(quitchars, ch)) {
-        if (flags.verbose)
-            pline("Never mind.");
+        pline(msgc_cancelled, "Never mind.");
         return;
     }
-    pline("You peer into %s...", the(xname(obj)));
+    pline(msgc_occstart, "You peer into %s...", the(xname(obj)));
     helpless(rnd(10), hr_busy, "gazing into a crystal ball",
              "You finish your crystal-gazing.");
-    if (obj->spe <= 0)
-        pline("The vision is unclear.");
-    else {
+    if (obj->spe <= 0) {
+        /* actually msgc_cancelled ## rnd(10), but... */
+        pline(obj->known ? msgc_cancelled1 : msgc_nospoil,
+              "The vision is unclear.");
+    } else {
         int class;
         int ret = 0;
 
@@ -927,7 +944,8 @@ use_crystal_ball(struct obj *obj)
                 {
                     int i = rn2(SIZE(level_detects));
 
-                    pline("You see %s, %s.", level_detects[i].what,
+                    pline(msgc_youdiscover, "You see %s, %s.",
+                          level_detects[i].what,
                           level_distance(level_detects[i].where));
                 }
                 ret = 0;
@@ -936,9 +954,10 @@ use_crystal_ball(struct obj *obj)
 
         if (ret) {
             if (!rn2(100))      /* make them nervous */
-                pline("You see the Wizard of Yendor gazing out at you.");
+                pline(msgc_failrandom,
+                      "You see the Wizard of Yendor gazing out at you.");
             else
-                pline("The vision is unclear.");
+                pline(msgc_nospoil, "The vision is unclear.");
         }
     }
     return;
@@ -1100,7 +1119,7 @@ openone(int zx, int zy, void *num)
             if (distu(zx, zy) < 3)
                 b_trapped("door", 0);
             else
-                pline_once("You %s an explosion!",
+                pline_once(msgc_levelsound, "You %s an explosion!",
                            cansee(zx, zy) ? "see" :
                            (canhear() ? "hear" : "feel the shock of"));
             wake_nearto(zx, zy, 11 * 11);
@@ -1147,9 +1166,9 @@ openit(void)
     if (Engulfed) {
         if (is_animal(u.ustuck->data)) {
             if (Blind)
-                pline("Its mouth opens!");
+                pline(msgc_actionok, "Its mouth opens!");
             else
-                pline("%s opens its mouth!", Monnam(u.ustuck));
+                pline(msgc_actionok, "%s opens its mouth!", Monnam(u.ustuck));
         }
         expels(u.ustuck, u.ustuck->data, TRUE);
         return -1;
@@ -1182,7 +1201,7 @@ find_trap(struct trap *trap)
         cleared = TRUE;
     }
 
-    pline("You find %s.", an(trapexplain[tt - 1]));
+    pline(msgc_youdiscover, "You find %s.", an(trapexplain[tt - 1]));
 
     if (cleared) {
         win_pause_output(P_MAP);        /* wait */
@@ -1244,8 +1263,14 @@ dosearch0(int aflag)
     struct trap *trap;
 
     if (Engulfed) {
+        /* Note: unlike most cases where we take time performing an action known
+           to be impossible, this one is at least justifiable: many players use
+           's' in order to wait a turn, even when engulfed, and in fact it's
+           reasonable to not keybind 'wait' at all. This could therefore be
+           considered msgc_yafm instead, if/when we get rid of all the
+           msgc_cancelled1 cases.*/
         if (!aflag)
-            pline("What are you looking for?  The exit?");
+            pline(msgc_cancelled1, "What are you looking for?  The exit?");
     } else {
         int fund = (uwep && uwep->oartifact &&
                     spec_ability(uwep, SPFX_SEARCH)) ? uwep->spe : 0;
@@ -1288,9 +1313,11 @@ dosearch0(int aflag)
                                 /* changed mechanic = changed message; also
                                    don't imply we're touching a trice */
                                 if (m_at(level, x, y)->m_ap_type)
-                                    pline("You think there's a mimic there.");
+                                    pline(msgc_youdiscover,
+                                          "You think there's a mimic there.");
                                 else
-                                    pline("You sense a monster nearby!");
+                                    pline(msgc_youdiscover,
+                                          "You sense a monster nearby!");
                                 return 1;
                             }
                         }

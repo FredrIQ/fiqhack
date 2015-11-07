@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -300,9 +300,11 @@ static void
 cutoff(struct monst *worm, struct wseg *tail)
 {
     if (flags.mon_moving)
-        pline("Part of the tail of %s is cut off.", mon_nam(worm));
+        pline(msgc_monneutral, "Part of the tail of %s is cut off.",
+              mon_nam(worm));
     else
-        pline("You cut part of the tail off of %s.", mon_nam(worm));
+        pline(msgc_combatgood, "You cut part of the tail off of %s.",
+              mon_nam(worm));
     toss_wsegs(level, tail, TRUE);
     if (worm->mhp >= 2)
         worm->mhp /= 2;
@@ -409,9 +411,9 @@ cutworm(struct monst *worm, xchar x, xchar y, struct obj *weap)
     place_wsegs(new_worm);
 
     if (flags.mon_moving)
-        pline("%s is cut in half.", Monnam(worm));
+        pline(msgc_monneutral, "%s is cut in half.", Monnam(worm));
     else
-        pline("You cut %s in half.", mon_nam(worm));
+        pline(msgc_combatgood, "You cut %s in half.", mon_nam(worm));
 }
 
 

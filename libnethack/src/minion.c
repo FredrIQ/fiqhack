@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-05-19 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -137,10 +137,12 @@ summon_minion(aligntyp alignment, boolean talk)
         mon = makemon(&mons[mnum], level, u.ux, u.uy, NO_MM_FLAGS);
     if (mon) {
         if (talk) {
-            pline("The voice of %s booms:", align_gname(alignment));
-            verbalize("Thou shalt pay for thy indiscretion!");
+            pline(msgc_npcvoice, "The voice of %s booms:",
+                  align_gname(alignment));
+            verbalize(msgc_alignbad, "Thou shalt pay for thy indiscretion!");
             if (!Blind)
-                pline("%s appears before you.", Amonnam(mon));
+                pline(msgc_levelwarning, "%s appears before you.",
+                      Amonnam(mon));
         }
         msethostility(mon, TRUE, FALSE);
         /* don't call set_malign(); player was naughty */
@@ -190,7 +192,7 @@ demon_talk(struct monst *mtmp)
     long cash, demand, offer;
 
     if (uwep && uwep->oartifact == ART_EXCALIBUR) {
-        pline("%s looks very angry.", Amonnam(mtmp));
+        pline(msgc_npcanger, "%s looks very angry.", Amonnam(mtmp));
         msethostility(mtmp, TRUE, TRUE);
         return 0;
     }
@@ -199,11 +201,11 @@ demon_talk(struct monst *mtmp)
     if (is_dprince(mtmp->data) && mtmp->minvis) {
         mtmp->minvis = mtmp->perminvis = 0;
         if (!Blind)
-            pline("%s appears before you.", Amonnam(mtmp));
+            pline(msgc_levelwarning, "%s appears before you.", Amonnam(mtmp));
         newsym(mtmp->mx, mtmp->my);
     }
     if (youmonst.data->mlet == S_DEMON) {       /* Won't blackmail their own. */
-        pline("%s says, \"Good hunting, %s.\"", Amonnam(mtmp),
+        pline(msgc_npcvoice, "%s says, \"Good hunting, %s.\"", Amonnam(mtmp),
               u.ufemale ? "Sister" : "Brother");
         if (!tele_restrict(mtmp))
             rloc(mtmp, TRUE);
@@ -225,16 +227,18 @@ demon_talk(struct monst *mtmp)
         if (mon_has_amulet(mtmp))
             demand = cash + (long)rn1(1000, 40);
 
-        pline("%s demands %ld %s for safe passage.", Amonnam(mtmp), demand,
-              currency(demand));
+        pline(msgc_unpaid, "%s demands %ld %s for safe passage.",
+              Amonnam(mtmp), demand, currency(demand));
 
         if ((offer = bribe(mtmp)) >= demand) {
-            pline("%s vanishes, laughing about cowardly %s.", Amonnam(mtmp),
+            pline(msgc_moncombatgood,
+                  "%s vanishes, laughing about cowardly %s.", Amonnam(mtmp),
                   makeplural(mortal_or_creature(youmonst.data, FALSE)));
         } else if (offer > 0L && (long)rnd(40) > (demand - offer)) {
-            pline("%s scowls at you menacingly, then vanishes.", Amonnam(mtmp));
+            pline(msgc_moncombatgood,
+                  "%s scowls at you menacingly, then vanishes.", Amonnam(mtmp));
         } else {
-            pline("%s gets angry...", Amonnam(mtmp));
+            pline(msgc_npcanger, "%s gets angry...", Amonnam(mtmp));
             msethostility(mtmp, TRUE, TRUE);
             return 0;
         }
@@ -258,19 +262,21 @@ bribe(struct monst *mtmp)
     /* Michael Paddon -- fix for negative offer to monster */
     /* JAR880815 - */
     if (offer < 0L) {
-        pline("You try to shortchange %s, but fumble.", mon_nam(mtmp));
+        pline(msgc_substitute, "You try to shortchange %s, but fumble.",
+              mon_nam(mtmp));
         return 0L;
     } else if (offer == 0L) {
-        pline("You refuse.");
+        pline(msgc_yafm, "You refuse.");
         return 0L;
     } else if (umoney == 0L) {
-        pline("You open your purse, but realize you have no gold.");
+        pline(msgc_yafm, "You open your purse, but realize you have no gold.");
         return 0L;
     } else if (offer >= umoney) {
-        pline("You give %s all your gold.", mon_nam(mtmp));
+        pline(msgc_actionok, "You give %s all your gold.", mon_nam(mtmp));
         offer = umoney;
     } else {
-        pline("You give %s %ld %s.", mon_nam(mtmp), offer, currency(offer));
+        pline(msgc_actionok, "You give %s %ld %s.", mon_nam(mtmp), offer,
+              currency(offer));
     }
     money2mon(mtmp, offer);
 

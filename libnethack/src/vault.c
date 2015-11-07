@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -68,12 +68,12 @@ clear_fcorr(struct monst *grd, boolean forceshow)
     if (DEADMONSTER(grd)) {
         if (showmsg) {
             if (!Blind)
-                pline("The corridor disappears.");
+                pline(msgc_monneutral, "The corridor disappears.");
             else
-                pline("You feel claustrophobic.");
+                pline(msgc_monneutral, "You feel claustrophobic.");
         }
         if (IS_ROCK(level->locations[u.ux][u.uy].typ))
-            pline("You are encased in rock.");
+            pline(msgc_fatal, "You are encased in rock.");
     }
     return TRUE;
 }
@@ -283,9 +283,10 @@ invault(void)
         /* We used to reset fainted status here, but that doesn't really make
            sense; instead, that's treated like normal helplessness */
         if (canspotmon(guard))
-            pline("Suddenly one of the Vault's guards enters!");
+            pline(msgc_youdiscover,
+                  "Suddenly one of the Vault's guards enters!");
         else if (canhear())
-            You_hear("someone else enter the Vault.");
+            You_hear(msgc_levelsound, "someone else enter the Vault.");
         else
             messages = FALSE;
 
@@ -293,19 +294,23 @@ invault(void)
         if (youmonst.m_ap_type == M_AP_OBJECT || u.uundetected || u.uburied) {
             if (youmonst.m_ap_type == M_AP_OBJECT &&
                 youmonst.mappearance != GOLD_PIECE)
-                verbalize("Hey! Who left that %s in here?",
+                verbalize(msgc_npcvoice,
+                          "Hey! Who left that %s in here?",
                           mimic_obj_name(&youmonst));
             /* You're mimicking some object or you're hidden. */
             if (messages)
-                pline("Puzzled, %s turns around and leaves.", mhe(guard));
+                pline(msgc_monneutral, "Puzzled, %s turns around and leaves.",
+                      mhe(guard));
             mongone(guard);
             return;
         }
         if (Engulfed) {
             if ((!u.ustuck->minvis || perceives(guard->data)))
-                verbalize("How did that %s get in here?", m_monnam(u.ustuck));
+                verbalize(msgc_npcvoice,
+                          "How did that %s get in here?", m_monnam(u.ustuck));
             if (messages)
-                pline("Puzzled, %s turns around and leaves.", mhe(guard));
+                pline(msgc_monneutral, "Puzzled, %s turns around and leaves.",
+                      mhe(guard));
             mongone(guard);
             return;
         }
@@ -313,7 +318,8 @@ invault(void)
             /* [we ought to record whether this this message has already been
                given in order to vary it upon repeat visits, but discarding the 
                monster and its egd data renders that hard] */
-            verbalize("I'll be back when you're ready to speak to me!");
+            verbalize(msgc_npcvoice,
+                      "I'll be back when you're ready to speak to me!");
             mongone(guard);
             return;
         }
@@ -335,11 +341,13 @@ invault(void)
         if (!strcmpi(buf, "Croesus") || !strcmpi(buf, "Kroisos") ||
             !strcmpi(buf, "Creosote")) {
             if (!mvitals[PM_CROESUS].died) {
-                verbalize("Oh, yes, of course.  Sorry to have disturbed you.");
+                verbalize(msgc_npcvoice,
+                          "Oh, yes, of course.  Sorry to have disturbed you.");
                 mongone(guard);
             } else {
                 setmangry(guard);
-                verbalize("Back from the dead, are you?  I'll remedy that!");
+                verbalize(msgc_npcanger,
+                          "Back from the dead, are you?  I'll remedy that!");
                 /* don't want guard to waste next turn wielding a weapon */
                 if (!MON_WEP(guard)) {
                     guard->weapon_check = NEED_HTH_WEAPON;
@@ -348,15 +356,16 @@ invault(void)
             }
             return;
         }
-        verbalize("I don't know you.");
+        verbalize(msgc_npcvoice, "I don't know you.");
         umoney = money_cnt(invent);
         if (!umoney && !hidden_gold())
-            verbalize("Please follow me.");
+            verbalize(msgc_hint, "Please follow me.");
         else {
             if (!umoney)
-                verbalize("You have hidden money.");
-            verbalize("Most likely all your money was stolen from this vault.");
-            verbalize("Please drop that money and follow me.");
+                verbalize(msgc_hint, "You have hidden money.");
+            verbalize(msgc_npcvoice,
+                      "Most likely all your money was stolen from this vault.");
+            verbalize(msgc_hint, "Please drop that money and follow me.");
         }
 
         EGD(guard)->gdx = gx;
@@ -463,14 +472,17 @@ wallify_vault(struct monst *grd)
 
     if (movedgold || fixed) {
         if (mon_visible(grd))
-            pline("%s whispers an incantation.", Monnam(grd));
+            pline(msgc_monneutral, "%s whispers an incantation.", Monnam(grd));
         else
-            You_hear("a %s chant.", in_fcorridor(grd, grd->mx, grd->my)
-                     ? "nearby" : "distant");
+            You_hear(msgc_levelsound, "a %s chant.",
+                     in_fcorridor(grd, grd->mx, grd->my) ?
+                     "nearby" : "distant");
         if (movedgold)
-            pline("A mysterious force moves the gold into the vault.");
+            pline(msgc_monneutral,
+                  "A mysterious force moves the gold into the vault.");
         if (fixed)
-            pline("The damaged vault's walls are magically restored!");
+            pline(msgc_monneutral,
+                  "The damaged vault's walls are magically restored!");
     }
 }
 
@@ -522,14 +534,14 @@ gd_move(struct monst *grd)
     if (egrd->fcend == 1) {
         if (u_in_vault && (u_carry_gold || um_dist(grd->mx, grd->my, 1))) {
             if (egrd->warncnt == 3)
-                verbalize("I repeat, %sfollow me!",
+                verbalize(msgc_hint, "I repeat, %sfollow me!",
                           u_carry_gold ? (!umoney ?
                                           "drop that hidden money and " :
                                           "drop that money and ") : "");
             if (egrd->warncnt == 7) {
                 m = grd->mx;
                 n = grd->my;
-                verbalize("You've been warned, knave!");
+                verbalize(msgc_npcanger, "You've been warned, knave!");
                 mnexto(grd);
                 level->locations[m][n].typ = egrd->fakecorr[0].ftyp;
                 newsym(m, n);
@@ -552,14 +564,15 @@ gd_move(struct monst *grd)
                 msethostility(grd, TRUE, FALSE);
             letknow:
                 if (!cansee(grd->mx, grd->my) || !mon_visible(grd))
-                    You_hear("the shrill sound of a guard's whistle.");
+                    You_hear(msgc_npcanger,
+                             "the shrill sound of a guard's whistle.");
                 else
-                    pline(um_dist(grd->mx, grd->my, 2) ?
+                    pline(msgc_npcanger, um_dist(grd->mx, grd->my, 2) ?
                           "You see an angry guard approaching." :
                           "You are confronted by an angry guard.");
                 return -1;
             } else {
-                verbalize("Well, begone.");
+                verbalize(msgc_npcvoice, "Well, begone.");
                 wallify_vault(grd);
                 egrd->gddone = 1;
                 goto cleanup;
@@ -573,7 +586,8 @@ gd_move(struct monst *grd)
             level->locations[egrd->fakecorr[0].fx][egrd->fakecorr[0].fy].typ ==
             egrd->fakecorr[0].ftyp) {
             if (canseemon(grd)) {
-                pline("%s, confused, disappears.", Monnam(grd));
+                pline(msgc_monneutral,
+                      "%s, confused, disappears.", Monnam(grd));
                 disappear_msg_seen = TRUE;
             }
             goto cleanup;
@@ -587,10 +601,10 @@ gd_move(struct monst *grd)
             }
             if (egrd->warncnt < 6) {
                 egrd->warncnt = 6;
-                verbalize("Drop all your gold, scoundrel!");
+                verbalize(msgc_hint, "Drop all your gold, scoundrel!");
                 return 0;
             } else {
-                verbalize("So be it, rogue!");
+                verbalize(msgc_npcanger, "So be it, rogue!");
                 msethostility(grd, TRUE, FALSE);
                 return -1;
             }
@@ -620,7 +634,7 @@ gd_move(struct monst *grd)
         } else {
             /* just for insurance... */
             if (MON_AT(level, m, n) && m != grd->mx && n != grd->my) {
-                verbalize("Out of my way, scum!");
+                verbalize(msgc_monneutral, "Out of my way, scum!");
                 rloc(m_at(level, m, n), FALSE);
             }
             remove_monster(level, grd->mx, grd->my);
@@ -630,10 +644,10 @@ gd_move(struct monst *grd)
         }
         if (cansee(m, n)) {
             if (yours) {
-                pline("%s%s picks up the gold.", Monnam(grd),
+                pline(msgc_monneutral, "%s%s picks up the gold.", Monnam(grd),
                       grd->mpeaceful ? " calms down and" : "");
             } else {
-                pline("%s picks up some gold.", Monnam(grd));
+                pline(msgc_monneutral, "%s picks up some gold.", Monnam(grd));
             }
         }
         if (x != grd->mx || y != grd->my) {
@@ -651,7 +665,7 @@ gd_move(struct monst *grd)
     }
     if (um_dist(grd->mx, grd->my, 1) || egrd->gddone) {
         if (!egrd->gddone && !rn2(10))
-            verbalize("Move along!");
+            verbalize(msgc_npcvoice, "Move along!");
         restfakecorr(grd);
         return 0;       /* didn't move */
     }
@@ -744,7 +758,8 @@ proceed:
         /* We're stuck, so try to find a new destination. */
         if (!find_guard_dest(grd, &egrd->gdx, &egrd->gdy) ||
             (egrd->gdx == gx && egrd->gdy == gy)) {
-            pline("%s, confused, disappears.", Monnam(grd));
+            pline(msgc_monneutral, "%s, confused, disappears.",
+                  Monnam(grd));
             disappear_msg_seen = TRUE;
             goto cleanup;
         } else
@@ -773,7 +788,8 @@ newpos:
         restfakecorr(grd);
         if (!semi_dead && (in_fcorridor(grd, u.ux, u.uy) || cansee(x, y))) {
             if (!disappear_msg_seen && see_guard)
-                pline("Suddenly, %s disappears.", noit_mon_nam(grd));
+                pline(msgc_monneutral, "Suddenly, %s disappears.",
+                      noit_mon_nam(grd));
             return 1;
         }
         return -2;
@@ -800,8 +816,8 @@ paygd(void)
         return;
 
     if (u.uinvault) {
-        pline("Your %ld %s goes into the Magic Memory Vault.", umoney,
-              currency(umoney));
+        pline(msgc_outrobad, "Your %ld %s goes into the Magic Memory Vault.",
+              umoney, currency(umoney));
         gx = u.ux;
         gy = u.uy;
     } else {
@@ -810,7 +826,7 @@ paygd(void)
             return;
         }
         mnexto(grd);
-        pline("%s remits your gold to the vault.", Monnam(grd));
+        pline(msgc_outrobad, "%s remits your gold to the vault.", Monnam(grd));
         gx = level->rooms[EGD(grd)->vroom].lx + rn2(2);
         gy = level->rooms[EGD(grd)->vroom].ly + rn2(2);
         make_grave(level, gx, gy,

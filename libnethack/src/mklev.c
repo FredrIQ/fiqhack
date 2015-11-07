@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1433,11 +1433,13 @@ mkinvokearea(void)
     xchar ymin = gamestate.inv_pos.y, ymax = gamestate.inv_pos.y;
     xchar i;
 
-    pline("The floor shakes violently under you!");
+    pline(msgc_levelsound, "The floor shakes violently under you!");
     if (Blind)
-        pline("The entire dungeon seems to be tearing apart!");
+        pline_implied(msgc_levelsound,
+                      "The entire dungeon seems to be tearing apart!");
     else
-        pline("The walls around you begin to bend and crumble!");
+        pline_implied(msgc_levelsound,
+                      "The walls around you begin to bend and crumble!");
     win_pause_output(P_MESSAGE);
 
     mkinvpos(xmin, ymin, 0);    /* middle, before placing stairs */
@@ -1467,9 +1469,11 @@ mkinvokearea(void)
     }
 
     if (Blind)
-        pline("You feel the stones reassemble below you!");
+        pline(msgc_levelsound,
+              "You feel the stones reassemble below you!");
     else
-        pline("You are standing at the top of a stairwell leading down!");
+        pline(msgc_levelsound,
+              "You are standing at the top of a stairwell leading down!");
     mkstairs(level, u.ux, u.uy, 0, NULL);       /* down */
     newsym(u.ux, u.uy);
     turnstate.vision_full_recalc = TRUE;     /* everything changed */

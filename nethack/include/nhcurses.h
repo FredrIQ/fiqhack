@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-01 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -161,6 +161,10 @@ enum keyreq_context {
     krc_query_key_letter_reassignment,
 };
 
+/* Message "colors" that suggest special handling; ORed with a color */
+#define CLRFLAG_HIDE      256             /* hide the message */
+#define CLRFLAG_FORCEMORE 512             /* force a --More-- */
+#define CLRFLAG_FORCETAB  1024            /* force a --Press Tab-- */
 
 struct interface_flags {
     int done_hup;

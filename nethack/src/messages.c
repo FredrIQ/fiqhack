@@ -1,11 +1,116 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include <ctype.h>
 
 #include "nhcurses.h"
+#include "messagechannel.h"
+
+/* Default colors for each message channel. We have eight possible message
+   colours: the seven bold/bright colours that aren't dark gray, and light
+   gray. CLRFLAG_* constants can also be ORed in. */
+static int channel_color[] = {
+    /* CLR_GRAY: normal misses, cancelled actions, etc. */
+    [msgc_nonmongood] = CLR_GRAY,
+    [msgc_moncombatgood] = CLR_GRAY,
+    [msgc_playerimmune] = CLR_GRAY,
+    [msgc_petcombatbad] = CLR_GRAY,
+    [msgc_cancelled] = CLR_GRAY,
+    [msgc_failrandom] = CLR_GRAY,
+    [msgc_trapescape] = CLR_GRAY,
+    [msgc_notarget] = CLR_GRAY,
+    [msgc_yafm] = CLR_GRAY,
+
+    /* also CLR_GRAY: low-priority messages with no real implications */
+    [msgc_alignchaos] = CLR_GRAY, /* e.g. chaotic action as a neutral */
+    [msgc_monneutral] = CLR_GRAY,
+    [msgc_npcvoice] = CLR_GRAY,
+    [msgc_petneutral] = CLR_GRAY,
+    [msgc_occstart] = CLR_GRAY,
+    [msgc_levelsound] = CLR_GRAY,
+    [msgc_branchchange] = CLR_GRAY,
+    [msgc_rumor] = CLR_GRAY,
+    [msgc_consequence] = CLR_GRAY,
+    
+    /* CLR_ORANGE: actions going wrong due to spoiler info; also warnings
+       that are not important enough to be bright magenta */
+    [msgc_notresisted] = CLR_ORANGE,
+    [msgc_petwarning] = CLR_ORANGE,
+    [msgc_substitute] = CLR_ORANGE,
+    [msgc_failcurse] = CLR_ORANGE,
+    [msgc_combatimmune] = CLR_ORANGE,
+    [msgc_unpaid] = CLR_ORANGE,
+    [msgc_cancelled1] = CLR_ORANGE, /* here because it wasted time */
+    [msgc_levelwarning] = CLR_ORANGE,
+    
+    /* CLR_BRIGHT_GREEN: permanent non-spammy good things */
+    [msgc_intrgain] = CLR_BRIGHT_GREEN,
+    [msgc_outrogood] = CLR_BRIGHT_GREEN,
+    
+    /* CLR_YELLOW: spammy/common bad events (e.g. being hit in combat) */
+    [msgc_moncombatbad] = CLR_YELLOW,
+    [msgc_itemloss] = CLR_YELLOW,
+    [msgc_statusbad] = CLR_YELLOW,
+    [msgc_statusend] = CLR_YELLOW,
+    [msgc_alignbad] = CLR_YELLOW,
+    [msgc_interrupted] = CLR_YELLOW,
+    [msgc_nonmonbad] = CLR_YELLOW,
+    [msgc_badidea] = CLR_YELLOW,
+    [msgc_outrobad] = CLR_YELLOW,
+    
+    /* CLR_BRIGHT_BLUE: metagame messages, hints, debug messages, etc. */
+    [msgc_emergency] = CLR_BRIGHT_BLUE,
+    [msgc_impossible] = CLR_BRIGHT_BLUE,
+    [msgc_saveload] = CLR_BRIGHT_BLUE,
+    [msgc_debug] = CLR_BRIGHT_BLUE,
+    [msgc_noidea] = CLR_BRIGHT_BLUE,
+    [msgc_intro] = CLR_BRIGHT_BLUE,
+    [msgc_info] = CLR_BRIGHT_BLUE,
+    [msgc_controlhelp] = CLR_BRIGHT_BLUE,
+    [msgc_hint] = CLR_BRIGHT_BLUE,
+    [msgc_uiprompt] = CLR_BRIGHT_BLUE,
+    [msgc_curprompt] = CLR_BRIGHT_BLUE,
+    [msgc_reminder] = CLR_BRIGHT_BLUE, /* but fades to dark blue immediately */
+    
+    /* CLR_BRIGHT_MAGENTA: permanent non-spammy bad things, urgent warnings */
+    [msgc_fatal] = CLR_BRIGHT_MAGENTA | CLRFLAG_FORCETAB,
+    [msgc_fatalavoid] = CLR_BRIGHT_MAGENTA | CLRFLAG_FORCEMORE,
+    [msgc_petfatal] = CLR_BRIGHT_MAGENTA,
+    [msgc_npcanger] = CLR_BRIGHT_MAGENTA,
+    [msgc_intrloss] = CLR_BRIGHT_MAGENTA,
+    
+    /* CLR_BRIGHT_CYAN: healing and temporary status gains; unexpected good
+       events that need to look different from CLR_WHITE; may be somewhat
+       spammy */
+    [msgc_statusgood] = CLR_BRIGHT_CYAN,
+    [msgc_statusheal] = CLR_BRIGHT_CYAN,
+    [msgc_itemrepair] = CLR_BRIGHT_CYAN,
+    [msgc_aligngood] = CLR_BRIGHT_CYAN,
+    [msgc_combatalert] = CLR_BRIGHT_CYAN,
+    [msgc_discoverportal] = CLR_BRIGHT_CYAN | CLRFLAG_FORCEMORE,
+    [msgc_youdiscover] = CLR_BRIGHT_CYAN,
+    
+    /* CLR_WHITE: spammy/common good events (e.g. hitting in combat) */
+    [msgc_statusextend] = CLR_WHITE,
+    [msgc_petkill] = CLR_WHITE,
+    [msgc_petcombatgood] = CLR_WHITE,
+    [msgc_kill] = CLR_WHITE,
+    [msgc_combatgood] = CLR_WHITE,
+    [msgc_actionok] = CLR_WHITE,
+    [msgc_actionboring] = CLR_WHITE,
+    [msgc_nospoil] = CLR_WHITE,
+
+    /* Special handling, listed for completeness */
+    [msgc_intrloss_level] = 0, /* msgc_intrloss but never forces a more */
+    [msgc_intrgain_level] = 0, /* msgc_intrgain but never forces a more */
+    [msgc_fatal_predone] = 0,  /* msgc_fatal but never forces a more */
+    [msgc_mispaste] = 0,       /* msgc_cancelled but triggers mispaste code */
+    [msgc_offlevel] = 0,       /* should never reach the client */
+    [msgc_mute] = 0,           /* should never reach the client */
+};
+
 
 struct msghist_entry {
     int turn;               /* for displaying in the UI */

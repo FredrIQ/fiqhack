@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -120,11 +120,11 @@ cursed_book(struct obj *bp)
 
     switch (rn2(lev)) {
     case 0:
-        pline("You feel a wrenching sensation.");
+        pline(msgc_nonmonbad, "You feel a wrenching sensation.");
         tele(); /* teleport him */
         break;
     case 1:
-        pline("You feel threatened.");
+        pline(msgc_statusbad, "You feel threatened.");
         aggravate();
         break;
     case 2:
@@ -134,11 +134,11 @@ cursed_book(struct obj *bp)
         take_gold();
         break;
     case 4:
-        pline("These runes were just too much to comprehend.");
+        pline(msgc_statusbad, "These runes were just too much to comprehend.");
         make_confused(HConfusion + rn1(7, 16), FALSE);
         break;
     case 5:
-        pline("The book was coated with contact poison!");
+        pline(msgc_nonmonbad, "The book was coated with contact poison!");
         if (uarmg) {
             erode_obj(uarmg, "gloves", ERODE_CORRODE, TRUE, TRUE);
             break;
@@ -160,10 +160,11 @@ cursed_book(struct obj *bp)
     case 6:
         if (Antimagic) {
             shieldeff(u.ux, u.uy);
-            pline("The book %s, but you are unharmed!", explodes);
+            pline(msgc_itemloss, "The book %s, but you are unharmed!",
+                  explodes);
         } else {
-            pline("As you read the book, it %s in your %s!", explodes,
-                  body_part(FACE));
+            pline(msgc_itemloss, "As you read the book, it %s in your %s!",
+                  explodes, body_part(FACE));
             losehp(2 * rnd(10) + 5, killer_msg(DIED, "an exploding rune"));
         }
         return TRUE;
@@ -182,18 +183,22 @@ confused_book(struct obj *spellbook)
 
     if (!rn2(3) && spellbook->otyp != SPE_BOOK_OF_THE_DEAD) {
         spellbook->in_use = TRUE;       /* in case called from learn */
-        pline("Being confused you have difficulties in controlling your "
-              "actions.");
+        pline(msgc_substitute, "Being confused you have difficulties in "
+              "controlling your actions.");
         win_pause_output(P_MESSAGE);
-        pline("You accidentally tear the spellbook to pieces.");
+        pline(msgc_itemloss, "You accidentally tear the spellbook to pieces.");
         if (!objects[spellbook->otyp].oc_name_known &&
             !objects[spellbook->otyp].oc_uname)
             docall(spellbook);
         useup(spellbook);
         gone = TRUE;
     } else {
-        pline("You find yourself reading the %s line over and over again.",
-              spellbook == u.utracked[tos_book] ? "next" : "first");
+        /* Technically, there is another result, but few people intentionally
+           read spellbooks while confused in an attempt to destroy them, so
+           this isn't failrandom */
+        pline(msgc_yafm, "You find yourself reading the %s line "
+              "over and over again.", spellbook == u.utracked[tos_book] ?
+              "next" : "first");
     }
     return gone;
 }
@@ -206,7 +211,7 @@ deadbook(struct obj *book2, boolean invoked)
     coord mm;
 
     if (!invoked)
-        pline("You turn the pages of the Book of the Dead...");
+        pline(msgc_occstart, "You turn the pages of the Book of the Dead...");
     makeknown(SPE_BOOK_OF_THE_DEAD);
     /* KMH -- Need ->known to avoid "_a_ Book of the Dead" */
     book2->known = 1;
@@ -216,41 +221,47 @@ deadbook(struct obj *book2, boolean invoked)
 
         if (invoked) {
             if (Blind)
-                You_hear("a crisp flicker...");
+                You_hear(msgc_occstart, "a crisp flicker...");
             else
-                pline("The Book of the Dead opens of its own accord...");
+                pline(msgc_occstart,
+                      "The Book of the Dead opens of its own accord...");
         }
 
         if (book2->cursed) {
             if (invoked) {
                 if (Hallucination)
-                    You_hear("gratuitous bleeping.");
+                    You_hear(book2->bknown ? msgc_yafm : msgc_failcurse,
+                             "gratuitous bleeping.");
                 else
-                    You_hear("a mumbled curse.");
+                    You_hear(book2->bknown ? msgc_yafm : msgc_failcurse,
+                             "a mumbled curse.");
             } else
-                pline("The runes appear scrambled.  You can't read them!");
+                pline(book2->bknown ? msgc_yafm : msgc_failcurse,
+                      "The runes appear scrambled.  You can't read them!");
+            book2->bknown = TRUE;
             return;
         }
 
         if (!Uhave_bell || !Uhave_menorah) {
-            pline("A chill runs down your %s.", body_part(SPINE));
+            pline(msgc_yafm, "A chill runs down your %s.", body_part(SPINE));
             if (!Uhave_bell) {
                 if (Hallucination)
-                    pline("You feel like a tuning fork!");
+                    pline(msgc_hint, "You feel like a tuning fork!");
                 else
-                    You_hear("a faint chime...");
+                    You_hear(msgc_hint, "a faint chime...");
             }
             if (!Uhave_menorah) {
                 if (Hallucination) {
-                    pline("Nosferatu giggles.");
+                    pline(msgc_hint, "Nosferatu giggles.");
                 } else if (mvitals[PM_DOPPELGANGER].mvflags & G_GENOD) {
                     /* suggestion by b_jonas: can't talk about doppelgangers
                        if they don't exist */
                     if (Uhave_bell)
-                        pline("Nothing seems to happen.");
+                        pline(msgc_noconsequence,
+                              "Nothing seems to happen.");
                     /* otherwise no message, we already printed one. */
                 } else {
-                    pline("Vlad's doppelganger is amused.");
+                    pline(msgc_hint, "Vlad's doppelganger is amused.");
                 }
             }
             return;
@@ -274,11 +285,13 @@ deadbook(struct obj *book2, boolean invoked)
         }
 
         if (arti_cursed) {
-            pline("The invocation fails!");
+            pline(msgc_failcurse, "The invocation fails!");
             if (Hallucination)
-                pline("At least one of your heirlooms is in a tizzy!");
+                pline(msgc_hint,
+                      "At least one of your heirlooms is in a tizzy!");
             else
-                pline("At least one of your artifacts is cursed...");
+                pline(msgc_hint,
+                      "At least one of your artifacts is cursed...");
         } else if (arti1_primed && arti2_primed) {
             unsigned soon = (unsigned)dice(2, 6); /* time til next intervene */
 
@@ -292,7 +305,7 @@ deadbook(struct obj *book2, boolean invoked)
             if (!u.udg_cnt || u.udg_cnt > soon)
                 u.udg_cnt = soon;
         } else {        /* at least one artifact not prepared properly */
-            pline("You have a feeling that something is amiss...");
+            pline(msgc_hint, "You have a feeling that something is amiss...");
             goto raise_dead;
         }
         return;
@@ -300,7 +313,7 @@ deadbook(struct obj *book2, boolean invoked)
 
     /* when not an invocation situation */
     if (invoked) {
-        pline("Nothing happens.");
+        pline(msgc_yafm, "Nothing happens.");
         return;
     }
 
@@ -308,9 +321,9 @@ deadbook(struct obj *book2, boolean invoked)
     raise_dead:
 
         if (Hallucination)
-            You_hear("Michael Jackson dancing!");
+            You_hear(msgc_substitute, "Michael Jackson dancing!");
         else
-            pline("You raised the dead!");
+            pline(msgc_substitute, "You raised the dead!");
         /* first maybe place a dangerous adversary; don't bother with
            MM_CREATEMONSTER, that's mostly used to ensure that consistent
            species of monsters generate */
@@ -349,13 +362,13 @@ deadbook(struct obj *book2, boolean invoked)
     } else {
         switch (rn2(3)) {
         case 0:
-            pline("Your ancestors are annoyed with you!");
+            pline(msgc_yafm, "Your ancestors are annoyed with you!");
             break;
         case 1:
-            pline("The headstones in the cemetery begin to move!");
+            pline(msgc_yafm, "The headstones in the cemetery begin to move!");
             break;
         default:
-            pline("Oh my!  Your name appears in the book!");
+            pline(msgc_yafm, "Oh my!  Your name appears in the book!");
         }
     }
     return;
@@ -401,7 +414,7 @@ learn(void)
        memorize the spell anyway; this makes no sense. It destroys the spellbook
        on the "contact poison" result, which makes even less sense.) */
     if (u.utracked[tos_book]->cursed) {
-        pline("This book isn't making sense any more.");
+        pline(msgc_substitute, "This book isn't making sense any more.");
         helpless(rn1(5,5), hr_busy,
                  "making sense of a spellbook",
                  "You give up trying to make sense of the spellbook.");
@@ -422,17 +435,20 @@ learn(void)
         if (spellid(i) == booktype) {
             already_known = TRUE;
             if (u.utracked[tos_book]->spestudied > MAX_SPELL_STUDY) {
-                pline("This spellbook is too faint to be read any more.");
+                pline(msgc_failcurse,
+                      "This spellbook is too faint to be read any more.");
                 u.utracked[tos_book]->otyp = booktype = SPE_BLANK_PAPER;
             } else if (spellknow(i) <= 1000) {
-                pline("Your knowledge of %s is keener.", splname);
+                pline(msgc_actionok, "Your knowledge of %s is keener.",
+                      splname);
                 incrnknow(i);
                 u.utracked[tos_book]->spestudied++;
                 exercise(A_WIS, TRUE);  /* extra study */
-            } else {    /* 1000 < spellknow(i) <= MAX_SPELL_STUDY */
-                pline("You know %s quite well already.", splname);
+            } else {    /* spell known already, book studiable*/
+                pline(msgc_hint, "You know %s quite well already.", splname);
                 if (yn("Do you want to read the book anyway?") == 'y') {
-                    pline("You refresh your knowledge of %s.", splname);
+                    pline(msgc_actionok, "You refresh your knowledge of %s.",
+                          splname);
                     incrnknow(i);
                     u.utracked[tos_book]->spestudied++;
                 } else
@@ -458,8 +474,8 @@ learn(void)
         spl_book[first_unknown].sp_lev = objects[booktype].oc_level;
         incrnknow(first_unknown);
         u.utracked[tos_book]->spestudied++;
-        pline(known_spells > 0 ? "You add %s to your repertoire." :
-              "You learn %s.", splname);
+        pline(msgc_actionok, known_spells > 0 ?
+              "You add %s to your repertoire." : "You learn %s.", splname);
         makeknown((int)booktype);
     }
 
@@ -482,13 +498,14 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
            become erased somehow, resume reading it */
         booktype != SPE_BLANK_PAPER) {
         if (turnstate.continue_message)
-            pline("You continue your efforts to memorize the spell.");
+            pline(msgc_occstart,
+                  "You continue your efforts to memorize the spell.");
     } else {
         /* Restarting reading the book */
 
         /* KMH -- Simplified this code */
         if (booktype == SPE_BLANK_PAPER) {
-            pline("This spellbook is all blank.");
+            pline(msgc_yafm, "This spellbook is all blank.");
             makeknown(booktype);
             return 1;
         }
@@ -554,7 +571,7 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
             u.uoccupation_progress[tos_book] = 0;
             if (gone || !rn2(3)) {
                 if (!gone)
-                    pline("The spellbook crumbles to dust!");
+                    pline(msgc_itemloss, "The spellbook crumbles to dust!");
                 if (!objects[spellbook->otyp].oc_name_known &&
                     !objects[spellbook->otyp].oc_uname)
                     docall(spellbook);
@@ -575,7 +592,7 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
         }
         spellbook->in_use = FALSE;
 
-        pline("You begin to %s the runes.",
+        pline(msgc_occstart, "You begin to %s the runes.",
               spellbook->otyp == SPE_BOOK_OF_THE_DEAD ? "recite" : "memorize");
     }
 
@@ -805,9 +822,11 @@ cast_protection(void)
             const char *hgolden = hcolor("golden");
 
             if (u.uspellprot)
-                pline("The %s haze around you becomes more dense.", hgolden);
+                pline(msgc_statusextend,
+                      "The %s haze around you becomes more dense.", hgolden);
             else
-                pline("The %s around you begins to shimmer with %s haze.",
+                pline(msgc_statusgood,
+                      "The %s around you begins to shimmer with %s haze.",
                       (Underwater || Is_waterlevel(&u.uz)) ? "water" :
                       Engulfed ? mbodypart(u.ustuck, STOMACH) :
                       IS_STWALL(level->locations[u.ux][u.uy].typ) ? "stone" :
@@ -820,7 +839,7 @@ cast_protection(void)
         if (!u.usptime)
             u.usptime = u.uspmtime;
     } else {
-        pline("Your skin feels warm for a moment.");
+        pline(msgc_yafm, "Your skin feels warm for a moment.");
     }
 }
 
@@ -912,7 +931,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             }
             else {
                 /* Decided not to target anything.  Abort the spell. */
-                pline("Spell canceled.");
+                pline(msgc_cancelled, "Spell cancelled.");
                 return 0;
             }
         }
@@ -939,14 +958,14 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             dx = dy = dz = 0;
         else if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
             /* getdir cancelled, abort */
-            pline("Spell canceled.");
+            pline(msgc_cancelled, "Spell canceled.");
             return 0;
         }
         break;
     case SPE_JUMPING:
         if(!get_jump_coords(arg, &cc, max(role_skill, 1))) {
             /* No jumping after all, I guess. */
-            pline("Spell canceled.");
+            pline(msgc_cancelled, "Spell canceled.");
             return 0;
         }
         break;
@@ -960,38 +979,40 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     /* Spell casting no longer affects knowledge of the spell. A decrement of
        spell knowledge is done every turn. */
     if (spellknow(spell) <= 0) {
-        pline("Your knowledge of this spell is twisted.");
-        pline("It invokes nightmarish images in your mind...");
+        pline(msgc_substitute, "Your knowledge of this spell is twisted.");
+        pline_implied(msgc_statusbad,
+                      "It invokes nightmarish images in your mind...");
         spell_backfire(spell);
         return 0;
     } else if (spellknow(spell) <= 200) {       /* 1% */
-        pline("You strain to recall the spell.");
+        pline(msgc_hint, "You strain to recall the spell.");
     } else if (spellknow(spell) <= 1000) {      /* 5% */
-        pline("Your knowledge of this spell is growing faint.");
+        pline(msgc_hint, "Your knowledge of this spell is growing faint.");
     }
     energy = (spellev(spell) * 5);      /* 5 <= energy <= 35 */
 
     if (u.uhunger <= 10 && spellid(spell) != SPE_DETECT_FOOD) {
-        pline("You are too hungry to cast that spell.");
+        pline(msgc_cancelled, "You are too hungry to cast that spell.");
         return 0;
     } else if (ACURR(A_STR) < 4) {
-        pline("You lack the strength to cast spells.");
+        pline(msgc_cancelled, "You lack the strength to cast spells.");
         return 0;
-    } else
-        if (check_capacity
-            ("Your concentration falters while carrying so much stuff.")) {
+    } else if (check_capacity
+               ("Your concentration falters while carrying so much stuff.")) {
         return 1;
     } else if (!freehand()) {
-        pline("Your arms are not free to cast!");
+        pline(msgc_cancelled, "Your arms are not free to cast!");
         return 0;
     }
 
     if (Uhave_amulet) {
-        pline("You feel the amulet draining your energy away.");
+        pline(msgc_substitute,
+              "You feel the amulet draining your energy away.");
         energy += rnd(2 * energy);
     }
     if (energy > u.uen) {
-        pline("You don't have enough energy to cast that spell.");
+        pline(msgc_cancelled,
+              "You don't have enough energy to cast that spell.");
         return 0;
     } else {
         if (spellid(spell) != SPE_DETECT_FOOD) {
@@ -1033,7 +1054,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
 
     chance = percent_success(spell);
     if (confused || (rnd(100) > chance)) {
-        pline("You fail to cast the spell correctly.");
+        pline(msgc_failrandom, "You fail to cast the spell correctly.");
         u.uen -= energy / 2;
         return 1;
     }
@@ -1151,9 +1172,9 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         break;
     case SPE_CURE_SICKNESS:
         if (Sick)
-            pline("You are no longer ill.");
+            pline(msgc_statusheal, "You are no longer ill.");
         if (Slimed) {
-            pline("The slime disappears!");
+            pline(msgc_statusheal, "The slime disappears!");
             Slimed = 0;
         }
         healup(0, 0, TRUE, FALSE);
@@ -1165,8 +1186,11 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         if (!BClairvoyant)
             do_vicinity_map();
         /* at present, only one thing blocks clairvoyance */
-        else if (uarmh && uarmh->otyp == CORNUTHAUM)
-            pline("You sense a pointy hat on top of your %s.", body_part(HEAD));
+        else if (uarmh && uarmh->otyp == CORNUTHAUM) {
+            pline(msgc_failcurse, "You sense a pointy hat on top of your %s.",
+                  body_part(HEAD));
+            makeknown(CORNUTHAUM);
+        }
         break;
     case SPE_PROTECTION:
         cast_protection();
@@ -1194,24 +1218,24 @@ throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg)
     coord cc;
 
     if (u.uinwater) {
-        pline("You're joking! In this weather?");
+        pline(msgc_cancelled, "You're joking! In this weather?");
         return 0;
     } else if (Is_waterlevel(&u.uz)) {
-        pline("You had better wait for the sun to come out.");
+        pline(msgc_cancelled, "You had better wait for the sun to come out.");
         return 0;
     }
 
-    pline("Where do you want to cast the spell?");
+    pline(msgc_uiprompt, "Where do you want to cast the spell?");
     cc.x = u.ux;
     cc.y = u.uy;
     if (getargpos(arg, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     /* The number of moves from hero to where the spell drops. */
     if (distmin(u.ux, u.uy, cc.x, cc.y) > 10) {
-        pline("The spell dissipates over the distance!");
+        pline(msgc_cancelled, "The spell dissipates over the distance!");
         return 0;
     } else if (Engulfed) {
-        pline("The spell is cut short!");
+        pline(msgc_badidea, "The spell is cut short!");
         exercise(A_WIS, FALSE); /* What were you THINKING! */
         *dx = 0;
         *dy = 0;
@@ -1221,7 +1245,8 @@ throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg)
              (!MON_AT(level, cc.x, cc.y) ||
               !canspotmon(m_at(level, cc.x, cc.y)))) ||
             IS_STWALL(level->locations[cc.x][cc.y].typ)) {
-        pline("Your mind fails to lock onto that location!");
+            pline(msgc_cancelled,
+                  "Your mind fails to lock onto that location!");
         return 0;
     } else {
         *dx = cc.x;
@@ -1452,8 +1477,8 @@ initialspell(struct obj *obj)
         if (i == -1)
             j = spellno_from_let(objects[obj->otyp].oc_defletter);
         if (spellid(j) == obj->otyp) {
-            pline("Error: Spell %s already known.",
-                  OBJ_NAME(objects[obj->otyp]));
+            impossible("Error: Spell %s already known.",
+                       OBJ_NAME(objects[obj->otyp]));
             return;
         }
         if (spellid(j) == NO_SPELL) {

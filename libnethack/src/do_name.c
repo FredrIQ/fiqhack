@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-09-25 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -46,7 +46,7 @@ do_mname(const struct nh_cmd_arg *arg)
     const char *qbuf, *buf;
 
     if (Hallucination) {
-        pline("You would never recognize it anyway.");
+        pline(msgc_cancelled, "You would never recognize it anyway.");
         return 0;
     }
     cc.x = u.ux;
@@ -60,7 +60,8 @@ do_mname(const struct nh_cmd_arg *arg)
         if (u.usteed && canspotmon(u.usteed))
             mtmp = u.usteed;
         else {
-            pline("This %s creature is called %s and cannot be renamed.",
+            pline(msgc_cancelled,
+                  "This %s creature is called %s and cannot be renamed.",
                   beautiful(), u.uplname);
             return 0;
         }
@@ -70,10 +71,11 @@ do_mname(const struct nh_cmd_arg *arg)
     unsigned msense_status = mtmp ? msensem(&youmonst, mtmp) : 0;
 
     if (!(msense_status & ~MSENSE_ITEMMIMIC)) {
-        pline("I see no monster there.");
+        pline(msgc_mispaste, "I see no monster there.");
         return 0;
     } else if (!(msense_status & (MSENSE_ANYDETECT | MSENSE_ANYVISION))) {
-        pline("You can't see it well enough to recognise it in the future.");
+        pline(msgc_cancelled,
+              "You can't see it well enough to recognise it in the future.");
         return 0;
     }
 
@@ -88,7 +90,7 @@ do_mname(const struct nh_cmd_arg *arg)
 
     if (mtmp->data->geno & G_UNIQ) {
         qbuf = msgupcasefirst(distant_monnam(mtmp, NULL, ARTICLE_THE));
-        pline("%s doesn't like being called names!", qbuf);
+        pline(msgc_cancelled, "%s doesn't like being called names!", qbuf);
     } else
         christen_monst(mtmp, buf);
     return 0;
@@ -135,7 +137,7 @@ do_oname(const struct nh_cmd_arg *arg)
 
     char slipbuf[strlen(buf) + 1];
     if (obj->oartifact) {
-        pline("The artifact seems to resist the attempt.");
+        pline(msgc_cancelled, "The artifact seems to resist the attempt.");
         return 0;
     } else if (restrict_name(obj, buf) || exist_artifact(obj->otyp, buf)) {
         int n = rn2((int)strlen(buf));
@@ -148,9 +150,9 @@ do_oname(const struct nh_cmd_arg *arg)
         while (c1 == c2);
 
         slipbuf[n] = (slipbuf[n] == c1) ? c2 : highc(c2);   /* keep same case */
-        pline("While engraving your %s slips.", body_part(HAND));
-        win_pause_output(P_MESSAGE);
-        pline("You engrave: \"%s\".", slipbuf);
+        pline_implied(msgc_substitute, "While engraving your %s slips.",
+                      body_part(HAND));
+        pline(msgc_substitute, "You engrave: \"%s\".", slipbuf);
         buf = slipbuf;
     }
     oname(obj, buf);
@@ -332,7 +334,7 @@ do_tname(const struct nh_cmd_arg *arg)
         examine_object(obj);
 
         if (!obj->dknown) {
-            pline("You would never recognize another one.");
+            pline(msgc_cancelled, "You would never recognize another one.");
             return 0;
         }
         docall_inner(arg, obj->otyp);
@@ -471,10 +473,11 @@ docall(struct obj *obj)
     otemp.oxlth = 0;
     if (objects[otemp.otyp].oc_class == POTION_CLASS && otemp.fromsink)
         /* kludge, meaning it's sink water */
-        pline("(You can name a stream of %s fluid from the item naming menu.)",
+        pline(msgc_controlhelp,
+              "(You can name a stream of %s fluid from the item naming menu.)",
               OBJ_DESCR(objects[otemp.otyp]));
     else
-        pline("(You can name %s from the item naming menu.)",
+        pline(msgc_controlhelp, "(You can name %s from the item naming menu.)",
               an(xname(&otemp)));
     flags.recently_broken_otyp = otemp.otyp;
 }
@@ -838,6 +841,23 @@ s_suffix(const char *s)
         return msgcat(s, "'s");
 }
 
+/* Given a monster (or &youmonst) and a verb as an argument, produces "the
+   goblin hits" (or "you hit"), etc. */
+const char *
+m_verbs(const struct monst *mtmp, const char *verb)
+{
+    if (mtmp == &youmonst)
+        return msgcat("you ", verb);
+    else
+        return msgcat_many(mon_nam(mtmp), " ", vtense(NULL, verb), NULL);
+}
+
+/* The same, with an initial capital letter. */
+const char *
+M_verbs(const struct monst *mtmp, const char *verb)
+{
+    return msgupcasefirst(m_verbs(mtmp, verb));
+}
 
 static struct {
     const char *name;

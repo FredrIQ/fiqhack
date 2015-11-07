@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,7 +26,7 @@ force_servercancel(void)
  * log_record_input(...)
  * log_time_line()
  *
- * pline_nomore([a text description of the input])
+ * pline(msgc_reminder, [a text description of the input])
  *
  * if (!program_state.in_zero_time_command && isarg) {
  *   flags.last_arg = ...
@@ -98,9 +98,9 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
     log_time_line();
 
     if (rv == NHCR_CLIENT_CANCEL)
-        pline_nomore("<position: (cancelled)>");
+        pline(msgc_reminder, "<position: (cancelled)>");
     else
-        pline_nomore("<position: (%d, %d)>", x, y);
+        pline(msgc_reminder, "<position: (%d, %d)>", x, y);
 
     cc->x = x;
     cc->y = y;
@@ -149,7 +149,7 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
     if (!program_state.in_zero_time_command && isarg)
         flags.last_arg.argtype &= ~CMD_ARG_DIR;
 
-    pline_nomore("<%s: %s>", query, dirnames[dir + 1]);
+    pline(msgc_reminder, "<%s: %s>", query, dirnames[dir + 1]);
 
     *dz = 0;
     if (!dir_to_delta(dir, dx, dy, dz))
@@ -198,11 +198,11 @@ query_key(const char *query, enum nh_query_key_flags qkflags, int *count)
     log_time_line();
 
     if (count && qkr.count != -1)
-        pline_nomore("<%s: %d %c>", query, qkr.count, qkr.key);
+        pline(msgc_reminder, "<%s: %d %c>", query, qkr.count, qkr.key);
     else if (count && strchr(quitchars, qkr.key))
-        pline_nomore("<%s: cancelled>", query);
+        pline(msgc_reminder, "<%s: cancelled>", query);
     else
-        pline_nomore("<%s: %c>", query, qkr.key);
+        pline(msgc_reminder, "<%s: %c>", query, qkr.key);
 
     if (count)
         *count = qkr.count;
@@ -230,7 +230,8 @@ getlin(const char *query, boolean isarg)
 
     log_time_line();
 
-    pline_nomore("<%s: %s>", query, res[0] == '\033' ? "(escaped)" : res);
+    pline(msgc_reminder, "<%s: %s>", query, res[0] == '\033' ?
+          "(escaped)" : res);
 
     if (isarg && !program_state.in_zero_time_command) {
         if (*res == '\033')
@@ -290,7 +291,7 @@ yn_function(const char *query, const char *resp, char def)
 
     log_time_line();
 
-    pline_nomore("<%s [%s]: %c>", qbuf, resp, key);
+    pline(msgc_reminder, "<%s [%s]: %c>", qbuf, resp, key);
     return key;
 }
 
@@ -339,13 +340,14 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
     } else if (dmcd.nresults == -1) {
         log_record_input("M!");
         log_time_line();
-        pline_nomore("<%s: cancelled>", title ? title : "Untitled menu");
+        pline(msgc_reminder, "<%s: cancelled>",
+              title ? title : "Untitled menu");
     } else if (how == PICK_LETTER) {
         log_record_menu(FALSE, &dmcd);
         log_time_line();
-        pline_nomore("<%s: %c>", title ? title : "Untitled menu",
-                     dmcd.results[0] < 26 ? 'a' + dmcd.results[0] - 1:
-                                            'A' + dmcd.results[0] - 27);
+        pline(msgc_reminder, "<%s: %c>", title ? title : "Untitled menu",
+              dmcd.results[0] < 26 ? 'a' + dmcd.results[0] - 1:
+              'A' + dmcd.results[0] - 27);
     } else {
         const char *buf = "(none selected)";
 
@@ -361,7 +363,7 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
             buf = msgprintf("(%d selected)", dmcd.nresults);
         }
 
-        pline_nomore("<%s: %s>", title ? title : "Untitled menu", buf);
+        pline(msgc_reminder, "<%s: %s>", title ? title : "Untitled menu", buf);
     }
 
     return dmcd.nresults;
@@ -411,7 +413,8 @@ display_objects(struct nh_objlist *objlist, const char *title, int how,
     } else if (docd.nresults == -1) {
         log_record_input("O!");
         log_time_line();
-        pline_nomore("<%s: cancelled>", title ? title : "List of objects");
+        pline(msgc_reminder, "<%s: cancelled>",
+              title ? title : "List of objects");
     } else {
         const char *buf = "no selections";
 
@@ -438,7 +441,8 @@ display_objects(struct nh_objlist *objlist, const char *title, int how,
             buf = msg_from_string(selected);
 
     no_inventory_letters:
-        pline_nomore("<%s: %s>", title ? title : "Untitled menu", buf);
+        pline(msgc_reminder, "<%s: %s>",
+              title ? title : "Untitled menu", buf);
     }
 
     return docd.nresults;

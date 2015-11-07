@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-21 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,12 +19,10 @@ static void watch_on_duty(struct monst *);
 boolean
 mb_trapped(struct monst *mtmp)
 {
-    if (flags.verbose) {
-        if (cansee(mtmp->mx, mtmp->my))
-            pline("KABOOM!!  You see a door explode.");
-        else
-            You_hear("a distant explosion.");
-    }
+    if (cansee(mtmp->mx, mtmp->my))
+        pline(msgc_levelsound, "KABOOM!!  You see a door explode.");
+    else
+        You_hear(msgc_levelsound, "a distant explosion.");
     wake_nearto(mtmp->mx, mtmp->my, 7 * 7);
     mtmp->mstun = 1;
     mtmp->mhp -= rnd(15);
@@ -177,7 +175,7 @@ monflee(struct monst *mtmp, int fleetime, boolean first, boolean fleemsg)
             expels(mtmp, mtmp->data, TRUE);
         else if (!sticks(youmonst.data)) {
             unstuck(mtmp);      /* monster lets go when fleeing */
-            pline("You get released!");
+            pline(msgc_statusheal, "You get released!");
         }
     }
 
@@ -192,11 +190,12 @@ monflee(struct monst *mtmp, int fleetime, boolean first, boolean fleemsg)
                 fleetime++;
             mtmp->mfleetim = min(fleetime, 127);
         }
+        enum msg_channel msgc = mtmp->mtame ? msgc_petneutral : msgc_monneutral;
         if (!mtmp->mflee && fleemsg && canseemon(mtmp) && !mtmp->mfrozen) {
             if (mtmp->data->mlet != S_MIMIC)
-                pline("%s turns to flee!", (Monnam(mtmp)));
+                pline(msgc, "%s turns to flee!", Monnam(mtmp));
             else
-                pline("%s mimics a chicken for a moment!", (Monnam(mtmp)));
+                pline(msgc, "%s mimics a chicken for a moment!", Monnam(mtmp));
         }
         mtmp->mflee = 1;
     }
@@ -361,7 +360,7 @@ dochug(struct monst *mtmp)
             return 0; /* wait for you to be able to respond */
         if (!knows_ux_uy(mtmp)) {
             if (aware_of_u(mtmp)) {
-                pline("%s whispers at thin air.",
+                pline(msgc_npcvoice, "%s whispers at thin air.",
                       cansee(mtmp->mux, mtmp->muy) ? Monnam(mtmp) : "It");
 
                 if (is_demon(youmonst.data)) {
@@ -371,7 +370,7 @@ dochug(struct monst *mtmp)
                 } else {
                     mtmp->minvis = mtmp->perminvis = 0;
                     /* Why? For the same reason in real demon talk */
-                    pline("%s gets angry!", Amonnam(mtmp));
+                    pline(msgc_npcanger, "%s gets angry!", Amonnam(mtmp));
                     msethostility(mtmp, TRUE, FALSE);
                     /* TODO: reset alignment? */
                     /* since no way is an image going to pay it off */
@@ -389,28 +388,32 @@ dochug(struct monst *mtmp)
         struct monst *m2, *nmon = NULL;
 
         if (canseemon(mtmp))
-            pline("%s concentrates.", Monnam(mtmp));
+            pline_implied(combat_msgc(mtmp, NULL, cr_hit), "%s concentrates.",
+                          Monnam(mtmp));
         if (distu(mtmp->mx, mtmp->my) > BOLT_LIM * BOLT_LIM) {
-            pline("You sense a faint wave of psychic energy.");
+            pline(msgc_levelwarning,
+                  "You sense a faint wave of psychic energy.");
             goto toofar;
         }
-        pline("A wave of psychic energy pours over you!");
         if (mtmp->mpeaceful && (!Conflict || resist(mtmp, RING_CLASS, 0, 0)))
-            pline("It feels quite soothing.");
+            pline(msgc_petneutral, "Soothing psychic energy surrounds you.");
         else {
             boolean m_sen = sensemon(mtmp);
-
+            
             if (m_sen || (Blind_telepat && rn2(2)) || !rn2(10)) {
                 int dmg;
 
-                pline("It locks on to your %s!",
-                      m_sen ? "telepathy" : Blind_telepat ? "latent telepathy" :
-                      "mind");
+                pline(combat_msgc(mtmp, &youmonst, cr_hit),
+                      "A wave of psychic energy locks on to your %s!",
+                      m_sen ? "telepathy" : Blind_telepat ?
+                      "latent telepathy" : "mind");
                 dmg = rnd(15);
                 if (Half_spell_damage)
                     dmg = (dmg + 1) / 2;
                 losehp(dmg, killer_msg(DIED, "a psychic blast"));
-            }
+            } else
+                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                      "A wave of psychic energy washes around you.");
         }
         for (m2 = level->monlist; m2; m2 = nmon) {
             nmon = m2->nmon;
@@ -425,10 +428,11 @@ dochug(struct monst *mtmp)
             if ((telepathic(m2->data) && (rn2(2) || m2->mblinded)) ||
                 !rn2(10)) {
                 if (cansee(m2->mx, m2->my))
-                    pline("It locks on to %s.", mon_nam(m2));
+                    pline(combat_msgc(mtmp, m2, cr_hit),
+                          "%s looks overwhelmed.", Monnam(m2));
                 m2->mhp -= rnd(15);
                 if (m2->mhp <= 0)
-                    monkilled(m2, "", AD_DRIN);
+                    monkilled(mtmp, m2, "", AD_DRIN);
                 else
                     m2->msleeping = 0;
             }
@@ -633,7 +637,8 @@ boolean
 itsstuck(struct monst *mtmp)
 {
     if (sticks(youmonst.data) && mtmp == u.ustuck && !Engulfed) {
-        pline("%s cannot escape from you!", Monnam(mtmp));
+        pline(combat_msgc(&youmonst, mtmp, cr_hit),
+              "%s cannot escape from you!", Monnam(mtmp));
         return TRUE;
     }
     return FALSE;
@@ -993,7 +998,8 @@ not_special:
             if (u.uundetected)
                 return 0;
 
-            pline("%s bumps right into you!", Monnam(mtmp));
+            pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                  "%s bumps right into you!", Monnam(mtmp));
             return 3;
         }
 
@@ -1054,8 +1060,11 @@ postmov:
                 boolean btrapped = (here->doormask & D_TRAPPED);
 
                 if (here->doormask & (D_LOCKED | D_CLOSED) && amorphous(ptr)) {
-                    if (flags.verbose && canseemon(mtmp))
-                        pline("%s %s under the door.", Monnam(mtmp),
+                    /* monneutral even for pets; basically nothing is happening
+                       here */
+                    if (canseemon(mtmp))
+                        pline(msgc_monneutral, "%s %s under the door.",
+                              Monnam(mtmp),
                               (ptr == &mons[PM_FOG_CLOUD] ||
                                ptr == &mons[PM_YELLOW_LIGHT])
                               ? "flows" : "oozes");
@@ -1067,12 +1076,12 @@ postmov:
                         if (mb_trapped(mtmp))
                             return 2;
                     } else {
-                        if (flags.verbose) {
-                            if (canseeit)
-                                pline("You see a door unlock and open.");
-                            else
-                                You_hear("a door unlock and open.");
-                        }
+                        if (canseeit)
+                            pline(msgc_monneutral,
+                                  "You see a door unlock and open.");
+                        else
+                            You_hear(msgc_levelsound,
+                                     "a door unlock and open.");
                         here->doormask = D_ISOPEN;
                         /* newsym(mtmp->mx, mtmp->my); */
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
@@ -1085,12 +1094,10 @@ postmov:
                         if (mb_trapped(mtmp))
                             return 2;
                     } else {
-                        if (flags.verbose) {
-                            if (canseeit)
-                                pline("You see a door open.");
-                            else
-                                You_hear("a door open.");
-                        }
+                        if (canseeit)
+                            pline(msgc_monneutral, "You see a door open.");
+                        else
+                            You_hear(msgc_levelsound, "a door open.");
                         here->doormask = D_ISOPEN;
                         /* newsym(mtmp->mx, mtmp->my); *//* done below */
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
@@ -1104,12 +1111,11 @@ postmov:
                         if (mb_trapped(mtmp))
                             return 2;
                     } else {
-                        if (flags.verbose) {
-                            if (canseeit)
-                                pline("You see a door crash open.");
-                            else
-                                You_hear("a door crash open.");
-                        }
+                        if (canseeit)
+                            pline(msgc_monneutral,
+                                  "You see a door crash open.");
+                        else
+                            You_hear(msgc_levelsound, "a door crash open.");
                         if (here->doormask & D_LOCKED && !rn2(2))
                             here->doormask = D_NODOOR;
                         else
@@ -1123,10 +1129,10 @@ postmov:
                 }
             } else if (isok(mtmp->mx, mtmp->my) &&
                        level->locations[mtmp->mx][mtmp->my].typ == IRONBARS) {
-                if (flags.verbose && canseemon(mtmp))
-                    pline_once("%s %s %s the iron bars.", Monnam(mtmp),
-                               /* pluralization fakes verb conjugation */
-                               makeplural(locomotion(ptr, "pass")),
+                if (canseemon(mtmp))
+                    pline_once(msgc_monneutral,
+                               "%s %s the iron bars.",
+                               M_verbs(mtmp, locomotion(ptr, "pass")),
                                passes_walls(ptr) ? "through" : "between");
             }
 

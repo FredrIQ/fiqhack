@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-19 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -148,6 +148,9 @@ struct turnstate {
 
     /* TRUE if continuing a multi-turn action should print a message. */
     boolean continue_message;
+    /* TRUE if a message had a force-More removed due to the character's
+       pending death (which needs to be added back by done()) */
+    boolean force_more_pending_until_done;
     /* TRUE if we need to do a complete vision recalculation. */
     boolean vision_full_recalc;
     /* TRUE if we should avoid flushing the display buffer. */
@@ -251,6 +254,7 @@ struct flag {
     boolean mon_generation;     /* debug: control monster generaion */
     boolean mon_moving; /* monsters' turn to move */
     boolean mon_polycontrol;    /* debug: control monster polymorphs */
+    boolean hide_implied;       /* hide messages if other messages imply them */
     boolean incomplete; /* the requested action continues into future turns */
     boolean interrupted;/* something happened to make long actions stop */
     boolean pickup;     /* whether you pickup or move and look */
@@ -264,7 +268,7 @@ struct flag {
     boolean tombstone;  /* print tombstone */
     boolean travel_interrupt;   /* Interrupt travel if there is a hostile *
                                    monster in sight. */
-    boolean verbose;    /* max battle info */
+    boolean verbose;    /* if turned off, abbreviate combat messages */
 
     /* 32-bit values: integers, etc. */
     int timezone;       /* UTC plus this many seconds */

@@ -8,6 +8,7 @@
 # define MESSAGE_H
 
 #include "compilers.h"
+#include "messagechannel.h"
 #include <stdarg.h>
 
 /* 
@@ -31,31 +32,30 @@
 /******************************************************************************/
 
 /* Message printing functions, from pline.c. Note that these are using printf's
-   calling convention, and in particular don't require the format string or "%s"
-   arguments to be messages, any sort of string will do. (They'll be converted
-   into messages internally if necessary.) */
+   calling convention (with an extra argument for message channel), and in
+   particular don't require the format string or "%s" arguments to be messages,
+   any sort of string will do. (They'll be converted into messages internally if
+   necessary.) */
 
 /* Print a message to the player (in the message area). The caller is
    responsible for doing any checks that determine that the player should see
    the message in question. */
-extern void pline(const char *, ...) PRINTFLIKE(1,2);
-
-/* Like pline(), but the game will potentially allow the message to scroll off
-   the screen before the player sees it, rather than holding up gameplay to
-   allow it to be read. For use with reminder lines that show what the player
-   selected. */
-extern void pline_nomore(const char *, ...) PRINTFLIKE(1,2);
+extern void pline(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
 
 /* Like pline(), but will hide a message if it's identical to the previous
    message shown. */
-extern void pline_once(const char *, ...) PRINTFLIKE(1,2);
+extern void pline_once(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
+
+/* Like pline(), but the message can be deduced from other messages shown (and
+   thus experienced players may want to hide it). */
+extern void pline_implied(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
 
 /* Typically pline("You hear %s"), but with checks to ensure that the character
    actually can hear. */
-extern void You_hear(const char *, ...) PRINTFLIKE(1,2);
+extern void You_hear(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
 
 /* pline() with extra double quotes added: for speech that an NPC is saying. */
-extern void verbalize(const char *, ...) PRINTFLIKE(1,2);
+extern void verbalize(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
 
 /* pline() variant for emergency use. Does not rely on the existence of the
    message chain, and will attempt to output to both the player's screen and the

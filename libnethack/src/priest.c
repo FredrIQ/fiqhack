@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-02 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,8 +98,10 @@ pick_move:
         if (mtmp->isshk && !in_his_shop && inhishop(mtmp))
             check_special_room(FALSE);
         if (ib) {
+            /* the mtame check is probably paranoia, but may as well... */
             if (cansee(mtmp->mx, mtmp->my))
-                pline("%s picks up %s.", Monnam(mtmp),
+                pline(mtmp->mtame ? msgc_petneutral : msgc_monneutral,
+                      "%s picks up %s.", Monnam(mtmp),
                       distant_name(ib, doname));
             obj_extract_self(ib);
             mpickobj(mtmp, ib);
@@ -157,7 +159,8 @@ pri_move(struct monst *priest)
     if (!priest->mpeaceful || (Conflict && !resist(priest, RING_CLASS, 0, 0))) {
         if (monnear(priest, u.ux, u.uy)) {
             if (Displaced)
-                pline("Your displaced image doesn't fool %s!", mon_nam(priest));
+                pline(msgc_notresisted,
+                      "Your displaced image doesn't fool %s!", mon_nam(priest));
             mattacku(priest);
             return 0;
         } else if (strchr(u.urooms, temple)) {
@@ -367,6 +370,7 @@ intemple(int roomno)
     boolean sanctum, can_speak;
     xchar shrined;
     const char *msg1, *msg2;
+    enum msg_channel msgc = msgc_npcvoice;
 
     if (!temple_occupied(u.urooms0)) {
         if (tended) {
@@ -383,12 +387,13 @@ intemple(int roomno)
                    suppress the "of Moloch" for him here too */
                 if (sanctum && !Hallucination)
                     priest->ispriest = 0;
-                pline("%s intones:",
+                pline(msgc_npcvoice, "%s intones:",
                       canseemon(priest) ? Monnam(priest) : "A nearby voice");
                 priest->ispriest = save_priest;
             }
             msg2 = 0;
             if (sanctum && CONST_EPRI(priest)->shralign == A_NONE) {
+                msgc = msgc_npcanger;
                 if (priest->mpeaceful) {
                     msg1 = "Infidel, you have entered Moloch's Sanctum!";
                     msg2 = "Be gone!";
@@ -400,29 +405,33 @@ intemple(int roomno)
                                  !shrined ? "desecrated" : "sacred");
             }
             if (can_speak) {
-                verbalize("%s", msg1);
+                verbalize(msgc, "%s", msg1);
                 if (msg2)
-                    verbalize("%s", msg2);
+                    verbalize(msgc, "%s", msg2);
             }
             if (!sanctum) {
                 /* !tended -> !shrined */
                 if (!shrined || !p_coaligned(priest) ||
                     u.ualign.record <= ALGN_SINNED)
-                    pline("You have a%s forbidding feeling...",
-                          (!shrined) ? "" : " strange");
+                    pline_implied(msgc_levelsound,
+                                  "You have a%s forbidding feeling...",
+                                  (!shrined) ? "" : " strange");
                 else
-                    pline("You experience a strange sense of peace.");
+                    pline_implied(msgc_levelsound,
+                                  "You experience a strange sense of peace.");
             }
         } else {
             switch (rn2(3)) {
             case 0:
-                pline("You have an eerie feeling...");
+                pline(msgc_levelwarning, "You have an eerie feeling...");
                 break;
             case 1:
-                pline("You feel like you are being watched.");
+                pline(msgc_levelwarning,
+                      "You feel like you are being watched.");
                 break;
             default:
-                pline("A shiver runs down your %s.", body_part(SPINE));
+                pline(msgc_levelwarning, "A shiver runs down your %s.",
+                      body_part(SPINE));
                 break;
             }
             if (!rn2(5)) {
@@ -432,12 +441,13 @@ intemple(int roomno)
                                       u.ux, u.uy, NO_MM_FLAGS))))
                     return;
                 if (!Blind || sensemon(mtmp))
-                    pline("An enormous ghost appears next to you!");
+                    pline(msgc_statusbad,
+                          "An enormous ghost appears next to you!");
                 else
-                    pline("You sense a presence close by!");
+                    pline(msgc_statusbad, "You sense a presence close by!");
                 msethostility(mtmp, TRUE, TRUE);
-                if (flags.verbose)
-                    pline("You are frightened to death, and unable to move.");
+                pline_implied(msgc_statusbad, 
+                    "You are frightened to death, and unable to move.");
                 helpless(3, hr_afraid, "frightened to death",
                          "You regain your composure.");
             }
@@ -455,7 +465,8 @@ priest_talk(struct monst *priest)
     break_conduct(conduct_gnostic);
 
     if (priest->mflee || (!priest->ispriest && coaligned && strayed)) {
-        pline("%s doesn't want anything to do with you!", Monnam(priest));
+        pline(msgc_npcanger, "%s doesn't want anything to do with you!",
+              Monnam(priest));
         msethostility(priest, TRUE, FALSE);
         return;
     }
@@ -470,12 +481,13 @@ priest_talk(struct monst *priest)
         };
 
         if (!priest->mcanmove || priest->msleeping) {
-            pline("%s breaks out of %s reverie!", Monnam(priest), mhis(priest));
+            pline(msgc_moncombatbad, "%s breaks out of %s reverie!",
+                  Monnam(priest), mhis(priest));
             priest->mfrozen = priest->msleeping = 0;
             priest->mcanmove = 1;
         }
         msethostility(priest, TRUE, FALSE);
-        verbalize("%s", cranky_msg[rn2(3)]);
+        verbalize(msgc_npcanger, "%s", cranky_msg[rn2(3)]);
         return;
     }
 
@@ -483,7 +495,8 @@ priest_talk(struct monst *priest)
     if (priest->mpeaceful && *in_rooms(level, priest->mx, priest->my, TEMPLE) &&
         !has_shrine(priest)) {
         verbalize
-            ("Begone!  Thou desecratest this holy place with thy presence.");
+            (msgc_npcanger,
+             "Begone!  Thou desecratest this holy place with thy presence.");
         msethostility(priest, TRUE, FALSE);
         return;
     }
@@ -493,42 +506,44 @@ priest_talk(struct monst *priest)
 
             if (pmoney > 0L) {
                 /* Note: two bits is actually 25 cents.  Hmm. */
-                pline("%s gives you %s for an ale.", Monnam(priest),
-                      (pmoney == 1L) ? "one bit" : "two bits");
+                pline(msgc_npcvoice, "%s gives you %s for an ale.",
+                      Monnam(priest), (pmoney == 1L) ? "one bit" : "two bits");
                 money2u(priest, pmoney > 1L ? 2 : 1);
             } else
-                pline("%s preaches the virtues of poverty.", Monnam(priest));
+                pline(msgc_npcvoice, "%s preaches the virtues of poverty.",
+                      Monnam(priest));
             exercise(A_WIS, TRUE);
         } else
-            pline("%s is not interested.", Monnam(priest));
+            pline(msgc_npcvoice, "%s is not interested.", Monnam(priest));
         return;
     } else {
         long offer;
 
-        pline("%s asks you for a contribution for the temple.", Monnam(priest));
+        pline(msgc_uiprompt,
+              "%s asks you for a contribution for the temple.", Monnam(priest));
         if ((offer = bribe(priest)) == 0) {
-            verbalize("Thou shalt regret thine action!");
+            verbalize(msgc_alignbad, "Thou shalt regret thine action!");
             if (coaligned)
                 adjalign(-1);
         } else if (offer < (u.ulevel * 200)) {
             if (money_cnt(invent) > (offer * 2L))
-                verbalize("Cheapskate.");
+                verbalize(msgc_npcvoice, "Cheapskate.");
             else {
-                verbalize("I thank thee for thy contribution.");
+                verbalize(msgc_npcvoice, "I thank thee for thy contribution.");
                 /* give player some token */
                 exercise(A_WIS, TRUE);
             }
         } else if (offer < (u.ulevel * 400)) {
-            verbalize("Thou art indeed a pious individual.");
+            verbalize(msgc_aligngood, "Thou art indeed a pious individual.");
             if (money_cnt(invent) < (offer * 2L)) {
                 if (coaligned && u.ualign.record <= ALGN_SINNED)
                     adjalign(1);
-                verbalize("I bestow upon thee a blessing.");
+                verbalize(msgc_statusgood, "I bestow upon thee a blessing.");
                 incr_itimeout(&HClairvoyant, rn1(500, 500));
             }
         } else if (offer < (u.ulevel * 600) && u.ublessed < 20 &&
                    (u.ublessed < 9 || !rn2(u.ublessed))) {
-            verbalize("Thy devotion has been rewarded.");
+            verbalize(msgc_intrgain, "Thy devotion has been rewarded.");
             if (!(HProtection & INTRINSIC)) {
                 HProtection |= FROMOUTSIDE;
                 if (!u.ublessed)
@@ -536,7 +551,8 @@ priest_talk(struct monst *priest)
             } else
                 u.ublessed++;
         } else {
-            verbalize("Thy selfless generosity is deeply appreciated.");
+            verbalize(msgc_aligngood,
+                      "Thy selfless generosity is deeply appreciated.");
             if (money_cnt(invent) < (offer * 2L) && coaligned) {
                 if (strayed && (moves - u.ucleansed) > 5000L) {
                     u.ualign.record = 0;        /* cleanse thee */
@@ -670,14 +686,16 @@ ghod_hitsu(struct monst *priest)
 
     switch (rn2(3)) {
     case 0:
-        pline("%s roars in anger:  \"Thou shalt suffer!\"", a_gname_at(ax, ay));
+        pline(msgc_npcanger, "%s roars in anger:  \"Thou shalt suffer!\"",
+              a_gname_at(ax, ay));
         break;
     case 1:
-        pline("%s voice booms:  \"How darest thou harm my servant!\"",
+        pline(msgc_npcanger,
+              "%s voice booms:  \"How darest thou harm my servant!\"",
               s_suffix(a_gname_at(ax, ay)));
         break;
     default:
-        pline("%s roars:  \"Thou dost profane my shrine!\"",
+        pline(msgc_npcanger, "%s roars:  \"Thou dost profane my shrine!\"",
               a_gname_at(ax, ay));
         break;
     }

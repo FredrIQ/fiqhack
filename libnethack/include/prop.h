@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-16 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -154,7 +154,7 @@ static_assert(os_special < sizeof (unsigned) * CHAR_BIT,
 enum equipmsg {
     em_silent,    /* no messages; used for theft, etc. */
     em_voluntary, /* as if the player was doing the action intentionally */
-    em_magical,   /* for magical forcible removal: "<the ring> falls off!" */
+    em_magicheal, /* item is removed via magic to heal a status */
 };
 
 /* This enum holds object pointers (other than equipped equipment) that are

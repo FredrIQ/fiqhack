@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,7 +16,7 @@ static void dofindgem(void);
 void
 floating_above(const char *what)
 {
-    pline("You are floating high above the %s.", what);
+    pline(msgc_cancelled1, "You are floating high above the %s.", what);
 }
 
 static void
@@ -27,18 +27,19 @@ dowatersnakes(void)
 
     if (!(mvitals[PM_WATER_MOCCASIN].mvflags & G_GONE)) {
         if (!Blind)
-            pline("An endless stream of %s pours forth!",
+            pline(msgc_levelwarning, "An endless stream of %s pours forth!",
                   Hallucination ? makeplural(monnam_for_index(rndmonidx())) :
                   "snakes");
         else
-            You_hear("something hissing!");
+            You_hear(msgc_levelwarning, "something hissing!");
         while (num-- > 0)
             if ((mtmp =
                  makemon(&mons[PM_WATER_MOCCASIN], level, u.ux, u.uy,
                          NO_MM_FLAGS)) && t_at(level, mtmp->mx, mtmp->my))
                 mintrap(mtmp);
     } else
-        pline("The fountain bubbles furiously for a moment, then calms.");
+        pline(msgc_noconsequence,
+              "The fountain bubbles furiously for a moment, then calms.");
 }
 
 /* Quantizes the probabilities of wishes, so that wish sources work consistently
@@ -83,13 +84,14 @@ dowaterdemon(void)
         if ((mtmp =
              makemon(&mons[PM_WATER_DEMON], level, u.ux, u.uy, NO_MM_FLAGS))) {
             if (!Blind)
-                pline("You unleash %s!", a_monnam(mtmp));
+                pline(msgc_levelwarning, "You unleash %s!", a_monnam(mtmp));
             else
-                pline("You feel the presence of evil.");
+                pline(msgc_levelwarning, "You feel the presence of evil.");
 
             /* A slightly better chance of a wish at early levels */
             if (wish_available(20 - level_difficulty(&u.uz), NULL)) {
-                pline("Grateful for %s release, %s grants you a wish!",
+                pline(msgc_intrgain,
+                      "Grateful for %s release, %s grants you a wish!",
                       mhis(mtmp), mhe(mtmp));
                 makewish();
                 mongone(mtmp);
@@ -97,7 +99,8 @@ dowaterdemon(void)
                 mintrap(mtmp);
         }
     } else
-        pline("The fountain bubbles furiously for a moment, then calms.");
+        pline(msgc_noconsequence,
+              "The fountain bubbles furiously for a moment, then calms.");
 }
 
 
@@ -110,16 +113,17 @@ dowaternymph(void)
         (mtmp =
          makemon(&mons[PM_WATER_NYMPH], level, u.ux, u.uy, NO_MM_FLAGS))) {
         if (!Blind)
-            pline("You attract %s!", a_monnam(mtmp));
+            pline(msgc_levelwarning, "You attract %s!", a_monnam(mtmp));
         else
-            You_hear("a seductive voice.");
+            You_hear(msgc_levelwarning, "a seductive voice.");
         mtmp->msleeping = 0;
         if (t_at(level, mtmp->mx, mtmp->my))
             mintrap(mtmp);
     } else if (!Blind)
-        pline("A large bubble rises to the surface and pops.");
+        pline(msgc_noconsequence,
+              "A large bubble rises to the surface and pops.");
     else
-        You_hear("a loud pop.");
+        You_hear(msgc_noconsequence, "a loud pop.");
 }
 
 void
@@ -130,9 +134,9 @@ dogushforth(int drinking)
     do_clear_area(u.ux, u.uy, 7, gush, &madepool);
     if (!madepool) {
         if (drinking)
-            pline("Your thirst is quenched.");
+            pline(msgc_noconsequence, "Your thirst is quenched.");
         else
-            pline("Water sprays all over you.");
+            pline(msgc_noconsequence, "Water sprays all over you.");
     }
 }
 
@@ -152,7 +156,8 @@ gush(int x, int y, void *poolcnt)
         return;
 
     if (!((*(int *)poolcnt)++))
-        pline("Water gushes forth from the overflowing fountain!");
+        pline(msgc_consequence,
+              "Water gushes forth from the overflowing fountain!");
 
     /* Put a pool at x, y */
     level->locations[x][y].typ = POOL;
@@ -170,9 +175,9 @@ static void
 dofindgem(void)
 {       /* Find a gem in the sparkling waters. */
     if (!Blind)
-        pline("You spot a gem in the sparkling waters!");
+        pline(msgc_youdiscover, "You spot a gem in the sparkling waters!");
     else
-        pline("You feel a gem here!");
+        pline(msgc_youdiscover, "You feel a gem here!");
     mksobj_at(rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE - 1, rng_random_gem),
               level, u.ux, u.uy, FALSE, FALSE, rng_main);
     SET_FOUNTAIN_LOOTED(u.ux, u.uy);
@@ -197,14 +202,15 @@ dryup(xchar x, xchar y, boolean isyou)
                 if ((mtmp->data == &mons[PM_WATCHMAN] ||
                      mtmp->data == &mons[PM_WATCH_CAPTAIN]) &&
                     couldsee(mtmp->mx, mtmp->my) && mtmp->mpeaceful) {
-                    pline("%s yells:", Amonnam(mtmp));
-                    verbalize("Hey, stop using that fountain!");
+                    pline(msgc_npcvoice, "%s yells:", Amonnam(mtmp));
+                    verbalize(msgc_npcvoice,
+                              "Hey, stop using that fountain!");
                     break;
                 }
             }
             /* You can see or hear this effect */
             if (!mtmp)
-                pline("The flow reduces to a trickle.");
+                pline(msgc_hint, "The flow reduces to a trickle.");
             return;
         }
 
@@ -218,7 +224,7 @@ dryup(xchar x, xchar y, boolean isyou)
         level->locations[x][y].looted = 0;
         level->locations[x][y].blessedftn = 0;
         if (cansee(x, y))
-            pline("The fountain dries up!");
+            pline(msgc_consequence, "The fountain dries up!");
         /* The location is seen if the hero/monster is invisible */
         /* or felt if the hero is blind.  */
         newsym(x, y);
@@ -243,7 +249,7 @@ drinkfountain(void)
     if (mgkftn && u.uluck >= 0 && fate >= 10) {
         int i, ii, littleluck = (u.uluck < 4);
 
-        pline("Wow!  This makes you feel great!");
+        pline(msgc_intrgain, "Wow!  This makes you feel great!");
         /* blessed restore ability */
         for (ii = 0; ii < A_MAX; ii++)
             if (ABASE(ii) < AMAX(ii))
@@ -257,14 +263,14 @@ drinkfountain(void)
                 i = 0;
         }
         win_pause_output(P_MESSAGE);
-        pline("A wisp of vapor escapes the fountain...");
+        pline(msgc_consequence, "A wisp of vapor escapes the fountain...");
         exercise(A_WIS, TRUE);
         level->locations[u.ux][u.uy].blessedftn = 0;
         return;
     }
 
     if (fate < 10) {
-        pline("The cool draught refreshes you.");
+        pline(msgc_statusheal, "The cool draught refreshes you.");
         u.uhunger += rnd(10);   /* don't choke on water */
         newuhs(FALSE);
         if (mgkftn)
@@ -277,7 +283,7 @@ drinkfountain(void)
         {
             struct obj *obj;
             
-            pline("This water's no good!");
+            pline(msgc_itemloss, "This water's no good!");
             morehungry(rn1(20, 11));
             exercise(A_CON, FALSE);
             for (obj = invent; obj; obj = obj->nobj)
@@ -290,14 +296,15 @@ drinkfountain(void)
         case 17:       /* See invisible */
             if (Blind) {
                 if (Invisible) {
-                    pline("You feel transparent.");
+                    pline(msgc_intrgain, "You feel transparent.");
                 } else {
-                    pline("You feel very self-conscious.");
-                    pline("Then it passes.");
+                    pline(msgc_intrgain, "You feel very self-conscious.");
+                    pline_implied(msgc_intrgain, "Then it passes.");
                 }
             } else {
-                pline("You see an image of someone stalking you.");
-                pline("But it disappears.");
+                pline(msgc_intrgain,
+                      "You see an image of someone stalking you.");
+                pline_implied(msgc_intrgain, "But it disappears.");
             }
             HSee_invisible |= FROMOUTSIDE;
             newsym(u.ux, u.uy);
@@ -308,17 +315,17 @@ drinkfountain(void)
             exercise(A_WIS, TRUE);
             break;
         case 19:       /* Self-knowledge */
-            pline("You feel self-knowledgeable...");
+            pline(msgc_youdiscover, "You feel self-knowledgeable...");
             win_pause_output(P_MESSAGE);
             enlightenment(0);
             exercise(A_WIS, TRUE);
-            pline("The feeling subsides.");
+            pline_implied(msgc_info, "The feeling subsides.");
             break;
         case 20:       /* Scare monsters */ 
         {
             struct monst *mtmp;
             
-            pline("This water gives you bad breath!");
+            pline(msgc_statusgood, "This water gives you bad breath!");
             for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
                 if (!DEADMONSTER(mtmp))
                     monflee(mtmp, 0, FALSE, FALSE);
@@ -342,14 +349,18 @@ drinkfountain(void)
             dogushforth(TRUE);
             break;
         case 26:       /* Poisonous; strange tingling in dipfountain */
-            pline("The water is contaminated!");
             if (Poison_resistance) {
-                pline("Perhaps it is runoff from the nearby %s farm.",
+                /* change from 3.4.3: removed the "is contaminated" message in
+                   the case where you resist it, to reduce message spam and to
+                   make the message channeling more consistent */
+                pline(msgc_nonmonbad,
+                      "Is this water runoff from the nearby %s farm?",
                       fruitname(FALSE));
                 losehp(rnd(4),
                        killer_msg(DIED, "an unrefrigerated sip of juice"));
                 break;
             }
+            pline(msgc_intrloss, "The water is contaminated!");
             losestr(rn1(4, 3), DIED, killer_msg(DIED, "contaminated water"),
                     NULL);
             losehp(rnd(10), killer_msg(DIED, "contaminated water"));
@@ -357,13 +368,13 @@ drinkfountain(void)
             break;
             /* 27 is a sudden chill (no effect) in dipfountain */
         case 28:       /* Foul water; lose gold in dipfountain */
-            pline("The water is foul!  You gag and vomit.");
+            pline(msgc_statusbad, "The water is foul!  You gag and vomit.");
             morehungry(rn1(20, 11));
             vomit();
             break;
             /* 29 is gain money in dipfountain */
         default:
-            pline("This tepid water is tasteless.");
+            pline(msgc_failrandom, "This tepid water is tasteless.");
             break;
         }
     }
@@ -386,9 +397,9 @@ dipfountain(struct obj *obj)
 
         if (u.ualign.type != A_LAWFUL) {
             /* Ha! Trying to cheat her. */
-            pline("A freezing mist rises from the water and envelopes the "
-                  "sword.");
-            pline("The fountain disappears!");
+            pline(msgc_itemloss, "A freezing mist rises from the water "
+                  "and envelopes the sword.");
+            pline(msgc_consequence, "The fountain disappears!");
             curse(obj);
             if (obj->spe > -6 && !rn2(3))
                 obj->spe--;
@@ -397,9 +408,10 @@ dipfountain(struct obj *obj)
         } else {
             /* The lady of the lake acts! - Eric Backus */
             /* Be *REAL* nice */
-            pline("From the murky depths, a hand reaches up to bless the "
-                  "sword.");
-            pline("As the hand retreats, the fountain disappears!");
+            pline(msgc_intrgain, "From the murky depths, a hand reaches up "
+                  "to bless the sword.");
+            pline(msgc_consequence, "As the hand retreats, the "
+                  "fountain disappears!");
             obj = oname(obj, artiname(ART_EXCALIBUR));
             discover_artifact(ART_EXCALIBUR);
             bless(obj);
@@ -433,10 +445,10 @@ dipfountain(struct obj *obj)
     case 20:   /* Uncurse the item */
         if (obj->cursed) {
             if (!Blind)
-                pline("The water glows for a moment.");
+                pline(msgc_itemrepair, "The water glows for a moment.");
             uncurse(obj);
         } else {
-            pline("A feeling of loss comes over you.");
+            pline(msgc_noconsequence, "A feeling of loss comes over you.");
         }
         break;
     case 21:   /* Water Demon */
@@ -457,13 +469,14 @@ dipfountain(struct obj *obj)
         dogushforth(FALSE);
         break;
     case 26:   /* Strange feeling */
-        pline("A strange tingling runs up your %s.", body_part(ARM));
+        pline(msgc_failrandom, "A strange tingling runs up your %s.",
+              body_part(ARM));
         break;
     case 27:   /* Strange feeling */
-        pline("You feel a sudden chill.");
+        pline(msgc_failrandom, "You feel a sudden chill.");
         break;
     case 28:   /* Strange feeling */
-        pline("An urge to take a bath overwhelms you.");
+        pline(msgc_nonmonbad, "An urge to take a bath overwhelms you.");
         {
             long money = money_cnt(invent);
             struct obj *otmp;
@@ -483,7 +496,8 @@ dipfountain(struct obj *obj)
                         if (!otmp->quan)
                             delobj(otmp);
                     }
-                pline("You lost some of your money in the fountain!");
+                pline(msgc_itemloss,
+                      "You lost some of your money in the fountain!");
                 CLEAR_FOUNTAIN_LOOTED(u.ux, u.uy);
                 exercise(A_WIS, FALSE);
             }
@@ -501,7 +515,8 @@ dipfountain(struct obj *obj)
         mkgold((rnd((dunlevs_in_dungeon(&u.uz) - dunlev(&u.uz) + 1) * 2) + 5),
                level, u.ux, u.uy, rng_main);
         if (!Blind)
-            pline("Far below you, you see coins glistening in the water.");
+            pline(msgc_youdiscover,
+                  "Far below you, you see coins glistening in the water.");
         exercise(A_WIS, TRUE);
         newsym(u.ux, u.uy);
         break;
@@ -514,7 +529,7 @@ void
 breaksink(int x, int y)
 {
     if (cansee(x, y) || (x == u.ux && y == u.uy))
-        pline("The pipes break!  Water spurts out!");
+        pline(msgc_consequence, "The pipes break!  Water spurts out!");
     level->locations[x][y].doormask = 0;
     level->locations[x][y].typ = FOUNTAIN;
     newsym(x, y);
@@ -532,30 +547,32 @@ drinksink(void)
     }
     switch (rn2_on_rng(20, rng_sink_quaff)) {
     case 0:
-        pline("You take a sip of very cold water.");
+        pline(msgc_failrandom, "You take a sip of very cold water.");
         break;
     case 1:
-        pline("You take a sip of very warm water.");
+        pline(msgc_failrandom, "You take a sip of very warm water.");
         break;
     case 2:
-        pline("You take a sip of scalding hot water.");
-        if (Fire_resistance)
-            pline("It seems quite tasty.");
-        else
+        if (Fire_resistance) {
+            pline(msgc_playerimmune, "This scalding hot water is quite tasty!");
+        } else {
+            pline(msgc_nonmonbad, "You take a sip of scalding hot water.");
             losehp(rnd(6), killer_msg(DIED, "sipping boiling water"));
+        }
         break;
     case 3:
         if (mvitals[PM_SEWER_RAT].mvflags & G_GONE)
-            pline("The sink seems quite dirty.");
+            pline(msgc_noconsequence, "The sink seems quite dirty.");
         else {
             mtmp = makemon(&mons[PM_SEWER_RAT], level, u.ux, u.uy, NO_MM_FLAGS);
             if (mtmp)
-                pline("Eek!  There's %s in the sink!",
+                pline(msgc_nonmonbad, "Eek!  There's %s in the sink!",
                       (Blind || !canspotmon(mtmp)) ? "something squirmy" :
                       a_monnam(mtmp));
         }
         break;
     case 4:
+        /* TODO: temporary object? */
         do {
             otmp = mkobj(level, POTION_CLASS, FALSE, rng_sink_quaff);
             if (otmp->otyp == POT_WATER) {
@@ -564,7 +581,7 @@ drinksink(void)
             }
         } while (!otmp);
         otmp->cursed = otmp->blessed = 0;
-        pline("Some %s liquid flows from the faucet.",
+        pline(msgc_substitute, "Some %s liquid flows from the faucet.",
               Blind ? "odd" : hcolor(OBJ_DESCR(objects[otmp->otyp])));
         otmp->dknown = !(Blind || Hallucination);
         otmp->quan++;   /* Avoid panic upon useup() */
@@ -574,55 +591,63 @@ drinksink(void)
         break;
     case 5:
         if (!(level->locations[u.ux][u.uy].looted & S_LRING)) {
-            pline("You find a ring in the sink!");
+            pline(msgc_youdiscover, "You find a ring in the sink!");
             mkobj_at(RING_CLASS, level, u.ux, u.uy, TRUE, rng_sink_ring);
             level->locations[u.ux][u.uy].looted |= S_LRING;
             exercise(A_WIS, TRUE);
             newsym(u.ux, u.uy);
         } else
-            pline("Some dirty water backs up in the drain.");
+            pline(msgc_noconsequence,
+                  "Some dirty water backs up in the drain.");
         break;
     case 6:
         breaksink(u.ux, u.uy);
         break;
     case 7:
-        pline("The water moves as though of its own will!");
+        pline(msgc_nonmonbad, "The water moves as though of its own will!");
         if ((mvitals[PM_WATER_ELEMENTAL].mvflags & G_GONE)
             || !makemon(&mons[PM_WATER_ELEMENTAL], level, u.ux, u.uy,
                         NO_MM_FLAGS))
-            pline("But it quiets down.");
+            pline(msgc_noconsequence, "But it quiets down.");
         break;
     case 8:
-        pline("Yuk, this water tastes awful.");
+        /* +1 experience point isn't enough to be msgc_intrgain; treat it like
+           there was no real effect, unless there was actually a level gain (in
+           which case it'll print its own messages) */
+        pline(msgc_failrandom, "Yuk, this water tastes awful.");
         more_experienced(1, 0);
         newexplevel();
         break;
     case 9:
-        pline("Gaggg... this tastes like sewage!  You vomit.");
+        pline(msgc_statusbad, "Gaggg... this tastes like sewage!  You vomit.");
         morehungry(rn1(30 - ACURR(A_CON), 11));
         vomit();
         break;
     case 10:
-        pline("This water contains toxic wastes!");
         if (!Unchanging) {
-            pline("You undergo a freakish metamorphosis!");
+            pline_implied(msgc_statusbad,
+                          "This water contains toxic wastes!");
+            pline(msgc_statusbad, "You undergo a freakish metamorphosis!");
             polyself(FALSE);
+        } else {
+            pline(msgc_playerimmune, "This water contains toxic wastes!");
         }
         break;
         /* more odd messages --JJB */
     case 11:
-        You_hear("clanking from the pipes...");
+        You_hear(msgc_failrandom, "clanking from the pipes...");
         break;
     case 12:
-        You_hear("snatches of song from among the sewers...");
+        You_hear(msgc_failrandom, "snatches of song from among the sewers...");
         break;
     case 19:
         if (Hallucination) {
-            pline("From the murky drain, a hand reaches up... --oops--");
+            pline(msgc_failrandom,
+                  "From the murky drain, a hand reaches up... --oops--");
             break;
         }
     default:
-        pline("You take a sip of %s water.",
+        pline(msgc_failrandom, "You take a sip of %s water.",
               rn2(3) ? (rn2(2) ? "cold" : "warm") : "hot");
     }
 }

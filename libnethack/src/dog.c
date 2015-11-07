@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -65,7 +65,7 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
                 if (!quietly)
                     /* have just been given "You <do something with> the
                        figurine and it transforms." message */
-                    pline("... into a pile of dust.");
+                    pline(msgc_substitute, "... into a pile of dust.");
                 break;  /* mtmp is null */
             }
         } else if (!rn2(3)) {
@@ -74,8 +74,9 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
             pm = rndmonst(&u.uz, rng_t_create_monster);
             if (!pm) {
                 if (!quietly)
-                    pline
-                        ("There seems to be nothing available for a familiar.");
+                    pline(
+                        msgc_failcurse,
+                        "There seems to be nothing available for a familiar.");
                 break;
             }
         }
@@ -84,7 +85,8 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
                        (otmp ? 0 : (MM_CREATEMONSTER | MM_CMONSTER_T)));
         if (otmp && !mtmp) {    /* monster was genocided or square occupied */
             if (!quietly)
-                pline("The figurine writhes and then shatters into pieces!");
+                pline(msgc_substitute,
+                      "The figurine writhes and then shatters into pieces!");
             break;
         }
     } while (!mtmp && --trycnt > 0);
@@ -107,7 +109,7 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
             mtmp->mtame = 0;    /* not tame after all */
             if (chance == 2) {  /* hostile (cursed figurine) */
                 if (!quietly)
-                    pline("You get a bad feeling about this.");
+                    pline(msgc_substitute, "You get a bad feeling about this.");
                 msethostility(mtmp, TRUE, TRUE);
             }
         }
@@ -539,16 +541,17 @@ keepdogs(boolean pets_only)
             stay_behind = FALSE;
             if (!pets_only && mtmp->mtame && mtmp->meating) {
                 if (canseemon(mtmp))
-                    pline("%s is still eating.", Monnam(mtmp));
+                    pline(msgc_petfatal, "%s is still eating.", Monnam(mtmp));
                 stay_behind = TRUE;
             } else if (mon_has_amulet(mtmp)) {
                 if (canseemon(mtmp))
-                    pline("%s seems very disoriented for a moment.",
+                    pline(msgc_petfatal,
+                          "%s seems very disoriented for a moment.",
                           Monnam(mtmp));
                 stay_behind = TRUE;
             } else if (!pets_only && mtmp->mtame && mtmp->mtrapped) {
                 if (canseemon(mtmp))
-                    pline("%s is still trapped.", Monnam(mtmp));
+                    pline(msgc_petfatal, "%s is still trapped.", Monnam(mtmp));
                 stay_behind = TRUE;
             }
             if (mtmp == u.usteed)
@@ -556,9 +559,11 @@ keepdogs(boolean pets_only)
 
             if (stay_behind) {
                 if (mtmp->mleashed) {
-                    pline("%s leash suddenly comes loose.", humanoid(mtmp->data)
-                          ? (mtmp->female ? "Her" : "His")
-                          : "Its");
+                    /* don't print multiple msgc_petfatal messages in quick
+                       succession; so use msgc_petwarning here instead */
+                    pline(msgc_petwarning,
+                          "%s leash suddenly comes loose.", humanoid(mtmp->data)
+                          ? (mtmp->female ? "Her" : "His") : "Its");
                     m_unleash(mtmp, FALSE);
                 }
                 continue;
@@ -599,7 +604,8 @@ keepdogs(boolean pets_only)
         } else if (mtmp->mleashed) {
             /* this can happen if your quest leader ejects you from the "home"
                level while a leashed pet isn't next to you */
-            pline("%s leash goes slack.", s_suffix(Monnam(mtmp)));
+            pline(msgc_petfatal, "%s leash goes slack.",
+                  s_suffix(Monnam(mtmp)));
             m_unleash(mtmp, FALSE);
         }
     }
@@ -821,10 +827,10 @@ tamedog(struct monst *mtmp, struct obj *obj)
                                       obj->corpsenm >= LOW_PM &&
                                       mons[obj->corpsenm].msize >
                                       mtmp->data->msize);
-                pline("%s catches %s%s", Monnam(mtmp), the(xname(obj)),
-                      !big_corpse ? "." : ", or vice versa!");
+                pline(msgc_actionok, "%s catches %s%s", Monnam(mtmp),
+                      the(xname(obj)), !big_corpse ? "." : ", or vice versa!");
             } else if (cansee(mtmp->mx, mtmp->my))
-                pline("%s.", Tobjnam(obj, "stop"));
+                pline(msgc_petneutral, "%s.", Tobjnam(obj, "stop"));
             /* dog_eat expects a floor object */
             place_object(obj, level, mtmp->mx, mtmp->my);
             dog_eat(mtmp, obj, mtmp->mx, mtmp->my, FALSE);
@@ -909,11 +915,12 @@ wary_dog(struct monst *mtmp, boolean was_dead)
         if (!quietly && cansee(mtmp->mx, mtmp->my)) {
             if (haseyes(youmonst.data)) {
                 if (haseyes(mtmp->data))
-                    pline("%s %s to look you in the %s.", Monnam(mtmp),
-                          mtmp->mpeaceful ? "seems unable" : "refuses",
-                          body_part(EYE));
+                    pline(msgc_petwarning, "%s %s to look you in the %s.",
+                          Monnam(mtmp), mtmp->mpeaceful ?
+                          "seems unable" : "refuses", body_part(EYE));
                 else
-                    pline("%s avoids your gaze.", Monnam(mtmp));
+                    pline(msgc_petwarning, "%s avoids your gaze.",
+                          Monnam(mtmp));
             }
         }
     } else {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,7 +51,7 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
         blessed_foot_damage = 1;
 
     if (mon->data == &mons[PM_SHADE] && !blessed_foot_damage) {
-        pline("The %s.", kick_passes_thru);
+        pline(msgc_combatimmune, "The %s.", kick_passes_thru);
         /* doesn't exercise skill or abuse alignment or frighten pet, and
            shades have no passive counterattack */
         return;
@@ -62,7 +62,8 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
        the floating eye has been named already in the previous message. */
     if (mon->data == &mons[PM_FLOATING_EYE] && canseemon(mon) && !Free_action &&
         !Reflecting && mon->mcansee) {
-        pline("But it glares at you, making your kick go wild!");
+        pline(msgc_combatimmune,
+              "But it glares at you, making your kick go wild!");
         return;
     }
 
@@ -116,7 +117,7 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
         mon->mhp = newmhp;
 
         if (goodpos(level, mdx, mdy, mon, 0)) {
-            pline("%s reels from the blow.", Monnam(mon));
+            pline(msgc_combatalert, "%s reels from the blow.", Monnam(mon));
             if (m_in_out_region(mon, mdx, mdy)) {
                 remove_monster(level, mon->mx, mon->my);
                 newsym(mon->mx, mon->my);
@@ -186,10 +187,11 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
             if (mon->data == &mons[PM_SHADE] && (!uarmf || !uarmf->blessed)) {
                 /* doesn't matter whether it would have hit or missed, and
                    shades have no passive counterattack */
-                pline("Your %s %s.", kick_passes_thru, mon_nam(mon));
+                pline(msgc_combatimmune, "Your %s %s.", kick_passes_thru,
+                      mon_nam(mon));
                 break;  /* skip any additional kicks */
             } else if (tmp > rnd(20)) {
-                pline("You kick %s.", mon_nam(mon));
+                pline(msgc_combatgood, "You kick %s.", mon_nam(mon));
                 attack_status = ac_monsterhit;
                 sum = damageum(mon, uattk);
                 passive(mon, (boolean) (sum > 0), (sum != 2), AT_KICK);
@@ -204,7 +206,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
     }
 
     if (Levitation && !rn2(3) && verysmall(mon->data) && !is_flyer(mon->data)) {
-        pline("Floating in the air, you miss wildly!");
+        pline(msgc_failrandom, "Floating in the air, you miss wildly!");
         exercise(A_DEX, FALSE);
         passive(mon, FALSE, 1, AT_KICK);
         return attack_status;
@@ -217,7 +219,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
         if (!rn2((i < j / 10) ? 2 : (i < j / 5) ? 3 : 4)) {
             if (martial() && !rn2(2))
                 goto doit;
-            pline("Your clumsy kick does no damage.");
+            pline(msgc_failrandom, "Your clumsy kick does no damage.");
             passive(mon, FALSE, 1, AT_KICK);
             return attack_status;
         }
@@ -234,7 +236,6 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
         clumsy = TRUE;
 
 doit:
-    pline("You kick %s.", mon_nam(mon));
     if (!enexto(&bypos, level, u.ux, u.uy, mon->data) ||
         !((can_teleport(mon->data) && !level->flags.noteleport) ||
           ((abs(bypos.x - u.ux) <= 1) && (abs(bypos.y - u.uy) <= 1))))
@@ -245,7 +246,7 @@ doit:
         !mon->mstun && !mon->mconf && !mon->msleeping &&
         mon->data->mmove >= 12) {
         if (!canmove || (!nohands(mon->data) && !rn2(martial()? 5 : 3))) {
-            pline("%s blocks your %skick.", Monnam(mon),
+            pline(msgc_failrandom, "%s blocks your %skick.", Monnam(mon),
                   clumsy ? "clumsy " : "");
             passive(mon, FALSE, 1, AT_KICK);
             return ac_somethingelse;
@@ -254,7 +255,8 @@ doit:
             if (mon->mx != x || mon->my != y) {
                 reveal_monster_at(x, y, TRUE);
                 /* TODO: This should probably use locomotion(). */
-                pline("%s %s, %s evading your %skick.", Monnam(mon),
+                pline(msgc_failrandom,
+                      "%s %s, %s evading your %skick.", Monnam(mon),
                       (can_teleport(mon->data) &&
                        !level->flags.noteleport ? "teleports" :
                        is_floater(mon->data) ? "floats" :
@@ -267,6 +269,7 @@ doit:
             }
         }
     }
+    pline(msgc_combatgood, "You kick %s.", mon_nam(mon));
     kickdmg(mon, clumsy, dx, dy);
 
     return ac_monsterhit;
@@ -287,8 +290,8 @@ ghitm(struct monst * mtmp, struct obj * gold)
     } else if (!mtmp->mcanmove) {
         /* too light to do real damage */
         if (canseemon(mtmp)) {
-            pline("The %s harmlessly %s %s.", xname(gold), otense(gold, "hit"),
-                  mon_nam(mtmp));
+            pline(msgc_yafm, "The %s harmlessly %s %s.", xname(gold),
+                  otense(gold, "hit"), mon_nam(mtmp));
             msg_given = TRUE;
         }
     } else {
@@ -301,7 +304,7 @@ ghitm(struct monst * mtmp, struct obj * gold)
 
         /* greedy monsters catch gold */
         if (cansee(mtmp->mx, mtmp->my))
-            pline("%s catches the gold.", Monnam(mtmp));
+            pline(msgc_actionok, "%s catches the gold.", Monnam(mtmp));
         if (mtmp->isshk) {
             long robbed = ESHK(mtmp)->robbed;
 
@@ -309,7 +312,7 @@ ghitm(struct monst * mtmp, struct obj * gold)
                 robbed -= value;
                 if (robbed < 0)
                     robbed = 0;
-                pline("The amount %scovers %s recent losses.",
+                pline(msgc_actionok, "The amount %scovers %s recent losses.",
                       !robbed ? "" : "partially ", mhis(mtmp));
                 ESHK(mtmp)->robbed = robbed;
                 if (!robbed)
@@ -317,17 +320,17 @@ ghitm(struct monst * mtmp, struct obj * gold)
             } else {
                 if (mtmp->mpeaceful) {
                     ESHK(mtmp)->credit += value;
-                    pline("You have %ld %s in credit.",
+                    pline(msgc_actionok, "You have %ld %s in credit.",
                           (long)ESHK(mtmp)->credit,
                           currency(ESHK(mtmp)->credit));
                 } else
-                    verbalize("Thanks, scum!");
+                    verbalize(msgc_badidea, "Thanks, scum!");
             }
         } else if (mtmp->ispriest) {
             if (mtmp->mpeaceful)
-                verbalize("Thank you for your contribution.");
+                verbalize(msgc_actionok, "Thank you for your contribution.");
             else
-                verbalize("Thanks, scum!");
+                verbalize(msgc_badidea, "Thanks, scum!");
         } else if (is_mercenary(mtmp->data)) {
             long goldreqd = 0L;
 
@@ -349,9 +352,9 @@ ghitm(struct monst * mtmp, struct obj * gold)
                 }
             }
             if (mtmp->mpeaceful)
-                verbalize("That should do.  Now beat it!");
+                verbalize(msgc_actionok, "That should do.  Now beat it!");
             else
-                verbalize("That's not enough, coward!");
+                verbalize(msgc_failrandom, "That's not enough, coward!");
         }
 
         add_to_minv(mtmp, gold);
@@ -359,7 +362,7 @@ ghitm(struct monst * mtmp, struct obj * gold)
     }
 
     if (!msg_given)
-        miss(xname(gold), mtmp);
+        miss(xname(gold), mtmp, &youmonst);
     return FALSE;
 }
 
@@ -401,7 +404,7 @@ container_impact_dmg(struct obj *obj)
                exactly 1 that breaks */
             if (otmp->otyp == EGG && otmp->spe && otmp->corpsenm >= LOW_PM)
                 change_luck(-1);
-            You_hear("a muffled %s.", result);
+            You_hear(msgc_itemloss, "a muffled %s.", result);
             if (costly)
                 loss +=
                     stolen_value(otmp, x, y, (boolean) shkp->mpeaceful, TRUE);
@@ -415,11 +418,12 @@ container_impact_dmg(struct obj *obj)
     }
     if (costly && loss) {
         if (!insider) {
-            pline("You caused %ld %s worth of damage!", loss, currency(loss));
+            pline(msgc_npcanger, "You caused %ld %s worth of damage!", loss,
+                  currency(loss));
             make_angry_shk(shkp, x, y);
         } else {
-            pline("You owe %s %ld %s for objects destroyed.", mon_nam(shkp),
-                  loss, currency(loss));
+            pline(msgc_unpaid, "You owe %s %ld %s for objects destroyed.",
+                  mon_nam(shkp), loss, currency(loss));
         }
     }
 }
@@ -447,21 +451,21 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
          trap->ttyp == WEB)) {
         if (!trap->tseen)
             find_trap(trap);
-        pline("You can't kick something that's in a %s!",
+        pline(msgc_cancelled1, "You can't kick something that's in a %s!",
               Hallucination ? "tizzy" : (trap->ttyp == WEB) ? "web" : "pit");
         return 1;
     }
 
     if (Fumbling && !rn2(3)) {
-        pline("Your clumsy kick missed.");
+        pline(msgc_failrandom, "Your clumsy kick missed.");
         return 1;
     }
 
     if (kickobj->otyp == CORPSE && !uarmf &&
         touched_monster(kickobj->corpsenm)) {
-        pline("You kick the %s with your bare %s.",
+        pline(msgc_badidea, "You kick the %s with your bare %s.",
               corpse_xname(kickobj, TRUE), makeplural(body_part(FOOT)));
-        pline("You turn to stone...");
+        pline(msgc_fatal_predone, "You turn to stone...");
         /* KMH -- otmp should be kickobj */
         done(STONING, killer_msg(STONING,
                                  msgprintf("kicking %s without boots",
@@ -511,17 +515,18 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
             IS_ROCK(level->locations[u.ux][u.uy].typ) ||
             closed_door(level, u.ux, u.uy)) {
             if (Blind)
-                pline("It doesn't come loose.");
+                pline(msgc_failrandom, "It doesn't come loose.");
             else
-                pline("%s %sn't come loose.", The(distant_name(kickobj, xname)),
+                pline(msgc_failrandom, "%s %sn't come loose.",
+                      The(distant_name(kickobj, xname)),
                       otense(kickobj, "do"));
             return !rn2(3) || martial();
         }
         if (Blind)
-            pline("It comes loose.");
+            pline(msgc_actionok, "It comes loose.");
         else
-            pline("%s %s loose.", The(distant_name(kickobj, xname)),
-                  otense(kickobj, "come"));
+            pline(msgc_actionok, "%s %s loose.",
+                  The(distant_name(kickobj, xname)), otense(kickobj, "come"));
         obj_extract_self(kickobj);
         newsym(x, y);
         if (costly &&
@@ -541,13 +546,13 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
         boolean otrp = kickobj->otrapped;
 
         if (range < 2)
-            pline("THUD!");
+            pline_implied(msgc_failrandom, "THUD!");
 
         container_impact_dmg(kickobj);
 
         if (kickobj->olocked) {
             if (!rn2(5) || (martial() && !rn2(2))) {
-                pline("You break open the lock!");
+                pline(msgc_actionok, "You break open the lock!");
                 kickobj->olocked = 0;
                 kickobj->obroken = 1;
                 if (otrp)
@@ -556,7 +561,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
             }
         } else {
             if (!rn2(3) || (martial() && !rn2(2))) {
-                pline("The lid slams open, then falls shut.");
+                pline(msgc_actionok, "The lid slams open, then falls shut.");
                 if (otrp)
                     chest_trap(kickobj, LEG, FALSE);
                 return 1;
@@ -576,7 +581,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
        its current position */
     if (range < 2 || (isgold && kickobj->quan > 300L)) {
         if (!Is_box(kickobj))
-            pline("Thump!");
+            pline(msgc_failcurse, "Thump!");
         return !rn2(3) || martial();
     }
 
@@ -584,7 +589,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
         kickobj = splitobj(kickobj, 1L);
 
     if (slide && !Blind)
-        pline("Whee!  %s %s %s the %s.", Doname2(kickobj),
+        pline(msgc_actionok, "Whee!  %s %s %s the %s.", Doname2(kickobj),
               otense(kickobj, air ? "fly" : "slide"),
               air ? "through" : "across", air &&
               Is_waterlevel(&u.uz) ? "bubble" : surface(x, y));
@@ -682,14 +687,14 @@ dokick(const struct nh_cmd_arg *arg)
     struct obj *kickobj = NULL;
 
     if (nolimbs(youmonst.data) || slithy(youmonst.data)) {
-        pline("You have no legs to kick with.");
+        pline(msgc_cancelled, "You have no legs to kick with.");
         no_kick = TRUE;
     } else if (verysmall(youmonst.data)) {
-        pline("You are too small to do any kicking.");
+        pline(msgc_cancelled, "You are too small to do any kicking.");
         no_kick = TRUE;
     } else if (u.usteed) {
         if (yn_function("Kick your steed?", ynchars, 'y') == 'y') {
-            pline("You kick %s.", mon_nam(u.usteed));
+            pline(msgc_occstart, "You kick %s.", mon_nam(u.usteed));
             kick_steed();
             return 1;
         } else {
@@ -701,28 +706,29 @@ dokick(const struct nh_cmd_arg *arg)
 
         if (LWounded_legs && RWounded_legs)
             bp = makeplural(bp);
-        pline("Your %s%s %s in no shape for kicking.",
+        pline(msgc_cancelled, "Your %s%s %s in no shape for kicking.",
               (!RWounded_legs) ? "left " :
               (!LWounded_legs) ? "right " : "",
               bp, (LWounded_legs && RWounded_legs) ? "are" : "is");
         no_kick = TRUE;
     } else if (near_capacity() > SLT_ENCUMBER) {
-        pline("Your load is too heavy to balance yourself for a kick.");
+        pline(msgc_cancelled,
+              "Your load is too heavy to balance yourself for a kick.");
         no_kick = TRUE;
     } else if (youmonst.data->mlet == S_LIZARD) {
-        pline("Your legs cannot kick effectively.");
+        pline(msgc_cancelled, "Your legs cannot kick effectively.");
         no_kick = TRUE;
     } else if (u.uinwater && !rn2(2)) {
-        pline("Your slow motion kick doesn't hit anything.");
+        pline(msgc_failrandom, "Your slow motion kick doesn't hit anything.");
         no_kick = TRUE;
     } else if (u.utrap) {
         switch (u.utraptype) {
         case TT_PIT:
-            pline("There's not enough room to kick down here.");
+            pline(msgc_cancelled, "There's not enough room to kick down here.");
             break;
         case TT_WEB:
         case TT_BEARTRAP:
-            pline("You can't move your %s!", body_part(LEG));
+            pline(msgc_cancelled, "You can't move your %s!", body_part(LEG));
             break;
         default:
             break;
@@ -730,6 +736,7 @@ dokick(const struct nh_cmd_arg *arg)
         no_kick = TRUE;
     }
 
+    /* TODO: Prompt for a direction before the error message? */
     if (no_kick) {
         /* ignore direction typed before player notices kick failed */
         win_pause_output(P_MESSAGE);    /* --More-- */
@@ -753,21 +760,21 @@ dokick(const struct nh_cmd_arg *arg)
     if (Engulfed) {
         switch (rn2(3)) {
         case 0:
-            pline("You can't move your %s!", body_part(LEG));
+            pline(msgc_cancelled1, "You can't move your %s!", body_part(LEG));
             break;
         case 1:
             if (is_animal(u.ustuck->data)) {
-                pline("%s burps loudly.", Monnam(u.ustuck));
+                pline(msgc_cancelled1, "%s burps loudly.", Monnam(u.ustuck));
                 break;
             }
         default:
-            pline("Your feeble kick has no effect.");
+            pline(msgc_cancelled1, "Your feeble kick has no effect.");
             break;
         }
         return 1;
     }
     if (!isok(x, y)) {
-        pline("Now is not the time to think outside the box.");
+        pline(msgc_cancelled, "Now is not the time to think outside the box.");
         return 0;
     }
     if (Levitation) {
@@ -781,7 +788,8 @@ dokick(const struct nh_cmd_arg *arg)
         if (isok(xx, yy) && !IS_ROCK(level->locations[xx][yy].typ) &&
             !IS_DOOR(level->locations[xx][yy].typ) &&
             (!Is_airlevel(&u.uz) || !OBJ_AT(xx, yy))) {
-            pline("You have nothing to brace yourself against.");
+            pline(msgc_cancelled,
+                  "You have nothing to brace yourself against.");
             return 0;
         }
     }
@@ -827,9 +835,9 @@ dokick(const struct nh_cmd_arg *arg)
 
     reveal_monster_at(x, y, TRUE);
 
-    if (is_pool(level, x, y) ^ ! !u.uinwater) {
+    if (is_pool(level, x, y) ^ !!u.uinwater) {
         /* objects normally can't be removed from water by kicking */
-        pline("You splash some water around.");
+        pline(msgc_cancelled1, "You splash some water around.");
         return 1;
     }
 
@@ -848,7 +856,7 @@ dokick(const struct nh_cmd_arg *arg)
         if (maploc->typ == SDOOR) {
             if (!Levitation && rn2(30) < avrg_attrib) {
                 cvt_sdoor_to_door(maploc, &u.uz);       /* ->typ = DOOR */
-                pline("Crash!  %s a secret door!",
+                pline(msgc_youdiscover, "Crash!  %s a secret door!",
                       /* don't "kick open" when it's locked unless it also
                          happens to be trapped */
                       (maploc->doormask & (D_LOCKED | D_TRAPPED)) ==
@@ -873,7 +881,8 @@ dokick(const struct nh_cmd_arg *arg)
         }
         if (maploc->typ == SCORR) {
             if (!Levitation && rn2(30) < avrg_attrib) {
-                pline("Crash!  You kick open a secret passage!");
+                pline(msgc_youdiscover,
+                      "Crash!  You kick open a secret passage!");
                 exercise(A_DEX, TRUE);
                 maploc->typ = CORR;
                 if (Blind)
@@ -899,9 +908,9 @@ dokick(const struct nh_cmd_arg *arg)
                 maploc->doormask = 0;   /* don't leave loose ends.. */
                 mkgold(goldamt, level, x, y, rng_main);
                 if (Blind)
-                    pline("CRASH!  You destroy it.");
+                    pline(msgc_substitute, "CRASH!  You destroy it.");
                 else {
-                    pline("CRASH!  You destroy the throne.");
+                    pline(msgc_substitute, "CRASH!  You destroy the throne.");
                     newsym(x, y);
                 }
                 exercise(A_DEX, TRUE);
@@ -916,9 +925,10 @@ dokick(const struct nh_cmd_arg *arg)
                                         rng_main),
                               level, x, y, FALSE, TRUE, rng_main);
                 if (Blind)
-                    pline("You kick something loose!");
+                    pline(msgc_actionok, "You kick something loose!");
                 else {
-                    pline("You kick loose some ornamental coins and gems!");
+                    pline(msgc_actionok,
+                          "You kick loose some ornamental coins and gems!");
                     newsym(x, y);
                 }
                 /* prevent endless milking */
@@ -936,7 +946,8 @@ dokick(const struct nh_cmd_arg *arg)
         if (IS_ALTAR(maploc->typ)) {
             if (Levitation)
                 goto dumb;
-            pline("You kick %s.", (Blind ? "something" : "the altar"));
+            pline(msgc_badidea, "You kick %s.",
+                  (Blind ? "something" : "the altar"));
             if (!rn2(3))
                 goto ouch;
             altar_wrath(x, y);
@@ -946,13 +957,14 @@ dokick(const struct nh_cmd_arg *arg)
         if (IS_FOUNTAIN(maploc->typ)) {
             if (Levitation)
                 goto dumb;
-            pline("You kick %s.", (Blind ? "something" : "the fountain"));
+            pline(msgc_badidea, "You kick %s.",
+                  (Blind ? "something" : "the fountain"));
             if (!rn2(3))
                 goto ouch;
             /* make metal boots rust */
             if (uarmf && rn2(3))
                 if (!water_damage(uarmf, "metal boots", TRUE)) {
-                    pline("Your boots get wet.");
+                    pline(msgc_badidea, "Your boots get wet.");
                     /* could cause short-lived fumbling here */
                 }
             exercise(A_DEX, TRUE);
@@ -966,7 +978,7 @@ dokick(const struct nh_cmd_arg *arg)
             /* nothing, fruit or trouble? 75:23.5:1.5% */
             if (rn2(3)) {
                 if (!rn2(6) && !(mvitals[PM_KILLER_BEE].mvflags & G_GONE))
-                    You_hear("a low buzzing."); /* a warning */
+                    You_hear(msgc_levelwarning, "a low buzzing.");
                 goto ouch;
             }
             if (rn2(15) && !(maploc->looted & TREE_LOOTED) &&
@@ -976,17 +988,19 @@ dokick(const struct nh_cmd_arg *arg)
 
                 treefruit->quan = nfruit;
                 if (is_plural(treefruit))
-                    pline("Some %s fall from the tree!", xname(treefruit));
+                    pline(msgc_actionok, "Some %s fall from the tree!",
+                          xname(treefruit));
                 else
-                    pline("%s falls from the tree!", An(xname(treefruit)));
+                    pline(msgc_actionok, "%s falls from the tree!",
+                          An(xname(treefruit)));
                 nfall = scatter(x, y, 2, MAY_HIT, treefruit);
                 if (nfall != nfruit) {
                     /* scatter left some in the tree, but treefruit may not
                        refer to the correct object */
                     treefruit = mksobj(level, frtype, TRUE, FALSE, rng_main);
                     treefruit->quan = nfruit - nfall;
-                    pline("%ld %s got caught in the branches.", nfruit - nfall,
-                          xname(treefruit));
+                    pline(msgc_actionok, "%ld %s got caught in the branches.",
+                          nfruit - nfall, xname(treefruit));
                     dealloc_obj(treefruit);
                 }
                 exercise(A_DEX, TRUE);
@@ -1008,9 +1022,10 @@ dokick(const struct nh_cmd_arg *arg)
                         made++;
                 }
                 if (made)
-                    pline("You've attracted the tree's former occupants!");
+                    pline(msgc_substitute,
+                          "You've attracted the tree's former occupants!");
                 else
-                    pline("You smell stale honey.");
+                    pline(msgc_substitute, "You smell stale honey.");
                 maploc->looted |= TREE_SWARM;
                 return 1;
             }
@@ -1030,17 +1045,19 @@ dokick(const struct nh_cmd_arg *arg)
                 goto dumb;
             if (rn2_on_rng(5, rng_sink_kick)) {
                 if (canhear())
-                    pline("Klunk!  The pipes vibrate noisily.");
+                    pline(msgc_failrandom,
+                          "Klunk!  The pipes vibrate noisily.");
                 else
-                    pline("Klunk!");
+                    pline(msgc_failrandom, "Klunk!");
                 exercise(A_DEX, TRUE);
                 return 1;
             } else if (!(maploc->looted & S_LPUDDING) && pudding_available) {
                 if (!(mvitals[PM_BLACK_PUDDING].mvflags & G_GONE)) {
                     if (Blind)
-                        You_hear("a gushing sound.");
+                        You_hear(msgc_levelwarning, "a gushing sound.");
                     else
-                        pline("A %s ooze gushes up from the drain!",
+                        pline(msgc_levelwarning,
+                              "A %s ooze gushes up from the drain!",
                               hcolor("black"));
                     makemon(&mons[PM_BLACK_PUDDING], level, x, y, NO_MM_FLAGS);
                     exercise(A_DEX, TRUE);
@@ -1048,35 +1065,42 @@ dokick(const struct nh_cmd_arg *arg)
                     maploc->looted |= S_LPUDDING;
                 } else {
                     /* this message works even if blind */
-                    pline("A %s ooze fails to gush up from the drain.",
+                    pline(msgc_noconsequence,
+                          "A %s ooze fails to gush up from the drain.",
                           hcolor("black"));
                 }
                 return 1;
             } else if (!(maploc->looted & S_LDWASHER) && dishwasher_available) {
                 if (!(mvitals[washerndx].mvflags & G_GONE)) {
                     /* can't resist... */
-                    pline("%s returns!",
+                    pline(msgc_levelwarning, "%s returns!",
                           (Blind ? "Something" : "The dish washer"));
                     if (makemon(&mons[washerndx], level, x, y, NO_MM_FLAGS))
                         newsym(x, y);
                     maploc->looted |= S_LDWASHER;
                     exercise(A_DEX, TRUE);
                 } else {
-                    pline("You wonder if the sink's owners would approve.");
+                    pline(msgc_noconsequence,
+                          "You wonder if the sink's owners would approve.");
                 }
                 return 1;
             } else if (ring_available) {
-                pline("Flupp!  %s.",
-                      (Blind ? "You hear a sloshing sound" :
-                       "Muddy waste pops up from the drain"));
                 if (!(maploc->looted & S_LRING)) {      /* once per sink */
                     if (!Blind)
-                        pline("You see a ring shining in its midst.");
+                        pline(msgc_youdiscover, "Muddy waste backs up.  "
+                              "There's a ring in its midst!");
+                    else
+                        pline(msgc_youdiscover,
+                              "Flupp!  Rattle rattle rattle!");
                     mkobj_at(RING_CLASS, level, x, y, TRUE, rng_sink_ring);
                     newsym(x, y);
                     exercise(A_DEX, TRUE);
                     exercise(A_WIS, TRUE);      /* a discovery! */
                     maploc->looted |= S_LRING;
+                } else {
+                    pline(msgc_noconsequence, "Flupp!  %s.",
+                          (Blind ? "You hear a sloshing sound" :
+                           "Muddy waste pops up from the drain"));
                 }
                 return 1;
             }
@@ -1088,13 +1112,13 @@ dokick(const struct nh_cmd_arg *arg)
             if (!IS_STWALL(maploc->typ) && maploc->ladder == LA_DOWN)
                 goto dumb;
         ouch:
-            pline("Ouch!  That hurts!");
+            pline(msgc_badidea, "Ouch!  That hurts!");
             exercise(A_DEX, FALSE);
             exercise(A_STR, FALSE);
             if (Blind)
                 feel_location(x, y);    /* we know we hit it */
             if (is_drawbridge_wall(x, y) >= 0) {
-                pline("The drawbridge is unaffected.");
+                pline(msgc_cancelled1, "The drawbridge is unaffected.");
                 /* update maploc to refer to the drawbridge */
                 find_drawbridge(&x, &y);
                 maploc = &level->locations[x][y];
@@ -1115,11 +1139,11 @@ dokick(const struct nh_cmd_arg *arg)
     dumb:
         exercise(A_DEX, FALSE);
         if (martial() || ACURR(A_DEX) >= 16 || rn2(3)) {
-            pline("You kick at empty space.");
+            pline(msgc_yafm, "You kick at empty space.");
             if (Blind)
                 feel_location(x, y);
         } else {
-            pline("Dumb move!  You strain a muscle.");
+            pline(msgc_badidea, "Dumb move!  You strain a muscle.");
             exercise(A_STR, FALSE);
             set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
         }
@@ -1140,17 +1164,17 @@ dokick(const struct nh_cmd_arg *arg)
 
         /* break the door */
         if (maploc->doormask & D_TRAPPED) {
-            if (flags.verbose)
-                pline("You kick the door.");
+            pline(msgc_actionboring, "You kick the door.");
             exercise(A_STR, FALSE);
             maploc->doormask = D_NODOOR;
             b_trapped("door", FOOT);
         } else if (ACURR(A_STR) > 18 && !rn2(5) && !shopdoor) {
-            pline("As you kick the door, it shatters to pieces!");
+            pline(msgc_actionok,
+                  "As you kick the door, it shatters to pieces!");
             exercise(A_STR, TRUE);
             maploc->doormask = D_NODOOR;
         } else {
-            pline("As you kick the door, it crashes open!");
+            pline(msgc_actionok, "As you kick the door, it crashes open!");
             exercise(A_STR, TRUE);
             maploc->doormask = D_BROKEN;
         }
@@ -1171,10 +1195,11 @@ dokick(const struct nh_cmd_arg *arg)
                      mtmp->data == &mons[PM_WATCH_CAPTAIN]) &&
                     couldsee(mtmp->mx, mtmp->my) && mtmp->mpeaceful) {
                     if (canspotmon(mtmp))
-                        pline("%s yells:", Amonnam(mtmp));
+                        pline(msgc_npcvoice, "%s yells:", Amonnam(mtmp));
                     else
-                        You_hear("someone yell:");
-                    verbalize("Halt, thief!  You're under arrest!");
+                        You_hear(msgc_npcvoice, "someone yell:");
+                    verbalize(msgc_npcanger,
+                              "Halt, thief!  You're under arrest!");
                     angry_guards(FALSE);
                     break;
                 }
@@ -1183,7 +1208,7 @@ dokick(const struct nh_cmd_arg *arg)
         if (Blind)
             feel_location(x, y);        /* we know we hit it */
         exercise(A_STR, TRUE);
-        pline("WHAMMM!!!");
+        pline(msgc_failrandom, "WHAMMM!!!");
         if (in_town(x, y))
             for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
                 if (DEADMONSTER(mtmp))
@@ -1192,14 +1217,16 @@ dokick(const struct nh_cmd_arg *arg)
                      mtmp->data == &mons[PM_WATCH_CAPTAIN]) && mtmp->mpeaceful
                     && couldsee(mtmp->mx, mtmp->my)) {
                     if (canspotmon(mtmp))
-                        pline("%s yells:", Amonnam(mtmp));
+                        pline(msgc_npcvoice, "%s yells:", Amonnam(mtmp));
                     else
-                        You_hear("someone yell:");
+                        You_hear(msgc_npcvoice, "someone yell:");
                     if (level->locations[x][y].looted & D_WARNED) {
-                        verbalize("Halt, vandal!  You're under arrest!");
+                        verbalize(msgc_npcanger,
+                                  "Halt, vandal!  You're under arrest!");
                         angry_guards(FALSE);
                     } else {
-                        verbalize("Hey, stop damaging that door!");
+                        verbalize(msgc_levelwarning,
+                                  "Hey, stop damaging that door!");
                         level->locations[x][y].looted |= D_WARNED;
                     }
                     break;
@@ -1322,29 +1349,31 @@ impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
         const char *what = (dct == 1L ? "object falls" : "objects fall");
 
         if (missile)
-            pline("From the impact, %sother %s.",
+            pline(msgc_consequence, "From the impact, %sother %s.",
                   dct == oct ? "the " : dct == 1L ? "an" : "", what);
         else if (oct == dct)
-            pline("%s adjacent %s %s.", dct == 1L ? "The" : "All the", what,
+            pline(msgc_consequence,
+                  "%s adjacent %s %s.", dct == 1L ? "The" : "All the", what,
                   gate_str);
         else
-            pline("%s adjacent %s %s.",
+            pline(msgc_consequence, "%s adjacent %s %s.",
                   dct == 1L ? "One of the" : "Some of the",
                   dct == 1L ? "objects falls" : what, gate_str);
     }
 
     if (costly && shkp && price) {
         if (ESHK(shkp)->robbed > robbed) {
-            pline("You removed %ld %s worth of goods!", price, currency(price));
+            pline(msgc_unpaid, "You removed %ld %s worth of goods!", price,
+                  currency(price));
             if (cansee(shkp->mx, shkp->my)) {
                 if (ESHK(shkp)->customer[0] == 0)
                     strncpy(ESHK(shkp)->customer, u.uplname, PL_NSIZ);
                 if (angry)
-                    pline("%s is infuriated!", Monnam(shkp));
+                    pline(msgc_npcanger, "%s is infuriated!", Monnam(shkp));
                 else
-                    pline("\"%s, you are a thief!\"", u.uplname);
+                    pline(msgc_npcanger, "\"%s, you are a thief!\"", u.uplname);
             } else
-                You_hear("a scream, \"Thief!\"");
+                You_hear(msgc_npcanger, "a scream, \"Thief!\"");
             hot_pursuit(shkp);
             angry_guards(FALSE);
             return;
@@ -1352,8 +1381,8 @@ impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
         if (ESHK(shkp)->debit > debit) {
             long amt = (ESHK(shkp)->debit - debit);
 
-            pline("You owe %s %ld %s for goods lost.", Monnam(shkp), amt,
-                  currency(amt));
+            pline(msgc_unpaid, "You owe %s %ld %s for goods lost.",
+                  Monnam(shkp), amt, currency(amt));
         }
     }
 
@@ -1451,7 +1480,7 @@ ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
                 change_luck((schar) - min(otmp->quan, 5L));
             result = "splat";
         }
-        You_hear("a muffled %s.", result);
+        You_hear(msgc_itemloss, "a muffled %s.", result);
         obj_extract_self(otmp);
         obfree(otmp, NULL);
         return TRUE;
@@ -1545,9 +1574,10 @@ otransit_msg(struct obj *otmp, boolean nodrop, long num)
         else
             obuf = msgprintf("%s and %s %s.", obuf,
                              otense(otmp, "fall"), gate_str);
-        pline("%s", obuf);
+        pline(msgc_consequence, "%s", obuf);
     } else if (!nodrop)
-        pline("%s %s %s.", obuf, otense(otmp, "fall"), gate_str);
+        pline(msgc_consequence, "%s %s %s.", obuf, otense(otmp, "fall"),
+              gate_str);
 }
 
 /* migration destination for objects which fall down to next level */
