@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -768,12 +768,12 @@ you_moved(void)
             } else {
                 u.moveamt = youmonst.data->mmove;
 
-                if (Very_fast) {        /* speed boots or potion */
+                if (very_fast(&youmonst)) { /* speed boots or potion */
                     /* average movement is 1.67 times normal */
                     u.moveamt += NORMAL_SPEED / 2;
                     if (rn2(3) == 0)
                         u.moveamt += NORMAL_SPEED / 2;
-                } else if (Fast) {
+                } else if (fast(&youmonst)) {
                     /* average movement is 1.33 times normal */
                     if (rn2(3) != 0)
                         u.moveamt += NORMAL_SPEED / 2;
@@ -1013,7 +1013,7 @@ you_moved(void)
        categorization; birth options count with permanently gained
        intrinsics. */
     for (p = 1; p <= LAST_PROP; p++) {
-        unsigned reasons = u_have_property(p, ANY_PROPERTY, TRUE);
+        unsigned reasons = m_has_property(&youmonst, p, ANY_PROPERTY, TRUE);
         if (reasons & (W_MASKABLE | W_ARTIFACT))
             u.ever_extrinsic[p / 8] |= 1 << (p % 8);
         if (reasons & (INTRINSIC | W_MASK(os_birthopt)))

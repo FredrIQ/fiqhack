@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1767,17 +1767,28 @@ wand_explode(struct monst *mon, struct obj *obj)
     }
 }
 
-/*
- * Low-level lit-field update routine.
- */
+/* Low-level lit-field update routine. */
 static void
 set_lit(int x, int y, void *val)
 {
+    struct monst *mtmp;
+    struct obj *otmp;
     if (val)
         level->locations[x][y].lit = 1;
     else {
         level->locations[x][y].lit = 0;
-        snuff_light_source(x, y);
+
+        /* kill light sources on the ground */
+        for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
+            snuff_lit(otmp);
+
+        /* kill light sources in inventories of monsters */
+        mtmp = m_at(level, x, y);
+        if (!mtmp && x == u.ux && y == u.uy)
+            mtmp = &youmonst;
+        if (mtmp)
+            for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj)
+                snuff_lit(otmp);
     }
 }
 
@@ -1803,41 +1814,29 @@ litroom(struct monst *mon, boolean on, struct obj *obj)
                        wandlevel == P_MASTER    ? -1 :
                        1);
 
-    /* Check if this will affect you */
-    boolean hits_you = you;
-    if (!you)
-        hits_you = ((dist2(m_mx(mon), m_my(mon), u.ux, u.uy) <= (lightradius * lightradius) ||
-                     lightradius == -1) && !you && !Engulfed &&
-                    mon->dlevel == level);
-
     /* first produce the text (provided you're not blind) */
     if (!on) {
         struct obj *otmp;
 
-        /* the magic douses lamps, et al, too, do this before checking
-           for engulfing because being engulfed shouldn't prevent your
-           inventory from getting snuff out */
-        if (hits_you)
-            for (otmp = invent; otmp; otmp = otmp->nobj)
-                if (otmp->lamplit)
-                    snuff_lit(otmp);
-
         if (you && Engulfed) {
-            if (hits_you)
-                pline("It seems even darker in here than before.");
+            /* Since engulfing will prevent set_lit(), douse lamps/etc here as well */
+            for (otmp = invent; otmp; otmp = otmp->nobj)
+                snuff_lit(otmp);
+            pline("It seems even darker in here than before.");
             return;
         }
 
-        if (!blind(&youmonst) && hits_you) {
-            if (uwep && artifact_light(uwep) && uwep->lamplit)
+        if (!blind(&youmonst) && (you || vis)) {
+            struct obj *wep = m_mwep(mon);
+            if (wep && artifact_light(wep) && wep->lamplit)
                 pline("Suddenly, the only light left comes from %s!",
-                      the(xname(uwep)));
-            else if (you || vis)
+                      the(xname(wep)));
+            else
                 pline("%s %s surrounded by darkness!", you ? "You" : Monnam(mon),
                       you ? "are" : "is");
         }
     } else {
-        if (hits_you && Engulfed) {
+        if (you && Engulfed) {
             if (!blind(&youmonst)) {
                 if (is_animal(u.ustuck->data))
                     pline("%s %s is lit.", s_suffix(Monnam(u.ustuck)),
@@ -1847,8 +1846,7 @@ litroom(struct monst *mon, boolean on, struct obj *obj)
                 else
                     pline("%s glistens.", Monnam(u.ustuck));
             }
-            if (you)
-                return;
+            return;
         }
 
         if ((!blind(&youmonst) && you) || vis)
@@ -1895,7 +1893,8 @@ litroom(struct monst *mon, boolean on, struct obj *obj)
                 for (y = 0; y < ROWNO; y++)
                     set_lit(x, y, (on ? &is_lit : NULL));
         } else
-            do_clear_area(m_mx(mon), m_my(mon), lightradius, set_lit, (on ? &is_lit : NULL));
+            do_clear_area(m_mx(mon), m_my(mon), lightradius, set_lit,
+                          (on ? &is_lit : NULL));
     }
 
     /* 

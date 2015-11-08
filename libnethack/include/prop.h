@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -270,20 +270,22 @@ enum tracked_location {
    TODO: Give these better names. The current names are for 3.4.3
    compatibility. */
 
-/* Timed properties */
-# define TIMEOUT      0x7fffU      /* Up to 32767 turns */
-/* FROMOUTSIDE can no longer be made to refer to mintrinsic directly,
-   because there is too many slots for that. Thus, FROMOUTSIDE_RAW
-   can be used to directly refer to the os_outside bit on mintrinsic.
-   This should only be used if you cannot use set_property or similar
-   for some reason. */
-# define FROMOUTSIDE_RAW 0x8000
+/* mintrinsic is now a 16bit field. There is however 19 extrinsic slots,
+   and thus TIMEOUT/FROMOUTSIDE can no longer point to the mintrinsic
+   bitfield and the slot enum simultaneously. Thus,
+   (TIMEOUT|FROMOUTSIDE)_RAW points to the mintrinsic while
+   (TIMEOUT|FROMOUTSIDE) points to the slots (os_timeout/os_outside).
+   Do not use the RAW macros unless you need to manipulate mintrinsic. */
+# define TIMEOUT_RAW  0x7fffU      /* Up to 32767 turns */
+# define FROMOUTSIDE_RAW 0x8000U
 /* Permanent properties */
 # define FROMROLE     ((unsigned)W_MASK(os_role))
 # define FROMRACE     ((unsigned)W_MASK(os_race))
 # define FROMPOLY     ((unsigned)W_MASK(os_polyform))
 # define FROMOUTSIDE  ((unsigned)W_MASK(os_outside))
+# define TIMEOUT      ((unsigned)W_MASK(os_timeout))
 # define INTRINSIC    (FROMOUTSIDE|FROMRACE|FROMROLE|FROMPOLY)
+# define EXTRINSIC    ~INTRINSIC
 /* Control flags */
 # define I_SPECIAL    ((unsigned)W_MASK(os_special))
 # define ANY_PROPERTY ((unsigned)-1)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -314,19 +314,16 @@ int
 mpickobj(struct monst *mtmp, struct obj *otmp)
 {
     int freed_otmp;
-
     boolean snuff_otmp = FALSE;
 
     /* don't want hidden light source inside the monster; assumes that
        engulfers won't have external inventories; whirly monsters cause the
        light to be extinguished rather than letting it shine thru */
     if (otmp->lamplit &&        /* hack to avoid function calls for most objs */
-        obj_sheds_light(otmp) && attacktype(mtmp->data, AT_ENGL)) {
-        /* this is probably a burning object that you dropped or threw */
-        if (Engulfed && mtmp == u.ustuck && !Blind)
-            pline("%s out.", Tobjnam(otmp, "go"));
+        obj_sheds_light(otmp) && attacktype(mtmp->data, AT_ENGL) &&
+        mtmp == u.ustuck && Engulfed)
         snuff_otmp = TRUE;
-    }
+
     /* Must do carrying effects on object prior to add_to_minv() */
     carry_obj_effects(otmp);
     /* add_to_minv() might free otmp [if merged with something else], so we
@@ -334,7 +331,7 @@ mpickobj(struct monst *mtmp, struct obj *otmp)
     freed_otmp = add_to_minv(mtmp, otmp);
     /* and we had to defer this until object is in mtmp's inventory */
     if (snuff_otmp)
-        snuff_light_source(mtmp->mx, mtmp->my);
+        snuff_lit(otmp);
 
     return freed_otmp;
 }

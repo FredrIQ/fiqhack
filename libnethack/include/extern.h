@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -762,7 +762,6 @@ extern void restore_light_sources(struct memfile *mf, struct level *lev);
 extern void relink_light_sources(boolean ghostly, struct level *lev);
 extern void obj_move_light_source(struct obj *, struct obj *);
 extern boolean any_light_source(void);
-extern void snuff_light_source(int, int);
 extern boolean obj_sheds_light(struct obj *);
 extern boolean obj_is_burning(struct obj *);
 extern void obj_split_light_source(struct obj *, struct obj *);
@@ -1446,7 +1445,6 @@ extern boolean any_property(struct monst *);
 extern int pm_has_property(const struct permonst *, enum youprop);
 extern unsigned m_has_property(const struct monst *, enum youprop,
                                unsigned, boolean);
-extern unsigned u_have_property(enum youprop, unsigned, boolean);
 extern boolean m_helpless(const struct monst *, enum helpless_mask mask);
 extern boolean u_helpless(enum helpless_mask mask);
 extern unsigned msensem_xy(struct monst *, struct monst *,

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -109,10 +109,6 @@ fightm(struct monst *mtmp)
 {       /* have monsters fight each other */
     struct monst *mon, *nmon;
     int result, has_u_swallowed;
-
-    /* perhaps the monster will resist Conflict */
-    if (resist(mtmp, RING_CLASS, 0))
-        return 0;
 
     if (u.ustuck == mtmp) {
         /* perhaps we're holding it... */
@@ -677,6 +673,20 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     /* cancellation factor is the same as when attacking the hero */
     armpro = magic_negation(mdef);
     cancelled = cancelled(magr) || !((rn2(3) >= armpro) || !rn2(50));
+
+    /* for explosions, give a chance to resist similar to players.
+       SAVEBREAK: for next savebreak, add AT_FLSH instead for lights
+       as to avoid the S_LIGHT special case */
+    if (!cancelled(magr) && mattk->aatyp == AT_EXPL &&
+        magr->data->mlet != S_LIGHT) {
+        if (acurr(mdef, A_DEX) > rnd(20)) {
+            if (vis)
+                pline("%s ducks some of the blast.",
+                      Monnam(mdef));
+            tmp = (tmp + 1) / 2;
+        } else if (vis)
+            pline("%s is blasted!", Monnam(mdef));
+    }
 
     switch (mattk->adtyp) {
     case AD_DGST:

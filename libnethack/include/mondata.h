@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,7 +12,10 @@
 # define pm_resistance(ptr,typ) (((ptr)->mresists & (typ)) != 0)
 
 # define has_property(mon,prop) (m_has_property(mon, prop, ANY_PROPERTY, FALSE))
+# define bhas_property(mon,prop) (m_has_property(mon, prop, ANY_PROPERTY, TRUE) & \
+                                  W_MASK(os_blocked))
 # define ihas_property(mon,prop) (has_property(mon, prop) & INTRINSIC)
+# define ehas_property(mon,prop) (has_property(mon, prop) & EXTRINSIC)
 
 /* Any properties */
 # define resists_fire(mon)      (has_property(mon, FIRE_RES))
@@ -40,7 +43,7 @@
 # define see_invisible(mon)     (has_property(mon, SEE_INVIS))
 # define invisible(mon)         (has_property(mon, INVIS))
 /* binvisible: invisibility blocked */
-# define binvisible(mon)        (mworn_blocked(mon, INVIS))
+# define binvisible(mon)        (bhas_property(mon, INVIS))
 # define teleportitis(mon)      (has_property(mon, TELEPORT))
 # define teleport_control(mon)  (has_property(mon, TELEPORT_CONTROL))
 # define polymorphitis(mon)     (has_property(mon, POLYMORPH))
@@ -55,8 +58,8 @@
 # define telepathic(mon)        (has_property(mon, TELEPAT))
 # define fast(mon)              (has_property(mon, FAST))
 /* ifast: whether or not you have intrinsic fast in particular */
-# define ifast(mon)             (fast(mon) & INTRINSIC)
-# define very_fast(mon)         (fast(mon) & ~INTRINSIC)
+# define ifast(mon)             (ihas_property(mon, FAST))
+# define very_fast(mon)         (ehas_property(mon, FAST))
 # define stunned(mon)           (has_property(mon, STUNNED))
 # define confused(mon)          (has_property(mon, CONFUSION))
 # define sick(mon)              (has_property(mon, SICK))
@@ -78,7 +81,7 @@
 # define will_be_lifesaved(mon) (has_property(mon, LIFESAVED))
 # define clairvoyant(mon)       (has_property(mon, CLAIRVOYANT))
 /* bclairvoyant -- clairvoance blocked */
-# define bclairvoyant(mon)      (mworn_blocked(mon, CLAIRVOYANT))
+# define bclairvoyant(mon)      (bhas_property(mon, CLAIRVOYANT))
 # define vomiting(mon)          (has_property(mon, VOMITING))
 # define unbreathing(mon)       (has_property(mon, MAGICAL_BREATHING))
 # define warned_of_undead(mon)  (has_property(mon, WARN_UNDEAD))

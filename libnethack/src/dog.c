@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -429,7 +429,7 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
     enum youprop prop;
     int dec = imv;
     for (prop = 0; prop <= LAST_PROP; prop++) {
-        if (mtmp->mintrinsic[prop] & TIMEOUT) {
+        if (mtmp->mintrinsic[prop] & TIMEOUT_RAW) {
             dec = imv;
             if (prop == PROTECTION &&
                 mprof(mtmp, MP_SCLRC) < P_EXPERT)

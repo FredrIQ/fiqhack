@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-07 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -317,7 +317,7 @@ m_has_property(const struct monst *mon, enum youprop property,
     rv |= mworn_extrinsic(mon, property);
 
     /* Timed and corpse/etc-granted */
-    if (mon->mintrinsic[property] & TIMEOUT)
+    if (mon->mintrinsic[property] & TIMEOUT_RAW)
         rv |= W_MASK(os_timeout);
     if (mon->mintrinsic[property] & FROMOUTSIDE_RAW)
         rv |= W_MASK(os_outside);
@@ -553,7 +553,7 @@ prop_wary(const struct monst *mon, struct monst *target, enum youprop prop)
 int
 property_timeout(struct monst *mon, enum youprop property)
 {
-    return mon->mintrinsic[property] & TIMEOUT;
+    return mon->mintrinsic[property] & TIMEOUT_RAW;
 }
 
 
@@ -565,7 +565,7 @@ decrease_property_timers(struct monst *mon)
     skill = (mon == &youmonst ? P_SKILL(P_CLERIC_SPELL) :
              mprof(mon, MP_SCLRC));
     for (prop = 0; prop <= LAST_PROP; prop++) {
-        if (mon->mintrinsic[prop] & TIMEOUT) {
+        if (mon->mintrinsic[prop] & TIMEOUT_RAW) {
             /* Decrease protection at half speed at Expert */
             if (prop == PROTECTION && skill == P_EXPERT &&
                 (moves % 2))
@@ -759,7 +759,7 @@ set_property(struct monst *mon, enum youprop prop,
              int type, boolean forced)
 {
     boolean increased = FALSE;
-    if (mon->mintrinsic[prop] & TIMEOUT && type > 0)
+    if (mon->mintrinsic[prop] & TIMEOUT_RAW && type > 0)
         increased = TRUE;
 
     /* check for redundant usage */
@@ -772,14 +772,14 @@ set_property(struct monst *mon, enum youprop prop,
         return FALSE;
 
     if (type > 0) { /* set timeout */
-        mon->mintrinsic[prop] &= ~TIMEOUT;
-        mon->mintrinsic[prop] |= min(type, TIMEOUT);
+        mon->mintrinsic[prop] &= ~TIMEOUT_RAW;
+        mon->mintrinsic[prop] |= min(type, TIMEOUT_RAW);
     } else if (type == 0) /* set outside */
         mon->mintrinsic[prop] |= FROMOUTSIDE_RAW;
     else { /* unset outside */
         mon->mintrinsic[prop] &= ~FROMOUTSIDE_RAW;
         if (type == -2) /* ...and timeout */
-            mon->mintrinsic[prop] &= ~TIMEOUT;
+            mon->mintrinsic[prop] &= ~TIMEOUT_RAW;
     }
 
     if (forced)
@@ -800,7 +800,7 @@ inc_timeout(struct monst *mon, enum youprop prop,
 {
     return set_property(mon, prop,
                         min(time + property_timeout(mon, prop),
-                            TIMEOUT), forced);
+                            TIMEOUT_RAW), forced);
 }
 
 /* Called on experience level changes */
@@ -905,7 +905,7 @@ update_property(struct monst *mon, enum youprop prop,
     boolean redundant_intrinsic = FALSE;
     if (((W_MASK(real_slot) & INTRINSIC) &&
          (has_property(mon, prop) & INTRINSIC & ~W_MASK(real_slot))) ||
-        ((W_MASK(real_slot) & ~INTRINSIC) &&
+        ((W_MASK(real_slot) & EXTRINSIC) &&
          (has_property(mon, prop) & ~INTRINSIC & ~W_MASK(real_slot))))
         redundant_intrinsic = TRUE;
     /* Special case: set redundant to whether or not the monster has the property
@@ -1345,9 +1345,14 @@ update_property(struct monst *mon, enum youprop prop,
         see_monsters(FALSE);
         break;
     case SLEEPING: /* actually restful sleep */
+        if (!lost && !redundant && real_slot != os_timeout) {
+            set_property(mon, prop, rnd(100), TRUE);
+            break;
+        }
+
         /* Kill the timer if the property was fully lost */
-        if (lost && !redundant)
-            mon->mintrinsic[prop] &= ~TIMEOUT;
+        if (lost && !(has_property(mon, prop) & ~TIMEOUT))
+            set_property(mon, prop, -2, TRUE);
 
         if (lost && slot == os_dectimeout) {
             int sleeptime = 0;
@@ -1559,8 +1564,8 @@ update_property(struct monst *mon, enum youprop prop,
 
         /* Kill the timer if the property was fully lost
            (This is redundant, but fine, if slot was os_dectimeout) */
-        if (lost && !redundant)
-            mon->mintrinsic[prop] &= ~TIMEOUT;
+        if (lost && !(has_property(mon, prop) & ~TIMEOUT))
+            set_property(mon, prop, -2, TRUE);
 
         if (lost && slot == os_dectimeout) {
             /* canmove+not eating is close enough to umoved */
@@ -1995,13 +2000,6 @@ slip_or_trip(struct monst *mon)
         pline("%s make%s a lot of noise!",
               you ? "You" : Monnam(mon), you ? "" : "s");
     return TRUE;
-}
-
-unsigned
-u_have_property(enum youprop property, unsigned reasons,
-                boolean even_if_blocked)
-{
-    return m_has_property(&youmonst, property, reasons, even_if_blocked);
 }
 
 
@@ -2550,8 +2548,7 @@ enlighten_mon(struct monst *mon, int final)
         mon_is(&menu, mon, "invisible to others");
     /* ordinarily "visible" is redundant; this is a special case for the
        situation when invisibility would be an expected attribute */
-    else if (m_has_property(mon, INVIS, ANY_PROPERTY, TRUE) &&
-             !invisible(mon))
+    else if (binvisible(mon))
         mon_is(&menu, mon, "visible");
     if (displacement(mon))
         mon_is(&menu, mon, "displaced");
@@ -2929,7 +2926,7 @@ enlightenment(int final)
         you_are(&menu, "invisible to others");
     /* ordinarily "visible" is redundant; this is a special case for the
        situation when invisibility would be an expected attribute */
-    else if (u_have_property(INVIS, ANY_PROPERTY, TRUE) && BInvis)
+    else if (binvisible(&youmonst))
         you_are(&menu, "visible");
     if (Displaced)
         you_are(&menu, "displaced");
@@ -3015,8 +3012,8 @@ enlightenment(int final)
     }
     if (Unchanging)
         you_can(&menu, "not change from your current form");
-    if (Fast)
-        you_are(&menu, Very_fast ? "very fast" : "fast");
+    if (fast(&youmonst))
+        you_are(&menu, very_fast(&youmonst) ? "very fast" : "fast");
     if (Reflecting)
         you_have(&menu, "reflection");
     if (Free_action)
