@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -27,9 +27,8 @@ static void missmm(struct monst *, struct monst *, const struct attack *);
 static int passivemm(struct monst *, struct monst *, boolean, int);
 
 /* Needed for the special case of monsters wielding vorpal blades (rare).
- * If we use this a lot it should probably be a parameter to mdamagem()
- * instead of a global variable.
- */
+   If we use this a lot it should probably be a parameter to mdamagem()
+   instead of a global variable. */
 static int dieroll;
 
 /* returns mon_nam(mon) relative to other_mon; normal name unless they're
@@ -63,7 +62,7 @@ noises(struct monst *magr, const struct attack *mattk)
         noisetime = moves;
         You_hear("%s%s.",
                  (mattk->aatyp == AT_EXPL) ? "an explosion" : "some noises",
-                 farq ? " in the distance" : "");
+                 farq ? " in the distance" : " nearby");
     }
 }
 
