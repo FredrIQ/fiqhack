@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-09 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -92,77 +92,76 @@ missmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         noises(magr, mattk);
 }
 
-/*
- *  fightm()  -- fight some other monster
- *
- *  Returns:
- *      0 - Monster did nothing.
- *      1 - If the monster made an attack.  The monster might have died.
- *
- *  There is an exception to the above.  If mtmp has the hero swallowed,
- *  then we report that the monster did nothing so it will continue to
- *  digest the hero.
- */
+/* fightm() -- find some other monster to fight in melee. Returns 1 if the monster
+   attacked something, 0 otherwise */
 int
-fightm(struct monst *mtmp)
+fightm(struct monst *mon)
 {       /* have monsters fight each other */
-    struct monst *mon, *nmon;
-    int result, has_u_swallowed;
+    int result;
+    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) &&
+                          m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
 
-    if (u.ustuck == mtmp) {
-        /* perhaps we're holding it... */
-        if (itsstuck(mtmp))
-            return 0;
+    /* perhaps we're holding it... */
+    if (itsstuck(mon))
+        return 0;
+
+    /* ignore tame monsters for now, it has its' own movement logic alltogether */
+    if (mon->mtame)
+        return 0;
+
+    int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
+    int diry[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
+
+    /* try each in a random order, so do a shuffle */
+    int try[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+    int i, old, change;
+    for (i = 0; i < 8; i++) {
+        change = rn2(8);
+        old = try[i];
+        try[i] = try[change];
+        try[change] = old;
     }
-    has_u_swallowed = (Engulfed && (mtmp == u.ustuck));
 
-    for (mon = level->monlist; mon; mon = nmon) {
-        nmon = mon->nmon;
-        if (nmon == mtmp)
-            nmon = mtmp->nmon;
-        /* Be careful to ignore monsters that are already dead, since we might
-           be calling this before we've cleaned them up.  This can happen if
-           the monster attacked a cockatrice bare-handedly, for instance. */
-        if (mon != mtmp && !DEADMONSTER(mon)) {
-            if (monnear(mtmp, mon->mx, mon->my)) {
-                if (!Engulfed && (mtmp == u.ustuck)) {
-                    if (!rn2(4)) {
-                        pline("%s releases you!", Monnam(mtmp));
-                        u.ustuck = 0;
-                    } else
-                        break;
-                }
+    /* check for monsters on positions */
+    struct monst *mtmp;
+    int x, y;
+    for (i = 0; i < 8; i++) {
+        x = mon->mx + dirx[try[i]];
+        y = mon->my + diry[try[i]];
+        mtmp = m_at(level, x, y);
+        if (!mtmp || (!mm_aggression(mon, mtmp) && !conflicted))
+            continue;
 
-                /* mtmp can be killed */
-                bhitpos.x = mon->mx;
-                bhitpos.y = mon->my;
-                notonhead = 0;
-                result = mattackm(mtmp, mon);
+        /* TODO: why are these needed... */
+        bhitpos.x = mtmp->mx;
+        bhitpos.y = mtmp->my;
+        notonhead = 0; /* what if it is? */
+        result = mattackm(mon, mtmp);
 
-                if (result & MM_AGR_DIED)
-                    return 1;   /* mtmp died */
-                /* 
-                 *  If mtmp has the hero swallowed, lie and say there
-                 *  was no attack (this allows mtmp to digest the hero).
-                 */
-                if (has_u_swallowed)
-                    return 0;
+        /* For engulfers, a spent turn also gives an opportunity to continue
+           hitting the hero (digestion, cold attacks, whatever) */
+        if ((result & MM_AGR_DIED) ||
+            (Engulfed && mon == u.ustuck && mattacku(mon)))
+            return 1; /* monster died */
 
-                /* Allow attacked monsters a chance to hit back. Primarily to
-                   allow monsters that resist conflict to respond.
+        /* Allow attacked monsters a chance to hit back. Primarily to
+           allow monsters that resist conflict to respond.
 
-                   Note: in 4.3, this no longer costs movement points, because
-                   it throws off the turn alternation. */
-                if ((result & MM_HIT) && !(result & MM_DEF_DIED)) {
-                    notonhead = 0;
-                    mattackm(mon, mtmp);        /* return attack */
-                }
-
-                return (result & MM_HIT) ? 1 : 0;
-            }
+           Note: in 4.3, this no longer costs movement points, because
+           it throws off the turn alternation.
+           TODO: might want to handle sanity checks before retaliating,
+           since this is no longer exclusively called by conflict */
+        if ((result & MM_HIT) && !(result & MM_DEF_DIED)) {
+            notonhead = 0;
+            mattackm(mon, mtmp); /* retaliation */
         }
+
+        /* Turn is spent, so return 1. This used to return 0 if the attack was
+           a miss or if the monster has you engulfed, but missing attacks shouldn't
+           allow further movement, and engulfement is taken care of above */
+        return 1;
     }
-    return 0;
+    return 0; /* no suitable target */
 }
 
 /*

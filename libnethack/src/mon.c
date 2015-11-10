@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -667,18 +667,13 @@ movemon(void)
                 continue;
         }
 
-        /* continue if the monster died fighting */
-        if (Conflict && !resist(mtmp, RING_CLASS, NOTELL) &&
-            !mtmp->iswiz && !blind(mtmp)) {
-            /* Note: Conflict does not take effect in the first round.
-               Therefore, A monster when stepping into the area will get to
-               swing at you.  The call to fightm() must be _last_.  The monster
-               might have died if it returns 1. */
-            if (couldsee(mtmp->mx, mtmp->my) &&
-                (distu(mtmp->mx, mtmp->my) <= BOLT_LIM * BOLT_LIM) &&
-                fightm(mtmp))
-                continue;       /* mon might have died */
-        }
+        /* This used to do a conflict check pass before checking for
+           other monsters to fight. However, with grudge changes, this
+           is no longer feasible since there might be valid targets to
+           fight under other cases than conflict. */
+        if (fightm(mtmp))
+            continue; /* monster targeted something */
+
         if (dochugw(mtmp))      /* otherwise just move the monster */
             continue;
     }
