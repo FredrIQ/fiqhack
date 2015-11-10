@@ -90,7 +90,7 @@ combat_msgc(struct monst *magr, struct monst *mdef, enum combatresult cr)
             return cr == cr_kill ? msgc_petfatal : msgc_petwarning;
         if (magr == &youmonst)
             return msgc_kill;
-        if (magr->mtame)
+        if (magr && magr->mtame)
             return msgc_petkill;
         cr = cr_hit;
     }
