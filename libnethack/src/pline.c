@@ -46,7 +46,6 @@ vpline(enum msg_channel msgc, boolean norepeat,
 {
     const char *pbuf;
     boolean repeated;
-    boolean nonblocking = FALSE;
     int lastline;
 
     lastline = curline - 1;
@@ -112,8 +111,8 @@ vpline(enum msg_channel msgc, boolean norepeat,
         return;
     else if (msgc == msgc_alignchaos && u.ualign.type == A_LAWFUL)
         msgc = msgc_alignbad;
-    else if (msgc == msgc_reminder)
-        nonblocking = TRUE;
+    else if (msgc == msgc_fatal_predone)
+        turnstate.force_more_pending_until_done = TRUE;
     else if (msgc == msgc_offlevel) {
         /* if (the game is not multiplayer) */
         impossible("Offlevel pline in a single-player game?");
@@ -129,10 +128,7 @@ vpline(enum msg_channel msgc, boolean norepeat,
         curline++;
         curline %= MSGCOUNT;
     }
-    if (nonblocking)
-        (*windowprocs.win_print_message_nonblocking) (moves, line);
-    else
-        print_message(moves, line);
+    print_message(msgc, line);
 }
 
 

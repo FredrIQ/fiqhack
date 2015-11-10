@@ -149,6 +149,7 @@ enum keyreq_context {
     krc_menu,
     krc_objmenu,
     krc_more,
+    krc_moretab,
     krc_pause_map,
     krc_notification,
     krc_keybinding,
@@ -502,20 +503,17 @@ extern void draw_objlist(WINDOW * win, struct nh_objlist *objlist,
 extern nh_bool do_item_actions(const struct nh_objitem *);
 
 /* messages.c */
-extern void alloc_hist_array(void);
-extern void setup_showlines(void);
-extern void redo_showlines(void);
-extern void curses_print_message(int turn, const char *msg);
-extern void curses_print_message_nonblocking(int turn, const char *inmsg);
+extern void discard_message_history(int lines_to_keep);
+extern void curses_print_message(enum msg_channel msgc, const char *msg);
 extern void curses_temp_message(const char *msg);
 extern void curses_clear_temp_messages(void);
-extern void draw_msgwin(void);
-extern void mark_showlines_seen(void);
-extern void fresh_message_line(nh_bool blocking);
-extern void pause_messages(void);
+extern void fresh_message_line(void);
+extern void redraw_messages(void);
+extern void draw_messages_prekey(nh_bool room_for_more);
+extern void draw_messages_postkey(void);
+extern void draw_messages_precover(void);
+extern void force_more(nh_bool require_tab);
 extern void doprev_message(void);
-extern void cleanup_messages(void);
-extern void new_action(void);
 extern void wrap_text(int width, const char *input, int *output_count,
                       char ***output);
 extern void free_wrap(char **wrap_output);
@@ -607,7 +605,7 @@ extern void redraw_game_windows(void);
 extern void handle_resize(void);
 extern void rebuild_ui(void);
 extern int nh_wgetch(WINDOW * win, enum keyreq_context context);
-extern struct gamewin *alloc_gamewin(int extra);
+extern struct gamewin *alloc_gamewin(int extra, nh_bool handle_messages);
 extern void delete_gamewin(struct gamewin *win);
 extern void delete_all_gamewins(void);
 extern void curses_pause(enum nh_pause_reason reason);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -143,7 +143,7 @@ hooked_curses_getlin(const char *query, void *callbackarg,
     height = output_count + 3;
     width = COLNO;
 
-    gw = alloc_gamewin(sizeof (struct win_getline));
+    gw = alloc_gamewin(sizeof (struct win_getline), TRUE);
     gw->win = newdialog(height, width, 2, 0);
     gw->draw = echo ? draw_getline : draw_getline_noecho;
     gw->resize = resize_getline;

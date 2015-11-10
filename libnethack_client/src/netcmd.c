@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -19,7 +19,6 @@ static json_t *cmd_pause(json_t *params, int display_only);
 static json_t *cmd_display_buffer(json_t *params, int display_only);
 static json_t *cmd_update_status(json_t *params, int display_only);
 static json_t *cmd_print_message(json_t *params, int display_only);
-static json_t *cmd_print_message_nonblocking(json_t *params, int display_only);
 static json_t *cmd_update_screen(json_t *params, int display_only);
 static json_t *cmd_delay_output(json_t *params, int display_only);
 static json_t *cmd_level_changed(json_t *params, int display_only);
@@ -59,7 +58,6 @@ static struct netcmd netcmd_list[] = {
     {"getdir", cmd_getdir},
     {"yn", cmd_yn_function},
     {"getline", cmd_getline},
-    {"print_message_nonblocking", cmd_print_message_nonblocking},
 
     {"server_error", cmd_server_error},
     {NULL, NULL}
@@ -267,30 +265,16 @@ cmd_update_status(json_t *params, int display_only)
 static json_t *
 cmd_print_message(json_t *params, int display_only)
 {
-    int turn;
+    int channel;
     const char *msg;
 
-    if (json_unpack(params, "{si,ss!}", "turn", &turn, "msg", &msg) == -1) {
+    if (json_unpack(params, "{si,ss!}",
+                    "channel", &channel, "msg", &msg) == -1) {
         print_error("Incorrect parameters in cmd_print_message");
         return NULL;
     }
 
-    client_windowprocs.win_print_message(turn, msg);
-    return NULL;
-}
-
-static json_t *
-cmd_print_message_nonblocking(json_t *params, int display_only)
-{
-    int turn;
-    const char *msg;
-
-    if (json_unpack(params, "{si,ss!}", "turn", &turn, "msg", &msg) == -1) {
-        print_error("Incorrect parameters in cmd_print_message_nonblocking");
-        return NULL;
-    }
-
-    client_windowprocs.win_print_message_nonblocking(turn, msg);
+    client_windowprocs.win_print_message(channel, msg);
     return NULL;
 }
 

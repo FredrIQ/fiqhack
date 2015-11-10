@@ -1,7 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
+
+#include "messagechannel.h"
 
 /*
  * System autodetection: greatly simplified, as we only care about
@@ -775,7 +777,7 @@ struct nh_window_procs {
     void (*win_pause) (enum nh_pause_reason reason);
     void (*win_display_buffer) (const char *buf, nh_bool trymove);
     void (*win_update_status) (struct nh_player_info *pi);
-    void (*win_print_message) (int turn, const char *msg);
+    void (*win_print_message) (enum msg_channel, const char *msg);
     void (*win_request_command) (nh_bool debug, nh_bool completed,
                                  nh_bool interrupted, void *callbackarg,
                                  void (*callback)(
@@ -810,7 +812,6 @@ struct nh_window_procs {
     void (*win_outrip) (struct nh_menulist *menulist,
                         nh_bool tombstone, const char *name, int gold,
                         const char *killbuf, int end_how, int year);
-    void (*win_print_message_nonblocking) (int turn, const char *msg);
     void (*win_server_cancel) (void);
 };
 

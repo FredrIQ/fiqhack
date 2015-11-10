@@ -17,7 +17,11 @@
    be somewhat subjective, so relying on the order for anything but presenting
    lists to the user may be unwise.
 
-   When adding entries to this, also add default rules to them */
+   When adding entries to this, also add default rules to them in messages.c.
+
+   Warning: this file is currently included from nethack_types.h (because it
+   contains the definition of windowprocs), and thus should do nothing but
+   define the one enum it's supposed to define. */
 
 enum msg_channel {
     /* Outside the game */

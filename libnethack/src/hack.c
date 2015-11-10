@@ -2161,8 +2161,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             mtmp->mtrapped = 0;
             remove_monster(level, x, y);
             place_monster(mtmp, u.ux0, u.uy0);
-            pline(mtmp->mtame ? msgc_actionok : msgc_petfatal, "You %s %s.",
-                  mtmp->mtame ? "displace" : "frighten", pnambuf);
+            pline_once(mtmp->mtame ? msgc_petneutral : msgc_petfatal,
+                       "You %s %s.", mtmp->mtame ? "displace" : "frighten",
+                       pnambuf);
 
             /* check for displacing it into pools and traps */
             switch (minliquid(mtmp) ? 2 : mintrap(mtmp)) {

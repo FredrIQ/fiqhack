@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -515,7 +515,7 @@ rungame(nh_bool net)
     close(fd);
 
     destroy_game_windows();
-    cleanup_messages();
+    discard_message_history(0);
 
     game_ended(ret, net ? NULL : filename, net);
 
@@ -730,7 +730,7 @@ loadgame(void)
     close(fd);
 
     destroy_game_windows();
-    cleanup_messages();
+    discard_message_history(0);
     game_ended(ret, filename, FALSE);
 
     return TRUE;

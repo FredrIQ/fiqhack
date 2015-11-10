@@ -3618,7 +3618,8 @@ price_quote(struct obj *first_obj)
             cost = get_cost(first_obj, NULL);
             if (Has_contents(first_obj))
                 cost += contained_cost(first_obj, shkp, 0L, FALSE, FALSE);
-            pline(msgc_info, "%s, price %ld %s%s%s", doname(first_obj), cost,
+            pline(msgc_info, "%s, price %ld %s%s%s",
+                  msgupcasefirst(doname(first_obj)), cost,
                   currency(cost), first_obj->quan > 1L ? " each" : "",
                   shk_embellish(first_obj, cost));
         }

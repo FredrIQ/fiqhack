@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-08-22 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -340,7 +340,7 @@ curses_set_option(const char *name, union nh_optvalue value)
         rebuild_ui();
     } else if (!strcmp(option->name, "msghistory")) {
         settings.msghistory = option->value.i;
-        alloc_hist_array();
+        discard_message_history(settings.msghistory);
     }
     else
         return FALSE;

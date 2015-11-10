@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-14 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -387,12 +387,16 @@ get_command(void *callbackarg,
     }
 
     do {
-        mark_showlines_seen();
         multi = 0;
         cmd = NULL;
         ncaa.arg.argtype = 0;
 
+        draw_messages_prekey(FALSE);
         key = get_map_key(TRUE, TRUE, krc_get_command);
+        /* TODO: If we get a /spurious/ server cancel, we should avoid greying
+           messages as a result (problematic because a non-spurious server
+           cancel will quite possibly display messages). */
+        draw_messages_postkey();
 
         if (key <= KEY_MAX && keymap[key] == find_command("repeatcount")) {
             do {
@@ -409,10 +413,10 @@ get_command(void *callbackarg,
                      (multi > 0 && key == KEY_BACKSPACE));
         }
 
-        if (key == '\x1b' || key == KEY_ESCAPE)
+        if (key == '\x1b' || key == KEY_ESCAPE) {
             continue;
+        }
 
-        new_action();   /* use a new message line for this action */
         if (key == KEY_SIGNAL) {
             cmd = find_command("servercancel");
         } else if (key <= KEY_MAX) {
@@ -437,7 +441,8 @@ get_command(void *callbackarg,
         if (key >= KEY_MAX + 256) {
             /* This range of user-defined keys is used for clicks on the map. */
 
-            /* For now, these don't do anything. */
+            /* For now, these don't do anything, and don't cause a
+               draw_messages_postkey() either (safe beacuse they're no-ops). */
             continue;
         }
 
@@ -497,7 +502,7 @@ get_command(void *callbackarg,
         if (!cmd) {
             snprintf(line, ARRAY_SIZE(line), "Bad command: '%s'.",
                      friendly_keyname(key));
-            curses_print_message(player.moves, line);
+            curses_print_message(msgc_cancelled, line);
         }
     } while (!cmd);
 

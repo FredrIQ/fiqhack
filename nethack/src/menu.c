@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-05 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -308,7 +308,7 @@ find_accel(int accel, struct win_menu *mdat)
 {
     int i, upper;
 
-    /* 
+    /*
      * scan visible entries first: long list of (eg the options menu)
      * might re-use accelerators, so that each is only unique among the visible
      * menu items
@@ -322,7 +322,7 @@ find_accel(int accel, struct win_menu *mdat)
     for (i = mdat->offset; i < upper; i++)
         if (mdat->items[i].group_accel == accel)
             return i;
-    /* 
+    /*
      * extra effort: if the list is too long for one page search for the accel
      * among those entries, too and scroll the changed item into view.
      */
@@ -351,7 +351,7 @@ menu_search_callback(const char *sbuf, void *mdat_void)
             break;
     if (i < mdat->icount) {
         int end = max(mdat->icount - mdat->innerheight, 0);
-        
+
         mdat->offset = min(i, end);
     }
 }
@@ -367,7 +367,7 @@ objmenu_search_callback(const char *sbuf, void *mdat_void)
             break;
     if (i < mdat->icount) {
         int end = max(mdat->icount - mdat->innerheight, 0);
-        
+
         mdat->offset = min(i, end);
     }
 }
@@ -404,9 +404,10 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
     prevcurs = nh_curs_set(0);
 
-    gw = alloc_gamewin(sizeof (struct win_menu));
+    gw = alloc_gamewin(sizeof (struct win_menu), FALSE);
     gw->draw = draw_menu;
     gw->resize = resize_menu;
+
     mdat = (struct win_menu *)gw->extra;
     mdat->items = item_copy;
     mdat->icount = ml->icount;
@@ -552,7 +553,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
             curses_getline("Search:", mdat, menu_search_callback);
             break;
 
-            /* try to find an item for this key and, if one is found, select it 
+            /* try to find an item for this key and, if one is found, select it
              */
         default:
             if (mdat->how == PICK_LETTER) {
@@ -630,7 +631,7 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
     int x1 = 0, y1 = 0, x2 = -1, y2 = -1;
 
     if (msgwin)
-        pause_messages();
+        draw_messages_precover();
     redraw_popup_windows();
 
     /* Even while watching/replaying, these menus take input. */
@@ -895,7 +896,7 @@ find_objaccel(int accel, struct win_objmenu *mdat)
 {
     int i, upper;
 
-    /* 
+    /*
      * scan visible entries first: long list of items (eg the options menu)
      * might re-use accelerators, so that each is only unique among the visible
      * menu items
@@ -905,7 +906,7 @@ find_objaccel(int accel, struct win_objmenu *mdat)
         if (mdat->items[i].accel == accel)
             return i;
 
-    /* 
+    /*
      * extra effort: if the list is too long for one page search for the accel
      * among those entries, too
      */
@@ -934,7 +935,7 @@ curses_display_objects(
     struct nh_objresult results[objlist->icount ? objlist->icount : 1];
 
     if (msgwin)
-        pause_messages();
+        draw_messages_precover();
 
     if (isendwin() || COLS < COLNO || LINES < ROWNO) {
         dealloc_objmenulist(objlist);
@@ -955,9 +956,10 @@ curses_display_objects(
 
     prevcurs = nh_curs_set(0);
 
-    gw = alloc_gamewin(sizeof (struct win_objmenu));
+    gw = alloc_gamewin(sizeof (struct win_objmenu), FALSE);
     gw->draw = draw_objmenu;
     gw->resize = resize_objmenu;
+
     mdat = (struct win_objmenu *)gw->extra;
     mdat->items = item_copy;
     mdat->icount = objlist->icount;
@@ -1156,7 +1158,7 @@ curses_display_objects(
                 break;
             }
 
-            /* try to find an item for this key and, if one is found, select it 
+            /* try to find an item for this key and, if one is found, select it
              */
             idx = find_objaccel(key, mdat);
 
