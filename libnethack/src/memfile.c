@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-22 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -702,12 +702,13 @@ mdiffflush(struct memfile *mf, boolean eof)
         }
         /* "last copy" = the copy ends just before this point (so presumably
            this point will be edited or seeked away) */
-        fprintf(debuglog, "] pos %d, last copy %d:%08lx%+d\n> ",
+        fprintf(debuglog, "] pos %d, last copy %d:%08lx%+d anchor %d\n> ",
                 mf->pos,
                 mf->last_tag ? mf->last_tag->tagtype : -1,
                 mf->last_tag ? mf->last_tag->tagdata : 0,
                 mf->pos - (int)mf->pending_edits -
-                (mf->last_tag ? mf->last_tag->pos : 0));
+                (mf->last_tag ? mf->last_tag->pos : 0),
+                mf->coord_relative_to);
     }
 
     mdiffwritecmd(mf, best + 0);
@@ -722,10 +723,10 @@ mdiffflush(struct memfile *mf, boolean eof)
        position, we calculate the value of pos as of the previous flush, then
        work forwards from there. If we see it in the second position, we can
        just use the value of pos right now. */
-    if (best[0].command == mdiff_copy)
+    if (best[0].command == mdiff_copy && best[0].arg1)
         mf->coord_relative_to = mf->pos - mf->pending_edits -
             mf->pending_copies + best[0].arg1;
-    if (best[1].command == mdiff_copy)
+    if (best[1].command == mdiff_copy && best[1].arg1)
         mf->coord_relative_to = mf->pos;
 
     if (debuglog)
@@ -843,6 +844,11 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
                 arg1_bits_required -= 8;
             }
 
+            if (debuglog)
+                fprintf(debuglog, "< %s %" PRIdLEAST64 " %" PRIuLEAST64 "\n",
+                        mdiff_command_sizes[mdci.command].name,
+                        (int_least64_t)mdci.arg1, (uint_least64_t)mdci.arg2);
+
             /* Handle the "copy" part of a command, if any. */
             long long copy;
             switch (mdci.command) {
@@ -880,6 +886,13 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
                 errfunction("this should be unreachable", diff);
                 return;
             }
+
+            if (debuglog)
+                fprintf(debuglog, "= seek %" PRIdLEAST64
+                        " copy %" PRIdLEAST64,
+                        (uint_least64_t)
+                        (mdci.command == mdiff_seek ? mdci.arg1 : 0),
+                        (uint_least64_t)copy);
 
             mfp = mmmap(new_memfile, copy, new_memfile->pos);
             if (dbpos < 0 && copy) {
@@ -934,6 +947,11 @@ mdiffapply(char *diff, long difflen, struct memfile *diff_base,
                 errfunction("this should be unreachable", diff);
                 return;
             }
+
+            if (debuglog)
+                fprintf(debuglog, " edit %" PRIdLEAST64
+                        " pos %" PRIdLEAST64 "\n", (uint_least64_t)edit,
+                        (uint_least64_t)(new_memfile->pos + edit));
 
             mfp = mmmap(new_memfile, edit, new_memfile->pos);
             if (mdci.command == mdiff_edit || mdci.command == mdiff_copyedit ||
