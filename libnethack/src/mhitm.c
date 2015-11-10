@@ -153,7 +153,7 @@ fightm(struct monst *mon)
            since this is no longer exclusively called by conflict */
         if ((result & MM_HIT) && !(result & MM_DEF_DIED)) {
             notonhead = 0;
-            mattackm(mon, mtmp); /* retaliation */
+            mattackm(mtmp, mon); /* retaliation */
         }
 
         /* Turn is spent, so return 1. This used to return 0 if the attack was
