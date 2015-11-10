@@ -259,7 +259,9 @@ show_msgwin(enum moreforce more)
                      !chunk->seen ? color :
                      color == CLR_GRAY || color == CLR_WHITE ?
                      CLR_DARK_GRAY : color & 7, 0));
-        mvwaddstr(msgwin, chunk->y + y_offset, chunk->x, chunk->message);
+        if (chunk->x < ui_flags.mapwidth)
+            mvwaddnstr(msgwin, chunk->y + y_offset, chunk->x,
+                       chunk->message, ui_flags.mapwidth - chunk->x);
     }
 
     /* Maybe draw a --More--. */
