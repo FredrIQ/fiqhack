@@ -279,7 +279,7 @@ show_msgwin(enum moreforce more)
 static void
 more_io(nh_bool block_until_tab)
 {
-    in_more_io = block_until_tab ? mf_more : mf_tab;
+    in_more_io = block_until_tab ? mf_tab : mf_more;
 
     while (!stopmore || block_until_tab) {
         switch (get_map_key(FALSE, FALSE,
