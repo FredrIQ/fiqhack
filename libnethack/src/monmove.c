@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -483,13 +483,13 @@ dochug(struct monst *mtmp)
     }
 
     /* Look for other monsters to fight (at a distance) */
-    if ((attacktype(mtmp->data, AT_BREA) || attacktype(mtmp->data, AT_GAZE) ||
-         attacktype(mtmp->data, AT_SPIT) ||
+    if ((((attacktype(mtmp->data, AT_BREA) || attacktype(mtmp->data, AT_GAZE) ||
+           attacktype(mtmp->data, AT_SPIT)) && !mtmp->mspec_used) ||
          (attacktype(mtmp->data, AT_WEAP) && select_rwep(mtmp) != 0)) &&
         mtmp->mlstmv != moves && mtmp->mstrategy != st_ascend) {
         struct monst *mtmp2 = mfind_target(mtmp, FALSE);
 
-        if (mtmp2 && mtmp2 != &youmonst) {
+        if (mtmp2) {
             if (mattackm(mtmp, mtmp2) & MM_AGR_DIED)
                 return 1;       /* Oops. */
 
