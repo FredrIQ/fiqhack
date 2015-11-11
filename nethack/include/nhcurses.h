@@ -350,26 +350,46 @@ struct gamewin {
     void *extra[];
 };
 
+/* Structure for menu-like things that might or might not be actual menus.  This
+   handles scrolling, borders, scrollbars etc. but doesn't make assumptions
+   about what's shown on the inside.  It respects MP_LINES/MP_PAGES, and thus
+   whatever is scrolled must be happy to scroll to arbitrary positions,
+   including beyond the end (although not necessarily before the start). */
+struct win_scrollable {
+    const char *title;
+    int linecount;      /* number of lines in the underlying document */
+    int innerwidth, innerheight; /* dimensions of the viewport into it */
+    int frameheight;    /* height of the frame */
+    int width, height;  /* dimensions of viewport + scrollbars/frame/etc. */
+    int x1, y1, x2, y2; /* parameters for placement algorithm */
+    int wanted_width;   /* "ideal" innerwidth; use when handling resize */
+    int offset;         /* scroll position, expressed as the number of lines
+                           currently hidden above the top of the viewport */
+    int dismissable;    /* what style of frame to render */
+};
+
 
 # define MAXCOLS 16
+/* Note: the win_scrollable must be the first entry of this struct (because
+   a struct win_menu pointer is sometimes cast to a struct win_scrollable
+   pointer) */
 struct win_menu {
+    struct win_scrollable s;
     struct nh_menuitem *items;
     char *selected;
     const char *title;
-    int icount, how, offset, placement_hint;
-    int height, frameheight, innerheight;
-    int width, innerwidth, colpos[MAXCOLS], maxcol;
-    int x1, y1, x2, y2;
-    int dismissable;
+    int how;
+    int colpos[MAXCOLS], maxcol;
 };
 
+/* Note: the win_scrollable must be the first entry of this struct, for the same
+   reason as with win_menu */
 struct win_objmenu {
+    struct win_scrollable s;
     struct nh_objitem *items;
     int *selected;
     const char *title;
-    int icount, how, offset, selcount, placement_hint;
-    int height, frameheight, innerheight;
-    int width, innerwidth;
+    int how, selcount;
 };
 
 struct win_getline {
