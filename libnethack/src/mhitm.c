@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-10 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -96,7 +96,7 @@ missmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
    attacked something, 0 otherwise */
 int
 fightm(struct monst *mon)
-{       /* have monsters fight each other */
+{
     int result;
     boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));

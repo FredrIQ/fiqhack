@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -500,7 +500,7 @@ digactualhole(int x, int y, struct monst *mon, int ttyp)
     boolean yours = (mon == &youmonst);
     boolean vis = (mon && canseemon(mon));
     boolean byobj = !mon;
-    struct level *lev = ((yours || byobj) ? level : mon->dlevel);
+    struct level *lev = (byobj ? level : m_dlevel(mon));
     struct monst *target = m_at(lev, x, y);
     boolean hityou = (target == &youmonst);
     struct obj *oldobjs, *newobjs;
@@ -684,7 +684,7 @@ dighole(struct monst *mon, boolean pit_only)
     struct rm *loc = &level->locations[m_mx(mon)][m_my(mon)];
     struct obj *boulder_here;
     schar typ;
-    boolean nohole = !can_dig_down(you ? level : mon->dlevel);
+    boolean nohole = !can_dig_down(m_dlevel(mon));
 
     if ((ttmp &&
          (ttmp->ttyp == MAGIC_PORTAL || ttmp->ttyp == VIBRATING_SQUARE ||

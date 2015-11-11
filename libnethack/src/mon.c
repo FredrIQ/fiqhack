@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-10 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -345,10 +345,12 @@ make_corpse(struct monst *mtmp)
 int
 minliquid(struct monst *mtmp)
 {
+    boolean vis = canseemon(mtmp);
     boolean inpool, inlava, infountain;
 
     inpool = is_pool(level, mtmp->mx, mtmp->my) && !flying(mtmp) &&
-        !levitates(mtmp);
+        !levitates(mtmp) && !waterwalks(mtmp);
+    /* Not waterwalks() for lava, the source might burn up... */
     inlava = is_lava(level, mtmp->mx, mtmp->my) && !flying(mtmp) &&
         !levitates(mtmp);
     infountain = IS_FOUNTAIN(level->locations[mtmp->mx][mtmp->my].typ);
@@ -360,7 +362,7 @@ minliquid(struct monst *mtmp)
 
     /* Gremlin multiplying won't go on forever since the hit points keep going
        down, and when it gets to 1 hit point the clone function will fail. */
-    if (mtmp->data == &mons[PM_GREMLIN] && (inpool || infountain) && rn2(3)) {
+    if (mtmp->data == &mons[PM_GREMLIN] && rn2(3) && (infountain || inpool)) {
         if (split_mon(mtmp, NULL))
             dryup(mtmp->mx, mtmp->my, FALSE);
         if (inpool)
@@ -385,33 +387,55 @@ minliquid(struct monst *mtmp)
 
     if (inlava) {
         boolean alive_means_lifesaved = TRUE;
-        /*
-         * Lava effects much as water effects. Lava likers are able to
-         * protect their stuff. Fire resistant monsters can only protect
-         * themselves  --ALI
-         */
+        /* Lava effects much as water effects. Lava likers are able to
+           protect their stuff. Fire resistant monsters can only protect
+           themselves  --ALI */
         burn_away_slime(mtmp);
         if (!is_clinger(mtmp->data) && !likes_lava(mtmp->data)) {
+            /* check if water walking boots should burn */
+            struct obj *armf = which_armor(mtmp, os_armf);
+            if (waterwalks(mtmp) && armf && is_organic(armf) &&
+                !armf->oerodeproof) {
+                if (vis)
+                    pline("%s %s into flame!", Monnam(mtmp),
+                          aobjnam(armf, "burst"));
+                mtmp->misc_worn_check &= ~W_MASK(os_armf);
+                m_useup(mtmp, armf);
+            }
+            /* If the monster still has water walking, don't teleport
+               if it dies (from lack of fire resistance) */
+            if (waterwalks(mtmp))
+                alive_means_lifesaved = FALSE;
             if (!resists_fire(mtmp)) {
-                if (cansee(mtmp->mx, mtmp->my))
-                    pline("%s %s.", Monnam(mtmp),
-                          mtmp->data ==
-                          &mons[PM_WATER_ELEMENTAL] ? "boils away" :
-                          "burns to a crisp");
-                mondead(mtmp);
-            } else {
+                if (waterwalks(mtmp)) {
+                    if (vis)
+                        pline("The lava burns %s!",
+                              mon_nam(mtmp));
+                    mtmp->mhp -= dice(6, 6);
+                    if (mtmp->mhp <= 0)
+                        mondied(mtmp);
+                } else {
+                    if (cansee(mtmp->mx, mtmp->my))
+                        pline("%s %s.", Monnam(mtmp),
+                              mtmp->data ==
+                              &mons[PM_WATER_ELEMENTAL] ? "boils away" :
+                              "burns to a crisp");
+                    mondead(mtmp);
+                }
+            } else if (!waterwalks(mtmp)) {
                 if (--mtmp->mhp <= 0) {
                     if (cansee(mtmp->mx, mtmp->my))
                         pline("%s surrenders to the fire.", Monnam(mtmp));
                     mondead(mtmp);
                 } else {
-                    alive_means_lifesaved = FALSE;
                     if (cansee(mtmp->mx, mtmp->my))
                         pline("%s burns slightly.", Monnam(mtmp));
+                    alive_means_lifesaved = FALSE;
                 }
             }
             if (!DEADMONSTER(mtmp)) {
-                fire_damage(mtmp->minvent, FALSE, FALSE, mtmp->mx, mtmp->my);
+                if (!waterwalks(mtmp))
+                    fire_damage(mtmp->minvent, FALSE, FALSE, mtmp->mx, mtmp->my);
                 if (alive_means_lifesaved) {
                     rloc(mtmp, TRUE);
                     /* Analogous to player case: if we have nowhere to place the
@@ -426,9 +450,8 @@ minliquid(struct monst *mtmp)
         /* Most monsters drown in pools.  flooreffects() will take care of
            water damage to dead monsters' inventory, but survivors need to be
            handled here.  Swimmers are able to protect their stuff... */
-        if (!is_clinger(mtmp->data)
-            && !swims(mtmp) && !unbreathing(mtmp)) {
-            if (cansee(mtmp->mx, mtmp->my)) {
+        if (!is_clinger(mtmp->data) && !swims(mtmp)) {
+            if (cansee(mtmp->mx, mtmp->my) && !unbreathing(mtmp)) {
                 pline("%s drowns.", Monnam(mtmp));
             }
             if (u.ustuck && Engulfed && u.ustuck == mtmp) {
@@ -437,14 +460,16 @@ minliquid(struct monst *mtmp)
                 pline("%s sinks as water rushes in and flushes you out.",
                       Monnam(mtmp));
             }
-            mondead(mtmp);
-            if (!DEADMONSTER(mtmp)) {
-                rloc(mtmp, TRUE);
-                water_damage_chain(mtmp->minvent, FALSE);
-                minliquid(mtmp);
-                return 0;
+            if (!unbreathing(mtmp)) {
+                mondead(mtmp);
+                if (!DEADMONSTER(mtmp)) {
+                    rloc(mtmp, TRUE);
+                    water_damage_chain(mtmp->minvent, FALSE);
+                    minliquid(mtmp);
+                    return 0;
+                }
             }
-            return 1;
+            return DEADMONSTER(mtmp) ? 1 : 0;
         }
     } else {
         /* but eels have a difficult time outside */
@@ -2523,7 +2548,7 @@ update_displacement(struct monst *mon)
     int x;
     int y;
     int i;
-    struct level *lev = (mon == &youmonst ? level : mon->dlevel);
+    struct level *lev = m_dlevel(mon);
     for (i = 0; i < 100; i++) {
         x = (rn1(5, m_mx(mon)) - 2);
         y = (rn1(5, m_my(mon)) - 2);
@@ -2550,7 +2575,7 @@ update_displacement(struct monst *mon)
 void
 unset_displacement(struct monst *mon)
 {
-    struct level *lev = (mon == &youmonst ? level : mon->dlevel);
+    struct level *lev = m_dlevel(mon);
     if (displaced(mon)) {
         lev->dmonsters[mon->dx][mon->dy] = NULL;
         if (level) {
@@ -2567,7 +2592,7 @@ unset_displacement(struct monst *mon)
 void
 set_displacement(struct monst *mon)
 {
-    struct level *lev = (mon == &youmonst ? level : mon->dlevel);
+    struct level *lev = m_dlevel(mon);
     if (displaced(mon)) {
         lev->dmonsters[mon->dx][mon->dy] = mon;
         if (level) {

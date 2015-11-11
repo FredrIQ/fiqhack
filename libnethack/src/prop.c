@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-11 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -296,9 +296,7 @@ init_permonsts(const struct monst *mon, const struct permonst **role,
 /* Returns an object slot mask giving all the reasons why the given
    player/monster might have the given property, limited by "reasons", an object
    slot mask (W_EQUIP, INTRINSIC, and ANY_PROPERTY are the most likely values
-   here, but you can specify slots individually if you like).
-   The "os_polyform" checks used to not be accurate at all. They are now,
-   hopefully */
+   here, but you can specify slots individually if you like). */
 unsigned
 m_has_property(const struct monst *mon, enum youprop property,
                unsigned reasons, boolean even_if_blocked)
@@ -346,10 +344,9 @@ m_has_property(const struct monst *mon, enum youprop property,
     /* External circumstances */
     /* Fumbling on ice */
     if (property == FUMBLING &&
-        is_ice(mon == &youmonst ? level : mon->dlevel,
-               m_mx(mon), m_my(mon)) &&
-        !levitates(mon) && !flying(mon) &&
-        !is_whirly(mon->data)) {
+        is_ice(m_dlevel(mon), m_mx(mon), m_my(mon)) &&
+        (mon != &youmonst || !u.usteed) && !flying(mon) &&
+        !levitates(mon) && !is_whirly(mon->data)) {
         struct obj *armf = which_armor(mon, os_armf);
         if (armf && armf->otyp == find_skates())
             rv |= W_MASK(os_circumstance);
@@ -358,21 +355,19 @@ m_has_property(const struct monst *mon, enum youprop property,
     /* Cases specific to the player */
     if (mon == &youmonst) {
         /* Birth options */
-        if (property == BLINDED && flags.permablind)
-            rv |= W_MASK(os_birthopt);
-        if (property == HALLUC && flags.permahallu)
-            rv |= W_MASK(os_birthopt);
-        if (property == UNCHANGING && flags.polyinit_mnum != -1)
+        if ((property == BLINDED && flags.permablind) ||
+            (property == HALLUC && flags.permahallu) ||
+            (property == UNCHANGING && flags.polyinit_mnum != -1))
             rv |= W_MASK(os_birthopt);
 
         /* External circumstances */
         if (property == BLINDED && u_helpless(hm_unconscious))
             rv |= W_MASK(os_circumstance);
 
-        /* Riding */
-        if (property == FLYING && u.usteed && is_flyer(u.usteed->data))
-            rv |= W_MASK(os_saddle);
-        if (property == SWIMMING && u.usteed && pm_swims(u.usteed->data))
+        /* Riding allows you to inherit a few properties from steeds */
+        if ((property == FLYING || property == SWIMMING ||
+            property == WWALKING || property == LEVITATION) &&
+            u.usteed && has_property(u.usteed, property))
             rv |= W_MASK(os_saddle);
     }
 
@@ -381,17 +376,15 @@ m_has_property(const struct monst *mon, enum youprop property,
        TODO: Monsters with no eyes are not considered blind. This doesn't
        make much sense. However, changing it would be a major balance
        change (due to Elbereth), and so it has been left alone for now. */
-    if (property == BLINDED && !haseyes(mon->data))
-        rv |= (unsigned)(W_MASK(os_blocked));
-    if (property == HALLUC && resists_hallu(mon))
-        rv |= (unsigned)(W_MASK(os_blocked));
-    if (property == WWALKING && Is_waterlevel(m_mz(mon)))
-        rv |= (unsigned)(W_MASK(os_blocked));
-    if (mworn_blocked(mon, property))
+    if ((property == BLINDED && !haseyes(mon->data)) ||
+        (property == HALLUC && resists_hallu(mon)) ||
+        (property == WWALKING && Is_waterlevel(m_mz(mon))) ||
+        mworn_blocked(mon, property))
         rv |= (unsigned)(W_MASK(os_blocked));
 
-    /* If a property is blocked, turn off all flags except circumstance/blocked,
-       unless even_if_blocked is TRUE */
+    /* If a property is blocked, turn off all flags except circumstance/birthopt,
+       unless even_if_blocked is TRUE. Yes, including os_blocked, because not
+       doing that would interfere with macros and whatnot. */
     if ((rv & W_MASK(os_blocked)) && !even_if_blocked)
         rv &= (unsigned)(W_MASK(os_circumstance) |
                          W_MASK(os_birthopt));
@@ -460,16 +453,13 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
     case SPE_MAGIC_MISSILE:
         if (!prop_wary(user, target, ANTIMAGIC))
             return TRUE;
-        if (!user)
+        if (!user || obj->oclass != WAND_CLASS)
             return FALSE;
-        wandlevel = 0;
-        if (obj->oclass == WAND_CLASS) {
-            wandlevel = mprof(user, MP_WANDS);
-            if (obj->mbknown)
-                wandlevel = getwandlevel(user, obj);
-            if (wandlevel >= P_SKILLED)
-                return TRUE;
-        }
+        wandlevel = mprof(user, MP_WANDS);
+        if (obj->mbknown)
+            wandlevel = getwandlevel(user, obj);
+        if (wandlevel >= P_SKILLED)
+            return TRUE;
         return FALSE;
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
@@ -490,16 +480,13 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
               is_undead(target->data) ||
               is_demon(target->data)))
             return TRUE;
-        if (!user)
+        if (!user || obj->oclass != WAND_CLASS)
             return FALSE;
-        wandlevel = 0;
-        if (obj->oclass == WAND_CLASS) {
-            wandlevel = mprof(user, MP_WANDS);
-            if (obj->mbknown)
-                wandlevel = getwandlevel(user, obj);
-            if (wandlevel >= P_EXPERT)
-                return !prop_wary(user, target, DRAIN_RES);
-        }
+        wandlevel = mprof(user, MP_WANDS);
+        if (obj->mbknown)
+            wandlevel = getwandlevel(user, obj);
+        if (wandlevel >= P_EXPERT)
+            return !prop_wary(user, target, DRAIN_RES);
         return FALSE;
     case POT_PARALYSIS:
         return !prop_wary(user, target, FREE_ACTION);
@@ -586,16 +573,12 @@ teleport_at_will(const struct monst *mon)
 {
     if (!teleportitis(mon))
         return FALSE;
-    if (teleportitis(mon) & W_MASK(os_polyform))
+    /* FROMOUTSIDE isn't natural */
+    if (teleportitis(mon) & (INTRINSIC & ~FROMOUTSIDE))
         return TRUE;
-    int level;
-    if (mon == &youmonst)
-        level = u.ulevel;
-    else
-        level = mon->m_lev;
-    if (level >= 12)
+    if (m_mlev(mon) >= 12)
         return TRUE;
-    if (level >= 8) {
+    if (m_mlev(mon) >= 8) {
         if (mon == &youmonst && Race_if(PM_WIZARD))
             return TRUE;
         if (mon != &youmonst && spellcaster(mon->data))
@@ -1374,8 +1357,16 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case LWOUNDED_LEGS:
-        if (lost && !redundant)
-            heal_legs(mon, LEFT_SIDE);
+        if (lost && !redundant) {
+            /* if this is from dec_timeout and RWOUNDED_LEGS timer is 1, heal
+               both legs with a single message */
+            if (slot == os_dectimeout &&
+                property_timeout(mon, RWOUNDED_LEGS) == 1 &&
+                !(leg_hurtr(mon) & ~TIMEOUT))
+                heal_legs(mon, BOTH_SIDES);
+            else
+                heal_legs(mon, LEFT_SIDE);
+        }
         break;
     case RWOUNDED_LEGS:
         if (lost && !redundant)
@@ -1399,9 +1390,7 @@ update_property(struct monst *mon, enum youprop prop,
                 if (hallu)
                     pline("What a pity - %s just ruined a piece of %sart!",
                           you ? "you" : mon_nam(mon),
-                          ((you && ACURR(A_CHA) > 15) ||
-                           mon->data == &mons[PM_SUCCUBUS] || /* Foocubi has 18 cha */
-                           mon->data == &mons[PM_INCUBUS]) ? "fine " : "");
+                          acurr(mon, A_CHA) > 15 ? "fine " : "");
                 else
                     pline("%s %s more limber!",
                           you ? "You" : Monnam(mon),
@@ -1569,8 +1558,8 @@ update_property(struct monst *mon, enum youprop prop,
 
         if (lost && slot == os_dectimeout) {
             /* canmove+not eating is close enough to umoved */
-            if (((you && u.umoved) ||
-                 (!you && mon->mcanmove &&
+            if ((((you || mon == u.usteed) && u.umoved) ||
+                 (!you && mon != u.usteed && mon->mcanmove &&
                   !mon->meating)) &&
                 !levitates(mon)) {
                 effect = slip_or_trip(mon);
@@ -1597,7 +1586,8 @@ update_property(struct monst *mon, enum youprop prop,
     case WWALKING:
         if (mon == &youmonst)
             spoteffects(TRUE);
-        /* monsters are handled at end-of-turn elsewhere */
+        else
+            minliquid(mon);
         break;
     case HUNGER:
         break;
@@ -1901,6 +1891,7 @@ slip_or_trip(struct monst *mon)
             pline("You hear fumbling %s.",
                   dist2(u.ux, u.uy, mon->mx, mon->my) > BOLT_LIM * BOLT_LIM ?
                   "in the distance" : "nearby");
+        mwake_nearby(mon, FALSE);
         return FALSE; /* can't see the target anyway */
     }
 
@@ -1932,18 +1923,17 @@ slip_or_trip(struct monst *mon)
             pline("%s trip%s over %s.", you ? "You" : Monnam(mon),
                   you ? "" : "s", what);
     } else if (rn2(3) && is_ice(level, m_mx(mon), m_my(mon)) &&
-               !levitates(mon) && !flying(mon))
+               on_foot)
         pline("%s %s%s on the ice.",
-              !you ? Monnam(mon) :
-              u.usteed ? Monnam(u.usteed) :
-              "You", rn2(2) ? "slip" : "slide",
-              you && !u.usteed ? "" : "s");
+              you ? "You" : Monnam(mon),
+              rn2(2) ? "slip" : "slide",
+              you ? "" : "s");
     else {
         if (on_foot) {
             switch (rn2(4)) {
             case 1:
-                pline("%s trip%s over your own %s.", you ? "You" : Monnam(mon),
-                      you ? "" : "s",
+                pline("%s trip%s over %s own %s.", you ? "You" : Monnam(mon),
+                      you ? "" : "s", you ? "your" : mhis(mon),
                       Hallucination ? "elbow" : makeplural(body_part(FOOT)));
                 break;
             case 2:
@@ -1996,9 +1986,11 @@ slip_or_trip(struct monst *mon)
             }
         }
     }
-    if (pctload > 50)
+    if (pctload > 50) {
         pline("%s make%s a lot of noise!",
               you ? "You" : Monnam(mon), you ? "" : "s");
+        mwake_nearby(mon, FALSE);
+    }
     return TRUE;
 }
 
