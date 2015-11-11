@@ -788,9 +788,6 @@ display_rip(int how, long umoney, const char *killer)
     if (!program_state.game_running)
         return;
 
-    /* clean up unneeded windows */
-    win_pause_output(P_MESSAGE);
-
     init_menulist(&menu);
 
     pbuf = msgprintf("%s %s the %s, %s...", Goodbye(), u.uplname,
@@ -993,8 +990,6 @@ done_noreturn(int how, const char *killer)
     taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));
     paygd();
     clearpriests();
-
-    win_pause_output(P_MESSAGE);
 
     if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT)
         disclose(how, taken, money_cnt(invent) + hidden_gold());
