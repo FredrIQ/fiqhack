@@ -122,13 +122,22 @@ enum game_dirs {
 };
 
 /* A boolean that can be "pinned" at a particular value, or that can be left to
-   have its value chosen automatically. 
+   have its value chosen automatically.
 
    I'm /so/ tempted to just use FALSE, TRUE, and ENOENT instead... */
 enum autoable_boolean {
     AB_FALSE,
     AB_TRUE,
     AB_AUTO,
+};
+
+/* People have been complaining about not having their favourite msg_window
+   settings, so let's implement the entire set from 3.4.0. */
+enum prevmsg_style {
+    PREVMSG_SINGLE,
+    PREVMSG_COMBINATION,
+    PREVMSG_FULL,
+    PREVMSG_REVERSE
 };
 
 /* Any extra space on the terminal is used to give advice about controls. This
@@ -148,6 +157,7 @@ enum keyreq_context {
     krc_getpos,
     krc_menu,
     krc_objmenu,
+    krc_prevmsg,
     krc_more,
     krc_moretab,
     krc_pause_map,
@@ -212,6 +222,11 @@ struct interface_flags {
     int maphoverx;
     int maphovery;
 
+    /* Implementation of "single" and "combination" msg_window modes: this
+       scrolls the message window "up" that many lines, hiding the newest
+       messages and showing older ones. */
+    int msghistory_yskip;
+
     nh_bool want_cursor;       /* delayed-action cursor setting */
 
     char username[BUFSZ];      /* username being used in connection-only mode */
@@ -268,6 +283,7 @@ struct settings {
     enum nh_animation animation;     /* when to delay */
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
+    enum prevmsg_style msg_window;
     enum nh_frame whichframes;
     enum nh_palette palette;         /* palette to use for text */
 
@@ -311,7 +327,7 @@ struct curses_drawing_info {
     struct curses_symdef *objects;
     /* invisible monster symbol: show this if nh_dbuf_entry.invis is true */
     struct curses_symdef *invis;
-    /* monster layer symbols: nh_dbuf_entry.mon symbols with id <= num_monsters 
+    /* monster layer symbols: nh_dbuf_entry.mon symbols with id <= num_monsters
        are actual monsters, followed by warnings */
     struct curses_symdef *monsters;
     struct curses_symdef *warnings;

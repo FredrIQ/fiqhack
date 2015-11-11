@@ -1273,6 +1273,7 @@ key_is_meaningful_in_context(int key, enum keyreq_context context)
     case krc_yn_generic:
     case krc_getlin:
     case krc_menu:
+    case krc_prevmsg:
     case krc_objmenu:
     case krc_query_key_inventory:
     case krc_query_key_inventory_nullable:

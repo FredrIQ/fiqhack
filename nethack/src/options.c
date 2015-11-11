@@ -103,6 +103,15 @@ static struct nh_listitem autoable_boolean_list[] = {
 static struct nh_enum_option autoable_boolean_spec =
     { autoable_boolean_list, listlen(autoable_boolean_list) };
 
+static struct nh_listitem msg_window_list[] = {
+    {PREVMSG_SINGLE,      "single"},
+    {PREVMSG_COMBINATION, "combination"},
+    {PREVMSG_FULL,        "full"},
+    {PREVMSG_REVERSE,     "reverse"}
+};
+static struct nh_enum_option msg_window_spec =
+    { msg_window_list, listlen(msg_window_list) };
+
 static struct nh_listitem frame_list[] = {
     {FRAME_ALL,   "screen and menus"},
     {FRAME_MENUS, "menus only"},
@@ -153,6 +162,8 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_INT, {.i = 8}},
     {"msghistory", "number of messages lines viewable via prevmsg",
      nh_birth_ingame, OPTTYPE_INT, {.i = 256}},
+    {"msg_window", "behaviour of the 'previous message' command",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = PREVMSG_FULL}},
     {"networkmotd", "get tips and announcements from the Internet",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MOTD_ASK}},
     {"optstyle", "option menu display style",
@@ -333,6 +344,8 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.show_motd = option->value.e;
     } else if (!strcmp(option->name, "menupaging")) {
         settings.menupaging = option->value.e;
+    } else if (!strcmp(option->name, "msg_window")) {
+        settings.msg_window = option->value.e;
     } else if (!strcmp(option->name, "optstyle")) {
         settings.optstyle = option->value.e;
     } else if (!strcmp(option->name, "msgheight")) {
@@ -381,6 +394,7 @@ init_options(void)
     find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
     find_option("menupaging")->e = menupaging_spec;
+    find_option("msg_window")->e = msg_window_spec;
     find_option("palette")->e = palette_spec;
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;

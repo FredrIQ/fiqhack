@@ -287,6 +287,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
                     nh_bool include_debug)
 {
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_RUN | DIRCMD_GO);
+    nh_bool cancel_yskip = TRUE;
 
     ui_flags.in_zero_time_command = TRUE;
 
@@ -343,6 +344,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
 
     case UICMD_PREVMSG:
         doprev_message();
+        cancel_yskip = FALSE;
         *cmd = NULL;
         break;
 
@@ -361,6 +363,10 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
         break;
     }
     ui_flags.in_zero_time_command = FALSE;
+
+    /* We cancel the yskip on all commands exept UICMD_PREVMSG. */
+    if (cancel_yskip)
+        ui_flags.msghistory_yskip = 0;
 }
 
 void
@@ -454,6 +460,10 @@ get_command(void *callbackarg,
                 if (!cmd)       /* command was fully handled internally */
                     continue;
             }
+
+            /* When we know for certain that the command wasn't a prevmsg
+               command, cancel any prevmsg scroll in progress. */
+            ui_flags.msghistory_yskip = 0;
 
             if (multi && cmd->flags & CMD_ARG_LIMIT) {
                 ncaa.arg.argtype |= CMD_ARG_LIMIT;

@@ -287,6 +287,12 @@ draw_extrawin(enum keyreq_context context)
                  "elect all   -:select none"             );
         break;
 
+    case krc_prevmsg:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Scroll the list of messages with '<' and"
+                 "'>'. Press Return when finished."      );
+        break;
+
     case krc_more:
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Press Space to see the remaining message"

@@ -262,7 +262,7 @@ show_msgwin_core(enum moreforce more, WINDOW *win,
 
         int color = resolve_channel_color(chunk->channel) & 15;
         wattrset(win, curses_color_attr(
-                     !chunk->seen ? color :
+                     (!chunk->seen || win != msgwin) ? color :
                      color == CLR_GRAY || color == CLR_WHITE ?
                      CLR_DARK_GRAY : color & 7, 0));
         if (chunk->x < winwidth)
@@ -281,11 +281,12 @@ show_msgwin_core(enum moreforce more, WINDOW *win,
 }
 
 /* show_msgwin_core's usual parameter set: draw the most recent messages to the
-   message window. */
+   message window (or slightly older ones with msghistory_yskip set). */
 static void
 show_msgwin(enum moreforce more)
 {
-    show_msgwin_core(more, msgwin, ui_flags.msgheight, ui_flags.mapwidth, 0);
+    show_msgwin_core(more, msgwin, ui_flags.msgheight, ui_flags.mapwidth,
+                     ui_flags.msghistory_yskip);
 }
 
 /* Implementation of --More--. Assumes that the rendering has already happened,
@@ -610,14 +611,16 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
    will be up to date. This should be called before any key input that has the
    message window visible.
 
-   The room_for_more argument is used to handle a particularly awkward case: the
-   game fills the message area exactly with messages, does a delay, and then
-   forces a --More-- as part of the same turn without printing any further
-   messages. If it's set to TRUE, the last portion of the message area (where
-   the --More-- goes) will be left empty, in case you subsequently need to
-   render a --More-- there. If it's set to FALSE, you're promising that after
-   this function returns, you will call draw_messages_postkey() before the next
-   event that might potentially force a --More--. */
+   The room_for_more argument is used externally to handle a particularly
+   awkward case: the game fills the message area exactly with messages, does a
+   delay, and then forces a --More-- as part of the same turn without printing
+   any further messages. If it's set to TRUE, the last portion of the message
+   area (where the --More-- goes) will be left empty, in case you subsequently
+   need to render a --More-- there. If it's set to FALSE, you're promising that
+   after this function returns, you will call draw_messages_postkey() before the
+   next event that might potentially force a --More--. (The argument is also
+   used for internal purposes a lot, in situations where we know we're about to
+   show a --More--.) */
 void
 draw_messages_prekey(nh_bool room_for_more)
 {
@@ -733,6 +736,10 @@ draw_messages_precover(void)
 void
 force_more(nh_bool require_tab)
 {
+    /* ensure the --More--/--Tab!-- is alongside the most recent message, even
+       if we Ctrl-P'ed in between */
+    ui_flags.msghistory_yskip = 0;
+
     /* Get all messages onto the screen. */
     draw_messages_prekey(TRUE);
 
@@ -748,6 +755,9 @@ force_more(nh_bool require_tab)
 void
 curses_print_message(enum msg_channel msgc, const char *msg)
 {
+    /* When we get a new message, stop scrolling back into message history */
+    ui_flags.msghistory_yskip = 0;
+
     /* Sanity: ignore blank messages */
     if (!*msg)
         return;
@@ -855,7 +865,7 @@ reconstruct_message_history(nh_bool reverse)
     while (temp) {
         /* If we're going backwards, lay out pending_message if we're looking at
            part of a new message. */
-        if (reverse && temp->end_of_message) {
+        if (reverse && temp->end_of_message && pending_message) {
             chunkify_pending_message(FALSE, FALSE, TRUE);
             last_chunk->seen = pending_seen;
         }
@@ -885,7 +895,7 @@ reconstruct_message_history(nh_bool reverse)
 
         /* If we're going forwards, lay out pending_message if we just finished
            reconstructing a complete message. */
-        if (!reverse && temp->end_of_message) {
+        if (!reverse && temp->end_of_message && pending_message) {
             chunkify_pending_message(FALSE, FALSE, TRUE);
             last_chunk->seen = pending_seen;
         }
@@ -893,6 +903,13 @@ reconstruct_message_history(nh_bool reverse)
         struct message_chunk *temp2 = reverse ? temp->prev : temp->next;
         free(temp);
         temp = temp2;
+    }
+
+    /* There isn't an end_of_message before the first message, so handle that
+       here */
+    if (reverse && pending_message) {
+        chunkify_pending_message(FALSE, FALSE, TRUE);
+        last_chunk->seen = pending_seen;
     }
 }
 
@@ -926,10 +943,25 @@ doprev_message(void)
     struct win_scrollable *s;
     nh_bool done = FALSE;
 
+    /* Can we implement this simply using yskip? */
+    if (settings.msg_window == PREVMSG_SINGLE ||
+        (settings.msg_window == PREVMSG_COMBINATION &&
+         ui_flags.msghistory_yskip < 2)) {
+        ui_flags.msghistory_yskip++;
+        redraw_messages();
+        return;
+    }
+
+    ui_flags.msghistory_yskip = 0;
+
     if (COLS < COLNO || LINES < ROWNO)
         return; /* don't try to render this on a subsize terminal */
     if (!last_chunk)
         return; /* nothing to show */
+
+    /* The user might want the messages in reverse order. */
+    if (settings.msg_window == PREVMSG_REVERSE)
+        reconstruct_message_history(TRUE);
 
     /* If we view previous messages while watching, we want to pause our
        watching while the messages are shown (and catch up only afterwards).
@@ -957,12 +989,13 @@ doprev_message(void)
 
     layout_scrollable(gw);
     initialize_scrollable_windows(gw, 0, 0); /* aim for the top left corner */
-    scroll_onscreen(s, s->linecount - 1);    /* scroll to the end */
+    if (settings.msg_window != PREVMSG_REVERSE)
+        scroll_onscreen(s, s->linecount - 1);    /* scroll to the end */
 
     while (!done) {
         draw_prev_messages(gw);
 
-        int key = nh_wgetch(gw->win, krc_menu); /* TODO: separate krc */
+        int key = nh_wgetch(gw->win, krc_prevmsg);
         if (!scroll_using_key(s, key, &done))
             switch (key) {
             case KEY_ESCAPE:
@@ -978,6 +1011,10 @@ doprev_message(void)
                 break;        /* ignore most non-scrolling keypresses */
             }
     }
+
+    /* Put the messages back into their original order, if required. */
+    if (settings.msg_window == PREVMSG_REVERSE)
+        reconstruct_message_history(TRUE);
 
     ui_flags.in_zero_time_command = save_zero_time;
     delete_gamewin(gw);
