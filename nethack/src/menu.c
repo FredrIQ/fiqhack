@@ -339,7 +339,7 @@ assign_objmenu_accelerators(struct win_objmenu *mdat)
 /* Functions for non-object menus (specifically) */
 
 static int
-calc_colwidths(char *menustr, int *colwidth)
+calc_colwidths(char *menustr, int *colwidth, int level)
 {
     char *start, *tab;
     int col = 0;
@@ -347,12 +347,15 @@ calc_colwidths(char *menustr, int *colwidth)
     start = menustr;
     while ((tab = strchr(start, '\t')) != NULL && col < MAXCOLS) {
         *tab = '\0';
-        colwidth[col] = max(colwidth[col], utf8_wcswidth(start, SIZE_MAX));
+        colwidth[col] = max(colwidth[col],
+                            utf8_wcswidth(start, SIZE_MAX) + level * 2);
         *tab = '\t';
         start = tab + 1;
         col++;
+        level = 0;
     }
-    colwidth[col] = max(colwidth[col], utf8_wcswidth(start, SIZE_MAX));
+    colwidth[col] = max(colwidth[col],
+                        utf8_wcswidth(start, SIZE_MAX) + level * 2);
     return col;
 }
 
@@ -389,7 +392,8 @@ layout_menu(struct gamewin *gw)
                 w += 4;
             singlewidth = max(singlewidth, w);
         } else {
-            col = calc_colwidths(mdat->items[i].caption, colwidth);
+            col = calc_colwidths(mdat->items[i].caption, colwidth,
+                                 mdat->items[i].level);
             mdat->maxcol = max(mdat->maxcol, col);
         }
     }
@@ -439,7 +443,7 @@ draw_menu(struct gamewin *gw)
         if (item->role == MI_HEADING)
             wattron(gw->win2, settings.menu_headings);
 
-        wmove(gw->win2, i, 0);
+        wmove(gw->win2, i, item->level * 2);
 
         if (mdat->how != PICK_NONE && item->role == MI_NORMAL && item->accel) {
             wset_mouse_event(gw->win2, uncursed_mbutton_left, item->accel, OK);
@@ -454,8 +458,9 @@ draw_menu(struct gamewin *gw)
             for (j = 0; j <= col; j++) {
                 wchar_t wcol[utf8_wcswidth(colstrs[j], SIZE_MAX) + 1];
                 if (utf8_mbstowcs(wcol, colstrs[j], sizeof wcol) != (size_t) -1)
-                    waddwnstr(gw->win2, wcol,
-                              mdat->colpos[j + 1] - mdat->colpos[j] - 1);
+                    waddwnstr(gw->win2, wcol + (j ? 0 : item->level * 2),
+                              mdat->colpos[j + 1] - mdat->colpos[j] -
+                              1 - (j ? 0 : item->level * 2));
 
                 if (j < col)
                     wmove(gw->win2, i, mdat->colpos[j + 1]);

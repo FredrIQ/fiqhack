@@ -124,67 +124,97 @@ static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
 static struct nh_option_desc curses_options[] = {
-    {"alt_is_esc", "interpret Alt-letter as ESC letter",
+    {"alt_is_esc", "Terminal and Rendering",
+     "interpret Alt-letter as ESC letter",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"animation", "what to animate, and how fast",
+    {"animation", "Commands and Confirmations",
+     "which commands to run slowly",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = ANIM_ALL}},
-    {"border", "what to draw borders around",
+    {"border", "Screen Layout",
+     "what to draw borders around",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = FRAME_ALL}},
-    {"comment", "has no effect",
+    {"comment", "Online and Tournaments",
+     "no game effect, used to prove your ID in tournaments",
      nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
-    {"darkgray", "try to show 'black' as dark gray instead of dark blue",
+    {"darkgray", "Terminal and Rendering",
+     "try to show 'black' as dark gray instead of dark blue",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_branch", "use different renderings for different branches",
+    {"draw_branch", "Map Display",
+     "use different renderings for different branches",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_detected", "mark detected monsters",
+    {"draw_detected", "Map Display",
+     "mark detected monsters",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_rock", "make the walls of corridors visible",
+    {"draw_rock", "Map Display",
+     "make the walls of corridors visible",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"draw_stepped", "mark squares you have walked on",
+    {"draw_stepped", "Map Display",
+     "mark squares you have walked on",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_tame", "mark tame and peaceful monsters",
+    {"draw_tame", "Map Display",
+     "mark tame and peaceful monsters",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_terrain", "mark concealed traps and stairs",
+    {"draw_terrain", "Map Display",
+     "mark concealed traps and stairs",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"extmenu", "use a menu for selecting extended commands (#)",
+    {"extmenu", "Commands and Confirmations",
+     "use a menu for selecting extended commands (#)",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"invweight", "show item weights in the inventory",
+    {"invweight", "Messages and Menus",
+     "show item weights in the inventory",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"keymap", "alter the key to command mapping",
+    {"keymap", "Commands and Confirmations",
+     "alter the key to command mapping",
      nh_birth_ingame, (enum nh_opttype)OPTTYPE_KEYMAP, {0}},
-    {"menu_headings", "display style for menu headings",
+    {"menu_headings", "Messages and Menus",
+     "display style for menu headings",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = A_REVERSE}},
-    {"mouse", "accept mouse input (where supported)",
+    {"mouse", "Terminal and Rendering",
+     "accept mouse input (where supported)",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"menupaging", "scrolling behaviour of menus",
+    {"menupaging", "Messages and Menus",
+     "scrolling behaviour of menus",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MP_LINES}},
-    {"msgheight", "message window height",
+    {"msgheight", "Screen Layout",
+     "message window height",
      nh_birth_ingame, OPTTYPE_INT, {.i = 8}},
-    {"msghistory", "number of messages lines viewable via prevmsg",
+    {"msghistory", "Messages and Menus",
+     "number of messages lines viewable via prevmsg",
      nh_birth_ingame, OPTTYPE_INT, {.i = 256}},
-    {"msg_window", "behaviour of the 'previous message' command",
+    {"msg_window", "Messages and Menus",
+     "behaviour of the 'previous message' command",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = PREVMSG_FULL}},
-    {"networkmotd", "get tips and announcements from the Internet",
+    {"networkmotd", "Online and Tournaments",
+     "get tips and announcements from the Internet",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MOTD_ASK}},
-    {"optstyle", "option menu display style",
+    {"optstyle", "Messages and Menus",
+     "option menu display style",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = OPTSTYLE_FULL}},
-    {"palette", "color palette used for text",
+    {"palette", "Terminal and Rendering",
+     "color palette used for text",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = PALETTE_DEFAULT}},
-    {"prompt_inline", "place prompts in the message window",
+    {"prompt_inline", "Messages and Menus",
+     "place prompts in the message window",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"scores_own", "show all your own scores in the list",
+    {"scores_own", "Endgame Sequence",
+      "show all your own scores in the list",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"scores_top", "how many top scores to show",
+    {"scores_top", "Endgame Sequence",
+      "how many top scores to show",
      nh_birth_ingame, OPTTYPE_INT, {.i = 3}},
-    {"scores_around", "the number of scores shown around your score",
+    {"scores_around", "Endgame Sequence",
+      "the number of scores shown around your score",
      nh_birth_ingame, OPTTYPE_INT, {.i = 2}},
-    {"sidebar", "when to draw the inventory sidebar",
+    {"sidebar", "Screen Layout",
+     "when to draw the inventory sidebar",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = AB_AUTO}},
-    {"status3", "3 line status display",
+    {"status3", "Screen Layout",
+     "3 line status display",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"tileset", "text or graphics for map drawing",
+    {"tileset", "Terminal and Rendering",
+     "text or graphics for map drawing",
      nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
-    {NULL, NULL, nh_birth_ingame, OPTTYPE_BOOL, {NULL}}};
+    {NULL, NULL, NULL, nh_birth_ingame, OPTTYPE_BOOL, {NULL}}};
 
 static struct nhlib_boolopt_map boolopt_map[] = {
     {"alt_is_esc", &settings.alt_is_esc},
@@ -461,31 +491,65 @@ print_option_string(struct nh_option_desc *option, char *buf)
 }
 
 
+static int
+compare_options(const void *opt1_void, const void *opt2_void)
+{
+    struct nh_option_desc *const *opt1 = opt1_void;
+    struct nh_option_desc *const *opt2 = opt2_void;
+    int d = strcmp((*opt1)->group, (*opt2)->group);
+    if (!d)
+        d = strcmp((*opt1)->name, (*opt2)->name);
+    return d;
+}
+
 /* add a list of options to the given selection menu */
 static int
 menu_add_options(struct nh_menulist *menu, int listid,
                  struct nh_option_desc *options, enum nh_optbirth birth,
                  nh_bool read_only)
 {
-    int i, id;
+    int i, j, noptions, id;
     char optbuf[256];
+    const char *last_group = "";
 
-    for (i = 0; options[i].name; i++) {
+    /* Count the number of options. */
+    for (noptions = 0; options[noptions].name; noptions++)
+        ;
+    if (!noptions)
+        return 0;
+
+    /* Make an array of pointers into the options list (we don't want to change
+       the one we're given, so we sort the pointers instead). */
+    struct nh_option_desc *opt_ptrs[noptions];
+    for (i = 0; i < noptions; i++)
+        opt_ptrs[i] = options + i;
+
+    /* Sort the options by group, then by name. */
+    qsort(opt_ptrs, noptions, sizeof *opt_ptrs, compare_options);
+
+    for (j = 0; j < noptions; j++) {
+        i = (opt_ptrs[j] - options);
         id = (listid << 10) | i;
         if (options[i].birth_option != birth)
             continue;
+
+        if (strcmp(last_group, options[i].group) != 0) {
+            last_group = options[i].group;
+            add_menu_txt(menu, last_group, MI_TEXT);
+        }
 
         print_option_string(&options[i], optbuf);
         if (read_only)
             add_menu_txt(menu, optbuf, MI_TEXT);
         else
             add_menu_item(menu, id, optbuf, 0, 0);
+        menu->items[menu->icount - 1].level = 1;
     }
 
     /* add an empty line */
     add_menu_txt(menu, "", MI_TEXT);
 
-    return i;
+    return noptions;
 }
 
 

@@ -476,6 +476,7 @@ enum nh_optbirth {
    so that they can safely be freed with nhlib_free_optlist. */
 struct nh_option_desc {
     const char *name;
+    const char *group;
     const char *helptxt;
     enum nh_optbirth birth_option;
     enum nh_opttype type;
