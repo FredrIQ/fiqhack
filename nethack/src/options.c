@@ -151,7 +151,7 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MP_LINES}},
     {"msgheight", "message window height",
      nh_birth_ingame, OPTTYPE_INT, {.i = 8}},
-    {"msghistory", "number of messages saved for prevmsg",
+    {"msghistory", "number of messages lines viewable via prevmsg",
      nh_birth_ingame, OPTTYPE_INT, {.i = 256}},
     {"networkmotd", "get tips and announcements from the Internet",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MOTD_ASK}},

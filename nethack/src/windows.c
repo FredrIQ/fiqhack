@@ -1183,6 +1183,10 @@ rebuild_ui(void)
         wclear(basewin);
         resize_game_windows();
 
+        /* if the message window was resized horizontally, we need to reposition
+           the messages within it */
+        reconstruct_message_history(FALSE);
+
         /* some windows are now empty because they were re-created */
         redraw_messages();
         draw_map(player.x, player.y);

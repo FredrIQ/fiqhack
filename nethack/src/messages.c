@@ -148,7 +148,8 @@ struct message_chunk {
     unsigned x;                    /* x-position of the chunk */
     unsigned y;                    /* y-position of the chunk */
     enum msg_channel channel;      /* message channel for this chunk */
-    nh_bool seen;                  /* this chunk was on screen at a keypress */
+    nh_bool seen : 1;              /* this chunk was on screen at a keypress */
+    nh_bool end_of_message : 1;    /* this is the last chunk of this message */
 };
 
 static struct message_chunk *first_chunk = NULL;
@@ -331,16 +332,6 @@ more_dismissed: /* multilevel break out of loop */
     in_more_io = mf_nomore;
 }
 
-/* Re-renders the message window, without trying to force a --More--. Used if
-   you know it hasn't changed, or in cases like the message window being resized
-   due to the screen being resized. This may cause messages at the top of the
-   window to be lost. */
-void
-redraw_messages(void)
-{
-    show_msgwin(in_more_io);
-}
-
 /* Breaks off the first n characters of the pending message, or less if there's
    somewhere convenient to split at, like a space. Returns the first portion of
    the message, leaving the rest of the message (if any) in pending_message. */
@@ -427,6 +418,7 @@ alloc_chunk(char *contents, enum msg_channel channel, int x, int y)
     new_chunk->y = y;
     new_chunk->channel = channel;
     new_chunk->seen = channel == msgc_reminder;
+    new_chunk->end_of_message = FALSE; /* caller can override this later */
     if (last_chunk)
         last_chunk->next = new_chunk;
     last_chunk = new_chunk;
@@ -451,19 +443,24 @@ limit_last_line_x(int max_ok_x)
 
 /* Attempts to break off chunks from the start of the pending message, adding
    them to the end of the list of chunks; however, will not scroll an unseen
-   message off the screen in the process. If entire_last_line is set, will leave
-   one line blank unless the entire message can be chunkfied (so that a caller
-   can leave room for a --More-- if and only if the entire message doesn't fit
-   without it). Otherwise, might chunkify only part of the message. If
-   room_for_more is set, will ensure that the --More-- region in the bottom
-   right of the message area is left blank (via leaving a blank line if
-   necessary). */
+   message off the screen in the process unless even_if_no_space is set. If
+   entire_last_line is set, will leave one line blank unless the entire message
+   can be chunkfied (so that a caller can leave room for a --More-- if and only
+   if the entire message doesn't fit without it). Otherwise, might chunkify only
+   part of the message. If room_for_more is set, will ensure that the --More--
+   region in the bottom right of the message area is left blank (via leaving a
+   blank line if necessary). In any case, it is possible that the function will
+   do nothing if there is no room for the message. */
 static void
-chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line)
+chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
+                         nh_bool even_if_no_space)
 {
-    /* avoid a segfault on very narrow windows */
+    /* Avoid a segfault on very narrow windows. */
     if (ui_flags.mapwidth < strlen(more_text))
         room_for_more = FALSE;
+
+    /* Clear out old messages from memory. */
+    discard_message_history(settings.msghistory);
 
     /* Do we have a "spacing chunk" at the start of the last line? If so, we can
        get rid of it safely for the time being (we might add it back later), and
@@ -486,12 +483,16 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line)
     }
 
     int spare_lines = ui_flags.msgheight;
-    FOR_EACH_ONSCREEN_CHUNK() /* sets chunk, y_offset */
-    {
-        /* If the last unseen chunk is on line y, then we have y lines spare
-           (if it's on line 0 we have 0 lines spare). */
-        if (!chunk->seen)
-            spare_lines = chunk->y + y_offset;
+    if (even_if_no_space)
+        spare_lines = INT_MAX; /* act as though the window were infinite */
+    else {
+        FOR_EACH_ONSCREEN_CHUNK() /* sets chunk, y_offset */
+        {
+            /* If the last unseen chunk is on line y, then we have y lines spare
+               (if it's on line 0 we have 0 lines spare). */
+            if (!chunk->seen)
+                spare_lines = chunk->y + y_offset;
+        }
     }
 
     while (pending_message)
@@ -564,6 +565,7 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line)
             /* We can. */
             alloc_chunk(firstpart, pending_message_channel,
                         padded_xright(last_chunk), last_chunk->y);
+            last_chunk->end_of_message = TRUE;
         } else if (spare_lines > 0 && strlen(firstpart) <=
                    (pending_message ?
                     usable_width_split : usable_width_unsplit)) {
@@ -571,6 +573,7 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line)
             alloc_chunk(firstpart, pending_message_channel, 0,
                         last_chunk ? last_chunk->y + 1 : 0);
             spare_lines--;
+            last_chunk->end_of_message = !pending_message;
         } else if (!splitok) {
             /* It doesn't fit; better put it back into pending_message
                and stop trying. */
@@ -610,11 +613,11 @@ draw_messages_prekey(nh_bool room_for_more)
     if (pending_message)
         /* Let's try to fit all of this onscreen at once, so we don't have to
            give a --More--. */
-        chunkify_pending_message(room_for_more, TRUE);
+        chunkify_pending_message(room_for_more, TRUE, FALSE);
     if (pending_message)
         /* OK, then, let's try to fit as much onscreen as possible. Leave
            room for our inevitable --More--. */
-        chunkify_pending_message(TRUE, FALSE);
+        chunkify_pending_message(TRUE, FALSE, FALSE);
     if (pending_message) {
         /* We haven't shown all the messages yet, so we need to force a
            --More--. */
@@ -799,12 +802,97 @@ curses_clear_temp_messages(void)
     }
 }
 
+/* Re-renders the message window, without trying to force a --More--. Used if
+   you know it hasn't changed, or in cases like the message window being resized
+   due to the screen being resized. This may cause unseen messages at the top of
+   the window to be lost, if the message window has become smaller (although in
+   most cases in which you call this, it's reasonable to assume that all
+   onscreen messages have been read already). */
+void
+redraw_messages(void)
+{
+    show_msgwin(in_more_io);
+}
+
+/* Reconstructs all messages from the list of chunks, then breaks them back into
+   chunks again, optionally reversing the order in the process. No room will be
+   left for a --More--, and every message will be marked as seen. (The
+   assumption is that the caller is going to immediately follow up by rendering
+   the message window, then waiting for a key, either as a command input or to
+   dismiss the message history.) Does not do rendering itself.
+
+   This is used in two contexts: displaying the message history (in cases where
+   it requires reversing the list); and handling horizontal resize of the
+   message window (which requires messages to reflow onto the new window
+   width). */
+void
+reconstruct_message_history(nh_bool reverse)
+{
+    /* If we have a pending message (unlikely, but perhaps possible?), just put
+       it onto the chunk list so that we can handle it the same way as
+       everything else. How it's laid out is irrelevant, as we're about to redo
+       the layout anyway. */
+    chunkify_pending_message(FALSE, FALSE, TRUE);
+    if (pending_message)
+        abort();
+
+    struct message_chunk *temp = reverse ? last_chunk : first_chunk;
+    first_chunk = NULL;
+    last_chunk = NULL;
+    nh_bool pending_seen = TRUE;
+
+    while (temp) {
+        /* If we're going backwards, lay out pending_message if we're looking at
+           part of a new message. */
+        if (reverse && temp->end_of_message) {
+            chunkify_pending_message(FALSE, FALSE, TRUE);
+            last_chunk->seen = pending_seen;
+        }
+
+        /* Append/prepend this chunk's message onto pending_message, freeing
+           it in the process. */
+        if (*(temp->message)) {
+            pending_seen = temp->seen;
+            pending_message_channel = temp->channel;
+        }
+        if (!pending_message)
+            pending_message = temp->message; /* steal ownership */
+        else if (reverse) {
+            temp->message =
+                realloc(temp->message,
+                        strlen(temp->message) + strlen(pending_message) + 1);
+            strcat(temp->message, pending_message);
+            free(pending_message);
+            pending_message = temp->message; /* steal ownership */
+        } else {
+            pending_message =
+                realloc(pending_message,
+                        strlen(pending_message) + strlen(temp->message) + 1);
+            strcat(pending_message, temp->message);
+            free(temp->message);
+        }
+
+        /* If we're going forwards, lay out pending_message if we just finished
+           reconstructing a complete message. */
+        if (!reverse && temp->end_of_message) {
+            chunkify_pending_message(FALSE, FALSE, TRUE);
+            last_chunk->seen = pending_seen;
+        }
+
+        struct message_chunk *temp2 = reverse ? temp->prev : temp->next;
+        free(temp);
+        temp = temp2;
+    }
+}
+
 /* Displays the message history. */
 void
 doprev_message(void)
 {
     /* TODO */
 }
+
+
 
 /* Given the string "input", generate a series of strings of the given maximum
    width, wrapping lines at spaces in the text. The number of lines will be
