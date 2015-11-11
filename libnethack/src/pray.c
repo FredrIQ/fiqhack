@@ -1630,9 +1630,6 @@ can_pray(boolean praying)
     int alignment;
 
     aligntyp align = on_altar()? a_align(u.ux, u.uy) : u.ualign.type;
-    turnstate.pray.align = align;
-    enum pray_trouble trouble = in_trouble();
-    turnstate.pray.trouble = trouble;
 
     if (is_demon(youmonst.data) && (align != A_CHAOTIC)) {
         if (praying)
@@ -1641,6 +1638,10 @@ can_pray(boolean praying)
                   align ? "lawful" : "neutral");
         return FALSE;
     }
+
+    turnstate.pray.align = align;
+    enum pray_trouble trouble = in_trouble();
+    turnstate.pray.trouble = trouble;
 
     if (praying)
         pline(msgc_occstart, "You begin praying to %s.", align_gname(align));
