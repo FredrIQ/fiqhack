@@ -1188,7 +1188,7 @@ rebuild_ui(void)
         reconstruct_message_history(FALSE);
 
         /* some windows are now empty because they were re-created */
-        redraw_messages();
+        draw_messages_postkey();
         draw_map(player.x, player.y);
         curses_update_status(&player);
         draw_sidebar();

@@ -13,7 +13,7 @@
 
 /* Functions for scrollable windows */
 
-static void
+void
 layout_scrollable(struct gamewin *gw)
 {
     struct win_scrollable *s = (struct win_scrollable *)gw->extra;
@@ -66,7 +66,7 @@ setup_scrollable_win2(WINDOW *win, WINDOW **win2,
                      KEY_DOWN, KEY_CODE_YES);
 }
 
-static void
+void
 initialize_scrollable_windows(struct gamewin *gw, int starty, int startx)
 {
     struct win_scrollable *s = (struct win_scrollable *)gw->extra;
@@ -81,7 +81,7 @@ initialize_scrollable_windows(struct gamewin *gw, int starty, int startx)
 }
 
 /* Draws the border and title of a scrollable, clearing the interior. */
-static void
+void
 draw_scrollable_frame(struct gamewin *gw)
 {
     struct win_scrollable *s = (struct win_scrollable *)gw->extra;
@@ -103,7 +103,7 @@ draw_scrollable_frame(struct gamewin *gw)
    onscreen. Ensures that we're scrolled into a legal position (i.e. a whole
    number of pages with MP_PAGES, and not beyond the end of the screen with
    MP_LINES). */
-static void
+void
 scroll_onscreen(struct win_scrollable *s, int onscreen_offset)
 {
     s->offset = onscreen_offset;
@@ -124,7 +124,7 @@ scroll_onscreen(struct win_scrollable *s, int onscreen_offset)
    (because the caller may want something more complex than layout_scrollable),
    and does not do rendering (a scrollable is an abstract concept, and in
    particular, there's no draw_scrollable). */
-static void
+void
 resize_scrollable_inner(struct gamewin *gw)
 {
     struct win_scrollable *s = (struct win_scrollable *)gw->extra;
@@ -139,10 +139,9 @@ resize_scrollable_inner(struct gamewin *gw)
 
     mvwin(gw->win, starty, startx);
     scroll_onscreen(s, s->offset);
-    draw_menu(gw);
 }
 
-static void
+void
 draw_scrollbar(WINDOW *win, struct win_scrollable *s)
 {
     switch (settings.menupaging) {
@@ -196,7 +195,7 @@ draw_scrollbar(WINDOW *win, struct win_scrollable *s)
    and return TRUE. Does not handle Escape, server cancels, etc., even though
    those work ina consistent way between scrollables (because they need
    different error returns). */
-static nh_bool
+nh_bool
 scroll_using_key(struct win_scrollable *s, int keycode, nh_bool *done)
 {
     switch (keycode) {

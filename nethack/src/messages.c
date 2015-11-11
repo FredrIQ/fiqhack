@@ -165,14 +165,14 @@ static struct message_chunk *last_chunk = NULL;
 
    Coded as a macro because without using gcc extensions, the version with a
    callback function is considerably harder to read. */
-#define FOR_EACH_ONSCREEN_CHUNK()                                 \
+#define FOR_EACH_ONRANGE_CHUNK(height)                            \
     const unsigned y_offset = !last_chunk ? 0 :                   \
-        (unsigned)ui_flags.msgheight - 1 - last_chunk->y;         \
+        (unsigned)(height) - 1 - last_chunk->y;                   \
     struct message_chunk *chunk;                                  \
     for (chunk = last_chunk;                                      \
-         chunk && (chunk->y + y_offset < ui_flags.msgheight);     \
+         chunk && (chunk->y + y_offset < (height));               \
          chunk = chunk->prev)
-
+#define FOR_EACH_ONSCREEN_CHUNK() FOR_EACH_ONRANGE_CHUNK(ui_flags.msgheight)
 
 /* We leave one message unchunkified untill just before we request a key (or
    perform a delay, which has similar message timing properties). At that point,
@@ -239,43 +239,54 @@ resolve_channel_color(enum msg_channel msgc)
         return channel_color[msgc];
 }
 
-/* The lowest-level message window drawing function. Draws the message window up
-   to and including the last chunk, and also renders a --More-- or --Tab!-- if
-   requested. Does not do any asking for input, and does not chunkify the
-   pending message. Should only be called in a state in which we've left room
-   for the --More-- during chunkification, if one is required. */
+/* The lowest-level message window drawing function. Draws the message window
+   (or the given window, treated as the message window) up to and including the
+   last chunk (except that the window will be scrolled down by yskip lines), and
+   also renders a --More-- or --Tab!-- if requested. Does not do any asking for
+   input, and does not chunkify the pending message.  Should only be called in a
+   state in which we've left room for the --More-- during chunkification, if one
+   is required. */
 static void
-show_msgwin(enum moreforce more)
+show_msgwin_core(enum moreforce more, WINDOW *win,
+                 unsigned winheight, unsigned winwidth, unsigned yskip)
 {
-    wattrset(msgwin, 0);
-    werase(msgwin);
+    wattrset(win, 0);
+    werase(win);
 
-    FOR_EACH_ONSCREEN_CHUNK()
+    FOR_EACH_ONRANGE_CHUNK(winheight + yskip)
     {
         if (!*(chunk->message))
             continue;
+        if ((chunk->y + y_offset) >= winheight)
+            continue;
 
         int color = resolve_channel_color(chunk->channel) & 15;
-        wattrset(msgwin, curses_color_attr(
+        wattrset(win, curses_color_attr(
                      !chunk->seen ? color :
                      color == CLR_GRAY || color == CLR_WHITE ?
                      CLR_DARK_GRAY : color & 7, 0));
-        if (chunk->x < ui_flags.mapwidth)
-            mvwaddnstr(msgwin, chunk->y + y_offset, chunk->x,
-                       chunk->message, ui_flags.mapwidth - chunk->x);
+        if (chunk->x < winwidth)
+            mvwaddnstr(win, chunk->y + y_offset, chunk->x,
+                       chunk->message, winwidth - chunk->x);
     }
 
     /* Maybe draw a --More--. */
     if (more != mf_nomore) {
-        wattrset(msgwin, curses_color_attr(0, 7));
-        mvwaddstr(msgwin, ui_flags.msgheight - 1,
-                  ui_flags.mapwidth - strlen(more_text),
+        wattrset(win, curses_color_attr(7, 7));
+        mvwaddstr(win, winheight - 1, winwidth - strlen(more_text),
                   more == mf_more ? more_text : tab_text);
     }
 
-    wnoutrefresh(msgwin);
+    wnoutrefresh(win);
 }
 
+/* show_msgwin_core's usual parameter set: draw the most recent messages to the
+   message window. */
+static void
+show_msgwin(enum moreforce more)
+{
+    show_msgwin_core(more, msgwin, ui_flags.msgheight, ui_flags.mapwidth, 0);
+}
 
 /* Implementation of --More--. Assumes that the rendering has already happened,
    and does the I/O parts. */
@@ -885,14 +896,94 @@ reconstruct_message_history(nh_bool reverse)
     }
 }
 
+/* Rendering code for message history. */
+static void
+draw_prev_messages(struct gamewin *gw)
+{
+    struct win_scrollable *s = (struct win_scrollable *)gw->extra;
+    draw_scrollable_frame(gw);
+    /* s->offset is the number of lines to skip at the /top/ of the message
+       history, but show_msgwin_core wants to know the number of lines to skip
+       at the /bottom/. We thus subtract from the number of lines that exist
+       total, minus one screenful. */
+    show_msgwin_core(mf_nomore, gw->win2, s->innerheight, s->innerwidth,
+                     s->linecount - s->innerheight - s->offset);
+    draw_scrollbar(gw->win, s);
+}
+static void
+resize_prev_messages(struct gamewin *gw)
+{
+    layout_scrollable(gw);
+    resize_scrollable_inner(gw);
+    draw_prev_messages(gw);
+}
+
 /* Displays the message history. */
 void
 doprev_message(void)
 {
-    /* TODO */
+    struct gamewin *gw;
+    struct win_scrollable *s;
+    nh_bool done = FALSE;
+
+    if (COLS < COLNO || LINES < ROWNO)
+        return; /* don't try to render this on a subsize terminal */
+    if (!last_chunk)
+        return; /* nothing to show */
+
+    /* If we view previous messages while watching, we want to pause our
+       watching while the messages are shown (and catch up only afterwards).
+       This also gives us a purple "accepts input" frame despite being in watch
+       mode. */
+    int save_zero_time = ui_flags.in_zero_time_command;
+    ui_flags.in_zero_time_command = TRUE;
+
+    int prevcurs = nh_curs_set(0);
+
+    gw = alloc_gamewin(sizeof (struct win_scrollable), FALSE);
+    gw->draw = draw_prev_messages;
+    gw->resize = resize_prev_messages;
+
+    s = (struct win_scrollable *)gw->extra;
+    s->linecount = (last_chunk->y - first_chunk->y) + 1;
+    s->title = "Previous messages";
+    s->x1 = 0;
+    s->y1 = 0;
+    s->x2 = 0;
+    s->y2 = 0;
+    s->dismissable = 2;
+    s->offset = 0;               /* for now; we don't know the height yet */
+    s->wanted_width = ui_flags.mapwidth;
+
+    layout_scrollable(gw);
+    initialize_scrollable_windows(gw, 0, 0); /* aim for the top left corner */
+    scroll_onscreen(s, s->linecount - 1);    /* scroll to the end */
+
+    while (!done) {
+        draw_prev_messages(gw);
+
+        int key = nh_wgetch(gw->win, krc_menu); /* TODO: separate krc */
+        if (!scroll_using_key(s, key, &done))
+            switch (key) {
+            case KEY_ESCAPE:
+            case '\x1b':
+                done = TRUE;
+                break;
+
+            case KEY_SIGNAL:
+                uncursed_signal_getch();        /* delay it for later */
+                break;
+
+            default:
+                break;        /* ignore most non-scrolling keypresses */
+            }
+    }
+
+    ui_flags.in_zero_time_command = save_zero_time;
+    delete_gamewin(gw);
+    redraw_game_windows();
+    nh_curs_set(prevcurs);
 }
-
-
 
 /* Given the string "input", generate a series of strings of the given maximum
    width, wrapping lines at spaces in the text. The number of lines will be

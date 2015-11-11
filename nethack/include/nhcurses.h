@@ -504,6 +504,16 @@ extern nh_bool monflag_is_at(short monflag, int x, int y);
 extern nh_bool apikey_is_at(const char *apikey, int x, int y);
 
 /* menu.c */
+extern void layout_scrollable(struct gamewin *gw);
+extern void initialize_scrollable_windows(struct gamewin *gw,
+                                          int startx, int starty);
+extern void draw_scrollable_frame(struct gamewin *gw);
+extern void scroll_onscreen(struct win_scrollable *s, int onscreen_offset);
+extern void resize_scrollable_inner(struct gamewin *gw);
+extern void draw_scrollbar(WINDOW *win, struct win_scrollable *s);
+extern nh_bool scroll_using_key(struct win_scrollable *s, int keycode,
+                                nh_bool *done);
+
 extern void draw_menu(struct gamewin *gw);
 extern void curses_menu_callback(const int *results, int nresults, void *arg);
 extern void curses_display_menu(
