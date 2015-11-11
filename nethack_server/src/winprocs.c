@@ -385,10 +385,10 @@ srv_level_changed(int displaymode)
 static json_t *
 json_menuitem(struct nh_menuitem *mi)
 {
-    json_t *jobj = json_pack("{ss,si,si,si,si,si}", "caption", mi->caption,
-                             "id", mi->id, "role", mi->role, "accel", mi->accel,
-                             "group_accel", mi->group_accel, "selected",
-                             mi->selected);
+    json_t *jobj = json_pack(
+        "{ss,si,si,si,si,si,si}", "caption", mi->caption, "id", mi->id,
+        "role", mi->role, "accel", mi->accel, "group_accel", mi->group_accel,
+        "selected", mi->selected, "level", (int)(mi->level));
 
     return jobj;
 }

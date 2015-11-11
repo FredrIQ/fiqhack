@@ -422,7 +422,10 @@ draw_menu(struct gamewin *gw)
     item = &mdat->items[mdat->s.offset];
     for (i = 0; i < mdat->s.innerheight &&
              (i + mdat->s.offset) < mdat->s.linecount; i++, item++) {
-        strncpy(caption, item->caption, BUFSZ - 1);
+        strncpy(caption + (item->level * 2), item->caption,
+                BUFSZ - 1 - (item->level * 2));
+        for (j = 0; j < (item->level * 2); j++)
+            caption[j] = ' ';
         caption[BUFSZ - 1] = '\0';
 
         col = 0;

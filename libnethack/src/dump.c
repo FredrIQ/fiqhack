@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-10 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -179,7 +179,7 @@ dump_display_menu(struct nh_menulist *menu, const char *title,
                   int how, int placement_hint, void *callbackarg,
                   void (*callback)(const int *, int, void *))
 {
-    int i, col, extra;
+    int i, j, col, extra;
     int colwidth[10];
     char *start, *tab;
     struct nh_menuitem *const items = menu->items;
@@ -201,6 +201,9 @@ dump_display_menu(struct nh_menulist *menu, const char *title,
         start = items[i].caption;
         while ((tab = strchr(start, '\t')) != NULL && col < 10) {
             extra = (items[i].accel) ? 4 : 0;   /* leave space for "a - " */
+            extra += items[i].level * 2;
+            if (col != 0)
+                extra = 0;
             colwidth[col] = max(colwidth[col], tab - start + extra);
             start = tab + 1;
             col++;
@@ -220,7 +223,8 @@ dump_display_menu(struct nh_menulist *menu, const char *title,
             continue;
         }
 
-        fprintf(dumpfp, " ");
+        for (j = 0; j < 1 + (items[i].level) * 2; j++)
+            fprintf(dumpfp, " ");
         if (items[i].accel)
             fprintf(dumpfp, " %c -", items[i].accel);
 

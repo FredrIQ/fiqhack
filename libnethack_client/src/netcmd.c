@@ -387,21 +387,22 @@ cmd_level_changed(json_t *params, int display_only)
 
 
 static void
-json_read_menuitem(json_t * jobj, struct nh_menuitem *mi)
+json_read_menuitem(json_t *jobj, struct nh_menuitem *mi)
 {
-    int accel, group_accel, selected;
+    int accel, group_accel, selected, level;
     const char *caption;
 
     if (json_unpack
-        (jobj, "{ss,si,si,si,si,si!}", "caption", &caption, "id", &mi->id,
+        (jobj, "{ss,si,si,si,si,si,si!}", "caption", &caption, "id", &mi->id,
          "role", &mi->role, "accel", &accel, "group_accel", &group_accel,
-         "selected", &selected) == -1)
+         "selected", &selected, "level", &level) == -1)
         print_error("Bad menuitem object encountered");
     strncpy(mi->caption, caption, BUFSZ - 1);
     /* char sized struct members can't be set through int pointers */
     mi->accel = accel;
     mi->group_accel = group_accel;
     mi->selected = selected;
+    mi->level = level;
 }
 
 
