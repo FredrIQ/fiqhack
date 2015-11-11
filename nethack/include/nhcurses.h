@@ -373,7 +373,8 @@ struct gamewin {
    including beyond the end (although not necessarily before the start). */
 struct win_scrollable {
     const char *title;
-    int linecount;      /* number of lines in the underlying document */
+    int linecount;      /* (changeable) lines in the underlying document */
+    int maxlinecount;   /* (fixed) bound which linecount won't exceed */
     int innerwidth, innerheight; /* dimensions of the viewport into it */
     int frameheight;    /* height of the frame */
     int width, height;  /* dimensions of viewport + scrollbars/frame/etc. */
@@ -391,8 +392,8 @@ struct win_scrollable {
    pointer) */
 struct win_menu {
     struct win_scrollable s;
-    struct nh_menuitem *items;
-    char *selected;
+    struct nh_menuitem **visitems;
+    char **visselected;
     const char *title;
     int how;
     int colpos[MAXCOLS], maxcol;

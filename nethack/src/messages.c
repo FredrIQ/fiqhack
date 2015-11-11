@@ -978,6 +978,7 @@ doprev_message(void)
 
     s = (struct win_scrollable *)gw->extra;
     s->linecount = (last_chunk->y - first_chunk->y) + 1;
+    s->maxlinecount = s->linecount;
     s->title = "Previous messages";
     s->x1 = 0;
     s->y1 = 0;

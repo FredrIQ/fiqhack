@@ -677,8 +677,8 @@ query_new_value(struct win_menu *mdat, int idx)
     struct nh_option_desc *option, *optlist;
     struct nh_option_desc optioncopy;
     struct nh_option_desc *optioncopy_p = &optioncopy;
-    int listid = mdat->items[idx].id >> 10;
-    int id = mdat->items[idx].id & 0x1ff;
+    int listid = mdat->visitems[idx]->id >> 10;
+    int id = mdat->visitems[idx]->id & 0x1ff;
     int prev_optstyle = settings.optstyle;
     enum nh_menupaging prev_menupaging = settings.menupaging;
     nh_bool prev_menuborder = settings.whichframes != FRAME_NONE;
@@ -762,7 +762,7 @@ query_new_value(struct win_menu *mdat, int idx)
             option = &optlist[id];
         }
 
-        print_option_string(option, mdat->items[idx].caption);
+        print_option_string(option, mdat->visitems[idx]->caption);
     }
 
     /* We need to deallocate any string that might have been allocated by

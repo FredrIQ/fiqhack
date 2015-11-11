@@ -1914,7 +1914,7 @@ keymap_action_game_submenu(void)
 static nh_bool
 set_command_keys(struct win_menu *mdat, int idx)
 {
-    int id = mdat->items[idx].id;
+    int id = mdat->visitems[idx]->id;
     struct nh_cmd_desc *cmd;
 
     if (id == RESET_BINDINGS_ID) {

@@ -37,7 +37,7 @@ layout_scrollable(struct gamewin *gw)
     if (settings.menupaging == MP_PAGES)
         s->frameheight++;    /* (1 of 2) or (end) */
 
-    s->height = s->frameheight + s->linecount;
+    s->height = s->frameheight + s->maxlinecount;
     if (s->height > scrheight)
         s->height = scrheight;
     s->innerheight = s->height - s->frameheight;
@@ -273,7 +273,7 @@ menu_search_callback(const char *sbuf, void *mdat_void)
     int i;
 
     for (i = 0; i < mdat->s.linecount; i++)
-        if (strstr(mdat->items[i].caption, sbuf))
+        if (strstr(mdat->visitems[i]->caption, sbuf))
             break;
     if (i < mdat->s.linecount)
         scroll_onscreen(&(mdat->s), i);
@@ -299,11 +299,12 @@ assign_menu_accelerators(struct win_menu *mdat)
 
     for (i = 0; i < mdat->s.linecount; i++) {
 
-        if (mdat->items[i].accel || mdat->items[i].role != MI_NORMAL ||
-            mdat->items[i].id == 0)
+        if (mdat->visitems[i]->accel ||
+            mdat->visitems[i]->role != MI_NORMAL ||
+            mdat->visitems[i]->id == 0)
             continue;
 
-        mdat->items[i].accel = accel;
+        mdat->visitems[i]->accel = accel;
 
         if (accel == 'z')
             accel = 'A';
@@ -386,14 +387,15 @@ layout_menu(struct gamewin *gw)
     for (i = 0; i < mdat->s.linecount; i++) {
         /* Headings without tabs are not fitted into columns, but headings with
            tabs are presumably column titles. */
-        if (!strchr(mdat->items[i].caption, '\t')) {
-            w = strlen(mdat->items[i].caption);
-            if (mdat->items[i].role == MI_NORMAL && mdat->items[i].id)
+        if (!strchr(mdat->visitems[i]->caption, '\t')) {
+            w = strlen(mdat->visitems[i]->caption);
+            if (mdat->visitems[i]->role == MI_NORMAL &&
+                mdat->visitems[i]->id)
                 w += 4;
             singlewidth = max(singlewidth, w);
         } else {
-            col = calc_colwidths(mdat->items[i].caption, colwidth,
-                                 mdat->items[i].level);
+            col = calc_colwidths(mdat->visitems[i]->caption, colwidth,
+                                 mdat->visitems[i]->level);
             mdat->maxcol = max(mdat->maxcol, col);
         }
     }
@@ -423,7 +425,7 @@ draw_menu(struct gamewin *gw)
     /* Draw the menu items. It's possible to scroll beyond the bottom of the
        menu (e.g. by using PgDn when the menu isn't a whole number of pages),
        so ensure we don't render any nonexistent menu items. */
-    item = &mdat->items[mdat->s.offset];
+    item = mdat->visitems[mdat->s.offset];
     for (i = 0; i < mdat->s.innerheight &&
              (i + mdat->s.offset) < mdat->s.linecount; i++, item++) {
         strncpy(caption + (item->level * 2), item->caption,
@@ -448,7 +450,7 @@ draw_menu(struct gamewin *gw)
         if (mdat->how != PICK_NONE && item->role == MI_NORMAL && item->accel) {
             wset_mouse_event(gw->win2, uncursed_mbutton_left, item->accel, OK);
             wprintw(gw->win2, "%c %c ", item->accel,
-                    mdat->selected[mdat->s.offset + i] ? '+' : '-');
+                    *(mdat->visselected[mdat->s.offset + i]) ? '+' : '-');
         }
 
         /* TODO: This isn't quite correct, we're taking a number of codepoints
@@ -489,7 +491,6 @@ resize_menu(struct gamewin *gw)
 }
 
 
-/* TODO: Check that this function works with MP_PAGES */
 static int
 find_accel(int accel, struct win_menu *mdat)
 {
@@ -500,19 +501,19 @@ find_accel(int accel, struct win_menu *mdat)
        items */
     upper = min(mdat->s.linecount, mdat->s.offset + mdat->s.innerheight);
     for (i = mdat->s.offset; i < upper; i++)
-        if (mdat->items[i].accel == accel)
+        if (mdat->visitems[i]->accel == accel)
             return i;
 
     /* It's not a regular accelerator; maybe there is a group accelerator? */
     for (i = mdat->s.offset; i < upper; i++)
-        if (mdat->items[i].group_accel == accel)
+        if (mdat->visitems[i]->group_accel == accel)
             return i;
 
     /* Extra effort: if the list is too long for one page search for the accel
        among those entries too, and scroll the changed item into view. */
     if (mdat->s.linecount > mdat->s.innerheight)
         for (i = 0; i < mdat->s.linecount; i++)
-            if (mdat->items[i].accel == accel) {
+            if (mdat->visitems[i]->accel == accel) {
                 scroll_onscreen(&(mdat->s), i);
                 return i;
             }
@@ -546,6 +547,12 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     struct nh_menuitem item_copy[ml->icount ? ml->icount : 1];
     if (ml->icount)
         memcpy(item_copy, ml->items, sizeof item_copy);
+    struct nh_menuitem *visitem_pointers[ml->icount ? ml->icount : 1];
+    for (i = 0; i < ml->icount; i++)
+        visitem_pointers[i] = item_copy + i;
+    char *visselected_pointers[ml->icount ? ml->icount : 1];
+    for (i = 0; i < ml->icount; i++)
+        visselected_pointers[i] = selected + i;
 
     memset(selected, 0, sizeof selected);
 
@@ -556,11 +563,12 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     gw->resize = resize_menu;
 
     mdat = (struct win_menu *)gw->extra;
-    mdat->items = item_copy;
+    mdat->visitems = visitem_pointers;
     mdat->s.linecount = ml->icount;
+    mdat->s.maxlinecount = ml->icount;
     mdat->s.title = title;
     mdat->how = how;
-    mdat->selected = selected;
+    mdat->visselected = visselected_pointers;
     mdat->s.x1 = x1;
     mdat->s.y1 = y1;
     mdat->s.x2 = x2;
@@ -610,16 +618,16 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
                 servercancelled = TRUE;
                 break;
 
-            case '.':                       /* select all */
+            case '.':                       /* select all (even hidden) */
                 if (mdat->how == PICK_ANY)
-                    for (i = 0; i < mdat->s.linecount; i++)
-                        if (mdat->items[i].role == MI_NORMAL)
-                            mdat->selected[i] = TRUE;
+                    for (i = 0; i < mdat->s.maxlinecount; i++)
+                        if (item_copy[i].role == MI_NORMAL)
+                            selected[i] = TRUE;
                 break;
 
-            case '-':                       /* select none */
-                for (i = 0; i < mdat->s.linecount; i++)
-                    mdat->selected[i] = FALSE;
+            case '-':                       /* select none (even hidden) */
+                for (i = 0; i < mdat->s.maxlinecount; i++)
+                    selected[i] = FALSE;
                 break;
 
             case ':':                       /* search for a menu item */
@@ -645,7 +653,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
                 if (idx != -1 &&    /* valid accelerator */
                     (!changefn || changefn(mdat, idx))) {
-                    mdat->selected[idx] = !mdat->selected[idx];
+                    *(mdat->visselected[idx]) = !*(mdat->visselected[idx]);
 
                     if (mdat->how == PICK_ONE)
                         done = TRUE;
@@ -658,9 +666,9 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         rv = servercancelled ? -2 : -1;
     else {
         rv = 0;
-        for (i = 0; i < mdat->s.linecount; i++) {
-            if (mdat->selected[i]) {
-                results[rv] = mdat->items[i].id;
+        for (i = 0; i < mdat->s.maxlinecount; i++) {
+            if (selected[i]) {
+                results[rv] = item_copy[i].id;
                 rv++;
             }
         }
@@ -950,6 +958,7 @@ curses_display_objects(
     mdat = (struct win_objmenu *)gw->extra;
     mdat->items = item_copy;
     mdat->s.linecount = objlist->icount;
+    mdat->s.maxlinecount = objlist->icount;
     mdat->s.title = title;
     mdat->how = inventory_special ? PICK_ONE : how;
     mdat->selcount = -1;
