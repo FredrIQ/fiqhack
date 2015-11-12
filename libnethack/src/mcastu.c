@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -743,8 +743,8 @@ mmspell_would_be_useless(struct monst *magr, struct monst *mdef,
                          unsigned int adtyp, int spellnum)
 {
     /* Can the aggressor see the square it thinks the defender is on? */
-    int believed_mdef_mx = m_mx(mdef);
-    int believed_mdef_my = m_my(mdef);
+    int believed_mdef_mx = mdef ? m_mx(mdef) : -1;
+    int believed_mdef_my = mdef ? m_my(mdef) : -1;
     if (mdef == &youmonst && !engulfing_u(mdef)) {
         believed_mdef_mx = magr->mux;
         believed_mdef_my = magr->muy;
@@ -753,9 +753,9 @@ mmspell_would_be_useless(struct monst *magr, struct monst *mdef,
     if (Engulfed && (magr == u.ustuck || mdef == u.ustuck))
         appropriate_vizarray = NULL;
 
-    boolean believed_loe = clear_path(magr->mx, magr->my,
-                                      believed_mdef_mx, believed_mdef_my,
-                                      appropriate_vizarray);
+    boolean believed_loe = mdef ? clear_path(magr->mx, magr->my,
+                                             believed_mdef_mx, believed_mdef_my,
+                                             appropriate_vizarray) : FALSE;
     boolean magr_peaceful = magr == &youmonst || magr->mpeaceful;
     boolean magr_tame = magr == &youmonst || magr->mtame;
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -922,6 +922,14 @@ rloc_to(struct monst *mtmp, int x, int y)
 
     newsym(x, y);       /* update new location */
     set_apparxy(mtmp);  /* orient monster */
+
+    /* In some cases involving migration, the player and monster are currently
+       on the same square. One of them will move, but we don't want the monster
+       to have itself in its muxy. */
+    if (mtmp->mux == mtmp->mx && mtmp->muy == mtmp->my) {
+        mtmp->mux = COLNO;
+        mtmp->muy = ROWNO;
+    }
 
     /* shopkeepers will only teleport if you zap them with a wand of
        teleportation or if they've been transformed into a jumpy monster; the

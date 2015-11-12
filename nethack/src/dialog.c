@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-11-06 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -384,6 +384,8 @@ curses_msgwin_validator(int key, void *unused)
         if (ui_flags.ingame)
             uncursed_signal_getch();
     }
+    if (key > KEY_MAX || key == KEY_UNHOVER)
+        return -1;
     return key;
 }
 
