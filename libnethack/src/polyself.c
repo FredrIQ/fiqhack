@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2015-11-13 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -920,6 +920,14 @@ rehumanize(int how, const char *killer)
     if (Unchanging && u.mh < 1) {
         done(how, killer);
     }
+
+    /* If something that would be fatal lead to rehumanization instead, there's
+       less of a reason to force a --More--. So just forget about any pending
+       --More-- that we might be delaying. (The alternative would be to force a
+       --More-- and then reset turnstate - we have to reset it one way or the
+       other - but that would likely be obnoxious, because most players don't
+       consider rehumanization to be nearly as important as actual death). */
+    turnstate.force_more_pending_until_done = FALSE;
 
     if (emits_light(youmonst.data))
         del_light_source(level, LS_MONSTER, &youmonst);
