@@ -1165,9 +1165,13 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
               Monnam(mon), OBJ_NAME(objects[spell]));
 
     /* highlevel casters can cast more than lowlevel ones */
-    int cooldown = 7 - (mon->m_lev / 5);
-    if (cooldown < 2)
-        cooldown = 2;
+    int cooldown = 10 - (mon->m_lev / 5);
+    if (cooldown < 4)
+        cooldown = 4;
+
+    /* make energy use unpredictable! */
+    cooldown = rn2(cooldown);
+
     energy = (objects[spell].oc_level * cooldown);
     if (mon_has_amulet(mon)) {
         amulet = TRUE;
@@ -1178,7 +1182,8 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
                       Monnam(mon));
             return 0;
         }
-        energy += 2 * rnd(energy);
+        if (energy)
+            energy += 2 * rnd(energy);
     }
             
     /* can't cast -- energy is used up! */
