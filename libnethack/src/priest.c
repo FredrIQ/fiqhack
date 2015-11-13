@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2015-11-13 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -209,7 +209,7 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
         impossible("Unable to find location for priest in shrine");
     } else {
         if (MON_AT(lev, priest_pos->x, priest_pos->y))
-            rloc(m_at(lev, priest_pos->x, priest_pos->y), FALSE);
+            rloc(m_at(lev, priest_pos->x, priest_pos->y), FALSE, lev);
 
         priest = makemon(&mons[sanctum ? PM_HIGH_PRIEST : PM_ALIGNED_PRIEST],
                          lev, priest_pos->x, priest_pos->y, MM_ALLLEVRNG);
@@ -576,7 +576,7 @@ mk_roamer(const struct permonst *ptr, aligntyp alignment, struct level *lev,
         return NULL;
 
     if (MON_AT(lev, x, y))
-        rloc(m_at(lev, x, y), FALSE);   /* insurance */
+        rloc(m_at(lev, x, y), FALSE, lev);   /* insurance */
 
     if (!(roamer = makemon(ptr, lev, x, y, mm_flags)))
         return NULL;

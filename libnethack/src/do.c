@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1213,7 +1213,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
                 with the situation, so only say something when debugging */
             pline(msgc_debug, "(monster in hero's way)");
 
-            if (!rloc(mtmp, TRUE))
+            if (!rloc(mtmp, TRUE, level))
                 /* no room to move it; send it away, to return later */
                 migrate_to_level(mtmp, ledger_no(&u.uz), MIGR_RANDOM, NULL);
         }

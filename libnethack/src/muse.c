@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2015-11-13 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -592,7 +592,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
         }
         if (oseen && how)
             makeknown(how);
-        rloc(mtmp, TRUE);
+        rloc(mtmp, TRUE, level);
         return 2;
     case MUSE_WAN_TELEPORTATION:
         zap_oseen = oseen;
@@ -1183,7 +1183,7 @@ mbhitm(struct monst *mtmp, struct obj *otmp)
                 if (mtmp->m_ap_type)
                     seemimic(mtmp);
             } else if (!tele_restrict(mtmp))
-                rloc(mtmp, TRUE);
+                rloc(mtmp, TRUE, level);
         }
         break;
     case WAN_CANCELLATION:

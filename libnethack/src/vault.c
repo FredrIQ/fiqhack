@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,7 +47,7 @@ clear_fcorr(struct monst *grd, boolean forceshow)
             else if (!in_fcorridor(grd, u.ux, u.uy)) {
                 if (mtmp->mtame)
                     yelp(mtmp);
-                rloc(mtmp, FALSE);
+                rloc(mtmp, FALSE, level);
             }
         }
         oldtyp = level->locations[fcx][fcy].typ;
@@ -441,7 +441,7 @@ wallify_vault(struct monst *grd)
                 if ((mon = m_at(level, x, y)) != 0 && mon != grd) {
                     if (mon->mtame)
                         yelp(mon);
-                    rloc(mon, FALSE);
+                    rloc(mon, FALSE, level);
                 }
                 if ((gold = gold_at(level, x, y)) != 0) {
                     move_gold(gold, EGD(grd)->vroom);
@@ -520,7 +520,7 @@ gd_move(struct monst *grd)
             (grd_in_vault ||
              (in_fcorridor(grd, grd->mx, grd->my) &&
               !in_fcorridor(grd, u.ux, u.uy)))) {
-            rloc(grd, FALSE);
+            rloc(grd, FALSE, level);
             wallify_vault(grd);
             clear_fcorr(grd, TRUE);
             goto letknow;
@@ -558,7 +558,7 @@ gd_move(struct monst *grd)
             if (u_carry_gold) { /* player teleported */
                 m = grd->mx;
                 n = grd->my;
-                rloc(grd, FALSE);
+                rloc(grd, FALSE, level);
                 level->locations[m][n].typ = egrd->fakecorr[0].ftyp;
                 newsym(m, n);
                 msethostility(grd, TRUE, FALSE);
@@ -635,7 +635,7 @@ gd_move(struct monst *grd)
             /* just for insurance... */
             if (MON_AT(level, m, n) && m != grd->mx && n != grd->my) {
                 verbalize(msgc_monneutral, "Out of my way, scum!");
-                rloc(m_at(level, m, n), FALSE);
+                rloc(m_at(level, m, n), FALSE, level);
             }
             remove_monster(level, grd->mx, grd->my);
             newsym(grd->mx, grd->my);

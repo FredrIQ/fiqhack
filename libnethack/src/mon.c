@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -415,7 +415,7 @@ minliquid(struct monst *mtmp)
             if (!DEADMONSTER(mtmp)) {
                 fire_damage(mtmp->minvent, FALSE, FALSE, mtmp->mx, mtmp->my);
                 if (alive_means_lifesaved) {
-                    rloc(mtmp, TRUE);
+                    rloc(mtmp, TRUE, level);
                     /* Analogous to player case: if we have nowhere to place the
                        monster, it ends up back in the lava, and dies again */
                     minliquid(mtmp);
@@ -443,7 +443,7 @@ minliquid(struct monst *mtmp)
             }
             mondead(mtmp);
             if (!DEADMONSTER(mtmp)) {
-                rloc(mtmp, TRUE);
+                rloc(mtmp, TRUE, mtmp->dlevel);
                 water_damage_chain(mtmp->minvent, FALSE);
                 minliquid(mtmp);
                 return 0;
@@ -2229,7 +2229,7 @@ mnexto(struct monst *mtmp)
 
     if (!enexto(&mm, level, u.ux, u.uy, mtmp->data))
         return;
-    rloc_to(mtmp, mm.x, mm.y);
+    rloc_to(mtmp, mm.x, mm.y, level);
     return;
 }
 
@@ -2251,7 +2251,7 @@ mnearto(struct monst * mtmp, xchar x, xchar y, boolean move_other)
 
     if (move_other && (othermon = m_at(level, x, y))) {
         if (othermon->wormno)
-            remove_worm(othermon);
+            remove_worm(othermon, level);
         else
             remove_monster(level, x, y);
     }
@@ -2269,7 +2269,7 @@ mnearto(struct monst * mtmp, xchar x, xchar y, boolean move_other)
         newy = mm.y;
     }
 
-    rloc_to(mtmp, newx, newy);
+    rloc_to(mtmp, newx, newy, level);
 
     if (move_other && othermon) {
         othermon->mx = COLNO;

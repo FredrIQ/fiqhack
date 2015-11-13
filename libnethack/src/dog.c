@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -271,7 +271,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
            up at your target spot when there is a monster there too. */
         if (!MON_AT(level, u.ux, u.uy) &&
             !rn2(mtmp->mtame ? 10 : mtmp->mpeaceful ? 5 : 2))
-            rloc_to(mtmp, u.ux, u.uy);
+            rloc_to(mtmp, u.ux, u.uy, level);
         else
             mnexto(mtmp);
         return;
@@ -380,7 +380,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     if (xlocale != COLNO)
         mnearto(mtmp, xlocale, ylocale, FALSE);
     else {
-        if (!rloc(mtmp, TRUE)) {
+        if (!rloc(mtmp, TRUE, level)) {
             /* Failed to place migrating monster, probably because the level is
                full.  Dump the monster's cargo and leave the monster dead. */
             struct obj *obj;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2015-11-13 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1690,8 +1690,8 @@ extern void level_tele_impl(boolean wizard_tele);
 extern void domagicportal(struct trap *);
 extern void tele_trap(struct trap *);
 extern void level_tele_trap(struct trap *);
-extern void rloc_to(struct monst *, int, int);
-extern boolean rloc(struct monst *, boolean);
+extern void rloc_to(struct monst *, int, int, struct level *);
+extern boolean rloc(struct monst *, boolean, struct level *);
 extern boolean tele_restrict(struct monst *);
 extern void mtele_trap(struct monst *, struct trap *, int);
 extern int mlevel_tele_trap(struct monst *, struct trap *, boolean, int);
@@ -1940,7 +1940,7 @@ extern void save_worm(struct memfile *mf, struct level *lev);
 extern void free_worm(struct level *lev);
 extern void rest_worm(struct memfile *mf, struct level *lev);
 extern void place_wsegs(struct monst *);
-extern void remove_worm(struct monst *);
+extern void remove_worm(struct monst *, struct level *);
 extern void place_worm_tail_randomly(struct monst *, xchar, xchar, enum rng);
 extern int count_wsegs(struct monst *);
 

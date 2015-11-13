@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2015-11-13 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -251,7 +251,7 @@ doit:
             passive(mon, FALSE, 1, AT_KICK);
             return ac_somethingelse;
         } else {
-            rloc_to(mon, bypos.x, bypos.y);
+            rloc_to(mon, bypos.x, bypos.y, level);
             if (mon->mx != x || mon->my != y) {
                 reveal_monster_at(x, y, TRUE);
                 /* TODO: This should probably use locomotion(). */
