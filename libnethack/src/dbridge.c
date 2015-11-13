@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -374,7 +374,7 @@ e_died(struct entity *etmp, int dest, int how, const char *killer)
             /* So, you didn't die */
             if (!e_survives_at(etmp, etmp->ex, etmp->ey)) {
                 if (enexto(&xy, level, etmp->ex, etmp->ey, etmp->edata)) {
-                    pline("A %s force teleports you away...",
+                    pline(msgc_statusheal, "A %s force teleports you away...",
                           Hallucination ? "normal" : "strange");
                     teleds(xy.x, xy.y, FALSE);
                 }
@@ -392,7 +392,7 @@ e_died(struct entity *etmp, int dest, int how, const char *killer)
 #define mk_corpse(dest)  ((dest & 2) ? AD_DGST : AD_PHYS)
         /* if monsters are moving, one of them caused the destruction */
         if (flags.mon_moving)
-            monkilled(etmp->emon, mk_message(dest), mk_corpse(dest));
+            monkilled(NULL, etmp->emon, mk_message(dest), mk_corpse(dest));
         else    /* you caused it */
             xkilled(etmp->emon, dest);
         etmp->edata = NULL;
@@ -496,9 +496,18 @@ do_entity(struct entity *etmp)
     at_portcullis = is_db_wall(oldx, oldy);
     crm = &level->locations[oldx][oldy];
 
+    enum msg_channel miss_msgc, hit_msgc;
+    if (is_u(etmp)) {
+        miss_msgc = msgc_fatalavoid;
+        hit_msgc = msgc_fatal_predone;
+    } else if (etmp->emon->mtame && canspotmon(etmp->emon))
+        miss_msgc = hit_msgc = msgc_petfatal;
+    else
+        miss_msgc = hit_msgc = msgc_monneutral;
+
     if (automiss(etmp) && e_survives_at(etmp, oldx, oldy)) {
         if (e_inview && (at_portcullis || IS_DRAWBRIDGE(crm->typ)))
-            pline("The %s passes through %s!",
+            pline(miss_msgc, "The %s passes through %s!",
                   at_portcullis ? "portcullis" : "drawbridge", e_nam(etmp));
         if (is_u(etmp))
             spoteffects(FALSE);
@@ -506,7 +515,7 @@ do_entity(struct entity *etmp)
     }
     if (e_missed(etmp, FALSE)) {
         if (at_portcullis)
-            pline("The portcullis misses %s!", e_nam(etmp));
+            pline(miss_msgc, "The portcullis misses %s!", e_nam(etmp));
         if (e_survives_at(etmp, oldx, oldy))
             return;
         else {
@@ -517,7 +526,7 @@ do_entity(struct entity *etmp)
         }
     } else {
         if (crm->typ == DRAWBRIDGE_DOWN) {
-            pline("%s crushed underneath the drawbridge.",
+            pline(hit_msgc, "%s crushed underneath the drawbridge.",
                   E_phrase(etmp, "are")); /* no jump */
             e_died(etmp, e_inview ? 3 : 2, CRUSHING,
                    killer_msg(CRUSHING, "a falling drawbridge"));  /* no corpse */
@@ -531,10 +540,10 @@ do_entity(struct entity *etmp)
                 relocates = TRUE;
             } else {
                 if (e_inview)
-                    pline("%s crushed by the falling portcullis!",
+                    pline(hit_msgc, "%s crushed by the falling portcullis!",
                           E_phrase(etmp, "are"));
                 else
-                    You_hear("a crushing sound.");
+                    You_hear(msgc_levelsound, "a crushing sound.");
                 e_died(etmp, e_inview ? 3 : 2, CRUSHING,
                        killer_msg(CRUSHING, "a falling portcullis"));
                 /* no corpse */
@@ -545,12 +554,10 @@ do_entity(struct entity *etmp)
         }
     }
 
-/*
- * Here's where we try to do relocation.  Assumes that etmp is not arriving
- * at the portcullis square while the drawbridge is falling, since this square
- * would be inaccessible (i.e. etmp started on drawbridge square) or
- * unnecessary (i.e. etmp started here) in such a situation.
- */
+    /* Here's where we try to do relocation. Assumes that etmp is not arriving
+       at the portcullis square while the drawbridge is falling, since this
+       square would be inaccessible (i.e. etmp started on drawbridge square) or
+       unnecessary (i.e. etmp started here) in such a situation. */
     newx = oldx;
     newy = oldy;
     find_drawbridge(&newx, &newy);
@@ -558,11 +565,10 @@ do_entity(struct entity *etmp)
         get_wall_for_db(&newx, &newy);
     if (relocates && (e_at(newx, newy))) {
 
-/*
- * Standoff problem:  one or both entities must die, and/or both switch
- * places.  Avoid infinite recursion by checking first whether the other
- * entity is staying put.  Clean up if we happen to move/die in recursion.
- */
+        /* Standoff problem: one or both entities must die, and/or both switch
+           places. Avoid infinite recursion by checking first whether the other
+           entity is staying put. Clean up if we happen to move/die in
+           recursion. */
         struct entity *other;
 
         other = e_at(newx, newy);
@@ -594,13 +600,16 @@ do_entity(struct entity *etmp)
     if (is_db_wall(etmp->ex, etmp->ey)) {
         if (e_inview) {
             if (is_u(etmp)) {
-                pline("You tumble towards the closed portcullis!");
+                pline(msgc_nonmonbad,
+                      "You tumble towards the closed portcullis!");
                 if (automiss(etmp))
-                    pline("You pass through it!");
+                    pline(miss_msgc, "You pass through it!");
                 else
-                    pline("The drawbridge closes in...");
+                    pline(e_survives_at(etmp, etmp->ex, etmp->ey) ?
+                          miss_msgc : hit_msgc, "The drawbridge closes in...");
             } else
-                pline("%s behind the drawbridge.", E_phrase(etmp, "disappear"));
+                pline(hit_msgc, "%s behind the drawbridge.",
+                      E_phrase(etmp, "disappear"));
         }
         if (!e_survives_at(etmp, etmp->ex, etmp->ey)) {
             e_died(etmp, 0, CRUSHING,
@@ -609,10 +618,10 @@ do_entity(struct entity *etmp)
         }
     } else {
         if (is_pool(level, etmp->ex, etmp->ey) && !e_inview)
-            You_hear("a splash.");
+            You_hear(msgc_levelsound, "a splash.");
         if (e_survives_at(etmp, etmp->ex, etmp->ey)) {
             if (e_inview && !flying(etmp->emon) && !levitates(etmp->emon))
-                pline("%s from the bridge.", E_phrase(etmp, "fall"));
+                pline(miss_msgc, "%s from the bridge.", E_phrase(etmp, "fall"));
             return;
         }
         if (is_pool(level, etmp->ex, etmp->ey) ||
@@ -622,10 +631,11 @@ do_entity(struct entity *etmp)
                 boolean lava = is_lava(level, etmp->ex, etmp->ey);
 
                 if (Hallucination)
-                    pline("%s the %s and disappears.", E_phrase(etmp, "drink"),
+                    pline(hit_msgc, "%s the %s and disappears.",
+                          E_phrase(etmp, "drink"),
                           lava ? "lava" : waterbody_name(etmp->ex, etmp->ey));
                 else
-                    pline("%s into the %s.", E_phrase(etmp, "fall"),
+                    pline(hit_msgc, "%s into the %s.", E_phrase(etmp, "fall"),
                           lava ? "lava" : waterbody_name(etmp->ex, etmp->ey));
             }
         e_died(etmp, e_inview ? 3 : 2,  /* CRUSHING is arbitrary */
@@ -653,7 +663,7 @@ close_drawbridge(int x, int y)
     y2 = y;
     get_wall_for_db(&x2, &y2);
     if (cansee(x, y) || cansee(x2, y2))
-        pline("You see a drawbridge %s up!",
+        pline(msgc_actionok, "You see a drawbridge %s up!",
               (((u.ux == x || u.uy == y) && !Underwater) ||
                distu(x2, y2) < distu(x, y)) ? "coming" : "going");
     loc1->typ = DRAWBRIDGE_UP;
@@ -676,7 +686,7 @@ close_drawbridge(int x, int y)
     set_entity(x2, y2, &(occupants[1]));        /* do_entity for worm tail */
     do_entity(&(occupants[1]));
     if (OBJ_AT(x, y))
-        You_hear("smashing and crushing.");
+        You_hear(msgc_levelsound, "smashing and crushing.");
     revive_nasty(x, y, NULL);
     revive_nasty(x2, y2, NULL);
     delallobj(x, y);
@@ -707,7 +717,7 @@ open_drawbridge(int x, int y)
     y2 = y;
     get_wall_for_db(&x2, &y2);
     if (cansee(x, y) || cansee(x2, y2))
-        pline("You see a drawbridge %s down!",
+        pline(msgc_actionok, "You see a drawbridge %s down!",
               (distu(x2, y2) < distu(x, y)) ? "going" : "coming");
     loc1->typ = DRAWBRIDGE_DOWN;
     loc2 = &level->locations[x2][y2];
@@ -757,16 +767,18 @@ destroy_drawbridge(int x, int y)
 
         if (loc1->typ == DRAWBRIDGE_UP) {
             if (cansee(x2, y2))
-                pline("The portcullis of the drawbridge falls into the %s!",
+                pline(msgc_consequence,
+                      "The portcullis of the drawbridge falls into the %s!",
                       lava ? "lava" : waterbody_name(x2, y2));
             else
-                You_hear("a loud *SPLASH*!");
+                You_hear(msgc_levelsound, "a loud *SPLASH*!");
         } else {
             if (cansee(x, y))
-                pline("The drawbridge collapses into the %s!",
+                pline(msgc_consequence,
+                      "The drawbridge collapses into the %s!",
                       lava ? "lava" : waterbody_name(x, y));
             else
-                You_hear("a loud *SPLASH*!");
+                You_hear(msgc_levelsound, "a loud *SPLASH*!");
         }
         loc1->typ = lava ? LAVAPOOL : MOAT;
         loc1->drawbridgemask = 0;
@@ -776,9 +788,9 @@ destroy_drawbridge(int x, int y)
         }
     } else {
         if (cansee(x, y))
-            pline("The drawbridge disintegrates!");
+            pline(msgc_consequence, "The drawbridge disintegrates!");
         else
-            You_hear("a loud *CRASH*!");
+            You_hear(msgc_levelsound, "a loud *CRASH*!");
         loc1->typ = ((loc1->drawbridgemask & DB_ICE) ? ICE : ROOM);
         loc1->icedpool = ((loc1->drawbridgemask & DB_ICE) ? ICED_MOAT : 0);
     }
@@ -798,10 +810,18 @@ destroy_drawbridge(int x, int y)
 
     set_entity(x2, y2, etmp2);  /* currently only automissers can be here */
     if (etmp2->edata) {
+        enum msg_channel hit_msgc;
+        if (is_u(etmp2))
+            hit_msgc = msgc_fatal_predone;
+        else if (etmp2->emon->mtame && canspotmon(etmp2->emon))
+            hit_msgc = msgc_petfatal;
+        else
+            hit_msgc = msgc_monneutral;
+        
         e_inview = e_canseemon(etmp2);
         if (!automiss(etmp2)) {
             if (e_inview)
-                pline("%s blown apart by flying debris.",
+                pline(hit_msgc, "%s blown apart by flying debris.",
                       E_phrase(etmp2, "are"));
             e_died(etmp2, e_inview ? 3 : 2, CRUSHING,
                    killer_msg(CRUSHING, "an exploding drawbridge"));
@@ -809,17 +829,26 @@ destroy_drawbridge(int x, int y)
     }
     set_entity(x, y, etmp1);
     if (etmp1->edata) {
+        enum msg_channel hit_msgc;
+        if (is_u(etmp1))
+            hit_msgc = msgc_fatal_predone;
+        else if (etmp1->emon->mtame && canspotmon(etmp1->emon))
+            hit_msgc = msgc_petfatal;
+        else
+            hit_msgc = msgc_monneutral;
+        
         e_inview = e_canseemon(etmp1);
         if (!e_missed(etmp1, TRUE)) {
             if (e_inview) {
                 if (!is_u(etmp1) && Hallucination)
-                    pline("%s into some heavy metal!", E_phrase(etmp1, "get"));
+                    pline(hit_msgc, "%s into some heavy metal!",
+                          E_phrase(etmp1, "get"));
                 else
-                    pline("%s hit by a huge chunk of metal!",
+                    pline(hit_msgc, "%s hit by a huge chunk of metal!",
                           E_phrase(etmp1, "are"));
             } else {
                 if (!is_u(etmp1) && !is_pool(level, x, y))
-                    You_hear("a crushing sound.");
+                    You_hear(msgc_levelsound, "a crushing sound.");
             }
             e_died(etmp1, e_inview ? 3 : 2, CRUSHING,
                    killer_msg(CRUSHING, "a collapsing drawbridge"));

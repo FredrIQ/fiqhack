@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -33,17 +33,16 @@ chain_explode(int x, int y, int type,
 }
 
 /* Note: I had to choose one of three possible kinds of "type" when writing
- * this function: a wand type (like in zap.c), an adtyp, or an object type.
- * Wand types get complex because they must be converted to adtyps for
- * determining such things as fire resistance.  Adtyps get complex in that
- * they don't supply enough information--was it a player or a monster that
- * did it, and with a wand, spell, or breath weapon?  Object types share both
- * these disadvantages....
- *
- * The descr argument should be used to describe the explosion. It should be
- * a string suitable for use with an().
- * raylevel is used for explosions caused by skilled wand usage (0=no wand)
- */
+   this function: a wand type (like in zap.c), an adtyp, or an object type.
+   Wand types get complex because they must be converted to adtyps for
+   determining such things as fire resistance.  Adtyps get complex in that
+   they don't supply enough information--was it a player or a monster that
+   did it, and with a wand, spell, or breath weapon?  Object types share both
+   these disadvantages....
+
+   The descr argument should be used to describe the explosion. It should be
+   a string suitable for use with an().
+   raylevel is used for explosions caused by skilled wand usage (0=no wand) */
 void
 explode(int x, int y, int type, /* the same as in zap.c */
         int dam, char olet, int expltype, const char *descr, int raylevel)
@@ -307,7 +306,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
         if (olet == MON_EXPLODE) {
             str = "explosion";
         }
-        You_hear("a blast.");
+        You_hear(msgc_levelsound, "a blast.");
     }
 
     if (dam)
@@ -327,9 +326,13 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     mtmp = u.usteed;
                 if (!mtmp)
                     continue;
+                /* TODO: We want to calculate message channels using
+                   combat_msgc(), but that requires knowing the attacker as well
+                   as the defender. We don't, so for now, we're just using
+                   guesses. */
                 if (Engulfed && mtmp == u.ustuck) {
                     if (is_animal(u.ustuck->data))
-                        pline("%s gets %s!", Monnam(u.ustuck),
+                        pline(msgc_combatgood, "%s gets %s!", Monnam(u.ustuck),
                               (adtyp == AD_FIRE) ? "heartburn" :
                               (adtyp == AD_COLD) ? "chilly" :
                               (adtyp == AD_DISN) ? ((olet == WAND_CLASS) ?
@@ -340,7 +343,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                               (adtyp == AD_ACID) ? "an upset stomach" :
                               "fried");
                     else
-                        pline("%s gets slightly %s!", Monnam(u.ustuck),
+                        pline(msgc_combatgood, "%s gets slightly %s!",
+                              Monnam(u.ustuck),
                               (adtyp == AD_FIRE) ? "toasted" :
                               (adtyp == AD_COLD) ? "chilly" :
                               (adtyp == AD_DISN) ? ((olet == WAND_CLASS) ?
@@ -350,8 +354,13 @@ explode(int x, int y, int type, /* the same as in zap.c */
                               (adtyp == AD_DRST) ? "intoxicated" :
                               (adtyp == AD_ACID) ? "burned" : "fried");
                 } else if (cansee(i + x - 1, j + y - 1)) {
-                    if (mtmp->m_ap_type) seemimic(mtmp);
-                    pline("%s is caught in %s%s!", Monnam(mtmp),
+                    if (mtmp->m_ap_type)
+                        seemimic(mtmp);
+                    /* TODO: figure out the source and use combat_msgc() */
+                    pline(mtmp->mtame ? msgc_petwarning :
+                          mtmp->mpeaceful ? msgc_moncombatbad :
+                          msgc_monneutral, "%s is caught in %s%s!",
+                          Monnam(mtmp),
                           expl_needs_the ? "the " : "", dispbuf);
                 }
 
@@ -365,14 +374,13 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     golemeffects(mtmp, (int)adtyp, dam + idamres);
                     mtmp->mhp -= idamnonres;
                 } else {
-                    /* call resist with 0 and do damage manually so 1) we can
-                       get out the message before doing the damage, and 2) we
-                       can call mondied, not killed, if it's not your blast */
                     int mdam = dam;
 
                     if (resist(mtmp, olet, FALSE)) {
+                        /* TODO: again, message channel is a guess */
                         if (cansee(i + x - 1, j + y - 1))
-                            pline("%s resists %s%s!", Monnam(mtmp),
+                            pline(msgc_monneutral,
+                                  "%s resists %s%s!", Monnam(mtmp),
                                   expl_needs_the ? "the " : "", dispbuf);
                         mdam = dam / 2;
                     }
@@ -399,7 +407,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                             /* FIXME: make a generic losexp() for monsters */
                             mdam = dice(2, 6);
                             if (cansee(i + x - 1, j + y - 1))
-                                pline("%s suddenly seems weaker!", Monnam(mtmp));
+                                pline(combat_msgc(NULL, mtmp, cr_hit),
+                                      "%s suddenly seems weaker!", Monnam(mtmp));
                             mtmp->mhpmax -= mdam;
                             if (mtmp->m_lev == 0)
                                 mdam = mtmp->mhp;
@@ -417,7 +426,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     if (!flags.mon_moving)
                         killed(mtmp);
                     else
-                        monkilled(mtmp, "", (int)adtyp);
+                        monkilled(NULL, mtmp, "", (int)adtyp);
                 } else if (!flags.mon_moving)
                     setmangry(mtmp);
             }
@@ -425,14 +434,16 @@ explode(int x, int y, int type, /* the same as in zap.c */
     /* Do your injury last */
     if (uhurt) {
         if (flags.verbose)
-            pline("You are caught in %s%s!", expl_needs_the ? "the " : "",
+            pline_implied(olet == MON_EXPLODE ?
+                          msgc_nonmonbad : msgc_nonmonbad,
+                          "You are caught in %s%s!", expl_needs_the ? "the " : "",
                   dispbuf);
         /* do property damage first, in case we end up leaving bones */
         if (adtyp == AD_FIRE)
             burn_away_slime(&youmonst);
         if (u.uinvulnerable) {
             damu = 0;
-            pline("You are unharmed!");
+            pline(msgc_playerimmune, "You are unharmed!");
         } else if (Half_physical_damage && adtyp == AD_PHYS)
             damu = (damu + 1) / 2;
         else if (raylevel) {
@@ -574,7 +585,8 @@ scatter(int sx, int sy, /* location of objects to scatter */
             && rn2(10)) {
             if (otmp->otyp == BOULDER) {
                 if (visible)
-                    pline("%s apart.", Tobjnam(otmp, "break"));
+                    pline(msgc_consequence, "%s apart.",
+                          Tobjnam(otmp, "break"));
                 fracture_rock(otmp);
                 place_object(otmp, lev, sx, sy);
                 if ((otmp = sobj_at(BOULDER, lev, sx, sy)) != 0) {
@@ -588,7 +600,7 @@ scatter(int sx, int sy, /* location of objects to scatter */
                 if ((trap = t_at(lev, sx, sy)) && trap->ttyp == STATUE_TRAP)
                     deltrap(lev, trap);
                 if (visible)
-                    pline("%s.", Tobjnam(otmp, "crumble"));
+                    pline(msgc_consequence, "%s.", Tobjnam(otmp, "crumble"));
                 break_statue(otmp);
                 place_object(otmp, lev, sx, sy); /* put fragments on floor */
             }
@@ -644,7 +656,7 @@ scatter(int sx, int sy, /* location of objects to scatter */
                 } else if ((mtmp = m_at(lev, bhitpos.x, bhitpos.y)) != 0) {
                     if (scflags & MAY_HITMON) {
                         stmp->range--;
-                        if (ohitmon(mtmp, stmp->obj, 1, FALSE)) {
+                        if (ohitmon(mtmp, stmp->obj, NULL, 1, FALSE)) {
                             stmp->obj = NULL;
                             stmp->stopped = TRUE;
                         }

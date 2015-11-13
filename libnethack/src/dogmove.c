@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -349,9 +349,10 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
         /* However, invisible monsters should still be "it" even though out of
            sight locations should not. */
         if (mon_visible(mtmp) && tunnels(mtmp->data) && was_starving)
-            pline("%s digs in!", Monnam(mtmp));
+            pline(msgc_petneutral, "%s digs in!", Monnam(mtmp));
         else
-            pline("%s %s %s.", mon_visible(mtmp) ? noit_Monnam(mtmp) : "It",
+            pline(msgc_petneutral, "%s %s %s.",
+                  mon_visible(mtmp) ? noit_Monnam(mtmp) : "It",
                   devour ? "devours" : "eats",
                   (obj->oclass == FOOD_CLASS) ?
                   singular(obj, doname) : doname(obj));
@@ -371,7 +372,7 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
         obj->oerodeproof = 0;
         set_property(mtmp, STUNNED, dice(4, 4), FALSE);
         if (canseemon(mtmp) && flags.verbose) {
-            pline("%s spits %s out in disgust!", Monnam(mtmp),
+            pline(msgc_petwarning, "%s spits %s out in disgust!", Monnam(mtmp),
                   distant_name(obj, doname));
         }
     }
@@ -436,20 +437,22 @@ dog_hunger(struct monst *mtmp, struct edog *edog)
             if (mtmp->mhp <= 0)
                 goto dog_died;
             if (cansee(mtmp->mx, mtmp->my))
-                pline("%s is confused from hunger.", Monnam(mtmp));
+                pline(msgc_petfatal, "%s is confused from hunger.",
+                      Monnam(mtmp));
             else if (couldsee(mtmp->mx, mtmp->my))
                 beg(mtmp);
             else
-                pline("You feel worried about %s.", y_monnam(mtmp));
+                pline(msgc_petfatal, "You feel worried about %s.",
+                      y_monnam(mtmp));
             action_interrupted();
         } else if (moves > edog->hungrytime + 750 || mtmp->mhp <= 0) {
         dog_died:
             if (mtmp->mleashed && mtmp != u.usteed)
-                pline("Your leash goes slack.");
+                pline(msgc_petfatal, "Your leash goes slack.");
             else if (cansee(mtmp->mx, mtmp->my))
-                pline("%s starves.", Monnam(mtmp));
+                pline(msgc_petfatal, "%s starves.", Monnam(mtmp));
             else
-                pline("You feel %s for a moment.",
+                pline(msgc_petfatal, "You feel %s for a moment.",
                       Hallucination ? "bummed" : "sad");
             mondied(mtmp);
             return TRUE;
@@ -511,8 +514,8 @@ dog_invent(struct monst *mtmp, struct edog *edog, int udist)
             if (can_use || (!droppables && rn2(20) < edog->apport + 3)) {
                 if (can_use || rn2(udist) || !rn2(edog->apport)) {
                     if (cansee(omx, omy) && flags.verbose)
-                        pline("%s picks up %s.", Monnam(mtmp),
-                              distant_name(obj, doname));
+                        pline(msgc_petneutral, "%s picks up %s.",
+                              Monnam(mtmp), distant_name(obj, doname));
                     obj_extract_self(obj);
                     newsym(omx, omy);
                     mpickobj(mtmp, obj);
@@ -740,8 +743,9 @@ dog_move(struct monst *mtmp, int after)
             /* Guardian angel refuses to be conflicted; rather, it disappears,
                angrily, and sends in some nasties */
             if (canspotmon(mtmp)) {
-                pline("%s rebukes you, saying:", Monnam(mtmp));
-                verbalize("Since you desire conflict, have some more!");
+                pline(msgc_npcvoice, "%s rebukes you, saying:", Monnam(mtmp));
+                verbalize(msgc_petfatal,
+                          "Since you desire conflict, have some more!");
             }
             mongone(mtmp);
             i = rnd(4);
@@ -759,7 +763,7 @@ dog_move(struct monst *mtmp, int after)
     if (!Conflict && !confused(mtmp) && mtmp == u.ustuck &&
         !sticks(youmonst.data)) {
         unstuck(mtmp);  /* swallowed case handled above */
-        pline("You get released!");
+        pline(msgc_petneutral, "You get released!");
     }
 
 /*
@@ -928,7 +932,8 @@ newdogpos:
 
         if (info[chi] & ALLOW_MUXY) {
             if (mtmp->mleashed) {       /* play it safe */
-                pline("%s breaks loose of %s leash!", Monnam(mtmp), mhis(mtmp));
+                pline(msgc_petwarning, "%s breaks loose of %s leash!",
+                      Monnam(mtmp), mhis(mtmp));
                 m_unleash(mtmp, FALSE);
             }
             mattackq(mtmp, nix, niy);
@@ -957,7 +962,7 @@ newdogpos:
         remove_monster(level, omx, omy);
         place_monster(mtmp, nix, niy, TRUE);
         if (cursemsg[chi] && (cansee(omx, omy) || cansee(nix, niy)))
-            pline("%s moves only reluctantly.", Monnam(mtmp));
+            pline(msgc_petneutral, "%s moves only reluctantly.", Monnam(mtmp));
         /* We have to know if the pet's gonna do a combined eat and move before
            moving it, but it can't eat until after being moved.  Thus the
            do_eat flag. */

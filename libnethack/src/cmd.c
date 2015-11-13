@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-04 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -480,7 +480,8 @@ wiz_mon_list(const struct nh_cmd_arg *arg)
 {
     struct monst *mon;
     for (mon = level->monlist; mon; mon = mon->nmon)
-        pline("at %d,%d: %s", mon->mx, mon->my, k_monnam(mon));
+        pline(msgc_debug, "at %d,%d: %s",
+              mon->mx, mon->my, k_monnam(mon));
 
     return 0;
 }
@@ -493,7 +494,7 @@ wiz_mon_polycontrol(const struct nh_cmd_arg *arg)
 
     flags.mon_polycontrol = !flags.mon_polycontrol;
 
-    pline("Monster polymorph control is %s.",
+    pline(msgc_actionok, "Monster polymorph control is %s.",
           flags.mon_polycontrol ? "on" : "off");
 
     return 0;
@@ -517,7 +518,7 @@ wiz_togglegen(const struct nh_cmd_arg *arg)
     (void) arg;
     flags.mon_generation = !flags.mon_generation;
 
-    pline("Monster generation is %s.",
+    pline(msgc_actionok, "Monster generation is %s.",
           flags.mon_generation ? "on" : "off");
 
     return 0;
@@ -538,9 +539,9 @@ wiz_hpset(const struct nh_cmd_arg *arg)
         *hp = 1;
     if (*hp >= *hpmax) {
         *hp = *hpmax;
-        pline("You feel entirely healed.");
+        pline(msgc_actionok, "You feel entirely healed.");
     } else {
-        pline("You feel very precisely wounded.");
+        pline(msgc_actionok, "You feel very precisely wounded.");
     }
     return 0;
 }
@@ -561,14 +562,15 @@ wiz_level_change(const struct nh_cmd_arg *arg)
         ret = sscanf(buf, "%d", &newlevel);
 
     if (ret != 1) {
-        pline("Never mind.");
+        pline(msgc_cancelled, "Never mind.");
         return 0;
     }
     if (newlevel == u.ulevel) {
-        pline("You are already that experienced.");
+        pline(msgc_cancelled, "You are already that experienced.");
     } else if (newlevel < u.ulevel) {
         if (u.ulevel == 1) {
-            pline("You are already as inexperienced as you can get.");
+            pline(msgc_cancelled,
+                  "You are already as inexperienced as you can get.");
             return 0;
         }
         if (newlevel < 1)
@@ -577,7 +579,8 @@ wiz_level_change(const struct nh_cmd_arg *arg)
             losexp(NULL, TRUE);
     } else {
         if (u.ulevel >= MAXULEV) {
-            pline("You are already as experienced as you can get.");
+            pline(msgc_cancelled,
+                  "You are already as experienced as you can get.");
             return 0;
         }
         if (newlevel > MAXULEV)
@@ -799,9 +802,10 @@ dowelcome(const struct nh_cmd_arg *arg)
          (ROLE_MALE | ROLE_FEMALE) : currentgend != u.initgend))
         buf = msgprintf("%s %s", buf, genders[currentgend].adj);
 
-    pline(new_game ? "%s %s, welcome to FIQHack!  You are a%s %s %s." :
-          "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL),
-          u.uplname, buf, urace.adj,
+    pline(msgc_intro, new_game ?
+          "%s %s, welcome to FIQHack!  You are a%s %s %s." :
+          "%s %s, the%s %s %s, welcome back to NetHack!",
+          Hello(NULL), u.uplname, buf, urace.adj,
           (currentgend && urole.name.f) ? urole.name.f : urole.name.m);
 
     /* Realtime messages are no longer printed in dowelcome(); rather, there's a
@@ -813,10 +817,10 @@ dowelcome(const struct nh_cmd_arg *arg)
        for the time when it's loaded), not two.*/
 
     if (discover)
-        pline("You are in non-scoring discovery mode.");
+        pline(msgc_intro, "You are in non-scoring discovery mode.");
 
     if (*level->levname)
-        pline("You named this level: %s.", level->levname);
+        pline(msgc_info, "You named this level: %s.", level->levname);
 
     return 0;
 }
@@ -1687,7 +1691,7 @@ do_command(int command, struct nh_cmd_arg *arg)
         return COMMAND_DEBUG_ONLY;
 
     if (u.uburied && !cmdlist[command].can_if_buried) {
-        pline("You can't do that while you are buried!");
+        pline(msgc_cancelled, "You can't do that while you are buried!");
         res = 0;
         action_completed();
     } else {
@@ -1747,7 +1751,7 @@ get_adjacent_loc(const char *prompt, const char *emsg, xchar x, xchar y,
     schar dx, dy;
 
     if (!getdir(prompt, &dx, &dy, dz, FALSE)) {
-        pline("Never mind.");
+        pline(msgc_cancelled, "Never mind.");
         return 0;
     }
     new_x = x + dx;
@@ -1757,7 +1761,7 @@ get_adjacent_loc(const char *prompt, const char *emsg, xchar x, xchar y,
         cc->y = new_y;
     } else {
         if (emsg)
-            pline("%s", emsg);
+            pline(msgc_mispaste, "%s", emsg);
         return 0;
     }
     return 1;
@@ -1778,7 +1782,8 @@ static int
 doquit(const struct nh_cmd_arg *arg)
 {
     (void) arg;
-    pline("To quit the game, use the 'save' command (typically on 'S').");
+    pline(msgc_controlhelp,
+          "To quit the game, use the 'save' command (typically on 'S').");
 
     return 0;
 }
@@ -1807,11 +1812,10 @@ dotravel(const struct nh_cmd_arg *arg)
         cc.y = u.uy;
     }
     if (!(arg->argtype & CMD_ARG_POS))
-        pline("Where do you want to travel to?");
+        pline(msgc_uiprompt, "Where do you want to travel to?");
     if (getargpos(arg, &cc, FALSE, "the desired destination") ==
         NHCR_CLIENT_CANCEL) {
-        if (flags.verbose)
-            pline("Never mind.");
+        pline(msgc_cancelled, "Never mind.");
         return 0;
     }
     flags.travelcc.x = u.tx = cc.x;

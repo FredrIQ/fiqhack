@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-22 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -40,7 +40,7 @@ main(int argc, char *argv[])
 
     if (request_kill) {
         fprintf(stderr, "There is no longer a centralized server daemon.\n");
-        fprintf(stderr, "Send SIGTERM the server processes manually.\n");
+        fprintf(stderr, "Send SIGTERM to the server processes manually.\n");
         return 0;
     }
 

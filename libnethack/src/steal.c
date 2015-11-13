@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -65,7 +65,8 @@ stealgold(struct monst *mtmp)
         obj_extract_self(fgold);
         add_to_minv(mtmp, fgold);
         newsym(u.ux, u.uy);
-        pline("%s quickly snatches some gold from between your %s!",
+        pline(msgc_itemloss,
+              "%s quickly snatches some gold from between your %s!",
               Monnam(mtmp), makeplural(body_part(FOOT)));
         if (!ygold || !rn2(5)) {
             if (!tele_restrict(mtmp))
@@ -82,7 +83,7 @@ stealgold(struct monst *mtmp)
         unwield_silently(ygold);
         freeinv(ygold);
         add_to_minv(mtmp, ygold);
-        pline("Your purse feels lighter.");
+        pline(msgc_itemloss, "Your purse feels lighter.");
         if (!tele_restrict(mtmp))
             rloc(mtmp, TRUE);
         monflee(mtmp, 0, FALSE, FALSE);
@@ -115,7 +116,8 @@ remove_worn_item(struct obj *obj, boolean unchain_ball)
     }
 }
 
-/* Returns 1 when something was stolen (or at least, when N should flee now)
+/*
+ * Returns 1 when something was stolen (or at least, when N should flee now)
  * Returns -1 if the monster died in the attempt
  * Avoid stealing the object stealoid
  */
@@ -136,9 +138,11 @@ steal(struct monst *mtmp, const char **objnambuf)
     nothing_to_steal:
         /* Not even a thousand men in armor can strip a naked man. */
         if (Blind)
-            pline("Somebody tries to rob you, but finds nothing to steal.");
+            pline(combat_msgc(mtmp, &youmonst, cr_immune),
+                  "Somebody tries to rob you, but finds nothing to steal.");
         else
-            pline("%s tries to rob you, but there is nothing to steal!",
+            pline(combat_msgc(mtmp, &youmonst, cr_immune),
+                  "%s tries to rob you, but there is nothing to steal!",
                   Monnam(mtmp));
         return 1;       /* let her flee */
     }
@@ -206,7 +210,8 @@ gotobj:
             static const char *const how[] =
                 { "steal", "snatch", "grab", "take" };
         cant_take:
-            pline("%s tries to %s your %s but gives up.", Monnam(mtmp),
+            pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                  "%s tries to %s your %s but gives up.", Monnam(mtmp),
                   how[rn2(SIZE(how))],
                   (otmp->owornmask & W_ARMOR) ? equipname(otmp) : cxname(otmp));
             /* the fewer items you have, the less likely the thief is going to
@@ -250,18 +255,20 @@ gotobj:
                 cancel_helplessness(hm_fainted, "Someone revives you.");
                 slowly = (armordelay >= 1 || u_helpless(hm_all));
                 if (u_helpless(hm_all)) {
-                    pline("%s tries to %s you, but is dismayed by your lack of "
+                    pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                          "%s tries to %s you, but is dismayed by your lack of "
                           "response.", !seen ? "She" : Monnam(mtmp),
                           u.ufemale ? "charm" : "seduce");
                     return (0);
                 }
                 if (u.ufemale)
-                    pline("%s charms you.  You gladly %s your %s.",
+                    pline(msgc_itemloss,
+                          "%s charms you.  You gladly %s your %s.",
                           !seen ? "She" : Monnam(mtmp),
                           curssv ? "let her take" : slowly ? "start removing" :
                           "hand over", equipname(otmp));
                 else
-                    pline("%s seduces you and %s off your %s.",
+                    pline(msgc_itemloss, "%s seduces you and %s off your %s.",
                           !seen ? "She" : Adjmonnam(mtmp, "beautiful"),
                           curssv ? "helps you to take" : slowly ?
                           "you start taking" : "you take", equipname(otmp));
@@ -297,12 +304,14 @@ gotobj:
     mtmp->mavenge = 1;
 
     freeinv(otmp);
-    pline("%s stole %s.", named ? "She" : Monnam(mtmp), doname(otmp));
+    pline(msgc_itemloss, "%s stole %s.", named ? "She" : Monnam(mtmp),
+          doname(otmp));
     could_petrify = (otmp->otyp == CORPSE &&
                      touch_petrifies(&mons[otmp->corpsenm]));
     mpickobj(mtmp, otmp);       /* may free otmp */
     if (could_petrify && !(mtmp->misc_worn_check & W_MASK(os_armg))) {
-        minstapetrify(mtmp, TRUE);
+        /* TODO: Should this really break pacifism? */
+        minstapetrify(mtmp, &youmonst);
         return -1;
     }
     return (slowly || u_helpless(hm_all)) ? 0 : 1;
@@ -377,7 +386,7 @@ stealamulet(struct monst *mtmp)
         /* mpickobj wont merge otmp because none of the above things to steal
            are mergable */
         mpickobj(mtmp, otmp);   /* may merge and free otmp */
-        pline("%s stole %s!", Monnam(mtmp), doname(otmp));
+        pline(msgc_itemloss, "%s stole %s!", Monnam(mtmp), doname(otmp));
         if (teleportitis(mtmp))
             mon_tele(mtmp, !!teleport_control(mtmp));
     }
@@ -408,7 +417,8 @@ mdrop_obj(struct monst *mon, struct obj *obj, boolean verbosely)
     if (!DEADMONSTER(mon) && obj->otyp == LOADSTONE && !obj->cursed)
         curse(obj);
     if (verbosely && cansee(omx, omy))
-        pline("%s drops %s.", Monnam(mon), distant_name(obj, doname));
+        pline(mon->mtame ? msgc_petneutral : msgc_monneutral,
+              "%s drops %s.", Monnam(mon), distant_name(obj, doname));
     if (!flooreffects(obj, omx, omy, "fall")) {
         place_object(obj, level, omx, omy);
         stackobj(obj);

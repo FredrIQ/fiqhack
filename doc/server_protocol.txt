@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-03-20
+Last modified by Alex Smith, 2015-11-11
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -30,13 +30,14 @@ though, such as `auth`, and the API for map updates is different.  For a full
 explanation of the various protocols in use, see `doc/mainloop.txt`.
 
 The following types are all special cases of integers:
-* All enumerated types
-* bitflags
-* boolean
-* charcode
-* connid
-* coordinate
-* gameid
+
+  * All enumerated types
+  * bitflags
+  * boolean
+  * charcode
+  * connid
+  * coordinate
+  * gameid
 
 
 Interaction
@@ -97,22 +98,24 @@ need to be used before commands that require a game to be loaded will work
 up the `play_game` call).
 
 Command arguments:
+
   * `string username`: the username of the user who is making the connection
   * `string password`: the password of the user who is making the connection
 
 Response arguments:
+
   * `enum authresult return`: whether the connection succeeded:
-      * [`NO_CONNECTION` = 0: not sent by the server, simulated by the client
+      * `NO_CONNECTION` = 0: not sent by the server, simulated by the client
         library if the connection fails]
       * `AUTH_FAILED_UNKNOWN_USER` = 1: the given user does not exist
       * `AUTH_FAILED_BAD_PASSWORD` = 2: the given password is wrong
       * `AUTH_SUCCESS_NEW` = 3: a new connection was created
   * `int[3] version`: the version number of the server
-      * [0] The major version number (if it's not 4, this document is probably
-        inaccurate)
-      * [1] The minor version number (changes when save compatibility breaks)
-      * [2] The patchlevel version number (changes when a release is made that
-        does not break save compatibility)
+      * `[0]` The major version number (if it's not 4, this document is
+        probably inaccurate)
+      * `[1]` The minor version number (changes when save compatibility breaks)
+      * `[2]` The patchlevel version number (changes when a release is made
+        that does not break save compatibility)
 
 TODO: What happens if this command is sent when a connection already exists?
 
@@ -121,10 +124,10 @@ register
 --------
 
 Like `auth`, except it requires a nonexistent rather than existing username,
-and will create an account.  This cannot re-establish an existing connection,
-for obvious reasons.
+and will create an account.
 
 Command arguments:
+
   * `string username`: the username for the new account
   * `string password`: the password to register the account with
   * `string email`: (optional) an email address to store in the database; the
@@ -144,11 +147,13 @@ string values in the response will be the null string, `objcount` will be -1,
 and `in` will be false.
 
 Command arguments:
+
   * `boolean is_in`: Whether to return the `in` element in the response
   * `coordinate x`: x coordinate of the map square to farlook
   * `coordinate y`: y coordinate of the map square to farlook
 
 Response arguments:
+
   * `string bgdesc`: a description of the background
   * `boolean feature_described`: true if `bgdesc` is redundant to other fields
   * `string effectdesc`: a description of an effect
@@ -183,6 +188,7 @@ that the client could respond to).  Obviously, it must return directly if
 there is no game running.
 
 Command arguments:
+
   * `enum nh_exit_types exit_type`: what sort of exit to perform
       * `EXIT_SAVE` = 0: detach from the game and drop the connection; the
         save file remains intact
@@ -195,6 +201,7 @@ Command arguments:
         change between play, watch and replay modes
 
 Response arguments:
+
   * `boolean return`: true if the game exited (whether due to a save, to a
     quit, or to the process being panicked), or if no game was running; false
     if the user cancelled the exit; true is rarely going to be observable
@@ -220,6 +227,7 @@ from non-debug-mode games.
 Command arguments: none
 
 Response arguments:
+
   * `struct nh_cmd_desc[] cmdlist`: a list of the commands that exist:
       * `string name`: the name of the command (`command` in
         `request_command`);
@@ -264,6 +272,7 @@ what the commands do than `get_commands` does, because it is specialised to
 one object.
 
 Command arguments:
+
   * `charcode invlet`: The inventory letter of the item to get commands for.
 
 Response arguments: the same as `get_commands`.
@@ -288,13 +297,14 @@ is not running.  This command corresponds to the `nh_get_drawing_info` API
 call in libnethack.
 
 TODO: Sending an array and its length separately over JSON is always a bad
-idea; what if they don't match? There's currently a `int num_*` for each
+idea; what if they don't match? There's currently an `int num_*` for each
 `struct nh_symdef[]` in the response arguments, but I removed the
 documentation for them in preparation for fixing this rather major issue.
 
 Command arguments: none
 
 Response arguments:
+
   * `int feature_offset`:
   * `struct nh_symdef[] bgelements`: Backgrounds.
   * `struct nh_symdef[] effects`: Effects.
@@ -311,6 +321,7 @@ Response arguments:
   
 where `struct nh_symdef[]` is defined as follows (and sent as an array, with
 its fields in this order):
+
   * `string name`: The API name of a drawable entity.  Explosions and zaps
     have two API names; one for the shape and location within the shape (the
     `*syms` list), one for the appearance (the `*types` list).  Other drawable
@@ -335,13 +346,15 @@ Currently under revision.  TODO: When we decide what the API call actually
 does, document it properly.
 
 Command arguments:
+
   * `enum nh_option_list list`: what sort of options to list
       * (values, semantics under revision)
 
 Response arguments:
+
   * `struct nh_option_desc[] options`:
       * `string name`: short name of the option
-      * `string helptxt`: long desription of the option
+      * `string helptxt`: long description of the option
       * `enum nh_opttype type`: what type of values the option takes:
           * `OPTTYPE_BOOL` = 0: booleans;
           * `OPTTYPE_INT` = 1: integers;
@@ -359,6 +372,7 @@ Response arguments:
             these are in)
             
 An autopickup rule has the following structure:
+
   * `enum autopickup action`: what action to take upon encountering this item:
       * `AP_GRAB` = 0: pick it up regardless of `pickup_types`;
       * `AP_LEAVE` = 1: leave it on the ground regardless of `pickup_types`.
@@ -381,6 +395,7 @@ runnable if a followup to `request_command` is legal, except possibly for
 setting birth options; this needs more thought.
 
 Command arguments:
+
   * `boolean isstr`: if true, allows sending the option value as a string
     regardless of the option's actual type (the server will parse it into an
     appropriate value for the option); if false, the client has already parsed
@@ -391,6 +406,7 @@ Command arguments:
     list of autopickup rules).
 
 Response arguments:
+
   * `struct nh_option_desc option`: TODO: work out if we need this and what
     its semantics are
   * `int return`: an integer treated as a boolean; nonzero if the option value
@@ -411,6 +427,7 @@ not be separate `num_` fields.
 Command arguments: none
 
 Response arguments:
+
   * `string[] alignnames`: the list of alignments that exist
   * `string[] gendnames`: the list of genders that exist
   * `string[] racenames`: the list of races that exist
@@ -435,6 +452,7 @@ get_topten
 Requests entries from the high score table.
 
 Command arguments:
+
   * `int around`: if there has been at least one game previously on this
     connection (even if it was re-established), and the most recent such game
     has since reached game over (death/quit/escape/ascension), and `player`
@@ -447,6 +465,7 @@ Command arguments:
   * `int top`: list this many games at the top of the table
 
 Response arguments:
+
   * `string msg`: an appropriate heading for the high score table; if `around`
     matches, this will talk about the most recent game (e.g. telling the
     player what position on the list they are, or explaining that wizard mode
@@ -495,6 +514,7 @@ Lists current and/or completed games on the server.
 TODO: what format are plgend, etc., in? Abbreviation? Full name?
 
 Command arguments:
+
   * `boolean completed`: list only completed games if true, only current games
     if false
   * `int limit`: the maximum number of games to list
@@ -503,6 +523,7 @@ Command arguments:
     to which the user has write access
 
 Response arguments:
+
   * `struct nhnet_game[] games`: the information about the games selected by
     the arguments:
       * `int gameid`: a value that can be given to `play_game` to connect to
@@ -537,11 +558,13 @@ API call in libnethack (although it has a slightly different calling
 convention).
 
 Command arguments:
+
   * `struct nh_option_desc[] options`: the options this game should initially
     be created with (including game mode, character, and character name); any
     options omitted wil be filled in with defaults
 
 Response arguments:
+
   * `int gameid`: The game ID, for use with future `play_game` calls; if this
     is -1, the game creation failed
 
@@ -566,6 +589,7 @@ Note that a `play_game` response may happen at any time after a unresponded
 API.)  The unresponded requests simply vanish, and the client should act as
 though they never happened (removing menus that they opened from the screen,
 forgetting messages, etc.).  This can happen in a few different situations:
+
   * If the client requests a save or quit (via `exit_game`), perhaps while a
     prompt is open;
   * If something goes wrong and the server needs to rewind the save file
@@ -575,6 +599,7 @@ forgetting messages, etc.).  This can happen in a few different situations:
     connection, even though it isn't actually sent over the network.
 
 Command arguments:
+
   * `int gameid`: A value returned from `list_games` or `create_game`
     representing a game to attach to
   * `enum followmode followmode`: How to load the game:
@@ -586,7 +611,9 @@ Command arguments:
         in network play for security reasons, but exists in the local API)
 
 Response arguments:
-  * `enum nh_play_status return`: what happen in the attempt to restore the game:
+
+  * `enum nh_play_status return`: what happened in the attempt to restore the
+    game, and (if it succeeded) subsequently:
       * `GAME_DETACHED` = 0: the game was restored successfully; eventually,
         the client requested to stop playing, and the game still exists
       * `GAME_OVER` = 1: the game was restored successfully; eventually, the
@@ -603,8 +630,8 @@ Response arguments:
       * `CLIENT_RESTART` = 4: ditto, but on the request of the client, which
         can react to it how it likes
       * `REPLAY_FINISHED` = 5: the game is still going, but cannot continue in
-        replay mode because the end was reached; a client can reconnect in
-        play or watch mode if it likes
+        replay mode because the end of the replay was reached; a client can
+        reconnect in play or watch mode if it likes
       * `ERR_BAD_ARGS` = 6: the game did not start because the given game ID
         does not exist
       * `ERR_BAD_FILE` = 7: the game did not start because the given game ID
@@ -631,9 +658,11 @@ address is not used by the game, but is available to server admins in case
 they need to verify a user's identity, e.g. for a password reset request.)
 
 Command arguments:
+
   * `string email`: the new email address
 
 Response arguments:
+
   * `boolean return`: true if the email address change succeeded
 
 
@@ -644,10 +673,12 @@ Change the password associated with the authenticated user.  The same password
 will be required by future `auth` requests.
 
 Command arguments:
+
   * `string password`: the new password (sent in plaintext, unless the
     connection is encrypted some other way)
 
 Response arguments:
+
   * `boolean return`: true if the password change succeeded
 
 
@@ -661,6 +692,7 @@ to save it before exiting).
 Command arguments: none
 
 Response arguments:
+
   * `int return`: Always 1.
 
 
@@ -668,11 +700,11 @@ Server requests
 ===============
 
 These requests are sent by the server, expecting a response from the client.
-Normally they will only be sent as followups to a response from the client;
-the only exceptions are `server_error` and `server_cancel`, which can be sent
-at any time (except to interrupt the request half of a server request or
-response half of a server response, in which case they will be delayed until
-the server is done sending its current request/response).
+Normally they will only be sent as followups to a request or response from the
+client; the only exceptions are `server_error` and `server_cancel`, which can
+be sent at any time (except to interrupt the request half of a server request
+or response half of a server response, in which case they will be delayed
+until the server is done sending its current request/response).
 
 
 server_cancel
@@ -697,7 +729,7 @@ absolutely any time at all; this includes such inconvenient times as "in the
 middle of allocating memory", or "in the middle of another request"; this is
 "async-signal" timing.  Doing this over the network would be impossible to
 parse (the closest equivalent would be TCP urgent data, which can interrupt an
-existing data stream in such a way that both can be distinguishd, but is
+existing data stream in such a way that both can be distinguished, but is
 limited to one byte and thus hard to fit JSON in).  Instead, the network API
 will delay making a `server_cancel` request until it has finished sending any
 current request, if possible.  Clients nonetheless need to make arrangements
@@ -726,22 +758,24 @@ request_command
 ---------------
 
 This request is sent by the server when the player's character is able to send
-a new command.  The client should respond with a game command, possibly
-following up with network API command in order to help decide which command to
-respond with.
+a new command.  The client should respond with a game command, possibly first
+following up with network API commands of its own in order to help decide
+which command to respond with.
 
 Request arguments:
+
   * `boolean debug`: whether debug-mode commands are a reasonable response to
     the prompt
-  * `boolean completed`: false if the client is in the middle of a multi-turn
-    command (whether it was interrupted by a monster or the like, or whether
-    the server's just giving the client the chance to interrupt); true if the
-    previous command completed or there was no previous command
+  * `boolean completed`: false if the character is in the middle of a
+    multi-turn command (whether it was interrupted by a monster or the like,
+    or whether the server's just giving the client the chance to interrupt);
+    true if the previous command completed or there was no previous command
   * `boolean interrupted`: true if the character is aware of danger that might
     cause a player to want to abort their current action (or not repeat a
     repeated action); this is independent of `completed`
 
 Response arguments:
+
   * `string command`: what the player wants to tell their character to do;
     this should be a string returned by `get_commands`, or else one of the
     following internal-use commands:
@@ -784,8 +818,9 @@ or to allow them to make a selection), until the user makes a selection or the
 server cancels the request using a `play_game` response.
 
 Request arguments:
+
   * `enum nh_pick_type how`: a specification of how many items the user can
-    choose from the menu:     
+    choose from the menu:
       * `PICK_NONE` = 0: the user cannot select items, the menu is purely used
         to present information to the user;
       * `PICK_ONE` = 1: the user can pick one item from the menu;
@@ -806,7 +841,7 @@ Request arguments:
       * `boolean selected`: whether this menu item should be selected by
         default (in a `PICK_ANY` menu, where choosing an item does not close
         the menu, choosing an item should toggle its selection state)
-  * `enum placement_hint plhint`: a suggestion for a sensibleplcae on the
+  * `enum placement_hint plhint`: a suggestion for a sensible place on the
     screen to place this menu, and styling for the menu (TODO: many of these
     are unimplemented in nhcurses):
       * `PLHINT_ANYWHERE` = 0: no suggested location;
@@ -821,6 +856,7 @@ Request arguments:
   * `string title`: the title of the menu
 
 Response arguments:
+
   * `int[] results`: a list of the `id` of all selected items after the menu
     was closed; this should be empty for `PICK_NONE` or if the menu was
     cancelled via server or client, empty or a single element for `PICK_ONE`,
@@ -841,6 +877,7 @@ information and allows the user to specify partial stacks of items in addition
 to full stacks.
 
 Request arguments: same as `display_menu`, except for `items`:
+
   * `struct nh_objitem[] items`: the menu items (sent as an array, not an
     object, with elements in the order shown here):
       * `string caption`: as in `display_menu`
@@ -861,6 +898,7 @@ Request arguments: same as `display_menu`, except for `items`:
       * `boolean worn`: true if the object is equipped
 
 Response arguments:
+
   * `struct nh_objresult[] pick_list`: a list of all selected items after the
     menu ws closed, as with `display_menu`, but with more information:
       * `int id`: the `id` specified for this item in the request
@@ -877,6 +915,7 @@ Requests a direction from the user (can be cancelled by the user, or the
 server via a `play_game` response).
 
 Request arguments:
+
   * `string query`: a message to print along with the direction request (the
     generic message is along the lines of "In which direction?", but the
     message is often more specific, similar to "Zap your wand in which
@@ -886,6 +925,7 @@ Request arguments:
     player is polymorphed into a grid bug)
 
 Response arguments:
+
   * `enum nh_direction return`: The selected direction:
       * `DIR_W` = 0: west (`h`, `4`)
       * `DIR_NW` = 1: northwest (`y`, `7`)
@@ -909,9 +949,11 @@ Requests a line of input from the user (can be cancelled by the user, or the
 server via a `play_game` response).
 
 Request arguments:
+
   * `string query`: The prompt to display along with the request for a line.
 
 Response arguments:
+
   * `string line`: The line of input from the user. Is the null string if the
     null string was entered, a single ESC character (hex 1B) if the user
     cancelled the prompt, a single ASCII 28 character (hex 1C) if the server
@@ -925,13 +967,15 @@ Requests a map location from the user (can be cancelled by the user, or the
 server via a `play_game` response).
 
 Request arguments:
+
   * `boolean force`: if true, the client should make it difficult for the user
-    to cancel the prompt (TODO: the idea behind thies option is bad)
+    to cancel the prompt (TODO: the idea behind this option is bad)
   * `string goal`: a description of what the user is supposd to select
   * `coordinate x`: the x coordinate to originally place the cursor at
   * `coordinate y`: the y coordinate to originally place the cursor at
 
 Response arguments:
+
   * `enum nh_client_response return`: information on how the prompt was closed:
       * `NHCR_ACCEPTED` = 0: the user accepted the location using the most
         ordinary input (usually `.`);
@@ -956,6 +1000,7 @@ beforehand.  This is used for inventory queries, and in a few other cases.  As
 always, can be cancelled by the user or the server.
 
 Request arguments:
+
   * `boolean allow_count`: whether to allow a repeat count
   * `enum nh_query_key_flags flags`: information about the reason for the
     query:
@@ -969,6 +1014,7 @@ Request arguments:
   * `string query`: what prompt to display to the user
 
 Response arguments:
+
   * `int count`: the repeat count, -1 if none was given; this is supplied
     even if `allow_count` is false, but is always -1 in that case and should
     be ignored
@@ -983,6 +1029,7 @@ Requests the user to choose from a short list of choices represented by ASCII
 characters.  As always, can be cancelled by the user or the server.
 
 Request arguments:
+
   * `string query`: the prompt to print to the user
   * `string set`: a list of appropriate responses; if ESC is included in the
     list, it does not mean that ESC is an appropriate response, but rather, it
@@ -991,6 +1038,7 @@ Request arguments:
     (this will be shown to the user in many interfaces)
 
 Response arguments:
+
   * `charcode return`: the choice the user chose; this is `def` if cancelled
     by the user, ASCII 28 if cancelled by the server
 
@@ -1003,8 +1051,9 @@ order to prevent the connection dropping.  This will never have a display list
 attached.
 
 Request arguments:
+
   * `int progress`: a number from 0 to 10000, proportional to the estimated
-    length of the background operation
+    proportion of the background operation that has been completed
 
 Response arguments: no response is sent for this message
 
@@ -1018,6 +1067,7 @@ and not particularly useful.  (For the same sort of message directed in the
 opposite direction, see `exit_game`.)
 
 Request arguments:
+
   * `boolean error`: true if the error is caused by something that the client
     did, false if the error is internal to the server
   * `string message`: a description of what went wrong, which can be displayed
@@ -1052,6 +1102,7 @@ Specifies that the client should display text to the user.  (The text may be
 quite long, and should be word-wrapped and tab-expanded.)
 
 Arguments: an object:
+
   * `string buf`: the text to display
   * `boolean trymove`: appears to be unused
 
@@ -1064,6 +1115,7 @@ Specifies that the client should change its level display mode.
 TODO: make this an enum.
 
 Arguments: an integer:
+
   * `LDM_DEFAULT` = 0: normal display;
   * `LDM_HELL` = 1: display appropriate for Gehennom;
   * `LDM_QUEST` = 2: display appropriate for the Quest;
@@ -1081,6 +1133,7 @@ Specifies a list of items in inventory or on the floor.
 TODO: The API of this is vulnerable to length mismatches.
 
 Arguments: an object:
+
   * `int icount`: length of `items`
   * `boolean invent`: true means that this list is the player's inventory;
     false means that this list is the list of items on the ground
@@ -1097,6 +1150,7 @@ game-over situations like ascension).
 TODO: The API of this is vulnerable to length mismatches.
 
 Arguments: an object:
+
   * `int gold`: amount of gold upon death
   * `int how`: as `end_how` in `get_topten`
   * `int icount`: length of `items`
@@ -1119,6 +1173,7 @@ TODO: This has a pretty weird interaction with server cancel requests.  It
 should probably be made a server request, not a display element.
 
 Arguments: an `enum nh_pause_reason`:
+
   * `P_MESSAGE` = 0: give the user a chance to read the message area
   * `P_MAP` = 1: give the user a chance to look at the map
 
@@ -1131,6 +1186,7 @@ Print a message in the message area.
 TODO: This API is badly designed and has caused several bugs.
 
 Arguments: an object:
+
   * `string msg`: the message to print
   * `int turn`: the turn on which the message was sent
 
@@ -1161,6 +1217,7 @@ update_screen
 Change what is displayed at a particular map location.
 
 Arguments: an object:
+
   * `mapdelta dbuf`: the map delta, in compressed form (see below)
   * `coordinate ux`: the character's x location
   * `coordinate uy`: the character's y location
@@ -1172,30 +1229,30 @@ list of cell deltas.  Again, 0 means empty, 1 means unchanged.  Otherwise the
 cell delta is an `int[10]`, mostly of indexes into the arrays returned by
 `get_drawing_info`:
 
-  * [0] encoded effect number: the encoding is quite complex, see `draw_map`
+  * `[0]` encoded effect number: the encoding is quite complex, see `draw_map`
     in `libnethack/src/map.c` for an example on how to decode it; it
     eventually decodes into offsets into `effects`, `zapsyms`, `zaptypes`,
     `swallowsyms`, `explsyms`, and/or `expltypes`
-  * [1] index into `bgelements`
-  * [2] index into `traps`
-  * [3] index into `objects`
-  * [4] index into `monsters`, representing the monster associated with an
+  * `[1]` index into `bgelements`
+  * `[2]` index into `traps`
+  * `[3]` index into `objects`
+  * `[4]` index into `monsters`, representing the monster associated with an
     object (e.g. "lichen" for "lichen corpse")
-  * [5] index into `monsters`, representing a monster on that square
-  * [6] a bitmask that represents details of a monster on the square:
+  * `[5]` index into `monsters`, representing a monster on that square
+  * `[6]` a bitmask that represents details of a monster on the square:
       * `MON_TAME` = 1: the monster is tame
       * `MON_RIDDEN` = 2: this monster has the player riding it
       * `MON_DETECTED` = 4: this monster is seen via monster detection
       * `MON_WARNING` = 8: this is a warning symbol, not a monster
       * `MON_PEACEFUL` = 16: the monster is peaceful
-  * [7] a bitmask that represents any branding of the square:
+  * `[7]` a bitmask that represents any branding of the square:
       * `NH_BRANDING_STEPPED` = 1: the player has stepped on the square
       * `NH_BRANDING_LOCKED` = 2: the player knows this door is locked
       * `NH_BRANDING_UNLOCKED` = 4: the player knows this door is unlocked
       * `NH_BRANDING_TRAPPED` = 8: the player knows this square is trapped
       * `NH_BRANDING_UNTRAPPED` = 16: the player knows this door is untrapped
-  * [8] index into `invis`
-  * [9] a boolean, not an int; true if the character can see this square
+  * `[8]` index into `invis`
+  * `[9]` a boolean, not an int; true if the character can see this square
 
 Indexes have 1 added to them, so that 0 can represent the lack of the
 appropriate sort of drawable entity on the square.
@@ -1207,6 +1264,7 @@ update_status
 Updates the character's status information.
 
 Arguments: an object:
+
   * `int ac`: the character's AC (10 = unarmored, lower is better)
   * `int align`: the character's alignment (TODO: what format?)
   * `boolean can_enhance`: true if the #enhance command is usable

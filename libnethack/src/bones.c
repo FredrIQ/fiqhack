@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -256,10 +256,8 @@ savebones(struct obj *corpse, boolean take_items)
             if (yn("Bones file already exists.  Replace it?") == 'y') {
                 if (delete_bonesfile(bonesid))
                     goto make_bones;
-                else {
-                    pline("Cannot unlink old bones.");
-                    win_pause_output(P_MESSAGE);
-                }
+                else
+                    pline(msgc_saveload, "Cannot unlink old bones.");
             }
         }
         return;
@@ -315,7 +313,8 @@ make_bones:
     } else {
         boolean charmed = FALSE;
         if (u.ugrave_arise < LOW_PM) { /* rn2(4) call above failed */
-            pline("For some reason, you think that you can almost hear the Wizard laugh manically...");
+            pline(msgc_outrobad,
+                  "For some reason, you think that you can almost hear the Wizard laugh manically...");
             if (unchanging(&youmonst))
                 u.ugrave_arise = u.umonnum; /* retain the polymorph as base form on polymorph if unchanging */
             else
@@ -337,7 +336,7 @@ make_bones:
         mtmp = christen_monst(mtmp, u.uplname);
         newsym(u.ux, u.uy);
         if (!charmed)
-            pline("Your body rises from the dead as %s...",
+            pline(msgc_outrobad, "Your body rises from the dead as %s...",
                   an(mons[u.ugrave_arise].mname));
         win_pause_output(P_MESSAGE);
         drop_upon_death(mtmp, NULL, charmed);
@@ -411,7 +410,7 @@ make_bones:
     fd = create_bonesfile(bonesid, &whynot);
     if (fd < 0) {
         if (wizard)
-            pline("%s", whynot);
+            pline(msgc_saveload, "%s", whynot);
 
         /* bones file creation problems are silent to the player. Keep it that
            way, but place a clue into the paniclog. */
@@ -493,7 +492,8 @@ getbones(d_level *levnum)
     bonesfn = bones_filename(bonesid);
     if ((ok = uptodate(&mf, bonesfn)) == 0) {
         if (!wizard)
-            pline("Discarding unuseable bones; no need to panic...");
+            pline(msgc_saveload,
+                  "Discarding unuseable bones; no need to panic...");
     } else {
 
         if (wizard && yn("Get bones?") == 'n')
@@ -508,7 +508,7 @@ getbones(d_level *levnum)
                                oldbonesid, bonesid);
 
             if (wizard) {
-                pline("%s", errbuf);
+                pline(msgc_saveload, "%s", errbuf);
                 ok = FALSE;     /* won't die of trickery */
             }
 
@@ -546,7 +546,7 @@ getbones(d_level *levnum)
            of them will fail to delete it (the first N-1 under AmigaDOS, the
            last N-1 under UNIX). So no point in a mysterious message for a
            normal event -- just generate a new level for those N-1 games. */
-        /* pline("Cannot unlink bones."); */
+        /* pline(msgc_saveload, "Cannot unlink bones."); */
         freelev(ledger_no(levnum));
         return 0;
     }

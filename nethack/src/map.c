@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-02 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -41,6 +41,11 @@ get_map_key(nh_bool place_cursor, nh_bool report_clicks,
     if (context == krc_interrupt_long_action) {
         consecutive++;
         int timeout = settings.animation == ANIM_SLOW ? 5000 : 700;
+
+        /* Before sleeping, update the message buffer. This might end up leaving
+           room for a --More-- that isn't required, but it can't be helped; it's
+           better than not leaving room for a --More-- that is required. */
+        draw_messages_prekey(TRUE);
         wtimeout(mapwin, timeout / (consecutive + 10));
     } else
         consecutive = 0;

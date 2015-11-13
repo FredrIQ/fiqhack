@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1810,7 +1810,8 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
         ptr = &mons[newtype];
         if (mvitals[newtype].mvflags & G_GENOD) {       /* allow G_EXTINCT */
             if (sensemon(mtmp))
-                pline("As %s grows up into %s, %s %s!", mon_nam(mtmp),
+                pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                      "As %s grows up into %s, %s %s!", mon_nam(mtmp),
                       an(ptr->mname), mhe(mtmp),
                       nonliving(ptr) ? "expires" : "dies");
             set_mon_data(mtmp, ptr);        /* keep mvitals[] accurate */
@@ -2169,7 +2170,9 @@ bagotricks(struct obj *bag)
     if (!bag || bag->otyp != BAG_OF_TRICKS) {
         impossible("bad bag o' tricks");
     } else if (bag->spe < 1) {
-        pline("Nothing happens.");
+        pline(bag->known ? msgc_cancelled1 : msgc_failcurse,
+              "You feel an absence of magical power.");
+        bag->known = 1;
     } else {
         consume_obj_charge(bag, TRUE);
         if (create_critters(!rn2(23) ? rn1(7, 2) : 1, NULL, u.ux, u.uy))

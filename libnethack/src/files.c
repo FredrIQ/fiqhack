@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,7 +53,7 @@ display_file(const char *fname, boolean complain)
     fp = dlb_fopen(fname, "r");
     if (!fp) {
         if (complain) {
-            pline("Cannot open \"%s\".", fname);
+            pline(msgc_saveload, "Cannot open \"%s\".", fname);
         } else if (program_state.game_running)
             doredraw();
     } else {
@@ -265,8 +265,8 @@ commit_bonesfile(char *bonesid)
     tempname = fqname(tempbuf, BONESPREFIX, 1);
 
     ret = rename(tempname, fq_bones);
-    if (wizard && ret != 0)
-        pline("couldn't rename %s to %s.", tempname, fq_bones);
+    if (ret != 0)
+        pline(msgc_debug, "Couldn't rename %s to %s.", tempname, fq_bones);
 
     free(bonesfn);
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,8 +25,7 @@ newdialog(int height, int width, int dismissable, WINDOW *win)
     if (game_is_running) {
         /* instead of covering up messages, draw the dialog as if it were a
            message */
-        fresh_message_line(TRUE);
-        draw_msgwin();
+        fresh_message_line();
         if (getmaxx(msgwin) < getmaxx(stdscr))
             width = getmaxx(msgwin) + (ui_flags.draw_outer_frame_lines ? 2 : 0);
         else
@@ -129,7 +128,7 @@ curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
 
     int prevcurs = nh_curs_set(cursor_visible);
 
-    struct gamewin *gw = alloc_gamewin(sizeof (struct win_msgwin));
+    struct gamewin *gw = alloc_gamewin(sizeof (struct win_msgwin), TRUE);
     struct win_msgwin *wmw = (struct win_msgwin *)gw->extra;
     wmw->msg = msg;
     wmw->context = context;
@@ -171,7 +170,7 @@ curses_inline_query(const char *msg, int (*validator)(int, void*),
     /* We use a temporary message as the game will send a summary of the
        decision along later. */
     curses_temp_message(msg);
-    draw_msgwin();
+    draw_messages_prekey(FALSE);
 
     /* We do not respect cursor_visible here, since we want the cursor focused
        on the prompt. We need to leave a space after it, though. */
@@ -185,7 +184,7 @@ curses_inline_query(const char *msg, int (*validator)(int, void*),
         rv = validator(nh_wgetch(msgwin, context), arg);
 
     curses_clear_temp_messages();
-    draw_msgwin();
+    draw_messages_postkey();
 
     return rv;
 }
@@ -384,6 +383,8 @@ curses_msgwin_validator(int key, void *unused)
         if (ui_flags.ingame)
             uncursed_signal_getch();
     }
+    if (key > KEY_MAX || key == KEY_UNHOVER)
+        return -1;
     return key;
 }
 

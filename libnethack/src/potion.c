@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,15 +23,17 @@ void
 make_sick(struct monst *mon, long xtime, const char *cause,
           boolean talk, int type)
 {
+    int old = property_timeout(mon, SICK);
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
-    int old = property_timeout(mon, SICK);
-
+    enum msg_channel msgc = (you ? msgc_fatal :
+                             mon->mtame ? msgc_petfatal :
+                             msgc_monneutral);
     if (xtime > 0L) {
         if (resists_sick(mon))
             return;
         if (talk && (you || vis))
-            pline(!old ? "%s %s deathly sick." :
+            pline(msgc, !old ? "%s %s deathly sick." :
                   xtime <= old / 2L ? "%s %s much worse" :
                   "%s %s even worse", you ? "You" : Monnam(mon),
                   you ? "feel" : "looks");
@@ -60,7 +62,8 @@ make_sick(struct monst *mon, long xtime, const char *cause,
             u.usick_type &= ~type;
         if (you && u.usick_type) { /* only partly cured */
             if (talk && (you || vis))
-                pline("%s %s somewhat better.", you ? "You" : Monnam(mon),
+                pline(you ? msgc_statusheal : msgc_monneutral,
+                      "%s %s somewhat better.", you ? "You" : Monnam(mon),
                       you ? "feel" : "looks");
             inc_timeout(mon, SICK, old, TRUE);
         } else
@@ -75,11 +78,11 @@ void
 eyepline(const char *verb_one_eye, const char *verb_two_eyes)
 {
     if (eyecount(youmonst.data) == 1)
-        pline(eyemsg, body_part(EYE), verb_one_eye);
+        pline(msgc_playerimmune, eyemsg, body_part(EYE), verb_one_eye);
     else
-        pline(eyemsg, makeplural(body_part(EYE)), verb_two_eyes);
+        pline(msgc_playerimmune, eyemsg, makeplural(body_part(EYE)),
+              verb_two_eyes);
 }
-
 
 static void
 ghost_from_bottle(void)
@@ -88,34 +91,34 @@ ghost_from_bottle(void)
         makemon(&mons[PM_GHOST], level, u.ux, u.uy, NO_MM_FLAGS);
 
     if (!mtmp) {
-        pline("This bottle turns out to be empty.");
+        pline(msgc_failrandom, "This bottle turns out to be empty.");
         return;
     }
     if (Blind) {
-        pline("As you open the bottle, something emerges.");
+        pline(msgc_substitute, "As you open the bottle, something emerges.");
         return;
     }
     if (Hallucination) {
         int idx = rndmonidx();
 
-        pline("As you open the bottle, %s emerges!", monnam_is_pname(idx)
-              ? monnam_for_index(idx)
+        pline(msgc_substitute, "As you open the bottle, %s emerges!",
+              monnam_is_pname(idx) ? monnam_for_index(idx)
               : (idx < SPECIAL_PM && (mons[idx].geno & G_UNIQ))
               ? the(monnam_for_index(idx))
               : an(monnam_for_index(idx)));
     } else {
-        pline("As you open the bottle, an enormous ghost emerges!");
+        pline(msgc_substitute,
+              "As you open the bottle, an enormous ghost emerges!");
     }
-    if (flags.verbose)
-        pline("You are frightened to death, and unable to move.");
+    pline_implied(msgc_statusbad,
+                  "You are frightened to death, and unable to move.");
 
     helpless(3, hr_afraid, "being frightened to death",
              "You regain your composure.");
 }
 
 
-/* "Quaffing is like drinking, except you spill more."  -- Terry Pratchett
- */
+/* "Quaffing is like drinking, except you spill more." -- Terry Pratchett */
 int
 dodrink(const struct nh_cmd_arg *arg)
 {
@@ -124,7 +127,8 @@ dodrink(const struct nh_cmd_arg *arg)
     void (*terrain) (void) = 0;
 
     if (strangled(&youmonst)) {
-        pline("If you can't breathe air, how can you drink liquid?");
+        pline(msgc_cancelled,
+              "If you can't breathe air, how can you drink liquid?");
         return 0;
     }
     /* Is there a fountain to drink from here? */
@@ -140,7 +144,7 @@ dodrink(const struct nh_cmd_arg *arg)
     /* Or are you surrounded by water? */
     if (Underwater && !Engulfed) {
         if (yn("Drink the water around you?") == 'y') {
-            pline("Do you know what lives in this water?!");
+            pline(msgc_cancelled1, "Do you know what lives in this water?!");
             return 1;
         }
     }
@@ -199,7 +203,8 @@ dopotion(struct obj *otmp)
 
     if (nothing) {
         unkn++;
-        pline("You have a %s feeling for a moment, then it passes.",
+        pline(msgc_nospoil,
+              "You have a %s feeling for a moment, then it passes.",
               Hallucination ? "normal" : "peculiar");
     }
     if (otmp->dknown && !objects[otmp->otyp].oc_name_known) {
@@ -237,6 +242,10 @@ peffects(struct monst *mon, struct obj *otmp)
     looks = you ? "feel" : "looks";
     const char *his;
     his = you ? "your" : mhis(mon);
+    /* and for msgchannels */
+    enum msg_channel statusheal = you ? msgc_statusheal : msgc_monneutral;
+    enum msg_channel statusbad = you ? msgc_statusbad : msgc_monneutral;
+    enum msg_channel badidea = you ? msgc_badidea : msgc_monneutral;
 
     if (you)
         alignment = u.ualign.type;
@@ -257,9 +266,11 @@ peffects(struct monst *mon, struct obj *otmp)
     case SPE_RESTORE_ABILITY:
         if (otmp->cursed) {
             if (you)
-                pline("Ulch!  This makes you feel mediocre!");
+                pline(statusbad,
+                      "Ulch!  This makes you feel mediocre!");
             else if (vis)
-                pline("%s looks strangely mediocre.", Monnam(mon));
+                pline(msgc_monneutral,
+                      "%s looks strangely mediocre.", Monnam(mon));
             break;
         } else {
             if (!you) {
@@ -270,7 +281,8 @@ peffects(struct monst *mon, struct obj *otmp)
                 if (!vis)
                     unkn++;
                 else
-                    pline("%s looks %s!", Monnam(mon), otmp->blessed ? "great" : "better");
+                    pline(msgc_monneutral,
+                          "%s looks %s!", Monnam(mon), otmp->blessed ? "great" : "better");
                 if (mon->mhpmax > (mon->m_lev * 8 - 8))
                     break;
                 int raised_maxhp = 0;
@@ -285,7 +297,7 @@ peffects(struct monst *mon, struct obj *otmp)
                 }
                 break;
             }
-            pline("Wow!  This makes you feel %s!",
+            pline(statusheal, "Wow!  This makes you feel %s!",
                   (otmp->blessed) ? (unfixable_trouble_count(FALSE) ? "better" :
                                      "great")
                   : "good");
@@ -313,9 +325,9 @@ peffects(struct monst *mon, struct obj *otmp)
            we need to see if the monster had the property before by hand, and only then, give a message */
         if (!has_property(mon, prop)) {
             if (you && !resists_hallu(mon))
-                pline("Oh wow!  Great stuff!");
+                pline(msgc_statusbad, "Oh wow!  Great stuff!");
             else if (vis)
-                pline("%s looks strangely crazed!", Monnam(mon));
+                pline(msgc_monneutral, "%s looks cross-eyed!", Monnam(mon));
         } else {
             unkn++;
             nothing++;
@@ -325,7 +337,7 @@ peffects(struct monst *mon, struct obj *otmp)
     case POT_WATER:
         if (!otmp->blessed && !otmp->cursed) {
             if (you)
-                pline("This tastes like water.");
+                pline(msgc_actionok, "This tastes like water.");
             else
                 unkn++;
             if (you) {
@@ -341,13 +353,17 @@ peffects(struct monst *mon, struct obj *otmp)
             alignment == A_CHAOTIC) {
             if (otmp->blessed) {
                 if (you) {
-                    pline("This burns like acid!");
+                    pline(badidea, "This burns like acid!");
                     exercise(A_CON, FALSE);
-                } else if (vis)
-                    pline("%s shrieks in pain!", Monnam(mon));
+                } else if (vis) {
+                    pline(badidea, "%s %s in pain!", Monnam(mon),
+                          is_silent(mon->data) ? "writhes" : "shrieks");
+                    if (!is_silent(mon->data))
+                        mwake_nearby(mon, FALSE);
+                }
                 if ((you && u.ulycn >= LOW_PM) || is_were(mon->data)) {
                     if (you || vis)
-                        pline("%s affinity to %s disappears!", Mons,
+                        pline(statusheal, "%s affinity to %s disappears!", Mons,
                               makeplural(you ? mons[u.ulycn].mname : mon_nam(mon)));
                     mon_unwere(mon, TRUE, FALSE);
                 }
@@ -360,8 +376,8 @@ peffects(struct monst *mon, struct obj *otmp)
                 }
             } else if (otmp->cursed) {
                 if (you || vis)
-                    pline("%s %s quite proud of %sself.", Mon, looks,
-                          you ? "your" : mhim(mon));
+                    pline(statusheal, "%s %s quite proud of %sself.",
+                          Mon, looks, you ? "your" : mhim(mon));
                 if (you) {
                     healup(dice(2, 6), 0, 0, 0);
                     exercise(A_CON, TRUE);
@@ -378,7 +394,7 @@ peffects(struct monst *mon, struct obj *otmp)
         } else {
             if (otmp->blessed) {
                 if (you || vis)
-                    pline("%s %s full of awe.", Mon, looks);
+                    pline(statusheal, "%s %s full of awe.", Mon, looks);
                 set_property(mon, SICK, -2, FALSE);
                 if (you) {
                     exercise(A_WIS, TRUE);
@@ -389,9 +405,12 @@ peffects(struct monst *mon, struct obj *otmp)
             } else {
                 if (alignment == A_LAWFUL) {
                     if (you)
-                        pline("This burns like acid!");
+                        pline(badidea, "This burns like acid!");
                     else if (vis)
-                        pline("%s shrieks in pain!", Monnam(mon));
+                        pline(badidea, "%s %s in pain!", Monnam(mon),
+                              is_silent(mon->data) ? "writhes" : "shrieks");
+                    if (!you && !is_silent(mon->data))
+                        mwake_nearby(mon, FALSE);
                     if (you)
                         losehp(dice(2, 6),
                                killer_msg(DIED, "a potion of unholy water"));
@@ -401,9 +420,9 @@ peffects(struct monst *mon, struct obj *otmp)
                             mondied(mon);
                     }
                 } else if (you)
-                    pline("You feel full of dread.");
+                    pline(msgc_actionok, "You feel full of dread.");
                 else if (vis)
-                    pline("%s looks dreaded.", Monnam(mon));
+                    pline(msgc_monneutral, "%s looks dreaded.", Monnam(mon));
                 if ((you && u.ulycn >= LOW_PM && !Upolyd) ||
                     (!you && is_human(mon->data) && is_were(mon->data))) {
                     if (you)
@@ -420,11 +439,11 @@ peffects(struct monst *mon, struct obj *otmp)
         if (!you && !vis)
             unkn++;
         if (you)
-            pline("Ooph!  This tastes like %s%s!",
+            pline(statusbad, "Ooph!  This tastes like %s%s!",
                   otmp->odiluted ? "watered down " : "",
                   Hallucination ? "dandelion wine" : "liquid fire");
         else if (vis)
-            pline("%s looks less coordinated.", Monnam(mon));
+            pline(statusbad, "%s looks less coordinated.", Monnam(mon));
         if (!otmp->blessed)
             set_property(mon, CONFUSION, dice(3, 8), TRUE);
         /* the whiskey makes us feel better */
@@ -442,8 +461,7 @@ peffects(struct monst *mon, struct obj *otmp)
             dog_eat(mon, otmp, mon->mx, mon->my, FALSE);
         if (otmp->cursed) {
             if (you || vis)
-                pline("%s pass%s out!", Mon,
-                      you ? "" : "es");
+                pline(statusbad, "%s out!", M_verbs(mon, "pass"));
             if (you) {
                 helpless(rnd(15), hr_fainted, "drunk",
                          "You awake with a headache.");
@@ -460,21 +478,22 @@ peffects(struct monst *mon, struct obj *otmp)
         if (otmp->cursed) {
             unkn++;
             if (you) {
-                pline("You have an uneasy feeling.");
+                pline(msgc_failcurse, "You have an uneasy feeling.");
                 exercise(A_WIS, FALSE);
             } else
-                pline("%s looks uneasy.", Monnam(mon));
+                pline(msgc_failcurse, "%s looks uneasy.", Monnam(mon));
         } else {
             if (you && otmp->blessed) {
                 adjattrib(A_INT, 1, FALSE);
                 adjattrib(A_WIS, 1, FALSE);
             }
-            pline("%s %s self-knowledgeable...", Mon, looks);
+            pline(you ? msgc_info : msgc_monneutral,
+                  "%s %s self-knowledgeable...", Mon, looks);
             /* no real effect on monsters at the moment */
             if (you) {
                 win_pause_output(P_MESSAGE);
                 enlightenment(0);
-                pline("The feeling subsides.");
+                pline_implied(msgc_info, "The feeling subsides.");
                 exercise(A_WIS, TRUE);
             }
         }
@@ -483,7 +502,8 @@ peffects(struct monst *mon, struct obj *otmp)
         /* spell cannot penetrate mummy wrapping */
         if (binvisible(mon)) {
             if (you || vis)
-                pline("%s %s rather itchy under %s %s.", Mon, looks, his,
+                pline(you ? msgc_failcurse : msgc_monneutral,
+                      "%s %s rather itchy under %s %s.", Mon, looks, his,
                       xname(which_armor(mon, os_armc)));
             break;
         }
@@ -497,7 +517,8 @@ peffects(struct monst *mon, struct obj *otmp)
         newsym(m_mx(mon), m_my(mon));     /* update position */
         if (otmp->cursed) {
             if (you) {
-                pline("For some reason, you feel your presence is known.");
+                pline(msgc_levelwarning,
+                      "For some reason, you feel your presence is known.");
                 aggravate();
             } else
                 you_aggravate(mon);
@@ -509,10 +530,10 @@ peffects(struct monst *mon, struct obj *otmp)
         {
             unkn++;
             if (otmp->cursed && you)
-                pline("Yecch!  This tastes %s.",
+                pline(msgc_failcurse, "Yecch!  This tastes %s.",
                       Hallucination ? "overripe" : "rotten");
             else if (you)
-                pline(Hallucination ?
+                pline(msgc_actionok, Hallucination ?
                       "This tastes like 10%% real %s%s all-natural beverage." :
                       "This tastes like %s%s.",
                       otmp->odiluted ? "reconstituted " : "", fruitname(TRUE));
@@ -534,16 +555,18 @@ peffects(struct monst *mon, struct obj *otmp)
     case POT_PARALYSIS:
         if (free_action(mon)) {
             if (you || vis)
-                pline("%s stiffen%s momentarily.", Mon, you ? "" : "s");
+                pline(combat_msgc(NULL, mon, cr_immune),
+                      "%s momentarily.", M_verbs(mon, "stiffen"));
             break;
         }
         if (you || vis) {
             if (levitates(mon) || Is_airlevel(m_mz(mon)) || Is_waterlevel(m_mz(mon)))
-                pline("%s %s motionlessly suspended.", Mon, you ? "are" : "is");
+                pline(statusbad, "%s motionlessly suspended.",
+                      M_verbs(mon, "are"));
             else if (you && u.usteed)
-                pline("You are frozen in place!");
+                pline(statusbad, "You are frozen in place!");
             else
-                pline("%s %s are frozen to the %s!", Mons,
+                pline(statusbad, "%s %s are frozen to the %s!", Mons,
                       makeplural(mbodypart(mon, FOOT)), surface(m_mx(mon), m_my(mon)));
         }
         if (you) {
@@ -558,11 +581,11 @@ peffects(struct monst *mon, struct obj *otmp)
     case POT_SLEEPING:
         if (resists_sleep(mon) || free_action(mon)) {
             if (you || vis)
-                pline("%s yawn%s", Mon, you ? "" : "s");
+                pline(combat_msgc(NULL, mon, cr_immune), M_verbs(mon, "yawn"));
             break;
         }
         if (you || vis)
-            pline("%s suddenly %s asleep!", Mon, you ? "" : "s");
+            pline(statusbad, "%s suddenly %s asleep!", Mon, you ? "" : "s");
         if (you)
             helpless(rn1(10, 25 - 12 * bcsign(otmp)), hr_asleep, "sleeping",
                      NULL);
@@ -584,14 +607,14 @@ peffects(struct monst *mon, struct obj *otmp)
                 i = 1;
             else
                 i = rn1(40, 21);
-            set_property(mon, DETECT_MONSTERS, i, FALSE);
+            inc_timeout(mon, DETECT_MONSTERS, i, FALSE);
             break;
         }
         /* TODO: uncursed (or unskilled/basic spell) for monsters */
         if (!you) {
             unkn++;
             if (vis)
-                pline("%s is granted an insight!", Mon);
+                pline(msgc_monneutral, "%s is granted an insight!", Mon);
         } else if (you && monster_detect(otmp, 0))
             return 1;   /* nothing detected */
         if (you)
@@ -602,7 +625,7 @@ peffects(struct monst *mon, struct obj *otmp)
         if (!you) {
             unkn++;
             if (vis)
-                pline("%s is granted an insight!", Mon);
+                pline(msgc_monneutral, "%s is granted an insight!", Mon);
         } else if (object_detect(otmp, 0))
             return 1;   /* nothing detected */
         if (you)
@@ -610,22 +633,32 @@ peffects(struct monst *mon, struct obj *otmp)
         break;
     case POT_SICKNESS:
         if (you)
-            pline("Yecch!  This stuff tastes like poison.");
+            pline(badidea, "Yecch!  This stuff tastes like poison.");
         else if (vis)
-            pline("%s looks %ssick.", Mon, otmp->blessed ? "slightly" : "");
+            pline(badidea, "%s looks %ssick.", Mon, otmp->blessed ? "slightly" : "");
         if (otmp->blessed) {
             if (you)
-                pline("(But in fact it was mildly stale %s.)", fruitname(TRUE));
-            if (!resists_poison(mon))
+                pline(msgc_failcurse, "(But in fact it was mildly stale %s.)",
+                      fruitname(TRUE));
+            if (!resists_poison(mon)) {
                 /* NB: blessed otmp->fromsink is not possible */
-                losehp(1, killer_msg(DIED, "a mildly contaminated potion"));
+                if (you)
+                    losehp(1, killer_msg(DIED, "a mildly contaminated potion"));
+                else {
+                    mon->mhp -= 1;
+                    if (mon->mhp <= 0)
+                        mondied(mon);
+                }
+            }
         } else {
             if (you) {
                 if (resists_poison(mon))
-                    pline("(But in fact it was biologically contaminated %s.)",
+                    pline(msgc_notresisted,
+                          "(But in fact it was biologically contaminated %s.)",
                           fruitname(TRUE));
                 if (Role_if(PM_HEALER))
-                    pline("Fortunately, you have been immunized.");
+                    pline(msgc_playerimmune,
+                          "Fortunately, you have been immunized.");
             }
             if ((you && !Role_if(PM_HEALER)) ||
                 monsndx(mon->data) != PM_HEALER) {
@@ -647,7 +680,7 @@ peffects(struct monst *mon, struct obj *otmp)
                         }
                     }
                 }
-                if (resists_poison(mon)) {
+                if (!resists_poison(mon)) {
                     if (you && otmp->fromsink)
                         losehp(rnd(10) + 5 * ! !(otmp->cursed),
                                killer_msg(DIED, "contaminated tap water"));
@@ -666,20 +699,20 @@ peffects(struct monst *mon, struct obj *otmp)
         }
         if (hallucinating(mon)) {
             if (you || vis)
-                pline("%s %s shocked back to %s senses!", Mon,
-                      you ? "are" : "is", his);
+                pline(statusheal, "%s shocked back to %s senses!",
+                      M_verbs(mon, "are"), you ? "your" : mhis(mon));
             set_property(mon, HALLUC, -2, TRUE);
         }
         break;
     case POT_CONFUSION:
         if (confused(mon))
             nothing++;
-        set_property(mon, CONFUSION, rn1(7, 16 - 8 * bcsign(otmp)), FALSE);
+        inc_timeout(mon, CONFUSION, rn1(7, 16 - 8 * bcsign(otmp)), FALSE);
         break;
     case POT_GAIN_ABILITY:
         if (otmp->cursed) {
             if (you)
-                pline("Ulch!  That potion tasted foul!");
+                pline(msgc_failcurse, "Ulch!  That potion tasted foul!");
             unkn++;
             break;
         } else if (fixed_abilities(mon)) {
@@ -699,7 +732,8 @@ peffects(struct monst *mon, struct obj *otmp)
             }
             break;
         }
-        /* FALLTHROUGH for monsters -- make gain level/ability equavilent for noncursed*/
+        /* FALLTHROUGH for monsters -- make gain level/ability equavilent for
+           noncursed */
     case POT_GAIN_LEVEL:
         if (otmp->cursed) {
             unkn++;
@@ -707,7 +741,7 @@ peffects(struct monst *mon, struct obj *otmp)
             if ((ledger_no(m_mz(mon)) == 1 && mon_has_amulet(mon)) ||
                 Can_rise_up(m_mx(mon), m_my(mon), m_mz(mon))) {
                 if (you || vis)
-                    pline("%s rise%s up, through the %s!",
+                    pline(msgc_substitute, "%s rise%s up, through the %s!",
                           Mon, you ? "" : "s",
                           ceiling(m_mx(mon), m_my(mon)));
                 if (ledger_no(m_mz(mon)) == 1) {
@@ -716,12 +750,14 @@ peffects(struct monst *mon, struct obj *otmp)
                     else { /* ouch... */
                         migrate_to_level(mon, ledger_no(&earth_level), MIGR_NEAR_PLAYER, NULL);
                         if (vis) {
-                            pline("Congratulations, %s!", mortal_or_creature(mon->data, TRUE));
-                            pline("But now thou must face the final Test...");
+                            pline(msgc_outrobad, "Congratulations, %s!",
+                                  mortal_or_creature(mon->data, TRUE));
+                            pline(msgc_outrobad, "But now thou must face the final Test...");
                         }
-                        pline("%s managed to enter the Planes with the Amulet...",
+                        pline(msgc_outrobad, "%s managed to enter the Planes with the Amulet...",
                               Monnam(mon));
-                        pline("You feel a sense of despair as you realize that all is lost.");
+                        pline(msgc_outrobad,
+                              "You feel a sense of despair as you realize that all is lost.");
                         const char *ebuf;
                         ebuf = msgprintf("lost the Amulet as %s entered the Planes with it",
                                          k_monnam(mon));
@@ -742,9 +778,9 @@ peffects(struct monst *mon, struct obj *otmp)
                         migrate_to_level(mon, ledger_no(&newlevel), MIGR_RANDOM, NULL);
                 }
             } else if (you)
-                pline("You have an uneasy feeling.");
+                pline(msgc_yafm, "You have an uneasy feeling.");
             else if (vis)
-                pline("%s looks uneasy.", Monnam(mon));
+                pline(msgc_monneutral, "%s looks uneasy.", Monnam(mon));
             break;
         }
         if (you) {
@@ -758,9 +794,9 @@ peffects(struct monst *mon, struct obj *otmp)
                 unkn++;
             else {
                 if (otmp->otyp == POT_GAIN_LEVEL)
-                    pline("%s seems more experienced.", Mon);
+                    pline(msgc_monneutral, "%s seems more experienced.", Mon);
                 else
-                    pline("%s abilities looks improved.", Mons);
+                    pline(msgc_monneutral, "%s abilities looks improved.", Mons);
             }
             if (!grow_up(mon, NULL))
                 return unkn;
@@ -787,7 +823,7 @@ peffects(struct monst *mon, struct obj *otmp)
         heal = 400;
         healmax = otmp->blessed ? 8 : 4;
         if (you || vis)
-            pline("%s %s fully healed", Mon, looks);
+            pline(statusheal, "%s %s fully healed", Mon, looks);
         /* Increase level if you lost some/many */
         if (you && otmp->blessed && u.ulevel < u.ulevelmax)
             pluslvl(FALSE);
@@ -797,7 +833,7 @@ peffects(struct monst *mon, struct obj *otmp)
             heal = dice(6 + 2 * bcsign(otmp), 8);
             healmax = otmp->blessed ? 5 : 2;
             if (you || vis)
-                pline("%s %s much better", Mon, looks);
+                pline(statusheal, "%s %s much better", Mon, looks);
         }
         set_property(mon, HALLUC, -2, FALSE);
         if (you)
@@ -807,7 +843,7 @@ peffects(struct monst *mon, struct obj *otmp)
             heal = dice(6 + 2 * bcsign(otmp), 4);
             healmax = 1;
             if (you || vis)
-                pline("%s %s better.", Mon, looks);
+                pline(statusheal, "%s %s better.", Mon, looks);
         }
         /* cure blindness for EH/FH or noncursed H */
         if (healmax > 1 || !otmp->cursed)
@@ -836,7 +872,8 @@ peffects(struct monst *mon, struct obj *otmp)
             nothing++;
         if (otmp->cursed) /* convert controlled->uncontrolled levi */
             /* TRUE to avoid float_down() */
-            set_property(mon, LEVITATION, -1, TRUE);
+            set_property(mon, LEVITATION, -1,
+                         levitates(mon) & ~FROMOUTSIDE ? TRUE : FALSE);
         if (otmp->blessed) {
             set_property(mon, LEVITATION, 0, FALSE);
             set_property(mon, LEVITATION, rn1(50, 250), FALSE);
@@ -849,7 +886,8 @@ peffects(struct monst *mon, struct obj *otmp)
                 (m_mx(mon) != level->upladder.sx ||
                  m_my(mon) != level->upladder.sy)) {
                 if (you || vis)
-                    pline("%s hit%s %s %s on the %s.", Mon, you ? "" : "s", his,
+                    pline(you ? msgc_nonmonbad : msgc_monneutral,
+                          "%s %s %s on the %s.", M_verbs(mon, "hit"), his,
                           mbodypart(mon, HEAD), ceiling(m_mx(mon), m_my(mon)));
                 dmg = which_armor(mon, os_armh) ? 1 : rnd(10);
                 if (you)
@@ -868,10 +906,10 @@ peffects(struct monst *mon, struct obj *otmp)
     case POT_GAIN_ENERGY:      /* M. Stephenson */
         if (otmp->cursed) {
             if (you || vis)
-                pline("%s %s lackluster.", Mon, looks);
+                pline(msgc_failcurse, "%s %s lackluster.", Mon, looks);
         } else {
             if (you || vis)
-                pline("Magical energies course through %s body.",
+                pline(statusheal, "Magical energies course through %s body.",
                       you ? "your" : s_suffix(mon_nam(mon)));
             set_property(mon, CANCELLED, -2, FALSE);
         }
@@ -898,13 +936,14 @@ peffects(struct monst *mon, struct obj *otmp)
             if (otmp->lamplit) {
                 if (likes_fire(mon->data)) {
                     if (you)
-                        pline("Ahh, a refreshing drink.");
+                        pline(msgc_yafm, "Ahh, a refreshing drink.");
                     else if (vis)
-                        pline("%s looks refreshed.", Monnam(mon));
+                        pline(msgc_yafm, "%s looks refreshed.", Monnam(mon));
                     good_for_you = TRUE;
                 } else {
-                    pline("%s burn%s %s %s.", Mon, you ? "" : "s", his,
-                          mbodypart(mon, FACE));
+                    if (you || vis)
+                        pline(badidea, "%s %s %s.", M_verbs(mon, "burn"), his,
+                              mbodypart(mon, FACE));
                     dmg = dice(resists_fire(mon) ? 1 : 3, 4);
                     if (you)
                         losehp(dmg, killer_msg(DIED, "a burning potion of oil"));
@@ -916,9 +955,9 @@ peffects(struct monst *mon, struct obj *otmp)
                 }
             } else if (you) {
                 if (otmp->cursed)
-                    pline("This tastes like castor oil.");
+                    pline(badidea, "This tastes like castor oil.");
                 else
-                    pline("That was smooth!");
+                    pline(badidea, "That was smooth!");
             } else
                 unkn++;
             if (you)
@@ -929,14 +968,18 @@ peffects(struct monst *mon, struct obj *otmp)
         if (resists_acid(mon)) {
             if (you)
                 /* Not necessarily a creature who _likes_ acid */
-                pline("This tastes %s.", Hallucination ? "tangy" : "sour");
+                pline(msgc_playerimmune,
+                      "This tastes %s.", Hallucination ? "tangy" : "sour");
         } else {
             if (you)
-                pline("This burns%s!",
+                pline(badidea, "This burns%s!",
                       otmp->blessed ? " a little" : otmp->
                       cursed ? " a lot" : " like acid");
             else if (vis)
-                pline("%s shrieks in pain!", Monnam(mon));
+                pline(badidea, "%s %s in pain!", Monnam(mon),
+                      is_silent(mon->data) ? "writhes" : "shrieks");
+            if (!you && !is_silent(mon->data))
+                mwake_nearby(mon, FALSE);
             dmg = dice(otmp->cursed ? 2 : 1, otmp->blessed ? 4 : 8);
             if (you) {
                 losehp(dmg, killer_msg(DIED, "drinking acid"));
@@ -953,11 +996,12 @@ peffects(struct monst *mon, struct obj *otmp)
     case POT_POLYMORPH:
         if (you || vis) {
             if (you)
-                pline("You feel a little %s.", Hallucination ? "normal" : "strange");
+                pline(unchanging(mon) ? msgc_failcurse : msgc_actionok,
+                      "You feel a little %s.", Hallucination ? "normal" : "strange");
             else if (vis && !unchanging(mon))
-                pline("%s suddenly mutates!", Mon);
+                pline(msgc_monneutral, "%s suddenly mutates!", Mon);
             else if (vis)
-                pline("%s looks a little %s.", Mon,
+                pline(msgc_monneutral, "%s looks a little %s.", Mon,
                       hallucinating(&youmonst) ? "normal" : "strange");
         }
         if (!unchanging(mon)) {
@@ -999,10 +1043,11 @@ void
 strange_feeling(struct obj *obj, const char *txt)
 {
     if (flags.beginner || !txt)
-        pline("You have a %s feeling for a moment, then it passes.",
+        pline(msgc_nospoil,
+              "You have a %s feeling for a moment, then it passes.",
               Hallucination ? "normal" : "strange");
     else
-        pline("%s", txt);
+        pline(msgc_hint, "%s", txt);
 
     if (!obj)   /* e.g., crystal ball finds no traps */
         return;
@@ -1024,9 +1069,9 @@ bottlename(void)
     return bottlenames[rn2(SIZE(bottlenames))];
 }
 
-
+/* magr = potion thrower; &youmonst for you; NULL for unknown/not a monster */
 void
-potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
+potionhit(struct monst *mon, struct obj *obj, struct monst *magr)
 {
     const char *botlnam = bottlename();
     boolean isyou = (mon == &youmonst);
@@ -1040,13 +1085,14 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 
     if (isyou) {
         distance = 0;
-        pline("The %s crashes on your %s and breaks into shards.", botlnam,
+        pline(combat_msgc(magr, mon, cr_hit),
+              "The %s crashes on your %s and breaks into shards.", botlnam,
               body_part(HEAD));
         losehp(rnd(2), killer_msg(DIED, "a thrown potion"));
     } else {
         distance = distu(mon->mx, mon->my);
         if (!cansee(mon->mx, mon->my))
-            pline("Crash!");
+            pline(msgc_levelsound, "Crash!");
         else {
             const char *mnam = mon_nam(mon);
             const char *buf;
@@ -1057,7 +1103,8 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             else
                 buf = mnam;
 
-            pline("The %s crashes on %s and breaks into shards.", botlnam, buf);
+            pline(combat_msgc(magr, mon, cr_hit),
+                  "The %s crashes on %s and breaks into shards.", botlnam, buf);
         }
         if (rn2(5) && mon->mhp >= 2)
             mon->mhp--;
@@ -1065,7 +1112,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 
     /* oil doesn't instantly evaporate */
     if (obj->otyp != POT_OIL && cansee(mon->mx, mon->my))
-        pline("%s.", Tobjnam(obj, "evaporate"));
+        pline_implied(msgc_consequence, "%s.", Tobjnam(obj, "evaporate"));
 
     if (isyou) {
         switch (obj->otyp) {
@@ -1074,14 +1121,14 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                 splatter_burning_oil(u.ux, u.uy);
             break;
         case POT_POLYMORPH:
-            pline("You feel a little %s.",
+            pline(combat_msgc(magr, mon, cr_hit), "You feel a little %s.",
                   Hallucination ? "normal" : "strange");
             if (!Unchanging && !Antimagic)
                 polyself(FALSE);
             break;
         case POT_ACID:
             if (!Acid_resistance) {
-                pline("This burns%s!",
+                pline(combat_msgc(magr, mon, cr_hit), "This burns%s!",
                       obj->blessed ? " a little" : obj->cursed ? " a lot" : "");
                 losehp(dice(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8),
                        killer_msg(DIED, "being doused in acid"));
@@ -1089,10 +1136,8 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             break;
         }
     } else {
-        boolean angermon = TRUE;
+        boolean angermon = magr == &youmonst;
 
-        if (!your_fault)
-            angermon = FALSE;
         switch (obj->otyp) {
         case POT_HEALING:
         case POT_EXTRA_HEALING:
@@ -1106,17 +1151,19 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             if (mon->mhp < mon->mhpmax) {
                 mon->mhp = mon->mhpmax;
                 if (canseemon(mon))
-                    pline("%s looks sound and hale again.", Monnam(mon));
+                    pline(magr == &youmonst ? msgc_actionok : msgc_monneutral,
+                          "%s looks sound and hale again.", Monnam(mon));
             }
             break;
         case POT_SICKNESS:
             if (mon->data == &mons[PM_PESTILENCE])
                 goto do_healing;
-            if (dmgtype(mon->data, AD_DISE) || dmgtype(mon->data, AD_PEST) ||
-                /* won't happen, see prior goto */
+            if (dmgtype(mon->data, AD_DISE) ||
+                dmgtype(mon->data, AD_PEST) || /* currently impossible */
                 resists_poison(mon)) {
                 if (canseemon(mon))
-                    pline("%s looks unharmed.", Monnam(mon));
+                    pline(combat_msgc(magr, mon, cr_immune),
+                          "%s looks unharmed.", Monnam(mon));
                 break;
             }
         do_illness:
@@ -1127,7 +1174,8 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             if (mon->mhp > mon->mhpmax)
                 mon->mhp = mon->mhpmax;
             if (canseemon(mon))
-                pline("%s looks rather ill.", Monnam(mon));
+                pline(combat_msgc(magr, mon, cr_hit),
+                      "%s looks rather ill.", Monnam(mon));
             break;
         case POT_CONFUSION:
         case POT_BOOZE:
@@ -1141,7 +1189,8 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
         case POT_SLEEPING:
             /* wakeup() doesn't rouse victims of temporary sleep */
             if (sleep_monst(mon, rnd(12), POTION_CLASS)) {
-                pline("%s falls asleep.", Monnam(mon));
+                pline(combat_msgc(magr, mon, cr_hit),
+                      "%s falls asleep.", Monnam(mon));
                 slept_monst(mon);
             }
             break;
@@ -1170,8 +1219,10 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             if (is_undead(mon->data) || is_demon(mon->data) ||
                 is_were(mon->data)) {
                 if (obj->blessed) {
-                    pline("%s %s in pain!", Monnam(mon),
-                          is_silent(mon->data) ? "writhes" : "shrieks");
+                    if (canseemon(magr))
+                        pline(combat_msgc(magr, mon, cr_hit),
+                              "%s %s in pain!", Monnam(mon),
+                              is_silent(mon->data) ? "writhes" : "shrieks");
                     if (!is_silent(mon->data))
                         aggravate();
                     mon->mhp -= dice(2, 6);
@@ -1183,7 +1234,9 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                 } else if (obj->cursed) {
                     angermon = FALSE;
                     if (canseemon(mon))
-                        pline("%s looks healthier.", Monnam(mon));
+                        pline(magr == &youmonst ?
+                              msgc_actionok : msgc_monneutral,
+                              "%s looks healthier.", Monnam(mon));
                     mon->mhp += dice(2, 6);
                     if (mon->mhp > mon->mhpmax)
                         mon->mhp = mon->mhpmax;
@@ -1196,7 +1249,8 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                 split_mon(mon, NULL);
             } else if (mon->data == &mons[PM_IRON_GOLEM]) {
                 if (canseemon(mon))
-                    pline("%s rusts.", Monnam(mon));
+                    pline(combat_msgc(magr, mon, cr_hit), "%s rusts.",
+                          Monnam(mon));
                 mon->mhp -= dice(1, 6);
                 /* should only be by you */
                 if (mon->mhp <= 0)
@@ -1209,16 +1263,17 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             break;
         case POT_ACID:
             if (!resists_acid(mon) && !resist(mon, POTION_CLASS, NOTELL)) {
-                pline("%s %s in pain!", Monnam(mon),
+                pline(combat_msgc(magr, mon, cr_hit),
+                      "%s %s in pain!", Monnam(mon),
                       is_silent(mon->data) ? "writhes" : "shrieks");
                 if (!is_silent(mon->data))
-                    aggravate();
+                    mwake_nearby(mon, FALSE);
                 mon->mhp -= dice(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8);
                 if (mon->mhp <= 0) {
-                    if (your_fault)
+                    if (magr == &youmonst)
                         killed(mon);
                     else
-                        monkilled(mon, "", AD_ACID);
+                        monkilled(magr, mon, "", AD_ACID);
                 }
             }
             break;
@@ -1276,13 +1331,14 @@ potionbreathe(struct monst *mon, struct obj *obj)
     case POT_GAIN_ABILITY:
         if (you && obj->cursed) {
             if (!breathless(youmonst.data))
-                pline("Ulch!  That potion smells terrible!");
+                pline(msgc_noconsequence,
+                      "Ulch!  That potion smells terrible!");
             else if (haseyes(youmonst.data)) {
                 int numeyes = eyecount(youmonst.data);
 
-                pline("Your %s sting%s!",
-                      (numeyes ==
-                       1) ? body_part(EYE) : makeplural(body_part(EYE)),
+                pline(msgc_noconsequence, "Your %s sting%s!",
+                      (numeyes == 1) ? body_part(EYE) :
+                      makeplural(body_part(EYE)),
                       (numeyes == 1) ? "s" : "");
             }
             break;
@@ -1381,23 +1437,23 @@ potionbreathe(struct monst *mon, struct obj *obj)
         break;
     case POT_HALLUCINATION:
         if (you) {
-            pline("You have a momentary vision.");
+            pline(msgc_noconsequence, "You have a momentary vision.");
             kn++;
         }
         break;
     case POT_CONFUSION:
     case POT_BOOZE:
-        set_property(mon, CONFUSION, rnd(5), FALSE);
+        inc_timeout(mon, CONFUSION, rnd(5), FALSE);
         break;
     case POT_INVISIBILITY:
         if (!blind(&youmonst) && !invisible(mon) && (you || vis)) {
             kn++;
             if (you)
-                pline("For an instant you %s!",
+                pline(msgc_noconsequence, "For an instant you %s!",
                       See_invisible ? "could see right through yourself" :
                       "couldn't see yourself");
             else
-                pline("%s %s for a moment!", Monnam(mon),
+                pline(msgc_noconsequence, "%s %s for a moment!", Monnam(mon),
                       see_invisible(&youmonst) ? "turns transparent" : "disappears");
         }
         break;
@@ -1405,7 +1461,8 @@ potionbreathe(struct monst *mon, struct obj *obj)
         if (you || vis) {
             kn++;
             if (!free_action(mon)) {
-                pline("Something seems to be holding %s.",
+                pline(you ? msgc_statusbad : msgc_monneutral,
+                      "Something seems to be holding %s.",
                       you ? "you" : mon_nam(mon));
                 if (you) {
                     helpless(5, hr_paralyzed, "frozen by potion vapours", NULL);
@@ -1416,7 +1473,8 @@ potionbreathe(struct monst *mon, struct obj *obj)
                         mon->mcanmove = 0;
                 }
             } else
-                pline("%s stiffen%s momentarily.",
+                pline(combat_msgc(NULL, mon, cr_immune),
+                      "%s stiffen%s momentarily.",
                       you ? "You" : Monnam(mon),
                       you ? "" : "s");
         }
@@ -1426,24 +1484,22 @@ potionbreathe(struct monst *mon, struct obj *obj)
             kn++;
             if (!free_action(mon) && !resists_sleep(mon)) {
                 if (you) {
-                    pline("You feel rather tired.");
+                    pline(msgc_statusbad, "You feel rather tired.");
                     helpless(5, hr_asleep, "sleeping off potion vapours", NULL);
                     exercise(A_DEX, FALSE);
                 } else {
-                    pline("%s falls asleep.", Monnam(mon));
+                    pline(msgc_monneutral, "%s falls asleep.", Monnam(mon));
                     mon->mfrozen += 5;
                     if (mon->mfrozen)
                         mon->mcanmove = 0;
                 }
             } else
-                pline("%s yawn%s.",
-                      you ? "You" : Monnam(mon),
-                      you ? "" : "s");
+                pline(combat_msgc(NULL, mon, cr_immune), M_verbs(mon, "yawn"));
         }
         break;
     case POT_SPEED:
         if (you && !fast(mon)) {
-            pline("Your knees seem more flexible now.");
+            pline(msgc_statusgood, "Your knees seem more flexible now.");
             kn++;
         }
         set_property(mon, FAST, 5, TRUE);
@@ -1453,11 +1509,11 @@ potionbreathe(struct monst *mon, struct obj *obj)
     case POT_BLINDNESS:
         if (you && !blind(mon)) {
             kn++;
-            pline("It suddenly gets dark.");
+            pline(msgc_statusbad, "It suddenly gets dark.");
         }
         set_property(mon, BLINDED, rnd(5), FALSE);
         if (you && !blind(mon))
-            pline("Your vision quickly clears.");
+            pline(msgc_statusheal, "Your vision quickly clears.");
         break;
     case POT_WATER:
         if (mon->data == &mons[PM_GREMLIN]) {
@@ -1507,9 +1563,9 @@ potionbreathe(struct monst *mon, struct obj *obj)
 }
 
 
+/* returns the potion type when o1 is dipped in o2 */
 static short
 mixtype(struct obj *o1, struct obj *o2)
-/* returns the potion type when o1 is dipped in o2 */
 {
     /* cut down on the number of cases below */
     if (o1->oclass == POTION_CLASS &&
@@ -1645,6 +1701,7 @@ dodip(const struct nh_cmd_arg *arg)
                                        the(simple_typename(obj->otyp)),
                                        "this item"), tmp);
             if (yn(qbuf) == 'y') {
+                /* TODO: There are unmarked msgc_cancelled1 cases here. */
                 if (Levitation) {
                     floating_above(tmp);
                 } else if (u.usteed && !swims(u.usteed) &&
@@ -1667,7 +1724,7 @@ dodip(const struct nh_cmd_arg *arg)
         return 0;
 
     if (potion == obj && potion->quan == 1L) {
-        pline("That is a potion bottle, not a Klein bottle!");
+        pline(msgc_cancelled, "That is a potion bottle, not a Klein bottle!");
         return 0;
     }
     potion->in_use = TRUE;      /* assume it will be used up */
@@ -1680,16 +1737,16 @@ dodip(const struct nh_cmd_arg *arg)
         if (potion->blessed) {
             if (obj->cursed) {
                 if (useeit)
-                    pline("%s %s %s.", Your_buf, aobjnam(obj, "softly glow"),
-                          hcolor("amber"));
+                    pline(msgc_itemrepair, "%s %s %s.", Your_buf,
+                          aobjnam(obj, "softly glow"), hcolor("amber"));
                 uncurse(obj);
                 obj->bknown = 1;
                 usedup = TRUE;
             } else if (!obj->blessed) {
                 if (useeit) {
                     tmp = hcolor("light blue");
-                    pline("%s %s with a%s %s aura.", Your_buf,
-                          aobjnam(obj, "softly glow"),
+                    pline(msgc_itemrepair, "%s %s with a%s %s aura.",
+                          Your_buf, aobjnam(obj, "softly glow"),
                           strchr(vowels, *tmp) ? "n" : "", tmp);
                 }
                 bless(obj);
@@ -1699,15 +1756,15 @@ dodip(const struct nh_cmd_arg *arg)
         } else if (potion->cursed) {
             if (obj->blessed) {
                 if (useeit)
-                    pline("%s %s %s.", Your_buf, aobjnam(obj, "glow"),
-                          hcolor((const char *)"brown"));
+                    pline(msgc_itemloss, "%s %s %s.", Your_buf,
+                          aobjnam(obj, "glow"), hcolor((const char *)"brown"));
                 unbless(obj);
                 obj->bknown = 1;
                 usedup = TRUE;
             } else if (!obj->cursed) {
                 if (useeit) {
                     tmp = hcolor("black");
-                    pline("%s %s with a%s %s aura.", Your_buf,
+                    pline(msgc_itemloss, "%s %s with a%s %s aura.", Your_buf,
                           aobjnam(obj, "glow"), strchr(vowels, *tmp) ? "n" : "",
                           tmp);
                 }
@@ -1727,7 +1784,7 @@ dodip(const struct nh_cmd_arg *arg)
     } else if (potion->otyp == POT_POLYMORPH) {
         /* some objects can't be polymorphed */
         if (poly_proof(obj) || obj_resists(obj, 5, 95)) {
-            pline("Nothing happens.");
+            pline(msgc_failrandom, "Nothing happens.");
         } else {
             int save_otyp = obj->otyp;
 
@@ -1748,7 +1805,8 @@ dodip(const struct nh_cmd_arg *arg)
                    to the regular message is silly, given that the message is
                    unique and the fact that the potion is used up is a
                    giveaway that something is up */
-                pline("The object you dipped changed slightly.");
+                pline(msgc_failrandom,
+                      "The object you dipped changed slightly.");
                 makeknown(POT_POLYMORPH);
                 useup(potion);
                 return 1;
@@ -1758,14 +1816,14 @@ dodip(const struct nh_cmd_arg *arg)
         return 1;
     } else if (obj->oclass == POTION_CLASS && obj->otyp != potion->otyp) {
         /* Mixing potions is dangerous... */
-        pline("The potions mix...");
+        pline(msgc_occstart, "The potions mix...");
         /* KMH, balance patch -- acid is particularly unstable */
         /* AIS: We use a custom RNG for this; many players alchemize only once
            or twice per game with an enormous stack of potions, and whether they
            survive or are consumed has balance implications */
         if (obj->cursed || obj->otyp == POT_ACID ||
             !rn2_on_rng(10, rng_alchemic_blast)) {
-            pline("BOOM!  They explode!");
+            pline(msgc_failrandom, "BOOM!  They explode!");
             wake_nearby(FALSE);
             exercise(A_STR, FALSE);
             if (!breathless(youmonst.data) || haseyes(youmonst.data))
@@ -1802,7 +1860,8 @@ dodip(const struct nh_cmd_arg *arg)
                 break;
             default:
                 if (!Blind)
-                    pline("The mixture glows brightly and evaporates.");
+                    pline(msgc_failrandom,
+                          "The mixture glows brightly and evaporates.");
                 useup(obj);
                 useup(potion);
                 return 1;
@@ -1812,9 +1871,10 @@ dodip(const struct nh_cmd_arg *arg)
         obj->odiluted = (obj->otyp != POT_WATER);
 
         if (obj->otyp == POT_WATER && !Hallucination) {
-            pline("The mixture bubbles%s.", Blind ? "" : ", then clears");
+            pline(msgc_failrandom, "The mixture bubbles%s.",
+                  Blind ? "" : ", then clears");
         } else if (!Blind) {
-            pline("The mixture looks %s.",
+            pline(msgc_actionok, "The mixture looks %s.",
                   hcolor(OBJ_DESCR(objects[obj->otyp])));
         }
 
@@ -1826,9 +1886,9 @@ dodip(const struct nh_cmd_arg *arg)
         obj->oinvis = TRUE;
         if (!Blind) {
             if (!See_invisible)
-                pline("Where did %s go?", the(xname(obj)));
+                pline(msgc_actionok, "Where did %s go?", the(xname(obj)));
             else
-                pline("You notice a little haziness around %s.",
+                pline(msgc_actionok, "You notice a little haziness around %s.",
                       the(xname(obj)));
         }
         makeknown(POT_INVISIBILITY);
@@ -1838,9 +1898,11 @@ dodip(const struct nh_cmd_arg *arg)
         obj->oinvis = FALSE;
         if (!Blind) {
             if (!See_invisible)
-                pline("So that's where %s went!", the(xname(obj)));
+                pline(msgc_actionok, "So that's where %s went!",
+                      the(xname(obj)));
             else
-                pline("The haziness around %s disappears.", the(xname(obj)));
+                pline(msgc_actionok, "The haziness around %s disappears.",
+                      the(xname(obj)));
         }
         makeknown(POT_SEE_INVISIBLE);
         useup(potion);
@@ -1856,7 +1918,8 @@ dodip(const struct nh_cmd_arg *arg)
                 buf = msgcat("One of ", the(xname(potion)));
             else
                 buf = The(xname(potion));
-            pline("%s forms a coating on %s.", buf, the(xname(obj)));
+            pline(msgc_itemrepair, "%s forms a coating on %s.", buf,
+                  the(xname(obj)));
             obj->opoisoned = TRUE;
             makeknown(POT_SICKNESS);
             useup(potion);
@@ -1865,7 +1928,7 @@ dodip(const struct nh_cmd_arg *arg)
                    (potion->otyp == POT_HEALING ||
                     potion->otyp == POT_EXTRA_HEALING ||
                     potion->otyp == POT_FULL_HEALING)) {
-            pline("A coating wears off %s.", the(xname(obj)));
+            pline(msgc_itemrepair, "A coating wears off %s.", the(xname(obj)));
             obj->opoisoned = 0;
             /* trigger the "recently broken" prompt because there are
                multiple possibilities */
@@ -1888,12 +1951,12 @@ dodip(const struct nh_cmd_arg *arg)
                 /* catch_lit does all the work if true */
             } else if (obj->oerodeproof || obj_resists(obj, 5, 95) ||
                        !is_flammable(obj) || obj->oclass == FOOD_CLASS) {
-                pline("%s %s to burn for a moment.", Yname2(obj),
-                      otense(obj, "seem"));
+                pline(msgc_failrandom, "%s %s to burn for a moment.",
+                      Yname2(obj), otense(obj, "seem"));
             } else {
                 if ((omat == PLASTIC || omat == PAPER) && !obj->oartifact)
                     obj->oeroded = MAX_ERODE;
-                pline("The burning oil %s %s.",
+                pline(msgc_itemloss, "The burning oil %s %s.",
                       obj->oeroded == MAX_ERODE ? "destroys" : "damages",
                       yname(obj));
                 if (obj->oeroded == MAX_ERODE) {
@@ -1904,14 +1967,15 @@ dodip(const struct nh_cmd_arg *arg)
                     /* we know it's carried */
                     if (obj->unpaid) {
                         /* create a dummy duplicate to put on bill */
-                        verbalize("You burnt it, you bought it!");
+                        verbalize(msgc_unpaid, "You burnt it, you bought it!");
                         bill_dummy_object(obj);
                     }
                     obj->oeroded++;
                 }
             }
         } else if (potion->cursed) {
-            pline("The potion spills and covers your %s with oil.",
+            pline(msgc_failcurse,
+                  "The potion spills and covers your %s with oil.",
                   makeplural(body_part(FINGER)));
             inc_timeout(&youmonst, GLIB, dice(2, 10), TRUE);
         } else if (obj->oclass != WEAPON_CLASS && !is_weptool(obj)) {
@@ -1923,13 +1987,12 @@ dodip(const struct nh_cmd_arg *arg)
         } else if ((!is_rustprone(obj) && !is_corrodeable(obj)) || is_ammo(obj)
                    || (!obj->oeroded && !obj->oeroded2)) {
             /* uses up potion, doesn't set obj->greased */
-            pline("%s %s with an oily sheen.", Yname2(obj),
+            pline(msgc_yafm, "%s %s with an oily sheen.", Yname2(obj),
                   otense(obj, "gleam"));
         } else {
-            pline("%s %s less %s.", Yname2(obj), otense(obj, "are"),
-                  (obj->oeroded &&
-                   obj->oeroded2) ? "corroded and rusty" : obj->
-                  oeroded ? "rusty" : "corroded");
+            pline(msgc_itemrepair, "%s %s less %s.", Yname2(obj),
+                  otense(obj, "are"), (obj->oeroded && obj->oeroded2) ?
+                  "corroded and rusty" : obj->oeroded ? "rusty" : "corroded");
             if (obj->oeroded > 0)
                 obj->oeroded--;
             if (obj->oeroded2 > 0)
@@ -1959,10 +2022,10 @@ more_dips:
             obj->age = 0;
         }
         if (obj->age > 1000L) {
-            pline("%s %s full.", Yname2(obj), otense(obj, "are"));
+            pline(msgc_yafm, "%s %s full.", Yname2(obj), otense(obj, "are"));
             potion->in_use = FALSE;     /* didn't go poof */
         } else {
-            pline("You fill %s with oil.", yname(obj));
+            pline(msgc_actionok, "You fill %s with oil.", yname(obj));
             check_unpaid(potion);       /* Yendorian Fuel Tax */
             obj->age += 2 * potion->age;        /* burns more efficiently */
             if (obj->age > 1500L)
@@ -1996,7 +2059,7 @@ more_dips:
             singlepotion = potion;
 
         if (singlepotion->unpaid && costly_spot(u.ux, u.uy)) {
-            pline("You use it, you pay for it.");
+            pline(msgc_unpaid, "You use it, you pay for it.");
             bill_dummy_object(singlepotion);
         }
         singlepotion->otyp = mixture;
@@ -2014,7 +2077,7 @@ more_dips:
                 newbuf = "clears";
             else
                 newbuf = msgcat("turns ", hcolor(OBJ_DESCR(objects[mixture])));
-            pline("The %spotion%s %s.", oldbuf,
+            pline(msgc_actionok, "The %spotion%s %s.", oldbuf,
                   more_than_one ? " that you dipped into" : "", newbuf);
             if (!objects[old_otyp].oc_uname && !objects[old_otyp].oc_name_known
                 && old_dknown) {
@@ -2032,7 +2095,7 @@ more_dips:
         return 1;
     }
 
-    pline("Interesting...");
+    pline(msgc_cancelled1, "Interesting...");
     return 1;
 }
 
@@ -2043,23 +2106,30 @@ djinni_from_bottle(struct monst *mon, struct obj *obj)
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
     struct monst *mtmp;
+    enum msg_channel msgc = msgc_monneutral;
 
     if (!(mtmp = makemon(&mons[PM_DJINNI], level, u.ux, u.uy, NO_MM_FLAGS))) {
+        if (you)
+            msgc = msgc_noconsequence;
         if (you || vis)
-            pline("It turns out to be empty.");
+            pline(msgc, "It turns out to be empty.");
         return;
     }
 
     /* only hear the djinni if there is clear LOE to the monster... */
     boolean speak = FALSE;
     if (you || couldsee(mon->mx, mon->my)) {
+        if (you)
+            msgc = msgc_occstart;
         if (!blind(&youmonst))
-            pline("In a cloud of smoke, %s emerges!", a_monnam(mtmp));
+            pline_implied(msgc, "In a cloud of smoke, %s emerges!",
+                          a_monnam(mtmp));
         else
-            pline("You smell acrid fumes.");
+            pline_implied(msgc, "You smell acrid fumes.");
         if (canhear()) {
             speak = TRUE;
-            pline("%s speaks.", Monnam(mtmp));
+            pline_implied(msgc_npcvoice, "%s speaks.",
+                          blind(&youmonst) ? "Something" : Monnam(mtmp));
         }
     }
 
@@ -2073,9 +2143,12 @@ djinni_from_bottle(struct monst *mon, struct obj *obj)
     if ((you && wish_available(obj->blessed ? 80 : obj->cursed ? 5 : 20, &dieroll)) ||
         (!you &&
          ((dieroll = rn2(100)) < (obj->blessed ? 80 : obj->cursed ? 5 : 20)))) {
+        if (you)
+            msgc = msgc_intrgain;
         msethostility(mtmp, FALSE, TRUE); /* show as peaceful while wishing */
+        /* TODO: consider something different than monneutral for monster wishing */
         if (speak)
-            verbalize("I am in your debt.  I will grant one wish!");
+            verbalize(msgc, "I am in your debt.  I will grant one wish!");
         if (you)
             makewish();
         else
@@ -2089,10 +2162,17 @@ djinni_from_bottle(struct monst *mon, struct obj *obj)
     if (obj->cursed && dieroll >= 20)
         dieroll = 0;
 
+    /* avoid failrandom here; that may have been spammed beforehand */
+    if (you) {
+        msgc = msgc_actionok;
+        if (!(dieroll % 4))
+            msgc = msgc_substitute;
+    }
+
     switch (dieroll % 4) {
     case 0:
         if (speak)
-            verbalize("You disturbed me, fool!");
+            verbalize(msgc, "You disturbed me, fool!");
         mtmp->mpeaceful = (you ? 0 : !mon->mpeaceful);
         /* TODO: allow monster specific grudges */
         if (!you && !mon->mpeaceful)
@@ -2100,21 +2180,21 @@ djinni_from_bottle(struct monst *mon, struct obj *obj)
         break;
     case 1:
         if (speak)
-            verbalize("Thank you for freeing me!");
+            verbalize(msgc, "Thank you for freeing me!");
         mtmp->mpeaceful = (you || mon->mpeaceful);
         if (you || mon->mtame)
             tamedog(mtmp, NULL);
         break;
     case 2:
         if (speak)
-            verbalize("You freed me!");
+            verbalize(msgc, "You freed me!");
         msethostility(mtmp, FALSE, TRUE);
         break;
     case 3:
         if (speak)
-            verbalize("It is about time!");
+            verbalize(msgc, "It is about time!");
         if (you || canseemon(mtmp))
-            pline("%s vanishes.", Monnam(mtmp));
+            pline(msgc_actionok, "%s vanishes.", Monnam(mtmp));
         mongone(mtmp);
         break;
     }
@@ -2140,7 +2220,7 @@ split_mon(struct monst *mon,    /* monster being split */
         if (mtmp2) {
             mtmp2->mhpmax = u.mhmax / 2;
             u.mhmax -= mtmp2->mhpmax;
-            pline("You multiply%s!", reason);
+            pline(msgc_statusgood, "You multiply%s!", reason);
         }
     } else {
         mtmp2 = clone_mon(mon, 0, 0);
@@ -2148,7 +2228,8 @@ split_mon(struct monst *mon,    /* monster being split */
             mtmp2->mhpmax = mon->mhpmax / 2;
             mon->mhpmax -= mtmp2->mhpmax;
             if (canspotmon(mon))
-                pline("%s multiplies%s!", Monnam(mon), reason);
+                pline(combat_msgc(mon, NULL, cr_hit),
+                      "%s multiplies%s!", Monnam(mon), reason);
         }
     }
     return mtmp2;

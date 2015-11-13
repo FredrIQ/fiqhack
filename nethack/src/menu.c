@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-05 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,229 +11,49 @@
 #define BORDERWIDTH  (settings.whichframes != FRAME_NONE ? 4 : 2)
 #define BORDERHEIGHT (settings.whichframes != FRAME_NONE ? 2 : 0)
 
-static int
-calc_colwidths(char *menustr, int *colwidth)
+/* Functions for scrollable windows */
+
+void
+layout_scrollable(struct gamewin *gw)
 {
-    char *start, *tab;
-    int col = 0;
+    struct win_scrollable *s = (struct win_scrollable *)gw->extra;
 
-    start = menustr;
-    while ((tab = strchr(start, '\t')) != NULL && col < MAXCOLS) {
-        *tab = '\0';
-        colwidth[col] = max(colwidth[col], utf8_wcswidth(start, SIZE_MAX));
-        *tab = '\t';
-        start = tab + 1;
-        col++;
-    }
-    colwidth[col] = max(colwidth[col], utf8_wcswidth(start, SIZE_MAX));
-    return col;
-}
-
-
-static int
-calc_menuwidth(int *colwidth, int *colpos, int maxcol)
-{
-    int i;
-
-    for (i = 1; i <= maxcol; i++)
-        colpos[i] = colpos[i - 1] + colwidth[i - 1] + 1;
-    return colpos[maxcol] + colwidth[maxcol];
-}
-
-
-static void
-layout_menu(struct gamewin *gw)
-{
-    struct win_menu *mdat = (struct win_menu *)gw->extra;
-    int i, col, w, x1, x2, y1, y2;
-    int colwidth[MAXCOLS];
+    int x1, x2, y1, y2;
     int scrheight;
     int scrwidth;
-    int singlewidth = 0;
 
-    x1 = (mdat->x1 > 0) ? mdat->x1 : 0;
-    y1 = (mdat->y1 > 0) ? mdat->y1 : 0;
-    x2 = (mdat->x2 > 0 && mdat->x2 <= COLS) ? mdat->x2 : COLS;
-    y2 = (mdat->y2 > 0 && mdat->y2 <= LINES) ? mdat->y2 : LINES;
+    x1 = (s->x1 > 0) ? s->x1 : 0;
+    y1 = (s->y1 > 0) ? s->y1 : 0;
+    x2 = (s->x2 > 0 && s->x2 <= COLS) ? s->x2 : COLS;
+    y2 = (s->y2 > 0 && s->y2 <= LINES) ? s->y2 : LINES;
 
     scrheight = y2 - y1;
     scrwidth = x2 - x1;
 
-    /* calc height */
-    mdat->frameheight = BORDERHEIGHT;
-    if (mdat->title && mdat->title[0])
-        mdat->frameheight++;
+    /* calculate height */
+    s->frameheight = BORDERHEIGHT;
+    if (s->title && s->title[0])
+        s->frameheight++;
     if (settings.menupaging == MP_PAGES)
-        mdat->frameheight++;    /* (1 of 2) or (end) */
+        s->frameheight++;    /* (1 of 2) or (end) */
 
-    mdat->height = mdat->frameheight + mdat->icount;
-    if (mdat->height > scrheight)
-        mdat->height = scrheight;
-    mdat->innerheight = mdat->height - mdat->frameheight;
+    s->height = s->frameheight + s->maxlinecount;
+    if (s->height > scrheight)
+        s->height = scrheight;
+    s->innerheight = s->height - s->frameheight;
 
-    /* calc width */
-    mdat->maxcol = 0;
-    for (i = 0; i < MAXCOLS; i++)
-        colwidth[i] = 0;
-
-    for (i = 0; i < mdat->icount; i++) {
-        /* headings without tabs are not fitted into columns, but headers with
-           tabs are presumably column titles */
-        if (!strchr(mdat->items[i].caption, '\t')) {
-            w = strlen(mdat->items[i].caption);
-            if (mdat->items[i].role == MI_NORMAL && mdat->items[i].id)
-                w += 4;
-            singlewidth = max(singlewidth, w);
-        } else {
-            col = calc_colwidths(mdat->items[i].caption, colwidth);
-            mdat->maxcol = max(mdat->maxcol, col);
-        }
-    }
-    if (mdat->how != PICK_NONE)
-        colwidth[0] += 4;       /* "a - " */
-
-    mdat->innerwidth =
-        max(calc_menuwidth(colwidth, mdat->colpos, mdat->maxcol), singlewidth);
-    if (mdat->innerwidth > scrwidth - BORDERWIDTH)
-        mdat->innerwidth = scrwidth - BORDERWIDTH;
-    mdat->width = mdat->innerwidth + BORDERWIDTH; /* border + space */
-    mdat->colpos[mdat->maxcol + 1] = mdat->innerwidth + 1;
-
-    if (mdat->title && mdat->width < strlen(mdat->title) + BORDERWIDTH) {
-        mdat->innerwidth = strlen(mdat->title);
-        mdat->width = mdat->innerwidth + BORDERWIDTH;
-    }
+    /* calculate width */
+    s->innerwidth = s->wanted_width;
+    if (s->title && s->innerwidth < strlen(s->title))
+        s->innerwidth = strlen(s->title);
+    if (s->innerwidth > scrwidth - BORDERWIDTH)
+        s->innerwidth = scrwidth - BORDERWIDTH;
+    s->width = s->innerwidth + BORDERWIDTH; /* border + space */
 }
 
 static void
-draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
-                    int height, int innerheight, int width)
-{
-    switch (settings.menupaging) {
-
-    case MP_LINES:
-        if (icount > innerheight) {
-
-            int scrltop, scrlheight, scrlpos, attr, i;
-            scrltop = !!title + (settings.whichframes != FRAME_NONE);
-            scrlheight = innerheight * innerheight / icount;
-            scrlpos = offset * (innerheight - scrlheight) /
-                (icount - innerheight);
-            for (i = 0; i < innerheight; i++) {
-                char ch = ' ';
-                attr = A_NORMAL;
-                if (i >= scrlpos && i < scrlpos + scrlheight) {
-                    if (ui_flags.asciiborders)
-                        ch = '#';
-                    else
-                        attr = A_REVERSE;
-                }
-                wattron(win, attr);
-                mvwaddch(win, i + scrltop,
-                         width - (settings.whichframes != FRAME_NONE) - 1, ch);
-                wattroff(win, attr);
-            }
-
-        }
-        break;
-
-    case MP_PAGES:
-        if (icount <= innerheight)
-            mvwprintw(win, height -
-                      (settings.whichframes != FRAME_NONE) - 1, 2, "(end)");
-        else
-            mvwprintw(win, height -
-                      (settings.whichframes != FRAME_NONE) - 1, 2,
-                      "(%lg of %d)", (double)offset / (double)innerheight + 1.,
-                      (icount - 1) / innerheight + 1);
-        /* note: the floating-point arithmetic here should always produce an
-           integer; we do it with floating-point so that something obviously
-           wrong is displayed in cases where something went wrong */
-        break;
-    }
-}
-
-void
-draw_menu(struct gamewin *gw)
-{
-    struct win_menu *mdat = (struct win_menu *)gw->extra;
-    struct nh_menuitem *item;
-    char caption[BUFSZ];
-    char *colstrs[MAXCOLS];
-    int i, j, col;
-    char *tab;
-
-    werase(gw->win);
-    if (settings.whichframes != FRAME_NONE)
-        nh_window_border(gw->win, mdat->dismissable);
-    if (mdat->title) {
-        wattron(gw->win, A_UNDERLINE);
-        mvwaddnstr(gw->win, (settings.whichframes != FRAME_NONE),
-                   (settings.whichframes != FRAME_NONE) + 1,
-                   mdat->title, mdat->width - 4);
-        wattroff(gw->win, A_UNDERLINE);
-    }
-    werase(gw->win2);
-
-    /* Draw the menu items. It's possible to scroll beyond the bottom of the
-       menu (e.g. by using PgDn when the menu isn't a whole number of pages),
-       so ensure we don't render any nonexistent menu items. */
-    item = &mdat->items[mdat->offset];
-    for (i = 0; i < mdat->innerheight &&
-             (i + mdat->offset) < mdat->icount; i++, item++) {
-        strncpy(caption, item->caption, BUFSZ - 1);
-        caption[BUFSZ - 1] = '\0';
-
-        col = 0;
-        colstrs[col] = caption;
-        while ((tab = strchr(colstrs[col], '\t')) != NULL) {
-            col++;
-            *tab = '\0';
-            colstrs[col] = tab + 1;
-        }
-
-        if (item->role == MI_HEADING)
-            wattron(gw->win2, settings.menu_headings);
-
-        wmove(gw->win2, i, 0);
-
-        if (mdat->how != PICK_NONE && item->role == MI_NORMAL && item->accel) {
-            wset_mouse_event(gw->win2, uncursed_mbutton_left, item->accel, OK);
-            wprintw(gw->win2, "%c %c ", item->accel,
-                    mdat->selected[mdat->offset + i] ? '+' : '-');
-        }
-
-        /* TODO: This isn't quite correct, we're taking a number of codepoints
-           from the string equal to the width of the output we want, and that
-           doesn't work correctly with combining characters. */
-        if (col) {
-            for (j = 0; j <= col; j++) {
-                wchar_t wcol[utf8_wcswidth(colstrs[j], SIZE_MAX) + 1];
-                if (utf8_mbstowcs(wcol, colstrs[j], sizeof wcol) != (size_t) -1)
-                    waddwnstr(gw->win2, wcol,
-                              mdat->colpos[j + 1] - mdat->colpos[j] - 1);
-
-                if (j < col)
-                    wmove(gw->win2, i, mdat->colpos[j + 1]);
-            }
-        } else {
-            wchar_t wcap[utf8_wcswidth(caption, SIZE_MAX) + 1];
-            if (utf8_mbstowcs(wcap, caption, sizeof wcap) != (size_t) -1)
-                waddwnstr(gw->win2, wcap, mdat->innerwidth);
-        }
-
-        if (item->role == MI_HEADING)
-            wattroff(gw->win2, settings.menu_headings);
-
-        wset_mouse_event(gw->win2, uncursed_mbutton_left, 0, ERR);
-    }
-
-    draw_menu_scrollbar(gw->win, !!mdat->title, mdat->icount, mdat->offset,
-                        mdat->height, mdat->innerheight, mdat->width);
-}
-
-static void
-setup_menu_win2(WINDOW *win, WINDOW **win2, int innerheight, int innerwidth)
+setup_scrollable_win2(WINDOW *win, WINDOW **win2,
+                      int innerheight, int innerwidth)
 {
     *win2 = derwin(win, innerheight, innerwidth,
                    getmaxy(win) - innerheight -
@@ -246,38 +66,230 @@ setup_menu_win2(WINDOW *win, WINDOW **win2, int innerheight, int innerwidth)
                      KEY_DOWN, KEY_CODE_YES);
 }
 
-static void
-resize_menu(struct gamewin *gw)
+void
+initialize_scrollable_windows(struct gamewin *gw, int starty, int startx)
 {
-    struct win_menu *mdat = (struct win_menu *)gw->extra;
-    int startx, starty;
-
-    layout_menu(gw);
-
-    delwin(gw->win2);
-    wresize(gw->win, mdat->height, mdat->width);
-    setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);
-
-    starty = (LINES - mdat->height) / 2;
-    startx = (COLS - mdat->width) / 2;
-
-    mvwin(gw->win, starty, startx);
-
-    switch (settings.menupaging) {
-    case MP_LINES:
-        if (mdat->offset > mdat->icount - mdat->innerheight)
-            mdat->offset = mdat->icount - mdat->innerheight;
-        if (mdat->offset < 0)
-            mdat->offset = 0;
-        break;
-    case MP_PAGES:
-        mdat->offset -= mdat->offset % mdat->innerheight;
-        break;
-    }
-
-    draw_menu(gw);
+    struct win_scrollable *s = (struct win_scrollable *)gw->extra;
+    gw->win = newwin_onscreen(s->height, s->width, starty, startx);
+    keypad(gw->win, TRUE);
+    if (settings.whichframes != FRAME_NONE)
+        nh_window_border(gw->win, s->dismissable);
+    setup_scrollable_win2(gw->win, &(gw->win2),
+                          s->innerheight, s->innerwidth);
+    leaveok(gw->win, TRUE);
+    leaveok(gw->win2, TRUE);
 }
 
+/* Draws the border and title of a scrollable, clearing the interior. */
+void
+draw_scrollable_frame(struct gamewin *gw)
+{
+    struct win_scrollable *s = (struct win_scrollable *)gw->extra;
+
+    werase(gw->win);
+    if (settings.whichframes != FRAME_NONE)
+        nh_window_border(gw->win, s->dismissable);
+    if (s->title) {
+        wattron(gw->win, A_UNDERLINE);
+        mvwaddnstr(gw->win, (settings.whichframes != FRAME_NONE),
+                   (settings.whichframes != FRAME_NONE) + 1,
+                   s->title, s->width - 4);
+        wattroff(gw->win, A_UNDERLINE);
+    }
+    werase(gw->win2);
+}
+
+/* Changes the offset inside the given win_scrollable so that the given line is
+   onscreen. Ensures that we're scrolled into a legal position (i.e. a whole
+   number of pages with MP_PAGES, and not beyond the end of the screen with
+   MP_LINES). */
+void
+scroll_onscreen(struct win_scrollable *s, int onscreen_offset)
+{
+    s->offset = onscreen_offset;
+    switch (settings.menupaging) {
+    case MP_LINES:
+        if (s->offset > s->linecount - s->innerheight)
+            s->offset = s->linecount - s->innerheight;
+        if (s->offset < 0)
+            s->offset = 0;
+        break;
+    case MP_PAGES:
+        s->offset -= s->offset % s->innerheight;
+        break;
+    }
+}
+
+/* Handles most of the work of resizing a scrollable. Does not perform layout
+   (because the caller may want something more complex than layout_scrollable),
+   and does not do rendering (a scrollable is an abstract concept, and in
+   particular, there's no draw_scrollable). */
+void
+resize_scrollable_inner(struct gamewin *gw)
+{
+    struct win_scrollable *s = (struct win_scrollable *)gw->extra;
+    int startx, starty;
+
+    delwin(gw->win2);
+    wresize(gw->win, s->height, s->width);
+    setup_scrollable_win2(gw->win, &(gw->win2), s->innerheight, s->innerwidth);
+
+    starty = (LINES - s->height) / 2;
+    startx = (COLS - s->width) / 2;
+
+    mvwin(gw->win, starty, startx);
+    scroll_onscreen(s, s->offset);
+}
+
+void
+draw_scrollbar(WINDOW *win, struct win_scrollable *s)
+{
+    switch (settings.menupaging) {
+
+    case MP_LINES:
+        if (s->linecount > s->innerheight) {
+
+            int scrltop, scrlheight, scrlpos, attr, i;
+            scrltop = !!s->title + (settings.whichframes != FRAME_NONE);
+            scrlheight = s->innerheight * s->innerheight / s->linecount;
+            scrlpos = s->offset * (s->innerheight - scrlheight) /
+                (s->linecount - s->innerheight);
+            for (i = 0; i < s->innerheight; i++) {
+                char ch = ' ';
+                attr = A_NORMAL;
+                if (i >= scrlpos && i < scrlpos + scrlheight) {
+                    if (ui_flags.asciiborders)
+                        ch = '#';
+                    else
+                        attr = A_REVERSE;
+                }
+                wattron(win, attr);
+                mvwaddch(win, i + scrltop, s->width -
+                         (settings.whichframes != FRAME_NONE) - 1, ch);
+                wattroff(win, attr);
+            }
+
+        }
+        break;
+
+    case MP_PAGES:
+        if (s->linecount <= s->innerheight)
+            mvwprintw(win, s->height -
+                      (settings.whichframes != FRAME_NONE) - 1, 2, "(end)");
+        else
+            mvwprintw(win, s->height -
+                      (settings.whichframes != FRAME_NONE) - 1, 2,
+                      "(%lg of %d)",
+                      (double)(s->offset) / (double)(s->innerheight) + 1.,
+                      (s->linecount - 1) / s->innerheight + 1);
+        /* note: the floating-point arithmetic here should always produce an
+           integer; we do it with floating-point so that something obviously
+           wrong is displayed in cases where something went wrong */
+        break;
+    }
+}
+
+/* If keycode is a key that has a meaning to scrollable windows, update the
+   given win_scrollable accordingly, and return TRUE. Otherwise return FALSE.
+   Scrolling off the end of the menu (or pressing Return) will set *done to TRUE
+   and return TRUE. Does not handle Escape, server cancels, etc., even though
+   those work ina consistent way between scrollables (because they need
+   different error returns). */
+nh_bool
+scroll_using_key(struct win_scrollable *s, int keycode, nh_bool *done)
+{
+    switch (keycode) {
+    case KEY_UP:        /* one line up */
+        if (s->offset > 0 && settings.menupaging == MP_LINES)
+            s->offset--;
+        return TRUE;
+
+    case KEY_DOWN:      /* one line down */
+        if (s->offset < s->linecount - s->innerheight &&
+            settings.menupaging == MP_LINES)
+            s->offset++;
+        return TRUE;
+
+    case KEY_PPAGE:     /* page up */
+    case '<':
+        s->offset -= s->innerheight;
+        if (s->offset < 0)
+            s->offset = 0;
+        return TRUE;
+
+    case KEY_NPAGE:     /* page down */
+    case '>':
+    case ' ':
+        s->offset += s->innerheight;
+        if (s->offset >= s->linecount) {
+            s->offset -= s->innerheight;
+            if (keycode == ' ')
+                *done = TRUE;
+        }
+        return TRUE;
+
+    case KEY_HOME:      /* go to the top */
+    case '^':
+        s->offset = 0;
+        return TRUE;
+
+    /* Go to the end. This acts differently in line-at-a-time and
+       page-at-a-time scrolling; in page-at-a-time, we want to go to the
+       last page, in line-at-a-time, we want the last line at the bottom
+       of the window. */
+    case KEY_END:
+    case '|':
+        switch (settings.menupaging) {
+        case MP_LINES:
+            s->offset = max(s->linecount - s->innerheight, 0);
+            break;
+        case MP_PAGES:
+            s->offset = (s->linecount - 1);
+            s->offset -= s->offset % s->innerheight;
+            if (s->offset < 0) /* 0-item menu */
+                s->offset = 0;
+            break;
+        }
+        return TRUE;
+
+    case KEY_ENTER:     /* confirm */
+    case '\r':
+        *done = TRUE;
+        return TRUE;
+
+    default:
+        return FALSE;
+    }
+}
+
+
+/* Functions that are the "same" for object and non-object menus, but
+   reference different structures and thus produce different code */
+
+static void
+menu_search_callback(const char *sbuf, void *mdat_void)
+{
+    struct win_menu *mdat = mdat_void;
+    int i;
+
+    for (i = 0; i < mdat->s.linecount; i++)
+        if (strstr(mdat->visitems[i]->caption, sbuf))
+            break;
+    if (i < mdat->s.linecount)
+        scroll_onscreen(&(mdat->s), i);
+}
+static void
+objmenu_search_callback(const char *sbuf, void *mdat_void)
+{
+    struct win_objmenu *mdat = mdat_void;
+    int i;
+
+    for (i = 0; i < mdat->s.linecount; i++)
+        if (strstr(mdat->items[i].caption, sbuf))
+            break;
+    if (i < mdat->s.linecount)
+        scroll_onscreen(&(mdat->s), i);
+}
 
 static void
 assign_menu_accelerators(struct win_menu *mdat)
@@ -285,7 +297,30 @@ assign_menu_accelerators(struct win_menu *mdat)
     int i;
     char accel = 'a';
 
-    for (i = 0; i < mdat->icount; i++) {
+    for (i = 0; i < mdat->s.linecount; i++) {
+
+        if (mdat->visitems[i]->accel ||
+            mdat->visitems[i]->role != MI_NORMAL ||
+            mdat->visitems[i]->id == 0)
+            continue;
+
+        mdat->visitems[i]->accel = accel;
+
+        if (accel == 'z')
+            accel = 'A';
+        else if (accel == 'Z')
+            accel = 'a';
+        else
+            accel++;
+    }
+}
+static void
+assign_objmenu_accelerators(struct win_objmenu *mdat)
+{
+    int i;
+    char accel = 'a';
+
+    for (i = 0; i < mdat->s.linecount; i++) {
 
         if (mdat->items[i].accel || mdat->items[i].role != MI_NORMAL ||
             mdat->items[i].id == 0)
@@ -302,76 +337,189 @@ assign_menu_accelerators(struct win_menu *mdat)
     }
 }
 
+/* Functions for non-object menus (specifically) */
+
+static int
+calc_colwidths(char *menustr, int *colwidth, int level)
+{
+    char *start, *tab;
+    int col = 0;
+
+    start = menustr;
+    while ((tab = strchr(start, '\t')) != NULL && col < MAXCOLS) {
+        *tab = '\0';
+        colwidth[col] = max(colwidth[col],
+                            utf8_wcswidth(start, SIZE_MAX) + level * 2);
+        *tab = '\t';
+        start = tab + 1;
+        col++;
+        level = 0;
+    }
+    colwidth[col] = max(colwidth[col],
+                        utf8_wcswidth(start, SIZE_MAX) + level * 2);
+    return col;
+}
+
+static int
+calc_menuwidth(int *colwidth, int *colpos, int maxcol)
+{
+    int i;
+
+    for (i = 1; i <= maxcol; i++)
+        colpos[i] = colpos[i - 1] + colwidth[i - 1] + 1;
+    return colpos[maxcol] + colwidth[maxcol];
+}
+
+static void
+layout_menu(struct gamewin *gw)
+{
+    struct win_menu *mdat = (struct win_menu *)gw->extra;
+
+    int i, col, w;
+    int colwidth[MAXCOLS];
+    int singlewidth = 0;
+
+    /* Calculate the width we're aiming for. */
+    mdat->maxcol = 0;
+    for (i = 0; i < MAXCOLS; i++)
+        colwidth[i] = 0;
+
+    for (i = 0; i < mdat->s.linecount; i++) {
+        /* Headings without tabs are not fitted into columns, but headings with
+           tabs are presumably column titles. */
+        if (!strchr(mdat->visitems[i]->caption, '\t')) {
+            w = strlen(mdat->visitems[i]->caption);
+            if (mdat->visitems[i]->role == MI_NORMAL &&
+                mdat->visitems[i]->id)
+                w += 4;
+            singlewidth = max(singlewidth, w);
+        } else {
+            col = calc_colwidths(mdat->visitems[i]->caption, colwidth,
+                                 mdat->visitems[i]->level);
+            mdat->maxcol = max(mdat->maxcol, col);
+        }
+    }
+    if (mdat->how != PICK_NONE)
+        colwidth[0] += 4;       /* "a - " */
+
+    mdat->s.wanted_width =
+        max(calc_menuwidth(colwidth, mdat->colpos, mdat->maxcol), singlewidth);
+
+    layout_scrollable(gw);
+
+    mdat->colpos[mdat->maxcol + 1] = mdat->s.innerwidth + 1;
+}
+
+void
+draw_menu(struct gamewin *gw)
+{
+    struct win_menu *mdat = (struct win_menu *)gw->extra;
+    struct nh_menuitem *item;
+    char caption[BUFSZ];
+    char *colstrs[MAXCOLS];
+    int i, j, col;
+    char *tab;
+
+    draw_scrollable_frame(gw);
+
+    /* Draw the menu items. It's possible to scroll beyond the bottom of the
+       menu (e.g. by using PgDn when the menu isn't a whole number of pages),
+       so ensure we don't render any nonexistent menu items. */
+    item = mdat->visitems[mdat->s.offset];
+    for (i = 0; i < mdat->s.innerheight &&
+             (i + mdat->s.offset) < mdat->s.linecount; i++, item++) {
+        strncpy(caption + (item->level * 2), item->caption,
+                BUFSZ - 1 - (item->level * 2));
+        for (j = 0; j < (item->level * 2); j++)
+            caption[j] = ' ';
+        caption[BUFSZ - 1] = '\0';
+
+        col = 0;
+        colstrs[col] = caption;
+        while ((tab = strchr(colstrs[col], '\t')) != NULL) {
+            col++;
+            *tab = '\0';
+            colstrs[col] = tab + 1;
+        }
+
+        if (item->role == MI_HEADING)
+            wattron(gw->win2, settings.menu_headings);
+
+        wmove(gw->win2, i, item->level * 2);
+
+        if (mdat->how != PICK_NONE && item->role == MI_NORMAL && item->accel) {
+            wset_mouse_event(gw->win2, uncursed_mbutton_left, item->accel, OK);
+            wprintw(gw->win2, "%c %c ", item->accel,
+                    *(mdat->visselected[mdat->s.offset + i]) ? '+' : '-');
+        }
+
+        /* TODO: This isn't quite correct, we're taking a number of codepoints
+           from the string equal to the width of the output we want, and that
+           doesn't work correctly with combining characters. */
+        if (col) {
+            for (j = 0; j <= col; j++) {
+                wchar_t wcol[utf8_wcswidth(colstrs[j], SIZE_MAX) + 1];
+                if (utf8_mbstowcs(wcol, colstrs[j], sizeof wcol) != (size_t) -1)
+                    waddwnstr(gw->win2, wcol + (j ? 0 : item->level * 2),
+                              mdat->colpos[j + 1] - mdat->colpos[j] -
+                              1 - (j ? 0 : item->level * 2));
+
+                if (j < col)
+                    wmove(gw->win2, i, mdat->colpos[j + 1]);
+            }
+        } else {
+            wchar_t wcap[utf8_wcswidth(caption, SIZE_MAX) + 1];
+            if (utf8_mbstowcs(wcap, caption, sizeof wcap) != (size_t) -1)
+                waddwnstr(gw->win2, wcap, mdat->s.innerwidth);
+        }
+
+        if (item->role == MI_HEADING)
+            wattroff(gw->win2, settings.menu_headings);
+
+        wset_mouse_event(gw->win2, uncursed_mbutton_left, 0, ERR);
+    }
+
+    draw_scrollbar(gw->win, &(mdat->s));
+}
+
+static void
+resize_menu(struct gamewin *gw)
+{
+    layout_menu(gw);
+    resize_scrollable_inner(gw);
+    draw_menu(gw);
+}
+
 
 static int
 find_accel(int accel, struct win_menu *mdat)
 {
     int i, upper;
 
-    /* 
-     * scan visible entries first: long list of (eg the options menu)
-     * might re-use accelerators, so that each is only unique among the visible
-     * menu items
-     */
-    upper = min(mdat->icount, mdat->offset + mdat->innerheight);
-    for (i = mdat->offset; i < upper; i++)
-        if (mdat->items[i].accel == accel)
+    /* Scan visible entries first: long lists (e.g. the options menu) might
+       re-use accelerators, so that each is only unique among the visible menu
+       items */
+    upper = min(mdat->s.linecount, mdat->s.offset + mdat->s.innerheight);
+    for (i = mdat->s.offset; i < upper; i++)
+        if (mdat->visitems[i]->accel == accel)
             return i;
 
-    /* it's not a regular accelerator, maybe there is a group accel? */
-    for (i = mdat->offset; i < upper; i++)
-        if (mdat->items[i].group_accel == accel)
+    /* It's not a regular accelerator; maybe there is a group accelerator? */
+    for (i = mdat->s.offset; i < upper; i++)
+        if (mdat->visitems[i]->group_accel == accel)
             return i;
-    /* 
-     * extra effort: if the list is too long for one page search for the accel
-     * among those entries, too and scroll the changed item into view.
-     */
-    if (mdat->icount > mdat->innerheight)
-        for (i = 0; i < mdat->icount; i++)
-            if (mdat->items[i].accel == accel) {
-                if (i > mdat->offset)
-                    mdat->offset = i - mdat->innerheight + 1;
-                else
-                    mdat->offset = i;
+
+    /* Extra effort: if the list is too long for one page search for the accel
+       among those entries too, and scroll the changed item into view. */
+    if (mdat->s.linecount > mdat->s.innerheight)
+        for (i = 0; i < mdat->s.linecount; i++)
+            if (mdat->visitems[i]->accel == accel) {
+                scroll_onscreen(&(mdat->s), i);
                 return i;
             }
 
     return -1;
 }
-
-
-static void
-menu_search_callback(const char *sbuf, void *mdat_void)
-{
-    struct win_menu *mdat = mdat_void;
-    int i;
-
-    for (i = 0; i < mdat->icount; i++)
-        if (strstr(mdat->items[i].caption, sbuf))
-            break;
-    if (i < mdat->icount) {
-        int end = max(mdat->icount - mdat->innerheight, 0);
-        
-        mdat->offset = min(i, end);
-    }
-}
-
-static void
-objmenu_search_callback(const char *sbuf, void *mdat_void)
-{
-    struct win_objmenu *mdat = mdat_void;
-    int i;
-
-    for (i = 0; i < mdat->icount; i++)
-        if (strstr(mdat->items[i].caption, sbuf))
-            break;
-    if (i < mdat->icount) {
-        int end = max(mdat->icount - mdat->innerheight, 0);
-        
-        mdat->offset = min(i, end);
-    }
-}
-
 
 void
 curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
@@ -383,7 +531,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 {
     struct gamewin *gw;
     struct win_menu *mdat;
-    int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
+    int i, key, idx, rv, startx, starty, prevcurs;
     nh_bool done, cancelled, servercancelled;
     char selected[ml->icount ? ml->icount : 1];
     int results[ml->icount ? ml->icount : 1];
@@ -399,27 +547,36 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     struct nh_menuitem item_copy[ml->icount ? ml->icount : 1];
     if (ml->icount)
         memcpy(item_copy, ml->items, sizeof item_copy);
+    struct nh_menuitem *visitem_pointers[ml->icount ? ml->icount : 1];
+    for (i = 0; i < ml->icount; i++)
+        visitem_pointers[i] = item_copy + i;
+    char *visselected_pointers[ml->icount ? ml->icount : 1];
+    for (i = 0; i < ml->icount; i++)
+        visselected_pointers[i] = selected + i;
 
     memset(selected, 0, sizeof selected);
 
     prevcurs = nh_curs_set(0);
 
-    gw = alloc_gamewin(sizeof (struct win_menu));
+    gw = alloc_gamewin(sizeof (struct win_menu), FALSE);
     gw->draw = draw_menu;
     gw->resize = resize_menu;
+
     mdat = (struct win_menu *)gw->extra;
-    mdat->items = item_copy;
-    mdat->icount = ml->icount;
-    mdat->title = title;
+    mdat->visitems = visitem_pointers;
+    mdat->s.linecount = ml->icount;
+    mdat->s.maxlinecount = ml->icount;
+    mdat->s.title = title;
     mdat->how = how;
-    mdat->selected = selected;
-    mdat->x1 = x1;
-    mdat->y1 = y1;
-    mdat->x2 = x2;
-    mdat->y2 = y2;
-    mdat->dismissable = !!dismissable;
-    if (mdat->how != PICK_ONE && mdat->dismissable)
-        mdat->dismissable = 2;
+    mdat->visselected = visselected_pointers;
+    mdat->s.x1 = x1;
+    mdat->s.y1 = y1;
+    mdat->s.x2 = x2;
+    mdat->s.y2 = y2;
+    mdat->s.dismissable = !!dismissable;
+    mdat->s.offset = 0;
+    if (mdat->how != PICK_ONE && mdat->s.dismissable)
+        mdat->s.dismissable = 2;
 
     dealloc_menulist(ml);
 
@@ -432,162 +589,86 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     if (y2 < 0)
         y2 = LINES;
 
-
     assign_menu_accelerators(mdat);
     layout_menu(gw);
 
-    starty = (y2 - y1 - mdat->height) / 2 + y1;
-    startx = (x2 - x1 - mdat->width) / 2 + x1;
+    starty = (y2 - y1 - mdat->s.height) / 2 + y1;
+    startx = (x2 - x1 - mdat->s.width) / 2 + x1;
 
-    gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
-    keypad(gw->win, TRUE);
-    if (settings.whichframes != FRAME_NONE)
-        nh_window_border(gw->win, mdat->dismissable);
-    setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);
-    leaveok(gw->win, TRUE);
-    leaveok(gw->win2, TRUE);
+    initialize_scrollable_windows(gw, starty, startx);
     done = FALSE;
     cancelled = servercancelled = FALSE;
 
-    if (bottom && mdat->icount - mdat->innerheight > 0)
-        mdat->offset = mdat->icount - mdat->innerheight;
+    if (bottom && mdat->s.linecount - mdat->s.innerheight > 0)
+        mdat->s.offset = mdat->s.linecount - mdat->s.innerheight;
     while (!done && !cancelled) {
         draw_menu(gw);
 
         key = nh_wgetch(gw->win, krc_menu);
 
-        switch (key) {
-            /* one line up */
-        case KEY_UP:
-            if (mdat->offset > 0 && settings.menupaging == MP_LINES)
-                mdat->offset--;
-            break;
-
-            /* one line down */
-        case KEY_DOWN:
-            if (mdat->offset < mdat->icount - mdat->innerheight &&
-                settings.menupaging == MP_LINES)
-                mdat->offset++;
-            break;
-
-            /* page up */
-        case KEY_PPAGE:
-        case '<':
-            mdat->offset -= mdat->innerheight;
-            if (mdat->offset < 0)
-                mdat->offset = 0;
-            break;
-
-            /* page down */
-        case KEY_NPAGE:
-        case '>':
-        case ' ':
-            prev_offset = mdat->offset;
-            mdat->offset += mdat->innerheight;
-            if (mdat->offset >= mdat->icount) {
-                mdat->offset = prev_offset;
-                if (key == ' ')
-                    done = TRUE;
-            }
-            break;
-
-            /* go to the top */
-        case KEY_HOME:
-        case '^':
-            mdat->offset = 0;
-            break;
-
-            /* Go to the end. This acts differently in line-at-a-time and
-               page-at-a-time scrolling; in page-at-a-time, we want to go to the
-               last page, in line-at-a-time, we want the last line at the bottom
-               of the window. */
-        case KEY_END:
-        case '|':
-            switch (settings.menupaging) {
-            case MP_LINES:
-                mdat->offset = max(mdat->icount - mdat->innerheight, 0);
+        if (!scroll_using_key(&(mdat->s), key, &done))
+            switch (key) {
+            case KEY_ESCAPE:                /* cancel */
+            case '\x1b':
+                cancelled = TRUE;
                 break;
-            case MP_PAGES:
-                mdat->offset = (mdat->icount - 1);
-                mdat->offset -= mdat->offset % mdat->innerheight;
-                if (mdat->offset < 0) /* 0-item menu */
-                    mdat->offset = 0;
+
+            case KEY_SIGNAL:
+                cancelled = TRUE;
+                servercancelled = TRUE;
                 break;
-            }
-            break;
 
-            /* cancel */
-        case KEY_ESCAPE:
-        case '\x1b':
-            cancelled = TRUE;
-            break;
+            case '.':                       /* select all (even hidden) */
+                if (mdat->how == PICK_ANY)
+                    for (i = 0; i < mdat->s.maxlinecount; i++)
+                        if (item_copy[i].role == MI_NORMAL)
+                            selected[i] = TRUE;
+                break;
 
-        case KEY_SIGNAL:
-            cancelled = TRUE;
-            servercancelled = TRUE;
-            break;
+            case '-':                       /* select none (even hidden) */
+                for (i = 0; i < mdat->s.maxlinecount; i++)
+                    selected[i] = FALSE;
+                break;
 
-            /* confirm */
-        case KEY_ENTER:
-        case '\r':
-            done = TRUE;
-            break;
+            case ':':                       /* search for a menu item */
+                curses_getline("Search:", mdat, menu_search_callback);
+                break;
 
-            /* select all */
-        case '.':
-            if (mdat->how == PICK_ANY)
-                for (i = 0; i < mdat->icount; i++)
-                    if (mdat->items[i].role == MI_NORMAL)
-                        mdat->selected[i] = TRUE;
-            break;
-
-            /* select none */
-        case '-':
-            for (i = 0; i < mdat->icount; i++)
-                mdat->selected[i] = FALSE;
-            break;
-
-            /* search for a menu item */
-        case ':':
-            curses_getline("Search:", mdat, menu_search_callback);
-            break;
-
-            /* try to find an item for this key and, if one is found, select it 
-             */
-        default:
-            if (mdat->how == PICK_LETTER) {
-                if (key >= 'a' && key <= 'z') {
-                    /* Since you can choose a letter outside of the menu range,
-                       this needs to bypass the normal results-setting code. */
-                    results[0] = key - 'a' + 1;
-                    rv = 1;
-                    goto cleanup_and_return;
-                } else if (key >= 'A' && key <= 'Z') {
-                    results[0] = key - 'A' + 27;
-                    rv = 1;
-                    goto cleanup_and_return;
+            /* try to find an item for this key and, if one is found, select it */
+            default:
+                if (mdat->how == PICK_LETTER) {
+                    if (key >= 'a' && key <= 'z') {
+                        /* Since you can choose a letter outside of the menu range,
+                           this needs to bypass the normal results-setting code. */
+                        results[0] = key - 'a' + 1;
+                        rv = 1;
+                        goto cleanup_and_return;
+                    } else if (key >= 'A' && key <= 'Z') {
+                        results[0] = key - 'A' + 27;
+                        rv = 1;
+                        goto cleanup_and_return;
+                    }
                 }
-            }
-            idx = find_accel(key, mdat);
+                idx = find_accel(key, mdat);
 
-            if (idx != -1 &&    /* valid accelerator */
-                (!changefn || changefn(mdat, idx))) {
-                mdat->selected[idx] = !mdat->selected[idx];
+                if (idx != -1 &&    /* valid accelerator */
+                    (!changefn || changefn(mdat, idx))) {
+                    *(mdat->visselected[idx]) = !*(mdat->visselected[idx]);
 
-                if (mdat->how == PICK_ONE)
-                    done = TRUE;
+                    if (mdat->how == PICK_ONE)
+                        done = TRUE;
+                }
+                break;
             }
-            break;
-        }
     }
 
     if (cancelled)
         rv = servercancelled ? -2 : -1;
     else {
         rv = 0;
-        for (i = 0; i < mdat->icount; i++) {
-            if (mdat->selected[i]) {
-                results[rv] = mdat->items[i].id;
+        for (i = 0; i < mdat->s.maxlinecount; i++) {
+            if (selected[i]) {
+                results[rv] = item_copy[i].id;
                 rv++;
             }
         }
@@ -600,7 +681,6 @@ cleanup_and_return:
 
     callback(results, rv, callbackarg);
 }
-
 
 void
 curses_menu_callback(const int *results, int nresults, void *arg)
@@ -621,7 +701,6 @@ curses_menu_callback(const int *results, int nresults, void *arg)
     }
 }
 
-
 void
 curses_display_menu(struct nh_menulist *ml, const char *title,
                     int how, int placement_hint, void *callbackarg,
@@ -630,7 +709,7 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
     int x1 = 0, y1 = 0, x2 = -1, y2 = -1;
 
     if (msgwin)
-        pause_messages();
+        draw_messages_precover();
     redraw_popup_windows();
 
     /* Even while watching/replaying, these menus take input. */
@@ -660,12 +739,8 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
                              x1, y1, x2, y2, FALSE, NULL, TRUE);
 }
 
-/******************************************************************************
- * object menu functions follow
- * they are _very_ similar to the functions for regular menus, but not
- * identical. I can't shake the feeling that it should be possible to share lots
- * of code, but I can't quite see how to get there...
- */
+
+/* Functions for object menus (specifically) */
 
 static void
 layout_objmenu(struct gamewin *gw)
@@ -673,33 +748,22 @@ layout_objmenu(struct gamewin *gw)
     struct win_objmenu *mdat = (struct win_objmenu *)gw->extra;
     char weightstr[16];
     int i, maxwidth, itemwidth;
-    int scrheight = LINES;
-    int scrwidth = COLS;
-
-    /* calc height */
-    mdat->frameheight = BORDERHEIGHT;
-    if (mdat->title)
-        mdat->frameheight++;
-    if (settings.menupaging == MP_PAGES)
-        mdat->frameheight++;    /* (end) or (1 of 2) */
-
-    mdat->height = mdat->frameheight + mdat->icount;
-    if (mdat->height > scrheight)
-        mdat->height = scrheight;
-    mdat->innerheight = mdat->height - mdat->frameheight;
 
     /* calc width */
     maxwidth = 0;
-    for (i = 0; i < mdat->icount; i++) {
+    for (i = 0; i < mdat->s.linecount; i++) {
         itemwidth = strlen(mdat->items[i].caption);
 
-        /* add extra space for an object symbol */
+        /* Add extra space for an object symbol.
+
+           TODO: We don't need this any more, do we? */
         if (mdat->items[i].role == MI_NORMAL)
             itemwidth += 2;
 
-        /* if the weight is known, leave space to show it */
+        /* If the weight is known, leave space to show it. */
         if (settings.invweight && mdat->items[i].weight != -1) {
-            snprintf(weightstr, ARRAY_SIZE(weightstr), " {%d}", mdat->items[i].weight);
+            snprintf(weightstr, ARRAY_SIZE(weightstr),
+                     " {%d}", mdat->items[i].weight);
             itemwidth += strlen(weightstr);
         }
         if ((mdat->items[i].role == MI_NORMAL && mdat->items[i].accel) ||
@@ -708,17 +772,9 @@ layout_objmenu(struct gamewin *gw)
         maxwidth = max(maxwidth, itemwidth);
     }
 
-    mdat->innerwidth = maxwidth;
-    if (mdat->innerwidth > scrwidth - BORDERWIDTH)
-        mdat->innerwidth = scrwidth - BORDERWIDTH;
-    mdat->width = mdat->innerwidth + BORDERWIDTH; /* border + space */
-
-    if (mdat->title && mdat->width < strlen(mdat->title) + 4) {
-        mdat->innerwidth = strlen(mdat->title);
-        mdat->width = mdat->innerwidth + BORDERWIDTH;
-    }
+    mdat->s.wanted_width = maxwidth;
+    layout_scrollable(gw);
 }
-
 
 void
 draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
@@ -801,122 +857,62 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
     wnoutrefresh(win);
 }
 
-
 static void
 draw_objmenu(struct gamewin *gw)
 {
     struct win_objmenu *mdat = (struct win_objmenu *)gw->extra;
 
-    if (settings.whichframes != FRAME_NONE)
-        nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
-    if (mdat->title) {
-        wattron(gw->win, A_UNDERLINE);
-        mvwaddnstr(gw->win, (settings.whichframes != FRAME_NONE),
-                   (settings.whichframes != FRAME_NONE) + 1,
-                   mdat->title, mdat->width - 4);
-        wattroff(gw->win, A_UNDERLINE);
-    }
-
+    draw_scrollable_frame(gw);
     draw_objlist(gw->win2,
-                 &(struct nh_objlist){.icount = mdat->icount - mdat->offset,
-                                      .items  = mdat->items  + mdat->offset},
-                 mdat->selected + mdat->offset, mdat->how);
+                 &(struct nh_objlist){
+                     .icount = mdat->s.linecount - mdat->s.offset,
+                     .items  = mdat->items       + mdat->s.offset},
+                 mdat->selected + mdat->s.offset, mdat->how);
 
     if (mdat->selcount > 0 && settings.whichframes != FRAME_NONE) {
         wmove(gw->win, getmaxy(gw->win) - 1, 1);
         wprintw(gw->win, "Count: %d", mdat->selcount);
     }
 
-    draw_menu_scrollbar(gw->win, !!mdat->title, mdat->icount, mdat->offset,
-                        mdat->height, mdat->innerheight, mdat->width);
+    draw_scrollbar(gw->win, &(mdat->s));
 }
 
 
 static void
 resize_objmenu(struct gamewin *gw)
 {
-    struct win_objmenu *mdat = (struct win_objmenu *)gw->extra;
-    int startx, starty;
-
     layout_objmenu(gw);
-
-    delwin(gw->win2);
-    wresize(gw->win, mdat->height, mdat->width);
-
-    setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);
-
-    starty = (LINES - mdat->height) / 2;
-    startx = (COLS - mdat->width) / 2;
-
-    switch (settings.menupaging) {
-    case MP_LINES:
-        if (mdat->offset > mdat->icount - mdat->innerheight)
-            mdat->offset = mdat->icount - mdat->innerheight;
-        if (mdat->offset < 0)
-            mdat->offset = 0;
-        break;
-    case MP_PAGES:
-        mdat->offset -= mdat->offset % mdat->innerheight;
-        break;
-    }
-
-    mvwin(gw->win, starty, startx);
-
+    resize_scrollable_inner(gw);
     draw_objmenu(gw);
 }
-
-
-static void
-assign_objmenu_accelerators(struct win_objmenu *mdat)
-{
-    int i;
-    char accel = 'a';
-
-    for (i = 0; i < mdat->icount; i++) {
-
-        if (mdat->items[i].accel || mdat->items[i].role != MI_NORMAL ||
-            mdat->items[i].id == 0)
-            continue;
-
-        mdat->items[i].accel = accel;
-
-        if (accel == 'z')
-            accel = 'A';
-        else if (accel == 'Z')
-            accel = 'a';
-        else
-            accel++;
-    }
-}
-
 
 static int
 find_objaccel(int accel, struct win_objmenu *mdat)
 {
     int i, upper;
 
-    /* 
-     * scan visible entries first: long list of items (eg the options menu)
-     * might re-use accelerators, so that each is only unique among the visible
-     * menu items
-     */
-    upper = min(mdat->icount, mdat->offset + mdat->innerheight);
-    for (i = mdat->offset; i < upper; i++)
+    /* Scan visible entries first: long lists (e.g. the options menu) might
+       re-use accelerators, so that each is only unique among the visible menu
+       items */
+    upper = min(mdat->s.linecount, mdat->s.offset + mdat->s.innerheight);
+    for (i = mdat->s.offset; i < upper; i++)
         if (mdat->items[i].accel == accel)
             return i;
 
-    /* 
-     * extra effort: if the list is too long for one page search for the accel
-     * among those entries, too
-     */
-    if (mdat->icount > mdat->innerheight)
-        for (i = 0; i < mdat->icount; i++)
-            if (mdat->items[i].accel == accel)
+    /* Don't handle group accelerators here, because they need special handling
+       for the item counts. */
+
+    /* Extra effort: if the list is too long for one page, search for the accel
+       among those entries too. */
+    if (mdat->s.linecount > mdat->s.innerheight)
+        for (i = 0; i < mdat->s.linecount; i++)
+            if (mdat->items[i].accel == accel) {
+                scroll_onscreen(&(mdat->s), i);
                 return i;
+            }
 
     return -1;
 }
-
 
 void
 curses_display_objects(
@@ -926,7 +922,7 @@ curses_display_objects(
 {
     struct gamewin *gw;
     struct win_objmenu *mdat;
-    int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
+    int i, key, idx, rv, startx, starty, prevcurs;
     nh_bool done, cancelled, servercancelled;
     nh_bool inventory_special = title && !!strstr(title, "Inventory") &&
         how == PICK_NONE;
@@ -934,7 +930,7 @@ curses_display_objects(
     struct nh_objresult results[objlist->icount ? objlist->icount : 1];
 
     if (msgwin)
-        pause_messages();
+        draw_messages_precover();
 
     if (isendwin() || COLS < COLNO || LINES < ROWNO) {
         dealloc_objmenulist(objlist);
@@ -955,16 +951,24 @@ curses_display_objects(
 
     prevcurs = nh_curs_set(0);
 
-    gw = alloc_gamewin(sizeof (struct win_objmenu));
+    gw = alloc_gamewin(sizeof (struct win_objmenu), FALSE);
     gw->draw = draw_objmenu;
     gw->resize = resize_objmenu;
+
     mdat = (struct win_objmenu *)gw->extra;
     mdat->items = item_copy;
-    mdat->icount = objlist->icount;
-    mdat->title = title;
+    mdat->s.linecount = objlist->icount;
+    mdat->s.maxlinecount = objlist->icount;
+    mdat->s.title = title;
     mdat->how = inventory_special ? PICK_ONE : how;
     mdat->selcount = -1;
     mdat->selected = selected;
+    mdat->s.x1 = 0;
+    mdat->s.y1 = 0;
+    mdat->s.x2 = 0;
+    mdat->s.y2 = 0;
+    mdat->s.dismissable = mdat->how == PICK_ONE ? 1 : 2;
+    mdat->s.offset = 0;
 
     dealloc_objmenulist(objlist);
 
@@ -972,235 +976,155 @@ curses_display_objects(
         assign_objmenu_accelerators(mdat);
     layout_objmenu(gw);
 
-    starty = (LINES - mdat->height) / 2;
-    startx = (COLS - mdat->width) / 2;
+    starty = (LINES - mdat->s.height) / 2;
+    startx = (COLS - mdat->s.width) / 2;
 
     if (placement_hint == PLHINT_INVENTORY ||
         placement_hint == PLHINT_CONTAINER) {
         if (ui_flags.sidebarwidth)
-            mdat->width = max(mdat->width, 2 + getmaxx(sidebar));
+            mdat->s.width = max(mdat->s.width, 2 + getmaxx(sidebar));
         starty = 0;
-        startx = COLS - mdat->width;
+        startx = COLS - mdat->s.width;
     } else if (placement_hint == PLHINT_ONELINER && game_is_running) {
         starty = 0;
         startx = 0;
     }
 
-    gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
-    keypad(gw->win, TRUE);
-    if (settings.whichframes != FRAME_NONE)
-        nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
-
-    setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);
-
-    leaveok(gw->win, TRUE);
-    leaveok(gw->win2, TRUE);
-
+    initialize_scrollable_windows(gw, starty, startx);
     done = FALSE;
     cancelled = servercancelled = FALSE;
+
     while (!done && !cancelled) {
         draw_objmenu(gw);
 
         key = nh_wgetch(gw->win, krc_objmenu);
 
-        switch (key) {
-            /* one line up */
-        case KEY_UP:
-            if (mdat->offset > 0 && settings.menupaging == MP_LINES)
-                mdat->offset--;
-            break;
-
-            /* one line down */
-        case KEY_DOWN:
-            if (mdat->offset < mdat->icount - mdat->innerheight &&
-                settings.menupaging == MP_LINES)
-                mdat->offset++;
-            break;
-
-            /* page up */
-        case KEY_PPAGE:
-        case '<':
-            mdat->offset -= mdat->innerheight;
-            if (mdat->offset < 0)
-                mdat->offset = 0;
-            break;
-
-            /* page down */
-        case KEY_NPAGE:
-        case '>':
-        case ' ':
-            prev_offset = mdat->offset;
-            mdat->offset += mdat->innerheight;
-            if (mdat->offset >= mdat->icount) {
-                mdat->offset = prev_offset;
-                if (key == ' ')
-                    done = TRUE;
-            }
-            break;
-
-            /* go to the top */
-        case KEY_HOME:
-        case '^':
-            mdat->offset = 0;
-            break;
-
-            /* go to the end */
-        case KEY_END:
-        case '|':
-            switch (settings.menupaging) {
-            case MP_LINES:
-                mdat->offset = max(mdat->icount - mdat->innerheight, 0);
+        if (!scroll_using_key(&(mdat->s), key, &done))
+            switch (key) {
+            case KEY_ESCAPE:                       /* cancel */
+            case '\x1b':
+                cancelled = TRUE;
                 break;
-            case MP_PAGES:
-                mdat->offset = (mdat->icount - 1);
-                mdat->offset -= mdat->offset % mdat->innerheight;
-                if (mdat->offset < 0) /* 0-item menu */
-                    mdat->offset = 0;
+
+            case KEY_SIGNAL:
+                cancelled = TRUE;
+                servercancelled = TRUE;
                 break;
-            }
-            break;
 
-            /* cancel */
-        case KEY_ESCAPE:
-        case '\x1b':
-            cancelled = TRUE;
-            break;
 
-        case KEY_SIGNAL:
-            cancelled = TRUE;
-            servercancelled = TRUE;
-            break;
+            case '.':                              /* select all */
+                if (mdat->how == PICK_ANY)
+                    for (i = 0; i < mdat->s.linecount; i++)
+                        if (mdat->items[i].oclass != -1)
+                            mdat->selected[i] = -1;
+                break;
 
-            /* confirm */
-        case KEY_ENTER:
-        case '\r':
-            done = TRUE;
-            break;
+            case '-':                              /* select none */
+                for (i = 0; i < mdat->s.linecount; i++)
+                    mdat->selected[i] = 0;
+                break;
 
-            /* select all */
-        case '.':
-            if (mdat->how == PICK_ANY)
-                for (i = 0; i < mdat->icount; i++)
+            case '@':                              /* invert all */
+                if (mdat->how == PICK_ANY)
+                    for (i = 0; i < mdat->s.linecount; i++)
+                        if (mdat->items[i].oclass != -1)
+                            mdat->selected[i] = mdat->selected[i] ? 0 : -1;
+                                break;
+
+            case ',':                              /* select page */
+                if (mdat->how != PICK_ANY)
+                    break;
+
+                for (i = mdat->s.offset; i < mdat->s.linecount &&
+                         i < mdat->s.offset + mdat->s.innerheight; i++)
                     if (mdat->items[i].oclass != -1)
                         mdat->selected[i] = -1;
-            break;
+                break;
 
-            /* select none */
-        case '-':
-            for (i = 0; i < mdat->icount; i++)
-                mdat->selected[i] = 0;
-            break;
+            case '\\':                             /* deselect page */
+                for (i = mdat->s.offset; i < mdat->s.linecount &&
+                         i < mdat->s.offset + mdat->s.innerheight; i++)
+                    if (mdat->items[i].oclass != -1)
+                        mdat->selected[i] = 0;
+                break;
 
-            /* invert all */
-        case '@':
-            if (mdat->how == PICK_ANY)
-                for (i = 0; i < mdat->icount; i++)
+            case '~':                              /* invert page */
+                if (mdat->how != PICK_ANY)
+                    break;
+
+                for (i = mdat->s.offset; i < mdat->s.linecount &&
+                         i < mdat->s.offset + mdat->s.innerheight; i++)
                     if (mdat->items[i].oclass != -1)
                         mdat->selected[i] = mdat->selected[i] ? 0 : -1;
-            break;
-
-            /* select page */
-        case ',':
-            if (mdat->how != PICK_ANY)
                 break;
 
-            for (i = mdat->offset;
-                 i < mdat->icount && i < mdat->offset + mdat->innerheight;
-                 i++)
-                if (mdat->items[i].oclass != -1)
-                    mdat->selected[i] = -1;
-            break;
-
-            /* deselect page */
-        case '\\':
-            for (i = mdat->offset;
-                 i < mdat->icount && i < mdat->offset + mdat->innerheight;
-                 i++)
-                if (mdat->items[i].oclass != -1)
-                    mdat->selected[i] = 0;
-            break;
-
-            /* invert page */
-        case '~':
-            if (mdat->how != PICK_ANY)
+            case ':':                              /* search for a menu item */
+                curses_getline("Search:", mdat, objmenu_search_callback);
                 break;
 
-            for (i = mdat->offset;
-                 i < mdat->icount && i < mdat->offset + mdat->innerheight;
-                 i++)
-                if (mdat->items[i].oclass != -1)
-                    mdat->selected[i] = mdat->selected[i] ? 0 : -1;
-            break;
-
-            /* search for a menu item */
-        case ':':
-            curses_getline("Search:", mdat, objmenu_search_callback);
-            break;
-
-            /* edit selection count */
-        case KEY_BACKSPACE:
-            mdat->selcount /= 10;
-            if (mdat->selcount == 0)
-                mdat->selcount = -1;    /* -1: select all */
-            break;
-
-        default:
-            /* selection allows an item count */
-            if (key >= '0' && key <= '9') {
-                if (mdat->selcount == -1)
-                    mdat->selcount = 0;
-                mdat->selcount = mdat->selcount * 10 + (key - '0');
-                if (mdat->selcount > 0xffff)
-                    mdat->selcount /= 10;
-
+            case KEY_BACKSPACE:                    /* edit selection count */
+                mdat->selcount /= 10;
+                if (mdat->selcount == 0)
+                    mdat->selcount = -1;    /* -1: select all */
                 break;
-            }
 
-            /* try to find an item for this key and, if one is found, select it 
-             */
-            idx = find_objaccel(key, mdat);
+            default:
+                /* selection allows an item count */
+                if (key >= '0' && key <= '9') {
+                    if (mdat->selcount == -1)
+                        mdat->selcount = 0;
+                    mdat->selcount = mdat->selcount * 10 + (key - '0');
+                    if (mdat->selcount > 0xffff)
+                        mdat->selcount /= 10;
 
-            if (idx != -1) {    /* valid item accelerator */
-                if (mdat->selected[idx])
-                    mdat->selected[idx] = 0;
-                else
-                    mdat->selected[idx] = mdat->selcount;
-                mdat->selcount = -1;
-
-                /* inventory special case: show item actions menu */
-                if (inventory_special) {
-                    mdat->selected[idx] = 0;
-                    if (do_item_actions(&mdat->items[idx]))
-                        done = TRUE;
-                } else if (mdat->how == PICK_ONE)
-                    done = TRUE;
-
-            } else if (mdat->how == PICK_ANY) { /* maybe it's a group accel? */
-                int grouphits = 0;
-
-                for (i = 0; i < mdat->icount; i++) {
-                    if (mdat->items[i].group_accel == key &&
-                        mdat->items[i].oclass != -1) {
-                        if (mdat->selected[i] == mdat->selcount)
-                            mdat->selected[i] = 0;
-                        else
-                            mdat->selected[i] = mdat->selcount;
-                        grouphits++;
-                    }
+                    break;
                 }
 
-                if (grouphits)
+                /* try to find an item for this key and, if one is found, select
+                   it */
+                idx = find_objaccel(key, mdat);
+
+                if (idx != -1) {    /* valid item accelerator */
+                    if (mdat->selected[idx])
+                        mdat->selected[idx] = 0;
+                    else
+                        mdat->selected[idx] = mdat->selcount;
                     mdat->selcount = -1;
+
+                    /* inventory special case: show item actions menu */
+                    if (inventory_special) {
+                        mdat->selected[idx] = 0;
+                        if (do_item_actions(&mdat->items[idx]))
+                            done = TRUE;
+                    } else if (mdat->how == PICK_ONE)
+                        done = TRUE;
+
+                } else if (mdat->how == PICK_ANY) { /* group accel? */
+                    int grouphits = 0;
+
+                    for (i = 0; i < mdat->s.linecount; i++) {
+                        if (mdat->items[i].group_accel == key &&
+                            mdat->items[i].oclass != -1) {
+                            if (mdat->selected[i] == mdat->selcount)
+                                mdat->selected[i] = 0;
+                            else
+                                mdat->selected[i] = mdat->selcount;
+                            grouphits++;
+                        }
+                    }
+
+                    if (grouphits)
+                        mdat->selcount = -1;
+                }
+                break;
             }
-            break;
-        }
     }
 
     if (cancelled)
         rv = servercancelled ? -2 : -1;
     else {
         rv = 0;
-        for (i = 0; i < mdat->icount; i++) {
+        for (i = 0; i < mdat->s.linecount; i++) {
             if (mdat->selected[i]) {
                 results[rv].id = mdat->items[i].id;
                 results[rv].count = mdat->selected[i];

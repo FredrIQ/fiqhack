@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -367,7 +367,8 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
                 buf = msgprintf(" removes %s and", distant_name(old, doname));
             else
                 buf = "";
-            pline("%s%s puts on %s.", Monnam(mon), buf,
+            pline(mon->mtame ? msgc_petneutral : msgc_monneutral,
+                  "%s%s puts on %s.", Monnam(mon), buf,
                   distant_name(best, doname));
             /* we know enchantment now */
             best->mknown = 1;
@@ -381,7 +382,8 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
     if ((best->otyp == DUNCE_CAP || best->otyp == HELM_OF_OPPOSITE_ALIGNMENT) &&
         !best->cursed) {
         if (!creation && canseemon(mon)) {
-            pline("%s %s for a moment.", Tobjnam(best, "glow"),
+            pline(msgc_consequence, "%s %s for a moment.",
+                  Tobjnam(best, "glow"),
                   hcolor("black"));
             best->bknown = 1; /* player learned that the object is cursed */
             best->mbknown = 1; /* monster did too */
@@ -432,8 +434,9 @@ equip(struct monst *mon, struct obj *obj,
             struct obj *gloves = which_armor(mon, os_armg);
             if (gloves->cursed) {
                 if (tell)
-                    pline("%s tries to take off %s, but it is cursed.",
-                        Monnam(mon), an(xname(gloves)));
+                    pline(msgc_info,
+                          "%s tries to take off %s, but it is cursed.",
+                          Monnam(mon), an(xname(gloves)));
                 return 0;
             }
         }
@@ -470,13 +473,15 @@ do_equip(struct monst *mon, struct obj *obj,
     redundant = redundant && !mworn_blocked(mon, prop);
     if (!on && obj->cursed) {
         if (tell)
-            pline("%s tries to take off %s, but it is cursed.",
-                    Monnam(mon), an(xname(obj)));
+            pline(msgc_info,
+                  "%s tries to take off %s, but it is cursed.",
+                  Monnam(mon), an(xname(obj)));
         return 0;
     }
     if (!on) {
         if (tell)
-            pline("%s takes off %s.", Monnam(mon), an(xname(obj)));
+            pline(msgc_monneutral, "%s takes off %s.",
+                  Monnam(mon), an(xname(obj)));
         mon->misc_worn_check &= ~obj->owornmask;
         obj->owornmask = 0L;
     } else {
@@ -488,7 +493,8 @@ do_equip(struct monst *mon, struct obj *obj,
         } else
             obj->owornmask |= W_MASK(slot);
         if (tell)
-            pline("%s puts on %s.", Monnam(mon), an(xname(obj)));
+            pline(msgc_monneutral, "%s puts on %s.",
+                  Monnam(mon), an(xname(obj)));
         mon->misc_worn_check |= obj->owornmask;
     }
 
@@ -627,27 +633,28 @@ mon_break_armor(struct monst *mon, boolean polyspot)
                and the monster's previous form is already gone */
             else if (show_msg) {
                 if (vis)
-                    pline("%s breaks out of %s armor!", Monnam(mon), ppronoun);
+                    pline(msgc_monneutral, "%s breaks out of %s armor!",
+                          Monnam(mon), ppronoun);
                 else
-                    You_hear("a cracking sound.");
+                    You_hear(msgc_levelsound, "a cracking sound.");
             }
             m_useup(mon, otmp);
         }
         if ((otmp = which_armor(mon, os_armc)) != 0) {
             if (otmp->oartifact) {
                 if (vis)
-                    pline("%s %s falls off!", s_suffix(Monnam(mon)),
-                          cloak_simple_name(otmp));
+                    pline(msgc_monneutral, "%s %s falls off!",
+                          s_suffix(Monnam(mon)), cloak_simple_name(otmp));
                 if (polyspot)
                     bypass_obj(otmp);
                 m_lose_armor(mon, otmp);
             } else {
                 if (show_msg) {
                     if (vis)
-                        pline("%s %s tears apart!", s_suffix(Monnam(mon)),
-                              cloak_simple_name(otmp));
+                        pline(msgc_monneutral, "%s %s tears apart!",
+                              s_suffix(Monnam(mon)), cloak_simple_name(otmp));
                     else
-                        You_hear("a ripping sound.");
+                        You_hear(msgc_levelsound, "a ripping sound.");
                 }
                 m_useup(mon, otmp);
             }
@@ -655,9 +662,10 @@ mon_break_armor(struct monst *mon, boolean polyspot)
         if ((otmp = which_armor(mon, os_armu)) != 0) {
             if (show_msg) {
                 if (vis)
-                    pline("%s shirt rips to shreds!", s_suffix(Monnam(mon)));
+                    pline(msgc_monneutral, "%s shirt rips to shreds!",
+                          s_suffix(Monnam(mon)));
                 else
-                    You_hear("a ripping sound.");
+                    You_hear(msgc_levelsound, "a ripping sound.");
             }
             m_useup(mon, otmp);
         }
@@ -665,10 +673,10 @@ mon_break_armor(struct monst *mon, boolean polyspot)
         if ((otmp = which_armor(mon, os_arm)) != 0) {
             if (show_msg) {
                 if (vis)
-                    pline("%s armor falls around %s!", s_suffix(Monnam(mon)),
-                          pronoun);
+                    pline(msgc_monneutral, "%s armor falls around %s!",
+                          s_suffix(Monnam(mon)), pronoun);
                 else
-                    You_hear("a thud.");
+                    You_hear(msgc_levelsound, "a thud.");
             }
             if (polyspot)
                 bypass_obj(otmp);
@@ -677,11 +685,11 @@ mon_break_armor(struct monst *mon, boolean polyspot)
         if ((otmp = which_armor(mon, os_armc)) != 0) {
             if (vis) {
                 if (is_whirly(mon->data))
-                    pline("%s %s falls, unsupported!", s_suffix(Monnam(mon)),
-                          cloak_simple_name(otmp));
+                    pline(msgc_monneutral, "%s %s falls, unsupported!",
+                          s_suffix(Monnam(mon)), cloak_simple_name(otmp));
                 else
-                    pline("%s shrinks out of %s %s!", Monnam(mon), ppronoun,
-                          cloak_simple_name(otmp));
+                    pline(msgc_levelsound, "%s shrinks out of %s %s!",
+                          Monnam(mon), ppronoun, cloak_simple_name(otmp));
             }
             if (polyspot)
                 bypass_obj(otmp);
@@ -690,10 +698,11 @@ mon_break_armor(struct monst *mon, boolean polyspot)
         if ((otmp = which_armor(mon, os_armu)) != 0) {
             if (vis) {
                 if (sliparm(mon->data))
-                    pline("%s seeps right through %s shirt!", Monnam(mon),
-                          ppronoun);
+                    pline(msgc_monneutral, "%s seeps right through %s shirt!",
+                          Monnam(mon), ppronoun);
                 else
-                    pline("%s becomes much too small for %s shirt!",
+                    pline(msgc_levelsound,
+                          "%s becomes much too small for %s shirt!",
                           Monnam(mon), ppronoun);
             }
             if (polyspot)
@@ -705,8 +714,8 @@ mon_break_armor(struct monst *mon, boolean polyspot)
         /* [caller needs to handle weapon checks] */
         if ((otmp = which_armor(mon, os_armg)) != 0) {
             if (vis)
-                pline("%s drops %s gloves%s!", Monnam(mon), ppronoun,
-                      MON_WEP(mon) ? " and weapon" : "");
+                pline(msgc_monneutral, "%s drops %s gloves%s!", Monnam(mon),
+                      ppronoun, MON_WEP(mon) ? " and weapon" : "");
             if (polyspot)
                 bypass_obj(otmp);
             m_lose_armor(mon, otmp);
@@ -714,10 +723,10 @@ mon_break_armor(struct monst *mon, boolean polyspot)
         if ((otmp = which_armor(mon, os_arms)) != 0) {
             if (show_msg) {
                 if (vis)
-                    pline("%s can no longer hold %s shield!", Monnam(mon),
-                          ppronoun);
+                    pline(msgc_monneutral, "%s can no longer hold %s shield!",
+                          Monnam(mon), ppronoun);
                 else
-                    You_hear("a clank.");
+                    You_hear(msgc_levelsound, "a clank.");
             }
             if (polyspot)
                 bypass_obj(otmp);
@@ -730,11 +739,11 @@ mon_break_armor(struct monst *mon, boolean polyspot)
             (handless_or_tiny || !is_flimsy(otmp))) {
             if (show_msg) {
                 if (vis)
-                    pline("%s %s falls to the %s!", s_suffix(Monnam(mon)),
-                          helmet_name(otmp), surface(mon->mx, mon->my));
-                else if (is_metallic(otmp))     /* soft hats don't make a sound 
-                                                 */
-                    You_hear("a clank.");
+                    pline(msgc_monneutral, "%s %s falls to the %s!",
+                          s_suffix(Monnam(mon)), helmet_name(otmp),
+                          surface(mon->mx, mon->my));
+                else if (is_metallic(otmp))  /* soft hats don't make a sound */
+                    You_hear(msgc_levelsound, "a clank.");
             }
             if (polyspot)
                 bypass_obj(otmp);
@@ -745,9 +754,11 @@ mon_break_armor(struct monst *mon, boolean polyspot)
         if ((otmp = which_armor(mon, os_armf)) != 0) {
             if (vis) {
                 if (is_whirly(mon->data))
-                    pline("%s boots fall away!", s_suffix(Monnam(mon)));
+                    pline(msgc_monneutral, "%s boots fall away!",
+                          s_suffix(Monnam(mon)));
                 else
-                    pline("%s boots %s off %s feet!", s_suffix(Monnam(mon)),
+                    pline(msgc_monneutral, "%s boots %s off %s feet!",
+                          s_suffix(Monnam(mon)),
                           verysmall(mdat) ? "slide" : "are pushed", ppronoun);
             }
             if (polyspot)
@@ -761,15 +772,16 @@ mon_break_armor(struct monst *mon, boolean polyspot)
                 bypass_obj(otmp);
             m_lose_armor(mon, otmp);
             if (vis)
-                pline("%s saddle falls off.", s_suffix(Monnam(mon)));
+                pline(mon->mtame ? msgc_petneutral : msgc_monneutral,
+                      "%s saddle falls off.", s_suffix(Monnam(mon)));
         }
         if (mon == u.usteed)
             goto noride;
     } else if (mon == u.usteed && !can_ride(mon)) {
     noride:
-        pline("You can no longer ride %s.", mon_nam(mon));
+        pline(msgc_statusend, "You can no longer ride %s.", mon_nam(mon));
         if (touch_petrifies(u.usteed->data) && !Stone_resistance && rnl(3)) {
-            pline("You touch %s.", mon_nam(u.usteed));
+            pline(msgc_fatal_predone, "You touch %s.", mon_nam(u.usteed));
             instapetrify(killer_msg(STONING,
                 msgcat("falling of ", an(u.usteed->data->mname))));
         }

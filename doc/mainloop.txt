@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-31
+Last modified by Alex Smith, 2015-11-11
 
 Copyright (C) 2013 Alex Smith.
 
@@ -103,12 +103,13 @@ server state will be cleaned up if the server is restarted (maybe to update
 the game) or after a long period of inactivity, the network connection can
 become disconnected spontaneously due to network problems.  The client library
 will attempt to reconstruct as much state as possible when either of these
-situations happen.  If only the network connection was lost, it will use the
-over-the-wire API to reconnect to the existing server state.  If the server
-state was lost as well (the server will close the network connection if it
-doesn't have matching state), it will reconnect it silently in most cases, or
-else produce an appropriate error return if it's in the middle of an API call
-and there is no game active.  (If there is a game active, it will use the
+situations happen.  It used to be the case that these situations were treated
+separately, but that is no longer the case; in order to considerably reduce
+complexity in the server, the current method if either of these pieces of
+state are lost is to drop the connection, start a new connection from scratch,
+and reconstruct from there.  (From a client's point of view, if there is no
+game active, it will get an error return on whatever API call it was
+attempting; and if there is a game active, the client library will use the
 exception-based mechanism explained later.)
 
 There are many API commands that work without a game running (in fact, some
@@ -121,19 +122,14 @@ work only without a game running).  They fall into the following categories:
     all independent of any given game.  This is to avoid needing to duplicate
     the information between the server and client, which also gains the
     advantage that there's no need for the server and client to have exactly
-    the same version. Changes to the server that merely make changes to what
-    exists in the game can thus be compensated for by the client, although it
-    might not be able to use them to their full potential; for instance, if a
-    new monster was added to the game that the server was aware of but the
-    client predated, then the client would have enough information to be able
-    to render the monster in ASCII (using the recommended rendering provided
-    to it by the server), but not be able to render it in Unicode or with
-    graphical tiles.  Likewise, this mechanism means that the server can use
-    numbers rather than names, saving on bandwidth; the information requested
-    from the server will allow the client to know what, for instance, "trap 4"
-    is, and even if new traps are added earlier in the list, the mechanism
-    avoids off-by-one errors.  A client would typically query this information
-    once during startup.
+    the same version.  Currently this situation is in an unhappy middle ground
+    between two extremes: things like new monsters are mentioned in the list,
+    but the client does not have enough information to be able to render them
+    without a separate data file, so there are no real benefits from the
+    technique.  As a result, it is quite possible that there will be changes
+    in this area.
+
+    A client would typically query this information once during startup.
 
   * Queries for server-wide state: lists of games that exist (e.g. games to
     resume, or completed games to replay), and the high-score table.  The game
@@ -189,7 +185,8 @@ but here is a partial list:
     just like it could do outside a game.
 
   * "Save" (actually detach) or quit the game.  This seems innocuous, but has
-    quite a complex implementation: see below.
+    quite a complex implementation: see below.  (TODO: quitting seems to make
+    more sense as a game command than a separate API call.)
 
   * Request more detailed information about the gamestate than the server will
     send spontaneously via window procedures.  For instance, the window
@@ -201,7 +198,8 @@ but here is a partial list:
     are associated with an item, perhaps because it has a menu-driven
     interface rather than a command-driven interface.
 
-  * (Currently unimplemented: replay commands.)
+  * (Currently in progress: replay commands, which at the moment are mapped
+    over the direction commands, but a better UI is needed).
 
 This general pattern is quite simple, but there are some complicating cases
 that implementors need to be aware of.
@@ -240,9 +238,17 @@ explaining how it works, we give a list of situations known to use it:
     It also happens when a user starts a client for a game, forgets about it
     (or becomes unable to access it due to ssh timeout, etc.), and starts a
     second client for the same game; answering a prompt in the second game
-    closes it in the first game.  (TODO: This situation no longer uses the
-    exceptional pattern in most case because server cancels suffice instead.
-    Document this.)
+    closes it in the first game.
+
+    In most cases, this situation is no longer used, instead using a "server
+    cancel" mechanism.  The server can send a server cancel request using the
+    `server_cancel` window function with asynchronous signal timing (i.e. at
+    any time at all), and the client must react via returning a "cancelled by
+    server" return value to the current server request that it's handling (or
+    to the next server request, if the server cancel didn't arrive during a
+    request; this avoids a potential race condition).  It must also return its
+    view of the game and its user interface to a state before the cancelled
+    request happened, such as via closing menus.
 
 The exceptional pattern is implemented in the server and the client library
 via a `longjmp` that causes the `nh[net]_play_game` to return a specific
@@ -276,19 +282,17 @@ pattern, but they all fall into three catgories:
     for network play).  It's implemented via `terminate()` inside libnethack
     (the argument to `terminate()` is the return value from `nh_play_game`).
     It is also the most common case, covering most of 1. and 2. in the
-    numbered list above (all the cases except `nh[net]_exit_game` and
-    `nh[net]_replay_game`).
+    numbered list above (all the cases except `nh[net]_exit_game`).
 
-  * The trigger is an explicit API call by the client: `nh[net]_exit_game` and
-    `nh[net]_replay_game` (currently unimplemented) can both move the code to
-    the exceptional pattern as part of their normal behaviour, and any API
-    call by the client (while the game is running) can cause this in case of
-    network failure.
+  * The trigger is an explicit API call by the client: `nh[net]_exit_game` can
+    move the code to the exceptional pattern as part of their normal
+    behaviour, and any API call by the client (while the game is running) can
+    cause this in case of network failure.
 
     This covers cases 1. and 2. in the list above, when triggered by
-    `nh[net]_exit_game` and `nh[net]_replay_game`.  The same codepaths also
-    handle case 3 (which goes via `nh_exit_game` at the server end, and via
-    some API call into the client library at the client end).
+    `nh[net]_exit_game`.  The same codepaths also handle case 3 (which goes
+    via `nh_exit_game` at the server end, and via some API call into the
+    client library at the client end).
     
     The client needs to take some care to be exception-safe in its use of API
     calls as a result of this trigger.  However, the need for exception-safety
@@ -338,36 +342,45 @@ pattern, but they all fall into three catgories:
     exception-safe place in its code (a location where it can handle a
     potential `longjmp` out), then ask the game library to process any
     exceptional pattern triggers that may have occured.  This is accomplished
-    via the window procedure `abort_input` (for the server to notify the
+    via the window procedure `server_cancel` (for the server to notify the
     client that there's a potential for an exceptional pattern trigger having
     occurred), via the client library informing the client of the file
     descriptor it's using for the network communication (so that it can use
     `select` or similar to be able to handle input from both the network and
-    from the user); and via the API call `nh[net]_input_aborted`, which the
-    client uses to notify the server that it's in a safe place in the code and
-    is ready to `longjmp` out to the `nh_play_game` return value if necessary.
-    (If it turns out to be a false alarm, `nh[net]_input_aborted` simply
-    returns, leaving the client to go back into its input loop.)
+    from the user); and via the "cancelled by server" return value that exists
+    for each API call (the client returns the value to abandon its current
+    input attempt while notifying the server that it's in a safe place in the
+    code and is ready to `longjmp` out to the `nh_play_game` return if
+    necessary).  If it turns out to be a false alarm, the server will simply
+    send the same request again; false alarms should ideally only happen
+    during race conditions, meaning that no partial information entered by the
+    user will be lost as they will have had only fractions of a second to do
+    so.
     
-    Thus, `abort_input` itself needs to be asynchronous signal safe, but the
+    Thus, `server_cancel` itself needs to be asynchronous signal safe, but the
     rest of the client code need not be.  The typical way to implement it in a
     client is to generate simulated input of the same type that it's expecting
     from the user.  For instance, when inputting from a terminal on UNIX, the
     client is expecting input from a file (using `select` or the like);
-    `abort_input` is thus most easily implemented via writing to a pipe, with
-    the `select` attached both to the terminal and to the other end of the
-    pipe.  For GUI clients, they will likely be using some sort of message
-    loop to wait for user input, and so `abort_input` can be implemented via
+    `server_cancel` is thus most easily implemented via writing to a pipe,
+    with the `select` attached both to the terminal and to the other end of
+    the pipe.  For GUI clients, they will likely be using some sort of message
+    loop to wait for user input, and so `server_cancel` can be implemented via
     the client sending a message to itself (in an asynchronous signal safe
     way; the vast majority of message loop systems have a function for doing
-    that specifically for this sort of use case).
+    that specifically for this sort of use case *glares at SDL, which
+    doesn't*).
     
     In nhcurses, this issue is handled via using libuncursed's support for
     interrupting user input in response to a signal handler or to activity on
     a network socket.  (It is not a coincidence that libuncursed happens to
     abstract over precisely those operations that the API requires the client
     to be able to handle; libuncursed was originally written for use with
-    NetHack 4.)
+    NetHack 4.)  Note that when using the client library, you need to inform
+    the client library of network activity (using `nhnet_check_socket_fd`) so
+    that it has a chance to check for the server cancel.  (In future, it might
+    be possible to do something using `SIGURG` to simplify the client, but
+    this would be less portable.)
 
 
 Here's a summary of the exception and signal safety requirements on clients:
@@ -376,24 +389,34 @@ Here's a summary of the exception and signal safety requirements on clients:
     must be able to handle a `longjmp` back to the `nh[net]_play_game` call.
     In order to make handling this situation easier, `nh[net]_play_game` will
     immediately return after it has been jumped back to, giving the client an
-    opportunity to observe the jump.  (By "able to handle", this means no
-    leaks of any kind, and the user interface must be restored to a neutral
-    state, rather than leaving prompts or menus showing on the screen.)  This
-    includes `nh[net]_input_aborted`.
+    opportunity to observe the jump, although it may return a value that
+    requests the client to immediately call it again with the same arguments.
+    (By "able to handle", this means no leaks of any kind, and the user
+    interface must be restored to a neutral state, rather than leaving prompts
+    or menus showing on the screen.)  This also includes the state just after
+    returning "cancelled by server" (which will typically be a state where the
+    only running API call is `nh_play_game`, and thus there is no partial
+    state on the client to celan up anyway).
 
-  * For local play, the client must have an `abort_input` window procedure
+  * For local play, the client must have a `server_cancel` window procedure
     that can safely be asynchronously called from signal handlers.  While
-    accepting input from the user, if the client recieves an `abort_input`
-    call, the client must stop blocking on input and instead call
-    `nh_input_aborted`, blocking on the input again only once
-    `nh_input_aborted` returns (if it returns at all).
+    accepting input from the user, if the client recieves a `server_cancel`
+    call, the client must stop blocking on input and instead return an
+    appropriate "cancelled by server" return value to the current or next API
+    request from the server (each such request has an appropriate return value
+    allocated that's distinct from any otherwise legal return values).
 
   * For network play, the client must monitor a network socket specified by
     the client library, in addition to whatever it is monitoring in order to
     read input from the user.  If there is activity on the network socket, it
-    must stop blocking on user input and instead call `nhnet_input_aborted`,
-    blocking on the input again only once `nhnet_input_aborted` returns (if it
-    returns at all).
+    must stop blocking on user input and instead call `nhnet_check_socket_fd`,
+    which will check to see if a server cancel was sent and call the
+    `server_cancel` window procedure if it was.  (It will also potentially
+    longjmp back to `nh[net]_play_game` if something goes wrong with the
+    connection, although not in the "normal" case of server cancels.  Thus the
+    client must be exception-safe in this scenario; async-signal safety is not
+    needed anywhere in network play, though, because the potential longjmps
+    only happen at defined points inside the client's code.)
 
 
 Semantics of the request_command window procedure
@@ -413,9 +436,7 @@ state.
 The more complex cases are commands that take more than one action.  These are
 divided into two categories:
 
-  * (TODO: This is slightly out of date.)
-  
-    Interruptible actions.  These can be cancelled at any time by the client.
+  * Interruptible actions.  These can be cancelled at any time by the client.
     The way this works is that the client sends the command, libnethack
     simulates the command for one action, then requests a command again; the
     client can continue the action by sending the `repeat` command, or it can
@@ -447,11 +468,20 @@ divided into two categories:
         The `multi` variable also had many other uses.  The uses of `multi`
         for things like limiting the number of items picked up from a pile
         with `,` or the maximum number of arrows to shoot with `f` are now
-        implemented via the `limit` element of `struct nh_cmd_arg`.  For
-        repetition-related uses, the repetition now happens on the client,
-        with `CMD_ARG_CONT` used to make the server aware of the repetition
-        (so that it can adapt the interface appropriately, e.g. not prompting
-        about whether to resume an interrupted action).
+        implemented via the `limit` element of `struct nh_cmd_arg`.  For most
+        repetition-related uses, the repetition now happens on the client.
+
+        In a few common cases (such as searching), the client can optionally
+        use the `limit` element for straightforward command repeat, where the
+        limit is the number of turns to search, and the server will convert
+        this to an occupation that has the same gameplay behaviour as manually
+        repeating the command would.  This is easier on the client because the
+        server can produce appropriate messages rather than the client needing
+        to be involved; and it also happens to be considerably more efficient
+        in terms of performance.  Thus, clients are recommended to take
+        advantage of this mechanism, where it's available.  (You can tell that
+        a numeric count can be sent to the server via looking for the
+        `CMD_ARG_LIMIT` flag on the command information.)
 
       * Farmove commands (e.g. `54` with numpad controls or `gh` with vikeys
         controls).  These were traditionally implemented as command repeat
@@ -459,9 +489,11 @@ divided into two categories:
         when applied to movement commands.  They're still implemented the same
         way as command repeat, but clients are free to (and recommended to)
         choose some saner method of implementing an unbounded number of
-        repeats.
+        repeats.  (Or just send a farmove command to the server, and have it
+        implement it as an occupation; it's one of the special cases mentioned
+        in the previous paragraph.)
 
-      * Occupations.  This was traditionally implemented via setting the
+      * Occupations.  These were traditionally implemented via setting the
         variable `occupation` to a non-NULL value, a callback that ran every
         action.  The new implementation works via setting the `completed`
         argument of `nh_request_command` to false, recommending that the
@@ -473,18 +505,12 @@ divided into two categories:
         the character is in danger and the player should be asked to confirm
         continuing/repeating the action manually with control-A).
 
-  * (TODO: This documentation is very out of date.)
-  
-    Uninterruptible actions.  These are currently implemented in the
-    traditional way: `multi` is set to a negative number, increasing by one
-    per turn, and the server ignores all commands sent until it gets back to
-    zero.  However, it does continue requesting commands (with completed and
-    interrupted both false), even though it's going to ignore them.  (TODO:
-    Change the API for this; a separate windowproc is possibly overkill, but
-    we should at least let `request_command` know that repeating is the only
-    option.) (Another TODO: `multi` now has sensible semantics, but it badly
-    needs a better name, and should probably be flipped to be positive rather
-    than negative.)
+  * Uninterruptible actions.  These were traditionally implemented by setting
+    the variable `multi` to a negative number, which increased by one per
+    turn, with the server not requesting commands until the number reached
+    zero again.  NetHack 4.3 handles this in pretty much the same way,
+    although it now tracks a range of different helplessness reasons in their
+    own variables, rather than all using one shared variable.
 
     Paralysis is also implemented as an uninterruptible action; the player is
     forced to repeat waiting until `multi` gets back to 0.  The general term
@@ -505,5 +531,6 @@ divided into two categories:
     engraving, you hide existing engravings on the square; and if you lifesave
     during a long engraving, it cancels the helplessness but not the delay on
     the engraving activating, so you have a visible but temporarily
-    ineffective engraving.)
-
+    ineffective engraving.)  As such, over time, we're aiming to move the use
+    of helplessness to *only* status effects during which the player can do
+    nothing at all.

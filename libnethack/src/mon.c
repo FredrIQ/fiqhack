@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,7 +221,8 @@ make_corpse(struct monst *mtmp)
     case PM_BLACK_UNICORN:
         if (mtmp->mrevived && rn2(20)) {
             if (canseemon(mtmp))
-                pline("%s recently regrown horn crumbles to dust.",
+                pline(msgc_failrandom,
+                      "%s recently regrown horn crumbles to dust.",
                       s_suffix(Monnam(mtmp)));
         } else
             mksobj_at(UNICORN_HORN, level, x, y, TRUE, FALSE, rng_main);
@@ -372,7 +373,8 @@ minliquid(struct monst *mtmp)
         int dam = dice(2, 6);
 
         if (cansee(mtmp->mx, mtmp->my))
-            pline("%s rusts.", Monnam(mtmp));
+            pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                  "%s rusts.", Monnam(mtmp));
         mtmp->mhp -= dam;
         if (mtmp->mhpmax > dam)
             mtmp->mhpmax -= dam;
@@ -397,7 +399,8 @@ minliquid(struct monst *mtmp)
             if (waterwalks(mtmp) && armf && is_organic(armf) &&
                 !armf->oerodeproof) {
                 if (vis)
-                    pline("%s %s into flame!", Monnam(mtmp),
+                    pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                          "%s %s into flame!", Monnam(mtmp),
                           aobjnam(armf, "burst"));
                 mtmp->misc_worn_check &= ~W_MASK(os_armf);
                 m_useup(mtmp, armf);
@@ -409,14 +412,16 @@ minliquid(struct monst *mtmp)
             if (!resists_fire(mtmp)) {
                 if (waterwalks(mtmp)) {
                     if (vis)
-                        pline("The lava burns %s!",
+                        pline(mtmp->mtame ? msgc_petwarning : msgc_monneutral,
+                              "The lava burns %s!",
                               mon_nam(mtmp));
                     mtmp->mhp -= dice(6, 6);
                     if (mtmp->mhp <= 0)
                         mondied(mtmp);
                 } else {
                     if (cansee(mtmp->mx, mtmp->my))
-                        pline("%s %s.", Monnam(mtmp),
+                        pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                              "%s %s.", Monnam(mtmp),
                               mtmp->data ==
                               &mons[PM_WATER_ELEMENTAL] ? "boils away" :
                               "burns to a crisp");
@@ -425,11 +430,13 @@ minliquid(struct monst *mtmp)
             } else if (!waterwalks(mtmp)) {
                 if (--mtmp->mhp <= 0) {
                     if (cansee(mtmp->mx, mtmp->my))
-                        pline("%s surrenders to the fire.", Monnam(mtmp));
+                        pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                              "%s surrenders to the fire.", Monnam(mtmp));
                     mondead(mtmp);
                 } else {
                     if (cansee(mtmp->mx, mtmp->my))
-                        pline("%s burns slightly.", Monnam(mtmp));
+                        pline(mtmp->mtame ? msgc_petwarning : msgc_monneutral,
+                              "%s burns slightly.", Monnam(mtmp));
                     alive_means_lifesaved = FALSE;
                 }
             }
@@ -452,12 +459,14 @@ minliquid(struct monst *mtmp)
            handled here.  Swimmers are able to protect their stuff... */
         if (!is_clinger(mtmp->data) && !swims(mtmp)) {
             if (cansee(mtmp->mx, mtmp->my) && !unbreathing(mtmp)) {
-                pline("%s drowns.", Monnam(mtmp));
+                pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                      "%s drowns.", Monnam(mtmp));
             }
             if (u.ustuck && Engulfed && u.ustuck == mtmp) {
                 /* This can happen after a purple worm plucks you off a flying
                    steed while you are over water. */
-                pline("%s sinks as water rushes in and flushes you out.",
+                pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                      "%s sinks as water rushes in and flushes you out.",
                       Monnam(mtmp));
             }
             if (!unbreathing(mtmp)) {
@@ -747,25 +756,27 @@ meatmetal(struct monst *mtmp)
         if (is_metallic(otmp) && !obj_resists(otmp, 5, 95) &&
             touch_artifact(otmp, mtmp)) {
             if (mtmp->data == &mons[PM_RUST_MONSTER] && otmp->oerodeproof) {
-                if (canseemon(mtmp) && flags.verbose) {
-                    pline("%s eats %s!", Monnam(mtmp),
+                if (canseemon(mtmp)) {
+                    pline(msgc_itemloss, "%s eats %s!", Monnam(mtmp),
                           distant_name(otmp, doname));
                 }
                 /* The object's rustproofing is gone now */
                 otmp->oerodeproof = 0;
                 set_property(mtmp, STUNNED, dice(4, 4), FALSE);
                 if (canseemon(mtmp) && flags.verbose) {
-                    pline("%s spits %s out in disgust!", Monnam(mtmp),
+                    pline_implied(mtmp->mtame ?
+                                  msgc_petneutral : msgc_monneutral,
+                                  "%s spits %s out in disgust!", Monnam(mtmp),
                           distant_name(otmp, doname));
                 }
                 /* KMH -- Don't eat indigestible/choking objects */
             } else if (otmp->otyp != AMULET_OF_STRANGULATION &&
                        otmp->otyp != RIN_SLOW_DIGESTION) {
-                if (cansee(mtmp->mx, mtmp->my) && flags.verbose)
-                    pline("%s eats %s!", Monnam(mtmp),
+                if (cansee(mtmp->mx, mtmp->my))
+                    pline(msgc_itemloss, "%s eats %s!", Monnam(mtmp),
                           distant_name(otmp, doname));
-                else if (flags.verbose)
-                    You_hear("a crunching sound.");
+                else
+                    You_hear(msgc_itemloss, "a crunching sound.");
                 mtmp->meating = otmp->owt / 2 + 1;
                 /* Heal up to the object's weight in hp */
                 if (mtmp->mhp < mtmp->mhpmax) {
@@ -796,7 +807,9 @@ meatmetal(struct monst *mtmp)
                             ptr = mtmp->data;
                         } else if (!resists_ston(mtmp)) {
                             if (canseemon(mtmp))
-                                pline("%s turns to stone!", Monnam(mtmp));
+                                pline(mtmp->mtame ? msgc_petfatal :
+                                      msgc_monneutral,
+                                      "%s turns to stone!", Monnam(mtmp));
                             monstone(mtmp);
                             ptr = NULL;
                         }
@@ -845,10 +858,11 @@ meatobj(struct monst *mtmp)
                 otmp->otyp == RIN_SLOW_DIGESTION)
                 continue;
             ++count;
-            if (cansee(mtmp->mx, mtmp->my) && flags.verbose)
-                pline("%s eats %s!", Monnam(mtmp), distant_name(otmp, doname));
-            else if (flags.verbose)
-                You_hear("a slurping sound.");
+            if (cansee(mtmp->mx, mtmp->my))
+                pline(msgc_itemloss, "%s eats %s!", Monnam(mtmp),
+                      distant_name(otmp, doname));
+            else
+                You_hear(msgc_itemloss, "a slurping sound.");
             /* Heal up to the object's weight in hp */
             if (mtmp->mhp < mtmp->mhpmax) {
                 mtmp->mhp += objects[otmp->otyp].oc_weight;
@@ -890,14 +904,17 @@ meatobj(struct monst *mtmp)
             if ((otmp->otyp == CORPSE) && is_rider(&mons[otmp->corpsenm])) {
                 buf = "";
                 if (cansee(mtmp->mx, mtmp->my)) {
-                    pline("%s attempts to engulf %s.", Monnam(mtmp),
+                    pline(mtmp->mtame ? msgc_petwarning : msgc_monneutral,
+                          "%s attempts to engulf %s.", Monnam(mtmp),
                           distant_name(otmp, doname));
-                    pline("%s dies!", Monnam(mtmp));
-                } else if (flags.verbose) {
-                    You_hear("a slurping sound abruptly stop.");
+                    pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                          "%s dies!", Monnam(mtmp));
+                } else {
+                    You_hear(msgc_monneutral,
+                             "a slurping sound abruptly stop.");
                     if (mtmp->mtame) {
-                        pline("You have a queasy feeling for a moment, then "
-                              "it passes.");
+                        pline(msgc_petfatal, "You have a queasy feeling for a "
+                              "moment, then it passes.");
                     }
                 }
                 mondied(mtmp);
@@ -918,11 +935,11 @@ meatobj(struct monst *mtmp)
             newsym(mtmp->mx, mtmp->my);
     }
     if (ecount > 0) {
-        if (cansee(mtmp->mx, mtmp->my) && flags.verbose && buf[0])
-            pline("%s", buf);
-        else if (flags.verbose)
-            You_hear("%s slurping sound%s.", ecount == 1 ? "a" : "several",
-                     ecount == 1 ? "" : "s");
+        if (cansee(mtmp->mx, mtmp->my) && buf[0])
+            pline(msgc_itemloss, "%s", buf);
+        else
+            You_hear(msgc_itemloss, "%s slurping sound%s.",
+                     ecount == 1 ? "a" : "several", ecount == 1 ? "" : "s");
     }
     return ((count > 0) || (ecount > 0)) ? 1 : 0;
 }
@@ -939,8 +956,9 @@ mpickgold(struct monst *mtmp)
         obj_extract_self(gold);
         add_to_minv(mtmp, gold);
         if (cansee(mtmp->mx, mtmp->my)) {
-            if (flags.verbose && !mtmp->isgd)
-                pline("%s picks up some %s.", Monnam(mtmp),
+            if (!mtmp->isgd)
+                pline(mtmp->mtame ? msgc_petneutral : msgc_monneutral,
+                      "%s picks up some %s.", Monnam(mtmp),
                       mat_idx == GOLD ? "gold" : "money");
             newsym(mtmp->mx, mtmp->my);
         }
@@ -1137,7 +1155,8 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
     }
     if (vanish) {
         if (canseemon(mon))
-            pline("You barely notice %s item%s disappearing!",
+            pline(msgc_monneutral,
+                  "You barely notice %s item%s disappearing!",
                   vanish > 5 ? "several" :
                   vanish > 1 ? "a few" :
                   "an", vanish != 1 ? "s" : "");
@@ -1159,7 +1178,8 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
         }
         if (container && container->otrapped) {
             if (canseemon(mon))
-                pline("%s carefully opens %s...", Monnam(mon),
+                pline(msgc_monneutral,
+                      "%s carefully opens %s...", Monnam(mon),
                       distant_name(container, doname));
             chest_trap(mon, container, FINGER, FALSE);
             return TRUE; /* waste a turn */
@@ -1169,7 +1189,8 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
         if (picked) {
             /* TODO: maybe make the oclass/etc checks into a common function */
             if (canseemon(mon))
-                pline("%s picks up %s%s from %s.", Monnam(mon),
+                pline(msgc_monneutral,
+                      "%s picks up %s%s from %s.", Monnam(mon),
                       picked > 5 ? "several " :
                       picked > 1 ? "a few " : "",
                       picked == 1 ? distant_name(pickobj, doname) :
@@ -1879,17 +1900,22 @@ lifesaved_monster(struct monst *mtmp)
            could see a glowing amulet on an unlit square. If that change is
            made, it'll also be important to check player blindness. */
         if (cansee(mtmp->mx, mtmp->my)) {
-            pline("But wait...");
-            pline("%s medallion begins to glow!", s_suffix(Monnam(mtmp)));
+            /* the lifesave itself is treated as a self-buff for channelization
+               purposes; all the messages about the consequences are neutral */
+            enum msg_channel msgc =
+                mtmp->mtame ? msgc_petneutral : msgc_monneutral;
+            pline(combat_msgc(mtmp, NULL, cr_hit),
+                  "But wait...  %s medallion begins to glow!",
+                  s_suffix(Monnam(mtmp)));
             makeknown(AMULET_OF_LIFE_SAVING);
             if (attacktype(mtmp->data, AT_EXPL)
                 || attacktype(mtmp->data, AT_BOOM))
-                pline("%s reconstitutes!", Monnam(mtmp));
+                pline_implied(msgc, "%s reconstitutes!", Monnam(mtmp));
             else if (canseemon(mtmp))
-                pline("%s looks much better!", Monnam(mtmp));
+                pline_implied(msgc, "%s looks much better!", Monnam(mtmp));
             else
-                pline("%s seems much better!", Monnam(mtmp));
-            pline("The medallion crumbles to dust!");
+                pline_implied(msgc, "%s seems much better!", Monnam(mtmp));
+            pline_implied(msgc, "The medallion crumbles to dust!");
         }
         m_useup(mtmp, lifesave);
         mtmp->mcanmove = 1;
@@ -1902,7 +1928,8 @@ lifesaved_monster(struct monst *mtmp)
         mtmp->mhp = mtmp->mhpmax;
         if (mvitals[monsndx(mtmp->data)].mvflags & G_GENOD) {
             if (cansee(mtmp->mx, mtmp->my))
-                pline("Unfortunately %s is still genocided...", mon_nam(mtmp));
+                pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                      "Unfortunately %s is still genocided...", mon_nam(mtmp));
         } else {
             mtmp->deadmonster = 0; /* paranoia */
             return;
@@ -2005,7 +2032,8 @@ corpse_chance(struct monst *mon,
 
     if (mdat == &mons[PM_VLAD_THE_IMPALER] || mdat->mlet == S_LICH) {
         if (cansee(mon->mx, mon->my) && !was_swallowed)
-            pline("%s body crumbles into dust.", s_suffix(Monnam(mon)));
+            pline_implied(msgc_monneutral, "%s body crumbles into dust.",
+                          s_suffix(Monnam(mon)));
         return FALSE;
     }
 
@@ -2020,21 +2048,24 @@ corpse_chance(struct monst *mon,
                 tmp = 0;
             if (was_swallowed && magr) {
                 if (magr == &youmonst) {
-                    pline("There is an explosion in your %s!",
+                    pline(combat_msgc(mon, magr, cr_hit),
+                          "There is an explosion in your %s!",
                           body_part(STOMACH));
                     if (Half_physical_damage)
                         tmp = (tmp + 1) / 2;
                     losehp(tmp, msgprintf("%s explosion", s_suffix(mdat->mname)));
                 } else {
-                    You_hear("an explosion.");
+                    You_hear(msgc_levelsound, "an explosion.");
                     magr->mhp -= tmp;
                     if (magr->mhp <= 0)
                         mondied(magr);
                     if (DEADMONSTER(magr)) {        /* i.e. not lifesaved */
                         if (canseemon(magr))
-                            pline("%s rips open!", Monnam(magr));
+                            pline(combat_msgc(mon, magr, cr_kill),
+                                  "%s rips open!", Monnam(magr));
                     } else if (canseemon(magr))
-                        pline("%s seems to have indigestion.", Monnam(magr));
+                        pline(combat_msgc(mon, magr, cr_hit),
+                              "%s seems to have indigestion.", Monnam(magr));
                 }
 
                 return FALSE;
@@ -2108,7 +2139,7 @@ mongone(struct monst *mdef)
 }
 
 void
-mstiffen(struct monst *mon)
+mstiffen(struct monst *mon, struct monst *magr)
 {
     if (resists_ston(mon))
         return;
@@ -2118,6 +2149,8 @@ mstiffen(struct monst *mon)
     }
 
     set_property(mon, STONED, 5, FALSE);
+    if (magr == &youmonst)
+        mon->ustoned = 1;
 }
 
 /* drop a statue or rock and remove monster */
@@ -2194,36 +2227,57 @@ monstone(struct monst *mdef)
     mondead(mdef);
     if (wasinside) {
         if (is_animal(mdef->data))
-            pline("You %s through an opening in the new %s.",
+            pline(msgc_nonmongood, "You %s through an opening in the new %s.",
                   locomotion(youmonst.data, "jump"), xname(otmp));
     }
 }
 
-/* another monster has killed the monster mdef */
+/* The monster magr has killed the monster mdef (with a fltxt, if that's set;
+   it can be "" for no implement, or NULL to hide the message altogether).
+
+   Occasionally (for backwards compatibility) magr might be unknown, in which
+   case you can pass NULL. (Please try to avoid this case if you can; we hope
+   to get rid of it eventually.) In some cases, magr might not exist (e.g.
+   because the monster is killed by a trap that generated along with the level),
+   or might have died since starting a delayed-action attack that kills another
+   monster; NULL is fine in those cases too, and will continue to be so.
+
+   Handles: messages; corpses; dropping inventory; flagging the monster as dead
+   Does not (yet) handle: experience; mdef as the player
+   Does not happen: deathdrops of new items (those are for player kills only) */
 void
-monkilled(struct monst *mdef, const char *fltxt, int how)
+monkilled(struct monst *magr, struct monst *mdef, const char *fltxt, int how)
 {
     boolean be_sad = FALSE;     /* true if unseen pet is killed */
-
-    /* canseemon() normally returns false for a monster that's already died;
-       because this monster is in the process of dying, temporarily mark it as
-       alive */
+    /* number to pass to xkilled(). TODO: merge with this function.
+       xkill numbers for reference: bit 1 is message,
+       bit 2 is for corpse leaving */
+    int xkill = 0;
 
     if (fltxt && canseemon(mdef))
-        pline("%s is %s%s%s!", Monnam(mdef),
+        /* no xkill |= 1, that gives redundant messages */
+        pline(magr ? combat_msgc(magr, mdef, cr_kill) : msgc_monneutral,
+              "%s is %s%s%s!", Monnam(mdef),
               nonliving(mdef->data) ? "destroyed" : "killed",
               *fltxt ? " by the " : "", fltxt);
     else
-        be_sad = (mdef->mtame != 0);
+        be_sad = !!mdef->mtame;
 
     /* no corpses if digested or disintegrated */
     if (how == AD_DGST || how == -AD_RBRE)
+        xkill |= 2;
+
+    if (magr == &youmonst)
+        xkilled(mdef, xkill);
+
+    if (xkill & 2)
         mondead(mdef);
     else
         mondied(mdef);
 
     if (be_sad && DEADMONSTER(mdef))
-        pline("You have a sad feeling for a moment, then it passes.");
+        pline(msgc_petfatal,
+              "You have a sad feeling for a moment, then it passes.");
 }
 
 void
@@ -2278,14 +2332,19 @@ xkilled(struct monst *mtmp, int dest)
         const char *verb = nonliving(mtmp->data) ? "destroy" : "kill";
 
         if (!wasinside && mtmp != u.usteed && !canclassifymon(mtmp))
-            pline("You %s it!", verb);
-        else {
-            pline("You %s %s!", verb,
-                  !mtmp->mtame ? mon_nam(mtmp) :
-                  x_monnam(mtmp, mtmp-> mnamelth ? ARTICLE_NONE :
-                           ARTICLE_THE, "poor", mtmp-> mnamelth ?
-                           SUPPRESS_SADDLE : 0, FALSE));
-        }
+            pline(msgc_kill, "You %s it!", verb);
+        else if (mtmp->mtame)
+            /* TODO: If the character can't hear for some reason, and the player
+               is turning off spammy messages, they'll get neither this
+               petwarning nor the subsequent petfatal. It's unclear how to fix
+               this without adding a special case (for canclassifymon but unable
+               to hear). */
+            pline_implied(msgc_petwarning, "You %s %s!", verb,
+                          x_monnam(mtmp, mtmp->mnamelth ? ARTICLE_NONE :
+                                   ARTICLE_THE, "poor", mtmp->mnamelth ?
+                                   SUPPRESS_SADDLE : 0, FALSE));
+        else
+            pline(msgc_kill, "You %s %s!", verb, mon_nam(mtmp));
     }
 
     if (mtmp->mtrapped && (t = t_at(level, x, y)) != 0 &&
@@ -2314,7 +2373,7 @@ xkilled(struct monst *mtmp, int dest)
            visible lifesaving which always appears). */
         stoned = FALSE;
         if (!cansee(x, y))
-            pline("Maybe not...");
+            pline(msgc_substitute, "Maybe not...");
         return;
     }
 
@@ -2379,7 +2438,7 @@ cleanup:
         u.ualign.type != A_CHAOTIC) {
         set_property(&youmonst, TELEPAT, -1, TRUE);
         change_luck(-2);
-        pline("You murderer!");
+        pline(msgc_alignbad, "You murderer!");
         if (Blind && !Blind_telepat)
             see_monsters(FALSE);     /* Can't sense monsters any more. */
     }
@@ -2387,7 +2446,7 @@ cleanup:
         change_luck(-1);
     if (is_unicorn(mdat) && sgn(u.ualign.type) == sgn(mdat->maligntyp)) {
         change_luck(-5);
-        pline("You feel guilty...");
+        pline(msgc_alignbad, "You feel guilty...");
     }
 
     /* give experience points */
@@ -2398,16 +2457,18 @@ cleanup:
     /* adjust alignment points */
     if (mtmp->m_id == u.quest_status.leader_m_id) {       /* REAL BAD! */
         adjalign(-(u.ualign.record + (int)ALIGNLIM / 2));
-        pline("That was %sa bad idea...",
+        /* Technically just a msgc_alignbad, but bad enough that we want to use
+           a higher-priority channel */
+        pline(msgc_intrloss, "That was %sa bad idea...",
               u.uevent.qcompleted ? "probably " : "");
     } else if (mdat->msound == MS_NEMESIS)      /* Real good! */
         adjalign((int)(ALIGNLIM / 4));
     else if (mdat->msound == MS_GUARDIAN) {     /* Bad */
         adjalign(-(int)(ALIGNLIM / 8));
         if (!Hallucination)
-            pline("That was probably a bad idea...");
+            pline(msgc_alignbad, "That was probably a bad idea...");
         else
-            pline("Whoopsie-daisy!");
+            pline(msgc_alignbad, "Whoopsie-daisy!");
     } else if (mtmp->ispriest) {
         adjalign((p_coaligned(mtmp)) ? -2 : 2);
         /* cancel divine protection for killing your priest */
@@ -2419,9 +2480,9 @@ cleanup:
         adjalign(-15);  /* bad!! */
         /* your god is mighty displeased... */
         if (!Hallucination)
-            You_hear("the rumble of distant thunder...");
+            You_hear(msgc_petfatal, "the rumble of distant thunder...");
         else
-            You_hear("the studio audience applaud!");
+            You_hear(msgc_petfatal, "the studio audience applaud!");
     } else if (mtmp->mpeaceful)
         adjalign(-5);
 
@@ -2437,13 +2498,15 @@ mon_to_stone(struct monst *mtmp)
     if (mtmp->data->mlet == S_GOLEM) {
         /* it's a golem, and not a stone golem */
         if (canseemon(mtmp))
-            pline("%s solidifies...", Monnam(mtmp));
+            pline(mtmp->mtame ? msgc_petneutral : msgc_monneutral,
+                  "%s solidifies...", Monnam(mtmp));
         if (newcham(mtmp, &mons[PM_STONE_GOLEM], FALSE, FALSE)) {
             if (canseemon(mtmp))
-                pline("Now it's %s.", an(mtmp->data->mname));
+                pline_implied(mtmp->mtame ? msgc_petneutral : msgc_monneutral,
+                              "Now it's %s.", an(mtmp->data->mname));
         } else {
             if (canseemon(mtmp))
-                pline("... and returns to normal.");
+                pline(msgc_noconsequence, "... and returns to normal.");
         }
     } else
         impossible("Can't polystone %s!", a_monnam(mtmp));
@@ -2658,39 +2721,25 @@ static const char *const poiseff[] = {
     " feel very sick", " break out in hives"
 };
 
+/* Print an alternative message for losing ability to poison; this assumes that
+   the normal ability-loss message will be suppressed. */
 void
 poisontell(int typ)
 {
-    pline("You%s.", poiseff[typ]);
+    pline_implied(msgc_intrloss, "You%s.", poiseff[typ]);
 }
 
-/* Cause should be a string suitable for passing to killer_msg,
- * because the actual death mechanism may vary. It should have
- * an article if appropriate.
- */
+/* Cause should be a string suitable for passing to killer_msg, because the
+   actual death mechanism may vary. It should have an article if appropriate. */
 void
 poisoned(const char *string, int typ, const char *killer, int fatal)
 {
     int i, plural;
     boolean thrown_weapon = (fatal < 0);
+    boolean resist_message_printed = FALSE;
 
     if (thrown_weapon)
         fatal = -fatal;
-    if (strcmp(string, "blast") && !thrown_weapon) {
-        /* 'blast' has already given a 'poison gas' message */
-        /* so have "poison arrow", "poison dart", etc... */
-        plural = (string[strlen(string) - 1] == 's') ? 1 : 0;
-        /* avoid "The" Orcus's sting was poisoned... */
-        pline("%s%s %s poisoned!", isupper(*string) ? "" : "The ", string,
-              plural ? "were" : "was");
-    }
-
-    if (Poison_resistance) {
-        if (!strcmp(string, "blast"))
-            shieldeff(u.ux, u.uy);
-        pline("The poison doesn't seem to affect you.");
-        return;
-    }
 
     fatal += 20 * thrown_weapon;
     enum rng rng;
@@ -2705,14 +2754,36 @@ poisoned(const char *string, int typ, const char *killer, int fatal)
         break;
     }
 
-    i = rn2_on_rng(fatal, rng);
+    i = Poison_resistance ? 0 : rn2_on_rng(fatal, rng);
+
+    if (strcmp(string, "blast") && !thrown_weapon) {
+        /* 'blast' has already given a 'poison gas' message */
+        /* so have "poison arrow", "poison dart", etc... */
+        plural = (string[strlen(string) - 1] == 's') ? 1 : 0;
+        /* avoid "The" Orcus's sting was poisoned... */
+        pline(Poison_resistance ? msgc_playerimmune :
+              i == 0 ? msgc_fatal_predone : msgc_fatalavoid,
+              "%s%s %s poisoned%s", isupper(*string) ? "" : "The ",
+              string, plural ? "were" : "was", Poison_resistance ?
+              ", but doesn't affect you." : "!");
+        resist_message_printed = TRUE;
+    }
+
+    if (Poison_resistance) {
+        if (!strcmp(string, "blast"))
+            shieldeff(u.ux, u.uy);
+        if (!resist_message_printed)
+            pline(msgc_playerimmune, "You aren't poisoned.");
+        return;
+    }
+
     if (i == 0 && typ != A_CHA) {
-        pline("The poison was deadly...");
+        pline(msgc_fatal_predone, "The poison was deadly...");
         done(POISONING, killer);
     } else if (i <= 5) {
         /* Check that a stat change was made */
         if (adjattrib(typ, thrown_weapon ? -1 : -rn1(3, 3), 1))
-            pline("You%s!", poiseff[typ]);
+            pline(msgc_intrloss, "You%s!", poiseff[typ]);
     } else {
         i = thrown_weapon ? rnd(6) : rn1(10, 6);
         if (Half_physical_damage)
@@ -2734,7 +2805,7 @@ m_respond(struct monst *mtmp)
 {
     if (mtmp->data->msound == MS_SHRIEK) {
         if (canhear()) {
-            pline("%s shrieks.", Monnam(mtmp));
+            pline(msgc_levelsound, "%s shrieks.", Monnam(mtmp));
             action_interrupted();
         }
         if (!rn2(10)) {
@@ -2809,7 +2880,8 @@ setmangry(struct monst *mtmp)
 
     if (couldsee(mtmp->mx, mtmp->my)) {
         if (humanoid(mtmp->data) || mtmp->isshk || mtmp->isgd)
-            pline("%s gets angry!", Monnam(mtmp));
+            pline(always_peaceful(mtmp->data) ? msgc_npcanger :
+                  msgc_alignbad, "%s gets angry!", Monnam(mtmp));
         else if (flags.verbose)
             growl(mtmp);
     }
@@ -2829,7 +2901,8 @@ setmangry(struct monst *mtmp)
                     ++got_mad;
             }
         if (got_mad && !Hallucination)
-            pline("The %s appear%s to be angry too...", got_mad == 1 ?
+            pline(msgc_npcanger, "The %s appear%s to be angry too...",
+                  got_mad == 1 ?
                   pm_guardian.mname : makeplural(pm_guardian.mname),
                   got_mad == 1 ? "s" : "");
     }
@@ -3083,12 +3156,13 @@ select_newcham_form(struct monst *mon)
             buf = getlin(pprompt, FALSE);
             mndx = name_to_mon(buf);
             if (mndx < LOW_PM)
-                pline("You cannot polymorph %s into that.", mon_nam(mon));
+                pline(msgc_hint, "You cannot polymorph %s into that.",
+                      mon_nam(mon));
             else
                 break;
         } while (++tries < 5);
         if (tries == 5)
-            pline("That's enough tries!");
+            pline(msgc_yafm, "That's enough tries!");
     }
 
     if (mndx == NON_PM)
@@ -3219,8 +3293,8 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
                 /* Does mdat care? */
                 if (!noncorporeal(mdat) && !amorphous(mdat) && !is_whirly(mdat)
                     && (mdat != &mons[PM_YELLOW_LIGHT])) {
-                    pline("You break out of %s%s!", mon_nam(mtmp),
-                          (is_animal(mdat) ? "'s stomach" : ""));
+                    pline(msgc_consequence, "You break out of %s%s!",
+                          mon_nam(mtmp), (is_animal(mdat) ? "'s stomach" : ""));
                     mtmp->mhp = 1;      /* almost dead */
                 }
                 expels(mtmp, olddata, FALSE);
@@ -3247,7 +3321,8 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
         uchar save_mnamelth = mtmp->mnamelth;
 
         mtmp->mnamelth = 0;
-        pline("%s turns into %s!", oldname,
+        pline(mtmp->mtame ? msgc_petneutral : msgc_monneutral,
+              "%s turns into %s!", oldname,
               mdat == &mons[PM_GREEN_SLIME] ? "slime" :
               x_monnam(mtmp, ARTICLE_A, NULL, SUPPRESS_SADDLE, FALSE));
         mtmp->mnamelth = save_mnamelth;
@@ -3255,8 +3330,10 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
 
     possibly_unwield(mtmp, polyspot);   /* might lose use of weapon */
     mon_break_armor(mtmp, polyspot);
+    /* TODO: the use of mtmp here is a guess. */
     if (!(mtmp->misc_worn_check & W_MASK(os_armg)))
-        mselftouch(mtmp, "No longer petrify-resistant, ", !flags.mon_moving);
+        mselftouch(mtmp, "No longer petrify-resistant, ",
+                   flags.mon_moving ? mtmp : &youmonst);
     m_dowear(mtmp, FALSE);
 
     /* This ought to re-test can_carry() on each item in the inventory rather
@@ -3435,13 +3512,15 @@ golemeffects(struct monst *mon, int damtype, int dam)
     if (heal) {
         if (you && u.mh < u.mhmax) {
             healup(heal, 0, FALSE, FALSE);
-            pline("Strangely, you feel better than before.");
+            pline(msgc_statusheal,
+                  "Strangely, you feel better than before.");
         } else if (!you && mon->mhp < mon->mhpmax) {
             mon->mhp += heal;
             if (mon->mhp > mon->mhpmax)
                 mon->mhp = mon->mhpmax;
             if (cansee(mon->mx, mon->my))
-                pline("%s seems healthier.", Monnam(mon));
+                pline(combat_msgc(mon, NULL, cr_hit),
+                      "%s seems healthier.", Monnam(mon));
         }
     }
 }
@@ -3475,17 +3554,21 @@ angry_guards(boolean silent)
     if (ct) {
         if (!silent) {  /* do we want pline msgs? */
             if (slct)
-                pline("The guard%s wake%s up!", slct > 1 ? "s" : "",
+                pline(msgc_levelsound,
+                      "The guard%s wake%s up!", slct > 1 ? "s" : "",
                       slct == 1 ? "s" : "");
             if (nct || sct) {
                 if (nct)
-                    pline("The guard%s get%s angry!", nct == 1 ? "" : "s",
+                    pline(msgc_npcanger,
+                          "The guard%s get%s angry!", nct == 1 ? "" : "s",
                           nct == 1 ? "s" : "");
                 else if (!Blind)
-                    pline("You see %sangry guard%s approaching!",
+                    pline(msgc_npcanger,
+                          "You see %sangry guard%s approaching!",
                           sct == 1 ? "an " : "", sct > 1 ? "s" : "");
             } else
-                You_hear("the shrill sound of a guard's whistle.");
+                You_hear(msgc_npcanger,
+                         "the shrill sound of a guard's whistle.");
         }
         return TRUE;
     }
@@ -3518,7 +3601,7 @@ mimic_hit_msg(struct monst *mtmp, short otyp)
         break;
     case M_AP_OBJECT:
         if (otyp == SPE_HEALING || otyp == SPE_EXTRA_HEALING) {
-            pline("%s seems a more vivid %s than before.",
+            pline(msgc_monneutral, "%s seems a more vivid %s than before.",
                   The(simple_typename(ap)), c_obj_colors[objects[ap].oc_color]);
         }
         break;

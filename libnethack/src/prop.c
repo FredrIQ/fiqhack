@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -687,21 +687,25 @@ mon_remove_levitation(struct monst *mon, boolean forced)
         /* at this point, only polyform levitation is left */
         if (forced) {
             if (cansee(mon->mx, mon->my))
-                pline("%s wobbles unsteadily for a moment.", Monnam(mon));
+                pline(msgc_monneutral,
+                      "%s wobbles unsteadily for a moment.", Monnam(mon));
         }
         return dropped ? 1 : 0;
     }
     
     if (lev_source) {
         if (cansee(mon->mx, mon->my))
-            pline("%s crashes to the floor!", Monnam(mon));
+            pline(mon->mtame ? msgc_petwarning : msgc_monneutral,
+                  "%s crashes to the floor!", Monnam(mon));
 
         mon->mhp -= rn1(8, 14); /* same as for player with 11 Con */
         if (mon->mhp <= 0) {
             if (cansee(mon->mx, mon->my))
-                pline("%s dies!", Monnam(mon));
+                pline(mon->mtame ? msgc_petfatal : msgc_monneutral,
+                      "%s dies!", Monnam(mon));
             else if (mon->mtame)
-                pline("You have a sad feeling for a moment, then it passes.");
+                pline(msgc_petfatal,
+                      "You have a sad feeling for a moment, then it passes.");
             mondied(mon);
         }
     }
@@ -722,7 +726,8 @@ gremlin_curse(struct monst *mon)
         }
     }
     if (mon == &youmonst || canseemon(mon))
-        pline("But nothing happens.");
+        pline(combat_msgc(NULL, mon, cr_miss),
+              "But nothing happens.");
     return;
 }
 
@@ -736,7 +741,7 @@ gremlin_curse(struct monst *mon)
    to handle the work related to the property itself.
    Note that "set a timeout" literally sets whatever you specify.
    If you want to increase the timeout (potentially from 0),
-   use inc_property(). */
+   use inc_timeout(). */
 boolean
 set_property(struct monst *mon, enum youprop prop,
              int type, boolean forced)
@@ -906,6 +911,7 @@ update_property(struct monst *mon, enum youprop prop,
     boolean effect = FALSE;
     int timer = property_timeout(mon, prop);
     struct obj *weapon;
+    enum msg_channel msgc = msgc_monneutral;
 
     /* Messages when properties are acquired/lost */
     if (mon == &youmonst &&
@@ -917,10 +923,11 @@ update_property(struct monst *mon, enum youprop prop,
                 if (msg->prop == prop) {
                     /* the XL-based properties always use "You feel ...!" */
                     if (slot != os_outside)
-                        pline("You feel %s!",
+                        pline(lost ? msgc_intrloss : msgc_intrgain,
+                              "You feel %s!",
                               lost ? msg->losepm : msg->gainpm);
                     else
-                        pline("%s",
+                        pline(lost ? msgc_intrloss : msgc_intrgain,
                               lost ? msg->loseoutside : msg->gainoutside);
                     effect = TRUE;
                     break;
@@ -931,10 +938,10 @@ update_property(struct monst *mon, enum youprop prop,
             for (msg = prop_msg; msg->prop != NO_PROP; msg++) {
                 if (msg->prop == prop) {
                     if (slot != os_outside)
-                        pline("You feel %s!",
+                        pline(lost ? msgc_intrloss : msgc_intrgain, "You feel %s!",
                               lost ? msg->losepm : msg->gainpm);
                     else
-                        pline("%s",
+                        pline(msgc_intrloss,
                               lost ? msg->loseoutside : msg->gainoutside);
                     effect = TRUE;
                     break;
@@ -966,7 +973,7 @@ update_property(struct monst *mon, enum youprop prop,
             touch_petrifies(&mons[weapon->corpsenm])) {
             if (!you)
                 mselftouch(mon, "No longer petrify-resistant, ",
-                           !flags.mon_moving);
+                           !flags.mon_moving ? &youmonst : NULL);
             else {
                 const char *kbuf;
                 kbuf = msgprintf("losing stone resistance while wielding %s",
@@ -995,7 +1002,8 @@ update_property(struct monst *mon, enum youprop prop,
             see_monsters(FALSE);        /* see invisible monsters */
             newsym(u.ux, u.uy);         /* see yourself! */
             if (!redundant && invisible(mon)) {
-                pline(lost ? "Your body seems to fade out." :
+                pline(lost ? msgc_intrloss : msgc_intrgain,
+                      lost ? "Your body seems to fade out." :
                       "You can see yourself, but remain transparent.");
                 effect = TRUE;
             }
@@ -1005,9 +1013,10 @@ update_property(struct monst *mon, enum youprop prop,
         if (you) {
             if (!redundant) {
                 if (lost)
-                    pline("Your body seems to unfade...");
+                    pline(msgc_statusend,
+                          "Your body seems to unfade...");
                 else
-                    pline("%s %s.",
+                    pline(msgc_statusgood, "%s %s.",
                           hallu ? "Far out, man!  You" :
                           "Gee!  All of a sudden, you",
                           see_invisible(&youmonst) ?
@@ -1018,12 +1027,14 @@ update_property(struct monst *mon, enum youprop prop,
             newsym(u.ux, u.uy);
         } else if (!redundant && vis_invis) {
             if (see_invisible(&youmonst)) {
-                pline(lost ? "%s body seems to unfade..." :
+                pline(msgc_monneutral,
+                      lost ? "%s body seems to unfade..." :
                       "%s body turns transparent!",
                       s_suffix(Monnam(mon)));
             } else {
                 /* call x_monnam directly to get rid of "The invisible ..." */
-                pline(lost ? "%s appears!" :
+                pline(msgc_monneutral,
+                      lost ? "%s appears!" :
                       (msensem(&youmonst, mon) & MSENSE_ANYDETECT) ?
                       "%s disappears, but you can still sense it." :
                       "%s suddenly disappears!",
@@ -1067,10 +1078,12 @@ update_property(struct monst *mon, enum youprop prop,
         if (slot == os_armf && !redundant &&
             !levitates(mon) && !flying(mon)) {
             if (you)
-                pline(lost ? "You sure are noisy." :
+                pline(lost ? msgc_intrloss : msgc_intrgain,
+                      lost ? "You sure are noisy." :
                       "You walk very quietly");
             else if (vis)
-                pline(lost ? "%s sure is noisy." :
+                pline(msgc_monneutral,
+                      lost ? "%s sure is noisy." :
                       "%s walks very quietly.",
                       Monnam(mon));
             effect = TRUE;
@@ -1086,18 +1099,21 @@ update_property(struct monst *mon, enum youprop prop,
         /* Monsters should not be causing conflict. Just
            in case it happens anyway, alert the player. */
         if (!you) {
-            pline(lost ? "You feel as if a conflict disappeared." :
+            pline(msgc_levelwarning,
+                  lost ? "You feel as if a conflict disappeared." :
                   "You feel as if someone is causing conflict.");
             effect = TRUE;
         }
         break;
     case PROTECTION:
         if (you && slot == os_armc && !lost) {
-            pline("Your cloak feels unusually protective.");
+            pline(msgc_intrgain,
+                  "Your cloak feels unusually protective.");
             effect = TRUE;
         } else if (slot == os_dectimeout && !(timer % 10) &&
                    (you || vis)) {
-            pline("The %s haze around %s %s.", hcolor("golden"),
+            pline(you ? msgc_statusend : msgc_monneutral,
+                  "The %s haze around %s %s.", hcolor("golden"),
                   you ? "you" : mon_nam(mon),
                   m_mspellprot(mon) ? "becomes less dense" : "disappears");
             effect = TRUE;
@@ -1118,7 +1134,7 @@ update_property(struct monst *mon, enum youprop prop,
         /* only give the "new energy" message if the monster has redundant speed */
         if (redundant_intrinsic) {
             if (slot == os_inctimeout && you) {
-                pline("Your %s get new energy.",
+                pline(msgc_hint, "Your %s get new energy.",
                       makeplural(body_part(LEG)));
                 effect = TRUE;
             }
@@ -1130,7 +1146,9 @@ update_property(struct monst *mon, enum youprop prop,
         /* speed boots */
         if (slot == os_armf) {
             if (you || vis) {
-                pline("%s %s %s%s.",
+                pline(!you ? msgc_monneutral :
+                      lost ? msgc_statusend :
+                      msgc_statusgood, "%s %s %s%s.",
                       you ? "You" : Monnam(mon),
                       you ? "feel yourself" : "seems to",
                       lost ? "slow down" : "speed up",
@@ -1145,16 +1163,16 @@ update_property(struct monst *mon, enum youprop prop,
         if (lost) {
             if (slot == os_outside && redundant) {
                 if (you) {
-                    pline("Your quickness feels less natural.");
+                    pline(msgc_intrloss,
+                          "Your quickness feels less natural.");
                     effect = TRUE;
                 }
                 break;
             }
 
             if (you || vis) {
-                pline("%s slow%s down%s.",
-                      you ? "You" : Monnam(mon),
-                      you ? "" : "s",
+                pline(you ? msgc_intrloss : msgc_monneutral,
+                      "%s down%s.", M_verbs(mon, "slow"),
                       redundant && (W_MASK(real_slot) & ~INTRINSIC) ? " slightly" : "");
                 effect = TRUE;
             }
@@ -1164,12 +1182,10 @@ update_property(struct monst *mon, enum youprop prop,
         /* intrinsic acquirement */
         if (slot == os_outside) {
             if (!redundant && (you || vis)) {
-                pline("%s speed%s up.",
-                      you ? "You" : Monnam(mon),
-                      you ? "" : "s");
+                pline(msgc_intrgain, "%s up.", M_verbs(mon, "speed"));
                 effect = TRUE;
             } else if (you) {
-                pline("Your quickness feels more natural.");
+                pline(msgc_intrgain, "Your quickness feels more natural.");
                 effect = TRUE;
             }
             break;
@@ -1178,7 +1194,8 @@ update_property(struct monst *mon, enum youprop prop,
         if (real_slot & ~INTRINSIC) {
             if (slot != os_inctimeout && !redundant_intrinsic) {
                 if (you || vis) {
-                    pline("%s %s moving %sfaster.",
+                    pline(you ? msgc_statusgood : msgc_monneutral,
+                          "%s %s moving %sfaster.",
                           you ? "You" : Monnam(mon),
                           you ? "are suddenly" : "seems to be",
                           redundant ? "" : "much ");
@@ -1192,21 +1209,25 @@ update_property(struct monst *mon, enum youprop prop,
             if (redundant) {
                 if (slot == os_inctimeout) {
                     if (you)
-                        pline(hallu ? "You feel like wobbling some more." :
+                        pline(msgc_statusbad,
+                              hallu ? "You feel like wobbling some more." :
                               "You struggle to keep your balance.");
                     else
-                        pline("%s struggles to keep %s balance.",
+                        pline(msgc_monneutral,
+                              "%s struggles to keep %s balance.",
                               Monnam(mon), mhis(mon));
                     effect = TRUE;
                 }
             } else {
                 if (lost)
-                    pline("%s %s %s now.",
+                    pline(you ? msgc_statusheal : msgc_monneutral,
+                          "%s %s %s now.",
                           you ? "You" : Monnam(mon),
                           you ? "feel" : "looks",
                           you && hallu ? "less wobbly" : "a bit steadier");
                 else
-                    pline("%s %s%s...",
+                    pline(you ? msgc_statusbad : msgc_monneutral,
+                          "%s %s%s...",
                           you ? "You" : Monnam(mon),
                           you && hallu ? "wobble" : stagger(mon->data, "stagger"),
                           you ? "" : "s");
@@ -1217,31 +1238,37 @@ update_property(struct monst *mon, enum youprop prop,
     case CONFUSION:
         if (you) {
             if (lost && !redundant) {
-                pline(hallu ? "You feel less trippy." :
+                pline(msgc_statusheal, hallu ? "You feel less trippy." :
                       "You are no longer confused.");
                 effect = TRUE;
             } else if (redundant) {
                 if (slot == os_inctimeout) {
-                    pline("You are even more %s",
+                    pline(msgc_statusbad, "You are even more %s",
                           hallu ? "trippy!" : "confused...");
                     effect = TRUE;
                 }
             } else {
-                pline(hallu ? "What a trippy feeling!" :
+                pline(msgc_statusbad, hallu ? "What a trippy feeling!" :
                       "Huh, What?  Where am I?");
                 effect = TRUE;
             }
         } else if (vis && (!redundant || slot == os_inctimeout)) {
-            pline(redundant ? "%s looks even more confused..." :
+            pline(redundant ? msgc_actionok :
+                  msgc_monneutral,
+                  redundant ? "%s looks even more confused..." :
                   lost ? "%s looks less confused now." :
                   "%s looks rather confused.", Monnam(mon));
             effect = TRUE;
         }
         break;
     case SICK:
+        if (you)
+            msgc = (timer ? msgc_fatal : msgc_fatal_predone);
+        else if (mon->mtame)
+            msgc = msgc_petfatal;
         if (lost && slot == os_dectimeout) {
             if (you || vis) {
-                pline("%s die%s from %s illness.",
+                pline(msgc, "%s die%s from %s illness.",
                       you ? "You" : Monnam(mon),
                       you ? "" : "s",
                       you ? "your" : mhis(mon));
@@ -1249,21 +1276,23 @@ update_property(struct monst *mon, enum youprop prop,
             }
             if (you)
                 done(POISONING, delayed_killer(POISONING));
-            else if (mon->usicked)
-                killed(mon);
-            else
-                monkilled(mon, "", AD_DISE);
-            mon->usicked = 0; /* in case monster lifesaved */
+            else {
+                monkilled(mon, mon->usicked ? &youmonst : NULL,
+                          "", AD_DISE);
+                mon->usicked = 0; /* in case monster lifesaved */
+            }
             break;
         }
 
         if (you) {
-            pline(redundant ? "You feel much worse." :
+            pline(msgc,
+                  redundant ? "You feel much worse." :
                   lost ? "What a relief!" :
                   "You feel deathly sick.");
             effect = TRUE;
         } else if (vis) {
-            pline(redundant ? "%s looks much worse." :
+            pline(msgc,
+                  redundant ? "%s looks much worse." :
                   lost ? "%s looks relieved." :
                   "%s looks deathly sick.",
                   Monnam(mon));
@@ -1281,13 +1310,16 @@ update_property(struct monst *mon, enum youprop prop,
         if (slot == os_tool) {
             if (you) {
                 if (lost && blocked) {
-                    pline("You can see!");
+                    pline(msgc_statusheal, "You can see!");
                     effect = TRUE;
                 } else if (!lost && !redundant) {
-                    pline("You can't see any more.");
+                    pline(msgc_statusbad,
+                          "You can't see any more.");
                     effect = TRUE;
                 } else if (lost) {
-                    pline(redundant ? "You still can't see..." :
+                    pline(redundant ? msgc_yafm :
+                          msgc_statusheal,
+                          redundant ? "You still can't see..." :
                           "You can see again.");
                     effect = TRUE;
                 }
@@ -1295,14 +1327,16 @@ update_property(struct monst *mon, enum youprop prop,
         } else if (you || vis) {
             if (blocked) {
                 if (you) {
-                    pline("Your vision seems to %s for a moment but is %s now",
+                    pline(msgc_playerimmune,
+                          "Your vision seems to %s for a moment but is %s now",
                           lost ? "brighten" : "dim",
                           hallu ?
                           (lost ? "sadder" : "happier") :
                           "normal");
                     effect = TRUE;
                 } else if (!lost) {
-                    pline("%s is briefly blinded.", Monnam(mon));
+                    pline(combat_msgc(NULL, mon, cr_immune),
+                          "%s is briefly blinded.", Monnam(mon));
                     effect = TRUE;
                 }
             } else if (redundant) {
@@ -1314,12 +1348,13 @@ update_property(struct monst *mon, enum youprop prop,
                 }
             } else {
                 if (you)
-                    pline(lost && hallu ? "Far out!  A light show!" :
+                    pline(lost ? msgc_statusheal : msgc_statusbad,
+                          lost && hallu ? "Far out!  A light show!" :
                           lost ? "You can see again." :
                           hallu ? "Oh, bummer!  Everything is dark! Help!" :
                           "A cloud of darkness falls upon you.");
                 else
-                    pline("%s %s.", Monnam(mon),
+                    pline(msgc_monneutral, "%s %s.", Monnam(mon),
                           lost ? "can see again" : "is blinded");
                 effect = TRUE;
             }
@@ -1345,8 +1380,9 @@ update_property(struct monst *mon, enum youprop prop,
                 sleeptime = rnd(20);
             if (sleeptime) {
                 if (you || vis) {
-                    pline("%s fall%s asleep.", you ? "You" : Monnam(mon),
-                          you ? "" : "s");
+                    pline(you ? msgc_statusbad :
+                          mon->mtame ? msgc_petwarning :
+                          msgc_monneutral, "%s asleep.", M_verbs(mon, "fall"));
                     effect = TRUE;
                 }
                 sleep_monst(mon, sleeptime, 0);
@@ -1373,6 +1409,10 @@ update_property(struct monst *mon, enum youprop prop,
             heal_legs(mon, RIGHT_SIDE);
         break;
     case STONED:
+        if (you)
+            msgc = timer ? msgc_fatal : msgc_fatal_predone;
+        else if (mon->mtame)
+            msgc = msgc_petfatal;
         if (lost && slot != os_dectimeout) {
             /* Check for golem change first */
             if (blocked && poly_when_stoned(mon->data)) {
@@ -1388,11 +1428,13 @@ update_property(struct monst *mon, enum youprop prop,
             }
             if (you || vis) {
                 if (hallu)
-                    pline("What a pity - %s just ruined a piece of %sart!",
+                    pline(you ? msgc_fatalavoid : msgc_monneutral,
+                          "What a pity - %s just ruined a piece of %sart!",
                           you ? "you" : mon_nam(mon),
                           acurr(mon, A_CHA) > 15 ? "fine " : "");
                 else
-                    pline("%s %s more limber!",
+                    pline(you ? msgc_fatalavoid : msgc_monneutral,
+                          "%s %s more limber!",
                           you ? "You" : Monnam(mon),
                           you ? "feel" : "looks");
                 if (!you)
@@ -1404,23 +1446,19 @@ update_property(struct monst *mon, enum youprop prop,
         } else {
             if (you || vis) {
                 if (timer == 4)
-                    pline("%s %s slowing down.",
-                          you ? "You" : Monnam(mon),
-                          you ? "are" : "is");
+                    pline(msgc, "%s slowing down.",
+                          M_verbs(mon, "are"));
                 else if (timer == 3)
-                    pline("%s limbs are stiffening.",
+                    pline(msgc, "%s limbs are stiffening.",
                           you ? "Your" : s_suffix(Monnam(mon)));
                 else if (timer == 2)
-                    pline("%s limbs have turned to stone.",
+                    pline(msgc, "%s limbs have turned to stone.",
                           you ? "Your" : s_suffix(Monnam(mon)));
                 else if (timer == 1)
-                    pline("%s %s turned to stone.",
-                          you ? "You" : Monnam(mon),
-                          you ? "have" : "has");
+                    pline(msgc, "%s turned to stone.",
+                          M_verbs(mon, "are"));
                 else if (timer == 0)
-                    pline("%s %s a statue.",
-                          you ? "You" : Monnam(mon),
-                          you ? "are" : "is");
+                    pline(msgc, "%s a statue.", M_verbs(mon, "are"));
                 effect = TRUE;
             }
             /* remove intrinsic speed, even if mon re-acquired it */
@@ -1448,9 +1486,14 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case STRANGLED:
+        if (you)
+            msgc = timer ? msgc_fatal : msgc_fatal_predone;
+        else if (mon->mtame)
+            msgc = msgc_petfatal;
         if (lost && slot != os_dectimeout) {
             if (you || vis) { /* TODO: give a suitable message if unbreathing */
-                pline("%s can breathe more easily!",
+                pline(you ? msgc_fatalavoid : msgc_monneutral,
+                      "%s can breathe more easily!",
                       you ? "You" : Monnam(mon));
                 effect = TRUE;
             }
@@ -1461,7 +1504,7 @@ update_property(struct monst *mon, enum youprop prop,
 
         if (!lost && !redundant && slot != os_dectimeout) {
             if (you || vis)
-                pline("It constricts %s throat!",
+                pline(msgc, "It constricts %s throat!",
                       you ? "your" : s_suffix(mon_nam(mon)));
             set_property(&youmonst, STRANGLED, 5, TRUE);
         }
@@ -1471,7 +1514,7 @@ update_property(struct monst *mon, enum youprop prop,
 
         if (lost) {
             if (you || vis)
-                pline("%s suffocate%s.",
+                pline(msgc, "%s suffocate%s.",
                       you ? "You" : Monnam(mon),
                       you ? "" : "s");
             effect = TRUE;
@@ -1486,33 +1529,31 @@ update_property(struct monst *mon, enum youprop prop,
         if (you || vis) {
             if (unbreathing(mon) || !rn2(50)) {
                 if (timer == 4)
-                    pline("%s %s is becoming constricted.",
+                    pline(msgc, "%s %s is becoming constricted.",
                           you ? "Your" : s_suffix(Monnam(mon)),
                           mbodypart(mon, NECK));
                 else if (timer == 3)
-                    pline("%s blood is having trouble reaching %s brain.",
+                    pline(msgc, "%s blood is having trouble reaching %s brain.",
                           you ? "Your" : s_suffix(Monnam(mon)),
                           you ? "your" : s_suffix(mon_nam(mon)));
                 else if (timer == 2)
-                    pline("The pressure on %s %s increases.",
+                    pline(msgc, "The pressure on %s %s increases.",
                           you ? "your" : s_suffix(mon_nam(mon)),
                           mbodypart(mon, NECK));
                 else if (timer == 1)
-                    pline("%s consciousness is fading.",
+                    pline(msgc, "%s consciousness is fading.",
                           you ? "Your" : s_suffix(Monnam(mon)));
             } else {
                 if (timer == 4)
-                    pline("%s find%s it hard to breathe.",
-                          you ? "You" : Monnam(mon), you ? "" : "s");
+                    pline(msgc, "%s it hard to breathe.", M_verbs(mon, "find"));
                 else if (timer == 3)
-                    pline("%s %s gasping for air.",
-                          you ? "You" : Monnam(mon), you ? "are" : "is");
+                    pline(msgc, "%s gasping for air.", M_verbs(mon, "are"));
                 else if (timer == 2)
-                    pline("%s can no longer breathe.",
+                    pline(msgc, "%s can no longer breathe.",
                           you ? "You" : Monnam(mon));
                 else if (timer == 1)
-                    pline("%s %s turning %s.", you ? "You" : Monnam(mon),
-                          you ? "are" : "is", hcolor("blue"));
+                    pline(msgc, "%s turning %s.", M_verbs(mon, "are"),
+                          hcolor("blue"));
             }
             effect = TRUE;
         }
@@ -1520,14 +1561,17 @@ update_property(struct monst *mon, enum youprop prop,
     case HALLUC:
         if (you) {
             if (lost && blocked)
-                pline("Your vision seems to %s for a moment but is %s now",
+                pline(msgc_statusheal,
+                      "Your vision seems to %s for a moment but is %s now",
                       "flatten", "normal");
             else if (lost && blind(mon))
                 eyepline("itches", "itch");
             else if (lost)
-                pline("Everything looks SO boring now.");
+                pline(msgc_statusheal,
+                      "Everything looks SO boring now.");
             else if (!redundant)
-                pline("Oh wow!  Everything %s so cosmic!",
+                pline(msgc_statusbad,
+                      "Oh wow!  Everything %s so cosmic!",
                       blind(mon) ? "feels" : "looks");
             effect = TRUE;
             see_monsters(TRUE);
@@ -1578,7 +1622,8 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case JUMPING:
         if (you && slot == os_armf) {
-            pline("Your %s feel %s.", makeplural(body_part(LEG)),
+            pline(lost ? msgc_intrloss : msgc_intrgain,
+                  "Your %s feel %s.", makeplural(body_part(LEG)),
                   lost ? "shorter" : "longer");
             effect = TRUE;
         }
@@ -1595,7 +1640,7 @@ update_property(struct monst *mon, enum youprop prop,
         if (blocked) /* no message, just remove timers */
             set_property(mon, prop, -2, TRUE);
         else if (you && lost && !redundant) {
-            pline("Your %s feels less slippery",
+            pline(msgc_statusheal, "Your %s feels less slippery",
                   makeplural(body_part(FINGER)));
             effect = TRUE;
         }
@@ -1606,7 +1651,8 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case DISPLACED:
         if (you && !redundant) {
-            pline(lost ? "You stop shimmering" :
+            pline(lost ? msgc_intrloss : msgc_intrgain,
+                  lost ? "You stop shimmering" :
                   "Your outline shimmers and shifts");
             effect = TRUE;
         }
@@ -1628,9 +1674,12 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case VOMITING:
+        if (you)
+            msgc = msgc_statusbad;
         if (lost && slot != os_dectimeout) {
             if (you || vis) {
-                pline("%s %s much less nauseated now.",
+                pline(you ? msgc_statusheal : msgc_monneutral,
+                      "%s %s much less nauseated now.",
                       you ? "You" : Monnam(mon),
                       you ? "feel" : "looks");
                 effect = TRUE;
@@ -1638,19 +1687,23 @@ update_property(struct monst *mon, enum youprop prop,
         } else if (slot == os_dectimeout) {
             if (you || vis) {
                 if (timer == 14)
-                    pline("%s %s mildly nauseated.", you ? "You" : Monnam(mon),
+                    pline(msgc, "%s %s mildly nauseated.",
+                          you ? "You" : Monnam(mon),
                           you ? "are feeling" : "looks");
                 if (timer == 11)
-                    pline("%s %s slightly confused.", you ? "You" : Monnam(mon),
+                    pline(msgc, "%s %s slightly confused.",
+                          you ? "You" : Monnam(mon),
                           you ? "feel" : "looks");
                 if (timer == 8)
-                    pline("%s can't seem to think straight.",
+                    pline(msgc, "%s can't seem to think straight.",
                           you ? "You" : Monnam(mon));
                 if (timer == 5)
-                    pline("%s %s incredibly sick.", you ? "You" : Monnam(mon),
+                    pline(msgc, "%s %s incredibly sick.",
+                          you ? "You" : Monnam(mon),
                           you ? "feel" : "looks");
                 if (timer == 2)
-                    pline("%s suddenly vomit%s!", you ? "You" : Monnam(mon),
+                    pline(msgc, "%s suddenly vomit%s!",
+                          you ? "You" : Monnam(mon),
                           you ? "" : "s");
                 if ((timer % 3) == 2)
                     effect = TRUE;
@@ -1689,12 +1742,17 @@ update_property(struct monst *mon, enum youprop prop,
             spoteffects(TRUE);
         break;
     case SLIMED:
+        if (you)
+            msgc = timer ? msgc_fatal : msgc_fatal_predone;
+        else if (mon->mtame)
+            msgc = msgc_petfatal;
         if (lost && slot != os_dectimeout) {
             if (blocked) { /* lost by poly */
                 if (flaming(mon->data))
                     burn_away_slime(mon);
             } else if (you || vis) {
-                pline("The slime on %s disappears!",
+                pline(you ? msgc_fatalavoid : msgc_monneutral,
+                      "The slime on %s disappears!",
                       you ? "you" : mon_nam(mon));
                 effect = TRUE;
             }
@@ -1723,31 +1781,29 @@ update_property(struct monst *mon, enum youprop prop,
 
             if (you || vis) {
                 if (timer == 9)
-                    pline("%s %s %s very well.",
+                    pline(msgc, "%s %s %s very well.",
                           you ? "You" : Monnam(mon),
                           you ? "don't" : "doesn't",
                           you ? "feel" : "look");
                 else if (timer == 8)
-                    pline("%s %s turning a %s %s.",
+                    pline(msgc, "%s %s turning a %s %s.",
                           you ? "You" : Monnam(mon),
                           you ? "are" : "is",
                           is_green(mon) && !hallu ? "more vivid shade of" : "little",
                           hcolor("green"));
                 else if (timer == 6)
-                    pline("%s limbs are getting oozy.",
+                    pline(msgc, "%s limbs are getting oozy.",
                           you ? "Your" : s_suffix(Monnam(mon)));
                 else if (timer == 4)
-                    pline("%s skin begins to peel away.",
+                    pline(msgc, "%s skin begins to peel away.",
                           you ? "Your" : s_suffix(Monnam(mon)));
                 else if (timer == 2)
-                    pline("%s %s turning into %s.",
+                    pline(msgc, "%s %s turning into %s.",
                           you ? "You" : Monnam(mon),
                           you ? "are" : "is",
                           turninto);
                 else if (timer == 0)
-                    pline("%s %s become %s.",
-                          you ? "You" : Monnam(mon),
-                          you ? "have" : "has",
+                    pline(msgc, "%s become %s.", M_verbs(mon, "have"),
                           turninto);
                 effect = TRUE;
             }
@@ -1819,18 +1875,18 @@ update_property(struct monst *mon, enum youprop prop,
                     }
                 }
                 if (!found_monsters)
-                    pline("You feel lonely");
+                    pline(msgc_failcurse, "You feel lonely");
                 effect = TRUE; /* either lonely or detected stuff */
             }
         }
         break;
     case SLOW:
         if (you && !redundant) {
-            pline(lost ? "Your speed returns." :
+            pline(msgc_statusheal, lost ? "Your speed returns." :
                   "You feel abnormally slow.");
             effect = TRUE;
         } else if (vis && !redundant) {
-            pline(lost ? "%s speeds up." :
+            pline(msgc_monneutral, lost ? "%s speeds up." :
                   "%s slows down abnormally.",
                   Monnam(mon));
             effect = TRUE;
@@ -1888,13 +1944,14 @@ slip_or_trip(struct monst *mon)
 
     if (!you && !vis) {
         if (pctload > 50 && canhear())
-            pline("You hear fumbling %s.",
+            pline(msgc_levelwarning, "You hear fumbling %s.",
                   dist2(u.ux, u.uy, mon->mx, mon->my) > BOLT_LIM * BOLT_LIM ?
                   "in the distance" : "nearby");
         mwake_nearby(mon, FALSE);
         return FALSE; /* can't see the target anyway */
     }
 
+    enum msg_channel msgc = you ? msgc_statusbad : msgc_monneutral;
     if ((you && u.usteed) || flying(mon) || levitates(mon))
         on_foot = FALSE;
 
@@ -1915,16 +1972,16 @@ slip_or_trip(struct monst *mon)
             ((otmp = sobj_at(ROCK, level, m_mx(mon), m_my(mon))) == 0 ?
              "something" : otmp-> quan == 1L ? "a rock" : "some rocks");
         if (Hallucination)
-            pline("Egads!  %s bite%s %s %s!", msgupcasefirst(what),
+            pline(msgc, "Egads!  %s bite%s %s %s!", msgupcasefirst(what),
                   (!otmp || otmp->quan == 1L) ? "s" : "",
                   you ? "your" : s_suffix(mon_nam(mon)),
                   body_part(FOOT));
         else
-            pline("%s trip%s over %s.", you ? "You" : Monnam(mon),
+            pline(msgc, "%s trip%s over %s.", you ? "You" : Monnam(mon),
                   you ? "" : "s", what);
     } else if (rn2(3) && is_ice(level, m_mx(mon), m_my(mon)) &&
                on_foot)
-        pline("%s %s%s on the ice.",
+        pline(msgc, "%s %s%s on the ice.",
               you ? "You" : Monnam(mon),
               rn2(2) ? "slip" : "slide",
               you ? "" : "s");
@@ -1932,38 +1989,41 @@ slip_or_trip(struct monst *mon)
         if (on_foot) {
             switch (rn2(4)) {
             case 1:
-                pline("%s trip%s over %s own %s.", you ? "You" : Monnam(mon),
+                pline(msgc, "%s trip%s over %s own %s.",
+                      you ? "You" : Monnam(mon),
                       you ? "" : "s", you ? "your" : mhis(mon),
                       Hallucination ? "elbow" : makeplural(body_part(FOOT)));
                 break;
             case 2:
-                pline("%s slip%s %s.", you ? "You" : Monnam(mon),
+                pline(msgc, "%s slip%s %s.", you ? "You" : Monnam(mon),
                       you ? "" : "s",
                       Hallucination ? "on a banana peel" :
                       you ? "and nearly fall" :
                       "and nearly falls");
                 break;
             case 3:
-                pline("%s flounder%s.", you ? "You" : Monnam(mon), you ? "" : "s");
+                pline(msgc, "%s flounder%s.", you ? "You" : Monnam(mon),
+                      you ? "" : "s");
                 break;
             default:
-                pline("%s stumble%s.", you ? "You" : Monnam(mon), you ? "" : "s");
+                pline(msgc, "%s stumble%s.", you ? "You" : Monnam(mon),
+                      you ? "" : "s");
                 break;
             }
         } else if (you && u.usteed) {
             switch (rn2(4)) {
             case 1:
-                pline("Your %s slip out of the stirrups.",
+                pline(msgc, "Your %s slip out of the stirrups.",
                       makeplural(body_part(FOOT)));
                 break;
             case 2:
-                pline("You let go of the reins.");
+                pline(msgc, "You let go of the reins.");
                 break;
             case 3:
-                pline("You bang into the saddle-horn.");
+                pline(msgc, "You bang into the saddle-horn.");
                 break;
             default:
-                pline("You slide to one side of the saddle.");
+                pline(msgc, "You slide to one side of the saddle.");
                 break;
             }
             dismount_steed(DISMOUNT_FELL);
@@ -1971,23 +2031,21 @@ slip_or_trip(struct monst *mon)
             /* tripping in the air */
             switch (rn2(3)) {
             case 1:
-                pline("%s tumble%s in place.", you ? "You" : Monnam(mon),
-                      you ? "" : "s");
+                pline(msgc, "%s in place.", M_verbs(mon, "tumble"));
                 break;
             case 2:
-                pline("%s lose%s %s balance!", you ? "You" : Monnam(mon),
-                      you ? "" : "s", you ? "your" : mhis(mon));
+                pline(msgc, "%s %s balance!", M_verbs(mon, "lose"),
+                      you ? "your" : mhis(mon));
                 break;
             default:
-                pline("%s %s a hard time controlling %s movement.",
-                      you ? "You" : Monnam(mon), you ? "have" : "has",
-                      you ? "your" : mhis(mon));
+                pline(msgc, "%s a hard time controlling %s movement.",
+                      M_verbs(mon, "have"), you ? "your" : mhis(mon));
                 break;
             }
         }
     }
     if (pctload > 50) {
-        pline("%s make%s a lot of noise!",
+        pline(msgc_levelwarning, "%s make%s a lot of noise!",
               you ? "You" : Monnam(mon), you ? "" : "s");
         mwake_nearby(mon, FALSE);
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -12,8 +12,7 @@
 static void srv_raw_print(const char *str);
 static void srv_pause(enum nh_pause_reason r);
 static void srv_update_status(struct nh_player_info *pi);
-static void srv_print_message(int turn, const char *msg);
-static void srv_print_message_nonblocking(int turn, const char *msg);
+static void srv_print_message(enum msg_channel msgc, const char *msg);
 static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux,
                               int uy);
 static void srv_delay_output(void);
@@ -72,7 +71,6 @@ struct nh_window_procs server_windowprocs = {
     srv_load_progress,
     srv_level_changed,
     srv_outrip,
-    srv_print_message_nonblocking,
     srv_server_cancel,
 };
 
@@ -287,19 +285,11 @@ srv_update_status(struct nh_player_info *pi)
 
 
 static void
-srv_print_message(int turn, const char *msg)
+srv_print_message(enum msg_channel msgc, const char *msg)
 {
-    json_t *jobj = json_pack("{si,ss}", "turn", turn, "msg", msg);
+    json_t *jobj = json_pack("{si,ss}", "channel", msgc, "msg", msg);
 
     add_display_data("print_message", jobj);
-}
-
-static void
-srv_print_message_nonblocking(int turn, const char *msg)
-{
-    json_t *jobj = json_pack("{si,ss}", "turn", turn, "msg", msg);
-
-    add_display_data("print_message_nonblocking", jobj);
 }
 
 static void
@@ -395,10 +385,10 @@ srv_level_changed(int displaymode)
 static json_t *
 json_menuitem(struct nh_menuitem *mi)
 {
-    json_t *jobj = json_pack("{ss,si,si,si,si,si}", "caption", mi->caption,
-                             "id", mi->id, "role", mi->role, "accel", mi->accel,
-                             "group_accel", mi->group_accel, "selected",
-                             mi->selected);
+    json_t *jobj = json_pack(
+        "{ss,si,si,si,si,si,si}", "caption", mi->caption, "id", mi->id,
+        "role", mi->role, "accel", mi->accel, "group_accel", mi->group_accel,
+        "selected", mi->selected, "level", (int)(mi->level));
 
     return jobj;
 }

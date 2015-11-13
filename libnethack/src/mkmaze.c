@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -853,7 +853,7 @@ water_friction(schar * udx, schar * udy)
         eff = TRUE;
     }
     if (eff)
-        pline("Water turbulence affects your movements.");
+        pline(msgc_substitute, "Water turbulence affects your movements.");
 }
 
 
@@ -1062,7 +1062,7 @@ mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boolean ini)
 
     /* move bubble */
     if (dx < -1 || dx > 1 || dy < -1 || dy > 1) {
-        /* pline("mv_bubble: dx = %d, dy = %d", dx, dy); */
+        /* pline(msgc_debug, "mv_bubble: dx = %d, dy = %d", dx, dy); */
         dx = sgn(dx);
         dy = sgn(dy);
     }
@@ -1081,19 +1081,21 @@ mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boolean ini)
         colli |= 1;
 
     if (b->x < bxmin) {
-        pline("bubble xmin: x = %d, xmin = %d", b->x, bxmin);
+        pline(msgc_debug, "bubble xmin: x = %d, xmin = %d", b->x, bxmin);
         b->x = bxmin;
     }
     if (b->y < bymin) {
-        pline("bubble ymin: y = %d, ymin = %d", b->y, bymin);
+        pline(msgc_debug, "bubble ymin: y = %d, ymin = %d", b->y, bymin);
         b->y = bymin;
     }
     if ((int)(b->x + b->bm[0] - 1) > bxmax) {
-        pline("bubble xmax: x = %d, xmax = %d", b->x + b->bm[0] - 1, bxmax);
+        pline(msgc_debug, "bubble xmax: x = %d, xmax = %d",
+              b->x + b->bm[0] - 1, bxmax);
         b->x = bxmax - b->bm[0] + 1;
     }
     if ((int)(b->y + b->bm[1] - 1) > bymax) {
-        pline("bubble ymax: y = %d, ymax = %d", b->y + b->bm[1] - 1, bymax);
+        pline(msgc_debug, "bubble ymax: y = %d, ymax = %d",
+              b->y + b->bm[1] - 1, bymax);
         b->y = bymax - b->bm[1] + 1;
     }
 
