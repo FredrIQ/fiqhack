@@ -804,7 +804,10 @@ pleased(aligntyp g_align)
         if (turnstate.pray.trouble == ptr_invalid)
             pat_on_head = 1;
     } else {
-        int action = rn1(Luck + (on_altar() ? 3 + on_shrine() : 2), 1);
+        int actionmax = Luck + (on_altar() ? 3 + on_shrine() : 2);
+        if (actionmax < 1)
+            actionmax = 1;
+        int action = rn1(actionmax, 1);
 
         if (!on_altar())
             action = min(action, 3);
