@@ -13,10 +13,18 @@ extern const int monstr[];
 
 boolean m_using = FALSE;
 
-/* Let monsters use magic items.  Arbitrary assumptions: Monsters only use
- * scrolls when they can see, monsters know when wands have 0 charges, monsters
- * cannot recognize if items are cursed are not, monsters which are confused
- * don't know not to read scrolls, etc....
+/*
+ * Monster item usage logic.  General guidelines:
+ * - Monsters do not play the ID game with object types (it is unfeasible)
+ * - When it comes to everything else regarding the ID game and object
+ *   knowledge, player replication should be done whenever possible.
+ * - The AI will not avoid reading scrolls while confused, or take it to
+ *   its' adventage. This is by design. Maybe later some extra intelligent
+ *   monsters can abuse this.
+ * - Only intelligent monsters use items. Any non-mindless can spellcast.
+ * - Monsters generally use items whenever they have a good reason to, and
+ *   have no concept of resource management. For hostile monsters, this is
+ *   OK but can be problematic with pets. Maybe for later.
  */
 
 static int precheck(struct monst *mon, struct obj *obj, struct musable *m);
@@ -1112,6 +1120,14 @@ find_item(const struct monst *mon, struct musable *m)
 
     /* Fix other ailments */
     if (confused(mon) || stunned(mon) || blind(mon) || sick(mon)) {
+        /* Sickness */
+        if (sick(mon)) {
+            if (mon_castable(mon, SPE_CURE_SICKNESS, FALSE)) {
+                m->use = SPE_CURE_SICKNESS;
+                m->use = MUSE_SPE;
+                return TRUE;
+            }
+        }
         if (!is_unicorn(mon->data) && !nohands(mon->data)) {
             for (obj = mon->minvent; obj; obj = obj->nobj)
                 if (obj->otyp == UNICORN_HORN && (!obj->cursed || !obj->mbknown))
@@ -1121,6 +1137,12 @@ find_item(const struct monst *mon, struct musable *m)
             m->obj = obj;
             m->use = MUSE_UNICORN_HORN;
             return TRUE;
+        }
+        /* Unihorn-less sickness: look for healing potions */
+        if (sick(mon)) {
+            if (find_item_obj(mon, mon->minvent, m, FALSE, POT_EXTRA_HEALING) ||
+                find_item_obj(mon, mon->minvent, m, FALSE, POT_FULL_HEALING))
+                return TRUE;
         }
     }
 
