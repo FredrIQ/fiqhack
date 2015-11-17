@@ -783,10 +783,12 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     }
 
     newsym(m2->mx, m2->my);     /* display the new monster */
-    if (m2->mtame && !isminion(m2)) {
+    if (mx_edog(mon)) {
         mx_edog_new(m2);
-        /* IMPORTANT: if edog ever includes pointers, the below code
-           must (probably) change */
+        *(mx_edog(m2)) = *(mx_edog(mon));
+    }
+    if (isminion(mon)) {
+        mx_epri_new(m2);
         *(mx_edog(m2)) = *(mx_edog(mon));
     }
     set_malign(m2);
