@@ -1,13 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "mfndpos.h"
-#include "eshk.h"
-#include "epri.h"
-#include "emin.h"
 
 /* this matches the categorizations shown by enlightenment */
 #define ALGN_SINNED     (-4)    /* worse than strayed */
@@ -41,7 +38,7 @@ move_special(struct monst *mtmp, boolean in_his_shop, schar appr,
 
     nix = omx;
     niy = omy;
-    if (mtmp->isshk)
+    if (mx_eshk(mtmp))
         allowflags = ALLOW_SSM;
     else
         allowflags = ALLOW_SSM | ALLOW_SANCT;
@@ -60,7 +57,7 @@ move_special(struct monst *mtmp, boolean in_his_shop, schar appr,
         allowflags |= BUSTDOOR;
     cnt = mfndpos(mtmp, poss, info, allowflags);
 
-    if (mtmp->isshk && avoid && uondoor) {    /* perhaps we cannot avoid him */
+    if (mx_eshk(mtmp) && avoid && uondoor) {    /* perhaps we cannot avoid him */
         for (i = 0; i < cnt; i++)
             if (!(info[i] & NOTONL))
                 goto pick_move;
@@ -73,8 +70,8 @@ pick_move:
         nx = poss[i].x;
         ny = poss[i].y;
         if (level->locations[nx][ny].typ == ROOM ||
-            (mtmp->ispriest && level->locations[nx][ny].typ == ALTAR) ||
-            (mtmp->isshk && (!in_his_shop || ESHK(mtmp)->following))) {
+            (ispriest(mtmp) && level->locations[nx][ny].typ == ALTAR) ||
+            (mx_eshk(mtmp) && (!in_his_shop || mx_eshk(mtmp)->following))) {
             if (avoid && (info[i] & NOTONL))
                 continue;
             if ((!appr && !rn2(++chcnt)) ||
@@ -84,7 +81,7 @@ pick_move:
             }
         }
     }
-    if (mtmp->ispriest && avoid && nix == omx && niy == omy &&
+    if (ispriest(mtmp) && avoid && nix == omx && niy == omy &&
         onlineu(omx, omy)) {
         /* might as well move closer as long it's going to stay lined up */
         avoid = FALSE;
@@ -95,7 +92,7 @@ pick_move:
         remove_monster(level, omx, omy);
         place_monster(mtmp, nix, niy, TRUE);
         newsym(nix, niy);
-        if (mtmp->isshk && !in_his_shop && inhishop(mtmp))
+        if (mx_eshk(mtmp) && !in_his_shop && inhishop(mtmp))
             check_special_room(FALSE);
         if (ib) {
             /* the mtame check is probably paranoia, but may as well... */
@@ -128,8 +125,8 @@ static boolean
 histemple_at(struct monst *priest, xchar x, xchar y)
 {
     return ((boolean)
-            ((CONST_EPRI(priest)->shroom == *in_rooms(level, x, y, TEMPLE)) &&
-             on_level(&(CONST_EPRI(priest)->shrlevel), &u.uz)));
+            ((mx_epri(priest)->shroom == *in_rooms(level, x, y, TEMPLE)) &&
+             on_level(&(mx_epri(priest)->shrlevel), &u.uz)));
 }
 
 /*
@@ -148,10 +145,10 @@ pri_move(struct monst *priest)
     if (!histemple_at(priest, omx, omy))
         return -1;
 
-    temple = CONST_EPRI(priest)->shroom;
+    temple = mx_epri(priest)->shroom;
 
-    gx = CONST_EPRI(priest)->shrpos.x;
-    gy = CONST_EPRI(priest)->shrpos.y;
+    gx = mx_epri(priest)->shrpos.x;
+    gy = mx_epri(priest)->shrpos.y;
 
     gx += rn1(3, -1);   /* mill around the altar */
     gy += rn1(3, -1);
@@ -216,22 +213,23 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
     }
 
     if (priest) {
-        EPRI(priest)->shroom = (sroom - lev->rooms) + ROOMOFFSET;
-        EPRI(priest)->shralign = Amask2align(lev->locations[sx][sy].altarmask);
-        EPRI(priest)->shrpos.x = sx;
-        EPRI(priest)->shrpos.y = sy;
-        assign_level(&(EPRI(priest)->shrlevel), &lev->z);
+        mx_epri_new(priest);
+        struct epri *epri = priest->mextra->epri;
+        epri->shroom = (sroom - lev->rooms) + ROOMOFFSET;
+        priest->maligntyp = Amask2align(lev->locations[sx][sy].altarmask);
+        epri->shrpos.x = sx;
+        epri->shrpos.y = sy;
+        assign_level(&(mx_epri(priest)->shrlevel), &lev->z);
         priest->mtrapseen = ~0; /* traps are known */
         priest->mpeaceful = 1;
-        priest->ispriest = 1;
         priest->msleeping = 0;
         set_malign(priest);     /* mpeaceful may have changed */
 
         /* now his/her goodies... */
-        if (sanctum && CONST_EPRI(priest)->shralign == A_NONE &&
-            on_level(&sanctum_level, &lev->z)) {
+        if (sanctum && malign(priest) == A_NONE &&
+            on_level(&sanctum_level, &lev->z))
             mongets(priest, AMULET_OF_YENDOR, rng_for_level(&lev->z));
-        }
+
         /* 2 to 4 spellbooks */
         for (cnt = rn1(3, 2); cnt > 0; --cnt) {
             mpickobj(priest, mkobj(level, SPBOOK_CLASS, FALSE,
@@ -288,7 +286,7 @@ priestname(const struct monst *mon, boolean override_hallu)
         pname = "the ";
     if (invisible(mon))
         pname = msgcat(pname, "invisible ");
-    if (mon->ispriest || mon->data == &mons[PM_ALIGNED_PRIEST] ||
+    if (ispriest(mon) || mon->data == &mons[PM_ALIGNED_PRIEST] ||
         mon->data == &mons[PM_ANGEL]) {
         /* use epri */
         if (mon->mtame && mon->data == &mons[PM_ANGEL])
@@ -298,7 +296,7 @@ priestname(const struct monst *mon, boolean override_hallu)
             pname = msgcat_many(pname, what, " ", NULL);
         }
         if (mon->data != &mons[PM_ANGEL]) {
-            if (!mon->ispriest && CONST_EPRI(mon)->renegade)
+            if (isminion(mon))
                 pname = msgcat(pname, "renegade ");
             if (mon->data == &mons[PM_HIGH_PRIEST])
                 pname = msgcat(pname, "high ");
@@ -314,21 +312,18 @@ priestname(const struct monst *mon, boolean override_hallu)
             else
                 pname = msgcat(pname, "priest ");
         }
-        pname = msgcat(pname, "of ");
-        pname = msgcat(pname, gname_function((int)CONST_EPRI(mon)->shralign));
-        return pname;
-    }
-    /* use emin instead of epri */
-    pname = msgcat(pname, what);
+    } else
+        pname = msgcat(pname, what);
     pname = msgcat(pname, " of ");
-    pname = msgcat(pname, gname_function((int)CONST_EMIN(mon)->min_align));
+    pname = msgcat(pname, gname_function((int)malign(mon)));
     return pname;
 }
 
+/* TODO: make this into coaligned() since it now works on any monster */
 boolean
 p_coaligned(const struct monst * priest)
 {
-    return (boolean) (u.ualign.type == ((int)CONST_EPRI(priest)->shralign));
+    return (boolean) (u.ualign.type == ((int)malign(priest)));
 }
 
 static xchar
@@ -339,10 +334,11 @@ has_shrine(const struct monst *pri)
     if (!pri)
         return FALSE;
     loc = &level->locations
-        [CONST_EPRI(pri)->shrpos.x][CONST_EPRI(pri)->shrpos.y];
+        [mx_epri(pri)->shrpos.x][mx_epri(pri)->shrpos.y];
     if (!IS_ALTAR(loc->typ))
         return FALSE;
-    return (CONST_EPRI(pri)->shralign == Amask2align(loc->altarmask & AM_MASK))
+    /* not malign() -- we want the original alignment, not current */
+    return (pri->maligntyp == Amask2align(loc->altarmask & AM_MASK))
         ? loc->altarmask & (AM_SHRINE | AM_SANCTUM) : 0;
 }
 
@@ -354,7 +350,7 @@ findpriest(char roomno)
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
             continue;
-        if (mtmp->ispriest && (CONST_EPRI(mtmp)->shroom == roomno) &&
+        if (ispriest(mtmp) && (mx_epri(mtmp)->shroom == roomno) &&
             histemple_at(mtmp, mtmp->mx, mtmp->my))
             return mtmp;
     }
@@ -379,20 +375,15 @@ intemple(int roomno)
                        (shrined & AM_SANCTUM));
             can_speak = (priest->mcanmove && !priest->msleeping &&
                          canhear());
-            if (can_speak) {
-                unsigned save_priest = priest->ispriest;
-
-                /* don't reveal the altar's owner upon temple entry in the
-                   endgame; for the Sanctum, the next message names Moloch so
-                   suppress the "of Moloch" for him here too */
-                if (sanctum && !Hallucination)
-                    priest->ispriest = 0;
+            if (can_speak)
+                /* Use distant_monnam to avoid spoiling endgame priests */
                 pline(msgc_npcvoice, "%s intones:",
-                      canseemon(priest) ? Monnam(priest) : "A nearby voice");
-                priest->ispriest = save_priest;
-            }
+                      !canseemon(priest) ? "A nearby voice" :
+                      (sanctum && !Hallucination) ?
+                      msgupcasefirst(distant_monnam(priest, NULL, ARTICLE_THE)) :
+                      Monnam(priest));
             msg2 = 0;
-            if (sanctum && CONST_EPRI(priest)->shralign == A_NONE) {
+            if (sanctum && priest->maligntyp == A_NONE) {
                 msgc = msgc_npcanger;
                 if (priest->mpeaceful) {
                     msg1 = "Infidel, you have entered Moloch's Sanctum!";
@@ -464,7 +455,7 @@ priest_talk(struct monst *priest)
     /* KMH, conduct */
     break_conduct(conduct_gnostic);
 
-    if (priest->mflee || (!priest->ispriest && coaligned && strayed)) {
+    if (priest->mflee || (!ispriest(priest) && coaligned && strayed)) {
         pline(msgc_npcanger, "%s doesn't want anything to do with you!",
               Monnam(priest));
         msethostility(priest, TRUE, FALSE);
@@ -581,11 +572,10 @@ mk_roamer(const struct permonst *ptr, aligntyp alignment, struct level *lev,
     if (!(roamer = makemon(ptr, lev, x, y, mm_flags)))
         return NULL;
 
-    EPRI(roamer)->shralign = alignment;
+    mx_epri_new(roamer);
+    roamer->maligntyp = alignment;
     if (coaligned && !peaceful)
-        EPRI(roamer)->renegade = TRUE;
-    /* roamer->ispriest == FALSE naturally */
-    roamer->isminion = TRUE;    /* borrowing this bit */
+        mx_epri(roamer)->shroom = 0;
     roamer->mtrapseen = ~0;     /* traps are known */
     msethostility(roamer, !peaceful, TRUE); /* TODO: handle in_mklev */
     roamer->msleeping = 0;
@@ -597,12 +587,12 @@ mk_roamer(const struct permonst *ptr, aligntyp alignment, struct level *lev,
 void
 reset_hostility(struct monst *roamer)
 {
-    if (! (roamer->isminion &&
-           (roamer->data == &mons[PM_ALIGNED_PRIEST] ||
-            roamer->data == &mons[PM_ANGEL])))
+    if (!(isminion(roamer) &&
+          (roamer->data == &mons[PM_ALIGNED_PRIEST] ||
+           roamer->data == &mons[PM_ANGEL])))
         return;
 
-    if (EPRI(roamer)->shralign != u.ualign.type)
+    if (malign(roamer) != u.ualign.type)
         msethostility(roamer, TRUE, TRUE);
 }
 
@@ -615,7 +605,7 @@ in_your_sanctuary(struct monst *mon,    /* if non-null, <mx,my> overrides <x,y>
     struct monst *priest;
 
     if (mon) {
-        if (is_minion(mon->data) || is_rider(mon->data))
+        if (pm_isminion(mon->data) || is_rider(mon->data))
             return FALSE;
         x = mon->mx, y = mon->my;
     }
@@ -640,8 +630,8 @@ ghod_hitsu(struct monst *priest)
     if (!roomno || !has_shrine(priest))
         return;
 
-    ax = x = CONST_EPRI(priest)->shrpos.x;
-    ay = y = CONST_EPRI(priest)->shrpos.y;
+    ax = x = mx_epri(priest)->shrpos.x;
+    ay = y = mx_epri(priest)->shrpos.y;
     troom = &level->rooms[roomno - ROOMOFFSET];
 
     if ((u.ux == x && u.uy == y) || !linedup(u.ux, u.uy, x, y)) {
@@ -721,15 +711,11 @@ angry_priest(void)
          *  opportunity to try converting it back; maybe someday...)
          */
         loc = &level->locations
-            [CONST_EPRI(priest)->shrpos.x][CONST_EPRI(priest)->shrpos.y];
+            [mx_epri(priest)->shrpos.x][mx_epri(priest)->shrpos.y];
         if (!IS_ALTAR(loc->typ) ||
             ((aligntyp) Amask2align(loc->altarmask & AM_MASK) !=
-             CONST_EPRI(priest)->shralign)) {
-            priest->ispriest = 0;       /* now a roamer */
-            priest->isminion = 1;       /* but still aligned */
-            /* this overloads the `shroom' field, which is now clobbered */
-            EPRI(priest)->renegade = 0;
-        }
+             priest->maligntyp))
+            mx_epri(priest)->shroom = 0; /* renegade now */
     }
 }
 
@@ -744,8 +730,8 @@ clearpriests(void)
 
     for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
         mtmp2 = mtmp->nmon;
-        if (!DEADMONSTER(mtmp) && mtmp->ispriest &&
-            !on_level(&(CONST_EPRI(mtmp)->shrlevel), &u.uz))
+        if (!DEADMONSTER(mtmp) && ispriest(mtmp) &&
+            !on_level(&(mx_epri(mtmp)->shrlevel), &u.uz))
             mongone(mtmp);
     }
 }
@@ -756,9 +742,8 @@ restpriest(struct monst *mtmp, boolean ghostly)
 {
     if (u.uz.dlevel) {
         if (ghostly)
-            assign_level(&(EPRI(mtmp)->shrlevel), &u.uz);
+            assign_level(&(mx_epri(mtmp)->shrlevel), &u.uz);
     }
 }
 
 /*priest.c*/
-

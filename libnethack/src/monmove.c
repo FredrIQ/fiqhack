@@ -1,13 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "mfndpos.h"
 #include "artifact.h"
-#include "epri.h"
-
 
 static int disturb(struct monst *);
 static void distfleeck(struct monst *, int *, int *, int *);
@@ -102,7 +100,7 @@ dochugw(struct monst *mtmp)
 boolean
 onscary(int x, int y, const struct monst *mtmp)
 {
-    if (mtmp->isshk || mtmp->isgd || mtmp->iswiz || blind(mtmp) ||
+    if (mx_eshk(mtmp) || mx_egd(mtmp) || mtmp->iswiz || blind(mtmp) ||
         mtmp->mpeaceful || mtmp->data->mlet == S_HUMAN || is_lminion(mtmp) ||
         mtmp->data == &mons[PM_ANGEL] || is_rider(mtmp->data) ||
         mtmp->data == &mons[PM_MINOTAUR])
@@ -522,7 +520,7 @@ dochug(struct monst *mtmp)
         case 3:        /* absolutely no movement */
             /* for pets, case 0 and 3 are equivalent */
             /* vault guard might have vanished */
-            if (mtmp->isgd &&
+            if (mx_egd(mtmp) &&
                 (DEADMONSTER(mtmp) || (mtmp->mx == COLNO && mtmp->my == ROWNO)))
                 return 1;       /* behave as if it died */
             /* During hallucination, monster appearance should still change -
@@ -716,7 +714,7 @@ m_move(struct monst *mtmp, int after)
     }
 
     /* likewise for shopkeeper */
-    if (mtmp->isshk) {
+    if (mx_eshk(mtmp)) {
         mmoved = shk_move(mtmp);
         if (mmoved == -2)
             return 2;
@@ -726,7 +724,7 @@ m_move(struct monst *mtmp, int after)
     }
 
     /* and for the guard */
-    if (mtmp->isgd) {
+    if (mx_egd(mtmp)) {
         mmoved = gd_move(mtmp);
         if (mmoved == -2)
             return 2;
@@ -763,7 +761,7 @@ m_move(struct monst *mtmp, int after)
     }
 
     /* and for the priest */
-    if (mtmp->ispriest) {
+    if (ispriest(mtmp)) {
         mmoved = pri_move(mtmp);
         if (mmoved == -2)
             return 2;
@@ -850,7 +848,7 @@ not_special:
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
         flag |= ALLOW_MUXY;
-    if (is_minion(ptr) || is_rider(ptr) || is_mplayer(ptr))
+    if (pm_isminion(ptr) || is_rider(ptr) || is_mplayer(ptr))
         flag |= ALLOW_SANCT;
     /* unicorn may not be able to avoid hero on a noteleport level */
     if (is_unicorn(ptr) && !level->flags.noteleport)
@@ -1256,7 +1254,7 @@ postmov:
                      !Is_waterlevel(&u.uz));
             newsym(mtmp->mx, mtmp->my);
         }
-        if (mtmp->isshk) {
+        if (mx_eshk(mtmp)) {
             after_shk_move(mtmp);
         }
     }

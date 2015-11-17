@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -100,10 +100,8 @@
 # define detects_monsters(mon)  (has_property(mon, DETECT_MONSTERS))
 # define slow(mon)              (has_property(mon, SLOW))
 
-# define is_lminion(mon)        (is_minion((mon)->data) && \
-                                 (mon)->data->maligntyp >= A_COALIGNED && \
-                                 ((mon)->data != &mons[PM_ANGEL] || \
-                                  CONST_EPRI(mon)->shralign > 0))
+# define is_lminion(mon)        (pm_isminion((mon)->data) &&    \
+                                 malign(mon) == A_LAWFUL)
 
 # define is_flyer(ptr)          (((ptr)->mflags1 & M1_FLY) != 0L)
 # define is_floater(ptr)        ((ptr)->mlet == S_EYE)
@@ -194,7 +192,7 @@
                                  (((ptr)->mflags2 & (M2_LORD|M2_PRINCE)) == 0L))
 # define is_dlord(ptr)          (is_demon(ptr) && is_lord(ptr))
 # define is_dprince(ptr)        (is_demon(ptr) && is_prince(ptr))
-# define is_minion(ptr)         (((ptr)->mflags2 & M2_MINION) != 0L)
+# define pm_isminion(ptr)       (((ptr)->mflags2 & M2_MINION) != 0L)
 # define likes_gold(ptr)        (((ptr)->mflags2 & M2_GREEDY) != 0L)
 # define likes_gems(ptr)        (((ptr)->mflags2 & M2_JEWELS) != 0L)
 # define likes_objs(ptr)        (((ptr)->mflags2 & M2_COLLECT) != 0L || \

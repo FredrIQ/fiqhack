@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -89,8 +89,7 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
         exercise(A_WIS, FALSE);
         return 1;
     }
-    if (mtmp->isminion || mtmp->isshk || mtmp->ispriest || mtmp->isgd ||
-        mtmp->iswiz) {
+    if (mx_epri(mtmp) || mx_eshk(mtmp) || mx_egd(mtmp) || mtmp->iswiz) {
         pline(msgc_cancelled, "I think %s would mind.", mon_nam(mtmp));
         return 0;
     }
@@ -252,7 +251,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
         instapetrify(killer_msg(STONING,
             msgcat("attempting to ride ", an(mtmp->data->mname))));
     }
-    if (!mtmp->mtame || mtmp->isminion) {
+    if (!mtmp->mtame || isminion(mtmp)) {
         pline(msgc_cancelled, "I think %s would mind.", mon_nam(mtmp));
         return FALSE;
     }
@@ -517,7 +516,7 @@ dismount_steed(int reason)
                   "You can't. There isn't anywhere for you to stand.");
             return;
         }
-        if (!mtmp->mnamelth) {
+        if (!mx_name(mtmp)) {
             pline(msgc_actionok,
                   "You've been through the dungeon on %s with no name.",
                   an(mtmp->data->mname));

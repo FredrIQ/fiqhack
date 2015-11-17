@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -8,7 +8,6 @@
  */
 
 #include "hack.h"
-#include "edog.h"
 
 extern const int monstr[];
 
@@ -315,7 +314,7 @@ mon_makewish(struct monst *mon)
         case 7:
             wishtyp = SCR_GENOCIDE;
         }
-    } else if ((likes_gold(mdat) && !rn2(5)) || mon->isshk)
+    } else if ((likes_gold(mdat) && !rn2(5)) || mx_eshk(mon))
         wishtyp = GOLD_PIECE;
 
     if (wisharti) {
@@ -398,7 +397,7 @@ mon_makewish(struct monst *mon)
     }
     if (wishtyp == GOLD_PIECE) {
         /* 1-5000 gold, shopkeepers always wish for 5000 */
-        if (!mon->isshk)
+        if (!mx_eshk(mon))
             wishobj->quan = rnd(5000);
         else
             wishobj->quan = 5000;
@@ -1233,8 +1232,8 @@ find_item(const struct monst *mon, struct musable *m)
                                             if ((t->ttyp == TRAPDOOR ||
                                                  t->ttyp == HOLE)
                                                 && !levitates(mon)
-                                                && !mon->isshk && !mon->isgd
-                                                && !mon->ispriest &&
+                                                && !mx_eshk(mon) && !mx_egd(mon)
+                                                && !ispriest(mon) &&
                                                 can_fall_thru(lev) &&
                                                 fraction < 35) {
                                                 trapx = xx;
@@ -1269,8 +1268,8 @@ find_item(const struct monst *mon, struct musable *m)
             for (yy = y - 3; yy <= y + 3; yy++)
                 if (isok(xx, yy))
                     if ((mtmp = m_at(lev, xx, yy)) && is_mercenary(mtmp->data) &&
-                        !mtmp->isgd && (mtmp->msleeping ||
-                                        (!mtmp->mcanmove))) {
+                        !mx_egd(mtmp) && (mtmp->msleeping ||
+                                          (!mtmp->mcanmove))) {
                         m->obj = obj;
                         m->use = MUSE_BUGLE;
                     }
@@ -1683,7 +1682,7 @@ find_item_single(const struct monst *mon, struct obj *obj, boolean spell,
     /* Defensive only */
     if (fraction < 35) {
         if ((otyp == WAN_DIGGING || otyp == SPE_DIG) && !stuck && !t &&
-            !mon->isshk && !mon->isgd && !mon->ispriest &&
+            !mx_eshk(mon) && !mx_egd(mon) && !ispriest(mon) &&
             !levitates(mon)
             /* monsters digging in Sokoban can ruin things */
             && !In_sokoban(m_mz(mon))
@@ -1699,7 +1698,7 @@ find_item_single(const struct monst *mon, struct obj *obj, boolean spell,
 
         /* c!oGL is pretty much reverse digging */
         if (otyp == POT_GAIN_LEVEL && cursed &&
-            !mon->isshk && !mon->isgd && !mon->ispriest &&
+            !mx_eshk(mon) && !mx_egd(mon) && !ispriest(mon) &&
             !In_sokoban(m_mz(mon)) &&
             !In_endgame(m_mz(mon)))
             return 1;
@@ -1721,8 +1720,8 @@ find_item_single(const struct monst *mon, struct obj *obj, boolean spell,
             if ((otyp == WAN_TELEPORTATION ||
                  otyp == SPE_TELEPORT_AWAY ||
                  (otyp == SCR_TELEPORTATION &&
-                  (!cursed || (!(mon->isshk && inhishop(mon)) && !mon->isgd && !mon->ispriest)))) &&
-                !tele_wary(mon))
+                  !(mx_eshk(mon) && inhishop(mon)))) &&
+                !mx_egd(mon) && !ispriest(mon) && !tele_wary(mon))
                 if (!mon_has_amulet(mon) || (otyp != SCR_TELEPORTATION && mfind_target(mon, FALSE)))
                     return mon_has_amulet(mon) ? 2 : 1;
 
@@ -2416,6 +2415,9 @@ rnd_defensive_item(struct monst *mtmp, enum rng rng)
     int difficulty = monstr[monsndx(pm)];
     int trycnt = 0;
 
+    if (!rn2_on_rng(30, rng))
+        return SCR_GENOCIDE;
+
     if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
         || noncorporeal(pm) || pm->mlet == S_KOP)
         return 0;
@@ -2447,7 +2449,8 @@ try_again:
         return (mtmp->data !=
                 &mons[PM_PESTILENCE]) ? POT_FULL_HEALING : POT_SICKNESS;
     case 7:
-        if (levitates(mtmp) || mtmp->isshk || mtmp->isgd || mtmp->ispriest)
+        if (levitates(mtmp) || mx_eshk(mtmp) ||
+            mx_egd(mtmp) || ispriest(mtmp))
             return 0;
         else
             return WAN_DIGGING;
@@ -2571,16 +2574,15 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
     if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
         || noncorporeal(pm) || pm->mlet == S_KOP)
         return 0;
+    if (difficulty > 3 && !rn2_on_rng(15, rng))
+        return WAN_SLOW_MONSTER;
+    if (difficulty > 5 && !rn2_on_rng(25, rng))
+        return WAN_CANCELLATION;
     if (difficulty > 7 && !rn2_on_rng(35, rng))
         return WAN_DEATH;
     switch (rn2_on_rng(9 - (difficulty < 4) + 4 * (difficulty > 6), rng)) {
-    case 0:{
-            struct obj *helmet = which_armor(mtmp, os_armh);
-
-            if ((helmet && is_metallic(helmet)) || amorphous(pm) ||
-                phasing(mtmp) || noncorporeal(pm) || unsolid(pm))
-                return SCR_EARTH;
-        }       /* fall through */
+    case 0:
+        return WAN_SLEEP;
     case 1:
         return WAN_STRIKING;
     case 2:
@@ -2594,6 +2596,7 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
     case 6:
         return POT_PARALYSIS;
     case 7:
+        return WAN_CREATE_MONSTER;
     case 8:
         return WAN_MAGIC_MISSILE;
     case 9:
@@ -2634,23 +2637,19 @@ int
 rnd_misc_item(struct monst *mtmp, enum rng rng)
 {
     const struct permonst *pm = mtmp->data;
-    int difficulty = monstr[monsndx(pm)];
 
     if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
         || noncorporeal(pm) || pm->mlet == S_KOP)
         return 0;
-    /* Unlike other rnd_item functions, we only allow _weak_ monsters to have
-       this item; after all, the item will be used to strengthen the monster
-       and strong monsters won't use it at all... */
-    if (difficulty < 6 && !rn2_on_rng(30, rng))
-        return rn2_on_rng(6, rng) ? POT_POLYMORPH : WAN_POLYMORPH;
+    if (!rn2_on_rng(30, rng))
+        return rn2_on_rng(3, rng) ? POT_POLYMORPH : WAN_POLYMORPH;
 
     if (!rn2_on_rng(40, rng) && !nonliving(pm))
         return AMULET_OF_LIFE_SAVING;
 
     switch (rn2_on_rng(3, rng)) {
     case 0:
-        if (mtmp->isgd)
+        if (mx_egd(mtmp))
             return 0;
         return rn2_on_rng(6, rng) ? POT_SPEED : WAN_SPEED_MONSTER;
     case 1:
@@ -2828,9 +2827,7 @@ searches_for_item(const struct monst *mon, struct obj *obj)
 }
 
 /* magr = monster whose attack or refection is being reflected or NULL if
-   the reflection wasn't caused by any monster (temple lightning zaps).
-   magr should always represent the monster that caused the reflection, but
-   is sometimes NULL anyway at present because zap.c is spaghetti.
+   the reflection wasn't caused by any monster (divine lightning zaps).
 
    recursive = TRUE if we're testing to see if a reflection is itself
    reflected. This is based on whether magr /intended/ to perform the attack,
@@ -2852,9 +2849,12 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
                   refl(os_arms)     ? "shield" :
                   refl(os_wep)      ? "weapon" :
                   refl(os_amul)     ? "amulet" :
-                  refl(os_arm)      ? "armor"  :
+                  refl(os_role)     ? "scales" :
+                  refl(os_race)     ? "scales" :
                   refl(os_polyform) ? "scales" :
-                  "something weird");
+                  refl(os_arm)      ? "armor"  :
+                  "something weird"); /* os_arm after role/etc to suppress
+                                         "armor" if uskin() */
         /* TODO: when object properties is a thing, change this */
         if (refl(os_arms))
             makeknown((which_armor(&youmonst, os_arms))->otyp);

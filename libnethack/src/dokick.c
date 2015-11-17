@@ -1,10 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "eshk.h"
 
 #define is_bigfoot(x)   ((x) == &mons[PM_SASQUATCH])
 #define martial()       (martial_bonus() || is_bigfoot(youmonst.data) || \
@@ -285,7 +284,7 @@ ghitm(struct monst * mtmp, struct obj * gold)
 {
     boolean msg_given = FALSE;
 
-    if (!likes_gold(mtmp->data) && !mtmp->isshk && !mtmp->ispriest &&
+    if (!likes_gold(mtmp->data) && !mx_eshk(mtmp) && !ispriest(mtmp) &&
         !is_mercenary(mtmp->data)) {
         wakeup(mtmp, FALSE);
     } else if (!mtmp->mcanmove) {
@@ -306,8 +305,8 @@ ghitm(struct monst * mtmp, struct obj * gold)
         /* greedy monsters catch gold */
         if (cansee(mtmp->mx, mtmp->my))
             pline(msgc_actionok, "%s catches the gold.", Monnam(mtmp));
-        if (mtmp->isshk) {
-            long robbed = ESHK(mtmp)->robbed;
+        if (mx_eshk(mtmp)) {
+            long robbed = mx_eshk(mtmp)->robbed;
 
             if (robbed) {
                 robbed -= value;
@@ -315,19 +314,19 @@ ghitm(struct monst * mtmp, struct obj * gold)
                     robbed = 0;
                 pline(msgc_actionok, "The amount %scovers %s recent losses.",
                       !robbed ? "" : "partially ", mhis(mtmp));
-                ESHK(mtmp)->robbed = robbed;
+                mx_eshk(mtmp)->robbed = robbed;
                 if (!robbed)
                     make_happy_shk(mtmp, FALSE);
             } else {
                 if (mtmp->mpeaceful) {
-                    ESHK(mtmp)->credit += value;
+                    mx_eshk(mtmp)->credit += value;
                     pline(msgc_actionok, "You have %ld %s in credit.",
-                          (long)ESHK(mtmp)->credit,
-                          currency(ESHK(mtmp)->credit));
+                          (long)mx_eshk(mtmp)->credit,
+                          currency(mx_eshk(mtmp)->credit));
                 } else
                     verbalize(msgc_badidea, "Thanks, scum!");
             }
-        } else if (mtmp->ispriest) {
+        } else if (ispriest(mtmp)) {
             if (mtmp->mpeaceful)
                 verbalize(msgc_actionok, "Thank you for your contribution.");
             else
@@ -601,7 +600,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
     mon = beam_hit(dx, dy, range, KICKED_WEAPON, NULL, NULL, kickobj, NULL);
 
     if (mon) {
-        if (mon->isshk && kickobj->where == OBJ_MINVENT &&
+        if (mx_eshk(mon) && kickobj->where == OBJ_MINVENT &&
             kickobj->ocarry == mon)
             return 1;   /* alert shk caught it */
         notonhead = (mon->mx != bhitpos.x || mon->my != bhitpos.y);
@@ -1299,15 +1298,15 @@ impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
     price = debit = robbed = 0L;
     angry = FALSE;
     shkp = NULL;
-    /* if 'costly', we must keep a record of ESHK(shkp) before it undergoes
+    /* if 'costly', we must keep a record of mx_eshk(shkp) before it undergoes
        changes through the calls to stolen_value. the angry bit must be reset,
        if needed, in this fn, since stolen_value is called under the 'silent'
        flag to avoid unsavory pline repetitions. */
     if (costly) {
         if ((shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE)))
                 != 0) {
-            debit = ESHK(shkp)->debit;
-            robbed = ESHK(shkp)->robbed;
+            debit = mx_eshk(shkp)->debit;
+            robbed = mx_eshk(shkp)->robbed;
             angry = !shkp->mpeaceful;
         }
     }
@@ -1365,12 +1364,12 @@ impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
     }
 
     if (costly && shkp && price) {
-        if (ESHK(shkp)->robbed > robbed) {
+        if (mx_eshk(shkp)->robbed > robbed) {
             pline(msgc_unpaid, "You removed %ld %s worth of goods!", price,
                   currency(price));
             if (cansee(shkp->mx, shkp->my)) {
-                if (ESHK(shkp)->customer[0] == 0)
-                    strncpy(ESHK(shkp)->customer, u.uplname, PL_NSIZ);
+                if (mx_eshk(shkp)->customer[0] == 0)
+                    strncpy(mx_eshk(shkp)->customer, u.uplname, PL_NSIZ);
                 if (angry)
                     pline(msgc_npcanger, "%s is infuriated!", Monnam(shkp));
                 else
@@ -1381,8 +1380,8 @@ impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
             angry_guards(FALSE);
             return;
         }
-        if (ESHK(shkp)->debit > debit) {
-            long amt = (ESHK(shkp)->debit - debit);
+        if (mx_eshk(shkp)->debit > debit) {
+            long amt = (mx_eshk(shkp)->debit - debit);
 
             pline(msgc_unpaid, "You owe %s %ld %s for goods lost.",
                   Monnam(shkp), amt, currency(amt));

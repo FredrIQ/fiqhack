@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -163,7 +163,7 @@ awaken_soldiers(struct monst *culprit)
 
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         if (!DEADMONSTER(mtmp) && is_mercenary(mtmp->data) &&
-            !mtmp->isgd) {
+            !mx_egd(mtmp)) {
             mtmp->mfrozen = 0;
             msethostility(mtmp, TRUE, FALSE);
             mtmp->mcanmove = 1;
@@ -344,7 +344,7 @@ do_earthquake(int force)
                                         pline(msgc_petfatal, "You destroy %s!",
                                               mtmp->mtame ?
                                               x_monnam(mtmp, ARTICLE_THE,
-                                                       "poor", mtmp->mnamelth ?
+                                                       "poor", mx_name(mtmp) ?
                                                        SUPPRESS_SADDLE : 0,
                                                        FALSE) : mon_nam(mtmp));
                                     }

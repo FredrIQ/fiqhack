@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Mike Stephenson, Izchak Miller  1991.            */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -40,6 +40,18 @@ typedef struct align {  /* alignment & record */
              : ((x) == AM_LAWFUL) ? A_LAWFUL : ((int)x) - 2))
 # define Align2amask(x) (((x) == A_NONE) ? AM_NONE \
              : ((x) == A_LAWFUL) ? AM_LAWFUL : (x) + 2)
+# define Align2asave(x) ((x) == A_LAWFUL  ? 0 : \
+                         (x) == A_NEUTRAL ? 1 : \
+                         (x) == A_CHAOTIC ? 2 : \
+                         3)
+# define Asave2align(x) ((x) == 0 ? A_LAWFUL  : \
+                         (x) == 1 ? A_NEUTRAL : \
+                         (x) == 2 ? A_CHAOTIC : \
+                         A_NONE)
+# define Align2typ(x) ((x) > 0 ? A_LAWFUL :     \
+                       (x) == -128 ? A_NONE :   \
+                       (x) < 0 ? A_CHAOTIC :    \
+                       A_NEUTRAL)
 
 #endif /* ALIGN_H */
 

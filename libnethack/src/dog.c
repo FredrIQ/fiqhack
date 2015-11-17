@@ -1,10 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "edog.h"
 
 static int pet_type(struct newgame_options *);
 
@@ -17,17 +16,17 @@ initedog(struct monst *mtmp)
     set_malign(mtmp);   /* recalc alignment now that it's tamed */
     mtmp->mleashed = 0;
     mtmp->meating = 0;
-    EDOG(mtmp)->droptime = 0;
-    EDOG(mtmp)->dropdist = 10000;
-    EDOG(mtmp)->apport = 10;
-    EDOG(mtmp)->whistletime = 0;
-    EDOG(mtmp)->hungrytime = 1000 + moves;
-    EDOG(mtmp)->save_compat_bytes[0] = -1;
-    EDOG(mtmp)->save_compat_bytes[1] = -1;
-    EDOG(mtmp)->abuse = 0;
-    EDOG(mtmp)->revivals = 0;
-    EDOG(mtmp)->mhpmax_penalty = 0;
-    EDOG(mtmp)->killed_by_u = 0;
+    mx_edog_new(mtmp);
+    struct edog *edog = mtmp->mextra->edog;
+    edog->droptime = 0;
+    edog->dropdist = 10000;
+    edog->apport = 10;
+    edog->whistletime = 0;
+    edog->hungrytime = 1000 + moves;
+    edog->abuse = 0;
+    edog->revivals = 0;
+    edog->mhpmax_penalty = 0;
+    edog->killed_by_u = 0;
 }
 
 static int
@@ -118,7 +117,7 @@ make_familiar(struct monst *mon, struct obj *otmp, xchar x, xchar y, boolean qui
         }
         /* if figurine has been named, give same name to the monster */
         if (otmp->onamelth)
-            mtmp = christen_monst(mtmp, ONAME(otmp));
+            christen_monst(mtmp, ONAME(otmp));
     }
     set_malign(mtmp);   /* more alignment changes */
     newsym(mtmp->mx, mtmp->my);
@@ -185,7 +184,7 @@ makedog(struct newgame_options *ngo)
     }
 
     if (*petname)
-        mtmp = christen_monst(mtmp, petname);
+        christen_monst(mtmp, petname);
 
     initedog(mtmp);
     return mtmp;
@@ -240,7 +239,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     mtmp->dlevel = level;
     mtmp->nmon = level->monlist;
     level->monlist = mtmp;
-    if (mtmp->isshk)
+    if (mx_eshk(mtmp))
         set_residency(mtmp, FALSE);
 
     num_segs = mtmp->wormno;
@@ -470,9 +469,9 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
     }
     /* check to see if it would have died as a pet; if so, go wild instead of
        dying the next time we call dog_move() */
-    if (mtmp->mtame && !mtmp->isminion &&
+    if (mtmp->mtame && !isminion(mtmp) &&
         (carnivorous(mtmp->data) || herbivorous(mtmp->data))) {
-        const struct edog *edog = CONST_EDOG(mtmp);
+        const struct edog *edog = mtmp->mextra->edog;
 
         if ((moves > edog->hungrytime + 500 && mtmp->mhp < 3) ||
             (moves > edog->hungrytime + 750))
@@ -553,7 +552,7 @@ keepdogs(boolean pets_only)
                 }
                 continue;
             }
-            if (mtmp->isshk)
+            if (mx_eshk(mtmp))
                 set_residency(mtmp, TRUE);
 
             if (mtmp->wormno) {
@@ -607,7 +606,7 @@ migrate_to_level(struct monst *mtmp, xchar tolev,       /* destination level */
     xchar xyflags;
     int num_segs = 0;   /* count of worm segments */
 
-    if (mtmp->isshk)
+    if (mx_eshk(mtmp))
         set_residency(mtmp, TRUE);
 
     if (mtmp->wormno) {
@@ -672,27 +671,27 @@ dogfood(const struct monst *mon, struct obj *obj)
     boolean starving;
 
     if (is_quest_artifact(obj) || obj_resists(obj, 0, 95))
-        return obj->cursed ? TABU : APPORT;
+        return obj->cursed ? df_tabu : df_apport;
 
     switch (obj->oclass) {
     case FOOD_CLASS:
         if (obj->otyp == CORPSE &&
             ((touch_petrifies(&mons[obj->corpsenm]) && !resists_ston(mon))
              || is_rider(fptr)))
-            return TABU;
+            return df_tabu;
 
         /* Ghouls only eat old corpses... yum! */
         if (mon->data == &mons[PM_GHOUL])
             return (obj->otyp == CORPSE &&
                     peek_at_iced_corpse_age(obj) + 50L <=
-                    moves) ? DOGFOOD : TABU;
+                    moves) ? df_treat : df_tabu;
 
         if (!carni && !herbi)
-            return obj->cursed ? UNDEF : APPORT;
+            return obj->cursed ? df_nofood : df_apport;
 
         /* a starving pet will eat almost anything */
-        starving = (mon->mtame && !mon->isminion &&
-                    CONST_EDOG(mon)->mhpmax_penalty);
+        starving = (mon->mtame && !isminion(mon) &&
+                    mx_edog(mon)->mhpmax_penalty);
 
         switch (obj->otyp) {
         case TRIPE_RATION:
@@ -700,34 +699,34 @@ dogfood(const struct monst *mon, struct obj *obj)
         case MEAT_RING:
         case MEAT_STICK:
         case HUGE_CHUNK_OF_MEAT:
-            return carni ? DOGFOOD : MANFOOD;
+            return carni ? df_treat : df_manfood;
         case EGG:
             if (touch_petrifies(&mons[obj->corpsenm]) && !resists_ston(mon))
-                return POISON;
-            return carni ? CADAVER : MANFOOD;
+                return df_harmful;
+            return carni ? df_good : df_manfood;
         case CORPSE:
             if ((peek_at_iced_corpse_age(obj) + 50L <= moves &&
                  obj->corpsenm != PM_LIZARD && obj->corpsenm != PM_LICHEN &&
                  !resists_sick(mon)) ||
                 (acidic(&mons[obj->corpsenm]) && !resists_acid(mon)) ||
                 (poisonous(&mons[obj->corpsenm]) && !resists_poison(mon)))
-                return POISON;
+                return df_harmful;
             else if (vegan(fptr))
-                return herbi ? CADAVER : MANFOOD;
+                return herbi ? df_good : df_manfood;
             else
-                return carni ? CADAVER : MANFOOD;
+                return carni ? df_good : df_manfood;
         case CLOVE_OF_GARLIC:
-            return (is_undead(mon->data) ? TABU
-                    : ((herbi || starving) ? ACCFOOD : MANFOOD));
+            return (is_undead(mon->data) ? df_tabu
+                    : ((herbi || starving) ? df_acceptable : df_manfood));
         case TIN:
-            return metallivorous(mon->data) ? ACCFOOD : MANFOOD;
+            return metallivorous(mon->data) ? df_acceptable : df_manfood;
         case APPLE:
         case CARROT:
-            return herbi ? DOGFOOD : starving ? ACCFOOD : MANFOOD;
+            return herbi ? df_treat : starving ? df_acceptable : df_manfood;
         case BANANA:
             return ((mon->data->mlet ==
-                     S_YETI) ? DOGFOOD : ((herbi ||
-                                           starving) ? ACCFOOD : MANFOOD));
+                     S_YETI) ? df_treat : ((herbi ||
+                                           starving) ? df_acceptable : df_manfood));
 
         case K_RATION:
         case C_RATION:
@@ -736,34 +735,34 @@ dogfood(const struct monst *mon, struct obj *obj)
         case FOOD_RATION:
             if (is_human(mon->data) || is_elf(mon->data) || is_dwarf(mon->data)
                 || is_gnome(mon->data) || is_orc(mon->data))
-                return ACCFOOD;
+                return df_acceptable;
 
         default:
             if (starving)
-                return ACCFOOD;
+                return df_acceptable;
             return (obj->otyp >
-                    SLIME_MOLD ? (carni ? ACCFOOD : MANFOOD) :
-                    (herbi ? ACCFOOD : MANFOOD));
+                    SLIME_MOLD ? (carni ? df_acceptable : df_manfood) :
+                    (herbi ? df_acceptable : df_manfood));
         }
     default:
         if (obj->otyp == AMULET_OF_STRANGULATION ||
             obj->otyp == RIN_SLOW_DIGESTION)
-            return TABU;
+            return df_tabu;
         if (hates_silver(mon->data) && objects[obj->otyp].oc_material == SILVER)
-            return TABU;
+            return df_tabu;
         if (mon->data == &mons[PM_GELATINOUS_CUBE] && is_organic(obj))
-            return ACCFOOD;
+            return df_acceptable;
         if (metallivorous(mon->data) && is_metallic(obj) &&
             (is_rustprone(obj) || mon->data != &mons[PM_RUST_MONSTER])) {
             /* Non-rustproofed ferrous based metals are preferred. */
-            return (is_rustprone(obj) && !obj->oerodeproof) ? DOGFOOD : ACCFOOD;
+            return (is_rustprone(obj) && !obj->oerodeproof) ? df_treat : df_acceptable;
         }
         if (!obj->cursed && obj->oclass != BALL_CLASS &&
             obj->oclass != CHAIN_CLASS)
-            return APPORT;
+            return df_apport;
         /* fall into next case */
     case ROCK_CLASS:
-        return UNDEF;
+        return df_nofood;
     }
 }
 
@@ -771,8 +770,6 @@ dogfood(const struct monst *mon, struct obj *obj)
 struct monst *
 tamedog(struct monst *mtmp, struct obj *obj)
 {
-    struct monst *mtmp2;
-
     /* The Wiz, Medusa and the quest nemeses aren't even made peaceful. */
     if (mtmp->iswiz || mtmp->data == &mons[PM_MEDUSA]
         || (mtmp->data->mflags3 & M3_WANTSARTI))
@@ -804,8 +801,8 @@ tamedog(struct monst *mtmp, struct obj *obj)
         int tasty;
 
         if (mtmp->mcanmove && !confused(mtmp) && !mtmp->meating &&
-            ((tasty = dogfood(mtmp, obj)) == DOGFOOD ||
-             (tasty <= ACCFOOD && CONST_EDOG(mtmp)->hungrytime <= moves))) {
+            ((tasty = dogfood(mtmp, obj)) == df_treat ||
+             (tasty >= df_acceptable && mx_edog(mtmp)->hungrytime <= moves))) {
             /* pet will "catch" and eat this thrown food */
             if (canseemon(mtmp)) {
                 boolean big_corpse = (obj->otyp == CORPSE &&
@@ -827,44 +824,37 @@ tamedog(struct monst *mtmp, struct obj *obj)
             return NULL;
     }
 
-    if (mtmp->mtame || !mtmp->mcanmove ||
-        /* monsters with conflicting structures cannot be tamed */
-        mtmp->isshk || mtmp->isgd || mtmp->ispriest || mtmp->isminion ||
-        is_covetous(mtmp->data) || is_human(mtmp->data) ||
-        (is_demon(mtmp->data) && !is_demon(youmonst.data)) ||
-        (obj && dogfood(mtmp, obj) >= MANFOOD))
+    /* Some monsters aren't allowed to be tamed. Some of those used to be for
+       technical reasons (minions/shopkeepers/priests/guards), but disallow
+       them for now (minions especially) because even if it's now possible to
+       combine eshk and edog, for example, doing so would break a lot of things. */
+    if (mtmp->mtame || !mtmp->mcanmove || mx_epri(mtmp) || mx_eshk(mtmp) ||
+        mx_egd(mtmp) || is_covetous(mtmp->data) ||
+        is_human(mtmp->data) || (obj && dogfood(mtmp, obj) <= df_manfood) ||
+        (is_demon(mtmp->data) && !is_demon(youmonst.data)))
         return NULL;
 
     if (mtmp->m_id == u.quest_status.leader_m_id)
         return NULL;
 
-    /* make a new monster which has the pet extension */
-    mtmp2 = newmonst(MX_EDOG, mtmp->mnamelth);
-    *mtmp2 = *mtmp;
-    mtmp2->mxtyp = MX_EDOG;
-    mtmp2->mxlth = sizeof (struct edog);
-    if (mtmp->mnamelth)
-        strcpy(NAME_MUTABLE(mtmp2), NAME(mtmp));
-    initedog(mtmp2);
-    replmon(mtmp, mtmp2);
-    /* `mtmp' is now obsolete */
+    /* initialize edog struct */
+    initedog(mtmp);
 
     if (obj) {  /* thrown food */
-        /* defer eating until the edog extension has been set up */
-        place_object(obj, level, mtmp2->mx, mtmp2->my); /* put on floor */
-        /* devour the food (might grow into larger, genocided monster) */
-        if (dog_eat(mtmp2, obj, mtmp2->mx, mtmp2->my, TRUE) == 2)
-            return mtmp2;       /* oops, it died... */
+        mpickobj(mtmp, obj);
+        /* devour the food */
+        if (dog_eat(mtmp, obj, mtmp->mx, mtmp->my, TRUE) == 2)
+            return mtmp;       /* oops, it died... */
         /* `obj' is now obsolete */
     }
 
-    if (mtmp2->dlevel == level)
-        newsym(mtmp2->mx, mtmp2->my);
-    if (attacktype(mtmp2->data, AT_WEAP)) {
-        mtmp2->weapon_check = NEED_HTH_WEAPON;
-        mon_wield_item(mtmp2);
+    if (mtmp->dlevel == level)
+        newsym(mtmp->mx, mtmp->my);
+    if (attacktype(mtmp->data, AT_WEAP)) {
+        mtmp->weapon_check = NEED_HTH_WEAPON;
+        mon_wield_item(mtmp);
     }
-    return mtmp2;
+    return mtmp;
 }
 
 /*
@@ -883,7 +873,7 @@ wary_dog(struct monst *mtmp, boolean was_dead)
     mtmp->meating = 0;
     if (!mtmp->mtame)
         return;
-    edog = !mtmp->isminion ? EDOG(mtmp) : 0;
+    edog = !isminion(mtmp) ? mx_edog(mtmp) : NULL;
 
     /* if monster was starving when it died, undo that now */
     if (edog && edog->mhpmax_penalty) {
@@ -948,8 +938,8 @@ abuse_dog(struct monst *mtmp)
     else
         mtmp->mtame--;
 
-    if (mtmp->mtame && !mtmp->isminion)
-        EDOG(mtmp)->abuse++;
+    if (mtmp->mtame && !isminion(mtmp))
+        mx_edog(mtmp)->abuse++;
 
     if (!mtmp->mtame && mtmp->mleashed)
         m_unleash(mtmp, TRUE);

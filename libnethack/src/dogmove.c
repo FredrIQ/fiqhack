@@ -1,12 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
 #include "mfndpos.h"
-#include "edog.h"
 
 #define DOG_SATIATED 3000
 
@@ -102,7 +101,7 @@ could_use_item(const struct monst *mtmp, struct obj *otmp)
     boolean can_use = monster_would_take_item(mtmp, otmp);
 
     /* food, weapons, armor */
-    if (dogfood(mtmp, otmp) < APPORT ||
+    if (dogfood(mtmp, otmp) > df_apport ||
         (attacktype(mtmp->data, AT_WEAP) &&
          (otmp->oclass == WEAPON_CLASS || is_weptool(otmp)) &&
          (would_prefer_hwep(mtmp, otmp) || would_prefer_rwep(mtmp, otmp))) ||
@@ -201,7 +200,7 @@ DROPPABLES(struct monst *mon)
 
 static const char nofetch[] = { BALL_CLASS, CHAIN_CLASS, ROCK_CLASS, 0 };
 
-static xchar gtyp, gx, gy;      /* type and position of dog's current goal */
+static xchar gx, gy;      /* type and position of dog's current goal */
 
 static boolean cursed_object_at(int, int);
 
@@ -290,7 +289,7 @@ dog_nutrition(struct monst *mtmp, struct obj *obj)
 int
 dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 {
-    struct edog *edog = EDOG(mtmp);
+    struct edog *edog = mx_edog(mtmp);
     boolean was_starving = FALSE;
     int nutrit;
 
@@ -361,7 +360,7 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
     /* It's a reward if it's DOGFOOD and the player dropped/threw it. */
     /* We know the player had it if invlet is set -dlc */
     if (edog) {
-        if (dogfood(mtmp, obj) == DOGFOOD && obj->invlet)
+        if (dogfood(mtmp, obj) == df_treat && obj->invlet)
             edog->apport +=
                 (int)(200L / ((long)edog->dropdist + moves - edog->droptime));
     }
@@ -402,7 +401,7 @@ dog_hunger(struct monst *mtmp, struct edog *edog)
            Intelligent pets should be able to carry such food */
         struct obj *otmp, *obest = NULL;
         int cur_nutrit = -1, best_nutrit = -1;
-        int cur_food = APPORT, best_food = APPORT;
+        int cur_food = df_apport, best_food = df_apport;
 
         for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
             cur_nutrit = dog_nutrition_value(mtmp, otmp, FALSE);
@@ -495,9 +494,9 @@ dog_invent(struct monst *mtmp, struct edog *edog, int udist)
     if ((obj = level->objects[omx][omy]) && !strchr(nofetch, obj->oclass)) {
         int edible = dogfood(mtmp, obj);
 
-        if (!droppables && (edible <= CADAVER ||
+        if (!droppables && (edible >= df_good ||
                             /* starving pet is more aggressive about eating */
-                            (edog->mhpmax_penalty && edible == ACCFOOD)) &&
+                            (edog->mhpmax_penalty && edible == df_acceptable)) &&
             could_reach_item(mtmp, obj->ox, obj->oy)) {
             if (edog->hungrytime < moves + DOG_SATIATED) {
                 if (levitates(mtmp) && levitates_at_will(mtmp, TRUE, FALSE))
@@ -544,6 +543,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
     struct obj *obj;
     xchar otyp;
     int appr;
+    enum dogfood gtyp;
 
     /* Steeds don't move on their own will */
     if (mtmp == u.usteed)
@@ -556,7 +556,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
     dog_has_minvent = (DROPPABLES(mtmp) != 0);
 
     if (!edog || mtmp->mleashed) {      /* he's not going anywhere... */
-        gtyp = APPORT;
+        gtyp = df_apport;
         gx = u.ux;
         gy = u.uy;
     } else {
@@ -566,8 +566,8 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
         int nx, ny;
         boolean can_use = FALSE;
 
-        gtyp = UNDEF;   /* no goal as yet */
-        gx = gy = 0;    /* suppress 'used before set' message */
+        gtyp = df_nofood;   /* no goal as yet */
+        gx = gy = 0;        /* suppress 'used before set' message */
 
         if ((min_x = omx - SQSRCHRADIUS) < 0)
             min_x = 0;
@@ -585,41 +585,41 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
             if (nx >= min_x && nx <= max_x && ny >= min_y && ny <= max_y) {
                 otyp = dogfood(mtmp, obj);
                 /* skip inferior goals */
-                if (otyp > gtyp || otyp == UNDEF)
+                if (otyp < gtyp || otyp == df_nofood)
                     continue;
                 /* avoid cursed items unless starving */
                 if (cursed_object_at(nx, ny) &&
-                    !(edog->mhpmax_penalty && otyp < MANFOOD))
+                    !(edog->mhpmax_penalty && otyp > df_manfood))
                     continue;
                 /* skip completely unreacheable goals */
                 if (!could_reach_item(mtmp, nx, ny) ||
                     !can_reach_location(mtmp, mtmp->mx, mtmp->my, nx, ny))
                     continue;
-                if (otyp < MANFOOD) {
-                    if (otyp < gtyp || DDIST(nx, ny) < DDIST(gx, gy)) {
+                if (otyp > df_manfood) {
+                    if (otyp > gtyp || DDIST(nx, ny) < DDIST(gx, gy)) {
                         gx = nx;
                         gy = ny;
                         gtyp = otyp;
                     }
-                } else if (gtyp == UNDEF && in_masters_sight &&
+                } else if (gtyp == df_nofood && in_masters_sight &&
                            ((can_use = could_use_item(mtmp, obj)) &&
                             !dog_has_minvent) &&
                            (!level->locations[omx][omy].lit ||
                             level->locations[u.ux][u.uy].lit) &&
-                           (otyp == MANFOOD || m_cansee(mtmp, nx, ny)) &&
+                           (otyp == df_manfood || m_cansee(mtmp, nx, ny)) &&
                            (can_use || edog->apport > rn2(8)) &&
                            can_carry(mtmp, obj)) {
                     gx = nx;
                     gy = ny;
-                    gtyp = APPORT;
+                    gtyp = df_apport;
                 }
             }
         }
     }
 
     /* follow player if appropriate */
-    if (gtyp == UNDEF ||
-        (gtyp != DOGFOOD && gtyp != APPORT && moves < edog->hungrytime)) {
+    if (gtyp == df_nofood ||
+        (gtyp != df_treat && gtyp != df_apport && moves < edog->hungrytime)) {
         gx = u.ux;
         gy = u.uy;
         if (after && udist <= 4 && gx == u.ux && gy == u.uy)
@@ -634,7 +634,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
         if (appr == 0) {
             obj = invent;
             while (obj) {
-                if (dogfood(mtmp, obj) == DOGFOOD) {
+                if (dogfood(mtmp, obj) == df_treat) {
                     appr = 1;
                     break;
                 }
@@ -669,7 +669,7 @@ dog_move(struct monst *mtmp, int after)
     int omx, omy;       /* original mtmp position */
     int appr, whappr, udist;
     int i, j;
-    struct edog *edog = EDOG(mtmp);
+    struct edog *edog = mx_edog(mtmp);
     struct obj *obj = NULL;
     xchar otyp;
     boolean has_edog, cursemsg[9], do_eat = FALSE;
@@ -689,7 +689,7 @@ dog_move(struct monst *mtmp, int after)
      * spend all their energy defending the player.  (They are the only
      * monsters with other structures that can be tame.)
      */
-    has_edog = !mtmp->isminion;
+    has_edog = !isminion(mtmp);
 
     omx = mtmp->mx;
     omy = mtmp->my;
@@ -892,8 +892,8 @@ dog_move(struct monst *mtmp, int after)
                 /* levitating monsters will not touch the cursed object */
                 if (obj->cursed && !levitates(mtmp))
                     cursemsg[i] = TRUE;
-                else if ((otyp = dogfood(mtmp, obj)) < MANFOOD &&
-                         (otyp < ACCFOOD || edog->hungrytime <= moves) &&
+                else if ((otyp = dogfood(mtmp, obj)) > df_manfood &&
+                         (otyp > df_acceptable || edog->hungrytime <= moves) &&
                          edog->hungrytime < moves + DOG_SATIATED &&
                          (!levitates(mtmp) ||
                          levitates_at_will(mtmp, TRUE, FALSE))) {

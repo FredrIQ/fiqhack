@@ -1,12 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* Contains code for 't' (throw) */
 
 #include "hack.h"
-#include "edog.h"
 
 static int throw_obj(struct obj *, const struct nh_cmd_arg *, boolean);
 static void autoquiver(void);
@@ -998,7 +997,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
     if (mon) {
         boolean obj_gone;
 
-        if (mon->isshk && obj->where == OBJ_MINVENT && obj->ocarry == mon) {
+        if (mx_eshk(mon) && obj->where == OBJ_MINVENT && obj->ocarry == mon) {
             thrownobj = NULL;
             return;     /* alert shk caught it */
         }
@@ -1009,7 +1008,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
         mon = m_at(level, bhitpos.x, bhitpos.y);
 
         /* [perhaps this should be moved into thitmonst or hmon] */
-        if (mon && mon->isshk &&
+        if (mon && mx_eshk(mon) &&
             (!inside_shop(level, u.ux, u.uy) ||
              !strchr(in_rooms(level, mon->mx, mon->my, SHOPBASE), *u.ushops)))
             hot_pursuit(mon);
@@ -1080,7 +1079,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
         if (flooreffects(obj, bhitpos.x, bhitpos.y, "fall"))
             return;
         obj_no_longer_held(obj);
-        if (mon && mon->isshk && is_pick(obj)) {
+        if (mon && mx_eshk(mon) && is_pick(obj)) {
             if (cansee(bhitpos.x, bhitpos.y))
                 pline(msgc_substitute, "%s snatches up %s.", Monnam(mon),
                       the(xname(obj)));
@@ -1408,7 +1407,7 @@ thitmonst(struct monst *mon, struct obj *obj)
         return 0;
 
     } else if (befriend_with_obj(mon->data, obj) ||
-               (mon->mtame && dogfood(mon, obj) <= ACCFOOD)) {
+               (mon->mtame && dogfood(mon, obj) >= df_acceptable)) {
         if (tamedog(mon, obj))
             return 1;   /* obj is gone */
         else {

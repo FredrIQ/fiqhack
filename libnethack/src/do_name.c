@@ -1,40 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "epri.h"
-
-struct monst *
-christen_monst(struct monst *mtmp, const char *name)
-{
-    int lth;
-    struct monst *mtmp2;
-    char buf[PL_PSIZ];
-
-    /* dogname & catname are PL_PSIZ arrays; object names have same limit */
-    lth = *name ? (int)(strlen(name) + 1) : 0;
-    if (lth > PL_PSIZ) {
-        lth = PL_PSIZ;
-        name = strncpy(buf, name, PL_PSIZ - 1);
-        buf[PL_PSIZ - 1] = '\0';
-    }
-    if (lth == mtmp->mnamelth) {
-        /* don't need to allocate a new monst struct */
-        if (lth)
-            strcpy(NAME_MUTABLE(mtmp), name);
-        return mtmp;
-    }
-    mtmp2 = newmonst(mtmp->mxtyp, lth);
-    *mtmp2 = *mtmp;
-    memcpy(mtmp2->mextra, mtmp->mextra, mtmp->mxlth);
-    mtmp2->mnamelth = lth;
-    if (lth)
-        strcpy(NAME_MUTABLE(mtmp2), name);
-    replmon(mtmp, mtmp2);
-    return mtmp2;
-}
 
 
 int
@@ -561,16 +530,15 @@ x_monnam(const struct monst *mtmp,
     }
 
     /* priests and minions: don't even use this function */
-    if (mtmp->ispriest || mtmp->isminion) {
-        struct monst *priestmon = newmonst(mtmp->mxtyp, mtmp->mnamelth);
+    if (mx_epri(mtmp)) {
+        struct monst *priestmon = newmonst();
         const char *name;
 
-        memcpy(priestmon, mtmp,
-               sizeof (struct monst) + mtmp->mxlth + mtmp->mnamelth);
+        memcpy(priestmon, mtmp, sizeof (struct monst));
 
         /* when true name is wanted, explicitly block Hallucination */
         if (!do_invis)
-            set_property(priestmon, INVIS, -2, FALSE);
+            set_property(priestmon, INVIS, -2, TRUE);
         name = priestname(priestmon, !do_hallu);
 
         if (article == ARTICLE_NONE && !strncmp(name, "the ", 4))
@@ -583,17 +551,17 @@ x_monnam(const struct monst *mtmp,
     /* Shopkeepers: use shopkeeper name.  For normal shopkeepers, just
        "Asidonhopo"; for unusual ones, "Asidonhopo the invisible shopkeeper" or 
        "Asidonhopo the blue dragon".  If hallucinating, none of this applies. */
-    if (mtmp->isshk && !do_hallu) {
+    if (mx_eshk(mtmp) && !do_hallu) {
         if (adjective && article == ARTICLE_THE) {
             /* pathological case: "the angry Asidonhopo the blue dragon" sounds 
                silly */
-            return msgcat_many("the ", adjective, " ", shkname(mtmp), NULL);
+            return msgcat_many("the ", adjective, " ", mx_name(mtmp), NULL);
         }
         /* TODO: Shouldn't there be a case for "the angry Asidonhopo" here? */
         if (mdat == &mons[PM_SHOPKEEPER] && !do_invis)
-            return shkname(mtmp);
+            return mx_name(mtmp);
 
-        buf = msgcat(shkname(mtmp), " the ");
+        buf = msgcat(mx_name(mtmp), " the ");
         if (do_invis)
             buf = msgcat(buf, "invisible ");
         buf = msgcat(buf, mdat->mname);
@@ -622,8 +590,8 @@ x_monnam(const struct monst *mtmp,
 
         buf = msgcat(buf, monnam_for_index(idx));
         name_at_start = monnam_is_pname(idx);
-    } else if (mtmp->mnamelth) {
-        const char *name = NAME(mtmp);
+    } else if (mx_name(mtmp) && !(suppress & SUPPRESS_NAME)) {
+        const char *name = mx_name(mtmp);
 
         if (mdat == &mons[PM_GHOST]) {
             buf = msgprintf("%s%s ghost", buf, s_suffix(name));
@@ -677,7 +645,7 @@ const char *
 l_monnam(const struct monst *mtmp)
 {
     return (x_monnam
-            (mtmp, ARTICLE_NONE, NULL, mtmp->mnamelth ? SUPPRESS_SADDLE : 0,
+            (mtmp, ARTICLE_NONE, NULL, mx_name(mtmp) ? SUPPRESS_SADDLE : 0,
              TRUE));
 }
 
@@ -686,7 +654,7 @@ const char *
 mon_nam(const struct monst *mtmp)
 {
     return (x_monnam
-            (mtmp, ARTICLE_THE, NULL, mtmp->mnamelth ? SUPPRESS_SADDLE : 0,
+            (mtmp, ARTICLE_THE, NULL, mx_name(mtmp) ? SUPPRESS_SADDLE : 0,
              FALSE));
 }
 
@@ -698,7 +666,7 @@ noit_mon_nam(const struct monst *mtmp)
 {
     return (x_monnam
             (mtmp, ARTICLE_THE, NULL,
-             mtmp->mnamelth ? (SUPPRESS_SADDLE | SUPPRESS_IT) : SUPPRESS_IT,
+             mx_name(mtmp) ? (SUPPRESS_SADDLE | SUPPRESS_IT) : SUPPRESS_IT,
              FALSE));
 }
 
@@ -729,7 +697,7 @@ y_monnam(const struct monst *mtmp)
 
     prefix = mtmp->mtame ? ARTICLE_YOUR : ARTICLE_THE;
     /* "saddled" is redundant when mounted */
-    suppression_flag = (mtmp->mnamelth ||
+    suppression_flag = (mx_name(mtmp) ||
                         mtmp == u.usteed) ? SUPPRESS_SADDLE : 0;
 
     return x_monnam(mtmp, prefix, NULL, suppression_flag, FALSE);
@@ -741,13 +709,13 @@ Adjmonnam(const struct monst *mtmp, const char *adj)
 {
     return msgupcasefirst(
         x_monnam(mtmp, ARTICLE_THE, adj,
-                 mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE));
+                 mx_name(mtmp) ? SUPPRESS_SADDLE : 0, FALSE));
 }
 
 const char *
 a_monnam(const struct monst *mtmp)
 {
-    return x_monnam(mtmp, ARTICLE_A, NULL, mtmp->mnamelth ? SUPPRESS_SADDLE : 0,
+    return x_monnam(mtmp, ARTICLE_A, NULL, mx_name(mtmp) ? SUPPRESS_SADDLE : 0,
                     FALSE);
 }
 
@@ -767,8 +735,8 @@ distant_monnam(const struct monst *mon, const char *adjective, int article)
        you're adjacent (overridden for hallucination which does its own
        obfuscation) */
     if (mon->data == &mons[PM_HIGH_PRIEST] && !Hallucination &&
-        has_sanctum(level, Align2amask(CONST_EPRI(mon)->shralign)) &&
-        CONST_EPRI(mon)->shralign != A_NONE && distu(mon->mx, mon->my) > 2) {
+        has_sanctum(level, Align2amask(malign(mon))) &&
+        malign(mon) != A_NONE && distu(mon->mx, mon->my) > 2) {
         return msgcat(article == ARTICLE_THE ? "the " : "",
                       mon->female ? "high priestess" : "high priest");
     } else {
@@ -784,13 +752,13 @@ k_monnam(const struct monst *mtmp) {
     boolean article = FALSE;
 
     if ((mtmp->data->geno & G_UNIQ) != 0 &&
-        !(mtmp->data == &mons[PM_HIGH_PRIEST] && !mtmp->ispriest)) {
+        !(mtmp->data == &mons[PM_HIGH_PRIEST] && !ispriest(mtmp))) {
         /* "killed by the high priest of Crom" is okay, "killed by the high
            priest" alone isn't */
         if (!type_is_pname(mtmp->data))
             buf = "the ";
     }
-    else if (mtmp->data == &mons[PM_GHOST] && mtmp->mnamelth) {
+    else if (mtmp->data == &mons[PM_GHOST] && mx_name(mtmp)) {
         /* _the_ <invisible> <distorted> ghost of Dudley */
         buf = "the ";
     } else if (!(mtmp->data->geno & G_UNIQ)) {
@@ -804,19 +772,19 @@ k_monnam(const struct monst *mtmp) {
 
     if (mtmp->data == &mons[PM_GHOST]) {
         buf = msgcat(buf, "ghost");
-        if (mtmp->mnamelth)
-            buf = msgprintf("%s of %s", buf, NAME(mtmp));
-    } else if (mtmp->isshk) {
+        if (mx_name(mtmp))
+            buf = msgprintf("%s of %s", buf, mx_name(mtmp));
+    } else if (mx_eshk(mtmp)) {
         buf = msgprintf("%s%s %s, the shopkeeper", buf,
-                        (mtmp->female ? "Ms." : "Mr."), shkname(mtmp));
-    } else if (mtmp->ispriest || mtmp->isminion) {
+                        (mtmp->female ? "Ms." : "Mr."), mx_name(mtmp));
+    } else if (mx_epri(mtmp)) {
         /* m_monnam() suppresses "the" prefix plus "invisible", and it
            overrides the effect of Hallucination on priestname() */
         buf = msgcat(buf, m_monnam(mtmp));
     } else {
         buf = msgcat(buf, mtmp->data->mname);
-        if (mtmp->mnamelth)
-            buf = msgcat_many(buf, " called \"", NAME(mtmp), "\"", NULL);
+        if (mx_name(mtmp))
+            buf = msgcat_many(buf, " called \"", mx_name(mtmp), "\"", NULL);
     }
 
     return article ? an(buf) : buf;

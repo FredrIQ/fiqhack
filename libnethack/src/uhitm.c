@@ -1,10 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "eshk.h"
 
 static boolean known_hitum(struct monst *, int *, const struct attack *, schar,
                            schar);
@@ -290,11 +289,11 @@ hmon(struct monst * mon, struct obj * obj, int thrown)
     boolean result, anger_guards;
 
     anger_guards = (mon->mpeaceful &&
-                    (mon->ispriest || mon->isshk ||
+                    (ispriest(mon) || mx_eshk(mon) ||
                      mon->data == &mons[PM_WATCHMAN] ||
                      mon->data == &mons[PM_WATCH_CAPTAIN]));
     result = hmon_hitmon(mon, obj, thrown);
-    if (mon->ispriest && !rn2(2))
+    if (ispriest(mon) && !rn2(2))
         ghod_hitsu(mon);
     if (anger_guards)
         angry_guards(!canhear());
@@ -2422,7 +2421,7 @@ flash_hits_mon(struct monst *mtmp, struct obj *otmp)
             if (!DEADMONSTER(mtmp)) {
                 if (!flags.mon_moving)
                     setmangry(mtmp);
-                if (tmp < 9 && !mtmp->isshk && rn2(4)) {
+                if (tmp < 9 && !mx_eshk(mtmp) && rn2(4)) {
                     if (rn2(4))
                         monflee(mtmp, rnd(100), FALSE, TRUE);
                     else

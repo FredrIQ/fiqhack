@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -307,7 +307,7 @@ make_bones:
         in_mklev = FALSE;
         if (!mtmp)
             return;
-        mtmp = christen_monst(mtmp, u.uplname);
+        christen_monst(mtmp, u.uplname);
         if (corpse)
             corpse = obj_attach_mid(corpse, mtmp->m_id);
     } else {
@@ -333,7 +333,7 @@ make_bones:
             drop_upon_death(NULL, NULL, FALSE);
             return;
         }
-        mtmp = christen_monst(mtmp, u.uplname);
+        christen_monst(mtmp, u.uplname);
         newsym(u.ux, u.uy);
         if (!charmed)
             pline(msgc_outrobad, "Your body rises from the dead as %s...",

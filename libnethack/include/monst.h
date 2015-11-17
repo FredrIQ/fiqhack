@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -38,8 +38,8 @@
 # define MINV_NOLET 0x01
 # define MINV_ALL   0x02
 
-# ifndef ALIGN_H
-#  include "align.h"
+# ifndef MEXTRA_H
+#  include "mextra.h"
 # endif
 
 /* Monster strategies */
@@ -69,6 +69,8 @@ struct monst {
     struct level *dlevel;       /* pointer to the level this monster is on */
     struct obj *minvent;
     struct obj *mw;             /* weapon */
+    struct monst *mstuck;       /* is the monster stuck to another monster */
+    struct mextra *mextra;      /* extended data for some monsters (or names) */
     unsigned int m_id;
     int mhp, mhpmax;
     int mspec_used;             /* monster's special ability attack timeout */
@@ -91,8 +93,11 @@ struct monst {
     xchar dx, dy;               /* monster's displaced image, COLNO/ROWNO if none */
     xchar mux, muy;             /* where the monster thinks you are; if it doesn't know
                                    where you are, this is (COLNO, ROWNO) */
+    /* TODO: find a saner name for malign */
     aligntyp malign;            /* alignment of this monster, relative to the player
                                    (positive = good to kill) */
+    aligntyp maligntyp;         /* monster alignment */
+    unsigned maligntyp_temp:2;  /* temporary alignment from opposite alignment */
     short moveoffset;           /* how this monster's actions map onto turns */
     schar mtame;                /* level of tameness, implies peaceful */
     uchar m_ap_type;            /* what mappearance is describing: */
@@ -137,16 +142,11 @@ struct monst {
 
     unsigned mleashed:1;        /* monster is on a leash */
     unsigned msuspicious:1;     /* monster is suspicious of the player */
-    /* 1 spare bit */
-    unsigned isshk:1;           /* is shopkeeper */
-    unsigned isminion:1;        /* is a minion */
-    unsigned isgd:1;            /* is guard */
-    unsigned ispriest:1;        /* is a priest */
     unsigned iswiz:1;           /* is the Wizard of Yendor */
-    
     uint64_t mspells;           /* known monster spells */
+
+    /* intrinsic format: os_outside:1, os_timeout:15 */
     short mintrinsic[LAST_PROP + 1]; /* monster intrinsics */
-    /* intrinsic format: os_outside:1, os_spec:1, os_spc2:1, os_timeout:13 */
 
     /* turnstate; doesn't count against bitfield bit count */
     unsigned deadmonster:1;     /* always 0 at neutral turnstate */
@@ -158,38 +158,11 @@ struct monst {
     xchar weapon_check;
     int misc_worn_check;
 
-    uchar mnamelth;     /* length of name (following mxlth) */
-    uchar mxtyp;        /* type of the following data (MX_* flags in
-                           permonst.h) */
-    short mxlth;        /* length of following data */
     int meating;        /* monster is eating timeout */
     schar mhitinc;      /* monster intrinsic to-hit bonus/penalty */
     schar mdaminc;      /* monster intrinsic damage bonus/penalty */
     schar mac;          /* monster AC bonus/penalty */
-    void *mextra[];     /* monster dependent info */
 };
-
-/*
- * Note that mextra[] may correspond to any of a number of structures, which
- * are indicated by some of the other fields.
- *      isgd     ->     struct egd
- *      ispriest ->     struct epri
- *      isshk    ->     struct eshk
- *      isminion ->     struct emin
- *                      (struct epri for roaming priests and angels, which is
- *                       compatible with emin for polymorph purposes)
- *      mtame    ->     struct edog
- *                      (struct epri for guardian angels, which do not eat
- *                       or do other doggy things)
- * Since at most one structure can be indicated in this manner, it is not
- * possible to tame any creatures using the other structures (the only
- * exception being the guardian angels which are tame on creation).
- */
-
-# define dealloc_monst(mon) free((mon))
-
-# define NAME(mtmp)         (((const char *)(mtmp)->mextra) + (mtmp)->mxlth)
-# define NAME_MUTABLE(mtmp) (((char *)(mtmp)->mextra) + (mtmp)->mxlth)
 
 # define MON_WEP(mon)     (m_mwep(mon))
 # define MON_NOWEP(mon)   ((mon)->mw = NULL)
@@ -216,10 +189,14 @@ struct monst {
 # define m_mx(mon) ((mon) == &youmonst ? u.ux : (mon)->mx)
 # define m_my(mon) ((mon) == &youmonst ? u.uy : (mon)->my)
 # define m_mz(mon) ((mon) == &youmonst ? &u.uz : &((mon)->dlevel->z))
+/* mhp(max) will not work for polymorphed player, when monster polymorph
+   is implemented, mhp will always point to current hp (umh/umhmax "equavilent"
+   will be orig_hp(max)) */
 # define m_mhp(mon) ((mon) == &youmonst ? u.uhp : (mon)->mhp)
 # define m_mhpmax(mon) ((mon) == &youmonst ? u.uhpmax : (mon)->mhpmax)
 # define m_mlev(mon) ((mon) == &youmonst ? u.ulevel : (mon)->m_lev)
 # define m_mwep(mon) ((mon) == &youmonst ? uwep : (mon)->mw)
+/* actually used for players and monsters alike now */
 # define m_mspellprot(mon) ((property_timeout(mon, PROTECTION) + 9) / 10)
 
 /* Does a monster know where the player character is? Does it think it does? */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -310,9 +310,9 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
             set_malign(mtmp);
         }
 
-        if (mtmp->isshk)
+        if (mx_eshk(mtmp))
             restshk(mtmp, ghostly);
-        if (mtmp->ispriest)
+        if (ispriest(mtmp))
             restpriest(mtmp, ghostly);
 
         mtmp2 = mtmp;
@@ -1200,7 +1200,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
         for (mtmp = lev->monlist; mtmp; mtmp = mtmp2) {
             mtmp2 = mtmp->nmon;
             /* reset peaceful/malign relative to new character */
-            if (!mtmp->isshk)
+            if (!mx_eshk(mtmp))
                 /* shopkeepers will reset based on name */
                 mtmp->mpeaceful = peace_minded(mtmp->data);
             set_malign(mtmp);
@@ -1226,7 +1226,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
         for (y = 0; y < ROWNO; y++)
             lev->monsters[x][y] = NULL;
     for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (mtmp->isshk)
+        if (mx_eshk(mtmp))
             set_residency(mtmp, FALSE);
 
         /* mtmp->mx == COLNO is a sentinel value. place_monster rejects it to

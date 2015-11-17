@@ -1,14 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "epri.h"
-#include "emin.h"
-#include "edog.h"
-#include "eshk.h"
-#include "vault.h"
 #include <ctype.h>
 
 /* this assumes that a human quest leader or nemesis is an archetype
@@ -37,37 +32,11 @@ struct monst zeromonst; /* only address matters, value is irrelevant */
 #define tooweak(monindx, lev)          (monstr[monindx] < lev)
 
 struct monst *
-newmonst(int extyp, int namelen)
+newmonst(void)
 {
     struct monst *mon;
-    int xlen;
-
-    switch (extyp) {
-    case MX_EMIN:
-        xlen = sizeof (struct emin);
-        break;
-    case MX_EPRI:
-        xlen = sizeof (struct epri);
-        break;
-    case MX_EGD:
-        xlen = sizeof (struct egd);
-        break;
-    case MX_ESHK:
-        xlen = sizeof (struct eshk);
-        break;
-    case MX_EDOG:
-        xlen = sizeof (struct edog);
-        break;
-    default:
-        xlen = 0;
-        break;
-    }
-
-    mon = malloc(sizeof (struct monst) + namelen + xlen);
-    memset(mon, 0, sizeof (struct monst) + namelen + xlen);
-    mon->mxtyp = extyp;
-    mon->mxlth = xlen;
-    mon->mnamelth = namelen;
+    mon = malloc(sizeof (struct monst));
+    memset(mon, 0, sizeof (struct monst));
     mon->m_id = TEMPORARY_IDENT;
     mon->mux = COLNO;
     mon->muy = ROWNO;
@@ -75,6 +44,13 @@ newmonst(int extyp, int namelen)
     return mon;
 }
 
+/* Used to be a macro for free(), but we need to free mextra now too */
+void
+dealloc_monst(struct monst *mon)
+{
+    mx_free(mon);
+    free(mon);
+}
 
 boolean
 is_home_elemental(const struct d_level * dlev, const struct permonst * ptr)
@@ -773,7 +749,7 @@ clone_mon(struct monst *mon, xchar x, xchar y)
                 return NULL;
         }
     }
-    m2 = newmonst(MX_NONE, 0);
+    m2 = newmonst();
     *m2 = *mon; /* copy condition of old monster */
     m2->nmon = level->monlist;
     level->monlist = m2;
@@ -782,6 +758,7 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     m2->my = mm.y;
 
     m2->minvent = NULL; /* objects don't clone */
+    m2->mextra = NULL; /* created later if necessary */
     m2->mleashed = FALSE;
     /* Max HP the same, but current HP halved for both.  The caller might want
        to override this by halving the max HP also. When current HP is odd, the
@@ -790,27 +767,12 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     m2->mhp = mon->mhp / 2;
     mon->mhp -= m2->mhp;
 
-    /* since shopkeepers and guards will only be cloned if they've been
-       polymorphed away from their original forms, the clone doesn't have room
-       for the extra information.  we also don't want two shopkeepers around
-       for the same shop. */
-    if (mon->isshk)
-        m2->isshk = FALSE;
-    if (mon->isgd)
-        m2->isgd = FALSE;
-    if (mon->ispriest)
-        m2->ispriest = FALSE;
-    m2->mxlth = 0;
     place_monster(m2, m2->mx, m2->my, FALSE);
     if (emits_light(m2->data))
         new_light_source(m2->dlevel, m2->mx, m2->my, emits_light(m2->data),
                          LS_MONSTER, m2);
-    if (m2->mnamelth) {
-        m2->mnamelth = 0;       /* or it won't get allocated */
-        m2 = christen_monst(m2, NAME(mon));
-    } else if (mon->isshk) {
-        m2 = christen_monst(m2, shkname(mon));
-    }
+    if (mx_name(mon))
+        christen_monst(m2, mx_name(mon));
 
     /* not all clones caused by player are tame or peaceful */
     if (!flags.mon_moving) {
@@ -821,29 +783,11 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     }
 
     newsym(m2->mx, m2->my);     /* display the new monster */
-    if (m2->mtame) {
-        struct monst *m3;
-
-        if (mon->isminion) {
-            m3 = newmonst(MX_EPRI, mon->mnamelth);
-            *m3 = *m2;
-            m3->mxtyp = MX_EPRI;
-            m3->mxlth = sizeof (struct epri);
-            if (m2->mnamelth)
-                strcpy(NAME_MUTABLE(m3), NAME(m2));
-            *(EPRI(m3)) = *(CONST_EPRI(mon));
-            replmon(m2, m3);
-            m2 = m3;
-        } else {
-            /* because m2 is a copy of mon it is tame but not init'ed. however,
-               tamedog will not re-tame a tame dog, so m2 must be made non-tame
-               to get initialized properly. */
-            m2->mtame = 0;
-            if ((m3 = tamedog(m2, NULL)) != 0) {
-                m2 = m3;
-                *(EDOG(m2)) = *(EDOG(mon));
-            }
-        }
+    if (m2->mtame && !isminion(m2)) {
+        mx_edog_new(m2);
+        /* IMPORTANT: if edog ever includes pointers, the below code
+           must (probably) change */
+        *(mx_edog(m2)) = *(mx_edog(mon));
     }
     set_malign(m2);
 
@@ -896,7 +840,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         int mmflags)
 {
     struct monst *mtmp;
-    int mndx, mcham, ct, mitem, xtyp;
+    int mndx, mcham, ct, mitem;
     boolean anymon = (!ptr);
     boolean byyou = (x == u.ux && y == u.uy);
     boolean allow_minvent = ((mmflags & NO_MINVENT) == 0);
@@ -991,17 +935,19 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     propagate(mndx, countbirth, FALSE);
 
-    xtyp = ptr->pxtyp;
+    mtmp = newmonst();
     if (mmflags & MM_EDOG)
-        xtyp = MX_EDOG;
+        mx_edog_new(mtmp);
     else if (mmflags & MM_EMIN)
-        xtyp = MX_EMIN;
+        mx_epri_new(mtmp);
 
-    mtmp = newmonst(xtyp, 0);
     mtmp->nmon = lev->monlist;
     lev->monlist = mtmp;
     mtmp->m_id = next_ident();
     set_mon_data(mtmp, ptr);
+    /* TODO: monsters with several potential alignments */
+    mtmp->maligntyp = (mtmp->data->maligntyp == A_NONE ? A_NONE :
+                       sgn(mtmp->data->maligntyp));
 
     if (mtmp->data->msound == MS_LEADER)
         u.quest_status.leader_m_id = mtmp->m_id;
@@ -1140,7 +1086,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     } else if (mndx == PM_GHOST) {
         flags.ghost_count++;
         if (!(mmflags & MM_NONAME))
-            mtmp = christen_monst(mtmp, rndghostname());
+            christen_monst(mtmp, rndghostname());
     } else if (mndx == PM_VLAD_THE_IMPALER) {
         mitem = CANDELABRUM_OF_INVOCATION;
     } else if (mndx == PM_CROESUS) {
@@ -1956,7 +1902,7 @@ peace_minded(const struct permonst *ptr)
         return FALSE;
 
     /* minions are hostile to players that have strayed at all */
-    if (is_minion(ptr))
+    if (pm_isminion(ptr))
         return u.ualign.record >= 0;
 
     /* balance fix for 4.3-beta2: titan hostility has a major balance effect,
@@ -1970,6 +1916,18 @@ peace_minded(const struct permonst *ptr)
     return ((boolean)
             (rn2(16 + (u.ualign.record < -15 ? -15 : u.ualign.record)) &&
              rn2(2 + abs(mal))));
+}
+
+/* Returns a monster's alignment. Handles opposite alignment and players */
+aligntyp
+malign(const struct monst *mon)
+{
+    if (mon == &youmonst)
+        return u.ualign.type;
+    struct obj *armh = which_armor(mon, os_armh);
+    if (armh && armh->otyp == HELM_OF_OPPOSITE_ALIGNMENT)
+        return mon->maligntyp_temp;
+    return mon->maligntyp;
 }
 
 /*
@@ -1989,20 +1947,8 @@ peace_minded(const struct permonst *ptr)
 void
 set_malign(struct monst *mtmp)
 {
-    schar mal = mtmp->data->maligntyp;
+    schar mal = malign(mtmp);
     boolean coaligned;
-
-    if (mtmp->ispriest || mtmp->isminion) {
-        /* some monsters have individual alignments; check them */
-        if (mtmp->ispriest || (mtmp->isminion && roamer_type(mtmp->data)))
-            mal = CONST_EPRI(mtmp)->shralign;
-        else if (mtmp->isminion)
-            mal = EMIN(mtmp)->min_align;
-        /* unless alignment is none, set mal to -5,0,5 */
-        /* (see align.h for valid aligntyp values) */
-        if (mal != A_NONE)
-            mal *= 5;
-    }
 
     coaligned = (sgn(mal) == sgn(u.ualign.type));
     if (mtmp->data->msound == MS_LEADER) {
@@ -2181,39 +2127,25 @@ bagotricks(struct obj *bag)
 }
 
 
-static void
-restore_shkbill(struct memfile *mf, struct bill_x *b)
-{
-    b->bo_id = mread32(mf);
-    b->price = mread32(mf);
-    b->bquan = mread32(mf);
-    b->useup = mread8(mf);
-}
-
-
-static void
-restore_fcorr(struct memfile *mf, struct fakecorridor *f)
-{
-    f->fx = mread8(mf);
-    f->fy = mread8(mf);
-    f->ftyp = mread8(mf);
-}
-
-
 struct monst *
 restore_mon(struct memfile *mf, struct level *l)
 {
     struct monst *mon;
-    short namelen, xtyp;
+    short namelth, xtyp;
     int idx, i;
     unsigned int mflags;
     struct eshk *shk;
 
     mfmagic_check(mf, MON_MAGIC);
 
-    namelen = mread16(mf);
+    /* SAVEBREAK: remove this logic and further legacy checks */
+    namelth = mread16(mf);
     xtyp = mread16(mf);
-    mon = newmonst(xtyp, namelen);
+    boolean legacy = FALSE;
+    if (xtyp <= MX_LAST_LEGACY)
+        legacy = TRUE; /* old save */
+
+    mon = newmonst();
     mon->dlevel = l;
 
     idx = mread32(mf);
@@ -2303,78 +2235,108 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->mdaminc = mread8(mf);
     mon->mac = mread8(mf);
 
-    if (mon->mnamelth)
-        mread(mf, NAME_MUTABLE(mon), mon->mnamelth);
+    /* Legacy saves need special handling */
+    if (legacy) {
+        /* set alignment to whatever the monster usually has -- might be corrected
+           later if mon had epri/emin */
+        mon->maligntyp = (mon->data->maligntyp == A_NONE ? A_NONE :
+                          sgn(mon->data->maligntyp));
+        /* check if initializing mextra is necessary */
+        /* emin is no more since what it used to store is now in the main monst */
+        if (namelth || (xtyp != MX_NONE_LEGACY && xtyp != MX_EMIN_LEGACY))
+            mx_new(mon);
 
-    switch (mon->mxtyp) {
-    case MX_EPRI:
-        EPRI(mon)->shralign = mread8(mf);
-        EPRI(mon)->shroom = mread8(mf);
-        EPRI(mon)->shrpos.x = mread8(mf);
-        EPRI(mon)->shrpos.y = mread8(mf);
-        EPRI(mon)->shrlevel.dnum = mread8(mf);
-        EPRI(mon)->shrlevel.dlevel = mread8(mf);
-        break;
+        struct mextra *mx = mon->mextra;
+        char namebuf[namelth];
+        if (namelth) {
+            mread(mf, namebuf, namelth);
+            christen_monst(mon, namebuf);
+        }
 
-    case MX_EMIN:
-        EMIN(mon)->min_align = mread8(mf);
-        break;
-
-    case MX_EDOG:
-        EDOG(mon)->droptime = mread32(mf);
-        EDOG(mon)->dropdist = mread32(mf);
-        EDOG(mon)->apport = mread32(mf);
-        EDOG(mon)->whistletime = mread32(mf);
-        EDOG(mon)->hungrytime = mread32(mf);
-        EDOG(mon)->abuse = mread32(mf);
-        EDOG(mon)->revivals = mread32(mf);
-        EDOG(mon)->mhpmax_penalty = mread32(mf);
-        EDOG(mon)->save_compat_bytes[0] = mread8(mf);
-        EDOG(mon)->save_compat_bytes[1] = mread8(mf);
-        EDOG(mon)->killed_by_u = mread8(mf);
-        break;
-
-    case MX_ESHK:
-        shk = ESHK(mon);
-        shk->bill_inactive = mread32(mf);
-        shk->shk.x = mread8(mf);
-        shk->shk.y = mread8(mf);
-        shk->shd.x = mread8(mf);
-        shk->shd.y = mread8(mf);
-        shk->robbed = mread32(mf);
-        shk->credit = mread32(mf);
-        shk->debit = mread32(mf);
-        shk->loan = mread32(mf);
-        shk->shoptype = mread16(mf);
-        shk->billct = mread16(mf);
-        shk->visitct = mread16(mf);
-        shk->shoplevel.dnum = mread8(mf);
-        shk->shoplevel.dlevel = mread8(mf);
-        shk->shoproom = mread8(mf);
-        shk->following = mread8(mf);
-        shk->surcharge = mread8(mf);
-        mread(mf, shk->customer, sizeof (shk->customer));
-        mread(mf, shk->shknam, sizeof (shk->shknam));
-        for (i = 0; i < BILLSZ; i++)
-            restore_shkbill(mf, &shk->bill[i]);
-        break;
-
-    case MX_EGD:
-        EGD(mon)->fcbeg = mread32(mf);
-        EGD(mon)->fcend = mread32(mf);
-        EGD(mon)->vroom = mread32(mf);
-        EGD(mon)->gdx = mread8(mf);
-        EGD(mon)->gdy = mread8(mf);
-        EGD(mon)->ogx = mread8(mf);
-        EGD(mon)->ogy = mread8(mf);
-        EGD(mon)->gdlevel.dnum = mread8(mf);
-        EGD(mon)->gdlevel.dlevel = mread8(mf);
-        EGD(mon)->warncnt = mread8(mf);
-        EGD(mon)->gddone = mread8(mf);
-        for (i = 0; i < FCSIZ; i++)
-            restore_fcorr(mf, &EGD(mon)->fakecorr[i]);
-        break;
-    }
+        switch (xtyp) {
+        case MX_EPRI_LEGACY:
+            mx_epri_new(mon);
+            mon->maligntyp = mread8(mf); /* moved from EPRI(mon)->shralign */
+            mx->epri->shroom = mread8(mf);
+            mx->epri->shrpos.x = mread8(mf);
+            mx->epri->shrpos.y = mread8(mf);
+            mx->epri->shrlevel.dnum = mread8(mf);
+            mx->epri->shrlevel.dlevel = mread8(mf);
+            break;
+        case MX_EMIN_LEGACY:
+            mx_epri_new(mon);
+            mx->epri->shroom = 0;
+            mon->maligntyp = mread8(mf);
+            break;
+        case MX_EDOG_LEGACY:
+            mx_edog_new(mon);
+            mx->edog->droptime = mread32(mf);
+            mx->edog->dropdist = mread32(mf);
+            mx->edog->apport = mread32(mf);
+            mx->edog->whistletime = mread32(mf);
+            mx->edog->hungrytime = mread32(mf);
+            mx->edog->abuse = mread32(mf);
+            mx->edog->revivals = mread32(mf);
+            mx->edog->mhpmax_penalty = mread32(mf);
+            mread16(mf); /* dummy data */
+            mx->edog->killed_by_u = mread8(mf);
+            break;
+        case MX_ESHK_LEGACY:
+            mx_eshk_new(mon);
+            shk = mx_eshk(mon);
+            shk->bill_inactive = mread32(mf);
+            shk->shk.x = mread8(mf);
+            shk->shk.y = mread8(mf);
+            shk->shd.x = mread8(mf);
+            shk->shd.y = mread8(mf);
+            shk->robbed = mread32(mf);
+            shk->credit = mread32(mf);
+            shk->debit = mread32(mf);
+            shk->loan = mread32(mf);
+            shk->shoptype = mread16(mf);
+            shk->billct = mread16(mf);
+            shk->visitct = mread16(mf);
+            shk->shoplevel.dnum = mread8(mf);
+            shk->shoplevel.dlevel = mread8(mf);
+            shk->shoproom = mread8(mf);
+            shk->following = mread8(mf);
+            shk->surcharge = mread8(mf);
+            mread(mf, shk->customer, sizeof (shk->customer));
+            char shknam[PL_NSIZ];
+            /* unlike ordinary monster names, shopkeepers always
+               allocated PL_NSIZ bytes of memory */
+            mread(mf, shknam, PL_NSIZ);
+            christen_monst(mon, shknam);
+            for (i = 0; i < BILLSZ; i++)
+                restore_shkbill(mf, &shk->bill[i]);
+            break;
+        case MX_EGD_LEGACY:
+            mx_egd_new(mon);
+            mx->egd->fcbeg = mread32(mf);
+            mx->egd->fcend = mread32(mf);
+            mx->egd->vroom = mread32(mf);
+            mx->egd->gdx = mread8(mf);
+            mx->egd->gdy = mread8(mf);
+            mx->egd->ogx = mread8(mf);
+            mx->egd->ogy = mread8(mf);
+            mx->egd->gdlevel.dnum = mread8(mf);
+            mx->egd->gdlevel.dlevel = mread8(mf);
+            mx->egd->warncnt = mread8(mf);
+            mx->egd->gddone = mread8(mf);
+            for (i = 0; i < FCSIZ; i++)
+                restore_fcorr(mf, &(mx->egd)->fakecorr[i]);
+            break;
+        }
+        /* and in case monster is wearing opposite alignment... we must give a
+           deterministic answer, so always set to lawful (or chaotic if normally
+           lawful) */
+        mon->maligntyp_temp = (mon->maligntyp == A_LAWFUL ? A_CHAOTIC : A_LAWFUL);
+        /* add new elements to mflags */
+        mflags &= (0xffffff & ~(2|4|8|16));
+        mflags |= (Align2asave(mon->maligntyp) << 1);
+        mflags |= (Align2asave(mon->maligntyp_temp) << 3);
+    } else if (xtyp == MX_YES)
+        restore_mextra(mf, mon);
 
     /* 8 free bits... */
     mon->usicked = (mflags >> 23) & 1;
@@ -2394,37 +2356,14 @@ restore_mon(struct memfile *mf, struct level *l)
     mon->mtrapped = (mflags >> 7) & 1;
     mon->mleashed = (mflags >> 6) & 1;
     mon->msuspicious = (mflags >> 5) & 1;
-    mon->isshk = (mflags >> 4) & 1;
-    mon->isminion = (mflags >> 3) & 1;
-    mon->isgd = (mflags >> 2) & 1;
-    mon->ispriest = (mflags >> 1) & 1;
+    mon->maligntyp_temp = Asave2align((mflags >> 3) & 3);
+    mon->maligntyp = Asave2align((mflags >> 1) & 3);
     mon->iswiz = (mflags >> 0) & 1;
 
     /* turnstate has a fixed value on save */
     mon->deadmonster = 0;
 
     return mon;
-}
-
-
-static void
-save_shkbill(struct memfile *mf, const struct bill_x *b)
-{
-    /* no mtag needed; saved as part of a particular shk's data */
-    mwrite32(mf, b->bo_id);
-    mwrite32(mf, b->price);
-    mwrite32(mf, b->bquan);
-    mwrite8(mf, b->useup);
-}
-
-
-static void
-save_fcorr(struct memfile *mf, const struct fakecorridor *f)
-{
-    /* no mtag needed; saved as part of a particular guard's data */
-    mwrite8(mf, f->fx);
-    mwrite8(mf, f->fy);
-    mwrite8(mf, f->ftyp);
 }
 
 
@@ -2437,9 +2376,8 @@ save_fcorr(struct memfile *mf, const struct fakecorridor *f)
 void
 save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
 {
-    int idx, i;
+    int idx;
     unsigned int mflags;
-    const struct eshk *shk;
 
     if (mon->m_id == TEMPORARY_IDENT) {
         impossible("temporary monster encountered in save code!");
@@ -2474,8 +2412,9 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mfmagic_set(mf, MON_MAGIC);
     mtag(mf, mon->m_id, MTAG_MON);
 
-    mwrite16(mf, mon->mnamelth);
-    mwrite16(mf, mon->mxtyp);
+    /* SAVEBREAK: dummy data */
+    mwrite16(mf, 0);
+    mwrite16(mf, mon->mextra ? MX_YES : MX_NO);
     mwrite32(mf, idx);
     mwrite32(mf, mon->m_id);
     /* When monsters regenerate HP, we can interpret the bottom two bytes of
@@ -2533,9 +2472,10 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
         (mon->mflee << 11) | (mon->mcanmove << 10) |
         (mon->msleeping << 9) | (mon->mpeaceful << 8) |
         (mon->mtrapped << 7) | (mon->mleashed << 6) |
-        (mon->msuspicious << 5) | (mon->isshk << 4) |
-        (mon->isminion << 3) | (mon->isgd << 2) |
-        (mon->ispriest << 1) | (mon->iswiz << 0);
+        (mon->msuspicious << 5) |
+        (Align2asave(mon->maligntyp) << 3) |
+        (Align2asave(mon->maligntyp) << 1) |
+        (mon->iswiz << 0);
     mwrite32(mf, mflags);
     enum youprop prop;
     /* see monster restoration for why this code looks more complicated than it should be */
@@ -2561,78 +2501,8 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite8(mf, mon->mdaminc);
     mwrite8(mf, mon->mac);
 
-    if (mon->mnamelth)
-        mwrite(mf, NAME(mon), mon->mnamelth);
-
-    switch (mon->mxtyp) {
-    case MX_EPRI:
-        mwrite8(mf, CONST_EPRI(mon)->shralign);
-        mwrite8(mf, CONST_EPRI(mon)->shroom);
-        mwrite8(mf, CONST_EPRI(mon)->shrpos.x);
-        mwrite8(mf, CONST_EPRI(mon)->shrpos.y);
-        mwrite8(mf, CONST_EPRI(mon)->shrlevel.dnum);
-        mwrite8(mf, CONST_EPRI(mon)->shrlevel.dlevel);
-        break;
-
-    case MX_EMIN:
-        mwrite8(mf, CONST_EMIN(mon)->min_align);
-        break;
-
-    case MX_EDOG:
-        mwrite32(mf, CONST_EDOG(mon)->droptime);
-        mwrite32(mf, CONST_EDOG(mon)->dropdist);
-        mwrite32(mf, CONST_EDOG(mon)->apport);
-        mwrite32(mf, CONST_EDOG(mon)->whistletime);
-        mwrite32(mf, CONST_EDOG(mon)->hungrytime);
-        mwrite32(mf, CONST_EDOG(mon)->abuse);
-        mwrite32(mf, CONST_EDOG(mon)->revivals);
-        mwrite32(mf, CONST_EDOG(mon)->mhpmax_penalty);
-        mwrite8(mf, CONST_EDOG(mon)->save_compat_bytes[0]);
-        mwrite8(mf, CONST_EDOG(mon)->save_compat_bytes[1]);
-        mwrite8(mf, CONST_EDOG(mon)->killed_by_u);
-        break;
-
-    case MX_ESHK:
-        shk = CONST_ESHK(mon);
-        mwrite32(mf, shk->bill_inactive);
-        mwrite8(mf, shk->shk.x);
-        mwrite8(mf, shk->shk.y);
-        mwrite8(mf, shk->shd.x);
-        mwrite8(mf, shk->shd.y);
-        mwrite32(mf, shk->robbed);
-        mwrite32(mf, shk->credit);
-        mwrite32(mf, shk->debit);
-        mwrite32(mf, shk->loan);
-        mwrite16(mf, shk->shoptype);
-        mwrite16(mf, shk->billct);
-        mwrite16(mf, shk->visitct);
-        mwrite8(mf, shk->shoplevel.dnum);
-        mwrite8(mf, shk->shoplevel.dlevel);
-        mwrite8(mf, shk->shoproom);
-        mwrite8(mf, shk->following);
-        mwrite8(mf, shk->surcharge);
-        mwrite(mf, shk->customer, sizeof (shk->customer));
-        mwrite(mf, shk->shknam, sizeof (shk->shknam));
-        for (i = 0; i < BILLSZ; i++)
-            save_shkbill(mf, &shk->bill[i]);
-        break;
-
-    case MX_EGD:
-        mwrite32(mf, CONST_EGD(mon)->fcbeg);
-        mwrite32(mf, CONST_EGD(mon)->fcend);
-        mwrite32(mf, CONST_EGD(mon)->vroom);
-        mwrite8(mf, CONST_EGD(mon)->gdx);
-        mwrite8(mf, CONST_EGD(mon)->gdy);
-        mwrite8(mf, CONST_EGD(mon)->ogx);
-        mwrite8(mf, CONST_EGD(mon)->ogy);
-        mwrite8(mf, CONST_EGD(mon)->gdlevel.dnum);
-        mwrite8(mf, CONST_EGD(mon)->gdlevel.dlevel);
-        mwrite8(mf, CONST_EGD(mon)->warncnt);
-        mwrite8(mf, CONST_EGD(mon)->gddone);
-        for (i = 0; i < FCSIZ; i++)
-            save_fcorr(mf, &CONST_EGD(mon)->fakecorr[i]);
-        break;
-    }
+    if (mon->mextra)
+        save_mextra(mf, mon);
 
     /* verify turnstate */
     if (mon->deadmonster)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,9 +51,9 @@ dev_name(void)
         match = FALSE;
         i = rn2(n);
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-            if (!is_mplayer(mtmp->data) || !mtmp->mnamelth)
+            if (!is_mplayer(mtmp->data) || !mx_name(mtmp))
                 continue;
-            if (!strncmp(developers[i], NAME(mtmp), strlen(developers[i]))) {
+            if (!strncmp(developers[i], mx_name(mtmp), strlen(developers[i]))) {
                 match = TRUE;
                 break;
             }
@@ -149,7 +149,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             (special ? rn2_on_rng(30, rng) : 0);
         if (special) {
             get_mplname(mtmp, nam);
-            mtmp = christen_monst(mtmp, nam);
+            christen_monst(mtmp, nam);
             /* that's why they are "stuck" in the endgame :-) */
             mongets(mtmp, FAKE_AMULET_OF_YENDOR, rng);
         }

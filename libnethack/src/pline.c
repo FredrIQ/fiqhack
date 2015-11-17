@@ -1,12 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "epri.h"
-#include "emin.h"
-#include "edog.h"
 
 static void vpline(enum msg_channel msgc, boolean norepeat,
                    const char *, va_list) PRINTFLIKE(3,0);
@@ -240,28 +237,17 @@ mstatusline(struct monst *mon)
     aligntyp alignment;
     const char *info, *monnambuf;
 
-    if (you)
-        alignment = u.ualign.type;
-    else if (mon->ispriest || (mon->isminion && roamer_type(mon->data)))
-        alignment = CONST_EPRI(mon)->shralign;
-    else if (mon->isminion)
-        alignment = EMIN(mon)->min_align;
-    else {
-        alignment = mon->data->maligntyp;
-        alignment =
-            (alignment > 0) ? A_LAWFUL :
-            (alignment == A_NONE) ? A_NONE :
-            (alignment < 0) ? A_CHAOTIC : A_NEUTRAL;
-    }
+    alignment = malign(mon);
 
     info = "";
     if (mon->mtame) {
         info = msgcat(info, ", tame");
         if (wizard) {
             info = msgprintf("%s (%d", info, mon->mtame);
-            if (!mon->isminion)
+            if (!isminion(mon))
                 info = msgprintf("%s; hungry %u; apport %d", info,
-                                 EDOG(mon)->hungrytime, EDOG(mon)->apport);
+                                 mx_edog(mon)->hungrytime,
+                                 mx_edog(mon)->apport);
             info = msgcat(info, ")");
         }
     } else if (mon->mpeaceful)

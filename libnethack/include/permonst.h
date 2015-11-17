@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,14 +8,35 @@
 
 # include "global.h"
 
+/* SAVEBREAK: Cruft from old mextra system. In older save files, the very first thing to be
+   saved was name length (16bit, but interestingly the name was capped at 63) and type of
+   mon->mextra (16bit). The type was compared with the enum below (which didn't have
+   "legacy" all over it) and the game was saved/restored based on it. To account for this,
+   until a savebreak is performed, monst has 16 dummy bits on start, plus 16 bits of
+   "legacy" extype. This is *always* saved as MX_(NO|YES), and if a restore finds anything
+   else, the save file is assumed to follow the old system and is read accordingly. For
+   the next savebreak, extypes_legacy will be removed entirely and a "has mextra" flag will
+   be saved into the mflags part instead.
+   (MX_(NO|YES) determines whether or not a monster has a mextra) */
 enum mon_extypes {
-    MX_NONE = 0,
-    MX_EPRI,
-    MX_EMIN,
-    MX_EDOG,
-    MX_ESHK,
-    MX_EGD
+    MX_NONE_LEGACY = 0,
+    MX_EPRI_LEGACY,
+    MX_EMIN_LEGACY,
+    MX_EDOG_LEGACY,
+    MX_ESHK_LEGACY,
+    MX_EGD_LEGACY,
+    MX_NO,
+    MX_YES,
+    MX_LAST_LEGACY = MX_EGD_LEGACY,
 };
+
+/* new mxflags. EMIN is no more. */
+#define MX_NONE 0x00
+#define MX_EDOG 0x01
+#define MX_EPRI 0x02
+#define MX_ESHK 0x04
+#define MX_EGD  0x08
+#define MX_NAME 0x10
 
 /* This structure covers all attack forms.
  * aatyp is the gross attack type (eg. claw, bite, breath, ...)
@@ -88,4 +109,3 @@ extern const struct permonst mons[];    /* the master list of monster types */
            generated randomly and cannot be polymorphed into */
 
 #endif /* PERMONST_H */
-

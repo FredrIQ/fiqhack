@@ -1,12 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* shknam.c -- initialize a shop */
 
 #include "hack.h"
-#include "eshk.h"
 
 static void mkshobj_at(const struct shclass *shp, struct level *lev, int sx,
                        int sy);
@@ -280,9 +279,9 @@ nameshk(struct monst *shk, const char *const *nlp, struct level *lev)
 
             /* is name already in use on this level? */
             for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon) {
-                if (DEADMONSTER(mtmp) || (mtmp == shk) || !mtmp->isshk)
+                if (DEADMONSTER(mtmp) || (mtmp == shk) || !mx_eshk(mtmp))
                     continue;
-                if (strcmp(ESHK(mtmp)->shknam, shname))
+                if (mx_name(mtmp) && strcmp(mx_name(mtmp), shname))
                     continue;
                 break;
             }
@@ -290,8 +289,7 @@ nameshk(struct monst *shk, const char *const *nlp, struct level *lev)
                 break;  /* new name */
         }
     }
-    strncpy(ESHK(shk)->shknam, shname, PL_NSIZ);
-    ESHK(shk)->shknam[PL_NSIZ - 1] = 0;
+    christen_monst(shk, shname);
 }
 
 /* create a new shopkeeper in the given room; uses level creation RNG */
@@ -343,25 +341,25 @@ shkinit(const struct shclass *shp, struct level *lev, struct mkroom *sroom)
     /* now initialize the shopkeeper monster structure */
     if (!(shk = makemon(&mons[PM_SHOPKEEPER], lev, sx, sy, MM_ALLLEVRNG)))
         return -1;
-    shk->isshk = 1;
+    mx_eshk_new(shk);
     msethostility(shk, FALSE, TRUE);
     shk->msleeping = 0;
     shk->mtrapseen = ~0;        /* we know all the traps already */
-    ESHK(shk)->shoproom = (sroom - lev->rooms) + ROOMOFFSET;
+    mx_eshk(shk)->shoproom = (sroom - lev->rooms) + ROOMOFFSET;
     sroom->resident = shk;
-    ESHK(shk)->shoptype = sroom->rtype;
-    assign_level(&(ESHK(shk)->shoplevel), &lev->z);
-    ESHK(shk)->shd = lev->doors[sh];
-    ESHK(shk)->shk.x = sx;
-    ESHK(shk)->shk.y = sy;
-    ESHK(shk)->robbed = 0L;
-    ESHK(shk)->credit = 0L;
-    ESHK(shk)->debit = 0L;
-    ESHK(shk)->loan = 0L;
-    ESHK(shk)->visitct = 0;
-    ESHK(shk)->following = 0;
-    ESHK(shk)->billct = 0;
-    ESHK(shk)->bill_inactive = FALSE;
+    mx_eshk(shk)->shoptype = sroom->rtype;
+    assign_level(&(mx_eshk(shk)->shoplevel), &lev->z);
+    mx_eshk(shk)->shd = lev->doors[sh];
+    mx_eshk(shk)->shk.x = sx;
+    mx_eshk(shk)->shk.y = sy;
+    mx_eshk(shk)->robbed = 0L;
+    mx_eshk(shk)->credit = 0L;
+    mx_eshk(shk)->debit = 0L;
+    mx_eshk(shk)->loan = 0L;
+    mx_eshk(shk)->visitct = 0;
+    mx_eshk(shk)->following = 0;
+    mx_eshk(shk)->billct = 0;
+    mx_eshk(shk)->bill_inactive = FALSE;
 
     /* initial capital */
     mkmonmoney(shk, 1030L + 30L * mklev_rn2(100, lev), rng_for_level(&lev->z));
@@ -449,7 +447,7 @@ stock_room(int shp_indx, struct level *lev, struct mkroom *sroom)
 boolean
 saleable(struct monst *shkp, struct obj *obj)
 {
-    int i, shp_indx = ESHK(shkp)->shoptype - SHOPBASE;
+    int i, shp_indx = mx_eshk(shkp)->shoptype - SHOPBASE;
     const struct shclass *shp = &shtypes[shp_indx];
 
     if (shp->symb == RANDOM_CLASS)
@@ -479,4 +477,3 @@ get_shop_item(int type, enum rng rng)
 }
 
 /*shknam.c*/
-

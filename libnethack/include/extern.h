@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,11 +24,13 @@
 
 /* forward definitions of structures */
 struct attack;
+struct bill_x;
 struct damage;
 struct def_skill;
 struct distmap_state;
 struct d_level;
 struct engr;
+struct fakecorridor;
 struct flag;
 struct level;
 struct memfile;
@@ -344,7 +346,6 @@ extern void heal_legs(struct monst *, int);
 
 /* ### do_name.c ### */
 
-extern struct monst *christen_monst(struct monst *, const char *);
 extern int do_oname(const struct nh_cmd_arg *);
 extern int do_tname(const struct nh_cmd_arg *);
 extern int do_mname(const struct nh_cmd_arg *);
@@ -829,7 +830,8 @@ extern void log_game_state(void);
 
 /* ### makemon.c ### */
 
-extern struct monst *newmonst(int extyp, int namelen);
+extern struct monst *newmonst(void);
+extern void dealloc_monst(struct monst *);
 extern boolean is_home_elemental(const struct d_level *dlev,
                                  const struct permonst *);
 extern struct monst *clone_mon(struct monst *, xchar, xchar);
@@ -846,6 +848,7 @@ extern const struct permonst *grow_up(struct monst *, struct monst *);
 extern int mongets(struct monst *, int, enum rng);
 extern int golemhp(int);
 extern boolean peace_minded(const struct permonst *);
+extern aligntyp malign(const struct monst *);
 extern void set_malign(struct monst *);
 extern void set_mimic_sym(struct monst *mtmp, struct level *lev, enum rng rng);
 extern int mbirth_limit(int);
@@ -886,6 +889,27 @@ extern void mfmagic_check(struct memfile *mf, int32_t magic);
 extern void mfmagic_set(struct memfile *mf, int32_t magic);
 extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
                       const char **difference_reason);
+
+/* ### mextra.c ### */
+
+extern void mx_new(struct monst *);
+extern void mx_free(struct monst *);
+extern void mx_possiblyfree(struct monst *);
+extern char *mx_name(const struct monst *);
+# define GEN_MEXTRA_PROT(nmx)                                   \
+    extern struct nmx *mx_##nmx(const struct monst *);          \
+    extern void mx_##nmx##_new(struct monst *);                 \
+    extern void mx_##nmx##_free(struct monst *);
+GEN_MEXTRA_PROT(edog)
+GEN_MEXTRA_PROT(epri)
+GEN_MEXTRA_PROT(eshk)
+GEN_MEXTRA_PROT(egd)
+# undef GEN_MEXTRA_PROT
+extern void christen_monst(struct monst *, const char *);
+extern void restore_fcorr(struct memfile *, struct fakecorridor *);
+extern void restore_shkbill(struct memfile *, struct bill_x *);
+extern void restore_mextra(struct memfile *, struct monst *);
+extern void save_mextra(struct memfile *, const struct monst *);
 
 /* ### messages.c ### */
 
@@ -1550,7 +1574,6 @@ extern int32_t save_decode_32(int32_t, int, int);
 
 extern long money2mon(struct monst *, long);
 extern void money2u(struct monst *, long);
-extern const char *shkname(const struct monst *);
 extern void shkgone(struct monst *);
 extern void set_residency(struct monst *, boolean);
 extern void replshk(struct monst *, struct monst *);

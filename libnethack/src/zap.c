@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -495,7 +495,7 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             if (yours) {
                 wakeup(mtmp, FALSE);
                 m_respond(mtmp);
-                if (mtmp->isshk && !*u.ushops)
+                if (mx_eshk(mtmp) && !*u.ushops)
                     hot_pursuit(mtmp);
             } else
                 mtmp->msleeping = 0;
@@ -808,7 +808,7 @@ revive(struct obj *obj)
                 xy.x = x;
                 xy.y = y;
                 mtmp = montraits(obj, &xy);
-                if (mtmp && mtmp->mtame && !mtmp->isminion)
+                if (mtmp && mtmp->mtame && !isminion(mtmp))
                     wary_dog(mtmp, TRUE);
             } else
                 mtmp = makemon(&mons[montype], level, x, y,
@@ -840,7 +840,7 @@ revive(struct obj *obj)
                 }
                 /* Monster retains its name */
                 if (obj->onamelth)
-                    mtmp = christen_monst(mtmp, ONAME(obj));
+                    christen_monst(mtmp, ONAME(obj));
                 /* flag the quest leader as alive. */
                 if (mtmp->data->msound == MS_LEADER ||
                     mtmp->m_id == u.quest_status.leader_m_id) {
@@ -4054,9 +4054,9 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
             seemimic(mon);
         if (type >= 0) {
             setmangry(mon);
-            if (mon->ispriest && *in_rooms(level, mon->mx, mon->my, TEMPLE))
+            if (ispriest(mon) && *in_rooms(level, mon->mx, mon->my, TEMPLE))
                 ghod_hitsu(mon);
-            if (mon->isshk && !*u.ushops)
+            if (mx_eshk(mon) && !*u.ushops)
                 hot_pursuit(mon);
         }
     }

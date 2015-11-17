@@ -1,10 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "edog.h"
+
 /* #define DEBUG *//* turn on for diagnostics */
 
 static boolean rm_waslit(void);
@@ -675,7 +675,7 @@ digactualhole(int x, int y, struct monst *mon, int ttyp)
                     } else {
                         get_level(&tolevel, depth(m_mz(mon)) + 1);
                     }
-                    if (target->isshk && (yours || !flags.mon_moving))
+                    if (mx_eshk(target) && (yours || !flags.mon_moving))
                         make_angry_shk(target, 0, 0);
                     if (yours || canseemon(target))
                         pline(msgc_monneutral,

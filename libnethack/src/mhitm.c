@@ -1,12 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "artifact.h"
-#include "edog.h"
-
 
 static boolean vis, far_noise;
 static long noisetime;
@@ -859,7 +857,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
            G_NOCORPSE monster, eg, undead. DGST monsters don't die from undead
            corpses */
         num = monsndx(mdef->data);
-        if (magr->mtame && !magr->isminion &&
+        if (magr->mtame && !isminion(magr) &&
             !(mvitals[num].mvflags & G_NOCORPSE)) {
             struct obj *virtualcorpse =
                 mksobj(level, CORPSE, FALSE, FALSE, rng_main);
@@ -875,7 +873,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 magr->meating = (magr->meating + 3) / 4;
             if (nutrit > 1)
                 nutrit /= 2;
-            EDOG(magr)->hungrytime += nutrit;
+            mx_edog(magr)->hungrytime += nutrit;
         }
         break;
     case AD_STUN:
@@ -1356,8 +1354,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                   "%s brain is eaten!", s_suffix(Monnam(mdef)));
 
         tmp += rnd(10); /* fakery, since monsters lack INT scores */
-        if (magr->mtame && !magr->isminion) {
-            EDOG(magr)->hungrytime += rnd(60);
+        if (magr->mtame && !isminion(magr)) {
+            mx_edog(magr)->hungrytime += rnd(60);
             set_property(mdef, CONFUSION, dice(3, 8), FALSE);
         }
         if (tmp >= mdef->mhp && vis)
@@ -1379,7 +1377,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         case 19:
         case 18:
         case 17:
-            if (!resist(mdef, 0, 0)) {
+            if (!resist(mdef, 0, 0) && !resists_magm(mdef)) {
                 monkilled(magr, mdef, "", AD_DETH);
                 if (DEADMONSTER(mdef))            /* did it lifesave? */
                     return MM_DEF_DIED;
@@ -1409,24 +1407,27 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_PEST:
-        if (vis)
-            pline(combat_msgc(magr, mdef, cr_hit),
-                  "%s reaches out, and %s looks rather ill.", Monnam(magr),
-                  mon_nam(mdef));
-        if ((mdef->mhpmax > 3) && !resist(mdef, 0, NOTELL))
-            mdef->mhpmax /= 2;
-        if ((mdef->mhp > 2) && !resist(mdef, 0, NOTELL))
-            mdef->mhp /= 2;
-        if (mdef->mhp > mdef->mhpmax)
-            mdef->mhp = mdef->mhpmax;
+        if (resists_sick(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s reaches out, but %s doesn't look ill!", Monnam(magr),
+                      mon_nam(mdef));
+        } else {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "%s reaches out, and %s looks rather ill.", Monnam(magr),
+                      mon_nam(mdef));
+            make_sick(mdef, 20 + rn2_on_rng(acurr(mdef, A_CON), rng_main),
+                      magr->data->mname, TRUE, SICK_NONVOMITABLE);
+        }
         break;
     case AD_FAMN:
         if (vis)
             pline(combat_msgc(magr, mdef, cr_hit),
                   "%s reaches out, and %s body shrivels.",
                   Monnam(magr), s_suffix(mon_nam(mdef)));
-        if (mdef->mtame && !mdef->isminion)
-            EDOG(mdef)->hungrytime -= rn1(120, 120);
+        if (mdef->mtame && !isminion(mdef))
+            mx_edog(mdef)->hungrytime -= rn1(120, 120);
         else {
             tmp += rnd(10);     /* lacks a food rating */
             if (tmp >= mdef->mhp && vis)

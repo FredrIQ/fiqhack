@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -477,7 +477,7 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
     if (statue->oxlth && statue->oattached == OATTACHED_MONST) {
         cc.x = x, cc.y = y;
         mon = montraits(statue, &cc);
-        if (mon && mon->mtame && !mon->isminion)
+        if (mon && mon->mtame && !isminion(mon))
             wary_dog(mon, TRUE);
     } else {
         /* statue of any golem hit with stone-to-flesh becomes flesh golem */
@@ -532,7 +532,7 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
         mon->female = TRUE;
     /* if statue has been named, give same name to the monster */
     if (statue->onamelth)
-        mon = christen_monst(mon, ONAME(statue));
+        christen_monst(mon, ONAME(statue));
     /* transfer any statue contents to monster's inventory */
     while ((item = statue->cobj) != 0) {
         obj_extract_self(item);
@@ -942,14 +942,14 @@ dotrap(struct trap *trap, unsigned trflags)
                     verbbuf = msgprintf(
                         "and %s fall",
                         x_monnam(u.usteed,
-                                 u.usteed->mnamelth ? ARTICLE_NONE :
+                                 mx_name(u.usteed) ? ARTICLE_NONE :
                                  ARTICLE_THE, NULL, SUPPRESS_SADDLE,
                                  FALSE));
                 else
                     verbbuf = msgcat(
                         "lead ",
                         x_monnam(u.usteed,
-                                 u.usteed->mnamelth ? ARTICLE_NONE :
+                                 mx_name(u.usteed) ? ARTICLE_NONE :
                                  ARTICLE_THE, "poor", SUPPRESS_SADDLE,
                                  FALSE));
             } else
@@ -973,7 +973,7 @@ dotrap(struct trap *trap, unsigned trflags)
                       msgupcasefirst(
                           x_monnam(
                               u.usteed,
-                              u.usteed->mnamelth ? ARTICLE_NONE : ARTICLE_THE,
+                              mx_name(u.usteed) ? ARTICLE_NONE : ARTICLE_THE,
                               "poor", SUPPRESS_SADDLE, FALSE)), predicament);
             } else
                 pline(msgc_nonmonbad, "You land %s!", predicament);
@@ -1056,9 +1056,8 @@ dotrap(struct trap *trap, unsigned trflags)
                 verbbuf = msgcat(
                     "lead ",
                     x_monnam(u.usteed,
-                             u.usteed->
-                             mnamelth ? ARTICLE_NONE : ARTICLE_THE, "poor",
-                             SUPPRESS_SADDLE, FALSE));
+                             mx_name(u.usteed) ? ARTICLE_NONE : ARTICLE_THE,
+                             "poor", SUPPRESS_SADDLE, FALSE));
             else
                 verbbuf = Levitation ? (const char *)"float" :
                     locomotion(youmonst.data, "stumble");
@@ -1161,9 +1160,8 @@ dotrap(struct trap *trap, unsigned trflags)
             verbbuf = msgcat(
                 "lead ",
                 x_monnam(u.usteed,
-                         u.usteed->
-                         mnamelth ? ARTICLE_NONE : ARTICLE_THE, NULL,
-                         SUPPRESS_SADDLE, FALSE));
+                         mx_name(u.usteed)  ? ARTICLE_NONE : ARTICLE_THE,
+                         NULL, SUPPRESS_SADDLE, FALSE));
         else
             verbbuf =
                 Levitation ? (const char *)"float" :
@@ -1349,9 +1347,9 @@ steedintrap(struct trap *trap, struct obj *otmp)
                 } else {
                     pline(msgc_consequence,
                           "You have to adjust yourself in the saddle on %s.",
-                          x_monnam(mtmp,
-                                   mtmp->mnamelth ? ARTICLE_NONE : ARTICLE_A,
-                                   NULL, SUPPRESS_SADDLE, FALSE));
+                          x_monnam(mtmp, mx_name(mtmp) ?
+                                   ARTICLE_NONE : ARTICLE_A, NULL,
+                                   SUPPRESS_SADDLE, FALSE));
                 }
 
             }

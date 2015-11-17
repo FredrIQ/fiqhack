@@ -1,11 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "mfndpos.h"
-#include "edog.h"
 #include <ctype.h>
 
 static boolean restrap(struct monst *);
@@ -171,7 +170,7 @@ static const short cham_to_pm[] = {
 };
 
 /* for deciding whether corpse or statue will carry along full monster data */
-#define KEEPTRAITS(mon) ((mon)->isshk || (mon)->mtame ||                \
+#define KEEPTRAITS(mon) (mx_eshk(mon) || (mon)->mtame ||                \
                          ((mon)->data->geno & G_UNIQ) ||                \
                          is_reviver((mon)->data) ||                     \
                          /* normally leader the will be unique, */      \
@@ -195,6 +194,7 @@ make_corpse(struct monst *mtmp)
     struct obj *obj = NULL;
     int x = mtmp->mx, y = mtmp->my;
     int mndx = monsndx(mdat);
+    boolean noname = FALSE;
 
     switch (mndx) {
     case PM_GRAY_DRAGON:
@@ -262,20 +262,20 @@ make_corpse(struct monst *mtmp)
         num = dice(2, 6);
         while (num--)
             obj = mksobj_at(IRON_CHAIN, level, x, y, TRUE, FALSE, rng_main);
-        mtmp->mnamelth = 0;
+        noname = TRUE;
         break;
     case PM_GLASS_GOLEM:
         num = dice(2, 4);       /* very low chance of creating all glass gems */
         while (num--)
             obj = mksobj_at((LAST_GEM + rnd(9)), level, x, y, TRUE, FALSE,
                             rng_main);
-        mtmp->mnamelth = 0;
+        noname = TRUE;
         break;
     case PM_CLAY_GOLEM:
         obj = mksobj_at(ROCK, level, x, y, FALSE, FALSE, rng_main);
         obj->quan = (long)(rn2(20) + 50);
         obj->owt = weight(obj);
-        mtmp->mnamelth = 0;
+        noname = TRUE;
         break;
     case PM_STONE_GOLEM:
         obj = mkcorpstat(STATUE, NULL, mdat, level, x, y, FALSE, rng_main);
@@ -285,24 +285,24 @@ make_corpse(struct monst *mtmp)
         while (num--) {
             obj = mksobj_at(QUARTERSTAFF, level, x, y, TRUE, FALSE, rng_main);
         }
-        mtmp->mnamelth = 0;
+        noname = TRUE;
         break;
     case PM_LEATHER_GOLEM:
         num = dice(2, 4);
         while (num--)
             obj = mksobj_at(LEATHER_ARMOR, level, x, y, TRUE, FALSE, rng_main);
-        mtmp->mnamelth = 0;
+        noname = TRUE;
         break;
     case PM_GOLD_GOLEM:
         /* Good luck gives more coins */
         obj = mkgold((long)(200 - rnl(101)), level, x, y, rng_main);
-        mtmp->mnamelth = 0;
+        noname = TRUE;
         break;
     case PM_PAPER_GOLEM:
         num = rnd(4);
         while (num--)
             obj = mksobj_at(SCR_BLANK_PAPER, level, x, y, TRUE, FALSE, rng_main);
-        mtmp->mnamelth = 0;
+        noname = TRUE;
         break;
     default_1:
     default:
@@ -319,8 +319,8 @@ make_corpse(struct monst *mtmp)
     if (flags.bypasses)
         bypass_obj(obj);
 
-    if (mtmp->mnamelth)
-        obj = oname(obj, NAME(mtmp));
+    if (!noname && mx_name(mtmp))
+        obj = oname(obj, mx_name(mtmp));
 
     /* Avoid "It was hidden under a green mold corpse!" during Blind combat. An
        unseen monster referred to as "it" could be killed and leave a corpse.
@@ -956,7 +956,7 @@ mpickgold(struct monst *mtmp)
         obj_extract_self(gold);
         add_to_minv(mtmp, gold);
         if (cansee(mtmp->mx, mtmp->my)) {
-            if (!mtmp->isgd)
+            if (!mx_egd(mtmp))
                 pline(mtmp->mtame ? msgc_petneutral : msgc_monneutral,
                       "%s picks up some %s.", Monnam(mtmp),
                       mat_idx == GOLD ? "gold" : "money");
@@ -974,7 +974,7 @@ mpickstuff(struct monst *mon, boolean autopickup)
     struct obj *otmp;
 
     /* prevent shopkeepers from leaving the door of their shop */
-    if (mon->isshk && inhishop(mon))
+    if (mx_eshk(mon) && inhishop(mon))
         return FALSE;
 
     /* can't pickup objects if we are levitating */
@@ -1290,7 +1290,7 @@ can_carry(struct monst *mtmp, struct obj *otmp)
     /* Steeds don't pick up stuff (to avoid shop abuse) */
     if (mtmp == u.usteed)
         return FALSE;
-    if (mtmp->isshk)
+    if (mx_eshk(mtmp))
         return TRUE;    /* no limit */
     if (mtmp->mpeaceful && !mtmp->mtame)
         return FALSE;
@@ -1806,7 +1806,7 @@ replmon(struct monst *mtmp, struct monst *mtmp2)
         u.ustuck = mtmp2;
     if (u.usteed == mtmp)
         u.usteed = mtmp2;
-    if (mtmp2->isshk)
+    if (mx_eshk(mtmp2))
         replshk(mtmp, mtmp2);
 
     if (nmtmp == mtmp)
@@ -1860,7 +1860,7 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
     if (isok(mtmp->mx, mtmp->my))
         fill_pit(mtmp->dlevel, mtmp->mx, mtmp->my);
 
-    if (mtmp->isshk)
+    if (mx_eshk(mtmp))
         shkgone(mtmp);
     if (mtmp->wormno)
         wormgone(mtmp);
@@ -1920,7 +1920,7 @@ lifesaved_monster(struct monst *mtmp)
         m_useup(mtmp, lifesave);
         mtmp->mcanmove = 1;
         mtmp->mfrozen = 0;
-        if (mtmp->mtame && !mtmp->isminion) {
+        if (mtmp->mtame && !isminion(mtmp)) {
             wary_dog(mtmp, FALSE);
         }
         if (mtmp->mhpmax <= 0)
@@ -1944,9 +1944,10 @@ mondead(struct monst *mtmp)
 {
     const struct permonst *mptr;
     int tmp;
+    /* BUG: this doesn't work, figure out how to best fix it */
     boolean player_aware = cansuspectmon(mtmp);
 
-    if (mtmp->isgd) {
+    if (mx_egd(mtmp)) {
         /* if we're going to abort the death, it *must* be before the m_detach
            or there will be relmon problems later */
         if (!grddead(mtmp))
@@ -2198,8 +2199,8 @@ monstone(struct monst *mdef)
            monster traits won't retain any stale item-conferred attributes */
         otmp = mkcorpstat(STATUE, KEEPTRAITS(mdef) ? mdef : 0, mdef->data,
                           level, x, y, FALSE, rng_main);
-        if (mdef->mnamelth)
-            otmp = oname(otmp, NAME(mdef));
+        if (mx_name(mdef))
+            otmp = oname(otmp, mx_name(mdef));
         while ((obj = oldminvent) != 0) {
             oldminvent = obj->nobj;
             add_to_container(otmp, obj);
@@ -2340,8 +2341,8 @@ xkilled(struct monst *mtmp, int dest)
                this without adding a special case (for canclassifymon but unable
                to hear). */
             pline_implied(msgc_petwarning, "You %s %s!", verb,
-                          x_monnam(mtmp, mtmp->mnamelth ? ARTICLE_NONE :
-                                   ARTICLE_THE, "poor", mtmp->mnamelth ?
+                          x_monnam(mtmp, mx_name(mtmp) ? ARTICLE_NONE :
+                                   ARTICLE_THE, "poor", mx_name(mtmp) ?
                                    SUPPRESS_SADDLE : 0, FALSE));
         else
             pline(msgc_kill, "You %s %s!", verb, mon_nam(mtmp));
@@ -2358,8 +2359,8 @@ xkilled(struct monst *mtmp, int dest)
                          */
 
     /* your pet knows who just killed it...watch out */
-    if (mtmp->mtame && !mtmp->isminion)
-        EDOG(mtmp)->killed_by_u = 1;
+    if (mtmp->mtame && !isminion(mtmp))
+        mx_edog(mtmp)->killed_by_u = 1;
 
     /* dispose of monster and make cadaver */
     if (stoned)
@@ -2469,7 +2470,7 @@ cleanup:
             pline(msgc_alignbad, "That was probably a bad idea...");
         else
             pline(msgc_alignbad, "Whoopsie-daisy!");
-    } else if (mtmp->ispriest) {
+    } else if (ispriest(mtmp)) {
         adjalign((p_coaligned(mtmp)) ? -2 : 2);
         /* cancel divine protection for killing your priest */
         if (p_coaligned(mtmp))
@@ -2870,7 +2871,7 @@ setmangry(struct monst *mtmp)
         return;
     msethostility(mtmp, TRUE, FALSE);
 
-    if (mtmp->ispriest) {
+    if (ispriest(mtmp)) {
         if (p_coaligned(mtmp))
             adjalign(-5);       /* very bad */
         else
@@ -2879,7 +2880,7 @@ setmangry(struct monst *mtmp)
         adjalign(-1);   /* attacking peaceful monsters is bad */
 
     if (couldsee(mtmp->mx, mtmp->my)) {
-        if (humanoid(mtmp->data) || mtmp->isshk || mtmp->isgd)
+        if (humanoid(mtmp->data) || mx_eshk(mtmp) || mx_egd(mtmp))
             pline(always_peaceful(mtmp->data) ? msgc_npcanger :
                   msgc_alignbad, "%s gets angry!", Monnam(mtmp));
         else if (flags.verbose)
@@ -3222,21 +3223,19 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
             mtmp->female = !mtmp->female;
     }
 
-    if (In_endgame(&mtmp->dlevel->z) && is_mplayer(olddata)) {
+    if (mdat == mtmp->data)
+        return 0;       /* still the same monster */
+
+    if (In_endgame(&mtmp->dlevel->z) && is_mplayer(olddata) &&
+        mx_name(mtmp)) {
         /* mplayers start out as "Foo the Bar", but some of the titles are
            inappropriate when polymorphed, particularly into the opposite sex.
            players don't use ranks when polymorphed, so dropping the rank for
            mplayers seems reasonable. */
-        char *p = strchr(NAME(mtmp), ' ');
-
-        if (p) {
+        char *p = strchr(mx_name(mtmp), ' ');
+        if (p)
             *p = '\0';
-            mtmp->mnamelth = p - NAME(mtmp) + 1;
-        }
     }
-
-    if (mdat == mtmp->data)
-        return 0;       /* still the same monster */
 
     if (mtmp->wormno) { /* throw tail away */
         wormgone(mtmp);
@@ -3317,16 +3316,12 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
     if (mtmp->dlevel == level)
         newsym(mtmp->mx, mtmp->my);
 
-    if (msg) {
-        uchar save_mnamelth = mtmp->mnamelth;
-
-        mtmp->mnamelth = 0;
+    if (msg)
         pline(mtmp->mtame ? msgc_petneutral : msgc_monneutral,
               "%s turns into %s!", oldname,
               mdat == &mons[PM_GREEN_SLIME] ? "slime" :
-              x_monnam(mtmp, ARTICLE_A, NULL, SUPPRESS_SADDLE, FALSE));
-        mtmp->mnamelth = save_mnamelth;
-    }
+              x_monnam(mtmp, ARTICLE_A, NULL,
+                       SUPPRESS_SADDLE | SUPPRESS_NAME, FALSE));
 
     possibly_unwield(mtmp, polyspot);   /* might lose use of weapon */
     mon_break_armor(mtmp, polyspot);

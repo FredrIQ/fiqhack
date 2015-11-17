@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1110,7 +1110,7 @@ save_mtraits(struct obj *obj, struct monst *mtmp)
     struct obj *otmp;
     int lth, namelth;
 
-    lth = sizeof (struct monst) + mtmp->mxlth + mtmp->mnamelth;
+    lth = sizeof (struct monst);
     namelth = obj->onamelth ? strlen(ONAME(obj)) + 1 : 0;
     otmp = realloc_obj(obj, lth, mtmp, namelth, ONAME(obj));
     if (otmp && otmp->oxlth) {
@@ -1146,14 +1146,10 @@ get_mtraits(struct obj *obj, boolean copyof)
         mtmp = (struct monst *)obj->oextra;
     if (mtmp) {
         if (copyof) {
-            int lth = mtmp->mxlth + mtmp->mnamelth + sizeof (struct monst);
-
-            mnew = newmonst(mtmp->mxtyp, mtmp->mnamelth);
-            memcpy(mnew, mtmp, lth);
-        } else {
-            /* Never insert this returned pointer into mon chains! */
+            mnew = newmonst();
+            memcpy(mnew, mtmp, sizeof (struct monst));
+        } else /* Never insert this returned pointer into mon chains! */
             mnew = mtmp;
-        }
     }
     return mnew;
 }
@@ -1719,7 +1715,7 @@ restore_obj(struct memfile *mf)
 
     if (otmp->oattached == OATTACHED_MONST) {
         struct monst *mtmp = restore_mon(mf, NULL);
-        int monlen = sizeof (struct monst) + mtmp->mnamelth + mtmp->mxlth;
+        int monlen = sizeof (struct monst);
 
         otmp = realloc_obj(otmp, monlen, mtmp, otmp->onamelth, ONAME(otmp));
         dealloc_monst(mtmp);

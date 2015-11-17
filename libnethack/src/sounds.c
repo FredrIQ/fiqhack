@@ -1,10 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "edog.h"
 
 static int domonnoise(struct monst *);
 static int mon_in_room(struct monst *, int);
@@ -529,9 +528,9 @@ domonnoise(struct monst *mtmp)
         } else if (mtmp->mpeaceful) {
             if (mtmp->mtame &&
                 (confused(mtmp) || mtmp->mflee || mtmp->mtrapped ||
-                 moves > EDOG(mtmp)->hungrytime || mtmp->mtame < 5))
+                 moves > mx_edog(mtmp)->hungrytime || mtmp->mtame < 5))
                 pline_msg = "whines.";
-            else if (mtmp->mtame && EDOG(mtmp)->hungrytime > moves + 1000)
+            else if (mtmp->mtame && mx_edog(mtmp)->hungrytime > moves + 1000)
                 pline_msg = "yips.";
             else {
                 if (mtmp->data != &mons[PM_DINGO])      /* dingos do not
@@ -547,9 +546,9 @@ domonnoise(struct monst *mtmp)
             if (confused(mtmp) || mtmp->mflee ||
                 mtmp->mtrapped || mtmp->mtame < 5)
                 pline_msg = "yowls.";
-            else if (moves > EDOG(mtmp)->hungrytime)
+            else if (moves > mx_edog(mtmp)->hungrytime)
                 pline_msg = "meows.";
-            else if (EDOG(mtmp)->hungrytime > moves + 1000)
+            else if (mx_edog(mtmp)->hungrytime > moves + 1000)
                 pline_msg = "purrs.";
             else
                 pline_msg = "mews.";
@@ -585,7 +584,7 @@ domonnoise(struct monst *mtmp)
     case MS_NEIGH:
         if (mtmp->mtame < 5)
             pline_msg = "neighs.";
-        else if (moves > EDOG(mtmp)->hungrytime)
+        else if (moves > mx_edog(mtmp)->hungrytime)
             pline_msg = "whinnies.";
         else
             pline_msg = "whickers.";
@@ -676,8 +675,8 @@ domonnoise(struct monst *mtmp)
             verbl_msg = "I'm trapped!";
         } else if (mtmp->mhp < mtmp->mhpmax / 2)
             pline_msg = "asks for a potion of healing.";
-        else if (mtmp->mtame && !mtmp->isminion &&
-                 moves > EDOG(mtmp)->hungrytime)
+        else if (mtmp->mtame && !isminion(mtmp) &&
+                 moves > mx_edog(mtmp)->hungrytime)
             verbl_msg = "I'm hungry.";
         /* Specific monsters' interests */
         else if (is_elf(ptr))
@@ -911,7 +910,7 @@ dotalk(const struct nh_cmd_arg *arg)
     }
 
     /* sleeping monsters won't talk, except priests (who wake up) */
-    if ((!mtmp->mcanmove || mtmp->msleeping) && !mtmp->ispriest) {
+    if ((!mtmp->mcanmove || mtmp->msleeping) && !ispriest(mtmp)) {
         /* If it is unseen, the player can't tell the difference between not
            noticing him and just not existing, so skip the message. */
         if (canspotmon(mtmp))

@@ -1,11 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "emin.h"
-#include "epri.h"
 
 /* mon summons a monster
 
@@ -24,12 +22,10 @@ msummon(struct monst *mon, const d_level *dlev)
         if (dlev->dnum != mon->dlevel->z.dnum ||
             dlev->dlevel != mon->dlevel->z.dlevel)
             impossible("dlev mismatch for monster in msummon");
-        atyp = (ptr->maligntyp == A_NONE) ? A_NONE : sgn(ptr->maligntyp);
-        if (mon->ispriest || roamer_type(mon->data))
-            atyp = CONST_EPRI(mon)->shralign;
+        atyp = malign(mon);
     } else {
         ptr = &mons[PM_WIZARD_OF_YENDOR];
-        atyp = (ptr->maligntyp == A_NONE) ? A_NONE : sgn(ptr->maligntyp);
+        atyp = A_NONE;
         if (dlev->dnum != u.uz.dnum || dlev->dlevel != u.uz.dlevel)
             impossible("dlev mismatch for player in msummon");
     }
@@ -87,9 +83,9 @@ msummon(struct monst *mon, const d_level *dlev)
     while (cnt > 0) {
         mtmp = makemon(&mons[dtype], level, u.ux, u.uy,
                        MM_CREATEMONSTER | MM_CMONSTER_M);
-        if (mtmp && roamer_type(&mons[dtype])) {
+        if (mtmp) {
             /* alignment should match the summoner */
-            EPRI(mtmp)->shralign = atyp;
+            mtmp->maligntyp = atyp;
         }
         cnt--;
     }
@@ -119,23 +115,15 @@ summon_minion(aligntyp alignment, boolean talk)
     }
     if (mnum == NON_PM) {
         mon = 0;
-    } else if (mons[mnum].pxtyp == MX_NONE) {
-        const struct permonst *pm = &mons[mnum];
-
-        mon = makemon(pm, level, u.ux, u.uy, MM_EMIN);
-        if (mon) {
-            mon->isminion = TRUE;
-            EMIN(mon)->min_align = alignment;
-        }
-    } else if (roamer_type(&mons[mnum])) {
-        mon = makemon(&mons[mnum], level, u.ux, u.uy, NO_MM_FLAGS);
-        if (mon) {
-            mon->isminion = TRUE;
-            EPRI(mon)->shralign = alignment;
-        }
+    } else if (mons[mnum].pxtyp == MX_NONE ||
+               roamer_type(&mons[mnum])) {
+        mon = makemon(&mons[mnum], level, u.ux, u.uy, MM_EMIN);
+        mx_epri_new(mon);
+        mx_epri(mon)->shroom = 0; /* marks as renegade */
     } else
         mon = makemon(&mons[mnum], level, u.ux, u.uy, NO_MM_FLAGS);
     if (mon) {
+        mon->maligntyp = alignment; /* set alignment */
         if (talk) {
             pline(msgc_npcvoice, "The voice of %s booms:",
                   align_gname(alignment));

@@ -1,10 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "vault.h"
 
 static struct monst *findgd(void);
 
@@ -22,14 +21,14 @@ clear_fcorr(struct monst *grd, boolean forceshow)
     struct monst *mtmp;
     boolean showmsg = FALSE;
 
-    if (!on_level(&(EGD(grd)->gdlevel), &u.uz))
+    if (!on_level(&(mx_egd(grd)->gdlevel), &u.uz))
         return TRUE;
 
-    while ((fcbeg = EGD(grd)->fcbeg) < EGD(grd)->fcend) {
-        fcx = EGD(grd)->fakecorr[fcbeg].fx;
-        fcy = EGD(grd)->fakecorr[fcbeg].fy;
+    while ((fcbeg = mx_egd(grd)->fcbeg) < mx_egd(grd)->fcend) {
+        fcx = mx_egd(grd)->fakecorr[fcbeg].fx;
+        fcy = mx_egd(grd)->fakecorr[fcbeg].fy;
         if ((DEADMONSTER(grd) || !in_fcorridor(grd, u.ux, u.uy)) &&
-            EGD(grd)->gddone)
+            mx_egd(grd)->gddone)
             forceshow = TRUE;
         if ((u.ux == fcx && u.uy == fcy && !DEADMONSTER(grd))
             || (!forceshow && couldsee(fcx, fcy)))
@@ -42,7 +41,7 @@ clear_fcorr(struct monst *grd, boolean forceshow)
         }
 
         if ((mtmp = m_at(level, fcx, fcy)) != 0) {
-            if (mtmp->isgd)
+            if (mx_egd(mtmp))
                 return FALSE;
             else if (!in_fcorridor(grd, u.ux, u.uy)) {
                 if (mtmp->mtame)
@@ -51,7 +50,7 @@ clear_fcorr(struct monst *grd, boolean forceshow)
             }
         }
         oldtyp = level->locations[fcx][fcy].typ;
-        level->locations[fcx][fcy].typ = EGD(grd)->fakecorr[fcbeg].ftyp;
+        level->locations[fcx][fcy].typ = mx_egd(grd)->fakecorr[fcbeg].ftyp;
         if (!ACCESSIBLE(level->locations[fcx][fcy].typ) && ACCESSIBLE(oldtyp)) {
             struct trap *t = t_at(level, fcx, fcy);
 
@@ -63,7 +62,7 @@ clear_fcorr(struct monst *grd, boolean forceshow)
             block_point(fcx, fcy);
         }
         map_location(fcx, fcy, 1, FALSE);      /* bypass vision */
-        EGD(grd)->fcbeg++;
+        mx_egd(grd)->fcbeg++;
     }
     if (DEADMONSTER(grd)) {
         if (showmsg) {
@@ -98,8 +97,8 @@ grddead(struct monst *grd)
         newsym(grd->mx, grd->my);
         grd->mx = COLNO;
         grd->my = ROWNO;
-        EGD(grd)->ogx = grd->mx;
-        EGD(grd)->ogy = grd->my;
+        mx_egd(grd)->ogx = grd->mx;
+        mx_egd(grd)->ogy = grd->my;
         dispose = clear_fcorr(grd, TRUE);
     }
     return dispose;
@@ -110,8 +109,8 @@ in_fcorridor(struct monst *grd, int x, int y)
 {
     int fci;
 
-    for (fci = EGD(grd)->fcbeg; fci < EGD(grd)->fcend; fci++)
-        if (x == EGD(grd)->fakecorr[fci].fx && y == EGD(grd)->fakecorr[fci].fy)
+    for (fci = mx_egd(grd)->fcbeg; fci < mx_egd(grd)->fcend; fci++)
+        if (x == mx_egd(grd)->fakecorr[fci].fx && y == mx_egd(grd)->fakecorr[fci].fy)
             return TRUE;
     return FALSE;
 }
@@ -122,8 +121,8 @@ findgd(void)
     struct monst *mtmp;
 
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
-        if (mtmp->isgd && !DEADMONSTER(mtmp) &&
-            on_level(&(EGD(mtmp)->gdlevel), &u.uz))
+        if (mx_egd(mtmp) && !DEADMONSTER(mtmp) &&
+            on_level(&(mx_egd(mtmp)->gdlevel), &u.uz))
             return mtmp;
     return NULL;
 }
@@ -156,7 +155,7 @@ find_guard_dest(struct monst *guard, xchar * rx, xchar * ry)
                     continue;
                 if (guard &&
                     ((x == guard->mx && y == guard->my) ||
-                     (guard->isgd && in_fcorridor(guard, x, y))))
+                     (mx_egd(guard) && in_fcorridor(guard, x, y))))
                     continue;
                 if (level->locations[x][y].typ == CORR) {
                     if (x < u.ux)
@@ -271,14 +270,14 @@ invault(void)
         /* make something interesting happen */
         if (!(guard = makemon(&mons[PM_GUARD], level, x, y, NO_MM_FLAGS)))
             return;
-        guard->isgd = 1;
+        mx_egd_new(guard);
         msethostility(guard, FALSE, TRUE);
-        EGD(guard)->gddone = 0;
-        EGD(guard)->ogx = x;
-        EGD(guard)->ogy = y;
-        assign_level(&(EGD(guard)->gdlevel), &u.uz);
-        EGD(guard)->vroom = vaultroom;
-        EGD(guard)->warncnt = 0;
+        mx_egd(guard)->gddone = 0;
+        mx_egd(guard)->ogx = x;
+        mx_egd(guard)->ogy = y;
+        assign_level(&(mx_egd(guard)->gdlevel), &u.uz);
+        mx_egd(guard)->vroom = vaultroom;
+        mx_egd(guard)->warncnt = 0;
 
         /* We used to reset fainted status here, but that doesn't really make
            sense; instead, that's treated like normal helplessness */
@@ -370,36 +369,36 @@ invault(void)
             verbalize(msgc_hint, "Please drop that money and follow me.");
         }
 
-        EGD(guard)->gdx = gx;
-        EGD(guard)->gdy = gy;
-        EGD(guard)->fcbeg = 0;
-        EGD(guard)->fakecorr[0].fx = x;
-        EGD(guard)->fakecorr[0].fy = y;
+        mx_egd(guard)->gdx = gx;
+        mx_egd(guard)->gdy = gy;
+        mx_egd(guard)->fcbeg = 0;
+        mx_egd(guard)->fakecorr[0].fx = x;
+        mx_egd(guard)->fakecorr[0].fy = y;
         if (IS_WALL(level->locations[x][y].typ))
-            EGD(guard)->fakecorr[0].ftyp = level->locations[x][y].typ;
+            mx_egd(guard)->fakecorr[0].ftyp = level->locations[x][y].typ;
         else {  /* the initial guard location is a dug door */
-            int vlt = EGD(guard)->vroom;
+            int vlt = mx_egd(guard)->vroom;
             xchar lowx = level->rooms[vlt].lx, hix = level->rooms[vlt].hx;
             xchar lowy = level->rooms[vlt].ly, hiy = level->rooms[vlt].hy;
 
             if (x == lowx - 1 && y == lowy - 1)
-                EGD(guard)->fakecorr[0].ftyp = TLCORNER;
+                mx_egd(guard)->fakecorr[0].ftyp = TLCORNER;
             else if (x == hix + 1 && y == lowy - 1)
-                EGD(guard)->fakecorr[0].ftyp = TRCORNER;
+                mx_egd(guard)->fakecorr[0].ftyp = TRCORNER;
             else if (x == lowx - 1 && y == hiy + 1)
-                EGD(guard)->fakecorr[0].ftyp = BLCORNER;
+                mx_egd(guard)->fakecorr[0].ftyp = BLCORNER;
             else if (x == hix + 1 && y == hiy + 1)
-                EGD(guard)->fakecorr[0].ftyp = BRCORNER;
+                mx_egd(guard)->fakecorr[0].ftyp = BRCORNER;
             else if (y == lowy - 1 || y == hiy + 1)
-                EGD(guard)->fakecorr[0].ftyp = HWALL;
+                mx_egd(guard)->fakecorr[0].ftyp = HWALL;
             else if (x == lowx - 1 || x == hix + 1)
-                EGD(guard)->fakecorr[0].ftyp = VWALL;
+                mx_egd(guard)->fakecorr[0].ftyp = VWALL;
         }
         level->locations[x][y].typ = DOOR;
         level->locations[x][y].doormask = D_NODOOR;
         unblock_point(x, y);    /* doesn't block light */
-        EGD(guard)->fcend = 1;
-        EGD(guard)->warncnt = 1;
+        mx_egd(guard)->fcend = 1;
+        mx_egd(guard)->warncnt = 1;
     }
 }
 
@@ -422,7 +421,7 @@ static void
 wallify_vault(struct monst *grd)
 {
     int x, y, typ;
-    int vlt = EGD(grd)->vroom;
+    int vlt = mx_egd(grd)->vroom;
     char tmp_viz;
     xchar lox = level->rooms[vlt].lx - 1, hix = level->rooms[vlt].hx + 1, loy =
         level->rooms[vlt].ly - 1, hiy = level->rooms[vlt].hy + 1;
@@ -446,7 +445,7 @@ wallify_vault(struct monst *grd)
                     rloc(mon, FALSE);
                 }
                 if ((gold = gold_at(level, x, y)) != 0) {
-                    move_gold(gold, EGD(grd)->vroom);
+                    move_gold(gold, mx_egd(grd)->vroom);
                     movedgold = TRUE;
                 }
                 if ((trap = t_at(level, x, y)) != 0)
@@ -498,7 +497,7 @@ gd_move(struct monst *grd)
     int dx, dy, gx = 0, gy = 0, fci;
     uchar typ;
     struct fakecorridor *fcp;
-    struct egd *egrd = EGD(grd);
+    struct egd *egrd = mx_egd(grd);
     struct rm *crm;
     boolean goldincorridor = FALSE, u_in_vault =
         vault_occupied(u.urooms) ? TRUE : FALSE, grd_in_vault =
@@ -829,8 +828,8 @@ paygd(void)
         }
         mnexto(grd);
         pline(msgc_outrobad, "%s remits your gold to the vault.", Monnam(grd));
-        gx = level->rooms[EGD(grd)->vroom].lx + rn2(2);
-        gy = level->rooms[EGD(grd)->vroom].ly + rn2(2);
+        gx = level->rooms[mx_egd(grd)->vroom].lx + rn2(2);
+        gy = level->rooms[mx_egd(grd)->vroom].ly + rn2(2);
         make_grave(level, gx, gy,
                    msgprintf(
                        "To Croesus: here's the gold recovered from %s the %s.",

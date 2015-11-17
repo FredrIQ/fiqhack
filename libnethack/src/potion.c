@@ -1,12 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "edog.h"
-#include "epri.h"
-#include "emin.h"
 
 boolean notonhead = FALSE;
 
@@ -230,7 +227,8 @@ peffects(struct monst *mon, struct obj *otmp)
     int healmax = 0;
     /* For nutrition */
     struct edog *edog;
-    edog = (!you && mon->mtame && !mon->isminion) ? EDOG(mon) : 0;
+    edog = (!you && mon->mtame && !isminion(mon)) ?
+        mx_edog(mon) : NULL;
     enum youprop prop;
     aligntyp alignment;
     /* Dynamic strings based on whether it was you or the monster */
@@ -247,19 +245,7 @@ peffects(struct monst *mon, struct obj *otmp)
     enum msg_channel statusbad = you ? msgc_statusbad : msgc_monneutral;
     enum msg_channel badidea = you ? msgc_badidea : msgc_monneutral;
 
-    if (you)
-        alignment = u.ualign.type;
-    else if (mon->ispriest || (mon->isminion && roamer_type(mon->data)))
-        alignment = CONST_EPRI(mon)->shralign;
-    else if (mon->isminion)
-        alignment = EMIN(mon)->min_align;
-    else {
-        alignment = mon->data->maligntyp;
-        alignment =
-            (alignment > 0) ? A_LAWFUL :
-            (alignment == -128) ? A_NONE :
-            (alignment < 0) ? A_CHAOTIC : A_NEUTRAL;
-    }
+    alignment = malign(mon);
 
     switch (otmp->otyp) {
     case POT_RESTORE_ABILITY:

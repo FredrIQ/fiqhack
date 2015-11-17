@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -1039,7 +1039,7 @@ update_property(struct monst *mon, enum youprop prop,
                       "%s disappears, but you can still sense it." :
                       "%s suddenly disappears!",
                       msgupcasefirst(x_monnam(mon, ARTICLE_THE, NULL,
-                                              (mon->mnamelth ? SUPPRESS_SADDLE : 0) |
+                                              (mx_name(mon) ? SUPPRESS_SADDLE : 0) |
                                               SUPPRESS_IT | SUPPRESS_INVISIBLE,
                                               FALSE)));
                 set_mimic_blocking();       /* do special mimic handling */
@@ -2116,6 +2116,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     unsigned sensemethod = 0;
 
     /* sanity checks, so the caller doesn't have to */
+    /* TODO: checking deadmonster() breaks death messages and some other
+       related things, but simply removing the checks probably breaks
+       other things, figure out how to deal with this */
     if (viewer != &youmonst)
         if (!onmap(viewer) || DEADMONSTER(viewer))
             return 0;
