@@ -2239,7 +2239,8 @@ restore_mon(struct memfile *mf, struct level *l)
     if (legacy) {
         /* set alignment to whatever the monster usually has -- might be corrected
            later if mon had epri/emin */
-        mon->maligntyp = (mon->data->maligntyp == A_NONE ? A_NONE :
+        mon->maligntyp = (!mon->data ? A_NEUTRAL :
+                          mon->data->maligntyp == A_NONE ? A_NONE :
                           sgn(mon->data->maligntyp));
         /* check if initializing mextra is necessary */
         /* emin is no more since what it used to store is now in the main monst */
@@ -2363,6 +2364,8 @@ restore_mon(struct memfile *mf, struct level *l)
     /* turnstate has a fixed value on save */
     mon->deadmonster = 0;
 
+    if (!mon->data)
+        panic("Bad monster data: %p", mon);
     return mon;
 }
 
