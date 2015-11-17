@@ -789,7 +789,7 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     }
     if (isminion(mon)) {
         mx_epri_new(m2);
-        *(mx_edog(m2)) = *(mx_edog(mon));
+        *(mx_epri(m2)) = *(mx_epri(mon));
     }
     set_malign(m2);
 
