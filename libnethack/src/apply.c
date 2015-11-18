@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -38,7 +38,6 @@ static const char no_elbow_room[] =
 static int
 use_camera(struct obj *obj, const struct nh_cmd_arg *arg)
 {
-    struct monst *mtmp;
     schar dx, dy, dz;
 
     if (Underwater) {
@@ -56,24 +55,17 @@ use_camera(struct obj *obj, const struct nh_cmd_arg *arg)
     }
     consume_obj_charge(obj, TRUE);
 
-    if (obj->cursed && !rn2(2)) {
-        zapyourself(obj, TRUE);
-    } else if (Engulfed) {
+    if (obj->cursed && !rn2(2))
+        bhitm(&youmonst, &youmonst, obj, 10);
+    else if (Engulfed)
         pline(msgc_yafm,
               "You take a picture of %s %s.", s_suffix(mon_nam(u.ustuck)),
               mbodypart(u.ustuck, STOMACH));
-    } else if (dz) {
+    else if (dz)
         pline(msgc_yafm, "You take a picture of the %s.",
               (dz > 0) ? surface(u.ux, u.uy) : ceiling(u.ux, u.uy));
-    } else if (!dx && !dy) {
-        zapyourself(obj, TRUE);
-    } else
-        if ((mtmp =
-             beam_hit(dx, dy, COLNO, FLASHED_LIGHT, NULL, NULL, obj,
-                      NULL)) != 0) {
-        obj->ox = u.ux, obj->oy = u.uy;
-        flash_hits_mon(mtmp, obj);
-    }
+    else
+        weffects(&youmonst, obj, dx, dy, dz);
     return 1;
 }
 
@@ -2817,11 +2809,11 @@ do_break_wand(struct obj *obj, boolean intentional)
     static const char nothing_else_happens[] = "But nothing else happens...";
     int i, x, y;
     struct monst *mon;
-    int dmg, damage;
+    int dmg;
     boolean affects_objects;
     boolean shop_damage = FALSE;
     int expltype = EXPL_MAGICAL;
-    const char *confirm, *the_wand, *buf;
+    const char *confirm, *the_wand;
 
     if (intentional) {
 	the_wand = yname(obj);
@@ -2945,14 +2937,10 @@ do_break_wand(struct obj *obj, boolean intentional)
                     bhitpile(obj, bhito, x, y);
                     bot();  /* potion effects */
                 }
-                damage = zapyourself(obj, FALSE);
-                if (damage) {
-                    buf = msgprintf("killed %sself by breaking a wand", uhim());
-                    losehp(damage, buf);
-                }
+                bhitm(&youmonst, &youmonst, obj, 10);
                 bot();      /* blindness */
             } else if ((mon = m_at(level, x, y)) != 0) {
-                bhitm(&youmonst, mon, obj);
+                bhitm(&youmonst, mon, obj, 10);
                 /* bot(); */
             }
             if (affects_objects && level->objects[x][y]) {
@@ -3068,10 +3056,6 @@ doapply(const struct nh_cmd_arg *arg)
     case CREDIT_CARD:
     case SKELETON_KEY:
         res = pick_lock(obj, arg);
-        break;
-    case PICK_AXE:
-    case DWARVISH_MATTOCK:
-        res = use_pick_axe(obj, arg);
         break;
     case TINNING_KIT:
         res = use_tinning_kit(obj);

@@ -2564,23 +2564,20 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
                 makemon(NULL, level, otmp->ox, otmp->oy, MM_CREATEMONSTER | MM_CMONSTER_U);
             } else {
                 /* avoid telecontrol/autopickup shenanigans */
-                if (x == u.ux && y == u.uy) {
-                    if (otyp == WAN_TELEPORTATION &&
-                        level->objects[x][y]) {
-                        bhitpile(otmp, bhito, x, y);
-                        bot();  /* potion effects */
-                    }
-                    damage = zapyourself(otmp, FALSE);
-                    if (damage) {
-                        losehp(damage, "killed by a wand's explosion");
-                    }
-                    bot();      /* blindness */
-                } else if ((mon = m_at(level, x, y)) != 0) {
-                    bhitm(mtmp, mon, otmp);
-                }
-                if (affects_objects && level->objects[x][y]) {
+                if (otyp == WAN_TELEPORTATION &&
+                    level->objects[x][y]) {
                     bhitpile(otmp, bhito, x, y);
-                    bot();      /* potion effects */
+                    bot();  /* potion effects */
+                } else {
+                    mon = m_at(level, x, y);
+                    if (!mon && x == u.ux && y == u.uy)
+                        mon = &youmonst;
+                    bhitm(mtmp, mon, otmp, 10);
+                    bot();      /* blindness */
+                    if (affects_objects && level->objects[x][y]) {
+                        bhitpile(otmp, bhito, x, y);
+                        bot();      /* potion effects */
+                    }
                 }
             }
         }

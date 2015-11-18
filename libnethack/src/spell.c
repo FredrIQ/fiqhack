@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1341,7 +1341,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
 int
 spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
 {
-    int energy, damage, chance, n, intell;
+    int energy, chance, n, intell;
     int skill, role_skill;
     boolean confused = (Confusion != 0);
     struct obj *pseudo;
@@ -1551,18 +1551,11 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             cc.y = dy;
             n = rnd(8) + 1;
             while (n--) {
-                if (!dx && !dy && !dz) {
-                    if ((damage = zapyourself(pseudo, TRUE)) != 0)
-                        losehp(damage, msgprintf(
-                                   "zapped %sself with an exploding spell",
-                                   uhim()));
-                } else {
-                    explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
-                            u.ulevel / 2 + 1 + spell_damage_bonus(), 0,
-                            (pseudo->otyp ==
-                             SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
-                            NULL, 0);
-                }
+                explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
+                        u.ulevel / 2 + 1 + spell_damage_bonus(), 0,
+                        (pseudo->otyp ==
+                         SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
+                        NULL, 0);
                 dx = cc.x + rnd(3) - 2;
                 dy = cc.y + rnd(3) - 2;
                 if (!isok(dx, dy) || !cansee(dx, dy) ||

@@ -78,9 +78,10 @@ const char *const flash_types[] = {   /* also used in buzzmu(mcastu.c) */
 
 /* Routines for IMMEDIATE wands and spells. */
 /* bhitm: monster mdef was hit by the effect of wand or spell otmp
-   by magr */
+   by magr. range is used for wands of light and expensive cameras to
+   determine how strong blindness. */
 int
-bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp)
+bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
 {
     boolean wake = TRUE;        /* Most 'zaps' should wake monster */
     boolean reveal_invis = FALSE;
@@ -141,8 +142,13 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp)
                 dmg *= 2;
             if (otyp == SPE_FORCE_BOLT && yours)
                 dmg += spell_damage_bonus();
-            if (useen || tseen)
-                hit(zap_type_text, mdef, exclam(dmg), magr);
+            if (useen || tseen) {
+                if (!selfzap)
+                    hit(zap_type_text, mdef, exclam(dmg), magr);
+                else
+                    pline(msgc_yafm, "%s %sself!", M_verbs(mdef, "bash"),
+                          hityou ? "your" : mhim(mdef));
+            }
             if (hityou) {
                 const char *kbuf;
                 kbuf = msgprintf("%s%s %s", yours ? mhis(magr) : s_suffix(k_monnam(magr)),
@@ -240,7 +246,8 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp)
                 monflee(mdef, 0, FALSE, TRUE);
             } else if (wandlevel >= P_SKILLED)
                 monkilled(magr, mdef, "", AD_RBRE);
-        }
+        } else if (tseen)
+            pline(msgc_yafm, "%s in dread.", M_verbs(mdef, "shudder"));
         break;
     case WAN_POLYMORPH:
     case SPE_POLYMORPH:
@@ -355,7 +362,8 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp)
             place_object(obj, level, mdef->mx, mdef->my);
             /* call stackobj() if we ever drop anything that can merge */
             newsym(mdef->mx, mdef->my);
-        }
+        } else if (hityou && Punished)
+            pline(msgc_yafm, "Your chain quivers for a moment.");
         break;
     case SPE_HEALING:
     case SPE_EXTRA_HEALING:
@@ -400,17 +408,62 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp)
         }
         break;
     case WAN_LIGHT:    /* (broken wand) */
-        if (flash_hits_mon(mdef, otmp)) {
-            known = TRUE;
-            reveal_invis = TRUE;
+    case EXPENSIVE_CAMERA:
+        if (mdef->data->mlet == S_LIGHT) {
+            if (mdef == &youmonst)
+                u.mh = u.mhmax;
+            else
+                mdef->mhp = mdef->mhpmax;
+            if (tseen)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s %s strengthened by the flash!",
+                      hityou ? "You" : Monnam(mdef),
+                      hityou ? "feel" : "looks");
+            break;
         }
+
+        if (mdef->data == &mons[PM_GREMLIN]) {
+            /* Rule #1: Keep them out of the light. */
+            int hp = m_mhp(mdef);
+            if (hityou && Upolyd)
+                hp = u.mh;
+
+            dmg = otmp->otyp == WAN_LIGHT ?
+                dice(1 + otmp->spe, 4) : rnd(min(mdef->mhp, 2 * range));
+            pline(combat_msgc(magr, mdef, cr_hit),
+                  "%s in %s!", M_verbs(mdef, dmg > hp / 2 ? "wail" :
+                                      "cry"),
+                  dmg > hp / 2 ? "agony" : "pain");
+            if (hityou)
+                losehp(dmg, killer_msg(DIED, "exposure to strong brightness"));
+            else {
+                mdef->mhp -= dmg;
+                if (mdef->mhp <= 0)
+                    monkilled(magr, mdef, NULL, AD_BLND);
+            }
+        }
+
+        if (resists_blnd(mdef))
+            break;
+
+        dmg = rnd(10) * rnd(range);
+        if (tseen)
+            pline(combat_msgc(magr, mdef, cr_hit),
+                  "%s blinded by the flash!", M_verbs(mdef, "are"));
+
+        if (dmg > 20 && !mx_eshk(mdef) && rn2(4)) {
+            if (rn2(4))
+                monflee(mdef, rnd(100), FALSE, TRUE);
+            else
+                monflee(mdef, 0, FALSE, TRUE);
+        }
+        set_property(mdef, BLINDED, dmg, FALSE);
         break;
     case WAN_SLEEP:    /* (broken wand) */
         /* [wakeup() doesn't rouse victims of temporary sleep, so it's okay to
            leave `wake' set to TRUE here] */
         reveal_invis = TRUE;
-        /* this never affects the hero -- zapyourself() is called instead */
-        if (sleep_monst(mdef, dice(1 + otmp->spe, 12), WAND_CLASS))
+        if (sleep_monst(mdef, dice(1 + otmp->spe, 12), WAND_CLASS) && !hityou)
             slept_monst(mdef);
         known = TRUE;
         break;
@@ -1847,6 +1900,7 @@ bhito(struct obj *obj, struct obj *otmp)
         case WAN_NOTHING:
         case SPE_HEALING:
         case SPE_EXTRA_HEALING:
+        case EXPENSIVE_CAMERA:
             res = 0;
             break;
         case SPE_STONE_TO_FLESH:
@@ -2045,7 +2099,6 @@ static const char zap_syms[] = { WAND_CLASS, 0 };
 int
 dozap(const struct nh_cmd_arg *arg)
 {
-    int damage;
     schar dx = 0, dy = 0, dz = 0;
     struct obj *obj;
     int wandlevel;
@@ -2074,9 +2127,6 @@ dozap(const struct nh_cmd_arg *arg)
         if (!Blind)
             pline(msgc_itemloss, "%s glows and fades.", The(xname(obj)));
         /* make him pay for knowing !NODIR */
-    } else if (!dx && !dy && !dz && !(objects[obj->otyp].oc_dir == NODIR)) {
-        if ((damage = zapyourself(obj, TRUE)) != 0)
-            losehp(damage, msgprintf("zapped %sself with a wand", uhim()));
     } else {
 
         /* Are we having fun yet? weffects -> buzz(obj->otyp) -> zhitm (temple
@@ -2094,273 +2144,6 @@ dozap(const struct nh_cmd_arg *arg)
     }
     update_inventory(); /* maybe used a charge */
     return 1;
-}
-
-int
-zapyourself(struct obj *obj, boolean ordinary)
-{
-    int damage = 0;
-    int wandlevel = getwandlevel(&youmonst, obj);
-    boolean known = FALSE;
-
-    switch (obj->otyp) {
-    case WAN_STRIKING:
-        makeknown(WAN_STRIKING);
-    case SPE_FORCE_BOLT:
-        if (Antimagic) {
-            shieldeff(u.ux, u.uy);
-            pline(msgc_yafm, "Boing!");
-        } else {
-            if (ordinary) {
-                pline(msgc_badidea, "You bash yourself!");
-                damage = dice(2, 12);
-            } else
-                damage = dice(1 + obj->spe, 6);
-            exercise(A_STR, FALSE);
-        }
-        break;
-
-    case WAN_LIGHTNING:
-        makeknown(WAN_LIGHTNING);
-        if (!Shock_resistance) {
-            pline(msgc_badidea, "You shock yourself!");
-            damage = dice(12, 6);
-            exercise(A_CON, FALSE);
-        } else {
-            shieldeff(u.ux, u.uy);
-            pline(msgc_yafm, "You zap yourself, but seem unharmed.");
-            ugolemeffects(AD_ELEC, dice(12, 6));
-        }
-        destroy_item(WAND_CLASS, AD_ELEC);
-        if (!resists_blnd(&youmonst)) {
-            pline(msgc_statusbad, blinded_by_the_flash);
-            inc_timeout(&youmonst, BLINDED, rnd(100), TRUE);
-            if (!blind(&youmonst))
-                pline(msgc_statusheal, "Your vision quickly clears.");
-        }
-        break;
-
-    case SPE_FIREBALL:
-        pline(msgc_badidea, "You explode a fireball on top of yourself!");
-        explode(u.ux, u.uy, 11, dice(6, 6), WAND_CLASS, EXPL_FIERY, NULL, 0);
-        break;
-    case WAN_FIRE:
-        makeknown(WAN_FIRE);
-    case FIRE_HORN:
-        if (Fire_resistance) {
-            shieldeff(u.ux, u.uy);
-            pline(msgc_yafm, "You feel rather warm.");
-            ugolemeffects(AD_FIRE, dice(12, 6));
-        } else {
-            pline(msgc_badidea, "You've set yourself afire!");
-            damage = dice(12, 6);
-        }
-        burn_away_slime(&youmonst);
-        burnarmor(&youmonst);
-        destroy_item(SCROLL_CLASS, AD_FIRE);
-        destroy_item(POTION_CLASS, AD_FIRE);
-        destroy_item(SPBOOK_CLASS, AD_FIRE);
-        break;
-
-    case WAN_COLD:
-        makeknown(WAN_COLD);
-    case SPE_CONE_OF_COLD:
-    case FROST_HORN:
-        if (Cold_resistance) {
-            shieldeff(u.ux, u.uy);
-            pline(msgc_yafm, "You feel a little chill.");
-            ugolemeffects(AD_COLD, dice(12, 6));
-        } else {
-            pline(msgc_badidea, "You imitate a popsicle!");
-            damage = dice(12, 6);
-        }
-        destroy_item(POTION_CLASS, AD_COLD);
-        break;
-
-    case WAN_MAGIC_MISSILE:
-        makeknown(WAN_MAGIC_MISSILE);
-    case SPE_MAGIC_MISSILE:
-        if (Antimagic) {
-            shieldeff(u.ux, u.uy);
-            pline(msgc_yafm, "The missiles bounce!");
-        } else {
-            damage = dice(4, 6);
-            pline(msgc_badidea, "Idiot!  You've shot yourself!");
-        }
-        break;
-    case WAN_POLYMORPH:
-        if (!Unchanging)
-            polyself(FALSE);
-    case SPE_POLYMORPH:
-        if (!Unchanging)
-            polyself(FALSE);
-        break;
-
-    case WAN_CANCELLATION:
-    case SPE_CANCELLATION:
-        cancel_monst(&youmonst, obj, &youmonst, FALSE, TRUE);
-        break;
-
-    case SPE_DRAIN_LIFE:
-        if (!Drain_resistance) {
-            losexp(msgcat_many("drained ", uhis(), " own life", NULL),
-                   FALSE);
-            makeknown(obj->otyp);
-        }
-        damage = 0;     /* No additional damage */
-        break;
-
-    case WAN_MAKE_INVISIBLE:
-        if (wandlevel >= P_SKILLED && invisible(&youmonst))
-            known = set_property(&youmonst, INVIS, -2, FALSE);
-        else if (wandlevel == P_UNSKILLED)
-            known = inc_timeout(&youmonst, INVIS, rnd(50), FALSE);
-        else
-            known = set_property(&youmonst, INVIS, 0, FALSE);
-        break;
-
-    case WAN_SPEED_MONSTER:
-        damage = dice(2, 20);
-        if (ordinary) {
-            if (wandlevel >= P_BASIC)
-                damage += 20;
-            if (wandlevel >= P_EXPERT)
-                damage += 30;
-            if (wandlevel == P_MASTER) {
-                damage += 50;
-                damage += dice(3, 20);
-            }
-        }
-        known = inc_timeout(&youmonst, FAST, damage, FALSE);
-        if (ordinary && wandlevel >= P_SKILLED) {
-            set_property(&youmonst, FAST, 0, FALSE);
-            exercise(A_DEX, TRUE);
-        }
-        damage = 0;
-        break;
-
-    case WAN_SLEEP:
-        makeknown(WAN_SLEEP);
-    case SPE_SLEEP:
-        if (Sleep_resistance) {
-            shieldeff(u.ux, u.uy);
-            pline(msgc_yafm, "You don't feel sleepy!");
-        } else {
-            pline(msgc_badidea, "The sleep ray hits you!");
-            helpless(rnd(50), hr_asleep, "sleeping", NULL);
-        }
-        break;
-
-    case WAN_SLOW_MONSTER:
-    case SPE_SLOW_MONSTER:
-        if (inc_timeout(&youmonst, SLOW, dice(3, 8), FALSE))
-            makeknown(obj->otyp);
-        break;
-    case WAN_TELEPORTATION:
-    case SPE_TELEPORT_AWAY:
-        tele();
-        if (Teleport_control || !couldsee(u.ux0, u.uy0) ||
-            (distu(u.ux0, u.uy0) >= 16))
-            makeknown(obj->otyp);
-        break;
-
-    case WAN_DEATH:
-    case SPE_FINGER_OF_DEATH:
-        if (nonliving(youmonst.data) || is_demon(youmonst.data)) {
-            pline(msgc_yafm, (obj->otyp == WAN_DEATH) ?
-                  "The wand shoots an apparently harmless beam at you." :
-                  "You seem no deader than before.");
-            break;
-        }
-        pline(msgc_fatal_predone, "You irradiate yourself with pure energy!");
-        pline(msgc_fatal_predone, "You die.");
-        makeknown(obj->otyp);
-        /* They might survive with an amulet of life saving */
-        done(DIED, msgcat_many("shot ", uhim(), "self with a death ray", NULL));
-        break;
-    case WAN_UNDEAD_TURNING:
-        makeknown(WAN_UNDEAD_TURNING);
-    case SPE_TURN_UNDEAD:
-        unturn_dead(&youmonst);
-        if (is_undead(youmonst.data)) {
-            pline(msgc_substitute, "You feel frightened and %sstunned.",
-                  Stunned ? "even more " : "");
-            inc_timeout(&youmonst, STUNNED, rnd(30), TRUE);
-        } else
-            pline(msgc_yafm, "You shudder in dread.");
-        break;
-    case SPE_HEALING:
-    case SPE_EXTRA_HEALING:
-        healup(dice(6, obj->otyp == SPE_EXTRA_HEALING ? 8 : 4), 0, FALSE,
-               (obj->otyp == SPE_EXTRA_HEALING));
-        pline(msgc_actionok, "You feel %sbetter.",
-              obj->otyp == SPE_EXTRA_HEALING ? "much " : "");
-        break;
-    case WAN_LIGHT:    /* (broken wand) */
-        /* assert( !ordinary ); */
-        damage = dice(obj->spe, 25);
-    case EXPENSIVE_CAMERA:
-        damage += rnd(25);
-        /* TODO: This is just asking for a YAFM. */
-        if (!resists_blnd(&youmonst)) {
-            pline(msgc_statusbad, blinded_by_the_flash);
-            inc_timeout(&youmonst, BLINDED, damage, TRUE);
-            makeknown(obj->otyp);
-            if (!blind(&youmonst))
-                pline(msgc_statusheal, "Your vision quickly clears.");
-        }
-        damage = 0;     /* reset */
-        break;
-    case WAN_OPENING:
-        if (Punished)
-            makeknown(WAN_OPENING);
-    case SPE_KNOCK:
-        if (Punished)
-            pline(msgc_yafm, "Your chain quivers for a moment.");
-        break;
-    case WAN_DIGGING:
-    case SPE_DIG:
-    case SPE_DETECT_UNSEEN:
-    case WAN_NOTHING:
-    case WAN_LOCKING:
-    case SPE_WIZARD_LOCK:
-        break;
-    case SPE_STONE_TO_FLESH:
-        {
-            struct obj *otemp, *onext;
-            boolean didmerge;
-
-            if (u.umonnum == PM_STONE_GOLEM)
-                polymon(PM_FLESH_GOLEM, TRUE);
-            set_property(&youmonst, STONED, -2, FALSE);  /* saved! */
-            /* but at a cost.. */
-            for (otemp = invent; otemp; otemp = onext) {
-                onext = otemp->nobj;
-                bhito(otemp, obj);
-            }
-            /*
-             * It is possible that we can now merge some inventory.
-             * Do a higly paranoid merge.  Restart from the beginning
-             * until no merges.
-             */
-            do {
-                didmerge = FALSE;
-                for (otemp = invent; !didmerge && otemp; otemp = otemp->nobj)
-                    for (onext = otemp->nobj; onext; onext = onext->nobj)
-                        if (merged(&otemp, &onext)) {
-                            didmerge = TRUE;
-                            break;
-                        }
-            } while (didmerge);
-        }
-        break;
-    default:
-        impossible("object %d used?", obj->otyp);
-        break;
-    }
-    if (known)
-        makeknown(obj->otyp);
-    return damage;
 }
 
 /* you've zapped a wand downwards while riding
@@ -2412,7 +2195,7 @@ zap_steed(struct obj *obj)
     case SPE_DRAIN_LIFE:
     case WAN_OPENING:
     case SPE_KNOCK:
-        bhitm(&youmonst, u.usteed, obj);
+        bhitm(&youmonst, u.usteed, obj, 7);
         steedhit = TRUE;
         break;
 
@@ -2687,7 +2470,7 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
     boolean disclose = FALSE, was_unkn = !objects[otyp].oc_name_known;
 
     if (!dx && !dy && !dz && objects[otyp].oc_dir != NODIR) { /* zapped self */
-        bhitm(mon, mon, obj);
+        bhitm(mon, mon, obj, 7);
         return;
     }
 
@@ -2697,9 +2480,9 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
         !dx && !dy && (dz > 0) &&
         zap_steed(obj)) {
         disclose = TRUE;
-    } else if (objects[otyp].oc_dir == IMMEDIATE) {
+    } else if (objects[otyp].oc_dir == IMMEDIATE || otyp == EXPENSIVE_CAMERA) {
         if (Engulfed) {
-            bhitm(&youmonst, u.ustuck, obj);
+            bhitm(&youmonst, u.ustuck, obj, 7);
             /* [how about `bhitpile(u.ustuck->minvent)' effect?] */
         } else if (dz) {
             disclose = zap_updown(mon, obj, dz);
@@ -2730,7 +2513,8 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
                      wandlevel == P_UNSKILLED ? 3 : 6, m_mx(mon), m_my(mon),
                      dx, dy, wandlevel);
         } else
-            impossible("weffects: unexpected spell or wand");
+            impossible("weffects: unexpected spell or wand x:%d",
+                       objects[otyp].oc_dir);
         disclose = TRUE;
     }
     if (disclose && (you || vis) && was_unkn) {
@@ -2849,14 +2633,16 @@ void
 mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
     struct monst *mdef;
     struct obj *otmp;
+    struct tmp_sym *tsym = NULL;
     uchar typ;
-    unsigned orig_ident = flags.ident;
     boolean shopdoor = FALSE; /* for determining if you should pay for ruining a door */
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
 
     bhitpos.x = m_mx(mon);
     bhitpos.y = m_my(mon);
+    if (obj->otyp == EXPENSIVE_CAMERA)
+        tsym = tmpsym_init(DISP_BEAM, dbuf_effect(E_MISC, E_flashbeam));
 
     while (range-- > 0) {
         int x, y;
@@ -2871,7 +2657,12 @@ mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
             bhitpos.y -= dy;
             break;
         }
+        
         typ = level->locations[bhitpos.x][bhitpos.y].typ;
+        if (tsym) {
+            tmpsym_at(tsym, bhitpos.x, bhitpos.y);
+            win_delay_output();
+        }
         if (find_drawbridge(&x, &y))
             switch (obj->otyp) {
             case WAN_OPENING:
@@ -2908,26 +2699,24 @@ mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
             /* Fix for polymorph bug, Tim Wright */
             next_obj = otmp->nexthere;
             hitanything += bhito(otmp, obj);
+            /* boulders block vision, so make them block camera flashes too... */
+            if (otmp->otyp == BOULDER && obj->otyp == EXPENSIVE_CAMERA)
+                range = 0;
         }
         if (hitanything)
             range--;
-        if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
-            bhitm(mon, &youmonst, obj);
+        mdef = m_at(level, bhitpos.x, bhitpos.y);
+        if (!mdef && bhitpos.x == u.ux && bhitpos.y == u.uy)
+            mdef = &youmonst;
+        if (mdef) {
+            if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mdef))
+                map_invisible(bhitpos.x, bhitpos.y);
             range -= 3;
-        } else if (MON_AT(level, bhitpos.x, bhitpos.y)) {
-            mdef = m_at(level, bhitpos.x, bhitpos.y);
-            /* Only hit the monster if it wasn't just created */
-            if (mdef && mdef->m_id - orig_ident <= 100u)
-                mdef = NULL;
-            else {
-                if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mdef))
-                    map_invisible(bhitpos.x, bhitpos.y);
-                bhitm(mon, mdef, obj);
-                range -= 3;
-            }
+            bhitm(mon, mdef, obj, min(range, 1));
         } else if ((mdef = vismon_at(level, bhitpos.x, bhitpos.y))) {
             pline(combat_msgc(mon, mdef, cr_miss),
-                  "The beam fires through %s displaced image!",
+                  "The %s passes through %s displaced image!",
+                  obj->otyp == EXPENSIVE_CAMERA ? "flash" : "beam",
                   mdef == &youmonst ? "your" : s_suffix(mon_nam(mdef)));
         }
         if (you && obj->otyp == WAN_PROBING &&
@@ -2967,6 +2756,9 @@ mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
         }
     }
 
+    if (tsym)
+        tmpsym_end(tsym);
+
     if (you && shopdoor)
         pay_for_damage("destroy", FALSE);
 }
@@ -2976,7 +2768,6 @@ mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
  *  Called for the following distance effects:
  *      when a weapon is thrown (weapon == THROWN_WEAPON)
  *      when an object is kicked (KICKED_WEAPON)
- *      when a light beam is flashed (FLASHED_LIGHT)
  *      when a mirror is applied (INVIS_BEAM)
  *  A thrown/kicked object falls down at the end of its range or when a monster
  *  is hit.  The variable 'bhitpos' is set to the final position of the weapon
@@ -3255,6 +3046,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     int buzztyp = (type <= -30 ? abstype : abs(type));
     boolean yours = (type >= 0);
     boolean disintegrated = (buzztyp == ZT_BREATH(ZT_DEATH));
+    boolean wand = (buzztyp < 10);
     struct obj *otmp;
 
     fltxt = flash_types[buzztyp];
@@ -3276,6 +3068,10 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         }
         if (you)
             exercise(A_STR, FALSE);
+        if (!resisted && selfzap && oseen)
+            pline(you ? msgc_badidea : msgc_yafm,
+                  "%s%s shot %sself!", you ? "Idiot!  " : "", M_verbs(mdef, "have"),
+                  you ? "your" : mhim(mdef));
         break;
     case ZT_FIRE:
         ztyp = "hot";
@@ -3291,6 +3087,10 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         }
         if (resists_cold(mdef))
             tmp += dice(nd, 3);
+        if (!resisted && selfzap && oseen)
+            pline(you ? msgc_badidea : msgc_yafm,
+                  "%s set %sself on fire!", M_verbs(mdef, "have"),
+                  you ? "your" : mhim(mdef));
         burn_away_slime(mdef);
         golemeffects(mdef, AD_FIRE, tmp);
         if (raylevel != P_UNSKILLED && burnarmor(mdef)) {
@@ -3308,6 +3108,9 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
             resisted = 1;
         if (resists_fire(mdef))
             tmp += dice(nd, 3);
+        if (!resisted && selfzap && oseen)
+            pline(you ? msgc_badidea : msgc_yafm,
+                  "%s a popsicle!", M_verbs(mdef, "imitate"));
         golemeffects(mdef, AD_COLD, tmp);
         if (raylevel != P_UNSKILLED && !rn2(3))
             destroy_mitem(mdef, POTION_CLASS, AD_COLD);
@@ -3341,13 +3144,19 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                 mdef->mhp = mdef->mhpmax;
                 return;
             }
-            if (nonliving(mdef->data) || is_demon(mdef->data) || resists_magm(mdef) ||
+            if (nonliving(mdef->data) || is_demon(mdef->data) ||
+                (!selfzap && resists_magm(mdef)) ||
                 raylevel == P_UNSKILLED) {
                 if (resists_drli(mdef) || raylevel <= P_SKILLED) {
-                    shieldeff(m_mx(mdef), m_my(mdef));
-                    if (oseen)
-                        pline(combat_msgc(magr, mdef, cr_immune),
-                              "%s unaffected.", M_verbs(mdef, "are"));
+                    resisted = 2;
+                    if (oseen) {
+                        if (selfzap && wand)
+                            pline(msgc_yafm, "The wand shoots an apparently "
+                                  "harmless beam at %s.", you ? "you" : mon_nam(mdef));
+                        else
+                            pline(combat_msgc(magr, mdef, cr_immune),
+                                  "%s unaffected.", M_verbs(mdef, "are"));
+                    }
                 } else {
                     if (you) {
                         losexp("drained by a wand of death", FALSE);
@@ -3366,7 +3175,10 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                         /* level 0 monsters are killed below */
                     }
                 }
-            }
+            } else if (selfzap && (you || oseen))
+                pline(combat_msgc(magr, mdef, cr_kill),
+                      "%s %sself with pure energy!", M_verbs(mdef, "irradiate"),
+                      you ? "your" : mhim(mdef));
         } else { /* disintegration */
             if (is_rider(mdef->data)) {
                 if (canseemon(mdef)) {
@@ -3415,9 +3227,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                 shieldeff(m_mx(mdef), m_my(mdef));
                 if (oseen)
                     pline(combat_msgc(magr, mdef, cr_immune),
-                          "%s %s not disintegrated.",
-                          you ? "You" : Monnam(mdef),
-                          you ? "are" : "is");
+                          "%s not disintegrated.", M_verbs(mdef, "are"));
                 return;
             }
             pline(combat_msgc(magr, mdef, cr_kill),
@@ -3438,6 +3248,9 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
             resisted = 1;
         else if (you)
             exercise(A_CON, FALSE);
+        if (!resisted && selfzap && oseen)
+            pline(you ? msgc_badidea : msgc_yafm,
+                  "%s %sself", M_verbs(mdef, "shock"), you ? "your" : mhim(mdef));
         if (!resists_blnd(mdef) && !(yours && Engulfed && mdef == u.ustuck)) {
             if (oseen)
                 pline(combat_msgc(magr, mdef, cr_hit),

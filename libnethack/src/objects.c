@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -567,13 +567,15 @@ const struct objclass const_objects[] = {
 
 /* tools ... */
 /* tools with weapon characteristics come last */
-#define TOOLX(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color,power)    \
+#define TOOLX(name,desc,kn,mrg,mgc,chg,dir,prob,wt,cost,mat,color,power) \
     OBJECT( OBJ(name,desc),                                             \
-            BITS(kn,mrg,chg,0,mgc,chg,0,0,0,0,0,P_NONE,mat),            \
+            BITS(kn,mrg,chg,0,mgc,chg,0,0,0,0,dir,P_NONE,mat),          \
             power, TOOL_CLASS, prob, 0,                                 \
             wt, cost, 0, 0, 0, 0, wt, color )
 #define TOOL(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color)   \
-    TOOLX(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color,0)
+    TOOLX(name,desc,kn,mrg,mgc,chg,0,prob,wt,cost,mat,color,0)
+#define TOOLD(name,desc,kn,mrg,mgc,chg,dir,prob,wt,cost,mat,color)      \
+    TOOLX(name,desc,kn,mrg,mgc,chg,dir,prob,wt,cost,mat,color,0)
 #define LIGHTSOURCE(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color)    \
     OBJECT( OBJ(name,desc),                                             \
             BITS(kn,mrg,1,0,mgc,chg,0,0,0,0,0,P_NONE,mat),              \
@@ -613,14 +615,14 @@ const struct objclass const_objects[] = {
 /* magic lamps can't run out, so are marked as TOOL instead */
     TOOL("magic lamp", "lamp", 0, 0, 1, 0, 15, 20, 50, COPPER, CLR_YELLOW),
 /* other tools */
-    TOOL("expensive camera", NULL,
-         1, 0, 0, 1, 15, 12, 200, PLASTIC, CLR_BLACK),
+    TOOLD("expensive camera", NULL,
+         1, 0, 0, 1, IMMEDIATE, 15, 12, 200, PLASTIC, CLR_BLACK),
     TOOL("mirror", "looking glass", 0, 0, 0, 0, 45, 13, 10, GLASS, HI_SILVER),
     TOOL("crystal ball", "glass orb",
          0, 0, 1, 1, 15, 150, 60, GLASS, HI_GLASS),
     TOOL("lenses", NULL, 1, 0, 0, 0, 5, 3, 80, GLASS, HI_GLASS),
-    TOOLX("blindfold", NULL, 1, 0, 0, 0, 50, 2, 20, CLOTH, CLR_BLACK, BLINDED),
-    TOOLX("towel", NULL, 1, 0, 0, 0, 50, 2, 50, CLOTH, CLR_MAGENTA, BLINDED),
+    TOOLX("blindfold", NULL, 1, 0, 0, 0, 0, 50, 2, 20, CLOTH, CLR_BLACK, BLINDED),
+    TOOLX("towel", NULL, 1, 0, 0, 0, 0, 50, 2, 50, CLOTH, CLR_MAGENTA, BLINDED),
     TOOL("saddle", NULL, 1, 0, 0, 0, 5, 200, 150, LEATHER, HI_LEATHER),
     TOOL("leash", NULL, 1, 0, 0, 0, 65, 12, 20, LEATHER, HI_LEATHER),
     TOOL("stethoscope", NULL, 1, 0, 0, 0, 25, 4, 75, IRON, HI_METAL),
@@ -639,8 +641,8 @@ const struct objclass const_objects[] = {
     TOOL("wooden flute", "flute", 0, 0, 0, 0, 4, 5, 12, WOOD, HI_WOOD),
     TOOL("magic flute", "flute", 0, 0, 1, 1, 2, 5, 36, WOOD, HI_WOOD),
     TOOL("tooled horn", "horn", 0, 0, 0, 0, 5, 18, 15, BONE, CLR_WHITE),
-    TOOL("frost horn", "horn", 0, 0, 1, 1, 2, 18, 50, BONE, CLR_WHITE),
-    TOOL("fire horn", "horn", 0, 0, 1, 1, 2, 18, 50, BONE, CLR_WHITE),
+    TOOLD("frost horn", "horn", 0, 0, 1, 1, RAY, 2, 18, 50, BONE, CLR_WHITE),
+    TOOLD("fire horn", "horn", 0, 0, 1, 1, RAY, 2, 18, 50, BONE, CLR_WHITE),
     TOOL("horn of plenty", "horn", 0, 0, 1, 1, 2, 18, 50, BONE, CLR_WHITE),
     TOOL("wooden harp", "harp", 0, 0, 0, 0, 4, 30, 50, WOOD, HI_WOOD),
     TOOL("magic harp", "harp", 0, 0, 1, 1, 2, 30, 50, WOOD, HI_WOOD),

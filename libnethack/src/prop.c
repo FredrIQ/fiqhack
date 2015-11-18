@@ -1911,18 +1911,16 @@ is_green(struct monst *mon)
         mon->data == &mons[PM_BABY_GREEN_DRAGON] ||
         mon->data == &mons[PM_GREEN_DRAGON] ||
         /* Are NetHack's lichens green?  Some real lichens are, some not.
-         * What about guardian nagas and their hatchlings?  Their default
-         * representation is green, but that's also true of hobbits, among
-         * other things... */
+           What about guardian nagas and their hatchlings?  Their default
+           representation is green, but that's also true of hobbits, among
+           other things... */
         mon->data == &mons[PM_GARTER_SNAKE] || /* usually green and black */
         mon->data == &mons[PM_GREEN_MOLD] ||
         /* Green elves are not green; etymology is they live in forests. */
         mon->data == &mons[PM_GECKO] || mon->data == &mons[PM_IGUANA] ||
         /* Lizards come in a variety of colors.  What about crocodiles?
-         * I grew up thinking crocodiles and aligators are green, but
-         * Google Images seems to suggest they're more often gray/brown. */
-        /* The ones below this comment are currently not relevant, since
-         * you can't be slimed while polymorphed into them. */
+           I grew up thinking crocodiles and aligators are green, but
+           Google Images seems to suggest they're more often gray/brown. */
         mon->data == &mons[PM_MEDUSA] || mon->data == &mons[PM_JUIBLEX] ||
         mon->data == &mons[PM_NEFERET_THE_GREEN] ||
         mon->data == &mons[PM_GREEN_SLIME]) {

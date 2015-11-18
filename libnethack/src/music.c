@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -387,7 +387,7 @@ do_earthquake(int force)
 static int
 do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
 {
-    int damage, do_spec = !Confusion;
+    int do_spec = !Confusion;
 
     if (!do_spec)
         pline(msgc_yafm, "What you produce is quite far from music...");
@@ -422,14 +422,6 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
                 pline(msgc_yafm, "%s.", Tobjnam(instr, "vibrate"));
                 break;
-            } else if (!dx && !dy && !dz) {
-                if ((damage = zapyourself(instr, TRUE)) != 0) {
-                    losehp(damage, 
-                           killer_msg(DIED,
-                                      msgprintf(
-                                          "using a magical horn on %sself",
-                                          uhim())));
-                }
             } else {
                 buzz((instr->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1,
                      rn1(6, 6), u.ux, u.uy, dx, dy, 0);

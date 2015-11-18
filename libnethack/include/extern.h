@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2029,7 +2029,7 @@ extern int dowrite(struct obj *, const struct nh_cmd_arg *);
 
 /* ### zap.c ### */
 
-extern int bhitm(struct monst *, struct monst *, struct obj *);
+extern int bhitm(struct monst *, struct monst *, struct obj *, int);
 extern void probe_monster(struct monst *);
 extern boolean get_obj_location(const struct obj *, xchar *, xchar *, int);
 extern boolean get_mon_location(struct monst *, xchar *, xchar *, int);
@@ -2049,7 +2049,6 @@ extern int wrestable(struct obj *wand);
 extern int zappable(struct monst *, struct obj *);
 extern void zapnodir(struct monst *, struct obj *);
 extern int dozap(const struct nh_cmd_arg *);
-extern int zapyourself(struct obj *, boolean);
 extern boolean cancel_monst(struct monst *, struct obj *, struct monst *,
                             boolean, boolean);
 extern void weffects(struct monst *, struct obj *, schar, schar, schar);
