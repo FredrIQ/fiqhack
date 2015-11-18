@@ -630,9 +630,9 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                     if (!self && !msensem(mon, mtmp))
                         continue;
                     range -= 2; /* buzz */
-                    if (wand && oc_dir == IMMEDIATE)
+                    if ((wand || spell) && oc_dir == IMMEDIATE)
                         range -= 1; /* -3 for beam wands */
-                    if (!wand || obj->otyp == SPE_FIREBALL)
+                    if ((!wand && !spell) || obj->otyp == SPE_FIREBALL)
                         range = 0; /* fireballs hits 1st target only */
                     if (oc_dir == RAY && wandlevel < P_SKILLED &&
                         prop_wary(mon, mtmp, REFLECTING)) {
