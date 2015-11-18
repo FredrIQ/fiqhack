@@ -776,23 +776,30 @@ pleased(aligntyp g_align)
     } else if (u.ualign.record < 2 && trouble <= 0)
         adjalign(1);
 
-    /* depending on your luck & align level, the god you prayed to will: - fix
-       your worst problem if it's major. - fix all your major problems. - fix
-       your worst problem if it's minor. - fix all of your problems. - do you a
-       gratuitous favor.
-
-       if you make it to the the last category, you roll randomly again to see
-       what they do for you.
-
-       If your luck is at least 0, then you are guaranteed rescued from your
-       worst major problem. */
+    /*
+     * Depending on your luck & align level, the god you prayed to will:
+     * - fix your worst problem if it's major.
+     * - fix all your major problems.
+     * - fix your worst problem if it's minor.
+     * - fix all of your problems.
+     * - do you a gratuitous favor.
+     *
+     * If you make it to the the last category, you roll randomly again to see
+     * what they do for you.
+     *
+     * If your luck is at least 0, then you are guaranteed rescued from your
+     * worst major problem.
+     */
 
     if (trouble == ptr_invalid && u.ualign.record >= DEVOUT) {
         /* if hero was in trouble, but got better, no special favor */
         if (turnstate.pray.trouble == ptr_invalid)
             pat_on_head = 1;
     } else {
-        int action = rn1(Luck + (on_altar()? 3 + on_shrine() : 2), 1);
+        int actionmax = Luck + (on_altar() ? 3 + on_shrine() : 2);
+        if (actionmax < 1)
+            actionmax = 1;
+        int action = rn1(actionmax, 1);
 
         if (!on_altar())
             action = min(action, 3);
@@ -803,20 +810,21 @@ pleased(aligntyp g_align)
         case 5:
             pat_on_head = 1;
         case 4:
-            do
+            while (((trouble = in_trouble())) != ptr_invalid)
                 fix_worst_trouble(trouble);
-            while ((trouble = in_trouble()) != 0);
             break;
 
         case 3:
-            fix_worst_trouble(trouble);
+            if (trouble != ptr_invalid)
+                fix_worst_trouble(trouble);
         case 2:
-            while ((trouble = in_trouble()) > 0)
+            while (((trouble = in_trouble())) >= ptr_first_major &&
+                   trouble <= ptr_last_major)
                 fix_worst_trouble(trouble);
             break;
 
         case 1:
-            if (trouble > 0)
+            if (trouble >= ptr_first_major && trouble <= ptr_last_major)
                 fix_worst_trouble(trouble);
         case 0:
             break;      /* your god blows you off, too bad */

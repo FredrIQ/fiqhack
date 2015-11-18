@@ -1529,7 +1529,7 @@ find_item_obj(const struct monst *mon, struct obj *chain, struct musable *m,
                               obj->oclass == SPBOOK_CLASS ? MUSE_BOOK :
                               obj->otyp == SKELETON_KEY   ? MUSE_KEY  :
                               obj->otyp == CREDIT_CARD    ? MUSE_KEY  :
-                              obj->otyp == LOCKPICK       ? MUSE_KEY  :
+                              obj->otyp == LOCK_PICK      ? MUSE_KEY  :
                               obj->otyp == BAG_OF_TRICKS  ? MUSE_BAG_OF_TRICKS :
                               0);;
                 }

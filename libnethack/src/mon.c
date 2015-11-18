@@ -2684,7 +2684,7 @@ mnearto(struct monst * mtmp, xchar x, xchar y, boolean move_other)
 
     if (move_other && (othermon = m_at(level, x, y))) {
         if (othermon->wormno)
-            remove_worm(othermon);
+            remove_worm(othermon, level);
         else
             remove_monster(level, x, y);
     }

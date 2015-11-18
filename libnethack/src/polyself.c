@@ -838,6 +838,14 @@ rehumanize(int how, const char *killer)
         done(how, killer);
     }
 
+    /* If something that would be fatal lead to rehumanization instead, there's
+       less of a reason to force a --More--. So just forget about any pending
+       --More-- that we might be delaying. (The alternative would be to force a
+       --More-- and then reset turnstate - we have to reset it one way or the
+       other - but that would likely be obnoxious, because most players don't
+       consider rehumanization to be nearly as important as actual death). */
+    turnstate.force_more_pending_until_done = FALSE;
+
     if (emits_light(youmonst.data))
         del_light_source(level, LS_MONSTER, &youmonst);
     polyman("You return to %s form!", urace.adj);

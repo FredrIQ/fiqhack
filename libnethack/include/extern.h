@@ -1996,7 +1996,7 @@ extern void save_worm(struct memfile *mf, struct level *lev);
 extern void free_worm(struct level *lev);
 extern void rest_worm(struct memfile *mf, struct level *lev);
 extern void place_wsegs(struct monst *);
-extern void remove_worm(struct monst *);
+extern void remove_worm(struct monst *, struct level *);
 extern void place_worm_tail_randomly(struct monst *, xchar, xchar, enum rng);
 extern int count_wsegs(struct monst *);
 

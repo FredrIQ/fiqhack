@@ -3003,7 +3003,6 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
     struct tmp_sym *tsym;
     uchar typ;
     boolean point_blank = TRUE;
-    unsigned orig_ident = flags.ident;
 
     if (obj_destroyed)
         *obj_destroyed = FALSE;
@@ -3519,7 +3518,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     else {
         mdef->mhp -= tmp;
         if (mdef->mhp <= 0)
-            mdefkilled(magr, mdef, fltxt, AD_RBRE);
+            monkilled(magr, mdef, fltxt, AD_RBRE);
     }
     return;
 }
