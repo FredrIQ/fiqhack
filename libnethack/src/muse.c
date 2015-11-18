@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1123,7 +1123,7 @@ find_item(const struct monst *mon, struct musable *m)
         /* Sickness */
         if (sick(mon)) {
             if (mon_castable(mon, SPE_CURE_SICKNESS, FALSE)) {
-                m->use = SPE_CURE_SICKNESS;
+                m->spell = SPE_CURE_SICKNESS;
                 m->use = MUSE_SPE;
                 return TRUE;
             }
