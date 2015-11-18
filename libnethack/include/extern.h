@@ -1853,7 +1853,6 @@ extern void missum(struct monst *, const struct attack *);
 extern int passive(struct monst *, boolean, int, uchar);
 extern void passive_obj(struct monst *, struct obj *, const struct attack *);
 extern void stumble_onto_mimic(struct monst *, schar, schar);
-extern int flash_hits_mon(struct monst *, struct obj *);
 extern void demonpet(void);
 
 /* ### vault.c ### */

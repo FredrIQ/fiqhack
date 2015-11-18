@@ -2711,7 +2711,8 @@ mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
         if (mdef) {
             if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mdef))
                 map_invisible(bhitpos.x, bhitpos.y);
-            range -= 3;
+            if (obj->otyp != EXPENSIVE_CAMERA || !invisible(mdef))
+                range -= 3;
             bhitm(mon, mdef, obj, min(range, 1));
         } else if ((mdef = vismon_at(level, bhitpos.x, bhitpos.y))) {
             pline(combat_msgc(mon, mdef, cr_miss),
@@ -2771,9 +2772,7 @@ mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
  *      when a mirror is applied (INVIS_BEAM)
  *  A thrown/kicked object falls down at the end of its range or when a monster
  *  is hit.  The variable 'bhitpos' is set to the final position of the weapon
- *  thrown/zapped.  The ray of a wand may affect (by calling a provided
- *  function) several objects and monsters on its path.  The return value
- *  is the monster hit, or a null monster pointer.
+ *  thrown/kicked.
  *
  *  Check !Engulfed before calling beam_hit().
  *  This function reveals the absence of a remembered invisible monster in
@@ -2791,7 +2790,7 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
     )
 {
     struct monst *mtmp;
-    struct tmp_sym *tsym;
+    struct tmp_sym *tsym = NULL;
     uchar typ;
     boolean point_blank = TRUE;
 
@@ -2808,17 +2807,8 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
         bhitpos.y = u.uy;
     }
 
-    if (weapon == FLASHED_LIGHT)
-        tsym = tmpsym_init(DISP_BEAM, dbuf_effect(E_MISC, E_flashbeam));
-    else if (weapon != INVIS_BEAM)
+    if (weapon != INVIS_BEAM)
         tsym = tmpsym_initobj(obj);
-    else
-        /* technically there's no problem with tsym being uninitialized in this
-           case because it's never used, but the control flow is complex enough
-           that gcc can't determine that. We initialize to NULL so that if the
-           control flow is ever change to cause a problem, we get a reliable
-           crash. */
-        tsym = 0;
 
     while (range-- > 0) {
         int x, y;
@@ -2864,34 +2854,18 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
         mtmp = m_at(level, bhitpos.x, bhitpos.y);
         if (mtmp) {
             notonhead = (bhitpos.x != mtmp->mx || bhitpos.y != mtmp->my);
-            if (weapon != FLASHED_LIGHT) {
-                if (weapon != INVIS_BEAM)
-                    tmpsym_end(tsym);
-                if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp)) {
-                    if (weapon != INVIS_BEAM) {
-                        map_invisible(bhitpos.x, bhitpos.y);
-                        return mtmp;
-                    }
-                } else
-                    return mtmp;
+            if (weapon != INVIS_BEAM)
+                tmpsym_end(tsym);
+            if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp)) {
                 if (weapon != INVIS_BEAM) {
-                    (*fhitm) (&youmonst, mtmp, obj);
-                    range -= 3;
+                    map_invisible(bhitpos.x, bhitpos.y);
+                    return mtmp;
                 }
-            } else {
-                /* FLASHED_LIGHT hitting invisible monster should pass through
-                   instead of stop so we call flash_hits_mon() directly rather
-                   than returning mtmp back to caller. That allows the flash to
-                   keep on going. Note that we use mtmp->minvis not
-                   canspotmon() because it makes no difference whether the hero
-                   can see the monster or not. */
-                if (invisible(mtmp)) {
-                    obj->ox = u.ux, obj->oy = u.uy;
-                    flash_hits_mon(mtmp, obj);
-                } else {
-                    tmpsym_end(tsym);
-                    return mtmp;        /* caller will call flash_hits_mon */
-                }
+            } else
+                return mtmp;
+            if (weapon != INVIS_BEAM) {
+                (*fhitm) (&youmonst, mtmp, obj);
+                range -= 3;
             }
         }
         if (!fhito) {
@@ -2923,7 +2897,7 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
                 (is_pool(level, bhitpos.x, bhitpos.y) ||
                  is_lava(level, bhitpos.x, bhitpos.y)))
                 break;
-            if (IS_SINK(typ) && weapon != FLASHED_LIGHT)
+            if (IS_SINK(typ))
                 break;  /* physical objects fall onto sink */
         }
         /* limit range of ball so hero won't make an invalid move */

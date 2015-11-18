@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2379,59 +2379,6 @@ nohandglow(struct monst *mon)
                   hands, hcolor("red"));
     }
     u.umconf--;
-}
-
-int
-flash_hits_mon(struct monst *mtmp, struct obj *otmp)
-{       /* source of flash */
-    int tmp, amt, res = 0, useeit = canseemon(mtmp);
-
-    /* TODO: The message channels here are guesses, because the context has been
-       lost. */
-    if (mtmp->msleeping) {
-        mtmp->msleeping = 0;
-        if (useeit) {
-            pline(msgc_consequence, "The flash awakens %s.", mon_nam(mtmp));
-            res = 1;
-        }
-    } else if (mtmp->data->mlet != S_LIGHT) {
-        if (!resists_blnd(mtmp)) {
-            tmp = dist2(otmp->ox, otmp->oy, mtmp->mx, mtmp->my);
-            if (useeit) {
-                pline(msgc_combatgood, "%s is blinded by the flash!",
-                      Monnam(mtmp));
-                res = 1;
-            }
-            if (mtmp->data == &mons[PM_GREMLIN]) {
-                /* Rule #1: Keep them out of the light. */
-                amt = otmp->otyp == WAN_LIGHT ?
-                    dice(1 + otmp->spe, 4) : rn2(min(mtmp->mhp, 4));
-                pline(msgc_combatgood, "%s %s!", Monnam(mtmp),
-                      amt > mtmp->mhp / 2 ? "wails in agony" :
-                      "cries out in pain");
-                if ((mtmp->mhp -= amt) <= 0) {
-                    if (flags.mon_moving)
-                        monkilled(NULL, mtmp, NULL, AD_BLND);
-                    else
-                        killed(mtmp);
-                } else if (cansee(mtmp->mx, mtmp->my) && !canspotmon(mtmp)) {
-                    map_invisible(mtmp->mx, mtmp->my);
-                }
-            }
-            if (!DEADMONSTER(mtmp)) {
-                if (!flags.mon_moving)
-                    setmangry(mtmp);
-                if (tmp < 9 && !mx_eshk(mtmp) && rn2(4)) {
-                    if (rn2(4))
-                        monflee(mtmp, rnd(100), FALSE, TRUE);
-                    else
-                        monflee(mtmp, 0, FALSE, TRUE);
-                }
-                set_property(mtmp, BLINDED, tmp, FALSE);
-            }
-        }
-    }
-    return res;
 }
 
 /*uhitm.c*/
