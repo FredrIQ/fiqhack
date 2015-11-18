@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,7 +12,7 @@ static void polyuse(struct obj *, int, int);
 static void create_polymon(struct obj *, int);
 static boolean zap_updown(struct monst *, struct obj *, schar);
 static void zap_hit_mon(struct monst *, struct monst *,
-                        int, int, int);
+                        int, int, int, boolean);
 static void revive_egg(struct obj *);
 static boolean zap_steed(struct obj *);
 static void cancel_item(struct obj *);
@@ -77,45 +77,45 @@ const char *const flash_types[] = {   /* also used in buzzmu(mcastu.c) */
 };
 
 /* Routines for IMMEDIATE wands and spells. */
-/* bhitm: monster mtmp was hit by the effect of wand or spell otmp
-   by user */
+/* bhitm: monster mdef was hit by the effect of wand or spell otmp
+   by magr */
 int
-bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
+bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp)
 {
     boolean wake = TRUE;        /* Most 'zaps' should wake monster */
     boolean reveal_invis = FALSE;
     boolean known = FALSE;
-    boolean dbldam = Role_if(PM_KNIGHT) && Uhave_questart && user == &youmonst;
-    boolean useen = (user == &youmonst || canseemon(user));
-    boolean tseen = (mtmp == &youmonst || canseemon(mtmp));
-    boolean yours = (user == &youmonst);
-    boolean hityou = (mtmp == &youmonst);
-    boolean selfzap = (user == mtmp);
+    boolean dbldam = Role_if(PM_KNIGHT) && Uhave_questart && magr == &youmonst;
+    boolean useen = (magr == &youmonst || canseemon(magr));
+    boolean tseen = (mdef == &youmonst || canseemon(mdef));
+    boolean yours = (magr == &youmonst);
+    boolean hityou = (mdef == &youmonst);
+    boolean selfzap = (magr == mdef);
     int dmg, otyp = otmp->otyp;
     const char *zap_type_text = "force bolt";
     struct obj *obj;
     int wandlevel = 0;
     if (otmp->oclass == WAND_CLASS) {
-        wandlevel = getwandlevel(user, otmp);
+        wandlevel = getwandlevel(magr, otmp);
         zap_type_text = "wand";
     }
     boolean hostile;
     boolean tame;
-    if (user->mtame) {
-        hostile = !mtmp->mpeaceful;
-        tame = mtmp->mtame;
-    } else if (user->mpeaceful) {
+    if (magr->mtame) {
+        hostile = !mdef->mpeaceful;
+        tame = mdef->mtame;
+    } else if (magr->mpeaceful) {
         hostile = FALSE;
-        tame = mtmp->mpeaceful;
+        tame = mdef->mpeaceful;
     } else {
-        hostile = mtmp->mtame;
-        tame = !mtmp->mpeaceful;
+        hostile = mdef->mtame;
+        tame = !mdef->mpeaceful;
     }
-    boolean mlevel = mtmp->m_lev;
-    boolean disguised_mimic = (mtmp->data->mlet == S_MIMIC &&
-                               mtmp->m_ap_type != M_AP_NOTHING);
+    boolean mlevel = mdef->m_lev;
+    boolean disguised_mimic = (mdef->data->mlet == S_MIMIC &&
+                               mdef->m_ap_type != M_AP_NOTHING);
 
-    if (Engulfed && mtmp == u.ustuck)
+    if (Engulfed && mdef == u.ustuck)
         reveal_invis = FALSE;
 
     if (hityou)
@@ -125,13 +125,13 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     case WAN_STRIKING:
     case SPE_FORCE_BOLT:
         reveal_invis = TRUE;
-        if (resists_magm(mtmp)) {
-            shieldeff(mtmp->mx, mtmp->my);
+        if (resists_magm(mdef)) {
+            shieldeff(mdef->mx, mdef->my);
             if (hityou || tseen)
                 pline(msgc_yafm, "Boing!");
             break;      /* skip makeknown */
         } else if (selfzap || (yours && Engulfed) ||
-                   wandlevel || rnd(20) < 10 + find_mac(mtmp)) {
+                   wandlevel || rnd(20) < 10 + find_mac(mdef)) {
             dmg = dice(2, 12);
             if (wandlevel == P_MASTER)
                 dmg = dice(8, 12);
@@ -142,42 +142,42 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             if (otyp == SPE_FORCE_BOLT && yours)
                 dmg += spell_damage_bonus();
             if (useen || tseen)
-                hit(zap_type_text, mtmp, exclam(dmg), user);
+                hit(zap_type_text, mdef, exclam(dmg), magr);
             if (hityou) {
                 const char *kbuf;
-                kbuf = msgprintf("%s%s %s", yours ? mhis(user) : s_suffix(k_monnam(user)),
+                kbuf = msgprintf("%s%s %s", yours ? mhis(magr) : s_suffix(k_monnam(magr)),
                                 yours ? " own" : "", zap_type_text);
                 losehp(dmg, killer_msg(DIED, kbuf));
             } else {
-                if (resist(mtmp, otmp->oclass, TELL))
+                if (resist(mdef, otmp->oclass, TELL))
                     dmg = dmg / 2 + 1;
-                mtmp->mhp -= dmg;
-                if (mtmp->mhp <= 0)
-                    monkilled(user, mtmp, "", AD_RBRE);
+                mdef->mhp -= dmg;
+                if (mdef->mhp <= 0)
+                    monkilled(magr, mdef, "", AD_RBRE);
             }
         } else
-            miss(zap_type_text, mtmp, user);
+            miss(zap_type_text, mdef, magr);
         known = TRUE;
         break;
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
         if (wandlevel)
-            inc_timeout(mtmp, SLOW, rn1((4 * wandlevel), (6 * wandlevel)), FALSE);
+            inc_timeout(mdef, SLOW, rn1((4 * wandlevel), (6 * wandlevel)), FALSE);
         else
-            inc_timeout(mtmp, SLOW, dice(3, 8), FALSE);
+            inc_timeout(mdef, SLOW, dice(3, 8), FALSE);
         if (wandlevel == P_MASTER)
-            set_property(mtmp, FAST, -2, TRUE);
+            set_property(mdef, FAST, -2, TRUE);
         else if (wandlevel >= P_SKILLED)
-            set_property(mtmp, FAST, -1, TRUE);
+            set_property(mdef, FAST, -1, TRUE);
         if (!hityou)
-            m_dowear(mtmp, FALSE);      /* might want speed boots */
-        if (Engulfed && (mtmp == u.ustuck) && is_whirly(mtmp->data)) {
+            m_dowear(mdef, FALSE);      /* might want speed boots */
+        if (Engulfed && (mdef == u.ustuck) && is_whirly(mdef->data)) {
             if (yours)
-                pline(msgc_statusheal, "You disrupt %s!", mon_nam(mtmp));
+                pline(msgc_statusheal, "You disrupt %s!", mon_nam(mdef));
             else
-                pline(msgc_statusheal, "%s is disrupted!", Monnam(mtmp));
+                pline(msgc_statusheal, "%s is disrupted!", Monnam(mdef));
             pline_implied(msgc_statusheal, "A huge hole opens up...");
-            expels(mtmp, mtmp->data, TRUE);
+            expels(mdef, mdef->data, TRUE);
             known = TRUE;
         }
         break;
@@ -191,25 +191,25 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             dmg += 50;
             dmg += dice(3, 20);
         }
-        known = inc_timeout(mtmp, FAST, dmg, FALSE);
+        known = inc_timeout(mdef, FAST, dmg, FALSE);
         if (wandlevel >= P_SKILLED) {
-            set_property(mtmp, FAST, 0, FALSE);
+            set_property(mdef, FAST, 0, FALSE);
             exercise(A_DEX, TRUE);
         }
         break;
     case WAN_UNDEAD_TURNING:
     case SPE_TURN_UNDEAD:
         wake = FALSE;
-        if (wandlevel >= P_BASIC && unturn_dead(mtmp))
+        if (wandlevel >= P_BASIC && unturn_dead(mdef))
             wake = TRUE;
-        if (is_undead(mtmp->data)) {
+        if (is_undead(mdef->data)) {
             reveal_invis = TRUE;
             wake = TRUE;
             known = TRUE;
             flags.bypasses = TRUE;      /* for make_corpse() */
             if (hityou) {
                 if (wandlevel < P_SKILLED) {
-                    pline(combat_msgc(user, mtmp, cr_hit),
+                    pline(combat_msgc(magr, mdef, cr_hit),
                           Stunned ? "You struggle to keep your balance." :
                           "You reel...");
                     dmg = dice(ACURR(A_DEX) < 12 ? 6 : 4, 4);
@@ -222,57 +222,57 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
                     else
                         done(DIED, "a turn undead effect");
                 }
-            } else if ((wandlevel < P_SKILLED && !resist(mtmp, otmp->oclass, NOTELL)) ||
-                       (wandlevel >= P_SKILLED && resist(mtmp, otmp->oclass, NOTELL))) {
+            } else if ((wandlevel < P_SKILLED && !resist(mdef, otmp->oclass, NOTELL)) ||
+                       (wandlevel >= P_SKILLED && resist(mdef, otmp->oclass, NOTELL))) {
                 if (tseen) {
-                    if (stunned(mtmp))
-                        pline(combat_msgc(user, mtmp, cr_hit),
-                              "%s struggles to keep %s balance.", Monnam(mtmp),
-                              mhis(mtmp));
+                    if (stunned(mdef))
+                        pline(combat_msgc(magr, mdef, cr_hit),
+                              "%s struggles to keep %s balance.", Monnam(mdef),
+                              mhis(mdef));
                     else
-                        pline(combat_msgc(user, mtmp, cr_hit),
-                              "%s reels...", Monnam(mtmp));
+                        pline(combat_msgc(magr, mdef, cr_hit),
+                              "%s reels...", Monnam(mdef));
                 }
                 dmg = dice(6, 4);
-                if (half_spell_dam(mtmp))
+                if (half_spell_dam(mdef))
                         dmg = (dmg + 1) / 2;
-                inc_timeout(mtmp, STUNNED, dmg, TRUE);
-                monflee(mtmp, 0, FALSE, TRUE);
+                inc_timeout(mdef, STUNNED, dmg, TRUE);
+                monflee(mdef, 0, FALSE, TRUE);
             } else if (wandlevel >= P_SKILLED)
-                monkilled(user, mtmp, "", AD_RBRE);
+                monkilled(magr, mdef, "", AD_RBRE);
         }
         break;
     case WAN_POLYMORPH:
     case SPE_POLYMORPH:
     case POT_POLYMORPH:
-        if (unchanging(mtmp) || (resists_magm(mtmp) && !selfzap)) {
+        if (unchanging(mdef) || (resists_magm(mdef) && !selfzap)) {
             /* magic resistance protects from polymorph traps, so make it guard
                against involuntary polymorph attacks too... */
-            shieldeff(m_mx(mtmp), m_my(mtmp));
+            shieldeff(m_mx(mdef), m_my(mdef));
             if (tseen)
-                pline(combat_msgc(user, mtmp, cr_immune),
+                pline(combat_msgc(magr, mdef, cr_immune),
                       "%s %s momentarily different.",
-                      hityou ? "You" : Monnam(mtmp),
+                      hityou ? "You" : Monnam(mdef),
                       hityou ? "feel" : "looks");
             known = TRUE;
         } else if (hityou) {
             polyself(FALSE); /* FIXME: make skilled users able to affect the outcome */
             known = TRUE;
-        } else if (!resist(mtmp, otmp->oclass, NOTELL)) {
+        } else if (!resist(mdef, otmp->oclass, NOTELL)) {
             /* natural shapechangers aren't affected by system shock (unless
                protection from shapechangers is interfering with their
                metabolism...) */
-            if (mtmp->cham == CHAM_ORDINARY && !rn2(25) && (!tame || wandlevel < P_EXPERT)) {
-                if (canseemon(mtmp)) {
-                    pline(combat_msgc(user, mtmp, cr_kill),
-                          "%s shudders!", Monnam(mtmp));
+            if (mdef->cham == CHAM_ORDINARY && !rn2(25) && (!tame || wandlevel < P_EXPERT)) {
+                if (canseemon(mdef)) {
+                    pline(combat_msgc(magr, mdef, cr_kill),
+                          "%s shudders!", Monnam(mdef));
                 }
                 /* dropped inventory shouldn't be hit by this zap */
-                for (obj = mtmp->minvent; obj; obj = obj->nobj)
+                for (obj = mdef->minvent; obj; obj = obj->nobj)
                     bypass_obj(obj);
                 /* flags.bypasses = TRUE; ## for make_corpse() */
                 /* no corpse after system shock */
-                monkilled(user, mtmp, "", -AD_RBRE);
+                monkilled(magr, mdef, "", -AD_RBRE);
                 break;
             }
             int tries = 1;
@@ -282,11 +282,11 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             if (wandlevel == P_MASTER)
                 tries++;
             while (tries-- > 0) {
-                if (!newcham(mtmp, NULL, (otyp != POT_POLYMORPH || selfzap), FALSE))
+                if (!newcham(mdef, NULL, (otyp != POT_POLYMORPH || selfzap), FALSE))
                     tries = 0;
                 else {
                     polymorphed = TRUE;
-                    if ((hostile && mlevel < mtmp->m_lev) || (tame && mlevel > mtmp->m_lev))
+                    if ((hostile && mlevel < mdef->m_lev) || (tame && mlevel > mdef->m_lev))
                         tries = 0;
                 }
             }
@@ -296,31 +296,31 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         break;
     case WAN_CANCELLATION:
     case SPE_CANCELLATION:
-        cancel_monst(mtmp, otmp, &youmonst, TRUE, FALSE);
+        cancel_monst(mdef, otmp, &youmonst, TRUE, FALSE);
         break;
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         known = TRUE;
-        if ((wandlevel != P_MASTER || selfzap) && tele_restrict(mtmp))
+        if ((wandlevel != P_MASTER || selfzap) && tele_restrict(mdef))
             break; /* noteleport */
         if (level->flags.noteleport) {
             /* master proficiency can bypass noteleport */
-            if (mtmp == &youmonst)
+            if (mdef == &youmonst)
                 safe_teleds(FALSE);
             else
-                rloc(mtmp, TRUE);
+                rloc(mdef, TRUE);
             break;
         }
-        reveal_invis = !mon_tele(mtmp, (level->flags.noteleport ?
-                                        FALSE : !!teleport_control(mtmp)));
+        reveal_invis = !mon_tele(mdef, (level->flags.noteleport ?
+                                        FALSE : !!teleport_control(mdef)));
         break;
     case WAN_MAKE_INVISIBLE:
-        if (wandlevel >= P_SKILLED && invisible(mtmp))
-            known = set_property(mtmp, INVIS, -2, FALSE);
+        if (wandlevel >= P_SKILLED && invisible(mdef))
+            known = set_property(mdef, INVIS, -2, FALSE);
         else if (wandlevel == P_UNSKILLED)
-            known = inc_timeout(mtmp, INVIS, rnd(50), FALSE);
+            known = inc_timeout(mdef, INVIS, rnd(50), FALSE);
         else
-            known = set_property(mtmp, INVIS, 0, FALSE);
+            known = set_property(mdef, INVIS, 0, FALSE);
         break;
     case WAN_NOTHING:
     case WAN_LOCKING:
@@ -330,77 +330,77 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
     case WAN_PROBING:
         wake = FALSE;
         reveal_invis = TRUE;
-        probe_monster(mtmp);
+        probe_monster(mdef);
         if (wandlevel >= P_SKILLED)
-            enlighten_mon(mtmp, 0);
+            enlighten_mon(mdef, 0);
         known = TRUE;
         break;
     case WAN_OPENING:
     case SPE_KNOCK:
         wake = FALSE;   /* don't want immediate counterattack */
-        if (Engulfed && mtmp == u.ustuck) {
-            if (is_animal(mtmp->data)) {
+        if (Engulfed && mdef == u.ustuck) {
+            if (is_animal(mdef->data)) {
                 if (Blind)
                     pline(msgc_statusheal, "You feel a sudden rush of air!");
                 else
-                    pline(msgc_statusheal, "%s opens its mouth!", Monnam(mtmp));
+                    pline(msgc_statusheal, "%s opens its mouth!", Monnam(mdef));
             }
-            expels(mtmp, mtmp->data, TRUE);
-        } else if ((obj = which_armor(mtmp, os_saddle))) {
-            mtmp->misc_worn_check &= ~obj->owornmask;
+            expels(mdef, mdef->data, TRUE);
+        } else if ((obj = which_armor(mdef, os_saddle))) {
+            mdef->misc_worn_check &= ~obj->owornmask;
             obj->owornmask = 0L;
-            if (mtmp == u.usteed)
+            if (mdef == u.usteed)
                 dismount_steed(DISMOUNT_FELL);
             obj_extract_self(obj);
-            place_object(obj, level, mtmp->mx, mtmp->my);
+            place_object(obj, level, mdef->mx, mdef->my);
             /* call stackobj() if we ever drop anything that can merge */
-            newsym(mtmp->mx, mtmp->my);
+            newsym(mdef->mx, mdef->my);
         }
         break;
     case SPE_HEALING:
     case SPE_EXTRA_HEALING:
         reveal_invis = TRUE;
         dmg = dice(6, otyp == SPE_EXTRA_HEALING ? 8 : 4);
-        if (mtmp->data != &mons[PM_PESTILENCE]) {
+        if (mdef->data != &mons[PM_PESTILENCE]) {
             wake = FALSE;       /* wakeup() makes the target angry */
-            if (mtmp == &youmonst)
+            if (mdef == &youmonst)
                 healup(dmg, 0, FALSE, FALSE);
             else {
-                mtmp->mhp += dmg;
-                if (mtmp->mhp > mtmp->mhpmax)
-                    mtmp->mhp = mtmp->mhpmax;
+                mdef->mhp += dmg;
+                if (mdef->mhp > mdef->mhpmax)
+                    mdef->mhp = mdef->mhpmax;
             }
             if (!selfzap) /* only cure blindness if zapped by someone else */
-                set_property(mtmp, BLINDED, -2, FALSE);
-            if (mtmp != &youmonst && canseemonoritem(mtmp)) {
+                set_property(mdef, BLINDED, -2, FALSE);
+            if (mdef != &youmonst && canseemonoritem(mdef)) {
                 if (disguised_mimic) {
-                    if (mtmp->m_ap_type == M_AP_OBJECT &&
-                        mtmp->mappearance == STRANGE_OBJECT) {
+                    if (mdef->m_ap_type == M_AP_OBJECT &&
+                        mdef->mappearance == STRANGE_OBJECT) {
                         /* it can do better now */
-                        set_mimic_sym(mtmp, level, rng_main);
-                        newsym(mtmp->mx, mtmp->my);
+                        set_mimic_sym(mdef, level, rng_main);
+                        newsym(mdef->mx, mdef->my);
                     } else
-                        mimic_hit_msg(mtmp, otyp);
+                        mimic_hit_msg(mdef, otyp);
                 } else
                     pline(msgc_actionok, "%s %s%s better.",
-                          mtmp == &youmonst ? "You" : Monnam(mtmp),
-                          mtmp == &youmonst ? "feel" : "looks",
+                          mdef == &youmonst ? "You" : Monnam(mdef),
+                          mdef == &youmonst ? "feel" : "looks",
                           otyp == SPE_EXTRA_HEALING ? " much" : "");
             }
-            if (yours && (mtmp->mtame || mtmp->mpeaceful)) {
+            if (yours && (mdef->mtame || mdef->mpeaceful)) {
                 adjalign(Role_if(PM_HEALER) ? 1 : sgn(u.ualign.type));
             }
         } else {        /* Pestilence */
             /* Pestilence will always resist; damage is half of 3d{4,8} */
-            if (resist(mtmp, otmp->oclass, TELL))
+            if (resist(mdef, otmp->oclass, TELL))
                 dmg = dmg / 2 + 1;
-            mtmp->mhp -= dmg;
-            if (mtmp->mhp <= 0)
-                monkilled(user, mtmp, "", AD_RBRE);
+            mdef->mhp -= dmg;
+            if (mdef->mhp <= 0)
+                monkilled(magr, mdef, "", AD_RBRE);
         }
         break;
     case WAN_LIGHT:    /* (broken wand) */
-        if (flash_hits_mon(mtmp, otmp)) {
+        if (flash_hits_mon(mdef, otmp)) {
             known = TRUE;
             reveal_invis = TRUE;
         }
@@ -410,36 +410,36 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
            leave `wake' set to TRUE here] */
         reveal_invis = TRUE;
         /* this never affects the hero -- zapyourself() is called instead */
-        if (sleep_monst(mtmp, dice(1 + otmp->spe, 12), WAND_CLASS))
-            slept_monst(mtmp);
+        if (sleep_monst(mdef, dice(1 + otmp->spe, 12), WAND_CLASS))
+            slept_monst(mdef);
         known = TRUE;
         break;
     case SPE_STONE_TO_FLESH:
         wake = FALSE;
-        if (monsndx(mtmp->data) == PM_STONE_GOLEM) {
+        if (monsndx(mdef->data) == PM_STONE_GOLEM) {
             wake = TRUE;
             if (hityou)
                 polymon(PM_FLESH_GOLEM, TRUE);
             else {
-                const char *name = Monnam(mtmp);
-                if (newcham(mtmp, &mons[PM_FLESH_GOLEM], FALSE, FALSE)) {
-                    if (canseemon(mtmp))
+                const char *name = Monnam(mdef);
+                if (newcham(mdef, &mons[PM_FLESH_GOLEM], FALSE, FALSE)) {
+                    if (canseemon(mdef))
                         pline(msgc_actionok, "%s turns to flesh!", name);
                 } else {
-                    if (canseemon(mtmp))
+                    if (canseemon(mdef))
                         pline(msgc_substitute,
                               "%s looks rather fleshy for a moment.", name);
                 }
             }
         }
 
-        wake = set_property(mtmp, STONED, -2, FALSE); /* saved! */
+        wake = set_property(mdef, STONED, -2, FALSE); /* saved! */
         /* but at a cost.. */
         if (selfzap) {
             struct obj *otemp;
             struct obj *onext;
             boolean didmerge;
-            for (otemp = m_minvent(mtmp); otemp; otemp = onext) {
+            for (otemp = m_minvent(mdef); otemp; otemp = onext) {
                 onext = otemp->nobj;
                 bhito(otemp, otmp);
             }
@@ -463,26 +463,26 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
             dmg *= 2;
         if (otyp == SPE_DRAIN_LIFE)
             dmg += spell_damage_bonus();
-        if (half_spell_dam(mtmp))
+        if (half_spell_dam(mdef))
             dmg = dmg / 2 + 1;
-        if (resists_drli(mtmp)) {
-            shieldeff(mtmp->mx, mtmp->my);
-            if (hityou || canseemon(mtmp))
-                pline(combat_msgc(user, mtmp, cr_immune),
-                      "%sn't drained.", M_verbs(mtmp, "are"));
+        if (resists_drli(mdef)) {
+            shieldeff(m_mx(mdef), m_my(mdef));
+            if (hityou || canseemon(mdef))
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%sn't drained.", M_verbs(mdef, "are"));
         } else if (hityou)
-            losexp(msgcat_many("drained by %s spell", s_suffix(k_monnam(user)), NULL),
+            losexp(msgcat_many("drained by %s spell", s_suffix(k_monnam(magr)), NULL),
                    FALSE);
-        else if (!resist(mtmp, otmp->oclass, TELL)) {
-            mtmp->mhp -= dmg;
-            mtmp->mhpmax -= dmg;
-            if (mtmp->mhp <= 0 || mtmp->mhpmax <= 0 || mtmp->m_lev < 1)
-                monkilled(user, mtmp, "", AD_RBRE);
+        else if (!resist(mdef, otmp->oclass, TELL)) {
+            mdef->mhp -= dmg;
+            mdef->mhpmax -= dmg;
+            if (mdef->mhp <= 0 || mdef->mhpmax <= 0 || mdef->m_lev < 1)
+                monkilled(magr, mdef, "", AD_DRLI);
             else {
-                mtmp->m_lev--;
-                if (canseemon(mtmp))
-                    pline(combat_msgc(&youmonst, mtmp, cr_hit),
-                          "%s suddenly seems weaker!", Monnam(mtmp));
+                mdef->m_lev--;
+                if (canseemon(mdef))
+                    pline(combat_msgc(&youmonst, mdef, cr_hit),
+                          "%s suddenly seems weaker!", Monnam(mdef));
             }
         }
         break;
@@ -491,23 +491,23 @@ bhitm(struct monst *user, struct monst *mtmp, struct obj *otmp)
         break;
     }
     if (wake) {
-        if (!DEADMONSTER(mtmp)) {
+        if (!DEADMONSTER(mdef)) {
             if (yours) {
-                wakeup(mtmp, FALSE);
-                m_respond(mtmp);
-                if (mx_eshk(mtmp) && !*u.ushops)
-                    hot_pursuit(mtmp);
+                wakeup(mdef, FALSE);
+                m_respond(mdef);
+                if (mx_eshk(mdef) && !*u.ushops)
+                    hot_pursuit(mdef);
             } else
-                mtmp->msleeping = 0;
-        } else if (mtmp->m_ap_type)
-            seemimic(mtmp);     /* might unblock if mimicing a boulder/door */
+                mdef->msleeping = 0;
+        } else if (mdef->m_ap_type)
+            seemimic(mdef);     /* might unblock if mimicing a boulder/door */
     }
     /* note: bhitpos won't be set if swallowed, but that's okay since
-       reveal_invis will be false.  We can't use mtmp->mx, my since it might be
+       reveal_invis will be false.  We can't use mdef->mx, my since it might be
        an invisible worm hit on the tail. */
     if (reveal_invis) {
-        if (!DEADMONSTER(mtmp) && cansee(bhitpos.x, bhitpos.y) &&
-            !canspotmon(mtmp))
+        if (!DEADMONSTER(mdef) && cansee(bhitpos.x, bhitpos.y) &&
+            !canspotmon(mdef))
             map_invisible(bhitpos.x, bhitpos.y);
     }
     if (known && useen && tseen && (otmp->oclass == WAND_CLASS || otmp->oclass == POTION_CLASS))
@@ -2816,28 +2816,28 @@ exclam(int force)
 }
 
 void
-hit(const char *str, struct monst *mtmp, const char *force,
+hit(const char *str, struct monst *mdef, const char *force,
     struct monst *magr)
 {       /* usually either "." or "!" */
-    if (((!cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp) &&
-          !(Engulfed && mtmp == u.ustuck)) ||
-         !flags.verbose) && mtmp != &youmonst)
-        pline(combat_msgc(magr, mtmp, cr_hit),
+    if (((!cansee(bhitpos.x, bhitpos.y) && !canspotmon(mdef) &&
+          !(Engulfed && mdef == u.ustuck)) ||
+         !flags.verbose) && mdef != &youmonst)
+        pline(combat_msgc(magr, mdef, cr_hit),
               "%s %s it.", The(str), vtense(str, "hit"));
     else
-        pline(combat_msgc(magr, mtmp, cr_hit),
+        pline(combat_msgc(magr, mdef, cr_hit),
               "%s %s %s%s", The(str), vtense(str, "hit"),
-              mtmp == &youmonst ? "you" : mon_nam(mtmp), force);
+              mdef == &youmonst ? "you" : mon_nam(mdef), force);
 }
 
 void
-miss(const char *str, struct monst *mtmp, struct monst *magr)
+miss(const char *str, struct monst *mdef, struct monst *magr)
 {
-    pline(combat_msgc(magr, mtmp, cr_miss), "%s %s %s.",
+    pline(combat_msgc(magr, mdef, cr_miss), "%s %s %s.",
           The(str), vtense(str, "miss"),
-          ((cansee(bhitpos.x, bhitpos.y) || canspotmon(mtmp) ||
-            mtmp == &youmonst) && flags.verbose) ?
-          (mtmp == &youmonst ? "you" : mon_nam(mtmp)) : "it");
+          ((cansee(bhitpos.x, bhitpos.y) || canspotmon(mdef) ||
+            mdef == &youmonst) && flags.verbose) ?
+          (mdef == &youmonst ? "you" : mon_nam(mdef)) : "it");
 }
 
 
@@ -2847,7 +2847,7 @@ miss(const char *str, struct monst *mtmp, struct monst *magr)
    TODO: figure out a more suitable name that doesn't clash with beam_hit() */
 void
 mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
-    struct monst *mtmp;
+    struct monst *mdef;
     struct obj *otmp;
     uchar typ;
     unsigned orig_ident = flags.ident;
@@ -2915,20 +2915,20 @@ mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
             bhitm(mon, &youmonst, obj);
             range -= 3;
         } else if (MON_AT(level, bhitpos.x, bhitpos.y)) {
-            mtmp = m_at(level, bhitpos.x, bhitpos.y);
+            mdef = m_at(level, bhitpos.x, bhitpos.y);
             /* Only hit the monster if it wasn't just created */
-            if (mtmp && mtmp->m_id - orig_ident <= 100u)
-                mtmp = NULL;
+            if (mdef && mdef->m_id - orig_ident <= 100u)
+                mdef = NULL;
             else {
-                if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp))
+                if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mdef))
                     map_invisible(bhitpos.x, bhitpos.y);
-                bhitm(mon, mtmp, obj);
+                bhitm(mon, mdef, obj);
                 range -= 3;
             }
-        } else if ((mtmp = vismon_at(level, bhitpos.x, bhitpos.y))) {
-            pline(combat_msgc(mon, mtmp, cr_miss),
+        } else if ((mdef = vismon_at(level, bhitpos.x, bhitpos.y))) {
+            pline(combat_msgc(mon, mdef, cr_miss),
                   "The beam fires through %s displaced image!",
-                  mtmp == &youmonst ? "your" : s_suffix(mon_nam(mtmp)));
+                  mdef == &youmonst ? "your" : s_suffix(mon_nam(mdef)));
         }
         if (you && obj->otyp == WAN_PROBING &&
             level->locations[bhitpos.x][bhitpos.y].mem_invis) {
@@ -3070,15 +3070,8 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
                 range--;
         }
 
-        /* Affect monsters on the square. Exception: if the monster was created
-           as a result of the wand zap. We can determine this by comparing its
-           ident to orig_ident. orig_ident wraps around; thus, we compare the
-           distance the monster is above orig_ident, and if it's in the range
-           0..100, assume it's a newly created monster. */
+        /* Affect monsters on the square. */
         mtmp = m_at(level, bhitpos.x, bhitpos.y);
-        if (mtmp && mtmp->m_id - orig_ident <= 100u)
-            mtmp = NULL;
-
         if (mtmp) {
             notonhead = (bhitpos.x != mtmp->mx || bhitpos.y != mtmp->my);
             if (weapon != FLASHED_LIGHT) {
@@ -3242,9 +3235,12 @@ boomhit(int dx, int dy)
 }
 
 /* returns damage to mon */
+/* selfzap is special, it implies magr==mdef, but the reverse isn't true.
+   Basically, it is used when the monster zapped the wand at itself,
+   not when it happens to catch itself in a rebound. */
 static void
-zap_hit_mon(struct monst *user, struct monst *mon,
-            int type, int nd, int raylevel)
+zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
+            int nd, int raylevel, boolean selfzap)
 {
     int tmp = dice(nd, 6);
     int abstype = abs(type) % 10;
@@ -3252,8 +3248,8 @@ zap_hit_mon(struct monst *user, struct monst *mon,
     const char *ztyp;
     const char *fltxt;
     boolean oseen = FALSE;
-    oseen = mon_visible(mon);
-    boolean you = (mon == &youmonst);
+    oseen = mon_visible(mdef);
+    boolean you = (mdef == &youmonst);
     if (you)
         oseen = TRUE;
     boolean spellcaster = is_hero_spell(type);  /* maybe get a bonus! */
@@ -3265,16 +3261,16 @@ zap_hit_mon(struct monst *user, struct monst *mon,
     fltxt = flash_types[buzztyp];
     switch (abstype) {
     case ZT_MAGIC_MISSILE:
-        if (resists_magm(mon)) {
+        if (resists_magm(mdef)) {
             if (raylevel >= P_EXPERT) {
                 tmp = (tmp / 2) + 1;
                 if (oseen)
-                    pline(combat_msgc(user, mon, cr_resist),
+                    pline(combat_msgc(magr, mdef, cr_resist),
                           "Some of the missiles bounce off!");
             } else {
                 resisted = 2;
                 if (oseen)
-                    pline(combat_msgc(user, mon, cr_immune),
+                    pline(combat_msgc(magr, mdef, cr_immune),
                           "The missiles bounce off!");
             }
             break;
@@ -3284,75 +3280,75 @@ zap_hit_mon(struct monst *user, struct monst *mon,
         break;
     case ZT_FIRE:
         ztyp = "hot";
-        if (resists_fire(mon)) {
+        if (resists_fire(mdef)) {
             resisted = 1;
-            if (likes_fire(mon->data)) {
+            if (likes_fire(mdef->data)) {
                 /* innately hot creatures probably look hot... */
                 resisted = 2;
                 if (oseen)
-                    pline(combat_msgc(user, mon, cr_immune),
-                          "%s unharmed!", M_verbs(mon, "are"));
+                    pline(combat_msgc(magr, mdef, cr_immune),
+                          "%s unharmed!", M_verbs(mdef, "are"));
             }
         }
-        if (resists_cold(mon))
+        if (resists_cold(mdef))
             tmp += dice(nd, 3);
-        burn_away_slime(mon);
-        golemeffects(mon, AD_FIRE, tmp);
-        if (raylevel != P_UNSKILLED && burnarmor(mon)) {
+        burn_away_slime(mdef);
+        golemeffects(mdef, AD_FIRE, tmp);
+        if (raylevel != P_UNSKILLED && burnarmor(mdef)) {
             if (!rn2(3))
-                destroy_mitem(mon, POTION_CLASS, AD_FIRE);
+                destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
             if (!rn2(3))
-                destroy_mitem(mon, SCROLL_CLASS, AD_FIRE);
+                destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
             if (!rn2(5))
-                destroy_mitem(mon, SPBOOK_CLASS, AD_FIRE);
+                destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
         }
         break;
     case ZT_COLD:
         ztyp = "cold";
-        if (resists_cold(mon))
+        if (resists_cold(mdef))
             resisted = 1;
-        if (resists_fire(mon))
+        if (resists_fire(mdef))
             tmp += dice(nd, 3);
-        golemeffects(mon, AD_COLD, tmp);
+        golemeffects(mdef, AD_COLD, tmp);
         if (raylevel != P_UNSKILLED && !rn2(3))
-            destroy_mitem(mon, POTION_CLASS, AD_COLD);
+            destroy_mitem(mdef, POTION_CLASS, AD_COLD);
         break;
     case ZT_SLEEP:
         ztyp = "sleepy";
         tmp = 0;
-        if (resists_sleep(mon))
+        if (resists_sleep(mdef))
             resisted = 1;
         else {
-            sleep_monst(mon, dice(nd, 25),
+            sleep_monst(mdef, dice(nd, 25),
                         buzztyp == ZT_WAND(ZT_SLEEP) ? WAND_CLASS : '\0');
             if (!you)
-                slept_monst(mon);
+                slept_monst(mdef);
         }
         break;
     case ZT_DEATH:     /* death/disintegration */
         ztyp = "dead";
         if (!disintegrated) { /* death */
-            if (mon->data == &mons[PM_DEATH]) {
-                if (canseemon(mon)) {
-                    pline_implied(combat_msgc(user, mon, cr_immune),
-                                  "%s absorbs the deadly %s!", Monnam(mon),
+            if (mdef->data == &mons[PM_DEATH]) {
+                if (canseemon(mdef)) {
+                    pline_implied(combat_msgc(magr, mdef, cr_immune),
+                                  "%s absorbs the deadly %s!", Monnam(mdef),
                                   buzztyp < ZT_SPELL(0) ? "ray" : "spell");
-                    pline(combat_msgc(user, mon, cr_immune),
+                    pline(combat_msgc(magr, mdef, cr_immune),
                           "It seems even stronger than before.");
                 }
-                mon->mhpmax += mon->mhpmax / 2;
-                if (mon->mhpmax > 999) /* arbitrary -- cap HP at 999 */
-                    mon->mhpmax = 999;
-                mon->mhp = mon->mhpmax;
+                mdef->mhpmax += mdef->mhpmax / 2;
+                if (mdef->mhpmax > 999) /* arbitrary -- cap HP at 999 */
+                    mdef->mhpmax = 999;
+                mdef->mhp = mdef->mhpmax;
                 return;
             }
-            if (nonliving(mon->data) || is_demon(mon->data) || resists_magm(mon) ||
+            if (nonliving(mdef->data) || is_demon(mdef->data) || resists_magm(mdef) ||
                 raylevel == P_UNSKILLED) {
-                if (resists_drli(mon) || raylevel <= P_SKILLED) {
-                    shieldeff(m_mx(mon), m_my(mon));
+                if (resists_drli(mdef) || raylevel <= P_SKILLED) {
+                    shieldeff(m_mx(mdef), m_my(mdef));
                     if (oseen)
-                        pline(combat_msgc(user, mon, cr_immune),
-                              "%s unaffected.", M_verbs(mon, "are"));
+                        pline(combat_msgc(magr, mdef, cr_immune),
+                              "%s unaffected.", M_verbs(mdef, "are"));
                 } else {
                     if (you) {
                         losexp("drained by a wand of death", FALSE);
@@ -3360,12 +3356,12 @@ zap_hit_mon(struct monst *user, struct monst *mon,
                     } else {
                         tmp = dice(2, 6);
                         if (oseen)
-                            pline(combat_msgc(user, mon, cr_hit),
-                                  "%s suddenly seems weaker!", Monnam(mon));
-                        mon->mhpmax -= tmp;
-                        mon->mhp -= tmp;
-                        if (mon->m_lev > 0) {
-                            mon->m_lev--;
+                            pline(combat_msgc(magr, mdef, cr_hit),
+                                  "%s suddenly seems weaker!", Monnam(mdef));
+                        mdef->mhpmax -= tmp;
+                        mdef->mhp -= tmp;
+                        if (mdef->m_lev > 0) {
+                            mdef->m_lev--;
                             return;
                         }
                         /* level 0 monsters are killed below */
@@ -3373,20 +3369,20 @@ zap_hit_mon(struct monst *user, struct monst *mon,
                 }
             }
         } else { /* disintegration */
-            if (is_rider(mon->data)) {
-                if (canseemon(mon)) {
-                    pline_implied(combat_msgc(user, mon, cr_immune),
-                                  "%s disintegrates.", Monnam(mon));
-                    pline(combat_msgc(user, mon, cr_immune),
+            if (is_rider(mdef->data)) {
+                if (canseemon(mdef)) {
+                    pline_implied(combat_msgc(magr, mdef, cr_immune),
+                                  "%s disintegrates.", Monnam(mdef));
+                    pline(combat_msgc(magr, mdef, cr_immune),
                           "%s body reintegrates before your %s!",
-                          s_suffix(Monnam(mon)),
+                          s_suffix(Monnam(mdef)),
                           (eyecount(youmonst.data) ==
                            1) ? body_part(EYE) :
                           makeplural(body_part(EYE)));
-                    pline_implied(combat_msgc(user, mon, cr_immune),
-                                  "%s resurrects!", Monnam(mon));
+                    pline_implied(combat_msgc(magr, mdef, cr_immune),
+                                  "%s resurrects!", Monnam(mdef));
                 }
-                mon->mhp = mon->mhpmax;
+                mdef->mhp = mdef->mhpmax;
                 return;
             }
             int dummy;
@@ -3394,14 +3390,14 @@ zap_hit_mon(struct monst *user, struct monst *mon,
                If suit or monster is to be disintegrated,
                also destroy cloak. If monster is to be
                disintegrated, also destroy shirt. */
-            if ((otmp = which_armor(mon, os_arms)) ||
-                ((otmp = which_armor(mon, os_arm)) &&
+            if ((otmp = which_armor(mdef, os_arms)) ||
+                ((otmp = which_armor(mdef, os_arm)) &&
                  otmp != uskin())) {
                 struct obj *otmp2;
                 if (is_suit(otmp) &&
-                    (otmp2 = which_armor(mon, os_armc))) {
+                    (otmp2 = which_armor(mdef, os_armc))) {
                     if (!item_provides_extrinsic(otmp2, DISINT_RES, &dummy))
-                        destroy_arm(mon, otmp2);
+                        destroy_arm(mdef, otmp2);
                 }
 
                 if (!item_provides_extrinsic(otmp, DISINT_RES, &dummy))
@@ -3409,94 +3405,94 @@ zap_hit_mon(struct monst *user, struct monst *mon,
                 return;
             }
 
-            if ((otmp = which_armor(mon, os_armc)) &&
+            if ((otmp = which_armor(mdef, os_armc)) &&
                 !item_provides_extrinsic(otmp, DISINT_RES, &dummy))
-                destroy_arm(mon, otmp);
-            if ((otmp = which_armor(mon, os_armu)) &&
+                destroy_arm(mdef, otmp);
+            if ((otmp = which_armor(mdef, os_armu)) &&
                 !item_provides_extrinsic(otmp, DISINT_RES, &dummy))
-                destroy_arm(mon, otmp);
+                destroy_arm(mdef, otmp);
 
-            if (resists_disint(mon)) {
-                shieldeff(m_mx(mon), m_my(mon));
+            if (resists_disint(mdef)) {
+                shieldeff(m_mx(mdef), m_my(mdef));
                 if (oseen)
-                    pline(combat_msgc(user, mon, cr_immune),
+                    pline(combat_msgc(magr, mdef, cr_immune),
                           "%s %s not disintegrated.",
-                          you ? "You" : Monnam(mon),
+                          you ? "You" : Monnam(mdef),
                           you ? "are" : "is");
                 return;
             }
-            pline(combat_msgc(user, mon, cr_kill),
-                  "%s disintegrated!", M_verbs(mon, "are"));
+            pline(combat_msgc(magr, mdef, cr_kill),
+                  "%s disintegrated!", M_verbs(mdef, "are"));
         }
         if (you) {
             /* when killed by disintegration breath, don't leave corpse */
             u.ugrave_arise = disintegrated ? -3 : NON_PM;
             done(DIED, killer_msg(DIED, an(fltxt)));
         } else {
-            mon->mhp = -1;
-            monkilled(user, mon, "", disintegrated ? -AD_RBRE : AD_RBRE);
+            mdef->mhp = -1;
+            monkilled(magr, mdef, "", disintegrated ? -AD_RBRE : AD_RBRE);
         }
         return; /* lifesaved */
     case ZT_LIGHTNING:
         ztyp = "shocked";
-        if (resists_elec(mon))
+        if (resists_elec(mdef))
             resisted = 1;
         else if (you)
             exercise(A_CON, FALSE);
-        if (!resists_blnd(mon) && !(yours && Engulfed && mon == u.ustuck)) {
+        if (!resists_blnd(mdef) && !(yours && Engulfed && mdef == u.ustuck)) {
             if (oseen)
-                pline(combat_msgc(user, mon, cr_hit),
-                      "%s blinded by the flash!", M_verbs(mon, "are"));
-            inc_timeout(mon, BLINDED, rnd(50), TRUE);
-            if (!blind(mon))
-                pline(combat_msgc(user, mon, cr_immune),
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "%s blinded by the flash!", M_verbs(mdef, "are"));
+            inc_timeout(mdef, BLINDED, rnd(50), TRUE);
+            if (!blind(mdef))
+                pline(combat_msgc(magr, mdef, cr_immune),
                       "%s vision quickly clears.",
-                      you ? "Your" : s_suffix(Monnam(mon)));
+                      you ? "Your" : s_suffix(Monnam(mdef)));
         }
-        golemeffects(mon, AD_ELEC, tmp);
+        golemeffects(mdef, AD_ELEC, tmp);
         if (raylevel != P_UNSKILLED && !rn2(3))
-            destroy_mitem(mon, WAND_CLASS, AD_ELEC);
+            destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
         break;
     case ZT_POISON_GAS:
         ztyp = "affected";
-        if (resists_poison(mon))
+        if (resists_poison(mdef))
             resisted = 1;
-        if (you && !resists_poison(mon)) {
+        if (you && !resists_poison(mdef)) {
             tmp = 0;
             poisoned("blast", A_DEX, killer_msg(DIED, "a poisoned blast"), 15);
         }
         break;
     case ZT_ACID:
         ztyp = "burned";
-        if (resists_acid(mon))
+        if (resists_acid(mdef))
             resisted = 1;
         else if (you) {
-            pline_implied(combat_msgc(user, mon, cr_hit),
+            pline_implied(combat_msgc(magr, mdef, cr_hit),
                           "The acid burns!");
             exercise(A_STR, FALSE);
         }
         /* using two weapons at once makes both of them more vulnerable */
         if (!rn2((you && u.twoweap) ? 3 : 6))
-            acid_damage(MON_WEP(mon));
+            acid_damage(MON_WEP(mdef));
         if (you && u.twoweap && !rn2(3))
             acid_damage(uswapwep);
         if (!rn2(6))
-            hurtarmor(mon, ERODE_CORRODE);
+            hurtarmor(mdef, ERODE_CORRODE);
         break;
     case ZT_STUN:
         ztyp = "stunned";
         if (you)
             exercise(A_DEX, FALSE);
-        inc_timeout(mon, STUNNED, tmp, FALSE);
+        inc_timeout(mdef, STUNNED, tmp, FALSE);
         tmp = 0;
         break;
     }
     if (resisted) {
-        shieldeff(m_mx(mon), m_my(mon));
+        shieldeff(m_mx(mdef), m_my(mdef));
         if (ztyp && resisted == 1)
-            pline(combat_msgc(user, mon, cr_immune),
+            pline(combat_msgc(magr, mdef, cr_immune),
                   "%s %s %s.",
-                  you ? "You" : Monnam(mon),
+                  you ? "You" : Monnam(mdef),
                   you ? "don't feel" : "doesn't seem",
                   ztyp);
         return;
@@ -3505,15 +3501,15 @@ zap_hit_mon(struct monst *user, struct monst *mon,
         tmp += spell_damage_bonus();
     if (is_hero_spell(type) && (Role_if(PM_KNIGHT) && Uhave_questart))
         tmp *= 2;
-    if (tmp > 0 && resist(mon, buzztyp < ZT_SPELL(0) ? WAND_CLASS : '\0', NOTELL))
+    if (tmp > 0 && resist(mdef, buzztyp < ZT_SPELL(0) ? WAND_CLASS : '\0', NOTELL))
         tmp /= 2;
-    if (half_spell_dam(mon) && tmp && buzztyp < ZT_BREATH(0))
+    if (half_spell_dam(mdef) && tmp && buzztyp < ZT_BREATH(0))
         tmp = (tmp + 1) / 2;
     if (tmp < 0)
         tmp = 0;        /* don't allow negative damage */
     if (raylevel == P_UNSKILLED) {
         /* unskilled rays has a 40% maxHP cap on damage */
-        int hpmax = m_mhpmax(mon);
+        int hpmax = m_mhpmax(mdef);
         if (you && Upolyd)
             hpmax = u.mhmax;
         tmp = min((40 * hpmax + 1) / 100, tmp);
@@ -3521,9 +3517,9 @@ zap_hit_mon(struct monst *user, struct monst *mon,
     if (you)
         losehp(tmp, killer_msg(DIED, an(fltxt)));
     else {
-        mon->mhp -= tmp;
-        if (mon->mhp <= 0)
-            monkilled(user, mon, fltxt, AD_RBRE);
+        mdef->mhp -= tmp;
+        if (mdef->mhp <= 0)
+            mdefkilled(magr, mdef, fltxt, AD_RBRE);
     }
     return;
 }
@@ -3627,6 +3623,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
     int spell_type;
     int buzztyp = abs(type) % 30; /* % 30 to catch -30-39 */
     boolean selfreflect = FALSE;
+    boolean selfzap = FALSE;
     /* has nothing to do with absolute value. TODO: give this var a better name */
     int abstype = buzztyp % 10;
     /* you = buzz hits you, vis = you can see mon, yours = you created the buzz */
@@ -3634,11 +3631,11 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
     boolean vis = FALSE;
     boolean yours = (type >= 0);
     /* TODO: source of buzz in a better way */
-    struct monst *user = NULL;
+    struct monst *magr = NULL;
     if (buzztyp != ZT_SPELL(ZT_LIGHTNING)) {
-        user = m_at(level, sx, sy);
+        magr = m_at(level, sx, sy);
         if (yours)
-            user = &youmonst;
+            magr = &youmonst;
     }
 
     /* if its a Hero Spell then get its SPE_TYPE */
@@ -3646,13 +3643,15 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
 
     fltxt = flash_types[buzztyp];
     if (Engulfed && yours) {
-        zap_hit_mon(user, u.ustuck, type, nd, raylevel);
+        zap_hit_mon(magr, u.ustuck, type, nd, raylevel, FALSE);
         return;
     }
     newsym(u.ux, u.uy);
     range = rn1(7, 7);
-    if (dx == 0 && dy == 0)
+    if (dx == 0 && dy == 0) {
         range = 1;
+        selfzap = TRUE;
+    }
     save_bhitpos = bhitpos;
 
     tsym = tmpsym_init(DISP_BEAM, zapdir_to_effect(dx, dy, abstype));
@@ -3694,7 +3693,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
 
         if (mon) {
             selfreflect = FALSE;
-            if (mon == user)
+            if (mon == magr)
                 selfreflect = TRUE;
             vis = canseemon(mon);
             if (buzztyp == ZT_SPELL(ZT_FIRE))
@@ -3704,26 +3703,26 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
             if (zap_hit_check(find_mac(mon), spell_type)) {
                 range -= 2;
                 if (yours || you || vis)
-                    hit(fltxt, mon, "!", user);
-                if (reflecting(mon)) {
+                    hit(fltxt, mon, "!", magr);
+                if (reflecting(mon) && !selfzap) {
                     if (you || vis) {
                         shieldeff(sx, sy);
                         if (raylevel >= P_SKILLED) {
                             if (blind(&youmonst))
-                                pline(combat_msgc(user, mon, cr_resist),
+                                pline(combat_msgc(magr, mon, cr_resist),
                                       "%s is disrupted by something!", The(fltxt));
                             else
-                                mon_reflects(mon, user, selfreflect,
+                                mon_reflects(mon, magr, selfreflect,
                                              "%s is disrupted by %s %s!",
                                              The(fltxt));
                         } else {
                             if (blind(&youmonst))
-                                pline(combat_msgc(user, mon, cr_immune),
+                                pline(combat_msgc(magr, mon, cr_immune),
                                       "For some reason, %s %s not affected.",
                                       you ? "you" : mon_nam(mon),
                                       you ? "are" : "is");
                             else
-                                mon_reflects(mon, user, selfreflect,
+                                mon_reflects(mon, magr, selfreflect,
                                              "But %s reflects from %s %s!", the(fltxt));
                         }
                     }
@@ -3734,21 +3733,21 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                     dx = -dx;
                     dy = -dy;
                 } else if (raylevel == P_MASTER) {
-                    pline(combat_msgc(user, mon, cr_hit),
+                    pline(combat_msgc(magr, mon, cr_hit),
                           "The powerful %s explodes!", fltxt);
                     range = 0;
                     continue;
                 } else
-                    zap_hit_mon(user, mon, type, nd, raylevel);
+                    zap_hit_mon(magr, mon, type, nd, raylevel, FALSE);
             } else if (you || yours || vis)
-                pline(combat_msgc(user, mon, cr_miss),
+                pline(combat_msgc(magr, mon, cr_miss),
                       "%s whizzes by %s!", The(fltxt),
                       you ? "you" : mon_nam(mon));
             if (you)
                 action_interrupted();
         } else if ((mon = vismon_at(level, sx, sy)) &&
                    (yours || cansee(sx, sy)))
-            pline(combat_msgc(user, mon, cr_miss),
+            pline(combat_msgc(magr, mon, cr_miss),
                   "%s whizzes by %s displaced image!", The(fltxt),
                   you ? "your" : s_suffix(mon_nam(mon)));
             

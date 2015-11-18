@@ -1,21 +1,26 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
 /* Copyright (c) Fredrik Ljungdahl, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
 /* Handling of extended monster memory.
-   mx_free(): frees up mx, mx_possiblyfree() frees up empty mextras, mx_new() creates a new one.
-   For the mextra structs themselves, mx_STRUCT() returns the struct or NULL if no mextra or no mextra->STRUCT,
-   mx_STRUCT_new() creates a new one, mx_STRUCT_free frees it (and potentially frees up mextra).
-   To simplify the code, the error handling is performed inside the functions, no need to do it on callers.
-   However, they only handle the structs -- e.g. they don't reset tameness on mx_edog_free for example.
-   Names are special -- just call christen_monst(mon, name) (name==NULL removes name) and it will handle
-   things. Should you wish to add a new mextra struct, add it in /include/mextra.h (and to struct mextra),
-   add a GEN_MEXTRA() line with your new struct, and add your struct to save/restore_mextra, mx_free and
-   mx_possiblyfree. WARNING: ensure that you get the mextra save/restore order right, otherwise it will
-   appear to work with only a single mextra, but fail with stacked ones... */
+   mx_free(): frees up mx, mx_possiblyfree() frees up empty mextras,
+   mx_new() creates a new one. For the mextra structs themselves,
+   mx_STRUCT() returns the struct or NULL if no mextra or no
+   mextra->STRUCT, mx_STRUCT_new() creates a new one, mx_STRUCT_free
+   frees it (and potentially frees up mextra). To simplify the code,
+   the error handling is performed inside the functions, no need to do
+   it on callers. However, they only handle the structs -- e.g. they
+   don't reset tameness on mx_edog_free for example. Names are special,
+   just call christen_monst(mon, name) (name==NULL removes name) and it
+   will handle things. Should you wish to add a new mextra struct, add
+   it in /include/mextra.h (and to struct mextra), add a GEN_MEXTRA()
+   line with your new struct, and add your struct to save/restore_mextra,
+   mx_free and mx_possiblyfree. WARNING: ensure that you get the mextra
+   save/restore order right, otherwise it will appear to work with only a
+   single mextra, but fail with stacked ones... */
 
 #define GEN_MEXTRA(nmx)                                                 \
     extern struct nmx *                                                 \
@@ -55,6 +60,7 @@ mx_new(struct monst *mon)
     mon->mextra = malloc(sizeof (struct mextra));
     memset(mon->mextra, 0, sizeof (struct mextra));
 }
+
 void
 mx_free(struct monst *mon)
 {
