@@ -1753,7 +1753,8 @@ update_property(struct monst *mon, enum youprop prop,
             if (blocked) { /* lost by poly */
                 if (flaming(mon->data))
                     burn_away_slime(mon);
-            } else if (you || vis) {
+            } else if (monsndx(mon->data) != PM_GREEN_SLIME &&
+                       (you || vis)) {
                 pline(you ? msgc_fatalavoid : msgc_monneutral,
                       "The slime on %s disappears!",
                       you ? "you" : mon_nam(mon));
