@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -440,6 +440,7 @@ extern void hitfloor(struct obj *);
 extern void hurtle(int, int, int, boolean);
 extern void mhurtle(struct monst *, int, int, int);
 extern boolean throwing_weapon(const struct obj *);
+extern struct monst *fire_obj(int, int, int, int, struct obj *, boolean *);
 extern void throwit(struct obj *, long, boolean, schar, schar, schar);
 extern int omon_adj(struct monst *, struct obj *, boolean);
 extern int thitmonst(struct monst *, struct obj *);
@@ -2055,11 +2056,6 @@ extern int spell_damage_bonus(void);
 extern const char *exclam(int force);
 extern void hit(const char *, struct monst *, const char *, struct monst *);
 extern void miss(const char *, struct monst *, struct monst *);
-extern void mbhit(struct monst *, int, int, int, struct obj *);
-extern struct monst *beam_hit(int, int, int, int,
-                              int (*)(struct monst *, struct monst *, struct obj *),
-                              int (*)(struct obj *, struct obj *), struct obj *,
-                              boolean *);
 extern struct monst *boomhit(int, int);
 extern int burn_floor_paper(struct level *, int, int, boolean, boolean);
 extern void buzz(int, int, xchar, xchar, int, int, int);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -597,7 +597,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
     obj_extract_self(kickobj);
     snuff_candle(kickobj);
     newsym(x, y);
-    mon = beam_hit(dx, dy, range, KICKED_WEAPON, NULL, NULL, kickobj, NULL);
+    mon = fire_obj(dx, dy, range, KICKED_WEAPON, kickobj, NULL);
 
     if (mon) {
         if (mx_eshk(mon) && kickobj->where == OBJ_MINVENT &&

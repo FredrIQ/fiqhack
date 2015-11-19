@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -845,6 +845,154 @@ sho_obj_return_to_u(struct obj *obj, schar dx, schar dy)
     }
 }
 
+/*
+ *  Called for the following distance effects:
+ *      when a weapon is thrown (weapon == THROWN_WEAPON)
+ *      when an object is kicked (KICKED_WEAPON)
+ *  A thrown/kicked object falls down at the end of its range or when a monster
+ *  is hit.  The variable 'bhitpos' is set to the final position of the weapon
+ *  thrown/kicked.
+ *
+ *  Check !Engulfed before calling fire_obj().
+ *  This function reveals the absence of a remembered invisible monster in
+ *  necessary cases (throwing or kicking weapons).  The presence of a real
+ *  one is revealed for a weapon, but if not a weapon is left up to fhitm().
+ */
+struct monst *
+fire_obj(int ddx, int ddy, int range,   /* direction and range */
+         int weapon,    /* see values in hack.h */
+         /* fns called when mon/obj hit */
+         struct obj *obj,    /* object tossed/used */
+         boolean * obj_destroyed /* has object been deallocated? may be NULL */
+    )
+{
+    struct monst *mtmp;
+    struct tmp_sym *tsym = NULL;
+    uchar typ;
+    boolean point_blank = TRUE;
+
+    if (obj_destroyed)
+        *obj_destroyed = FALSE;
+
+    if (weapon == KICKED_WEAPON) {
+        /* object starts one square in front of player */
+        bhitpos.x = u.ux + ddx;
+        bhitpos.y = u.uy + ddy;
+        range--;
+    } else {
+        bhitpos.x = u.ux;
+        bhitpos.y = u.uy;
+    }
+
+    tsym = tmpsym_initobj(obj);
+    while (range-- > 0) {
+        int x, y;
+
+        bhitpos.x += ddx;
+        bhitpos.y += ddy;
+        x = bhitpos.x;
+        y = bhitpos.y;
+
+        if (!isok(x, y)) {
+            bhitpos.x -= ddx;
+            bhitpos.y -= ddy;
+            break;
+        }
+
+        if (is_pick(obj) && inside_shop(level, x, y) &&
+            (mtmp = shkcatch(obj, x, y))) {
+            tmpsym_end(tsym);
+            return mtmp;
+        }
+
+        typ = level->locations[bhitpos.x][bhitpos.y].typ;
+
+        /* iron bars will block anything big enough */
+        if ((weapon == THROWN_WEAPON || weapon == KICKED_WEAPON) &&
+            typ == IRONBARS &&
+            hits_bars(&obj, x - ddx, y - ddy, point_blank ? 0 : !rn2(5), 1)) {
+            /* caveat: obj might now be null... */
+            if (obj == NULL && obj_destroyed)
+                *obj_destroyed = TRUE;
+            bhitpos.x -= ddx;
+            bhitpos.y -= ddy;
+            break;
+        }
+
+        if ((mtmp = m_at(level, bhitpos.x, bhitpos.y))) {
+            notonhead = (bhitpos.x != mtmp->mx || bhitpos.y != mtmp->my);
+            tmpsym_end(tsym);
+            if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp))
+                map_invisible(bhitpos.x, bhitpos.y);
+            return mtmp;
+        }
+        if (weapon == KICKED_WEAPON &&
+            ((obj->oclass == COIN_CLASS && OBJ_AT(bhitpos.x, bhitpos.y)) ||
+             ship_object(obj, bhitpos.x, bhitpos.y,
+                         costly_spot(bhitpos.x, bhitpos.y)))) {
+            tmpsym_end(tsym);
+            return NULL;
+        }
+        if (!ZAP_POS(typ) || closed_door(level, bhitpos.x, bhitpos.y)) {
+            bhitpos.x -= ddx;
+            bhitpos.y -= ddy;
+            break;
+        }
+
+        /* 'I' present but no monster: erase */
+        /* do this before the tmpsym_at() */
+        if (level->locations[bhitpos.x][bhitpos.y].mem_invis &&
+            cansee(x, y)) {
+            level->locations[bhitpos.x][bhitpos.y].mem_invis = FALSE;
+            newsym(x, y);
+        }
+        tmpsym_at(tsym, bhitpos.x, bhitpos.y);
+        win_delay_output();
+        /* kicked objects fall in pools */
+        if ((weapon == KICKED_WEAPON) &&
+            (is_pool(level, bhitpos.x, bhitpos.y) ||
+             is_lava(level, bhitpos.x, bhitpos.y)))
+            break;
+        if (IS_SINK(typ))
+            break;  /* physical objects fall onto sink */
+
+        /* limit range of ball so hero won't make an invalid move */
+        if (weapon == THROWN_WEAPON && range > 0 &&
+            obj->otyp == HEAVY_IRON_BALL) {
+            struct obj *bobj;
+            struct trap *t;
+
+            if ((bobj = sobj_at(BOULDER, level, x, y)) != 0) {
+                if (cansee(x, y))
+                    pline(msgc_yafm, "%s hits %s.",
+                          The(distant_name(obj, xname)), an(xname(bobj)));
+                range = 0;
+            } else if (obj == uball) {
+                struct test_move_cache cache;
+                init_test_move_cache(&cache);
+                if (!test_move(x - ddx, y - ddy, ddx, ddy, 0, TEST_MOVE,
+                               &cache)) {
+                    /* nb: it didn't hit anything directly */
+                    if (cansee(x, y))
+                        pline(msgc_yafm, "%s jerks to an abrupt halt.",
+                              The(distant_name(obj, xname))); /* lame */
+                    range = 0;
+                } else if (In_sokoban(&u.uz) && (t = t_at(level, x, y)) != 0 &&
+                           (t->ttyp == PIT || t->ttyp == SPIKED_PIT ||
+                            t->ttyp == HOLE || t->ttyp == TRAPDOOR)) {
+                    /* hero falls into the trap, so ball stops */
+                    range = 0;
+                }
+            }
+        }
+
+        /* thrown/kicked missile has moved away from its starting spot */
+        point_blank = FALSE;    /* affects passing through iron bars */
+    }
+    tmpsym_end(tsym);
+    return NULL;
+}
+
 void
 throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang 
                                          */
@@ -982,9 +1130,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
             range = 1;
 
         obj_destroyed = FALSE;
-        mon =
-            beam_hit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj,
-                     &obj_destroyed);
+        mon = fire_obj(dx, dy, range, THROWN_WEAPON, obj, &obj_destroyed);
 
         /* have to do this after bhit() so u.ux & u.uy are correct */
         if (Is_airlevel(&u.uz) || Levitation)
@@ -1781,7 +1927,7 @@ throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
             bhitpos.x = u.ux;
             bhitpos.y = u.uy;
         } else {
-            mon = beam_hit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj, NULL);
+            mon = fire_obj(dx, dy, range, THROWN_WEAPON, obj, NULL);
             if (mon) {
                 if (ghitm(mon, obj))    /* was it caught? */
                     return 1;

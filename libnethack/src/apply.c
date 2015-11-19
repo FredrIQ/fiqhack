@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -624,8 +624,7 @@ static const char look_str[] = "You look %s.";
 static int
 use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
 {
-    struct monst *mtmp;
-    char mlet;
+    struct monst *mon[COLNO];
     boolean vis;
     schar dx, dy, dz;
 
@@ -694,91 +693,172 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
                   (dz > 0) ? surface(u.ux, u.uy) : ceiling(u.ux, u.uy));
         return 1;
     }
-    mtmp = beam_hit(dx, dy, COLNO, INVIS_BEAM, NULL, NULL, obj, NULL);
-    if (!mtmp || !haseyes(mtmp->data))
-        return 1;
-    /* handle the case of long worms where we have LOF to the tail but not the
-       head; without LOE to the head, the worm clearly can't see the mirror;
-       assume that given an intent to aim at the worm, the character can figure
-       out what angle to hold the mirror at even if they can't see the head */
-    if (!couldsee(mtmp->mx, mtmp->my))
-        return 1;
 
-    vis = canseemon(mtmp);
-    mlet = mtmp->data->mlet;
-    if (mtmp->msleeping) {
-        if (vis)
-            pline(msgc_combatimmune, "%s is too tired to look at your %s.",
-                  Monnam(mtmp), simple_typename(obj->otyp));
-    } else if (blind(mtmp)) {
-        if (vis)
-            pline(msgc_combatimmune, "%s can't see anything right now.",
-                  Monnam(mtmp));
-        /* some monsters do special things */
-    } else if (mlet == S_VAMPIRE || noncorporeal(mtmp->data)) {
-        if (vis)
-            pline(msgc_combatimmune, "%s doesn't have a reflection.",
-                  Monnam(mtmp));
-    } else if (!cancelled(mtmp) && !invisible(mtmp) &&
-               mtmp->data == &mons[PM_MEDUSA]) {
-        if (mon_reflects(mtmp, mtmp, FALSE,
-                         "The gaze is reflected further by %s%s!", ""))
-            return 1;
-        if (vis)
-            pline(msgc_kill, "%s is turned to stone!", Monnam(mtmp));
-        stoned = TRUE;
-        killed(mtmp);
-    } else if (!cancelled(mtmp) && !invisible(mtmp) &&
-               mtmp->data == &mons[PM_FLOATING_EYE]) {
-        int tmp = dice((int)mtmp->m_lev, (int)mtmp->data->mattk[0].damd);
+    schar sx = u.ux;
+    schar sy = u.uy;
+    int range = COLNO;
+    struct monst *hitmon, *hitby;
+    boolean self = FALSE;
+    int obstr[COLNO]; /* how obstructed is the view */
+    int obstructing = 0;
+    int amount = 0;
+    /* Add potentially affected monsters to mon[] */
+    while (range--) {
+        sx += dx;
+        sy += dy;
+        if (!isok(sx, sy) ||
+            !ZAP_POS(level->locations[sx][sy].typ) ||
+            closed_door(level, sx, sy))
+            break;
+        if (!(hitmon = m_at(level, sx, sy)))
+            continue;
+        mon[amount] = hitmon;
+        /* Invisible monsters doesn't obstruct anything */
+        if (invisible(hitmon))
+            continue;
 
-        if (!rn2(4))
-            tmp = 120;
-        if (vis)
-            pline(msgc_combatgood, "%s is frozen by its reflection.",
-                  Monnam(mtmp));
-        else
-            You_hear(msgc_combatgood, "something stop moving.");
-        mtmp->mcanmove = 0;
-        if ((int)mtmp->mfrozen + tmp > 127)
-            mtmp->mfrozen = 127;
-        else
-            mtmp->mfrozen += tmp;
-    } else if (!cancelled(mtmp) && !invisible(mtmp) &&
-               mtmp->data == &mons[PM_UMBER_HULK]) {
-        if (vis)
-            pline(msgc_combatgood, "%s confuses itself!", Monnam(mtmp));
-        set_property(mtmp, CONFUSION, dice(3, 8), FALSE);
-    } else if (!cancelled(mtmp) && !invisible(mtmp) &&
-               (mlet == S_NYMPH || mtmp->data == &mons[PM_SUCCUBUS])) {
-        if (vis) {
-            pline(msgc_actionok, "%s admires herself in your %s.",
-                  Monnam(mtmp), simple_typename(obj->otyp));
-            pline_implied(msgc_substitute, "She takes it!");
-        } else
-            pline(msgc_substitute, "It steals your %s!",
-                  simple_typename(obj->otyp));
-        setnotworn(obj);        /* in case mirror was wielded */
-        freeinv(obj);
-        mpickobj(mtmp, obj);
-        if (!tele_restrict(mtmp))
-            rloc(mtmp, TRUE);
-    } else if (!is_unicorn(mtmp->data) && !humanoid(mtmp->data) &&
-               (!invisible(mtmp) || see_invisible(mtmp)) && rn2(5)) {
-        if (vis)
-            pline(msgc_combatgood, "%s is frightened by its reflection.",
-                  Monnam(mtmp));
-        monflee(mtmp, dice(2, 4), FALSE, FALSE);
-    } else if (!Blind) {
-        if (invisible(mtmp) && !see_invisible(&youmonst))
-            ;
-        else if ((invisible(mtmp) && !see_invisible(mtmp))
-                 || !haseyes(mtmp->data))
-            pline(msgc_combatimmune,
-                  "%s doesn't seem to notice its reflection.", Monnam(mtmp));
-        else
-            pline(msgc_failrandom, "%s ignores %s reflection.",
-                  Monnam(mtmp), mhis(mtmp));
+        obstructing += rnd(20);
+        obstr[amount] = obstructing;
+        amount++;
+        if (obstructing > 25)
+            break; /* at this point, the view is too obstructed */
+    }
+
+    /* Iterate through affected monsters */
+    int i, j, randobstr;
+    for (i = 0; mon[i]; i++) {
+        hitmon = mon[i];
+        vis = canseemon(hitmon);
+
+        /* can this monster be affected in first place? */
+        if (hitmon->msleeping) {
+            if (vis)
+                pline(msgc_combatimmune, "%s is too tired to look at your %s.",
+                      Monnam(hitmon), simple_typename(obj->otyp));
+            continue;
+        }
+        if (blind(hitmon) || !haseyes(hitmon->data)) {
+            if (vis)
+                pline(msgc_combatimmune, "%s can't see anything.",
+                      Monnam(hitmon));
+            continue;
+        }
+        randobstr = rnd(30); /* limit until view is too obstructed */
+        /* Do a secondary iteration, in case the monster is affected by something
+           behind or in front */
+        for (j = 0; mon[j]; j++) {
+            self = FALSE;
+            hitby = mon[j];
+            if (DEADMONSTER(hitby))
+                continue; /* can happen if some monsters died in the iteration */
+            if (hitmon == hitby)
+                self = TRUE;
+            if (hitby->data->mlet == S_VAMPIRE || noncorporeal(hitby->data)) {
+                if (vis && self)
+                    pline(msgc_combatimmune, "%s doesn't have a reflection.",
+                          Monnam(hitmon));
+                continue;
+            }
+            if (randobstr < (self && !j ? 0 : obstr[j - 1]) +
+                (self && !i ? 0 : obstr[i - 1])) {
+                if (vis)
+                    pline(msgc_combatimmune, "%s doesn't notice any "
+                          "reflections with the obstructed view.",
+                          Monnam(hitmon));
+                break; /* obstruction prevents monsters seeing */
+            }
+            if (!rn2(self ? 2 : 4)) {
+                if (self && vis)
+                    pline(combat_msgc(hitby, hitmon, cr_immune),
+                          "%s doesn't pay attention to %s reflection.",
+                          Monnam(hitmon), mhis(hitby));
+                continue; /* not paying attention */
+            }
+            if (invisible(hitby) && !see_invisible(hitmon)) {
+                if (self && vis)
+                    pline(combat_msgc(hitby, hitmon, cr_immune),
+                          "%s doesn't notice its' reflection.",
+                          Monnam(hitmon));
+                continue; /* can't see this monster */
+            }
+            if (!cancelled(hitby) && attacktype(hitby->data, AT_GAZE)) {
+                /* gaze attacks */
+                if (reflecting(hitmon)) {
+                    const char *reflbuf =
+                        "%s gaze is reflected further by %%s %%s!";
+                    reflbuf = msgcat(reflbuf, s_suffix(Monnam(hitby)));
+                    if (vis)
+                        mon_reflects(hitmon, hitby, FALSE, reflbuf,
+                                     self ? mhis(hitmon) :
+                                     s_suffix(mon_nam(hitmon)));
+                    break;
+                }
+                /* TODO: don't special case monsters */
+                if (hitby->data == &mons[PM_MEDUSA]) {
+                    if (resists_ston(hitmon) && !self) {
+                        if (vis)
+                            pline(combat_msgc(hitby, hitmon, cr_immune),
+                                  "%s isn't petrified.",
+                                  Monnam(hitmon));
+                    } else
+                        minstapetrify(hitmon, &youmonst);
+                    /* not hitby -- that would credit hitby with the kill */
+                    break;
+                }
+                if (hitby->data == &mons[PM_FLOATING_EYE]) {
+                    int tmp = dice((int)hitmon->m_lev, (int)hitmon->data->mattk[0].damd);
+
+                    if (!rn2(4))
+                        tmp = 120;
+                    if (vis)
+                        pline(msgc_combatgood, "%s is frozen by %s reflection.",
+                              Monnam(hitmon), self ? "its" : mon_nam(hitby));
+                    else
+                        You_hear(msgc_combatgood, "something stop moving.");
+                    hitmon->mcanmove = 0;
+                    if ((int)hitmon->mfrozen + tmp > 127)
+                        hitmon->mfrozen = 127;
+                    else
+                        hitmon->mfrozen += tmp;
+                    break;
+                }
+                if (hitby->data == &mons[PM_UMBER_HULK]) {
+                    set_property(hitmon, CONFUSION, dice(3, 8), FALSE);
+                    break;
+                }
+            }
+            if (!self)
+                continue; /* the rest of the things only affect self-reflects */
+            if (!cancelled(hitmon) &&
+                (hitmon->data->mlet == S_NYMPH ||
+                 hitmon->data == &mons[PM_SUCCUBUS])) {
+                if (vis) {
+                    pline(msgc_actionok, "%s admires herself in your %s.",
+                          Monnam(hitmon), simple_typename(obj->otyp));
+                    pline_implied(msgc_substitute, "She takes it!");
+                } else
+                    pline(msgc_substitute, "It steals your %s!",
+                          simple_typename(obj->otyp));
+                setnotworn(obj);        /* in case mirror was wielded */
+                freeinv(obj);
+                mpickobj(hitmon, obj);
+                if (!tele_restrict(hitmon))
+                    rloc(hitmon, TRUE);
+                return 1; /* someone snatched the mirror, so no more reflections */
+            }
+            if (!is_unicorn(hitmon->data) && !humanoid(hitmon->data) &&
+                (!invisible(hitmon) || see_invisible(hitmon))) {
+                if (vis)
+                    pline(msgc_combatgood, "%s is frightened by its reflection.",
+                          Monnam(hitmon));
+                monflee(hitmon, dice(2, 4), FALSE, FALSE);
+                break;
+            } else if (vis) {
+                pline(msgc_failrandom, "%s ignores %s reflection.",
+                      Monnam(hitmon), mhis(hitmon));
+                break;
+            }
+        }
     }
     return 1;
 }

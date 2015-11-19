@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,7 +18,7 @@ static boolean zap_steed(struct obj *);
 static void cancel_item(struct obj *);
 static boolean obj_shudders(struct obj *);
 static void do_osshock(struct obj *);
-
+static void bhit(struct monst *, int, int, int, struct obj *);
 static int zap_hit_check(int, int);
 static int spell_hit_bonus(int);
 
@@ -2487,7 +2487,7 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
         } else if (dz) {
             disclose = zap_updown(mon, obj, dz);
         } else if (dx || dy) {
-            mbhit(mon, dx, dy, rn1(8, 6), obj);
+            bhit(mon, dx, dy, rn1(8, 6), obj);
         }
     } else if (objects[otyp].oc_dir == NODIR) {
         zapnodir(mon, obj);
@@ -2625,12 +2625,9 @@ miss(const char *str, struct monst *mdef, struct monst *magr)
 }
 
 
-/* mbhit() -- zap immediate wand in any direction.
-   This used to be handled in beam_hit(), but that function
-   is kind of a mess...
-   TODO: figure out a more suitable name that doesn't clash with beam_hit() */
-void
-mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
+/* bhit() -- zap immediate wand in any direction. */
+static void
+bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
     struct monst *mdef;
     struct obj *otmp;
     struct tmp_sym *tsym = NULL;
@@ -2765,180 +2762,6 @@ mbhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
 }
 
 
-/*
- *  Called for the following distance effects:
- *      when a weapon is thrown (weapon == THROWN_WEAPON)
- *      when an object is kicked (KICKED_WEAPON)
- *      when a mirror is applied (INVIS_BEAM)
- *  A thrown/kicked object falls down at the end of its range or when a monster
- *  is hit.  The variable 'bhitpos' is set to the final position of the weapon
- *  thrown/kicked.
- *
- *  Check !Engulfed before calling beam_hit().
- *  This function reveals the absence of a remembered invisible monster in
- *  necessary cases (throwing or kicking weapons).  The presence of a real
- *  one is revealed for a weapon, but if not a weapon is left up to fhitm().
- */
-struct monst *
-beam_hit(int ddx, int ddy, int range,   /* direction and range */
-         int weapon,    /* see values in hack.h */
-         /* fns called when mon/obj hit */
-         int (*fhitm) (struct monst *, struct monst *, struct obj *),
-         int (*fhito) (struct obj *, struct obj *),
-         struct obj *obj,    /* object tossed/used */
-         boolean * obj_destroyed /* has object been deallocated? may be NULL */
-    )
-{
-    struct monst *mtmp;
-    struct tmp_sym *tsym = NULL;
-    uchar typ;
-    boolean point_blank = TRUE;
-
-    if (obj_destroyed)
-        *obj_destroyed = FALSE;
-
-    if (weapon == KICKED_WEAPON) {
-        /* object starts one square in front of player */
-        bhitpos.x = u.ux + ddx;
-        bhitpos.y = u.uy + ddy;
-        range--;
-    } else {
-        bhitpos.x = u.ux;
-        bhitpos.y = u.uy;
-    }
-
-    if (weapon != INVIS_BEAM)
-        tsym = tmpsym_initobj(obj);
-
-    while (range-- > 0) {
-        int x, y;
-
-        bhitpos.x += ddx;
-        bhitpos.y += ddy;
-        x = bhitpos.x;
-        y = bhitpos.y;
-
-        if (!isok(x, y)) {
-            bhitpos.x -= ddx;
-            bhitpos.y -= ddy;
-            break;
-        }
-
-        if (is_pick(obj) && inside_shop(level, x, y) &&
-            (mtmp = shkcatch(obj, x, y))) {
-            tmpsym_end(tsym);
-            return mtmp;
-        }
-
-        typ = level->locations[bhitpos.x][bhitpos.y].typ;
-
-        /* iron bars will block anything big enough */
-        if ((weapon == THROWN_WEAPON || weapon == KICKED_WEAPON) &&
-            typ == IRONBARS &&
-            hits_bars(&obj, x - ddx, y - ddy, point_blank ? 0 : !rn2(5), 1)) {
-            /* caveat: obj might now be null... */
-            if (obj == NULL && obj_destroyed)
-                *obj_destroyed = TRUE;
-            bhitpos.x -= ddx;
-            bhitpos.y -= ddy;
-            break;
-        }
-
-        /* Affect objects on the square. */
-        if (fhito) {
-            if (bhitpile(obj, fhito, bhitpos.x, bhitpos.y))
-                range--;
-        }
-
-        /* Affect monsters on the square. */
-        mtmp = m_at(level, bhitpos.x, bhitpos.y);
-        if (mtmp) {
-            notonhead = (bhitpos.x != mtmp->mx || bhitpos.y != mtmp->my);
-            if (weapon != INVIS_BEAM)
-                tmpsym_end(tsym);
-            if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp)) {
-                if (weapon != INVIS_BEAM) {
-                    map_invisible(bhitpos.x, bhitpos.y);
-                    return mtmp;
-                }
-            } else
-                return mtmp;
-            if (weapon != INVIS_BEAM) {
-                (*fhitm) (&youmonst, mtmp, obj);
-                range -= 3;
-            }
-        }
-        if (!fhito) {
-            if (weapon == KICKED_WEAPON &&
-                ((obj->oclass == COIN_CLASS && OBJ_AT(bhitpos.x, bhitpos.y)) ||
-                 ship_object(obj, bhitpos.x, bhitpos.y,
-                             costly_spot(bhitpos.x, bhitpos.y)))) {
-                tmpsym_end(tsym);
-                return NULL;
-            }
-        }
-        if (!ZAP_POS(typ) || closed_door(level, bhitpos.x, bhitpos.y)) {
-            bhitpos.x -= ddx;
-            bhitpos.y -= ddy;
-            break;
-        }
-        if (weapon != INVIS_BEAM) {
-            /* 'I' present but no monster: erase */
-            /* do this before the tmpsym_at() */
-            if (level->locations[bhitpos.x][bhitpos.y].mem_invis &&
-                cansee(x, y)) {
-                level->locations[bhitpos.x][bhitpos.y].mem_invis = FALSE;
-                newsym(x, y);
-            }
-            tmpsym_at(tsym, bhitpos.x, bhitpos.y);
-            win_delay_output();
-            /* kicked objects fall in pools */
-            if ((weapon == KICKED_WEAPON) &&
-                (is_pool(level, bhitpos.x, bhitpos.y) ||
-                 is_lava(level, bhitpos.x, bhitpos.y)))
-                break;
-            if (IS_SINK(typ))
-                break;  /* physical objects fall onto sink */
-        }
-        /* limit range of ball so hero won't make an invalid move */
-        if (weapon == THROWN_WEAPON && range > 0 &&
-            obj->otyp == HEAVY_IRON_BALL) {
-            struct obj *bobj;
-            struct trap *t;
-
-            if ((bobj = sobj_at(BOULDER, level, x, y)) != 0) {
-                if (cansee(x, y))
-                    pline(msgc_yafm, "%s hits %s.",
-                          The(distant_name(obj, xname)), an(xname(bobj)));
-                range = 0;
-            } else if (obj == uball) {
-                struct test_move_cache cache;
-                init_test_move_cache(&cache);
-                if (!test_move(x - ddx, y - ddy, ddx, ddy, 0, TEST_MOVE,
-                               &cache)) {
-                    /* nb: it didn't hit anything directly */
-                    if (cansee(x, y))
-                        pline(msgc_yafm, "%s jerks to an abrupt halt.",
-                              The(distant_name(obj, xname))); /* lame */
-                    range = 0;
-                } else if (In_sokoban(&u.uz) && (t = t_at(level, x, y)) != 0 &&
-                           (t->ttyp == PIT || t->ttyp == SPIKED_PIT ||
-                            t->ttyp == HOLE || t->ttyp == TRAPDOOR)) {
-                    /* hero falls into the trap, so ball stops */
-                    range = 0;
-                }
-            }
-        }
-
-        /* thrown/kicked missile has moved away from its starting spot */
-        point_blank = FALSE;    /* affects passing through iron bars */
-    }
-
-    if (weapon != INVIS_BEAM)
-        tmpsym_end(tsym);
-
-    return NULL;
-}
 
 struct monst *
 boomhit(int dx, int dy)
