@@ -3416,7 +3416,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
         if (abstype == ZT_FIRE)
             expltype = EXPL_FIERY;
         else if (abstype == ZT_COLD)
-            expltype = EXPL_FROSTY; 
+            expltype = EXPL_FROSTY;
         else
             expltype = EXPL_MAGICAL;
         explode(sx, sy, type, dice(nd, 6), WAND_CLASS, expltype, NULL, raylevel);

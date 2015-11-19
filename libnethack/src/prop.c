@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -13,7 +13,6 @@
    are rather hard to iterate over, and make it even harder to work with the
    game's logic. */
 
-static int race_from_pm(const struct permonst *);
 static void init_permonsts(const struct monst *, const struct permonst **,
                            const struct permonst **, const struct permonst **);
 static boolean is_green(struct monst *);
@@ -249,19 +248,6 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
     return 0;
 }
 
-/* Convert a permonst to a race where applicable. Used to determine
-   source of property */
-/* TODO: Real racial monsters */
-static int
-race_from_pm(const struct permonst *pm)
-{
-    return (pm->mflags2 & M2_HUMAN ? PM_HUMAN :
-            pm->mflags2 & M2_ELF   ? PM_ELF   :
-            pm->mflags2 & M2_DWARF ? PM_DWARF :
-            pm->mflags2 & M2_GNOME ? PM_GNOME :
-            pm->mflags2 & M2_ORC   ? PM_ORC   :
-            0);
-}
 
 /* Initialize 3 permonsts set to role, race and poly. Used to determine
    source of properties (os_role, os_race, os_polyform) */
@@ -278,7 +264,7 @@ init_permonsts(const struct monst *mon, const struct permonst **role,
             *role = &mons[mon->orig_mnum];
         else
             *role = mon->data;
-        racenum = race_from_pm(*role);
+        racenum = genus(monsndx(*role), 0);
         if (racenum)
             *race = &mons[racenum];
     }
@@ -286,7 +272,7 @@ init_permonsts(const struct monst *mon, const struct permonst **role,
         (mon != &youmonst || Upolyd)) { /* polymorphed */
         *poly = mon->data;
         *race = NULL; /* polymorph grants the polyform's race */
-        racenum = race_from_pm(*poly);
+        racenum = genus(monsndx(*poly), 0);
         if (racenum)
             *race = &mons[racenum];
     }
