@@ -851,25 +851,22 @@ gulpmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         return MM_MISS;
 
     if (vis)
-        pline(combat_msgc(magr, mdef, cr_hit), "%s swallows %s.",
-              Monnam(magr), mon_nam(mdef));
+        pline(combat_msgc(magr, mdef, cr_hit), "%s %s.",
+              M_verbs(magr, mattk->adtyp == AD_DGST ? "swallow" : "engulf"),
+              mon_nam(mdef));
 
     for (obj = mdef->minvent; obj; obj = obj->nobj)
         snuff_lit(obj);
 
-    /*
-     *  All of this maniuplation is needed to keep the display correct.
-     *  There is a flush at the next pline().
-     */
+    /* All of this maniuplation is needed to keep the display correct.
+       There is a flush at the next pline(). */
     ax = magr->mx;
     ay = magr->my;
     dx = mdef->mx;
     dy = mdef->my;
-    /*
-     *  Leave the defender in the monster chain at it's current position,
-     *  but don't leave it on the screen.  Move the agressor to the def-
-     *  ender's position.
-     */
+    /* Leave the defender in the monster chain at it's current position,
+       but don't leave it on the screen.  Move the agressor to the def-
+       ender's position. */
     remove_monster(level, ax, ay);
     place_monster(magr, dx, dy, TRUE);
     newsym(ax, ay);     /* erase old position */
@@ -880,11 +877,9 @@ gulpmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     if ((status & MM_AGR_DIED) && (status & MM_DEF_DIED)) {
         ;       /* both died -- do nothing */
     } else if (status & MM_DEF_DIED) {  /* defender died */
-        /*
-         *  Note:  remove_monster() was called in relmon(), wiping out
-         *  magr from level->monsters[mdef->mx][mdef->my].  We need to
-         *  put it back and display it.     -kd
-         */
+        /* Note:  remove_monster() was called in relmon(), wiping out
+           magr from level->monsters[mdef->mx][mdef->my].  We need to
+           put it back and display it.     -kd */
         place_monster(magr, dx, dy, TRUE);
         newsym(dx, dy);
     } else if (status & MM_AGR_DIED) {  /* agressor died */
