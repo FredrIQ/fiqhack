@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -930,6 +930,7 @@ extern enum msg_channel combat_msgc(const struct monst *,
                                     enum combatresult);
 extern int fightm(struct monst *);
 extern int mattackm(struct monst *, struct monst *);
+extern int gazemm(struct monst *, struct monst *, const struct attack *);
 extern void mswingsm(struct monst *, struct monst *, struct obj *);
 extern int noattacks(const struct permonst *);
 extern int sleep_monst(struct monst *, int, int);
@@ -952,7 +953,6 @@ extern const struct attack *getmattk(const struct permonst *, int, int *,
 extern int mattacku(struct monst *);
 extern void hurtarmor(struct monst *, enum erode_type);
 extern int magic_negation(struct monst *);
-extern int gazemu(struct monst *, const struct attack *);
 extern void mdamageu(struct monst *, int);
 extern int could_seduce(struct monst *, struct monst *, const struct attack *);
 extern int doseduce(struct monst *);

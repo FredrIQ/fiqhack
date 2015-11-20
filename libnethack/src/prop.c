@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -585,15 +585,15 @@ levitates_at_will(const struct monst *mon, boolean include_extrinsic,
     boolean why)
 {
     unsigned lev = levitates(mon);
-    unsigned lev_worn = mworn_extrinsic(mon, LEVITATION);
+    unsigned lev_worn = (lev & W_MASKABLE);
 
     /* polyform */
     if (is_floater(mon->data))
         return (why ? W_MASK(os_polyform) : 0);
 
     /* uncontrolled intrinsic levitation */
-    if ((lev & lev_worn) && !(lev & W_MASK(os_outside)))
-        return (why ? (lev & lev_worn) : 0);
+    if ((lev & ~lev_worn) && !(lev & W_MASK(os_outside)))
+        return (why ? (lev & ~lev_worn) : 0);
 
     /* has extrinsic */
     if ((lev & lev_worn) && !include_extrinsic)
@@ -673,8 +673,8 @@ mon_remove_levitation(struct monst *mon, boolean forced)
         /* at this point, only polyform levitation is left */
         if (forced) {
             if (cansee(mon->mx, mon->my))
-                pline(msgc_monneutral,
-                      "%s wobbles unsteadily for a moment.", Monnam(mon));
+                pline(msgc_monneutral, "%s unsteadily for a moment.",
+                      M_verbs(mon, "wobble"));
         }
         return dropped ? 1 : 0;
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,7 +23,6 @@ enum monster_attitude {
 static enum monster_attitude monster_known_attitude(const struct monst *);
 static const char *mon_nam_too(struct monst *, struct monst *);
 static int hitmm(struct monst *, struct monst *, const struct attack *);
-static int gazemm(struct monst *, struct monst *, const struct attack *);
 static int gulpmm(struct monst *, struct monst *, const struct attack *);
 static int explmm(struct monst *, struct monst *, const struct attack *);
 static int mdamagem(struct monst *, struct monst *, const struct attack *);
@@ -612,55 +611,233 @@ hitmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
 
 /* Returns the same values as mdamagem(). */
-static int
+int
 gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
-    if (cancelled(magr) || blind(magr) || (invisible(magr) && !see_invisible(mdef))
-        || blind(mdef) || mdef->msleeping) {
-        if (vis)
-            pline(combat_msgc(magr, mdef, cr_resist),
-                  "%s gazes at %s, but nothing happens.",
-                  Monnam(magr), mon_nam(mdef));
-        return MM_MISS;
-    } else if (vis)
-        pline(combat_msgc(magr, mdef, cr_hit),
-              "%s gazes at %s...", Monnam(magr), mon_nam(mdef));
+    boolean uagr = (magr == &youmonst);
+    boolean udef = (mdef == &youmonst);
+    boolean visad = (msensem(magr, mdef) & MSENSE_VISION);
+    boolean visda = (msensem(mdef, magr) & MSENSE_VISION);
+    boolean vis = (cansee(magr->mx, magr->my) && cansee(mdef->mx, mdef->my) &&
+                   (canspotmon(magr) || canspotmon(mdef)));
+    if (uagr) /* not udef: blindness shouldn't reveal monsters attacking you */
+        vis = TRUE;
 
-    /* call mon_reflects 2x, first test, then, if visible, print message */
-    if (magr->data == &mons[PM_MEDUSA] && reflecting(mdef)) {
-        if (canseemon(mdef))
-            mon_reflects(mdef, magr, FALSE,
-                         "%s gaze is reflected away by %s %s.",
-                         s_suffix(Monnam(magr)));
-        if (!blind(mdef)) {
-            if (reflecting(magr)) {
-                if (canseemon(magr))
-                    mon_reflects(magr, mdef, TRUE,
-                                 "%s gaze is reflected further by %s %s.",
-                                 s_suffix(Monnam(magr)));
+    /* for mvm gazing, clear_path will always be valid -- but not for mvu */
+    boolean valid_range = clear_path(m_mx(magr), m_my(magr), m_mx(mdef), m_my(mdef),
+                                     viz_array);
+    boolean conf = FALSE;
+    int damn = mattk->damn;
+    int damd = mattk->damd;
+    int dmg = 0;
+    if (damd)
+        dmg = dice(damn ? damn : m_mlev(magr) / 2 + 1, damd);
+    int ret = 0;
+
+    /* gaze attacks except for radiance (AD_BLND) and Medusa share common checks */
+    if (mattk->adtyp != AD_BLND && magr->data != &mons[PM_MEDUSA]) {
+        if (!cancelled(magr) && !blind(magr) && valid_range && visda &&
+            (uagr || !magr->mspec_used) && rn2(5)) {
+            if (!rn2(3))
+                magr->mspec_used += (dmg + rn2(6));
+            else
                 return MM_MISS;
-            }
-            if (!invisible(mdef) && !see_invisible(magr)) {
-                if (canseemon(magr)) {
-                    pline(combat_msgc(mdef, magr, cr_immune),
-                          "%s doesn't seem to notice that %s gaze was "
-                          "reflected.", Monnam(magr), mhis(magr));
-                }
-                return MM_MISS;
-            }
-            /* TODO: Aren't there other sorts of gaze attacks than this? */
-            if (canseemon(magr))
-                pline(magr->mtame ? msgc_petfatal : msgc_monneutral,
-                      "%s is turned to stone!", Monnam(magr));
-            monstone(magr);
-            if (!DEADMONSTER(magr))
-                return MM_MISS;
-            return MM_AGR_DIED;
         }
     }
 
-    return mdamagem(magr, mdef, mattk);
+    switch (mattk->adtyp) {
+    case AD_STON:
+        /* It'd be nice to give a warning that there's an instadeath around,
+           but there's nowhere to put it; you die on the very first turn the
+           monster sees you (which is also the first related message).  The
+           warning is instead given via special level architecture (and there's
+           also a fatalavoid warning if the attack is used against something
+           other than the player). */
+        if (cancelled(magr) || blind(magr)) {
+            /* Monsters can heal blindness with a healing potion, so we should
+               produce the "instadeath averted" warning if the blindness is the
+               problem. */
+            boolean cancelled_medusa =
+                magr->data == &mons[PM_MEDUSA] && cancelled(magr);
+            if (vis)
+                pline(!cancelled_medusa && !uagr ? msgc_fatalavoid :
+                      combat_msgc(magr, mdef, cr_immune),
+                      "%s %s.", M_verbs(magr, cancelled_medusa ? "do" : "gaze"),
+                      cancelled_medusa ?
+                      "n't look all that ugly" : "ineffectually");
+            break;
+        }
+        if (reflecting(mdef) && valid_range && magr->data == &mons[PM_MEDUSA]) {
+            /* Having reflection at this point is very common and unlikely to
+               go away in a hurry, so it seems best to not print an "instadeath
+               averted" message if that's the reason. (There isn't anywhere to
+               put it, anyway.) */
+            if (vis)
+                mon_reflects(mdef, magr, FALSE,
+                             "%s gaze is reflected by %s %s.",
+                             uagr ? s_suffix(Monnam(magr)) : "Your");
+            if (reflecting(magr)) {
+                if (vis)
+                    mon_reflects(magr, mdef, TRUE, 
+                                 "%s gaze is reflected further by %s %s!",
+                                 uagr ? s_suffix(Monnam(magr)) : "Your");
+                break;
+            }
+            if (!visad) { /* probably you're invisible */
+                /* not msgc_combatimmune because this may not be an intentional
+                   attempt to reflection-petrify, so we shouldn't give alerts
+                   that it isn't working; "hostile monster fails to commit
+                   suicide" is a monneutral event */
+                if (vis && !uagr)
+                    pline(msgc_monneutral, "%sn't seem to notice that %s "
+                          "gaze was reflected.", M_verbs(magr, "do"),
+                          uagr ? "your" : mhis(magr));
+                else if (uagr)
+                    pline(combat_msgc(magr, mdef, cr_immune),
+                          "Nothing seems to happen...");
+                break;
+            }
+            if (vis)
+                pline(msgc_kill, "%s turned to stone!", M_verbs(magr, "are"));
+            stoned = TRUE;
+            /* Currently, only Medusa has a stoning gaze, and players can't polymorph
+               into her. However, just in case it is implemented later... */
+            if (uagr)
+                done(STONING, killer_msg(STONING, "a reflected gaze"));
+            else if (udef)
+                killed(magr);
+            else
+                monstone(magr);
+
+            return (!uagr && DEADMONSTER(magr)) ? MM_AGR_DIED : 0;
+                break;
+            return MM_AGR_DIED;
+        }
+        if (visad && valid_range && !resists_ston(mdef)) {
+            pline(combat_msgc(magr, mdef, cr_kill), "%s %s gaze.",
+                  M_verbs(magr, "meet"), s_suffix(mon_nam(magr)));
+            if (udef) {
+                action_interrupted();
+                instapetrify(killer_msg(STONING,
+                                        msgprintf("catching the eye of %s",
+                                                  k_monnam(magr))));
+            } else
+                minstapetrify(mdef, magr);
+            return (!udef && DEADMONSTER(mdef)) ? MM_DEF_DIED : 0;
+        }
+        break;
+    case AD_CONF:
+        conf = TRUE;
+    case AD_STUN:
+        if (!has_property(mdef, conf ? CONFUSION : STUNNED)) {
+            if (vis) {
+                if (conf)
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s gaze confuses %s!",
+                          uagr ? "Your" : s_suffix(Monnam(magr)),
+                          udef ? "you" : mon_nam(mdef));
+                else
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s piercingly at %s!", M_verbs(magr, "stare"),
+                          udef ? "you" : mon_nam(mdef));
+            }
+        } else if (vis && conf)
+            pline(combat_msgc(magr, mdef, cr_hit),
+                  "%s getting more and more confused.", M_verbs(mdef, "are"));
+        inc_timeout(mdef, conf ? CONFUSION : STUNNED, dmg,
+                    conf ? TRUE : FALSE);
+        if (udef)
+            action_interrupted();
+        ret |= MM_HIT;
+        break;
+    case AD_BLND:
+        if (!cancelled(magr) && visda && !resists_blnd(mdef)
+            && dist2(m_mx(magr), m_my(magr),
+                     m_mx(mdef), m_my(mdef)) <= BOLT_LIM * BOLT_LIM) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit), "%s blinded by %s radiance!",
+                      M_verbs(mdef, "are"), uagr ? "your" : s_suffix(mon_nam(mdef)));
+            set_property(mdef, BLINDED, dmg, TRUE);
+            if (udef)
+                action_interrupted();
+            /* not blind at this point implies you're wearing the Eyes of the
+               Overworld; make them block this particular stun attack too */
+            if (!blind(mdef)) {
+                if (vis || udef)
+                    pline(combat_msgc(magr, mdef, cr_immune),
+                          "%s vision quickly clears.", udef ? "Your" : s_suffix(Monnam(mdef)));
+            } else
+                inc_timeout(mdef, STUNNED, dice(1, 3), FALSE);
+            ret |= MM_HIT;
+        }
+        break;
+    case AD_FIRE:
+        if (resists_fire(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s at %s, but %s to catch fire.", M_verbs(magr, "glare"),
+                      udef ? "you" : mon_nam(mdef), m_verbs(mdef, "fail"));
+            dmg = 0;
+        } else if (vis)
+            pline(combat_msgc(magr, mdef, cr_hit),
+                  "%s %s with a fiery gaze!", M_verbs(magr, "attack"),
+                  udef ? "you" : mon_nam(mdef));
+        if (udef)
+            action_interrupted();
+        burn_away_slime(mdef);
+        if (m_mlev(magr) > rn2(20))
+            destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
+        if (m_mlev(magr) > rn2(20))
+            destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
+        if (m_mlev(magr) > rn2(25))
+            destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
+        /* this used to call mdamageu, but since mdamageu and mdamagem doesn't
+           work even remotely similar (mdamageu is essentially a losehp() macro
+           in function form, presumably made before losehp() existed), perform
+           damage here instead, it's easier... */
+        if (!dmg)
+            break;
+        if (udef)
+            losehp(dmg, killer_msg_mon(DIED, magr));
+        else {
+            mdef->mhp -= dmg;
+            if (mdef->mhp <= 0)
+                monkilled(magr, mdef, "", AD_FIRE);
+        }
+        return (!udef && DEADMONSTER(mdef)) ? MM_DEF_DIED : 0;
+        /* TODO: golems */
+        ret |= MM_HIT;
+        break;
+    case AD_SLEE:
+        if (!resists_sleep(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "%s gaze makes %s very sleepy...",
+                      uagr ? "Your" : s_suffix(Monnam(mdef)),
+                      udef ? "you" : mon_nam(mdef));
+            sleep_monst(mdef, dmg, 0);
+            if (!udef)
+                slept_monst(mdef);
+        } else if (vis)
+            pline(combat_msgc(magr, mdef, cr_immune),
+                  "%s at %s, but %sn't feel tired!",
+                  M_verbs(magr, "gaze"), udef ? "you" : mon_nam(mdef),
+                  m_verbs(mdef, "do"));
+        ret |= MM_HIT;
+        break;
+    case AD_SLOW:
+        inc_timeout(mdef, SLOW, dmg, FALSE);
+        if (udef)
+            action_interrupted();
+        ret |= MM_HIT;
+        break;
+    default:
+        impossible("Gaze attack %d?", mattk->adtyp);
+        break;
+    }
+    return ret ? ret : MM_MISS;
 }
+
 
 /* Returns the same values as mattackm(). */
 static int
@@ -764,9 +941,7 @@ explmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     return result;
 }
 
-/*
- *  See comment at top of mattackm(), for return values.
- */
+/* See comment at top of mattackm(), for return values. */
 static int
 mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {

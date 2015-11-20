@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1085,23 +1085,27 @@ dogaze(void)
     struct monst *mtmp;
     int looked = 0;
     int i;
-    uchar adtyp = 0;
+    const struct attack *mattk = NULL;
 
     for (i = 0; i < NATTK; i++) {
         if (youmonst.data->mattk[i].aatyp == AT_GAZE) {
-            adtyp = youmonst.data->mattk[i].adtyp;
+            mattk = &(youmonst.data->mattk[i]);
             break;
         }
     }
-    if (adtyp != AD_CONF && adtyp != AD_FIRE) {
-        impossible("gaze attack %d?", adtyp);
+
+    if (!mattk) {
+        impossible("found no gaze attack?");
         return 0;
     }
 
-    if (Blind) {
-        pline(msgc_cancelled, "You can't see anything to gaze at.");
+    if (blind(&youmonst) && mattk->adtyp != AD_BLND &&
+        youmonst.data != &mons[PM_MEDUSA]) {
+        pline(msgc_cancelled,
+              "How can you gaze at something if you can't see?");
         return 0;
     }
+
     if (u.uen < 15) {
         pline(msgc_cancelled, "You lack the energy to use your special gaze!");
         return 0;
@@ -1123,53 +1127,12 @@ dogaze(void)
                 pline(msgc_cancelled, "You avoid gazing at %s.",
                       y_monnam(mtmp));
             else {
-                /* This used to prompt for whether to attack peacefuls, or
-                   attack them indiscriminately at uim_indiscriminate. Both of
-                   these are a UI nightmare, really. We could consider not
-                   attacking if uim_pacifist, but presumably if the player is
-                   intentionally using a gaze attack, they want to do
-                   /something/. */
                 setmangry(mtmp);
+                gazemm(&youmonst, mtmp, mattk);
 
-                if (!mtmp->mcanmove || stunned(mtmp) || mtmp->msleeping ||
-                    blind(mtmp) || !haseyes(mtmp->data)) {
-                    looked--;
+                if (DEADMONSTER(mtmp))
                     continue;
-                }
 
-                /* No reflection check for consistency with when a monster
-                   gazes at *you*--only medusa gaze gets reflected then. */
-                if (adtyp == AD_CONF) {
-                    if (!confused(mtmp))
-                        pline(msgc_combatgood, "Your gaze confuses %s!",
-                              mon_nam(mtmp));
-                    else
-                        pline(msgc_combatgood,
-                              "%s is getting more and more confused.",
-                              Monnam(mtmp));
-                    set_property(mtmp, CONFUSION, dice(3, 8), FALSE);
-                } else if (adtyp == AD_FIRE) {
-                    int dmg = dice(2, 6);
-
-                    if (resists_fire(mtmp)) {
-                        pline(msgc_combatimmune,
-                              "The fire doesn't burn %s!", mon_nam(mtmp));
-                        dmg = 0;
-                    } else
-                        pline(msgc_combatgood,
-                              "You attack %s with a fiery gaze!",
-                              mon_nam(mtmp));
-                    if ((int)u.ulevel > rn2(20))
-                        destroy_mitem(mtmp, SCROLL_CLASS, AD_FIRE);
-                    if ((int)u.ulevel > rn2(20))
-                        destroy_mitem(mtmp, POTION_CLASS, AD_FIRE);
-                    if ((int)u.ulevel > rn2(25))
-                        destroy_mitem(mtmp, SPBOOK_CLASS, AD_FIRE);
-                    if (dmg && !DEADMONSTER(mtmp))
-                        mtmp->mhp -= dmg;
-                    if (mtmp->mhp <= 0)
-                        killed(mtmp);
-                }
                 /* For consistency with passive() in uhitm.c, this only affects
                    you if the monster is still alive. */
                 if (!DEADMONSTER(mtmp) && (mtmp->data == &mons[PM_FLOATING_EYE])

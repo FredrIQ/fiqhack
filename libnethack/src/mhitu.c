@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -481,7 +481,7 @@ mattacku(struct monst *mtmp)
             /* Medusa gaze already operated through m_respond in dochug();
                don't gaze more than once per round. */
             if (mdat != &mons[PM_MEDUSA])
-                sum[i] = gazemu(mtmp, mattk);
+                sum[i] = gazemm(mtmp, &youmonst, mattk);
             break;
 
         case AT_EXPL:
@@ -1893,175 +1893,6 @@ explmu(struct monst *mtmp, const struct attack *mattk)
     if (!DEADMONSTER(mtmp))
         return 0;
     return 2;   /* it dies */
-}
-
-
-/* monster gazes at you */
-int
-gazemu(struct monst *mtmp, const struct attack *mattk)
-{
-    switch (mattk->adtyp) {
-    case AD_STON:
-        /* It'd be nice to give a warning that there's an instadeath around,
-           but there's nowhere to put it; you die on the very first turn the
-           monster sees you (which is also the first related message).  The
-           warning is instead given via special level architecture (and there's
-           also a fatalavoid warning if the attack is used against something
-           other than the player). */
-        if (cancelled(mtmp) || blind(mtmp)) {
-            if (!canseemon(mtmp))
-                break;  /* silently */
-
-            /* Monsters can heal blindness with a healing potion, so we should
-               produce the "instadeath averted" warning if the blindness is the
-               problem. */
-            boolean cancelled_medusa =
-                mtmp->data == &mons[PM_MEDUSA] && cancelled(mtmp);
-            pline(cancelled_medusa ? msgc_playerimmune : msgc_fatalavoid,
-                  "%s %s.", Monnam(mtmp), cancelled_medusa ?
-                  "doesn't look all that ugly" : "gazes ineffectually");
-            break;
-        }
-        if (Reflecting && couldsee(mtmp->mx, mtmp->my) &&
-            mtmp->data == &mons[PM_MEDUSA]) {
-            /* hero has line of sight to Medusa and she's not blind */
-            boolean useeit = canseemon(mtmp);
-
-            /* Having reflection at this point is very common and unlikely to
-               go away in a hurry, so it seems best to not print an "instadeath
-               averted" message if that's the reason. (There isn't anywhere to
-               put it, anyway.) */
-            
-            if (useeit)
-                mon_reflects(&youmonst, mtmp, FALSE,
-                             "%s gaze is reflected by %s %s.",
-                             s_suffix(Monnam(mtmp)));
-            if (reflecting(mtmp)) {
-                if (useeit)
-                    mon_reflects(mtmp, &youmonst, TRUE, 
-                                 "%s gaze is reflected further by %s %s!", s_suffix(Monnam(mtmp)));
-                break;
-            }
-            if (!m_canseeu(mtmp)) {     /* probably you're invisible */
-                /* not msgc_combatimmune because this may not be an intentional
-                   attempt to reflection-petrify, so we shouldn't give alerts
-                   that it isn't working; "hostile monster fails to commit
-                   suicide" is a monneutral event */
-                if (useeit)
-                    pline(msgc_monneutral, "%s doesn't seem to notice that %s "
-                          "gaze was reflected.", Monnam(mtmp), mhis(mtmp));
-                break;
-            }
-            if (useeit)
-                pline(msgc_kill, "%s is turned to stone!", Monnam(mtmp));
-            stoned = TRUE;
-            killed(mtmp);
-
-            if (!DEADMONSTER(mtmp))
-                break;
-            return 2;
-        }
-        if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            !resists_ston(&youmonst)) {
-            pline(msgc_fatal_predone, "You meet %s gaze.",
-                  s_suffix(mon_nam(mtmp)));
-            action_interrupted();
-            instapetrify(killer_msg(
-                             STONING, msgprintf(
-                                 "catching the eye of %s", k_monnam(mtmp))));
-        }
-        break;
-    case AD_CONF:
-        if (!cancelled(mtmp) && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            !blind(mtmp) && !mtmp->mspec_used && rn2(5)) {
-            int conf = dice(3, 4);
-
-            mtmp->mspec_used = mtmp->mspec_used + (conf + rn2(6));
-            if (!Confusion)
-                pline(msgc_statusbad, "%s gaze confuses you!",
-                      s_suffix(Monnam(mtmp)));
-            else
-                pline(msgc_statusbad,
-                      "You are getting more and more confused.");
-            inc_timeout(&youmonst, CONFUSION, conf, TRUE);
-            action_interrupted();
-        }
-        break;
-    case AD_STUN:
-        if (!cancelled(mtmp) && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            !blind(mtmp) && !mtmp->mspec_used && rn2(5)) {
-            int stun = dice(2, 6);
-
-            mtmp->mspec_used = mtmp->mspec_used + (stun + rn2(6));
-            pline(msgc_statusbad, "%s stares piercingly at you!", Monnam(mtmp));
-            inc_timeout(&youmonst, STUNNED, stun, FALSE);
-            action_interrupted();
-        }
-        break;
-    case AD_BLND:
-        if (!cancelled(mtmp) && canseemon(mtmp) && !resists_blnd(&youmonst)
-            && distu(mtmp->mx, mtmp->my) <= BOLT_LIM * BOLT_LIM) {
-            int blnd = dice((int)mattk->damn, (int)mattk->damd);
-
-            pline(msgc_statusbad, "You are blinded by %s radiance!",
-                  s_suffix(mon_nam(mtmp)));
-            set_property(&youmonst, BLINDED, blnd, TRUE);
-            action_interrupted();
-            /* not blind at this point implies you're wearing the Eyes of the
-               Overworld; make them block this particular stun attack too */
-            if (!blind(&youmonst))
-                pline(msgc_statusheal, "Your vision quickly clears.");
-            else
-                inc_timeout(&youmonst, STUNNED, dice(1, 3), FALSE);
-        }
-        break;
-    case AD_FIRE:
-        if (!cancelled(mtmp) && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            !blind(mtmp) && !mtmp->mspec_used && rn2(5)) {
-            int dmg = dice(2, 6);
-
-            if (Fire_resistance) {
-                pline(combat_msgc(mtmp, &youmonst, cr_immune),
-                      "%s glares at you, but you fail to catch fire.",
-                      Monnam(mtmp));
-                dmg = 0;
-            } else
-                pline(combat_msgc(mtmp, &youmonst, cr_hit),
-                      "%s attacks you with a fiery gaze!", Monnam(mtmp));
-            action_interrupted();
-            burn_away_slime(&youmonst);
-            if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(SCROLL_CLASS, AD_FIRE);
-            if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(POTION_CLASS, AD_FIRE);
-            if ((int)mtmp->m_lev > rn2(25))
-                destroy_item(SPBOOK_CLASS, AD_FIRE);
-            if (dmg)
-                mdamageu(mtmp, dmg);
-        }
-        break;
-#ifdef PM_BEHOLDER      /* work in progress */
-    case AD_SLEE:
-        if (!cancelled(mtmp) && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            !blind(mtmp) && !u_helpless(hm_all) && !rn2(5) &&
-            !Sleep_resistance) {
-            helpless(rnd(10), hr_asleep, "sleeping", NULL);
-            pline(msgc_statusbad, "%s gaze makes you very sleepy...",
-                  s_suffix(Monnam(mtmp)));
-        }
-        break;
-    case AD_SLOW:
-        if (!cancelled(mtmp) && canseemon(mtmp) && !blind(mtmp) &&
-            !defends(AD_SLOW, uwep) && !rn2(4))
-            inc_timeout(&youmonst, SLOW, rnd(10), FALSE);
-        action_interrupted();
-        break;
-#endif
-    default:
-        impossible("Gaze attack %d?", mattk->adtyp);
-        break;
-    }
-    return 0;
 }
 
 
