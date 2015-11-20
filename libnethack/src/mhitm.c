@@ -1837,7 +1837,7 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
     /* These affect the enemy only if defender is still alive */
     if (rn2(3))
         switch (mddat->mattk[i].adtyp) {
-        case AD_PLYS:  /* Floating eye */
+        case AD_PLYS:
             if (tmp > 127)
                 tmp = 127;
             if (mddat == &mons[PM_FLOATING_EYE]) {
@@ -1851,6 +1851,13 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                                          "%s gaze is reflected by %s %s.", s_suffix(Monnam(mdef)));
                         return mdead | mhit;
                     }
+                    if (free_action(magr)) {
+                        if (canseemon(magr))
+                            pline(combat_msgc(mdef, magr, cr_immune),
+                                  "%s momentarily stiffens under %s gaze.",
+                                  Monnam(mdef), mon_nam(magr));
+                        return mdead | mhit;
+                    }
                     if (canseemon(magr))
                         pline(combat_msgc(mdef, magr, cr_hit),
                               "%s is frozen by %s gaze!", Monnam(magr),
@@ -1859,6 +1866,12 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                     magr->mfrozen = tmp;
                     return mdead | mhit;
                 }
+            } else if (free_action(magr)) {
+                if (canseemon(magr))
+                    pline(combat_msgc(mdef, magr, cr_immune),
+                          "%s momentarily stiffens.",
+                          Monnam(mdef));
+                return mdead | mhit;
             } else {    /* gelatinous cube */
                 if (canseemon(magr))
                     pline(combat_msgc(mdef, magr, cr_hit),
