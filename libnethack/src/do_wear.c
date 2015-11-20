@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1309,34 +1309,15 @@ boolean
 canwearobj(struct obj *otmp, long *mask,
            boolean noisy, boolean spoil, boolean cblock)
 {
-    enum objslot slot = os_invalid;
+    enum objslot slot = which_slot(otmp);
+    /* ensure that we are dealing with equippables */
+    if (slot > os_last_equip)
+        slot = os_invalid;
     int temp_mask;
 
     enum msg_channel msgc =
         !noisy ? msgc_mute : spoil ? msgc_failcurse : msgc_cancelled;
     
-    if (is_suit(otmp))
-        slot = os_arm;
-    else if (is_cloak(otmp))
-        slot = os_armc;
-    else if (is_helmet(otmp))
-        slot = os_armh;
-    else if (is_shield(otmp))
-        slot = os_arms;
-    else if (is_gloves(otmp))
-        slot = os_armg;
-    else if (is_boots(otmp))
-        slot = os_armf;
-    else if (is_shirt(otmp))
-        slot = os_armu;
-    else if (otmp->oclass == AMULET_CLASS)
-        slot = os_amul;
-    else if (otmp->oclass == RING_CLASS || otmp->otyp == MEAT_RING)
-        slot = os_ringl; /* also os_ringr */
-    else if (otmp->otyp == BLINDFOLD || otmp->otyp == LENSES ||
-             otmp->otyp == TOWEL)
-        slot = os_tool;
-
     /* Generic checks: wearing armor is possible; the armor is not already
        equipped (if !cblock); the item is equippable; the equip is not blocked
        by a cursed two-handed weapon */
