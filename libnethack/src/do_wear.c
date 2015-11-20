@@ -1348,7 +1348,7 @@ canwearobj(struct obj *otmp, long *mask,
     /* Find which slots are free to equip this item, and complain if there
        aren't any. */
     temp_mask = W_MASK(slot);
-    if (slot == os_ringl) {
+    if (slot == os_ringl || slot == os_ringr) {
         /* Rings are a special case because we have two slots to equip them
            into, and thus we complain only if both are blocked. */
         temp_mask = W_RING;
@@ -1929,14 +1929,13 @@ doequip(const struct nh_cmd_arg *arg)
     return n > 0;
 }
 
-/* hit by destroy armor scroll/black dragon breath/monster spell */
+/* hit by destroy armor scroll/black dragon breath */
 int
 destroy_arm(struct monst *mon, struct obj *obj)
 {
     /* Sanity checks: atmp exist and is worn */
-    if (!obj)
-        return 0;
-    if (!obj->owornmask)
+    if (!obj || !obj->owornmask || (mon == &youmonst && obj == uskin()) ||
+        obj_resists(obj, 0, 90))
         return 0;
 
     boolean you = mon == &youmonst;
@@ -1986,6 +1985,8 @@ destroy_arm(struct monst *mon, struct obj *obj)
         action_interrupted();
     } else {
         mon->misc_worn_check &= ~obj->owornmask;
+        obj->owornmask = 0;
+        update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
         m_useup(mon, obj);
         struct obj *weapon;
         weapon = m_mwep(mon);
