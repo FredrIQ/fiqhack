@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -927,7 +927,7 @@ update_property(struct monst *mon, enum youprop prop,
                         pline(lost ? msgc_intrloss : msgc_intrgain, "You feel %s!",
                               lost ? msg->losepm : msg->gainpm);
                     else
-                        pline(msgc_intrloss,
+                        pline(lost ? msgc_intrloss : msgc_intrgain,
                               lost ? msg->loseoutside : msg->gainoutside);
                     effect = TRUE;
                     break;
