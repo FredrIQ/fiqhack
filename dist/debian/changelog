@@ -1,3 +1,7 @@
+fiqhack (4.3.1~beta2) unstable; urgency=low
+  * Updated packages for 4.3.1.0
+ -- Fredrik Ljungdahl <fredde1994@gmail.com>  Mon 23 Nov 2015 15:53:35 +0100
+
 fiqhack (4.3.0~beta1) unstable; urgency=low
   * Updated packages for 4.3.0.0
  -- Fredrik Ljungdahl <fredde1994@gmail.com>  Tue 03 Nov 2015 15:09:01 +0100
