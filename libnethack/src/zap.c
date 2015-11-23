@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2206,7 +2206,6 @@ zap_steed(struct obj *obj)
     return steedhit;
 }
 
-
 /* Cancel a monster (possibly the hero). Inventory is cancelled only if the
    monster is zapping itself directly, since otherwise the effect is too strong.
    Currently non-hero monsters do not zap themselves with cancellation.
@@ -2234,33 +2233,24 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
             cancel_item(otmp);
     }
 
-    /* now handle special cases */
-    if (youdefend) {
-        set_property(mdef, CANCELLED, 0, FALSE);
-        if (Upolyd) {
-            if ((u.umonnum == PM_CLAY_GOLEM) && !Blind)
-                pline(combat_msgc(magr, mdef, cr_hit),
-                      writing_vanishes, your);
-
-            if (Unchanging)
-                pline(msgc_noconsequence,
-                      "Your amulet grows hot for a moment, then cools.");
-            else
-                rehumanize(DIED, NULL);
-        }
-    } else {
-        set_property(mdef, CANCELLED, 0, FALSE);
-
-        if (is_were(mdef->data) && mdef->data->mlet != S_HUMAN)
+    set_property(mdef, CANCELLED, 0, FALSE);
+    if (is_were(mdef->data) && mdef->data->mlet != S_HUMAN) {
+        if (youdefend)
+            you_unwere(FALSE);
+        else
             were_change(mdef);
+    }
 
-        if (mdef->data == &mons[PM_CLAY_GOLEM]) {
-            if (canseemon(mdef))
-                pline(combat_msgc(magr, mdef,
-                                  allow_cancel_kill ? cr_kill : cr_hit),
-                      writing_vanishes, s_suffix(mon_nam(mdef)));
-
-            if (allow_cancel_kill)
+    if (mdef->data == &mons[PM_CLAY_GOLEM]) {
+        /* canseemon even if &youmonst -- if you can't see yourself, you can't
+           see writing vanishing */
+        if (canseemon(mdef))
+            pline(combat_msgc(magr, mdef, allow_cancel_kill ? cr_kill : cr_hit),
+                  writing_vanishes, youdefend ? your : s_suffix(mon_nam(mdef)));
+        if (allow_cancel_kill) {
+            if (youdefend)
+                rehumanize(DIED, "loss of magical runes");
+            else
                 monkilled(magr, mdef, "", AD_RBRE);
         }
     }
@@ -2270,7 +2260,7 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
 /* you or a monster zapped an immediate type wand up or down */
 /* obj: wand or spell */
 static boolean
-zap_updown(struct monst *mon,struct obj *obj, schar dz)
+zap_updown(struct monst *mon, struct obj *obj, schar dz)
 {
     boolean striking = FALSE, disclose = FALSE;
     int x, y, xx, yy, ptmp;
@@ -2292,17 +2282,17 @@ zap_updown(struct monst *mon,struct obj *obj, schar dz)
         if (dz < 0) {
             if (you || vis)
                 pline(you ? msgc_yafm : msgc_monneutral,
-                      "%s probe%s towards the %s.",
-                      you ? "You" : Monnam(mon),
-                      you ? "" : "s", ceiling(x, y));
+                      "%s towards the %s.",
+                      M_verbs(mon, "probe"),
+                      ceiling(m_mx(mon), m_my(mon)));
         } else {
             if (you)
                 ptmp += bhitpile(obj, bhito, x, y);
             if (you || vis)
                 pline(you ? msgc_info : msgc_monneutral,
-                      "%s probe%s beneath the %s.",
-                      you ? "You" : Monnam(mon),
-                      you ? "" : "s", surface(x, y));
+                      "%s beneath the %s.",
+                      M_verbs(mon, "probe"),
+                      surface(m_mx(mon), m_my(mon)));
             if (you)
                 ptmp += display_binventory(x, y, TRUE);
         }
@@ -2388,7 +2378,8 @@ zap_updown(struct monst *mon,struct obj *obj, schar dz)
                 pline(msgc_yafm, "Nothing happens.");
         } else if (dz < 0) {    /* we should do more... */
             if (you || vis)
-                pline(msgc_yafm, "Blood drips on your %s.",
+                pline(msgc_yafm, "Blood drips on %s %s.",
+                      you ? "your" : s_suffix(mon_nam(mon)),
                       body_part(FACE));
         } else if (dz > 0 && !OBJ_AT(u.ux, u.uy)) {
             /* Print this message only if there wasn't an engraving affected
@@ -2624,7 +2615,6 @@ miss(const char *str, struct monst *mdef, struct monst *magr)
           (mdef == &youmonst ? "you" : mon_nam(mdef)) : "it");
 }
 
-
 /* bhit() -- zap immediate wand in any direction. */
 static void
 bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
@@ -2687,21 +2677,6 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
                     makeknown(obj->otyp);
                 break;
             }
-        /* modified by GAN to hit all objects */
-        int hitanything = 0;
-        struct obj *next_obj;
-
-        for (otmp = level->objects[bhitpos.x][bhitpos.y]; otmp;
-                otmp = next_obj) {
-            /* Fix for polymorph bug, Tim Wright */
-            next_obj = otmp->nexthere;
-            hitanything += bhito(otmp, obj);
-            /* boulders block vision, so make them block camera flashes too... */
-            if (otmp->otyp == BOULDER && obj->otyp == EXPENSIVE_CAMERA)
-                range = 0;
-        }
-        if (hitanything)
-            range--;
         mdef = m_at(level, bhitpos.x, bhitpos.y);
         if (!mdef && bhitpos.x == u.ux && bhitpos.y == u.uy)
             mdef = &youmonst;
@@ -2717,6 +2692,21 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
                   obj->otyp == EXPENSIVE_CAMERA ? "flash" : "beam",
                   mdef == &youmonst ? "your" : s_suffix(mon_nam(mdef)));
         }
+        /* modified by GAN to hit all objects */
+        int hitanything = 0;
+        struct obj *next_obj;
+
+        for (otmp = level->objects[bhitpos.x][bhitpos.y]; otmp;
+                otmp = next_obj) {
+            /* Fix for polymorph bug, Tim Wright */
+            next_obj = otmp->nexthere;
+            hitanything += bhito(otmp, obj);
+            /* boulders block vision, so make them block camera flashes too... */
+            if (otmp->otyp == BOULDER && obj->otyp == EXPENSIVE_CAMERA)
+                range = 0;
+        }
+        if (hitanything)
+            range--;
         if (you && obj->otyp == WAN_PROBING &&
             level->locations[bhitpos.x][bhitpos.y].mem_invis) {
             level->locations[bhitpos.x][bhitpos.y].mem_invis = 0;
@@ -2761,64 +2751,244 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
         pay_for_damage("destroy", FALSE);
 }
 
+/* will zap/spell/breath attack score a hit against armor class `ac'? */
+static int
+zap_hit_check(int ac, int type)
+{       /* either hero cast spell type or 0 */
+    int chance = rn2(20);
+    int spell_bonus = type ? spell_hit_bonus(type) : 0;
 
+    /* small chance for naked target to avoid being hit */
+    if (!chance)
+        return rnd(10) < ac + spell_bonus;
 
-struct monst *
-boomhit(int dx, int dy)
+    /* very high armor protection does not achieve invulnerability */
+    ac = AC_VALUE(ac);
+
+    return (3 - chance) < ac + spell_bonus;
+}
+
+/* type ==   0 to   9 : you shooting a wand */
+/* type ==  10 to  19 : you casting a spell */
+/* type ==  20 to  29 : you breathing as a monster */
+/* type == -10 to -19 : monster casting spell */
+/* type == -20 to -29 : monster breathing at you */
+/* type == -30 to -39 : monster shooting a wand */
+/* called with dx = dy = 0 with vertical bolts */
+/* buzztyp gives a consistent number for kind of ray, "yours" can be used combined
+   with this to determine source+kind without unneccessary arithmetic */
+void
+buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
 {
-    int i, ct;
-    int boom = E_boomleft;      /* showsym[] index */
-    struct monst *mtmp;
+    int range;
+    int expltype;
+    struct rm *loc;
+    xchar lsx, lsy;
+    struct monst *mon;
+    coord save_bhitpos;
+    boolean shopdamage = FALSE;
+    const char *fltxt;
     struct tmp_sym *tsym;
+    int spell_type;
+    int buzztyp = abs(type) % 30; /* % 30 to catch -30-39 */
+    boolean selfreflect = FALSE;
+    boolean selfzap = FALSE;
+    /* has nothing to do with absolute value. TODO: give this var a better name */
+    int abstype = buzztyp % 10;
+    /* you = buzz hits you, vis = you can see mon, yours = you created the buzz */
+    boolean you = FALSE;
+    boolean vis = FALSE;
+    boolean yours = (type >= 0);
+    /* TODO: source of buzz in a better way */
+    struct monst *magr = NULL;
+    if (buzztyp != ZT_SPELL(ZT_LIGHTNING)) {
+        magr = m_at(level, sx, sy);
+        if (yours)
+            magr = &youmonst;
+    }
 
-    bhitpos.x = u.ux;
-    bhitpos.y = u.uy;
+    /* if its a Hero Spell then get its SPE_TYPE */
+    spell_type = is_hero_spell(type) ? SPE_MAGIC_MISSILE + abstype : 0;
 
-    for (i = 0; i < 8; i++)
-        if (xdir[i] == dx && ydir[i] == dy)
-            break;
-    tsym = tmpsym_init(DISP_FLASH, dbuf_effect(E_MISC, boom));
-    for (ct = 0; ct < 10; ct++) {
-        if (i == 8)
-            i = 0;
-        boom = (boom == E_boomleft) ? E_boomright : E_boomleft;
-        tmpsym_change(tsym, dbuf_effect(E_MISC, boom)); /* change glyph */
-        dx = xdir[i];
-        dy = ydir[i];
-        bhitpos.x += dx;
-        bhitpos.y += dy;
-        if (MON_AT(level, bhitpos.x, bhitpos.y)) {
-            mtmp = m_at(level, bhitpos.x, bhitpos.y);
-            m_respond(mtmp);
-            tmpsym_end(tsym);
-            return mtmp;
-        }
-        if (!ZAP_POS(level->locations[bhitpos.x][bhitpos.y].typ) ||
-            closed_door(level, bhitpos.x, bhitpos.y)) {
-            bhitpos.x -= dx;
-            bhitpos.y -= dy;
-            break;
-        }
-        if (bhitpos.x == u.ux && bhitpos.y == u.uy) {   /* ct == 9 */
-            if (Fumbling || rn2(20) >= ACURR(A_DEX)) {
-                /* we hit ourselves */
-                thitu(10, rnd(10), NULL, "boomerang");
+    fltxt = flash_types[buzztyp];
+    if (Engulfed && yours) {
+        zap_hit_mon(magr, u.ustuck, type, nd, raylevel, FALSE);
+        return;
+    }
+    newsym(u.ux, u.uy);
+    range = rn1(7, 7);
+    if (dx == 0 && dy == 0) {
+        range = 1;
+        selfzap = TRUE;
+    }
+    save_bhitpos = bhitpos;
+
+    tsym = tmpsym_init(DISP_BEAM, zapdir_to_effect(dx, dy, abstype));
+    while (range-- > 0) {
+        you = FALSE;
+        vis = FALSE;
+        lsx = sx;
+        sx += dx;
+        lsy = sy;
+        sy += dy;
+        if (isok(sx, sy) && (loc = &level->locations[sx][sy])->typ) {
+            mon = m_at(level, sx, sy);
+            if (!mon && sx == u.ux && sy == u.uy) {
+                mon = &youmonst;
+                if (u.usteed && !rn2(3) && !reflecting(u.usteed))
+                    mon = u.usteed;
+                you = (mon == &youmonst);
+            }
+            if (cansee(sx, sy)) {
+                /* reveal/unreveal invisible monsters before tmpsym_at() */
+                if (!you && mon && !canspotmon(mon))
+                    map_invisible(sx, sy);
+                else if ((!mon || you) && level->locations[sx][sy].mem_invis) {
+                    level->locations[sx][sy].mem_invis = FALSE;
+                    newsym(sx, sy);
+                }
+                if (ZAP_POS(loc->typ) || cansee(lsx, lsy))
+                    tmpsym_at(tsym, sx, sy);
+                win_delay_output();     /* wait a little */
+            }
+        } else
+            goto make_bounce;
+
+        /* hit() and miss() need bhitpos to match the target */
+        bhitpos.x = sx, bhitpos.y = sy;
+        /* Fireballs only damage when they explode */
+        if (buzztyp != ZT_SPELL(ZT_FIRE))
+            range += zap_over_floor(sx, sy, type, &shopdamage);
+
+        if (mon) {
+            selfreflect = FALSE;
+            if (mon == magr)
+                selfreflect = TRUE;
+            vis = canseemon(mon);
+            if (buzztyp == ZT_SPELL(ZT_FIRE))
                 break;
-            } else {    /* we catch it */
-                tmpsym_end(tsym);
-                pline(msgc_actionok, "You skillfully catch the boomerang.");
-                return &youmonst;
+            if (yours && !you && idle(mon))
+                mon->mstrategy = st_none;
+            if (zap_hit_check(find_mac(mon), spell_type)) {
+                range -= 2;
+                if (yours || you || vis)
+                    hit(fltxt, mon, "!", magr);
+                if (reflecting(mon) && !selfzap) {
+                    if (you || vis) {
+                        shieldeff(sx, sy);
+                        if (raylevel >= P_SKILLED) {
+                            if (blind(&youmonst))
+                                pline(combat_msgc(magr, mon, cr_resist),
+                                      "%s is disrupted by something!", The(fltxt));
+                            else
+                                mon_reflects(mon, magr, selfreflect,
+                                             "%s is disrupted by %s %s!",
+                                             The(fltxt));
+                        } else {
+                            if (blind(&youmonst))
+                                pline(combat_msgc(magr, mon, cr_immune),
+                                      "For some reason, %s %s not affected.",
+                                      you ? "you" : mon_nam(mon),
+                                      you ? "are" : "is");
+                            else
+                                mon_reflects(mon, magr, selfreflect,
+                                             "But %s reflects from %s %s!", the(fltxt));
+                        }
+                    }
+                    if (raylevel >= P_SKILLED) {
+                        range = 0;
+                        continue;
+                    }
+                    dx = -dx;
+                    dy = -dy;
+                } else if (raylevel == P_MASTER) {
+                    pline(combat_msgc(magr, mon, cr_hit),
+                          "The powerful %s explodes!", fltxt);
+                    range = 0;
+                    continue;
+                } else
+                    zap_hit_mon(magr, mon, type, nd, raylevel, FALSE);
+            } else if (you || yours || vis)
+                pline(combat_msgc(magr, mon, cr_miss),
+                      "%s whizzes by %s!", The(fltxt),
+                      you ? "you" : mon_nam(mon));
+            if (you)
+                action_interrupted();
+        } else if ((mon = vismon_at(level, sx, sy)) &&
+                   (yours || cansee(sx, sy)))
+            pline(combat_msgc(magr, mon, cr_miss),
+                  "%s whizzes by %s displaced image!", The(fltxt),
+                  you ? "your" : s_suffix(mon_nam(mon)));
+
+        if (!ZAP_POS(loc->typ) ||
+            (closed_door(level, sx, sy) && (range >= 0))) {
+            int bounce;
+            uchar rmn;
+
+        make_bounce:
+            if (buzztyp == ZT_SPELL(ZT_FIRE)) {
+                sx = lsx;
+                sy = lsy;
+                break;  /* fireballs explode before the wall */
+            }
+            bounce = 0;
+            range--;
+            if (range && isok(lsx, lsy) && cansee(lsx, lsy))
+                pline(msgc_consequence, "%s bounces!", The(fltxt));
+            if (!dx || !dy || !rn2(20)) {
+                dx = -dx;
+                dy = -dy;
+            } else {
+                if (isok(sx, lsy) &&
+                    ZAP_POS(rmn = level->locations[sx][lsy].typ) &&
+                    !closed_door(level, sx, lsy) &&
+                    (IS_ROOM(rmn) ||
+                     (isok(sx + dx, lsy) &&
+                      ZAP_POS(level->locations[sx + dx][lsy].typ))))
+                    bounce = 1;
+                if (isok(lsx, sy) &&
+                    ZAP_POS(rmn = level->locations[lsx][sy].typ) &&
+                    !closed_door(level, lsx, sy) &&
+                    (IS_ROOM(rmn) ||
+                     (isok(lsx, sy + dy) &&
+                      ZAP_POS(level->locations[lsx][sy + dy].typ))))
+                    if (!bounce || rn2(2))
+                        bounce = 2;
+
+                switch (bounce) {
+                case 0:
+                    dx = -dx;   /* fall into... */
+                case 1:
+                    dy = -dy;
+                    break;
+                case 2:
+                    dx = -dx;
+                    break;
+                }
+                tmpsym_change(tsym, zapdir_to_effect(dx, dy, abstype));
             }
         }
-        tmpsym_at(tsym, bhitpos.x, bhitpos.y);
-        win_delay_output();
-        if (ct % 5 != 0)
-            i++;
-        if (IS_SINK(level->locations[bhitpos.x][bhitpos.y].typ))
-            break;      /* boomerang falls on sink */
     }
-    tmpsym_end(tsym);   /* do not leave last symbol */
-    return NULL;
+    tmpsym_end(tsym);
+    if (type == ZT_SPELL(ZT_FIRE))
+        explode(sx, sy, type, dice(12, 6), 0, EXPL_FIERY, NULL, 0);
+    if (raylevel >= P_SKILLED) {
+        if (abstype == ZT_FIRE)
+            expltype = EXPL_FIERY;
+        else if (abstype == ZT_COLD)
+            expltype = EXPL_FROSTY;
+        else
+            expltype = EXPL_MAGICAL;
+        explode(sx, sy, type, dice(nd, 6), WAND_CLASS, expltype, NULL, raylevel);
+        if (raylevel == P_MASTER)
+            chain_explode(sx, sy, type, dice(nd, 6),
+                          WAND_CLASS, expltype, NULL, raylevel, rnd(5));
+    }
+    if (shopdamage)
+        pay_for_damage(abstype == ZT_FIRE ? "burn away" : abstype ==
+                       ZT_COLD ? "shatter" : abstype ==
+                       ZT_DEATH ? "disintegrate" : "destroy", FALSE);
+    bhitpos = save_bhitpos;
 }
 
 /* returns damage to mon */
@@ -3190,247 +3360,6 @@ burn_floor_paper(struct level *lev, int x, int y,
     }
     return cnt;
 }
-
-/* will zap/spell/breath attack score a hit against armor class `ac'? */
-static int
-zap_hit_check(int ac, int type)
-{       /* either hero cast spell type or 0 */
-    int chance = rn2(20);
-    int spell_bonus = type ? spell_hit_bonus(type) : 0;
-
-    /* small chance for naked target to avoid being hit */
-    if (!chance)
-        return rnd(10) < ac + spell_bonus;
-
-    /* very high armor protection does not achieve invulnerability */
-    ac = AC_VALUE(ac);
-
-    return (3 - chance) < ac + spell_bonus;
-}
-
-/* type ==   0 to   9 : you shooting a wand */
-/* type ==  10 to  19 : you casting a spell */
-/* type ==  20 to  29 : you breathing as a monster */
-/* type == -10 to -19 : monster casting spell */
-/* type == -20 to -29 : monster breathing at you */
-/* type == -30 to -39 : monster shooting a wand */
-/* called with dx = dy = 0 with vertical bolts */
-/* buzztyp gives a consistent number for kind of ray, "yours" can be used combined
-   with this to determine source+kind without unneccessary arithmetic */
-void
-buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
-{
-    int range;
-    int expltype;
-    struct rm *loc;
-    xchar lsx, lsy;
-    struct monst *mon;
-    coord save_bhitpos;
-    boolean shopdamage = FALSE;
-    const char *fltxt;
-    struct tmp_sym *tsym;
-    int spell_type;
-    int buzztyp = abs(type) % 30; /* % 30 to catch -30-39 */
-    boolean selfreflect = FALSE;
-    boolean selfzap = FALSE;
-    /* has nothing to do with absolute value. TODO: give this var a better name */
-    int abstype = buzztyp % 10;
-    /* you = buzz hits you, vis = you can see mon, yours = you created the buzz */
-    boolean you = FALSE;
-    boolean vis = FALSE;
-    boolean yours = (type >= 0);
-    /* TODO: source of buzz in a better way */
-    struct monst *magr = NULL;
-    if (buzztyp != ZT_SPELL(ZT_LIGHTNING)) {
-        magr = m_at(level, sx, sy);
-        if (yours)
-            magr = &youmonst;
-    }
-
-    /* if its a Hero Spell then get its SPE_TYPE */
-    spell_type = is_hero_spell(type) ? SPE_MAGIC_MISSILE + abstype : 0;
-
-    fltxt = flash_types[buzztyp];
-    if (Engulfed && yours) {
-        zap_hit_mon(magr, u.ustuck, type, nd, raylevel, FALSE);
-        return;
-    }
-    newsym(u.ux, u.uy);
-    range = rn1(7, 7);
-    if (dx == 0 && dy == 0) {
-        range = 1;
-        selfzap = TRUE;
-    }
-    save_bhitpos = bhitpos;
-
-    tsym = tmpsym_init(DISP_BEAM, zapdir_to_effect(dx, dy, abstype));
-    while (range-- > 0) {
-        you = FALSE;
-        vis = FALSE;
-        lsx = sx;
-        sx += dx;
-        lsy = sy;
-        sy += dy;
-        if (isok(sx, sy) && (loc = &level->locations[sx][sy])->typ) {
-            mon = m_at(level, sx, sy);
-            if (!mon && sx == u.ux && sy == u.uy) {
-                mon = &youmonst;
-                if (u.usteed && !rn2(3) && !reflecting(u.usteed))
-                    mon = u.usteed;
-                you = (mon == &youmonst);
-            }
-            if (cansee(sx, sy)) {
-                /* reveal/unreveal invisible monsters before tmpsym_at() */
-                if (!you && mon && !canspotmon(mon))
-                    map_invisible(sx, sy);
-                else if ((!mon || you) && level->locations[sx][sy].mem_invis) {
-                    level->locations[sx][sy].mem_invis = FALSE;
-                    newsym(sx, sy);
-                }
-                if (ZAP_POS(loc->typ) || cansee(lsx, lsy))
-                    tmpsym_at(tsym, sx, sy);
-                win_delay_output();     /* wait a little */
-            }
-        } else
-            goto make_bounce;
-
-        /* hit() and miss() need bhitpos to match the target */
-        bhitpos.x = sx, bhitpos.y = sy;
-        /* Fireballs only damage when they explode */
-        if (buzztyp != ZT_SPELL(ZT_FIRE))
-            range += zap_over_floor(sx, sy, type, &shopdamage);
-
-        if (mon) {
-            selfreflect = FALSE;
-            if (mon == magr)
-                selfreflect = TRUE;
-            vis = canseemon(mon);
-            if (buzztyp == ZT_SPELL(ZT_FIRE))
-                break;
-            if (yours && !you && idle(mon))
-                mon->mstrategy = st_none;
-            if (zap_hit_check(find_mac(mon), spell_type)) {
-                range -= 2;
-                if (yours || you || vis)
-                    hit(fltxt, mon, "!", magr);
-                if (reflecting(mon) && !selfzap) {
-                    if (you || vis) {
-                        shieldeff(sx, sy);
-                        if (raylevel >= P_SKILLED) {
-                            if (blind(&youmonst))
-                                pline(combat_msgc(magr, mon, cr_resist),
-                                      "%s is disrupted by something!", The(fltxt));
-                            else
-                                mon_reflects(mon, magr, selfreflect,
-                                             "%s is disrupted by %s %s!",
-                                             The(fltxt));
-                        } else {
-                            if (blind(&youmonst))
-                                pline(combat_msgc(magr, mon, cr_immune),
-                                      "For some reason, %s %s not affected.",
-                                      you ? "you" : mon_nam(mon),
-                                      you ? "are" : "is");
-                            else
-                                mon_reflects(mon, magr, selfreflect,
-                                             "But %s reflects from %s %s!", the(fltxt));
-                        }
-                    }
-                    if (raylevel >= P_SKILLED) {
-                        range = 0;
-                        continue;
-                    }
-                    dx = -dx;
-                    dy = -dy;
-                } else if (raylevel == P_MASTER) {
-                    pline(combat_msgc(magr, mon, cr_hit),
-                          "The powerful %s explodes!", fltxt);
-                    range = 0;
-                    continue;
-                } else
-                    zap_hit_mon(magr, mon, type, nd, raylevel, FALSE);
-            } else if (you || yours || vis)
-                pline(combat_msgc(magr, mon, cr_miss),
-                      "%s whizzes by %s!", The(fltxt),
-                      you ? "you" : mon_nam(mon));
-            if (you)
-                action_interrupted();
-        } else if ((mon = vismon_at(level, sx, sy)) &&
-                   (yours || cansee(sx, sy)))
-            pline(combat_msgc(magr, mon, cr_miss),
-                  "%s whizzes by %s displaced image!", The(fltxt),
-                  you ? "your" : s_suffix(mon_nam(mon)));
-            
-        if (!ZAP_POS(loc->typ) ||
-            (closed_door(level, sx, sy) && (range >= 0))) {
-            int bounce;
-            uchar rmn;
-
-        make_bounce:
-            if (buzztyp == ZT_SPELL(ZT_FIRE)) {
-                sx = lsx;
-                sy = lsy;
-                break;  /* fireballs explode before the wall */
-            }
-            bounce = 0;
-            range--;
-            if (range && isok(lsx, lsy) && cansee(lsx, lsy))
-                pline(msgc_consequence, "%s bounces!", The(fltxt));
-            if (!dx || !dy || !rn2(20)) {
-                dx = -dx;
-                dy = -dy;
-            } else {
-                if (isok(sx, lsy) &&
-                    ZAP_POS(rmn = level->locations[sx][lsy].typ) &&
-                    !closed_door(level, sx, lsy) &&
-                    (IS_ROOM(rmn) ||
-                     (isok(sx + dx, lsy) &&
-                      ZAP_POS(level->locations[sx + dx][lsy].typ))))
-                    bounce = 1;
-                if (isok(lsx, sy) &&
-                    ZAP_POS(rmn = level->locations[lsx][sy].typ) &&
-                    !closed_door(level, lsx, sy) &&
-                    (IS_ROOM(rmn) ||
-                     (isok(lsx, sy + dy) &&
-                      ZAP_POS(level->locations[lsx][sy + dy].typ))))
-                    if (!bounce || rn2(2))
-                        bounce = 2;
-
-                switch (bounce) {
-                case 0:
-                    dx = -dx;   /* fall into... */
-                case 1:
-                    dy = -dy;
-                    break;
-                case 2:
-                    dx = -dx;
-                    break;
-                }
-                tmpsym_change(tsym, zapdir_to_effect(dx, dy, abstype));
-            }
-        }
-    }
-    tmpsym_end(tsym);
-    if (type == ZT_SPELL(ZT_FIRE))
-        explode(sx, sy, type, dice(12, 6), 0, EXPL_FIERY, NULL, 0);
-    if (raylevel >= P_SKILLED) {
-        if (abstype == ZT_FIRE)
-            expltype = EXPL_FIERY;
-        else if (abstype == ZT_COLD)
-            expltype = EXPL_FROSTY;
-        else
-            expltype = EXPL_MAGICAL;
-        explode(sx, sy, type, dice(nd, 6), WAND_CLASS, expltype, NULL, raylevel);
-        if (raylevel == P_MASTER)
-            chain_explode(sx, sy, type, dice(nd, 6),
-                          WAND_CLASS, expltype, NULL, raylevel, rnd(5));
-    }
-    if (shopdamage)
-        pay_for_damage(abstype == ZT_FIRE ? "burn away" : abstype ==
-                       ZT_COLD ? "shatter" : abstype ==
-                       ZT_DEATH ? "disintegrate" : "destroy", FALSE);
-    bhitpos = save_bhitpos;
-}
-
 
 void
 melt_ice(struct level *lev, xchar x, xchar y)

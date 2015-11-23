@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -120,7 +120,8 @@ mon_regen(struct monst *mon, boolean digest_meal)
     /* Monster constitution is counted as 12 + ring bonuses/etc */
     if (mon->mhp < mon->mhpmax) {
         if (mon->m_lev > 9 && (moves % 3))
-            mon->mhp += min((mon->m_lev - 9), rnd(acurr(mon, A_CON)));
+            mon->mhp += min((mon->m_lev - 9), acurr(mon, A_CON) <= 11 ? 1 :
+                            rnd(acurr(mon, A_CON)));
         else if (regenerates(mon) || (mon->m_lev <= 9 && !(moves % (42 / (mon->m_lev + 2) + 1))))
             mon->mhp++;
         if (mon->mhp > mon->mhpmax)

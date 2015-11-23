@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -321,8 +321,8 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_NEUTER, 0, 0, CLR_GRAY),
     MON("floating eye", S_EYE,
         LVL(2, 1, 9, 10, 0), (G_GENO | 5),
-        A(ATTK(AT_NONE, AD_PLYS, 0, 70),
-          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        A(ATTK(AT_AREA, AD_SLOW, 8, 5), ATTK(AT_NONE, AD_SLOW, 8, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(10, 10, 0, MS_SILENT, MZ_SMALL), 0, 0,
         M1_FLY | M1_AMPHIBIOUS | M1_NOLIMBS | M1_NOHEAD | M1_NOTAKE,
         M2_HOSTILE | M2_NEUTER | M2_TELEPATHIC,

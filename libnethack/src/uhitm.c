@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2164,40 +2164,37 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
     if (malive && !cancelled(mon) && rn2(3)) {
 
         switch (ptr->mattk[i].adtyp) {
-
-        case AD_PLYS:
-            if (ptr == &mons[PM_FLOATING_EYE]) {
-                if (!canseemon(mon)) {
-                    break;
-                }
-                if (!blind(mon)) {
-                    if (mon_reflects(&youmonst, mon, FALSE,
-                                     "%s gaze is reflected by %s %s.",
-                                     s_suffix(Monnam(mon))));
-                    else if (free_action(&youmonst))
-                        pline(combat_msgc(mon, &youmonst, cr_immune),
-                              "You momentarily stiffen under %s gaze!",
-                              s_suffix(mon_nam(mon)));
-                    else {
-                        /* In AceHack, this is now a forced miss rather than
-                           causing paralysis; thus no further passive effects
-                           are desired here */
-                    }
-                } else {
-                    pline(combat_msgc(mon, &youmonst, cr_miss),
-                          "%s cannot defend itself.", Adjmonnam(mon, "blind"));
-                    if (!rn2(500))
-                        change_luck(-1);
-                }
-            } else if (free_action(&youmonst)) {
-                pline(combat_msgc(mon, &youmonst, cr_miss),
-                      "You momentarily stiffen.");
-            } else {    /* gelatinous cube */
-                pline(msgc_statusbad, "You are frozen by %s!", mon_nam(mon));
-                helpless(tmp, hr_paralyzed, "frozen by attacking a monster",
-                         NULL);
-                exercise(A_DEX, FALSE);
+        case AD_SLOW:
+            if (blind(mon)) {
+                pline(msgc_badidea, "%snot defend %sself.", M_verbs(mon, "can"),
+                      mhim(mon));
+                if (!rn2(500))
+                    change_luck(-1);
+                break;
             }
+            if (cancelled(mon) ||
+                !(msensem(&youmonst, mon) & MSENSE_VISION) ||
+                !(msensem(mon, &youmonst) & MSENSE_VISION))
+                break;
+            if (slow(&youmonst))
+                pline(msgc_statusbad,
+                      "You feel as if you will be slow for longer.");
+            else
+                pline(combat_msgc(mon, &youmonst, cr_hit),
+                      "You slow down under %s gaze!", s_suffix(mon_nam(mon)));
+            inc_timeout(&youmonst, SLOW, tmp, TRUE);
+            break;
+        case AD_PLYS:
+            if (free_action(&youmonst)) {
+                pline(combat_msgc(mon, &youmonst, cr_immune),
+                      "You momentarily stiffen.");
+                break;
+            }
+
+            pline(msgc_statusbad, "You are frozen by %s!", mon_nam(mon));
+            helpless(tmp, hr_paralyzed, "frozen by attacking a monster",
+                     NULL);
+            exercise(A_DEX, FALSE);
             break;
         case AD_COLD:  /* brown mold or blue jelly */
             if (monnear(mon, u.ux, u.uy)) {

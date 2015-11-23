@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,6 +29,8 @@ static int mdamagem(struct monst *, struct monst *, const struct attack *);
 static void noises(struct monst *, const struct attack *);
 static void missmm(struct monst *, struct monst *, const struct attack *);
 static int passivemm(struct monst *, struct monst *, boolean, int);
+static void set_at_area(int, int, void *);
+static void maurahitm(struct monst *, struct monst *, const struct attack *);
 
 /* Needed for the special case of monsters wielding vorpal blades (rare). If we
    use this a lot it should probably be a parameter to mdamagem() instead of a
@@ -618,7 +620,8 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     boolean udef = (mdef == &youmonst);
     boolean visad = (msensem(magr, mdef) & MSENSE_VISION);
     boolean visda = (msensem(mdef, magr) & MSENSE_VISION);
-    boolean vis = (cansee(magr->mx, magr->my) && cansee(mdef->mx, mdef->my) &&
+    boolean vis = (cansee(m_mx(magr), m_my(magr)) &&
+                   cansee(m_mx(mdef), m_my(mdef)) &&
                    (canspotmon(magr) || canspotmon(mdef)));
     if (uagr) /* not udef: blindness shouldn't reveal monsters attacking you */
         vis = TRUE;
@@ -1765,7 +1768,6 @@ static int
 passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
 {
     const struct permonst *mddat = mdef->data;
-    const struct permonst *madat = magr->data;
     int i, tmp;
 
     for (i = 0;; i++) {
@@ -1837,50 +1839,39 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
     /* These affect the enemy only if defender is still alive */
     if (rn2(3))
         switch (mddat->mattk[i].adtyp) {
+        case AD_SLOW:
+            if (blind(mdef)) {
+                if (canseemon(magr))
+                    pline(combat_msgc(mdef, magr, cr_miss),
+                          "%snot defend %sself.", M_verbs(mdef, "can"),
+                          mhim(mdef));
+                break;
+            }
+            if (cancelled(mdef) ||
+                !(msensem(mdef, magr) & MSENSE_VISION) ||
+                !(msensem(magr, mdef) & MSENSE_VISION))
+                break;
+            if (!slow(mdef) && canseemon(mdef))
+                pline(combat_msgc(mdef, magr, cr_hit),
+                      "%s down under %s gaze!", M_verbs(mdef, "slow"),
+                      s_suffix(mon_nam(magr)));
+            inc_timeout(mdef, SLOW, tmp, TRUE);
+            break;
         case AD_PLYS:
-            if (tmp > 127)
-                tmp = 127;
-            if (mddat == &mons[PM_FLOATING_EYE]) {
-                if (!rn2(4))
-                    tmp = 127;
-                if (!blind(magr) && haseyes(madat) && !blind(mdef) &&
-                    (see_invisible(magr) || !invisible(mdef))) {
-                    if (reflecting(magr)) {
-                        if (canseemon(magr))
-                            mon_reflects(magr, mdef, FALSE,
-                                         "%s gaze is reflected by %s %s.", s_suffix(Monnam(mdef)));
-                        return mdead | mhit;
-                    }
-                    if (free_action(magr)) {
-                        if (canseemon(magr))
-                            pline(combat_msgc(mdef, magr, cr_immune),
-                                  "%s momentarily stiffens under %s gaze.",
-                                  Monnam(mdef), mon_nam(magr));
-                        return mdead | mhit;
-                    }
-                    if (canseemon(magr))
-                        pline(combat_msgc(mdef, magr, cr_hit),
-                              "%s is frozen by %s gaze!", Monnam(magr),
-                              s_suffix(mon_nam(mdef)));
-                    magr->mcanmove = 0;
-                    magr->mfrozen = tmp;
-                    return mdead | mhit;
-                }
-            } else if (free_action(magr)) {
+            if (free_action(magr)) {
                 if (canseemon(magr))
                     pline(combat_msgc(mdef, magr, cr_immune),
                           "%s momentarily stiffens.",
-                          Monnam(mdef));
-                return mdead | mhit;
-            } else {    /* gelatinous cube */
-                if (canseemon(magr))
-                    pline(combat_msgc(mdef, magr, cr_hit),
-                          "%s is frozen by %s.", Monnam(magr), mon_nam(mdef));
-                magr->mcanmove = 0;
-                magr->mfrozen = tmp;
+                          Monnam(magr));
                 return mdead | mhit;
             }
-            return 1;
+
+            if (canseemon(magr))
+                pline(combat_msgc(mdef, magr, cr_hit),
+                      "%s is frozen by %s.", Monnam(magr), mon_nam(mdef));
+            magr->mcanmove = 0;
+            magr->mfrozen = min(tmp, 127);
+            return mdead | mhit;
         case AD_COLD:
             if (resists_cold(magr)) {
                 if (canseemon(magr)) {
@@ -1956,6 +1947,116 @@ assess_dmg:
     }
     return mdead | mhit;
 }
+
+/* area[COLNO][0] is used to make set_at_area figure out what bit to set.
+   TODO: figure out if this can be handled better than a static variable. */
+static uint64_t area[COLNO+1][ROWNO];
+
+/* Perform AT_AREA logic (e.g. area of effect "auras" for certain monsters.
+   AT_AREA defines certain "auras" from certain monsters with an
+   area-of-effect. For example, floating eyes make monsters within a certain
+   radius slow. */
+void
+do_at_area(struct level *lev)
+{
+    struct monst *magr, *mdef;
+    struct monst *areamons[64];
+    const struct attack *areaatk[64];
+    int i = 0;
+    int dummy; /* for do_clear_area */
+
+    /* Clear area from earlier invocations */
+    memset(area, 0, sizeof area);
+
+    /* Iterate the monlist, looking for AT_AREA. If one is found, perform a
+       do_clear_area on the selected area, contained in the numdice attack
+       number */
+    for (magr = lev->monlist; magr; magr = (magr->nmon ? magr->nmon :
+                                         magr == &youmonst ? NULL :
+                                         &youmonst)) {
+        if (magr != &youmonst && DEADMONSTER(magr))
+            continue;
+        if ((areaatk[i] = attacktype_fordmg(magr->data, AT_AREA, AD_ANY))) {
+            areamons[i] = magr;
+            area[COLNO][0] = 0;
+            area[COLNO][0] |= ((uint64_t)1 << i);
+            do_clear_area(m_mx(magr), m_my(magr), areaatk[i]->damn,
+                          set_at_area, &dummy);
+            i++;
+        }
+        /* arbitrary cap (we've defined 64 indices, so bail out if we go above
+           that cap) */
+        if (i >= 64)
+            break;
+    }
+
+    /* Now, perform the attack itself */
+    int x;
+    int y;
+    for (x = 0; x < COLNO; x++) {
+        for (y = 0; y < ROWNO; y++) {
+            /* is there an aura here */
+            if (!area[x][y])
+                continue;
+            /* is there a monster here */
+            mdef = m_at(lev, x, y);
+            if (!mdef && x == u.ux && y == u.uy && lev == level)
+                mdef = &youmonst;
+            if (!mdef)
+                continue;
+
+            /* Find the monsters responsible for the aura */
+            for (i = 0; i < 64; i++) {
+                if (!(area[x][y] & (((uint64_t)1 >> i) & 1)))
+                    continue;
+
+                /* We found what we're looking for. Now, do the attack. */
+                maurahitm(areamons[i], mdef, areaatk[i]);
+            }
+        }
+    }
+}
+
+
+/* Set relevant bit for at_area */
+static void
+set_at_area(int x, int y, void *ptr)
+{
+    area[x][y] |= area[COLNO][0];
+}
+
+
+/* Aura effects */
+static void
+maurahitm(struct monst *magr, struct monst *mdef,
+          const struct attack *mattk)
+{
+    boolean uagr = (magr == &youmonst);
+    boolean udef = (mdef == &youmonst);
+    boolean vis = (cansee(m_mx(magr), m_my(magr)) &&
+                   cansee(m_mx(mdef), m_my(mdef)) &&
+                   (canspotmon(magr) || canspotmon(mdef)));
+    /* Doesn't include damn: it is for the size of the area effect */
+    int dmg = mattk->damd;
+
+    switch (mattk->adtyp) {
+    case AD_SLOW: /* floating eyes */
+        if (!(uagr || magr->mtame) ==
+            !(udef || mdef->mtame) ||
+            !(msensem(mdef, magr) & MSENSE_VISION))
+            break;
+        if (!slow(mdef) && (uagr || udef || vis))
+            pline(combat_msgc(magr, mdef, cr_hit),
+                  "%s down under %s gaze.",
+                  M_verbs(mdef, "slow"),
+                  magr == &youmonst ? "your" :
+                  s_suffix(mon_nam(magr)));
+        if (property_timeout(mdef, SLOW) < dmg)
+            set_property(mdef, SLOW, dmg, TRUE);
+        break;
+    }
+}
+
 
 /* "aggressive defense"; what type of armor prevents specified attack
    from touching its target? */

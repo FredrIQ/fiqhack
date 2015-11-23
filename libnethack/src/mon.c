@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -627,8 +627,9 @@ mcalcdistress(void)
         if (teleportitis(mtmp) && !rn2(85))
             mon_tele(mtmp, !!teleport_control(mtmp));
 
-        /* time out mt properties */
+        /* intrinsic timeouts */
         decrease_property_timers(mtmp);
+        /* monsters might get worried about their levi timing out */
         if (levitates(mtmp) && !rn2(40) &&
             !(has_property(mtmp, LEVITATION) & ~W_MASK(os_timeout)))
             mtmp->levi_wary = 1;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2350,37 +2350,37 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
                 goto assess_dmg;
             }
             break;
-        case AD_PLYS:  /* Floating eye */
-            if (tmp > 127)
-                tmp = 127;
-            if (u.umonnum == PM_FLOATING_EYE) {
-                if (!rn2(4))
-                    tmp = 127;
-                if (!blind(mtmp) && haseyes(mtmp->data) && rn2(3) &&
-                    (see_invisible(mtmp) || !invisible(&youmonst))) {
-                    if (Blind)
-                        pline(msgc_noconsequence,
-                              "As a blind %s, you cannot defend yourself.",
-                              youmonst.data->mname);
-                    else {
-                        if (mon_reflects(mtmp, &youmonst, FALSE,
-                                         "%s gaze is reflected by %s %s.", "Your"))
-                            return 1;
-                        pline(combat_msgc(&youmonst, mtmp, cr_hit),
-                              "%s is frozen by your gaze!", Monnam(mtmp));
-                        mtmp->mcanmove = 0;
-                        mtmp->mfrozen = tmp;
-                        return 3;
-                    }
-                }
-            } else {    /* gelatinous cube */
+        case AD_SLOW:
+            if (blind(&youmonst)) {
+                pline(msgc_statusbad,
+                      "Being blind, you cannot defend yourself.");
+                /* TODO: rarely lose luck for monster */
+                break;
+            }
+            if (cancelled(&youmonst) ||
+                !(msensem(mtmp, &youmonst) & MSENSE_VISION) ||
+                !(msensem(&youmonst, mtmp) & MSENSE_VISION))
+                break;
+            if (!slow(mtmp) && canseemon(mtmp))
+                pline(combat_msgc(&youmonst, mtmp, cr_hit),
+                      "%s down under your gaze!", M_verbs(mtmp, "slow"));
+            inc_timeout(mtmp, SLOW, tmp, TRUE);
+            break;
+        case AD_PLYS:
+            if (free_action(mtmp)) {
+                if (canseemon(mtmp))
+                    pline(combat_msgc(&youmonst, mtmp, cr_immune),
+                          "%s momentarily stiffens.",
+                          Monnam(mtmp));
+                return 1;
+            }
+
+            if (canseemon(mtmp))
                 pline(combat_msgc(&youmonst, mtmp, cr_hit),
                       "%s is frozen by you.", Monnam(mtmp));
-                mtmp->mcanmove = 0;
-                mtmp->mfrozen = tmp;
-                return 3;
-            }
-            return 1;
+            mtmp->mcanmove = 0;
+            mtmp->mfrozen = min(tmp, 127);
+            return 3;
         case AD_COLD:  /* Brown mold or blue jelly */
             if (resists_cold(mtmp)) {
                 shieldeff(mtmp->mx, mtmp->my);

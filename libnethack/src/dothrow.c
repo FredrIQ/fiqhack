@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -990,6 +990,64 @@ fire_obj(int ddx, int ddy, int range,   /* direction and range */
         point_blank = FALSE;    /* affects passing through iron bars */
     }
     tmpsym_end(tsym);
+    return NULL;
+}
+
+struct monst *
+boomhit(int dx, int dy)
+{
+    int i, ct;
+    int boom = E_boomleft;      /* showsym[] index */
+    struct monst *mtmp;
+    struct tmp_sym *tsym;
+
+    bhitpos.x = u.ux;
+    bhitpos.y = u.uy;
+
+    for (i = 0; i < 8; i++)
+        if (xdir[i] == dx && ydir[i] == dy)
+            break;
+    tsym = tmpsym_init(DISP_FLASH, dbuf_effect(E_MISC, boom));
+    for (ct = 0; ct < 10; ct++) {
+        if (i == 8)
+            i = 0;
+        boom = (boom == E_boomleft) ? E_boomright : E_boomleft;
+        tmpsym_change(tsym, dbuf_effect(E_MISC, boom)); /* change glyph */
+        dx = xdir[i];
+        dy = ydir[i];
+        bhitpos.x += dx;
+        bhitpos.y += dy;
+        if (MON_AT(level, bhitpos.x, bhitpos.y)) {
+            mtmp = m_at(level, bhitpos.x, bhitpos.y);
+            m_respond(mtmp);
+            tmpsym_end(tsym);
+            return mtmp;
+        }
+        if (!ZAP_POS(level->locations[bhitpos.x][bhitpos.y].typ) ||
+            closed_door(level, bhitpos.x, bhitpos.y)) {
+            bhitpos.x -= dx;
+            bhitpos.y -= dy;
+            break;
+        }
+        if (bhitpos.x == u.ux && bhitpos.y == u.uy) {   /* ct == 9 */
+            if (Fumbling || rn2(20) >= ACURR(A_DEX)) {
+                /* we hit ourselves */
+                thitu(10, rnd(10), NULL, "boomerang");
+                break;
+            } else {    /* we catch it */
+                tmpsym_end(tsym);
+                pline(msgc_actionok, "You skillfully catch the boomerang.");
+                return &youmonst;
+            }
+        }
+        tmpsym_at(tsym, bhitpos.x, bhitpos.y);
+        win_delay_output();
+        if (ct % 5 != 0)
+            i++;
+        if (IS_SINK(level->locations[bhitpos.x][bhitpos.y].typ))
+            break;      /* boomerang falls on sink */
+    }
+    tmpsym_end(tsym);   /* do not leave last symbol */
     return NULL;
 }
 
