@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -622,7 +622,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                 if (sobj_at(CORPSE, level, sx, sy) &&
                     (obj->otyp == WAN_UNDEAD_TURNING ||
                      obj->otyp == SPE_TURN_UNDEAD))
-                    tilescore += (mtmp->mpeaceful ? -20 : +30);
+                    tilescore += (mon->mpeaceful ? -20 : +30);
                 if (mtmp) {
                     if (mon == mtmp)
                         self = TRUE;
