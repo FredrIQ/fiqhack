@@ -1190,7 +1190,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
         obj_destroyed = FALSE;
         mon = fire_obj(dx, dy, range, THROWN_WEAPON, obj, &obj_destroyed);
 
-        /* have to do this after bhit() so u.ux & u.uy are correct */
+        /* have to do this after fire_obj() so u.ux & u.uy are correct */
         if (Is_airlevel(&u.uz) || Levitation)
             hurtle(-dx, -dy, urange, TRUE);
 
