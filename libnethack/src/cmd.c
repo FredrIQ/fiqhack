@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1355,7 +1355,7 @@ count_obj(struct obj *chain, long *total_count, long *total_size, boolean top,
     for (count = size = 0, obj = chain; obj; obj = obj->nobj) {
         if (top) {
             count++;
-            size += sizeof (struct obj) + obj->oxlth + obj->onamelth;
+            size += sizeof (struct obj);
         }
         if (recurse && obj->cobj)
             count_obj(obj->cobj, total_count, total_size, TRUE, TRUE);

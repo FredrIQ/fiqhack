@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2252,8 +2252,8 @@ monkilled(struct monst *magr, struct monst *mdef, const char *fltxt, int how)
 {
     boolean be_sad = FALSE;     /* true if unseen pet is killed */
     /* number to pass to xkilled(). TODO: merge with this function.
-       xkill numbers for reference: bit 1 is message,
-       bit 2 is for corpse leaving */
+       xkill numbers for reference: bit 0 is message,
+       bit 1 is for corpse leaving */
     int xkill = 0;
 
     if (fltxt && canseemon(mdef))
@@ -2275,7 +2275,7 @@ monkilled(struct monst *magr, struct monst *mdef, const char *fltxt, int how)
     }
 
     if (xkill & 2)
-        mondead(mdef);
+        mondead(mdef); /* no corpse */
     else
         mondied(mdef);
 

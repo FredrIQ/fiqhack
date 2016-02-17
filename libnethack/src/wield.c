@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -593,7 +593,7 @@ chwepon(struct monst *mon, struct obj *otmp, int amount)
         return 1;
     }
 
-    if (amount < 0 && twep->oartifact && restrict_name(twep, ONAME(twep))) {
+    if (amount < 0 && twep->oartifact && restrict_name(twep, ox_name(twep))) {
         if (!Blind && (you || vis))
             pline(you ? msgc_failcurse : msgc_monneutral,
                   "%s %s %s.", your, aobjnam(twep, "faintly glow"), color);

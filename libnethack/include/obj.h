@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,6 +7,9 @@
 # define OBJ_H
 
 # include "global.h"
+
+# define OX_NAME  0x01
+# define OX_MONST 0x02
 
 enum obj_where {
     OBJ_FREE,   /* object not attached to anything */
@@ -36,7 +39,9 @@ struct obj {
     };
 
     struct obj *cobj;   /* contents list for containers */
+    struct oextra *oextra; /* extra object data */
     unsigned int o_id;
+    unsigned int m_id; /* monster ID for temporary monsters and bones ghosts */
     struct level *olev; /* the level it is on */
     xchar ox, oy;
     short otyp; /* object class number */
@@ -98,11 +103,6 @@ struct obj {
     unsigned oinvis:1;          /* invisible */
 # endif
     unsigned greased:1;         /* covered with grease */
-    unsigned oattached:2;       /* obj struct has special attachment */
-# define OATTACHED_NOTHING 0
-# define OATTACHED_MONST   1    /* monst struct in oextra */
-# define OATTACHED_M_ID    2    /* monst id in oextra */
-# define OATTACHED_UNUSED3 3
 
     unsigned in_use:1;          /* for magic items before useup items */
     unsigned was_thrown:1;      /* thrown by the hero since last picked up */
@@ -119,16 +119,10 @@ struct obj {
     };
     unsigned oeaten;            /* nutrition left in food, if partly eaten */
 
-    int onamelth;               /* length of name (following oxlth) */
-    short oxlth;                /* length of following data */
     int age;                    /* creation date */
     int owornmask;
-    void *oextra[];             /* used for name of ordinary objects - length is
-                                   flexible; amount for tmp gold objects */
+    unsigned nomerge:1;         /* always 0 at neutral turnstate */
 };
-
-# define ONAME(otmp)         (((const char *)(otmp)->oextra) + (otmp)->oxlth)
-# define ONAME_MUTABLE(otmp) (((char *)(otmp)->oextra) + (otmp)->oxlth)
 
 /* Weapons and weapon-tools */
 /* KMH -- now based on skill categories.  Formerly:

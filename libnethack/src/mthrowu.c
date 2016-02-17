@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -528,6 +528,8 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
     schar skill;
     int multishot;
     const char *onm;
+    int dx = mtmp->mx - xdef;
+    int dy = mtmp->my - ydef;
 
     /* Rearranged beginning so monsters can use polearms not in a line */
     if (mtmp->weapon_check == NEED_WEAPON || !MON_WEP(mtmp)) {
@@ -650,7 +652,7 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
 
     m_shot.n = multishot;
     for (m_shot.i = 1; m_shot.i <= m_shot.n; m_shot.i++)
-        m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
+        m_throw(mtmp, mtmp->mx, mtmp->my, sgn(dx), sgn(dy),
                 distmin(mtmp->mx, mtmp->my, xdef, ydef), otmp, TRUE);
     m_shot.n = m_shot.i = 0;
     m_shot.o = STRANGE_OBJECT;
@@ -663,10 +665,6 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
 
    Returns TRUE and sets *mdef to a monster if there's a monster it wants to
    target (and no monster it doesn't want to attack). *mdef can be &youmonst.
-
-   If mdef is non-NULL, also set the tbx/tby globals for backwards compatibility
-   (clobbered on a *mdef == NULL return, appropriately otherwise). TODO: get rid
-   of these, they're really spaghetti.
 
    Returns TRUE and sets *mdef to NULL if there's no reason it wants to fire
    in that direction, but no reason it dislikes firing in that direction
@@ -708,11 +706,8 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
         if ((x == magr->mux && y == magr->muy && msensem(magr, &youmonst)) ||
             (magr->mtame && x == u.ux && y == u.uy)) {
             if (!Engulfed && !confused(magr)) {
-                if (mdef) {
+                if (mdef)
                     *mdef = &youmonst;
-                    tbx = x - magr->mx;
-                    tby = y - magr->my;
-                }
 
                 if (!Conflict || resist(magr, RING_CLASS, 0)) {
                     if ((!helpful && magr->mpeaceful) ||
@@ -745,18 +740,12 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
                 couldsee(magr->mx, magr->my) &&
                 distu(magr->mx, magr->my) <= BOLT_LIM * BOLT_LIM) {
                 /* we're conflicted, anything is a valid target */
-                if (mdef) {
+                if (mdef)
                     *mdef = mat;
-                    tbx = x - magr->mx;
-                    tby = y - magr->my;
-                }
             } else if (mm_aggression(magr, mat) & ALLOW_M && !helpful) {
                 /* we want to target this monster */
-                if (mdef) {
+                if (mdef)
                     *mdef = mat;
-                    tbx = x - magr->mx;
-                    tby = y - magr->my;
-                }
             } else if (!helpful && (magr->mpeaceful || mat->mpeaceful)) {
                 /* we don't want to attack this monster; peacefuls (including
                    pets) should avoid collateral damage; also handles the
@@ -771,11 +760,8 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
                 /* helpful beam, hostile-hostile or peaceful/tame-peaceful/tame
                    is OK; the peaceful checks aren't redundant with above since
                    pet_attacks_up_to_difficulty is a thing */
-                if (mdef) {
+                if (mdef)
                     *mdef = mat;
-                    tbx = x - magr->mx;
-                    tby = y - magr->my;
-                }
             }
         }
     }
@@ -808,8 +794,6 @@ mfind_target(const struct monst *mtmp, boolean helpful)
         }
     }
 
-    /* Nothing lined up? */
-    tbx = tby = 0;
     return NULL;
 }
 
@@ -818,6 +802,8 @@ int
 spitmq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
 {
     struct obj *otmp;
+    int dx = mtmp->mx - xdef;
+    int dy = mtmp->my - ydef;
 
     if (cancelled(mtmp)) {
         if (canhear())
@@ -848,7 +834,7 @@ spitmq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
                   "%s spits venom!", Monnam(mtmp));
             action_interrupted();
         }
-        m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
+        m_throw(mtmp, mtmp->mx, mtmp->my, sgn(dx), sgn(dy),
                 distmin(mtmp->mx, mtmp->my, xdef, ydef), otmp,
                 FALSE);
         return 1;
@@ -869,6 +855,8 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
         return 0;
 
     boolean linedup = qlined_up(mtmp, xdef, ydef, TRUE, FALSE);
+    int dx = mtmp->mx - xdef;
+    int dy = mtmp->my - ydef;
 
     if (linedup) {
         if (cancelled(mtmp)) {
@@ -890,7 +878,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
                     action_interrupted();
                 }
                 buzz((int)(-20 - (typ - 1)), (int)mattk->damn, mtmp->mx,
-                     mtmp->my, sgn(tbx), sgn(tby), 0);
+                     mtmp->my, sgn(dx), sgn(dy), 0);
                 /* breath runs out sometimes. Also, give monster some cunning;
                    don't breath if the target fell asleep. */
                 if (!rn2(3))
@@ -910,16 +898,16 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
 boolean
 linedup(xchar ax, xchar ay, xchar bx, xchar by)
 {
-    tbx = ax - bx;      /* These two values are set for use */
-    tby = ay - by;      /* after successful return.  */
+    int dx = ax - bx;
+    int dy = ay - by;
 
     /* sometimes displacement makes a monster think that you're at its own
        location; prevent it from throwing and zapping in that case */
-    if (!tbx && !tby)
+    if (!dx && !dy)
         return FALSE;
 
-    if ((!tbx || !tby || abs(tbx) == abs(tby))  /* straight line or diagonal */
-        && distmin(tbx, tby, 0, 0) < BOLT_LIM) {
+    if ((!dx || !dy || abs(dx) == abs(dy))  /* straight line or diagonal */
+        && distmin(dx, dy, 0, 0) < BOLT_LIM) {
         if (clear_path(ax, ay, bx, by, viz_array))
             return TRUE;
     }

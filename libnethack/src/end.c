@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -837,7 +837,7 @@ display_rip(int how, long umoney, const char *killer)
                     makeknown(otmp->otyp);
                     otmp->known = 1;    /* for fake amulets */
                     otmp->dknown = 1;   /* seen it (blindness fix) */
-                    otmp->onamelth = 0;
+                    christen_obj(otmp, NULL);
                     otmp->quan = count;
                     pbuf = msgprintf("%8ld %s (worth %ld %s),", count,
                                      xname(otmp), count *

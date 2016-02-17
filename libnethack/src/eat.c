@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -262,18 +262,17 @@ touchfood(void)
     if (carried(*uttf)) {
         unwield_silently(*uttf);
         freeinv(*uttf);
-        (*uttf)->oxlth++;  /* hack to prevent merge */
         if (!can_hold(*uttf)) {
             sellobj_state(SELL_DONTSELL);
             /* TODO: dropy can destroy the object */
             dropy(*uttf);
             sellobj_state(SELL_NORMAL);
         } else {
-           *uttf = addinv(*uttf);
+            (*uttf)->nomerge = TRUE;
+            *uttf = addinv(*uttf);
+            (*uttf)->nomerge = FALSE;
         }
-        if (*uttf) /* it wasn't destroyed by dropy() */
-            (*uttf)->oxlth--;
-        else /* explain what happened */
+        if (!*uttf) /* explain what happened */
             pline(msgc_substitute,
                   "You must have fumbled and dropped your food.");
     }

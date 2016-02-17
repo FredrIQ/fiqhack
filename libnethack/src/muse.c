@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -52,59 +52,23 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
         return 0;
     vis = cansee(mon->mx, mon->my);
 
+#define POTION_OCCUPANT_CHANCE(n) (13 + 2*(n))  /* also in muse.c */
+
     if (obj->oclass == POTION_CLASS) {
-        coord cc;
-        static const char *const empty = "The potion turns out to be empty.";
         const char *potion_descr;
-        struct monst *mtmp;
-
-#define POTION_OCCUPANT_CHANCE(n) (13 + 2*(n))  /* also in potion.c */
-
         potion_descr = OBJ_DESCR(objects[obj->otyp]);
-        if (potion_descr && !strcmp(potion_descr, "milky")) {
-            if (flags.ghost_count < MAXMONNO &&
-                !rn2(POTION_OCCUPANT_CHANCE(flags.ghost_count))) {
-                if (!enexto(&cc, level, mon->mx, mon->my, &mons[PM_GHOST]))
-                    return 0;
-                mquaffmsg(mon, obj);
-                m_useup(mon, obj);
-                mtmp = makemon(&mons[PM_GHOST], level, cc.x, cc.y, NO_MM_FLAGS);
-                if (!mtmp) {
-                    if (vis)
-                        pline(msgc_noconsequence, "%s", empty);
-                } else {
-                    if (vis) {
-                        if (Hallucination) {
-                            int idx = rndmonidx();
 
-                            pline(msgc_monneutral,
-                                  "As %s opens the bottle, %s emerges!",
-                                  mon_nam(mon), monnam_is_pname(idx)
-                                  ? monnam_for_index(idx)
-                                  : (idx < SPECIAL_PM &&
-                                     (mons[idx].geno & G_UNIQ))
-                                  ? the(monnam_for_index(idx))
-                                  : an(monnam_for_index(idx)));
-                        } else {
-                            pline(msgc_monneutral,
-                                  "As %s opens the bottle, an enormous"
-                                  " ghost emerges!", mon_nam(mon));
-                        }
-                        pline_implied(
-                            combat_msgc(NULL, mon, cr_hit),
-                            "%s is frightened to death, and unable to"
-                            " move.", Monnam(mon));
-                    }
-                    mon->mcanmove = 0;
-                    mon->mfrozen = 3;
-                }
-                return 2;
-            }
-        }
-        /* not rng_smoky_potion; that's for wishes that players will get */
-        if (potion_descr && !strcmp(potion_descr, "smoky") &&
-            flags.djinni_count < MAXMONNO &&
-            !rn2(POTION_OCCUPANT_CHANCE(flags.djinni_count))) {
+        if (!strcmp(potion_descr, "milky") &&
+            !(mvitals[PM_GHOST].mvflags & G_GONE) &&
+            !rn2(POTION_OCCUPANT_CHANCE(mvitals[PM_GHOST].born))) {
+            mquaffmsg(mon, obj);
+            ghost_from_bottle(mon);
+            m_useup(mon, obj);
+            return 2;
+        } else if (!strcmp(potion_descr, "smoky") &&
+                   !(mvitals[PM_DJINNI].mvflags & G_GONE) &&
+                   !rn2(POTION_OCCUPANT_CHANCE(mvitals[PM_DJINNI].born))) {
+            /* not rng_smoky_potion; that's for wishes that players will get */
             mquaffmsg(mon, obj);
             djinni_from_bottle(mon, obj);
             m_useup(mon, obj);
@@ -127,7 +91,6 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
             mon_break_wand(mon, obj);
             m_useup(mon, obj);
             m->use = MUSE_NONE;
-            /* Only one needed to be set to MUSE_NONE but the others are harmless */
             return DEADMONSTER(mon) ? 1 : 2;
         }
     }
@@ -336,7 +299,7 @@ mon_makewish(struct monst *mon)
 
     /* Below the wisharti check so that spellcasters that wished for artis
        gets a chance to fall back to spells */
-    if (spellcaster(mdat)) {
+    if (spellcaster(mdat) && !wisharti && !wishtyp) {
         /* first, wish for a helm of brilliance if we lack it */
         if (!has_horns(mdat) &&
             (!which_armor(mon, os_armh) ||
@@ -357,6 +320,8 @@ mon_makewish(struct monst *mon)
                 if (mon_castable(mon, wishtyp, TRUE) ||
                     mprof(mon, mspell_skilltype(wishtyp)) == P_UNSKILLED)
                     wishtyp = 0;
+                if (wishtyp) /* found a good spellbook */
+                    break;
             }
         }
     }
@@ -383,7 +348,7 @@ mon_makewish(struct monst *mon)
         if (is_quest_artifact(wishobj) ||
              (wishobj->oartifact &&
               rn2(nartifact_exist()) > 1)) {
-            artifact_exists(wishobj, ONAME(wishobj), FALSE);
+            artifact_exists(wishobj, ox_name(wishobj), FALSE);
             obfree(wishobj, NULL);
             wishobj = &zeroobj;
             if (canseemon(mon))
@@ -548,7 +513,8 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                 self = TRUE;
             if (self && !wand && !spell)
                 continue; /* only wands and spells can be selfzapped */
-            /* TODO: implement monsters throwing stuff upwards */
+            /* TODO: implement monsters throwing stuff upwards
+               (is this ever a good idea?) */
             if (self)
                 range = 1;
             while (range-- > 0) {
@@ -573,7 +539,10 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                     if ((!wand && !spell) || oc_dir != RAY || obj->otyp == SPE_FIREBALL)
                         break;
                     if (range > 0) { /* bounce */
-                        /* TODO: maybe only allow some monsters to bounce rays? */
+                        /* maybe only allow some monsters to visualize raybouncing?
+                           TODO: I have no idea how this code actually works, but I
+                           have a feeling that it could be simplified. As-is, it's
+                           copied straight from buzz(), and I know that it works. */
                         int bounce = 0;
                         uchar rmn;
                         if (!cx || !cy || !rn2(20)) {
@@ -622,6 +591,8 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                 if (sobj_at(CORPSE, level, sx, sy) &&
                     (obj->otyp == WAN_UNDEAD_TURNING ||
                      obj->otyp == SPE_TURN_UNDEAD))
+                    /* hostiles revive corpses (it's very rarely a bad idea for hostile monsters to do this,
+                       and even if it happens to be a pet, maybe the hostile monster didn't realize?) */
                     tilescore += (mon->mpeaceful ? -20 : +30);
                 if (mtmp) {
                     if (mon == mtmp)
@@ -639,6 +610,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         cx = -cx;
                         cy = -cy;
                         continue; /* reflecting a ray has no effect on monster */
+                        /* TODO: lightning blindness? */
                     }
                     if (!obj_affects(mon, mtmp, obj))
                         continue; /* object has no effect */
@@ -2439,12 +2411,13 @@ rnd_defensive_item(struct monst *mtmp, enum rng rng)
     int difficulty = monstr[monsndx(pm)];
     int trycnt = 0;
 
-    if (!rn2_on_rng(30, rng))
-        return SCR_GENOCIDE;
-
     if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
         || noncorporeal(pm) || pm->mlet == S_KOP)
         return 0;
+
+    if (!rn2_on_rng(30, rng))
+        return SCR_GENOCIDE;
+
 try_again:
     switch (rn2_on_rng(8 + (difficulty > 3) + (difficulty > 6) +
                        (difficulty > 8), rng)) {
@@ -2715,6 +2688,11 @@ searches_for_item(const struct monst *mon, struct obj *obj)
         obj->mknown)
         return FALSE;
 
+    /* one can argue that this check is redundant since monsters can't pickup
+       items while levitating in first place... but what if they could? */
+    if (typ == WAN_DIGGING)
+        return (boolean) (!levitates(mon) || levitates_at_will(mon, TRUE, FALSE));
+
     if (typ == POT_INVISIBILITY)
         return (boolean) (!m_has_property(mon, INVIS, W_MASK(os_outside), TRUE) &&
                           !attacktype(mon->data, AT_GAZE));
@@ -2724,12 +2702,11 @@ searches_for_item(const struct monst *mon, struct obj *obj)
     if (typ == POT_SEE_INVISIBLE)
         return !see_invisible(mon);
 
+    if (typ == POT_BLINDNESS)
+        return !attacktype(mon->data, AT_GAZE);
+
     switch (obj->oclass) {
     case WAND_CLASS:
-        /* one can argue that this check is redundant since monsters can't pickup
-           items while levitating in first place... but what if they could? */
-        if (typ == WAN_DIGGING)
-            return (boolean) (!levitates(mon) || levitates_at_will(mon, TRUE, FALSE));
         /* locking is TODO */
         if (typ == WAN_LIGHT ||
             typ == WAN_LOCKING ||
@@ -2765,8 +2742,6 @@ searches_for_item(const struct monst *mon, struct obj *obj)
             typ == POT_SLEEPING ||
             typ == POT_ACID ||
             typ == POT_CONFUSION)
-            return TRUE;
-        if (typ == POT_BLINDNESS && !attacktype(mon->data, AT_GAZE))
             return TRUE;
         break;
     case SCROLL_CLASS:
@@ -2847,7 +2822,7 @@ searches_for_item(const struct monst *mon, struct obj *obj)
     return FALSE;
 }
 
-/* magr = monster whose attack or refection is being reflected or NULL if
+/* magr = monster whose attack or reflection is being reflected or NULL if
    the reflection wasn't caused by any monster (divine lightning zaps).
 
    recursive = TRUE if we're testing to see if a reflection is itself

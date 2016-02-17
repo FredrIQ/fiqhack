@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,7 +12,7 @@ static void mkbox_cnts(struct obj *, enum rng rng);
 static struct obj *mksobj_basic(struct level *lev, int otyp);
 static void obj_timer_checks(struct obj *, xchar, xchar, int);
 static void container_weight(struct obj *);
-static struct obj *save_mtraits(struct obj *, struct monst *);
+static void save_mtraits(struct obj *, struct monst *);
 static void extract_nexthere(struct obj *, struct obj **);
 
 struct icp {
@@ -294,7 +294,8 @@ splitobj(struct obj *obj, long num)
 
     if (obj->cobj || num <= 0L || obj->quan <= num)
         panic("splitobj");      /* can't split containers */
-    otmp = newobj(obj->oxlth + obj->onamelth, obj);
+    otmp = newobj(obj);
+    ox_copy(otmp, obj);
     extract_nobj(otmp, &turnstate.floating_objects, NULL, 0);
     otmp->nobj = obj->nobj;
     obj->nobj = otmp;
@@ -312,10 +313,6 @@ splitobj(struct obj *obj, long num)
     /* as a back pointer to the container object when contained. */
     if (obj->where == OBJ_FLOOR)
         obj->nexthere = otmp;
-    if (obj->oxlth)
-        memcpy(otmp->oextra, (void *)obj->oextra, obj->oxlth);
-    if (obj->onamelth)
-        strncpy(ONAME_MUTABLE(otmp), ONAME(obj), (int)obj->onamelth);
     if (obj->unpaid)
         splitbill(obj, otmp);
     if (obj->timed)
@@ -411,13 +408,10 @@ bill_dummy_object(struct obj *otmp)
 
     if (otmp->unpaid)
         subfrombill(otmp, shop_keeper(level, *u.ushops));
-    dummy = newobj(otmp->oxlth + otmp->onamelth, otmp);
+    dummy = newobj(otmp);
     dummy->o_id = next_ident();
     dummy->timed = 0;
-    if (otmp->oxlth)
-        memcpy(dummy->oextra, otmp->oextra, otmp->oxlth);
-    if (otmp->onamelth)
-        strncpy(ONAME_MUTABLE(dummy), ONAME(otmp), (int)otmp->onamelth);
+    ox_copy(dummy, otmp);
     if (Is_candle(dummy))
         dummy->lamplit = 0;
     addtobill(dummy, FALSE, TRUE, TRUE);
@@ -440,7 +434,7 @@ mksobj_basic(struct level *lev, int otyp)
     struct obj *otmp;
     const char let = objects[otyp].oc_class;
 
-    otmp = newobj(0, &zeroobj);
+    otmp = newobj(&zeroobj);
     otmp->age = moves;
     otmp->o_id = TEMPORARY_IDENT; /* temporary ID, no good for saving */
     otmp->quan = 1L;
@@ -1051,14 +1045,9 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
         otmp = mksobj_at(objtype, lev, x, y, init, FALSE, rng);
     if (otmp) {
         if (mtmp) {
-            struct obj *otmp2;
-
             if (!ptr)
                 ptr = mtmp->data;
-            /* save_mtraits frees original data pointed to by otmp */
-            otmp2 = save_mtraits(otmp, mtmp);
-            if (otmp2)
-                otmp = otmp2;
+            save_mtraits(otmp, mtmp);
         }
 
         /* use the corpse or statue produced by mksobj() as-is unless `ptr' is
@@ -1079,58 +1068,26 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
     return otmp;
 }
 
-/*
- * Attach a monster id to an object, to provide
- * a lasting association between the two.
- */
-struct obj *
-obj_attach_mid(struct obj *obj, unsigned mid)
+void
+save_mtraits(struct obj *obj, struct monst *mon)
 {
-    struct obj *otmp;
-    int namelth;
+    ox_monst_new(obj);
+    struct monst *mtmp = obj->oextra->monst;
+    *mtmp = *mon;
+    if (mtmp->data)
+        mtmp->orig_mnum = monsndx(mon->data);
 
-    if (!mid || !obj)
-        return NULL;
+    /* Invalidate pointers. m_id is needed to know if this is a
+       revived quest leader but m_id must be cleared when
+       loading bones. */
+    mtmp->nmon = NULL;
+    mtmp->data = NULL;
+    mtmp->minvent = NULL;
 
-    if (obj->oxlth) {
-        impossible("xlth set when attaching mid");
-        return NULL;
-    }
+    mx_copy(mtmp, mon);
 
-    namelth = obj->onamelth ? strlen(ONAME(obj)) + 1 : 0;
-    otmp = realloc_obj(obj, sizeof mid, &mid, namelth, ONAME(obj));
-    if (otmp && otmp->oxlth)
-        otmp->oattached = OATTACHED_M_ID;       /* mark it */
-    return otmp;
-}
-
-static struct obj *
-save_mtraits(struct obj *obj, struct monst *mtmp)
-{
-    struct obj *otmp;
-    int lth, namelth;
-
-    lth = sizeof (struct monst);
-    namelth = obj->onamelth ? strlen(ONAME(obj)) + 1 : 0;
-    otmp = realloc_obj(obj, lth, mtmp, namelth, ONAME(obj));
-    if (otmp && otmp->oxlth) {
-        struct monst *mtmp2 = (struct monst *)otmp->oextra;
-
-        if (mtmp->data)
-            mtmp2->orig_mnum = monsndx(mtmp->data);
-        /* invalidate pointers */
-        /* m_id is needed to know if this is a revived quest leader */
-        /* but m_id must be cleared when loading bones */
-        mtmp2->nmon = NULL;
-        mtmp2->data = NULL;
-        mtmp2->minvent = NULL;
-
-        /* clear monster turnstate */
-        mtmp2->deadmonster = 0;
-
-        otmp->oattached = OATTACHED_MONST;      /* mark it */
-    }
-    return otmp;
+    /* clear monster turnstate */
+    mtmp->deadmonster = 0;
 }
 
 /* returns a pointer to a new monst structure based on
@@ -1139,15 +1096,13 @@ save_mtraits(struct obj *obj, struct monst *mtmp)
 struct monst *
 get_mtraits(struct obj *obj, boolean copyof)
 {
-    struct monst *mtmp = NULL;
+    struct monst *mtmp = ox_monst(obj);
     struct monst *mnew = NULL;
-
-    if (obj->oxlth && obj->oattached == OATTACHED_MONST)
-        mtmp = (struct monst *)obj->oextra;
     if (mtmp) {
         if (copyof) {
             mnew = newmonst();
             memcpy(mnew, mtmp, sizeof (struct monst));
+            mx_copy(mnew, mtmp);
         } else /* Never insert this returned pointer into mon chains! */
             mnew = mtmp;
     }
@@ -1584,13 +1539,14 @@ container_weight(struct obj *container)
 
 /* Allocates an object. */
 struct obj *
-newobj(int extra_bytes, struct obj *initfrom)
+newobj(struct obj *initfrom)
 {
-    struct obj *otmp = malloc((unsigned)extra_bytes + sizeof(struct obj));
+    struct obj *otmp = malloc(sizeof(struct obj));
     *otmp = *initfrom;
     /* note: extra data not copied by newobj */
     otmp->where = OBJ_FREE;
     otmp->nobj = turnstate.floating_objects;
+    otmp->oextra = NULL;
     turnstate.floating_objects = otmp;
     return otmp;
 }
@@ -1653,14 +1609,12 @@ struct obj *
 restore_obj(struct memfile *mf)
 {
     unsigned int oflags;
-    int namelen;
     struct obj *otmp;
 
     mfmagic_check(mf, OBJ_MAGIC);
 
-    namelen = mread32(mf);
-    otmp = newobj(namelen, &zeroobj);
-    memset(otmp, 0, namelen + sizeof (struct obj));
+    otmp = newobj(&zeroobj);
+    memset(otmp, 0, sizeof (struct obj));
 
     otmp->o_id = mread32(mf);
     otmp->owt = mread32(mf);
@@ -1683,7 +1637,7 @@ restore_obj(struct memfile *mf)
     otmp->timed = mread8(mf);
     otmp->cobj = mread8(mf) ? (void *)1 : NULL; /* set the pointer to 1 if
                                                    there will be contents */
-    otmp->onamelth = namelen;
+    boolean has_extra = !!mread8(mf);
 
     otmp->cursed = (oflags >> 31) & 1;
     otmp->blessed = (oflags >> 30) & 1;
@@ -1702,7 +1656,6 @@ restore_obj(struct memfile *mf)
     otmp->recharged = (oflags >> 13) & 7;
     otmp->lamplit = (oflags >> 12) & 1;
     otmp->greased = (oflags >> 11) & 1;
-    otmp->oattached = (oflags >> 9) & 3;
     otmp->in_use = (oflags >> 8) & 1;
     otmp->was_thrown = (oflags >> 7) & 1;
     otmp->bypass = (oflags >> 6) & 1;
@@ -1710,21 +1663,8 @@ restore_obj(struct memfile *mf)
     otmp->mknown = (oflags >> 4) & 1;
     otmp->mbknown = (oflags >> 3) & 1;
 
-    if (otmp->onamelth)
-        mread(mf, ONAME_MUTABLE(otmp), otmp->onamelth);
-
-    if (otmp->oattached == OATTACHED_MONST) {
-        struct monst *mtmp = restore_mon(mf, NULL);
-        int monlen = sizeof (struct monst);
-
-        otmp = realloc_obj(otmp, monlen, mtmp, otmp->onamelth, ONAME(otmp));
-        dealloc_monst(mtmp);
-    } else if (otmp->oattached == OATTACHED_M_ID) {
-        unsigned int mid = mread32(mf);
-
-        otmp = obj_attach_mid(otmp, mid);
-    }
-
+    if (has_extra)
+        restore_oextra(mf, otmp);
     return otmp;
 }
 
@@ -1748,15 +1688,14 @@ save_obj(struct memfile *mf, struct obj *obj)
         (obj->oerodeproof << 19) | (obj->olocked << 18) |
         (obj->obroken << 17) | (obj->otrapped << 16) |
         (obj->recharged << 13) | (obj->lamplit << 12) |
-        (obj->greased << 11) | (obj->oattached << 9) |
-        (obj->in_use << 8) | (obj->was_thrown << 7) |
-        (obj->bypass << 6) | (obj->was_dropped << 5) |
-        (obj->mknown << 4) | (obj->mbknown << 3);
+        (obj->greased << 11) | (obj->in_use << 8) |
+        (obj->was_thrown << 7) | (obj->bypass << 6) |
+        (obj->was_dropped << 5) | (obj->mknown << 4) |
+        (obj->mbknown << 3);
 
     mfmagic_set(mf, OBJ_MAGIC);
     mtag(mf, obj->o_id, MTAG_OBJ);
 
-    mwrite32(mf, obj->onamelth);
     mwrite32(mf, obj->o_id);
     mwrite32(mf, obj->owt);
     mwrite32(mf, obj->quan);
@@ -1776,22 +1715,13 @@ save_obj(struct memfile *mf, struct obj *obj)
     mwrite8(mf, obj->oartifact);
     mwrite8(mf, obj->where);
     mwrite8(mf, obj->timed);
-    /* no need to save the value of the cobj pointer, but we will need to know
-       if there is something in here that needs to be restored */
+    /* Saving the pointer itself is unneccessary, but we need to know if
+       there is one in first place to save/restore */
     mwrite8(mf, obj->cobj ? 1 : 0);
+    mwrite8(mf, obj->oextra ? 1 : 0);
 
-    if (obj->onamelth)
-        mwrite(mf, ONAME(obj), obj->onamelth);
-
-    if (obj->oattached == OATTACHED_MONST)
-        save_mon(mf, (struct monst *)obj->oextra, NULL);
-    else if (obj->oattached == OATTACHED_M_ID) {
-        unsigned m_id;
-
-        memcpy(&m_id, obj->oextra, sizeof m_id);
-
-        mwrite32(mf, m_id);
-    }
+    if (obj->oextra)
+        save_oextra(mf, obj);
 }
 
 /*mkobj.c*/

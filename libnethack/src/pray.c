@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1268,9 +1268,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
             else
                 useupf(otmp, 1L);
             return 1;
-        } else if (otmp->oxlth && otmp->oattached == OATTACHED_MONST &&
-                   ((mtmp = get_mtraits(otmp, FALSE)) != NULL)
-                   && mtmp->mtame) {
+        } else if ((mtmp = get_mtraits(otmp, FALSE)) && mtmp->mtame) {
             /* mtmp is a temporary pointer to a tame monster's attributes, not
                a real monster */
             pline(msgc_alignbad, "So this is how you repay loyalty?");

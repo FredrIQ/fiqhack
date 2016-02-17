@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -261,7 +261,7 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
     count = mread32(mf);
 
     while (count--) {
-        mtmp = restore_mon(mf, lev);
+        mtmp = restore_mon(mf, NULL, lev);
         if (!first)
             first = mtmp;
         else
@@ -749,8 +749,7 @@ restore_flags(struct memfile *mf, struct flag *f)
 
     f->turntime = mread64(mf);
 
-    f->djinni_count = mread32(mf);
-    f->ghost_count = mread32(mf);
+    (void) mread64(mf); /* old djinni/ghost_count */
     f->timezone = mread32(mf);
     f->polyinit_mnum = mread32(mf);
     f->ident = mread32(mf);
@@ -866,7 +865,7 @@ dorecover(struct memfile *mf)
     role_init();       /* Reset the initial role, race, gender, and alignment */
     pantheon_init(FALSE);
 
-    mtmp = restore_mon(mf, NULL);
+    mtmp = restore_mon(mf, NULL, NULL);
     youmonst = *mtmp;
     dealloc_monst(mtmp);
     set_uasmon();       /* fix up youmonst.data */
@@ -1391,18 +1390,18 @@ reset_oattached_mids(boolean ghostly, struct level *lev)
     unsigned oldid, nid;
 
     for (otmp = lev->objlist; otmp; otmp = otmp->nobj) {
-        if (ghostly && otmp->oattached == OATTACHED_MONST && otmp->oxlth) {
-            struct monst *mtmp = (struct monst *)otmp->oextra;
+        if (ghostly && ox_monst(otmp)) {
+            struct monst *mtmp = ox_monst(otmp);
 
             mtmp->m_id = 0;
             mtmp->mpeaceful = mtmp->mtame = 0;  /* pet's owner died! */
         }
-        if (ghostly && otmp->oattached == OATTACHED_M_ID) {
-            memcpy(&oldid, (void *)otmp->oextra, sizeof (oldid));
+        if (ghostly && otmp->m_id) {
+            oldid = otmp->m_id;
             if (lookup_id_mapping(oldid, &nid))
-                memcpy(otmp->oextra, (void *)&nid, sizeof (nid));
+                otmp->m_id = nid;
             else
-                otmp->oattached = OATTACHED_NOTHING;
+                otmp->m_id = 0;
         }
     }
 }

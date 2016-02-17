@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -687,7 +687,7 @@ montraits(struct obj *obj, coord * cc)
     struct monst *mtmp = NULL;
     struct monst *mtmp2 = NULL;
 
-    if (!(obj->oxlth && (obj->oattached == OATTACHED_MONST)))
+    if (!ox_monst(obj))
         panic("montraits() called without a monster to restore");
     mtmp2 = get_mtraits(obj, TRUE);
 
@@ -855,7 +855,7 @@ revive(struct obj *obj)
                 set_property(mtmp, FAST, 0, TRUE);
             }
         } else {
-            if (obj->oxlth && (obj->oattached == OATTACHED_MONST)) {
+            if (ox_monst(obj)) {
                 coord xy;
 
                 xy.x = x;
@@ -867,12 +867,10 @@ revive(struct obj *obj)
                 mtmp = makemon(&mons[montype], level, x, y,
                                NO_MINVENT | MM_NOWAIT | MM_NOCOUNTBIRTH);
             if (mtmp) {
-                if (obj->oxlth && (obj->oattached == OATTACHED_M_ID)) {
-                    unsigned m_id;
+                if (obj->m_id) {
                     struct monst *ghost;
 
-                    memcpy(&m_id, obj->oextra, sizeof (m_id));
-                    ghost = find_mid(level, m_id, FM_FMON);
+                    ghost = find_mid(level, obj->m_id, FM_FMON);
                     if (ghost && ghost->data == &mons[PM_GHOST]) {
                         int x2, y2;
 
@@ -888,12 +886,9 @@ revive(struct obj *obj)
                         recorporealization = TRUE;
                         newsym(x2, y2);
                     }
-                    /* don't mess with obj->oxlth here */
-                    obj->oattached = OATTACHED_NOTHING;
                 }
                 /* Monster retains its name */
-                if (obj->onamelth)
-                    christen_monst(mtmp, ONAME(obj));
+                christen_monst(mtmp, ox_name(obj));
                 /* flag the quest leader as alive. */
                 if (mtmp->data->msound == MS_LEADER ||
                     mtmp->m_id == u.quest_status.leader_m_id) {
@@ -2775,7 +2770,7 @@ zap_hit_check(int ac, int type)
 /* type == -20 to -29 : monster breathing at you */
 /* type == -30 to -39 : monster shooting a wand */
 /* called with dx = dy = 0 with vertical bolts */
-/* buzztyp gives a consistent number for kind of ray, "yours" can be used combined
+/* buzztyp gives a consistent number for kind of ray, magr can be used combined
    with this to determine source+kind without unneccessary arithmetic */
 void
 buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
@@ -2970,7 +2965,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
         }
     }
     tmpsym_end(tsym);
-    if (type == ZT_SPELL(ZT_FIRE))
+    if (buzztyp == ZT_SPELL(ZT_FIRE))
         explode(sx, sy, type, dice(12, 6), 0, EXPL_FIERY, NULL, 0);
     if (raylevel >= P_SKILLED) {
         if (abstype == ZT_FIRE)
@@ -3613,9 +3608,7 @@ fracture_rock(struct obj *obj)
     obj->owt = weight(obj);
     obj->oclass = GEM_CLASS;
     obj->known = FALSE;
-    obj->onamelth = 0;  /* no names */
-    obj->oxlth = 0;     /* no extra data */
-    obj->oattached = OATTACHED_NOTHING;
+    ox_free(obj); /* kill potential extra object data */
     if (obj->where == OBJ_FLOOR) {
         struct level *olev = obj->olev;
         obj_extract_self(obj);  /* move rocks back on top */
@@ -3948,6 +3941,7 @@ resist(const struct monst *mtmp, char oclass, int domsg)
     return resisted;
 }
 
+/* Player wishes. Monster wishing is in muse.c */
 void
 makewish(void)
 {

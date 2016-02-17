@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2310,13 +2310,11 @@ sub_one_frombill(struct obj *obj, struct monst *shkp)
 
         obj->unpaid = 0;
         if (bp->bquan > obj->quan) {
-            otmp = newobj(0, obj);
+            otmp = newobj(obj);
             bp->bo_id = otmp->o_id = next_ident();
             otmp->quan = (bp->bquan -= obj->quan);
             otmp->owt = 0;      /* superfluous */
-            otmp->onamelth = 0;
-            otmp->oxlth = 0;
-            otmp->oattached = OATTACHED_NOTHING;
+            ox_free(otmp);
             bp->useup = 1;
             add_to_billobjs(otmp);
             return;

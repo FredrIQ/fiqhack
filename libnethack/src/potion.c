@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,7 +12,6 @@ static const char beverages_and_fountains[] =
     { ALLOW_NONE, NONE_ON_COMMA, POTION_CLASS, 0 };
 static const char beverages[] = { POTION_CLASS, 0 };
 
-static void ghost_from_bottle(void);
 static short mixtype(struct obj *, struct obj *);
 
 
@@ -81,37 +80,152 @@ eyepline(const char *verb_one_eye, const char *verb_two_eyes)
               verb_two_eyes);
 }
 
-static void
-ghost_from_bottle(void)
+void
+ghost_from_bottle(struct monst *mon)
 {
-    struct monst *mtmp =
-        makemon(&mons[PM_GHOST], level, u.ux, u.uy, NO_MM_FLAGS);
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    struct monst *mtmp;
+    enum msg_channel msgc = msgc_monneutral;
 
-    if (!mtmp) {
-        pline(msgc_failrandom, "This bottle turns out to be empty.");
+    if (!(mtmp = makemon(&mons[PM_DJINNI], level, u.ux, u.uy, NO_MM_FLAGS))) {
+        if (you)
+            msgc = msgc_noconsequence;
+        if (you || vis)
+            pline(msgc, "It turns out to be empty.");
         return;
     }
-    if (Blind) {
-        pline(msgc_substitute, "As you open the bottle, something emerges.");
+
+    const char *ghost;
+    ghost = a_monnam(mtmp);
+    if (you && Blind)
+        ghost = "something";
+    else if (!Hallucination)
+        ghost = "an enormous ghost";
+
+    if (you || vis)
+        pline(msgc_substitute, "As %s the bottle, %s emerges%s",
+              m_verbs(mon, "open"), ghost, blind(mon) ? "!" : ".");
+
+    /* only scare the monster if it can actually see the ghost */
+    if (blind(mon))
+        return;
+
+    if (you)
+        msgc = msgc_statusbad;
+
+    if (you || vis)
+        pline_implied(msgc, "%s frightened to death, and unable to move.",
+                      m_verbs(mon, "are"));
+
+    if (you)
+        helpless(3, hr_afraid, "being frightened to death",
+                 "You regain your composure.");
+    else {
+        mon->mcanmove = 0;
+        mon->mfrozen += 3;
+    }
+}
+
+
+void
+djinni_from_bottle(struct monst *mon, struct obj *obj)
+{
+    boolean you = (mon == &youmonst);
+    boolean vis = canseemon(mon);
+    struct monst *mtmp;
+    enum msg_channel msgc = msgc_monneutral;
+
+    if (!(mtmp = makemon(&mons[PM_DJINNI], level, u.ux, u.uy, NO_MM_FLAGS))) {
+        if (you)
+            msgc = msgc_noconsequence;
+        if (you || vis)
+            pline(msgc, "It turns out to be empty.");
         return;
     }
-    if (Hallucination) {
-        int idx = rndmonidx();
 
-        pline(msgc_substitute, "As you open the bottle, %s emerges!",
-              monnam_is_pname(idx) ? monnam_for_index(idx)
-              : (idx < SPECIAL_PM && (mons[idx].geno & G_UNIQ))
-              ? the(monnam_for_index(idx))
-              : an(monnam_for_index(idx)));
-    } else {
-        pline(msgc_substitute,
-              "As you open the bottle, an enormous ghost emerges!");
+    /* only hear the djinni if there is clear LOE to the monster... */
+    boolean speak = FALSE;
+    if (you || couldsee(mon->mx, mon->my)) {
+        if (you)
+            msgc = msgc_occstart;
+        if (!blind(&youmonst))
+            pline_implied(msgc, "In a cloud of smoke, %s emerges!",
+                          a_monnam(mtmp));
+        else
+            pline_implied(msgc, "You smell acrid fumes.");
+        if (canhear()) {
+            speak = TRUE;
+            pline_implied(msgc_npcvoice, "%s speaks.",
+                          blind(&youmonst) ? "Something" : Monnam(mtmp));
+        }
     }
-    pline_implied(msgc_statusbad,
-                  "You are frightened to death, and unable to move.");
 
-    helpless(3, hr_afraid, "being frightened to death",
-             "You regain your composure.");
+    int dieroll;
+    /* The wish has the largest balance implications; use wish_available to
+       balance it against other wish sources with the same probability; also
+       find out what the dieroll was so that the non-wish results will be
+       consistent if the only 80%/20%/5% wish sources so far were djinn.
+       If you wasn't the one drinking the potion, perform rng checks on
+       rng_main instead */
+    if ((you && wish_available(obj->blessed ? 80 : obj->cursed ? 5 : 20, &dieroll)) ||
+        (!you &&
+         ((dieroll = rn2(100)) < (obj->blessed ? 80 : obj->cursed ? 5 : 20)))) {
+        if (you)
+            msgc = msgc_intrgain;
+        msethostility(mtmp, FALSE, TRUE); /* show as peaceful while wishing */
+        /* TODO: consider something different than monneutral for monster wishing */
+        if (speak)
+            verbalize(msgc, "I am in your debt.  I will grant one wish!");
+        if (you)
+            makewish();
+        else
+            mon_makewish(mon);
+        mongone(mtmp);
+        return;
+    }
+
+    /* otherwise, typically an equal chance of each other result, although
+       for a cursed potion, we have a hostile djinni with an 80% chance */
+    if (obj->cursed && dieroll >= 20)
+        dieroll = 0;
+
+    /* avoid failrandom here; that may have been spammed beforehand */
+    if (you) {
+        msgc = msgc_actionok;
+        if (!(dieroll % 4))
+            msgc = msgc_substitute;
+    }
+
+    switch (dieroll % 4) {
+    case 0:
+        if (speak)
+            verbalize(msgc, "You disturbed me, fool!");
+        mtmp->mpeaceful = (you ? 0 : !mon->mpeaceful);
+        /* TODO: allow monster specific grudges */
+        if (!you && !mon->mpeaceful)
+            tamedog(mtmp, NULL);
+        break;
+    case 1:
+        if (speak)
+            verbalize(msgc, "Thank you for freeing me!");
+        mtmp->mpeaceful = (you || mon->mpeaceful);
+        if (you || mon->mtame)
+            tamedog(mtmp, NULL);
+        break;
+    case 2:
+        if (speak)
+            verbalize(msgc, "You freed me!");
+        msethostility(mtmp, FALSE, TRUE);
+        break;
+    case 3:
+        if (speak)
+            verbalize(msgc, "It is about time!");
+        if (you || canseemon(mtmp))
+            pline(msgc_actionok, "%s vanishes.", Monnam(mtmp));
+        mongone(mtmp);
+        break;
+    }
 }
 
 
@@ -164,14 +278,15 @@ dodrink(const struct nh_cmd_arg *arg)
 
     potion_descr = OBJ_DESCR(objects[potion->otyp]);
     if (potion_descr) {
-        if (!strcmp(potion_descr, "milky") && flags.ghost_count < MAXMONNO &&
-            !rn2(POTION_OCCUPANT_CHANCE(flags.ghost_count))) {
-            ghost_from_bottle();
+        if (!strcmp(potion_descr, "milky") &&
+            !(mvitals[PM_GHOST].mvflags & G_GONE) &&
+            !rn2(POTION_OCCUPANT_CHANCE(mvitals[PM_GHOST].born))) {
+            ghost_from_bottle(&youmonst);
             useup(potion);
             return 1;
         } else if (!strcmp(potion_descr, "smoky") &&
-                   flags.djinni_count < MAXMONNO &&
-                   !rn2_on_rng(POTION_OCCUPANT_CHANCE(flags.djinni_count),
+                   !(mvitals[PM_DJINNI].mvflags & G_GONE) &&
+                   !rn2_on_rng(POTION_OCCUPANT_CHANCE(mvitals[PM_DJINNI].born),
                                rng_smoky_potion)) {
             djinni_from_bottle(&youmonst, potion);
             useup(potion);
@@ -2085,106 +2200,6 @@ more_dips:
     return 1;
 }
 
-
-void
-djinni_from_bottle(struct monst *mon, struct obj *obj)
-{
-    boolean you = (mon == &youmonst);
-    boolean vis = canseemon(mon);
-    struct monst *mtmp;
-    enum msg_channel msgc = msgc_monneutral;
-
-    if (!(mtmp = makemon(&mons[PM_DJINNI], level, u.ux, u.uy, NO_MM_FLAGS))) {
-        if (you)
-            msgc = msgc_noconsequence;
-        if (you || vis)
-            pline(msgc, "It turns out to be empty.");
-        return;
-    }
-
-    /* only hear the djinni if there is clear LOE to the monster... */
-    boolean speak = FALSE;
-    if (you || couldsee(mon->mx, mon->my)) {
-        if (you)
-            msgc = msgc_occstart;
-        if (!blind(&youmonst))
-            pline_implied(msgc, "In a cloud of smoke, %s emerges!",
-                          a_monnam(mtmp));
-        else
-            pline_implied(msgc, "You smell acrid fumes.");
-        if (canhear()) {
-            speak = TRUE;
-            pline_implied(msgc_npcvoice, "%s speaks.",
-                          blind(&youmonst) ? "Something" : Monnam(mtmp));
-        }
-    }
-
-    int dieroll;
-    /* The wish has the largest balance implications; use wish_available to
-       balance it against other wish sources with the same probability; also
-       find out what the dieroll was so that the non-wish results will be
-       consistent if the only 80%/20%/5% wish sources so far were djinn.
-       If you wasn't the one drinking the potion, perform rng checks on
-       rng_main instead */
-    if ((you && wish_available(obj->blessed ? 80 : obj->cursed ? 5 : 20, &dieroll)) ||
-        (!you &&
-         ((dieroll = rn2(100)) < (obj->blessed ? 80 : obj->cursed ? 5 : 20)))) {
-        if (you)
-            msgc = msgc_intrgain;
-        msethostility(mtmp, FALSE, TRUE); /* show as peaceful while wishing */
-        /* TODO: consider something different than monneutral for monster wishing */
-        if (speak)
-            verbalize(msgc, "I am in your debt.  I will grant one wish!");
-        if (you)
-            makewish();
-        else
-            mon_makewish(mon);
-        mongone(mtmp);
-        return;
-    }
-
-    /* otherwise, typically an equal chance of each other result, although
-       for a cursed potion, we have a hostile djinni with an 80% chance */
-    if (obj->cursed && dieroll >= 20)
-        dieroll = 0;
-
-    /* avoid failrandom here; that may have been spammed beforehand */
-    if (you) {
-        msgc = msgc_actionok;
-        if (!(dieroll % 4))
-            msgc = msgc_substitute;
-    }
-
-    switch (dieroll % 4) {
-    case 0:
-        if (speak)
-            verbalize(msgc, "You disturbed me, fool!");
-        mtmp->mpeaceful = (you ? 0 : !mon->mpeaceful);
-        /* TODO: allow monster specific grudges */
-        if (!you && !mon->mpeaceful)
-            tamedog(mtmp, NULL);
-        break;
-    case 1:
-        if (speak)
-            verbalize(msgc, "Thank you for freeing me!");
-        mtmp->mpeaceful = (you || mon->mpeaceful);
-        if (you || mon->mtame)
-            tamedog(mtmp, NULL);
-        break;
-    case 2:
-        if (speak)
-            verbalize(msgc, "You freed me!");
-        msethostility(mtmp, FALSE, TRUE);
-        break;
-    case 3:
-        if (speak)
-            verbalize(msgc, "It is about time!");
-        if (you || canseemon(mtmp))
-            pline(msgc_actionok, "%s vanishes.", Monnam(mtmp));
-        mongone(mtmp);
-        break;
-    }
-}
 
 /* clone a gremlin or mold (2nd arg non-null implies heat as the trigger);
    hit points are cut in half (odd HP stays with original) */

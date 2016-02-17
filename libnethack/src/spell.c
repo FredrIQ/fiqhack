@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1052,12 +1052,10 @@ cast_protection(struct monst *mon)
 
     if (gain > 0) {
         if (!blind(&youmonst) && (you || vis)) {
-            const char *hgolden = hcolor("golden");
-
             if (m_mspellprot(mon))
                 pline(you ? msgc_statusextend : msgc_monneutral,
-                      "The %s haze around %s becomes more dense.", hgolden,
-                      you ? "you" : mon_nam(mon));
+                      "The %s haze around %s becomes more dense.",
+                      hcolor("golden"), you ? "you" : mon_nam(mon));
             else
                 pline(you ? msgc_statusextend : msgc_monneutral,
                       "The %s around %s begins to shimmer with %s haze.",
@@ -1065,16 +1063,15 @@ cast_protection(struct monst *mon)
                       Engulfed ? mbodypart(u.ustuck, STOMACH) :
                       IS_STWALL(level->locations[u.ux][u.uy].typ) ? "stone" :
                       "air", you ? "you" : mon_nam(mon),
-                      an(hgolden));
+                      an(hcolor("golden")));
         } else if (you) {
             if (m_mspellprot(mon))
                 pline(msgc_statusgood, "Your skin begins feeling warmer.");
             else
                 pline(msgc_statusgood, "Your skin feels even hotter.");
         }
-        /* Monster's "golden haze" works by increasing the timeout for the
-           PROTECTION property. m_mspellprot() then converts this into
-           an AC bonus. */
+        /* Spell protection is implemented by using the timeout field of the
+           Protection intrinsic. m_mspellprot() then calculates AC from it. */
         int cur_prot = m_mspellprot(mon);
         cur_prot += gain;
         cur_prot *= 10;
@@ -1109,7 +1106,9 @@ spell_backfire(int spell)
    The side effect is that monsters with a 80% failure rate on a spell will only
    return nonzero 1/5 of the time, meaning that monsters will generally (try to)
    cast those spells much more rarely. This is by design.
-   If theoretical is true, bypass the random check and mspec_used */
+   If theoretical is true, bypass the random check and mspec_used, this is used
+   to check if a spell is featured in the spell list, or get a realible fail rate
+   (for example, to check if knock is realible enough for usage with doors) */
 int
 mon_castable(const struct monst *mon, int spell, boolean theoretical)
 {
@@ -1313,8 +1312,9 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
         }
         break;
     case SPE_CLAIRVOYANCE:
-        if (!bclairvoyant(mon))
-            /*do_vicinity_map(); wont work on monsters */
+        if (!bclairvoyant(mon)) {
+            ; /* wont work for monsters */
+        }
         break;
     case SPE_PROTECTION:
         cast_protection(mon);

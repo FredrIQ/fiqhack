@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1083,10 +1083,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         flags.no_of_wizards++;
         if (flags.no_of_wizards == 1 && Is_earthlevel(&lev->z))
             mitem = SPE_DIG;
-    } else if (mndx == PM_DJINNI) {
-        flags.djinni_count++;
     } else if (mndx == PM_GHOST) {
-        flags.ghost_count++;
         if (!(mmflags & MM_NONAME))
             christen_monst(mtmp, rndghostname());
     } else if (mndx == PM_VLAD_THE_IMPALER) {
@@ -1333,6 +1330,8 @@ assign_spells(struct monst *mon, enum rng rng)
         return;
     case PM_MASTER_KAEN:
         mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_DETECT_MONSTERS);
+        mon_addspell(mon, SPE_SLOW_MONSTER);
         mon_addspell(mon, SPE_HASTE_SELF);
         mon_addspell(mon, SPE_PHASE);
         return;
@@ -1351,18 +1350,20 @@ assign_spells(struct monst *mon, enum rng rng)
     if (mprof(mon, MP_SATTK) >= P_BASIC)
         mon_addspell(mon, SPE_FORCE_BOLT);
 
-    /* Randomize an amount of spells based on hit dice for monster.
-       Add the spell (with potential redundancy) if the monster
-       has proficiency in the school and passes a random check like
-       this:
-       Level    Skill
-       1        U( 50%), B(100%), S(100%), E(100%)
-       2        U( 33%), B( 83%), S(100%), E(100%)
-       3        U( 16%), B( 66%), S(100%), E(100%)
-       4        U(  0%), B( 50%), S(100%), E(100%)
-       5        U(  0%), B( 33%), S( 83%), E(100%)
-       6        U(  0%), B( 16%), S( 66%), E(100%)
-       7        U(  0%), B(  0%), S( 50%), E(100%) */
+    /*
+     * Randomize an amount of spells based on a monster's level.
+     * Add the spell (with potential redundancy) if the monster
+     * has proficiency in the school and passes a random check like
+     * this:
+     * Level    Skill
+     * 1        U( 50%), B(100%), S(100%), E(100%)
+     * 2        U( 33%), B( 83%), S(100%), E(100%)
+     * 3        U( 16%), B( 66%), S(100%), E(100%)
+     * 4        U(  0%), B( 50%), S(100%), E(100%)
+     * 5        U(  0%), B( 33%), S( 83%), E(100%)
+     * 6        U(  0%), B( 16%), S( 66%), E(100%)
+     * 7        U(  0%), B(  0%), S( 50%), E(100%)
+     */
     int addspell_prob = 0;
     int spell = 0;
     int i = rn2_on_rng(mon->m_lev + 5, rng) + 10;
@@ -2129,8 +2130,10 @@ bagotricks(struct obj *bag)
 }
 
 
+/* if mtmp!=NULL, a new monst isn't created -- instead, it uses
+   the supplied monst. Used to restore monsts as part of objects. */
 struct monst *
-restore_mon(struct memfile *mf, struct level *l)
+restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
 {
     struct monst *mon;
     short namelth, xtyp;
@@ -2147,8 +2150,11 @@ restore_mon(struct memfile *mf, struct level *l)
     if (xtyp <= MX_LAST_LEGACY)
         legacy = TRUE; /* old save */
 
-    mon = newmonst();
-    mon->dlevel = l;
+    if (!mtmp) {
+        mon = newmonst();
+        mon->dlevel = l;
+    } else
+        mon = mtmp;
 
     idx = mread32(mf);
     switch (idx) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -128,116 +128,20 @@ do_oname(const struct nh_cmd_arg *arg)
     return 0;
 }
 
-/*
- * Allocate a new and possibly larger storage space for an obj.
- */
-struct obj *
-realloc_obj(struct obj *obj, int oextra_size, void *oextra_src, int oname_size,
-            const char *name)
-{
-    struct obj *otmp;
-
-    otmp = newobj(oextra_size + oname_size, obj);
-
-    if (oextra_size) {
-        if (oextra_src)
-            memcpy(otmp->oextra, oextra_src, oextra_size);
-    } else {
-        otmp->oattached = OATTACHED_NOTHING;
-    }
-    otmp->oxlth = oextra_size;
-    otmp->onamelth = oname_size;
-
-    if (oname_size) {
-        if (name)
-            strcpy(ONAME_MUTABLE(otmp), name);
-    }
-
-    /* !obj->olev means the obj is currently being restored and no pointer from 
-       or to it is valid. Re-equipping, timer linking, etc. will happen
-       elsewhere in that case. */
-    if (obj->olev) {
-        int i;
-        if (obj->owornmask) {
-            boolean save_twoweap = u.twoweap;
-
-            /* unwearing the old instance will clear dual-wield mode if this
-               object is either of the two weapons */
-            setworn(NULL, obj->owornmask);
-            setworn(otmp, otmp->owornmask);
-            u.twoweap = save_twoweap;
-        }
-
-        /* replace obj with otmp */
-        replace_object(obj, otmp);
-
-        /* fix ocontainer pointers */
-        if (Has_contents(obj)) {
-            struct obj *inside;
-
-            for (inside = obj->cobj; inside; inside = inside->nobj)
-                inside->ocontainer = otmp;
-        }
-
-        /* move timers and light sources from obj to otmp */
-        otmp->timed = 0;        /* not timed, yet */
-        if (obj->timed)
-            obj_move_timers(obj, otmp);
-        otmp->lamplit = 0;      /* ditto */
-        if (obj->lamplit)
-            obj_move_light_source(obj, otmp);
-
-        /* objects possibly being manipulated by multi-turn occupations which
-           have been interrupted but might be subsequently resumed */
-        for (i = 0; i <= tos_last_slot; i++) {
-            if (obj == u.utracked[i])
-                u.utracked[i] = otmp;
-        }
-        /* This is probably paranoia; it would only come up if an item can
-           end up being specific-named as a result of trying to use it. */
-        for (i = 0; i <= ttos_last_slot; i++) {
-            if (obj == turnstate.tracked[i])
-                turnstate.tracked[i] = otmp;
-        }
-    } else {
-        /* During restore, floating objects are on the floating objects
-           chain, /but/ may not have OBJ_FREE set. */
-        otmp->where = obj->where;
-        obj->where = OBJ_FREE;
-        obj->timed = FALSE;
-        obj->lamplit = FALSE;
-    }
-    /* obfree(obj, otmp); now unnecessary: no pointers on bill */
-
-    dealloc_obj(obj);   /* let us hope nobody else saved a pointer */
-    return otmp;
-}
 
 struct obj *
 oname(struct obj *obj, const char *name)
 {
     int lth;
-    char buf[PL_PSIZ];
-
     lth = *name ? (int)(strlen(name) + 1) : 0;
-    if (lth > PL_PSIZ) {
-        lth = PL_PSIZ;
-        name = strncpy(buf, name, PL_PSIZ - 1);
-        buf[PL_PSIZ - 1] = '\0';
-    }
+
     /* If named artifact exists in the game, do not create another. Also trying 
        to create an artifact shouldn't de-artifact it (e.g. Excalibur from
        prayer). In this case the object will retain its current name. */
     if (obj->oartifact || (lth && exist_artifact(obj->otyp, name)))
         return obj;
 
-    if (lth == obj->onamelth) {
-        /* no need to replace entire object */
-        if (lth)
-            strcpy(ONAME_MUTABLE(obj), name);
-    } else {
-        obj = realloc_obj(obj, obj->oxlth, obj->oextra, lth, name);
-    }
+    christen_obj(obj, name);
     if (lth)
         artifact_exists(obj, name, TRUE);
     if (obj->oartifact) {
@@ -432,23 +336,17 @@ do_naming(const struct nh_cmd_arg *arg)
 void
 docall(struct obj *obj)
 {
-    struct obj otemp;
-
     if (!obj->dknown)
         return; /* probably blind */
-    otemp = *obj;
-    otemp.quan = 1L;
-    otemp.onamelth = 0;
-    otemp.oxlth = 0;
-    if (objects[otemp.otyp].oc_class == POTION_CLASS && otemp.fromsink)
+    if (objects[obj->otyp].oc_class == POTION_CLASS && obj->fromsink)
         /* kludge, meaning it's sink water */
         pline(msgc_controlhelp,
               "(You can name a stream of %s fluid from the item naming menu.)",
-              OBJ_DESCR(objects[otemp.otyp]));
+              OBJ_DESCR(objects[obj->otyp]));
     else
         pline(msgc_controlhelp, "(You can name %s from the item naming menu.)",
-              an(xname(&otemp)));
-    flags.recently_broken_otyp = otemp.otyp;
+              an(singular(obj, xname)));
+    flags.recently_broken_otyp = obj->otyp;
 }
 
 

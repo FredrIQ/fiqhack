@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -375,7 +375,6 @@ extern boolean monnam_is_pname(int);
 extern const char *hcolor(const char *);
 extern const char *rndcolor(void);
 extern const char *roguename(void);
-extern struct obj *realloc_obj(struct obj *, int, void *, int, const char *);
 extern const char *coyotename(const struct monst *);
 
 /* ### do_wear.c ### */
@@ -858,7 +857,8 @@ extern void mimic_hit_msg(struct monst *, short);
 extern void mkmonmoney(struct monst *, long, enum rng);
 extern void bagotricks(struct obj *);
 extern boolean propagate(int, boolean, boolean);
-extern struct monst *restore_mon(struct memfile *mf, struct level *l);
+extern struct monst *restore_mon(struct memfile *mf, struct monst *mtmp,
+                                 struct level *l);
 extern void save_mon(struct memfile *mf, const struct monst *mon,
                      const struct level *l);
 
@@ -894,24 +894,36 @@ extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
 
 /* ### mextra.c ### */
 
-extern void mx_new(struct monst *);
-extern void mx_free(struct monst *);
-extern void mx_possiblyfree(struct monst *);
-extern char *mx_name(const struct monst *);
-# define GEN_MEXTRA_PROT(nmx)                                   \
-    extern struct nmx *mx_##nmx(const struct monst *);          \
-    extern void mx_##nmx##_new(struct monst *);                 \
-    extern void mx_##nmx##_free(struct monst *);
-GEN_MEXTRA_PROT(edog)
-GEN_MEXTRA_PROT(epri)
-GEN_MEXTRA_PROT(eshk)
-GEN_MEXTRA_PROT(egd)
-# undef GEN_MEXTRA_PROT
-extern void christen_monst(struct monst *, const char *);
+# define GEN_EXBASE_PROT(entity, emo)                                   \
+    extern void emo##x_new(struct entity *);                            \
+    extern void emo##x_free(struct entity *);                           \
+    extern void emo##x_copy(struct entity *, const struct entity *);    \
+    extern void emo##x_possiblyfree(struct entity *);                   \
+    extern char *emo##x_name(const struct entity *);                    \
+    extern int emo##xcontent(const struct entity *);                    \
+    extern void christen_##entity(struct entity *, const char *);       \
+    extern void save_##emo##extra(struct memfile *,                     \
+                                  const struct entity *);               \
+    extern void restore_##emo##extra(struct memfile *, struct entity *);
+
+# define GEN_EXTYP_PROT(extyp, entity, emo)                        \
+    extern struct extyp *emo##x_##extyp(const struct entity *);    \
+    extern void emo##x_##extyp##_new(struct entity *);             \
+    extern void emo##x_##extyp##_free(struct entity *);
+
+GEN_EXBASE_PROT(monst, m)
+GEN_EXBASE_PROT(obj, o)
+GEN_EXTYP_PROT(edog, monst, m)
+GEN_EXTYP_PROT(epri, monst, m)
+GEN_EXTYP_PROT(eshk, monst, m)
+GEN_EXTYP_PROT(egd, monst, m)
+GEN_EXTYP_PROT(monst, obj, o)
+
+# undef GEN_EXTYP_PROT
+# undef GEN_EXBASE_PROT
+
 extern void restore_fcorr(struct memfile *, struct fakecorridor *);
 extern void restore_shkbill(struct memfile *, struct bill_x *);
-extern void restore_mextra(struct memfile *, struct monst *);
-extern void save_mextra(struct memfile *, const struct monst *);
 
 /* ### messages.c ### */
 
@@ -1037,7 +1049,6 @@ extern struct obj *mkgold(long amount, struct level *, int x, int y, enum rng);
 extern struct obj *mkcorpstat(int objtype, struct monst *mtmp,
                               const struct permonst *ptr, struct level *lev,
                               int x, int y, boolean init, enum rng);
-extern struct obj *obj_attach_mid(struct obj *, unsigned);
 extern struct monst *get_mtraits(struct obj *, boolean);
 extern struct obj *mk_tt_object(struct level *lev, int objtype, int x, int y);
 extern struct obj *mk_named_object(int, const struct permonst *, int, int,
@@ -1060,7 +1071,7 @@ extern void extract_nobj(struct obj *, struct obj **,
 extern int add_to_minv(struct monst *, struct obj *);
 extern struct obj *add_to_container(struct obj *, struct obj *);
 extern void add_to_buried(struct obj *obj);
-extern struct obj *newobj(int, struct obj *);
+extern struct obj *newobj(struct obj *);
 extern void dealloc_obj(struct obj *);
 extern void obj_ice_effects(struct level *, int, int, boolean);
 extern long peek_at_iced_corpse_age(struct obj *);
@@ -1392,6 +1403,7 @@ extern void strange_feeling(struct obj *, const char *);
 extern void potionhit(struct monst *, struct obj *, struct monst *);
 extern void potionbreathe(struct monst *, struct obj *);
 extern int dodip(const struct nh_cmd_arg *);
+extern void ghost_from_bottle(struct monst *);
 extern void djinni_from_bottle(struct monst *, struct obj *);
 extern struct monst *split_mon(struct monst *, struct monst *);
 extern const char *bottlename(void);

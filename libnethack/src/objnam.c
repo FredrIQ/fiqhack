@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -200,7 +200,7 @@ simple_typename(int otyp)
 boolean
 obj_is_pname(const struct obj * obj)
 {
-    return ((boolean) (obj->dknown && obj->known && obj->onamelth &&
+    return ((boolean) (obj->dknown && obj->known && ox_name(obj) &&
                        /* Since there aren't any objects which are both
                           artifacts and unique, the last check is redundant. */
                        obj->oartifact && !objects[obj->otyp].oc_unique));
@@ -543,13 +543,13 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
     if (!ignore_oquan && obj->quan != 1L)
         buf = makeplural(buf);
 
-    if (obj->onamelth && dknown) {
+    if (ox_name(obj) && dknown) {
         buf = msgcat(buf, " named ");
     nameit:
         if (mark_user)
-            buf = msgcat_many(buf, "\"", ONAME(obj), "\"", NULL);
+            buf = msgcat_many(buf, "\"", ox_name(obj), "\"", NULL);
         else
-            buf = msgcat(buf, ONAME(obj));
+            buf = msgcat(buf, ox_name(obj));
     }
 
     if (!strncmpi(buf, "the ", 4))
@@ -989,7 +989,7 @@ killer_xname(const struct obj *obj_orig)
     int osize;
 
     /* Copy the object. */
-    osize = sizeof (struct obj) + obj_orig->onamelth + obj_orig->oxlth;
+    osize = sizeof (struct obj);
     unsigned char objcopy[osize];
     obj = (void *)objcopy;
     memcpy(obj, obj_orig, osize);
@@ -1006,7 +1006,7 @@ killer_xname(const struct obj *obj_orig)
     obj->opoisoned = 0;
     /* strip user-supplied name; artifacts keep theirs */
     if (!obj->oartifact)
-        obj->onamelth = 0;
+        christen_obj(obj, NULL);
     /* temporarily identify the type of object */
     save_ocknown = objects[obj->otyp].oc_name_known;
     objects[obj->otyp].oc_name_known = 1;
@@ -2716,7 +2716,7 @@ typfnd:
     if ((is_quest_artifact(otmp) ||
          (otmp->oartifact &&
           rn2_on_rng(nartifact_exist(), rng_artifact_wish) > 1)) && !wizard) {
-        artifact_exists(otmp, ONAME(otmp), FALSE);
+        artifact_exists(otmp, ox_name(otmp), FALSE);
         obfree(otmp, NULL);
         otmp = &zeroobj;
         if (!flags.mon_moving)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -116,8 +116,7 @@ make_familiar(struct monst *mon, struct obj *otmp, xchar x, xchar y, boolean qui
             }
         }
         /* if figurine has been named, give same name to the monster */
-        if (otmp->onamelth)
-            christen_monst(mtmp, ONAME(otmp));
+        christen_monst(mtmp, ox_name(otmp));
     }
     set_malign(mtmp);   /* more alignment changes */
     newsym(mtmp->mx, mtmp->my);
@@ -931,6 +930,10 @@ void
 abuse_dog(struct monst *mtmp)
 {
     if (!mtmp->mtame)
+        return;
+
+    /* Mindless monsters don't understand that you was the source of their pain */
+    if (mindless(mtmp->data))
         return;
 
     if (Aggravate_monster || Conflict)

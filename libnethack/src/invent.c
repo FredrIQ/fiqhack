@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -258,8 +258,7 @@ merged(struct obj **potmp, struct obj **pobj)
             otmp->owt = weight(otmp);
         else
             otmp->owt += obj->owt;
-        if (!otmp->onamelth && obj->onamelth)
-            otmp = *potmp = oname(otmp, ONAME(obj));
+        christen_obj(otmp, ox_name(obj));
         obj_extract_self(obj);
 
         /* really should merge the timeouts */
@@ -2127,6 +2126,10 @@ stackobj(struct obj *obj)
 static boolean
 mergable(struct obj *otmp, struct obj *obj)
 {
+    /* Explicit "no merge" flag -- isn't saved to the save */
+    if (obj->nomerge || otmp->nomerge)
+        return FALSE;
+
     if (obj->otyp != otmp->otyp)
         return FALSE;
 
@@ -2179,13 +2182,14 @@ mergable(struct obj *otmp, struct obj *obj)
         return FALSE;
 
     /* if they have names, make sure they're the same */
-    if ((obj->onamelth != otmp->onamelth) ||
-        (obj->onamelth && otmp->onamelth &&
-         strncmp(ONAME(obj), ONAME(otmp), (int)obj->onamelth)))
+    int lth = ox_name(obj) ? strlen(ox_name(obj)) : 0;
+    if (!ox_name(obj) != !ox_name(otmp) ||
+        (lth && lth != strlen(ox_name(otmp))) ||
+        strncmp(ox_name(obj), ox_name(otmp), lth))
         return FALSE;
 
     /* for the moment, any additional information is incompatible */
-    if (obj->oxlth || otmp->oxlth)
+    if (oxcontent(obj) & ~OX_NAME)
         return FALSE;
 
     if (obj->oartifact != otmp->oartifact)

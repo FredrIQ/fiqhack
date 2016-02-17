@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1948,10 +1948,6 @@ assess_dmg:
     return mdead | mhit;
 }
 
-/* area[COLNO][0] is used to make set_at_area figure out what bit to set.
-   TODO: figure out if this can be handled better than a static variable. */
-static uint64_t area[COLNO+1][ROWNO];
-
 /* Perform AT_AREA logic (e.g. area of effect "auras" for certain monsters.
    AT_AREA defines certain "auras" from certain monsters with an
    area-of-effect. For example, floating eyes make monsters within a certain
@@ -1962,8 +1958,8 @@ do_at_area(struct level *lev)
     struct monst *magr, *mdef;
     struct monst *areamons[64];
     const struct attack *areaatk[64];
+    uint64_t area[COLNO+1][ROWNO];
     int i = 0;
-    int dummy; /* for do_clear_area */
 
     /* Clear area from earlier invocations */
     memset(area, 0, sizeof area);
@@ -1981,7 +1977,7 @@ do_at_area(struct level *lev)
             area[COLNO][0] = 0;
             area[COLNO][0] |= ((uint64_t)1 << i);
             do_clear_area(m_mx(magr), m_my(magr), areaatk[i]->damn,
-                          set_at_area, &dummy);
+                          set_at_area, &area);
             i++;
         }
         /* arbitrary cap (we've defined 64 indices, so bail out if we go above
@@ -2020,9 +2016,10 @@ do_at_area(struct level *lev)
 
 /* Set relevant bit for at_area */
 static void
-set_at_area(int x, int y, void *ptr)
+set_at_area(int x, int y, void *area)
 {
-    area[x][y] |= area[COLNO][0];
+    (*((uint64_t(*)[COLNO+1][ROWNO])area))[x][y] |=
+        (*((uint64_t(*)[COLNO+1][ROWNO])area))[COLNO][0];
 }
 
 

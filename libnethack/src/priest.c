@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -597,8 +597,7 @@ reset_hostility(struct monst *roamer)
 }
 
 boolean
-in_your_sanctuary(struct monst *mon,    /* if non-null, <mx,my> overrides <x,y> 
-                                         */
+in_your_sanctuary(struct monst *mon, /* if non-null, <mx,my> overrides <x,y> */
                   xchar x, xchar y)
 {
     char roomno;
@@ -625,6 +624,7 @@ void
 ghod_hitsu(struct monst *priest)
 {
     int x, y, ax, ay, roomno = (int)temple_occupied(u.urooms);
+    int dx, dy; /* delta for xy vs u.uxy */
     struct mkroom *troom;
 
     if (!roomno || !has_shrine(priest))
@@ -633,6 +633,8 @@ ghod_hitsu(struct monst *priest)
     ax = x = mx_epri(priest)->shrpos.x;
     ay = y = mx_epri(priest)->shrpos.y;
     troom = &level->rooms[roomno - ROOMOFFSET];
+    dx = u.ux - x;
+    dy = u.uy - y;
 
     if ((u.ux == x && u.uy == y) || !linedup(u.ux, u.uy, x, y)) {
         if (IS_DOOR(level->locations[u.ux][u.uy].typ)) {
@@ -670,6 +672,8 @@ ghod_hitsu(struct monst *priest)
                 break;
             }
         }
+        dx = u.ux - x;
+        dy = u.uy - y;
         if (!linedup(u.ux, u.uy, x, y))
             return;
     }
@@ -691,7 +695,7 @@ ghod_hitsu(struct monst *priest)
     }
 
     /* bolt of lightning */
-    buzz(-10 - (AD_ELEC - 1), 6, x, y, sgn(tbx), sgn(tby), 0);
+    buzz(-10 - (AD_ELEC - 1), 6, x, y, sgn(dx), sgn(dy), 0);
     exercise(A_WIS, FALSE);
 }
 

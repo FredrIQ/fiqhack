@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -80,12 +80,12 @@ resetobjs(struct obj *ochain, boolean restore)
              && otmp->otyp != STATUE)
             && ((!restore && !otmp->oartifact) ||
                 (restore && otmp->oartifact &&
-                 (exist_artifact(otmp->otyp, ONAME(otmp))
+                 (exist_artifact(otmp->otyp, ox_name(otmp))
                   || is_quest_artifact(otmp))))) {
             otmp->oartifact = 0;
-            otmp->onamelth = 0;
+            christen_obj(otmp, NULL);
         } else if (otmp->oartifact && restore)
-            artifact_exists(otmp, ONAME(otmp), TRUE);
+            artifact_exists(otmp, ox_name(otmp), TRUE);
         if (!restore) {
             /* do not zero out o_ids for ghost levels anymore */
 
@@ -231,7 +231,8 @@ savebones(struct obj *corpse, boolean take_items)
     char c, bonesid[10];
     struct memfile mf;
     struct obj *statue = 0;
-    uchar cnamelth = 0, snamelth = 0;
+    const char *cname;
+    const char *sname;
     const char *whynot;
 
     /* Bones creation does require some calls to the RNG. Ensure that they are
@@ -309,7 +310,7 @@ make_bones:
             return;
         christen_monst(mtmp, u.uplname);
         if (corpse)
-            corpse = obj_attach_mid(corpse, mtmp->m_id);
+            corpse->m_id = mtmp->m_id;
     } else {
         boolean charmed = FALSE;
         if (u.ugrave_arise < LOW_PM) { /* rn2(4) call above failed */
@@ -386,15 +387,15 @@ make_bones:
     }
     /* This will reset names; put them back for the corpse and/or statue. */
     if (corpse)
-        cnamelth = corpse->onamelth;
+        cname = ox_name(corpse);
     if (statue)
-        snamelth = statue->onamelth;
+        sname = ox_name(statue);
     resetobjs(level->objlist, FALSE);
     resetobjs(level->buriedobjlist, FALSE);
     if (corpse)
-        corpse->onamelth = cnamelth;
+        christen_obj(corpse, cname);
     if (statue)
-        statue->onamelth = snamelth;
+        christen_obj(statue, sname);
 
     /* Hero is no longer on the map. */
     u.ux = u.uy = 0;
