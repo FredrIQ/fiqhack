@@ -1,13 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-
-/* KMH -- Copied from pray.c; this really belongs in a header file */
-#define DEVOUT 14
-#define STRIDENT 4
 
 #define Your_Own_Role(mndx) \
         ((mndx) == urole.malenum || \
@@ -370,7 +366,7 @@ mon_choose_recharge(struct monst *mon, int bcsign)
             score_best = score;
         }
     }
-    if (!obj_best || score_best == -1) /* nothing to charge */
+    if (!obj_best || score_best <= -1) /* nothing to charge */
         return NULL;
     return obj_best;
 }

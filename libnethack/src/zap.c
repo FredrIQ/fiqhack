@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-02-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -948,12 +948,10 @@ revive(struct obj *obj)
 static void
 revive_egg(struct obj *obj)
 {
-    /*
-     * Note: generic eggs with corpsenm set to NON_PM will never hatch.
-     */
-    if (obj->otyp != EGG)
-        return;
-    if (obj->corpsenm != NON_PM && !dead_species(obj->corpsenm, TRUE))
+    /* Generic eggs with corpsenm set to NON_PM will never hatch. */
+    if (obj->otyp == EGG &&
+        obj->corpsenm != NON_PM &&
+        !dead_species(obj->corpsenm, TRUE))
         attach_egg_hatch_timeout(obj);
 }
 
