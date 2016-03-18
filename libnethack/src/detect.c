@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2016-03-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1242,6 +1242,7 @@ dosearch0(int aflag)
 {
     xchar x, y;
     struct trap *trap;
+    boolean already = 0; /* finding a monster already found? */
 
     if (Engulfed) {
         if (!aflag)
@@ -1293,6 +1294,17 @@ dosearch0(int aflag)
                                     pline("You sense a monster nearby!");
                                 return 1;
                             }
+                            /* If there was an I there, and there still is,
+                               let the user know; this is needed to prevent
+                               autoexplore repeatedly searching the same
+                               square. The case where it's new is handled
+                               by reveal_monster_at, so we only need to
+                               handle the case where it isn't new.
+
+                               Check this last in case there's something more
+                               urgent to report. */
+                            if (level->locations[x][y].mem_invis)
+                                already = 1;
                         }
 
                         if ((trap = t_at(level, x, y)) && !trap->tseen &&
@@ -1311,6 +1323,13 @@ dosearch0(int aflag)
                 }
             }
     }
+
+    if (already) {
+        action_completed();
+        pline("There's still a monster there.");
+        return 1;
+    }
+
     return 1;
 }
 
