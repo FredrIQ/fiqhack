@@ -78,7 +78,7 @@ static int monitored_fds_count_or_max;
 
 static int debug = 0;
 
-static int sdl_hook_getkeyorcodepointx(int, int *);
+static int getkeyorcodepoint_inner(int, int *);
 
 /* force the minimum size as 80x24; many programs don't function properly with
    less than that */
@@ -809,7 +809,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
        WINDOWEVENT_EXPOSED (what causes redraws) cases,
        only redraw once for every X events queued up. */
     int redraw = 0;
-    int ret = sdl_hook_getkeyorcodepointx(timeout_ms, &redraw);
+    int ret = getkeyorcodepoint_inner(timeout_ms, &redraw);
     if (redraw)
         sdl_hook_fullredraw();
 
@@ -817,7 +817,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
 }
 
 static int
-sdl_hook_getkeyorcodepointx(int timeout_ms, int *redraw)
+getkeyorcodepoint_inner(int timeout_ms, int *redraw)
 {
     long tick_target = SDL_GetTicks() + timeout_ms;
     long key_tick_target = -1;
