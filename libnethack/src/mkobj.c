@@ -1681,10 +1681,11 @@ restore_obj(struct memfile *mf)
             restore_mon(mf, otmp->oextra->monst, NULL);
         } else if (oattached == OATTACHED_M_ID)
             otmp->m_id = mread32(mf);
-    } else
+    } else {
         otmp->m_id = mread32(mf);
-    if (has_extra)
-        restore_oextra(mf, otmp);
+        if (has_extra)
+            restore_oextra(mf, otmp);
+    }
     return otmp;
 }
 
