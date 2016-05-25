@@ -29,7 +29,7 @@
  * with all four numbers specified as two hexadecimal digits.
  * Keep this consistent with nethack.h.
  */
-#define VERSION_COMPATIBILITY 0x04030100L       /* 4.3.0-0 */
+#define VERSION_COMPATIBILITY 0x04030000L       /* 4.3.0-0 */
 
 
 /*patchlevel.h*/
