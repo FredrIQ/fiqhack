@@ -8,8 +8,15 @@
 
 # include "global.h"
 
+/* New oextra defines */
 # define OX_NAME  0x01
 # define OX_MONST 0x02
+
+/* Old oextra defines. Kept for save compatibility */
+# define OATTACHED_NOTHING 0
+# define OATTACHED_MONST   1
+# define OATTACHED_M_ID    2
+# define OATTACHED_NEW 3 /* Originally UNUSED3, now used to mark non-legacy save */
 
 enum obj_where {
     OBJ_FREE,   /* object not attached to anything */

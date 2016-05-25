@@ -1609,10 +1609,15 @@ struct obj *
 restore_obj(struct memfile *mf)
 {
     unsigned int oflags;
+    int namelth;
     struct obj *otmp;
 
     mfmagic_check(mf, OBJ_MAGIC);
 
+    /* namelen used to be 32bit, but the name can't even exceed 16bit,
+       so reading 2 16bit chunks seperately is safe */
+    boolean has_extra = !!mread16(mf);
+    namelth = mread16(mf);
     otmp = newobj(&zeroobj);
     memset(otmp, 0, sizeof (struct obj));
 
@@ -1637,8 +1642,6 @@ restore_obj(struct memfile *mf)
     otmp->timed = mread8(mf);
     otmp->cobj = mread8(mf) ? (void *)1 : NULL; /* set the pointer to 1 if
                                                    there will be contents */
-    boolean has_extra = !!mread8(mf);
-
     otmp->cursed = (oflags >> 31) & 1;
     otmp->blessed = (oflags >> 30) & 1;
     otmp->unpaid = (oflags >> 29) & 1;
@@ -1656,6 +1659,7 @@ restore_obj(struct memfile *mf)
     otmp->recharged = (oflags >> 13) & 7;
     otmp->lamplit = (oflags >> 12) & 1;
     otmp->greased = (oflags >> 11) & 1;
+    int oattached = (oflags >> 9) & 1; /* old saves */
     otmp->in_use = (oflags >> 8) & 1;
     otmp->was_thrown = (oflags >> 7) & 1;
     otmp->bypass = (oflags >> 6) & 1;
@@ -1663,6 +1667,22 @@ restore_obj(struct memfile *mf)
     otmp->mknown = (oflags >> 4) & 1;
     otmp->mbknown = (oflags >> 3) & 1;
 
+    otmp->m_id = 0;
+    if (oattached != OATTACHED_NEW) {
+        /* legacy mode */
+        if (namelth) {
+            char namebuf[namelth];
+            mread(mf, namebuf, namelth);
+            christen_obj(otmp, namebuf);
+        }
+
+        if (oattached == OATTACHED_MONST) {
+            ox_monst_new(otmp);
+            restore_mon(mf, otmp->oextra->monst, NULL);
+        } else if (oattached == OATTACHED_M_ID)
+            otmp->m_id = mread32(mf);
+    } else
+        otmp->m_id = mread32(mf);
     if (has_extra)
         restore_oextra(mf, otmp);
     return otmp;
@@ -1688,14 +1708,16 @@ save_obj(struct memfile *mf, struct obj *obj)
         (obj->oerodeproof << 19) | (obj->olocked << 18) |
         (obj->obroken << 17) | (obj->otrapped << 16) |
         (obj->recharged << 13) | (obj->lamplit << 12) |
-        (obj->greased << 11) | (obj->in_use << 8) |
-        (obj->was_thrown << 7) | (obj->bypass << 6) |
-        (obj->was_dropped << 5) | (obj->mknown << 4) |
-        (obj->mbknown << 3);
+        (obj->greased << 11) | (OATTACHED_NEW << 9) |
+        (obj->in_use << 8) | (obj->was_thrown << 7) |
+        (obj->bypass << 6) | (obj->was_dropped << 5) |
+        (obj->mknown << 4) | (obj->mbknown << 3);
 
     mfmagic_set(mf, OBJ_MAGIC);
     mtag(mf, obj->o_id, MTAG_OBJ);
 
+    mwrite16(mf, obj->oextra ? 1 : 0);
+    mwrite16(mf, 0); /* Old save data */
     mwrite32(mf, obj->o_id);
     mwrite32(mf, obj->owt);
     mwrite32(mf, obj->quan);
@@ -1718,7 +1740,7 @@ save_obj(struct memfile *mf, struct obj *obj)
     /* Saving the pointer itself is unneccessary, but we need to know if
        there is one in first place to save/restore */
     mwrite8(mf, obj->cobj ? 1 : 0);
-    mwrite8(mf, obj->oextra ? 1 : 0);
+    mwrite32(mf, obj->m_id);
 
     if (obj->oextra)
         save_oextra(mf, obj);
