@@ -1659,7 +1659,7 @@ restore_obj(struct memfile *mf)
     otmp->recharged = (oflags >> 13) & 7;
     otmp->lamplit = (oflags >> 12) & 1;
     otmp->greased = (oflags >> 11) & 1;
-    int oattached = (oflags >> 9) & 1; /* old saves */
+    int oattached = (oflags >> 9) & 3; /* old saves */
     otmp->in_use = (oflags >> 8) & 1;
     otmp->was_thrown = (oflags >> 7) & 1;
     otmp->bypass = (oflags >> 6) & 1;
