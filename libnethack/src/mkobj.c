@@ -1609,15 +1609,11 @@ struct obj *
 restore_obj(struct memfile *mf)
 {
     unsigned int oflags;
-    int namelth;
     struct obj *otmp;
 
     mfmagic_check(mf, OBJ_MAGIC);
 
-    /* namelen used to be 32bit, but the name can't even exceed 16bit,
-       so reading 2 16bit chunks seperately is safe */
-    boolean has_extra = !!mread16(mf);
-    namelth = mread16(mf);
+    int has_extra = mread32(mf); /* Possibly length of name in legacy saves */
     otmp = newobj(&zeroobj);
     memset(otmp, 0, sizeof (struct obj));
 
@@ -1670,9 +1666,9 @@ restore_obj(struct memfile *mf)
     otmp->m_id = 0;
     if (oattached != OATTACHED_NEW) {
         /* legacy mode */
-        if (namelth) {
-            char namebuf[namelth];
-            mread(mf, namebuf, namelth);
+        if (has_extra) {
+            char namebuf[has_extra];
+            mread(mf, namebuf, has_extra);
             christen_obj(otmp, namebuf);
         }
 
@@ -1717,8 +1713,7 @@ save_obj(struct memfile *mf, struct obj *obj)
     mfmagic_set(mf, OBJ_MAGIC);
     mtag(mf, obj->o_id, MTAG_OBJ);
 
-    mwrite16(mf, obj->oextra ? 1 : 0);
-    mwrite16(mf, 0); /* Old save data */
+    mwrite32(mf, obj->oextra ? 1 : 0);
     mwrite32(mf, obj->o_id);
     mwrite32(mf, obj->owt);
     mwrite32(mf, obj->quan);
