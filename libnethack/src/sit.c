@@ -351,15 +351,14 @@ rndcurse(struct monst *mtmp, struct monst *magr)
     boolean you = (mtmp == &youmonst);
     boolean vis = canseemon(mtmp);
     enum rng rng = (you ? rng_rndcurse : rng_main);
-    cnt = rn2_on_rng(6, rng);
+    cnt = rn2_on_rng(18, rng);
     saddle = (you && !rn2_on_rng(4, rng));
 
-    if ((otmp = m_mwep(mtmp)) && otmp->oartifact == ART_MAGICBANE &&
-        rn2_on_rng(20, rng)) {
+    if ((otmp = m_mwep(mtmp)) && otmp->oartifact == ART_MAGICBANE) {
         if (you || vis)
             pline(combat_msgc(magr, mtmp, cr_miss), mal_aura,
                   "the magic-absorbing blade");
-        return;
+        cnt = rn2_on_rng(6, rng);
     }
     for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj) {
         /* gold isn't subject to being cursed or blessed */
@@ -369,9 +368,11 @@ rndcurse(struct monst *mtmp, struct monst *magr)
     }
 
     /*
-     * With neither MR nor half spell damage: cnt is 1-6
-     * With either MR or half spell damage:   cnt is 1-3
-     * With both MR and half spell damage:    cnt is 1-2
+     * With nothing:                          cnt is 1-18
+     * With one of MR or half spell damage:   cnt is 1-9
+     * With Magicbane or MR+half spell:       cnt is 1-6
+     * With Magicbane and MR or half spell:   cnt is 1-3
+     * With Magicbane, MR and half spell:     cnt is 1-2
      */
     cnt /= (!!resists_magm(mtmp) + !!half_spell_dam(mtmp) + 1);
     cnt++;
