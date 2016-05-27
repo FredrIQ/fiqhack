@@ -85,6 +85,7 @@ static const struct trobj Healer[] = {
     {SPE_EXTRA_HEALING, 0, SPBOOK_CLASS, 1, 1},
     {SPE_STONE_TO_FLESH, 0, SPBOOK_CLASS, 1, 1},
     {APPLE, 0, FOOD_CLASS, 5, 0},
+    {EUCALYPTUS_LEAF, 0, FOOD_CLASS, 6, 1},
     {0, 0, 0, 0, 0}
 };
 
@@ -652,8 +653,7 @@ u_init_inv_skills(void)
     case PM_HEALER:
         u.umoney0 = 1001 + rolern2(1000);
         role_ini_inv(Healer, nclist);
-        if (!rolern2(25))
-            role_ini_inv(Lamp, nclist);
+        role_ini_inv(Lamp, nclist);
         knows_object(POT_FULL_HEALING);
         skill_init(Skill_H);
         break;
