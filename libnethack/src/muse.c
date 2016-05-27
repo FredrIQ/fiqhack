@@ -27,6 +27,7 @@ boolean m_using = FALSE;
  *   OK but can be problematic with pets. Maybe for later.
  */
 
+static void mconfdir(const struct monst *, schar *, schar *);
 static int precheck(struct monst *mon, struct obj *obj, struct musable *m);
 static void mzapmsg(struct monst *, struct obj *, boolean);
 static void mreadmsg(struct monst *, struct obj *);
@@ -38,6 +39,169 @@ static int find_item_single(const struct monst *, struct obj *, boolean,
 static boolean mon_allowed(int);
 
 static int trapx, trapy;
+
+/* Converts a nh_cmd_arg to a musable, allowing one to use a single struct for both
+   player and monster "commands". It is important to note that this performs no
+   additional sanity checks, all it does is to convert arg to musable. So far, for
+   the scope of this, limit and str (from arg) is unneeded, and pos/dir is
+   mutually exclusive (they both use m.x/m.y for musable). Equavilents to functions that
+   actually include sanity checks are also included below in the form of m*(), i.e.
+   mgetargdir, mgetargpos, mgetargobj, mgetargspell. These will also (like the non-m
+   equavilents) ask the player in case the data is missing or invalid. */
+struct musable
+arg_to_musable(const struct nh_cmd_arg *arg)
+{
+    struct musable m;
+    m.obj = NULL;
+    m.tobj = NULL;
+    m.spell = 0;
+    m.use = MUSE_NONE; /* Used as a sentinel to mark the player as the user. */
+
+    /* Set xyz to -1, which is never valid, as a sentinel for not having chosen any
+       direction/position yet. */
+    m.x = -1;
+    m.y = -1;
+    m.z = -1;
+
+    /* Set xyz. Note that currently, muse use x/y/z both for directions and absolute
+       positions. So far, they have been mutually exclusive, but it is possible that
+       this changes later. */
+    if (arg->argtype & CMD_ARG_DIR)
+        dir_to_delta(arg->dir, (schar *) &m.x, (schar *) &m.y, (schar *) &m.z);
+    else if (arg->argtype & CMD_ARG_POS) {
+        m.x = arg->pos.x;
+        m.y = arg->pos.y;
+        m.z = 0;
+    }
+
+    /* Set obj. &zeroobj is not particurly specific, but that's what getargobj() returns
+       in the same context... */
+    if (arg->argtype & CMD_ARG_OBJ) {
+        if (arg->invlet == '-' || arg->invlet == ',')
+            m.obj = &zeroobj;
+        else
+            for (m.obj = invent; m.obj; m.obj = m.obj->nobj)
+                if (m.obj->invlet == arg->invlet)
+                    break;
+    }
+
+/* from spell.c (TODO: these are pretty awkward in general, even in spell.c) */
+#define spellid(spell)   spl_book[spell].sp_id
+#define spellno_from_let(slet)                                  \
+    (((slet) >= 'a' && (slet) <= 'z') ? slet - 'a' :            \
+     ((slet) >= 'A' && (slet) <= 'Z') ? slet - 'A' + 26 : -1)
+    if (arg->argtype & CMD_ARG_SPELL) {
+        int sno = spellno_from_let(arg->spelllet);
+        if (sno >= 0 && spellid(sno) != NO_SPELL)
+            m.spell = sno;
+    }
+#undef spellid
+#undef spellno_from_let
+
+    return m;
+}
+
+/* A version of mconfdir for general purposes (needed due to grid bug checks) */
+static void
+mconfdir(const struct monst *mon, schar *dx, schar *dy)
+{
+    int x = (mon->data == &mons[PM_GRID_BUG]) ? 2 * rn2(4) : rn2(8);
+
+    *dx = xdir[x];
+    *dy = ydir[x];
+    return;
+}
+
+/* Sets direction deltas in d*, possibly asking the user. Unlike other
+   mgetarg equavilents, this needs an explicit monst for confusion/stun purposes */
+int
+mgetargdir(const struct monst *mon, const struct musable *m, const char *query,
+           schar *dx, schar *dy, schar *dz)
+{
+    /* Is there a reasonable direction already? */
+    if ((m->x != -1 || m->y != -1 || m->z != -1) &&
+        (!m->x || !m->y || mon->data != &mons[PM_GRID_BUG])) {
+        if (mon == &youmonst) {
+            turnstate.intended_dx = m->x;
+            turnstate.intended_dy = m->y;
+        }
+
+        /* Set musable params in d*. Technically redundant, but keeps consistency
+           with getargdir and other mgetargs where they're actually needed */
+        *dx = m->x;
+        *dy = m->y;
+        *dz = m->z;
+
+        /* confusion/stun handling */
+        if (!m->z && (stunned(mon) || (confused(mon) && !rn2(5))))
+            mconfdir(mon, dx, dy);
+
+        return 1;
+    }
+
+    if (m->use != MUSE_NONE) {
+        impossible("mgetargdir: unclear direction for non-player?");
+        return 0;
+    }
+
+    /* Otherwise, ask */
+    return getdir(query, dx, dy, dz, TRUE);
+}
+
+/* Sets cc and performs sanity check on position */
+int
+mgetargpos(const struct musable *m, coord *cc, boolean force,
+          const char *goal)
+{
+    /* Did the client specify an (in bounds) position? */
+    if ((m->x != -1 || m->y != -1 || m->z != -1) && isok(cc->x, cc->y)) {
+        cc->x = m->x;
+        cc->y = m->y;
+        return NHCR_ACCEPTED;
+    }
+
+    if (m->use != MUSE_NONE) {
+        impossible("mgetargpos: unclear position for non-player?");
+        return 0;
+    }
+
+    /* Otherwise, ask. */
+    return getpos(cc, force, goal, TRUE);
+}
+
+/* Returns musable's object if valid or a queried-for object otherwise.
+   The way parameters are set up doesn't really allow validation of monster
+   choices, those are assumed to be valid (they should be anyway) */
+struct obj *
+mgetargobj(const struct musable *m, const char *let, const char *word)
+{
+    if (m->use != MUSE_NONE)
+        return m->obj;
+
+    /* Is there a valid object? (If not, ask for another.) */
+    if ((m->obj && validate_object(m->obj, let, word)) ||
+        (m->obj == &zeroobj && strchr(let, ALLOW_NONE)))
+        return m->obj;
+
+    /* Otherwise, prompt the user. */
+    return getobj(let, word, TRUE);
+}
+
+boolean
+mgetargspell(const struct musable *m, int *spell_no)
+{
+    if (m->spell) {
+        *spell_no = m->spell;
+        return TRUE;
+    }
+
+    if (m->use != MUSE_NONE) {
+        impossible("mgetargspell: unclear spell for non-player?");
+        return 0;
+    }
+
+    return getspell(spell_no);
+}
 
 /* Any preliminary checks which may result in the monster being unable to use
    the item.  Returns 0 if nothing happened, 2 if the monster can't do anything
@@ -893,13 +1057,7 @@ boolean
 find_unlocker(const struct monst *mon, struct musable *m)
 {
     /* Initialize musable */
-    m->x = 0;
-    m->y = 0;
-    m->z = 0;
-    m->obj = NULL;
-    m->tobj = NULL;
-    m->spell = 0;
-    m->use = 0;
+    memset(m, 0, sizeof (struct musable));
 
     /* look for keys
        TODO: lockpicks should require an occupation timer */

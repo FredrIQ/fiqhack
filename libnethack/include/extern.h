@@ -1240,6 +1240,12 @@ extern boolean hits_bars(struct obj **, int, int, int, int);
 
 /* ### muse.c ### */
 
+extern struct musable arg_to_musable(const struct nh_cmd_arg *);
+extern int mgetargdir(const struct monst *, const struct musable *,
+                      const char *, schar *, schar *, schar *);
+extern int mgetargpos(const struct musable *, coord *, boolean, const char *);
+extern struct obj *mgetargobj(const struct musable *, const char *, const char *);
+extern boolean mgetargspell(const struct musable *, int *);
 extern int mon_choose_dirtarget(const struct monst *, struct obj *, coord *);
 extern int mon_choose_spectarget(const struct monst *, struct obj *, coord *);
 extern boolean find_unlocker(const struct monst *, struct musable *);
@@ -1695,6 +1701,7 @@ extern void age_spells(void);
 extern void update_supernatural_abilities(void);
 extern boolean supernatural_ability_available(int);
 extern int docast(const struct nh_cmd_arg *);
+extern boolean getspell(int *);
 extern int spell_skilltype(int);
 extern int mspell_skilltype(int);
 extern int monspellprot(struct monst *);

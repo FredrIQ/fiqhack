@@ -47,7 +47,6 @@ spellname(int spell)
 static boolean cursed_book(struct monst *, struct obj *bp);
 static boolean confused_book(struct monst *, struct obj *);
 static int learn(void);
-static boolean getspell(int *);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(const struct monst *, int);
 static int throwspell(boolean, schar *dx, schar *dy, const struct nh_cmd_arg *arg);
@@ -825,7 +824,7 @@ age_spells(void)
  * Return TRUE if a spell was picked, with the spell index in the return
  * parameter.  Otherwise return FALSE.
  */
-static boolean
+boolean
 getspell(int *spell_no)
 {
     return dospellmenu("Choose which spell to cast", SPELLMENU_CAST, spell_no);

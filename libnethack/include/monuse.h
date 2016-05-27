@@ -44,7 +44,6 @@ enum monuse {
     MUSE_BULLWHIP,
 };
 
-
 struct musable {
     struct obj *obj;
     struct obj *tobj; /* target obj, currently only used when unlocking chests */
@@ -58,4 +57,3 @@ struct musable {
 };
 
 #endif
-

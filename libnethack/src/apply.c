@@ -318,7 +318,7 @@ use_magic_whistle(struct obj *obj)
 {
     struct monst *mtmp, *nextmon;
 
-    if (Upolyd && !can_blow_instrument(youmonst.data)) {
+    if (!can_blow_instrument(youmonst.data)) {
         pline(msgc_cancelled, "You are incapable of blowing the whistle!");
         return 0;
     }
