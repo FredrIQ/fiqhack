@@ -2728,7 +2728,7 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
         return 0;
     if (difficulty > 3 && !rn2_on_rng(15, rng))
         return WAN_SLOW_MONSTER;
-    if (difficutly > 4 && !rn2_on_rng(20, rng))
+    if (difficulty > 4 && !rn2_on_rng(20, rng))
         return SCR_STINKING_CLOUD;
     if (difficulty > 5 && !rn2_on_rng(25, rng))
         return WAN_CANCELLATION;

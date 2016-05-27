@@ -823,6 +823,10 @@ mstrength(const struct permonst *ptr)
         n += ((int)(ptr->mattk[i].damd * ptr->mattk[i].damn) > 23);
     }
 
+/* Dedicated spellcasters */
+    if (ptr->mflags3 & M3_SPELLCASTER)
+        n += 3;
+
 /* Leprechauns are special cases.  They have many hit dice so they
    can hit and are hard to kill, but they don't really do much damage. */
     if (!strcmp(ptr->mname, "leprechaun"))
