@@ -41,7 +41,6 @@ static const int channel_color[] = {
     [msgc_substitute] = CLR_ORANGE,
     [msgc_failcurse] = CLR_ORANGE,
     [msgc_combatimmune] = CLR_ORANGE,
-    [msgc_unpaid] = CLR_ORANGE,
     [msgc_cancelled1] = CLR_ORANGE, /* here because it wasted time */
     [msgc_levelwarning] = CLR_ORANGE,
 
@@ -73,6 +72,7 @@ static const int channel_color[] = {
     [msgc_uiprompt] = CLR_BRIGHT_BLUE,
     [msgc_curprompt] = CLR_BRIGHT_BLUE,
     [msgc_reminder] = CLR_BRIGHT_BLUE,    /* fades to dark blue immediately */
+    [msgc_unpaid] = CLR_BRIGHT_BLUE,
 
     /* CLR_BRIGHT_MAGENTA: permanent non-spammy bad things, urgent warnings */
     [msgc_fatal] = CLR_BRIGHT_MAGENTA | CLRFLAG_FORCETAB,
