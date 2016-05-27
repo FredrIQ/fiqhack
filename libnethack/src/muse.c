@@ -2728,8 +2728,12 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
         return 0;
     if (difficulty > 3 && !rn2_on_rng(15, rng))
         return WAN_SLOW_MONSTER;
+    if (difficutly > 4 && !rn2_on_rng(20, rng))
+        return SCR_STINKING_CLOUD;
     if (difficulty > 5 && !rn2_on_rng(25, rng))
         return WAN_CANCELLATION;
+    if (difficulty > 6 && !rn2_on_rng(30, rng))
+        return WAN_POLYMORPH;
     if (difficulty > 7 && !rn2_on_rng(35, rng))
         return WAN_DEATH;
     switch (rn2_on_rng(9 - (difficulty < 4) + 4 * (difficulty > 6), rng)) {
