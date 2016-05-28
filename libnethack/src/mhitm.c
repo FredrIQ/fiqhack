@@ -1854,9 +1854,10 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                 break;
             if (!slow(mdef) && canseemon(mdef))
                 pline(combat_msgc(mdef, magr, cr_hit),
-                      "%s down under %s gaze!", M_verbs(mdef, "slow"),
-                      s_suffix(mon_nam(magr)));
+                      "%s down under %s gaze!", M_verbs(magr, "slow"),
+                      s_suffix(mon_nam(mdef)));
             inc_timeout(mdef, SLOW, tmp, TRUE);
+            tmp = 0;
             break;
         case AD_PLYS:
             if (free_action(magr)) {
