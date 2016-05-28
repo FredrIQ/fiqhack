@@ -5,5 +5,5 @@ script:
     - ../aimake -i ../installdir --without=gui
 notifications:
     - irc:
-          channels:
-	      - "chat.freenode.net#fiqhack"
+        channels:
+            - "chat.freenode.net#fiqhack"
