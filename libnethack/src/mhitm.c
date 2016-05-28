@@ -1846,12 +1846,15 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                     pline(combat_msgc(mdef, magr, cr_miss),
                           "%snot defend %sself.", M_verbs(mdef, "can"),
                           mhim(mdef));
+                tmp = 0;
                 break;
             }
             if (cancelled(mdef) ||
                 !(msensem(mdef, magr) & MSENSE_VISION) ||
-                !(msensem(magr, mdef) & MSENSE_VISION))
+                !(msensem(magr, mdef) & MSENSE_VISION)) {
+                tmp = 0;
                 break;
+            }
             if (!slow(mdef) && canseemon(mdef))
                 pline(combat_msgc(mdef, magr, cr_hit),
                       "%s down under %s gaze!", M_verbs(magr, "slow"),
