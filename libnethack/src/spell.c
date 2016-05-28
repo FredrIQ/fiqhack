@@ -52,6 +52,7 @@ static int percent_success(const struct monst *, int);
 static int throwspell(boolean, schar *dx, schar *dy, const struct nh_cmd_arg *arg);
 static void cast_protection(struct monst *);
 static void spell_backfire(int);
+static void run_maintained_spell(struct monst *, int);
 
 static const char *spelltypemnemonic(int);
 
@@ -685,6 +686,115 @@ mon_addspell(struct monst *mon, int typ)
     int mspellid = (typ - SPE_DIG);
     mon->mspells |= (uint64_t)(1 << mspellid);
     return mspellid;
+}
+
+boolean
+spell_maintained(const struct monst *mon, int spell)
+{
+    spell = (spell - SPE_DIG);
+    return !!(mon->spells_maintained & (uint64_t)(1 << spell));
+}
+
+void
+spell_maintain(struct monst *mon, int spell)
+{
+    spell = (spell - SPE_DIG);
+    mon->spells_maintained |= (uint64_t)(1 << spell);
+}
+
+void
+spell_unmaintain(struct monst *mon, int spell)
+{
+    spell = (spell - SPE_DIG);
+    mon->spells_maintained &= ~(uint64_t)(1 << spell);
+}
+
+void
+run_maintained_spells(struct level *lev)
+{
+    int spell, i;
+    /* First check the player if the level is the one the player is on */
+    if (lev == level) {
+        /* Check forgotten spells */
+        for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
+            if (!spell_maintained(&youmonst, spell))
+                continue;
+
+            int spell_index = 0;
+            boolean knows_spell = FALSE; /* might not be true if amnesia removed it */
+            for (i = 0; i < MAXSPELL; i++) {
+                if (spellid(i) == spell) {
+                    spell_index = i;
+                    knows_spell = TRUE;
+                }
+            }
+
+            if (!knows_spell || spellknow(spell_index) <= 0 || confused(&youmonst)) {
+                pline(msgc_intrloss, "You can no longer maintain %s.",
+                      OBJ_NAME(objects[spell]));
+                spell_unmaintain(&youmonst, spell);
+                continue;
+            }
+
+            /* Decrease power depending on spell level */
+            int spell_level = objects[spell].oc_level;
+            if (moves % 5) {
+                if (u.uen < spell_level) {
+                    pline(msgc_intrloss, "You lack the energy to maintain %s.",
+                          OBJ_NAME(objects[spell]));
+                    spell_unmaintain(&youmonst, spell);
+                    continue;
+                }
+                u.uen -= spell_level;
+            }
+
+            run_maintained_spell(&youmonst, spell);
+        }
+    }
+
+    struct monst *mon;
+    for (mon = lev->monlist; mon; mon = mon->nmon) {
+        if (DEADMONSTER(mon) || !spell_maintained(mon, spell))
+            continue;
+
+        /* mspec_used check is arbitrary, but prevents mspec_used from going out of
+           hand */
+        if (confused(mon) || mon->mspec_used > 20) {
+            mon->spells_maintained = 0;
+            continue;
+        }
+
+        for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
+            if (!spell_maintained(mon, spell))
+                continue;
+
+            if (!mon_castable(mon, spell, TRUE)) {
+                spell_unmaintain(mon, spell);
+                continue;
+            }
+            run_maintained_spell(mon, spell);
+        }
+    }
+}
+
+static void
+run_maintained_spell(struct monst *mon, int spell)
+{
+    switch (spell) {
+    case SPE_HASTE_SELF:
+        if (property_timeout(&youmonst, FAST) < 5)
+            inc_timeout(&youmonst, FAST, 50, TRUE);
+        break;
+    case SPE_DETECT_MONSTERS:
+        if (property_timeout(&youmonst, DETECT_MONSTERS) < 5)
+            inc_timeout(&youmonst, DETECT_MONSTERS, 20, TRUE);
+        break;
+    default:
+        impossible("%s maintaining an unmaintainable spell? (%d)",
+                   mon == &youmonst ? "player" : k_monnam(mon), spell);
+        spell_unmaintain(mon, spell);
+        break;
+    }
 }
 
 int
@@ -1377,6 +1487,12 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
      */
     skill = spell_skilltype(spellid(spell));
     role_skill = P_SKILL(skill);
+    boolean maintained = spell_maintained(&youmonst, spellid(spell));
+    if (maintained) {
+        spell_unmaintain(&youmonst, spellid(spell));
+        pline(msgc_cancelled, "Spell no longer maintained.");
+        return 0;
+    }
 
     /* Get the direction or target, if applicable.
 
@@ -1434,6 +1550,17 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             pline(msgc_cancelled, "Spell canceled.");
             return 0;
         }
+        break;
+
+    /* These spells can be toggled for whether or not to maintain it */
+    case SPE_HASTE_SELF:
+    case SPE_DETECT_MONSTERS:
+        /* Detect monsters isn't useful to maintain on a lower level */
+        if (spellid(spell) == SPE_DETECT_MONSTERS &&
+            role_skill < P_SKILLED)
+            break;
+        if (yn("Maintain the spell?") == 'y')
+            spell_maintain(&youmonst, spellid(spell));
         break;
 
     /* The rest of the spells don't have targeting. */

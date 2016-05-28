@@ -843,6 +843,7 @@ you_moved(void)
                 glibr();
             nh_timeout();
             run_regions(level);
+            run_maintained_spells(level);
 
             if (u.ublesscnt)
                 u.ublesscnt--;
