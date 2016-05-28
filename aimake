@@ -291,6 +291,17 @@ options.  (Note that you don't need to, and shouldn't, include the B<-l>
 options that specify dependencies on libraries; aimake should figure those out
 by itself.)
 
+=item YFLAGS
+
+Command-line arguments to pass to C<yacc>.  The default is to pass no options
+beyond the C<--defines=> that aimake always provides because it needs special
+handling (to place the files in the right place).
+
+=item LEXFLAGS
+
+Command-line arguments to pass to C<lex>.  The default is to pass C<--warn>,
+which tells C<flex> (the default C<lex> implementation) to produce warnings.
+
 =back
 
 Note that this option is I<not> "sticky"; the value has to be given anew with
@@ -497,6 +508,17 @@ or using debug or profiling tools that produce output before aimake starts
 running; in these cases, you can specify C<--nonempty-directory> to suppress
 the sanity check.  Before using this option, make absolutely sure you are
 running from the correct directory.
+
+This option can also be used to permit installing to the source or build
+directory, a combination that is typically disallowed because it makes no
+sense and can lead to accidentally overwriting the source.
+
+=item B<--no-sanity-checks>
+
+Disables checks on permissions that are normally used to prevent yourself
+accidentally creating a file that can't be deleted.  The most common reason to
+use this is if you're building as root because you're using a system or jail
+that has no regular users.
 
 =item B<--install-only>
 
@@ -4034,7 +4056,7 @@ my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
     $opt_install_only, $opt_elevate_permissions, $opt_specific_exit_status,
     @opt_with, @opt_without, @opt_with_default, $opt_nonempty_directory,
     %opt_directory_overrides, $opt_nocr, @opt_rebuild, $opt_documentation,
-    $opt_gen_installer, %opt_var, $opt_profile,
+    $opt_gen_installer, %opt_var, $opt_profile, $opt_no_sanity_checks,
     $opt_license, $opt_filelist, $opt_noperms, @opt_local_config); # options
 my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
@@ -5032,7 +5054,7 @@ sub calculate_installation_path {
         # file in some cases. So when the file isn't an executable, we set the
         # execute bit based on the read bit.
 
-        ($octal & 0700) >= 0600 or
+        ($octal & 0700) >= 0600 or $opt_no_sanity_checks or
             die "Refusing to deny read or write permission to Administrators";
         my $otherread  = ($octal & 0004) ? 'yes' : 'KEYDEL';
         my $otherwrite = ($octal & 0002) ? 'yes' : 'KEYDEL';
@@ -5206,7 +5228,8 @@ sub calculate_installation_path {
         }
 
         my @pi = parse_aipath $instdir;
-        $pi[0] eq 'spath' or die "Installing to build or source dir";
+        $pi[0] eq 'spath' or $opt_nonempty_directory or
+            die "Installing to build or source dir";
 
         $filelist_feature_seen{$feature}{$id} or
             $filelist_features{$feature} .=
@@ -8098,6 +8121,7 @@ GetOptions('verbose|v:+' => \$opt_verbose,
            'destdir=s' => \$opt_prefix,
            'filelist=s' => \$opt_filelist,
            'gen-installer=s' => \$opt_gen_installer,
+           'no-sanity-checks' => \$opt_no_sanity_checks,
            'natural-permissions' => \$opt_noperms,
            'profile' => \$opt_profile,
            'dump-status:s' => \$opt_dump,
@@ -8386,7 +8410,8 @@ $opt_install and $ipath = ospath2aipath($opt_install);
 # Check effective UID for this, so that root can run a setuid-something-else
 # install program, and so that we complain if someone installs aimake suid root
 # (note: do not install aimake suid root).
-if ($os_parsed ne 'MSWin32' && $> == 0 && !$opt_install_only) {
+if ($os_parsed ne 'MSWin32' && $> == 0 && !$opt_install_only &&
+    !$opt_no_sanity_checks) {
     die ("Please do not run aimake as root.\n" .
          "To install as root, use '-S su' or '-S sudo' as appropriate.");
 }
@@ -8511,7 +8536,7 @@ if ($installing && !defined $opt_elevate_permissions &&
 
 # Complain and exit if -S or --install-only were specified, but we're
 # nonetheless failing to install.
-if ((defined $opt_elevate_permissions || defined $opt_install_only) &&
+if ((defined $opt_elevate_permissions || $opt_install_only) &&
     !$installing) {
     die "Cannot obey the requested install options: -S and --install-only " .
         "are useful only when installing, but the install path '" .
@@ -10773,6 +10798,46 @@ EOF
             verb => 'determined',
         },
 
+        default_yflags => {
+            output => 'optionset:YFLAGS',
+            outdepends => [],
+            verb => 'determined',
+            low_message_priority => 1,
+            command_line_override => 'YFLAGS',
+        },
+        default_am_yflags => {
+            output => 'optionset:AM_YFLAGS',
+            outdepends => [],
+            verb => 'determined',
+            low_message_priority => 1,
+            command_line_override => 'AM_YFLAGS',
+        },
+        yflags_includes_am_yflags => {
+            object => 'optionset:YFLAGS',
+            depends => 'optionset:AM_YFLAGS',
+            verb => 'determined',
+        },
+
+        default_lexflags => {
+            output => 'optionset:LEXFLAGS',
+            outdepends => ['optstring:--warn'],
+            verb => 'determined',
+            low_message_priority => 1,
+            command_line_override => 'LEXFLAGS',
+        },
+        default_am_lexflags => {
+            output => 'optionset:AM_LEXFLAGS',
+            outdepends => [],
+            verb => 'determined',
+            low_message_priority => 1,
+            command_line_override => 'AM_LEXFLAGS',
+        },
+        lexflags_includes_am_lexflags => {
+            object => 'optionset:LEXFLAGS',
+            depends => 'optionset:AM_LEXFLAGS',
+            verb => 'determined',
+        },
+
         cflags_includes_cppflags => {
             object => 'optionset:CFLAGS',
             depends => 'optionset:CPPFLAGS',
@@ -11879,7 +11944,7 @@ EOF
         # traditional lex's nasty habit of using hardcoded filenames.
         lex_tool => {
             output => 'tool:lex',
-            outdepends => ['cmd:flex'],
+            outdepends => ['cmd:flex', 'optionset:LEXFLAGS'],
             verb => 'found',
         },
         compile_lex => {
@@ -11894,7 +11959,7 @@ EOF
 
         yacc_tool => {
             output => 'tool:yacc',
-            outdepends => ['cmd:bison'],
+            outdepends => ['cmd:bison', 'optionset:YFLAGS'],
             verb => 'found',
         },
         compile_yacc => {
