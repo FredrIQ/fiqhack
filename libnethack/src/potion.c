@@ -682,7 +682,7 @@ peffects(struct monst *mon, struct obj *otmp)
     case POT_SLEEPING:
         if (resists_sleep(mon) || free_action(mon)) {
             if (you || vis)
-                pline(combat_msgc(NULL, mon, cr_immune), M_verbs(mon, "yawn"));
+                pline(combat_msgc(NULL, mon, cr_immune), "%s", M_verbs(mon, "yawn"));
             break;
         }
         if (you || vis)
@@ -1595,7 +1595,7 @@ potionbreathe(struct monst *mon, struct obj *obj)
                         mon->mcanmove = 0;
                 }
             } else
-                pline(combat_msgc(NULL, mon, cr_immune), M_verbs(mon, "yawn"));
+                pline(combat_msgc(NULL, mon, cr_immune), "%s", M_verbs(mon, "yawn"));
         }
         break;
     case POT_SPEED:

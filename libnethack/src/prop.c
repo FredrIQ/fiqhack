@@ -913,7 +913,7 @@ update_property(struct monst *mon, enum youprop prop,
                               "You feel %s!",
                               lost ? msg->losepm : msg->gainpm);
                     else
-                        pline(lost ? msgc_intrloss : msgc_intrgain,
+                        pline(lost ? msgc_intrloss : msgc_intrgain, "%s", 
                               lost ? msg->loseoutside : msg->gainoutside);
                     effect = TRUE;
                     break;
@@ -927,7 +927,7 @@ update_property(struct monst *mon, enum youprop prop,
                         pline(lost ? msgc_intrloss : msgc_intrgain, "You feel %s!",
                               lost ? msg->losepm : msg->gainpm);
                     else
-                        pline(lost ? msgc_intrloss : msgc_intrgain,
+                        pline(lost ? msgc_intrloss : msgc_intrgain, "%s", 
                               lost ? msg->loseoutside : msg->gainoutside);
                     effect = TRUE;
                     break;
