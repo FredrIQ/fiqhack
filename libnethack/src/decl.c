@@ -316,6 +316,7 @@ init_data(boolean including_program_state)
         memset(&program_state, 0, sizeof (program_state));
         memset(toplines, 0, sizeof (toplines));
         memset(toplines_count, 0, sizeof (toplines_count));
+        curline = 0;
 
         program_state.followmode = fm;
 
@@ -352,7 +353,6 @@ init_data(boolean including_program_state)
     histevents = NULL;
     histcount = 0;
     timer_id = 1;
-    curline = 0;
 
     flags.moonphase = 2;  /* half moon; this needs to be valid because
                              realtime_tasks won't be called until after
