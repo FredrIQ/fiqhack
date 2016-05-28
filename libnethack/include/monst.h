@@ -144,6 +144,7 @@ struct monst {
     unsigned msuspicious:1;     /* monster is suspicious of the player */
     unsigned iswiz:1;           /* is the Wizard of Yendor */
     uint64_t mspells;           /* known monster spells */
+    uint64_t spells_maintained; /* maintained spells */
 
     /* intrinsic format: os_outside:1, os_timeout:15 */
     short mintrinsic[LAST_PROP + 1]; /* monster intrinsics */

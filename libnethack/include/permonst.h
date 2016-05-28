@@ -25,9 +25,12 @@ enum mon_extypes {
     MX_EDOG_LEGACY,
     MX_ESHK_LEGACY,
     MX_EGD_LEGACY,
+    MX_NO_LEGACY,
+    MX_YES_LEGACY,
     MX_NO,
     MX_YES,
-    MX_LAST_LEGACY = MX_EGD_LEGACY,
+    MX_LAST_OLDLEGACY = MX_EGD_LEGACY,
+    MX_LAST_LEGACY = MX_YES_LEGACY,
 };
 
 /* new mxflags. EMIN is no more. */

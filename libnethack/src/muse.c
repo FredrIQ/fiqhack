@@ -101,7 +101,7 @@ arg_to_musable(const struct nh_cmd_arg *arg)
     return m;
 }
 
-/* A version of mconfdir for general purposes (needed due to grid bug checks) */
+/* A version of confdir for general purposes (needed due to grid bug checks) */
 static void
 mconfdir(const struct monst *mon, schar *dx, schar *dy)
 {

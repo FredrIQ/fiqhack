@@ -2146,9 +2146,16 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     /* SAVEBREAK: remove this logic and further legacy checks */
     namelth = mread16(mf);
     xtyp = mread16(mf);
-    boolean legacy = FALSE;
-    if (xtyp <= MX_LAST_LEGACY)
-        legacy = TRUE; /* old save */
+    int legacy = 0;
+    if (xtyp <= MX_LAST_OLDLEGACY)
+        legacy++; /* very old save */
+    if (xtyp <= MX_LAST_LEGACY) {
+        /* There is no free space in monst to save/restore, so we need one of these
+           again. However, from this point on, there should be a lot of free space
+           until this is needed again... */
+        legacy++; /* old save, hopefully not needed again soon */
+        xtyp += 2; /* new MX_NO/MX_YES locations */
+    }
 
     if (!mtmp) {
         mon = newmonst();
@@ -2234,6 +2241,13 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
             mon->mintrinsic[prop] |= FROMOUTSIDE_RAW;
     }
     mon->mspells = mread64(mf);
+    if (legacy < 1) {
+        mon->spells_maintained = mread64(mf);
+
+        /* Some reserved space for further expansion */
+        for (i = 0; i < 200; i++)
+            (void) mread8(mf);
+    }
 
     /* just mark the pointers for later restoration */
     mon->minvent = mread8(mf) ? (void *)1 : NULL;
@@ -2244,7 +2258,7 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     mon->mac = mread8(mf);
 
     /* Legacy saves need special handling */
-    if (legacy) {
+    if (legacy == 2) {
         /* set alignment to whatever the monster usually has -- might be corrected
            later if mon had epri/emin */
         mon->maligntyp = (!mon->data ? A_NEUTRAL :
@@ -2501,6 +2515,11 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     }
     mwrite8(mf, octet);
     mwrite64(mf, mon->mspells);
+    mwrite64(mf, mon->spells_maintained);
+
+    int i;
+    for (i = 0; i < 200; i++)
+        mwrite8(mf, 0);
 
     /* just mark that the pointers had values */
     mwrite8(mf, mon->minvent ? 1 : 0);

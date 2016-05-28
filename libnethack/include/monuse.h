@@ -45,6 +45,7 @@ enum monuse {
 };
 
 struct musable {
+    struct monst *mon;
     struct obj *obj;
     struct obj *tobj; /* target obj, currently only used when unlocking chests */
     int spell; /* for spells */
