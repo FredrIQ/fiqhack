@@ -736,9 +736,26 @@ run_maintained_spells(struct level *lev)
                 continue;
             }
 
-            /* Decrease power depending on spell level */
+            /* Decrease power depending on spell level and proficiency.
+               If an attempted cast fails 5 times in a row, unmaintain the spell. */
+            int chance = percent_success(&youmonst, spell);
+            int moves_modulo = 5;
+            while (moves_modulo) {
+                if (rnd(100) > chance) {
+                    moves_modulo--;
+                    continue;
+                }
+                break;
+            }
+            if (!moves_modulo) {
+                pline(msgc_intrloss, "Your limited ability with %s causes you to fumble "
+                      "and lose maintaining of it!", OBJ_NAME(objects[spell]));
+                spell_unmaintain(&youmonst, spell);
+                continue;
+            }
+
             int spell_level = objects[spell].oc_level;
-            if (moves % 5) {
+            if (!(moves % moves_modulo)) {
                 if (u.uen < spell_level) {
                     pline(msgc_intrloss, "You lack the energy to maintain %s.",
                           OBJ_NAME(objects[spell]));
@@ -768,10 +785,27 @@ run_maintained_spells(struct level *lev)
             if (!spell_maintained(mon, spell))
                 continue;
 
-            if (!mon_castable(mon, spell, TRUE)) {
-                spell_unmaintain(mon, spell);
+            /* Decrease power depending on spell level and proficiency.
+               If an attempted cast fails 5 times in a row, unmaintain the spell. */
+            int moves_modulo = 5;
+            while (moves_modulo) {
+                if (!mon_castable(mon, spell, FALSE)) {
+                    moves_modulo--;
+                    continue;
+                }
+                break;
+            }
+            if (!moves_modulo) {
+                spell_unmaintain(&youmonst, spell);
                 continue;
             }
+
+            /* Increase mspec_used depending on level and proficiency */
+            int spell_level = objects[spell].oc_level;
+            if (!(moves % moves_modulo)) {
+                mon->mspec_used += spell_level;
+            }
+
             run_maintained_spell(mon, spell);
         }
     }
@@ -782,12 +816,28 @@ run_maintained_spell(struct monst *mon, int spell)
 {
     switch (spell) {
     case SPE_HASTE_SELF:
-        if (property_timeout(&youmonst, FAST) < 5)
-            inc_timeout(&youmonst, FAST, 50, TRUE);
+        if (property_timeout(mon, FAST) < 5)
+            inc_timeout(mon, FAST, 50, TRUE);
         break;
     case SPE_DETECT_MONSTERS:
-        if (property_timeout(&youmonst, DETECT_MONSTERS) < 5)
-            inc_timeout(&youmonst, DETECT_MONSTERS, 20, TRUE);
+        if (property_timeout(mon, DETECT_MONSTERS) < 5)
+            inc_timeout(mon, DETECT_MONSTERS, 20, TRUE);
+        break;
+    case SPE_LEVITATION:
+        if (property_timeout(mon, LEVITATION) < 5)
+            inc_timeout(mon, LEVITATION, 5, TRUE);
+        break;
+    case SPE_INVISIBILITY:
+        if (property_timeout(mon, INVIS) < 5)
+            inc_timeout(mon, INVIS, 50, TRUE);
+        break;
+    case SPE_ASTRAL_EYESIGHT:
+        if (property_timeout(mon, XRAY_VISION) < 5)
+            inc_timeout(mon, XRAY_VISION, 10, TRUE);
+        break;
+    case SPE_PHASE:
+        if (property_timeout(mon, PASSES_WALLS) < 5)
+            inc_timeout(mon, PASSES_WALLS, 20, TRUE);
         break;
     default:
         impossible("%s maintaining an unmaintainable spell? (%d)",
@@ -1555,7 +1605,10 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     /* These spells can be toggled for whether or not to maintain it */
     case SPE_HASTE_SELF:
     case SPE_DETECT_MONSTERS:
-        /* Detect monsters isn't useful to maintain on a lower level */
+    case SPE_LEVITATION:
+    case SPE_INVISIBILITY:
+    case SPE_ASTRAL_EYESIGHT:
+    case SPE_PHASE:        /* Detect monsters isn't useful to maintain on a lower level */
         if (spellid(spell) == SPE_DETECT_MONSTERS &&
             role_skill < P_SKILLED)
             break;

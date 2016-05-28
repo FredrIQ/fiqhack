@@ -2474,6 +2474,10 @@ float_down(struct monst *mon)
     struct trap *trap = t_at(level, m_mx(mon), m_my(mon));
     d_level current_dungeon_level;
 
+    /* Unmaintain the levitation spell if applicable */
+    if (spell_maintained(mon, SPE_LEVITATION))
+        spell_unmaintain(mon, SPE_LEVITATION);
+
     if (you && Engulfed) {
         pline(msgc_statusend,
               (Flying) ? "You feel less buoyant, but you are still %s." :
