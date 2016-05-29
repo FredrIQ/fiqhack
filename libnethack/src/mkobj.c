@@ -1579,6 +1579,7 @@ dealloc_obj(struct obj *obj)
 
     extract_nobj(obj, &turnstate.floating_objects, NULL, 0);
 
+    ox_free(obj);
     free(obj);
 }
 
