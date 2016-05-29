@@ -1375,6 +1375,7 @@ spelleffects(boolean atme, struct musable *m)
         role_skill = mprof(mon, skill);
     }
 
+    boolean set_maintained = FALSE;
     boolean maintained = spell_maintained(mon, spell);
     if (maintained) {
         spell_unmaintain(&youmonst, spell);
@@ -1459,7 +1460,7 @@ spelleffects(boolean atme, struct musable *m)
         if (spell == SPE_DETECT_MONSTERS && role_skill < P_SKILLED)
             break;
         if (yn("Maintain the spell?") == 'y')
-            spell_maintain(&youmonst, spell);
+            set_maintained = TRUE; /* set it below, past all the usual sanity checks */
         break;
 
     /* The rest of the spells don't have targeting. */
@@ -1621,6 +1622,9 @@ spelleffects(boolean atme, struct musable *m)
             pline(msgc_monneutral,
                   "The amulet drains %s energy away...", s_suffix(mon_nam(mon)));
     }
+
+    if (set_maintained)
+        spell_maintain(mon, spell);
 
     /* pseudo is a temporary "false" object containing the spell stats */
     pseudo = mktemp_sobj(level, spell);
