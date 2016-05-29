@@ -50,7 +50,7 @@ static int learn(void);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(const struct monst *, int);
 static int throwspell(boolean, schar *dx, schar *dy, const struct musable *arg);
-static void cast_protection(struct monst *);
+static boolean cast_protection(struct monst *, boolean);
 static void spell_backfire(int);
 static int spellindex_by_typ(int);
 static void run_maintained_spell(struct monst *, int);
@@ -703,27 +703,27 @@ boolean
 spell_maintained(const struct monst *mon, int spell)
 {
     spell = (spell - SPE_DIG);
-    return !!(mon->spells_maintained & (uint64_t)(1 << spell));
+    return !!(mon->spells_maintained & ((uint64_t)1 << spell));
 }
 
 void
 spell_maintain(struct monst *mon, int spell)
 {
     spell = (spell - SPE_DIG);
-    mon->spells_maintained |= (uint64_t)(1 << spell);
+    mon->spells_maintained |= ((uint64_t)1 << spell);
 }
 
 void
 spell_unmaintain(struct monst *mon, int spell)
 {
     spell = (spell - SPE_DIG);
-    mon->spells_maintained &= ~(uint64_t)(1 << spell);
+    mon->spells_maintained &= ~((uint64_t)1 << spell);
 }
 
 void
 run_maintained_spells(struct level *lev)
 {
-    int spell, i;
+    int spell;
     /* First check the player if the level is the one the player is on */
     if (lev == level) {
         /* Check forgotten spells */
@@ -731,18 +731,16 @@ run_maintained_spells(struct level *lev)
             if (!spell_maintained(&youmonst, spell))
                 continue;
 
-            int spell_index = 0;
+            int spell_index = spellindex_by_typ(spell);
             boolean knows_spell = FALSE; /* might not be true if amnesia removed it */
-            for (i = 0; i < MAXSPELL; i++) {
-                if (spellid(i) == spell) {
-                    spell_index = i;
-                    knows_spell = TRUE;
-                }
-            }
+            if (spell_index >= 0)
+                knows_spell = TRUE;
 
+            /* We can't use spellname() but need to use OBJ_NAME directly, because
+               amnesia can delete any trace of spell index... */
             if (!knows_spell || spellknow(spell_index) <= 0 || confused(&youmonst)) {
                 pline(msgc_intrloss, "You can no longer maintain %s.",
-                      spellname(spell_index));
+                      OBJ_NAME(objects[spell]));
                 spell_unmaintain(&youmonst, spell);
                 continue;
             }
@@ -849,6 +847,20 @@ run_maintained_spell(struct monst *mon, int spell)
     case SPE_PHASE:
         if (property_timeout(mon, PASSES_WALLS) < 5)
             inc_timeout(mon, PASSES_WALLS, 20, TRUE);
+        break;
+    case SPE_PROTECTION:
+        if (cast_protection(mon, TRUE)) {
+            if (mon == &youmonst) {
+                if (u.uen < 5) {
+                    pline(msgc_intrloss, "Your energy level fizzles, preventing you "
+                          "from maintaining the protection spell!");
+                    spell_unmaintain(mon, SPE_PROTECTION);
+                    break;
+                }
+                u.uen -= 5;
+            } else
+                mon->mspec_used++;
+        }
         break;
     default:
         impossible("%s maintaining an unmaintainable spell? (%d)",
@@ -1009,7 +1021,7 @@ int
 docast(const struct nh_cmd_arg *arg)
 {
     struct musable m = arg_to_musable(arg);
-    int spell;
+    int spell = 0;
 
     if (mgetargspell(&m, &spell)) {
         m.spell = spell;
@@ -1164,8 +1176,8 @@ mspell_skilltype(int booktype)
     return 0;
 }
 
-static void
-cast_protection(struct monst *mon)
+static boolean
+cast_protection(struct monst *mon, boolean autocast)
 {
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
@@ -1239,8 +1251,12 @@ cast_protection(struct monst *mon)
         set_property(mon, PROTECTION, cur_prot, TRUE);
         /* protection is special cased to only decrease 50% of the time
            on Expert. */
-    } else if (you)
+        return TRUE;
+    }
+
+    if (you && !autocast)
         pline(msgc_yafm, "Your skin feels warm for a moment.");
+    return FALSE;
 }
 
 /* attempting to cast a forgotten spell will cause disorientation */
@@ -1359,9 +1375,9 @@ spelleffects(boolean atme, struct musable *m)
         role_skill = mprof(mon, skill);
     }
 
-    boolean maintained = spell_maintained(mon, spellid(spell));
+    boolean maintained = spell_maintained(mon, spell);
     if (maintained) {
-        spell_unmaintain(&youmonst, spellid(spell));
+        spell_unmaintain(&youmonst, spell);
         if (you)
             pline(msgc_cancelled, "Spell no longer maintained.");
 
@@ -1372,7 +1388,7 @@ spelleffects(boolean atme, struct musable *m)
 
        We want to do this *before* determining spell success, both for interface
        consistency and to cut down on needless mksobj calls. */
-    switch (spellid(spell)) {
+    switch (spell) {
 
     /* These spells ask the user to target a specific space. */
     case SPE_SUMMON_NASTY:
@@ -1435,6 +1451,7 @@ spelleffects(boolean atme, struct musable *m)
     case SPE_INVISIBILITY:
     case SPE_ASTRAL_EYESIGHT:
     case SPE_PHASE:
+    case SPE_PROTECTION:
         if (!you)
             break; /* TODO */
 
@@ -1738,7 +1755,7 @@ spelleffects(boolean atme, struct musable *m)
         }
         break;
     case SPE_PROTECTION:
-        cast_protection(mon);
+        cast_protection(mon, FALSE);
         break;
     case SPE_JUMPING:
         if (!you) {
