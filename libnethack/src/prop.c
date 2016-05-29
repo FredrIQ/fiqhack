@@ -1255,10 +1255,13 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case SICK:
-        if (you)
-            msgc = (timer ? msgc_fatal : msgc_fatal_predone);
-        else if (mon->mtame)
-            msgc = msgc_petfatal;
+        msgc = msgc_monneutral;
+        if (you || mon->mtame) {
+            msgc = msgc_statusheal;
+            if (!lost)
+                msgc = (mon->mtame ? msgc_petfatal :
+                        timer ? msgc_fatal : msgc_fatal_predone);
+        }
         if (lost && slot == os_dectimeout) {
             if (you || vis) {
                 pline(msgc, "%s die%s from %s illness.",
@@ -1276,6 +1279,9 @@ update_property(struct monst *mon, enum youprop prop,
             }
             break;
         }
+
+        if (slot == os_dectimeout)
+            break;
 
         if (you) {
             pline(msgc,
