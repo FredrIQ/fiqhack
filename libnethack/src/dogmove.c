@@ -17,7 +17,7 @@ static struct obj *DROPPABLES(struct monst *);
 static boolean can_reach_location(struct monst *, xchar, xchar, xchar, xchar);
 static boolean could_reach_item(struct monst *, xchar, xchar);
 static boolean is_better_armor(const struct monst *mtmp, struct obj *otmp);
-static boolean could_use_item(const struct monst *mtmp, struct obj *otmp);
+static boolean could_use_item(struct monst *mtmp, struct obj *otmp);
 
 /*
  * See if this armor is better than what we're wearing.
@@ -90,7 +90,7 @@ is_better_armor(const struct monst *mtmp, struct obj *otmp)
  * See if a monst could use this item in an offensive or defensive capacity.
  */
 static boolean
-could_use_item(const struct monst *mtmp, struct obj *otmp)
+could_use_item(struct monst *mtmp, struct obj *otmp)
 {
     /* make sure this is an intelligent monster */
     if (!mtmp || is_animal(mtmp->data) || mindless(mtmp->data) ||
@@ -136,7 +136,7 @@ could_use_item(const struct monst *mtmp, struct obj *otmp)
 }
 
 void
-initialize_pet_weapons(const struct monst *mtmp, struct pet_weapons *p)
+initialize_pet_weapons(struct monst *mtmp, struct pet_weapons *p)
 {
     struct obj *obj;
 
@@ -771,7 +771,7 @@ dog_move(struct monst *mtmp, int after)
  * distance and attack them if it's plausible.
  */
     if (find_item(mtmp, &m)) {
-        int ret = use_item(mtmp, &m);
+        int ret = use_item(&m);
 
         if (ret == 1)
             return 2;   /* died */

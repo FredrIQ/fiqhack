@@ -8,6 +8,7 @@
 
 # include "global.h"
 # include "coord.h"
+# include "monuse.h"
 # include "prop.h"
 
 /* The weapon_check flag is used two ways:
@@ -252,7 +253,7 @@ struct polyform_ability {
     const char *description; /* infinitive without the 'to' */
     boolean directed;
     union {
-        int (*handler_directed)(const struct nh_cmd_arg *);
+        int (*handler_directed)(const struct musable *);
         int (*handler_undirected)(void);
     };
 };

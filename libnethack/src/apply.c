@@ -1399,14 +1399,16 @@ dorub(const struct nh_cmd_arg *arg)
 int
 dojump(const struct nh_cmd_arg *arg)
 {
+    struct musable m = arg_to_musable(arg);
+
     /* Physical jump */
-    return jump(arg, 0);
+    return jump(&m, 0);
 }
 
 /* Meaning of "magic" argument: 0 means physical; otherwise skill level.
    Returns 0 if the jump should be aborted. */
 int
-get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
+get_jump_coords(const struct musable *m, coord *cc, int magic)
 {
     /* Used to point at the right monster for wounded legs */
     struct monst *maybe_steed = u.usteed ? u.usteed : &youmonst;
@@ -1470,7 +1472,7 @@ get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
     pline(msgc_uiprompt, "Where do you want to jump?");
     cc->x = u.ux;
     cc->y = u.uy;
-    if (getargpos(arg, cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
+    if (mgetargpos(m, cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     if (!magic && !(jumps(&youmonst) & ~INTRINSIC) &&
         distu(cc->x, cc->y) != 5) {
@@ -1571,12 +1573,12 @@ jump_to_coords(coord *cc)
 
 /* Meaning of "magic" argument: 0 means physical; otherwise skill level */
 int
-jump(const struct nh_cmd_arg *arg, int magic)
+jump(const struct musable *m, int magic)
 {
     coord cc;
 
     /* Get the coordinates.  This might involve aborting. */
-    if(!get_jump_coords(arg, &cc, magic))
+    if(!get_jump_coords(m, &cc, magic))
         return 0;
 
     /* Now do the actual jumping. */

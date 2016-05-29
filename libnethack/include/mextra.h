@@ -109,7 +109,7 @@ struct edog {
 };
 
 struct pet_weapons {
-    const struct monst *mon;
+    struct monst *mon;
     int uses_weapons;
     const struct obj *wep;
     const struct obj *hwep;

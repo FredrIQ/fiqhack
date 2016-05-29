@@ -469,6 +469,12 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
 int
 dotele(const struct nh_cmd_arg *arg)
 {
+    struct musable m = arg_to_musable(arg);
+    return mdotele(&m);
+}
+int
+mdotele(struct musable *m)
+{
     struct trap *trap;
 
     trap = t_at(level, u.ux, u.uy);
@@ -501,7 +507,7 @@ dotele(const struct nh_cmd_arg *arg)
 
         if (!supernatural_ability_available(SPID_RLOC)) {
             /* Try to use teleport away spell. */
-            if (objects[SPE_TELEPORT_AWAY].oc_name_known && !Confusion)
+            if (!Confusion)
                 for (sp_no = 0; sp_no < MAXSPELL; sp_no++)
                     if (spl_book[sp_no].sp_id == SPE_TELEPORT_AWAY) {
                         castit = TRUE;
@@ -535,7 +541,8 @@ dotele(const struct nh_cmd_arg *arg)
 
         if (castit) {
             exercise(A_WIS, TRUE);
-            if (spelleffects(sp_no, TRUE, arg))
+            m->spell = SPE_TELEPORT_AWAY;
+            if (spelleffects(TRUE, m))
                 return 1;
             else
                 return 0;

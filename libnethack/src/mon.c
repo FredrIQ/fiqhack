@@ -998,13 +998,7 @@ mpickstuff(struct monst *mon, boolean autopickup)
        remain in air if there turns out to be nothing of interest in the
        chest (or if it's trapped) */
     struct musable boxuse;
-    boxuse.x = 0;
-    boxuse.y = 0;
-    boxuse.z = 0;
-    boxuse.obj = NULL;
-    boxuse.tobj = NULL;
-    boxuse.spell = 0;
-    boxuse.use = 0;
+    init_musable(mon, &boxuse);
     for (otmp = level->objects[mon->mx][mon->my]; otmp;
          otmp = otmp->nexthere) {
         if (autopickup) /* only pickup from ground... */
@@ -1025,20 +1019,20 @@ mpickstuff(struct monst *mon, boolean autopickup)
                 boxuse.spell = SPE_DETECT_UNSEEN;
                 boxuse.use = MUSE_SPE;
             } else
-                find_item_obj(mon, mon->minvent, &boxuse,
+                find_item_obj(mon->minvent, &boxuse,
                               FALSE, WAN_SECRET_DOOR_DETECTION);
             if (boxuse.use)
-                return !!use_item(mon, &boxuse);
+                return !!use_item(&boxuse);
         }
         if (otmp->mbknown && otmp->otrapped) /* container is trapped */
             continue; /* no untrapping for now */
         /* if we're levitating at will, probe the chest for good stuff */
         if (levitates(mon) && levitates_at_will(mon, TRUE, FALSE)) {
             /* find and use probing if we can */
-            if (find_item_obj(mon, mon->minvent, &boxuse,
+            if (find_item_obj(mon->minvent, &boxuse,
                               FALSE, WAN_PROBING)) {
                 boxuse.z = 1; /* zap downwards */
-                return !!use_item(mon, &boxuse);
+                return !!use_item(&boxuse);
             }
         }
         /* now, use the usual item pickup routines */
@@ -1062,13 +1056,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
     boolean cursed_boh = FALSE; /* maybe zap cancellation later */
     boolean found_castle_wand; /* only ignore the first wishing wand in the castle chest */
     struct musable muse; /* unlocking tool, or cancellation for cursed BoH */
-    muse.x = 0;
-    muse.y = 0;
-    muse.z = 0;
-    muse.obj = NULL;
-    muse.tobj = NULL;
-    muse.spell = 0;
-    muse.use = 0;
+    init_musable(mon, &muse);
 
     for (obj = (container ? (Has_contents(container) ? container->cobj : NULL) :
                 mon->dlevel->objects[mon->mx][mon->my]); obj; obj = nobj) {
@@ -1168,9 +1156,11 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             return !!mon_remove_levitation(mon, FALSE);
         if (container && container->olocked) {
             if (find_unlocker(mon, &muse)) {
+                muse.x = 0;
+                muse.y = 0;
                 muse.z = 1; /* use downwards */
                 muse.tobj = obj; /* for MUSE_KEY to figure out what container to open */
-                return !!use_item(mon, &muse);
+                return !!use_item(&muse);
             }
             /* can't open chest, so ignore it, but set mknown to prevent pathfinding to
                the chest in the future w/o a key */
@@ -1211,16 +1201,20 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
         }
     }
     if (cursed_boh) { /* there is a cursed BoH here, maybe we can cancel it */
-        if (find_item_obj(mon, mon->minvent, &muse,
+        if (find_item_obj(mon->minvent, &muse,
                           FALSE, WAN_CANCELLATION)) {
+            muse.x = 0;
+            muse.y = 0;
             muse.z = 1;
-            return use_item(mon, &muse);
+            return use_item(&muse);
         }
         if (mon_castable(mon, SPE_CANCELLATION, TRUE) > 80) {
+            muse.x = 0;
+            muse.y = 0;
             muse.z = 1;
             muse.spell = SPE_CANCELLATION;
             muse.use = MUSE_SPE;
-            return use_item(mon, &muse);
+            return use_item(&muse);
         }
     }
     return FALSE;

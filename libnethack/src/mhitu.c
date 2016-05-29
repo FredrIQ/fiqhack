@@ -437,9 +437,9 @@ mattacku(struct monst *mtmp)
     }
 
     /* Unlike defensive stuff, don't let them use item _and_ attack. */
-    memset(&musable, 0, sizeof (musable));
+    init_musable(mtmp, &musable);
     if (find_item(mtmp, &musable)) {
-        int foo = use_item(mtmp, &musable);
+        int foo = use_item(&musable);
 
         if (foo != 0)
             return foo == 1;

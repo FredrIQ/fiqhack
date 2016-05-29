@@ -360,7 +360,7 @@ dochug(struct monst *mtmp)
 
     /* item usage logic */
     if (find_item(mtmp, &musable)) {
-        if (use_item(mtmp, &musable) != 0)
+        if (use_item(&musable) != 0)
             return 1;
     }
 
@@ -590,7 +590,7 @@ static const char magical[] = {
 };
 
 boolean
-monster_would_take_item(const struct monst *mtmp, struct obj *otmp)
+monster_would_take_item(struct monst *mtmp, struct obj *otmp)
 {
     int pctload = (curr_mon_load(mtmp) * 100) / max_mon_load(mtmp);
 
@@ -1046,7 +1046,8 @@ not_special:
                 /* doorbusters are taken care of in postmov */
                 unlocker.x = nix - mtmp->mx;
                 unlocker.y = niy - mtmp->my;
-                if (use_item(mtmp, &unlocker) == 1) /* died */
+                unlocker.z = 0;
+                if (use_item(&unlocker) == 1) /* died */
                     return 2;
                 return 3;
             }

@@ -20,8 +20,8 @@ static void uunstick(void);
 static int armor_to_dragon(int);
 static void newman(void);
 
-static int dobreathe(const struct nh_cmd_arg *);
-static int dospit(const struct nh_cmd_arg *);
+static int dobreathe(const struct musable *);
+static int dospit(const struct musable *);
 static int doremove(void);
 static int dospinweb(void);
 static int dosummon(void);
@@ -450,6 +450,12 @@ has_polyform_ability(const struct permonst *pm,
 int
 domonability(const struct nh_cmd_arg *arg)
 {
+    struct musable m = arg_to_musable(arg);
+    return mdomonability(&m);
+}
+int
+mdomonability(const struct musable *m)
+{
     struct polyform_ability pa;
     if (cancelled(&youmonst)) {
         pline(msgc_cancelled,
@@ -458,7 +464,7 @@ domonability(const struct nh_cmd_arg *arg)
     }
     if (has_polyform_ability(youmonst.data, &pa)) {
         if (pa.directed)
-            return pa.handler_directed(arg);
+            return pa.handler_directed(m);
         else
             return pa.handler_undirected();
     } else if (Upolyd)
@@ -862,7 +868,7 @@ rehumanize(int how, const char *killer)
 }
 
 static int
-dobreathe(const struct nh_cmd_arg *arg)
+dobreathe(const struct musable *m)
 {
     const struct attack *mattk;
     schar dx, dy, dz;
@@ -877,7 +883,7 @@ dobreathe(const struct nh_cmd_arg *arg)
     }
     u.uen -= 15;
 
-    if (!getargdir(arg, NULL, &dx, &dy, &dz))
+    if (!mgetargdir(m, NULL, &dx, &dy, &dz))
         return 0;
 
     mattk = attacktype_fordmg(youmonst.data, AT_BREA, AD_ANY);
@@ -890,12 +896,12 @@ dobreathe(const struct nh_cmd_arg *arg)
 }
 
 static int
-dospit(const struct nh_cmd_arg *arg)
+dospit(const struct musable *m)
 {
     struct obj *otmp;
     schar dx, dy, dz;
 
-    if (!getargdir(arg, NULL, &dx, &dy, &dz))
+    if (!mgetargdir(m, NULL, &dx, &dy, &dz))
         return 0;
 
     const struct attack *at = attacktype_fordmg(youmonst.data, AT_SPIT, AD_ANY);

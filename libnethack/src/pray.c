@@ -1681,8 +1681,12 @@ can_pray(boolean praying)
 int
 dopray(const struct nh_cmd_arg *arg)
 {
-    (void) arg;
-
+    struct musable m = arg_to_musable(arg);
+    return mdopray(&m);
+}
+int
+mdopray(struct musable *m)
+{
     /* Confirm accidental slips of Alt-P */
     if (flags.prayconfirm)
         if (yn("Are you sure you want to pray?") == 'n')
@@ -1778,14 +1782,18 @@ prayer_done(void)
 int
 doturn(const struct nh_cmd_arg *arg)
 {
+    struct musable m = arg_to_musable(arg);
+    return mdoturn(&m);
+}
+int
+mdoturn(struct musable *m)
+{
     struct monst *mtmp, *mtmp2;
     int once, range, xlev;
 
-    (void) arg;
-
     if (!supernatural_ability_available(SPID_TURN)) {
         /* Try to use turn undead spell. */
-        if (objects[SPE_TURN_UNDEAD].oc_name_known) {
+        if (!confused(m->mon)) {
             int sp_no;
 
             for (sp_no = 0;
@@ -1794,8 +1802,10 @@ doturn(const struct nh_cmd_arg *arg)
                 ;
 
             if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == SPE_TURN_UNDEAD &&
-                spellknow(sp_no) > 0)
-                return spelleffects(sp_no, TRUE, arg);
+                spellknow(sp_no) > 0) {
+                m->spell = SPE_TURN_UNDEAD;
+                return spelleffects(TRUE, m);
+            }
         }
 
         pline(msgc_cancelled, "You don't know how to turn undead!");

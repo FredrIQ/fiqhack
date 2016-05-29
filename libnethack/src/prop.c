@@ -768,10 +768,14 @@ set_property(struct monst *mon, enum youprop prop,
         return update_property(mon, prop, os_outside);
 }
 
+/* Increases a property timeout. Does nothing if the time is zero. */
 boolean
 inc_timeout(struct monst *mon, enum youprop prop,
             int time, boolean forced)
 {
+    if (!time)
+        return FALSE;
+
     return set_property(mon, prop,
                         min(time + property_timeout(mon, prop),
                             TIMEOUT_RAW), forced);

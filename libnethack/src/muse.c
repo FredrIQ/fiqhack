@@ -28,17 +28,32 @@ boolean m_using = FALSE;
  */
 
 static void mconfdir(const struct monst *, schar *, schar *);
-static int precheck(struct monst *mon, struct obj *obj, struct musable *m);
+static int precheck(struct obj *obj, struct musable *m);
 static void mzapmsg(struct monst *, struct obj *, boolean);
 static void mreadmsg(struct monst *, struct obj *);
 static void mquaffmsg(struct monst *, struct obj *);
 static void mon_break_wand(struct monst *, struct obj *);
 static int find_item_score(const struct monst *, struct obj *, coord *);
-static int find_item_single(const struct monst *, struct obj *, boolean,
-                            struct musable *, boolean, boolean);
+static int find_item_single(struct obj *, boolean, struct musable *, boolean, boolean);
 static boolean mon_allowed(int);
 
 static int trapx, trapy;
+
+void
+init_musable(struct monst *mon, struct musable *m)
+{
+    m->mon = mon;
+    m->obj = NULL;
+    m->tobj = NULL;
+    m->spell = 0;
+    m->use = MUSE_NONE;
+
+    /* Set xyz to -1, which is never valid, as a sentinel for not having chosen any
+       direction/position yet. */
+    m->x = -1;
+    m->y = -1;
+    m->z = -1;
+}
 
 /* Converts a nh_cmd_arg to a musable, allowing one to use a single struct for both
    player and monster "commands". It is important to note that this performs no
@@ -52,18 +67,9 @@ struct musable
 arg_to_musable(const struct nh_cmd_arg *arg)
 {
     struct musable m;
-    m.obj = NULL;
-    m.tobj = NULL;
-    m.spell = 0;
-    m.use = MUSE_NONE; /* Used as a sentinel to mark the player as the user. */
+    init_musable(&youmonst, &m);
 
-    /* Set xyz to -1, which is never valid, as a sentinel for not having chosen any
-       direction/position yet. */
-    m.x = -1;
-    m.y = -1;
-    m.z = -1;
-
-    /* Set xyz. Note that currently, muse use x/y/z both for directions and absolute
+    /* Set xyz. Note that currently, muse uses x/y/z both for directions and absolute
        positions. So far, they have been mutually exclusive, but it is possible that
        this changes later. */
     if (arg->argtype & CMD_ARG_DIR)
@@ -112,12 +118,13 @@ mconfdir(const struct monst *mon, schar *dx, schar *dy)
     return;
 }
 
-/* Sets direction deltas in d*, possibly asking the user. Unlike other
-   mgetarg equavilents, this needs an explicit monst for confusion/stun purposes */
+/* Sets direction deltas in d*, possibly asking the user. */
 int
-mgetargdir(const struct monst *mon, const struct musable *m, const char *query,
+mgetargdir(const struct musable *m, const char *query,
            schar *dx, schar *dy, schar *dz)
 {
+    struct monst *mon = m->mon;
+
     /* Is there a reasonable direction already? */
     if ((m->x != -1 || m->y != -1 || m->z != -1) &&
         (!m->x || !m->y || mon->data != &mons[PM_GRID_BUG])) {
@@ -139,7 +146,7 @@ mgetargdir(const struct monst *mon, const struct musable *m, const char *query,
         return 1;
     }
 
-    if (m->use != MUSE_NONE) {
+    if (m->mon != &youmonst) {
         impossible("mgetargdir: unclear direction for non-player?");
         return 0;
     }
@@ -160,7 +167,7 @@ mgetargpos(const struct musable *m, coord *cc, boolean force,
         return NHCR_ACCEPTED;
     }
 
-    if (m->use != MUSE_NONE) {
+    if (m->mon != &youmonst) {
         impossible("mgetargpos: unclear position for non-player?");
         return 0;
     }
@@ -175,7 +182,7 @@ mgetargpos(const struct musable *m, coord *cc, boolean force,
 struct obj *
 mgetargobj(const struct musable *m, const char *let, const char *word)
 {
-    if (m->use != MUSE_NONE)
+    if (m->mon != &youmonst)
         return m->obj;
 
     /* Is there a valid object? (If not, ask for another.) */
@@ -195,7 +202,7 @@ mgetargspell(const struct musable *m, int *spell_no)
         return TRUE;
     }
 
-    if (m->use != MUSE_NONE) {
+    if (m->mon != &youmonst) {
         impossible("mgetargspell: unclear spell for non-player?");
         return 0;
     }
@@ -207,8 +214,9 @@ mgetargspell(const struct musable *m, int *spell_no)
    the item.  Returns 0 if nothing happened, 2 if the monster can't do anything
    (i.e. it teleported) and 1 if it's dead. */
 static int
-precheck(struct monst *mon, struct obj *obj, struct musable *m)
+precheck(struct obj *obj, struct musable *m)
 {
+    struct monst *mon = m->mon;
     boolean vis;
     int wandlevel;
 
@@ -1054,16 +1062,16 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
 
 /* Find an unlocking tool */
 boolean
-find_unlocker(const struct monst *mon, struct musable *m)
+find_unlocker(struct monst *mon, struct musable *m)
 {
     /* Initialize musable */
-    memset(m, 0, sizeof (struct musable));
+    init_musable(mon, m);
 
     /* look for keys
        TODO: lockpicks should require an occupation timer */
-    if (find_item_obj(mon, mon->minvent, m, FALSE, SKELETON_KEY) ||
-        find_item_obj(mon, mon->minvent, m, FALSE, LOCK_PICK) ||
-        find_item_obj(mon, mon->minvent, m, FALSE, CREDIT_CARD))
+    if (find_item_obj(mon->minvent, m, FALSE, SKELETON_KEY) ||
+        find_item_obj(mon->minvent, m, FALSE, LOCK_PICK) ||
+        find_item_obj(mon->minvent, m, FALSE, CREDIT_CARD))
         return TRUE;
 
     /* check if we can cast knock, only accepting
@@ -1077,12 +1085,12 @@ find_unlocker(const struct monst *mon, struct musable *m)
     }
 
     /* look for good wands of opening */
-    if (find_item_obj(mon, mon->minvent, m, FALSE, WAN_OPENING))
+    if (find_item_obj(mon->minvent, m, FALSE, WAN_OPENING))
         return TRUE;
     /* if we are on the ascension run, accept dig/striking as well */
     if (mon->mstrategy == st_ascend) {
-        if (find_item_obj(mon, mon->minvent, m, FALSE, WAN_DIGGING) ||
-            find_item_obj(mon, mon->minvent, m, FALSE, WAN_STRIKING))
+        if (find_item_obj(mon->minvent, m, FALSE, WAN_DIGGING) ||
+            find_item_obj(mon->minvent, m, FALSE, WAN_STRIKING))
             return TRUE;
         if (mon_castable(mon, SPE_FORCE_BOLT, FALSE))
             m->spell = SPE_FORCE_BOLT;
@@ -1099,16 +1107,17 @@ find_unlocker(const struct monst *mon, struct musable *m)
 /* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in pathfinding),
    it makes no sense to have it here */
 boolean
-find_item(const struct monst *mon, struct musable *m)
+find_item(struct monst *mon, struct musable *m)
 {
+    init_musable(mon, m);
     struct obj *obj = NULL;
     struct trap *t;
     int x = mon->mx, y = mon->my;
     struct level *lev = mon->dlevel;
     boolean stuck = (mon == u.ustuck && sticks(youmonst.data));
     boolean immobile = (mon->data->mmove == 0);
-    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) &&
-                          m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
+    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) && m_canseeu(mon) &&
+                          distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     coord tc;
     int fraction;
     m->x = 0;
@@ -1198,7 +1207,7 @@ find_item(const struct monst *mon, struct musable *m)
 
         /* look for potions of acid */
         if (!nohands(mon->data)) {
-            if (find_item_obj(mon, mon->minvent, m, FALSE, POT_ACID))
+            if (find_item_obj(mon->minvent, m, FALSE, POT_ACID))
                 return TRUE;
         }
 
@@ -1209,9 +1218,9 @@ find_item(const struct monst *mon, struct musable *m)
             return TRUE;
         }
         if (!nohands(mon->data)) {
-            if (find_item_obj(mon, mon->minvent, m, FALSE, POT_POLYMORPH))
+            if (find_item_obj(mon->minvent, m, FALSE, POT_POLYMORPH))
                 return TRUE;
-            if (find_item_obj(mon, mon->minvent, m, FALSE, WAN_POLYMORPH))
+            if (find_item_obj(mon->minvent, m, FALSE, WAN_POLYMORPH))
                 return TRUE;
         }
     }
@@ -1243,6 +1252,7 @@ find_item(const struct monst *mon, struct musable *m)
                    so there is no setting of it there, but it is needed here */
                 m->x = mon->mx;
                 m->y = mon->my;
+                m->z = 0;
             }
             return TRUE;
         }
@@ -1270,8 +1280,8 @@ find_item(const struct monst *mon, struct musable *m)
         }
         /* Unihorn-less sickness: look for healing potions */
         if (sick(mon)) {
-            if (find_item_obj(mon, mon->minvent, m, FALSE, POT_EXTRA_HEALING) ||
-                find_item_obj(mon, mon->minvent, m, FALSE, POT_FULL_HEALING))
+            if (find_item_obj(mon->minvent, m, FALSE, POT_EXTRA_HEALING) ||
+                find_item_obj(mon->minvent, m, FALSE, POT_FULL_HEALING))
                 return TRUE;
         }
     }
@@ -1286,7 +1296,7 @@ find_item(const struct monst *mon, struct musable *m)
         }
     }
 
-    if (blind(mon) && find_item_obj(mon, mon->minvent, m, FALSE, CARROT))
+    if (blind(mon) && find_item_obj(mon->minvent, m, FALSE, CARROT))
         return TRUE;
     /* It so happens there are two unrelated cases when we might want to check
        specifically for healing alone.  The first is when the monster is blind
@@ -1441,6 +1451,7 @@ find_item(const struct monst *mon, struct musable *m)
     tc_best.x = 0;
     tc_best.y = 0;
     struct musable m2; /* for find_item_single */
+    init_musable(m->mon, &m2);
     int usable = 0;
 
     /* Spell handling */
@@ -1458,7 +1469,7 @@ find_item(const struct monst *mon, struct musable *m)
              mprof(mon, MP_SCLRC) >= P_SKILLED))
             obj->blessed = 1;
 
-        usable = find_item_single(mon, obj, TRUE, &m2, mclose ? TRUE : FALSE, FALSE);
+        usable = find_item_single(obj, TRUE, &m2, mclose ? TRUE : FALSE, FALSE);
         if (usable && mon_allowed(spell)) {
             if (usable == 1) {
                 if (!rn2(randcount)) {
@@ -1474,6 +1485,7 @@ find_item(const struct monst *mon, struct musable *m)
                         }
                         m->x = m_mx(mclose);
                         m->y = m_my(mclose);
+                        m->z = 0;
                     }
                     m->use = MUSE_SPE;
                 }
@@ -1518,13 +1530,9 @@ find_item(const struct monst *mon, struct musable *m)
        and if containers are found, those are checked recursively.
        Deeper objects are not considered before objects in the current
        chain. */
-    m->use = 0;
-    m->spell = 0;
-    m->obj = NULL;
-    m->x = 0;
-    m->y = 0;
-    m->z = 0;
-    if (find_item_obj(mon, mon->minvent, m, mclose ? TRUE : FALSE, 0))
+    init_musable(mon, m); /* reset musable */
+
+    if (find_item_obj(mon->minvent, m, mclose ? TRUE : FALSE, 0))
         return TRUE; /* find_item_obj handles musable */
 
     /* If we are here, there was no relevant objects found.
@@ -1565,7 +1573,7 @@ find_item(const struct monst *mon, struct musable *m)
 }
 
 boolean
-find_item_obj(const struct monst *mon, struct obj *chain, struct musable *m,
+find_item_obj(struct obj *chain, struct musable *m,
               boolean close, int specobj)
 {
     /* If specobj is nonzero (an object type), only look for that object, performing
@@ -1580,8 +1588,10 @@ find_item_obj(const struct monst *mon, struct obj *chain, struct musable *m,
     int score_best = 0;
     coord tc;
     coord tc_best;
+    struct monst *mon = m->mon;
     struct obj *obj;
     struct musable m2;
+    init_musable(mon, &m2);
     struct obj *obj_best = NULL;
 
     for (obj = chain; obj; obj = obj->nobj) {
@@ -1631,7 +1641,7 @@ find_item_obj(const struct monst *mon, struct obj *chain, struct musable *m,
                 } else /* we aren't safe, ignore the chained bag for now */
                     continue;
             } else if ((obj->mknown = 1) &&
-                       find_item_obj(mon, obj->cobj, m, close, specobj)) {
+                       find_item_obj(obj->cobj, m, close, specobj)) {
                 /* obj->mknown = 1 to mark the container as recognized -- monster knows what's inside */
                 /* Check if there's something interesting in it */
                 m->use = MUSE_CONTAINER; /* take the object out */
@@ -1644,7 +1654,7 @@ find_item_obj(const struct monst *mon, struct obj *chain, struct musable *m,
         }
         if (specobj && obj->otyp != specobj)
             continue;
-        usable = find_item_single(mon, obj, FALSE, &m2, close, !!specobj);
+        usable = find_item_single(obj, FALSE, &m2, close, !!specobj);
         if (usable && mon_allowed(obj->otyp)) {
             if (usable == 1) {
                 if (!rn2(randcount)) {
@@ -1703,9 +1713,10 @@ find_item_obj(const struct monst *mon, struct obj *chain, struct musable *m,
    if BUC is unknown. This is by design. Otherwise, they always try
    to use items semi-"intelligently" */
 static int
-find_item_single(const struct monst *mon, struct obj *obj, boolean spell,
-                 struct musable *m, boolean close, boolean specific)
+find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean close,
+                 boolean specific)
 {
+    struct monst *mon = m->mon;
     boolean stuck = (mon == u.ustuck && sticks(youmonst.data));
     int x = mon->mx, y = mon->my;
     struct level *lev = mon->dlevel;
@@ -2027,15 +2038,16 @@ find_item_single(const struct monst *mon, struct obj *obj, boolean spell,
 /* Use item or dungeon feature (TODO: make it only items).
    Returns 0: can act again, 1: died, 2: can not act again */
 int
-use_item(struct monst *mon, struct musable *m)
+use_item(struct musable *m)
 {
+    struct monst *mon = m->mon;
     struct obj *obj = m->obj;
     int i;
     if (obj &&
         m->use != MUSE_SPE &&       /* MUSE_SPE deals with m->spell, not m->obj */
         m->use != MUSE_THROW && /* thrown potions never release ghosts/djinni */
         m->use != MUSE_CONTAINER && /* BoH vanish logic is performed in find_item_obj */
-        (i = precheck(mon, obj, m)))
+        (i = precheck(obj, m)))
         return i;
     boolean vis = cansee(mon->mx, mon->my);
     boolean vismon = mon_visible(mon);
@@ -2053,7 +2065,7 @@ use_item(struct monst *mon, struct musable *m)
 
     switch (m->use) {
     case MUSE_SPE:
-        m_spelleffects(mon, m->spell, m->x, m->y, m->z);
+        spelleffects(FALSE, m);
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_SCR:
         mreadmsg(mon, obj);
@@ -2817,10 +2829,11 @@ rnd_misc_item(struct monst *mtmp, enum rng rng)
 }
 
 boolean
-searches_for_item(const struct monst *mon, struct obj *obj)
+searches_for_item(struct monst *mon, struct obj *obj)
 {
     int typ = obj->otyp;
     struct musable dummy; /* for find_item_obj */
+    init_musable(mon, &dummy); /* sets musable->mon */
 
     /* don't loot bones piles */
     if (is_animal(mon->data) || mindless(mon->data) ||
@@ -2840,7 +2853,7 @@ searches_for_item(const struct monst *mon, struct obj *obj)
         obj->mknown &&
         typ != WAN_WISHING &&
         mon_castable(mon, SPE_CHARGING, TRUE) < 80 &&
-        !find_item_obj(mon, mon->minvent, &dummy, FALSE, SCR_CHARGING))
+        !find_item_obj(mon->minvent, &dummy, FALSE, SCR_CHARGING))
         return FALSE;
 
     /* discharged lamps */

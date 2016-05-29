@@ -82,10 +82,9 @@ extern void break_conduct(enum player_conduct);
 extern int doapply(const struct nh_cmd_arg *);
 extern int dorub(const struct nh_cmd_arg *);
 extern int dojump(const struct nh_cmd_arg *);
-extern int get_jump_coords(const struct nh_cmd_arg *arg, coord *cc,
-                           int magic);
+extern int get_jump_coords(const struct musable *, coord *, int);
 extern void jump_to_coords(coord *cc);
-extern int jump(const struct nh_cmd_arg *, int);
+extern int jump(const struct musable *, int);
 extern int number_leashed(void);
 extern void o_unleash(struct obj *);
 extern void m_unleash(struct monst *, boolean);
@@ -417,7 +416,7 @@ extern void wary_dog(struct monst *, boolean);
 extern int dog_nutrition(struct monst *, struct obj *);
 extern int dog_eat(struct monst *, struct obj *, int, int, boolean);
 extern int dog_move(struct monst *, int);
-extern void initialize_pet_weapons(const struct monst *, struct pet_weapons *);
+extern void initialize_pet_weapons(struct monst *, struct pet_weapons *);
 extern boolean pet_wants_object(const struct pet_weapons *, struct obj *);
 
 /* ### dokick.c ### */
@@ -1205,7 +1204,7 @@ extern void mon_regen(struct monst *, boolean);
 extern int dochugw(struct monst *);
 extern boolean onscary(int, int, const struct monst *);
 extern void monflee(struct monst *, int, boolean, boolean);
-extern boolean monster_would_take_item(const struct monst *, struct obj *);
+extern boolean monster_would_take_item(struct monst *, struct obj *);
 extern int dochug(struct monst *);
 extern int m_move(struct monst *, int);
 extern boolean closed_door(struct level *lev, int x, int y);
@@ -1240,24 +1239,24 @@ extern boolean hits_bars(struct obj **, int, int, int, int);
 
 /* ### muse.c ### */
 
+extern void init_musable(struct monst *, struct musable *);
 extern struct musable arg_to_musable(const struct nh_cmd_arg *);
-extern int mgetargdir(const struct monst *, const struct musable *,
-                      const char *, schar *, schar *, schar *);
+extern int mgetargdir(const struct musable *, const char *, schar *, schar *,
+                      schar *);
 extern int mgetargpos(const struct musable *, coord *, boolean, const char *);
 extern struct obj *mgetargobj(const struct musable *, const char *, const char *);
 extern boolean mgetargspell(const struct musable *, int *);
 extern int mon_choose_dirtarget(const struct monst *, struct obj *, coord *);
 extern int mon_choose_spectarget(const struct monst *, struct obj *, coord *);
-extern boolean find_unlocker(const struct monst *, struct musable *);
-extern boolean find_item(const struct monst *, struct musable *);
-extern boolean find_item_obj(const struct monst *, struct obj *,
-                             struct musable *, boolean, int);
-extern int use_item(struct monst *, struct musable *);
+extern boolean find_unlocker(struct monst *, struct musable *);
+extern boolean find_item(struct monst *, struct musable *);
+extern boolean find_item_obj(struct obj *, struct musable *, boolean, int);
+extern int use_item(struct musable *);
 extern boolean mon_makewish(struct monst *);
 extern int rnd_defensive_item(struct monst *, enum rng rng);
 extern int rnd_offensive_item(struct monst *, enum rng rng);
 extern int rnd_misc_item(struct monst *mon, enum rng rng);
-extern boolean searches_for_item(const struct monst *, struct obj *);
+extern boolean searches_for_item(struct monst *, struct obj *);
 extern boolean mon_reflects(const struct monst *, const struct monst *,
                             boolean, const char *, const char *);
 extern void you_aggravate(const struct monst *);
@@ -1387,6 +1386,7 @@ extern void change_sex(void);
 extern void polyself(boolean);
 extern int polymon(int, boolean);
 extern int domonability(const struct nh_cmd_arg *);
+extern int mdomonability(const struct musable *);
 extern boolean has_polyform_ability(const struct permonst *,
                                     struct polyform_ability *);
 extern boolean touched_monster(int);
@@ -1419,9 +1419,11 @@ extern const char *bottlename(void);
 extern int dosacrifice(const struct nh_cmd_arg *);
 extern boolean can_pray(boolean);
 extern int dopray(const struct nh_cmd_arg *);
+extern int mdopray(struct musable *);
 extern void prayer_done(void);
 extern const char *u_gname(void);
 extern int doturn(const struct nh_cmd_arg *);
+extern int mdoturn(struct musable *);
 extern const char *a_gname(void);
 extern const char *a_gname_at(xchar x, xchar y);
 extern const char *align_gname(aligntyp);
@@ -1710,8 +1712,7 @@ extern int spell_skilltype(int);
 extern int mspell_skilltype(int);
 extern int monspellprot(struct monst *);
 extern int mon_castable(const struct monst *, int, boolean);
-extern int m_spelleffects(struct monst *, int, schar, schar, schar);
-extern int spelleffects(int, boolean, const struct nh_cmd_arg *);
+extern int spelleffects(boolean, struct musable *);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
 extern void dump_spells(void);
@@ -1759,6 +1760,7 @@ extern boolean teleport_pet(struct monst *, boolean);
 extern int tele(void);
 extern int tele_impl(boolean wizard_tele, boolean next_to_u);
 extern int dotele(const struct nh_cmd_arg *);
+extern int mdotele(struct musable *);
 extern void level_tele(void);
 extern void mon_level_tele(struct monst *mon);
 extern void level_tele_impl(struct monst *, boolean wizard_tele);

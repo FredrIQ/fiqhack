@@ -49,9 +49,10 @@ static boolean confused_book(struct monst *, struct obj *);
 static int learn(void);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(const struct monst *, int);
-static int throwspell(boolean, schar *dx, schar *dy, const struct nh_cmd_arg *arg);
+static int throwspell(boolean, schar *dx, schar *dy, const struct musable *arg);
 static void cast_protection(struct monst *);
 static void spell_backfire(int);
+static int spellindex_by_typ(int);
 static void run_maintained_spell(struct monst *, int);
 
 static const char *spelltypemnemonic(int);
@@ -688,6 +689,16 @@ mon_addspell(struct monst *mon, int typ)
     return mspellid;
 }
 
+static int
+spellindex_by_typ(int spell)
+{
+    int i;
+    for (i = 0; i < MAXSPELL; i++)
+        if (spellid(i) == spell)
+            return i;
+    return -1;
+}
+
 boolean
 spell_maintained(const struct monst *mon, int spell)
 {
@@ -731,7 +742,7 @@ run_maintained_spells(struct level *lev)
 
             if (!knows_spell || spellknow(spell_index) <= 0 || confused(&youmonst)) {
                 pline(msgc_intrloss, "You can no longer maintain %s.",
-                      OBJ_NAME(objects[spell]));
+                      spellname(spell_index));
                 spell_unmaintain(&youmonst, spell);
                 continue;
             }
@@ -749,7 +760,7 @@ run_maintained_spells(struct level *lev)
             }
             if (!moves_modulo) {
                 pline(msgc_intrloss, "Your limited ability with %s causes you to fumble "
-                      "and lose maintaining of it!", OBJ_NAME(objects[spell]));
+                      "and lose maintaining of it!", spellname(spell_index));
                 spell_unmaintain(&youmonst, spell);
                 continue;
             }
@@ -758,7 +769,7 @@ run_maintained_spells(struct level *lev)
             if (!(moves % moves_modulo)) {
                 if (u.uen < spell_level) {
                     pline(msgc_intrloss, "You lack the energy to maintain %s.",
-                          OBJ_NAME(objects[spell]));
+                          spellname(spell_index));
                     spell_unmaintain(&youmonst, spell);
                     continue;
                 }
@@ -987,32 +998,23 @@ age_spells(void)
 boolean
 getspell(int *spell_no)
 {
-    return dospellmenu("Choose which spell to cast", SPELLMENU_CAST, spell_no);
-}
-
-static boolean
-getargspell(const struct nh_cmd_arg *arg, int *spell_no)
-{
-    if (arg->argtype & CMD_ARG_SPELL) {
-        char slet = arg->spelllet;
-        int sno = spellno_from_let(slet);
-        if (sno >= 0 && spellid(sno) != NO_SPELL) {
-            *spell_no = sno;
-            return TRUE;
-        }
-    }
-
-    return getspell(spell_no);
+    boolean ret = dospellmenu("Choose which spell to cast", SPELLMENU_CAST,
+                              spell_no);
+    *spell_no = spellid(*spell_no);
+    return ret;
 }
 
 /* the 'Z' command -- cast a spell */
 int
 docast(const struct nh_cmd_arg *arg)
 {
-    int spell_no;
+    struct musable m = arg_to_musable(arg);
+    int spell;
 
-    if (getargspell(arg, &spell_no))
-        return spelleffects(spell_no, FALSE, arg);
+    if (mgetargspell(&m, &spell)) {
+        m.spell = spell;
+        return spelleffects(FALSE, &m);
+    }
     return 0;
 }
 
@@ -1245,18 +1247,21 @@ cast_protection(struct monst *mon)
 static void
 spell_backfire(int spell)
 {
-    long duration = (long)((spellev(spell) + 1) * 3);   /* 6..24 */
+    long duration = (long)((objects[spell].oc_level + 1) * 3);   /* 6..24 */
     int rand = rnd(10);
-    inc_timeout(&youmonst, CONFUSION,
-                rand <= 4 ? duration :
-                rand <= 7 ? (2 * duration / 3) :
-                rand <= 9 ? (duration / 3) :
-                0, TRUE);
-    inc_timeout(&youmonst, STUNNED,
-                rand <= 4 ? 0 :
-                rand <= 7 ? (duration / 3) :
-                rand <= 9 ? (2 * duration / 3) :
-                duration, TRUE);
+
+    if (rand != 10)
+        inc_timeout(&youmonst, CONFUSION,
+                    rand <= 4 ? duration :
+                    rand <= 7 ? (2 * duration / 3) :
+                    rand <= 9 ? (duration / 3) :
+                    0, TRUE);
+    if (rand <= 4)
+        inc_timeout(&youmonst, STUNNED,
+                    rand <= 4 ? 0 :
+                    rand <= 7 ? (duration / 3) :
+                    rand <= 9 ? (2 * duration / 3) :
+                    duration, TRUE);
 }
 
 /* Can a monster cast a specific spell? If the monster doesn't even know the spell
@@ -1300,79 +1305,316 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
     return chance;
 }
 
-/* Monster spellcasting. Currently it is not possible to reuse spelleffects()
-   because a lot of things it does relies on your command argument(s).
-   TODO: reuse spelleffects() */
 int
-m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
+spelleffects(boolean atme, struct musable *m)
 {
-    int energy, chance, n;
-    int skill, role_skill;
-    boolean confused = !!confused(mon);
+    int spell = m->spell;
+    struct monst *mon = m->mon;
+    boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
+    boolean confused = !!confused(mon);
     boolean dummy;
     coord cc;
     struct obj *pseudo;
-    skill = mspell_skilltype(spell);
-    role_skill = mprof(mon, skill);
-    int count = 0;
+    int energy, chance, n, intell;
+    int skill, role_skill;
+    schar dx = 0, dy = 0, dz = 0;
+    boolean thrownasty = FALSE;
+    int count = 0; /* for nasty */
     boolean amulet = FALSE;
 
-    if (vis)
-        pline(msgc_debug, "%s wants to cast: %s",
-              Monnam(mon), OBJ_NAME(objects[spell]));
-
-    /* highlevel casters can cast more than lowlevel ones */
-    int cooldown = 10 - (mon->m_lev / 5);
-    if (cooldown < 4)
-        cooldown = 4;
-
-    /* make energy use unpredictable! */
-    cooldown = rn2(cooldown);
-
-    energy = (objects[spell].oc_level * cooldown);
-    if (mon_has_amulet(mon)) {
-        amulet = TRUE;
-        if (!rn2(5)) {
-            if (vis)
-                pline(msgc_monneutral,
-                      "%s tries to cast a spell, but the Amulet of Yendor drains it!",
-                      Monnam(mon));
-            return 0;
+    if (!SPELL_IS_FROM_SPELLBOOK(spell)) {
+        if (!you)
+            impossible("Monster using a special ability?");
+        else {
+            /* At the moment, we implement this via calling the code for the
+               shortcut command. Eventually, it would make sense to invert this
+               (and make the shortcut commands wrappers for spelleffects).
+               Added 29/5 2016: now even more dire, because now we're just calling
+               musable wrappers since spelleffects no longer take an arg... */
+            switch (spell) {
+            case SPID_PRAY:
+                return mdopray(m);
+            case SPID_TURN:
+                return mdoturn(m);
+            case SPID_RLOC:
+                return mdotele(m);
+            case SPID_JUMP:
+                return jump(m, 0);
+            case SPID_MONS:
+                return mdomonability(m);
+            default:
+                impossible("Unknown spell number %d?", spell);
+                return 0;
+            }
         }
-        if (energy)
-            energy += 2 * rnd(energy);
     }
-            
-    /* can't cast -- energy is used up! */
-    if (mon->mspec_used) {
-        if (vis)
-            pline(msgc_monneutral,
-                  "%s tries to cast a spell, but is out of energy!",
-                  Monnam(mon));
+
+    /* Find the skill for the given spell type category */
+    if (you) {
+        skill = spell_skilltype(spell);
+        role_skill = P_SKILL(skill);
+    } else {
+        skill = mspell_skilltype(spell);
+        role_skill = mprof(mon, skill);
+    }
+
+    boolean maintained = spell_maintained(mon, spellid(spell));
+    if (maintained) {
+        spell_unmaintain(&youmonst, spellid(spell));
+        if (you)
+            pline(msgc_cancelled, "Spell no longer maintained.");
+
         return 0;
     }
 
-    chance = percent_success(mon, spell);
-    if (cancelled(mon) || confused || (rnd(100) > chance)) {
-        if (vis)
+    /* Get the direction or target, if applicable.
+
+       We want to do this *before* determining spell success, both for interface
+       consistency and to cut down on needless mksobj calls. */
+    switch (spellid(spell)) {
+
+    /* These spells ask the user to target a specific space. */
+    case SPE_SUMMON_NASTY:
+        thrownasty = TRUE;
+    case SPE_CONE_OF_COLD:
+    case SPE_FIREBALL:
+        /* If Skilled or better, get a specific space. */
+        if (role_skill >= P_SKILLED) {
+            if (throwspell(thrownasty, &dx, &dy, m)) {
+                dz = 0;
+                break;
+            }
+            else {
+                if (!you)
+                    impossible("Invalid location for monster-usage of position spell?");
+                /* Decided not to target anything.  Abort the spell. */
+                pline(msgc_cancelled, "Spell cancelled.");
+                return 0;
+            }
+        }
+        /* If not Skilled, fall through. */
+
+    /* These spells ask the user to target a direction. */
+    case SPE_FORCE_BOLT:
+    case SPE_SLEEP:
+    case SPE_MAGIC_MISSILE:
+    case SPE_KNOCK:
+    case SPE_SLOW_MONSTER:
+    case SPE_WIZARD_LOCK:
+    case SPE_DIG:
+    case SPE_TURN_UNDEAD:
+    case SPE_POLYMORPH:
+    case SPE_TELEPORT_AWAY:
+    case SPE_CANCELLATION:
+    case SPE_FINGER_OF_DEATH:
+    case SPE_HEALING:
+    case SPE_EXTRA_HEALING:
+    case SPE_DRAIN_LIFE:
+    case SPE_STONE_TO_FLESH:
+        if (atme)
+            dx = dy = dz = 0;
+        else if (!mgetargdir(m, NULL, &dx, &dy, &dz)) {
+            /* getdir cancelled, abort */
+            pline(msgc_cancelled, "Spell canceled.");
+            return 0;
+        }
+        break;
+    case SPE_JUMPING:
+        if(!get_jump_coords(m, &cc, max(role_skill, 1))) {
+            /* No jumping after all, I guess. */
+            pline(msgc_cancelled, "Spell canceled.");
+            return 0;
+        }
+        break;
+
+    /* These spells can be toggled for whether or not to maintain it */
+    case SPE_HASTE_SELF:
+    case SPE_DETECT_MONSTERS:
+    case SPE_LEVITATION:
+    case SPE_INVISIBILITY:
+    case SPE_ASTRAL_EYESIGHT:
+    case SPE_PHASE:
+        if (!you)
+            break; /* TODO */
+
+        /* Detect monsters isn't useful to maintain on a lower level */
+        if (spell == SPE_DETECT_MONSTERS && role_skill < P_SKILLED)
+            break;
+        if (yn("Maintain the spell?") == 'y')
+            spell_maintain(&youmonst, spell);
+        break;
+
+    /* The rest of the spells don't have targeting. */
+    default:
+        break;
+    }
+
+    if (acurr(mon, A_STR) < 4) {
+        pline(you ? msgc_cancelled : msgc_monneutral,
+              "%s the strength to cast spells.", M_verbs(mon, "lack"));
+        return 0;
+    }
+
+    /* All of these checks are only applicable for players (Pets have hunger, but
+       it doesn't interfere with their spellcasting at the moment to simplify things) */
+    if (you) {
+        /* Spell casting no longer affects knowledge of the spell. A decrement of
+           spell knowledge is done every turn. */
+        int spell_index = spellindex_by_typ(spell);
+        if (spell_index == -1) {
+            impossible("Trying to cast spell outside spell list?");
+            return 0;
+        }
+
+        if (spellknow(spell_index) <= 0) {
+            pline(msgc_substitute, "Your knowledge of this spell is twisted.");
+            pline_implied(msgc_statusbad,
+                          "It invokes nightmarish images in your mind...");
+            spell_backfire(spell);
+            return 0;
+        } else if (spellknow(spell_index) <= 200) {       /* 1% */
+            pline(msgc_hint, "You strain to recall the spell.");
+        } else if (spellknow(spell_index) <= 1000) {      /* 5% */
+            pline(msgc_hint, "Your knowledge of this spell is growing faint.");
+        }
+
+        if (u.uhunger <= 10) {
+            pline(msgc_cancelled, "You are too hungry to cast that spell.");
+            return 0;
+        } else if (!freehand()) {
+            pline(msgc_cancelled, "Your arms are not free to cast!");
+            return 0;
+        } else if (check_capacity
+                   ("Your concentration falters while carrying so much stuff.")) {
+            return 1;
+        }
+    }
+
+    if (cancelled(mon)) {
+        if (you)
+            pline(msgc_cancelled1, "Being cancelled, you cannot cast the spell.");
+        else
             pline(msgc_monneutral, "%s tries, but fails, to cast a spell.",
                   Monnam(mon));
         return 1;
     }
 
-    if (vis)
-        pline(msgc_monneutral, "%s casts a spell!", Monnam(mon));
-    if (amulet)
-        pline(msgc_monneutral,
-              "The amulet drains %s energy away...", s_suffix(mon_nam(mon)));
-    mon->mspec_used += energy;
+    /* Energy checks, and for players, hunger drain */
+    if (you) {
+        energy = (objects[spell].oc_level * 5);      /* 5 <= energy <= 35 */
+        if (Uhave_amulet) {
+            pline(msgc_substitute,
+                  "You feel the amulet draining your energy away.");
+            energy += rnd(2 * energy);
+        }
+        if (energy > u.uen) {
+            pline(msgc_cancelled,
+                  "You don't have enough energy to cast that spell.");
+            return 0;
+        } else {
+            int hungr = energy * 2;
+
+            /*
+             * If hero is a wizard, their current intelligence
+             * (bonuses + temporary + current)
+             * affects hunger reduction in casting a spell.
+             * 1. int = 17-18 no reduction
+             * 2. int = 16    1/4 hungr
+             * 3. int = 15    1/2 hungr
+             * 4. int = 1-14  normal reduction
+             * The reason for this is:
+             * a) Intelligence affects the amount of exertion
+             * in thinking.
+             * b) Wizards have spent their life at magic and
+             * understand quite well how to cast spells.
+             */
+            intell = ACURR(A_INT);
+            if (!Role_if(PM_WIZARD))
+                intell = 10;
+            if (intell >= 17)
+                hungr = 0;
+            else if (intell == 16)
+                hungr /= 4;
+            else if (intell == 15)
+                hungr /= 2;
+
+            /* don't put player (quite) into fainting from casting a spell,
+               particularly since they might not even be hungry at the
+               beginning; however, this is low enough that they must eat before
+               casting anything else except detect food */
+            if (hungr > u.uhunger - 3)
+                hungr = u.uhunger - 3;
+            morehungry(hungr);
+        }
+    } else {
+        /* highlevel casters can cast more than lowlevel ones */
+        int cooldown = 10 - (mon->m_lev / 5);
+        if (cooldown < 4)
+            cooldown = 4;
+
+        /* make energy use unpredictable! */
+        cooldown = rn2(cooldown);
+
+        energy = (objects[spell].oc_level * cooldown);
+        if (mon_has_amulet(mon)) {
+            amulet = TRUE;
+            if (!rn2(5)) {
+                if (vis)
+                    pline(msgc_monneutral,
+                          "%s tries to cast a spell, but the Amulet drains it!",
+                          Monnam(mon));
+                return 0;
+            }
+            if (energy)
+                energy += 2 * rnd(energy);
+        }
+
+        /* can't cast -- energy is used up! */
+        if (mon->mspec_used) {
+            if (vis)
+                pline(msgc_monneutral,
+                      "%s tries to cast a spell, but is out of energy!",
+                      Monnam(mon));
+            return 0;
+        }
+    }
+
+    chance = percent_success(mon, spell);
+    if (confused || (rnd(100) > chance)) {
+        if (you) {
+            pline(msgc_failrandom, "You fail to cast the spell correctly.");
+            u.uen -= energy / 2;
+        } else if (vis)
+            pline(msgc_monneutral, "%s tries, but fails, to cast a spell.",
+                  Monnam(mon));
+        return 1;
+    }
+
+    if (you) {
+        u.uen -= energy;
+        exercise(A_WIS, TRUE);
+    } else
+        mon->mspec_used += energy;
+
+    if (!you) {
+        if (vis)
+            pline(msgc_monneutral, "%s casts a spell!", Monnam(mon));
+        if (amulet)
+            pline(msgc_monneutral,
+                  "The amulet drains %s energy away...", s_suffix(mon_nam(mon)));
+    }
+
     /* pseudo is a temporary "false" object containing the spell stats */
     pseudo = mktemp_sobj(level, spell);
     pseudo->blessed = pseudo->cursed = 0;
     pseudo->quan = 20L; /* do not let useup get it */
 
     switch (pseudo->otyp) {
+        /* At first spells act as expected.  As the hero increases in skill
+           with the appropriate spell type, some spells increase in their
+           effects, e.g. more damage, further distance, and so on, without
+           additional cost to the spellcaster. */
     case SPE_CONE_OF_COLD:
     case SPE_FIREBALL:
         if (role_skill >= P_SKILLED) {
@@ -1381,14 +1623,14 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
             n = rnd(8) + 1;
             while (n--) {
                 explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
-                        mon->m_lev / 2 + 1, 0,
+                        m_mlev(mon) / 2 + 1 + (you ? spell_damage_bonus() : 0), 0,
                         (pseudo->otyp ==
                          SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
                         NULL, 0);
                 dx = cc.x + rnd(3) - 2;
                 dy = cc.y + rnd(3) - 2;
-                if (!isok(dx, dy) || !cansee(dx, dy) ||
-                    IS_STWALL(level->locations[dx][dy].typ)) {
+                if (!isok(dx, dy) || !m_cansee(mon, dx, dy) ||
+                    IS_STWALL(level->locations[dx][dy].typ) || Engulfed) {
                     /* Spell is reflected back to center */
                     dx = cc.x;
                     dy = cc.y;
@@ -1399,10 +1641,9 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
 
         /* else fall through... */
         /* these spells are all duplicates of wand effects */
-    case SPE_MAGIC_MISSILE:
-    case SPE_SLEEP:
-    case SPE_FINGER_OF_DEATH:
     case SPE_FORCE_BOLT:
+    case SPE_SLEEP:
+    case SPE_MAGIC_MISSILE:
     case SPE_KNOCK:
     case SPE_SLOW_MONSTER:
     case SPE_WIZARD_LOCK:
@@ -1411,6 +1652,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     case SPE_POLYMORPH:
     case SPE_TELEPORT_AWAY:
     case SPE_CANCELLATION:
+    case SPE_FINGER_OF_DEATH:
     case SPE_LIGHT:
     case SPE_DETECT_UNSEEN:
     case SPE_HEALING:
@@ -1418,6 +1660,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
     case SPE_DRAIN_LIFE:
     case SPE_STONE_TO_FLESH:
         weffects(mon, pseudo, dx, dy, dz);
+        update_inventory();     /* spell may modify inventory */
         break;
 
         /* these are all duplicates of scroll effects */
@@ -1451,7 +1694,7 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
         break;
 
     case SPE_CURE_BLINDNESS:
-        set_property(mon, BLINDED, -2, FALSE);
+        healup(0, 0, FALSE, TRUE);
         break;
     case SPE_CURE_SICKNESS:
         set_property(mon, SICK, -2, FALSE);
@@ -1465,361 +1708,10 @@ m_spelleffects(struct monst *mon, int spell, schar dx, schar dy, schar dz)
         cc.y = dy;
         count = nasty(mon, cc);
         if (count) {
-            pline(msgc_levelwarning,
+            pline(you ? msgc_actionok : msgc_levelwarning,
                   "%s from nowhere!", count > 1 ? "Monsters appear" :
                   "A monster appears");
-        }
-        break;
-    case SPE_CLAIRVOYANCE:
-        if (!bclairvoyant(mon)) {
-            ; /* wont work for monsters */
-        }
-        break;
-    case SPE_PROTECTION:
-        cast_protection(mon);
-        break;
-    case SPE_JUMPING:
-        jump_to_coords(&cc);
-        break;
-    case SPE_ASTRAL_EYESIGHT:
-        set_property(mon, XRAY_VISION, rn1(20, 11), FALSE);
-        break;
-    case SPE_PHASE:
-        set_property(mon, PASSES_WALLS, rn1(40, 21), FALSE);
-        break;
-    default:
-        impossible("Unknown or nonimplemented monster spell %d attempted.", spell);
-        obfree(pseudo, NULL);
-        return 0;
-    }
-
-    obfree(pseudo, NULL);       /* now, get rid of it */
-    return 1;
-}
-
-int
-spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
-{
-    int energy, chance, n, intell;
-    int skill, role_skill;
-    boolean confused = (Confusion != 0);
-    struct obj *pseudo;
-    boolean dummy;
-    coord cc;
-    schar dx = 0, dy = 0, dz = 0;
-    boolean thrownasty = FALSE;
-    int count = 0; /* for nasty */
-
-    if (!SPELL_IS_FROM_SPELLBOOK(spell)) {
-        /* At the moment, we implement this via calling the code for the
-           shortcut command. Eventually, it would make sense to invert this
-           (and make the shortcut commands wrappers for spelleffects). */
-        switch (spellid(spell)) {
-        case SPID_PRAY:
-            return dopray(arg);
-        case SPID_TURN:
-            return doturn(arg);
-        case SPID_RLOC:
-            return dotele(arg);
-        case SPID_JUMP:
-            return dojump(arg);
-        case SPID_MONS:
-            return domonability(arg);
-        default:
-            impossible("Unknown spell number %d?", spellid(spell));
-            return 0;
-        }
-    }
-
-    /*
-     * Find the skill the hero has in a spell type category.
-     * See spell_skilltype for categories.
-     */
-    skill = spell_skilltype(spellid(spell));
-    role_skill = P_SKILL(skill);
-    boolean maintained = spell_maintained(&youmonst, spellid(spell));
-    if (maintained) {
-        spell_unmaintain(&youmonst, spellid(spell));
-        pline(msgc_cancelled, "Spell no longer maintained.");
-        return 0;
-    }
-
-    /* Get the direction or target, if applicable.
-
-       We want to do this *before* determining spell success, both for interface
-       consistency and to cut down on needless mksobj calls. */
-    switch (spellid(spell)) {
-
-    /* These spells ask the user to target a specific space. */
-    case SPE_SUMMON_NASTY:
-        thrownasty = TRUE;
-    case SPE_CONE_OF_COLD:
-    case SPE_FIREBALL:
-        /* If Skilled or better, get a specific space. */
-        if (role_skill >= P_SKILLED) {
-            if (throwspell(thrownasty, &dx, &dy, arg)) {
-                dz = 0;
-                break;
-            }
-            else {
-                /* Decided not to target anything.  Abort the spell. */
-                pline(msgc_cancelled, "Spell cancelled.");
-                return 0;
-            }
-        }
-        /* If not Skilled, fall through. */
-
-    /* These spells ask the user to target a direction. */
-    case SPE_FORCE_BOLT:
-    case SPE_SLEEP:
-    case SPE_MAGIC_MISSILE:
-    case SPE_KNOCK:
-    case SPE_SLOW_MONSTER:
-    case SPE_WIZARD_LOCK:
-    case SPE_DIG:
-    case SPE_TURN_UNDEAD:
-    case SPE_POLYMORPH:
-    case SPE_TELEPORT_AWAY:
-    case SPE_CANCELLATION:
-    case SPE_FINGER_OF_DEATH:
-    case SPE_HEALING:
-    case SPE_EXTRA_HEALING:
-    case SPE_DRAIN_LIFE:
-    case SPE_STONE_TO_FLESH:
-        if (atme)
-            dx = dy = dz = 0;
-        else if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
-            /* getdir cancelled, abort */
-            pline(msgc_cancelled, "Spell canceled.");
-            return 0;
-        }
-        break;
-    case SPE_JUMPING:
-        if(!get_jump_coords(arg, &cc, max(role_skill, 1))) {
-            /* No jumping after all, I guess. */
-            pline(msgc_cancelled, "Spell canceled.");
-            return 0;
-        }
-        break;
-
-    /* These spells can be toggled for whether or not to maintain it */
-    case SPE_HASTE_SELF:
-    case SPE_DETECT_MONSTERS:
-    case SPE_LEVITATION:
-    case SPE_INVISIBILITY:
-    case SPE_ASTRAL_EYESIGHT:
-    case SPE_PHASE:        /* Detect monsters isn't useful to maintain on a lower level */
-        if (spellid(spell) == SPE_DETECT_MONSTERS &&
-            role_skill < P_SKILLED)
-            break;
-        if (yn("Maintain the spell?") == 'y')
-            spell_maintain(&youmonst, spellid(spell));
-        break;
-
-    /* The rest of the spells don't have targeting. */
-    default:
-        break;
-    }
-
-
-    /* Spell casting no longer affects knowledge of the spell. A decrement of
-       spell knowledge is done every turn. */
-    if (spellknow(spell) <= 0) {
-        pline(msgc_substitute, "Your knowledge of this spell is twisted.");
-        pline_implied(msgc_statusbad,
-                      "It invokes nightmarish images in your mind...");
-        spell_backfire(spell);
-        return 0;
-    } else if (spellknow(spell) <= 200) {       /* 1% */
-        pline(msgc_hint, "You strain to recall the spell.");
-    } else if (spellknow(spell) <= 1000) {      /* 5% */
-        pline(msgc_hint, "Your knowledge of this spell is growing faint.");
-    }
-    energy = (spellev(spell) * 5);      /* 5 <= energy <= 35 */
-
-    if (u.uhunger <= 10) {
-        pline(msgc_cancelled, "You are too hungry to cast that spell.");
-        return 0;
-    } else if (ACURR(A_STR) < 4) {
-        pline(msgc_cancelled, "You lack the strength to cast spells.");
-        return 0;
-    } else if (check_capacity
-               ("Your concentration falters while carrying so much stuff.")) {
-        return 1;
-    } else if (!freehand()) {
-        pline(msgc_cancelled, "Your arms are not free to cast!");
-        return 0;
-    }
-
-    if (cancelled(&youmonst)) {
-        pline(msgc_cancelled1,
-              "Being cancelled, you cannot cast the spell.");
-        return 1;
-    }
-
-    if (Uhave_amulet) {
-        pline(msgc_substitute,
-              "You feel the amulet draining your energy away.");
-        energy += rnd(2 * energy);
-    }
-    if (energy > u.uen) {
-        pline(msgc_cancelled,
-              "You don't have enough energy to cast that spell.");
-        return 0;
-    } else {
-        int hungr = energy * 2;
-
-        /*
-         * If hero is a wizard, their current intelligence
-         * (bonuses + temporary + current)
-         * affects hunger reduction in casting a spell.
-         * 1. int = 17-18 no reduction
-         * 2. int = 16    1/4 hungr
-         * 3. int = 15    1/2 hungr
-         * 4. int = 1-14  normal reduction
-         * The reason for this is:
-         * a) Intelligence affects the amount of exertion
-         * in thinking.
-         * b) Wizards have spent their life at magic and
-         * understand quite well how to cast spells.
-         */
-        intell = ACURR(A_INT);
-        if (!Role_if(PM_WIZARD))
-            intell = 10;
-        if (intell >= 17)
-            hungr = 0;
-        else if (intell == 16)
-            hungr /= 4;
-        else if (intell == 15)
-            hungr /= 2;
-
-        /* don't put player (quite) into fainting from casting a spell,
-           particularly since they might not even be hungry at the
-           beginning; however, this is low enough that they must eat before
-           casting anything else except detect food */
-        if (hungr > u.uhunger - 3)
-            hungr = u.uhunger - 3;
-        morehungry(hungr);
-    }
-
-    chance = percent_success(&youmonst, spellid(spell));
-    if (confused || (rnd(100) > chance)) {
-        pline(msgc_failrandom, "You fail to cast the spell correctly.");
-        u.uen -= energy / 2;
-        return 1;
-    }
-
-    u.uen -= energy;
-    exercise(A_WIS, TRUE);
-    /* pseudo is a temporary "false" object containing the spell stats */
-    pseudo = mktemp_sobj(level, spellid(spell));
-    pseudo->blessed = pseudo->cursed = 0;
-    pseudo->quan = 20L; /* do not let useup get it */
-
-    switch (pseudo->otyp) {
-        /*
-         * At first spells act as expected.  As the hero increases in skill
-         * with the appropriate spell type, some spells increase in their
-         * effects, e.g. more damage, further distance, and so on, without
-         * additional cost to the spellcaster.
-         */
-    case SPE_CONE_OF_COLD:
-    case SPE_FIREBALL:
-        if (role_skill >= P_SKILLED) {
-            cc.x = dx;
-            cc.y = dy;
-            n = rnd(8) + 1;
-            while (n--) {
-                explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
-                        u.ulevel / 2 + 1 + spell_damage_bonus(), 0,
-                        (pseudo->otyp ==
-                         SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
-                        NULL, 0);
-                dx = cc.x + rnd(3) - 2;
-                dy = cc.y + rnd(3) - 2;
-                if (!isok(dx, dy) || !cansee(dx, dy) ||
-                    IS_STWALL(level->locations[dx][dy].typ) || Engulfed) {
-                    /* Spell is reflected back to center */
-                    dx = cc.x;
-                    dy = cc.y;
-                }
-            }
-            break;
-        }
-
-        /* else fall through... */
-        /* these spells are all duplicates of wand effects */
-    case SPE_FORCE_BOLT:
-    case SPE_SLEEP:
-    case SPE_MAGIC_MISSILE:
-    case SPE_KNOCK:
-    case SPE_SLOW_MONSTER:
-    case SPE_WIZARD_LOCK:
-    case SPE_DIG:
-    case SPE_TURN_UNDEAD:
-    case SPE_POLYMORPH:
-    case SPE_TELEPORT_AWAY:
-    case SPE_CANCELLATION:
-    case SPE_FINGER_OF_DEATH:
-    case SPE_LIGHT:
-    case SPE_DETECT_UNSEEN:
-    case SPE_HEALING:
-    case SPE_EXTRA_HEALING:
-    case SPE_DRAIN_LIFE:
-    case SPE_STONE_TO_FLESH:
-        weffects(&youmonst, pseudo, dx, dy, dz);
-        update_inventory();     /* spell may modify inventory */
-        break;
-
-        /* these are all duplicates of scroll effects */
-    case SPE_REMOVE_CURSE:
-    case SPE_CONFUSE_MONSTER:
-    case SPE_CAUSE_FEAR:
-        /* high skill yields effect equivalent to blessed scroll */
-        if (role_skill >= P_SKILLED)
-            pseudo->blessed = 1;
-        /* fall through */
-    case SPE_CHARM_MONSTER:
-    case SPE_MAGIC_MAPPING:
-    case SPE_CREATE_MONSTER:
-    case SPE_IDENTIFY:
-    case SPE_CHARGING:
-        seffects(&youmonst, pseudo, &dummy);
-        break;
-
-        /* these are all duplicates of potion effects */
-    case SPE_HASTE_SELF:
-    case SPE_DETECT_TREASURE:
-    case SPE_DETECT_MONSTERS:
-    case SPE_LEVITATION:
-    case SPE_RESTORE_ABILITY:
-        /* high skill yields effect equivalent to blessed potion */
-        if (role_skill >= P_SKILLED)
-            pseudo->blessed = 1;
-        /* fall through */
-    case SPE_INVISIBILITY:
-        peffects(&youmonst, pseudo);
-        break;
-
-    case SPE_CURE_BLINDNESS:
-        healup(0, 0, FALSE, TRUE);
-        break;
-    case SPE_CURE_SICKNESS:
-        set_property(&youmonst, SICK, -2, FALSE);
-        set_property(&youmonst, SLIMED, -2, FALSE);
-        break;
-    case SPE_CREATE_FAMILIAR:
-        make_familiar(&youmonst, NULL, u.ux, u.uy, FALSE);
-        break;
-    case SPE_SUMMON_NASTY:
-        cc.x = dx;
-        cc.y = dy;
-        count = nasty(&youmonst, cc);
-        if (count) {
-            pline(msgc_actionok, "%s from nowhere!",
-                  count > 1 ? "Monsters appear" :
-                  "A monster appears");
-        } else
+        } else if (you)
             pline(msgc_substitute, "You feel lonely.");
         /* summoning aggravates the target */
         struct monst *mtmp = m_at(level, cc.x, cc.y);
@@ -1831,6 +1723,11 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         }
         break;
     case SPE_CLAIRVOYANCE:
+        if (!you) {
+            impossible("Monster casting clairvoyance?");
+            break;
+        }
+
         if (!BClairvoyant)
             do_vicinity_map();
         /* at present, only one thing blocks clairvoyance */
@@ -1841,16 +1738,21 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         }
         break;
     case SPE_PROTECTION:
-        cast_protection(&youmonst);
+        cast_protection(mon);
         break;
     case SPE_JUMPING:
+        if (!you) {
+            impossible("Monster attempted to cast jumping, which isn't implemented...");
+            break;
+        }
+
         jump_to_coords(&cc);
         break;
     case SPE_ASTRAL_EYESIGHT:
-        set_property(&youmonst, XRAY_VISION, rn1(20, 11), FALSE);
+        set_property(mon, XRAY_VISION, rn1(20, 11), FALSE);
         break;
     case SPE_PHASE:
-        set_property(&youmonst, PASSES_WALLS, rn1(40, 21), FALSE);
+        set_property(mon, PASSES_WALLS, rn1(40, 21), FALSE);
         break;
     default:
         impossible("Unknown spell %d attempted.", spell);
@@ -1859,7 +1761,8 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     }
 
     /* gain skill for successful cast */
-    use_skill(skill, spellev(spell));
+    if (you)
+        use_skill(skill, objects[spell].oc_level);
 
     obfree(pseudo, NULL);       /* now, get rid of it */
     return 1;
@@ -1868,46 +1771,52 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
 /* Choose location where spell takes effect.
    Fireball/CoC and summon nasty have different conditions. */
 static int
-throwspell(boolean nasty, schar *dx, schar *dy, const struct nh_cmd_arg *arg)
+throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
 {
+    struct monst *mon = m->mon;
     coord cc;
 
-    if (!nasty && u.uinwater) {
+    /* Don't bother checking mon!=you for plines here, the mere trigger shouldn't happen,
+       and if it does, the caller should call impossible() */
+    if (!nasty && m_underwater(mon)) {
         pline(msgc_cancelled, "You're joking! In this weather?");
         return 0;
-    } else if (!nasty && Is_waterlevel(&u.uz)) {
+    } else if (!nasty && Is_waterlevel(m_mz(mon))) {
         pline(msgc_cancelled, "You had better wait for the sun to come out.");
         return 0;
     }
 
-    if (nasty)
-        pline(msgc_uiprompt, "What monster do you want to target?");
-    else
-        pline(msgc_uiprompt, "Where do you want to cast the spell?");
-    cc.x = u.ux;
-    cc.y = u.uy;
-    if (getargpos(arg, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
+    if (mon == &youmonst) {
+        if (nasty)
+            pline(msgc_uiprompt, "What monster do you want to target?");
+        else
+            pline(msgc_uiprompt, "Where do you want to cast the spell?");
+    }
+
+    cc.x = m_mx(mon);
+    cc.y = m_my(mon);
+    if (mgetargpos(m, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     /* The number of moves from hero to where the spell drops. */
-    if (distmin(u.ux, u.uy, cc.x, cc.y) > 10) {
+    if (distmin(m_mx(mon), m_my(mon), cc.x, cc.y) > 10) {
         pline(msgc_cancelled, "The spell dissipates over the distance!");
         return 0;
-    } else if (Engulfed) {
+    } else if (mon == &youmonst && Engulfed) {
         pline(msgc_badidea, "The spell is cut short!");
         exercise(A_WIS, FALSE); /* What were you THINKING! */
         *dx = 0;
         *dy = 0;
         return 1;
-    } else if (nasty && (cc.x != u.ux || cc.y != u.uy) &&
+    } else if (nasty && (cc.x != m_mx(mon) || cc.y != m_my(mon)) &&
                (!MON_AT(level, cc.x, cc.y) ||
-                !canspotmon(m_at(level, cc.x, cc.y)))) {
+                !(msensem(mon, m_at(level, cc.x, cc.y)) & MSENSE_ANYDETECT))) {
         pline(msgc_cancelled,
               "You fail to sense a monster there!");
         return 0;
     } else
         if ((!cansee(cc.x, cc.y) &&
              (!MON_AT(level, cc.x, cc.y) ||
-              !canspotmon(m_at(level, cc.x, cc.y)))) ||
+              !(msensem(mon, m_at(level, cc.x, cc.y)) & MSENSE_ANYDETECT))) ||
             IS_STWALL(level->locations[cc.x][cc.y].typ)) {
             pline(msgc_cancelled,
                   "Your mind fails to lock onto that location!");
