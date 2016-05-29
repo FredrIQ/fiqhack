@@ -1323,7 +1323,7 @@ spelleffects(boolean atme, struct musable *m)
     int count = 0; /* for nasty */
     boolean amulet = FALSE;
 
-    if (!SPELL_IS_FROM_SPELLBOOK(spell)) {
+    if (spell < 0) {
         if (!you)
             impossible("Monster using a special ability?");
         else {
