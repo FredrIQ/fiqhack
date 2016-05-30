@@ -272,7 +272,6 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
     boolean ideed = TRUE;
 
     pline(msgc_occstart, "You drop %s down the drain.", doname(obj));
-    obj->in_use = TRUE; /* block free identification via interrupt */
     switch (obj->otyp) {        /* effects that can be noticed without eyes */
     case RIN_SEARCHING:
         pline(msgc_consequence,
@@ -282,7 +281,6 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
     case RIN_SLOW_DIGESTION:
         pline(msgc_consequence, "The ring is regurgitated!");
     giveback:
-        obj->in_use = FALSE;
         /* this is safe, the ring was unwielded by the caller */
         dropx(obj);
         makeknown(obj->otyp);
@@ -410,11 +408,16 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
        overkill. */
     if (!rn2(20)) {
         pline(msgc_youdiscover, "The sink backs up, leaving %s.", doname(obj));
-        obj->in_use = FALSE;
         /* the caller has checked this is safe */
         dropx(obj);
-    } else
-        useup(obj);
+    } else {
+        /* Rather than destroy the ring, we bury it in the ground under the
+           sink.  In order to get it back, the player must destroy the sink. */
+        freeinv(obj);
+        obj->ox = u.ux;
+        obj->oy = u.uy;
+        add_to_buried(obj);
+    }
 }
 
 
