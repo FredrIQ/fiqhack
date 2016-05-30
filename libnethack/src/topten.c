@@ -807,11 +807,20 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
     /* find the rank of a completed game in the score list */
     if (game_complete && !strcmp(player, u.uplname)) {
         fill_topten_entry(&newtt, end_how, end_killer);
+        /* deathtime are grabbed with utc_time() which doesn't stay static, so don't
+           compare these */
+        newtt.deathtime = 0;
+        newtt.deathdate = 0;
+        struct toptenentry ttlist_notime;
 
         /* find this entry in the list */
-        for (i = 0; i < TTLISTLEN && validentry(ttlist[i]); i++)
-            if (!memcmp(&ttlist[i], &newtt, sizeof (struct toptenentry)))
+        for (i = 0; i < TTLISTLEN && validentry(ttlist[i]); i++) {
+            ttlist_notime = ttlist[i];
+            ttlist_notime.deathtime = 0;
+            ttlist_notime.deathdate = 0;
+            if (!memcmp(&ttlist_notime, &newtt, sizeof (struct toptenentry)))
                 rank = i;
+        }
 
         /* TODO: Perhaps we could have a different top ten list for play on a
            particular set seed (seed of the week, as it were). But there's too
