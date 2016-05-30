@@ -764,6 +764,8 @@ run_maintained_spells(struct level *lev)
             }
 
             int spell_level = objects[spell].oc_level;
+            if (mon_has_amulet(&youmonst))
+                spell_level *= 2;
             if (!(moves % moves_modulo)) {
                 if (u.uen < spell_level) {
                     pline(msgc_intrloss, "You lack the energy to maintain %s.",
@@ -811,6 +813,8 @@ run_maintained_spells(struct level *lev)
 
             /* Increase mspec_used depending on level and proficiency */
             int spell_level = objects[spell].oc_level;
+            if (mon_has_amulet(mon))
+                spell_level *= 2;
             if (!(moves % moves_modulo)) {
                 mon->mspec_used += spell_level;
             }
