@@ -788,7 +788,7 @@ maybe_tame(struct monst *mon, struct monst *mtmp, struct obj *sobj)
     /* no effect on self */
     if (mon == mtmp)
         return;
-    if (!mx_eshk(mtmp) && resist(mtmp, sobj->oclass,NOTELL))
+    if (!mx_eshk(mtmp) && resist(mon, mtmp, sobj->oclass, NOTELL, bcsign(sobj)))
         return;
 
     boolean set_align = 1;
@@ -825,7 +825,7 @@ maybe_tame(struct monst *mon, struct monst *mtmp, struct obj *sobj)
     case 2:
         if (mx_eshk(mtmp))
             make_happy_shk(mtmp, FALSE);
-        else if (!resist(mtmp, sobj->oclass, NOTELL))
+        else if (!resist(mon, mtmp, sobj->oclass, NOTELL, bcsign(sobj)))
             tamedog(mtmp, NULL);
     }
 }
@@ -1116,7 +1116,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                     if (confused || sobj->cursed) {
                         mtmp->mflee = mtmp->mfrozen = mtmp->msleeping = 0;
                         mtmp->mcanmove = 1;
-                    } else if (!resist(mtmp, sobj->oclass, NOTELL))
+                    } else if (!resist(mon, mtmp, sobj->oclass, NOTELL, bcsign(sobj)))
                         monflee(mtmp, 0, FALSE, FALSE);
                     if (!mtmp->mtame)
                         ct++;   /* pets don't laugh at you */

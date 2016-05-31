@@ -215,7 +215,7 @@ int
 fightm(struct monst *mon)
 {
     int result;
-    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) &&
+    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
 
     /* perhaps we're holding it... */
@@ -819,7 +819,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                       "%s gaze makes %s very sleepy...",
                       uagr ? "Your" : s_suffix(Monnam(mdef)),
                       udef ? "you" : mon_nam(mdef));
-            sleep_monst(mdef, dmg, 0);
+            sleep_monst(magr, mdef, dmg, 0);
             if (!udef)
                 slept_monst(mdef);
         } else if (vis)
@@ -1279,7 +1279,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_SLEE:
-        if (!cancelled && !mdef->msleeping && sleep_monst(mdef, rnd(10), -1)) {
+        if (!cancelled && !mdef->msleeping && sleep_monst(magr, mdef, rnd(10), -1)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit),
                       "%s is put to sleep by %s.", Monnam(mdef), mon_nam(magr));
@@ -1552,7 +1552,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         case 19:
         case 18:
         case 17:
-            if (!resist(mdef, 0, 0) && !resists_magm(mdef)) {
+            if (!resist(magr, mdef, 0, 0, 0) && !resists_magm(mdef)) {
                 monkilled(magr, mdef, "", AD_DETH);
                 if (DEADMONSTER(mdef))            /* did it lifesave? */
                     return MM_DEF_DIED;
@@ -1688,26 +1688,26 @@ noattacks(const struct permonst *ptr)
 
 /* `mon' is hit by a sleep attack; return 1 if it's affected, 0 otherwise */
 int
-sleep_monst(struct monst *mon, int amt, int how)
+sleep_monst(struct monst *magr, struct monst *mdef, int amt, int how)
 {
-    if (resists_sleep(mon) || (how >= 0 && mon != &youmonst &&
-                               resist(mon, (char)how, NOTELL))) {
-        shieldeff(m_mx(mon), m_my(mon));
+    if (resists_sleep(mdef) || (how >= 0 && mdef != &youmonst &&
+                                resist(magr, mdef, (char)how, NOTELL, 0))) {
+        shieldeff(m_mx(mdef), m_my(mdef));
         return 0;
     }
-    if (mon == &youmonst) {
+    if (mdef == &youmonst) {
         helpless(amt, hr_asleep, "sleeping", NULL);
         return 1;
     }
-    if (!mon->mcanmove)
+    if (!mdef->mcanmove)
         return 0;
 
-    amt += (int)mon->mfrozen;
+    amt += (int)mdef->mfrozen;
     if (amt > 0) {  /* sleep for N turns */
-        mon->mcanmove = 0;
-        mon->mfrozen = min(amt, 127);
+        mdef->mcanmove = 0;
+        mdef->mfrozen = min(amt, 127);
     } else {        /* sleep until awakened */
-        mon->msleeping = 1;
+        mdef->msleeping = 1;
     }
     return 1;
 }

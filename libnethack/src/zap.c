@@ -155,7 +155,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                                 yours ? " own" : "", zap_type_text);
                 losehp(dmg, killer_msg(DIED, kbuf));
             } else {
-                if (resist(mdef, otmp->oclass, TELL))
+                if (resist(magr, mdef, otmp->oclass, TELL, bcsign(otmp)))
                     dmg = dmg / 2 + 1;
                 mdef->mhp -= dmg;
                 if (mdef->mhp <= 0)
@@ -228,8 +228,10 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                     else
                         done(DIED, "a turn undead effect");
                 }
-            } else if ((wandlevel < P_SKILLED && !resist(mdef, otmp->oclass, NOTELL)) ||
-                       (wandlevel >= P_SKILLED && resist(mdef, otmp->oclass, NOTELL))) {
+            } else if ((wandlevel < P_SKILLED &&
+                        !resist(magr, mdef, otmp->oclass, NOTELL, bcsign(otmp))) ||
+                       (wandlevel >= P_SKILLED &&
+                        resist(magr, mdef, otmp->oclass, NOTELL, bcsign(otmp)))) {
                 if (tseen) {
                     if (stunned(mdef))
                         pline(combat_msgc(magr, mdef, cr_hit),
@@ -265,7 +267,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         } else if (hityou) {
             polyself(FALSE); /* FIXME: make skilled users able to affect the outcome */
             known = TRUE;
-        } else if (!resist(mdef, otmp->oclass, NOTELL)) {
+        } else if (!resist(magr, mdef, otmp->oclass, NOTELL, bcsign(otmp))) {
             /* natural shapechangers aren't affected by system shock (unless
                protection from shapechangers is interfering with their
                metabolism...) */
@@ -400,7 +402,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             }
         } else {        /* Pestilence */
             /* Pestilence will always resist; damage is half of 3d{4,8} */
-            if (resist(mdef, otmp->oclass, TELL))
+            if (resist(magr, mdef, otmp->oclass, TELL, bcsign(otmp)))
                 dmg = dmg / 2 + 1;
             mdef->mhp -= dmg;
             if (mdef->mhp <= 0)
@@ -463,7 +465,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         /* [wakeup() doesn't rouse victims of temporary sleep, so it's okay to
            leave `wake' set to TRUE here] */
         reveal_invis = TRUE;
-        if (sleep_monst(mdef, dice(1 + otmp->spe, 12), WAND_CLASS) && !hityou)
+        if (sleep_monst(magr, mdef, dice(1 + otmp->spe, 12), WAND_CLASS) && !hityou)
             slept_monst(mdef);
         known = TRUE;
         break;
@@ -526,7 +528,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         } else if (hityou)
             losexp(msgcat_many("drained by %s spell", s_suffix(k_monnam(magr)), NULL),
                    FALSE);
-        else if (!resist(mdef, otmp->oclass, TELL)) {
+        else if (!resist(magr, mdef, otmp->oclass, TELL, bcsign(otmp))) {
             mdef->mhp -= dmg;
             mdef->mhpmax -= dmg;
             if (mdef->mhp <= 0 || mdef->mhpmax <= 0 || mdef->m_lev < 1)
@@ -2209,14 +2211,31 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
              boolean allow_cancel_kill, boolean self_cancel)
 {
     boolean youdefend = (mdef == &youmonst);
-    boolean youattack = (magr == &youmonst);
     static const char writing_vanishes[] =
         "Some writing vanishes from %s head!";
     static const char your[] = "your";  /* should be extern */
 
-    if (youdefend ? (!youattack && Antimagic)
-        : resist(mdef, obj->oclass, NOTELL))
-        return FALSE;   /* resisted cancellation */
+    /* Nonplayers can use resist() in place of MR. */
+    boolean has_mr = FALSE;
+    if (!youdefend) {
+        if (magr != mdef && resist(magr, mdef, obj->oclass, NOTELL, bcsign(obj)))
+            has_mr = TRUE;
+    }
+    if (resists_magm(mdef))
+        has_mr = TRUE;
+
+    int wandlevel = 0;
+    if (obj->oclass == WAND_CLASS)
+        wandlevel = getwandlevel(magr, obj);
+
+    /* Cancel is averted with MR (or for non-players, resist() as well) 100% of the time
+       below expert wands (and for the spell), 90% of the time for expert wands,
+       50% at the time for master wands */
+    if (has_mr && magr != mdef &&
+        (!wandlevel || wandlevel < P_EXPERT ||
+         (wandlevel == P_EXPERT ? rn2(10) :
+          wandlevel == P_MASTER ? rn2(2) : 0)))
+        return FALSE;
 
     if (self_cancel) {  /* 1st cancel inventory */
         struct obj *otmp;
@@ -3007,7 +3026,15 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     boolean yours = (type >= 0);
     boolean disintegrated = (buzztyp == ZT_BREATH(ZT_DEATH));
     boolean wand = (buzztyp < 10);
+    int bcsign = 0;
     struct obj *otmp;
+
+    /* we need to figure out BUC for potential wand for resist() */
+    int wandlevel = P_SKILL(P_WANDS);
+    if (magr != &youmonst)
+        wandlevel = mprof(magr, MP_WANDS);
+    if (raylevel)
+        bcsign = raylevel - wandlevel;
 
     fltxt = flash_types[buzztyp];
     switch (abstype) {
@@ -3081,7 +3108,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         if (resists_sleep(mdef))
             resisted = 1;
         else {
-            sleep_monst(mdef, dice(nd, 25),
+            sleep_monst(magr, mdef, dice(nd, 25),
                         buzztyp == ZT_WAND(ZT_SLEEP) ? WAND_CLASS : '\0');
             if (!you)
                 slept_monst(mdef);
@@ -3273,7 +3300,8 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         tmp += spell_damage_bonus();
     if (is_hero_spell(type) && (Role_if(PM_KNIGHT) && Uhave_questart))
         tmp *= 2;
-    if (tmp > 0 && resist(mdef, buzztyp < ZT_SPELL(0) ? WAND_CLASS : '\0', NOTELL))
+    if (tmp > 0 && resist(magr, mdef, buzztyp < ZT_SPELL(0) ? WAND_CLASS : '\0', NOTELL,
+                          bcsign))
         tmp /= 2;
     if (half_spell_dam(mdef) && tmp && buzztyp < ZT_BREATH(0))
         tmp = (tmp + 1) / 2;
@@ -3892,7 +3920,8 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
 
 
 int
-resist(const struct monst *mtmp, char oclass, int domsg)
+resist(const struct monst *magr, const struct monst *mdef,
+       char oclass, int domsg, int buc)
 {
     int resisted;
     int alev, dlev;
@@ -3901,6 +3930,18 @@ resist(const struct monst *mtmp, char oclass, int domsg)
     switch (oclass) {
     case WAND_CLASS:
         alev = 12;
+        if (magr) {
+            int wandlevel = P_SKILL(P_WANDS);
+            if (magr != &youmonst)
+                wandlevel = mprof(magr, MP_WANDS);
+            wandlevel += buc;
+            alev = (wandlevel == P_UNSKILLED ? 5 :
+                    wandlevel == P_BASIC ? 10 :
+                    wandlevel == P_SKILLED ? 20 :
+                    wandlevel == P_EXPERT ? 30 :
+                    wandlevel == P_MASTER ? 50 :
+                    1);
+        }
         break;
     case TOOL_CLASS:
         alev = 10;
@@ -3918,21 +3959,21 @@ resist(const struct monst *mtmp, char oclass, int domsg)
         alev = 5;
         break;
     default:
-        alev = u.ulevel;
+        alev = magr ? m_mlev(magr) : 10;
         break;  /* spell */
     }
     /* defense level */
-    dlev = (int)mtmp->m_lev;
+    dlev = (int)mdef->m_lev;
     if (dlev > 50)
         dlev = 50;
     else if (dlev < 1)
-        dlev = is_mplayer(mtmp->data) ? u.ulevel : 1;
+        dlev = is_mplayer(mdef->data) ? u.ulevel : 1;
 
-    resisted = rn2(100 + alev - dlev) < mtmp->data->mr;
+    resisted = rn2(100 + alev - dlev) < mdef->data->mr;
     if (resisted) {
         if (domsg) {
-            shieldeff(mtmp->mx, mtmp->my);
-            pline(msgc_noconsequence, "%s resists!", Monnam(mtmp));
+            shieldeff(mdef->mx, mdef->my);
+            pline(msgc_noconsequence, "%s resists!", Monnam(mdef));
         }
     }
 

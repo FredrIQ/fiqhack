@@ -709,7 +709,7 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
                 if (mdef)
                     *mdef = &youmonst;
 
-                if (!Conflict || resist(magr, RING_CLASS, 0)) {
+                if (!Conflict || resist(&youmonst, magr, RING_CLASS, 0, 0)) {
                     if ((!helpful && magr->mpeaceful) ||
                         (helpful && !magr->mpeaceful))
                     return FALSE;
@@ -736,7 +736,7 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
             !confused(magr)) {
             /* Note: the couldsee() here is an LOE check and has nothing to
                do with vision; it determines conflict radius */
-            if (Conflict && !resist(magr, RING_CLASS, 0) &&
+            if (Conflict && !resist(&youmonst, magr, RING_CLASS, 0, 0) &&
                 couldsee(magr->mx, magr->my) &&
                 distu(magr->mx, magr->my) <= BOLT_LIM * BOLT_LIM) {
                 /* we're conflicted, anything is a valid target */

@@ -3166,7 +3166,8 @@ shk_move(struct monst *shkp)
 
     if ((udist = distu(omx, omy)) < 3 &&
         (shkp->data != &mons[PM_GRID_BUG] || (omx == u.ux || omy == u.uy))) {
-        if (!shkp->mpeaceful || (Conflict && !resist(shkp, RING_CLASS, 0))) {
+        if (!shkp->mpeaceful || (Conflict && !resist(&youmonst, shkp, RING_CLASS, 0,
+                                                     0))) {
             if (Displaced)
                 pline(msgc_notresisted,
                       "Your displaced image doesn't fool %s!", mon_nam(shkp));

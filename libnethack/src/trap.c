@@ -1338,7 +1338,7 @@ steedintrap(struct trap *trap, struct obj *otmp)
         break;
     case POLY_TRAP:
         if (!resists_magm(mtmp)) {
-            if (!resist(mtmp, WAND_CLASS, NOTELL)) {
+            if (!resist(NULL, mtmp, WAND_CLASS, NOTELL, 0)) {
                 newcham(mtmp, NULL, FALSE, FALSE);
                 if (!can_saddle(mtmp) || !can_ride(mtmp)) {
                     dismount_steed(DISMOUNT_POLY);
@@ -2255,7 +2255,7 @@ mintrap(struct monst *mtmp)
         case POLY_TRAP:
             if (resists_magm(mtmp)) {
                 shieldeff(mtmp->mx, mtmp->my);
-            } else if (!resist(mtmp, WAND_CLASS, NOTELL)) {
+            } else if (!resist(NULL, mtmp, WAND_CLASS, NOTELL, 0)) {
                 newcham(mtmp, NULL, FALSE, FALSE);
                 if (in_sight)
                     seetrap(trap);

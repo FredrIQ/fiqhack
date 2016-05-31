@@ -1385,7 +1385,7 @@ update_property(struct monst *mon, enum youprop prop,
                           msgc_monneutral, "%s asleep.", M_verbs(mon, "fall"));
                     effect = TRUE;
                 }
-                sleep_monst(mon, sleeptime, 0);
+                sleep_monst(NULL, mon, sleeptime, -1);
             }
 
             if (restful_sleep(mon))

@@ -876,7 +876,7 @@ magicbane_hit(struct monst *magr,   /* attacker */
                 }
             }
         } else {
-            if (rn2(2) && resist(mdef, WEAPON_CLASS, NOTELL))
+            if (rn2(2) && resist(magr, mdef, WEAPON_CLASS, NOTELL, 0))
                 resisted = TRUE;
             else
                 monflee(mdef, 3, FALSE, (mdef->mhp > *dmgptr));

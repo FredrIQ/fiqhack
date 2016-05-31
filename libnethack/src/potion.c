@@ -1268,9 +1268,9 @@ potionhit(struct monst *mon, struct obj *obj, struct monst *magr)
                 break;
             }
         do_illness:
-            if ((mon->mhpmax > 3) && !resist(mon, POTION_CLASS, NOTELL))
+            if ((mon->mhpmax > 3) && !resist(magr, mon, POTION_CLASS, NOTELL, 0))
                 mon->mhpmax /= 2;
-            if ((mon->mhp > 2) && !resist(mon, POTION_CLASS, NOTELL))
+            if ((mon->mhp > 2) && !resist(magr, mon, POTION_CLASS, NOTELL, 0))
                 mon->mhp /= 2;
             if (mon->mhp > mon->mhpmax)
                 mon->mhp = mon->mhpmax;
@@ -1280,7 +1280,7 @@ potionhit(struct monst *mon, struct obj *obj, struct monst *magr)
             break;
         case POT_CONFUSION:
         case POT_BOOZE:
-            if (!resist(mon, POTION_CLASS, NOTELL))
+            if (!resist(magr, mon, POTION_CLASS, NOTELL, 0))
                 set_property(mon, CONFUSION, dice(3, 8), FALSE);
             break;
         case POT_INVISIBILITY:
@@ -1289,7 +1289,7 @@ potionhit(struct monst *mon, struct obj *obj, struct monst *magr)
             break;
         case POT_SLEEPING:
             /* wakeup() doesn't rouse victims of temporary sleep */
-            if (sleep_monst(mon, rnd(12), POTION_CLASS)) {
+            if (sleep_monst(magr, mon, rnd(12), POTION_CLASS)) {
                 pline(combat_msgc(magr, mon, cr_hit),
                       "%s falls asleep.", Monnam(mon));
                 slept_monst(mon);
@@ -1310,7 +1310,7 @@ potionhit(struct monst *mon, struct obj *obj, struct monst *magr)
         case POT_BLINDNESS:
             if (haseyes(mon->data)) {
                 int btmp = 64 + rn2(32) + rn2(32) *
-                  !resist(mon, POTION_CLASS, NOTELL);
+                    !resist(magr, mon, POTION_CLASS, NOTELL, 0);
 
                 if (btmp)
                     set_property(mon, BLINDED, btmp, FALSE);
@@ -1363,7 +1363,7 @@ potionhit(struct monst *mon, struct obj *obj, struct monst *magr)
                 splatter_burning_oil(mon->mx, mon->my);
             break;
         case POT_ACID:
-            if (!resists_acid(mon) && !resist(mon, POTION_CLASS, NOTELL)) {
+            if (!resists_acid(mon) && !resist(magr, mon, POTION_CLASS, NOTELL, 0)) {
                 pline(combat_msgc(magr, mon, cr_hit),
                       "%s %s in pain!", Monnam(mon),
                       is_silent(mon->data) ? "writhes" : "shrieks");

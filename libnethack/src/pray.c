@@ -1858,7 +1858,7 @@ mdoturn(struct musable *m)
                 mtmp->mflee = 0;
                 mtmp->mfrozen = 0;
                 mtmp->mcanmove = 1;
-            } else if (!resist(mtmp, '\0', TELL)) {
+            } else if (!resist(&youmonst, mtmp, '\0', TELL, 0)) {
                 xlev = 6;
                 switch (mtmp->data->mlet) {
                     /* this is intentional, lichs are tougher than zombies. */
@@ -1873,7 +1873,7 @@ mdoturn(struct musable *m)
                 case S_MUMMY:
                     xlev += 2; /*FALLTHRU*/
                 case S_ZOMBIE:
-                    if (u.ulevel >= xlev && !resist(mtmp, '\0', NOTELL)) {
+                    if (u.ulevel >= xlev && !resist(&youmonst, mtmp, '\0', NOTELL, 0)) {
                         if (u.ualign.type == A_CHAOTIC)
                             msethostility(mtmp, FALSE, TRUE);
                         else

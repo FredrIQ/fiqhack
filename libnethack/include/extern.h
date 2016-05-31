@@ -945,7 +945,7 @@ extern int mattackm(struct monst *, struct monst *);
 extern int gazemm(struct monst *, struct monst *, const struct attack *);
 extern void mswingsm(struct monst *, struct monst *, struct obj *);
 extern int noattacks(const struct permonst *);
-extern int sleep_monst(struct monst *, int, int);
+extern int sleep_monst(struct monst *, struct monst *, int, int);
 extern void slept_monst(struct monst *);
 extern long attk_protection(int);
 extern void mrustm (struct monst *magr, struct monst *mdef, struct obj *obj);
@@ -2092,7 +2092,7 @@ extern void fracture_rock(struct obj *);
 extern boolean break_statue(struct obj *);
 extern void destroy_item(int, int);
 extern int destroy_mitem(struct monst *, int, int);
-extern int resist(const struct monst *, char, int);
+extern int resist(const struct monst *, const struct monst *, char, int, int);
 extern void makewish(void);
 extern int getwandlevel(const struct monst *, struct obj *);
 

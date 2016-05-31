@@ -660,7 +660,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
     boolean wand = (obj->oclass == WAND_CLASS);
     boolean spell = (obj->oclass == SPBOOK_CLASS);
     boolean helpful = FALSE;
-    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) &&
+    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     /* if monsters know BUC, apply real wandlevel for wands */
     if (obj->mbknown && wand) {
@@ -935,7 +935,7 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
     int x, y, xx, yy;
     int x_best = 0;
     int y_best = 0;
-    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) &&
+    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     struct monst *mtmp;
     for (x = mon->mx - globrange; x <= mon->mx + globrange; x++) {
@@ -1116,7 +1116,8 @@ find_item(struct monst *mon, struct musable *m)
     struct level *lev = mon->dlevel;
     boolean stuck = (mon == u.ustuck && sticks(youmonst.data));
     boolean immobile = (mon->data->mmove == 0);
-    boolean conflicted = (Conflict && !resist(mon, RING_CLASS, 0) && m_canseeu(mon) &&
+    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
+                          m_canseeu(mon) &&
                           distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     coord tc;
     int fraction;

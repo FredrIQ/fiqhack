@@ -57,7 +57,7 @@ awaken_monsters(struct monst *mon, int distance)
 
         /* May scare some monsters */
         if (distm >= distance / 3 ||
-            resist(mtmp, TOOL_CLASS, NOTELL))
+            resist(mon, mtmp, TOOL_CLASS, NOTELL, 0))
             continue;
 
         monflee(mtmp, 0, FALSE, TRUE);
@@ -95,7 +95,7 @@ put_monsters_to_sleep(int distance)
 
     while (mtmp) {
         if (!DEADMONSTER(mtmp) && distu(mtmp->mx, mtmp->my) < distance &&
-            sleep_monst(mtmp, dice(10, 10), TOOL_CLASS)) {
+            sleep_monst(&youmonst, mtmp, dice(10, 10), TOOL_CLASS)) {
             mtmp->msleeping = 1;        /* 10d10 turns + wake_nearby to rouse */
             slept_monst(mtmp);
         }
@@ -187,7 +187,7 @@ charm_monsters(int distance)
     struct monst *mtmp, *mtmp2;
 
     if (Engulfed) {
-        if (!resist(u.ustuck, TOOL_CLASS, NOTELL))
+        if (!resist(&youmonst, u.ustuck, TOOL_CLASS, NOTELL, 0))
             tamedog(u.ustuck, NULL);
     } else {
         for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
@@ -196,7 +196,7 @@ charm_monsters(int distance)
                 continue;
 
             if (distu(mtmp->mx, mtmp->my) <= distance) {
-                if (!resist(mtmp, TOOL_CLASS, NOTELL))
+                if (!resist(&youmonst, mtmp, TOOL_CLASS, NOTELL, 0))
                     tamedog(mtmp, NULL);
             }
         }

@@ -376,7 +376,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 } else {
                     int mdam = dam;
 
-                    if (resist(mtmp, olet, FALSE)) {
+                    if (resist(NULL, mtmp, olet, FALSE, 0)) {
                         /* TODO: again, message channel is a guess */
                         if (cansee(i + x - 1, j + y - 1))
                             pline(msgc_monneutral,
@@ -393,7 +393,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     if (adtyp == AD_MAGM && raylevel >= P_EXPERT && resists_magm(mtmp))
                         mdam = (mdam + 1) / 2;
                     if (adtyp == AD_SLEE && raylevel) {
-                        sleep_monst(mtmp, mdam, WAND_CLASS);
+                        sleep_monst(NULL, mtmp, mdam, WAND_CLASS);
                         mdam = 0;
                     }
                     if (adtyp == AD_DISN && raylevel) {

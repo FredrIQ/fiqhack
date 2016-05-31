@@ -426,7 +426,8 @@ dochug(struct monst *mtmp)
             pline(msgc_levelwarning,
                   "You sense a faint wave of psychic energy.");
         else {
-            if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0))) {
+            if (!mtmp->mpeaceful || (Conflict &&
+                                     !resist(&youmonst, mtmp, RING_CLASS, 0, 0))) {
                 boolean m_sen = sensemon(mtmp);
 
                 if (!u.uinvulnerable &&
@@ -581,7 +582,7 @@ dochug(struct monst *mtmp)
        make sure that the monster's physically capable of attacking the square,
        and that the monster hasn't used its turn already (tmp == 3). */
 
-    if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0))) {
+    if (!mtmp->mpeaceful || (Conflict && !resist(&youmonst, mtmp, RING_CLASS, 0, 0))) {
         if (nearby && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3 &&
             aware_of_u(mtmp))
             if (engulfing_u(mtmp) ? mattackq(mtmp, u.ux, u.uy) :
@@ -865,7 +866,7 @@ not_special:
     nix = omx;
     niy = omy;
     flag = 0L;
-    if (mtmp->mpeaceful && (!Conflict || resist(mtmp, RING_CLASS, 0)))
+    if (mtmp->mpeaceful && (!Conflict || resist(&youmonst, mtmp, RING_CLASS, 0, 0)))
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
         flag |= ALLOW_MUXY;

@@ -864,7 +864,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
             killed(mon);        /* takes care of most messages */
     } else if (u.umconf && !thrown) {
         nohandglow(mon);
-        if (!resist(mon, SPBOOK_CLASS, NOTELL)) {
+        if (!resist(&youmonst, mon, SPBOOK_CLASS, NOTELL, 0)) {
             set_property(mon, CONFUSION, dice(3, 8), TRUE);
             if (!stunned(mon) && mon->mcanmove && !mon->msleeping &&
                 canseemon(mon))
@@ -1466,7 +1466,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_SLEE:
-        if (!negated && !mdef->msleeping && sleep_monst(mdef, rnd(10), -1)) {
+        if (!negated && !mdef->msleeping && sleep_monst(&youmonst, mdef, rnd(10), -1)) {
             if (!Blind)
                 pline(combat_msgc(&youmonst, mdef, cr_hit),
                       "%s is put to sleep by you!", Monnam(mdef));
