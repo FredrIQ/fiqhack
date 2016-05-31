@@ -1370,17 +1370,21 @@ spelleffects(boolean atme, struct musable *m)
         }
     }
 
+    boolean clone_wiz = FALSE;
+    boolean set_maintained = FALSE;
+    boolean maintained = spell_maintained(mon, spell);
+    if (spell == SPE_BOOK_OF_THE_DEAD)
+        clone_wiz = TRUE;
+
     /* Find the skill for the given spell type category */
     if (you) {
-        skill = spell_skilltype(spell);
+        skill = clone_wiz ? P_CLERIC_SPELL : spell_skilltype(spell);
         role_skill = P_SKILL(skill);
     } else {
-        skill = mspell_skilltype(spell);
+        skill = clone_wiz ? MP_SCLRC : mspell_skilltype(spell);
         role_skill = mprof(mon, skill);
     }
 
-    boolean set_maintained = FALSE;
-    boolean maintained = spell_maintained(mon, spell);
     if (maintained) {
         spell_unmaintain(&youmonst, spell);
         if (you)
@@ -1578,7 +1582,7 @@ spelleffects(boolean atme, struct musable *m)
         /* make energy use unpredictable! */
         cooldown = rn2(cooldown);
 
-        energy = (objects[spell].oc_level * cooldown);
+        energy = ((clone_wiz ? 7 : objects[spell].oc_level) * cooldown);
         if (mon_has_amulet(mon)) {
             amulet = TRUE;
             if (!rn2(5)) {
@@ -1602,7 +1606,10 @@ spelleffects(boolean atme, struct musable *m)
         }
     }
 
-    chance = percent_success(mon, spell);
+    if (clone_wiz)
+        chance = 100;
+    else
+        chance = percent_success(mon, spell);
     if (confused || (rnd(100) > chance)) {
         if (you) {
             pline(msgc_failrandom, "You fail to cast the spell correctly.");
@@ -1622,7 +1629,7 @@ spelleffects(boolean atme, struct musable *m)
     if (!you) {
         if (vis)
             pline(msgc_monneutral, "%s casts a spell!", Monnam(mon));
-        if (amulet)
+        if (vis && amulet)
             pline(msgc_monneutral,
                   "The amulet drains %s energy away...", s_suffix(mon_nam(mon)));
     }
@@ -1778,6 +1785,15 @@ spelleffects(boolean atme, struct musable *m)
         break;
     case SPE_PHASE:
         set_property(mon, PASSES_WALLS, rn1(40, 21), FALSE);
+        break;
+    case SPE_BOOK_OF_THE_DEAD:
+        if (!mon->iswiz || flags.no_of_wizards != 1 || mon == &youmonst) {
+            impossible("Invalid user of double trouble?");
+            break;
+        }
+        if (vis)
+            pline(msgc_levelwarning, "Double Trouble...");
+        clonewiz();
         break;
     default:
         impossible("Unknown spell %d attempted.", spell);

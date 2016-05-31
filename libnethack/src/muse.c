@@ -1442,6 +1442,13 @@ find_item(struct monst *mon, struct musable *m)
     if (m->use) /* stairs, trap door or tele-trap, bugle alert */
         return TRUE;
 
+    /* Clone ourselves */
+    if (mon->iswiz && flags.no_of_wizards == 1 && !mon->mspec_used) {
+        m->use = MUSE_SPE;
+        m->spell = SPE_BOOK_OF_THE_DEAD; /* sentinel for double trouble */
+        return TRUE;
+    }
+
     int randcount = 1; /* for randomizing inventory usage */
     /* For figuring out the best use of target based stuff in particular */
     int spell_best = 0;
@@ -2547,25 +2554,25 @@ use_item(struct musable *m)
         switch (where_to) {
         case 1:    /* onto floor beneath mon */
             pline(combat_msgc(mon, mtmp, cr_hit),
-                  "%s yanks %s from %s %s!", Monnam(mtmp), the_weapon,
+                  "%s yanks %s from %s %s!", Monnam(mon), the_weapon,
                   mtmp == &youmonst ? "your" : s_suffix(mon_nam(mon)),
                   hand);
             place_object(otmp, level, mon->mx, mon->my);
             break;
         case 2:    /* onto floor beneath you */
             pline(combat_msgc(mon, mtmp, cr_hit),
-                  "%s yanks %s to the %s!", Monnam(mtmp), the_weapon,
+                  "%s yanks %s to the %s!", Monnam(mon), the_weapon,
                   surface(m_mx(mon), m_my(mon)));
             place_object(otmp, level, m_mx(mtmp), m_my(mtmp));
             break;
         case 3:    /* into mon's inventory */
             pline(combat_msgc(mon, mtmp, cr_hit),
-                  "%s snatches %s!", Monnam(mtmp), the_weapon);
+                  "%s snatches %s!", Monnam(mon), the_weapon);
             mpickobj(mon, otmp);
             break;
         }
         return 1;
-    case 0:
+    case MUSE_NONE:
         return 0;
     default:
         impossible("%s wanted to perform action %d?", Monnam(mon),
