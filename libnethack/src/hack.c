@@ -79,9 +79,9 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
 
         if (mtmp && !Hallucination && canclassifymon(mtmp)) {
             if (mtmp->mtame)
-                peaceful = 3;
+                peaceful = 3; /* tame */
             else if (mtmp->mpeaceful)
-                peaceful = always_peaceful(mtmp->data) ? 2 : 1;
+                peaceful = 1; /* 1=don't interact, 2=chat */
         } /* otherwise treat the monster as hostile */
 
         switch (uim) {
@@ -89,10 +89,6 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
         case uim_forcefight:
             return uia_attack;
         case uim_traditional:
-            if (peaceful > 1)
-                peaceful = 1;
-            /* then fall through */
-        case uim_standard:
             if (peaceful == 1) { /* implies mtmp != NULL */
                 if (yn(msgprintf("Really attack %s?", mon_nam(mtmp))) != 'y')
                     return uia_halt;
@@ -100,6 +96,10 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
                     return uia_attack;
             }
             /* otherwise fall through */
+        case uim_standard:
+            if (peaceful == 1)
+                peaceful++;
+            /* then fall through */
         case uim_attackhostile:
             if (peaceful == 0)
                 return uia_attack;
