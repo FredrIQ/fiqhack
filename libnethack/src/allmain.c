@@ -908,13 +908,17 @@ you_moved(void)
                 }
             }
 
-            if ((u.uen < u.uenmax) &&
-                ((wtcap < MOD_ENCUMBER &&
-                  (!(moves %
-                     ((MAXULEV + 8 -
-                       u.ulevel) * (Role_if(PM_WIZARD) ? 3 : 4) / 6))))
-                 || Energy_regeneration)) {
-                u.uen += rn1((int)(ACURR(A_WIS) + ACURR(A_INT)) / 15 + 1, 1);
+            int pw_regen = 0;
+            if (Energy_regeneration)
+                pw_regen += 100;
+            if (Role_if(PM_WIZARD))
+                pw_regen += 33;
+            int wis = ACURR(A_WIS);
+            if (wis > 3)
+                pw_regen += wis * 3;
+            pw_regen += u.ulevel * 3;
+            if (u.uen < u.uenmax && wtcap < MOD_ENCUMBER) {
+                u.uen += regeneration_by_rate(pw_regen);
                 if (u.uen > u.uenmax)
                     u.uen = u.uenmax;
             }

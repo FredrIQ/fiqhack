@@ -1200,6 +1200,7 @@ extern short mprof(const struct monst *, int);
 
 extern boolean itsstuck(struct monst *);
 extern boolean mb_trapped(struct monst *);
+extern int regeneration_by_rate(int);
 extern void mon_regen(struct monst *, boolean);
 extern int dochugw(struct monst *);
 extern boolean onscary(int, int, const struct monst *);

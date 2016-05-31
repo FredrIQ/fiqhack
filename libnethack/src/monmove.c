@@ -112,6 +112,26 @@ onscary(int x, int y, const struct monst *mtmp)
                           IS_ALTAR(level->locations[x][y].typ)));
 }
 
+/* Returns a number to generate this turn based on regeneration rate.
+   Base number of regeneration rate is 100 which means 1(HP|Pw)/turn.
+   200 means twice that, 50 means regenerate 1 every other turn, etc. */
+int
+regeneration_by_rate(int regen_rate)
+{
+    int ret = regen_rate / 100;
+    regen_rate %= 100;
+    int movecount = moves % 100;
+    int rate_counter = 0;
+    int i;
+    for (i = 0; i <= movecount; i++) {
+        if (rate_counter >= 100)
+            rate_counter -= 100;
+        rate_counter += regen_rate;
+    }
+    if (rate_counter >= 100)
+        ret++;
+    return ret;
+}
 
 /* regenerate lost hit points */
 void
