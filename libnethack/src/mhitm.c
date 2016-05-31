@@ -1691,7 +1691,7 @@ int
 sleep_monst(struct monst *magr, struct monst *mdef, int amt, int how)
 {
     if (resists_sleep(mdef) || (how >= 0 && mdef != &youmonst &&
-                                resist(magr, mdef, (char)how, NOTELL, 0))) {
+                                resist(magr, mdef, (char)how, TELL, 0))) {
         shieldeff(m_mx(mdef), m_my(mdef));
         return 0;
     }
