@@ -1769,6 +1769,11 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
         if (cursed)
             return 0;
 
+        /* Aligned priests (and high ones) will not read nonblessed spellbooks
+           at all to avoid ruining the temple if the book teleports them */
+        if (ispriest(mon) && !blessed)
+            return 0;
+
         /* monsters don't know how hard a book is unless mknown is set
            (from the identify spell or a spellcaster trying earlier).
            If they do, only read books with min. success rate 15 */
