@@ -2936,11 +2936,24 @@ wake_nearby(boolean intentional)
 
 void mwake_nearby(const struct monst *mon, boolean intentional)
 {
-    wake_nearto(m_mx(mon), m_my(mon), aggravating(mon) ? COLNO * COLNO + ROWNO * ROWNO :
-                intentional ? m_mlev(mon) * 20 :
-                600 / (m_mlev(mon) *
-                       ((mon == &youmonst ? Role_if(PM_ROGUE) : mon->data == &mons[PM_ROGUE]) ?
-                        2 : 1) * (stealthy(mon) ? 2 : 1)));
+    int dist = 0;
+    if (aggravating(mon))
+        dist = COLNO * COLNO + ROWNO * ROWNO;
+    else if (intentional)
+        dist = m_mlev(mon) * 20;
+    else {
+        int div = m_mlev(mon);
+        if (div < 1)
+            div = 1; /* monsters can be XL 0 */
+        if (mon == &youmonst && Role_if(PM_ROGUE))
+            div *= 2;
+        else if (mon != &youmonst && mon->data == &mons[PM_ROGUE])
+            div *= 2;
+        if (stealthy(mon))
+            div *= 2;
+        dist = 600 / div;
+    }
+    wake_nearto(m_mx(mon), m_my(mon), dist);
 }
 
 /* Produce noise at a particular location. Monsters in the given dist2 radius
