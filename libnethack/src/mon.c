@@ -1159,7 +1159,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
                 muse.x = 0;
                 muse.y = 0;
                 muse.z = 1; /* use downwards */
-                muse.tobj = obj; /* for MUSE_KEY to figure out what container to open */
+                muse.tobj = container; /* for MUSE_KEY to figure out what container to open */
                 return !!use_item(&muse);
             }
             /* can't open chest, so ignore it, but set mknown to prevent pathfinding to
