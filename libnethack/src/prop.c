@@ -506,7 +506,7 @@ prop_wary(const struct monst *mon, struct monst *target, enum youprop prop)
         (target == &youmonst && mon->mpeaceful) ||
         (target != &youmonst && mon->mpeaceful == target->mpeaceful) ||
         mon->iswiz || mon == target || mon->mtame)
-        return (m_has_property(target, prop, ANY_PROPERTY, TRUE));
+        return !!m_has_property(target, prop, ANY_PROPERTY, TRUE);
     /* Monsters always know properties gained from those */
     if (m_has_property(target, prop,
                        (W_MASK(os_polyform) | W_MASK(os_birthopt) |
@@ -519,7 +519,7 @@ prop_wary(const struct monst *mon, struct monst *target, enum youprop prop)
 
     /* TODO: make monsters learn properties properly */
     if (rn2(4))
-        return (has_property(target, prop));
+        return !!has_property(target, prop);
     return FALSE;
 }
 
