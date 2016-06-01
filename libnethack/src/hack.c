@@ -239,6 +239,17 @@ clear_travel_direction(void)
     memset(turnstate.move.stepped_on, FALSE, sizeof(turnstate.move.stepped_on));
 }
 
+struct monst *
+um_at(struct level *lev, int x, int y)
+{
+    struct monst *mon = m_at(lev, x, y);
+    if (mon)
+        return mon;
+    else if (lev == level && x == u.ux && y == u.uy)
+        return &youmonst;
+    return NULL;
+}
+
 boolean
 revive_nasty(int x, int y, const char *msg)
 {

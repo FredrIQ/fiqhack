@@ -143,6 +143,8 @@
    via telepathy/monster detection/etc., but not if sensed via vision */
 # define canspotmon(mon)      !!(msensem(&youmonst, (mon)) & \
                                  (MSENSE_ANYDETECT | MSENSE_ANYVISION))
+# define mcanspotmon(mon,target) !!(msensem((mon), (target)) &          \
+                                    (MSENSE_ANYDETECT | MSENSE_ANYVISION))
 /* monster sensed or seen via any means, including mimicking mimics */
 # define canspotmonoritem(mon)!!(msensem(&youmonst, (mon)) & \
                                  (MSENSE_ANYDETECT | MSENSE_ANYVISION | \

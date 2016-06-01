@@ -629,6 +629,7 @@ extern void drinksink(void);
 extern enum u_interaction_attempt resolve_uim(
     enum u_interaction_mode, boolean, xchar, xchar);
 extern void clear_travel_direction(void);
+extern struct monst *um_at(struct level *, int, int);
 extern boolean revive_nasty(int, int, const char *);
 extern void movobj(struct obj *, xchar, xchar);
 extern boolean may_dig(struct level *lev, xchar x, xchar y);

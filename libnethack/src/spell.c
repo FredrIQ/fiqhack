@@ -1849,15 +1849,15 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
         *dy = 0;
         return 1;
     } else if (nasty && (cc.x != m_mx(mon) || cc.y != m_my(mon)) &&
-               (!MON_AT(level, cc.x, cc.y) ||
-                !(msensem(mon, m_at(level, cc.x, cc.y)) & MSENSE_ANYDETECT))) {
+               (!um_at(level, cc.x, cc.y) ||
+                !mcanspotmon(mon, um_at(level, cc.x, cc.y)))) {
         pline(msgc_cancelled,
               "You fail to sense a monster there!");
         return 0;
     } else
-        if ((!cansee(cc.x, cc.y) &&
-             (!MON_AT(level, cc.x, cc.y) ||
-              !(msensem(mon, m_at(level, cc.x, cc.y)) & MSENSE_ANYDETECT))) ||
+        if ((!m_cansee(mon, cc.x, cc.y) &&
+             (!um_at(level, cc.x, cc.y) ||
+              !mcanspotmon(mon, um_at(level, cc.x, cc.y)))) ||
             IS_STWALL(level->locations[cc.x][cc.y].typ)) {
             pline(msgc_cancelled,
                   "Your mind fails to lock onto that location!");

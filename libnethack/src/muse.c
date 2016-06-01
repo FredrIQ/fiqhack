@@ -945,11 +945,11 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
             /* Invalid targets */
             if (!isok(x, y))
                 continue;
+            if (IS_STWALL(level->locations[x][y].typ))
+                continue;
             if (!m_cansee(mon, x, y) ||
-                (!stink && ((x == u.ux && y == u.uy &&
-                            msensem(mon, &youmonst)) ||
-                            ((mtmp = m_at(level, x, y)) &&
-                             msensem(mon, mtmp)))))
+                (!stink && (mtmp = um_at(level, x, y)) &&
+                 mcanspotmon(mon, mtmp)))
                 continue;
             if (dist2(mon->mx, mon->my, x, y) > (globrange * globrange))
                 continue;
@@ -965,13 +965,9 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
                     if (distmin(x, y, xx, yy) > range && stink)
                         continue;
 
-                    mtmp = m_at(mon->dlevel, xx, yy);
-                    if (!mtmp) {
-                        if (xx == u.ux && yy == u.uy)
-                            mtmp = &youmonst;
-                        if (!mtmp)
-                            continue;
-                    }
+                    mtmp = um_at(mon->dlevel, xx, yy);
+                    if (!mtmp)
+                        continue;
                     if (!obj_affects(mon, mtmp, obj))
                         continue;
                     /* self harm */
@@ -980,7 +976,7 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
                     else if (mon == mtmp) /* cure slime */
                         tilescore += 40;
                     /* monster doesn't know of the target */
-                    else if (!msensem(mon, mtmp))
+                    else if (!mcanspotmon(mon, mtmp))
                         continue;
                     /* target is hostile or we're conflicted */
                     else if (mm_aggression(mon, mtmp) || conflicted)
