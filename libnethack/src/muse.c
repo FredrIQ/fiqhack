@@ -2272,7 +2272,7 @@ use_item(struct musable *m)
         btrapped = (door->doormask & D_TRAPPED);
         if (vismon)
             pline(msgc_levelwarning, "%s %s a door.", Monnam(mon),
-                  otmp->otyp == SKELETON_KEY ? "unlocks" :
+                  obj->otyp == SKELETON_KEY ? "unlocks" :
                   "succeeds in picking the lock on");
         else
             You_hear(msgc_levelwarning, "a door unlock.");
