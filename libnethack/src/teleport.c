@@ -1159,8 +1159,9 @@ mon_tele(struct monst *mon, boolean free_will)
 
     /* the Amulet and Wizard's Tower occasionally block teleportation */
     if ((mon_has_amulet(mon) || (On_W_tower_level(m_mz(mon)))) && !rn2(3)) {
-        pline(msgc_substitute,
-              "%s seems very disoriented for a monent.", Monnam(mon));
+        if (canseemon(mon))
+            pline(msgc_substitute,
+                  "%s seems very disoriented for a monent.", Monnam(mon));
         return FALSE;
     }
 
