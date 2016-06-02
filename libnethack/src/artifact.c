@@ -449,7 +449,8 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
         (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
         (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
         (dtyp == AD_DRST && extrinsic == POISON_RES) ||
-        (dtyp == AD_DISE && extrinsic == SICK_RES))
+        (dtyp == AD_DISE && extrinsic == SICK_RES) ||
+        (dtyp == AD_DRLI && extrinsic == DRAIN_RES))
         return mask;
 
     if (equipped) {
@@ -461,7 +462,8 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
             (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
             (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
             (dtyp == AD_DRST && extrinsic == POISON_RES) ||
-            (dtyp == AD_DISE && extrinsic == SICK_RES))
+            (dtyp == AD_DISE && extrinsic == SICK_RES) ||
+            (dtyp == AD_DRLI && extrinsic == DRAIN_RES))
             return mask;
     }
 
