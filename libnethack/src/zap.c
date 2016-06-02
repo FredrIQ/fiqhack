@@ -3031,7 +3031,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
 
     /* we need to figure out BUC for potential wand for resist() */
     int wandlevel = P_SKILL(P_WANDS);
-    if (magr != &youmonst)
+    if (magr && magr != &youmonst)
         wandlevel = mprof(magr, MP_WANDS);
     if (raylevel)
         bcsign = raylevel - wandlevel;
