@@ -528,8 +528,8 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
     schar skill;
     int multishot;
     const char *onm;
-    int dx = mtmp->mx - xdef;
-    int dy = mtmp->my - ydef;
+    int dx = xdef - mtmp->mx;
+    int dy = ydef - mtmp->my;
 
     /* Rearranged beginning so monsters can use polearms not in a line */
     if (mtmp->weapon_check == NEED_WEAPON || !MON_WEP(mtmp)) {
@@ -802,8 +802,8 @@ int
 spitmq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
 {
     struct obj *otmp;
-    int dx = mtmp->mx - xdef;
-    int dy = mtmp->my - ydef;
+    int dx = xdef - mtmp->mx;
+    int dy = ydef - mtmp->my;
 
     if (cancelled(mtmp)) {
         if (canhear())
@@ -846,7 +846,7 @@ spitmq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
 int
 breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
 {
-    /* if new breath types are added, change AD_ACID to max type */
+    /* if new breath types are added, change AD_STUN to max type */
     int typ = (mattk->adtyp == AD_RBRE) ? rnd(AD_STUN) : mattk->adtyp;
 
     boolean youdef = u.ux == xdef && u.uy == ydef;
@@ -855,8 +855,8 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
         return 0;
 
     boolean linedup = qlined_up(mtmp, xdef, ydef, TRUE, FALSE);
-    int dx = mtmp->mx - xdef;
-    int dy = mtmp->my - ydef;
+    int dx = xdef - mtmp->mx;
+    int dy = ydef - mtmp->my;
 
     if (linedup) {
         if (cancelled(mtmp)) {
