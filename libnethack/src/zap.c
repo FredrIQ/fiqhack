@@ -3144,6 +3144,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                             pline(combat_msgc(magr, mdef, cr_immune),
                                   "%s unaffected.", M_verbs(mdef, "are"));
                     }
+                    break;
                 } else {
                     if (you) {
                         losexp("drained by a wand of death", FALSE);
