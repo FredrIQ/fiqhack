@@ -2554,20 +2554,23 @@ use_item(struct musable *m)
         }
         switch (where_to) {
         case 1:    /* onto floor beneath mon */
-            pline(combat_msgc(mon, mtmp, cr_hit),
+            pline(mtmp == &youmonst ? msgc_itemloss :
+                  combat_msgc(mon, mtmp, cr_hit),
                   "%s yanks %s from %s %s!", Monnam(mon), the_weapon,
                   mtmp == &youmonst ? "your" : s_suffix(mon_nam(mon)),
                   hand);
             place_object(otmp, level, mon->mx, mon->my);
             break;
         case 2:    /* onto floor beneath you */
-            pline(combat_msgc(mon, mtmp, cr_hit),
+            pline(mtmp == &youmonst ? msgc_itemloss :
+                  combat_msgc(mon, mtmp, cr_hit),
                   "%s yanks %s to the %s!", Monnam(mon), the_weapon,
                   surface(m_mx(mon), m_my(mon)));
             place_object(otmp, level, m_mx(mtmp), m_my(mtmp));
             break;
         case 3:    /* into mon's inventory */
-            pline(combat_msgc(mon, mtmp, cr_hit),
+            pline(mtmp == &youmonst ? msgc_itemloss :
+                  combat_msgc(mon, mtmp, cr_hit),
                   "%s snatches %s!", Monnam(mon), the_weapon);
             mpickobj(mon, otmp);
             break;
