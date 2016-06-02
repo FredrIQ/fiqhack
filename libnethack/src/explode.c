@@ -446,7 +446,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
             pline(msgc_playerimmune, "You are unharmed!");
         } else if (Half_physical_damage && adtyp == AD_PHYS)
             damu = (damu + 1) / 2;
-        else if (raylevel) {
+        else if (raylevel && uhurt == 2) {
             if (adtyp == AD_MAGM && Antimagic)
                 damu = (damu + 1) / 2;
             if (adtyp == AD_SLEE) {
