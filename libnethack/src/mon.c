@@ -2312,6 +2312,11 @@ xkilled(struct monst *mtmp, int dest)
  * either; dest=3, message but no corpse
  */
 {
+    if (mtmp == &youmonst) {
+        panic("xkilled running on player?");
+        return;
+    }
+
     int tmp, x = mtmp->mx, y = mtmp->my;
     const struct permonst *mdat;
     int mndx;

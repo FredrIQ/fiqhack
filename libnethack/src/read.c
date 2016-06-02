@@ -1613,7 +1613,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             boolean will_hit_you = FALSE;
             boolean hityou = FALSE;
             struct obj *otmp2;
-            struct monst *mtmp;
+            struct monst *mtmp = NULL;
             struct obj *armh;
             int dmg;
 
@@ -1682,8 +1682,8 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                         } else {
                             if (hityou || canseemon(mtmp))
                                 pline(combat_msgc(mon, mtmp, cr_resist),
-                                      "A %s bounces off %s hard %s.",
-                                      doname(otmp2), hityou ? "your" : 
+                                      "%s bounces off %s hard %s.",
+                                      An(xname(otmp2)), hityou ? "your" :
                                       s_suffix(mon_nam(mtmp)),
                                       helmet_name(armh));
                             else
@@ -1695,7 +1695,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                         if (!hityou) {
                             mtmp->mhp -= dmg;
                             if (mtmp->mhp <= 0)
-                                monkilled(mon, mtmp, "", AD_PHYS);
+                                monkilled(mtmp, mtmp, "", AD_PHYS);
                         } else {
                             if (you)
                                 losehp(dmg, killer_msg(DIED, "a scroll of earth"));
