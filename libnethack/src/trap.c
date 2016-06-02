@@ -4222,7 +4222,7 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
                 }
             }
             inc_timeout(mon, STUNNED, rn1(7, 16), TRUE);
-            inc_timeout(mon, HALLUC, rn1(5, 16), TRUE);
+            inc_timeout(mon, you ? HALLUC : CONFUSION, rn1(5, 16), TRUE);
             break;
         default:
             impossible("bad chest trap");
