@@ -3200,7 +3200,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                 }
 
                 if (!item_provides_extrinsic(otmp, DISINT_RES, &dummy))
-                    destroy_arm(&youmonst, otmp);
+                    destroy_arm(mdef, otmp);
                 return;
             }
 
