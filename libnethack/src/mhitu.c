@@ -618,6 +618,8 @@ diseasemu(const struct permonst *mdat, const char *hitmsg)
         pline(msgc_playerimmune, "You feel a slight illness.");
         return FALSE;
     } else {
+        /* avoid double-tab */
+        pline_implied(combat_msgc(NULL, &youmonst, cr_hit), , "%s", hitmsg);
         make_sick(&youmonst, 20 + rn2_on_rng(ACURR(A_CON), rng_ddeath_dconp20),
                   mdat->mname, TRUE, SICK_NONVOMITABLE);
         return TRUE;
