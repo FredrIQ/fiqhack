@@ -1926,7 +1926,6 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
              otyp == SPE_SLOW_MONSTER ||
              otyp == WAN_CANCELLATION ||
              otyp == SPE_CANCELLATION ||
-             otyp == SPE_CONFUSE_MONSTER ||
              otyp == SCR_TAMING ||
              otyp == SPE_CHARM_MONSTER ||
              otyp == POT_BLINDNESS ||
