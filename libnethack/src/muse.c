@@ -2461,6 +2461,7 @@ use_item(struct musable *m)
             if (mw_tmp)
                 setmnotwielded(mon, mw_tmp);
             mon->weapon_check = NEED_WEAPON;
+            obj->owornmask = W_MASK(os_wep);
             if (mon_visible(mon)) {
                 pline(msgc_monneutral,
                       "%s wields %s%s", Monnam(mon), singular(obj, doname),

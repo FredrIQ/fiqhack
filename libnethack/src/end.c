@@ -583,8 +583,13 @@ calc_score(int how, boolean show, long umoney)
 
         count_discovered_objects(&curd, &maxd);
         category_raw = curd;
-        category_ratio = curd * 100.0 / maxd;
-        category_points = isqrt((curd * max_squared) / maxd);
+        if (!maxd) { /* hotfix: should never happen */
+            category_ratio = 0;
+            category_points = 0;
+        } else {
+            category_ratio = curd * 100.0 / maxd;
+            category_points = isqrt((curd * max_squared) / maxd);
+        }
     }
     total += category_points;
 
