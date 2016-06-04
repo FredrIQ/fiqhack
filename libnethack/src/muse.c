@@ -3040,9 +3040,9 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
                                          "armor" if uskin() */
         /* TODO: when object properties is a thing, change this */
         if (refl(os_arms))
-            makeknown((which_armor(&youmonst, os_arms))->otyp);
+            makeknown((which_armor(mon, os_arms))->otyp);
         else if (refl(os_amul))
-            makeknown((which_armor(&youmonst, os_amul))->otyp);
+            makeknown((which_armor(mon, os_amul))->otyp);
 #undef refl
         return TRUE;
     }
