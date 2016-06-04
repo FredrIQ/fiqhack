@@ -505,6 +505,7 @@ void
 m_useup(struct monst *mon, struct obj *obj)
 {
     if (obj->quan > 1L) {
+        obj->in_use = FALSE; /* no longer used */
         obj->quan--;
         obj->owt = weight(obj);
     } else {
