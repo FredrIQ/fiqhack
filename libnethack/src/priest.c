@@ -307,11 +307,10 @@ priestname(const struct monst *mon, boolean override_hallu)
                     hallu_priest_types[rn2_on_display_rng(
                             sizeof hallu_priest_types /
                             sizeof *hallu_priest_types)]);
-                pname = msgcat(pname, " ");
             } else if (mon->female)
-                pname = msgcat(pname, "priestess ");
+                pname = msgcat(pname, "priestess");
             else
-                pname = msgcat(pname, "priest ");
+                pname = msgcat(pname, "priest");
         }
     } else
         pname = msgcat(pname, what);
