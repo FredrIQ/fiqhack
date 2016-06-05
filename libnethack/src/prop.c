@@ -1274,8 +1274,7 @@ update_property(struct monst *mon, enum youprop prop,
             if (you)
                 done(POISONING, delayed_killer(POISONING));
             else {
-                monkilled(mon, mon->usicked ? &youmonst : NULL,
-                          "", AD_DISE);
+                monkilled(mon->usicked ? &youmonst : NULL, mon, "", AD_DISE);
                 mon->usicked = 0; /* in case monster lifesaved */
             }
             break;
