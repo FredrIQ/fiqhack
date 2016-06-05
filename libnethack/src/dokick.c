@@ -357,7 +357,7 @@ ghitm(struct monst * mtmp, struct obj * gold)
                 verbalize(msgc_failrandom, "That's not enough, coward!");
         }
 
-        add_to_minv(mtmp, gold);
+        add_to_minv(mtmp, gold, NULL);
         return TRUE;
     }
 

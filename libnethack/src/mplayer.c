@@ -108,7 +108,7 @@ mk_mplayer_armor(struct monst *mon, short typ, enum rng rng)
     obj->spe = rn2_on_rng(10, rng) ?
         (rn2_on_rng(3, rng) ? rn2_on_rng(5, rng) : 4 + rn2_on_rng(4, rng)) :
         - 1 - rn2_on_rng(3, rng);
-    mpickobj(mon, obj);
+    mpickobj(mon, obj, NULL);
 }
 
 /* assumes rng is rng_main or rng_for_level(&lev->z) */
@@ -272,7 +272,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 /* +2 magicbane is generally regarded as the best enchantment,
                    this is debatable but since this is a *player* monster... */
                 otmp->spe = rn2_on_rng(3, rng) ? 2 : 1 + rn2_on_rng(4, rng);
-            mpickobj(mtmp, otmp);
+            mpickobj(mtmp, otmp, NULL);
         }
 
         if (special) {
@@ -355,7 +355,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             mkmonmoney(mtmp, rn2_on_rng(1000, rng), rng);
             quan = rn2_on_rng(10, rng);
             while (quan--)
-                mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE, rng));
+                mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE, rng), NULL);
             /* if the monster acquired polymorph control as part of the
                randomness, then maybe they did some ring eating... */
             if (m_carrying_recursive(mtmp, m_minvent(mtmp),

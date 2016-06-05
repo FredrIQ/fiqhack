@@ -2011,7 +2011,7 @@ doseduce(struct monst *mon)
             unwield_silently(ring);
             setunequip(ring);
             freeinv(ring);
-            mpickobj(mon, ring);
+            mpickobj(mon, ring, NULL);
         } else {
             enum objslot slot = os_invalid;
 

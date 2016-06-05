@@ -142,7 +142,7 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
         freeinv(otmp);
         /* mpickobj may free otmp it if merges, but we have already checked for
            a saddle above, so no merger should happen */
-        mpickobj(mtmp, otmp);
+        mpickobj(mtmp, otmp, NULL);
         mtmp->misc_worn_check |= W_MASK(os_saddle);
         otmp->owornmask = W_MASK(os_saddle);
         otmp->leashmon = mtmp->m_id;

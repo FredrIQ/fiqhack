@@ -628,7 +628,7 @@ gd_move(struct monst *grd)
             yours = TRUE;
             /* Grab the gold from between the hero's feet.  */
             obj_extract_self(gold);
-            add_to_minv(grd, gold);
+            add_to_minv(grd, gold, NULL);
             newsym(m, n);
         } else if (m == x && n == y) {
             mpickgold(grd);     /* does a newsym */

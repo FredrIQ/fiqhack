@@ -881,7 +881,7 @@ meatobj(struct monst *mtmp)
                         otmp3->age = moves - otmp3->age;
                         start_corpse_timeout(otmp3);
                     }
-                    mpickobj(mtmp, otmp3);
+                    mpickobj(mtmp, otmp3, NULL);
                 }
             }
             poly = polyfodder(otmp);
@@ -929,7 +929,7 @@ meatobj(struct monst *mtmp)
             } else if (ecount == 2)
                 buf = msgprintf("%s engulfs several objects.", Monnam(mtmp));
             obj_extract_self(otmp);
-            mpickobj(mtmp, otmp);       /* slurp */
+            mpickobj(mtmp, otmp, NULL);       /* slurp */
         }
         /* Engulf & devour is instant, so don't set meating */
         if (invisible(mtmp) && mtmp->dlevel == level)
@@ -955,7 +955,7 @@ mpickgold(struct monst *mtmp)
     if ((gold = gold_at(level, mtmp->mx, mtmp->my)) != 0) {
         mat_idx = objects[gold->otyp].oc_material;
         obj_extract_self(gold);
-        add_to_minv(mtmp, gold);
+        add_to_minv(mtmp, gold, NULL);
         if (cansee(mtmp->mx, mtmp->my)) {
             if (!mx_egd(mtmp))
                 pline(mtmp->mtame ? msgc_petneutral : msgc_monneutral,
@@ -1138,7 +1138,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             /* unblock point after extract, before pickup */
             if (obj->otyp == BOULDER)
                 unblock_point(obj->ox, obj->oy); /* vision */
-            mpickobj(mon, obj); /* may merge and free obj */
+            mpickobj(mon, obj, pickobj ? &pickobj : NULL); /* may merge and free obj */
             newsym(mon->mx, mon->my);
         }
     }

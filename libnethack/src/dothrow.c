@@ -1224,7 +1224,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
     if (Engulfed) {
         /* ball is not picked up by monster */
         if (obj != uball)
-            mpickobj(u.ustuck, obj);
+            mpickobj(u.ustuck, obj, NULL);
     } else {
         /* the code following might become part of dropy() */
         if (obj->oartifact == ART_MJOLLNIR && Role_if(PM_VALKYRIE) &&
@@ -1289,7 +1289,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
                       the(xname(obj)));
             if (*u.ushops)
                 check_shop_obj(obj, bhitpos.x, bhitpos.y, FALSE);
-            mpickobj(mon, obj); /* may merge and free obj */
+            mpickobj(mon, obj, NULL); /* may merge and free obj */
             thrownobj = NULL;
             return;
         }
@@ -1491,7 +1491,7 @@ thitmonst(struct monst *mon, struct obj *obj)
                 encumber_msg();
             } else {
                 /* angry leader caught it and isn't returning it */
-                mpickobj(mon, obj);
+                mpickobj(mon, obj, NULL);
             }
             return 1;   /* caller doesn't need to place it */
         }
@@ -1713,7 +1713,7 @@ gem_accept(struct monst *mon, struct obj *obj)
     buf = msgcat(buf, acceptgift);
     if (*u.ushops)
         check_shop_obj(obj, mon->mx, mon->my, TRUE);
-    mpickobj(mon, obj); /* may merge and free obj */
+    mpickobj(mon, obj, NULL); /* may merge and free obj */
     ret = 1;
 
 nopick:
@@ -1956,7 +1956,7 @@ throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
         pline(msgc_yafm, is_animal(u.ustuck->data) ?
               "%s in the %s's entrails." : "%s into %s.",
               "The money disappears", mon_nam(u.ustuck));
-        add_to_minv(u.ustuck, obj);
+        add_to_minv(u.ustuck, obj, NULL);
         return 1;
     }
 

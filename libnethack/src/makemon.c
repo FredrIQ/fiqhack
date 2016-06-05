@@ -133,7 +133,7 @@ m_initthrow(struct monst *mtmp, int otyp, int oquan, enum rng rng)
     otmp->owt = weight(otmp);
     if (otyp == ORCISH_ARROW)
         otmp->opoisoned = TRUE;
-    mpickobj(mtmp, otmp);
+    mpickobj(mtmp, otmp, NULL);
 }
 
 static void
@@ -242,7 +242,7 @@ m_initweap(struct level *lev, struct monst *mtmp, enum rng rng)
                 otmp->spe = 1 + rn2_on_rng(3, rng);
                 if (!rn2_on_rng(2, rng))
                     curse(otmp);
-                mpickobj(mtmp, otmp);
+                mpickobj(mtmp, otmp, NULL);
             }
         }
         break;
@@ -262,7 +262,7 @@ m_initweap(struct level *lev, struct monst *mtmp, enum rng rng)
             otmp->oerodeproof = TRUE;
             spe2 = rn2_on_rng(4, rng);
             otmp->spe = max(otmp->spe, spe2);
-            mpickobj(mtmp, otmp);
+            mpickobj(mtmp, otmp, NULL);
 
             otmp = mksobj(lev, !rn2_on_rng(4, rng) ||
                           is_lord(ptr) ? SHIELD_OF_REFLECTION : LARGE_SHIELD,
@@ -270,7 +270,7 @@ m_initweap(struct level *lev, struct monst *mtmp, enum rng rng)
             otmp->cursed = FALSE;
             otmp->oerodeproof = TRUE;
             otmp->spe = 0;
-            mpickobj(mtmp, otmp);
+            mpickobj(mtmp, otmp, NULL);
         }
         break;
 
@@ -498,7 +498,7 @@ mkmonmoney(struct monst *mtmp, long amount, enum rng rng)
     struct obj *gold = mksobj(mtmp->dlevel, GOLD_PIECE, FALSE, FALSE, rng);
 
     gold->quan = amount;
-    add_to_minv(mtmp, gold);
+    add_to_minv(mtmp, gold, NULL);
 }
 
 
@@ -636,7 +636,7 @@ m_initinv(struct monst *mtmp, enum rng rng)
                               rng_main);
                 otmp->quan = 3 + rn2_on_rng(2, rng);
                 otmp->owt = weight(otmp);
-                mpickobj(mtmp, otmp);
+                mpickobj(mtmp, otmp, NULL);
             }
         }
         break;
@@ -644,7 +644,7 @@ m_initinv(struct monst *mtmp, enum rng rng)
         if (ptr == &mons[PM_NAZGUL]) {
             otmp = mksobj(lev, RIN_INVISIBILITY, FALSE, FALSE, rng);
             curse(otmp);
-            mpickobj(mtmp, otmp);
+            mpickobj(mtmp, otmp, NULL);
         }
         break;
     case S_LICH:
@@ -657,7 +657,7 @@ m_initinv(struct monst *mtmp, enum rng rng)
                 otmp->spe = 1 + rn2_on_rng(3, rng);
             if (!rn2_on_rng(4, rng))
                 otmp->oerodeproof = 1;
-            mpickobj(mtmp, otmp);
+            mpickobj(mtmp, otmp, NULL);
         }
         break;
     case S_MUMMY:
@@ -669,7 +669,7 @@ m_initinv(struct monst *mtmp, enum rng rng)
             otmp = mksobj(lev, LARGE_BOX, FALSE, FALSE, rng);
             otmp->spe = 1;      /* flag for special box */
             otmp->owt = weight(otmp);
-            mpickobj(mtmp, otmp);
+            mpickobj(mtmp, otmp, NULL);
         }
         break;
     case S_LEPRECHAUN:
@@ -1834,7 +1834,7 @@ mongets(struct monst *mtmp, int otyp, enum rng rng)
         }
 
         spe = otmp->spe;
-        mpickobj(mtmp, otmp);   /* might free otmp */
+        mpickobj(mtmp, otmp, NULL);   /* might free otmp */
         return spe;
     } else
         return 0;

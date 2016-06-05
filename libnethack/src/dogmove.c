@@ -517,7 +517,7 @@ dog_invent(struct monst *mtmp, struct edog *edog, int udist)
                               Monnam(mtmp), distant_name(obj, doname));
                     obj_extract_self(obj);
                     newsym(omx, omy);
-                    mpickobj(mtmp, obj);
+                    mpickobj(mtmp, obj, NULL);
                     if (attacktype(mtmp->data, AT_WEAP) &&
                         mtmp->weapon_check == NEED_WEAPON) {
                         mtmp->weapon_check = NEED_HTH_WEAPON;

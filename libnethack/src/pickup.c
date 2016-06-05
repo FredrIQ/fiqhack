@@ -1368,7 +1368,7 @@ lootcont:
                                                 level, u.ux, u.uy, NO_MM_FLAGS);
 
                     if (mon) {
-                        add_to_minv(mon, goldob);
+                        add_to_minv(mon, goldob, NULL);
                         pline(msgc_levelwarning,
                               "The exchequer accepts your contribution.");
                     } else {

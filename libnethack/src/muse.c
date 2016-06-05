@@ -591,7 +591,7 @@ mon_makewish(struct monst *mon)
               distant_name(wishobj, Doname2),
               s_suffix(mon_nam(mon)),
               makeplural(mbodypart(mon, HAND)));
-    if (mpickobj(mon, wishobj))
+    if (mpickobj(mon, wishobj, &wishobj))
         wishobj = m_carrying(mon, wishtyp);
     if (!wishobj) {
         impossible("monster wished-for object disappeared?");
@@ -2134,7 +2134,7 @@ use_item(struct musable *m)
         if (obj->where == OBJ_CONTAINED) {
             container = obj->ocontainer;
             obj_extract_self(obj);
-            mpickobj(mon, obj);
+            mpickobj(mon, obj, &obj);
             if (cansee(mon->mx, mon->my))
                 pline(msgc_monneutral,
                       "%s removes %s from %s %s.", Monnam(mon),
@@ -2572,7 +2572,7 @@ use_item(struct musable *m)
             pline(mtmp == &youmonst ? msgc_itemloss :
                   combat_msgc(mon, mtmp, cr_hit),
                   "%s snatches %s!", Monnam(mon), the_weapon);
-            mpickobj(mon, otmp);
+            mpickobj(mon, otmp, NULL);
             break;
         }
         return 1;

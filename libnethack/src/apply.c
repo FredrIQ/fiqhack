@@ -841,7 +841,7 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
                           simple_typename(obj->otyp));
                 setnotworn(obj);        /* in case mirror was wielded */
                 freeinv(obj);
-                mpickobj(hitmon, obj);
+                mpickobj(hitmon, obj, NULL);
                 if (!tele_restrict(hitmon))
                     rloc(hitmon, TRUE);
                 return 1; /* someone snatched the mirror, so no more reflections */

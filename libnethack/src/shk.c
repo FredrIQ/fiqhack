@@ -88,7 +88,7 @@ money2mon(struct monst *mon, long amount)
     else if (ygold->owornmask)
         remove_worn_item(ygold, FALSE); /* quiver */
     freeinv(ygold);
-    add_to_minv(mon, ygold);
+    add_to_minv(mon, ygold, NULL);
     return amount;
 }
 
@@ -2873,7 +2873,7 @@ shkcatch(struct obj *obj, xchar x, xchar y)
             win_delay_output();
         }
         subfrombill(obj, shkp);
-        mpickobj(shkp, obj);
+        mpickobj(shkp, obj, NULL);
         return shkp;
     }
     return NULL;
@@ -3046,7 +3046,7 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
                        TRUE, FALSE, rng_main);
             otmp->quan = 1;
             otmp->owt = weight(otmp);
-            mpickobj(shkp, otmp);
+            mpickobj(shkp, otmp, NULL);
         } else if (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT ||
                    ttmp->ttyp == HOLE)
             floordamage = TRUE;
@@ -3354,7 +3354,7 @@ shopdig(int fall)
             setnotworn(obj);
             freeinv(obj);
             subfrombill(obj, shkp);
-            add_to_minv(shkp, obj);     /* may free obj */
+            add_to_minv(shkp, obj, NULL);     /* may free obj */
         }
     }
 }

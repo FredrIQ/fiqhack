@@ -1462,23 +1462,26 @@ extract_nexthere(struct obj *obj, struct obj **head_ptr)
 }
 
 
-/*
- * Add obj to mon's inventory.  If obj is able to merge with something already
- * in the inventory, then the passed obj is deleted and 1 is returned.
- * Otherwise 0 is returned.
- */
+/* Add obj to mon's inventory and point new_obj, if not NULL, to either obj or the
+   merged result.  If obj is able to merge with something already in the inventory,
+   then the passed obj is deleted and 1 is returned. Otherwise, 0 is returned. */
 int
-add_to_minv(struct monst *mon, struct obj *obj)
+add_to_minv(struct monst *mon, struct obj *obj, struct obj **new_obj)
 {
     struct obj *otmp;
 
     if (obj->where != OBJ_FREE)
         panic("add_to_minv: obj not free");
 
+    if (new_obj)
+        *new_obj = obj;
     /* merge if possible */
     for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
-        if (merged(&otmp, &obj))
+        if (merged(&otmp, &obj)) {
+            if (new_obj)
+                *new_obj = otmp;
             return 1;   /* obj merged and then free'd */
+        }
     /* else insert; don't bother forcing it to end of chain */
     extract_nobj(obj, &turnstate.floating_objects, &mon->minvent, OBJ_MINVENT);
     obj->ocarry = mon;

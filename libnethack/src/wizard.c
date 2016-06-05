@@ -672,7 +672,7 @@ tactics(struct monst *mtmp)
                                   (distu(mtmp->mx, mtmp->my) <= 5) ?
                                   doname(otmp) : distant_name(otmp, doname));
                         obj_extract_self(otmp);
-                        mpickobj(mtmp, otmp);
+                        mpickobj(mtmp, otmp, NULL);
                         return 1;
                     } else
                         return 0;
@@ -719,7 +719,7 @@ clonewiz(void)
         msethostility(mtmp2, TRUE, FALSE); /* TODO: reset alignment? */
         if (!Uhave_amulet && rn2(2)) {        /* give clone a fake */
             add_to_minv(mtmp2, mksobj(level, FAKE_AMULET_OF_YENDOR,
-                                      TRUE, FALSE, rng_main));
+                                      TRUE, FALSE, rng_main), NULL);
         }
         mtmp2->m_ap_type = M_AP_MONSTER;
         mtmp2->mappearance = wizapp[rn2(SIZE(wizapp))];

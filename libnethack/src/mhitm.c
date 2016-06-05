@@ -1386,7 +1386,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (!gold)
                 break;
             obj_extract_self(gold);
-            add_to_minv(magr, gold);
+            add_to_minv(magr, gold, NULL);
         }
         if (mdef->mstrategy == st_waiting)
             mdef->mstrategy = st_none;
@@ -1448,7 +1448,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
             /* add_to_minv() might free otmp [if it merges] */
             const char *onambuf = doname(otmp);
-            add_to_minv(magr, otmp);
+            add_to_minv(magr, otmp, NULL);
 
             /* In case of teleport */
             const char *magr_Monnam = Monnam(magr);

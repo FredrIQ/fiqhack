@@ -62,7 +62,7 @@ stealgold(struct monst *mtmp)
 
     if (fgold && (!ygold || fgold->quan > ygold->quan || !rn2(5))) {
         obj_extract_self(fgold);
-        add_to_minv(mtmp, fgold);
+        add_to_minv(mtmp, fgold, NULL);
         newsym(u.ux, u.uy);
         pline(msgc_itemloss,
               "%s quickly snatches some gold from between your %s!",
@@ -81,7 +81,7 @@ stealgold(struct monst *mtmp)
             ygold = splitobj(ygold, tmp);
         unwield_silently(ygold);
         freeinv(ygold);
-        add_to_minv(mtmp, ygold);
+        add_to_minv(mtmp, ygold, NULL);
         pline(msgc_itemloss, "Your purse feels lighter.");
         if (!tele_restrict(mtmp))
             rloc(mtmp, TRUE);
@@ -307,7 +307,7 @@ gotobj:
           doname(otmp));
     could_petrify = (otmp->otyp == CORPSE &&
                      touch_petrifies(&mons[otmp->corpsenm]));
-    mpickobj(mtmp, otmp);       /* may free otmp */
+    mpickobj(mtmp, otmp, NULL);       /* may free otmp */
     if (could_petrify && !(mtmp->misc_worn_check & W_MASK(os_armg))) {
         /* TODO: Should this really break pacifism? */
         minstapetrify(mtmp, &youmonst);
@@ -317,31 +317,32 @@ gotobj:
 }
 
 
-/* Returns 1 if otmp is free'd, 0 otherwise. */
+/* Returns 1 if otmp is free'd, 0 otherwise.
+   new_obj is changed to point to a merged obj when applicable */
 int
-mpickobj(struct monst *mtmp, struct obj *otmp)
+mpickobj(struct monst *mtmp, struct obj *obj, struct obj **new_obj)
 {
-    int freed_otmp;
-    boolean snuff_otmp = FALSE;
+    int freed_obj;
+    boolean snuff_obj = FALSE;
 
     /* don't want hidden light source inside the monster; assumes that
        engulfers won't have external inventories; whirly monsters cause the
        light to be extinguished rather than letting it shine thru */
-    if (otmp->lamplit &&        /* hack to avoid function calls for most objs */
-        obj_sheds_light(otmp) && attacktype(mtmp->data, AT_ENGL) &&
+    if (obj->lamplit &&        /* hack to avoid function calls for most objs */
+        obj_sheds_light(obj) && attacktype(mtmp->data, AT_ENGL) &&
         mtmp == u.ustuck && Engulfed)
-        snuff_otmp = TRUE;
+        snuff_obj = TRUE;
 
     /* Must do carrying effects on object prior to add_to_minv() */
-    carry_obj_effects(otmp);
-    /* add_to_minv() might free otmp [if merged with something else], so we
+    carry_obj_effects(obj);
+    /* add_to_minv() might free obj [if merged with something else], so we
        have to call it after doing the object checks */
-    freed_otmp = add_to_minv(mtmp, otmp);
+    freed_obj = add_to_minv(mtmp, obj, new_obj);
     /* and we had to defer this until object is in mtmp's inventory */
-    if (snuff_otmp)
-        snuff_lit(otmp);
+    if (snuff_obj)
+        snuff_lit(obj);
 
-    return freed_otmp;
+    return freed_obj;
 }
 
 
@@ -384,7 +385,7 @@ stealamulet(struct monst *mtmp)
         freeinv(otmp);
         /* mpickobj wont merge otmp because none of the above things to steal
            are mergable */
-        mpickobj(mtmp, otmp);   /* may merge and free otmp */
+        mpickobj(mtmp, otmp, NULL);   /* may merge and free otmp */
         pline(msgc_itemloss, "%s stole %s!", Monnam(mtmp), doname(otmp));
         if (teleportitis(mtmp))
             mon_tele(mtmp, !!teleport_control(mtmp));
@@ -470,7 +471,7 @@ relobj(struct monst *mtmp, int show, boolean is_pet)
     /* put kept objects back */
     while ((otmp = keepobj) != NULL) {
         keepobj = otmp->nobj;
-        add_to_minv(mtmp, otmp);
+        add_to_minv(mtmp, otmp, NULL);
     }
 
     if (show & cansee(omx, omy) && mtmp->dlevel == level)

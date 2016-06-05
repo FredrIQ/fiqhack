@@ -170,7 +170,7 @@ drop_upon_death(struct monst *mtmp, struct obj *cont, boolean charmed)
         if (rn2(5) && !charmed)
             curse(otmp); /* Don't curse items if it was a normal player monster */
         if (mtmp)
-            add_to_minv(mtmp, otmp);
+            add_to_minv(mtmp, otmp, NULL);
         else if (cont)
             add_to_container(cont, otmp);
         else

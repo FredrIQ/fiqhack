@@ -535,7 +535,7 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
     /* transfer any statue contents to monster's inventory */
     while ((item = statue->cobj) != 0) {
         obj_extract_self(item);
-        add_to_minv(mon, item);
+        add_to_minv(mon, item, NULL);
     }
     m_dowear(mon, TRUE);
     delobj(statue);
@@ -1496,7 +1496,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                     pline(msgc_consequence, "%s snatches the boulder.",
                           Monnam(mtmp));
                     singleobj->otrapped = 0;
-                    mpickobj(mtmp, singleobj);
+                    mpickobj(mtmp, singleobj, NULL);
                     used_up = TRUE;
                     break;
                 }

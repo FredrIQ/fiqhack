@@ -101,7 +101,7 @@ pick_move:
                       "%s picks up %s.", Monnam(mtmp),
                       distant_name(ib, doname));
             obj_extract_self(ib);
-            mpickobj(mtmp, ib);
+            mpickobj(mtmp, ib, NULL);
         }
         return 1;
     }
@@ -234,7 +234,7 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
         /* 2 to 4 spellbooks */
         for (cnt = rn1(3, 2); cnt > 0; --cnt) {
             mpickobj(priest, mkobj(level, SPBOOK_CLASS, FALSE,
-                                   rng_for_level(&lev->z)));
+                                   rng_for_level(&lev->z)), NULL);
         }
         /* robe [via makemon()] */
         if (mklev_rn2(2, lev) && (otmp = which_armor(priest, os_armc)) != 0) {

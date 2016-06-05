@@ -542,7 +542,7 @@ dropy(struct obj *obj)
                 could_grow = (obj->corpsenm == PM_WRAITH);
                 could_heal = (obj->corpsenm == PM_NURSE);
             }
-            mpickobj(u.ustuck, obj);
+            mpickobj(u.ustuck, obj, &obj);
             if (is_animal(u.ustuck->data)) {
                 if (could_poly || could_slime) {
                     set_property(u.ustuck, SLIMED, 10, FALSE);
@@ -1393,7 +1393,7 @@ final_level(void)
                     dice((int)mtmp->m_lev, 10) + 30 + rnd(30);
                 if ((otmp = select_hwep(mtmp)) == 0) {
                     otmp = mksobj(level, SILVER_SABER, FALSE, FALSE, rng_main);
-                    if (mpickobj(mtmp, otmp))
+                    if (mpickobj(mtmp, otmp, NULL))
                         panic("merged weapon?");
                 }
                 bless(otmp);

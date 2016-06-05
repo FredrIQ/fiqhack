@@ -1068,7 +1068,7 @@ extern void discard_minvent(struct monst *);
 extern void obj_extract_self(struct obj *);
 extern void extract_nobj(struct obj *, struct obj **,
                          struct obj **, enum obj_where);
-extern int add_to_minv(struct monst *, struct obj *);
+extern int add_to_minv(struct monst *, struct obj *, struct obj **);
 extern struct obj *add_to_container(struct obj *, struct obj *);
 extern void add_to_buried(struct obj *obj);
 extern struct obj *newobj(struct obj *);
@@ -1726,7 +1726,7 @@ extern long somegold(long);
 extern void stealgold(struct monst *);
 extern void remove_worn_item(struct obj *, boolean);
 extern int steal(struct monst *, const char **);
-extern int mpickobj(struct monst *, struct obj *);
+extern int mpickobj(struct monst *, struct obj *, struct obj **);
 extern void stealamulet(struct monst *);
 extern void mdrop_obj(struct monst *, struct obj *, boolean);
 extern void mdrop_special_objs(struct monst *);

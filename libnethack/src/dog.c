@@ -174,7 +174,7 @@ makedog(struct newgame_options *ngo)
     /* Horses already wear a saddle */
     if (pettype == PM_PONY &&
         ((otmp = mksobj(level, SADDLE, TRUE, FALSE, rng_charstats_role)))) {
-        if (mpickobj(mtmp, otmp))
+        if (mpickobj(mtmp, otmp, NULL))
             panic("merged saddle?");
         mtmp->misc_worn_check |= W_MASK(os_saddle);
         otmp->dknown = otmp->bknown = otmp->rknown = 1;
@@ -840,7 +840,7 @@ tamedog(struct monst *mtmp, struct obj *obj)
     initedog(mtmp);
 
     if (obj) {  /* thrown food */
-        mpickobj(mtmp, obj);
+        mpickobj(mtmp, obj, &obj);
         /* devour the food */
         if (dog_eat(mtmp, obj, mtmp->mx, mtmp->my, TRUE) == 2)
             return mtmp;       /* oops, it died... */
