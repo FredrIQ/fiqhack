@@ -733,6 +733,8 @@ peffects(struct monst *mon, struct obj *otmp)
             exercise(A_WIS, TRUE);
         break;
     case POT_SICKNESS:
+        if (mon->data == &mons[PM_PESTILENCE])
+            goto pestilence_heal;
         if (you)
             pline(badidea, "Yecch!  This stuff tastes like poison.");
         else if (vis)
@@ -769,7 +771,7 @@ peffects(struct monst *mon, struct obj *otmp)
                         poisontell(typ);
                         adjattrib(typ, resists_poison(mon) ? -1 : -rn1(4, 3), TRUE);
                     } else {
-                        int dmg = resists_poison(mon) ? -1 : -rn1(4, 3);
+                        int dmg = resists_poison(mon) ? 1 : rn1(4, 3);
                         dmg = dice(dmg, 8);
                         mon->mhpmax -= dmg;
                         mon->mhp -= dmg;
@@ -921,6 +923,7 @@ peffects(struct monst *mon, struct obj *otmp)
         set_property(mon, BLINDED, rn1(200, 250 - 125 * bcsign(otmp)), FALSE);
         break;
     case POT_FULL_HEALING:
+    pestilence_heal:
         heal = 400;
         healmax = otmp->blessed ? 8 : 4;
         if (you || vis)
