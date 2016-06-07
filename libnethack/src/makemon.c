@@ -2148,8 +2148,8 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     xtyp = mread16(mf);
     int legacy = 0;
     if (xtyp <= MX_LAST_OLDLEGACY)
-        legacy++; /* very old save */
-    if (xtyp <= MX_LAST_LEGACY) {
+        legacy = 2; /* very old save */
+    else if (xtyp <= MX_LAST_LEGACY) {
         /* There is no free space in monst to save/restore, so we need one of these
            again. However, from this point on, there should be a lot of free space
            until this is needed again... */
