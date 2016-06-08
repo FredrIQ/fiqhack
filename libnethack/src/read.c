@@ -29,7 +29,7 @@ static void randomize(int *, int);
 static void forget_single_object(int);
 static void forget(int);
 static void maybe_tame(struct monst *, struct monst *, struct obj *);
-
+static void do_earth(struct level *, int, int, int, struct monst *);
 static void set_lit(int, int, void *);
 
 int
@@ -830,6 +830,110 @@ maybe_tame(struct monst *mon, struct monst *mtmp, struct obj *sobj)
     }
 }
 
+static void
+do_earth(struct level *lev, int x, int y, int confused,
+         struct monst *magr)
+{
+    struct obj *obj = mksobj(lev, confused ? ROCK : BOULDER,
+                             FALSE, FALSE, rng_main);
+
+    if (!obj)
+        return; /* Shouldn't happen */
+    obj->quan = confused ? rn1(5, 2) : 1;
+    obj->owt = weight(obj);
+
+    struct monst *mdef;
+    if (x == u.ux && y == u.uy)
+        mdef = &youmonst;
+    else
+        mdef = m_at(lev, x, y);
+
+    boolean uagr = (magr == &youmonst);
+    boolean udef = (mdef == &youmonst);
+    boolean vis = (uagr || udef || canseemon(magr) ||
+                   canseemon(mdef));
+
+    boolean steed = (udef && u.usteed);
+
+    /* Must come before the hit to avoid bones oddities */
+    if (!flooreffects(obj, x, y, "fall")) {
+        place_object(obj, lev, x, y);
+        stackobj(obj);
+        newsym(x, y);   /* map the rock */
+    }
+
+    struct obj *armh;
+    int dmg;
+    if (mdef && !amorphous(mdef->data) &&
+        !phasing(mdef) &&
+        !noncorporeal(mdef->data) &&
+        !unsolid(mdef->data)) {
+        armh = which_armor(mdef, os_armh);
+        dmg = dmgval(obj, mdef) * obj->quan;
+
+        if (!udef && !canseemon(mdef))
+            map_invisible(mdef->mx, mdef->my);
+        if (!armh || !is_metallic(armh)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "%s hit by %s!", M_verbs(mdef, "are"),
+                      doname(obj));
+        } else {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_resist),
+                      "%s bounces off %s hard %s.",
+                      An(xname(obj)), udef ? "your" :
+                      s_suffix(mon_nam(mdef)),
+                      helmet_name(armh));
+            else
+                You_hear(msgc_levelsound,
+                         "a clanging sound.");
+            if (dmg > 2)
+                dmg = 2;
+        }
+
+        if (!udef) {
+            mdef->mhp -= dmg;
+            if (mdef->mhp <= 0)
+                monkilled(magr, mdef, "", AD_PHYS);
+        } else {
+            /* Check steed */
+            int udmg = dmg;
+            if (steed) {
+                armh = which_armor(u.usteed, os_armh);
+                dmg = dmgval(obj, u.usteed) * obj->quan;
+
+                if (!armh || !is_metallic(armh))
+                    pline(combat_msgc(magr, u.usteed, cr_hit),
+                          "%s hit by %s!",
+                          M_verbs(u.usteed, "are"), doname(obj));
+                else {
+                    pline(combat_msgc(magr, u.usteed, cr_resist),
+                          "%s bounces off %s hard %s.",
+                          An(xname(obj)),
+                          s_suffix(mon_nam(u.usteed)),
+                          helmet_name(armh));
+                    if (dmg > 2)
+                        dmg = 2;
+                }
+
+                u.usteed->mhp -= dmg;
+                if (u.usteed->mhp <= 0)
+                monkilled(magr, u.usteed, "", AD_PHYS);
+            }
+
+            if (uagr)
+                losehp(udmg, killer_msg(DIED, "a scroll of earth"));
+            else {
+                const char *kbuf;
+                kbuf = msgprintf("%s scroll of earth",
+                                 s_suffix(k_monnam(magr)));
+                losehp(udmg, killer_msg(DIED, kbuf));
+            }
+        }
+    }
+}
+
 int
 seffects(struct monst *mon, struct obj *sobj, boolean *known)
 {
@@ -1607,109 +1711,39 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             if (you && In_sokoban(&u.uz))
                 change_luck(-1);        /* Sokoban guilt */
 
-            /* The player must be hit last to avoid oddities in bones levels.
-               This is done by looping one additional x if player is hit and use
-               x == mx+2 as a sentinel value for "now do the player". */
-            boolean will_hit_you = FALSE;
             boolean hityou = FALSE;
-            struct obj *otmp2;
-            struct monst *mtmp = NULL;
-            struct obj *armh;
-            int dmg;
-
             /* Loop through the surrounding squares */
-            for (x = m_mx(mon) - 1; x <= m_mx(mon) + 1 || will_hit_you; x++) {
+            for (x = m_mx(mon) - 1; x <= m_mx(mon) + 1; x++) {
                 for (y = m_my(mon) - 1; y <= m_my(mon) + 1; y++) {
-                    if (x == m_mx(mon) + 2) {
-                        /* you are the target */
-                        hityou = TRUE;
-                        mtmp = &youmonst;
-                        x = u.ux;
-                        y = u.uy;
+                    /* Is this a suitable spot? */
+                    if (!isok(x, y) || closed_door(level, x, y) ||
+                        IS_ROCK(level->locations[x][y].typ) ||
+                        IS_AIR(level->locations[x][y].typ))
+                        continue;
+
+                    /* Is this a valid spot to attack? */
+                    if (x == m_mx(mon) && y == m_my(mon)) {
+                        if (sobj->blessed)
+                            continue;
                     } else {
-                        /* Is this a suitable spot? */
-                        if (!isok(x, y) || closed_door(level, x, y) ||
-                            IS_ROCK(level->locations[x][y].typ) ||
-                            IS_AIR(level->locations[x][y].typ))
+                        if (sobj->cursed)
                             continue;
-                        /* Is this a valid spot to attack? */
-                        if (x == m_mx(mon) && y == m_my(mon)) {
-                            if (sobj->blessed)
-                                continue;
-                        } else {
-                            if (sobj->cursed)
-                                continue;
-                        }
-                        /* If the spot is the player, postpone it for later to avoid
-                           bones oddities */
-                        if (x == u.ux && y == u.uy) {
-                            will_hit_you = TRUE;
-                            continue;
-                        }
+                    }
+
+                    /* If the spot is the player, postpone it for later to avoid
+                       bones oddities */
+                    if (x == u.ux && y == u.uy) {
+                        hityou = TRUE;
+                        continue;
                     }
 
                     /* Make the object(s) */
-                    otmp2 = mksobj(level, confused ? ROCK : BOULDER,
-                                   FALSE, FALSE, rng_main);
-                    if (!otmp2)
-                        continue;       /* Shouldn't happen */
-                    otmp2->quan = confused ? rn1(5, 2) : 1;
-                    otmp2->owt = weight(otmp2);
-                    if (mtmp != &youmonst)
-                        mtmp = m_at(level, x, y);
-
-                    /* Must come before the hit to avoid bones oddities */
-                    if (!flooreffects(otmp2, x, y, "fall")) {
-                        place_object(otmp2, level, x, y);
-                        stackobj(otmp2);
-                        newsym(x, y);   /* map the rock */
-                    }
-
-                    if (mtmp && !amorphous(mtmp->data) &&
-                        !phasing(mtmp) &&
-                        !noncorporeal(mtmp->data) &&
-                        !unsolid(mtmp->data)) {
-                        armh = which_armor(mtmp, os_armh);
-                        dmg = dmgval(otmp2, mtmp) * otmp2->quan;
-
-                        if (!armh || !is_metallic(armh)) {
-                            if (hityou || cansee(m_mx(mtmp), m_my(mtmp)))
-                                pline(combat_msgc(mon, mtmp, cr_hit),
-                                      "%s hit by %s!", M_verbs(mtmp, "are"),
-                                      doname(otmp2));
-                            if (!hityou && !canspotmon(mtmp))
-                                map_invisible(mtmp->mx, mtmp->my);
-                        } else {
-                            if (hityou || canseemon(mtmp))
-                                pline(combat_msgc(mon, mtmp, cr_resist),
-                                      "%s bounces off %s hard %s.",
-                                      An(xname(otmp2)), hityou ? "your" :
-                                      s_suffix(mon_nam(mtmp)),
-                                      helmet_name(armh));
-                            else
-                                You_hear(msgc_levelsound,
-                                         "a clanging sound.");
-                            if (dmg > 2)
-                                dmg = 2;
-                        }
-                        if (!hityou) {
-                            mtmp->mhp -= dmg;
-                            if (mtmp->mhp <= 0)
-                                monkilled(mtmp, mtmp, "", AD_PHYS);
-                        } else {
-                            if (you)
-                                losehp(dmg, killer_msg(DIED, "a scroll of earth"));
-                            else {
-                                const char *kbuf;
-                                kbuf = msgprintf("%s scroll of earth", s_suffix(k_monnam(mon)));
-                                losehp(dmg, killer_msg(DIED, kbuf));
-                            }
-                        }
-                    }
-                    if (hityou)
-                        break;
+                    do_earth(m_dlevel(mon), x, y, confused, mon);
                 }
             }
+
+            if (hityou)
+                do_earth(m_dlevel(mon), u.ux, u.uy, confused, mon);
         }
         break;
     case SCR_PUNISHMENT:
