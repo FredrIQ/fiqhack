@@ -1316,7 +1316,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit),
                       "%s looks confused.", Monnam(mdef));
-            set_property(mdef, CONFUSION, tmp, TRUE);
+            inc_timeout(mdef, CONFUSION, tmp, TRUE);
             if (mdef->mstrategy == st_waiting)
                 mdef->mstrategy = st_none;
         }
@@ -1339,7 +1339,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit),
                       "%s is freaked out.", Monnam(mdef));
-            set_property(mdef, CONFUSION, tmp, TRUE);
+            inc_timeout(mdef, CONFUSION, tmp, TRUE);
             if (mdef->mstrategy == st_waiting)
                 mdef->mstrategy = st_none;
         }
@@ -1531,7 +1531,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         tmp += rnd(10); /* fakery, since monsters lack INT scores */
         if (magr->mtame && !isminion(magr)) {
             mx_edog(magr)->hungrytime += rnd(60);
-            set_property(mdef, CONFUSION, dice(3, 8), FALSE);
+            inc_timeout(mdef, CONFUSION, dice(3, 8), FALSE);
         }
         if (tmp >= mdef->mhp && vis)
             pline(combat_msgc(magr, mdef, cr_kill0),
