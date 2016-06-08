@@ -2865,7 +2865,8 @@ domagictrap(struct monst *mon)
 
                 set_property(mon, CONFUSION, -2, TRUE);
                 seffects(mon, pseudo, &dummy);
-                set_property(mon, CONFUSION, save_conf, TRUE);
+                if (save_conf)
+                    set_property(mon, CONFUSION, save_conf, TRUE);
 
                 obfree(pseudo, NULL);
                 break;
