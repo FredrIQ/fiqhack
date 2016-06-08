@@ -14,5 +14,15 @@
 # define FAINTING        4
 # define FAINTED         5
 # define STARVED         6
-#endif
 
+/* Corpse rotness */
+enum corpserot {
+    corpserot_maybe_tainted,
+    corpserot_tainted,
+    corpserot_maybe_sick,
+    corpserot_sick,
+    corpserot_ok,
+    corpserot_last_harmful = corpserot_sick,
+};
+
+#endif /* HUNGER_STATUS_H */

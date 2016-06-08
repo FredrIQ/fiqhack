@@ -516,6 +516,7 @@ extern int dooverview(const struct nh_cmd_arg *);
 extern boolean is_edible(const struct obj *, boolean);
 extern void init_uhunger(void);
 extern int doeat(const struct nh_cmd_arg *);
+extern enum corpserot corpse_rot_status(struct obj *, boolean);
 extern int eatcorpse(struct monst *, struct obj *);
 extern void eatspecial(struct monst *, int, struct obj *);
 extern void gethungry(void);

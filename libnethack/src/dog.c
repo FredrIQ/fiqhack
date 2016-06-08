@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "hungerstatus.h"
 
 static int pet_type(struct newgame_options *);
 
@@ -704,8 +705,7 @@ dogfood(const struct monst *mon, struct obj *obj)
                 return df_harmful;
             return carni ? df_good : df_manfood;
         case CORPSE:
-            if ((peek_at_iced_corpse_age(obj) + 50L <= moves &&
-                 obj->corpsenm != PM_LIZARD && obj->corpsenm != PM_LICHEN &&
+            if ((corpse_rot_status(obj, TRUE) <= corpserot_last_harmful &&
                  !resists_sick(mon)) ||
                 (acidic(&mons[obj->corpsenm]) && !resists_acid(mon)) ||
                 (poisonous(&mons[obj->corpsenm]) && !resists_poison(mon)))

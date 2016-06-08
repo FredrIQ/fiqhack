@@ -1061,6 +1061,45 @@ rottenfood(struct obj *obj)
     return 0;
 }
 
+/* Returns rotness status. If test is true, return
+   corpserot_tainted|sick|ok. Otherwise, return
+   the worst possible case. This is for
+   pet/interface purposes to try to stop you and
+   pets from eating *potentially* tainted corpses. */
+enum corpserot
+corpse_rot_status(struct obj *obj, boolean test)
+{
+    int min = 19; /* best case */
+    if (!test)
+        min = rn2(20);
+    boolean allow_sick = TRUE;
+    if (!test && !rn2(5))
+        allow_sick = FALSE;
+
+    if (obj->corpsenm == PM_LICHEN ||
+        obj->corpsenm == PM_LIZARD)
+        return corpserot_ok; /* always safe */
+
+    long rot = 0L;
+    long maxrot = 0L;
+    long age = peek_at_iced_corpse_age(obj);
+    rot = (moves - age) / (10L + min);
+    maxrot = (moves - age) / 10L;
+    rot += bcsign(obj) * 2;
+    maxrot += bcsign(obj) * 2;
+    if (obj->corpsenm != PM_ACID_BLOB) {
+        if (rot > 5L)
+            return corpserot_tainted;
+        else if (maxrot > 5L && test)
+            return corpserot_maybe_tainted;
+    }
+    if (rot > 3L && allow_sick)
+        return corpserot_sick;
+    else if (maxrot > 3L && test && allow_sick)
+        return corpserot_maybe_sick;
+    return corpserot_ok;
+}
+
 /* called when a corpse is selected as food */
 int
 eatcorpse(struct monst *mon, struct obj *otmp)
@@ -1068,7 +1107,7 @@ eatcorpse(struct monst *mon, struct obj *otmp)
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
     int tp = 0, mnum = otmp->corpsenm;
-    long rotted = 0L;
+    enum corpserot rot = corpse_rot_status(otmp, FALSE);
     boolean uniq = ! !(mons[mnum].geno & G_UNIQ);
     int retcode = 0;
     boolean stoneable = (touch_petrifies(&mons[mnum]) &&
@@ -1083,17 +1122,8 @@ eatcorpse(struct monst *mon, struct obj *otmp)
             break_conduct(conduct_vegetarian);
     }
 
-    if (mnum != PM_LIZARD && mnum != PM_LICHEN) {
-        long age = peek_at_iced_corpse_age(otmp);
-
-        rotted = (moves - age) / (10L + rn2(20));
-        if (otmp->cursed)
-            rotted += 2L;
-        else if (otmp->blessed)
-            rotted -= 2L;
-    }
-
-    if (mnum != PM_ACID_BLOB && !stoneable && rotted > 5L) {
+    if (mnum != PM_ACID_BLOB && !stoneable &&
+        rot == corpserot_tainted) {
         boolean cannibal = FALSE;
         if (you)
             cannibal = maybe_cannibal(mnum, FALSE);
@@ -1170,8 +1200,7 @@ eatcorpse(struct monst *mon, struct obj *otmp)
                   you ? "You" : Monnam(mon),
                   you ? "" : "s");
         /* now any corpse left too long will make you mildly ill */
-    } else if ((rotted > 5L || (rotted > 3L && rn2(5)))
-               && !resists_sick(mon)) {
+    } else if (rot == corpserot_sick && !resists_sick(mon)) {
         tp++;
         if (you || vis)
             pline(you ? msgc_statusbad : msgc_monneutral,
