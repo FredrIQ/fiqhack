@@ -271,7 +271,8 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             /* natural shapechangers aren't affected by system shock (unless
                protection from shapechangers is interfering with their
                metabolism...) */
-            if (mdef->cham == CHAM_ORDINARY && !rn2(25) && (!tame || wandlevel < P_EXPERT)) {
+            if (mdef->cham == CHAM_ORDINARY && !rn2(25) &&
+                (!tame || wandlevel < P_EXPERT)) {
                 if (canseemon(mdef)) {
                     pline(combat_msgc(magr, mdef, cr_kill),
                           "%s shudders!", Monnam(mdef));
@@ -431,7 +432,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                 hp = u.mh;
 
             dmg = otmp->otyp == WAN_LIGHT ?
-                dice(1 + otmp->spe, 4) : rnd(min(mdef->mhp, 2 * range));
+                dice(1 + otmp->spe, 4) : rnd(min(m_mhp(mdef), 2 * range));
             pline(combat_msgc(magr, mdef, cr_hit),
                   "%s in %s!", M_verbs(mdef, dmg > hp / 2 ? "wail" :
                                       "cry"),
