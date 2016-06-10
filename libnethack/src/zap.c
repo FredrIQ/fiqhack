@@ -2882,9 +2882,11 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                 break;
             if (yours && !you && idle(mon))
                 mon->mstrategy = st_none;
-            if (zap_hit_check(find_mac(mon), spell_type)) {
+            if (selfzap ||
+                zap_hit_check(find_mac(mon), spell_type)) {
                 range -= 2;
-                if (yours || you || vis)
+                if (!selfzap && /* the fact that it hits is implied */
+                    (yours || you || vis))
                     hit(fltxt, mon, "!", magr);
                 if (reflecting(mon) && !selfzap) {
                     if (you || vis) {
