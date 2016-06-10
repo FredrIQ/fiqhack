@@ -1545,10 +1545,10 @@ spelleffects(boolean atme, struct musable *m)
              * If hero is a wizard, their current intelligence
              * (bonuses + temporary + current)
              * affects hunger reduction in casting a spell.
-             * 1. int = 17-18 no reduction
+             * 1. int = 17-18 no hunger
              * 2. int = 16    1/4 hungr
              * 3. int = 15    1/2 hungr
-             * 4. int = 1-14  normal reduction
+             * 4. int = 1-14  normal hunger
              * The reason for this is:
              * a) Intelligence affects the amount of exertion
              * in thinking.
