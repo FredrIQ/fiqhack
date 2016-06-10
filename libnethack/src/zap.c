@@ -2473,7 +2473,7 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
         use_skill(P_WANDS, wandlevel); /* successful wand use exercises */
     boolean disclose = FALSE, was_unkn = !objects[otyp].oc_name_known;
 
-    if (!dx && !dy && !dz && objects[otyp].oc_dir != NODIR) { /* zapped self */
+    if (!dx && !dy && !dz && objects[otyp].oc_dir == IMMEDIATE) { /* zapped self */
         bhitm(mon, mon, obj, 7);
         return;
     }
@@ -2920,7 +2920,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                     range = 0;
                     continue;
                 } else
-                    zap_hit_mon(magr, mon, type, nd, raylevel, FALSE);
+                    zap_hit_mon(magr, mon, type, nd, raylevel, selfzap);
             } else if (you || yours || vis)
                 pline(combat_msgc(magr, mon, cr_miss),
                       "%s whizzes by %s!", The(fltxt),
