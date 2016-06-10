@@ -1407,7 +1407,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             
             for (i = -bd; i <= bd; i++) {
                 for (j = -bd; j <= bd; j++) {
-                    if (!isok(m_mx(mon) + i, m_mx(mon) + j))
+                    if (!isok(m_mx(mon) + i, m_my(mon) + j))
                         continue;
                     if (!you && (m_mx(mon) + i) == u.ux && (m_my(mon) + j) == u.uy)
                         maybe_tame(mon, &youmonst, sobj);
