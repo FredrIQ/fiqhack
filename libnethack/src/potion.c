@@ -88,7 +88,8 @@ ghost_from_bottle(struct monst *mon)
     struct monst *mtmp;
     enum msg_channel msgc = msgc_monneutral;
 
-    if (!(mtmp = makemon(&mons[PM_GHOST], level, u.ux, u.uy, NO_MM_FLAGS))) {
+    if (!(mtmp = makemon(&mons[PM_GHOST], level, m_mx(mon), m_my(mon),
+                         MM_ADJACENTOK))) {
         if (you)
             msgc = msgc_noconsequence;
         if (you || vis)
@@ -136,7 +137,8 @@ djinni_from_bottle(struct monst *mon, struct obj *obj)
     struct monst *mtmp;
     enum msg_channel msgc = msgc_monneutral;
 
-    if (!(mtmp = makemon(&mons[PM_DJINNI], level, u.ux, u.uy, NO_MM_FLAGS))) {
+    if (!(mtmp = makemon(&mons[PM_DJINNI], level, m_mx(mon), m_my(mon),
+                         MM_ADJACENTOK))) {
         if (you)
             msgc = msgc_noconsequence;
         if (you || vis)
