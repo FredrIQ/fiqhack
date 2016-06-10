@@ -757,14 +757,16 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                     !throws_rocks(mon->data) &&
                     (obj->otyp == WAN_STRIKING ||
                      obj->otyp == SPE_FORCE_BOLT))
-                    /* Boulders generally make the life harder for monsters, because they have pretty much no control over them.
-                       Thus, give a scoring bonus if they're nearby (but not for sokoban boulders!). */
+                    /* Boulders generally make the life harder for monsters, because they
+                       have pretty much no control over them. Thus, give a scoring bonus
+                       if they're nearby (but not for sokoban boulders!). */
                     tilescore += In_sokoban(m_mz(mon)) ? -20 : +20;
                 if (sobj_at(CORPSE, level, sx, sy) &&
                     (obj->otyp == WAN_UNDEAD_TURNING ||
                      obj->otyp == SPE_TURN_UNDEAD))
-                    /* hostiles revive corpses (it's very rarely a bad idea for hostile monsters to do this,
-                       and even if it happens to be a pet, maybe the hostile monster didn't realize?) */
+                    /* hostiles revive corpses (it's very rarely a bad idea for hostile
+                       monsters to do this, and even if it happens to be a pet, maybe the
+                       hostile monster didn't realize?) */
                     tilescore += (mon->mpeaceful ? -20 : +30);
                 if (mtmp) {
                     if (mon == mtmp)
@@ -791,6 +793,10 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                          obj->otyp == SPE_FIREBALL) &&
                         prop_wary(mon, mtmp, SLIMED))
                         helpful = TRUE;
+                    /* make invisible vs invisible things is harmful */
+                    if (obj->otyp == WAN_MAKE_INVISIBLE &&
+                        prop_wary(mon, mtmp, INVIS))
+                        helpful = FALSE;
                     /* stone to flesh vs stone golems is harmful */
                     if (obj->otyp == SPE_STONE_TO_FLESH &&
                         mtmp->data == &mons[PM_STONE_GOLEM])
@@ -814,18 +820,19 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         if (mtmp != &youmonst && mtmp->data->mlevel >= 14)
                             helpful = FALSE;
                     }
-                    /* Deathzapping Death will do no good. However, while a deathzap against him
-                       would technically be helpful, declaring it as so would encourage monsters
-                       to FoD/WoD him if hostile, which would be a huge pain. Thus, he always get
-                       a scoring penalty */
+                    /* Deathzapping Death will do no good. However, while a deathzap
+                       against him would technically be helpful, declaring it as so would
+                       encourage monsters to FoD/WoD him if hostile, which would be a
+                       huge pain. Thus, he always get a scoring penalty */
                     if ((obj->otyp == WAN_DEATH ||
                          obj->otyp == SPE_FINGER_OF_DEATH) &&
                         mtmp->data == &mons[PM_DEATH]) {
                         tilescore -= 10;
                         continue;
                     }
-                    /* Special case: make invisible and polymorph is always considered harmful if zapped
-                       at player by tame or peaceful monster, unless conflicted */
+                    /* Special case: make invisible and polymorph is always considered
+                       harmful if zapped at player by tame or peaceful monster, unless
+                       conflicted */
                     if ((obj->otyp == WAN_MAKE_INVISIBLE ||
                          obj->otyp == WAN_POLYMORPH ||
                          obj->otyp == SPE_POLYMORPH) &&
@@ -844,7 +851,8 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                              (mtmp != &youmonst &&
                               mon->mpeaceful == mtmp->mpeaceful)) {
                         tilescore += (helpful ? 20 : -10);
-                        /* tame monsters like zapping friends and dislike collateral damage */
+                        /* tame monsters like zapping friends and dislike collateral
+                           damage */
                         if (mon->mtame) {
                             tilescore *= 2;
                             /* never hit allies with deathzaps */
@@ -853,11 +861,14 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                                 tilescore *= 10;
                         }
                     }
-                    /* If monster is peaceful/tame and you don't see invisible, reveal invisible things and
-                       don't make things invisible */
-                    if (obj->otyp == WAN_MAKE_INVISIBLE && mon->mpeaceful && !see_invisible(&youmonst)) {
+                    /* If monster is peaceful/tame and you don't see invisible, reveal
+                       invisible things and don't make things invisible */
+                    if (obj->otyp == WAN_MAKE_INVISIBLE && mon->mpeaceful &&
+                        !see_invisible(&youmonst)) {
                         if (wandlevel >= P_SKILLED &&
-                            m_has_property(mtmp, INVIS, (W_MASK(os_outside) | W_MASK(os_timeout)), TRUE))
+                            m_has_property(mtmp, INVIS,
+                                           (W_MASK(os_outside) | W_MASK(os_timeout)),
+                                           TRUE))
                             tilescore = 30;
                         else
                             tilescore = 0;
@@ -1935,6 +1946,25 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
             return 2;
     }
 
+    if ((otyp == WAN_MAKE_INVISIBLE ||
+         otyp == WAN_POLYMORPH ||
+         otyp == SPE_POLYMORPH ||
+         otyp == WAN_SPEED_MONSTER ||
+         otyp == SPE_HEALING ||
+         otyp == SPE_EXTRA_HEALING ||
+         otyp == SPE_STONE_TO_FLESH ||
+         otyp == WAN_DEATH ||
+         otyp == SPE_FINGER_OF_DEATH ||
+         otyp == WAN_MAGIC_MISSILE ||
+         otyp == SPE_MAGIC_MISSILE ||
+         otyp == WAN_SLEEP ||
+         otyp == SPE_SLEEP ||
+         otyp == POT_PARALYSIS ||
+         otyp == POT_SLEEPING ||
+         otyp == EGG) && /* trice */
+        close)
+        return 2;
+
     /* tame monsters wont zap wishing */
     if (otyp == WAN_WISHING && !mon->mtame)
         return 1;
@@ -1957,22 +1987,19 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
 
     /* If peaceful, only selfinvis if hero can't see invisible.
        There is a similar check in choose_dirtarget. */
-    if ((otyp == WAN_MAKE_INVISIBLE ||
-         otyp == SPE_INVISIBILITY ||
+    if ((otyp == SPE_INVISIBILITY ||
          otyp == POT_INVISIBILITY) &&
         !invisible(mon) && !binvisible(mon) &&
         (!mon->mpeaceful || see_invisible(&youmonst)) &&
         (!attacktype(mon->data, AT_GAZE) || cancelled(mon)))
         return 1;
 
-    if ((otyp == WAN_POLYMORPH ||
-         otyp == SPE_POLYMORPH ||
+    if ((otyp == SPE_POLYMORPH ||
          otyp == POT_POLYMORPH) && !mon->cham &&
         monstr[monsndx(mon->data)] < 6)
         return 1;
 
-    if ((otyp == WAN_SPEED_MONSTER ||
-         otyp == SPE_HASTE_SELF ||
+    if ((otyp == SPE_HASTE_SELF ||
          otyp == POT_SPEED) && !very_fast(mon))
         return 1;
 
@@ -2021,25 +2048,6 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
          otyp == SPE_SUMMON_NASTY) &&
         close)
         return 1;
-
-    if ((otyp == WAN_MAKE_INVISIBLE ||
-         otyp == WAN_POLYMORPH ||
-         otyp == SPE_POLYMORPH ||
-         otyp == WAN_SPEED_MONSTER ||
-         otyp == SPE_HEALING ||
-         otyp == SPE_EXTRA_HEALING ||
-         otyp == SPE_STONE_TO_FLESH ||
-         otyp == WAN_DEATH ||
-         otyp == SPE_FINGER_OF_DEATH ||
-         otyp == WAN_MAGIC_MISSILE ||
-         otyp == SPE_MAGIC_MISSILE ||
-         otyp == WAN_SLEEP ||
-         otyp == SPE_SLEEP ||
-         otyp == POT_PARALYSIS ||
-         otyp == POT_SLEEPING ||
-         otyp == EGG) && /* trice */
-        close)
-        return 2;
     return 0;
 }
 

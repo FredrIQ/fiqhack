@@ -423,7 +423,8 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
             wandlevel = mprof(user, MP_WANDS);
             if (obj->mbknown)
                 wandlevel = getwandlevel(user, obj);
-            if (wandlevel >= P_SKILLED)
+            if (wandlevel >= P_SKILLED &&
+                !binvisible(target))
                 return TRUE;
         }
         return !prop_wary(user, target, INVIS);
