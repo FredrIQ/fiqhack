@@ -2266,12 +2266,12 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
 
                 mndx = name_to_mon(buf);
             } else {
-                buf = "kitten"; /* yeah, screw those kittens (fallback in case buf is read after this point) */
+                buf = "kitten"; /* fallback if something goes wrong */
                 if (known_cursed)
                     mndx = mon_choose_reverse_genocide(mon);
                 else
                     mndx = mon_choose_genocide(mon, FALSE, i);
-                if (mndx) {
+                if (!mndx) {
                     if (vis) {
                         if (!i)
                             pline(msgc_monneutral,
@@ -2403,7 +2403,8 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
         if (!(mons[mndx].geno & G_UNIQ) &&
             !(mvitals[mndx].mvflags & (G_GENOD | G_EXTINCT)))
             for (i = rn1(3, 4); i > 0; i--) {
-                if (!(mtmp = makemon(ptr, level, m_mx(mon), m_my(mon), NO_MINVENT)))
+                if (!(mtmp = makemon(ptr, level, m_mx(mon), m_my(mon),
+                                     NO_MINVENT | MM_ADJACENTOK)))
                     break;      /* couldn't make one */
                 if (canseemon(mtmp))
                     mtmp_vis++;
