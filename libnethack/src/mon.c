@@ -1478,7 +1478,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         continue;
                     info[cnt] |= ALLOW_ROCK;
                 }
-                if (blind(mon) && (!invisible(&youmonst) ||
+                if (!blind(mon) && (!invisible(&youmonst) ||
                     see_invisible(mon)) && onlineu(nx, ny)) {
                     if (flag & NOTONL)
                         continue;
