@@ -726,7 +726,7 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
 
     /* Iterate through affected monsters */
     int i, j, randobstr;
-    for (i = 0; mon[i]; i++) {
+    for (i = 0; i < amount; i++) {
         hitmon = mon[i];
         vis = canseemon(hitmon);
 
@@ -746,7 +746,7 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
         randobstr = rnd(30); /* limit until view is too obstructed */
         /* Do a secondary iteration, in case the monster is affected by something
            behind or in front */
-        for (j = 0; mon[j]; j++) {
+        for (j = 0; j < amount; j++) {
             self = FALSE;
             hitby = mon[j];
             if (DEADMONSTER(hitby))
