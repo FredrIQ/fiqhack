@@ -2144,9 +2144,11 @@ mstiffen(struct monst *mon, struct monst *magr)
         return;
     }
 
-    set_property(mon, STONED, 5, FALSE);
-    if (magr == &youmonst)
-        mon->ustoned = 1;
+    if (!petrifying(mon)) {
+        set_property(mon, STONED, 5, FALSE);
+        if (magr == &youmonst)
+            mon->ustoned = 1;
+    }
 }
 
 /* drop a statue or rock and remove monster */
