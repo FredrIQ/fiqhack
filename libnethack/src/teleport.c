@@ -1084,7 +1084,7 @@ mon_choose_level(struct monst *mon)
 
     /* Wizard of Yendor teleports to the Amulet */
     if (mon->iswiz && !flags.made_amulet)
-            return 99;
+        return 99;
 
     /* Covetous monsters stay if obj is here */
     if (is_covetous(mon->data) && target_on(mon->data->mflags3 & M3_COVETOUS, mon))
