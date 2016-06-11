@@ -382,10 +382,8 @@ find_branch(const char *s,      /* dungeon name */
 }
 
 
-/*
- * Find the "parent" by searching the prototype branch list for the branch
- * listing, then figuring out to which dungeon it belongs.
- */
+/* Find the "parent" by searching the prototype branch list for the branch
+   listing, then figuring out to which dungeon it belongs. */
 static xchar
 parent_dnum(const char *s,      /* dungeon name */
             struct proto_dungeon *pd)
@@ -394,17 +392,14 @@ parent_dnum(const char *s,      /* dungeon name */
     xchar pdnum;
 
     i = find_branch(s, pd);
-    /*
-     * Got branch, now find parent dungeon.  Stop if we have reached
-     * "this" dungeon (if we haven't found it by now it is an error).
-     */
+    /* Got branch, now find parent dungeon.  Stop if we have reached
+       "this" dungeon (if we haven't found it by now it is an error). */
     for (pdnum = 0; strcmp(pd->tmpdungeon[pdnum].name, s); pdnum++)
         if ((i -= pd->tmpdungeon[pdnum].branches) < 0)
             return pdnum;
 
     panic("parent_dnum: couldn't resolve branch.");
-    /* NOT REACHED */
-    return (xchar) 0;
+    /*NOTREACHED*/ return (xchar) 0;
 }
 
 /*
@@ -493,12 +488,10 @@ correct_branch_type(struct tmpbranch *tbr)
     return BR_STAIR;
 }
 
-/*
- * Add the given branch to the branch list.  The branch list is ordered
- * by end1 dungeon and level followed by end2 dungeon and level.  If
- * extract_first is true, then the branch is already part of the list
- * but needs to be repositioned.
- */
+/* Add the given branch to the branch list.  The branch list is ordered
+   by end1 dungeon and level followed by end2 dungeon and level.  If
+   extract_first is true, then the branch is already part of the list
+   but needs to be repositioned. */
 void
 insert_branch(branch * new_branch, boolean extract_first)
 {
@@ -525,9 +518,7 @@ insert_branch(branch * new_branch, boolean extract_first)
        (long)(bp)->end1.dlevel) * (MAXDUNGEON+1) * (MAXLEVEL+1)) +      \
      ((long)(bp)->end2.dnum * (MAXLEVEL+1) + (long)(bp)->end2.dlevel))
 
-    /*
-     * Insert the new branch into the correct place in the branch list.
-     */
+    /* Insert the new branch into the correct place in the branch list. */
     prev = NULL;
     prev_val = -1;
     new_val = branch_val(new_branch);
@@ -672,13 +663,11 @@ pick_level(boolean * map,       /* an array MAXLEVEL+1 in size */
 }
 
 
-/*
- * Place a level.  First, find the possible places on a dungeon map
- * template.  Next pick one.  Then try to place the next level->  If
- * sucessful, we're done.  Otherwise, try another (and another) until
- * all possible places have been tried.  If all possible places have
- * been exausted, return false.
- */
+/* Place a level.  First, find the possible places on a dungeon map
+   template.  Next pick one.  Then try to place the next level->  If
+   sucessful, we're done.  Otherwise, try another (and another) until
+   all possible places have been tried.  If all possible places have
+   been exausted, return false. */
 static boolean
 place_level(int proto_index, struct proto_dungeon *pd)
 {
