@@ -677,6 +677,10 @@ movemon(void)
     for (mtmp = level->monlist; mtmp; mtmp = nmtmp) {
         nmtmp = mtmp->nmon;
 
+        /* Clear bypass flags */
+        if (flags.bypasses)
+            clear_bypasses();
+
         /* Find a monster that we have not treated yet.  */
         if (DEADMONSTER(mtmp))
             continue;
@@ -712,6 +716,10 @@ movemon(void)
         if (dochugw(mtmp))      /* otherwise just move the monster */
             continue;
     }
+
+    /* Clear bypass flags for the last monster in the chain */
+    if (flags.bypasses)
+        clear_bypasses();
 
     if (any_light_source())
         /* in case a mon moved with a light source */
