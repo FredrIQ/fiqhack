@@ -2085,8 +2085,6 @@ backfire(struct obj *otmp)
     } else {
         pline(msgc_substitute, "%s suddenly explodes!", The(xname(otmp)));
         do_break_wand(otmp, FALSE);
-        losehp(dice(otmp->spe + 2, 6), killer_msg(DIED, "an exploding wand"));
-        useup(otmp);
     }
 }
 
