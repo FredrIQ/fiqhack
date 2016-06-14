@@ -646,8 +646,6 @@ possibly_unwield(struct monst *mon, boolean polyspot)
         }
         /* might be dropping object into water or lava */
         if (!flooreffects(obj, mon->mx, mon->my, "drop")) {    /* FIXME - JMM */
-            if (polyspot)
-                bypass_obj(obj);
             place_object(obj, lev, mon->mx, mon->my);
             stackobj(obj);
         }

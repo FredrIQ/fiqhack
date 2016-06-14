@@ -2146,7 +2146,7 @@ mergable(struct obj *otmp, struct obj *obj)
         obj->oinvis != otmp->oinvis ||
 #endif
         obj->greased != otmp->greased || obj->oeroded != otmp->oeroded ||
-        obj->oeroded2 != otmp->oeroded2 || obj->bypass != otmp->bypass)
+        obj->oeroded2 != otmp->oeroded2 || obj->to_be_hit != otmp->to_be_hit)
         return FALSE;
 
     if ((obj->oclass == WEAPON_CLASS || obj->oclass == ARMOR_CLASS) &&

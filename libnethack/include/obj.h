@@ -114,7 +114,7 @@ struct obj {
     unsigned in_use:1;          /* for magic items before useup items */
     unsigned was_thrown:1;      /* thrown by the hero since last picked up */
     unsigned was_dropped:1;     /* last left inventory via d or D command */
-    unsigned bypass:1;  /* mark this as an object to be skipped by bhito() */
+    unsigned to_be_hit:1;  /* mark this as an object to be hit by bhitpile */
     /* 4 free bits */
 
     union {

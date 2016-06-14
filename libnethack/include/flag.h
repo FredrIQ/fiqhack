@@ -241,7 +241,6 @@ struct flag {
     boolean autodigdown;        /* autodigging works downwadrds */
     boolean autoquiver; /* Automatically fill quiver */
     boolean beginner;
-    boolean bypasses;   /* bypass flag is set on at least one fobj */
     boolean cblock;
     boolean corridorbranch;     /* branching corridors are interesting */
     boolean debug;      /* in debugging mode */

@@ -2048,8 +2048,6 @@ extern int find_mac(struct monst *);
 extern void m_dowear(struct monst *, boolean);
 extern struct obj *which_armor(const struct monst *, enum objslot);
 extern void mon_break_armor(struct monst *, boolean);
-extern void bypass_obj(struct obj *);
-extern void clear_bypasses(void);
 extern int racial_exception(struct monst *, struct obj *);
 extern int extra_pref(const struct monst *, struct obj *);
 
@@ -2071,9 +2069,10 @@ extern boolean drain_item(struct obj *);
 extern boolean poly_proof(struct obj *);
 extern struct obj *poly_obj(struct obj *, int);
 extern boolean obj_resists(struct obj *, int, int);
+extern int bhit_at(struct monst *, struct obj *, int, int, int);
 extern int bhito(struct obj *, struct obj *);
-extern int bhitpile(struct obj *, int (*)(struct obj *, struct obj *), int,
-                    int);
+extern void bhitinv(struct monst *, struct obj *);
+extern int bhitpile(struct monst *, struct obj *, int, int);
 extern void backfire(struct obj *);
 extern int wrestable(struct obj *wand);
 extern int zappable(struct monst *, struct obj *);

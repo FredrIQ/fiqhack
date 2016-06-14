@@ -314,11 +314,6 @@ make_corpse(struct monst *mtmp)
     }
     /* All special cases should precede the G_NOCORPSE check */
 
-    /* if polymorph or undead turning has killed this monster, prevent the same
-       attack beam from hitting its corpse */
-    if (flags.bypasses)
-        bypass_obj(obj);
-
     if (!noname && mx_name(mtmp))
         obj = oname(obj, mx_name(mtmp));
 
@@ -677,10 +672,6 @@ movemon(void)
     for (mtmp = level->monlist; mtmp; mtmp = nmtmp) {
         nmtmp = mtmp->nmon;
 
-        /* Clear bypass flags */
-        if (flags.bypasses)
-            clear_bypasses();
-
         /* Find a monster that we have not treated yet.  */
         if (DEADMONSTER(mtmp))
             continue;
@@ -716,10 +707,6 @@ movemon(void)
         if (dochugw(mtmp))      /* otherwise just move the monster */
             continue;
     }
-
-    /* Clear bypass flags for the last monster in the chain */
-    if (flags.bypasses)
-        clear_bypasses();
 
     if (any_light_source())
         /* in case a mon moved with a light source */
@@ -3367,10 +3354,6 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
         for (otmp = mtmp->minvent; otmp; otmp = otmp2) {
             otmp2 = otmp->nobj;
             if (otmp->otyp == BOULDER) {
-                /* this keeps otmp from being polymorphed in the same zap that
-                   the monster that held it is polymorphed */
-                if (polyspot)
-                    bypass_obj(otmp);
                 obj_extract_self(otmp);
                 /* probably ought to give some "drop" message here */
                 if (flooreffects(otmp, mtmp->mx, mtmp->my, ""))

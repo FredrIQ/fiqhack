@@ -574,44 +574,6 @@ m_lose_armor(struct monst *mon, struct obj *obj)
         newsym(mon->mx, mon->my);
 }
 
-/* all objects with their bypass bit set should now be reset to normal */
-void
-clear_bypasses(void)
-{
-    struct obj *otmp, *nobj;
-    struct monst *mtmp;
-
-    for (otmp = level->objlist; otmp; otmp = nobj) {
-        nobj = otmp->nobj;
-        if (otmp->bypass) {
-            otmp->bypass = 0;
-            /* bypass will have inhibited any stacking, but since it's used for 
-               polymorph handling, the objects here probably have been
-               transformed and won't be stacked in the usual manner afterwards; 
-               so don't bother with this */
-        }
-    }
-    /* invent and migrating_pets chains shouldn't matter here */
-    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp))
-            continue;
-        for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
-            otmp->bypass = 0;
-    }
-    for (mtmp = migrating_mons; mtmp; mtmp = mtmp->nmon) {
-        for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
-            otmp->bypass = 0;
-    }
-    flags.bypasses = FALSE;
-}
-
-void
-bypass_obj(struct obj *obj)
-{
-    obj->bypass = 1;
-    flags.bypasses = TRUE;
-}
-
 void
 mon_break_armor(struct monst *mon, boolean polyspot)
 {
@@ -645,8 +607,6 @@ mon_break_armor(struct monst *mon, boolean polyspot)
                 if (vis)
                     pline(msgc_monneutral, "%s %s falls off!",
                           s_suffix(Monnam(mon)), cloak_simple_name(otmp));
-                if (polyspot)
-                    bypass_obj(otmp);
                 m_lose_armor(mon, otmp);
             } else {
                 if (show_msg) {
@@ -678,8 +638,6 @@ mon_break_armor(struct monst *mon, boolean polyspot)
                 else
                     You_hear(msgc_levelsound, "a thud.");
             }
-            if (polyspot)
-                bypass_obj(otmp);
             m_lose_armor(mon, otmp);
         }
         if ((otmp = which_armor(mon, os_armc)) != 0) {
@@ -691,8 +649,6 @@ mon_break_armor(struct monst *mon, boolean polyspot)
                     pline(msgc_levelsound, "%s shrinks out of %s %s!",
                           Monnam(mon), ppronoun, cloak_simple_name(otmp));
             }
-            if (polyspot)
-                bypass_obj(otmp);
             m_lose_armor(mon, otmp);
         }
         if ((otmp = which_armor(mon, os_armu)) != 0) {
@@ -705,8 +661,6 @@ mon_break_armor(struct monst *mon, boolean polyspot)
                           "%s becomes much too small for %s shirt!",
                           Monnam(mon), ppronoun);
             }
-            if (polyspot)
-                bypass_obj(otmp);
             m_lose_armor(mon, otmp);
         }
     }
@@ -716,8 +670,6 @@ mon_break_armor(struct monst *mon, boolean polyspot)
             if (vis)
                 pline(msgc_monneutral, "%s drops %s gloves%s!", Monnam(mon),
                       ppronoun, MON_WEP(mon) ? " and weapon" : "");
-            if (polyspot)
-                bypass_obj(otmp);
             m_lose_armor(mon, otmp);
         }
         if ((otmp = which_armor(mon, os_arms)) != 0) {
@@ -728,8 +680,6 @@ mon_break_armor(struct monst *mon, boolean polyspot)
                 else
                     You_hear(msgc_levelsound, "a clank.");
             }
-            if (polyspot)
-                bypass_obj(otmp);
             m_lose_armor(mon, otmp);
         }
     }
@@ -745,8 +695,6 @@ mon_break_armor(struct monst *mon, boolean polyspot)
                 else if (is_metallic(otmp))  /* soft hats don't make a sound */
                     You_hear(msgc_levelsound, "a clank.");
             }
-            if (polyspot)
-                bypass_obj(otmp);
             m_lose_armor(mon, otmp);
         }
     }
@@ -761,15 +709,11 @@ mon_break_armor(struct monst *mon, boolean polyspot)
                           s_suffix(Monnam(mon)),
                           verysmall(mdat) ? "slide" : "are pushed", ppronoun);
             }
-            if (polyspot)
-                bypass_obj(otmp);
             m_lose_armor(mon, otmp);
         }
     }
     if (!can_saddle(mon)) {
         if ((otmp = which_armor(mon, os_saddle)) != 0) {
-            if (polyspot)
-                bypass_obj(otmp);
             m_lose_armor(mon, otmp);
             if (vis)
                 pline(mon->mtame ? msgc_petneutral : msgc_monneutral,

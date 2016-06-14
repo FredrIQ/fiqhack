@@ -2652,19 +2652,30 @@ try_again:
 /* what? (investigate do_break_wand for this...) */
 #define BY_OBJECT       (NULL)
 static void
-mon_break_wand(struct monst *mtmp, struct obj *otmp) {
+mon_break_wand(struct monst *mtmp, struct obj *otmp)
+{
     int i, x, y;
-    struct monst *mon;
     int damage;
     int expltype;
     int otyp;
     boolean oseen = mon_visible(mtmp);
-    boolean affects_objects;
 
     otyp = otmp->otyp;
-    affects_objects = FALSE;
     otmp->ox = mtmp->mx;
     otmp->oy = mtmp->my;
+
+    /* The following wands have no effect */
+    if (otyp == WAN_WISHING ||
+        otyp == WAN_NOTHING ||
+        otyp == WAN_OPENING ||
+        otyp == WAN_LOCKING ||
+        otyp == WAN_PROBING ||
+        otyp == WAN_ENLIGHTENMENT ||
+        otyp == WAN_SECRET_DOOR_DETECTION) {
+        if (oseen)
+            pline(msgc_failcurse, "But nothing else happens...");
+        return;
+    }
 
     /* damage */
     damage = otmp->spe * 4;
@@ -2682,70 +2693,51 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
         expltype = EXPL_MAGICAL;
 
     /* (non-sleep) ray explosions */
-    if (otyp == WAN_DEATH
-     || otyp == WAN_FIRE
-     || otyp == WAN_COLD
-     || otyp == WAN_LIGHTNING
-     || otyp == WAN_MAGIC_MISSILE)
+    if (otyp == WAN_DEATH ||
+        otyp == WAN_FIRE ||
+        otyp == WAN_COLD ||
+        otyp == WAN_LIGHTNING ||
+        otyp == WAN_MAGIC_MISSILE) {
         explode(otmp->ox, otmp->oy, (otyp - WAN_MAGIC_MISSILE), damage, WAND_CLASS,
                 expltype, NULL, 0);
-    else {
-        if (otyp == WAN_STRIKING) {
-            if (oseen)
-                pline(msgc_monneutral,
-                      "A wall of force smashes down around %s!",
-                      mon_nam(mtmp));
-            damage = dice(1 + otmp->spe, 6);
-        }
-        if (otyp == WAN_STRIKING
-         || otyp == WAN_CANCELLATION
-         || otyp == WAN_POLYMORPH
-         || otyp == WAN_TELEPORTATION
-         || otyp == WAN_UNDEAD_TURNING)
-            affects_objects = TRUE;
+        return;
+    }
 
-        explode(otmp->ox, otmp->oy, 0, rnd(damage), WAND_CLASS, expltype, NULL, 0);
+    if (otyp == WAN_STRIKING) {
+        if (oseen)
+            pline(msgc_monneutral,
+                  "A wall of force smashes down around %s!",
+                  mon_nam(mtmp));
+        damage = dice(1 + otmp->spe, 6);
+    }
 
-        /* affect all tiles around the monster */
-        for (i = 0; i <= 8; i++) {
-            bhitpos.x = x = otmp->ox + xdir[i];
-            bhitpos.y = y = otmp->oy + ydir[i];
-            if (!isok(x, y))
-                continue;
+    explode(otmp->ox, otmp->oy, 0, rnd(damage), WAND_CLASS, expltype, NULL, 0);
 
-            if (otyp == WAN_DIGGING && dig_check(BY_OBJECT, FALSE, x, y)) {
-                if (IS_WALL(level->locations[x][y].typ) ||
-                    IS_DOOR(level->locations[x][y].typ)) {
-                    /* add potential shop damage for fixing */
-                    if (*in_rooms(level, x, y, SHOPBASE))
-                        add_damage(bhitpos.x, bhitpos.y, 0L);
-                }
-                digactualhole(x, y, BY_OBJECT,
-                              (rn2(otmp->spe) < 3 ||
-                               !can_dig_down(level)) ? PIT : HOLE);
-            } else if (otyp == WAN_CREATE_MONSTER) {
-                makemon(NULL, level, otmp->ox, otmp->oy, MM_CREATEMONSTER | MM_CMONSTER_U);
-            } else {
-                /* avoid telecontrol/autopickup shenanigans */
-                if (otyp == WAN_TELEPORTATION &&
-                    level->objects[x][y]) {
-                    bhitpile(otmp, bhito, x, y);
-                    bot();  /* potion effects */
-                } else {
-                    mon = m_at(level, x, y);
-                    if (!mon && x == u.ux && y == u.uy)
-                        mon = &youmonst;
-                    if (mon)
-                        bhitm(mtmp, mon, otmp, 10);
-                    bot();      /* blindness */
-                    if (affects_objects && level->objects[x][y]) {
-                        bhitpile(otmp, bhito, x, y);
-                        bot();      /* potion effects */
-                    }
-                }
+    /* affect all tiles around the monster */
+    for (i = 0; i <= 8; i++) {
+        bhitpos.x = x = otmp->ox + xdir[i];
+        bhitpos.y = y = otmp->oy + ydir[i];
+        if (!isok(x, y))
+            continue;
+
+        if (otyp == WAN_DIGGING && dig_check(BY_OBJECT, FALSE, x, y)) {
+            if (IS_WALL(level->locations[x][y].typ) ||
+                IS_DOOR(level->locations[x][y].typ)) {
+                /* add potential shop damage for fixing */
+                if (*in_rooms(level, x, y, SHOPBASE))
+                    add_damage(bhitpos.x, bhitpos.y, 0L);
             }
+            digactualhole(x, y, BY_OBJECT,
+                          (rn2(otmp->spe) < 3 ||
+                           !can_dig_down(level)) ? PIT : HOLE);
+        } else if (otyp == WAN_CREATE_MONSTER)
+            makemon(NULL, level, otmp->ox, otmp->oy, MM_CREATEMONSTER | MM_CMONSTER_U);
+        else {
+            bhit_at(mtmp, otmp, x, y, 10);
+            bot(); /* blindness */
         }
     }
+
     if (otyp == WAN_LIGHT)
         litroom(mtmp, TRUE, otmp);     /* only needs to be done once */
 }

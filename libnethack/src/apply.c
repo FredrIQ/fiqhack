@@ -5,6 +5,7 @@
 
 #include "hack.h"
 #include "hungerstatus.h"
+#include "zap.h"
 
 static int use_camera(struct obj *, const struct nh_cmd_arg *);
 static int use_towel(struct obj *);
@@ -2890,10 +2891,8 @@ do_break_wand(struct obj *obj, boolean intentional)
 {
     static const char nothing_else_happens[] = "But nothing else happens...";
     int i, x, y;
-    struct monst *mon;
     int dmg;
-    boolean affects_objects;
-    boolean shop_damage = FALSE;
+    int shop_damage = 0; /* 1=digging, 2=from bhit_at */
     int expltype = EXPL_MAGICAL;
     const char *confirm, *the_wand;
 
@@ -2935,7 +2934,6 @@ do_break_wand(struct obj *obj, boolean intentional)
     obj->ox = u.ux;
     obj->oy = u.uy;
     dmg = obj->spe * 4;
-    affects_objects = FALSE;
 
     switch (obj->otyp) {
     case WAN_WISHING:
@@ -2970,11 +2968,6 @@ do_break_wand(struct obj *obj, boolean intentional)
         pline_implied(msgc_badidea,
                       "A wall of force smashes down around you!");
         dmg = dice(1 + obj->spe, 6);    /* normally 2d12 */
-    case WAN_CANCELLATION:
-    case WAN_POLYMORPH:
-    case WAN_TELEPORTATION:
-    case WAN_UNDEAD_TURNING:
-        affects_objects = TRUE;
         break;
     default:
         break;
@@ -2984,6 +2977,7 @@ do_break_wand(struct obj *obj, boolean intentional)
     explode(obj->ox, obj->oy, 0, rnd(dmg), WAND_CLASS, EXPL_MAGICAL, NULL, 0);
 
     /* this makes it hit us last, so that we can see the action first */
+    int bhit = BHIT_NONE;
     for (i = 0; i <= 8; i++) {
         bhitpos.x = x = obj->ox + xdir[i];
         bhitpos.y = y = obj->oy + ydir[i];
@@ -2998,7 +2992,7 @@ do_break_wand(struct obj *obj, boolean intentional)
                        if it's a wall or door that's being dug */
                     watch_warn(NULL, x, y, TRUE);
                     if (*in_rooms(level, x, y, SHOPBASE))
-                        shop_damage = TRUE;
+                        shop_damage = 1;
                 }
                 digactualhole(x, y, BY_OBJECT,
                               (rn2(obj->spe) < 3 ||
@@ -3009,33 +3003,17 @@ do_break_wand(struct obj *obj, boolean intentional)
             /* u.ux,u.uy creates it near you--x,y might create it in rock */
             makemon(NULL, level, u.ux, u.uy, MM_CREATEMONSTER | MM_CMONSTER_U);
             continue;
-        } else {
-            if (x == u.ux && y == u.uy) {
-                /* teleport objects first to avoid race with tele control and
-                   autopickup.  Other wand/object effects handled after
-                   possible wand damage is assessed */
-                if (obj->otyp == WAN_TELEPORTATION && affects_objects &&
-                    level->objects[x][y]) {
-                    bhitpile(obj, bhito, x, y);
-                    bot();  /* potion effects */
-                }
-                bhitm(&youmonst, &youmonst, obj, 10);
-                bot();      /* blindness */
-            } else if ((mon = m_at(level, x, y)) != 0) {
-                bhitm(&youmonst, mon, obj, 10);
-                /* bot(); */
-            }
-            if (affects_objects && level->objects[x][y]) {
-                bhitpile(obj, bhito, x, y);
-                bot();      /* potion effects */
-            }
+        } else if ((bhit = bhit_at(&youmonst, obj, x, y, 10))) {
+            if (bhit & BHIT_SHOPDAM)
+                shop_damage = 2;
+            bot(); /* blindness */
         }
     }
 
     /* Note: if player fell thru, this call is a no-op. Damage is handled in
        digactualhole in that case */
     if (shop_damage)
-        pay_for_damage("dig into", FALSE);
+        pay_for_damage(shop_damage == 1 ? "dig into" : "destroy", FALSE);
 
     if (obj->otyp == WAN_LIGHT)
         litroom(&youmonst, TRUE, obj);     /* only needs to be done once */
