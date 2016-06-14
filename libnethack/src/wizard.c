@@ -680,9 +680,6 @@ tactics(struct monst *mtmp)
                     /* a monster is standing on it - go after it */
                     return mattackq(mtmp, tx, ty) ? 2 : 1;
                 }
-            } else if (mtmp->mx != tx || mtmp->my != ty) {
-                /* something is blocking our square; attack it */
-                return mattackq(mtmp, tx, ty) ? 2 : 1;
             } else {
                 /* fall through to the normal AI */
                 return 0;
