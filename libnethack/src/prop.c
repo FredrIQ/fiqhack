@@ -1487,7 +1487,8 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case STRANGLED:
         if (you)
-            msgc = timer ? msgc_fatal : msgc_fatal_predone;
+            msgc = (lost && slot == os_dectimeout ?
+                    msgc_fatal_predone : msgc_fatal);
         else if (mon->mtame)
             msgc = msgc_petfatal;
         if (lost && slot != os_dectimeout) {
