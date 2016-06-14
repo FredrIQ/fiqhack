@@ -124,6 +124,9 @@ temple_occupied(char *array)
 static boolean
 histemple_at(struct monst *priest, xchar x, xchar y)
 {
+    if (!mx_epri(priest))
+        panic("histemple_at: priest has no MX_EPRI?");
+
     return ((boolean)
             ((mx_epri(priest)->shroom == *in_rooms(level, x, y, TEMPLE)) &&
              on_level(&(mx_epri(priest)->shrlevel), &u.uz)));

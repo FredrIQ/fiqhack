@@ -2582,10 +2582,9 @@ unpunish(void)
 boolean
 cant_create(int *mtype, boolean revival)
 {
-
     /* SHOPKEEPERS can be revived now */
     if (*mtype == PM_GUARD || (*mtype == PM_SHOPKEEPER && !revival)
-        || *mtype == PM_ALIGNED_PRIEST /* || *mtype==PM_ANGEL */ ) {
+        || *mtype == PM_ALIGNED_PRIEST || *mtype == PM_HIGH_PRIEST) {
         *mtype = PM_HUMAN_ZOMBIE;
         return TRUE;
     } else if (*mtype == PM_LONG_WORM_TAIL) {   /* for create_particular() */
