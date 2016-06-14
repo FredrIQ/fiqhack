@@ -1922,11 +1922,16 @@ bhitpile_post(struct monst *mon, struct obj *obj, int x, int y)
             continue;
 
         hitanything += bhito(otmp, obj);
+
+        /* Reset to_be_hit. However, leave it present for polymorph, because
+           create_polymon should only affect objects that was here in the first place. */
+        if (obj->otyp != WAN_POLYMORPH && obj->otyp != SPE_POLYMORPH)
+            otmp->to_be_hit = 0;
     }
     if (poly_zapped >= 0)
         create_polymon(level->objects[x][y], poly_zapped);
 
-    /* Reset to_be_hit */
+    /* Reset to_be_hit post-polymorph */
     for (otmp = m_dlevel(mon)->objects[x][y]; otmp; otmp = otmp->nexthere)
         otmp->to_be_hit = 0;
 
