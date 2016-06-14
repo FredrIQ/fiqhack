@@ -2666,6 +2666,19 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
     otmp->ox = mtmp->mx;
     otmp->oy = mtmp->my;
 
+    /* The following wands have no effect */
+    if (otyp == WAN_WISHING ||
+        otyp == WAN_NOTHING ||
+        otyp == WAN_OPENING ||
+        otyp == WAN_LOCKING ||
+        otyp == WAN_PROBING ||
+        otyp == WAN_ENLIGHTENMENT ||
+        otyp == WAN_SECRET_DOOR_DETECTION) {
+        if (oseen)
+            pline(msgc_failcurse, "But nothing else happens...");
+        return;
+    }
+
     /* damage */
     damage = otmp->spe * 4;
     if (otyp != WAN_MAGIC_MISSILE)
