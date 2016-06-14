@@ -1850,6 +1850,8 @@ bhito(struct obj *obj, struct obj *otmp)
         case SPE_SLOW_MONSTER:
         case WAN_SPEED_MONSTER:
         case WAN_NOTHING:
+        case WAN_SLEEP: /* (broken wand) */
+        case WAN_LIGHT: /* (broken wand) */
         case SPE_HEALING:
         case SPE_EXTRA_HEALING:
         case EXPENSIVE_CAMERA:
