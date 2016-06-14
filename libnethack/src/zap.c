@@ -2653,7 +2653,8 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj)
 
         if (ret & BHIT_MON)
             range -= 3;
-        else if ((dmon = vismon_at(lev, bhitpos.x, bhitpos.y)))
+        else if ((ret & BHIT_DMON) &&
+                 (dmon = vismon_at(lev, x, y)))
             pline(combat_msgc(mon, dmon, cr_miss),
                   "The %s passes through %s displaced image!",
                   obj->otyp == EXPENSIVE_CAMERA ? "flash" : "beam",
@@ -2763,7 +2764,8 @@ bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
             map_invisible(x, y);
         bhitm(mon, mdef, obj, min(range, 1));
         ret |= BHIT_MON;
-    }
+    } else if ((mdef = vismon_at(lev, x, y)))
+        ret |= BHIT_DMON;
 
     if (obj->otyp != WAN_TELEPORTATION && obj->otyp != SPE_TELEPORT_AWAY &&
         bhitpile_post(mon, obj, x, y))

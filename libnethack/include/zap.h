@@ -20,11 +20,12 @@
 # define ZT_SPELL(x)             (10+(x))
 # define ZT_BREATH(x)            (20+(x))
 
-# define BHIT_NONE     0x0
-# define BHIT_MON      0x1
-# define BHIT_OBJ      0x2
-# define BHIT_OBSTRUCT 0x4
-# define BHIT_SHOPDAM  0x8
+# define BHIT_NONE     0x00
+# define BHIT_MON      0x01
+# define BHIT_DMON     0x02 /* displaced image was hit */
+# define BHIT_OBJ      0x04
+# define BHIT_OBSTRUCT 0x08
+# define BHIT_SHOPDAM  0x10
 
 # define is_hero_spell(type) ((type) >= 10 && (type) < 20)
 
