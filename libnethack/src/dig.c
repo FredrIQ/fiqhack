@@ -673,7 +673,7 @@ digactualhole(int x, int y, struct monst *mon, int ttyp)
                                   Monnam(target));
                         return;
                     } else {
-                        get_level(&tolevel, depth(m_mz(mon)) + 1);
+                        get_level(&tolevel, depth(m_mz(target)) + 1);
                     }
                     if (mx_eshk(target) && (yours || !flags.mon_moving))
                         make_angry_shk(target, 0, 0);
