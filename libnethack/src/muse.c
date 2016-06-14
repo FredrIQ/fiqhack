@@ -2735,7 +2735,8 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
                     mon = m_at(level, x, y);
                     if (!mon && x == u.ux && y == u.uy)
                         mon = &youmonst;
-                    bhitm(mtmp, mon, otmp, 10);
+                    if (mon)
+                        bhitm(mtmp, mon, otmp, 10);
                     bot();      /* blindness */
                     if (affects_objects && level->objects[x][y]) {
                         bhitpile(otmp, bhito, x, y);
