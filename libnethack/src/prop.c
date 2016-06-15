@@ -932,6 +932,8 @@ update_property(struct monst *mon, enum youprop prop,
                     if (slot != os_outside)
                         pline(lost ? msgc_intrloss : msgc_intrgain, "You feel %s!",
                               lost ? msg->losepm : msg->gainpm);
+                    else if (prop == POISON_RES && !lost && redundant) /* special msg */
+                        pline(msgc_intrgain, "You feel especially healthy.");
                     else
                         pline(lost ? msgc_intrloss : msgc_intrgain, "%s", 
                               lost ? msg->loseoutside : msg->gainoutside);
