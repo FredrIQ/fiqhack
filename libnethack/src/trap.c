@@ -573,7 +573,7 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
     /* avoid hiding under nothing */
     if (x == youmonst.mx && y == youmonst.my && Upolyd && hides_under(youmonst.data) &&
         !OBJ_AT(x, y))
-        u.uundetected = 0;
+        youmonst.mundetected = 0;
 
     if (fail_reason)
         *fail_reason = AS_OK;

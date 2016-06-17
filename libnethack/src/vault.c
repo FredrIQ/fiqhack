@@ -290,7 +290,8 @@ invault(void)
             messages = FALSE;
 
         newsym(guard->mx, guard->my);
-        if (youmonst.m_ap_type == M_AP_OBJECT || u.uundetected || u.uburied) {
+        if (youmonst.m_ap_type == M_AP_OBJECT || youmonst.mundetected ||
+            u.uburied) {
             if (youmonst.m_ap_type == M_AP_OBJECT &&
                 youmonst.mappearance != GOLD_PIECE)
                 verbalize(msgc_npcvoice,

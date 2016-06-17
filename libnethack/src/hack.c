@@ -1752,7 +1752,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     /* Special case: monsters that are hiding on the ceiling don't block
        movement; they'll move off their square in spoteffects(). This doesn't
        apply if the player can suspect something there, or is forcefighting. */
-    if (mtmp && m_mhiding(mtmp) && !cansuspectmon(mtmp) && uia != uia_attack)
+    if (mtmp && is_hider(mtmp->data) && mtmp->mundetected &&
+        !cansuspectmon(mtmp) && uia != uia_attack)
         mtmp = NULL;
 
     if (mtmp) {
@@ -2132,7 +2133,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
      * Ceiling-hiding pets are skipped by this section of code, to be caught by
      * the normal falling-monster code.
      */
-    if (uia == uia_displace && mtmp && !(m_mhiding(mtmp))) {
+    if (uia == uia_displace && mtmp && !(is_hider(mtmp->data) &&
+                                         mtmp->mundetected)) {
         /* if trapped, there's a chance the pet goes wild */
         if (mtmp->mtrapped) {
             if (!rn2(mtmp->mtame)) {
@@ -2260,11 +2262,12 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     }
 
     if (hides_under(youmonst.data))
-        u.uundetected = OBJ_AT(youmonst.mx, youmonst.my);
+        youmonst.mundetected = OBJ_AT(youmonst.mx, youmonst.my);
     else if (youmonst.data->mlet == S_EEL)
-        u.uundetected = is_pool(level, youmonst.mx, youmonst.my) && !Is_waterlevel(&u.uz);
+        youmonst.mundetected = (is_pool(level, youmonst.mx, youmonst.my) &&
+                                !Is_waterlevel(&u.uz));
     else if (turnstate.move.dx || turnstate.move.dy)
-        u.uundetected = 0;
+        youmonst.mundetected = 0;
 
     /*
      * Mimics (or whatever) become noticeable if they move and are

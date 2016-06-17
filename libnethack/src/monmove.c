@@ -1027,7 +1027,7 @@ not_special:
             mtmp->muy = youmonst.my;
 
             /* Exception: if you've laid a trap for the monster. */
-            if (u.uundetected)
+            if (youmonst.mundetected)
                 return 0;
 
             pline(combat_msgc(mtmp, &youmonst, cr_miss),

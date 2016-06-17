@@ -3535,7 +3535,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
                 if (u.uinwater) {       /* not just `if (Underwater)' */
                     /* leave the no longer existent water */
                     u.uinwater = 0;
-                    u.uundetected = 0;
+                    youmonst.mundetected = 0;
                     doredraw();
                     turnstate.vision_full_recalc = TRUE;
                 } else if (u.utrap && u.utraptype == TT_LAVA) {

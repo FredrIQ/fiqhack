@@ -2373,8 +2373,8 @@ useupf(struct obj *obj, long numused)
             stolen_value(otmp, otmp->ox, otmp->oy, FALSE, FALSE);
     }
     delobj(otmp);
-    if (at_u && u.uundetected && hides_under(youmonst.data)) {
-        u.uundetected = OBJ_AT(youmonst.mx, youmonst.my);
+    if (at_u && youmonst.mundetected && hides_under(youmonst.data)) {
+        youmonst.mundetected = OBJ_AT(youmonst.mx, youmonst.my);
         newsym(youmonst.mx, youmonst.my);
     }
 }

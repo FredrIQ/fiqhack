@@ -256,8 +256,8 @@ mattacku(struct monst *mtmp)
     if (!mpreattack(mtmp, range2))
         return 0;
 
-    if (u.uundetected && !range2 && !Engulfed) {
-        u.uundetected = 0;
+    if (youmonst.mundetected && !range2 && !Engulfed) {
+        youmonst.mundetected = 0;
         if (is_hider(youmonst.data)) {
             coord cc;   /* maybe we need a unexto() function? */
             struct obj *obj;

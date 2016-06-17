@@ -281,11 +281,11 @@ teleds(int nux, int nuy, boolean allow_drag)
     u.uy0 = youmonst.my;
 
     if (hides_under(youmonst.data))
-        u.uundetected = OBJ_AT(nux, nuy);
+        youmonst.mundetected = OBJ_AT(nux, nuy);
     else if (youmonst.data->mlet == S_EEL)
-        u.uundetected = is_pool(level, nux, nuy);
+        youmonst.mundetected = is_pool(level, nux, nuy);
     else {
-        u.uundetected = 0;
+        youmonst.mundetected = 0;
         /* mimics stop being unnoticed */
         if (youmonst.data->mlet == S_MIMIC)
             youmonst.m_ap_type = M_AP_NOTHING;

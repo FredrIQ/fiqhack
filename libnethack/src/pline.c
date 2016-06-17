@@ -317,7 +317,7 @@ mstatusline(struct monst *mon)
                       fast(mon) ? ", fast" : ", fast somehow");
     if (slow(mon))
         info = msgcat(info, ", slowed");
-    if (m_mundetected(mon))
+    if (mon->mundetected)
         info = msgcat(info, ", concealed");
     if (invisible(mon))
         info = msgcat(info, ", invisible");

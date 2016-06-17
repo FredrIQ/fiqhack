@@ -1002,7 +1002,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     fill_pit(level, youmonst.mx, youmonst.my);
     u.ustuck = 0;       /* idem */
     u.uinwater = 0;
-    u.uundetected = 0;  /* not hidden, even if means are available */
+    youmonst.mundetected = 0;  /* not hidden, even if means are available */
     keepdogs(FALSE);
     if (Engulfed)     /* idem */
         u.uswldtim = Engulfed = 0;

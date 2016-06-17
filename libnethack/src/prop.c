@@ -2172,7 +2172,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     boolean vertical_loe =
         !(m_mburied(viewer) || m_mburied(viewee) ||
           ((!!m_underwater(viewee)) ^ (!!m_underwater(viewer))) ||
-          m_mundetected(viewee));
+          viewee->mundetected);
 
     boolean invisible = !!invisible(viewee);
 

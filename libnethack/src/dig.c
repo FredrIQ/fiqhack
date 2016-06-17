@@ -1568,9 +1568,10 @@ rot_corpse(void *arg, long timeout)
         if ((mtmp = m_at(level, x, y)) && mtmp->mundetected &&
             hides_under(mtmp->data)) {
             mtmp->mundetected = 0;
-        } else if (Upolyd && x == youmonst.mx && y == youmonst.my && u.uundetected &&
+        } else if (Upolyd && x == youmonst.mx && y == youmonst.my &&
+                   youmonst.mundetected &&
                    hides_under(youmonst.data)) {
-            u.uundetected = 0;
+            youmonst.mundetected = 0;
         }
     } else if (in_invent) {
         if (flags.verbose) {

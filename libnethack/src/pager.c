@@ -293,7 +293,7 @@ describe_mon(int x, int y, int monnum, char *buf)
            you could also see yourself via other means). Sensing self while
            blind or swallowed is treated as if it were by normal vision (cf
            canseeself()). */
-        if ((Invisible || u.uundetected) && !Blind && !Engulfed) {
+        if ((Invisible || youmonst.mundetected) && !Blind && !Engulfed) {
             unsigned how = 0;
 
             if (Infravision)

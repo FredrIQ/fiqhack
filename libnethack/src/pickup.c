@@ -282,7 +282,7 @@ menu_pickup:
 
     if (!Engulfed) {
         if (!OBJ_AT(youmonst.mx, youmonst.my))
-            u.uundetected = 0;
+            youmonst.mundetected = 0;
 
         /* position may need updating (invisible hero) */
         if (n_picked)

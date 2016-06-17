@@ -59,7 +59,7 @@ polyman(const char *fmt, const char *arg)
 
     u.mh = u.mhmax = 0;
     u.mtimedone = 0;
-    u.uundetected = 0;
+    youmonst.mundetected = 0;
 
     if (sticky)
         uunstick();
@@ -578,11 +578,11 @@ polymon(int mntmp, boolean noisy)
     break_armor(noisy);
     drop_weapon(1, noisy);
     if (hides_under(youmonst.data))
-        u.uundetected = OBJ_AT(youmonst.mx, youmonst.my);
+        youmonst.mundetected = OBJ_AT(youmonst.mx, youmonst.my);
     else if (youmonst.data->mlet == S_EEL)
-        u.uundetected = is_pool(level, youmonst.mx, youmonst.my);
+        youmonst.mundetected = is_pool(level, youmonst.mx, youmonst.my);
     else
-        u.uundetected = 0;
+        youmonst.mundetected = 0;
 
     newsym(youmonst.mx, youmonst.my); /* Change symbol */
 
@@ -1185,7 +1185,8 @@ dohide(void)
 {
     boolean ismimic = youmonst.data->mlet == S_MIMIC;
 
-    if (u.uundetected || (ismimic && youmonst.m_ap_type != M_AP_NOTHING)) {
+    if (youmonst.mundetected ||
+        (ismimic && youmonst.m_ap_type != M_AP_NOTHING)) {
         pline(msgc_cancelled, "You are already hiding.");
         return 0;
     }
@@ -1194,7 +1195,7 @@ dohide(void)
         youmonst.m_ap_type = M_AP_OBJECT;
         youmonst.mappearance = STRANGE_OBJECT;
     } else
-        u.uundetected = 1;
+        youmonst.mundetected = 1;
     newsym(youmonst.mx, youmonst.my);
     return 1;
 }
