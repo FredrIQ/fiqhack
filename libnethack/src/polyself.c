@@ -65,7 +65,7 @@ polyman(const char *fmt, const char *arg)
         uunstick();
     cancel_mimicking("");
 
-    newsym(u.ux, u.uy);
+    newsym(youmonst.mx, youmonst.my);
 
     /* check whether player foolishly genocided self while poly'd */
     if ((mvitals[urole.malenum].mvflags & G_GENOD) ||
@@ -321,10 +321,10 @@ made_change:
         if (new_light == 1)
             ++new_light;        /* otherwise it's undetectable */
         if (new_light)
-            new_light_source(level, u.ux, u.uy, new_light, LS_MONSTER,
+            new_light_source(level, youmonst.mx, youmonst.my, new_light, LS_MONSTER,
                              &youmonst);
     }
-    if (is_pool(level, u.ux, u.uy) && was_floating && !(Levitation || Flying) &&
+    if (is_pool(level, youmonst.mx, youmonst.my) && was_floating && !(Levitation || Flying) &&
         !unbreathing(&youmonst) && !Swimming)
         drown();
 }
@@ -332,9 +332,9 @@ made_change:
 static int
 dogremlin_multiply(void)
 {
-    if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ)) {
+    if (IS_FOUNTAIN(level->locations[youmonst.mx][youmonst.my].typ)) {
         if (split_mon(&youmonst, NULL))
-            dryup(u.ux, u.uy, TRUE);
+            dryup(youmonst.mx, youmonst.my, TRUE);
         return 1;
     } else {
         pline(msgc_cancelled, "There's no fountain here to multiply in.");
@@ -578,13 +578,13 @@ polymon(int mntmp, boolean noisy)
     break_armor(noisy);
     drop_weapon(1, noisy);
     if (hides_under(youmonst.data))
-        u.uundetected = OBJ_AT(u.ux, u.uy);
+        u.uundetected = OBJ_AT(youmonst.mx, youmonst.my);
     else if (youmonst.data->mlet == S_EEL)
-        u.uundetected = is_pool(level, u.ux, u.uy);
+        u.uundetected = is_pool(level, youmonst.mx, youmonst.my);
     else
         u.uundetected = 0;
 
-    newsym(u.ux, u.uy); /* Change symbol */
+    newsym(youmonst.mx, youmonst.my); /* Change symbol */
 
     if (!sticky && !Engulfed && u.ustuck && sticks(youmonst.data))
         u.ustuck = 0;
@@ -755,7 +755,7 @@ break_armor(boolean noisy)
             } else {
                 if (noisy)
                     pline(msgc_statusbad, "Your %s falls to the %s!",
-                          helmet_name(otmp), surface(u.ux, u.uy));
+                          helmet_name(otmp), surface(youmonst.mx, youmonst.my));
                 setequip(os_armh, NULL, em_silent);
                 dropx(otmp);
             }
@@ -780,7 +780,7 @@ break_armor(boolean noisy)
         if ((otmp = uarmh) != 0) {
             if (noisy)
                 pline(msgc_statusbad, "Your %s falls to the %s!",
-                      helmet_name(otmp), surface(u.ux, u.uy));
+                      helmet_name(otmp), surface(youmonst.mx, youmonst.my));
             setequip(os_armh, NULL, em_silent);
             dropx(otmp);
         }
@@ -890,7 +890,7 @@ dobreathe(const struct musable *m)
     if (!mattk)
         impossible("bad breath attack?");       /* mouthwash needed... */
     else
-        buzz((int)(20 + mattk->adtyp - 1), (int)mattk->damn, u.ux, u.uy, dx,
+        buzz((int)(20 + mattk->adtyp - 1), (int)mattk->damn, youmonst.mx, youmonst.my, dx,
              dy, 0);
     return 1;
 }
@@ -943,7 +943,7 @@ doremove(void)
 static int
 dospinweb(void)
 {
-    struct trap *ttmp = t_at(level, u.ux, u.uy);
+    struct trap *ttmp = t_at(level, youmonst.mx, youmonst.my);
 
     if (Levitation || Is_airlevel(&u.uz) ||
         Underwater || Is_waterlevel(&u.uz)) {
@@ -999,13 +999,13 @@ dospinweb(void)
         case SPIKED_PIT:
             pline(msgc_actionok, "You spin a web, covering up the pit.");
             deltrap(level, ttmp);
-            bury_objs(level, u.ux, u.uy);
-            newsym(u.ux, u.uy);
+            bury_objs(level, youmonst.mx, youmonst.my);
+            newsym(youmonst.mx, youmonst.my);
             return 1;
         case SQKY_BOARD:
             pline(msgc_actionok, "The squeaky board is muffled.");
             deltrap(level, ttmp);
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             return 1;
         case TELEP_TRAP:
         case LEVEL_TELEP:
@@ -1021,12 +1021,12 @@ dospinweb(void)
             pline(msgc_actionok, "You web over the %s.",
                   (ttmp->ttyp == TRAPDOOR) ? "trap door" : "hole");
             deltrap(level, ttmp);
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             return 1;
         case ROLLING_BOULDER_TRAP:
             pline(msgc_actionok, "You spin a web, jamming the trigger.");
             deltrap(level, ttmp);
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             return 1;
         case ARROW_TRAP:
         case DART_TRAP:
@@ -1045,21 +1045,21 @@ dospinweb(void)
         default:
             impossible("Webbing over trap type %d?", ttmp->ttyp);
             return 0;
-    } else if (On_stairs(u.ux, u.uy)) {
+    } else if (On_stairs(youmonst.mx, youmonst.my)) {
         /* cop out: don't let them hide the stairs */
         pline(msgc_cancelled1,
               "Your web fails to impede access to the %s.",
-              (level->locations[u.ux][u.uy].typ ==
+              (level->locations[youmonst.mx][youmonst.my].typ ==
                STAIRS) ? "stairs" : "ladder");
         return 1;
 
     }
-    ttmp = maketrap(level, u.ux, u.uy, WEB, rng_main);
+    ttmp = maketrap(level, youmonst.mx, youmonst.my, WEB, rng_main);
     if (ttmp) {
         ttmp->tseen = 1;
         ttmp->madeby_u = 1;
     }
-    newsym(u.ux, u.uy);
+    newsym(youmonst.mx, youmonst.my);
     return 1;
 }
 
@@ -1195,7 +1195,7 @@ dohide(void)
         youmonst.mappearance = STRANGE_OBJECT;
     } else
         u.uundetected = 1;
-    newsym(u.ux, u.uy);
+    newsym(youmonst.mx, youmonst.my);
     return 1;
 }
 

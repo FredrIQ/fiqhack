@@ -1399,8 +1399,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                    long as you are visible. */
                 if (awareness_reason(mon) == mar_guessing_displaced &&
                     mon->mux == nx && mon->muy == ny) {
-                    dispx = u.ux;
-                    dispy = u.uy;
+                    dispx = youmonst.mx;
+                    dispy = youmonst.my;
 
                     /* The code previously checked for (checkobj || Displaced),
                        but that's wrong if the mu[xy] == n[xy] check fails;
@@ -2280,8 +2280,8 @@ unstuck(struct monst *mtmp)
 {
     if (u.ustuck == mtmp) {
         if (Engulfed) {
-            u.ux = mtmp->mx;
-            u.uy = mtmp->my;
+            youmonst.mx = mtmp->mx;
+            youmonst.my = mtmp->my;
             if (Punished) {
                 unplacebc();
                 placebc();
@@ -2401,7 +2401,7 @@ xkilled(struct monst *mtmp, int dest)
         goto cleanup;
 
     /* might be here after swallowed */
-    if (((x != u.ux) || (y != u.uy)) && !rn2(6) &&
+    if (((x != youmonst.mx) || (y != youmonst.my)) && !rn2(6) &&
         !(mvitals[mndx].mvflags & G_NOCORPSE) && mdat->mlet != S_KOP) {
         int typ;
 
@@ -2520,12 +2520,12 @@ mnexto(struct monst *mtmp)
 
     if (mtmp == u.usteed) {
         /* Keep your steed in sync with you instead */
-        mtmp->mx = u.ux;
-        mtmp->my = u.uy;
+        mtmp->mx = youmonst.mx;
+        mtmp->my = youmonst.my;
         return;
     }
 
-    if (!enexto(&mm, level, u.ux, u.uy, mtmp->data))
+    if (!enexto(&mm, level, youmonst.mx, youmonst.my, mtmp->data))
         return;
     rloc_to(mtmp, mm.x, mm.y);
     return;
@@ -2565,8 +2565,8 @@ place_monster(struct monst *mon, xchar x, xchar y, boolean updatedisplacement)
         mon->mx = x;
         mon->my = y;
     } else {
-        u.ux = x;
-        u.uy = y;
+        youmonst.mx = x;
+        youmonst.my = y;
     }
 
     if (isok(x, y)) {
@@ -2771,7 +2771,7 @@ poisoned(const char *string, int typ, const char *killer, int fatal)
 
     if (Poison_resistance) {
         if (!strcmp(string, "blast"))
-            shieldeff(u.ux, u.uy);
+            shieldeff(youmonst.mx, youmonst.my);
         if (!resist_message_printed)
             pline(msgc_playerimmune, "You aren't poisoned.");
         return;

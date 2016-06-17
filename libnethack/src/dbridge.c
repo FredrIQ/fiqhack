@@ -286,15 +286,15 @@ static void
 u_to_e(struct entity *etmp)
 {
     etmp->emon = &youmonst;
-    etmp->ex = u.ux;
-    etmp->ey = u.uy;
+    etmp->ex = youmonst.mx;
+    etmp->ey = youmonst.my;
     etmp->edata = youmonst.data;
 }
 
 static void
 set_entity(int x, int y, struct entity *etmp)
 {
-    if ((x == u.ux) && (y == u.uy))
+    if ((x == youmonst.mx) && (y == youmonst.my))
         u_to_e(etmp);
     else if (MON_AT(level, x, y))
         m_to_e(m_at(level, x, y), x, y, etmp);
@@ -383,7 +383,7 @@ e_died(struct entity *etmp, int dest, int how, const char *killer)
             }
         }
         /* we might have crawled out of the moat to survive */
-        etmp->ex = u.ux, etmp->ey = u.uy;
+        etmp->ex = youmonst.mx, etmp->ey = youmonst.my;
     } else {
         int entitycnt;
 
@@ -590,8 +590,8 @@ do_entity(struct entity *etmp)
             place_monster(etmp->emon, newx, newy, TRUE);
             update_monster_region(etmp->emon);
         } else {
-            u.ux = newx;
-            u.uy = newy;
+            youmonst.mx = newx;
+            youmonst.my = newy;
         }
         etmp->ex = newx;
         etmp->ey = newy;
@@ -664,7 +664,7 @@ close_drawbridge(int x, int y)
     get_wall_for_db(&x2, &y2);
     if (cansee(x, y) || cansee(x2, y2))
         pline(msgc_actionok, "You see a drawbridge %s up!",
-              (((u.ux == x || u.uy == y) && !Underwater) ||
+              (((youmonst.mx == x || youmonst.my == y) && !Underwater) ||
                distu(x2, y2) < distu(x, y)) ? "coming" : "going");
     loc1->typ = DRAWBRIDGE_UP;
     loc2 = &level->locations[x2][y2];

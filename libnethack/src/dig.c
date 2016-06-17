@@ -31,11 +31,11 @@ rm_waslit(void)
 {
     xchar x, y;
 
-    if (level->locations[u.ux][u.uy].typ == ROOM &&
-        level->locations[u.ux][u.uy].waslit)
+    if (level->locations[youmonst.mx][youmonst.my].typ == ROOM &&
+        level->locations[youmonst.mx][youmonst.my].waslit)
         return TRUE;
-    for (x = u.ux - 2; x < u.ux + 3; x++)
-        for (y = u.uy - 1; y < u.uy + 2; y++)
+    for (x = youmonst.mx - 2; x < youmonst.mx + 3; x++)
+        for (y = youmonst.my - 1; y < youmonst.my + 2; y++)
             if (isok(x, y) && level->locations[x][y].waslit)
                 return TRUE;
     return FALSE;
@@ -94,8 +94,8 @@ static void
 mkcavearea(boolean rockit)
 {
     int dist;
-    xchar xmin = u.ux, xmax = u.ux;
-    xchar ymin = u.uy, ymax = u.uy;
+    xchar xmin = youmonst.mx, xmax = youmonst.mx;
+    xchar ymin = youmonst.my, ymax = youmonst.my;
     xchar i;
     boolean waslit = rm_waslit();
 
@@ -103,7 +103,7 @@ mkcavearea(boolean rockit)
         pline(msgc_consequence, "Crash!  The ceiling collapses around you!");
     else
         pline(msgc_consequence, "A mysterious force %s cave around you!",
-              (level->locations[u.ux][u.uy].typ ==
+              (level->locations[youmonst.mx][youmonst.my].typ ==
                CORR) ? "creates a" : "extends the");
     win_pause_output(P_MESSAGE);
 
@@ -131,11 +131,11 @@ mkcavearea(boolean rockit)
         win_delay_output();
     }
 
-    if (!rockit && level->locations[u.ux][u.uy].typ == CORR) {
-        level->locations[u.ux][u.uy].typ = ROOM;
+    if (!rockit && level->locations[youmonst.mx][youmonst.my].typ == CORR) {
+        level->locations[youmonst.mx][youmonst.my].typ = ROOM;
         if (waslit)
-            level->locations[u.ux][u.uy].waslit = TRUE;
-        newsym(u.ux, u.uy);     /* in case player is invisible */
+            level->locations[youmonst.mx][youmonst.my].waslit = TRUE;
+        newsym(youmonst.mx, youmonst.my);     /* in case player is invisible */
     }
 
     turnstate.vision_full_recalc = TRUE;     /* everything changed */
@@ -228,7 +228,7 @@ dig(void)
     boolean ispick = uwep && is_pick(uwep);
     const char *verb = (!uwep || is_pick(uwep)) ? "dig into" : "chop through";
     loc = &level->locations[dpx][dpy];
-    boolean down = u.ux == dpx && u.uy == dpy;
+    boolean down = youmonst.mx == dpx && youmonst.my == dpy;
     boolean new_dig = u.uoccupation_progress[tos_dig] == 0;
 
     /* perhaps a nymph stole your pick-axe while you were busy digging */
@@ -240,7 +240,7 @@ dig(void)
         /* technically not always a msgc_cancelled1; dig_check will override the
            channel in the case of undiggable walls, which are currently spoiler
            info that isn't saved */
-        if (!dig_check(BY_YOU, msgc_cancelled1, u.ux, u.uy))
+        if (!dig_check(BY_YOU, msgc_cancelled1, youmonst.mx, youmonst.my))
             return 0;
     } else {    /* !down */
         /* TODO: Should we be tracking wall undiggability somehow? Really it
@@ -732,7 +732,7 @@ dighole(struct monst *mon, boolean pit_only, boolean instant)
                   is_lava(level, m_mx(mon), m_my(mon)) ? "lava" : "water");
         mwake_nearby(mon, FALSE); /* splashing */
     } else if (loc->typ == DRAWBRIDGE_DOWN ||
-               (is_drawbridge_wall(u.ux, u.uy) >= 0)) {
+               (is_drawbridge_wall(youmonst.mx, youmonst.my) >= 0)) {
         /* drawbridge_down is the platform crossing the moat when the bridge is
            extended; drawbridge_wall is the open "doorway" or closed "door"
            where the portcullis/mechanism is located */
@@ -750,7 +750,7 @@ dighole(struct monst *mon, boolean pit_only, boolean instant)
             return TRUE;
         }
 
-    } else if ((boulder_here = sobj_at(BOULDER, level, u.ux, u.uy)) != 0) {
+    } else if ((boulder_here = sobj_at(BOULDER, level, youmonst.mx, youmonst.my)) != 0) {
         if (ttmp && (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT) && rn2(2)) {
             if (you || vis)
                 pline(you ? msgc_consequence : msgc_monneutral,
@@ -783,7 +783,7 @@ dighole(struct monst *mon, boolean pit_only, boolean instant)
                the drawbridge.  The following is a cop-out. --dlc */
             if (you || vis)
                 pline(you ? msgc_failcurse : msgc_monneutral,
-                      "The %s here is too hard to dig in.", surface(u.ux, u.uy));
+                      "The %s here is too hard to dig in.", surface(youmonst.mx, youmonst.my));
             return FALSE;
         }
 
@@ -954,7 +954,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
             pline(msgc_cancelled1, "You don't have enough leverage.");
         else
             pline(msgc_cancelled1, "You can't reach the %s.",
-                  ceiling(u.ux, u.uy));
+                  ceiling(youmonst.mx, youmonst.my));
     } else if (!dx && !dy && !dz) {
         const char *buf;
         int dam;
@@ -978,8 +978,8 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
              
         if (Stunned || (Confusion && !rn2(5)))
             confdir(&dx, &dy);
-        rx = u.ux + dx;
-        ry = u.uy + dy;
+        rx = youmonst.mx + dx;
+        ry = youmonst.my + dy;
         if (!isok(rx, ry)) {
             pline(bad_msgc, "Clash!");
             return 1;
@@ -1057,15 +1057,15 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
         pline(msgc_cancelled1, "You swing your %s through thin air.",
               aobjnam(obj, NULL));
     } else if (!can_reach_floor()) {
-        pline(msgc_cancelled1, "You can't reach the %s.", surface(u.ux, u.uy));
-    } else if (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) {
+        pline(msgc_cancelled1, "You can't reach the %s.", surface(youmonst.mx, youmonst.my));
+    } else if (is_pool(level, youmonst.mx, youmonst.my) || is_lava(level, youmonst.mx, youmonst.my)) {
         pline(msgc_badidea, "You swing your %s through the %s below.",
               aobjnam(obj, NULL),
-              is_pool(level, u.ux, u.uy) ? "water" : "lava");
+              is_pool(level, youmonst.mx, youmonst.my) ? "water" : "lava");
 
         /* TODO: This has to be code duplication, surely. (It's not like you
            can use the Book of the Dead as a pick-axe anyway, AFAIK.) */
-        if (is_lava(level, u.ux, u.uy) && is_organic(obj) &&
+        if (is_lava(level, youmonst.mx, youmonst.my) && is_organic(obj) &&
             !obj->oerodeproof) {
             if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
                 if (!Blind)
@@ -1083,21 +1083,21 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
         /* TODO: No rusting when digging water? */
     } else if (!ispick) {
         pline(msgc_yafm, "Your %s merely scratches the %s.",
-              aobjnam(obj, NULL), surface(u.ux, u.uy));
+              aobjnam(obj, NULL), surface(youmonst.mx, youmonst.my));
         u_wipe_engr(3);
     } else {
-        struct trap *t = t_at(level, u.ux, u.uy);
+        struct trap *t = t_at(level, youmonst.mx, youmonst.my);
 
         if (t && (t->ttyp == HOLE || (t->ttyp == TRAPDOOR && t->tseen))) {
             pline(msgc_cancelled, "There's already a %s in the floor here.",
                   t->ttyp == HOLE ? "hole" : "trap door");
             return 0;
         }
-        if (u.utracked_location[tl_dig].x != u.ux ||
-            u.utracked_location[tl_dig].y != u.uy ||
+        if (u.utracked_location[tl_dig].x != youmonst.mx ||
+            u.utracked_location[tl_dig].y != youmonst.my ||
             u.uoccupation_progress[tos_dig] == 0) {
-            u.utracked_location[tl_dig].x = u.ux;
-            u.utracked_location[tl_dig].y = u.uy;
+            u.utracked_location[tl_dig].x = youmonst.mx;
+            u.utracked_location[tl_dig].y = youmonst.my;
             u.uoccupation_progress[tos_dig] = 0;
             pline(msgc_occstart, "You start %s downward.", verbing);
             if (*u.ushops)
@@ -1325,7 +1325,7 @@ zap_dig(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
                 newsym(m_mx(mon), m_my(mon));
             } else {
                 if (you)
-                    watch_warn(NULL, u.ux, u.uy, TRUE);
+                    watch_warn(NULL, youmonst.mx, youmonst.my, TRUE);
                 dighole(mon, FALSE, TRUE);
             }
         }
@@ -1568,7 +1568,7 @@ rot_corpse(void *arg, long timeout)
         if ((mtmp = m_at(level, x, y)) && mtmp->mundetected &&
             hides_under(mtmp->data)) {
             mtmp->mundetected = 0;
-        } else if (Upolyd && x == u.ux && y == u.uy && u.uundetected &&
+        } else if (Upolyd && x == youmonst.mx && y == youmonst.my && u.uundetected &&
                    hides_under(youmonst.data)) {
             u.uundetected = 0;
         }

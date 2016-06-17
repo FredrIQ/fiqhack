@@ -275,7 +275,7 @@ describe_mon(int x, int y, int monnum, char *buf)
     if (monnum == -1)
         return;
 
-    if (u.ux == x && u.uy == y && senseself()) {
+    if (youmonst.mx == x && youmonst.my == y && senseself()) {
         /* if not polymorphed, show both the role and the race */
         race[0] = 0;
         if (!Upolyd)
@@ -454,7 +454,7 @@ nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
     if (level->locations[x][y].mem_invis)
         strcpy(bufs->invisdesc, invisexplain);
 
-    if (Engulfed && (x != u.ux || y != u.uy)) {
+    if (Engulfed && (x != youmonst.mx || y != youmonst.my)) {
         /* all locations when swallowed other than the hero are the monster */
         snprintf(bufs->effectdesc, SIZE(bufs->effectdesc), "interior of %s",
                 Blind ? "a monster" : a_monnam(u.ustuck));
@@ -658,8 +658,8 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
     }
 
     if (from_screen) {
-        cc.x = u.ux;
-        cc.y = u.uy;
+        cc.x = youmonst.mx;
+        cc.y = youmonst.my;
     } else {
         if (arg->argtype & CMD_ARG_OBJ) {
             static const char allowall[] = { ALL_CLASSES, 0 };
@@ -775,8 +775,8 @@ doidtrap(const struct nh_cmd_arg *arg)
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    x = u.ux + dx;
-    y = u.uy + dy;
+    x = youmonst.mx + dx;
+    y = youmonst.my + dy;
     for (trap = level->lev_traps; trap; trap = trap->ntrap)
         if (trap->tx == x && trap->ty == y) {
             if (!trap->tseen)

@@ -64,7 +64,7 @@ awaken_monsters(struct monst *mon, int distance)
     }
 
     /* affect the player */
-    distm = dist2(m_mx(mon), m_my(mon), u.ux, u.uy);
+    distm = dist2(m_mx(mon), m_my(mon), youmonst.mx, youmonst.my);
     if (distm >= distance || mon == &youmonst)
         return;
 
@@ -216,10 +216,10 @@ do_earthquake(int force)
     struct trap *chasm, *oldtrap;
     int start_x, start_y, end_x, end_y;
 
-    start_x = u.ux - (force * 2);
-    start_y = u.uy - (force * 2);
-    end_x = u.ux + (force * 2);
-    end_y = u.uy + (force * 2);
+    start_x = youmonst.mx - (force * 2);
+    start_y = youmonst.my - (force * 2);
+    end_x = youmonst.mx + (force * 2);
+    end_y = youmonst.my + (force * 2);
     if (start_x < 0)
         start_x = 0;
     if (start_y < 0)
@@ -237,10 +237,10 @@ do_earthquake(int force)
                     if (cansee(x, y))
                         pline(msgc_youdiscover, "%s is shaken loose from %s!",
                               Amonnam(mtmp), mtmp->data == &mons[PM_TRAPPER] ?
-                              "its hiding place" : the(ceiling(u.ux, u.uy)));
+                              "its hiding place" : the(ceiling(youmonst.mx, youmonst.my)));
                     else
                         You_hear(msgc_levelsound, "a thumping sound.");
-                    if (x == u.ux && y == u.uy &&
+                    if (x == youmonst.mx && y == youmonst.my &&
                         mtmp->data != &mons[PM_TRAPPER])
                         pline(msgc_moncombatgood,
                               "You easily dodge the falling %s.",
@@ -314,8 +314,8 @@ do_earthquake(int force)
                         if (cansee(x, y))
                             pline(msgc_consequence,
                                   "KADOOM! The boulder falls into a chasm%s!",
-                                  ((x == u.ux) &&
-                                   (y == u.uy)) ? " below you" : "");
+                                  ((x == youmonst.mx) &&
+                                   (y == youmonst.my)) ? " below you" : "");
                         if (mtmp)
                             mtmp->mtrapped = 0;
                         obj_extract_self(otmp);
@@ -351,7 +351,7 @@ do_earthquake(int force)
                                     xkilled(mtmp, 0);
                                 }
                         }
-                    } else if (!u.utrap && x == u.ux && y == u.uy) {
+                    } else if (!u.utrap && x == youmonst.mx && y == youmonst.my) {
                         if (Levitation || Flying || is_clinger(youmonst.data)) {
                             pline(msgc_noconsequence,
                                   "A chasm opens up under you!");
@@ -424,7 +424,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
                 break;
             } else {
                 buzz((instr->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1,
-                     rn1(6, 6), u.ux, u.uy, dx, dy, 0);
+                     rn1(6, 6), youmonst.mx, youmonst.my, dx, dy, 0);
             }
             makeknown(instr->otyp);
             break;
@@ -541,8 +541,8 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
             exercise(A_WIS, TRUE);      /* just for trying */
             if (!strcmp(buf, gamestate.castle_tune)) {
                 /* Search for the drawbridge */
-                for (y = u.uy - 1; y <= u.uy + 1; y++)
-                    for (x = u.ux - 1; x <= u.ux + 1; x++)
+                for (y = youmonst.my - 1; y <= youmonst.my + 1; y++)
+                    for (x = youmonst.mx - 1; x <= youmonst.mx + 1; x++)
                         if (isok(x, y))
                             if (find_drawbridge(&x, &y)) {
                                 /* tune now fully known */
@@ -560,8 +560,8 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
                 /* Okay, it wasn't the right tune, but perhaps we can give the
                    player some hints like in the Mastermind game */
                 ok = FALSE;
-                for (y = u.uy - 1; y <= u.uy + 1 && !ok; y++)
-                    for (x = u.ux - 1; x <= u.ux + 1 && !ok; x++)
+                for (y = youmonst.my - 1; y <= youmonst.my + 1 && !ok; y++)
+                    for (x = youmonst.mx - 1; x <= youmonst.mx + 1 && !ok; x++)
                         if (isok(x, y))
                             if (IS_DRAWBRIDGE(level->locations[x][y].typ) ||
                                 is_drawbridge_wall(x, y) >= 0)

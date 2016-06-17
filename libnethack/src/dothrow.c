@@ -319,19 +319,19 @@ dofire(const struct nh_cmd_arg *arg)
 void
 hitfloor(struct obj *obj)
 {
-    if (IS_SOFT(level->locations[u.ux][u.uy].typ) || u.uinwater) {
+    if (IS_SOFT(level->locations[youmonst.mx][youmonst.my].typ) || u.uinwater) {
         dropy(obj);
         return;
     }
-    if (IS_ALTAR(level->locations[u.ux][u.uy].typ))
+    if (IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ))
         doaltarobj(obj);
     else /* easy to do this by mistake, use a moderately warny msgc */
         pline(msgc_badidea, "%s hit%s the %s.", Doname2(obj),
-              (obj->quan == 1L) ? "s" : "", surface(u.ux, u.uy));
+              (obj->quan == 1L) ? "s" : "", surface(youmonst.mx, youmonst.my));
 
-    if (hero_breaks(obj, u.ux, u.uy, TRUE))
+    if (hero_breaks(obj, youmonst.mx, youmonst.my, TRUE))
         return;
-    if (ship_object(obj, u.ux, u.uy, FALSE))
+    if (ship_object(obj, youmonst.mx, youmonst.my, FALSE))
         return;
     dropy(obj);
     if (!Engulfed)
@@ -476,8 +476,8 @@ hurtle_step(void *arg, int x, int y)
                    killer_msg(DIED, "touching the edge of the universe"));
             return FALSE;
         }
-        if ((u.ux - x) && (u.uy - y) && bad_rock(&youmonst, u.ux, y) &&
-            bad_rock(&youmonst, x, u.uy)) {
+        if ((youmonst.mx - x) && (youmonst.my - y) && bad_rock(&youmonst, youmonst.mx, y) &&
+            bad_rock(&youmonst, x, youmonst.my)) {
             boolean too_much = (invent && (inv_weight() + weight_cap() > 600));
 
             /* Move at a diagonal. */
@@ -497,8 +497,8 @@ hurtle_step(void *arg, int x, int y)
         wakeup(mon, TRUE);
         return FALSE;
     }
-    if ((u.ux - x) && (u.uy - y) && bad_rock(&youmonst, u.ux, y) &&
-        bad_rock(&youmonst, x, u.uy)) {
+    if ((youmonst.mx - x) && (youmonst.my - y) && bad_rock(&youmonst, youmonst.mx, y) &&
+        bad_rock(&youmonst, x, youmonst.my)) {
         /* Move at a diagonal. */
         if (In_sokoban(&u.uz)) {
             pline(msgc_cancelled1, "You come to an abrupt halt!");
@@ -506,10 +506,10 @@ hurtle_step(void *arg, int x, int y)
         }
     }
 
-    ox = u.ux;
-    oy = u.uy;
-    u.ux = x;
-    u.uy = y;
+    ox = youmonst.mx;
+    oy = youmonst.my;
+    youmonst.mx = x;
+    youmonst.my = y;
     newsym(ox, oy);     /* update old position */
     vision_recalc(1);   /* update for new position */
     flush_screen();
@@ -595,7 +595,7 @@ hurtle(int dx, int dy, int range, boolean verbose)
         pline(msgc_yafm, "You are anchored by the %s.",
               u.utraptype == TT_WEB ? "web" :
               u.utraptype == TT_LAVA ? "lava" :
-              u.utraptype == TT_INFLOOR ? surface(u.ux, u.uy) : "trap");
+              u.utraptype == TT_INFLOOR ? surface(youmonst.mx, youmonst.my) : "trap");
         action_completed();
         return;
     }
@@ -621,11 +621,11 @@ hurtle(int dx, int dy, int range, boolean verbose)
     }
     if (In_sokoban(&u.uz))
         change_luck(-1);        /* Sokoban guilt */
-    uc.x = u.ux;
-    uc.y = u.uy;
+    uc.x = youmonst.mx;
+    uc.y = youmonst.my;
     /* this setting of cc is only correct if dx and dy are [-1,0,1] only */
-    cc.x = u.ux + (dx * range);
-    cc.y = u.uy + (dy * range);
+    cc.x = youmonst.mx + (dx * range);
+    cc.y = youmonst.my + (dy * range);
     walk_path(&uc, &cc, hurtle_step, &range);
 }
 
@@ -670,7 +670,7 @@ check_shop_obj(struct obj *obj, xchar x, xchar y, boolean broken)
 
     if (broken) {
         if (obj->unpaid) {
-            stolen_value(obj, u.ux, u.uy, (boolean) shkp->mpeaceful, FALSE);
+            stolen_value(obj, youmonst.mx, youmonst.my, (boolean) shkp->mpeaceful, FALSE);
             subfrombill(obj, shkp);
         }
         obj->no_charge = 1;
@@ -680,11 +680,11 @@ check_shop_obj(struct obj *obj, xchar x, xchar y, boolean broken)
     if (!costly_spot(x, y) || *in_rooms(level, x, y, SHOPBASE) != *u.ushops) {
         /* thrown out of a shop or into a different shop */
         if (obj->unpaid) {
-            stolen_value(obj, u.ux, u.uy, (boolean) shkp->mpeaceful, FALSE);
+            stolen_value(obj, youmonst.mx, youmonst.my, (boolean) shkp->mpeaceful, FALSE);
             subfrombill(obj, shkp);
         }
     } else {
-        if (costly_spot(u.ux, u.uy) && costly_spot(x, y)) {
+        if (costly_spot(youmonst.mx, youmonst.my) && costly_spot(x, y)) {
             if (obj->unpaid)
                 subfrombill(obj, shkp);
             else if (!(x == shkp->mx && y == shkp->my))
@@ -708,9 +708,9 @@ toss_up(struct obj *obj, boolean hitsroof)
     if (hitsroof) {
         if (breaktest(obj)) {
             pline(msgc_actionok, "%s hits the %s.", Doname2(obj),
-                  ceiling(u.ux, u.uy));
+                  ceiling(youmonst.mx, youmonst.my));
             breakmsg(obj, !Blind);
-            breakobj(obj, u.ux, u.uy, TRUE, TRUE);
+            breakobj(obj, youmonst.mx, youmonst.my, TRUE, TRUE);
             return FALSE;
         }
         almost = "";
@@ -718,7 +718,7 @@ toss_up(struct obj *obj, boolean hitsroof)
         almost = " almost";
     }
     pline(msgc_badidea, "%s%s hits the %s, then falls back on top of your %s.",
-          Doname2(obj), almost, ceiling(u.ux, u.uy), body_part(HEAD));
+          Doname2(obj), almost, ceiling(youmonst.mx, youmonst.my), body_part(HEAD));
 
     /* object now hits you */
 
@@ -734,7 +734,7 @@ toss_up(struct obj *obj, boolean hitsroof)
             can_blnd(&youmonst, &youmonst, AT_WEAP, obj) ? rnd(25) : 0;
 
         breakmsg(obj, !Blind);
-        breakobj(obj, u.ux, u.uy, TRUE, TRUE);
+        breakobj(obj, youmonst.mx, youmonst.my, TRUE, TRUE);
         obj = NULL;     /* it's now gone */
         switch (otyp) {
         case EGG:
@@ -829,13 +829,13 @@ static void
 sho_obj_return_to_u(struct obj *obj, schar dx, schar dy)
 {
     /* might already be our location (bounced off a wall) */
-    if (bhitpos.x != u.ux || bhitpos.y != u.uy) {
+    if (bhitpos.x != youmonst.mx || bhitpos.y != youmonst.my) {
         int x = bhitpos.x - dx;
         int y = bhitpos.y - dy;
 
         struct tmp_sym *tsym = tmpsym_initobj(obj);
 
-        while (x != u.ux || y != u.uy) {
+        while (x != youmonst.mx || y != youmonst.my) {
             tmpsym_at(tsym, x, y);
             win_delay_output();
             x -= dx;
@@ -876,12 +876,12 @@ fire_obj(int ddx, int ddy, int range,   /* direction and range */
 
     if (weapon == KICKED_WEAPON) {
         /* object starts one square in front of player */
-        bhitpos.x = u.ux + ddx;
-        bhitpos.y = u.uy + ddy;
+        bhitpos.x = youmonst.mx + ddx;
+        bhitpos.y = youmonst.my + ddy;
         range--;
     } else {
-        bhitpos.x = u.ux;
-        bhitpos.y = u.uy;
+        bhitpos.x = youmonst.mx;
+        bhitpos.y = youmonst.my;
     }
 
     tsym = tmpsym_initobj(obj);
@@ -1001,8 +1001,8 @@ boomhit(int dx, int dy)
     struct monst *mtmp;
     struct tmp_sym *tsym;
 
-    bhitpos.x = u.ux;
-    bhitpos.y = u.uy;
+    bhitpos.x = youmonst.mx;
+    bhitpos.y = youmonst.my;
 
     for (i = 0; i < 8; i++)
         if (xdir[i] == dx && ydir[i] == dy)
@@ -1029,7 +1029,7 @@ boomhit(int dx, int dy)
             bhitpos.y -= dy;
             break;
         }
-        if (bhitpos.x == u.ux && bhitpos.y == u.uy) {   /* ct == 9 */
+        if (bhitpos.x == youmonst.mx && bhitpos.y == youmonst.my) {   /* ct == 9 */
             if (Fumbling || rn2(20) >= ACURR(A_DEX)) {
                 /* we hit ourselves */
                 thitu(10, rnd(10), NULL, "boomerang");
@@ -1111,7 +1111,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
         if (dz < 0 && Role_if(PM_VALKYRIE) && obj->oartifact == ART_MJOLLNIR &&
             !impaired) {
             pline(msgc_yafm, "%s the %s and returns to your hand!",
-                  Tobjnam(obj, "hit"), ceiling(u.ux, u.uy));
+                  Tobjnam(obj, "hit"), ceiling(youmonst.mx, youmonst.my));
             obj = addinv(obj);
             encumber_msg();
             setuwep(obj);
@@ -1190,7 +1190,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
         obj_destroyed = FALSE;
         mon = fire_obj(dx, dy, range, THROWN_WEAPON, obj, &obj_destroyed);
 
-        /* have to do this after fire_obj() so u.ux & u.uy are correct */
+        /* have to do this after fire_obj() so youmonst.mx & youmonst.my are correct */
         if (Is_airlevel(&u.uz) || Levitation)
             hurtle(-dx, -dy, urange, TRUE);
 
@@ -1213,7 +1213,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
 
         /* [perhaps this should be moved into thitmonst or hmon] */
         if (mon && mx_eshk(mon) &&
-            (!inside_shop(level, u.ux, u.uy) ||
+            (!inside_shop(level, youmonst.mx, youmonst.my) ||
              !strchr(in_rooms(level, mon->mx, mon->my, SHOPBASE), *u.ushops)))
             hot_pursuit(mon);
 
@@ -1259,7 +1259,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
                     artifact_hit(NULL, &youmonst, obj, &dmg, 0);
                     losehp(dmg, killer_msg_obj(DIED, obj));
                 }
-                if (ship_object(obj, u.ux, u.uy, FALSE)) {
+                if (ship_object(obj, youmonst.mx, youmonst.my, FALSE)) {
                     thrownobj = NULL;
                     return;
                 }
@@ -1418,7 +1418,7 @@ thitmonst(struct monst *mon, struct obj *obj)
 
     /* Modify to-hit depending on distance; but keep it sane. Polearms get a
        distance penalty even when wielded; it's hard to hit at a distance. */
-    disttmp = 3 - distmin(u.ux, u.uy, mon->mx, mon->my);
+    disttmp = 3 - distmin(youmonst.mx, youmonst.my, mon->mx, mon->my);
     if (disttmp < -4)
         disttmp = -4;
     tmp += disttmp;
@@ -1475,15 +1475,15 @@ thitmonst(struct monst *mon, struct obj *obj)
             pline(msgc_actionok, "%s catches %s.", Monnam(mon),
                   the(xname(obj)));
             if (mon->mpeaceful) {
-                boolean next2u = monnear(mon, u.ux, u.uy);
+                boolean next2u = monnear(mon, youmonst.mx, youmonst.my);
 
                 finish_quest(obj);      /* acknowledge quest completion */
                 pline_implied(msgc_consequence, "%s %s %s back to you.",
                               Monnam(mon), (next2u ? "hands" : "tosses"),
                               the(xname(obj)));
                 if (!next2u) {
-                    schar dx = sgn(mon->mx - u.ux);
-                    schar dy = sgn(mon->my - u.uy);
+                    schar dx = sgn(mon->mx - youmonst.mx);
+                    schar dy = sgn(mon->my - youmonst.my);
 
                     sho_obj_return_to_u(obj, dx, dy);
                 }
@@ -1859,7 +1859,7 @@ breakobj(struct obj *obj,
                 if (moves != lastmovetime)
                     peaceful_shk = shkp->mpeaceful;
                 if (stolen_value(obj, x, y, peaceful_shk, FALSE) > 0L &&
-                    (*o_shop != u.ushops[0] || !inside_shop(level, u.ux, u.uy))
+                    (*o_shop != u.ushops[0] || !inside_shop(level, youmonst.mx, youmonst.my))
                     && moves != lastmovetime)
                     make_angry_shk(shkp, x, y);
                 lastmovetime = moves;
@@ -1965,25 +1965,25 @@ throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
             !Is_waterlevel(&u.uz)) {
             pline(msgc_yafm,
                   "The gold hits the %s, then falls back on top of your %s.",
-                  ceiling(u.ux, u.uy), body_part(HEAD));
+                  ceiling(youmonst.mx, youmonst.my), body_part(HEAD));
             /* some self damage? */
             if (uarmh)
                 pline(msgc_playerimmune,
                       "Fortunately, you are wearing a %s!", helmet_name(uarmh));
         }
-        bhitpos.x = u.ux;
-        bhitpos.y = u.uy;
+        bhitpos.x = youmonst.mx;
+        bhitpos.y = youmonst.my;
     } else {
         /* consistent with range for normal objects */
         range = (int)((ACURRSTR) / 2 - obj->owt / 40);
 
         /* see if the gold has a place to move into */
-        odx = u.ux + dx;
-        ody = u.uy + dy;
+        odx = youmonst.mx + dx;
+        ody = youmonst.my + dy;
         if (!ZAP_POS(level->locations[odx][ody].typ) ||
             closed_door(level, odx, ody)) {
-            bhitpos.x = u.ux;
-            bhitpos.y = u.uy;
+            bhitpos.x = youmonst.mx;
+            bhitpos.y = youmonst.my;
         } else {
             mon = fire_obj(dx, dy, range, THROWN_WEAPON, obj, NULL);
             if (mon) {

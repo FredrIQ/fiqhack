@@ -49,7 +49,7 @@ findgold(struct obj *chain)
 void
 stealgold(struct monst *mtmp)
 {
-    struct obj *fgold = gold_at(level, u.ux, u.uy);
+    struct obj *fgold = gold_at(level, youmonst.mx, youmonst.my);
     struct obj *ygold;
     long tmp;
 
@@ -63,7 +63,7 @@ stealgold(struct monst *mtmp)
     if (fgold && (!ygold || fgold->quan > ygold->quan || !rn2(5))) {
         obj_extract_self(fgold);
         add_to_minv(mtmp, fgold, NULL);
-        newsym(u.ux, u.uy);
+        newsym(youmonst.mx, youmonst.my);
         pline(msgc_itemloss,
               "%s quickly snatches some gold from between your %s!",
               Monnam(mtmp), makeplural(body_part(FOOT)));
@@ -130,7 +130,7 @@ steal(struct monst *mtmp, const char **objnambuf)
     if (objnambuf)
         *objnambuf = "";
     /* the following is true if successful on first of two attacks. */
-    if (!monnear(mtmp, u.ux, u.uy))
+    if (!monnear(mtmp, youmonst.mx, youmonst.my))
         return 0;
 
     if (!invent || (inv_cnt(FALSE) == 1 && uskin())) {

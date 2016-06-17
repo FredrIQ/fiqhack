@@ -149,7 +149,7 @@ attack(struct monst *mtmp, schar dx, schar dy, boolean confirmed)
     /* if the caller didn't check to see if we even want to attack, do that
        now */
     if (!confirmed) {
-        if (resolve_uim(flags.interaction_mode, TRUE, u.ux + dx, u.uy + dy) ==
+        if (resolve_uim(flags.interaction_mode, TRUE, youmonst.mx + dx, youmonst.my + dy) ==
             uia_halt)
             return ac_cancel;
     }
@@ -176,8 +176,8 @@ attack(struct monst *mtmp, schar dx, schar dy, boolean confirmed)
     if (mdat->mlet == S_LEPRECHAUN &&
         !mtmp->mfrozen && !mtmp->msleeping && !confused(mtmp) &&
         !blind(mtmp) && !rn2(7) && (m_move(mtmp, 0) == 2 || /* it died */
-                                     mtmp->mx != u.ux + dx ||
-                                     mtmp->my != u.uy + dy)) /* it moved */
+                                     mtmp->mx != youmonst.mx + dx ||
+                                     mtmp->my != youmonst.my + dy)) /* it moved */
         return ac_continue;
 
     tmp = find_roll_to_hit(mtmp);
@@ -202,8 +202,8 @@ known_hitum(struct monst *mon, int *mhit, const struct attack *uattk, schar dx,
         missum(mon, uattk);
     } else {
         int oldhp = mon->mhp;
-        int x = u.ux + dx;
-        int y = u.uy + dy;
+        int x = youmonst.mx + dx;
+        int y = youmonst.my + dy;
 
         /* Save current conduct state in case we revert it later on a forced
            miss. */
@@ -766,7 +766,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
         }
         /* avoid migrating a dead monster */
         if (mon->mhp > tmp) {
-            mhurtle(mon, mon->mx - u.ux, mon->my - u.uy, 1);
+            mhurtle(mon, mon->mx - youmonst.mx, mon->my - youmonst.my, 1);
             mdat = mon->data;   /* in case of a polymorph trap */
             if (DEADMONSTER(mon))
                 already_killed = TRUE;
@@ -782,7 +782,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                       Monnam(mon), makeplural(stagger(mon->data, "stagger")));
             /* avoid migrating a dead monster */
             if (mon->mhp > tmp) {
-                mhurtle(mon, mon->mx - u.ux, mon->my - u.uy, 1);
+                mhurtle(mon, mon->mx - youmonst.mx, mon->my - youmonst.my, 1);
                 mdat = mon->data;       /* in case of a polymorph trap */
                 if (DEADMONSTER(mon))
                     already_killed = TRUE;
@@ -987,7 +987,7 @@ demonpet(void)
     i = (!rn2(6) || !is_demon(youmonst.data))
         ? ndemon(&u.uz, u.ualign.type) : NON_PM;
     pm = i != NON_PM ? &mons[i] : youmonst.data;
-    if ((dtmp = makemon(pm, level, u.ux, u.uy,
+    if ((dtmp = makemon(pm, level, youmonst.mx, youmonst.my,
                         MM_CREATEMONSTER | MM_CMONSTER_T)) != 0)
         tamedog(dtmp, NULL);
     exercise(A_WIS, TRUE);
@@ -1372,7 +1372,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
             tmp = 0;
             if (!Unchanging && !unsolid(youmonst.data) &&
                 mdef->data == &mons[PM_GREEN_SLIME]) {
-                if (!sliming(&youmonst) && level->locations[u.ux][u.uy].typ != LAVAPOOL) {
+                if (!sliming(&youmonst) && level->locations[youmonst.mx][youmonst.my].typ != LAVAPOOL) {
                     pline(msgc_fatal,
                           "You suck in some slime and don't feel very well.");
                     set_property(&youmonst, SLIMED, 10, TRUE);
@@ -1439,7 +1439,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
                     u.ustuck = mdef;
                 }
             } else if (u.ustuck == mdef) {
-                if (is_pool(level, u.ux, u.uy) && !swims(mdef) &&
+                if (is_pool(level, youmonst.mx, youmonst.my) && !swims(mdef) &&
                     !unbreathing(mdef)) {
                     pline(combat_msgc(&youmonst, mdef, cr_hit),
                           "You drown %s...", mon_nam(mdef));
@@ -1594,7 +1594,7 @@ start_engulf(struct monst *mdef)
     if (!Invisible) {
         x = mdef->mx;
         y = mdef->my;
-        map_location(u.ux, u.uy, TRUE, 0);
+        map_location(youmonst.mx, youmonst.my, TRUE, 0);
 
         dbuf_set(x, y, level->locations[x][y].mem_bg,
                  level->locations[x][y].mem_trap,
@@ -1614,7 +1614,7 @@ end_engulf(struct monst *mdef)
 {
     if (!Invisible) {
         newsym(mdef->mx, mdef->my);
-        newsym(u.ux, u.uy);
+        newsym(youmonst.mx, youmonst.my);
     }
 }
 
@@ -1699,7 +1699,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                         pline(msgc_fatal, "%s isn't sitting well with you.",
                               The(mdef->data->mname));
                         if (!Unchanging && !unsolid(youmonst.data) &&
-                            level->locations[u.ux][u.uy].typ != LAVAPOOL) {
+                            level->locations[youmonst.mx][youmonst.my].typ != LAVAPOOL) {
                             set_property(&youmonst, SLIMED, 5, TRUE);
                             set_delayed_killer(TURNED_SLIME,
                                                killer_msg(TURNED_SLIME, "digested green slime"));
@@ -1864,7 +1864,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
             } else
                 sum[i] = dhit;
             /* might be a worm that gets cut in half */
-            if (m_at(level, u.ux + dx, u.uy + dy) != mon)
+            if (m_at(level, youmonst.mx + dx, youmonst.my + dy) != mon)
                 return (boolean) (nsum != 0);
             /* Do not print "You hit" message, since known_hitum already did
                it. */
@@ -2118,7 +2118,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
     case AD_MAGM:
         /* wrath of gods for attacking Oracle */
         if (Antimagic) {
-            shieldeff(u.ux, u.uy);
+            shieldeff(youmonst.mx, youmonst.my);
             pline(msgc_playerimmune,
                   "A hail of magic missiles narrowly misses you!");
         } else {
@@ -2184,9 +2184,9 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             exercise(A_DEX, FALSE);
             break;
         case AD_COLD:  /* brown mold or blue jelly */
-            if (monnear(mon, u.ux, u.uy)) {
+            if (monnear(mon, youmonst.mx, youmonst.my)) {
                 if (Cold_resistance) {
-                    shieldeff(u.ux, u.uy);
+                    shieldeff(youmonst.mx, youmonst.my);
                     pline(combat_msgc(mon, &youmonst, cr_miss),
                           "You feel a mild chill.");
                     ugolemeffects(AD_COLD, tmp);
@@ -2209,9 +2209,9 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
                 inc_timeout(&youmonst, STUNNED, tmp, FALSE);
             break;
         case AD_FIRE:
-            if (monnear(mon, u.ux, u.uy)) {
+            if (monnear(mon, youmonst.mx, youmonst.my)) {
                 if (resists_fire(&youmonst)) {
-                    shieldeff(u.ux, u.uy);
+                    shieldeff(youmonst.mx, youmonst.my);
                     pline(combat_msgc(mon, &youmonst, cr_miss),
                           "You feel mildly warm.");
                     ugolemeffects(AD_FIRE, tmp);
@@ -2224,7 +2224,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             break;
         case AD_ELEC:
             if (resists_elec(&youmonst)) {
-                shieldeff(u.ux, u.uy);
+                shieldeff(youmonst.mx, youmonst.my);
                 pline(combat_msgc(mon, &youmonst, cr_miss),
                       "You feel a mild tingle.");
                 ugolemeffects(AD_ELEC, tmp);
@@ -2322,10 +2322,10 @@ stumble_onto_mimic(struct monst *mtmp, schar dx, schar dy)
         else if (mtmp->m_ap_type == M_AP_MONSTER)
             what = a_monnam(mtmp);      /* differs from what was sensed */
     } else {
-        if (level->locations[u.ux + dx][u.uy + dy].mem_bg == S_hcdoor ||
-            level->locations[u.ux + dx][u.uy + dy].mem_bg == S_vcdoor)
+        if (level->locations[youmonst.mx + dx][youmonst.my + dy].mem_bg == S_hcdoor ||
+            level->locations[youmonst.mx + dx][youmonst.my + dy].mem_bg == S_vcdoor)
             fmt = "The door actually was %s!";
-        else if (level->locations[u.ux + dx][u.uy + dy].mem_obj - 1 ==
+        else if (level->locations[youmonst.mx + dx][youmonst.my + dy].mem_obj - 1 ==
                  GOLD_PIECE)
             fmt = "That gold was %s!";
 

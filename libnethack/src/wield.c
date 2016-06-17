@@ -277,7 +277,7 @@ ready_weapon(struct obj *wep)
             struct monst *this_shkp;
 
             if ((this_shkp =
-                 shop_keeper(level, inside_shop(level, u.ux, u.uy))) != NULL) {
+                 shop_keeper(level, inside_shop(level, youmonst.mx, youmonst.my))) != NULL) {
                 pline(msgc_unpaid, "%s says \"You be careful with my %s!\"",
                       mx_name(this_shkp), xname(wep));
             }

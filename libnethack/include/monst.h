@@ -188,8 +188,8 @@ struct monst {
 # define m_minvent(mon) ((mon) == &youmonst ? invent : (mon)->minvent)
 /* TODO: does the hero have a true mon->dlevel equavilent? */
 # define m_dlevel(mon) ((mon) == &youmonst ? level : (mon)->dlevel)
-# define m_mx(mon) ((mon) == &youmonst ? u.ux : (mon)->mx)
-# define m_my(mon) ((mon) == &youmonst ? u.uy : (mon)->my)
+# define m_mx(mon) ((mon)->mx)
+# define m_my(mon) ((mon)->my)
 # define m_mz(mon) ((mon) == &youmonst ? &u.uz : &((mon)->dlevel->z))
 /* mhp(max) will not work for polymorphed player, when monster polymorph
    is implemented, mhp will always point to current hp (umh/umhmax "equavilent"

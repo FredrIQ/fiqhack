@@ -842,12 +842,7 @@ do_earth(struct level *lev, int x, int y, int confused,
     obj->quan = confused ? rn1(5, 2) : 1;
     obj->owt = weight(obj);
 
-    struct monst *mdef;
-    if (x == u.ux && y == u.uy)
-        mdef = &youmonst;
-    else
-        mdef = m_at(lev, x, y);
-
+    struct monst *mdef = um_at(lev, x, y);
     boolean uagr = (magr == &youmonst);
     boolean udef = (mdef == &youmonst);
     boolean vis = (uagr || udef || canseemon(magr) ||
@@ -1409,9 +1404,8 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                 for (j = -bd; j <= bd; j++) {
                     if (!isok(m_mx(mon) + i, m_my(mon) + j))
                         continue;
-                    if (!you && (m_mx(mon) + i) == u.ux && (m_my(mon) + j) == u.uy)
-                        maybe_tame(mon, &youmonst, sobj);
-                    else if ((mtmp = m_at(level, m_mx(mon) + i, m_my(mon) + j)) != 0)
+                    mtmp = um_at(level, mon->mx + i, mon->my + j);
+                    if (mon != mtmp)
                         maybe_tame(mon, mtmp, sobj);
                 }
             }
@@ -1446,10 +1440,11 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                     break;
                 }
             }
+            int x, y;
+            x = mon->mx;
+            y = mon->my;
             mon_tele(mon, !!teleport_control(mon));
-                
-            if (you && (teleport_control(mon) || !couldsee(u.ux0, u.uy0) ||
-                        (distu(u.ux0, u.uy0) >= 16)))
+            if (you && (teleport_control(mon) || (x != mon->mx && y != mon->my)))
                 *known = TRUE;
         }
         break;
@@ -1712,6 +1707,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                 change_luck(-1);        /* Sokoban guilt */
 
             boolean hityou = FALSE;
+            struct monst *mtmp;
             /* Loop through the surrounding squares */
             for (x = m_mx(mon) - 1; x <= m_mx(mon) + 1; x++) {
                 for (y = m_my(mon) - 1; y <= m_my(mon) + 1; y++) {
@@ -1732,7 +1728,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
 
                     /* If the spot is the player, postpone it for later to avoid
                        bones oddities */
-                    if (x == u.ux && y == u.uy) {
+                    if ((mtmp = um_at(level, x, y)) == &youmonst) {
                         hityou = TRUE;
                         continue;
                     }
@@ -1743,7 +1739,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             }
 
             if (hityou)
-                do_earth(m_dlevel(mon), u.ux, u.uy, confused, mon);
+                do_earth(m_dlevel(mon), youmonst.mx, youmonst.my, confused, mon);
         }
         break;
     case SCR_PUNISHMENT:
@@ -1838,9 +1834,7 @@ set_lit(int x, int y, void *val)
             snuff_lit(otmp);
 
         /* kill light sources in inventories of monsters */
-        mtmp = m_at(level, x, y);
-        if (!mtmp && x == u.ux && y == u.uy)
-            mtmp = &youmonst;
+        mtmp = um_at(level, x, y);
         if (mtmp)
             for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj)
                 snuff_lit(otmp);
@@ -2560,7 +2554,7 @@ punish(struct obj *sobj)
     placebc();
     if (Blind)
         set_bc(1);  /* set up ball and chain variables */
-    newsym(u.ux, u.uy);     /* see ball&chain if can't see self */
+    newsym(youmonst.mx, youmonst.my); /* see ball&chain if can't see self */
 }
 
 void
@@ -2680,11 +2674,12 @@ create_particular(const struct nh_cmd_arg *arg)
             if (monclass != MAXMCLASSES)
                 whichpm = mkclass(&u.uz, monclass, 0, rng_main);
             if (maketame) {
-                mtmp = makemon(whichpm, level, u.ux, u.uy, MM_EDOG);
+                mtmp = makemon(whichpm, level, youmonst.mx, youmonst.my, MM_EDOG);
                 if (mtmp)
                     initedog(mtmp);
             } else {
-                mtmp = makemon(whichpm, level, u.ux, u.uy, NO_MM_FLAGS);
+                mtmp = makemon(whichpm, level, youmonst.mx, youmonst.my,
+                               NO_MM_FLAGS);
                 if ((makepeaceful || makehostile) && mtmp)
                     msethostility(mtmp, !makepeaceful, TRUE);
             }
@@ -2701,8 +2696,8 @@ create_particular(const struct nh_cmd_arg *arg)
        sickness too, but we don't do that yet, because other sorts of debugging
        might want the monster to be as "normal" as possible.) */
     if (mtmp) {
-        int dx = mtmp->mx - u.ux;
-        int dy = mtmp->my - u.uy;
+        int dx = mtmp->mx - youmonst.mx;
+        int dy = mtmp->my - youmonst.my;
 
         enum nh_direction dir = DIR_NONE;
 

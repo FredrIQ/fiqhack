@@ -174,7 +174,7 @@ drop_upon_death(struct monst *mtmp, struct obj *cont, boolean charmed)
         else if (cont)
             add_to_container(cont, otmp);
         else
-            place_object(otmp, level, u.ux, u.uy);
+            place_object(otmp, level, youmonst.mx, youmonst.my);
     }
     if (cont)
         cont->owt = weight(cont);
@@ -290,7 +290,7 @@ make_bones:
     /* dispose of your possessions, usually cursed */
     if (u.ugrave_arise == (NON_PM - 1)) {
         /* embed your possessions in your statue */
-        statue = mk_named_object(STATUE, &mons[u.umonnum], u.ux, u.uy,
+        statue = mk_named_object(STATUE, &mons[u.umonnum], youmonst.mx, youmonst.my,
                                  u.uplname);
 
         drop_upon_death(NULL, statue, FALSE);
@@ -303,7 +303,7 @@ make_bones:
         drop_upon_death(NULL, NULL, FALSE);
         /* trick makemon() into allowing monster creation on your location */
         in_mklev = TRUE;
-        mtmp = makemon(&mons[PM_GHOST], level, u.ux, u.uy, MM_NONAME);
+        mtmp = makemon(&mons[PM_GHOST], level, youmonst.mx, youmonst.my, MM_NONAME);
         in_mklev = FALSE;
         if (!mtmp)
             return;
@@ -327,14 +327,14 @@ make_bones:
         }
         /* give your possessions to the monster you become */
         in_mklev = TRUE;
-        mtmp = makemon(&mons[u.ugrave_arise], level, u.ux, u.uy, NO_MM_FLAGS);
+        mtmp = makemon(&mons[u.ugrave_arise], level, youmonst.mx, youmonst.my, NO_MM_FLAGS);
         in_mklev = FALSE;
         if (!mtmp) {
             drop_upon_death(NULL, NULL, FALSE);
             return;
         }
         christen_monst(mtmp, u.uplname);
-        newsym(u.ux, u.uy);
+        newsym(youmonst.mx, youmonst.my);
         if (!charmed)
             pline(msgc_outrobad, "Your body rises from the dead as %s...",
                   an(mons[u.ugrave_arise].mname));
@@ -397,7 +397,7 @@ make_bones:
         christen_obj(statue, sname);
 
     /* Hero is no longer on the map. */
-    u.ux = u.uy = 0;
+    youmonst.mx = youmonst.my = 0;
 
     /* Clear all memory from the level. */
     for (x = 0; x < COLNO; x++)

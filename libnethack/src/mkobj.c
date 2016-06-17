@@ -396,7 +396,7 @@ replace_object(struct obj *obj, struct obj *otmp)
  * command needs to display the original object.
  *
  * The caller is responsible for checking otmp->unpaid and
- * costly_spot(u.ux, u.uy).  This function will make otmp no charge.
+ * costly_spot(youmonst.mx, youmonst.my).  This function will make otmp no charge.
  *
  * Note that check_unpaid_usage() should be used instead for partial
  * usage of an object.

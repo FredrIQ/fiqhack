@@ -297,8 +297,10 @@ struct test_move_cache {
              - min((int)greatest_erosion(obj),objects[(obj)->otyp].a_ac))
 
 # define makeknown(x)     discover_object((x),TRUE,TRUE,FALSE)
-# define distu(xx,yy)     dist2((int)(xx),(int)(yy),(int)u.ux,(int)u.uy)
-# define onlineu(xx,yy)   online2((int)(xx),(int)(yy),(int)u.ux,(int)u.uy)
+# define distu(xx,yy)     dist2((int)(xx),(int)(yy),(int)youmonst.mx, \
+                                (int)youmonst.my)
+# define onlineu(xx,yy)   online2((int)(xx),(int)(yy),(int)youmonst.mx, \
+                                  (int)youmonst.my)
 
 # define rn1(x,y)         (rn2(x)+(y))
 

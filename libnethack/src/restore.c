@@ -808,8 +808,11 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->save_encoding = mread8(mf);
     f->hide_implied = mread8(mf);
 
+    /* Used for a consistent way of handling save shims */
+    f->save_revision = mread32(mf);
+
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 109; i++)
+    for (i = 0; i < 105; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));
@@ -865,7 +868,6 @@ dorecover(struct memfile *mf)
     mtmp = restore_mon(mf, NULL, NULL);
     youmonst = *mtmp;
     dealloc_monst(mtmp);
-    set_uasmon();       /* fix up youmonst.data */
 
     /* restore dungeon */
     restore_dungeon(mf);

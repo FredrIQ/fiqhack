@@ -152,7 +152,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
             } else
                 explmask[i][j] = 0;
 
-            if (i + x - 1 == u.ux && j + y - 1 == u.uy) {
+            if (i + x - 1 == youmonst.mx && j + y - 1 == youmonst.my) {
                 switch (adtyp) {
                 case AD_PHYS:
                     explmask[i][j] = 0;
@@ -200,7 +200,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
             }
             /* can be both you and mtmp if you're swallowed */
             mtmp = m_at(level, i + x - 1, j + y - 1);
-            if (!mtmp && i + x - 1 == u.ux && j + y - 1 == u.uy)
+            if (!mtmp && i + x - 1 == youmonst.mx && j + y - 1 == youmonst.my)
                 mtmp = u.usteed;
             if (mtmp) {
                 if (DEADMONSTER(mtmp))
@@ -314,7 +314,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
             for (j = 0; j < 3; j++) {
                 if (explmask[i][j] == 2)
                     continue;
-                if (i + x - 1 == u.ux && j + y - 1 == u.uy)
+                if (i + x - 1 == youmonst.mx && j + y - 1 == youmonst.my)
                     uhurt = (explmask[i][j] == 1) ? 1 : 2;
                 idamres = idamnonres = 0;
                 if (type >= 0)
@@ -322,7 +322,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                                    type, &shopdamage);
 
                 mtmp = m_at(level, i + x - 1, j + y - 1);
-                if (!mtmp && i + x - 1 == u.ux && j + y - 1 == u.uy)
+                if (!mtmp && i + x - 1 == youmonst.mx && j + y - 1 == youmonst.my)
                     mtmp = u.usteed;
                 if (!mtmp)
                     continue;
@@ -661,7 +661,7 @@ scatter(int sx, int sy, /* location of objects to scatter */
                             stmp->stopped = TRUE;
                         }
                     }
-                } else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
+                } else if (bhitpos.x == youmonst.mx && bhitpos.y == youmonst.my) {
                     if (scflags & MAY_HITYOU) {
                         int hitvalu, hitu;
 

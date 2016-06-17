@@ -433,7 +433,7 @@ quest_stat_check(struct monst *mtmp)
 {
     if (mtmp->data->msound == MS_NEMESIS)
         Qstat(in_battle) = (mtmp->mcanmove && !mtmp->msleeping &&
-                            monnear(mtmp, u.ux, u.uy));
+                            monnear(mtmp, youmonst.mx, youmonst.my));
 }
 
 /*quest.c*/

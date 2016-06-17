@@ -187,11 +187,11 @@ gold_detect(struct monst *mon, struct obj *sobj, boolean *scr_known)
     for (obj = level->objlist; obj; obj = obj->nobj) {
         if (sobj->blessed && o_material(obj, GOLD)) {
             *scr_known = TRUE;
-            if (obj->ox != u.ux || obj->oy != u.uy)
+            if (obj->ox != youmonst.mx || obj->oy != youmonst.my)
                 goto outgoldmap;
         } else if (o_in(obj, COIN_CLASS)) {
             *scr_known = TRUE;
-            if (obj->ox != u.ux || obj->oy != u.uy)
+            if (obj->ox != youmonst.mx || obj->oy != youmonst.my)
                 goto outgoldmap;
         }
     }
@@ -262,7 +262,7 @@ outgoldmap:
                 }
     }
 
-    newsym(u.ux, u.uy);
+    newsym(youmonst.mx, youmonst.my);
     pline(msgc_youdiscover, "You feel very greedy, and sense gold!");
     exercise(A_WIS, TRUE);
     win_pause_output(P_MAP);
@@ -292,7 +292,7 @@ food_detect(struct obj *sobj, boolean * scr_known)
 
     for (obj = level->objlist; obj; obj = obj->nobj)
         if (o_in(obj, oclass)) {
-            if (obj->ox == u.ux && obj->oy == u.uy)
+            if (obj->ox == youmonst.mx && obj->oy == youmonst.my)
                 ctu++;
             else
                 ct++;
@@ -369,7 +369,7 @@ food_detect(struct obj *sobj, boolean * scr_known)
                     map_object(temp, 1, TRUE);
                     break;      /* skip rest of this monster's inventory */
                 }
-        newsym(u.ux, u.uy);
+        newsym(youmonst.mx, youmonst.my);
         if (sobj) {
             if (sobj->blessed) {
                 pline(u.uedibility ? msgc_youdiscover : msgc_statusgood,
@@ -430,7 +430,7 @@ object_detect(struct obj *detector,     /* object doing the detecting */
 
     for (obj = level->objlist; obj; obj = obj->nobj) {
         if (!class || o_in(obj, class)) {
-            if (obj->ox == u.ux && obj->oy == u.uy)
+            if (obj->ox == youmonst.mx && obj->oy == youmonst.my)
                 ctu++;
             else
                 ct++;
@@ -441,7 +441,7 @@ object_detect(struct obj *detector,     /* object doing the detecting */
 
     for (obj = level->buriedobjlist; obj; obj = obj->nobj) {
         if (!class || o_in(obj, class)) {
-            if (obj->ox == u.ux && obj->oy == u.uy)
+            if (obj->ox == youmonst.mx && obj->oy == youmonst.my)
                 ctu++;
             else
                 ct++;
@@ -551,7 +551,7 @@ object_detect(struct obj *detector,     /* object doing the detecting */
         }
     }
 
-    newsym(u.ux, u.uy);
+    newsym(youmonst.mx, youmonst.my);
     pline(ct ? msgc_youdiscover : msgc_notarget, "You detect the %s of %s.",
           ct ? "presence" : "absence", stuff);
     win_pause_output(P_MAP);
@@ -773,7 +773,7 @@ outtrapmap:
     }
 
     if (reveal) {
-        newsym(u.ux, u.uy);
+        newsym(youmonst.mx, youmonst.my);
         if (you)
             pline(msgc_youdiscover, "You feel %s.",
                   sobj && sobj->cursed ? "very greedy" : "entrapped");
@@ -1058,10 +1058,10 @@ void
 do_vicinity_map(void)
 {
     int zx, zy;
-    int lo_y = (u.uy - 5 < 0 ? 0 : u.uy - 5),
-        hi_y = (u.uy + 6 > ROWNO ? ROWNO : u.uy + 6),
-        lo_x = (u.ux - 9 < 0 ? 0 : u.ux - 9),
-        hi_x = (u.ux + 10 > COLNO ? COLNO : u.ux + 10);
+    int lo_y = (youmonst.my - 5 < 0 ? 0 : youmonst.my - 5),
+        hi_y = (youmonst.my + 6 > ROWNO ? ROWNO : youmonst.my + 6),
+        lo_x = (youmonst.mx - 9 < 0 ? 0 : youmonst.mx - 9),
+        hi_x = (youmonst.mx + 10 > COLNO ? COLNO : youmonst.mx + 10);
 
     for (zx = lo_x; zx < hi_x; zx++)
         for (zy = lo_y; zy < hi_y; zy++)
@@ -1199,7 +1199,7 @@ findit(int radius)
             for (y = 0; y < ROWNO; y++)
                 findone(x, y, &num);
     } else
-        do_clear_area(u.ux, u.uy, radius, findone, &num);
+        do_clear_area(youmonst.mx, youmonst.my, radius, findone, &num);
     return num;
 }
 
@@ -1219,7 +1219,7 @@ openit(void)
         return -1;
     }
 
-    do_clear_area(u.ux, u.uy, BOLT_LIM, openone, &num);
+    do_clear_area(youmonst.mx, youmonst.my, BOLT_LIM, openone, &num);
     return num;
 }
 
@@ -1324,11 +1324,11 @@ dosearch0(int aflag)
             fund += 2;  /* JDS: lenses help searching */
         if (fund > 5)
             fund = 5;
-        for (x = u.ux - 1; x < u.ux + 2; x++)
-            for (y = u.uy - 1; y < u.uy + 2; y++) {
+        for (x = youmonst.mx - 1; x < youmonst.mx + 2; x++)
+            for (y = youmonst.my - 1; y < youmonst.my + 2; y++) {
                 if (!isok(x, y))
                     continue;
-                if (x != u.ux || y != u.uy) {
+                if (x != youmonst.mx || y != youmonst.my) {
                     if (Blind && !aflag)
                         feel_location(x, y);
                     if (level->locations[x][y].typ == SDOOR) {

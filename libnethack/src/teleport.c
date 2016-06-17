@@ -35,7 +35,7 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
        top of the player or any existing monster. however, occasionally we are
        relocating engravings or objects, which could be co-located and thus get
        restricted a bit too much. oh well. */
-    if (mtmp != &youmonst && x == u.ux && y == u.uy &&
+    if (mtmp != &youmonst && x == youmonst.mx && y == youmonst.my &&
         (!u.usteed || mtmp != u.usteed) && !(gpflags & MM_IGNOREMONST))
         return FALSE;
 
@@ -238,7 +238,7 @@ teleok(int x, int y, boolean trapok, boolean wizard_tele)
         return FALSE;
     if (!goodpos(level, x, y, &youmonst, 0))
         return FALSE;
-    if (!wizard_tele && !tele_jump_ok(u.ux, u.uy, x, y, level))
+    if (!wizard_tele && !tele_jump_ok(youmonst.mx, youmonst.my, x, y, level))
         return FALSE;
     if (!in_out_region(level, x, y))
         return FALSE;
@@ -267,7 +267,7 @@ teleds(int nux, int nuy, boolean allow_drag)
             ball_still_in_range = TRUE; /* don't have to move the ball */
         else {
             /* have to move the ball */
-            if (!allow_drag || distmin(u.ux, u.uy, nux, nuy) > 1) {
+            if (!allow_drag || distmin(youmonst.mx, youmonst.my, nux, nuy) > 1) {
                 /* we should not have dist > 1 and allow_drag at the same time,
                    but just in case, we must then revert to teleport. */
                 allow_drag = FALSE;
@@ -277,8 +277,8 @@ teleds(int nux, int nuy, boolean allow_drag)
     }
     u.utrap = 0;
     u.ustuck = 0;
-    u.ux0 = u.ux;
-    u.uy0 = u.uy;
+    u.ux0 = youmonst.mx;
+    u.uy0 = youmonst.my;
 
     if (hides_under(youmonst.data))
         u.uundetected = OBJ_AT(nux, nuy);
@@ -312,10 +312,10 @@ teleds(int nux, int nuy, boolean allow_drag)
                 move_bc(0, bc_control, ballx, bally, chainx, chainy);
         }
     }
-    /* must set u.ux, u.uy after drag_ball(), which may need to know the old
+    /* must set youmonst.mx, youmonst.my after drag_ball(), which may need to know the old
        position if allow_drag is true... */
-    u.ux = nux;
-    u.uy = nuy;
+    youmonst.mx = nux;
+    youmonst.my = nuy;
     fill_pit(level, u.ux0, u.uy0);
     if (ball_active) {
         if (!ball_still_in_range && !allow_drag)
@@ -434,8 +434,8 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
             pline(msgc_uiprompt,
                   "To what position do you%s want to be teleported?",
                   u.usteed ? msgcat(" and ", mon_nam(u.usteed)) : "");
-            cc.x = u.ux;
-            cc.y = u.uy;
+            cc.x = youmonst.mx;
+            cc.y = youmonst.my;
             if (getpos(&cc, FALSE, "the teleport target", FALSE)
                 == NHCR_CLIENT_CANCEL)
                 return 0; /* abort */
@@ -477,7 +477,7 @@ mdotele(struct musable *m)
 {
     struct trap *trap;
 
-    trap = t_at(level, u.ux, u.uy);
+    trap = t_at(level, youmonst.mx, youmonst.my);
     if (trap && (!trap->tseen || trap->ttyp != TELEP_TRAP))
         trap = 0;
 
@@ -488,7 +488,7 @@ mdotele(struct musable *m)
                 trap = 0;
             else {
                 deltrap(level, trap);
-                newsym(u.ux, u.uy);
+                newsym(youmonst.mx, youmonst.my);
             }
         }
         if (trap)
@@ -672,7 +672,7 @@ level_tele_impl(struct monst *mon, boolean wizard_tele)
             if (invent)
                 pline(msgc_consequence,
                       "Your possessions land on the %s with a thud.",
-                      surface(u.ux, u.uy));
+                      surface(youmonst.mx, youmonst.my));
             done(DIED, "committed suicide");
             pline_implied(msgc_statusheal,
                           "An energized cloud of dust begins to coalesce.");
@@ -893,13 +893,13 @@ tele_trap(struct trap *trap)
 {
     if (In_endgame(&u.uz) || Antimagic) {
         if (Antimagic)
-            shieldeff(u.ux, u.uy);
+            shieldeff(youmonst.mx, youmonst.my);
         pline(msgc_nonmongood, "You feel a wrenching sensation.");
     } else if (!next_to_u()) {
         pline(msgc_nonmongood, "You shudder for a moment.");
     } else if (trap->once) {
         deltrap(level, trap);
-        newsym(u.ux, u.uy);     /* get rid of trap symbol */
+        newsym(youmonst.mx, youmonst.my);     /* get rid of trap symbol */
         vault_tele();
     } else
         tele();
@@ -912,7 +912,7 @@ level_tele_trap(struct trap *trap)
                   Levitation ? (const char *)"float" :
                   locomotion(youmonst.data, "step"));
     if (Antimagic) {
-        shieldeff(u.ux, u.uy);
+        shieldeff(youmonst.mx, youmonst.my);
     }
     if (Antimagic || In_endgame(&u.uz)) {
         pline(msgc_nonmongood, "You feel a wrenching sensation.");
@@ -924,7 +924,7 @@ level_tele_trap(struct trap *trap)
     else
         pline(msgc_nonmonbad, "You are momentarily disoriented.");
     deltrap(level, trap);
-    newsym(u.ux, u.uy); /* get rid of trap symbol */
+    newsym(youmonst.mx, youmonst.my); /* get rid of trap symbol */
     level_tele();
 }
 
@@ -1014,8 +1014,8 @@ rloc_to(struct monst *mtmp, int x, int y)
 
     if (u.ustuck == mtmp) { /* implying mtmp is on the current level */
         if (Engulfed) {
-            u.ux = x;
-            u.uy = y;
+            youmonst.mx = x;
+            youmonst.my = y;
             doredraw();
         } else
             u.ustuck = 0;
@@ -1296,8 +1296,8 @@ mon_tele(struct monst *mon, boolean free_will)
     /* first, check for monster being aware of the hero */
     struct monst *tmon = NULL;
     if (!mon->mpeaceful && msensem_xy(mon, &youmonst, ox, oy)) {
-        tx = u.ux;
-        ty = u.uy;
+        tx = youmonst.mx;
+        ty = youmonst.my;
         tmon = &youmonst;
     } else {
         for (m2 = level->monlist; m2; m2 = nmon) {
@@ -1358,7 +1358,7 @@ rloc(struct monst *mtmp,        /* mx==COLNO implies migrating monster arrival *
     }
 
     if (mtmp->iswiz && mtmp->mx != COLNO) {      /* Wizard, not just arriving */
-        if (!In_W_tower(u.ux, u.uy, &u.uz))
+        if (!In_W_tower(youmonst.mx, youmonst.my, &u.uz))
             x = lev->upstair.sx, y = lev->upstair.sy;
         else if (!isok(lev->dnladder.sx, lev->dnladder.sy))
             x = lev->upladder.sx, y = lev->upladder.sy;/* bottom of tower */
@@ -1596,7 +1596,7 @@ rloco(struct obj *obj)
             && (!costly_spot(tx, ty) ||
                 !strchr(in_rooms(level, tx, ty, 0),
                         *in_rooms(level, otx, oty, 0)))) {
-            if (costly_spot(u.ux, u.uy) &&
+            if (costly_spot(youmonst.mx, youmonst.my) &&
                 strchr(u.urooms, *in_rooms(level, otx, oty, 0)))
                 addtobill(obj, FALSE, FALSE, FALSE);
             else
@@ -1689,7 +1689,7 @@ u_teleport_mon(struct monst *mtmp, boolean give_feedback)
         unstuck(mtmp);
         rloc(mtmp, FALSE);
     } else if (is_rider(mtmp->data) && rn2(13) &&
-               enexto(&cc, level, u.ux, u.uy, mtmp->data)) {
+               enexto(&cc, level, youmonst.mx, youmonst.my, mtmp->data)) {
         rloc_to(mtmp, cc.x, cc.y);
     } else
         return rloc(mtmp, TRUE);

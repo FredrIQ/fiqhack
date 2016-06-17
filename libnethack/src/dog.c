@@ -170,7 +170,7 @@ makedog(struct newgame_options *ngo)
     }
 
     /* ideally we'd use rng_charstats_role for this, but... */
-    mtmp = makemon(&mons[pettype], level, u.ux, u.uy, MM_EDOG);
+    mtmp = makemon(&mons[pettype], level, youmonst.mx, youmonst.my, MM_EDOG);
 
     /* Horses already wear a saddle */
     if (pettype == PM_PONY &&
@@ -266,9 +266,9 @@ mon_arrive(struct monst *mtmp, boolean with_you)
            intended destination and you'll end up next to that spot.  This code
            doesn't control the final outcome; goto_level(do.c) decides who ends
            up at your target spot when there is a monster there too. */
-        if (!MON_AT(level, u.ux, u.uy) &&
+        if (!MON_AT(level, youmonst.mx, youmonst.my) &&
             !rn2(mtmp->mtame ? 10 : mtmp->mpeaceful ? 5 : 2))
-            rloc_to(mtmp, u.ux, u.uy);
+            rloc_to(mtmp, youmonst.mx, youmonst.my);
         else
             mnexto(mtmp);
         return;
@@ -298,7 +298,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
         wander = 0;
         break;
     case MIGR_NEAR_PLAYER:
-        xlocale = u.ux, ylocale = u.uy;
+        xlocale = youmonst.mx, ylocale = youmonst.my;
         break;
     case MIGR_STAIRS_UP:
         xlocale = level->upstair.sx, ylocale = level->upstair.sy;
@@ -511,7 +511,7 @@ keepdogs(boolean pets_only)
             continue;
         if (pets_only && !mtmp->mtame)
             continue;
-        if (((monnear(mtmp, u.ux, u.uy) && levl_follower(mtmp)) ||
+        if (((monnear(mtmp, youmonst.mx, youmonst.my) && levl_follower(mtmp)) ||
              (mtmp == u.usteed) ||
              /* the wiz will level t-port from anywhere to chase the amulet; if
                 you don't have it, will chase you only if in range. -3. */

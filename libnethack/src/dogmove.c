@@ -557,8 +557,8 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
 
     if (!edog || mtmp->mleashed) {      /* he's not going anywhere... */
         gtyp = df_apport;
-        gx = u.ux;
-        gy = u.uy;
+        gx = youmonst.mx;
+        gy = youmonst.my;
     } else {
 #define DDIST(x,y) (dist2(x,y,omx,omy))
 #define SQSRCHRADIUS 5
@@ -605,7 +605,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
                            ((can_use = could_use_item(mtmp, obj)) &&
                             !dog_has_minvent) &&
                            (!level->locations[omx][omy].lit ||
-                            level->locations[u.ux][u.uy].lit) &&
+                            level->locations[youmonst.mx][youmonst.my].lit) &&
                            (otyp == df_manfood || m_cansee(mtmp, nx, ny)) &&
                            (can_use || edog->apport > rn2(8)) &&
                            can_carry(mtmp, obj)) {
@@ -620,13 +620,13 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
     /* follow player if appropriate */
     if (gtyp == df_nofood ||
         (gtyp != df_treat && gtyp != df_apport && moves < edog->hungrytime)) {
-        gx = u.ux;
-        gy = u.uy;
-        if (after && udist <= 4 && gx == u.ux && gy == u.uy)
+        gx = youmonst.mx;
+        gy = youmonst.my;
+        if (after && udist <= 4 && gx == youmonst.mx && gy == youmonst.my)
             return -2;
         appr = (udist >= 9) ? 1 : (mtmp->mflee) ? -1 : 0;
         if (udist > 1) {
-            if (!IS_ROOM(level->locations[u.ux][u.uy].typ) || !rn2(4) || whappr
+            if (!IS_ROOM(level->locations[youmonst.mx][youmonst.my].typ) || !rn2(4) || whappr
                 || (dog_has_minvent && rn2(edog->apport)))
                 appr = 1;
         }
@@ -650,7 +650,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
        Otherwise, the dog is lost, and will random-walk. (This shouldn't
        happen because set_apparxy gives pets perfect knowledge of where
        their master is.) */
-    if (gx == u.ux && gy == u.uy && !in_masters_sight) {
+    if (gx == youmonst.mx && gy == youmonst.my && !in_masters_sight) {
         if (st_target(mtmp)) {
             gx = mtmp->sx;
             gy = mtmp->sy;
@@ -750,8 +750,8 @@ dog_move(struct monst *mtmp, int after)
             mongone(mtmp);
             i = rnd(4);
             while (i--) {
-                mm.x = u.ux;
-                mm.y = u.uy;
+                mm.x = youmonst.mx;
+                mm.y = youmonst.my;
                 if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL]))
                     mk_roamer(&mons[PM_ANGEL], u.ualign.type, level, mm.x, mm.y,
                               FALSE, NO_MM_FLAGS);
@@ -983,10 +983,10 @@ newdogpos:
            spends time eating or in a trap, etc. */
         coord cc;
 
-        nx = sgn(omx - u.ux);
-        ny = sgn(omy - u.uy);
-        cc.x = u.ux + nx;
-        cc.y = u.uy + ny;
+        nx = sgn(omx - youmonst.mx);
+        ny = sgn(omy - youmonst.my);
+        cc.x = youmonst.mx + nx;
+        cc.y = youmonst.my + ny;
         if (goodpos(level, cc.x, cc.y, mtmp, 0))
             goto dognext;
 

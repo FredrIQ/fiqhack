@@ -81,7 +81,7 @@ msummon(struct monst *mon, const d_level *dlev)
     }
 
     while (cnt > 0) {
-        mtmp = makemon(&mons[dtype], level, u.ux, u.uy,
+        mtmp = makemon(&mons[dtype], level, youmonst.mx, youmonst.my,
                        MM_CREATEMONSTER | MM_CMONSTER_M);
         if (mtmp) {
             /* alignment should match the summoner */
@@ -117,11 +117,11 @@ summon_minion(aligntyp alignment, boolean talk)
         mon = 0;
     } else if (mons[mnum].pxtyp == MX_NONE ||
                roamer_type(&mons[mnum])) {
-        mon = makemon(&mons[mnum], level, u.ux, u.uy, MM_EMIN);
+        mon = makemon(&mons[mnum], level, youmonst.mx, youmonst.my, MM_EMIN);
         mx_epri_new(mon);
         mx_epri(mon)->shroom = 0; /* marks as renegade */
     } else
-        mon = makemon(&mons[mnum], level, u.ux, u.uy, NO_MM_FLAGS);
+        mon = makemon(&mons[mnum], level, youmonst.mx, youmonst.my, NO_MM_FLAGS);
     if (mon) {
         mon->maligntyp = alignment; /* set alignment */
         if (talk) {

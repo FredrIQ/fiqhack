@@ -245,12 +245,12 @@ dodrink(const struct nh_cmd_arg *arg)
         return 0;
     }
     /* Is there a fountain to drink from here? */
-    if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) && !Engulfed &&
+    if (IS_FOUNTAIN(level->locations[youmonst.mx][youmonst.my].typ) && !Engulfed &&
         !Levitation) {
         terrain = drinkfountain;
     }
     /* Or a kitchen sink? */
-    if (IS_SINK(level->locations[u.ux][u.uy].typ) && !Engulfed) {
+    if (IS_SINK(level->locations[youmonst.mx][youmonst.my].typ) && !Engulfed) {
         terrain = drinksink;
     }
 
@@ -1224,7 +1224,7 @@ potionhit(struct monst *mon, struct obj *obj, struct monst *magr)
         switch (obj->otyp) {
         case POT_OIL:
             if (lamplit)
-                splatter_burning_oil(u.ux, u.uy);
+                splatter_burning_oil(youmonst.mx, youmonst.my);
             break;
         case POT_POLYMORPH:
             pline(combat_msgc(magr, mon, cr_hit), "You feel a little %s.",
@@ -1410,12 +1410,12 @@ potionhit(struct monst *mon, struct obj *obj, struct monst *magr)
         docall(obj);
     if (*u.ushops && obj->unpaid) {
         struct monst *shkp =
-            shop_keeper(level, *in_rooms(level, u.ux, u.uy, SHOPBASE));
+            shop_keeper(level, *in_rooms(level, youmonst.mx, youmonst.my, SHOPBASE));
 
         if (!shkp)
             obj->unpaid = 0;
         else {
-            stolen_value(obj, u.ux, u.uy, (boolean) shkp->mpeaceful, FALSE);
+            stolen_value(obj, youmonst.mx, youmonst.my, (boolean) shkp->mpeaceful, FALSE);
             subfrombill(obj, shkp);
         }
     }
@@ -1786,7 +1786,7 @@ dodip(const struct nh_cmd_arg *arg)
         return 0;
 
     if (!(arg->argtype & CMD_ARG_OBJ)) {
-        here = level->locations[u.ux][u.uy].typ;
+        here = level->locations[youmonst.mx][youmonst.my].typ;
         /* Is there a fountain to dip into here? */
         if (IS_FOUNTAIN(here)) {
             qbuf = msgprintf("Dip %s into the fountain?",
@@ -1798,8 +1798,8 @@ dodip(const struct nh_cmd_arg *arg)
                 dipfountain(obj);
                 return 1;
             }
-        } else if (is_pool(level, u.ux, u.uy)) {
-            tmp = waterbody_name(u.ux, u.uy);
+        } else if (is_pool(level, youmonst.mx, youmonst.my)) {
+            tmp = waterbody_name(youmonst.mx, youmonst.my);
             qbuf = msgprintf("Dip %s into the %s?",
                              safe_qbuf("",
                                        sizeof ("Dip  into the pool of water?"),
@@ -2118,7 +2118,7 @@ more_dips:
         /* Turn off engine before fueling, turn off fuel too :-) */
         if (obj->lamplit || potion->lamplit) {
             useup(potion);
-            explode(u.ux, u.uy, 11, dice(6, 6), 0, EXPL_FIERY, NULL, 0);
+            explode(youmonst.mx, youmonst.my, 11, dice(6, 6), 0, EXPL_FIERY, NULL, 0);
             exercise(A_WIS, FALSE);
             return 1;
         }
@@ -2164,7 +2164,7 @@ more_dips:
         } else
             singlepotion = potion;
 
-        if (singlepotion->unpaid && costly_spot(u.ux, u.uy)) {
+        if (singlepotion->unpaid && costly_spot(youmonst.mx, youmonst.my)) {
             pline(msgc_unpaid, "You use it, you pay for it.");
             bill_dummy_object(singlepotion);
         }

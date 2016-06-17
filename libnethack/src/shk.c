@@ -307,8 +307,8 @@ call_kops(struct monst *shkp, boolean nearshop)
             /* Create swarm around you, if you merely "stepped out" */
             if (flags.verbose)
                 pline_implied(msgc_levelwarning, "The Keystone Kops appear!");
-            mm.x = u.ux;
-            mm.y = u.uy;
+            mm.x = youmonst.mx;
+            mm.y = youmonst.my;
             makekops(&mm);
             return;
         }
@@ -358,7 +358,7 @@ u_left_shop(char *leavestring, boolean newlev)
      * THEN (there's nothing to do, so just return)
      */
     if (!*leavestring &&
-        (!level->locations[u.ux][u.uy].edge ||
+        (!level->locations[youmonst.mx][youmonst.my].edge ||
          level->locations[u.ux0][u.uy0].edge))
         return;
 
@@ -457,7 +457,7 @@ u_entered_shop(char *enterstring)
 
     if (!(shkp = shop_keeper(level, *enterstring))) {
         if (!strchr(empty_shops, *enterstring) &&
-            in_rooms(level, u.ux, u.uy, SHOPBASE) !=
+            in_rooms(level, youmonst.mx, youmonst.my, SHOPBASE) !=
             in_rooms(level, u.ux0, u.uy0, SHOPBASE))
             pline(msgc_info, no_shk);
         strcpy(empty_shops, u.ushops);
@@ -513,7 +513,7 @@ u_entered_shop(char *enterstring)
                   s_suffix(mx_name(shkp)), shtypes[rt - SHOPBASE].name);
     }
     /* can't do anything about blocking if teleported in */
-    if (!inside_shop(level, u.ux, u.uy)) {
+    if (!inside_shop(level, youmonst.mx, youmonst.my)) {
         boolean should_block;
         int cnt;
         const char *tool;
@@ -551,8 +551,8 @@ u_entered_shop(char *enterstring)
             should_block = TRUE;
         } else {
             should_block = (Fast &&
-                            (sobj_at(PICK_AXE, level, u.ux, u.uy) ||
-                             sobj_at(DWARVISH_MATTOCK, level, u.ux, u.uy)));
+                            (sobj_at(PICK_AXE, level, youmonst.mx, youmonst.my) ||
+                             sobj_at(DWARVISH_MATTOCK, level, youmonst.mx, youmonst.my)));
         }
         if (should_block)
             dochug(shkp);       /* shk gets extra move */
@@ -622,7 +622,7 @@ void
 shopper_financial_report(void)
 {
     struct monst *shkp, *this_shkp =
-        shop_keeper(level, inside_shop(level, u.ux, u.uy));
+        shop_keeper(level, inside_shop(level, youmonst.mx, youmonst.my));
     struct eshk *eshkp;
     long amt;
     int pass;
@@ -1127,8 +1127,8 @@ dopay(const struct nh_cmd_arg *arg)
         int cx, cy;
 
         pline(msgc_uiprompt, "Pay whom?");
-        cc.x = u.ux;
-        cc.y = u.uy;
+        cc.x = youmonst.mx;
+        cc.y = youmonst.my;
         if (getpos(&cc, TRUE, "the creature you want to pay", FALSE) ==
             NHCR_CLIENT_CANCEL)
             return 0;   /* player pressed ESC */
@@ -1138,7 +1138,7 @@ dopay(const struct nh_cmd_arg *arg)
             pline(msgc_cancelled, "Try again...");
             return 0;
         }
-        if (u.ux == cx && u.uy == cy) {
+        if (youmonst.mx == cx && youmonst.my == cy) {
             pline(msgc_cancelled, "You are generous to yourself.");
             return 0;
         }
@@ -1666,8 +1666,8 @@ set_repo_loc(struct eshk *eshkp)
     /* if you're not in this shk's shop room, or if you're in its doorway or
        entry spot, then your gear gets dumped all the way inside */
     if (*u.ushops != eshkp->shoproom ||
-        IS_DOOR(level->locations[u.ux][u.uy].typ) ||
-        (u.ux == eshkp->shk.x && u.uy == eshkp->shk.y)) {
+        IS_DOOR(level->locations[youmonst.mx][youmonst.my].typ) ||
+        (youmonst.mx == eshkp->shk.x && youmonst.my == eshkp->shk.y)) {
         /* shk.x,shk.y is the position immediately in front of the door -- move 
            in one more space */
         ox = eshkp->shk.x;
@@ -1675,8 +1675,8 @@ set_repo_loc(struct eshk *eshkp)
         ox += sgn(ox - eshkp->shd.x);
         oy += sgn(oy - eshkp->shd.y);
     } else {    /* already inside this shk's shop */
-        ox = u.ux;
-        oy = u.uy;
+        ox = youmonst.mx;
+        oy = youmonst.my;
     }
     /* finish_paybill will deposit invent here */
     repo_location.x = ox;
@@ -2858,7 +2858,7 @@ shkcatch(struct obj *obj, xchar x, xchar y)
         return 0;
 
     if (shkp->mcanmove && !shkp->msleeping &&
-        (*u.ushops != mx_eshk(shkp)->shoproom || !inside_shop(level, u.ux, u.uy))
+        (*u.ushops != mx_eshk(shkp)->shoproom || !inside_shop(level, youmonst.mx, youmonst.my))
         && dist2(shkp->mx, shkp->my, x, y) < 3 &&
         /* if it is the shk's pos, you hit and anger him */
         (shkp->mx != x || shkp->my != y)) {
@@ -2996,7 +2996,7 @@ remove_damage(struct monst *shkp, boolean croaked)
         else if (saw_untrap)
             pline(msgc_monneutral,
                   "Suddenly, the trap is removed from the floor!");
-        else if (inside_shop(level, u.ux, u.uy) == mx_eshk(shkp)->shoproom)
+        else if (inside_shop(level, youmonst.mx, youmonst.my) == mx_eshk(shkp)->shoproom)
             pline(msgc_levelsound, "You feel more claustrophobic than before.");
         else if (canhear() && !rn2(10))
             pline_once(msgc_levelsound,
@@ -3025,7 +3025,7 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
     x = tmp_dam->place.x;
     y = tmp_dam->place.y;
     if (!IS_ROOM(tmp_dam->typ)) {
-        if (x == u.ux && y == u.uy)
+        if (x == youmonst.mx && y == youmonst.my)
             if (!Passes_walls)
                 return 0;
         if (x == shkp->mx && y == shkp->my)
@@ -3036,7 +3036,7 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
     if ((ttmp = t_at(lev, x, y)) != 0) {
         boolean floordamage = FALSE;
 
-        if (x == u.ux && y == u.uy)
+        if (x == youmonst.mx && y == youmonst.my)
             if (!Passes_walls)
                 return 0;
         if (ttmp->ttyp == LANDMINE || ttmp->ttyp == BEAR_TRAP) {
@@ -3165,7 +3165,7 @@ shk_move(struct monst *shkp)
         remove_damage(shkp, FALSE);
 
     if ((udist = distu(omx, omy)) < 3 &&
-        (shkp->data != &mons[PM_GRID_BUG] || (omx == u.ux || omy == u.uy))) {
+        (shkp->data != &mons[PM_GRID_BUG] || (omx == youmonst.mx || omy == youmonst.my))) {
         if (!shkp->mpeaceful || (Conflict && !resist(&youmonst, shkp, RING_CLASS, 0,
                                                      0))) {
             if (Displaced)
@@ -3210,13 +3210,13 @@ shk_move(struct monst *shkp)
            character fell through the hole.] */
         if (udist > 4 && eshkp->following)
             return -1;  /* leave it to m_move */
-        gx = u.ux;
-        gy = u.uy;
+        gx = youmonst.mx;
+        gy = youmonst.my;
     } else if (!shkp->mpeaceful) {
         /* Move towards the hero if the shopkeeper can sense him. */
         if (!blind(shkp) && m_cansenseu(shkp)) {
-            gx = u.ux;
-            gy = u.uy;
+            gx = youmonst.mx;
+            gy = youmonst.my;
         }
         avoid = FALSE;
     } else {
@@ -3224,12 +3224,12 @@ shk_move(struct monst *shkp)
         if (Invis || u.usteed) {
             avoid = FALSE;
         } else {
-            uondoor = (u.ux == eshkp->shd.x && u.uy == eshkp->shd.y);
+            uondoor = (youmonst.mx == eshkp->shd.x && youmonst.my == eshkp->shd.y);
             if (uondoor) {
                 badinv = (carrying(PICK_AXE) || carrying(DWARVISH_MATTOCK) ||
                           (Fast &&
-                           (sobj_at(PICK_AXE, level, u.ux, u.uy) ||
-                            sobj_at(DWARVISH_MATTOCK, level, u.ux, u.uy))));
+                           (sobj_at(PICK_AXE, level, youmonst.mx, youmonst.my) ||
+                            sobj_at(DWARVISH_MATTOCK, level, youmonst.mx, youmonst.my))));
                 if (satdoor && badinv)
                     return 0;
                 avoid = !badinv;
@@ -3571,7 +3571,7 @@ price_quote(struct obj *first_obj)
     long cost;
     int cnt = 0;
     struct nh_menulist menu;
-    struct monst *shkp = shop_keeper(level, inside_shop(level, u.ux, u.uy));
+    struct monst *shkp = shop_keeper(level, inside_shop(level, youmonst.mx, youmonst.my));
     const char *buf = ""; /* lint suppression */
 
     init_menulist(&menu);
@@ -3916,7 +3916,7 @@ block_door(xchar x, xchar y)
 }
 
 /* used in domove to block diagonal shop-entry */
-/* u.ux, u.uy should always be a door */
+/* youmonst.mx, youmonst.my should always be a door */
 boolean
 block_entry(xchar x, xchar y)
 {
@@ -3925,8 +3925,8 @@ block_entry(xchar x, xchar y)
     struct monst *shkp;
 
     if (!
-        (IS_DOOR(level->locations[u.ux][u.uy].typ) &&
-         level->locations[u.ux][u.uy].doormask == D_BROKEN))
+        (IS_DOOR(level->locations[youmonst.mx][youmonst.my].typ) &&
+         level->locations[youmonst.mx][youmonst.my].doormask == D_BROKEN))
         return FALSE;
 
     roomno = *in_rooms(level, x, y, SHOPBASE);
@@ -3935,7 +3935,7 @@ block_entry(xchar x, xchar y)
     if (!(shkp = shop_keeper(level, (char)roomno)) || !inhishop(shkp))
         return FALSE;
 
-    if (mx_eshk(shkp)->shd.x != u.ux || mx_eshk(shkp)->shd.y != u.uy)
+    if (mx_eshk(shkp)->shd.x != youmonst.mx || mx_eshk(shkp)->shd.y != youmonst.my)
         return FALSE;
 
     sx = mx_eshk(shkp)->shk.x;

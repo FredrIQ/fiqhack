@@ -158,7 +158,7 @@ pri_move(struct monst *priest)
 
     if (!priest->mpeaceful || (Conflict && !resist(&youmonst, priest, RING_CLASS, 0,
                                                    0))) {
-        if (monnear(priest, u.ux, u.uy)) {
+        if (monnear(priest, youmonst.mx, youmonst.my)) {
             if (Displaced)
                 pline(msgc_notresisted,
                       "Your displaced image doesn't fool %s!", mon_nam(priest));
@@ -167,8 +167,8 @@ pri_move(struct monst *priest)
         } else if (strchr(u.urooms, temple)) {
             /* chase player if inside temple & can sense him */
             if (m_cansenseu(priest)) {
-                gx = u.ux;
-                gy = u.uy;
+                gx = youmonst.mx;
+                gy = youmonst.my;
             }
             avoid = FALSE;
         }
@@ -432,7 +432,7 @@ intemple(int roomno)
                 struct monst *mtmp;
 
                 if (!((mtmp = makemon(&mons[PM_GHOST], level, 
-                                      u.ux, u.uy, NO_MM_FLAGS))))
+                                      youmonst.mx, youmonst.my, NO_MM_FLAGS))))
                     return;
                 if (!Blind || sensemon(mtmp))
                     pline(msgc_statusbad,
@@ -627,7 +627,7 @@ void
 ghod_hitsu(struct monst *priest)
 {
     int x, y, ax, ay, roomno = (int)temple_occupied(u.urooms);
-    int dx, dy; /* delta for xy vs u.uxy */
+    int dx, dy; /* delta for xy vs youmonst.mxy */
     struct mkroom *troom;
 
     if (!roomno || !has_shrine(priest))
@@ -636,48 +636,48 @@ ghod_hitsu(struct monst *priest)
     ax = x = mx_epri(priest)->shrpos.x;
     ay = y = mx_epri(priest)->shrpos.y;
     troom = &level->rooms[roomno - ROOMOFFSET];
-    dx = u.ux - x;
-    dy = u.uy - y;
+    dx = youmonst.mx - x;
+    dy = youmonst.my - y;
 
-    if ((u.ux == x && u.uy == y) || !linedup(u.ux, u.uy, x, y)) {
-        if (IS_DOOR(level->locations[u.ux][u.uy].typ)) {
+    if ((youmonst.mx == x && youmonst.my == y) || !linedup(youmonst.mx, youmonst.my, x, y)) {
+        if (IS_DOOR(level->locations[youmonst.mx][youmonst.my].typ)) {
 
-            if (u.ux == troom->lx - 1) {
+            if (youmonst.mx == troom->lx - 1) {
                 x = troom->hx;
-                y = u.uy;
-            } else if (u.ux == troom->hx + 1) {
+                y = youmonst.my;
+            } else if (youmonst.mx == troom->hx + 1) {
                 x = troom->lx;
-                y = u.uy;
-            } else if (u.uy == troom->ly - 1) {
-                x = u.ux;
+                y = youmonst.my;
+            } else if (youmonst.my == troom->ly - 1) {
+                x = youmonst.mx;
                 y = troom->hy;
-            } else if (u.uy == troom->hy + 1) {
-                x = u.ux;
+            } else if (youmonst.my == troom->hy + 1) {
+                x = youmonst.mx;
                 y = troom->ly;
             }
         } else {
             switch (rn2(4)) {
             case 0:
-                x = u.ux;
+                x = youmonst.mx;
                 y = troom->ly;
                 break;
             case 1:
-                x = u.ux;
+                x = youmonst.mx;
                 y = troom->hy;
                 break;
             case 2:
                 x = troom->lx;
-                y = u.uy;
+                y = youmonst.my;
                 break;
             default:
                 x = troom->hx;
-                y = u.uy;
+                y = youmonst.my;
                 break;
             }
         }
-        dx = u.ux - x;
-        dy = u.uy - y;
-        if (!linedup(u.ux, u.uy, x, y))
+        dx = youmonst.mx - x;
+        dy = youmonst.my - y;
+        if (!linedup(youmonst.mx, youmonst.my, x, y))
             return;
     }
 

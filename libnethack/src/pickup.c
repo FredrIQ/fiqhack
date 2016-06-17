@@ -57,20 +57,20 @@ check_here(boolean picked_some)
     boolean autoexploring = flags.occupation == occ_autoexplore;
 
     /* count the objects here */
-    for (obj = level->objects[u.ux][u.uy]; obj; obj = obj->nexthere) {
+    for (obj = level->objects[youmonst.mx][youmonst.my]; obj; obj = obj->nexthere) {
         if (obj != uchain)
             ct++;
     }
 
     /* If there are objects here, take a look unless autoexploring a previously
        explored space. */
-    if (ct && !(autoexploring && level->locations[u.ux][u.uy].mem_stepped)) {
+    if (ct && !(autoexploring && level->locations[youmonst.mx][youmonst.my].mem_stepped)) {
         if (flags.occupation == occ_move || travelling())
             action_completed();
         flush_screen();
         look_here(ct, picked_some, FALSE, Blind);
     } else {
-        read_engr_at(u.ux, u.uy);
+        read_engr_at(youmonst.mx, youmonst.my);
     }
 }
 
@@ -180,20 +180,20 @@ pickup(int what, enum u_interaction_mode uim)
         count = 0;
 
     if (!Engulfed) {
-        struct trap *ttmp = t_at(level, u.ux, u.uy);
+        struct trap *ttmp = t_at(level, youmonst.mx, youmonst.my);
 
         /* no auto-pick if no-pick move, nothing there, or in a pool */
         if (autopickup &&
-            (uim == uim_nointeraction || !OBJ_AT(u.ux, u.uy) ||
-             (is_pool(level, u.ux, u.uy) && !Underwater) ||
-             is_lava(level, u.ux, u.uy))) {
-            read_engr_at(u.ux, u.uy);
+            (uim == uim_nointeraction || !OBJ_AT(youmonst.mx, youmonst.my) ||
+             (is_pool(level, youmonst.mx, youmonst.my) && !Underwater) ||
+             is_lava(level, youmonst.mx, youmonst.my))) {
+            read_engr_at(youmonst.mx, youmonst.my);
             return 0;
         }
 
         /* no pickup if levitating & not on air or water level */
         if (!can_reach_floor()) {
-            read_engr_at(u.ux, u.uy);
+            read_engr_at(youmonst.mx, youmonst.my);
             return 0;
         }
 
@@ -205,7 +205,7 @@ pickup(int what, enum u_interaction_mode uim)
             if ((ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT) &&
                 (!u.utrap || (u.utrap && u.utraptype != TT_PIT)) &&
                 !Passes_walls) {
-                read_engr_at(u.ux, u.uy);
+                read_engr_at(youmonst.mx, youmonst.my);
                 return 0;
             }
         }
@@ -228,14 +228,14 @@ pickup(int what, enum u_interaction_mode uim)
 
         /* If there's anything here, stop running and travel, but not
            autoexplore unless it picks something up, which is handled later. */
-        if (OBJ_AT(u.ux, u.uy) && (flags.occupation == occ_move ||
+        if (OBJ_AT(youmonst.mx, youmonst.my) && (flags.occupation == occ_move ||
                                    flags.occupation == occ_travel))
             action_completed();
     }
 
     add_valid_menu_class(0);    /* reset */
     if (!Engulfed) {
-        objchain = level->objects[u.ux][u.uy];
+        objchain = level->objects[youmonst.mx][youmonst.my];
         traverse_how = BY_NEXTHERE;
     } else {
         objchain = u.ustuck->minvent;
@@ -281,12 +281,12 @@ menu_pickup:
         free(pick_list);
 
     if (!Engulfed) {
-        if (!OBJ_AT(u.ux, u.uy))
+        if (!OBJ_AT(youmonst.mx, youmonst.my))
             u.uundetected = 0;
 
         /* position may need updating (invisible hero) */
         if (n_picked)
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
 
         /* see whether there's anything else here, after auto-pickup is done */
         if (autopickup)
@@ -296,7 +296,7 @@ menu_pickup:
     /* Stop autoexplore if this pile hasn't been explored or auto-pickup (tried 
        to) pick up anything. */
     if (flags.occupation == occ_autoexplore &&
-        (!level->locations[u.ux][u.uy].mem_stepped ||
+        (!level->locations[youmonst.mx][youmonst.my].mem_stepped ||
          (autopickup && n_tried > 0)))
         action_completed();
 
@@ -1276,8 +1276,8 @@ doloot(const struct nh_cmd_arg *arg)
         pline(msgc_cancelled, "You have no hands!"); /* not `body_part(HAND)' */
         return 0;
     }
-    cc.x = u.ux;
-    cc.y = u.uy;
+    cc.x = youmonst.mx;
+    cc.y = youmonst.my;
 
 lootcont:
 
@@ -1346,7 +1346,7 @@ lootcont:
             unwield_silently(goldob);
             freeinv(goldob);
 
-            if (IS_THRONE(level->locations[u.ux][u.uy].typ)) {
+            if (IS_THRONE(level->locations[youmonst.mx][youmonst.my].typ)) {
                 struct obj *coffers = NULL;
                 int pass;
 
@@ -1365,7 +1365,7 @@ lootcont:
                     coffers->owt = weight(coffers);
                 } else {
                     struct monst *mon = makemon(courtmon(&u.uz, rng_main),
-                                                level, u.ux, u.uy, NO_MM_FLAGS);
+                                                level, youmonst.mx, youmonst.my, NO_MM_FLAGS);
 
                     if (mon) {
                         add_to_minv(mon, goldob, NULL);
@@ -1387,14 +1387,14 @@ lootcont:
     /* 
      * 3.3.1 introduced directional looting for some things.
      */
-    if (c != 'y' && mon_beside(u.ux, u.uy)) {
+    if (c != 'y' && mon_beside(youmonst.mx, youmonst.my)) {
         schar dz;
 
         if (!get_adjacent_loc
-            ("Loot in what direction?", "Invalid loot location", u.ux, u.uy,
+            ("Loot in what direction?", "Invalid loot location", youmonst.mx, youmonst.my,
              &cc, &dz))
             return 0;
-        if (cc.x == u.ux && cc.y == u.uy) {
+        if (cc.x == youmonst.mx && cc.y == youmonst.my) {
             underfoot = TRUE;
             if (container_at(cc.x, cc.y, FALSE))
                 goto lootcont;
@@ -1652,7 +1652,7 @@ in_container(struct obj *obj)
     if (obj_is_burning(obj))    /* this used to be part of freeinv() */
         snuff_lit(obj);
 
-    if (floor_container && costly_spot(u.ux, u.uy)) {
+    if (floor_container && costly_spot(youmonst.mx, youmonst.my)) {
         if (current_container->no_charge && !obj->unpaid) {
             /* don't sell when putting the item into your own container */
             obj->no_charge = 1;
@@ -1661,7 +1661,7 @@ in_container(struct obj *obj)
                are handled later */
             was_unpaid = obj->unpaid ? TRUE : FALSE;
             sellobj_state(SELL_DELIBERATE);
-            sellobj(obj, u.ux, u.uy);
+            sellobj(obj, youmonst.mx, youmonst.my);
             sellobj_state(SELL_NORMAL);
         }
     }
@@ -1688,7 +1688,7 @@ in_container(struct obj *obj)
         delete_contents(current_container);
         if (!floor_container)
             useup(current_container);
-        else if (obj_here(current_container, u.ux, u.uy))
+        else if (obj_here(current_container, youmonst.mx, youmonst.my))
             useupf(current_container, obj->quan);
         else
             panic("in_container:  bag not found.");
@@ -1799,9 +1799,9 @@ mbag_item_gone(int held, struct obj *item)
               doname(item));
 
     if (*u.ushops && (shkp = shop_keeper(level, *u.ushops)) != 0) {
-        if (held ? (boolean) item->unpaid : costly_spot(u.ux, u.uy))
+        if (held ? (boolean) item->unpaid : costly_spot(youmonst.mx, youmonst.my))
             loss =
-                stolen_value(item, u.ux, u.uy, (boolean) shkp->mpeaceful, TRUE);
+                stolen_value(item, youmonst.mx, youmonst.my, (boolean) shkp->mpeaceful, TRUE);
     }
     obfree(item, NULL);
     return loss;

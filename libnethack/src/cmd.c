@@ -651,7 +651,7 @@ wiz_show_seenv(const struct nh_cmd_arg *arg)
      * Each seenv description takes up 2 characters, so center
      * the seenv display around the hero.
      */
-    startx = max(0, u.ux - (COLNO / 4));
+    startx = max(0, youmonst.mx - (COLNO / 4));
     stopx = min(startx + (COLNO / 2), COLNO);
     /* can't have a line exactly 80 chars long */
     if (stopx - startx == COLNO / 2)
@@ -659,7 +659,7 @@ wiz_show_seenv(const struct nh_cmd_arg *arg)
 
     for (y = 0; y < ROWNO; y++) {
         for (x = startx, curx = 0; x < stopx; x++, curx += 2) {
-            if (x == u.ux && y == u.uy) {
+            if (x == youmonst.mx && y == youmonst.my) {
                 row[curx] = row[curx + 1] = '@';
             } else {
                 v = level->locations[x][y].seenv & 0xff;
@@ -704,7 +704,7 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
     add_menutext(&menu, "");
     for (y = 0; y < ROWNO; y++) {
         for (x = 0; x < COLNO; x++) {
-            if (x == u.ux && y == u.uy)
+            if (x == youmonst.mx && y == youmonst.my)
                 row[x] = '@';
             else {
                 v = viz_array[y][x];    /* data access should be hidden */
@@ -740,7 +740,7 @@ wiz_show_wmodes(const struct nh_cmd_arg *arg)
     for (y = 0; y < ROWNO; y++) {
         for (x = 0; x < COLNO; x++) {
             loc = &level->locations[x][y];
-            if (x == u.ux && y == u.uy)
+            if (x == youmonst.mx && y == youmonst.my)
                 row[x] = '@';
             else if (IS_WALL(loc->typ) || loc->typ == SDOOR)
                 row[x] = '0' + (loc->wall_info & WM_MASK);
@@ -1219,7 +1219,7 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD('E', "engrave", "Write on the floor with %s", 0);
 
     /* pay for this item */
-    if ((shkp = shop_keeper(level, *in_rooms(level, u.ux, u.uy, SHOPBASE))) &&
+    if ((shkp = shop_keeper(level, *in_rooms(level, youmonst.mx, youmonst.my, SHOPBASE))) &&
         inhishop(shkp) && obj->unpaid) {
         char desc[80];  /* == sizeof(obj_cmd[i].desc) */
         long price = unpaid_cost(obj);
@@ -1314,7 +1314,7 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD('z', "zap", "Zap %s to release its magic", 0);
 
     /* sacrifice object */
-    if (IS_ALTAR(level->locations[u.ux][u.uy].typ) && !Engulfed) {
+    if (IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ) && !Engulfed) {
         if (In_endgame(&u.uz) &&
             (obj->otyp == AMULET_OF_YENDOR ||
              obj->otyp == FAKE_AMULET_OF_YENDOR))
@@ -1808,8 +1808,8 @@ dotravel(const struct nh_cmd_arg *arg)
     cc.y = flags.travelcc.y;
     if (cc.x == -1 && cc.y == -1) {
         /* No cached destination, start attempt from current position */
-        cc.x = u.ux;
-        cc.y = u.uy;
+        cc.x = youmonst.mx;
+        cc.y = youmonst.my;
     }
     if (!(arg->argtype & CMD_ARG_POS))
         pline(msgc_uiprompt, "Where do you want to travel to?");

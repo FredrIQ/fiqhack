@@ -72,9 +72,9 @@ but that's really hard.
  */
 
 #define ugod_is_angry() (u.ualign.record < 0)
-#define on_altar()      (IS_ALTAR(level->locations[u.ux][u.uy].typ) && \
+#define on_altar()      (IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ) && \
                          !Engulfed)
-#define on_shrine()     ((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) \
+#define on_shrine()     ((level->locations[youmonst.mx][youmonst.my].altarmask & AM_SHRINE) \
                             != 0)
 #define a_align(x,y)    ((aligntyp)Amask2align( \
                             level->locations[x][y].altarmask & AM_MASK))
@@ -112,8 +112,8 @@ in_trouble(void)
         for (j = -1; j <= 1; j++) {
             if (!i && !j)
                 continue;
-            if (!isok(u.ux + i, u.uy + j) ||
-                IS_ROCK(level->locations[u.ux + i][u.uy + j].typ)
+            if (!isok(youmonst.mx + i, youmonst.my + j) ||
+                IS_ROCK(level->locations[youmonst.mx + i][youmonst.my + j].typ)
                 || (blocked_boulder(i, j) && !throws_rocks(youmonst.data)))
                 count++;
         }
@@ -437,14 +437,14 @@ god_zaps_you(aligntyp resp_god)
     } else {
         pline(msgc_alignbad, "Suddenly, a bolt of lightning strikes you!");
         if (Reflecting) {
-            shieldeff(u.ux, u.uy);
+            shieldeff(youmonst.mx, youmonst.my);
             if (Blind)
                 pline(msgc_playerimmune, "For some reason you're unaffected.");
             else
                 mon_reflects(&youmonst, NULL, FALSE, 
                              "%s reflects from %s %s.", "It");
         } else if (Shock_resistance) {
-            shieldeff(u.ux, u.uy);
+            shieldeff(youmonst.mx, youmonst.my);
             pline(msgc_playerimmune, "It seems not to affect you.");
         } else
             fry_by_god(resp_god);
@@ -563,7 +563,7 @@ angrygods(aligntyp resp_god)
         godvoice(msgc_npcvoice, resp_god, NULL);
         verbalize(msgc_alignbad, "Thou durst %s me?",
                   (on_altar() &&
-                   (a_align(u.ux, u.uy) != resp_god)) ? "scorn" : "call upon");
+                   (a_align(youmonst.mx, youmonst.my) != resp_god)) ? "scorn" : "call upon");
         pline(msgc_levelwarning,
               "\"Then die, %s!\"", mortal_or_creature(youmonst.data, TRUE));
         summon_minion(resp_god, FALSE);
@@ -1025,7 +1025,7 @@ pleased(aligntyp g_align)
                               rng_spellbook_gift);
             }
             bless(otmp);
-            place_object(otmp, level, u.ux, u.uy);
+            place_object(otmp, level, youmonst.mx, youmonst.my);
             break;
         default:
             impossible("Confused deity!");
@@ -1053,7 +1053,7 @@ water_prayer(boolean bless_water)
     long changed = 0;
     boolean other = FALSE, bc_known = !(Blind || Hallucination);
 
-    for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
+    for (otmp = level->objects[youmonst.mx][youmonst.my]; otmp; otmp = otmp->nexthere) {
         /* turn water into (un)holy water */
         if (otmp->otyp == POT_WATER &&
             (bless_water ? !otmp->blessed : !otmp->cursed)) {
@@ -1143,8 +1143,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
 {
     int value = 0;
     int pm;
-    aligntyp altaralign = a_align(u.ux, u.uy);
-    boolean sanctum = level->locations[u.ux][u.uy].altarmask & AM_SANCTUM;
+    aligntyp altaralign = a_align(youmonst.mx, youmonst.my);
+    boolean sanctum = level->locations[youmonst.mx][youmonst.my].altarmask & AM_SANCTUM;
     int cnt; /* for loop initial declarations are only allowed in C99 mode */
     struct obj *otmp;
 
@@ -1213,9 +1213,9 @@ dosacrifice(const struct nh_cmd_arg *arg)
                       urace.adj);
                 if (!sanctum) {
                     /* This is supposed to be &= */
-                    level->locations[u.ux][u.uy].altarmask &=
+                    level->locations[youmonst.mx][youmonst.my].altarmask &=
                         AM_SHRINE & AM_SANCTUM;
-                    level->locations[u.ux][u.uy].altarmask |= AM_CHAOTIC;
+                    level->locations[youmonst.mx][youmonst.my].altarmask |= AM_CHAOTIC;
                 }
                 angry_priest();
             } else {
@@ -1228,9 +1228,9 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     !sanctum) {
                     pline(msgc_badidea, "The blood floods the altar, which "
                           "vanishes in %s cloud!", an(hcolor("black")));
-                    level->locations[u.ux][u.uy].typ = ROOM;
-                    level->locations[u.ux][u.uy].altarmask = 0;
-                    newsym(u.ux, u.uy);
+                    level->locations[youmonst.mx][youmonst.my].typ = ROOM;
+                    level->locations[youmonst.mx][youmonst.my].altarmask = 0;
+                    newsym(youmonst.mx, youmonst.my);
                     angry_priest();
                     demonless_msg = "cloud dissipates";
                 } else {
@@ -1241,7 +1241,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 }
                 if ((pm = dlord(altaralign)) != NON_PM &&
                     ((dmon =
-                      makemon(&mons[pm], level, u.ux, u.uy, NO_MM_FLAGS)))) {
+                      makemon(&mons[pm], level, youmonst.mx, youmonst.my, NO_MM_FLAGS)))) {
                     pline(msgc_levelwarning, "You have summoned %s!",
                           a_monnam(dmon));
                     if (sgn(u.ualign.type) == sgn(dmon->data->maligntyp))
@@ -1470,9 +1470,9 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     exercise(A_WIS, TRUE);
                     change_luck(1);
                     /* Yes, this is supposed to be &=, not |= */
-                    level->locations[u.ux][u.uy].altarmask &=
+                    level->locations[youmonst.mx][youmonst.my].altarmask &=
                         AM_SHRINE & AM_SANCTUM;
-                    level->locations[u.ux][u.uy].altarmask |=
+                    level->locations[youmonst.mx][youmonst.my].altarmask |=
                         Align2amask(u.ualign.type);
                     if (!Blind)
                         pline_implied(
@@ -1570,7 +1570,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
             if (u.ulevel > 2 && u.uluck >= 0) {
                 if (!rn2_on_rng(10 + (2 * u.ugifts * nartifacts),
                                 rng_altar_gift)) {
-                    otmp = mk_artifact(level, NULL, a_align(u.ux, u.uy),
+                    otmp = mk_artifact(level, NULL, a_align(youmonst.mx, youmonst.my),
                                        rng_altar_gift);
                     if (otmp) {
                         if (otmp->spe < 0)
@@ -1627,7 +1627,7 @@ can_pray(boolean praying)
 {
     int alignment;
 
-    aligntyp align = on_altar()? a_align(u.ux, u.uy) : u.ualign.type;
+    aligntyp align = on_altar()? a_align(youmonst.mx, youmonst.my) : u.ualign.type;
 
     if (is_demon(youmonst.data) && (align != A_CHAOTIC)) {
         if (praying)
@@ -1895,7 +1895,7 @@ mdoturn(struct musable *m)
 const char *
 a_gname(void)
 {
-    return a_gname_at(u.ux, u.uy);
+    return a_gname_at(youmonst.mx, youmonst.my);
 }
 
 /* returns the name of an altar's deity */
@@ -2057,7 +2057,7 @@ blocked_boulder(int dx, int dy)
     struct obj *otmp;
     long count = 0L;
 
-    for (otmp = level->objects[u.ux + dx][u.uy + dy]; otmp;
+    for (otmp = level->objects[youmonst.mx + dx][youmonst.my + dy]; otmp;
          otmp = otmp->nexthere) {
         if (otmp->otyp == BOULDER)
             count += otmp->quan;
@@ -2073,11 +2073,11 @@ blocked_boulder(int dx, int dy)
                            don't force them to push it first to find out */
     }
 
-    if (!isok(u.ux + 2 * dx, u.uy + 2 * dy))
+    if (!isok(youmonst.mx + 2 * dx, youmonst.my + 2 * dy))
         return TRUE;
-    if (IS_ROCK(level->locations[u.ux + 2 * dx][u.uy + 2 * dy].typ))
+    if (IS_ROCK(level->locations[youmonst.mx + 2 * dx][youmonst.my + 2 * dy].typ))
         return TRUE;
-    if (sobj_at(BOULDER, level, u.ux + 2 * dx, u.uy + 2 * dy))
+    if (sobj_at(BOULDER, level, youmonst.mx + 2 * dx, youmonst.my + 2 * dy))
         return TRUE;
 
     return FALSE;

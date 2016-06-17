@@ -297,7 +297,7 @@ map_object(struct obj *obj, int show, boolean reroll_hallu)
 void
 map_invisible(xchar x, xchar y)
 {
-    if (x != u.ux || y != u.uy) {       /* don't display I at hero's location */
+    if (x != youmonst.mx || y != youmonst.my) {       /* don't display I at hero's location */
         if (level->flags.hero_memory)
             level->locations[x][y].mem_invis = 1;
         dbuf_set(x, y, level->locations[x][y].mem_bg,
@@ -507,6 +507,9 @@ vismon_at(struct level *lev, xchar x, xchar y)
 struct monst *
 mvismon_at(struct monst *mon, struct level *lev, xchar x, xchar y)
 {
+    if (!lev)
+        panic("mvismon_at: lev is null?");
+
     struct monst *mtmp = dm_at(lev, x, y);
 
     /* If a monster is displaced at this location, return it if the
@@ -595,7 +598,7 @@ feel_location(xchar x, xchar y)
 
     /* Set the seen vector as if the hero had seen it.  It doesn't matter */
     /* if the hero is levitating or not.  */
-    set_seenv(loc, u.ux, u.uy, x, y);
+    set_seenv(loc, youmonst.mx, youmonst.my, x, y);
 
     if (Levitation && !Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz)) {
         /* 
@@ -648,7 +651,7 @@ feel_location(xchar x, xchar y)
         }
     }
     /* draw monster on top if we can sense it */
-    if ((x != u.ux || y != u.uy) && (mon = m_at(level, x, y)) && sensemon(mon))
+    if ((x != youmonst.mx || y != youmonst.my) && (mon = m_at(level, x, y)) && sensemon(mon))
         display_monster(x, y, mon,
                         (tp_sensemon(mon) ||
                          MATCH_WARN_OF_MON(mon)) ? PHYSICALLY_SEEN : DETECTED,
@@ -683,7 +686,7 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
 
     /* only permit updating the hero when swallowed */
     if (Engulfed) {
-        if (x == u.ux && y == u.uy)
+        if (x == youmonst.mx && y == youmonst.my)
             display_self();
         return;
     }
@@ -693,10 +696,10 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
 
         if (!is_pool(level, x, y))
             return;
-        dx = x - u.ux;
+        dx = x - youmonst.mx;
         if (dx < 0)
             dx = -dx;
-        dy = y - u.uy;
+        dy = y - youmonst.my;
         if (dy < 0)
             dy = -dy;
         if (dx > 1 || dy > 1)
@@ -734,7 +737,7 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
          */
         loc->waslit = (loc->lit != 0);  /* remember lit condition */
 
-        if (x == u.ux && y == u.uy) {
+        if (x == youmonst.mx && y == youmonst.my) {
             if (senseself()) {
                 /* map *under* self */
                 map_location(x, y, 0, reroll_hallucinated_appearances);
@@ -791,8 +794,8 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
 
     /* Can't see the location. */
     else {
-        if (x == u.ux && y == u.uy) {
-            feel_location(u.ux, u.uy);  /* forces an update */
+        if (x == youmonst.mx && y == youmonst.my) {
+            feel_location(youmonst.mx, youmonst.my);  /* forces an update */
 
             if (senseself())
                 display_self();
@@ -1046,41 +1049,41 @@ swallowed(int first)
     }
 
     swallower = monsndx(u.ustuck->data);
-    /* assume isok(u.ux,u.uy) */
-    left_ok = isok(u.ux - 1, u.uy);
-    rght_ok = isok(u.ux + 1, u.uy);
+    /* assume isok(youmonst.mx,youmonst.my) */
+    left_ok = isok(youmonst.mx - 1, youmonst.my);
+    rght_ok = isok(youmonst.mx + 1, youmonst.my);
     /* 
      *  Display the hero surrounded by the monster's stomach.
      */
-    if (isok(u.ux, u.uy - 1)) {
+    if (isok(youmonst.mx, youmonst.my - 1)) {
         if (left_ok)
-            dbuf_set_effect(u.ux - 1, u.uy - 1,
+            dbuf_set_effect(youmonst.mx - 1, youmonst.my - 1,
                             swallow_to_effect(swallower, S_sw_tl));
-        dbuf_set_effect(u.ux, u.uy - 1, swallow_to_effect(swallower, S_sw_tc));
+        dbuf_set_effect(youmonst.mx, youmonst.my - 1, swallow_to_effect(swallower, S_sw_tc));
         if (rght_ok)
-            dbuf_set_effect(u.ux + 1, u.uy - 1,
+            dbuf_set_effect(youmonst.mx + 1, youmonst.my - 1,
                             swallow_to_effect(swallower, S_sw_tr));
     }
 
     if (left_ok)
-        dbuf_set_effect(u.ux - 1, u.uy, swallow_to_effect(swallower, S_sw_ml));
+        dbuf_set_effect(youmonst.mx - 1, youmonst.my, swallow_to_effect(swallower, S_sw_ml));
     display_self();
     if (rght_ok)
-        dbuf_set_effect(u.ux + 1, u.uy, swallow_to_effect(swallower, S_sw_mr));
+        dbuf_set_effect(youmonst.mx + 1, youmonst.my, swallow_to_effect(swallower, S_sw_mr));
 
-    if (isok(u.ux, u.uy + 1)) {
+    if (isok(youmonst.mx, youmonst.my + 1)) {
         if (left_ok)
-            dbuf_set_effect(u.ux - 1, u.uy + 1,
+            dbuf_set_effect(youmonst.mx - 1, youmonst.my + 1,
                             swallow_to_effect(swallower, S_sw_bl));
-        dbuf_set_effect(u.ux, u.uy + 1, swallow_to_effect(swallower, S_sw_bc));
+        dbuf_set_effect(youmonst.mx, youmonst.my + 1, swallow_to_effect(swallower, S_sw_bc));
         if (rght_ok)
-            dbuf_set_effect(u.ux + 1, u.uy + 1,
+            dbuf_set_effect(youmonst.mx + 1, youmonst.my + 1,
                             swallow_to_effect(swallower, S_sw_br));
     }
 
     /* Update the swallowed position. */
-    lastx = u.ux;
-    lasty = u.uy;
+    lastx = youmonst.mx;
+    lasty = youmonst.my;
 }
 
 /*
@@ -1117,16 +1120,16 @@ under_water(int mode)
                 if (isok(x, y))
                     dbuf_set(x, y, S_unexplored, 0, 0, 0, 0, 0, 0, 0, 0);
     }
-    for (x = u.ux - 1; x <= u.ux + 1; x++)
-        for (y = u.uy - 1; y <= u.uy + 1; y++)
+    for (x = youmonst.mx - 1; x <= youmonst.mx + 1; x++)
+        for (y = youmonst.my - 1; y <= youmonst.my + 1; y++)
             if (isok(x, y) && is_pool(level, x, y)) {
-                if (Blind && !(x == u.ux && y == u.uy))
+                if (Blind && !(x == youmonst.mx && y == youmonst.my))
                     dbuf_set(x, y, S_unexplored, 0, 0, 0, 0, 0, 0, 0, 0);
                 else
                     newsym(x, y);
             }
-    lastx = u.ux;
-    lasty = u.uy;
+    lastx = youmonst.mx;
+    lasty = youmonst.my;
 }
 
 /*
@@ -1155,7 +1158,7 @@ under_ground(int mode)
     }
     /* limited update */
     else
-        newsym(u.ux, u.uy);
+        newsym(youmonst.mx, youmonst.my);
 }
 
 
@@ -1193,7 +1196,7 @@ see_monsters(boolean reroll_hallucinated_appearances)
     }
     /* when mounted, hero's location gets caught by monster loop */
     if (!u.usteed)
-        newsym(u.ux, u.uy);
+        newsym(youmonst.mx, youmonst.my);
 }
 
 /*
@@ -1257,7 +1260,7 @@ see_traps(boolean reroll_hallucinated_appearances)
 void
 display_self(void)
 {
-    int x = u.ux, y = u.uy;
+    int x = youmonst.mx, y = youmonst.my;
 
     if (u.usteed && mon_visible(u.usteed)) {
         dbuf_set(x, y, level->locations[x][y].mem_bg,
@@ -1622,7 +1625,7 @@ flush_screen(void)
     if (turnstate.delay_flushing)
         return;
 
-    update_screen(dbuf, u.ux, u.uy);
+    update_screen(dbuf, youmonst.mx, youmonst.my);
 
     if (!program_state.panicking)
         bot();

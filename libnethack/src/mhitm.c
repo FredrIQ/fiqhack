@@ -2001,7 +2001,7 @@ do_at_area(struct level *lev)
                 continue;
             /* is there a monster here */
             mdef = m_at(lev, x, y);
-            if (!mdef && x == u.ux && y == u.uy && lev == level)
+            if (!mdef && x == youmonst.mx && y == youmonst.my && lev == level)
                 mdef = &youmonst;
             if (!mdef)
                 continue;

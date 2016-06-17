@@ -963,11 +963,11 @@ done_noreturn(int how, const char *killer)
                         urace.femalenum !=
                         NON_PM) ? urace.femalenum : urace.malenum;
             }
-            corpse = mk_named_object(CORPSE, &mons[mnum], u.ux, u.uy,
+            corpse = mk_named_object(CORPSE, &mons[mnum], youmonst.mx, youmonst.my,
                                      u.uplname);
             /* how <= LAST_KILLER is required for bones_ok */
             pbuf = msgcat_many(u.uplname, ", ", killer, NULL);
-            make_grave(level, u.ux, u.uy, pbuf);
+            make_grave(level, youmonst.mx, youmonst.my, pbuf);
         }
     }
 

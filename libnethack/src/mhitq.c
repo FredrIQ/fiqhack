@@ -129,7 +129,7 @@ mattackq(struct monst *mtmp, int x, int y)
     const struct attack *mattk;
     int i;
 
-    if (x == u.ux && y == u.uy)
+    if (x == youmonst.mx && y == youmonst.my)
         mdef = &youmonst;
 
     /* From monmove.c: handle monster counterattacks. */

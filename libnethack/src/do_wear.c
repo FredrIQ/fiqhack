@@ -1407,7 +1407,7 @@ canwearobj(struct obj *otmp, long *mask,
                 pline(msgc, "Your %s is trapped!", body_part(FOOT));
             } else {
                 pline(msgc, "Your %s are stuck in the %s!",
-                      makeplural(body_part(FOOT)), surface(u.ux, u.uy));
+                      makeplural(body_part(FOOT)), surface(youmonst.mx, youmonst.my));
             }
             return FALSE;
         }
@@ -1600,7 +1600,7 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
             return FALSE;
         } else if (u.utrap && u.utraptype == TT_INFLOOR) {
             pline(msgc, "You are stuck in the %s, and cannot pull your %s out.",
-                  surface(u.ux, u.uy), makeplural(body_part(FOOT)));
+                  surface(youmonst.mx, youmonst.my), makeplural(body_part(FOOT)));
             return FALSE;
         }
     }

@@ -189,7 +189,7 @@ surface(int x, int y)
 {
     struct rm *loc = &level->locations[x][y];
 
-    if ((x == u.ux) && (y == u.uy) && Engulfed && is_animal(u.ustuck->data))
+    if ((x == youmonst.mx) && (y == youmonst.my) && Engulfed && is_animal(u.ustuck->data))
         return "maw";
     else if (IS_AIR(loc->typ) && Is_airlevel(&u.uz))
         return "air";
@@ -272,7 +272,7 @@ void
 u_wipe_engr(int cnt)
 {
     if (can_reach_floor())
-        wipe_engr_at(level, u.ux, u.uy, cnt);
+        wipe_engr_at(level, youmonst.mx, youmonst.my, cnt);
 }
 
 
@@ -493,7 +493,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     int maxelen;                /* Max allowable length of engraving text */
     int helpless_time;          /* Temporary for calculating helplessness */
     const char *helpless_endmsg;/* Temporary for helpless end message */
-    struct engr *oep = engr_at(level, u.ux, u.uy);
+    struct engr *oep = engr_at(level, youmonst.mx, youmonst.my);
     struct obj *otmp;
 
     /* The current engraving */
@@ -515,18 +515,18 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             return 0;
         } else if (is_whirly(u.ustuck->data)) {
             pline(msgc_cancelled, "You can't reach the %s.",
-                  surface(u.ux, u.uy));
+                  surface(youmonst.mx, youmonst.my));
             return 0;
         } else
             jello = TRUE;
-    } else if (is_lava(level, u.ux, u.uy)) {
+    } else if (is_lava(level, youmonst.mx, youmonst.my)) {
         pline(msgc_cancelled, "You can't write on the lava!");
         return 0;
     } else if (Underwater) {
         pline(msgc_cancelled, "You can't write underwater!");
         return 0;
-    } else if (is_pool(level, u.ux, u.uy) ||
-               IS_FOUNTAIN(level->locations[u.ux][u.uy].typ)) {
+    } else if (is_pool(level, youmonst.mx, youmonst.my) ||
+               IS_FOUNTAIN(level->locations[youmonst.mx][youmonst.my].typ)) {
         pline(msgc_cancelled, "You can't write on the water!");
         return 0;
     }
@@ -570,27 +570,27 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         return 0;
     }
     if (otmp->oclass != WAND_CLASS && !can_reach_floor()) {
-        pline(msgc_cancelled, "You can't reach the %s!", surface(u.ux, u.uy));
+        pline(msgc_cancelled, "You can't reach the %s!", surface(youmonst.mx, youmonst.my));
         return 0;
     }
-    if (IS_ALTAR(level->locations[u.ux][u.uy].typ)) {
+    if (IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ)) {
         /* TODO: This takes zero time but has game effects (sort-of the reverse
            of msgc_cancelled1). */
         pline(msgc_badidea, "You make a motion towards the altar with your %s.",
               writer);
-        altar_wrath(u.ux, u.uy);
+        altar_wrath(youmonst.mx, youmonst.my);
         return 0;
     }
-    if (IS_GRAVE(level->locations[u.ux][u.uy].typ)) {
+    if (IS_GRAVE(level->locations[youmonst.mx][youmonst.my].typ)) {
         if (otmp == &zeroobj) { /* using only finger */
             pline(msgc_cancelled,
                   "You would only make a small smudge on the %s.",
-                  surface(u.ux, u.uy));
+                  surface(youmonst.mx, youmonst.my));
             return 0;
-        } else if (!level->locations[u.ux][u.uy].disturbed) {
+        } else if (!level->locations[youmonst.mx][youmonst.my].disturbed) {
             pline(msgc_badidea, "You disturb the undead!");
-            level->locations[u.ux][u.uy].disturbed = 1;
-            makemon(&mons[PM_GHOUL], level, u.ux, u.uy, NO_MM_FLAGS);
+            level->locations[youmonst.mx][youmonst.my].disturbed = 1;
+            makemon(&mons[PM_GHOUL], level, youmonst.mx, youmonst.my, NO_MM_FLAGS);
             exercise(A_WIS, FALSE);
             return 1;
         }
@@ -636,7 +636,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     case SPBOOK_CLASS:
         /* also msgc_cancelled1 */
         pline(msgc_mispaste, "Your %s would get %s.", xname(otmp),
-              is_ice(level, u.ux, u.uy) ? "all frosty" : "too dirty");
+              is_ice(level, youmonst.mx, youmonst.my) ? "all frosty" : "too dirty");
         ptext = FALSE;
         break;
 
@@ -681,14 +681,14 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             case WAN_SLOW_MONSTER:
                 if (!Blind) {
                     post_engr_text = msgprintf("The bugs on the %s slow down!",
-                                               surface(u.ux, u.uy));
+                                               surface(youmonst.mx, youmonst.my));
                     doknown_after = TRUE;
                 }
                 break;
             case WAN_SPEED_MONSTER:
                 if (!Blind) {
                     post_engr_text = msgprintf("The bugs on the %s speed up!",
-                                               surface(u.ux, u.uy));
+                                               surface(youmonst.mx, youmonst.my));
                     doknown_after = TRUE;
                 }
                 break;
@@ -715,7 +715,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 if (!Blind) {
                     post_engr_text = msgprintf(
                         "The %s is riddled by bullet holes!",
-                        surface(u.ux, u.uy));
+                        surface(youmonst.mx, youmonst.my));
                     doknown_after = TRUE;
                 }
                 break;
@@ -725,7 +725,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             case WAN_DEATH:
                 if (!Blind) {
                     post_engr_text = msgprintf(
-                        "The bugs on the %s stop moving!", surface(u.ux, u.uy));
+                        "The bugs on the %s stop moving!", surface(youmonst.mx, youmonst.my));
                 }
                 break;
 
@@ -741,7 +741,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 if (oep && oep->engr_type != HEADSTONE) {
                     if (!Blind)
                         pline(msgc_info, "The engraving on the %s vanishes!",
-                              surface(u.ux, u.uy));
+                              surface(youmonst.mx, youmonst.my));
                     dengr = TRUE;
                 }
                 break;
@@ -749,7 +749,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 if (oep && oep->engr_type != HEADSTONE) {
                     if (!Blind)
                         pline(msgc_info, "The engraving on the %s vanishes!",
-                              surface(u.ux, u.uy));
+                              surface(youmonst.mx, youmonst.my));
                     teleengr = TRUE;
                 }
                 break;
@@ -765,9 +765,9 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 }
                 if (!Blind)
                     post_engr_text =
-                        IS_GRAVE(level->locations[u.ux][u.uy].typ) ?
+                        IS_GRAVE(level->locations[youmonst.mx][youmonst.my].typ) ?
                         "Chips fly out from the headstone." :
-                        is_ice(level, u.ux, u.uy) ?
+                        is_ice(level, youmonst.mx, youmonst.my) ?
                         "Ice chips fly up from the ice surface!" :
                         "Gravel flies up from the floor.";
                 else
@@ -809,7 +809,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         } else { /* i.e. not zappable */
             if (!can_reach_floor()) {
                 pline(wrestable(otmp) ? msgc_failrandom : msgc_cancelled,
-                      "You can't reach the %s!", surface(u.ux, u.uy));
+                      "You can't reach the %s!", surface(youmonst.mx, youmonst.my));
                 /* If it's a wrestable wand, the player wasted a turn trying. */
                 if (wrestable(otmp))
                     return 1;
@@ -858,7 +858,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                     else
                         pline(msgc_yafm, "Your %s %s %s.", xname(otmp),
                               otense(otmp, "get"),
-                              is_ice(level, u.ux, u.uy) ? "frosty" : "dusty");
+                              is_ice(level, youmonst.mx, youmonst.my) ? "frosty" : "dusty");
                     dengr = TRUE;
                 } else
                     pline(msgc_cancelled1,
@@ -867,7 +867,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             else
                 pline(msgc_yafm, "Your %s %s %s.", xname(otmp),
                       otense(otmp, "get"),
-                      is_ice(level, u.ux, u.uy) ? "frosty" : "dusty");
+                      is_ice(level, youmonst.mx, youmonst.my) ? "frosty" : "dusty");
             break;
         default:
             break;
@@ -880,7 +880,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         break;
     }
 
-    if (IS_GRAVE(level->locations[u.ux][u.uy].typ)) {
+    if (IS_GRAVE(level->locations[youmonst.mx][youmonst.my].typ)) {
         if (type == ENGRAVE || type == 0)
             type = HEADSTONE;
         else {
@@ -919,7 +919,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     /* Something has changed the engraving here */
     if (*buf) {
-        make_engr_at(level, u.ux, u.uy, buf, moves, type);
+        make_engr_at(level, youmonst.mx, youmonst.my, buf, moves, type);
         pline(msgc_info, "The engraving now reads: \"%s\".", buf);
         ptext = FALSE;
     }
@@ -927,11 +927,11 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     if (zapwand && (otmp->spe < 0)) {
         pline(msgc_itemloss, "%s %sturns to dust.", The(xname(otmp)),
               Blind ? "" : "glows violently, then ");
-        if (!IS_GRAVE(level->locations[u.ux][u.uy].typ))
+        if (!IS_GRAVE(level->locations[youmonst.mx][youmonst.my].typ))
             pline(msgc_yafm,
                   "You are not going to get anywhere trying to write in the "
                   "%s with your dust.",
-                  is_ice(level, u.ux, u.uy) ? "frost" : "dust");
+                  is_ice(level, youmonst.mx, youmonst.my) ? "frost" : "dust");
         useup(otmp);
         ptext = FALSE;
     }
@@ -939,7 +939,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     if (!ptext) {       /* Early exit for some implements. */
         if (otmp->oclass == WAND_CLASS && !can_reach_floor())
             pline(msgc_cancelled1, "You can't reach the %s!",
-                  surface(u.ux, u.uy));
+                  surface(youmonst.mx, youmonst.my));
         return 1;
     }
 
@@ -988,10 +988,10 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                        (type == ENGR_BLOOD)) {
                 pline(msgc_cancelled1,
                       "You cannot wipe out the message that is %s the %s here.",
-                      oep->engr_type == BURN ? (is_ice(level, u.ux, u.uy) ?
+                      oep->engr_type == BURN ? (is_ice(level, youmonst.mx, youmonst.my) ?
                                                 "melted into" : "burned into") :
                       "engraved in",
-                      surface(u.ux, u.uy));
+                      surface(youmonst.mx, youmonst.my));
                 return 1;
             } else if ((type != oep->engr_type) || (c == 'n')) {
                 if (!Blind || can_reach_floor())
@@ -1002,7 +1002,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         }
     }
 
-    eloc = surface(u.ux, u.uy);
+    eloc = surface(youmonst.mx, youmonst.my);
     switch (type) {
     default:
         everb = (oep &&
@@ -1010,7 +1010,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         break;
     case DUST:
         everb = (oep && !eow ? "add to the writing in" : "write in");
-        eloc = is_ice(level, u.ux, u.uy) ? "frost" : "dust";
+        eloc = is_ice(level, youmonst.mx, youmonst.my) ? "frost" : "dust";
         break;
     case HEADSTONE:
         everb = (oep && !eow ? "add to the epitaph on" : "engrave on");
@@ -1019,10 +1019,10 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         everb = (oep && !eow ? "add to the engraving in" : "engrave in");
         break;
     case BURN:
-        everb = (oep && !eow ? (is_ice(level, u.ux, u.uy) ?
+        everb = (oep && !eow ? (is_ice(level, youmonst.mx, youmonst.my) ?
                                 "add to the text melted into" :
                                 "add to the text burned into") :
-                 (is_ice(level, u.ux, u.uy) ? "melt into" : "burn into"));
+                 (is_ice(level, youmonst.mx, youmonst.my) ? "melt into" : "burn into"));
         break;
     case MARK:
         everb = (oep && !eow ? "add to the graffiti on" : "scribble on");
@@ -1139,7 +1139,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         helpless_endmsg = "You finish engraving.";
         break;
     case BURN:
-        helpless_endmsg =  is_ice(level, u.ux, u.uy) ?
+        helpless_endmsg =  is_ice(level, youmonst.mx, youmonst.my) ?
             "You finish melting your message into the ice." :
             "You finish burning your message into the floor.";
         break;
@@ -1184,7 +1184,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     buf = msgcat(buf, msg_from_string(ebuf_copy));
 
-    make_engr_at(level, u.ux, u.uy, buf, moves + helpless_time, type);
+    make_engr_at(level, youmonst.mx, youmonst.my, buf, moves + helpless_time, type);
 
     if (strstri(buf, "Elbereth")) {
         break_conduct(conduct_elbereth);

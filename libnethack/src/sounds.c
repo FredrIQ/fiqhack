@@ -839,7 +839,7 @@ dotalk(const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    if (!Blind && (otmp = shop_object(u.ux, u.uy)) != NULL) {
+    if (!Blind && (otmp = shop_object(youmonst.mx, youmonst.my)) != NULL) {
         /* standing on something in a shop and chatting causes the shopkeeper
            to describe the price(s).  This can inhibit other chatting inside a
            shop, but that shouldn't matter much.  shop_object() returns an
@@ -879,8 +879,8 @@ dotalk(const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    tx = u.ux + dx;
-    ty = u.uy + dy;
+    tx = youmonst.mx + dx;
+    ty = youmonst.my + dy;
 
     if (!isok(tx, ty)) {
         pline(msgc_cancelled,

@@ -43,7 +43,7 @@ watch_on_duty(struct monst *mtmp)
 {
     int x, y;
 
-    if (mtmp->mpeaceful && in_town(u.ux, u.uy) && !blind(mtmp) &&
+    if (mtmp->mpeaceful && in_town(youmonst.mx, youmonst.my) && !blind(mtmp) &&
         m_canseeu(mtmp) && !rn2(3)) {
 
         /* If you're digging, or if you're picking a lock (chests are OK), the
@@ -58,8 +58,8 @@ watch_on_duty(struct monst *mtmp)
             schar dx, dy, dz;
 
             dir_to_delta(flags.last_arg.dir, &dx, &dy, &dz);
-            x = u.ux + dx;
-            y = u.uy + dy;
+            x = youmonst.mx + dx;
+            y = youmonst.my + dy;
 
             if (isok(x, y))
                 watch_warn(mtmp, x, y, FALSE);
@@ -90,7 +90,7 @@ dochugw(struct monst *mtmp)
 
            TODO: This can spoil the existence of walls in dark areas. */
         (canseemon(mtmp) || (sensemon(mtmp) && couldsee(mtmp->mx, mtmp->my))) &&
-        mtmp->mcanmove && !noattacks(mtmp->data) && !onscary(u.ux, u.uy, mtmp))
+        mtmp->mcanmove && !noattacks(mtmp->data) && !onscary(youmonst.mx, youmonst.my, mtmp))
         action_interrupted();
 
     return rd;
@@ -258,8 +258,8 @@ distfleeck(struct monst *mtmp, int *inrange, int *nearby, int *scared)
         seescaryx = mtmp->mux;
         seescaryy = mtmp->muy;
     } else {
-        seescaryx = u.ux;
-        seescaryy = u.uy;
+        seescaryx = youmonst.mx;
+        seescaryy = youmonst.my;
     }
     *scared = (*nearby &&
                (onscary(seescaryx, seescaryy, mtmp) ||
@@ -307,7 +307,7 @@ dochug(struct monst *mtmp)
         if (Hallucination)
             newsym(mtmp->mx, mtmp->my);
         if (mtmp->mcanmove && mtmp->mstrategy == st_close &&
-            !mtmp->msleeping && monnear(mtmp, u.ux, u.uy))
+            !mtmp->msleeping && monnear(mtmp, youmonst.mx, youmonst.my))
             quest_talk(mtmp);   /* give the leaders a chance to speak */
         return 0;       /* other frozen monsters can't do anything */
     }
@@ -585,7 +585,7 @@ dochug(struct monst *mtmp)
     if (!mtmp->mpeaceful || (Conflict && !resist(&youmonst, mtmp, RING_CLASS, 0, 0))) {
         if (nearby && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3 &&
             aware_of_u(mtmp))
-            if (engulfing_u(mtmp) ? mattackq(mtmp, u.ux, u.uy) :
+            if (engulfing_u(mtmp) ? mattackq(mtmp, youmonst.mx, youmonst.my) :
                 mattackq(mtmp, mtmp->mux, mtmp->muy))
                 return 1;       /* monster died (e.g. exploded) */
 
@@ -953,7 +953,7 @@ not_special:
     }
 
     if (mmoved) {
-        if (mmoved == 1 && (u.ux != nix || u.uy != niy) && itsstuck(mtmp))
+        if (mmoved == 1 && (youmonst.mx != nix || youmonst.my != niy) && itsstuck(mtmp))
             return 3;
 
         if (((IS_ROCK(level->locations[nix][niy].typ) &&
@@ -1017,14 +1017,14 @@ not_special:
            monster AI, the monster should at least lose its turn. We also add a
            message, partly for the changed mechanic, partly so players
            understand where the monster turn went. */
-        if (nix == u.ux && niy == u.uy) {
+        if (nix == youmonst.mx && niy == youmonst.my) {
 
             /* Exception: the monster has you engulfed. */
             if (engulfing_u(mtmp))
                 return 0;
 
-            mtmp->mux = u.ux;
-            mtmp->muy = u.uy;
+            mtmp->mux = youmonst.mx;
+            mtmp->muy = youmonst.my;
 
             /* Exception: if you've laid a trap for the monster. */
             if (u.uundetected)
@@ -1226,10 +1226,10 @@ postmov:
             if (Engulfed && mtmp == u.ustuck &&
                 (mtmp->mx != omx || mtmp->my != omy)) {
                 /* If the monster moved, then update */
-                u.ux0 = u.ux;
-                u.uy0 = u.uy;
-                u.ux = mtmp->mx;
-                u.uy = mtmp->my;
+                u.ux0 = youmonst.mx;
+                u.uy0 = youmonst.my;
+                youmonst.mx = mtmp->mx;
+                youmonst.my = mtmp->my;
                 if (Punished) {
                     unplacebc();
                     placebc();
@@ -1305,7 +1305,7 @@ void
 set_apparxy(struct monst *mtmp)
 {
     int disp;
-    boolean actually_adjacent = distmin(mtmp->mx, mtmp->my, u.ux, u.uy) <= 1;
+    boolean actually_adjacent = distmin(mtmp->mx, mtmp->my, youmonst.mx, youmonst.my) <= 1;
     boolean loe = couldsee(mtmp->mx, mtmp->my);
     unsigned msense_status;
 
@@ -1319,8 +1319,8 @@ set_apparxy(struct monst *mtmp)
             mtmp->mux = COLNO;
             mtmp->muy = ROWNO;
         } else {
-            mtmp->mux = u.ux;
-            mtmp->muy = u.uy;
+            mtmp->mux = youmonst.mx;
+            mtmp->muy = youmonst.my;
         }
         return;
     }
@@ -1328,15 +1328,15 @@ set_apparxy(struct monst *mtmp)
     /* monsters which are adjacent to you and actually know your location will
        continue to know it */
     if (knows_ux_uy(mtmp) && actually_adjacent) {
-        mtmp->mux = u.ux;
-        mtmp->muy = u.uy;
+        mtmp->mux = youmonst.mx;
+        mtmp->muy = youmonst.my;
         return;
     }
 
     /* monsters won't track you beyond a certain range on some levels (mostly
        endgame levels), for balance */
     if (!mtmp->mpeaceful && mtmp->dlevel->flags.shortsighted &&
-        dist2(mtmp->mx, mtmp->my, u.ux, u.uy) > (loe ? 144 : 36)) {
+        dist2(mtmp->mx, mtmp->my, youmonst.mx, youmonst.my) > (loe ? 144 : 36)) {
         mtmp->mux = COLNO;
         mtmp->muy = ROWNO;
         return;
@@ -1396,8 +1396,8 @@ set_apparxy(struct monst *mtmp)
         disp = 0;
 
     if (!disp) {
-        mtmp->mux = u.ux;
-        mtmp->muy = u.uy;
+        mtmp->mux = youmonst.mx;
+        mtmp->muy = youmonst.my;
         return;
     }
 
@@ -1408,16 +1408,16 @@ set_apparxy(struct monst *mtmp)
     int mx, my;
     do {
         if (++try_cnt > 200) {
-            mx = u.ux;
-            my = u.uy;
+            mx = youmonst.mx;
+            my = youmonst.my;
             break;
         }
 
-        mx = u.ux - disp + rn2(2 * disp + 1);
-        my = u.uy - disp + rn2(2 * disp + 1);
+        mx = youmonst.mx - disp + rn2(2 * disp + 1);
+        my = youmonst.my - disp + rn2(2 * disp + 1);
     } while (!isok(mx, my)
              || (mx == mtmp->mx && my == mtmp->my)
-             || ((mx != u.ux || my != u.uy) && !phasing(mtmp) &&
+             || ((mx != youmonst.mx || my != youmonst.my) && !phasing(mtmp) &&
                  (!ACCESSIBLE(level->locations[mx][my].typ) ||
                   (closed_door(level, mx, my) && !can_ooze(mtmp))))
              || !couldsee(mx, my));

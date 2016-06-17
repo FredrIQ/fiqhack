@@ -63,9 +63,9 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
         pline(msgc_cancelled, "Saddle yourself?  Very funny...");
         return 0;
     }
-    if (!isok(u.ux + dx, u.uy + dy) ||
-        !((mtmp = m_at(level, u.ux + dx, u.uy + dy))) || !canspotmon(mtmp)) {
-        if (knownwormtail(u.ux + dx, u.uy + dy))
+    if (!isok(youmonst.mx + dx, youmonst.my + dy) ||
+        !((mtmp = m_at(level, youmonst.mx + dx, youmonst.my + dy))) || !canspotmon(mtmp)) {
+        if (knownwormtail(youmonst.mx + dx, youmonst.my + dy))
             pline(msgc_cancelled, "It's hard to strap a saddle to a tail.");
         else
             pline(msgc_cancelled, "I see nobody there.");
@@ -173,10 +173,10 @@ doride(const struct nh_cmd_arg *arg)
     if (u.usteed)
         dismount_steed(DISMOUNT_BYCHOICE);
     else if (getargdir(arg, NULL, &dx, &dy, &dz) &&
-             isok(u.ux + dx, u.uy + dy)) {
+             isok(youmonst.mx + dx, youmonst.my + dy)) {
         if (wizard && yn("Force the mount to succeed?") == 'y')
             forcemount = TRUE;
-        return mount_steed(m_at(level, u.ux + dx, u.uy + dy), forcemount);
+        return mount_steed(m_at(level, youmonst.mx + dx, youmonst.my + dy), forcemount);
     } else
         return 0;
     return 1;
@@ -229,7 +229,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
     init_test_move_cache(&cache);
 
     if (Engulfed || u.ustuck || u.utrap || Punished ||
-        !test_move(u.ux, u.uy, mtmp->mx - u.ux, mtmp->my - u.uy, 0,
+        !test_move(youmonst.mx, youmonst.my, mtmp->mx - youmonst.mx, mtmp->my - youmonst.my, 0,
                    TEST_MOVE, &cache)) {
         if (Punished || !(Engulfed || u.ustuck || u.utrap))
             pline(msgc_cancelled, "You are unable to swing your %s over.",
@@ -426,9 +426,9 @@ landing_spot(coord * spot,      /* landing position (we fill it in) */
     if (reason != DISMOUNT_BYCHOICE || Stunned || Confusion || Fumbling)
         i = 1;
     for (; !found && i < 2; ++i) {
-        for (x = u.ux - 1; x <= u.ux + 1; x++)
-            for (y = u.uy - 1; y <= u.uy + 1; y++) {
-                if (!isok(x, y) || (x == u.ux && y == u.uy))
+        for (x = youmonst.mx - 1; x <= youmonst.mx + 1; x++)
+            for (y = youmonst.my - 1; y <= youmonst.my + 1; y++) {
+                if (!isok(x, y) || (x == youmonst.mx && y == youmonst.my))
                     continue;
 
                 if (ACCESSIBLE(level->locations[x][y].typ) &&
@@ -452,7 +452,7 @@ landing_spot(coord * spot,      /* landing position (we fill it in) */
 
     /* If we didn't find a good spot and forceit is on, try enexto(). */
     if (forceit && min_distance < 0 &&
-        !enexto(spot, level, u.ux, u.uy, youmonst.data))
+        !enexto(spot, level, youmonst.mx, youmonst.my, youmonst.data))
         return FALSE;
 
     return found;
@@ -535,30 +535,30 @@ dismount_steed(int reason)
        we're in the midst of creating a bones file. */
     if (reason == DISMOUNT_BONES) {
         /* move the steed to an adjacent square */
-        if (enexto(&cc, level, u.ux, u.uy, mtmp->data))
+        if (enexto(&cc, level, youmonst.mx, youmonst.my, mtmp->data))
             rloc_to(mtmp, cc.x, cc.y);
         else    /* evidently no room nearby; move steed elsewhere */
             rloc(mtmp, FALSE);
         return;
     }
     if (!DEADMONSTER(mtmp)) {
-        place_monster(mtmp, u.ux, u.uy, TRUE);
+        place_monster(mtmp, youmonst.mx, youmonst.my, TRUE);
         if (!Engulfed && !u.ustuck && have_spot) {
             const struct permonst *mdat = mtmp->data;
 
             /* The steed may drop into water/lava */
             if (!levitates(mtmp) && !flying(mtmp) && !is_clinger(mdat)) {
-                if (is_pool(level, u.ux, u.uy)) {
+                if (is_pool(level, youmonst.mx, youmonst.my)) {
                     boolean fatal = (!swims(mtmp) && !unbreathing(mtmp));
                     if (!Underwater && !waterwalks(mtmp))
                         pline(fatal ? msgc_petfatal : msgc_petwarning,
                               "%s falls into the %s!", Monnam(mtmp),
-                              surface(u.ux, u.uy));
+                              surface(youmonst.mx, youmonst.my));
                     if (fatal && !waterwalks(mtmp)) {
                         killed(mtmp);
                         adjalign(-1);
                     }
-                } else if (is_lava(level, u.ux, u.uy)) {
+                } else if (is_lava(level, youmonst.mx, youmonst.my)) {
                     struct obj *armf = which_armor(mtmp, os_armf);
                     if (armf && !armf->oerodeproof) {
                         pline(msgc_petfatal,
@@ -603,7 +603,7 @@ dismount_steed(int reason)
                     mintrap(mtmp);
             }
             /* Couldn't... try placing the steed */
-        } else if (enexto(&cc, level, u.ux, u.uy, mtmp->data)) {
+        } else if (enexto(&cc, level, youmonst.mx, youmonst.my, mtmp->data)) {
             /* Keep player here, move the steed to cc */
             rloc_to(mtmp, cc.x, cc.y);
             /* Player stays put */

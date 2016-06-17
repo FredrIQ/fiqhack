@@ -18,14 +18,14 @@ do_mname(const struct nh_cmd_arg *arg)
         pline(msgc_cancelled, "You would never recognize it anyway.");
         return 0;
     }
-    cc.x = u.ux;
-    cc.y = u.uy;
+    cc.x = youmonst.mx;
+    cc.y = youmonst.my;
     if (getargpos(arg, &cc, FALSE, "the monster you want to name") ==
         NHCR_CLIENT_CANCEL || (cx = cc.x) < 0)
         return 0;
     cy = cc.y;
 
-    if (cx == u.ux && cy == u.uy) {
+    if (cx == youmonst.mx && cy == youmonst.my) {
         if (u.usteed && canspotmon(u.usteed))
             mtmp = u.usteed;
         else {

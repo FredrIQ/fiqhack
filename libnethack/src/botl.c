@@ -190,8 +190,8 @@ make_player_info(struct nh_player_info *pi)
         return;
     API_ENTRY_CHECKPOINT_RETURN_VOID_ON_ERROR();
 
-    pi->x = u.ux;
-    pi->y = u.uy;
+    pi->x = youmonst.mx;
+    pi->y = youmonst.my;
     pi->z = u.uz.dlevel;
 
     if (Upolyd) {

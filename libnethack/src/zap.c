@@ -583,8 +583,8 @@ get_obj_location(const struct obj *obj, xchar * xp, xchar * yp, int locflags)
 {
     switch (obj->where) {
     case OBJ_INVENT:
-        *xp = u.ux;
-        *yp = u.uy;
+        *xp = youmonst.mx;
+        *yp = youmonst.my;
         return TRUE;
     case OBJ_FLOOR:
         *xp = obj->ox;
@@ -618,8 +618,8 @@ boolean
 get_mon_location(struct monst * mon, xchar * xp, xchar * yp, int locflags)
 {
     if (mon == &youmonst) {
-        *xp = u.ux;
-        *yp = u.uy;
+        *xp = youmonst.mx;
+        *yp = youmonst.my;
         return TRUE;
     } else if (mon->mx != COLNO && (!mon->mburied || locflags)) {
         *xp = mon->mx;
@@ -789,8 +789,8 @@ revive(struct obj *obj)
                 in_container = TRUE;
                 break;
             case OBJ_INVENT:
-                x = u.ux;
-                y = u.uy;
+                x = youmonst.mx;
+                y = youmonst.my;
                 in_container = TRUE;
                 break;
             case OBJ_FLOOR:
@@ -1000,9 +1000,9 @@ costly_cancel(struct obj *obj)
         shkp = shop_keeper(level, objroom);
         if (!costly_spot(obj->ox, obj->oy))
             return;
-        /* "if costly_spot(u.ux, u.uy)" is correct. It checks whether shk can
+        /* "if costly_spot(youmonst.mx, youmonst.my)" is correct. It checks whether shk can
            force the player to pay for the item by blocking the door. */
-        if (costly_spot(u.ux, u.uy) && objroom == *u.ushops) {
+        if (costly_spot(youmonst.mx, youmonst.my) && objroom == *u.ushops) {
             pline_once(msgc_unpaid, "You cancel it, you pay for it!");
             bill_dummy_object(obj);
         } else
@@ -1574,9 +1574,9 @@ poly_obj(struct obj *obj, int id)
             && inhishop(shkp)) {
             if (shkp->mpeaceful) {
                 if (*u.ushops &&
-                    *in_rooms(level, u.ux, u.uy, 0) ==
+                    *in_rooms(level, youmonst.mx, youmonst.my, 0) ==
                     *in_rooms(level, shkp->mx, shkp->my, 0) &&
-                    !costly_spot(u.ux, u.uy))
+                    !costly_spot(youmonst.mx, youmonst.my))
                     make_angry_shk(shkp, ox, oy);
                 else {
                     pline(msgc_npcanger, "%s gets angry!", Monnam(shkp));
@@ -2271,7 +2271,7 @@ zap_updown(struct monst *mon, struct obj *obj, schar dz)
     boolean vis = canseemon(mon);
 
     /* some wands have special effects other than normal bhitpile */
-    /* drawbridge might change <u.ux,u.uy> */
+    /* drawbridge might change <youmonst.mx,youmonst.my> */
     x = xx = m_mx(mon);      /* <x,y> is zap location */
     y = yy = m_my(mon);      /* <xx,yy> is drawbridge (portcullis) position */
     ttmp = t_at(level, x, y);   /* trap if there is one */
@@ -2381,17 +2381,17 @@ zap_updown(struct monst *mon, struct obj *obj, schar dz)
                 pline(msgc_yafm, "Blood drips on %s %s.",
                       you ? "your" : s_suffix(mon_nam(mon)),
                       body_part(FACE));
-        } else if (dz > 0 && !OBJ_AT(u.ux, u.uy)) {
+        } else if (dz > 0 && !OBJ_AT(youmonst.mx, youmonst.my)) {
             /* Print this message only if there wasn't an engraving affected
                here.  If water or ice, act like waterlevel case. */
-            e = engr_at(level, u.ux, u.uy);
+            e = engr_at(level, youmonst.mx, youmonst.my);
             if (!(e && e->engr_type == ENGRAVE)) {
-                if (is_pool(level, u.ux, u.uy) || is_ice(level, u.ux, u.uy)) {
+                if (is_pool(level, youmonst.mx, youmonst.my) || is_ice(level, youmonst.mx, youmonst.my)) {
                     if (you || vis)
                         pline(msgc_yafm, "Nothing happens.");
                 } else if (you || vis)
                     pline(msgc_yafm, "Blood %ss %s your %s.",
-                          is_lava(level, u.ux, u.uy) ? "boil" : "pool",
+                          is_lava(level, youmonst.mx, youmonst.my) ? "boil" : "pool",
                           Levitation ? "beneath" : "at",
                           makeplural(body_part(FOOT)));
             }
@@ -2490,7 +2490,7 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
             zap_dig(mon, obj, dx, dy, dz);
         else if (otyp >= SPE_MAGIC_MISSILE && otyp <= SPE_FINGER_OF_DEATH) {
             if (you)
-                buzz(otyp - SPE_MAGIC_MISSILE + 10, u.ulevel / 2 + 1, u.ux, u.uy,
+                buzz(otyp - SPE_MAGIC_MISSILE + 10, u.ulevel / 2 + 1, youmonst.mx, youmonst.my,
                      dx, dy, 0);
             else
                 buzz(-10 - (otyp - SPE_MAGIC_MISSILE), mon->m_lev / 2 + 1,
@@ -2498,7 +2498,7 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
         } else if (otyp >= WAN_MAGIC_MISSILE && otyp <= WAN_LIGHTNING) {
             if (you)
                 buzz(otyp - WAN_MAGIC_MISSILE, (wandlevel == P_UNSKILLED) ? 3 : 6,
-                     u.ux, u.uy, dx, dy, wandlevel);
+                     youmonst.mx, youmonst.my, dx, dy, wandlevel);
             else
                 buzz((int)(-30 - (otyp - WAN_MAGIC_MISSILE)),
                      wandlevel == P_UNSKILLED ? 3 : 6, m_mx(mon), m_my(mon),
@@ -2847,7 +2847,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
         zap_hit_mon(magr, u.ustuck, type, nd, raylevel, FALSE);
         return;
     }
-    newsym(u.ux, u.uy);
+    newsym(youmonst.mx, youmonst.my);
     range = rn1(7, 7);
     if (dx == 0 && dy == 0) {
         range = 1;
@@ -2865,7 +2865,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
         sy += dy;
         if (isok(sx, sy) && (loc = &level->locations[sx][sy])->typ) {
             mon = m_at(level, sx, sy);
-            if (!mon && sx == u.ux && sy == u.uy) {
+            if (!mon && sx == youmonst.mx && sy == youmonst.my) {
                 mon = &youmonst;
                 if (u.usteed && !rn2(3) && !reflecting(u.usteed))
                     mon = u.usteed;
@@ -3378,10 +3378,10 @@ burn_floor_paper(struct level *lev, int x, int y,
                 if (give_feedback) {
                     obj->quan = 1;
 
-                    buf1 = (x == u.ux && y == u.uy) ?
+                    buf1 = (x == youmonst.mx && y == youmonst.my) ?
                         xname(obj) : distant_name(obj, xname);
                     obj->quan = 2;
-                    buf2 = (x == u.ux && y == u.uy) ?
+                    buf2 = (x == youmonst.mx && y == youmonst.my) ?
                         xname(obj) : distant_name(obj, xname);
                     obj->quan = scrquan;
                 }
@@ -3440,7 +3440,7 @@ melt_ice(struct level *lev, xchar x, xchar y)
         if (lev == level)
             newsym(x, y);
     }
-    if (lev == level && x == u.ux && y == u.uy)
+    if (lev == level && x == youmonst.mx && y == youmonst.my)
         spoteffects(TRUE);      /* possibly drown, notice objects */
 }
 
@@ -3531,7 +3531,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
             } else if (!lava)
                 You_hear(msgc_levelsound, "a crackling sound.");
 
-            if (x == u.ux && y == u.uy) {
+            if (x == youmonst.mx && y == youmonst.my) {
                 if (u.uinwater) {       /* not just `if (Underwater)' */
                     /* leave the no longer existent water */
                     u.uinwater = 0;
@@ -4058,8 +4058,8 @@ retry:
         hold_another_object(otmp,
                             Engulfed ? "Oops!  %s out of your reach!"
                             : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
-                               level->locations[u.ux][u.uy].typ < IRONBARS ||
-                               level->locations[u.ux][u.uy].typ >=
+                               level->locations[youmonst.mx][youmonst.my].typ < IRONBARS ||
+                               level->locations[youmonst.mx][youmonst.my].typ >=
                                ICE) ? "Oops!  %s away from you!" :
                             "Oops!  %s to the floor!",
                             The(aobjnam

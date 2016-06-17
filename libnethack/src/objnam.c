@@ -2365,7 +2365,7 @@ srch:
                 if ((trap == TRAPDOOR || trap == HOLE)
                     && !can_fall_thru(level))
                     trap = ROCKTRAP;
-                maketrap(level, u.ux, u.uy, trap, rng_main);
+                maketrap(level, youmonst.mx, youmonst.my, trap, rng_main);
                 pline(msgc_info, "%s.", An(tname));
                 return &zeroobj;
             }
@@ -2373,49 +2373,49 @@ srch:
         /* or some other dungeon features -dlc */
         p = bp + strlen(bp);
         if (!BSTRCMP(bp, p - 8, "fountain")) {
-            level->locations[u.ux][u.uy].typ = FOUNTAIN;
+            level->locations[youmonst.mx][youmonst.my].typ = FOUNTAIN;
             if (!strncmpi(bp, "magic ", 6))
-                level->locations[u.ux][u.uy].blessedftn = 1;
+                level->locations[youmonst.mx][youmonst.my].blessedftn = 1;
             pline(msgc_info, "A %sfountain.",
-                  level->locations[u.ux][u.uy].blessedftn ? "magic " : "");
-            newsym(u.ux, u.uy);
+                  level->locations[youmonst.mx][youmonst.my].blessedftn ? "magic " : "");
+            newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
         }
         if (!BSTRCMP(bp, p - 6, "throne")) {
-            level->locations[u.ux][u.uy].typ = THRONE;
+            level->locations[youmonst.mx][youmonst.my].typ = THRONE;
             pline(msgc_info, "A throne.");
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
         }
         if (!BSTRCMP(bp, p - 4, "sink")) {
-            level->locations[u.ux][u.uy].typ = SINK;
+            level->locations[youmonst.mx][youmonst.my].typ = SINK;
             pline(msgc_info, "A sink.");
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
         }
         if (!BSTRCMP(bp, p - 4, "pool")) {
-            level->locations[u.ux][u.uy].typ = POOL;
-            del_engr_at(level, u.ux, u.uy);
+            level->locations[youmonst.mx][youmonst.my].typ = POOL;
+            del_engr_at(level, youmonst.mx, youmonst.my);
             pline(msgc_info, "A pool.");
             /* Must manually make kelp! */
-            water_damage_chain(level->objects[u.ux][u.uy], TRUE);
-            newsym(u.ux, u.uy);
+            water_damage_chain(level->objects[youmonst.mx][youmonst.my], TRUE);
+            newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
         }
         if (!BSTRCMP(bp, p - 4, "lava")) {      /* also matches "molten lava" */
-            level->locations[u.ux][u.uy].typ = LAVAPOOL;
-            del_engr_at(level, u.ux, u.uy);
+            level->locations[youmonst.mx][youmonst.my].typ = LAVAPOOL;
+            del_engr_at(level, youmonst.mx, youmonst.my);
             pline(msgc_info, "A pool of molten lava.");
             if (!(Levitation || Flying))
                 lava_effects();
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
         }
 
         if (!BSTRCMP(bp, p - 5, "altar")) {
             aligntyp al;
 
-            level->locations[u.ux][u.uy].typ = ALTAR;
+            level->locations[youmonst.mx][youmonst.my].typ = ALTAR;
             if (!strncmpi(bp, "chaotic ", 8))
                 al = A_CHAOTIC;
             else if (!strncmpi(bp, "neutral ", 8))
@@ -2426,31 +2426,31 @@ srch:
                 al = A_NONE;
             else        /* -1 - A_CHAOTIC, 0 - A_NEUTRAL, 1 - A_LAWFUL */
                 al = (!rn2(6)) ? A_NONE : rn2((int)A_LAWFUL + 2) - 1;
-            level->locations[u.ux][u.uy].altarmask = Align2amask(al);
+            level->locations[youmonst.mx][youmonst.my].altarmask = Align2amask(al);
             pline(msgc_info, "%s altar.", An(align_str(al)));
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
         }
 
         if (!BSTRCMP(bp, p - 5, "grave") || !BSTRCMP(bp, p - 9, "headstone")) {
-            make_grave(level, u.ux, u.uy, NULL);
+            make_grave(level, youmonst.mx, youmonst.my, NULL);
             pline(msgc_info, "A grave.");
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
         }
 
         if (!BSTRCMP(bp, p - 4, "tree")) {
-            level->locations[u.ux][u.uy].typ = TREE;
+            level->locations[youmonst.mx][youmonst.my].typ = TREE;
             pline(msgc_info, "A tree.");
-            newsym(u.ux, u.uy);
-            block_point(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
+            block_point(youmonst.mx, youmonst.my);
             return &zeroobj;
         }
 
         if (!BSTRCMP(bp, p - 4, "bars")) {
-            level->locations[u.ux][u.uy].typ = IRONBARS;
+            level->locations[youmonst.mx][youmonst.my].typ = IRONBARS;
             pline(msgc_info, "Iron bars.");
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
         }
     }
@@ -2503,7 +2503,7 @@ typfnd:
     if (islit &&
         (typ == OIL_LAMP || typ == MAGIC_LAMP || typ == BRASS_LANTERN ||
          Is_candle(otmp) || typ == POT_OIL)) {
-        place_object(otmp, level, u.ux, u.uy); /* make it viable light source */
+        place_object(otmp, level, youmonst.mx, youmonst.my); /* make it viable light source */
         begin_burn(otmp, FALSE);
         obj_extract_self(otmp); /* now release it for caller's use */
     }

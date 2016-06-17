@@ -147,7 +147,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
              (t->ttyp == PIT || t->ttyp == SPIKED_PIT || t->ttyp == TRAPDOOR ||
               t->ttyp == HOLE)) {
         if (((mtmp = m_at(lev, x, y)) && mtmp->mtrapped) ||
-            (u.utrap && u.ux == x && u.uy == y)) {
+            (u.utrap && youmonst.mx == x && youmonst.my == y)) {
             if (*verb)
                 pline(msgc_consequence, "The boulder %s into the pit%s.",
                       vtense(NULL, verb), (mtmp) ? "" : " with you");
@@ -170,7 +170,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
                depends on whose turn it is and if the boulder movement was
                intentional. */
             if (Blind && couldsee(x, y)) {
-                if ((x == u.ux) && (y == u.uy))
+                if ((x == youmonst.mx) && (y == youmonst.my))
                     You_hear(msgc_levelsound, "a CRASH! beneath you.");
                 else
                     You_hear(msgc_levelsound, "a nearby CRASH!");
@@ -195,7 +195,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
            floating above the water even small things make noise. Stuff dropped 
            near fountains always misses. */
         if ((Blind || (Levitation || Flying)) && canhear() &&
-            ((x == u.ux) && (y == u.uy))) {
+            ((x == youmonst.mx) && (y == youmonst.my))) {
             if (!Underwater) {
                 if (weight(obj) > 9) {
                     pline(msgc_consequence, "Splash!");
@@ -208,7 +208,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
                 newsym(x, y);
         }
         return water_damage(obj, NULL, FALSE) == 3;
-    } else if (u.ux == x && u.uy == y && (!u.utrap || u.utraptype != TT_PIT) &&
+    } else if (youmonst.mx == x && youmonst.my == y && (!u.utrap || u.utraptype != TT_PIT) &&
                (t = t_at(lev, x, y)) != 0 && t->tseen &&
                (t->ttyp == PIT || t->ttyp == SPIKED_PIT)) {
         /* you escaped a pit and are standing on the precipice */
@@ -321,7 +321,7 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
         break;
     case RIN_HUNGER:
         ideed = FALSE;
-        for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp2) {
+        for (otmp = level->objects[youmonst.mx][youmonst.my]; otmp; otmp = otmp2) {
             otmp2 = otmp->nexthere;
             if (otmp != uball && otmp != uchain && !obj_resists(otmp, 1, 99)) {
                 if (!Blind) {
@@ -414,8 +414,8 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
         /* Rather than destroy the ring, we bury it in the ground under the
            sink.  In order to get it back, the player must destroy the sink. */
         freeinv(obj);
-        obj->ox = u.ux;
-        obj->oy = u.uy;
+        obj->ox = youmonst.mx;
+        obj->oy = youmonst.my;
         add_to_buried(obj);
     }
 }
@@ -486,7 +486,7 @@ drop(struct obj *obj)
               s_suffix(mon_nam(u.ustuck)), mbodypart(u.ustuck, STOMACH));
     } else {
         if ((obj->oclass == RING_CLASS || obj->otyp == MEAT_RING) &&
-            IS_SINK(level->locations[u.ux][u.uy].typ)) {
+            IS_SINK(level->locations[youmonst.mx][youmonst.my].typ)) {
             dosinkring(obj);
             return 1;
         }
@@ -497,7 +497,7 @@ drop(struct obj *obj)
             hitfloor(obj);
             return 1;
         }
-        if (!IS_ALTAR(level->locations[u.ux][u.uy].typ) && flags.verbose)
+        if (!IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ) && flags.verbose)
             pline(msgc_actionboring, "You drop %s.", doname(obj));
     }
     dropx(obj);
@@ -511,9 +511,9 @@ dropx(struct obj *obj)
 {
     freeinv(obj);
     if (!Engulfed) {
-        if (ship_object(obj, u.ux, u.uy, FALSE))
+        if (ship_object(obj, youmonst.mx, youmonst.my, FALSE))
             return;
-        if (IS_ALTAR(level->locations[u.ux][u.uy].typ))
+        if (IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ))
             doaltarobj(obj);    /* set bknown */
     }
     dropy(obj);
@@ -524,7 +524,7 @@ dropy(struct obj *obj)
 {
     unwield_silently(obj);
 
-    if (!Engulfed && flooreffects(obj, u.ux, u.uy, "drop"))
+    if (!Engulfed && flooreffects(obj, youmonst.mx, youmonst.my, "drop"))
         return;
     /* Engulfed check done by GAN 01/29/87 */
     if (Engulfed) {
@@ -562,15 +562,15 @@ dropy(struct obj *obj)
             }
         }
     } else {
-        place_object(obj, level, u.ux, u.uy);
+        place_object(obj, level, youmonst.mx, youmonst.my);
         if (obj == uball)
-            drop_ball(u.ux, u.uy, 0, 0);
+            drop_ball(youmonst.mx, youmonst.my, 0, 0);
         else
-            sellobj(obj, u.ux, u.uy);
+            sellobj(obj, youmonst.mx, youmonst.my);
         stackobj(obj);
         if (Blind && Levitation)
             map_object(obj, 0, FALSE);
-        newsym(u.ux, u.uy);     /* remap location under self */
+        newsym(youmonst.mx, youmonst.my);     /* remap location under self */
     }
 }
 
@@ -693,11 +693,11 @@ dodown(boolean autodig_ok)
 {
     struct trap *trap = 0;
     boolean stairs_down =
-        ((u.ux == level->dnstair.sx && u.uy == level->dnstair.sy) ||
-         (u.ux == level->sstairs.sx && u.uy == level->sstairs.sy &&
+        ((youmonst.mx == level->dnstair.sx && youmonst.my == level->dnstair.sy) ||
+         (youmonst.mx == level->sstairs.sx && youmonst.my == level->sstairs.sy &&
           !level->sstairs.up));
-    boolean ladder_down = (u.ux == level->dnladder.sx &&
-                           u.uy == level->dnladder.sy);
+    boolean ladder_down = (youmonst.mx == level->dnladder.sx &&
+                           youmonst.my == level->dnladder.sy);
 
     if (u.usteed && !u.usteed->mcanmove) {
         pline(msgc_cancelled, "%s won't move!", Monnam(u.usteed));
@@ -717,14 +717,14 @@ dodown(boolean autodig_ok)
             if (set_property(&youmonst, LEVITATION, -2, FALSE))
                 return 1;       /* came down, so moved */
         }
-        if (level->locations[u.ux][u.uy].seenv &&
-            level->locations[u.ux][u.uy].typ != S_stone) {
+        if (level->locations[youmonst.mx][youmonst.my].seenv &&
+            level->locations[youmonst.mx][youmonst.my].typ != S_stone) {
             boolean known_stairs = stairs_down &&
-                level->locations[u.ux][u.uy].typ == S_dnstair;
+                level->locations[youmonst.mx][youmonst.my].typ == S_dnstair;
             boolean known_ladder = ladder_down &&
-                level->locations[u.ux][u.uy].typ == S_dnladder;
+                level->locations[youmonst.mx][youmonst.my].typ == S_dnladder;
             floating_above(known_stairs ? "stairs" : known_ladder ? "ladder" :
-                           surface(u.ux, u.uy));
+                           surface(youmonst.mx, youmonst.my));
         } else {
             pline(msgc_cancelled, "You are floating high in the air.");
         }
@@ -733,7 +733,7 @@ dodown(boolean autodig_ok)
     if (!stairs_down && !ladder_down) {
         boolean can_fall;
 
-        trap = t_at(level, u.ux, u.uy);
+        trap = t_at(level, youmonst.mx, youmonst.my);
         can_fall = trap && (trap->ttyp == TRAPDOOR || trap->ttyp == HOLE);
         if (!trap ||
             (trap->ttyp != TRAPDOOR && trap->ttyp != HOLE && trap->ttyp != PIT
@@ -811,7 +811,7 @@ dodown(boolean autodig_ok)
     if (trap && Is_stronghold(&u.uz)) {
         goto_hell(FALSE, TRUE);
     } else {
-        at_ladder = (boolean) (level->locations[u.ux][u.uy].typ == LADDER);
+        at_ladder = (boolean) (level->locations[youmonst.mx][youmonst.my].typ == LADDER);
         next_level(!trap);
         at_ladder = FALSE;
     }
@@ -821,9 +821,9 @@ dodown(boolean autodig_ok)
 int
 doup(void)
 {
-    if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy)
-        && (u.ux != level->upladder.sx || u.uy != level->upladder.sy)
-        && (u.ux != level->sstairs.sx || u.uy != level->sstairs.sy ||
+    if ((youmonst.mx != level->upstair.sx || youmonst.my != level->upstair.sy)
+        && (youmonst.mx != level->upladder.sx || youmonst.my != level->upladder.sy)
+        && (youmonst.mx != level->sstairs.sx || youmonst.my != level->sstairs.sy ||
             !level->sstairs.up)) {
         pline(msgc_mispaste, "You can't go up here.");
         return 0;
@@ -843,7 +843,7 @@ doup(void)
     if (near_capacity() > SLT_ENCUMBER) {
         /* No levitation check; inv_weight() already allows for it */
         pline(msgc_cancelled1, "Your load is too heavy to climb the %s.",
-              level->locations[u.ux][u.uy].typ == STAIRS ? "stairs" : "ladder");
+              level->locations[youmonst.mx][youmonst.my].typ == STAIRS ? "stairs" : "ladder");
         return 1;
     }
     if (ledger_no(&u.uz) == 1) {
@@ -855,7 +855,7 @@ doup(void)
         pline(msgc_cancelled, "You are held back by your pet!");
         return 0;
     }
-    at_ladder = (boolean) (level->locations[u.ux][u.uy].typ == LADDER);
+    at_ladder = (boolean) (level->locations[youmonst.mx][youmonst.my].typ == LADDER);
     prev_level(TRUE);
     at_ladder = FALSE;
     return 1;
@@ -905,13 +905,13 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     xchar new_ledger;
     boolean up = (depth(newlevel) < depth(&u.uz)), newdungeon =
         (u.uz.dnum != newlevel->dnum), was_in_W_tower =
-        In_W_tower(u.ux, u.uy, &u.uz), familiar = FALSE;
+        In_W_tower(youmonst.mx, youmonst.my, &u.uz), familiar = FALSE;
     boolean new = FALSE;        /* made a new level? */
     struct monst *mtmp, *mtmp2;
     struct obj *otmp;
     struct level *origlev;
-    boolean at_trapdoor = ((t_at(level, u.ux, u.uy)) &&
-                           (t_at(level, u.ux, u.uy))->ttyp == TRAPDOOR);
+    boolean at_trapdoor = ((t_at(level, youmonst.mx, youmonst.my)) &&
+                           (t_at(level, youmonst.mx, youmonst.my))->ttyp == TRAPDOOR);
     d_level orig_d;
 
     if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
@@ -993,13 +993,13 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         return; /* this can happen */
 
     if (falling)        /* assuming this is only trap door or hole */
-        impact_drop(NULL, u.ux, u.uy, newlevel->dlevel);
+        impact_drop(NULL, youmonst.mx, youmonst.my, newlevel->dlevel);
 
     check_special_room(TRUE);   /* probably was a trap door */
     if (Punished)
         unplacebc();
     u.utrap = 0;        /* needed in level_tele */
-    fill_pit(level, u.ux, u.uy);
+    fill_pit(level, youmonst.mx, youmonst.my);
     u.ustuck = 0;       /* idem */
     u.uinwater = 0;
     u.uundetected = 0;  /* not hidden, even if means are available */
@@ -1191,7 +1191,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     initrack();
 
-    if ((mtmp = m_at(level, u.ux, u.uy)) != 0 && mtmp != u.usteed) {
+    if ((mtmp = m_at(level, youmonst.mx, youmonst.my)) != 0 && mtmp != u.usteed) {
         /* There's a monster at your target destination; it might be one which
            accompanied you--see mon_arrive(dogmove.c)--or perhaps it was
            already here.  Randomly move you to an adjacent spot or else the
@@ -1199,13 +1199,13 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
            unconditionally. */
         coord cc;
 
-        if (!rn2(2) && enexto(&cc, level, u.ux, u.uy, youmonst.data) &&
+        if (!rn2(2) && enexto(&cc, level, youmonst.mx, youmonst.my, youmonst.data) &&
             distu(cc.x, cc.y) <= 2)
             u_on_newpos(cc.x, cc.y);    /* [maybe give message here?] */
         else
             mnexto(mtmp);
 
-        if ((mtmp = m_at(level, u.ux, u.uy)) != 0) {
+        if ((mtmp = m_at(level, youmonst.mx, youmonst.my)) != 0) {
             /* there was an unconditional impossible("mnearto failed")
                 here, but it's not impossible and we're prepared to cope
                 with the situation, so only say something when debugging */
@@ -1218,7 +1218,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     }
 
     /* Stop autoexplore revisiting the entrance stairs. */
-    level->locations[u.ux][u.uy].mem_stepped = 1;
+    level->locations[youmonst.mx][youmonst.my].mem_stepped = 1;
 
     /* initial movement of bubbles just before vision_recalc */
     if (Is_waterlevel(&u.uz))
@@ -1326,7 +1326,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     /* assume this will always return TRUE when changing level */
     reset_occupations(TRUE);    /* you moved */
-    in_out_region(level, u.ux, u.uy);
+    in_out_region(level, youmonst.mx, youmonst.my);
     pickup(1, flags.interaction_mode);
 }
 
@@ -1362,8 +1362,8 @@ final_level(void)
         pline(msgc_levelwarning,
               "A voice booms: \"Thy desire for conflict shall be fulfilled!\"");
         for (i = angel_count; i > 0; --i) {
-            mm.x = u.ux;
-            mm.y = u.uy;
+            mm.x = youmonst.mx;
+            mm.y = youmonst.my;
             if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL]))
                 mk_roamer(&mons[PM_ANGEL], u.ualign.type, level, mm.x, mm.y,
                           FALSE, i == angel_count ? MM_ALLLEVRNG : NO_MM_FLAGS);
@@ -1374,8 +1374,8 @@ final_level(void)
            RNG (except for m_lev which is relevant to balance), no others */
         pline(msgc_statusgood,
               "A voice whispers: \"Thou hast been worthy of me!\"");
-        mm.x = u.ux;
-        mm.y = u.uy;
+        mm.x = youmonst.mx;
+        mm.y = youmonst.my;
         if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL])) {
             if (((mtmp = mk_roamer(&mons[PM_ANGEL], u.ualign.type, level,
                                    mm.x, mm.y, TRUE, MM_ALLLEVRNG)))) {
@@ -1458,11 +1458,11 @@ deferred_goto(void)
         retval = TRUE;
 
         if (typmask & 0200) {   /* remove portal */
-            struct trap *t = t_at(level, u.ux, u.uy);
+            struct trap *t = t_at(level, youmonst.mx, youmonst.my);
 
             if (t) {
                 deltrap(level, t);
-                newsym(u.ux, u.uy);
+                newsym(youmonst.mx, youmonst.my);
             }
         }
 

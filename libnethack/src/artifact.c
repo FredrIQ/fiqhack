@@ -1501,7 +1501,7 @@ arti_invoke(struct obj *obj)
         case INVIS:
             if (BInvis || Blind)
                 goto nothing_special;
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             if (on)
                 pline(msgc_statusgood,
                       "Your body takes on a %s transparency...",

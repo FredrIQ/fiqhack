@@ -15,7 +15,7 @@ ballfall(void)
 {
     boolean gets_hit;
 
-    gets_hit = (((uball->ox != u.ux) || (uball->oy != u.uy)) &&
+    gets_hit = (((uball->ox != youmonst.mx) || (uball->oy != youmonst.my)) &&
                 ((uwep == uball) ? FALSE : (boolean) rn2(5)));
     if (carried(uball)) {
         pline(msgc_statusbad, "Startled, you drop the iron ball.");
@@ -104,23 +104,23 @@ placebc(void)
         return;
     }
 
-    flooreffects(uchain, u.ux, u.uy, "");       /* chain might rust */
+    flooreffects(uchain, youmonst.mx, youmonst.my, "");       /* chain might rust */
 
     if (carried(uball)) /* the ball is carried */
         u.bc_order = BCPOS_DIFFER;
     else {
         /* ball might rust -- already checked when carried */
-        flooreffects(uball, u.ux, u.uy, "");
-        place_object(uball, level, u.ux, u.uy);
+        flooreffects(uball, youmonst.mx, youmonst.my, "");
+        place_object(uball, level, youmonst.mx, youmonst.my);
         u.bc_order = BCPOS_CHAIN;
     }
 
-    place_object(uchain, level, u.ux, u.uy);
+    place_object(uchain, level, youmonst.mx, youmonst.my);
 
     /* pick up glyph */
-    u.bglyph = u.cglyph = level->locations[u.ux][u.uy].mem_obj;
+    u.bglyph = u.cglyph = level->locations[youmonst.mx][youmonst.my].mem_obj;
 
-    newsym(u.ux, u.uy);
+    newsym(youmonst.mx, youmonst.my);
 }
 
 void
@@ -180,7 +180,7 @@ set_bc(int already_blind)
     u.bc_felt = ball_on_floor ? BC_BALL | BC_CHAIN : BC_CHAIN;  /* felt */
 
     if (already_blind || Engulfed) {
-        u.cglyph = u.bglyph = level->locations[u.ux][u.uy].mem_obj;
+        u.cglyph = u.bglyph = level->locations[youmonst.mx][youmonst.my].mem_obj;
         return;
     }
 
@@ -395,8 +395,8 @@ drag_ball(xchar x, xchar y, int *bc_control, xchar * ballx, xchar * bally,
         if (carried(uball)) {
             /* move chain only if necessary */
             if (distmin(x, y, uchain->ox, uchain->oy) > 1) {
-                *chainx = u.ux;
-                *chainy = u.uy;
+                *chainx = youmonst.mx;
+                *chainy = youmonst.my;
             }
             return TRUE;
         }
@@ -416,7 +416,7 @@ drag_ball(xchar x, xchar y, int *bc_control, xchar * ballx, xchar * bally,
 #define SKIP_TO_DRAG { *chainx = oldchainx; *chainy = oldchainy; \
     move_bc(0, *bc_control, *ballx, *bally, *chainx, *chainy); \
     goto drag; }
-        if (IS_CHAIN_ROCK(u.ux, u.uy) || IS_CHAIN_ROCK(*chainx, *chainy)
+        if (IS_CHAIN_ROCK(youmonst.mx, youmonst.my) || IS_CHAIN_ROCK(*chainx, *chainy)
             || IS_CHAIN_ROCK(uball->ox, uball->oy))
             already_in_rock = TRUE;
         else
@@ -452,12 +452,12 @@ drag_ball(xchar x, xchar y, int *bc_control, xchar * ballx, xchar * bally,
                     if (allow_drag) {
                         /* Avoid pathological case *if* not teleporting: 0 0_
                            _X move northeast -----> X@ @ */
-                        if (dist2(u.ux, u.uy, uball->ox, uball->oy) == 5 &&
+                        if (dist2(youmonst.mx, youmonst.my, uball->ox, uball->oy) == 5 &&
                             dist2(x, y, tempx, tempy) == 1)
                             SKIP_TO_DRAG;
                         /* Avoid pathological case *if* not teleporting: 0 0 _X 
                            move east -----> X_ @ @ */
-                        if (dist2(u.ux, u.uy, uball->ox, uball->oy) == 4 &&
+                        if (dist2(youmonst.mx, youmonst.my, uball->ox, uball->oy) == 4 &&
                             dist2(x, y, tempx, tempy) == 2)
                             SKIP_TO_DRAG;
                     }
@@ -466,10 +466,10 @@ drag_ball(xchar x, xchar y, int *bc_control, xchar * ballx, xchar * bally,
                 } else if (!IS_CHAIN_ROCK(tempx, tempy) &&
                            IS_CHAIN_ROCK(tempx2, tempy2) && !already_in_rock) {
                     if (allow_drag) {
-                        if (dist2(u.ux, u.uy, uball->ox, uball->oy) == 5 &&
+                        if (dist2(youmonst.mx, youmonst.my, uball->ox, uball->oy) == 5 &&
                             dist2(x, y, tempx2, tempy2) == 1)
                             SKIP_TO_DRAG;
-                        if (dist2(u.ux, u.uy, uball->ox, uball->oy) == 4 &&
+                        if (dist2(youmonst.mx, youmonst.my, uball->ox, uball->oy) == 4 &&
                             dist2(x, y, tempx2, tempy2) == 2)
                             SKIP_TO_DRAG;
                     }
@@ -525,9 +525,9 @@ drag_ball(xchar x, xchar y, int *bc_control, xchar * ballx, xchar * bally,
             if (CHAIN_IN_MIDDLE(uchain->ox, uchain->oy))
                 break;
             /* otherwise try to drag chain to player's old position */
-            if (CHAIN_IN_MIDDLE(u.ux, u.uy)) {
-                *chainx = u.ux;
-                *chainy = u.uy;
+            if (CHAIN_IN_MIDDLE(youmonst.mx, youmonst.my)) {
+                *chainx = youmonst.mx;
+                *chainy = youmonst.my;
                 break;
             }
             /* otherwise use player's new position (they must have teleported,
@@ -548,7 +548,7 @@ drag_ball(xchar x, xchar y, int *bc_control, xchar * ballx, xchar * bally,
 
 drag:
 
-    if (near_capacity() > SLT_ENCUMBER && dist2(x, y, u.ux, u.uy) <= 2) {
+    if (near_capacity() > SLT_ENCUMBER && dist2(x, y, youmonst.mx, youmonst.my) <= 2) {
         pline(msgc_cancelled1, "You cannot %sdrag the heavy iron ball.",
               invent ? "carry all that and also " : "");
         action_completed();
@@ -584,8 +584,8 @@ drag:
 
             }   /* now check again in case mon died */
             if (!m_at(level, uchain->ox, uchain->oy)) {
-                u.ux = uchain->ox;
-                u.uy = uchain->oy;
+                youmonst.mx = uchain->ox;
+                youmonst.my = uchain->oy;
                 newsym(u.ux0, u.uy0);
             }
             action_interrupted();
@@ -603,7 +603,7 @@ drag:
     *bc_control = BC_BALL | BC_CHAIN;
 
     move_bc(1, *bc_control, *ballx, *bally, *chainx, *chainy);
-    if (dist2(x, y, u.ux, u.uy) > 2) {
+    if (dist2(x, y, youmonst.mx, youmonst.my) > 2) {
         /* Awful case: we're still in range of the ball, so we thought we could 
            only move the chain, but it turned out that the target square for
            the chain was rock, so we had to drag it instead. But we can't drag
@@ -614,8 +614,8 @@ drag:
     } else {
         *ballx = uchain->ox;
         *bally = uchain->oy;
-        *chainx = u.ux;
-        *chainy = u.uy;
+        *chainx = youmonst.mx;
+        *chainy = youmonst.my;
     }
     *cause_delay = TRUE;
     return TRUE;
@@ -639,7 +639,7 @@ drop_ball(xchar x, xchar y, schar dx, schar dy)
         u.bglyph = (u.bc_order) ? u.cglyph : level->locations[x][y].mem_obj;
     }
 
-    if (x != u.ux || y != u.uy) {
+    if (x != youmonst.mx || y != youmonst.my) {
         struct trap *t;
         const char *pullmsg = "The ball pulls you out of the %s!";
 
@@ -651,7 +651,7 @@ drop_ball(xchar x, xchar y, schar dx, schar dy)
             case TT_WEB:
                 pline(msgc_actionok, pullmsg, "web");
                 pline_implied(msgc_consequence, "The web is destroyed!");
-                deltrap(level, t_at(level, u.ux, u.uy));
+                deltrap(level, t_at(level, youmonst.mx, youmonst.my));
                 break;
             case TT_LAVA:
                 pline(msgc_actionok, pullmsg, "lava");
@@ -676,21 +676,21 @@ drop_ball(xchar x, xchar y, schar dx, schar dy)
                 }
             }
             u.utrap = 0;
-            fill_pit(level, u.ux, u.uy);
+            fill_pit(level, youmonst.mx, youmonst.my);
         }
 
-        u.ux0 = u.ux;
-        u.uy0 = u.uy;
+        u.ux0 = youmonst.mx;
+        u.uy0 = youmonst.my;
         if (!Levitation && !MON_AT(level, x, y) && !u.utrap &&
             (is_pool(level, x, y) ||
              ((t = t_at(level, x, y)) &&
               (t->ttyp == PIT || t->ttyp == SPIKED_PIT || t->ttyp == TRAPDOOR ||
                t->ttyp == HOLE)))) {
-            u.ux = x;
-            u.uy = y;
+            youmonst.mx = x;
+            youmonst.my = y;
         } else {
-            u.ux = x - dx;
-            u.uy = y - dy;
+            youmonst.mx = x - dx;
+            youmonst.my = y - dy;
         }
 
         /* hero has moved, recalculate vision later */
@@ -703,14 +703,14 @@ drop_ball(xchar x, xchar y, schar dx, schar dy)
             u.bc_felt = 0;      /* feel nothing */
             /* pick up new glyph */
             u.cglyph =
-                (u.bc_order) ? u.bglyph : level->locations[u.ux][u.uy].mem_obj;
+                (u.bc_order) ? u.bglyph : level->locations[youmonst.mx][youmonst.my].mem_obj;
         }
-        movobj(uchain, u.ux, u.uy);     /* has a newsym */
+        movobj(uchain, youmonst.mx, youmonst.my);     /* has a newsym */
         if (Blind) {
             u.bc_order = bc_order();
         }
         newsym(u.ux0, u.uy0);   /* clean up old position */
-        if (u.ux0 != u.ux || u.uy0 != u.uy) {
+        if (u.ux0 != youmonst.mx || u.uy0 != youmonst.my) {
             spoteffects(TRUE);
             if (In_sokoban(&u.uz))
                 change_luck(-1);        /* Sokoban guilt */

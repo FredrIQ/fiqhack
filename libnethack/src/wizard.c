@@ -252,8 +252,8 @@ target_on(int mask, struct monst *mtmp)
     if (!mon_has_arti(mtmp, otyp)) {
         if (you_have(mask)) {
             mtmp->mstrategy = st_mon;
-            mtmp->sx = u.ux;
-            mtmp->sy = u.uy;
+            mtmp->sx = youmonst.mx;
+            mtmp->sy = youmonst.my;
         } else if ((otmp = on_ground(otyp, COLNO, ROWNO, NULL))) {
             /* Special case: if a meditating monster is standing on the item,
                act like that item hasn't spawned. Otherwise randomly generated
@@ -420,8 +420,8 @@ strategy(struct monst *mtmp, boolean magical_target)
     /* Aggravated monsters are all attracted to the player's real location. */
     if (magical_target && chases_player) {
         mtmp->mstrategy = st_mon;
-        mtmp->mstrategy = u.ux;
-        mtmp->mstrategy = u.uy;
+        mtmp->mstrategy = youmonst.mx;
+        mtmp->mstrategy = youmonst.my;
         return;
     }
 
@@ -656,7 +656,7 @@ tactics(struct monst *mtmp)
 
             /* if the player's blocking our target square, use the regular AI
                to attack them (so that we use items, request bribes, etc.) */
-            if (u.ux == tx && u.uy == ty)
+            if (youmonst.mx == tx && youmonst.my == ty)
                 return 0;
 
             if (strat == st_obj) {
@@ -710,7 +710,7 @@ clonewiz(void)
     struct monst *mtmp2;
 
     if ((mtmp2 =
-         makemon(&mons[PM_WIZARD_OF_YENDOR], level, u.ux, u.uy,
+         makemon(&mons[PM_WIZARD_OF_YENDOR], level, youmonst.mx, youmonst.my,
                  NO_MM_FLAGS)) != 0) {
         mtmp2->msleeping = 0;
         msethostility(mtmp2, TRUE, FALSE); /* TODO: reset alignment? */
@@ -741,7 +741,7 @@ nasty(struct monst *mcast, coord bypos)
     struct monst *mtmp;
     struct monst *mtarget = m_at(level, bypos.x, bypos.y);
     /* m_at doesn't work on you */
-    if (bypos.x == u.ux && bypos.y == u.uy)
+    if (bypos.x == youmonst.mx && bypos.y == youmonst.my)
         mtarget = &youmonst;
     int i, j, tmp;
     int castalign = (mcast ? mcast->data->maligntyp : -1);
@@ -839,7 +839,7 @@ resurrect(void)
         /* make a new Wizard */
         verb = "kill";
         mtmp =
-            makemon(&mons[PM_WIZARD_OF_YENDOR], level, u.ux, u.uy, MM_NOWAIT);
+            makemon(&mons[PM_WIZARD_OF_YENDOR], level, youmonst.mx, youmonst.my, MM_NOWAIT);
     } else {
         /* look for a migrating Wizard */
         verb = "elude";
@@ -904,8 +904,8 @@ intervene(void)
         aggravate();
         break;
     case 4:
-        cc.x = u.ux;
-        cc.y = u.uy;
+        cc.x = youmonst.mx;
+        cc.y = youmonst.my;
         nasty(NULL, cc);
         break;
     case 5:

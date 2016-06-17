@@ -72,7 +72,7 @@ vpline(enum msg_channel msgc, boolean norepeat,
         return;
     if (turnstate.vision_full_recalc)
         vision_recalc(0);
-    if (u.ux)
+    if (youmonst.mx)
         flush_screen();
 
     /* Some message channels need special handling. */

@@ -421,7 +421,7 @@ create_mplayers(int num, boolean special)
             y = 1 + rn2_on_rng(ROWNO - 2, rng);
             /* Special case: the player is on the map right now, don't desync
                the RNG by placing a monster on top of the player */
-            while (x == u.ux && y == u.uy) {
+            while (x == youmonst.mx && y == youmonst.my) {
                 x = rnd(COLNO - 2);
                 y = rnd(ROWNO - 2);
             }

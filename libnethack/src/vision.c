@@ -279,7 +279,7 @@ static void
 rogue_vision(char **next,       /* could_see array pointers */
              char *rmin, char *rmax)
 {
-    int rnum = level->locations[u.ux][u.uy].roomno - ROOMOFFSET;
+    int rnum = level->locations[youmonst.mx][youmonst.my].roomno - ROOMOFFSET;
 
     /* no SHARED... */
 
@@ -304,13 +304,13 @@ rogue_vision(char **next,       /* could_see array pointers */
         }
     }
 
-    in_door = level->locations[u.ux][u.uy].typ == DOOR;
+    in_door = level->locations[youmonst.mx][youmonst.my].typ == DOOR;
 
     /* Can always see adjacent. */
-    ylo = max(u.uy - 1, 0);
-    yhi = min(u.uy + 1, ROWNO - 1);
-    xlo = max(u.ux - 1, 0);
-    xhi = min(u.ux + 1, COLNO - 1);
+    ylo = max(youmonst.my - 1, 0);
+    yhi = min(youmonst.my + 1, ROWNO - 1);
+    xlo = max(youmonst.mx - 1, 0);
+    xhi = min(youmonst.mx + 1, COLNO - 1);
     for (zy = ylo; zy <= yhi; zy++) {
         if (xlo < rmin[zy])
             rmin[zy] = xlo;
@@ -327,7 +327,7 @@ rogue_vision(char **next,       /* could_see array pointers */
              * positions are not updated because they were already in sight.
              * So, we have to do it here.
              */
-            if (in_door && (zx == u.ux || zy == u.uy))
+            if (in_door && (zx == youmonst.mx || zy == youmonst.my))
                 newsym(zx, zy);
         }
     }
@@ -525,7 +525,7 @@ vision_recalc(int control)
          *
          *      + Monsters can see you even when you're in a pit.
          */
-        view_from(u.uy, u.ux, next_array, next_rmin, next_rmax, 0,
+        view_from(youmonst.my, youmonst.mx, next_array, next_rmin, next_rmax, 0,
                   (void (*)(int, int, void *))0, 0);
 
         /* 
@@ -563,8 +563,8 @@ vision_recalc(int control)
              */
             has_night_vision = 0;
 
-            for (row = u.uy - 1; row <= u.uy + 1; row++)
-                for (col = u.ux - 1; col <= u.ux + 1; col++) {
+            for (row = youmonst.my - 1; row <= youmonst.my + 1; row++)
+                for (col = youmonst.mx - 1; col <= youmonst.mx + 1; col++) {
                     if (!isok(col, row) || !is_pool(level, col, row))
                         continue;
 
@@ -576,21 +576,21 @@ vision_recalc(int control)
 
         /* if in a pit, just update for immediate locations */
         else if (u.utrap && u.utraptype == TT_PIT) {
-            for (row = u.uy - 1; row <= u.uy + 1; row++) {
+            for (row = youmonst.my - 1; row <= youmonst.my + 1; row++) {
                 if (row < 0)
                     continue;
                 if (row >= ROWNO)
                     break;
 
-                next_rmin[row] = max(0, u.ux - 1);
-                next_rmax[row] = min(COLNO - 1, u.ux + 1);
+                next_rmin[row] = max(0, youmonst.mx - 1);
+                next_rmax[row] = min(COLNO - 1, youmonst.mx + 1);
                 next_row = next_array[row];
 
                 for (col = next_rmin[row]; col <= next_rmax[row]; col++)
                     next_row[col] = IN_SIGHT | COULD_SEE;
             }
         } else
-            view_from(u.uy, u.ux, next_array, next_rmin, next_rmax, 0,
+            view_from(youmonst.my, youmonst.mx, next_array, next_rmin, next_rmax, 0,
                       (void (*)(int, int, void *))0, 0);
 
         /* 
@@ -599,17 +599,17 @@ vision_recalc(int control)
         if (Xray_vision) {
             ranges = circle_ptr(XRAY_RANGE);
                 
-            for (row = u.uy - XRAY_RANGE; row <= u.uy + XRAY_RANGE;
+            for (row = youmonst.my - XRAY_RANGE; row <= youmonst.my + XRAY_RANGE;
                  row++) {
                 if (row < 0)
                     continue;
                 if (row >= ROWNO)
                     break;
-                dy = v_abs(u.uy - row);
+                dy = v_abs(youmonst.my - row);
                 next_row = next_array[row];
                     
-                start = max(0, u.ux - ranges[dy]);
-                stop = min(COLNO - 1, u.ux + ranges[dy]);
+                start = max(0, youmonst.mx - ranges[dy]);
+                stop = min(COLNO - 1, youmonst.mx + ranges[dy]);
                     
                 for (col = start; col <= stop; col++) {
                     char old_row_val = next_row[col];
@@ -629,23 +629,23 @@ vision_recalc(int control)
 
         if (has_night_vision && (!Xray_vision || XRAY_RANGE < u.nv_range)) {
             if (!u.nv_range) {  /* range is 0 */
-                next_array[u.uy][u.ux] |= IN_SIGHT;
-                level->locations[u.ux][u.uy].seenv = SVALL;
-                next_rmin[u.uy] = min(u.ux, next_rmin[u.uy]);
-                next_rmax[u.uy] = max(u.ux, next_rmax[u.uy]);
+                next_array[youmonst.my][youmonst.mx] |= IN_SIGHT;
+                level->locations[youmonst.mx][youmonst.my].seenv = SVALL;
+                next_rmin[youmonst.my] = min(youmonst.mx, next_rmin[youmonst.my]);
+                next_rmax[youmonst.my] = max(youmonst.mx, next_rmax[youmonst.my]);
             } else if (u.nv_range > 0) {
                 ranges = circle_ptr(u.nv_range);
 
-                for (row = u.uy - u.nv_range; row <= u.uy + u.nv_range; row++) {
+                for (row = youmonst.my - u.nv_range; row <= youmonst.my + u.nv_range; row++) {
                     if (row < 0)
                         continue;
                     if (row >= ROWNO)
                         break;
-                    dy = v_abs(u.uy - row);
+                    dy = v_abs(youmonst.my - row);
                     next_row = next_array[row];
 
-                    start = max(0, u.ux - ranges[dy]);
-                    stop = min(COLNO - 1, u.ux + ranges[dy]);
+                    start = max(0, youmonst.mx - ranges[dy]);
+                    stop = min(COLNO - 1, youmonst.mx + ranges[dy]);
 
                     for (col = start; col <= stop; col++)
                         if (next_row[col])
@@ -684,9 +684,9 @@ vision_recalc(int control)
      *      Even so, that is not entirely correct.  But it seems close
      *      enough for now.
      */
-    colbump[u.ux] = colbump[u.ux + 1] = 1;
+    colbump[youmonst.mx] = colbump[youmonst.mx + 1] = 1;
     for (row = 0; row < ROWNO; row++) {
-        dy = u.uy - row;
+        dy = youmonst.my - row;
         dy = sign(dy);
         next_row = next_array[row];
         old_row = temp_array[row];
@@ -696,7 +696,7 @@ vision_recalc(int control)
         stop = max(viz_rmax[row], next_rmax[row]);
         loc = &level->locations[start][row];
 
-        sv = &seenv_matrix[dy + 1][start < u.ux ? 0 : (start > u.ux ? 2 : 1)];
+        sv = &seenv_matrix[dy + 1][start < youmonst.mx ? 0 : (start > youmonst.mx ? 2 : 1)];
 
         for (col = start; col <= stop;
              loc += ROWNO, sv += (int)colbump[++col]) {
@@ -722,7 +722,7 @@ vision_recalc(int control)
                      * the adjacent position.  If it is lit, then we can see
                      * the door or wall, otherwise we can't.
                      */
-                    dx = u.ux - col;
+                    dx = youmonst.mx - col;
                     dx = sign(dx);
                     flev = &(level->locations[col + dx][row + dy]);
                     if (flev->lit ||
@@ -753,7 +753,7 @@ vision_recalc(int control)
                 newsym(col, row);
         }       /* end for col . . */
     }   /* end for row . .  */
-    colbump[u.ux] = colbump[u.ux + 1] = 0;
+    colbump[youmonst.mx] = colbump[youmonst.mx + 1] = 0;
 
 skip:
     /* This newsym() caused a crash delivering msg about failure to open
@@ -762,10 +762,10 @@ skip:
        init_dungeons() -> panic() -> done(11) -> vision_recalc(2) -> newsym() ->
        crash!
 
-       u.ux and u.uy are 0 and program_state.panicking == 1 under those
+       youmonst.mx and youmonst.my are 0 and program_state.panicking == 1 under those
        circumstances. */
     if (!program_state.panicking)
-        newsym(u.ux, u.uy);     /* Make sure the hero shows up! */
+        newsym(youmonst.mx, youmonst.my);     /* Make sure the hero shows up! */
 
     /* Set the new min and max pointers. */
     viz_rmin = next_rmin;
@@ -1308,9 +1308,9 @@ clear_path(int col1, int row1, int col2, int row2, char **couldsee_data)
 
     /* couldsee() gives better results than the simple algorithm below, so
        preferentially use that when checking the player's location. */
-    if (col1 == u.ux && row1 == u.uy && couldsee_data)
+    if (col1 == youmonst.mx && row1 == youmonst.my && couldsee_data)
         return !!(couldsee_data[row2][col2] & COULD_SEE);
-    else if (col2 == u.ux && row2 == u.uy && couldsee_data)
+    else if (col2 == youmonst.mx && row2 == youmonst.my && couldsee_data)
         return !!(couldsee_data[row1][col1] & COULD_SEE);
 
     if (col1 < col2) {
@@ -1775,7 +1775,7 @@ do_clear_area(int scol, int srow, int range, void (*func) (int, int, void *),
               void *arg)
 {
     /* If not centered on hero, do the hard work of figuring the area */
-    if (scol != u.ux || srow != u.uy)
+    if (scol != youmonst.mx || srow != youmonst.my)
         view_from(srow, scol, NULL, NULL, NULL, range, func, arg);
     else {
         int x;

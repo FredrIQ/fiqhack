@@ -994,7 +994,7 @@ update_property(struct monst *mon, enum youprop prop,
         if (you) {
             set_mimic_blocking();       /* do special mimic handling */
             see_monsters(FALSE);        /* see invisible monsters */
-            newsym(u.ux, u.uy);         /* see yourself! */
+            newsym(youmonst.mx, youmonst.my);         /* see yourself! */
             if (!redundant && invisible(mon)) {
                 pline(lost ? msgc_intrloss : msgc_intrgain,
                       lost ? "Your body seems to fade out." :
@@ -1018,7 +1018,7 @@ update_property(struct monst *mon, enum youprop prop,
                           "can't see yourself");
                 effect = TRUE;
             }
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
         } else if (!redundant && vis_invis) {
             if (see_invisible(&youmonst)) {
                 pline(msgc_monneutral,
@@ -1947,7 +1947,7 @@ slip_or_trip(struct monst *mon)
     if (!you && !vis) {
         if (pctload > 50 && canhear())
             pline(msgc_levelwarning, "You hear fumbling %s.",
-                  dist2(u.ux, u.uy, mon->mx, mon->my) > BOLT_LIM * BOLT_LIM ?
+                  dist2(youmonst.mx, youmonst.my, mon->mx, mon->my) > BOLT_LIM * BOLT_LIM ?
                   "in the distance" : "nearby");
         mwake_nearby(mon, FALSE);
         return FALSE; /* can't see the target anyway */

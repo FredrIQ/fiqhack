@@ -140,7 +140,7 @@ do_light_sources(char **cs_rows)
 
         /* minor optimization: don't bother with duplicate light sources at
            hero */
-        if (ls->x == u.ux && ls->y == u.uy) {
+        if (ls->x == youmonst.mx && ls->y == youmonst.my) {
             if (at_hero_range >= ls->range)
                 ls->flags &= ~LSF_SHOW;
             else
@@ -557,7 +557,7 @@ wiz_light_sources(const struct nh_cmd_arg *arg)
 
     init_menulist(&menu);
 
-    buf = msgprintf("Mobile light sources: hero @ (%2d,%2d)", u.ux, u.uy);
+    buf = msgprintf("Mobile light sources: hero @ (%2d,%2d)", youmonst.mx, youmonst.my);
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
 

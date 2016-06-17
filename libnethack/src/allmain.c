@@ -351,7 +351,7 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
             ++light_range; /* matches polyself() handling */
 
         if (light_range)
-            new_light_source(level, u.ux, u.uy, light_range, LS_MONSTER,
+            new_light_source(level, youmonst.mx, youmonst.my, light_range, LS_MONSTER,
                              &youmonst);
     }
 
@@ -858,7 +858,7 @@ you_moved(void)
                 /* for the moment at least, you're in tiptop shape */
                 wtcap = UNENCUMBERED;
             } else if (Upolyd && youmonst.data->mlet == S_EEL &&
-                       !is_pool(level, u.ux, u.uy) && !Is_waterlevel(&u.uz)) {
+                       !is_pool(level, youmonst.mx, youmonst.my) && !Is_waterlevel(&u.uz)) {
                 if (u.mh > 1) {
                     u.mh--;
                 } else if (u.mh < 1)
@@ -925,10 +925,10 @@ you_moved(void)
 
             if (!u.uinvulnerable) {
                 if (Teleportation && !rn2(85)) {
-                    xchar old_ux = u.ux, old_uy = u.uy;
+                    xchar old_ux = youmonst.mx, old_uy = youmonst.my;
 
                     tele();
-                    if (u.ux != old_ux || u.uy != old_uy) {
+                    if (youmonst.mx != old_ux || youmonst.my != old_uy) {
                         if (!next_to_u()) {
                             check_leash(old_ux, old_uy);
                         }
@@ -989,7 +989,7 @@ you_moved(void)
                               !(Flying || Levitation))) {
                 if (Underwater)
                     drown();
-                else if (is_lava(level, u.ux, u.uy))
+                else if (is_lava(level, youmonst.mx, youmonst.my))
                     lava_effects();
             }
 
@@ -1042,7 +1042,7 @@ you_moved(void)
 static void
 handle_lava_trap(boolean didmove)
 {
-    if (!is_lava(level, u.ux, u.uy))
+    if (!is_lava(level, youmonst.mx, youmonst.my))
         u.utrap = 0;
     else if (!u.uinvulnerable) {
         u.utrap -= 1 << 8;
@@ -1133,7 +1133,7 @@ pre_move_tasks(boolean didmove, boolean loading_game)
     if (didmove) {
         /* Mark the current square as stepped on unless blind, since that would
            imply that we had properly explored it. */
-        struct rm *loc = &level->locations[u.ux][u.uy];
+        struct rm *loc = &level->locations[youmonst.mx][youmonst.my];
 
         if (!Blind && !loc->mem_stepped)
             loc->mem_stepped = 1;
@@ -1249,7 +1249,7 @@ cancel_helplessness(enum helpless_mask mask, const char *msg)
     if ((mask & hm_mimicking) && youmonst.m_ap_type) {
         youmonst.m_ap_type = M_AP_NOTHING;
         youmonst.mappearance = 0;
-        newsym(u.ux, u.uy);
+        newsym(youmonst.mx, youmonst.my);
     }
 
     if ((mask & hm_fainted) && u.uhs == FAINTED)
@@ -1298,7 +1298,7 @@ cancel_mimicking(const char* msg)
         *turnstate.helpless_endmsgs[hr_mimicking] = '\0';
         youmonst.m_ap_type = M_AP_NOTHING;
         youmonst.mappearance = 0;
-        newsym(u.ux, u.uy);
+        newsym(youmonst.mx, youmonst.my);
     }
     else
         return;
@@ -1474,14 +1474,14 @@ newgame(microseconds birthday, struct newgame_options *ngo)
 
     /* Move the monster from under you or else makedog() will fail when it
        calls makemon().  - ucsfcgl!kneller */
-    if (MON_AT(level, u.ux, u.uy))
-        mnexto(m_at(level, u.ux, u.uy));
+    if (MON_AT(level, youmonst.mx, youmonst.my))
+        mnexto(m_at(level, youmonst.mx, youmonst.my));
 
     /* This can clobber the charstars RNGs, so call it late */
     makedog(ngo);
 
     /* Stop autoexplore revisiting the entrance stairs (or position). */
-    level->locations[u.ux][u.uy].mem_stepped = 1;
+    level->locations[youmonst.mx][youmonst.my].mem_stepped = 1;
 
     historic_event(FALSE,
                    "entered the Dungeons of Doom to retrieve the Amulet of "

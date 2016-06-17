@@ -12,7 +12,7 @@ static boolean qlined_up(const struct monst *mtmp, int ax, int ay,
 static boolean m_beam_ok(const struct monst *, int, int, struct monst **,
                          boolean);
 
-#define URETREATING(x,y) (distmin(u.ux,u.uy,x,y) > distmin(u.ux0,u.uy0,x,y))
+#define URETREATING(x,y) (distmin(youmonst.mx,youmonst.my,x,y) > distmin(u.ux0,u.uy0,x,y))
 
 #define POLE_LIM 5      /* How far monsters can use pole-weapons */
 
@@ -126,7 +126,7 @@ drop_throw(struct obj *obj, boolean ohit, int x, int y)
             if (!flooreffects(obj, x, y, "fall")) {
                 /* don't double-dip on damage */
                 place_object(obj, level, x, y);
-                if (!mtmp && x == u.ux && y == u.uy)
+                if (!mtmp && x == youmonst.mx && y == youmonst.my)
                     mtmp = &youmonst;
                 if (mtmp && ohit)
                     passive_obj(mtmp, obj, NULL);
@@ -355,7 +355,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
         if ((mtmp = m_at(level, bhitpos.x, bhitpos.y)) != 0) {
             if (ohitmon(mtmp, singleobj, mon, range, verbose))
                 break;
-        } else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
+        } else if (bhitpos.x == youmonst.mx && bhitpos.y == youmonst.my) {
             action_interrupted();
 
             if (singleobj->oclass == GEM_CLASS &&
@@ -401,7 +401,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 break;
             default:
                 dam = dmgval(singleobj, &youmonst);
-                hitv = 3 - distmin(u.ux, u.uy, mon->mx, mon->my);
+                hitv = 3 - distmin(youmonst.mx, youmonst.my, mon->mx, mon->my);
                 if (hitv < -4)
                     hitv = -4;
                 if (is_elf(mon->data) &&
@@ -461,7 +461,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
             }
             action_interrupted();
             if (hitu || !range) {
-                drop_throw(singleobj, hitu, u.ux, u.uy);
+                drop_throw(singleobj, hitu, youmonst.mx, youmonst.my);
                 break;
             }
         } else if (!range       /* reached end of path */
@@ -550,7 +550,7 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
 
         /* TODO: LOE function between two arbitrary points. */
         if (dist2(mtmp->mx, mtmp->my, xdef, ydef) > POLE_LIM ||
-            (xdef == u.ux && ydef == u.uy && !couldsee(mtmp->mx, mtmp->my)))
+            (xdef == youmonst.mx && ydef == youmonst.my && !couldsee(mtmp->mx, mtmp->my)))
             return;     /* Out of range, or intervening wall */
 
         /* TODO: Rearrange the code around here to make the messages less
@@ -561,10 +561,10 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
                   obj_is_pname(otmp) ? the(onm) : an(onm));
         }
 
-        if (xdef == u.ux && ydef == u.uy) {
+        if (xdef == youmonst.mx && ydef == youmonst.my) {
 
             dam = dmgval(otmp, &youmonst);
-            hitv = 3 - distmin(u.ux, u.uy, mtmp->mx, mtmp->my);
+            hitv = 3 - distmin(youmonst.mx, youmonst.my, mtmp->mx, mtmp->my);
             if (hitv < -4)
                 hitv = -4;
             if (bigmonst(youmonst.data))
@@ -705,7 +705,7 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
            player (or to avoid the player); no monster can hit an engulfed
            player with a beam. */
         if ((x == magr->mux && y == magr->muy && msensem(magr, &youmonst)) ||
-            (magr->mtame && x == u.ux && y == u.uy)) {
+            (magr->mtame && x == youmonst.mx && y == youmonst.my)) {
             if (!Engulfed && !confused(magr)) {
                 if (mdef)
                     *mdef = &youmonst;
@@ -850,7 +850,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
     /* if new breath types are added, change AD_STUN to max type */
     int typ = (mattk->adtyp == AD_RBRE) ? rnd(AD_STUN) : mattk->adtyp;
 
-    boolean youdef = u.ux == xdef && u.uy == ydef;
+    boolean youdef = youmonst.mx == xdef && youmonst.my == ydef;
 
     if (!youdef && distmin(mtmp->mx, mtmp->my, xdef, ydef) < 3)
         return 0;

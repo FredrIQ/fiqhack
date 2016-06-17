@@ -64,7 +64,7 @@ use_camera(struct obj *obj, const struct nh_cmd_arg *arg)
               mbodypart(u.ustuck, STOMACH));
     else if (dz)
         pline(msgc_yafm, "You take a picture of the %s.",
-              (dz > 0) ? surface(u.ux, u.uy) : ceiling(u.ux, u.uy));
+              (dz > 0) ? surface(youmonst.mx, youmonst.my) : ceiling(youmonst.mx, youmonst.my));
     else
         weffects(&youmonst, obj, dx, dy, dz);
     return 1;
@@ -165,7 +165,7 @@ its_dead(int rx, int ry, int *resp)
             otmp = vobj_at(rx, ry);
         if (otmp->otyp == CORPSE) {
             pline(msgc_yafm, "You determine that %s unfortunate being is dead.",
-                  (rx == u.ux && ry == u.uy) ? "this" : "that");
+                  (rx == youmonst.mx && ry == youmonst.my) ? "this" : "that");
         } else {
             ttmp = t_at(level, rx, ry);
             pline(msgc_yafm, "%s appears to be in %s health for a statue.",
@@ -230,14 +230,14 @@ use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
             You_hear(msgc_yafm, "faint splashing.");
         else if (dz < 0 || !can_reach_floor())
             pline(msgc_cancelled1, "You can't reach the %s.",
-                  (dz > 0) ? surface(u.ux, u.uy) : ceiling(u.ux, u.uy));
-        else if (its_dead(u.ux, u.uy, &res))
+                  (dz > 0) ? surface(youmonst.mx, youmonst.my) : ceiling(youmonst.mx, youmonst.my));
+        else if (its_dead(youmonst.mx, youmonst.my, &res))
             ;  /* message already given */
         else if (Is_stronghold(&u.uz))
             You_hear(msgc_actionok, "the crackling of hellfire.");
         else
             pline(msgc_yafm, "The %s seems healthy enough.",
-                  surface(u.ux, u.uy));
+                  surface(youmonst.mx, youmonst.my));
         return res;
     } else if (obj->cursed && !rn2(2)) {
         You_hear(obj->bknown ? msgc_failrandom : msgc_failcurse,
@@ -252,8 +252,8 @@ use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
         return res;
     }
 
-    rx = u.ux + dx;
-    ry = u.uy + dy;
+    rx = youmonst.mx + dx;
+    ry = youmonst.my + dy;
     if (!isok(rx, ry)) {
         You_hear(msgc_yafm, "a faint typing noise.");
         return 0;
@@ -352,7 +352,7 @@ use_magic_whistle(struct obj *obj)
 boolean
 um_dist(xchar x, xchar y, xchar n)
 {
-    return (boolean) (abs(u.ux - x) > n || abs(u.uy - y) > n);
+    return (boolean) (abs(youmonst.mx - x) > n || abs(youmonst.my - y) > n);
 }
 
 int
@@ -430,8 +430,8 @@ use_leash(struct obj *obj, const struct nh_cmd_arg *arg)
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    cc.x = u.ux + dx;
-    cc.y = u.uy + dy;
+    cc.x = youmonst.mx + dx;
+    cc.y = youmonst.my + dy;
     if (!isok(cc.x, cc.y))
         return 0;
 
@@ -566,7 +566,7 @@ check_leash(xchar x, xchar y)
             otmp->leashmon = 0;
             continue;
         }
-        if (dist2(u.ux, u.uy, mtmp->mx, mtmp->my) >
+        if (dist2(youmonst.mx, youmonst.my, mtmp->mx, mtmp->my) >
             dist2(x, y, mtmp->mx, mtmp->my)) {
             if (!um_dist(mtmp->mx, mtmp->my, 3)) {
                 ;       /* still close enough */
@@ -691,12 +691,12 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
     if (dz) {
         if (!Blind)
             pline(msgc_yafm, "You reflect the %s.",
-                  (dz > 0) ? surface(u.ux, u.uy) : ceiling(u.ux, u.uy));
+                  (dz > 0) ? surface(youmonst.mx, youmonst.my) : ceiling(youmonst.mx, youmonst.my));
         return 1;
     }
 
-    schar sx = u.ux;
-    schar sy = u.uy;
+    schar sx = youmonst.mx;
+    schar sy = youmonst.my;
     int range = COLNO;
     struct monst *hitmon, *hitby;
     boolean self = FALSE;
@@ -872,7 +872,7 @@ use_bell(struct obj **optr)
     boolean wakem = FALSE, learno = FALSE;
     boolean ordinary = obj->otyp != BELL_OF_OPENING || !obj->spe;
     boolean invoking = obj->otyp == BELL_OF_OPENING &&
-        invocation_pos(&u.uz, u.ux, u.uy) && !On_stairs(u.ux, u.uy);
+        invocation_pos(&u.uz, youmonst.mx, youmonst.my) && !On_stairs(youmonst.mx, youmonst.my);
 
     pline(msgc_occstart, "You ring %s.", the(xname(obj)));
 
@@ -892,7 +892,7 @@ use_bell(struct obj **optr)
             !(mvitals[PM_WATER_NYMPH].mvflags & G_GONE) &&
             !(mvitals[PM_MOUNTAIN_NYMPH].mvflags & G_GONE) &&
             ((mtmp = makemon(mkclass(&u.uz, S_NYMPH, 0, rng_main), level,
-                             u.ux, u.uy, NO_MINVENT)))) {
+                             youmonst.mx, youmonst.my, NO_MINVENT)))) {
             pline(msgc_substitute, "You summon %s!", a_monnam(mtmp));
             if (!obj_resists(obj, 93, 100)) {
                 pline(msgc_substitute, "%s shattered!", Tobjnam(obj, "have"));
@@ -930,8 +930,8 @@ use_bell(struct obj **optr)
         } else if (obj->cursed) {
             coord mm;
 
-            mm.x = u.ux;
-            mm.y = u.uy;
+            mm.x = youmonst.mx;
+            mm.y = youmonst.my;
             mkundead(level, &mm, FALSE, NO_MINVENT);
             wakem = TRUE;
 
@@ -1022,7 +1022,7 @@ use_candelabrum(struct obj *obj)
         pline(msgc_actionok, "%s's %s burn%s", The(xname(obj)), s,
               (Blind ? "." : " brightly!"));
     }
-    if (!invocation_pos(&u.uz, u.ux, u.uy) || On_stairs(u.ux, u.uy)) {
+    if (!invocation_pos(&u.uz, youmonst.mx, youmonst.my) || On_stairs(youmonst.mx, youmonst.my)) {
         pline_implied(msgc_hint, "The %s %s being rapidly consumed!", s,
                       vtense(s, "are"));
         obj->age = (obj->age + 1) / 2;
@@ -1194,7 +1194,7 @@ catch_lit(struct obj * obj)
                   otense(obj, "catch"));
         if (obj->otyp == POT_OIL)
             makeknown(obj->otyp);
-        if (obj->unpaid && costly_spot(u.ux, u.uy) &&
+        if (obj->unpaid && costly_spot(youmonst.mx, youmonst.my) &&
             obj->where == OBJ_INVENT) {
             /* if it catches while you have it, then it's your tough luck */
             check_unpaid(obj);
@@ -1277,7 +1277,7 @@ use_lamp(struct obj *obj)
             pline(msgc_actionok, "%s flame%s %s%s", s_suffix(Yname2(obj)),
                   plur(obj->quan), otense(obj, "burn"),
                   Blind ? "." : " brightly!");
-            if (obj->unpaid && costly_spot(u.ux, u.uy) &&
+            if (obj->unpaid && costly_spot(youmonst.mx, youmonst.my) &&
                 obj->age == 20L * (long)objects[obj->otyp].oc_cost) {
                 const char *ithem = obj->quan > 1L ? "them" : "it";
 
@@ -1316,7 +1316,7 @@ light_cocktail(struct obj *obj)
 
     pline(msgc_actionok, "You light %s potion.%s", shk_your(obj),
           Blind ? "" : "  It gives off a dim light.");
-    if (obj->unpaid && costly_spot(u.ux, u.uy)) {
+    if (obj->unpaid && costly_spot(youmonst.mx, youmonst.my)) {
         /* Normally, we shouldn't both partially and fully charge for an item,
            but (Yendorian Fuel) Taxes are inevitable... */
         check_unpaid(obj);
@@ -1471,8 +1471,8 @@ get_jump_coords(const struct musable *m, coord *cc, int magic)
     }
 
     pline(msgc_uiprompt, "Where do you want to jump?");
-    cc->x = u.ux;
-    cc->y = u.uy;
+    cc->x = youmonst.mx;
+    cc->y = youmonst.my;
     if (mgetargpos(m, cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     if (!magic && !(jumps(&youmonst) & ~INTRINSIC) &&
@@ -1521,7 +1521,7 @@ get_jump_coords(const struct musable *m, coord *cc, int magic)
             case TT_WEB:
                 pline(msgc_actionok,
                       "You tear the web apart as you pull yourself free!");
-                deltrap(level, t_at(level, u.ux, u.uy));
+                deltrap(level, t_at(level, youmonst.mx, youmonst.my));
                 break;
             case TT_LAVA:
                 pline(msgc_actionok, "You pull yourself above the lava!");
@@ -1550,8 +1550,8 @@ jump_to_coords(coord *cc)
      * location.  The final position actually reached will be
      * in cc.
      */
-    uc.x = u.ux;
-    uc.y = u.uy;
+    uc.x = youmonst.mx;
+    uc.y = youmonst.my;
     /* calculate max(abs(dx), abs(dy)) as the range */
     range = cc->x - uc.x;
     if (range < 0)
@@ -1995,8 +1995,8 @@ use_figurine(struct obj **objp, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    x = u.ux + dx;
-    y = u.uy + dy;
+    x = youmonst.mx + dx;
+    y = youmonst.my + dy;
     cc.x = x;
     cc.y = y;
 
@@ -2239,16 +2239,16 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
         what = "underwater";
     else if (Levitation)
         what = "while levitating";
-    else if (is_pool(level, u.ux, u.uy))
+    else if (is_pool(level, youmonst.mx, youmonst.my))
         what = "in water", mispasting = 1;
-    else if (is_lava(level, u.ux, u.uy))
+    else if (is_lava(level, youmonst.mx, youmonst.my))
         what = "in lava", mispasting = 1;
-    else if (On_stairs(u.ux, u.uy))
-        what = (u.ux == level->dnladder.sx ||
-                u.ux == level->upladder.sx) ? "on the ladder" : "on the stairs";
-    else if (IS_FURNITURE(level->locations[u.ux][u.uy].typ) ||
-             IS_ROCK(level->locations[u.ux][u.uy].typ) ||
-             closed_door(level, u.ux, u.uy) || t_at(level, u.ux, u.uy))
+    else if (On_stairs(youmonst.mx, youmonst.my))
+        what = (youmonst.mx == level->dnladder.sx ||
+                youmonst.mx == level->upladder.sx) ? "on the ladder" : "on the stairs";
+    else if (IS_FURNITURE(level->locations[youmonst.mx][youmonst.my].typ) ||
+             IS_ROCK(level->locations[youmonst.mx][youmonst.my].typ) ||
+             closed_door(level, youmonst.mx, youmonst.my) || t_at(level, youmonst.mx, youmonst.my))
         what = "here", mispasting = 1;
     if (what) {
         pline(mispasting ? msgc_mispaste : msgc_cancelled,
@@ -2259,17 +2259,17 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
     ttyp = (otmp->otyp == LAND_MINE) ? LANDMINE : BEAR_TRAP;
     makeknown(otmp->otyp);
     if (otmp == u.utracked[tos_trap] &&
-        u.ux == u.utracked_location[tl_trap].x &&
-        u.uy == u.utracked_location[tl_trap].y) {
+        youmonst.mx == u.utracked_location[tl_trap].x &&
+        youmonst.my == u.utracked_location[tl_trap].y) {
         if (turnstate.continue_message)
             pline(msgc_occstart, "You resume setting %s %s.", shk_your(otmp),
-                  trapexplain[what_trap(ttyp, u.ux, u.uy, rn2) - 1]);
+                  trapexplain[what_trap(ttyp, youmonst.mx, youmonst.my, rn2) - 1]);
         one_occupation_turn(set_trap, occutext, occ_trap);
         return 1;
     }
     u.utracked[tos_trap] = otmp;
-    u.utracked_location[tl_trap].x = u.ux;
-    u.utracked_location[tl_trap].y = u.uy;
+    u.utracked_location[tl_trap].x = youmonst.mx;
+    u.utracked_location[tl_trap].y = youmonst.my;
     tmp = ACURR(A_DEX);
     u.uoccupation_progress[tos_trap] =
         (tmp > 17) ? 2 : (tmp > 12) ? 3 : (tmp > 7) ? 4 : 5;
@@ -2328,8 +2328,8 @@ set_trap(void)
     int ttyp;
 
     if (!otmp || !carried(otmp) ||
-        u.ux != u.utracked_location[tl_trap].x ||
-        u.uy != u.utracked_location[tl_trap].y) {
+        youmonst.mx != u.utracked_location[tl_trap].x ||
+        youmonst.my != u.utracked_location[tl_trap].y) {
         u.utracked[tos_trap] = 0;
         return 0;
     }
@@ -2338,16 +2338,16 @@ set_trap(void)
         return 1;       /* still busy */
 
     ttyp = (otmp->otyp == LAND_MINE) ? LANDMINE : BEAR_TRAP;
-    ttmp = maketrap(level, u.ux, u.uy, ttyp, rng_main);
+    ttmp = maketrap(level, youmonst.mx, youmonst.my, ttyp, rng_main);
     if (ttmp) {
         ttmp->tseen = 1;
         ttmp->madeby_u = 1;
-        newsym(u.ux, u.uy);     /* if our hero happens to be invisible */
-        if (*in_rooms(level, u.ux, u.uy, SHOPBASE)) {
-            add_damage(u.ux, u.uy, 0L); /* schedule removal */
+        newsym(youmonst.mx, youmonst.my);     /* if our hero happens to be invisible */
+        if (*in_rooms(level, youmonst.mx, youmonst.my, SHOPBASE)) {
+            add_damage(youmonst.mx, youmonst.my, 0L); /* schedule removal */
         }
         pline(msgc_actionok, "You finish arming %s.",
-              the(trapexplain[what_trap(ttyp, u.ux, u.uy, rn2) - 1]));
+              the(trapexplain[what_trap(ttyp, youmonst.mx, youmonst.my, rn2) - 1]));
         if ((otmp->cursed || Fumbling) && rnl(10) > 5)
             dotrap(ttmp, 0);
     } else {
@@ -2382,8 +2382,8 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 
     if (Stunned || (Confusion && !rn2(5)))
         confdir(&dx, &dy);
-    rx = u.ux + dx;
-    ry = u.uy + dy;
+    rx = youmonst.mx + dx;
+    ry = youmonst.my + dy;
     mtmp = (isok(rx, ry)) ? m_at(level, rx, ry) : NULL;
 
     /* fake some proficiency checks */
@@ -2415,7 +2415,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
               "There is too much resistance to flick your bullwhip.");
 
     } else if (dz < 0) {
-        pline(msgc_yafm, "You flick a bug off of the %s.", ceiling(u.ux, u.uy));
+        pline(msgc_yafm, "You flick a bug off of the %s.", ceiling(youmonst.mx, youmonst.my));
 
     } else if ((!dx && !dy) || (dz > 0)) {
         int dam;
@@ -2429,7 +2429,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 
         if (Levitation || u.usteed) {
             /* Have a shot at snaring something on the floor */
-            otmp = level->objects[u.ux][u.uy];
+            otmp = level->objects[youmonst.mx][youmonst.my];
             if (otmp && otmp->otyp == CORPSE && otmp->corpsenm == PM_HORSE) {
                 pline(msgc_yafm, "Why beat a dead horse?");
                 return 1;
@@ -2437,7 +2437,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             if (otmp && proficient) {
                 pline(msgc_occstart,
                       "You wrap your bullwhip around %s on the %s.",
-                      an(singular(otmp, xname)), surface(u.ux, u.uy));
+                      an(singular(otmp, xname)), surface(youmonst.mx, youmonst.my));
                 if (rnl(6) || pickup_object(otmp, 1L, TRUE) < 1)
                     pline(msgc_failrandom, "%s", msg_slipsfree);
                 return 1;
@@ -2561,8 +2561,8 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                     /* to floor near you */
                     pline(msgc_actionok, "You yank %s %s to the %s!",
                           s_suffix(mon_nam(mtmp)), onambuf,
-                          surface(u.ux, u.uy));
-                    place_object(otmp, level, u.ux, u.uy);
+                          surface(youmonst.mx, youmonst.my));
+                    place_object(otmp, level, youmonst.mx, youmonst.my);
                     stackobj(otmp);
                     break;
                 case 3:
@@ -2658,8 +2658,8 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 
     /* Prompt for a location */
     pline(msgc_uiprompt, where_to_hit);
-    cc.x = u.ux;
-    cc.y = u.uy;
+    cc.x = youmonst.mx;
+    cc.y = youmonst.my;
     if (getargpos(arg, &cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return 0;     /* user pressed ESC */
 
@@ -2776,8 +2776,8 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
 
     /* Prompt for a location */
     pline(msgc_uiprompt, where_to_hit);
-    cc.x = u.ux;
-    cc.y = u.uy;
+    cc.x = youmonst.mx;
+    cc.y = youmonst.my;
     if (getargpos(arg, &cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return 0;     /* user pressed ESC */
 
@@ -2844,7 +2844,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         if ((mtmp = m_at(level, cc.x, cc.y)) == NULL)
             break;
         if (verysmall(mtmp->data) && !rn2(4) &&
-            enexto(&cc, level, u.ux, u.uy, NULL)) {
+            enexto(&cc, level, youmonst.mx, youmonst.my, NULL)) {
             pline(msgc_actionok, "You pull in %s!", mon_nam(mtmp));
             mtmp->mundetected = 0;
             rloc_to(mtmp, cc.x, cc.y);
@@ -2866,7 +2866,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         else {
             pline(msgc_actionok, "You are yanked toward the %s!",
                   surface(cc.x, cc.y));
-            hurtle(sgn(cc.x - u.ux), sgn(cc.y - u.uy), 1, FALSE);
+            hurtle(sgn(cc.x - youmonst.mx), sgn(cc.y - youmonst.my), 1, FALSE);
             spoteffects(TRUE);
         }
         return 1;
@@ -2931,8 +2931,8 @@ do_break_wand(struct obj *obj, boolean intentional)
         pline(msgc_failcurse, nothing_else_happens);
         goto discard_broken_wand;
     }
-    obj->ox = u.ux;
-    obj->oy = u.uy;
+    obj->ox = youmonst.mx;
+    obj->oy = youmonst.my;
     dmg = obj->spe * 4;
 
     switch (obj->otyp) {
@@ -2959,7 +2959,7 @@ do_break_wand(struct obj *obj, boolean intentional)
         dmg *= 2;
     case WAN_MAGIC_MISSILE:
     wanexpl:
-        explode(u.ux, u.uy, (obj->otyp - WAN_MAGIC_MISSILE), dmg, WAND_CLASS,
+        explode(youmonst.mx, youmonst.my, (obj->otyp - WAN_MAGIC_MISSILE), dmg, WAND_CLASS,
                 expltype, NULL, 0);
         makeknown(obj->otyp);   /* explode described the effect */
         goto discard_broken_wand;
@@ -3000,8 +3000,8 @@ do_break_wand(struct obj *obj, boolean intentional)
             }
             continue;
         } else if (obj->otyp == WAN_CREATE_MONSTER) {
-            /* u.ux,u.uy creates it near you--x,y might create it in rock */
-            makemon(NULL, level, u.ux, u.uy, MM_CREATEMONSTER | MM_CMONSTER_U);
+            /* youmonst.mx,youmonst.my creates it near you--x,y might create it in rock */
+            makemon(NULL, level, youmonst.mx, youmonst.my, MM_CREATEMONSTER | MM_CMONSTER_U);
             continue;
         } else if ((bhit = bhit_at(&youmonst, obj, x, y, 10))) {
             if (bhit & BHIT_SHOPDAM)
@@ -3246,8 +3246,8 @@ doapply(const struct nh_cmd_arg *arg)
             hold_another_object(
                 otmp, Engulfed ? "Oops!  %s out of your reach!"
                 : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
-                   level->locations[u.ux][u.uy].typ < IRONBARS
-                   || level->locations[u.ux][u.uy].typ >=
+                   level->locations[youmonst.mx][youmonst.my].typ < IRONBARS
+                   || level->locations[youmonst.mx][youmonst.my].typ >=
                    ICE) ? "Oops!  %s away from you!" :
                 "Oops!  %s to the floor!",
                 The(aobjnam(otmp, "slip")), NULL);

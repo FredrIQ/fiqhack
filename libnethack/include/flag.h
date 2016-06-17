@@ -282,6 +282,8 @@ struct flag {
     unsigned no_of_wizards;     /* 0, 1 or 2 (wizard and his shadow) */
     int pickup_burden;  /* maximum burden before prompt */
     int recently_broken_otyp;   /* object that broke recently */
+    unsigned save_revision; /* save versioning to maintain save compatibility */
+# define SAVE_REVISION 1
 
     /* Weird-sized structures */
     struct nh_autopickup_rules *ap_rules;

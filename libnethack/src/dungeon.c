@@ -1148,7 +1148,7 @@ Is_branchlev(const d_level * lev)
 void
 next_level(boolean at_stairs)
 {
-    if (at_stairs && u.ux == level->sstairs.sx && u.uy == level->sstairs.sy) {
+    if (at_stairs && youmonst.mx == level->sstairs.sx && youmonst.my == level->sstairs.sy) {
         /* Taking a down dungeon branch. */
         goto_level(&level->sstairs.tolev, at_stairs, FALSE, FALSE);
     } else {
@@ -1165,7 +1165,7 @@ next_level(boolean at_stairs)
 void
 prev_level(boolean at_stairs)
 {
-    if (at_stairs && u.ux == level->sstairs.sx && u.uy == level->sstairs.sy) {
+    if (at_stairs && youmonst.mx == level->sstairs.sx && youmonst.my == level->sstairs.sy) {
         /* Taking an up dungeon branch. */
         /* KMH -- Upwards branches are okay if not level 1 */
         /* (Just make sure it doesn't go above depth 1) */
@@ -1186,13 +1186,13 @@ prev_level(boolean at_stairs)
 void
 u_on_newpos(int x, int y)
 {
-    if (!isok(u.ux, u.uy))
+    if (!isok(youmonst.mx, youmonst.my))
         panic("placing player outside the map boundaries");
-    u.ux = x;
-    u.uy = y;
+    youmonst.mx = x;
+    youmonst.my = y;
     /* ridden steed always shares hero's location */
     if (u.usteed)
-        u.usteed->mx = u.ux, u.usteed->my = u.uy;
+        u.usteed->mx = youmonst.mx, u.usteed->my = youmonst.my;
 }
 
 static boolean
@@ -1782,7 +1782,7 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
     if (Invocation_lev(&u.uz)) {
         add_menutext(&menu, "");
         buf = msgprintf("Invocation position @ (%d,%d), hero @ (%d,%d)",
-                        gamestate.inv_pos.x, gamestate.inv_pos.y, u.ux, u.uy);
+                        gamestate.inv_pos.x, gamestate.inv_pos.y, youmonst.mx, youmonst.my);
         add_menutext(&menu, buf);
     }
     /*
@@ -1801,7 +1801,7 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
         add_menutext(&menu, "");
         if (trap)
             buf = msgprintf("Portal @ (%d,%d), hero @ (%d,%d)",
-                            trap->tx, trap->ty, u.ux, u.uy);
+                            trap->tx, trap->ty, youmonst.mx, youmonst.my);
         else
             buf = "No portal found.";
         add_menutext(&menu, buf);

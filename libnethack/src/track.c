@@ -28,8 +28,8 @@ settrack(void)
         utcnt++;
     if (utpnt == UTSZ)
         utpnt = 0;
-    utrack[utpnt].x = u.ux;
-    utrack[utpnt].y = u.uy;
+    utrack[utpnt].x = youmonst.mx;
+    utrack[utpnt].y = youmonst.my;
     utpnt++;
 }
 

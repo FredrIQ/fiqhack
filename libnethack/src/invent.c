@@ -425,7 +425,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
         boolean wasUpolyd = Upolyd;
 
         /* in case touching this object turns out to be fatal */
-        place_object(obj, level, u.ux, u.uy);
+        place_object(obj, level, youmonst.mx, youmonst.my);
 
         if (!touch_artifact(obj, &youmonst)) {
             obj_extract_self(obj);      /* remove it from the floor */
@@ -659,7 +659,7 @@ obj_with_u(struct obj *obj)
         return TRUE;
     if (obj->where != OBJ_FLOOR)
         return FALSE;
-    return obj_here(obj, u.ux, u.uy);
+    return obj_here(obj, youmonst.mx, youmonst.my);
 }
 
 const char *
@@ -1835,7 +1835,7 @@ void
 update_location(boolean all_objects)
 {
     boolean minv = FALSE;
-    struct obj *otmp = level->objects[u.ux][u.uy];
+    struct obj *otmp = level->objects[youmonst.mx][youmonst.my];
     struct trap *trap;
     const char *dfeature = NULL;
     int ocount;
@@ -1852,14 +1852,14 @@ update_location(boolean all_objects)
         otmp = u.ustuck->minvent;
         minv = TRUE;
     } else {
-        if ((trap = t_at(level, u.ux, u.uy)) && trap->tseen) {
+        if ((trap = t_at(level, youmonst.mx, youmonst.my)) && trap->tseen) {
             const char *buf;
             buf = msgprintf("There is %s here.",
                             an(trapexplain[trap->ttyp - 1]));
             add_objitem(&objlist, MI_TEXT, 0, buf, NULL, FALSE);
         }
 
-        dfeature = dfeature_at(u.ux, u.uy);
+        dfeature = dfeature_at(youmonst.mx, youmonst.my);
         if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
             dfeature = NULL;
         if (dfeature) {
@@ -1956,11 +1956,11 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         }
         return !!feeling;
     }
-    if (looked_explicitly && (trap = t_at(level, u.ux, u.uy)) && trap->tseen)
+    if (looked_explicitly && (trap = t_at(level, youmonst.mx, youmonst.my)) && trap->tseen)
         pline(msgc_info, "There is %s here.", an(trapexplain[trap->ttyp - 1]));
 
-    otmp = level->objects[u.ux][u.uy];
-    dfeature = dfeature_at(u.ux, u.uy);
+    otmp = level->objects[youmonst.mx][youmonst.my];
+    dfeature = dfeature_at(youmonst.mx, youmonst.my);
     if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
         dfeature = NULL;
 
@@ -1973,9 +1973,9 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         } else {
             pline(msgc_occstart, "You try to feel what is %s%s.",
                   drift ? "floating here" : "lying here on the ",
-                  drift ? "" : surface(u.ux, u.uy));
+                  drift ? "" : surface(youmonst.mx, youmonst.my));
         }
-        if (dfeature && !drift && !strcmp(dfeature, surface(u.ux, u.uy)))
+        if (dfeature && !drift && !strcmp(dfeature, surface(youmonst.mx, youmonst.my)))
             dfeature = NULL;    /* ice already identifed */
         if (!can_reach_floor()) {
             /* Don't assume a msg_occstart message was printed (it's a
@@ -1989,11 +1989,11 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
     if (dfeature)
         fbuf = msgprintf("There is %s here.", an(dfeature));
 
-    if (!otmp || is_lava(level, u.ux, u.uy) ||
-        (is_pool(level, u.ux, u.uy) && !Underwater)) {
+    if (!otmp || is_lava(level, youmonst.mx, youmonst.my) ||
+        (is_pool(level, youmonst.mx, youmonst.my) && !Underwater)) {
         if (dfeature)
             pline(msgc_info, "%s", fbuf);
-        read_engr_at(u.ux, u.uy);
+        read_engr_at(youmonst.mx, youmonst.my);
         if (looked_explicitly && (feeling || !dfeature))
             pline(msgc_info, "You %s no objects here.", verb);
         return !!feeling;
@@ -2004,7 +2004,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         /* multiple objects here, and this is an autopickup command */
         if (dfeature)
             pline(msgc_info, "%s", fbuf);
-        read_engr_at(u.ux, u.uy);
+        read_engr_at(youmonst.mx, youmonst.my);
         pline(msgc_info, "There are %s%s objects here.",
               (obj_cnt <= 4) ? "a few" :
               (obj_cnt <= 10) ? "several" : "many", picked_some ? " more" : "");
@@ -2012,7 +2012,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         /* only one object */
         if (dfeature)
             pline(msgc_info, "%s", fbuf);
-        read_engr_at(u.ux, u.uy);
+        read_engr_at(youmonst.mx, youmonst.my);
 #ifdef INVISIBLE_OBJECTS
         if (otmp->oinvis && !See_invisible)
             verb = "feel";
@@ -2053,7 +2053,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
 
         if (felt_cockatrice)
             feel_cockatrice(otmp, feeling, "feeling around for");
-        read_engr_at(u.ux, u.uy);
+        read_engr_at(youmonst.mx, youmonst.my);
     }
     return ! !feeling;
 }
@@ -2357,7 +2357,7 @@ void
 useupf(struct obj *obj, long numused)
 {
     struct obj *otmp;
-    boolean at_u = (obj->ox == u.ux && obj->oy == u.uy);
+    boolean at_u = (obj->ox == youmonst.mx && obj->oy == youmonst.my);
 
     /* burn_floor_paper() keeps an object pointer that it tries to useupf()
        multiple times, so obj must survive if plural */
@@ -2374,8 +2374,8 @@ useupf(struct obj *obj, long numused)
     }
     delobj(otmp);
     if (at_u && u.uundetected && hides_under(youmonst.data)) {
-        u.uundetected = OBJ_AT(u.ux, u.uy);
-        newsym(u.ux, u.uy);
+        u.uundetected = OBJ_AT(youmonst.mx, youmonst.my);
+        newsym(youmonst.mx, youmonst.my);
     }
 }
 

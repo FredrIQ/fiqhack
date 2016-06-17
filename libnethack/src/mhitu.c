@@ -154,7 +154,7 @@ expels(struct monst *mtmp,
     }
     unstuck(mtmp);      /* ball&chain returned in unstuck() */
     mnexto(mtmp);
-    newsym(u.ux, u.uy);
+    newsym(youmonst.mx, youmonst.my);
     spoteffects(TRUE);
     /* to cover for a case where mtmp is not in a next square */
     if (um_dist(mtmp->mx, mtmp->my, 1))
@@ -203,7 +203,7 @@ mattacku(struct monst *mtmp)
     boolean ranged = (distu(mtmp->mx, mtmp->my) > 3);
 
     /* Is it near you? Affects your actions */
-    boolean range2 = !monnear(mtmp, u.ux, u.uy);
+    boolean range2 = !monnear(mtmp, youmonst.mx, youmonst.my);
 
     /* Can you see it? Affects messages. For long worms, if they're attacking
        you and you can see any part of the monster, you presumably know it's a
@@ -214,9 +214,9 @@ mattacku(struct monst *mtmp)
 
        Exception: the monster has you engulfed, in which case we want to avoid
        setting mux and muy to the monster's own square. */
-    if (mtmp->mx != u.ux || mtmp->my != u.uy) {
-        mtmp->mux = u.ux;
-        mtmp->muy = u.uy;
+    if (mtmp->mx != youmonst.mx || mtmp->my != youmonst.my) {
+        mtmp->mux = youmonst.mx;
+        mtmp->muy = youmonst.my;
     }
 
     /* Might be attacking your image around the corner, or invisible, or you
@@ -266,19 +266,19 @@ mattacku(struct monst *mtmp)
                 pline(msgc_occstart, "You ambush %s!", mon_nam(mtmp));
             else
                 pline(msgc_occstart, "You fall from the %s!",
-                      ceiling(u.ux, u.uy));
+                      ceiling(youmonst.mx, youmonst.my));
 
             /* TODO: This next line is beautifully exploitable (see the
                explanation on TASvideos). */
-            if (enexto(&cc, level, u.ux, u.uy, youmonst.data)) {
+            if (enexto(&cc, level, youmonst.mx, youmonst.my, youmonst.data)) {
                 remove_monster(level, mtmp->mx, mtmp->my);
                 newsym(mtmp->mx, mtmp->my);
-                place_monster(mtmp, u.ux, u.uy, TRUE);
+                place_monster(mtmp, youmonst.mx, youmonst.my, TRUE);
                 if (mtmp->wormno)
                     worm_move(mtmp);
                 teleds(cc.x, cc.y, TRUE);
                 set_apparxy(mtmp);
-                newsym(u.ux, u.uy);
+                newsym(youmonst.mx, youmonst.my);
             } else {
                 /* this is a pathological case, so might as well be silly about
                    it... */
@@ -289,7 +289,7 @@ mattacku(struct monst *mtmp)
                     pline(msgc_kill, "%s is killed by a falling %s (you)!",
                           Monnam(mtmp), youmonst.data->mname);
                 killed(mtmp);
-                newsym(u.ux, u.uy);
+                newsym(youmonst.mx, youmonst.my);
                 if (!DEADMONSTER(mtmp))
                     return 0;
                 else
@@ -326,11 +326,11 @@ mattacku(struct monst *mtmp)
 
                    The messages are placed in the msgc_youdiscover channel, in
                    order to continue the parallelism. This might be too cute. */
-                struct obj *obj = level->objects[u.ux][u.uy];
+                struct obj *obj = level->objects[youmonst.mx][youmonst.my];
 
                 if (obj ||
                     (youmonst.data->mlet == S_EEL &&
-                     is_pool(level, u.ux, u.uy))) {
+                     is_pool(level, youmonst.mx, youmonst.my))) {
                     int save_spe = 0;   /* suppress warning */
 
                     if (obj) {
@@ -346,13 +346,13 @@ mattacku(struct monst *mtmp)
                         pline(msgc_youdiscover, "Wait, %s!  There's a %s named "
                               "%s hiding under %s!", m_monnam(mtmp),
                               youmonst.data->mname, u.uplname,
-                              doname(level->objects[u.ux][u.uy]));
+                              doname(level->objects[youmonst.mx][youmonst.my]));
                     if (obj)
                         obj->spe = save_spe;
                 } else
                     impossible("hiding under nothing?");
             }
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
         }
         return 0;
     }
@@ -504,16 +504,16 @@ mattacku(struct monst *mtmp)
             break;
         case AT_BREA:
             if (range2)
-                sum[i] = breamq(mtmp, u.ux, u.uy, mattk);
+                sum[i] = breamq(mtmp, youmonst.mx, youmonst.my, mattk);
             break;
         case AT_SPIT:
             if (range2)
-                sum[i] = spitmq(mtmp, u.ux, u.uy, mattk);
+                sum[i] = spitmq(mtmp, youmonst.mx, youmonst.my, mattk);
             break;
         case AT_WEAP:
             if (range2) {
                 if (!Is_rogue_level(&u.uz))
-                    thrwmq(mtmp, u.ux, u.uy);
+                    thrwmq(mtmp, youmonst.mx, youmonst.my);
             } else {
                 int hittmp = 0;
 
@@ -1445,7 +1445,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             pline(msgc_fatalavoid, "%s reaches out with its deadly touch.",
                   Monnam(mtmp));
             if (Antimagic)
-                shieldeff(u.ux, u.uy);
+                shieldeff(youmonst.mx, youmonst.my);
             /* can use a lower-priority channel for this because we already gave
                a warning that an instadeath's around */
             pline(combat_msgc(mtmp, &youmonst, cr_miss),
@@ -1475,7 +1475,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         if (!uncancelled)
             break;
         if (flaming(youmonst.data) ||
-            level->locations[u.ux][u.uy].typ == LAVAPOOL) {
+            level->locations[youmonst.mx][youmonst.my].typ == LAVAPOOL) {
             pline(msgc_fatalavoid, "The slime burns away!");
             dmg = 0;
         } else if (Unchanging || unsolid(youmonst.data) ||
@@ -1584,7 +1584,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 static int
 gulpmu(struct monst *mtmp, const struct attack *mattk)
 {
-    struct trap *t = t_at(level, u.ux, u.uy);
+    struct trap *t = t_at(level, youmonst.mx, youmonst.my);
     int tmp = dice((int)mattk->damn, (int)mattk->damd);
     int tim_tmp;
     struct obj *otmp2;
@@ -1594,14 +1594,14 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         if (youmonst.data->msize >= MZ_HUGE)
             return 0;
         if ((t && ((t->ttyp == PIT) || (t->ttyp == SPIKED_PIT))) &&
-            sobj_at(BOULDER, level, u.ux, u.uy))
+            sobj_at(BOULDER, level, youmonst.mx, youmonst.my))
             return 0;
 
         if (Punished)
             unplacebc();        /* ball&chain go away */
         remove_monster(level, mtmp->mx, mtmp->my);
         mtmp->mtrapped = 0;     /* no longer on old trap */
-        place_monster(mtmp, u.ux, u.uy, TRUE);
+        place_monster(mtmp, youmonst.mx, youmonst.my, TRUE);
         u.ustuck = mtmp;
         newsym(mtmp->mx, mtmp->my);
 
@@ -1633,7 +1633,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         if (touch_petrifies(youmonst.data) && !resists_ston(mtmp)) {
             expels(mtmp, mtmp->data, FALSE);
             remove_monster(level, mtmp->mx, mtmp->my);
-            place_monster(mtmp, u.ux, u.uy, TRUE);
+            place_monster(mtmp, youmonst.mx, youmonst.my, TRUE);
             if (Punished)
                 placebc();
             minstapetrify(mtmp, &youmonst);
@@ -1734,7 +1734,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
     case AD_ELEC:
         if (!cancelled(mtmp) && rn2(2)) {
             if (Shock_resistance) {
-                shieldeff(u.ux, u.uy);
+                shieldeff(youmonst.mx, youmonst.my);
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "Electricity sparks around, avoiding you.");
                 ugolemeffects(AD_ELEC, tmp);
@@ -1749,7 +1749,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
     case AD_COLD:
         if (!cancelled(mtmp) && rn2(2)) {
             if (Cold_resistance) {
-                shieldeff(u.ux, u.uy);
+                shieldeff(youmonst.mx, youmonst.my);
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "You feel mildly chilly.");
                 ugolemeffects(AD_COLD, tmp);
@@ -1763,7 +1763,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
     case AD_FIRE:
         if (!cancelled(mtmp) && rn2(2)) {
             if (Fire_resistance) {
-                shieldeff(u.ux, u.uy);
+                shieldeff(youmonst.mx, youmonst.my);
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "You feel mildly hot.");
                 ugolemeffects(AD_FIRE, tmp);
@@ -2461,7 +2461,7 @@ cloneu(void)
     if (mvitals[mndx].mvflags & G_EXTINCT)
         return NULL;
 
-    mon = makemon(youmonst.data, level, u.ux, u.uy, NO_MINVENT | MM_EDOG);
+    mon = makemon(youmonst.data, level, youmonst.mx, youmonst.my, NO_MINVENT | MM_EDOG);
     if (mon) {
         christen_monst(mon, u.uplname);
         initedog(mon);

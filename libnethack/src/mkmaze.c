@@ -770,7 +770,7 @@ movebubbles(void)
                         mon->mx = COLNO;
                         mon->my = ROWNO;
                     }
-                    if (!Engulfed && x == u.ux && y == u.uy) {
+                    if (!Engulfed && x == youmonst.mx && y == youmonst.my) {
                         struct container *cons =
                             malloc(sizeof (struct container));
 
@@ -833,20 +833,20 @@ water_friction(schar * udx, schar * udy)
 
     if (*udx && !rn2(!*udy ? 3 : 6)) {  /* 1/3 chance or half that */
         /* cancel delta x and choose an arbitrary delta y value */
-        x = u.ux;
+        x = youmonst.mx;
         do {
             dy = rn2(3) - 1;    /* -1, 0, 1 */
-            y = u.uy + dy;
+            y = youmonst.my + dy;
         } while (dy && (!isok(x, y) || !is_pool(level, x, y)));
         *udx = 0;
         *udy = dy;
         eff = TRUE;
     } else if (*udy && !rn2(!*udx ? 3 : 5)) {   /* 1/3 or 1/5*(5/6) */
         /* cancel delta y and choose an arbitrary delta x value */
-        y = u.uy;
+        y = youmonst.my;
         do {
             dx = rn2(3) - 1;    /* -1 .. 1 */
-            x = u.ux + dx;
+            x = youmonst.mx + dx;
         } while (dx && (!isok(x, y) || !is_pool(level, x, y)));
         *udy = 0;
         *udx = dx;
@@ -1147,11 +1147,11 @@ mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boolean ini)
             }
 
         case CONS_HERO:{
-                int ux0 = u.ux, uy0 = u.uy;
+                int ux0 = youmonst.mx, uy0 = youmonst.my;
 
                 /* change u.ux0 and u.uy0? */
-                u.ux = cons->x;
-                u.uy = cons->y;
+                youmonst.mx = cons->x;
+                youmonst.my = cons->y;
                 newsym(ux0, uy0);       /* clean up old position */
 
                 if (MON_AT(lev, cons->x, cons->y)) {

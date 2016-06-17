@@ -751,7 +751,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                     continue;
                 }
                 mtmp = m_at(mon->dlevel, sx, sy);
-                if (!mtmp && sx == u.ux && sy == u.uy)
+                if (!mtmp && sx == youmonst.mx && sy == youmonst.my)
                     mtmp = &youmonst;
                 if (sobj_at(BOULDER, level, sx, sy) &&
                     !throws_rocks(mon->data) &&
@@ -896,7 +896,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                 while (--range) {
                     sx += cx;
                     sy += cy;
-                    if (sx == u.ux && sy == u.uy)
+                    if (sx == youmonst.mx && sy == youmonst.my)
                         score = 0;
                 }
             }
@@ -1036,7 +1036,7 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
                 mtmp = m_at(mon->dlevel, x, y);
                 if (!mtmp) {
                     mtmp = &youmonst;
-                    if (x != u.ux || y != u.uy)
+                    if (x != youmonst.mx || y != youmonst.my)
                         continue;
                 }
                 if (!mm_aggression(mon, mtmp))
@@ -1141,9 +1141,9 @@ find_item(struct monst *mon, struct musable *m)
     if (msensem(mon, &youmonst) && (mm_aggression(mon, &youmonst) || conflicted)) {
         hostsense++;
         if ((msensem(mon, &youmonst) & MSENSE_ANYVISION) ||
-            m_cansee(mon, u.ux, u.uy)) {
+            m_cansee(mon, youmonst.mx, youmonst.my)) {
             hostvis++;
-            hostrange = dist2(mon->mx, mon->my, u.ux, u.uy);
+            hostrange = dist2(mon->mx, mon->my, youmonst.mx, youmonst.my);
             mclose = &youmonst;
         }
     }
@@ -1389,7 +1389,7 @@ find_item(struct monst *mon, struct musable *m)
         for (xx = x - 1; xx <= x + 1; xx++)
             for (yy = y - 1; yy <= y + 1; yy++)
                 if (isok(xx, yy))
-                    if (xx != u.ux || yy != u.uy)
+                    if (xx != youmonst.mx || yy != youmonst.my)
                         if (mon->data != &mons[PM_GRID_BUG] || xx == x ||
                             yy == y)
                             if ((xx == x && yy == y) || !lev->monsters[xx][yy])
@@ -2486,7 +2486,7 @@ use_item(struct musable *m)
 
         mtmp = m_at(mon->dlevel, m->x, m->y);
         if (!mtmp) {
-            if (m->x == u.ux && m->y == u.uy)
+            if (m->x == youmonst.mx && m->y == youmonst.my)
                 mtmp = &youmonst;
         }
         if (!mtmp) {

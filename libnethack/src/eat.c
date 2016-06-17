@@ -289,7 +289,7 @@ eat_one_turn(void)
 
     if (!u.utracked[tos_food] ||
         (!carried(u.utracked[tos_food]) &&
-         !obj_here(u.utracked[tos_food], u.ux, u.uy))) {
+         !obj_here(u.utracked[tos_food], youmonst.mx, youmonst.my))) {
         /* this can happen if, for instance, the food was stolen, or the food
            was on the ground and the character teleported; reset_occupations
            does not check for this because walking away from a meal, back to it,
@@ -659,7 +659,7 @@ cpostfx(struct monst *mon, int pm)
             helpless(tmp, hr_mimicking, "pretending to be a pile of gold", buf);
             youmonst.m_ap_type = M_AP_OBJECT;
             youmonst.mappearance = Hallucination ? ORANGE : GOLD_PIECE;
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
             flush_screen();
             /* make gold symbol show up now */
             win_pause_output(P_MAP);
@@ -811,7 +811,7 @@ eat_tin_one_turn(void)
        future */
     if (!u.utracked[tos_tin] ||
         (!carried(u.utracked[tos_tin]) &&
-         !obj_here(u.utracked[tos_tin], u.ux, u.uy))) {
+         !obj_here(u.utracked[tos_tin], youmonst.mx, youmonst.my))) {
         /* perhaps it was stolen? */
         pline(msgc_interrupted,
               "The tin you were opening seems to have gone missing.");
@@ -1050,7 +1050,7 @@ rottenfood(struct obj *obj)
             what = "you lose control of", where = "yourself";
         else
             what = "you slap against the", where =
-                (u.usteed) ? "saddle" : surface(u.ux, u.uy);
+                (u.usteed) ? "saddle" : surface(youmonst.mx, youmonst.my);
         pline(msgc_statusbad, "The world spins and %s %s.", what, where);
         helpless(rnd(10), hr_fainted, "unconscious from rotten food", NULL);
         see_monsters(FALSE);
@@ -1876,7 +1876,7 @@ doeat(const struct nh_cmd_arg *arg)
         inc_timeout(&youmonst, STUNNED, rn2(10), FALSE);
         pline(msgc_consequence, "You spit %s out onto the %s.",
               the(xname(otmp)),
-              surface(u.ux, u.uy));
+              surface(youmonst.mx, youmonst.my));
         if (carried(otmp)) {
             unwield_silently(otmp);
             freeinv(otmp);
@@ -2255,7 +2255,7 @@ floorfood(const char *verb, const struct nh_cmd_arg *arg)
     struct obj *otmp;
     const char *qbuf;
     char c;
-    struct trap *ttmp = t_at(level, u.ux, u.uy);
+    struct trap *ttmp = t_at(level, youmonst.mx, youmonst.my);
     boolean feeding = (!strcmp(verb, "eat"));
     boolean sacrificing = (!strcmp(verb, "sacrifice"));
     boolean tinning = (!strcmp(verb, "tin"));
@@ -2273,7 +2273,7 @@ floorfood(const char *verb, const struct nh_cmd_arg *arg)
     /* if we can't touch floor objects then use invent food only */
     if (!can_reach_floor() || (feeding && u.usteed) ||  /* can't eat off floor
                                                            while riding */
-        ((is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) &&
+        ((is_pool(level, youmonst.mx, youmonst.my) || is_lava(level, youmonst.mx, youmonst.my)) &&
          (Wwalking || is_clinger(youmonst.data) || (Flying && !Breathless))) ||
         (ttmp && ttmp->tseen && (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT)
          && (!u.utrap || (u.utrap && u.utraptype != TT_PIT)) && !Passes_walls))
@@ -2310,7 +2310,7 @@ eat_floorfood:
     }
 
     if (checking_can_floorfood) {
-        for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
+        for (otmp = level->objects[youmonst.mx][youmonst.my]; otmp; otmp = otmp->nexthere) {
             if ((*floorfood_check)(otmp)) {
                 can_floorfood = TRUE;
                 break;
@@ -2321,7 +2321,7 @@ eat_floorfood:
         int n;
 
         qbuf = msgprintf("%c%s what?", highc(*verb), verb + 1);
-        n = query_objlist(qbuf, level->objects[u.ux][u.uy],
+        n = query_objlist(qbuf, level->objects[youmonst.mx][youmonst.my],
                           BY_NEXTHERE | INVORDER_SORT | AUTOSELECT_SINGLE,
                           &floorfood_list, PICK_ONE, floorfood_check);
         if (n) {

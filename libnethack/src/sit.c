@@ -39,7 +39,7 @@ dosit(const struct nh_cmd_arg *arg)
 {
     static const char sit_message[] = "You sit on the %s.";
     struct trap *trap;
-    int typ = level->locations[u.ux][u.uy].typ;
+    int typ = level->locations[youmonst.mx][youmonst.my].typ;
     int attrib;
 
     (void) arg;
@@ -56,12 +56,12 @@ dosit(const struct nh_cmd_arg *arg)
         else
             pline(msgc_cancelled, "You are sitting on air.");
         return 0;
-    } else if (is_pool(level, u.ux, u.uy) && !Underwater) {
+    } else if (is_pool(level, youmonst.mx, youmonst.my) && !Underwater) {
         /* water walking */
         goto in_water;
     }
 
-    if ((trap = t_at(level, u.ux, u.uy)) != 0 && !u.utrap &&
+    if ((trap = t_at(level, youmonst.mx, youmonst.my)) != 0 && !u.utrap &&
         (trap->ttyp == HOLE || trap->ttyp == TRAPDOOR || trap->ttyp == PIT ||
          trap->ttyp == SPIKED_PIT) && trap->tseen) {
         pline(msgc_yafm, "You sit on the edge of the %s.",
@@ -70,15 +70,15 @@ dosit(const struct nh_cmd_arg *arg)
         return 1;
     }
 
-    if (OBJ_AT(u.ux, u.uy)) {
+    if (OBJ_AT(youmonst.mx, youmonst.my)) {
         struct obj *obj;
 
-        obj = level->objects[u.ux][u.uy];
+        obj = level->objects[youmonst.mx][youmonst.my];
         pline(msgc_yafm, "You sit on %s.", the(xname(obj)));
         if (!(Is_box(obj) || objects[obj->otyp].oc_material == CLOTH))
             pline_implied(msgc_yafm, "It's not very comfortable...");
 
-    } else if ((trap = t_at(level, u.ux, u.uy)) != 0 ||
+    } else if ((trap = t_at(level, youmonst.mx, youmonst.my)) != 0 ||
                (u.utrap && (u.utraptype >= TT_LAVA))) {
 
         if (u.utrap) {
@@ -118,7 +118,7 @@ dosit(const struct nh_cmd_arg *arg)
             pline(msgc_cancelled1, "There are no cushions floating nearby.");
         else
             pline(msgc_yafm, "You sit down on the muddy bottom.");
-    } else if (is_pool(level, u.ux, u.uy)) {
+    } else if (is_pool(level, youmonst.mx, youmonst.my)) {
     in_water:
         pline(msgc_badidea, "You sit in the water.");
         if (!rn2(10) && uarm)
@@ -133,7 +133,7 @@ dosit(const struct nh_cmd_arg *arg)
     } else if (IS_ALTAR(typ)) {
 
         pline(msgc_badidea, sit_message, defexplain[S_altar]);
-        altar_wrath(u.ux, u.uy);
+        altar_wrath(youmonst.mx, youmonst.my);
 
     } else if (IS_GRAVE(typ)) {
 
@@ -147,7 +147,7 @@ dosit(const struct nh_cmd_arg *arg)
 
         pline(msgc_yafm, sit_message, "ladder");
 
-    } else if (is_lava(level, u.ux, u.uy)) {
+    } else if (is_lava(level, youmonst.mx, youmonst.my)) {
 
         /* must be WWalking */
         pline(msgc_yafm, sit_message, "lava");
@@ -160,7 +160,7 @@ dosit(const struct nh_cmd_arg *arg)
         losehp(dice((Fire_resistance ? 2 : 10), 10),
                killer_msg(DIED, "sitting on lava"));
 
-    } else if (is_ice(level, u.ux, u.uy)) {
+    } else if (is_ice(level, youmonst.mx, youmonst.my)) {
 
         pline(msgc_yafm, sit_message, defexplain[S_ice]);
         if (!Cold_resistance)
@@ -231,7 +231,7 @@ dosit(const struct nh_cmd_arg *arg)
                           "Thy audience hath been summoned, %s!",
                           u.ufemale ? "Dame" : "Sire");
                 while (cnt--)
-                    makemon(courtmon(&u.uz, rng_main), level, u.ux, u.uy,
+                    makemon(courtmon(&u.uz, rng_main), level, youmonst.mx, youmonst.my,
                             NO_MM_FLAGS);
                 break;
             }
@@ -264,7 +264,7 @@ dosit(const struct nh_cmd_arg *arg)
                 } else {
                     pline(msgc_intrgain, "Your vision becomes clear.");
                     set_property(&youmonst, SEE_INVIS, 0, FALSE);
-                    newsym(u.ux, u.uy);
+                    newsym(youmonst.mx, youmonst.my);
                 }
                 break;
             case 11:
@@ -300,12 +300,12 @@ dosit(const struct nh_cmd_arg *arg)
         }
 
         if (!rn2_on_rng(3, rng_throne_result) &&
-            IS_THRONE(level->locations[u.ux][u.uy].typ)) {
+            IS_THRONE(level->locations[youmonst.mx][youmonst.my].typ)) {
             /* may have teleported */
-            level->locations[u.ux][u.uy].typ = ROOM;
+            level->locations[youmonst.mx][youmonst.my].typ = ROOM;
             pline(msgc_consequence,
                   "The throne vanishes in a puff of logic.");
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
         }
 
     } else if (lays_eggs(youmonst.data)) {
@@ -336,7 +336,7 @@ dosit(const struct nh_cmd_arg *arg)
     } else if (Engulfed)
         pline(msgc_cancelled1, "There are no seats in here!");
     else
-        pline(msgc_yafm, "Having fun sitting on the %s?", surface(u.ux, u.uy));
+        pline(msgc_yafm, "Having fun sitting on the %s?", surface(youmonst.mx, youmonst.my));
     return 1;
 }
 

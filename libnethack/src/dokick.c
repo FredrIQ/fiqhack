@@ -155,8 +155,8 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
     bhitpos.x = x;
     bhitpos.y = y;
 
-    if (resolve_uim(flags.interaction_mode, TRUE, u.ux + turnstate.intended_dx,
-                    u.uy + turnstate.intended_dy) == uia_halt)
+    if (resolve_uim(flags.interaction_mode, TRUE, youmonst.mx + turnstate.intended_dx,
+                    youmonst.my + turnstate.intended_dy) == uia_halt)
         return ac_cancel;
 
     attack_status = ac_continue;
@@ -236,9 +236,9 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
         clumsy = TRUE;
 
 doit:
-    if (!enexto(&bypos, level, u.ux, u.uy, mon->data) ||
+    if (!enexto(&bypos, level, youmonst.mx, youmonst.my, mon->data) ||
         !((teleportitis(mon) && !level->flags.noteleport) ||
-          ((abs(bypos.x - u.ux) <= 1) && (abs(bypos.y - u.uy) <= 1))))
+          ((abs(bypos.x - youmonst.mx) <= 1) && (abs(bypos.y - youmonst.my) <= 1))))
         canmove = FALSE;
     if (!rn2(clumsy ? 3 : 4) && (clumsy || !bigmonst(mon->data)) &&
         !blind(mon) && !mon->mtrapped && !thick_skinned(mon->data) &&
@@ -383,7 +383,7 @@ container_impact_dmg(struct obj *obj)
 
     costly = ((shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE))) &&
               costly_spot(x, y));
-    insider = (*u.ushops && inside_shop(level, u.ux, u.uy) &&
+    insider = (*u.ushops && inside_shop(level, youmonst.mx, youmonst.my) &&
                *in_rooms(level, x, y, SHOPBASE) == *u.ushops);
 
     for (otmp = obj->cobj; otmp; otmp = otmp2) {
@@ -512,8 +512,8 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
 
     if (IS_ROCK(level->locations[x][y].typ) || closed_door(level, x, y)) {
         if ((!martial() && rn2(20) > ACURR(A_DEX)) ||
-            IS_ROCK(level->locations[u.ux][u.uy].typ) ||
-            closed_door(level, u.ux, u.uy)) {
+            IS_ROCK(level->locations[youmonst.mx][youmonst.my].typ) ||
+            closed_door(level, youmonst.mx, youmonst.my)) {
             if (Blind)
                 pline(msgc_failrandom, "It doesn't come loose.");
             else
@@ -530,13 +530,13 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
         obj_extract_self(kickobj);
         newsym(x, y);
         if (costly &&
-            (!costly_spot(u.ux, u.uy) ||
+            (!costly_spot(youmonst.mx, youmonst.my) ||
              !strchr(u.urooms, *in_rooms(level, x, y, SHOPBASE))))
             addtobill(kickobj, FALSE, FALSE, FALSE);
-        if (!flooreffects(kickobj, u.ux, u.uy, "fall")) {
-            place_object(kickobj, level, u.ux, u.uy);
+        if (!flooreffects(kickobj, youmonst.mx, youmonst.my, "fall")) {
+            place_object(kickobj, level, youmonst.mx, youmonst.my);
             stackobj(kickobj);
-            newsym(u.ux, u.uy);
+            newsym(youmonst.mx, youmonst.my);
         }
         return 1;
     }
@@ -750,8 +750,8 @@ dokick(const struct nh_cmd_arg *arg)
     if (!dx && !dy)
         return 0;
 
-    x = u.ux + dx;
-    y = u.uy + dy;
+    x = youmonst.mx + dx;
+    y = youmonst.my + dy;
 
     /* KMH -- Kicking boots always succeed */
     if (uarmf && uarmf->otyp == KICKING_BOOTS)
@@ -782,8 +782,8 @@ dokick(const struct nh_cmd_arg *arg)
     if (Levitation) {
         int xx, yy;
 
-        xx = u.ux - dx;
-        yy = u.uy - dy;
+        xx = youmonst.mx - dx;
+        yy = youmonst.my - dy;
         /* doors can be opened while levitating, so they must be reachable for
            bracing purposes. Possible extension: allow bracing against stuff on
            the side? */
@@ -1330,7 +1330,7 @@ impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
         if (costly) {
             price +=
                 stolen_value(obj, x, y,
-                             (costly_spot(u.ux, u.uy) &&
+                             (costly_spot(youmonst.mx, youmonst.my) &&
                               strchr(u.urooms,
                                      *in_rooms(level, x, y, SHOPBASE))), TRUE);
             /* set obj->no_charge to 0 */
@@ -1449,12 +1449,12 @@ ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
     if (unpaid || shop_floor_obj) {
         if (unpaid) {
             subfrombill(otmp, shop_keeper(level, *u.ushops));
-            stolen_value(otmp, u.ux, u.uy, TRUE, FALSE);
+            stolen_value(otmp, youmonst.mx, youmonst.my, TRUE, FALSE);
         } else {
             ox = otmp->ox;
             oy = otmp->oy;
             stolen_value(otmp, ox, oy,
-                         (costly_spot(u.ux, u.uy) &&
+                         (costly_spot(youmonst.mx, youmonst.my) &&
                           strchr(u.urooms, *in_rooms(level, ox, oy, SHOPBASE))),
                          FALSE);
         }
@@ -1539,8 +1539,8 @@ deliver_object(struct obj *obj, xchar dnum, xchar dlevel, int where)
         /* the player has fallen through a trapdoor or hole and obj fell
            through too [impact_drop in goto_level] */
         if (level == lev) {
-            nx = u.ux;
-            ny = u.uy;
+            nx = youmonst.mx;
+            ny = youmonst.my;
         } else {
             extract_nobj(obj, &turnstate.floating_objects,
                          &turnstate.migrating_objs, OBJ_MIGRATING);

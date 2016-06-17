@@ -241,7 +241,7 @@ add_region(struct level *lev, struct region *reg)
                 newsym(i, j);
         }
     /* Check for player now... */
-    if (inside_region(reg, u.ux, u.uy))
+    if (inside_region(reg, youmonst.mx, youmonst.my))
         set_hero_inside(reg);
     else
         clear_hero_inside(reg);
@@ -445,7 +445,7 @@ update_player_regions(struct level *lev)
 
     for (i = 0; i < lev->n_regions; i++)
         if (!lev->regions[i]->attach_2_u &&
-            inside_region(lev->regions[i], u.ux, u.uy))
+            inside_region(lev->regions[i], youmonst.mx, youmonst.my))
             set_hero_inside(lev->regions[i]);
         else
             clear_hero_inside(lev->regions[i]);

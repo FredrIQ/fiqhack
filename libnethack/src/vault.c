@@ -27,10 +27,10 @@ clear_fcorr(struct monst *grd, boolean forceshow)
     while ((fcbeg = mx_egd(grd)->fcbeg) < mx_egd(grd)->fcend) {
         fcx = mx_egd(grd)->fakecorr[fcbeg].fx;
         fcy = mx_egd(grd)->fakecorr[fcbeg].fy;
-        if ((DEADMONSTER(grd) || !in_fcorridor(grd, u.ux, u.uy)) &&
+        if ((DEADMONSTER(grd) || !in_fcorridor(grd, youmonst.mx, youmonst.my)) &&
             mx_egd(grd)->gddone)
             forceshow = TRUE;
-        if ((u.ux == fcx && u.uy == fcy && !DEADMONSTER(grd))
+        if ((youmonst.mx == fcx && youmonst.my == fcy && !DEADMONSTER(grd))
             || (!forceshow && couldsee(fcx, fcy)))
             return FALSE;
 
@@ -43,7 +43,7 @@ clear_fcorr(struct monst *grd, boolean forceshow)
         if ((mtmp = m_at(level, fcx, fcy)) != 0) {
             if (mx_egd(mtmp))
                 return FALSE;
-            else if (!in_fcorridor(grd, u.ux, u.uy)) {
+            else if (!in_fcorridor(grd, youmonst.mx, youmonst.my)) {
                 if (mtmp->mtame)
                     yelp(mtmp);
                 rloc(mtmp, FALSE);
@@ -71,7 +71,7 @@ clear_fcorr(struct monst *grd, boolean forceshow)
             else
                 pline(msgc_monneutral, "You feel claustrophobic.");
         }
-        if (IS_ROCK(level->locations[u.ux][u.uy].typ))
+        if (IS_ROCK(level->locations[youmonst.mx][youmonst.my].typ))
             pline(msgc_fatal, "You are encased in rock.");
     }
     return TRUE;
@@ -145,12 +145,12 @@ find_guard_dest(struct monst *guard, xchar * rx, xchar * ry)
     int x, y, dd, lx = 0, ly = 0;
 
     for (dd = 2; (dd < ROWNO || dd < COLNO); dd++) {
-        for (y = u.uy - dd; y <= u.uy + dd; ly = y, y++) {
+        for (y = youmonst.my - dd; y <= youmonst.my + dd; ly = y, y++) {
             if (y < 0 || y > ROWNO - 1)
                 continue;
-            for (x = u.ux - dd; x <= u.ux + dd; lx = x, x++) {
-                if (y != u.uy - dd && y != u.uy + dd && x != u.ux - dd)
-                    x = u.ux + dd;
+            for (x = youmonst.mx - dd; x <= youmonst.mx + dd; lx = x, x++) {
+                if (y != youmonst.my - dd && y != youmonst.my + dd && x != youmonst.mx - dd)
+                    x = youmonst.mx + dd;
                 if (x < 0 || x > COLNO - 1)
                     continue;
                 if (guard &&
@@ -158,15 +158,15 @@ find_guard_dest(struct monst *guard, xchar * rx, xchar * ry)
                      (mx_egd(guard) && in_fcorridor(guard, x, y))))
                     continue;
                 if (level->locations[x][y].typ == CORR) {
-                    if (x < u.ux)
+                    if (x < youmonst.mx)
                         lx = x + 1;
-                    else if (x > u.ux)
+                    else if (x > youmonst.mx)
                         lx = x - 1;
                     else
                         lx = x;
-                    if (y < u.uy)
+                    if (y < youmonst.my)
                         ly = y + 1;
-                    else if (y > u.uy)
+                    else if (y > youmonst.my)
                         ly = y - 1;
                     else
                         ly = y;
@@ -214,8 +214,8 @@ invault(void)
         gy = ry;
 
         /* next find a good place for a door in the wall */
-        x = u.ux;
-        y = u.uy;
+        x = youmonst.mx;
+        y = youmonst.my;
         if (level->locations[x][y].typ != ROOM) {       /* player dug a door
                                                            and is in it */
             if (level->locations[x + 1][y].typ == ROOM)
@@ -250,7 +250,7 @@ invault(void)
             else
                 y += dy;
         }
-        if (x == u.ux && y == u.uy) {
+        if (x == youmonst.mx && y == youmonst.my) {
             if (level->locations[x + 1][y].typ == HWALL ||
                 level->locations[x + 1][y].typ == DOOR)
                 x = x + 1;
@@ -520,7 +520,7 @@ gd_move(struct monst *grd)
         if (!u_in_vault &&
             (grd_in_vault ||
              (in_fcorridor(grd, grd->mx, grd->my) &&
-              !in_fcorridor(grd, u.ux, u.uy)))) {
+              !in_fcorridor(grd, youmonst.mx, youmonst.my)))) {
             rloc(grd, FALSE);
             wallify_vault(grd);
             clear_fcorr(grd, TRUE);
@@ -583,7 +583,7 @@ gd_move(struct monst *grd)
 
     if (egrd->fcend > 1) {
         if (egrd->fcend > 2 && in_fcorridor(grd, grd->mx, grd->my) &&
-            !egrd->gddone && !in_fcorridor(grd, u.ux, u.uy) &&
+            !egrd->gddone && !in_fcorridor(grd, youmonst.mx, youmonst.my) &&
             level->locations[egrd->fakecorr[0].fx][egrd->fakecorr[0].fy].typ ==
             egrd->fakecorr[0].ftyp) {
             if (canseemon(grd)) {
@@ -593,7 +593,7 @@ gd_move(struct monst *grd)
             }
             goto cleanup;
         }
-        if (u_carry_gold && (in_fcorridor(grd, u.ux, u.uy) ||
+        if (u_carry_gold && (in_fcorridor(grd, youmonst.mx, youmonst.my) ||
                              /* cover a 'blind' spot */
                              (egrd->fcend > 1 && u_in_vault))) {
             if (!grd->mx) {
@@ -622,7 +622,7 @@ gd_move(struct monst *grd)
 
         x = grd->mx;
         y = grd->my;
-        if (m == u.ux && n == u.uy) {
+        if (m == youmonst.mx && n == youmonst.my) {
             struct obj *gold = gold_at(level, m, n);
 
             yours = TRUE;
@@ -787,7 +787,7 @@ newpos:
         egrd->ogx = grd->mx;
         egrd->ogy = grd->my;
         restfakecorr(grd);
-        if (!semi_dead && (in_fcorridor(grd, u.ux, u.uy) || cansee(x, y))) {
+        if (!semi_dead && (in_fcorridor(grd, youmonst.mx, youmonst.my) || cansee(x, y))) {
             if (!disappear_msg_seen && see_guard)
                 pline(msgc_monneutral, "Suddenly, %s disappears.",
                       noit_mon_nam(grd));
@@ -819,8 +819,8 @@ paygd(void)
     if (u.uinvault) {
         pline(msgc_outrobad, "Your %ld %s goes into the Magic Memory Vault.",
               umoney, currency(umoney));
-        gx = u.ux;
-        gy = u.uy;
+        gx = youmonst.mx;
+        gy = youmonst.my;
     } else {
         if (grd->mpeaceful) {   /* guard has no "right" to your gold */
             mongone(grd);

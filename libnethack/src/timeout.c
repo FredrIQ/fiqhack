@@ -787,7 +787,7 @@ do_storms(void)
         }
     }
 
-    if (level->locations[u.ux][u.uy].typ == CLOUD) {
+    if (level->locations[youmonst.mx][youmonst.my].typ == CLOUD) {
         /* inside a cloud during a thunder storm is deafening */
         pline(msgc_statusbad, "Kaboom!!!  Boom!!  Boom!!");
         if (!u.uinvulnerable)

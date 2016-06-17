@@ -1474,8 +1474,8 @@ mkinvokearea(void)
     else
         pline(msgc_levelsound,
               "You are standing at the top of a stairwell leading down!");
-    mkstairs(level, u.ux, u.uy, 0, NULL);       /* down */
-    newsym(u.ux, u.uy);
+    mkstairs(level, youmonst.mx, youmonst.my, 0, NULL);       /* down */
+    newsym(youmonst.mx, youmonst.my);
     turnstate.vision_full_recalc = TRUE;     /* everything changed */
 }
 

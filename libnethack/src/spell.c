@@ -257,7 +257,7 @@ deadbook(struct obj *book2, boolean invoked)
     makeknown(SPE_BOOK_OF_THE_DEAD);
     /* KMH -- Need ->known to avoid "_a_ Book of the Dead" */
     book2->known = 1;
-    if (invocation_pos(&u.uz, u.ux, u.uy) && !On_stairs(u.ux, u.uy)) {
+    if (invocation_pos(&u.uz, youmonst.mx, youmonst.my) && !On_stairs(youmonst.mx, youmonst.my)) {
         struct obj *otmp;
         boolean arti1_primed = FALSE, arti2_primed = FALSE, arti_cursed = FALSE;
 
@@ -370,17 +370,17 @@ deadbook(struct obj *book2, boolean invoked)
            MM_CREATEMONSTER, that's mostly used to ensure that consistent
            species of monsters generate */
         if (!rn2(3) &&
-            ((mtmp = makemon(&mons[PM_MASTER_LICH], level, u.ux, u.uy,
+            ((mtmp = makemon(&mons[PM_MASTER_LICH], level, youmonst.mx, youmonst.my,
                              NO_MINVENT)) != 0 ||
-             (mtmp = makemon(&mons[PM_NALFESHNEE], level, u.ux, u.uy,
+             (mtmp = makemon(&mons[PM_NALFESHNEE], level, youmonst.mx, youmonst.my,
                              NO_MINVENT)) != 0)) {
             msethostility(mtmp, TRUE, TRUE);
         }
         /* next handle the effect on things you're carrying */
         unturn_dead(&youmonst);
         /* last place some monsters around you */
-        mm.x = u.ux;
-        mm.y = u.uy;
+        mm.x = youmonst.mx;
+        mm.y = youmonst.my;
         mkundead(level, &mm, TRUE, NO_MINVENT);
     } else if (book2->blessed) {
         for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
@@ -1239,7 +1239,7 @@ cast_protection(struct monst *mon, boolean autocast)
                       "The %s around %s begins to shimmer with %s haze.",
                       (Underwater || Is_waterlevel(&u.uz)) ? "water" :
                       Engulfed ? mbodypart(u.ustuck, STOMACH) :
-                      IS_STWALL(level->locations[u.ux][u.uy].typ) ? "stone" :
+                      IS_STWALL(level->locations[youmonst.mx][youmonst.my].typ) ? "stone" :
                       "air", you ? "you" : mon_nam(mon),
                       an(hcolor("golden")));
         } else if (you) {

@@ -243,7 +243,7 @@ forcelock(void)
     pline(msgc_actionok, "You succeed in forcing the lock.");
     box->olocked = 0;
     box->obroken = 1;
-    costly = (*u.ushops && costly_spot(u.ux, u.uy));
+    costly = (*u.ushops && costly_spot(youmonst.mx, youmonst.my));
     shkp = costly ? shop_keeper(level, *u.ushops) : 0;
     if (!is_blade(uwep) && !rn2(3)) {
         long loss = 0L;
@@ -258,7 +258,7 @@ forcelock(void)
                 chest_shatter_msg(otmp);
                 if (costly)
                     loss +=
-                        stolen_value(otmp, u.ux, u.uy,
+                        stolen_value(otmp, youmonst.mx, youmonst.my,
                                      (boolean) shkp->mpeaceful, TRUE);
                 if (otmp->quan == 1L) {
                     obfree(otmp, NULL);
@@ -270,13 +270,13 @@ forcelock(void)
                 otmp->age = moves - otmp->age;  /* actual age */
                 start_corpse_timeout(otmp);
             }
-            place_object(otmp, level, u.ux, u.uy);
+            place_object(otmp, level, youmonst.mx, youmonst.my);
             stackobj(otmp);
         }
 
         if (costly)
             loss +=
-                stolen_value(box, u.ux, u.uy, (boolean) shkp->mpeaceful,
+                stolen_value(box, youmonst.mx, youmonst.my, (boolean) shkp->mpeaceful,
                              TRUE);
         if (loss)
             pline(msgc_unpaid, "You owe %ld %s for objects destroyed.",
@@ -310,8 +310,8 @@ pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
 
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
-    cc.x = u.ux + dx;
-    cc.y = u.uy + dy;
+    cc.x = youmonst.mx + dx;
+    cc.y = youmonst.my + dy;
     if (!isok(cc.x, cc.y))
         return 0;
 
@@ -372,11 +372,11 @@ pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
             pline(msgc_cancelled, "There isn't any sort of lock up %s.",
                   Levitation ? "here" : "there");
             return 0;
-        } else if (is_lava(level, u.ux, u.uy)) {
+        } else if (is_lava(level, youmonst.mx, youmonst.my)) {
             pline(msgc_cancelled, "Doing that would probably melt your %s.",
                   xname(pick));
             return 0;
-        } else if (is_pool(level, u.ux, u.uy) && !Underwater) {
+        } else if (is_pool(level, youmonst.mx, youmonst.my) && !Underwater) {
             /* better YAFM - AIS */
             pline(msgc_cancelled,
                   "Canals might have locks, but this water doesn't.");
@@ -527,7 +527,7 @@ doforce(const struct nh_cmd_arg *arg)
     /* A lock is made only for the honest man, the thief will break it. */
     u.utracked[tos_lock] = NULL;
     u.uoccupation_progress[tos_lock] = 0;
-    for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere)
+    for (otmp = level->objects[youmonst.mx][youmonst.my]; otmp; otmp = otmp->nexthere)
         if (Is_box(otmp)) {
             if (otmp->obroken || !otmp->olocked) {
                 pline(msgc_cancelled,
@@ -589,19 +589,19 @@ doopen(const struct nh_cmd_arg *arg)
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    cc.x = u.ux + dx;
-    cc.y = u.uy + dy;
+    cc.x = youmonst.mx + dx;
+    cc.y = youmonst.my + dy;
     if (!isok(cc.x, cc.y))
         return 0;
 
-    if ((cc.x == u.ux) && (cc.y == u.uy))
+    if ((cc.x == youmonst.mx) && (cc.y == youmonst.my))
         return 0;
 
     if ((mtmp = m_at(level, cc.x, cc.y)) && mtmp->m_ap_type == M_AP_FURNITURE &&
         (mtmp->mappearance == S_hcdoor || mtmp->mappearance == S_vcdoor) &&
         !Protection_from_shape_changers) {
 
-        stumble_onto_mimic(mtmp, cc.x - u.ux, cc.y - u.uy);
+        stumble_onto_mimic(mtmp, cc.x - youmonst.mx, cc.y - youmonst.my);
         return 1;
     }
 
@@ -741,12 +741,12 @@ doclose(const struct nh_cmd_arg *arg)
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    cc.x = u.ux + dx;
-    cc.y = u.uy + dy;
+    cc.x = youmonst.mx + dx;
+    cc.y = youmonst.my + dy;
     if (!isok(cc.x, cc.y))
         return 0;
 
-    if ((cc.x == u.ux) && (cc.y == u.uy)) {
+    if ((cc.x == youmonst.mx) && (cc.y == youmonst.my)) {
         pline(msgc_cancelled1, "You are in the way!");
         return 1;
     }
