@@ -1152,7 +1152,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         break;
     case SCR_CONFUSE_MONSTER:
     case SPE_CONFUSE_MONSTER:
-        if (mon->data->mlet != S_HUMAN /* why? */ || sobj->cursed)
+        if (sobj->cursed)
             inc_timeout(mon, CONFUSION, rnd(100), FALSE);
         else if (confused) {
             if (!sobj->blessed) {
