@@ -372,7 +372,7 @@ cprefx(struct monst *mon, int pm)
         ((you && !instapetrify(killer_msg(STONING,
                                           msgcat_many("tasting ", mons[pm].mname,
                                                       " meat", NULL)))) ||
-         (!you && minstapetrify(mon, FALSE)))) {
+         (!you && minstapetrify(mon, NULL)))) {
         return; /* abort if died or lifesaved */
     }
 
