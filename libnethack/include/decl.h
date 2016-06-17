@@ -70,21 +70,6 @@ struct dgn_topology {    /* special dungeon levels for speed */
 };
 
 
-/* This structure is being used as part of the globals purge.
-
-   Current meaning: "globals associated with the player character that aren't
-   part of struct you".
-
-   Eventual meaning: "values associated with a player that aren't associated
-   with a monster".
-
-   Ideally, we'll continuously deform one into the other. (Also, this is in the
-   wrong file; you.h would make more sense.) */
-struct youaux {
-    int unused;
-};
-
-
 /* The big gamestate structure that holds all saved data. */
 extern struct gamestate {
 
