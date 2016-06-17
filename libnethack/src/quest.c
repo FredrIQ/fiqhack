@@ -142,7 +142,7 @@ ok_to_quest(boolean verbose)
 static boolean
 not_capable(void)
 {
-    return (boolean) (u.ulevel < MIN_QUEST_LEVEL);
+    return (boolean) (youmonst.m_lev < MIN_QUEST_LEVEL);
 }
 
 static int

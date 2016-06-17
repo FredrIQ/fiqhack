@@ -635,7 +635,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     int damd = mattk->damd;
     int dmg = 0;
     if (damd)
-        dmg = dice(damn ? damn : m_mlev(magr) / 2 + 1, damd);
+        dmg = dice(damn ? damn : magr->m_lev / 2 + 1, damd);
     int ret = 0;
 
     /* gaze attacks except for radiance (AD_BLND) and Medusa share common checks */
@@ -789,11 +789,11 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (udef)
             action_interrupted();
         burn_away_slime(mdef);
-        if (m_mlev(magr) > rn2(20))
+        if (magr->m_lev > rn2(20))
             destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
-        if (m_mlev(magr) > rn2(20))
+        if (magr->m_lev > rn2(20))
             destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
-        if (m_mlev(magr) > rn2(25))
+        if (magr->m_lev > rn2(25))
             destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
         /* this used to call mdamageu, but since mdamageu and mdamagem doesn't
            work even remotely similar (mdamageu is essentially a losehp() macro

@@ -400,16 +400,16 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             consume_obj_charge(instr, TRUE);
 
             pline(msgc_actionok, "You produce soft music.");
-            put_monsters_to_sleep(u.ulevel * 5);
+            put_monsters_to_sleep(youmonst.m_lev * 5);
             exercise(A_DEX, TRUE);
             break;
         }       /* else FALLTHRU */
     case WOODEN_FLUTE: /* May charm snakes */
-        do_spec &= (rn2(ACURR(A_DEX)) + u.ulevel > 25);
+        do_spec &= (rn2(ACURR(A_DEX)) + youmonst.m_lev > 25);
         pline(do_spec ? msgc_actionok : msgc_failrandom, "%s.",
               Tobjnam(instr, do_spec ? "trill" : "toot"));
         if (do_spec)
-            charm_snakes(u.ulevel * 3);
+            charm_snakes(youmonst.m_lev * 3);
         exercise(A_DEX, TRUE);
         break;
     case FROST_HORN:   /* Idem wand of cold */
@@ -431,7 +431,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
         }       /* else FALLTHRU */
     case TOOLED_HORN:  /* Awaken or scare monsters */
         pline(msgc_actionok, "You produce a frightful, grave sound.");
-        awaken_monsters(&youmonst, u.ulevel * 30);
+        awaken_monsters(&youmonst, youmonst.m_lev * 30);
         exercise(A_WIS, FALSE);
         break;
     case BUGLE:        /* Awaken & attract soldiers */
@@ -446,17 +446,17 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
 
             pline(msgc_actionok, "%s very attractive music.",
                   Tobjnam(instr, "produce"));
-            charm_monsters((u.ulevel - 1) / 3 + 1);
+            charm_monsters((youmonst.m_lev - 1) / 3 + 1);
             exercise(A_DEX, TRUE);
             break;
         }       /* else FALLTHRU */
     case WOODEN_HARP:  /* May calm Nymph */
-        do_spec &= (rn2(ACURR(A_DEX)) + u.ulevel > 25);
+        do_spec &= (rn2(ACURR(A_DEX)) + youmonst.m_lev > 25);
         pline(do_spec ? msgc_actionok : msgc_failrandom,
               "%s %s.", The(xname(instr)),
               do_spec ? "produces a lilting melody" : "twangs");
         if (do_spec)
-            calm_nymphs(u.ulevel * 3);
+            calm_nymphs(youmonst.m_lev * 3);
         exercise(A_DEX, TRUE);
         break;
     case DRUM_OF_EARTHQUAKE:   /* create several pits */
@@ -466,7 +466,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             pline(msgc_occstart, "You produce a heavy, thunderous rolling!");
             pline_implied(msgc_occstart,
                           "The entire dungeon is shaking around you!");
-            do_earthquake((u.ulevel - 1) / 3 + 1);
+            do_earthquake((youmonst.m_lev - 1) / 3 + 1);
             /* shake up monsters in a much larger radius... */
             awaken_monsters(&youmonst, ROWNO * COLNO);
             makeknown(DRUM_OF_EARTHQUAKE);
@@ -474,7 +474,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
         }       /* else FALLTHRU */
     case LEATHER_DRUM: /* Awaken monsters */
         pline(msgc_actionok, "You beat a deafening row!");
-        awaken_monsters(&youmonst, u.ulevel * 40);
+        awaken_monsters(&youmonst, youmonst.m_lev * 40);
         exercise(A_WIS, FALSE);
         break;
     default:

@@ -1079,7 +1079,7 @@ log_game_state_inner(void)
        strings.) */
     const char *buf = msgprintf(
         "%s:%d, %d turns, on %s", Upolyd ? "HD" : "Exp",
-        Upolyd ? mons[u.umonnum].mlevel : u.ulevel, moves, levname_buf);
+        Upolyd ? mons[u.umonnum].mlevel : youmonst.m_lev, moves, levname_buf);
     /* TODO: mention notable conducts here */
 
     set_second_logline(buf);

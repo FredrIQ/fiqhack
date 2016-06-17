@@ -549,8 +549,8 @@ calc_score(int how, boolean show, long umoney)
     }
 
     /* Experience. Although this maxes at 30, the ratio isn't displayed. */
-    category_raw = u.ulevel;
-    category_points = isqrt(((u.ulevel - 1) * max_squared) / 29);
+    category_raw = youmonst.m_lev;
+    category_points = isqrt(((youmonst.m_lev - 1) * max_squared) / 29);
     total += category_points;
 
     if (show) {
@@ -767,7 +767,7 @@ check_survival(int how)
         pline(msgc_saveload, "OK, so you don't %s.",
               (how == CHOKING) ? "choke" : "die");
         if (u.uhpmax <= 0)
-            u.uhpmax = u.ulevel * 8;    /* arbitrary */
+            u.uhpmax = youmonst.m_lev * 8;    /* arbitrary */
         savelife(how);
         historic_event(FALSE, "were saved from death by your wizard powers!");
         return TRUE;
@@ -885,7 +885,7 @@ display_rip(int how, long umoney, const char *killer)
     add_menutext(&menu, pbuf);
     pbuf = msgprintf("You were level %d with a maximum of %d "
                      "hit point%s when you %s.",
-                     u.ulevel, u.uhpmax, plur(u.uhpmax), ends[how]);
+                     youmonst.m_lev, u.uhpmax, plur(u.uhpmax), ends[how]);
     add_menutext(&menu, pbuf);
     add_menutext(&menu, "");
     

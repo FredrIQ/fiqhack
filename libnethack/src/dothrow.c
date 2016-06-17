@@ -1406,7 +1406,7 @@ thitmonst(struct monst *mon, struct obj *obj)
        damage ignore tmp. Distance and monster size affect chance to hit. */
     tmp =
         -1 + Luck + find_mac(mon) + mon_hitbon(&youmonst) +
-        maybe_polyd(youmonst.data->mlevel, u.ulevel);
+        maybe_polyd(youmonst.data->mlevel, youmonst.m_lev);
     if (ACURR(A_DEX) < 4)
         tmp -= 3;
     else if (ACURR(A_DEX) < 6)

@@ -343,7 +343,7 @@ make_bones:
         m_dowear(mtmp, TRUE);
     }
     if (mtmp) {
-        mtmp->m_lev = (u.ulevel ? u.ulevel : 1);
+        mtmp->m_lev = (youmonst.m_lev ? youmonst.m_lev : 1);
         mtmp->mhp = mtmp->mhpmax = u.uhpmax;
         mtmp->female = u.ufemale;
         mtmp->msleeping = 1;

@@ -533,7 +533,7 @@ study_rate(const struct monst *mon, struct obj *spellbook)
 {
     struct obj *eyewear = which_armor(mon, os_tool);
     boolean you = (mon == &youmonst);
-    int level = you ? u.ulevel : mon->m_lev;
+    int level = you ? youmonst.m_lev : mon->m_lev;
     int read_ability =
         acurr(mon, A_INT) + 4 + level / 2 -
         2 * objects[spellbook->otyp].oc_level +
@@ -1115,7 +1115,7 @@ supernatural_ability_available(int spid)
         return Role_if(PM_PRIEST) || Role_if(PM_KNIGHT);
     case SPID_RLOC:
         return teleportitis(&youmonst) &&
-            (u.ulevel >= (Role_if(PM_WIZARD) ? 8 : 12));
+            (youmonst.m_lev >= (Role_if(PM_WIZARD) ? 8 : 12));
     case SPID_JUMP:
         return Jumping;
     case SPID_MONS:
@@ -1187,14 +1187,14 @@ cast_protection(struct monst *mon, boolean autocast)
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
     int loglev = 0;
-    int l = you ? u.ulevel : mon->m_lev;
+    int l = you ? youmonst.m_lev : mon->m_lev;
     /* Monsters can be level 0, ensure that no oddities occur if that is the case. */
     if (l == 0)
         l = 1;
     int natac = find_mac(mon) + m_mspellprot(mon);
     int gain;
 
-    /* loglev=log2(u.ulevel)+1 (1..5) */
+    /* loglev=log2(youmonst.m_lev)+1 (1..5) */
     while (l) {
         loglev++;
         l /= 2;
@@ -1656,7 +1656,7 @@ spelleffects(boolean atme, struct musable *m)
             n = rnd(8) + 1;
             while (n--) {
                 explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
-                        m_mlev(mon) / 2 + 1 + (you ? spell_damage_bonus() : 0), 0,
+                        mon->m_lev / 2 + 1 + (you ? spell_damage_bonus() : 0), 0,
                         (pseudo->otyp ==
                          SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
                         NULL, 0);
@@ -2007,7 +2007,7 @@ percent_success(const struct monst *mon, int spell)
     struct obj *armf = which_armor(mon, os_armf);
     int spelarmr = you ? urole.spelarmr : 10;
     int spelshld = you ? urole.spelshld : 1;
-    int xl = you ? u.ulevel : mon->m_lev;
+    int xl = you ? youmonst.m_lev : mon->m_lev;
 
     if (arm && is_metallic(arm))
         splcaster += (armc &&

@@ -652,7 +652,7 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
                     else
                         pline(msgc_statusbad,
                               "Yikes!  You've frozen yourself!");
-                    helpless(rnd((MAXULEV + 6) - u.ulevel), hr_paralyzed,
+                    helpless(rnd((MAXULEV + 6) - youmonst.m_lev), hr_paralyzed,
                              "gazing into a mirror", NULL);
                 } else
                     pline(msgc_yafm,

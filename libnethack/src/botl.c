@@ -81,7 +81,7 @@ rank_of(int lev, short monnum, boolean female)
 static const char *
 rank(void)
 {
-    return rank_of(u.ulevel, Role_switch, u.ufemale);
+    return rank_of(youmonst.m_lev, Role_switch, u.ufemale);
 }
 
 int
@@ -248,7 +248,7 @@ make_player_info(struct nh_player_info *pi)
     if (Upolyd)
         pi->level = mons[u.umonnum].mlevel;
     else
-        pi->level = u.ulevel;
+        pi->level = youmonst.m_lev;
     pi->xp = u.uexp;
 
     cap = near_capacity();

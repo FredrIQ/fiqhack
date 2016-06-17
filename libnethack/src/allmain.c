@@ -872,22 +872,22 @@ you_moved(void)
                 }
             } else if (u.uhp < u.uhpmax &&
                        (wtcap < MOD_ENCUMBER || !u.umoved || Regeneration)) {
-                if (u.ulevel > 9 && !(moves % 3)) {
+                if (youmonst.m_lev > 9 && !(moves % 3)) {
                     int heal, Con = (int)ACURR(A_CON);
 
                     if (Con <= 12) {
                         heal = 1;
                     } else {
                         heal = rnd(Con);
-                        if (heal > u.ulevel - 9)
-                            heal = u.ulevel - 9;
+                        if (heal > youmonst.m_lev - 9)
+                            heal = youmonst.m_lev - 9;
                     }
                     u.uhp += heal;
                     if (u.uhp > u.uhpmax)
                         u.uhp = u.uhpmax;
                 } else if (Regeneration ||
-                           (u.ulevel <= 9 &&
-                            !(moves % ((MAXULEV + 12) / (u.ulevel + 2) + 1)))) {
+                           (youmonst.m_lev <= 9 &&
+                            !(moves % ((MAXULEV + 12) / (youmonst.m_lev + 2) + 1)))) {
                     u.uhp++;
                 }
             }
@@ -916,7 +916,7 @@ you_moved(void)
             int wis = ACURR(A_WIS);
             if (wis > 3)
                 pw_regen += wis * 3;
-            pw_regen += u.ulevel * 3;
+            pw_regen += youmonst.m_lev * 3;
             if (u.uen < u.uenmax && wtcap < MOD_ENCUMBER) {
                 u.uen += regeneration_by_rate(pw_regen);
                 if (u.uen > u.uenmax)

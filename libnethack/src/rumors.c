@@ -313,7 +313,7 @@ int
 doconsult(struct monst *oracl)
 {
     int umoney = money_cnt(invent);
-    int u_pay, minor_cost = 50, major_cost = 500 + 50 * u.ulevel;
+    int u_pay, minor_cost = 50, major_cost = 500 + 50 * youmonst.m_lev;
     int add_xpts;
     const char *qbuf;
 

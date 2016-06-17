@@ -574,7 +574,7 @@ u_init(microseconds birthday)
 
     set_uasmon();
 
-    u.ulevel = 0;       /* set up some of the initial attributes */
+    youmonst.m_lev = 0;       /* set up some of the initial attributes */
     u.uhp = u.uhpmax = newhp();
     u.uenmax = urole.enadv.infix + urace.enadv.infix;
     if (urole.enadv.inrnd > 0)
@@ -583,7 +583,7 @@ u_init(microseconds birthday)
         u.uenmax += 1 + racern2(urace.enadv.inrnd);
     u.uen = u.uenmax;
     adjabil(0, 1);
-    u.ulevel = u.ulevelmax = 1;
+    youmonst.m_lev = youmonst.m_levmax = 1;
 
     u.urexp = -1;       /* indicates that score is calculated not remembered */
 

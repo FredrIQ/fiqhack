@@ -519,7 +519,7 @@ priest_talk(struct monst *priest)
             verbalize(msgc_alignbad, "Thou shalt regret thine action!");
             if (coaligned)
                 adjalign(-1);
-        } else if (offer < (u.ulevel * 200)) {
+        } else if (offer < (youmonst.m_lev * 200)) {
             if (money_cnt(invent) > (offer * 2L))
                 verbalize(msgc_npcvoice, "Cheapskate.");
             else {
@@ -527,7 +527,7 @@ priest_talk(struct monst *priest)
                 /* give player some token */
                 exercise(A_WIS, TRUE);
             }
-        } else if (offer < (u.ulevel * 400)) {
+        } else if (offer < (youmonst.m_lev * 400)) {
             verbalize(msgc_aligngood, "Thou art indeed a pious individual.");
             if (money_cnt(invent) < (offer * 2L)) {
                 if (coaligned && u.ualign.record <= ALGN_SINNED)
@@ -535,7 +535,7 @@ priest_talk(struct monst *priest)
                 verbalize(msgc_intrgain, "I bestow upon thee a blessing.");
                 inc_timeout(&youmonst, CLAIRVOYANT, rn1(500, 500), TRUE);
             }
-        } else if (offer < (u.ulevel * 600) && u.ublessed < 20 &&
+        } else if (offer < (youmonst.m_lev * 600) && u.ublessed < 20 &&
                    (u.ublessed < 9 || !rn2(u.ublessed))) {
             verbalize(msgc_intrgain, "Thy devotion has been rewarded.");
             if (!ihas_property(&youmonst, PROTECTION)) {

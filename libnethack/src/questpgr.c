@@ -151,7 +151,7 @@ convert_arg(char c)
     case 'c':
         return (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m;
     case 'r':
-        return rank_of(u.ulevel, Role_switch, u.ufemale);
+        return rank_of(youmonst.m_lev, Role_switch, u.ufemale);
     case 'R':
         return rank_of(MIN_QUEST_LEVEL, Role_switch, u.ufemale);
     case 's':

@@ -114,10 +114,10 @@ losexp(const char *killer, boolean override_res)
     if (!override_res && resists_drli(&youmonst))
         return;
 
-    if (u.ulevel > 1) {
-        pline(msgc_intrloss, "%s level %d.", Goodbye(), u.ulevel--);
+    if (youmonst.m_lev > 1) {
+        pline(msgc_intrloss, "%s level %d.", Goodbye(), youmonst.m_lev--);
         /* remove intrinsic abilities */
-        adjabil(u.ulevel + 1, u.ulevel);
+        adjabil(youmonst.m_lev + 1, youmonst.m_lev);
         reset_rndmonst(NON_PM); /* new monster selection */
     } else {
         if (killer)
@@ -136,7 +136,7 @@ losexp(const char *killer, boolean override_res)
     else if (u.uhp > u.uhpmax)
         u.uhp = u.uhpmax;
 
-    if (u.ulevel < urole.xlev)
+    if (youmonst.m_lev < urole.xlev)
         num =
             rn1((int)ACURR(A_WIS) / 2 + urole.enadv.lornd + urace.enadv.lornd,
                 urole.enadv.lofix + urace.enadv.lofix);
@@ -155,7 +155,7 @@ losexp(const char *killer, boolean override_res)
         u.uen = u.uenmax;
 
     if (u.uexp > 0)
-        u.uexp = newuexp(u.ulevel) - 1;
+        u.uexp = newuexp(youmonst.m_lev) - 1;
 }
 
 /*
@@ -167,7 +167,7 @@ losexp(const char *killer, boolean override_res)
 void
 newexplevel(void)
 {
-    if (u.ulevel < MAXULEV && u.uexp >= newuexp(u.ulevel))
+    if (youmonst.m_lev < MAXULEV && u.uexp >= newuexp(youmonst.m_lev))
         pluslvl(TRUE);
 }
 
@@ -189,7 +189,7 @@ pluslvl(boolean incr)
         u.mhmax += num;
         u.mh += num;
     }
-    if (u.ulevel < urole.xlev)
+    if (youmonst.m_lev < urole.xlev)
         num =
             rn1((int)ACURR(A_WIS) / 2 + urole.enadv.lornd + urace.enadv.lornd,
                 urole.enadv.lofix + urace.enadv.lofix);
@@ -200,22 +200,22 @@ pluslvl(boolean incr)
     num = enermod(num); /* M. Stephenson */
     u.uenmax += num;
     u.uen += num;
-    if (u.ulevel < MAXULEV) {
+    if (youmonst.m_lev < MAXULEV) {
         if (incr) {
-            long tmp = newuexp(u.ulevel + 1);
+            long tmp = newuexp(youmonst.m_lev + 1);
 
             if (u.uexp >= tmp)
                 u.uexp = tmp - 1;
         } else {
-            u.uexp = newuexp(u.ulevel);
+            u.uexp = newuexp(youmonst.m_lev);
         }
-        ++u.ulevel;
-        if (u.ulevelmax < u.ulevel) {
-            u.ulevelmax = u.ulevel;
-            historic_event(FALSE, "advanced to experience level %d.", u.ulevel);
+        ++youmonst.m_lev;
+        if (youmonst.m_levmax < youmonst.m_lev) {
+            youmonst.m_levmax = youmonst.m_lev;
+            historic_event(FALSE, "advanced to experience level %d.", youmonst.m_lev);
         }
-        pline(msgc_intrgain, "Welcome to experience level %d.", u.ulevel);
-        adjabil(u.ulevel - 1, u.ulevel);        /* give new intrinsics */
+        pline(msgc_intrgain, "Welcome to experience level %d.", youmonst.m_lev);
+        adjabil(youmonst.m_lev - 1, youmonst.m_lev);        /* give new intrinsics */
         reset_rndmonst(NON_PM); /* new monster selection */
     }
 }
@@ -229,8 +229,8 @@ rndexp(boolean gaining)
 {
     long minexp, maxexp, diff, factor, result;
 
-    minexp = (u.ulevel == 1) ? 0L : newuexp(u.ulevel - 1);
-    maxexp = newuexp(u.ulevel);
+    minexp = (youmonst.m_lev == 1) ? 0L : newuexp(youmonst.m_lev - 1);
+    maxexp = newuexp(youmonst.m_lev);
     diff = maxexp - minexp, factor = 1L;
     /* make sure that `diff' is an argument which rn2() can handle */
     while (diff >= (long)LARGEST_INT)
@@ -240,7 +240,7 @@ rndexp(boolean gaining)
        than to threshold needed to reach the current level; otherwise blessed
        potions of gain level can result in lowering the experience points
        instead of raising them */
-    if (u.ulevel == MAXULEV && gaining) {
+    if (youmonst.m_lev == MAXULEV && gaining) {
         result += (u.uexp - minexp);
         /* avoid wrapping (over 400 blessed potions needed for that...) */
         if (result < u.uexp)

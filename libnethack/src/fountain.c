@@ -391,7 +391,7 @@ dipfountain(struct obj *obj)
 
     /* Don't grant Excalibur when there's more than one object.  */
     /* (quantity could be > 1 if merged daggers got polymorphed) */
-    if (obj->otyp == LONG_SWORD && obj->quan == 1L && u.ulevel >= 5 &&
+    if (obj->otyp == LONG_SWORD && obj->quan == 1L && youmonst.m_lev >= 5 &&
         !obj->oartifact && !rn2_on_rng(6, rng_excalibur) &&
         !exist_artifact(LONG_SWORD, artiname(ART_EXCALIBUR))) {
 

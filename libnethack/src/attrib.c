@@ -487,7 +487,7 @@ newhp(void)
     int hp, conplus;
 
 
-    if (u.ulevel == 0) {
+    if (youmonst.m_lev == 0) {
         /* Initialize hit points */
         hp = urole.hpadv.infix + urace.hpadv.infix;
         if (urole.hpadv.inrnd > 0)
@@ -501,7 +501,7 @@ newhp(void)
 
         return hp;
     } else {
-        if (u.ulevel < urole.xlev) {
+        if (youmonst.m_lev < urole.xlev) {
             hp = urole.hpadv.lofix + urace.hpadv.lofix;
             if (urole.hpadv.lornd > 0)
                 hp += 1 + rn2_on_rng(urole.hpadv.lornd, rng_charstats_role);

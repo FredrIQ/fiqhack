@@ -1869,7 +1869,7 @@ get_cost(const struct obj *obj, struct monst *shkp)
         } else if (!(obj->o_id % 4))    /* arbitrarily impose surcharge */
             tmp += tmp / 3L;
     }
-    if ((Role_if(PM_TOURIST) && u.ulevel < (MAXULEV / 2))
+    if ((Role_if(PM_TOURIST) && youmonst.m_lev < (MAXULEV / 2))
         || (uarmu && !uarm && !uarmc))  /* touristy shirt visible */
         tmp += tmp / 3L;
     else if (uarmh && uarmh->otyp == DUNCE_CAP)
@@ -1991,7 +1991,7 @@ set_cost(struct obj *obj, struct monst *shkp)
 {
     long tmp = getprice(obj, TRUE) * obj->quan;
 
-    if ((Role_if(PM_TOURIST) && u.ulevel < (MAXULEV / 2))
+    if ((Role_if(PM_TOURIST) && youmonst.m_lev < (MAXULEV / 2))
         || (uarmu && !uarm && !uarmc))  /* touristy shirt visible */
         tmp /= 3L;
     else if (uarmh && uarmh->otyp == DUNCE_CAP)

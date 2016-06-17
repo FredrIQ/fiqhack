@@ -351,7 +351,7 @@ mstatusline(struct monst *mon)
           (u.ualign.record >= 1) ? "haltingly " :
           (u.ualign.record == 0) ? "nominally " : "insufficiently ",
           align_str(alignment),
-          you && Upolyd ? mons[u.umonnum].mlevel : you ? u.ulevel : mon->m_lev,
+          you && Upolyd ? mons[u.umonnum].mlevel : you ? youmonst.m_lev : mon->m_lev,
           you && Upolyd ? u.mh : m_mhp(mon),
           you && Upolyd ? u.mhmax : m_mhpmax(mon),
           10 - find_mac(mon), info);

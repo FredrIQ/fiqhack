@@ -1482,7 +1482,7 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
     if (in_mklev)
         maxmlev = (zlevel <= 10 ? (zlevel + 1) / 2 : zlevel - 5);
     else
-        maxmlev = (zlevel + u.ulevel) / 2;
+        maxmlev = (zlevel + youmonst.m_lev) / 2;
 
     boolean hell = In_hell(dlev);
     boolean rogue = Is_rogue_level(dlev);
@@ -1636,7 +1636,7 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
                     maxgenprob <<= ood_distance / 2;
 
                 /* implement a hard rejection from the second check */
-                if (ptr->mlevel > 5*u.ulevel + 3)
+                if (ptr->mlevel > 5*youmonst.m_lev + 3)
                     genprob = 0;
             }
             if (genprob <= rn2_on_rng(maxgenprob, rng))
@@ -2258,6 +2258,7 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
 
         /* Some reserved space for further expansion */
         mon->confhits = mread8(mf);
+        mon->m_levmax = mread8(mf);
         for (i = 0; i < 199; i++)
             (void) mread8(mf);
     }
@@ -2532,9 +2533,10 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite64(mf, mon->mspells);
     mwrite64(mf, mon->spells_maintained);
     mwrite8(mf, mon->confhits);
+    mwrite8(mf, mon->m_levmax);
 
     int i;
-    for (i = 0; i < 199; i++)
+    for (i = 0; i < 198; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */

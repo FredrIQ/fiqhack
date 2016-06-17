@@ -1295,7 +1295,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 u.uhp += rnd(7);
                 if (!rn2(7)) {
                     /* hard upper limit via nurse care: 25 * ulevel */
-                    if (u.uhpmax < 5 * u.ulevel + dice(2 * u.ulevel, 10)) {
+                    if (u.uhpmax < 5 * youmonst.m_lev + dice(2 * youmonst.m_lev, 10)) {
                         u.uhpmax++;
                         morehpmax = TRUE;
                     }
@@ -1546,20 +1546,20 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
              * fine
              */
             permdmg = rn2_on_rng(dmg / 2 + 1, rng_deathtouch);
-            if (Upolyd || u.uhpmax > 25 * u.ulevel)
+            if (Upolyd || u.uhpmax > 25 * youmonst.m_lev)
                 permdmg = dmg;
-            else if (u.uhpmax > 10 * u.ulevel)
+            else if (u.uhpmax > 10 * youmonst.m_lev)
                 permdmg += dmg / 2;
-            else if (u.uhpmax > 5 * u.ulevel)
+            else if (u.uhpmax > 5 * youmonst.m_lev)
                 permdmg += dmg / 4;
 
             if (Upolyd) {
                 hpmax_p = &u.mhmax;
                 /* [can't use youmonst.m_lev] */
-                lowerlimit = min((int)youmonst.data->mlevel, u.ulevel);
+                lowerlimit = min((int)youmonst.data->mlevel, youmonst.m_lev);
             } else {
                 hpmax_p = &u.uhpmax;
-                lowerlimit = u.ulevel;
+                lowerlimit = youmonst.m_lev;
             }
             if (*hpmax_p - permdmg > lowerlimit)
                 *hpmax_p -= permdmg;
@@ -1855,7 +1855,7 @@ explmu(struct monst *mtmp, const struct attack *mattk)
         not_affected = resists_blnd(&youmonst);
         if (!not_affected) {
             /* sometimes you're affected even if it's invisible */
-            if (mon_visible(mtmp) || (rnd(tmp /= 2) > u.ulevel)) {
+            if (mon_visible(mtmp) || (rnd(tmp /= 2) > youmonst.m_lev)) {
                 pline(msgc_statusbad, "You are blinded by a blast of light!");
                 inc_timeout(&youmonst, BLINDED, tmp, TRUE);
                 if (!blind(&youmonst))
@@ -2135,8 +2135,8 @@ doseduce(struct monst *mon)
             if (!resists_drli(&youmonst)) {
                 /* If we're near death or outright die from this, use an
                    instadeath warning or instadeath channel */
-                pline(u.ulevel > 3 ? msgc_statusbad :
-                      u.ulevel > 1 ? msgc_fatal : msgc_fatal_predone,
+                pline(youmonst.m_lev > 3 ? msgc_statusbad :
+                      youmonst.m_lev > 1 ? msgc_fatal : msgc_fatal_predone,
                       "You feel out of shape.");
                 losexp(killer_msg(DIED, "overexertion"), FALSE);
             } else {

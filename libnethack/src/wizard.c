@@ -765,10 +765,10 @@ nasty(struct monst *mcast, coord bypos)
         count++;
     } else {
         if (!mcast) /* WoY harassment */
-            tmp = (u.ulevel > 3) ? u.ulevel / 3 : 1; /* just in case -- rph */
+            tmp = (youmonst.m_lev > 3) ? youmonst.m_lev / 3 : 1; /* just in case -- rph */
         else {
             if (you)
-                tmp = u.ulevel / 5;
+                tmp = youmonst.m_lev / 5;
             else
                 tmp = mcast->m_lev / 5;
             if (tmp < 1)

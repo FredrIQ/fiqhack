@@ -282,7 +282,7 @@ fix_worst_trouble(int trouble)
                 u.mhmax = 5 + 1;
             u.mh = u.mhmax;
         }
-        if (u.uhpmax < u.ulevel * 5 + 11)
+        if (u.uhpmax < youmonst.m_lev * 5 + 11)
             u.uhpmax += rnd(5);
         if (u.uhpmax <= 5)
             u.uhpmax = 5 + 1;
@@ -916,8 +916,8 @@ pleased(aligntyp g_align)
                       an(hcolor("golden")));
             /* if any levels have been lost (and not yet regained), treat this
                effect like blessed full healing */
-            if (u.ulevel < u.ulevelmax) {
-                u.ulevelmax -= 1;       /* see potion.c */
+            if (youmonst.m_lev < youmonst.m_levmax) {
+                youmonst.m_levmax -= 1;       /* see potion.c */
                 pluslvl(FALSE);
             } else {
                 u.uhpmax += 5;
@@ -1001,7 +1001,7 @@ pleased(aligntyp g_align)
         case 6:
             at_your_feet("An object");
             struct obj *otmp;
-            int sp_no, trycnt = u.ulevel + 1;
+            int sp_no, trycnt = youmonst.m_lev + 1;
 
             /* not yet known spells given preference over already known
                ones */
@@ -1462,7 +1462,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 pline_implied(
                     msgc_occstart, "You sense a conflict between %s and %s.",
                     u_gname(), a_gname());
-                if (rn2_on_rng(8 + u.ulevel, rng_altar_convert) > 5) {
+                if (rn2_on_rng(8 + youmonst.m_lev, rng_altar_convert) > 5) {
                     struct monst *pri;
 
                     pline(msgc_intrgain, "You feel the power of %s increase.",
@@ -1480,7 +1480,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                             hcolor(u.ualign.type == A_LAWFUL ? "white" :
                                    u.ualign.type ? "black" : "gray"));
 
-                    if (rnl(u.ulevel) > 6 && u.ualign.record > 0 &&
+                    if (rnl(youmonst.m_lev) > 6 && u.ualign.record > 0 &&
                         rnd(u.ualign.record) > (3 * ALIGNLIM) / 4)
                         summon_minion(altaralign, TRUE);
                     /* anger priest; test handles bones files */
@@ -1493,7 +1493,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                           u_gname());
                     change_luck(-1);
                     exercise(A_WIS, FALSE);
-                    if (rnl(u.ulevel) > 6 && u.ualign.record > 0 &&
+                    if (rnl(youmonst.m_lev) > 6 && u.ualign.record > 0 &&
                         rnd(u.ualign.record) > (7 * ALIGNLIM) / 8)
                         summon_minion(altaralign, TRUE);
                 }
@@ -1567,7 +1567,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
             /* you were already in pretty good standing */
             /* The player can gain an artifact */
             /* The chance goes down as the number of artifacts goes up */
-            if (u.ulevel > 2 && u.uluck >= 0) {
+            if (youmonst.m_lev > 2 && u.uluck >= 0) {
                 if (!rn2_on_rng(10 + (2 * u.ugifts * nartifacts),
                                 rng_altar_gift)) {
                     otmp = mk_artifact(level, NULL, a_align(youmonst.mx, youmonst.my),
@@ -1835,7 +1835,7 @@ mdoturn(struct musable *m)
     exercise(A_WIS, TRUE);
 
     /* note: does not perform unturn_dead() on victims' inventories */
-    range = BOLT_LIM + (u.ulevel / 5);  /* 5 to 11 */
+    range = BOLT_LIM + (youmonst.m_lev / 5);  /* 5 to 11 */
     range *= range;
     once = 0;
     for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
@@ -1848,7 +1848,7 @@ mdoturn(struct musable *m)
 
         if (!mtmp->mpeaceful &&
             (is_undead(mtmp->data) ||
-             (is_demon(mtmp->data) && (u.ulevel > (MAXULEV / 2))))) {
+             (is_demon(mtmp->data) && (youmonst.m_lev > (MAXULEV / 2))))) {
 
             mtmp->msleeping = 0;
             if (Confusion) {
@@ -1873,7 +1873,7 @@ mdoturn(struct musable *m)
                 case S_MUMMY:
                     xlev += 2; /*FALLTHRU*/
                 case S_ZOMBIE:
-                    if (u.ulevel >= xlev && !resist(&youmonst, mtmp, '\0', NOTELL, 0)) {
+                    if (youmonst.m_lev >= xlev && !resist(&youmonst, mtmp, '\0', NOTELL, 0)) {
                         if (u.ualign.type == A_CHAOTIC)
                             msethostility(mtmp, FALSE, TRUE);
                         else
@@ -1887,8 +1887,8 @@ mdoturn(struct musable *m)
             }
         }
     }
-    if ((5 - (u.ulevel / 6)) > 0)
-        helpless((5 - (u.ulevel / 6)), hr_busy, "trying to turn the monsters", NULL);
+    if ((5 - (youmonst.m_lev / 6)) > 0)
+        helpless((5 - (youmonst.m_lev / 6)), hr_busy, "trying to turn the monsters", NULL);
     return 1;
 }
 

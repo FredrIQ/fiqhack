@@ -809,7 +809,7 @@ abon(void)
         sbon = 3;
 
 /* Game tuning kludge: make it a bit easier for a low level character to hit */
-    sbon += (u.ulevel < 3) ? 1 : 0;
+    sbon += (youmonst.m_lev < 3) ? 1 : 0;
 
     if (dex < 4)
         return sbon - 3;
@@ -989,7 +989,7 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
                 buf = msgprintf(
                     "(Skill%s flagged by \"*\" may be enhanced %s.)",
                     plur(eventually_advance),
-                    (u.ulevel < MAXULEV) ? "when you're more experienced" :
+                    (youmonst.m_lev < MAXULEV) ? "when you're more experienced" :
                     "if skill slots become available");
                 add_menutext(&menu, buf);
             }

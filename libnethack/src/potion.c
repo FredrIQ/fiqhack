@@ -931,7 +931,7 @@ peffects(struct monst *mon, struct obj *otmp)
         if (you || vis)
             pline(statusheal, "%s %s fully healed", Mon, looks);
         /* Increase level if you lost some/many */
-        if (you && otmp->blessed && u.ulevel < u.ulevelmax)
+        if (you && otmp->blessed && youmonst.m_lev < youmonst.m_levmax)
             pluslvl(FALSE);
         /* fallthrough */
     case POT_EXTRA_HEALING:

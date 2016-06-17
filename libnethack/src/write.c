@@ -214,7 +214,7 @@ found:
             if (by_descr) {
                 written = OBJ_DESCR(objects[new_obj->otyp]);
                 written = eroded_text(written,
-                                      (6 + MAXULEV - u.ulevel) / 6, 0);
+                                      (6 + MAXULEV - youmonst.m_lev) / 6, 0);
             } else
                 written = msgprintf("%s was here!", u.uplname);
             pline_implied(msgc_failrandom,

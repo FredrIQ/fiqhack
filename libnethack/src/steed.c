@@ -100,7 +100,7 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
 
     /* Calculate your chance */
     chance = ACURR(A_DEX) + ACURR(A_CHA) / 2 + 2 * mtmp->mtame;
-    chance += u.ulevel * (mtmp->mtame ? 20 : 5);
+    chance += youmonst.m_lev * (mtmp->mtame ? 20 : 5);
     if (!mtmp->mtame)
         chance -= 10 * mtmp->m_lev;
     if (Role_if(PM_KNIGHT))
@@ -301,7 +301,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
         (confused(&youmonst) || fumbling(&youmonst) ||
          slippery_fingers(&youmonst) || leg_hurt(&youmonst) ||
          otmp->cursed ||
-         (u.ulevel + mtmp->mtame < rnd(MAXULEV / 2 + 5)))) {
+         (youmonst.m_lev + mtmp->mtame < rnd(MAXULEV / 2 + 5)))) {
         if (Levitation) {
             pline(msgc_failrandom, "%s slips away from you.", Monnam(mtmp));
             return FALSE;
@@ -396,7 +396,7 @@ kick_steed(void)
     if (!u.usteed->mtame && u.usteed->mleashed)
         m_unleash(u.usteed, TRUE);
     if (!u.usteed->mtame ||
-        (u.ulevel + u.usteed->mtame < rnd(MAXULEV / 2 + 5))) {
+        (youmonst.m_lev + u.usteed->mtame < rnd(MAXULEV / 2 + 5))) {
         newsym(u.usteed->mx, u.usteed->my);
         dismount_steed(DISMOUNT_THROWN);
         return;

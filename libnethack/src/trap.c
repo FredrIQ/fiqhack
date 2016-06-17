@@ -1147,7 +1147,7 @@ dotrap(struct trap *trap, unsigned trflags)
             shieldeff(youmonst.mx, youmonst.my);
             pline(msgc_playerimmune, "You feel momentarily lethargic.");
         } else
-            drain_en(rnd(u.ulevel) + 1);
+            drain_en(rnd(youmonst.m_lev) + 1);
         break;
 
     case POLY_TRAP:
@@ -2709,7 +2709,7 @@ dofiretrap(struct monst *mon, struct obj *box)
             mon->mhpmax -= rn2(min(mon->mhpmax, num + 1));
     } else { /* you */
         num = dice(2, 4);
-        if (u.uhpmax > u.ulevel)
+        if (u.uhpmax > youmonst.m_lev)
             u.uhpmax -= rn2(min(u.uhpmax, num + 1));
     }
     if (!num) {
@@ -3359,7 +3359,7 @@ untrap_prob(struct trap *ttmp)
     if (ttmp->madeby_u)
         chance--;
     if (Role_if(PM_ROGUE)) {
-        if (rn2(2 * MAXULEV) < u.ulevel)
+        if (rn2(2 * MAXULEV) < youmonst.m_lev)
             chance--;
         if (Uhave_questart && chance > 1)
             chance--;
@@ -3860,7 +3860,7 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
                     return 0;
                 }
                 if ((otmp->otrapped &&
-                     (force || (!confused && rn2(MAXULEV + 1 - u.ulevel) < 10)))
+                     (force || (!confused && rn2(MAXULEV + 1 - youmonst.m_lev) < 10)))
                     || (!force && confused && !rn2(3))) {
                     pline(msgc_youdiscover, "You find a trap on %s!",
                           the(xname(otmp)));
@@ -3877,7 +3877,7 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
 
                     if (otmp->otrapped) {
                         exercise(A_DEX, TRUE);
-                        ch = ACURR(A_DEX) + u.ulevel;
+                        ch = ACURR(A_DEX) + youmonst.m_lev;
                         if (Role_if(PM_ROGUE))
                             ch *= 2;
                         if (!force &&
@@ -3933,14 +3933,14 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
     }
 
     if ((level->locations[x][y].doormask & D_TRAPPED &&
-         (force || (!confused && rn2(MAXULEV - u.ulevel + 11) < 10)))
+         (force || (!confused && rn2(MAXULEV - youmonst.m_lev + 11) < 10)))
         || (!force && confused && !rn2(3))) {
         pline(msgc_youdiscover, "You find a trap on the door!");
         exercise(A_WIS, TRUE);
         if (ynq("Disarm it?") != 'y')
             return 1;
         if (level->locations[x][y].doormask & D_TRAPPED) {
-            ch = 15 + (Role_if(PM_ROGUE) ? u.ulevel * 3 : u.ulevel);
+            ch = 15 + (Role_if(PM_ROGUE) ? youmonst.m_lev * 3 : youmonst.m_lev);
             exercise(A_DEX, TRUE);
             if (!force &&
                 (confused || Fumbling ||

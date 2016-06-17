@@ -1531,7 +1531,7 @@ xchar
 level_difficulty(const d_level * dlev)
 {
     if (In_endgame(dlev))
-        return (xchar) (depth(&sanctum_level) + u.ulevel/2);
+        return (xchar) (depth(&sanctum_level) + youmonst.m_lev/2);
     else if (Uhave_amulet)
         return deepest_lev_reached(FALSE);
     else

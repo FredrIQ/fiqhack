@@ -311,7 +311,7 @@ m_has_property(const struct monst *mon, enum youprop property,
     for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
          pmprop++) {
         if (pmprop->prop == property &&
-            pmprop->xl <= (mon == &youmonst ? u.ulevel : mon->m_lev)) {
+            pmprop->xl <= (mon == &youmonst ? youmonst.m_lev : mon->m_lev)) {
             if (pmprop->mnum == monsndx(mdat_role))
                 rv |= W_MASK(os_role);
             if (mdat_race && pmprop->mnum == monsndx(mdat_race))
@@ -564,9 +564,9 @@ teleport_at_will(const struct monst *mon)
     /* FROMOUTSIDE isn't natural */
     if (teleportitis(mon) & (INTRINSIC & ~FROMOUTSIDE))
         return TRUE;
-    if (m_mlev(mon) >= 12)
+    if (mon->m_lev >= 12)
         return TRUE;
-    if (m_mlev(mon) >= 8) {
+    if (mon->m_lev >= 8) {
         if (mon == &youmonst && Race_if(PM_WIZARD))
             return TRUE;
         if (mon != &youmonst && spellcaster(mon->data))
@@ -788,7 +788,7 @@ void
 update_xl_properties(struct monst *mon, int oldlevel)
 {
     enum objslot slot;
-    int newlevel = u.ulevel;
+    int newlevel = youmonst.m_lev;
     if (mon != &youmonst)
         newlevel = mon->m_lev;
 
@@ -2291,7 +2291,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
     /* Warning. This partial-senses monsters that are hostile to the viewer, and
        have a level of 4 or greater, and a distance of 100 or less. */
-    if (distance <= 100 && m_mlev(viewee) >= 4 &&
+    if (distance <= 100 && viewee->m_lev >= 4 &&
         warned(viewer) &&
         mm_aggression(viewee, viewer) & ALLOW_M) {
         sensemethod |= MSENSE_WARNING;

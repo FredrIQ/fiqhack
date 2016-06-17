@@ -2942,9 +2942,9 @@ void mwake_nearby(const struct monst *mon, boolean intentional)
     if (aggravating(mon))
         dist = COLNO * COLNO + ROWNO * ROWNO;
     else if (intentional)
-        dist = m_mlev(mon) * 20;
+        dist = mon->m_lev * 20;
     else {
-        int div = m_mlev(mon);
+        int div = mon->m_lev;
         if (div < 1)
             div = 1; /* monsters can be XL 0 */
         if (mon == &youmonst && Role_if(PM_ROGUE))

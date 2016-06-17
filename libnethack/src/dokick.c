@@ -347,7 +347,7 @@ ghitm(struct monst * mtmp, struct obj * gold)
                 if (goldreqd) {
                     if (value >
                         goldreqd + (money_cnt(invent) +
-                                    u.ulevel * rn2(5)) / ACURR(A_CHA))
+                                    youmonst.m_lev * rn2(5)) / ACURR(A_CHA))
                         msethostility(mtmp, FALSE, FALSE);
                 }
             }

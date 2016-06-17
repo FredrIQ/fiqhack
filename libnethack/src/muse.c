@@ -813,7 +813,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         if (extra_nasty(mtmp->data))
                             helpful = FALSE;
                         /* Otherwise, hit dice OR player level if not polymorphed decides */
-                        if (mtmp == &youmonst && !Upolyd && u.ulevel >= 14)
+                        if (mtmp == &youmonst && !Upolyd && youmonst.m_lev >= 14)
                             helpful = FALSE;
                         if (mtmp == &youmonst && Upolyd && mtmp->data->mlevel >= 14)
                             helpful = FALSE;

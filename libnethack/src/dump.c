@@ -91,8 +91,8 @@ dump_status(void)
     char rngseedbuf[RNG_SEED_SIZE_BASE64];
 
     fprintf(dumpfp, "%s the %s\n", u.uplname,
-            rank_of(u.ulevel, Role_switch, u.ufemale));
-    fprintf(dumpfp, "  Experience level: %d\n", u.ulevel);
+            rank_of(youmonst.m_lev, Role_switch, u.ufemale));
+    fprintf(dumpfp, "  Experience level: %d\n", youmonst.m_lev);
 
     if (ACURR(A_STR) > 18) {
         if (ACURR(A_STR) < 118)

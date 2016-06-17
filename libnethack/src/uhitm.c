@@ -47,7 +47,7 @@ find_roll_to_hit(struct monst *mtmp)
 
     tmp =
         1 + Luck + abon() + find_mac(mtmp) + mon_hitbon(&youmonst) +
-        maybe_polyd(youmonst.data->mlevel, u.ulevel);
+        maybe_polyd(youmonst.data->mlevel, youmonst.m_lev);
 
     check_caitiff(mtmp);
 
@@ -86,7 +86,7 @@ find_roll_to_hit(struct monst *mtmp)
                 pline_implied(msgc_hint, "Your armor is rather cumbersome...");
             tmp -= urole.spelarmr;
         } else if (!uwep && !uarms) {
-            tmp += (u.ulevel / 3) + 2;
+            tmp += (youmonst.m_lev / 3) + 2;
         }
     }
 
@@ -392,7 +392,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                 } else if (mon->mflee && Role_if(PM_ROGUE) && !Upolyd) {
                     pline(msgc_combatalert, "You strike %s from behind!",
                           mon_nam(mon));
-                    tmp += rnd(u.ulevel);
+                    tmp += rnd(youmonst.m_lev);
                     hittxt = TRUE;
                 } else if (dieroll == 2 && obj == uwep &&
                            obj->oclass == WEAPON_CLASS &&

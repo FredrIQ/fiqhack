@@ -2490,7 +2490,7 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
             zap_dig(mon, obj, dx, dy, dz);
         else if (otyp >= SPE_MAGIC_MISSILE && otyp <= SPE_FINGER_OF_DEATH) {
             if (you)
-                buzz(otyp - SPE_MAGIC_MISSILE + 10, u.ulevel / 2 + 1, youmonst.mx, youmonst.my,
+                buzz(otyp - SPE_MAGIC_MISSILE + 10, youmonst.m_lev / 2 + 1, youmonst.mx, youmonst.my,
                      dx, dy, 0);
             else
                 buzz(-10 - (otyp - SPE_MAGIC_MISSILE), mon->m_lev / 2 + 1,
@@ -2528,7 +2528,7 @@ spell_damage_bonus(void)
        punished only when high level */
     if (intell < 10)
         tmp = -3;
-    else if (u.ulevel < 5)
+    else if (youmonst.m_lev < 5)
         tmp = 0;
     else if (intell < 14)
         tmp = 0;
@@ -3982,7 +3982,7 @@ resist(const struct monst *magr, const struct monst *mdef,
         alev = 5;
         break;
     default:
-        alev = magr ? m_mlev(magr) : 10;
+        alev = magr ? magr->m_lev : 10;
         break;  /* spell */
     }
     /* defense level */
@@ -3990,7 +3990,7 @@ resist(const struct monst *magr, const struct monst *mdef,
     if (dlev > 50)
         dlev = 50;
     else if (dlev < 1)
-        dlev = is_mplayer(mdef->data) ? u.ulevel : 1;
+        dlev = is_mplayer(mdef->data) ? youmonst.m_lev : 1;
 
     resisted = rn2(100 + alev - dlev) < mdef->data->mr;
     if (resisted) {

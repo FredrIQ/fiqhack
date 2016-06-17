@@ -551,7 +551,7 @@ static int
 wiz_level_change(const struct nh_cmd_arg *arg)
 {
     const char *buf;
-    int newlevel = u.ulevel;
+    int newlevel = youmonst.m_lev;
     int ret;
 
     buf = getarglin(arg, "To what experience level do you want to be set?");
@@ -565,30 +565,30 @@ wiz_level_change(const struct nh_cmd_arg *arg)
         pline(msgc_cancelled, "Never mind.");
         return 0;
     }
-    if (newlevel == u.ulevel) {
+    if (newlevel == youmonst.m_lev) {
         pline(msgc_cancelled, "You are already that experienced.");
-    } else if (newlevel < u.ulevel) {
-        if (u.ulevel == 1) {
+    } else if (newlevel < youmonst.m_lev) {
+        if (youmonst.m_lev == 1) {
             pline(msgc_cancelled,
                   "You are already as inexperienced as you can get.");
             return 0;
         }
         if (newlevel < 1)
             newlevel = 1;
-        while (u.ulevel > newlevel)
+        while (youmonst.m_lev > newlevel)
             losexp(NULL, TRUE);
     } else {
-        if (u.ulevel >= MAXULEV) {
+        if (youmonst.m_lev >= MAXULEV) {
             pline(msgc_cancelled,
                   "You are already as experienced as you can get.");
             return 0;
         }
         if (newlevel > MAXULEV)
             newlevel = MAXULEV;
-        while (u.ulevel < newlevel)
+        while (youmonst.m_lev < newlevel)
             pluslvl(FALSE);
     }
-    u.ulevelmax = u.ulevel;
+    youmonst.m_levmax = youmonst.m_lev;
     return 0;
 }
 
@@ -895,11 +895,11 @@ doattributes(const struct nh_cmd_arg *arg)
                     buf, ACURR(A_DEX), ACURR(A_CON),
                     ACURR(A_INT), ACURR(A_WIS), ACURR(A_CHA));
     add_menutext(&menu, buf);
-    if (u.ulevel < 30)
-        buf = msgprintf("%-10s: %d (exp: %d, %ld needed)", "level", u.ulevel,
-                        u.uexp, newuexp(u.ulevel));
+    if (youmonst.m_lev < 30)
+        buf = msgprintf("%-10s: %d (exp: %d, %ld needed)", "level", youmonst.m_lev,
+                        u.uexp, newuexp(youmonst.m_lev));
     else
-        buf = msgprintf("%-10s: %d (exp: %d)", "level", u.ulevel, u.uexp);
+        buf = msgprintf("%-10s: %d (exp: %d)", "level", youmonst.m_lev, u.uexp);
     add_menutext(&menu, buf);
 
     wc = weight_cap();

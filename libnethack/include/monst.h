@@ -91,6 +91,7 @@ struct monst {
     int orig_hpmax;             /* monster maxHP pre-polyself */
     uchar polyself_timer;       /* polyelf timer (0-255, decreases at 1/4 turnspeed) */
     uchar m_lev;                /* adjusted difficulty level of monster */
+    uchar m_levmax;             /* highest level of monster before leveldrain/etc */
     xchar mx, my;               /* monster location */
     xchar dx, dy;               /* monster's displaced image, COLNO/ROWNO if none */
     xchar mux, muy;             /* where the monster thinks you are; if it doesn't know
@@ -193,7 +194,6 @@ struct monst {
    will be orig_hp(max)) */
 # define m_mhp(mon) ((mon) == &youmonst ? u.uhp : (mon)->mhp)
 # define m_mhpmax(mon) ((mon) == &youmonst ? u.uhpmax : (mon)->mhpmax)
-# define m_mlev(mon) ((mon) == &youmonst ? u.ulevel : (mon)->m_lev)
 # define m_mwep(mon) ((mon) == &youmonst ? uwep : (mon)->mw)
 /* actually used for players and monsters alike now */
 # define m_mspellprot(mon) ((property_timeout(mon, PROTECTION) + 9) / 10)

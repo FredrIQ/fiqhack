@@ -125,46 +125,46 @@ newman(void)
     int tmp, oldlvl;
 
     tmp = u.uhpmax;
-    oldlvl = u.ulevel;
-    u.ulevel = u.ulevel - 2 + rn2_on_rng(5, rng_poly_level_adj);
-    if (u.ulevel > 127 || u.ulevel < 1) {       /* level went below 0? */
-        u.ulevel = oldlvl;      /* restore old level in case they lifesave */
+    oldlvl = youmonst.m_lev;
+    youmonst.m_lev = youmonst.m_lev - 2 + rn2_on_rng(5, rng_poly_level_adj);
+    if (youmonst.m_lev > 127 || youmonst.m_lev < 1) {       /* level went below 0? */
+        youmonst.m_lev = oldlvl;      /* restore old level in case they lifesave */
         goto dead;
     }
-    if (u.ulevel > MAXULEV)
-        u.ulevel = MAXULEV;
+    if (youmonst.m_lev > MAXULEV)
+        youmonst.m_lev = MAXULEV;
     /* If your level goes down, your peak level goes down by the same amount so
        that you can't simply use blessed full healing to undo the decrease. But
        if your level goes up, your peak level does *not* undergo the same
        adjustment; you might end up losing out on the chance to regain some
        levels previously lost to other causes. */
-    if (u.ulevel < oldlvl)
-        u.ulevelmax -= (oldlvl - u.ulevel);
-    if (u.ulevelmax < u.ulevel)
-        u.ulevelmax = u.ulevel;
+    if (youmonst.m_lev < oldlvl)
+        youmonst.m_levmax -= (oldlvl - youmonst.m_lev);
+    if (youmonst.m_levmax < youmonst.m_lev)
+        youmonst.m_levmax = youmonst.m_lev;
 
     if (!rn2(10))
         change_sex();
 
-    adjabil(oldlvl, (int)u.ulevel);
+    adjabil(oldlvl, (int)youmonst.m_lev);
     reset_rndmonst(NON_PM);     /* new monster generation criteria */
 
     /* random experience points for the new experience level */
     u.uexp = rndexp(FALSE);
 
-    /* u.uhpmax * u.ulevel / oldlvl: proportionate hit points to new level
+    /* u.uhpmax * youmonst.m_lev / oldlvl: proportionate hit points to new level
 
        -10 and +10: don't apply proportionate HP to 10 of a starting character's
        hit points (since a starting character's hit points are not on the same
        scale with hit points obtained through level gain)
 
        9 - rn2(19): random change of -9 to +9 hit points */
-    u.uhpmax = ((u.uhpmax - 10) * (long)u.ulevel / oldlvl + 10) + (9 - rn2(19));
+    u.uhpmax = ((u.uhpmax - 10) * (long)youmonst.m_lev / oldlvl + 10) + (9 - rn2(19));
 
     u.uhp = u.uhp * (long)u.uhpmax / tmp;
 
     tmp = u.uenmax;
-    u.uenmax = u.uenmax * (long)u.ulevel / oldlvl + 9 - rn2(19);
+    u.uenmax = u.uenmax * (long)youmonst.m_lev / oldlvl + 9 - rn2(19);
     if (u.uenmax < 0)
         u.uenmax = 0;
     u.uen = (tmp ? u.uen * (long)u.uenmax / tmp : u.uenmax);
@@ -568,9 +568,9 @@ polymon(int mntmp, boolean noisy)
     }
     u.mh = u.mhmax;
 
-    if (u.ulevel < mlvl) {
+    if (youmonst.m_lev < mlvl) {
         /* Low level characters can't become high level monsters for long */
-        u.mtimedone = u.mtimedone * u.ulevel / mlvl;
+        u.mtimedone = u.mtimedone * youmonst.m_lev / mlvl;
     }
 
     /* At this point, if we're wearing dragon scales, umonnum and thus uskin()
@@ -1146,7 +1146,7 @@ dogaze(void)
                     if (!Free_action) {
                         pline(msgc_statusbad, "You are frozen by %s gaze!",
                               s_suffix(mon_nam(mtmp)));
-                        helpless((u.ulevel > 6 ||
+                        helpless((youmonst.m_lev > 6 ||
                                   rn2(4)) ? dice((int)mtmp->m_lev + 1,
                                                  (int)mtmp->data->mattk[0].damd)
                                  : 200, hr_paralyzed,
