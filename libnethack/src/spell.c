@@ -738,7 +738,8 @@ run_maintained_spells(struct level *lev)
 
             /* We can't use spellname() but need to use OBJ_NAME directly, because
                amnesia can delete any trace of spell index... */
-            if (!knows_spell || spellknow(spell_index) <= 0 || confused(&youmonst)) {
+            if (!knows_spell || spellknow(spell_index) <= 0 || confused(&youmonst) ||
+                cancelled(&youmonst)) {
                 pline(msgc_intrloss, "You can no longer maintain %s.",
                       OBJ_NAME(objects[spell]));
                 spell_unmaintain(&youmonst, spell);
