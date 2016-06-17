@@ -1173,32 +1173,34 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                 set_property(mon, CONFUSION, -2, TRUE);
             }
         } else {
-            if (you) {
-                if (!sobj->blessed) {
+            /* arbitrary limit, but it has to stop somewhere... */
+            if (mon->confhits >= 250) {
+                if (you || vis)
+                    pline(msgc_failcurse, "Nothing seems to happen.");
+                break;
+            }
+
+            if (!sobj->blessed) {
+                if (you || vis)
                     pline(msgc_statusgood,
-                          "Your %s%s %s%s.", makeplural(body_part(HAND)),
+                          "%s %s%s %s%s.", your,
+                          makeplural(mbodypart(mon, HAND)),
                           Blind ? "" : " begin to glow",
                           Blind ? "tingle" : hcolor("red"),
-                          u.umconf ? " even more" : "");
-                    u.umconf++;
-                } else {
-                    if (Blind)
-                        pline(msgc_statusgood, "Your %s tingle %s sharply.",
-                              makeplural(body_part(HAND)),
-                              u.umconf ? "even more" : "very");
-                    else
-                        pline(msgc_statusgood,
-                              "Your %s glow a%s brilliant %s.",
-                              makeplural(body_part(HAND)),
-                              u.umconf ? "n even more" : "", hcolor("red"));
-                    /* after a while, repeated uses become less effective */
-                    if (u.umconf >= 40)
-                        u.umconf++;
-                    else
-                        u.umconf += rn1(8, 2);
-                }
+                          mon->confhits ? " even more" : "");
+                mon->confhits++;
             } else {
-                impossible("Monster read/cast confuse monster, which is not implemented?");
+                if (you && Blind)
+                    pline(msgc_statusgood, "Your %s tingle %s sharply.",
+                          makeplural(body_part(HAND)),
+                          mon->confhits ? "even more" : "very");
+                else if (you || vis)
+                    pline(msgc_statusgood,
+                          "%s %s glow a%s brilliant %s.", your,
+                          makeplural(mbodypart(mon, HAND)),
+                          mon->confhits ? "n even more" : "", hcolor("red"));
+                /* after a while, repeated uses become less effective */
+                mon->confhits += (mon->confhits >= 40 ? 1 : rn1(8, 2));
             }
         }
         break;

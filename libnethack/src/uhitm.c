@@ -862,7 +862,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     } else if (destroyed) {
         if (!already_killed)
             killed(mon);        /* takes care of most messages */
-    } else if (u.umconf && !thrown) {
+    } else if (youmonst.confhits && !thrown) {
         nohandglow(mon);
         if (!resist(&youmonst, mon, SPBOOK_CLASS, NOTELL, 0)) {
             set_property(mon, CONFUSION, dice(3, 8), TRUE);
@@ -2347,9 +2347,9 @@ nohandglow(struct monst *mon)
 {
     const char *hands = makeplural(body_part(HAND));
 
-    if (!u.umconf || confused(mon))
+    if (!youmonst.confhits || confused(mon))
         return;
-    if (u.umconf == 1) {
+    if (youmonst.confhits == 1) {
         if (Blind)
             pline(msgc_statusend, "Your %s stop tingling.", hands);
         else
@@ -2362,7 +2362,7 @@ nohandglow(struct monst *mon)
             pline(msgc_statusend, "Your %s no longer glow so brightly %s.",
                   hands, hcolor("red"));
     }
-    u.umconf--;
+    youmonst.confhits--;
 }
 
 /*uhitm.c*/

@@ -2580,7 +2580,7 @@ enlighten_mon(struct monst *mon, int final)
         mon_has(&menu, mon, "infravision");
     if (detects_monsters(mon))
         mon_is(&menu, mon, "sensing the presence of monsters");
-    if (mon == &youmonst && u.umconf)
+    if (mon->confhits)
         mon_is(&menu, mon, "going to confuse monsters");
 
         /*** Appearance and behavior ***/
@@ -2959,7 +2959,7 @@ enlightenment(int final)
         you_have(&menu, "infravision");
     if (Detect_monsters)
         you_are(&menu, "sensing the presence of monsters");
-    if (u.umconf)
+    if (youmonst.confhits)
         you_are(&menu, "going to confuse monsters");
 
         /*** Appearance and behavior ***/

@@ -77,6 +77,7 @@ struct monst {
     int mspec_used;             /* monster's special ability attack timeout */
     unsigned int mtrapseen;     /* bitmap of traps we've been trapped in */
     unsigned int mlstmv;        /* for catching up with lost time */
+    unsigned confhits;          /* amount of hits "charged" to cause confusion */
 
     int mstrategy;              /* Current monster strategy */
     xchar sx, sy;               /* Monster strategy coordinates */
