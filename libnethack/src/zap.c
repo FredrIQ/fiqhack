@@ -25,8 +25,6 @@ static int bhitpile_post(struct monst *, struct obj *, int, int);
 static int zap_hit_check(int, int);
 static int spell_hit_bonus(int);
 
-static const char blinded_by_the_flash[] = "You are blinded by the flash!";
-
 const char *const flash_types[] = {   /* also used in buzzmu(mcastu.c) */
     "magic missile",    /* Wands must be 0-9 */
     "bolt of fire",

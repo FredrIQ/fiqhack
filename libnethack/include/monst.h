@@ -98,7 +98,7 @@ struct monst {
     aligntyp malign;            /* alignment of this monster, relative to the player
                                    (positive = good to kill) */
     aligntyp maligntyp;         /* monster alignment */
-    unsigned maligntyp_temp:2;  /* temporary alignment from opposite alignment */
+    aligntyp maligntyp_temp;    /* temporary alignment from opposite alignment */
     short moveoffset;           /* how this monster's actions map onto turns */
     schar mtame;                /* level of tameness, implies peaceful */
     uchar m_ap_type;            /* what mappearance is describing: */
