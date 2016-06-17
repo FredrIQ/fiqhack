@@ -62,8 +62,6 @@ nh_timeout(void)
         else
             rehumanize(DIED, NULL);
     }
-    if (u.ucreamed)
-        u.ucreamed--;
 
     if (u.ugallop) {
         if (--u.ugallop == 0L && u.usteed)

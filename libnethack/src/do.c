@@ -1610,16 +1610,17 @@ dowipe(const struct nh_cmd_arg *arg)
 {
     (void) arg;
 
-    if (!u.ucreamed) {
+    if (!creamed(&youmonst)) {
         pline(msgc_mispaste, "Your %s is already clean.", body_part(FACE));
         return 0;
     }
 
-    if (u.ucreamed < 4)
-        u.ucreamed = 0;
+    int creaming = property_timeout(&youmonst, CREAMED);
+    if (creaming <= 4)
+        set_property(&youmonst, CREAMED, -2, TRUE);
     else
-        u.ucreamed -= 4;
-    if (!u.ucreamed) {
+        set_property(&youmonst, CREAMED, creaming - 4, TRUE);
+    if (!creamed(&youmonst)) {
         pline(msgc_actionok, "Your %s feels clean now.", body_part(FACE));
         return 1;
     } else {

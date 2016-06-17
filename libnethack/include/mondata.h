@@ -99,6 +99,7 @@
 # define astral_vision(mon)     (has_property(mon, XRAY_VISION))
 # define detects_monsters(mon)  (has_property(mon, DETECT_MONSTERS))
 # define slow(mon)              (has_property(mon, SLOW))
+# define creamed(mon)           (has_property(mon, CREAMED))
 
 # define is_lminion(mon)        (pm_isminion((mon)->data) &&    \
                                  malign(mon) == A_LAWFUL)

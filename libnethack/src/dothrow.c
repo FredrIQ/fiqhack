@@ -747,7 +747,7 @@ toss_up(struct obj *obj, boolean hitsroof)
             if (blindinc) {
                 if (otyp == BLINDING_VENOM && !Blind)
                     pline_implied(msgc_statusbad, "It blinds you!");
-                u.ucreamed += blindinc;
+                inc_timeout(&youmonst, CREAMED, blindinc, TRUE);
                 if (!blind(&youmonst))
                     pline(msgc_statusheal, "Your vision quickly clears.");
                 else if (flags.verbose)

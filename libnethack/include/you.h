@@ -38,7 +38,16 @@ struct u_event {
 
 /*** Information about the player ***/
 struct you {
+    /* As a temporary thing, fields listed on top here are "removed"
+       (no longer used but still exist during u removal work) during
+       the removal of this struct */
+    /* UNUSED */
     xchar ux, uy;
+    unsigned uundetected:1;     /* if you're a hiding monster/piercer */
+    unsigned umconf;
+    unsigned ucreamed;
+
+    /* USED */
     xchar tx, ty;       /* destination of travel */
     xchar ux0, uy0;     /* initial position of a move */
     d_level uz;    /* your level on this and the previous turn */
@@ -70,8 +79,6 @@ struct you {
     int uoccupation_progress[tos_last_slot + 1];  /* time spent on occupation */
     coord utracked_location[tl_last_slot + 1];    /* occupation locations */
 
-    unsigned umconf;
-
     /* uwhybusy is the reason for an occupation occuring (e.g.  "You stop
        uwhybusy.") This is undefined when flags.occupation is zero.
     
@@ -101,13 +108,11 @@ struct you {
             mamax;      /* for monster attribs */
     int ulycn;          /* lycanthrope type */
 
-    unsigned ucreamed;
     unsigned uswldtim;  /* time you have been swallowed */
 
     unsigned uswallow:1;        /* true if swallowed */
     unsigned uinwater:1;        /* if you're currently in water (only
                                    underwater possible currently) */
-    unsigned uundetected:1;     /* if you're a hiding monster/piercer */
     unsigned ufemale:1;         /* no neutral gender for players normally */
     unsigned mfemale:1;         /* saved value of ufemale */
     unsigned uinvulnerable:1;   /* you're invulnerable (praying) */

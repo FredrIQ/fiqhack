@@ -93,8 +93,9 @@ use_towel(struct obj *obj)
             if (!ublindf) {
                 old = blind(&youmonst);
                 pline(msgc_statusbad, "Yecch! Your %s %s gunk on it!",
-                      body_part(FACE), (u.ucreamed ? "has more" : "now has"));
-                u.ucreamed += rn1(10, 3);
+                      body_part(FACE),
+                      (creamed(&youmonst) ? "has more" : "now has"));
+                inc_timeout(&youmonst, CREAMED, rn1(10, 3), TRUE);
                 if (blind(&youmonst) && !old)
                     pline(msgc_statusbad, "You can't see any more.");
             } else {
@@ -122,9 +123,9 @@ use_towel(struct obj *obj)
         pline(msgc_statusheal, "You wipe off your %s.",
               makeplural(body_part(HAND)));
         return 1;
-    } else if (u.ucreamed) {
+    } else if (creamed(&youmonst)) {
         boolean wasblind = blind(&youmonst);
-        u.ucreamed = 0;
+        set_property(&youmonst, CREAMED, -2, TRUE);
         if (wasblind && !blind(&youmonst)) {
             pline(msgc_statusheal, "You've got the glop off.");
             pline(msgc_statusheal, "You can see again.");
@@ -2716,7 +2717,7 @@ static int
 use_cream_pie(struct obj **objp)
 {
     boolean wasblind = !!blind(&youmonst);
-    boolean wascreamed = u.ucreamed;
+    boolean wascreamed = creamed(&youmonst);
     boolean several = FALSE;
     struct obj *obj = *objp;
 
@@ -2731,7 +2732,7 @@ use_cream_pie(struct obj **objp)
               several ? "one of " : "",
               several ? makeplural(the(xname(obj))) : the(xname(obj)));
     if (can_blnd(NULL, &youmonst, AT_WEAP, obj)) {
-        u.ucreamed += rnd(25);
+        inc_timeout(&youmonst, CREAMED, rnd(25), TRUE);
         if (wasblind == !!blind(&youmonst)) /* was blind, or didn't become */
             pline(msgc_statusbad, "There's %ssticky goop all over your %s.",
                   wascreamed ? "more " : "", body_part(FACE));

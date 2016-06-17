@@ -144,7 +144,7 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
                 return FALSE;
         } else if (obj && (obj->otyp == BLINDING_VENOM)) {
             /* all ublindf, including LENSES, protect, cream-pies too */
-            if (is_you && (ublindf || u.ucreamed))
+            if (is_you && (ublindf || creamed(&youmonst)))
                 return FALSE;
             check_visor = TRUE;
         } else if (obj && (obj->otyp == POT_BLINDNESS)) {
@@ -157,7 +157,7 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
 
     case AT_ENGL:
         if (is_you && ((blind(&youmonst) & W_MASK(os_tool)) ||
-                       u_helpless(hm_asleep) || u.ucreamed))
+                       u_helpless(hm_asleep) || creamed(&youmonst)))
             return FALSE;
         if (!is_you && mdef->msleeping)
             return FALSE;

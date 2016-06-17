@@ -490,7 +490,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
     tmpsym_end(tsym);
 
     if (blindinc) {
-        u.ucreamed += blindinc;
+        inc_timeout(&youmonst, CREAMED, blindinc, TRUE);
         if (!blind(&youmonst))
             pline(msgc_statusheal, "Your vision quickly clears.");
         else if (flags.verbose)

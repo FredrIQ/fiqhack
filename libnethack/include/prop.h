@@ -85,9 +85,9 @@ enum youprop {
     XRAY_VISION              = 67,
     DETECT_MONSTERS          = 68,
     SLOW                     = 69,
-    FOOD_APPRAISAL           = 70,
+    CREAMED                  = 70,
 /*  DEATH_RES                = 71, TODO */
-    LAST_PROP                = SLOW,
+    LAST_PROP                = CREAMED,
     INVALID_PROP             = -1,
 };
 

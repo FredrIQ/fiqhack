@@ -281,7 +281,7 @@ mstatusline(struct monst *mon)
         info = msgcat(info, ", confused");
     if (blind(mon))
         info = msgcat(info, ", blind");
-    if (you && u.ucreamed) {
+    if (creamed(mon)) {
         if (blind(mon) != W_MASK(os_special))
             info = msgcat(info, ", cover");
         info = msgcat(info, "ed by sticky goop");
