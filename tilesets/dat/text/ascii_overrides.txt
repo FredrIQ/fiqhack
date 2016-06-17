@@ -20,7 +20,7 @@ boulder: gray '0'
 ! Corpse/statue/figurine substitutions.
 sub corpse *: basefg '%'
 sub statue *: gray '`'
-sub figurine *: gray ')'
+sub figurine *: gray '('
 
 ! Stairs and portals have red backgrounds (that show through).
 staircase *; ladder *; long staircase *: bgred basefg base_underline basechar
