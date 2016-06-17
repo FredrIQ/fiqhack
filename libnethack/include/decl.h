@@ -91,7 +91,6 @@ extern struct gamestate {
        just be a single monster chain.  But that's a *long* way off at the
        moment.) */
     struct you us[1];
-    struct youaux us_aux[1];
 
     /* Fruit state. Arguably should be in flags. Currently, this is attached to
        a dungeon as a whole /or/ a bones level, which is weird enough as it is;
