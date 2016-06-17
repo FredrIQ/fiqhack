@@ -1144,7 +1144,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
                   vanish > 5 ? "several" :
                   vanish > 1 ? "a few" :
                   "an", vanish != 1 ? "s" : "");
-        obj->owt = weight(obj);
+        container->owt = weight(container);
     }
     if (picked || (container && !container->mknown)) {
         if (levitates(mon) && levitates_at_will(mon, TRUE, FALSE))
