@@ -275,7 +275,7 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt,
             aligns[1 - u.ualignbase[A_ORIGINAL]].filecode);
 
     fprintf(rfile, SEP "xplevel=%d", youmonst.m_lev);
-    fprintf(rfile, SEP "exp=%d", u.uexp);
+    fprintf(rfile, SEP "exp=%d", youmonst.exp);
 
     fprintf(rfile, SEP "mode=%s",
             (flags.debug ? "debug" : flags.explore ? "explore" :

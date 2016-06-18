@@ -46,6 +46,9 @@ struct you {
     unsigned uundetected:1;     /* if you're a hiding monster/piercer */
     unsigned umconf;
     unsigned ucreamed;
+    int ulevel;         /* 1 to MAXULEV */
+    int ulevelmax;
+    int uexp;
 
     /* USED */
     xchar tx, ty;       /* destination of travel */
@@ -53,8 +56,6 @@ struct you {
     d_level uz;    /* your level on this and the previous turn */
     boolean umoved;     /* changed map location (post-move) */
     /* +: turn right, -: turn left */
-    int ulevel;         /* 1 to MAXULEV */
-    int ulevelmax;
     unsigned utrap;     /* trap timeout */
     unsigned utraptype; /* defined if utrap nonzero */
 # define TT_BEARTRAP    0
@@ -158,7 +159,7 @@ struct you {
     int ugifts; /* number of artifacts bestowed */
     int ublessed, ublesscnt;    /* blessing/duration from #pray */
     int umoney0;
-    int uexp, urexp;
+    int urexp;
     int ucleansed;      /* to record moves when player was cleansed */
     int uinvault;
     struct monst *ustuck;

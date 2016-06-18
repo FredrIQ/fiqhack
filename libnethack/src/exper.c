@@ -96,8 +96,8 @@ experience(struct monst *mtmp, int nk)
 void
 more_experienced(int exp, int rexp)
 {
-    u.uexp += exp;
-    if (u.uexp >= (Role_if(PM_WIZARD) ? 250 : 500))
+    youmonst.exp += exp;
+    if (youmonst.exp >= (Role_if(PM_WIZARD) ? 250 : 500))
         flags.beginner = 0;
 }
 
@@ -124,7 +124,7 @@ losexp(const char *killer, boolean override_res)
             done(DIED, killer);
 
         /* no drainer or lifesaved */
-        u.uexp = 0;
+        youmonst.exp = 0;
     }
     num = newhp();
     u.uhpmax -= num;
@@ -154,8 +154,8 @@ losexp(const char *killer, boolean override_res)
     else if (u.uen > u.uenmax)
         u.uen = u.uenmax;
 
-    if (u.uexp > 0)
-        u.uexp = newuexp(youmonst.m_lev) - 1;
+    if (youmonst.exp > 0)
+        youmonst.exp = newuexp(youmonst.m_lev) - 1;
 }
 
 /*
@@ -167,7 +167,7 @@ losexp(const char *killer, boolean override_res)
 void
 newexplevel(void)
 {
-    if (youmonst.m_lev < MAXULEV && u.uexp >= newuexp(youmonst.m_lev))
+    if (youmonst.m_lev < MAXULEV && youmonst.exp >= newuexp(youmonst.m_lev))
         pluslvl(TRUE);
 }
 
@@ -204,10 +204,10 @@ pluslvl(boolean incr)
         if (incr) {
             long tmp = newuexp(youmonst.m_lev + 1);
 
-            if (u.uexp >= tmp)
-                u.uexp = tmp - 1;
+            if (youmonst.exp >= tmp)
+                youmonst.exp = tmp - 1;
         } else {
-            u.uexp = newuexp(youmonst.m_lev);
+            youmonst.exp = newuexp(youmonst.m_lev);
         }
         ++youmonst.m_lev;
         if (youmonst.m_levmax < youmonst.m_lev) {
@@ -241,10 +241,10 @@ rndexp(boolean gaining)
        potions of gain level can result in lowering the experience points
        instead of raising them */
     if (youmonst.m_lev == MAXULEV && gaining) {
-        result += (u.uexp - minexp);
+        result += (youmonst.exp - minexp);
         /* avoid wrapping (over 400 blessed potions needed for that...) */
-        if (result < u.uexp)
-            result = u.uexp;
+        if (result < youmonst.exp)
+            result = youmonst.exp;
     }
     return result;
 }

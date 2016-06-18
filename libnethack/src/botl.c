@@ -249,7 +249,7 @@ make_player_info(struct nh_player_info *pi)
         pi->level = mons[u.umonnum].mlevel;
     else
         pi->level = youmonst.m_lev;
-    pi->xp = u.uexp;
+    pi->xp = youmonst.exp;
 
     cap = near_capacity();
 

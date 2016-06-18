@@ -897,9 +897,9 @@ doattributes(const struct nh_cmd_arg *arg)
     add_menutext(&menu, buf);
     if (youmonst.m_lev < 30)
         buf = msgprintf("%-10s: %d (exp: %d, %ld needed)", "level", youmonst.m_lev,
-                        u.uexp, newuexp(youmonst.m_lev));
+                        youmonst.exp, newuexp(youmonst.m_lev));
     else
-        buf = msgprintf("%-10s: %d (exp: %d)", "level", youmonst.m_lev, u.uexp);
+        buf = msgprintf("%-10s: %d (exp: %d)", "level", youmonst.m_lev, youmonst.exp);
     add_menutext(&menu, buf);
 
     wc = weight_cap();

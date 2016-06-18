@@ -92,6 +92,7 @@ struct monst {
     uchar polyself_timer;       /* polyelf timer (0-255, decreases at 1/4 turnspeed) */
     uchar m_lev;                /* adjusted difficulty level of monster */
     uchar m_levmax;             /* highest level of monster before leveldrain/etc */
+    unsigned exp;               /* experience points */
     xchar mx, my;               /* monster location */
     xchar dx, dy;               /* monster's displaced image, COLNO/ROWNO if none */
     xchar mux, muy;             /* where the monster thinks you are; if it doesn't know

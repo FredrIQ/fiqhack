@@ -893,7 +893,7 @@ peffects(struct monst *mon, struct obj *otmp)
             if (otmp->blessed)
                 /* blessed potions place you at a random spot in the middle of the
                    new level instead of the low point */
-                u.uexp = rndexp(TRUE);
+                youmonst.exp = rndexp(TRUE);
         } else {
             if (!vis)
                 unkn++;

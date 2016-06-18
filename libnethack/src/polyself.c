@@ -150,7 +150,7 @@ newman(void)
     reset_rndmonst(NON_PM);     /* new monster generation criteria */
 
     /* random experience points for the new experience level */
-    u.uexp = rndexp(FALSE);
+    youmonst.exp = rndexp(FALSE);
 
     /* u.uhpmax * youmonst.m_lev / oldlvl: proportionate hit points to new level
 
