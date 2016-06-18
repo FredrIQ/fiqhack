@@ -1283,7 +1283,6 @@ q3_path(int srow, int scol, int y2, int x2)
  *     m_cansee()
  *     msensem()
  *     do_light_sources()
- *     mmspell_would_be_useless()
  *
  * Because this might be called from inside the vision code, and thus couldsee()
  * might not have a valid viz_array to look at, the caller passes in a vision
