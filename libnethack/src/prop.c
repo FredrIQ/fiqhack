@@ -243,6 +243,7 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
         property == STEALTH           ? mdat->mflags3 & M3_STEALTHY          :
         property == FAST              ? mdat->mflags3 & M3_FAST              :
         property == SEARCHING         ? mdat->mflags3 & M3_SEARCH            :
+        property == JUMPING           ? mdat->mflags3 & M3_JUMPS             :
         0)
         return 1;
     return 0;
