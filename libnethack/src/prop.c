@@ -1887,8 +1887,8 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case SLOW:
         if (you && !redundant) {
-            pline(msgc_statusheal, lost ? "Your speed returns." :
-                  "You feel abnormally slow.");
+            pline(lost ? msgc_statusheal : msgc_statusbad,
+                  lost ? "Your speed returns." : "You feel abnormally slow.");
             effect = TRUE;
         } else if (vis && !redundant) {
             pline(msgc_monneutral, lost ? "%s speeds up." :
@@ -1896,6 +1896,25 @@ update_property(struct monst *mon, enum youprop prop,
                   Monnam(mon));
             effect = TRUE;
         }
+        break;
+    case CREAMED:
+        if ((!you && !vis) || (slot == os_dectimeout))
+            break;
+
+        if (lost && !redundant) {
+            pline(msgc_statusheal, "%s %s %s cleaner.", s_suffix(Monnam(mon)),
+                  mbodypart(mon, FACE), you ? "feels" : "looks");
+
+            /* Hack: blindness to give proper blindness messages */
+            if (!property_timeout(mon, BLINDED)) {
+                set_property(mon, BLINDED, 1, TRUE);
+                set_property(mon, BLINDED, -2, FALSE);
+            }
+            break;
+        }
+
+        if (!lost)
+            pline(msgc_statusbad, "Yeech!  %s been creamed.", M_verbs(mon, "have"));
         break;
     default:
         impossible("Unknown property: %u", prop);
