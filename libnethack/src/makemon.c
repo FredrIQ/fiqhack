@@ -2259,7 +2259,8 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         /* Some reserved space for further expansion */
         mon->confhits = mread8(mf);
         mon->m_levmax = mread8(mf);
-        for (i = 0; i < 199; i++)
+        mon->exp = mread32(mf);
+        for (i = 0; i < 194; i++)
             (void) mread8(mf);
     }
 
@@ -2534,9 +2535,10 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite64(mf, mon->spells_maintained);
     mwrite8(mf, mon->confhits);
     mwrite8(mf, mon->m_levmax);
+    mwrite32(mf, mon->exp);
 
     int i;
-    for (i = 0; i < 198; i++)
+    for (i = 0; i < 194; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */
