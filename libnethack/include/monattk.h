@@ -6,11 +6,7 @@
 #ifndef MONATTK_H
 # define MONATTK_H
 
-/*      Add new attack types below - ordering affects experience (exper.c).
- *      Attacks > AT_BUTT are worth extra experience.
- *      Be careful about changing the order of these, since it can have strange
- *      effects on particular monsters saved into saves (quest monsters, mainly)
- */
+/* Monster attack types. Order affects experience, type > AT_BUTT gives more */
 # define AT_ANY  (-1)   /* fake attack; dmgtype_fromattack wildcard */
 # define AT_NONE 0      /* passive monster (ex. acid blob) */
 # define AT_CLAW 1      /* claw (punch, hit, etc.) */
@@ -30,9 +26,9 @@
 # define AT_AREA 17     /* area of effect ability */
 
 /* Special attack types, some of them aren't used on permonsts directly */
-# define AT_SCRL 252    /* scrolls */
-# define AT_WAND 253    /* wands */
-# define AT_WEAP 254    /* weapons */
+# define AT_WEAP 252    /* weapons */
+# define AT_SCRL 253    /* scrolls */
+# define AT_WAND 254    /* wands */
 # define AT_SPEL 255    /* spells */
 
 /*      Add new damage types below.
