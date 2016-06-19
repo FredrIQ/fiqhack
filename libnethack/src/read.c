@@ -1407,7 +1407,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                     if (!isok(m_mx(mon) + i, m_my(mon) + j))
                         continue;
                     mtmp = um_at(level, mon->mx + i, mon->my + j);
-                    if (mon != mtmp)
+                    if (mtmp && mon != mtmp)
                         maybe_tame(mon, mtmp, sobj);
                 }
             }
