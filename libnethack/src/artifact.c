@@ -429,7 +429,8 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
          carried */
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
         return mask & W_EQUIP;
-    if (otmp->otyp == AMULET_OF_YENDOR && extrinsic == CLAIRVOYANT)
+    if (otmp->otyp == AMULET_OF_YENDOR &&
+        (extrinsic == CLAIRVOYANT || extrinsic == AGGRAVATE_MONSTER))
         return mask | W_MASK(os_carried);
 
     if (!oart)
