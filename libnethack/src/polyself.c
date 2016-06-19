@@ -1445,6 +1445,9 @@ armor_to_dragon(int atyp)
     case SILVER_DRAGON_SCALE_MAIL:
     case SILVER_DRAGON_SCALES:
         return PM_SILVER_DRAGON;
+    case SHIMMERING_DRAGON_SCALE_MAIL:
+    case SHIMMERING_DRAGON_SCALES:
+        return PM_SHIMMERING_DRAGON;
     case RED_DRAGON_SCALE_MAIL:
     case RED_DRAGON_SCALES:
         return PM_RED_DRAGON;
