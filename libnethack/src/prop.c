@@ -2152,6 +2152,11 @@ msensem(const struct monst *viewer, const struct monst *viewee)
                    k_monnam(viewer), k_monnam(viewee));
         return 0;
     }
+    if ((viewer != &youmonst && !viewer->dlevel) ||
+        (viewee != &youmonst && !viewee->dlevel))
+        panic("msensem: viewer or target has no dlevel, migrating? %s->%s",
+              viewer->data ? k_monnam(viewer) : "<zeromonst?>",
+              viewee->data ? k_monnam(viewee) : "<zeromonst?>");
 
     /* TODO: once levels rewrite is done, this code can be simplified (and won't
        work in its present form). */
