@@ -3,6 +3,7 @@ build/*
 *.swp
 *.kate-swp
 *~
+\#*\#
 .emacs.desktop
 .emacs.desktop.lock
 aimake.local
