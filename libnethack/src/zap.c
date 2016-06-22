@@ -4069,9 +4069,15 @@ retry:
     }
 }
 
-
+/* wandlevel is 0-5 depending on skill + BUC combination */
 int
-getwandlevel(const struct monst *user, struct obj *obj) {
+getwandlevel(const struct monst *user, struct obj *obj)
+{
+    if (!obj || obj->oclass != WAND_CLASS) {
+        impossible("getwandlevel() with no wand obj?");
+        return 0;
+    }
+
     int wandlevel;
     if (user == &youmonst) {
         wandlevel = P_SKILL(P_WANDS);
@@ -4080,15 +4086,7 @@ getwandlevel(const struct monst *user, struct obj *obj) {
     } else
         wandlevel = mprof(user, MP_WANDS);
 
-    /* wandlevel is 0-5 depending on skill + BUC combination */
-    if (!obj || obj->oclass != WAND_CLASS) {
-        impossible("getwandlevel() with no wand obj?");
-        return 0;
-    }
-    if (obj->cursed)
-        wandlevel--;
-    else if (obj->blessed)
-        wandlevel++;
+    wandlevel += bcsign(obj);
     return wandlevel;
 }
 
