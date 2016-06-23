@@ -906,7 +906,7 @@ show_conduct(int final)
     if (u.uconduct_time[conduct_food] > 1800) {
         buf = msgprintf("did not eat until turn %d",
                         u.uconduct_time[conduct_food]);
-        enl_msg(&menu, You_, "", "had ", buf);
+        enl_msg(&menu, You_, "", "", buf);
     }
     if (u.uconduct_time[conduct_vegan] > 1800) {
         buf = msgprintf("followed a strict vegan diet until turn %d",
