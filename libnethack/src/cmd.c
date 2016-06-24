@@ -1000,7 +1000,7 @@ doattributes(const struct nh_cmd_arg *arg)
             break;
         case 'w':
             if (wizard || discover)
-                enlightenment(0);
+                enlighten_mon(&youmonst, 0, wizard);
             break;
         }
     }

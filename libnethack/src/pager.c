@@ -77,7 +77,7 @@ append_str(const char **buf, const char *new_str, int is_plur, int is_in)
 
 /* Like the above, except with commas, and into a BUFSZ-sized buffer for API
    boundary uses. */
-static boolean
+boolean
 append_str_comma(char *buf, char **end_of_buf, const char *new_str)
 {
     int remaining_space = BUFSZ - (*end_of_buf - buf);

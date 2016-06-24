@@ -21,7 +21,6 @@
 # define uhas_property(p)      has_property(&youmonst, p)
 # define worn_extrinsic(p)     mworn_extrinsic(&youmonst, p)
 # define worn_blocked(p)       mworn_blocked(&youmonst, p)
-# define worn_warntype()       mworn_warntype(&youmonst)
 
 /*** Resistances to troubles ***/
 /* With intrinsics and extrinsics */

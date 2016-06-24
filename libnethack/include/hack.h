@@ -101,8 +101,6 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 # define THROWN_WEAPON  1
 # define KICKED_WEAPON  2
 
-# define MATCH_WARN_OF_MON(mon)  (worn_warntype() & (mon)->data->mflags2)
-
 # include "trap.h"
 # include "flag.h"
 # include "rm.h"

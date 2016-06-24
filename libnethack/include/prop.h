@@ -70,7 +70,7 @@ enum youprop {
     HALF_PHDAM               = 52,
     SICK_RES                 = 53,
     DRAIN_RES                = 54,
-    WARN_UNDEAD              = 55,
+    WARN_UNDEAD              = 55, /* unused */
     CANCELLED                = 56,
     FREE_ACTION              = 57,
     SWIMMING                 = 58,

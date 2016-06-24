@@ -312,7 +312,7 @@ disclose(int how, boolean taken, long umoney)
         c = ask ? yn_function("Do you want to see your attributes?", ynqchars,
                               defquery) : defquery;
         if (c == 'y')
-            enlightenment(how > LAST_KILLER  ? 1 : 2);     /* final */
+            enlighten_mon(&youmonst, how > LAST_KILLER ? 1 : 2, 1); /* final */
         if (c == 'q')
             done_stopprint++;
     }
@@ -361,7 +361,7 @@ dump_disclose(int how)
     container_contents(invent, TRUE, TRUE);
     dump_spells();
     dump_skills();
-    enlightenment(how > LAST_KILLER ? 1 : 2);     /* final */
+    enlighten_mon(&youmonst, how > LAST_KILLER ? 1 : 2, 1);     /* final */
     list_vanquished('y', FALSE);
     list_genocided('y', FALSE);
     show_conduct(how > LAST_KILLER ? 1 : 2);

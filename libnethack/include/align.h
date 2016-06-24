@@ -30,6 +30,7 @@ typedef struct align {  /* alignment & record */
 # define AM_CHAOTIC     1
 # define AM_NEUTRAL     2
 # define AM_LAWFUL      4
+# define AM_UNALIGNED   8
 
 # define AM_MASK        7
 
@@ -54,4 +55,3 @@ typedef struct align {  /* alignment & record */
                        A_NEUTRAL)
 
 #endif /* ALIGN_H */
-

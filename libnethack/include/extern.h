@@ -122,7 +122,7 @@ extern boolean arti_reflects(struct obj *);
 extern boolean restrict_name(struct obj *, const char *);
 extern boolean defends(int, struct obj *);
 extern boolean protects(int, struct obj *);
-extern long item_provides_extrinsic(struct obj *, int, int *);
+extern long item_provides_extrinsic(struct obj *, int);
 extern void uninvoke_artifact(struct obj *);
 extern int touch_artifact(struct obj *, const struct monst *);
 extern int spec_abon(struct obj *, struct monst *);
@@ -1341,6 +1341,7 @@ extern boolean set_option(const char *, union nh_optvalue,
 
 /* ### pager.c ### */
 
+extern boolean append_str_comma(char *, char **, const char *);
 extern int dowhatis(const struct nh_cmd_arg *);
 extern int doquickwhatis(const struct nh_cmd_arg *);
 extern int doidtrap(const struct nh_cmd_arg *);
@@ -1480,8 +1481,9 @@ extern boolean u_helpless(enum helpless_mask mask);
 extern unsigned msensem_xy(struct monst *, struct monst *,
                            xchar, xchar);
 extern unsigned msensem(const struct monst *, const struct monst *);
-extern void enlighten_mon(struct monst *, int);
-extern void enlightenment(int);
+extern boolean monwarn_affects(const struct monst *, const struct monst *);
+extern const char *get_monwarnstr(const struct monst *, boolean);
+extern void enlighten_mon(struct monst *, int, int);
 extern void unspoilered_intrinsics(void);
 extern void show_conduct(int);
 
@@ -2037,7 +2039,6 @@ extern void setnotworn(struct obj *);
 extern boolean obj_worn_on(struct obj *, enum objslot);
 extern long mworn_extrinsic(const struct monst *, int);
 extern boolean mworn_blocked(const struct monst *, int);
-extern int mworn_warntype(const struct monst *);
 
 extern void mon_set_minvis(struct monst *);
 extern void mon_adjust_speed(struct monst *, int, struct obj *);
@@ -2098,4 +2099,3 @@ extern void makewish(void);
 extern int getwandlevel(const struct monst *, struct obj *);
 
 #endif /* EXTERN_H */
-

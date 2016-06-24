@@ -544,7 +544,7 @@ display_warning(struct monst *mon)
     int wl = (int)(mon->m_lev / 4);
     int monnum, mflag;
 
-    if (MATCH_WARN_OF_MON(mon)) {
+    if (monwarn_affects(&youmonst, mon)) {
         monnum = dbuf_monid(mon, x, y, newsym_rng);
         mflag = 0;
     } else {
@@ -654,7 +654,7 @@ feel_location(xchar x, xchar y)
     if ((x != youmonst.mx || y != youmonst.my) && (mon = m_at(level, x, y)) && sensemon(mon))
         display_monster(x, y, mon,
                         (tp_sensemon(mon) ||
-                         MATCH_WARN_OF_MON(mon)) ? PHYSICALLY_SEEN : DETECTED,
+                         monwarn_affects(&youmonst, mon)) ? PHYSICALLY_SEEN : DETECTED,
                         TRUE, is_worm_tail(mon));
 }
 

@@ -319,7 +319,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         reveal_invis = TRUE;
         probe_monster(mdef);
         if (wandlevel >= P_SKILLED)
-            enlighten_mon(mdef, 0);
+            enlighten_mon(mdef, 0, (wandlevel == P_MASTER));
         known = TRUE;
         break;
     case WAN_OPENING:
@@ -2045,7 +2045,7 @@ zapnodir(struct monst *mon, struct obj *obj)
             known = TRUE;
             pline(msgc_info, "You feel self-knowledgeable...");
             win_pause_output(P_MESSAGE);
-            enlightenment(FALSE);
+            enlighten_mon(&youmonst, FALSE, (wandlevel >= P_SKILLED));
             pline_implied(msgc_info, "The feeling subsides.");
             exercise(A_WIS, TRUE);
         } else if (vis) {
@@ -3206,7 +3206,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                 mdef->mhp = mdef->mhpmax;
                 return;
             }
-            int dummy;
+
             /* Destroy shield first, then suit, then monster.
                If suit or monster is to be disintegrated,
                also destroy cloak. If monster is to be
@@ -3217,20 +3217,20 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                 struct obj *otmp2;
                 if (is_suit(otmp) &&
                     (otmp2 = which_armor(mdef, os_armc))) {
-                    if (!item_provides_extrinsic(otmp2, DISINT_RES, &dummy))
+                    if (!item_provides_extrinsic(otmp2, DISINT_RES))
                         destroy_arm(mdef, otmp2);
                 }
 
-                if (!item_provides_extrinsic(otmp, DISINT_RES, &dummy))
+                if (!item_provides_extrinsic(otmp, DISINT_RES))
                     destroy_arm(mdef, otmp);
                 return;
             }
 
             if ((otmp = which_armor(mdef, os_armc)) &&
-                !item_provides_extrinsic(otmp, DISINT_RES, &dummy))
+                !item_provides_extrinsic(otmp, DISINT_RES))
                 destroy_arm(mdef, otmp);
             if ((otmp = which_armor(mdef, os_armu)) &&
-                !item_provides_extrinsic(otmp, DISINT_RES, &dummy))
+                !item_provides_extrinsic(otmp, DISINT_RES))
                 destroy_arm(mdef, otmp);
 
             if (resists_disint(mdef)) {

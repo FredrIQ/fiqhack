@@ -595,7 +595,7 @@ peffects(struct monst *mon, struct obj *otmp)
             /* no real effect on monsters at the moment */
             if (you) {
                 win_pause_output(P_MESSAGE);
-                enlightenment(0);
+                enlighten_mon(&youmonst, FALSE, otmp->blessed);
                 pline_implied(msgc_info, "The feeling subsides.");
                 exercise(A_WIS, TRUE);
             }

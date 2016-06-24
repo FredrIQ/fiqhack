@@ -48,4 +48,3 @@ extern const char circle_data[];
 extern const char circle_start[];
 
 #endif /* VISION_H */
-

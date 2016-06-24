@@ -22,7 +22,6 @@ static int spec_applies(const struct artifact *, const struct monst *);
 static int arti_invoke(struct obj *);
 static boolean magicbane_hit(struct monst *magr, struct monst *mdef,
                              struct obj *, int *, int, boolean, const char *);
-static long spec_m2(struct obj *);
 
 /* The amount added to the victim's total hit points to insure that the
    victim will be killed even after damage bonus/penalty adjustments.
@@ -383,7 +382,7 @@ protects(int adtyp, struct obj * otmp)
    relevant), bitwise-or W_MASK(os_carried), bitwise-or W_MASK(os_invoked) if
    relevant. */
 long
-item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
+item_provides_extrinsic(struct obj *otmp, int extrinsic)
 {
     if (!otmp) {
         panic("Trying to check non-existing item?");
@@ -487,22 +486,11 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
         (spfx & SPFX_HPHDAM  && extrinsic == HALF_PHDAM) ||
         (spfx & SPFX_HALRES  && extrinsic == HALLUC_RES) ||
         (spfx & SPFX_REFLECT && extrinsic == REFLECTING) ||
-        (spfx & SPFX_XRAY    && extrinsic == XRAY_VISION))
+        (spfx & SPFX_XRAY    && extrinsic == XRAY_VISION) ||
+        (spfx & SPFX_WARN    && extrinsic == WARNING) ||
+        (spfx & SPFX_WARNMON && extrinsic == WARN_OF_MON))
         return mask;
-
-    if (spfx & SPFX_WARN) {
-        if (spec_m2(otmp)) {
-            if (extrinsic == WARN_OF_MON) {
-                *warntype = spec_m2(otmp);
-                return mask;
-            }
-        } else {
-            if (extrinsic == WARNING)
-                return mask;
-        }
-    }
-
-    return 0L;
+    return 0;
 }
 
 /*
@@ -543,13 +531,8 @@ touch_artifact(struct obj *obj, const struct monst *mon)
     }
     /* weapons which attack specific categories of monsters are bad for them
        even if their alignments happen to match */
-    if (!badalign && (oart->spfx & SPFX_DBONUS) != 0) {
-        struct artifact tmp;
-
-        tmp = *oart;
-        tmp.spfx &= SPFX_DBONUS;
-        badalign = ! !spec_applies(&tmp, mon);
-    }
+    if (!badalign && (oart->mtype.matchtyp != MTYP_ALL))
+        badalign = !!spec_applies(oart, mon);
 
     if (((badclass || badalign) && self_willed) ||
         (badalign && (!yours || !rn2(4)))) {
@@ -579,72 +562,76 @@ touch_artifact(struct obj *obj, const struct monst *mon)
 }
 
 
-/* decide whether an artifact's special attacks apply against mtmp */
+/* decide whether an artifact's special attacks or mon warning apply against mtmp */
 static int
 spec_applies(const struct artifact *weap, const struct monst *mtmp)
 {
-    const struct permonst *ptr;
-    boolean yours;
+    const struct permonst *ptr = mtmp->data;
+    boolean yours = (mtmp == &youmonst);
+    unsigned match = weap->mtype.match;
 
-    if (!(weap->spfx & (SPFX_DBONUS | SPFX_ATTK)))
-        return weap->attk.adtyp == AD_PHYS;
-
-    yours = (mtmp == &youmonst);
-    ptr = mtmp->data;
-
-    if (weap->spfx & SPFX_DMONS) {
-        return ptr == &mons[(int)weap->mtype];
-    } else if (weap->spfx & SPFX_DCLAS) {
-        return weap->mtype == (unsigned long)ptr->mlet;
-    } else if (weap->spfx & SPFX_DFLAG1) {
-        return (ptr->mflags1 & weap->mtype) != 0L;
-    } else if (weap->spfx & SPFX_DFLAG2) {
-        return ((ptr->mflags2 & weap->mtype) ||
-                (yours &&
-                 ((!Upolyd && (urace.selfmask & weap->mtype)) ||
-                  ((weap->mtype & M2_WERE) && u.ulycn >= LOW_PM))));
-    } else if (weap->spfx & SPFX_DALIGN) {
-        return yours ? (u.ualign.type != weap->alignment) :
-          (ptr->maligntyp == A_NONE || sgn(ptr->maligntyp) != weap->alignment);
-    } else if (weap->spfx & SPFX_ATTK) {
-        struct obj *defending_weapon = (yours ? uwep : MON_WEP(mtmp));
-
-        if (defending_weapon && defending_weapon->oartifact &&
-            defends((int)weap->attk.adtyp, defending_weapon))
-            return FALSE;
-        switch (weap->attk.adtyp) {
-        case AD_FIRE:
-            return !resists_fire(mtmp);
-        case AD_COLD:
-            return !resists_cold(mtmp);
-        case AD_ELEC:
-            return !resists_elec(mtmp);
-        case AD_MAGM:
-        case AD_STUN:
-            return !resists_magm(mtmp);
-        case AD_DRST:
-            return !resists_poison(mtmp);
-        case AD_DRLI:
-            return !resists_drli(mtmp);
-        case AD_STON:
-            return !resists_ston(mtmp);
-        default:
-            impossible("Weird weapon special attack.");
+    /* Check specific targets */
+    switch (weap->mtype.matchtyp) {
+    case MTYP_PM:
+        return ptr == &mons[match];
+    case MTYP_S:
+        return ptr->mlet == match;
+    case MTYP_M1:
+        return (ptr->mflags1 & match);
+    case MTYP_M2:
+        /* check player properly, player may not have the proper flags (racial/lycn) */
+        if (yours) {
+            unsigned uflags2 = ptr->mflags2;
+            if (u.ulycn)
+                uflags2 |= M2_WERE;
+            if (!Upolyd)
+                uflags2 |= urace.selfmask;
+            return (uflags2 & match);
         }
+        return (ptr->mflags2 & match);
+    case MTYP_M3:
+        return (ptr->mflags3 & match);
+    case MTYP_ALIGN:
+        return (malign(mtmp) == A_LAWFUL ? !!(match & AM_LAWFUL) :
+                malign(mtmp) == A_NEUTRAL ? !!(match & AM_NEUTRAL) :
+                malign(mtmp) == A_CHAOTIC ? !!(match & AM_CHAOTIC) :
+                malign(mtmp) == A_NONE ? !!(match & AM_UNALIGNED) :
+                0);
+    case MTYP_ALL:
+    default:
+        break; /* No specific target, check below */
     }
+
+    struct obj *defending_weapon = (yours ? uwep : MON_WEP(mtmp));
+
+    if (defending_weapon && defending_weapon->oartifact &&
+        defends((int)weap->attk.adtyp, defending_weapon))
+        return FALSE;
+
+    if (weap->attk.adtyp == AD_PHYS)
+        return TRUE;
+
+    switch (weap->attk.adtyp) {
+    case AD_FIRE:
+        return !resists_fire(mtmp);
+    case AD_COLD:
+        return !resists_cold(mtmp);
+    case AD_ELEC:
+        return !resists_elec(mtmp);
+    case AD_MAGM:
+    case AD_STUN:
+        return !resists_magm(mtmp);
+    case AD_DRST:
+        return !resists_poison(mtmp);
+    case AD_DRLI:
+        return !resists_drli(mtmp);
+    case AD_STON:
+        return !resists_ston(mtmp);
+    default:
+        return FALSE;
+    }
+
     return 0;
-}
-
-/* return the M2 flags of monster that an artifact's special attacks apply
- * against */
-static long
-spec_m2(struct obj *otmp)
-{
-    const struct artifact *artifact = get_artifact(otmp);
-
-    if (artifact)
-        return artifact->mtype;
-    return 0L;
 }
 
 /* special attack bonus */
@@ -1213,7 +1200,7 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
         return artifact_hit_behead(magr, mdef, otmp, dmgptr, dieroll);
 
     /* Stormbringer */
-    if (spec_ability(otmp, SPFX_DRLI))
+    if (attacks(AD_DRLI, otmp))
         return artifact_hit_drainlife(magr, mdef, otmp, dmgptr);
 
     return FALSE;
@@ -1427,7 +1414,7 @@ arti_invoke(struct obj *obj)
                 break;
             }
         case ENLIGHTENING:
-            enlightenment(0);
+            enlighten_mon(&youmonst, 0, obj->blessed);
             break;
         case CREATE_AMMO:{
                 struct obj *otmp =

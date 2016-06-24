@@ -317,7 +317,7 @@ drinkfountain(void)
         case 19:       /* Self-knowledge */
             pline(msgc_youdiscover, "You feel self-knowledgeable...");
             win_pause_output(P_MESSAGE);
-            enlightenment(0);
+            enlighten_mon(&youmonst, 0, 0);
             exercise(A_WIS, TRUE);
             pline_implied(msgc_info, "The feeling subsides.");
             break;

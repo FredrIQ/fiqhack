@@ -5,7 +5,7 @@
 
 #include "hack.h"
 
-static long find_extrinsic(struct obj *, int, int *, boolean *);
+static long find_extrinsic(struct obj *, int, boolean *);
 static void m_lose_armor(struct monst *, struct obj *);
 static void m_dowear_type(struct monst *, enum objslot, boolean, boolean);
 static unsigned do_equip(struct monst *, struct obj *, boolean, boolean);
@@ -23,8 +23,7 @@ static unsigned do_equip(struct monst *, struct obj *, boolean, boolean);
 
 /* Finds all items on the given chain with the given extrinsic. */
 static long
-find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
-               boolean *blocked)
+find_extrinsic(struct obj *chain, int extrinsic, boolean *blocked)
 {
     if (program_state.restoring_binary_save)
         return 0L; /* inventory chains may not be linked yet */
@@ -32,7 +31,7 @@ find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
     long mask = 0L;
     *blocked = FALSE;
     while (chain) {
-        mask |= item_provides_extrinsic(chain, extrinsic, warntype);
+        mask |= item_provides_extrinsic(chain, extrinsic);
         if (extrinsic == w_blocks(chain, chain->owornmask))
              *blocked = TRUE;
         chain = chain->nobj;
@@ -44,27 +43,16 @@ find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
 long
 mworn_extrinsic(const struct monst *mon, int extrinsic)
 {
-    int warntype;
     boolean blocked;
-    return find_extrinsic(m_minvent(mon), extrinsic, &warntype, &blocked);
+    return find_extrinsic(m_minvent(mon), extrinsic, &blocked);
 }
 
 boolean
 mworn_blocked(const struct monst *mon, int extrinsic)
 {
-    int warntype;
     boolean blocked;
-    find_extrinsic(m_minvent(mon), extrinsic, &warntype, &blocked);
+    find_extrinsic(m_minvent(mon), extrinsic, &blocked);
     return blocked;
-}
-
-int
-mworn_warntype(const struct monst *mon)
-{
-    int warntype;
-    boolean blocked;
-    return find_extrinsic(m_minvent(mon), WARN_OF_MON, &warntype, &blocked)
-        ? warntype : 0;
 }
 
 void
