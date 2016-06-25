@@ -288,10 +288,10 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         known = TRUE;
-        if ((wandlevel != P_MASTER || selfzap) && tele_restrict(mdef))
+        if ((wandlevel < P_EXPERT || selfzap) && tele_restrict(mdef))
             break; /* noteleport */
         if (level->flags.noteleport) {
-            /* master proficiency can bypass noteleport */
+            /* expert proficiency can bypass noteleport */
             if (mdef == &youmonst)
                 safe_teleds(FALSE);
             else
