@@ -3111,7 +3111,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         if (resists_sleep(mdef))
             resisted = 1;
         else {
-            sleep_monst(magr, mdef, dice(nd, 25),
+            sleep_monst(magr, mdef, dice(nd, 6),
                         buzztyp == ZT_WAND(ZT_SLEEP) ? WAND_CLASS : '\0');
             if (!you)
                 slept_monst(mdef);
