@@ -1695,20 +1695,19 @@ sleep_monst(struct monst *magr, struct monst *mdef, int amt, int how)
         shieldeff(m_mx(mdef), m_my(mdef));
         return 0;
     }
+    if (mdef == &youmonst ? u_helpless(hm_asleep) : !mdef->mcanmove)
+        return 0;
+
     if (mdef == &youmonst) {
         helpless(amt, hr_asleep, "sleeping", NULL);
         return 1;
     }
-    if (!mdef->mcanmove)
-        return 0;
-
     amt += (int)mdef->mfrozen;
     if (amt > 0) {  /* sleep for N turns */
         mdef->mcanmove = 0;
         mdef->mfrozen = min(amt, 127);
-    } else {        /* sleep until awakened */
+    } else /* sleep until awakened */
         mdef->msleeping = 1;
-    }
     return 1;
 }
 
