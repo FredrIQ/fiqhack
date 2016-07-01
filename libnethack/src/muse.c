@@ -1132,6 +1132,9 @@ find_item(struct monst *mon, struct musable *m)
     m->y = 0;
     m->z = 0;
 
+    if (is_animal(mon->data) || mindless(mon->data))
+        return FALSE;
+
     /* Find amount of hostiles seen/sensed and the closest one */
     int hostvis = 0;
     int hostsense = 0;
@@ -1150,9 +1153,9 @@ find_item(struct monst *mon, struct musable *m)
 
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp) ||
-            !msensem(mon, mtmp) ||
-            (!mm_aggression(mon, mtmp) &&
-             (!conflicted || mon == mtmp)))
+            ((!conflicted || mon == mtmp) &&
+             !mm_aggression(mon, mtmp)) ||
+            !msensem(mon, mtmp))
             continue;
         hostsense++;
         if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
@@ -1169,9 +1172,6 @@ find_item(struct monst *mon, struct musable *m)
     /* range of 100 is the cap on fireball, cone of cold and summon nasty */
     if (mclose && hostrange > 100)
         mclose = NULL; /* no close targets */
-
-    if (is_animal(mon->data) || mindless(mon->data))
-        return FALSE;
 
     m->obj = NULL;
     m->spell = 0;
