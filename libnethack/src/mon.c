@@ -1440,7 +1440,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                 } else {
                     if (MON_AT(mlevel, nx, ny)) {
                         struct monst *mtmp2 = m_at(mlevel, nx, ny);
-                        long mmflag = flag | mm_aggression(mon, mtmp2);
+                        long mmflag = flag | mm_aggression(mon, mtmp2, Conflict);
 
                         swarmcount++;
 
@@ -1642,7 +1642,8 @@ do_grudge(const struct permonst *pm1, const struct permonst *pm2)
    that would attack them, unless pacifist. */
 long
 mm_aggression(const struct monst *magr, /* monster that might attack */
-              const struct monst *mdef) /* the monster it might attack  */
+              const struct monst *mdef, /* the monster it might attack  */
+              boolean conflicted)
 {
     const struct permonst *ma = magr->data;
     const struct permonst *md = mdef->data;
@@ -1658,7 +1659,7 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     /* anti-stupidity checks moved here from dog_move, so that hostile monsters
        benefit from the improved AI when attacking pets too: */
 
-    if (!Conflict) {
+    if (!conflicted) {
         /* monsters have a 9/10 chance of rejecting an attack on a monster that
            would paralyze them; in a change from 3.4.3, they don't check whether
            a floating eye they're attacking is blind (because it's not obvious

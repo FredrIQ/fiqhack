@@ -246,7 +246,7 @@ fightm(struct monst *mon)
         x = mon->mx + dirx[try[i]];
         y = mon->my + diry[try[i]];
         mtmp = m_at(level, x, y);
-        if (!mtmp || (!mm_aggression(mon, mtmp) && !conflicted))
+        if (!mtmp || (!mm_aggression(mon, mtmp, conflicted) && !conflicted))
             continue;
 
         /* TODO: why are these needed... */

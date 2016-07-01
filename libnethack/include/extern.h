@@ -1160,7 +1160,7 @@ extern void kill_genocided_monsters(void);
 extern void golemeffects(struct monst *, int, int);
 extern boolean angry_guards(boolean);
 extern void pacify_guards(void);
-extern long mm_aggression(const struct monst *, const struct monst *);
+extern long mm_aggression(const struct monst *, const struct monst *, boolean);
 extern boolean grudge(const struct permonst *, const struct permonst *);
 
 /* ### mondata.c ### */

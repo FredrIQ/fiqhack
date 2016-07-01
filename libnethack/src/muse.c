@@ -842,7 +842,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                     if (self) /* -40 or +40 depending on helpfulness */
                         tilescore += (helpful ? 40 : -40);
                     /* target is hostile, or we are conflicted */
-                    else if (mm_aggression(mon, mtmp) || conflicted)
+                    else if (mm_aggression(mon, mtmp, conflicted) || conflicted)
                         tilescore += (helpful ? -10 : 20);
                     /* ally/peaceful -- we can't just perform "else" here, because it
                        would mess with conflict behaviour and pets would heal hostiles
@@ -990,7 +990,7 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
                     else if (!mcanspotmon(mon, mtmp))
                         continue;
                     /* target is hostile or we're conflicted */
-                    else if (mm_aggression(mon, mtmp) || conflicted)
+                    else if (mm_aggression(mon, mtmp, conflicted) || conflicted)
                         tilescore += 20;
                     /* ally/peaceful */
                     else if ((mtmp == &youmonst && mon->mpeaceful) ||
@@ -1039,7 +1039,7 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
                     if (x != youmonst.mx || y != youmonst.my)
                         continue;
                 }
-                if (!mm_aggression(mon, mtmp))
+                if (!mm_aggression(mon, mtmp, Conflict))
                     continue;
                 if (otyp == BULLWHIP && m_mwep(mtmp)) {
                     tc->x = x;
@@ -1141,7 +1141,8 @@ find_item(struct monst *mon, struct musable *m)
     int hostrange = 0;
     struct monst *mtmp;
     struct monst *mclose = NULL;
-    if (msensem(mon, &youmonst) && (mm_aggression(mon, &youmonst) || conflicted)) {
+    if (msensem(mon, &youmonst) && (mm_aggression(mon, &youmonst, conflicted) ||
+                                    conflicted)) {
         hostsense++;
         if ((msensem(mon, &youmonst) & MSENSE_ANYVISION) ||
             m_cansee(mon, youmonst.mx, youmonst.my)) {
@@ -1154,7 +1155,7 @@ find_item(struct monst *mon, struct musable *m)
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp) ||
             ((!conflicted || mon == mtmp) &&
-             !mm_aggression(mon, mtmp)) ||
+             !mm_aggression(mon, mtmp, conflicted)) ||
             !msensem(mon, mtmp))
             continue;
         hostsense++;

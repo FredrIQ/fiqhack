@@ -2317,7 +2317,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        have a level of 4 or greater, and a distance of 100 or less. */
     if (distance <= 100 && viewee->m_lev >= 4 &&
         warned(viewer) &&
-        mm_aggression(viewee, viewer) & ALLOW_M) {
+        mm_aggression(viewee, viewer, Conflict) & ALLOW_M) {
         sensemethod |= MSENSE_WARNING;
     }
 

@@ -743,7 +743,7 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
                 /* we're conflicted, anything is a valid target */
                 if (mdef)
                     *mdef = mat;
-            } else if (mm_aggression(magr, mat) & ALLOW_M && !helpful) {
+            } else if (mm_aggression(magr, mat, Conflict) & ALLOW_M && !helpful) {
                 /* we want to target this monster */
                 if (mdef)
                     *mdef = mat;
