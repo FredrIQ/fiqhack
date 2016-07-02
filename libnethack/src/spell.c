@@ -758,8 +758,8 @@ run_maintained_spells(struct level *lev)
                 break;
             }
             if (!moves_modulo) {
-                pline(msgc_intrloss, "Your limited ability with %s causes you to fumble "
-                      "and lose maintaining of it!", spellname(spell_index));
+                pline(msgc_intrloss, "You lose concentration and fail to maintain %s!",
+                      spellname(spell_index));
                 spell_unmaintain(&youmonst, spell);
                 continue;
             }
