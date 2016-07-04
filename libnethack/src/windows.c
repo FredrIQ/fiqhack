@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2016-06-10 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -332,6 +332,14 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
 
     if (results)
         *results = dmcd.results;
+
+    /* Save shim for "impossible" results on menus that have been saved into
+       some save files; interpret "pick 0 letters" as "cancel"
+
+       TODO: Fix the various implementations of win_display_menu not to
+       return this sort of impossible result */
+    if (dmcd.nresults < 1 && how == PICK_LETTER)
+        dmcd.nresults = -1;
 
     if (how == PICK_NONE) {
         log_record_input("M");
