@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2016-06-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -337,8 +337,12 @@ shkinit(const struct shclass *shp, struct level *lev, struct mkroom *sroom)
         return -1;
     }
 
-    if (MON_AT(lev, sx, sy))
-        rloc(m_at(lev, sx, sy), FALSE); /* insurance */
+    /* On rare occasions, there might already be a monster standing on the
+       shk's square. Move the monster. */
+    if (MON_AT(lev, sx, sy)) {
+        m_at(lev, sx, sy)->dlevel = lev; /* ensure rloc() can work */
+        rloc(m_at(lev, sx, sy), FALSE);
+    }
 
     /* now initialize the shopkeeper monster structure */
     if (!(shk = makemon(&mons[PM_SHOPKEEPER], lev, sx, sy, MM_ALLLEVRNG)))
