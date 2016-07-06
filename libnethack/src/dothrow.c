@@ -198,7 +198,10 @@ throw_obj(struct obj *obj, const struct musable *m,
                   "%s %d %s.", M_verbs(mon, shot ? "shoot" : "throw"),
                   multishot, /* (might be 1 if player gave shotlimit) */
                   (multishot == 1) ? singular(obj, xname) : xname(obj));
-    }
+    } else if (!you && vis)
+        pline(msgc_monneutral, "%s %s!",
+              M_verbs(mon, shot ? "shoot" : "throw"),
+              singular(obj, doname));
 
     wep_mask = obj->owornmask;
     int i;
@@ -1793,9 +1796,10 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj, int count)
 
             if (uagr)
                 exercise(A_DEX, TRUE);
-            if (obj->oclass == POTION_CLASS)
+            if (obj->oclass == POTION_CLASS) {
                 potionhit(mdef, obj, magr);
-            else if (!mhmon(magr, mdef, obj, 1, count) && otyp == HEAVY_IRON_BALL &&
+                return 1; /* potionhit shatters the item */
+            } else if (!mhmon(magr, mdef, obj, 1, count) && otyp == HEAVY_IRON_BALL &&
                      uagr && was_swallowed && !Engulfed && obj == uball)
                 return 1; /* already did placebc() */
         } else

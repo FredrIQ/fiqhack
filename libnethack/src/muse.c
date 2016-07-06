@@ -1191,6 +1191,7 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
         score = mon_choose_spectarget(mon, obj, tc);
     else
         score = mon_choose_dirtarget(mon, obj, tc);
+    pline(msgc_debug, "%d", score);
     return score;
 }
 
@@ -1840,6 +1841,8 @@ find_item_obj(struct obj *chain, struct musable *m,
                       obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
                       obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
                       obj_best->otyp == BULLWHIP       ? MUSE_BULLWHIP :
+                      is_ammo(obj_best)                ? MUSE_THROW :
+                      is_missile(obj_best)             ? MUSE_THROW :
                       obj_best->otyp == EGG            ? MUSE_THROW :
                       0);
             if (m->use == 0)
@@ -2097,6 +2100,9 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
          otyp == SPE_SLEEP ||
          otyp == POT_PARALYSIS ||
          otyp == POT_SLEEPING ||
+         (attacktype(mon->data, AT_WEAP) &&
+          (is_missile(obj) ||
+           ammo_and_launcher(obj, m_mwep(mon)))) ||
          otyp == EGG) && /* trice */
         close)
         return 2;
@@ -2261,11 +2267,6 @@ use_item(struct musable *m)
         }
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_THROW:
-        if (cansee(mon->mx, mon->my)) {
-            obj->dknown = 1;
-            pline(msgc_monneutral,
-                  "%s hurls %s!", Monnam(mon), singular(obj, doname));
-        }
         ret = mdothrow(m);
         return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_EAT:
