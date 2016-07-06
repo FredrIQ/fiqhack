@@ -934,13 +934,13 @@ show_obj_flight(struct obj *obj, int fx, int fy, int tx, int ty)
        noticeable, unlike win_delay_output, and the additional complexity is simple enough
        to justify it, especially since it allows error-checking without weird displays) */
     boolean see_path = FALSE;
-    while (x != tx && y != ty) {
+    while (x != tx || y != ty) {
         if (!isok(x, y)) {
             impossible("show_obj_flight: source/destination doesn't line up?");
             return;
         }
 
-        if (cansee(x,  y)) {
+        if (cansee(x, y)) {
             see_path = TRUE;
             break;
         }
@@ -953,7 +953,7 @@ show_obj_flight(struct obj *obj, int fx, int fy, int tx, int ty)
     x = fx + dx;
     y = fy + dy;
     struct tmp_sym *tsym = tmpsym_initobj(obj);
-    while (x != tx && y != ty) {
+    while (x != tx || y != ty) {
         tmpsym_at(tsym, x, y);
         win_delay_output();
         x += dx;
