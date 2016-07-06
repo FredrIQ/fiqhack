@@ -1030,8 +1030,13 @@ killer_xname(const struct obj *obj_orig, boolean article)
        it is, so suppress "poisoned" prefix */
     obj->opoisoned = 0;
     /* strip user-supplied name; artifacts keep theirs */
-    if (!obj->oartifact)
-        christen_obj(obj, NULL);
+    if (!obj->oartifact && ox_name(obj)) {
+        /* Not christen_obj, that will mess with the original obj's pointer (since
+           they're the same). We currently don't use obj->oextra for anything unless we
+           want the artifact name, so just dispose of it entirely. */
+        obj->oextra = NULL;
+    }
+
     /* temporarily identify the type of object */
     save_ocknown = objects[obj->otyp].oc_name_known;
     objects[obj->otyp].oc_name_known = 1;

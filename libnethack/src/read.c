@@ -1423,7 +1423,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (sobj->blessed)
             do_class_genocide(mon);
         else
-            do_genocide(mon, (!sobj->cursed) | (2 * ! !Confusion),
+            do_genocide(mon, (!sobj->cursed) | (2 * confused),
                         (sobj->cursed && sobj->mbknown));
         break;
     case SCR_LIGHT:
