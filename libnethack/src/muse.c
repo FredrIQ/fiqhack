@@ -2089,6 +2089,8 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
             return 2;
     }
 
+    /* Directional things. Mjollnir is handled
+       seperately to simplify this expression */
     if ((otyp == WAN_MAKE_INVISIBLE ||
          otyp == WAN_POLYMORPH ||
          otyp == SPE_POLYMORPH ||
@@ -2106,10 +2108,18 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
          otyp == POT_SLEEPING ||
          (attacktype(mon->data, AT_WEAP) &&
           ((throwing_weapon(obj) &&
+            otyp != WAR_HAMMER &&
             (obj != m_mwep(mon) || obj->quan > 1)) ||
            ammo_and_launcher(obj, m_mwep(mon)))) ||
          otyp == EGG) && /* trice */
         close)
+        return 2;
+
+    if (otyp == WAR_HAMMER &&
+        obj == m_mwep(mon) &&
+        obj->oartifact == ART_MJOLLNIR &&
+        mon->data == &mons[PM_VALKYRIE] &&
+        acurr(mon, A_STR) == STR19(25))
         return 2;
 
     /* tame monsters wont zap wishing */
