@@ -2248,6 +2248,15 @@ save_fcorr(struct memfile *mf, const struct fakecorridor *f)
 void
 save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
 {
+    /* Check muxy for an invalid value (mux/muy being equal to mx/my). If this has
+       happened, run an impossible and set it to ROWNO/COLNO to allow games to continue
+       properly. */
+    if (mon->mux == mon->mx && mon->muy == mon->my) {
+        impossible("save_mon: muxy and mxy are equal?");
+        mon->mux = COLNO;
+        mon->muy = ROWNO;
+    }
+
     int idx, i;
     unsigned int mflags;
     const struct eshk *shk;

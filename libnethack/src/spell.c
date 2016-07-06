@@ -611,7 +611,13 @@ age_spells(void)
 static boolean
 getspell(int *spell_no)
 {
-    return dospellmenu("Choose which spell to cast", SPELLMENU_CAST, spell_no);
+    boolean ret = dospellmenu("Choose which spell to cast", SPELLMENU_CAST, spell_no);
+    flags.last_arg.argtype &= ~CMD_ARG_SPELL;
+    if (ret) {
+        flags.last_arg.argtype |= CMD_ARG_SPELL;
+        flags.last_arg.spelllet = spelllet_from_no(*spell_no);
+    }
+    return ret;
 }
 
 static boolean
