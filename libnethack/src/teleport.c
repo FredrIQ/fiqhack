@@ -1330,7 +1330,7 @@ mon_tele(struct monst *mon, boolean free_will)
         for (i = 0; i < 100; i++) {
             rloc(mon, TRUE);
             if ((msensem(mon, tmon) & MSENSE_ANYVISION) &&
-                mfind_target(mon, FALSE))
+                find_ranged(mon, tmon, NULL))
                 return TRUE;
         }
         /* we didn't find a suitable spot... fallthrough */

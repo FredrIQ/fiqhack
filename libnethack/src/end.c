@@ -117,16 +117,36 @@ killer_msg(int how, const char *killer)
 
 
 const char *
-killer_msg_mon(int how, struct monst *mtmp)
+killer_msg_mon(int how, struct monst *mon)
 {
-    return killer_msg(how, k_monnam(mtmp));
+    return killer_msg(how, mon == &youmonst ? msgcat(uhim(), "self") : k_monnam(mon));
 }
 
 
 const char *
 killer_msg_obj(int how, struct obj *obj)
 {
-    return killer_msg(how, killer_xname(obj));
+    return killer_msg(how, killer_xname(obj, TRUE));
+}
+
+/* Alias for killer_msg_mon if obj is NULL, killer_msg_obj if mon is NULL,
+   uses "<whatever by> mon's obj" form if none is NULL. */
+const char *
+killer_msg_mon_obj(int how, struct monst *mon, struct obj *obj)
+{
+    if (!mon && !obj) {
+        /* We should probably not panic at this point */
+        pline(msgc_emergency, "Killer msg handler expected mon or obj, but got nothing");
+        return killer_msg(how, "a weird bug");
+    }
+    if (!mon)
+        return killer_msg_obj(how, obj);
+    if (!obj)
+        return killer_msg_mon(how, mon);
+    return killer_msg(how, msgcat_many(mon == &youmonst ? uhis() :
+                                       s_suffix(k_monnam(mon)),
+                                       mon == &youmonst ? " own " : " ",
+                                       killer_xname(obj, FALSE), NULL));
 }
 
 

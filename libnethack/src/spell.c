@@ -1161,24 +1161,7 @@ int
 mspell_skilltype(int booktype)
 {
     int pskill = spell_skilltype(booktype);
-    switch (pskill) {
-    case P_ATTACK_SPELL:
-        return MP_SATTK;
-    case P_ESCAPE_SPELL:
-        return MP_SESCA;
-    case P_CLERIC_SPELL:
-        return MP_SCLRC;
-    case P_DIVINATION_SPELL:
-        return MP_SDIVN;
-    case P_MATTER_SPELL:
-        return MP_SMATR;
-    case P_ENCHANTMENT_SPELL:
-        return MP_SENCH;
-    case P_HEALING_SPELL:
-        return MP_SHEAL;
-    }
-    impossible("invalid monster proficiency: %d for obj %d", pskill, booktype);
-    return 0;
+    return mon_skilltype(pskill);
 }
 
 static boolean

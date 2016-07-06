@@ -519,8 +519,9 @@ mvismon_at(struct monst *mon, struct level *lev, xchar x, xchar y)
 
     /* otherwise, return the monster here unless the viewer see it
        displaced somewhere else */
-    mtmp = m_at(lev, x, y);
-    if (mtmp && !(msensem(mon, mtmp) & MSENSE_DISPLACED))
+    mtmp = um_at(lev, x, y);
+    int msense_res;
+    if (mtmp && (msense_res = msensem(mon, mtmp)) && !(msense_res & MSENSE_DISPLACED))
         return mtmp;
 
     /* otherwise return nothing */

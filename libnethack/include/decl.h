@@ -116,12 +116,6 @@ extern struct gamestate {
 
 extern struct xmalloc_block *api_blocklist;
 
-extern struct multishot {
-    int n, i;
-    short o;
-    boolean s;
-} m_shot;
-
 extern unsigned int moves;
 extern long wailmsg;
 

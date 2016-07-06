@@ -1697,7 +1697,7 @@ use_unicorn_horn(struct obj *obj)
         switch (rn2_on_rng(6, rng_cursed_unihorn)) {
         case 0:
             make_sick(&youmonst, (unsigned long)rn1(ACURR(A_CON), 20),
-                      killer_xname(obj), TRUE, SICK_NONVOMITABLE);
+                      killer_xname(obj, TRUE), TRUE, SICK_NONVOMITABLE);
             break;
         case 1:
             inc_timeout(&youmonst, BLINDED, lcount, FALSE);
@@ -2700,7 +2700,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 
         bhitpos = cc;
         check_caitiff(mtmp);
-        thitmonst(mtmp, uwep);
+        thitmonst(&youmonst, mtmp, uwep, 0);
         /* check the monster's HP because thitmonst() doesn't return an
            indication of whether it hit.  Not perfect (what if it's a
            non-silver weapon on a shade?) */
@@ -2852,7 +2852,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
             return 1;
         } else if ((!bigmonst(mtmp->data) && !strongmonst(mtmp->data)) ||
                    rn2(4)) {
-            thitmonst(mtmp, uwep);
+            thitmonst(&youmonst, mtmp, uwep, 0);
             return 1;
         }
         /* TODO: This fallthrough looks very suspicious, even though there's a

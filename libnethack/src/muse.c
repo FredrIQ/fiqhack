@@ -53,16 +53,17 @@ init_musable(struct monst *mon, struct musable *m)
     m->x = -1;
     m->y = -1;
     m->z = -1;
+    m->limit = 0;
 }
 
 /* Converts a nh_cmd_arg to a musable, allowing one to use a single struct for both
    player and monster "commands". It is important to note that this performs no
    additional sanity checks, all it does is to convert arg to musable. So far, for
-   the scope of this, limit and str (from arg) is unneeded, and pos/dir is
-   mutually exclusive (they both use m.x/m.y for musable). Equavilents to functions that
-   actually include sanity checks are also included below in the form of m*(), i.e.
-   mgetargdir, mgetargpos, mgetargobj, mgetargspell. These will also (like the non-m
-   equavilents) ask the player in case the data is missing or invalid. */
+   the scope of this, str (from arg) is unneeded, and pos/dir is mutually exclusive
+   (they both use m.x/m.y for musable). Equavilents to functions that actually include
+   sanity checks are also included below in the form of m*(), i.e. mgetargdir,
+   mgetargpos, mgetargobj, mgetargspell. These will also (like the non-m equavilents)
+   ask the player in case the data is missing or invalid. */
 struct musable
 arg_to_musable(const struct nh_cmd_arg *arg)
 {
@@ -90,6 +91,10 @@ arg_to_musable(const struct nh_cmd_arg *arg)
                 if (m.obj->invlet == arg->invlet)
                     break;
     }
+
+    /* Set limit. */
+    if (arg->argtype & CMD_ARG_LIMIT)
+        m.limit = arg->limit;
 
 /* from spell.c (TODO: these are pretty awkward in general, even in spell.c) */
 #define spellid(spell)   spl_book[spell].sp_id
@@ -635,6 +640,131 @@ mon_allowed(int otyp)
     return FALSE;
 }
 
+/* General targeting functions. Use more specific ones (like mon_choose_dirtarget) for
+   particular objects, the ones below are more general for pathfinding purposes.
+   For all of them, target only returns a monst if it is the target or any mon
+   if mon==target (useful for polearm skill). cc allows you to specify an initial pos
+   other than mx/my. Returns a monst. */
+
+/* Check if we have a melee target */
+struct monst *
+find_melee(struct monst *mon, struct monst *target, coord *cc)
+{
+    int ox = mon->mx;
+    int oy = mon->my;
+    if (cc) {
+        ox = cc->x;
+        oy = cc->y;
+    }
+    int sx, sy;
+    for (sx = ox - 1; sx <= ox + 1; sx++) {
+        for (sy = oy - 1; sy <= oy + 1; sy++) {
+            if (sx == ox && sy == oy)
+                continue;
+            if (!isok(sx, sy))
+                continue;
+            struct monst *mtmp = mvismon_at(mon, mon->dlevel, sx, sy);
+            if (target && mon != target && mtmp != target)
+                continue;
+            if (mtmp && mm_aggression(mon, mtmp, Conflict))
+                return mtmp;
+        }
+    }
+    return NULL;
+}
+
+/* Check if we have a target in polearm (or lance) range.
+   Here, target will also use target's polearm skill. Use mon itself
+   as target will use mon's polearm skill */
+struct monst *
+find_polearm(struct monst *mon, struct monst *target, coord *cc)
+{
+    int ox = mon->mx;
+    int oy = mon->my;
+    if (cc) {
+        ox = cc->x;
+        oy = cc->y;
+    }
+    int min_range = 4;
+    int max_range = 8;
+    if (target == &youmonst) {
+        switch (P_SKILL(P_POLEARMS)) {
+        case P_ISRESTRICTED:
+        case P_UNSKILLED:
+        case P_BASIC:
+            max_range = 4;
+            break;
+        case P_SKILLED:
+            max_range = 5;
+            break;
+        case P_EXPERT:
+        default:
+            max_range = 8;
+            break;
+        }
+    }
+
+    int sx, sy;
+    for (sx = ox - 2; sx <= ox + 2; sx++) {
+        for (sy = oy - 2; sy <= oy + 2; sy++) {
+            if (sx == ox && sy == oy)
+                continue;
+            if (!isok(sx, sy))
+                continue;
+            if (dist2(ox, oy, sx, sy) < min_range ||
+                dist2(ox, oy, sx, sy) > max_range)
+                continue;
+            if (!clear_path(ox, oy, sx, sy, viz_array))
+                continue;
+
+            struct monst *mtmp = mvismon_at(mon, mon->dlevel, sx, sy);
+            if (target && mon != target && mtmp != target)
+                continue;
+            if (mtmp && mm_aggression(mon, mtmp, Conflict))
+                return mtmp;
+        }
+    }
+    return NULL;
+}
+
+/* Check if we have a ranged target */
+struct monst *
+find_ranged(struct monst *mon, struct monst *target, coord *cc)
+{
+    int dx, dy; /* deltas */
+    int sx, sy; /* specific coordinates */
+    struct rm *loc;
+    for (dx = -1; dx <= 1; dx++) {
+        for (dy = -1; dy <= 1; dy++) {
+            if (!dx && !dy)
+                continue;
+            int range = BOLT_LIM;
+            sx = mon->mx;
+            sy = mon->my;
+            if (cc) {
+                sx = cc->x;
+                sy = cc->y;
+            }
+            while (range-- > 0) {
+                sx += dx;
+                sy += dy;
+                if (!isok(sx, sy) || !(loc = &level->locations[sx][sy])->typ ||
+                    !ZAP_POS(loc->typ) || closed_door(level, sx, sy)) {
+                    break; /* nothing to see here */
+                }
+                struct monst *mtmp = mvismon_at(mon, mon->dlevel, sx, sy);
+                if (mtmp)
+                    range -= 2;
+                if (target && mon != target && mtmp != target)
+                    continue;
+                if (mtmp && mm_aggression(mon, mtmp, Conflict))
+                    return mtmp;
+            }
+        }
+    }
+    return NULL;
+}
+
 /* Monster directional targeting. The monster will check through all
    directions, scoring based on what would be hit and their
    resistances/etc. The monster assumes perfect accuracy. Potions will
@@ -711,10 +841,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                     if ((!wand && !spell) || oc_dir != RAY || obj->otyp == SPE_FIREBALL)
                         break;
                     if (range > 0) { /* bounce */
-                        /* maybe only allow some monsters to visualize raybouncing?
-                           TODO: I have no idea how this code actually works, but I
-                           have a feeling that it could be simplified. As-is, it's
-                           copied straight from buzz(), and I know that it works. */
+                        /* maybe only allow some monsters to visualize raybouncing? */
                         int bounce = 0;
                         uchar rmn;
                         if (!cx || !cy || !rn2(20)) {
@@ -1658,7 +1785,9 @@ find_item_obj(struct obj *chain, struct musable *m,
                     continue;
             } else if ((obj->mknown = 1) &&
                        find_item_obj(obj->cobj, m, close, specobj)) {
-                /* obj->mknown = 1 to mark the container as recognized -- monster knows what's inside */
+                /* obj->mknown = 1 to mark the container as recognized -- monster knows
+                   what's inside */
+
                 /* Check if there's something interesting in it */
                 m->use = MUSE_CONTAINER; /* take the object out */
 
@@ -1908,7 +2037,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
                  (otyp == SCR_TELEPORTATION &&
                   !(mx_eshk(mon) && inhishop(mon)))) &&
                 !mx_egd(mon) && !ispriest(mon) && !tele_wary(mon))
-                if (!mon_has_amulet(mon) || (otyp != SCR_TELEPORTATION && mfind_target(mon, FALSE)))
+                if (!mon_has_amulet(mon) || otyp != SCR_TELEPORTATION)
                     return mon_has_amulet(mon) ? 2 : 1;
 
             if (otyp == SCR_GENOCIDE && !cursed)
@@ -2053,7 +2182,9 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
 }
 
 /* Use item or dungeon feature (TODO: make it only items).
-   Returns 0: can act again, 1: died, 2: can not act again */
+   Returns 0: can act again, 1: died, 2: can not act again
+   TODO: return values are inconsistent with how it usually is,
+   change it to 0=can act again, 1=can not, 2=died */
 int
 use_item(struct musable *m)
 {
@@ -2061,7 +2192,7 @@ use_item(struct musable *m)
     struct obj *obj = m->obj;
     int i;
     if (obj &&
-        m->use != MUSE_SPE &&       /* MUSE_SPE deals with m->spell, not m->obj */
+        m->use != MUSE_SPE && /* MUSE_SPE deals with m->spell, not m->obj */
         m->use != MUSE_THROW && /* thrown potions never release ghosts/djinni */
         m->use != MUSE_CONTAINER && /* BoH vanish logic is performed in find_item_obj */
         (i = precheck(obj, m)))
@@ -2076,14 +2207,16 @@ use_item(struct musable *m)
     struct rm *door; /* for muse_key */
     boolean btrapped;
     int x, y;
+    /* If the action took no time. This shouldn't happen generally */
+    int ret = 0;
 
     if (oseen)
         examine_object(obj);
 
     switch (m->use) {
     case MUSE_SPE:
-        spelleffects(FALSE, m);
-        return DEADMONSTER(mon) ? 1 : 2;
+        ret = spelleffects(FALSE, m);
+        return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_SCR:
         mreadmsg(mon, obj);
         obj->in_use = TRUE;
@@ -2127,9 +2260,8 @@ use_item(struct musable *m)
             pline(msgc_monneutral,
                   "%s hurls %s!", Monnam(mon), singular(obj, doname));
         }
-        m_throw(mon, mon->mx, mon->my, m->x, m->y,
-                distmin(mon->mx, mon->my, m->x, m->y), obj, TRUE);
-        return 2;
+        ret = mdothrow(m);
+        return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_EAT:
         dog_eat(mon, obj, mon->mx, mon->my, FALSE);
         return DEADMONSTER(mon) ? 1 : 2;
@@ -2470,18 +2602,19 @@ use_item(struct musable *m)
                 setmnotwielded(mon, mw_tmp);
             mon->weapon_check = NEED_WEAPON;
             obj->owornmask = W_MASK(os_wep);
-            if (mon_visible(mon)) {
+            if (vismon)
                 pline(msgc_monneutral,
                       "%s wields %s%s", Monnam(mon), singular(obj, doname),
                       mon->mtame ? "." : "!");
-                if (obj->cursed && obj->otyp != CORPSE) {
+            if (will_weld(obj)) {
+                if (vismon) {
                     pline(msgc_monneutral,
                           "%s %s to %s %s!", Tobjnam(obj, "weld"),
-                          is_plural(obj) ? "themselves" : "itself",
+                          obj_isplural(obj) ? "themselves" : "itself",
                           s_suffix(mon_nam(mon)), mbodypart(mon, HAND));
                     obj->bknown = 1;
-                    obj->mbknown = 1;
                 }
+                obj->mbknown = 1;
             }
         }
 
@@ -2490,15 +2623,16 @@ use_item(struct musable *m)
             if (m->x == youmonst.mx && m->y == youmonst.my)
                 mtmp = &youmonst;
         }
+        boolean bseen = (oseen || mtmp == &youmonst);
+
         if (!mtmp) {
             /* can happen if a monster is confused or is trying to hit
                something invisible/displaced */
             mtmp = mvismon_at(mon, mon->dlevel, m->x, m->y);
-            if (vis)
+            if (bseen)
                 pline(combat_msgc(mon, mtmp, cr_hit),
                       "%s flicks a whip at %s%s!", Monnam(mon),
                       !mtmp ? "thin air" :
-                      mtmp == &youmonst ? "your" :
                       s_suffix(mon_nam(mtmp)),
                       mtmp ? " displaced image" : "");
             return 1;
@@ -2524,32 +2658,30 @@ use_item(struct musable *m)
                   mtmp == &youmonst ? "your" : s_suffix(mon_nam(mtmp)),
                   hand);
         if (otmp->otyp == HEAVY_IRON_BALL) {
-            pline(combat_msgc(mon, mtmp, cr_immune),
-                  "%s fails to wrap around %s.", The_whip, the_weapon);
+            if (bseen)
+                pline(combat_msgc(mon, mtmp, cr_immune),
+                      "%s fails to wrap around %s.", The_whip, the_weapon);
             return 1;
         }
-        pline(combat_msgc(mon, mtmp, cr_hit),
-              "%s wraps around %s %s %s wielding!", The_whip, the_weapon,
-              mtmp == &youmonst ? "you" : mon_nam(mtmp),
-              mtmp == &youmonst ? "are" : "is");
-        if ((mtmp == &youmonst && welded(otmp)) ||
-            (otmp->cursed && otmp->otyp != CORPSE)) {
-            pline(combat_msgc(mon, mtmp, cr_immune),
-                  "%s welded to %s %s%c",
-                  !is_plural(obj) ? "It is" : "They are", hand,
-                  mtmp == &youmonst ? "your" : s_suffix(mon_nam(mtmp)),
-                  !obj->bknown ? '!' : '.');
-            otmp->bknown = 1;
-            otmp->mbknown = 1;
+        if (bseen)
+            pline(combat_msgc(mon, mtmp, cr_hit),
+                  "%s wraps around %s %s wielding!", The_whip,
+                  the_weapon, m_verbs(mtmp, "are"));
+        if (welded(mtmp, otmp)) {
+            if (bseen) {
+                weldmsg(combat_msgc(mon, mtmp, cr_immune), mtmp, otmp);
+                otmp->bknown = 1;
+            }
             where_to = 0;
         }
         if (!where_to) {
-            pline(combat_msgc(mon, mtmp, cr_miss),
-                  "The whip slips free.");  /* not `The_whip' */
+            if (bseen)
+                pline(combat_msgc(mon, mtmp, cr_miss),
+                      "The whip slips free.");  /* not `The_whip' */
             return 2;
         } else if (where_to == 3 && hates_silver(mon->data) &&
                    objects[otmp->otyp].oc_material == SILVER) {
-            /* this monster won't want to catch a silver weapon; drop it at 
+            /* this monster won't want to catch a silver weapon; drop it at
                hero's feet instead */
             where_to = 2;
         }
@@ -2563,19 +2695,20 @@ use_item(struct musable *m)
         }
         switch (where_to) {
         case 1:    /* onto floor beneath mon */
-            pline(mtmp == &youmonst ? msgc_itemloss :
-                  combat_msgc(mon, mtmp, cr_hit),
-                  "%s yanks %s from %s %s!", Monnam(mon), the_weapon,
-                  mtmp == &youmonst ? "your" : s_suffix(mon_nam(mon)),
-                  hand);
+            if (bseen)
+                pline(mtmp == &youmonst ? msgc_itemloss :
+                      combat_msgc(mon, mtmp, cr_hit),
+                      "%s yanks %s from %s %s!", Monnam(mon), the_weapon,
+                      s_suffix(mon_nam(mtmp)), hand);
             place_object(otmp, level, mon->mx, mon->my);
             break;
         case 2:    /* onto floor beneath you */
-            pline(mtmp == &youmonst ? msgc_itemloss :
-                  combat_msgc(mon, mtmp, cr_hit),
-                  "%s yanks %s to the %s!", Monnam(mon), the_weapon,
-                  surface(m_mx(mon), m_my(mon)));
-            place_object(otmp, level, m_mx(mtmp), m_my(mtmp));
+            if (bseen)
+                pline(mtmp == &youmonst ? msgc_itemloss :
+                      combat_msgc(mon, mtmp, cr_hit),
+                      "%s yanks %s to the %s!", Monnam(mon), the_weapon,
+                      surface(mtmp->mx, mtmp->my));
+            place_object(otmp, level, mtmp->mx, mtmp->my);
             break;
         case 3:    /* into mon's inventory */
             pline(mtmp == &youmonst ? msgc_itemloss :

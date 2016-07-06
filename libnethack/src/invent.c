@@ -2105,7 +2105,7 @@ feel_cockatrice(struct obj *otmp, boolean force_touch, const char *verbing)
         }
         instapetrify(killer_msg(STONING,
                                 msgcat_many(verbing, " ",
-                                            killer_xname(otmp), NULL)));
+                                            killer_xname(otmp, TRUE), NULL)));
     }
     return rv;
 }

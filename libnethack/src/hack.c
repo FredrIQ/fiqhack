@@ -239,6 +239,8 @@ clear_travel_direction(void)
     memset(turnstate.move.stepped_on, FALSE, sizeof(turnstate.move.stepped_on));
 }
 
+/* m_at() wrapper to return &youmonst if the player is at the location (and no monster
+   is) */
 struct monst *
 um_at(struct level *lev, int x, int y)
 {
@@ -1907,13 +1909,13 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                       "Sparks fly as you" : "You",
                       boulder->otyp == STATUE ? "statue" : "boulder");
                 if (ouch)
-                    killer = msgprintf("hitting %s", killer_xname(boulder));
+                    killer = msgprintf("hitting %s", killer_xname(boulder, TRUE));
             } else {
                 pline(msgc_yafm, "You %s the %s.",
                       Role_if(PM_MONK) ? "strike" : "bash",
                       boulder->otyp == STATUE ? "statue" : "boulder");
                 ouch = TRUE;
-                killer = msgprintf("punching %s", killer_xname(boulder));
+                killer = msgprintf("punching %s", killer_xname(boulder, TRUE));
             }
             /* TODO: Possibly make the player hurtle after striking. */
         }

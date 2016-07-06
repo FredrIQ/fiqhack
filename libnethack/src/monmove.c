@@ -334,7 +334,8 @@ dochug(struct monst *mtmp)
         mtmp->mflee = 0;
 
     /* if a player monster gets the amulet, it wants to ascend */
-    /* TODO: make this work outside Astral (in which the monster heads there) */
+    /* TODO: make this work outside Astral (in which the monster heads there).
+       Also, move this to strategy */
     if (is_mplayer(mtmp->data) && mon_has_amulet(mtmp) &&
         Is_astralevel(m_mz(mtmp)) && mtmp->mstrategy != st_ascend) {
         mtmp->mstrategy = st_ascend;
@@ -416,6 +417,7 @@ dochug(struct monst *mtmp)
         watch_on_duty(mtmp);
 
     else if (is_mind_flayer(mdat) && !rn2(20)) {
+        /* TODO: move this to muse */
         int dmg;
         struct monst *m2, *nmon = NULL;
 
@@ -496,21 +498,6 @@ dochug(struct monst *mtmp)
             mtmp->weapon_check = NEED_HTH_WEAPON;
             if (mon_wield_item(mtmp) != 0)
                 return 0;
-        }
-    }
-
-    /* Look for other monsters to fight (at a distance) */
-    if ((((attacktype(mtmp->data, AT_BREA) || attacktype(mtmp->data, AT_GAZE) ||
-           attacktype(mtmp->data, AT_SPIT)) && !mtmp->mspec_used) ||
-         (attacktype(mtmp->data, AT_WEAP) && select_rwep(mtmp) != 0)) &&
-        mtmp->mlstmv != moves && mtmp->mstrategy != st_ascend) {
-        struct monst *mtmp2 = mfind_target(mtmp, FALSE);
-
-        if (mtmp2) {
-            if (mattackm(mtmp, mtmp2) & MM_AGR_DIED)
-                return 1;       /* Oops. */
-
-            return 0;   /* that was our move for the round */
         }
     }
 
@@ -839,7 +826,7 @@ not_special:
         appr = 0;
 
     if ((!mtmp->mpeaceful || !rn2(10)) && (!Is_rogue_level(&u.uz))) {
-        boolean in_line = lined_up(mtmp) &&
+        boolean in_line = find_ranged(mtmp, &youmonst, NULL) &&
             (distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <=
              (throws_rocks(youmonst.data) ? 20 : ACURRSTR / 2 + 1));
 

@@ -52,6 +52,7 @@ struct musable {
     int x;
     int y;
     int z;
+    int limit; /* arg limit equavilent */
     enum monuse use;
     /* =0, no capability; otherwise, different numbers. If it's an object, the
        object is also set (it's 0 otherwise). */

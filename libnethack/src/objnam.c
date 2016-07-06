@@ -242,6 +242,31 @@ fruitname(boolean juice)
     return msgprintf("%s%s", makesingular(fruit_nam), juice ? " juice" : "");
 }
 
+/* Returns TRUE if obj is plural, either innately (gloves/etc) or because
+   there is >1 */
+boolean
+obj_isplural(const struct obj *obj)
+{
+    if (obj->quan > 1)
+        return TRUE;
+
+    /* TODO: fruitname */
+    return isplural(obj->otyp);
+}
+
+boolean
+isplural(int otyp)
+{
+    if (otyp == LENSES ||
+        (otyp >= GRAY_DRAGON_SCALES && otyp <= YELLOW_DRAGON_SCALES))
+        return TRUE;
+
+    if (objects[otyp].oc_class == ARMOR_CLASS &&
+        (objects[otyp].oc_armcat == ARM_BOOTS ||
+         objects[otyp].oc_armcat == ARM_GLOVES))
+        return TRUE;
+    return FALSE;
+}
 
 /* Basic first look at the object; this used to be part of xname. Examining an
    object this way happens automatically and does not involve touching (no
@@ -559,14 +584,14 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
 
 /* xname() output augmented for multishot missile feedback */
 const char *
-mshot_xname(const struct obj *obj)
+mshot_xname(const struct obj *obj, int count)
 {
     const char *onm = xname(obj);
 
-    if (m_shot.n > 1 && m_shot.o == obj->otyp) {
+    if (count) {
         /* "the Nth arrow"; value will eventually be passed to an() or The(),
            both of which correctly handle this "the " prefix */
-        return msgprintf("the %d%s %s", m_shot.i, ordin(m_shot.i), onm);
+        return msgprintf("the %d%s %s", count, ordin(count), onm);
     }
 
     return onm;
@@ -681,7 +706,7 @@ doname_base(const struct obj *obj, boolean with_price)
         if (!strncmpi(buf, "the ", 4))
             buf += 4;
         prefix = "the ";
-    } else if (!is_plural(obj)) /* Don't give boots/gloves/etc an article */
+    } else if (!obj_isplural(obj)) /* Don't give boots/gloves/etc an article */
         prefix = "a ";
     else
         prefix = "";
@@ -980,7 +1005,7 @@ cxname2(const struct obj *obj)
 
 /* treat an object as fully ID'd when it might be used as reason for death */
 const char *
-killer_xname(const struct obj *obj_orig)
+killer_xname(const struct obj *obj_orig, boolean article)
 {
     struct obj *obj;
     unsigned save_ocknown;
@@ -1018,7 +1043,7 @@ killer_xname(const struct obj *obj_orig)
     else
         buf = xname(obj);
 
-    if (obj->quan == 1L)
+    if (obj->quan == 1L && article)
         buf = obj_is_pname(obj) ? the(buf) : an(buf);
 
     objects[obj->otyp].oc_name_known = save_ocknown;
@@ -1159,7 +1184,7 @@ otense(const struct obj *otmp, const char *verb)
        the result of xname(otmp) would be plural.  Don't bother recomputing
        xname(otmp) at this time. */
 
-    if (!is_plural(otmp))
+    if (!obj_isplural(otmp))
         return vtense(NULL, verb);
     else
         return verb;

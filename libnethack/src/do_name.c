@@ -90,10 +90,10 @@ do_oname(const struct nh_cmd_arg *arg)
         return 0;
 
     qbuf = msgprintf("What do you want to name %s %s?",
-                     is_plural(obj) ? "these" : "this",
+                     obj_isplural(obj) ? "these" : "this",
                      safe_qbuf("", sizeof("What do you want to name these ?"),
                                xname(obj), simple_typename(obj->otyp),
-                               is_plural(obj) ? "things" : "thing"));
+                               obj_isplural(obj) ? "things" : "thing"));
     buf = getarglin(arg, qbuf);
     if (!*buf || *buf == '\033')
         return 0;

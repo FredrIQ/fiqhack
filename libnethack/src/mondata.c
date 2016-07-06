@@ -45,7 +45,6 @@ poly_when_stoned(const struct permonst * ptr)
     /* allow G_EXTINCT */
 }
 
-/* BUG: currently does the wrong thing for players */
 int
 mon_hitbon(struct monst *mon)
 {
@@ -59,7 +58,6 @@ mon_hitbon(struct monst *mon)
     return ret;
 }
 
-/* BUG: currently does the wrong thing for players */
 int
 mon_dambon(struct monst *mon)
 {
@@ -84,6 +82,31 @@ mon_protbon(struct monst *mon)
 
     ret += mon->mac;
     return ret;
+}
+
+/* Wrapper around rnl that works for monsters. Currently monsters lack any concept of luck,
+   but this function can simply be changed when that changes. */
+int
+mrnl(const struct monst *mon, int x)
+{
+    if (mon != &youmonst)
+        return rn2(x);
+    return rnl(x);
+}
+
+/* Returns the race permonst for given mon.
+   Sometimes, you can't just do genus(monsndx(mon->data)), it will for instance do the
+   wrong thing for players that aren't polymorphed (genus for player monsters is always
+   human), and later when we have a more robust race system, it wouldn't work at all.
+   want_orig==TRUE will return the race of the original (pre-poly) form of the monster. */
+int
+race(const struct monst *mon, boolean want_orig)
+{
+    if (mon == &youmonst && (!Upolyd || want_orig))
+        return urace.malenum;
+    if (mon != &youmonst && mon->orig_mnum && want_orig)
+        return genus(mon->orig_mnum, 0);
+    return genus(monsndx(mon->data), 0);
 }
 
 /* TRUE iff monster is resistant to light-induced blindness */
@@ -503,7 +526,7 @@ name_to_mon(const char *in_str)
 
 /* returns 3 values (0=male, 1=female, 2=none) */
 int
-gender(struct monst *mtmp)
+gender(const struct monst *mtmp)
 {
     if (is_neuter(mtmp->data))
         return 2;
@@ -513,7 +536,7 @@ gender(struct monst *mtmp)
 /* Like gender(), but lower animals and such are still "it". */
 /* This is the one we want to use when printing messages. */
 int
-pronoun_gender(struct monst *mtmp)
+pronoun_gender(const struct monst *mtmp)
 {
     if (is_neuter(mtmp->data) || !canclassifymon(mtmp))
         return 2;
@@ -711,14 +734,62 @@ on_fire(const struct permonst *mptr, const struct attack *mattk)
     return what;
 }
 
+enum monprof
+mon_skilltype(int pskill)
+{
+    switch (pskill) {
+    case P_WANDS:
+        return MP_WANDS;
+    case P_ATTACK_SPELL:
+        return MP_SATTK;
+    case P_ESCAPE_SPELL:
+        return MP_SESCA;
+    case P_CLERIC_SPELL:
+        return MP_SCLRC;
+    case P_DIVINATION_SPELL:
+        return MP_SDIVN;
+    case P_MATTER_SPELL:
+        return MP_SMATR;
+    case P_ENCHANTMENT_SPELL:
+        return MP_SENCH;
+    case P_HEALING_SPELL:
+        return MP_SHEAL;
+    case P_DAGGER:
+        return MP_DAGGR;
+    case P_BOW:
+        return MP_BOW;
+    case P_SLING:
+        return MP_SLING;
+    case P_CROSSBOW:
+        return MP_XBOW;
+    case P_DART:
+        return MP_DART;
+    case P_SHURIKEN:
+        return MP_SHURK;
+    default:
+        /* safe to use with mprof(), it will return unskilled */
+        return MP_NONE;
+    }
+}
+
+/* Proficiency check that works on both monsters and players.
+   Takes a P_ skilltype rather than a MP_ one. */
+short
+prof(const struct monst *mon, int proficiency)
+{
+    if (mon == &youmonst)
+        return P_SKILL(proficiency);
+    return mprof(mon, mon_skilltype(proficiency));
+}
 
 /* check monster proficiency */
 short
-mprof(const struct monst * mon, int proficiency)
+mprof(const struct monst *mon, enum monprof proficiency)
 {
     const struct permonst *ptr = mon->data;
-    /* return the relevant bits. */
-    return (short) ((((ptr)->mskill / proficiency) % 4) + 1);
+    /* return the relevant bits. + 1 is because basic is 2, not 1,
+       (unskilled is 1, restricted 0 which isn't used for monsters) */
+    return (short) ((((ptr)->mskill >> proficiency) % 4) + 1);
 }
 
 /*mondata.c*/

@@ -151,7 +151,7 @@ mattackq(struct monst *mtmp, int x, int y)
         return 3;
     }
 
-    mpreattack(mtmp, distmin(mtmp->mx, mtmp->my, x, y) > 1);
+    mpreattack(mtmp);
 
     int sum[NATTK];
     struct attack alt_attk;
@@ -208,26 +208,6 @@ mattackq(struct monst *mtmp, int x, int y)
             }
             break;
 
-        /* 3.4.3 aims at your real location regardless in these cases, due to a
-           bug. Now we have breamq/spitmq, we can breathe at the believed
-           location. And maybe hit anyway! */
-        case AT_BREA:
-            breamq(mtmp, x, y, mattk);
-            break;
-
-        case AT_SPIT:
-            spitmq(mtmp, x, y, mattk);
-            break;
-
-        case AT_WEAP:
-            if (distmin(mtmp->mx, mtmp->my, x, y) > 1) {
-                if (!Is_rogue_level(&u.uz))
-                    thrwmq(mtmp, x, y);
-            } else {
-                wildmiss(mtmp, mattk);
-            }
-            break;
-
         default:       /* no attack */
             break;
         }
@@ -253,7 +233,7 @@ mattackq(struct monst *mtmp, int x, int y)
    The code here was moved here from mattacku (which ran in both the "player"
    and "empty space" codepaths in 4.3, but not the "monster" codepath). */
 boolean
-mpreattack(struct monst *mtmp, boolean range2)
+mpreattack(struct monst *mtmp)
 {
     const struct permonst *mdat = mtmp->data;
 
@@ -261,7 +241,7 @@ mpreattack(struct monst *mtmp, boolean range2)
         return FALSE;
 
     /* Special demon handling code */
-    if (!mtmp->cham && is_demon(mdat) && !range2 && !mtmp->mtame &&
+    if (!mtmp->cham && is_demon(mdat) && !mtmp->mtame &&
         mtmp->data != &mons[PM_BALROG]
         && mtmp->data != &mons[PM_SUCCUBUS]
         && mtmp->data != &mons[PM_INCUBUS])
@@ -269,7 +249,7 @@ mpreattack(struct monst *mtmp, boolean range2)
             msummon(mtmp, &mtmp->dlevel->z);
 
     /* Special lycanthrope handling code */
-    if (!mtmp->cham && is_were(mdat) && !range2) {
+    if (!mtmp->cham && is_were(mdat)) {
 
         if (is_human(mdat)) {
             if (!rn2(5 - (night() * 2)) && !cancelled(mtmp))

@@ -280,89 +280,113 @@ doit:
  *  The gold object is *not* attached to the level->objlist chain!
  */
 boolean
-ghitm(struct monst * mtmp, struct obj * gold)
+ghitm(struct monst *magr, struct monst *mdef, struct obj * gold)
 {
+    boolean uagr = (magr == &youmonst);
+    boolean udef = (mdef == &youmonst);
+    boolean vis = (uagr || udef || canseemon(magr) || canseemon(mdef));
     boolean msg_given = FALSE;
 
-    if (!likes_gold(mtmp->data) && !mx_eshk(mtmp) && !ispriest(mtmp) &&
-        !is_mercenary(mtmp->data)) {
-        wakeup(mtmp, FALSE);
-    } else if (!mtmp->mcanmove) {
-        /* too light to do real damage */
-        if (canseemon(mtmp)) {
-            pline(msgc_yafm, "The %s harmlessly %s %s.", xname(gold),
-                  otense(gold, "hit"), mon_nam(mtmp));
-            msg_given = TRUE;
+    if (!likes_gold(mdef->data) && !mx_eshk(mdef) && !ispriest(mdef) &&
+        !is_mercenary(mdef->data)) {
+        if (uagr && !udef)
+            wakeup(mdef, FALSE);
+        else if (!udef) {
+            mdef->msleeping = 0;
+            mdef->meating = 0;
         }
+    } else if (m_helpless(mdef, udef ? hm_all : hr_paralyzed)) {
+        /* too light to do real damage */
+        if (!udef && canseemon(mdef)) /* udef -> you wont notice */
+            pline(msgc_yafm, "The %s harmlessly %s %s.", xname(gold),
+                  otense(gold, "hit"), mon_nam(mdef));
+            msg_given = TRUE;
     } else {
         long value = gold->quan * objects[gold->otyp].oc_cost;
 
-        mtmp->msleeping = 0;
-        mtmp->meating = 0;
-        if (!rn2(4))
-            setmangry(mtmp);    /* not always pleasing */
+        if (!udef) {
+            mdef->msleeping = 0;
+            mdef->meating = 0;
+            if (uagr && !rn2(4))
+                setmangry(mdef); /* not always pleasing */
+        }
 
         /* greedy monsters catch gold */
-        if (cansee(mtmp->mx, mtmp->my))
-            pline(msgc_actionok, "%s catches the gold.", Monnam(mtmp));
-        if (mx_eshk(mtmp)) {
-            long robbed = mx_eshk(mtmp)->robbed;
+        if (cansee(mdef->mx, mdef->my))
+            pline(msgc_actionok, "%s the gold.", M_verbs(mdef, "catch"));
+        if (mx_eshk(mdef)) {
+            if (udef)
+                panic("player is a shopkeeper?");
 
-            if (robbed) {
+            long robbed = mx_eshk(mdef)->robbed;
+
+            if ((uagr || magr->mtame) && robbed) {
                 robbed -= value;
                 if (robbed < 0)
                     robbed = 0;
-                pline(msgc_actionok, "The amount %scovers %s recent losses.",
-                      !robbed ? "" : "partially ", mhis(mtmp));
-                mx_eshk(mtmp)->robbed = robbed;
+                if (vis)
+                    pline(msgc_actionok, "The amount %scovers %s recent losses.",
+                          !robbed ? "" : "partially ", mhis(mdef));
+                mx_eshk(mdef)->robbed = robbed;
                 if (!robbed)
-                    make_happy_shk(mtmp, FALSE);
-            } else {
-                if (mtmp->mpeaceful) {
-                    mx_eshk(mtmp)->credit += value;
-                    pline(msgc_actionok, "You have %ld %s in credit.",
-                          (long)mx_eshk(mtmp)->credit,
-                          currency(mx_eshk(mtmp)->credit));
-                } else
+                    make_happy_shk(mdef, FALSE);
+            } else if (uagr) {
+                if (mdef->mpeaceful == (uagr ? 1 : magr->mpeaceful)) {
+                    mx_eshk(mdef)->credit += value;
+                    if (vis)
+                        pline(msgc_actionok, "You have %ld %s in credit.",
+                              (long)mx_eshk(mdef)->credit,
+                              currency(mx_eshk(mdef)->credit));
+                } else if (vis)
                     verbalize(msgc_badidea, "Thanks, scum!");
             }
-        } else if (ispriest(mtmp)) {
-            if (mtmp->mpeaceful)
+        } else if (ispriest(mdef) && vis) {
+            if (mdef->mpeaceful == (uagr ? 1 : magr->mpeaceful))
                 verbalize(msgc_actionok, "Thank you for your contribution.");
             else
                 verbalize(msgc_badidea, "Thanks, scum!");
-        } else if (is_mercenary(mtmp->data)) {
-            long goldreqd = 0L;
+        } else if (is_mercenary(mdef->data)) {
+            if (udef)
+                pline(msgc_yafm,
+                      "%s to bribe you, but you ignore it.", M_verbs(magr, "attempt"));
+            else {
+                long goldreqd = 0L;
 
-            if (rn2(3)) {
-                if (mtmp->data == &mons[PM_SOLDIER])
-                    goldreqd = 100L;
-                else if (mtmp->data == &mons[PM_SERGEANT])
-                    goldreqd = 250L;
-                else if (mtmp->data == &mons[PM_LIEUTENANT])
-                    goldreqd = 500L;
-                else if (mtmp->data == &mons[PM_CAPTAIN])
-                    goldreqd = 750L;
+                if (rn2(3)) {
+                    if (mdef->data == &mons[PM_SOLDIER])
+                        goldreqd = 100L;
+                    else if (mdef->data == &mons[PM_SERGEANT])
+                        goldreqd = 250L;
+                    else if (mdef->data == &mons[PM_LIEUTENANT])
+                        goldreqd = 500L;
+                    else if (mdef->data == &mons[PM_CAPTAIN])
+                        goldreqd = 750L;
 
-                if (goldreqd) {
-                    if (value >
-                        goldreqd + (money_cnt(invent) +
-                                    youmonst.m_lev * rn2(5)) / ACURR(A_CHA))
-                        msethostility(mtmp, FALSE, FALSE);
+                    if (goldreqd) {
+                        if (value >
+                            goldreqd + (money_cnt(m_minvent(magr)) +
+                                        magr->m_lev * rn2(5)) / acurr(magr, A_CHA))
+                            msethostility(mdef, !(uagr ? 1 : magr->mpeaceful), FALSE);
+                    }
                 }
+                if (mdef->mpeaceful)
+                    verbalize(msgc_actionok, "That should do.  Now beat it!");
+                else
+                    verbalize(msgc_failrandom, "That's not enough, coward!");
             }
-            if (mtmp->mpeaceful)
-                verbalize(msgc_actionok, "That should do.  Now beat it!");
-            else
-                verbalize(msgc_failrandom, "That's not enough, coward!");
         }
 
-        add_to_minv(mtmp, gold, NULL);
+        if (!udef)
+            add_to_minv(mdef, gold, NULL);
+        else {
+            addinv(gold);
+            encumber_msg();
+        }
         return TRUE;
     }
 
-    if (!msg_given)
-        miss(xname(gold), mtmp, &youmonst);
+    if (!msg_given && vis)
+        miss(xname(gold), mdef, magr);
     return FALSE;
 }
 
@@ -469,7 +493,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
         /* KMH -- otmp should be kickobj */
         done(STONING, killer_msg(STONING,
                                  msgprintf("kicking %s without boots",
-                                           killer_xname(kickobj))));
+                                           killer_xname(kickobj, TRUE))));
     }
 
     /* range < 2 means the object will not move. */
@@ -597,15 +621,15 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
     obj_extract_self(kickobj);
     snuff_candle(kickobj);
     newsym(x, y);
-    mon = fire_obj(dx, dy, range, KICKED_WEAPON, kickobj, NULL);
+    mon = fire_obj(&youmonst, dx, dy, range, KICKED_WEAPON, kickobj, NULL, &bhitpos);
 
     if (mon) {
         if (mx_eshk(mon) && kickobj->where == OBJ_MINVENT &&
             kickobj->ocarry == mon)
             return 1;   /* alert shk caught it */
         notonhead = (mon->mx != bhitpos.x || mon->my != bhitpos.y);
-        if (isgold ? ghitm(mon, kickobj) :      /* caught? */
-            thitmonst(mon, kickobj))    /* hit && used up? */
+        if (isgold ? ghitm(&youmonst, mon, kickobj) : /* caught? */
+            thitmonst(&youmonst, mon, kickobj, 0))    /* hit && used up? */
             return 1;
     }
 
@@ -644,7 +668,7 @@ kickstr(struct obj *kickobj)
     const char *what;
 
     if (kickobj)
-        what = killer_xname(kickobj);
+        what = killer_xname(kickobj, TRUE);
     else if (IS_DOOR(maploc->typ))
         what = "a door";
     else if (IS_TREE(maploc->typ))
@@ -989,7 +1013,7 @@ dokick(const struct nh_cmd_arg *arg)
                 short frtype = treefruit->otyp;
 
                 treefruit->quan = nfruit;
-                if (is_plural(treefruit))
+                if (obj_isplural(treefruit))
                     pline(msgc_actionok, "Some %s fall from the tree!",
                           xname(treefruit));
                 else

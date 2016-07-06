@@ -760,7 +760,7 @@ mon_wield_item(struct monst *mon)
             if (obj->cursed && obj->otyp != CORPSE) {
                 pline(msgc_monneutral, "%s %s to %s %s!",
                       Tobjnam(obj, "weld"),
-                      is_plural(obj) ? "themselves" : "itself",
+                      obj_isplural(obj) ? "themselves" : "itself",
                       s_suffix(mon_nam(mon)), mbodypart(mon, HAND));
                 obj->bknown = 1;
                 obj->mbknown = 1;

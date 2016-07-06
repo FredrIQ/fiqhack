@@ -200,10 +200,10 @@ mattacku(struct monst *mtmp)
     struct musable musable;
 
     const struct permonst *mdat = mtmp->data;
-    boolean ranged = (distu(mtmp->mx, mtmp->my) > 3);
-
-    /* Is it near you? Affects your actions */
-    boolean range2 = !monnear(mtmp, youmonst.mx, youmonst.my);
+    if (distu(mtmp->mx, mtmp->my) > 3) {
+        impossible("Old-style ranged combat attempted (mattacku)");
+        return 0;
+    }
 
     /* Can you see it? Affects messages. For long worms, if they're attacking
        you and you can see any part of the monster, you presumably know it's a
@@ -219,16 +219,12 @@ mattacku(struct monst *mtmp)
         mtmp->muy = youmonst.my;
     }
 
-    /* Might be attacking your image around the corner, or invisible, or you
-       might be blind... so we require !ranged to ensure you're aware of it. */
-    if (!ranged)
-        action_interrupted();
+    action_interrupted();
 
     /* If swallowed, can only be affected by u.ustuck */
     if (Engulfed) {
         if (mtmp != u.ustuck)
             return 0;
-        range2 = 0;
         if (u.uinvulnerable)
             return 0;   /* stomachs can't hurt you! */
     }
@@ -253,10 +249,10 @@ mattacku(struct monst *mtmp)
 
     /* must be called after the above mattackm check, or the monster could
        summon at both you and your steed in the same attack */
-    if (!mpreattack(mtmp, range2))
+    if (!mpreattack(mtmp))
         return 0;
 
-    if (youmonst.mundetected && !range2 && !Engulfed) {
+    if (youmonst.mundetected && !Engulfed) {
         youmonst.mundetected = 0;
         if (is_hider(youmonst.data)) {
             coord cc;   /* maybe we need a unexto() function? */
@@ -356,7 +352,7 @@ mattacku(struct monst *mtmp)
         }
         return 0;
     }
-    if (youmonst.data->mlet == S_MIMIC && youmonst.m_ap_type && !range2 &&
+    if (youmonst.data->mlet == S_MIMIC && youmonst.m_ap_type &&
         !Engulfed) {
         /* This is msgc_interrupted both ways around; from the player's point of
            view (their mimicking was cut short by a monster's arrival); and from
@@ -373,7 +369,7 @@ mattacku(struct monst *mtmp)
     }
 
     /* player might be mimicking an object */
-    if (youmonst.m_ap_type == M_AP_OBJECT && !range2 && !Engulfed) {
+    if (youmonst.m_ap_type == M_AP_OBJECT && !Engulfed) {
         if (!youseeit)
             pline(msgc_interrupted, "Something %s!",
                   (likes_gold(mtmp->data) && youmonst.mappearance ==
@@ -426,7 +422,7 @@ mattacku(struct monst *mtmp)
         if (mtmp == u.ustuck)
             pline(msgc_noconsequence, "%s loosens its grip slightly.",
                   Monnam(mtmp));
-        else if (!range2) {
+        else {
             if (youseeit || sensemon(mtmp))
                 pline(msgc_noconsequence,
                       "%s starts to attack you, but pulls back.", Monnam(mtmp));
@@ -459,9 +455,8 @@ mattacku(struct monst *mtmp)
         case AT_TUCH:
         case AT_BUTT:
         case AT_TENT:
-            if (!range2 &&
-                (!MON_WEP(mtmp) || confused(mtmp) || Conflict ||
-                 !touch_petrifies(youmonst.data))) {
+            if (!MON_WEP(mtmp) || confused(mtmp) || Conflict ||
+                !touch_petrifies(youmonst.data)) {
                 if (tmp > (j = rnd(20 + i))) {
                     if (mattk->aatyp != AT_KICK ||
                         !thick_skinned(youmonst.data))
@@ -472,7 +467,7 @@ mattacku(struct monst *mtmp)
             break;
 
         case AT_HUGS:  /* automatic if prev two attacks succeed */
-            if ((!range2 && i >= 2 && sum[i - 1] && sum[i - 2])
+            if ((i >= 2 && sum[i - 1] && sum[i - 2])
                 || mtmp == u.ustuck)
                 sum[i] = hitmu(mtmp, mattk);
             break;
@@ -485,62 +480,43 @@ mattacku(struct monst *mtmp)
             break;
 
         case AT_EXPL:
-            /* explmu does hit calculations, but we have to check range */
-            if (!range2)
-                sum[i] = explmu(mtmp, mattk);
+            sum[i] = explmu(mtmp, mattk);
             break;
 
         case AT_ENGL:
-            if (!range2) {
-                if (Engulfed || tmp > (j = rnd(20 + i))) {
-                    /* Force swallowing monster to be displayed even when
-                       player is moving away */
-                    flush_screen();
-                    sum[i] = gulpmu(mtmp, mattk);
-                } else {
-                    missmu(mtmp, (tmp == j), mattk);
-                }
-            }
-            break;
-        case AT_BREA:
-            if (range2)
-                sum[i] = breamq(mtmp, youmonst.mx, youmonst.my, mattk);
-            break;
-        case AT_SPIT:
-            if (range2)
-                sum[i] = spitmq(mtmp, youmonst.mx, youmonst.my, mattk);
+            if (Engulfed || tmp > (j = rnd(20 + i))) {
+                /* Force swallowing monster to be displayed even when
+                   player is moving away */
+                flush_screen();
+                sum[i] = gulpmu(mtmp, mattk);
+            } else
+                missmu(mtmp, (tmp == j), mattk);
             break;
         case AT_WEAP:
-            if (range2) {
-                if (!Is_rogue_level(&u.uz))
-                    thrwmq(mtmp, youmonst.mx, youmonst.my);
-            } else {
-                int hittmp = 0;
-
-                /* Rare but not impossible.  Normally the monster wields when 2
-                   spaces away, but it can be teleported or whatever.... */
-                if (mtmp->weapon_check == NEED_WEAPON || !MON_WEP(mtmp)) {
-                    mtmp->weapon_check = NEED_HTH_WEAPON;
-                    /* mon_wield_item resets weapon_check as appropriate */
-                    if (mon_wield_item(mtmp) != 0)
-                        break;
-                }
-                otmp = MON_WEP(mtmp);
-                if (otmp) {
-                    hittmp = hitval(otmp, &youmonst);
-                    tmp += hittmp;
-                    mswingsm(mtmp, &youmonst, otmp);
-                }
-                if (tmp > (j = dieroll = rnd(20 + i)))
-                    sum[i] = hitmu(mtmp, mattk);
-                else
-                    missmu(mtmp, (tmp == j), mattk);
-                /* KMH -- Don't accumulate to-hit bonuses */
-                if (otmp)
-                    tmp -= hittmp;
+            /* Rare but not impossible.  Normally the monster wields when 2
+               spaces away, but it can be teleported or whatever.... */
+            if (mtmp->weapon_check == NEED_WEAPON || !MON_WEP(mtmp)) {
+                mtmp->weapon_check = NEED_HTH_WEAPON;
+                /* mon_wield_item resets weapon_check as appropriate */
+                if (mon_wield_item(mtmp) != 0)
+                    break;
             }
-            break;
 
+            int hittmp = 0;
+            otmp = MON_WEP(mtmp);
+            if (otmp) {
+                hittmp = hitval(otmp, &youmonst);
+                tmp += hittmp;
+                mswingsm(mtmp, &youmonst, otmp);
+            }
+            if (tmp > (j = dieroll = rnd(20 + i)))
+                sum[i] = hitmu(mtmp, mattk);
+            else
+                missmu(mtmp, (tmp == j), mattk);
+            /* KMH -- Don't accumulate to-hit bonuses */
+            if (otmp)
+                tmp -= hittmp;
+            break;
         default:       /* no attack */
             break;
         }
@@ -2081,7 +2057,7 @@ doseduce(struct monst *mon)
     if (!uarmc && !uskin())
         mayberem(uarm, "suit");
     mayberem(uarmf, "boots");
-    if (!uwep || !welded(uwep))
+    if (!uwep || !welded(&youmonst, uwep))
         mayberem(uarmg, "gloves");
     mayberem(uarms, "shield");
     mayberem(uarmh, maybe_helmet_name(uarmh));

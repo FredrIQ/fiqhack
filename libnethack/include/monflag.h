@@ -68,14 +68,23 @@
 /* other conveyances: teleport, teleport control, telepathy */
 
 /* proficiencies */
-# define MP_WANDS        0x00000001L
-# define MP_SATTK        0x00000004L
-# define MP_SHEAL        0x00000010L
-# define MP_SDIVN        0x00000040L
-# define MP_SENCH        0x00000100L
-# define MP_SCLRC        0x00000400L
-# define MP_SESCA        0x00001000L
-# define MP_SMATR        0x00004000L
+enum monprof {
+    MP_WANDS,
+    MP_SATTK,
+    MP_SHEAL,
+    MP_SDIVN,
+    MP_SENCH,
+    MP_SCLRC,
+    MP_SESCA,
+    MP_SMATR,
+    MP_DAGGR,
+    MP_BOW,
+    MP_SLING,
+    MP_XBOW,
+    MP_DART,
+    MP_SHURK,
+    MP_NONE,
+};
 
 /* seperate levels */
 # define MP_WAND_BASIC   0x00000001L
@@ -109,6 +118,30 @@
 # define MP_SMAT_BASIC   0x00004000L
 # define MP_SMAT_SKILLED 0x00008000L
 # define MP_SMAT_EXPERT  0x0000c000L
+
+# define MP_DAGG_BASIC   0x00010000L
+# define MP_DAGG_SKILLED 0x00020000L
+# define MP_DAGG_EXPERT  0x00030000L
+
+# define MP_BOW_BASIC    0x00040000L
+# define MP_BOW_SKILLED  0x00080000L
+# define MP_BOW_EXPERT   0x000c0000L
+
+# define MP_SLIN_BASIC   0x00100000L
+# define MP_SLIN_SKILLED 0x00200000L
+# define MP_SLIN_EXPERT  0x00300000L
+
+# define MP_XBOW_BASIC   0x00400000L
+# define MP_XBOW_SKILLED 0x00800000L
+# define MP_XBOW_EXPERT  0x00c00000L
+
+# define MP_DART_BASIC   0x01000000L
+# define MP_DART_SKILLED 0x02000000L
+# define MP_DART_EXPERT  0x03000000L
+
+# define MP_SHUR_BASIC   0x04000000L
+# define MP_SHUR_SKILLED 0x08000000L
+# define MP_SHUR_EXPERT  0x0c000000L
 
 /* mflags */
 # define M1_FLY          0x00000001L    /* can fly or float */

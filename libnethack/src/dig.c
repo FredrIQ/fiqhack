@@ -262,7 +262,7 @@ dig(void)
     if (Fumbling && !rn2(3)) {
         switch (rn2(3)) {
         case 0:
-            if (!welded(uwep)) {
+            if (!welded(&youmonst, uwep)) {
                 struct obj *otmp = uwep;
                 pline(msgc_substitute, "You fumble and drop your %s.",
                       xname(otmp));

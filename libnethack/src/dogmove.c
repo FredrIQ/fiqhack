@@ -782,7 +782,7 @@ dog_move(struct monst *mtmp, int after)
                 attacktype(mtmp->data, AT_SPIT) ||
                 (attacktype(mtmp->data, AT_WEAP) && select_rwep(mtmp))) &&
                mtmp->mlstmv != moves) {
-        struct monst *mon = mfind_target(mtmp, FALSE);
+        struct monst *mon = find_ranged(mtmp, NULL, FALSE);
 
         if (mon) {
             if (mattackm(mtmp, mon) & MM_AGR_DIED)

@@ -653,28 +653,18 @@ scatter(int sx, int sy, /* location of objects to scatter */
                     bhitpos.x -= stmp->dx;
                     bhitpos.y -= stmp->dy;
                     stmp->stopped = TRUE;
-                } else if ((mtmp = m_at(lev, bhitpos.x, bhitpos.y)) != 0) {
-                    if (scflags & MAY_HITMON) {
-                        stmp->range--;
-                        if (ohitmon(mtmp, stmp->obj, NULL, 1, FALSE)) {
-                            stmp->obj = NULL;
+                } else if ((mtmp = um_at(lev, bhitpos.x, bhitpos.y)) != 0) {
+                    if ((mtmp != &youmonst && (scflags & MAY_HITMON)) ||
+                        (mtmp == &youmonst && (scflags & MAY_HITYOU))) {
+                        if (mtmp == &youmonst)
+                            action_interrupted();
+                        int hitv = 8 + stmp->obj->spe;
+                        if (bigmonst(mtmp->data))
+                            hitv++;
+                        if (hitv >= rnd(20)) {
+                            mhmon(NULL, mtmp, stmp->obj, 1, 0);
                             stmp->stopped = TRUE;
                         }
-                    }
-                } else if (bhitpos.x == youmonst.mx && bhitpos.y == youmonst.my) {
-                    if (scflags & MAY_HITYOU) {
-                        int hitvalu, hitu;
-
-                        action_interrupted();
-
-                        hitvalu = 8 + stmp->obj->spe;
-                        if (bigmonst(youmonst.data))
-                            hitvalu++;
-                        hitu =
-                            thitu(hitvalu, dmgval(stmp->obj, &youmonst),
-                                  stmp->obj, NULL);
-                        if (hitu)
-                            stmp->range -= 3;
                     }
                 } else {
                     if (scflags & VIS_EFFECTS) {

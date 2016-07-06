@@ -531,7 +531,6 @@ rn2_on_display_rng(int x)
     return rn2_on_rng(x, rng_display);
 }
 
-
 /* Moved here from rnd.h, because a) it's perhaps a little too complex to be
    inline, and b) so that rnd.h doesn't need dependencies on things like
    you.h. */

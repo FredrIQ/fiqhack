@@ -1409,6 +1409,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
     struct obj *singleobj;
     boolean used_up = FALSE;
     boolean otherside = FALSE;
+    boolean credit_player = FALSE; /* only credit player if the trap was known */
     int dist;
     int tmp;
     int delaycnt = 0;
@@ -1457,8 +1458,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
         style &= ~LAUNCH_UNSEEN;
         goto roll;
     case ROLL | LAUNCH_KNOWN:
-        /* use otrapped as a flag to ohitmon */
-        singleobj->otrapped = 1;
+        credit_player = TRUE;
         style &= ~LAUNCH_KNOWN;
         /* fall through */
     roll:
@@ -1490,27 +1490,23 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
         bhitpos.y += dy;
         t = t_at(level, bhitpos.x, bhitpos.y);
 
-        if ((mtmp = m_at(level, bhitpos.x, bhitpos.y)) != 0) {
+        if ((mtmp = um_at(level, bhitpos.x, bhitpos.y)) != 0) {
             if (otyp == BOULDER && throws_rocks(mtmp->data)) {
                 if (rn2(3)) {
-                    pline(msgc_consequence, "%s snatches the boulder.",
-                          Monnam(mtmp));
-                    singleobj->otrapped = 0;
-                    mpickobj(mtmp, singleobj, NULL);
+                    if (mtmp == &youmonst || canseemon(mtmp))
+                        pline(msgc_consequence, "%s the boulder.",
+                              M_verbs(mtmp, "snatch"));
+                    if (mtmp == &youmonst) {
+                        hold_another_object(singleobj, "You drop %s!", doname(singleobj),
+                                            NULL);
+                        encumber_msg();
+                    } else
+                        mpickobj(mtmp, singleobj, NULL);
                     used_up = TRUE;
                     break;
                 }
             }
-            if (ohitmon(mtmp, singleobj, NULL,
-                        (style == ROLL) ? -1 : dist, FALSE)) {
-                used_up = TRUE;
-                break;
-            }
-        } else if (bhitpos.x == youmonst.mx && bhitpos.y == youmonst.my) {
-            action_interrupted();
-
-            if (thitu(9 + singleobj->spe, 0, singleobj, NULL))
-                damage = dmgval(singleobj, &youmonst);
+            mhmon(credit_player ? &youmonst : NULL, mtmp, singleobj, 1, 0);
         }
         if (style == ROLL) {
             if (down_gate(bhitpos.x, bhitpos.y) != -1) {
@@ -1531,7 +1527,6 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                         deltrap(level, t);
                         del_engr_at(level, bhitpos.x, bhitpos.y);
                         place_object(singleobj, level, bhitpos.x, bhitpos.y);
-                        singleobj->otrapped = 0;
                         fracture_rock(singleobj);
                         scatter(bhitpos.x, bhitpos.y, 4,
                                 MAY_DESTROY | MAY_HIT | MAY_FRACTURE |
@@ -1548,7 +1543,6 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                               "Suddenly the rolling boulder disappears!");
                     else
                         You_hear(msgc_consequence, "a rumbling stop abruptly.");
-                    singleobj->otrapped = 0;
                     if (t->ttyp == TELEP_TRAP)
                         rloco(singleobj);
                     else {
@@ -1597,9 +1591,6 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                          "a loud crash%s!",
                          cansee(bhitpos.x, bhitpos.y) ? bmsg : "");
                 obj_extract_self(otmp2);
-                /* pass off the otrapped flag to the next boulder */
-                otmp2->otrapped = singleobj->otrapped;
-                singleobj->otrapped = 0;
                 place_object(singleobj, level, bhitpos.x, bhitpos.y);
                 singleobj = otmp2;
                 otmp2 = NULL;
@@ -1628,7 +1619,6 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
     }
     tmpsym_end(tsym);
     if (!used_up) {
-        singleobj->otrapped = 0;
         place_object(singleobj, level, x2, y2);
         newsym(x2, y2);
     }
@@ -3121,7 +3111,7 @@ emergency_disrobe(boolean * lostsome)
                      obj == uarm || obj == uarmc || obj == uarmg || obj == uarmf
                      || obj == uarmu || (obj->cursed &&
                                          (obj == uarmh || obj == uarms)) ||
-                     welded(obj)))
+                     welded(&youmonst, obj)))
                     otmp = obj;
                 /* reached the mark and found some stuff to drop? */
                 if (--i < 0 && otmp)
@@ -3329,7 +3319,7 @@ dountrap(const struct nh_cmd_arg *arg)
               mon_nam(u.ustuck));
         return 0;
     }
-    if (u.ustuck || (welded(uwep) && bimanual(uwep))) {
+    if (u.ustuck || (welded(&youmonst, uwep) && bimanual(uwep))) {
         pline(msgc_cancelled, "Your %s seem to be too busy for that.",
               makeplural(body_part(HAND)));
         return 0;

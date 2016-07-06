@@ -327,7 +327,7 @@ mattackm(struct monst *magr, struct monst *mdef)
     pa = magr->data;
     pd = mdef->data;
 
-    if (!mpreattack(magr, distmin(mdef->mx, mdef->my, magr->mx, magr->my) > 1))
+    if (!mpreattack(magr))
         return FALSE;
 
     /* Grid bugs cannot attack at an angle. */
@@ -377,27 +377,12 @@ mattackm(struct monst *magr, struct monst *mdef)
 
     /* Now perform all attacks for the monster. */
     for (i = 0; i < NATTK; i++) {
-        int tmphp = mdef->mhp;
-
         res[i] = MM_MISS;
         mattk = getmattk(pa, i, res, &alt_attk);
         otmp = NULL;
         attk = 1;
         switch (mattk->aatyp) {
         case AT_WEAP:  /* weapon attacks */
-            if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
-                thrwmq(magr, mdef->mx, mdef->my);
-                if (tmphp > mdef->mhp)
-                    res[i] = MM_HIT;
-                else
-                    res[i] = MM_MISS;
-                if (DEADMONSTER(mdef))
-                    res[i] = MM_DEF_DIED;
-                if (DEADMONSTER(magr))
-                    res[i] = MM_AGR_DIED;
-                strike = 0;
-                break;
-            }
             if (magr->weapon_check == NEED_WEAPON || !MON_WEP(magr)) {
                 magr->weapon_check = NEED_HTH_WEAPON;
                 if (mon_wield_item(magr) != 0)
@@ -461,32 +446,6 @@ mattackm(struct monst *magr, struct monst *mdef)
             if (strike)
                 res[i] = hitmm(magr, mdef, mattk);
 
-            break;
-
-        case AT_BREA:
-            breamq(magr, mdef->mx, mdef->my, mattk);
-            if (tmphp > mdef->mhp)
-                res[i] = MM_HIT;
-            else
-                res[i] = MM_MISS;
-            if (DEADMONSTER(mdef))
-                res[i] = MM_DEF_DIED;
-            if (DEADMONSTER(magr))
-                res[i] = MM_AGR_DIED;
-            strike = 0; /* waking up handled by m_throw() */
-            break;
-
-        case AT_SPIT:
-            spitmq(magr, mdef->mx, mdef->my, mattk);
-            if (tmphp > mdef->mhp)
-                res[i] = MM_HIT;
-            else
-                res[i] = MM_MISS;
-            if (DEADMONSTER(mdef))
-                res[i] = MM_DEF_DIED;
-            if (DEADMONSTER(magr))
-                res[i] = MM_AGR_DIED;
-            strike = 0; /* waking up handled by m_throw() */
             break;
 
         case AT_GAZE:

@@ -36,10 +36,6 @@ char hackdir[PATHLEN];  /* where rumors, help, record are */
 
 
 
-/* for xname handling of multiple shot missile volleys:
-   number of shots, index of current one, validity check, shoot vs throw */
-struct multishot m_shot = { 0, 0, STRANGE_OBJECT, FALSE };
-
 boolean in_mklev;
 boolean stoned; /* done to monsters hit by 'c' */
 

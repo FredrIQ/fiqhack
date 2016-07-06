@@ -209,7 +209,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             o->bknown = TRUE;
             if (msgtype != em_silent)
                 pline(msgc_substitute, "Oops!  %s deathly cold.",
-                      is_plural(o) ? "They feel" : "That feels");
+                      obj_isplural(o) ? "They feel" : "That feels");
         }
     } else {
         setworn(NULL, W_MASK(slot));
@@ -1184,7 +1184,7 @@ already_wearing(const char *cc)
 static inline boolean
 known_welded(boolean spoil)
 {
-    return (spoil || (uwep && uwep->bknown)) && welded(uwep);
+    return (spoil || (uwep && uwep->bknown)) && welded(&youmonst, uwep);
 }
 
 /* Checks how many slots of a given type a given monster has (works correctly
@@ -1653,7 +1653,7 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
     }
     if (otmp->owornmask & W_MASK(os_wep) && known_welded(spoil)) {
         if (noisy)
-            weldmsg(msgc, otmp);
+            weldmsg(msgc, &youmonst, otmp);
         return FALSE;
     }
 
@@ -1670,8 +1670,8 @@ glibr(void)
     const char *otherwep = 0;
 
     leftfall = (uleft && !uleft->cursed &&
-                (!uwep || !welded(uwep) || !bimanual(uwep)));
-    rightfall = (uright && !uright->cursed && (!welded(uwep)));
+                (!uwep || !welded(&youmonst, uwep) || !bimanual(uwep)));
+    rightfall = (uright && !uright->cursed && (!welded(&youmonst, uwep)));
     if (!uarmg && (leftfall || rightfall) && !nolimbs(youmonst.data)) {
         /* changed so cursed rings don't fall off, GAN 10/30/86 */
         pline(msgc_statusbad, "Your %s off your %s.",
@@ -1703,7 +1703,7 @@ glibr(void)
             dropx(otmp);
     }
     otmp = uwep;
-    if (otmp && !welded(otmp)) {
+    if (otmp && !welded(&youmonst, otmp)) {
         const char *thiswep;
 
         /* nice wording if both weapons are the same type */
@@ -1764,7 +1764,8 @@ stuck_ring(struct obj *ring, int otyp)
         if (nolimbs(youmonst.data) && uamul &&
             uamul->otyp == AMULET_OF_UNCHANGING && uamul->cursed)
             return uamul;
-        if ((ring == uright || (uwep && bimanual(uwep))) && welded(uwep))
+        if ((ring == uright || (uwep && bimanual(uwep))) &&
+            welded(&youmonst, uwep))
             return uwep;
         if (uarmg && uarmg->cursed)
             return uarmg;

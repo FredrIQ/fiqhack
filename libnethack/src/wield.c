@@ -53,10 +53,14 @@
                             || is_weptool(optr)                         \
                             || (optr)->otyp == HEAVY_IRON_BALL)
 
-/* An item that will weld to the hands if wielded. */
-#define will_weld(optr)    ((optr)->cursed  &&                          \
-                            (sensible_wep(optr) || (optr)->otyp == TIN_OPENER))
-
+/* An item that will weld to the hands if wielded.
+   Converted from a define to a function to make more accessible */
+boolean
+will_weld(const struct obj *obj)
+{
+    return (obj->cursed &&
+            (sensible_wep(obj) || obj->otyp == TIN_OPENER));
+}
 
 /*** Functions that place a given item in a slot ***/
 /* Proper usage includes:
@@ -426,7 +430,7 @@ can_twoweapon(void)
     else if (NOT_WEAPON(uwep) || NOT_WEAPON(uswapwep)) {
         otmp = NOT_WEAPON(uwep) ? uwep : uswapwep;
         pline(msgc_cancelled, "%s %s.", Yname2(otmp),
-              is_plural(otmp) ? "aren't weapons" : "isn't a weapon");
+              obj_isplural(otmp) ? "aren't weapons" : "isn't a weapon");
     } else if (bimanual(uwep) || bimanual(uswapwep)) {
         otmp = bimanual(uwep) ? uwep : uswapwep;
         pline(msgc_cancelled, "%s isn't one-handed.", Yname2(otmp));
@@ -674,21 +678,26 @@ weapon_unpaid_fixup:
 }
 
 int
-welded(struct obj *obj)
+welded(struct monst *mon, struct obj *obj)
 {
-    if (obj && obj == uwep && will_weld(obj)) {
-        obj->bknown = TRUE;
+    if (obj && m_mwep(mon) == obj && will_weld(obj)) {
+        if (mon == &youmonst)
+            obj->bknown = TRUE;
+        else
+            obj->mbknown = TRUE;
         return 1;
     }
     return 0;
 }
 
 void
-weldmsg(enum msg_channel msgc, struct obj *obj)
+weldmsg(enum msg_channel msgc, const struct monst *mon,
+        const struct obj *obj)
 {
-    pline(msgc, "Your %s %s welded to your %s!", xname(obj),
-          otense(obj, "are"), bimanual(obj) ?
-          (const char *)makeplural(body_part(HAND)) : body_part(HAND));
+    pline(msgc, "%s %s %s welded to %s %s!", s_suffix(Monnam(mon)),
+          xname(obj), otense(obj, "are"), mon == &youmonst ? "your" : mhis(mon),
+          bimanual(obj) ? (const char *)makeplural(mbodypart(mon, HAND)) :
+          mbodypart(mon, HAND));
 }
 
 /* Unwields all weapons silently. */

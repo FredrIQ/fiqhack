@@ -2851,6 +2851,7 @@ void
 msethostility(struct monst *mtmp, boolean hostile, boolean adjust_malign)
 {
     mtmp->mpeaceful = !hostile;
+    mx_edog_free(mtmp);
     mtmp->mtame = 0;
 
     if (mtmp->dlevel == level && !in_mklev)

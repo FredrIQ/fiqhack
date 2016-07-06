@@ -153,7 +153,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
                       vtense(NULL, verb), (mtmp) ? "" : " with you");
             if (mtmp) {
                 if (!phasing(mtmp) && !throws_rocks(mtmp->data)) {
-                    if (hmon(mtmp, obj, TRUE) && !is_whirly(mtmp->data))
+                    if (hmon(mtmp, obj, TRUE, 0) && !is_whirly(mtmp->data))
                         return FALSE;   /* still alive */
                 }
                 mtmp->mtrapped = 0;
@@ -223,45 +223,73 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
 
 
 void
-doaltarobj(struct obj *obj)
+doaltarobj(struct monst *mon, struct obj *obj)
 {       /* obj is an object dropped on an altar */
-    if (Blind)
-        return;
+    boolean you = (mon == &youmonst);
+    boolean mvis = (!you && !blind(mon)); /* does a monster that isn't you see it? */
+    boolean vis = (!blind(&youmonst) && (you || mon == u.usteed)); /* do you? */
+    /* not canseemon() -- those are too faint */
 
-    /* KMH, conduct */
-    break_conduct(conduct_gnostic);
+    /* Only if you drop it, or if you steed does (which is rare and controllable), will
+       you see flashes (or lack of), and break conduct. This is avoidable by your own
+       actions, and thus shouldn't cause frustration. */
+    if (vis)
+        break_conduct(conduct_gnostic);
 
     if ((obj->blessed || obj->cursed) && obj->oclass != COIN_CLASS) {
-        pline_implied(msgc_hint, "There is %s flash as %s %s the altar.",
-                      an(hcolor(obj->blessed ? "amber" : "black")), doname(obj),
-                      otense(obj, "hit"));
-        if (!Hallucination)
+        if (vis)
+            pline_implied(msgc_hint, "There is %s flash as %s %s the altar.",
+                          an(hcolor(obj->blessed ? "amber" : "black")), doname(obj),
+                          otense(obj, "hit"));
+        if (vis && !hallucinating(&youmonst))
             obj->bknown = 1;
+        if (!mvis && !hallucinating(mon))
+            obj->mbknown = 1;
     } else {
-        pline_implied(msgc_noconsequence, "%s %s on the altar.", Doname2(obj),
-                      otense(obj, "land"));
-        obj->bknown = 1;
+        if (vis) {
+            pline_implied(msgc_noconsequence, "%s %s on the altar.", Doname2(obj),
+                          otense(obj, "land"));
+            obj->bknown = 1;
+        }
+        if (!mvis)
+            obj->mbknown = 1;
     }
     /* Also BCU one level deep inside containers */
     if (Has_contents(obj)) {
-        int bcucount = 0;
+        int blesscount = 0;
+        int cursecount = 0;
+        int bccount = 0;
         struct obj *otmp;
 
         for (otmp = obj->cobj; otmp; otmp = otmp->nobj) {
-            if (otmp->blessed || otmp->cursed)
-                bcucount++;
-            if (!Hallucination)
+            if (otmp->blessed || otmp->cursed) {
+                bccount++;
+                if (otmp->blessed)
+                    blesscount++;
+                else if (otmp->cursed)
+                    cursecount++;
+            }
+            if (hallucinating(mon))
+                continue;
+
+            /* Not vis, if you are on a mount, you can't "look into the container" */
+            if (you)
                 otmp->bknown = 1;
+            if (mvis)
+                otmp->mbknown = 1;
         }
-        if (bcucount == 1) {
+        if (!you)
+            return; /* no messages for monsters about this */
+
+        if (bccount)
             pline_implied(msgc_hint,
-                          "Looking inside %s, you see a colored flash.",
-                          the(xname(obj)));
-        } else if (bcucount > 1) {
-            pline_implied(msgc_hint,
-                          "Looking inside %s, you see colored flashes.",
-                          the(xname(obj)));
-        }
+                          "Looking inside %s, you see %s flash%s.",
+                          the(xname(obj)),
+                          bccount == 1 ? an(hcolor(blesscount ? "amber" : "black")) :
+                          !cursecount ? hcolor("amber") :
+                          !blesscount ? hcolor("black") :
+                          hallucinating(mon) ? "pretty rainbow-colored" : "colored",
+                          bccount == 1 ? "" : "es");
     }
 }
 
@@ -473,8 +501,8 @@ drop(struct obj *obj)
     if (!canletgo(obj, "drop"))
         return 0;
     if (obj == uwep) {
-        if (welded(uwep)) {
-            weldmsg(msgc_cancelled, obj);
+        if (welded(&youmonst, uwep)) {
+            weldmsg(msgc_cancelled, &youmonst, obj);
             return 0;
         }
     }
@@ -494,7 +522,7 @@ drop(struct obj *obj)
             pline(msgc_actionboring, "You drop %s.", doname(obj));
 
             freeinv(obj);
-            hitfloor(obj);
+            hitfloor(&youmonst, obj);
             return 1;
         }
         if (!IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ) && flags.verbose)
@@ -514,7 +542,7 @@ dropx(struct obj *obj)
         if (ship_object(obj, youmonst.mx, youmonst.my, FALSE))
             return;
         if (IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ))
-            doaltarobj(obj);    /* set bknown */
+            doaltarobj(&youmonst, obj);    /* set bknown */
     }
     dropy(obj);
 }
@@ -665,7 +693,7 @@ menu_drop(int retry)
                 otmp = obj_pick_list[i].obj;
                 cnt = obj_pick_list[i].count;
                 if (cnt < otmp->quan) {
-                    if (welded(otmp)) {
+                    if (welded(&youmonst, otmp)) {
                         ;       /* don't split */
                     } else if (otmp->otyp == LOADSTONE && otmp->cursed) {
                         /* same kludge as getobj(), for canletgo()'s use */

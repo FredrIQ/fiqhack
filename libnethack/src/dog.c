@@ -478,11 +478,14 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
             mtmp->mtame = mtmp->mpeaceful = 0;
     }
 
-    if (!mtmp->mtame && mtmp->mleashed) {
-        /* leashed monsters should always be with hero, consequently never
-           losing any time to be accounted for later */
-        impossible("catching up for leashed monster?");
-        m_unleash(mtmp, FALSE);
+    if (!mtmp->mtame) {
+        if (mtmp->mleashed) {
+            /* leashed monsters should always be with hero, consequently never
+               losing any time to be accounted for later */
+            impossible("catching up for leashed monster?");
+            m_unleash(mtmp, FALSE);
+        }
+        mx_edog_free(mtmp);
     }
 
     /* recover lost hit points */

@@ -925,7 +925,7 @@ dospit(const struct musable *m)
     }
 
     otmp->spe = 1;      /* to indicate it's yours */
-    throwit(otmp, 0L, FALSE, dx, dy, dz);
+    throwit(&youmonst, otmp, NULL, 0, 0L, FALSE, dx, dy, dz);
     return 1;
 }
 
@@ -1264,7 +1264,7 @@ uskin(void)
 }
 
 const char *
-mbodypart(struct monst *mon, int part)
+mbodypart(const struct monst *mon, int part)
 {
     static const char
         *const humanoid_parts[] = { "arm", "eye", "face", "finger",

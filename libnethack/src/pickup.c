@@ -1616,8 +1616,8 @@ in_container(struct obj *obj)
         pline(msgc_failcurse, "%s attached to your pet.", Tobjnam(obj, "are"));
         return 0;
     } else if (obj == uwep) {
-        if (welded(obj)) {
-            weldmsg(msgc_yafm, obj);
+        if (welded(&youmonst, obj)) {
+            weldmsg(msgc_yafm, &youmonst, obj);
             return 0;
         }
         setuwep(NULL);

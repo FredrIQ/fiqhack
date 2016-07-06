@@ -698,7 +698,7 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
         nh_describe_pos(cc.x, cc.y, &descbuf, &is_in);
 
         otmp = vobj_at(cc.x, cc.y);
-        if (otmp && is_plural(otmp))
+        if (otmp && obj_isplural(otmp))
             objplur = 1;
 
         out_str = "";

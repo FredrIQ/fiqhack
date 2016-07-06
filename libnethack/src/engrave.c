@@ -423,7 +423,7 @@ del_engr_at(struct level *lev, int x, int y)
 int
 freehand(void)
 {
-    return (!uwep || !welded(uwep) ||
+    return (!uwep || !welded(&youmonst, uwep) ||
             (!bimanual(uwep) && (!uarms || !uarms->cursed)));
 /* if ((uwep && bimanual(uwep)) ||
            (uwep && uarms))

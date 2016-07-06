@@ -127,7 +127,7 @@ in_trouble(void)
         /* for bag/box access [cf use_container()]... make sure it's a case
            that we know how to handle; otherwise "fix all troubles" would get
            stuck in a loop */
-        if (welded(uwep))
+        if (welded(&youmonst, uwep))
             return ptr_hands;
         if (Upolyd && nohands(youmonst.data) &&
             (!Unchanging || ((otmp = unchanger()) != 0 && otmp->cursed)))
@@ -183,9 +183,10 @@ worst_cursed_item(void)
             if (Cursed_obj(otmp, LOADSTONE))
                 return otmp;
     }
-    /* weapon takes precedence if it is interfering with taking off a ring or
+    /* weapon takes precedence if interfering with taking off a ring or
        putting on a shield */
-    if (welded(uwep) && (uright || bimanual(uwep))) {   /* weapon */
+    if (welded(&youmonst, uwep) && (uright || bimanual(uwep))) {
+        /* weapon */
         otmp = uwep;
         /* gloves come next, due to rings */
     } else if (uarmg && uarmg->cursed) {        /* gloves */
@@ -213,7 +214,7 @@ worst_cursed_item(void)
     } else if (ublindf && ublindf->cursed) {    /* eyewear */
         otmp = ublindf; /* must be non-blinding lenses */
         /* if weapon wasn't handled above, do it now */
-    } else if (welded(uwep)) {  /* weapon */
+    } else if (welded(&youmonst, uwep)) {  /* weapon */
         otmp = uwep;
         /* active secondary weapon even though it isn't welded */
     } else if (uswapwep && uswapwep->cursed && u.twoweap) {
@@ -308,7 +309,7 @@ fix_worst_trouble(int trouble)
         }
         goto decurse;
     case ptr_hands:
-        if (welded(uwep)) {
+        if (welded(&youmonst, uwep)) {
             otmp = uwep;
             goto decurse;
         }
@@ -842,7 +843,8 @@ pleased(aligntyp g_align)
             break;
         case 1:
             if (uwep &&
-                (welded(uwep) || uwep->oclass == WEAPON_CLASS ||
+                (welded(&youmonst, uwep) ||
+                 uwep->oclass == WEAPON_CLASS ||
                  is_weptool(uwep))) {
                 const char *repair_buf = "";
 

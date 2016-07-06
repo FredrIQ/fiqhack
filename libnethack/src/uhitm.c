@@ -9,7 +9,7 @@ static boolean known_hitum(struct monst *, int *, const struct attack *, schar,
                            schar);
 static void steal_it(struct monst *, const struct attack *);
 static boolean hitum(struct monst *, int, const struct attack *, schar, schar);
-static boolean hmon_hitmon(struct monst *, struct obj *, int);
+static boolean hmon_hitmon(struct monst *, struct obj *, int, int);
 static int joust(struct monst *, struct obj *);
 static boolean m_slips_free(struct monst *mtmp, const struct attack *mattk);
 static int explum(struct monst *, const struct attack *);
@@ -218,10 +218,10 @@ known_hitum(struct monst *mon, int *mhit, const struct attack *uattk, schar dx,
         /* we hit the monster; be careful: it might die or be knocked into a
            different location */
         notonhead = (mon->mx != x || mon->my != y);
-        malive = hmon(mon, uwep, 0);
+        malive = hmon(mon, uwep, 0, 0);
         /* this assumes that Stormbringer was uwep not uswapwep */
         if (malive && u.twoweap && m_at(level, x, y) == mon)
-            malive = hmon(mon, uswapwep, 0);
+            malive = hmon(mon, uswapwep, 0, 0);
         if (malive) {
             /* monster still alive */
             if (!rn2(25) && mon->mhp < mon->mhpmax / 2 &&
@@ -268,10 +268,115 @@ hitum(struct monst *mon, int tmp, const struct attack *uattk, schar dx,
     return malive;
 }
 
+/* This is a hmon that is functional with the player as the non-aggressor. The idea was
+   to use this for monsters and players alike, but it turns out that we need this for
+   more than just that, like object scattering, rolling boulder traps, etc.
+   magr can be NULL if the cause was from something other than a monster. */
+boolean
+mhmon(struct monst *magr, struct monst *mdef, struct obj *obj, int thrown,
+      int multishot_count)
+{
+    if (!thrown) {
+        impossible("mhmon: running on a non-thrown weapon?");
+        if (magr == &youmonst)
+            return hmon(mdef, obj, 0, multishot_count);
+        return 1;
+    }
+    if (magr == &youmonst)
+        return hmon(mdef, obj, 1, multishot_count);
+
+    boolean udef = (mdef == &youmonst);
+    boolean vis = (udef || canseemon(mdef));
+    int dmg = dmgval(obj, mdef);
+    if (mdef->m_ap_type && mdef->m_ap_type != M_AP_MONSTER)
+        seemimic(mdef);
+    if (!udef && mdef->msleeping)
+        mdef->msleeping = 0;
+    if (vis || (magr && canseemon(magr)))
+        hit(mshot_xname(obj, multishot_count), mdef, exclam(dmg), magr);
+    if (obj->opoisoned && is_poisonable(obj)) {
+        if (resists_poison(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "The poison doesn't seem to affect %s.", mon_nam(mdef));
+        } else {
+            if (udef)
+                poisoned(xname(obj), A_STR,
+                         killer_msg_obj(POISONING, obj),  -10);
+            else if (rn2(30))
+                dmg += rnd(6);
+            else {
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_kill),
+                          "The poison was deadly...");
+                dmg = mdef->mhp;
+                if (half_phys_dam(mdef))
+                    dmg *= 2; /* sorry */
+            }
+        }
+    }
+
+    if (objects[obj->otyp].oc_material == SILVER &&
+        hates_silver(mdef->data)) {
+        if (vis)
+            pline(combat_msgc(magr, mdef, cr_hit),
+                  "The silver sears %s flesh!", s_suffix(mon_nam(mdef)));
+        /* because reasons, the silver damage is actually added in dmgval already */
+    }
+    if (obj->otyp == ACID_VENOM && vis) {
+        if (resists_acid(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s unaffected.", M_verbs(mdef, "are"));
+            dmg = 0;
+        } else {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "The acid burns %s!", mon_nam(mdef));
+            if (udef)
+                exercise(A_STR, FALSE);
+        }
+    }
+    if (obj->otyp == CREAM_PIE || obj->otyp == BLINDING_VENOM) {
+        if (can_blnd(magr, mdef,
+                     (uchar) (obj->otyp == BLINDING_VENOM ? AT_SPIT : AT_WEAP), obj)) {
+            if (vis && obj->otyp == BLINDING_VENOM)
+                pline(udef ? msgc_statusbad : combat_msgc(magr, mdef, cr_hit),
+                      "The venom blinds %s.", mon_nam(mdef));
+        }
+        /* suppress the cream message if it was from venom */
+        inc_timeout(mdef, CREAMED, dmg, obj->otyp == BLINDING_VENOM ? TRUE : FALSE);
+        dmg = 0; /* no physical damage */
+    }
+    if (obj->otyp == EGG && touch_petrifies(&mons[obj->corpsenm])) {
+        if (!petrifying(mdef)) {
+            if (!udef)
+                mstiffen(mdef, magr);
+            else if (touched_monster(obj->corpsenm)) {
+                set_property(mdef, STONED, 5, TRUE);
+                set_delayed_killer(STONING, killer_msg_mon_obj(STONING, magr, obj));
+            }
+        }
+        dmg = 0;
+    }
+    if (dmg) {
+        if (udef) /* Not mshot_xname, we don't care about 1st/etc here... */
+            losehp(dmg, killer_msg_mon_obj(DIED, magr, obj));
+        else {
+            mdef->mhp -= dmg;
+            if (mdef->mhp <= 0) {
+                monkilled(magr, mdef, mshot_xname(obj, multishot_count), AD_PHYS);
+                return FALSE;
+            }
+        }
+    }
+    return TRUE;
+}
+
 /* general "damage monster" routine */
 /* return TRUE if mon still alive */
 boolean
-hmon(struct monst * mon, struct obj * obj, int thrown)
+hmon(struct monst * mon, struct obj * obj, int thrown, int multishot_count)
 {
     boolean result, anger_guards;
 
@@ -279,7 +384,7 @@ hmon(struct monst * mon, struct obj * obj, int thrown)
                     (ispriest(mon) || mx_eshk(mon) ||
                      mon->data == &mons[PM_WATCHMAN] ||
                      mon->data == &mons[PM_WATCH_CAPTAIN]));
-    result = hmon_hitmon(mon, obj, thrown);
+    result = hmon_hitmon(mon, obj, thrown, multishot_count);
     if (ispriest(mon) && !rn2(2))
         ghod_hitsu(mon);
     if (anger_guards)
@@ -289,7 +394,7 @@ hmon(struct monst * mon, struct obj * obj, int thrown)
 
 /* guts of hmon() */
 static boolean
-hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
+hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
 {
     int tmp;
     const struct permonst *mdat = mon->data;
@@ -815,9 +920,9 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     }
 
     if (!hittxt &&      /* ( thrown => obj exists ) */
-        (!destroyed || (thrown && m_shot.n > 1 && m_shot.o == obj->otyp))) {
+        (!destroyed || (thrown && multishot_count && obj->otyp))) {
         if (thrown)
-            hit(mshot_xname(obj), mon, exclam(tmp), &youmonst);
+            hit(mshot_xname(obj, multishot_count), mon, exclam(tmp), &youmonst);
         else if (!flags.verbose)
             pline(combat_msgc(&youmonst, mon, cr_hit), "You hit it.");
         else
