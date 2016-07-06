@@ -104,7 +104,7 @@ arg_to_musable(const struct nh_cmd_arg *arg)
     if (arg->argtype & CMD_ARG_SPELL) {
         int sno = spellno_from_let(arg->spelllet);
         if (sno >= 0 && spellid(sno) != NO_SPELL)
-            m.spell = sno;
+            m.spell = spellid(sno);
     }
 #undef spellid
 #undef spellno_from_let
