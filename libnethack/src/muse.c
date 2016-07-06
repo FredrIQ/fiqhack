@@ -1686,7 +1686,9 @@ find_item_obj(struct obj *chain, struct musable *m,
                               obj->otyp == CREDIT_CARD    ? MUSE_KEY  :
                               obj->otyp == LOCK_PICK      ? MUSE_KEY  :
                               obj->otyp == BAG_OF_TRICKS  ? MUSE_BAG_OF_TRICKS :
-                              0);;
+                              0);
+                    if (m->use == 0)
+                        impossible("AI error: Unhandled nondirectional musable");
                 }
             } else {
                 score = find_item_score(mon, obj, &tc);
@@ -1704,10 +1706,14 @@ find_item_obj(struct obj *chain, struct musable *m,
             m->x = tc_best.x;
             m->y = tc_best.y;
             m->z = 0;
-            m->use = (obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
+            m->use = (obj_best->oclass == POTION_CLASS ? MUSE_THROW :
+                      obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
                       obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
                       obj_best->otyp == BULLWHIP       ? MUSE_BULLWHIP :
+                      obj_best->otyp == EGG            ? MUSE_THROW :
                       0);
+            if (m->use == 0)
+                impossible("AI error: Unhandled directional musable");
             m->obj = obj_best;
             return TRUE;
         }
