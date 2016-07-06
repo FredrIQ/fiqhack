@@ -194,7 +194,7 @@ throw_obj(struct obj *obj, const struct musable *m,
     if (multishot > 1 || m->limit) {
         /* "You shoot N arrows." or "You throw N daggers." */
         if (vis)
-            pline(you ? msgc_actionboring : msgc_monneutral,
+            pline(you ? msgc_actionok : msgc_monneutral,
                   "%s %d %s.", M_verbs(mon, shot ? "shoot" : "throw"),
                   multishot, /* (might be 1 if player gave shotlimit) */
                   (multishot == 1) ? singular(obj, xname) : xname(obj));

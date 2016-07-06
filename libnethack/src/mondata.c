@@ -790,7 +790,8 @@ mprof(const struct monst *mon, enum monprof proficiency)
     const struct permonst *ptr = mon->data;
     /* return the relevant bits. + 1 is because basic is 2, not 1,
        (unskilled is 1, restricted 0 which isn't used for monsters) */
-    return (short) ((((ptr)->mskill >> proficiency) % 4) + 1);
+    return (short) ((((ptr)->mskill >>
+                      (2 * proficiency)) & 3) + 1);
 }
 
 /*mondata.c*/
