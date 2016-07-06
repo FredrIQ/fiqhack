@@ -1191,7 +1191,6 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
         score = mon_choose_spectarget(mon, obj, tc);
     else
         score = mon_choose_dirtarget(mon, obj, tc);
-    pline(msgc_debug, "%d", score);
     return score;
 }
 
@@ -1842,12 +1841,17 @@ find_item_obj(struct obj *chain, struct musable *m,
                       obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
                       obj_best->otyp == BULLWHIP       ? MUSE_BULLWHIP :
                       is_ammo(obj_best)                ? MUSE_THROW :
-                      is_missile(obj_best)             ? MUSE_THROW :
+                      throwing_weapon(obj_best)        ? MUSE_THROW :
                       obj_best->otyp == EGG            ? MUSE_THROW :
                       0);
             if (m->use == 0)
                 impossible("AI error: Unhandled directional musable");
             m->obj = obj_best;
+            /* Avoid monsters exhausting their entire weapon stack with
+               multishoot */
+            if (m->use == MUSE_THROW && throwing_weapon(m->obj) &&
+                m->obj == m_mwep(mon))
+                m->limit = (m->obj->quan - 1);
             return TRUE;
         }
         return TRUE;
@@ -2101,7 +2105,8 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
          otyp == POT_PARALYSIS ||
          otyp == POT_SLEEPING ||
          (attacktype(mon->data, AT_WEAP) &&
-          (is_missile(obj) ||
+          ((throwing_weapon(obj) &&
+            (obj != m_mwep(mon) || obj->quan > 1)) ||
            ammo_and_launcher(obj, m_mwep(mon)))) ||
          otyp == EGG) && /* trice */
         close)
