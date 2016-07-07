@@ -786,7 +786,14 @@ dotrap(struct trap *trap, unsigned trflags)
             stackobj(otmp);
             newsym(youmonst.mx, youmonst.my); /* map the rock */
 
-            losehp(dmg, killer_msg(DIED, "a falling rock"));
+            /* Don't kill from full HP for undiscovered traps, that's a bit unfair */
+            if (!already_seen && dmg >= u.uhpmax)
+                dmg = u.uhpmax - 1;
+            if (!dmg)
+                pline(msgc_yafm, "%s doesn't manage to do any notable harm.",
+                      The(xname(otmp)));
+            else
+                losehp(dmg, killer_msg(DIED, "a falling rock"));
             exercise(A_STR, FALSE);
         }
         break;
