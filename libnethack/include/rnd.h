@@ -133,11 +133,11 @@ enum rng {
     rng_rndcurse,        /* rndcurse(): Magicbane absorption, count, saddle */
     rng_levport_results, /* distance to get level-teleported */
     rng_trapdoor_result, /* distance to get trapdoored */
-    first_level_rng
+    first_level_rng,
+    last_rng = first_level_rng + NUMBER_OF_LEVEL_RNGS
 };
 
-static_assert((first_level_rng + NUMBER_OF_LEVEL_RNGS) *
-              RNG_SEED_SIZE_BYTES <= RNG_SEEDSPACE,
+static_assert(last_rng * RNG_SEED_SIZE_BYTES <= RNG_SEEDSPACE,
               "too many RNGs defined");
 
 /* Not in extern.h, because we can't guarantee that that's included before this
