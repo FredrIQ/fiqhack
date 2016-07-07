@@ -696,7 +696,7 @@ aggravate(void)
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
         if (!DEADMONSTER(mtmp)) {
             mtmp->msleeping = 0;
-            if (!mtmp->mcanmove && !(property_timeout(mtmp, STONED) <= 3)) {
+            if (!mtmp->mcanmove && !(property_timeout(mtmp, STONED) <= 2)) {
                 mtmp->mfrozen = 0;
                 mtmp->mcanmove = 1;
             }

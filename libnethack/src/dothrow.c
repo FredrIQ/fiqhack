@@ -1536,7 +1536,7 @@ omon_adj(struct monst *mon, struct obj *obj, boolean mon_notices)
     if (m_helpless(mon, hm_all) || !mon->data->mmove) {
         tmp += 4;
         if (mon_notices && mon->data->mmove && !rn2(10) &&
-            !(property_timeout(mon, STONED) <= 3)) {
+            !(property_timeout(mon, STONED) <= 2)) {
             if (you)
                 cancel_helplessness(hm_unconscious,
                                     "Hit by something, you snap awake!");

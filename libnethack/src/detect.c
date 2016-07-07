@@ -625,7 +625,7 @@ monster_detect(struct obj *otmp,        /* detecting object (if any) */
             if (otmp && otmp->cursed && (mtmp->msleeping || !mtmp->mcanmove)) {
                 mtmp->msleeping = 0;
                 /* Don't unfreeze a petrifying monster */
-                if (!(property_timeout(mtmp, STONED) <= 3)) {
+                if (!(property_timeout(mtmp, STONED) <= 2)) {
                     mtmp->mfrozen = 0;
                     mtmp->mcanmove = 1;
                 }
