@@ -848,7 +848,7 @@ extern void mkmonmoney(struct monst *, long, enum rng);
 extern void bagotricks(struct obj *);
 extern boolean propagate(int, boolean, boolean);
 extern struct monst *restore_mon(struct memfile *mf, struct level *l);
-extern void save_mon(struct memfile *mf, const struct monst *mon,
+extern void save_mon(struct memfile *mf, struct monst *mon,
                      const struct level *l);
 
 /* ### mcastu.c ### */
