@@ -128,7 +128,7 @@ static struct nh_option_desc curses_options[] = {
      "interpret Alt-letter as ESC letter",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"animation", "Commands and Confirmations",
-     "which commands to run slowly",
+     "controls multi-turn actions and other animations",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = ANIM_ALL}},
     {"border", "Screen Layout",
      "what to draw borders around",
