@@ -2696,8 +2696,10 @@ mnearto(struct monst * mtmp, xchar x, xchar y, boolean move_other)
         /* actually we have real problems if enexto ever fails. migrating_mons
            that need to be placed will cause no end of trouble. */
         if (!enexto(&mm, level, newx, newy, mtmp->data))
-            panic("Nowhere to place '%s' (at (%d, %d), wanted (%d, %d))",
-                  k_monnam(mtmp), mtmp->mx, mtmp->my, x, y);
+            if (!enexto_core(&mm, level, newx, newy, mtmp->data,
+                             MM_IGNOREWATER))
+                panic("Nowhere to place '%s' (at (%d, %d), wanted (%d, %d))",
+                      k_monnam(mtmp), mtmp->mx, mtmp->my, x, y);
         newx = mm.x;
         newy = mm.y;
     }

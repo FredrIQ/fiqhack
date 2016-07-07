@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-04-05
+Last modified by Alex Smith, 2016-03-08
 
 Copyright (C) 2013 Alex Smith.
 
@@ -1326,7 +1326,7 @@ now feels the ground for items. (4, f394be6, 1c76f8f)
 it. (Ace, cea2284)
 
 `h`, etc.: Walking into an always-peaceful monster will chat to them rather
-than atacking them, unless an `F` prefix is given. (Ace, 361ed66)
+than attacking them, unless an `F` prefix is given. (Ace, 361ed66)
 
 `h`, etc.: What these commands do is now controllable via the `movecommand`
 option, which offers a range of possibilities, such as the `standard`

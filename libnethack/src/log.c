@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2016-07-07 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2403,18 +2403,38 @@ log_replay_save_line(void)
     char *logline;
     struct memfile bsave;
 
-    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
-        panic("Could not upgrade to read lock on logfile");
+    int tries = 30;
 
-    lseek(program_state.logfile,
-          program_state.end_of_gamestate_location, SEEK_SET);
+    /* The file should always end with a save line. If we don't have one,
+       either the process got interrupted or we outraced the process that
+       was meant to write it. */
+    do {
 
-    logline = lgetline_malloc(program_state.logfile);
+        if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+            panic("Could not upgrade to read lock on logfile");
 
-    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
-        panic("Could not downgrade to monitor lock on logfile");
+        lseek(program_state.logfile,
+              program_state.end_of_gamestate_location, SEEK_SET);
 
-    if (logline && *logline == '~') {
+        logline = lgetline_malloc(program_state.logfile);
+
+        if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+            panic("Could not downgrade to monitor lock on logfile");
+
+#ifndef WIN32
+        /* Don't bother sleeping on Windows; this situation should be
+           impossible anyway because watching doesn't work there */
+        if (!logline)
+            nanosleep(&(struct timespec){.tv_nsec = 100000000}, NULL);
+#endif
+
+    } while (!logline && tries--);
+
+    if (!logline)
+        return; /* will probably cause an error if watching but that's what we
+                   want */
+
+    if (*logline == '~') {
 
         bsave = program_state.binary_save;
         program_state.binary_save_allocated = FALSE;
@@ -2424,7 +2444,7 @@ log_replay_save_line(void)
             program_state.end_of_gamestate_location;
         load_gamestate_from_binary_save(TRUE);
 
-    } else if (logline && *logline == '*') {
+    } else if (*logline == '*') {
 
         load_save_backup_from_string(logline);
         program_state.binary_save_location =
@@ -2432,7 +2452,7 @@ log_replay_save_line(void)
             program_state.end_of_gamestate_location;
         load_gamestate_from_binary_save(TRUE);
 
-    } else if (logline && *logline == 'Q') {
+    } else if (*logline == 'Q') {
 
         terminate(GAME_ALREADY_OVER);
 

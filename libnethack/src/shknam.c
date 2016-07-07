@@ -335,8 +335,12 @@ shkinit(const struct shclass *shp, struct level *lev, struct mkroom *sroom)
         return -1;
     }
 
-    if (MON_AT(lev, sx, sy))
-        rloc(m_at(lev, sx, sy), FALSE); /* insurance */
+    /* On rare occasions, there might already be a monster standing on the
+       shk's square. Move the monster. */
+    if (MON_AT(lev, sx, sy)) {
+        m_at(lev, sx, sy)->dlevel = lev; /* ensure rloc() can work */
+        rloc(m_at(lev, sx, sy), FALSE);
+    }
 
     /* now initialize the shopkeeper monster structure */
     if (!(shk = makemon(&mons[PM_SHOPKEEPER], lev, sx, sy, MM_ALLLEVRNG)))

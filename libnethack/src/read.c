@@ -2607,7 +2607,11 @@ create_particular(const struct nh_cmd_arg *arg)
     const struct permonst *whichpm;
     struct monst *mtmp;
     boolean madeany = FALSE;
+    boolean parseadjective = TRUE;
     boolean maketame, makepeaceful, makehostile;
+    boolean cancelled, fast, slow, revived;
+    boolean fleeing, blind, paralyzed, sleeping;
+    boolean stunned, confused, suspicious, mavenge;
     int quan = 1;
 
     /* This is explicitly a debug mode operation only. (In addition to the
@@ -2623,6 +2627,8 @@ create_particular(const struct nh_cmd_arg *arg)
     do {
         which = urole.malenum;  /* an arbitrary index into mons[] */
         maketame = makepeaceful = makehostile = FALSE;
+        cancelled = fast = slow = revived = fleeing = blind = mavenge = FALSE;
+        paralyzed = sleeping = stunned = confused = suspicious = FALSE;
         buf = getarglin(
             arg, "Create what kind of monster? [type the name or symbol]");
         bufp = msgmungspaces(buf);
@@ -2638,18 +2644,72 @@ create_particular(const struct nh_cmd_arg *arg)
                 bufp++;
         }
 
-        /* allow the initial disposition to be specified */
-        if (!strncmpi(bufp, "tame ", 5)) {
-            bufp += 5;
-            maketame = TRUE;
-        } else if (!strncmpi(bufp, "peaceful ", 9)) {
-            bufp += 9;
-            makepeaceful = TRUE;
-        } else if (!strncmpi(bufp, "hostile ", 8)) {
-            bufp += 8;
-            makehostile = TRUE;
+        while (parseadjective) {
+            parseadjective = FALSE;
+            /* allow the initial disposition to be specified */
+            if (!strncmpi(bufp, "tame ", 5)) {
+                bufp += 5;
+                parseadjective = maketame = TRUE;
+            } else if (!strncmpi(bufp, "peaceful ", 9)) {
+                bufp += 9;
+                parseadjective = makepeaceful = TRUE;
+            } else if (!strncmpi(bufp, "hostile ", 8)) {
+                bufp += 8;
+                parseadjective = makehostile = TRUE;
+            }
+            /* allow status effects to be specified */
+            if (!strncmpi(bufp, "cancelled ", 10)) {
+                bufp += 10;
+                parseadjective = cancelled = TRUE;
+            } else if (!strncmpi(bufp, "canceled ", 9)) {
+                bufp += 9;
+                parseadjective = cancelled = TRUE;
+            }
+            if (!strncmpi(bufp, "fast ", 5)) {
+                bufp += 5;
+                parseadjective = fast = TRUE;
+            } else if (!strncmpi(bufp, "slow ", 5)) {
+                bufp += 5;
+                parseadjective = slow = TRUE;
+            }
+            if (!strncmpi(bufp, "revived ", 8)) {
+                bufp += 9;
+                parseadjective = revived = TRUE;
+            }
+            if (!strncmpi(bufp, "fleeing ", 8)) {
+                bufp += 8;
+                parseadjective = fleeing = TRUE;
+            }
+            if (!strncmpi(bufp, "blind ", 6)) {
+                bufp += 6;
+                parseadjective = blind = TRUE;
+            }
+            if (!strncmpi(bufp, "paralyzed ", 10)) {
+                bufp += 10;
+                parseadjective = paralyzed = TRUE;
+            }
+            if (!strncmpi(bufp, "sleeping ", 9)) {
+                bufp += 9;
+                parseadjective = sleeping = TRUE;
+            }
+            if (!strncmpi(bufp, "stunned ", 8)) {
+                bufp += 8;
+                parseadjective = stunned = TRUE;
+            }
+            if (!strncmpi(bufp, "confused ", 9)) {
+                bufp += 9;
+                parseadjective = confused = TRUE;
+            }
+            if (!strncmpi(bufp, "suspicious ", 11)) {
+                bufp += 11;
+                parseadjective = suspicious = TRUE;
+            }
+            if (!strncmpi(bufp, "mavenge ", 8)) {
+                bufp += 8;
+                parseadjective = mavenge = TRUE;
+            }
         }
-
+            
         /* decide whether a valid monster was chosen */
         if (strlen(bufp) == 1) {
             monclass = def_char_to_monclass(*bufp);
@@ -2685,8 +2745,33 @@ create_particular(const struct nh_cmd_arg *arg)
                 if ((makepeaceful || makehostile) && mtmp)
                     msethostility(mtmp, !makepeaceful, TRUE);
             }
-            if (mtmp)
+            if (mtmp) {
                 madeany = TRUE;
+                if (cancelled)
+                    set_property(mtmp, CANCELLED, 0, TRUE);
+                if (fast)
+                    set_property(mtmp, FAST, 0, TRUE);
+                if (slow)
+                    set_property(mtmp, SLOW, 0, TRUE);
+                if (revived)
+                    mtmp->mrevived = 1;
+                if (fleeing)
+                    mtmp->mflee = 1;
+                if (blind)
+                    set_property(mtmp, BLINDED, 100, TRUE);
+                if (paralyzed)
+                    mtmp->mcanmove = 0;
+                if (sleeping)
+                    mtmp->msleeping = 1;
+                if (stunned)
+                    set_property(mtmp, STUNNED, 100, TRUE);
+                if (confused)
+                    set_property(mtmp, CONFUSION, 100, TRUE);
+                if (suspicious)
+                    mtmp->msuspicious = 1;
+                if (mavenge)
+                    mtmp->mavenge = 1;
+            }
         }
     }
 

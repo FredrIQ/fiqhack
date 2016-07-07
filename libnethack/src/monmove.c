@@ -1292,7 +1292,16 @@ void
 set_apparxy(struct monst *mtmp)
 {
     int disp;
-    boolean actually_adjacent = distmin(mtmp->mx, mtmp->my, youmonst.mx, youmonst.my) <= 1;
+
+    /* if you aren't on the level, then the monster can't sense you */
+    if (mtmp->dlevel != level) {
+        mtmp->mux = COLNO;
+        mtmp->muy = ROWNO;
+        return;
+    }
+
+    boolean actually_adjacent = distmin(mtmp->mx, mtmp->my,
+                                        youmonst.mx, youmonst.my) <= 1;
     boolean loe = couldsee(mtmp->mx, mtmp->my);
     unsigned msense_status;
 

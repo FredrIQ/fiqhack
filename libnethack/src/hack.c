@@ -1556,13 +1556,13 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     uia = resolve_uim(uim, !!Engulfed,
                       Engulfed ? youmonst.mx : youmonst.mx + turnstate.intended_dx,
                       Engulfed ? youmonst.my : youmonst.my + turnstate.intended_dy);
-    boolean moving = FALSE; /* true if we are peforming a move */
+    boolean moving = FALSE; /* true if we are performing a move */
 
     switch (uia) {
     case uia_move_nopickup:
     case uia_move_pickup:
-        moving = TRUE;
     case uia_displace:
+        moving = TRUE;
     case uia_attack:
         break;
     case uia_opendoor:
