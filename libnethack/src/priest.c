@@ -371,7 +371,7 @@ intemple(int roomno)
     const char *msg1, *msg2;
     enum msg_channel msgc = msgc_npcvoice;
 
-    if (!temple_occupied(u.urooms0)) {
+    if (!temple_occupied(in_rooms(level, u.ux0, u.uy0, TEMPLE))) {
         if (tended) {
             shrined = has_shrine(priest);
             sanctum = (priest->data == &mons[PM_HIGH_PRIEST] &&
