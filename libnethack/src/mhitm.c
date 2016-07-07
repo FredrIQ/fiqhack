@@ -1713,8 +1713,7 @@ mswingsm(struct monst *magr, struct monst *mdef, struct obj *otemp)
        message can get pretty spammy. Also note that the format strings have
        different numbers of arguments; printf is specified to ignore spare
        arguments at the end of the format string (C11 7.21.6.1p2) */
-    pline_implied(msgc_monneutral, mdef == &youmonst ?
-                  "%s %s %s %s." : "%s %s %s %s at %s.", Monnam(magr),
+    pline_implied(msgc_monneutral, "%s %s %s %s at %s.", Monnam(magr),
                   (objects[otemp->otyp].oc_dir & PIERCE) ? "thrusts" : "swings",
                   mhis(magr), singular(otemp, xname), mon_nam(mdef));
 }

@@ -508,7 +508,7 @@ rn2_on_rng(int maxplus1, enum rng rng)
 
         panic("Attempt to change the initial RNG seed using rn2_on_rng");
 
-    } else if (rng < first_level_rng + NUMBER_OF_LEVEL_RNGS && rng >= 0) {
+    } else if (rng < last_rng && rng >= 0) {
 
         if (program_state.in_zero_time_command &&
             !program_state.gameover && !turnstate.generating_bones)
