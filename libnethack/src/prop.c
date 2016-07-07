@@ -197,7 +197,8 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
 
     /* Blockers. Sickness resistance blocking sickness, etc, is handled
        elsewhere... */
-    if (property == SLIMED            ? flaming(mdat) || unsolid(mdat) ||
+    if (property == BLINDED           ? !haseyes(mdat)                       :
+        property == SLIMED            ? flaming(mdat) || unsolid(mdat) ||
                                         mdat == &mons[PM_GREEN_SLIME]        :
         property == STONED            ? poly_when_stoned(mdat)               :
         property == GLIB              ? nohands(mdat)                        :
@@ -364,8 +365,7 @@ m_has_property(const struct monst *mon, enum youprop property,
        TODO: Monsters with no eyes are not considered blind. This doesn't
        make much sense. However, changing it would be a major balance
        change (due to Elbereth), and so it has been left alone for now. */
-    if ((property == BLINDED && !haseyes(mon->data)) ||
-        (property == HALLUC && resists_hallu(mon)) ||
+    if ((property == HALLUC && resists_hallu(mon)) ||
         (property == WWALKING && Is_waterlevel(m_mz(mon))) ||
         mworn_blocked(mon, property))
         rv |= (unsigned)(W_MASK(os_blocked));
