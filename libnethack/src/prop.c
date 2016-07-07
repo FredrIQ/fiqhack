@@ -1957,7 +1957,7 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case WWALKING:
         if (mon == &youmonst)
-            spoteffects(TRUE);
+            spoteffects(FALSE);
         else
             minliquid(mon);
         break;
@@ -2068,7 +2068,9 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case SWIMMING:
         if (mon == &youmonst)
-            spoteffects(TRUE);
+            spoteffects(FALSE);
+        else
+            minliquid(mon);
         break;
     case SLIMED:
         if (you)
@@ -2157,7 +2159,9 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case FLYING:
         if (mon == &youmonst)
-            spoteffects(TRUE);
+            spoteffects(FALSE);
+        else
+            minliquid(mon);
         break;
     case UNCHANGING:
         set_property(mon, SLIMED, -2, TRUE);
