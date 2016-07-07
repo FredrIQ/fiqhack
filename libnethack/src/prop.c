@@ -950,9 +950,11 @@ update_property(struct monst *mon, enum youprop prop,
        prettifying */
     switch (prop) {
     case FIRE_RES:
-        /* BUG: shouldn't there be a check for lava here?
-        if (lost && !redundant) {
-        } */
+        if (mon == &youmonst)
+            spoteffects(FALSE);
+        else
+            minliquid(mon);
+        break;
     case COLD_RES:
     case SLEEP_RES:
     case DISINT_RES:
