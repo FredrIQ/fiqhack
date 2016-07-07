@@ -295,7 +295,7 @@ ghitm(struct monst *magr, struct monst *mdef, struct obj * gold)
             mdef->msleeping = 0;
             mdef->meating = 0;
         }
-    } else if (m_helpless(mdef, udef ? hm_all : hr_paralyzed)) {
+    } else if (m_helpless(mdef, udef ? hm_all : hm_paralyzed)) {
         /* too light to do real damage */
         if (!udef && canseemon(mdef)) /* udef -> you wont notice */
             pline(msgc_yafm, "The %s harmlessly %s %s.", xname(gold),

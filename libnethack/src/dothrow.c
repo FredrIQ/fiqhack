@@ -1527,7 +1527,7 @@ omon_adj(struct monst *mon, struct obj *obj, boolean mon_notices)
     tmp += (mon->data->msize - MZ_MEDIUM);      /* -2..+5 */
     /* sleeping target is more likely to be hit.
        This is sleep from being generated asleep, not from magic, so monster-only. */
-    if (!you && m_helpless(mon, hr_asleep)) {
+    if (!you && m_helpless(mon, hm_asleep)) {
         tmp += 2;
         if (mon_notices)
             mon->msleeping = 0;
