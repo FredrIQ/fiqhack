@@ -1257,6 +1257,7 @@ extern struct monst *find_ranged(struct monst *, struct monst *, coord *);
 extern int mon_choose_dirtarget(const struct monst *, struct obj *, coord *);
 extern int mon_choose_spectarget(const struct monst *, struct obj *, coord *);
 extern boolean find_unlocker(struct monst *, struct musable *);
+extern struct monst *find_closest_target(struct monst *, int);
 extern boolean find_item(struct monst *, struct musable *);
 extern boolean find_item_obj(struct obj *, struct musable *, boolean, int);
 extern int use_item(struct musable *);

@@ -1238,6 +1238,46 @@ find_unlocker(struct monst *mon, struct musable *m)
     return FALSE;
 }
 
+/* Returns closest target hostile to mon if closer than 10 tiles away */
+struct monst *
+find_closest_target(struct monst *mon, int range_limit)
+{
+    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
+                          m_canseeu(mon) &&
+                          distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
+    int hostrange = 0;
+    struct monst *mtmp;
+    struct monst *mclose = NULL;
+    if (msensem(mon, &youmonst) && (mm_aggression(mon, &youmonst, conflicted) ||
+                                    conflicted)) {
+        if ((msensem(mon, &youmonst) & MSENSE_ANYVISION) ||
+            m_cansee(mon, youmonst.mx, youmonst.my)) {
+            hostrange = dist2(mon->mx, mon->my, youmonst.mx, youmonst.my);
+            mclose = &youmonst;
+        }
+    }
+
+    for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp) ||
+            ((!conflicted || mon == mtmp) &&
+             !mm_aggression(mon, mtmp, conflicted)) ||
+            !msensem(mon, mtmp))
+            continue;
+        if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
+            m_cansee(mon, mtmp->mx, mtmp->my)) {
+            if (!hostrange ||
+                hostrange > dist2(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
+                hostrange = dist2(mon->mx, mon->my, mtmp->mx, mtmp->my);
+                mclose = mtmp;
+            }
+        }
+    }
+
+    if (mclose && hostrange > range_limit)
+        mclose = NULL; /* no close targets */
+    return mclose;
+}
+
 /* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in pathfinding),
    it makes no sense to have it here */
 boolean
@@ -1250,9 +1290,6 @@ find_item(struct monst *mon, struct musable *m)
     struct level *lev = mon->dlevel;
     boolean stuck = (mon == u.ustuck && sticks(youmonst.data));
     boolean immobile = (mon->data->mmove == 0);
-    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
-                          m_canseeu(mon) &&
-                          distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     coord tc;
     int fraction;
     m->x = 0;
@@ -1262,44 +1299,10 @@ find_item(struct monst *mon, struct musable *m)
     if (is_animal(mon->data) || mindless(mon->data))
         return FALSE;
 
-    /* Find amount of hostiles seen/sensed and the closest one */
-    int hostvis = 0;
-    int hostsense = 0;
-    int hostrange = 0;
-    struct monst *mtmp;
-    struct monst *mclose = NULL;
-    if (msensem(mon, &youmonst) && (mm_aggression(mon, &youmonst, conflicted) ||
-                                    conflicted)) {
-        hostsense++;
-        if ((msensem(mon, &youmonst) & MSENSE_ANYVISION) ||
-            m_cansee(mon, youmonst.mx, youmonst.my)) {
-            hostvis++;
-            hostrange = dist2(mon->mx, mon->my, youmonst.mx, youmonst.my);
-            mclose = &youmonst;
-        }
-    }
-
-    for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp) ||
-            ((!conflicted || mon == mtmp) &&
-             !mm_aggression(mon, mtmp, conflicted)) ||
-            !msensem(mon, mtmp))
-            continue;
-        hostsense++;
-        if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
-            m_cansee(mon, mtmp->mx, mtmp->my)) {
-            hostvis++;
-            if (!hostrange ||
-                hostrange > dist2(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
-                hostrange = dist2(mon->mx, mon->my, mtmp->mx, mtmp->my);
-                mclose = mtmp;
-            }
-        }
-    }
+    struct monst *mtmp = NULL;
 
     /* range of 100 is the cap on fireball, cone of cold and summon nasty */
-    if (mclose && hostrange > 100)
-        mclose = NULL; /* no close targets */
+    struct monst *mclose = find_closest_target(mon, 100);
 
     m->obj = NULL;
     m->spell = 0;
