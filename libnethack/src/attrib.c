@@ -37,6 +37,8 @@ adjattrib(int ndx, int incr, int msgflg)
         return FALSE;
     }
 
+    int oldcap = near_capacity();
+
     if (incr > 0) {
         if ((AMAX(ndx) >= ATTRMAX(ndx)) && (ACURR(ndx) >= AMAX(ndx))) {
             if (msgflg == 0 && flags.verbose)
@@ -91,7 +93,7 @@ adjattrib(int ndx, int incr, int msgflg)
               "You feel %s%s!", (incr > 1 || incr < -1) ? "very " : "",
               (incr > 0) ? plusattr[ndx] : minusattr[ndx]);
     if (moves > 1 && (ndx == A_STR || ndx == A_CON))
-        encumber_msg();
+        encumber_msg(oldcap);
     return TRUE;
 }
 
@@ -204,6 +206,7 @@ void
 restore_attrib(void)
 {
     int i;
+    int oldcap = near_capacity();
 
     for (i = 0; i < A_MAX; i++) {       /* all temporary losses/gains */
 
@@ -216,7 +219,7 @@ restore_attrib(void)
             }
         }
     }
-    encumber_msg();
+    encumber_msg(oldcap);
 }
 
 
@@ -232,6 +235,7 @@ exercise(int i, boolean inc_or_dec)
     if (Upolyd && i != A_WIS)
         return;
 
+    int oldcap = near_capacity();
     if (abs(AEXE(i)) < AVAL) {
         /*
          *      Law of diminishing returns (Part I):
@@ -245,7 +249,7 @@ exercise(int i, boolean inc_or_dec)
         AEXE(i) += (inc_or_dec) ? (rn2(19) > ACURR(i)) : -rn2(2);
     }
     if (moves > 0 && (i == A_STR || i == A_CON))
-        encumber_msg();
+        encumber_msg(oldcap);
 }
 
 static void
@@ -444,6 +448,7 @@ void
 redist_attr(void)
 {
     int i, tmp;
+    int oldcap = near_capacity();
 
     for (i = 0; i < A_MAX; i++) {
         if (i == A_INT || i == A_WIS)
@@ -460,7 +465,7 @@ redist_attr(void)
         if (ABASE(i) < ATTRMIN(i))
             ABASE(i) = ATTRMIN(i);
     }
-    encumber_msg();
+    encumber_msg(oldcap);
 }
 
 void

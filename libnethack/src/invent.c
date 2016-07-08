@@ -330,6 +330,16 @@ addinv_stats(struct obj *obj)
     }
 }
 
+/* Add obj to inventory and print potential encumbrance changes */
+struct obj *
+pickobj(struct obj *obj)
+{
+    int oldcap = near_capacity();
+    struct obj *ret = addinv(obj);
+    encumber_msg(oldcap);
+    return ret;
+}
+
 /* Add obj to the hero's inventory.  Make sure the object is "free".
    Adjust hero attributes as necessary. */
 struct obj *
@@ -416,6 +426,8 @@ struct obj *
 hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
                     const char *hold_msg)
 {
+    int oldcap = near_capacity();
+
     if (!Blind)
         obj->dknown = 1;        /* maximize mergability */
     if (obj->oartifact) {
@@ -430,6 +442,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
         if (!touch_artifact(obj, &youmonst)) {
             obj_extract_self(obj);      /* remove it from the floor */
             dropy(obj); /* now put it back again :-) */
+            encumber_msg(oldcap);
             return obj;
         } else if (wasUpolyd && !Upolyd) {
             /* loose your grip if you revert your form */
@@ -437,6 +450,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
                 pline(msgc_substitute, drop_fmt, drop_arg);
             obj_extract_self(obj);
             dropy(obj);
+            encumber_msg(oldcap);
             return obj;
         }
         obj_extract_self(obj);
@@ -451,7 +465,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
         dropy(obj);
     } else {
         long oquan = obj->quan;
-        int prev_encumbr = near_capacity();     /* before addinv() */
+        int prev_encumbr = near_capacity(); /* before addinv */
 
         /* encumbrance only matters if it would now become worse than max(
            current_value, stressed ) */
@@ -476,6 +490,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
                 prinv(hold_msg, obj, oquan);
         }
     }
+    encumber_msg(oldcap);
     return obj;
 }
 

@@ -49,6 +49,7 @@ struct you {
     int ulevel;         /* 1 to MAXULEV */
     int ulevelmax;
     int uexp;
+    int oldcap;         /* carry cap on previous turn */
 
     /* USED */
     xchar tx, ty;       /* destination of travel */
@@ -73,8 +74,6 @@ struct you {
 
     int uhunger;        /* refd only in eat.c and shk.c */
     unsigned uhs;       /* hunger state - see eat.c */
-
-    int oldcap;         /* carry cap on previous turn */
 
     struct obj *utracked[tos_last_slot + 1];      /* occupation objects */
     int uoccupation_progress[tos_last_slot + 1];  /* time spent on occupation */

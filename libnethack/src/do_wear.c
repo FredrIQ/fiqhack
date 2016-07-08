@@ -174,6 +174,7 @@ on_msg(struct obj *otmp)
 boolean
 setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 {
+    int oldcap = near_capacity();
     /* o holds the item that is being equipped or removed. */
     struct obj *o = otmp;
     /* Work out whether we're equipping, unequipping, both, or neither. */
@@ -338,7 +339,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         /* gauntlets of fumbling handled by the boots codepath */
     case GAUNTLETS_OF_POWER:
         makeknown(otyp);
-        encumber_msg();
+        encumber_msg(oldcap);
         break;
 
         /* Amulets */

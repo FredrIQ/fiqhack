@@ -1503,11 +1503,10 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                     if (mtmp == &youmonst || canseemon(mtmp))
                         pline(msgc_consequence, "%s the boulder.",
                               M_verbs(mtmp, "snatch"));
-                    if (mtmp == &youmonst) {
+                    if (mtmp == &youmonst)
                         hold_another_object(singleobj, "You drop %s!", doname(singleobj),
                                             NULL);
-                        encumber_msg();
-                    } else
+                    else
                         mpickobj(mtmp, singleobj, NULL);
                     used_up = TRUE;
                     break;

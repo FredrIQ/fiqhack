@@ -1661,6 +1661,7 @@ dowipe(const struct nh_cmd_arg *arg)
 void
 set_wounded_legs(struct monst *mon, long side, int timex)
 {
+    int oldcap = near_capacity();
     boolean you = (mon == &youmonst);
     if (you && !leg_hurt(mon))
         ATEMP(A_DEX)--;
@@ -1671,7 +1672,7 @@ set_wounded_legs(struct monst *mon, long side, int timex)
         inc_timeout(mon, RWOUNDED_LEGS, timex, FALSE);
 
     if (you || mon == u.usteed)
-        encumber_msg();
+        encumber_msg(oldcap);
 }
 
 /* Note: call only if the legs are/were actually wounded. This function can
@@ -1688,6 +1689,7 @@ heal_legs(struct monst *mon, int side)
 {
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
+    int oldcap = near_capacity();
 
     if ((!(side & LEFT_SIDE) && leg_hurtl(mon)) ||
         (!(side & RIGHT_SIDE) && leg_hurtr(mon))) {
@@ -1718,5 +1720,5 @@ heal_legs(struct monst *mon, int side)
     set_property(mon, RWOUNDED_LEGS, -2, TRUE);
 
     if (you || mon == u.usteed)
-        encumber_msg();
+        encumber_msg(oldcap);
 }

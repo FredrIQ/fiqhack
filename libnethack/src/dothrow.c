@@ -1253,8 +1253,7 @@ throwit(struct monst *magr, struct obj *obj, struct obj *stack, int count,
                       obj_isplural(obj) ? "" : "s",
                       s_suffix(mon_nam(magr)), mbodypart(magr, HAND));
             if (uagr) {
-                obj = addinv(obj);
-                encumber_msg();
+                obj = pickobj(obj);
                 setuwep(obj);
                 u.twoweap = twoweap;
             } else {
@@ -1281,8 +1280,7 @@ throwit(struct monst *magr, struct obj *obj, struct obj *stack, int count,
         if (magr == mdef) { /* the thing was caught */
             if (uagr) {
                 exercise(A_DEX, TRUE);
-                obj = addinv(obj);
-                encumber_msg();
+                obj = pickobj(obj);
             } else
                 mpickobj(magr, obj, &obj);
             if (wep_mask && !(obj->owornmask & wep_mask)) {
@@ -1409,8 +1407,7 @@ throwit(struct monst *magr, struct obj *obj, struct obj *stack, int count,
                     pline(msgc_actionok, "%s to %s %s!", Tobjnam(obj, "return"),
                           s_suffix(mon_nam(magr)), mbodypart(magr, HAND));
                 if (uagr) {
-                    obj = addinv(obj);
-                    encumber_msg();
+                    obj = pickobj(obj);
                     setuwep(obj);
                     u.twoweap = twoweap;
                 } else {
@@ -1680,10 +1677,9 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj, int count)
                 if (!next2u)
                     show_obj_flight(obj, mdef->mx, mdef->my,
                                     magr->mx, magr->my);
-                if (uagr) {
-                    addinv(obj); /* back into your inventory */
-                    encumber_msg();
-                } else
+                if (uagr)
+                    pickobj(obj); /* back into your inventory */
+                else
                     mpickobj(magr, obj, NULL);
             } else
                 mpickobj(mdef, obj, NULL); /* angry leader wont return it */

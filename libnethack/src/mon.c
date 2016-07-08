@@ -2740,6 +2740,7 @@ poisoned(const char *string, int typ, const char *killer, int fatal)
     int i, plural;
     boolean thrown_weapon = (fatal < 0);
     boolean resist_message_printed = FALSE;
+    int oldcap = near_capacity();
 
     if (thrown_weapon)
         fatal = -fatal;
@@ -2798,7 +2799,7 @@ poisoned(const char *string, int typ, const char *killer, int fatal)
         impossible("Survived to the end of poisoned() with negative HP");
         done(DIED, killer);
     }
-    encumber_msg();
+    encumber_msg(oldcap);
 }
 
 /* monster responds to player action; not the same as a passive attack */

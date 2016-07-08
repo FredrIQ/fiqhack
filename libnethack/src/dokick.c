@@ -378,10 +378,8 @@ ghitm(struct monst *magr, struct monst *mdef, struct obj * gold)
 
         if (!udef)
             add_to_minv(mdef, gold, NULL);
-        else {
-            addinv(gold);
-            encumber_msg();
-        }
+        else
+            pickobj(gold);
         return TRUE;
     }
 
