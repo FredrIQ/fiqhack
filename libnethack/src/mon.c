@@ -2599,6 +2599,7 @@ place_monster(struct monst *mon, xchar x, xchar y, boolean allow_effects)
         update_displacement(mon);
         if (!you && !mon->dlevel->locations[x][y].mem_invis) {
             if ((stealthy(mon) ? !rn2(10) : rn2(4)) &&
+                monnear(mon, youmonst.mx, youmonst.my) &&
                 ((msensem(&youmonst, mon) & MSENSE_DISPLACED) ||
                  (!canspotmon(mon) && !knownwormtail(x, y))) &&
                 reveal_monster_at(x, y, FALSE))
