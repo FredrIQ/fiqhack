@@ -1294,8 +1294,10 @@ reveal_monster_at(int x, int y, boolean unhide)
     if (unhide)
         mon->msleeping = 0; /* wakeup() angers mon */
 
-    if ((msensem(&youmonst, mon) & MSENSE_DISPLACED) ||
-        (!canspotmon(mon) && !knownwormtail(x, y)))
+    int msense = msensem(&youmonst, mon);
+    if ((msense & MSENSE_DISPLACED) ||
+        (!canspotmon(mon) && !(msense & MSENSE_WARNING) &&
+         !knownwormtail(x, y)))
         map_invisible(x, y);
 
     newsym(x, y);
