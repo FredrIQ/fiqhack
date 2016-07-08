@@ -516,8 +516,8 @@ adjust_move_offset(struct monst *mon, int oldspeed, int newspeed)
         NORMAL_SPEED;
 }
 
-boolean
-can_act_this_turn(struct monst *mon)
+int
+actions_remaining(struct monst *mon)
 {
     /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
 
@@ -547,7 +547,9 @@ can_act_this_turn(struct monst *mon)
 
     /* We can move if we've done fewer actions this turn than we have
        available. */
-    return flags.actions < actions_this_turn;
+    if (flags.actions >= actions_this_turn)
+        return 0;
+    return (actions_this_turn - flags.actions);
 }
 
 int
@@ -675,7 +677,7 @@ movemon(void)
         /* Find a monster that we have not treated yet.  */
         if (DEADMONSTER(mtmp))
             continue;
-        if (!can_act_this_turn(mtmp))
+        if (!actions_remaining(mtmp))
             continue;
 
         somebody_can_move = TRUE;
@@ -969,8 +971,12 @@ mpickstuff(struct monst *mon, boolean autopickup)
 {
     struct obj *otmp;
 
-    /* prevent shopkeepers from leaving the door of their shop */
-    if (mx_eshk(mon) && inhishop(mon))
+    /* don't run autopickup in a shop  */
+    if (autopickup && *in_rooms(level, mon->mx, mon->my, SHOPBASE))
+        return FALSE;
+
+    /* peaceful/tame monsters don't have autopickup: prevents frustration */
+    if (autopickup && mon->mpeaceful)
         return FALSE;
 
     /* can't pickup objects if we are levitating */
@@ -984,8 +990,9 @@ mpickstuff(struct monst *mon, boolean autopickup)
         (levitates(mon) || flying(mon) || waterwalks(mon)))
         return FALSE;
 
-    /* non-tame monsters normally don't go shopping */
-    if (*in_rooms(mon->dlevel, mon->mx, mon->my, SHOPBASE) && rn2(25))
+    /* non-tame monsters normally don't go shopping, and shopkeepers don't
+       pickup shop wares at all (not from other shops either) */
+    if (*in_rooms(mon->dlevel, mon->mx, mon->my, SHOPBASE) && (mx_eshk(mon) || rn2(25)))
         return FALSE;
 
     /* check unknown containers first, and try to investigate them before
@@ -2539,6 +2546,18 @@ remove_monster(struct level *lev, xchar x, xchar y)
     if (!mon)
         return;
 
+    /* TODO: Figure out when we can do this, and add an allow_effects */
+#if 0
+    if (mon != &youmonst && distmin(youmonst.mx, youmonst.my, x, y) == 1 &&
+        lev->locations[x][y].mem_invis) {
+        /* 75% of the time (unstealthy) or 10% of the time with, let the player notice */
+        if (stealthy(mon) ? !rn2(10) : rn2(4)) {
+            pline(msgc_youdiscover, "The monster moves away.");
+            lev->locations[x][y].mem_invis = 0;
+        }
+    }
+#endif
+
     /* remove the map->monster reference */
     lev->monsters[x][y] = NULL;
 
@@ -2547,11 +2566,10 @@ remove_monster(struct level *lev, xchar x, xchar y)
         unset_displacement(mon);
 }
 
-/* updatedisplacement: set to FALSE to avoid a displacement position update.
-   Used to avoid restoring from save updating it, and by makemon to avoid issues
-   checking displacement state */
+/* allow_effects: set to FALSE to allow side effects other than the placement of the
+   monster */
 void
-place_monster(struct monst *mon, xchar x, xchar y, boolean updatedisplacement)
+place_monster(struct monst *mon, xchar x, xchar y, boolean allow_effects)
 {
     if (!mon)
         panic("Placing non-existing monster?!");
@@ -2576,11 +2594,21 @@ place_monster(struct monst *mon, xchar x, xchar y, boolean updatedisplacement)
     } else
         impossible("placing monster on invalid spot (%d,%d)", x, y);
 
-    /* Update displacement position */
-    if (updatedisplacement)
+    /* Run post-placement code where side effects are allowed */
+    if (allow_effects) {
         update_displacement(mon);
+        if (!you && !mon->dlevel->locations[x][y].mem_invis) {
+            if ((stealthy(mon) ? !rn2(10) : rn2(4)) &&
+                ((msensem(&youmonst, mon) & MSENSE_DISPLACED) ||
+                 (!canspotmon(mon) && !knownwormtail(x, y))) &&
+                reveal_monster_at(x, y, FALSE))
+                pline(msgc_youdiscover, "Something you can't see walks nearby!");
+        }
+        mpickstuff(mon, TRUE); /* autopickup */
+    }
 
     set_displacement(mon);
+
 
     /* If a monster's moved to the location it believes the player to be on,
        it'll learn the player isn't there. */

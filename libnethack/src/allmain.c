@@ -701,7 +701,7 @@ you_moved(void)
     enum youprop p;
 
     /* Note: we track which heroes/monsters can move using flags.actions and
-       can_act_this_turn. When a hero or monster acts, we conceptually increase
+       actions_remaining. When a hero or monster acts, we conceptually increase
        the value of flags.actions for that hero or monster. However, there's
        only one flags.actions value. Therefore, we need to track each
        hero/monster's offset of action count from the global flags.actions.
@@ -726,7 +726,7 @@ you_moved(void)
 
             /* ...and now the global is correct. */
 
-            if (can_act_this_turn(&youmonst))
+            if (actions_remaining(&youmonst))
                 break;          /* it's now your turn */
 
             /* If we reach this point, then either monscanmove (in which case,
@@ -740,7 +740,7 @@ you_moved(void)
         } while (monscanmove);
         flags.mon_moving = FALSE;
 
-        if (!monscanmove && !can_act_this_turn(&youmonst)) {
+        if (!monscanmove && !actions_remaining(&youmonst)) {
             /* both you and the monsters are out of steam this round */
 
             /**************************************/
@@ -753,7 +753,7 @@ you_moved(void)
             /* No actions have happened yet this turn. (Combined with the change
                in 'moves', this effectively gives monsters and player a new
                movement point ration by changing the inputs to
-               can_act_this_turn.) */
+               actions_remaining.) */
             flags.actions = 0;
 
             if (flags.mon_generation &&
@@ -824,7 +824,7 @@ you_moved(void)
                you need 12 movement points for the code to reach the point where
                it runs neutral_turnstate_tasks). We're about to set
                youmonst.moveamt correctly, so we need to set youmonst.moveoffset
-               correctly too to let can_act_this_turn know to use it. */
+               correctly too to let actions_remaining know to use it. */
             if (youmonst.moveoffset >= 12) {
                 youmonst.moveoffset = 0;
             }
@@ -1002,7 +1002,7 @@ you_moved(void)
            will have negative actions), but because the hero can't act at all
            this turn, that's OK and will have the desired effect. */
 
-    } while (!can_act_this_turn(&youmonst)); /* hero can't move loop */
+    } while (!actions_remaining(&youmonst)); /* hero can't move loop */
 
     /******************************************/
     /* once-per-hero-took-time things go here */

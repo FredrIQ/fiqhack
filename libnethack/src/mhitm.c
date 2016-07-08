@@ -222,9 +222,12 @@ fightm(struct monst *mon)
     if (itsstuck(mon))
         return 0;
 
-    /* ignore tame monsters for now, it has its' own movement logic alltogether */
-    if (mon->mtame)
+    /* ignore tame monsters if recently whistled */
+    if (mon->mtame && (!mx_edog(mon) || (moves - mx_edog(mon)->whistletime) < 100)) {
+        pline(msgc_debug, "not attacking due to tameness: %d - %d", moves,
+              mx_edog(mon)->whistletime);
         return 0;
+    }
 
     int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
     int diry[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
@@ -245,7 +248,10 @@ fightm(struct monst *mon)
     for (i = 0; i < 8; i++) {
         x = mon->mx + dirx[try[i]];
         y = mon->my + diry[try[i]];
-        mtmp = m_at(level, x, y);
+        mtmp = mvismon_at(mon, level, x, y);
+        if (mtmp == &youmonst && !conflicted)
+            continue; /* run the normal AI for this */
+
         if (!mtmp || (!mm_aggression(mon, mtmp, conflicted) && !conflicted))
             continue;
 
@@ -258,17 +264,19 @@ fightm(struct monst *mon)
         /* For engulfers, a spent turn also gives an opportunity to continue
            hitting the hero (digestion, cold attacks, whatever) */
         if ((result & MM_AGR_DIED) ||
-            (Engulfed && mon == u.ustuck && mattacku(mon)))
+            (Engulfed && mon == u.ustuck && mtmp != &youmonst && mattacku(mon)))
             return 1; /* monster died */
 
-        /* Allow attacked monsters a chance to hit back. Primarily to
-           allow monsters that resist conflict to respond.
+        /* If a monster doesn't normally dislike this monster, or can't see it, retaliate
 
            Note: in 4.3, this no longer costs movement points, because
            it throws off the turn alternation.
            TODO: might want to handle sanity checks before retaliating,
            since this is no longer exclusively called by conflict */
-        if ((result & MM_HIT) && !(result & MM_DEF_DIED)) {
+        if ((result & MM_HIT) && !(result & MM_DEF_DIED) &&
+            (!mm_aggression(mtmp, mon, conflicted) ||
+             mvismon_at(mtmp, level, x, y) != mon) &&
+            monnear(mtmp, mon->mx, mon->my)) {
             notonhead = 0;
             mattackm(mtmp, mon); /* retaliation */
         }

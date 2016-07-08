@@ -648,6 +648,38 @@ itsstuck(struct monst *mtmp)
     return FALSE;
 }
 
+/* Returns a score for a tile for pathfind purposes. Generally, the closer the tile is,
+   the better. */
+int
+pathfind_score(struct monst *mon, int appr, struct distmap_state *ds, int x, int y)
+{
+    /* if appr is 0, every tile is equal */
+    if (!appr)
+        return 1;
+
+    int score = 0;
+
+    /* Give a bonus to items the monster wants */
+    struct obj *obj;
+    for (obj = mon->dlevel->objects[x][y]; obj; obj = obj->nexthere)
+        if (obj_interesting(mon, obj))
+            score += 2;
+
+    /* Gives a score for the distance depending on distmap state */
+    int dist = distmap(ds, x, y);
+
+    /* dist is lower if xy is closer to the goal, but higher score is better. Thus,
+       if appr is 1, negate it */
+    score = (appr == 1 ? -dist : dist);
+
+    /* I want to make some monsters who lack ranged attacks attempt to avoid
+       being in line with hostile monsters (out of fear for ranged attacks),
+       but doing that for everyone would lead to frustration. Figure out a
+       good way to limit this strategy. */
+
+    return score;
+}
+
 /*
  * Return values:
  * 0: Did not move, but can still attack and do other stuff.
@@ -853,6 +885,11 @@ not_special:
     nix = omx;
     niy = omy;
     flag = 0L;
+
+    /* Check if we have 1 action left. If we do, and we can jump, try it. */
+    /*if (actions_remaining(mtmp) == 1 && mon_jump(mtmp))
+      return 3;*/
+
     if (mtmp->mpeaceful && (!Conflict || resist(&youmonst, mtmp, RING_CLASS, 0, 0)))
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
@@ -883,7 +920,6 @@ not_special:
     {
         int i, nx, ny, better, score_tie;
         int cnt, chcnt;
-        int ndist = 0;
         int score = 0;
         int score_best = 0;
         coord poss[9];
@@ -914,22 +950,7 @@ not_special:
             nx = poss[i].x;
             ny = poss[i].y;
 
-            score = 0;
-
-            /* Give a bonus to items the monster wants */
-            struct obj *obj;
-            for (obj = mtmp->dlevel->objects[nx][ny]; obj; obj = obj->nexthere)
-                if (obj_interesting(mtmp, obj))
-                    score += 2;
-
-            /* I want to make some monsters who lack ranged attacks attempt to avoid
-               being in line with hostile monsters (out of fear for ranged attacks),
-               but doing that for everyone would lead to frustration. Figure out a
-               good way to limit this strategy. */
-
-            ndist = distmap(&ds, nx, ny);
-            score += (appr == 1 ? -ndist : ndist);
-
+            score = pathfind_score(mtmp, appr, &ds, nx, ny);
             better = (score > score_best);
             score_tie = (score == score_best);
 
@@ -1260,10 +1281,6 @@ postmov:
                 if (meatobj(mtmp) == 2)
                     return 2;   /* it died */
             }
-
-            if (!*in_rooms(level, mtmp->mx, mtmp->my, SHOPBASE) &&
-                !mtmp->mtame && mpickstuff(mtmp, TRUE))
-                mmoved = 3;
 
             /* We can't condition this on being invisible any more; maybe a
                monster just picked up gold or an invocation item */

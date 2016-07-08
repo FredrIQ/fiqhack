@@ -506,6 +506,7 @@ prop_wary(const struct monst *mon, struct monst *target, enum youprop prop)
     if (!mon ||
         prop == INVIS || /* "the invisible X" */
         prop == AGGRAVATE_MONSTER || /* "seen: aggravate monster" */
+        prop == DISPLACED || /* seen: displacement */
         (target == &youmonst && mon->mpeaceful) ||
         (target != &youmonst && mon->mpeaceful == target->mpeaceful) ||
         mon->iswiz || mon == target || mon->mtame)
