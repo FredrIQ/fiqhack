@@ -448,13 +448,7 @@ has_polyform_ability(const struct permonst *pm,
    compatibility with older versions. Also called indirectly from the
    spellcasting code, to implement monster attacks. */
 int
-domonability(const struct nh_cmd_arg *arg)
-{
-    struct musable m = arg_to_musable(arg);
-    return mdomonability(&m);
-}
-int
-mdomonability(const struct musable *m)
+domonability(const struct musable *m)
 {
     struct polyform_ability pa;
     if (cancelled(&youmonst)) {

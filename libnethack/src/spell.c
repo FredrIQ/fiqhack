@@ -1313,7 +1313,7 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
 }
 
 int
-spelleffects(boolean atme, struct musable *m)
+spelleffects(boolean atme, const struct musable *m)
 {
     int spell = m->spell;
     struct monst *mon = m->mon;
@@ -1341,15 +1341,15 @@ spelleffects(boolean atme, struct musable *m)
                musable wrappers since spelleffects no longer take an arg... */
             switch (spell) {
             case SPID_PRAY:
-                return mdopray(m);
+                return dopray(m);
             case SPID_TURN:
-                return mdoturn(m);
+                return doturn(m);
             case SPID_RLOC:
-                return mdotele(m);
+                return dotele(m);
             case SPID_JUMP:
                 return jump(m, 0);
             case SPID_MONS:
-                return mdomonability(m);
+                return domonability(m);
             default:
                 impossible("Unknown spell number %d?", spell);
                 return 0;

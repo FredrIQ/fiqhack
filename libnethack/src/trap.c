@@ -3216,7 +3216,8 @@ drown(void)
         pline(msgc_consequence,
               "You attempt a teleport spell."); /* utcsri!carroll */
         if (!level->flags.noteleport) {
-            dotele(&(struct nh_cmd_arg){.argtype = 0});
+            struct musable m = arg_to_musable(&(struct nh_cmd_arg){.argtype = 0});
+            dotele(&m);
             if (!is_pool(level, youmonst.mx, youmonst.my))
                 return TRUE;
         } else

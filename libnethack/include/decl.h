@@ -215,7 +215,10 @@ struct cmd_desc {
     const char *desc;
     char defkey, altkey;
     boolean can_if_buried;
-    int (*func)(const struct nh_cmd_arg *);
+    union {
+        int (*cmdarg)(const struct nh_cmd_arg *);
+        int (*cmdmuse)(const struct musable *);
+    };
     unsigned int flags;
 };
 

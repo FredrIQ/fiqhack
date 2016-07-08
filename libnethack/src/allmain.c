@@ -592,7 +592,8 @@ just_reloaded_save:
                 /* Internal commands weren't sent by the player, so don't
                    complain about them, just ignore them. Ditto for repeat. */
                 if (!(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
-                    cmdlist[cmdidx].func)
+                    !(!(cmdlist[cmdidx].flags & CMD_MUSABLE) &&
+                      cmdlist[cmdidx].cmdarg))
                     pline(msgc_cancelled,
                           "Command '%s' is unavailable while %s.", cmd.cmd,
                           program_state.followmode == FM_WATCH ?

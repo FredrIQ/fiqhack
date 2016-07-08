@@ -241,13 +241,7 @@ throw_obj(struct obj *obj, const struct musable *m,
 
 
 int
-dothrow(const struct nh_cmd_arg *arg)
-{
-    struct musable m = arg_to_musable(arg);
-    return mdothrow(&m);
-}
-int
-mdothrow(const struct musable *m)
+dothrow(const struct musable *m)
 {
     struct monst *mon = m->mon;
     struct obj *obj;
@@ -344,6 +338,7 @@ int
 dofire(const struct nh_cmd_arg *arg)
 {
     boolean cancel_unquivers = FALSE;
+    struct musable m = arg_to_musable(arg);
 
     if (notake(youmonst.data)) {
         pline(msgc_cancelled, "You are physically incapable of doing that.");
@@ -362,20 +357,19 @@ dofire(const struct nh_cmd_arg *arg)
                object when entering a firing direction. */
             cancel_unquivers = TRUE;
             if (!uquiver)
-                return dothrow(arg);
+                return dothrow(&m);
         }
         autoquiver();
         if (!uquiver) {
             pline_implied(msgc_cancelled,
                           "You have nothing appropriate for your quiver!");
-            return dothrow(arg);
+            return dothrow(&m);
         } else {
             pline(msgc_actionboring, "You fill your quiver:");
             prinv(NULL, uquiver, 0L);
         }
     }
 
-    struct musable m = arg_to_musable(arg);
     return throw_obj(uquiver, &m, cancel_unquivers);
 }
 

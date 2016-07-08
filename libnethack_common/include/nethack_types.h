@@ -171,6 +171,9 @@
                                            or dungeon, and not available through
                                            itemactions */
 
+/* pass a musable instead of a nh_cmd_arg for this command */
+# define CMD_MUSABLE    (1 << 30)
+
 /* note that CMD_INTERNAL commands should be ones that cannot be used to cheat
    if they're nonetheless sent manually anyway */
 

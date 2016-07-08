@@ -1681,13 +1681,7 @@ can_pray(boolean praying)
 }
 
 int
-dopray(const struct nh_cmd_arg *arg)
-{
-    struct musable m = arg_to_musable(arg);
-    return mdopray(&m);
-}
-int
-mdopray(struct musable *m)
+dopray(const struct musable *m)
 {
     /* Confirm accidental slips of Alt-P */
     if (flags.prayconfirm)
@@ -1781,14 +1775,9 @@ prayer_done(void)
     turnstate.pray.trouble = ptr_invalid;
 }
 
+/* Can't be const: can mess with m->spell */
 int
-doturn(const struct nh_cmd_arg *arg)
-{
-    struct musable m = arg_to_musable(arg);
-    return mdoturn(&m);
-}
-int
-mdoturn(struct musable *m)
+doturn(const struct musable *m)
 {
     struct monst *mtmp, *mtmp2;
     int once, range, xlev;
@@ -1805,8 +1794,10 @@ mdoturn(struct musable *m)
 
             if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == SPE_TURN_UNDEAD &&
                 spellknow(sp_no) > 0) {
-                m->spell = SPE_TURN_UNDEAD;
-                return spelleffects(TRUE, m);
+                /* m is const, so create a new musable */
+                struct musable m_new = *m;
+                m_new.spell = SPE_TURN_UNDEAD;
+                return spelleffects(TRUE, &m_new);
             }
         }
 

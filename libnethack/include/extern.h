@@ -433,8 +433,7 @@ extern void deliver_object(struct obj *obj, xchar dnum, xchar dlevel,
 /* ### dothrow.c ### */
 
 extern boolean will_weld(const struct obj *);
-extern int dothrow(const struct nh_cmd_arg *);
-extern int mdothrow(const struct musable *);
+extern int dothrow(const struct musable *);
 extern int dofire(const struct nh_cmd_arg *);
 extern void hitfloor(struct monst *, struct obj *);
 extern void hurtle(int, int, int, boolean);
@@ -1396,8 +1395,7 @@ extern void set_uasmon(void);
 extern void change_sex(void);
 extern void polyself(boolean);
 extern int polymon(int, boolean);
-extern int domonability(const struct nh_cmd_arg *);
-extern int mdomonability(const struct musable *);
+extern int domonability(const struct musable *);
 extern boolean has_polyform_ability(const struct permonst *,
                                     struct polyform_ability *);
 extern boolean touched_monster(int);
@@ -1429,12 +1427,10 @@ extern const char *bottlename(void);
 
 extern int dosacrifice(const struct nh_cmd_arg *);
 extern boolean can_pray(boolean);
-extern int dopray(const struct nh_cmd_arg *);
-extern int mdopray(struct musable *);
+extern int dopray(const struct musable *);
 extern void prayer_done(void);
 extern const char *u_gname(void);
-extern int doturn(const struct nh_cmd_arg *);
-extern int mdoturn(struct musable *);
+extern int doturn(const struct musable *);
 extern const char *a_gname(void);
 extern const char *a_gname_at(xchar x, xchar y);
 extern const char *align_gname(aligntyp);
@@ -1724,7 +1720,7 @@ extern int spell_skilltype(int);
 extern int mspell_skilltype(int);
 extern int monspellprot(struct monst *);
 extern int mon_castable(const struct monst *, int, boolean);
-extern int spelleffects(boolean, struct musable *);
+extern int spelleffects(boolean, const struct musable *);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
 extern void dump_spells(void);
@@ -1771,8 +1767,7 @@ extern boolean safe_teleds(boolean);
 extern boolean teleport_pet(struct monst *, boolean);
 extern int tele(void);
 extern int tele_impl(boolean wizard_tele, boolean next_to_u);
-extern int dotele(const struct nh_cmd_arg *);
-extern int mdotele(struct musable *);
+extern int dotele(const struct musable *);
 extern void level_tele(void);
 extern void mon_level_tele(struct monst *mon);
 extern void level_tele_impl(struct monst *, boolean wizard_tele);

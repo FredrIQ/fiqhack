@@ -2282,7 +2282,7 @@ use_item(struct musable *m)
         }
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_THROW:
-        ret = mdothrow(m);
+        ret = dothrow(m);
         return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_EAT:
         dog_eat(mon, obj, mon->mx, mon->my, FALSE);

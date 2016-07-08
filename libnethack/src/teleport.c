@@ -468,13 +468,7 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
    to the spell-handling function (which currently ignores it), but the other
    possible codepaths just lose it. */
 int
-dotele(const struct nh_cmd_arg *arg)
-{
-    struct musable m = arg_to_musable(arg);
-    return mdotele(&m);
-}
-int
-mdotele(struct musable *m)
+dotele(const struct musable *m)
 {
     struct trap *trap;
 
@@ -542,11 +536,10 @@ mdotele(struct musable *m)
 
         if (castit) {
             exercise(A_WIS, TRUE);
-            m->spell = SPE_TELEPORT_AWAY;
-            if (spelleffects(TRUE, m))
-                return 1;
-            else
-                return 0;
+            /* m is const, so create a new musable */
+            struct musable m_new = *m;
+            m_new.spell = SPE_TELEPORT_AWAY;
+            return spelleffects(TRUE, &m_new);
         } else
             u.uen -= energy;
     }
