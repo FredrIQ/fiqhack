@@ -566,7 +566,7 @@ dog_goal(struct monst *mon, struct edog *edog, int after, int udist,
         gx = mclose->mx;
         gy = mclose->my;
     } else {
-#define DDIST(x,y) (dist2(x,y,omx,omy))
+#define DDIST(x,y) (distmin(x,y,omx,omy))
 #define SQSRCHRADIUS 5
         int min_x, max_x, min_y, max_y;
         int nx, ny;
