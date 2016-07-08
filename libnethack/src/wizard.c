@@ -275,6 +275,20 @@ target_on(int mask, struct monst *mtmp)
     return FALSE;
 }
 
+boolean
+obj_interesting(struct monst *mon, struct obj *obj)
+{
+    return (((monster_would_take_item(mon, obj) &&
+              can_carry(mon, obj)) ||
+             ((Is_box(obj) || obj->otyp == ICE_BOX) &&
+              !obj->mknown && !nohands(mon->data) &&
+              !is_animal(mon->data) &&
+              !mindless(mon->data))) &&
+            (throws_rocks(mon->data) ||
+             !sobj_at(BOULDER, level, obj->ox, obj->oy)) &&
+            !(onscary(obj->ox, obj->oy, mon)));
+}
+
 /* Work out what this monster wants to be doing, and set its mstrategy field
    appropriately. magical_target is set if the monster should be magically aware
    of your position (typically due to someone casting "aggravate").
@@ -541,15 +555,7 @@ strategy(struct monst *mtmp, boolean magical_target)
                          !mtoo->data->mmove))
                         continue;
 
-                    if (((monster_would_take_item(mtmp, otmp) &&
-                          can_carry(mtmp, otmp)) ||
-                         ((Is_box(otmp) || otmp->otyp == ICE_BOX) &&
-                          !otmp->mknown && !nohands(mtmp->data) &&
-                          !is_animal(mtmp->data) &&
-                          !mindless(mtmp->data))) &&
-                        (throws_rocks(mtmp->data) ||
-                         !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
-                        !(onscary(otmp->ox, otmp->oy, mtmp))) {
+                    if (obj_interesting(mtmp, otmp)) {
                         minr = distmap(&ds, otmp->ox, otmp->oy) - 1;
                         gx = otmp->ox;
                         gy = otmp->oy;

@@ -881,9 +881,11 @@ not_special:
     if (doorbuster)
         flag |= BUSTDOOR;
     {
-        int i, nx, ny, nearer, distance_tie;
+        int i, nx, ny, better, score_tie;
         int cnt, chcnt;
-        int ndist, nidist;
+        int ndist = 0;
+        int score = 0;
+        int score_best = 0;
         coord poss[9];
 
         struct distmap_state ds;
@@ -895,7 +897,9 @@ not_special:
         chi = -1;
         if (flag & OPENDOOR)
             ds.mmflags |= MM_IGNOREDOORS;
-        nidist = distmap(&ds, omx, omy);
+        score_best = distmap(&ds, omx, omy);
+        if (appr == 1) /* more is better for score, appr=1 wants low dist */
+            score_best = -score_best;
 
         if (is_unicorn(ptr) && level->flags.noteleport) {
             /* on noteleport levels, perhaps we cannot avoid hero */
@@ -910,20 +914,37 @@ not_special:
             nx = poss[i].x;
             ny = poss[i].y;
 
-            nearer = ((ndist = distmap(&ds, nx, ny)) < nidist);
-            distance_tie = (ndist == nidist);
+            score = 0;
 
-            if ((appr == 1 && nearer) ||
-                (appr == -1 && !nearer && !distance_tie) ||
-                (appr && distance_tie && !rn2(++chcnt)) ||
-                (!appr && !rn2(++chcnt)) || !mmoved) {
+            /* Give a bonus to items the monster wants */
+            struct obj *obj;
+            for (obj = mtmp->dlevel->objects[nx][ny]; obj; obj = obj->nexthere)
+                if (obj_interesting(mtmp, obj))
+                    score += 2;
+
+            /* I want to make some monsters who lack ranged attacks attempt to avoid
+               being in line with hostile monsters (out of fear for ranged attacks),
+               but doing that for everyone would lead to frustration. Figure out a
+               good way to limit this strategy. */
+
+            ndist = distmap(&ds, nx, ny);
+            score += (appr == 1 ? -ndist : ndist);
+
+            better = (score > score_best);
+            score_tie = (score == score_best);
+
+            if (!mmoved ||
+                (!appr && !rn2(++chcnt)) ||
+                (appr &&
+                 ((score_tie && !rn2(++chcnt)) ||
+                  better))) {
                 nix = nx;
                 niy = ny;
-                nidist = ndist;
+                score_best = score;
                 chi = i;
                 mmoved = 1;
 
-                if (appr && !distance_tie)
+                if (appr && !score_tie)
                     chcnt = 1;
             }
         }

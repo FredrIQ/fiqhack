@@ -2006,6 +2006,7 @@ extern int mon_has_special(const struct monst *);
 extern boolean mon_has_arti(const struct monst *, short);
 extern boolean target_on(int, struct monst *);
 extern int tactics(struct monst *);
+extern boolean obj_interesting(struct monst *, struct obj *);
 extern void strategy(struct monst *, boolean);
 extern boolean covetous_sense(const struct monst *, const struct monst *);
 extern void aggravate(void);
