@@ -6,11 +6,11 @@
 
 #include "hack.h"
 
-static void wildmiss(struct monst *, const struct attack *);
+static void wildmiss(struct monst *, struct monst *, const struct attack *);
 
 /* monster attacked your displaced image */
 static void
-wildmiss(struct monst *mtmp, const struct attack *mattk)
+wildmiss(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
     int compat;
 
@@ -18,31 +18,28 @@ wildmiss(struct monst *mtmp, const struct attack *mattk)
 
     if (!flags.verbose)
         return;
-    if (!cansee(mtmp->mx, mtmp->my))
+    if (!cansee(magr->mx, magr->my))
         return;
     /* maybe it's attacking an image around the corner? */
 
     compat = (mattk->adtyp == AD_SEDU || mattk->adtyp == AD_SSEX) &&
-        could_seduce(mtmp, &youmonst, NULL);
+        could_seduce(magr, mdef, NULL);
 
-    switch(awareness_reason(mtmp)) {
-
+    switch (mdef != &youmonst ? mar_guessing_displaced : awareness_reason(magr)) {
     case mar_guessing_other:
-
         if (Underwater) {
             /* monsters may miss especially on water level where bubbles shake
                the player here and there */
             if (compat)
-                pline(combat_msgc(mtmp, &youmonst, cr_miss),
-                      "%s reaches towards your distorted image.", Monnam(mtmp));
+                pline(combat_msgc(magr, mdef, cr_miss),
+                      "%s reaches towards your distorted image.", Monnam(magr));
             else
-                pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                pline(combat_msgc(magr, mdef, cr_miss),
                       "%s is fooled by water reflections and misses!",
-                      Monnam(mtmp));
+                      Monnam(magr));
             break;
         }
-        /* otherwise fall through */
- 
+        /* fallthrough */
     case mar_guessing_invis:
 
         ;
@@ -50,33 +47,33 @@ wildmiss(struct monst *mtmp, const struct attack *mattk)
             mattk->aatyp == AT_BITE ? "snaps" : mattk->aatyp ==
             AT_KICK ? "kicks" : (mattk->aatyp == AT_STNG ||
                                  mattk->aatyp == AT_BUTT ||
-                                 nolimbs(mtmp->data)) ? "lunges" : "swings";
+                                 nolimbs(magr->data)) ? "lunges" : "swings";
 
         if (compat)
-            pline(combat_msgc(mtmp, &youmonst, cr_miss),
-                  "%s tries to touch you and misses!", Monnam(mtmp));
+            pline(combat_msgc(magr, mdef, cr_miss),
+                  "%s tries to touch you and misses!", Monnam(magr));
         else
             switch (rn2(3)) {
             case 0:
-                pline(combat_msgc(mtmp, &youmonst, cr_miss),
-                      "%s %s wildly and misses!", Monnam(mtmp), swings);
+                pline(combat_msgc(magr, mdef, cr_miss),
+                      "%s %s wildly and misses!", Monnam(magr), swings);
                 break;
             case 1:
-                pline(combat_msgc(mtmp, &youmonst, cr_miss),
-                      "%s attacks a spot beside you.", Monnam(mtmp));
+                pline(combat_msgc(magr, mdef, cr_miss),
+                      "%s attacks a spot beside you.", Monnam(magr));
                 break;
             case 2:
                 /* Note: mar_guessing_invis implies that the muxy is a) valid,
                    and b) wrong (from the monster's point of view). So we can
                    print this without needing any further sanity checks. */
-                pline(combat_msgc(mtmp, &youmonst, cr_miss),
-                      "%s strikes at %s!", Monnam(mtmp),
-                      level->locations[mtmp->mux][mtmp->muy].typ ==
+                pline(combat_msgc(magr, mdef, cr_miss),
+                      "%s strikes at %s!", Monnam(magr),
+                      level->locations[magr->mux][magr->muy].typ ==
                       WATER ? "empty water" : "thin air");
                 break;
             default:
-                pline(combat_msgc(mtmp, &youmonst, cr_miss),
-                      "%s %s wildly!", Monnam(mtmp), swings);
+                pline(combat_msgc(magr, mdef, cr_miss),
+                      "%s %s wildly!", Monnam(magr), swings);
                 break;
             }
 
@@ -85,27 +82,29 @@ wildmiss(struct monst *mtmp, const struct attack *mattk)
     case mar_guessing_displaced:
 
         if (compat)
-            pline(combat_msgc(mtmp, &youmonst, cr_miss),
-                  "%s smiles %s at your %sdisplaced image...", Monnam(mtmp),
-                  compat == 2 ? "engagingly" : "seductively",
-                  Invis ? "invisible " : "");
+            pline(combat_msgc(magr, mdef, cr_miss),
+                  "%s smiles %s at %s %sdisplaced image...", Monnam(magr),
+                  s_suffix(mon_nam(mdef)), compat == 2 ? "engagingly" : "seductively",
+                  mdef == &youmonst && invisible(mdef) ? "invisible " : "");
         else
-            pline(combat_msgc(mtmp, &youmonst, cr_miss),
-                  "%s strikes at your %sdisplaced image and misses you!",
+            pline(combat_msgc(magr, mdef, cr_miss),
+                  "%s strikes at %s %sdisplaced image and misses %s!", Monnam(magr),
+                  s_suffix(mon_nam(mdef)),
+                  mdef == &youmonst && invisible(mdef) ? "invisible " : "",
+                  mdef == &youmonst ? "you" : mhim(mdef));
                   /* Note: if you're both invisible and displaced, only
                      monsters which see invisible will attack your displaced
                      image, since the displaced image is also invisible. */
-                  Monnam(mtmp), Invis ? "invisible " : "");
 
         break;
 
     case mar_unaware:
         impossible("%s attacks you without knowing your location?",
-                   Monnam(mtmp));
+                   Monnam(magr));
         break;
 
     case mar_aware:
-        impossible("%s misses wildly for no reason?", Monnam(mtmp));
+        impossible("%s misses wildly for no reason?", Monnam(magr));
         break;
     }
 }
@@ -149,7 +148,10 @@ mattackq(struct monst *mtmp, int x, int y)
                 return 2;
         }
         return 3;
-    }
+    } else
+        mdef = dm_at(mtmp->dlevel, x, y);
+    if (!mdef)
+        mdef = &youmonst; /* it is assumed that it tried to attack you */
 
     mpreattack(mtmp);
 
@@ -169,7 +171,7 @@ mattackq(struct monst *mtmp, int x, int y)
         case AT_TUCH:
         case AT_BUTT:
         case AT_TENT:
-            wildmiss(mtmp, mattk);
+            wildmiss(mtmp, mdef, mattk);
             break;
 
         case AT_HUGS:  /* requires previous attacks to succeed */

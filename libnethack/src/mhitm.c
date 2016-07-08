@@ -256,10 +256,10 @@ fightm(struct monst *mon)
             continue;
 
         /* TODO: why are these needed... */
-        bhitpos.x = mtmp->mx;
-        bhitpos.y = mtmp->my;
+        bhitpos.x = x;
+        bhitpos.y = x;
         notonhead = 0; /* what if it is? */
-        result = mattackm(mon, mtmp);
+        result = mattackq(mon, x, y);
 
         /* For engulfers, a spent turn also gives an opportunity to continue
            hitting the hero (digestion, cold attacks, whatever) */

@@ -104,6 +104,12 @@ mon_vision_summary(const struct monst *mtmp, char *outbuf)
     char *outbufp = outbuf;
     char wbuf[BUFSZ];
 
+    /* don't spoil whenever a displaced monster isn't showing the displaced image because
+       of being outside FOV or similar */
+    if (!(msense_status & ~(MSENSE_ANYVISION | MSENSEF_KNOWNINVIS)) &&
+        displaced(mtmp))
+        msense_status |= MSENSE_DISPLACED;
+
     outbuf[0] = '\0';
 
     if (msense_status & MSENSE_VISION)

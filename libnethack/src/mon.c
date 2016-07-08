@@ -2641,6 +2641,13 @@ update_displacement(struct monst *mon)
     int x;
     int y;
     int i;
+    int gpflags = MM_IGNOREMONST;
+    if (flying(mon) || levitates(mon) || waterwalks(mon) || unbreathing(mon) ||
+        swims(mon))
+        gpflags |= MM_IGNOREWATER;
+    if (phasing(mon))
+        gpflags |= MM_CHEWROCK;
+
     struct level *lev = m_dlevel(mon);
     for (i = 0; i < 100; i++) {
         x = (rn1(5, m_mx(mon)) - 2);
@@ -2649,11 +2656,11 @@ update_displacement(struct monst *mon)
         /* is the position sane */
         if (!isok(x, y)) /* valid */
             continue;
-        if (!ACCESSIBLE(lev->locations[x][y].typ) && !phasing(mon)) /* accessible */
+        if (lev->dmonsters[x][y]) /* claimed by someone else */
             continue;
         if (closed_door(lev, x, y) && !can_ooze(mon)) /* not a closed door */
             continue;
-        if (lev->dmonsters[x][y]) /* claimed by someone else */
+        if (!goodpos(lev, x, y, mon, gpflags)) /* accessible */
             continue;
         break; /* valid pos found */
     }
