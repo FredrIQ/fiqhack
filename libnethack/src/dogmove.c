@@ -561,7 +561,7 @@ dog_goal(struct monst *mon, struct edog *edog, int after, int udist,
         gtyp = df_apport;
         gx = youmonst.mx;
         gy = youmonst.my;
-    } else if ((mclose = find_closest_target(mon, 400))) {
+    } else if ((mclose = find_closest_target(mon, 20))) {
         gtyp = df_apport;
         gx = mclose->mx;
         gy = mclose->my;

@@ -1252,7 +1252,7 @@ find_closest_target(struct monst *mon, int range_limit)
                                     conflicted)) {
         if ((msensem(mon, &youmonst) & MSENSE_ANYVISION) ||
             m_cansee(mon, youmonst.mx, youmonst.my)) {
-            hostrange = dist2(mon->mx, mon->my, youmonst.mx, youmonst.my);
+            hostrange = distmin(mon->mx, mon->my, youmonst.mx, youmonst.my);
             mclose = &youmonst;
         }
     }
@@ -1266,8 +1266,8 @@ find_closest_target(struct monst *mon, int range_limit)
         if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
             m_cansee(mon, mtmp->mx, mtmp->my)) {
             if (!hostrange ||
-                hostrange > dist2(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
-                hostrange = dist2(mon->mx, mon->my, mtmp->mx, mtmp->my);
+                hostrange > distmin(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
+                hostrange = distmin(mon->mx, mon->my, mtmp->mx, mtmp->my);
                 mclose = mtmp;
             }
         }
@@ -1301,8 +1301,8 @@ find_item(struct monst *mon, struct musable *m)
 
     struct monst *mtmp = NULL;
 
-    /* range of 100 is the cap on fireball, cone of cold and summon nasty */
-    struct monst *mclose = find_closest_target(mon, 100);
+    /* range of 10 is the cap on fireball, cone of cold and summon nasty */
+    struct monst *mclose = find_closest_target(mon, 10);
 
     m->obj = NULL;
     m->spell = 0;
