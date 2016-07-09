@@ -2775,7 +2775,8 @@ add_property_eline(struct nh_menulist *menu, int show_source, const struct monst
        property is either not blocked, or the block is dormant */
     if ((!blocked && !has_property(mon, prop)) ||
         (blocked &&
-         !(m_has_property(mon, prop, ANY_PROPERTY, TRUE) & ~W_MASK(os_blocked))))
+         (!bhas_property(mon, prop) ||
+          !(m_has_property(mon, prop, ANY_PROPERTY, TRUE) & ~W_MASK(os_blocked)))))
         return;
 
     eline(menu, "%s %s", who, what);
