@@ -1929,11 +1929,22 @@ dospellmenu(const struct monst *mon,
                           (spellid(i) == SPID_PRAY || spellid(i) == SPID_TURN) ?
                           "divine" : "ability");
         } else {
+            /* Book of the Dead ('b') is used as sentinel for WoY double trouble */
+            if (i == 1) {
+                if (!mon->iswiz)
+                    continue;
+                buf = msgprintf("double trouble\t%-d \tclerical\t%-d%%\t%-d%%", 7, 0,
+                                100);
+                set_menuitem(&items[count++], i + 1, MI_NORMAL, buf,
+                             'b', FALSE);
+                continue;
+            }
             /* Iterate like this to preserve sane letter ordering */
             for (otyp = SPE_DIG; otyp <= SPE_BOOK_OF_THE_DEAD; otyp++)
                 if (objects[otyp].oc_defletter == spelllet_from_no(i))
                     break;
-            /* Book of the Dead is used as sentinel for WoY double trouble */
+            if (otyp > SPE_BOOK_OF_THE_DEAD)
+                continue;
             if (otyp == SPE_BLANK_PAPER ||
                 (otyp != SPE_BOOK_OF_THE_DEAD &&
                  !mon_castable(mon, otyp, TRUE)))
@@ -1941,11 +1952,8 @@ dospellmenu(const struct monst *mon,
             if (otyp == SPE_BOOK_OF_THE_DEAD && !mon->iswiz)
                 break;
             buf = msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%",
-                            otyp == SPE_BOOK_OF_THE_DEAD ? "double trouble" :
                             OBJ_NAME(objects[otyp]),
-                            otyp == SPE_BOOK_OF_THE_DEAD ? 7 :
                             objects[otyp].oc_level, " ",
-                            otyp == SPE_BOOK_OF_THE_DEAD ? "clerical" :
                             spelltypemnemonic(spell_skilltype(otyp)),
                             100 - percent_success(mon, otyp),
                             100);
@@ -2091,6 +2099,8 @@ percent_success(const struct monst *mon, int spell)
         /* Player is above level.  Learning continues, but the law of
            diminishing returns sets in quickly for low-level spells.  That is,
            a player quickly gains no advantage for raising level. */
+        if (!objects[spell].oc_level)
+            panic("Invalid spell: %s", OBJ_NAME(objects[spell]));
         int learning = 15 * -difficulty / objects[spell].oc_level;
 
         chance += learning > 20 ? 20 : learning;

@@ -799,8 +799,8 @@ const struct objclass const_objects[] = {
  * the last SPID_COUNT (those letters are reserved for supernatural abilities)
  *
  * Currently used: aABcCdDefFgGhHiIjkKlLmMnNoOpPqrRsStTuUvwxyz
- *         unused: bEJQ
- *       reserved: VWXYZ
+ *         unused: EJQ
+ *       reserved: bVWXYZ
  *
  * Reasoning:
  * - most spells get the first letter of their name
@@ -911,7 +911,7 @@ const struct objclass const_objects[] = {
    probing (WoY double trouble). */
     OBJECT(OBJ("Book of the Dead", "papyrus"),
            BITS(0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, P_NONE, PAPER), 0,
-           SPBOOK_CLASS, 0, 0, 20, 10000, 0, 0, 'b', 7, 20, HI_PAPER),
+           SPBOOK_CLASS, 0, 0, 20, 10000, 0, 0, 0, 7, 20, HI_PAPER),
 #undef SPELL
 
 /* wands ... */
