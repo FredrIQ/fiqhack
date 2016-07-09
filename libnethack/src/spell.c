@@ -47,7 +47,7 @@ spellname(int spell)
 static boolean cursed_book(struct monst *, struct obj *bp);
 static boolean confused_book(struct monst *, struct obj *);
 static int learn(void);
-static boolean dospellmenu(const char *, int, int *);
+static boolean dospellmenu(const struct monst *, const char *, int, int *);
 static int percent_success(const struct monst *, int);
 static int throwspell(boolean, schar *dx, schar *dy, const struct musable *arg);
 static boolean cast_protection(struct monst *, boolean);
@@ -1013,7 +1013,7 @@ age_spells(void)
 boolean
 getspell(int *spell_no)
 {
-    boolean ret = dospellmenu("Choose which spell to cast", SPELLMENU_CAST,
+    boolean ret = dospellmenu(&youmonst, "Choose which spell to cast", SPELLMENU_CAST,
                               spell_no);
     flags.last_arg.argtype &= ~CMD_ARG_SPELL;
     if (ret) {
@@ -1877,10 +1877,10 @@ dovspell(const struct nh_cmd_arg *arg)
 
     (void) arg;
 
-    while (dospellmenu("Your magical abilities", SPELLMENU_VIEW, &splnum)) {
+    while (dospellmenu(&youmonst, "Your magical abilities", SPELLMENU_VIEW, &splnum)) {
         qbuf = msgprintf("Reordering magic: adjust '%c' to",
                          spelllet_from_no(splnum));
-        if (!dospellmenu(qbuf, splnum, &othnum))
+        if (!dospellmenu(&youmonst, qbuf, splnum, &othnum))
             break;
 
         spl_tmp = spl_book[splnum];
@@ -1890,12 +1890,23 @@ dovspell(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+
+void
+show_monster_spells(const struct monst *mon)
+{
+    const char *buf = msgprintf("%s %s:", s_suffix(noit_Monnam(mon)),
+                                "spells");
+    dospellmenu(mon, buf, SPELLMENU_VIEW, NULL);
+}
+
 static boolean
-dospellmenu(const char *prompt,
+dospellmenu(const struct monst *mon,
+            const char *prompt,
             int splaction,  /* SPELLMENU_CAST, SPELLMENU_VIEW, or
                                spl_book[] index */
             int *spell_no)
 {
+    boolean you = (mon == &youmonst);
     int i, n, how, count = 0;
     struct nh_menuitem items[MAXSPELL + 1];
     const int *selected;
@@ -1903,19 +1914,46 @@ dospellmenu(const char *prompt,
     set_menuitem(&items[count++], 0, MI_HEADING,
                  "Name\tLevel\tCategory\tFail\tMemory", 0, FALSE);
     for (i = 0; i < MAXSPELL; i++) {
-        if (spellid(i) == NO_SPELL)
-            continue;
-        const char *buf = SPELL_IS_FROM_SPELLBOOK(i) ?
-            msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
-                      spellknow(i) ? " " : "*",
-                      spelltypemnemonic(spell_skilltype(spellid(i))),
-                      100 - percent_success(&youmonst, spellid(i)),
-                      (spellknow(i) * 100 + (KEEN - 1)) / KEEN) :
-            msgprintf("%s\t--\t%s\t?\t--", spellname(i),
-                      (spellid(i) == SPID_PRAY || spellid(i) == SPID_TURN) ?
-                      "divine" : "ability");
+        int otyp = 0;
+        const char *buf;
+        if (you) {
+            if (spellid(i) == NO_SPELL)
+                continue;
+            buf = SPELL_IS_FROM_SPELLBOOK(i) ?
+                msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
+                          spellknow(i) ? " " : "*",
+                          spelltypemnemonic(spell_skilltype(spellid(i))),
+                          100 - percent_success(&youmonst, spellid(i)),
+                          (spellknow(i) * 100 + (KEEN - 1)) / KEEN) :
+                msgprintf("%s\t--\t%s\t?\t--", spellname(i),
+                          (spellid(i) == SPID_PRAY || spellid(i) == SPID_TURN) ?
+                          "divine" : "ability");
+        } else {
+            /* Iterate like this to preserve sane letter ordering */
+            for (otyp = SPE_DIG; otyp <= SPE_BOOK_OF_THE_DEAD; otyp++)
+                if (objects[otyp].oc_defletter == spelllet_from_no(i))
+                    break;
+            /* Book of the Dead is used as sentinel for WoY double trouble */
+            if (otyp == SPE_BLANK_PAPER ||
+                (otyp != SPE_BOOK_OF_THE_DEAD &&
+                 !mon_castable(mon, otyp, TRUE)))
+                continue;
+            if (otyp == SPE_BOOK_OF_THE_DEAD && !mon->iswiz)
+                break;
+            buf = msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%",
+                            otyp == SPE_BOOK_OF_THE_DEAD ? "double trouble" :
+                            OBJ_NAME(objects[otyp]),
+                            otyp == SPE_BOOK_OF_THE_DEAD ? 7 :
+                            objects[otyp].oc_level, " ",
+                            otyp == SPE_BOOK_OF_THE_DEAD ? "clerical" :
+                            spelltypemnemonic(spell_skilltype(otyp)),
+                            100 - percent_success(mon, otyp),
+                            100);
+        }
         set_menuitem(&items[count++], i + 1, MI_NORMAL, buf,
-                     spelllet_from_no(i), FALSE);
+                     you ? spelllet_from_no(i) : objects[otyp].oc_defletter, FALSE);
+        if (!you && otyp == SPE_BOOK_OF_THE_DEAD)
+            break;
     }
 
     how = PICK_ONE;
@@ -1951,7 +1989,7 @@ dump_spells(void)
 {
     /* note: the actual dumping is done in dump_display_menu(), we just need to
        get the data there. */
-    dospellmenu("Spells and supernatural/magical abilities:",
+    dospellmenu(&youmonst, "Spells and supernatural/magical abilities:",
                 SPELLMENU_VIEW, NULL);
 }
 

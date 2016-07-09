@@ -907,10 +907,11 @@ const struct objclass const_objects[] = {
           NODIR, CLR_YELLOW, 'q'),
 /* blank spellbook must come last because it retains its description */
     SPELL("blank paper", "plain", P_NONE, 18, 0, 0, 0, 0, HI_PAPER, 0),
-/* a special, one of a kind, spellbook */
+/* a special, one of a kind, spellbook. Spell letter is 'b', used for monster spell
+   probing (WoY double trouble). */
     OBJECT(OBJ("Book of the Dead", "papyrus"),
            BITS(0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, P_NONE, PAPER), 0,
-           SPBOOK_CLASS, 0, 0, 20, 10000, 0, 0, 0, 7, 20, HI_PAPER),
+           SPBOOK_CLASS, 0, 0, 20, 10000, 0, 0, 'b', 7, 20, HI_PAPER),
 #undef SPELL
 
 /* wands ... */

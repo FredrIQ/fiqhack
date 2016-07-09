@@ -1725,6 +1725,7 @@ extern int mon_castable(const struct monst *, int, boolean);
 extern int spelleffects(boolean, const struct musable *);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
+extern void show_monster_spells(const struct monst *);
 extern void dump_spells(void);
 extern void initialspell(struct obj *);
 

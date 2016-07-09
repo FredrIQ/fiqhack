@@ -320,6 +320,12 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         probe_monster(mdef);
         if (wandlevel >= P_SKILLED)
             enlighten_mon(mdef, 0, (wandlevel == P_MASTER));
+        if (wandlevel == P_MASTER) {
+            if (mdef->mspells || mdef->iswiz)
+                show_monster_spells(mdef);
+            else
+                pline(msgc_info, "%s no spells.", M_verbs(mdef, "has"));
+        }
         known = TRUE;
         break;
     case WAN_OPENING:
@@ -2145,17 +2151,6 @@ zap_steed(struct obj *obj)
     int steedhit = FALSE;
 
     switch (obj->otyp) {
-
-        /*
-         * Wands that are allowed to hit the steed
-         * Carefully test the results of any that are
-         * moved here from the bottom section.
-         */
-    case WAN_PROBING:
-        probe_monster(u.usteed);
-        makeknown(WAN_PROBING);
-        steedhit = TRUE;
-        break;
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         /* you go together */
@@ -2167,6 +2162,7 @@ zap_steed(struct obj *obj)
         break;
 
         /* Default processing via bhitm() for these */
+    case WAN_PROBING:
     case SPE_CURE_SICKNESS:
     case WAN_MAKE_INVISIBLE:
     case WAN_CANCELLATION:

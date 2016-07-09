@@ -223,11 +223,8 @@ fightm(struct monst *mon)
         return 0;
 
     /* ignore tame monsters if recently whistled */
-    if (mon->mtame && (!mx_edog(mon) || (moves - mx_edog(mon)->whistletime) < 100)) {
-        pline(msgc_debug, "not attacking due to tameness: %d - %d", moves,
-              mx_edog(mon)->whistletime);
+    if (mon->mtame && (!mx_edog(mon) || (moves - mx_edog(mon)->whistletime) < 100))
         return 0;
-    }
 
     int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
     int diry[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };

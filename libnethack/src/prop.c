@@ -2178,6 +2178,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
         dx = viewee->dx, dy = viewee->dy;
 
     int distance = dist2(sx, sy, tx, ty);
+    /* 500 is arbitrary, it prevents oddities in xray vision */
     int distance_displaced = (displaced(viewee) ? dist2(sx, sy, dx, dy) : 500);
 
     /* Special case: if either endpoint is an engulfing monster, then we want
