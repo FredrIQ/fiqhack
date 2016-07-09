@@ -1945,12 +1945,8 @@ dospellmenu(const struct monst *mon,
                     break;
             if (otyp > SPE_BOOK_OF_THE_DEAD)
                 continue;
-            if (otyp == SPE_BLANK_PAPER ||
-                (otyp != SPE_BOOK_OF_THE_DEAD &&
-                 !mon_castable(mon, otyp, TRUE)))
+            if (!mon_castable(mon, otyp, TRUE))
                 continue;
-            if (otyp == SPE_BOOK_OF_THE_DEAD && !mon->iswiz)
-                break;
             buf = msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%",
                             OBJ_NAME(objects[otyp]),
                             objects[otyp].oc_level, " ",
