@@ -685,7 +685,7 @@ mon_addspell(struct monst *mon, int typ)
 {
     /* FIXME: don't rely on a certain spell being first */
     int mspellid = (typ - SPE_DIG);
-    mon->mspells |= (uint64_t)(1 << mspellid);
+    mon->mspells |= ((uint64_t)1 << mspellid);
     return mspellid;
 }
 
@@ -1296,7 +1296,7 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
     /* FIXME: don't rely on spell order */
     int mspellid = spell - SPE_DIG;
 
-    if (!(mon->mspells & (uint64_t)(1 << mspellid)))
+    if (!(mon->mspells & ((uint64_t)1 << mspellid)))
         return 0;
 
     /* calculate fail rate */
