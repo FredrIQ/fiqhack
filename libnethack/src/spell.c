@@ -1966,6 +1966,8 @@ dospellmenu(const struct monst *mon,
 
     n = display_menu(&(struct nh_menulist){.items = items, .icount = count},
                      prompt, how, PLHINT_ANYWHERE, &selected);
+    if (!you)
+        return FALSE;
 
     if (n > 0) {
         *spell_no = selected[0] - 1;
