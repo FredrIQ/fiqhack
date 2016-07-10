@@ -1634,10 +1634,8 @@ potionbreathe(struct monst *mon, struct obj *obj)
             exercise(A_DEX, TRUE);
         break;
     case POT_BLINDNESS:
-        if (you && !blind(mon)) {
+        if (you && !blind(mon))
             kn++;
-            pline(msgc_statusbad, "It suddenly gets dark.");
-        }
         set_property(mon, BLINDED, rnd(5), FALSE);
         if (you && !blind(mon))
             pline(msgc_statusheal, "Your vision quickly clears.");
