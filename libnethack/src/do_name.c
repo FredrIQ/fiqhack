@@ -403,6 +403,10 @@ x_monnam(const struct monst *mtmp,
                             of all the above */
          boolean called)
 {
+    /* Return "you" unconditionally for players */
+    if (mtmp == &youmonst)
+        return "you";
+
     const struct permonst *mdat = mtmp->data;
     boolean do_hallu, do_invis, do_it, do_saddle;
     boolean name_at_start, has_adjectives;
