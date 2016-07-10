@@ -24,15 +24,14 @@ enum monuse {
     MUSE_POLY_TRAP,
     MUSE_ASCEND,
 
-    /* general items */
-    MUSE_SCR,
-    MUSE_POT,
+    /* general commands */
+    MUSE_CAST,
+    MUSE_QUAFF,
+    MUSE_READ,
     MUSE_THROW,
-    MUSE_WAN,
-    MUSE_SPE,
+    MUSE_ZAP,
     MUSE_CONTAINER,
     MUSE_EAT,
-    MUSE_BOOK,
 
     /* misc (TODO: merge tools into a single function) */
     MUSE_UNICORN_HORN,

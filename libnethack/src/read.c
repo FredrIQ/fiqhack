@@ -33,29 +33,43 @@ static void do_earth(struct level *, int, int, int, struct monst *);
 static void set_lit(int, int, void *);
 
 int
-doread(const struct nh_cmd_arg *arg)
+doread(const struct musable *m)
 {
-    boolean confused, known;
-    struct obj *scroll;
+    struct monst *mon = m->mon;
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
+    boolean confused = confused(mon);
+    boolean known = FALSE;
 
-    known = FALSE;
-    if (check_capacity(NULL))
+    if (you && check_capacity(NULL))
         return 0;
 
-    scroll = getargobj(arg, readable, "read");
-    if (!scroll)
+    struct obj *obj = mgetargobj(m, readable, "read");
+    if (!obj)
         return 0;
 
-    /* outrumor has its own blindness check */
-    if (scroll->otyp == FORTUNE_COOKIE) {
-        pline(msgc_occstart,
-              "You break up the cookie and throw away the pieces.");
-        outrumor(bcsign(scroll), BY_COOKIE);
-        if (!Blind)
+    if (obj->otyp == FORTUNE_COOKIE) {
+        if (blind(mon)) {
+            pline(msgc_cancelled,
+                  "Being blind, %s wouldn't be able to read the paper anyway.",
+                  mon_nam(mon));
+            if (!you)
+                impossible("Monster reading a fortune cookie while blind?");
+            return 0;
+        }
+        if (vis)
+            pline(you ? msgc_occstart : msgc_monneutral,
+                  "%s up the cookie and throw away the pieces.", M_verbs(mon, "break"));
+        if (you) {
+            outrumor(bcsign(obj), BY_COOKIE);
             break_conduct(conduct_illiterate);
-        useup(scroll);
+        }
+        if (you)
+            useup(obj);
+        else
+            m_useup(mon, obj);
         return 1;
-    } else if (scroll->otyp == T_SHIRT) {
+    } else if (obj->otyp == T_SHIRT) {
         static const char *const shirt_msgs[] = {       /* Scott Bigham */
             "I explored the Dungeons of Doom and all I got was this lousy "
                 "T-shirt!",
@@ -79,81 +93,122 @@ doread(const struct nh_cmd_arg *arg)
         const char *buf;
         int erosion;
 
-        if (Blind) {
+        if (blind(mon)) {
             pline(msgc_cancelled, "You can't feel any Braille writing.");
+            if (!you)
+                impossible("Monster reading a T-shirt while blind?");
             return 0;
         }
-        break_conduct(conduct_illiterate);
-        pline_implied(msgc_info, "It reads:");
-        buf = shirt_msgs[scroll->o_id % SIZE(shirt_msgs)];
-        erosion = greatest_erosion(scroll);
-        if (erosion)
-            buf = eroded_text(buf,
-                              (int)(strlen(buf) * erosion / (2 * MAX_ERODE)),
-                              scroll->o_id ^ (unsigned)u.ubirthday);
-        pline(msgc_info, "\"%s\"", buf);
+        if (!you && vis)
+            pline(msgc_monneutral, "%s a T-shirt.", M_verbs(mon, "read"));
+        if (vis) {
+            if (you)
+                break_conduct(conduct_illiterate);
+            pline_implied(msgc_info, "It reads:");
+            buf = shirt_msgs[obj->o_id % SIZE(shirt_msgs)];
+            erosion = greatest_erosion(obj);
+            if (erosion)
+                buf = eroded_text(buf,
+                                  (int)(strlen(buf) * erosion / (2 * MAX_ERODE)),
+                                  obj->o_id ^ (unsigned)u.ubirthday);
+            pline(msgc_info, "\"%s\"", buf);
+        }
         return 1;
-    } else if (scroll->oclass != SCROLL_CLASS &&
-               scroll->oclass != SPBOOK_CLASS) {
+    } else if (obj->oclass != SCROLL_CLASS &&
+               obj->oclass != SPBOOK_CLASS) {
         pline(msgc_cancelled, "That is a silly thing to read.");
+        if (!you)
+            impossible("Monster reading something silly? obj: %s", xname(obj));
         return 0;
-    } else if (Blind) {
+    } else if (blind(mon)) {
         const char *what = 0;
 
-        if (scroll->oclass == SPBOOK_CLASS)
+        if (obj->oclass == SPBOOK_CLASS)
             what = "mystic runes";
-        else if (!scroll->dknown)
+        else if (you ? !obj->dknown : !obj->mknown)
             what = "formula on the scroll";
         if (what) {
-            pline(msgc_cancelled, "Being blind, you cannot read the %s.", what);
+            pline(msgc_cancelled, "Being blind, %s cannot read the %s.", mon_nam(mon),
+                  what);
+            if (!you)
+                impossible("Monster trying to read scroll/book while blind?");
             return 0;
         }
     }
 
     /* TODO: When we add a conduct assistance option, add a condition here.  Or
        better yet, check for all reading of things. */
-    if (scroll->otyp == SPE_BOOK_OF_THE_DEAD &&
+    if (obj->otyp == SPE_BOOK_OF_THE_DEAD &&
         !u.uconduct[conduct_illiterate] &&
         yn("You are currently illiterate and could invoke the Book "
            "instead. Read it nonetheless?") != 'y')
         return 0;
 
-    if (scroll->otyp != SPE_BLANK_PAPER && scroll->otyp != SCR_BLANK_PAPER)
+    if (obj->otyp != SPE_BLANK_PAPER && obj->otyp != SCR_BLANK_PAPER)
         break_conduct(conduct_illiterate);
 
-    confused = (Confusion != 0);
-    if (scroll->oclass == SPBOOK_CLASS)
-        return study_book(scroll, arg);
+    if (obj->oclass == SPBOOK_CLASS)
+        return study_book(obj, m);
 
-    scroll->in_use = TRUE;      /* scroll, not spellbook, now being read */
-    if (scroll->otyp != SCR_BLANK_PAPER) {
-        if (Blind)
-            pline(msgc_occstart,
-                  "As you %s the formula on it, the scroll disappears.",
-                  is_silent(youmonst.data) ? "cogitate" : "pronounce");
-        else
-            pline(msgc_occstart, "As you read the scroll, it disappears.");
-        if (confused) {
-            if (Hallucination)
-                pline(msgc_substitute, "Being so trippy, you screw up...");
+    obj->in_use = TRUE;      /* scroll, not spellbook, now being read */
+    if (obj->otyp != SCR_BLANK_PAPER) {
+        const char *onamebuf = singular(obj, doname);
+        if (!vis) {
+            /* This is a monster you can't see reading a scroll. This is not visible if
+               the monster can't speak. */
+            if (!is_silent(mon->data)) {
+                /* Hack: don't display BUC if you are hearing it happen...
+                   TODO: this is stupid, make a wrapper for object names that doesn't
+                   display BUC */
+                unsigned savebknown = obj->bknown;
+                obj->bknown = 0;
+                unsigned saverole = Role_switch; /* priests */
+                Role_switch = 0;
+                onamebuf = singular(obj, doname);
+                Role_switch = saverole;
+                obj->bknown = savebknown;
+                You_hear(combat_msgc(mon, NULL, cr_hit),
+                         "%s reading %s!",
+                         x_monnam(mon, ARTICLE_A, NULL,
+                                  (SUPPRESS_IT | SUPPRESS_INVISIBLE | SUPPRESS_SADDLE),
+                                  FALSE), onamebuf);
+            }
+        } else if (you) {
+            if (blind(mon))
+                pline(msgc_occstart,
+                      "As you %s the formula on it, the scroll disappears.",
+                      is_silent(youmonst.data) ? "cogitate" : "pronounce");
+            else
+                pline(msgc_occstart, "As you read the scroll, it disappears.");
+        } else if (vis)
+            pline(combat_msgc(mon, NULL, cr_hit), "%s %s!", M_verbs(mon, "read"),
+                  onamebuf);
+        if (confused && (vis || !is_silent(mon->data))) {
+            if (Hallucination) /* not hallucinating(mon) */
+                pline(msgc_substitute, "Being so trippy, %s up...",
+                      m_verbs(mon, "screw"));
             else
                 pline(msgc_substitute,
-                      "Being confused, you mis%s the magic words...",
-                      is_silent(youmonst.data) ? "understand" : "pronounce");
+                      "Being confused, %s the magic words...",
+                      m_verbs(mon, is_silent(mon->data) ? "misunderstand" :
+                              "mispronounce"));
         }
     }
-    if (!seffects(&youmonst, scroll, &known)) {
-        if (!objects[scroll->otyp].oc_name_known) {
+    if (!seffects(mon, obj, &known)) {
+        if (!objects[obj->otyp].oc_name_known) {
             if (known) {
-                makeknown(scroll->otyp);
+                makeknown(obj->otyp);
                 more_experienced(0, 10);
-            } else if (!objects[scroll->otyp].oc_uname)
-                docall(scroll);
+            } else if (!objects[obj->otyp].oc_uname)
+                docall(obj);
         }
-        if (scroll->otyp != SCR_BLANK_PAPER)
-            useup(scroll);
-        else
-            scroll->in_use = FALSE;
+        if (obj->otyp != SCR_BLANK_PAPER) {
+            if (you)
+                useup(obj);
+            else
+                m_useup(mon, obj);
+        } else
+            obj->in_use = FALSE;
     }
     return 1;
 }

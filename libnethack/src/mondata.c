@@ -84,6 +84,15 @@ mon_protbon(struct monst *mon)
     return ret;
 }
 
+/* Returns true if the monster is >10 tiles away */
+boolean
+distant(const struct monst *mon)
+{
+    if (distmin(youmonst.mx, youmonst.my, mon->mx, mon->my) > 10)
+        return TRUE;
+    return FALSE;
+}
+
 /* Wrapper around rnl that works for monsters. Currently monsters lack any concept of luck,
    but this function can simply be changed when that changes. */
 int

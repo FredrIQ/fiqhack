@@ -1019,7 +1019,7 @@ mpickstuff(struct monst *mon, boolean autopickup)
                unseen if we can */
             if (mon_castable(mon, SPE_DETECT_UNSEEN, TRUE) > 80) {
                 boxuse.spell = SPE_DETECT_UNSEEN;
-                boxuse.use = MUSE_SPE;
+                boxuse.use = MUSE_CAST;
             } else
                 find_item_obj(mon->minvent, &boxuse,
                               FALSE, WAN_SECRET_DOOR_DETECTION);
@@ -1208,6 +1208,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             muse.x = 0;
             muse.y = 0;
             muse.z = 1;
+            muse.use = MUSE_ZAP;
             return use_item(&muse);
         }
         if (mon_castable(mon, SPE_CANCELLATION, TRUE) > 80) {
@@ -1215,7 +1216,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             muse.y = 0;
             muse.z = 1;
             muse.spell = SPE_CANCELLATION;
-            muse.use = MUSE_SPE;
+            muse.use = MUSE_CAST;
             return use_item(&muse);
         }
     }

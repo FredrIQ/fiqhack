@@ -47,6 +47,7 @@ spellname(int spell)
 static boolean cursed_book(struct monst *, struct obj *bp);
 static boolean confused_book(struct monst *, struct obj *);
 static int learn(void);
+static int mon_study_book(const struct musable *);
 static boolean dospellmenu(const struct monst *, const char *, int, int *);
 static int percent_success(const struct monst *, int);
 static int throwspell(boolean, schar *dx, schar *dy, const struct musable *arg);
@@ -551,9 +552,12 @@ study_rate(const struct monst *mon, struct obj *spellbook)
    Cursed books still retain their original delay and behaviour, and confused
    books retain their behaviour. Returns 0 if nothing happened, -1 if turn
    was wasted with no spell learned, spell id otherwise. */
-int
-mon_study_book(struct monst *mon, struct obj *spellbook)
+static int
+mon_study_book(const struct musable *m)
 {
+    struct monst *mon = m->mon;
+    struct obj *spellbook = m->obj;
+
     int booktype = spellbook->otyp;
     boolean confused = confused(mon);
     boolean too_hard = FALSE;
@@ -876,8 +880,12 @@ run_maintained_spell(struct monst *mon, int spell)
 }
 
 int
-study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
+study_book(struct obj *spellbook, const struct musable *m)
 {
+    /* Occupations aren't a thing for monsters yet, so they use a seperate function */
+    if (m->mon != &youmonst)
+        return mon_study_book(m);
+
     int booktype = spellbook->otyp;
     boolean confused = (Confusion != 0);
     boolean too_hard = FALSE;
@@ -1026,14 +1034,14 @@ getspell(int *spell_no)
 
 /* the 'Z' command -- cast a spell */
 int
-docast(const struct nh_cmd_arg *arg)
+docast(const struct musable *m)
 {
-    struct musable m = arg_to_musable(arg);
     int spell = 0;
-
-    if (mgetargspell(&m, &spell)) {
-        m.spell = spell;
-        return spelleffects(FALSE, &m);
+    if (mgetargspell(m, &spell)) {
+        /* m is const, so create a new musable */
+        struct musable m_new = *m;
+        m_new.spell = spell;
+        return spelleffects(FALSE, &m_new);
     }
     return 0;
 }

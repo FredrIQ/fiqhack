@@ -622,12 +622,12 @@ extern void flush_logfile_watchers(void);
 
 extern boolean wish_available(int, int *);
 extern void floating_above(const char *);
-extern void dogushforth(int);
+extern void dogushforth(struct monst *, boolean);
 extern void dryup(xchar, xchar, boolean);
-extern void drinkfountain(void);
+extern int drinkfountain(struct monst *);
 extern void dipfountain(struct obj *);
 extern void breaksink(int, int);
-extern void drinksink(void);
+extern int drinksink(struct monst *);
 
 /* ### hack.c ### */
 
@@ -1180,6 +1180,7 @@ extern boolean can_blnd(struct monst *, struct monst *, uchar, struct obj *);
 extern int mon_hitbon(struct monst *);
 extern int mon_dambon(struct monst *);
 extern int mon_protbon(struct monst *);
+extern boolean distant(const struct monst *);
 extern int mrnl(const struct monst *, int);
 extern int race(const struct monst *, boolean);
 extern boolean ranged_attk(const struct permonst *);
@@ -1252,6 +1253,7 @@ extern int mgetargdir(const struct musable *, const char *, schar *, schar *,
 extern int mgetargpos(const struct musable *, coord *, boolean, const char *);
 extern struct obj *mgetargobj(const struct musable *, const char *, const char *);
 extern boolean mgetargspell(const struct musable *, int *);
+extern void mon_break_wand(struct monst *, struct obj *);
 extern struct monst *find_melee(struct monst *, struct monst *, coord *);
 extern struct monst *find_polearm(struct monst *, struct monst *, coord *);
 extern struct monst *find_ranged(struct monst *, struct monst *, coord *);
@@ -1412,8 +1414,8 @@ extern void ugolemeffects(int, int);
 
 extern void eyepline(const char *, const char *);
 extern void make_sick(struct monst *, long, const char *, boolean, int);
-extern int dodrink(const struct nh_cmd_arg *);
-extern int dopotion(struct obj *);
+extern int dodrink(const struct musable *);
+extern int dopotion(struct monst *, struct obj *);
 extern int peffects(struct monst *, struct obj *);
 extern void healup(int, int, boolean, boolean);
 extern void strange_feeling(struct obj *, const char *);
@@ -1515,7 +1517,7 @@ extern const struct permonst *qt_montype(const d_level *, enum rng);
 
 /* ### read.c ### */
 
-extern int doread(const struct nh_cmd_arg *);
+extern int doread(const struct musable *);
 extern boolean is_chargeable(struct obj *);
 extern struct obj *mon_choose_recharge(struct monst *, int);
 extern void recharge(struct monst *, struct obj *, int);
@@ -1706,17 +1708,16 @@ extern void fixup_special(struct level *lev);
 
 extern void deadbook(struct obj *book2, boolean invoked);
 extern int study_rate(const struct monst *, struct obj *);
-extern int mon_study_book(struct monst *, struct obj *);
 extern int mon_addspell(struct monst *, int);
 extern boolean spell_maintained(const struct monst *, int);
 extern void spell_maintain(struct monst *, int);
 extern void spell_unmaintain(struct monst *, int);
 extern void run_maintained_spells(struct level *);
-extern int study_book(struct obj *, const struct nh_cmd_arg *);
+extern int study_book(struct obj *, const struct musable *);
 extern void age_spells(void);
 extern void update_supernatural_abilities(void);
 extern boolean supernatural_ability_available(int);
-extern int docast(const struct nh_cmd_arg *);
+extern int docast(const struct musable *);
 extern boolean getspell(int *);
 extern int spell_skilltype(int);
 extern int mspell_skilltype(int);
@@ -2086,7 +2087,7 @@ extern void backfire(struct obj *);
 extern int wrestable(struct obj *wand);
 extern int zappable(struct monst *, struct obj *);
 extern void zapnodir(struct monst *, struct obj *);
-extern int dozap(const struct nh_cmd_arg *);
+extern int dozap(const struct musable *);
 extern boolean cancel_monst(struct monst *, struct obj *, struct monst *,
                             boolean, boolean);
 extern void weffects(struct monst *, struct obj *, schar, schar, schar);

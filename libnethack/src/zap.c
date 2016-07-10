@@ -2091,50 +2091,83 @@ backfire(struct obj *otmp)
 static const char zap_syms[] = { WAND_CLASS, 0 };
 
 int
-dozap(const struct nh_cmd_arg *arg)
+dozap(const struct musable *m)
 {
+    struct monst *mon = m->mon;
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
     schar dx = 0, dy = 0, dz = 0;
     struct obj *obj;
     int wandlevel;
 
-    if (check_capacity(NULL))
+    if (you && check_capacity(NULL))
         return 0;
 
-    obj = getargobj(arg, zap_syms, "zap");
+    obj = mgetargobj(m, zap_syms, "zap");
     if (!obj)
         return 0;
 
     wandlevel = getwandlevel(&youmonst, obj);
     check_unpaid(obj);
 
-    if (obj->oartifact && !touch_artifact(obj, &youmonst))
+    if (obj->oartifact && !touch_artifact(obj, mon))
         return 1;
 
     /* zappable addition done by GAN 11/03/86 */
-    if (!zappable(&youmonst, obj)) {       /* zappable prints the message itself */
+    if (!zappable(mon, obj)) {       /* zappable prints the message itself */
     } else if (!wandlevel) {
-        backfire(obj);  /* the wand blows up in your face! */
-        exercise(A_STR, FALSE);
-        return 1;
+        if (you) {
+            backfire(obj);  /* the wand blows up in your face! */
+            exercise(A_STR, FALSE);
+        } else {
+            if (vis)
+                pline(msgc_itemloss,
+                      "%s zaps %s, which suddenly explodes!", Monnam(mon),
+                      an(xname(obj)));
+            else
+                You_hear(msgc_itemloss,
+                         "a zap and an explosion in the distance.");
+        }
+        mon_break_wand(mon, obj);
+        m_useup(mon, obj);
+        return DEADMONSTER(mon) ? 2 : 1;
     } else if (!(objects[obj->otyp].oc_dir == NODIR) &&
-               !getargdir(arg, NULL, &dx, &dy, &dz)) {
-        if (!Blind)
+               !mgetargdir(m, NULL, &dx, &dy, &dz)) {
+        if (!Blind && vis)
             pline(msgc_itemloss, "%s glows and fades.", The(xname(obj)));
         /* make him pay for knowing !NODIR */
     } else {
-
         /* Are we having fun yet? weffects -> buzz(obj->otyp) -> zhitm (temple
            priest) -> attack -> hitum -> known_hitum -> ghod_hitsu ->
            buzz(AD_ELEC) -> destroy_item(WAND_CLASS) -> useup -> obfree ->
            dealloc_obj -> free(obj) */
-        turnstate.tracked[ttos_wand] = obj;
-        weffects(&youmonst, obj, dx, dy, dz);
-        obj = turnstate.tracked[ttos_wand];
-        turnstate.tracked[ttos_wand] = 0;
+        if (you)
+            turnstate.tracked[ttos_wand] = obj;
+        else {
+            if (vis) {
+                if (objects[obj->otyp].oc_dir != NODIR &&
+                    !dx && !dy && !dz)
+                    pline(combat_msgc(mon, NULL, cr_hit),
+                          "%s %sself with %s!", M_verbs(mon, "zap"),
+                          mhim(mon), doname(obj));
+                else
+                    pline(combat_msgc(mon, NULL, cr_hit),
+                          "%s %s!", M_verbs(mon, "zap"),
+                          doname(obj));
+            } else
+                You_hear(msgc_levelwarning, "a %s zap.",
+                         distant(mon) ? "distant" : "nearby");
+        }
+        weffects(mon, obj, dx, dy, dz);
+        if (you) {
+            obj = turnstate.tracked[ttos_wand];
+            turnstate.tracked[ttos_wand] = 0;
+        }
     }
     if (obj && obj->spe < 0) {
-        pline(msgc_itemloss, "%s to dust.", Tobjnam(obj, "turn"));
-        useup(obj);
+        if (vis)
+            pline(msgc_itemloss, "%s to dust.", Tobjnam(obj, "turn"));
+        m_useup(mon, obj);
     }
     update_inventory(); /* maybe used a charge */
     return 1;

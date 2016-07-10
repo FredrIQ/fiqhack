@@ -1512,12 +1512,8 @@ eatspecial(struct monst *mon, int nutrition, struct obj *otmp)
     }
 
     if (otmp->oclass == POTION_CLASS) {
-        if (!you) {
-            impossible("unhandled monster potion eating?");
-            return;
-        }
         otmp->quan++;   /* dopotion() does a useup() */
-        dopotion(otmp);
+        dopotion(mon, otmp);
     }
 
     if (otmp->oclass == RING_CLASS || otmp->oclass == AMULET_CLASS)
