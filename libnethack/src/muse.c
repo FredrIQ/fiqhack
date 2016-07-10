@@ -29,6 +29,7 @@ boolean m_using = FALSE;
 
 static void mconfdir(const struct monst *, schar *, schar *);
 static int find_item_score(const struct monst *, struct obj *, coord *);
+static enum monuse muse_for_obj(const struct obj *);
 static int find_item_single(struct obj *, boolean, struct musable *, boolean, boolean);
 static boolean mon_allowed(int);
 
@@ -1143,6 +1144,35 @@ find_closest_target(struct monst *mon, int range_limit)
     return mclose;
 }
 
+/* Returns the most probably musable for given object.
+   TODO: common call for tools, most of the ternary chain is tool special cases... */
+static enum monuse
+muse_for_obj(const struct obj *obj)
+{
+    enum monuse ret = (obj->oclass == SCROLL_CLASS ? MUSE_READ          :
+                       obj->oclass == SPBOOK_CLASS ? MUSE_READ          :
+                       obj->oclass == POTION_CLASS ? MUSE_QUAFF         :
+                       obj->oclass == WAND_CLASS   ? MUSE_ZAP           :
+                       obj->otyp == FIRE_HORN      ? MUSE_DIRHORN       :
+                       obj->otyp == FROST_HORN     ? MUSE_DIRHORN       :
+                       obj->otyp == SKELETON_KEY   ? MUSE_KEY           :
+                       obj->otyp == CREDIT_CARD    ? MUSE_KEY           :
+                       obj->otyp == LOCK_PICK      ? MUSE_KEY           :
+                       obj->otyp == SACK           ? MUSE_CONTAINER     :
+                       obj->otyp == OILSKIN_SACK   ? MUSE_CONTAINER     :
+                       obj->otyp == BAG_OF_HOLDING ? MUSE_CONTAINER     :
+                       obj->otyp == BAG_OF_TRICKS  ? MUSE_BAG_OF_TRICKS :
+                       obj->otyp == BULLWHIP       ? MUSE_BULLWHIP      :
+                       obj->otyp == EGG            ? MUSE_THROW         :
+                       is_ammo(obj)                ? MUSE_THROW         :
+                       throwing_weapon(obj)        ? MUSE_THROW         :
+                       MUSE_NONE);
+    if (ret == MUSE_NONE)
+        impossible("AI error: Unhandled obj->muse conversion for obj: %s",
+                   killer_xname(obj, FALSE));
+    return ret;
+}
+
 /* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in pathfinding),
    it makes no sense to have it here */
 boolean
@@ -1598,12 +1628,12 @@ find_item_obj(struct obj *chain, struct musable *m,
     int score = 0;
     int score_best = 0;
     coord tc;
-    coord tc_best;
+    struct musable m_best;
     struct monst *mon = m->mon;
     struct obj *obj;
     struct musable m2;
     init_musable(mon, &m2);
-    struct obj *obj_best = NULL;
+    init_musable(mon, &m_best);
 
     for (obj = chain; obj; obj = obj->nobj) {
         /* Containers */
@@ -1672,52 +1702,33 @@ find_item_obj(struct obj *chain, struct musable *m,
             if (usable == 1) {
                 if (!rn2(randcount)) {
                     randcount++;
-                    m->obj = obj;
                     m->x = m2.x;
                     m->y = m2.y;
                     m->z = m2.z;
-                    m->use = (obj->oclass == WAND_CLASS   ? MUSE_ZAP   :
-                              obj->oclass == SCROLL_CLASS ? MUSE_READ  :
-                              obj->oclass == POTION_CLASS ? MUSE_QUAFF :
-                              obj->oclass == SPBOOK_CLASS ? MUSE_READ  :
-                              obj->otyp == SKELETON_KEY   ? MUSE_KEY   :
-                              obj->otyp == CREDIT_CARD    ? MUSE_KEY   :
-                              obj->otyp == LOCK_PICK      ? MUSE_KEY   :
-                              obj->otyp == BAG_OF_TRICKS  ? MUSE_BAG_OF_TRICKS :
-                              0);
-                    if (m->use == 0)
-                        impossible("AI error: Unhandled nondirectional musable for obj: %s",
-                                   killer_xname(obj));
+                    m->use = m2.use;
+                    m->obj = obj;
                 }
             } else {
                 score = find_item_score(mon, obj, &tc);
                 if (score > score_best) {
-                    tc_best = tc;
-                    obj_best = obj;
+                    m_best.x = tc.x;
+                    m_best.y = tc.y;
+                    m_best.z = 0;
+                    m_best.use = m2.use;
+                    m_best.obj = obj;
                     score_best = score;
                 }
             }
         }
     }
 
-    if (obj_best || m->use) {
-        if (!m->use || (obj_best && (score_best > 20 ? rn2(3) : !rn2(3)))) {
-            m->x = tc_best.x;
-            m->y = tc_best.y;
-            m->z = 0;
-            m->use = (obj_best->oclass == WAND_CLASS   ? MUSE_ZAP   :
-                      obj_best->oclass == SCROLL_CLASS ? MUSE_READ  :
-                      obj_best->oclass == POTION_CLASS ? MUSE_THROW :
-                      obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
-                      obj_best->otyp == BULLWHIP       ? MUSE_BULLWHIP :
-                      is_ammo(obj_best)                ? MUSE_THROW :
-                      throwing_weapon(obj_best)        ? MUSE_THROW :
-                      obj_best->otyp == EGG            ? MUSE_THROW :
-                      0);
-            if (m->use == 0)
-                impossible("AI error: Unhandled directional musable for obj: %s",
-                           killer_xname(obj_best));
-            m->obj = obj_best;
+    if (m_best.use || m->use) {
+        if (!m->use || (m_best.use && (score_best > 20 ? rn2(3) : !rn2(3)))) {
+            m->x = m_best.x;
+            m->y = m_best.y;
+            m->z = m_best.z;
+            m->use = m_best.use;
+            m->obj = m_best.obj;
             /* Avoid monsters exhausting their entire weapon stack with
                multishoot */
             if (m->use == MUSE_THROW && throwing_weapon(m->obj) &&
@@ -1830,6 +1841,12 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
         return 0;
 
     /* END SANITY CHECKS */
+    m->use = MUSE_NONE;
+    if (spell)
+        m->use = MUSE_CAST;
+    else
+        m->use = muse_for_obj(obj);
+
     if (specific)
         return 1;
 
@@ -1956,8 +1973,11 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
              otyp == POT_BLINDNESS ||
              otyp == POT_CONFUSION ||
              otyp == POT_ACID) &&
-            close)
+            close) {
+            if (oclass == POTION_CLASS)
+                m->use = MUSE_THROW;
             return 2;
+        }
     }
 
     /* Directional things. Mjollnir is handled
@@ -1983,8 +2003,11 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
             (obj != m_mwep(mon) || obj->quan > 1)) ||
            ammo_and_launcher(obj, m_mwep(mon)))) ||
          otyp == EGG) && /* trice */
-        close)
+        close) {
+        if (oclass == POTION_CLASS)
+            m->use = MUSE_THROW;
         return 2;
+    }
 
     if (otyp == WAR_HAMMER &&
         obj == m_mwep(mon) &&
