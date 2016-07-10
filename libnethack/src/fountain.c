@@ -29,12 +29,6 @@ dowatersnakes(struct monst *mon)
     boolean made_snakes = FALSE; /* whether or not to print any message in first place */
 
     if (!(mvitals[PM_WATER_MOCCASIN].mvflags & G_GONE)) {
-        if (!Blind)
-            pline(msgc_levelwarning, "An endless stream of %s pours forth!",
-                  Hallucination ? makeplural(monnam_for_index(rndmonidx())) :
-                  "snakes");
-        else
-            You_hear(msgc_levelwarning, "something hissing!");
         while (num-- > 0) {
             if ((mtmp =
                  makemon(&mons[PM_WATER_MOCCASIN], m_dlevel(mon),
