@@ -1686,7 +1686,8 @@ find_item_obj(struct obj *chain, struct musable *m,
                               obj->otyp == BAG_OF_TRICKS  ? MUSE_BAG_OF_TRICKS :
                               0);
                     if (m->use == 0)
-                        impossible("AI error: Unhandled nondirectional musable");
+                        impossible("AI error: Unhandled nondirectional musable for obj: %s",
+                                   killer_xname(obj));
                 }
             } else {
                 score = find_item_score(mon, obj, &tc);
@@ -1704,8 +1705,9 @@ find_item_obj(struct obj *chain, struct musable *m,
             m->x = tc_best.x;
             m->y = tc_best.y;
             m->z = 0;
-            m->use = (obj_best->oclass == POTION_CLASS ? MUSE_THROW :
-                      obj_best->oclass == WAND_CLASS   ? MUSE_ZAP :
+            m->use = (obj_best->oclass == WAND_CLASS   ? MUSE_ZAP   :
+                      obj_best->oclass == SCROLL_CLASS ? MUSE_READ  :
+                      obj_best->oclass == POTION_CLASS ? MUSE_THROW :
                       obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
                       obj_best->otyp == BULLWHIP       ? MUSE_BULLWHIP :
                       is_ammo(obj_best)                ? MUSE_THROW :
@@ -1713,7 +1715,8 @@ find_item_obj(struct obj *chain, struct musable *m,
                       obj_best->otyp == EGG            ? MUSE_THROW :
                       0);
             if (m->use == 0)
-                impossible("AI error: Unhandled directional musable");
+                impossible("AI error: Unhandled directional musable for obj: %s",
+                           killer_xname(obj_best));
             m->obj = obj_best;
             /* Avoid monsters exhausting their entire weapon stack with
                multishoot */
