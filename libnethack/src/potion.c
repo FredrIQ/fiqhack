@@ -241,7 +241,6 @@ dodrink(const struct musable *m)
     struct obj *potion;
     const char *potion_descr;
     boolean fountain = FALSE, sink = FALSE;
-    void (*terrain) (void) = 0;
 
     if (strangled(mon)) {
         pline(msgc_cancelled,
@@ -266,7 +265,7 @@ dodrink(const struct musable *m)
         }
     }
 
-    potion = mgetargobj(m, terrain ? beverages_and_fountains : beverages,
+    potion = mgetargobj(m, fountain || sink ? beverages_and_fountains : beverages,
                        "drink");
     if (!potion)
         return 0;
