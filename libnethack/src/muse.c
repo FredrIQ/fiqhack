@@ -1707,8 +1707,9 @@ find_item_obj(struct obj *chain, struct musable *m,
             m->x = tc_best.x;
             m->y = tc_best.y;
             m->z = 0;
-            m->use = (obj_best->oclass == POTION_CLASS ? MUSE_THROW :
-                      obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
+            m->use = (obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
+                      obj_best->oclass == SCROLL_CLASS ? MUSE_SCR :
+                      obj_best->oclass == POTION_CLASS ? MUSE_THROW :
                       obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
                       obj_best->otyp == BULLWHIP       ? MUSE_BULLWHIP :
                       obj_best->otyp == EGG            ? MUSE_THROW :
