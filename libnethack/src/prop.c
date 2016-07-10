@@ -55,8 +55,9 @@ static const struct propmsg prop_msg[] = {
      "You feel less in control.", "uncontrolled"},
     {POLYMORPH, "Your body begins to shapeshift.", "shapeshifting",
      "You are no longer shapeshifting.", "less shapeshifting"},
-    {POLYMORPH_CONTROL, "You feel in control of your shapeshifting", "shapeshift-controlled",
-     "You feel no lnger in control of your shapeshifting.", "less shapeshift-controlled"},
+    {POLYMORPH_CONTROL, "You feel in control of your shapeshifting",
+     "shapeshift-controlled", "You feel no lnger in control of your shapeshifting.",
+     "less shapeshift-controlled"},
     {STEALTH, "", "stealthy", "", "noisy"},
     {AGGRAVATE_MONSTER, "You feel attractive!", "attractive",
      "You feel less attractive.", "less attractive"},
@@ -543,7 +544,7 @@ decrease_property_timers(struct monst *mon)
              mprof(mon, MP_SCLRC));
     for (prop = 0; prop <= LAST_PROP; prop++) {
         if (mon->mintrinsic[prop] & TIMEOUT_RAW) {
-            /* Decrease protection at half speed at Expert and not at all if maintained */
+            /* Decrease protection less at Expert and not at all if maintained */
             if (prop == PROTECTION &&
                 (spell_maintained(mon, SPE_PROTECTION) ||
                  (skill == P_EXPERT && (moves % 2))))
@@ -556,9 +557,10 @@ decrease_property_timers(struct monst *mon)
 
 
 /* Can this monster teleport at will?
-   Any monster who has reached XL12 or more can teleport at will if they have teleportitis.
-   If the monster has teleportitis in their natural form, they can always teleport at will.
-   If the monster is a wizard, they can teleport at will from XL8 with teleportitis. */
+   Any monster who has reached XL12 or more can teleport at will if they have
+   teleportitis. If the monster has teleportitis in their natural form, they can always
+   teleport at will. If the monster is a wizard, they can teleport at will from XL8 with
+   teleportitis. */
 boolean
 teleport_at_will(const struct monst *mon)
 {
@@ -839,7 +841,7 @@ update_property_polymorph(struct monst *mon, int pm)
         pm_hasprop = pm_has_property(&mons[pm], prop) > 0;
         pm_blocks = pm_has_property(&mons[pm], prop) < 0;
         if ((hasprop && pm_blocks) || /* has property, target blocks */
-            (hasprop_poly && !pm_hasprop) || /* has property from polyself only, target lacks */
+            (hasprop_poly && !pm_hasprop) || /* has property @polyself, target lacks */
             (!hasprop && pm_hasprop)) /* lacks property, target has */
             update_property(mon, prop, os_newpolyform);
 
@@ -853,7 +855,7 @@ update_property_polymorph(struct monst *mon, int pm)
 
 /* Called to give any eventual messages and perform checks in case
    e.g. mon lost levitation (drowning), stone res (wielding trice).
-   TODO: some of the status problem message logic is a mess, fix it */
+   TODO: this function is rather fragile */
 boolean
 update_property(struct monst *mon, enum youprop prop,
                 enum objslot slot)
@@ -1535,8 +1537,8 @@ update_property(struct monst *mon, enum youprop prop,
                       you ? "" : "s");
             effect = TRUE;
             if (you)
-                done(SUFFOCATION, killer_msg(SUFFOCATION,
-                                             u.uburied ? "suffocation" : "strangulation"));
+                done(SUFFOCATION, killer_msg(SUFFOCATION, u.uburied ? "suffocation" :
+                                             "strangulation"));
             else
                 mondied(mon);
             break;
@@ -1782,7 +1784,8 @@ update_property(struct monst *mon, enum youprop prop,
             else
                 set_delayed_killer(TURNED_SLIME, NULL);
         } else {
-            /* if slimes are genocided at any point during this process, immediately remove sliming */
+            /* if slimes are genocided at any point during this process, immediately
+               remove sliming */
             if (mvitals[PM_GREEN_SLIME].mvflags & G_GENOD)
                 return set_property(mon, SLIMED, -2, FALSE);
 
@@ -1983,8 +1986,8 @@ slip_or_trip(struct monst *mon)
     if (!you && !vis) {
         if (pctload > 50 && canhear())
             pline(msgc_levelwarning, "You hear fumbling %s.",
-                  dist2(youmonst.mx, youmonst.my, mon->mx, mon->my) > BOLT_LIM * BOLT_LIM ?
-                  "in the distance" : "nearby");
+                  dist2(youmonst.mx, youmonst.my, mon->mx, mon->my) >
+                  BOLT_LIM * BOLT_LIM ? "in the distance" : "nearby");
         mwake_nearby(mon, FALSE);
         return FALSE; /* can't see the target anyway */
     }
