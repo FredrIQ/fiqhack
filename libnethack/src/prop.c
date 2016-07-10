@@ -880,6 +880,16 @@ update_property(struct monst *mon, enum youprop prop,
     boolean lost = !(has_property(mon, prop) & W_MASK(real_slot));
     boolean blocked;
     blocked = !!(m_has_property(mon, prop, ANY_PROPERTY, TRUE) & W_MASK(os_blocked));
+    /* Unless this was called as a result of newpolyform/block, check whether or not the
+       property was actually lost, to avoid lost being set when gaining new properties
+       if blocked. */
+    if (lost && blocked && slot != os_newpolyform && slot != os_blocked) {
+        if (m_has_property(mon, prop, ANY_PROPERTY, TRUE) & W_MASK(real_slot))
+            lost = FALSE;
+        /* And if this is os_dectimeout, ensure that no pointless messages are printed */
+        if (slot == os_dectimeout && !lost)
+            return FALSE;
+    }
     /* Whether or not a monster has it elsewhere */
     boolean redundant = !!(has_property(mon, prop) & ~W_MASK(real_slot));
     /* make a redundant flag accurate for speed changes... */
