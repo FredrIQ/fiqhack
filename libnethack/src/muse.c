@@ -483,28 +483,11 @@ mon_makewish(struct monst *mon)
     return TRUE;
 }
 
-/* blacklist some items for now */
+/* Utility to allow certain items to be disabled. Currently everything is enabled */
 static boolean
 mon_allowed(int otyp)
 {
-    /* Initial Release Test: free for all item using */
     return TRUE;
-
-    /* The corresponding spells (when relevant) are OK */
-    switch (otyp) {
-    case WAN_WISHING: /* was controversial in GruntHack */
-    case SCR_GENOCIDE: /* following items are rather valuable */
-    case SCR_CHARGING:
-    case SCR_IDENTIFY:
-    case SCR_ENCHANT_ARMOR:
-    case SCR_ENCHANT_WEAPON:
-        return FALSE;
-        break;
-    default:
-        return TRUE;
-        break;
-    }
-    return FALSE;
 }
 
 /* General targeting functions. Use more specific ones (like mon_choose_dirtarget) for
