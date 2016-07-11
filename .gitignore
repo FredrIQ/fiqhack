@@ -4,6 +4,9 @@ build/*
 *.kate-swp
 *~
 \#*\#
+.\#*
+*.d
+*.o
 .emacs.desktop
 .emacs.desktop.lock
 aimake.local
