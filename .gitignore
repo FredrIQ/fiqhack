@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-03-11
+# Last modified by Fredrik Ljungdahl, 2016-07-12
 build/*
 *.swp
 *.kate-swp
@@ -19,3 +19,6 @@ install_manifest.txt
 tags
 TAGS
 libnethack/util/savemap.txt
+readonly.c
+makedefs
+artinames.h
