@@ -5,7 +5,6 @@
 
 #include "hack.h"
 #include "hungerstatus.h"
-#include "zap.h"
 
 static int use_camera(struct obj *, const struct nh_cmd_arg *);
 static int use_towel(struct obj *);
