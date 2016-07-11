@@ -11,7 +11,6 @@ static int throw_obj(struct obj *, const struct musable *, boolean);
 static void autoquiver(void);
 static int gem_accept(struct monst *, struct monst *, struct obj *);
 static void tmiss(struct monst *, struct monst *, struct obj *, int);
-static int throw_gold(struct monst *, struct obj *, schar, schar, schar);
 static void check_shop_obj(struct obj *, xchar, xchar, boolean);
 static void breakobj(struct obj *, xchar, xchar, boolean, boolean);
 static void breakmsg(struct obj *, boolean);
@@ -73,8 +72,9 @@ throw_obj(struct obj *obj, const struct musable *m,
 
        If the money is in quiver, throw one coin at a time, possibly using a
        sling. */
+    boolean throw_all = FALSE;
     if (obj->oclass == COIN_CLASS && obj != uquiver)
-        return throw_gold(mon, obj, dx, dy, dz);
+        throw_all = TRUE;
 
     /* Monsters are assumed to always be able to throw the given object */
     if (!canletgo(obj, "throw"))
@@ -187,6 +187,8 @@ throw_obj(struct obj *obj, const struct musable *m,
         multishot = m->limit;
     if (multishot < 1)
         multishot = 1;
+    if (throw_all && multishot > 1)
+        multishot = 1;
 
     shot = ammo_and_launcher(obj, m_mwep(mon)) ? TRUE : FALSE;
     /* give a message if shooting more than one, or if player attempted to
@@ -209,7 +211,7 @@ throw_obj(struct obj *obj, const struct musable *m,
         if (you)
             twoweap = u.twoweap;
         /* split this object off from its slot if necessary */
-        if (obj->quan > 1L) {
+        if (obj->quan > 1L && !throw_all) {
             otmp = splitobj(obj, 1L);
         } else {
             otmp = obj;
@@ -2105,95 +2107,4 @@ breakmsg(struct obj *obj, boolean in_view)
     }
 }
 
-static int
-throw_gold(struct monst *magr, struct obj *obj, schar dx, schar dy, schar dz)
-{
-    boolean you = (magr == &youmonst);
-    boolean vis = (you || canseemon(magr));
-    int range, odx, ody;
-    struct monst *mdef;
-
-    if (!dx && !dy && !dz) {
-        if (you)
-            pline(msgc_cancelled, "You cannot throw gold at yourself.");
-        else
-            impossible("Monster trying to throw gold at itself?");
-        return 0;
-    }
-    if (you) {
-        unwield_silently(obj);
-        freeinv(obj);
-    } else {
-        if (obj->owornmask & W_MASK(os_wep))
-            magr->mw = NULL;
-        obj->owornmask = 0;
-        obj_extract_self(obj);
-    }
-
-    if (you && Engulfed) {
-        pline(msgc_yafm, is_animal(u.ustuck->data) ?
-              "%s in the %s's entrails." : "%s into %s.",
-              "The money disappears", mon_nam(u.ustuck));
-        add_to_minv(u.ustuck, obj, NULL);
-        return 1;
-    }
-
-    if (dz) {
-        if (dz < 0 && !Is_airlevel(&u.uz) && !Underwater &&
-            !Is_waterlevel(&u.uz)) {
-            if (vis)
-                pline(msgc_yafm,
-                      "The gold hits the %s, then falls back on top of %s %s.",
-                      ceiling(magr->mx, magr->my), mon_nam(magr), mbodypart(magr, HEAD));
-            /* some self damage? */
-            if (which_armor(magr, os_armh) && vis)
-                pline(combat_msgc(NULL, magr, cr_immune),
-                      "Fortunately, %s wearing a %s!", m_verbs(magr, "are"),
-                      helmet_name(which_armor(magr, os_armh)));
-        }
-        bhitpos.x = magr->mx;
-        bhitpos.y = magr->my;
-    } else {
-        /* consistent with range for normal objects */
-        /* TODO: acurrstr() for monsters */
-        int str = acurr(magr, A_STR);
-        if (str > 18 && str <= 121)
-            str = (19 + str / 50); /* map to 19-21 */
-        else if (str > 121)
-            str -= 100;
-        range = (int)(str / 2 - obj->owt / 40);
-
-        /* see if the gold has a place to move into */
-        odx = magr->mx + dx;
-        ody = magr->my + dy;
-        if (!ZAP_POS(level->locations[odx][ody].typ) ||
-            closed_door(level, odx, ody)) {
-            bhitpos.x = magr->mx;
-            bhitpos.y = magr->my;
-        } else {
-            mdef = fire_obj(magr, dx, dy, range, THROWN_WEAPON, obj, NULL, &bhitpos);
-            if (mdef) {
-                if (ghitm(magr, mdef, obj))    /* was it caught? */
-                    return 1;
-            } else {
-                if (ship_object(obj, bhitpos.x, bhitpos.y, FALSE))
-                    return 1;
-            }
-        }
-    }
-
-    if (flooreffects(obj, bhitpos.x, bhitpos.y, "fall"))
-        return 1;
-    if (dz > 0)
-        pline(msgc_actionboring, "The gold hits the %s.",
-              surface(bhitpos.x, bhitpos.y));
-    place_object(obj, level, bhitpos.x, bhitpos.y);
-    if (you && *u.ushops)
-        sellobj(obj, bhitpos.x, bhitpos.y);
-    stackobj(obj);
-    newsym(bhitpos.x, bhitpos.y);
-    return 1;
-}
-
 /*dothrow.c*/
-
