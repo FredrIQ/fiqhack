@@ -1162,7 +1162,7 @@ boomhit(int dx, int dy)
 /* Returns the throwing range for given obj. If hurtle_range is non-NULL, set it to
    the range to be hurtled */
 int
-throwing_range(struct monst *mon, struct obj *obj, int *hurtle_range)
+throwing_range(const struct monst *mon, const struct obj *obj, int *hurtle_range)
 {
     int range, urange;
     /* TODO: acurrstr() for monsters */
@@ -1181,7 +1181,7 @@ throwing_range(struct monst *mon, struct obj *obj, int *hurtle_range)
     else
         range = urange - (int)(obj->owt / 40);
     if (obj == uball) {
-        if (!uagr)
+        if (mon != &youmonst)
             panic("Monster throwing your ball?");
 
         if (u.ustuck)

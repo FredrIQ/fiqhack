@@ -22,11 +22,10 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
 
         AM_CPPFLAGS => '-DNETCLIENT -D_REENTRANT',
         CFLAGS      => '-Wall -Wextra -fdiagnostics-show-option -O2 -g',
-        AM_CFLAGS   => '-Wno-missing-field-initializers '.
-                       # These warnings are probably worth fixing eventually,
-                       # but have too many false positives to be able to show
-                       # them right now
-                       '-Wno-unused-parameter -Wno-sign-compare '.
+        # These warnings are probably worth fixing eventually,
+        # but have too many false positives to be able to show
+        # them right now
+        AM_CFLAGS   => '-Wno-unused-parameter -Wno-sign-compare '.
                        '-Wold-style-definition -Wstrict-prototypes '.
                        '-Wmissing-prototypes -Wmissing-declarations '.
                        '-Wpointer-arith',

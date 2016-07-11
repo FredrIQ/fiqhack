@@ -1458,7 +1458,6 @@ find_item(struct monst *mon, struct musable *m)
 
         /* Distance is arbitrary.  What we really want to do is have the soldier play the
            bugle when it sees or remembers soldiers nearby... */
-        */
         for (xx = x - 3; xx <= x + 3; xx++)
             for (yy = y - 3; yy <= y + 3; yy++)
                 if (isok(xx, yy))
