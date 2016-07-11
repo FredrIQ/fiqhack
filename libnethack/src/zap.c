@@ -2206,8 +2206,11 @@ break_wand(struct monst *mtmp, struct obj *otmp)
                 shop_damage = 2;
         }
     }
-    if (hityou)
-        bhit_at(mtmp, otmp, youmonst.mx, youmonst.my, 10);
+    if (hityou) {
+        int res_bhit = bhit_at(mtmp, otmp, youmonst.mx, youmonst.my, 10);
+        if (you && (res_bhit & BHIT_SHOPDAM))
+            shop_damage = 2;
+    }
 
     if (shop_damage)
         pay_for_damage(shop_damage == 1 ? "dig into" : "destroy", FALSE);
