@@ -441,6 +441,7 @@ extern boolean throwing_weapon(const struct obj *);
 extern struct monst *fire_obj(struct monst *, int, int, int, int, struct obj *,
                               boolean *, coord *);
 extern struct monst *boomhit(int, int);
+extern int throwing_range(struct monst *, struct obj *, int *);
 extern boolean throwit(struct monst *, struct obj *, struct obj *, int, long, boolean,
                        schar, schar, schar);
 extern int omon_adj(struct monst *, struct obj *, boolean);

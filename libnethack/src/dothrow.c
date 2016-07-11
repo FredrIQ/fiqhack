@@ -1159,6 +1159,60 @@ boomhit(int dx, int dy)
     return NULL;
 }
 
+/* Returns the throwing range for given obj. If hurtle_range is non-NULL, set it to
+   the range to be hurtled */
+int
+throwing_range(struct monst *mon, struct obj *obj, int *hurtle_range)
+{
+    int range, urange;
+    /* TODO: acurrstr() for monsters */
+    int str = acurr(mon, A_STR);
+    if (str > 18 && str <= 121)
+        str = (19 + str / 50); /* map to 19-21 */
+    else if (str > 121)
+        str -= 100;
+    urange = str;
+
+    /* balls are easy to throw or at least roll */
+    /* also, this insures the maximum range of a ball is greater than 1, so
+       the effects from throwing attached balls are actually possible */
+    if (obj->otyp == HEAVY_IRON_BALL)
+        range = urange - (int)(obj->owt / 100);
+    else
+        range = urange - (int)(obj->owt / 40);
+    if (obj == uball) {
+        if (!uagr)
+            panic("Monster throwing your ball?");
+
+        if (u.ustuck)
+            range = 1;
+        else if (range >= 5)
+            range = 5;
+    }
+    if (range < 1)
+        range = 1;
+
+    if (is_ammo(obj)) {
+        if (ammo_and_launcher(obj, m_mwep(mon)))
+            range++;
+        else if (obj->oclass != GEM_CLASS)
+            range /= 2;
+    }
+
+    if ((Is_airlevel(m_mz(mon)) && !flying(mon)) || levitates(mon)) {
+        /* action, reaction... */
+        urange -= range;
+        if (urange < 1)
+            urange = 1;
+        range -= urange;
+        if (range < 1)
+            range = 1;
+    }
+    if (hurtle_range)
+        *hurtle_range = urange;
+    return range;
+}
+
 /* Throw an object. Returns TRUE if we should abort a potential multishot
    due to hurtling through air. */
 boolean
@@ -1301,49 +1355,8 @@ throwit(struct monst *magr, struct obj *obj, struct obj *stack, int count,
     } else {
         boolean obj_destroyed;
 
-        /* TODO: acurrstr() for monsters */
-        int str = acurr(magr, A_STR);
-        if (str > 18 && str <= 121)
-            str = (19 + str / 50); /* map to 19-21 */
-        else if (str > 121)
-            str -= 100;
-        urange = str;
-
-        /* balls are easy to throw or at least roll */
-        /* also, this insures the maximum range of a ball is greater than 1, so 
-           the effects from throwing attached balls are actually possible */
-        if (obj->otyp == HEAVY_IRON_BALL)
-            range = urange - (int)(obj->owt / 100);
-        else
-            range = urange - (int)(obj->owt / 40);
-        if (obj == uball) {
-            if (!uagr)
-                panic("Monster throwing your ball?");
-
-            if (u.ustuck)
-                range = 1;
-            else if (range >= 5)
-                range = 5;
-        }
-        if (range < 1)
-            range = 1;
-
-        if (is_ammo(obj)) {
-            if (ammo_and_launcher(obj, m_mwep(magr)))
-                range++;
-            else if (obj->oclass != GEM_CLASS)
-                range /= 2;
-        }
-
-        if ((Is_airlevel(m_mz(magr)) && !flying(magr)) || levitates(magr)) {
-            /* action, reaction... */
-            urange -= range;
-            if (urange < 1)
-                urange = 1;
-            range -= urange;
-            if (range < 1)
-                range = 1;
-        }
+        urange = 0;
+        range = throwing_range(magr, obj, &urange);
 
         if (obj->otyp == BOULDER)
             range = 20; /* you must be giant */

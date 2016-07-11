@@ -9,8 +9,11 @@ extern const int monstr[];
 
 boolean m_using = FALSE;
 
+/* This file handles the monster item use AI and the monster-player-symmetric argument
+   conversion utilities */
+
 /*
- * Monster item usage logic.  General guidelines:
+ * General guidelines for monster item AI:
  * - Monsters do not play the ID game with object types (it is unfeasible)
  * - When it comes to everything else regarding the ID game and object
  *   knowledge, player replication should be done whenever possible.
@@ -31,6 +34,7 @@ static boolean mon_allowed(int);
 
 static int trapx, trapy;
 
+/* Initializes a musable, and sets the mon field to the given mon */
 void
 init_musable(struct monst *mon, struct musable *m)
 {
@@ -191,6 +195,7 @@ mgetargobj(const struct musable *m, const char *let, const char *word)
     return getobj(let, word, TRUE);
 }
 
+/* Sets spell_no to spell, possibly asking the user */
 boolean
 mgetargspell(const struct musable *m, int *spell_no)
 {
@@ -627,12 +632,11 @@ find_ranged(struct monst *mon, struct monst *target, coord *cc)
     return NULL;
 }
 
-/* Monster directional targeting. The monster will check through all
-   directions, scoring based on what would be hit and their
-   resistances/etc. The monster assumes perfect accuracy. Potions will
-   only be scored based on first hit target (since the monster assumes
-   perfect accuracy, a potion would simply be destroyed on the first
-   target). */
+/* Monster directional targeting. The monster will check through all directions, scoring
+   based on what would be hit and their resistances/etc. The monster assumes perfect
+   accuracy. Thrown items will only be scored based on first hit target (since the
+   monster assumes perfect accuracy, and there's no piercing items, it would stop at the
+   first target). */
 int
 mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
 {
@@ -653,7 +657,8 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
     boolean spell = (obj->oclass == SPBOOK_CLASS);
     boolean helpful = FALSE;
     boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
-                          m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
+                          distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM) &&
+                          m_canseeu(mon));
     /* if monsters know BUC, apply real wandlevel for wands */
     if (obj->mbknown && wand) {
         wandlevel = getwandlevel(mon, obj);
@@ -667,6 +672,8 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
         for (dy = -1; dy <= 1; dy++) {
             self = FALSE;
             range = BOLT_LIM;
+            if (!wand && !spell)
+                range = throwing_range(mon, obj, NULL);
             score = 0;
             sx = mon->mx;
             sy = mon->my;
@@ -775,8 +782,9 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         continue; /* reflecting a ray has no effect on monster */
                         /* TODO: lightning blindness? */
                     }
+                    /* ignore monsters where the item has no effect */
                     if (!obj_affects(mon, mtmp, obj))
-                        continue; /* object has no effect */
+                        continue;
                     /* curing slime is helpful */
                     if ((obj->otyp == WAN_FIRE ||
                          obj->otyp == SPE_FIREBALL) &&
@@ -801,7 +809,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         /* Polymorphing nasties is considered harmful */
                         if (extra_nasty(mtmp->data))
                             helpful = FALSE;
-                        /* Otherwise, hit dice OR player level if not polymorphed decides */
+                        /* Otherwise, hit dice OR player level if not polymorphed */
                         if (mtmp == &youmonst && !Upolyd && youmonst.m_lev >= 14)
                             helpful = FALSE;
                         if (mtmp == &youmonst && Upolyd && mtmp->data->mlevel >= 14)
@@ -865,7 +873,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                     /* cure stiffening ASAP */
                     if (obj->otyp == SPE_STONE_TO_FLESH)
                         tilescore *= 10;
-                    /* adjust (extra) healing priority sometimes to vary between heal/extraheal */
+                    /* random score fuzzing of healing/extra healing for variety */
                     if (obj->otyp == SPE_HEALING ||
                         obj->otyp == SPE_EXTRA_HEALING) {
                         if (rn2(2))
@@ -877,7 +885,8 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                 score += tilescore;
             }
             /* kludge: for deathzaps, avoid zapping you if tame to avoid YAAD */
-            /* no bounce handling here -- it simplifies the code, and bouncing here is an edge case */
+            /* no bounce handling here -- it simplifies the code, and bouncing here is an
+               edge case */
             if (obj->otyp == SPE_FINGER_OF_DEATH &&
                 obj->otyp == WAN_DEATH &&
                 mon->mtame) {
@@ -936,7 +945,8 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
     int x_best = 0;
     int y_best = 0;
     boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
-                          m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
+                          distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM) &&
+                          m_canseeu(mon));
     struct monst *mtmp;
     for (x = mon->mx - globrange; x <= mon->mx + globrange; x++) {
         for (y = mon->my - globrange; y <= mon->my + globrange; y++) {
@@ -1010,6 +1020,7 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
     return score_best;
 }
 
+/* Returns usability score for an item and sets tc to the xy for the best dir/pos */
 static int
 find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
 {
@@ -1044,7 +1055,7 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
                     if (mtmp == &youmonst)
                         continue;
                     if (mon->mpeaceful == mtmp->mpeaceful)
-                        /* targeting monsters we grudge with charm spells will do no good... */
+                        /* charming monsters we grudge will do no good... */
                         continue;
                     score += 20;
                 }
@@ -1177,8 +1188,8 @@ muse_for_obj(const struct obj *obj)
     return ret;
 }
 
-/* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in pathfinding),
-   it makes no sense to have it here */
+/* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in
+   pathfinding), it makes no sense to have it here */
 boolean
 find_item(struct monst *mon, struct musable *m)
 {
@@ -1458,11 +1469,12 @@ find_item(struct monst *mon, struct musable *m)
                                         }
     }
 
-    if (!nohands(mon->data) && is_mercenary(mon->data) && (obj = m_carrying(mon, BUGLE))) {
+    if (!nohands(mon->data) && is_mercenary(mon->data) &&
+        (obj = m_carrying(mon, BUGLE))) {
         int xx, yy;
 
-        /* Distance is arbitrary.  What we really want to do is have the
-           soldier play the bugle when it sees or remembers soldiers nearby...
+        /* Distance is arbitrary.  What we really want to do is have the soldier play the
+           bugle when it sees or remembers soldiers nearby... */
         */
         for (xx = x - 3; xx <= x + 3; xx++)
             for (yy = y - 3; yy <= y + 3; yy++)
@@ -1525,7 +1537,7 @@ find_item(struct monst *mon, struct musable *m)
                     m->z = m2.z;
                     if (spell == SPE_SUMMON_NASTY) {
                         if (!mclose) {
-                            impossible("Monster casting summon nasties when there is no target");
+                            impossible("Monster casting summon nasties without target?");
                             return FALSE;
                         }
                         m->x = m_mx(mclose);
@@ -1602,7 +1614,7 @@ find_item(struct monst *mon, struct musable *m)
                      obj->oclass == POTION_CLASS ||
                      obj->oclass == WAND_CLASS) &&
                     ((obj->otyp != WAN_CANCELLATION &&
-                      obj->otyp != BAG_OF_TRICKS && /* should never happen in current code */
+                      obj->otyp != BAG_OF_TRICKS && /* just in case */
                       obj->otyp != BAG_OF_HOLDING) ||
                      container->otyp != BAG_OF_HOLDING)) {
                     m->obj = container;
@@ -2026,13 +2038,13 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
     if (otyp == WAN_WISHING && !mon->mtame)
         return 1;
 
-    /* If there is partial protection already, cast it only 12% of the time to avoid this essentially being the default
-       (Protection is a level 1 spell -- the monster can afford occasionally wasting a few casts to avoid this code being
-       far more complex) */
+    /* If there is partial protection already, cast it only 12% of the time to avoid this
+       essentially being the default spell. */
     if (otyp == SPE_PROTECTION && (!(protected(mon) & W_MASK(os_timeout)) || !rn2(8)))
         return 1;
 
-    /* only quaff unIDed !oGL if we can't ID it somehow (prevents shopkeepers/priests from quaffing c!oGL mostly) */
+    /* only quaff unIDed !oGL if we can't ID it somehow (prevents shopkeepers/priests
+       from quaffing c!oGL mostly) */
     if (otyp == POT_GAIN_LEVEL && !cursed &&
         (obj->mbknown ||
          (mon_castable(mon, SPE_IDENTIFY, TRUE) < 50 &&
@@ -2175,7 +2187,7 @@ use_item(struct musable *m)
                          otmp->oclass == POTION_CLASS ||
                          otmp->oclass == WAND_CLASS) &&
                         ((otmp->otyp != WAN_CANCELLATION &&
-                          otmp->otyp != BAG_OF_TRICKS && /* should never happen in current code */
+                          otmp->otyp != BAG_OF_TRICKS && /* just in case */
                           otmp->otyp != BAG_OF_HOLDING) ||
                          container->otyp != BAG_OF_HOLDING)) {
                         obj_extract_self(otmp);
@@ -2192,7 +2204,7 @@ use_item(struct musable *m)
                               "an", contained != 1 ? "s" : "", mhis(mon), xname(obj));
                     return 2;
                 }
-                impossible("monster wanted to stash objects, but there was nothing to stash?");
+                impossible("monster wanted to stash nothing?");
                 return 0;
             }
         }
@@ -2609,6 +2621,7 @@ use_item(struct musable *m)
     return 0;
 }
 
+/* Returns a random "defensive" item for monster to get */
 int
 rnd_defensive_item(struct monst *mtmp, enum rng rng)
 {
@@ -2660,6 +2673,7 @@ try_again:
      /*NOTREACHED*/ return 0;
 }
 
+/* Returns a random "offensive" item for monster to get */
 int
 rnd_offensive_item(struct monst *mtmp, enum rng rng)
 {
@@ -2732,6 +2746,7 @@ you_aggravate(const struct monst *mtmp)
         map_invisible(mtmp->mx, mtmp->my);
 }
 
+/* Returns a random "misc" item for monster to get */
 int
 rnd_misc_item(struct monst *mtmp, enum rng rng)
 {
@@ -2759,6 +2774,7 @@ rnd_misc_item(struct monst *mtmp, enum rng rng)
      /*NOTREACHED*/ return 0;
 }
 
+/* Returns TRUE if the item is desirable for the monster to pickup */
 boolean
 searches_for_item(struct monst *mon, struct obj *obj)
 {
