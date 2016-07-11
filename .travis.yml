@@ -10,10 +10,10 @@ compiler:
 
 # Disable aimake for now, for performance purposes
 script:
-    - make
-#   - mkdir build installdir
-#   - cd build
-#   - ../aimake -i ../installdir --without=gui
+    - rm _aimake_get_option.*
+    - mkdir build installdir
+    - cd build
+    - ../aimake -i ../installdir --without=gui
 
 notifications:
     irc: "chat.freenode.net#FIQHack"
