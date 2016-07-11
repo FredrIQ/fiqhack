@@ -1510,7 +1510,7 @@ find_item(struct monst *mon, struct musable *m)
             obj->blessed = 1;
 
         usable = find_item_single(obj, TRUE, &m2, mclose ? TRUE : FALSE, FALSE);
-        if (usable && mon_allowed(spell)) {
+        if (usable) {
             if (usable == 1) {
                 if (!rn2(randcount)) {
                     randcount++;
@@ -1697,7 +1697,7 @@ find_item_obj(struct obj *chain, struct musable *m,
         if (specobj && obj->otyp != specobj)
             continue;
         usable = find_item_single(obj, FALSE, &m2, close, !!specobj);
-        if (usable && mon_allowed(obj->otyp)) {
+        if (usable) {
             if (usable == 1) {
                 if (!rn2(randcount)) {
                     randcount++;
@@ -1788,6 +1788,11 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
 
     /* BEGIN SANITY CHECKS */
 
+    /* item isn't allowed to be used */
+    if (!mon_allowed(otyp))
+        return 0;
+
+    /* don't try to use spells we can't cast */
     if (spell && !mon_castable(mon, otyp, specific))
         return 0;
 
