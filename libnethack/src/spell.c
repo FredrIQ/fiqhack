@@ -1619,11 +1619,13 @@ spelleffects(boolean atme, const struct musable *m)
         u.uen -= energy;
         exercise(A_WIS, TRUE);
     } else
-        mon->mspec_used += energy;
+        mon->mspec_used += !rn2(3) ? energy : 0;
 
     if (!you) {
-        if (vis)
+        if (vis) {
             pline(msgc_monneutral, "%s casts a spell!", Monnam(mon));
+            pline(msgc_debug, "Spell: %s", OBJ_NAME(objects[spell]));
+        }
         if (vis && amulet)
             pline(msgc_monneutral,
                   "The amulet drains %s energy away...", s_suffix(mon_nam(mon)));

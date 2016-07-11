@@ -100,7 +100,6 @@ extern void use_unicorn_horn(struct obj *);
 extern boolean tinnable(const struct obj *);
 extern void fig_transform(void *, long);
 extern int unfixable_trouble_count(boolean);
-extern int do_break_wand(struct obj *, boolean);
 
 /* ### artifact.c ### */
 
@@ -1253,7 +1252,6 @@ extern int mgetargdir(const struct musable *, const char *, schar *, schar *,
 extern int mgetargpos(const struct musable *, coord *, boolean, const char *);
 extern struct obj *mgetargobj(const struct musable *, const char *, const char *);
 extern boolean mgetargspell(const struct musable *, int *);
-extern void mon_break_wand(struct monst *, struct obj *);
 extern struct monst *find_melee(struct monst *, struct monst *, coord *);
 extern struct monst *find_polearm(struct monst *, struct monst *, coord *);
 extern struct monst *find_ranged(struct monst *, struct monst *, coord *);
@@ -2083,7 +2081,8 @@ extern int bhit_at(struct monst *, struct obj *, int, int, int);
 extern int bhito(struct obj *, struct obj *);
 extern void bhitinv(struct monst *, struct obj *);
 extern int bhitpile(struct monst *, struct obj *, int, int);
-extern void backfire(struct obj *);
+extern void backfire(struct monst *, struct obj *);
+extern void break_wand(struct monst *, struct obj *);
 extern int wrestable(struct obj *wand);
 extern int zappable(struct monst *, struct obj *);
 extern void zapnodir(struct monst *, struct obj *);

@@ -847,7 +847,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         /* tame monsters like zapping friends and dislike collateral
                            damage */
                         if (mon->mtame) {
-                            tilescore *= 2;
+                            tilescore *= 4;
                             /* never hit allies with deathzaps */
                             if (obj->otyp == SPE_FINGER_OF_DEATH ||
                                 obj->otyp == WAN_DEATH)
@@ -988,8 +988,12 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
                     /* ally/peaceful */
                     else if ((mtmp == &youmonst && mon->mpeaceful) ||
                         (mtmp != &youmonst &&
-                         mon->mpeaceful == mtmp->mpeaceful))
-                        tilescore -= 10;
+                         mon->mpeaceful == mtmp->mpeaceful)) {
+                        if (sliming(mtmp) && obj->otyp == SPE_FIREBALL)
+                            tilescore += 40;
+                        else
+                            tilescore -= 40;
+                    }
 
                     tilescore /= (distmin(x, y, xx, yy) + 1);
                     score += tilescore;
@@ -1149,7 +1153,8 @@ find_closest_target(struct monst *mon, int range_limit)
 static enum monuse
 muse_for_obj(const struct obj *obj)
 {
-    enum monuse ret = (obj->oclass == SCROLL_CLASS ? MUSE_READ          :
+    enum monuse ret = (obj->oclass == FOOD_CLASS   ? MUSE_EAT           :
+                       obj->oclass == SCROLL_CLASS ? MUSE_READ          :
                        obj->oclass == SPBOOK_CLASS ? MUSE_READ          :
                        obj->oclass == POTION_CLASS ? MUSE_QUAFF         :
                        obj->oclass == WAND_CLASS   ? MUSE_ZAP           :
@@ -1163,11 +1168,14 @@ muse_for_obj(const struct obj *obj)
                        obj->otyp == BAG_OF_HOLDING ? MUSE_CONTAINER     :
                        obj->otyp == BAG_OF_TRICKS  ? MUSE_BAG_OF_TRICKS :
                        obj->otyp == BULLWHIP       ? MUSE_BULLWHIP      :
-                       obj->otyp == EGG            ? MUSE_THROW         :
+                       obj->otyp == GOLD_PIECE     ? MUSE_THROW         :
+                       obj->otyp == BOULDER        ? MUSE_THROW         :
                        is_ammo(obj)                ? MUSE_THROW         :
                        throwing_weapon(obj)        ? MUSE_THROW         :
                        MUSE_NONE);
-    if (ret == MUSE_NONE)
+    if (ret == MUSE_NONE && obj->oclass != ARMOR_CLASS && obj->oclass != TOOL_CLASS &&
+        obj->oclass != WEAPON_CLASS && obj->oclass != RING_CLASS &&
+        obj->oclass != AMULET_CLASS)
         impossible("AI error: Unhandled obj->muse conversion for obj: %s",
                    killer_xname(obj, FALSE));
     return ret;
@@ -2001,10 +2009,12 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
           ((throwing_weapon(obj) &&
             otyp != WAR_HAMMER &&
             (obj != m_mwep(mon) || obj->quan > 1)) ||
+           (otyp == BOULDER && throws_rocks(mon->data)) ||
            ammo_and_launcher(obj, m_mwep(mon)))) ||
          otyp == EGG) && /* trice */
         close) {
-        if (oclass == POTION_CLASS)
+        if (oclass == FOOD_CLASS ||
+            oclass == POTION_CLASS)
             m->use = MUSE_THROW;
         return 2;
     }
@@ -2652,103 +2662,6 @@ try_again:
             return WAN_DIGGING;
     }
      /*NOTREACHED*/ return 0;
-}
-
-/* Used for critical failures with wand use. Might also see
-   use if monsters learn to break wands intelligently.
-   FIXME: merge this with do_break_wand() */
-
-/* what? (investigate do_break_wand for this...) */
-#define BY_OBJECT       (NULL)
-void
-mon_break_wand(struct monst *mtmp, struct obj *otmp)
-{
-    int i, x, y;
-    int damage;
-    int expltype;
-    int otyp;
-    boolean oseen = mon_visible(mtmp);
-
-    otyp = otmp->otyp;
-    otmp->ox = mtmp->mx;
-    otmp->oy = mtmp->my;
-
-    /* The following wands have no effect */
-    if (otyp == WAN_WISHING ||
-        otyp == WAN_NOTHING ||
-        otyp == WAN_OPENING ||
-        otyp == WAN_LOCKING ||
-        otyp == WAN_PROBING ||
-        otyp == WAN_ENLIGHTENMENT ||
-        otyp == WAN_SECRET_DOOR_DETECTION) {
-        if (oseen)
-            pline(msgc_failcurse, "But nothing else happens...");
-        return;
-    }
-
-    /* damage */
-    damage = otmp->spe * 4;
-    if (otyp != WAN_MAGIC_MISSILE)
-        damage *= 2;
-    if (otyp == WAN_DEATH || otyp == WAN_LIGHTNING)
-        damage *= 2;
-
-    /* explosion color */
-    if (otyp == WAN_FIRE)
-        expltype = EXPL_FIERY;
-    else if (otyp == WAN_COLD)
-        expltype = EXPL_FROSTY; 
-    else
-        expltype = EXPL_MAGICAL;
-
-    /* (non-sleep) ray explosions */
-    if (otyp == WAN_DEATH ||
-        otyp == WAN_FIRE ||
-        otyp == WAN_COLD ||
-        otyp == WAN_LIGHTNING ||
-        otyp == WAN_MAGIC_MISSILE) {
-        explode(otmp->ox, otmp->oy, (otyp - WAN_MAGIC_MISSILE), damage, WAND_CLASS,
-                expltype, NULL, 0);
-        return;
-    }
-
-    if (otyp == WAN_STRIKING) {
-        if (oseen)
-            pline(msgc_monneutral,
-                  "A wall of force smashes down around %s!",
-                  mon_nam(mtmp));
-        damage = dice(1 + otmp->spe, 6);
-    }
-
-    explode(otmp->ox, otmp->oy, 0, rnd(damage), WAND_CLASS, expltype, NULL, 0);
-
-    /* affect all tiles around the monster */
-    for (i = 0; i <= 8; i++) {
-        bhitpos.x = x = otmp->ox + xdir[i];
-        bhitpos.y = y = otmp->oy + ydir[i];
-        if (!isok(x, y))
-            continue;
-
-        if (otyp == WAN_DIGGING && dig_check(BY_OBJECT, FALSE, x, y)) {
-            if (IS_WALL(level->locations[x][y].typ) ||
-                IS_DOOR(level->locations[x][y].typ)) {
-                /* add potential shop damage for fixing */
-                if (*in_rooms(level, x, y, SHOPBASE))
-                    add_damage(bhitpos.x, bhitpos.y, 0L);
-            }
-            digactualhole(x, y, BY_OBJECT,
-                          (rn2(otmp->spe) < 3 ||
-                           !can_dig_down(level)) ? PIT : HOLE);
-        } else if (otyp == WAN_CREATE_MONSTER)
-            makemon(NULL, level, otmp->ox, otmp->oy, MM_CREATEMONSTER | MM_CMONSTER_U);
-        else {
-            bhit_at(mtmp, otmp, x, y, 10);
-            bot(); /* blindness */
-        }
-    }
-
-    if (otyp == WAN_LIGHT)
-        litroom(mtmp, TRUE, otmp);     /* only needs to be done once */
 }
 
 int

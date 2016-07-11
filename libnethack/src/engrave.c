@@ -896,7 +896,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     /* If engraving with wand, blow up the wand if cursed+unskilled */
     if (zapwand && !getwandlevel(&youmonst, otmp)) {
-        backfire(otmp);
+        backfire(&youmonst, otmp);
         exercise(A_STR, FALSE);
         return 1;
     }

@@ -1226,9 +1226,27 @@ doinvoke(const struct nh_cmd_arg *arg)
     const struct artifact *oart = get_artifact(obj);
 
     if (!oart || !oart->inv_prop) {
-        if (obj->oclass == WAND_CLASS)
-            return do_break_wand(obj, TRUE);
-        else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
+        if (obj->oclass == WAND_CLASS) {
+            const char *confirm =
+                msgprintf("Are you really sure you want to break %s?",
+                          safe_qbuf("", sizeof
+                                    "Are you really sure you want to break ?",
+                                    yname(obj), ysimple_name(obj), "the wand"));
+            if (yn(confirm) == 'n')
+                return 0;
+            if (nohands(youmonst.data)) {
+                pline(msgc_cancelled, "You can't break %s without hands!", yname(obj));
+                return 0;
+            } else if (ACURR(A_STR) < 10 || obj->oartifact) {
+                pline(msgc_cancelled,
+                      "You don't have the strength to break %s!", yname(obj));
+                return 0;
+            }
+            pline(msgc_occstart, "Raising %s high above your %s, you break it in two!",
+                  yname(obj), body_part(HEAD));
+            break_wand(&youmonst, obj);
+            return 1;
+        } else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
                  obj->otyp == BRASS_LANTERN)
             return dorub(&(struct nh_cmd_arg){.argtype = CMD_ARG_OBJ,
                                               .invlet = obj->invlet});
