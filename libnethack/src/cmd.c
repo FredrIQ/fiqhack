@@ -1074,18 +1074,27 @@ set_obj_cmd(char caccel, struct nh_cmd_desc *obj_cmd, struct obj *obj, size_t i,
     obj_cmd[i].flags = cmdlist[_o_c_idx].flags;
 }
 
-#define SET_OBJ_CMD(caccel, cname, cdesc, singular)              \
-    set_obj_cmd(caccel, obj_cmd, obj, i++, cname, cdesc, singular)
+#define SET_OBJ_CMD(caccel, cname, cdesc, singular)                     \
+    do {                                                                \
+        int _o_c_idx = get_command_idx(cname);                          \
+        if (program_state.followmode == FM_PLAY ||                      \
+            (cmdlist[_o_c_idx].flags & CMD_NOTIME))                     \
+            set_obj_cmd(caccel, obj_cmd, obj, i++, cname, cdesc,        \
+                        singular);                                      \
+    } while (0)
 
-#define SET_OBJ_CMD2(caccel, cname, cdesc) \
-do {\
-    int _o_c_idx = get_command_idx(cname);\
-    obj_cmd[i].defkey = caccel;\
-    strncpy(obj_cmd[i].name, cname, sizeof(obj_cmd[i].name));\
-    strncpy(obj_cmd[i].desc, cdesc, sizeof(obj_cmd[i].desc));\
-    obj_cmd[i].flags = cmdlist[_o_c_idx].flags;\
-    i++;\
-} while (0)
+#define SET_OBJ_CMD2(caccel, cname, cdesc)                              \
+    do {                                                                \
+        int _o_c_idx = get_command_idx(cname);                          \
+        if (program_state.followmode == FM_PLAY ||                      \
+            (cmdlist[_o_c_idx].flags & CMD_NOTIME)) {                   \
+            obj_cmd[i].defkey = caccel;                                 \
+            strncpy(obj_cmd[i].name, cname, sizeof(obj_cmd[i].name));   \
+            strncpy(obj_cmd[i].desc, cdesc, sizeof(obj_cmd[i].desc));   \
+            obj_cmd[i].flags = cmdlist[_o_c_idx].flags;                 \
+            i++;                                                        \
+        }                                                               \
+    } while (0)
 
 
 struct nh_cmd_desc *
@@ -1097,11 +1106,6 @@ nh_get_object_commands(int *count, char invlet)
     struct monst *shkp;
 
     xmalloc_cleanup(&api_blocklist);
-
-    /* returning a list of commands when viewing doesn't hurt anything, but
-       since they won't work there is no point. */
-    if (program_state.followmode != FM_PLAY)
-        return NULL;
 
     for (obj = invent; obj; obj = obj->nobj)
         if (obj->invlet == invlet)
