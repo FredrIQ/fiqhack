@@ -3,8 +3,10 @@
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include "nhcurses.h"
-#include <fcntl.h>
+#ifdef NETCLIENT
+
+# include "nhcurses.h"
+# include <fcntl.h>
 
 enum menuids {
     NEWGAME = 1,
@@ -762,5 +764,7 @@ finally:
     free_displaychars();        /* remove server display info */
     init_displaychars();        /* go back to local object/monster/... lists */
 }
+
+#endif /* NETCLIENT */
 
 /* netgame.c */

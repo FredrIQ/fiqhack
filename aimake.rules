@@ -25,7 +25,8 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
         # These warnings are probably worth fixing eventually,
         # but have too many false positives to be able to show
         # them right now
-        AM_CFLAGS   => '-Wno-unused-parameter -Wno-sign-compare '.
+        AM_CFLAGS   => '-Wno-missing-field-initializers '.
+                       '-Wno-unused-parameter -Wno-sign-compare '.
                        '-Wold-style-definition -Wstrict-prototypes '.
                        '-Wmissing-prototypes -Wmissing-declarations '.
                        '-Wpointer-arith',

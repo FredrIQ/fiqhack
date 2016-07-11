@@ -3,7 +3,9 @@
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include "nhcurses.h"
+#ifdef NETCLIENT
+
+# include "nhcurses.h"
 
 void
 net_loadgame(void)
@@ -130,3 +132,5 @@ net_replay(void)
 
     game_ended(ret, NULL, TRUE);
 }
+
+#endif /* NETCLIENT */
