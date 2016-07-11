@@ -8,10 +8,12 @@ compiler:
     - gcc
     - clang
 
+# Disable aimake for now, for performance purposes
 script:
-    - mkdir build installdir
-    - cd build
-    - ../aimake -i ../installdir --without=gui
+    - make
+#   - mkdir build installdir
+#   - cd build
+#   - ../aimake -i ../installdir --without=gui
 
 notifications:
     irc: "chat.freenode.net#FIQHack"
