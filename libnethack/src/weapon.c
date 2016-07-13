@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -790,13 +790,11 @@ mon_wield_item(struct monst *mon)
 
 /* attack bonus for strength & dexterity */
 int
-abon(void)
+abon(const struct monst *mon)
 {
     int sbon;
-    int str = ACURR(A_STR), dex = ACURR(A_DEX);
+    int str = acurr(mon, A_STR), dex = acurr(mon, A_DEX);
 
-    if (Upolyd)
-        return adj_lev(&u.uz, &mons[u.umonnum]) - 3;
     if (str < 6)
         sbon = -2;
     else if (str < 8)
@@ -809,9 +807,6 @@ abon(void)
         sbon = 2;
     else
         sbon = 3;
-
-/* Game tuning kludge: make it a bit easier for a low level character to hit */
-    sbon += (u.ulevel < 3) ? 1 : 0;
 
     if (dex < 4)
         return sbon - 3;
@@ -827,12 +822,9 @@ abon(void)
 
 /* damage bonus for strength */
 int
-dbon(void)
+dbon(const struct monst *mon)
 {
-    int str = ACURR(A_STR);
-
-    if (Upolyd)
-        return 0;
+    int str = acurr(mon, A_STR);
 
     if (str < 6)
         return -1;

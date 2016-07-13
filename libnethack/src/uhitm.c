@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1340,11 +1340,11 @@ damageum(struct monst *mdef, const struct attack *mattk)
                   "%s falls to pieces!", Monnam(mdef));
             xkilled(mdef, 0);
         }
-        hurtarmor(mdef, ERODE_RUST);
+        hurtarmor(mdef, AD_RUST);
         tmp = 0;
         break;
     case AD_CORR:
-        hurtarmor(mdef, ERODE_CORRODE);
+        hurtarmor(mdef, AD_CORR);
         tmp = 0;
         break;
     case AD_DCAY:
@@ -1353,7 +1353,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
                   "%s falls to pieces!", Monnam(mdef));
             xkilled(mdef, 0);
         }
-        hurtarmor(mdef, ERODE_ROT);
+        hurtarmor(mdef, AD_DCAY);
         tmp = 0;
         break;
     case AD_DRST:
@@ -2073,12 +2073,12 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             if (!Acid_resistance)
                 mdamageu(mon, tmp);
             if (!rn2(30))
-                hurtarmor(&youmonst, ERODE_CORRODE);
+                hurtarmor(&youmonst, AD_ACID);
         }
         if (mhit) {
             if (aatyp == AT_KICK) {
                 if (uarmf && !rn2(6))
-                    erode_obj(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
+                    erode_obj(uarmf, xname(uarmf), AD_ACID, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
         }
@@ -2114,7 +2114,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit && !cancelled(mon)) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
-                    erode_obj(uarmf, xname(uarmf), ERODE_RUST, TRUE, TRUE);
+                    erode_obj(uarmf, xname(uarmf), AD_RUST, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
         }
@@ -2123,7 +2123,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit && !cancelled(mon)) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
-                    erode_obj(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
+                    erode_obj(uarmf, xname(uarmf), AD_CORR, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
         }
@@ -2290,17 +2290,17 @@ passive_obj(struct monst *mon, /* could be youmonst */
 
     case AD_ACID:
         if (!rn2(6)) {
-            erode_obj(obj, NULL, ERODE_CORRODE, TRUE, TRUE);
+            erode_obj(obj, NULL, AD_ACID, TRUE, TRUE);
         }
         break;
     case AD_RUST:
         if (!cancelled(mon)) {
-            erode_obj(obj, NULL, ERODE_RUST, TRUE, TRUE);
+            erode_obj(obj, NULL, AD_RUST, TRUE, TRUE);
         }
         break;
     case AD_CORR:
         if (!cancelled(mon)) {
-            erode_obj(obj, NULL, ERODE_CORRODE, TRUE, TRUE);
+            erode_obj(obj, NULL, AD_CORR, TRUE, TRUE);
         }
         break;
     case AD_ENCH:

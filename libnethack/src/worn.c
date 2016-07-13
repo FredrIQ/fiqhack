@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -107,8 +107,11 @@ setnotworn(struct obj *obj)
 {
     if (!obj)
         return;
-    if (obj == uwep || obj == uswapwep)
+    if (obj == uwep || obj == uswapwep) {
         u.twoweap = 0;
+        if (obj == uwep) {
+            u.bashmsg = FALSE; /* reset bash message */
+    }
     if (obj->oartifact)
         uninvoke_artifact(obj);
     obj->owornmask = 0L;
@@ -130,7 +133,7 @@ obj_worn_on(struct obj *obj, enum objslot slot)
 }
 
 int
-find_mac(struct monst *mon)
+find_mac(const struct monst *mon)
 {
     struct obj *obj;
     int base = mon->data->ac;
@@ -167,6 +170,48 @@ find_mac(struct monst *mon)
         base = 127;
 
     return base;
+}
+
+/* find_mac_hit()/dam() - returns "effective" AC for to-hit and damage
+   reduction */
+int
+find_mac_hit(const struct monst *mon)
+{
+    int ac = find_mac(mon);
+    if (ac > -1)
+        return ac;
+
+    /* Effective AC to-hit gives diminishing returns the more AC you got,
+       and is also somewhat random */
+    ac = -ac; /* More readable this way */
+    int ac_res = ac;
+    int i;
+    for (i = 0; i < ac; i++)
+        if (!rn2(1 + i/5))
+            ac_res++;
+
+    ac_res = -ac_res; /* Convert back to normal */
+    return ac_res;
+}
+
+int
+find_ac_dam(const struct monst *mon)
+{
+    /* Damage reduction. Works somewhat similar to "effective AC" in
+       scaling, but scales more agressively and doesn't count at all
+       until AC-1 or below */
+    int ac = find_mac(mon);
+    if (ac > -1)
+        return 0;
+
+    ac = -ac;
+    int dam = 0;
+    int i;
+    for (i = 0; i < ac; i++)
+        if (!rn2(1 + i/3))
+            dam--;
+
+    return dam;
 }
 
 /* weapons are handled separately; eyewear aren't used by monsters */

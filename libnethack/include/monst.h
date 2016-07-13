@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -196,6 +196,7 @@ struct monst {
 # define m_mhpmax(mon) ((mon) == &youmonst ? u.uhpmax : (mon)->mhpmax)
 # define m_mlev(mon) ((mon) == &youmonst ? u.ulevel : (mon)->m_lev)
 # define m_mwep(mon) ((mon) == &youmonst ? uwep : (mon)->mw)
+# define female(mon) ((mon) == &youmonst ? u.ufemale : (mon)->female)
 /* actually used for players and monsters alike now */
 # define m_mspellprot(mon) ((property_timeout(mon, PROTECTION) + 9) / 10)
 

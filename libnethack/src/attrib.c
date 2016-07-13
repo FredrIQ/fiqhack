@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -154,6 +154,46 @@ losestr(int num, int how, const char *killer, struct monst *magr)
         }
     }
     adjattrib(A_STR, -num, TRUE);
+}
+
+/* Returns amount of luck. Also works (partially for now) on monsters */
+int
+luck(const struct monst *mon)
+{
+    /* Base luck */
+    int luckcount = 0;
+    if (mon == &youmonst)
+        luckcount = u.uluck;
+
+    /*
+     * Calculate luck item luck. This is done as such:
+     * - More cursed items than blessed ones deducts luck
+     * - More blessed items than cursed ones grants luck
+     * - If the amount of cursed/blessed ones cancel out,
+     *   grant luck if you have uncursed ones, otherwise
+     *   do nothing
+     */
+    int luckitemdiff = 0;
+    boolean uncursed = FALSE;
+
+    struct obj *obj;
+    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+        if (confers_luck(obj)) {
+            if (obj->cursed)
+                luckitemdiff--;
+            else if (obj->blessed)
+                luckitemdiff++;
+            else
+                uncursed = TRUE;
+        }
+    }
+
+    if (!luckitemdiff && uncursed)
+        luckitemdiff++;
+    if (luckitemdiff)
+        luckcount += (sgn(luckitemdiff) * LUCKADD);
+
+    return luckcount;
 }
 
 void

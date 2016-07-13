@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -105,26 +105,58 @@ more_experienced(int exp, int rexp)
 
    TODO: We really ought to be driving the rng_charstats_* RNGs /backwards/.
    That's left out for now for sanity reasons, but is definitely possible to
-   implement. For now, this is left as main RNG. */
+   implement. For now, this is left as main RNG.
+   magr is the offender when applicable (can be NULL for non-monster
+   sources), mdef is the one losing levels. */
 void
-losexp(const char *killer, boolean override_res)
+losexp(const char *killer, boolean override_res,
+       struct monst *magr, struct monst *mdef)
 {
+    boolean uagr = (magr == &youmonst);
+    boolean udef = (mdef == &youmonst);
+    boolean vis = (uagr || udef ||
+                   (magr && canseemon(magr)) ||
+                   canseemon(mdef));
     int num;
 
-    if (!override_res && resists_drli(&youmonst))
+    if (!override_res && resists_drli(mdef))
         return;
 
-    if (u.ulevel > 1) {
-        pline(msgc_intrloss, "%s level %d.", Goodbye(), u.ulevel--);
-        /* remove intrinsic abilities */
-        adjabil(u.ulevel + 1, u.ulevel);
-        reset_rndmonst(NON_PM); /* new monster selection */
+    /* Monster min level is 0, not 1 */
+    if (m_mlev(mdef) > (udef ? 1 : 0)) {
+        if (udef) {
+            pline(msgc_intrloss, "%s level %d.",
+                  Goodbye(), u.ulevel--);
+            /* remove intrinsic abilities */
+            adjabil(u.ulevel + 1, u.ulevel);
+            reset_rndmonst(NON_PM); /* new monster selection */
+        } else {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "%s suddenly seems weaker!",
+                      Monnam(mdef));
+            num = dice(2, 6);
+            mdef->mhp -= num;
+            if (mdef->mhp < 1)
+                mdef->mhp = 1;
+            mdef->mhpmax -= num;
+            if (mdef->mhpmax < 1)
+                mdef->mhpmax = 1;
+            mdef->m_lev--;
+        }
     } else {
-        if (killer)
-            done(DIED, killer);
+        if (killer) {
+            if (udef)
+                done(DIED, killer);
+            else
+                monkilled(magr, mdef, "", AD_DRLI);
+        }
 
         /* no drainer or lifesaved */
-        u.uexp = 0;
+        if (udef)
+            u.uexp = 0;
+        else
+            return; /* the rest is all player-specific logic */
     }
     num = newhp();
     u.uhpmax -= num;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-19 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1399,21 +1399,29 @@ poly_obj(struct obj *obj, int id)
         /* first, turn into a generic egg */
         if (otmp->otyp == EGG)
             kill_egg(otmp);
-        else {
+        else if (id == STRANGE_OBJECT) {
+            /* only turn the result into an egg if it was originally a random
+               polymorph */
             otmp->otyp = EGG;
             otmp->owt = weight(otmp);
         }
-        otmp->corpsenm = NON_PM;
-        otmp->spe = 0;
 
-        /* now change it into something laid by the hero */
-        while (tryct--) {
-            mnum = can_be_hatched(rn2(NUMMONS));
-            if (mnum != NON_PM && !dead_species(mnum, TRUE)) {
-                otmp->spe = 1;  /* layed by hero */
-                otmp->corpsenm = mnum;
-                attach_egg_hatch_timeout(otmp);
-                break;
+        if (otmp->otyp == EGG) {
+            /* only attach egg metadata if we're dealing with an actual
+               egg -- in case we did a forced poly, this might not be
+               the case */
+            otmp->corpsenm = NON_PM;
+            otmp->spe = 0;
+
+            /* now change it into something laid by the hero */
+            while (tryct--) {
+                mnum = can_be_hatched(rn2(NUMMONS));
+                if (mnum != NON_PM && !dead_species(mnum, TRUE)) {
+                    otmp->spe = 1;  /* layed by hero */
+                    otmp->corpsenm = mnum;
+                    attach_egg_hatch_timeout(otmp);
+                    break;
+                }
             }
         }
     }
@@ -2028,20 +2036,17 @@ zapnodir(struct monst *mon, struct obj *obj)
         known = create_critters(howmany, NULL, m_mx(mon), m_my(mon));
         break;
     case WAN_WISHING:
-        if (you) {
+        if (you || vis)
             known = TRUE;
-            if (Luck + rn2(5) < 0) {
+
+        if (luck(mon) + rn2(5) < 0) {
+            if (you || vis)
                 pline(msgc_itemloss,
                       "Unfortunately, nothing happens.");
-                break;
-            }
-            makewish();
-        } else {
-            if (vis)
-                pline(msgc_monneutral, "%s may wish for an object.",
-                      Monnam(mon));
-            mon_makewish(mon);
+            break;
         }
+
+        mon_makewish(mon);
         break;
     case WAN_ENLIGHTENMENT:
         if (you) {
@@ -3231,7 +3236,8 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
             resisted = 1;
         if (you && !resists_poison(mdef)) {
             tmp = 0;
-            poisoned("blast", A_DEX, killer_msg(DIED, "a poisoned blast"), 15);
+            poisoned("blast", A_DEX, killer_msg(DIED, "a poisoned blast"), 15,
+                     magr, mdef);
         }
         break;
     case ZT_ACID:
@@ -3249,7 +3255,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         if (you && u.twoweap && !rn2(3))
             acid_damage(uswapwep);
         if (!rn2(6))
-            hurtarmor(mdef, ERODE_CORRODE);
+            hurtarmor(mdef, AD_CORR);
         break;
     case ZT_STUN:
         ztyp = "stunned";

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -82,7 +82,7 @@ combat_msgc(const struct monst *magr, const struct monst *mdef,
        that. Assumes that if the player is dying, the caller is about to call
        done(), perhaps indirectly. Note that most callers print the message for
        the hit and death separately, in which case the hit can still use cr_hit;
-       this is more for instadeaths and for after the damage is dealt. */
+s       this is more for instadeaths and for after the damage is dealt. */
     if (cr == cr_kill || cr == cr_kill0) {
         if (mdef == &youmonst)
             return msgc_fatal_predone;
@@ -132,8 +132,8 @@ combat_msgc(const struct monst *magr, const struct monst *mdef,
             msgc_petwarning,    msgc_petwarning,    /* tame vs. player */
             msgc_petneutral,    msgc_petneutral,    /* tame undirected */
 
-            msgc_combatgood,    msgc_failrandom,     /* player vs. hostile */
-            msgc_combatgood,    msgc_failrandom,     /* player vs. peaceful */
+            msgc_combatgood,    msgc_failrandom,    /* player vs. hostile */
+            msgc_combatgood,    msgc_failrandom,    /* player vs. peaceful */
             msgc_badidea,       msgc_failrandom,    /* player vs. tame */
             msgc_badidea,       msgc_failrandom,    /* attacking yourself */
             msgc_actionok,      msgc_failrandom,    /* player undirected */
@@ -278,6 +278,1991 @@ fightm(struct monst *mon)
         return 1;
     }
     return 0; /* no suitable target */
+}
+
+/* A wrapper to mhitm_inner() to handle a few special cases */
+int
+mhitm(struct monst *magr, struct monst *mdef)
+{
+    /* Used to track steed redirection, to give the steed
+       an opportunity to retaliate */
+    boolean steed = FALSE;
+
+    /* Override hitting steeds to hitting the steed rider.
+       This is going to be more general once monsters can
+       ride steeds. */
+    if (mdef == u.usteed)
+        mdef = &youmonst;
+
+    /* However, sometimes monsters end up hitting the steed
+       instead. Orcs in particular favour this sort of hit,
+       because they like to steal, eat horses and stuff */
+    if (mdef == &youmonst &&
+        rn2(is_orc(magr->data) ? 2 : 4)) {
+        steed = TRUE;
+        mdef = u.usteed;
+    }
+
+    int ret = 0;
+    int ret2 = 0; /* steed retaliation */
+
+    /* Attacker isn't a worm */
+    if (!magr->wormno) {
+        ret = mhitm_inner(magr, mdef);
+        if (!(ret & MM_DIED) && steed) {
+            ret2 = mhitm_inner(mdef, magr);
+            /* since retalitory attacks have reversed roles,
+               we need to fix some return values by hand... */
+            if (ret2 & MM_AGR_DIED)
+                ret |= MM_DEF_DIED;
+            if (ret2 & MM_DEF_DIED)
+                ret |= MM_AGR_DIED;
+        }
+        return ret;
+    }
+
+    int ret = 0;
+    int wnum = magr->wormno;
+    struct wseg *seg;
+
+    /* FIXME: make worm attacks check for steed on each attack
+       rather than the whole sequence, and allow steeds to
+       retaliate (once) */
+    for (seg = level->wtails[wnum]; seg; seg = seg->nseg) {
+        if (dist2(seg->wx, seg->wy, mdef->mx, mdef->my) < 3) {
+            ret |= mhitm_inner(magr, mdef);
+            /* If attacker or defender dies, bail out */
+            if (ret & MM_DIED)
+                return ret;
+        }
+    }
+
+    return MM_MISS;
+}
+
+/*
+ * Main melee combat function
+ *
+ * Returns a bitfield with the following values:
+ * 0x1 - Whether or not the attack hit (MM_MISS or MM_HIT)
+ * 0x2 - The defender died (MM_DEF_DIED)
+ * 0x4 - The attacker died (MM_AGR_DIED)
+ * AT_EXPL monsters always dies, which is reflected in the return value
+ */
+int
+mhitm_inner(struct monst *magr, struct monst *mdef)
+{
+    boolean uagr = (magr == &youmonst);
+    boolean udef = (mdef == &youmonst);
+    boolean vis = (uagr || udef || canseemon(magr) ||
+                   canseemon(mdef));
+
+    int hitbon = 1;
+    int dambon = 0;
+    int wepbon = 0;
+    int wepbon2 = 0; /* for off-hand weapons */
+    /* wep: current weapon, mwep: main weapon, swep: off-hand weapon */
+    struct obj *wep, mwep, swep;
+    mwep = m_mwep(magr);
+    swep = (!uagr ? NULL : uswapwep); /* FIXME */
+
+    /* To-hit bonuses/penalties */
+    if (mon_hitbon(magr)) /* rings */
+        hitbon += rnd(mon_hitbon(magr));
+    if (luck(magr) > 0)
+        hitbon += rnd(luck(magr) / 4);
+    else if (luck(magr) < 0)
+        hitbon += -rnd(-luck(magr) / 4);
+    hitbon += find_mac_hit(mdef); /* effective AC for to-hit */
+    hitbon += rnd(m_mlev(magr) / 3);
+    hitbon += hitbon_attrib(magr);
+    if (stunned(mdef))
+        hitbon += 2;
+    if (!udef && mdef->mflee)
+        hitbon += 2;
+    if (!udef && mdef->msleeping) {
+        /* well, it's awake now */
+        mdef->msleeping = 0;
+        hitbon += 2;
+    }
+    if ((udef && u_helpless(hm_all)) ||
+        (!udef && !mdef->mcanmove)) {
+        hitbon += 4;
+        /* Give the defender a chance to react before they die */
+        if (!rn2(10)) {
+            if (!udef) {
+                mdef->mcanmove = 1;
+                mdef->mfrozen = 0;
+            }
+            else if (u_helpless(hm_asleep) &&
+                     turnstate.helpless_timers[hr_asleep] < moves)
+                cancel_helplessness(hm_asleep,
+                                    "The combat suddenly awakens you.");
+        }
+    }
+    if (is_elf(magr->data) &&
+        is_orc(mdef->data))
+        hitbon++;
+    if (magr->data == &mons[PM_MONK]) {
+        /* Monks get special to-hit bonuses or penalties if lightly/heavily
+           equipped */
+        if (which_armor(magr, os_arm) &&
+            (!uagr || !uskin())) {
+            /* give people two different ways to turn this off without having
+               to suppress msgc_hint altogether */
+            if (flags.verbose)
+                pline_implied(uagr ? msgc_hint : msgc_monneutral,
+                              "%s armor is rather cumbersome...",
+                              uagr ? "Your" : s_suffix(Monnam(magr)));
+            hitbon -= uagr ? urole.spelarmr : 20;
+        } else if (!m_mwep(magr) &&
+                 !which_armor(magr, os_arms))
+            hitbon += (m_mlev(magr) / 3) + 2;
+    }
+    if ((uagr && u.utrapped) ||
+        (!uagr && magr->mtrapped))
+        hitbon -= 3;
+    if (uagr && near_capacity() != 0)
+        hitbon -= (near_capacity() * 2) - 1;
+    if (hitbon <= 0)
+        hitbon = 1;
+
+    wepbon += hitval(mwep, mdef);
+    /* Monsters have no concept of weapon skills, so this is player-only
+       for now */
+    if (uagr)
+        wepbon += weapon_hit_bonus(mwep);
+
+    /* FIXME: currently, only players can dual-wield. */
+    if (uagr && u.twoweap) {
+        wepbon2 += hitval(swep, mdef);
+        wepbon2 += weapon_hit_bonus(swep);
+    }
+
+    /* Damage bonuses and penalties */
+    if (mon_dambon(magr)) /* rings */
+        dambon += rnd(mon_dambon(magr));
+    dambon += find_mac_dam(mdef); /* AC-tied damage reduction */
+
+    if (uagr) {
+        check_caitiff(mtmp); /* check for knight dishonorable attacks */
+
+        /* attacking peaceful creatures is bad for the samurai's giri */
+        if (Role_if(PM_SAMURAI) && mtmp->mpeaceful && u.ualign.record > -10) {
+            pline(msgc_alignbad, "You dishonorably attack the innocent!");
+            adjalign(-1);
+        }
+    }
+
+    /* whether or not we've already performed a weapon attack */
+    int wepcount = 0;
+
+    /* shade checks */
+    enum objslot silverslot = os_invalid; /* potential silver damage and slot */
+    boolean silver = FALSE;
+    boolean blessed = FALSE; /* blessing touches the defender */
+    boolean shade_bypass = FALSE; /* bypass shade "resistance"  */
+    boolean cancelled = FALSE; /* MC procced */
+    int jousting = 0;
+    int wtype = 0; /* weapon type to exercise */
+    const char *killmsg; /* kill messages */
+
+    /* armor slots, for more seamless access */
+    struct obj *arm = which_armor(magr, os_arm);
+    struct obj *armc = which_armor(magr, os_armc);
+    struct obj *armh = which_armor(magr, os_armh);
+    struct obj *arms = which_armor(magr, os_arms);
+    struct obj *armg = which_armor(magr, os_armg);
+    struct obj *armf = which_armor(magr, os_armf);
+    struct obj *armu = which_armor(magr, os_armu);
+
+    int sum[NATTK]; /* stores attack results, used for AT_HUGS */
+    int hitbon_sum; /* hit bonus including weapon hit bonuses */
+    int dmg;
+    int i;
+    int hitroll = 0; /* used to check if something hit, beheading (vorpal),
+                        weapon shattering */
+    struct attack *mattk;
+    struct attack alt_attk;
+    for (i = 0; i < NATTK; i++) {
+        /* Damage bonus (or penalty) only applies for the 1st attack */
+        if (i > 0)
+            dambon = 0;
+
+        sum[i] = 0;
+        silverslot = os_invalid;
+        silver = FALSE;
+        blessed = FALSE;
+        shade_bypass = FALSE;
+        cancelled = FALSE;
+        mattk = getmattk(mdat, i, sum, &alt_attk);
+
+        if (engulfed(mdef) == magr && (mattk->aatyp != AT_ENGL))
+            continue;
+
+        wep = NULL; /* allowing checking wep to imply AT_WEAP */
+        if (mattk->aatyp == AT_WEAP) {
+            wep = mwep;
+            wepcount++;
+            /* second weapon attack is only performed in two-weapon combat */
+            if (wepcount > 1) {
+                if (wepcount > 2) {
+                    impossible("More than 2 weapon attacks?");
+                    return 0;
+                }
+
+                if (!uagr || !u.twoweap)
+                    continue;
+                wep = swep;
+            }
+        }
+
+        /* Ensure that we are performing a melee attack and nothing else.
+           Gaze is special -- it can be used both reflexively in melee
+           and at range. */
+        if (mattk->aatyp == AT_SPIT ||
+            mattk->aatyp == AT_BREA ||
+            mattk->aatyp == AT_AREA)
+            continue;
+
+        /* An engulfed target is only hit further by the engulf attack */
+        if (mattk->aatyp != AT_ENGL &&
+            engulfed(mdef) == magr)
+            continue;
+
+        /* calculate hit bonus from current attack (weapon can adjust) */
+        hitbon_sum = hitbon;
+        if (mattk->aatyp == AT_WEAP)
+            hitbon_sum += (wepcount == 1 ? wepbon : wepbon2);
+
+        /* did our attack hit? some always do */
+        hitroll = rnd(20 + i);
+        if (mattk->aatyp != AT_EXPL && /* those 3 always hit */
+            mattk->aatyp != AT_BOOM &&
+            mattk->aatyp != AT_GAZE &&
+            mattk->aatyp != AT_HUGS && /* doesn't always hit, but see below */
+            engulfed(mdef) != magr && /* engulfed monsters are never missed */
+            hitbon_sum <= hitroll) {
+            if (vis)
+                pline("%s %s!",
+                      M_verbs(magr, "%smiss",
+                              hitbon_sum == hitroll ? "just " : ""),
+                      udef ? "you" : mon_nam(mdef));
+            continue;
+        }
+
+        /* engulfing doesn't work on non-engulfers to prevent engulf chains,
+           and avoid engulfing if already engulfing something else. Also,
+           don't engulf huge monsters because they're too big */
+        if (mattk->aatyp == AT_ENGL &&
+            (attacktype(mdef->data, AT_ENGL) ||
+             mdef->wormno || /* too much hassle for now */
+             mdef->data->msize >= MZ_HUGE ||
+             (engulfed(mdef) != magr && engulfing(magr))))
+            continue;
+
+        /* hugging attacks has a special hit rate -- it succeeds based on
+           whether or not the 2 previous attacks succeeded (or if already
+           hugging the target), and never vs other huggers
+           FIXME: monsters hugging each other isn't implemented yet */
+        if (mattk->aatyp == AT_HUGS && stuck(mdef) != magr &&
+            (!sticks(mdef->data) || stuck(mdef) ||
+             !sum[i - 1] || !sum[i - 2]))
+            continue;
+        if (mattk->aatyp == AT_HUGS && !uagr && !udef)
+            continue;
+
+        /* petrification checks */
+        long protector = attk_protection((int)mattk->aatyp);
+        if (mattk->aatyp == AT_WEAP && wep)
+            protector = 0L; /* attk_protection doesn't check this */
+
+        boolean petrify = FALSE;
+
+        /* Kill message in case petrification does happen */
+        const char *stone_killer = "attacking %s directly";
+        if (mattk->aatyp == AT_CLAW)
+            stone_killer = "clawing %s barehanded";
+        else if (mattk->aatyp == AT_KICK)
+            stone_killer = "kicking %s barefoot";
+        else if (mattk->aatyp == AT_BITE)
+            stone_killer = "biting %s";
+        else if (mattk->aatyp == AT_STNG)
+            stone_killer = "stinging %s";
+        else if (mattk->aatyp == AT_TUCH)
+            stone_killer = "touching %s barehanded";
+        else if (mattk->aatyp == AT_BUTT)
+            stone_killer = "headbutting %s with no helmet";
+        else if (mattk->aatyp == AT_TENT)
+            stone_killer = "sucking %s";
+        else if (mattk->aatyp == AT_WEAP)
+            stone_killer = "punching %s barehanded";
+        else if (mattk->aatyp == AT_HUGS)
+            stone_killer = armc ? "hugging %s without gloves" :
+                "hugging %s without a cloak";
+        else if (mattk->aatyp == AT_ENGL)
+            stone_killer = "trying to engulf %s";
+        stone_killer = msgprintf(stone_killer, k_monnam(mdef));
+
+        if (protector == 0L || /* no protection needed */
+            (protector == W_MASK(os_armg) && !armg && !wep) ||
+            (protector == W_MASK(os_armf) && !armf) ||
+            (protector == W_MASK(os_armh) && !armh) ||
+            (protector == (W_MASK(os_armc) | W_MASK(os_armg)) &&
+             (!armc || !armg))) {
+            if (!confused(magr) && !stunned(magr) && !Conflict) {
+                if (uagr && flags.verbose) /* elaborate on what happened */
+                    pline_implied(combat_msgc(magr, mdef, cr_miss),
+                                  "You reflexively avoid %s %s.",
+                                  mattk->aatyp == AT_CLAW ? "clawing" :
+                                  mattk->aatyp == AT_KICK ? "kicking" :
+                                  mattk->aatyp == AT_TUCH ? "touching" :
+                                  mattk->aatyp == AT_BUTT ? "head-butting" :
+                                  mattk->aatyp == AT_WEAP ? "punching" :
+                                  mattk->aatyp == AT_BITE ? "biting" :
+                                  mattk->aatyp == AT_STNG ? "stinging" :
+                                  mattk->aatyp == AT_TENT ? "sucking" :
+                                  mattk->aatyp == AT_HUGS &&
+                                  mattk->adtyp == AT_WRAP ? "wrapping" :
+                                  mattk->aatyp == AT_HUGS ? "grabbing" :
+                                  mattk->aatyp == AT_ENGL ? "engulfing" :
+                                  "hitting",
+                                  mon_nam(mdef));
+                continue;
+            } else
+                petrify = TRUE; /* Not yet, we want to do the hit first */
+        }
+
+        /* check for silver/blessed damage bonuses */
+
+#define addbonus(slot) {                                        \
+        if (slot && objects[slot].oc_material == SILVER)        \
+            silverslot = os_slot;                               \
+        if (slot && slot->blessed)                              \
+            blessed = TRUE;                                     \
+        if (slot && slot->otyp == MIRROR)                       \
+            shade_bypass = TRUE; }
+
+        if (wep)
+            addbonus(wep);
+        else if (mattk->aatyp == AT_CLAW ||
+                 mattk->aatyp == AT_WEAP || /* bare handed combat */
+                 mattk->aatyp == AT_TUCH ||
+                 mattk->aatyp == AT_HUGS) {
+            addbonus(armg);
+
+            /* Check rings. Touch attacks doesn't make ring contact, or
+               at least not enough to do anything notable */
+            if (!armg && mattk->aatyp != AT_TUCH) {
+                struct obj *ring;
+                int rings = 0;
+
+                ring = which_armor(magr, os_ringl);
+                if (ring && objects[ring->otyp].oc_material == SILVER)
+                    rings++;
+                if (ring && ring->blessed)
+                    blessed = TRUE;
+                ring = which_armor(magr, os_ringr);
+                if (ring && objects[ring->otyp].oc_material == SILVER)
+                    rings++;
+                if (ring && ring->blessed)
+                    blessed = TRUE;
+
+                /* Ring slots are special cased -- os_ringl is
+                   regarded as "one ring", os_ringr as two */
+                if (rings)
+                    silverslot = (rings > 1 ? os_ringr : os_ringl);
+            }
+
+            /* Hugs also checks body armor unless the defender is
+               a shade (who can't be grabbed properly) */
+            if (mattk->aatyp == AT_HUGS &&
+                mdef->data != &mons[PM_SHADE]) {
+                if (armc)
+                    addbonus(armc);
+                else if (arm)
+                    addbonus(arm);
+                else if (armu)
+                    addbonus(armu);
+            }
+        } else if (mattk->aatyp == AT_KICK)
+            addbonus(armf);
+        else if (mattk->aatyp == AT_BUTT)
+            addbonus(armh);
+
+        if (silverslot != os_invalid)
+            silver = TRUE;
+#undef addbonus
+
+        /* calculate general damage */
+        dmg = 0;
+        if (mattk->damd)
+            dmg = dice(mattk->damn ? mattk->damn : m_mlev(magr) + 1,
+                       mattk->damd);
+
+        switch (mattk->aatyp) {
+        case AT_CLAW: /* Ordinary melee attacks (with various flavour) */
+        case AT_KICK:
+        case AT_BITE:
+        case AT_STNG:
+        case AT_TUCH:
+        case AT_BUTT:
+        case AT_TENT:
+            if (vis) {
+                if (mattk->aatyp == AT_TENT)
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s tentacles suck %s!",
+                          uagr ? "Your" : s_suffix(Monnam(magr)),
+                          udef ? "you" : mon_nam(mdef));
+                else
+                    pline(combat_msgc(magr, mdef, cr_hit), "%s %s!",
+                          M_verbs(magr, hitverb(magr, mattk)),
+                          udef ? "you" : mon_nam(mdef));
+            } else
+                noises(magr, mattk);
+            break;
+        case AT_HUGS:
+            if (mdef->data == &mons[PM_SHADE]) {
+                /* Silvered or blessed gloves/rings still hurt,
+                   even if the shade can't be grabbed */
+                if (vis)
+                    pline(combat_msgc(magr, mdef, silver || blessed ?
+                                      cr_resist : cr_immune),
+                          "%s hug passes %sthrough %s.",
+                          uagr ? "Your" : s_suffix(Monnam(magr)),
+                          !silver && !blessed ? "harmlessly " : "",
+                          udef ? "you" : mon_nam(mdef));
+                dmg = 0;
+                break;
+            }
+
+            if (stuck(mdef) != magr) {
+                boolean drownable = is_pool(level, m_mx(magr), m_my(mdef)) &&
+                    !swims(mdef) && !unbreathing(mdef) &&
+                    mattk->adtyp == AD_WRAP;
+                /* ad_wrap has lower success chance */
+                if (mattk->adtyp == AD_WRAP &&
+                    (cancelled(magr) ||
+                     rn2(10, drownable && udef ?
+                         rng_eel_drowning :
+                         rng_main))) {
+                    if (vis)
+                        pline(udef && drownable ? msgc_fatalavoid :
+                              combat_msgc(magr, mdef, cr_miss),
+                              "%s against %s %s.", M_verbs(magr, "brush"),
+                              udef ? "your" : s_suffix(mon_nam(mdef)),
+                              mbodypart(mdef, LEG));
+                    dmg = 0;
+                    if (petrify) {
+                        if (uagr)
+                            instapetrify(killer_msg(STONING, stone_killer));
+                        else
+                            minstapetrify(magr, mdef);
+                        return uagr ? 0 : DEADMONSTER(magr) ?
+                            MM_HIT | MM_AGR_DIED : 0;
+                    }
+                    break;
+                } else if ((mattk->adtyp != AD_WRAP && rn2(2) ||
+                            slip_free(magr, mdef, mattk))) {
+                    dmg = 0;
+                    break; /* no message for now */
+                }
+
+                if (vis) {
+                    if (mattk->adtyp == AD_WRAP)
+                        pline(udef && drownable ? msgc_fatal :
+                              combat_msgc(magr, mdef, cr_hit),
+                              "%s %sself around %s!",
+                              M_verbs(magr, "swing"),
+                              uagr ? "your" : "it",
+                              udef ? "you" : mon_nam(mdef));
+                    else
+                        pline(combat_msgc(magr, mdef, cr_hit),
+                              "%s %s!", M_verbs(magr, "grab"),
+                              udef ? "you" : mon_nam(mdef));
+                } else
+                    noises(magr, mattk);
+                if (petrify) {
+                    if (uagr)
+                        instapetrify(killer_msg(STONING, stone_killer));
+                    else
+                        minstapetrify(magr, mdef);
+                    return uagr ? 0 : DEADMONSTER(magr) ?
+                        MM_HIT | MM_AGR_DIED : 0;
+                }
+                u.ustuck = (uagr ? mdef : magr); /* FIXME */
+                break;
+            } else {
+                if (mattk->adtyp == AD_WRAP &&
+                    is_pool(level, m_mx(magr), m_my(magr)) &&
+                    !cancelled(magr)) {
+                    /* Petrification checks, just in case
+                       (this code should never run, but might do if polymorph
+                       doesn't check stuff properly) */
+                    if (petrify) {
+                        if (uagr)
+                            instapetrify(killer_msg(STONING, stone_killer));
+                        else
+                            minstapetrify(magr, mdef);
+                        return uagr ? 0 : DEADMONSTER(magr) ?
+                            MM_HIT | MM_AGR_DIED : 0;
+                    }
+
+                    /* At this point, the eel/kraken/whatever is going to
+                       attempt a drowning. No matter the outcome, this causes
+                       water damage to inventory. Do this first in case the
+                       end result is a dead player (if this happens, we can't
+                       do it later) */
+                    water_damage_chain(m_minvent(mdef), FALSE);
+
+                    /* Check resists */
+                    if (!swims(mdef) && !unbreathing(mdef)) {
+                        if (vis)
+                            pline(combat_msgc(magr, mdef, cr_kill),
+                                  "%s %s...", M_verbs(magr, "drown"),
+                                  udef ? "you" : mon_nam(mdef));
+                        else if (mdef->mtame)
+                            pline(msgc_petfatal,
+                                  "You have a sad feeling for a moment, "
+                                  "then it passes.");
+                        else
+                            noises(magr, mattk);
+                        if (udef) {
+                            done(DROWNING,
+                                 killer_msg(DROWNING,
+                                            msgprintf("%s by %s",
+                                                      Is_waterlevel(&u.uz)
+                                                      ? "the Plane of Water"
+                                                      : a_waterbody(mtmp->mx,
+                                                                    mtmp->my),
+                                                      an(mtmp->data->mname))));
+                            return 0; /* lifesaved */
+                        } else {
+                            mdef->mhp = 0;
+                            monkilled(magr, mdef, "", (int)mattk->adtyp);
+                            if (!DEADMONSTER(mdef))
+                                return 0;
+                            return MM_DEF_DIED |
+                                (grow_up(magr, mdef) ? 0 : MM_AGR_DIED);
+                        }
+                    } else if (vis)
+                        pline(combat_msgc(magr, mdef, cr_immune),
+                              "%s to drown %s.",
+                              M_verbs(magr, "try"),
+                              udef ? "you" : mon_nam(mdef));
+                    else
+                        noises(magr, mattk);
+                } else {
+                    if (udef)
+                        exercise(A_STR, FALSE);
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s being %s.", M_verbs(magr, "are"),
+                          (magr->data == &mons[PM_ROPE_GOLEM]) ?
+                          "choked" : "crushed");
+                }
+            }
+            break;
+        case AT_GAZE:
+            shade_bypass = TRUE;
+            /* Medusa gaze already operated through m_respond in dochug();
+               don't gaze more than once per round. */
+            if (magr->mdata != &mons[PM_MEDUSA])
+                sum[i] = gazemm(magr, mdef, mattk);
+            dmg = 0;
+            break;
+        case AT_EXPL:
+            shade_bypass = TRUE;
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "%s!", M_verbs(magr, "explode"));
+            else
+                noises(magr, mattk);
+            if (cancelled(magr))
+                return MM_HIT | MM_AGR_DIED; /* we're done here */
+            if (magr->data->mlet == S_LIGHT) {
+                /* light explosions only affects those who can see */
+                if (blind(mdef) ||
+                    (mattk->adtyp == AD_BLND && invisible(magr) &&
+                     !see_invisible(mdef))) {
+                    if (vis && (blind(mdef) || !udef))
+                        pline(combat_msgc(magr, mdef, cr_immune),
+                              "%s unaffected.", M_verbs(mdef, "seem"));
+                    else if (vis) /* lack of see invis vs blinding invis */
+                        pline(msgc_yafm,
+                              "You get the impression it was not terribly bright.");
+                    return MM_HIT | MM_AGR_DIED;
+                }
+            } else {
+                if (acurr(mdef, A_DEX) > rnd(20)) {
+                    if (vis)
+                        pline(combat_msgc(magr, mdef, cr_resist),
+                              "%s some of the blast.", M_verbs(mdef, "duck"));
+                    dmg /= 2;
+                } else if (vis)
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s blasted!", M_verbs(mdef, "are"));
+            }
+            sum[i] |= MM_HIT | MM_AGR_DIED;
+            break;
+        case AT_ENGL:
+            shade_bypass = TRUE; /* maybe not? */
+            if (engulfing(magr)) { /* already engulfed */
+                mdef->swallowtime--;
+                break;
+            }
+
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "%s %s!",
+                      M_verbs(magr, mattk->adtyp == AD_DGST ? "swallow" :
+                              "engulf"), udef ? "you" : mon_nam(mdef));
+            else
+                noises(magr, mattk);
+
+            if (udef) {
+                if (Punished)
+                    unplacebc(); /* get rid of ball for now */
+                action_interrupted();
+                reset_occupations(TRUE);
+                if (number_leashed()) {
+                    pline(msgc_petwarning, "The %s loose.",
+                          number_leashed() > 1 ? "leashes snap" :
+                          "leash snaps");
+                    unleash_all();
+                }
+            }
+
+            /* dismount hero to prevent oddities */
+            if ((uagr || udef) && u.usteed)
+                dismount_steed(DISMOUNT_ENGULFED);
+
+            /* old location */
+            int x = m_mx(magr);
+            int y = m_my(magr);
+
+            if (uagr) {
+                if (u.utrap) {
+                    pline(msgc_statusheal,
+                          "You release yourself from the %s.",
+                          u.utraptype == TT_WEB ? "web" : "trap");
+                    u.utrap = 0;
+                }
+                u.ux = m_mx(mdef);
+                u.uy = m_my(mdef);
+            } else {
+                magr->mtrapped = 0;
+                remove_monster(m_dlevel(magr), m_mx(mon), m_my(mon));
+                place_monster(magr, m_mx(mdef), m_my(mdef), TRUE);
+
+                /* Clear muxy if necessary, it can't be equal to mxy */
+                if (udef) {
+                    magr->mux = COLNO;
+                    magr->muy = ROWNO;
+                    if (Punished)
+                        placebc(); /* place the ball back */
+                }
+            }
+            newsym(x, y);
+            newsym(m_mx(magr), m_my(magr));
+            if (udef) {
+                win_pause_output(P_MESSAGE);
+                vision_full_recalc(2);
+                swallowed(1); /* special engulf display for hero */
+            }
+
+            /* kill light sources */
+            struct obj *obj;
+            for (obj = m_minvent(mdef); obj; obj = obj->nobj)
+                snuff_lit(obj);
+
+            int engulf_timer = 25 - m_mlev(magr);
+            if (engulf_timer > 0)
+                engulf_timer = rnd(engulf_timer) / 2;
+            else if (tim_tmp < 0)
+                engulf_timer = -(rnd(-engulf_timer) / 2);
+            engulf_timer += -find_mac(mdef) + 10;
+            mdef->swallowtime = engulf_timer < 2 ? 2 : engulf_timer;
+            break;
+        case AT_WEAP:
+            /* Needed a bunch of times, so set up killer message right away */
+            killmsg = msgcat(s_suffix(k_monnam(mdef)), xname(wep));
+            if (uagr)
+                killmsg = msgcat_many(uhis(), " own ", xname(wep));
+
+            /* Reset the damage value, we'll recalculate it afterwards. This
+               is because we want to calculate weapon damage and perform
+               weapon specific stuff here, and then deal an additional damage
+               bonus from the base monster damage+type by continuing to that
+               relevant codepath. This results in equal behaviour for
+               physical weapon attacks, but makes non-physical weapon attacks
+               less awkward/buggy. Note that players wont get the secondary
+               part unless polymorphed, this will have unintentional side
+               effects in balance otherwise. */
+            dmg = 0;
+            if (!vis)
+                noises(magr, mattk);
+            else if (!wep) /* bare-handed combat/martial arts */
+                pline(combat_msgc(magr, mdef, cr_hit), "%s %s!",
+                      M_verbs(magr,
+                              ((uagr && (Role_if(PM_MONK) ||
+                                         Role_if(PM_SAMURAI))) ||
+                               magr->data == &mons[PM_MONK] ||
+                               magr->data == &mons[PM_GRAND_MASTER] ||
+                               magr->data == &mons[PM_ABBOT] ||
+                               magr->data == &mons[PM_MASTER_KAEN] ||
+                               magr->data == &mons[PM_SAMURAI] ||
+                               magr->data == &mons[PM_LORD_SATO] ||
+                               magr->data == &mons[PM_ROSHI] ||
+                               magr->data == &mons[PM_ASHIKAGA_TAKAUJI]) ?
+                              "strike" : "hit"),
+                      udef ? "you" : mon_nam(mdef));
+            else if (wep->otyp == CORPSE)
+                pline((!touch_petrifies(&mons[wep->corpsenm]) ||
+                       resists_ston(mdef)) ?
+                      combat_msgc(magr, mdef, cr_hit) :
+                      udef ? msgc_fatalavoid : mdef->mtame ? msgc_petfatal :
+                      combat_msgc(magr, mdef, cr_hit),
+                      "%s %s with the %s corpse.", M_verbs(magr, "hit"),
+                      udef ? "you" : mon_nam(mdef),
+                      mons[wep->corpsenm].mname);
+            else /* taken from L's weapon type patch */
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      udef ? "%s %s %s %s!" : "%s %s %s %s at %s!",
+                      M_verbs(magr,
+                              ((objects[wep->otyp].oc_dir & WHACK) &&
+                               (!(objects[wep->otyp].oc_dir & PIERCE) ||
+                                rn2(2))) ?
+                              ((objects[wep->otyp].oc_skill == P_CLUB ||
+                                objects[wep->otyp].oc_skill == P_MACE ||
+                                objects[wep->otyp].oc_skill == P_MORNING_STAR) ?
+                               "club" : "whack") :
+                              ((objects[wep->otyp].oc_dir & PIERCE) &&
+                               (!(objects[wep->otyp].oc_dir & SLASH) ||
+                                rn2(2))) ?
+                              (is_blade(wep) ? "stab" : "jab") :
+                              ((objects[wep->otyp].oc_dir & SLASH) ?
+                               ((uagr && Role_if(PM_BARBARIAN)) ||
+                                magr->data == &mons[PM_BARBARIAN]) ?
+                               "smite" : rn2(2) ? "hack" : is_axe(wep) ?
+                               "hew" : "slash") :
+                              (objects[wep->otyp].oc_skill == P_WHIP) ?
+                              "whip" : "hit"),
+                      uagr ? shk_your(wep) : mhis(magr),
+                      singular(wep, xname),
+                      udef ? "you" : mon_nam(mdef));
+
+            /* we've gotten the hit message, now check for petrification */
+            if (petrify) {
+                if (uagr)
+                    instapetrify(killer_msg(STONING, stone_killer));
+                else
+                    minstapetrify(magr, mdef);
+                return uagr ? 0 : DEADMONSTER(magr) ?
+                    MM_HIT | MM_AGR_DIED : 0;
+            }
+
+            /* after the checks below, wep might no longer exist */
+            boolean proper = FALSE; /* using a proper weapon or hands */
+            if (wep &&
+                !is_launcher(wep) &&
+                !is_missile(wep) &&
+                !is_ammo(wep) &&
+                (wep->oclass == WEAPON_CLASS ||
+                 is_weptool(wep))) {
+                dmg = dmgval(wep, mdef);
+                proper = TRUE;
+
+                /* for players: weapon skill damage bonus */
+                if (uagr)
+                    dmg += weapon_dam_bonus(wep);
+
+                wtype = uwep_skill_type();
+
+                /* skill exercise: only players can exercise skills */
+                if (uagr) {
+                    /* only a secondary weaopn hit exercises twoweapon since
+                       it trains the off-hand capabilities */
+                    if ((u.twoweap && wepcount > 1) ||
+                        !u.twoweap)
+                        use_skill(wtype, 1);
+                }
+            } else if (wep && wep->oclass == POTION_CLASS) {
+                if (wep->quan > 1)
+                    wep = splitobj(obj, 1);
+                obj_extract_self(wep);
+                if (uagr)
+                    setnotworn(wep);
+                else
+                    MON_NOWEP(wep);
+                /* TODO: Adjust this function to work properly vs players.
+                   Currently it only procs for players for certain thrown
+                   potions, the rest is handled in potionbreathe(), which
+                   potionhit calls. Rework this so that potionbreathe
+                   ignores the "main" target (because he was hit with a
+                   harsher effect) */
+                potionhit(mdef, wep, magr);
+                if ((!udef && DEADMONSTER(mdef)) ||
+                    (!uagr && DEADMONSTER(magr))) {
+                    /* Abort the rest of the attack */
+                    return MM_HIT | (DEADMONSTER(mdef) ? MM_DEF_DIED : 0) |
+                        (DEADMONSTER(magr) ? MM_AGR_DIED : 0);
+                }
+                dmg = 1;
+            } else if (wep) {
+                dmg = rnd(2); /* exceptions are handled below */
+                switch (wep->otyp) {
+                case BOULDER:  /* 1d20 */
+                case HEAVY_IRON_BALL:  /* 1d25 */
+                case IRON_CHAIN:       /* 1d4+1 */
+                    dmg = dmgval(wep, mdef);
+                    break;
+                case BOOMERANG: /* might break */
+                    if ((uagr ? rnl(4) : rn2(4)) == 4 - 1) {
+                        if (vis)
+                            pline(msgc_itemloss,
+                                  "As %s %s, %s%s %s breaks into splinters.",
+                                  m_verbs(magr, "hit"),
+                                  udef ? "you" : mon_nam(mdef),
+                                  wep->quan > 1 ? "one of " : "",
+                                  uagr ? shk_your(wep) : mhis(wep),
+                                  xname(wep));
+                        m_useup(magr, wep);
+                    }
+                    break;
+                case MIRROR:
+                    if (breaktest(wep)) {
+                        if (vis)
+                            pline(uagr ? msgc_statusbad : msgc_monneutral,
+                                  "%s %s %s.  That's bad luck!",
+                                  uagr ? shk_your(wep) : mhis(wep),
+                                  simple_typename(wep->otyp));
+                        if (uagr)
+                            change_luck(-2);
+                        m_useup(magr, wep);
+                    }
+                    dmg = 1;
+                    break;
+                case EXPENSIVE_CAMERA:
+                    if (vis)
+                        pline(msgc_itemloss,
+                              "%s in destroying %s camera.%s",
+                              M_verbs(magr, "succeed"),
+                              uagr ? shk_your(wep) : mhis(wep),
+                              uagr ? "  Congratulations!" : "");
+                    m_useup(magr, wep);
+                    break;
+                case CORPSE:
+                    dmg = (wep->corpsenm >= LOW_PM ?
+                           mons[wep->corpsenm].msize : 0) + 1;
+                    if (!touch_petrifies(&mons[obj->corpsenm]))
+                        break;
+
+                    if (udef) { /* This should probably be in mstiffen */
+                        if (!petrifying(&youmonst) &&
+                            !resists_ston(&youmonst) &&
+                            !(poly_when_stoned(youmonst.data) &&
+                              polymon(PM_STONE_GOLEM, TRUE))) {
+                            set_property(&youmonst, STONED, 5, TRUE);
+                            set_delayed_killer(STONING,
+                                               killer_msg_mon(STONING,
+                                                              mtmp));
+                        }
+                    } else if (!petrifying(mdef))
+                        mstiffen(mdef, magr);
+                    break;
+                case EGG:
+                    if (!touch_petrifies(mdef) ||
+                        pm_resistance(&mons[wep->corpsenm], MR_STONE)) {
+                        if (vis)
+                            pline(combat_msgc(magr, mdef, cr_hit), "Splat!");
+                        if (touch_petrifies(&mons[wep->corpsenm]) &&
+                            !resists_ston(mdef) && !petrifying(mdef)) {
+                            if (vis) {
+                                pline(udef ? msgc_fatal :
+                                      mdef->mtame ? msgc_petfatal :
+                                      combat_msgc(magr, mdef, cr_hit),
+                                      "The egg%s stiffen%s %s!",
+                                      wep->quan != 1 ? "s" : "",
+                                      wep->quan == 1 ? "s" : "",
+                                      udef ? "you" : mon_nam(mdef));
+                                learn_egg_type(wep->corpsenm);
+                            }
+                            if (udef) {
+                                if (!petrifying(&youmonst) &&
+                                    !resists_ston(&youmonst) &&
+                                    !(poly_when_stoned(youmonst.data) &&
+                                      polymon(PM_STONE_GOLEM, TRUE))) {
+                                    set_property(&youmonst, STONED, 5, TRUE);
+                                    set_delayed_killer(STONING,
+                                                       killer_msg_mon(STONING,
+                                                                      mtmp));
+                                }
+                            } else
+                                mstiffen(mdef, magr);
+                        }
+                        wep->quan = 1; /* hack: there's no m_useupall */
+                        m_useup(magr, wep);
+                        break;
+                    }
+
+                    /* hitting things that petrifies with non-stone-resistant
+                       eggs */
+                    if (vis)
+                        pline(msgc_consequence,
+                              "The egg%s alive any more...",
+                              wep->quan > 1 ? "s aren't" : " isn't");
+                    poly_obj(wep, ROCK);
+                    break;
+                case CLOVE_OF_GARLIC:
+                    /* FIXME: find a suitable effect for players as opposed
+                       to "do nothing" */
+                    if (!udef && is_undead(mdef->data))
+                        monflee(mdef, dice(2, 4), FALSE, TRUE);
+                    break;
+                case CREAM_PIE:
+                    if (vis)
+                        pline(combat_msgc(magr, mdef, cr_hit),
+                              "%s splats over %s%s!",
+                              An(singular(wep, xname)),
+                              udef ? "your" : s_suffix(mon_nam(mdef)),
+                              mbodypart(mdef, FACE));
+                    else
+                        pline(msgc_levelsound, "Splat!");
+                    int creaming = rnd(25);
+                    if (can_blnd(magr, mdef, AT_WEAP))
+                        inc_timeout(mdef, BLINDED, creaming, FALSE);
+                    if (udef)
+                        u.ucreamed += creaming;
+                    break;
+                default:
+                    dmg = wep->owt / 100;
+                    dmg = min(max(dmg, 6), 1); /* min 1, capped at 6 */
+                    break;
+                }
+            } else
+                dmg = rnd(uagr && martial_bonus() ? 4 : 2);
+
+            /* Reset weapon pointers in case a weapon was destroyed above */
+            mwep = m_mwep(magr);
+            swep = (!uagr ? NULL : uswapwep); /* FIXME */
+            wep = mwep;
+            if (wepcount > 1)
+                wep = swep;
+
+            if (proper && wep && wep->opoisoned &&
+                is_poisonable(wep)) {
+                /* alignment checks */
+                if (uagr) {
+                    if (Role_if(PM_SAMURAI)) {
+                        pline(msgc_alignchaos,
+                              "You dishonorably use a poisoned weapon!");
+                        adjalign(-sgn(u.ualign.type));
+                    } else if (u.ualign.type == A_LAWFUL &&
+                               u.ualign.record > -10) {
+                        pline(msgc_alignbad,
+                              "You feel like an evil coward "
+                              "for using a poisoned weapon.");
+                        adjalign(-1);
+                    }
+                }
+
+                poisoned("weapon", A_STR, killer_msg(DIED, killmsg), 30,
+                         magr, mdef);
+
+                /* check if the poison should wear off */
+                if (!rn2(min(10 - (wep->owt / 10), 2))) {
+                    wep->opoisoned = FALSE;
+                    if (vis)
+                        pline(msgc_itemloss, "The poison wears off.");
+                }
+
+                /* did the poison kill? (if it hit the player, it clearly
+                   didn't at this point) */
+                if (!udef && DEADMONSTER(mdef))
+                    return MM_HIT | MM_DEF_DIED;
+            }
+
+            /* Some bonuses. These things used to include mon!=u.ustuck.
+               I saw no reason to keep this behaviour
+               TODO: maybe only allow knives/daggers to backstab? */
+            if (proper && wep && (!uagr || !u.twoweap)) {
+                /* Backstab. Only true rogues (not polymorph) can do this */
+                if (((!udef && mon->mflee) ||
+                     (udef && u_helpless(hr_afraid))) &&
+                    magr->data == &mons[PM_ROGUE]) {
+                    if (vis)
+                        pline("%s %s from behind!", M_verbs(magr, "strike"),
+                              udef ? "you" : mon_nam(mdef));
+                    dmg += rnd(m_mlev(magr));
+                }
+
+                /* Weapon shattering with 2-handers or katanas for samurai.
+                   For players, this can only happen if they're Skilled or
+                   better. Since monsters currently lack weapon skills,
+                   this is implemented as just happening 50% of the time
+                   (compared to players). Only two-handed weapons can shatter,
+                   except for samurai who can do it with merely a katana
+                   (but can't be done when twoweaponing). */
+                struct obj *defwep = m_mwep(mdef);
+                if (dieroll == 2 && defwep && !is_flimsy(defwep) &&
+                    (bimanual(wep) ||
+                     (magr->data == &mons[PM_SAMURAI] &&
+                      wep->otyp == KATANA)) &&
+                    ((uagr && wtype != P_NONE &&
+                      P_SKILL(wtype) >= P_SKILLED) ||
+                     (!uagr && !rn2(2))) &&
+                    !obj_resists(defwep, 50 + 15 * greatest_erosion(wep) -
+                                 15 * greatest_erosion(defwep))) {
+                    if (vis)
+                        pline(udef ? msgc_itemloss : msgc_combatalert,
+                              "%s %s shatters from the force of your blow!",
+                              udef ? "Your" : s_suffix(Monnam(mdef)),
+                              cxname2(defwep));
+                    else
+                        You_hear(msgc_monneutral, "something shatter.");
+                    m_useup(mdef, defwep);
+                }
+
+                if (uagr && u.usteed && dmg && weapon_type(wep) == P_LANCE &&
+                    (jousting = joust(mdef, wep))) {
+                    dmg += dice(2, 10);
+                    if (vis)
+                        pline(msgc_combatalert, "%s %s!",
+                              M_verbs(magr, "joust"), udef ? "you" :
+                              mon_nam(mdef));
+                    if (jousting < 0) { /* lance shattered */
+                        if (vis)
+                            pline(msgc_itemloss, "%s %s shatters on impact!",
+                                  uagr ? "Your" : s_suffix(Monnam(magr)),
+                                  xname(wep));
+                        else
+                            You_hear(msgc_monneutral, "something shatter.");
+                        m_useup(magr, wep);
+
+                        /* reset weapon pointers */
+                        mwep = m_mwep(magr);
+                        swep = (!uagr ? NULL : uswapwep); /* FIXME */
+                        wep = mwep;
+                        if (wepcount > 1)
+                            wep = swep;
+                    }
+                }
+            }
+
+            if (wep && wep->oartifact && artifact_hit(magr, mdef, wep, &dmg,
+                                                      dieroll)) {
+                /* might have killed the monster */
+                if (!udef && DEADMONSTER(mdef))
+                    return MM_HIT | MM_DEF_DIED;
+                /* TODO: logic copied from uhitm, figure out why it's there */
+                if (dmg == 0)
+                    return MM_HIT;
+            }
+
+            /* Avoid bogus damage numbers */
+            if (dmg < 1)
+                dmg = 1;
+
+            /* Shades are unharmed by most attacks. */
+            if (!silver && !blessed && !shade_bypass &&
+                (!wep || !wep->oartifact)) {
+                dmg = 0;
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_immune),
+                          "%s attack pass%s harmlessly through %s.",
+                          uagr ? "Your" : s_suffix(Monnam(magr)),
+                          uagr ? "" : "es", udef ? "you" : mon_nam(mdef));
+            } else {
+                if (udef)
+                    losehp(dmg, killer_msgc(DIED, killmsg));
+                else {
+                    mon->mhp -= dmg;
+                    if (mon->mhp <= 0)
+                        monkilled(magr, mdef, "", AD_PHYS);
+                }
+
+                /* Revert dmg to pre-AT_WEAP state to deal with the
+                   adtyp part */
+                dmg = 0;
+                if (mattk->damd)
+                    dmg = dice(mattk->damn ? mattk->damn : m_mlev(magr) + 1,
+                               mattk->damd);
+            }
+            break;
+        default: /* no other attyps are active melee */
+            break;
+        }
+
+        /* All damage logic aside from resistances done, now check
+           for MC.
+           MC protects against various melee attacks.
+           Unlike vanilla, MC no longer nullifies damage unless
+           the monster is cancelled, it only cuts it in half.
+           The special effects obviously still go away. */
+        if ((cancelled(magr) ||
+             (rn2(50) && rn2(3) >= magic_negation(mdef))) &&
+            (mattk->aatyp == AT_CLAW ||
+             mattk->aatyp == AT_BITE ||
+             mattk->aatyp == AT_KICK ||
+             mattk->aatyp == AT_BUTT ||
+             mattk->aatyp == AT_TUCH ||
+             mattk->aatyp == AT_STNG ||
+             mattk->aatyp == AT_WEAP) &&
+            (mattk->adtyp == AD_MAGM ||
+             mattk->adtyp == AD_FIRE ||
+             mattk->adtyp == AD_COLD ||
+             mattk->adtyp == AD_SLEE ||
+             mattk->adtyp == AD_DISN ||
+             mattk->adtyp == AD_ELEC ||
+             mattk->adtyp == AD_DRST ||
+             mattk->adtyp == AD_ACID ||
+             mattk->adtyp == AD_PLYS ||
+             mattk->adtyp == AD_DRLI ||
+             mattk->adtyp == AD_TLPT ||
+             mattk->adtyp == AD_WERE ||
+             mattk->adtyp == AD_DRDX ||
+             mattk->adtyp == AD_DRCO ||
+             mattk->adtyp == AD_SLIM)) {
+            cancelled = TRUE;
+            if (cancelled(magr))
+                dmg = 0;
+            else if (dmg) /* don't turn 0 into 1 */
+                dmg = dmg / 2 + 1;
+        }
+
+        /* check if the attack was resisted in any form
+           or for certain cancelled attacks */
+        if (!dmg)
+            continue;
+
+        /* deal with weaknesses */
+        if (silver && hates_silver(mdef->data)) {
+            if (vis)
+                pline(udef ? msgc_statusbad : /* no msgc_weakness */
+                      combat_msgc(magr, mdef, cr_hit),
+                      "%s %s sear%s %s%s!",
+                      uagr ? "Your" : s_suffix(Monnam(magr)),
+                      silverslot == os_wep ? "silver weapon" :
+                      silverslot == os_arm ? "silver armor" :
+                      silverslot == os_armc ? "silvery cloak" :
+                      silverslot == os_armh ? "silver helmet" :
+                      silverslot == os_armf ? "silver boots" :
+                      silverslot == os_armg ? "silvery gloves" :
+                      silverslot == os_armu ? "silvery shirt" :
+                      silverslot == os_ringl ? "silver ring" :
+                      silverslot == os_ringr ? "silver rings" :
+                      "imaginary silver",
+                      silverslot != os_ringr ? "s" : "",
+                      udef && !noncorporeal(mdef->data) ? "your" :
+                      udef ? "you" :
+                      !noncorporeal(mdef->data) ?
+                      s_suffix(mon_nam(mdef)) :
+                      mon_nam(mdef),
+                      !noncorporeal(mdef->data) " flesh" : "");
+            dmg += rnd(20);
+        }
+
+        if (blessed &&
+            (is_undead(mdef->data) || is_demon(mdef->data)))
+            dmg += rnd(4);
+
+        if (!silver && !blessed && !shade_bypass &&
+            (!wep || !wep->oartifact) &&
+            mdef->data == &mons[PM_SHADE]) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s attack pass%s harmlessly through %s.",
+                      uagr ? "Your" : s_suffix(Monnam(magr)),
+                      uagr ? "" : "es", udef ? "you" : mon_nam(mdef));
+            continue;
+        }
+
+        switch (mattk->adtyp) {
+        case AD_MAGM:
+            if (vis)
+                pline(combat_msgc(magr, mdef, resists_magm(mdef) ?
+                                  cr_immune : cr_hit),
+                      "%s hit by a shower of missiles%s",
+                      M_verbs(mdef, "are"),
+                      !resists_magm(mdef) ? "!" :
+                      ", but they bounce off.");
+            break;
+        case AD_FIRE:
+            if (vis)
+                pline(combat_msgc(magr, mdef, resists_fire(mdef) ?
+                                  cr_immune : cr_hit),
+                      "%s %s%s",
+                      M_verbs(mdef, "are"),
+                      on_fire(mdef->data, mattk),
+                      !resists_fire(mdef) ? "!" :
+                      udef ? ", but it's not that hot." :
+                      ", but seems unharmed.");
+
+            if (!cancelled) {
+                if (m_mlev(mdef) > rn2(20))
+                    destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
+                if (m_mlev(mdef) > rn2(20))
+                    destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
+                if (m_mlev(mdef) > rn2(25))
+                    destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
+            }
+
+            break;
+        case AD_COLD:
+            if (vis)
+                pline(combat_msgc(magr, mdef, resists_cold(mdef) ?
+                                  cr_immune : cr_hit),
+                      "%s covered in frost%s",
+                      M_verbs(mdef, "are"),
+                      !resists_cold(mdef) ? "!" :
+                      udef ? ", but it doesn't seem cold." :
+                      ", but seems unharmed.");
+
+            if (!cancelled && m_mlev(mdef) > rn2(20))
+                destroy_mitem(mdef, POTION_CLASS, AD_COLD);
+
+            break;
+        case AD_ELEC:
+            if (vis)
+                pline(combat_msgc(magr, mdef, resists_magm(mdef) ?
+                                  cr_immune : cr_hit),
+                      "%s zapped%s",
+                      M_verbs(mdef, "get"),
+                      !resists_magm(mdef) ? "!" :
+                      udef ? ", but aren't shocked." :
+                      ", but isn't shocked.");
+
+            if (!cancelled && m_mlev(mdef) > rn2(20))
+                destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
+
+            break;
+        case AD_SLEE:
+            /* Sleep attacks dealing damage is intentional,
+               allbeit unintuitive.
+               TODO: improve this behaviour */
+            if (cancelled || resists_sleep(mdef))
+                break; /* no message */
+
+            if (vis)
+                pline(combat_msgc(magr, mdef, resists_magm(mdef) ?
+                                  cr_immune : cr_hit),
+                      "%s put to sleep!"
+                      M_verbs(magr, mdef, "are"));
+
+            if (udef)
+                helpless(rnd(10), hr_asleep, "sleeping", NULL);
+            else {
+                mdef->mcanmove = 0;
+                mdef->mfrozen = rnd(10);
+                if (mdef->mstrategy == st_waiting)
+                    mdef->mstrategy = st_none;
+            }
+
+            break;
+        case AD_BLND:
+            inc_timeout(mdef, BLINDED, dmg, FALSE);
+            dmg = 0;
+            break;
+        case AD_DRST:
+        case AD_DRDX:
+        case AD_DRCO:
+            /* only works 1/8 of the time (even less with MC) */
+            if (cancelled || rn2(8))
+                break;
+
+            poisoned(msgprintf("%s %s",
+                               uagr ? s_suffix(Monnam(mtmp)) :
+                               "Your",
+                               mpoisons_subj(magr, mattk)),
+                     mattk->adtyp == AD_DRST ? A_STR :
+                     mattk->adtyp == AD_DRDX ? A_DEX :
+                     mattk->adtyp == AD_DRCO ? A_CON :
+                     A_STR, killer_msg_mon(POISONING, magr), 30,
+                     magr, mdef);
+            break;
+        case AD_DRIN:
+            if (!has_head(mdef->data)) {
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_immune),
+                          "%s unaffected.", M_verbs(magr, "are"));
+                break;
+            }
+
+            if (armh && rn2(8)) {
+                if (vis)
+                    pline(uagr ? msgc_fatalavoid :
+                          combat_msgc(magr, mdef, cr_resist),
+                          "%s %s blocks the attack to %s head.",
+                          udef ? "Your" : s_suffix(Monnam(mdef)),
+                          helmet_name(armh),
+                          udef ? "your" : mhis(mdef));
+                break;
+            }
+
+            if (armh && armh->otyp == DUNCE_CAP) {
+                /* copy the constriction message here since the
+                   usual one can't be used for monsters */
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_immune),
+                          "%s cap constricts briefly, "
+                          "then relaxes again.",
+                          udef ? "Your" : s_suffix(Monnam(mdef)));
+                break;
+            }
+
+            /* Players are never mindless.
+               TODO: nor are polymorphed non-mindless monsters */
+            if (mindless(mdef->data) && !udef) {
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s seem%s unaffected.",
+                      udef ? "You" : Monnam(mdef),
+                      udef ? "" : "s");
+                break;
+            }
+
+            pline(udef && ABASE(A_INT) <= ATTRMIN(A_INT) ?
+                  msgc_fatal_predone : udef ?
+                  msgc_fatal : combat_msgc(magr, mdef, cr_hit),
+                  "%s brain is eaten!", udef ? "Your" :
+                  s_suffix(Monnam(mdef)));
+            break;
+
+            /* Non-player "int loss" is just additional damage.
+               Do monster bonus damage here, rather than at the
+               same place as player int loss. The reason is that
+               it allows monsters to fail a lifesave from
+               "brainlessness" similar to players. */
+            if (!udef)
+                mdef->mhp -= rnd(10);
+            if ((udef && ABASE(A_INT) <= ATTRMIN(A_INT)) ||
+                (!udef && mdef->mhp <= 0)) {
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_kill),
+                          "%s last thought fades away.",
+                          udef ? "Your" : s_suffix(Monnam(mdef)));
+                if (will_be_lifesaved(mdef)) {
+                    if (udef)
+                        done(DIED, killer_msg(DIED, "brainlessness"));
+                    else
+                        monkilled(magr, mdef, "", AD_DRIN);
+
+                    /* lifesave procced */
+                    pline(combat_msgc(magr, mdef, cr_kill),
+                          "Unfortunately, %s brain is still gone.",
+                          udef ? "your" : s_suffix(mon_nam(mdef)));
+                }
+                if (udef)
+                    done(DIED, killer_msg(DIED, "brainlessness"));
+                else
+                    monkilled(magr, mdef, "", AD_DRIN);
+
+                if (udef || !DEADMONSTER(mdef)) {
+                    /* if we are here, monster somehow lifesaved without
+                       the intrinsic (or lifesaved twice). This should
+                       only happen in explorer mode, and should never
+                       happen at all for non-players */
+                    if (udef)
+                        ABASE(A_INT) = ATTRMIN(A_INT) + 2;
+                    else
+                        impossible("Monster survived brainlessness?");
+
+                    if (udef)
+                        pline(msgc_intrgain,
+                              "You feel like a scarecrow.");
+                    break;
+                } else
+                    return MM_HIT | MM_DEF_DIED;
+            }
+
+            if (udef) {
+                adjattrib(A_INT, -rnd(2), FALSE);
+                forget_objects(50);
+                exercise(A_WIS, FALSE);
+            }
+
+            break;
+        case AD_PLYS:
+            if (cancelled)
+                break;
+
+            if (free_action(mdef)) {
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_immune),
+                          "%s momentarily.", M_verbs(mdef,
+                                                     "stiffen"));
+                break;
+            }
+
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "%s frozen!", M_verbs(mdef, "are"));
+            if (udef)
+                helpless(10, hr_paralyzed, "paralyzed by a monster",
+                         NULL);
+            else {
+                mdef->mcanmove = 0;
+                mdef->mfrozen += 10;
+            }
+
+            if (udef)
+                exercise(A_DEX, FALSE);
+
+            break;
+        case AD_DRLI:
+            if (cancelled || rn2(3) || resists_drli(mdef))
+                break;
+
+            losexp(msgcat("drained of life by ", k_monnam(magr)),
+                   FALSE, magr, mdef);
+            break;
+        case AD_LEGS:
+            if (!flying(magr) && !levitates(magr) &&
+                (flying(mdef) || levitates(mdef) ||
+                 (udef && u.usteed))) {
+                pline(combat_msgc(magr, mdef, cr_miss),
+                      "%s tries to reach %s %s!",
+                      uagr ? "You" : Monnam(magr),
+                      udef ? "your" : s_suffix(mon_nam(mdef)),
+                      makeplural(mbodypart(mdef, LEG)));
+                dmg = 0;
+                break;
+            }
+
+            int side = rn2(2) ? RIGHT_SIDE : LEFT_SIDE;
+            const char *sidestr = (side == RIGHT_SIDE) ? "right" : "left";
+            if (cancelled(magr)) {
+                pline(combat_msgc(magr, mdef, cr_miss),
+                      "%s against %s %s %s!", M_verbs(magr, "nuzzle"),
+                      udef ? "your" : s_suffix(mon_nam(mdef)),
+                      sidestr, mbodypart(mdef, LEG));
+                dmg = 0;
+                break;
+            }
+
+            if (!armf) {
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s %s %s %s!", M_verbs(magr, "prick"),
+                          udef ? "your" : s_suffix(mon_nam(mdef)),
+                          sidestr, mbodypart(mdef, LEG));
+            } else if (rn2(2) &&
+                       (armf->otyp == LOW_BOOTS ||
+                        armf->otyp == IRON_SHOES)) {
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s the exposed part of %s %s %s!",
+                          M_verbs(magr, "prick"),
+                          udef ? "your" : s_suffix(mon_nam(mdef)),
+                          sidestr, mbodypart(mdef, LEG));
+            } else if (!rn2(5)) {
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s through %s %s boot!",
+                          M_verbs(magr, "prick"),
+                          udef ? "your" : s_suffix(mon_nam(mdef)),
+                          sidestr);
+            } else {
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s %s %s boot!", M_verbs(magr, "scratch"),
+                          udef ? "your" : s_suffix(mon_nam(mdef)),
+                          sidestr);
+                dmg = 0;
+                break;
+            }
+            set_wounded_legs(mdef, side, rnd(60 - acurr(mdef, A_DEX)));
+            if (udef) {
+                exercise(A_STR, FALSE);
+                exercise(A_DEX, FALSE);
+            }
+            break;
+        case AD_STON:
+            if (rn2(3))
+                break;
+
+            if (cancelled(magr)) {
+                if (!rn2(3)) {
+                    if (!uagr)
+                        You_hear(combat_msgc(magr, mdef, cr_immune),
+                                 "a cough from %s!", mon_nam(magr));
+                    else
+                        pline(combat_msgc(magr, mdef, cr_immune),
+                              "You cough!");
+                }
+                break;
+            }
+
+            boolean stiffen = !rn2_on_rng(10, udef ? rng_slow_stoning :
+                                          rng_main);
+            if (flags.moonphase == NEW_MOON && !have_lizard(mdef))
+                stiffen = TRUE;
+            if (vis && !uagr)
+                You_hear(resists_ston(mdef) ?
+                         combat_msgc(magr, mdef, cr_immune) :
+                         udef && stiffen ? msgc_fatal :
+                         udef ? msgc_fatalavoid :
+                         mdef->mtame ? msgc_petfatal :
+                         combat_msgc(magr, mdef, cr_hit),
+                         "%s hissing!", s_suffix(mon_nam(magr)));
+            else if (uagr)
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "You hiss!");
+            if (!stiffen)
+                break;
+
+            if (!udef)
+                mstiffen(mdef, magr);
+            else if (!petrifying(mdef) && !resists_ston(mdef) &&
+                     !(poly_when_stoned(mdef->data) &&
+                       polymon(PM_STONE_GOLEM, TRUE))) {
+                set_property(mdef, STONED, 5, TRUE);
+                set_delayed_killer(STONING,
+                                   killer_msg_mon(STONING, magr));
+                break;
+            }
+            break;
+        case AD_STCK:
+            /* FIXME: uvm/mvu-only for now */
+            if (!stuck(mdef) && !sticks(mdef->data) &&
+                (uagr || udef))
+                u.ustuck = (uagr ? mdef : magr);
+            break;
+        case AD_WERE:
+            if (cancelled || rn2(4))
+                break;
+
+            if (!udef)
+                break; /* TODO */
+            if (shapeshift_prot(mdef) || u.ulycn != NON_PM ||
+                defends(AD_WERE, m_mwep(mdef)))
+                break;
+
+            if (vis)
+                pline(msgc_statusbad, "%s %s feverish.",
+                      udef ? "You" : Monnam(mdef),
+                      udef ? "feel" : "looks");
+            if (udef) {
+                exercise(A_CON, FALSE);
+                u.ulycn = monsndx(magr->data);
+            }
+            break;
+        case AD_SGLD:
+            if (cancelled(magr))
+                break;
+
+            struct obj *igold = findgold(m_minvent(mdef));
+            struct obj *fgold = gold_at(m_dlevel(mdef),
+                                        m_mx(mdef),
+                                        m_my(mdef));
+            /* Floor gold is generally preferred, unless
+               the inventory gold is of more value in which
+               that gold is taken 80% of the time. */
+            if (fgold && (!igold || fgold->quan > igold->quan ||
+                          !rn2(5))) {
+                obj_extract_self(fgold);
+                mpickobj(magr, fgold);
+                newsym(m_mx(mdef), m_my(mdef));
+                if (vis)
+                    pline(udef ? msgc_itemloss :
+                          combat_msgc(magr, mdef, cr_hit),
+                          "%s some gold from between %s %s!",
+                          M_verbs(magr, "quickly snatch"),
+                          udef ? "your" : s_suffix(mon_nam(mdef)),
+                          makeplural(mbodypart(mdef, FOOT)));
+                /* teleport away unless the defender has gold too */
+                if (!igold || !rn2(5))
+                    mon_tele(magr, !!teleport_control(magr));
+            } else if (igold) {
+                int amount = min(igold->quan, somegold(igold->quan));
+                if (amount < igold->quan)
+                    igold = splitobj(igold, amount);
+                obj_extract_self(igold);
+                mpickobj(magr, igold);
+                if (uagr || udef)
+                    pline(udef && !uagr ? msgc_itemloss :
+                          combat_msgc(magr, mdef, cr_hit),
+                          "Your purse feels %s.",
+                          uagr && udef ? "tidier" :
+                          uagr ? "heavier" :
+                          "lighter");
+                else if (vis)
+                    pline(combat_msgc(magr, mdef, cr_hit),
+                          "%s steals some gold from %s!",
+                          Monnam(magr), mon_nam(mdef));
+                mon_tele(magr, !!teleport_control(magr));
+            }
+            break;
+        case AD_SSEX:
+            /* If the player is the offender, fallback to nymph
+               behaviour. This avoids some awkwardness... */
+            if (!uagr) {
+                if (could_seduce(magr, mdef, mattk) == 1 &&
+                    !cancelled(magr))
+                    doseduce(magr, mdef);
+                break;
+            }
+            /* fallthrough */
+        case AD_SITM: /* for now, those are the same */
+        case AD_SEDU:
+            if (is_animal(magr->data) && cancelled(magr))
+                break;
+
+            /* Arbitrary assumptions:
+               - Opposite-gendered creatures "seduce",
+                 otherwise "charm"
+               - Non-intelligent creatures (read: lacks hands)
+                 are unaffected by any of those */
+            boolean compatible =
+                female(magr) != female(mdef);
+            if (!is_animal(magr->data)) {
+                if (dmgtype(mdef->data, AD_SEDU) ||
+                    dmgtype(mdef->data, AD_SSEX)) {
+                    /* TODO: should probably be changed for
+                       players */
+                    if (vis)
+                        pline(msgc_npcvoice, "%s %s.",
+                              M_verbs(magr, m_minvent(magr) ?
+                                      "brag" : "make"),
+                              m_minvent(magr) ?
+                              "about the goods some dungeon "
+                              "explorer provided" :
+                              "some remarks about how difficult "
+                              "theft is lately");
+                    mon_tele(magr, !!teleport_control(magr));
+                    break;
+                } else if (cancelled(magr) ||
+                           (!udef && nohands(mdef->data))) {
+                    if (vis)
+                        pline(combat_msgc(magr, mdef, cr_immune),
+                              "%s %s to %s %s, but %s seem %s.",
+                              uagr ? "You" : cancelled(magr) ?
+                              Adjmonnam(magr, "plain") :
+                              Monnam(magr), uagr ? "try" : "tries",
+                              compatible ? "seduce" : "charm",
+                              udef ? "you" : mon_nam(mdef), mhe(mdef),
+                              compatible ? "uninterested" : "unaffected");
+                    if (rn2(3))
+                        mon_tele(magr, !!teleport_control(magr));
+                    break;
+                }
+            }
+
+            /* now do actual stealing logic */
+            if (!m_minvent(mdef) ||
+                (udef && inv_cnt(FALSE) == 1 && uskin())) {
+                if (vis)
+                    pline(combat_msgc(magr, mdef, cr_immune),
+                          "%s to rob %s, but find%s nothing to steal.",
+                          M_verbs(magr, "try"), udef ? "you" :
+                          mon_nam(mdef), udef ? "" : "s");
+                break;
+            }
+
+            /* roll a random item, weighted by whether or not you wear
+               it */
+            int stealroll = 0;
+            struct obj *sobj;
+            for (sobj = m_minvent(mdef); sobj; sobj = sobj->nobj) {
+                if ((sobj == armu && (armc || arm)) ||
+                    (sobj == arm && (armc || sobj == uskin())) ||
+                    (sobj == armg && m_mwep(mdef)))
+                    continue;
+                stealroll += ((sobj->owornmask & W_WORN) ? 5 : 1);
+            }
+            stealroll = rn2(stealroll);
+            for (sobj = m_minvent(mdef); sobj; sobj = sobj->nobj) {
+                if ((sobj == armu && (armc || arm)) ||
+                    (sobj == arm && (armc || sobj == uskin())) ||
+                    (sobj == armg && m_mwep(mdef)))
+                    continue;
+                if ((stealroll -= ((sobj->owornmask & W_WORN) ?
+                                   5 : 1)) < 0)
+                    break;
+            }
+
+            /* Animals can't steal cursed items (or chained balls),
+               and usually lacks the patience to steal things that
+               take time to remove */
+            if (((sobj->cursed &&
+                 ((sobj->owornmask & W_WORN) ||
+                  (sobj->owornmask & W_MASK(os_wep)) ||
+                  sobj->otyp == LOADSTONE ||
+                  (sobj->otyp == LEASH && sobj->leashmon)) ||
+                  ((sobj->owornmask & W_RING) &&
+                   which_armor(mdef, os_armg) &&
+                   (which_armor(mdef, os_armg))->cursed)) ||
+                 sobj == uball ||
+                 (!uagr && !can_carry(magr, sobj)) ||
+                 (objects[sobj->otyp].oc_delay >= 1 && rn2(10) &&
+                  sobj->owornmask & W_WORN)) &&
+                is_animal(magr->data)) {
+                static const char *const how[] =
+                    {"steal", "snatch", "grab", "take"};
+                pline(combat_msgc(magr, mdef, cr_miss),
+                      "%s to %s %s %s but gives up.",
+                      M_verbs(magr, "try"), how[rn2(SIZE(how))],
+                      udef ? "your" : s_suffix(mon_nam(mdef)),
+                      (sobj->owornmask & W_WORN) ? equipname(sobj) :
+                      cxname(sobj));
+                break;
+            }
+
+            /* adornment can override other items when applicable */
+            if (!is_animal(magr->data) &&
+                obj_by_property(mdef, ADORNED, TRUE)) {
+                sobj = obj_by_property(mdef, ADORNED, TRUE);
+                if (uagr)
+                    pline(msgc_consequence,
+                          "You put a particular liking to %s.",
+                          xname(sobj));
+            }
+
+            if (sobj->otyp == LEASH && sobj->leashmon)
+                o_unleash(sobj);
+
+            if ((sobj->owornmask & W_WORN) &&
+                sobj->oclass == ARMOR_CLASS &&
+                !is_animal(magr->data)) {
+                int delay = objects[sobj].oc_delay;
+
+                if (udef)
+                    cancel_helplessness(hm_fainted,
+                                        "Someone revives you.");
+                /* Monsters can't be fainted */
+
+                if (m_helpless(mdef, hm_all)) {
+                    if (vis)
+                        pline(combat_msgc(magr, mdef, cr_miss),
+                              "%s to %s %s, but %s dismayed by %s lack "
+                              "of response.", M_verbs(magr, "try"),
+                              compatible ? "seduce" : "charm",
+                              udef ? "you" : mon_nam(mdef), mhis(mdef));
+                    break;
+                }
+                if (compatible && vis)
+                    pline(udef ? msgc_itemloss :
+                          combat_msgc(magr, mdef, cr_hit),
+                          "%s %s and %s gladly %s %s %s.",
+                          M_verbs(magr, "charm"),
+                          udef ? "you" : mon_nam(mdef), mhe(mdef),
+                          sobj->cursed &&
+                          (uagr ? u.ufemale : magr->mfemale) ?
+                          "let her take" : sobj->cursed ?
+                          "let him take" : "hand over",
+                          mhis(mdef), equipname(sobj));
+                else if (vis)
+                    pline(udef ? msgc_itemloss :
+                          combat_msgc(magr, mdef, cr_hit),
+                          "%s seduce%s %s and %s off %s %s.",
+                          uagr ? "You" : Adjmonnam(mdef, "beautiful"),
+                          udef ? "you" : mon_nam(mdef),
+                          sobj->cursed ? "helps you to take" :
+                          objects[sobj].oc_delay > 1 ? "you start taking" :
+                          "you take", mhis(mdef), equipname(sobj));
+                if (objects[sobj].oc_delay) {
+                    if (uagr)
+                        helpless(objects[sobj].oc_delay, hr_busy,
+                                 "taking off clothes",
+                                 "You finish disrobing.");
+                    else {
+                        mdef->mcanmove = 0;
+                        mdef->mfrozen += objects[sobj].oc_delay;
+                    }
+                }
+            }
+
+            if (sobj->owornmask) {
+                if (udef)
+                    remove_worn_item(sobj, TRUE);
+                else {
+                    mdef->misc_worn_check &= ~sobj->owornmask;
+                    sobj->owornmask = 0;
+                }
+            }
+
+            /* set avenge bit to allow knight to reclaim stolen gear */
+            if (udef && !uagr)
+                magr->mavenge = TRUE;
+
+            if (vis)
+                pline(udef ? msgc_itemloss :
+                      combat_msgc(magr, mdef, cr_hit),
+                      "%s stole %s%s", uagr ? "You" : Monnam(magr),
+                      doname(sobj), is_animal(magr) ?
+                      ", and tries to get away with it." : ".");
+            obj_extract_self(sobj);
+            mpickobj(magr, sobj);
+
+            /* did it steal a trice corpse w/o gloves? */
+            if (sobj->otyp == CORPSE &&
+                touch_petrifies(&mons[sobj->corpsenm]) &&
+                !which_armor(magr, os_armg)) {
+                /* oops... */
+                if (uagr)
+                    instapetrify(killer_msg(STONING,
+                                            msgcat("attempted to steal "
+                                                   an(xname(sobj)))));
+                else /* do not credit anyone -- avoids breaking pacifist */
+                    minstapetrify(magr, NULL);
+            }
+            if (!is_animal(magr))
+                mon_tele(magr, !!teleport_control(magr));
+
+            if (!uagr)
+                monflee(magr, 0, FALSE, FALSE);
+            break;
+        case AD_TLPT:
+            if (cancelled(magr))
+                break;
+
+            if (vis)
+                pline_implied(combat_msgc(magr, mdef, cr_hit),
+                              "%s position suddenly seems very uncertain!",
+                              udef ? "Your" : s_suffix(Monnam(mdef)));
+            mon_tele(mdef, FALSE); /* uncontrolled */
+
+            break;
+        case AD_RUST:
+        case AD_CORR:
+        case AD_DCAY:
+            if (cancelled(magr))
+                break;
+
+            hurtarmor(mdef, mattk->adtyp);
+            break;
+        case AD_HEAL:
+            if (cancelled(magr))
+                break; /* revert to physical damage if cancelled */
+
+            /* wearing armor or equipping weapons is not OK */
+            if ((which_armor(mdef, os_arm) &&
+                 which_armor(mdef, os_arm) != uskin()) ||
+                which_armor(mdef, os_armc) ||
+                which_armor(mdef, os_armu) ||
+                which_armor(mdef, os_armh) ||
+                which_armor(mdef, os_armf) ||
+                which_armor(mdef, os_arms) ||
+                which_armor(mdef, os_armg) ||
+                m_mwep(mdef) ||
+                (udef && uswapwep && u.twoweap)) {
+                /* vanilla gave polymorphed healers a benefit, this makes
+                   no sense, so check current form instead */
+                if (mdef == &mons[PM_HEALER]) {
+                    dmg = 0;
+                    if (!rn2(5))
+                        verbalize(udef ? msgc_hint : msgc_monneutral,
+                                  "Doc, I can't help you unless you "
+                                  "cooperate.");
+                }
+                break;
+            }
+            
+        }
+    }
+}
+
+/* Returns a proper verb for the "basic" melee attacks */
+static const char *
+hitverb(const struct monst *mon, const struct attack *mattk)
+{
+    /* special cases */
+    if (mattk->aatyp == AT_BITE &&
+        (mon->data == &mons[PM_RAVEN] ||
+         mon->data == &mons[PM_TENGU] ||
+         mon->data == &mons[PM_VROCK]))
+        return "peck";
+
+    if (mattk->aatyp == AT_CLAW &&
+        (mon->data == &mons[PM_FIRE_ELEMENTAL] ||
+         mon->data == &mons[PM_WATER_ELEMENTAL] ||
+         mon->data == &mons[PM_KRAKEN]))
+        return "lash";
+
+    if (mattk->aatyp == AT_CLAW &&
+        mon->data == &mons[PM_EARTH_ELEMENTAL])
+        return "pummel";
+
+    if (mattk->aatyp == AT_CLAW &&
+        is_undead(mon->data)) /* perhaps too broad? */
+        return "scratch";
+
+    if (mattk->aatyp == AT_CLAW &&
+        (!strcmp(mbodypart(mon, HAND), "claw") ||
+         !strcmp(mbodypart(mon, HAND), "paw") ||
+         !strcmp(mbodypart(mon, HAND), "foreclaw") ||
+         is_bird(magr->data)))
+        return "claw";
+
+    /* everything else */
+    return (mattk->aatyp == AT_KICK ? "kick" :
+            mattk->aatyp == AT_BITE ? "bite" :
+            mattk->aatyp == AT_STNG ? "sting" :
+            mattk->aatyp == AT_TUCH ? "touch" :
+            mattk->aatyp == AT_BUTT ? "butt" :
+            "hit");
+}
+
+/* Returns the monster that mon is engulfing */
+struct monst *
+engulfing(const struct monst *mon)
+{
+    if (!attacktype(mon->data, AT_ENGL))
+        return NULL;
+
+    /* The player is not part of dlev->monlist and needs a special case */
+    if (mon != &youmonst && mon->mx == u.ux && mon->my == u.uy)
+        return &youmonst;
+
+    struct monst *mtmp;
+    for (mtmp = m_dlevel(mon)->monlist; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp))
+            continue;
+        if (mon == mtmp)
+            continue;
+        if (m_mx(mon) == m_mx(mtmp) && m_my(mon) == m_my(mtmp))
+            return mtmp;
+    }
+    return NULL;
+}
+
+/* Returns the monster that mon is engulfed by if any, or NULL otherwise
+   FIXME: consider changing this logic to simply having a
+   struct monst engulfed in struct monst */
+struct monst *
+engulfed(const struct monst *mon)
+{
+    if (attacktype(mon->data, AT_ENGL))
+        return NULL;
+
+    if (mon != &youmonst && mon != u.usteed &&
+        mon->mx == u.ux && mon->my == u.uy)
+        return &youmonst;
+
+    struct monst *engulfer =
+        m_dlevel(mon)->monsters[m_mx(mon)][m_my(mon)];
+
+    if (engulfer != mon)
+        return engulfer;
+    return NULL;
+}
+
+/* Returns if magr is stuck to mdef.
+   FIXME: Currently, only players can be stuck to monsters and vice versa.
+   Once implemented, this logic can be simplified somewhat. */
+struct monst *
+stuck(const struct monst *mon)
+{
+    /* ensure that it doesn't have a hugging attack on its' own, because
+       those can't be stuck to each other */
+    if (sticks(mon->data))
+        return NULL;
+
+    if (mon == &youmonst)
+        return u.ustuck;
+
+    if (mon == u.ustuck)
+        return &youmonst;
+    return NULL;
 }
 
 /*
@@ -681,7 +2666,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                              uagr ? s_suffix(Monnam(magr)) : "Your");
             if (reflecting(magr)) {
                 if (vis)
-                    mon_reflects(magr, mdef, TRUE, 
+                    mon_reflects(magr, mdef, TRUE,
                                  "%s gaze is reflected further by %s %s!",
                                  uagr ? s_suffix(Monnam(magr)) : "Your");
                 break;
@@ -1205,7 +3190,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                           "It burns %s!", mon_nam(mdef));
         }
         if (!rn2(30))
-            hurtarmor(mdef, ERODE_CORRODE);
+            hurtarmor(mdef, AD_ACID);
         if (!rn2(6))
             acid_damage(MON_WEP(mdef));
         break;
@@ -1223,7 +3208,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline(msgc_petfatal, "May %s rust in peace.", mon_nam(mdef));
             return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
         }
-        hurtarmor(mdef, ERODE_RUST);
+        hurtarmor(mdef, AD_RUST);
         if (mdef->mstrategy == st_waiting)
             mdef->mstrategy = st_none;
         tmp = 0;
@@ -1231,7 +3216,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_CORR:
         if (cancelled(magr))
             break;
-        hurtarmor(mdef, ERODE_CORRODE);
+        hurtarmor(mdef, AD_CORR);
         if (mdef->mstrategy == st_waiting)
             mdef->mstrategy = st_none;
         tmp = 0;
@@ -1250,7 +3235,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline(msgc_petfatal, "May %s rot in peace.", mon_nam(mdef));
             return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
         }
-        hurtarmor(mdef, ERODE_ROT);
+        hurtarmor(mdef, AD_DCAY);
         if (mdef->mstrategy == st_waiting)
             mdef->mstrategy = st_none;
         tmp = 0;
@@ -1732,9 +3717,9 @@ mrustm(struct monst *magr, struct monst *mdef, struct obj *obj)
         return; /* just in case */
 
     if (dmgtype(mdef->data, AD_CORR))
-        type = ERODE_CORRODE;
+        type = AD_CORR;
     else if (dmgtype(mdef->data, AD_RUST))
-        type = ERODE_RUST;
+        type = AD_RUST;
     else
         return;
 

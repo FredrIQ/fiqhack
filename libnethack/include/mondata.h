@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -103,6 +103,14 @@
 # define is_lminion(mon)        (pm_isminion((mon)->data) &&    \
                                  malign(mon) == A_LAWFUL)
 
+# define mhe(mon)  ((mon == &youmonst) ? "you" :        \
+                    genders[pronoun_gender(mon)].he)
+/* Doesn't work for "fooself" context, needs special casing */
+# define mhim(mon) ((mon == &youmonst) ? "you" :        \
+                    genders[pronoun_gender(mon)].him)
+# define mhis(mon) ((mon == &youmonst) ? "your" :       \
+                    genders[pronoun_gender(mon)].his)
+
 # define is_flyer(ptr)          (((ptr)->mflags1 & M1_FLY) != 0L)
 # define is_floater(ptr)        ((ptr)->mlet == S_EYE)
 # define is_clinger(ptr)        (((ptr)->mflags1 & M1_CLING) != 0L)
@@ -153,6 +161,7 @@
 # define herbivorous(ptr)       (((ptr)->mflags1 & M1_HERBIVORE) != 0L)
 # define metallivorous(ptr)     (((ptr)->mflags1 & M1_METALLIVORE) != 0L)
 # define polyok(ptr)            (((ptr)->mflags2 & M2_NOPOLY) == 0L)
+# define is_bigfoot(ptr)        ((ptr) == &mons[PM_SASQUATCH])
 # define is_undead(ptr)         (((ptr)->mflags2 & M2_UNDEAD) != 0L)
 # define is_were(ptr)           (((ptr)->mflags2 & M2_WERE) != 0L)
 # define is_elf(ptr)            (((ptr)->mflags2 & M2_ELF) != 0L)
@@ -170,8 +179,8 @@
 # define is_domestic(ptr)       (((ptr)->mflags2 & M2_DOMESTIC) != 0L)
 # define is_demon(ptr)          (((ptr)->mflags2 & M2_DEMON) != 0L)
 # define is_mercenary(ptr)      (((ptr)->mflags2 & M2_MERC) != 0L)
-# define is_male(ptr)           (((ptr)->mflags2 & M2_MALE) != 0L)
-# define is_female(ptr)         (((ptr)->mflags2 & M2_FEMALE) != 0L)
+# define pm_male(ptr)           (((ptr)->mflags2 & M2_MALE) != 0L)
+# define pm_female(ptr)         (((ptr)->mflags2 & M2_FEMALE) != 0L)
 # define is_neuter(ptr)         (((ptr)->mflags2 & M2_NEUTER) != 0L)
 # define is_wanderer(ptr)       (((ptr)->mflags2 & M2_WANDER) != 0L)
 # define always_hostile(ptr)    (((ptr)->mflags2 & M2_HOSTILE) != 0L)

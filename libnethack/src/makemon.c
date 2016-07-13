@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -984,9 +984,9 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     }
 
     mtmp->female = rn2_on_rng(2, stats_rng);
-    if (is_female(ptr))
+    if (pm_female(ptr))
         mtmp->female = TRUE;
-    else if (is_male(ptr))
+    else if (pm_male(ptr))
         mtmp->female = FALSE;
 
     if (In_sokoban(&lev->z) && !mindless(ptr))  /* know about traps here */
@@ -1323,9 +1323,8 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_HASTE_SELF);
         return;
     case PM_IXOTH:
-        mon_addspell(mon, SPE_DETECT_MONSTERS);
         mon_addspell(mon, SPE_PROTECTION);
-        mon_addspell(mon, SPE_SUMMON_NASTY);
+        mon_addspell(mon, SPE_SLOW_MONSTER);
         mon_addspell(mon, SPE_HASTE_SELF);
         return;
     case PM_MASTER_KAEN:
@@ -2143,18 +2142,20 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
 
     mfmagic_check(mf, MON_MAGIC);
 
-    /* SAVEBREAK: remove this logic and further legacy checks */
-    namelth = mread16(mf);
-    xtyp = mread16(mf);
-    boolean legacy = FALSE;
-    if (xtyp <= MX_LAST_LEGACY)
-        legacy = TRUE; /* old save */
-
     if (!mtmp) {
         mon = newmonst();
         mon->dlevel = l;
     } else
         mon = mtmp;
+
+    mon->swallowtime = mread8(mf);
+    /* SAVEBREAK: remove this logic and further legacy checks */
+    /* namelth was originally saved in a 16bit area, but only 8 were used */
+    namelth = mread8(mf);
+    xtyp = mread16(mf);
+    boolean legacy = FALSE;
+    if (xtyp <= MX_LAST_LEGACY)
+        legacy = TRUE; /* old save */
 
     idx = mread32(mf);
     switch (idx) {
@@ -2245,6 +2246,9 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
 
     /* Legacy saves need special handling */
     if (legacy) {
+        /* kill the swallow timer, just in case */
+        mon->swallowtime = 0;
+
         /* set alignment to whatever the monster usually has -- might be corrected
            later if mon had epri/emin */
         mon->maligntyp = (!mon->data ? A_NEUTRAL :
@@ -2421,8 +2425,9 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mfmagic_set(mf, MON_MAGIC);
     mtag(mf, mon->m_id, MTAG_MON);
 
+    mwrite8(mf, mon->swallowtime);
     /* SAVEBREAK: dummy data */
-    mwrite16(mf, 0);
+    mwrite8(mf, 0);
     mwrite16(mf, mon->mextra ? MX_YES : MX_NO);
     mwrite32(mf, idx);
     mwrite32(mf, mon->m_id);

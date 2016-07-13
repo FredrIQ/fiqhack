@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -419,9 +419,9 @@ dochug(struct monst *mtmp)
                     if (Half_spell_damage)
                         dmg = (dmg + 1) / 2;
                     losehp(dmg, killer_msg(DIED, "a psychic blast"));
-                }
-                pline(combat_msgc(mtmp, &youmonst, cr_miss),
-                      "A wave of psychic energy washes around you.");
+                } else
+                    pline(combat_msgc(mtmp, &youmonst, cr_miss),
+                          "A wave of psychic energy washes around you.");
             }
             else
                 pline(msgc_petneutral, "Soothing psychic energy surrounds you.");
@@ -1041,7 +1041,7 @@ not_special:
             !mtmp->iswiz && !is_rider(mtmp->data) && /* cheats */
             !phasing(mtmp) && !amorphous(mtmp->data)) { /* bypass doors */
             struct rm *door = &level->locations[nix][niy];
-            boolean btrapped = (door->doormask & D_TRAPPED);
+            boolean btrapped = !!(door->doormask & D_TRAPPED);
             if ((door->doormask & D_LOCKED) && can_unlock) {
                 /* doorbusters are taken care of in postmov */
                 unlocker.x = nix - mtmp->mx;
@@ -1116,7 +1116,7 @@ postmov:
                 && !can_tunnel   /* taken care of below */
                 ) {
                 struct rm *here = &level->locations[mtmp->mx][mtmp->my];
-                boolean btrapped = (here->doormask & D_TRAPPED);
+                boolean btrapped = !!(here->doormask & D_TRAPPED);
 
                 if (here->doormask & (D_LOCKED | D_CLOSED) && amorphous(ptr)) {
                     /* monneutral even for pets; basically nothing is happening

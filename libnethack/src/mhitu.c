@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -401,9 +401,9 @@ mattacku(struct monst *mtmp)
         tmp -= 2;
     if (mtmp->mtrapped)
         tmp -= 2;
+    tmp += mon_hitbon(mtmp);
     if (tmp <= 0)
         tmp = 1;
-    tmp += mon_hitbon(mtmp);
 
     /* make eels visible the moment they hit/miss us */
     if (mdat->mlet == S_EEL && invisible(mtmp) && cansee(mtmp->mx, mtmp->my)) {
@@ -436,17 +436,7 @@ mattacku(struct monst *mtmp)
         return 0;
     }
 
-    /* Unlike defensive stuff, don't let them use item _and_ attack. */
-    memset(&musable, 0, sizeof (musable));
-    if (find_item(mtmp, &musable)) {
-        int foo = use_item(mtmp, &musable);
-
-        if (foo != 0)
-            return foo == 1;
-    }
-
     for (i = 0; i < NATTK; i++) {
-
         sum[i] = 0;
         mattk = getmattk(mdat, i, sum, &alt_attk);
         if (Engulfed && (mattk->aatyp != AT_ENGL))
@@ -1245,13 +1235,13 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             rehumanize(DIED, msgcat("rusted to death by ", k_monnam(mtmp)));
             break;
         }
-        hurtarmor(&youmonst, ERODE_RUST);
+        hurtarmor(&youmonst, AD_RUST);
         break;
     case AD_CORR:
         hitmsg(mtmp, mattk);
         if (cancelled(mtmp))
             break;
-        hurtarmor(&youmonst, ERODE_CORRODE);
+        hurtarmor(&youmonst, AD_CORR);
         break;
     case AD_DCAY:
         hitmsg(mtmp, mattk);
@@ -1262,7 +1252,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             rehumanize(DIED, msgcat("rotted to death by ", k_monnam(mtmp)));
             break;
         }
-        hurtarmor(&youmonst, ERODE_ROT);
+        hurtarmor(&youmonst, AD_DCAY);
         break;
     case AD_HEAL:
         /* a cancelled nurse is just an ordinary monster */
@@ -2298,9 +2288,9 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
         } else
             tmp = 0;
         if (!rn2(30))
-            hurtarmor(mtmp, ERODE_CORRODE);
+            hurtarmor(mtmp, AD_ACID);
         if (!rn2(6))
-            erode_obj(MON_WEP(mtmp), NULL, ERODE_CORRODE, TRUE, TRUE);
+            erode_obj(MON_WEP(mtmp), NULL, AD_ACID, TRUE, TRUE);
         goto assess_dmg;
     case AD_STON:      /* cockatrice */
         {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -181,6 +181,12 @@ mquaffmsg(struct monst *mtmp, struct obj *otmp)
 boolean
 mon_makewish(struct monst *mon)
 {
+    /* Allow this function to be called properly for the player */
+    if (mon == &youmonst) {
+        makewish();
+        return TRUE;
+    }
+
     if (canseemon(mon) && (msensem(mon, &youmonst) & MSENSE_ANYVISION) &&
         mon->mtame) {
         /* for tame monsters, redirect the wish if hero is in view */
@@ -188,6 +194,10 @@ mon_makewish(struct monst *mon)
         makewish();
         return TRUE;
     }
+    if (canseemon(mon))
+        pline(msgc_monneutral, "%s may wish for an object.",
+              Monnam(mon));
+
     const struct permonst *mdat = mon->data;
     int pm = monsndx(mdat);
     struct obj *wishobj;
@@ -412,6 +422,19 @@ mon_makewish(struct monst *mon)
             if (rnd(5) < wishobj->quan)
                 wishobj->quan = 1L;
         }
+
+        /* If the monster is unlucky (carries a cursed luckstone or such),
+           proc the same things as if the player is.
+           Sadly, the monster will be aware because there's no concept
+           of informal ID for them. */
+        if (luck(mon) < 0) {
+            wishobj->blessed = 0;
+            wishobj->cursed = 1;
+            wishobj->greased = 0;
+            wishobj->oerodeproof = 0;
+            if (wishobj->spe >= 3)
+                wishobj->spe *= -1;
+        }
     }
 
     if (wishobj && canseemon(mon))
@@ -419,12 +442,12 @@ mon_makewish(struct monst *mon)
               distant_name(wishobj, Doname2),
               s_suffix(mon_nam(mon)),
               makeplural(mbodypart(mon, HAND)));
-    if (mpickobj(mon, wishobj))
-        wishobj = m_carrying(mon, wishtyp);
     if (!wishobj) {
         impossible("monster wished-for object disappeared?");
         return FALSE;
     }
+    if (mpickobj(mon, wishobj))
+        wishobj = m_carrying(mon, wishtyp);
 
     /* technically, player wishing only informally IDs the item
        (since you probably know what you wished for), but monsters

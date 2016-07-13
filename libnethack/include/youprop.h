@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -96,7 +96,7 @@
 
 # define Ground_based           (!Levitation && !Flying &&      \
                                  !is_clinger(youmonst.data))
-# define Engulfed               (u.uswallow)
+# define Engulfed               (engulfed(&youmonst))
 # define Underwater             (u.uinwater)
 /* Note that Underwater and u.uinwater are both used in code.
    The latter form is for later implementation of other in-water

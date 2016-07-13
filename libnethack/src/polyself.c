@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -97,10 +97,10 @@ change_sex(void)
 
     /* Some monsters are always of one sex and their sex can't be changed */
     /* succubi/incubi can change, but are handled below */
-    /* !already_polyd check necessary because is_male() and is_female() are
+    /* !already_polyd check necessary because pm_male() and pm_female() are
        true if the player is a priest/priestess */
     if (!already_polyd ||
-        (!is_male(youmonst.data) && !is_female(youmonst.data) &&
+        (!pm_male(youmonst.data) && !pm_female(youmonst.data) &&
          !is_neuter(youmonst.data)))
         u.ufemale = !u.ufemale;
     if (already_polyd)  /* poly'd: also change saved sex */
@@ -509,10 +509,10 @@ polymon(int mntmp, boolean noisy)
     }
 
     cancel_mimicking("");
-    if (is_male(&mons[mntmp])) {
+    if (pm_male(&mons[mntmp])) {
         if (u.ufemale)
             dochange = TRUE;
-    } else if (is_female(&mons[mntmp])) {
+    } else if (pm_female(&mons[mntmp])) {
         if (!u.ufemale)
             dochange = TRUE;
     } else if (!is_neuter(&mons[mntmp]) && mntmp != u.ulycn) {
@@ -524,8 +524,8 @@ polymon(int mntmp, boolean noisy)
         if (noisy)
             pline(msgc_statusbad, "You %s %s%s!",
                   (u.umonnum != mntmp) ? "turn into a" : "feel like a new",
-                  (is_male(&mons[mntmp]) ||
-                   is_female(&mons[mntmp])) ? "" : u.ufemale ? "female " :
+                  (pm_male(&mons[mntmp]) ||
+                   pm_female(&mons[mntmp])) ? "" : u.ufemale ? "female " :
                   "male ", mons[mntmp].mname);
     } else if (noisy) {
         if (u.umonnum != mntmp)

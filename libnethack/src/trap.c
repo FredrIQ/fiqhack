@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,7 +45,7 @@ burnarmor(struct monst *victim)
 
     if (!victim)
         return 0;
-#define burn_dmg(obj,descr) erode_obj(obj, descr, ERODE_BURN, TRUE, FALSE)
+#define burn_dmg(obj,descr) erode_obj(obj, descr, AD_FIRE, TRUE, FALSE)
     while (1) {
         switch (rn2(6)) {
         case 0:
@@ -109,7 +109,7 @@ burnarmor(struct monst *victim)
  * "print", if set, means to print a message even if no change occurs.
  */
 boolean
-erode_obj(struct obj *otmp, const char *ostr, enum erode_type type,
+erode_obj(struct obj *otmp, const char *ostr, int adtyp,
           boolean check_grease, boolean print)
 {
     static const char *const action[] =
@@ -132,25 +132,25 @@ erode_obj(struct obj *otmp, const char *ostr, enum erode_type type,
     /* FIXME: bhitpos is stupid, but due to the throwing code, we must use it */
     boolean visobj = !victim && cansee(bhitpos.x, bhitpos.y);
 
-    switch (type) {
-    case ERODE_BURN:
+    switch (adtyp) {
+    case AD_FIRE:
         vulnerable = is_flammable(otmp);
         check_grease = FALSE;
         break;
-    case ERODE_RUST:
+    case AD_RUST:
         vulnerable = is_rustprone(otmp);
         break;
-    case ERODE_ROT:
+    case AD_DCAY:
         vulnerable = is_rottable(otmp);
         check_grease = FALSE;
         primary = FALSE;
         break;
-    case ERODE_CORRODE:
+    case AD_ACID:
+    case AD_CORR:
         vulnerable = is_corrodeable(otmp);
         primary = FALSE;
         break;
     default:
-        impossible("Invalid erosion type in erode_obj");
         return FALSE;
     }
 
@@ -740,7 +740,7 @@ dotrap(struct trap *trap, unsigned trflags)
         else if (thitu(7, dmgval(otmp, &youmonst), otmp, "little dart")) {
             if (otmp->opoisoned)
                 poisoned("dart", A_CON, killer_msg(POISONING, "a little dart"),
-                         -10);
+                         -10, NULL, &youmonst);
             obfree(otmp, NULL);
         } else {
             place_object(otmp, level, u.ux, u.uy);
@@ -987,7 +987,7 @@ dotrap(struct trap *trap, unsigned trflags)
                 if (!rn2(6))
                     poisoned("spikes", A_STR,
                              killer_msg(DIED, "a fall onto poison spikes"),
-                             8);
+                             8, NULL, &youmonst);
             } else
                 losehp(rnd(6), "fell into a pit");
             if (Punished && !carried(uball)) {
@@ -2861,7 +2861,8 @@ domagictrap(struct monst *mon)
 
                 set_property(mon, CONFUSION, -2, TRUE);
                 seffects(mon, pseudo, &dummy);
-                set_property(mon, CONFUSION, save_conf, TRUE);
+                if (save_conf)
+                    set_property(mon, CONFUSION, save_conf, TRUE);
 
                 obfree(pseudo, NULL);
                 break;
@@ -2956,7 +2957,7 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
             delobj(obj);
             retval++;
         } else
-            erode_obj(obj, NULL, ERODE_BURN, FALSE, TRUE);
+            erode_obj(obj, NULL, AD_FIRE, FALSE, TRUE);
     }
 
     if (retval && !in_sight)
@@ -2994,7 +2995,7 @@ acid_damage(struct obj *obj)
             obj->spe = 0;
         }
     } else
-        erode_obj(obj, NULL, ERODE_CORRODE, FALSE, TRUE);
+        erode_obj(obj, NULL, AD_ACID, FALSE, TRUE);
 }
 
 
@@ -3069,7 +3070,7 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
             return 2;
         }
     } else {
-        return erode_obj(obj, ostr, ERODE_RUST, FALSE, FALSE) ? 2 : 0;
+        return erode_obj(obj, ostr, AD_RUST, FALSE, FALSE) ? 2 : 0;
     }
 
     return 0;
@@ -4105,7 +4106,8 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
                       "A cloud of noxious gas billows from %s.", the(xname(obj)));
             if (you) {
                 poisoned("gas cloud", A_STR,
-                         killer_msg(DIED, "a cloud of poison gas"), 15);
+                         killer_msg(DIED, "a cloud of poison gas"), 15,
+                         NULL, &youmonst);
                 exercise(A_CON, FALSE);
             } else {
                 mon->mhp -= rnd(20);
@@ -4121,7 +4123,8 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
                 pline(msgc_nonmonbad, "You feel a needle prick your %s.",
                       body_part(bodypart));
                 poisoned("needle", A_CON,
-                         killer_msg(DIED, "a poisoned needle"), 10);
+                         killer_msg(DIED, "a poisoned needle"), 10,
+                         NULL, &youmonst);
                 exercise(A_CON, FALSE);
             } else {
                 if (vis)

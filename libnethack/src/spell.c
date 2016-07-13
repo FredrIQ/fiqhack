@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2016-07-13 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -153,7 +153,7 @@ cursed_book(struct monst *mon, struct obj *bp)
                   "The book was coated with contact poison!");
         if (which_armor(mon, os_armg)) {
             erode_obj(which_armor(mon, os_armg), "gloves",
-                      ERODE_CORRODE, TRUE, TRUE);
+                      AD_CORR, TRUE, TRUE);
             break;
         }
         /* Temporarily disable in_use; death should not destroy the book.
