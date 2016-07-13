@@ -145,7 +145,6 @@ extern int stone_luck(boolean);
 extern void set_moreluck(void);
 extern void gainstr(struct obj *, int);
 extern void losestr(int, int, const char *, struct monst *);
-extern void restore_attrib(void);
 extern void exercise(int, boolean);
 extern void exerchk(void);
 extern void init_attr(int);

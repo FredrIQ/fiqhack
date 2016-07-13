@@ -25,13 +25,10 @@
 # define ACURR(x)   (acurr(&youmonst, x))
 # define ACURRSTR   (acurrstr())
 /* should be: */
-/* #define ACURR(x) (ABON(x) + ATEMP(x) + (Upolyd  ? MBASE(x) : ABASE(x)) */
+/* #define ACURR(x) (Upolyd ? MBASE(x) : ABASE(x)) */
 # define MCURR(x)   (u.macurr.a[x])
 # define AMAX(x)    (u.amax.a[x])
 # define MMAX(x)    (u.mamax.a[x])
-
-# define ATEMP(x)   (u.atemp.a[x])
-# define ATIME(x)   (u.atime.a[x]) /* TODO: is this actually used? */
 
 /* KMH -- Conveniences when dealing with strength constants */
 # define STR18(x)   (18+(x))    /* 18/xx */

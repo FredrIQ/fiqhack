@@ -324,8 +324,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             pline(bad_msgc, "My brain hurts!");
         } else if (equipping && otyp == DUNCE_CAP) {
             pline(bad_msgc, "You feel %s.",   /* track INT change; ignore WIS */
-                  ACURR(A_INT) <=
-                  (ABASE(A_INT) + ATEMP(A_INT)) ?
+                  ACURR(A_INT) <= ABASE(A_INT) ?
                   "like sitting in a corner" : "giddy");
         } else if (otyp == HELM_OF_OPPOSITE_ALIGNMENT) {
             pline(bad_msgc, "Your mind oscillates briefly.");

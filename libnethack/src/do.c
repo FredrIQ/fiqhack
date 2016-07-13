@@ -1663,8 +1663,6 @@ set_wounded_legs(struct monst *mon, long side, int timex)
 {
     int oldcap = near_capacity();
     boolean you = (mon == &youmonst);
-    if (you && !leg_hurt(mon))
-        ATEMP(A_DEX)--;
 
     if (side & LEFT_SIDE)
         inc_timeout(mon, LWOUNDED_LEGS, timex, FALSE);
@@ -1705,9 +1703,6 @@ heal_legs(struct monst *mon, int side)
     }
 
     /* Heal both legs. */
-
-    if (you && ATEMP(A_DEX) < 0)
-        ATEMP(A_DEX)++;
 
     if (you || vis)
         pline(you ? msgc_statusheal : msgc_monneutral,

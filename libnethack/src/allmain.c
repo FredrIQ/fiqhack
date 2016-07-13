@@ -974,7 +974,6 @@ you_moved(void)
                     u.udg_cnt = rn1(200, 50);
                 }
             }
-            restore_attrib();
             /* underwater and waterlevel vision are done here */
             if (Is_waterlevel(&u.uz))
                 movebubbles();

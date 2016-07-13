@@ -261,10 +261,6 @@ fix_worst_trouble(int trouble)
             u.utrap = 0;
         break;
     case ptr_starving:
-        /* TODO: Verify this bugfix (was previously STARVED, which is part of
-           the wrong "enum"). */
-        losestr(-1, STARVING, "<should be unused>", NULL);
-        /* fall into... */
     case ptr_hungry:
         pline(msgc_statusheal, "Your %s feels content.", body_part(STOMACH));
         init_uhunger();

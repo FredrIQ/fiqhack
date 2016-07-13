@@ -2221,10 +2221,12 @@ newuhs(boolean incr)
                 action_interrupted();
             break;
         }
-        if (newhs >= WEAK && u.uhs < WEAK)
-            losestr(1, STARVING, killer_msg(STARVING, "exhaustion"), NULL);
-        else if (newhs < WEAK && u.uhs >= WEAK)
-            losestr(-1, STARVING, killer_msg(STARVING, "exhaustion"), NULL);
+        if (newhs >= WEAK && u.uhs < WEAK) {
+            /* Will not actually do anything to your base strength, but allows HP loss to
+               properly proc */
+            if (ABASE(A_STR) == 3)
+                losestr(1, STARVING, killer_msg(STARVING, "exhaustion"), NULL);
+        }
         u.uhs = newhs;
         bot();
     }

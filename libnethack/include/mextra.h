@@ -15,6 +15,7 @@
    monster. Since all monsters now have this, it is now redundant. */
 
 # include "align.h"
+# include "attrib.h"
 # include "coord.h"
 # include "dungeon.h"
 # include "global.h"
@@ -119,15 +120,37 @@ struct pet_weapons {
     const struct obj *unihorn;
 };
 
+/* Attributes */
+struct eattr {
+    struct attribs abase;
+    struct attribs amax;
+    struct attribs aexe;
+    unsigned exercise_time;
+};
+
+/* Polymorph data */
+struct epoly {
+    int typ;
+    int subtyp;
+    int race;
+    int hp;
+    int hpmax;
+    int timeout;
+    unsigned female:1;
+    struct attribs abase;
+    struct attribs amax;
+    /* no exercising for polymorphed bodies */
+};
 
 /* mextra struct itself */
 struct mextra {
     char *name;
-    struct egd *egd;
-    struct epri *epri;
-    struct eshk *eshk;
-    struct emin *emin;
-    struct edog *edog;
+    struct egd *egd;            /* vault guard */
+    struct epri *epri;          /* priest */
+    struct eshk *eshk;          /* shopkeepers */
+    struct edog *edog;          /* pets */
+    struct eattr *eattr;        /* attributes */
+    struct epoly *epoly;        /* polymorph stats */
 };
 
 struct oextra {
