@@ -1,7 +1,8 @@
+GAME = fiqhack
 DESTDIR =
 BINDIR = /home/fiq/fiqhack_compiled
-DATADIR = /home/fiq/fiqhack_compiled/data
-STATEDIR = /home/fiq/fiqhck_compiled/save
+DATADIR = $(BINDIR)/data
+STATEDIR = $(BINDIR)/save
 
 FLEX = flex
 BISON = bison
@@ -16,7 +17,8 @@ all: nethack/src/main libnethack/dat/license libnethack/dat/nhdat tilesets/dat/t
 
 .PHONY: install
 install: all
-	install nethack/src/main $(DESTDIR)$(BINDIR)/fiqhack
+	mkdir -p $(DESTDIR)$(BINDIR) $(DESTDIR)$(DATADIR) $(DESTDIR)$(STATEDIR)
+	install nethack/src/main $(DESTDIR)$(BINDIR)/$(GAME)
 	install -m 644 libnethack/dat/license $(DESTDIR)$(DATADIR)/license
 	install -m 644 libnethack/dat/nhdat $(DESTDIR)$(DATADIR)/nhdat
 	install -m 644 tilesets/dat/textascii.nh4ct $(DESTDIR)$(DATADIR)/textascii.nh4ct
@@ -27,82 +29,59 @@ CXXFLAGS = -g -O2
 
 CFLAGS += --std=c11 -DAIMAKE_NORETURN=_Noreturn
 
+CPPFLAGS += -DAIMAKE_BUILDOS_linux
+CPPFLAGS += -D_XOPEN_SOURCE=700
+CPPFLAGS += -D_REENTRANT
+
 CPPFLAGS += -DGAMESDATADIR=\"$(DATADIR)\"
 CPPFLAGS += -DGAMESSTATEDIR=\"$(STATEDIR)\"
 CPPFLAGS += -include _aimake_get_option.h
 
-CPPFLAGS += -DAIMAKE_BUILDOS_linux
-CPPFLAGS += -D"AIMAKE_ABI_VERSION(x)="
-CPPFLAGS += -D"AIMAKE_IMPORT(x)=x"
-CPPFLAGS += -D"AIMAKE_EXPORT(x)=x"
-
-CPPFLAGS += -D_XOPEN_SOURCE=700
-CPPFLAGS += -D_REENTRANT
-
 CPPFLAGS += -Ilibnethack/include
 CPPFLAGS += -Ilibnethack_common/include
 CPPFLAGS += -Inethack/include
-CPPFLAGS += -Ilibuncursed/include
 CPPFLAGS += -Itilesets/include
+CPPFLAGS += -Ilibuncursed/include
 
 
 ### BINARIES ###
 
-GAME_O_LNH = allmain.o apply.o artifact.o attrib.o ball.o bones.o \
-  botl.o cmd.o dbridge.o decl.o detect.o dig.o display.o dlb.o do.o do_name.o \
-  do_wear.o dog.o dogmove.o dokick.o dothrow.o drawing.o dump.o dungeon.o \
-  eat.o end.o engrave.o exper.o explode.o extralev.o files.o fountain.o \
-  hack.o history.o invent.o level.o light.o localtime.o lock.o log.o \
-  makemon.o memfile.o messages.o mextra.o mhitm.o mhitq.o mhitu.o minion.o \
-  mklev.o mkmap.o mkmaze.o mkobj.o mkroom.o mon.o mondata.o monmove.o monst.o \
-  mplayer.o mthrowu.o muse.o music.o newrng.o o_init.o objects.o objnam.o \
-  options.o pager.o pickup.o pline.o polyself.o potion.o pray.o priest.o \
-  prop.o quest.o questpgr.o read.o readonly.o rect.o region.o restore.o \
-  role.o rumors.o save.o shk.o shknam.o sit.o sounds.o sp_lev.o spell.o \
-  steal.o steed.o symclass.o teleport.o timeout.o topten.o track.o trap.o \
-  u_init.o uhitm.o vault.o version.o vision.o weapon.o were.o wield.o \
-  windows.o wizard.o worm.o worn.o write.o zap.o
-GAME_O_LNHC = common_options.o hacklib.o menulist.o trietable.o \
-  utf8conv.o xmalloc.o
-GAME_O_NH = brandings.o color.o dialog.o extrawin.o gameover.o getline.o \
-  keymap.o main.o map.o menu.o messages.o motd.o options.o outchars.o \
-  playerselect.o replay.o rungame.o sidebar.o status.o topten.o windows.o
-GAME_O_LUNC = libuncursed.o plugins.o plugins/tty.o plugins/wrap_tty.o
-GAME_O = $(GAME_O_LNH:%=libnethack/src/%) \
-  $(GAME_O_LNHC:%=libnethack_common/src/%) \
-  $(GAME_O_NH:%=nethack/src/%) \
-  $(GAME_O_LUNC:%=libuncursed/src/%) \
-  tilesets/src/tilesequence.o _aimake_get_option.o
+# nethack: everything but netgame and netplay
+GAME_O = $(addprefix nethack/src/,brandings.o color.o dialog.o extrawin.o gameover.o getline.o keymap.o main.o map.o menu.o messages.o motd.o options.o outchars.o playerselect.o replay.o rungame.o sidebar.o status.o topten.o windows.o)
+# libnethack: everything plus readonly
+GAME_O += $(addprefix libnethack/src/,allmain.o apply.o artifact.o attrib.o ball.o bones.o botl.o cmd.o dbridge.o decl.o detect.o dig.o display.o dlb.o do.o do_name.o do_wear.o dog.o dogmove.o dokick.o dothrow.o drawing.o dump.o dungeon.o eat.o end.o engrave.o exper.o explode.o extralev.o files.o fountain.o hack.o history.o invent.o level.o light.o localtime.o lock.o log.o makemon.o memfile.o messages.o mextra.o mhitm.o mhitq.o mhitu.o minion.o mklev.o mkmap.o mkmaze.o mkobj.o mkroom.o mon.o mondata.o monmove.o monst.o mplayer.o mthrowu.o muse.o music.o newrng.o o_init.o objects.o objnam.o options.o pager.o pickup.o pline.o polyself.o potion.o pray.o priest.o prop.o quest.o questpgr.o read.o readonly.o rect.o region.o restore.o role.o rumors.o save.o shk.o shknam.o sit.o sounds.o sp_lev.o spell.o steal.o steed.o symclass.o teleport.o timeout.o topten.o track.o trap.o u_init.o uhitm.o vault.o version.o vision.o weapon.o were.o wield.o windows.o wizard.o worm.o worn.o write.o zap.o)
+# libnethack_common: everything but netconnect
+GAME_O += $(addprefix libnethack_common/src/,common_options.o hacklib.o menulist.o trietable.o utf8conv.o xmalloc.o)
+GAME_O += tilesets/src/tilesequence.o
+# libuncursed with tty
+GAME_O += $(addprefix libuncursed/src/,libuncursed.o plugins.o plugins/tty.o plugins/wrap_tty.o)
+GAME_O += _aimake_get_option.o
 
-MAKEDEFS_O = libnethack/util/makedefs.o libnethack/src/objects.o \
-  libnethack/src/monst.o
+MAKEDEFS_O = libnethack/util/makedefs.o
+MAKEDEFS_O += $(addprefix libnethack/src/,objects.o monst.o)
 
-DGN_COMP_O = libnethack/util/dgn_main.o libnethack/util/dgn_lex.o \
-  libnethack/util/dgn_yacc.o
+DGN_COMP_O = $(addprefix libnethack/util/,dgn_main.o dgn_lex.o dgn_yacc.o)
 
-LEV_COMP_O = libnethack/util/lev_main.o libnethack/util/lev_lex.o \
-  libnethack/util/lev_yacc.o libnethack/src/readonly.o \
-  libnethack/src/symclass.o libnethack/src/objects.o libnethack/src/monst.o
+LEV_COMP_O = $(addprefix libnethack/util/,lev_main.o lev_lex.o lev_yacc.o)
+LEV_COMP_O += $(addprefix libnethack/src/,monst.o objects.o readonly.o symclass.o)
 
-DLB_O = libnethack/util/dlb_main.o libnethack/src/dlb.o
+DLB_O = libnethack/util/dlb_main.o
+DLB_O += libnethack/src/dlb.o
 
-TILEC_O_LNH = drawing.o monst.o objects.o symclass.o
-TILEC_O_LNHC = hacklib.o utf8conv.o xmalloc.o
-TILEC_O_TS = src/fallback-tileset-image.o src/tilesequence.o \
-  util/tilecompile.o util/tileset-read.o util/tileset-write.o
-TILEC_O = $(TILEC_O_LNH:%=libnethack/src/%) \
-  $(TILEC_O_LNHC:%=libnethack_common/src/%) \
-  $(TILEC_O_TS:%=tilesets/%) nethack/src/brandings.o
+TILEC_O = $(addprefix tilesets/util/,tilecompile.o tileset-read.o tileset-write.o)
+TILEC_O += $(addprefix tilesets/src/,fallback-tileset-image.o tilesequence.o)
+TILEC_O += $(addprefix libnethack/src/,drawing.o monst.o objects.o symclass.o)
+TILEC_O += $(addprefix libnethack_common/src/,hacklib.o utf8conv.o xmalloc.o)
+TILEC_O += nethack/src/brandings.o
 
-BASECC_O_LNH = drawing.o monst.o objects.o symclass.o
-BASECC_O_LNHC = hacklib.o xmalloc.o
-BASECC_O_TS = src/tilesequence.o util/basecchar.o
-BASECC_O = $(BASECC_O_LNH:%=libnethack/src/%) \
-  $(BASECC_O_LNHC:%=libnethack_common/src/%) \
-  $(BASECC_O_TS:%=tilesets/%) nethack/src/brandings.o
+BASECC_O = tilesets/util/basecchar.o
+BASECC_O += tilesets/src/tilesequence.o
+BASECC_O += $(addprefix libnethack/src/,drawing.o monst.o objects.o symclass.o)
+BASECC_O += $(addprefix libnethack_common/src/,hacklib.o xmalloc.o)
+BASECC_O += nethack/src/brandings.o
 
 nethack/src/main: $(GAME_O)
-	$(CXX) $(LDFLAGS) $^ -pthread -ldl -lz -o $@ 
+	$(CXX) $(LDFLAGS) $^ -pthread -ldl -lz -o $@
 clean:: ; rm -f nethack/src/main $(GAME_O)
 
 libnethack/util/makedefs: $(MAKEDEFS_O)
@@ -129,17 +108,17 @@ tilesets/util/basecchar: $(BASECC_O)
 	$(CC) $(LDFLAGS) $^ -o $@
 clean:: ; rm -f tilesets/util/basecchar $(BASECC_O)
 
-ALL_O = $(GAME_O) $(MAKEDEFS_O) $(DGN_COMP_O) $(LEV_COMP_O) $(DLB_O) \
-  $(TILEC_O) $(BASECC_O)
+
+ALL_O = $(GAME_O) $(MAKEDEFS_O) $(DGN_COMP_O) $(LEV_COMP_O) $(DLB_O) $(TILEC_O) $(BASECC_O)
 
 
 ##### BASIC RULES AND AUTOMATIC DEPENDENCIES #####
 
-libuncursed/src/plugins/wrap_%.o: libuncursed/src/plugins/%.cxx 
+libuncursed/src/plugins/wrap_%.o: libuncursed/src/plugins/%.cxx
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MMD -MP -c -o $@ $<
 
 libuncursed/src/plugins/wrap_%.d:
-	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MP -MG -MT libuncursed/src/plugins/wrap_$*.o -MF libuncursed/src/plugins/wrap_$*.d libuncursed/src/plugins/$*.cxx 
+	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MP -MG -MT libuncursed/src/plugins/wrap_$*.o -MF libuncursed/src/plugins/wrap_$*.d libuncursed/src/plugins/$*.cxx
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -MMD -MP -c -o $@ $<
@@ -172,8 +151,7 @@ clean:: ; rm -f libnethack/include/onames.h
 
 libnethack/src/readonly.c: libnethack/util/makedefs
 	libnethack/util/makedefs -m $@
-libnethack/src/readonly.o: libnethack/include/onames.h
-libnethack/src/readonly.o: libnethack/include/pm.h 
+libnethack/src/readonly.o: libnethack/include/onames.h libnethack/include/pm.h
 libnethack/src/readonly.d: ;
 clean:: ; rm -f libnethack/src/readonly.c
 
@@ -181,8 +159,8 @@ clean:: ; rm -f libnethack/src/readonly.c
 # essentially, so we depend on GAME_O except for version.o for obvious
 # reasons
 date.h: libnethack/include/date.h ;
-libnethack/include/date.h: libnethack/util/makedefs .git/index $(filter-out libnethack/src/version.o,$(GAME_O))
-	$< -v $@ $(shell git rev-parse --short HEAD)
+libnethack/include/date.h: libnethack/util/makedefs $(filter-out libnethack/src/version.o,$(GAME_O))
+	$< -v $@
 clean:: ; rm -f libnethack/include/date.h
 
 verinfo.h: libnethack/include/verinfo.h ;
@@ -213,10 +191,7 @@ clean:: ; rm -f libnethack/util/dgn_comp.h libnethack/util/dgn_yacc.c
 
 libnethack/util/lev_lex.c: libnethack/util/lev_comp.l
 	$(FLEX) -o$@ $<
-libnethack/util/lev_lex.o: libnethack/include/onames.h
-libnethack/util/lev_lex.o: libnethack/include/verinfo.h
-libnethack/util/lev_lex.o: libnethack/include/pm.h
-libnethack/util/lev_lex.o: libnethack/util/lev_comp.h
+libnethack/util/lev_lex.o: libnethack/include/onames.h libnethack/include/verinfo.h libnethack/include/pm.h libnethack/util/lev_comp.h
 libnethack/util/lev_lex.d: ;
 clean:: ; rm -f libnethack/util/lev_lex.c
 
@@ -224,9 +199,7 @@ lev_comp.h: libnethack/util/lev_comp.h ;
 libnethack/util/lev_comp.h: libnethack/util/lev_yacc.c
 libnethack/util/lev_yacc.c: libnethack/util/lev_comp.y
 	$(BISON) --defines=libnethack/util/lev_comp.h -o libnethack/util/lev_yacc.c libnethack/util/lev_comp.y
-libnethack/util/lev_yacc.o: libnethack/include/onames.h
-libnethack/util/lev_yacc.o: libnethack/include/verinfo.h
-libnethack/util/lev_yacc.o: libnethack/include/pm.h
+libnethack/util/lev_yacc.o: libnethack/include/onames.h libnethack/include/verinfo.h libnethack/include/pm.h
 libnethack/util/lev_yacc.d: ;
 clean:: ; rm -f libnethack/util/lev_comp.h libnethack/util/lev_yacc.c
 
@@ -263,17 +236,15 @@ clean:: ; rm -f libnethack/dat/dungeon
 
 
 DESFILES = Arch.des Barb.des Caveman.des Healer.des Knight.des Monk.des Priest.des Ranger.des Rogue.des Samurai.des Tourist.des Valkyrie.des Wizard.des bigroom.des castle.des endgame.des gehennom.des knox.des medusa.des mines.des oracle.des sokoban.des tower.des yendor.des
-ALL_TAG = $(DESFILES:%.des=libnethack/dat/%.tag)
+TAGFILES = $(DESFILES:%.des=libnethack/dat/%.tag)
 
-$(ALL_TAG): libnethack/dat/%.tag: libnethack/util/lev_comp libnethack/dat/%.des
+$(TAGFILES): libnethack/dat/%.tag: libnethack/util/lev_comp libnethack/dat/%.des
 	cd libnethack/dat && ../util/lev_comp $*.des && touch $*.tag
-clean:: ; rm -f $(ALL_TAG) libnethack/dat/*.lev
-
+clean:: ; rm -f $(TAGFILES) libnethack/dat/*.lev
 
 DATFILES = data dungeon history oracles quest.dat rumors
-NHDAT_DAT = $(DATFILES:%=libnethack/dat/%)
 
-libnethack/dat/nhdat: libnethack/util/dlb $(NHDAT_DAT) $(ALL_TAG)
+libnethack/dat/nhdat: libnethack/util/dlb $(addprefix libnethack/dat/,$(DATFILES)) $(TAGFILES)
 	cd libnethack/dat && ../util/dlb cf nhdat $(DATFILES) *.lev
 clean:: ; rm -f libnethack/dat/nhdat
 
@@ -282,10 +253,10 @@ tilesets/dat/text/base.txt: tilesets/util/basecchar
 	$< -o $@
 clean:: ; rm -f tilesets/dat/text/base.txt
 
-tilesets/dat/textascii.nh4ct: tilesets/util/tilecompile tilesets/dat/text/base.txt tilesets/dat/text/ascii_overrides.txt tilesets/dat/text/dungeoncolors.txt tilesets/dat/text/rogue_overrides.txt
+tilesets/dat/textascii.nh4ct: tilesets/util/tilecompile $(addprefix tilesets/dat/text/,base.txt ascii_overrides.txt dungeoncolors.txt rogue_overrides.txt)
 	$< -W -t nh4ct -n ASCII -z 0 0 -o $@ $>
 clean:: ; rm -f tilesets/dat/textascii.nh4ct
 
-tilesets/dat/textunicode.nh4ct: tilesets/util/tilecompile tilesets/dat/text/base.txt tilesets/dat/text/ascii_overrides.txt tilesets/dat/text/unicode_overrides.txt tilesets/dat/text/dungeoncolors.txt tilesets/dat/text/rogue_overrides.txt
+tilesets/dat/textunicode.nh4ct: tilesets/util/tilecompile $(addprefix tilesets/dat/text/,base.txt ascii_overrides.txt unicode_overrides.txt dungeoncolors.txt rogue_overrides.txt)
 	$< -W -t nh4ct -n Unicode -z 0 0 -o $@ $>
 clean:: ; rm -f tilesets/dat/textunicode.nh4ct
