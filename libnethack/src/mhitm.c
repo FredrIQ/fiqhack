@@ -724,7 +724,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                      m_mx(mdef), m_my(mdef)) <= BOLT_LIM * BOLT_LIM) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit), "%s blinded by %s radiance!",
-                      M_verbs(mdef, "are"), uagr ? "your" : s_suffix(mon_nam(mdef)));
+                      M_verbs(mdef, "are"), s_suffix(mon_nam(magr)));
             set_property(mdef, BLINDED, dmg, TRUE);
             if (udef)
                 action_interrupted();
@@ -733,7 +733,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (!blind(mdef)) {
                 if (vis || udef)
                     pline(combat_msgc(magr, mdef, cr_immune),
-                          "%s vision quickly clears.", udef ? "Your" : s_suffix(Monnam(mdef)));
+                          "%s vision quickly clears.", s_suffix(Monnam(mdef)));
             } else
                 inc_timeout(mdef, STUNNED, dice(1, 3), FALSE);
             ret |= MM_HIT;
