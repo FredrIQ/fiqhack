@@ -86,9 +86,7 @@ is_better_armor(const struct monst *mtmp, struct obj *otmp)
              ARM_BONUS(best) + extra_pref(mtmp, best)));
 }
 
-/*
- * See if a monst could use this item in an offensive or defensive capacity.
- */
+/* See if a monst could use this item in an offensive or defensive capacity. */
 static boolean
 could_use_item(struct monst *mtmp, struct obj *otmp)
 {
