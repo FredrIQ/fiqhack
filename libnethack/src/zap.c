@@ -366,7 +366,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             }
             if (!selfzap) /* only cure blindness if zapped by someone else */
                 set_property(mdef, BLINDED, -2, FALSE);
-            if (mdef != &youmonst && canseemonoritem(mdef)) {
+            if (mdef == &youmonst || canseemonoritem(mdef)) {
                 if (disguised_mimic) {
                     if (mdef->m_ap_type == M_AP_OBJECT &&
                         mdef->mappearance == STRANGE_OBJECT) {
