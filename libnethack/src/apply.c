@@ -1406,6 +1406,72 @@ dojump(const struct nh_cmd_arg *arg)
     return jump(&m, 0);
 }
 
+/* Returns TRUE if we can jump, FALSE otherwise. This doesn't check for
+   whether or not we actually have the ability to jump in first place,
+   abil_usable does that. */
+boolean
+can_jump(const struct monst *mon, boolean msg)
+{
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
+    /* Used to point at the right monster for wounded legs */
+    struct monst *maybe_steed = (you && u.usteed) ? u.usteed : mon;
+
+    if (you && Engulfed) {
+        if (msg)
+            pline(msgc_cancelled, "You've got to be kidding!");
+        return FALSE;
+    } else if (m_underwater(mon)) {
+        if (msg && you)
+            pline(msgc_cancelled, "This calls for swimming, not jumping!");
+        return FALSE;
+    } else if (((you && u.ustuck) || (mon == u.ustuck)) &&
+               ((you && !u.ustuck->mtame) ||
+                (!you && mon->mtame) ||
+                Conflict || confused(you ? u.ustuck : &youmonst))) {
+        /* TODO: this spoils something (no conflict/pet confusion) under
+           some circumstances, which shouldn't be the case for
+           msgc_cancelled */
+        if (msg && you)
+            pline(msgc_cancelled, "You cannot escape from %s!",
+                  mon_nam(u.ustuck));
+        return FALSE;
+    } else if (levitates(mon) || Is_airlevel(m_mz(mon)) ||
+               Is_waterlevel(m_mz(mon))) {
+        if (msg && you)
+            pline(msgc_cancelled,
+                  "You don't have enough traction to jump.");
+        return FALSE;
+    } else if (leg_hurt(maybe_steed)) {
+        const char *bp = mbodypart(maybe_steed, LEG);
+
+        if (leg_hurtl(maybe_steed) && leg_hurtr(maybe_steed))
+            bp = makeplural(bp);
+        if (msg && you && u.usteed)
+            pline(msgc_cancelled, "%s is in no shape for jumping.",
+                  Monnam(u.usteed));
+        else if (msg && you)
+            pline(msgc_cancelled, "Your %s%s %s in no shape for jumping.",
+                  (!leg_hurtr(maybe_steed)) ? "left " :
+                  (!leg_hurtl(maybe_steed)) ? "right " : "",
+                  bp, (leg_hurtl(maybe_steed) &&
+                       leg_hurtr(maybe_steed)) ? "are" : "is");
+        return FALSE;
+    } else if (you && u.usteed && u.utrap) {
+        if (msg && you)
+            pline(msgc_cancelled, "%s is stuck in a trap.",
+                  Monnam(u.usteed));
+        return FALSE;
+    } else if (you && u.usteed && !u.usteed->mcanmove) {
+        if (msg && you)
+            pline(msgc_cancelled,
+                  "%s won't move sideways, much less upwards.",
+                  Monnam(u.usteed));
+        return FALSE;
+    }
+    return TRUE;
+}
+
 /* Meaning of "magic" argument: 0 means physical; otherwise skill level.
    Returns 0 if the jump should be aborted. */
 int
@@ -1413,67 +1479,18 @@ get_jump_coords(const struct musable *m, coord *cc, int magic)
 {
     /* Used to point at the right monster for wounded legs */
     struct monst *maybe_steed = u.usteed ? u.usteed : &youmonst;
-    if (!magic && (nolimbs(youmonst.data) || slithy(youmonst.data))) {
-        /* normally (nolimbs || slithy) implies !Jumping, but that isn't
-           necessarily the case for knights */
-        pline(msgc_cancelled, "You can't jump; you have no legs!");
+    if (!can_jump(m->mon, TRUE))
         return 0;
-    } else if (!magic && !Jumping) {
-        pline(msgc_cancelled, "You can't jump very far.");
-        return 0;
-    } else if (Engulfed) {
-        pline(msgc_cancelled, "You've got to be kidding!");
-        return 0;
-    } else if (u.uinwater) {
-        pline(msgc_cancelled, "This calls for swimming, not jumping!");
-        return 0;
-    } else if (u.ustuck) {
-        if (u.ustuck->mtame && !Conflict && !confused(u.ustuck)) {
-            pline(msgc_actionok, "You pull free from %s.", mon_nam(u.ustuck));
-            u.ustuck = 0;
-            return 1;
-        }
-        /* TODO: this spoils something (no conflict/pet confusion) under
-           some circumstances, which shouldn't be the case for msgc_cancelled */
-        pline(msgc_cancelled, "You cannot escape from %s!", mon_nam(u.ustuck));
-        return 0;
-    } else if (Levitation || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)) {
-        pline(msgc_cancelled, "You don't have enough traction to jump.");
-        return 0;
-    } else if (!magic && near_capacity() > UNENCUMBERED) {
-        pline(msgc_cancelled, "You are carrying too much to jump!");
-        return 0;
-    } else if (!magic && (u.uhunger <= 100 || ACURR(A_STR) < 6)) {
-        pline(msgc_cancelled, "You lack the strength to jump!");
-        return 0;
-    } else if (leg_hurt(maybe_steed)) {
-        const char *bp = body_part(LEG);
-
-        if (leg_hurtl(maybe_steed) && leg_hurtr(maybe_steed))
-            bp = makeplural(bp);
-        if (u.usteed)
-            pline(msgc_cancelled, "%s is in no shape for jumping.",
-                  Monnam(u.usteed));
-        else
-            pline(msgc_cancelled, "Your %s%s %s in no shape for jumping.",
-                  (!leg_hurtr(maybe_steed)) ? "left " :
-                  (!leg_hurtl(maybe_steed)) ? "right " : "",
-                  bp, (leg_hurtl(maybe_steed) &&
-                       leg_hurtr(maybe_steed)) ? "are" : "is");
-        return 0;
-    } else if (msgc_cancelled && u.usteed && u.utrap) {
-        pline(msgc_cancelled, "%s is stuck in a trap.", Monnam(u.usteed));
-        return 0;
-    } else if (msgc_cancelled && u.usteed && !u.usteed->mcanmove) {
-        pline(msgc_cancelled, "%s won't move sideways, much less upwards.",
-              Monnam(u.usteed));
-        return 0;
+    if (u.ustuck) {
+        pline(msgc_actionok, "You pull free from %s.", mon_nam(u.ustuck));
+        u.ustuck = 0;
+        return 1;
     }
 
     pline(msgc_uiprompt, "Where do you want to jump?");
     cc->x = youmonst.mx;
     cc->y = youmonst.my;
-    if (mgetargpos(m, cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
+    if (!mgetargpos(m, cc, FALSE, "the desired position"))
         return 0;       /* user pressed ESC */
     if (!magic && !(jumps(&youmonst) & ~INTRINSIC) &&
         distu(cc->x, cc->y) != 5) {

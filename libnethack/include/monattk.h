@@ -121,5 +121,27 @@ enum combatresult {
                   caller will in that case) */
 };
 
-#endif /* MONATTK_H */
+/* Monster special abilities. In monattk.h since most are various kinds of
+   attacks. Currently only properly handles having a single kind of
+   gaze/breath/spit ability (each). */
+enum monabil {
+    abil_none, /* used as terminator */
+    abil_pray,
+    abil_turn,
+    abil_tele,
+    abil_jump,
+    abil_spit,
+    abil_remove_ball,
+    abil_gaze,
+    abil_weresummon,
+    abil_web,
+    abil_hide,
+    abil_mindblast,
+    abil_multiply,
+    abil_unihorn,
+    abil_shriek,
+    abil_breathe,
+    last_abil = abil_breathe,
+};
 
+#endif /* MONATTK_H */

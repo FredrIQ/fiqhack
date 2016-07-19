@@ -82,6 +82,7 @@ extern void break_conduct(enum player_conduct);
 extern int doapply(const struct nh_cmd_arg *);
 extern int dorub(const struct nh_cmd_arg *);
 extern int dojump(const struct nh_cmd_arg *);
+extern boolean can_jump(const struct monst *, boolean);
 extern int get_jump_coords(const struct musable *, coord *, int);
 extern void jump_to_coords(coord *cc);
 extern int jump(const struct musable *, int);

@@ -29,6 +29,237 @@ static int dogaze(void);
 static int dohide(void);
 static int domindblast(void);
 
+struct ability {
+    enum monabil typ;
+    const char *description;
+    int pw_cost;
+    boolean allowed_while_cancelled;
+};
+
+static const struct ability abil_data[] = {
+    {abil_pray, "pray", 0, TRUE},
+    {abil_turn, "turn undead", 0, FALSE},
+    {abil_tele, "teleport", 20, FALSE},
+    {abil_jump, "jump", 0, FALSE},
+    {abil_spit, "spit venom", 15, FALSE},
+    {abil_remove_ball, "remove iron ball", 0, FALSE},
+    {abil_gaze, "gaze", 15, FALSE},
+    {abil_weresummon, "call for help", 10, FALSE},
+    {abil_web, "create web", 5, FALSE},
+    {abil_hide, "hide", 0, FALSE},
+    {abil_mindblast, "release psychic blast", 20, FALSE},
+    {abil_multiply, "multiply", 0, FALSE},
+    {abil_unihorn, "use unicorn horn", 0, FALSE},
+    {abil_shriek, "shriek", 0, FALSE},
+    {abil_breathe, "use breath weapon", 20, FALSE},
+    {abil_none, "terminator", 0, FALSE},
+};
+
+static const struct ability *
+get_abil_data(enum monabil typ)
+{
+    const struct ability *abil;
+    for (abil = abil_data; abil->typ != abil_none; abil++) {
+        if (abil->typ == typ)
+            return abil;
+    }
+    panic("get_abil_data: invalid ability requested: %d", typ);
+    return NULL;
+}
+
+/* Returns whether or not the ability is usable for the given monster.
+   "theoretical" is used to check if a certain ability is usable at all,
+   but perhaps not necessarily at once (cancelled/out of pw/etc).
+   msg being TRUE is for when attempting to actually use the ability,
+   where it can possibly fail.
+   Returns: 1 = usable, 0 = not usable, -1 = not usable, but use up turn
+   if attempted. The reason this function is run even post-attempt (where
+   -1 can potentially return and msg is true) is to potentially allow
+   intelligent monsters to not attempt futile things in first place. */
+int
+abil_usable(const struct monst *mon, enum monabil typ,
+            boolean theoretical, boolean msg)
+{
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
+    const struct ability *abil = get_abil_data(typ);
+
+    /* Jumping is special: it is available despite being cancelled if we
+       have it extrinsically. */
+    boolean cancelled_ok = abil->allowed_while_cancelled;
+    if (ehas_property(mon, JUMPING) && abil->typ == abil_jump)
+        cancelled_ok = TRUE;
+
+    if (!theoretical) {
+        if (cancelled(mon) && !cancelled_ok) {
+            if (msg) {
+                if (abil->typ == abil_turn && vis)
+                    pline(combat_msgc(mon, NULL, cr_immune),
+                          "%s, but nothing seems to happen.",
+                          M_verbs(mon, "gesture"));
+                else if (abil->typ == abil_tele && vis)
+                    pline(combat_msgc(mon, NULL, cr_immune),
+                          "%s for a moment.", M_verbs(mon, "shudder"));
+                else if (abil->typ == abil_jump && vis)
+                    pline(combat_msgc(mon, NULL, cr_immune),
+                          "%s a small hop.", M_verbs(mon, "do"));
+                else if (abil->typ == abil_spit) {
+                    if (you)
+                        pline(msgc_cancelled1,
+                              "You throat rattles.");
+                    else if (vis)
+                        You_hear(combat_msgc(mon, NULL, cr_immune),
+                                 "a dry rattle coming from %s.",
+                                 mon_nam(mon));
+                    else
+                        You_hear(msgc_levelwarning,
+                                 "a dry rattle%s.",
+                                 distant(mon) ? " in the distance" :
+                                 " nearby");
+                } else if (abil->typ == abil_remove_ball && you)
+                    pline(msgc_cancelled1,
+                          "You can't unchain yourself while cancelled!");
+                else if (abil->typ == abil_gaze && vis)
+                    pline(combat_msgc(mon, NULL, cr_immune),
+                          "%s, but nothing happens.",
+                          M_verbs(mon, "glare"));
+                else if (abil->typ == abil_weresummon && vis)
+                    pline(combat_msgc(mon, NULL, cr_immune),
+                          "%s for help, but nothing comes.",
+                          M_verbs(mon, "call"));
+                else if (abil->typ == abil_web && vis)
+                    pline(combat_msgc(mon, NULL, cr_immune),
+                          "%s, but nothing is released.",
+                          M_verbs(mon, "spin"));
+                else if (abil->typ == abil_hide && vis)
+                    pline(combat_msgc(mon, NULL, cr_immune),
+                          "%s to hide, but trips!",
+                          M_verbs(mon, "attempt"));
+                else if (abil->typ == abil_mindblast && vis)
+                    pline(combat_msgc(mon, NULL, cr_immune),
+                          "%s, but nothing else happens.",
+                          M_verbs(mon, "concentrate"));
+                else if (abil->typ == abil_multiply && you)
+                    pline(msgc_cancelled1,
+                          "You cannot multiply while cancelled.");
+                else if (abil->typ == abil_unihorn && you)
+                    pline(msgc_cancelled1,
+                          "Being cancelled, your horn wont help you.");
+                else if (abil->typ == abil_shriek ||
+                         abil->typ == abil_breathe) {
+                    if (!distant(mon) || vis)
+                        pline(msgc_cancelled1, "%s", M_verbs(mon, "cough"));
+                    else
+                        You_hear(msgc_levelwarning, "a distant cough.");
+                }
+            }
+            return -1;
+        }
+
+        if (you ? (u.uen < abil->pw_cost) : (mon->mspec_used)) {
+            if (you && msg)
+                pline(msgc_cancelled,
+                      "You lack the energy to %s.", abil->description);
+            return 0;
+        }
+    }
+
+    switch (abil->typ) {
+        /* Formely player-only abilities */
+    case abil_pray:
+        if (!you)
+            return 0; /* TODO */
+        return 1;
+    case abil_turn:
+        if (!you)
+            return 0; /* TODO */
+        if (!Role_if(PM_PRIEST) && !Role_if(PM_KNIGHT)) {
+            if (msg)
+                pline(msgc_cancelled,
+                      "You don't know how to turn undead!");
+            return 0;
+        }
+        return 1;
+    case abil_tele:
+        if (!teleportitis(mon) ||
+            mon->m_lev < 8 ||
+            (mon->m_lev < 12 &&
+             !(you ? Role_if(PM_WIZARD) : spellcaster(mon->data)))) {
+            if (msg && you)
+                pline(msgc_cancelled,
+                      "You can't teleport at will.");
+            return 0;
+        }
+        return 1;
+    case abil_jump:
+        /* some of those checks moved from get_jump_coords (now can_jump),
+           since they are purely for non-spell jumps. */
+        if (!jumps(mon)) {
+            if (msg && you)
+                pline(msgc_cancelled,
+                      "You can't jump very far.");
+            return 0;
+        }
+        if (nolimbs(mon->data) || slithy(mon->data)) {
+            if (msg && you)
+                pline(msgc_cancelled, "You can't jump; you have no legs!");
+            return 0;
+        }
+        if (!theoretical && you && near_capacity() > UNENCUMBERED) {
+            if (msg && you)
+                pline(msgc_cancelled, "You are carrying too much to jump!");
+            return 0;
+        }
+        if (!theoretical &&
+            ((you && (u.uhunger <= 100)) ||
+             acurr(mon, A_STR) < 6)) {
+            if (msg && you)
+                pline(msgc_cancelled, "You lack the strength to jump!");
+            return 0;
+        }
+
+        /* Don't merge the function called from here to this, because it
+           is also used for spellcasting purposes. */
+        if (!theoretical && !can_jump(mon, msg))
+            return 0;
+        return 1;
+
+        /* Formely #monster abilities */
+    case abil_spit:
+        return attacktype(mon->data, AT_SPIT);
+    case abil_remove_ball:
+        if (!you)
+            return 0; /* TODO: monster punishment */
+        if (mon->data->mlet != S_NYMPH)
+            return 0;
+        if (!theoretical && !Punished) {
+            if (msg && you)
+                pline(msgc_cancelled, "You are not chained to anything!");
+            return 0;
+        }
+        return 1;
+    case abil_gaze:
+        return attacktype(mon->data, AT_GAZE);
+    case abil_weresummon:
+        return is_were(mon->data);
+    case abil_web:
+        return webmaker(mon->data);
+    case abil_hide:
+        return is_hider(mon->data);
+    case abil_mindblast:
+        return is_mind_flayer(mon->data);
+    case abil_multiply:
+        return (monsndx(mon->data) == PM_GREMLIN);
+    case abil_unihorn:
+        return is_unicorn(mon->data);
+    case abil_shriek:
+        return (mon->data->msound == MS_SHRIEK);
+    case abil_breathe:
+        return attacktype(mon->data, AT_BREA);
+    default:
+        return 0;
+    }
+}
 
 /* update the youmonst.data structure pointer */
 void
@@ -393,6 +624,7 @@ has_polyform_ability(const struct permonst *pm,
         case AD_ELEC: breathname = "breathe electricity"; break;
         case AD_DRST: breathname = "breathe poison"; break;
         case AD_ACID: breathname = "breathe acid"; break;
+        case AD_STUN: breathname = "breathe disorientation"; break;
         case AD_RBRE: breathname = "random breath weapon"; break;
         default:      breathname = "unknown breath weapon"; break;
         }
