@@ -243,4 +243,3 @@ found:
 }
 
 /*write.c*/
-

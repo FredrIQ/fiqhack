@@ -120,4 +120,3 @@ struct def_skill {
 };
 
 #endif /* SKILLS_H */
-

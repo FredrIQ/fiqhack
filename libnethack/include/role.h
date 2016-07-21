@@ -178,5 +178,4 @@ struct Align {
 extern const struct Align aligns[];     /* table of available alignments */
 
 
-#endif
-
+#endif /* ROLE_H */

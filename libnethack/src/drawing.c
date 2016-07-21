@@ -474,4 +474,3 @@ nh_get_drawing_info(void)
 }
 
 /*drawing.c*/
-

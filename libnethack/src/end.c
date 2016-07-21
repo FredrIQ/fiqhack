@@ -1307,4 +1307,3 @@ list_genocided(char defquery, boolean ask)
 }
 
 /*end.c*/
-

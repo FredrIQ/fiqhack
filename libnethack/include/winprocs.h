@@ -30,4 +30,3 @@ struct display_objects_callback_data {
 };
 
 #endif /* WINPROCS_H */
-

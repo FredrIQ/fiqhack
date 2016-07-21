@@ -862,4 +862,3 @@ destroy_drawbridge(int x, int y)
 }
 
 /*dbridge.c*/
-

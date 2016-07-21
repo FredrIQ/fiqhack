@@ -1411,4 +1411,3 @@ make_grave(struct level *lev, int x, int y, const char *str)
 }
 
 /*engrave.c*/
-

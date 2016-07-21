@@ -721,4 +721,3 @@ create_worm_tail(int num_segs)
 }
 
 /*worm.c*/
-

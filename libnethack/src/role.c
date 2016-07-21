@@ -1206,4 +1206,3 @@ Goodbye(void)
 }
 
 /* role.c */
-

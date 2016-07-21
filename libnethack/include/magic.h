@@ -23,4 +23,4 @@
 # define DIG_MAGIC              0x53474944      /* "DIGS" */
 # define DGN_MAGIC              0x004e4744      /* "DGN\0" */
 
-#endif
+#endif /* MAGIC_H */

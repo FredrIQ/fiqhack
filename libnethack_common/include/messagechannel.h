@@ -170,4 +170,4 @@ enum msg_channel {
  *   unconditionally producing the message and conditionalizing the channel)
  */
 
-#endif
+#endif /* MESSAGECHANNEL_H */

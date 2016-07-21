@@ -529,4 +529,3 @@ count_discovered_objects(int *curp, int *maxp)
 }
 
 /*o_init.c*/
-

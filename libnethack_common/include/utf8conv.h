@@ -21,4 +21,4 @@ extern void EXPORT(wctoutf8)(unsigned long, char [static 7]);
 extern size_t EXPORT(utf8_mbstowcs)(wchar_t *, const char *, size_t);
 extern int EXPORT(utf8_wcswidth)(const char *, size_t);
 
-#endif
+#endif /* COMMON_UTF8CONV_H */

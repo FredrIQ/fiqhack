@@ -1009,4 +1009,3 @@ cuss(struct monst *mtmp)
 }
 
 /*wizard.c*/
-

@@ -145,4 +145,3 @@ struct version_info {
 # define MAXSPELL       52      /* maximum spell index */
 
 #endif /* GLOBAL_H */
-

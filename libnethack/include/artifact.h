@@ -76,4 +76,3 @@ struct artifact {
 # define CREATE_AMMO    (LAST_PROP+9)
 
 #endif /* ARTIFACT_H */
-

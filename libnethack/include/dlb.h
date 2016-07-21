@@ -61,4 +61,3 @@ int dlb_fgetc(DLB_P);
 long dlb_ftell(DLB_P);
 
 #endif /* DLB_H */
-

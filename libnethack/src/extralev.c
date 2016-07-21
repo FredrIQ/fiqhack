@@ -371,4 +371,3 @@ makerogueghost(struct level *lev)
 }
 
 /*extralev.c*/
-

@@ -841,4 +841,3 @@ drinksink(struct monst *mon)
 }
 
 /*fountain.c*/
-

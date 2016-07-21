@@ -110,4 +110,3 @@ struct qtlists {
 # endif /***** !MAKEDEFS *****/
 
 #endif /* QTEXT_H */
-

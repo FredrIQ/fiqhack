@@ -166,4 +166,3 @@ struct overview_info {
 # define MIGR_NEAR_PLAYER       9       /* mon: followers; obj: trap door */
 
 #endif /* DUNGEON_H */
-

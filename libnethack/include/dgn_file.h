@@ -71,4 +71,3 @@ struct tmpbranch {
 # define BRANCH_LIMIT    32
 
 #endif /* DGN_FILE_H */
-

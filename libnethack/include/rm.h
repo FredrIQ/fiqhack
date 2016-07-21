@@ -528,4 +528,3 @@ extern struct level *level;             /* pointer to an entry in levels */
              (MON_BURIED_AT(x,y) ? level->monsters[x][y] : NULL)
 
 #endif /* RM_H */
-

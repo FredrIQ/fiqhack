@@ -1804,4 +1804,3 @@ do_clear_area(int scol, int srow, int range, void (*func) (int, int, void *),
 }
 
 /*vision.c*/
-

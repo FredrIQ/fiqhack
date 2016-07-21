@@ -719,4 +719,3 @@ splatter_burning_oil(int x, int y)
 }
 
 /*explode.c*/
-

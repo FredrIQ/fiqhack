@@ -480,4 +480,3 @@ mkmap(struct level *lev, lev_init *init_lev)
 }
 
 /*mkmap.c*/
-

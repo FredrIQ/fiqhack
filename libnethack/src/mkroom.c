@@ -744,4 +744,3 @@ rest_rooms(struct memfile *mf, struct level *lev)
 }
 
 /*mkroom.c*/
-

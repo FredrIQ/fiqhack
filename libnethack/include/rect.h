@@ -14,4 +14,3 @@ struct nhrect {
 };
 
 #endif /* RECT_H */
-

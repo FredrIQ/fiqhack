@@ -4040,4 +4040,3 @@ costly_damage_obj(struct obj *obj)
 }
 
 /*shk.c*/
-

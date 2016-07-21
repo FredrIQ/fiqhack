@@ -1064,4 +1064,3 @@ chest_shatter_msg(struct obj *otmp)
 }
 
 /*lock.c*/
-

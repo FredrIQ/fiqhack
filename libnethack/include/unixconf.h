@@ -22,5 +22,4 @@
 
 # define strncmpi(a,b,c) strncasecmp(a,b,c)
 
-#endif/* UNIXCONF_H */
-
+#endif /* UNIXCONF_H */

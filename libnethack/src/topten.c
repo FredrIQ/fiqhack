@@ -895,4 +895,3 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
 
 
 /* topten.c */
-

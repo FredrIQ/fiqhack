@@ -460,4 +460,3 @@ mplayer_talk(struct monst *mtmp)
 }
 
 /*mplayer.c*/
-

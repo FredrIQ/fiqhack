@@ -24,4 +24,3 @@
 # define NOGARLIC       0x80000000UL    /* hates garlic */
 
 #endif /* MFNDPOS_H */
-

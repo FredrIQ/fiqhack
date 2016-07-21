@@ -860,4 +860,4 @@ typedef struct nh_topten_entry *nh_topten_entry_p;
 
 typedef struct nhnet_game *nhnet_game_p;
 
-#endif
+#endif /* NETHACK_TYPES_H */

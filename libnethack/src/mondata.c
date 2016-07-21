@@ -804,4 +804,3 @@ mprof(const struct monst *mon, enum monprof proficiency)
 }
 
 /*mondata.c*/
-

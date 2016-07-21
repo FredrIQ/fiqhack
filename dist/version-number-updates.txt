@@ -55,4 +55,3 @@ Note that the NGPL also requires all modified files to specify who
 modified them and when, which is a pretty obnoxious requirement.
 Nowadays, we get git to do this automatically: see
 scripts/vcs-hooks/git-hooks-post-commit.
-

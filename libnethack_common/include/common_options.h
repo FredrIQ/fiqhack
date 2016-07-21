@@ -55,4 +55,4 @@ extern void EXPORT(nhlib_free_optlist)(
 extern struct nh_option_desc *EXPORT(nhlib_clone_optlist)(
     const struct nh_option_desc *opt);
 
-#endif
+#endif /* COMMON_OPTIONS_H */

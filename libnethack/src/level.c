@@ -28,4 +28,3 @@ boolean has_terrain(struct level *lev, schar typ) {
 
     return FALSE;
 }
-

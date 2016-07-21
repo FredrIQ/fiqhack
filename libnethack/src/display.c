@@ -2442,4 +2442,3 @@ wall_angle(struct rm *loc)
 }
 
 /*display.c*/
-

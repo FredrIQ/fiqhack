@@ -23,4 +23,3 @@
 # define HI_ZAP         CLR_BRIGHT_BLUE
 
 #endif /* COLOR_H */
-

@@ -44,4 +44,3 @@ typedef struct timer_element {
 } timer_element;
 
 #endif /* TIMEOUT_H */
-

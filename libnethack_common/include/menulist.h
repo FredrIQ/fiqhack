@@ -22,4 +22,4 @@ extern void dealloc_objmenulist(struct nh_objlist *);
 
 extern void null_menu_callback(const int *, int, void *);
 
-#endif
+#endif /* MENULIST_H */

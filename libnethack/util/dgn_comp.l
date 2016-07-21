@@ -94,4 +94,3 @@ void init_yyout( FILE *output_f )
 }
 
 /*dgn_comp.l*/
-

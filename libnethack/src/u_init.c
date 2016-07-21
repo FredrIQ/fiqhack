@@ -1101,4 +1101,3 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
 
 
 /*u_init.c*/
-

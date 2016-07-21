@@ -57,4 +57,4 @@ struct musable {
        object is also set (it's 0 otherwise). */
 };
 
-#endif
+#endif /* MONUSE_H */

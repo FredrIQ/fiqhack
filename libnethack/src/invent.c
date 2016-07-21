@@ -2716,4 +2716,3 @@ display_binventory(int x, int y, boolean as_if_seen)
 }
 
 /*invent.c*/
-

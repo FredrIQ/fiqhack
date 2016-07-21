@@ -2097,4 +2097,3 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
 }
 
 /*pickup.c*/
-

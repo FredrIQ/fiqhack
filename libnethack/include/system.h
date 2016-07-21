@@ -64,4 +64,3 @@ extern time_t time(time_t *);
 # endif/* !__cplusplus */
 
 #endif /* SYSTEM_H */
-

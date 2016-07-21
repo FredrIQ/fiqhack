@@ -52,4 +52,4 @@ extern void trietable_add(struct trietable **table, unsigned key, void *value);
 extern void *trietable_find(struct trietable **table, unsigned key);
 extern void trietable_empty(struct trietable **table);
 
-#endif
+#endif /* TRIETABLE_H */

@@ -41,4 +41,4 @@ extern void handle_display_list(json_t * display_list);
     (!conn_err && (ex_jmp_buf_valid++ ? 1 : setjmp(ex_jmp_buf) ? 0 : 1))
 # define api_exit()  do {--ex_jmp_buf_valid; } while(0)
 
-#endif
+#endif /* NHCLIENT_H */

@@ -854,4 +854,3 @@ racial_exception(struct monst *mon, struct obj *obj)
 }
 
 /*worn.c*/
-

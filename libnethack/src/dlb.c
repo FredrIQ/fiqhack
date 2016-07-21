@@ -508,4 +508,3 @@ dlb_ftell(dlb * dp)
 }
 
 /*dlb.c*/
-

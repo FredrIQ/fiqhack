@@ -34,5 +34,4 @@ extern const char *const warnexplain[];
 extern const char *const trapexplain[];
 extern const char *const invismonexplain;
 
-#endif
-
+#endif /* DRAWING_H */

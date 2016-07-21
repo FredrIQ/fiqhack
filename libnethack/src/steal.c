@@ -479,4 +479,3 @@ relobj(struct monst *mtmp, int show, boolean is_pet)
 }
 
 /*steal.c*/
-

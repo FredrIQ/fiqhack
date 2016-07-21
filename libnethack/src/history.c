@@ -148,4 +148,3 @@ hist_lev_name(const d_level * l, boolean in_or_on)
 }
 
 /* history.c */
-

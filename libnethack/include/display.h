@@ -284,4 +284,3 @@ struct tmp_sym;
 extern const unsigned char seenv_matrix[3][3];
 
 #endif /* DISPLAY_H */
-

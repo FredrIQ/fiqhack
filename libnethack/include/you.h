@@ -206,4 +206,3 @@ struct you {
 # define Upolyd (u.umonnum != u.umonster)
 
 #endif /* YOU_H */
-

@@ -1430,4 +1430,3 @@ short ospeed;
 #endif /* STRICT_REF_DEF */
 
 /*lev_main.c*/
-

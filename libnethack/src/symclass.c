@@ -124,4 +124,3 @@ def_char_to_monclass(char ch)
             break;
     return i;
 }
-

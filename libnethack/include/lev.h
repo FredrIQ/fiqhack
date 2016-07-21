@@ -44,4 +44,3 @@ typedef struct ls_t {
 extern int n_dgns;
 
 #endif /* LEV_H */
-

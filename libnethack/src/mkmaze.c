@@ -1198,4 +1198,3 @@ mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boolean ini)
 }
 
 /*mkmaze.c*/
-

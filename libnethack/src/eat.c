@@ -2388,4 +2388,3 @@ eaten_stat(int base, struct obj *obj)
 }
 
 /*eat.c*/
-

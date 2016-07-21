@@ -204,4 +204,3 @@ mon_unwere(struct monst *mon, boolean purify, boolean quiet)
 }
 
 /*were.c*/
-

@@ -193,4 +193,3 @@ split_rects(struct nhrect *r1, struct nhrect *r2)
 
 
 /*rect.c*/
-

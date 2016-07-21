@@ -782,4 +782,3 @@ drag_down(void)
 }
 
 /*ball.c*/
-

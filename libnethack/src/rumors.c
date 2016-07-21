@@ -386,4 +386,3 @@ doconsult(struct monst *oracl)
 }
 
 /*rumors.c*/
-

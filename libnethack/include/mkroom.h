@@ -103,4 +103,3 @@ extern const struct shclass shtypes[];
     (!level->nsubroom || SUBROOM_INDEX(x) == level->nsubroom)
 
 #endif /* MKROOM_H */
-

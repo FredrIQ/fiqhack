@@ -1722,3 +1722,5 @@ heal_legs(struct monst *mon, int side)
     if (you || mon == u.usteed)
         encumber_msg(oldcap);
 }
+
+/*do.c*/

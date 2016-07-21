@@ -186,4 +186,3 @@ enum player_conduct {
 };
 
 #endif /* YOUPROP_H */
-

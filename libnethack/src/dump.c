@@ -284,4 +284,3 @@ dump_outrip(struct nh_menulist *menu, boolean ts, const char *name,
     dump_display_menu(menu, "Final status:", PICK_NONE, PLHINT_ANYWHERE, NULL,
                       null_menu_callback);
 }
-

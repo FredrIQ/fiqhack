@@ -98,4 +98,3 @@ store_version(struct memfile *mf)
 
 
 /*version.c*/
-

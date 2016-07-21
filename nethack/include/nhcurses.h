@@ -673,4 +673,4 @@ extern void net_loadgame(void);
 extern void net_replay(void);
 # endif
 
-#endif
+#endif /* NHCURSES_H */

@@ -1674,4 +1674,3 @@ region		: '(' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ')'
 %%
 
 /*lev_comp.y*/
-

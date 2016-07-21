@@ -115,4 +115,4 @@ extern const char *const nhcurses_sub_names[];
 extern const char *const nhcurses_effect_names[E_COUNT];
 extern const char *const nhcurses_swallow_names[NUMSWALLOWCHARS];
 
-#endif
+#endif /* BRANDINGS_H */

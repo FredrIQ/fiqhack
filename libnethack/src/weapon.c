@@ -1502,4 +1502,3 @@ setmnotwielded(struct monst *mon, struct obj *obj)
 }
 
 /*weapon.c*/
-

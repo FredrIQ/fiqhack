@@ -794,4 +794,3 @@ create_gas_cloud(struct level *lev, xchar x, xchar y, int radius, int damage)
 }
 
 /*region.c*/
-

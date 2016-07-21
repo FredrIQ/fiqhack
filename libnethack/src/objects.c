@@ -1077,4 +1077,3 @@ init_objlist(void)
 #endif /* !OBJECTS_PASS_2_ */
 
 /*objects.c*/
-

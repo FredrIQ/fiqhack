@@ -48,4 +48,4 @@ extern int parse_ip_addr(const char *host, int port, int want_v4,
 extern int connect_server(const char *host, int port, int want_v4,
                           char *errmsg, int msglen);
 
-#endif
+#endif /* NETCONNECT_H */

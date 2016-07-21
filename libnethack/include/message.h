@@ -137,4 +137,4 @@ extern const char *msgcaseconv(const char *message,
                                char (*insidewordcaseconv)(char),
                                char (*wordstartcaseconv)(char)) USE_RETVAL;
 
-#endif
+#endif /* MESSAGE_H */

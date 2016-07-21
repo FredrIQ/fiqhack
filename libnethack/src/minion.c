@@ -342,4 +342,3 @@ ndemon(const d_level * dlev, aligntyp atyp)
 }
 
 /*minion.c*/
-

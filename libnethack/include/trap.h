@@ -79,4 +79,3 @@ struct trap {
 # define TRAPNUM 24
 
 #endif /* TRAP_H */
-

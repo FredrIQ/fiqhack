@@ -1572,4 +1572,3 @@ arti_cost(const struct obj *otmp)
 }
 
 /*artifact.c*/
-

@@ -194,5 +194,5 @@ struct fruit {
 
 # define OBJ_NAME(obj)  (obj_descr[(obj).oc_name_idx].oc_name)
 # define OBJ_DESCR(obj) (obj_descr[(obj).oc_descr_idx].oc_descr)
-#endif /* OBJCLASS_H */
 
+#endif /* OBJCLASS_H */

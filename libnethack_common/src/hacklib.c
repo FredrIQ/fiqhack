@@ -581,4 +581,3 @@ fuzzymatch(const char *s1, const char *s2, const char *ignore_chars,
 }
 
 /*hacklib.c*/
-

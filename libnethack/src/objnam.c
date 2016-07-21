@@ -2833,4 +2833,3 @@ mimic_obj_name(const struct monst *mtmp)
 }
 
 /*objnam.c*/
-

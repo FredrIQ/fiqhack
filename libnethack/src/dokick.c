@@ -1638,4 +1638,3 @@ down_gate(xchar x, xchar y)
 }
 
 /*dokick.c*/
-

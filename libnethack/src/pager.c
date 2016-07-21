@@ -827,4 +827,3 @@ doverhistory(const struct nh_cmd_arg *arg)
 }
 
 /*pager.c*/
-

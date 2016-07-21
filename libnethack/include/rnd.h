@@ -220,4 +220,3 @@ rnz(int i)
 #endif
 
 /*rnd.h*/
-

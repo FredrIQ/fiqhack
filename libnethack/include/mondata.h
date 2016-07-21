@@ -285,4 +285,3 @@ extern const int monstr[];
 extern struct monst zeromonst;
 
 #endif /* MONDATA_H */
-

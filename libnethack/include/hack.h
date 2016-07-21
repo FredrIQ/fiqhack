@@ -376,4 +376,3 @@ struct test_move_cache {
 # define API_EXIT() do {--exit_jmp_buf_valid; } while(0)
 
 #endif /* HACK_H */
-

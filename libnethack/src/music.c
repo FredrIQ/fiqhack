@@ -616,4 +616,3 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
 }
 
 /*music.c*/
-

@@ -41,4 +41,3 @@ struct spell {
 extern const char *const flash_types[];
 
 #endif /* SPELL_H */
-

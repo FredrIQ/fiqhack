@@ -586,4 +586,3 @@ wiz_light_sources(const struct nh_cmd_arg *arg)
 }
 
 /*light.c*/
-

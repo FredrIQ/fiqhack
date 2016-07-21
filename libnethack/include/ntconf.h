@@ -58,4 +58,3 @@
 # endif
 
 #endif /* NTCONF_H */
-

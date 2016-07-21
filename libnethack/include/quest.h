@@ -42,4 +42,3 @@ struct q_score {        /* Quest "scorecard" */
   /* note: exp.lev. 14 is threshold level for 5th rank (class title, role.c) */
 
 #endif /* QUEST_H */
-

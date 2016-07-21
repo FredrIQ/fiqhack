@@ -93,4 +93,4 @@ extern int EXPORT(nhnet_change_password) (const char *password);
 #  define nh_get_topten               nhnet_get_topten
 # endif
 
-#endif
+#endif /* NETHACK_CLIENT_H */

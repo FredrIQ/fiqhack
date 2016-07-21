@@ -1425,4 +1425,3 @@ struct attribs attrmax, attrmin;
 #endif /* STRICT_REF_DEF */
 
 /*makedefs.c*/
-

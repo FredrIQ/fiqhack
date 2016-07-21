@@ -970,4 +970,3 @@ coyotename(const struct monst *mtmp)
 }
 
 /*do_name.c*/
-

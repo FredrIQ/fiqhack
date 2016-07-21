@@ -203,4 +203,4 @@ struct memfile {
     struct memfile_tag *last_tag;
 };
 
-#endif
+#endif /* MEMFILE_H */

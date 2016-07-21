@@ -20,4 +20,3 @@
 # include "global.h"    /* Define everything else according to choices above */
 
 #endif /* CONFIG_H */
-

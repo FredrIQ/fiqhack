@@ -258,4 +258,3 @@ void mkmap(struct level *lev, lev_init * init_lev);
 extern int min_rx, max_rx, min_ry, max_ry;
 
 #endif /* SP_LEV_H */
-

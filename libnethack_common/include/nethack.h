@@ -72,4 +72,4 @@ extern nh_topten_entry_p EXPORT(nh_get_topten) (
 
 # undef EXPORT
 
-#endif
+#endif /* NETHACK_H */

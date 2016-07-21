@@ -156,4 +156,3 @@ midnight(void)
 {
     return getlt()->tm_hour == 0;
 }
-

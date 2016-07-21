@@ -13,4 +13,3 @@ typedef struct nhcoord {
 } coord;
 
 #endif /* COORD_H */
-

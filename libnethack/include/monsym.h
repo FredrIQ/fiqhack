@@ -140,4 +140,3 @@
 # define DEF_MIMIC_DEF  ']'
 
 #endif /* MONSYM_H */
-

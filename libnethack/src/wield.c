@@ -723,4 +723,3 @@ unwield_silently(struct obj *obj)
 }
 
 /*wield.c*/
-

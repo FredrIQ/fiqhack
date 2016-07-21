@@ -41,5 +41,4 @@ extern char *strstri_mutable(char *, const char *);
 
 extern boolean fuzzymatch(const char *, const char *, const char *, boolean);
 
-#endif
-
+#endif /* HACKLIB_H */
