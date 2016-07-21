@@ -1339,8 +1339,7 @@ nh_get_object_commands(int *count, char invlet)
     if (obj->oclass != COIN_CLASS && obj->oclass != WEAPON_CLASS &&
         obj->oclass != ROCK_CLASS && obj->oclass != CHAIN_CLASS &&
         obj->oclass != BALL_CLASS && obj->oclass != VENOM_CLASS)
-        set_obj_cmd('C', obj_cmd, obj, i++, "nametype",
-                    "Name all objects of this type", false);
+        SET_OBJ_CMD('C', "nametype", "Name all objects of this type", 0);
 
     *count = i;
     return obj_cmd;
