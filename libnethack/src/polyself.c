@@ -13,6 +13,8 @@
 
 #include "hack.h"
 
+static int check_or_do_ability(struct monst *, enum monabil, boolean,
+                               boolean, boolean);
 static void polyman(const char *, const char *);
 static void break_armor(boolean);
 static void drop_weapon(int, boolean);
@@ -47,11 +49,11 @@ static const struct ability abil_data[] = {
     {abil_weresummon, "call for help", 10, FALSE},
     {abil_web, "create web", 5, FALSE},
     {abil_hide, "hide", 0, FALSE},
-    {abil_mindblast, "release psychic blast", 20, FALSE},
+    {abil_mindblast, "release psychic static", 20, FALSE},
     {abil_multiply, "multiply", 0, FALSE},
-    {abil_unihorn, "use unicorn horn", 0, FALSE},
+    {abil_unihorn, "use horn", 0, FALSE},
     {abil_shriek, "shriek", 0, FALSE},
-    {abil_breathe, "use breath weapon", 20, FALSE},
+    {abil_breathe, "breathe", 20, FALSE},
     {abil_none, "terminator", 0, FALSE},
 };
 
@@ -67,18 +69,54 @@ get_abil_data(enum monabil typ)
     return NULL;
 }
 
-/* Returns whether or not the ability is usable for the given monster.
-   "theoretical" is used to check if a certain ability is usable at all,
-   but perhaps not necessarily at once (cancelled/out of pw/etc).
-   msg being TRUE is for when attempting to actually use the ability,
-   where it can possibly fail.
-   Returns: 1 = usable, 0 = not usable, -1 = not usable, but use up turn
-   if attempted. The reason this function is run even post-attempt (where
-   -1 can potentially return and msg is true) is to potentially allow
-   intelligent monsters to not attempt futile things in first place. */
+/* Checks if the ability produces an useful effect. Doesn't imply that it
+   is usable. */
+boolean
+ability_useful(struct monst *mon, enum monabil typ)
+{
+    int ret = check_or_do_ability(mon, typ, FALSE, FALSE, TRUE);
+    if (ret == 1)
+        return TRUE;
+    return FALSE;
+}
+
+/* Checks if mon can perform an ability. */
+boolean
+ability_usable(struct monst *mon, enum monabil typ)
+{
+    int ret = check_or_do_ability(mon, typ, TRUE, FALSE, TRUE);
+    return ret ? TRUE : FALSE;
+}
+
+/* Performs a special ability. */
 int
-abil_usable(const struct monst *mon, enum monabil typ,
-            boolean theoretical, boolean msg)
+use_ability(struct monst *mon, enum monabil typ)
+{
+    int ret;
+    /* First, call with can_use and msg=true to figure out if the ability
+       is usable in first place and bail out if not. Then, actually
+       perform the abiility. */
+    if (!check_or_do_ability(mon, typ, TRUE, TRUE, TRUE))
+        return 0;
+
+    ret = check_or_do_ability(mon, typ, FALSE, TRUE, FALSE);
+    if (!ret)
+        return 0;
+    if (mon != &youmonst && DEADMONSTER(mon))
+        return 2; /* it died */
+    return 1;
+}
+
+/* Performs or check whether or not we can perform an ability.
+   mon: who is doing it
+   typ: what kind of ability
+   can_use: only check if we can perform the ability at all theoretically
+   msg: display messages
+   checking: if we are checking or actually performing the ability
+   Returns 1 (usable), 0 (unusable or useless), -1 (useless, use turn) */
+static int
+check_or_do_ability(struct monst *mon, enum monabil typ,
+                    boolean can_use, boolean msg, boolean checking)
 {
     boolean you = (mon == &youmonst);
     boolean vis = (you || canseemon(mon));
@@ -90,7 +128,7 @@ abil_usable(const struct monst *mon, enum monabil typ,
     if (ehas_property(mon, JUMPING) && abil->typ == abil_jump)
         cancelled_ok = TRUE;
 
-    if (!theoretical) {
+    if (!can_use) {
         if (cancelled(mon) && !cancelled_ok) {
             if (msg) {
                 if (abil->typ == abil_turn && vis)
@@ -169,7 +207,12 @@ abil_usable(const struct monst *mon, enum monabil typ,
     case abil_pray:
         if (!you)
             return 0; /* TODO */
-        return 1;
+        if (checking)
+            return 1;
+        if (flags.prayconfirm)
+            if (yn("Are you sure you want to pray?") == 'n')
+                return 0; /* might have been a Alt+P typo */
+        break;
     case abil_turn:
         if (!you)
             return 0; /* TODO */
@@ -179,7 +222,7 @@ abil_usable(const struct monst *mon, enum monabil typ,
                       "You don't know how to turn undead!");
             return 0;
         }
-        return 1;
+        break;
     case abil_tele:
         if (!teleportitis(mon) ||
             mon->m_lev < 8 ||
@@ -188,9 +231,9 @@ abil_usable(const struct monst *mon, enum monabil typ,
             if (msg && you)
                 pline(msgc_cancelled,
                       "You can't teleport at will.");
-            return 0;
+            return -2;
         }
-        return 1;
+        break;
     case abil_jump:
         /* some of those checks moved from get_jump_coords (now can_jump),
            since they are purely for non-spell jumps. */
@@ -205,12 +248,12 @@ abil_usable(const struct monst *mon, enum monabil typ,
                 pline(msgc_cancelled, "You can't jump; you have no legs!");
             return 0;
         }
-        if (!theoretical && you && near_capacity() > UNENCUMBERED) {
+        if (!can_use && you && near_capacity() > UNENCUMBERED) {
             if (msg && you)
                 pline(msgc_cancelled, "You are carrying too much to jump!");
             return 0;
         }
-        if (!theoretical &&
+        if (!can_use &&
             ((you && (u.uhunger <= 100)) ||
              acurr(mon, A_STR) < 6)) {
             if (msg && you)
@@ -220,45 +263,87 @@ abil_usable(const struct monst *mon, enum monabil typ,
 
         /* Don't merge the function called from here to this, because it
            is also used for spellcasting purposes. */
-        if (!theoretical && !can_jump(mon, msg))
+        if (!can_use && !can_jump(mon, msg))
             return 0;
-        return 1;
+        break;
 
         /* Formely #monster abilities */
     case abil_spit:
-        return attacktype(mon->data, AT_SPIT);
+        if (!attacktype(mon->data, AT_SPIT))
+            return 0;
+        break;
     case abil_remove_ball:
         if (!you)
             return 0; /* TODO: monster punishment */
         if (mon->data->mlet != S_NYMPH)
             return 0;
-        if (!theoretical && !Punished) {
+        if (!can_use && !Punished) {
             if (msg && you)
                 pline(msgc_cancelled, "You are not chained to anything!");
             return 0;
         }
-        return 1;
+        break;
     case abil_gaze:
-        return attacktype(mon->data, AT_GAZE);
+        if (!attacktype(mon->data, AT_GAZE))
+            return 0;
+        if (!can_use && blind(mon)) {
+            if (msg && you)
+                pline(msgc_cancelled,
+                      "How can you gaze at something if you can't see?");
+            return 0;
+        }
+        break;
     case abil_weresummon:
-        return is_were(mon->data);
+        if (!is_were(mon->data))
+            return 0;
+        break;
     case abil_web:
-        return webmaker(mon->data);
+        if (!webmaker(mon->data))
+            return 0;
+        if (!can_use) {
+            if (you ? u.utrap : mon->mtrapped) {
+                if (msg && you)
+                    pline(msgc_cancelled,
+                          "You can't spin webs while stuck in a trap.");
+                return 0;
+            }
+            if (On_stairs(mon->mx, mon->my)) {
+                if (msg && vis)
+                    pline(you ? msgc_cancelled1 : msgc_monneutral,
+                          "%s and fail to spin a web on a trap!",
+                          M_verbs(mon, "try"));
+                return -1;
+            }
+        }
+        break;
     case abil_hide:
-        return is_hider(mon->data);
+        if (!is_hider(mon->data))
+            return 0;
+        break;
     case abil_mindblast:
-        return is_mind_flayer(mon->data);
+        if (!is_mind_flayer(mon->data))
+            return 0;
+        break;
     case abil_multiply:
-        return (monsndx(mon->data) == PM_GREMLIN);
+        if (monsndx(mon->data) != PM_GREMLIN)
+            return 0;
+        break;
     case abil_unihorn:
-        return is_unicorn(mon->data);
+        if (!is_unicorn(mon->data))
+            return 0;
+        break;
     case abil_shriek:
-        return (mon->data->msound == MS_SHRIEK);
+        if (mon->data->msound != MS_SHRIEK)
+            return 0;
+        break;
     case abil_breathe:
-        return attacktype(mon->data, AT_BREA);
+        if (!attacktype(mon->data, AT_BREA))
+            return 0;
+        break;
     default:
         return 0;
     }
+    return 1;
 }
 
 /* update the youmonst.data structure pointer */
