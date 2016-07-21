@@ -671,22 +671,16 @@ cpostfx(struct monst *mon, int pm)
         set_property(mon, FAST, ifast(mon) ? -1 : 0, TRUE);
         if (you || vis) {
             pline_implied(msgc, "%s velocity suddenly seems very uncertain!",
-                  s_suffix(you ? "You" : Monnam(mon)));
-            pline(msgc, "%s seem%s %ser.",
-                  you ? "You" : Monnam(mon),
-                  you ? "" : "s",
+                  s_suffix(Monnam(mon)));
+            pline(msgc, "%s %ser.", M_verbs(mon, "seem"),
                   ifast(mon) ? "fast" : "slow");
         }
         break;
     case PM_LIZARD:
-        if (property_timeout(mon, STUNNED) > 2) {
-            set_property(mon, STUNNED, -2, TRUE);
+        if (property_timeout(mon, STUNNED) > 2)
             set_property(mon, STUNNED, 2, FALSE);
-        }
-        if (property_timeout(mon, CONFUSION) > 2) {
-            set_property(mon, CONFUSION, -2, TRUE);
+        if (property_timeout(mon, CONFUSION) > 2)
             set_property(mon, CONFUSION, 2, FALSE);
-        }
         break;
     case PM_CHAMELEON:
     case PM_DOPPELGANGER:
