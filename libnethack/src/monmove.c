@@ -333,36 +333,6 @@ dochug(struct monst *mtmp)
     if (mtmp->mflee && !mtmp->mfleetim && mtmp->mhp == mtmp->mhpmax && !rn2(25))
         mtmp->mflee = 0;
 
-    /* if a player monster gets the amulet, it wants to ascend */
-    /* TODO: make this work outside Astral (in which the monster heads there).
-       Also, move this to strategy */
-    if (is_mplayer(mtmp->data) && mon_has_amulet(mtmp) &&
-        Is_astralevel(m_mz(mtmp)) && mtmp->mstrategy != st_ascend) {
-        mtmp->mstrategy = st_ascend;
-        mtmp->sx = COLNO;
-        mtmp->sy = ROWNO;
-        int x, y;
-        /* find coaligned altar */
-        for (x = 0; x < COLNO; x++) {
-            for (y = 0; y < ROWNO; y++) {
-                if (mtmp->dlevel->locations[x][y].typ == ALTAR) {
-                    int mask = mtmp->dlevel->locations[x][y].altarmask;
-                    int alignment = mtmp->data->maligntyp;
-                    if ((mask & AM_LAWFUL && alignment > 0) ||
-                        (mask & AM_NEUTRAL && alignment == 0) ||
-                        (mask & AM_CHAOTIC && alignment < 0)) {
-                        mtmp->sx = x;
-                        mtmp->sy = y;
-                        break;
-                    }
-                }
-            }
-        }
-        if (mtmp->sx == COLNO) { /* no altar...? */
-            impossible("No coaligned altar on astral for player monster?");
-            mtmp->mstrategy = st_none;
-        }
-    }
     strategy(mtmp, FALSE); /* calls set_apparxy */
     /* Must be done after you move and before the monster does.  The
        set_apparxy() call in m_move() doesn't suffice since the variables

@@ -321,8 +321,37 @@ strategy(struct monst *mtmp, boolean magical_target)
     if (idle(mtmp))
         return;
 
-    /* If the monster is heading for ascension, don't change the mind for anything
-       but losing the amulet */
+    /* if a player monster gets the amulet, it wants to ascend */
+    if (is_mplayer(mtmp->data) && mon_has_amulet(mtmp) &&
+        Is_astralevel(m_mz(mtmp)) && mtmp->mstrategy != st_ascend) {
+        mtmp->mstrategy = st_ascend;
+        mtmp->sx = COLNO;
+        mtmp->sy = ROWNO;
+        int x, y;
+        /* find coaligned altar */
+        for (x = 0; x < COLNO; x++) {
+            for (y = 0; y < ROWNO; y++) {
+                if (mtmp->dlevel->locations[x][y].typ == ALTAR) {
+                    int mask = mtmp->dlevel->locations[x][y].altarmask;
+                    int alignment = mtmp->data->maligntyp;
+                    if ((mask & AM_LAWFUL && alignment > 0) ||
+                        (mask & AM_NEUTRAL && alignment == 0) ||
+                        (mask & AM_CHAOTIC && alignment < 0)) {
+                        mtmp->sx = x;
+                        mtmp->sy = y;
+                        break;
+                    }
+                }
+            }
+        }
+        if (mtmp->sx == COLNO) { /* no altar...? */
+            impossible("No coaligned altar on astral for player monster?");
+            mtmp->mstrategy = st_none;
+        }
+    }
+
+    /* If the monster is heading for ascension, don't change the mind for
+       anything but losing the amulet */
     if (mtmp->mstrategy == st_ascend) {
         if (mon_has_amulet(mtmp)) {
             /* regain courage immediately */
