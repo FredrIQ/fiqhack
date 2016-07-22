@@ -544,9 +544,11 @@ decrease_property_timers(struct monst *mon)
              mprof(mon, MP_SCLRC));
     for (prop = 0; prop <= LAST_PROP; prop++) {
         if (mon->mintrinsic[prop] & TIMEOUT_RAW) {
-            /* Decrease protection less at Expert and not at all if maintained */
+            /* Decrease protection less at Expert and not at all if maintained,
+               unless we are currently overprotected as a result */
             if (prop == PROTECTION &&
-                (spell_maintained(mon, SPE_PROTECTION) ||
+                ((spell_maintained(mon, SPE_PROTECTION) &&
+                  cast_protection(mon, FALSE, TRUE)) ||
                  (skill == P_EXPERT && (moves % 2))))
                 continue;
             mon->mintrinsic[prop]--;
