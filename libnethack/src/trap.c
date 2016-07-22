@@ -1923,15 +1923,24 @@ mintrap(struct monst *mtmp)
             break;
 
         case SLP_GAS_TRAP:
-            if (!resists_sleep(mtmp) && !breathless(mptr) && !mtmp->msleeping &&
-                mtmp->mcanmove) {
+            if (in_sight) {
+                if (!resists_sleep(mtmp) && !unbreathing(mtmp) &&
+                    !mtmp->msleeping && mtmp->mcanmove)
+                    pline(combat_msgc(culprit, mtmp, cr_hit),
+                          "A cloud of gas puts %s to sleep!",
+                          mon_nam(mtmp));
+                else
+                    pline(combat_msgc(culprit, mtmp,
+                                      !resists_sleep(mtmp) ? cr_miss :
+                                      cr_immune),
+                          "%s enveloped in a cloud of gas!",
+                          M_verbs(mtmp, "are"));
+                seetrap(trap);
+            }
+            if (!resists_sleep(mtmp) && !breathless(mptr) &&
+                !mtmp->msleeping && mtmp->mcanmove) {
                 mtmp->mcanmove = 0;
                 mtmp->mfrozen = rnd(25);
-                if (in_sight) {
-                    pline(combat_msgc(culprit, mtmp, cr_hit),
-                          "%s suddenly falls asleep!", Monnam(mtmp));
-                    seetrap(trap);
-                }
             }
             break;
 
