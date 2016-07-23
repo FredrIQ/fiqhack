@@ -1415,7 +1415,7 @@ can_jump(const struct monst *mon, boolean msg)
     boolean you = (mon == &youmonst);
     boolean vis = (you || canseemon(mon));
     /* Used to point at the right monster for wounded legs */
-    struct monst *maybe_steed = (you && u.usteed) ? u.usteed : mon;
+    const struct monst *maybe_steed = (you && u.usteed) ? u.usteed : mon;
 
     if (you && Engulfed) {
         if (msg)
