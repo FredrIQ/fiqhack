@@ -2036,8 +2036,7 @@ mintrap(struct monst *mtmp)
                 pline(combat_msgc(culprit, mtmp, cr_hit), "%s %s into %s pit!",
                       Monnam(mtmp), fallverb, a_your[trap->madeby_u]);
                 if (mptr == &mons[PM_PIT_VIPER] || mptr == &mons[PM_PIT_FIEND])
-                    pline(combat_msgc(culprit, mtmp, cr_hit),
-                          "How pitiful.  Isn't that the pits?");
+                    pline(msgc_yafm, "How pitiful!  Isn't that the pits?");
                 seetrap(trap);
             }
             mselftouch(mtmp, "Falling, ", culprit);
