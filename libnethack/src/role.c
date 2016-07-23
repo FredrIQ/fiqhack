@@ -1127,22 +1127,6 @@ role_init(void)
         pm_nemesis.mflags3 |= M3_WANTSARTI | M3_WAITFORU;
     }
 
-    /* Fix up infravision */
-    pm_you_male = pm_you_female = mons[urole.malenum];
-    if (urole.femalenum != NON_PM)
-        pm_you_female = mons[urole.femalenum];
-    if (mons[urace.malenum].mflags3 & M3_INFRAVISION) {
-        /* although an infravision intrinsic is possible, infravision is purely 
-           a property of the physical race.  This means that we must put the
-           infravision flag in the player's current race (either that or have
-           separate permonst entries for elven/non-elven members of each
-           class).  The side effect is that all NPCs of that class will have
-           (probably bogus) infravision, but since infravision has no effect
-           for NPCs anyway we can ignore this. */
-        pm_you_male.mflags3 |= M3_INFRAVISION;
-        pm_you_female.mflags3 |= M3_INFRAVISION;
-    }
-
     /* Artifacts are fixed in hack_artifacts() */
 
     /* Success! */
