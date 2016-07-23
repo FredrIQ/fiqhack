@@ -1721,7 +1721,6 @@ extern int docast(const struct musable *);
 extern boolean getspell(int *);
 extern int spell_skilltype(int);
 extern int mspell_skilltype(int);
-extern int monspellprot(struct monst *);
 extern boolean cast_protection(struct monst *, boolean, boolean);
 extern int mon_castable(const struct monst *, int, boolean);
 extern int spelleffects(boolean, const struct musable *);
