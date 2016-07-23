@@ -1126,7 +1126,7 @@ update_property(struct monst *mon, enum youprop prop,
             pline(you ? msgc_statusend : msgc_monneutral,
                   "The %s haze around %s %s.", hcolor("golden"),
                   you ? "you" : mon_nam(mon),
-                  m_mspellprot(mon) ? "becomes less dense" : "disappears");
+                  spellprot(mon) ? "becomes less dense" : "disappears");
             effect = TRUE;
         } else if (slot == os_outside && lost) {
             if (you)
@@ -3043,7 +3043,7 @@ enlighten_mon(struct monst *mon, int final, int show_source)
         int prot = mon_protbon(mon);
         if (you)
             prot += u.ublessed;
-        prot += m_mspellprot(mon);
+        prot += spellprot(mon);
 
         add_eline(mon, PROTECTION, monis, prot < 0 ? "ineffectively protected" :
                   "protected");

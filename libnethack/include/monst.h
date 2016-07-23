@@ -196,8 +196,6 @@ struct monst {
 # define m_mhp(mon) ((mon) == &youmonst ? u.uhp : (mon)->mhp)
 # define m_mhpmax(mon) ((mon) == &youmonst ? u.uhpmax : (mon)->mhpmax)
 # define m_mwep(mon) ((mon) == &youmonst ? uwep : (mon)->mw)
-/* actually used for players and monsters alike now */
-# define m_mspellprot(mon) ((property_timeout(mon, PROTECTION) + 9) / 10)
 
 /* Does a monster know where the player character is? Does it think it does? */
 # define engulfing_u(mon) (Engulfed && (mon) == u.ustuck)

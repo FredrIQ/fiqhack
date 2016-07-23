@@ -1192,7 +1192,7 @@ cast_protection(struct monst *mon, boolean autocast,
     /* Monsters can be level 0, ensure that no oddities occur if that is the case. */
     if (l == 0)
         l = 1;
-    int speac = m_mspellprot(mon);
+    int speac = spellprot(mon);
     int natac = find_mac(mon) + speac;
     int gain;
 
@@ -1240,7 +1240,7 @@ cast_protection(struct monst *mon, boolean autocast,
 
     if (gain > 0) {
         if (!blind(&youmonst) && (you || vis)) {
-            if (m_mspellprot(mon))
+            if (spellprot(mon))
                 pline(you ? msgc_statusextend : msgc_monneutral,
                       "The %s haze around %s becomes more dense.",
                       hcolor("golden"), you ? "you" : mon_nam(mon));
@@ -1253,14 +1253,14 @@ cast_protection(struct monst *mon, boolean autocast,
                       "air", you ? "you" : mon_nam(mon),
                       an(hcolor("golden")));
         } else if (you) {
-            if (m_mspellprot(mon))
+            if (spellprot(mon))
                 pline(msgc_statusgood, "Your skin begins feeling warmer.");
             else
                 pline(msgc_statusgood, "Your skin feels even hotter.");
         }
         /* Spell protection is implemented by using the timeout field of the
-           Protection intrinsic. m_mspellprot() then calculates AC from it. */
-        int cur_prot = m_mspellprot(mon);
+           Protection intrinsic. spellprot() then calculates AC from it. */
+        int cur_prot = spellprot(mon);
         cur_prot += gain;
         cur_prot *= 10;
         set_property(mon, PROTECTION, cur_prot, TRUE);

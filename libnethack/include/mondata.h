@@ -53,6 +53,7 @@
 # define aggravating(mon)       (has_property(mon, AGGRAVATE_MONSTER))
 # define conflicting(mon)       (has_property(mon, CONFLICT))
 # define protected(mon)         (has_property(mon, PROTECTION))
+# define spellprot(mon)         ((property_timeout(mon, PROTECTION) + 9) / 10)
 # define shapeshift_prot(mon)   (has_property(mon, PROT_FROM_SHAPE_CHANGERS))
 # define warned(mon)            (has_property(mon, WARNING))
 # define telepathic(mon)        (has_property(mon, TELEPAT))
