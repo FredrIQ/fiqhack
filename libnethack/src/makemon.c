@@ -2246,7 +2246,7 @@ save_fcorr(struct memfile *mf, const struct fakecorridor *f)
    changing that value breaks save compatibility (but so does changing the
    number of bytes this function writes). */
 void
-save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
+save_mon(struct memfile *mf, struct monst *mon, const struct level *l)
 {
     /* Check muxy for an invalid value (mux/muy being equal to mx/my). If this has
        happened, run an impossible and set it to ROWNO/COLNO to allow games to continue
