@@ -47,4 +47,3 @@ struct attribs {
 # define ATTRMIN(x) (urace.attrmin[x])
 
 #endif /* ATTRIB_H */
-

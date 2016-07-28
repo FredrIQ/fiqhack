@@ -280,4 +280,3 @@ static const struct artifact const_artilist[] = {
 #endif
 
 /*artilist.h*/
-
