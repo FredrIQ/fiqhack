@@ -103,6 +103,10 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
     if (Engulfed && mdef == u.ustuck)
         reveal_invis = FALSE;
 
+    if (hityou && u.uinvulnerable) {
+        pline(combat_msgc(magr, mdef, cr_miss), "You're unaffected.");
+        return 0;
+    }
     if (hityou)
         action_interrupted();
 
