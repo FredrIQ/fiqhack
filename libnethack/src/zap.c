@@ -2830,6 +2830,7 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj)
  * Returns a bitfield:
  *   - BHIT_NONE (0x0) - nothing was hit
  *   - BHIT_MON        - a monster was hit
+ *   - BHIT_DMON       - a displaced image was hit
  *   - BHIT_OBJ        - one (or several) objects was hit
  *   - BHIT_OBSTRUCT   - some obstruction was hit (wall, door, etc...), stop range
  *   - BHIT_SHOPDAM    - a shopdoor or similar was hit for damage
