@@ -29,15 +29,20 @@ CXXFLAGS = -g -O2
 
 CFLAGS += --std=c11 -DAIMAKE_NORETURN=_Noreturn
 
-CPPFLAGS += -D_XOPEN_SOURCE=700
+EXTRAS = -pthread -ldl
+ifeq ($(shell uname), Linux)
+	CPPFLAGS += -DAIMAKE_BUILDOS_linux
+	CPPFLAGS += -D_XOPEN_SOURCE=700
+	CPPFLAGS += -D_REENTRANT
+else
+	CPPFLAGS += -DAIMAKE_BUILDOS_freebsd
+	EXTRAS =
+endif
 
 CPPFLAGS += -DDUMBMAKE
 CPPFLAGS += -DGAMESDATADIR=\"$(DATADIR)\"
 CPPFLAGS += -DGAMESSTATEDIR=\"$(STATEDIR)\"
 CPPFLAGS += -include dumbmake/dumbmake.h
-
-CPPFLAGS += -DAIMAKE_BUILDOS_linux
-CPPFLAGS += -D_REENTRANT
 
 CPPFLAGS += -Ilibnethack/include
 CPPFLAGS += -Ilibnethack_common/include
@@ -83,7 +88,7 @@ BASECC_O += $(addprefix libnethack_common/src/,hacklib.o xmalloc.o)
 BASECC_O += nethack/src/brandings.o
 
 nethack/src/main: $(GAME_O)
-	$(CXX) $(LDFLAGS) $^ -pthread -ldl -lz -o $@
+	$(CXX) $(LDFLAGS) $^ $(EXTRAS) -lz -o $@
 clean:: ; rm -f nethack/src/main $(GAME_O)
 
 libnethack/util/makedefs: $(MAKEDEFS_O)
