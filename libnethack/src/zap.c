@@ -8,6 +8,7 @@
 
 static int poly_zapped;
 
+static int hito_stone_to_flesh(struct obj *);
 static void costly_cancel(struct obj *);
 static void polyuse(struct obj *, int, int);
 static void create_polymon(struct obj *, int);
