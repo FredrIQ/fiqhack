@@ -3028,9 +3028,8 @@ drown(void)
         turnstate.vision_full_recalc = TRUE;
         return FALSE;
     }
-    /* TODO: Isn't this u_helpless check backwards? */
     if ((Teleportation || can_teleport(youmonst.data)) &&
-        u_helpless(hm_unconscious) && (Teleport_control || rn2(3) < Luck + 2)) {
+        !u_helpless(hm_unconscious) && (Teleport_control || rn2(3) < Luck + 2)) {
         pline("You attempt a teleport spell."); /* utcsri!carroll */
         if (!level->flags.noteleport) {
             dotele(&(struct nh_cmd_arg){.argtype = 0});
