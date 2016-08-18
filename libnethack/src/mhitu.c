@@ -399,7 +399,7 @@ mattacku(struct monst *mtmp)
         tmp -= 2;
     if (tmp <= 0)
         tmp = 1;
-    tmp += mon_hitbon(mtmp);
+    tmp += hitbon(mtmp);
 
     /* make eels visible the moment they hit/miss us */
     if (mdat->mlet == S_EEL && invisible(mtmp) && cansee(mtmp->mx, mtmp->my)) {
@@ -715,7 +715,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     dmg = dice((int)mattk->damn, (int)mattk->damd);
     if (is_undead(mdat) && midnight())
         dmg += dice((int)mattk->damn, (int)mattk->damd); /* extra damage */
-    dmg += mon_dambon(mtmp);
+    dmg += dambon(mtmp);
 
     /* Next a cancellation factor. Use uncancelled when the cancellation factor
        takes into account certain armor's special magic protection.  Otherwise just

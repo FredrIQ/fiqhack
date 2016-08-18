@@ -45,42 +45,21 @@ poly_when_stoned(const struct permonst * ptr)
     /* allow G_EXTINCT */
 }
 
+/* Returns a bonus counting equipment enchantment and a potential extra.
+   Used for rings of increase damage/accuracy/protection/searching. */
 int
-mon_hitbon(struct monst *mon)
+mon_bon(struct monst *mon, int otyp, int extra)
 {
     int ret = 0;
-    struct obj *otmp;
-    for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
-        if (otmp->owornmask && otmp->otyp == RIN_INCREASE_ACCURACY)
-            ret += otmp->spe;
+    struct obj *obj;
+    for (obj = m_minvent(mon); obj; obj = obj->nobj)
+        if (obj->otyp == otyp &&
+            ((obj->oclass == RING_CLASS &&
+              (obj->owornmask & W_RING)) ||
+             (obj->owornmask & W_MASK(which_slot(obj)))))
+            ret += obj->spe;
 
-    ret += mon->mhitinc;
-    return ret;
-}
-
-int
-mon_dambon(struct monst *mon)
-{
-    int ret = 0;
-    struct obj *otmp;
-    for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
-        if (otmp->owornmask && otmp->otyp == RIN_INCREASE_DAMAGE)
-            ret += otmp->spe;
-
-    ret += mon->mdaminc;
-    return ret;
-}
-
-int
-mon_protbon(struct monst *mon)
-{
-    int ret = 0;
-    struct obj *otmp;
-    for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
-        if (otmp->owornmask && otmp->otyp == RIN_PROTECTION)
-            ret += otmp->spe;
-
-    ret += mon->mac;
+    ret += extra;
     return ret;
 }
 

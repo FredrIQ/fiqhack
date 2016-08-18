@@ -15,22 +15,20 @@
 # define SPFX_RESTR   0x0000002L /* item is restricted - can't be named */
 # define SPFX_INTEL   0x0000004L /* item is self-willed - intelligent */
 # define SPFX_SPEAK   0x0000008L /* item can speak */
-# define SPFX_SEEK    0x0000010L /* item helps you search for things */
-# define SPFX_WARN    0x0000020L /* item warns you of danger */
-# define SPFX_SEARCH  0x0000040L /* helps searching */
-# define SPFX_BEHEAD  0x0000080L /* beheads monsters */
-# define SPFX_HALRES  0x0000100L /* blocks hallucinations */
-# define SPFX_ESP     0x0000200L /* ESP (like amulet of ESP) */
-# define SPFX_STLTH   0x0000400L /* Stealth */
-# define SPFX_REGEN   0x0000800L /* Regeneration */
-# define SPFX_EREGEN  0x0001000L /* Energy Regeneration */
-# define SPFX_HSPDAM  0x0002000L /* 1/2 spell damage (on player) in combat */
-# define SPFX_HPHDAM  0x0004000L /* 1/2 physical damage (on player) in combat */
-# define SPFX_TCTRL   0x0008000L /* Teleportation Control */
-# define SPFX_LUCK    0x0010000L /* Increase Luck (like Luckstone) */
-# define SPFX_WARNMON 0x0020000L /* warning against monster type, or monster detection */
-# define SPFX_XRAY    0x0040000L /* gives X-RAY vision to player */
-# define SPFX_REFLECT 0x0080000L /* Reflection */
+# define SPFX_WARN    0x0000010L /* item warns you of danger */
+# define SPFX_BEHEAD  0x0000020L /* beheads monsters */
+# define SPFX_HALRES  0x0000040L /* blocks hallucinations */
+# define SPFX_ESP     0x0000080L /* ESP (like amulet of ESP) */
+# define SPFX_STLTH   0x0000100L /* Stealth */
+# define SPFX_REGEN   0x0000200L /* Regeneration */
+# define SPFX_EREGEN  0x0000400L /* Energy Regeneration */
+# define SPFX_HSPDAM  0x0000800L /* 1/2 spell damage (on player) in combat */
+# define SPFX_HPHDAM  0x0001000L /* 1/2 physical damage (on player) in combat */
+# define SPFX_TCTRL   0x0002000L /* Teleportation Control */
+# define SPFX_LUCK    0x0004000L /* Increase Luck (like Luckstone) */
+# define SPFX_WARNMON 0x0008000L /* warning against monster type, or monster detection */
+# define SPFX_XRAY    0x0010000L /* gives X-RAY vision to player */
+# define SPFX_REFLECT 0x0020000L /* Reflection */
 
 /* What "match" refers to: a permonst, "letter", alignment, flag... */
 enum mon_matchtyp {

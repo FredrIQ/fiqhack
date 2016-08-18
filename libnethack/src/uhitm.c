@@ -46,7 +46,7 @@ find_roll_to_hit(struct monst *mtmp)
     int tmp2;
 
     tmp =
-        1 + Luck + abon() + find_mac(mtmp) + mon_hitbon(&youmonst) +
+        1 + Luck + abon() + find_mac(mtmp) + hitbon(&youmonst) +
         maybe_polyd(youmonst.data->mlevel, youmonst.m_lev);
 
     check_caitiff(mtmp);
@@ -792,7 +792,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
          *      *OR* if attacking bare-handed!! */
 
     if (get_dmg_bonus && tmp > 0) {
-        tmp += mon_dambon(&youmonst);
+        tmp += dambon(&youmonst);
         /* If you throw using a propellor, you don't get a strength bonus but
            you do get an increase-damage bonus. */
         if (!thrown || !obj || !uwep || !ammo_and_launcher(obj, uwep))

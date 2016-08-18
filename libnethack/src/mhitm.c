@@ -347,7 +347,7 @@ mattackm(struct monst *magr, struct monst *mdef)
         tmp += 4;
         mdef->msleeping = 0;
     }
-    tmp += mon_hitbon(magr);
+    tmp += hitbon(magr);
 
     /* undetect monsters become un-hidden if they are attacked */
     if (mdef->mundetected &&
@@ -940,7 +940,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             return MM_AGR_DIED;
         }
     }
-    tmp += mon_dambon(magr);
+    tmp += dambon(magr);
 
     /* cancellation factor is the same as when attacking the hero */
     armpro = magic_negation(mdef);

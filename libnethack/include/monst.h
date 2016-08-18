@@ -166,6 +166,7 @@ struct monst {
     int meating;        /* monster is eating timeout */
     schar mhitinc;      /* monster intrinsic to-hit bonus/penalty */
     schar mdaminc;      /* monster intrinsic damage bonus/penalty */
+    schar msearchinc;   /* monster intrinsic search bonus/penalty */
     schar mac;          /* monster AC bonus/penalty */
 };
 

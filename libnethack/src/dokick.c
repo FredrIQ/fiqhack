@@ -97,7 +97,7 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
         dmg += rnd(4);
     if (uarmf)
         dmg += uarmf->spe;
-    dmg += mon_dambon(&youmonst);   /* add ring(s) of increase damage */
+    dmg += dambon(&youmonst);   /* add ring(s) of increase damage */
 
     /* Do passive counterattacks before damaging the monster. Otherwise, we get
        a dmonsfree crash if the monster and player kill each other

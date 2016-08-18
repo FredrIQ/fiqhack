@@ -293,7 +293,7 @@ dig(void)
     }
 
     u.uoccupation_progress[tos_dig] +=
-        10 + rn2(5) + abon() + uwep->spe - greatest_erosion(uwep) + mon_dambon(&youmonst);
+        10 + rn2(5) + abon() + uwep->spe - greatest_erosion(uwep) + dambon(&youmonst);
     /* TODO: This formula looks /very/ suspicious, becuse the exponential
        factor is going to override almost anyting else. */
     if (Race_if(PM_DWARF))

@@ -20,6 +20,7 @@ static void sense_trap(struct trap *, xchar, xchar, int);
 static void show_map_spot(int, int);
 static void findone(int, int, void *);
 static void openone(int, int, void *);
+static void search_tile(int, int, struct monst *, int);
 static const char *level_distance(d_level *);
 
 /* Recursively search obj for an object in class oclass and return 1st found */
@@ -1304,13 +1305,10 @@ reveal_monster_at(int x, int y, boolean unhide)
     return unknown;
 }
 
+/* Search function wrapper */
 int
 dosearch0(int aflag)
 {
-    xchar x, y;
-    struct trap *trap;
-    boolean already = 0; /* finding a monster already found? */
-
     if (Engulfed) {
         /* Note: unlike most cases where we take time performing an action known
            to be impossible, this one is at least justifiable: many players use
@@ -1320,92 +1318,183 @@ dosearch0(int aflag)
            msgc_cancelled1 cases.*/
         if (!aflag)
             pline(msgc_cancelled1, "What are you looking for?  The exit?");
-    } else {
-        int fund = (uwep && uwep->oartifact &&
-                    spec_ability(uwep, SPFX_SEARCH)) ? uwep->spe : 0;
-        if (ublindf && ublindf->otyp == LENSES && !Blind)
-            fund += 2;  /* JDS: lenses help searching */
-        if (fund > 5)
-            fund = 5;
-        for (x = youmonst.mx - 1; x < youmonst.mx + 2; x++)
-            for (y = youmonst.my - 1; y < youmonst.my + 2; y++) {
-                if (!isok(x, y))
-                    continue;
-                if (x != youmonst.mx || y != youmonst.my) {
-                    if (Blind && !aflag)
-                        feel_location(x, y);
-                    if (level->locations[x][y].typ == SDOOR) {
-                        if (rnl(7 - fund))
-                            continue;
-                        /* changes .type to DOOR */
-                        cvt_sdoor_to_door(&level->locations[x][y], &u.uz);
-                        exercise(A_WIS, TRUE);
-                        action_completed();
-                        if (Blind && !aflag)
-                            feel_location(x, y);   /* make sure it shows up */
-                        else
-                            newsym(x, y);
-                    } else if (level->locations[x][y].typ == SCORR) {
-                        if (rnl(7 - fund))
-                            continue;
-                        level->locations[x][y].typ = CORR;
-                        unblock_point(x, y);    /* vision */
-                        exercise(A_WIS, TRUE);
-                        action_completed();
-                        newsym(x, y);
-                    } else {
-                        /* Be careful not to find anything in an SCORR or
-                           SDOOR. */
-                        if (!aflag) {
-                            if (reveal_monster_at(x, y, FALSE)) {
-                                exercise(A_WIS, TRUE);
-                                /* changed mechanic = changed message; also
-                                   don't imply we're touching a trice */
-                                if (m_at(level, x, y)->m_ap_type)
-                                    pline(msgc_youdiscover,
-                                          "You think there's a mimic there.");
-                                else
-                                    pline(msgc_youdiscover,
-                                          "You sense a monster nearby!");
-                                return 1;
-                            }
-                            /* If there was an I there, and there still is,
-                               let the user know; this is needed to prevent
-                               autoexplore repeatedly searching the same
-                               square. The case where it's new is handled
-                               by reveal_monster_at, so we only need to
-                               handle the case where it isn't new.
-
-                               Check this last in case there's something more
-                               urgent to report. */
-                            if (level->locations[x][y].mem_invis)
-                                already = 1;
-                        }
-
-                        if ((trap = t_at(level, x, y)) && !trap->tseen &&
-                            !rnl(8)) {
-                            action_interrupted();
-
-                            if (trap->ttyp == STATUE_TRAP) {
-                                if (activate_statue_trap(trap, x, y, FALSE))
-                                    exercise(A_WIS, TRUE);
-                                return 1;
-                            } else {
-                                find_trap(trap);
-                            }
-                        }
-                    }
-                }
-            }
-    }
-
-    if (already) {
-        action_completed();
-        pline(msgc_yafm, "There's still a monster there.");
         return 1;
     }
 
+    /* We can't use do_clear_area because it iterates a ball radius, and it will be
+       blocked by secret doors/corridors... Instead, iterate a 11x11 square centered on
+       the player. The iteration is done in an outwards "spiral" to avoid oddities where
+       a tile further away fails to be found because a tile closer was blocked even if
+       it was unblocked as a result of the searching. */
+
+    /* search center tile */
+    search_tile(youmonst.mx, youmonst.my, &youmonst, aflag);
+    int i, x, y, iter_typ;
+    for (i = 1; i <= 5; i++) {
+        x = youmonst.mx - i;
+        y = youmonst.my - i;
+        iter_typ = 0;
+        while (iter_typ < 4) {
+            search_tile(x, y, &youmonst, aflag);
+            switch (iter_typ) {
+            case 0:
+                x++;
+                break;
+            case 1:
+                y++;
+                break;
+            case 2:
+                x--;
+                break;
+            case 3:
+                y--;
+                break;
+            }
+            if (x == youmonst.mx + ((iter_typ == 0 || iter_typ == 1) ? i : -i) &&
+                y == youmonst.my + ((iter_typ == 1 || iter_typ == 2) ? i : -i))
+                iter_typ++;
+        }
+    }
     return 1;
+}
+
+/* Main search logic */
+static void
+search_tile(int x, int y, struct monst *mon, int autosearch)
+{
+    if (!isok(x, y))
+        return;
+
+    struct level *lev = m_dlevel(mon);
+    struct trap *trap;
+    boolean you = (mon == &youmonst);
+    int dist = distmin(x, y, mon->mx, mon->my);
+
+    /* Proc autosearch only 1/3 of the time (or 3+enchantment/6 if extrinsic) */
+    if (autosearch) {
+        int autorate = 2;
+        if (ehas_property(mon, SEARCHING)) {
+            autorate++;
+            autorate += searchbon(mon);
+        }
+        if (autorate < rnd(6))
+            return;
+    }
+
+    /* If you are blind, searching only functions if done deliberately, and only then for
+       tiles next to you. */
+    if (blind(mon)) {
+        if (autosearch || dist > 1)
+            return;
+
+        if (you)
+            feel_location(x, y);
+    }
+
+    /* If the tile isn't next to us, don't find anything there if the tile is dark. */
+    if (dist > 1 && !lev->locations[x][y].lit && !templit(x, y))
+        return;
+
+    /*
+     * Search rate:
+     * 20
+     * + Luck
+     * + 5*searchbonus
+     * + 5 with lenses
+     * This is divided by 20 * 3 ^ (Manhattan distance - 1) to form a search rate
+     * This means that with no luck or other bonuses, you find things next to you
+     * 20/20 of the time (100%), 2 tiles away 20/60 (1/3), 3 tiles away 20/180 (1/9), etc
+     */
+    int baserate = 20;
+    if (you)
+        baserate += Luck;
+    baserate += searchbon(mon) * 5;
+    struct obj *tool = which_armor(mon, os_tool);
+    if (tool && tool->otyp == LENSES)
+        baserate += 5;
+    if (baserate < 1)
+        baserate = 1; /* Make it not impossible to find doors/etc */
+
+    int basediv = 20;
+    int i;
+    for (i = 1; i < dist; i++)
+        basediv *= 3;
+
+    if (baserate < rnd(basediv))
+        return;
+
+    /* Don't allow searching through walls/similar */
+    if (!clear_path(x, y, mon->mx, mon->my, viz_array))
+        return;
+
+    if (lev->locations[x][y].typ == SDOOR) {
+        cvt_sdoor_to_door(&lev->locations[x][y], m_mz(mon));
+        if (you) {
+            exercise(A_WIS, TRUE);
+            action_completed();
+        }
+        if (you && blind(mon))
+            feel_location(x, y); /* make sure it shows up */
+        else
+            newsym(x, y);
+    } else if (lev->locations[x][y].typ == SCORR) {
+        lev->locations[x][y].typ = CORR;
+        unblock_point(x, y); /* vision */
+        if (you) {
+            exercise(A_WIS, TRUE);
+            action_completed();
+        }
+        newsym(x, y);
+    } else {
+        /* Be careful not to find anything in an SCORR or
+           SDOOR. */
+
+        boolean already = 0; /* finding a monster already found? */
+        if (dist == 1 && you) {
+            if (reveal_monster_at(x, y, FALSE)) {
+                exercise(A_WIS, TRUE);
+                /* changed mechanic = changed message; also
+                   don't imply we're touching a trice */
+                if (m_at(level, x, y)->m_ap_type)
+                    pline(msgc_youdiscover,
+                          "You think there's a mimic there.");
+                else
+                    pline(msgc_youdiscover,
+                          "You sense a monster nearby!");
+                return;
+            }
+            /* If there was an I there, and there still is,
+               let the user know; this is needed to prevent
+               autoexplore repeatedly searching the same
+               square. The case where it's new is handled
+               by reveal_monster_at, so we only need to
+               handle the case where it isn't new.
+
+               Check this last in case there's something more
+               urgent to report. */
+            if (level->locations[x][y].mem_invis && !autosearch)
+                already = 1;
+        }
+
+        if ((trap = t_at(level, x, y)) && !trap->tseen) {
+            int traprate = 1;
+            if (ehas_property(mon, SEARCHING)) {
+                traprate++;
+                traprate += searchbon(mon);
+            }
+            if (traprate >= rnd(6)) {
+                action_interrupted();
+                find_trap(trap);
+            }
+        }
+
+        if (already) {
+            action_completed();
+            pline(msgc_yafm, "There's still a monster there.");
+        }
+    }
+
+    return;
 }
 
 

@@ -142,7 +142,7 @@ find_mac(struct monst *mon)
     }
 
     base -= spellprot(mon);
-    base -= mon_protbon(mon);
+    base -= protbon(mon);
 
     /* Add divine protection */
     if (mon == &youmonst)

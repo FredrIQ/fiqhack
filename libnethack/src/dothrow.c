@@ -847,7 +847,7 @@ toss_up(struct monst *mon, struct obj *obj, boolean hitsroof)
         if (dmg > 1 && less_damage)
             dmg = 1;
         if (dmg > 0)
-            dmg += mon_dambon(mon);
+            dmg += dambon(mon);
         if (dmg < 0)
             dmg = 0;    /* beware negative rings of increase damage */
         if (Half_physical_damage)
@@ -1609,7 +1609,7 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj, int count)
        dodge melee blows as readily, but dodging arrows is hard anyway). Not
        affected by traps, etc. Certain items which don't in themselves do
        damage ignore tmp. Distance and monster size affect chance to hit. */
-    tmp = (-1 + find_mac(mdef) + mon_hitbon(magr) +
+    tmp = (-1 + find_mac(mdef) + hitbon(magr) +
            (uagr && Upolyd ? magr->data->mlevel : magr->m_lev));
     if (uagr)
         tmp += Luck;

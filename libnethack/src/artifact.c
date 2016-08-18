@@ -476,8 +476,7 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic)
     /* TODO: this function used to print a message for hallucination
        resistance, but it's definitely the wrong place. Discover where the
        correct place is. */
-    if ((spfx & SPFX_SEARCH  && extrinsic == SEARCHING) ||
-        (spfx & SPFX_ESP     && extrinsic == TELEPAT) ||
+    if ((spfx & SPFX_ESP     && extrinsic == TELEPAT) ||
         (spfx & SPFX_STLTH   && extrinsic == STEALTH) ||
         (spfx & SPFX_REGEN   && extrinsic == REGENERATION) ||
         (spfx & SPFX_TCTRL   && extrinsic == TELEPORT_CONTROL) ||

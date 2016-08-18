@@ -3035,12 +3035,12 @@ enlighten_mon(struct monst *mon, int final, int show_source)
         buf = msgprintf("%sadorned", adorn < 0 ? "poorly " : "");
         add_eline(mon, ADORNED, monis, buf);
     }
-    if (mon_hitbon(mon))
-        eline(&menu, "%s %s", monhas, enl_combatinc("to hit", mon_hitbon(mon), final));
-    if (mon_dambon(mon))
-        eline(&menu, "%s %s", monhas, enl_combatinc("damage", mon_dambon(mon), final));
-    if (protected(mon) || mon_protbon(mon)) {
-        int prot = mon_protbon(mon);
+    if (hitbon(mon))
+        eline(&menu, "%s %s", monhas, enl_combatinc("to hit", hitbon(mon), final));
+    if (dambon(mon))
+        eline(&menu, "%s %s", monhas, enl_combatinc("damage", dambon(mon), final));
+    if (protected(mon) || protbon(mon)) {
+        int prot = protbon(mon);
         if (you)
             prot += u.ublessed;
         prot += spellprot(mon);
