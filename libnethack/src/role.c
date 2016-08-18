@@ -1127,6 +1127,11 @@ role_init(void)
         pm_nemesis.mflags3 |= M3_WANTSARTI | M3_WAITFORU;
     }
 
+    /* Fix up base form data */
+    pm_you_male = pm_you_female = mons[urole.malenum];
+    if (urole.femalenum != NON_PM)
+        pm_you_female = mons[urole.femalenum];
+
     /* Artifacts are fixed in hack_artifacts() */
 
     /* Success! */
