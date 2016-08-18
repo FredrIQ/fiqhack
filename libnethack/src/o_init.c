@@ -160,7 +160,7 @@ shuffle_all(void)
     /* shuffle the cloaks */
     shuffle(CLOAK_OF_PROTECTION, CLOAK_OF_DISPLACEMENT, FALSE);
 
-    /* shuffle the boots [if they change, update find_skates() below] */
+    /* shuffle the boots */
     shuffle(SPEED_BOOTS, LEVITATION_BOOTS, FALSE);
 }
 
@@ -203,22 +203,6 @@ corpsenm_is_relevant(int otyp)
 {
     return (otyp == CORPSE || otyp == STATUE || otyp == TIN ||
             otyp == FIGURINE || otyp == EGG);
-}
-
-
-/* find the object index for snow boots; used [once] by slippery ice code */
-int
-find_skates(void)
-{
-    int i;
-    const char *s;
-
-    for (i = SPEED_BOOTS; i <= LEVITATION_BOOTS; i++)
-        if ((s = OBJ_DESCR(objects[i])) != 0 && !strcmp(s, "snow boots"))
-            return i;
-
-    impossible("snow boots not found?");
-    return -1;  /* not 0, or caller would try again each move */
 }
 
 /* Does a few dummy writes for things that doesn't change between games.

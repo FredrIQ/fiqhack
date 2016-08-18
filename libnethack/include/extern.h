@@ -1287,7 +1287,6 @@ int mklev_rn2(int, struct level *);
 extern void init_objects(void);
 extern boolean has_shuffled_appearance(int otyp);
 extern boolean corpsenm_is_relevant(int otyp);
-extern int find_skates(void);
 extern void freenames(void);
 extern void savenames(struct memfile *mf);
 extern void restnames(struct memfile *mf);

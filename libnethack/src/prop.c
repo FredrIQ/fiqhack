@@ -338,7 +338,7 @@ m_has_property(const struct monst *mon, enum youprop property,
         (mon != &youmonst || !u.usteed) && !flying(mon) &&
         !levitates(mon) && !is_whirly(mon->data)) {
         struct obj *armf = which_armor(mon, os_armf);
-        if (armf && armf->otyp == find_skates())
+        if (!armf || strcmp(OBJ_DESCR(objects[armf->otyp]), "snow boots"))
             rv |= W_MASK(os_circumstance);
     }
 
