@@ -506,7 +506,12 @@ dochug(struct monst *mtmp)
         mtmp->mlstmv != moves && mtmp->mstrategy != st_ascend) {
         struct monst *mtmp2 = mfind_target(mtmp, FALSE);
 
-        if (mtmp2) {
+        /* Hack: check for Elbereth if the target is in melee and is you, to
+           fix a bug. This is a temporary fix until ranged combat logic is
+           rewritten. */
+        if (mtmp2 &&
+            (mtmp2 != &youmonst || !monnear(mtmp, u.ux, u.uy) ||
+             !onscary(u.ux, u.uy, mtmp))) {
             if (mattackm(mtmp, mtmp2) & MM_AGR_DIED)
                 return 1;       /* Oops. */
 
