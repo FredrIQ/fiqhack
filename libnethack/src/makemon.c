@@ -2399,7 +2399,18 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
 void
 save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
 {
-    int idx;
+    /* Check muxy for an invalid value (mux/muy being equal to mx/my). If this has
+       happened, run an impossible and set it to ROWNO/COLNO to allow games to continue
+       properly. */
+    xchar mux = mon->mux;
+    xchar muy = mon->muy;
+    if (mon->mux == mon->mx && mon->muy == mon->my) {
+        impossible("save_mon: muxy and mxy are equal?");
+        mux = COLNO;
+        muy = ROWNO;
+    }
+
+    int idx, i;
     unsigned int mflags;
 
     if (mon->m_id == TEMPORARY_IDENT) {
@@ -2471,8 +2482,8 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite8(mf, mon->dx);
     mwrite8(mf, mon->dy);
-    mwrite8(mf, mon->mux);
-    mwrite8(mf, mon->muy);
+    mwrite8(mf, mux);
+    mwrite8(mf, muy);
     mwrite8(mf, mon->m_lev);
     mwrite8(mf, mon->malign);
     mwrite16(mf, mon->moveoffset);
@@ -2517,7 +2528,6 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite64(mf, mon->mspells);
     mwrite64(mf, mon->spells_maintained);
 
-    int i;
     for (i = 0; i < 200; i++)
         mwrite8(mf, 0);
 

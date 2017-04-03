@@ -334,6 +334,14 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
     if (results)
         *results = dmcd.results;
 
+    /* Save shim for "impossible" results on menus that have been saved into
+       some save files; interpret "pick 0 letters" as "cancel"
+
+       TODO: Fix the various implementations of win_display_menu not to
+       return this sort of impossible result */
+    if (dmcd.nresults < 1 && how == PICK_LETTER)
+        dmcd.nresults = -1;
+
     if (how == PICK_NONE) {
         log_record_input("M");
         log_time_line();

@@ -1559,8 +1559,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     switch (uia) {
     case uia_move_nopickup:
     case uia_move_pickup:
-        moving = TRUE;
     case uia_displace:
+        moving = TRUE;
     case uia_attack:
         break;
     case uia_opendoor:

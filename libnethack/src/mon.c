@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Alex Smith, 2016-06-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2711,8 +2711,10 @@ mnearto(struct monst * mtmp, xchar x, xchar y, boolean move_other)
         /* actually we have real problems if enexto ever fails. migrating_mons
            that need to be placed will cause no end of trouble. */
         if (!enexto(&mm, level, newx, newy, mtmp->data))
-            panic("Nowhere to place '%s' (at (%d, %d), wanted (%d, %d))",
-                  k_monnam(mtmp), mtmp->mx, mtmp->my, x, y);
+            if (!enexto_core(&mm, level, newx, newy, mtmp->data,
+                             MM_IGNOREWATER))
+                panic("Nowhere to place '%s' (at (%d, %d), wanted (%d, %d))",
+                      k_monnam(mtmp), mtmp->mx, mtmp->my, x, y);
         newx = mm.x;
         newy = mm.y;
     }

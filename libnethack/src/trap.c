@@ -3214,8 +3214,9 @@ drown(void)
         return FALSE;
     }
     /* TODO: Isn't this u_helpless check backwards? */
-    if ((Teleportation) &&
-        u_helpless(hm_unconscious) && (Teleport_control || rn2(3) < Luck + 2)) {
+    if (teleportitis(&youmonst) &&
+        !u_helpless(hm_unconscious) && (teleport_control(&youmonst) ||
+                                        rn2(3) < Luck + 2)) {
         pline(msgc_consequence,
               "You attempt a teleport spell."); /* utcsri!carroll */
         if (!level->flags.noteleport) {

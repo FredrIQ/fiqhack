@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Alex Smith, 2016-06-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -506,16 +506,23 @@ dochug(struct monst *mtmp)
         mtmp->mlstmv != moves && mtmp->mstrategy != st_ascend) {
         struct monst *mtmp2 = mfind_target(mtmp, FALSE);
 
+        int tx = mtmp2->mx, ty = mtmp2->my;
+        if (mtmp2 == &youmonst) {
+            /* use muxy */
+            tx = mtmp->mux;
+            ty = mtmp->muy;
+        }
+
         /* Hack: check for Elbereth if the target is in melee and is you, to
            fix a bug. This is a temporary fix until ranged combat logic is
            rewritten. */
         if (mtmp2 &&
             (mtmp2 != &youmonst || !monnear(mtmp, u.ux, u.uy) ||
              !onscary(u.ux, u.uy, mtmp))) {
-            if (mattackm(mtmp, mtmp2) & MM_AGR_DIED)
+            if (mattackq(mtmp, tx, ty) & MM_AGR_DIED)
                 return 1;       /* Oops. */
 
-            return 0;   /* that was our move for the round */
+            return 0; /* that was our move for the round */
         }
     }
 
@@ -1310,6 +1317,14 @@ void
 set_apparxy(struct monst *mtmp)
 {
     int disp;
+
+    /* if you aren't on the level, then the monster can't sense you */
+    if (mtmp->dlevel != level) {
+        mtmp->mux = COLNO;
+        mtmp->muy = ROWNO;
+        return;
+    }
+
     boolean actually_adjacent = distmin(mtmp->mx, mtmp->my, u.ux, u.uy) <= 1;
     boolean loe = couldsee(mtmp->mx, mtmp->my);
     unsigned msense_status;

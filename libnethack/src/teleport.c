@@ -6,7 +6,7 @@
 #include "hack.h"
 
 static boolean tele_jump_ok(int, int, int, int, struct level *);
-static boolean teleok(int, int, boolean, boolean wizard_tele);
+static boolean u_teleok(int, int, boolean, boolean wizard_tele);
 static int mon_choose_level(struct monst *);
 static void vault_tele(void);
 static boolean rloc_pos_ok(int, int, struct monst *, struct level *);
@@ -232,7 +232,7 @@ tele_jump_ok(int x1, int y1, int x2, int y2, struct level *lev)
 }
 
 static boolean
-teleok(int x, int y, boolean trapok, boolean wizard_tele)
+u_teleok(int x, int y, boolean trapok, boolean wizard_tele)
 {
     if (!trapok && t_at(level, x, y))
         return FALSE;
@@ -352,7 +352,8 @@ safe_teleds(boolean allow_drag)
     do {
         nux = rn2(COLNO);
         nuy = rn2(ROWNO);
-    } while (!teleok(nux, nuy, (boolean) (tcnt > 200), FALSE) && ++tcnt <= 400);
+    } while (!u_teleok(nux, nuy,
+                       (boolean) (tcnt > 200), FALSE) && ++tcnt <= 400);
 
     if (tcnt <= 400) {
         teleds(nux, nuy, allow_drag);
@@ -368,7 +369,7 @@ vault_tele(void)
     coord c;
 
     if (croom && somexy(level, croom, &c, rng_main) &&
-        teleok(c.x, c.y, FALSE, FALSE)) {
+        u_teleok(c.x, c.y, FALSE, FALSE)) {
         teleds(c.x, c.y, FALSE);
         return;
     }
@@ -449,7 +450,7 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
 
             /* possible extensions: introduce a small error if magic power is
                low; allow transfer to solid rock */
-            if (teleok(cc.x, cc.y, FALSE, wizard_tele)) {
+            if (u_teleok(cc.x, cc.y, FALSE, wizard_tele)) {
                 teleds(cc.x, cc.y, FALSE);
                 return 1;
             }
@@ -555,10 +556,9 @@ mdotele(struct musable *m)
             vault_tele();
         else
             pline(msgc_failcurse, "You shudder for a moment.");
-    }
-
-    if (!tele_impl(FALSE, TRUE))
+    } else if (!tele_impl(FALSE, TRUE))
         return 0;
+
     next_to_u();
 
     if (!trap)
@@ -1357,7 +1357,11 @@ rloc(struct monst *mtmp,        /* mx==COLNO implies migrating monster arrival *
         return TRUE;
     }
 
-    if (mtmp->iswiz && mtmp->mx != COLNO) {      /* Wizard, not just arriving */
+    if (!(mtmp->dlevel))
+        panic("trying to teleport monster onto which level?");
+
+    if (mtmp->iswiz && mtmp->mx != COLNO &&
+        lev == level) {      /* Wizard, not just arriving */
         if (!In_W_tower(u.ux, u.uy, &u.uz))
             x = lev->upstair.sx, y = lev->upstair.sy;
         else if (!isok(lev->dnladder.sx, lev->dnladder.sy))
