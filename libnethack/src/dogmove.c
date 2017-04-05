@@ -396,17 +396,23 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 static boolean
 dog_hunger(struct monst *mtmp, struct edog *edog)
 {
+    /* Pets who don't eat don't go through this logic at all */
+    if (!carnivorous(mtmp->data) && !herbivorous(mtmp->data)) {
+        edog->hungrytime = moves + 500;
+        return FALSE;
+    }
+
     if (moves > edog->hungrytime) {
         /* We're hungry; check if we're carrying anything we can eat
            Intelligent pets should be able to carry such food */
         struct obj *otmp, *obest = NULL;
         int cur_nutrit = -1, best_nutrit = -1;
-        int cur_food = df_apport, best_food = df_apport;
+        enum dogfood cur_food = df_apport, best_food = df_apport;
 
         for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
             cur_nutrit = dog_nutrition_value(mtmp, otmp, FALSE);
             cur_food = dogfood(mtmp, otmp);
-            if (cur_food < best_food && cur_nutrit > best_nutrit) {
+            if (cur_food > best_food && cur_nutrit > best_nutrit) {
                 best_nutrit = cur_nutrit;
                 best_food = cur_food;
                 obest = otmp;
@@ -421,10 +427,7 @@ dog_hunger(struct monst *mtmp, struct edog *edog)
         }
     }
     if (moves > edog->hungrytime + 500) {
-        if (!carnivorous(mtmp->data) && !herbivorous(mtmp->data)) {
-            edog->hungrytime = moves + 500;
-            /* but not too high; it might polymorph */
-        } else if (!edog->mhpmax_penalty) {
+        if (!edog->mhpmax_penalty) {
             /* starving pets are limited in healing */
             int newmhpmax = mtmp->mhpmax / 3;
 

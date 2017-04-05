@@ -660,9 +660,9 @@ migrate_to_level(struct monst *mtmp, xchar tolev,       /* destination level */
 }
 
 
-/* return quality of food; the lower the better */
+/* return quality of food; the higher the better */
 /* fungi will eat even tainted food */
-int
+enum dogfood
 dogfood(const struct monst *mon, struct obj *obj)
 {
     boolean carni = carnivorous(mon->data);
