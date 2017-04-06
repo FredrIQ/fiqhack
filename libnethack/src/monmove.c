@@ -506,23 +506,24 @@ dochug(struct monst *mtmp)
         mtmp->mlstmv != moves && mtmp->mstrategy != st_ascend) {
         struct monst *mtmp2 = mfind_target(mtmp, FALSE);
 
-        int tx = mtmp2->mx, ty = mtmp2->my;
-        if (mtmp2 == &youmonst) {
-            /* use muxy */
-            tx = mtmp->mux;
-            ty = mtmp->muy;
-        }
+        if (mtmp2) {
+            int tx = mtmp2->mx, ty = mtmp2->my;
+            if (mtmp2 == &youmonst) {
+                /* use muxy */
+                tx = mtmp->mux;
+                ty = mtmp->muy;
+            }
 
-        /* Hack: check for Elbereth if the target is in melee and is you, to
-           fix a bug. This is a temporary fix until ranged combat logic is
-           rewritten. */
-        if (mtmp2 &&
-            (mtmp2 != &youmonst || !monnear(mtmp, u.ux, u.uy) ||
-             !onscary(u.ux, u.uy, mtmp))) {
-            if (mattackq(mtmp, tx, ty) & MM_AGR_DIED)
-                return 1;       /* Oops. */
+            /* Hack: check for Elbereth if the target is in melee and is you, to
+               fix a bug. This is a temporary fix until ranged combat logic is
+               rewritten. */
+            if (mtmp2 != &youmonst || !monnear(mtmp, u.ux, u.uy) ||
+                !onscary(u.ux, u.uy, mtmp)) {
+                if (mattackq(mtmp, tx, ty) & MM_AGR_DIED)
+                    return 1;       /* Oops. */
 
-            return 0; /* that was our move for the round */
+                return 0; /* that was our move for the round */
+            }
         }
     }
 
