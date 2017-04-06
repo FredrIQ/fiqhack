@@ -1019,6 +1019,7 @@ getspell(int *spell_no)
     if (ret) {
         flags.last_arg.argtype |= CMD_ARG_SPELL;
         flags.last_arg.spelllet = spelllet_from_no(*spell_no);
+        *spell_no = spellid(*spell_no);
     }
     return ret;
 }
