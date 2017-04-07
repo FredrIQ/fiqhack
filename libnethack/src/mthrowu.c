@@ -710,11 +710,9 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
                 if (mdef)
                     *mdef = &youmonst;
 
-                if (!Conflict || resist(&youmonst, magr, RING_CLASS, 0, 0)) {
-                    if ((!helpful && magr->mpeaceful) ||
-                        (helpful && !magr->mpeaceful))
+                if ((!helpful && magr->mpeaceful) ||
+                    (helpful && !magr->mpeaceful))
                     return FALSE;
-                }
             }
         }
 
@@ -722,7 +720,7 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
 
         /* special case: make sure we don't hit the quest leader with stray
            beams, as it can make the game unwinnable; do this regardless of LOS
-           or hostility or Conflict or confusion or anything like that */
+           or hostility or confusion or anything like that */
         if (mat && mat->data->msound == MS_LEADER && !helpful) {
             if (mdef)
                 *mdef = mat;
@@ -735,15 +733,7 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
            the above MS_LEADER case). */
         if (mat && (msensem(magr, mat) & ~MSENSE_ITEMMIMIC) &&
             !confused(magr)) {
-            /* Note: the couldsee() here is an LOE check and has nothing to
-               do with vision; it determines conflict radius */
-            if (Conflict && !resist(&youmonst, magr, RING_CLASS, 0, 0) &&
-                couldsee(magr->mx, magr->my) &&
-                distu(magr->mx, magr->my) <= BOLT_LIM * BOLT_LIM) {
-                /* we're conflicted, anything is a valid target */
-                if (mdef)
-                    *mdef = mat;
-            } else if (mm_aggression(magr, mat) & ALLOW_M && !helpful) {
+            if (mm_aggression(magr, mat) & ALLOW_M && !helpful) {
                 /* we want to target this monster */
                 if (mdef)
                     *mdef = mat;
