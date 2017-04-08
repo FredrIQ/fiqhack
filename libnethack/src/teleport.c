@@ -1005,7 +1005,7 @@ rloc_to(struct monst *mtmp, int x, int y)
     if (mtmp->wormno)   /* now put down tail */
         place_worm_tail_randomly(mtmp, x, y, rng_main);
 
-    if (u.ustuck == mtmp) { /* implies mtmp->dlevel == level */
+    if (u.ustuck == mtmp) { /* implying mtmp is on the current level */
         if (Engulfed) {
             youmonst.mx = x;
             youmonst.my = y;
@@ -1353,7 +1353,8 @@ rloc(struct monst *mtmp,        /* mx==COLNO implies migrating monster arrival *
     if (!lev)
         panic("trying to teleport monster onto which level?");
 
-    if (mtmp->iswiz && mtmp->mx != COLNO) {      /* Wizard, not just arriving */
+    if (mtmp->iswiz && mtmp->mx != COLNO &&
+        lev == level) {      /* Wizard, not just arriving */
         if (!In_W_tower(youmonst.mx, youmonst.my, &u.uz))
             x = lev->upstair.sx, y = lev->upstair.sy;
         else if (!isok(lev->dnladder.sx, lev->dnladder.sy))
@@ -1384,7 +1385,7 @@ rloc(struct monst *mtmp,        /* mx==COLNO implies migrating monster arrival *
                 goto found_xy;
         } while (++trycount < 1000);
 
-        /* try every square on the lev as a fallback */
+        /* try every square on the level as a fallback */
         for (x = 0; x < COLNO; x++)
             for (y = 0; y < ROWNO; y++)
                 if (goodpos(lev, x, y, mtmp, gpflags))

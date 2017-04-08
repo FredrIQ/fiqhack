@@ -406,7 +406,7 @@ extern void mon_arrive(struct monst *, boolean);
 extern void mon_catchup_elapsed_time(struct monst *, long);
 extern void keepdogs(boolean);
 extern void migrate_to_level(struct monst *, xchar, xchar, coord *);
-extern int dogfood(const struct monst *, struct obj *);
+extern enum dogfood dogfood(const struct monst *, struct obj *);
 extern struct monst *tamedog(struct monst *, struct obj *);
 extern void abuse_dog(struct monst *);
 extern void wary_dog(struct monst *, boolean);

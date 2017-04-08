@@ -2417,10 +2417,12 @@ save_mon(struct memfile *mf, struct monst *mon, const struct level *l)
     /* Check muxy for an invalid value (mux/muy being equal to mx/my). If this has
        happened, run an impossible and set it to ROWNO/COLNO to allow games to continue
        properly. */
+    xchar mux = mon->mux;
+    xchar muy = mon->muy;
     if (mon->mux == mon->mx && mon->muy == mon->my) {
         impossible("save_mon: muxy and mxy are equal?");
-        mon->mux = COLNO;
-        mon->muy = ROWNO;
+        mux = COLNO;
+        muy = ROWNO;
     }
 
     int idx;
@@ -2495,8 +2497,8 @@ save_mon(struct memfile *mf, struct monst *mon, const struct level *l)
     mhint_mon_coordinates(mf); /* savemap: ignore */
     mwrite8(mf, mon->dx);
     mwrite8(mf, mon->dy);
-    mwrite8(mf, mon->mux);
-    mwrite8(mf, mon->muy);
+    mwrite8(mf, mux);
+    mwrite8(mf, muy);
     mwrite8(mf, mon->m_lev);
     mwrite8(mf, mon->malign);
     mwrite16(mf, mon->moveoffset);

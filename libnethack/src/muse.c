@@ -639,9 +639,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
     boolean wand = (obj->oclass == WAND_CLASS);
     boolean spell = (obj->oclass == SPBOOK_CLASS);
     boolean helpful = FALSE;
-    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
-                          distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM) &&
-                          m_canseeu(mon));
+
     /* if monsters know BUC, apply real wandlevel for wands */
     if (obj->mbknown && wand) {
         wandlevel = getwandlevel(mon, obj);
@@ -811,22 +809,19 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         continue;
                     }
                     /* Special case: make invisible and polymorph is always considered
-                       harmful if zapped at player by tame or peaceful monster, unless
-                       conflicted */
+                       harmful if zapped at player by tame or peaceful monster, unless */
                     if ((obj->otyp == WAN_MAKE_INVISIBLE ||
                          obj->otyp == WAN_POLYMORPH ||
                          obj->otyp == SPE_POLYMORPH) &&
-                        mtmp == &youmonst && mon->mpeaceful &&
-                        !conflicted)
+                        mtmp == &youmonst && mon->mpeaceful)
                         helpful = FALSE;
                     if (self) /* -40 or +40 depending on helpfulness */
                         tilescore += (helpful ? 40 : -40);
-                    /* target is hostile, or we are conflicted */
-                    else if (mm_aggression(mon, mtmp, conflicted) || conflicted)
+                    /* target is hostile */
+                    else if (mm_aggression(mon, mtmp, Conflict))
                         tilescore += (helpful ? -10 : 20);
-                    /* ally/peaceful -- we can't just perform "else" here, because it
-                       would mess with conflict behaviour and pets would heal hostiles
-                       that are too dangerous for it to target.  */
+                    /* ally/peaceful -- we can't just perform "else" here, because pets
+                       would heal hostiles that are too dangerous for it to target */
                     else if ((mtmp == &youmonst && mon->mpeaceful) ||
                              (mtmp != &youmonst &&
                               mon->mpeaceful == mtmp->mpeaceful)) {
@@ -927,9 +922,6 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
     int x, y, xx, yy;
     int x_best = 0;
     int y_best = 0;
-    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
-                          distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM) &&
-                          m_canseeu(mon));
     struct monst *mtmp;
     for (x = mon->mx - globrange; x <= mon->mx + globrange; x++) {
         for (y = mon->my - globrange; y <= mon->my + globrange; y++) {
@@ -971,8 +963,8 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
                     /* monster doesn't know of the target */
                     else if (!mcanspotmon(mon, mtmp))
                         continue;
-                    /* target is hostile or we're conflicted */
-                    else if (mm_aggression(mon, mtmp, conflicted) || conflicted)
+                    /* target is hostile */
+                    else if (mm_aggression(mon, mtmp, Conflict))
                         tilescore += 20;
                     /* ally/peaceful */
                     else if ((mtmp == &youmonst && mon->mpeaceful) ||
@@ -1102,14 +1094,10 @@ find_unlocker(struct monst *mon, struct musable *m)
 struct monst *
 find_closest_target(struct monst *mon, int range_limit)
 {
-    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
-                          m_canseeu(mon) &&
-                          distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     int hostrange = 0;
     struct monst *mtmp;
     struct monst *mclose = NULL;
-    if (msensem(mon, &youmonst) && (mm_aggression(mon, &youmonst, conflicted) ||
-                                    conflicted)) {
+    if (msensem(mon, &youmonst) && (mm_aggression(mon, &youmonst, Conflict))) {
         if ((msensem(mon, &youmonst) & MSENSE_ANYVISION) ||
             m_cansee(mon, youmonst.mx, youmonst.my)) {
             hostrange = distmin(mon->mx, mon->my, youmonst.mx, youmonst.my);
@@ -1118,9 +1106,8 @@ find_closest_target(struct monst *mon, int range_limit)
     }
 
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp) ||
-            ((!conflicted || mon == mtmp) &&
-             !mm_aggression(mon, mtmp, conflicted)) ||
+        if (DEADMONSTER(mtmp) || mon == mtmp ||
+            !mm_aggression(mon, mtmp, Conflict) ||
             !msensem(mon, mtmp))
             continue;
         if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||

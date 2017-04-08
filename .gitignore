@@ -7,6 +7,7 @@ build/*
 .\#*
 *.d
 *.o
+*.tag
 .emacs.desktop
 .emacs.desktop.lock
 aimake.local

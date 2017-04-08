@@ -320,9 +320,10 @@ make_bones:
             else
                 u.ugrave_arise = u.umonster;
             charmed = TRUE;
-            if (corpse)
+            if (corpse) {
                 delobj(corpse);
-            else
+                corpse = NULL;
+            } else
                 panic("where did the corpse pointer go?");
         }
         /* give your possessions to the monster you become */

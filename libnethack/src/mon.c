@@ -969,6 +969,9 @@ mpickgold(struct monst *mtmp)
 boolean
 mpickstuff(struct monst *mon, boolean autopickup)
 {
+    if (blind(mon) && autopickup)
+        return FALSE;
+
     struct obj *otmp;
 
     /* don't run autopickup in a shop  */

@@ -200,7 +200,7 @@ struct monst {
 
 /* Does a monster know where the player character is? Does it think it does? */
 # define engulfing_u(mon) (Engulfed && (mon) == u.ustuck)
-# define knows_ux_uy(mon) (((mon)->mux == u.ux && (mon)->muy == u.uy) || \
+# define knows_ux_uy(mon) (((mon)->mux == youmonst.mx && (mon)->muy == youmonst.my) || \
                            engulfing_u(mon))
 # define aware_of_u(mon)  (isok((mon)->mux, (mon)->muy) || engulfing_u(mon))
 
