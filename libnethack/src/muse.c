@@ -1867,7 +1867,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
 
                 /* don't charge these if we know it's 1:x */
                 if ((otmp->otyp == WAN_WISHING || otmp->otyp == MAGIC_MARKER) &&
-                    (otmp->recharged && otmp->mknown))
+                    recharged)
                     continue;
                 return 1;
             }
