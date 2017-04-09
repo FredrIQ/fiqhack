@@ -141,7 +141,7 @@ const struct cmd_desc cmdlist[] = {
     {"menuinv", "show a partial inventory", 'I', 0, TRUE, ARG(dotypeinv),
      CMD_NOTIME},
     {"monster", "use a monster's special ability", 'M', M('m'), TRUE,
-     MUSE(domonability), CMD_ARG_DIR | CMD_EXT | CMD_MUSABLE},
+     MUSE(domonability), CMD_ARG_DIR | CMD_ARG_SPELL | CMD_EXT | CMD_MUSABLE},
     {"multidrop", "drop multiple items", 'D', 0, FALSE, ARG(doddrop), 0},
     {"name", "name a monster, item or type of object", M('n'), 'C', TRUE,
      ARG(do_naming), CMD_EXT},
@@ -1694,6 +1694,8 @@ do_command(int command, struct nh_cmd_arg *arg)
             flags.last_arg.spelllet = 0;
         if (!(flags.last_arg.argtype & CMD_ARG_LIMIT))
             flags.last_arg.limit = 0;
+        if (!(flags.last_arg.argtype & CMD_ARG_ABILITY))
+            flags.last_arg.ability = 0;
     }
 
     /* Debug commands are now restricted to wizard mode here, rather than with

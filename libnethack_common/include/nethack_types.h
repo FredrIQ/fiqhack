@@ -149,12 +149,13 @@
  *   one described above.
  */
 
-# define CMD_ARG_DIR   (1 << 0)         /* param can be a direction */
-# define CMD_ARG_POS   (1 << 1)         /* param can be a position */
-# define CMD_ARG_OBJ   (1 << 2)         /* param can be an inventory letter */
-# define CMD_ARG_STR   (1 << 3)         /* param can be a string */
-# define CMD_ARG_SPELL (1 << 4)         /* param can be a spell letter */
-# define CMD_ARG_LIMIT (1 << 5)         /* param can be a limit */
+# define CMD_ARG_DIR     (1 << 0)       /* param can be a direction */
+# define CMD_ARG_POS     (1 << 1)       /* param can be a position */
+# define CMD_ARG_OBJ     (1 << 2)       /* param can be an inventory letter */
+# define CMD_ARG_STR     (1 << 3)       /* param can be a string */
+# define CMD_ARG_SPELL   (1 << 4)       /* param can be a spell letter */
+# define CMD_ARG_LIMIT   (1 << 5)       /* param can be a limit */
+# define CMD_ARG_ABILITY (1 << 6)       /* param can be an ability letter */
 
 /* command usage hints */
 # define CMD_EXT        (1 << 10)       /* an 'extended' command */
@@ -650,6 +651,7 @@ struct nh_cmd_arg {
     const char *str;           /* CMD_ARG_STR */
     char spelllet;             /* CMD_ARG_SPELL */
     int limit;                 /* CMD_ARG_LIMIT */
+    int ability;               /* CMD_ARG_ABILITY */
 };
 
 struct nh_cmd_and_arg {

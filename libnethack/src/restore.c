@@ -811,8 +811,10 @@ restore_flags(struct memfile *mf, struct flag *f)
     /* Used for a consistent way of handling save shims */
     f->save_revision = mread32(mf);
 
+    f->last_arg.ability = mread8(mf);
+
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 105; i++)
+    for (i = 0; i < 104; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));

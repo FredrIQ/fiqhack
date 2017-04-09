@@ -1632,13 +1632,8 @@ can_pray(boolean praying)
 
     aligntyp align = on_altar()? a_align(youmonst.mx, youmonst.my) : u.ualign.type;
 
-    if (is_demon(youmonst.data) && (align != A_CHAOTIC)) {
-        if (praying)
-            pline(msgc_cancelled,
-                  "The very idea of praying to a %s god is repugnant to you.",
-                  align ? "lawful" : "neutral");
-        return FALSE;
-    }
+    if (is_demon(youmonst.data) && (align != A_CHAOTIC))
+        return FALSE; /* only reached in enlightenment checks */
 
     turnstate.pray.align = align;
     enum pray_trouble trouble = in_trouble();
@@ -1689,6 +1684,13 @@ dopray(const struct musable *m)
         if (yn("Are you sure you want to pray?") == 'n')
             return 0;
 
+    if (is_demon(youmonst.data) && (align != A_CHAOTIC)) {
+        pline(msgc_cancelled,
+              "The very idea of praying to a %s god is repugnant to you.",
+              align ? "lawful" : "neutral");
+        return 0;
+    }
+
     break_conduct(conduct_gnostic);
 
     /* set up turnstate alignment and trouble */
@@ -1735,7 +1737,7 @@ prayer_done(void)
         pline(msgc_statusend, "You feel like you are falling apart.");
         /* KMH -- Gods have mastery over unchanging */
         rehumanize(DIED, NULL);
-        losehp(rnd(20), killer_msg(DIED, "an residual undead turning effect"));
+        losehp(rnd(20), killer_msg(DIED, "a divine undead turning"));
         exercise(A_CON, FALSE);
     } else if (Inhell && (!uarmh || uarmh->oartifact != ART_MITRE_OF_HOLINESS)) {
         pline(msgc_substitute,

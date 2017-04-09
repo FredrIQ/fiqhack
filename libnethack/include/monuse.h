@@ -47,7 +47,8 @@ struct musable {
     struct monst *mon;
     struct obj *obj;
     struct obj *tobj; /* target obj, currently only used when unlocking chests */
-    int spell; /* for spells */
+    int spell;
+    int abil;
     int x;
     int y;
     int z;

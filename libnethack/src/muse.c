@@ -42,6 +42,7 @@ init_musable(struct monst *mon, struct musable *m)
     m->obj = NULL;
     m->tobj = NULL;
     m->spell = 0;
+    m->abil = 0;
     m->use = MUSE_NONE;
 
     /* Set xyz to -1, which is never valid, as a sentinel for not having chosen any
@@ -91,6 +92,9 @@ arg_to_musable(const struct nh_cmd_arg *arg)
     /* Set limit. */
     if (arg->argtype & CMD_ARG_LIMIT)
         m.limit = arg->limit;
+
+    if (arg->argtype & CMD_ARG_ABILITY)
+        m.abil = arg->ability;
 
 /* from spell.c (TODO: these are pretty awkward in general, even in spell.c) */
 #define spellid(spell)   spl_book[spell].sp_id

@@ -35,26 +35,27 @@ struct ability {
     enum monabil typ;
     const char *description;
     int pw_cost;
+    char letter;
     boolean allowed_while_cancelled;
 };
 
 static const struct ability abil_data[] = {
-    {abil_pray, "pray", 0, TRUE},
-    {abil_turn, "turn undead", 0, FALSE},
-    {abil_tele, "teleport", 20, FALSE},
-    {abil_jump, "jump", 0, FALSE},
-    {abil_spit, "spit venom", 15, FALSE},
-    {abil_remove_ball, "remove iron ball", 0, FALSE},
-    {abil_gaze, "gaze", 15, FALSE},
-    {abil_weresummon, "call for help", 10, FALSE},
-    {abil_web, "create web", 5, FALSE},
-    {abil_hide, "hide", 0, FALSE},
-    {abil_mindblast, "release psychic static", 20, FALSE},
-    {abil_multiply, "multiply", 0, FALSE},
-    {abil_unihorn, "use horn", 0, FALSE},
-    {abil_shriek, "shriek", 0, FALSE},
-    {abil_breathe, "breathe", 20, FALSE},
-    {abil_none, "terminator", 0, FALSE},
+    {abil_pray, "pray", 0, 'p', TRUE},
+    {abil_turn, "turn undead", 0, 'T', FALSE},
+    {abil_tele, "teleport", 20, 't', FALSE},
+    {abil_jump, "jump", 0, 'j', FALSE},
+    {abil_spit, "spit venom", 15, 'N', FALSE},
+    {abil_remove_ball, "remove iron ball", 0, 'n', FALSE},
+    {abil_gaze, "gaze", 15, 'e', FALSE},
+    {abil_weresummon, "call for help", 10, 'd', FALSE},
+    {abil_web, "create web", 5, 's', FALSE},
+    {abil_hide, "hide", 0, 'S', FALSE},
+    {abil_mindblast, "release psychic static", 20, 'h', FALSE},
+    {abil_multiply, "multiply", 0, 'g', FALSE},
+    {abil_unihorn, "use horn", 0, 'u', FALSE},
+    {abil_shriek, "shriek", 0, 'F', FALSE},
+    {abil_breathe, "breathe", 20, 'D', FALSE},
+    {abil_none, "terminator", 0, 'Z', FALSE},
 };
 
 static const struct ability *
@@ -90,19 +91,19 @@ ability_usable(struct monst *mon, enum monabil typ)
 
 /* Performs a special ability. */
 int
-use_ability(struct monst *mon, enum monabil typ)
+use_ability(const struct musable *m)
 {
     int ret;
     /* First, call with can_use and msg=true to figure out if the ability
        is usable in first place and bail out if not. Then, actually
        perform the abiility. */
-    if (!check_or_do_ability(mon, typ, TRUE, TRUE, TRUE))
+    if (!check_or_do_ability(m->mon, m->abil, TRUE, TRUE, TRUE))
         return 0;
 
-    ret = check_or_do_ability(mon, typ, FALSE, TRUE, FALSE);
+    ret = check_or_do_ability(m->mon, m->abil, FALSE, TRUE, FALSE);
     if (!ret)
         return 0;
-    if (mon != &youmonst && DEADMONSTER(mon))
+    if (m->mon != &youmonst && DEADMONSTER(m->mon))
         return 2; /* it died */
     return 1;
 }
@@ -209,9 +210,11 @@ check_or_do_ability(struct monst *mon, enum monabil typ,
             return 0; /* TODO */
         if (checking)
             return 1;
-        if (flags.prayconfirm)
+        if (you && flags.prayconfirm)
             if (yn("Are you sure you want to pray?") == 'n')
                 return 0; /* might have been a Alt+P typo */
+        if (you)
+            break_conduct(conduct_gnostic);
         break;
     case abil_turn:
         if (!you)
@@ -231,7 +234,7 @@ check_or_do_ability(struct monst *mon, enum monabil typ,
             if (msg && you)
                 pline(msgc_cancelled,
                       "You can't teleport at will.");
-            return -2;
+            return 0;
         }
         break;
     case abil_jump:
@@ -768,24 +771,49 @@ has_polyform_ability(const struct permonst *pm,
 int
 domonability(const struct musable *m)
 {
-    struct polyform_ability pa;
-    if (cancelled(&youmonst)) {
-        pline(msgc_cancelled,
-              "You can't perform special abilities while cancelled!");
+    pline(msgc_debug, "ability number: %d", m->abil);
+    if (m->abil)
+        return use_ability(m);
+
+    if (m->mon != &youmonst) {
+        impossible("domonability: unclear ability for non-player?");
         return 0;
     }
-    if (has_polyform_ability(youmonst.data, &pa)) {
-        if (pa.directed)
-            return pa.handler_directed(m);
+
+    const struct ability *abil;
+    struct nh_menuitem items[last_abil + 1];
+    int count = 0;
+    for (abil = abil_data; abil->typ != abil_none; abil++) {
+        if (ability_usable(&youmonst, abil->typ))
+            set_menuitem(&items[count++], abil->typ, MI_NORMAL, abil->description,
+                         abil->letter, FALSE);
+    }
+
+    if (!count) {
+        if (Upolyd)
+            pline(msgc_cancelled,
+                  "Any special ability you may have is purely reflexive.");
         else
-            return pa.handler_undirected();
-    } else if (Upolyd)
-        pline(msgc_cancelled,
-              "Any special ability you may have is purely reflexive.");
-    else
-        pline(msgc_cancelled,
-              "You don't have a special ability in your normal form!");
-    return 0;
+            pline(msgc_cancelled,
+                  "You don't have a special ability in your normal form!");
+        return FALSE;
+    }
+
+    int n;
+    const int *selected;
+    n = display_menu(&(struct nh_menulist){.items = items, .icount = count},
+                     "Abilities", PICK_ONE, PLHINT_ANYWHERE, &selected);
+
+    flags.last_arg.argtype &= ~CMD_ARG_ABILITY;
+    if (n <= 0)
+        return FALSE;
+
+    enum monabil typ = selected[0];
+    flags.last_arg.argtype |= CMD_ARG_ABILITY;
+    flags.last_arg.ability = typ;
+    struct musable m_new = *m;
+    m_new.abil = typ;
+    return use_ability(&m_new);
 }
 
 

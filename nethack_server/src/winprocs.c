@@ -452,6 +452,8 @@ srv_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
         ncaa.arg.argtype |= CMD_ARG_SPELL;
     if (json_unpack(jarg, "{si*}", "limit", &(ncaa.arg.limit)) != -1)
         ncaa.arg.argtype |= CMD_ARG_LIMIT;
+    if (json_unpack(jarg, "{si*}", "ability", &(ncaa.arg.ability)) != -1)
+        ncaa.arg.argtype |= CMD_ARG_ABILITY;
 
     ncaa.cmd = cmd;
     /* sanitize for implausible/malicious input */

@@ -209,10 +209,12 @@ save_flags(struct memfile *mf)
     flags.save_revision = SAVE_REVISION;
     mwrite32(mf, flags.save_revision);
 
+    mwrite8(mf, flags.last_arg.ability);
+
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 105; i++)
+    for (i = 0; i < 104; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));
