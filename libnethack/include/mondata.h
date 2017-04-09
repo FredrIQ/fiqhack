@@ -101,6 +101,9 @@
 # define detects_monsters(mon)  (has_property(mon, DETECT_MONSTERS))
 # define slow(mon)              (has_property(mon, SLOW))
 # define creamed(mon)           (has_property(mon, CREAMED))
+/* pseudo-properties, some are player-only but defined for the future */
+# define punished(mon)          (mon != &youmonst ? 0 : Punished)
+# define engulfed(mon)          (mon != &youmonst ? 0 : Engulfed)
 
 # define hitbon(mon)            (mon_bon(mon, RIN_INCREASE_ACCURACY, (mon)->mhitinc))
 # define dambon(mon)            (mon_bon(mon, RIN_INCREASE_DAMAGE, (mon)->mdaminc))

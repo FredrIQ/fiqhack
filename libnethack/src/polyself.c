@@ -208,6 +208,15 @@ check_or_do_ability(struct monst *mon, enum monabil typ,
     case abil_pray:
         if (!you)
             return 0; /* TODO */
+
+        if (is_demon(mon->data) && ma_align(mon) != A_CHAOTIC) {
+            if (msg)
+                pline(msgc_cancelled,
+                      "The very idea of praying to a %s god is repugnant to you.",
+                      ma_align(mon) ? "lawful" : "neutral");
+            return 0;
+        }
+
         if (checking)
             return 1;
         if (you && flags.prayconfirm)

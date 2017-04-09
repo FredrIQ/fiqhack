@@ -1426,6 +1426,7 @@ extern const char *bottlename(void);
 
 /* ### pray.c ### */
 
+extern aligntyp ma_align(const struct monst *);
 extern int dosacrifice(const struct nh_cmd_arg *);
 extern boolean can_pray(boolean);
 extern int dopray(const struct musable *);

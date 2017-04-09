@@ -79,6 +79,16 @@ but that's really hard.
 #define a_align(x,y)    ((aligntyp)Amask2align( \
                             level->locations[x][y].altarmask & AM_MASK))
 
+/* Returns alignment for an altar a monster is standing on, or own alignment if none */
+aligntyp
+ma_align(const struct monst *mon)
+{
+    struct level *lev = m_dlevel(mon);
+    if (IS_ALTAR(lev->locations[mon->mx][mon->my].typ) && !engulfed(mon))
+        return Amask2align(lev->locations[mon->mx][mon->my].altarmask & AM_MASK);
+    return malign(mon);
+}
+
 static enum pray_trouble
 in_trouble(void)
 {
@@ -1630,7 +1640,7 @@ can_pray(boolean praying)
 {
     int alignment;
 
-    aligntyp align = on_altar()? a_align(youmonst.mx, youmonst.my) : u.ualign.type;
+    aligntyp align = on_altar() ? a_align(youmonst.mx, youmonst.my) : u.ualign.type;
 
     if (is_demon(youmonst.data) && (align != A_CHAOTIC))
         return FALSE; /* only reached in enlightenment checks */
@@ -1679,10 +1689,7 @@ can_pray(boolean praying)
 int
 dopray(const struct musable *m)
 {
-    /* Confirm accidental slips of Alt-P */
-    if (flags.prayconfirm)
-        if (yn("Are you sure you want to pray?") == 'n')
-            return 0;
+    aligntyp align = on_altar() ? a_align(youmonst.mx, youmonst.my) : u.ualign.type;
 
     if (is_demon(youmonst.data) && (align != A_CHAOTIC)) {
         pline(msgc_cancelled,
@@ -1690,6 +1697,11 @@ dopray(const struct musable *m)
               align ? "lawful" : "neutral");
         return 0;
     }
+
+    /* Confirm accidental slips of Alt-P */
+    if (flags.prayconfirm)
+        if (yn("Are you sure you want to pray?") == 'n')
+            return 0;
 
     break_conduct(conduct_gnostic);
 
