@@ -854,6 +854,13 @@ you_moved(void)
                messes up on this. Another possible result is rehumanization,
                which requires that encumbrance and movement rate be
                recalculated. */
+            int *hp = &(u.uhp);
+            int *hpmax = &(u.uhpmax);
+            if (flags.polyinit_mnum != -1) {
+                hp = &(u.mh);
+                hpmax = &(u.mhmax);
+            }
+            boolean polyinit = (flags.polyinit_mnum != -1);
             if (u.uinvulnerable) {
                 /* for the moment at least, you're in tiptop shape */
                 wtcap = UNENCUMBERED;
@@ -863,14 +870,15 @@ you_moved(void)
                     u.mh--;
                 } else if (u.mh < 1)
                     rehumanize(DIED, NULL);
-            } else if (Upolyd && u.mh < u.mhmax) {
+            } else if (flags.polyinit_mnum == -1 &&
+                       Upolyd && u.mh < u.mhmax) {
                 if (u.mh < 1)
                     rehumanize(DIED, NULL);
                 else if (Regeneration ||
                          (wtcap < MOD_ENCUMBER && !(moves % 20))) {
                     u.mh++;
                 }
-            } else if (u.uhp < u.uhpmax &&
+            } else if (*hp < *hpmax &&
                        (wtcap < MOD_ENCUMBER || !u.umoved || Regeneration)) {
                 if (u.ulevel > 9 && !(moves % 3)) {
                     int heal, Con = (int)ACURR(A_CON);
@@ -882,13 +890,13 @@ you_moved(void)
                         if (heal > u.ulevel - 9)
                             heal = u.ulevel - 9;
                     }
-                    u.uhp += heal;
-                    if (u.uhp > u.uhpmax)
-                        u.uhp = u.uhpmax;
+                    *hp += heal;
+                    if (*hp > *hpmax)
+                        *hp = *hpmax;
                 } else if (Regeneration ||
                            (u.ulevel <= 9 &&
                             !(moves % ((MAXULEV + 12) / (u.ulevel + 2) + 1)))) {
-                    u.uhp++;
+                    *hp++;
                 }
             }
 
