@@ -770,21 +770,20 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             }
             if (!selfzap) /* only cure blindness if zapped by someone else */
                 set_property(mdef, BLINDED, -2, FALSE);
-            if (mdef == &youmonst || canseemonoritem(mdef)) {
-                if (disguised_mimic) {
-                    if (mdef->m_ap_type == M_AP_OBJECT &&
-                        mdef->mappearance == STRANGE_OBJECT) {
-                        /* it can do better now */
-                        set_mimic_sym(mdef, level, rng_main);
-                        newsym(mdef->mx, mdef->my);
-                    } else
-                        mimic_hit_msg(mdef, otyp);
+            if (mdef == &youmonst || canseemonoritem(mdef) &&
+                disguised_mimic) {
+                if (mdef->m_ap_type == M_AP_OBJECT &&
+                    mdef->mappearance == STRANGE_OBJECT) {
+                    /* it can do better now */
+                    set_mimic_sym(mdef, level, rng_main);
+                    newsym(mdef->mx, mdef->my);
                 } else
-                    pline(msgc_actionok, "%s %s%s better.",
-                          mdef == &youmonst ? "You" : Monnam(mdef),
-                          mdef == &youmonst ? "feel" : "looks",
-                          otyp == SPE_EXTRA_HEALING ? " much" : "");
-            }
+                    mimic_hit_msg(mdef, otyp);
+            } else
+                pline(msgc_actionok, "%s %s%s better.",
+                      mdef == &youmonst ? "You" : Monnam(mdef),
+                      mdef == &youmonst ? "feel" : "looks",
+                      otyp == SPE_EXTRA_HEALING ? " much" : "");
             if (yours && (mdef->mtame || mdef->mpeaceful)) {
                 adjalign(Role_if(PM_HEALER) ? 1 : sgn(u.ualign.type));
             }
