@@ -270,7 +270,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
         flush_screen(); /* will flush screen and output */
 
         if (any_shield && flags.sparkle) {      /* simulate shield effect */
-            for (k = 0; k < SHIELD_COUNT; k++) {
+            for (k = 0; k < flags.sparkle; k++) {
                 for (i = 0; i < 3; i++)
                     for (j = 0; j < 3; j++) {
                         if (explmask[i][j] == 1)

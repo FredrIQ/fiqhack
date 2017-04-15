@@ -265,7 +265,7 @@ struct flag {
     boolean showrace;   /* show hero glyph by race rather than by role */
     boolean show_uncursed;      /* always show uncursed items as such */
     boolean sortpack;   /* sorted inventory */
-    boolean sparkle;    /* show "resisting" special FX (Scott Bigham) */
+    int sparkle;        /* show "resisting" special FX (Scott Bigham) */
     boolean tombstone;  /* print tombstone */
     boolean travel_interrupt;   /* Interrupt travel if there is a hostile *
                                    monster in sight. */

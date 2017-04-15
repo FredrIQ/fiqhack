@@ -40,7 +40,7 @@ get_map_key(nh_bool place_cursor, nh_bool report_clicks,
 
     if (context == krc_interrupt_long_action) {
         consecutive++;
-        int timeout = settings.animation == ANIM_SLOW ? 5000 : 700;
+        int timeout = settings.animation == ANIM_SLOW ? 4000 : 550;
 
         /* Before sleeping, update the message buffer. This might end up leaving
            room for a --More-- that isn't required, but it can't be helped; it's
