@@ -860,7 +860,6 @@ you_moved(void)
                 hp = &(u.mh);
                 hpmax = &(u.mhmax);
             }
-            boolean polyinit = (flags.polyinit_mnum != -1);
             if (u.uinvulnerable) {
                 /* for the moment at least, you're in tiptop shape */
                 wtcap = UNENCUMBERED;
@@ -895,9 +894,8 @@ you_moved(void)
                         *hp = *hpmax;
                 } else if (Regeneration ||
                            (u.ulevel <= 9 &&
-                            !(moves % ((MAXULEV + 12) / (u.ulevel + 2) + 1)))) {
-                    *hp++;
-                }
+                            !(moves % ((MAXULEV + 12) / (u.ulevel + 2) + 1))))
+                    *hp += 1;
             }
 
             /* moving around while encumbered is hard work */
