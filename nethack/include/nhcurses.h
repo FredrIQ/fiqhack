@@ -304,6 +304,7 @@ struct settings {
     nh_bool status3;    /* draw 3 line status */
     nh_bool mouse;      /* accept mouse input */
     nh_bool prompt_inline; /* draw prompts in the message window */
+    nh_bool show_ac; /* whether to display armor value as AC or Def */
 };
 
 

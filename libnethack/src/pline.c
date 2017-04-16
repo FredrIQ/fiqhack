@@ -353,8 +353,7 @@ mstatusline(struct monst *mon)
           align_str(alignment),
           you && Upolyd ? mons[u.umonnum].mlevel : you ? u.ulevel : mon->m_lev,
           you && Upolyd ? u.mh : m_mhp(mon),
-          you && Upolyd ? u.mhmax : m_mhpmax(mon),
-          10 - find_mac(mon), info);
+          you && Upolyd ? u.mhmax : m_mhpmax(mon), 10 - find_mac(mon), info);
 }
 
 /*pline.c*/
