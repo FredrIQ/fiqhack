@@ -133,6 +133,9 @@ static struct nh_option_desc curses_options[] = {
     {"border", "Screen Layout",
      "what to draw borders around",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = FRAME_ALL}},
+    {"classic_status", "Screen Layout",
+     "use classic NetHack layout for status lines",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"comment", "Online and Tournaments",
      "no game effect, used to prove your ID in tournaments",
      nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
@@ -218,6 +221,7 @@ static struct nh_option_desc curses_options[] = {
 
 static struct nhlib_boolopt_map boolopt_map[] = {
     {"alt_is_esc", &settings.alt_is_esc},
+    {"classic_status", &settings.classic_status},
     {"draw_branch", &settings.dungeoncolor},
     {"draw_detected", &settings.use_inverse},
     {"draw_rock", &settings.visible_rock},

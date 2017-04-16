@@ -7,9 +7,10 @@
 #include <ctype.h>
 
 struct nh_player_info player;
+static void draw_statuses(struct nh_player_info *, nh_bool);
 
 static void
-draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp)
+draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp, const char *buf)
 {
     char str[ui_flags.mapwidth];
     int fill_len = 0, bl, colorattr, invcolorattr, color;
@@ -45,11 +46,19 @@ draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp)
        whether the foreground equals the background or not). */
     invcolorattr = curses_color_attr(color, color & 7);
 
-    sprintf(str, "%*d / %-*d", (bl - 3) / 2, val_cur, (bl - 2) / 2, val_max);
+    if (!buf)
+        sprintf(str, "%*d / %-*d", (bl - 3) / 2, val_cur, (bl - 2) / 2, val_max);
+    else {
+        /* limit title to ensure it fits */
+        sprintf(str, "%s", buf);
+        if (strlen(str) > barlen - 2) /* doesn't include the [] */
+            str[barlen - 2] = '\0';
+    }
 
     if (statuswin) {
         wattron(statuswin, colorattr);
-        wprintw(statuswin, ishp ? "HP:" : "Pw:");
+        if (!buf)
+            wprintw(statuswin, ishp ? "HP:" : "Pw:");
         wattroff(statuswin, colorattr);
         waddch(statuswin, '[');
         wattron(statuswin, invcolorattr);
@@ -113,10 +122,10 @@ static const struct {
       /* hunger */
       { "Satiated", CLR_RED, -1 },
       { "Hungry", CLR_RED, -1 },
-      { "Weak", CLR_ORANGE, CLR_YELLOW },
-      { "Fainting", CLR_BRIGHT_MAGENTA, CLR_YELLOW },
-      { "Fainted", CLR_BRIGHT_MAGENTA, CLR_YELLOW },
-      { "Starved", CLR_BRIGHT_MAGENTA, CLR_YELLOW },
+      { "Weak", CLR_ORANGE, CLR_BROWN },
+      { "Fainting", CLR_BRIGHT_MAGENTA, CLR_MAGENTA },
+      { "Fainted", CLR_BRIGHT_MAGENTA, CLR_MAGENTA },
+      { "Starved", CLR_BRIGHT_MAGENTA, CLR_MAGENTA },
       /* misc */
       { "Melee", CLR_GRAY, -1 },
       { "Dig", CLR_BROWN, -1 },
@@ -152,11 +161,57 @@ static const struct {
 };
 
 static void
-draw_status(struct nh_player_info *pi, nh_bool threeline)
+draw_classic_status(struct nh_player_info *pi, nh_bool threeline)
 {
     char buf[ui_flags.mapwidth];
-    int i, j, k;
+    char title[ui_flags.mapwidth];
 
+    /* line 1 */
+    wmove(statuswin, 0, 0);
+    sprintf(buf, " St:%-1d", pi->st);
+    if (pi->st == 18 && pi->st_extra) {
+        if (pi->st_extra < 100)
+            sprintf(buf, "%s/%02d", buf, pi->st_extra);
+        else
+            sprintf(buf, "%s/**", buf);
+    }
+    sprintf(buf, "%s Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
+            buf, pi->dx, pi->co, pi->in, pi->wi, pi->ch);
+    sprintf(buf, "%s %s", buf,
+            pi->align == A_CHAOTIC ? "Chaotic" :
+            pi->align == A_NEUTRAL ? "Neutral" :
+            pi->align == A_LAWFUL ? "Lawful" :
+            "Unaligned");
+    sprintf(title, "%.10s the %s", pi->plname, pi->rank);
+    wmove(statuswin, 0, 0);
+    int bar_len = ui_flags.mapwidth - strlen(buf) - 2;
+    if (bar_len > strlen(title))
+        bar_len = strlen(title);
+    draw_bar(bar_len + 2, pi->hp, pi->hpmax, TRUE, title);
+    wprintw(statuswin, "%s", buf);
+    wclrtoeol(statuswin);
+
+    /* line 2 (possibly not last line if status3 is enabled) */
+    wmove(statuswin, 1, 0);
+    wprintw(statuswin, "%s", pi->level_desc);
+    wprintw(statuswin, "  %c:%-2ld ", pi->coinsym, pi->gold);
+    wprintw(statuswin, " HP:%d(%d)", pi->hp, pi->hpmax);
+    wprintw(statuswin, " Pw:%d(%d)", pi->en, pi->enmax);
+    wprintw(statuswin, " Def:%d ", 10 - pi->ac);
+    wprintw(statuswin, " %s:%d",
+            threeline ? "Xp" : "Exp",
+            pi->level);
+    if (threeline)
+        wprintw(statuswin, "/%d", pi->xp);
+    wprintw(statuswin, " T:%d", pi->moves);
+    wclrtoeol(statuswin);
+
+    draw_statuses(pi, threeline);
+}
+
+static void
+draw_status(struct nh_player_info *pi, nh_bool threeline)
+{
     if (!statuswin)
         return;
 
@@ -165,9 +220,16 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
         return;
     }
 
+    if (settings.classic_status) {
+        draw_classic_status(pi, threeline);
+        return;
+    }
+
+    char buf[ui_flags.mapwidth];
+
     /* penultimate line */
     wmove(statuswin, (threeline ? 1 : 0), 0);
-    draw_bar(15, pi->hp, pi->hpmax, TRUE);
+    draw_bar(15, pi->hp, pi->hpmax, TRUE, NULL);
     wprintw(statuswin, " Def:%d %s:%d", 10 - pi->ac,
             pi->monnum == pi->cur_monnum ? "Xp" : "HD", pi->level);
     if (threeline && pi->monnum == pi->cur_monnum) {
@@ -185,50 +247,13 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
 
     /* last line */
     wmove(statuswin, (threeline ? 2 : 1), 0);
-    draw_bar(15, pi->en, pi->enmax, FALSE);
+    draw_bar(15, pi->en, pi->enmax, FALSE, NULL);
     wprintw(statuswin, " %c%ld S:%ld T:%ld", pi->coinsym, pi->gold, pi->score,
             pi->moves);
     if (getcurx(statuswin) > 0)
         wclrtoeol(statuswin);
 
-    /* status */
-    int mainframe_color = CLR_GRAY;
-    j = getmaxx(statuswin) + 1;
-    for (i = 0; i < pi->nr_items; i++) {
-        int color = CLR_WHITE, colorattr;
-
-        j -= strlen(pi->statusitems[i]) + 1;
-        for (k = 0; statuscolors[k].name; k++) {
-            if (!strcmp(pi->statusitems[i], statuscolors[k].name)) {
-                color = statuscolors[k].color;
-                if (statuscolors[k].framecolor != -1)
-                    mainframe_color = statuscolors[k].framecolor;
-                break;
-            }
-        }
-        colorattr = curses_color_attr(color, 0);
-        wmove(statuswin, (threeline ? 2 : 1), j);
-        wattron(statuswin, colorattr);
-        wprintw(statuswin, "%s", pi->statusitems[i]);
-        wattroff(statuswin, colorattr);
-    }
-
-    /* frame color */
-    if (pi->hp * 7 <= pi->hpmax)
-        mainframe_color = CLR_ORANGE;
-    else if (pi->hp * 3 <= pi->hpmax)
-        mainframe_color = CLR_RED;
-
-    if (ui_flags.current_followmode != FM_PLAY)
-        mainframe_color = CLR_BLACK;     /* a hint that we can't write */
-
-    /* We change the frame color via palette manipulation, because it's awkward
-       to correctly redraw otherwise. However, we don't want to do color
-       mapping logic here. So we copy an existing palette entry. */
-    uncursed_color fgcode, bgcode;
-    pair_content(PAIR_NUMBER(curses_color_attr(mainframe_color, 0)),
-                 &fgcode, &bgcode);
-    init_pair(MAINFRAME_PAIR, fgcode, bgcode);
+    draw_statuses(pi, threeline);
 
     /* name */
     if (threeline) {
@@ -256,6 +281,54 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
         wmove(statuswin, 1, getmaxx(statuswin) - (pi->st == 18 ? 20 : 17));
         wprintw(statuswin, "In:%-2d Wi:%-2d Ch:%-2d", pi->in, pi->wi, pi->ch);
     }
+}
+
+/* Draws statuses (Ill, FoodPois, etc) and figures out frame color */
+static void
+draw_statuses(struct nh_player_info *pi, nh_bool threeline)
+{
+    int i, j, k;
+    int mainframe_color = CLR_GRAY;
+    j = getmaxx(statuswin) + 1;
+    for (i = 0; i < pi->nr_items; i++) {
+        int color = CLR_WHITE, colorattr;
+
+        j -= strlen(pi->statusitems[i]) + 1;
+        for (k = 0; statuscolors[k].name; k++) {
+            if (!strcmp(pi->statusitems[i], statuscolors[k].name)) {
+                color = statuscolors[k].color;
+                if (statuscolors[k].framecolor != -1)
+                    mainframe_color = statuscolors[k].framecolor;
+                break;
+            }
+        }
+        colorattr = curses_color_attr(color, 0);
+        wmove(statuswin, (threeline ? 2 : 1), j);
+        wattron(statuswin, colorattr);
+        wprintw(statuswin, "%s", pi->statusitems[i]);
+        wattroff(statuswin, colorattr);
+    }
+
+    /* frame color */
+    if (pi->hp * 7 <= pi->hpmax)
+        mainframe_color = CLR_RED;
+    else if (pi->hp * 3 <= pi->hpmax &&
+             mainframe_color != CLR_BRIGHT_MAGENTA) /* delayed instadeath overrides */
+        mainframe_color = CLR_ORANGE;
+    else if (pi->hp * 3 <= pi->hpmax * 2 &&
+             mainframe_color == CLR_GRAY) /* food trouble+delayed instadeath overrides */
+        mainframe_color = CLR_YELLOW;
+
+    if (ui_flags.current_followmode != FM_PLAY)
+        mainframe_color = CLR_BLACK;     /* a hint that we can't write */
+
+    /* We change the frame color via palette manipulation, because it's awkward
+       to correctly redraw otherwise. However, we don't want to do color
+       mapping logic here. So we copy an existing palette entry. */
+    uncursed_color fgcode, bgcode;
+    pair_content(PAIR_NUMBER(curses_color_attr(mainframe_color, 0)),
+                 &fgcode, &bgcode);
+    init_pair(MAINFRAME_PAIR, fgcode + (mainframe_color > 7 ? 8 : 0), bgcode);
 }
 
 void

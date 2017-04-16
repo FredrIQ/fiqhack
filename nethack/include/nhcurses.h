@@ -290,6 +290,7 @@ struct settings {
     char *tileset;                   /* tileset file name */
 
     nh_bool alt_is_esc; /* parse Alt-letter as ESC letter */
+    nh_bool classic_status; /* mimic NH3's status bar */
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
     nh_bool dungeoncolor;       /* respect level display modes */
