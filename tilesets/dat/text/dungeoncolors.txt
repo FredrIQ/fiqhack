@@ -14,7 +14,7 @@
 sub mine walls *; sub bar sub questfill2 walls *; sub bar sub questgoal walls *; sub cav sub questfill1 walls *; sub cav sub questlocate walls *; sub cav sub questfill2 walls *: brown basechar
 sub gehennom walls *; sub pri sub questfill2 walls *; sub pri sub questgoal walls *: orange basechar
 sub knox walls *: white basechar
-sub sokoban walls *: green basechar
+sub sokoban walls *: bright_blue basechar
 sub vlad walls *: brown basechar
 sub astral walls *: bright_cyan basechar
 
