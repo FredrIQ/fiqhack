@@ -1712,7 +1712,7 @@ keymap_action_massrebind_digits(void)
         keymap[KEY_END] = find_command("south_west");
         keymap[KEY_NPAGE] = find_command("south_east");
 
-        keymap[KEY_B2] = find_command("go"); /* produces a unique code */
+        keymap[KEY_B2] = find_command("run"); /* produces a unique code */
         keymap[KEY_IC] = find_command("inventory");
         keymap[KEY_DC] = find_command("wait");
     }
