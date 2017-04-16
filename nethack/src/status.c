@@ -9,6 +9,31 @@
 struct nh_player_info player;
 static void draw_statuses(struct nh_player_info *, nh_bool);
 
+static int
+hpen_color(int val_cur, int val_max, nh_bool ishp)
+{
+    /*
+     * Rules:  HP     Pw
+     *    max  white  white
+     *   >2/3  green  cyan
+     *   >1/3  yellow blue
+     *   >1/7  red    magenta
+     *  <=1/7  br.red br.magenta
+     *
+     * Note for the HP/PW bars: we can't draw a brightly colored background,
+     * but the dim color gets substituted
+     */
+    if (val_cur == val_max)
+        return CLR_GRAY;
+    if (val_cur * 3 > val_max * 2)
+        return ishp ? CLR_GREEN : CLR_CYAN;
+    if (val_cur * 3 > val_max * 1)
+        return ishp ? CLR_YELLOW : CLR_BLUE;
+    if (val_cur * 7 > val_max * 1)
+        return ishp ? CLR_RED : CLR_MAGENTA;
+    return ishp ? CLR_ORANGE : CLR_BRIGHT_MAGENTA;
+}
+
 static void
 draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp, const char *buf)
 {
@@ -19,27 +44,7 @@ draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp, const char *buf)
     if (val_max > 0 && val_cur > 0)
         fill_len = bl * val_cur / val_max;
 
-    /*
-     * Rules:  HP     Pw
-     *    max  white  white
-     *   >2/3  green  cyan
-     *   >1/3  yellow blue
-     *   >1/7  red    magenta
-     *  <=1/7  br.red br.magenta
-     *
-     * Note: we can't draw a brightly colored background, but the dim color
-     * gets substituted
-     */
-    if (val_cur == val_max)
-        color = CLR_GRAY;
-    else if (val_cur * 3 > val_max * 2)
-        color = ishp ? CLR_GREEN : CLR_CYAN;
-    else if (val_cur * 3 > val_max * 1)
-        color = ishp ? CLR_BROWN : CLR_BLUE;
-    else
-        color = ishp ? CLR_RED : CLR_MAGENTA;
-    if (val_cur * 7 <= val_max || color == CLR_BROWN)
-        color |= 8;                                     /* bold color */
+    color = hpen_color(val_cur, val_max, ishp);
     colorattr = curses_color_attr(color, 0);        /* color on black */
     /* For the 'bar' portion, we use a 'color & 7'-colored background, and
        the foreground is either black or bolded background (depending on
@@ -192,11 +197,20 @@ draw_classic_status(struct nh_player_info *pi, nh_bool threeline)
     wclrtoeol(statuswin);
 
     /* line 2 (possibly not last line if status3 is enabled) */
+    int colorattr; /* for HP/Pw colors */
     wmove(statuswin, 1, 0);
     wprintw(statuswin, "%s", pi->level_desc);
     wprintw(statuswin, "  %c:%-2ld ", pi->coinsym, pi->gold);
-    wprintw(statuswin, " HP:%d(%d)", pi->hp, pi->hpmax);
-    wprintw(statuswin, " Pw:%d(%d)", pi->en, pi->enmax);
+    wprintw(statuswin, " HP:");
+    colorattr = curses_color_attr(hpen_color(pi->hp, pi->hpmax, TRUE), 0);
+    wattron(statuswin, colorattr);
+    wprintw(statuswin, "%d(%d)", pi->hp, pi->hpmax);
+    wattroff(statuswin, colorattr);
+    wprintw(statuswin, " Pw:");
+    colorattr = curses_color_attr(hpen_color(pi->en, pi->enmax, FALSE), 0);
+    wattron(statuswin, colorattr);
+    wprintw(statuswin, "%d(%d)", pi->en, pi->enmax);
+    wattroff(statuswin, colorattr);
     wprintw(statuswin, " Def:%d ", 10 - pi->ac);
     wprintw(statuswin, " %s:%d",
             threeline ? "Xp" : "Exp",
