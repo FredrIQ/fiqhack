@@ -326,7 +326,8 @@ curses_set_option(const char *name, union nh_optvalue value)
 
         *var = value.b;
 
-        if (!strcmp(option->name, "status3")) {
+        if (!strcmp(option->name, "status3") ||
+            !strcmp(option->name, "classic_status")) {
             rebuild_ui();
         } else if (!strcmp(option->name, "darkgray")) {
             set_darkgray();
