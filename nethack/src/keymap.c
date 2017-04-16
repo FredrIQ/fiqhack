@@ -1682,7 +1682,7 @@ keymap_action_massrebind_digits(void)
         keymap[KEY_C1] = find_command("south_west");
         keymap[KEY_C3] = find_command("south_east");
 
-        keymap[KEY_B2] = find_command("go");
+        keymap[KEY_B2] = find_command("run");
         keymap[KEY_D1] = find_command("inventory");
         keymap[KEY_D3] = find_command("wait");
     }
@@ -1697,7 +1697,7 @@ keymap_action_massrebind_digits(void)
         keymap['1'] = find_command("south_west");
         keymap['3'] = find_command("south_east");
 
-        keymap['5'] = find_command("go");
+        keymap['5'] = find_command("run");
         keymap['0'] = find_command("inventory");
         /* . is not a digit */
     }
