@@ -1663,16 +1663,17 @@ curses_show_ac(const char *formatstring, int ac, void *res,
     int done_str = 0;
     int done_num = 0;
     const char *str = "Def";
-    /*if (settings.show_ac)
-      str = "AC";*/
+    if (settings.show_ac)
+        str = "AC";
 
     char num[5];
     if (ac < -128)
         ac = -128;
     if (ac > 127)
         ac = 127;
-    snprintf(num, 5, "%d", 0 /*settings.show_ac*/ ? ac : 10 - ac);
+    snprintf(num, 5, "%d", settings.show_ac ? ac : 10 - ac);
 
+    j = 0;
     for (i = 0; formatstring[i]; i++) {
         if (formatstring[i] == '%') {
             if (formatstring[i + 1] == 's' && !done_str) {

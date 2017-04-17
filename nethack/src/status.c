@@ -246,7 +246,8 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
     /* penultimate line */
     wmove(statuswin, (threeline ? 1 : 0), 0);
     draw_bar(15, pi->hp, pi->hpmax, TRUE, NULL);
-    wprintw(statuswin, " Def:%d %s:%d", 10 - pi->ac,
+    wprintw(statuswin, " %s:%d %s:%d", settings.show_ac ? "AC" : "Def",
+            settings.show_ac ? pi->ac : 10 - pi->ac,
             pi->monnum == pi->cur_monnum ? "Xp" : "HD", pi->level);
     if (threeline && pi->monnum == pi->cur_monnum) {
         /* keep this synced with newuexp in exper.c */

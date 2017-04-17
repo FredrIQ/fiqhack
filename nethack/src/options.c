@@ -208,6 +208,9 @@ static struct nh_option_desc curses_options[] = {
     {"scores_around", "Endgame Sequence",
       "the number of scores shown around your score",
      nh_birth_ingame, OPTTYPE_INT, {.i = 2}},
+    {"show_ac", "Screen Layout",
+     "show armor value as AC instead of Def",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"sidebar", "Screen Layout",
      "when to draw the inventory sidebar",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = AB_AUTO}},
@@ -234,6 +237,7 @@ static struct nhlib_boolopt_map boolopt_map[] = {
     {"mouse", &settings.mouse},
     {"prompt_inline", &settings.prompt_inline},
     {"scores_own", &settings.end_own},
+    {"show_ac", &settings.show_ac},
     {"status3", &settings.status3},
     {NULL, NULL}
 };
@@ -327,7 +331,8 @@ curses_set_option(const char *name, union nh_optvalue value)
         *var = value.b;
 
         if (!strcmp(option->name, "status3") ||
-            !strcmp(option->name, "classic_status")) {
+            !strcmp(option->name, "classic_status") ||
+            !strcmp(option->name, "show_ac")) {
             rebuild_ui();
         } else if (!strcmp(option->name, "darkgray")) {
             set_darkgray();
