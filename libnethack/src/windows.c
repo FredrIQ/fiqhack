@@ -249,6 +249,13 @@ getlin(const char *query, boolean isarg)
     return res;
 }
 
+const char *
+show_ac(const char *formatstring, int ac)
+{
+    const char *res;
+    (*windowprocs.win_show_ac) (formatstring, ac, &res, msg_getlin_callback);
+    return res;
+}
 
 /* Validates the parameters for the generic yes/no function to prevent the core
    from sending too long a prompt string to the window port causing a buffer

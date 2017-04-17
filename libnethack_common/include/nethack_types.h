@@ -836,6 +836,8 @@ struct nh_window_procs {
                              char defchoice);
     void (*win_getlin) (const char *query, void *callbackarg,
                         void (*callback)(const char *lin, void *callbackarg));
+    void (*win_show_ac) (const char *formatstring, int ac, void *callbackarg,
+                         void (*callback)(const char *output, void *callbackarg));
     void (*win_delay) (void);
     void (*win_load_progress) (int progress);
     void (*win_level_changed) (int displaymode);
