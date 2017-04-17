@@ -853,11 +853,40 @@ dbon(void)
 }
 
 
+/* Express progress of training of a skill as a percentage, where every 100%
+ * represents a full level of possible enhancement, e.g. a basic skill that
+ * returns 150% for this means it can be advanced to skilled and is 50% of the
+ * way to expert. */
+static int
+skill_training_percent(int skill)
+{
+    int percent = 0;
+    int i;
+
+    if (P_RESTRICTED(skill))
+	return 0;
+
+    for (i = P_SKILL(skill); i < P_MAX_SKILL(skill); i++) {
+	if (P_ADVANCE(skill) >= practice_needed_to_advance(i)) {
+	    percent += 100;
+	} else {
+	    int mintrain = (i == P_UNSKILLED) ? 0 :
+			   practice_needed_to_advance(i - 1);
+	    int partial = (P_ADVANCE(skill) - mintrain) * 100 /
+			  (practice_needed_to_advance(i) - mintrain);
+	    percent += min(partial, 100);
+	    break;
+	}
+    }
+
+    return percent;
+}
+
 /* return the level name for the given skill */
 static const char *
-skill_level_name(int skill)
+skill_level_name(int level)
 {
-    switch (P_SKILL(skill)) {
+    switch (level) {
     case P_UNSKILLED:
         return "Unskilled";
     case P_BASIC:
@@ -1032,13 +1061,23 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
                         (to_advance + eventually_advance + maxxed_cnt >
                          0) ? "    " : "";
 
+                int percent = skill_training_percent(i);
+                const char *percent_str = msgprintf("%5d%%",
+                                                    skill_training_percent(i));
+                boolean maxed = (P_SKILL(i) == P_MAX_SKILL(i));
+                if ((P_SKILL(i) + (percent / 100)) == P_MAX_SKILL(i))
+                    maxed = TRUE;
+
                 if (wizard)
                     buf = msgprintf(" %s%s\t%s\t%5d(%4d)", prefix, P_NAME(i),
-                                    skill_level_name(i), P_ADVANCE(i),
+                                    skill_level_name(P_SKILL(i)), P_ADVANCE(i),
                                     practice_needed_to_advance(P_SKILL(i)));
                 else
-                    buf = msgprintf(" %s%s\t[%s]", prefix, P_NAME(i),
-                                    skill_level_name(i));
+                    buf = msgprintf(" %s%s\t[%s\t/ %s]\t%s", prefix, P_NAME(i),
+                                    skill_level_name(P_SKILL(i)),
+                                    skill_level_name(P_MAX_SKILL(i)),
+                                    maxed ? "   MAX" :
+                                    !percent ? "      " : percent_str);
 
                 if (could_advance(i) || can_advance(i, speedy))
                     buf = msgprintf("%s (%d to advance)",
@@ -1093,7 +1132,8 @@ dump_skills(void)
             if (P_RESTRICTED(i) || u.weapon_skills[i].skill == P_UNSKILLED)
                 continue;
 
-            buf = msgprintf(" %s\t[%s]", P_NAME(i), skill_level_name(i));
+            buf = msgprintf(" %s\t[%s]", P_NAME(i),
+                            skill_level_name(P_SKILL(i)));
             add_menuitem(&menu, 0, buf, 0, FALSE);
         }
 
