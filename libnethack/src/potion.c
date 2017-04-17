@@ -51,8 +51,18 @@ make_sick(struct monst *mon, long xtime, const char *cause,
                                cause ? killer_msg(POISONING, cause) : NULL);
         } else if (!flags.mon_moving) /* you made the monster sick */
             mon->usicked = 1;
-    } else if (old && (!you || (type & u.usick_type))) {
+    } else if ((old || zombifying(mon)) &&
+               (!you || (type & u.usick_type))) {
         /* TODO: usick_type equavilent for monsters */
+        if (zombifying(mon)) {
+            set_property(mon, ZOMBIE, -2, TRUE);
+            if (you || vis)
+                pline(you ? msgc_statusheal : msgc_monneutral,
+                      "%s zombifying disease is cured.",
+                      s_suffix(Monnam(mon)));
+            if (!sick(mon))
+                return;
+        }
         /* was sick, now not */
         if (you)
             u.usick_type &= ~type;

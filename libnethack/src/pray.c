@@ -96,7 +96,7 @@ in_trouble(void)
         return ptr_strangled;
     if (u.utrap && u.utraptype == TT_LAVA)
         return ptr_lava;
-    if (sick(&youmonst))
+    if (sick(&youmonst) || zombifying(&youmonst))
         return ptr_sick;
     if (u.uhs >= WEAK)
         return ptr_starving;

@@ -171,7 +171,7 @@ newman(void)
 
     redist_attr();
     u.uhunger = rn1(500, 500);
-    if (sick(&youmonst))
+    if (sick(&youmonst) || zombifying(&youmonst))
         make_sick(&youmonst, 0L, NULL, FALSE, SICK_ALL);
     set_property(&youmonst, STONED, -2, FALSE);
     if (u.uhp <= 0 || u.uhpmax <= 0) {

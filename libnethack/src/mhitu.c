@@ -1323,7 +1323,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 exercise(A_STR, TRUE);
             if (!rn2(3))
                 exercise(A_CON, TRUE);
-            if (sick(&youmonst))
+            if (sick(&youmonst) || zombifying(&youmonst))
                 make_sick(&youmonst, 0L, NULL, FALSE, SICK_ALL);
             if (goaway) {
                 mongone(mtmp);

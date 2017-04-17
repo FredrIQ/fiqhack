@@ -1911,7 +1911,7 @@ update_property(struct monst *mon, enum youprop prop,
         if (slot == os_timeout) {
             if (nonliving(mon->data) || izombie(mon)) {
                 /* random polymorphs, etc */
-                if (izombie(mon->data)) {
+                if (izombie(mon)) {
                     set_property(mon, ZOMBIE, -2, TRUE);
                     set_property(mon, ZOMBIE, 0, TRUE);
                 } else
