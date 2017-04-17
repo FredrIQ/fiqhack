@@ -321,13 +321,20 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
             tmp = rnd(4);       /* bonus for martial arts */
         else
             tmp = rnd(2);
-        valid_weapon_attack = (tmp > 1);
+        valid_weapon_attack = (martial_bonus() || tmp > 1 || rn2(8));
         /* blessed gloves give bonuses when fighting 'bare-handed' */
-        if (uarmg && uarmg->blessed && (is_undead(mdat) || is_demon(mdat)))
-            tmp += rnd(4);
+        if (uarmg) {
+            if (uarmg->blessed && (is_undead(mdat) || is_demon(mdat)))
+                tmp += rnd(4);
+            if (martial_bonus() && uarmg->spe > 0)
+                tmp += uarmg->spe;
+        }
         /* So do silver rings.  Note: rings are worn under gloves, so you don't
            get both bonuses. */
         if (!uarmg) {
+            if (((uleft && uleft->blessed) || (uright && uright->blessed)) &&
+                (is_undead(mdat) || is_demon(mdat)))
+                tmp += rnd(4); /* blessed damage */
             if (uleft && objects[uleft->otyp].oc_material == SILVER)
                 barehand_silver_rings++;
             if (uright && objects[uright->otyp].oc_material == SILVER)
