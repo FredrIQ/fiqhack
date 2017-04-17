@@ -147,6 +147,9 @@ delayed_killer_var(int how)
     case GENOCIDED:
         return &u.delayed_killers.genocide;
 
+    case TURNED_ZOMBIE:
+        return &u.delayed_killers.zombie;
+
     default:
         impossible("Illegal delayed killer type: %d", how);
         return 0;
@@ -192,6 +195,7 @@ clear_delayed_killers(void)
     set_delayed_killer(STONING, NULL);
     set_delayed_killer(TURNED_SLIME, NULL);
     set_delayed_killer(GENOCIDED, NULL);
+    set_delayed_killer(TURNED_ZOMBIE, NULL);
 }
 
 void
@@ -203,6 +207,10 @@ done_in_by(struct monst *mtmp, const char *override_msg)
         u.ugrave_arise = PM_WRAITH;
     else if (mtmp->data->mlet == S_MUMMY && urace.mummynum != NON_PM)
         u.ugrave_arise = urace.mummynum;
+    else if (mtmp->data->mlet == S_ZOMBIE && urace.zombienum != NON_PM &&
+             mtmp->data != &mons[PM_GHOUL] &&
+             mtmp->data != &mons[PM_SKELETON])
+        u.ugrave_arise = urace.zombienum;
     else if (mtmp->data->mlet == S_VAMPIRE && Race_if(PM_HUMAN))
         u.ugrave_arise = PM_VAMPIRE;
     else if (mtmp->data == &mons[PM_GHOUL])
@@ -946,6 +954,9 @@ done_noreturn(int how, const char *killer)
     if (how == TURNED_SLIME)
         u.ugrave_arise = PM_GREEN_SLIME;
 
+    if (how == TURNED_ZOMBIE && urace.zombienum != NON_PM)
+        u.ugrave_arise = urace.zombienum;
+
     if (bones_ok && u.ugrave_arise < LOW_PM) {
         /* corpse gets burnt up too */
         if (how == BURNING)
@@ -957,7 +968,7 @@ done_noreturn(int how, const char *killer)
             int mnum = u.umonnum;
             const char *pbuf;
 
-            if (!Upolyd) {
+            if (!Upolyd && !is_human(youmonst.data)) {
                 /* Base corpse on race when not poly'd since original u.umonnum 
                    is based on role, and all role monsters are human. */
                 mnum = (u.ufemale &&

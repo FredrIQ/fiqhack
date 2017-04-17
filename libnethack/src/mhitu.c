@@ -697,7 +697,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 {
     const struct permonst *mdat = mtmp->data;
     int uncancelled, ptmp;
-    int dmg, armpro, permdmg;
+    int dmg, armpro, permdmg, zombie_timer;
     const struct permonst *olduasmon = youmonst.data;
     int res;
     struct attack noseduce;
@@ -1501,6 +1501,18 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                       aobjnam(obj, "seem"));
             }
         }
+        break;
+    case AD_ZOMB:
+        if (nonliving(youmonst.data) || izombie(&youmonst))
+            break;
+        zombie_timer = property_timeout(&youmonst, ZOMBIE);
+        if (!zombie_timer)
+            set_delayed_killer(TURNED_ZOMBIE,
+                               killer_msg_mon(TURNED_ZOMBIE, mtmp));
+        set_property(&youmonst, ZOMBIE,
+                     !zombie_timer ? 100 :
+                     zombie_timer <= 10 ? 1 :
+                     (zombie_timer - 10), FALSE);
         break;
     default:
         dmg = 0;

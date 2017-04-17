@@ -605,7 +605,8 @@ u_init(microseconds birthday)
     u.next_attr_check = 600;    /* arbitrary initial setting */
     
     u.delayed_killers.genocide = u.delayed_killers.illness =
-        u.delayed_killers.stoning = u.delayed_killers.sliming = NULL;
+        u.delayed_killers.stoning = u.delayed_killers.sliming =
+        u.delayed_killers.zombie = NULL;
 }
 
 

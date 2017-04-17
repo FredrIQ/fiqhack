@@ -30,6 +30,7 @@ static void noises(struct monst *, const struct attack *);
 static void missmm(struct monst *, struct monst *, const struct attack *);
 static int passivemm(struct monst *, struct monst *, boolean, int);
 static void set_at_area(int, int, void *);
+static void maurahitpile(struct monst *, int, int, const struct attack *);
 static void maurahitm(struct monst *, struct monst *, const struct attack *);
 
 /* Needed for the special case of monsters wielding vorpal blades (rare). If we
@@ -949,6 +950,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     const struct permonst *pd = mdef->data;
     int armpro, num, tmp = dice((int)mattk->damn, (int)mattk->damd);
     boolean cancelled;
+    int zombie_timer;
 
     if (touch_petrifies(pd) && !resists_ston(magr)) {
         long protector = attk_protection((int)mattk->aatyp);
@@ -1634,6 +1636,15 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         /* there's no msomearmor() function, so just do damage */
         /* if (cancelled) break; */
         break;
+    case AD_ZOMB:
+        if (nonliving(mdef->data) || izombie(mdef))
+            break;
+        zombie_timer = property_timeout(mdef, ZOMBIE);
+        set_property(mdef, ZOMBIE,
+                     !zombie_timer ? 100 :
+                     zombie_timer <= 10 ? 1 :
+                     (zombie_timer - 10), FALSE);
+        break;
     default:
         tmp = 0;
         break;
@@ -1989,6 +2000,10 @@ do_at_area(struct level *lev)
             break;
     }
 
+    int total = i; /* total amount causing auras */
+    if (!total)
+        return;
+
     /* Now, perform the attack itself */
     int x;
     int y;
@@ -2001,16 +2016,19 @@ do_at_area(struct level *lev)
             mdef = m_at(lev, x, y);
             if (!mdef && x == u.ux && y == u.uy && lev == level)
                 mdef = &youmonst;
-            if (!mdef)
-                continue;
 
             /* Find the monsters responsible for the aura */
-            for (i = 0; i < 64; i++) {
+            for (i = 0; i < total; i++) {
                 if (!(area[x][y] & (((uint64_t)1 >> i) & 1)))
                     continue;
 
-                /* We found what we're looking for. Now, do the attack. */
-                maurahitm(areamons[i], mdef, areaatk[i]);
+                /* If there is a monster here, perform an attack */
+                if (mdef)
+                    maurahitm(areamons[i], mdef, areaatk[i]);
+
+                /* If adtyp is AD_ZOMB (zombies), potentially revive stuff */
+                if (areaatk[i]->adtyp == AD_ZOMB)
+                    maurahitpile(areamons[i], x, y, areaatk[i]);
             }
         }
     }
@@ -2026,7 +2044,75 @@ set_at_area(int x, int y, void *area)
 }
 
 
-/* Aura effects */
+/* Aura effects vs object piles */
+static void
+maurahitpile(struct monst *mon, int x, int y, const struct attack *mattk)
+{
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon) || cansee(x, y));
+    struct obj *obj, *nexthere;
+    struct monst *omon;
+    for (obj = level->objects[x][y]; obj; obj = nexthere) {
+        nexthere = obj->nexthere;
+        if (obj->otyp == CORPSE) {
+            pline(msgc_debug, "?");
+            if (ox_monst(obj)) {
+                omon = get_mtraits(obj, FALSE);
+                pline(msgc_debug, "?%d", omon->orig_mnum);
+                /* We can't use izombie() because normal property checks assume
+                   proper values in the monst */
+                if ((nonliving(&mons[omon->orig_mnum]) ||
+                     (omon->mintrinsic[ZOMBIE] & FROMOUTSIDE_RAW)) && rn2(20))
+                    continue;
+            }
+            omon = revive(obj);
+            if (mon->mtame != omon->mtame) {
+                if (mon->mtame)
+                    tamedog(omon, NULL);
+                else
+                    omon->mtame = 0; /* no longer tame */
+            }
+            if (mon->mpeaceful != omon->mpeaceful)
+                omon->mpeaceful = mon->mpeaceful;
+            /* turn into a zombie if applicable */
+            int mndx = NON_PM;
+            if (is_human(omon->data))
+                mndx = PM_HUMAN_ZOMBIE;
+            if (is_elf(omon->data))
+                mndx = PM_ELF_ZOMBIE;
+            if (is_orc(omon->data))
+                mndx = PM_ORC_ZOMBIE;
+            if (is_gnome(omon->data))
+                mndx = PM_GNOME_ZOMBIE;
+            if (is_dwarf(omon->data))
+                mndx = PM_DWARF_ZOMBIE;
+            if (is_giant(omon->data))
+                mndx = PM_GIANT_ZOMBIE;
+            if (omon->data == &mons[PM_ETTIN])
+                mndx = PM_ETTIN_ZOMBIE;
+            if (omon->data->mlet == S_KOBOLD)
+                mndx = PM_KOBOLD_ZOMBIE;
+            if (mndx != NON_PM && omon->data != &mons[mndx] &&
+                !newcham(omon, &mons[mndx], FALSE, FALSE)) {
+                if (you || vis)
+                    pline(msgc_monneutral, "%s from the unholy revival and is destroyed!",
+                          M_verbs(omon, "shudder"));
+                monkilled(mon, omon, "", -AD_ZOMB);
+                continue;
+            }
+
+            if (vis)
+                pline(msgc_monneutral, "%s from the dead%s!",
+                      M_verbs(omon, "raise"),
+                      nonliving(omon->data) ? "" :
+                      msgcat_many("under ", mon_nam(mon), " power", NULL));
+            if (!nonliving(omon->data) && !izombie(omon))
+                set_property(omon, ZOMBIE, 0, TRUE);
+        }
+    }
+}
+
+/* Aura effects vs mon */
 static void
 maurahitm(struct monst *magr, struct monst *mdef,
           const struct attack *mattk)
@@ -2053,6 +2139,10 @@ maurahitm(struct monst *magr, struct monst *mdef,
                   s_suffix(mon_nam(magr)));
         if (property_timeout(mdef, SLOW) < dmg)
             set_property(mdef, SLOW, dmg, TRUE);
+        break;
+    case AD_ZOMB:
+        if (property_timeout(mdef, ZOMBIE) > 100)
+            mdef->mintrinsic[ZOMBIE] -= 100; /* don't cure yet */
         break;
     }
 }

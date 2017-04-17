@@ -1907,6 +1907,122 @@ update_property(struct monst *mon, enum youprop prop,
             effect = TRUE;
         }
         break;
+    case ZOMBIE:
+        if (slot == os_timeout) {
+            if (nonliving(mon->data) || izombie(mon)) {
+                /* random polymorphs, etc */
+                if (izombie(mon->data)) {
+                    set_property(mon, ZOMBIE, -2, TRUE);
+                    set_property(mon, ZOMBIE, 0, TRUE);
+                } else
+                    set_property(mon, ZOMBIE, -2, TRUE);
+                mon->uzombied = FALSE;
+                if (mon == &youmonst)
+                    set_delayed_killer(TURNED_ZOMBIE, NULL);
+                break;
+            }
+            if (lost) {
+                if (you || vis) {
+                    pline(you ? msgc_statusheal : msgc_monneutral,
+                          "%s zombifying disease wears off naturally.",
+                          s_suffix(Monnam(mon)));
+                    effect = TRUE;
+                }
+                break;
+            }
+            if (you || vis) {
+                pline(you && timer > 40 ? msgc_statusbad :
+                      you ? msgc_fatal :
+                      mon->mtame ? msgc_petfatal :
+                      msgc_monneutral,
+                      "%s a %s zombification disease%s",
+                      M_verbs(mon, "attain"), timer > 40 ? "minor" : "major",
+                      timer > 40 ? "." : "!");
+                effect = TRUE;
+            }
+            break;
+        }
+        if (slot == os_inctimeout) { /* actually a decrease from being hit */
+            if (you || vis) {
+                pline(you && timer > 40 ? msgc_statusbad :
+                      you ? msgc_fatal :
+                      mon->mtame ? msgc_petfatal :
+                      msgc_monneutral,
+                      "%s zombification disease builds up%s",
+                      s_suffix(Monnam(mon)),
+                      timer > 40 ? "." : " critically!");
+                effect = TRUE;
+            }
+            break;
+        }
+        if (slot == os_dectimeout) {
+            if (timer == 40) {
+                if (you || vis)
+                    pline(you ? msgc_fatal :
+                          mon->mtame ? msgc_petfatal :
+                          msgc_monneutral,
+                          "%s zombification disease turns terminal!",
+                          s_suffix(Monnam(mon)));
+                effect = TRUE;
+                break;
+            }
+            if (timer > 40 && !rn2(10)) {
+                timer += 100;
+                if (timer > 200)
+                    set_property(mon, prop, -2, FALSE);
+                else
+                    inc_timeout(mon, prop, 100, TRUE);
+                break;
+            }
+            if (lost) { /* turned */
+                int mndx = NON_PM;
+                if (is_human(mon->data))
+                    mndx = PM_HUMAN_ZOMBIE;
+                if (is_elf(mon->data))
+                    mndx = PM_ELF_ZOMBIE;
+                if (is_orc(mon->data))
+                    mndx = PM_ORC_ZOMBIE;
+                if (is_gnome(mon->data))
+                    mndx = PM_GNOME_ZOMBIE;
+                if (is_dwarf(mon->data))
+                    mndx = PM_DWARF_ZOMBIE;
+                if (is_giant(mon->data))
+                    mndx = PM_GIANT_ZOMBIE;
+                if (mon->data == &mons[PM_ETTIN])
+                    mndx = PM_ETTIN_ZOMBIE;
+                if (mon->data->mlet == S_KOBOLD)
+                    mndx = PM_KOBOLD_ZOMBIE;
+                if (!you && mndx != NON_PM && mon->data != &mons[mndx] &&
+                    !newcham(mon, &mons[mndx], FALSE, FALSE)) {
+                    if (vis) {
+                        pline(mon->mtame ? msgc_petfatal : msgc_monneutral,
+                              "%s from the zombification and is destroyed!",
+                              M_verbs(mon, "shudder"));
+                        effect = TRUE;
+                    }
+                    monkilled(NULL, mon, "", -AD_ZOMB);
+                    break;
+                }
+                if (you || (vis && mndx != NON_PM)) {
+                    pline(you ? msgc_fatal_predone :
+                          mon->mtame ? msgc_petfatal : msgc_monneutral,
+                          "%s into a zombie...", M_verbs(mon, "turn"));
+                    effect = TRUE;
+                } else if (vis) {
+                    pline(mon->mtame ? msgc_petfatal :
+                          msgc_monneutral,
+                          "%s into an instrument of undead...", M_verbs(mon, "turn"));
+                    effect = TRUE;
+                }
+                if (you)
+                    done(TURNED_ZOMBIE, delayed_killer(TURNED_ZOMBIE));
+                else {
+                    mon->mtame = mon->mpeaceful = 0;
+                    set_property(mon, ZOMBIE, 0, TRUE);
+                }
+            }
+        }
+        break;
     default:
         impossible("Unknown property: %u", prop);
         break;

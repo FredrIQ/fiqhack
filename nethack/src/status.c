@@ -156,12 +156,14 @@ static const struct {
       { "Hallu", CLR_BRIGHT_BLUE, -1 },
       { "Cancelled", CLR_BRIGHT_BLUE, -1 },
       { "Slow", CLR_BRIGHT_BLUE, -1 },
+      { "Zombie", CLR_ORANGE, CLR_GREEN },
       /* misc fatal */
       { "FoodPois", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
       { "Ill", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
       { "Strangle", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
       { "Slime", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
       { "Petrify", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
+      { "Zombie!", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
       { NULL, 0 }
 };
 

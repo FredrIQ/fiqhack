@@ -499,6 +499,13 @@ save_you(struct memfile *mf, struct you *y)
     /* Padding to allow character information to be added without breaking save
        compatibility: add new options just before the padding, then remove the
        same amount of padding */
+    /*if (y->delayed_killers.zombie) {
+        int len = strlen(y->delayed_killers.zombie);
+        mwrite32(mf, len);
+        mwrite(mf, y->delayed_killers.zombie, len);
+    } else
+    mwrite32(mf, 0);*/
+
     for (i = 0; i < 511; i++)    /* savemap: ignore */
         mwrite8(mf, 0);          /* savemap: 4088 */
 

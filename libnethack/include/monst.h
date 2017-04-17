@@ -116,6 +116,7 @@ struct monst {
     unsigned usicked:1;
     unsigned uslimed:1;
     unsigned ustoned:1;
+    unsigned uzombied:1;
     unsigned levi_wary:1;       /* worried about levi timing out */
     unsigned female:1;          /* is female */
     unsigned cham:3;            /* shape-changer */

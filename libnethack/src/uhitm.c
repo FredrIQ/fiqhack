@@ -1094,6 +1094,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
     const struct permonst *pd = mdef->data;
     int tmp = dice((int)mattk->damn, (int)mattk->damd);
     int armpro;
+    int zombie_timer;
     boolean negated;
 
     armpro = magic_negation(mdef);
@@ -1492,6 +1493,17 @@ damageum(struct monst *mdef, const struct attack *mattk)
                   s_suffix(Monnam(mdef)), aobjnam(obj, "seem"));
         }
         tmp = 0;
+        break;
+    case AD_ZOMB:
+        if (nonliving(mdef->data) || izombie(mdef))
+            break;
+        zombie_timer = property_timeout(mdef, ZOMBIE);
+        if (!zombie_timer)
+            mdef->uzombied = TRUE;
+        set_property(mdef, ZOMBIE,
+                     !zombie_timer ? 100 :
+                     zombie_timer <= 10 ? 1 :
+                     (zombie_timer - 10), FALSE);
         break;
     case AD_SLOW:
         if (!negated)

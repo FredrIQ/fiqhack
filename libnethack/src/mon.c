@@ -1715,6 +1715,11 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     }
     /* end anti-stupidity checks */
 
+    /* nonliving/izombie vs living */
+    if (((nonliving(magr->data) || izombie(magr)) ? 1 : 0) !=
+        ((nonliving(mdef->data) || izombie(mdef)) ? 1 : 0))
+        return ALLOW_M | ALLOW_TM;
+
     /* pets attack hostile monsters */
     if (magr->mtame && !mdef->mpeaceful)
         return ALLOW_M | ALLOW_TM;

@@ -509,7 +509,7 @@ restgamestate(struct memfile *mf)
 void
 restore_you(struct memfile *mf, struct you *y)
 {
-    int i;
+    int i, len;
     unsigned int yflags, eflags;
 
     memset(y, 0, sizeof (struct you));
@@ -618,6 +618,17 @@ restore_you(struct memfile *mf, struct you *y)
     y->bashmsg = mread8(mf);
     y->moveamt = mread8(mf);
 
+    /* this is oddly placed due to save padding */
+    /*len = mread32(mf);
+    if (len > 0) {
+        char *buf = malloc(len + 1);
+        mread(mf, buf, len);
+        buf[len] = '\0';
+        y->delayed_killers.zombie = buf;
+    } else {
+        y->delayed_killers.zombie = NULL;
+        }*/
+
     /* Ignore the padding added in save.c */
     for (i = 0; i < 511; i++)
         (void) mread8(mf);
@@ -655,7 +666,7 @@ restore_you(struct memfile *mf, struct you *y)
 
     restore_quest_status(mf, &y->quest_status);
 
-    int len = mread32(mf);
+    len = mread32(mf);
     if (len > 0) {
         char *buf = malloc(len + 1);
         mread(mf, buf, len);
