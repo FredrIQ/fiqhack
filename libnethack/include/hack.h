@@ -76,7 +76,8 @@
 # define TURNED_SLIME   10
 # define EXPLODED       11
 # define GENOCIDED      12
-# define LAST_KILLER    (GENOCIDED)
+# define TURNED_ZOMBIE  13
+# define LAST_KILLER    (TURNED_ZOMBIE)
 # define NUM_KILLERS    (LAST_KILLER + 1)
 # define TRICKED        13
 # define QUIT           14

@@ -205,10 +205,14 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.save_encoding);
     mwrite8(mf, flags.hide_implied);
 
+    /* Save revision. Misplaced to maintain save compatibility. */
+    flags.save_revision = SAVE_REVISION;
+    mwrite32(mf, flags.save_revision);
+
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 109; i++)
+    for (i = 0; i < 105; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));

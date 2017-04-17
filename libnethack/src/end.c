@@ -58,19 +58,20 @@ static void container_contents(struct obj *, boolean, boolean);
 static const char *const ends[] = {     /* "when you..." */
     "died", "choked", "were poisoned", "starved", "drowned", "suffocated",
     "burned", "dissolved", "were crushed", "turned to stone",
-    "turned into slime", "exploded", "were wiped out", "were tricked",
-    "quit", "escaped", "ascended"
+    "turned into slime", "exploded", "were wiped out", "turned into a zombie",
+    "were tricked", "quit", "escaped", "ascended"
 };
 
 static const char *const killer_verb[] = {
     "killed", "choked", "poisoned", "died", "drowned", "died", "burned",
     "dissolved", "crushed to death", "petrified", "turned to slime",
-    "exploded", "wiped out", "committed trickery", "quit", "escaped", "ascended"
+    "exploded", "wiped out", "zombified", "committed trickery",
+    "quit", "escaped", "ascended"
 };
 
 static const char *const killer_preposition[] = {
     "by", "on", "by", "of", "in", "of", "by", "in", "by", "by", "by", "by",
-    "by", "", "", "", ""
+    "by", "by", "", "", "", ""
 };
 
 

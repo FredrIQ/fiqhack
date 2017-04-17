@@ -2227,14 +2227,25 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     mon->wormno = mread8(mf);
     mflags = mread32(mf);
     /* Intrinsics have 15 bits for timeout and 1 for FROMOUTSIDE(_RAW). Since
-       save_encode optimize size significantly, this is used for the timeouts,
+       save_encode optimizes size significantly, this is used for the timeouts,
        but since they are in the same field, save/restore them seperately. */
+
+    /* Amount of properties are stored on the save file. However, old files lack this
+       data. These save files have 70 (0-69) properties, so hardcode this. */
+    int lastprop = 0;
+
+    if (flags.save_revision < 1)
+        lastprop = 69;
+    else
+        lastprop = mread8(mf);
+
     enum youprop prop;
-    for (prop = 0; prop <= LAST_PROP; prop++) /* timeouts */
-        mon->mintrinsic[prop] = save_decode_16(mread16(mf), -moves, l ? -l->lastmoves : 0);
+    for (prop = 0; prop <= lastprop; prop++) /* timeouts */
+        mon->mintrinsic[prop] = save_decode_16(mread16(mf),
+                                               -moves, l ? -l->lastmoves : 0);
     /* outside -- padded to an octet */
     xchar octet = 0;
-    for (prop = 0; prop <= LAST_PROP; prop++) {
+    for (prop = 0; prop <= lastprop; prop++) {
         if (!(prop % 8))
             octet = mread8(mf);
         if ((octet >> (prop % 8)) & 1)
@@ -2511,8 +2522,10 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
         (Align2asave(mon->maligntyp) << 1) |
         (mon->iswiz << 0);
     mwrite32(mf, mflags);
+
+    mwrite8(mf, LAST_PROP);
     enum youprop prop;
-    /* see monster restoration for why this code looks more complicated than it should be */
+    /* see monster restoration for why this code looks more complicated than it should */
     for (prop = 0; prop <= LAST_PROP; prop++)
         mwrite16(mf, save_encode_16(mon->mintrinsic[prop] & TIMEOUT_RAW,
                                     -moves, l ? -l->lastmoves : 0));
