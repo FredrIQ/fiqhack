@@ -1652,6 +1652,8 @@ curses_delay_output(void)
 #endif
 }
 
+/* formatstring is printf-like, but doesn't use printf directly to
+   avoid potential serverside exploits */
 void
 curses_show_ac(const char *formatstring, int ac, void *res,
                void (*callback)(const char *, void *))
