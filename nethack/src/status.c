@@ -213,7 +213,8 @@ draw_classic_status(struct nh_player_info *pi, nh_bool threeline)
     wattron(statuswin, colorattr);
     wprintw(statuswin, "%d(%d)", pi->en, pi->enmax);
     wattroff(statuswin, colorattr);
-    wprintw(statuswin, " Def:%d ", 10 - pi->ac);
+    wprintw(statuswin, " %s:%d ", settings.show_ac ? "AC" : "Def",
+            settings.show_ac ? pi->ac : 10 - pi->ac);
     wprintw(statuswin, " %s:%d",
             threeline ? "Xp" : "Exp",
             pi->level);
