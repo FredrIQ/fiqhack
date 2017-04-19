@@ -1481,24 +1481,6 @@ assign_level(d_level * dest, const d_level * src)
     dest->dlevel = src->dlevel;
 }
 
-/* dest = src + rn1(range) */
-void
-assign_rnd_level(d_level * dest, const d_level * src, int range)
-{
-    int rangerng = rn2_on_rng(12, rng_mysterious_force);
-
-    dest->dnum = src->dnum;
-    dest->dlevel = src->dlevel + ((range > 0) ?
-                                  rangerng / (12 / range) + 1 :
-                                  -(rangerng / (12 / -range)) - 1);
-
-    if (dest->dlevel > dunlevs_in_dungeon(dest))
-        dest->dlevel = dunlevs_in_dungeon(dest);
-    else if (dest->dlevel < 1)
-        dest->dlevel = 1;
-}
-
-
 int
 induced_align(const d_level * dlev, int pct, enum rng rng)
 {

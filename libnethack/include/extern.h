@@ -502,7 +502,6 @@ extern boolean In_W_tower(int, int, const d_level *);
 extern void find_hell(d_level *);
 extern void goto_hell(boolean, boolean);
 extern void assign_level(d_level * dest, const d_level * src);
-extern void assign_rnd_level(d_level * dest, const d_level * src, int range);
 extern int induced_align(const d_level * dlev, int pct, enum rng rng);
 extern boolean Invocation_lev(const d_level * dlev);
 extern xchar level_difficulty(const d_level * dlev);

@@ -2359,23 +2359,10 @@ use_item(struct musable *m)
             return 2;
         }
 
-        if (Inhell && mon_has_amulet(mon) && !rn2(4) &&
-            (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3)) {
-            if (vismon)
-                pline(msgc_substitute,
-                      "As %s climbs the stairs, a mysterious force momentarily "
-                      "surrounds %s...", mon_nam(mon), mhim(mon));
-            /* simpler than for the player; this will usually be the Wizard and 
-               he'll immediately go right to the upstairs, so there's not much
-               point in having any chance for a random position on the current
-               level */
-            migrate_to_level(mon, ledger_no(&u.uz) + 1, MIGR_RANDOM, NULL);
-        } else {
-            if (vismon)
-                pline(msgc_monneutral, "%s escapes upstairs!", Monnam(mon));
-            migrate_to_level(mon, ledger_no(&u.uz) - 1, MIGR_STAIRS_DOWN,
-                             NULL);
-        }
+        if (vismon)
+            pline(msgc_monneutral, "%s escapes upstairs!", Monnam(mon));
+        migrate_to_level(mon, ledger_no(&u.uz) - 1, MIGR_STAIRS_DOWN,
+                         NULL);
         return 2;
     case MUSE_DOWNSTAIRS:
         if (vismon)
