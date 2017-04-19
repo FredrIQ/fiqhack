@@ -1985,6 +1985,7 @@ extern int getdir(const char *, schar *dx, schar *dy, schar *dz, boolean isarg);
 extern char query_key(const char *query, enum nh_query_key_flags flags,
                       int *count);
 extern const char *getlin(const char *query, boolean isarg);
+extern const char *show_ac(const char *, int);
 extern int display_menu(struct nh_menulist *, const char *, int, int,
                         const int **);
 extern int display_objects(struct nh_objlist *, const char *, int, int,
