@@ -170,7 +170,7 @@ display_oprops(const struct obj *obj, const char *input)
     if (strstr(buf, " of ") &&
         (!strstr(buf, "pair of") ||
          (obj->oclass == ARMOR_CLASS &&
-          is_boots(obj) && known)) &&
+          (is_boots(obj) || is_gloves(obj)) && known)) &&
         !strstr(buf, "set of") &&
         !strstr(buf, "tin of"))
         suffixes++;
