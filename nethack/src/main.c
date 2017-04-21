@@ -202,7 +202,7 @@ init_game_paths(const char *argv0)
             pathlist[LOCKPREFIX] = override_hackdir;
             pathlist[TROUBLEPREFIX] = override_hackdir;
         }
-# ifndef PUBLIC_SERVER
+# ifndef NO_DUMPDIR_OVERRIDE
         if (override_userdir) {
             /* player-specific */
             pathlist[DUMPPREFIX] = override_userdir;

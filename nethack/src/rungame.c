@@ -15,6 +15,14 @@
 # include <libgen.h>
 #endif
 
+/* these will only override unix directories */
+#ifdef UNIX
+# ifndef DUMPDIR
+#  define DUMPDIR "dumps/"
+# else
+#  define NO_DUMPDIR_OVERRIDE
+# endif
+#endif
 
 #if defined(WIN32)
 
@@ -138,7 +146,7 @@ get_gamedir(enum game_dirs dirtype, char *buf)
         subdir = "log/";
         break;
     case DUMP_DIR:
-        subdir = "dumps/";
+        subdir = DUMPDIR;
         break;
     case TILESET_DIR:
         subdir = "tilesets/";
