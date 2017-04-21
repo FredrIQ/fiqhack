@@ -600,20 +600,19 @@ void
 adjalign(int n)
 {
     int cnt; /* for loop initial declarations are only allowed in C99 mode */
-    int newalign = u.ualign.record + n;
+    int oldalign = u.ualign.record;
+    int newalign = oldalign;
+    if (n < 0 && oldalign > 0)
+        newalign = 0;
+    newalign += n;
+    if (newalign > ALIGNLIM)
+        newalign = ALIGNLIM;
+    u.ualign.record = newalign;
 
-    if (n < 0) {
-        if (newalign < u.ualign.record) {
-            for (cnt = newalign; cnt < u.ualign.record; cnt++) {
-                break_conduct(conduct_lostalign);
-            }
-            u.ualign.record = newalign;
-        }
-    } else if (newalign > u.ualign.record) {
-        u.ualign.record = newalign;
-        if (u.ualign.record > ALIGNLIM)
-            u.ualign.record = ALIGNLIM;
-    }
+    /* conduct */
+    if (n < 0 && newalign < oldalign)
+        for (cnt = newalign; cnt < oldalign; cnt++)
+            break_conduct(conduct_lostalign);
 }
 
 /* Return "beautiful", "handsome" or "ugly"
