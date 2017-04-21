@@ -106,6 +106,167 @@ static const struct Jitem Japanese_items[] = {
 
 static const char *Japanese_item_name(int i);
 
+struct opropdesc {
+    uint64_t mask;
+    const char *prefix;
+    const char *shorthand; /* for 3+ properties */
+    const char *suffix;
+    const char *suffix_armor;
+};
+
+/* shorthand/suffix_armor uses prefix/suffix if empty */
+static const struct opropdesc prop_desc[] = {
+    {opm_reflects, NULL, "reflect", "reflection", NULL},
+    {opm_search, NULL, "search", "searching", NULL},
+    {opm_hunger, NULL, NULL, "hunger", NULL},
+    {opm_stealth, NULL, NULL, "stealth", NULL},
+    {opm_telepat, NULL, NULL, "telepathy", NULL},
+    {opm_fumble, NULL, "fumble", "fumbling", NULL},
+    {opm_warn, NULL, "warn", "warning", NULL},
+    {opm_aggravate, NULL, "aggravates", "aggravate monster",
+     NULL},
+    {opm_fire, NULL, NULL, "fire", "fire resistance"},
+    {opm_frost, NULL, NULL, "frost", "cold resistance"},
+    {opm_shock, NULL, "shock", "lightning",
+     "shock resistance"},
+    {opm_drain, "thirsty", "drain", NULL, "drain resistance"},
+    {opm_speed, NULL, NULL, "speed", NULL},
+    {opm_oilskin, "oilskin", NULL, NULL, NULL},
+    {opm_power, NULL, NULL, "power", NULL},
+    {opm_dexterity, NULL, "dex", "dexterity", NULL},
+    {opm_brilliance, NULL, "brill", "brilliance", NULL},
+    {opm_displacement, NULL, "displace", "displacement", NULL},
+    {opm_clairvoyant, NULL, "clairvoyant", "clairvoyance", NULL},
+    /* these below use "versus x" instead of "of x" for armor,
+       checked via opm_vorpal */
+    {opm_vorpal, "vorpal", NULL, NULL, "beheading"},
+    {opm_detonate, NULL, "detonate", "detonation",
+     "explosions"},
+    {opm_none, NULL, NULL, NULL, NULL},
+};
+
+static const char *
+display_oprops(const struct obj *obj, const char *input)
+{
+    if (!obj)
+        return "";
+
+    const char *buf = input;
+    uint64_t props = (obj->oprops & obj->oprops_known);
+    int prop_amount = 0;
+
+    if (props != obj->oprops) {
+        prop_amount++;
+        buf = msgcat("magical ", buf);
+    }
+
+    const struct opropdesc *desc;
+    const struct opropdesc *olddesc = NULL;
+    int suffixes = 0;
+
+    struct objclass *ocl = &objects[obj->otyp];
+    int known = ocl->oc_name_known;
+
+    if (strstr(buf, " of ") &&
+        (!strstr(buf, "pair of") ||
+         (obj->oclass == ARMOR_CLASS &&
+          is_boots(obj) && known)) &&
+        !strstr(buf, "set of") &&
+        !strstr(buf, "tin of"))
+        suffixes++;
+    boolean use_armor = TRUE;
+    boolean versus = FALSE;
+    if (obj->oclass == WEAPON_CLASS || is_weptool(obj))
+        use_armor = FALSE;
+
+    for (desc = prop_desc; desc->mask != opm_none; desc++) {
+        if (desc->mask == opm_vorpal) {
+            suffixes = 0;
+            versus = TRUE;
+            if (olddesc) {
+                if (!use_armor || !olddesc->suffix_armor)
+                    buf = msgcat_many(buf, " and ",
+                                      olddesc->suffix, NULL);
+                else
+                    buf = msgcat_many(buf, " and ",
+                                      olddesc->suffix_armor,
+                                      NULL);
+                olddesc = NULL;
+            }
+        }
+        if (props & desc->mask) {
+            prop_amount++;
+            if (prop_amount > 4)
+                break;
+
+            if (desc->suffix ||
+                (desc->suffix_armor && use_armor)) {
+                if (olddesc) {
+                    if (!use_armor || !olddesc->suffix_armor)
+                        buf = msgcat_many(buf, ", ",
+                                          olddesc->suffix, NULL);
+                    else
+                        buf = msgcat_many(buf, ", ",
+                                          olddesc->suffix_armor,
+                                          NULL);
+                }
+
+                if (!suffixes) {
+                    if (!use_armor || !desc->suffix_armor)
+                        buf = msgcat_many(buf,
+                                          versus ? " versus " :
+                                          " of ", desc->suffix,
+                                          NULL);
+                    else
+                        buf = msgcat_many(buf,
+                                          versus ? " versus " :
+                                          " of ",
+                                          desc->suffix_armor,
+                                          NULL);
+                } else
+                    olddesc = desc;
+
+                suffixes++;
+            } else {
+            }
+            //buf = msgcat_many(desc->prefix, " ", buf, NULL);
+        }
+    }
+
+    if (olddesc) {
+        buf = msgcat_many(buf, " and ",
+                          !use_armor || !olddesc->suffix_armor ?
+                          olddesc->suffix : olddesc->suffix_armor,
+                          NULL);
+        olddesc = NULL;
+    }
+
+    if (prop_amount <= 4)
+        return buf;
+
+    /* Unusually many properties, use shorthand */
+    buf = msgcat(input, " (");
+    prop_amount = 0;
+    for (desc = prop_desc; desc->mask != opm_none; desc++) {
+        if (props & desc->mask) {
+            if (prop_amount)
+                buf = msgcat(buf, ",");
+
+            buf = msgcat(buf,
+                         desc->shorthand ? desc->shorthand :
+                         desc->prefix ? desc->prefix :
+                         desc->suffix ? desc->suffix :
+                         "???");
+            prop_amount++;
+        }
+    }
+
+    if (props != obj->oprops)
+        buf = msgcat(buf, "+more");
+
+    buf = msgcat(buf, ")");
+    return buf;
+}
 
 const char *
 obj_typename(int otyp)
@@ -307,6 +468,12 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
         bknown = TRUE;
     if (obj_is_pname(obj))
         goto nameit;
+
+    /* called is after oprops so we need to know if we
+       should display it before actually doing it to avoid
+       duplicate if expressions */
+    boolean do_un = FALSE;
+
     switch (obj->oclass) {
     case AMULET_CLASS:
         if (!dknown)
@@ -316,10 +483,15 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
             buf = known ? actualn : dn;
         else if (nn)
             buf = actualn;
-        else if (un)
-            buf = msgcat("amulet called ", un);
-        else
+        else if (un) {
+            buf = "amulet";
+            do_un = TRUE;
+        } else
             buf = msgcat(dn, " amulet");
+
+        buf = display_oprops(obj, buf);
+        if (do_un)
+            buf = msgcat_many(buf, " called ", un, NULL);
         break;
 
     case WEAPON_CLASS:
@@ -335,10 +507,16 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
             buf = msgcat(buf, dn ? dn : actualn);
         else if (nn)
             buf = msgcat(buf, actualn);
-        else if (un)
-            buf = msgcat_many(buf, dn ? dn : actualn, " called ", un, NULL);
-        else
+        else if (un) {
             buf = msgcat(buf, dn ? dn : actualn);
+            do_un = TRUE;
+        } else
+            buf = msgcat(buf, dn ? dn : actualn);
+
+        buf = display_oprops(obj, buf);
+        if (do_un)
+            buf = msgcat_many(buf, " called ", un, NULL);
+
         if (typ == FIGURINE)
             buf = msgcat_many(buf, " of ", an(mons[obj->corpsenm].mname), NULL);
         break;
@@ -377,10 +555,13 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
                 buf = "shield";
             else
                 buf = "armor";
-            buf = msgcat(buf, " called ");
-            buf = msgcat(buf, un);
+            do_un = TRUE;
         } else
             buf = msgcat(buf, dn);
+
+        buf = display_oprops(obj, buf);
+        if (do_un)
+            buf = msgcat_many(buf, " called ", un, NULL);
         break;
 
     case FOOD_CLASS:
@@ -412,6 +593,9 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
                 buf = msgcat_many(buf, " of ", mons[obj->corpsenm].mname,
                                   " meat", NULL);
         }
+
+        /* meat rings */
+        buf = display_oprops(obj, buf);
         break;
 
     case COIN_CLASS:
@@ -432,6 +616,8 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
                             mons[obj->corpsenm].mname);
         else
             buf = actualn;
+
+        buf = display_oprops(obj, buf);
         break;
 
     case BALL_CLASS:
@@ -439,6 +625,8 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
            separate out the "very", in my opinion. */
         buf = (obj->owt > ocl->oc_weight) ?
             "very heavy iron ball" : "heavy iron ball";
+
+        buf = display_oprops(obj, buf);
         break;
 
     case POTION_CLASS:
@@ -512,10 +700,15 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
             buf = "ring";
         else if (nn)
             buf = msgcat("ring of ", actualn);
-        else if (un)
-            buf = msgcat("ring called ", un);
-        else
+        else if (un) {
+            buf = "ring";
+            do_un = TRUE;
+        } else
             buf = msgcat(dn, " ring");
+
+        buf = display_oprops(obj, buf);
+        if (do_un)
+            buf = msgcat_many(buf, " called ", un, NULL);
         break;
 
     case GEM_CLASS:
@@ -525,9 +718,10 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
             if (!dknown) {
                 buf = rock;
             } else if (!nn) {
-                if (un)
-                    buf = msgcat_many(rock, " called ", un, NULL);
-                else
+                if (un) {
+                    buf = rock;
+                    do_un = TRUE;
+                } else
                     buf = msgcat_many(dn, " ", rock, NULL);
             } else {
                 buf = actualn;
@@ -535,6 +729,10 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
                     buf = msgcat(buf, " stone");
             }
         }
+
+        buf = display_oprops(obj, buf);
+        if (do_un)
+            buf = msgcat_many(buf, " called ", un, NULL);
         break;
 
     default:

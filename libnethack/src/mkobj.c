@@ -1642,6 +1642,17 @@ restore_obj(struct memfile *mf)
     otmp->timed = mread8(mf);
     otmp->cobj = mread8(mf) ? (void *)1 : NULL; /* set the pointer to 1 if
                                                    there will be contents */
+
+    if (flags.save_revision >= 2) {
+        otmp->oprops = mread64(mf);
+        otmp->oprops_known = mread64(mf);
+        int i;
+
+        /* Reserved for future extensions */
+        for (i = 0; i < 200; i++)
+            (void) mread8(mf);
+    }
+
     otmp->cursed = (oflags >> 31) & 1;
     otmp->blessed = (oflags >> 30) & 1;
     otmp->unpaid = (oflags >> 29) & 1;
@@ -1740,6 +1751,15 @@ save_obj(struct memfile *mf, struct obj *obj)
     /* Saving the pointer itself is unneccessary, but we need to know if
        there is one in first place to save/restore */
     mwrite8(mf, obj->cobj ? 1 : 0);
+
+    mwrite64(mf, obj->oprops);
+    mwrite64(mf, obj->oprops_known);
+
+    /* Reserved for future extensions */
+    int i;
+    for (i = 0; i < 200; i++)
+        mwrite8(mf, 0);
+
     mwrite32(mf, obj->m_id);
 
     if (obj->oextra)

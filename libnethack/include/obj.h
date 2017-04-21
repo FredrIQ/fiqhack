@@ -159,7 +159,7 @@ enum oprops {
     op_last = op_clairvoyant,
 };
 
-#define OPM(reason) opm_##reason = 1 << op_##reason
+#define OPM(reason) opm_##reason = ((uint64_t)1 << op_##reason)
 enum FLAG_ENUM opmask {
     opm_none = 0,
     OPM(reflects),
