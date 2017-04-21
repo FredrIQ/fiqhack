@@ -129,6 +129,71 @@ struct obj {
     int age;                    /* creation date */
     int owornmask;
     unsigned nomerge:1;         /* always 0 at neutral turnstate */
+    uint64_t oprops;            /* object properties */
+    uint64_t oprops_known;      /* IDed properties from above */
+};
+
+enum oprops {
+    op_reflects,
+    op_search,
+    op_hunger,
+    op_stealth,
+    op_telepat,
+    op_fumble,
+    op_warn,
+    op_aggravate,
+    op_fire,
+    op_frost,
+    op_shock,
+    op_vorpal,
+    op_drain,
+    op_detonate,
+    op_speed,
+    op_oilskin,
+    op_power,
+    op_dexterity,
+    op_brilliance,
+    op_displacement,
+    op_clairvoyant,
+    op_first = op_reflects,
+    op_last = op_clairvoyant,
+};
+
+#define OPM(reason) opm_##reason = 1 << op_##reason
+enum FLAG_ENUM opmask {
+    opm_none = 0,
+    OPM(reflects),
+    OPM(search),
+    OPM(hunger),
+    OPM(stealth),
+    OPM(telepat),
+    OPM(fumble),
+    OPM(warn),
+    OPM(aggravate),
+    OPM(fire),
+    OPM(frost),
+    OPM(shock),
+    OPM(vorpal),
+    OPM(drain),
+    OPM(detonate),
+    OPM(speed),
+    OPM(oilskin),
+    OPM(power),
+    OPM(dexterity),
+    OPM(brilliance),
+    OPM(displacement),
+    OPM(clairvoyant),
+    /* any except for projectiles */
+    opm_any = (opm_reflects | opm_search | opm_hunger | opm_stealth |
+               opm_telepat | opm_fumble | opm_warn | opm_aggravate),
+    opm_aweparm = (opm_fire | opm_frost | opm_shock | opm_drain),
+    opm_mwep = (opm_any | opm_aweparm | opm_vorpal),
+    opm_ammo = (opm_aweparm | opm_detonate),
+    opm_spe = (opm_dexterity | opm_brilliance),
+    opm_armor = (opm_any | opm_aweparm | opm_spe | opm_speed |
+                 opm_power | opm_displacement | opm_clairvoyant),
+    opm_jewelry = (opm_any | opm_spe),
+    opm_all = (1 << (op_last + 1)) - 1,
 };
 
 /* Weapons and weapon-tools */
