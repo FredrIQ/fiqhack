@@ -16,12 +16,8 @@
 #endif
 
 /* these will only override unix directories */
-#ifdef UNIX
-# ifndef DUMPDIR
-#  define DUMPDIR "dumps/"
-# else
-#  define NO_DUMPDIR_OVERRIDE
-# endif
+#if defined(UNIX) && ! defined(DUMPDIR)
+# define DUMPDIR "dumps/"
 #endif
 
 #if defined(WIN32)

@@ -202,7 +202,11 @@ init_game_paths(const char *argv0)
             pathlist[LOCKPREFIX] = override_hackdir;
             pathlist[TROUBLEPREFIX] = override_hackdir;
         }
-# ifndef NO_DUMPDIR_OVERRIDE
+
+/* note that the check in rungame.c defines DUMPDIR if not
+   set to a default, this code will break if said check is
+   exposed to this place. */
+# ifndef DUMPDIR
         if (override_userdir) {
             /* player-specific */
             pathlist[DUMPPREFIX] = override_userdir;
