@@ -6,6 +6,9 @@
 #include "nhcurses.h"
 #include "common_options.h"
 
+#ifdef PUBLIC_SERVER
+# include <sys/stat.h>
+#endif
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -1100,6 +1103,10 @@ write_keymap(void)
     fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
     if (fd == -1)
         return;
+
+#if defined(PUBLIC_SERVER) && defined(UNIX)
+    fchmod(fd, 0644);
+#endif
 
     for (key = 1; key <= KEY_MAX; key++) {
         name =
