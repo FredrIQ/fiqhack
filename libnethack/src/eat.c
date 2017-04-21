@@ -574,19 +574,15 @@ cpostfx(struct monst *mon, int pm)
     switch (pm) {
     case PM_NEWT:
         /* MRKR: "eye of newt" may give small magical energy boost */
-        if (rn2_on_rng(3, you ? rng_newt_pw_boost : rng_main)
-            || ((you && 3 * u.uen <= 2 * u.uenmax) ||
-                (!you && mon->mspec_used > rn2(5)))) {
+        if ((you && 3 * u.uen <= 2 * u.uenmax) ||
+            (!you && mon->mspec_used > rn2(5))) {
             if (you) {
                 int old_uen = u.uen;
-                boolean can_boost_max = !rn2_on_rng(3, rng_newt_pw_boost);
-                if (you)
-                    msgc = msgc_statusheal;
+                msgc = msgc_statusheal;
 
                 u.uen += 1 + rn2_on_rng(3, rng_newt_pw_boost);
                 if (u.uen > u.uenmax) {
-                    if (can_boost_max)
-                        u.uenmax++;
+                    u.uenmax++;
                     u.uen = u.uenmax;
                     if (you)
                         msgc = msgc_intrgain;
