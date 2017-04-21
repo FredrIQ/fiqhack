@@ -195,7 +195,7 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_ENUM, {.e = OPTSTYLE_FULL}},
     {"palette", "Terminal and Rendering",
      "color palette used for text",
-     nh_birth_ingame, OPTTYPE_ENUM, {.e = PALETTE_DEFAULT}},
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = PALETTE_NONE}},
     {"prompt_inline", "Messages and Menus",
      "place prompts in the message window",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
