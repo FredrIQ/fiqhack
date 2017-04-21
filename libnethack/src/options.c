@@ -60,7 +60,7 @@ static const struct nh_enum_option movecommand_spec =
 static const struct nh_listitem mode_list[] = {
     {MODE_NORMAL, "normal"},
     {MODE_EXPLORE, "explore"},
-#ifdef PUBLIC_SERVER
+#ifndef PUBLIC_SERVER
     {MODE_WIZARD, "debug"}
 #endif
 };

@@ -45,12 +45,12 @@ enum menuitems {
 static struct nh_menuitem mainmenu_items[] = {
     {NEWGAME, MI_NORMAL, 0, "new game", 'n'},
     {LOAD, MI_NORMAL, 0, "load game", 'l'},
-#ifdef PUBLIC_SERVER
+#ifndef PUBLIC_SERVER
     {REPLAY, MI_NORMAL, 0, "view replay", 'v'},
 #endif
     {OPTIONS, MI_NORMAL, 0, "set options", 'o'},
     {TOPTEN, MI_NORMAL, 0, "show score list", 's'},
-#if defined(NETCLIENT)
+#if defined(NETCLIENT) && ! defined(PUBLIC_SERVER)
     {NETWORK, MI_NORMAL, 0, "connect to server", 'c'},
 #endif
     {EXITGAME, MI_NORMAL, 0, "quit", 'q', 'x'}
