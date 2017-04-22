@@ -253,6 +253,9 @@ merged(struct obj **potmp, struct obj **pobj)
         if (obj->bknown)
             otmp->bknown = 1;
 
+        otmp->oprops_known |= obj->oprops_known;
+        otmp->oprops_known &= otmp->oprops; /* just in case */
+
         otmp->quan += obj->quan;
         if (otmp->oclass == COIN_CLASS)
             otmp->owt = weight(otmp);
@@ -2131,6 +2134,9 @@ mergable(struct obj *otmp, struct obj *obj)
         return FALSE;
 
     if (obj->otyp != otmp->otyp)
+        return FALSE;
+
+    if (obj->oprops != otmp->oprops)
         return FALSE;
 
     /* coins of the same kind will always merge, even in containers */

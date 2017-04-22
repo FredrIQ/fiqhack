@@ -509,8 +509,21 @@ obj_compare(const void *o1, const void *o2)
     if (val1 != val2)
         return val1 - val2;     /* Because bigger is WORSE. */
 
-    if (obj1->greased != obj2->greased)
-        return obj2->greased - obj1->greased;
+    /* Compare obj properties. It's not easy to judge quality,
+       so just map them consistently. Don't use obj_properties,
+       it might incur performance penalties and we don't care
+       about sanity checks here. */
+    boolean magical1 = FALSE;
+    boolean magical2 = FALSE;
+    if (obj1->oprops != obj1->oprops_known)
+        magical1 = TRUE;
+    if (obj2->oprops != obj2->oprops_known)
+        magical2 = TRUE;
+    if (obj1->oprops_known != obj2->oprops_known)
+        return ((obj1->oprops_known > obj2->oprops_known) ?
+                -1 : 1);
+    else if (magical1 != magical2)
+        return magical1 ? -1 : 1;
 
     return 0;
 }

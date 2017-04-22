@@ -264,6 +264,7 @@ uint64_t
 obj_properties(const struct obj *obj)
 {
     uint64_t props = obj->oprops;
+    props |= (opm_power);
 
     /* Artifacts don't retain object properties they might have
        had before being artifacts (Excalibur, Sting, etc) */
@@ -271,7 +272,7 @@ obj_properties(const struct obj *obj)
         return 0;
 
     if (obj->oclass == WEAPON_CLASS &&
-             is_ammo(obj))
+        (is_ammo(obj) || is_missile(obj)))
         props &= opm_ammo;
     else if (obj->oclass == WEAPON_CLASS ||
              is_weptool(obj))
@@ -327,6 +328,7 @@ obj_properties(const struct obj *obj)
 void
 learn_oprop(struct obj *obj, uint64_t mask)
 {
+    return;
     uint64_t props = obj_properties(obj);
     mask &= props;
     obj->oprops_known |= mask;

@@ -187,6 +187,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         return FALSE; /* nothing to do */
     boolean equipping = otmp && otmp != &zeroobj;
     int otyp = o->otyp;
+    uint64_t props = obj_properties(o);
     int prop = objects[otyp].oc_oprop;
     /* TODO: Effects that are redundant to racial properties. I'm not sure if
        this can actually come up, but we should handle it anyway. */
@@ -204,6 +205,12 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         if (update_property(&youmonst, prop, slot))
             makeknown(o->otyp);
         update_property_for_oprops(&youmonst, o, slot);
+        if (o->spe)
+            learn_oprop(o, (opm_dexterity | opm_brilliance));
+        learn_oprop(o, opm_power | opm_oilskin);
+        if (props & opm_power)
+            encumber_msg();
+        update_inventory();
         if (msgtype != em_silent)
             on_msg(o);
         if (o->cursed && !o->bknown) {
@@ -236,6 +243,12 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         if (update_property(&youmonst, prop, slot))
             makeknown(o->otyp);
         update_property_for_oprops(&youmonst, o, slot);
+        if (o->spe)
+            learn_oprop(o, (opm_dexterity | opm_brilliance));
+        learn_oprop(o, opm_power);
+        if (props & opm_power)
+            encumber_msg();
+        update_inventory();
     }
 
     /* Equipping armor makes its enchantment obvious. */
