@@ -122,7 +122,9 @@ extern boolean arti_reflects(struct obj *);
 extern boolean restrict_name(struct obj *, const char *);
 extern boolean defends(int, struct obj *);
 extern boolean protects(int, struct obj *);
-extern long item_provides_extrinsic(struct obj *, int, int *);
+extern long item_provides_extrinsic(const struct obj *, int, int *);
+extern long item_provides_extrinsic_before_oprop(const struct obj *,
+                                                 int, int *);
 extern void uninvoke_artifact(struct obj *);
 extern int touch_artifact(struct obj *, const struct monst *);
 extern int spec_abon(struct obj *, struct monst *);
@@ -1292,6 +1294,10 @@ extern void count_discovered_objects(int *, int *);
 
 /* ### objnam.c ### */
 
+extern uint64_t filter_redundant_oprops(const struct obj *,
+                                        uint64_t);
+extern boolean obj_oprops_provides_property(const struct obj *,
+                                            enum youprop);
 extern const char *obj_typename(int);
 extern const char *simple_typename(int);
 extern boolean obj_is_pname(const struct obj *);
@@ -1469,6 +1475,9 @@ extern int property_timeout(struct monst *, enum youprop);
 extern void decrease_property_timers(struct monst *);
 extern boolean inc_timeout(struct monst *, enum youprop, int, boolean);
 extern boolean set_property(struct monst *, enum youprop, int, boolean);
+extern void update_property_for_oprops(struct monst *,
+                                      struct obj *,
+                                      enum objslot);
 extern int update_property_polymorph(struct monst *, int);
 extern void update_xl_properties(struct monst *, int);
 extern boolean update_property(struct monst *, enum youprop, enum objslot);

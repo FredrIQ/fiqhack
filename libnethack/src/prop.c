@@ -819,6 +819,14 @@ update_xl_properties(struct monst *mon, int oldlevel)
     }
 }
 
+/* Runs property updates for every property provided by object */
+void
+update_property_for_oprops(struct monst *mon, struct obj *obj,
+                           enum objslot slot)
+{
+    
+}
+
 /* Called on polyself to possibly do some extra work for some properties.
    Returns a monster index if that should override the current polymorph
    (used if you polymorph into a golem while petrifying). */

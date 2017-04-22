@@ -267,7 +267,7 @@ obj_properties(const struct obj *obj)
 
     /* Artifacts don't retain object properties they might have
        had before being artifacts (Excalibur, Sting, etc) */
-    if (obj->oartifact)
+    if (!props || obj->oartifact)
         return 0;
 
     if (obj->oclass == WEAPON_CLASS &&
@@ -284,7 +284,7 @@ obj_properties(const struct obj *obj)
     else if (obj->oclass == TOOL_CLASS)
         props &= opm_any;
     else
-        props = 0;
+        props &= opm_oilskin; /* misc leather objects */
 
     /* can only have either a fire or cold suffix on a weapon,
        combining them would be weird */
@@ -292,17 +292,38 @@ obj_properties(const struct obj *obj)
         (obj->oclass == WEAPON_CLASS || is_weptool(obj)))
         props &= ~opm_frost; /* arbitrary but needs consistency */
 
-    /* Any leather object can have oilskin, nothing else */
-    if (objects[obj->otyp].oc_material != LEATHER)
-        props &= ~opm_oilskin;
-
     /* These make no sense on non-enchantable objects */
     if (!objects[obj->otyp].oc_charged)
         props &= ~opm_spe;
 
+    /* don't allow redundant properties with innate properties as
+       part of the object's type */
+    if (obj->otyp == GAUNTLETS_OF_POWER)
+        props &= ~opm_power;
+
+    if (obj->otyp == GAUNTLETS_OF_DEXTERITY)
+        props &= ~opm_dexterity;
+
+    if (obj->otyp == HELM_OF_BRILLIANCE)
+        props &= ~opm_brilliance;
+
+    /* Only leather objects, avoid redundancy */
+    if (objects[obj->otyp].oc_material != CLOTH ||
+        obj->otyp == OILSKIN_CLOAK ||
+        obj->otyp == OILSKIN_SACK)
+        props &= ~opm_oilskin;
+
+    if (!props)
+        return 0;
+
+    /* the rest are ordinary properties and can be checked
+       with a single function */
+    props = filter_redundant_oprops(obj, props);
+
     return props;
 }
 
+/* Learn one or several object properties */
 void
 learn_oprop(struct obj *obj, uint64_t mask)
 {
@@ -1804,7 +1825,7 @@ save_obj(struct memfile *mf, struct obj *obj)
        there is one in first place to save/restore */
     mwrite8(mf, obj->cobj ? 1 : 0);
 
-    if (obj->oprops != obj_properties(obj)) {
+    if (obj->oprops != obj_properties(obj) && FALSE) {
         impossible("Obj %s has invalid properties, deleting",
                    killer_xname(obj));
         obj->oprops = obj_properties(obj);

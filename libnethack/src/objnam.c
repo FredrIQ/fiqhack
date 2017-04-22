@@ -108,6 +108,7 @@ static const char *Japanese_item_name(int i);
 
 struct opropdesc {
     uint64_t mask;
+    enum youprop prop;
     const char *prefix;
     const char *shorthand; /* for 3+ properties */
     const char *suffix;
@@ -116,34 +117,71 @@ struct opropdesc {
 
 /* shorthand/suffix_armor uses prefix/suffix if empty */
 static const struct opropdesc prop_desc[] = {
-    {opm_reflects, NULL, "reflect", "reflection", NULL},
-    {opm_search, NULL, "search", "searching", NULL},
-    {opm_hunger, NULL, NULL, "hunger", NULL},
-    {opm_stealth, NULL, NULL, "stealth", NULL},
-    {opm_telepat, NULL, NULL, "telepathy", NULL},
-    {opm_fumble, NULL, "fumble", "fumbling", NULL},
-    {opm_warn, NULL, "warn", "warning", NULL},
-    {opm_aggravate, NULL, "aggravates", "aggravate monster",
+    {opm_reflects, REFLECTING, NULL, "reflect", "reflection",
      NULL},
-    {opm_fire, NULL, NULL, "fire", "fire resistance"},
-    {opm_frost, NULL, NULL, "frost", "cold resistance"},
-    {opm_shock, NULL, "shock", "lightning",
+    {opm_search, SEARCHING, NULL, "search", "searching", NULL},
+    {opm_hunger, HUNGER, NULL, NULL, "hunger", NULL},
+    {opm_stealth, STEALTH, NULL, NULL, "stealth", NULL},
+    {opm_telepat, TELEPAT, NULL, NULL, "telepathy", NULL},
+    {opm_fumble, FUMBLING, NULL, "fumble", "fumbling", NULL},
+    {opm_warn, WARNING, NULL, "warn", "warning", NULL},
+    {opm_aggravate, AGGRAVATE_MONSTER, NULL, "aggravates",
+     "aggravate monster", NULL},
+    {opm_fire, FIRE_RES, NULL, NULL, "fire", "fire resistance"},
+    {opm_frost, COLD_RES, NULL, NULL, "frost", "cold resistance"},
+    {opm_shock, SHOCK_RES, NULL, "shock", "lightning",
      "shock resistance"},
-    {opm_drain, "thirsty", "drain", NULL, "drain resistance"},
-    {opm_speed, NULL, NULL, "speed", NULL},
-    {opm_oilskin, "oilskin", NULL, NULL, NULL},
-    {opm_power, NULL, NULL, "power", NULL},
-    {opm_dexterity, NULL, "dex", "dexterity", NULL},
-    {opm_brilliance, NULL, "brill", "brilliance", NULL},
-    {opm_displacement, NULL, "displace", "displacement", NULL},
-    {opm_clairvoyant, NULL, "clairvoyant", "clairvoyance", NULL},
+    {opm_drain, DRAIN_RES, "thirsty", "drain", NULL,
+     "drain resistance"},
+    {opm_speed, FAST, NULL, NULL, "speed", NULL},
+    {opm_oilskin, 0, "oilskin", NULL, NULL, NULL},
+    {opm_power, 0, NULL, NULL, "power", NULL},
+    {opm_dexterity, 0, NULL, "dex", "dexterity", NULL},
+    {opm_brilliance, 0, NULL, "brill", "brilliance", NULL},
+    {opm_displacement, DISPLACED, NULL, "displace",
+     "displacement", NULL},
+    {opm_clairvoyant, CLAIRVOYANT, NULL, "clairvoyant",
+     "clairvoyance", NULL},
     /* these below use "versus x" instead of "of x" for armor,
        checked via opm_vorpal */
-    {opm_vorpal, "vorpal", NULL, NULL, "beheading"},
-    {opm_detonate, NULL, "detonate", "detonation",
+    {opm_vorpal, 0, "vorpal", NULL, NULL, "beheading"},
+    {opm_detonate, 0, NULL, "detonate", "detonation",
      "explosions"},
-    {opm_none, NULL, NULL, NULL, NULL},
+    {opm_none, 0, NULL, NULL, NULL, NULL},
 };
+
+uint64_t
+filter_redundant_oprops(const struct obj *obj,
+                        uint64_t props)
+{
+    const struct opropdesc *desc;
+    int dummy; /* needed for item_provides_extrinsic */
+
+    for (desc = prop_desc; desc->mask != opm_none; desc++)
+        if ((props & desc->mask) && desc->prop &&
+            item_provides_extrinsic_before_oprop(obj, desc->prop,
+                                                 &dummy))
+            props &= ~(desc->mask);
+
+    return props;
+}
+
+boolean
+obj_oprops_provides_property(const struct obj *obj,
+                             enum youprop prop)
+{
+    uint64_t props = obj_properties(obj);
+    if (!props)
+        return FALSE;
+
+    const struct opropdesc *desc;
+
+    for (desc = prop_desc; desc->mask != opm_none; desc++)
+        if (desc->prop == prop)
+            return !!(props & desc->mask);
+
+    return FALSE;
+}
 
 static const char *
 display_oprops(const struct obj *obj, const char *input)
@@ -152,7 +190,7 @@ display_oprops(const struct obj *obj, const char *input)
         return "";
 
     const char *buf = input;
-    uint64_t props = (obj_properties(obj));
+    uint64_t props = obj_properties(obj);
     int prop_amount = 0;
 
     if (props != (props & obj->oprops_known)) {
@@ -166,34 +204,6 @@ display_oprops(const struct obj *obj, const char *input)
 
     struct objclass *ocl = &objects[obj->otyp];
     int known = ocl->oc_name_known;
-
-    if (obj->oclass == WEAPON_CLASS &&
-             is_ammo(obj))
-        props &= opm_ammo;
-    else if (obj->oclass == WEAPON_CLASS ||
-             is_weptool(obj))
-        props &= opm_mwep;
-    else if (obj->oclass == ARMOR_CLASS)
-        props &= opm_armor;
-    else if (obj->oclass == AMULET_CLASS ||
-             obj->oclass == RING_CLASS)
-        props &= opm_jewelry;
-    else if (obj->oclass == TOOL_CLASS)
-        props &= opm_any;
-    else
-        props = 0;
-
-    /* can only have either a fire or cold suffix on a weapon,
-       combining them would be weird */
-    if ((props & opm_fire) && (props & opm_frost) &&
-        (obj->oclass == WEAPON_CLASS || is_weptool(obj)))
-        props &= ~opm_frost; /* arbitrary but needs consistency */
-
-    if (ocl->oc_material != LEATHER)
-        props &= ~opm_oilskin;
-
-    if (!ocl->oc_charged)
-        props &= ~opm_spe;
 
     if (strstr(buf, " of ") &&
         (!strstr(buf, "pair of") ||
@@ -255,9 +265,9 @@ display_oprops(const struct obj *obj, const char *input)
                     olddesc = desc;
 
                 suffixes++;
-            } else {
-            }
-            //buf = msgcat_many(desc->prefix, " ", buf, NULL);
+            } else
+                buf = msgcat_many(desc->prefix, " ", buf,
+                                  NULL);
         }
     }
 

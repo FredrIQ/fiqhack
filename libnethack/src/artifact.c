@@ -22,7 +22,9 @@ static int spec_applies(const struct artifact *, const struct monst *);
 static int arti_invoke(struct obj *);
 static boolean magicbane_hit(struct monst *magr, struct monst *mdef,
                              struct obj *, int *, int, boolean, const char *);
-static long spec_m2(struct obj *);
+static boolean spfx_provides_extrinsic(const struct obj *,
+                                       unsigned long, int, int *);
+static long spec_m2(const struct obj *);
 
 /* The amount added to the victim's total hit points to insure that the
    victim will be killed even after damage bonus/penalty adjustments.
@@ -375,15 +377,50 @@ protects(int adtyp, struct obj * otmp)
     return FALSE;
 }
 
-
-/* Given an item and an extrinsic, returns whether that item provides that
-   extrinsic, either through artifact properties or through a "normal" item
-   property. In the special case of warning about a particular type of monster,
-   returns that in *warntype.  Returns the artifact's worn mask (if it's
-   relevant), bitwise-or W_MASK(os_carried), bitwise-or W_MASK(os_invoked) if
-   relevant. */
+/* Returns extrinsics the item provides and in which slot.
+   For warntypes, returns the result in the provided *warntype
+   pointer. */
 long
-item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
+item_provides_extrinsic(const struct obj *otmp, int extrinsic,
+                        int *warntype)
+{
+    long res;
+    res = item_provides_extrinsic_before_oprop(otmp, extrinsic,
+                                               warntype);
+
+    if (res == W_WORN || res == W_EQUIP)
+        res &= otmp->owornmask;
+    if (res)
+        return res;
+
+    long equipmask;
+    enum objslot slot = which_slot(otmp);
+    if (slot == os_invalid) {
+        if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp))
+            res = W_WORN;
+        else
+            res = W_MASK(os_carried);
+    } else
+        res = W_EQUIP;
+
+    if (obj_oprops_provides_property(otmp, extrinsic)) {
+        if (res == W_WORN || res == W_EQUIP)
+            res &= otmp->owornmask;
+        return res;
+    }
+
+    return 0L;
+}
+
+/* Checks everything except for object properties. Called
+   directly by obj_properties() to figure out which ones are
+   potentially redundant. This returns if the item provides
+   an extrinsic for a slot *in general*, not if it does it
+   *right now*. */
+long
+item_provides_extrinsic_before_oprop(const struct obj *otmp,
+                                     int extrinsic,
+                                     int *warntype)
 {
     if (!otmp) {
         panic("Trying to check non-existing item?");
@@ -393,32 +430,25 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
     uchar dtyp;
     long spfx;
     boolean equipped;
-    long mask;    
+    long equipmask;
 
-    /* Artifacts can provide elemental defense, either when equipped, or when
-       carried. Non-artifact items (and artifact properties that depend on their
-       base item) only work when equipped. Our definition of "equipped" depends
-       on the base type; wearing is always enough, wielding is only enough for
-       weapons and weapon-tools.
-
-       TODO: Wielding as the secondary weapon while twoweaponing. This currently
-       isn't allowed for artifacts, and never comes up for non-artifacts (no
-       non-artifact weapons currently have properties), but it's unclear whether
-       that's for technical or balance reasons. We should at least fix the
-       technical issues here, even though balance considerations imply that it
-       probably shouldn't be allowed anyway. */
-    mask = W_WORN | W_MASK(os_invoked);
-    if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp))
-        mask |= W_MASK(os_wep);
-    mask &= otmp->owornmask;
-    equipped = !!(mask & W_EQUIP);
+    /* Don't allow non-weapon equippables to provide an extrinsic
+       if wielded */
+    enum objslot slot = which_slot(otmp);
+    if (slot == os_invalid) {
+        if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp))
+            equipmask = W_WORN;
+        else
+            equipmask = W_MASK(os_carried);
+    } else
+        equipmask = W_EQUIP;
 
     /* Does the base item (artifact or not) provide the property in question?
        Skip WARN_OF_MON for paranoia reasons; it wouldn't work if it were
        used, because there'd be no way to communicate which monster is being
        warned against. */
     if (objects[otmp->otyp].oc_oprop == extrinsic && extrinsic != WARN_OF_MON)
-        return mask & W_EQUIP;
+        return equipmask;
 
     /* Non-artifact item properties go here. At the present:
 
@@ -428,21 +458,17 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
        - the Amulet of Yendor is not an artifact but grants clairvoyance when
          carried */
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
-        return mask & W_EQUIP;
+        return equipmask;
     if (otmp->otyp == AMULET_OF_YENDOR && extrinsic == CLAIRVOYANT)
-        return mask | W_MASK(os_carried);
+        return W_MASK(os_carried);
 
     if (!oart)
         return 0L;
 
-    if (oart->inv_prop == extrinsic && mask & W_MASK(os_invoked))
-        return mask;
-
-    /* Anything from here on is based on artifact properties */
-    mask |= W_MASK(os_carried);
+    if (oart->inv_prop == extrinsic)
+        return W_MASK(os_invoked);
 
     dtyp = oart->cary.adtyp;
- 
     if ((dtyp == AD_FIRE && extrinsic == FIRE_RES) ||
         (dtyp == AD_COLD && extrinsic == COLD_RES) ||
         (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
@@ -451,31 +477,36 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
         (dtyp == AD_DRST && extrinsic == POISON_RES) ||
         (dtyp == AD_DISE && extrinsic == SICK_RES) ||
         (dtyp == AD_DRLI && extrinsic == DRAIN_RES))
-        return mask;
+        return W_MASK(os_carried);
 
-    if (equipped) {
-        dtyp = oart->defn.adtyp;
+    dtyp = oart->defn.adtyp;
+    if ((dtyp == AD_FIRE && extrinsic == FIRE_RES) ||
+        (dtyp == AD_COLD && extrinsic == COLD_RES) ||
+        (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
+        (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
+        (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
+        (dtyp == AD_DRST && extrinsic == POISON_RES) ||
+        (dtyp == AD_DISE && extrinsic == SICK_RES) ||
+        (dtyp == AD_DRLI && extrinsic == DRAIN_RES))
+        return equipmask;
 
-        if ((dtyp == AD_FIRE && extrinsic == FIRE_RES) ||
-            (dtyp == AD_COLD && extrinsic == COLD_RES) ||
-            (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
-            (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
-            (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
-            (dtyp == AD_DRST && extrinsic == POISON_RES) ||
-            (dtyp == AD_DISE && extrinsic == SICK_RES) ||
-            (dtyp == AD_DRLI && extrinsic == DRAIN_RES))
-            return mask;
-    }
+    if (spfx_provides_extrinsic(otmp, oart->cspfx, extrinsic,
+                                warntype))
+        return W_MASK(os_carried);
+    else if (spfx_provides_extrinsic(otmp, oart->spfx, extrinsic,
+                                     warntype))
+        return equipmask;
 
-    /* extrinsics from the spfx field; there could be more than one */
-    spfx = oart->cspfx;
- 
-    if (equipped)
-        spfx |= oart->spfx;
+    return 0L;
+}
 
-    /* TODO: this function used to print a message for hallucination
-       resistance, but it's definitely the wrong place. Discover where the
-       correct place is. */
+/* Returns true if the given artifact spfx field provides
+   extrinsic. Also messes with warntype if it's WARN_OF_MON.
+   obj is needed to properly grab the warn of mon info. */
+static boolean
+spfx_provides_extrinsic(const struct obj *obj, unsigned long spfx,
+                        int extrinsic, int *warntype)
+{
     if ((spfx & SPFX_SEARCH  && extrinsic == SEARCHING) ||
         (spfx & SPFX_ESP     && extrinsic == TELEPAT) ||
         (spfx & SPFX_STLTH   && extrinsic == STEALTH) ||
@@ -487,21 +518,21 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
         (spfx & SPFX_HALRES  && extrinsic == HALLUC_RES) ||
         (spfx & SPFX_REFLECT && extrinsic == REFLECTING) ||
         (spfx & SPFX_XRAY    && extrinsic == XRAY_VISION))
-        return mask;
+        return TRUE;
 
     if (spfx & SPFX_WARN) {
-        if (spec_m2(otmp)) {
+        if (spec_m2(obj)) {
             if (extrinsic == WARN_OF_MON) {
-                *warntype = spec_m2(otmp);
-                return mask;
+                *warntype = spec_m2(obj);
+                return TRUE;
             }
         } else {
             if (extrinsic == WARNING)
-                return mask;
+                return TRUE;
         }
     }
 
-    return 0L;
+    return FALSE;
 }
 
 /*
@@ -637,7 +668,7 @@ spec_applies(const struct artifact *weap, const struct monst *mtmp)
 /* return the M2 flags of monster that an artifact's special attacks apply
  * against */
 static long
-spec_m2(struct obj *otmp)
+spec_m2(const struct obj *otmp)
 {
     const struct artifact *artifact = get_artifact(otmp);
 

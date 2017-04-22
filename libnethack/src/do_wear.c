@@ -203,6 +203,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
            the item */
         if (update_property(&youmonst, prop, slot))
             makeknown(o->otyp);
+        update_property_for_oprops(&youmonst, o, slot);
         if (msgtype != em_silent)
             on_msg(o);
         if (o->cursed && !o->bknown) {
@@ -234,6 +235,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
                   slot == os_tool ? body_part(FACE) : "body");
         if (update_property(&youmonst, prop, slot))
             makeknown(o->otyp);
+        update_property_for_oprops(&youmonst, o, slot);
     }
 
     /* Equipping armor makes its enchantment obvious. */
@@ -1987,6 +1989,7 @@ destroy_arm(struct monst *mon, struct obj *obj)
         mon->misc_worn_check &= ~obj->owornmask;
         obj->owornmask = 0;
         update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
+        update_property_for_oprops(mon, obj, slot);
         m_useup(mon, obj);
         struct obj *weapon;
         weapon = m_mwep(mon);
