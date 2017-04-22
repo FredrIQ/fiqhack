@@ -259,6 +259,58 @@ mkbox_cnts(struct obj *box, enum rng rng)
     }
 }
 
+/* Returns obj->oprops, but strips invalid ones */
+uint64_t
+obj_properties(const struct obj *obj)
+{
+    uint64_t props = obj->oprops;
+
+    /* Artifacts don't retain object properties they might have
+       had before being artifacts (Excalibur, Sting, etc) */
+    if (obj->oartifact)
+        return 0;
+
+    if (obj->oclass == WEAPON_CLASS &&
+             is_ammo(obj))
+        props &= opm_ammo;
+    else if (obj->oclass == WEAPON_CLASS ||
+             is_weptool(obj))
+        props &= opm_mwep;
+    else if (obj->oclass == ARMOR_CLASS)
+        props &= opm_armor;
+    else if (obj->oclass == AMULET_CLASS ||
+             obj->oclass == RING_CLASS)
+        props &= opm_jewelry;
+    else if (obj->oclass == TOOL_CLASS)
+        props &= opm_any;
+    else
+        props = 0;
+
+    /* can only have either a fire or cold suffix on a weapon,
+       combining them would be weird */
+    if ((props & opm_fire) && (props & opm_frost) &&
+        (obj->oclass == WEAPON_CLASS || is_weptool(obj)))
+        props &= ~opm_frost; /* arbitrary but needs consistency */
+
+    /* Any leather object can have oilskin, nothing else */
+    if (objects[obj->otyp].oc_material != LEATHER)
+        props &= ~opm_oilskin;
+
+    /* These make no sense on non-enchantable objects */
+    if (!objects[obj->otyp].oc_charged)
+        props &= ~opm_spe;
+
+    return props;
+}
+
+void
+learn_oprop(struct obj *obj, uint64_t mask)
+{
+    uint64_t props = obj_properties(obj);
+    mask &= props;
+    obj->oprops_known |= mask;
+}
+
 /* select a random, common monster type */
 int
 rndmonnum(const d_level *dlev, enum rng rng)
@@ -1752,6 +1804,11 @@ save_obj(struct memfile *mf, struct obj *obj)
        there is one in first place to save/restore */
     mwrite8(mf, obj->cobj ? 1 : 0);
 
+    if (obj->oprops != obj_properties(obj)) {
+        impossible("Obj %s has invalid properties, deleting",
+                   killer_xname(obj));
+        obj->oprops = obj_properties(obj);
+    }
     mwrite64(mf, obj->oprops);
     mwrite64(mf, obj->oprops_known);
 

@@ -152,10 +152,10 @@ display_oprops(const struct obj *obj, const char *input)
         return "";
 
     const char *buf = input;
-    uint64_t props = (obj->oprops & obj->oprops_known);
+    uint64_t props = (obj_properties(obj));
     int prop_amount = 0;
 
-    if (props != obj->oprops) {
+    if (props != (props & obj->oprops_known)) {
         prop_amount++;
         buf = msgcat("magical ", buf);
     }
@@ -166,6 +166,34 @@ display_oprops(const struct obj *obj, const char *input)
 
     struct objclass *ocl = &objects[obj->otyp];
     int known = ocl->oc_name_known;
+
+    if (obj->oclass == WEAPON_CLASS &&
+             is_ammo(obj))
+        props &= opm_ammo;
+    else if (obj->oclass == WEAPON_CLASS ||
+             is_weptool(obj))
+        props &= opm_mwep;
+    else if (obj->oclass == ARMOR_CLASS)
+        props &= opm_armor;
+    else if (obj->oclass == AMULET_CLASS ||
+             obj->oclass == RING_CLASS)
+        props &= opm_jewelry;
+    else if (obj->oclass == TOOL_CLASS)
+        props &= opm_any;
+    else
+        props = 0;
+
+    /* can only have either a fire or cold suffix on a weapon,
+       combining them would be weird */
+    if ((props & opm_fire) && (props & opm_frost) &&
+        (obj->oclass == WEAPON_CLASS || is_weptool(obj)))
+        props &= ~opm_frost; /* arbitrary but needs consistency */
+
+    if (ocl->oc_material != LEATHER)
+        props &= ~opm_oilskin;
+
+    if (!ocl->oc_charged)
+        props &= ~opm_spe;
 
     if (strstr(buf, " of ") &&
         (!strstr(buf, "pair of") ||

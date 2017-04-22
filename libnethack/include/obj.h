@@ -133,68 +133,41 @@ struct obj {
     uint64_t oprops_known;      /* IDed properties from above */
 };
 
-enum oprops {
-    op_reflects,
-    op_search,
-    op_hunger,
-    op_stealth,
-    op_telepat,
-    op_fumble,
-    op_warn,
-    op_aggravate,
-    op_fire,
-    op_frost,
-    op_shock,
-    op_vorpal,
-    op_drain,
-    op_detonate,
-    op_speed,
-    op_oilskin,
-    op_power,
-    op_dexterity,
-    op_brilliance,
-    op_displacement,
-    op_clairvoyant,
-    op_first = op_reflects,
-    op_last = op_clairvoyant,
-};
+#define opm_none         0x0000000000000000LLU
+#define opm_reflects     0x0000000000000001LLU
+#define opm_search       0x0000000000000002LLU
+#define opm_hunger       0x0000000000000004LLU
+#define opm_stealth      0x0000000000000008LLU
+#define opm_telepat      0x0000000000000010LLU
+#define opm_fumble       0x0000000000000020LLU
+#define opm_warn         0x0000000000000040LLU
+#define opm_aggravate    0x0000000000000080LLU
+#define opm_fire         0x0000000000000100LLU
+#define opm_frost        0x0000000000000200LLU
+#define opm_shock        0x0000000000000400LLU
+#define opm_vorpal       0x0000000000000800LLU
+#define opm_drain        0x0000000000001000LLU
+#define opm_detonate     0x0000000000002000LLU
+#define opm_speed        0x0000000000004000LLU
+#define opm_oilskin      0x0000000000008000LLU
+#define opm_power        0x0000000000010000LLU
+#define opm_dexterity    0x0000000000020000LLU
+#define opm_brilliance   0x0000000000040000LLU
+#define opm_displacement 0x0000000000080000LLU
+#define opm_clairvoyant  0x0000000000100000LLU
+#define opm_all          0x00000000001fffffLLU
+#define opm_any (opm_reflects | opm_search | opm_hunger |       \
+                 opm_stealth | opm_telepat | opm_fumble |       \
+                 opm_warn | opm_aggravate | opm_oilskin)
+#define opm_aweparm (opm_fire | opm_frost | opm_shock | opm_drain)
+#define opm_mwep (opm_any | opm_aweparm | opm_vorpal)
+#define opm_ammo (opm_aweparm | opm_detonate)
+#define opm_spe (opm_dexterity | opm_brilliance)
+#define opm_armor (opm_any | opm_aweparm | opm_spe |            \
+                   opm_speed | opm_power | opm_displacement |   \
+                   opm_clairvoyant)
+#define opm_jewelry (opm_any | opm_spe)
 
-#define OPM(reason) opm_##reason = ((uint64_t)1 << op_##reason)
-enum FLAG_ENUM opmask {
-    opm_none = 0,
-    OPM(reflects),
-    OPM(search),
-    OPM(hunger),
-    OPM(stealth),
-    OPM(telepat),
-    OPM(fumble),
-    OPM(warn),
-    OPM(aggravate),
-    OPM(fire),
-    OPM(frost),
-    OPM(shock),
-    OPM(vorpal),
-    OPM(drain),
-    OPM(detonate),
-    OPM(speed),
-    OPM(oilskin),
-    OPM(power),
-    OPM(dexterity),
-    OPM(brilliance),
-    OPM(displacement),
-    OPM(clairvoyant),
-    /* any except for projectiles */
-    opm_any = (opm_reflects | opm_search | opm_hunger | opm_stealth |
-               opm_telepat | opm_fumble | opm_warn | opm_aggravate),
-    opm_aweparm = (opm_fire | opm_frost | opm_shock | opm_drain),
-    opm_mwep = (opm_any | opm_aweparm | opm_vorpal),
-    opm_ammo = (opm_aweparm | opm_detonate),
-    opm_spe = (opm_dexterity | opm_brilliance),
-    opm_armor = (opm_any | opm_aweparm | opm_spe | opm_speed |
-                 opm_power | opm_displacement | opm_clairvoyant),
-    opm_jewelry = (opm_any | opm_spe),
-    opm_all = (1 << (op_last + 1)) - 1,
-};
 
 /* Weapons and weapon-tools */
 /* KMH -- now based on skill categories.  Formerly:
