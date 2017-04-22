@@ -584,13 +584,11 @@ cpostfx(struct monst *mon, int pm)
                     msgc = msgc_statusheal;
 
                 u.uen += 1 + rn2_on_rng(3, rng_newt_pw_boost);
-                if (u.uen > u.uenmax) {
-                    if (can_boost_max)
-                        u.uenmax++;
-                    u.uen = u.uenmax;
-                    if (you)
-                        msgc = msgc_intrgain;
-                }
+                if (can_boost_max)
+                    u.uenmax++;
+                u.uen = u.uenmax;
+                if (you)
+                    msgc = msgc_intrgain;
                 if (old_uen != u.uen)
                     pline(msgc, "You feel a mild buzz.");
             } else {
