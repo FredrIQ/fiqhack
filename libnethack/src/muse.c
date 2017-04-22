@@ -2276,7 +2276,7 @@ use_item(struct musable *m)
                       "succeeds in picking the lock on",
                       an(xname(otmp)));
             if (otmp->otrapped)
-                chest_trap(mon, container, FINGER, FALSE);
+                chest_trap(mon, otmp, FINGER, FALSE);
             return DEADMONSTER(mon) ? 1 : 2; /* in case chest trap killed */
         }
         door = &level->locations[x][y];
