@@ -396,8 +396,16 @@ item_provides_extrinsic(const struct obj *otmp, int extrinsic,
     long equipmask;
     enum objslot slot = which_slot(otmp);
     if (slot == os_invalid) {
-        if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp))
+        if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp)) {
             res = W_WORN;
+
+            /* these are only offensive on weapons */
+            if (extrinsic == FIRE_RES ||
+                extrinsic == COLD_RES ||
+                extrinsic == SHOCK_RES ||
+                extrinsic == DRAIN_RES)
+                return 0L;
+        }
         else
             res = W_MASK(os_carried);
     } else
@@ -446,8 +454,8 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
     /* Does the base item (artifact or not) provide the property in question?
        Skip WARN_OF_MON for paranoia reasons; it wouldn't work if it were
        used, because there'd be no way to communicate which monster is being
-       warned against. */
-    if (objects[otmp->otyp].oc_oprop == extrinsic && extrinsic != WARN_OF_MON)
+       warned against. Potions don't grant their innate properties. */
+    if (objects[otmp->otyp].oc_oprop == extrinsic && extrinsic != WARN_OF_MON && otmp->oclass != POTION_CLASS)
         return equipmask;
 
     /* Non-artifact item properties go here. At the present:
