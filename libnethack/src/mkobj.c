@@ -264,7 +264,7 @@ uint64_t
 obj_properties(const struct obj *obj)
 {
     uint64_t props = obj->oprops;
-    props |= (opm_power);
+    props |= (opm_speed);
 
     /* Artifacts don't retain object properties they might have
        had before being artifacts (Excalibur, Sting, etc) */
@@ -282,8 +282,6 @@ obj_properties(const struct obj *obj)
     else if (obj->oclass == AMULET_CLASS ||
              obj->oclass == RING_CLASS)
         props &= opm_jewelry;
-    else if (obj->oclass == TOOL_CLASS)
-        props &= opm_any;
     else
         props &= opm_oilskin; /* misc leather objects */
 

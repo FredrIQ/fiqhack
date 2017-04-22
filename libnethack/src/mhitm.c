@@ -1446,6 +1446,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     setmnotwielded(mdef, otmp);
                 otmp->owornmask = 0L;
                 update_property(mdef, objects[otmp->otyp].oc_oprop, which_slot(otmp));
+                update_property_for_oprops(mdef, otmp,
+                                           which_slot(otmp));
             }
 
             /* add_to_minv() might free otmp [if it merges] */

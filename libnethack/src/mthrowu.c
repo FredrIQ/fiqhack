@@ -516,6 +516,7 @@ m_useup(struct monst *mon, struct obj *obj)
             if (obj->otyp == SADDLE && mon == u.usteed)
                 dismount_steed(DISMOUNT_FELL);
             update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
+            update_property_for_oprops(mon, obj, which_slot(obj));
         }
         obfree(obj, NULL);
     }

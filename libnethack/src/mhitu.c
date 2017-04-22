@@ -636,7 +636,9 @@ u_slip_free(struct monst *mtmp, const struct attack *mattk)
     if (mattk->adtyp == AD_DRIN)
         obj = uarmh;
 
-    uint64_t props = obj_properties(obj);
+    uint64_t props = 0;
+    if (obj)
+        props = obj_properties(obj);
 
     /* if your cloak/armor is greased, monster slips off; this protection might
        fail (33% chance) when the armor is cursed */

@@ -150,6 +150,24 @@ static const struct opropdesc prop_desc[] = {
     {opm_none, 0, NULL, NULL, NULL, NULL},
 };
 
+/* Runs property updates for every property provided by object */
+void
+update_property_for_oprops(struct monst *mon, struct obj *obj,
+                           enum objslot slot)
+{
+    uint64_t props = obj_properties(obj);
+    if (!props)
+        return;
+
+    const struct opropdesc *desc;
+
+    for (desc = prop_desc; desc->mask != opm_none; desc++)
+        if ((props & desc->mask) && desc->prop) {
+            if (update_property(mon, desc->prop, slot))
+                learn_oprop(obj, desc->mask);
+        }
+}
+
 uint64_t
 filter_redundant_oprops(const struct obj *obj,
                         uint64_t props)

@@ -397,7 +397,7 @@ item_provides_extrinsic(const struct obj *otmp, int extrinsic,
     enum objslot slot = which_slot(otmp);
     if (slot == os_invalid) {
         if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp)) {
-            res = W_WORN;
+            res = W_EQUIP;
 
             /* these are only offensive on weapons */
             if (extrinsic == FIRE_RES ||
@@ -409,7 +409,7 @@ item_provides_extrinsic(const struct obj *otmp, int extrinsic,
         else
             res = W_MASK(os_carried);
     } else
-        res = W_EQUIP;
+        res = W_WORN;
 
     if (obj_oprops_provides_property(otmp, extrinsic)) {
         if (res == W_WORN || res == W_EQUIP)
@@ -445,11 +445,11 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
     enum objslot slot = which_slot(otmp);
     if (slot == os_invalid) {
         if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp))
-            equipmask = W_WORN;
+            equipmask = W_EQUIP;
         else
             equipmask = W_MASK(os_carried);
     } else
-        equipmask = W_EQUIP;
+        equipmask = W_WORN;
 
     /* Does the base item (artifact or not) provide the property in question?
        Skip WARN_OF_MON for paranoia reasons; it wouldn't work if it were

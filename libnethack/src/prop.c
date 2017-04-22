@@ -819,14 +819,6 @@ update_xl_properties(struct monst *mon, int oldlevel)
     }
 }
 
-/* Runs property updates for every property provided by object */
-void
-update_property_for_oprops(struct monst *mon, struct obj *obj,
-                           enum objslot slot)
-{
-    
-}
-
 /* Called on polyself to possibly do some extra work for some properties.
    Returns a monster index if that should override the current polymorph
    (used if you polymorph into a golem while petrifying). */
@@ -1159,8 +1151,8 @@ update_property(struct monst *mon, enum youprop prop,
         /* if "redundant" is set at this point, it is pointing
            at speed of the "other" kind (very fast if intrinsic, fast if extrinsic) */
 
-        /* speed boots */
-        if (slot == os_armf) {
+        /* speed boots/objects of speed */
+        if (W_MASK(slot) & W_EQUIP) {
             if (you || vis) {
                 pline(!you ? msgc_monneutral :
                       lost ? msgc_statusend :

@@ -1294,6 +1294,9 @@ extern void count_discovered_objects(int *, int *);
 
 /* ### objnam.c ### */
 
+extern void update_property_for_oprops(struct monst *,
+                                      struct obj *,
+                                      enum objslot);
 extern uint64_t filter_redundant_oprops(const struct obj *,
                                         uint64_t);
 extern boolean obj_oprops_provides_property(const struct obj *,
@@ -1475,9 +1478,6 @@ extern int property_timeout(struct monst *, enum youprop);
 extern void decrease_property_timers(struct monst *);
 extern boolean inc_timeout(struct monst *, enum youprop, int, boolean);
 extern boolean set_property(struct monst *, enum youprop, int, boolean);
-extern void update_property_for_oprops(struct monst *,
-                                      struct obj *,
-                                      enum objslot);
 extern int update_property_polymorph(struct monst *, int);
 extern void update_xl_properties(struct monst *, int);
 extern boolean update_property(struct monst *, enum youprop, enum objslot);
