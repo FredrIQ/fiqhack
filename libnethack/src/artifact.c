@@ -406,7 +406,9 @@ item_provides_extrinsic(const struct obj *otmp, int extrinsic,
 
     if (res == W_WORN || res == W_EQUIP)
         res &= otmp->owornmask;
-    if (res)
+    if (res && res != W_MASK(os_quiver) &&
+        (res != W_MASK(os_swapwep) ||
+         (otmp->where == OBJ_INVENT && u.twoweap)))
         return res;
 
     long equipmask;
@@ -430,6 +432,10 @@ item_provides_extrinsic(const struct obj *otmp, int extrinsic,
     if (obj_oprops_provides_property(otmp, extrinsic)) {
         if (res == W_WORN || res == W_EQUIP)
             res &= otmp->owornmask;
+        res &= ~W_MASK(os_quiver);
+        if (res == W_MASK(os_swapwep) &&
+            (otmp->where != OBJ_INVENT || !u.twoweap))
+            res = 0L;
         return res;
     }
 
