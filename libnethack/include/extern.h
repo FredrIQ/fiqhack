@@ -128,7 +128,7 @@ extern long item_provides_extrinsic_before_oprop(const struct obj *,
 extern void uninvoke_artifact(struct obj *);
 extern int touch_artifact(struct obj *, const struct monst *);
 extern int spec_abon(struct obj *, struct monst *);
-extern int spec_dbon(struct obj *, struct monst *, int);
+extern int spec_dbon(struct obj *, struct monst *, int, boolean *);
 extern void discover_artifact(xchar);
 extern boolean undiscovered_artifact(xchar);
 extern int disp_artifact_discoveries(struct nh_menulist *);

@@ -302,7 +302,9 @@ dmgval(struct obj *otmp, struct monst *mon)
 
         /* if the weapon is going to get a double damage bonus, adjust this
            bonus so that effectively it's added after the doubling */
-        if (bonus > 1 && otmp->oartifact && spec_dbon(otmp, mon, 25) >= 25)
+        boolean dummy;
+        if (bonus > 1 && otmp->oartifact &&
+            spec_dbon(otmp, mon, 25, &dummy) >= 25)
             bonus = (bonus + 1) / 2;
 
         tmp += bonus;
@@ -375,6 +377,7 @@ would_prefer_rwep(const struct monst *mtmp, struct obj *otmp)
         if (mtmp->data->mlet == S_KOP && wep->otyp == CREAM_PIE)
             return FALSE;
         if (mtmp->data->mlet == S_KOP && otmp->otyp == CREAM_PIE)
+
             return TRUE;
 
         if (throws_rocks(mtmp->data) && wep->otyp == BOULDER)
