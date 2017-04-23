@@ -336,9 +336,6 @@ loadfruitchn(struct memfile *mf, boolean ghostly)
     mfmagic_check(mf, FRUITCHAIN_MAGIC);
     count = mread32(mf);
 
-    if (!count)
-        return flist;
-
     /* bones save version detection (fruit cap is 255) */
     if (count >= 65536) {
         count -= 65536;
@@ -347,6 +344,9 @@ loadfruitchn(struct memfile *mf, boolean ghostly)
         /* really old bones */
         flags.save_revision = 0;
     }
+
+    if (!count)
+        return flist;
 
     while (count--) {
         fnext = newfruit();
@@ -1145,7 +1145,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     /* Load the old fruit info.  We have to do it first, so the information is
        available when restoring the objects. */
     if (ghostly)
-        oldfruit = loadfruitchn(mf, TRUE);
+        oldfruit = loadfruitchn(mf, ghostly);
 
     /* for bones files, there is fruit chain data before the level data */
     mfmagic_check(mf, LEVEL_MAGIC);

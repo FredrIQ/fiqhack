@@ -927,6 +927,7 @@ savefruitchn(struct memfile *mf)
             count++;
     count += 65536; /* old bones detection */
     mwrite32(mf, count);
+    flags.save_revision = SAVE_REVISION;
     mwrite32(mf, flags.save_revision); /* in case of bones */
 
     for (f1 = gamestate.fruits.chain; f1; f1 = f1->nextf) {
