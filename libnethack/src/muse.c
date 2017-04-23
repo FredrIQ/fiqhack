@@ -3039,6 +3039,7 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
                   fmt, str, mon_s,
                   refl(os_arms)     ? "shield" :
                   refl(os_wep)      ? "weapon" :
+                  refl(os_swapwep)  ? "weapon" :
                   refl(os_amul)     ? "amulet" :
                   refl(os_role)     ? "scales" :
                   refl(os_race)     ? "scales" :
@@ -3047,11 +3048,35 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
                   "something weird"); /* os_arm after role/etc to suppress
                                          "armor" if uskin() */
         /* TODO: when object properties is a thing, change this */
-        if (refl(os_arms))
-            makeknown((which_armor(mon, os_arms))->otyp);
-        else if (refl(os_amul))
-            makeknown((which_armor(mon, os_amul))->otyp);
+        if (refl(os_arms)) {
+            struct obj *arms = which_armor(mon, os_arms);
+            if (arms->otyp == SHIELD_OF_REFLECTION)
+                makeknown(arms->otyp);
+            learn_oprop(arms, opm_reflects);
+        } else if (refl(os_wep)) {
+            struct obj *wep = m_mwep(mon);
+            if (wep)
+                learn_oprop(wep, opm_reflects);
+        } else if (refl(os_swapwep)) {
+            if (mon != &youmonst)
+                return TRUE;
+
+            if (uswapwep)
+                learn_oprop(uswapwep, opm_reflects);
+        } else if (refl(os_amul)) {
+            struct obj *amul = which_armor(mon, os_amul);
+            if (amul->otyp == AMULET_OF_REFLECTION)
+                makeknown(amul->otyp);
+            learn_oprop(amul, opm_reflects);
+        } else if (refl(os_role) || refl(os_race) ||
+                   refl(os_polyform))
+            return TRUE;
+        else if (refl(os_arm)) {
+            struct obj *arm = which_armor(mon, os_arm);
+            learn_oprop(arm, opm_reflects);
+        }
 #undef refl
+
         return TRUE;
     }
     return FALSE;
