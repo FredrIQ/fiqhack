@@ -518,7 +518,9 @@ getbones(d_level *levnum)
             trickery(errbuf);
         } else {
             struct monst *mtmp;
+            unsigned old_save_revision = flags.save_revision;
             struct level *lev = getlev(&mf, ledger_no(levnum), TRUE);
+            flags.save_revision = old_save_revision;
 
             /* Note that getlev() now keeps tabs on unique monsters such as
                demon lords, and tracks the birth counts of all species just as

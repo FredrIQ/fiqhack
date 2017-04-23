@@ -19,7 +19,8 @@ static void restobjchn(struct memfile *mf, struct level *lev,
                        struct trietable **table);
 static struct monst *restmonchn(struct memfile *mf, struct level *lev,
                                 boolean ghostly);
-static struct fruit *loadfruitchn(struct memfile *mf);
+static struct fruit *loadfruitchn(struct memfile *mf, boolean
+                                  ghostly);
 static void freefruitchn(struct fruit *);
 static void ghostfruit(struct obj *);
 static void restgamestate(struct memfile *mf);
@@ -327,7 +328,7 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
 
 
 static struct fruit *
-loadfruitchn(struct memfile *mf)
+loadfruitchn(struct memfile *mf, boolean ghostly)
 {
     struct fruit *flist = NULL, *fnext, *fcurr, *fprev;
     unsigned int count;
@@ -337,6 +338,15 @@ loadfruitchn(struct memfile *mf)
 
     if (!count)
         return flist;
+
+    /* bones save version detection (fruit cap is 255) */
+    if (count >= 65536) {
+        count -= 65536;
+        flags.save_revision = mread32(mf);
+    } else if (ghostly) {
+        /* really old bones */
+        flags.save_revision = 0;
+    }
 
     while (count--) {
         fnext = newfruit();
@@ -472,7 +482,7 @@ restgamestate(struct memfile *mf)
     /* set it to NULL before loadfruitchn, otherwise loading a faulty fruit
        chain will crash in terminate -> freedynamicdata -> freefruitchn */
     gamestate.fruits.chain = NULL;
-    gamestate.fruits.chain = loadfruitchn(mf);
+    gamestate.fruits.chain = loadfruitchn(mf, FALSE);
 
     restnames(mf);
     restore_waterlevel(mf, lev);
@@ -1135,7 +1145,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     /* Load the old fruit info.  We have to do it first, so the information is
        available when restoring the objects. */
     if (ghostly)
-        oldfruit = loadfruitchn(mf);
+        oldfruit = loadfruitchn(mf, TRUE);
 
     /* for bones files, there is fruit chain data before the level data */
     mfmagic_check(mf, LEVEL_MAGIC);
