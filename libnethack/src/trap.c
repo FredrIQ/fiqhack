@@ -1501,7 +1501,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                     break;
                 }
             }
-            if (ohitmon(mtmp, singleobj, NULL,
+            if (ohitmon(mtmp, singleobj, NULL, NULL,
                         (style == ROLL) ? -1 : dist, FALSE)) {
                 used_up = TRUE;
                 break;

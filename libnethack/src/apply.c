@@ -2698,7 +2698,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 
         bhitpos = cc;
         check_caitiff(mtmp);
-        thitmonst(mtmp, uwep);
+        thitmonst(mtmp, uwep, NULL);
         /* check the monster's HP because thitmonst() doesn't return an
            indication of whether it hit.  Not perfect (what if it's a
            non-silver weapon on a shade?) */
@@ -2850,7 +2850,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
             return 1;
         } else if ((!bigmonst(mtmp->data) && !strongmonst(mtmp->data)) ||
                    rn2(4)) {
-            thitmonst(mtmp, uwep);
+            thitmonst(mtmp, uwep, NULL);
             return 1;
         }
         /* TODO: This fallthrough looks very suspicious, even though there's a

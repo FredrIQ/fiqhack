@@ -442,9 +442,10 @@ extern void mhurtle(struct monst *, int, int, int);
 extern boolean throwing_weapon(const struct obj *);
 extern struct monst *fire_obj(int, int, int, int, struct obj *, boolean *);
 extern struct monst *boomhit(int, int);
-extern void throwit(struct obj *, long, boolean, schar, schar, schar);
+extern void throwit(struct obj *, struct obj *, long, boolean,
+                    schar, schar, schar);
 extern int omon_adj(struct monst *, struct obj *, boolean);
-extern int thitmonst(struct monst *, struct obj *);
+extern int thitmonst(struct monst *, struct obj *, struct obj *);
 extern int hero_breaks(struct obj *, xchar, xchar, boolean);
 extern int breaks(struct obj *, xchar, xchar);
 extern boolean breaktest(struct obj *);
@@ -1228,7 +1229,8 @@ extern void mplayer_talk(struct monst *);
 /* ### mthrowu.c ### */
 
 extern int thitu(int, int, struct obj *, const char *);
-extern int ohitmon(struct monst *, struct obj *, struct monst *, int, boolean);
+extern int ohitmon(struct monst *, struct obj *, struct obj *,
+                   struct monst *, int, boolean);
 extern void thrwmq(struct monst *, int, int);
 extern int spitmq(struct monst *, int, int, const struct attack *);
 extern int breamq(struct monst *, int, int, const struct attack *);
