@@ -8,8 +8,6 @@
 
 #include <limits.h>
 
-static void assign_oprops(struct level *, struct obj *, enum rng,
-                          boolean);
 static void mkbox_cnts(struct obj *, enum rng rng);
 static struct obj *mksobj_basic(struct level *lev, int otyp);
 static void obj_timer_checks(struct obj *, xchar, xchar, int);
@@ -261,7 +259,7 @@ mkbox_cnts(struct obj *box, enum rng rng)
     }
 }
 
-static void
+void
 assign_oprops(struct level *lev, struct obj *obj, enum rng rng,
               boolean first)
 {

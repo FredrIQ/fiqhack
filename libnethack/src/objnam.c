@@ -2078,6 +2078,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     char oclass, invlet;
     char *un, *dn, *actualn;
     const char *name = 0;
+    uint64_t props = 0;
+    boolean magical = FALSE; /* generic term for object properties */
 
     cnt = spe = spesgn = typ = very = rechrg = blessed = uncursed = iscursed =
 #ifdef INVISIBLE_OBJECTS
@@ -2194,6 +2196,29 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
             isdiluted = 1;
         } else if (!strncmpi(bp, "empty ", l = 6)) {
             contents = EMPTY;
+        } else if (!strncmpi(bp, "vorpal ", l = 7) &&
+                   strncmpi(bp, "vorpal blade", 12)) {
+            props |= opm_vorpal;
+        } else if (!strncmpi(bp, "thirsty ", l = 8)) {
+            props |= opm_drain;
+        } else if (!strncmpi(bp, "magical ", l = 8)) {
+            magical = TRUE;
+        } else if (!strncmpi(bp, "oilskin ", l = 8) &&
+                   /* Skip oilskin cloak except for the ones given
+                      below since otherwise the wishing parser would
+                      try to read them as object suffixes, failing.
+                      DynaHack included "of displacement" here
+                      for consistency, but that causes "oilskin cloak
+                      of displacement" to be disallowed as a non-wizmode
+                      wish since you're not allowed to wish for
+                      properties on magical armor (so you had to use
+                      "slippery cloak of displacement"). */
+                   (strncmpi(bp, "oilskin cloak", 13) ||
+                    !strncmpi(bp+13, " of protection", 14) ||
+                    !strncmpi(bp+13, " of invisibility", 16) ||
+                    !strncmpi(bp+13, " of magic resistance", 20)) &&
+                   strncmpi(bp, "oilskin sack", 12)) {
+            props |= opm_oilskin;
         } else
             break;
         bp += l;
@@ -2301,44 +2326,137 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     /* 
      * Find corpse type using "of" (figurine of an orc, tin of orc meat)
      * Don't check if it's a wand or spellbook.
-     * (avoid "wand/finger of death" confusion).
+     * (avoid "wand/finger of death" confusion or
+     * scroll(s) of fire).
      */
-    if (!strstri(bp, "wand ")
-        && !strstri(bp, "spellbook ")
-        && !strstri(bp, "finger ")) {
-        if ((p = strstri_mutable(bp, " of ")) != 0 &&
-            (mntmp = name_to_mon(p + 4)) >= LOW_PM)
-            *p = 0;
-    }
-    /* Find corpse type w/o "of" (red dragon scale mail, yeti corpse) */
-    if (strncmpi(bp, "samurai sword", 13))      /* not the "samurai" monster! */
-        if (strncmpi(bp, "wizard lock", 11))    /* not the "wizard" monster! */
-            if (strncmpi(bp, "ninja-to", 8))    /* not the "ninja" rank */
-                if (strncmpi(bp, "master key", 10)) /* not the "master" rank */
-                    if (strncmpi(bp, "magenta", 7)) /* not the "mage" rank */
-                        if (mntmp < LOW_PM && strlen(bp) > 2 &&
-                            (mntmp = name_to_mon(bp)) >= LOW_PM) {
-                            int mntmptoo, mntmplen;     /* double check for
-                                                           rank title */
-                            char *obp = bp;
+    if (!strstri(bp, "wand ") &&
+        !strstri(bp, "spellbook ") &&
+        !strstri(bp, "finger ") &&
+        !strstri(bp, "scroll ") &&
+        !strstri(bp, "scrolls ") &&
+        !strstri(bp, "potion ") &&
+        !strstri(bp, "potions ")) {
+        int l = 0;
+        int of = 4;
+        char *tmpp;
 
-                            mntmptoo = title_to_mon(bp, NULL, &mntmplen);
-                            bp += mntmp != mntmptoo ?
-                                (int)strlen(mons[mntmp].mname) : mntmplen;
-                            if (*bp == ' ')
-                                bp++;
-                            else if (!strncmpi(bp, "s ", 2))
-                                bp += 2;
-                            else if (!strncmpi(bp, "es ", 3))
-                                bp += 3;
-                            else if (!*bp && !actualn && !dn && !un &&
-                                     !oclass) {
-                                /* no referent; they don't really mean a
-                                   monster type */
-                                bp = obp;
-                                mntmp = NON_PM;
-                            }
-                        }
+        p = bp;
+        while (p != NULL) {
+            tmpp = strstri_mutable(p, " of ");
+            if (tmpp) {
+                if ((tmpp - 6 == bp && !strncmpi(tmpp - 6, "amulet", 6)) ||
+                    (tmpp - 5 == bp && !strncmpi(tmpp - 5, "cloak", 5)) ||
+                    (tmpp - 6 == bp && !strncmpi(tmpp - 6, "shield", 6)) ||
+                    (tmpp - 9 == bp && !strncmpi(tmpp - 9, "gauntlets", 9)) ||
+                    (tmpp - 4 == bp && !strncmpi(tmpp - 4, "helm", 4)) ||
+                    (tmpp - 4 == bp && !strncmpi(tmpp - 4, "ring", 4))) {
+                    p = tmpp + 4;
+                    continue;
+                }
+                of = 4;
+                p = tmpp;
+            } else {
+                tmpp = strstri_mutable(p, " and ");
+                if (tmpp) {
+                    of = 5;
+                    p = tmpp;
+                } else if ((tmpp = strstri_mutable(p, ", "))) {
+                    of = 2;
+                    p = tmpp;
+                } else {
+                    p = NULL;
+                    break;
+                }
+            }
+
+            l = 0;
+
+            if ((mntmp = name_to_mon(p + of)) >= LOW_PM) {
+                *p = '\0';
+                p = NULL;
+            } else if (!strncmpi(p + of, "fire", l=4)) {
+                props |= opm_fire;
+            } else if (!strncmpi(p + of, "frost", l=5) ||
+                       !strncmpi(p + of, "cold", l=4)) {
+                props |= opm_frost;
+            } else if (!strncmpi(p + of, "shock", l=5) ||
+                       !strncmpi(p + of, "lightning", l=9)) {
+                props |= opm_shock;
+            } else if (!strncmpi(p + of, "drain", l=5)) {
+                props |= opm_drain;
+                /* no "of vorpal"; require the prefix instead */
+            } else if (!strncmpi(p + of, "reflection", l=10)) {
+                props |= opm_reflects;
+            } else if (!strncmpi(p + of, "speed", l=5)) {
+                props |= opm_speed;
+                /* no "of oilskin"; require the prefix instead */
+            } else if (!strncmpi(p + of, "power", l=5)) {
+                props |= opm_power;
+            } else if (!strncmpi(p + of, "dexterity", l=9)) {
+                props |= opm_dexterity;
+            } else if (!strncmpi(p + of, "brilliance", l=10)) {
+                props |= opm_brilliance;
+            } else if (!strncmpi(p + of, "telepathy", l=9) ||
+                       !strncmpi(p + of, "ESP", l=3)) {
+                props |= opm_telepat;
+            } else if (!strncmpi(p + of, "displacement", l=12)) {
+                props |= opm_displacement;
+            } else if (!strncmpi(p + of, "warning", l=7)) {
+                props |= opm_warn;
+            } else if (!strncmpi(p + of, "searching", l=9)) {
+                props |= opm_search;
+            } else if (!strncmpi(p + of, "stealth", l=7)) {
+                props |= opm_stealth;
+            } else if (!strncmpi(p + of, "fumbling", l=8)) {
+                props |= opm_fumble;
+            } else if (!strncmpi(p + of, "clairvoyance", l=12)) {
+                props |= opm_clairvoyant;
+            } else if (!strncmpi(p + of, "detonations", l=11) ||
+                       !strncmpi(p + of, "detonation", l=10)) {
+                props |= opm_detonate;
+            } else if (!strncmpi(p + of, "hunger", l=6)) {
+                props |= opm_hunger;
+            } else if (!strncmpi(p + of, "aggravation", l=11)) {
+                props |= opm_aggravate;
+            } else
+                l = 0;
+
+            if (l > 0)
+                *p = '\0';
+
+            if (p)
+                p += of + l;
+        }
+    }
+
+    /* Find corpse type w/o "of" (red dragon scale mail, yeti corpse) */
+    if (strncmpi(bp, "samurai sword", 13) &&    /* not the "samurai" monster! */
+        strncmpi(bp, "wizard lock", 11) &&      /* not the "wizard" monster! */
+        strncmpi(bp, "ninja-to", 8) &&          /* not the "ninja" rank */
+        strncmpi(bp, "master key", 10) &&       /* not the "master" rank */
+        strncmpi(bp, "magenta", 7) &&            /* not the "mage" rank */
+        mntmp < LOW_PM && strlen(bp) > 2 &&
+        (mntmp = name_to_mon(bp)) >= LOW_PM) {
+        int mntmptoo, mntmplen; /* double check for rank title */
+        char *obp = bp;
+
+        mntmptoo = title_to_mon(bp, NULL, &mntmplen);
+        bp += mntmp != mntmptoo ?
+            (int)strlen(mons[mntmp].mname) : mntmplen;
+        if (*bp == ' ')
+            bp++;
+        else if (!strncmpi(bp, "s ", 2))
+            bp += 2;
+        else if (!strncmpi(bp, "es ", 3))
+            bp += 3;
+        else if (!*bp && !actualn && !dn && !un &&
+                 !oclass) {
+            /* no referent; they don't really mean a
+               monster type */
+            bp = obp;
+            mntmp = NON_PM;
+        }
+    }
 
     /* in debug mode, we allow wishing for otyps by number; this is intended for
        programmatic wishing (it's a pain to find a list of item names) */
@@ -2921,6 +3039,46 @@ typfnd:
     } else if (spesgn < 0) {
         curse(otmp);
     }
+
+    if (!otmp->oartifact) {
+        /* Kill existing object properties if any generated */
+        otmp->oprops = 0LLU;
+
+        otmp->oprops |= props;
+        otmp->oprops = obj_properties(otmp); /* filter invalid ones */
+        props = otmp->oprops;
+
+        if (magical && !props) {
+            /* Ensure that properties are allowed on this */
+            otmp->oprops = opm_all;
+            otmp->oprops = obj_properties(otmp);
+            if (otmp->oprops) {
+                otmp->oprops = 0LLU;
+                while (!otmp->oprops)
+                    assign_oprops(level, otmp, rng_main, FALSE);
+                props = otmp->oprops;
+            }
+        }
+
+        /* Do potential limitations on object properties outside wizmode */
+        if (props && !wizard) {
+            /* Don't allow properties at all on magical items */
+            if (otmp->oclass == TOOL_CLASS && !is_weptool(otmp))
+                props = 0LLU;
+            if (objects[otmp->otyp].oc_magic)
+                props = 0LLU;
+
+            uint64_t prop = 0LLU;
+            if (props) {
+                do {
+                    prop = ((uint64_t)1 << rn2(64));
+                } while (!(prop & props));
+            }
+            props = prop;
+            otmp->oprops = prop;
+        }
+    }
+
 #ifdef INVISIBLE_OBJECTS
     if (isinvisible)
         otmp->oinvis = 1;

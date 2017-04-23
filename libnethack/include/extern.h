@@ -1034,6 +1034,8 @@ extern const char *waterbody_name(xchar, xchar);
 
 /* ### mkobj.c ### */
 
+extern void assign_oprops(struct level *, struct obj *, enum rng,
+                          boolean);
 extern unsigned next_ident(void);
 extern struct obj *mkobj_at(char, struct level *, int, int, boolean, enum rng);
 extern struct obj *mksobj_at(int, struct level *, int, int, boolean, boolean,
