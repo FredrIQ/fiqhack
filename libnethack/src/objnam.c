@@ -142,6 +142,8 @@ static const struct opropdesc prop_desc[] = {
      "displacement", NULL},
     {opm_clairvoyant, CLAIRVOYANT, NULL, "clairvoyant",
      "clairvoyance", NULL},
+    {opm_mercy, 0, NULL, NULL,
+     "mercy", NULL},
     /* these below use "versus x" instead of "of x" for armor,
        checked via opm_vorpal */
     {opm_vorpal, 0, "vorpal", NULL, NULL, "beheading"},
@@ -2418,6 +2420,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
                 props |= opm_hunger;
             } else if (!strncmpi(p + of, "aggravation", l=11)) {
                 props |= opm_aggravate;
+            } else if (!strncmpi(p + of, "mercy", l=5)) {
+                props |= opm_mercy;
             } else
                 l = 0;
 

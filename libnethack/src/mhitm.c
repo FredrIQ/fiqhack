@@ -444,6 +444,7 @@ mattackm(struct monst *magr, struct monst *mdef)
                 if ((mdef->data == &mons[PM_BLACK_PUDDING] ||
                      mdef->data == &mons[PM_BROWN_PUDDING])
                     && otmp && objects[otmp->otyp].oc_material == IRON &&
+                    !(obj_properties(otmp) & opm_mercy) &&
                     mdef->mhp >= 2 && !cancelled(mdef)) {
                     if (clone_mon(mdef, 0, 0)) {
                         if (vis) {
@@ -950,6 +951,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     const struct permonst *pd = mdef->data;
     int armpro, num, tmp = dice((int)mattk->damn, (int)mattk->damd);
     boolean cancelled;
+    boolean mercy = FALSE;
     int zombie_timer;
 
     if (touch_petrifies(pd) && !resists_ston(magr)) {
@@ -1086,6 +1088,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     if (DEADMONSTER(mdef))
                         return (MM_DEF_DIED |
                                 (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
+                    if (obj_properties(otmp) & opm_mercy)
+                        mercy = TRUE;
                 }
                 if (tmp)
                     mrustm(magr, mdef, otmp);
@@ -1654,6 +1658,36 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     }
     if (!tmp)
         return MM_MISS;
+
+    if (mercy) {
+        otmp->mbknown = 1;
+        otmp->mknown = 1;
+        boolean saw_something = FALSE;
+        if (mdef->mhp < mdef->mhpmax) {
+            mdef->mhp += tmp;
+            if (mdef->mhp > mdef->mhpmax)
+                mdef->mhp = mdef->mhpmax;
+            if (canseemon(magr) || canseemon(mdef)) {
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s healed!", M_verbs(mdef, "are"));
+                saw_something = TRUE;
+            }
+        }
+
+        if (!otmp->cursed) {
+            if (canseemon(magr)) {
+                pline(msgc_monneutral, "%s %s for a moment.",
+                      Tobjnam(otmp, "glow"), hcolor("black"));
+                saw_something = TRUE;
+            }
+            curse(otmp);
+        }
+
+        if (saw_something) {
+            learn_oprop(otmp, opm_mercy);
+            otmp->bknown = 1; /* autocurses */
+        }
+    }
 
     if ((mdef->mhp -= tmp) < 1) {
         if (m_at(level, mdef->mx, mdef->my) == magr) {  /* see gulpmm() */

@@ -155,7 +155,8 @@ struct obj {
 #define opm_brilliance   0x0000000000040000LLU
 #define opm_displacement 0x0000000000080000LLU
 #define opm_clairvoyant  0x0000000000100000LLU
-#define opm_all          0x00000000001fffffLLU
+#define opm_mercy        0x0000000000200000LLU
+#define opm_all          0x00000000003fffffLLU
 /* Don't have any properties that depend on update_property in
    potential weapon slots, weapon properties aren't updated
    properly. */
@@ -163,7 +164,7 @@ struct obj {
                  opm_stealth | opm_telepat | opm_warn |         \
                  opm_aggravate | opm_oilskin)
 #define opm_aweparm (opm_fire | opm_frost | opm_shock | opm_drain)
-#define opm_mwep (opm_any | opm_aweparm | opm_vorpal)
+#define opm_mwep (opm_any | opm_aweparm | opm_vorpal | opm_mercy)
 #define opm_ammo (opm_aweparm | opm_detonate)
 #define opm_spe (opm_dexterity | opm_brilliance)
 #define opm_armor (opm_any | opm_aweparm | opm_spe |            \
