@@ -1080,7 +1080,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     touch_petrifies(&mons[otmp->corpsenm]))
                     goto do_stone;
                 tmp += dmgval(otmp, mdef);
-                if (otmp->oartifact) {
+                if (otmp->oartifact ||
+                    otmp->oprops) {
                     artifact_hit(magr, mdef, otmp, &tmp, dieroll);
                     if (DEADMONSTER(mdef))
                         return (MM_DEF_DIED |

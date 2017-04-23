@@ -794,7 +794,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
                 if (dmg <= 0)
                     dmg = 1;
-                if (!(otmp->oartifact &&
+                if (!((otmp->oartifact || otmp->oprops) &&
                       artifact_hit(mtmp, &youmonst, otmp, &dmg, dieroll)))
                     hitmsg(mtmp, mattk);
                 if (!dmg)

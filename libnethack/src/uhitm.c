@@ -434,7 +434,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                     hittxt = TRUE;
                 }
 
-                if (obj->oartifact &&
+                if ((obj->oartifact || obj->oprops) &&
                     artifact_hit(&youmonst, mon, obj, &tmp, dieroll)) {
                     if (DEADMONSTER(mon))  /* artifact killed monster */
                         return FALSE;
