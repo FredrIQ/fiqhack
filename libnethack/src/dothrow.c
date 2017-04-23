@@ -172,9 +172,10 @@ throw_obj(struct obj *obj, const struct nh_cmd_arg *arg,
             otmp = obj;
             if (otmp->owornmask)
                 remove_worn_item(otmp, FALSE);
+            obj = NULL;
         }
         freeinv(otmp);
-        throwit(otmp, wep_mask, twoweap, dx, dy, dz);
+        throwit(otmp, obj, wep_mask, twoweap, dx, dy, dz);
     }
     m_shot.n = m_shot.i = 0;
     m_shot.o = STRANGE_OBJECT;
@@ -1052,7 +1053,8 @@ boomhit(int dx, int dy)
 }
 
 void
-throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang 
+throwit(struct obj *obj, struct obj *stack,
+        long wep_mask, /* used to re-equip returning boomerang 
                                          */
         boolean twoweap,        /* used to restore twoweapon mode if wielded
                                    weapon returns */
@@ -1207,7 +1209,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
         }
         snuff_candle(obj);
         notonhead = (bhitpos.x != mon->mx || bhitpos.y != mon->my);
-        obj_gone = thitmonst(mon, obj);
+        obj_gone = thitmonst(mon, obj, stack);
         /* Monster may have been tamed; this frees old mon */
         mon = m_at(level, bhitpos.x, bhitpos.y);
 
@@ -1391,7 +1393,7 @@ tmiss(struct obj *obj, struct monst *mon)
  * 0 if caller must take care of it.
  */
 int
-thitmonst(struct monst *mon, struct obj *obj)
+thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
 {
     int tmp;    /* Base chance to hit */
     int disttmp;        /* distance modifier */
@@ -1557,6 +1559,21 @@ thitmonst(struct monst *mon, struct obj *obj)
                     broken = !rn2(4);
                 if (obj->blessed && !rnl(4))
                     broken = 0;
+
+                uint64_t props = obj_properties(obj);
+                if (props & opm_detonate) {
+                    obj->in_use = TRUE;
+                    explode(bhitpos.x, bhitpos.y,
+                            ((props & opm_frost) ? AD_COLD :
+                             (props & opm_shock) ? AD_ELEC :
+                             AD_FIRE) + 1,
+                            dice(3, 6), WEAPON_CLASS,
+                            (props & (opm_frost | opm_shock)) ?
+                            EXPL_FROSTY : EXPL_FIERY, NULL, 0);
+                    broken = 1;
+                    if (stack)
+                        learn_oprop(stack, opm_detonate);
+                }
 
                 if (broken) {
                     if (*u.ushops)

@@ -925,7 +925,7 @@ dospit(const struct musable *m)
     }
 
     otmp->spe = 1;      /* to indicate it's yours */
-    throwit(otmp, 0L, FALSE, dx, dy, dz);
+    throwit(otmp, NULL, 0L, FALSE, dx, dy, dz);
     return 1;
 }
 

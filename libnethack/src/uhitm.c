@@ -434,7 +434,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                     hittxt = TRUE;
                 }
 
-                if (obj->oartifact &&
+                if ((obj->oartifact || obj->oprops) &&
                     artifact_hit(&youmonst, mon, obj, &tmp, dieroll)) {
                     if (DEADMONSTER(mon))  /* artifact killed monster */
                         return FALSE;
@@ -923,18 +923,23 @@ m_slips_free(struct monst *mdef, const struct attack *mattk)
             obj = which_armor(mdef, os_armu);    /* shirt */
     }
 
+    uint64_t props = 0;
+    if (obj)
+        props = obj_properties(obj);
+
     /* if your cloak/armor is greased, monster slips off; this protection might
        fail (33% chance) when the armor is cursed */
-    if (obj && (obj->greased || obj->otyp == OILSKIN_CLOAK) &&
+    if (obj && (obj->greased || obj->otyp == OILSKIN_CLOAK ||
+                (props & opm_oilskin)) &&
         (!obj->cursed || rn2(3))) {
         pline(combat_msgc(&youmonst, mdef, cr_miss), "You %s %s %s %s!",
               mattk->adtyp == AD_WRAP ?
               "slip off of" : "grab, but cannot hold onto",
               s_suffix(mon_nam(mdef)), obj->greased ? "greased" : "slippery",
               /* avoid "slippery slippery cloak" for undiscovered oilskin */
-              (obj->greased ||
-               objects[obj->otyp].
-               oc_name_known) ? xname(obj) : cloak_simple_name(obj));
+              (obj->greased || objects[obj->otyp].oc_name_known ||
+               obj->otyp != OILSKIN_CLOAK) ?
+              xname(obj) : cloak_simple_name(obj));
 
         if (obj->greased && !rn2(2)) {
             pline(msgc_consequence, "The grease wears off.");
@@ -1063,6 +1068,8 @@ steal_it(struct monst *mdef, const struct attack *mattk)
             }
             otmp->owornmask = 0L;
             update_property(mdef, objects[otmp->otyp].oc_oprop, which_slot(otmp));
+            update_property_for_oprops(mdef, otmp,
+                                       which_slot(otmp));
 
             if (otmp == stealoid)       /* special message for final item */
                 pline(msgc_actionok, "%s finishes taking off %s suit.",

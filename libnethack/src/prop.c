@@ -1151,8 +1151,8 @@ update_property(struct monst *mon, enum youprop prop,
         /* if "redundant" is set at this point, it is pointing
            at speed of the "other" kind (very fast if intrinsic, fast if extrinsic) */
 
-        /* speed boots */
-        if (slot == os_armf) {
+        /* speed boots/objects of speed */
+        if (W_MASK(slot) & W_EQUIP) {
             if (you || vis) {
                 pline(!you ? msgc_monneutral :
                       lost ? msgc_statusend :

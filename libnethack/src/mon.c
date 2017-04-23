@@ -2190,8 +2190,11 @@ monstone(struct monst *mdef)
         /* some objects may end up outside the statue */
         while ((obj = mdef->minvent) != 0) {
             obj_extract_self(obj);
-            if (obj->owornmask)
+            if (obj->owornmask) {
                 update_property(mdef, objects[obj->otyp].oc_oprop, which_slot(obj));
+                update_property_for_oprops(mdef, obj,
+                                           which_slot(obj));
+            }
             obj_no_longer_held(obj);
             if (obj->owornmask & W_MASK(os_wep))
                 setmnotwielded(mdef, obj);

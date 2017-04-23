@@ -145,6 +145,7 @@ drop_throw(struct obj *obj, boolean ohit, int x, int y)
 int
 ohitmon(struct monst *mtmp, /* accidental target */
         struct obj *otmp,   /* missile; might be destroyed by drop_throw */
+        struct obj *stack,  /* used for oprop id purposes */
         struct monst *magr, /* attacker; NULL if not a monster */
         int range,  /* how much farther will object travel if it misses */
         /* Use -1 to signify to keep going even after hit, unless it's gone
@@ -154,6 +155,7 @@ ohitmon(struct monst *mtmp, /* accidental target */
     int damage, tmp;
     boolean vis, ismimic;
     int objgone = 1;
+    uint64_t props = obj_properties(otmp);
 
     ismimic = mtmp->m_ap_type && mtmp->m_ap_type != M_AP_MONSTER;
     vis = cansee(bhitpos.x, bhitpos.y);
@@ -195,7 +197,19 @@ ohitmon(struct monst *mtmp, /* accidental target */
             pline(combat_msgc(magr, mtmp, cr_hit), "%s is hit%s", Monnam(mtmp),
                   exclam(damage));
 
-        if (otmp->opoisoned && is_poisonable(otmp)) {
+        if (props) {
+            int dieroll = rnd(20);
+            if (artifact_hit(NULL, mtmp, otmp,
+                             &damage, dieroll)) {
+                /* first ID potential discovered properties
+                   on the rest of the stack */
+                if (stack)
+                    stack->oprops_known |= otmp->oprops_known;
+            }
+        }
+
+        if (!DEADMONSTER(mtmp) &&
+            otmp->opoisoned && is_poisonable(otmp)) {
             if (resists_poison(mtmp)) {
                 if (vis)
                     pline(combat_msgc(magr, mtmp, cr_immune),
@@ -212,7 +226,8 @@ ohitmon(struct monst *mtmp, /* accidental target */
                 }
             }
         }
-        if (objects[otmp->otyp].oc_material == SILVER &&
+        if (!DEADMONSTER(mtmp) &&
+            objects[otmp->otyp].oc_material == SILVER &&
             hates_silver(mtmp->data)) {
             if (vis)
                 pline(combat_msgc(magr, mtmp, cr_hit),
@@ -221,7 +236,8 @@ ohitmon(struct monst *mtmp, /* accidental target */
                 pline(combat_msgc(magr, mtmp, cr_hit),
                       "Its flesh is seared!");
         }
-        if (otmp->otyp == ACID_VENOM && cansee(mtmp->mx, mtmp->my)) {
+        if (!DEADMONSTER(mtmp) && otmp->otyp == ACID_VENOM &&
+            cansee(mtmp->mx, mtmp->my)) {
             if (resists_acid(mtmp)) {
                 if (vis || spoil_unseen)
                     pline(combat_msgc(magr, mtmp, cr_immune),
@@ -235,8 +251,9 @@ ohitmon(struct monst *mtmp, /* accidental target */
                     pline(combat_msgc(magr, mtmp, cr_hit), "It is burned!");
             }
         }
-        mtmp->mhp -= damage;
-        if (mtmp->mhp <= 0) {
+
+        if (!DEADMONSTER(mtmp) &&
+            ((mtmp->mhp -= damage) <= 0)) {
             if (vis || spoil_unseen)
                 pline(combat_msgc(magr, mtmp, cr_kill),
                       "%s is %s!", Monnam(mtmp),
@@ -263,6 +280,21 @@ ohitmon(struct monst *mtmp, /* accidental target */
         if (is_pole(otmp))
             return 1;
 
+        if (props & opm_detonate) {
+            otmp->in_use = TRUE;
+            explode(bhitpos.x, bhitpos.y,
+                    ((props & opm_frost) ? AD_COLD :
+                     (props & opm_shock) ? AD_ELEC :
+                     AD_FIRE) + 1,
+                    dice(3, 6), WEAPON_CLASS,
+                    (props & (opm_frost | opm_shock)) ? EXPL_FROSTY :
+                    EXPL_FIERY, NULL, 0);
+            if (stack)
+                learn_oprop(stack, opm_detonate);
+            obfree(otmp, NULL);
+            return 1;
+        }
+
         objgone = drop_throw(otmp, 1, bhitpos.x, bhitpos.y);
         if (!objgone && range == -1) {  /* special case */
             obj_extract_self(otmp);     /* free it for motion again */
@@ -282,6 +314,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
     struct obj *singleobj;
     struct tmp_sym *tsym = 0;
     int hitu, blindinc = 0;
+    uint64_t props = obj_properties(obj);
 
     bhitpos.x = x;
     bhitpos.y = y;
@@ -353,7 +386,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
         bhitpos.x += dx;
         bhitpos.y += dy;
         if ((mtmp = m_at(level, bhitpos.x, bhitpos.y)) != 0) {
-            if (ohitmon(mtmp, singleobj, mon, range, verbose))
+            if (ohitmon(mtmp, singleobj, obj, mon, range, verbose))
                 break;
         } else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
             action_interrupted();
@@ -419,6 +452,21 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                     dam = 1;
                 hitu = thitu(hitv, dam, singleobj, NULL);
             }
+            if (hitu && props) {
+                int dieroll = rnd(20);
+                int dmg = 1; /* in case artifact_hit doesn't like 0 */
+                if (artifact_hit(mon, &youmonst, singleobj,
+                                 &dmg, dieroll)) {
+                    /* first ID potential discovered properties
+                       on the rest of the stack */
+                    if (obj)
+                        obj->oprops_known |= singleobj->oprops_known;
+
+                    dmg--; /* get rid of the 1 earlier */
+                    if (dmg) /* damage bonuses from fire/frost/shock */
+                        losehp(dmg, killer_msg_obj(DIED, singleobj));
+                }
+            }
             if (hitu && singleobj->opoisoned && is_poisonable(singleobj)) {
                 poisoned(xname(singleobj), A_STR,
                          killer_msg_obj(POISONING, singleobj), -10);
@@ -459,6 +507,24 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                     set_delayed_killer(STONING, killer_msg(STONING, kbuf));
                 }
             }
+
+            if (props & opm_detonate) {
+                /* shock uses "frosty" too, similar to lightning rays */
+                singleobj->in_use = TRUE;
+                explode(u.ux, u.uy,
+                        ((props & opm_frost) ? AD_COLD :
+                         (props & opm_shock) ? AD_ELEC :
+                         AD_FIRE) + 1,
+                        dice(3, 6), WEAPON_CLASS,
+                        (props & (opm_frost | opm_shock)) ? EXPL_FROSTY :
+                        EXPL_FIERY, NULL, 0);
+                if (obj)
+                    learn_oprop(obj, opm_detonate);
+                action_interrupted();
+                obfree(singleobj, NULL);
+                break;
+            }
+
             action_interrupted();
             if (hitu || !range) {
                 drop_throw(singleobj, hitu, u.ux, u.uy);
@@ -516,6 +582,7 @@ m_useup(struct monst *mon, struct obj *obj)
             if (obj->otyp == SADDLE && mon == u.usteed)
                 dismount_steed(DISMOUNT_FELL);
             update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
+            update_property_for_oprops(mon, obj, which_slot(obj));
         }
         obfree(obj, NULL);
     }
@@ -577,7 +644,8 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
             action_interrupted();
 
         } else if (MON_AT(level, xdef, ydef))
-            (void)ohitmon(m_at(level, xdef, ydef), otmp, mtmp, 0, FALSE);
+            (void)ohitmon(m_at(level, xdef, ydef), otmp, NULL,
+                          mtmp, 0, FALSE);
         else if (mon_visible(mtmp))
             pline(combat_msgc(mtmp, NULL, cr_miss), "But it misses wildly.");
 

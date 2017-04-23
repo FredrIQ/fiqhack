@@ -631,16 +631,19 @@ diseasemu(const struct permonst *mdat, const char *hitmsg)
 static boolean
 u_slip_free(struct monst *mtmp, const struct attack *mattk)
 {
-    struct obj *obj = (uarmc ? uarmc : uarm);
+    struct obj *obj = (uarmc ? uarmc : uarm ? uarm : uarmu);
 
-    if (!obj)
-        obj = uarmu;
     if (mattk->adtyp == AD_DRIN)
         obj = uarmh;
 
+    uint64_t props = 0;
+    if (obj)
+        props = obj_properties(obj);
+
     /* if your cloak/armor is greased, monster slips off; this protection might
        fail (33% chance) when the armor is cursed */
-    if (obj && (obj->greased || obj->otyp == OILSKIN_CLOAK) &&
+    if (obj && (obj->greased || obj->otyp == OILSKIN_CLOAK ||
+                (props & opm_oilskin)) &&
         (!obj->cursed || rn2(3))) {
         pline(combat_msgc(mtmp, &youmonst, cr_miss), "%s %s your %s %s!",
               Monnam(mtmp), (mattk->adtyp == AD_WRAP) ? "slips off of" :
@@ -648,7 +651,8 @@ u_slip_free(struct monst *mtmp, const struct attack *mattk)
               obj->greased ? "greased" : "slippery",
               /* avoid "slippery slippery cloak" for undiscovered oilskin
                  cloak */
-              (obj->greased || objects[obj->otyp].oc_name_known) ?
+              (obj->greased || objects[obj->otyp].oc_name_known ||
+               obj->otyp != OILSKIN_CLOAK) ?
               xname(obj) : cloak_simple_name(obj));
 
         if (obj->greased && !rn2(2)) {
@@ -790,7 +794,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
                 if (dmg <= 0)
                     dmg = 1;
-                if (!(otmp->oartifact &&
+                if (!((otmp->oartifact || otmp->oprops) &&
                       artifact_hit(mtmp, &youmonst, otmp, &dmg, dieroll)))
                     hitmsg(mtmp, mattk);
                 if (!dmg)

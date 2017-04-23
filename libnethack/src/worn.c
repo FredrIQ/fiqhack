@@ -396,12 +396,16 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
     if (best->cursed)
         best->mbknown = 1;
 
-    if (old && update_property(mon, objects[old->otyp].oc_oprop, slot))
-        makeknown(old->otyp);
+    if (old) {
+        if (update_property(mon, objects[old->otyp].oc_oprop, slot))
+            makeknown(old->otyp);
+        update_property_for_oprops(mon, old, slot);
+    }
     mon->misc_worn_check |= W_MASK(slot);
     best->owornmask |= W_MASK(slot);
     if (update_property(mon, objects[best->otyp].oc_oprop, slot))
         makeknown(best->otyp);
+    update_property_for_oprops(mon, best, slot);
 }
 
 #undef RACE_EXCEPTION
@@ -501,6 +505,7 @@ do_equip(struct monst *mon, struct obj *obj,
     if (!redundant) {
         if (update_property(mon, prop, slot))
             makeknown(obj->otyp);
+        update_property_for_oprops(mon, obj, slot);
         if (!mon->mhp) /* died (lost a critical property) */
             return 2;
     }
@@ -563,8 +568,10 @@ m_lose_armor(struct monst *mon, struct obj *obj)
     struct level *lev = mon->dlevel;
 
     mon->misc_worn_check &= ~obj->owornmask;
-    if (obj->owornmask)
+    if (obj->owornmask) {
         update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
+        update_property_for_oprops(mon, obj, which_slot(obj));
+    }
     obj->owornmask = 0L;
 
     obj_extract_self(obj);

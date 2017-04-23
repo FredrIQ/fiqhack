@@ -122,11 +122,13 @@ extern boolean arti_reflects(struct obj *);
 extern boolean restrict_name(struct obj *, const char *);
 extern boolean defends(int, struct obj *);
 extern boolean protects(int, struct obj *);
-extern long item_provides_extrinsic(struct obj *, int, int *);
+extern long item_provides_extrinsic(const struct obj *, int, int *);
+extern long item_provides_extrinsic_before_oprop(const struct obj *,
+                                                 int, int *);
 extern void uninvoke_artifact(struct obj *);
 extern int touch_artifact(struct obj *, const struct monst *);
 extern int spec_abon(struct obj *, struct monst *);
-extern int spec_dbon(struct obj *, struct monst *, int);
+extern int spec_dbon(struct obj *, struct monst *, int, boolean *);
 extern void discover_artifact(xchar);
 extern boolean undiscovered_artifact(xchar);
 extern int disp_artifact_discoveries(struct nh_menulist *);
@@ -440,9 +442,10 @@ extern void mhurtle(struct monst *, int, int, int);
 extern boolean throwing_weapon(const struct obj *);
 extern struct monst *fire_obj(int, int, int, int, struct obj *, boolean *);
 extern struct monst *boomhit(int, int);
-extern void throwit(struct obj *, long, boolean, schar, schar, schar);
+extern void throwit(struct obj *, struct obj *, long, boolean,
+                    schar, schar, schar);
 extern int omon_adj(struct monst *, struct obj *, boolean);
-extern int thitmonst(struct monst *, struct obj *);
+extern int thitmonst(struct monst *, struct obj *, struct obj *);
 extern int hero_breaks(struct obj *, xchar, xchar, boolean);
 extern int breaks(struct obj *, xchar, xchar);
 extern boolean breaktest(struct obj *);
@@ -1031,6 +1034,8 @@ extern const char *waterbody_name(xchar, xchar);
 
 /* ### mkobj.c ### */
 
+extern void assign_oprops(struct level *, struct obj *, enum rng,
+                          boolean);
 extern unsigned next_ident(void);
 extern struct obj *mkobj_at(char, struct level *, int, int, boolean, enum rng);
 extern struct obj *mksobj_at(int, struct level *, int, int, boolean, boolean,
@@ -1039,6 +1044,8 @@ extern struct obj *mksobj(struct level *, int, boolean, boolean, enum rng);
 extern struct obj *mktemp_sobj(struct level *, int);
 extern struct obj *mkobj(struct level *, char, boolean, enum rng);
 extern struct obj *mkobj_of_class(struct level *, char, boolean, enum rng);
+extern uint64_t obj_properties(const struct obj *);
+extern void learn_oprop(struct obj *, uint64_t);
 extern int rndmonnum(const d_level *, enum rng);
 extern struct obj *splitobj(struct obj *, long);
 extern void replace_object(struct obj *, struct obj *);
@@ -1224,7 +1231,8 @@ extern void mplayer_talk(struct monst *);
 /* ### mthrowu.c ### */
 
 extern int thitu(int, int, struct obj *, const char *);
-extern int ohitmon(struct monst *, struct obj *, struct monst *, int, boolean);
+extern int ohitmon(struct monst *, struct obj *, struct obj *,
+                   struct monst *, int, boolean);
 extern void thrwmq(struct monst *, int, int);
 extern int spitmq(struct monst *, int, int, const struct attack *);
 extern int breamq(struct monst *, int, int, const struct attack *);
@@ -1290,6 +1298,13 @@ extern void count_discovered_objects(int *, int *);
 
 /* ### objnam.c ### */
 
+extern void update_property_for_oprops(struct monst *,
+                                      struct obj *,
+                                      enum objslot);
+extern uint64_t filter_redundant_oprops(const struct obj *,
+                                        uint64_t);
+extern boolean obj_oprops_provides_property(const struct obj *,
+                                            enum youprop);
 extern const char *obj_typename(int);
 extern const char *simple_typename(int);
 extern boolean obj_is_pname(const struct obj *);

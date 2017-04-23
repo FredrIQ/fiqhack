@@ -1080,7 +1080,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     touch_petrifies(&mons[otmp->corpsenm]))
                     goto do_stone;
                 tmp += dmgval(otmp, mdef);
-                if (otmp->oartifact) {
+                if (otmp->oartifact ||
+                    otmp->oprops) {
                     artifact_hit(magr, mdef, otmp, &tmp, dieroll);
                     if (DEADMONSTER(mdef))
                         return (MM_DEF_DIED |
@@ -1446,6 +1447,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     setmnotwielded(mdef, otmp);
                 otmp->owornmask = 0L;
                 update_property(mdef, objects[otmp->otyp].oc_oprop, which_slot(otmp));
+                update_property_for_oprops(mdef, otmp,
+                                           which_slot(otmp));
             }
 
             /* add_to_minv() might free otmp [if it merges] */

@@ -1037,6 +1037,7 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
             if (objects[otyp].oc_uses_known)
                 obj->known = 1;
             obj->cursed = 0;
+            obj->oprops = obj->oprops_known = 0;
             if (obj->opoisoned && u.ualign.type != A_CHAOTIC)
                 obj->opoisoned = 0;
             if (obj->oclass == WEAPON_CLASS || obj->oclass == TOOL_CLASS) {

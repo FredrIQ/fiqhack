@@ -1501,7 +1501,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                     break;
                 }
             }
-            if (ohitmon(mtmp, singleobj, NULL,
+            if (ohitmon(mtmp, singleobj, NULL, NULL,
                         (style == ROLL) ? -1 : dist, FALSE)) {
                 used_up = TRUE;
                 break;
@@ -3015,6 +3015,8 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
     if (!obj)
         return 0;
 
+    uint64_t props = obj_properties(obj);
+
     if (snuff_lit(obj))
         return 2;
 
@@ -3027,7 +3029,9 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
             update_inventory();
         return 1;
     } else if (Is_container(obj) && !Is_box(obj) &&
-                (obj->otyp != OILSKIN_SACK || (obj->cursed && !rn2(3)))) {
+               ((obj->otyp != OILSKIN_SACK &&
+                 !(props & opm_oilskin)) ||
+                (obj->cursed && !rn2(3)))) {
         water_damage_chain(obj->cobj, FALSE);
         return 0;
     } else if (!force && (Luck + 5) > rn2(20)) {

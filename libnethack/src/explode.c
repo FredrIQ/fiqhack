@@ -656,7 +656,8 @@ scatter(int sx, int sy, /* location of objects to scatter */
                 } else if ((mtmp = m_at(lev, bhitpos.x, bhitpos.y)) != 0) {
                     if (scflags & MAY_HITMON) {
                         stmp->range--;
-                        if (ohitmon(mtmp, stmp->obj, NULL, 1, FALSE)) {
+                        if (ohitmon(mtmp, stmp->obj, NULL, NULL,
+                                    1, FALSE)) {
                             stmp->obj = NULL;
                             stmp->stopped = TRUE;
                         }
