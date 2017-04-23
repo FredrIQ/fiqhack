@@ -1194,6 +1194,8 @@ fully_identify_obj(struct obj *otmp)
     otmp->known = otmp->dknown = otmp->bknown = otmp->rknown = 1;
     if (otmp->otyp == EGG && otmp->corpsenm != NON_PM)
         learn_egg_type(otmp->corpsenm);
+    if (otmp->oprops)
+        learn_oprop(otmp, otmp->oprops);
 }
 
 /* ggetobj callback routine; identify an object and give immediate feedback */
