@@ -254,7 +254,8 @@ restore_mextra(struct memfile *mf, struct monst *mon)
     if (extyp)
         mx_new(mon);
     else
-        panic("restore_mextra: nothing to restore?");
+        panic("restore_mextra: nothing to restore for %s?",
+              k_monnam(mon));
 
     struct mextra *mx = mon->mextra;
 
