@@ -282,6 +282,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
     struct obj *singleobj;
     struct tmp_sym *tsym = 0;
     int hitu, blindinc = 0;
+    uint64_t props = obj_properties(obj);
 
     bhitpos.x = x;
     bhitpos.y = y;
@@ -419,6 +420,21 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                     dam = 1;
                 hitu = thitu(hitv, dam, singleobj, NULL);
             }
+            if (hitu && props) {
+                int dieroll = rnd(20);
+                int dmg = 1; /* in case artifact_hit doesn't like 0 */
+                if (artifact_hit(mon, &youmonst, singleobj,
+                                 &dmg, dieroll)) {
+                    /* first ID potential discovered properties
+                       on the rest of the stack */
+                    if (obj)
+                        obj->oprops_known |= singleobj->oprops_known;
+
+                    dmg--; /* get rid of the 1 earlier */
+                    if (dmg) /* damage bonuses from fire/frost/shock */
+                        losehp(dmg, killer_msg_obj(DIED, singleobj));
+                }
+            }
             if (hitu && singleobj->opoisoned && is_poisonable(singleobj)) {
                 poisoned(xname(singleobj), A_STR,
                          killer_msg_obj(POISONING, singleobj), -10);
@@ -459,6 +475,21 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                     set_delayed_killer(STONING, killer_msg(STONING, kbuf));
                 }
             }
+
+            if (props & opm_detonate) {
+                /* shock uses "frosty" too, similar to lightning rays */
+                explode(u.ux, u.uy,
+                        ((props & opm_frost) ? AD_COLD :
+                         (props & opm_shock) ? AD_ELEC :
+                         AD_FIRE) + 1,
+                        dice(3, 6), WEAPON_CLASS,
+                        (props & (opm_frost | opm_shock)) ? EXPL_FROSTY :
+                        EXPL_FIERY, NULL, 0);
+                action_interrupted();
+                obfree(singleobj, NULL);
+                break;
+            }
+
             action_interrupted();
             if (hitu || !range) {
                 drop_throw(singleobj, hitu, u.ux, u.uy);

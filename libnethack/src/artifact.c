@@ -1241,7 +1241,8 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
             return FALSE;
 
         props = obj_properties(otmp);
-        if (!props)
+        if (!(props & (opm_fire | opm_frost | opm_shock |
+                       opm_drain | opm_vorpal)))
             return FALSE;
     }
 
