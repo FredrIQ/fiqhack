@@ -1895,7 +1895,7 @@ save_obj(struct memfile *mf, struct obj *obj)
        there is one in first place to save/restore */
     mwrite8(mf, obj->cobj ? 1 : 0);
 
-    if (obj->oprops != obj_properties(obj) && FALSE) {
+    if (obj->oprops != obj_properties(obj)) {
         impossible("Obj %s has invalid properties, deleting",
                    killer_xname(obj));
         obj->oprops = obj_properties(obj);
