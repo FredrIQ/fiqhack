@@ -840,7 +840,8 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
         mon->mhp = mon->mhpmax;
     if (mon->mhp <= 0)
         destroyed = TRUE;
-    if (mon->mtame && (!mon->mflee || mon->mfleetim) && tmp > 0) {
+    if (!mercy && mon->mtame &&
+        (!mon->mflee || mon->mfleetim) && tmp > 0) {
         abuse_dog(mon);
         monflee(mon, 10 * rnd(tmp), FALSE, FALSE);
     }
