@@ -15,6 +15,7 @@ static int passiveum(const struct permonst *, struct monst *,
 static void mayberem(struct obj *, const char *);
 
 static boolean diseasemu(const struct permonst *, const char *);
+static void do_mercy(struct monst *, struct obj *, int);
 static int hitmu(struct monst *, const struct attack *);
 static int gulpmu(struct monst *, const struct attack *);
 static int explmu(struct monst *, const struct attack *);
@@ -705,6 +706,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     const struct permonst *olduasmon = youmonst.data;
     int res;
     struct attack noseduce;
+    boolean mercy = FALSE;
 
     if (!flags.seduce_enabled && mattk->adtyp == AD_SSEX) {
         noseduce = *mattk;
@@ -797,11 +799,15 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 if (!((otmp->oartifact || otmp->oprops) &&
                       artifact_hit(mtmp, &youmonst, otmp, &dmg, dieroll)))
                     hitmsg(mtmp, mattk);
+                if (obj_properties(otmp) & opm_mercy)
+                    mercy = TRUE;
+
                 if (!dmg)
                     break;
                 if (u.mh > 1 && u.mh > ((find_mac(&youmonst) > 0) ?
                                             dmg : dmg + find_mac(&youmonst)) &&
                     objects[otmp->otyp].oc_material == IRON &&
+                    !mercy &&
                     (u.umonnum == PM_BLACK_PUDDING ||
                      u.umonnum == PM_BROWN_PUDDING)) {
                     /* This redundancy is necessary because you have to take the
@@ -961,7 +967,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         }
         if (Half_physical_damage)
             dmg = (dmg + 1) / 2;
-        mdamageu(mtmp, dmg);
+        if (mercy)
+            do_mercy(mtmp, otmp, dmg);
+        else
+            mdamageu(mtmp, dmg);
 
         if (!uarmh || uarmh->otyp != DUNCE_CAP) {
             pline(ABASE(A_INT) <= ATTRMIN(A_INT) ?
@@ -1584,7 +1593,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             /* else already at or below minimum threshold; do nothing */
         }
 
-        mdamageu(mtmp, dmg);
+        if (mercy)
+            do_mercy(mtmp, otmp, dmg);
+        else
+            mdamageu(mtmp, dmg);
     }
 
     if (dmg)
@@ -1914,6 +1926,52 @@ explmu(struct monst *mtmp, const struct attack *mattk)
     return 2;   /* it dies */
 }
 
+
+static void
+do_mercy(struct monst *magr, struct obj *obj, int dmg)
+{
+    boolean restored_hp = FALSE;
+    boolean saw_something = FALSE;
+    if (Upolyd) {
+        if (u.mh < u.mhmax) {
+            u.mh += dmg;
+            if (u.mh > u.mh)
+                u.mh = u.mhmax;
+            restored_hp = TRUE;
+        }
+    } else {
+        if (u.uhp < u.uhpmax) {
+            u.uhp += dmg;
+            if (u.uhp > u.uhpmax)
+                u.uhp = u.uhpmax;
+            restored_hp = TRUE;
+        }
+    }
+
+    if (restored_hp) {
+        pline(msgc_statusgood, "You are healed!");
+        saw_something = TRUE;
+    }
+
+    if (obj) {
+        obj->mknown = 1;
+        obj->mbknown = 1;
+
+        if (!obj->cursed) {
+            if (canseemon(magr)) {
+                pline(msgc_monneutral, "%s %s for a moment.",
+                      Tobjnam(obj, "glow"), hcolor("black"));
+                saw_something = TRUE;
+            }
+            curse(obj);
+        }
+
+        if (saw_something) {
+            obj->bknown = 1;
+            learn_oprop(obj, opm_mercy);
+        }
+    }
+}
 
 /* mtmp hits you for n points damage */
 void

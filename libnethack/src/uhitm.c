@@ -305,6 +305,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     boolean silvermsg = FALSE, silverobj = FALSE;
     boolean valid_weapon_attack = FALSE;
     boolean unarmed = !uwep && (!uarm || uskin()) && !uarms;
+    boolean mercy = FALSE;
     int jousting = 0;
     int wtype;
     struct obj *monwep;
@@ -442,6 +443,10 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                         return TRUE;
                     hittxt = TRUE;
                 }
+                if (!thrown &&
+                    (obj_properties(obj) & opm_mercy))
+                    mercy = TRUE;
+
                 if (objects[obj->otyp].oc_material == SILVER &&
                     hates_silver(mdat)) {
                     silvermsg = TRUE;
@@ -772,7 +777,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
             obj = 0;
         }
         /* avoid migrating a dead monster */
-        if (mon->mhp > tmp) {
+        if (mon->mhp > tmp || mercy) {
             mhurtle(mon, mon->mx - u.ux, mon->my - u.uy, 1);
             mdat = mon->data;   /* in case of a polymorph trap */
             if (DEADMONSTER(mon))
@@ -798,8 +803,37 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
         }
     }
 
-    if (!already_killed)
-        mon->mhp -= tmp;
+    if (!already_killed) {
+        if (mercy) {
+            if (mon->mhp < mon->mhpmax) {
+                mon->mhp += tmp;
+                if (mon->mhp > mon->mhpmax)
+                    mon->mhp = mon->mhpmax;
+                pline(combat_msgc(&youmonst, mon, cr_immune),
+                      "%s healed!", M_verbs(mon, "are"));
+            }
+
+            if (obj) {
+                obj->mbknown = 1;
+                obj->mknown = 1;
+
+                /* autocurse */
+                if (!obj->cursed) {
+                    if (Blind)
+                        pline(msgc_statusbad, "%s for a moment.",
+                              Tobjnam(obj, "vibrate"));
+                    else
+                        pline(msgc_statusbad, "%s %s for a moment.",
+                              Tobjnam(obj, "glow"), hcolor("black"));
+                    curse(obj);
+                    obj->bknown = TRUE;
+                }
+                learn_oprop(obj, opm_mercy);
+            }
+        } else
+            mon->mhp -= tmp;
+    }
+
     /* adjustments might have made tmp become less than what a level draining
        artifact has already done to max HP */
     if (mon->mhp > mon->mhpmax)
