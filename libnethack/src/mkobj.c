@@ -8,6 +8,8 @@
 
 #include <limits.h>
 
+static void assign_oprops(struct level *, struct obj *, enum rng,
+                          boolean);
 static void mkbox_cnts(struct obj *, enum rng rng);
 static struct obj *mksobj_basic(struct level *lev, int otyp);
 static void obj_timer_checks(struct obj *, xchar, xchar, int);
@@ -259,12 +261,81 @@ mkbox_cnts(struct obj *box, enum rng rng)
     }
 }
 
+static void
+assign_oprops(struct level *lev, struct obj *obj, enum rng rng,
+              boolean first)
+{
+    uint64_t props_old = obj_properties(obj);
+    obj->oprops = opm_all;
+    uint64_t props = obj_properties(obj);
+    obj->oprops = props_old;
+
+    /* Fire+frost can't be combined, but ensure both are allowed
+       to generate seperately */
+    if (props & (opm_fire | opm_frost))
+        props |= (opm_fire | opm_frost);
+
+    if (first) {
+        /* Figure out if obj is allowed to have properties */
+        obj->oprops = 0LLU;
+        props_old = obj->oprops;
+        if (!props)
+            return;
+
+        /* Baseline: Level difficulty/100 */
+        if (rn2_on_rng(100, rng) > (level_difficulty(&lev->z) / 2))
+            return;
+
+        /* Magical armor gets them half as often */
+        if (obj->oclass == ARMOR_CLASS &&
+            objects[obj->otyp].oc_magic &&
+            rn2(2))
+            return;
+
+        /* Jewelry gets it 1/4 as often (AoY+clones not at all) */
+        if ((obj->oclass == AMULET_CLASS ||
+             obj->oclass == RING_CLASS) &&
+            (rn2(4) || obj->otyp == AMULET_OF_YENDOR ||
+             obj->otyp == FAKE_AMULET_OF_YENDOR))
+            return;
+
+        /* Only bags/weapon-tools tool-wise are allowed properties */
+        if (obj->oclass == TOOL_CLASS &&
+            !is_weptool(obj) &&
+            obj->otyp != SACK && obj->otyp != BAG_OF_HOLDING &&
+            obj->otyp != BAG_OF_TRICKS)
+            return;
+    } else if (rn2(8)) /* 12.5% for each additional property */
+        return;
+
+    if (props_old == props)
+        return; /* we can't give more properties, bail out */
+
+    uint64_t prop = 0;
+    do {
+        prop = ((uint64_t)1 << rn2_on_rng(64, rng));
+    } while (!(prop & props) || rn2_on_rng(500, rng));
+
+    if (!(prop & props))
+        return; /* we hit the failsafe to avoid infloop */
+
+    /* Add the property, unless it's fire and we have frost or
+       vice versa. */
+    if ((prop & (opm_fire | opm_frost)) &&
+        (props_old & (opm_fire | opm_frost)))
+        return;
+
+    obj->oprops |= prop;
+
+    /* Potentially generate more properties */
+    assign_oprops(lev, obj, rng, FALSE);
+}
+
 /* Returns obj->oprops, but strips invalid ones */
 uint64_t
 obj_properties(const struct obj *obj)
 {
     uint64_t props = obj->oprops;
-    props |= (opm_speed);
 
     /* Artifacts don't retain object properties they might have
        had before being artifacts (Excalibur, Sting, etc) */
@@ -326,7 +397,6 @@ obj_properties(const struct obj *obj)
 void
 learn_oprop(struct obj *obj, uint64_t mask)
 {
-    return;
     uint64_t props = obj_properties(obj);
     mask &= props;
     obj->oprops_known |= mask;
@@ -823,6 +893,8 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                        objects[otmp->otyp].oc_class);
             return NULL;
         }
+
+        assign_oprops(lev, otmp, rng, TRUE);
     }
 
     /* Some things must get done (timers) even if init = 0 */

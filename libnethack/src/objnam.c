@@ -214,7 +214,11 @@ display_oprops(const struct obj *obj, const char *input)
     if (props != (props & obj->oprops_known)) {
         prop_amount++;
         buf = msgcat("magical ", buf);
+        props &= obj->oprops_known;
     }
+
+    if (!props)
+        return buf;
 
     const struct opropdesc *desc;
     const struct opropdesc *olddesc = NULL;
@@ -1176,7 +1180,13 @@ not_fully_identified_core(const struct obj * otmp, boolean ignore_bknown)
         return TRUE;
     if (otmp->oartifact && undiscovered_artifact(otmp->oartifact))
         return TRUE;
-    /* otmp->rknown is the only item of interest if we reach here */
+
+    /* object property ID */
+    if (obj_properties(otmp) &&
+        otmp->oprops_known != otmp->oprops)
+        return TRUE;
+
+    /* otmj->rknown is the only item of interest if we reach here */
     /* 
      *  Note:  if a revision ever allows scrolls to become fireproof or
      *  rings to become shockproof, this checking will need to be revised.

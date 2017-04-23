@@ -1250,6 +1250,7 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
     boolean udef = (mdef == &youmonst);
     boolean vis = (uagr || udef || canseemon(magr) ||
                    canseemon(mdef));
+    boolean res = FALSE;
     const char *hittee = mon_nam(mdef);
     boolean spec_dbon_applies = FALSE;
 
@@ -1283,8 +1284,10 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
             burn_away_slime(mdef);
         if (otmp->oartifact)
             return vis;
-        if (vis)
+        if (vis) {
             learn_oprop(otmp, opm_fire);
+            res = TRUE;
+        }
     }
     if (attacks(AD_COLD, otmp)) {
         if (vis)
@@ -1296,8 +1299,10 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
             destroy_mitem(mdef, POTION_CLASS, AD_COLD);
         if (otmp->oartifact)
             return vis;
-        if (vis)
+        if (vis) {
             learn_oprop(otmp, opm_frost);
+            res = TRUE;
+        }
     }
     if (attacks(AD_ELEC, otmp)) {
         if (vis)
@@ -1312,8 +1317,10 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
             destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
         if (otmp->oartifact)
             return vis;
-        if (vis)
+        if (vis) {
             learn_oprop(otmp, opm_shock);
+            res = TRUE;
+        }
     }
     if (attacks(AD_MAGM, otmp)) {
         if (vis)
@@ -1334,26 +1341,28 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
     if (!spec_dbon_applies) {
         /* since damage bonus didn't apply, nothing more to do; no further
            attacks have side-effects on inventory */
-        return FALSE;
+        return vis;
     }
 
     /* Tsurugi of Muramasa, Vorpal Blade */
     if ((props & opm_vorpal) ||
         (otmp->oartifact && spec_ability(otmp, SPFX_BEHEAD))) {
+        res = artifact_hit_behead(magr, mdef, otmp, dmgptr,
+                                  dieroll);
         if (otmp->oartifact)
-            return artifact_hit_behead(magr, mdef, otmp, dmgptr,
-                                       dieroll);
+            return res;
     }
 
     /* Stormbringer */
     if ((props & opm_drain) ||
         (otmp->oartifact && spec_ability(otmp, SPFX_DRLI))) {
+        res = (artifact_hit_drainlife(magr, mdef, otmp,
+                                      dmgptr) || res);
         if (otmp->oartifact)
-            return artifact_hit_drainlife(magr, mdef, otmp,
-                                          dmgptr);
+            return res;
     }
 
-    return FALSE;
+    return res;
 }
 
 static const char recharge_type[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
