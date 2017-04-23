@@ -218,6 +218,10 @@ fightm(struct monst *mon)
     int result;
     boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
+    boolean mercy = FALSE;
+    if (mon->mw && (obj_properties(mon->mw) & opm_mercy) &&
+        mon->mw->mknown)
+        mercy = TRUE;
 
     /* perhaps we're holding it... */
     if (itsstuck(mon))
@@ -247,7 +251,11 @@ fightm(struct monst *mon)
         x = mon->mx + dirx[try[i]];
         y = mon->my + diry[try[i]];
         mtmp = m_at(level, x, y);
-        if (!mtmp || (!mm_aggression(mon, mtmp) && !conflicted))
+        if (!mtmp || (!mm_aggression(mon, mtmp) && !conflicted &&
+                      !mercy))
+            continue;
+        if (mercy && mon->mpeaceful != (mtmp == &youmonst ? 1 :
+                                        mtmp->mpeaceful))
             continue;
 
         /* TODO: why are these needed... */
