@@ -117,7 +117,8 @@ enum pray_trouble {
     ptr_hands,
     ptr_blindfold,
     ptr_cancelled,
-    ptr_last_major = ptr_cancelled,
+    ptr_mercy,
+    ptr_last_major = ptr_mercy,
 
     ptr_first_minor,
     ptr_punished = ptr_first_minor,

@@ -123,6 +123,10 @@ in_trouble(void)
     if (Cursed_obj(uarmf, LEVITATION_BOOTS) || stuck_ring(uleft, RIN_LEVITATION)
         || stuck_ring(uright, RIN_LEVITATION))
         return ptr_levitation;
+    if (uwep && uwep->cursed &&
+        (obj_properties(uwep) & opm_mercy))
+        return ptr_mercy;
+
     if (nohands(youmonst.data) || !freehand()) {
         /* for bag/box access [cf use_container()]... make sure it's a case
            that we know how to handle; otherwise "fix all troubles" would get
@@ -324,6 +328,9 @@ fix_worst_trouble(int trouble)
         if (nohands(youmonst.data) || !freehand())
             impossible("fix_worst_trouble: couldn't cure hands.");
         break;
+    case ptr_mercy:
+        otmp = uwep;
+        goto decurse;
     case ptr_blindfold:
         otmp = ublindf;
         goto decurse;
