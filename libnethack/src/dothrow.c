@@ -1562,6 +1562,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
 
                 uint64_t props = obj_properties(obj);
                 if (props & opm_detonate) {
+                    obj->in_use = TRUE;
                     explode(bhitpos.x, bhitpos.y,
                             ((props & opm_frost) ? AD_COLD :
                              (props & opm_shock) ? AD_ELEC :

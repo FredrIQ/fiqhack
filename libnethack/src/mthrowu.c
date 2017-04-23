@@ -281,6 +281,7 @@ ohitmon(struct monst *mtmp, /* accidental target */
             return 1;
 
         if (props & opm_detonate) {
+            otmp->in_use = TRUE;
             explode(bhitpos.x, bhitpos.y,
                     ((props & opm_frost) ? AD_COLD :
                      (props & opm_shock) ? AD_ELEC :
@@ -509,6 +510,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
 
             if (props & opm_detonate) {
                 /* shock uses "frosty" too, similar to lightning rays */
+                singleobj->in_use = TRUE;
                 explode(u.ux, u.uy,
                         ((props & opm_frost) ? AD_COLD :
                          (props & opm_shock) ? AD_ELEC :
