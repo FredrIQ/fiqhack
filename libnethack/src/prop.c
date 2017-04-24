@@ -2791,16 +2791,16 @@ enlighten_mon(struct monst *mon, int final)
     }
 
     /*** Physical attributes ***/
-    if (mon_hitbon(mon))
-        mon_has(&menu, mon, enlght_combatinc("to hit", mon_hitbon(mon), final));
-    if (mon_dambon(mon))
-        mon_has(&menu, mon, enlght_combatinc("damage", mon_dambon(mon), final));
+    if (hitbon(mon))
+        mon_has(&menu, mon, enlght_combatinc("to hit", hitbon(mon), final));
+    if (dambon(mon))
+        mon_has(&menu, mon, enlght_combatinc("damage", dambon(mon), final));
     if (slow_digestion(mon))
         mon_has(&menu, mon, "slower digestion");
     if (regenerates(mon))
         mon_x(&menu, mon, "regenerate");
-    if (protected(mon) || mon_protbon(mon)) {
-        int prot = mon_protbon(mon);
+    if (protected(mon) || protbon(mon)) {
+        int prot = protbon(mon);
         if (mon == &youmonst)
             prot += u.ublessed;
         prot += m_mspellprot(mon);
@@ -3154,16 +3154,16 @@ enlightenment(int final)
     }
 
         /*** Physical attributes ***/
-    if (mon_hitbon(&youmonst))
-        you_have(&menu, enlght_combatinc("to hit", mon_hitbon(&youmonst), final));
-    if (mon_dambon(&youmonst))
-        you_have(&menu, enlght_combatinc("damage", mon_dambon(&youmonst), final));
+    if (hitbon(&youmonst))
+        you_have(&menu, enlght_combatinc("to hit", hitbon(&youmonst), final));
+    if (dambon(&youmonst))
+        you_have(&menu, enlght_combatinc("damage", dambon(&youmonst), final));
     if (Slow_digestion)
         you_have(&menu, "slower digestion");
     if (Regeneration)
         enl_msg(&menu, "You regenerate", "", "d", "");
-    if (protected(&youmonst) || mon_protbon(&youmonst)) {
-        int prot = mon_protbon(&youmonst);
+    if (protected(&youmonst) || protbon(&youmonst)) {
+        int prot = protbon(&youmonst);
         prot += m_mspellprot(&youmonst);
         prot += u.ublessed;
 

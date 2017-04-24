@@ -79,8 +79,7 @@ static const struct artifact const_artilist[] = {
  */
 
     A("Excalibur", LONG_SWORD,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_SEEK | SPFX_DEFN | SPFX_INTEL |
-       SPFX_SEARCH), 0, 0,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_DEFN | SPFX_INTEL), 0, 0,
       PHYS(5, 10), DRLI(0, 0), NO_CARY, 0, A_LAWFUL, PM_KNIGHT, NON_PM, 4000L),
 /*
  *      Stormbringer only has a 2 because it can drain a level,

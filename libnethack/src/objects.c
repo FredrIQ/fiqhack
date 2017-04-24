@@ -496,7 +496,7 @@ const struct objclass const_objects[] = {
 #define RING(name,power,stone,cost,mgc,spec,mohs,metal,color) OBJECT( \
            OBJ(name,stone), \
            BITS(0,0,spec,0,mgc,spec,0,0,0,HARDGEM(mohs),0,P_NONE,metal), \
-           power, RING_CLASS, 0, 0, 3, cost, 0, 0, 0, 0, 15, color )
+           power, RING_CLASS, 1, 0, 3, cost, 0, 0, 0, 0, 15, color )
     RING("adornment", ADORNED, "wooden", 100, 1, 1, 2, WOOD, HI_WOOD),
     RING("gain strength", 0, "granite", 150, 1, 1, 7, MINERAL, HI_MINERAL),
     RING("gain constitution", 0, "opal", 150, 1, 1, 7, MINERAL, HI_MINERAL),
@@ -506,7 +506,7 @@ const struct objclass const_objects[] = {
          CLR_BLACK),
     RING("regeneration", REGENERATION, "moonstone",
          200, 1, 0, 6, MINERAL, HI_MINERAL),
-    RING("searching", SEARCHING, "tiger eye", 200, 1, 0, 6, GEMSTONE,
+    RING("searching", SEARCHING, "tiger eye", 200, 1, 1, 6, GEMSTONE,
          CLR_BROWN),
     RING("stealth", STEALTH, "jade", 100, 1, 0, 6, GEMSTONE, CLR_GREEN),
     RING("sustain ability", FIXED_ABIL, "bronze",

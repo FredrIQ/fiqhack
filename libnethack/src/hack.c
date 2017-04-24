@@ -563,7 +563,7 @@ still_chewing(xchar x, xchar y)
         u.utracked_location[tl_dig].y = y;
         /* solid rock takes more work & time to dig through */
         u.uoccupation_progress[tos_dig] =
-            (IS_ROCK(loc->typ) && !IS_TREE(loc->typ) ? 30 : 60) + mon_dambon(&youmonst);
+            (IS_ROCK(loc->typ) && !IS_TREE(loc->typ) ? 30 : 60) + dambon(&youmonst);
         pline(msgc_occstart, "You start chewing %s %s.",
               (boulder ||
                IS_TREE(loc->typ)) ? "on a" : "a hole in the",
@@ -571,7 +571,7 @@ still_chewing(xchar x, xchar y)
               "tree" : IS_ROCK(loc->typ) ? "rock" : "door");
         watch_warn(NULL, x, y, FALSE);
         return 1;
-    } else if ((u.uoccupation_progress[tos_dig] += (30 + mon_dambon(&youmonst))) <= 100) {
+    } else if ((u.uoccupation_progress[tos_dig] += (30 + dambon(&youmonst))) <= 100) {
         if (flags.verbose)
             /* TODO: surely should be checking continue_message? */
             pline(msgc_occstart, "You continue chewing on the %s.",

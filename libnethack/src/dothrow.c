@@ -782,7 +782,7 @@ toss_up(struct obj *obj, boolean hitsroof)
         if (dmg > 1 && less_damage)
             dmg = 1;
         if (dmg > 0)
-            dmg += mon_dambon(&youmonst);
+            dmg += dambon(&youmonst);
         if (dmg < 0)
             dmg = 0;    /* beware negative rings of increase damage */
         if (Half_physical_damage)
@@ -1407,7 +1407,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
        affected by traps, etc. Certain items which don't in themselves do
        damage ignore tmp. Distance and monster size affect chance to hit. */
     tmp =
-        -1 + Luck + find_mac(mon) + mon_hitbon(&youmonst) +
+        -1 + Luck + find_mac(mon) + hitbon(&youmonst) +
         maybe_polyd(youmonst.data->mlevel, u.ulevel);
     if (ACURR(A_DEX) < 4)
         tmp -= 3;

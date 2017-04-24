@@ -1289,13 +1289,7 @@ do_objs(const char *outfile)
         if (!(objnam = tmpdup(OBJ_NAME(objects[i]))))
             continue;
 
-        /* make sure probabilities add up to 1000 */
         if (objects[i].oc_class != class) {
-            if (sum && sum != 1000) {
-                fprintf(stderr, "prob error for class %d (%d%%)", class, sum);
-                fflush(stderr);
-                sumerr = TRUE;
-            }
             class = objects[i].oc_class;
             sum = 0;
         }
