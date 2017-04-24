@@ -866,12 +866,12 @@ save_menu(void)
 static void
 dostop(void)
 {
-#ifndef WIN32
+#if ! defined(WIN32) && ! defined(PUBLIC_SERVER)
     if (ui_flags.no_stop) {
 #endif
         curses_msgwin("Process suspension is disabled on this instance.",
                       krc_notification);
-#ifndef WIN32
+#if ! defined(WIN32) && ! defined(PUBLIC_SERVER)
         return;
     }
 
