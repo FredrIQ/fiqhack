@@ -574,7 +574,7 @@ cpostfx(struct monst *mon, int pm)
     switch (pm) {
     case PM_NEWT:
         /* MRKR: "eye of newt" may give small magical energy boost */
-        if ((you && 3 * u.uen <= 2 * u.uenmax) ||
+        if (you ||
             (!you && mon->mspec_used > rn2(5))) {
             if (you) {
                 int old_uen = u.uen;
@@ -584,9 +584,12 @@ cpostfx(struct monst *mon, int pm)
                 if (u.uen > u.uenmax) {
                     u.uenmax++;
                     u.uen = u.uenmax;
-                    if (you)
-                        msgc = msgc_intrgain;
-                }
+                } else
+                    u.uenmax++;
+
+                if (you)
+                    msgc = msgc_intrgain;
+
                 if (old_uen != u.uen)
                     pline(msgc, "You feel a mild buzz.");
             } else {
