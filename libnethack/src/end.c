@@ -1058,6 +1058,7 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                         discover_object(obj->otyp, TRUE, FALSE, TRUE);
                         obj->known = obj->bknown = obj->dknown =
                             obj->rknown = 1;
+                        learn_oprop(obj, obj->oprops);
                     }
                     contents[icount++] = obj;
                 }
