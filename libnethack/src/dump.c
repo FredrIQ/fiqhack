@@ -72,7 +72,7 @@ begin_dump(int how)
     if (!dumpfp)
         return NULL;
 
-#if defined(PUBLIC_SERVER) && defined(UNIX)
+#ifdef UNIX
     fchmod(fileno(dumpfp), 0644);
 #endif
 
