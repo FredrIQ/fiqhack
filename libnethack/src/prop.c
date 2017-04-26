@@ -916,7 +916,7 @@ update_property(struct monst *mon, enum youprop prop,
     struct obj *weapon;
     enum msg_channel msgc = msgc_monneutral;
 
-    /* Messages when properties are acquired/lost */
+    /* Messages when intrinsics are acquired/lost */
     if (mon == &youmonst &&
         (slot == os_role || slot == os_race ||
          slot == os_polyform || slot == os_outside)) {
@@ -1030,7 +1030,7 @@ update_property(struct monst *mon, enum youprop prop,
                 effect = TRUE;
             }
             newsym(u.ux, u.uy);
-        } else if (!redundant && vis_invis) {
+        } else if (!redundant && level && vis_invis) {
             if (see_invisible(&youmonst)) {
                 pline(msgc_monneutral,
                       lost ? "%s body seems to unfade..." :
@@ -1095,7 +1095,8 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case AGGRAVATE_MONSTER:
-        if (!you && !redundant) {
+        /* avoid running vision code offlevel */
+        if (!you && !redundant && !level) {
             you_aggravate(mon);
             see_monsters(FALSE);
         }
