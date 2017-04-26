@@ -1096,7 +1096,7 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case AGGRAVATE_MONSTER:
         /* avoid running vision code offlevel */
-        if (!you && !redundant && !level) {
+        if (!you && !redundant && level) {
             you_aggravate(mon);
             see_monsters(FALSE);
         }
