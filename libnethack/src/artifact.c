@@ -1033,8 +1033,9 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
 {
     boolean youattack = (magr == &youmonst);
     boolean youdefend = (mdef == &youmonst);
-    boolean vis = (youattack || youdefend || canseemon(magr) ||
-                   canseemon(mdef));
+    boolean vis = (youattack || youdefend ||
+                   (magr && canseemon(magr)) ||
+                   (mdef && canseemon(mdef)));
 
     const char *wepdesc;
     const char *hittee = youdefend ? "you" : mon_nam(mdef);
@@ -1165,8 +1166,9 @@ artifact_hit_drainlife(struct monst *magr, struct monst *mdef, struct obj *otmp,
 {
     boolean youattack = (magr == &youmonst);
     boolean youdefend = (mdef == &youmonst);
-    boolean vis = (youattack || youdefend || canseemon(magr) ||
-                   canseemon(mdef));
+    boolean vis = (youattack || youdefend ||
+                   (magr && canseemon(magr)) ||
+                   (mdef && canseemon(mdef)));
 
     /* drain life artifacts can't end up here, but weapon object
        properties stacking can result in this running when the
@@ -1254,8 +1256,9 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
 
     boolean uagr = (magr == &youmonst);
     boolean udef = (mdef == &youmonst);
-    boolean vis = (uagr || udef || canseemon(magr) ||
-                   canseemon(mdef));
+    boolean vis = (uagr || udef ||
+                   (magr && canseemon(magr)) ||
+                   (mdef && canseemon(mdef)));
     boolean res = FALSE;
     const char *hittee = mon_nam(mdef);
     boolean spec_dbon_applies = FALSE;
