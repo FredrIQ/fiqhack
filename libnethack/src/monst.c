@@ -1292,8 +1292,8 @@ const struct permonst mons[] = {
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), 0, 0,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC, 0,
-        0, CLR_GRAY | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, 0, 0, CLR_GRAY | HI_ULINE),
     MON("silver dragon", S_DRAGON,
         LVL(15, 9, -1, 20, 4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_COLD, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
@@ -1302,8 +1302,8 @@ const struct permonst mons[] = {
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_COLD, 0,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
-        0, 0, DRAGON_SILVER | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, 0, 0, DRAGON_SILVER | HI_ULINE),
     MON("shimmering dragon", S_DRAGON,
         LVL(15, 9, -1, 20, 4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_STUN, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
@@ -1312,8 +1312,8 @@ const struct permonst mons[] = {
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), 0, 0,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
-        M3_DISPLACED, 0, CLR_CYAN | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, M3_DISPLACED, 0, CLR_CYAN | HI_ULINE),
     MON("red dragon", S_DRAGON,
         LVL(15, 9, -1, 20, -4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_FIRE, 6, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
@@ -1322,8 +1322,8 @@ const struct permonst mons[] = {
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_FIRE, MR_FIRE,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
-        M3_INFRAVISIBLE, 0, CLR_RED | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, M3_INFRAVISIBLE, 0, CLR_RED | HI_ULINE),
     MON("white dragon", S_DRAGON,
         LVL(15, 9, -1, 20, -5), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_COLD, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
@@ -1332,8 +1332,8 @@ const struct permonst mons[] = {
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_COLD, MR_COLD,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
-        0, 0, CLR_WHITE | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, 0, 0, CLR_WHITE | HI_ULINE),
     MON("orange dragon", S_DRAGON,
         LVL(15, 9, -1, 20, 5), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_SLEE, 4, 25), ATTK(AT_BITE, AD_PHYS, 3, 8),
@@ -1342,8 +1342,8 @@ const struct permonst mons[] = {
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_SLEEP, MR_SLEEP,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
-        0, 0, CLR_ORANGE | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, 0, 0, CLR_ORANGE | HI_ULINE),
     MON("black dragon", S_DRAGON,
         LVL(15, 9, -1, 20, -6), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_DISN, 4, 10), ATTK(AT_BITE, AD_PHYS, 3, 8),
@@ -1352,8 +1352,8 @@ const struct permonst mons[] = {
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_DISINT, MR_DISINT,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC, 0,
-        0, CLR_BLACK | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, 0, 0, CLR_BLACK | HI_ULINE),
     MON("blue dragon", S_DRAGON,
         LVL(15, 9, -1, 20, -7), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_ELEC, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
@@ -1362,8 +1362,8 @@ const struct permonst mons[] = {
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_ELEC, MR_ELEC,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC, 0,
-        0, CLR_BRIGHT_BLUE | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, 0, 0, CLR_BRIGHT_BLUE | HI_ULINE),
     MON("green dragon", S_DRAGON,
         LVL(15, 9, -1, 20, 6), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_DRST, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
@@ -1372,8 +1372,8 @@ const struct permonst mons[] = {
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_POISON, MR_POISON,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE | M1_POIS,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC, 0,
-        0, CLR_GREEN | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, 0, 0, CLR_GREEN | HI_ULINE),
     MON("yellow dragon", S_DRAGON,
         LVL(15, 9, -1, 20, 7), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_ACID, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
@@ -1383,8 +1383,8 @@ const struct permonst mons[] = {
         MR_ACID | MR_STONE, MR_STONE,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
         M1_CARNIVORE | M1_ACID,
-        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
-        0, 0, CLR_YELLOW | HI_ULINE),
+        M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
+        M2_MAGIC, 0, 0, CLR_YELLOW | HI_ULINE),
 /*
  * Elementals
  */
