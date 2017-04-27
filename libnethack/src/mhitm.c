@@ -1200,8 +1200,6 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             golemeffects(mdef, AD_ELEC, tmp);
             tmp = 0;
         }
-        /* only rings damage resistant players in destroy_item */
-        tmp += destroy_mitem(mdef, RING_CLASS, AD_ELEC);
         break;
     case AD_ACID:
         if (cancelled(magr)) {

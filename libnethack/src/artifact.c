@@ -1318,8 +1318,6 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
                   resists_elec(mdef) ? "" : "!  Lightning strikes",
                   mon_nam(mdef), !spec_dbon_applies ? '.' : '!');
         if (!rn2(5))
-            destroy_mitem(mdef, RING_CLASS, AD_ELEC);
-        if (!rn2(5))
             destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
         if (otmp->oartifact)
             return vis;
