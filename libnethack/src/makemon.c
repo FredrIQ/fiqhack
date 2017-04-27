@@ -2365,14 +2365,15 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
            deterministic answer, so always set to lawful (or chaotic if normally
            lawful) */
         mon->maligntyp_temp = (mon->maligntyp == A_LAWFUL ? A_CHAOTIC : A_LAWFUL);
-        /* add new elements to mflags */
+        /* Kill now-unused flags, add new */
         mflags &= (0xffffff & ~(2|4|8|16));
         mflags |= (Align2asave(mon->maligntyp) << 1);
         mflags |= (Align2asave(mon->maligntyp_temp) << 3);
     } else if (xtyp == MX_YES)
         restore_mextra(mf, mon);
 
-    /* 8 free bits... */
+    /* 7 free bits... */
+    mon->uzombied = (mflags >> 24) & 1;
     mon->usicked = (mflags >> 23) & 1;
     mon->uslimed = (mflags >> 22) & 1;
     mon->ustoned = (mflags >> 21) & 1;
@@ -2512,15 +2513,15 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite8(mf, mon->wormno);
 
     mflags =
-        (mon->usicked << 23) | (mon->uslimed << 22) |
-        (mon->ustoned << 21) | (mon->levi_wary << 20) |
-        (mon->female << 19) | (mon->cham << 16) |
-        (mon->mundetected << 15) | (mon->mburied << 14) |
-        (mon->mrevived << 13) | (mon->mavenge << 12) |
-        (mon->mflee << 11) | (mon->mcanmove << 10) |
-        (mon->msleeping << 9) | (mon->mpeaceful << 8) |
-        (mon->mtrapped << 7) | (mon->mleashed << 6) |
-        (mon->msuspicious << 5) |
+        (mon->uzombied >> 24) | (mon->usicked << 23) |
+        (mon->uslimed << 22) | (mon->ustoned << 21) |
+        (mon->levi_wary << 20) | (mon->female << 19) |
+        (mon->cham << 16) | (mon->mundetected << 15) |
+        (mon->mburied << 14) | (mon->mrevived << 13) |
+        (mon->mavenge << 12) | (mon->mflee << 11) |
+        (mon->mcanmove << 10) | (mon->msleeping << 9) |
+        (mon->mpeaceful << 8) | (mon->mtrapped << 7) |
+        (mon->mleashed << 6) | (mon->msuspicious << 5) |
         (Align2asave(mon->maligntyp) << 3) |
         (Align2asave(mon->maligntyp) << 1) |
         (mon->iswiz << 0);
