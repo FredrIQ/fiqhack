@@ -308,6 +308,8 @@ disclose(int how, boolean taken, long umoney)
                 for (obj = invent; obj; obj = obj->nobj) {
                     discover_object(obj->otyp, TRUE, FALSE, TRUE);
                     obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
+                    if (obj->oprops)
+                        learn_oprop(obj, obj_properties(obj));
                 }
                 display_inventory(NULL, FALSE);
                 container_contents(invent, TRUE, TRUE);
