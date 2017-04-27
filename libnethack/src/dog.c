@@ -637,7 +637,8 @@ migrate_to_level(struct monst *mtmp, xchar tolev,       /* destination level */
 
     /* The dlevel pointer is meaningless for a migrating monster. Set it to NULL
        so that any uses of it are detected quickly via the resulting
-       segfault. */
+       segfault. Also note that save_mon uses this to check if a mon
+       is migrating, to avoid overriding muxy in that case */
     mtmp->dlevel = NULL;
 
     new_lev.dnum = ledger_to_dnum((xchar) tolev);
