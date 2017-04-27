@@ -344,7 +344,7 @@ dname_to_dnum(const char *s)
 s_level *
 find_level(const char *s)
 {
-    s_level *curr;
+    s_level *curr = NULL;
 
     for (curr = gamestate.sp_levchn; curr; curr = curr->next)
         if (!strcmpi(s, curr->proto))
@@ -1638,7 +1638,8 @@ print_branch(struct nh_menulist *menu, int dnum,
     }
 }
 
-/* Print available dungeon information. */
+/* Print available dungeon information.
+   This is wizmode levelport "?", overview uses another function */
 schar
 print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 {

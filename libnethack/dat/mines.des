@@ -10,7 +10,7 @@
 #	specific levels as defined below.
 #
 MAZE: "minefill" , ' '
-INIT_MAP: '.' , ' ' , true , true , random , true
+INIT_MAP: '.' , ' ' , true , true , mineslight , true
 NOMAP
 #
 STAIR: random, up

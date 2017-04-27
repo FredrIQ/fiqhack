@@ -128,6 +128,7 @@ top		{ yylval.i=1; return TOP_OR_BOT; }
 bottom		{ yylval.i=5; return TOP_OR_BOT; }
 lit		{ yylval.i=1; return LIGHT_STATE; }
 unlit		{ yylval.i=0; return LIGHT_STATE; }
+mineslight		{ yylval.i=2; return LIGHT_STATE; }
 filled		{ yylval.i=0; return FILLING; }
 unfilled	{ yylval.i=1; return FILLING; }
 noalign		{ yylval.i= AM_NONE; return ALIGNMENT; }
