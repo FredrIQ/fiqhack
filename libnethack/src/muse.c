@@ -319,7 +319,8 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
         You_hear(combat_msgc(mtmp, NULL, cr_hit),
                  "%s pronouncing the formula on %s!",
                  x_monnam(mtmp, ARTICLE_A, NULL,
-                          (SUPPRESS_IT | SUPPRESS_INVISIBLE | SUPPRESS_SADDLE),
+                          (SUPPRESS_IT | SUPPRESS_INVISIBLE |
+                           SUPPRESS_SADDLE | SUPPRESS_ENSLAVEMENT),
                           FALSE), onambuf);
 
     if (confused(mtmp))

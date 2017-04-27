@@ -408,7 +408,7 @@ x_monnam(const struct monst *mtmp,
         return "you";
 
     const struct permonst *mdat = mtmp->data;
-    boolean do_hallu, do_invis, do_it, do_saddle;
+    boolean do_hallu, do_invis, do_it, do_saddle, do_enslavement;
     boolean name_at_start, has_adjectives;
     const char *buf = "";
     const char *bp;
@@ -420,6 +420,8 @@ x_monnam(const struct monst *mtmp,
 
     do_hallu = Hallucination && !(suppress & SUPPRESS_HALLUCINATION);
     do_invis = invisible(mtmp) && !(suppress & SUPPRESS_INVISIBLE);
+    do_enslavement = izombie(mtmp) &&
+        !(suppress & SUPPRESS_ENSLAVEMENT);
     do_it = !canclassifymon(mtmp) && article != ARTICLE_YOUR &&
         !program_state.gameover && mtmp != u.usteed &&
         !(Engulfed && mtmp == u.ustuck) &&
@@ -460,12 +462,15 @@ x_monnam(const struct monst *mtmp,
             return msgcat_many("the ", adjective, " ", mx_name(mtmp), NULL);
         }
         /* TODO: Shouldn't there be a case for "the angry Asidonhopo" here? */
-        if (mdat == &mons[PM_SHOPKEEPER] && !do_invis)
+        if (mdat == &mons[PM_SHOPKEEPER] && !do_invis &&
+            !do_enslavement)
             return mx_name(mtmp);
 
         buf = msgcat(mx_name(mtmp), " the ");
         if (do_invis)
             buf = msgcat(buf, "invisible ");
+        if (do_enslavement)
+            buf = msgcat(buf, "enslaved ");
         buf = msgcat(buf, mdat->mname);
         return buf;
     }
@@ -475,6 +480,8 @@ x_monnam(const struct monst *mtmp,
         buf = msgcat(adjective, " ");
     if (do_invis)
         buf = msgcat(buf, "invisible ");
+    if (do_enslavement)
+        buf = msgcat(buf, "enslaved ");
 
     if (do_saddle && (mtmp->misc_worn_check & W_MASK(os_saddle)) && !Blind &&
         !Hallucination)

@@ -1045,7 +1045,9 @@ update_property(struct monst *mon, enum youprop prop,
                       "%s suddenly disappears!",
                       msgupcasefirst(x_monnam(mon, ARTICLE_THE, NULL,
                                               (mx_name(mon) ? SUPPRESS_SADDLE : 0) |
-                                              SUPPRESS_IT | SUPPRESS_INVISIBLE,
+                                              SUPPRESS_IT |
+                                              SUPPRESS_INVISIBLE |
+                                              SUPPRESS_ENSLAVEMENT,
                                               FALSE)));
                 set_mimic_blocking();       /* do special mimic handling */
                 see_monsters(FALSE);        /* see invisible monsters */
