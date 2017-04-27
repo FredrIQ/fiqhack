@@ -1566,7 +1566,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
                     explode(bhitpos.x, bhitpos.y,
                             ((props & opm_frost) ? AD_COLD :
                              (props & opm_shock) ? AD_ELEC :
-                             AD_FIRE) + 1,
+                             AD_FIRE) - 1,
                             dice(3, 6), WEAPON_CLASS,
                             (props & (opm_frost | opm_shock)) ?
                             EXPL_FROSTY : EXPL_FIERY, NULL, 0);

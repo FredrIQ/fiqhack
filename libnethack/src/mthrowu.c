@@ -285,7 +285,7 @@ ohitmon(struct monst *mtmp, /* accidental target */
             explode(bhitpos.x, bhitpos.y,
                     ((props & opm_frost) ? AD_COLD :
                      (props & opm_shock) ? AD_ELEC :
-                     AD_FIRE) + 1,
+                     AD_FIRE) - 1,
                     dice(3, 6), WEAPON_CLASS,
                     (props & (opm_frost | opm_shock)) ? EXPL_FROSTY :
                     EXPL_FIERY, NULL, 0);
@@ -514,7 +514,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 explode(u.ux, u.uy,
                         ((props & opm_frost) ? AD_COLD :
                          (props & opm_shock) ? AD_ELEC :
-                         AD_FIRE) + 1,
+                         AD_FIRE) - 1,
                         dice(3, 6), WEAPON_CLASS,
                         (props & (opm_frost | opm_shock)) ? EXPL_FROSTY :
                         EXPL_FIERY, NULL, 0);
