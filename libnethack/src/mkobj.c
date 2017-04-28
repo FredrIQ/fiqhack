@@ -826,17 +826,19 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
             break;
         case RING_CLASS:
             if (objects[otmp->otyp].oc_charged) {
+                int chargesign = 1;
                 blessorcurse(otmp, 3, rng);
                 if (rn2_on_rng(10, rng)) {
-                    if (rn2_on_rng(10, rng) && bcsign(otmp))
-                        otmp->spe = bcsign(otmp) * rne_on_rng(3, rng);
-                    else
-                        otmp->spe = rn2_on_rng(2, rng) ?
-                            rne_on_rng(3, rng) : -rne_on_rng(3, rng);
-                }
-                /* make useless +0 rings much less common */
-                if (otmp->spe == 0)
-                    otmp->spe = rn2_on_rng(4, rng) - rn2_on_rng(3, rng);
+                    if (rn2_on_rng(10, rng) &&
+                        ((!bcsign(otmp) && rn2_on_rng(2, rng)) ||
+                         otmp->cursed))
+                        chargesign = -1;
+                } else if (!rn2_on_rng(5, rng))
+                    chargesign = 0;
+                else if (rn2_on_rng(2, rng))
+                    chargesign = -1;
+
+                otmp->spe = rne_on_rng(2, rng) * chargesign;
                 /* negative rings are usually cursed */
                 if (otmp->spe < 0 && rn2_on_rng(5, rng))
                     curse(otmp);
