@@ -832,6 +832,10 @@ extern void log_uninit(void);
 extern void log_game_over(const char *death);
 extern void log_game_state(void);
 
+/* ### mail.c ### */
+
+extern void checkformail(void);
+
 /* ### makemon.c ### */
 
 extern struct monst *newmonst(void);

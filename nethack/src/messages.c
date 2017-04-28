@@ -91,6 +91,7 @@ static const int channel_color[] = {
     [msgc_combatalert] = CLR_BRIGHT_CYAN,
     [msgc_discoverportal] = CLR_BRIGHT_CYAN | CLRFLAG_FORCEMORE,
     [msgc_youdiscover] = CLR_BRIGHT_CYAN,
+    [msgc_mail] = CLR_BRIGHT_CYAN | CLRFLAG_FORCEMORE,
 
     /* CLR_WHITE: spammy/common good events (e.g. hitting in combat) */
     [msgc_statusextend] = CLR_WHITE,

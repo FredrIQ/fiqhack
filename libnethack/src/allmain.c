@@ -720,6 +720,9 @@ you_moved(void)
 
             monscanmove = movemon();
 
+            if (flags.servermail)
+                checkformail();
+
             /* Now both players and monsters have taken 1 more action than the
                global... */
 

@@ -832,9 +832,10 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->hide_implied = mread8(mf);
 
     f->save_revision = mread32(mf);
+    f->servermail = mread8(mf);
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 105; i++)
+    for (i = 0; i < 104; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));
