@@ -620,7 +620,7 @@ const struct objclass const_objects[] = {
     TOOL("mirror", "looking glass", 0, 0, 0, 0, 45, 13, 10, GLASS, HI_SILVER),
     TOOL("crystal ball", "glass orb",
          0, 0, 1, 1, 15, 150, 60, GLASS, HI_GLASS),
-    TOOL("lenses", NULL, 1, 0, 0, 0, 5, 3, 80, GLASS, HI_GLASS),
+    TOOLX("lenses", NULL, 1, 0, 0, 0, 0, 5, 3, 80, GLASS, HI_GLASS, SEARCHING),
     TOOLX("blindfold", NULL, 1, 0, 0, 0, 0, 50, 2, 20, CLOTH, CLR_BLACK, BLINDED),
     TOOLX("towel", NULL, 1, 0, 0, 0, 0, 50, 2, 50, CLOTH, CLR_MAGENTA, BLINDED),
     TOOL("saddle", NULL, 1, 0, 0, 0, 5, 200, 150, LEATHER, HI_LEATHER),
