@@ -314,6 +314,7 @@ doconsult(struct monst *oracl)
 {
     int umoney = money_cnt(invent);
     int u_pay, minor_cost = 50, major_cost = 500 + 50 * u.ulevel;
+    int enlcost = 20 * u.ulevel;
     int add_xpts;
     const char *qbuf;
 
@@ -331,6 +332,27 @@ doconsult(struct monst *oracl)
     } else if (!umoney) {
         pline(msgc_cancelled, "You have no money.");
         return 0;
+    }
+
+    qbuf = msgprintf("\"Inquirest thou after enlightenment?\" (%d %s)",
+                     enlcost, currency(enlcost));
+    switch (ynq(qbuf)) {
+    case 'q':
+        return 0;
+    case 'y':
+        if (umoney < enlcost) {
+            pline(msgc_npcvoice, "\"Thou canst not afford it.\"");
+            break;
+        }
+        money2mon(oracl, enlcost);
+        pline(msgc_actionok, "You feel self-knowledgeable...");
+        win_pause_output(P_MESSAGE);
+        enlightenment(FALSE);
+        pline_implied(msgc_actionboring, "The feeling subsides.");
+        return 1;
+    case 'n':
+    default:
+        break;
     }
 
     qbuf = msgprintf("\"Wilt thou settle for a minor consultation?\" (%d %s)",
