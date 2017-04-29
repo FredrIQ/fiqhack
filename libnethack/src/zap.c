@@ -3316,7 +3316,8 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     }
     if (tmp && spellcaster)
         tmp += spell_damage_bonus();
-    if (is_hero_spell(type) && (Role_if(PM_KNIGHT) && Uhave_questart))
+    if (is_hero_spell(type) && Role_if(PM_KNIGHT) &&
+        Uhave_questart && mdef->data != &mons[PM_KNIGHT])
         tmp *= 2;
     if (tmp > 0 && resist(magr, mdef, buzztyp < ZT_SPELL(0) ? WAND_CLASS : '\0', NOTELL,
                           bcsign))

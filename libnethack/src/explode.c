@@ -62,23 +62,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
     /* 0=normal explosion, 1=do shieldeff, 2=do nothing */
     boolean shopdamage = FALSE;
 
-#if 0
-    /* Damage reduction from wand explosions */
-    if (olet == WAND_CLASS)     /* retributive strike */
-        switch (Role_switch) {
-        case PM_PRIEST:
-        case PM_MONK:
-        case PM_WIZARD:
-            damu /= 5;
-            break;
-        case PM_HEALER:
-        case PM_KNIGHT:
-            damu /= 2;
-            break;
-        default:
-            break;
-        }
-#endif
     if (olet == MON_EXPLODE) {
         str = descr;
         adtyp = AD_PHYS;
@@ -210,7 +193,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     case AD_PHYS:
                         break;
                     case AD_MAGM:
-                        explmask[i][j] |= (raylevel >= 4 || resists_magm(mtmp));
+                        explmask[i][j] |= (raylevel >= P_EXPERT ||
+                                           resists_magm(mtmp));
                         break;
                     case AD_FIRE:
                         explmask[i][j] |= !!resists_fire(mtmp);
