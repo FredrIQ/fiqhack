@@ -202,7 +202,7 @@ static const struct nh_option_desc const_options[] = {
      "group similar kinds of objects in inventory",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"sparkle", "Map Display",
-     "display sparkly effect for resisted magical attacks",
+     "speed of resistance animation (0 to disable)",
      nh_birth_ingame, OPTTYPE_INT, {.i = 20}},
     {"tombstone", "Messages and Menus",
      "print tombstone when you die",
