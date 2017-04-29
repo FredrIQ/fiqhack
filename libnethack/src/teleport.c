@@ -743,6 +743,10 @@ level_tele_impl(struct monst *mon, boolean wizard_tele)
                       you ? "You" : Monnam(mon),
                       you ? "" : "s");
             return;
+        } else if (!you && vis) {
+            pline(mon->mtame ? msgc_petfatal : msgc_monneutral,
+                  "Suddenly, %s disappears out of sight%s",
+                  mon_nam(mon), mon->mtame ? "!" : ".");
         }
     }
 
@@ -1530,6 +1534,8 @@ mlevel_tele_trap(struct monst *mtmp, struct trap *trap, boolean force_it,
         } else {
             const struct level *lev = mtmp->dlevel;
             mon_level_tele(mtmp);
+            if (lev != mtmp->dlevel && in_sight)
+                seetrap(trap);
             return (lev != mtmp->dlevel ? 3 : 0);
         }
 
