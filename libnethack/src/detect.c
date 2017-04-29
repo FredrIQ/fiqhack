@@ -1399,9 +1399,9 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
      * + Luck
      * + 5*searchbonus
      * + 5 with lenses
-     * This is divided by 20 * 3 ^ (Manhattan distance - 1) to form a search rate
+     * This is divided by 20 * 2 ^ (Manhattan distance - 1) to form a search rate
      * This means that with no luck or other bonuses, you find things next to you
-     * 20/20 of the time (100%), 2 tiles away 20/60 (1/3), 3 tiles away 20/180 (1/9), etc
+     * 20/20 of the time (100%), 2 tiles away 20/40 (1/2), 3 tiles away 20/80 (1/4), etc
      */
     int baserate = 20;
     if (you)
@@ -1416,7 +1416,7 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
     int basediv = 20;
     int i;
     for (i = 1; i < dist; i++)
-        basediv *= 3;
+        basediv *= 2;
 
     if (baserate < rnd(basediv))
         return;
