@@ -881,7 +881,7 @@ const struct objclass const_objects[] = {
           NODIR, HI_PAPER, 'M'),
     SPELL("identify", "bronze", P_DIVINATION_SPELL, 20, 6, 2, 1,
           NODIR, HI_COPPER, 'I'),
-    SPELL("cancellation", "shining", P_MATTER_SPELL, 15, 8, 6, 1,
+    SPELL("cancellation", "shining", P_MATTER_SPELL, 15, 8, 5, 1,
           IMMEDIATE, CLR_WHITE, 'C'),
     SPELL("turn undead", "copper", P_CLERIC_SPELL, 16, 8, 6, 1,
           IMMEDIATE, HI_COPPER, 'T'),
