@@ -1466,18 +1466,13 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (food_detect(sobj, known))
             return 1;   /* nothing detected */
         break;
-    case SPE_IDENTIFY:
-        cval = rn2_on_rng(25, you ? rng_id_count : rng_main) / 5;
-        goto id;
     case SCR_IDENTIFY:
-        cval = rn2_on_rng(25, you ? rng_id_count : rng_main);
-        if (sobj->cursed || (!sobj->blessed && cval % 5))
-            cval = 1;  /* cursed 100%, uncursed 80% chance of 1 */
-        else if (you && sobj->blessed && cval / 5 == 1 && Luck > 0)
-            cval = 2;  /* with positive luck, interpret 1 as 2 when blessed */
-        else
-            cval /= 5; /* otherwise, randomize all/1/2/3/4 items IDed */
+    case SPE_IDENTIFY:
+        cval = rn2_on_rng(5, you ? rng_id_count : rng_main);
+        if (you && Luck > 0 && cval == 1)
+            cval++;
 
+        int idpower = P_UNSKILLED;
         if (confused) {
             if (you)
                 pline(msgc_yafm, "You identify this as an identify scroll.");
@@ -1492,6 +1487,16 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                       "This is an identify scroll.");
             else if (vis)
                 pline(msgc_monneutral, "%s is granted an insight!", Monnam(mon));
+
+            if (sobj->otyp == SPE_IDENTIFY)
+                idpower = (you ? P_SKILL(P_DIVINATION_SPELL) :
+                           mprof(mon, MP_SDIVN));
+            else {
+                if (sobj->blessed)
+                    idpower = P_EXPERT;
+                else if (!sobj->cursed)
+                    idpower = P_BASIC;
+            }
         }
 
         if ((you || vis) && !objects[sobj->otyp].oc_name_known)
@@ -1502,9 +1507,9 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             m_useup(mon, sobj);
         if (you || vis)
             makeknown(SCR_IDENTIFY);
-    id:
+
         if (invent && !confused) {
-            identify_pack(mon, cval);
+            identify_pack(mon, cval, idpower);
         }
         return 1;
 

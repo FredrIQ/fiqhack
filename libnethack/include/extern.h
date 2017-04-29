@@ -713,7 +713,7 @@ extern struct obj *getobj(const char *let, const char *word, boolean isarg);
 extern boolean validate_object(struct obj *obj, const char *lets,
                                const char *word);
 extern void fully_identify_obj(struct obj *);
-extern void identify_pack(struct monst *, int);
+extern void identify_pack(struct monst *, int, int);
 extern void prinv(const char *, struct obj *, long);
 extern const char *xprname(
     struct obj *, const char *, char, boolean, long, long);
@@ -1320,7 +1320,7 @@ extern boolean the_unique_obj(const struct obj *obj);
 extern const char *doname(const struct obj *obj);
 extern const char *doname_price(const struct obj *obj);
 extern boolean not_fully_identified_core(const struct obj *otmp,
-                                         boolean ignore_bknown);
+                                         boolean ignore_bknown, int skill);
 extern boolean not_fully_identified(const struct obj *otmp);
 extern const char *corpse_xname(const struct obj *, boolean);
 extern const char *cxname(const struct obj *);

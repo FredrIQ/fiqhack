@@ -138,7 +138,7 @@ allow_category(const struct obj * obj)
               (obj->oclass != COIN_CLASS && !(priest || obj->bknown))))
         return TRUE;
     else if (((strchr(valid_menu_classes, 'I') != NULL) &&
-              not_fully_identified_core(obj, TRUE)))
+              not_fully_identified_core(obj, TRUE, P_EXPERT)))
         return TRUE;
     else
         return FALSE;

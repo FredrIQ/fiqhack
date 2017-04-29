@@ -1170,22 +1170,26 @@ doname_price(const struct obj *obj)
 
 /* used from invent.c */
 boolean
-not_fully_identified_core(const struct obj * otmp, boolean ignore_bknown)
+not_fully_identified_core(const struct obj * otmp, boolean ignore_bknown,
+                          int skill)
 {
     /* gold doesn't have any interesting attributes [yet?] */
     if (otmp->oclass == COIN_CLASS)
         return FALSE;   /* always fully ID'd */
 
     /* check fundamental ID hallmarks first */
-    if (!otmp->known || !otmp->dknown || (!ignore_bknown && !otmp->bknown) ||
-        !objects[otmp->otyp].oc_name_known)       /* ?redundant? */
+    if (!objects[otmp->otyp].oc_name_known || !otmp->dknown)
         return TRUE;
     if (otmp->oartifact && undiscovered_artifact(otmp->oartifact))
+        return TRUE;
+    if (!otmp->known && skill >= P_BASIC)
+        return TRUE;
+    if (!otmp->bknown && !ignore_bknown && skill >= P_SKILLED)
         return TRUE;
 
     /* object property ID */
     if (obj_properties(otmp) &&
-        otmp->oprops_known != otmp->oprops)
+        otmp->oprops_known != otmp->oprops && skill >= P_BASIC)
         return TRUE;
 
     /* otmj->rknown is the only item of interest if we reach here */
@@ -1194,21 +1198,23 @@ not_fully_identified_core(const struct obj * otmp, boolean ignore_bknown)
      *  rings to become shockproof, this checking will need to be revised.
      *  `rknown' ID only matters if xname() will provide the info about it.
      */
-    if (otmp->rknown || (otmp->oclass != ARMOR_CLASS &&
-                         otmp->oclass != WEAPON_CLASS &&
-                         !is_weptool(otmp) &&    /* (redunant) */
-                         otmp->oclass != BALL_CLASS))   /* (useless) */
+    if (skill == P_EXPERT &&
+        (otmp->rknown || (otmp->oclass != ARMOR_CLASS &&
+                          otmp->oclass != WEAPON_CLASS &&
+                          !is_weptool(otmp) &&    /* (redunant) */
+                          otmp->oclass != BALL_CLASS)))   /* (useless) */
         return FALSE;
     else        /* lack of `rknown' only matters for vulnerable objects */
-        return (boolean) (is_rustprone(otmp) || is_corrodeable(otmp) ||
-                          is_flammable(otmp));
+        return (boolean) ((is_rustprone(otmp) || is_corrodeable(otmp) ||
+                           is_flammable(otmp)) && skill == P_EXPERT);
 }
 
 
 boolean
 not_fully_identified(const struct obj * otmp)
 {
-    return not_fully_identified_core(otmp, FALSE);
+    return not_fully_identified_core(otmp, FALSE,
+                                     P_EXPERT);
 }
 
 const char *

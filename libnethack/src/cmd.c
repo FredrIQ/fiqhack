@@ -370,7 +370,7 @@ wiz_identify(const struct nh_cmd_arg *arg)
 {
     (void) arg;
 
-    identify_pack(&youmonst, 0);
+    identify_pack(&youmonst, 0, P_EXPERT);
 
     return 0;
 }
