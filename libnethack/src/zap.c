@@ -2501,12 +2501,27 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
         if (otyp == WAN_DIGGING || otyp == SPE_DIG)
             zap_dig(mon, obj, dx, dy, dz);
         else if (otyp >= SPE_MAGIC_MISSILE && otyp <= SPE_FINGER_OF_DEATH) {
+            int divisor = 2;
+            int wandlvl = 0;
+            if (otyp == SPE_MAGIC_MISSILE) {
+                int skill;
+                if (you)
+                    skill = P_SKILL(P_ATTACK_SPELL);
+                else
+                    skill = mprof(mon, MP_SATTK);
+                divisor = (skill == P_UNSKILLED ? 5 :
+                           skill == P_BASIC ? 4 :
+                           skill == P_SKILLED ? 3 :
+                           2);
+                if (skill >= P_SKILLED)
+                    wandlvl = skill;
+            }
             if (you)
-                buzz(otyp - SPE_MAGIC_MISSILE + 10, u.ulevel / 2 + 1, u.ux, u.uy,
-                     dx, dy, 0);
+                buzz(otyp - SPE_MAGIC_MISSILE + 10, u.ulevel / divisor + 1, u.ux, u.uy,
+                     dx, dy, wandlvl);
             else
-                buzz(-10 - (otyp - SPE_MAGIC_MISSILE), mon->m_lev / 2 + 1,
-                     m_mx(mon), m_my(mon), dx, dy, 0);
+                buzz(-10 - (otyp - SPE_MAGIC_MISSILE), mon->m_lev / divisor + 1,
+                     m_mx(mon), m_my(mon), dx, dy, wandlvl);
         } else if (otyp >= WAN_MAGIC_MISSILE && otyp <= WAN_LIGHTNING) {
             if (you)
                 buzz(otyp - WAN_MAGIC_MISSILE, (wandlevel == P_UNSKILLED) ? 3 : 6,

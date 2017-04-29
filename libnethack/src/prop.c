@@ -441,11 +441,18 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
     case SPE_MAGIC_MISSILE:
         if (!prop_wary(user, target, ANTIMAGIC))
             return TRUE;
-        if (!user || obj->oclass != WAND_CLASS)
+        if (!user)
             return FALSE;
-        wandlevel = mprof(user, MP_WANDS);
-        if (obj->mbknown)
-            wandlevel = getwandlevel(user, obj);
+        if (obj->otyp == SPE_MAGIC_MISSILE) {
+            wandlevel = mprof(user, MP_SATTK);
+            if (wandlevel < P_SKILLED)
+                return FALSE;
+        } else {
+            wandlevel = mprof(user, MP_WANDS);
+            if (obj->mbknown)
+                wandlevel = getwandlevel(user, obj);
+        }
+
         if (wandlevel >= P_SKILLED)
             return TRUE;
         return FALSE;

@@ -667,6 +667,10 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
         wandlevel = getwandlevel(mon, obj);
         if (!wandlevel) /* cursed wand is going to blow up */
             return 0;
+    } else if (obj->otyp == SPE_MAGIC_MISSILE) {
+        wandlevel = mprof(mon, MP_SATTK);
+        if (wandlevel < P_SKILLED)
+            wandlevel = 0;
     } else if (!wand)
         wandlevel = 0;
     struct monst *mtmp;
