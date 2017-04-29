@@ -819,7 +819,7 @@ const struct objclass const_objects[] = {
     OBJECT( OBJ(name,desc), BITS(0,0,0,0,mgc,0,0,0,0,0,dir,sub,PAPER), 0, \
             SPBOOK_CLASS, prob, delay,                                  \
             50, level*100, 0, 0, deflet, level, 20, color )
-    SPELL("dig", "parchment", P_MATTER_SPELL, 20, 6, 5, 1,
+    SPELL("dig", "parchment", P_MATTER_SPELL, 20, 6, 2, 1,
           RAY, HI_PAPER, 'd'),
     SPELL("magic missile", "vellum", P_ATTACK_SPELL, 45, 2, 2, 1,
           RAY, HI_PAPER, 'm'),
