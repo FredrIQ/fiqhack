@@ -2024,11 +2024,14 @@ zapnodir(struct monst *mon, struct obj *obj)
         }
         break;
     case WAN_CREATE_MONSTER:
-        howmany = 1;
-        if (wandlevel)
-            howmany = wandlevel;
-        if (!rn2(23) || wandlevel == P_MASTER)
-            howmany += rnd(7);
+        howmany = rn2(wandlevel == P_UNSKILLED ? 1  :
+                      wandlevel == P_BASIC     ? 2  :
+                      wandlevel == P_SKILLED   ? 4  :
+                      wandlevel == P_EXPERT    ? 8  :
+                      wandlevel == P_MASTER    ? 16 :
+                      1);
+        howmany++;
+
         known = create_critters(howmany, NULL, m_mx(mon), m_my(mon));
         break;
     case WAN_WISHING:

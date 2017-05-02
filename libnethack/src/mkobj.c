@@ -818,6 +818,8 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                using a separate RNG for wand of wishing charges */
             if (otmp->otyp == WAN_WISHING)
                 otmp->spe = 1 + rn2_on_rng(3, rng);
+            else if (otmp->otyp == WAN_CREATE_MONSTER)
+                otmp->spe = rn2_on_rng(5, rng) + 4;
             else
                 otmp->spe = rn2_on_rng(5, rng) +
                     ((objects[otmp->otyp].oc_dir == NODIR) ? 11 : 4);
