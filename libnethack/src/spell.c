@@ -1512,7 +1512,8 @@ spelleffects(boolean atme, struct musable *m)
         if (u.uhunger <= 10) {
             pline(msgc_cancelled, "You are too hungry to cast that spell.");
             return 0;
-        } else if (!freehand()) {
+        } else if (!freehand() &&
+                   (!uwep || uwep->otyp != QUARTERSTAFF)) {
             pline(msgc_cancelled, "Your arms are not free to cast!");
             return 0;
         } else if (check_capacity
@@ -2002,6 +2003,7 @@ percent_success(const struct monst *mon, int spell)
         splcaster = 1;
         special = -3;
     }
+    struct obj *wep = m_mwep(mon);
     struct obj *arm = which_armor(mon, os_arm);
     struct obj *armc = which_armor(mon, os_armc);
     struct obj *arms = which_armor(mon, os_arms);
@@ -2011,6 +2013,10 @@ percent_success(const struct monst *mon, int spell)
     int spelarmr = you ? urole.spelarmr : 10;
     int spelshld = you ? urole.spelshld : 1;
     int xl = you ? u.ulevel : mon->m_lev;
+
+    /* Quarterstaves enhance spellcasting */
+    if (wep && wep->otyp == QUARTERSTAFF)
+        splcaster -= spelarmr;
 
     if (arm && is_metallic(arm))
         splcaster += (armc &&
