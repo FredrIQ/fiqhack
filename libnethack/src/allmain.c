@@ -588,6 +588,25 @@ just_reloaded_save:
                           "That direction has no meaning while replaying.");
                     continue;
                 }
+            } else if (!strcmp(cmd.cmd, "grope")) {
+                /* go to a specific turn */
+                int trycnt = 0;
+                int turn = 0;
+                const char *buf;
+                const char *qbuf = "To what turn would you like to go to?";
+                do {
+                    if (++trycnt == 2)
+                        qbuf = msgcat(qbuf, " [type a number above 0]");
+
+                    (*windowprocs.win_getlin) (qbuf, &buf, msg_getlin_callback);
+                } while (!turn && strcmp(buf, "\033") && !digit(buf[0]) && trycnt < 10);
+
+                if (trycnt == 10 || !strcmp(buf, "\033"))
+                    continue; /* aborted or refused to input a number 10 times */
+
+                turn = atoi(buf);
+                log_sync(turn, TLU_TURNS, FALSE);
+                goto just_reloaded_save;
             } else {
                 /* Internal commands weren't sent by the player, so don't
                    complain about them, just ignore them. Ditto for repeat. */
