@@ -256,7 +256,7 @@ assign_oprops(struct level *lev, struct obj *obj, enum rng rng,
             return;
 
         /* Baseline: Level difficulty/100 */
-        if (rn2_on_rng(100, rng) > (level_difficulty(&lev->z) / 2))
+        if (rn2_on_rng(100, rng) > (lev ? (level_difficulty(&lev->z) / 2) : 0))
             return;
 
         /* Magical armor gets them half as often */
