@@ -912,7 +912,8 @@ magicbane_hit(struct monst *magr,   /* attacker */
     if (youattack || youdefend || vis) {
         result = TRUE;
         pline(combat_msgc(magr, mdef, cr_hit),
-              "The magic-absorbing blade %s %s!",
+              "The magic-absorbing %s %s %s!",
+              mb->otyp == QUARTERSTAFF ? "staff" : "blade", /* old saves */
               vtense(NULL, verb), hittee);
         /* assume probing has some sort of noticeable feedback even if it is
            being done by one monster to another */
