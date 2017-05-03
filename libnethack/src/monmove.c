@@ -702,7 +702,7 @@ m_move(struct monst *mtmp, int after)
     boolean avoid = FALSE;
     const struct permonst *ptr;
     schar mmoved = 0;   /* not strictly nec.: chi >= 0 will do */
-    long info[9];
+    long info[97];
     long flag;
     int omx = mtmp->mx, omy = mtmp->my;
     struct obj *mw_tmp;
@@ -910,13 +910,13 @@ not_special:
         int i, nx, ny, nearer, distance_tie;
         int cnt, chcnt;
         int ndist, nidist;
-        coord poss[9];
+        coord poss[97]; /* up to dist2 being 5*5 */
 
         struct distmap_state ds;
 
         distmap_init(&ds, gx, gy, mtmp);
 
-        cnt = mfndpos(mtmp, poss, info, flag);
+        cnt = mfndpos(mtmp, poss, info, flag, 1);
         chcnt = 0;
         chi = -1;
         if (flag & OPENDOOR)
@@ -936,7 +936,9 @@ not_special:
             nx = poss[i].x;
             ny = poss[i].y;
 
-            nearer = ((ndist = distmap(&ds, nx, ny)) < nidist);
+            ndist = distmap(&ds, nx, ny);
+
+            nearer = (ndist < nidist);
             distance_tie = (ndist == nidist);
 
             if ((appr == 1 && nearer) ||

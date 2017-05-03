@@ -1323,9 +1323,9 @@ can_carry(struct monst *mtmp, struct obj *otmp)
 
 /* return number of acceptable neighbour positions */
 int
-mfndpos(struct monst *mon, coord * poss,        /* coord poss[9] */
+mfndpos(struct monst *mon, coord *poss,        /* coord poss[9] */
         long *info,     /* long info[9] */
-        long flag)
+        long flag, int topdist)
 {
     const struct permonst *mdat = mon->data;
     xchar x, y, nx, ny;
@@ -1377,12 +1377,14 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
     }
     if (blind(mon))
         flag |= ALLOW_SSM;
-    maxx = min(x + 1, COLNO - 1);
-    maxy = min(y + 1, ROWNO - 1);
-    for (nx = max(0, x - 1); nx <= maxx; nx++)
-        for (ny = max(0, y - 1); ny <= maxy; ny++) {
+
+    maxx = min(x + topdist, COLNO - 1);
+    maxy = min(y + topdist, ROWNO - 1);
+    for (nx = max(0, x - topdist); nx <= maxx; nx++)
+        for (ny = max(0, y - topdist); ny <= maxy; ny++) {
             if (nx == x && ny == y)
                 continue;
+
             if (IS_ROCK(ntyp = mlevel->locations[nx][ny].typ) &&
                 !((flag & ALLOW_WALL) && may_passwall(mlevel, nx, ny)) &&
                 !((IS_TREE(ntyp) ? treeok : rockok) && may_dig(mlevel, nx, ny)))
