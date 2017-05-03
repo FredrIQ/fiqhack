@@ -197,8 +197,10 @@ losexp(const char *killer, boolean override_res)
     else if (u.uen > u.uenmax)
         u.uen = u.uenmax;
 
-    if (u.uexp > 0)
-        u.uexp = newuexp(u.ulevel) - 1;
+    if (u.ulevel > 1)
+        u.uexp = newuexp(u.ulevel - 1);
+    else
+        u.uexp = 0;
 }
 
 /*
