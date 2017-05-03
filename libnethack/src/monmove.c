@@ -681,8 +681,7 @@ itsstuck(struct monst *mtmp)
  *    immediately attempt a melee or ranged attack on the player, if it's in a
  *    state (hostile/conflicted) in which it doesn't mind doing that, and it's
  *    on a map square from which it's physically capable of doing that.
- * 1: Moved, possibly can attack.
- *    This will only attempt an attack if a ranged attack is a possibility.
+ * 1: Moved
  * 2: Monster died.
  * 3: Did not move, and can't do anything else either.
  *
