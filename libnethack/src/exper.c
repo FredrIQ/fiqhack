@@ -125,6 +125,20 @@ experience(struct monst *mtmp, int nk)
 void
 more_experienced(int exp, int rexp)
 {
+    if (u.ulevel < u.ulevelmax) {
+        /* We are drained. Boost EXP gain rate proportional to the levels lost */
+        int lev = u.ulevel;
+        while (lev++ < u.ulevelmax)
+            exp *= 2;
+
+        /* Only double up to each level threshould */
+        if ((u.uexp + exp) > newuexp(u.ulevel)) {
+            exp -= (newuexp(u.ulevel) - u.uexp);
+            u.uexp = newuexp(u.ulevel);
+            exp /= 2;
+        }
+    }
+
     u.uexp += exp;
     if (u.uexp >= (Role_if(PM_WIZARD) ? 250 : 500))
         flags.beginner = 0;
