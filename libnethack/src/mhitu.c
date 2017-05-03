@@ -1031,7 +1031,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_DRLI:
         hitmsg(mtmp, mattk);
-        if (uncancelled && !rn2(3) && !Drain_resistance) {
+        if (!cancelled(mtmp) && !rn2(3) && !Drain_resistance) {
             losexp(msgcat("drained of life by ", k_monnam(mtmp)), FALSE);
         }
         break;

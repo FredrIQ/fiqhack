@@ -1417,7 +1417,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     } case AD_DRLI:
-        if (!cancelled && !rn2(3) && !resists_drli(mdef)) {
+        if (!cancelled(magr) && !rn2(3) && !resists_drli(mdef)) {
             tmp = dice(2, 6);
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit),

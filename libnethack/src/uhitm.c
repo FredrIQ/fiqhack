@@ -1354,7 +1354,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_DRLI:
-        if (!negated && !rn2(3) && !resists_drli(mdef)) {
+        if (!cancelled(&youmonst) && !rn2(3) && !resists_drli(mdef)) {
             int xtmp = dice(2, 6);
 
             pline(combat_msgc(&youmonst, mdef, cr_hit),
