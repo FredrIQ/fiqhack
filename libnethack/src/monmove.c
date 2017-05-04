@@ -517,8 +517,7 @@ dochug(struct monst *mtmp)
             /* Hack: check for Elbereth if the target is in melee and is you, to
                fix a bug. This is a temporary fix until ranged combat logic is
                rewritten. */
-            if (mtmp2 != &youmonst || !monnear(mtmp, u.ux, u.uy) ||
-                !onscary(u.ux, u.uy, mtmp)) {
+            if (!monnear(mtmp, tx, ty)) {
                 if (mattackq(mtmp, tx, ty) & MM_AGR_DIED)
                     return 1;       /* Oops. */
 
@@ -534,6 +533,10 @@ dochug(struct monst *mtmp)
         lepgold = findgold(mtmp->minvent);
     }
 
+    boolean dragon = FALSE;
+    if (mdat->mlet == S_DRAGON && extra_nasty(mdat))
+        dragon = TRUE;
+
     /* We have two AI branches: "immediately attack the player's apparent
        location", and "don't immediately attack the player's apparent location"
        (in which case attacking the player's apparent location is still an
@@ -542,6 +545,7 @@ dochug(struct monst *mtmp)
        first, and we decide to use it via this rather large if statement. */
 
     if (!nearby || mtmp->mflee || scared || confused(mtmp) || stunned(mtmp) ||
+        (dragon && !mtmp->mspec_used) ||
         (invisible(mtmp) && !rn2(3)) ||
         (mdat->mlet == S_LEPRECHAUN && !ygold &&
          (lepgold || rn2(2))) || (is_wanderer(mdat) && !rn2(4)) ||
@@ -718,6 +722,13 @@ m_move(struct monst *mtmp, int after)
             return 0;   /* still in trap, so didn't move */
     }
     ptr = mtmp->data;   /* mintrap() can change mtmp->data -dlc */
+
+    /* Dragon pathfinding is a bit special */
+    boolean dragon = FALSE;
+
+    /* extra_nasty skips baby dragons */
+    if (ptr->mlet == S_DRAGON && extra_nasty(ptr))
+        dragon = TRUE;
 
     if (mtmp->meating) {
         mtmp->meating--;
@@ -913,13 +924,6 @@ not_special:
         int ogx = gx;
         int ogy = gy;
         boolean forceline = FALSE;
-
-        /* Dragon pathfinding is a bit special */
-        boolean dragon = FALSE;
-
-        /* extra_nasty skips baby dragons */
-        if (ptr->mlet == S_DRAGON && extra_nasty(ptr))
-            dragon = TRUE;
 
         struct distmap_state ds;
 
