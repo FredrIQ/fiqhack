@@ -917,6 +917,13 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
     int dx = xdef - mtmp->mx;
     int dy = ydef - mtmp->my;
 
+    /* Allow breath to sometimes pierce reflection for dragons,
+       except for disintegration */
+    int breathlvl = 0;
+    if (mtmp->data->mlet == S_DRAGON && extra_nasty(mtmp->data) &&
+        typ != AD_DISN && !rn2(3))
+        breathlvl = P_SKILLED;
+
     if (linedup) {
         if (cancelled(mtmp)) {
             if (canhear()) {
@@ -937,7 +944,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
                     action_interrupted();
                 }
                 buzz((int)(-20 - (typ - 1)), (int)mattk->damn, mtmp->mx,
-                     mtmp->my, sgn(dx), sgn(dy), 0);
+                     mtmp->my, sgn(dx), sgn(dy), breathlvl);
                 /* breath runs out sometimes. Also, give monster some cunning;
                    don't breath if the target fell asleep. */
                 if (!rn2(3))
