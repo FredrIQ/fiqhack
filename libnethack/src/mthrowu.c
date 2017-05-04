@@ -908,10 +908,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
     /* if new breath types are added, change AD_STUN to max type */
     int typ = (mattk->adtyp == AD_RBRE) ? rnd(AD_STUN) : mattk->adtyp;
 
-    boolean youdef = u.ux == xdef && u.uy == ydef;
-
-    if (!youdef && distmin(mtmp->mx, mtmp->my, xdef, ydef) < 3)
-        return 0;
+    boolean youdef = mtmp->mux == xdef && mtmp->muy == ydef;
 
     boolean linedup = qlined_up(mtmp, xdef, ydef, TRUE, FALSE);
     int dx = xdef - mtmp->mx;
