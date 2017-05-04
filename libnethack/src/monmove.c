@@ -514,9 +514,6 @@ dochug(struct monst *mtmp)
                 ty = mtmp->muy;
             }
 
-            /* Hack: check for Elbereth if the target is in melee and is you, to
-               fix a bug. This is a temporary fix until ranged combat logic is
-               rewritten. */
             if (!monnear(mtmp, tx, ty)) {
                 if (mattackq(mtmp, tx, ty) & MM_AGR_DIED)
                     return 1;       /* Oops. */

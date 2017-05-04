@@ -160,10 +160,11 @@ attack(struct monst *mtmp, schar dx, schar dy, boolean confirmed)
     if (u.bashmsg) {
         u.bashmsg = FALSE;
         if (uwep)
-            pline(msgc_occstart, "You begin bashing monsters with your %s.",
+            pline(msgc_fatalavoid, "You begin bashing monsters with your %s.",
                   aobjnam(uwep, NULL));
         else if (!cantwield(youmonst.data))
-            pline(msgc_occstart, "You begin %sing monsters with your %s %s.",
+            pline(Role_if(PM_MONK) ? msgc_occstart : msgc_fatalavoid,
+                  "You begin %sing monsters with your %s %s.",
                   Role_if(PM_MONK) ? "strik" : "bash",
                   uarmg ? "gloved" : "bare",      /* Del Lamb */
                   makeplural(body_part(HAND)));

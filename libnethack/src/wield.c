@@ -376,6 +376,16 @@ wield_tool(struct obj *obj, const char *occ_txt, enum occupation occupation)
 
     rv = equip_in_slot(obj, os_wep, TRUE);
 
+    /* If we lack skill with this weapon, set bashmsg to TRUE (Polearms will set it
+       elsewhere) since we probably only intended to wield for utility reason. */
+    if ((obj->oclass == WEAPON_CLASS || is_weptool(obj))) {
+        int skill = uwep_skill_type();
+        if (skill != P_NONE &&
+            (P_SKILL(skill) == P_ISRESTRICTED ||
+             P_SKILL(skill) == P_UNSKILLED))
+            u.bashmsg = TRUE;
+    }
+
     if (obj == uwep && rv == 0) /* it took no time */
         return 1;
 
