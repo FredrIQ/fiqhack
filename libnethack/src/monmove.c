@@ -954,7 +954,7 @@ not_special:
                     break;
                 }
             }
-        } else if (dragon ||
+        } else if ((dragon && mtmp->mspec_used) ||
                    (is_unicorn(ptr) && level->flags.noteleport)) {
             /* On noteleport, perhaps we can't avoid lineup */
             for (i = 0; i < cnt; i++) {
@@ -963,6 +963,12 @@ not_special:
                     break;
                 }
             }
+
+            /* Dragons not already in line will always avoid being
+               in line */
+            if (dragon && mtmp->mspec_used &&
+                !linedup(mtmp->mx, mtmp->my, gx, gy))
+                avoid = TRUE;
         }
 
         for (i = 0; i < cnt; i++) {
