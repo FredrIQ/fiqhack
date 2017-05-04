@@ -914,10 +914,18 @@ not_special:
         int ogy = gy;
         boolean forceline = FALSE;
 
+        /* Dragon pathfinding is a bit special */
+        boolean dragon = FALSE;
+
+        /* extra_nasty skips baby dragons */
+        if (ptr->mlet == S_DRAGON && extra_nasty(ptr))
+            dragon = TRUE;
+
         struct distmap_state ds;
 
         /* Some monsters try to lineup but as far away as possible */
-        if ((mtmp->data->mflags3 & M3_LINEUP) &&
+        if (((ptr->mflags3 & M3_LINEUP) ||
+             (dragon && !mtmp->mspec_used)) &&
             mtmp->mstrategy == st_mon) {
             find_best_lineup(mtmp, &gx, &gy);
             if (gx != ogx || gy != ogy)
@@ -942,7 +950,8 @@ not_special:
                     break;
                 }
             }
-        } else if (is_unicorn(ptr) && level->flags.noteleport) {
+        } else if (dragon ||
+                   (is_unicorn(ptr) && level->flags.noteleport)) {
             /* On noteleport, perhaps we can't avoid lineup */
             for (i = 0; i < cnt; i++) {
                 if (!(info[i] & NOTONL)) {
