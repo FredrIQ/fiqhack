@@ -1362,7 +1362,7 @@ find_best_lineup(struct monst *mon, xchar *gx, xchar *gy)
         }
         x -= dx[i];
         y -= dy[i];
-        if (x == *gx && y == *gy)
+        if (distmin(x, y, *gx, *gy) < 3)
             continue; /* this direction is invalid */
 
         distmap_init(&ds, x, y, mon);
