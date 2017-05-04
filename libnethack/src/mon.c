@@ -1323,16 +1323,15 @@ can_carry(struct monst *mtmp, struct obj *otmp)
 
 /* Adjust goalpoint to a good lineup to given gx/gy.
    "Good" means as far away as possible but still in line and within
-   BOLTLIM */
+   BOLT_LIM */
 void
 find_best_lineup(struct monst *mon, xchar *gx, xchar *gy)
 {
     struct distmap_state ds;
     struct level *lev = mon->dlevel;
     distmap_init(&ds, *gx, *gy, mon);
-    ds.mmflags |= MM_IGNOREWATER; /* we can shoot over water */
     int dist = distmap(&ds, mon->mx, mon->my);
-    if (dist > (BOLT_LIM * 99))
+    if (dist > (BOLT_LIM * 2))
         return; /* Don't bother */
 
     dist = 1659; /* sentinel to figure out if there is a valid pos */
@@ -1366,7 +1365,6 @@ find_best_lineup(struct monst *mon, xchar *gx, xchar *gy)
             continue; /* this direction is invalid */
 
         distmap_init(&ds, x, y, mon);
-        ds.mmflags |= MM_IGNOREWATER;
         tdist = distmap(&ds, mon->mx, mon->my);
         if (tdist < dist) {
             dist = tdist;
