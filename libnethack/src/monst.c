@@ -1287,7 +1287,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STRONG | M2_GREEDY | M2_JEWELS, 0, 0,
         CLR_YELLOW),
     MON("gray dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, 4), (G_GENO | 1),
+        LVL(15, 20, -1, 20, 4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_MAGM, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -1297,7 +1297,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
         M2_MAGIC, 0, 0, CLR_GRAY | HI_ULINE),
     MON("silver dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, 4), (G_GENO | 1),
+        LVL(15, 20, -1, 20, 4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_COLD, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -1307,7 +1307,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
         M2_MAGIC, 0, 0, DRAGON_SILVER | HI_ULINE),
     MON("shimmering dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, 4), (G_GENO | 1),
+        LVL(15, 20, -1, 20, 4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_STUN, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -1317,7 +1317,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
         M2_MAGIC, M3_DISPLACED, 0, CLR_CYAN | HI_ULINE),
     MON("red dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, -4), (G_GENO | 1),
+        LVL(15, 20, -1, 20, -4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_FIRE, 6, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -1327,7 +1327,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
         M2_MAGIC, M3_INFRAVISIBLE, 0, CLR_RED | HI_ULINE),
     MON("white dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, -5), (G_GENO | 1),
+        LVL(15, 20, -1, 20, -5), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_COLD, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -1337,7 +1337,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
         M2_MAGIC, 0, 0, CLR_WHITE | HI_ULINE),
     MON("orange dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, 5), (G_GENO | 1),
+        LVL(15, 20, -1, 20, 5), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_SLEE, 4, 25), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -1347,7 +1347,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
         M2_MAGIC, 0, 0, CLR_ORANGE | HI_ULINE),
     MON("black dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, -6), (G_GENO | 1),
+        LVL(15, 20, -1, 20, -6), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_DISN, 4, 10), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -1357,7 +1357,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
         M2_MAGIC, 0, 0, CLR_BLACK | HI_ULINE),
     MON("blue dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, -7), (G_GENO | 1),
+        LVL(15, 20, -1, 20, -7), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_ELEC, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -1367,7 +1367,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
         M2_MAGIC, 0, 0, CLR_BRIGHT_BLUE | HI_ULINE),
     MON("green dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, 6), (G_GENO | 1),
+        LVL(15, 20, -1, 20, 6), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_DRST, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -1377,7 +1377,7 @@ const struct permonst mons[] = {
         M2_HOSTILE | M2_STALK | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS |
         M2_MAGIC, 0, 0, CLR_GREEN | HI_ULINE),
     MON("yellow dragon", S_DRAGON,
-        LVL(15, 18, -1, 20, 7), (G_GENO | 1),
+        LVL(15, 20, -1, 20, 7), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_ACID, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
           ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
           NO_ATTK, NO_ATTK),
@@ -3309,7 +3309,7 @@ const struct permonst mons[] = {
     /* Multi-headed, possessing the breath attacks of all the other dragons
        (selected at random when attacking). */
     MON("Chromatic Dragon", S_DRAGON,
-        LVL(16, 12, 0, 30, -14), (G_NOGEN | G_UNIQ),
+        LVL(16, 20, 0, 30, -14), (G_NOGEN | G_UNIQ),
         A(ATTK(AT_BREA, AD_RBRE, 6, 8), ATTK(AT_CLAW, AD_SAMU, 2, 8),
           ATTK(AT_BITE, AD_PHYS, 4, 8), ATTK(AT_BITE, AD_PHYS, 4, 8),
           ATTK(AT_STNG, AD_PHYS, 1, 6), NO_ATTK),
@@ -3335,7 +3335,7 @@ const struct permonst mons[] = {
         M3_WANTSARTI | M3_WAITFORU | M3_INFRAVISION | M3_INFRAVISIBLE,
         MP_WAND_BASIC, HI_QUEST),
     MON("Ixoth", S_DRAGON,
-        LVL(15, 12, -1, 20, -14), (G_NOGEN | G_UNIQ),
+        LVL(15, 20, -1, 20, -14), (G_NOGEN | G_UNIQ),
         A(ATTK(AT_BREA, AD_FIRE, 8, 6), ATTK(AT_BITE, AD_PHYS, 4, 8),
           ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_SAMU, 2, 4),
           NO_ATTK, NO_ATTK),
