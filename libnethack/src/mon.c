@@ -1357,7 +1357,7 @@ find_best_lineup(struct monst *mon, xchar *gx, xchar *gy)
             /* Is there something in the way? */
             blocker = um_at(lev, x, y);
             if (blocker && blocker != mon &&
-                !msensem(mon, blocker))
+                msensem(mon, blocker))
                 break;
         }
         x -= dx[i];
