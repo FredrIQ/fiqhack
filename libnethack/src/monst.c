@@ -1289,7 +1289,7 @@ const struct permonst mons[] = {
     MON("gray dragon", S_DRAGON,
         LVL(15, 20, -1, 20, 4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_MAGM, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), 0, 0,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
@@ -1299,7 +1299,7 @@ const struct permonst mons[] = {
     MON("silver dragon", S_DRAGON,
         LVL(15, 20, -1, 20, 4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_COLD, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_COLD, 0,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
@@ -1309,7 +1309,7 @@ const struct permonst mons[] = {
     MON("shimmering dragon", S_DRAGON,
         LVL(15, 20, -1, 20, 4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_STUN, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), 0, 0,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
@@ -1319,7 +1319,7 @@ const struct permonst mons[] = {
     MON("red dragon", S_DRAGON,
         LVL(15, 20, -1, 20, -4), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_FIRE, 6, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_FIRE, MR_FIRE,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
@@ -1329,7 +1329,7 @@ const struct permonst mons[] = {
     MON("white dragon", S_DRAGON,
         LVL(15, 20, -1, 20, -5), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_COLD, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_COLD, MR_COLD,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
@@ -1339,7 +1339,7 @@ const struct permonst mons[] = {
     MON("orange dragon", S_DRAGON,
         LVL(15, 20, -1, 20, 5), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_SLEE, 4, 25), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_SLEEP, MR_SLEEP,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
@@ -1349,7 +1349,7 @@ const struct permonst mons[] = {
     MON("black dragon", S_DRAGON,
         LVL(15, 20, -1, 20, -6), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_DISN, 4, 10), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_DISINT, MR_DISINT,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
@@ -1359,7 +1359,7 @@ const struct permonst mons[] = {
     MON("blue dragon", S_DRAGON,
         LVL(15, 20, -1, 20, -7), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_ELEC, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_ELEC, MR_ELEC,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
@@ -1369,7 +1369,7 @@ const struct permonst mons[] = {
     MON("green dragon", S_DRAGON,
         LVL(15, 20, -1, 20, 6), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_DRST, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC), MR_POISON, MR_POISON,
         M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_OVIPAROUS |
@@ -1379,7 +1379,7 @@ const struct permonst mons[] = {
     MON("yellow dragon", S_DRAGON,
         LVL(15, 20, -1, 20, 7), (G_GENO | 1),
         A(ATTK(AT_BREA, AD_ACID, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
-          ATTK(AT_CLAW, AD_PHYS, 1, 4), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_CLAW, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_PHYS, 2, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_DRAGON, 1500, 0, MS_ROAR, MZ_GIGANTIC),
         MR_ACID | MR_STONE, MR_STONE,
