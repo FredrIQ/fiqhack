@@ -1121,6 +1121,7 @@ extern boolean mpickstuff(struct monst *, boolean);
 extern int curr_mon_load(const struct monst *);
 extern int max_mon_load(const struct monst *);
 extern boolean can_carry(struct monst *, struct obj *);
+extern void find_best_lineup(struct monst *, xchar *, xchar *);
 extern int mfndpos(struct monst *, coord *, long *, long, int);
 extern boolean monnear(struct monst *, int, int);
 extern void dmonsfree(struct level *lev);

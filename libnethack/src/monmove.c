@@ -701,7 +701,7 @@ m_move(struct monst *mtmp, int after)
     boolean avoid = FALSE;
     const struct permonst *ptr;
     schar mmoved = 0;   /* not strictly nec.: chi >= 0 will do */
-    long info[97];
+    long info[9];
     long flag;
     int omx = mtmp->mx, omy = mtmp->my;
     struct obj *mw_tmp;
@@ -909,9 +909,20 @@ not_special:
         int i, nx, ny, nearer, distance_tie;
         int cnt, chcnt;
         int ndist, nidist;
-        coord poss[97]; /* up to dist2 being 5*5 */
+        coord poss[9];
+        int ogx = gx;
+        int ogy = gy;
+        boolean forceline = FALSE;
 
         struct distmap_state ds;
+
+        /* Some monsters try to lineup but as far away as possible */
+        if ((mtmp->data->mflags3 & M3_LINEUP) &&
+            mtmp->mstrategy == st_mon) {
+            find_best_lineup(mtmp, &gx, &gy);
+            if (gx != ogx || gy != ogy)
+                forceline = TRUE;
+        }
 
         distmap_init(&ds, gx, gy, mtmp);
 
@@ -922,16 +933,31 @@ not_special:
             ds.mmflags |= MM_IGNOREDOORS;
         nidist = distmap(&ds, omx, omy);
 
-        if (is_unicorn(ptr) && level->flags.noteleport) {
-            /* on noteleport levels, perhaps we cannot avoid hero */
-            for (i = 0; i < cnt; i++)
-                if (!(info[i] & NOTONL))
+        /* Check if we can actually force lineup */
+        if (forceline) {
+            forceline = FALSE;
+            for (i = 0; i < cnt; i++) {
+                if (info[i] & NOTONL) {
+                    forceline = TRUE;
+                    break;
+                }
+            }
+        } else if (is_unicorn(ptr) && level->flags.noteleport) {
+            /* On noteleport, perhaps we can't avoid lineup */
+            for (i = 0; i < cnt; i++) {
+                if (!(info[i] & NOTONL)) {
                     avoid = TRUE;
+                    break;
+                }
+            }
         }
 
         for (i = 0; i < cnt; i++) {
             if (avoid && (info[i] & NOTONL))
                 continue;
+            else if (forceline && !(info[i] & NOTONL))
+                continue;
+
             nx = poss[i].x;
             ny = poss[i].y;
 

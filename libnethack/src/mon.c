@@ -1321,6 +1321,64 @@ can_carry(struct monst *mtmp, struct obj *otmp)
     return TRUE;
 }
 
+/* Adjust goalpoint to a good lineup to given gx/gy.
+   "Good" means as far away as possible but still in line and within
+   BOLTLIM */
+void
+find_best_lineup(struct monst *mon, xchar *gx, xchar *gy)
+{
+    struct distmap_state ds;
+    struct level *lev = mon->dlevel;
+    distmap_init(&ds, *gx, *gy, mon);
+    ds.mmflags |= MM_IGNOREWATER; /* we can shoot over water */
+    int dist = distmap(&ds, mon->mx, mon->my);
+    if (dist > (BOLT_LIM * 99))
+        return; /* Don't bother */
+
+    dist = 1659; /* sentinel to figure out if there is a valid pos */
+    int tdist = 0;
+    int dx[8] = {0, 1, 0, -1, 1, 1, -1, -1};
+    int dy[8] = {1, 0, -1, 0, 1, -1, -1, 1};
+    int x, y, bx, by;
+    bx = *gx;
+    by = *gy;
+    int i, j;
+    struct monst *blocker;
+    for (i = 0; i < 8; i++) {
+        x = *gx;
+        y = *gy;
+
+        for (j = 0; j < BOLT_LIM; j++) {
+            x += dx[i];
+            y += dy[i];
+
+            if (!linedup(x, y, *gx, *gy))
+                break;
+
+            /* Is there something in the way? */
+            blocker = um_at(lev, x, y);
+            if (blocker && blocker != mon)
+                break;
+        }
+        x -= dx[i];
+        y -= dy[i];
+        if (x == *gx && y == *gy)
+            continue; /* this direction is invalid */
+
+        distmap_init(&ds, x, y, mon);
+        ds.mmflags |= MM_IGNOREWATER;
+        tdist = distmap(&ds, mon->mx, mon->my);
+        if (tdist < dist) {
+            dist = tdist;
+            bx = x;
+            by = y;
+        }
+    }
+
+    *gx = bx;
+    *gy = by;
+}
+
 /* return number of acceptable neighbour positions */
 int
 mfndpos(struct monst *mon, coord *poss,        /* coord poss[9] */
