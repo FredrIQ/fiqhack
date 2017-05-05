@@ -141,7 +141,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     explmask[i][j] = 0;
                     break;
                 case AD_MAGM:
-                    explmask[i][j] = !!(raylevel >= P_EXPERT || Antimagic);
+                    explmask[i][j] = !!(raylevel < P_EXPERT && Antimagic);
                     break;
                 case AD_FIRE:
                     explmask[i][j] = !!Fire_resistance;
@@ -193,7 +193,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     case AD_PHYS:
                         break;
                     case AD_MAGM:
-                        explmask[i][j] |= (raylevel >= P_EXPERT ||
+                        explmask[i][j] |= (raylevel < P_EXPERT &&
                                            resists_magm(mtmp));
                         break;
                     case AD_FIRE:
