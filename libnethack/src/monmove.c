@@ -924,6 +924,21 @@ not_special:
 
         struct distmap_state ds;
 
+        /* Dragons try to avoid melee initiative, but there's no reason to avoid it if
+           their target is helpless */
+        boolean thelpless = FALSE;
+        if (dragon && mtmp->mstrategy == st_mon) {
+            if (gx == mtmp->mux && gy == mtmp->muy) {
+                /* player is target */
+                if (u_helpless(hm_all))
+                    thelpless = TRUE;
+            } else {
+                struct monst *targetmon = m_at(mtmp->dlevel, gx, gy);
+                if (targetmon && m_helpless(targetmon, hm_all))
+                    thelpless = TRUE;
+            }
+        }
+
         /* Some monsters try to lineup but as far away as possible */
         if (((ptr->mflags3 & M3_LINEUP) ||
              (dragon && !mtmp->mspec_used)) &&
@@ -951,7 +966,7 @@ not_special:
                     break;
                 }
             }
-        } else if ((dragon && mtmp->mspec_used) ||
+        } else if ((dragon && mtmp->mspec_used && !thelpless) ||
                    (is_unicorn(ptr) && level->flags.noteleport)) {
             /* On noteleport, perhaps we can't avoid lineup */
             for (i = 0; i < cnt; i++) {
