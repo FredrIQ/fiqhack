@@ -919,7 +919,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
     int breathlvl = 0;
     if (mtmp->data->mlet == S_DRAGON && extra_nasty(mtmp->data) &&
         typ != AD_DISN && !rn2(3))
-        breathlvl = P_SKILLED;
+        breathlvl = (!rn2(3) ? P_SKILLED : !rn2(2) ? P_EXPERT : P_MASTER);
 
     if (linedup) {
         if (cancelled(mtmp)) {
