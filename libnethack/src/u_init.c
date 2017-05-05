@@ -892,6 +892,10 @@ race_ini_inv(const struct trobj *trop, short nocreate[4])
 static void
 ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
 {
+    /* Keep track of spells we've already gotten */
+    int gotspell[NUM_OBJECTS];
+    memset(&gotspell, 0, NUM_OBJECTS);
+
     struct obj *obj;
     int otyp, i;
     long trquan = trop->trquan;
@@ -939,9 +943,8 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
                    otyp == WAN_NOTHING
                    /* Monks don't use weapons */
                    || (otyp == SCR_ENCHANT_WEAPON && Role_if(PM_MONK))
-                   /* wizard patch -- they already have one */
-                   || (otyp == SPE_FORCE_BOLT && Role_if(PM_WIZARD))
-                   || (otyp == SPE_MAGIC_MISSILE && Role_if(PM_WIZARD))
+                   /* avoid already gotten spells */
+                   || gotspell[otyp]
                    /* powerful spells are either useless to low level players
                       or unbalancing; also spells in restricted skill
                       categories */
@@ -1039,8 +1042,10 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
             else if (!uswapwep)
                 setuswapwep(obj);
         }
-        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER)
+        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER) {
+            gotspell[obj->otyp] = 1;
             initialspell(obj);
+        }
 
         if (--trquan)
             continue;   /* make a similar object */
