@@ -229,10 +229,10 @@ display_oprops(const struct obj *obj, const char *input)
     struct objclass *ocl = &objects[obj->otyp];
     int known = ocl->oc_name_known;
 
+    /* TODO: this can probably be made saner */
     if (strstr(buf, " of ") &&
         (!strstr(buf, "pair of") ||
-         (obj->oclass == ARMOR_CLASS &&
-          (is_boots(obj) || is_gloves(obj)) && known)) &&
+         strstr(buf, "gauntlets of")) &&
         !strstr(buf, "set of") &&
         !strstr(buf, "tin of"))
         suffixes++;
