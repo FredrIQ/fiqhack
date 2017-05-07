@@ -287,6 +287,22 @@ dofire(const struct nh_cmd_arg *arg)
 
     if (check_capacity(NULL))
         return 0;
+
+    /* It can be reasonable to fire rocks without a sling. Otherwise,
+       force the usage of 't' for ammo that needs a launcher when
+       the proper launcher isn't wielded. */
+    if (uquiver && is_ammo(uquiver) && uquiver->oclass != GEM_CLASS &&
+        !ammo_and_launcher(uquiver, uwep)) {
+        /* This is useless, but is here because players expect a direction prompt
+           after firing, so avoid them taking a step they don't want to. */
+        schar dx, dy, dz;
+        getargdir(arg, NULL, &dx, &dy, &dz);
+
+        pline(msgc_cancelled, "You aren't wielding the appropriate launcher.");
+        pline(msgc_controlhelp, "(Use the 'throw' command to fire anyway.)");
+        return 0;
+    }
+
     if (!uquiver) {
         if (!flags.autoquiver) {
             /* Don't automatically fill the quiver */
