@@ -2110,10 +2110,8 @@ maurahitpile(struct monst *mon, int x, int y, const struct attack *mattk)
     for (obj = level->objects[x][y]; obj; obj = nexthere) {
         nexthere = obj->nexthere;
         if (obj->otyp == CORPSE) {
-            pline(msgc_debug, "?");
             if (ox_monst(obj)) {
                 omon = get_mtraits(obj, FALSE);
-                pline(msgc_debug, "?%d", omon->orig_mnum);
                 /* We can't use izombie() because normal property checks assume
                    proper values in the monst */
                 if ((nonliving(&mons[omon->orig_mnum]) ||
@@ -2121,6 +2119,9 @@ maurahitpile(struct monst *mon, int x, int y, const struct attack *mattk)
                     continue;
             }
             omon = revive(obj);
+            if (!omon)
+                continue;
+
             if (mon->mtame != omon->mtame) {
                 if (mon->mtame)
                     tamedog(omon, NULL);

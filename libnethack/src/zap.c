@@ -698,8 +698,9 @@ montraits(struct obj *obj, coord * cc)
     if (mtmp2) {
         /* save_mtraits() validated mtmp2->mnum */
         mtmp2->data = &mons[mtmp2->orig_mnum];
-        if (mtmp2->mhpmax <= 0 && !is_rider(mtmp2->data))
-            return NULL;
+        if (mtmp2->mhpmax <= 0)
+            mtmp2->mhpmax = 1; /* Allow level drained monsters to revive */
+
         mtmp = makemon(mtmp2->data, level, cc->x, cc->y,
                        NO_MINVENT | MM_NOWAIT | MM_NOCOUNTBIRTH);
         if (!mtmp)
