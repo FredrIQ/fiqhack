@@ -3059,7 +3059,6 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
                   refl(os_arm)      ? "armor"  :
                   "something weird"); /* os_arm after role/etc to suppress
                                          "armor" if uskin() */
-        /* TODO: when object properties is a thing, change this */
         if (refl(os_arms)) {
             struct obj *arms = which_armor(mon, os_arms);
             if (arms->otyp == SHIELD_OF_REFLECTION)
