@@ -542,7 +542,6 @@ dochug(struct monst *mtmp)
        first, and we decide to use it via this rather large if statement. */
 
     if (!nearby || mtmp->mflee || scared || confused(mtmp) || stunned(mtmp) ||
-        (dragon && !mtmp->mspec_used) || /* dragons ready to breathe */
         (invisible(mtmp) && !rn2(3)) ||
         (mdat->mlet == S_LEPRECHAUN && !ygold &&
          (lepgold || rn2(2))) || (is_wanderer(mdat) && !rn2(4)) ||

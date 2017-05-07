@@ -392,9 +392,16 @@ mattackm(struct monst *magr, struct monst *mdef)
         mattk = getmattk(pa, i, res, &alt_attk);
         otmp = NULL;
         attk = 1;
+
+        boolean ranged_ok = FALSE;
+        if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2 ||
+            (magr->data->mlet == S_DRAGON && extra_nasty(magr->data) &&
+             !magr->mspec_used && (!cancelled(magr) || rn2(3))))
+            ranged_ok = TRUE;
+
         switch (mattk->aatyp) {
         case AT_WEAP:  /* weapon attacks */
-            if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
+            if (ranged_ok) {
                 thrwmq(magr, mdef->mx, mdef->my);
                 if (tmphp > mdef->mhp)
                     res[i] = MM_HIT;
@@ -429,7 +436,7 @@ mattackm(struct monst *magr, struct monst *mdef)
         case AT_BUTT:
         case AT_TENT:
             /* Nymph that teleported away on first attack? */
-            if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
+            if (ranged_ok) {
                 strike = 0;
                 break;  /* might have more ranged attacks */
             }
@@ -467,6 +474,9 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_HUGS:  /* automatic if prev two attacks succeed */
+            if (ranged_ok)
+                break;
+
             strike = (i >= 2 && res[i - 1] == MM_HIT && res[i - 2] == MM_HIT);
             if (strike)
                 res[i] = hitmm(magr, mdef, mattk);
@@ -474,7 +484,8 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_BREA:
-            breamq(magr, mdef->mx, mdef->my, mattk);
+            if (ranged_ok)
+                breamq(magr, mdef->mx, mdef->my, mattk);
             if (tmphp > mdef->mhp)
                 res[i] = MM_HIT;
             else
@@ -487,7 +498,8 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_SPIT:
-            spitmq(magr, mdef->mx, mdef->my, mattk);
+            if (ranged_ok)
+                spitmq(magr, mdef->mx, mdef->my, mattk);
             if (tmphp > mdef->mhp)
                 res[i] = MM_HIT;
             else
@@ -500,12 +512,13 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_GAZE:
+            /* both melee and ranged */
             strike = 0; /* will not wake up a sleeper */
             res[i] = gazemm(magr, mdef, mattk);
             break;
 
         case AT_EXPL:
-            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1) {
+            if (ranged_ok) {
                 strike = 0;
                 break;
             }
@@ -518,8 +531,7 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_ENGL:
-            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1 ||
-                (u.usteed && (mdef == u.usteed))) {
+            if (ranged_ok) {
                 strike = 0;
                 break;
             }

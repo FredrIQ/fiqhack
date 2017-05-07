@@ -201,9 +201,15 @@ mattacku(struct monst *mtmp)
     struct musable musable;
 
     const struct permonst *mdat = mtmp->data;
-    boolean ranged = (distu(mtmp->mx, mtmp->my) > 3);
 
-    /* Is it near you? Affects your actions */
+    /* Will monsters use ranged or melee attacks against you? */
+    boolean ranged = FALSE;
+    if (dist2(mtmp->mx, mtmp->my, u.ux, u.uy) > 2 ||
+        (mtmp->data->mlet == S_DRAGON && extra_nasty(mtmp->data) &&
+         !mtmp->mspec_used && (!cancelled(mtmp) || rn2(3))))
+        ranged = TRUE;
+
+    /* Is it near you at all? (Different from above) */
     boolean range2 = !monnear(mtmp, u.ux, u.uy);
 
     /* Can you see it? Affects messages. For long worms, if they're attacking
@@ -229,7 +235,8 @@ mattacku(struct monst *mtmp)
     if (Engulfed) {
         if (mtmp != u.ustuck)
             return 0;
-        range2 = 0;
+        range2 = FALSE;
+        ranged = FALSE;
         if (u.uinvulnerable)
             return 0;   /* stomachs can't hurt you! */
     }
@@ -427,7 +434,7 @@ mattacku(struct monst *mtmp)
         if (mtmp == u.ustuck)
             pline(msgc_noconsequence, "%s loosens its grip slightly.",
                   Monnam(mtmp));
-        else if (!range2) {
+        else if (!ranged) {
             if (youseeit || sensemon(mtmp))
                 pline(msgc_noconsequence,
                       "%s starts to attack you, but pulls back.", Monnam(mtmp));
@@ -447,7 +454,6 @@ mattacku(struct monst *mtmp)
     }
 
     for (i = 0; i < NATTK; i++) {
-
         sum[i] = 0;
         mattk = getmattk(mdat, i, sum, &alt_attk);
         if (Engulfed && (mattk->aatyp != AT_ENGL))
@@ -460,7 +466,7 @@ mattacku(struct monst *mtmp)
         case AT_TUCH:
         case AT_BUTT:
         case AT_TENT:
-            if (!range2 &&
+            if (!ranged &&
                 (!MON_WEP(mtmp) || confused(mtmp) || Conflict ||
                  !touch_petrifies(youmonst.data))) {
                 if (tmp > (j = rnd(20 + i))) {
@@ -473,7 +479,7 @@ mattacku(struct monst *mtmp)
             break;
 
         case AT_HUGS:  /* automatic if prev two attacks succeed */
-            if ((!range2 && i >= 2 && sum[i - 1] && sum[i - 2])
+            if ((!ranged && i >= 2 && sum[i - 1] && sum[i - 2])
                 || mtmp == u.ustuck)
                 sum[i] = hitmu(mtmp, mattk);
             break;
@@ -487,12 +493,12 @@ mattacku(struct monst *mtmp)
 
         case AT_EXPL:
             /* explmu does hit calculations, but we have to check range */
-            if (!range2)
+            if (!ranged)
                 sum[i] = explmu(mtmp, mattk);
             break;
 
         case AT_ENGL:
-            if (!range2) {
+            if (!ranged) {
                 if (Engulfed || tmp > (j = rnd(20 + i))) {
                     /* Force swallowing monster to be displayed even when
                        player is moving away */
@@ -504,15 +510,15 @@ mattacku(struct monst *mtmp)
             }
             break;
         case AT_BREA:
-            if (range2)
+            if (ranged)
                 sum[i] = breamq(mtmp, u.ux, u.uy, mattk);
             break;
         case AT_SPIT:
-            if (range2)
+            if (ranged)
                 sum[i] = spitmq(mtmp, u.ux, u.uy, mattk);
             break;
         case AT_WEAP:
-            if (range2) {
+            if (ranged) {
                 if (!Is_rogue_level(&u.uz))
                     thrwmq(mtmp, u.ux, u.uy);
             } else {
