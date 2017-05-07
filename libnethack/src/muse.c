@@ -1862,11 +1862,17 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
                 return 1;
 
     if (otyp == SPE_IDENTIFY ||
-        otyp == SCR_IDENTIFY)
+        otyp == SCR_IDENTIFY) {
+        int lvl = mprof(mon, MP_SDIVN);
+        if (otyp == SCR_IDENTIFY)
+            lvl = blessed ? P_EXPERT : cursed ? P_UNSKILLED : P_BASIC;
         for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
-            if (otmp->otyp != GOLD_PIECE && (!otmp->mknown || !otmp->mbknown) &&
+            if (otmp->otyp != GOLD_PIECE &&
+                ((!otmp->mknown && lvl >= P_BASIC) ||
+                 (!otmp->mbknown && lvl >= P_SKILLED)) &&
                 otmp != obj)
                 return 1;
+    }
 
     /* Defensive only */
     if (fraction < 35) {
