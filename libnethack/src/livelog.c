@@ -108,9 +108,7 @@ void livelog_flubbed_wish(const char *wishstring, const struct obj *result)
 void
 livelog_unique_monster(const struct monst *mon) {
     int pm    = monsndx(mon->data);
-#ifdef LIVELOG_BONES_KILLER
-    const char *name = NAME(mon);
-#endif
+    const char *name = mx_name(mon);
     if ((pm == PM_MEDUSA || pm == PM_WIZARD_OF_YENDOR ||
          pm == PM_VLAD_THE_IMPALER || pm == PM_DEMOGORGON ||
          pm == PM_CROESUS || pm == urole.neminum ||
@@ -123,7 +121,6 @@ livelog_unique_monster(const struct monst *mon) {
          * unimportant. */
         && (mvitals[monsndx(mon->data)].died == 1))
         livelog_write_event(msgprintf("defeated=%s", noit_mon_nam(mon)));
-#ifdef LIVELOG_BONES_KILLER
     else if (mon->former_player > 0) {
         /* $player killed the $bones_monst of $bones_killed the former
          * $bones_rank on $turns on dungeon level $dlev! */
@@ -149,7 +146,4 @@ livelog_unique_monster(const struct monst *mon) {
                                        : (frole.name.m)),
                                       mons[monsndx(mon->data)].mname));
     }
-#endif /* LIVELOG_BONES_KILLER */
 }
-
-
