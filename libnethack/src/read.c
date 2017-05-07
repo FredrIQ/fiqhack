@@ -1482,7 +1482,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         }
         else {
             /* TODO: give msgc_itemloss if you lack identifiable objects */
-            if (you)
+            if (you && sobj->oclass == SCROLL_CLASS)
                 pline_implied(!cval ? msgc_youdiscover : msgc_uiprompt,
                       "This is an identify scroll.");
             else if (vis)
