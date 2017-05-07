@@ -52,7 +52,8 @@ make_sick(struct monst *mon, long xtime, const char *cause,
         } else if (!flags.mon_moving) /* you made the monster sick */
             mon->usicked = 1;
     } else if ((old || zombifying(mon)) &&
-               (!you || (type & u.usick_type))) {
+               (!you || (type & u.usick_type) ||
+                zombifying(mon))) {
         /* TODO: usick_type equavilent for monsters */
         if (zombifying(mon)) {
             set_property(mon, ZOMBIE, -2, TRUE);
@@ -509,6 +510,7 @@ peffects(struct monst *mon, struct obj *otmp)
                 if (you || vis)
                     pline(statusheal, "%s %s full of awe.", Mon, looks);
                 set_property(mon, SICK, -2, FALSE);
+                set_property(mon, ZOMBIE, -2, FALSE);
                 if (you) {
                     exercise(A_WIS, TRUE);
                     exercise(A_CON, TRUE);
@@ -965,8 +967,10 @@ peffects(struct monst *mon, struct obj *otmp)
         if (healmax > 1 || !otmp->cursed)
             set_property(mon, BLINDED, -2, FALSE);
         /* cure sickness for noncursed EX/FH or blessed H */
-        if (otmp->blessed || (healmax > 1 && !otmp->cursed))
+        if (otmp->blessed || (healmax > 1 && !otmp->cursed)) {
             set_property(mon, SICK, -2, FALSE);
+            set_property(mon, ZOMBIE, -2, FALSE);
+        }
         /* cursed potions give no max HP gains */
         if (otmp->cursed)
             healmax = 0;

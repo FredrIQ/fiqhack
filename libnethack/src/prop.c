@@ -1281,6 +1281,7 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case SICK:
         msgc = msgc_monneutral;
+
         if (you || mon->mtame) {
             msgc = msgc_statusheal;
             if (!lost)
@@ -1751,6 +1752,7 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case SICK_RES:
         set_property(mon, SICK, -2, FALSE);
+        set_property(mon, ZOMBIE, -2, FALSE);
         break;
     case DRAIN_RES:
         break;
@@ -1934,7 +1936,7 @@ update_property(struct monst *mon, enum youprop prop,
             if (lost) {
                 if (you || vis) {
                     pline(you ? msgc_statusheal : msgc_monneutral,
-                          "%s zombifying disease wears off naturally.",
+                          "%s zombifying disease wears off.",
                           s_suffix(Monnam(mon)));
                     effect = TRUE;
                 }

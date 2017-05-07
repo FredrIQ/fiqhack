@@ -1473,6 +1473,8 @@ arti_invoke(struct obj *obj)
                 }
                 if (sick(&youmonst))
                     set_property(&youmonst, SICK, -2, FALSE);
+                if (zombifying(&youmonst))
+                    set_property(&youmonst, ZOMBIE, -2, FALSE);
                 if (sliming(&youmonst))
                     set_property(&youmonst, SLIMED, -2, FALSE);
                 if (blind(&youmonst))

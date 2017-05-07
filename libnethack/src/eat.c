@@ -1634,6 +1634,7 @@ fpostfx(struct obj *otmp)
     case EUCALYPTUS_LEAF:
         if (!otmp->cursed) {
             set_property(&youmonst, SICK, -2, FALSE);
+            set_property(&youmonst, ZOMBIE, -2, FALSE);
             set_property(&youmonst, VOMITING, -2, FALSE);
         }
         break;

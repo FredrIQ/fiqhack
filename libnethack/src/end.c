@@ -402,6 +402,8 @@ savelife(int how)
     /* cure impending doom of sickness hero won't have time to fix */
     if (property_timeout(&youmonst, SICK) == 1)
         set_property(&youmonst, SICK, -2, FALSE);
+    if (property_timeout(&youmonst, ZOMBIE) == 1)
+        set_property(&youmonst, ZOMBIE, -2, FALSE);
     if (how == CHOKING)
         init_uhunger();
 

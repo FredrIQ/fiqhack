@@ -1735,6 +1735,7 @@ spelleffects(boolean atme, struct musable *m)
         break;
     case SPE_CURE_SICKNESS:
         set_property(mon, SICK, -2, FALSE);
+        set_property(mon, ZOMBIE, -2, FALSE);
         set_property(mon, SLIMED, -2, FALSE);
         break;
     case SPE_CREATE_FAMILIAR:

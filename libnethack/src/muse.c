@@ -2225,6 +2225,7 @@ use_item(struct musable *m)
             set_property(mon, CONFUSION, -2, FALSE);
             set_property(mon, STUNNED, -2, FALSE);
             set_property(mon, SICK, -2, FALSE);
+            set_property(mon, ZOMBIE, -2, FALSE);
         }
         return 2;
     case MUSE_DIRHORN:

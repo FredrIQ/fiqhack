@@ -1730,7 +1730,7 @@ use_unicorn_horn(struct obj *obj)
     trouble_count = did_prop = did_attr = 0;
 
     /* collect property troubles */
-    if (sick(&youmonst))
+    if (sick(&youmonst) || zombifying(&youmonst))
         prop_trouble(SICK);
     if (property_timeout(&youmonst, BLINDED))
         prop_trouble(BLINDED);
@@ -1796,6 +1796,7 @@ use_unicorn_horn(struct obj *obj)
         switch (idx) {
         case prop2trbl(SICK):
             set_property(&youmonst, SICK, -2, FALSE);
+            set_property(&youmonst, ZOMBIE, -2, FALSE);
             did_prop++;
             break;
         case prop2trbl(BLINDED):
