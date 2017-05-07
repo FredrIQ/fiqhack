@@ -257,7 +257,8 @@ pluslvl(boolean incr)
         ++u.ulevel;
         if (u.ulevelmax < u.ulevel) {
             u.ulevelmax = u.ulevel;
-            historic_event(FALSE, "advanced to experience level %d.", u.ulevel);
+            historic_event(FALSE, FALSE,
+                           "advanced to experience level %d.", u.ulevel);
         }
         pline(msgc_intrgain, "Welcome to experience level %d.", u.ulevel);
         adjabil(u.ulevel - 1, u.ulevel);        /* give new intrinsics */

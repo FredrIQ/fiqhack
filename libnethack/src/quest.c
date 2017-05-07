@@ -194,7 +194,7 @@ expulsion(boolean seal)
         int reexpelled = u.uevent.qexpelled;
 
         u.uevent.qexpelled = 1;
-        historic_event(FALSE, "were expelled from the quest.");
+        historic_event(FALSE, FALSE, "were expelled from the quest.");
         /* Delete the near portal now; the far (main dungeon side) portal will
            be deleted as part of arrival on that level. If monster movement is
            in progress, any who haven't moved yet will now miss out on a chance
@@ -236,9 +236,8 @@ finish_quest(struct obj *obj)
 
     if (obj) {
         u.uevent.qcompleted = 1;        /* you did it! */
-        historic_event(FALSE, "completed the quest!");
-        /* behave as if leader imparts sufficient info about the quest artifact
-         */
+        historic_event(FALSE, FALSE, "completed the quest!");
+        /* behave as if leader imparts sufficient info about the quest artifact */
         fully_identify_obj(obj);
         update_inventory();
     }
@@ -312,7 +311,7 @@ chat_with_leader(void)
             qt_pager(QT_ASSIGNQUEST);
             exercise(A_WIS, TRUE);
             Qstat(got_quest) = TRUE;
-            historic_event(FALSE, "embarked upon an epic quest.");
+            historic_event(FALSE, FALSE, "embarked upon an epic quest.");
         }
     }
 }

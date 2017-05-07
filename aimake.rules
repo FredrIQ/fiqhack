@@ -683,6 +683,13 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             install_permission => "games",
             install_readable => 1,
         },
+        _install_livelog => {
+            object => "sys:ensure_exists",
+            install_dir => "gamesstatedir",
+            install_name => "livelog",
+            install_permission => "games",
+            install_readable => 1,
+        },
         _install_logfile => {
             object => "sys:ensure_exists",
             install_dir => "gamesstatedir",

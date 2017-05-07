@@ -2062,6 +2062,12 @@ mondead(struct monst *mtmp)
     if (mvitals[tmp].died < 255)
         mvitals[tmp].died++;
 
+    /* The subroutine checks whether the monster is actually one that should be
+     * livelogged.  It would be neat if there could be different message wording
+     * depending on whether the player perpetrated the kill or not, but we don't
+     * seem to have that information at this point; it's not really essential. */
+    livelog_unique_monster(mtmp);
+
     /* if it's a (possibly polymorphed) quest leader, mark him as dead */
     if (mtmp->m_id == u.quest_status.leader_m_id)
         u.quest_status.leader_is_dead = TRUE;
@@ -2462,7 +2468,7 @@ xkilled(struct monst *mtmp, int dest)
 
     /* with lifesaving taken care of, history can record the heroic deed */
     if ((mtmp->data->geno & G_UNIQ)) {
-        historic_event(FALSE, "killed %s %s.",
+        historic_event(FALSE, FALSE, "killed %s %s.",
                        x_monnam(mtmp, ARTICLE_NONE, NULL, EXACT_NAME, TRUE),
                        hist_lev_name(&u.uz, TRUE));
     }

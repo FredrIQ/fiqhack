@@ -17,6 +17,10 @@
 
 # define PANICLOG "paniclog"    /* log of panic and impossible events */
 
+/* include bones ghost kills in livelog; almost certainly breaks save compat. */
+/* # define LIVELOG_BONES_KILLER */
+
+
 # include "global.h"    /* Define everything else according to choices above */
 
 #endif /* CONFIG_H */

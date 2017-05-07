@@ -20,6 +20,7 @@
 # define LOGFILE       "logfile"/* records all game endings regardless of score
                                    for debugging purposes */
 # define XLOGFILE      "xlogfile"       /* records game endings in detail */
+# define LIVELOG       "livelog"/* file with in-game events as they happen */
 # define RUMORFILE     "rumors" /* file with fortune cookies */
 # define ORACLEFILE    "oracles"/* file with oracular information */
 # define DATAFILE      "data"   /* file giving the meaning of symbols used */

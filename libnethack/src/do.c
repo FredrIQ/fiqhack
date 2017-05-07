@@ -984,7 +984,8 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     if (!levels[new_ledger]) {
         /* entering this level for first time; make it now */
-        historic_event(FALSE, "reached %s.", hist_lev_name(&u.uz, FALSE));
+        historic_event(FALSE, (Is_firstplane(&u.uz) || Is_astralevel(&u.uz)),
+                       "reached %s.", hist_lev_name(&u.uz, FALSE));
         level = mklev(&u.uz);
         new = TRUE;     /* made the level */
     } else {

@@ -2254,9 +2254,10 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     mon->mspells = mread64(mf);
     if (legacy < 1) {
         mon->spells_maintained = mread64(mf);
+        mon->former_player = mread16(mf);
 
         /* Some reserved space for further expansion */
-        for (i = 0; i < 200; i++)
+        for (i = 0; i < 198; i++)
             (void) mread8(mf);
     }
 
@@ -2544,8 +2545,9 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite8(mf, octet);
     mwrite64(mf, mon->mspells);
     mwrite64(mf, mon->spells_maintained);
+    mwrite16(mf, mon->former_player);
 
-    for (i = 0; i < 200; i++)
+    for (i = 0; i < 198; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */
