@@ -113,6 +113,7 @@ setnotworn(struct obj *obj)
         uninvoke_artifact(obj);
     obj->owornmask = 0L;
 
+    obj->owt = weight(obj);
     turnstate.vision_full_recalc = TRUE;
     see_monsters(FALSE);
     update_inventory();
@@ -397,12 +398,14 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
         best->mbknown = 1;
 
     if (old) {
+        old->owt = weight(old);
         if (update_property(mon, objects[old->otyp].oc_oprop, slot))
             makeknown(old->otyp);
         update_property_for_oprops(mon, old, slot);
     }
     mon->misc_worn_check |= W_MASK(slot);
     best->owornmask |= W_MASK(slot);
+    best->owt = weight(best);
     if (update_property(mon, objects[best->otyp].oc_oprop, slot))
         makeknown(best->otyp);
     update_property_for_oprops(mon, best, slot);
@@ -502,6 +505,7 @@ do_equip(struct monst *mon, struct obj *obj,
         mon->misc_worn_check |= obj->owornmask;
     }
 
+    obj->owt = weight(obj);
     if (!redundant) {
         if (update_property(mon, prop, slot))
             makeknown(obj->otyp);
@@ -573,6 +577,7 @@ m_lose_armor(struct monst *mon, struct obj *obj)
         update_property_for_oprops(mon, obj, which_slot(obj));
     }
     obj->owornmask = 0L;
+    obj->owt = weight(obj);
 
     obj_extract_self(obj);
     place_object(obj, lev, mon->mx, mon->my);

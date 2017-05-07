@@ -198,6 +198,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     /* Change the item in the slot. */
     if (equipping) {
         setworn(o, W_MASK(slot));
+        o->owt = weight(o);
         /* There is a redundant update_property when taken off.
            The reason this is performed at this point is to give
            the identified description if update_property identifies
@@ -221,6 +222,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         }
     } else {
         setworn(NULL, W_MASK(slot));
+        o->owt = weight(o);
         /* It's not obvious whether we should uninvoke or not here. We need to
            uninvoke if the item is being destroyed or dropped, but not
            otherwise. However, of the items with togglable invokes, the Sceptre

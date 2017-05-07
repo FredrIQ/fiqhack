@@ -1101,6 +1101,8 @@ weight(struct obj *obj)
         return (int)(obj->owt); /* kludge for "very" heavy iron ball */
     else if (obj->otyp == CANDELABRUM_OF_INVOCATION)
         return (wt + obj->spe * objects[TALLOW_CANDLE].oc_weight);
+    else if (obj->oclass == ARMOR_CLASS && (obj->owornmask & W_WORN))
+        return (wt + 1) / 2;
     return wt ? wt * (int)obj->quan : ((int)obj->quan + 1) >> 1;
 }
 
