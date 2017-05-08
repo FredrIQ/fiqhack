@@ -242,6 +242,7 @@
 # define pm_invisible(ptr)      ((ptr) == &mons[PM_STALKER] || \
                                  (ptr) == &mons[PM_BLACK_LIGHT] || \
                                  (ptr) == &mons[PM_QUASIT])
+# define pm_zombie(ptr)         dmgtype(ptr, AD_ZOMB)
 
 /* could probably add more */
 # define likes_fire(ptr)        ((ptr) == &mons[PM_FIRE_VORTEX] || \
