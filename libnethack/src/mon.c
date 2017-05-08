@@ -1065,7 +1065,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
 
     boolean bag;
     boolean cursed_boh = FALSE; /* maybe zap cancellation later */
-    boolean found_castle_wand; /* only ignore the first wishing wand in the castle chest */
+    boolean found_castle_wand = FALSE; /* only ignore the first wishing wand in the castle chest */
     struct musable muse; /* unlocking tool, or cancellation for cursed BoH */
     init_musable(mon, &muse);
 
