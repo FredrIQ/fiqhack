@@ -4032,7 +4032,17 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
                   "But luckily%s%s the %s!",
                   you ? "" : "for ", you ? "" : mon_nam(mon), msg);
     } else {
-        switch (rn2(20) ? ((mluck >= 13) ? 0 : rn2(13 - mluck)) : rn2(26)) {
+        int result;
+        if (!rn2(20))
+            result = rn2(26);
+        else
+            result = (mluck >= 13 ? 0 : rn2(13 - mluck));
+
+        /* Don't allow the castle wand chest to explode */
+        if (result > 20 && obj->spe == 3)
+            result = rn2(21);
+
+        switch (result) {
         case 25:
         case 24:
         case 23:
