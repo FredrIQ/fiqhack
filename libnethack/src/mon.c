@@ -1127,7 +1127,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
                 continue;
             /* avoid taking the castle wand... */
             if (obj->otyp == WAN_WISHING && container && Is_stronghold(m_mz(mon)) &&
-                container->spe == 2 && !found_castle_wand) {
+                container->spe == 3 && !found_castle_wand) {
                 found_castle_wand = TRUE;
                 continue;
             }
