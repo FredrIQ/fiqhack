@@ -3276,12 +3276,13 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         break;
     case ZT_POISON_GAS:
         ztyp = "affected";
-        if (resists_poison(mdef))
+        if (resists_poison(mdef)) {
             resisted = 1;
-        if (you && !resists_poison(mdef)) {
-            tmp = 0;
-            poisoned("blast", A_DEX, killer_msg(DIED, "a poisoned blast"), 15);
+            break;
         }
+
+        tmp = 0;
+        poisoned(mdef, "blast", A_DEX, killer_msg(DIED, "a poisoned blast"), 15);
         break;
     case ZT_ACID:
         ztyp = "burned";

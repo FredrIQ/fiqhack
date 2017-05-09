@@ -1150,7 +1150,7 @@ extern void update_displacement(struct monst *);
 extern void unset_displacement(struct monst *);
 extern void set_displacement(struct monst *);
 extern void poisontell(int);
-extern void poisoned(const char *, int, const char *, int);
+extern void poisoned(struct monst *, const char *, int, const char *, int);
 extern void m_respond(struct monst *);
 extern void setmangry(struct monst *);
 extern void msethostility(struct monst *, boolean, boolean);

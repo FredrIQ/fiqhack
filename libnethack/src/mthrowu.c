@@ -209,23 +209,10 @@ ohitmon(struct monst *mtmp, /* accidental target */
         }
 
         if (!DEADMONSTER(mtmp) &&
-            otmp->opoisoned && is_poisonable(otmp)) {
-            if (resists_poison(mtmp)) {
-                if (vis)
-                    pline(combat_msgc(magr, mtmp, cr_immune),
-                          "The poison doesn't seem to affect %s.",
-                          mon_nam(mtmp));
-            } else {
-                if (rn2(30)) {
-                    damage += rnd(6);
-                } else {
-                    if (vis)
-                        pline(combat_msgc(magr, mtmp, cr_kill),
-                              "The poison was deadly...");
-                    damage = mtmp->mhp;
-                }
-            }
-        }
+            otmp->opoisoned && is_poisonable(otmp))
+            poisoned(mtmp, xname(otmp), A_STR,
+                     killer_msg_obj(POISONING, otmp), -10);
+
         if (!DEADMONSTER(mtmp) &&
             objects[otmp->otyp].oc_material == SILVER &&
             hates_silver(mtmp->data)) {
@@ -468,7 +455,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 }
             }
             if (hitu && singleobj->opoisoned && is_poisonable(singleobj)) {
-                poisoned(xname(singleobj), A_STR,
+                poisoned(&youmonst, xname(singleobj), A_STR,
                          killer_msg_obj(POISONING, singleobj), -10);
             }
             if (hitu &&

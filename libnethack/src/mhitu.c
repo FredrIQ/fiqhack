@@ -946,8 +946,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     dopois:
         hitmsg(mtmp, mattk);
         if (uncancelled && !rn2(8)) {
-            poisoned(msgprintf("%s %s", s_suffix(Monnam(mtmp)),
-                               mpoisons_subj(mtmp, mattk)),
+            poisoned(&youmonst, msgprintf("%s %s", s_suffix(Monnam(mtmp)),
+                                          mpoisons_subj(mtmp, mattk)),
                      ptmp, killer_msg_mon(POISONING, mtmp), 30);
         }
         break;

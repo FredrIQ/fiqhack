@@ -302,7 +302,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
        the damage don't come out until _after_ outputting a hit message. */
     boolean hittxt = FALSE, destroyed = FALSE, already_killed = FALSE;
     boolean get_dmg_bonus = TRUE;
-    boolean ispoisoned = FALSE, needpoismsg = FALSE, poiskilled = FALSE;
+    boolean ispoisoned = FALSE;
     boolean silvermsg = FALSE, silverobj = FALSE;
     boolean valid_weapon_attack = FALSE;
     boolean unarmed = !uwep && (!uarm || uskin()) && !uarms;
@@ -310,7 +310,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     int jousting = 0;
     int wtype;
     struct obj *monwep;
-    const char *unconventional, *saved_oname;
+    const char *unconventional, *saved_oname, *poistxt;
 
     unconventional = "";
     saved_oname = "";
@@ -471,8 +471,10 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                                  uwep->otyp == ELVEN_BOW)
                             tmp++;
                     }
-                    if (obj->opoisoned && is_poisonable(obj))
+                    if (obj->opoisoned && is_poisonable(obj)) {
                         ispoisoned = TRUE;
+                        poistxt = xname(obj);
+                    }
                 }
             }
         } else if (obj->oclass == POTION_CLASS) {
@@ -737,12 +739,6 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
             pline(msgc_itemloss, "Your %s %s no longer poisoned.",
                   xname(obj), otense(obj, "are"));
         }
-        if (resists_poison(mon))
-            needpoismsg = TRUE;
-        else if (rn2(10))
-            tmp += rnd(6);
-        else
-            poiskilled = TRUE;
     }
     if (tmp < 1) {
         /* make sure that negative damage adjustment can't result in
@@ -893,15 +889,11 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
         pline(combat_msgc(&youmonst, mon, cr_hit), fmt, whom);
     }
 
-    if (needpoismsg)
-        pline(combat_msgc(&youmonst, mon, cr_immune),
-              "The poison doesn't seem to affect %s.", mon_nam(mon));
-    if (poiskilled) {
-        pline(combat_msgc(&youmonst, mon, cr_kill),
-              "The poison was deadly...");
-        if (!already_killed)
-            xkilled(mon, 0);
-        return FALSE;
+    if (ispoisoned && !already_killed) {
+        poisoned(mon, poistxt, A_STR,
+                 "???SHOULD NOT HAPPEN???", thrown ? -10 : 10);
+        if (DEADMONSTER(mon))
+            destroyed = TRUE;
     } else if (destroyed) {
         if (!already_killed)
             killed(mon);        /* takes care of most messages */
@@ -1145,6 +1137,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
     int tmp = dice((int)mattk->damn, (int)mattk->damd);
     int armpro;
     int zombie_timer;
+    int ptmp;
     boolean negated;
 
     armpro = magic_negation(mdef);
@@ -1393,26 +1386,17 @@ damageum(struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_DRST:
+        ptmp = A_STR;
+        goto dopois;
     case AD_DRDX:
+        ptmp = A_DEX;
+        goto dopois;
     case AD_DRCO:
-        if (!negated && !rn2(8)) {
-            /* TODO: merge messages here to avoid incorrect "hit" channelization
-               in the case of an immunity */
-            pline(combat_msgc(&youmonst, mdef, cr_hit),
-                  "Your %s was poisoned!", mpoisons_subj(&youmonst, mattk));
-            if (resists_poison(mdef))
-                pline(combat_msgc(&youmonst, mdef, cr_immune),
-                      "The poison doesn't seem to affect %s.", mon_nam(mdef));
-            else {
-                if (!rn2(10)) {
-                    /* cr_kill message given later */
-                    pline(combat_msgc(&youmonst, mdef, cr_hit),
-                          "Your poison was deadly...");
-                    tmp = mdef->mhp;
-                } else
-                    tmp += rn1(10, 6);
-            }
-        }
+        ptmp = A_CON;
+    dopois:
+        if (!negated && !rn2(8))
+            poisoned(mdef, msgprintf("Your %s", mpoisons_subj(&youmonst, mattk)), ptmp,
+                     killer_msg_mon(POISONING, &youmonst), 30);
         break;
     case AD_DRIN:
         if (notonhead || !has_head(mdef->data)) {
@@ -1564,6 +1548,11 @@ damageum(struct monst *mdef, const struct attack *mattk)
     default:
         tmp = 0;
         break;
+    }
+
+    if (DEADMONSTER(mdef)) {
+        /* Can happen from poison which runs its own logic */
+        return 2;
     }
 
     /* in case player is fast */

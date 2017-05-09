@@ -739,8 +739,8 @@ dotrap(struct trap *trap, unsigned trflags)
             ;
         else if (thitu(7, dmgval(otmp, &youmonst), otmp, "little dart")) {
             if (otmp->opoisoned)
-                poisoned("dart", A_CON, killer_msg(POISONING, "a little dart"),
-                         -10);
+                poisoned(&youmonst, "dart", A_CON,
+                         killer_msg(POISONING, "a little dart"), -10);
             obfree(otmp, NULL);
         } else {
             place_object(otmp, level, u.ux, u.uy);
@@ -985,9 +985,8 @@ dotrap(struct trap *trap, unsigned trflags)
             if (ttype == SPIKED_PIT) {
                 losehp(rnd(10), "fell into a pit of iron spikes");
                 if (!rn2(6))
-                    poisoned("spikes", A_STR,
-                             killer_msg(DIED, "a fall onto poison spikes"),
-                             8);
+                    poisoned(&youmonst, "spikes", A_STR,
+                             killer_msg(DIED, "a fall onto poison spikes"), 8);
             } else
                 losehp(rnd(6), "fell into a pit");
             if (Punished && !carried(uball)) {
@@ -1870,6 +1869,7 @@ mintrap(struct monst *mtmp)
                 otmp->opoisoned = 1;
             if (in_sight)
                 seetrap(trap);
+            /* thitm takes care of poison */
             if (thitm(7, mtmp, otmp, 0, FALSE))
                 trapkilled = TRUE;
             break;
@@ -2036,8 +2036,24 @@ mintrap(struct monst *mtmp)
                 seetrap(trap);
             }
             mselftouch(mtmp, "Falling, ", culprit);
+            if (DEADMONSTER(mtmp)) {
+                trapkilled = TRUE;
+                break;
+            }
+
+            int dmg = 6;
+            if (tt == SPIKED_PIT) {
+                pline(combat_msgc(culprit, mtmp, cr_hit),
+                      "%s on a set of sharp iron spikes!", M_verbs(mtmp, "land"));
+                dmg = 10;
+
+                if (!rn2(6))
+                    poisoned(mtmp, "spikes", A_STR,
+                             killer_msg(DIED, "a fall onto poison spikes"), 8);
+            }
+
             if (DEADMONSTER(mtmp) ||
-                thitm(0, mtmp, NULL, rnd((tt == PIT) ? 6 : 10), FALSE))
+                thitm(0, mtmp, NULL, rnd(dmg), FALSE))
                 trapkilled = TRUE;
             break;
         case HOLE:
@@ -4123,15 +4139,8 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
             if (you || vis)
                 pline(you ? msgc_nonmonbad : msgc_monneutral,
                       "A cloud of noxious gas billows from %s.", the(xname(obj)));
-            if (you) {
-                poisoned("gas cloud", A_STR,
-                         killer_msg(DIED, "a cloud of poison gas"), 15);
-                exercise(A_CON, FALSE);
-            } else {
-                mon->mhp -= rnd(20);
-                if (mon->mhp <= 0)
-                    mondied(mon);
-            }
+            poisoned(mon, "gas cloud", A_STR,
+                     killer_msg(DIED, "a cloud of poison gas"), 15);
             break;
         case 16:
         case 15:
@@ -4140,17 +4149,13 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
             if (you) {
                 pline(msgc_nonmonbad, "You feel a needle prick your %s.",
                       body_part(bodypart));
-                poisoned("needle", A_CON,
-                         killer_msg(DIED, "a poisoned needle"), 10);
                 exercise(A_CON, FALSE);
-            } else {
-                if (vis)
-                    pline(msgc_monneutral, "You see a needle prick %s %s.",
-                          s_suffix(mon_nam(mon)), mbodypart(mon, bodypart));
-                mon->mhp -= rnd(15);
-                if (mon->mhp <= 0)
-                    mondied(mon);
-            }
+            } else if (vis)
+                pline(msgc_monneutral, "You see a needle prick %s %s.",
+                      s_suffix(mon_nam(mon)), mbodypart(mon, bodypart));
+
+            poisoned(mon, "needle", A_CON,
+                     killer_msg(DIED, "a poisoned needle"), 10);
             break;
         case 12:
         case 11:
@@ -4358,13 +4363,22 @@ thitm(int tlev, struct monst *mon, struct obj *obj, int d_override,
             if (dam < 1)
                 dam = 1;
         }
-        if ((mon->mhp -= dam) <= 0) {
+        mon->mhp -= dam;
+        if (mon->mhp <= 0) {
             int xx = mon->mx;
             int yy = mon->my;
 
             monkilled(NULL, mon, "", nocorpse ? -AD_RBRE : AD_PHYS);
             if (DEADMONSTER(mon)) {
                 newsym(xx, yy);
+                trapkilled = TRUE;
+            }
+        } else if (obj && obj->opoisoned) {
+            /* Yes, this is correct. Don't allow poison death if lifesaved */
+            poisoned(mon, "dart", A_CON,
+                     killer_msg(POISONING, "a little dart"), -10);
+            if (DEADMONSTER(mon)) {
+                newsym(mon->mx, mon->my);
                 trapkilled = TRUE;
             }
         }

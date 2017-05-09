@@ -2823,72 +2823,100 @@ poisontell(int typ)
 }
 
 /* Cause should be a string suitable for passing to killer_msg, because the
-   actual death mechanism may vary. It should have an article if appropriate. */
+   actual death mechanism may vary. It should have an article if appropriate.
+   Note that this goes unused if the victim isn't the player. */
 void
-poisoned(const char *string, int typ, const char *killer, int fatal)
+poisoned(struct monst *mon, const char *string, int typ, const char *killer,
+         int permanent)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
     int i, plural;
-    boolean thrown_weapon = (fatal < 0);
+    boolean thrown_weapon = (permanent < 0);
     boolean resist_message_printed = FALSE;
 
     if (thrown_weapon)
-        fatal = -fatal;
+        permanent = -permanent;
 
-    fatal += 20 * thrown_weapon;
+    permanent += 20 * thrown_weapon;
     enum rng rng;
-    switch (fatal) {
-    case  8: rng = rng_deadlypoison_8;  break;
-    case 10: rng = rng_deadlypoison_10; break;
-    case 15: rng = rng_deadlypoison_15; break;
-    case 30: rng = rng_deadlypoison_30; break;
+    switch (permanent) {
+    case  8: rng = rng_permattrdmg_8;  break;
+    case 10: rng = rng_permattrdmg_10; break;
+    case 15: rng = rng_permattrdmg_15; break;
+    case 30: rng = rng_permattrdmg_30; break;
     default:
-        impossible("Unknown poison type %d", fatal);
+        impossible("Unknown poison type %d", permanent);
         rng = rng_main;
         break;
     }
 
-    i = Poison_resistance ? 0 : rn2_on_rng(fatal, rng);
+    /* Don't use custom RNGs for monsters */
+    if (!you)
+        rng = rng_main;
 
-    if (strcmp(string, "blast") && !thrown_weapon) {
+    i = resists_poison(mon) ? 0 : rn2_on_rng(permanent, rng);
+
+    if (vis && strcmp(string, "blast") && !thrown_weapon) {
         /* 'blast' has already given a 'poison gas' message */
         /* so have "poison arrow", "poison dart", etc... */
         plural = (string[strlen(string) - 1] == 's') ? 1 : 0;
         /* avoid "The" Orcus's sting was poisoned... */
-        pline(Poison_resistance ? msgc_playerimmune :
-              i == 0 ? msgc_fatal_predone : msgc_fatalavoid,
+        pline(resists_poison(mon) ?
+              combat_msgc(NULL, mon, cr_immune) :
+              i == 0 && you ? msgc_intrloss :
+              combat_msgc(NULL, mon, cr_hit),
               "%s%s %s poisoned%s", isupper(*string) ? "" : "The ",
-              string, plural ? "were" : "was", Poison_resistance ?
-              ", but doesn't affect you." : "!");
+              string, plural ? "were" : "was",
+              resists_poison(mon) ?
+              msgcat_many(", but doesn't affect ", mon_nam(mon), ".") :
+              "!");
         resist_message_printed = TRUE;
     }
 
-    if (Poison_resistance) {
-        if (!strcmp(string, "blast"))
+    if (resists_poison(mon)) {
+        if (!strcmp(string, "blast") && vis)
             shieldeff(u.ux, u.uy);
-        if (!resist_message_printed)
-            pline(msgc_playerimmune, "You aren't poisoned.");
+        if (!resist_message_printed && vis)
+            pline(msgc_playerimmune, "%sn't poisoned.",
+                  M_verbs(mon, "are"));
         return;
     }
 
-    if (i == 0 && typ != A_CHA) {
-        pline(msgc_fatal_predone, "The poison was deadly...");
-        done(POISONING, killer);
-    } else if (i <= 5) {
-        /* Check that a stat change was made */
-        if (adjattrib(typ, thrown_weapon ? -1 : -rn1(3, 3), 1))
-            pline(msgc_intrloss, "You%s!", poiseff[typ]);
+    if (i <= 5) {
+        if (you) {
+            /* Check that a stat change was made */
+            if (adjattrib(typ, thrown_weapon ? -1 : -rn1(3, 3), 1)) {
+                pline(msgc_intrloss, "You%s%s!", poiseff[typ],
+                      !i ? " permanently" : "");
+                if (!i)
+                    AMAX(typ)--; /* Deal permanent attribute damage */
+            }
+        } else {
+            if (vis)
+                pline(combat_msgc(NULL, mon, cr_hit),
+                      "%s weaker!", M_verbs(mon, "look"));
+            mon->mhpmax -= (thrown_weapon ? 1 : rn1(3, 3));
+            if (mon->mhpmax < 1)
+                mon->mhpmax = 1;
+            if (mon->mhp > mon->mhpmax)
+                mon->mhp = mon->mhpmax;
+        }
     } else {
         i = thrown_weapon ? rnd(6) : rn1(10, 6);
         if (Half_physical_damage)
             i = (i + 1) / 2;
-        losehp(i, killer);
+        if (you)
+            losehp(i, killer);
+        else {
+            mon->mhp -= i;
+            if (mon->mhp <= 0)
+                monkilled(flags.mon_moving ? NULL : &youmonst, mon, string, AD_DRST);
+        }
     }
 
-    if (u.uhp < 1) {
-        impossible("Survived to the end of poisoned() with negative HP");
-        done(DIED, killer);
-    }
-    encumber_msg();
+    if (you)
+        encumber_msg();
 }
 
 /* monster responds to player action; not the same as a passive attack */
