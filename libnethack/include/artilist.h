@@ -241,8 +241,8 @@ static const struct artifact const_artilist[] = {
 
     A("The Tsurugi of Muramasa", TSURUGI,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_BEHEAD | SPFX_LUCK), 0, 0,
-      PHYS(0, 8), NO_DFNS, NO_CARY,
-      0, A_LAWFUL, PM_SAMURAI, NON_PM, 4500L),
+      PHYS(0, 0), NO_DFNS, NO_CARY,
+      SELF_UNCURSE, A_LAWFUL, PM_SAMURAI, NON_PM, 4500L),
 
     A("The Platinum Yendorian Express Card", CREDIT_CARD,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_DEFN),

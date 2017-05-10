@@ -2031,6 +2031,8 @@ percent_success(const struct monst *mon, int spell)
     if (armh && is_metallic(armh))
         if (armh->otyp != HELM_OF_BRILLIANCE)
             splcaster += uarmhbon;
+
+    /* Yes, uarm*bon is right, they're defined as fixed values */
     if (armg && is_metallic(armg))
         splcaster += uarmgbon;
     if (armf && is_metallic(armf))

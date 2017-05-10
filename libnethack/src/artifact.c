@@ -1447,6 +1447,14 @@ arti_invoke(struct obj *obj)
         obj->age = moves + rnz_on_rng(100, rng_artifact_invoke);
 
         switch (oart->inv_prop) {
+        case SELF_UNCURSE:
+            if (obj->cursed) {
+                uncurse(obj);
+                pline(msgc_itemrepair, "%s %s %s",
+                       The(xname(obj)), aobjnam(obj, "softly glow"),
+                       hcolor("amber"));
+            }
+            break;
         case TAMING:{
                 struct obj *pseudo = mktemp_sobj(NULL, SCR_TAMING);
                 boolean unused_known;
