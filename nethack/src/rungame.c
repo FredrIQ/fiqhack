@@ -353,7 +353,7 @@ plname_handler(const char *str, void *plname_void)
     if (*str == '\033') /* cancelled */
         return;
 
-    if (*str && strlen(str) < PL_NSIZ) { /* ok */
+    if (*str && strlen(str) < (PL_NSIZ - 5)) { /* ok */
         *plname = strdup(str);
         return;
     }
