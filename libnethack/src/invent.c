@@ -1236,7 +1236,7 @@ identify(struct monst *mon, struct obj *otmp, int skill)
     if (!you) {
         if (skill >= P_BASIC)
             otmp->mknown = 1;
-        else if (skill >= P_SKILLED)
+        if (skill >= P_SKILLED)
             otmp->mbknown = 1;
     }
     return 1;
@@ -1320,6 +1320,8 @@ identify_pack(struct monst *mon, int id_limit,
                 the_obj = obj;
             }
         } else {
+            if (obj->otyp == GOLD_PIECE)
+                continue;
             if (!obj->mknown || !obj->mbknown)
                 any_unid_cnt++;
             if ((!obj->mknown && skill >= P_BASIC) ||
@@ -1328,9 +1330,6 @@ identify_pack(struct monst *mon, int id_limit,
                 the_obj = obj;
             }
         }
-        if ((you && not_fully_identified_core(obj, FALSE, skill)) ||
-            (!you && (!obj->mknown || !obj->mbknown)))
-            ++unid_cnt, the_obj = obj;
     }
 
     if (!unid_cnt) {
@@ -1372,6 +1371,9 @@ identify_pack(struct monst *mon, int id_limit,
                       unid_cnt == 1 ? "" : "s", mhis(mon));
             n = 0;
             for (obj = m_minvent(mon); obj && n < id_limit; obj = obj->nobj) {
+                if (obj->otyp == GOLD_PIECE)
+                    continue;
+
                 if ((!obj->mknown && skill >= P_BASIC) ||
                     (!obj->mbknown && skill >= P_SKILLED)) {
                     identify(mon, obj, skill);

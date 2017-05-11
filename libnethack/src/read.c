@@ -1482,10 +1482,11 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         }
         else {
             /* TODO: give msgc_itemloss if you lack identifiable objects */
-            if (you && sobj->oclass == SCROLL_CLASS)
-                pline_implied(!cval ? msgc_youdiscover : msgc_uiprompt,
-                      "This is an identify scroll.");
-            else if (vis)
+            if (you) {
+                if (sobj->oclass == SCROLL_CLASS)
+                    pline_implied(!cval ? msgc_youdiscover : msgc_uiprompt,
+                                  "This is an identify scroll.");
+            } else if (vis)
                 pline(msgc_monneutral, "%s is granted an insight!", Monnam(mon));
 
             if (sobj->otyp == SPE_IDENTIFY)
@@ -1499,16 +1500,18 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             }
         }
 
-        if ((you || vis) && !objects[sobj->otyp].oc_name_known)
-            more_experienced(0, 10);
-        if (you)
-            useup(sobj);
-        else
-            m_useup(mon, sobj);
-        if (you || vis)
-            makeknown(SCR_IDENTIFY);
+        if (sobj->otyp == SCR_IDENTIFY) {
+            if ((you || vis) && !objects[sobj->otyp].oc_name_known)
+                more_experienced(0, 10);
+            if (you)
+                useup(sobj);
+            else
+                m_useup(mon, sobj);
+            if (you || vis)
+                makeknown(SCR_IDENTIFY);
+        }
 
-        if (invent && !confused) {
+        if (m_minvent(mon) && !confused) {
             identify_pack(mon, cval, idpower);
         }
         return 1;
