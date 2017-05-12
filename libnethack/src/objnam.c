@@ -3075,7 +3075,8 @@ typfnd:
             /* Don't allow properties at all on magical items */
             if (otmp->oclass == TOOL_CLASS && !is_weptool(otmp))
                 props = 0LLU;
-            if (objects[otmp->otyp].oc_magic)
+            if (objects[otmp->otyp].oc_magic ||
+                objects[otmp->otyp].oc_oprop)
                 props = 0LLU;
 
             uint64_t prop = 0LLU;

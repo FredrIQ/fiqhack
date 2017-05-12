@@ -480,14 +480,29 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
     if (objects[otmp->otyp].oc_oprop == extrinsic && extrinsic != WARN_OF_MON && otmp->oclass != POTION_CLASS)
         return equipmask;
 
-    /* Non-artifact item properties go here. At the present:
-
-       - alchemy smocks give two extrinsics, and so only one can be placed in
-         its item property field, with the other one being special-cased;
-
-       - the Amulet of Yendor is not an artifact but grants clairvoyance when
-         carried */
+    /* Non-artifact item properties go here. */
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
+        return equipmask;
+    if ((otmp->otyp == RED_DRAGON_SCALE_MAIL ||
+         otmp->otyp == RED_DRAGON_SCALES) && extrinsic == INFRAVISION)
+        return equipmask;
+    if ((otmp->otyp == WHITE_DRAGON_SCALE_MAIL ||
+         otmp->otyp == WHITE_DRAGON_SCALES) && extrinsic == SEARCHING)
+        return equipmask;
+    if ((otmp->otyp == ORANGE_DRAGON_SCALE_MAIL ||
+         otmp->otyp == ORANGE_DRAGON_SCALES) && extrinsic == FREE_ACTION)
+        return equipmask;
+    if ((otmp->otyp == BLACK_DRAGON_SCALE_MAIL ||
+         otmp->otyp == BLACK_DRAGON_SCALES) && extrinsic == DRAIN_RES)
+        return equipmask;
+    if ((otmp->otyp == BLUE_DRAGON_SCALE_MAIL ||
+         otmp->otyp == BLUE_DRAGON_SCALES) && extrinsic == FAST)
+        return equipmask;
+    if ((otmp->otyp == GREEN_DRAGON_SCALE_MAIL ||
+         otmp->otyp == GREEN_DRAGON_SCALES) && extrinsic == SICK_RES)
+        return equipmask;
+    if ((otmp->otyp == YELLOW_DRAGON_SCALE_MAIL ||
+         otmp->otyp == YELLOW_DRAGON_SCALES) && extrinsic == STONE_RES)
         return equipmask;
     if (otmp->otyp == AMULET_OF_YENDOR && extrinsic == CLAIRVOYANT)
         return W_MASK(os_carried);
