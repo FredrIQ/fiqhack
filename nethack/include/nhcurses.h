@@ -300,6 +300,7 @@ struct settings {
     nh_bool showexp;    /* show experience points */
     nh_bool use_inverse;        /* use inverse video for some things */
     nh_bool invweight;  /* show item weight in the inventory */
+    nh_bool msgcolor;   /* color messages depending on context */
     nh_bool bgbranding; /* show hidden traps/stairs with background */
     nh_bool floorcolor; /* draw stepped-on information for the floor */
     nh_bool status3;    /* draw 3 line status */
