@@ -2043,8 +2043,9 @@ mintrap(struct monst *mtmp)
 
             int dmg = 6;
             if (tt == SPIKED_PIT) {
-                pline(combat_msgc(culprit, mtmp, cr_hit),
-                      "%s on a set of sharp iron spikes!", M_verbs(mtmp, "land"));
+                if (canseemon(mtmp))
+                    pline(combat_msgc(culprit, mtmp, cr_hit),
+                          "%s on a set of sharp iron spikes!", M_verbs(mtmp, "land"));
                 dmg = 10;
 
                 if (!rn2(6))
