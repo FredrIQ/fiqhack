@@ -263,6 +263,12 @@ draw_classic_status(struct nh_player_info *pi, nh_bool threeline)
     wprintw(statuswin, " T:%d", pi->moves);
     wclrtoeol(statuswin);
 
+    /* Clear the 3rd line if we have one */
+    if (threeline) {
+        wmove(statuswin, 2, 0);
+        wclrtoeol(statuswin);
+    }
+
     draw_statuses(pi, threeline);
 }
 
