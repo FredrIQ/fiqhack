@@ -356,7 +356,7 @@ stealamulet(struct monst *mtmp)
     if (Uhave_amulet) {
         real = AMULET_OF_YENDOR;
         fake = FAKE_AMULET_OF_YENDOR;
-    } else if (Uhave_questart) {
+    } else if (Uhave_questart && mtmp->data != &mons[PM_WIZARD_OF_YENDOR]) {
         for (otmp = invent; otmp; otmp = otmp->nobj)
             if (is_quest_artifact(otmp))
                 break;
