@@ -176,9 +176,18 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
     if (!last_command_was("moveonly")) {
         boolean lava = l->mem_bg == S_lava;
         boolean pool = l->mem_bg == S_pool;
+        int waterwalk = 0;
+        /* set waterwalk to 1 if IDed, 2 if IDed fireproof (allows lava) */
+        if (uarmf && uarmf->otyp == WATER_WALKING_BOOTS && uarmf->dknown &&
+            objects[uarmf->otyp].oc_name_known) {
+            waterwalk++;
+            if (uarmf->rknown && uarmf->oerodeproof)
+                waterwalk++;
+        }
 
         if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
-            (lava || (pool && !Swimming)) &&
+            ((lava && waterwalk < 2) ||
+             (pool && !Swimming && !waterwalk)) &&
             !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy)) {
 
             if (cansee(x, y))
