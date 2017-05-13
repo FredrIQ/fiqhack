@@ -997,7 +997,13 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     mtmp->dlevel = lev;
     place_monster(mtmp, x, y, FALSE);
     mtmp->mcanmove = TRUE;
-    mtmp->mpeaceful = (mmflags & MM_ANGRY) ? FALSE : peace_minded(ptr);
+    /* In sokoban, peaceful monsters are generally worse for the player
+       than hostile ones, so don't make them peaceful there.  Make an
+       exception to this for particularly nasty monsters. */
+    mtmp->mpeaceful = ((In_sokoban(&lev->z) && !extra_nasty(mtmp->data) &&
+                        !always_peaceful(mtmp->data)) ?
+                       FALSE : (mmflags & MM_ANGRY) ?
+                       FALSE : peace_minded(ptr));
 
     /* Calculate the monster's movement offset. The number of movement points a
        monster has at the start of a turn ranges over a range of 12 possible
