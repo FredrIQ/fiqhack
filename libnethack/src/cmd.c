@@ -804,7 +804,7 @@ dowelcome(const struct nh_cmd_arg *arg)
 
     pline(msgc_intro, new_game ?
           "%s %s, welcome to FIQHack!  You are a%s %s %s." :
-          "%s %s, the%s %s %s, welcome back to NetHack!",
+          "%s %s, the%s %s %s, welcome back to FIQHack!",
           Hello(NULL), u.uplname, buf, urace.adj,
           (currentgend && urole.name.f) ? urole.name.f : urole.name.m);
 
