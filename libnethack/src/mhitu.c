@@ -875,11 +875,11 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                       "You're %s!", on_fire(youmonst.data, mattk));
             }
             if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(SCROLL_CLASS, AD_FIRE);
+                destroy_mitem(&youmonst, SCROLL_CLASS, AD_FIRE);
             if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(POTION_CLASS, AD_FIRE);
+                destroy_mitem(&youmonst, POTION_CLASS, AD_FIRE);
             if ((int)mtmp->m_lev > rn2(25))
-                destroy_item(SPBOOK_CLASS, AD_FIRE);
+                destroy_mitem(&youmonst, SPBOOK_CLASS, AD_FIRE);
             burn_away_slime(&youmonst);
         } else
             dmg = 0;
@@ -895,7 +895,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
                       "You're covered in frost!");
             if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(POTION_CLASS, AD_COLD);
+                destroy_mitem(&youmonst, POTION_CLASS, AD_COLD);
         } else
             dmg = 0;
         break;
@@ -908,7 +908,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             } else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit), "You get zapped!");
             if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(WAND_CLASS, AD_ELEC);
+                destroy_mitem(&youmonst, WAND_CLASS, AD_ELEC);
         } else
             dmg = 0;
         break;

@@ -2110,7 +2110,6 @@ extern void melt_ice(struct level *, xchar, xchar);
 extern int zap_over_floor(xchar, xchar, int, boolean *);
 extern void fracture_rock(struct obj *);
 extern boolean break_statue(struct obj *);
-extern void destroy_item(int, int);
 extern int destroy_mitem(struct monst *, int, int);
 extern int resist(const struct monst *, const struct monst *, char, int, int);
 extern void makewish(void);

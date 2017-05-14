@@ -452,10 +452,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
         }
         if (adtyp == AD_FIRE)
             burnarmor(&youmonst);
-        destroy_item(SCROLL_CLASS, (int)adtyp);
-        destroy_item(SPBOOK_CLASS, (int)adtyp);
-        destroy_item(POTION_CLASS, (int)adtyp);
-        destroy_item(WAND_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, SCROLL_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, SPBOOK_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, POTION_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, WAND_CLASS, (int)adtyp);
 
         ugolemeffects((int)adtyp, damu);
         if (uhurt == 2) {

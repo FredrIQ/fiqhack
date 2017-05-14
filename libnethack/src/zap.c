@@ -16,6 +16,7 @@ static void zap_hit_mon(struct monst *, struct monst *,
 static void revive_egg(struct obj *);
 static boolean zap_steed(struct obj *);
 static void cancel_item(struct obj *);
+static void destroy_item(int, int);
 static boolean obj_shudders(struct obj *);
 static void do_osshock(struct obj *);
 static void bhit(struct monst *, int, int, int, struct obj *);
@@ -3708,7 +3709,7 @@ struct destroy_message destroy_messages[num_destroy_msgs] = {
     {"breaks apart and explodes", "break apart and explode", "exploding wand"},
 };
 
-void
+static void
 destroy_item(int osym, int dmgtyp)
 {
     struct obj *obj, *obj2;
@@ -3839,6 +3840,12 @@ destroy_item(int osym, int dmgtyp)
 int
 destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
 {
+    /* Extrinsic properties protect against item destruction */
+    if ((dmgtyp == AD_FIRE && ehas_property(mtmp, FIRE_RES)) ||
+        (dmgtyp == AD_COLD && ehas_property(mtmp, COLD_RES)) ||
+        (dmgtyp == AD_ELEC && ehas_property(mtmp, SHOCK_RES)))
+        return 0;
+
     struct obj *obj, *obj2;
     int skip, tmp = 0;
     long i, cnt, quan;

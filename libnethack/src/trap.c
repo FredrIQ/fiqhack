@@ -4472,9 +4472,9 @@ lava_effects(void)
     }
 
 burn_stuff:
-    destroy_item(SCROLL_CLASS, AD_FIRE);
-    destroy_item(SPBOOK_CLASS, AD_FIRE);
-    destroy_item(POTION_CLASS, AD_FIRE);
+    destroy_mitem(&youmonst, SCROLL_CLASS, AD_FIRE);
+    destroy_mitem(&youmonst, SPBOOK_CLASS, AD_FIRE);
+    destroy_mitem(&youmonst, POTION_CLASS, AD_FIRE);
     return FALSE;
 }
 

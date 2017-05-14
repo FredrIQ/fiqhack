@@ -3042,7 +3042,7 @@ do_break_wand(struct obj *obj, boolean intentional)
         litroom(&youmonst, TRUE, obj);     /* only needs to be done once */
 
 discard_broken_wand:
-    obj = turnstate.tracked[ttos_wand]; /* [see dozap() and destroy_item()] */
+    obj = turnstate.tracked[ttos_wand]; /* [see dozap() and destroy_mitem()] */
     turnstate.tracked[ttos_wand] = 0;
     if (obj)
         delobj(obj);
