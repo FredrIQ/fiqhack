@@ -1,4 +1,4 @@
-# Last modified by Sean Hunt, 2014-02-16
+# Last modified by Khor, 2017-05-15
 #	Copyright (c) 1989-95 by Jean-Christophe Collet
 #	Copyright (c) 1991-95 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -686,116 +686,148 @@ RANDOM_CORRIDORS
   
 
 # Mine end level variant 1
-# "Mimic of the Mines"
+# "Orc Temple" by Khor
+# In this variant of the mines end a group of orcs have found a randomly generated figurine of a demon and worship it
 #
-MAZE: "minend-1", ' '
+MAZE:"minend-1",' '
+FLAGS:nommap
 GEOMETRY:center,center
-#1234567890123456789012345678901234567890123456789012345678901234567890
+#0         1         2         3         4         5         6         7
+#0123456789012345678901234567890123456789012345678901234567890123456789012345
 MAP
-------------------------------------------------------------------   ------
-|                        |.......|     |.......-...|       |.....|.       |
-|    ---------        ----.......-------...........|       ---...-S-      |
-|    |.......|        |..........................-S-      --.......|      |
-|    |......-------   ---........................|.       |.......--      |
-|    |..--........-----..........................|.       -.-..----       |
-|    --..--.-----........-.....................---        --..--          |
-|     --..--..| -----------..................---.----------..--           |
-|      |...--.|    |..S...S..............---................--            |
-|     ----..-----  ------------........--- ------------...---             |
-|     |.........--            ----------              ---...-- -----      |
-|    --.....---..--                           --------  --...---...--     |
-| ----..-..-- --..---------------------      --......--  ---........|     |
-|--....-----   --..-..................---    |........|    |.......--     |
-|.......|       --......................S..  --......--    ---..----      |
-|--.--.--        ----.................---     ------..------...--         |
-| |....S..          |...............-..|         ..S...........|          |
---------            --------------------           ------------------------
+0                                                                   |-----|
+1                                             -------              |-LLLLL-|
+2                         ---------------     |.....|             |-LL...LL-|
+3                        -|..|..........|     |.....|        -----|LL.....LL|
+4                       -|...F..........|     |.....|        |...||L.......L|
+5         |-------|    -|....|-+------+-|    ----+----       |...||L.......L|
+6        |-.......-|  -|.....F..........|----|.......|---------+---L.......L|
+7 -------|.........|--|.....--...............F.......F.....||.....|LL.....LL|
+8-|..........}}}...........-|..............................--.....|-LL...LL-|
+9|...........}{}...........+...............................+......||-LL.LL-|
+0-|..........}}}...........-|..............................--.....| |--S--|
+1 -------|.........|--|.....--...............F.......F.....||.....|    .     
+2        |-.......-|  -|.....F..........|----|.......|---------S---          
+3         |-------|    -|....|-+------+-|    ----+----         .             
+4                       -|...F..........|     |.....|                        
+5                        -|..|..........|     |.....|                        
+6                         ---------------     |.....|                        
+7                                             -------                     ..}
+8                                                                         .}}
+9                                                                        .}}{
 ENDMAP
 
-# Dungeon Description
-RANDOM_PLACES:(08,16),(13,07),(21,08),(41,14),(50,04),(50,16),(66,01)
-REGION:(26,01,32,01),unlit,"ordinary",filled,true
-REGION:(20,08,21,08),unlit,"ordinary"
-REGION:(23,08,25,08),unlit,"ordinary"
-# Secret doors
-DOOR:locked,(07,16)
-DOOR:locked,(22,08)
-DOOR:locked,(26,08)
-DOOR:locked,(40,14)
-DOOR:locked,(50,03)
-DOOR:locked,(51,16)
-DOOR:locked,(66,02)
-# Stairs
-STAIR:(36,04),up
-# Non diggable walls
-NON_DIGGABLE:(00,00,74,17)
-# Niches
-# Note: place[6] empty
-OBJECT:'*',"diamond",place[0]
-OBJECT:'*',"emerald",place[0]
-OBJECT:'*',"worthless piece of violet glass",place[0]
-MONSTER:'m',random,place[0], m_object "luckstone"
-OBJECT:'*',"worthless piece of white glass",place[1]
-OBJECT:'*',"emerald",place[1]
-OBJECT:'*',"amethyst",place[1]
-MONSTER:'m',random,place[1], m_object "loadstone"
-OBJECT:'*',"diamond",place[2]
-OBJECT:'*',"worthless piece of green glass",place[2]
-OBJECT:'*',"amethyst",place[2]
-MONSTER:'m',random,place[2], m_object "flint"
-OBJECT:'*',"worthless piece of white glass",place[3]
-OBJECT:'*',"emerald",place[3]
-OBJECT:'*',"worthless piece of violet glass",place[3]
-MONSTER:'m',random,place[3], m_object "touchstone"
-OBJECT:'*',"worthless piece of red glass",place[4]
-OBJECT:'*',"ruby",place[4]
-OBJECT:'*',"loadstone",place[4]
-OBJECT:'*',"ruby",place[5]
-OBJECT:'*',"worthless piece of red glass",place[5]
-OBJECT:'*',"luckstone",place[5]
-# Random objects
-OBJECT:'*',random,random
-OBJECT:'*',random,random
-OBJECT:'*',random,random
-OBJECT:'*',random,random
-OBJECT:'*',random,random
-OBJECT:'*',random,random
-OBJECT:'*',random,random
-OBJECT:'(',random,random
-OBJECT:'(',random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-# Random traps
-TRAP:random,random
-TRAP:random,random
-TRAP:random,random
-TRAP:random,random
-TRAP:random,random
-TRAP:random,random
-# Random monsters
-MONSTER:'G',"gnome king",random
-MONSTER:'G',"gnome lord",random
-MONSTER:'G',"gnome lord",random
-MONSTER:'G',"gnome lord",random
-MONSTER:'G',"gnomish wizard",random
-MONSTER:'G',"gnomish wizard",random
-MONSTER:'G',"gnome",random
-MONSTER:'G',"gnome",random
-MONSTER:'G',"gnome",random
-MONSTER:'G',"gnome",random
-MONSTER:'G',"gnome",random
-MONSTER:'G',"gnome",random
-MONSTER:'G',"gnome",random
-MONSTER:'G',"gnome",random
-MONSTER:'G',"gnome",random
-MONSTER:'h',"hobbit",random
-MONSTER:'h',"hobbit",random
-MONSTER:'h',"dwarf",random
-MONSTER:'h',"dwarf",random
-MONSTER:'h',"dwarf",random
-MONSTER:'h',random,random
+RANDOM_PLACES:(0,18),(0,12),(2,18),(12,14),(20,12),(16,16),(72,18),(52,14),(44,14)
+REGION:(0,0,75,19),lit,"ordinary"
+NON_DIGGABLE:(0,0,75,19)
+STAIR:(1,9),up
 
+#SOME ORCS (The religious kind)
+MONSTER:'o',"goblin",random
+MONSTER:'o',"goblin",random
+MONSTER:'o',"hobgoblin",random
+MONSTER:'o',"hobgoblin",random
+MONSTER:'o',"hill orc",random
+MONSTER:'o',"hill orc",random
+MONSTER:'o',"hill orc",random
+MONSTER:'o',"hill orc",random
+MONSTER:'o',"hill orc",random
+MONSTER:'o',"hill orc",random
+MONSTER:'o',"hill orc",random
+MONSTER:'o',"hill orc",random
+MONSTER:'o',"Mordor orc",random
+MONSTER:'o',"Mordor orc",random
+MONSTER:'o',"Mordor orc",random
+MONSTER:'o',"Mordor orc",random
+MONSTER:'o',"Mordor orc",random
+MONSTER:'o',"Mordor orc",random
+MONSTER:'o',"Mordor orc",random
+MONSTER:'o',"Mordor orc",random
+MONSTER:'o',random,random
+MONSTER:'o',random,random
+MONSTER:'o',random,random
+MONSTER:'o',random,random
+MONSTER:'o',random,random
+MONSTER:'o',random,random
+MONSTER:'o',random,random
+MONSTER:'o',random,random
+MONSTER:'o',random,random
+MONSTER:'o',random,random
+
+#SECRET CAVE
+MAZEWALK:(62,15),south
+ALTAR:(70,5),noalign,shrine
+DOOR:closed,(62,12)
+DOOR:closed,(70,10)
+TRAP:"rust",random
+TRAP:"board",random
+OBJECT:'(',"figurine",(70,5),random,"balrog",1
+OBJECT:'*',"luckstone",place[0]
+OBJECT:'*',"flint",place[1]
+OBJECT:'*',random,place[2]
+OBJECT:'*',random,place[3]
+OBJECT:'*',random,place[4]
+OBJECT:'*',random,place[5]
+OBJECT:'*',random,place[6]
+OBJECT:'*',random,place[7]
+OBJECT:'*',random,place[8]
+OBJECT:'*',random,place[9]
+MONSTER:'o',"orc shaman",(69,3),asleep
+MONSTER:'o',"orc shaman",(71,3),asleep
+MONSTER:'o',"orc shaman",(68,4),asleep
+MONSTER:'o',"orc shaman",(72,4),asleep
+MONSTER:'o',"orc shaman",(68,6),asleep
+MONSTER:'o',"orc shaman",(72,6),asleep
+MONSTER:'o',"orc shaman",(69,7),asleep
+MONSTER:'o',"orc shaman",(71,7),asleep
+
+#TEMPLE
+ENGRAVING:(55,9),burn,"Blessed are the destroyers of false hope, for they are the true Messiahs."
+MONSTER:'o',"orc shaman",(55,9),asleep
+ENGRAVING:(48,3),burn,"Why should you not hate your enemies. If you love them does that not place you at their mercy?"
+MONSTER:'o',"orc shaman",(48,3),asleep
+ENGRAVING:(48,15),burn,"Cursed are the god-adorers, for they shall be shorn sheep!"
+MONSTER:'o',"orc shaman",(48,15),asleep
+ENGRAVING:(25,09),burn,"Dagul protects our doors. Dagul protects our souls."
+MONSTER:'o',"orc shaman",(25,09),asleep
+OBJECT:'`',"statue",(56,8),"orc shaman",1
+OBJECT:'`',"statue",(56,10),"orc-captain",1
+OBJECT:'`',"statue",(50,3),"hill orc",1
+OBJECT:'`',"statue",(46,3),"hill orc",1
+OBJECT:'`',"statue",(50,15),"Mordor orc",1
+OBJECT:'`',"statue",(46,15),"Mordor orc",1
+OBJECT:'`',"statue",(29,03),"Mordor orc",1
+OBJECT:'`',"statue",(32,03),"hill orc",1
+OBJECT:'`',"statue",(35,03),"orc-captain",1
+OBJECT:'`',"statue",(38,03),"orc shaman",1
+OBJECT:'`',"statue",(29,15),"mordor orc",1
+OBJECT:'`',"statue",(32,15),"hill orc",1
+OBJECT:'`',"statue",(35,15),"orc-captain",1
+OBJECT:'`',"statue",(38,15),"orc shaman",1
+OBJECT:'(',"large box",(61,4)
+OBJECT:'(',"large box",(62,4)
+OBJECT:'(',"large box",(63,4)
+ALTAR:(48,2),noalign,shrine
+ALTAR:(48,16),noalign,shrine
+ALTAR:(56,9),noalign,shrine
+DOOR:closed,(58,9)
+DOOR:closed,(26,9)
+DOOR:closed,(30,5)
+DOOR:closed,(37,5)
+DOOR:closed,(48,5)
+DOOR:locked,(62,6)
+DOOR:closed,(30,13)
+DOOR:closed,(37,13)
+DOOR:closed,(48,13)
+# Wake the shamans if anyone tries to take the figurine:
+TRAP:"board",(69,04)
+TRAP:"board",(69,05)
+TRAP:"board",(69,06)
+TRAP:"board",(70,04)
+TRAP:"board",(70,06)
+TRAP:"board",(71,04)
+TRAP:"board",(71,05)
+TRAP:"board",(71,06)
 
 # Mine end level variant 2
 # "Gnome King's Wine Cellar"
