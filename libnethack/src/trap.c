@@ -3062,7 +3062,7 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
                 (obj->cursed && !rn2(3)))) {
         water_damage_chain(obj->cobj, FALSE);
         return 0;
-    } else if (!force && waterproof(mon))
+    } else if (!force && mon && waterproof(mon))
         return 0;
     else if (!force && (Luck + 5) > rn2(20)) {
         /* chance per item of sustaining damage: max luck (full moon): 5%
@@ -3095,7 +3095,7 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
             delobj(obj);
             if (carried) {
                 int dmg = rnd(10);
-                if (resists_acid(mon))
+                if (mon && resists_acid(mon))
                     dmg /= 2;
 
                 if (vis)
@@ -3106,7 +3106,7 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
                            killer_msg(DIED,
                                       force ? "elementary chemistry" :
                                       "an acidic potion"));
-                } else {
+                } else if (mon) {
                     mon->mhp -= dmg;
                     if (mon->mhp <= 0) {
                         if (!flags.mon_moving)
