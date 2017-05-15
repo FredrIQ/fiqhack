@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2017-05-15 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -346,7 +346,11 @@ plname_handler(const char *str, void *plname_void)
     if (*str == '\033') /* cancelled */
         return;
 
-    if (*str && strlen(str) < PL_NSIZ) { /* ok */
+    /* Allowing the full PL_NSIZ is causing bugs. This hardcoded "12" was always
+       intended to be the maximum name length, and should mask the bug until a
+       proper fix is available. TODO: Find out what's actually happening and fix
+       it. */
+    if (*str && strlen(str) < 12 && strlen(str) < PL_NSIZ) { /* ok */
         *plname = strdup(str);
         return;
     }
