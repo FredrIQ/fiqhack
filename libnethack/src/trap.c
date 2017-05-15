@@ -3034,6 +3034,8 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
 
     uint64_t props = obj_properties(obj);
     boolean carried = carried(obj);
+    if (obj->where != OBJ_INVENT)
+        carried = FALSE; /* container content */
     struct monst *mon = (carried ? &youmonst :
                          obj->where != OBJ_MINVENT ? NULL :
                          obj->ocarry);
