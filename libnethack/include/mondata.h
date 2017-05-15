@@ -102,6 +102,7 @@
 # define zombifying(mon)        (property_timeout(mon, ZOMBIE))
 /* living but under the power of undead (and immune to zombification) */
 # define izombie(mon)           (ihas_property(mon, ZOMBIE))
+# define waterproof(mon)        (has_property(mon, WATERPROOF))
 
 # define hitbon(mon)            (mon_bon(mon, RIN_INCREASE_ACCURACY, (mon)->mhitinc))
 # define dambon(mon)            (mon_bon(mon, RIN_INCREASE_DAMAGE, (mon)->mdaminc))

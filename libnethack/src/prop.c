@@ -2035,6 +2035,8 @@ update_property(struct monst *mon, enum youprop prop,
             }
         }
         break;
+    case WATERPROOF:
+        break;
     default:
         impossible("Unknown property: %u", prop);
         break;
@@ -2654,6 +2656,8 @@ enlighten_mon(struct monst *mon, int final)
         mon_is(&menu, mon, "petrification resistant");
     if (resists_hallu(mon))
         mon_is(&menu, mon, "hallucination resistant");
+    if (waterproof(mon))
+        mon_is(&menu, mon, "protected from water");
     if (mon == &youmonst && u.uinvulnerable)
         mon_is(&menu, mon, "invulnerable");
     if ((mon == &youmonst && u.uedibility) ||
@@ -3030,6 +3034,8 @@ enlightenment(int final)
         you_are(&menu, "acid resistant");
     if (Stone_resistance)
         you_are(&menu, "petrification resistant");
+    if (waterproof(&youmonst))
+        you_are(&menu, "protected from water");
     if (u.uinvulnerable)
         you_are(&menu, "invulnerable");
     if (u.uedibility)

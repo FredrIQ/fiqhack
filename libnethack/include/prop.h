@@ -86,8 +86,9 @@ enum youprop {
     DETECT_MONSTERS          = 68,
     SLOW                     = 69,
     ZOMBIE                   = 70,
-/*  DEATH_RES                = 71, TODO */
-    LAST_PROP                = ZOMBIE,
+    WATERPROOF               = 71,
+/*  DEATH_RES                = 72, TODO */
+    LAST_PROP                = WATERPROOF,
     INVALID_PROP             = -1,
 };
 

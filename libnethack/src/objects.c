@@ -417,7 +417,7 @@ const struct objclass const_objects[] = {
     CLOAK("dwarvish cloak", "hooded cloak",
           0, 0, 0, 8, 0, 15, 50, 10, 2, CLOTH, HI_CLOTH),
     CLOAK("oilskin cloak", "slippery cloak",
-          0, 0, 0, 8, 0, 15, 50, 9, 3, CLOTH, HI_CLOTH),
+          0, 0, WATERPROOF, 8, 0, 15, 50, 9, 3, CLOTH, HI_CLOTH),
     CLOAK("robe", NULL,
           1, 1, 0, 3, 0, 15, 50, 8, 3, CLOTH, CLR_RED),
     CLOAK("alchemy smock", "apron",

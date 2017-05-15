@@ -487,7 +487,7 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
          otmp->otyp == RED_DRAGON_SCALES) && extrinsic == INFRAVISION)
         return equipmask;
     if ((otmp->otyp == WHITE_DRAGON_SCALE_MAIL ||
-         otmp->otyp == WHITE_DRAGON_SCALES) && extrinsic == SEARCHING)
+         otmp->otyp == WHITE_DRAGON_SCALES) && extrinsic == WATERPROOF)
         return equipmask;
     if ((otmp->otyp == ORANGE_DRAGON_SCALE_MAIL ||
          otmp->otyp == ORANGE_DRAGON_SCALES) && extrinsic == FREE_ACTION)

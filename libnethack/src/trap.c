@@ -3033,6 +3033,15 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
         return 0;
 
     uint64_t props = obj_properties(obj);
+    boolean carried = carried(obj);
+    struct monst *mon = (carried ? &youmonst :
+                         obj->where != OBJ_MINVENT ? NULL :
+                         obj->ocarry);
+    boolean you = (mon == &youmonst);
+    boolean vis = you;
+    if (!you && mon)
+        vis = canseemon(mon);
+    carried = !!mon;
 
     if (snuff_lit(obj))
         return 2;
@@ -3042,7 +3051,7 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
     } else if (obj->greased) {
         if (!rn2(2))
             obj->greased = 0;
-        if (carried(obj))
+        if (you)
             update_inventory();
         return 1;
     } else if (Is_container(obj) && !Is_box(obj) &&
@@ -3051,7 +3060,9 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
                 (obj->cursed && !rn2(3)))) {
         water_damage_chain(obj->cobj, FALSE);
         return 0;
-    } else if (!force && (Luck + 5) > rn2(20)) {
+    } else if (!force && waterproof(mon))
+        return 0;
+    else if (!force && (Luck + 5) > rn2(20)) {
         /* chance per item of sustaining damage: max luck (full moon): 5%
             max luck (elsewhen): 10% avg luck (Luck==0): 75% awful luck
             (Luck<-4): 100% */
@@ -3059,29 +3070,55 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
     } else if (obj->oclass == SCROLL_CLASS) {
         obj->otyp = SCR_BLANK_PAPER;
         obj->spe = 0;
-        if (carried(obj))
+        if (you)
             update_inventory();
         return 2;
     } else if (obj->oclass == SPBOOK_CLASS) {
         if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
-            pline(msgc_noconsequence, "Steam rises from %s.", the(xname(obj)));
+            if (vis)
+                pline(msgc_noconsequence,
+                      "Steam rises from %s.", the(xname(obj)));
             return 0;
         } else {
             obj->otyp = SPE_BLANK_PAPER;
-            if (carried(obj))
+            if (you)
                 update_inventory();
             return 2;
         }
     } else if (obj->oclass == POTION_CLASS) {
         if (obj->otyp == POT_ACID) {
-            /* damage player/monster? */
-            pline(msgc_itemloss, "A potion explodes!");
-            boolean update = carried(obj);
+            if (vis)
+            pline(msgc_itemloss, "%s potion explodes!",
+                  you ? "Your" : "A");
             delobj(obj);
-            if (update)
-                update_inventory();
+            if (carried) {
+                int dmg = rnd(10);
+                if (resists_acid(mon))
+                    dmg /= 2;
+
+                if (vis)
+                    makeknown(POT_ACID);
+                if (you) {
+                    update_inventory();
+                    losehp(dmg,
+                           killer_msg(DIED,
+                                      force ? "elementary chemistry" :
+                                      "an acidic potion"));
+                } else {
+                    mon->mhp -= dmg;
+                    if (mon->mhp <= 0) {
+                        if (!flags.mon_moving)
+                            monkilled(&youmonst, mon, "", AD_ACID);
+                        else
+                            mondied(mon);
+                    }
+                }
+            }
             return 3;
         } else if (obj->odiluted) {
+            if (carried && you && force)
+                pline(msgc_actionok, "%s %s further.",
+                      Shk_Your(obj), aobjnam(obj, "dilute"));
             obj->otyp = POT_WATER;
             obj->blessed = obj->cursed = 0;
             obj->odiluted = 0;
@@ -3089,6 +3126,9 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
                 update_inventory();
             return 2;
         } else if (obj->otyp != POT_WATER) {
+            if (carried && you && force)
+                pline(msgc_actionok, "%s %s.", Shk_Your(obj),
+                      aobjnam(obj, "dilute"));
             obj->odiluted++;
             if (carried(obj))
                 update_inventory();
