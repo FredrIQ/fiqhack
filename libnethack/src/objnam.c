@@ -3050,10 +3050,11 @@ typfnd:
         curse(otmp);
     }
 
-    if (!otmp->oartifact) {
-        /* Kill existing object properties if any generated */
-        otmp->oprops = 0LLU;
+    /* Kill existing object properties if any generated */
+    otmp->oprops = 0LLU;
 
+    /* In wizard mode only, allow wishing for properties */
+    if (!otmp->oartifact && !wizard) {
         otmp->oprops |= props;
         otmp->oprops = obj_properties(otmp); /* filter invalid ones */
         props = otmp->oprops;
@@ -3070,7 +3071,7 @@ typfnd:
             }
         }
 
-        /* Do potential limitations on object properties outside wizmode */
+        /* Restrict properties, in case we allow it in the future */
         if (props && !wizard) {
             /* Don't allow properties at all on magical items */
             if (otmp->oclass == TOOL_CLASS && !is_weptool(otmp))

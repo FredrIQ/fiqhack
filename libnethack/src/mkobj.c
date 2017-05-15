@@ -265,6 +265,11 @@ assign_oprops(struct level *lev, struct obj *obj, enum rng rng,
             rn2(2))
             return;
 
+        /* Dragon armor isn't allowed to generate with properties */
+        if (obj->otyp >= GRAY_DRAGON_SCALE_MAIL &&
+            obj->otyp <= YELLOW_DRAGON_SCALES)
+            return;
+
         /* Jewelry gets it 1/4 as often (AoY+clones not at all) */
         if ((obj->oclass == AMULET_CLASS ||
              obj->oclass == RING_CLASS) &&
@@ -291,6 +296,17 @@ assign_oprops(struct level *lev, struct obj *obj, enum rng rng,
 
     if (!(prop & props))
         return; /* we hit the failsafe to avoid infloop */
+
+    /* The following properties generate only 10% of the time */
+    if ((prop &
+         (opm_reflects | opm_telepat | opm_speed | opm_power |
+          opm_dexterity | opm_brilliance | opm_displacement)) &&
+        rn2(10))
+        return;
+
+    /* Allowing this in first place was probably a bad idea */
+    if (prop & opm_vorpal)
+        return;
 
     /* Add the property, unless it's fire and we have frost or
        vice versa. */
