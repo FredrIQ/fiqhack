@@ -1844,6 +1844,17 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
     cc.y = m_my(mon);
     if (mgetargpos(m, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
+
+    /* Figure out what condition to mark the target square as
+       allowed */
+    boolean clearpath = FALSE;
+    if (m_cansee(mon, cc.x, cc.y))
+        clearpath = TRUE;
+
+    if (dist2(m_mx(mon), m_my(mon), cc.x, cc.y) <=
+        XRAY_RANGE * XRAY_RANGE && astral_vision(mon))
+        clearpath = TRUE;
+
     /* The number of moves from hero to where the spell drops. */
     if (distmin(m_mx(mon), m_my(mon), cc.x, cc.y) > 10) {
         pline(msgc_cancelled, "The spell dissipates over the distance!");
@@ -1860,13 +1871,10 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
         pline(msgc_cancelled,
               "You fail to sense a monster there!");
         return 0;
-    } else
-        if ((!m_cansee(mon, cc.x, cc.y) &&
-             (!um_at(level, cc.x, cc.y) ||
-              !mcanspotmon(mon, um_at(level, cc.x, cc.y)))) ||
-            IS_STWALL(level->locations[cc.x][cc.y].typ)) {
-            pline(msgc_cancelled,
-                  "Your mind fails to lock onto that location!");
+    } else if (!clearpath ||
+               IS_STWALL(level->locations[cc.x][cc.y].typ)) {
+        pline(msgc_cancelled,
+              "Your mind fails to lock onto that location!");
         return 0;
     } else {
         *dx = cc.x;

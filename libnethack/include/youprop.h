@@ -121,7 +121,7 @@
 # define Lifesaved              uhas_property(LIFESAVED)
 # define Xray_vision            uhas_property(XRAY_VISION)
 
-# define XRAY_RANGE             3
+# define XRAY_RANGE             8
 
 /*** Possessions ***/
 #define Uhave_amulet            carrying(AMULET_OF_YENDOR)
