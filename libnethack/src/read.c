@@ -2310,12 +2310,6 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
                 continue;
             }
             ptr = &mons[mndx];
-            /* Although "genus" is Latin for race, the hero benefits from both
-               race and role; thus genocide affects either. */
-            if (you && (Your_Own_Role(mndx) || Your_Own_Race(mndx))) {
-                killplayer++;
-                break;
-            }
 
             if (!(ptr->geno & G_GENO)) {
                 if (canhear()) {
@@ -2331,13 +2325,18 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
                 continue;
             }
 
+            /* Although "genus" is Latin for race, the hero benefits from both
+               race and role; thus genocide affects either. */
+            if (you && (Your_Own_Role(mndx) || Your_Own_Race(mndx) ||
+                        ptr == youmonst.data)) {
+                killplayer++;
+                break;
+            }
+
             if (you && is_human(ptr))
                 adjalign(-sgn(u.ualign.type));
             if (you && is_demon(ptr))
                 adjalign(sgn(u.ualign.type));
-            /* KMH -- Unchanging prevents rehumanization */
-            if (unchanging(&youmonst) && ptr == youmonst.data)
-                killplayer++;
             break;
         }
     }
@@ -2361,18 +2360,23 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
         pline(msgc_intrgain, "Wiped out %s%s.", which,
               (*which != 'a') ? buf : makeplural(buf));
 
+        /* Do this before killing the player, just in case */
+        kill_genocided_monsters();
+
         if (killplayer) {
             /* might need to wipe out dual role */
             if (urole.femalenum != NON_PM && mndx == urole.malenum)
                 mvitals[urole.femalenum].mvflags |= (G_GENOD | G_NOCORPSE);
-            if (urole.femalenum != NON_PM && mndx == urole.femalenum)
+            if (urole.malenum != NON_PM && mndx == urole.femalenum)
                 mvitals[urole.malenum].mvflags |= (G_GENOD | G_NOCORPSE);
             if (urace.femalenum != NON_PM && mndx == urace.malenum)
                 mvitals[urace.femalenum].mvflags |= (G_GENOD | G_NOCORPSE);
-            if (urace.femalenum != NON_PM && mndx == urace.femalenum)
+            if (urace.malenum != NON_PM && mndx == urace.femalenum)
                 mvitals[urace.malenum].mvflags |= (G_GENOD | G_NOCORPSE);
 
             u.uhp = -1;
+            if (Upolyd)
+                u.mh = -1;
 
             const char *killer;
             if (how & PLAYER)
@@ -2392,9 +2396,6 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
                 set_delayed_killer(GENOCIDED, killer);
             } else
                 done(GENOCIDED, killer);
-        } else if (ptr == youmonst.data) {
-            /* As above: the death reason should never be relevant. */
-            rehumanize(GENOCIDED, "arbitrary death reason");
         }
         reset_rndmonst(mndx);
         /* While endgame messages track whether you genocided
@@ -2403,7 +2404,6 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
          * in which it happened. */
         if (you)
             break_conduct(conduct_genocide);
-        kill_genocided_monsters();
         update_inventory();     /* in case identified eggs were affected */
     } else {
         int cnt = 0;
