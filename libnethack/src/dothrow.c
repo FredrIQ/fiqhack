@@ -1514,6 +1514,23 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
             return 1;   /* caller doesn't need to place it */
         }
         return 0;
+    } else if (mon->mtame && mon->mcanmove &&
+               !is_animal(mon->data) && !mindless(mon->data) &&
+               !(uwep && ammo_and_launcher(obj, uwep))) {
+        /* thrown item at intelligent pet to let it use it */
+        pline(msgc_actionok, "%s %s.",
+              M_verbs(mon, "catch"), the(xname(obj)));
+        obj_extract_self(obj);
+        mpickobj(mon, obj, NULL);
+        if (attacktype(mon->data, AT_WEAP) &&
+            mon->weapon_check == NEED_WEAPON) {
+            mon->weapon_check == NEED_HTH_WEAPON;
+            mon_wield_item(mon);
+        }
+
+        m_dowear(mon, FALSE);
+        newsym(mon->mx, mon->my);
+        return 1;
     }
 
     if (obj->oclass == WEAPON_CLASS || is_weptool(obj) ||
