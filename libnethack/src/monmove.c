@@ -139,7 +139,7 @@ mon_regen(struct monst *mon, boolean digest_meal)
 {
     /* Monster constitution is counted as 12 + ring bonuses/etc */
     if (mon->mhp < mon->mhpmax) {
-        if (mon->m_lev > 9 && (moves % 3))
+        if (mon->m_lev > 9 && !(moves % 3))
             mon->mhp += min((mon->m_lev - 9), acurr(mon, A_CON) <= 11 ? 1 :
                             rnd(acurr(mon, A_CON)));
         else if (regenerates(mon) || (mon->m_lev <= 9 && !(moves % (42 / (mon->m_lev + 2) + 1))))
