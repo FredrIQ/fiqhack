@@ -2112,7 +2112,12 @@ use_item(struct musable *m)
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_POT:
         mquaffmsg(mon, obj);
-        peffects(mon, obj);
+        int nothing = 0; /* nothing happened (pelicular feeling) */
+        int unkn = 0; /* unknown for other reasons */
+        peffects(mon, obj, &nothing, &unkn);
+        if (!nothing && !unkn && oseen)
+            makeknown(obj->otyp);
+
         m_useup(mon, obj);
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_WAN:

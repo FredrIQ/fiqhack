@@ -1423,7 +1423,7 @@ extern void eyepline(const char *, const char *);
 extern void make_sick(struct monst *, long, const char *, boolean, int);
 extern int dodrink(const struct nh_cmd_arg *);
 extern int dopotion(struct obj *);
-extern int peffects(struct monst *, struct obj *);
+extern int peffects(struct monst *, struct obj *, int *, int *);
 extern void healup(int, int, boolean, boolean);
 extern void strange_feeling(struct obj *, const char *);
 extern void potionhit(struct monst *, struct obj *, struct monst *);

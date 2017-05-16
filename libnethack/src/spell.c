@@ -1347,6 +1347,10 @@ spelleffects(boolean atme, struct musable *m)
     int count = 0; /* for nasty */
     boolean amulet = FALSE;
 
+    /* for potions */
+    int dummy2 = 0;
+    int dummy3 = 0;
+
     if (spell < 0) {
         if (!you)
             impossible("Monster using a special ability?");
@@ -1727,7 +1731,7 @@ spelleffects(boolean atme, struct musable *m)
             pseudo->blessed = 1;
         /* fall through */
     case SPE_INVISIBILITY:
-        peffects(mon, pseudo);
+        peffects(mon, pseudo, &dummy2, &dummy3);
         break;
 
     case SPE_CURE_BLINDNESS:
