@@ -312,7 +312,7 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
     Role_switch = saverole;
     otmp->bknown = savebknown;
 
-    if (vismon && !blind(mtmp) && !haseyes(mtmp->data))
+    if (vismon && !blind(mtmp) && haseyes(mtmp->data))
         pline(combat_msgc(mtmp, NULL, cr_hit),
               "%s reads %s!", Monnam(mtmp), onambuf);
     else

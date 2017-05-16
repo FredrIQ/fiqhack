@@ -1436,9 +1436,13 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         litroom(mon, !confused && !sobj->cursed, sobj);
         break;
     case SCR_TELEPORTATION:
-        if (confused || sobj->cursed)
+        if (confused || sobj->cursed) {
             mon_level_tele(mon);
-        else {
+            *known = TRUE;
+        } else {
+            /* In case we land on the same position, don't reveal the scroll's ID */
+            int sx = m_mx(mon);
+            int sy = m_my(mon);
             if (sobj->blessed && !teleport_control(mon)) {
                 if (you) {
                     *known = TRUE;
@@ -1446,10 +1450,8 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                     break;
                 }
             }
-            mon_tele(mon, !!teleport_control(mon));
-                
-            if (you && (teleport_control(mon) || !couldsee(u.ux0, u.uy0) ||
-                        (distu(u.ux0, u.uy0) >= 16)))
+            if (!mon_tele(mon, !!teleport_control(mon)) || /* "A mysterious force ..." */
+                sx != m_mx(mon) || sy != m_my(mon))
                 *known = TRUE;
         }
         break;
