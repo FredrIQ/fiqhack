@@ -280,7 +280,7 @@ mhmon(struct monst *magr, struct monst *mdef, struct obj *obj, int thrown,
     if (!thrown) {
         impossible("mhmon: running on a non-thrown weapon?");
         if (magr != &youmonst)
-            return 1;
+            return TRUE;
     }
     if (magr == &youmonst)
         return hmon(mdef, obj, thrown, multishot_count);
@@ -343,6 +343,13 @@ mhmon(struct monst *magr, struct monst *mdef, struct obj *obj, int thrown,
         dmg = 0;
     }
     if (dmg) {
+        if ((obj->oartifact || obj->oprops) &&
+            artifact_hit(magr, mdef, obj, &dmg, dieroll)) {
+            if (!udef && DEADMONSTER(mdef))  /* artifact killed monster */
+                return FALSE;
+            if (dmg == 0)
+                return TRUE;
+        }
         if (udef) /* Not mshot_xname, we don't care about 1st/etc here... */
             losehp(dmg, killer_msg_mon_obj(DIED, magr, obj));
         else {
