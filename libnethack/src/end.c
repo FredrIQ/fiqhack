@@ -58,19 +58,20 @@ static void container_contents(struct obj *, boolean, boolean);
 static const char *const ends[] = {     /* "when you..." */
     "died", "choked", "were poisoned", "starved", "drowned", "suffocated",
     "burned", "dissolved", "were crushed", "turned to stone",
-    "turned into slime", "exploded", "were wiped out", "were tricked",
-    "quit", "escaped", "ascended"
+    "turned into slime", "exploded", "were wiped out", "turned into a zombie",
+    "were tricked", "quit", "escaped", "ascended"
 };
 
 static const char *const killer_verb[] = {
     "killed", "choked", "poisoned", "died", "drowned", "died", "burned",
     "dissolved", "crushed to death", "petrified", "turned to slime",
-    "exploded", "wiped out", "committed trickery", "quit", "escaped", "ascended"
+    "exploded", "wiped out", "zombified", "committed trickery",
+    "quit", "escaped", "ascended"
 };
 
 static const char *const killer_preposition[] = {
     "by", "on", "by", "of", "in", "of", "by", "in", "by", "by", "by", "by",
-    "by", "", "", "", ""
+    "by", "by", "", "", "", ""
 };
 
 
@@ -166,6 +167,9 @@ delayed_killer_var(int how)
     case GENOCIDED:
         return &u.delayed_killers.genocide;
 
+    case TURNED_ZOMBIE:
+        return &u.delayed_killers.zombie;
+
     default:
         impossible("Illegal delayed killer type: %d", how);
         return 0;
@@ -211,6 +215,7 @@ clear_delayed_killers(void)
     set_delayed_killer(STONING, NULL);
     set_delayed_killer(TURNED_SLIME, NULL);
     set_delayed_killer(GENOCIDED, NULL);
+    set_delayed_killer(TURNED_ZOMBIE, NULL);
 }
 
 void
@@ -222,6 +227,10 @@ done_in_by(struct monst *mtmp, const char *override_msg)
         u.ugrave_arise = PM_WRAITH;
     else if (mtmp->data->mlet == S_MUMMY && urace.mummynum != NON_PM)
         u.ugrave_arise = urace.mummynum;
+    else if (mtmp->data->mlet == S_ZOMBIE && urace.zombienum != NON_PM &&
+             mtmp->data != &mons[PM_GHOUL] &&
+             mtmp->data != &mons[PM_SKELETON])
+        u.ugrave_arise = urace.zombienum;
     else if (mtmp->data->mlet == S_VAMPIRE && Race_if(PM_HUMAN))
         u.ugrave_arise = PM_VAMPIRE;
     else if (mtmp->data == &mons[PM_GHOUL])
@@ -319,6 +328,8 @@ disclose(int how, boolean taken, long umoney)
                 for (obj = invent; obj; obj = obj->nobj) {
                     discover_object(obj->otyp, TRUE, FALSE, TRUE);
                     obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
+                    if (obj->oprops)
+                        learn_oprop(obj, obj_properties(obj));
                 }
                 display_inventory(NULL, FALSE);
                 container_contents(invent, TRUE, TRUE);
@@ -411,6 +422,8 @@ savelife(int how)
     /* cure impending doom of sickness hero won't have time to fix */
     if (property_timeout(&youmonst, SICK) == 1)
         set_property(&youmonst, SICK, -2, FALSE);
+    if (property_timeout(&youmonst, ZOMBIE) == 1)
+        set_property(&youmonst, ZOMBIE, -2, FALSE);
     if (how == CHOKING)
         init_uhunger();
 
@@ -770,7 +783,7 @@ check_survival(int how)
                 pline(msgc_fatal_predone,
                       "Unfortunately you are still genocided...");
             else {
-                historic_event(FALSE,
+                historic_event(FALSE, TRUE,
                                "were saved from death by your amulet of life "
                                "saving!");
                 return TRUE;
@@ -789,7 +802,7 @@ check_survival(int how)
         if (u.uhpmax <= 0)
             u.uhpmax = youmonst.m_lev * 8;    /* arbitrary */
         savelife(how);
-        historic_event(FALSE, "were saved from death by your wizard powers!");
+        historic_event(FALSE, FALSE, "were saved from death by your wizard powers!");
         return TRUE;
     }
 
@@ -965,6 +978,9 @@ done_noreturn(int how, const char *killer)
     if (how == TURNED_SLIME)
         u.ugrave_arise = PM_GREEN_SLIME;
 
+    if (how == TURNED_ZOMBIE && urace.zombienum != NON_PM)
+        u.ugrave_arise = urace.zombienum;
+
     if (bones_ok && u.ugrave_arise < LOW_PM) {
         /* corpse gets burnt up too */
         if (how == BURNING)
@@ -976,7 +992,7 @@ done_noreturn(int how, const char *killer)
             int mnum = u.umonnum;
             const char *pbuf;
 
-            if (!Upolyd) {
+            if (!Upolyd && !is_human(youmonst.data)) {
                 /* Base corpse on race when not poly'd since original u.umonnum 
                    is based on role, and all role monsters are human. */
                 mnum = (u.ufemale &&
@@ -1066,6 +1082,7 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                         discover_object(obj->otyp, TRUE, FALSE, TRUE);
                         obj->known = obj->bknown = obj->dknown =
                             obj->rknown = 1;
+                        learn_oprop(obj, obj->oprops);
                     }
                     contents[icount++] = obj;
                 }

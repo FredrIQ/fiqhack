@@ -91,6 +91,7 @@ static const int channel_color[] = {
     [msgc_combatalert] = CLR_BRIGHT_CYAN,
     [msgc_discoverportal] = CLR_BRIGHT_CYAN | CLRFLAG_FORCEMORE,
     [msgc_youdiscover] = CLR_BRIGHT_CYAN,
+    [msgc_mail] = CLR_BRIGHT_CYAN | CLRFLAG_FORCEMORE,
 
     /* CLR_WHITE: spammy/common good events (e.g. hitting in combat) */
     [msgc_statusextend] = CLR_WHITE,
@@ -224,19 +225,28 @@ static int
 resolve_channel_color(enum msg_channel msgc)
 {
     const int no_forcing = ~(CLRFLAG_FORCEMORE | CLRFLAG_FORCETAB);
+    int chcolor;
     if (msgc == msgc_intrloss_level)
-        return channel_color[msgc_intrloss] & no_forcing;
+        chcolor = channel_color[msgc_intrloss] & no_forcing;
     else if (msgc == msgc_intrgain_level)
-        return channel_color[msgc_intrgain] & no_forcing;
+        chcolor = channel_color[msgc_intrgain] & no_forcing;
     else if (msgc == msgc_fatal_predone)
-        return channel_color[msgc_fatal] & no_forcing;
+        chcolor = channel_color[msgc_fatal] & no_forcing;
     else if (msgc == msgc_mispaste)
-        return channel_color[msgc_cancelled];
-    else if (channel_color[msgc] == 0)
-        /* something's gone badly wrong here */
-        return CLR_GREEN; /* the least common color in the message window */
+        chcolor = channel_color[msgc_cancelled] & no_forcing;
     else
-        return channel_color[msgc];
+        chcolor = channel_color[msgc];
+
+    if (!settings.msgcolor) {
+        /* make the color gray */
+        chcolor &= ~0xFF;
+        chcolor |= CLR_GRAY;
+    }
+
+    if (!chcolor)
+        /* something's gone badly wrong here */
+        return CLR_GREEN;
+    return chcolor;
 }
 
 /* The lowest-level message window drawing function. Draws the message window

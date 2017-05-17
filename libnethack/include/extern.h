@@ -122,11 +122,13 @@ extern boolean arti_reflects(struct obj *);
 extern boolean restrict_name(struct obj *, const char *);
 extern boolean defends(int, struct obj *);
 extern boolean protects(int, struct obj *);
-extern long item_provides_extrinsic(struct obj *, int);
+extern long item_provides_extrinsic(const struct obj *, int);
+extern long item_provides_extrinsic_before_oprop(const struct obj *,
+                                                 int);
 extern void uninvoke_artifact(struct obj *);
 extern int touch_artifact(struct obj *, const struct monst *);
 extern int spec_abon(struct obj *, struct monst *);
-extern int spec_dbon(struct obj *, struct monst *, int);
+extern int spec_dbon(struct obj *, struct monst *, int, boolean *);
 extern void discover_artifact(xchar);
 extern boolean undiscovered_artifact(xchar);
 extern int disp_artifact_discoveries(struct nh_menulist *);
@@ -446,7 +448,7 @@ extern int throwing_range(const struct monst *, const struct obj *, int *);
 extern boolean throwit(struct monst *, struct obj *, struct obj *, int, long, boolean,
                        schar, schar, schar);
 extern int omon_adj(struct monst *, struct obj *, boolean);
-extern int thitmonst(struct monst *, struct monst *, struct obj *, int);
+extern int thitmonst(struct monst *, struct obj *, struct obj *, int);
 extern int hero_breaks(struct obj *, xchar, xchar, boolean);
 extern int breaks(struct obj *, xchar, xchar);
 extern boolean breaktest(struct obj *);
@@ -506,7 +508,6 @@ extern boolean In_W_tower(int, int, const d_level *);
 extern void find_hell(d_level *);
 extern void goto_hell(boolean, boolean);
 extern void assign_level(d_level * dest, const d_level * src);
-extern void assign_rnd_level(d_level * dest, const d_level * src, int range);
 extern int induced_align(const d_level * dlev, int pct, enum rng rng);
 extern boolean Invocation_lev(const d_level * dlev);
 extern xchar level_difficulty(const d_level * dlev);
@@ -678,8 +679,8 @@ extern int dofight(const struct nh_cmd_arg *);
 /* ### history.c ### */
 
 extern int dohistory(const struct nh_cmd_arg *);
-extern void historic_event(boolean hidden, const char *fmt, ...)
-    PRINTFLIKE(2,3);
+extern void historic_event(boolean hidden, boolean dolivelog, const char *fmt, ...)
+    PRINTFLIKE(3,4);
 extern void save_history(struct memfile *mf);
 extern void restore_history(struct memfile *mf);
 extern void free_history(void);
@@ -717,7 +718,7 @@ extern struct obj *getobj(const char *let, const char *word, boolean isarg);
 extern boolean validate_object(struct obj *obj, const char *lets,
                                const char *word);
 extern void fully_identify_obj(struct obj *);
-extern void identify_pack(struct monst *, int);
+extern void identify_pack(struct monst *, int, int);
 extern void prinv(const char *, struct obj *, long);
 extern const char *xprname(
     struct obj *, const char *, char, boolean, long, long);
@@ -835,6 +836,10 @@ extern void log_init(int fd);
 extern void log_uninit(void);
 extern void log_game_over(const char *death);
 extern void log_game_state(void);
+
+/* ### mail.c ### */
+
+extern void checkformail(void);
 
 /* ### makemon.c ### */
 
@@ -1038,6 +1043,8 @@ extern const char *waterbody_name(xchar, xchar);
 
 /* ### mkobj.c ### */
 
+extern void assign_oprops(struct level *, struct obj *, enum rng,
+                          boolean);
 extern unsigned next_ident(void);
 extern struct obj *mkobj_at(char, struct level *, int, int, boolean, enum rng);
 extern struct obj *mksobj_at(int, struct level *, int, int, boolean, boolean,
@@ -1046,6 +1053,8 @@ extern struct obj *mksobj(struct level *, int, boolean, boolean, enum rng);
 extern struct obj *mktemp_sobj(struct level *, int);
 extern struct obj *mkobj(struct level *, char, boolean, enum rng);
 extern struct obj *mkobj_of_class(struct level *, char, boolean, enum rng);
+extern uint64_t obj_properties(const struct obj *);
+extern void learn_oprop(struct obj *, uint64_t);
 extern int rndmonnum(const d_level *, enum rng);
 extern struct obj *splitobj(struct obj *, long);
 extern void replace_object(struct obj *, struct obj *);
@@ -1117,7 +1126,8 @@ extern boolean mpickstuff(struct monst *, boolean);
 extern int curr_mon_load(const struct monst *);
 extern int max_mon_load(const struct monst *);
 extern boolean can_carry(struct monst *, struct obj *);
-extern int mfndpos(struct monst *, coord *, long *, long);
+extern void find_best_lineup(struct monst *, xchar *, xchar *);
+extern int mfndpos(struct monst *, coord *, long *, long, int);
 extern boolean monnear(struct monst *, int, int);
 extern void dmonsfree(struct level *lev);
 extern int actions_remaining(struct monst *);
@@ -1145,7 +1155,7 @@ extern void update_displacement(struct monst *);
 extern void unset_displacement(struct monst *);
 extern void set_displacement(struct monst *);
 extern void poisontell(int);
-extern void poisoned(const char *, int, const char *, int);
+extern void poisoned(struct monst *, const char *, int, const char *, int);
 extern void m_respond(struct monst *);
 extern void setmangry(struct monst *);
 extern void msethostility(struct monst *, boolean, boolean);
@@ -1297,6 +1307,13 @@ extern void count_discovered_objects(int *, int *);
 
 /* ### objnam.c ### */
 
+extern void update_property_for_oprops(struct monst *,
+                                      struct obj *,
+                                      enum objslot);
+extern uint64_t filter_redundant_oprops(const struct obj *,
+                                        uint64_t);
+extern boolean obj_oprops_provides_property(const struct obj *,
+                                            enum youprop);
 extern const char *obj_typename(int);
 extern const char *simple_typename(int);
 extern boolean obj_is_pname(const struct obj *);
@@ -1312,7 +1329,7 @@ extern boolean the_unique_obj(const struct obj *obj);
 extern const char *doname(const struct obj *obj);
 extern const char *doname_price(const struct obj *obj);
 extern boolean not_fully_identified_core(const struct obj *otmp,
-                                         boolean ignore_bknown);
+                                         boolean ignore_bknown, int skill);
 extern boolean not_fully_identified(const struct obj *otmp);
 extern const char *corpse_xname(const struct obj *, boolean);
 extern const char *cxname(const struct obj *);
@@ -1413,7 +1430,7 @@ extern void eyepline(const char *, const char *);
 extern void make_sick(struct monst *, long, const char *, boolean, int);
 extern int dodrink(const struct musable *);
 extern int dopotion(struct monst *, struct obj *);
-extern int peffects(struct monst *, struct obj *);
+extern int peffects(struct monst *, struct obj *, int *, int *);
 extern void healup(int, int, boolean, boolean);
 extern void strange_feeling(struct obj *, const char *);
 extern void potionhit(struct monst *, struct obj *, struct monst *);
@@ -1994,6 +2011,7 @@ extern int getdir(const char *, schar *dx, schar *dy, schar *dz, boolean isarg);
 extern char query_key(const char *query, enum nh_query_key_flags flags,
                       int *count);
 extern const char *getlin(const char *query, boolean isarg);
+extern const char *show_ac(const char *, int);
 extern int display_menu(struct nh_menulist *, const char *, int, int,
                         const int **);
 extern int display_objects(struct nh_objlist *, const char *, int, int,
@@ -2100,10 +2118,15 @@ extern void melt_ice(struct level *, xchar, xchar);
 extern int zap_over_floor(xchar, xchar, int, boolean *);
 extern void fracture_rock(struct obj *);
 extern boolean break_statue(struct obj *);
-extern void destroy_item(int, int);
 extern int destroy_mitem(struct monst *, int, int);
 extern int resist(const struct monst *, const struct monst *, char, int, int);
 extern void makewish(void);
 extern int getwandlevel(const struct monst *, struct obj *);
+
+/* ### livelog.c ### */
+extern void livelog_write_event(const char *);
+extern void livelog_wish(const char *);
+extern void livelog_flubbed_wish(const char *, const struct obj *);
+extern void livelog_unique_monster(const struct monst *);
 
 #endif /* EXTERN_H */

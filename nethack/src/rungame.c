@@ -15,6 +15,10 @@
 # include <libgen.h>
 #endif
 
+/* these will only override unix directories */
+#if defined(UNIX) && ! defined(DUMPDIR)
+# define DUMPDIR "dumps/"
+#endif
 
 #if defined(WIN32)
 
@@ -138,7 +142,7 @@ get_gamedir(enum game_dirs dirtype, char *buf)
         subdir = "log/";
         break;
     case DUMP_DIR:
-        subdir = "dumps/";
+        subdir = DUMPDIR;
         break;
     case TILESET_DIR:
         subdir = "tilesets/";
@@ -323,6 +327,9 @@ game_ended(int status, fnchar *filename, nh_bool net)
 
     /* don't care about errors: rename is nice to have, not essential */
     rename(filename, logname);
+# ifdef PUBLIC_SERVER
+    chmod(logname, 0644);
+# endif
 #else
     bp = wcsrchr(filename, L'\\');
     get_gamedir(SAVE_DIR, savedir);
@@ -346,7 +353,7 @@ plname_handler(const char *str, void *plname_void)
     if (*str == '\033') /* cancelled */
         return;
 
-    if (*str && strlen(str) < PL_NSIZ) { /* ok */
+    if (*str && strlen(str) < (PL_NSIZ - 5)) { /* ok */
         *plname = strdup(str);
         return;
     }
@@ -443,11 +450,12 @@ rungame(nh_bool net)
         nh_cm_idx(*info, role, race, 1, align))
         sprintf(prompt + strlen(prompt), " %s", info->gendnames[gend]);
 
-    sprintf(prompt + strlen(prompt), " %s %s. What is your name?",
+    sprintf(prompt + strlen(prompt), " %s %s. What is your name [max %d characters]?",
             info->racenames[race], (gend &&
                                     info->
                                     rolenames_f[role] ? info->rolenames_f :
-                                    info->rolenames_m)[role]);
+                                    info->rolenames_m)[role],
+            PL_NSIZ - 5 - 1);
 
     if (nameopt->value.s && !*nameopt->value.s) {
         free(nameopt->value.s);

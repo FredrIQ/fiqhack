@@ -19,7 +19,8 @@ static void restobjchn(struct memfile *mf, struct level *lev,
                        struct trietable **table);
 static struct monst *restmonchn(struct memfile *mf, struct level *lev,
                                 boolean ghostly);
-static struct fruit *loadfruitchn(struct memfile *mf);
+static struct fruit *loadfruitchn(struct memfile *mf, boolean
+                                  ghostly);
 static void freefruitchn(struct fruit *);
 static void ghostfruit(struct obj *);
 static void restgamestate(struct memfile *mf);
@@ -325,13 +326,22 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
 
 
 static struct fruit *
-loadfruitchn(struct memfile *mf)
+loadfruitchn(struct memfile *mf, boolean ghostly)
 {
     struct fruit *flist = NULL, *fnext, *fcurr, *fprev;
     unsigned int count;
 
     mfmagic_check(mf, FRUITCHAIN_MAGIC);
     count = mread32(mf);
+
+    /* bones save version detection (fruit cap is 255) */
+    if (count >= 65536) {
+        count -= 65536;
+        flags.save_revision = mread32(mf);
+    } else if (ghostly) {
+        /* really old bones */
+        flags.save_revision = 0;
+    }
 
     if (!count)
         return flist;
@@ -470,7 +480,7 @@ restgamestate(struct memfile *mf)
     /* set it to NULL before loadfruitchn, otherwise loading a faulty fruit
        chain will crash in terminate -> freedynamicdata -> freefruitchn */
     gamestate.fruits.chain = NULL;
-    gamestate.fruits.chain = loadfruitchn(mf);
+    gamestate.fruits.chain = loadfruitchn(mf, FALSE);
 
     restnames(mf);
     restore_waterlevel(mf, lev);
@@ -507,7 +517,7 @@ restgamestate(struct memfile *mf)
 void
 restore_you(struct memfile *mf, struct you *y)
 {
-    int i;
+    int i, len;
     unsigned int yflags, eflags;
 
     memset(y, 0, sizeof (struct you));
@@ -616,6 +626,17 @@ restore_you(struct memfile *mf, struct you *y)
     y->bashmsg = mread8(mf);
     y->moveamt = mread8(mf);
 
+    /* this is oddly placed due to save padding */
+    /*len = mread32(mf);
+    if (len > 0) {
+        char *buf = malloc(len + 1);
+        mread(mf, buf, len);
+        buf[len] = '\0';
+        y->delayed_killers.zombie = buf;
+    } else {
+        y->delayed_killers.zombie = NULL;
+        }*/
+
     /* Ignore the padding added in save.c */
     for (i = 0; i < 511; i++)
         (void) mread8(mf);
@@ -653,7 +674,7 @@ restore_you(struct memfile *mf, struct you *y)
 
     restore_quest_status(mf, &y->quest_status);
 
-    int len = mread32(mf);
+    len = mread32(mf);
     if (len > 0) {
         char *buf = malloc(len + 1);
         mread(mf, buf, len);
@@ -811,10 +832,11 @@ restore_flags(struct memfile *mf, struct flag *f)
     /* Used for a consistent way of handling save shims */
     f->save_revision = mread32(mf);
 
+    f->servermail = mread8(mf);
     f->last_arg.ability = mread8(mf);
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 104; i++)
+    for (i = 0; i < 103; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));
@@ -1123,7 +1145,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     /* Load the old fruit info.  We have to do it first, so the information is
        available when restoring the objects. */
     if (ghostly)
-        oldfruit = loadfruitchn(mf);
+        oldfruit = loadfruitchn(mf, ghostly);
 
     /* for bones files, there is fruit chain data before the level data */
     mfmagic_check(mf, LEVEL_MAGIC);

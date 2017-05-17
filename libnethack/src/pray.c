@@ -106,7 +106,7 @@ in_trouble(void)
         return ptr_strangled;
     if (u.utrap && u.utraptype == TT_LAVA)
         return ptr_lava;
-    if (sick(&youmonst))
+    if (sick(&youmonst) || zombifying(&youmonst))
         return ptr_sick;
     if (u.uhs >= WEAK)
         return ptr_starving;
@@ -133,6 +133,10 @@ in_trouble(void)
     if (Cursed_obj(uarmf, LEVITATION_BOOTS) || stuck_ring(uleft, RIN_LEVITATION)
         || stuck_ring(uright, RIN_LEVITATION))
         return ptr_levitation;
+    if (uwep && uwep->cursed &&
+        (obj_properties(uwep) & opm_mercy))
+        return ptr_mercy;
+
     if (nohands(youmonst.data) || !freehand()) {
         /* for bag/box access [cf use_container()]... make sure it's a case
            that we know how to handle; otherwise "fix all troubles" would get
@@ -335,6 +339,9 @@ fix_worst_trouble(int trouble)
         if (nohands(youmonst.data) || !freehand())
             impossible("fix_worst_trouble: couldn't cure hands.");
         break;
+    case ptr_mercy:
+        otmp = uwep;
+        goto decurse;
     case ptr_blindfold:
         otmp = ublindf;
         goto decurse;
@@ -631,14 +638,14 @@ gcrownu(void)
     case A_LAWFUL:
         u.uevent.uhand_of_elbereth = 1;
         verbalize(msgc_intrgain, "I crown thee...  The Hand of Elbereth!");
-        historic_event(FALSE, "were crowned as the Hand of Elbereth!");
+        historic_event(FALSE, TRUE, "were crowned as the Hand of Elbereth!");
         break;
     case A_NEUTRAL:
         u.uevent.uhand_of_elbereth = 2;
         in_hand = (uwep && uwep->oartifact == ART_VORPAL_BLADE);
         already_exists = exist_artifact(LONG_SWORD, artiname(ART_VORPAL_BLADE));
         verbalize(msgc_intrgain, "Thou shalt be my Envoy of Balance!");
-        historic_event(FALSE, "were named as the Envoy of Balance!");
+        historic_event(FALSE, TRUE, "were named as the Envoy of Balance!");
         break;
     case A_CHAOTIC:
         u.uevent.uhand_of_elbereth = 3;
@@ -646,7 +653,7 @@ gcrownu(void)
         already_exists = exist_artifact(RUNESWORD, artiname(ART_STORMBRINGER));
         verbalize(msgc_intrgain, "Thou art chosen to %s for My Glory!",
                   already_exists && !in_hand ? "take lives" : "steal souls");
-        historic_event(FALSE, "were chosen to %s for your god's glory!",
+        historic_event(FALSE, TRUE, "were chosen to %s for your god's glory!",
                        already_exists &&
                        !in_hand ? "take lives" : "steal souls");
         break;
@@ -1375,7 +1382,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 pline(msgc_outrogood,
                       "You ascend to the status of Demigod%s...",
                       u.ufemale ? "dess" : "");
-                historic_event(FALSE,
+                historic_event(FALSE, FALSE,
                                "offered the Amulet of Yendor to %s and ascended"
                                " to the status of Demigod%s!", u_gname(),
                                u.ufemale ? "dess" : "");
@@ -1595,7 +1602,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                         at_your_feet("An object");
                         godvoice(msgc_aligngood, u.ualign.type,
                                  "Use my gift wisely!");
-                        historic_event(FALSE, "received %s from %s.",
+                        historic_event(FALSE, FALSE, "received %s from %s.",
                                        artiname(otmp->oartifact), u_gname());
                         u.ugifts++;
                         u.ublesscnt = rnz(300 + (50 * nartifacts));

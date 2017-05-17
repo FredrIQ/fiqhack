@@ -649,6 +649,10 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
         wandlevel = getwandlevel(mon, obj);
         if (!wandlevel) /* cursed wand is going to blow up */
             return 0;
+    } else if (obj->otyp == SPE_MAGIC_MISSILE) {
+        wandlevel = mprof(mon, MP_SATTK);
+        if (wandlevel < P_SKILLED)
+            wandlevel = 0;
     } else if (!wand)
         wandlevel = 0;
     struct monst *mtmp;
@@ -1883,11 +1887,17 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
                 return 1;
 
     if (otyp == SPE_IDENTIFY ||
-        otyp == SCR_IDENTIFY)
+        otyp == SCR_IDENTIFY) {
+        int lvl = mprof(mon, MP_SDIVN);
+        if (otyp == SCR_IDENTIFY)
+            lvl = blessed ? P_EXPERT : cursed ? P_UNSKILLED : P_BASIC;
         for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
-            if (otmp->otyp != GOLD_PIECE && (!otmp->mknown || !otmp->mbknown) &&
+            if (otmp->otyp != GOLD_PIECE &&
+                ((!otmp->mknown && lvl >= P_BASIC) ||
+                 (!otmp->mbknown && lvl >= P_SKILLED)) &&
                 otmp != obj)
                 return 1;
+    }
 
     /* Defensive only */
     if (fraction < 35) {
@@ -2219,6 +2229,7 @@ use_item(struct musable *m)
             set_property(mon, CONFUSION, -2, FALSE);
             set_property(mon, STUNNED, -2, FALSE);
             set_property(mon, SICK, -2, FALSE);
+            set_property(mon, ZOMBIE, -2, FALSE);
         }
         return 2;
     case MUSE_DIRHORN:
@@ -2281,7 +2292,7 @@ use_item(struct musable *m)
                       "succeeds in picking the lock on",
                       an(xname(otmp)));
             if (otmp->otrapped)
-                chest_trap(mon, container, FINGER, FALSE);
+                chest_trap(mon, otmp, FINGER, FALSE);
             return DEADMONSTER(mon) ? 1 : 2; /* in case chest trap killed */
         }
         door = &level->locations[x][y];
@@ -2364,23 +2375,10 @@ use_item(struct musable *m)
             return 2;
         }
 
-        if (Inhell && mon_has_amulet(mon) && !rn2(4) &&
-            (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3)) {
-            if (vismon)
-                pline(msgc_substitute,
-                      "As %s climbs the stairs, a mysterious force momentarily "
-                      "surrounds %s...", mon_nam(mon), mhim(mon));
-            /* simpler than for the player; this will usually be the Wizard and 
-               he'll immediately go right to the upstairs, so there's not much
-               point in having any chance for a random position on the current
-               level */
-            migrate_to_level(mon, ledger_no(&u.uz) + 1, MIGR_RANDOM, NULL);
-        } else {
-            if (vismon)
-                pline(msgc_monneutral, "%s escapes upstairs!", Monnam(mon));
-            migrate_to_level(mon, ledger_no(&u.uz) - 1, MIGR_STAIRS_DOWN,
-                             NULL);
-        }
+        if (vismon)
+            pline(msgc_monneutral, "%s escapes upstairs!", Monnam(mon));
+        migrate_to_level(mon, ledger_no(&u.uz) - 1, MIGR_STAIRS_DOWN,
+                         NULL);
         return 2;
     case MUSE_DOWNSTAIRS:
         if (vismon)
@@ -2944,6 +2942,7 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
                   fmt, str, mon_s,
                   refl(os_arms)     ? "shield" :
                   refl(os_wep)      ? "weapon" :
+                  refl(os_swapwep)  ? "weapon" :
                   refl(os_amul)     ? "amulet" :
                   refl(os_role)     ? "scales" :
                   refl(os_race)     ? "scales" :
@@ -2951,12 +2950,35 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
                   refl(os_arm)      ? "armor"  :
                   "something weird"); /* os_arm after role/etc to suppress
                                          "armor" if uskin() */
-        /* TODO: when object properties is a thing, change this */
-        if (refl(os_arms))
-            makeknown((which_armor(mon, os_arms))->otyp);
-        else if (refl(os_amul))
-            makeknown((which_armor(mon, os_amul))->otyp);
+        if (refl(os_arms)) {
+            struct obj *arms = which_armor(mon, os_arms);
+            if (arms->otyp == SHIELD_OF_REFLECTION)
+                makeknown(arms->otyp);
+            learn_oprop(arms, opm_reflects);
+        } else if (refl(os_wep)) {
+            struct obj *wep = m_mwep(mon);
+            if (wep)
+                learn_oprop(wep, opm_reflects);
+        } else if (refl(os_swapwep)) {
+            if (mon != &youmonst)
+                return TRUE;
+
+            if (uswapwep)
+                learn_oprop(uswapwep, opm_reflects);
+        } else if (refl(os_amul)) {
+            struct obj *amul = which_armor(mon, os_amul);
+            if (amul->otyp == AMULET_OF_REFLECTION)
+                makeknown(amul->otyp);
+            learn_oprop(amul, opm_reflects);
+        } else if (refl(os_role) || refl(os_race) ||
+                   refl(os_polyform))
+            return TRUE;
+        else if (refl(os_arm)) {
+            struct obj *arm = which_armor(mon, os_arm);
+            learn_oprop(arm, opm_reflects);
+        }
 #undef refl
+
         return TRUE;
     }
     return FALSE;

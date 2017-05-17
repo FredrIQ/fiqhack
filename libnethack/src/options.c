@@ -60,7 +60,9 @@ static const struct nh_enum_option movecommand_spec =
 static const struct nh_listitem mode_list[] = {
     {MODE_NORMAL, "normal"},
     {MODE_EXPLORE, "explore"},
+#ifndef PUBLIC_SERVER
     {MODE_WIZARD, "debug"}
+#endif
 };
 static const struct nh_enum_option mode_spec =
     { mode_list, listlen(mode_list) };
@@ -187,6 +189,9 @@ static const struct nh_option_desc const_options[] = {
     {"pushweapon", "Commands and Confirmations",
      "offhand the old weapon when wielding a new one",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"server_messages", "Messages and Menus",
+     "deliver messages from other players",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"show_uncursed", "Messages and Menus",
      "always show uncursed status",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
@@ -197,8 +202,8 @@ static const struct nh_option_desc const_options[] = {
      "group similar kinds of objects in inventory",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"sparkle", "Map Display",
-     "display sparkly effect for resisted magical attacks",
-     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+     "speed of resistance animation (0 to disable)",
+     nh_birth_ingame, OPTTYPE_INT, {.i = 20}},
     {"tombstone", "Messages and Menus",
      "print tombstone when you die",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
@@ -288,10 +293,10 @@ static const struct nhlib_boolopt_map boolopt_map[] = {
     {"pickup_thrown", &flags.pickup_thrown},
     {"prayconfirm", &flags.prayconfirm},
     {"pushweapon", &flags.pushweapon},
+    {"server_messages", &flags.servermail},
     {"show_uncursed", &flags.show_uncursed},
     {"showrace", &flags.showrace},
     {"sortpack", &flags.sortpack},
-    {"sparkle", &flags.sparkle},
     {"travel_interrupt", &flags.travel_interrupt},
     {"tombstone", &flags.tombstone},
     {"verbose", &flags.verbose},
@@ -400,6 +405,8 @@ new_opt_struct(void)
     nhlib_find_option(options, "movecommand")->e = movecommand_spec;
     nhlib_find_option(options, "pickup_burden")->e = pickup_burden_spec;
     nhlib_find_option(options, "autopickup_rules")->a = autopickup_spec;
+    nhlib_find_option(options, "sparkle")->i.min = 0;
+    nhlib_find_option(options, "sparkle")->i.max = SHIELD_COUNT;
 
     nhlib_find_option(options, "name")->s.maxlen = PL_NSIZ;
     nhlib_find_option(options, "seed")->s.maxlen = RNG_SEED_SIZE_BASE64;
@@ -503,6 +510,8 @@ set_option(const char *name, union nh_optvalue value,
             flags.ap_rules = NULL;
         }
         flags.ap_rules = nhlib_copy_autopickup_rules(option->value.ar);
+    } else if (!strcmp("sparkle", option->name)) {
+        flags.sparkle = option->value.i;
     }
     /* birth options */
     else if (!strcmp("mode", option->name)) {
@@ -620,6 +629,8 @@ nh_get_options(void)
 
         } else if (!strcmp("menustyle", option->name)) {
             option->value.e = flags.menu_style;
+        } else if (!strcmp("sparkle", option->name)) {
+            option->value.i = flags.sparkle;
         } else if (!strcmp("movecommand", option->name)) {
             option->value.e = flags.interaction_mode;
         } else if (!strcmp("packorder", option->name)) {

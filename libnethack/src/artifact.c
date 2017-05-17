@@ -18,10 +18,13 @@
 #define get_artifact(o) \
                 (((o)&&(o)->oartifact) ? &artilist[(int) (o)->oartifact] : 0)
 
-static int spec_applies(const struct artifact *, const struct monst *);
+static boolean spec_applies(const struct artifact *, const struct monst *);
 static int arti_invoke(struct obj *);
 static boolean magicbane_hit(struct monst *magr, struct monst *mdef,
-                             struct obj *, int *, int, boolean, const char *);
+                             struct obj *, int *, int, boolean,
+                             const char *, boolean);
+static boolean spfx_provides_extrinsic(const struct obj *,
+                                       unsigned long, int);
 
 /* The amount added to the victim's total hit points to insure that the
    victim will be killed even after damage bonus/penalty adjustments.
@@ -346,8 +349,23 @@ restrict_name(struct obj * otmp, const char *name)
 static boolean
 attacks(int adtyp, struct obj *otmp)
 {
-    const struct artifact *weap;
+    if (!otmp)
+        return FALSE;
 
+    if (!otmp->oartifact) {
+        /* don't let armor of fire res do fire damage/similar */
+        if (otmp->oclass != WEAPON_CLASS && !is_weptool(otmp))
+            return FALSE;
+
+        uint64_t props = obj_properties(otmp);
+        if ((adtyp == AD_FIRE && (props & opm_fire)) ||
+            (adtyp == AD_COLD && (props & opm_frost)) ||
+            (adtyp == AD_ELEC && (props & opm_shock)))
+            return TRUE;
+        return FALSE;
+    }
+
+    const struct artifact *weap;
     if ((weap = get_artifact(otmp)) != 0)
         return (boolean) (weap->attk.adtyp == adtyp);
     return FALSE;
@@ -374,15 +392,63 @@ protects(int adtyp, struct obj * otmp)
     return FALSE;
 }
 
-
-/* Given an item and an extrinsic, returns whether that item provides that
-   extrinsic, either through artifact properties or through a "normal" item
-   property. In the special case of warning about a particular type of monster,
-   returns that in *warntype.  Returns the artifact's worn mask (if it's
-   relevant), bitwise-or W_MASK(os_carried), bitwise-or W_MASK(os_invoked) if
-   relevant. */
+/* Returns extrinsics the item provides and in which slot.
+   For warntypes, returns the result in the provided *warntype
+   pointer. */
 long
-item_provides_extrinsic(struct obj *otmp, int extrinsic)
+item_provides_extrinsic(const struct obj *otmp, int extrinsic,
+                        int *warntype)
+{
+    long res;
+    res = item_provides_extrinsic_before_oprop(otmp, extrinsic,
+                                               warntype);
+
+    if (res == W_WORN || res == W_EQUIP)
+        res &= otmp->owornmask;
+    if (res && res != W_MASK(os_quiver) &&
+        (res != W_MASK(os_swapwep) ||
+         (otmp->where == OBJ_INVENT && u.twoweap)))
+        return res;
+
+    long equipmask;
+    enum objslot slot = which_slot(otmp);
+    if (slot == os_invalid) {
+        if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp)) {
+            res = W_EQUIP;
+
+            /* these are only offensive on weapons */
+            if (extrinsic == FIRE_RES ||
+                extrinsic == COLD_RES ||
+                extrinsic == SHOCK_RES ||
+                extrinsic == DRAIN_RES)
+                return 0L;
+        }
+        else
+            res = W_MASK(os_carried);
+    } else
+        res = W_WORN;
+
+    if (obj_oprops_provides_property(otmp, extrinsic)) {
+        if (res == W_WORN || res == W_EQUIP)
+            res &= otmp->owornmask;
+        res &= ~W_MASK(os_quiver);
+        if (res == W_MASK(os_swapwep) &&
+            (otmp->where != OBJ_INVENT || !u.twoweap))
+            res = 0L;
+        return res;
+    }
+
+    return 0L;
+}
+
+/* Checks everything except for object properties. Called
+   directly by obj_properties() to figure out which ones are
+   potentially redundant. This returns if the item provides
+   an extrinsic for a slot *in general*, not if it does it
+   *right now*. */
+long
+item_provides_extrinsic_before_oprop(const struct obj *otmp,
+                                     int extrinsic)
 {
     if (!otmp) {
         panic("Trying to check non-existing item?");
@@ -392,57 +458,61 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic)
     uchar dtyp;
     long spfx;
     boolean equipped;
-    long mask;    
+    long equipmask;
 
-    /* Artifacts can provide elemental defense, either when equipped, or when
-       carried. Non-artifact items (and artifact properties that depend on their
-       base item) only work when equipped. Our definition of "equipped" depends
-       on the base type; wearing is always enough, wielding is only enough for
-       weapons and weapon-tools.
-
-       TODO: Wielding as the secondary weapon while twoweaponing. This currently
-       isn't allowed for artifacts, and never comes up for non-artifacts (no
-       non-artifact weapons currently have properties), but it's unclear whether
-       that's for technical or balance reasons. We should at least fix the
-       technical issues here, even though balance considerations imply that it
-       probably shouldn't be allowed anyway. */
-    mask = W_WORN | W_MASK(os_invoked);
-    if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp))
-        mask |= W_MASK(os_wep);
-    mask &= otmp->owornmask;
-    equipped = !!(mask & W_EQUIP);
+    /* Don't allow non-weapon equippables to provide an extrinsic
+       if wielded */
+    enum objslot slot = which_slot(otmp);
+    if (slot == os_invalid) {
+        if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp))
+            equipmask = W_EQUIP;
+        else
+            equipmask = W_MASK(os_carried);
+    } else
+        equipmask = W_WORN;
 
     /* Does the base item (artifact or not) provide the property in question?
        Skip WARN_OF_MON for paranoia reasons; it wouldn't work if it were
        used, because there'd be no way to communicate which monster is being
-       warned against. */
-    if (objects[otmp->otyp].oc_oprop == extrinsic && extrinsic != WARN_OF_MON)
-        return mask & W_EQUIP;
+       warned against. Potions don't grant their innate properties. */
+    if (objects[otmp->otyp].oc_oprop == extrinsic && extrinsic != WARN_OF_MON && otmp->oclass != POTION_CLASS)
+        return equipmask;
 
-    /* Non-artifact item properties go here. At the present:
-
-       - alchemy smocks give two extrinsics, and so only one can be placed in
-         its item property field, with the other one being special-cased;
-
-       - the Amulet of Yendor is not an artifact but grants clairvoyance when
-         carried */
+    /* Non-artifact item properties go here. */
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
-        return mask & W_EQUIP;
+        return equipmask;
+    if ((otmp->otyp == RED_DRAGON_SCALE_MAIL ||
+         otmp->otyp == RED_DRAGON_SCALES) && extrinsic == INFRAVISION)
+        return equipmask;
+    if ((otmp->otyp == WHITE_DRAGON_SCALE_MAIL ||
+         otmp->otyp == WHITE_DRAGON_SCALES) && extrinsic == WATERPROOF)
+        return equipmask;
+    if ((otmp->otyp == ORANGE_DRAGON_SCALE_MAIL ||
+         otmp->otyp == ORANGE_DRAGON_SCALES) && extrinsic == FREE_ACTION)
+        return equipmask;
+    if ((otmp->otyp == BLACK_DRAGON_SCALE_MAIL ||
+         otmp->otyp == BLACK_DRAGON_SCALES) && extrinsic == DRAIN_RES)
+        return equipmask;
+    if ((otmp->otyp == BLUE_DRAGON_SCALE_MAIL ||
+         otmp->otyp == BLUE_DRAGON_SCALES) && extrinsic == FAST)
+        return equipmask;
+    if ((otmp->otyp == GREEN_DRAGON_SCALE_MAIL ||
+         otmp->otyp == GREEN_DRAGON_SCALES) && extrinsic == SICK_RES)
+        return equipmask;
+    if ((otmp->otyp == YELLOW_DRAGON_SCALE_MAIL ||
+         otmp->otyp == YELLOW_DRAGON_SCALES) && extrinsic == STONE_RES)
+        return equipmask;
     if (otmp->otyp == AMULET_OF_YENDOR &&
         (extrinsic == CLAIRVOYANT || extrinsic == AGGRAVATE_MONSTER))
-        return mask | W_MASK(os_carried);
+        return W_MASK(os_carried);
 
     if (!oart)
         return 0L;
 
-    if (oart->inv_prop == extrinsic && mask & W_MASK(os_invoked))
-        return mask;
-
-    /* Anything from here on is based on artifact properties */
-    mask |= W_MASK(os_carried);
+    if (oart->inv_prop == extrinsic)
+        return W_MASK(os_invoked);
 
     dtyp = oart->cary.adtyp;
- 
     if ((dtyp == AD_FIRE && extrinsic == FIRE_RES) ||
         (dtyp == AD_COLD && extrinsic == COLD_RES) ||
         (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
@@ -451,31 +521,33 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic)
         (dtyp == AD_DRST && extrinsic == POISON_RES) ||
         (dtyp == AD_DISE && extrinsic == SICK_RES) ||
         (dtyp == AD_DRLI && extrinsic == DRAIN_RES))
-        return mask;
+        return W_MASK(os_carried);
 
-    if (equipped) {
-        dtyp = oart->defn.adtyp;
+    dtyp = oart->defn.adtyp;
+    if ((dtyp == AD_FIRE && extrinsic == FIRE_RES) ||
+        (dtyp == AD_COLD && extrinsic == COLD_RES) ||
+        (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
+        (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
+        (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
+        (dtyp == AD_DRST && extrinsic == POISON_RES) ||
+        (dtyp == AD_DISE && extrinsic == SICK_RES) ||
+        (dtyp == AD_DRLI && extrinsic == DRAIN_RES))
+        return equipmask;
 
-        if ((dtyp == AD_FIRE && extrinsic == FIRE_RES) ||
-            (dtyp == AD_COLD && extrinsic == COLD_RES) ||
-            (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
-            (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
-            (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
-            (dtyp == AD_DRST && extrinsic == POISON_RES) ||
-            (dtyp == AD_DISE && extrinsic == SICK_RES) ||
-            (dtyp == AD_DRLI && extrinsic == DRAIN_RES))
-            return mask;
-    }
+    if (spfx_provides_extrinsic(otmp, oart->cspfx, extrinsic))
+        return W_MASK(os_carried);
+    else if (spfx_provides_extrinsic(otmp, oart->spfx, extrinsic))
+        return equipmask;
 
-    /* extrinsics from the spfx field; there could be more than one */
-    spfx = oart->cspfx;
- 
-    if (equipped)
-        spfx |= oart->spfx;
+    return 0L;
+}
 
-    /* TODO: this function used to print a message for hallucination
-       resistance, but it's definitely the wrong place. Discover where the
-       correct place is. */
+/* Returns true if the given artifact spfx field provides
+   extrinsic.  */
+static boolean
+spfx_provides_extrinsic(const struct obj *obj, unsigned long spfx,
+                        int extrinsic)
+{
     if ((spfx & SPFX_ESP     && extrinsic == TELEPAT) ||
         (spfx & SPFX_STLTH   && extrinsic == STEALTH) ||
         (spfx & SPFX_REGEN   && extrinsic == REGENERATION) ||
@@ -605,10 +677,10 @@ spec_applies(const struct artifact *weap, const struct monst *mtmp)
 
     if (defending_weapon && defending_weapon->oartifact &&
         defends((int)weap->attk.adtyp, defending_weapon))
-        return FALSE;
+        return 0;
 
     if (weap->attk.adtyp == AD_PHYS)
-        return TRUE;
+        return 1;
 
     switch (weap->attk.adtyp) {
     case AD_FIRE:
@@ -627,7 +699,7 @@ spec_applies(const struct artifact *weap, const struct monst *mtmp)
     case AD_STON:
         return !resists_ston(mtmp);
     default:
-        return FALSE;
+        return 0;
     }
 
     return 0;
@@ -649,17 +721,42 @@ spec_abon(struct obj *otmp, struct monst *mon)
 
 /* special damage bonus */
 int
-spec_dbon(struct obj *otmp, struct monst *mon, int tmp)
+spec_dbon(struct obj *otmp, struct monst *mon, int tmp,
+          boolean *spec_dbon_applies)
 {
+    if (!otmp->oartifact) {
+        uint64_t props = obj_properties(otmp);
+        int bonus = 0;
+        *spec_dbon_applies = FALSE;
+        if ((props & opm_drain) && !resists_drli(mon))
+            *spec_dbon_applies = TRUE;
+        if (props & opm_vorpal)
+            *spec_dbon_applies = TRUE;
+        if ((props & opm_fire) && !resists_fire(mon)) {
+            *spec_dbon_applies = TRUE;
+            bonus += rnd(6);
+        }
+        if ((props & opm_frost) && !resists_cold(mon)) {
+            *spec_dbon_applies = TRUE;
+            bonus += rnd(6);
+        }
+        if ((props & opm_shock) && !resists_elec(mon)) {
+            *spec_dbon_applies = TRUE;
+            bonus += rnd(6);
+        }
+
+        return bonus;
+    }
+
     const struct artifact *weap = get_artifact(otmp);
 
     if (!weap || (weap->attk.adtyp == AD_PHYS &&       /* check for `NO_ATTK' */
                   weap->attk.damn == 0 && weap->attk.damd == 0))
-        spec_dbon_applies = FALSE;
+        *spec_dbon_applies = FALSE;
     else
-        spec_dbon_applies = spec_applies(weap, mon);
+        *spec_dbon_applies = spec_applies(weap, mon);
 
-    if (spec_dbon_applies)
+    if (*spec_dbon_applies)
         return weap->attk.damd ? rnd((int)weap->attk.damd) : max(tmp, 1);
     return 0;
 }
@@ -762,7 +859,8 @@ magicbane_hit(struct monst *magr,   /* attacker */
               int *dmgptr,          /* extra damage target will suffer */
               int dieroll,          /* d20 that has already scored a hit */
               boolean vis,          /* whether the action can be seen */
-              const char *hittee    /* target's name: "you" or mon_nam(mdef) */
+              const char *hittee,   /* target's name: "you" or mon_nam(mdef) */
+              boolean spec_dbon_applies
     )
 {
     const struct permonst *old_uasmon;
@@ -812,7 +910,8 @@ magicbane_hit(struct monst *magr,   /* attacker */
     if (youattack || youdefend || vis) {
         result = TRUE;
         pline(combat_msgc(magr, mdef, cr_hit),
-              "The magic-absorbing blade %s %s!",
+              "The magic-absorbing %s %s %s!",
+              mb->otyp == QUARTERSTAFF ? "staff" : "blade", /* old saves */
               vtense(NULL, verb), hittee);
         /* assume probing has some sort of noticeable feedback even if it is
            being done by one monster to another */
@@ -933,11 +1032,21 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
 {
     boolean youattack = (magr == &youmonst);
     boolean youdefend = (mdef == &youmonst);
-    boolean vis = (!youattack && magr && cansee(magr->mx, magr->my))
-        || (!youdefend && cansee(mdef->mx, mdef->my))
-        || (youattack && Engulfed && mdef == u.ustuck && !blind(&youmonst));
+    boolean vis = (youattack || youdefend ||
+                   (magr && canseemon(magr)) ||
+                   (mdef && canseemon(mdef)));
+
     const char *wepdesc;
     const char *hittee = youdefend ? "you" : mon_nam(mdef);
+
+    uint64_t props = 0;
+    if (!otmp->oartifact) {
+        props = obj_properties(otmp);
+        if (!(props & opm_vorpal)) {
+            impossible("Running vorpal damage check on a non-vorpal weapon?");
+            return FALSE;
+        }
+    }
 
     /* We really want "on a natural 20" but Nethack does it in reverse from
        AD&D. */
@@ -985,8 +1094,12 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
             otmp->dknown = TRUE;
             return TRUE;
         }
-    } else if (otmp->oartifact == ART_VORPAL_BLADE &&
+    } else if (((props & opm_vorpal) ||
+                otmp->oartifact == ART_VORPAL_BLADE) &&
                (dieroll == 1 || mdef->data == &mons[PM_JABBERWOCK])) {
+        if (vis && !otmp->oartifact)
+            learn_oprop(otmp, opm_vorpal);
+
         static const char *const behead_msg[2] = {
             "%s beheads %s!",
             "%s decapitates %s!"
@@ -994,7 +1107,11 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
 
         if (youattack && Engulfed && mdef == u.ustuck)
             return FALSE;
-        wepdesc = artilist[ART_VORPAL_BLADE].name;
+        if (!otmp->oartifact)
+            wepdesc = "The weapon";
+        else
+            wepdesc = artilist[ART_VORPAL_BLADE].name;
+
         if (!youdefend) {
             if (!has_head(mdef->data) || notonhead || Engulfed) {
                 if (youattack)
@@ -1048,9 +1165,19 @@ artifact_hit_drainlife(struct monst *magr, struct monst *mdef, struct obj *otmp,
 {
     boolean youattack = (magr == &youmonst);
     boolean youdefend = (mdef == &youmonst);
-    boolean vis = (!youattack && magr && cansee(magr->mx, magr->my))
-        || (!youdefend && cansee(mdef->mx, mdef->my))
-        || (youattack && Engulfed && mdef == u.ustuck && !Blind);
+    boolean vis = (youattack || youdefend ||
+                   (magr && canseemon(magr)) ||
+                   (mdef && canseemon(mdef)));
+
+    /* drain life artifacts can't end up here, but weapon object
+       properties stacking can result in this running when the
+       defender resists drain life */
+    if (resists_drli(mdef))
+        return FALSE;
+
+    if (vis && !otmp->oartifact)
+        learn_oprop(otmp, opm_drain);
+
     enum msg_channel msgc = youattack ? msgc_combatalert :
         youdefend ? msgc_intrloss :
         (mdef->mtame && canspotmon(mdef)) ? msgc_petfatal : msgc_monneutral;
@@ -1112,36 +1239,49 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
              int *dmgptr, int dieroll)  /* needed for Magicbane and
                                            vorpal blades */
 {
-    boolean youattack = (magr == &youmonst);
-    boolean youdefend = (mdef == &youmonst);
-    boolean vis = (!youattack && magr && cansee(magr->mx, magr->my))
-        || (!youdefend && cansee(mdef->mx, mdef->my))
-        || (youattack && Engulfed && mdef == u.ustuck && !Blind);
-    boolean realizes_damage;
-    const char *hittee = youdefend ? "you" : mon_nam(mdef);
+    if (!otmp)
+        return FALSE;
+    uint64_t props = 0;
+    if (!otmp->oartifact) {
+        /* don't let armor of fire res do fire damage/similar */
+        if (otmp->oclass != WEAPON_CLASS && !is_weptool(otmp))
+            return FALSE;
+
+        props = obj_properties(otmp);
+        if (!(props & (opm_fire | opm_frost | opm_shock |
+                       opm_drain | opm_vorpal)))
+            return FALSE;
+    }
+
+    boolean uagr = (magr == &youmonst);
+    boolean udef = (mdef == &youmonst);
+    boolean vis = (uagr || udef ||
+                   (magr && canseemon(magr)) ||
+                   (mdef && canseemon(mdef)));
+    boolean res = FALSE;
+    const char *hittee = mon_nam(mdef);
+    boolean spec_dbon_applies = FALSE;
 
     /* The following takes care of most of the damage, but not all-- the
        exception being for level draining, which is specially handled. Messages 
        are done in this function, however. */
-    *dmgptr += spec_dbon(otmp, mdef, *dmgptr);
+    *dmgptr += spec_dbon(otmp, mdef, *dmgptr, &spec_dbon_applies);
 
-    if (youattack && youdefend) {
+    if (uagr && udef) {
         impossible("attacking yourself with weapon?");
         return FALSE;
     }
 
-    realizes_damage = (youdefend || vis ||
-                       /* feel the effect even if not seen */
-                       (youattack && mdef == u.ustuck));
-
     /* the four basic attacks: fire, cold, shock and missiles */
     if (attacks(AD_FIRE, otmp)) {
-        if (realizes_damage)
-            pline(combat_msgc(magr, mdef, cr_hit), "The fiery blade %s %s%c",
-                  !spec_dbon_applies ? "hits" : (mdef->data ==
+        if (vis)
+            pline(combat_msgc(magr, mdef, cr_hit), "The %s %s %s%c",
+                  otmp->oartifact ? "fiery blade" : "weapon",
+                  resists_fire(mdef) ? "hits" : (mdef->data ==
                                                  &mons[PM_WATER_ELEMENTAL]) ?
-                  "vaporizes part of" : "burns", hittee,
+                  "vaporizes part of" : "burns", mon_nam(mdef),
                   !spec_dbon_applies ? '.' : '!');
+
         if (!rn2(4))
             destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
         if (!rn2(4))
@@ -1150,59 +1290,84 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
             destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
         if (sliming(mdef))
             burn_away_slime(mdef);
-        return realizes_damage;
+        if (otmp->oartifact)
+            return vis;
+        if (vis) {
+            learn_oprop(otmp, opm_fire);
+            res = TRUE;
+        }
     }
     if (attacks(AD_COLD, otmp)) {
-        if (realizes_damage)
-            pline(combat_msgc(magr, mdef, cr_hit), "The ice-cold blade %s %s%c",
-                  !spec_dbon_applies ? "hits" : "freezes", hittee,
-                  !spec_dbon_applies ? '.' : '!');
+        if (vis)
+            pline(combat_msgc(magr, mdef, cr_hit), "The %s %s %s%c",
+                  otmp->oartifact ? "ice-cold blade" : "weapon",
+                  resists_cold(mdef) ? "hits" : "freezes",
+                  mon_nam(mdef), !spec_dbon_applies ? '.' : '!');
         if (!rn2(4))
             destroy_mitem(mdef, POTION_CLASS, AD_COLD);
-        return realizes_damage;
+        if (otmp->oartifact)
+            return vis;
+        if (vis) {
+            learn_oprop(otmp, opm_frost);
+            res = TRUE;
+        }
     }
     if (attacks(AD_ELEC, otmp)) {
-        if (realizes_damage)
+        if (vis)
             pline(combat_msgc(magr, mdef, cr_hit),
-                  "The massive hammer hits%s %s%c",
-                  !spec_dbon_applies ? "" : "!  Lightning strikes", hittee,
-                  !spec_dbon_applies ? '.' : '!');
-        if (!rn2(5))
-            destroy_mitem(mdef, RING_CLASS, AD_ELEC);
+                  "The %s hits%s %s%c",
+                  otmp->oartifact ? "massive hammer" : "weapon",
+                  resists_elec(mdef) ? "" : "!  Lightning strikes",
+                  mon_nam(mdef), !spec_dbon_applies ? '.' : '!');
         if (!rn2(5))
             destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
-        return realizes_damage;
+        if (otmp->oartifact)
+            return vis;
+        if (vis) {
+            learn_oprop(otmp, opm_shock);
+            res = TRUE;
+        }
     }
     if (attacks(AD_MAGM, otmp)) {
-        if (realizes_damage)
+        if (vis)
             pline(combat_msgc(magr, mdef, cr_hit),
                   "The imaginary widget hits%s %s%c",
                   !spec_dbon_applies ? "" :
-                  "!  A hail of magic missiles strikes", hittee,
-                  !spec_dbon_applies ? '.' : '!');
-        return realizes_damage;
+                  "!  A hail of magic missiles strikes",
+                  mon_nam(mdef), !spec_dbon_applies ? '.' : '!');
+        return vis;
     }
 
     if (attacks(AD_STUN, otmp) && dieroll <= MB_MAX_DIEROLL) {
         /* Magicbane's special attacks (possibly modifies hittee[]) */
-        return magicbane_hit(magr, mdef, otmp, dmgptr, dieroll, vis, hittee);
+        return magicbane_hit(magr, mdef, otmp, dmgptr, dieroll, vis,
+                             hittee, spec_dbon_applies);
     }
 
     if (!spec_dbon_applies) {
         /* since damage bonus didn't apply, nothing more to do; no further
            attacks have side-effects on inventory */
-        return FALSE;
+        return vis;
     }
 
     /* Tsurugi of Muramasa, Vorpal Blade */
-    if (spec_ability(otmp, SPFX_BEHEAD))
-        return artifact_hit_behead(magr, mdef, otmp, dmgptr, dieroll);
+    if ((props & opm_vorpal) ||
+        (otmp->oartifact && spec_ability(otmp, SPFX_BEHEAD))) {
+        res = artifact_hit_behead(magr, mdef, otmp, dmgptr,
+                                  dieroll);
+        if (otmp->oartifact)
+            return res;
+    }
 
     /* Stormbringer */
-    if (attacks(AD_DRLI, otmp))
-        return artifact_hit_drainlife(magr, mdef, otmp, dmgptr);
+    if (attacks(AD_DRLI, otmp)) {
+        res = (artifact_hit_drainlife(magr, mdef, otmp,
+                                      dmgptr) || res);
+        if (otmp->oartifact)
+            return res;
+    }
 
-    return FALSE;
+    return res;
 }
 
 static const char recharge_type[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
@@ -1297,6 +1462,14 @@ arti_invoke(struct obj *obj)
         obj->age = moves + rnz_on_rng(100, rng_artifact_invoke);
 
         switch (oart->inv_prop) {
+        case SELF_UNCURSE:
+            if (obj->cursed) {
+                uncurse(obj);
+                pline(msgc_itemrepair, "%s %s %s",
+                       The(xname(obj)), aobjnam(obj, "softly glow"),
+                       hcolor("amber"));
+            }
+            break;
         case TAMING:{
                 struct obj *pseudo = mktemp_sobj(NULL, SCR_TAMING);
                 boolean unused_known;
@@ -1323,6 +1496,8 @@ arti_invoke(struct obj *obj)
                 }
                 if (sick(&youmonst))
                     set_property(&youmonst, SICK, -2, FALSE);
+                if (zombifying(&youmonst))
+                    set_property(&youmonst, ZOMBIE, -2, FALSE);
                 if (sliming(&youmonst))
                     set_property(&youmonst, SLIMED, -2, FALSE);
                 if (blind(&youmonst))

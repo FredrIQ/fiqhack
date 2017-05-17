@@ -1748,7 +1748,7 @@ use_unicorn_horn(struct obj *obj)
     trouble_count = did_prop = did_attr = 0;
 
     /* collect property troubles */
-    if (sick(&youmonst))
+    if (sick(&youmonst) || zombifying(&youmonst))
         prop_trouble(SICK);
     if (property_timeout(&youmonst, BLINDED))
         prop_trouble(BLINDED);
@@ -1814,6 +1814,7 @@ use_unicorn_horn(struct obj *obj)
         switch (idx) {
         case prop2trbl(SICK):
             set_property(&youmonst, SICK, -2, FALSE);
+            set_property(&youmonst, ZOMBIE, -2, FALSE);
             did_prop++;
             break;
         case prop2trbl(BLINDED):
@@ -2716,7 +2717,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 
         bhitpos = cc;
         check_caitiff(mtmp);
-        thitmonst(&youmonst, mtmp, uwep, 0);
+        thitmonst(&youmonst, mtmp, uwep, NULL, 0);
         /* check the monster's HP because thitmonst() doesn't return an
            indication of whether it hit.  Not perfect (what if it's a
            non-silver weapon on a shade?) */
@@ -2868,7 +2869,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
             return 1;
         } else if ((!bigmonst(mtmp->data) && !strongmonst(mtmp->data)) ||
                    rn2(4)) {
-            thitmonst(&youmonst, mtmp, uwep, 0);
+            thitmonst(&youmonst, mtmp, uwep, NULL, 0);
             return 1;
         }
         /* TODO: This fallthrough looks very suspicious, even though there's a

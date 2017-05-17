@@ -688,6 +688,10 @@ dog_move(struct monst *mtmp, int after)
     long info[9], allowflags;
     struct musable m;
     struct distmap_state ds;
+    boolean mercy = FALSE;
+    if (mtmp->mw && (obj_properties(mtmp->mw) & opm_mercy) &&
+        mtmp->mw->mknown)
+        mercy = TRUE;
 
     /*
      * Tame Angels have isminion set and an ispriest structure instead of
@@ -795,7 +799,7 @@ dog_move(struct monst *mtmp, int after)
         allowflags |= BUSTDOOR;
     if (!Is_rogue_level(&u.uz) && tunnels(mtmp->data))
         allowflags |= ALLOW_DIG;
-    cnt = mfndpos(mtmp, poss, info, allowflags);
+    cnt = mfndpos(mtmp, poss, info, allowflags, 1);
 
     /* Normally dogs don't step on cursed items, but if they have no other
        choice they will.  This requires checking ahead of time to see how many
@@ -819,6 +823,7 @@ dog_move(struct monst *mtmp, int after)
     chi = -1;
     nidist = GDIST(nix, niy);
 
+    struct monst *mtmp2 = NULL;
     for (i = 0; i < cnt; i++) {
         nx = poss[i].x;
         ny = poss[i].y;
@@ -832,9 +837,10 @@ dog_move(struct monst *mtmp, int after)
         if (!has_edog && (j = distu(nx, ny)) > 16 && j >= udist)
             continue;
 
-        if ((info[i] & ALLOW_M) && MON_AT(level, nx, ny)) {
+        mtmp2 = m_at(level, nx, ny);
+        if (mtmp2 &&
+            ((mtmp2->mtame && mercy) || (info[i] & ALLOW_M))) {
             int mstatus;
-            struct monst *mtmp2 = m_at(level, nx, ny);
 
             /* anti-stupidity checks moved to mm_aggression in mon.c */
 

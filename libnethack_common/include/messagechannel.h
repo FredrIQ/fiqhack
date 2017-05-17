@@ -143,6 +143,9 @@ enum msg_channel {
     /* Messages that are hidden inside pline() */
     msgc_offlevel,        /* something happened much too far away to perceive */
     msgc_mute,              /* always hidden, used to reduce code duplication */
+
+    /* Messages that don't directly pertain to the game at all. */
+    msgc_mail,         /* another player on the public server sends a message */
 };
 
 /*

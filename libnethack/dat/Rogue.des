@@ -174,57 +174,74 @@ MONSTER: ':',"chameleon",random,hostile
 #
 
 MAZE: "Rog-loca",' '
+FLAGS: hardfloor
 GEOMETRY:center,center
 #         1         2         3         4         5         6         7
-#123456789012345678901234567890123456789012345678901234567890123456789012345
+#12345678901234567890123456789012345678901234567890123456789012345678901234
 MAP
-             ----------------------------------------------------   --------
-           ---.................................................-    --.....|
-         ---...--------........-------.......................---     ---...|
-       ---.....-      ---......-     ---..................----         --.--
-     ---.....----       --------       --..................--         --..|
-   ---...-----                       ----.----.....----.....---      --..||
-----..----                       -----..---  |...---  |.......---   --...|
-|...---                       ----....---    |.---    |.........-- --...||
-|...-                      ----.....---     ----      |..........---....|
-|...----                ----......---       |         |...|.......-....||
-|......-----          ---.........-         |     -----...|............|
-|..........-----   ----...........---       -------......||...........||
-|..............-----................---     |............|||..........|
-|------...............................---   |...........|| |.........||
-|.....|..............------.............-----..........||  ||........|
-|.....|.............--    ---.........................||    |.......||
-|.....|.............-       ---.....................--|     ||......|
-|-S----------.......----      --.................----        |.....||
-|...........|..........--------..............-----           ||....|
-|...........|............................-----                |....|
-------------------------------------------                    ------
+---------------------------------------------------------------------------
+|....|.......|..|.......|..................|...|..........................|
+|....S.......|..|.......|..------------....|-+-|....{...--F--.......--F--.|
+|--+-|.......|..----+----..|..........|....|...|........|...|.......|...|.|
+|....|.......|.............|..........S....--F--........F...---------...F.|
+|....-----+---.............+..........|.BBBBBBBBBBB.....---...........---.|
+|..............----S----...|..........|.B.........B.......|...........|...|
+|--------......|.......|...------------.B.........B.......|-+-------+-|...|
+|.......|......|.......|................B.........BFF-----|..|.....|..|...|
+|.......|......|.......|................B.........BF.+....+..S.....|..S...|
+|.......+......|.......|...------------.B.........BFF-----|..|.....|..|...|
+|.......|......----+----...|..........|.B.........B.......|-+-------+-|...|
+|.......|..................+..........|.B.........B.......|...........|...|
+|---S----..................|..........S.BBBBBBBBBBB.....---...........---.|
+|.....|.......----+----....|..........|....--F--........F...---------...F.|
+|.....|...{...|.......|....------------....|...|....{...|...|.......|...|.|
+|.....|.......|.......|....................|-+-|........--F--.......--F--.|
+|.....|.......|.......|....................|...|..........................|
+---------------------------------------------------------------------------
 ENDMAP
-# Dungeon Description
-REGION:(00,00,75,20),lit,"ordinary"
-# Doors
-#DOOR:locked|closed|open,(xx,yy)
+# The "random" places here are where assassins stand to shoot at you.
+RANDOM_PLACES:(58,03),(70,03),(58,15),(70,15),(45,03),(45,15),(52,09)
+# Doors (Assassin's Guild Hall)
+DOOR:locked,(70,09)
+DOOR:locked,(68,07)
+DOOR:locked,(68,11)
+DOOR:locked,(60,07)
+DOOR:locked,(60,11)
+DOOR:locked,(61,09)
+DOOR:locked,(58,09)
+DOOR:locked,(53,09)
+# Doors (Assassin's Watchtowers)
+DOOR:closed,(45,02)
+DOOR:closed,(45,16)
+# Doors (other buildings)
+DOOR:locked,(38,04)
+DOOR:locked,(38,13)
+DOOR:random,(27,05)
+DOOR:random,(27,12)
+DOOR:random,(20,03)
+DOOR:locked,(19,06)
+DOOR:random,(19,11)
+DOOR:random,(18,14)
+DOOR:random,(10,05)
+DOOR:locked,(05,02)
+DOOR:random,(03,03)
+DOOR:closed,(04,13)
+# "I have set before you an open door..."  -- horribly out-of-context quote
+DOOR:open,(08,10)
 # Stairs
-STAIR:random,up
-STAIR:random,down
-# Non diggable walls
-NON_DIGGABLE:(00,00,75,20)
+STAIR:(03,10),up
+STAIR:(65,09),down
+# Non diggable walls for the guild hall
+NON_DIGGABLE:(56,02,72,16)
 # Objects
-OBJECT:'?',"teleportation",(11,18),cursed,0
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
-OBJECT:random,random,random
+OBJECT:'?',"teleportation",random,cursed,0
+OBJECT:'/',"cold",place[0]
+OBJECT:'/',"fire",place[1]
+OBJECT:'/',"lightning",place[2]
+OBJECT:'/',"sleep",place[3]
+OBJECT:'/',"magic missile",place[4]
+OBJECT:'/',"striking",place[5]
+OBJECT:'/',"slow monster",place[6]
 # Random traps
 TRAP:random,random
 TRAP:random,random
@@ -232,13 +249,32 @@ TRAP:random,random
 TRAP:random,random
 TRAP:random,random
 TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
+TRAP:random,random
 # Random monsters.
-MONSTER:'l',"leprechaun",random,hostile
-MONSTER:'l',"leprechaun",random,hostile
-MONSTER:'l',"leprechaun",random,hostile
-MONSTER:'l',"leprechaun",random,hostile
-MONSTER:'l',"leprechaun",random,hostile
-MONSTER:'l',"leprechaun",random,hostile
+MONSTER:'@',"soldier",place[0],hostile
+MONSTER:'@',random,place[1],hostile
+MONSTER:'@',random,place[2],hostile
+MONSTER:'@',"Woodland-elf",place[3],hostile
+MONSTER:'@',"soldier",place[4],hostile
+MONSTER:'@',"soldier",place[5],hostile
+MONSTER:'@',random,place[6],hostile
 MONSTER:'l',"leprechaun",random,hostile
 MONSTER:'l',"leprechaun",random,hostile
 MONSTER:'l',"leprechaun",random,hostile
@@ -261,11 +297,56 @@ MONSTER:'N',"guardian naga",random,hostile
 MONSTER:'N',random,random,hostile
 MONSTER:'N',random,random,hostile
 MONSTER:'N',random,random,hostile
-MONSTER: ':',"chameleon",random,hostile
-MONSTER: ':',"chameleon",random,hostile
-MONSTER: ':',"chameleon",random,hostile
-MONSTER: ':',"chameleon",random,hostile
-MONSTER: ':',"chameleon",random,hostile
+MONSTER:':',"chameleon",random,hostile
+MONSTER:':',"chameleon",random,hostile
+MONSTER:':',"chameleon",random,hostile
+MONSTER:':',"chameleon",random,hostile
+MONSTER:':',"chameleon",random,hostile
+#REGION:(00,00,74,19),lit,"ordinary"
+#This is what I actually want to do...
+#REGION:(41,06,49,12),lit,"shop"
+#But an open/unwalled shop doesn't actually work.  So...
+REGION:(41,06,49,12),lit,"ordinary"
+OBJECT:random,random,(42,07)
+OBJECT:random,random,(42,08)
+OBJECT:random,random,(42,09)
+OBJECT:random,random,(42,10)
+OBJECT:random,random,(42,11)
+OBJECT:random,random,(43,07)
+OBJECT:random,random,(43,08)
+OBJECT:random,random,(43,09)
+OBJECT:random,random,(43,10)
+OBJECT:random,random,(43,11)
+OBJECT:random,random,(44,07)
+OBJECT:random,random,(44,08)
+OBJECT:random,random,(44,09)
+OBJECT:random,random,(44,10)
+OBJECT:random,random,(44,11)
+OBJECT:random,random,(45,07)
+OBJECT:random,random,(45,08)
+OBJECT:random,random,(45,09)
+OBJECT:random,random,(45,10)
+OBJECT:random,random,(45,11)
+OBJECT:random,random,(46,07)
+OBJECT:random,random,(46,08)
+OBJECT:random,random,(46,09)
+OBJECT:random,random,(46,10)
+OBJECT:random,random,(46,11)
+OBJECT:random,random,(47,07)
+OBJECT:random,random,(47,08)
+OBJECT:random,random,(47,09)
+OBJECT:random,random,(47,10)
+OBJECT:random,random,(47,11)
+MONSTER:'@',"watchman",random,peaceful
+MONSTER:'@',"watchman",random,peaceful
+REGION:(01,08,07,12),lit,"ordinary"
+REGION:(06,01,12,04),lit,"ordinary"
+REGION:(15,15,21,17),lit,"ordinary"
+REGION:(16,07,22,10),lit,"ordinary"
+REGION:(17,01,23,02),lit,"ordinary"
+REGION:(28,03,37,06),lit,"ordinary"
+REGION:(28,11,37,14),lit,"ordinary"
+REGION:(62,08,66,10),lit,"ordinary"
 
 #
 #	The "goal" level for the quest.  Teleportation and digging are
@@ -275,6 +356,7 @@ MONSTER: ':',"chameleon",random,hostile
 #	simple searching or digging since there is no path between your
 #	arrival point and his location.
 #
+
 MAZE: "Rog-goal", ' '
 FLAGS: noteleport
 GEOMETRY:center,center
@@ -283,16 +365,15 @@ GEOMETRY:center,center
 MAP
 -----      -------.......................................|-----------------|
 |...|  -----.....|.......................................|.................|
-|...----...|.....|.......................................|....---------....|
-|.---......---..--.................................------------.......|....|
-|...............|..................................|..|...|...----........-|
-|.....-----....--.................................|-..--..-|.....----S----|
-|--S---...|....|.................................|-........-|....|........|
-|.........---------.............................|-....}}....-|...|...|....|
-|....|.....S......|............................|-.....}}.....-|..--.------|
-|-----.....--.....|...........................|-...}}}}}}}}...-|....|.....--
-|...........--....------S-----...............|-....}}}}}}}}....-|..........|
-|............--........|...| |..............--.....}}.}}........----------S-
+|...----...|.....|.................................--------------------....|
+|.---......---..--.................................|..|...|....--|....|....|
+|...............|.................................|-..--..-|.....|........-|
+|.....-----....--................................|-........-|....|---S----| 
+|--S---...|....|................................|-....}}....-|...|........| 
+|.........---------............................|-.....}}.....-|..--.------| 
+|....|.....S......|...........................|-...}}}}}}}}...-|....|.....--
+|-----.....--.....|..........................|-....}}}}}}}}....-|..........|
+|...........---...------S-----..............--.....}}.}}........----------S-
 |.............|........|...| |..............|......}}}}}}}}......|...|.....|
 |S-.---.---.---.---.---|...| ------------...--........}}.}}.....--..---....|
 |.---.---.---.---.-S-..----- |....|.....|....|-....}}}}}}}}....---..S.|--..|
@@ -303,18 +384,23 @@ MAP
     |.............|..........|.............S...   |S-------|.....|..-----..|
     ----------------------------------------  ......       ----------   ----
 ENDMAP
+# I removed a line, as follows:
+#  * Columns 00-43, removed row 12, decrement any y >= 12.
+#  * Columns 44-64, removed row 2,  decrement any y >= 2.
+#  * Columns 65-75, removed row 7,  decrement any y >= 7.
+
 # Dungeon Description
-REGION:(00,00,75,20),lit,"ordinary"
+REGION:(00,00,75,19),lit,"ordinary"
 # Stairs
-STAIR:levregion(00,00,14,20),(01,18,04,20),up
+STAIR:levregion(00,00,14,19),(01,17,04,19),up
 # Doors
 # Non diggable walls
-NON_DIGGABLE:(00,00,75,20)
+NON_DIGGABLE:(00,00,75,19)
 # One trap to keep the gnomes at bay.
 TRAP:"spiked pit",(37,07)
 # Objects
 OBJECT:'(',"skeleton key",(38,10),blessed,0,"The Master Key of Thievery"
-OBJECT:'%',"tin",(26,12),"chameleon",0
+OBJECT:'%',"tin",(26,11),"chameleon",0
 OBJECT:random,random,random
 OBJECT:random,random,random
 OBJECT:random,random,random
@@ -376,10 +462,10 @@ MONSTER: ':',"chameleon",random,hostile
 MONSTER: ':',"chameleon",random,hostile
 MONSTER: ':',"chameleon",random,hostile
 MONSTER: ':',"chameleon",random,hostile
-MONSTER:';',"shark",(51,14),hostile
-MONSTER:';',"shark",(53,09),hostile
-MONSTER:';',"shark",(55,15),hostile
-MONSTER:';',"shark",(58,10),hostile
+MONSTER:';',"shark",(51,13),hostile
+MONSTER:';',"shark",(53,08),hostile
+MONSTER:';',"shark",(55,14),hostile
+MONSTER:';',"shark",(58,09),hostile
 
 #
 #	The "fill" level for the quest.

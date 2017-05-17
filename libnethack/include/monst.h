@@ -119,6 +119,7 @@ struct monst {
     unsigned usicked:1;
     unsigned uslimed:1;
     unsigned ustoned:1;
+    unsigned uzombied:1;
     unsigned levi_wary:1;       /* worried about levi timing out */
     unsigned female:1;          /* is female */
     unsigned cham:3;            /* shape-changer */
@@ -163,6 +164,8 @@ struct monst {
     xchar weapon_check;
     int misc_worn_check;
 
+    short former_player; /* info about this being the ghost or whatnot
+                            of a former player, from a bones file */
     int meating;        /* monster is eating timeout */
     schar mhitinc;      /* monster intrinsic to-hit bonus/penalty */
     schar mdaminc;      /* monster intrinsic damage bonus/penalty */

@@ -92,6 +92,7 @@ resetobjs(struct obj *ochain, boolean restore)
             if (objects[otmp->otyp].oc_uses_known)
                 otmp->known = 0;
             otmp->dknown = otmp->bknown = 0;
+            otmp->oprops_known = 0;
             otmp->rknown = 0;
             otmp->invlet = 0;
             otmp->no_charge = 0;
@@ -373,6 +374,12 @@ make_bones:
                 continue;
             mon_addspell(mtmp, spellid(i));
         }
+
+        mtmp->former_player = 1 + /* Guarantee former_player > 0 */
+            (2 * u.initgend    /*   2 * (0-2) = 0-4 */) +
+            (8   * u.initalign /*   8 * (0-3) = 0-24 */) +
+            (32  * u.initrace  /*  32 * (0-4) = 0-128, but leave room */) +
+            (256 * u.initrole);
     }
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         resetobjs(mtmp->minvent, FALSE);
@@ -516,7 +523,9 @@ getbones(d_level *levnum)
             trickery(errbuf);
         } else {
             struct monst *mtmp;
+            unsigned old_save_revision = flags.save_revision;
             struct level *lev = getlev(&mf, ledger_no(levnum), TRUE);
+            flags.save_revision = old_save_revision;
 
             /* Note that getlev() now keeps tabs on unique monsters such as
                demon lords, and tracks the birth counts of all species just as

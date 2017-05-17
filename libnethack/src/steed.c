@@ -314,7 +314,8 @@ mount_steed(struct monst * mtmp,        /* The animal */
             /* "a saddled mumak" or "a saddled pony called Dobbin" */
             x_monnam(mtmp, ARTICLE_A, NULL,
                      SUPPRESS_IT | SUPPRESS_INVISIBLE |
-                     SUPPRESS_HALLUCINATION, TRUE));
+                     SUPPRESS_HALLUCINATION | SUPPRESS_ENSLAVEMENT,
+                     TRUE));
         losehp(rn1(5, 10), buf);
         return FALSE;
     }

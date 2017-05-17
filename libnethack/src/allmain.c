@@ -586,6 +586,25 @@ just_reloaded_save:
                           "That direction has no meaning while replaying.");
                     continue;
                 }
+            } else if (!strcmp(cmd.cmd, "grope")) {
+                /* go to a specific turn */
+                int trycnt = 0;
+                int turn = 0;
+                const char *buf;
+                const char *qbuf = "To what turn would you like to go to?";
+                do {
+                    if (++trycnt == 2)
+                        qbuf = msgcat(qbuf, " [type a number above 0]");
+
+                    (*windowprocs.win_getlin) (qbuf, &buf, msg_getlin_callback);
+                } while (!turn && strcmp(buf, "\033") && !digit(buf[0]) && trycnt < 10);
+
+                if (trycnt == 10 || !strcmp(buf, "\033"))
+                    continue; /* aborted or refused to input a number 10 times */
+
+                turn = atoi(buf);
+                log_sync(turn, TLU_TURNS, FALSE);
+                goto just_reloaded_save;
             } else {
                 /* Internal commands weren't sent by the player, so don't
                    complain about them, just ignore them. Ditto for repeat. */
@@ -718,6 +737,9 @@ you_moved(void)
                taken 0 more actions than the global. */
 
             monscanmove = movemon();
+
+            if (flags.servermail)
+                checkformail();
 
             /* Now both players and monsters have taken 1 more action than the
                global... */
@@ -859,7 +881,6 @@ you_moved(void)
                 hp = &(u.mh);
                 hpmax = &(u.mhmax);
             }
-            boolean polyinit = (flags.polyinit_mnum != -1);
             if (u.uinvulnerable) {
                 /* for the moment at least, you're in tiptop shape */
                 wtcap = UNENCUMBERED;
@@ -894,9 +915,8 @@ you_moved(void)
                         *hp = *hpmax;
                 } else if (Regeneration ||
                            (youmonst.m_lev <= 9 &&
-                            !(moves % ((MAXULEV + 12) / (youmonst.m_lev + 2) + 1)))) {
-                    *hp++;
-                }
+                            !(moves % ((MAXULEV + 12) / (youmonst.m_lev + 2) + 1))))
+                    *hp += 1;
             }
 
             /* moving around while encumbered is hard work */
@@ -1490,7 +1510,7 @@ newgame(microseconds birthday, struct newgame_options *ngo)
     /* Stop autoexplore revisiting the entrance stairs (or position). */
     level->locations[youmonst.mx][youmonst.my].mem_stepped = 1;
 
-    historic_event(FALSE,
+    historic_event(FALSE, FALSE,
                    "entered the Dungeons of Doom to retrieve the Amulet of "
                    "Yendor!");
 

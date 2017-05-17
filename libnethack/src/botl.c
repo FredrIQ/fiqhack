@@ -277,6 +277,7 @@ make_player_info(struct nh_player_info *pi)
         if (u.usick_type & SICK_NONVOMITABLE)
             strncpy(pi->statusitems[pi->nr_items++], "Ill", ITEMLEN);
     }
+    int zombie_timer = property_timeout(&youmonst, ZOMBIE);
     if (Blind)  /* 4 */
         strncpy(pi->statusitems[pi->nr_items++], "Blind", ITEMLEN);
     if (slippery_fingers(&youmonst))   /* 5 */
@@ -293,6 +294,12 @@ make_player_info(struct nh_player_info *pi)
         strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
     if (petrifying(&youmonst))     /* 11 */
         strncpy(pi->statusitems[pi->nr_items++], "Petrify", ITEMLEN);
+    if (zombie_timer) {
+        if (zombie_timer > 40)
+            strncpy(pi->statusitems[pi->nr_items++], "Zombie", ITEMLEN);
+        else
+            strncpy(pi->statusitems[pi->nr_items++], "Zombie!", ITEMLEN);
+    }
     if (u.ustuck && !Engulfed && !sticks(youmonst.data))      /* 12 */
         strncpy(pi->statusitems[pi->nr_items++], "Held", ITEMLEN);
     if (enc_stat[cap]           )  /* 13 */

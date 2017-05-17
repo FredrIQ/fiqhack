@@ -133,6 +133,9 @@ static struct nh_option_desc curses_options[] = {
     {"border", "Screen Layout",
      "what to draw borders around",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = FRAME_ALL}},
+    {"classic_status", "Screen Layout",
+     "use classic NetHack layout for status lines",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"comment", "Online and Tournaments",
      "no game effect, used to prove your ID in tournaments",
      nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
@@ -175,6 +178,9 @@ static struct nh_option_desc curses_options[] = {
     {"menupaging", "Messages and Menus",
      "scrolling behaviour of menus",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MP_LINES}},
+    {"msgcolor", "Screen Layout",
+     "color messages depending on context",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"msgheight", "Screen Layout",
      "message window height",
      nh_birth_ingame, OPTTYPE_INT, {.i = 8}},
@@ -192,7 +198,7 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_ENUM, {.e = OPTSTYLE_FULL}},
     {"palette", "Terminal and Rendering",
      "color palette used for text",
-     nh_birth_ingame, OPTTYPE_ENUM, {.e = PALETTE_DEFAULT}},
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = PALETTE_NONE}},
     {"prompt_inline", "Messages and Menus",
      "place prompts in the message window",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
@@ -205,6 +211,9 @@ static struct nh_option_desc curses_options[] = {
     {"scores_around", "Endgame Sequence",
       "the number of scores shown around your score",
      nh_birth_ingame, OPTTYPE_INT, {.i = 2}},
+    {"show_ac", "Screen Layout",
+     "show armor value as AC instead of Def",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"sidebar", "Screen Layout",
      "when to draw the inventory sidebar",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = AB_AUTO}},
@@ -218,6 +227,7 @@ static struct nh_option_desc curses_options[] = {
 
 static struct nhlib_boolopt_map boolopt_map[] = {
     {"alt_is_esc", &settings.alt_is_esc},
+    {"classic_status", &settings.classic_status},
     {"draw_branch", &settings.dungeoncolor},
     {"draw_detected", &settings.use_inverse},
     {"draw_rock", &settings.visible_rock},
@@ -227,9 +237,11 @@ static struct nhlib_boolopt_map boolopt_map[] = {
     {"darkgray", &settings.darkgray},
     {"extmenu", &settings.extmenu},
     {"invweight", &settings.invweight},
+    {"msgcolor", &settings.msgcolor},
     {"mouse", &settings.mouse},
     {"prompt_inline", &settings.prompt_inline},
     {"scores_own", &settings.end_own},
+    {"show_ac", &settings.show_ac},
     {"status3", &settings.status3},
     {NULL, NULL}
 };
@@ -322,7 +334,9 @@ curses_set_option(const char *name, union nh_optvalue value)
 
         *var = value.b;
 
-        if (!strcmp(option->name, "status3")) {
+        if (!strcmp(option->name, "status3") ||
+            !strcmp(option->name, "classic_status") ||
+            !strcmp(option->name, "show_ac")) {
             rebuild_ui();
         } else if (!strcmp(option->name, "darkgray")) {
             set_darkgray();
@@ -1485,6 +1499,9 @@ write_nh_config(void)
 
     if (get_config_name(filename, FALSE) &&
         (fp = open_config_file(filename))) {
+#ifdef UNIX
+        fchmod(fileno(fp), 0644);
+#endif
         write_config_options(fp, nh_options);
         fclose(fp);
     } else {
@@ -1506,6 +1523,9 @@ write_ui_config(void)
 
     if (get_config_name(filename, TRUE) &&
         (fp = open_config_file(filename))) {
+#ifdef UNIX
+        fchmod(fileno(fp), 0644);
+#endif
         write_config_options(fp, curses_options);
         fclose(fp);
     } else {

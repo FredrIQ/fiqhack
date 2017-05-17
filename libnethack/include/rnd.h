@@ -112,10 +112,10 @@ enum rng {
     rng_deathtouch,      /* touch of death used by Death */
     rng_foocubus_results,/* d35, d5, d25: result of foocubus sedution */
     rng_dragonscales,    /* chance of a dragon leaving scales */
-    rng_deadlypoison_8,  /* deadly poision results, fatal = 8 */
-    rng_deadlypoison_10, /* deadly poision results, fatal = 10 */
-    rng_deadlypoison_15, /* deadly poision results, fatal = 15 */
-    rng_deadlypoison_30, /* deadly poision results, fatal = 30 */
+    rng_permattrdmg_8,   /* Permanent attribute damage, permanent = 8 */
+    rng_permattrdmg_10,  /* Permanent attribute damage, permanent = 10 */
+    rng_permattrdmg_15,  /* Permanent attribute damage, permanent = 15 */
+    rng_permattrdmg_30,  /* Permanent attribute damage, permanent = 30 */
     rng_artifact_wish,   /* wishing for an artifact */
     rng_wish_quantity,   /* quantity of stackable items wished for */
     rng_wish_quality,    /* spe of wished-for weapon/armor */

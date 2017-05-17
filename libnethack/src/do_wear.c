@@ -188,6 +188,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         return FALSE; /* nothing to do */
     boolean equipping = otmp && otmp != &zeroobj;
     int otyp = o->otyp;
+    uint64_t props = obj_properties(o);
     int prop = objects[otyp].oc_oprop;
     /* TODO: Effects that are redundant to racial properties. I'm not sure if
        this can actually come up, but we should handle it anyway. */
@@ -198,12 +199,20 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     /* Change the item in the slot. */
     if (equipping) {
         setworn(o, W_MASK(slot));
+        o->owt = weight(o);
         /* There is a redundant update_property when taken off.
            The reason this is performed at this point is to give
            the identified description if update_property identifies
            the item */
         if (update_property(&youmonst, prop, slot))
             makeknown(o->otyp);
+        update_property_for_oprops(&youmonst, o, slot);
+        if (o->spe)
+            learn_oprop(o, (opm_dexterity | opm_brilliance));
+        learn_oprop(o, opm_power | opm_oilskin);
+        if (props & opm_power)
+            encumber_msg();
+        update_inventory();
         if (msgtype != em_silent)
             on_msg(o);
         if (o->cursed && !o->bknown) {
@@ -214,6 +223,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         }
     } else {
         setworn(NULL, W_MASK(slot));
+        o->owt = weight(o);
         /* It's not obvious whether we should uninvoke or not here. We need to
            uninvoke if the item is being destroyed or dropped, but not
            otherwise. However, of the items with togglable invokes, the Sceptre
@@ -235,6 +245,13 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
                   slot == os_tool ? body_part(FACE) : "body");
         if (update_property(&youmonst, prop, slot))
             makeknown(o->otyp);
+        update_property_for_oprops(&youmonst, o, slot);
+        if (o->spe)
+            learn_oprop(o, (opm_dexterity | opm_brilliance));
+        learn_oprop(o, opm_power);
+        if (props & opm_power)
+            encumber_msg();
+        update_inventory();
     }
 
     /* Equipping armor makes its enchantment obvious. */
@@ -1989,6 +2006,7 @@ destroy_arm(struct monst *mon, struct obj *obj)
         mon->misc_worn_check &= ~obj->owornmask;
         obj->owornmask = 0;
         update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
+        update_property_for_oprops(mon, obj, slot);
         m_useup(mon, obj);
         struct obj *weapon;
         weapon = m_mwep(mon);

@@ -205,8 +205,8 @@ saveobjclass(struct memfile *mf, struct objclass *ocl)
     /* no mtag useful; object classes are always saved in the same order and
        there are always the same number of them */
     oflags =
-        (ocl->oc_name_known << 31) | (ocl->oc_tough << 22) |
-        (ocl->oc_material << 15);
+        (ocl->oc_name_known << 31) | (ocl->oc_pre_discovered << 28) |
+        (ocl->oc_tough << 22) | (ocl->oc_material << 15);
     mwrite32(mf, oflags);
     mwrite16(mf, ocl->oc_name_idx);
     mwrite16(mf, ocl->oc_descr_idx);
@@ -264,6 +264,7 @@ restobjclass(struct memfile *mf, struct objclass *ocl)
 
     oflags = mread32(mf);
     ocl->oc_name_known = (oflags >> 31) & 1;
+    ocl->oc_pre_discovered = (oflags >> 28) & 1;
     ocl->oc_tough = (oflags >> 22) & 1;
     ocl->oc_material = (oflags >> 15) & 31;
 

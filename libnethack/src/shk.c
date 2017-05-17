@@ -2812,12 +2812,25 @@ static long
 getprice(const struct obj *obj, boolean shk_buying)
 {
     long tmp = (long)objects[obj->otyp].oc_cost;
+    uint64_t props = obj_properties(obj);
+    uint64_t prop = 0;
 
     if (obj->oartifact) {
         tmp = arti_cost(obj);
         if (shk_buying)
             tmp /= 4;
+    } else if (props) {
+        /* Add 50 to base price, then double for each additional
+           property (2 -> 104 -> 208..., 50 -> 200 -> 400 -> ...) */
+        tmp += 50;
+        int i;
+        for (i = 0; ((uint64_t)1 << i) & opm_all; i++) {
+            prop = ((uint64_t)1 << i);
+            if (props & prop)
+                tmp *= 2;
+        }
     }
+
     switch (obj->oclass) {
     case FOOD_CLASS:
         /* simpler hunger check, (2-4)*cost */

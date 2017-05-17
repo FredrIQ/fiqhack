@@ -209,12 +209,13 @@ save_flags(struct memfile *mf)
     flags.save_revision = SAVE_REVISION;
     mwrite32(mf, flags.save_revision);
 
+    mwrite8(mf, flags.servermail);
     mwrite8(mf, flags.last_arg.ability);
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 104; i++)
+    for (i = 0; i < 103; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));
@@ -501,6 +502,13 @@ save_you(struct memfile *mf, struct you *y)
     /* Padding to allow character information to be added without breaking save
        compatibility: add new options just before the padding, then remove the
        same amount of padding */
+    /*if (y->delayed_killers.zombie) {
+        int len = strlen(y->delayed_killers.zombie);
+        mwrite32(mf, len);
+        mwrite(mf, y->delayed_killers.zombie, len);
+    } else
+    mwrite32(mf, 0);*/
+
     for (i = 0; i < 511; i++)    /* savemap: ignore */
         mwrite8(mf, 0);          /* savemap: 4088 */
 
@@ -920,7 +928,10 @@ savefruitchn(struct memfile *mf)
     for (f1 = gamestate.fruits.chain; f1; f1 = f1->nextf)
         if (f1->fid >= 0)
             count++;
+    count += 65536; /* old bones detection */
     mwrite32(mf, count);
+    flags.save_revision = SAVE_REVISION;
+    mwrite32(mf, flags.save_revision); /* in case of bones */
 
     for (f1 = gamestate.fruits.chain; f1; f1 = f1->nextf) {
         if (f1->fid >= 0) {

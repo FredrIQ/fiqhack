@@ -100,6 +100,7 @@ m_useup(struct monst *mon, struct obj *obj)
             if (obj->otyp == SADDLE && mon == u.usteed)
                 dismount_steed(DISMOUNT_FELL);
             update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
+            update_property_for_oprops(mon, obj, which_slot(obj));
         }
         obfree(obj, NULL);
     }
@@ -117,7 +118,7 @@ linedup(xchar ax, xchar ay, xchar bx, xchar by)
         return FALSE;
 
     if ((!dx || !dy || abs(dx) == abs(dy))  /* straight line or diagonal */
-        && distmin(dx, dy, 0, 0) < BOLT_LIM) {
+        && distmin(dx, dy, 0, 0) <= BOLT_LIM) {
         if (clear_path(ax, ay, bx, by, viz_array))
             return TRUE;
     }

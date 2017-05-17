@@ -1487,9 +1487,13 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         litroom(mon, !confused && !sobj->cursed, sobj);
         break;
     case SCR_TELEPORTATION:
-        if (confused || sobj->cursed)
+        if (confused || sobj->cursed) {
             mon_level_tele(mon);
-        else {
+            *known = TRUE;
+        } else {
+            /* In case we land on the same position, don't reveal the scroll's ID */
+            int sx = mon->mx;
+            int sy = mon->my;
             if (sobj->blessed && !teleport_control(mon)) {
                 if (you) {
                     *known = TRUE;
@@ -1501,7 +1505,8 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             x = mon->mx;
             y = mon->my;
             mon_tele(mon, !!teleport_control(mon));
-            if (you && (teleport_control(mon) || (x != mon->mx && y != mon->my)))
+            if (!mon_tele(mon, !!teleport_control(mon)) || /* "A mysterious force ..." */
+                sx != m_mx(mon) || sy != m_my(mon))
                 *known = TRUE;
         }
         break;
@@ -1518,18 +1523,13 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (food_detect(sobj, known))
             return 1;   /* nothing detected */
         break;
-    case SPE_IDENTIFY:
-        cval = rn2_on_rng(25, you ? rng_id_count : rng_main) / 5;
-        goto id;
     case SCR_IDENTIFY:
-        cval = rn2_on_rng(25, you ? rng_id_count : rng_main);
-        if (sobj->cursed || (!sobj->blessed && cval % 5))
-            cval = 1;  /* cursed 100%, uncursed 80% chance of 1 */
-        else if (you && sobj->blessed && cval / 5 == 1 && Luck > 0)
-            cval = 2;  /* with positive luck, interpret 1 as 2 when blessed */
-        else
-            cval /= 5; /* otherwise, randomize all/1/2/3/4 items IDed */
+    case SPE_IDENTIFY:
+        cval = rn2_on_rng(5, you ? rng_id_count : rng_main);
+        if (you && Luck > 0 && cval == 1)
+            cval++;
 
+        int idpower = P_UNSKILLED;
         if (confused) {
             if (you)
                 pline(msgc_yafm, "You identify this as an identify scroll.");
@@ -1539,24 +1539,37 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         }
         else {
             /* TODO: give msgc_itemloss if you lack identifiable objects */
-            if (you)
-                pline_implied(!cval ? msgc_youdiscover : msgc_uiprompt,
-                      "This is an identify scroll.");
-            else if (vis)
+            if (you) {
+                if (sobj->oclass == SCROLL_CLASS)
+                    pline_implied(!cval ? msgc_youdiscover : msgc_uiprompt,
+                                  "This is an identify scroll.");
+            } else if (vis)
                 pline(msgc_monneutral, "%s is granted an insight!", Monnam(mon));
+
+            if (sobj->otyp == SPE_IDENTIFY)
+                idpower = (you ? P_SKILL(P_DIVINATION_SPELL) :
+                           mprof(mon, MP_SDIVN));
+            else {
+                if (sobj->blessed)
+                    idpower = P_EXPERT;
+                else if (!sobj->cursed)
+                    idpower = P_BASIC;
+            }
         }
 
-        if ((you || vis) && !objects[sobj->otyp].oc_name_known)
-            more_experienced(0, 10);
-        if (you)
-            useup(sobj);
-        else
-            m_useup(mon, sobj);
-        if (you || vis)
-            makeknown(SCR_IDENTIFY);
-    id:
-        if (invent && !confused) {
-            identify_pack(mon, cval);
+        if (sobj->otyp == SCR_IDENTIFY) {
+            if ((you || vis) && !objects[sobj->otyp].oc_name_known)
+                more_experienced(0, 10);
+            if (you)
+                useup(sobj);
+            else
+                m_useup(mon, sobj);
+            if (you || vis)
+                makeknown(SCR_IDENTIFY);
+        }
+
+        if (m_minvent(mon) && !confused) {
+            identify_pack(mon, cval, idpower);
         }
         return 1;
 
@@ -2353,12 +2366,6 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
                 continue;
             }
             ptr = &mons[mndx];
-            /* Although "genus" is Latin for race, the hero benefits from both
-               race and role; thus genocide affects either. */
-            if (you && (Your_Own_Role(mndx) || Your_Own_Race(mndx))) {
-                killplayer++;
-                break;
-            }
 
             if (!(ptr->geno & G_GENO)) {
                 if (canhear()) {
@@ -2374,13 +2381,18 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
                 continue;
             }
 
+            /* Although "genus" is Latin for race, the hero benefits from both
+               race and role; thus genocide affects either. */
+            if (you && (Your_Own_Role(mndx) || Your_Own_Race(mndx) ||
+                        ptr == youmonst.data)) {
+                killplayer++;
+                break;
+            }
+
             if (you && is_human(ptr))
                 adjalign(-sgn(u.ualign.type));
             if (you && is_demon(ptr))
                 adjalign(sgn(u.ualign.type));
-            /* KMH -- Unchanging prevents rehumanization */
-            if (unchanging(&youmonst) && ptr == youmonst.data)
-                killplayer++;
             break;
         }
     }
@@ -2404,18 +2416,23 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
         pline(msgc_intrgain, "Wiped out %s%s.", which,
               (*which != 'a') ? buf : makeplural(buf));
 
+        /* Do this before killing the player, just in case */
+        kill_genocided_monsters();
+
         if (killplayer) {
             /* might need to wipe out dual role */
             if (urole.femalenum != NON_PM && mndx == urole.malenum)
                 mvitals[urole.femalenum].mvflags |= (G_GENOD | G_NOCORPSE);
-            if (urole.femalenum != NON_PM && mndx == urole.femalenum)
+            if (urole.malenum != NON_PM && mndx == urole.femalenum)
                 mvitals[urole.malenum].mvflags |= (G_GENOD | G_NOCORPSE);
             if (urace.femalenum != NON_PM && mndx == urace.malenum)
                 mvitals[urace.femalenum].mvflags |= (G_GENOD | G_NOCORPSE);
-            if (urace.femalenum != NON_PM && mndx == urace.femalenum)
+            if (urace.malenum != NON_PM && mndx == urace.femalenum)
                 mvitals[urace.malenum].mvflags |= (G_GENOD | G_NOCORPSE);
 
             u.uhp = -1;
+            if (Upolyd)
+                u.mh = -1;
 
             const char *killer;
             if (how & PLAYER)
@@ -2435,9 +2452,6 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
                 set_delayed_killer(GENOCIDED, killer);
             } else
                 done(GENOCIDED, killer);
-        } else if (ptr == youmonst.data) {
-            /* As above: the death reason should never be relevant. */
-            rehumanize(GENOCIDED, "arbitrary death reason");
         }
         reset_rndmonst(mndx);
         /* While endgame messages track whether you genocided
@@ -2446,7 +2460,6 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
          * in which it happened. */
         if (you)
             break_conduct(conduct_genocide);
-        kill_genocided_monsters();
         update_inventory();     /* in case identified eggs were affected */
     } else {
         int cnt = 0;

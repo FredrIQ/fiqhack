@@ -103,7 +103,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {14, 0, 0, 8, 2, 0},       /* Hit points */
      {1, 0, 0, 1, 0, 1}, 10,    /* Energy */
-     0, 12, 0, 1, 8, A_INT, SPE_DIG, -4},
+     10, 12, 0, 1, 8, A_INT, SPE_DIG, -4},
     {{"Healer", 0}, {
                      {"Rhizotomist", 0},
                      {"Empiric", 0},
@@ -202,7 +202,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {12, 0, 0, 8, 1, 0},       /* Hit points */
      {4, 3, 0, 2, 0, 2}, 10,    /* Energy */
-     0, 3, -2, 2, 10, A_WIS, SPE_REMOVE_CURSE, -4},
+     10, 3, -2, 2, 10, A_WIS, SPE_REMOVE_CURSE, -4},
     /* Note: Rogue precedes Ranger so that use of `-R' on the command line
        retains its traditional meaning. */
     {{"Rogue", 0}, {
@@ -301,7 +301,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {8, 0, 0, 8, 0, 0},        /* Hit points */
      {1, 0, 0, 1, 0, 1}, 14,    /* Energy */
-     0, 5, 1, 2, 10, A_INT, SPE_CHARM_MONSTER, -4},
+     10, 5, 1, 2, 10, A_INT, SPE_CHARM_MONSTER, -4},
     {{"Valkyrie", 0}, {
                        {"Stripling", 0},
                        {"Skirmisher", 0},
@@ -325,7 +325,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {14, 0, 0, 8, 2, 0},       /* Hit points */
      {1, 0, 0, 1, 0, 1}, 10,    /* Energy */
-     0, 10, -2, 0, 9, A_WIS, SPE_CONE_OF_COLD, -4},
+     10, 10, -2, 0, 9, A_WIS, SPE_CONE_OF_COLD, -4},
     {{"Wizard", 0}, {
                      {"Evoker", 0},
                      {"Conjurer", 0},

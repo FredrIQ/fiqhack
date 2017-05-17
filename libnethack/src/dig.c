@@ -292,12 +292,21 @@ dig(void)
         return 0;
     }
 
-    u.uoccupation_progress[tos_dig] +=
-        10 + rn2(5) + abon() + uwep->spe - greatest_erosion(uwep) + dambon(&youmonst);
-    /* TODO: This formula looks /very/ suspicious, becuse the exponential
-       factor is going to override almost anyting else. */
+    int progress = 10;
+    progress += rn2(5);
+    progress += abon();
+    progress += uwep->spe;
+    progress -= greatest_erosion(uwep);
+    progress += dambon(&youmonst);
+    progress += (P_SKILL(is_pick(uwep) ? P_PICK_AXE : P_AXE) * 5);
+    if (progress < 1)
+        progress = 1;
+
     if (Race_if(PM_DWARF))
-        u.uoccupation_progress[tos_dig] *= 2;
+        progress *= 2;
+
+    u.uoccupation_progress[tos_dig] += progress;
+
     if (down) {
         struct trap *ttmp;
 

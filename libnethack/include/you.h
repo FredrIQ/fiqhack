@@ -194,6 +194,7 @@ struct you {
         char *sliming;
         char *illness;
         char *genocide;
+        char *zombie;
     } delayed_killers;
 
     int lastinvnr;

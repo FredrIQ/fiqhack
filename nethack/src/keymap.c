@@ -6,6 +6,9 @@
 #include "nhcurses.h"
 #include "common_options.h"
 
+#ifdef UNIX
+# include <sys/stat.h>
+#endif
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -863,12 +866,12 @@ save_menu(void)
 static void
 dostop(void)
 {
-#ifndef WIN32
+#if ! defined(WIN32) && ! defined(PUBLIC_SERVER)
     if (ui_flags.no_stop) {
 #endif
         curses_msgwin("Process suspension is disabled on this instance.",
                       krc_notification);
-#ifndef WIN32
+#if ! defined(WIN32) && ! defined(PUBLIC_SERVER)
         return;
     }
 
@@ -1100,6 +1103,10 @@ write_keymap(void)
     fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
     if (fd == -1)
         return;
+
+#ifdef UNIX
+    fchmod(fd, 0644);
+#endif
 
     for (key = 1; key <= KEY_MAX; key++) {
         name =
@@ -1682,7 +1689,7 @@ keymap_action_massrebind_digits(void)
         keymap[KEY_C1] = find_command("south_west");
         keymap[KEY_C3] = find_command("south_east");
 
-        keymap[KEY_B2] = find_command("go");
+        keymap[KEY_B2] = find_command("run");
         keymap[KEY_D1] = find_command("inventory");
         keymap[KEY_D3] = find_command("wait");
     }
@@ -1697,7 +1704,7 @@ keymap_action_massrebind_digits(void)
         keymap['1'] = find_command("south_west");
         keymap['3'] = find_command("south_east");
 
-        keymap['5'] = find_command("go");
+        keymap['5'] = find_command("run");
         keymap['0'] = find_command("inventory");
         /* . is not a digit */
     }
@@ -1712,7 +1719,7 @@ keymap_action_massrebind_digits(void)
         keymap[KEY_END] = find_command("south_west");
         keymap[KEY_NPAGE] = find_command("south_east");
 
-        keymap[KEY_B2] = find_command("go"); /* produces a unique code */
+        keymap[KEY_B2] = find_command("run"); /* produces a unique code */
         keymap[KEY_IC] = find_command("inventory");
         keymap[KEY_DC] = find_command("wait");
     }

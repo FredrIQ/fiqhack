@@ -607,8 +607,11 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
         return !rn2(3) || martial();
     }
 
-    if (kickobj->quan > 1L && !isgold)
+    struct obj *stack = NULL;
+    if (kickobj->quan > 1L && !isgold) {
+        stack = kickobj;
         kickobj = splitobj(kickobj, 1L);
+    }
 
     if (slide && !Blind)
         pline(msgc_actionok, "Whee!  %s %s %s the %s.", Doname2(kickobj),
@@ -627,7 +630,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
             return 1;   /* alert shk caught it */
         notonhead = (mon->mx != bhitpos.x || mon->my != bhitpos.y);
         if (isgold ? ghitm(&youmonst, mon, kickobj) : /* caught? */
-            thitmonst(&youmonst, mon, kickobj, 0))    /* hit && used up? */
+            thitmonst(&youmonst, mon, kickobj, stack, 0)) /* hit && used up? */
             return 1;
     }
 

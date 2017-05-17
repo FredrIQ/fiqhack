@@ -349,6 +349,22 @@ dofire(const struct nh_cmd_arg *arg)
 
     if (check_capacity(NULL))
         return 0;
+
+    /* It can be reasonable to fire rocks without a sling. Otherwise,
+       force the usage of 't' for ammo that needs a launcher when
+       the proper launcher isn't wielded. */
+    if (uquiver && is_ammo(uquiver) && uquiver->oclass != GEM_CLASS &&
+        !ammo_and_launcher(uquiver, uwep)) {
+        /* This is useless, but is here because players expect a direction prompt
+           after firing, so avoid them taking a step they don't want to. */
+        schar dx, dy, dz;
+        getargdir(arg, NULL, &dx, &dy, &dz);
+
+        pline(msgc_cancelled, "You aren't wielding the appropriate launcher.");
+        pline(msgc_controlhelp, "(Use the 'throw' command to fire anyway.)");
+        return 0;
+    }
+
     if (!uquiver) {
         if (!flags.autoquiver) {
             /* Don't automatically fill the quiver */
@@ -850,7 +866,7 @@ toss_up(struct monst *mon, struct obj *obj, boolean hitsroof)
             dmg += dambon(mon);
         if (dmg < 0)
             dmg = 0;    /* beware negative rings of increase damage */
-        if (Half_physical_damage)
+        if (half_phys_dam(mon))
             dmg = (dmg + 1) / 2;
 
         if (armh) {
@@ -1394,7 +1410,7 @@ throwit(struct monst *magr, struct obj *obj, struct obj *stack, int count,
         }
         snuff_candle(obj);
         notonhead = (bhitpos.x != mdef->mx || bhitpos.y != mdef->my);
-        obj_gone = thitmonst(magr, mdef, obj, count);
+        obj_gone = thitmonst(magr, mdef, obj, stack, count);
 
         /* [perhaps this should be moved into thitmonst or hmon] */
         if (mdef && mx_eshk(mdef) && uagr &&
@@ -1586,13 +1602,13 @@ tmiss(struct monst *magr, struct monst *mdef, struct obj *obj, int count)
 #define quest_arti_hits_leader(obj,mon) \
   (obj->oartifact && is_quest_artifact(obj) && (mon->data->msound == MS_LEADER))
 
-/*
- * Object thrown by player arrives at monster's location.
- * Return 1 if obj has disappeared or otherwise been taken care of,
- * 0 if caller must take care of it. count is used to pass (count)th shot in a multishot.
- */
+/* Object thrown by player arrives at monster's location. Returns
+   1 if obj has disappeared or otherwise been taken care of, 0 if
+   caller must take care of it. count is used to pass (count)th
+   shot in a multishot. */
 int
-thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj, int count)
+thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj,
+          struct obj *stack, int count)
 {
     boolean uagr = (magr == &youmonst);
     boolean udef = (mdef == &youmonst);
@@ -1701,6 +1717,23 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj, int count)
             return 1; /* caller doesn't need to place it */
         }
         return 0;
+    } else if (mon->mtame && mon->mcanmove &&
+               !is_animal(mon->data) && !mindless(mon->data) &&
+               !(uwep && ammo_and_launcher(obj, uwep))) {
+        /* thrown item at intelligent pet to let it use it */
+        pline(msgc_actionok, "%s %s.",
+              M_verbs(mon, "catch"), the(xname(obj)));
+        obj_extract_self(obj);
+        mpickobj(mon, obj, NULL);
+        if (attacktype(mon->data, AT_WEAP) &&
+            mon->weapon_check == NEED_WEAPON) {
+            mon->weapon_check == NEED_HTH_WEAPON;
+            mon_wield_item(mon);
+        }
+
+        m_dowear(mon, FALSE);
+        newsym(mon->mx, mon->my);
+        return 1;
     }
 
     if (obj->oclass == WEAPON_CLASS || is_weptool(obj) ||
@@ -1772,6 +1805,21 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj, int count)
                     broken = !rn2(4);
                 if (obj->blessed && !mrnl(magr, 4))
                     broken = 0;
+
+                uint64_t props = obj_properties(obj);
+                if (props & opm_detonate) {
+                    obj->in_use = TRUE;
+                    explode(bhitpos.x, bhitpos.y,
+                            ((props & opm_frost) ? AD_COLD :
+                             (props & opm_shock) ? AD_ELEC :
+                             AD_FIRE) - 1,
+                            dice(3, 6), WEAPON_CLASS,
+                            (props & (opm_frost | opm_shock)) ?
+                            EXPL_FROSTY : EXPL_FIERY, NULL, 0);
+                    broken = 1;
+                    if (stack && vis)
+                        learn_oprop(stack, opm_detonate);
+                }
 
                 if (broken) {
                     if (uagr && *u.ushops)

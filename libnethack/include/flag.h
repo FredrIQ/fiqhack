@@ -117,7 +117,8 @@ enum pray_trouble {
     ptr_hands,
     ptr_blindfold,
     ptr_cancelled,
-    ptr_last_major = ptr_cancelled,
+    ptr_mercy,
+    ptr_last_major = ptr_mercy,
 
     ptr_first_minor,
     ptr_punished = ptr_first_minor,
@@ -261,10 +262,11 @@ struct flag {
     boolean pickup_thrown;      /* auto-pickup items you threw */
     boolean prayconfirm;        /* confirm before praying */
     boolean pushweapon; /* When wielding, push old weapon into second slot */
+    boolean servermail; /* check for messages from other players */
     boolean showrace;   /* show hero glyph by race rather than by role */
     boolean show_uncursed;      /* always show uncursed items as such */
     boolean sortpack;   /* sorted inventory */
-    boolean sparkle;    /* show "resisting" special FX (Scott Bigham) */
+    int sparkle;        /* show "resisting" special FX (Scott Bigham) */
     boolean tombstone;  /* print tombstone */
     boolean travel_interrupt;   /* Interrupt travel if there is a hostile *
                                    monster in sight. */
@@ -283,7 +285,7 @@ struct flag {
     int pickup_burden;  /* maximum burden before prompt */
     int recently_broken_otyp;   /* object that broke recently */
     unsigned save_revision; /* save versioning to maintain save compatibility */
-# define SAVE_REVISION 1
+# define SAVE_REVISION 3
 
     /* Weird-sized structures */
     struct nh_autopickup_rules *ap_rules;

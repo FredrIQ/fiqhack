@@ -314,6 +314,7 @@ doconsult(struct monst *oracl)
 {
     int umoney = money_cnt(invent);
     int u_pay, minor_cost = 50, major_cost = 500 + 50 * youmonst.m_lev;
+    int enlcost = 20 * youmonst.m_lev;
     int add_xpts;
     const char *qbuf;
 
@@ -331,6 +332,27 @@ doconsult(struct monst *oracl)
     } else if (!umoney) {
         pline(msgc_cancelled, "You have no money.");
         return 0;
+    }
+
+    qbuf = msgprintf("\"Inquirest thou after enlightenment?\" (%d %s)",
+                     enlcost, currency(enlcost));
+    switch (ynq(qbuf)) {
+    case 'q':
+        return 0;
+    case 'y':
+        if (umoney < enlcost) {
+            pline(msgc_npcvoice, "\"Thou canst not afford it.\"");
+            break;
+        }
+        money2mon(oracl, enlcost);
+        pline(msgc_actionok, "You feel self-knowledgeable...");
+        win_pause_output(P_MESSAGE);
+        enlightenment(FALSE);
+        pline_implied(msgc_actionboring, "The feeling subsides.");
+        return 1;
+    case 'n':
+    default:
+        break;
     }
 
     qbuf = msgprintf("\"Wilt thou settle for a minor consultation?\" (%d %s)",
@@ -363,19 +385,25 @@ doconsult(struct monst *oracl)
     add_xpts = 0;       /* first oracle of each type gives experience points */
     if (u_pay == minor_cost) {
         outrumor(1, BY_ORACLE);
-        if (!u.uevent.minor_oracle)
+        if (!u.uevent.minor_oracle) {
             add_xpts = u_pay / (u.uevent.major_oracle ? 25 : 10);
-        /* 5 pts if very 1st, or 2 pts if major already done */
+            /* 5 pts if very 1st, or 2 pts if major already done */
+            if (!u.uevent.major_oracle)
+                livelog_write_event(msgprintf("historic_event=%s",
+                                              "heard a rumor from The Oracle"));
+        }
         u.uevent.minor_oracle = TRUE;
     } else {
         boolean cheapskate = u_pay < major_cost;
+        boolean firsttime  = (u.uevent.minor_oracle || u.uevent.major_oracle)
+            ? FALSE : TRUE;
 
         outoracle(cheapskate, TRUE);
         if (!cheapskate && !u.uevent.major_oracle)
             add_xpts = u_pay / (u.uevent.minor_oracle ? 25 : 10);
         /* ~100 pts if very 1st, ~40 pts if minor already done */
         u.uevent.major_oracle = TRUE;
-        historic_event(FALSE, "received advice from The Oracle.");
+        historic_event(FALSE, firsttime, "received advice from The Oracle.");
         exercise(A_WIS, !cheapskate);
     }
     if (add_xpts) {

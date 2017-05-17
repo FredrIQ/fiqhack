@@ -35,6 +35,7 @@ struct nh_window_procs curses_windowprocs = {
     curses_getdir,
     curses_yn_function_game,
     curses_getline,
+    curses_show_ac,
     curses_delay_output,
     curses_load_progress,
     curses_notify_level_changed,
@@ -1649,6 +1650,53 @@ curses_delay_output(void)
 #else
     nanosleep(&(struct timespec){ .tv_nsec = 50 * 1000 * 1000}, NULL);
 #endif
+}
+
+/* formatstring is printf-like, but doesn't use printf directly to
+   avoid potential serverside exploits */
+void
+curses_show_ac(const char *formatstring, int ac, void *res,
+               void (*callback)(const char *, void *))
+{
+    int len = strlen(formatstring);
+    len += 4; /* +1 from \0, +1 from %s->Def, +2 for %d->-127 */
+    char buf[len];
+    int i, j, k;
+    int done_str = 0;
+    int done_num = 0;
+    const char *str = "Def";
+    if (settings.show_ac)
+        str = "AC";
+
+    char num[5];
+    if (ac < -128)
+        ac = -128;
+    if (ac > 127)
+        ac = 127;
+    snprintf(num, 5, "%d", settings.show_ac ? ac : 10 - ac);
+
+    j = 0;
+    for (i = 0; formatstring[i]; i++) {
+        if (formatstring[i] == '%') {
+            if (formatstring[i + 1] == 's' && !done_str) {
+                i++;
+                for (k = 0; str[k]; k++)
+                    buf[j++] = str[k];
+                done_str = 1;
+                continue;
+            } else if (formatstring[i + 1] == 'd' && !done_num) {
+                i++;
+                for (k = 0; num[k]; k++)
+                    buf[j++] = num[k];
+                done_num = 1;
+                continue;
+            }
+        }
+
+        buf[j++] = formatstring[i];
+    }
+
+    callback(buf, res);
 }
 
 

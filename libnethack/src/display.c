@@ -834,13 +834,9 @@ newsym(int x, int y)
 void
 shieldeff(xchar x, xchar y)
 {
-    int i;
-
-    if (!flags.sparkle)
-        return;
-
-    if (cansee(x, y)) { /* Don't see anything if can't see the location */
-        for (i = 0; i < SHIELD_COUNT; i++) {
+    if (cansee(x, y) && flags.sparkle) {
+        int i;
+        for (i = 0; i < flags.sparkle; i++) {
             dbuf_set_effect(x, y, dbuf_effect(E_MISC, shield_static[i]));
             flush_screen();     /* make sure the effect shows up */
             win_delay_output();

@@ -72,6 +72,10 @@ begin_dump(int how)
     if (!dumpfp)
         return NULL;
 
+#ifdef UNIX
+    fchmod(fileno(dumpfp), 0644);
+#endif
+
     rolename = (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m;
     fprintf(dumpfp, "%s, %s %s %s %s\n", u.uplname,
             aligns[1 - u.ualign.type].adj, genders[u.ufemale].adj,

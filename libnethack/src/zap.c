@@ -18,6 +18,7 @@ static void zap_hit_mon(struct monst *, struct monst *,
 static void revive_egg(struct obj *);
 static boolean zap_steed(struct obj *);
 static void cancel_item(struct obj *);
+static void destroy_item(int, int);
 static boolean obj_shudders(struct obj *);
 static void do_osshock(struct obj *);
 static void bhit(struct monst *, int, int, int, struct obj *);
@@ -1080,8 +1081,9 @@ montraits(struct obj *obj, coord * cc)
     if (mtmp2) {
         /* save_mtraits() validated mtmp2->mnum */
         mtmp2->data = &mons[mtmp2->orig_mnum];
-        if (mtmp2->mhpmax <= 0 && !is_rider(mtmp2->data))
-            return NULL;
+        if (mtmp2->mhpmax <= 0)
+            mtmp2->mhpmax = 1; /* Allow level drained monsters to revive */
+
         mtmp = makemon(mtmp2->data, level, cc->x, cc->y,
                        NO_MINVENT | MM_NOWAIT | MM_NOCOUNTBIRTH);
         if (!mtmp)
@@ -2199,11 +2201,14 @@ zapnodir(struct monst *mon, struct obj *obj)
         }
         break;
     case WAN_CREATE_MONSTER:
-        howmany = 1;
-        if (wandlevel)
-            howmany = wandlevel;
-        if (!rn2(23) || wandlevel == P_MASTER)
-            howmany += rnd(7);
+        howmany = rn2(wandlevel == P_UNSKILLED ? 1  :
+                      wandlevel == P_BASIC     ? 2  :
+                      wandlevel == P_SKILLED   ? 4  :
+                      wandlevel == P_EXPERT    ? 8  :
+                      wandlevel == P_MASTER    ? 16 :
+                      1);
+        howmany++;
+
         known = create_critters(howmany, NULL, m_mx(mon), m_my(mon));
         break;
     case WAN_WISHING:
@@ -2813,12 +2818,27 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
         if (otyp == WAN_DIGGING || otyp == SPE_DIG)
             zap_dig(mon, obj, dx, dy, dz);
         else if (otyp >= SPE_MAGIC_MISSILE && otyp <= SPE_FINGER_OF_DEATH) {
+            int divisor = 2;
+            int wandlvl = 0;
+            if (otyp == SPE_MAGIC_MISSILE) {
+                int skill;
+                if (you)
+                    skill = P_SKILL(P_ATTACK_SPELL);
+                else
+                    skill = mprof(mon, MP_SATTK);
+                divisor = (skill == P_UNSKILLED ? 5 :
+                           skill == P_BASIC ? 4 :
+                           skill == P_SKILLED ? 3 :
+                           2);
+                if (skill >= P_SKILLED)
+                    wandlvl = skill;
+            }
             if (you)
-                buzz(otyp - SPE_MAGIC_MISSILE + 10, youmonst.m_lev / 2 + 1, youmonst.mx, youmonst.my,
-                     dx, dy, 0);
+                buzz(otyp - SPE_MAGIC_MISSILE + 10, youmonst.m_lev / divisor + 1,
+                     youmonst.mx, youmonst.my, dx, dy, wandlvl);
             else
-                buzz(-10 - (otyp - SPE_MAGIC_MISSILE), mon->m_lev / 2 + 1,
-                     m_mx(mon), m_my(mon), dx, dy, 0);
+                buzz(-10 - (otyp - SPE_MAGIC_MISSILE), mon->m_lev / divisor + 1,
+                     m_mx(mon), m_my(mon), dx, dy, wandlvl);
         } else if (otyp >= WAN_MAGIC_MISSILE && otyp <= WAN_LIGHTNING) {
             if (you)
                 buzz(otyp - WAN_MAGIC_MISSILE, (wandlevel == P_UNSKILLED) ? 3 : 6,
@@ -3434,12 +3454,13 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         break;
     case ZT_POISON_GAS:
         ztyp = "affected";
-        if (resists_poison(mdef))
+        if (resists_poison(mdef)) {
             resisted = 1;
-        if (you && !resists_poison(mdef)) {
-            tmp = 0;
-            poisoned("blast", A_DEX, killer_msg(DIED, "a poisoned blast"), 15);
+            break;
         }
+
+        tmp = 0;
+        poisoned(mdef, "blast", A_DEX, killer_msg(DIED, "a poisoned blast"), 15);
         break;
     case ZT_ACID:
         ztyp = "burned";
@@ -3478,7 +3499,8 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     }
     if (tmp && spellcaster)
         tmp += spell_damage_bonus();
-    if (is_hero_spell(type) && (Role_if(PM_KNIGHT) && Uhave_questart))
+    if (is_hero_spell(type) && Role_if(PM_KNIGHT) &&
+        Uhave_questart && mdef->data != &mons[PM_KNIGHT])
         tmp *= 2;
     if (tmp > 0 && resist(magr, mdef, buzztyp < ZT_SPELL(0) ? WAND_CLASS : '\0', NOTELL,
                           bcsign))
@@ -3864,7 +3886,7 @@ struct destroy_message destroy_messages[num_destroy_msgs] = {
     {"breaks apart and explodes", "break apart and explode", "exploding wand"},
 };
 
-void
+static void
 destroy_item(int osym, int dmgtyp)
 {
     struct obj *obj, *obj2;
@@ -3995,6 +4017,12 @@ destroy_item(int osym, int dmgtyp)
 int
 destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
 {
+    /* Extrinsic properties protect against item destruction */
+    if ((dmgtyp == AD_FIRE && ehas_property(mtmp, FIRE_RES)) ||
+        (dmgtyp == AD_COLD && ehas_property(mtmp, COLD_RES)) ||
+        (dmgtyp == AD_ELEC && ehas_property(mtmp, SHOCK_RES)))
+        return 0;
+
     struct obj *obj, *obj2;
     int skip, tmp = 0;
     long i, cnt, quan;
@@ -4196,15 +4224,20 @@ retry:
             goto retry;
         pline(msgc_itemloss, "That's enough tries!");
         otmp = readobjnam(NULL, NULL, TRUE);
+        livelog_flubbed_wish(origbuf, otmp);
         if (!otmp)
             return;     /* for safety; should never happen */
     } else if (otmp == &nothing) {
-        historic_event(FALSE, "refused a wish.");
+        historic_event(FALSE, TRUE, "refused a wish.");
         /* explicitly wished for "nothing", presumeably attempting to retain
            wishless conduct */
         return;
-    } else
-        historic_event(FALSE, "wished for \"%s\".", origbuf);
+    } else {
+        /* Don't have historic_event livelog the wishes for us, because we want
+           to special-case them to use different fields. */
+        historic_event(FALSE, FALSE, "wished for \"%s\".", origbuf);
+        livelog_wish(origbuf);
+    }
 
     /* KMH, conduct */
     break_conduct(conduct_wish);

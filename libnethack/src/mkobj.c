@@ -234,6 +234,163 @@ mkbox_cnts(struct obj *box, enum rng rng)
     }
 }
 
+void
+assign_oprops(struct level *lev, struct obj *obj, enum rng rng,
+              boolean first)
+{
+    uint64_t props_old = obj_properties(obj);
+    obj->oprops = opm_all;
+    uint64_t props = obj_properties(obj);
+    obj->oprops = props_old;
+
+    /* Fire+frost can't be combined, but ensure both are allowed
+       to generate seperately */
+    if (props & (opm_fire | opm_frost))
+        props |= (opm_fire | opm_frost);
+
+    if (first) {
+        /* Figure out if obj is allowed to have properties */
+        obj->oprops = 0LLU;
+        props_old = obj->oprops;
+        if (!props)
+            return;
+
+        /* Baseline: Level difficulty/100 */
+        if (rn2_on_rng(100, rng) > (lev ? (level_difficulty(&lev->z) / 2) : 0))
+            return;
+
+        /* Magical armor gets them half as often */
+        if (obj->oclass == ARMOR_CLASS &&
+            objects[obj->otyp].oc_magic &&
+            rn2(2))
+            return;
+
+        /* Dragon armor isn't allowed to generate with properties */
+        if (obj->otyp >= GRAY_DRAGON_SCALE_MAIL &&
+            obj->otyp <= YELLOW_DRAGON_SCALES)
+            return;
+
+        /* Jewelry gets it 1/4 as often (AoY+clones not at all) */
+        if ((obj->oclass == AMULET_CLASS ||
+             obj->oclass == RING_CLASS) &&
+            (rn2(4) || obj->otyp == AMULET_OF_YENDOR ||
+             obj->otyp == FAKE_AMULET_OF_YENDOR))
+            return;
+
+        /* Only bags/weapon-tools tool-wise are allowed properties */
+        if (obj->oclass == TOOL_CLASS &&
+            !is_weptool(obj) &&
+            obj->otyp != SACK && obj->otyp != BAG_OF_HOLDING &&
+            obj->otyp != BAG_OF_TRICKS)
+            return;
+    } else if (rn2(8)) /* 12.5% for each additional property */
+        return;
+
+    if (props_old == props)
+        return; /* we can't give more properties, bail out */
+
+    uint64_t prop = 0;
+    do {
+        prop = ((uint64_t)1 << rn2_on_rng(64, rng));
+    } while (!(prop & props) || rn2_on_rng(500, rng));
+
+    if (!(prop & props))
+        return; /* we hit the failsafe to avoid infloop */
+
+    /* The following properties generate only 10% of the time */
+    if ((prop &
+         (opm_reflects | opm_telepat | opm_speed | opm_power |
+          opm_dexterity | opm_brilliance | opm_displacement)) &&
+        rn2(10))
+        return;
+
+    /* Allowing this in first place was probably a bad idea */
+    if (prop & opm_vorpal)
+        return;
+
+    /* Add the property, unless it's fire and we have frost or
+       vice versa. */
+    if ((prop & (opm_fire | opm_frost)) &&
+        (props_old & (opm_fire | opm_frost)))
+        return;
+
+    obj->oprops |= prop;
+
+    /* Potentially generate more properties */
+    assign_oprops(lev, obj, rng, FALSE);
+}
+
+/* Returns obj->oprops, but strips invalid ones */
+uint64_t
+obj_properties(const struct obj *obj)
+{
+    uint64_t props = obj->oprops;
+
+    /* Artifacts don't retain object properties they might have
+       had before being artifacts (Excalibur, Sting, etc) */
+    if (!props || obj->oartifact)
+        return 0;
+
+    if (obj->oclass == WEAPON_CLASS &&
+        (is_ammo(obj) || is_missile(obj)))
+        props &= opm_ammo;
+    else if (obj->oclass == WEAPON_CLASS ||
+             is_weptool(obj))
+        props &= opm_mwep;
+    else if (obj->oclass == ARMOR_CLASS)
+        props &= opm_armor;
+    else if (obj->oclass == AMULET_CLASS ||
+             obj->oclass == RING_CLASS)
+        props &= opm_jewelry;
+    else
+        props &= opm_oilskin; /* misc leather objects */
+
+    /* can only have either a fire or cold suffix on a weapon,
+       combining them would be weird */
+    if ((props & opm_fire) && (props & opm_frost) &&
+        (obj->oclass == WEAPON_CLASS || is_weptool(obj)))
+        props &= ~opm_frost; /* arbitrary but needs consistency */
+
+    /* These make no sense on non-enchantable objects */
+    if (!objects[obj->otyp].oc_charged)
+        props &= ~opm_spe;
+
+    /* don't allow redundant properties with innate properties as
+       part of the object's type */
+    if (obj->otyp == GAUNTLETS_OF_POWER)
+        props &= ~opm_power;
+
+    if (obj->otyp == GAUNTLETS_OF_DEXTERITY)
+        props &= ~opm_dexterity;
+
+    if (obj->otyp == HELM_OF_BRILLIANCE)
+        props &= ~opm_brilliance;
+
+    /* Only leather objects, avoid redundancy */
+    if (objects[obj->otyp].oc_material != CLOTH ||
+        obj->otyp == OILSKIN_CLOAK ||
+        obj->otyp == OILSKIN_SACK)
+        props &= ~opm_oilskin;
+
+    if (!props)
+        return 0;
+
+    /* the rest are ordinary properties and can be checked
+       with a single function */
+    props = filter_redundant_oprops(obj, props);
+
+    return props;
+}
+
+/* Learn one or several object properties */
+void
+learn_oprop(struct obj *obj, uint64_t mask)
+{
+    uint64_t props = obj_properties(obj);
+    mask &= props;
+    obj->oprops_known |= mask;
+}
+
 /* select a random, common monster type */
 int
 rndmonnum(const d_level *dlev, enum rng rng)
@@ -677,6 +834,8 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                using a separate RNG for wand of wishing charges */
             if (otmp->otyp == WAN_WISHING)
                 otmp->spe = 1 + rn2_on_rng(3, rng);
+            else if (otmp->otyp == WAN_CREATE_MONSTER)
+                otmp->spe = rn2_on_rng(5, rng) + 4;
             else
                 otmp->spe = rn2_on_rng(5, rng) +
                     ((objects[otmp->otyp].oc_dir == NODIR) ? 11 : 4);
@@ -685,17 +844,19 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
             break;
         case RING_CLASS:
             if (objects[otmp->otyp].oc_charged) {
+                int chargesign = 1;
                 blessorcurse(otmp, 3, rng);
                 if (rn2_on_rng(10, rng)) {
-                    if (rn2_on_rng(10, rng) && bcsign(otmp))
-                        otmp->spe = bcsign(otmp) * rne_on_rng(3, rng);
-                    else
-                        otmp->spe = rn2_on_rng(2, rng) ?
-                            rne_on_rng(3, rng) : -rne_on_rng(3, rng);
-                }
-                /* make useless +0 rings much less common */
-                if (otmp->spe == 0)
-                    otmp->spe = rn2_on_rng(4, rng) - rn2_on_rng(3, rng);
+                    if (rn2_on_rng(10, rng) &&
+                        ((!bcsign(otmp) && rn2_on_rng(2, rng)) ||
+                         otmp->cursed))
+                        chargesign = -1;
+                } else if (!rn2_on_rng(5, rng))
+                    chargesign = 0;
+                else if (rn2_on_rng(2, rng))
+                    chargesign = -1;
+
+                otmp->spe = rne_on_rng(2, rng) * chargesign;
                 /* negative rings are usually cursed */
                 if (otmp->spe < 0 && rn2_on_rng(5, rng))
                     curse(otmp);
@@ -725,6 +886,8 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                        objects[otmp->otyp].oc_class);
             return NULL;
         }
+
+        assign_oprops(lev, otmp, rng, TRUE);
     }
 
     /* Some things must get done (timers) even if init = 0 */
@@ -954,6 +1117,8 @@ weight(struct obj *obj)
         return (int)(obj->owt); /* kludge for "very" heavy iron ball */
     else if (obj->otyp == CANDELABRUM_OF_INVOCATION)
         return (wt + obj->spe * objects[TALLOW_CANDLE].oc_weight);
+    else if (obj->oclass == ARMOR_CLASS && (obj->owornmask & W_WORN))
+        return (wt + 1) / 2;
     return wt ? wt * (int)obj->quan : ((int)obj->quan + 1) >> 1;
 }
 
@@ -1617,6 +1782,17 @@ restore_obj(struct memfile *mf)
     otmp->timed = mread8(mf);
     otmp->cobj = mread8(mf) ? (void *)1 : NULL; /* set the pointer to 1 if
                                                    there will be contents */
+
+    if (flags.save_revision >= 2) {
+        otmp->oprops = mread64(mf);
+        otmp->oprops_known = mread64(mf);
+        int i;
+
+        /* Reserved for future extensions */
+        for (i = 0; i < 200; i++)
+            (void) mread8(mf);
+    }
+
     otmp->cursed = (oflags >> 31) & 1;
     otmp->blessed = (oflags >> 30) & 1;
     otmp->unpaid = (oflags >> 29) & 1;
@@ -1718,6 +1894,20 @@ save_obj(struct memfile *mf, struct obj *obj)
     /* Saving the pointer itself is unneccessary, but we need to know if
        there is one in first place to save/restore */
     mwrite8(mf, obj->cobj ? 1 : 0);
+
+    if (obj->oprops != obj_properties(obj)) {
+        impossible("Obj %s has invalid properties, deleting",
+                   killer_xname(obj));
+        obj->oprops = obj_properties(obj);
+    }
+    mwrite64(mf, obj->oprops);
+    mwrite64(mf, obj->oprops_known);
+
+    /* Reserved for future extensions */
+    int i;
+    for (i = 0; i < 200; i++)
+        mwrite8(mf, 0);
+
     mwrite32(mf, obj->m_id);
 
     if (obj->oextra)

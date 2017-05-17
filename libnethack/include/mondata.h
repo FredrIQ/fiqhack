@@ -100,6 +100,10 @@
 # define astral_vision(mon)     (has_property(mon, XRAY_VISION))
 # define detects_monsters(mon)  (has_property(mon, DETECT_MONSTERS))
 # define slow(mon)              (has_property(mon, SLOW))
+# define zombifying(mon)        (property_timeout(mon, ZOMBIE))
+/* living but under the power of undead (and immune to zombification) */
+# define izombie(mon)           (ihas_property(mon, ZOMBIE))
+# define waterproof(mon)        (has_property(mon, WATERPROOF))
 # define creamed(mon)           (has_property(mon, CREAMED))
 /* pseudo-properties, some are player-only but defined for the future */
 # define punished(mon)          (mon != &youmonst ? 0 : Punished)
@@ -244,6 +248,7 @@
 # define pm_invisible(ptr)      ((ptr) == &mons[PM_STALKER] || \
                                  (ptr) == &mons[PM_BLACK_LIGHT] || \
                                  (ptr) == &mons[PM_QUASIT])
+# define pm_zombie(ptr)         dmgtype(ptr, AD_ZOMB)
 
 /* could probably add more */
 # define likes_fire(ptr)        ((ptr) == &mons[PM_FIRE_VORTEX] || \

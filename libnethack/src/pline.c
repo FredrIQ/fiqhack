@@ -340,9 +340,10 @@ mstatusline(struct monst *mon)
     /* and unlike a normal mon_nam, use "saddled" even if it has a name */
     monnambuf = (you ? u.uplname :
                  x_monnam(mon, ARTICLE_THE, NULL,
-                          (SUPPRESS_IT | SUPPRESS_INVISIBLE), FALSE));
+                          (SUPPRESS_IT | SUPPRESS_INVISIBLE |
+                           SUPPRESS_ENSLAVEMENT), FALSE));
 
-    pline(msgc_info, "Status of %s (%s%s):  Level %d  HP %d(%d)  Def %d%s.",
+    pline(msgc_info, "Status of %s (%s%s):  Level %d  HP %d(%d)  %s%s.",
           monnambuf, (!you || u.ualign.record == 3) ? "" :
           (u.ualign.record >= 20) ? "piously " :
           (u.ualign.record > 13) ? "devoutly " :
@@ -354,7 +355,7 @@ mstatusline(struct monst *mon)
           you && Upolyd ? mons[u.umonnum].mlevel : you ? youmonst.m_lev : mon->m_lev,
           you && Upolyd ? u.mh : m_mhp(mon),
           you && Upolyd ? u.mhmax : m_mhpmax(mon),
-          10 - find_mac(mon), info);
+          show_ac("%s %d", find_mac(mon)), info);
 }
 
 /*pline.c*/

@@ -344,7 +344,7 @@ dname_to_dnum(const char *s)
 s_level *
 find_level(const char *s)
 {
-    s_level *curr;
+    s_level *curr = NULL;
 
     for (curr = gamestate.sp_levchn; curr; curr = curr->next)
         if (!strcmpi(s, curr->proto))
@@ -1481,24 +1481,6 @@ assign_level(d_level * dest, const d_level * src)
     dest->dlevel = src->dlevel;
 }
 
-/* dest = src + rn1(range) */
-void
-assign_rnd_level(d_level * dest, const d_level * src, int range)
-{
-    int rangerng = rn2_on_rng(12, rng_mysterious_force);
-
-    dest->dnum = src->dnum;
-    dest->dlevel = src->dlevel + ((range > 0) ?
-                                  rangerng / (12 / range) + 1 :
-                                  -(rangerng / (12 / -range)) - 1);
-
-    if (dest->dlevel > dunlevs_in_dungeon(dest))
-        dest->dlevel = dunlevs_in_dungeon(dest);
-    else if (dest->dlevel < 1)
-        dest->dlevel = 1;
-}
-
-
 int
 induced_align(const d_level * dlev, int pct, enum rng rng)
 {
@@ -1656,7 +1638,8 @@ print_branch(struct nh_menulist *menu, int dnum,
     }
 }
 
-/* Print available dungeon information. */
+/* Print available dungeon information.
+   This is wizmode levelport "?", overview uses another function */
 schar
 print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 {

@@ -340,7 +340,7 @@ deadbook(struct obj *book2, boolean invoked)
             /* successful invocation */
             mkinvokearea();
             u.uevent.invoked = 1;
-            historic_event(FALSE, "performed the invocation.");
+            historic_event(FALSE, TRUE, "performed the invocation.");
             /* in case you haven't killed the Wizard yet, behave as if you just
                did */
             u.uevent.udemigod = 1;      /* wizdead() */
@@ -1354,6 +1354,10 @@ spelleffects(boolean atme, const struct musable *m)
     int count = 0; /* for nasty */
     boolean amulet = FALSE;
 
+    /* for potions */
+    int dummy2 = 0;
+    int dummy3 = 0;
+
     if (spell < 0) {
         if (!you)
             impossible("Monster using a special ability?");
@@ -1519,7 +1523,8 @@ spelleffects(boolean atme, const struct musable *m)
         if (u.uhunger <= 10) {
             pline(msgc_cancelled, "You are too hungry to cast that spell.");
             return 0;
-        } else if (!freehand()) {
+        } else if (!freehand() &&
+                   (!uwep || uwep->otyp != QUARTERSTAFF)) {
             pline(msgc_cancelled, "Your arms are not free to cast!");
             return 0;
         } else if (check_capacity
@@ -1735,7 +1740,7 @@ spelleffects(boolean atme, const struct musable *m)
             pseudo->blessed = 1;
         /* fall through */
     case SPE_INVISIBILITY:
-        peffects(mon, pseudo);
+        peffects(mon, pseudo, &dummy2, &dummy3);
         break;
 
     case SPE_CURE_BLINDNESS:
@@ -1743,6 +1748,7 @@ spelleffects(boolean atme, const struct musable *m)
         break;
     case SPE_CURE_SICKNESS:
         set_property(mon, SICK, -2, FALSE);
+        set_property(mon, ZOMBIE, -2, FALSE);
         set_property(mon, SLIMED, -2, FALSE);
         break;
     case SPE_CREATE_FAMILIAR:
@@ -1851,6 +1857,17 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
     cc.y = m_my(mon);
     if (mgetargpos(m, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
+
+    /* Figure out what condition to mark the target square as
+       allowed */
+    boolean clearpath = FALSE;
+    if (m_cansee(mon, cc.x, cc.y))
+        clearpath = TRUE;
+
+    if (dist2(m_mx(mon), m_my(mon), cc.x, cc.y) <=
+        XRAY_RANGE * XRAY_RANGE && astral_vision(mon))
+        clearpath = TRUE;
+
     /* The number of moves from hero to where the spell drops. */
     if (distmin(m_mx(mon), m_my(mon), cc.x, cc.y) > 10) {
         pline(msgc_cancelled, "The spell dissipates over the distance!");
@@ -1867,13 +1884,10 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
         pline(msgc_cancelled,
               "You fail to sense a monster there!");
         return 0;
-    } else
-        if ((!m_cansee(mon, cc.x, cc.y) &&
-             (!um_at(level, cc.x, cc.y) ||
-              !mcanspotmon(mon, um_at(level, cc.x, cc.y)))) ||
-            IS_STWALL(level->locations[cc.x][cc.y].typ)) {
-            pline(msgc_cancelled,
-                  "Your mind fails to lock onto that location!");
+    } else if (!clearpath ||
+               IS_STWALL(level->locations[cc.x][cc.y].typ)) {
+        pline(msgc_cancelled,
+              "Your mind fails to lock onto that location!");
         return 0;
     } else {
         *dx = cc.x;
@@ -2055,6 +2069,7 @@ percent_success(const struct monst *mon, int spell)
         splcaster = 1;
         special = -3;
     }
+    struct obj *wep = m_mwep(mon);
     struct obj *arm = which_armor(mon, os_arm);
     struct obj *armc = which_armor(mon, os_armc);
     struct obj *arms = which_armor(mon, os_arms);
@@ -2064,6 +2079,10 @@ percent_success(const struct monst *mon, int spell)
     int spelarmr = you ? urole.spelarmr : 10;
     int spelshld = you ? urole.spelshld : 1;
     int xl = you ? youmonst.m_lev : mon->m_lev;
+
+    /* Quarterstaves enhance spellcasting */
+    if (wep && wep->otyp == QUARTERSTAFF)
+        splcaster -= spelarmr;
 
     if (arm && is_metallic(arm))
         splcaster += (armc &&
@@ -2077,6 +2096,8 @@ percent_success(const struct monst *mon, int spell)
     if (armh && is_metallic(armh))
         if (armh->otyp != HELM_OF_BRILLIANCE)
             splcaster += uarmhbon;
+
+    /* Yes, uarm*bon is right, they're defined as fixed values */
     if (armg && is_metallic(armg))
         splcaster += uarmgbon;
     if (armf && is_metallic(armf))

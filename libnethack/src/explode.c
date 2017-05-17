@@ -62,23 +62,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
     /* 0=normal explosion, 1=do shieldeff, 2=do nothing */
     boolean shopdamage = FALSE;
 
-#if 0
-    /* Damage reduction from wand explosions */
-    if (olet == WAND_CLASS)     /* retributive strike */
-        switch (Role_switch) {
-        case PM_PRIEST:
-        case PM_MONK:
-        case PM_WIZARD:
-            damu /= 5;
-            break;
-        case PM_HEALER:
-        case PM_KNIGHT:
-            damu /= 2;
-            break;
-        default:
-            break;
-        }
-#endif
     if (olet == MON_EXPLODE) {
         str = descr;
         adtyp = AD_PHYS;
@@ -158,7 +141,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     explmask[i][j] = 0;
                     break;
                 case AD_MAGM:
-                    explmask[i][j] = !!(raylevel >= P_EXPERT || Antimagic);
+                    explmask[i][j] = !!(raylevel < P_EXPERT && Antimagic);
                     break;
                 case AD_FIRE:
                     explmask[i][j] = !!Fire_resistance;
@@ -210,7 +193,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     case AD_PHYS:
                         break;
                     case AD_MAGM:
-                        explmask[i][j] |= (raylevel >= 4 || resists_magm(mtmp));
+                        explmask[i][j] |= (raylevel < P_EXPERT &&
+                                           resists_magm(mtmp));
                         break;
                     case AD_FIRE:
                         explmask[i][j] |= !!resists_fire(mtmp);
@@ -270,7 +254,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
         flush_screen(); /* will flush screen and output */
 
         if (any_shield && flags.sparkle) {      /* simulate shield effect */
-            for (k = 0; k < SHIELD_COUNT; k++) {
+            for (k = 0; k < flags.sparkle; k++) {
                 for (i = 0; i < 3; i++)
                     for (j = 0; j < 3; j++) {
                         if (explmask[i][j] == 1)
@@ -468,10 +452,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
         }
         if (adtyp == AD_FIRE)
             burnarmor(&youmonst);
-        destroy_item(SCROLL_CLASS, (int)adtyp);
-        destroy_item(SPBOOK_CLASS, (int)adtyp);
-        destroy_item(POTION_CLASS, (int)adtyp);
-        destroy_item(WAND_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, SCROLL_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, SPBOOK_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, POTION_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, WAND_CLASS, (int)adtyp);
 
         ugolemeffects((int)adtyp, damu);
         if (uhurt == 2) {

@@ -30,6 +30,7 @@ static void noises(struct monst *, const struct attack *);
 static void missmm(struct monst *, struct monst *, const struct attack *);
 static int passivemm(struct monst *, struct monst *, boolean, int);
 static void set_at_area(int, int, void *);
+static void maurahitpile(struct monst *, int, int, const struct attack *);
 static void maurahitm(struct monst *, struct monst *, const struct attack *);
 
 /* Needed for the special case of monsters wielding vorpal blades (rare). If we
@@ -217,6 +218,10 @@ fightm(struct monst *mon)
     int result;
     boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
+    boolean mercy = FALSE;
+    if (mon->mw && (obj_properties(mon->mw) & opm_mercy) &&
+        mon->mw->mknown)
+        mercy = TRUE;
 
     /* perhaps we're holding it... */
     if (itsstuck(mon))
@@ -249,7 +254,10 @@ fightm(struct monst *mon)
         if (mtmp == &youmonst && !conflicted)
             continue; /* run the normal AI for this */
 
-        if (!mtmp || (!mm_aggression(mon, mtmp, conflicted) && !conflicted))
+        if (!mtmp || (!mm_aggression(mon, mtmp, conflicted) && !conflicted &&
+                      !mercy))
+        if (mercy && mon->mpeaceful != (mtmp == &youmonst ? 1 :
+                                        mtmp->mpeaceful))
             continue;
 
         /* TODO: why are these needed... */
@@ -386,6 +394,10 @@ mattackm(struct monst *magr, struct monst *mdef)
         mattk = getmattk(pa, i, res, &alt_attk);
         otmp = NULL;
         attk = 1;
+
+        if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2)
+            break; /* In case we teleported or similar (nymphs do this) */
+
         switch (mattk->aatyp) {
         case AT_WEAP:  /* weapon attacks */
             if (magr->weapon_check == NEED_WEAPON || !MON_WEP(magr)) {
@@ -409,11 +421,6 @@ mattackm(struct monst *magr, struct monst *mdef)
         case AT_TUCH:
         case AT_BUTT:
         case AT_TENT:
-            /* Nymph that teleported away on first attack? */
-            if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
-                strike = 0;
-                break;  /* might have more ranged attacks */
-            }
             /* Monsters won't attack cockatrices physically if they have a
                weapon instead.  This instinct doesn't work for players, or
                under conflict or confusion. */
@@ -433,6 +440,7 @@ mattackm(struct monst *magr, struct monst *mdef)
                 if ((mdef->data == &mons[PM_BLACK_PUDDING] ||
                      mdef->data == &mons[PM_BROWN_PUDDING])
                     && otmp && objects[otmp->otyp].oc_material == IRON &&
+                    !(obj_properties(otmp) & opm_mercy) &&
                     mdef->mhp >= 2 && !cancelled(mdef)) {
                     if (clone_mon(mdef, 0, 0)) {
                         if (vis) {
@@ -454,15 +462,12 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_GAZE:
+            /* both melee and ranged */
             strike = 0; /* will not wake up a sleeper */
             res[i] = gazemm(magr, mdef, mattk);
             break;
 
         case AT_EXPL:
-            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1) {
-                strike = 0;
-                break;
-            }
             res[i] = explmm(magr, mdef, mattk);
             if (res[i] == MM_MISS) {    /* cancelled--no attack */
                 strike = 0;
@@ -472,11 +477,6 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_ENGL:
-            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1 ||
-                (u.usteed && (mdef == u.usteed))) {
-                strike = 0;
-                break;
-            }
             /* Engulfing attacks are directed at the hero if possible. -dlc */
             if (Engulfed && magr == u.ustuck)
                 strike = 0;
@@ -913,6 +913,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     const struct permonst *pd = mdef->data;
     int armpro, num, tmp = dice((int)mattk->damn, (int)mattk->damd);
     boolean cancelled;
+    boolean mercy = FALSE;
+    int zombie_timer;
 
     if (touch_petrifies(pd) && !resists_ston(magr)) {
         long protector = attk_protection((int)mattk->aatyp);
@@ -1042,11 +1044,14 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     touch_petrifies(&mons[otmp->corpsenm]))
                     goto do_stone;
                 tmp += dmgval(otmp, mdef);
-                if (otmp->oartifact) {
+                if (otmp->oartifact ||
+                    otmp->oprops) {
                     artifact_hit(magr, mdef, otmp, &tmp, dieroll);
                     if (DEADMONSTER(mdef))
                         return (MM_DEF_DIED |
                                 (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
+                    if (obj_properties(otmp) & opm_mercy)
+                        mercy = TRUE;
                 }
                 if (tmp)
                     mrustm(magr, mdef, otmp);
@@ -1149,8 +1154,6 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             golemeffects(mdef, AD_ELEC, tmp);
             tmp = 0;
         }
-        /* only rings damage resistant players in destroy_item */
-        tmp += destroy_mitem(mdef, RING_CLASS, AD_ELEC);
         break;
     case AD_ACID:
         if (cancelled(magr)) {
@@ -1368,7 +1371,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     } case AD_DRLI:
-        if (!cancelled && !rn2(3) && !resists_drli(mdef)) {
+        if (!cancelled(magr) && !rn2(3) && !resists_drli(mdef)) {
             tmp = dice(2, 6);
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit),
@@ -1408,6 +1411,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     setmnotwielded(mdef, otmp);
                 otmp->owornmask = 0L;
                 update_property(mdef, objects[otmp->otyp].oc_oprop, which_slot(otmp));
+                update_property_for_oprops(mdef, otmp,
+                                           which_slot(otmp));
             }
 
             /* add_to_minv() might free otmp [if it merges] */
@@ -1598,12 +1603,51 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         /* there's no msomearmor() function, so just do damage */
         /* if (cancelled) break; */
         break;
+    case AD_ZOMB:
+        if (nonliving(mdef->data) || izombie(mdef))
+            break;
+        zombie_timer = property_timeout(mdef, ZOMBIE);
+        set_property(mdef, ZOMBIE,
+                     !zombie_timer ? 100 :
+                     zombie_timer <= 10 ? 1 :
+                     (zombie_timer - 10), FALSE);
+        break;
     default:
         tmp = 0;
         break;
     }
     if (!tmp)
         return MM_MISS;
+
+    if (mercy) {
+        otmp->mbknown = 1;
+        otmp->mknown = 1;
+        boolean saw_something = FALSE;
+        if (mdef->mhp < mdef->mhpmax) {
+            mdef->mhp += tmp;
+            if (mdef->mhp > mdef->mhpmax)
+                mdef->mhp = mdef->mhpmax;
+            if (canseemon(magr) || canseemon(mdef)) {
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s healed!", M_verbs(mdef, "are"));
+                saw_something = TRUE;
+            }
+        }
+
+        if (!otmp->cursed) {
+            if (canseemon(magr)) {
+                pline(msgc_monneutral, "%s %s for a moment.",
+                      Tobjnam(otmp, "glow"), hcolor("black"));
+                saw_something = TRUE;
+            }
+            curse(otmp);
+        }
+
+        if (saw_something) {
+            learn_oprop(otmp, opm_mercy);
+            otmp->bknown = 1; /* autocurses */
+        }
+    }
 
     if ((mdef->mhp -= tmp) < 1) {
         if (m_at(level, mdef->mx, mdef->my) == magr) {  /* see gulpmm() */
@@ -1953,6 +1997,10 @@ do_at_area(struct level *lev)
             break;
     }
 
+    int total = i; /* total amount causing auras */
+    if (!total)
+        return;
+
     /* Now, perform the attack itself */
     int x;
     int y;
@@ -1965,16 +2013,19 @@ do_at_area(struct level *lev)
             mdef = m_at(lev, x, y);
             if (!mdef && x == youmonst.mx && y == youmonst.my && lev == level)
                 mdef = &youmonst;
-            if (!mdef)
-                continue;
 
             /* Find the monsters responsible for the aura */
-            for (i = 0; i < 64; i++) {
+            for (i = 0; i < total; i++) {
                 if (!(area[x][y] & (((uint64_t)1 >> i) & 1)))
                     continue;
 
-                /* We found what we're looking for. Now, do the attack. */
-                maurahitm(areamons[i], mdef, areaatk[i]);
+                /* If there is a monster here, perform an attack */
+                if (mdef)
+                    maurahitm(areamons[i], mdef, areaatk[i]);
+
+                /* If adtyp is AD_ZOMB (zombies), potentially revive stuff */
+                if (areaatk[i]->adtyp == AD_ZOMB)
+                    maurahitpile(areamons[i], x, y, areaatk[i]);
             }
         }
     }
@@ -1990,7 +2041,76 @@ set_at_area(int x, int y, void *area)
 }
 
 
-/* Aura effects */
+/* Aura effects vs object piles */
+static void
+maurahitpile(struct monst *mon, int x, int y, const struct attack *mattk)
+{
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon) || cansee(x, y));
+    struct obj *obj, *nexthere;
+    struct monst *omon;
+    for (obj = level->objects[x][y]; obj; obj = nexthere) {
+        nexthere = obj->nexthere;
+        if (obj->otyp == CORPSE) {
+            if (ox_monst(obj)) {
+                omon = get_mtraits(obj, FALSE);
+                /* We can't use izombie() because normal property checks assume
+                   proper values in the monst */
+                if ((nonliving(&mons[omon->orig_mnum]) ||
+                     (omon->mintrinsic[ZOMBIE] & FROMOUTSIDE_RAW)) && rn2(20))
+                    continue;
+            }
+            omon = revive(obj);
+            if (!omon)
+                continue;
+
+            if (mon->mtame != omon->mtame) {
+                if (mon->mtame)
+                    tamedog(omon, NULL);
+                else
+                    omon->mtame = 0; /* no longer tame */
+            }
+            if (mon->mpeaceful != omon->mpeaceful)
+                omon->mpeaceful = mon->mpeaceful;
+            /* turn into a zombie if applicable */
+            int mndx = NON_PM;
+            if (is_human(omon->data))
+                mndx = PM_HUMAN_ZOMBIE;
+            if (is_elf(omon->data))
+                mndx = PM_ELF_ZOMBIE;
+            if (is_orc(omon->data))
+                mndx = PM_ORC_ZOMBIE;
+            if (is_gnome(omon->data))
+                mndx = PM_GNOME_ZOMBIE;
+            if (is_dwarf(omon->data))
+                mndx = PM_DWARF_ZOMBIE;
+            if (is_giant(omon->data))
+                mndx = PM_GIANT_ZOMBIE;
+            if (omon->data == &mons[PM_ETTIN])
+                mndx = PM_ETTIN_ZOMBIE;
+            if (omon->data->mlet == S_KOBOLD)
+                mndx = PM_KOBOLD_ZOMBIE;
+            if (mndx != NON_PM && omon->data != &mons[mndx] &&
+                !newcham(omon, &mons[mndx], FALSE, FALSE)) {
+                if (you || vis)
+                    pline(msgc_monneutral, "%s from the unholy revival and is destroyed!",
+                          M_verbs(omon, "shudder"));
+                monkilled(mon, omon, "", -AD_ZOMB);
+                continue;
+            }
+
+            if (vis)
+                pline(msgc_monneutral, "%s from the dead%s!",
+                      M_verbs(omon, "raise"),
+                      nonliving(omon->data) ? "" :
+                      msgcat_many(" under ", mon_nam(mon), " power", NULL));
+            if (!nonliving(omon->data) && !izombie(omon))
+                set_property(omon, ZOMBIE, 0, TRUE);
+        }
+    }
+}
+
+/* Aura effects vs mon */
 static void
 maurahitm(struct monst *magr, struct monst *mdef,
           const struct attack *mattk)
@@ -2017,6 +2137,10 @@ maurahitm(struct monst *magr, struct monst *mdef,
                   s_suffix(mon_nam(magr)));
         if (property_timeout(mdef, SLOW) < dmg)
             set_property(mdef, SLOW, dmg, TRUE);
+        break;
+    case AD_ZOMB:
+        if (property_timeout(mdef, ZOMBIE) > 100)
+            mdef->mintrinsic[ZOMBIE] -= 100; /* don't cure yet */
         break;
     }
 }

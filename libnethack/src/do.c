@@ -957,61 +957,6 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         done(ESCAPED, NULL);
     }
 
-    /*
-     * If you have the amulet and are trying to get out of Gehennom, going up a
-     * set of stairs sometimes does some very strange things! Biased against
-     * law and towards chaos, but not nearly as strongly as it used to be
-     * (prior to 3.2.0). Additionally, the documentation as of 3.2.0 didn't
-     * match the actual distribution:
-     *
-     *  pre-3.20 (documented)      3.2.0 (documented)         3.2.0 (actual)
-     * "up"   L     N     C     "up"   L     N     C     "up"   L     N     C
-     *  +1  75.00 75.00 75.00    +1  75.00 75.00 75.00    +1  75.00 75.00 75.00
-     *   0   0.00 12.50 25.00     0   6.25  8.33 12.50     0   6.25  8.33 12.50
-     *  -1   8.33  4.17  0.00    -1   6.25  8.33 12.50    -1  11.45 12.50 12.50
-     *  -2   8.33  4.17  0.00    -2   6.25  8.33  0.00    -2   5.21  4.17  0.00
-     *  -3   8.33  4.17  0.00    -3   6.25  0.00  0.00    -3   2.08  0.00  0.00
-     *
-     * 4.3.0 reproduces the actual distribution from 3.2.0 and later (i.e. the
-     * rightmost table above).
-     */
-    if (Inhell && up && Uhave_amulet && !newdungeon && !portal &&
-        (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3)) {
-        if (!rn2_on_rng(4, rng_mysterious_force)) {
-            /* Note: to keep the RNG behaviour the same between different
-               games on the same seed (with potentially different alignments),
-               we generate a distance to send back in the range 0 to 11, then
-               scale down to 0..1, 0..2, or 0..3 as appropriate;
-               assign_rnd_level uses one RNG, so burn an RNG to match if we're
-               not calling it */
-            int odds = 3 + (int)u.ualign.type,  /* 2..4 */
-                diff = odds <= 1 ? 0 /* paranoia */
-                : rn2_on_rng(12, rng_mysterious_force) / (12 / odds);
-
-            if (diff != 0) {
-                assign_rnd_level(newlevel, &u.uz, diff);
-                /* if inside the tower, stay inside */
-                if (was_in_W_tower && !On_W_tower_level(newlevel))
-                    diff = 0;
-            } else
-                rn2_on_rng(12, rng_mysterious_force); /* burn a random number */
-
-            if (diff == 0)
-                assign_level(newlevel, &u.uz);
-
-            new_ledger = ledger_no(newlevel);
-
-            pline(msgc_substitute,
-                  "A mysterious force momentarily surrounds you...");
-            if (on_level(newlevel, &u.uz)) {
-                safe_teleds(FALSE);
-                next_to_u();
-                return;
-            } else
-                at_stairs = at_ladder = FALSE;
-        }
-    }
-
     /* Prevent the player from going past the first quest level unless (s)he
        has been given the go-ahead by the leader. */
     if (on_level(&u.uz, &qstart_level) && !newdungeon && !ok_to_quest(TRUE))
@@ -1067,7 +1012,8 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     if (!levels[new_ledger]) {
         /* entering this level for first time; make it now */
-        historic_event(FALSE, "reached %s.", hist_lev_name(&u.uz, FALSE));
+        historic_event(FALSE, (Is_firstplane(&u.uz) || Is_astralevel(&u.uz)),
+                       "reached %s.", hist_lev_name(&u.uz, FALSE));
         level = mklev(&u.uz);
         new = TRUE;     /* made the level */
     } else {

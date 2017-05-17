@@ -32,8 +32,8 @@
  *                engulfed player (due to ambiguity as to whether you're
  *                aiming for the player's location, or the square's).
  */
-# define m_cansee(mtmp,x2,y2) \
-    (!blind(mtmp) &&                                            \
+# define m_cansee(mtmp,x2,y2)                                   \
+    (!blind(mtmp) && mtmp == &youmonst ? couldsee(x2,y2) :      \
      clear_path((mtmp)->mx,(mtmp)->my,(x2),(y2),viz_array))
 
 /*

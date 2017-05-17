@@ -79,6 +79,7 @@
 # define AD_SLIM 39     /* turns you into green slime */
 # define AD_ENCH 40     /* remove enchantment (disenchanter) */
 # define AD_CORR 41     /* corrode armor (black pudding) */
+# define AD_ZOMB 42     /* zombifies + revives corpses (if AT_AREA) */
 
 # define AD_RBRE 240    /* random breath weapon */
 

@@ -356,7 +356,7 @@ stealamulet(struct monst *mtmp)
     if (Uhave_amulet) {
         real = AMULET_OF_YENDOR;
         fake = FAKE_AMULET_OF_YENDOR;
-    } else if (Uhave_questart) {
+    } else if (Uhave_questart && mtmp->data != &mons[PM_WIZARD_OF_YENDOR]) {
         for (otmp = invent; otmp; otmp = otmp->nobj)
             if (is_quest_artifact(otmp))
                 break;
@@ -404,6 +404,7 @@ mdrop_obj(struct monst *mon, struct obj *obj, boolean verbosely)
         if (!DEADMONSTER(mon)) {
             mon->misc_worn_check &= ~obj->owornmask;
             update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
+            update_property_for_oprops(mon, obj, which_slot(obj));
             /* obj_no_longer_held(obj); -- done by place_object */
             if (obj->owornmask & W_MASK(os_wep))
                 setmnotwielded(mon, obj);

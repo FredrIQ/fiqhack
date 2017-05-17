@@ -17,10 +17,13 @@ static char display_pickinv(const char *, boolean, long *);
 static boolean this_type_only(const struct obj *);
 static void dounpaid(void);
 static struct obj *find_unpaid(struct obj *, struct obj **);
-static void menu_identify(int);
+static boolean not_fully_identified1(const struct obj *);
+static boolean not_fully_identified2(const struct obj *);
+static boolean not_fully_identified3(const struct obj *);
+static void menu_identify(int, int);
 static boolean tool_in_use(struct obj *);
 static char obj_to_let(struct obj *);
-static int identify(struct monst *, struct obj *);
+static int identify(struct monst *, struct obj *, int);
 static const char *dfeature_at(int, int);
 
 static void addinv_stats(struct obj *);
@@ -253,6 +256,9 @@ merged(struct obj **potmp, struct obj **pobj)
         if (obj->bknown)
             otmp->bknown = 1;
 
+        otmp->oprops_known |= obj->oprops_known;
+        otmp->oprops_known &= otmp->oprops; /* just in case */
+
         otmp->quan += obj->quan;
         if (otmp->oclass == COIN_CLASS)
             otmp->owt = weight(otmp);
@@ -316,7 +322,7 @@ static void
 addinv_stats(struct obj *obj)
 {
     if (obj->otyp == AMULET_OF_YENDOR) {
-        historic_event(!obj->known, "gained the Amulet of Yendor!");
+        historic_event(!obj->known, FALSE, "gained the Amulet of Yendor!");
     } else if (obj->oartifact) {
         if (is_quest_artifact(obj)) {
             artitouch();
@@ -545,7 +551,7 @@ freeinv_stats(struct obj *obj)
         /* Minor information leak about the Amulet of Yendor (vs fakes). You
            don't get any more info than you do by turning on show_uncursed
            though. */
-        historic_event(!obj->known, "lost the Amulet of Yendor.");
+        historic_event(!obj->known, FALSE, "lost the Amulet of Yendor.");
     } else if (obj->oartifact) {
         uninvoke_artifact(obj);
     }
@@ -1206,31 +1212,75 @@ fully_identify_obj(struct obj *otmp)
     otmp->known = otmp->dknown = otmp->bknown = otmp->rknown = 1;
     if (otmp->otyp == EGG && otmp->corpsenm != NON_PM)
         learn_egg_type(otmp->corpsenm);
+    if (otmp->oprops)
+        learn_oprop(otmp, otmp->oprops);
 }
 
 /* ggetobj callback routine; identify an object and give immediate feedback */
 int
-identify(struct monst *mon, struct obj *otmp)
+identify(struct monst *mon, struct obj *otmp, int skill)
 {
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
     if (you || (vis && mon->mtame)) {
-        fully_identify_obj(otmp);
+        if (skill == P_EXPERT)
+            fully_identify_obj(otmp);
+        else {
+            makeknown(otmp->otyp);
+            if (otmp->oartifact)
+                discover_artifact((xchar) otmp->oartifact);
+            otmp->dknown = 1;
+            if (skill >= P_BASIC) {
+                otmp->known = 1;
+                if (otmp->oprops)
+                    learn_oprop(otmp, otmp->oprops);
+                if (otmp->otyp == EGG && otmp->corpsenm != NON_PM)
+                    learn_egg_type(otmp->corpsenm);
+            }
+            if (skill >= P_SKILLED)
+                otmp->bknown = 1;
+            if (skill == P_EXPERT)
+                otmp->rknown = 1;
+        }
+
         if (you)
             prinv(NULL, otmp, 0L);
         else
             pline(msgc_info, "%s", doname(otmp));
     }
     if (!you) {
-        otmp->mknown = 1;
-        otmp->mbknown = 1;
+        if (skill >= P_BASIC)
+            otmp->mknown = 1;
+        if (skill >= P_SKILLED)
+            otmp->mbknown = 1;
     }
     return 1;
 }
 
+/* These 3 are required due to query_objlist only taking 1 parameter to
+   its function */
+static boolean
+not_fully_identified1(const struct obj * otmp)
+{
+    return not_fully_identified_core(otmp, FALSE,
+                                     P_UNSKILLED);
+}
+static boolean
+not_fully_identified2(const struct obj * otmp)
+{
+    return not_fully_identified_core(otmp, FALSE,
+                                     P_BASIC);
+}
+static boolean
+not_fully_identified3(const struct obj * otmp)
+{
+    return not_fully_identified_core(otmp, FALSE,
+                                     P_SKILLED);
+}
+
 /* menu of unidentified objects; select and identify up to id_limit of them */
 static void
-menu_identify(int id_limit)
+menu_identify(int id_limit, int skill)
 {
     struct object_pick *pick_list;
     int n, i, first = 1;
@@ -1243,13 +1293,17 @@ menu_identify(int id_limit)
                         first ? "first" : "next");
         n = query_objlist(buf, invent,
                           SIGNAL_NOMENU | USE_INVLET | INVORDER_SORT,
-                          &pick_list, PICK_ANY, not_fully_identified);
+                          &pick_list, PICK_ANY,
+                          skill == P_UNSKILLED ? not_fully_identified1 :
+                          skill == P_BASIC ? not_fully_identified2 :
+                          skill == P_SKILLED ? not_fully_identified3 :
+                          not_fully_identified);
 
         if (n > 0) {
             if (n > id_limit)
                 n = id_limit;
             for (i = 0; i < n; i++, id_limit--)
-                identify(&youmonst, pick_list[i].obj);
+                identify(&youmonst, pick_list[i].obj, skill);
             free(pick_list);
         } else {
             if (n < 0)
@@ -1262,28 +1316,47 @@ menu_identify(int id_limit)
 
 /* dialog with user to identify a given number of items; 0 means all */
 void
-identify_pack(struct monst *mon, int id_limit)
+identify_pack(struct monst *mon, int id_limit,
+              int skill)
 {
     struct obj *obj, *the_obj;
-    int n, unid_cnt;
+    int n, unid_cnt, any_unid_cnt;
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
 
     unid_cnt = 0;
     the_obj = 0;        /* if unid_cnt ends up 1, this will be it */
-    for (obj = m_minvent(mon); obj; obj = obj->nobj)
-        if ((you && not_fully_identified(obj)) ||
-            (!you && (!obj->mknown || !obj->mbknown)))
-            ++unid_cnt, the_obj = obj;
+    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+        if (you) {
+            if (not_fully_identified(obj))
+                any_unid_cnt++;
+            if (not_fully_identified_core(obj, FALSE, skill)) {
+                unid_cnt++;
+                the_obj = obj;
+            }
+        } else {
+            if (obj->otyp == GOLD_PIECE)
+                continue;
+            if (!obj->mknown || !obj->mbknown)
+                any_unid_cnt++;
+            if ((!obj->mknown && skill >= P_BASIC) ||
+                (!obj->mbknown && skill >= P_SKILLED)) {
+                unid_cnt++;
+                the_obj = obj;
+            }
+        }
+    }
 
     if (!unid_cnt) {
         if (you)
-            pline(msgc_info,
-                  "You have already identified all of your possessions.");
+            pline(any_unid_cnt ? msgc_failcurse : msgc_info,
+                  "You have already identified all of your possessions%s.",
+                  any_unid_cnt ? " as far as you can" : "");
         else if (vis)
             pline(msgc_monneutral,
-                  "%s has already identified all of %s possessions.",
-                  Monnam(mon), mhis(mon));
+                  "%s has already identified all of %s possessions%s.",
+                  Monnam(mon), mhis(mon),
+                  any_unid_cnt ? " as far as possible" : "");
     } else if (!id_limit) {
         if (!you && vis && mon->mtame)
             pline(msgc_youdiscover,
@@ -1292,15 +1365,17 @@ identify_pack(struct monst *mon, int id_limit)
                   unid_cnt == 1 ? "" : "s", mhis(mon));
         /* identify everything */
         if (unid_cnt == 1) {
-            identify(mon, the_obj);
+            identify(mon, the_obj, skill);
         } else {
 
             /* TODO: use fully_identify_obj and cornline/menu/whatever here */
             for (obj = m_minvent(mon); obj; obj = obj->nobj)
-                if ((you && not_fully_identified(obj)) ||
-                    (!you && (!obj->mknown || !obj->mbknown)))
-                    identify(mon, obj);
-
+                if ((you &&
+                     not_fully_identified_core(obj, FALSE, skill)) ||
+                    (!you &&
+                     ((!obj->mknown && skill >= P_BASIC) ||
+                      (!obj->mbknown && skill >= P_SKILLED))))
+                    identify(mon, obj, skill);
         }
     } else {
         if (!you) {
@@ -1311,8 +1386,12 @@ identify_pack(struct monst *mon, int id_limit)
                       unid_cnt == 1 ? "" : "s", mhis(mon));
             n = 0;
             for (obj = m_minvent(mon); obj && n < id_limit; obj = obj->nobj) {
-                if (!obj->mknown || !obj->mbknown) {
-                    identify(mon, obj);
+                if (obj->otyp == GOLD_PIECE)
+                    continue;
+
+                if ((!obj->mknown && skill >= P_BASIC) ||
+                    (!obj->mbknown && skill >= P_SKILLED)) {
+                    identify(mon, obj, skill);
                     n++;
                 }
             }
@@ -1320,7 +1399,7 @@ identify_pack(struct monst *mon, int id_limit)
             /* identify up to `id_limit' items */
             n = 0;
             if (n == 0 || n < -1)
-                menu_identify(id_limit);
+                menu_identify(id_limit, skill);
         }
     }
     update_inventory();
@@ -1607,7 +1686,7 @@ count_buc(struct obj *list, int type)
                 count++;
             break;
         case UNIDENTIFIED:
-            if (not_fully_identified_core(list, TRUE))
+            if (not_fully_identified_core(list, TRUE, P_EXPERT))
                 count++;
             break;
         default:
@@ -2146,6 +2225,9 @@ mergable(struct obj *otmp, struct obj *obj)
         return FALSE;
 
     if (obj->otyp != otmp->otyp)
+        return FALSE;
+
+    if (obj->oprops != otmp->oprops)
         return FALSE;
 
     /* coins of the same kind will always merge, even in containers */

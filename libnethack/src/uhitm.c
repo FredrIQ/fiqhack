@@ -160,10 +160,11 @@ attack(struct monst *mtmp, schar dx, schar dy, boolean confirmed)
     if (u.bashmsg) {
         u.bashmsg = FALSE;
         if (uwep)
-            pline(msgc_occstart, "You begin bashing monsters with your %s.",
+            pline(msgc_fatalavoid, "You begin bashing monsters with your %s.",
                   aobjnam(uwep, NULL));
         else if (!cantwield(youmonst.data))
-            pline(msgc_occstart, "You begin %sing monsters with your %s %s.",
+            pline(Role_if(PM_MONK) ? msgc_occstart : msgc_fatalavoid,
+                  "You begin %sing monsters with your %s %s.",
                   Role_if(PM_MONK) ? "strik" : "bash",
                   uarmg ? "gloved" : "bare",      /* Del Lamb */
                   makeplural(body_part(HAND)));
@@ -278,43 +279,25 @@ mhmon(struct monst *magr, struct monst *mdef, struct obj *obj, int thrown,
 {
     if (!thrown) {
         impossible("mhmon: running on a non-thrown weapon?");
-        if (magr == &youmonst)
-            return hmon(mdef, obj, 0, multishot_count);
-        return 1;
+        if (magr != &youmonst)
+            return 1;
     }
     if (magr == &youmonst)
-        return hmon(mdef, obj, 1, multishot_count);
+        return hmon(mdef, obj, thrown, multishot_count);
 
     boolean udef = (mdef == &youmonst);
-    boolean vis = (udef || canseemon(mdef));
+    boolean vis = (udef || canseemon(mdef) ||
+                   (magr && canseemon(magr)));
     int dmg = dmgval(obj, mdef);
     if (mdef->m_ap_type && mdef->m_ap_type != M_AP_MONSTER)
         seemimic(mdef);
     if (!udef && mdef->msleeping)
         mdef->msleeping = 0;
-    if (vis || (magr && canseemon(magr)))
+    if (vis)
         hit(mshot_xname(obj, multishot_count), mdef, exclam(dmg), magr);
-    if (obj->opoisoned && is_poisonable(obj)) {
-        if (resists_poison(mdef)) {
-            if (vis)
-                pline(combat_msgc(magr, mdef, cr_immune),
-                      "The poison doesn't seem to affect %s.", mon_nam(mdef));
-        } else {
-            if (udef)
-                poisoned(xname(obj), A_STR,
-                         killer_msg_obj(POISONING, obj),  -10);
-            else if (rn2(30))
-                dmg += rnd(6);
-            else {
-                if (vis)
-                    pline(combat_msgc(magr, mdef, cr_kill),
-                          "The poison was deadly...");
-                dmg = mdef->mhp;
-                if (half_phys_dam(mdef))
-                    dmg *= 2; /* sorry */
-            }
-        }
-    }
+    if (obj->opoisoned && is_poisonable(obj))
+        poisoned(mdef, xname(obj), A_STR,
+                 killer_msg_obj(POISONING, obj), -10);
 
     if (objects[obj->otyp].oc_material == SILVER &&
         hates_silver(mdef->data)) {
@@ -406,14 +389,15 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
        the damage don't come out until _after_ outputting a hit message. */
     boolean hittxt = FALSE, destroyed = FALSE, already_killed = FALSE;
     boolean get_dmg_bonus = TRUE;
-    boolean ispoisoned = FALSE, needpoismsg = FALSE, poiskilled = FALSE;
+    boolean ispoisoned = FALSE;
     boolean silvermsg = FALSE, silverobj = FALSE;
     boolean valid_weapon_attack = FALSE;
     boolean unarmed = !uwep && (!uarm || uskin()) && !uarms;
+    boolean mercy = FALSE;
     int jousting = 0;
     int wtype;
     struct obj *monwep;
-    const char *unconventional, *saved_oname;
+    const char *unconventional, *saved_oname, *poistxt;
 
     unconventional = "";
     saved_oname = "";
@@ -426,13 +410,20 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
             tmp = rnd(4);       /* bonus for martial arts */
         else
             tmp = rnd(2);
-        valid_weapon_attack = (tmp > 1);
+        valid_weapon_attack = (martial_bonus() || tmp > 1 || rn2(8));
         /* blessed gloves give bonuses when fighting 'bare-handed' */
-        if (uarmg && uarmg->blessed && (is_undead(mdat) || is_demon(mdat)))
-            tmp += rnd(4);
+        if (uarmg) {
+            if (uarmg->blessed && (is_undead(mdat) || is_demon(mdat)))
+                tmp += rnd(4);
+            if (martial_bonus() && uarmg->spe > 0)
+                tmp += uarmg->spe;
+        }
         /* So do silver rings.  Note: rings are worn under gloves, so you don't
            get both bonuses. */
         if (!uarmg) {
+            if (((uleft && uleft->blessed) || (uright && uright->blessed)) &&
+                (is_undead(mdat) || is_demon(mdat)))
+                tmp += rnd(4); /* blessed damage */
             if (uleft && objects[uleft->otyp].oc_material == SILVER)
                 barehand_silver_rings++;
             if (uright && objects[uright->otyp].oc_material == SILVER)
@@ -532,7 +523,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
                     hittxt = TRUE;
                 }
 
-                if (obj->oartifact &&
+                if ((obj->oartifact || obj->oprops) &&
                     artifact_hit(&youmonst, mon, obj, &tmp, dieroll)) {
                     if (DEADMONSTER(mon))  /* artifact killed monster */
                         return FALSE;
@@ -540,6 +531,10 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
                         return TRUE;
                     hittxt = TRUE;
                 }
+                if (!thrown &&
+                    (obj_properties(obj) & opm_mercy))
+                    mercy = TRUE;
+
                 if (objects[obj->otyp].oc_material == SILVER &&
                     hates_silver(mdat)) {
                     silvermsg = TRUE;
@@ -563,8 +558,10 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
                                  uwep->otyp == ELVEN_BOW)
                             tmp++;
                     }
-                    if (obj->opoisoned && is_poisonable(obj))
+                    if (obj->opoisoned && is_poisonable(obj)) {
                         ispoisoned = TRUE;
+                        poistxt = xname(obj);
+                    }
                 }
             }
         } else if (obj->oclass == POTION_CLASS) {
@@ -829,12 +826,6 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
             pline(msgc_itemloss, "Your %s %s no longer poisoned.",
                   xname(obj), otense(obj, "are"));
         }
-        if (resists_poison(mon))
-            needpoismsg = TRUE;
-        else if (rn2(10))
-            tmp += rnd(6);
-        else
-            poiskilled = TRUE;
     }
     if (tmp < 1) {
         /* make sure that negative damage adjustment can't result in
@@ -870,8 +861,9 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
             obj = 0;
         }
         /* avoid migrating a dead monster */
-        if (mon->mhp > tmp) {
-            mhurtle(mon, mon->mx - youmonst.mx, mon->my - youmonst.my, 1);
+        if ((mon->mhp > tmp) || mercy) {
+            mhurtle(mon, mon->mx - youmonst.mx,
+                    mon->my - youmonst.my, 1);
             mdat = mon->data;   /* in case of a polymorph trap */
             if (DEADMONSTER(mon))
                 already_killed = TRUE;
@@ -896,15 +888,45 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
         }
     }
 
-    if (!already_killed)
-        mon->mhp -= tmp;
+    if (!already_killed) {
+        if (mercy) {
+            if (mon->mhp < mon->mhpmax) {
+                mon->mhp += tmp;
+                if (mon->mhp > mon->mhpmax)
+                    mon->mhp = mon->mhpmax;
+                pline(combat_msgc(&youmonst, mon, cr_immune),
+                      "%s healed!", M_verbs(mon, "are"));
+            }
+
+            if (obj) {
+                obj->mbknown = 1;
+                obj->mknown = 1;
+
+                /* autocurse */
+                if (!obj->cursed) {
+                    if (Blind)
+                        pline(msgc_statusbad, "%s for a moment.",
+                              Tobjnam(obj, "vibrate"));
+                    else
+                        pline(msgc_statusbad, "%s %s for a moment.",
+                              Tobjnam(obj, "glow"), hcolor("black"));
+                    curse(obj);
+                    obj->bknown = TRUE;
+                }
+                learn_oprop(obj, opm_mercy);
+            }
+        } else
+            mon->mhp -= tmp;
+    }
+
     /* adjustments might have made tmp become less than what a level draining
        artifact has already done to max HP */
     if (mon->mhp > mon->mhpmax)
         mon->mhp = mon->mhpmax;
     if (mon->mhp <= 0)
         destroyed = TRUE;
-    if (mon->mtame && (!mon->mflee || mon->mfleetim) && tmp > 0) {
+    if (!mercy && mon->mtame &&
+        (!mon->mflee || mon->mfleetim) && tmp > 0) {
         abuse_dog(mon);
         monflee(mon, 10 * rnd(tmp), FALSE, FALSE);
     }
@@ -955,15 +977,11 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
         pline(combat_msgc(&youmonst, mon, cr_hit), fmt, whom);
     }
 
-    if (needpoismsg)
-        pline(combat_msgc(&youmonst, mon, cr_immune),
-              "The poison doesn't seem to affect %s.", mon_nam(mon));
-    if (poiskilled) {
-        pline(combat_msgc(&youmonst, mon, cr_kill),
-              "The poison was deadly...");
-        if (!already_killed)
-            xkilled(mon, 0);
-        return FALSE;
+    if (ispoisoned && !already_killed) {
+        poisoned(mon, poistxt, A_STR,
+                 "???SHOULD NOT HAPPEN???", thrown ? -10 : 10);
+        if (DEADMONSTER(mon))
+            destroyed = TRUE;
     } else if (destroyed) {
         if (!already_killed)
             killed(mon);        /* takes care of most messages */
@@ -1021,18 +1039,23 @@ m_slips_free(struct monst *mdef, const struct attack *mattk)
             obj = which_armor(mdef, os_armu);    /* shirt */
     }
 
+    uint64_t props = 0;
+    if (obj)
+        props = obj_properties(obj);
+
     /* if your cloak/armor is greased, monster slips off; this protection might
        fail (33% chance) when the armor is cursed */
-    if (obj && (obj->greased || obj->otyp == OILSKIN_CLOAK) &&
+    if (obj && (obj->greased || obj->otyp == OILSKIN_CLOAK ||
+                (props & opm_oilskin)) &&
         (!obj->cursed || rn2(3))) {
         pline(combat_msgc(&youmonst, mdef, cr_miss), "You %s %s %s %s!",
               mattk->adtyp == AD_WRAP ?
               "slip off of" : "grab, but cannot hold onto",
               s_suffix(mon_nam(mdef)), obj->greased ? "greased" : "slippery",
               /* avoid "slippery slippery cloak" for undiscovered oilskin */
-              (obj->greased ||
-               objects[obj->otyp].
-               oc_name_known) ? xname(obj) : cloak_simple_name(obj));
+              (obj->greased || objects[obj->otyp].oc_name_known ||
+               obj->otyp != OILSKIN_CLOAK) ?
+              xname(obj) : cloak_simple_name(obj));
 
         if (obj->greased && !rn2(2)) {
             pline(msgc_consequence, "The grease wears off.");
@@ -1161,6 +1184,8 @@ steal_it(struct monst *mdef, const struct attack *mattk)
             }
             otmp->owornmask = 0L;
             update_property(mdef, objects[otmp->otyp].oc_oprop, which_slot(otmp));
+            update_property_for_oprops(mdef, otmp,
+                                       which_slot(otmp));
 
             if (otmp == stealoid)       /* special message for final item */
                 pline(msgc_actionok, "%s finishes taking off %s suit.",
@@ -1199,6 +1224,8 @@ damageum(struct monst *mdef, const struct attack *mattk)
     const struct permonst *pd = mdef->data;
     int tmp = dice((int)mattk->damn, (int)mattk->damd);
     int armpro;
+    int zombie_timer;
+    int ptmp;
     boolean negated;
 
     armpro = magic_negation(mdef);
@@ -1325,8 +1352,6 @@ damageum(struct monst *mdef, const struct attack *mattk)
             shieldeff(mdef->mx, mdef->my);
             tmp = 0;
         }
-        /* only rings damage resistant players in destroy_item */
-        tmp += destroy_mitem(mdef, RING_CLASS, AD_ELEC);
         break;
     case AD_ACID:
         if (resists_acid(mdef))
@@ -1411,7 +1436,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_DRLI:
-        if (!negated && !rn2(3) && !resists_drli(mdef)) {
+        if (!cancelled(&youmonst) && !rn2(3) && !resists_drli(mdef)) {
             int xtmp = dice(2, 6);
 
             pline(combat_msgc(&youmonst, mdef, cr_hit),
@@ -1449,26 +1474,17 @@ damageum(struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_DRST:
+        ptmp = A_STR;
+        goto dopois;
     case AD_DRDX:
+        ptmp = A_DEX;
+        goto dopois;
     case AD_DRCO:
-        if (!negated && !rn2(8)) {
-            /* TODO: merge messages here to avoid incorrect "hit" channelization
-               in the case of an immunity */
-            pline(combat_msgc(&youmonst, mdef, cr_hit),
-                  "Your %s was poisoned!", mpoisons_subj(&youmonst, mattk));
-            if (resists_poison(mdef))
-                pline(combat_msgc(&youmonst, mdef, cr_immune),
-                      "The poison doesn't seem to affect %s.", mon_nam(mdef));
-            else {
-                if (!rn2(10)) {
-                    /* cr_kill message given later */
-                    pline(combat_msgc(&youmonst, mdef, cr_hit),
-                          "Your poison was deadly...");
-                    tmp = mdef->mhp;
-                } else
-                    tmp += rn1(10, 6);
-            }
-        }
+        ptmp = A_CON;
+    dopois:
+        if (!negated && !rn2(8))
+            poisoned(mdef, msgprintf("Your %s", mpoisons_subj(&youmonst, mattk)), ptmp,
+                     killer_msg_mon(POISONING, &youmonst), 30);
         break;
     case AD_DRIN:
         if (notonhead || !has_head(mdef->data)) {
@@ -1598,6 +1614,17 @@ damageum(struct monst *mdef, const struct attack *mattk)
         }
         tmp = 0;
         break;
+    case AD_ZOMB:
+        if (nonliving(mdef->data) || izombie(mdef))
+            break;
+        zombie_timer = property_timeout(mdef, ZOMBIE);
+        if (!zombie_timer)
+            mdef->uzombied = TRUE;
+        set_property(mdef, ZOMBIE,
+                     !zombie_timer ? 100 :
+                     zombie_timer <= 10 ? 1 :
+                     (zombie_timer - 10), FALSE);
+        break;
     case AD_SLOW:
         if (!negated)
             inc_timeout(mdef, SLOW, tmp, FALSE);
@@ -1609,6 +1636,11 @@ damageum(struct monst *mdef, const struct attack *mattk)
     default:
         tmp = 0;
         break;
+    }
+
+    if (DEADMONSTER(mdef)) {
+        /* Can happen from poison which runs its own logic */
+        return 2;
     }
 
     /* in case player is fast */

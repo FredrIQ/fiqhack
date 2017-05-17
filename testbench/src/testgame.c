@@ -57,6 +57,7 @@ static char test_yn_function(const char *, const char *, char);
 static void test_getlin(const char *, void *, void (*)(const char *, void *));
 static void test_no_op_void(void);
 static void test_no_op_int(int);
+static void test_no_op_str(const char *, int, void (*)(const char *));
 static void test_outrip(struct nh_menulist *, nh_bool, const char *, int,
                         const char *, int, int);
 
@@ -76,6 +77,7 @@ static struct nh_window_procs test_windowprocs = {
     .win_getdir = test_getdir,
     .win_yn_function = test_yn_function,
     .win_getlin = test_getlin,
+    .win_show_ac = test_show_ac,
     .win_delay = test_no_op_void,
     .win_load_progress = test_no_op_int,
     .win_level_changed = test_no_op_int,
@@ -1004,6 +1006,15 @@ static void
 test_no_op_int(int unused)
 {
     (void) unused;
+}
+
+static void
+test_show_ac(const char *unused1, int unused2,
+             void (*unused3)(const char *))
+{
+    (void) unused1;
+    (void) unused2;
+    (void) unused3;
 }
 
 static void

@@ -290,6 +290,7 @@ struct settings {
     char *tileset;                   /* tileset file name */
 
     nh_bool alt_is_esc; /* parse Alt-letter as ESC letter */
+    nh_bool classic_status; /* mimic NH3's status bar */
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
     nh_bool dungeoncolor;       /* respect level display modes */
@@ -299,11 +300,13 @@ struct settings {
     nh_bool showexp;    /* show experience points */
     nh_bool use_inverse;        /* use inverse video for some things */
     nh_bool invweight;  /* show item weight in the inventory */
+    nh_bool msgcolor;   /* color messages depending on context */
     nh_bool bgbranding; /* show hidden traps/stairs with background */
     nh_bool floorcolor; /* draw stepped-on information for the floor */
     nh_bool status3;    /* draw 3 line status */
     nh_bool mouse;      /* accept mouse input */
     nh_bool prompt_inline; /* draw prompts in the message window */
+    nh_bool show_ac; /* whether to display armor value as AC or Def */
 };
 
 
@@ -659,6 +662,7 @@ extern void delete_all_gamewins(void);
 extern void curses_pause(enum nh_pause_reason reason);
 extern void curses_display_buffer(const char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);
+extern void curses_show_ac(const char *, int, void *, void (*)(const char *, void *));
 extern void curses_delay_output(void);
 extern void curses_load_progress(int progress);
 extern void curses_server_cancel(void);

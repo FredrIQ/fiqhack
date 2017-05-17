@@ -115,7 +115,7 @@ log_recover_core_reasons(struct nh_menulist *menu, const char *message,
                      "Here is additional information about this save rewind:");
     } else {
         add_menutext(menu,
-            "You can report this error at <http://trac.nethack4.org>.");
+            "You can report this error at <https://github.com/FredrIQ/fiqhack/issues>.");
         add_menutext(menu, "Please include the following information:");
     }
     add_menutext(menu, "");

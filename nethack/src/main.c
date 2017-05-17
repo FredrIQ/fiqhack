@@ -45,10 +45,12 @@ enum menuitems {
 static struct nh_menuitem mainmenu_items[] = {
     {NEWGAME, MI_NORMAL, 0, "new game", 'n'},
     {LOAD, MI_NORMAL, 0, "load game", 'l'},
+#ifndef PUBLIC_SERVER
     {REPLAY, MI_NORMAL, 0, "view replay", 'v'},
+#endif
     {OPTIONS, MI_NORMAL, 0, "set options", 'o'},
     {TOPTEN, MI_NORMAL, 0, "show score list", 's'},
-#if defined(NETCLIENT)
+#if defined(NETCLIENT) && ! defined(PUBLIC_SERVER)
     {NETWORK, MI_NORMAL, 0, "connect to server", 'c'},
 #endif
     {EXITGAME, MI_NORMAL, 0, "quit", 'q', 'x'}
@@ -57,7 +59,9 @@ static struct nh_menuitem mainmenu_items[] = {
 static struct nh_menuitem mainmenu_items_noclient[] = {
     {NEWGAME, MI_NORMAL, 0, "new game", 'n'},
     {LOAD, MI_NORMAL, 0, "load game", 'l'},
+#ifndef PUBLIC_SERVER
     {REPLAY, MI_NORMAL, 0, "view replay", 'v'},
+#endif
     {OPTIONS, MI_NORMAL, 0, "set options", 'o'},
     {TOPTEN, MI_NORMAL, 0, "show score list", 's'},
     {EXITGAME, MI_NORMAL, 0, "quit", 'q', 'x'}
@@ -200,6 +204,11 @@ init_game_paths(const char *argv0)
             pathlist[LOCKPREFIX] = override_hackdir;
             pathlist[TROUBLEPREFIX] = override_hackdir;
         }
+
+/* note that the check in rungame.c defines DUMPDIR if not
+   set to a default, this code will break if said check is
+   exposed to this place. */
+# ifndef DUMPDIR
         if (override_userdir) {
             /* player-specific */
             pathlist[DUMPPREFIX] = override_userdir;
@@ -207,6 +216,7 @@ init_game_paths(const char *argv0)
                those as filenames to the engine; rather, get_gamedir looks at
                them */
         }
+# endif
 #ifdef UNIX
     }
 #endif

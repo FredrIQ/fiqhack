@@ -1350,8 +1350,10 @@ dosearch0(int aflag)
                 y--;
                 break;
             }
-            if (x == youmonst.mx + ((iter_typ == 0 || iter_typ == 1) ? i : -i) &&
-                y == youmonst.my + ((iter_typ == 1 || iter_typ == 2) ? i : -i))
+            if (x == youmonst.mx + ((iter_typ == 0 ||
+                                     iter_typ == 1) ? i : -i) &&
+                y == youmonst.my + ((iter_typ == 1 ||
+                                     iter_typ == 2) ? i : -i))
                 iter_typ++;
         }
     }
@@ -1401,9 +1403,9 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
      * + Luck
      * + 5*searchbonus
      * + 5 with lenses
-     * This is divided by 20 * 3 ^ (Manhattan distance - 1) to form a search rate
+     * This is divided by 20 * 2 ^ (Manhattan distance - 1) to form a search rate
      * This means that with no luck or other bonuses, you find things next to you
-     * 20/20 of the time (100%), 2 tiles away 20/60 (1/3), 3 tiles away 20/180 (1/9), etc
+     * 20/20 of the time (100%), 2 tiles away 20/40 (1/2), 3 tiles away 20/80 (1/4), etc
      */
     int baserate = 20;
     if (you)
@@ -1418,13 +1420,13 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
     int basediv = 20;
     int i;
     for (i = 1; i < dist; i++)
-        basediv *= 3;
+        basediv *= 2;
 
     if (baserate < rnd(basediv))
         return;
 
     /* Don't allow searching through walls/similar */
-    if (!clear_path(x, y, mon->mx, mon->my, viz_array))
+    if (!clear_path(x, y, m_mx(mon), m_my(mon), viz_array))
         return;
 
     if (lev->locations[x][y].typ == SDOOR) {
@@ -1469,7 +1471,6 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
                square. The case where it's new is handled
                by reveal_monster_at, so we only need to
                handle the case where it isn't new.
-
                Check this last in case there's something more
                urgent to report. */
             if (level->locations[x][y].mem_invis && !autosearch)
@@ -1493,10 +1494,7 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
             pline(msgc_yafm, "There's still a monster there.");
         }
     }
-
-    return;
 }
-
 
 int
 dosearch(const struct nh_cmd_arg *arg)
