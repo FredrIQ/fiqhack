@@ -240,7 +240,7 @@ display_oprops(const struct obj *obj, const char *input)
         use_armor = FALSE;
 
     for (desc = prop_desc; desc->mask != opm_none; desc++) {
-        if (desc->mask == opm_vorpal) {
+        if (desc->mask == opm_vorpal && use_armor) {
             suffixes = 0;
             versus = TRUE;
             if (olddesc) {
