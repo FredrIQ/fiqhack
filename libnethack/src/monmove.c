@@ -635,18 +635,18 @@ pathfind_score(struct monst *mon, int appr, struct distmap_state *ds, int x, int
 
     int score = 0;
 
-    /* Give a bonus to items the monster wants */
-    struct obj *obj;
-    for (obj = mon->dlevel->objects[x][y]; obj; obj = obj->nexthere)
-        if (obj_interesting(mon, obj))
-            score += 2;
-
     /* Gives a score for the distance depending on distmap state */
     int dist = distmap(ds, x, y);
 
     /* dist is lower if xy is closer to the goal, but higher score is better. Thus,
        if appr is 1, negate it */
     score = (appr == 1 ? -dist : dist);
+
+    /* Give a bonus to items the monster wants */
+    struct obj *obj;
+    for (obj = mon->dlevel->objects[x][y]; obj; obj = obj->nexthere)
+        if (obj_interesting(mon, obj))
+            score += 2;
 
     return score;
 }
