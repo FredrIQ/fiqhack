@@ -685,7 +685,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         if (visda && valid_range && !resists_ston(mdef)) {
             pline(combat_msgc(magr, mdef, cr_kill), "%s %s gaze.",
-                  M_verbs(magr, "meet"), s_suffix(mon_nam(magr)));
+                  M_verbs(mdef, "meet"), s_suffix(mon_nam(magr)));
             if (udef) {
                 action_interrupted();
                 instapetrify(killer_msg(STONING,
@@ -702,14 +702,11 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (!has_property(mdef, conf ? CONFUSION : STUNNED)) {
             if (vis) {
                 if (conf)
-                    pline(combat_msgc(magr, mdef, cr_hit),
-                          "%s gaze confuses %s!",
-                          uagr ? "Your" : s_suffix(Monnam(magr)),
-                          udef ? "you" : mon_nam(mdef));
+                    pline(combat_msgc(magr, mdef, cr_hit), "%s gaze confuses %s!",
+                          s_suffix(Monnam(magr)), mon_nam(mdef));
                 else
-                    pline(combat_msgc(magr, mdef, cr_hit),
-                          "%s piercingly at %s!", M_verbs(magr, "stare"),
-                          udef ? "you" : mon_nam(mdef));
+                    pline(combat_msgc(magr, mdef, cr_hit), "%s piercingly at %s!",
+                          M_verbs(magr, "stare"), mon_nam(mdef));
             }
         } else if (vis && conf)
             pline(combat_msgc(magr, mdef, cr_hit),
@@ -746,12 +743,11 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "%s at %s, but %s to catch fire.", M_verbs(magr, "glare"),
-                      udef ? "you" : mon_nam(mdef), m_verbs(mdef, "fail"));
+                      mon_nam(mdef), m_verbs(mdef, "fail"));
             dmg = 0;
         } else if (vis)
-            pline(combat_msgc(magr, mdef, cr_hit),
-                  "%s %s with a fiery gaze!", M_verbs(magr, "attack"),
-                  udef ? "you" : mon_nam(mdef));
+            pline(combat_msgc(magr, mdef, cr_hit), "%s %s with a fiery gaze!",
+                  M_verbs(magr, "attack"), mon_nam(mdef));
         if (udef)
             action_interrupted();
         burn_away_slime(mdef);
