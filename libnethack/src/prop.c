@@ -2537,8 +2537,6 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 }
 
 
-/* Enlightenment and conduct */
-
 /* Struct to handle warning strings */
 struct mon_warn_info {
     enum mon_matchtyp matchtyp;
@@ -2856,6 +2854,8 @@ get_monwarnstr(const struct monst *mon, boolean multi)
 
     return msg_from_string(outbuf);
 }
+
+/* Enlightenment and conduct */
 
 static void
 eline(struct nh_menulist *menu, const char *format, ...)
