@@ -396,12 +396,10 @@ protects(int adtyp, struct obj * otmp)
    For warntypes, returns the result in the provided *warntype
    pointer. */
 long
-item_provides_extrinsic(const struct obj *otmp, int extrinsic,
-                        int *warntype)
+item_provides_extrinsic(const struct obj *otmp, int extrinsic)
 {
     long res;
-    res = item_provides_extrinsic_before_oprop(otmp, extrinsic,
-                                               warntype);
+    res = item_provides_extrinsic_before_oprop(otmp, extrinsic);
 
     if (res == W_WORN || res == W_EQUIP)
         res &= otmp->owornmask;
@@ -560,8 +558,8 @@ spfx_provides_extrinsic(const struct obj *obj, unsigned long spfx,
         (spfx & SPFX_XRAY    && extrinsic == XRAY_VISION) ||
         (spfx & SPFX_WARN    && extrinsic == WARNING) ||
         (spfx & SPFX_WARNMON && extrinsic == WARN_OF_MON))
-        return mask;
-    return 0;
+        return TRUE;
+    return FALSE;
 }
 
 /*
@@ -634,7 +632,7 @@ touch_artifact(struct obj *obj, const struct monst *mon)
 
 
 /* decide whether an artifact's special attacks or mon warning apply against mtmp */
-static int
+static boolean
 spec_applies(const struct artifact *weap, const struct monst *mtmp)
 {
     const struct permonst *ptr = mtmp->data;

@@ -1717,22 +1717,22 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj,
             return 1; /* caller doesn't need to place it */
         }
         return 0;
-    } else if (mon->mtame && mon->mcanmove &&
-               !is_animal(mon->data) && !mindless(mon->data) &&
+    } else if (uagr && !udef && mdef->mtame && mdef->mcanmove &&
+               !is_animal(mdef->data) && !mindless(mdef->data) &&
                !(uwep && ammo_and_launcher(obj, uwep))) {
         /* thrown item at intelligent pet to let it use it */
         pline(msgc_actionok, "%s %s.",
-              M_verbs(mon, "catch"), the(xname(obj)));
+              M_verbs(mdef, "catch"), the(xname(obj)));
         obj_extract_self(obj);
-        mpickobj(mon, obj, NULL);
-        if (attacktype(mon->data, AT_WEAP) &&
-            mon->weapon_check == NEED_WEAPON) {
-            mon->weapon_check == NEED_HTH_WEAPON;
-            mon_wield_item(mon);
+        mpickobj(mdef, obj, NULL);
+        if (attacktype(mdef->data, AT_WEAP) &&
+            mdef->weapon_check == NEED_WEAPON) {
+            mdef->weapon_check == NEED_HTH_WEAPON;
+            mon_wield_item(mdef);
         }
 
-        m_dowear(mon, FALSE);
-        newsym(mon->mx, mon->my);
+        m_dowear(mdef, FALSE);
+        newsym(mdef->mx, mdef->my);
         return 1;
     }
 

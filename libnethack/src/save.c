@@ -399,7 +399,7 @@ save_you(struct memfile *mf, struct you *y)
 
     yflags =
         (y->uswallow << 31) | (y->uinwater << 30) |
-        (y->uundetected << 29) | (y->mfemale << 28) |
+        (y->unused_uundetected << 29) | (y->mfemale << 28) |
         (y->uinvulnerable << 27) | (y->uburied << 26) |
         (y->uedibility << 25) | (y->uwelcomed << 24) |
         (y->usick_type << 22) | (y->ufemale << 21);
@@ -426,11 +426,11 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->uhpmax);
     mwrite32(mf, y->uen);
     mwrite32(mf, y->uenmax);
-    mwrite32(mf, y->ulevel);
+    mwrite32(mf, y->unused_ulevel);
     mwrite32(mf, y->umoney0);
-    mwrite32(mf, y->uexp);
+    mwrite32(mf, y->unused_uexp);
     mwrite32(mf, y->urexp);
-    mwrite32(mf, y->ulevelmax);
+    mwrite32(mf, y->unused_ulevelmax);
     mwrite32(mf, y->umonster);
     mwrite32(mf, y->umonnum);
     mwrite32(mf, y->mh);
@@ -441,14 +441,14 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->utraptype);
     mwrite32(mf, save_encode_32(y->uhunger, -moves, -moves));
     mwrite32(mf, y->uhs);
-    mwrite32(mf, y->oldcap);
-    mwrite32(mf, save_encode_32(y->umconf, -moves, -moves));
+    mwrite32(mf, y->unused_oldcap);
+    mwrite32(mf, save_encode_32(y->unused_umconf, -moves, -moves));
     mwrite32(mf, y->nv_range);
     mwrite32(mf, y->bglyph);
     mwrite32(mf, y->cglyph);
     mwrite32(mf, y->bc_order);
     mwrite32(mf, y->bc_felt);
-    mwrite32(mf, y->ucreamed);
+    mwrite32(mf, y->unused_ucreamed);
     mwrite32(mf, y->uswldtim);
     mwrite32(mf, y->udg_cnt);
     mwrite32(mf, y->next_attr_check);
@@ -476,8 +476,8 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->ustuck ? y->ustuck->m_id : 0);
     mwrite32(mf, y->usteed ? y->usteed->m_id : 0);
 
-    mwrite8(mf, y->ux);
-    mwrite8(mf, y->uy);
+    mwrite8(mf, y->unused_ux);
+    mwrite8(mf, y->unused_uy);
     mwrite8(mf, y->tx);
     mwrite8(mf, y->ty);
     mwrite8(mf, y->ux0);

@@ -175,12 +175,10 @@ filter_redundant_oprops(const struct obj *obj,
                         uint64_t props)
 {
     const struct opropdesc *desc;
-    int dummy; /* needed for item_provides_extrinsic */
 
     for (desc = prop_desc; desc->mask != opm_none; desc++)
         if ((props & desc->mask) && desc->prop &&
-            item_provides_extrinsic_before_oprop(obj, desc->prop,
-                                                 &dummy))
+            item_provides_extrinsic_before_oprop(obj, desc->prop))
             props &= ~(desc->mask);
 
     return props;

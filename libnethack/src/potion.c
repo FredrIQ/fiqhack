@@ -340,10 +340,10 @@ dopotion(struct monst *mon, struct obj *obj)
         }
     }
 
-    otmp->in_use = TRUE;
+    obj->in_use = TRUE;
     int nothing = 0;
     int unkn = 0;
-    if ((retval = peffects(&youmonst, otmp, &nothing, &unkn)) >= 0)
+    if ((retval = peffects(&youmonst, obj, &nothing, &unkn)) >= 0)
         return retval;
 
     if (nothing) {

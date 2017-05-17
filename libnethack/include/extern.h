@@ -448,7 +448,8 @@ extern int throwing_range(const struct monst *, const struct obj *, int *);
 extern boolean throwit(struct monst *, struct obj *, struct obj *, int, long, boolean,
                        schar, schar, schar);
 extern int omon_adj(struct monst *, struct obj *, boolean);
-extern int thitmonst(struct monst *, struct obj *, struct obj *, int);
+extern int thitmonst(struct monst *, struct monst *, struct obj *, struct obj *,
+                     int);
 extern int hero_breaks(struct obj *, xchar, xchar, boolean);
 extern int breaks(struct obj *, xchar, xchar);
 extern boolean breaktest(struct obj *);

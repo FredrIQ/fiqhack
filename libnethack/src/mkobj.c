@@ -1897,7 +1897,7 @@ save_obj(struct memfile *mf, struct obj *obj)
 
     if (obj->oprops != obj_properties(obj)) {
         impossible("Obj %s has invalid properties, deleting",
-                   killer_xname(obj));
+                   killer_xname(obj, FALSE));
         obj->oprops = obj_properties(obj);
     }
     mwrite64(mf, obj->oprops);

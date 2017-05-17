@@ -528,7 +528,7 @@ restore_you(struct memfile *mf, struct you *y)
 
     y->uswallow = (yflags >> 31) & 1;
     y->uinwater = (yflags >> 30) & 1;
-    y->uundetected = (yflags >> 29) & 1;
+    y->unused_uundetected = (yflags >> 29) & 1;
     y->mfemale = (yflags >> 28) & 1;
     y->uinvulnerable = (yflags >> 27) & 1;
     y->uburied = (yflags >> 26) & 1;
@@ -554,11 +554,11 @@ restore_you(struct memfile *mf, struct you *y)
     y->uhpmax = mread32(mf);
     y->uen = mread32(mf);
     y->uenmax = mread32(mf);
-    y->ulevel = mread32(mf);
+    y->unused_ulevel = mread32(mf);
     y->umoney0 = mread32(mf);
-    y->uexp = mread32(mf);
+    y->unused_uexp = mread32(mf);
     y->urexp = mread32(mf);
-    y->ulevelmax = mread32(mf);
+    y->unused_ulevelmax = mread32(mf);
     y->umonster = mread32(mf);
     y->umonnum = mread32(mf);
     y->mh = mread32(mf);
@@ -569,14 +569,14 @@ restore_you(struct memfile *mf, struct you *y)
     y->utraptype = mread32(mf);
     y->uhunger = save_decode_32(mread32(mf), -moves, -moves);
     y->uhs = mread32(mf);
-    y->oldcap = mread32(mf);
-    y->umconf = save_decode_32(mread32(mf), -moves, -moves);
+    y->unused_oldcap = mread32(mf);
+    y->unused_umconf = save_decode_32(mread32(mf), -moves, -moves);
     y->nv_range = mread32(mf);
     y->bglyph = mread32(mf);
     y->cglyph = mread32(mf);
     y->bc_order = mread32(mf);
     y->bc_felt = mread32(mf);
-    y->ucreamed = mread32(mf);
+    y->unused_ucreamed = mread32(mf);
     y->uswldtim = mread32(mf);
     y->udg_cnt = mread32(mf);
     y->next_attr_check = mread32(mf);
@@ -603,8 +603,8 @@ restore_you(struct memfile *mf, struct you *y)
     y->ustuck = (void *)(intptr_t) mread32(mf);
     y->usteed = (void *)(intptr_t) mread32(mf);
 
-    y->ux = mread8(mf);
-    y->uy = mread8(mf);
+    y->unused_ux = mread8(mf);
+    y->unused_uy = mread8(mf);
     y->tx = mread8(mf);
     y->ty = mread8(mf);
     y->ux0 = mread8(mf);

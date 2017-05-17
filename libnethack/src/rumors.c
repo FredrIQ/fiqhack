@@ -347,7 +347,7 @@ doconsult(struct monst *oracl)
         money2mon(oracl, enlcost);
         pline(msgc_actionok, "You feel self-knowledgeable...");
         win_pause_output(P_MESSAGE);
-        enlightenment(FALSE);
+        enlighten_mon(&youmonst, FALSE, TRUE);
         pline_implied(msgc_actionboring, "The feeling subsides.");
         return 1;
     case 'n':

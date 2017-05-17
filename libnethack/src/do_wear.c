@@ -211,7 +211,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             learn_oprop(o, (opm_dexterity | opm_brilliance));
         learn_oprop(o, opm_power | opm_oilskin);
         if (props & opm_power)
-            encumber_msg();
+            encumber_msg(oldcap);
         update_inventory();
         if (msgtype != em_silent)
             on_msg(o);
@@ -250,7 +250,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             learn_oprop(o, (opm_dexterity | opm_brilliance));
         learn_oprop(o, opm_power);
         if (props & opm_power)
-            encumber_msg();
+            encumber_msg(oldcap);
         update_inventory();
     }
 

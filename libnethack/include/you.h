@@ -42,14 +42,14 @@ struct you {
        (no longer used but still exist during u removal work) during
        the removal of this struct */
     /* UNUSED */
-    xchar ux, uy;
-    unsigned uundetected:1;     /* if you're a hiding monster/piercer */
-    unsigned umconf;
-    unsigned ucreamed;
-    int ulevel;         /* 1 to MAXULEV */
-    int ulevelmax;
-    int uexp;
-    int oldcap;         /* carry cap on previous turn */
+    xchar unused_ux, unused_uy;
+    unsigned unused_uundetected:1; /* if you're a hiding monster/piercer */
+    unsigned unused_umconf;
+    unsigned unused_ucreamed;
+    int unused_ulevel;         /* 1 to MAXULEV */
+    int unused_ulevelmax;
+    int unused_uexp;
+    int unused_oldcap;         /* carry cap on previous turn */
 
     /* USED */
     xchar tx, ty;       /* destination of travel */
