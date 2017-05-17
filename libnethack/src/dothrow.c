@@ -1194,17 +1194,28 @@ throwing_range(const struct monst *mon, const struct obj *obj, int *hurtle_range
        the effects from throwing attached balls are actually possible */
     if (obj->otyp == HEAVY_IRON_BALL)
         range = urange - (int)(obj->owt / 100);
+    else if (obj->otyp == BOULDER)
+        range = 20; /* must be giant */
     else
         range = urange - (int)(obj->owt / 40);
+
+    if (obj->oartifact == ART_MJOLLNIR)
+        range = (range + 1) / 2; /* it's heavy */
+
     if (obj == uball) {
         if (mon != &youmonst)
             panic("Monster throwing your ball?");
 
-        if (u.ustuck)
+        if (u.ustuck ||
+            (u.utrap && u.utraptype == TT_INFLOOR))
             range = 1;
         else if (range >= 5)
             range = 5;
     }
+
+    if (m_underwater(mon))
+        range = 1;
+
     if (range < 1)
         range = 1;
 
@@ -1226,6 +1237,7 @@ throwing_range(const struct monst *mon, const struct obj *obj, int *hurtle_range
     }
     if (hurtle_range)
         *hurtle_range = urange;
+
     return range;
 }
 
@@ -1373,16 +1385,6 @@ throwit(struct monst *magr, struct obj *obj, struct obj *stack, int count,
 
         urange = 0;
         range = throwing_range(magr, obj, &urange);
-
-        if (obj->otyp == BOULDER)
-            range = 20; /* you must be giant */
-        else if (obj->oartifact == ART_MJOLLNIR)
-            range = (range + 1) / 2;    /* it's heavy */
-        else if (obj == uball && u.utrap && u.utraptype == TT_INFLOOR)
-            range = 1;
-
-        if (Underwater)
-            range = 1;
 
         obj_destroyed = FALSE;
         mdef = fire_obj(magr, dx, dy, range, THROWN_WEAPON, obj, &obj_destroyed,
