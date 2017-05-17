@@ -256,6 +256,8 @@ fightm(struct monst *mon)
 
         if (!mtmp || (!mm_aggression(mon, mtmp, conflicted) && !conflicted &&
                       !mercy))
+            continue;
+
         if (mercy && mon->mpeaceful != (mtmp == &youmonst ? 1 :
                                         mtmp->mpeaceful))
             continue;
