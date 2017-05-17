@@ -3054,7 +3054,7 @@ typfnd:
     otmp->oprops = 0LLU;
 
     /* In wizard mode only, allow wishing for properties */
-    if (!otmp->oartifact && !wizard) {
+    if (!otmp->oartifact && wizard) {
         otmp->oprops |= props;
         otmp->oprops = obj_properties(otmp); /* filter invalid ones */
         props = otmp->oprops;
