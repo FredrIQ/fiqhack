@@ -19,7 +19,7 @@ static int disarm_shooting_trap(struct trap *, int, schar, schar);
 static int try_lift(struct monst *, struct trap *, int, boolean);
 static int help_monster_out(struct monst *, struct trap *);
 static boolean thitm(int, struct monst *, struct obj *, int, boolean);
-static int thitu(int, int, struct obj *, const char *);
+static boolean thitu(int, int, struct obj *, const char *);
 static int mkroll_launch(struct trap *, struct level *lev, xchar, xchar, short,
                          long, enum rng);
 static boolean isclearpath(struct level *lev, coord *, int, schar, schar);
@@ -4377,7 +4377,7 @@ b_trapped(const char *item, int bodypart)
 }
 
 /* Hero is hit by trap or self-inflicted boomerang hit */
-static int
+static boolean
 thitu(int tlev, int dam, struct obj *obj, const char *name)
 {       /* if null, then format `obj' */
     const char *onm, *killer;
@@ -4401,7 +4401,7 @@ thitu(int tlev, int dam, struct obj *obj, const char *name)
             pline(msgc_nonmongood, "It misses.");
         else
             pline(msgc_nonmongood, "You are almost hit by %s.", onm);
-        return 0;
+        return FALSE;
     } else {
         if (Blind || !flags.verbose)
             pline(msgc_nonmonbad, "You are hit!");
@@ -4424,7 +4424,7 @@ thitu(int tlev, int dam, struct obj *obj, const char *name)
             losehp(dam, killer);
             exercise(A_STR, FALSE);
         }
-        return 1;
+        return TRUE;
     }
 }
 
