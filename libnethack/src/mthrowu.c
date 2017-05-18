@@ -10,22 +10,6 @@
 
 #define POLE_LIM 5      /* How far monsters can use pole-weapons */
 
-/*
- * Keep consistent with breath weapons in zap.c, and AD_* in monattk.h.
- */
-static const char *const breathwep[] = {
-    "fragments",
-    "fire",
-    "frost",
-    "sleep gas",
-    "a disintegration blast",
-    "lightning",
-    "a poisonous cloud",
-    "acid",
-    "a disorienting blast",
-    "strange breath #9"
-};
-
 /* Hero is hit by something other than a monster.
 
    TODO: track whether a monster is responsible */
