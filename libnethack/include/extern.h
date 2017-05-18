@@ -1249,10 +1249,6 @@ extern struct monst *mk_mplayer(const struct permonst *ptr, struct level *lev,
 extern void create_mplayers(int, boolean);
 extern void mplayer_talk(struct monst *);
 
-/* ### mthrowu.c ### */
-
-extern int thitu(int, int, struct obj *, const char *);
-
 /* ### muse.c ### */
 
 extern void init_musable(struct monst *, struct musable *);
@@ -1886,6 +1882,7 @@ extern void deltrap(struct level *, struct trap *);
 extern boolean delfloortrap(struct level *, struct trap *);
 extern struct trap *t_at(struct level *lev, int x, int y);
 extern void b_trapped(const char *, int);
+extern int thitu(int, int, struct obj *, const char *);
 extern boolean lava_effects(void);
 extern void blow_up_landmine(struct trap *);
 extern void cnv_trap_obj(struct level *lev, int otyp, int cnt,

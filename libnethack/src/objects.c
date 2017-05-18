@@ -991,8 +991,6 @@ const struct objclass const_objects[] = {
     GEM("obsidian", "black", 9, 1, 200, 15, 6, GEMSTONE, CLR_BLACK),
     GEM("agate", "orange", 12, 1, 200, 15, 6, GEMSTONE, CLR_ORANGE),
     GEM("jade", "green", 10, 1, 300, 15, 6, GEMSTONE, CLR_GREEN),
-    /* Warning: some code in mthrowu.c assumes there are exactly 9 of these.
-       (Search for "LAST_GEM + 9".) */
     GEM("worthless piece of white glass", "white", 77, 1, 0, 6, 5, GLASS,
         CLR_WHITE),
     GEM("worthless piece of blue glass", "blue", 77, 1, 0, 6, 5, GLASS,

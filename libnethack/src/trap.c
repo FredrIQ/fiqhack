@@ -4375,6 +4375,58 @@ b_trapped(const char *item, int bodypart)
     inc_timeout(&youmonst, STUNNED, dmg, FALSE);
 }
 
+/* Hero is hit by trap or self-inflicted boomerang hit */
+int
+thitu(int tlev, int dam, struct obj *obj, const char *name)
+{       /* if null, then format `obj' */
+    const char *onm, *killer;
+    boolean is_acid;
+
+    /* TODO: credit the monster that fired the object with the kill */
+    if (!name) {
+        if (!obj)
+            panic("thitu: name & obj both null?");
+        name = doname(obj);
+        killer = killer_msg_obj(DIED, obj);
+    } else {
+        killer = killer_msg(DIED, an(name));
+    }
+    onm = (obj && obj_is_pname(obj)) ? the(name) :
+      (obj && obj->quan > 1L) ? name : an(name);
+    is_acid = (obj && obj->otyp == ACID_VENOM);
+
+    if (find_mac(&youmonst) + tlev <= rnd(20)) {
+        if (Blind || !flags.verbose)
+            pline(msgc_nonmongood, "It misses.");
+        else
+            pline(msgc_nonmongood, "You are almost hit by %s.", onm);
+        return 0;
+    } else {
+        if (Blind || !flags.verbose)
+            pline(msgc_nonmonbad, "You are hit!");
+        else
+            pline(msgc_nonmonbad, "You are hit by %s%s", onm, exclam(dam));
+
+        if (obj && objects[obj->otyp].oc_material == SILVER &&
+            hates_silver(youmonst.data)) {
+            dam += rnd(20);
+            pline(msgc_statusbad, "The silver sears your flesh!");
+            exercise(A_CON, FALSE);
+        }
+        if (is_acid && Acid_resistance)
+            pline(msgc_playerimmune, "It doesn't seem to hurt you.");
+        else {
+            if (is_acid)
+                pline(msgc_statusbad, "It burns!");
+            if (Half_physical_damage)
+                dam = (dam + 1) / 2;
+            losehp(dam, killer);
+            exercise(A_STR, FALSE);
+        }
+        return 1;
+    }
+}
+
 /* Monster is hit by trap. */
 /* Note: doesn't work if both obj and d_override are null */
 static boolean

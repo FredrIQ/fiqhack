@@ -437,10 +437,10 @@ select_rwep(const struct monst *mtmp)
         Oselect(BOULDER);
 
     /* Select polearms first; they do more damage and aren't expendable */
-    /* The limit of 13 here is based on the monster polearm range limit
-       (defined as 5 in mthrowu.c).  5 corresponds to a distance of 2 in one
-       direction and 1 in another; one space beyond that would be 3 in one
-       direction and 2 in another; 3^2+2^2=13. */
+    /* The limit of 13 here is based on the monster polearm range limit, 5.
+       5 corresponds to a distance of 2 in one direction and 1 in another;
+       one space beyond that would be 3 in one direction and 2 in another;
+       3^2+2^2=13. */
     {
         for (i = 0; i < SIZE(pwep); i++) {
             /* Only strong monsters can wield big (esp. long) weapons. Big
