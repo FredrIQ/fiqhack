@@ -524,6 +524,32 @@ useup(struct obj *obj)
     }
 }
 
+/* Remove an item from the monster's inventory and destroy it. */
+void
+m_useup(struct monst *mon, struct obj *obj)
+{
+    if (mon == &youmonst) {
+        useup(obj);
+        return;
+    }
+    if (obj->quan > 1L) {
+        obj->in_use = FALSE; /* no longer used */
+        obj->quan--;
+        obj->owt = weight(obj);
+    } else {
+        obj_extract_self(obj);
+        possibly_unwield(mon, FALSE);
+        if (obj->owornmask) {
+            mon->misc_worn_check &= ~obj->owornmask;
+            if (obj->otyp == SADDLE && mon == u.usteed)
+                dismount_steed(DISMOUNT_FELL);
+            update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
+            update_property_for_oprops(mon, obj, which_slot(obj));
+        }
+        obfree(obj, NULL);
+    }
+}
+
 /* use one charge from an item and possibly incur shop debt for it */
 void
 consume_obj_charge(struct obj *obj, boolean maybe_unpaid)
@@ -2447,9 +2473,7 @@ doprinuse(const struct nh_cmd_arg *arg)
     return 0;
 }
 
-/*
- * uses up an object that's on the floor, charging for it as necessary
- */
+/* uses up an object that's on the floor, charging for it as necessary */
 void
 useupf(struct obj *obj, long numused)
 {
@@ -2475,7 +2499,6 @@ useupf(struct obj *obj, long numused)
         newsym(youmonst.mx, youmonst.my);
     }
 }
-
 
 /*
  * Conversion from a class to a string for printing.

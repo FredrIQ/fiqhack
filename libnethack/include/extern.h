@@ -700,6 +700,7 @@ extern struct obj *hold_another_object(struct obj *, const char *, const char *,
                                        const char *);
 extern void useupall(struct obj *);
 extern void useup(struct obj *);
+extern void m_useup(struct monst *, struct obj *);
 extern void consume_obj_charge(struct obj *, boolean);
 extern void freeinv(struct obj *);
 extern void swapinv(struct obj *oldobj, struct obj *newobj);
@@ -1251,7 +1252,6 @@ extern boolean linedup(xchar, xchar, xchar, xchar);
 extern struct obj *m_carrying(const struct monst *, int);
 extern struct obj *m_carrying_recursive(const struct monst *, struct obj *,
                                         int, boolean);
-extern void m_useup(struct monst *, struct obj *);
 
 /* ### muse.c ### */
 
