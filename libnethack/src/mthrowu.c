@@ -4,11 +4,6 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "mfndpos.h"    /* ALLOW_M */
-
-#define URETREATING(x,y) (distmin(youmonst.mx,youmonst.my,x,y) > distmin(u.ux0,u.uy0,x,y))
-
-#define POLE_LIM 5      /* How far monsters can use pole-weapons */
 
 /* Hero is hit by something other than a monster.
 
