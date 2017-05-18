@@ -443,7 +443,8 @@ extern void mhurtle(struct monst *, int, int, int);
 extern boolean throwing_weapon(const struct obj *);
 extern struct monst *fire_obj(struct monst *, int, int, int, int, struct obj *,
                               boolean *, coord *);
-extern struct monst *boomhit(int, int);
+extern boolean hits_bars(struct obj **, int, int, int, int);
+extern void hits_bars_hit(struct obj **, int, int, int);
 extern int throwing_range(const struct monst *, const struct obj *, int *);
 extern boolean throwit(struct monst *, struct obj *, struct obj *, int, long, boolean,
                        schar, schar, schar);
@@ -1251,8 +1252,6 @@ extern struct obj *m_carrying(const struct monst *, int);
 extern struct obj *m_carrying_recursive(const struct monst *, struct obj *,
                                         int, boolean);
 extern void m_useup(struct monst *, struct obj *);
-extern boolean hits_bars(struct obj **, int, int, int, int);
-extern void hits_bars_hit(struct obj **, int, int, int);
 
 /* ### muse.c ### */
 

@@ -16,6 +16,7 @@ static void breakobj(struct obj *, xchar, xchar, boolean, boolean);
 static void breakmsg(struct obj *, boolean);
 static boolean toss_up(struct monst *, struct obj *, boolean);
 static void show_obj_flight(struct obj *obj, int, int, int, int);
+static struct monst *boomhit(int, int);
 static boolean mhurtle_step(void *, int, int);
 
 
@@ -1118,7 +1119,84 @@ fire_obj(struct monst *magr, int dx, int dy, int range, int weapon, struct obj *
     return mdef;
 }
 
-struct monst *
+/* TRUE iff thrown/kicked/rolled object doesn't pass through iron bars */
+boolean
+hits_bars(struct obj ** obj_p, /* *obj_p will be set to NULL if object breaks */
+          int x, int y, int always_hit, /* caller can force a hit for items
+                                           which would fit through */
+          int whodidit)
+{       /* 1==hero, 0=other, -1==just check whether it'll pass thru */
+    struct obj *otmp = *obj_p;
+    int obj_type = otmp->otyp;
+    boolean hits = always_hit;
+
+    if (!hits)
+        switch (otmp->oclass) {
+        case WEAPON_CLASS:
+            {
+                int oskill = objects[obj_type].oc_skill;
+
+                hits = (oskill != -P_BOW && oskill != -P_CROSSBOW &&
+                        oskill != -P_DART && oskill != -P_SHURIKEN &&
+                        oskill != P_SPEAR && oskill != P_JAVELIN &&
+                        oskill != P_KNIFE); /* but not dagger */
+                break;
+            }
+        case ARMOR_CLASS:
+            hits = (objects[obj_type].oc_armcat != ARM_GLOVES);
+            break;
+        case TOOL_CLASS:
+            hits = (obj_type != SKELETON_KEY && obj_type != LOCK_PICK &&
+                    obj_type != CREDIT_CARD && obj_type != TALLOW_CANDLE &&
+                    obj_type != WAX_CANDLE && obj_type != LENSES &&
+                    obj_type != TIN_WHISTLE && obj_type != MAGIC_WHISTLE);
+            break;
+        case ROCK_CLASS:       /* includes boulder */
+            if (obj_type != STATUE || mons[otmp->corpsenm].msize > MZ_TINY)
+                hits = TRUE;
+            break;
+        case FOOD_CLASS:
+            if (obj_type == CORPSE && mons[otmp->corpsenm].msize > MZ_TINY)
+                hits = TRUE;
+            else
+                hits = (obj_type == MEAT_STICK ||
+                        obj_type == HUGE_CHUNK_OF_MEAT);
+            break;
+        case SPBOOK_CLASS:
+        case WAND_CLASS:
+        case BALL_CLASS:
+        case CHAIN_CLASS:
+            hits = TRUE;
+            break;
+        default:
+            break;
+        }
+
+    if (hits && whodidit != -1)
+        hits_bars_hit(obj_p, x, y, whodidit);
+
+    return hits;
+}
+
+/* Split from hits_bars to allow additional bookkeeping before destroying the obj */
+void
+hits_bars_hit(struct obj **obj_p, int x, int y, int whodidit)
+{
+    struct obj *obj = *obj_p;
+    if (whodidit ? hero_breaks(obj, x, y, FALSE) : breaks(obj, x, y))
+        *obj_p = obj = NULL; /* object is now gone */
+    else if (obj->otyp == BOULDER || obj->otyp == HEAVY_IRON_BALL)
+        pline(msgc_levelsound, "Whang!");
+    else if (obj->oclass == COIN_CLASS ||
+             objects[obj->otyp].oc_material == GOLD ||
+             objects[obj->otyp].oc_material == SILVER)
+        pline(msgc_levelsound, "Clink!");
+    else
+        pline(msgc_levelsound, "Clonk!");
+}
+
+/* Boomerang hits something */
+static struct monst *
 boomhit(int dx, int dy)
 {
     int i, ct;
