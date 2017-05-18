@@ -16,7 +16,7 @@ static void breakobj(struct obj *, xchar, xchar, boolean, boolean);
 static void breakmsg(struct obj *, boolean);
 static boolean toss_up(struct monst *, struct obj *, boolean);
 static void show_obj_flight(struct obj *obj, int, int, int, int);
-static struct monst *boomhit(int, int);
+static struct monst *boomhit(struct obj *, int, int);
 static boolean mhurtle_step(void *, int, int);
 
 
@@ -1197,7 +1197,7 @@ hits_bars_hit(struct obj **obj_p, int x, int y, int whodidit)
 
 /* Boomerang hits something */
 static struct monst *
-boomhit(int dx, int dy)
+boomhit(struct obj *obj, int dx, int dy)
 {
     int i, ct;
     int boom = E_boomleft;      /* showsym[] index */
@@ -1234,7 +1234,8 @@ boomhit(int dx, int dy)
         }
         if (bhitpos.x == youmonst.mx && bhitpos.y == youmonst.my) {   /* ct == 9 */
             if (Fumbling || rn2(20) >= ACURR(A_DEX)) {
-                thitu(10, rnd(10), NULL, "boomerang");
+                /* TODO: culprit */
+                mhmon(NULL, &youmonst, obj, 1, 0);
                 break;
             } else {    /* we catch it */
                 tmpsym_end(tsym);
@@ -1438,7 +1439,7 @@ throwit(struct monst *magr, struct obj *obj, struct obj *stack, int count,
                 mhurtle(magr, -dx, -dy, 1);
             hurtling = TRUE;
         }
-        mdef = boomhit(dx, dy);
+        mdef = boomhit(obj, dx, dy);
         if (magr == mdef) { /* the thing was caught */
             if (uagr) {
                 exercise(A_DEX, TRUE);

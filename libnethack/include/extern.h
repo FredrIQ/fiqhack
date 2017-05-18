@@ -1882,7 +1882,6 @@ extern void deltrap(struct level *, struct trap *);
 extern boolean delfloortrap(struct level *, struct trap *);
 extern struct trap *t_at(struct level *lev, int x, int y);
 extern void b_trapped(const char *, int);
-extern int thitu(int, int, struct obj *, const char *);
 extern boolean lava_effects(void);
 extern void blow_up_landmine(struct trap *);
 extern void cnv_trap_obj(struct level *lev, int otyp, int cnt,

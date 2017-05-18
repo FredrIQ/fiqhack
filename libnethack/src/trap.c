@@ -19,6 +19,7 @@ static int disarm_shooting_trap(struct trap *, int, schar, schar);
 static int try_lift(struct monst *, struct trap *, int, boolean);
 static int help_monster_out(struct monst *, struct trap *);
 static boolean thitm(int, struct monst *, struct obj *, int, boolean);
+static int thitu(int, int, struct obj *, const char *);
 static int mkroll_launch(struct trap *, struct level *lev, xchar, xchar, short,
                          long, enum rng);
 static boolean isclearpath(struct level *lev, coord *, int, schar, schar);
@@ -4376,7 +4377,7 @@ b_trapped(const char *item, int bodypart)
 }
 
 /* Hero is hit by trap or self-inflicted boomerang hit */
-int
+static int
 thitu(int tlev, int dam, struct obj *obj, const char *name)
 {       /* if null, then format `obj' */
     const char *onm, *killer;
