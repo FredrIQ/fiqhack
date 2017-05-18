@@ -19,7 +19,6 @@ static int disarm_shooting_trap(struct trap *, int, schar, schar);
 static int try_lift(struct monst *, struct trap *, int, boolean);
 static int help_monster_out(struct monst *, struct trap *);
 static boolean thitm(int, struct monst *, struct obj *, int, boolean);
-static boolean thitu(int, int, struct obj *, const char *);
 static int mkroll_launch(struct trap *, struct level *lev, xchar, xchar, short,
                          long, enum rng);
 static boolean isclearpath(struct level *lev, coord *, int, schar, schar);
@@ -705,15 +704,16 @@ dotrap(struct trap *trap, unsigned trflags)
         seetrap(trap);
         pline(msgc_nonmonbad, "An arrow shoots out at you!");
         otmp = mksobj(level, ARROW, TRUE, FALSE, rng_main);
+        otmp->in_use = TRUE;
         otmp->quan = 1L;
         otmp->owt = weight(otmp);
         otmp->opoisoned = 0;
+        otmp->oprops &= ~opm_detonate; /* Would be a bit harsh */
 
         if (u.usteed && !rn2(2) && steedintrap(trap, otmp))     /* nothing */
             ;
-        else if (thitu(8, dmgval(otmp, &youmonst), otmp, "arrow")) {
-            obfree(otmp, NULL);
-        } else {
+        else {
+            mhmon(NULL, &youmonst, otmp, 1, 0);
             place_object(otmp, level, youmonst.mx, youmonst.my);
             if (!Blind)
                 otmp->dknown = 1;
@@ -734,16 +734,13 @@ dotrap(struct trap *trap, unsigned trflags)
         otmp = mksobj(level, DART, TRUE, FALSE, rng_main);
         otmp->quan = 1L;
         otmp->owt = weight(otmp);
+        otmp->oprops &= ~opm_detonate; /* Would be a bit harsh */
         if (!rn2(6))
             otmp->opoisoned = 1;
         if (u.usteed && !rn2(2) && steedintrap(trap, otmp))     /* nothing */
             ;
-        else if (thitu(7, dmgval(otmp, &youmonst), otmp, "little dart")) {
-            if (otmp->opoisoned)
-                poisoned(&youmonst, "dart", A_CON,
-                         killer_msg(POISONING, "a little dart"), -10);
-            obfree(otmp, NULL);
-        } else {
+        else {
+            mhmon(NULL, &youmonst, otmp, 1, 0);
             place_object(otmp, level, youmonst.mx, youmonst.my);
             if (!Blind)
                 otmp->dknown = 1;
@@ -4374,58 +4371,6 @@ b_trapped(const char *item, int bodypart)
     if (bodypart)
         exercise(A_CON, FALSE);
     inc_timeout(&youmonst, STUNNED, dmg, FALSE);
-}
-
-/* Hero is hit by trap or self-inflicted boomerang hit */
-static boolean
-thitu(int tlev, int dam, struct obj *obj, const char *name)
-{       /* if null, then format `obj' */
-    const char *onm, *killer;
-    boolean is_acid;
-
-    /* TODO: credit the monster that fired the object with the kill */
-    if (!name) {
-        if (!obj)
-            panic("thitu: name & obj both null?");
-        name = doname(obj);
-        killer = killer_msg_obj(DIED, obj);
-    } else {
-        killer = killer_msg(DIED, an(name));
-    }
-    onm = (obj && obj_is_pname(obj)) ? the(name) :
-      (obj && obj->quan > 1L) ? name : an(name);
-    is_acid = (obj && obj->otyp == ACID_VENOM);
-
-    if (find_mac(&youmonst) + tlev <= rnd(20)) {
-        if (Blind || !flags.verbose)
-            pline(msgc_nonmongood, "It misses.");
-        else
-            pline(msgc_nonmongood, "You are almost hit by %s.", onm);
-        return FALSE;
-    } else {
-        if (Blind || !flags.verbose)
-            pline(msgc_nonmonbad, "You are hit!");
-        else
-            pline(msgc_nonmonbad, "You are hit by %s%s", onm, exclam(dam));
-
-        if (obj && objects[obj->otyp].oc_material == SILVER &&
-            hates_silver(youmonst.data)) {
-            dam += rnd(20);
-            pline(msgc_statusbad, "The silver sears your flesh!");
-            exercise(A_CON, FALSE);
-        }
-        if (is_acid && Acid_resistance)
-            pline(msgc_playerimmune, "It doesn't seem to hurt you.");
-        else {
-            if (is_acid)
-                pline(msgc_statusbad, "It burns!");
-            if (Half_physical_damage)
-                dam = (dam + 1) / 2;
-            losehp(dam, killer);
-            exercise(A_STR, FALSE);
-        }
-        return TRUE;
-    }
 }
 
 /* Monster is hit by trap. */
