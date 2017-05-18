@@ -651,6 +651,26 @@ pathfind_score(struct monst *mon, int appr, struct distmap_state *ds, int x, int
     return score;
 }
 
+/* Checks if ax/ay and bx/by is in line without walls/etc inbetween */
+boolean
+linedup(xchar ax, xchar ay, xchar bx, xchar by)
+{
+    int dx = ax - bx;
+    int dy = ay - by;
+
+    /* sometimes displacement makes a monster think that you're at its own
+       location; prevent it from throwing and zapping in that case */
+    if (!dx && !dy)
+        return FALSE;
+
+    if ((!dx || !dy || abs(dx) == abs(dy))  /* straight line or diagonal */
+        && distmin(dx, dy, 0, 0) <= BOLT_LIM) {
+        if (clear_path(ax, ay, bx, by, viz_array))
+            return TRUE;
+    }
+    return FALSE;
+}
+
 /*
  * Return values:
  * 0: Did not move, but can still attack and do other stuff.

@@ -1235,6 +1235,7 @@ extern void monflee(struct monst *, int, boolean, boolean);
 extern boolean monster_would_take_item(struct monst *, struct obj *);
 extern int dochug(struct monst *);
 extern int pathfind_score(struct monst *, int, struct distmap_state *, int, int);
+extern boolean linedup(xchar, xchar, xchar, xchar);
 extern int m_move(struct monst *, int);
 extern boolean closed_door(struct level *lev, int x, int y);
 extern boolean accessible(int, int);
@@ -1251,7 +1252,6 @@ extern void mplayer_talk(struct monst *);
 /* ### mthrowu.c ### */
 
 extern int thitu(int, int, struct obj *, const char *);
-extern boolean linedup(xchar, xchar, xchar, xchar);
 
 /* ### muse.c ### */
 
