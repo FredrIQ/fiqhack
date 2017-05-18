@@ -34,6 +34,17 @@ static boolean mon_allowed(int);
 
 static int trapx, trapy;
 
+/* When there is a perfect match between all muse enums and game
+   commands, we can get rid of the enum and this mapping. This
+   isn't yet the case however. */
+static int (*musecmd[LAST_MUSE + 1])(const struct musable *) = {
+    [MUSE_CAST] = docast,
+    [MUSE_READ] = doread,
+    [MUSE_QUAFF] = dodrink,
+    [MUSE_THROW] = dothrow,
+    [MUSE_ZAP] = dozap,
+};
+
 /* Initializes a musable, and sets the mon field to the given mon */
 void
 init_musable(struct monst *mon, struct musable *m)
@@ -2134,19 +2145,11 @@ use_item(struct musable *m)
 
     switch (m->use) {
     case MUSE_CAST:
-        ret = docast(m);
-        return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_READ:
-        ret = doread(m);
-        return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_QUAFF:
-        ret = dodrink(m);
-        return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_THROW:
-        ret = dothrow(m);
-        return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_ZAP:
-        ret = dozap(m);
+        ret = (*musecmd[m->use]) (m);
         return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_EAT:
         dog_eat(mon, obj, mon->mx, mon->my, FALSE);

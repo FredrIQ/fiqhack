@@ -41,6 +41,7 @@ enum monuse {
     MUSE_KEY,
     MUSE_INNATE_TPT,
     MUSE_BULLWHIP,
+    LAST_MUSE = MUSE_BULLWHIP,
 };
 
 struct musable {
