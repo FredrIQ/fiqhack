@@ -709,6 +709,9 @@ extern void delobj(struct obj *);
 extern struct obj *sobj_at(int otyp, struct level *lev, int x, int y);
 extern struct obj *carrying(int);
 extern struct obj *carrying_questart(void);
+extern struct obj *m_carrying(const struct monst *, int);
+extern struct obj *m_carrying_recursive(const struct monst *, struct obj *,
+                                        int, boolean);
 extern boolean obj_with_u(struct obj *);
 extern boolean have_lizard(void);
 extern struct obj *o_on(unsigned int, struct obj *);
@@ -1249,9 +1252,6 @@ extern void mplayer_talk(struct monst *);
 
 extern int thitu(int, int, struct obj *, const char *);
 extern boolean linedup(xchar, xchar, xchar, xchar);
-extern struct obj *m_carrying(const struct monst *, int);
-extern struct obj *m_carrying_recursive(const struct monst *, struct obj *,
-                                        int, boolean);
 
 /* ### muse.c ### */
 

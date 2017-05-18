@@ -693,6 +693,32 @@ carrying_questart(void)
     return NULL;
 }
 
+/* Check if a monster is carrying a particular item. Works on players */
+struct obj *
+m_carrying(const struct monst *mon, int type)
+{
+    return m_carrying_recursive(mon, m_minvent(mon),
+                                type, FALSE);
+}
+
+/* Check if a monster is carrying a particular item, recursively. */
+struct obj *
+m_carrying_recursive(const struct monst *mon, struct obj *chain,
+                     int type, boolean recursive)
+{
+    struct obj *otmp;
+    struct obj *cotmp = NULL;
+
+    for (otmp = chain; otmp; otmp = otmp->nobj) {
+        if (Has_contents(otmp) && recursive)
+            cotmp = m_carrying_recursive(mon, otmp->cobj, type, recursive);
+        if (otmp->otyp == type)
+            return otmp;
+    }
+    return cotmp ? cotmp : NULL;
+}
+
+
 /* Used by functions that need to track time-consuming actions by the player on
    an object, to see if the object is still around and in reach. Returns TRUE
    for a non-NULL object in inventory or on the ground on the player's square.
