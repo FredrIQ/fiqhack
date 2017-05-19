@@ -1376,6 +1376,8 @@ extern boolean allow_all(const struct obj *);
 extern boolean allow_category(const struct obj *);
 extern boolean is_worn_by_type(const struct obj *);
 extern int pickup(int, enum u_interaction_mode);
+extern void trackobj_start(struct obj *, enum turntracked_object_slots);
+extern struct obj *trackobj_finish(enum turntracked_object_slots);
 extern int pickup_object(struct obj *, long, boolean);
 extern int query_category(const char *, struct obj *, int,
                           const int **, int);

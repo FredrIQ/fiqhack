@@ -2452,17 +2452,12 @@ dozap(const struct musable *m)
             pline(msgc_itemloss, "%s glows and fades.", The(xname(obj)));
         /* make him pay for knowing !NODIR */
     } else {
-        /* Are we having fun yet? weffects -> buzz(obj->otyp) -> zhitm (temple
-           priest) -> attack -> hitum -> known_hitum -> ghod_hitsu ->
-           buzz(AD_ELEC) -> destroy_item(WAND_CLASS) -> useup -> obfree ->
-           dealloc_obj -> free(obj) */
-        if (you)
-            turnstate.tracked[ttos_wand] = obj;
+        /* The zapped wand can potentially be destroyed in corner cases:
+           zap hurts temple priest, temple god responds with lightning, lightning hits
+           and blows up the wand zapped. So track the wand in case this happens. */
+        trackobj_start(obj, ttos_wand);
         weffects(mon, obj, dx, dy, dz);
-        if (you) {
-            obj = turnstate.tracked[ttos_wand];
-            turnstate.tracked[ttos_wand] = 0;
-        }
+        obj = trackobj_finish(ttos_wand);
     }
     if (obj && obj->spe < 0) {
         if (vis)

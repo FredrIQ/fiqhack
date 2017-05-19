@@ -303,6 +303,25 @@ menu_pickup:
     return n_tried > 0;
 }
 
+/* Starts or finalizes tracking of an object. Used to keep track of
+   an object potentially disappearing mid-use (obfree handles
+   unsetting turnstate.tracked). Can't persist between turns. */
+void
+trackobj_start(struct obj *obj, enum turntracked_object_slots id)
+{
+    if (turnstate.tracked[id])
+        panic("track_object: id already in use (%d)", id);
+
+    turnstate.tracked[id] = obj;
+}
+
+struct obj *
+trackobj_finish(enum turntracked_object_slots id)
+{
+    struct obj *res = turnstate.tracked[id];
+    turnstate.tracked[id] = NULL;
+    return res;
+}
 
 static boolean
 autopickup_match(struct obj *obj)

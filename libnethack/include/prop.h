@@ -192,7 +192,7 @@ enum tracked_object_slots {
 };
 /* Ditto, for struct turnstate. These objects are not saved or restored, and
    have to be NULL between turns, just like with everything else in the
-   turnstate struct. */
+   turnstate struct. Used to keep track of an item being destroyed mid-use. */
 enum turntracked_object_slots {
     ttos_wand,    /* item that is currently being zapped */
 
