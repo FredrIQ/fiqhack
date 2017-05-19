@@ -95,8 +95,8 @@ could_use_item(struct monst *mtmp, struct obj *otmp)
         nohands(mtmp->data))
         return FALSE;
 
-    /* Common items pet/non-pet-wise */
-    boolean can_use = monster_would_take_item(mtmp, otmp);
+    /* Musables */
+    boolean can_use = searches_for_item(mtmp, otmp);
 
     /* food, weapons, armor */
     if (dogfood(mtmp, otmp) > df_apport ||
