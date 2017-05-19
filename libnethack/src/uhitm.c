@@ -368,6 +368,11 @@ mhmon(struct monst *magr, struct monst *mdef, struct obj *obj, int thrown,
 boolean
 hmon(struct monst * mon, struct obj * obj, int thrown, int multishot_count)
 {
+    if (mon == &youmonst) {
+        impossible("hmon called with player as defender?");
+        return TRUE;
+    }
+
     boolean result, anger_guards;
 
     anger_guards = (mon->mpeaceful &&
