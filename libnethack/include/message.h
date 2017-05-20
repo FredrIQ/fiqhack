@@ -37,18 +37,26 @@
    any sort of string will do. (They'll be converted into messages internally if
    necessary.) */
 
+/* The pline functions can be prefixed with b* (as in bpline/etc) as follows:
+   bpline(boolean, <etc>) -> pline(<etc>) where the pline is only executed if
+   the boolean is TRUE. This is to cut down on the major need of doing vision
+   checks or similar for when printing stuff based on visibility. */
+
 /* Print a message to the player (in the message area). The caller is
    responsible for doing any checks that determine that the player should see
    the message in question. */
 extern void pline(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
+extern void bpline(boolean, enum msg_channel, const char *, ...) PRINTFLIKE(3,4);
 
 /* Like pline(), but will hide a message if it's identical to the previous
    message shown. */
 extern void pline_once(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
+extern void bpline_once(boolean, enum msg_channel, const char *, ...) PRINTFLIKE(3,4);
 
 /* Like pline(), but the message can be deduced from other messages shown (and
    thus experienced players may want to hide it). */
 extern void pline_implied(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
+extern void bpline_implied(boolean, enum msg_channel, const char *, ...) PRINTFLIKE(3,4);
 
 /* Typically pline("You hear %s"), but with checks to ensure that the character
    actually can hear. */

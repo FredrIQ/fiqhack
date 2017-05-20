@@ -24,6 +24,13 @@ pline(enum msg_channel msgc, const char *line, ...)
 }
 
 void
+bpline(boolean doit, enum msg_channel msgc, const char *line, ...)
+{
+    if (doit)
+        pline_body(msgc, line, FALSE);
+}
+
+void
 pline_implied(enum msg_channel msgc, const char *line, ...)
 {
     if (!flags.hide_implied)
@@ -31,9 +38,23 @@ pline_implied(enum msg_channel msgc, const char *line, ...)
 }
 
 void
+bpline_implied(boolean doit, enum msg_channel msgc, const char *line, ...)
+{
+    if (doit && !flags.hide_implied)
+        pline_body(msgc, line, FALSE);
+}
+
+void
 pline_once(enum msg_channel msgc, const char *line, ...)
 {
     pline_body(msgc, line, TRUE);
+}
+
+void
+bpline_once(boolean doit, enum msg_channel msgc, const char *line, ...)
+{
+    if (doit)
+        pline_body(msgc, line, TRUE);
 }
 
 
