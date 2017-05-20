@@ -23,6 +23,7 @@ static int dowelcome(const struct nh_cmd_arg *);
 static int dointerrupt(const struct nh_cmd_arg *);
 static int doattributes(const struct nh_cmd_arg *);
 static int doconduct(const struct nh_cmd_arg *);
+static int dospoilers(const struct nh_cmd_arg *);
 static int doquit(const struct nh_cmd_arg *);
 static int wiz_wish(const struct nh_cmd_arg *);
 static int wiz_identify(const struct nh_cmd_arg *);
@@ -193,6 +194,8 @@ const struct cmd_desc cmdlist[] = {
      dovspell, CMD_MAINMENU},
     {"swapweapon", "exchange wielded and alternate weapon", 'x', 0, FALSE,
      doswapweapon, 0},
+    {"spoilers", "generate spoilers automatically", 0, 0, TRUE,
+     dospoilers, CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"takeoff", "take off an item you are wearing", 'T', 'R', FALSE, dounequip,
      CMD_ARG_OBJ},
     {"teleport", "use intrinsic or magical teleportation ability", C('t'), 0,
@@ -1776,6 +1779,14 @@ confdir(schar * dx, schar * dy)
     *dx = xdir[x];
     *dy = ydir[x];
     return;
+}
+
+static int
+dospoilers(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+    makespoilers();
+    return 0;
 }
 
 static int

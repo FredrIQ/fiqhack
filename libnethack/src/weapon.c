@@ -87,11 +87,17 @@ static int slots_required(int);
 static const char *skill_level_name(int);
 static void skill_advance(int);
 
-#define P_NAME(type) ((skill_names_indices[type] > 0) ? \
-                      OBJ_NAME(objects[skill_names_indices[type]]) : \
-                      (type == P_BARE_HANDED_COMBAT) ? \
-                        barehands_or_martial[martial_bonus()] : \
-                        odd_skill_names[-skill_names_indices[type]])
+#define P_NAME(type) skill_name(type)
+/* This is a function, not just a macro, so we can use it in spoiler.c */
+const char *
+skill_name(int type)
+{
+    return ((skill_names_indices[type] > 0) ?
+            OBJ_NAME(objects[skill_names_indices[type]]) :
+            (type == P_BARE_HANDED_COMBAT) ?
+            barehands_or_martial[martial_bonus()] :
+            odd_skill_names[-skill_names_indices[type]]);
+}
 
 static const char kebabable[] = {
     S_XORN, S_DRAGON, S_JABBERWOCK, S_NAGA, S_GIANT, '\0'

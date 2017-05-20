@@ -1738,6 +1738,10 @@ extern int dovspell(const struct nh_cmd_arg *arg);
 extern void dump_spells(void);
 extern void initialspell(struct obj *);
 
+/* ### spoilers.c ### */
+
+extern void makespoilers(void);
+
 /* ### steal.c ### */
 
 extern long somegold(long);
@@ -1934,6 +1938,7 @@ extern void do_clear_area(int, int, int, void (*)(int, int, void *), void *);
 
 /* ### weapon.c ### */
 
+extern const char *skill_name(int);
 extern boolean can_advance(int, boolean);
 extern int hitval(struct obj *, struct monst *);
 extern int dmgval(struct obj *, struct monst *);
