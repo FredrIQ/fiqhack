@@ -123,6 +123,10 @@ do_oname(const struct nh_cmd_arg *arg)
                       body_part(HAND));
         pline(msgc_substitute, "You engrave: \"%s\".", slipbuf);
         buf = slipbuf;
+
+        /* Messages imply that the player engraved on the item, so break illiterate. Don't
+           do it in general for players who just use it to make player notes or similar. */
+        break_conduct(conduct_illiterate);
     }
     oname(obj, buf);
     return 0;
