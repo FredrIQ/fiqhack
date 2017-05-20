@@ -1524,7 +1524,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
         mpickobj(mon, obj, NULL);
         if (attacktype(mon->data, AT_WEAP) &&
             mon->weapon_check == NEED_WEAPON) {
-            mon->weapon_check == NEED_HTH_WEAPON;
+            mon->weapon_check = NEED_HTH_WEAPON;
             mon_wield_item(mon);
         }
 
