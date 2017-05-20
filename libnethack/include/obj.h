@@ -133,6 +133,20 @@ struct obj {
     uint64_t oprops_known;      /* IDed properties from above */
 };
 
+/* Struct of player knowledge of where an object is. */
+struct objloc {
+    struct objloc *next; /* next in chain */
+    struct objloc *nextdummy; /* next in a dummy chain of used up/lost objects */
+
+    struct level *lev; /* the level it is on */
+    int otyp; /* Object type. If zero, use dname instead. */
+    char *dname; /* Used if otyp isn't recognized (e.g. saw only while blind/similar) */
+    char *name; /* The object's name (same as ox_name for the actual object) */
+    char *where; /* Where the player thinks it is, in string format to not change it if
+                    the object moves/disappears. */
+    xchar x, y; /* Where it is, if assumed to be on the floor, COLNO/ROWNO otherwise. */
+};
+
 #define opm_none         0x0000000000000000LLU
 #define opm_reflects     0x0000000000000001LLU
 #define opm_search       0x0000000000000002LLU

@@ -107,6 +107,9 @@ extern struct gamestate {
     struct {
         int branch;
     } unique_ids;
+
+    /* Player object location memory */
+    struct objloc *object_locations;
 } gamestate;
 
 # define find_dungeon(z)        (gamestate.dungeons[(z)->dnum])
