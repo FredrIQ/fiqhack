@@ -289,7 +289,7 @@ do_naming(const struct nh_cmd_arg *arg)
 
             if (*s != RING_CLASS && *s != AMULET_CLASS && *s != SCROLL_CLASS &&
                 *s != POTION_CLASS && *s != WAND_CLASS && *s != SPBOOK_CLASS &&
-                *s != ARMOR_CLASS)
+                *s != ARMOR_CLASS && *s != GEM_CLASS)
                 continue;
             for (n = bases[(int)*s];
                  n < NUM_OBJECTS && objects[n].oc_class == *s; n++) {
