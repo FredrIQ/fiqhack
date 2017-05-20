@@ -1808,7 +1808,7 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj,
         mpickobj(mdef, obj, NULL);
         if (attacktype(mdef->data, AT_WEAP) &&
             mdef->weapon_check == NEED_WEAPON) {
-            mdef->weapon_check == NEED_HTH_WEAPON;
+            mdef->weapon_check = NEED_HTH_WEAPON;
             mon_wield_item(mdef);
         }
 

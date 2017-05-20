@@ -2895,8 +2895,8 @@ poisoned(struct monst *mon, const char *string, int typ, const char *killer,
               "%s%s %s poisoned%s", isupper(*string) ? "" : "The ",
               string, plural ? "were" : "was",
               resists_poison(mon) ?
-              msgcat_many(", but doesn't affect ", mon_nam(mon), ".") :
-              "!");
+              msgcat_many(", but doesn't affect ", mon_nam(mon), ".",
+                          NULL) : "!");
         resist_message_printed = TRUE;
     }
 
