@@ -82,7 +82,7 @@ livelog_write_event(const char *buffer) {
                                    ((int_least64_t)utc_time() / 1000000L),
                                    u.ulevel, (flags.debug ? "debug" :
                                               flags.explore ? "explore" :
-                                              flags.setseed ? "setseed" :
+                                              *flags.setseed ? "setseed" :
                                               (flags.polyinit_mnum != -1) ?
                                               "polyinit" : "normal")));
 }
