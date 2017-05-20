@@ -292,8 +292,7 @@ dodrink(const struct musable *m)
         if (!strcmp(potion_descr, "milky") &&
             !(mvitals[PM_GHOST].mvflags & G_GONE) &&
             !rn2(POTION_OCCUPANT_CHANCE(mvitals[PM_GHOST].born))) {
-            if (vis)
-                pline(msgc_failrandom, "%s the bottle...", M_verbs(mon, "open"));
+            bpline(vis, msgc_failrandom, "%s the bottle...", M_verbs(mon, "open"));
             ghost_from_bottle(mon);
             m_useup(mon, potion);
             return 1;

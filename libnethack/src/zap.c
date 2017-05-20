@@ -3093,9 +3093,8 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                         } else {
                             if (blind(&youmonst))
                                 pline(combat_msgc(magr, mon, cr_immune),
-                                      "For some reason, %s %s not affected.",
-                                      you ? "you" : mon_nam(mon),
-                                      you ? "are" : "is");
+                                      "For some reason, %s not affected.",
+                                      M_verbs(mon, "are"));
                             else
                                 mon_reflects(mon, magr, selfreflect,
                                              "But %s reflects from %s %s!", the(fltxt));

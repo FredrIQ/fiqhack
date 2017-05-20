@@ -160,9 +160,16 @@ extern const struct Gender genders[];   /* table of available genders */
 # define uhe()          (genders[u.ufemale ? 1 : 0].he)
 # define uhim()         (genders[u.ufemale ? 1 : 0].him)
 # define uhis()         (genders[u.ufemale ? 1 : 0].his)
-# define mhe(mtmp)      (genders[pronoun_gender(mtmp)].he)
-# define mhim(mtmp)     (genders[pronoun_gender(mtmp)].him)
-# define mhis(mtmp)     (genders[pronoun_gender(mtmp)].his)
+
+/* Gives hero in 2nd person */
+# define mhe(mtmp)      ((mtmp) == &youmonst ? "you" : genders[pronoun_gender(mtmp)].he)
+# define mhim(mtmp)     ((mtmp) == &youmonst ? "you" : genders[pronoun_gender(mtmp)].him)
+# define mhis(mtmp)     ((mtmp) == &youmonst ? "your" : genders[pronoun_gender(mtmp)].his)
+
+/* Gives hero in 3rd person */
+# define mhe3(mtmp)     ((mtmp) == &youmonst ? uhe() : genders[pronoun_gender(mtmp)].he)
+# define mhim3(mtmp)    ((mtmp) == &youmonst ? uhim() : genders[pronoun_gender(mtmp)].him)
+# define mhis3(mtmp)    ((mtmp) == &youmonst ? uhis() : genders[pronoun_gender(mtmp)].his)
 
 
 /*** Unified structure specifying alignment information ***/
