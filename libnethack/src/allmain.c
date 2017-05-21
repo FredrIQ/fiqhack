@@ -569,7 +569,7 @@ just_reloaded_save:
                     goto just_reloaded_save;
                 case DIR_NE:
                     /* Move backwards 50 turns. */
-                    log_sync(moves - 50, TLU_TURNS, FALSE);
+                    log_sync(min(1, moves - 50), TLU_TURNS, FALSE);
                     goto just_reloaded_save;
                 case DIR_SE:
                     /* Move forwards 50 turns. */
