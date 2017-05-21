@@ -292,82 +292,94 @@ m_has_property(const struct monst *mon, enum youprop property,
     if (property == HALLUC && mon != &youmonst)
         return 0;
 
+    if (property > LAST_PROP || property == NO_PROP) {
+        impossible("Invalid property: %d", property);
+        return 0;
+    }
+
     unsigned rv = 0;
-    const struct permonst *mdat_role = NULL;
-    const struct permonst *mdat_race = NULL;
-    const struct permonst *mdat_poly = NULL;
-    init_permonsts(mon, &mdat_role, &mdat_race, &mdat_poly);
+    rv = mon->mintrinsic_cache[property];
+    if (!(rv & W_MASK(os_cache))) {
+        rv = 0;
+        const struct permonst *mdat_role = NULL;
+        const struct permonst *mdat_race = NULL;
+        const struct permonst *mdat_poly = NULL;
+        init_permonsts(mon, &mdat_role, &mdat_race, &mdat_poly);
 
-    /* The general case for equipment */
-    rv |= mworn_extrinsic(mon, property);
+        /* The general case for equipment */
+        rv |= mworn_extrinsic(mon, property);
 
-    /* Timed and corpse/etc-granted */
-    if (mon->mintrinsic[property] & TIMEOUT_RAW)
-        rv |= W_MASK(os_timeout);
-    if (mon->mintrinsic[property] & FROMOUTSIDE_RAW)
-        rv |= W_MASK(os_outside);
+        /* Timed and corpse/etc-granted */
+        if (mon->mintrinsic[property] & TIMEOUT_RAW)
+            rv |= W_MASK(os_timeout);
+        if (mon->mintrinsic[property] & FROMOUTSIDE_RAW)
+            rv |= W_MASK(os_outside);
 
-    /* Polyform / role / race properties */
-    const struct propxl *pmprop;
-    for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
-         pmprop++) {
-        if (pmprop->prop == property &&
-            pmprop->xl <= (mon == &youmonst ? u.ulevel : mon->m_lev)) {
-            if (pmprop->mnum == monsndx(mdat_role))
-                rv |= W_MASK(os_role);
-            if (mdat_race && pmprop->mnum == monsndx(mdat_race))
-                rv |= W_MASK(os_race);
-            if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
-                rv |= W_MASK(os_polyform);
+        /* Polyform / role / race properties */
+        const struct propxl *pmprop;
+        for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
+             pmprop++) {
+            if (pmprop->prop == property &&
+                pmprop->xl <= (mon == &youmonst ? youmonst.m_lev : mon->m_lev)) {
+                if (pmprop->mnum == monsndx(mdat_role))
+                    rv |= W_MASK(os_role);
+                if (mdat_race && pmprop->mnum == monsndx(mdat_race))
+                    rv |= W_MASK(os_race);
+                if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
+                    rv |= W_MASK(os_polyform);
+            }
         }
-    }
-    if (pm_has_property(mdat_role, property) > 0)
-        rv |= W_MASK(os_role);
-    if (mdat_race && pm_has_property(mdat_race, property) > 0)
-        rv |= W_MASK(os_race);
-    if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
-        rv |= W_MASK(os_polyform);
-
-    /* External circumstances */
-    /* Fumbling on ice */
-    if (property == FUMBLING &&
-        is_ice(m_dlevel(mon), m_mx(mon), m_my(mon)) &&
-        (mon != &youmonst || !u.usteed) && !flying(mon) &&
-        !levitates(mon) && !is_whirly(mon->data)) {
-        struct obj *armf = which_armor(mon, os_armf);
-        if (armf && armf->otyp == find_skates())
-            rv |= W_MASK(os_circumstance);
-    }
-
-    /* Cases specific to the player */
-    if (mon == &youmonst) {
-        /* Birth options */
-        if ((property == BLINDED && flags.permablind) ||
-            (property == HALLUC && flags.permahallu) ||
-            (property == UNCHANGING && flags.polyinit_mnum != -1))
-            rv |= W_MASK(os_birthopt);
+        if (pm_has_property(mdat_role, property) > 0)
+            rv |= W_MASK(os_role);
+        if (mdat_race && pm_has_property(mdat_race, property) > 0)
+            rv |= W_MASK(os_race);
+        if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
+            rv |= W_MASK(os_polyform);
 
         /* External circumstances */
-        if (property == BLINDED && u_helpless(hm_unconscious))
-            rv |= W_MASK(os_circumstance);
+        /* Fumbling on ice */
+        if (property == FUMBLING &&
+            is_ice(m_dlevel(mon), m_mx(mon), m_my(mon)) &&
+            (mon != &youmonst || !u.usteed) && !flying(mon) &&
+            !levitates(mon) && !is_whirly(mon->data)) {
+            struct obj *armf = which_armor(mon, os_armf);
+            if (!armf || strcmp(OBJ_DESCR(objects[armf->otyp]), "snow boots"))
+                rv |= W_MASK(os_circumstance);
+        }
 
-        /* Riding allows you to inherit a few properties from steeds */
-        if ((property == FLYING || property == SWIMMING ||
-            property == WWALKING || property == LEVITATION) &&
-            u.usteed && has_property(u.usteed, property))
-            rv |= W_MASK(os_saddle);
+        /* Cases specific to the player */
+        if (mon == &youmonst) {
+            /* Birth options */
+            if ((property == BLINDED && flags.permablind) ||
+                (property == HALLUC && flags.permahallu) ||
+                (property == UNCHANGING && flags.polyinit_mnum != -1))
+                rv |= W_MASK(os_birthopt);
+
+            /* External circumstances */
+            if (property == BLINDED && u_helpless(hm_unconscious))
+                rv |= W_MASK(os_circumstance);
+
+            /* Riding allows you to inherit a few properties from steeds */
+            if ((property == FLYING || property == SWIMMING ||
+                 property == WWALKING || property == LEVITATION) &&
+                u.usteed && has_property(u.usteed, property))
+                rv |= W_MASK(os_saddle);
+        }
+
+        /* Overrides
+
+           TODO: Monsters with no eyes are not considered blind. This doesn't
+           make much sense. However, changing it would be a major balance
+           change (due to Elbereth), and so it has been left alone for now. */
+        if ((property == HALLUC && resists_hallu(mon)) ||
+            (property == WWALKING && Is_waterlevel(m_mz(mon))) ||
+            mworn_blocked(mon, property))
+            rv |= (unsigned)(W_MASK(os_blocked));
+
+        if (mon == &youmonst)
+            youmonst.mintrinsic_cache[property] = (rv | W_MASK(os_cache));
     }
-
-    /* Overrides
-
-       TODO: Monsters with no eyes are not considered blind. This doesn't
-       make much sense. However, changing it would be a major balance
-       change (due to Elbereth), and so it has been left alone for now. */
-    if ((property == BLINDED && !haseyes(mon->data)) ||
-        (property == HALLUC && resists_hallu(mon)) ||
-        (property == WWALKING && Is_waterlevel(m_mz(mon))) ||
-        mworn_blocked(mon, property))
-        rv |= (unsigned)(W_MASK(os_blocked));
+    rv &= ~W_MASK(os_cache);
 
     /* If a property is blocked, turn off all flags except circumstance/birthopt,
        unless even_if_blocked is TRUE. Yes, including os_blocked, because not
@@ -868,6 +880,9 @@ update_property(struct monst *mon, enum youprop prop,
     /* Items call update_property() when lost, whether or not it had a property */
     if (prop == NO_PROP)
         return FALSE;
+
+    /* Invalidate property cache */
+    mon->mintrinsic_cache[prop] &= ~W_MASK(os_cache);
 
     /* update_property() can run for monsters wearing armor during level creation,
        or potentially off-level, so level can be non-existent or outright wrong,

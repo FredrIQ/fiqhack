@@ -150,6 +150,7 @@ struct monst {
 
     /* intrinsic format: os_outside:1, os_timeout:15 */
     short mintrinsic[LAST_PROP + 1]; /* monster intrinsics */
+    int mintrinsic_cache[LAST_PROP + 1]; /* cached from above */
 
     /* turnstate; doesn't count against bitfield bit count */
     unsigned deadmonster:1;     /* always 0 at neutral turnstate */

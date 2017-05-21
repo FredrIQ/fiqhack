@@ -146,12 +146,13 @@ enum objslot {
     os_special,        /* only for blindness by creaming for now */
     os_blocked,        /* property is blocked (only returned with allow_blocked) */
 
-/* pseudo-slots for update_property() to give proper messages */
+/* pseudo-slots */
     os_inctimeout,     /* increased timeout */
     os_dectimeout,     /* decreased timeout by decrease_property_timers() */
     os_newpolyform,    /* new polymorph */
+    os_cache,          /* whether the cache is valid or not */
 
-    os_last = os_newpolyform,
+    os_last = os_cache,
 
     os_invalid = -1,
 };
