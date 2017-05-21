@@ -320,7 +320,7 @@ m_has_property(const struct monst *mon, enum youprop property,
         for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
              pmprop++) {
             if (pmprop->prop == property &&
-                pmprop->xl <= (mon == &youmonst ? youmonst.m_lev : mon->m_lev)) {
+                pmprop->xl <= (mon == &youmonst ? u.ulevel : mon->m_lev)) {
                 if (pmprop->mnum == monsndx(mdat_role))
                     rv |= W_MASK(os_role);
                 if (mdat_race && pmprop->mnum == monsndx(mdat_race))
@@ -371,7 +371,8 @@ m_has_property(const struct monst *mon, enum youprop property,
            TODO: Monsters with no eyes are not considered blind. This doesn't
            make much sense. However, changing it would be a major balance
            change (due to Elbereth), and so it has been left alone for now. */
-        if ((property == HALLUC && resists_hallu(mon)) ||
+        if ((property == BLINDED && !haseyes(mon->data)) ||
+            (property == HALLUC && resists_hallu(mon)) ||
             (property == WWALKING && Is_waterlevel(m_mz(mon))) ||
             mworn_blocked(mon, property))
             rv |= (unsigned)(W_MASK(os_blocked));
