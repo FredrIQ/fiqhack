@@ -1502,7 +1502,7 @@ extern unsigned msensem_xy(struct monst *, struct monst *,
                            xchar, xchar);
 extern unsigned msensem(const struct monst *, const struct monst *);
 extern boolean monwarn_affects(const struct monst *, const struct monst *);
-extern const char *get_monwarnstr(const struct monst *, boolean);
+extern const char *get_monwarnstr(const struct monst *, const struct monst *);
 extern void enlighten_mon(struct monst *, int, int);
 extern void unspoilered_intrinsics(void);
 extern void show_conduct(int);

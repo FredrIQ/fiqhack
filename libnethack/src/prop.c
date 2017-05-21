@@ -2591,7 +2591,7 @@ static const struct mon_warn_info monwarn_str[] = {
     {MTYP_S, S_OGRE, "ogres"},
     {MTYP_S, S_PUDDING, "puddings, green slimes"},
     {MTYP_S, S_QUANTMECH, "quantum mechanics"},
-    {MTYP_S, S_RUSTMONST, "rust monsters, disenchanters"},
+    {MTYP_S, S_RUSTMONST, "erosive monsters"},
     {MTYP_S, S_SNAKE, "snakes"},
     {MTYP_S, S_TROLL, "trolls"},
     {MTYP_S, S_UMBER, "umber hulks"},
@@ -2695,9 +2695,10 @@ static const struct mon_warn_info monwarn_str[] = {
 };
 
 static boolean
-set_monwarn_vars(const struct monst *mon, int *pm, int *mlet, unsigned *mflags1,
-                 unsigned *mflags2, unsigned *mflags3, unsigned *malignmask,
-                 int *globals)
+set_monwarn_vars(const struct monst *mon, const struct monst *target,
+                 int *pm, int *mlet,
+                 unsigned *mflags1, unsigned *mflags2, unsigned *mflags3,
+                 unsigned *malignmask, int *globals)
 {
     if (program_state.restoring_binary_save)
         return FALSE; /* chain might not be linked yet */
@@ -2710,10 +2711,8 @@ set_monwarn_vars(const struct monst *mon, int *pm, int *mlet, unsigned *mflags1,
         const struct artifact *oart = &artilist[(int)obj->oartifact];
         switch (oart->mtype.matchtyp) {
         case MTYP_ALL:
-            if (oart->mtype.match == 1) {
+            if (oart->mtype.match == 1)
                 *globals = 1;
-                return TRUE; /* pointless to go on, everything is warned against */
-            }
             break;
         case MTYP_PM:
             pm[oart->mtype.match] = 1;
@@ -2737,6 +2736,19 @@ set_monwarn_vars(const struct monst *mon, int *pm, int *mlet, unsigned *mflags1,
             break;
         }
     }
+    if (target && target->data) {
+        const struct permonst *tdat = target->data;
+        int has_pm_target = pm[monsndx(tdat)];
+        memset(pm, 0, NUMMONS);
+        pm[monsndx(tdat)] = has_pm_target;
+        int has_mlet_target = mlet[tdat->mlet];
+        memset(mlet, 0, MAXMCLASSES);
+        mlet[tdat->mlet] = has_mlet_target;
+        *mflags1 &= ~(tdat->mflags1);
+        *mflags2 &= ~(tdat->mflags2);
+        *mflags3 &= ~(tdat->mflags3);
+        *malignmask &= ~Align2amask(malign(target));
+    }
     return TRUE;
 }
 
@@ -2753,7 +2765,7 @@ monwarn_affects(const struct monst *viewer, const struct monst *viewee)
     unsigned mflags3 = 0;
     unsigned malignmask = 0;
     int globals = 0;
-    if (!set_monwarn_vars(viewer, pm, mlet, &mflags1, &mflags2, &mflags3,
+    if (!set_monwarn_vars(viewer, viewee, pm, mlet, &mflags1, &mflags2, &mflags3,
                           &malignmask, &globals))
         panic("warning check attempted during binary save restore?");
 
@@ -2768,8 +2780,10 @@ monwarn_affects(const struct monst *viewer, const struct monst *viewee)
     return FALSE;
 }
 
+/* Returns a warning string. If target is non-NULL, filters the warnings to ones that
+   affect target. */
 const char *
-get_monwarnstr(const struct monst *mon, boolean multi)
+get_monwarnstr(const struct monst *mon, const struct monst *target)
 {
     int pm[NUMMONS];
     int mlet[MAXMCLASSES];
@@ -2781,8 +2795,8 @@ get_monwarnstr(const struct monst *mon, boolean multi)
     unsigned mflags3 = 0;
     unsigned malignmask = 0;
     int globals = 0;
-    if (!set_monwarn_vars(mon, pm, mlet, &mflags1, &mflags2, &mflags3, &malignmask,
-                          &globals))
+    if (!set_monwarn_vars(mon, target, pm, mlet, &mflags1, &mflags2, &mflags3,
+                          &malignmask, &globals))
         panic("warning string attempted during binary save restore?");
 
     char outbuf[BUFSZ];
@@ -2790,32 +2804,25 @@ get_monwarnstr(const struct monst *mon, boolean multi)
 
     outbuf[0] = '\0';
 
-#define returnwarnstr(s) {                              \
-        if (multi)                                      \
-            append_str_comma(outbuf, &outbufp, (s));    \
-        else                                            \
-            return (s);                                 \
-    }
-
     /* General warning targets */
     const struct mon_warn_info *warnstr;
     for (warnstr = monwarn_str; warnstr->match != -1; warnstr++) {
         switch (warnstr->matchtyp) {
         case MTYP_ALL:
             if (globals && globals == warnstr->match)
-                return warnstr->matchstr; /* everything, so don't bother with others */
+                append_str_comma(outbuf, &outbufp, warnstr->matchstr);
             break;
         case MTYP_ALIGN:
             if (malignmask & warnstr->match)
-                returnwarnstr(warnstr->matchstr);
+                append_str_comma(outbuf, &outbufp, warnstr->matchstr);
             break;
         case MTYP_S:
             if (mlet[warnstr->match])
-                returnwarnstr(warnstr->matchstr);
+                append_str_comma(outbuf, &outbufp, warnstr->matchstr);
             break;
         case MTYP_M1:
             if (mflags1 & warnstr->match)
-                returnwarnstr(warnstr->matchstr);
+                append_str_comma(outbuf, &outbufp, warnstr->matchstr);
             break;
         case MTYP_M2:
             /* Some S_ types makes certain flags here redundant, so check for those */
@@ -2826,7 +2833,7 @@ get_monwarnstr(const struct monst *mon, boolean multi)
                 (warnstr->match != M2_GNOME || !mlet[S_GNOME]) &&
                 (warnstr->match != M2_ORC || !mlet[S_ORC]) &&
                 (warnstr->match != M2_GIANT || !mlet[S_GIANT]))
-                returnwarnstr(warnstr->matchstr);
+                append_str_comma(outbuf, &outbufp, warnstr->matchstr);
             break;
         case MTYP_M3:
             /* Covetous flags and meditating flags might be redundant */
@@ -2837,7 +2844,7 @@ get_monwarnstr(const struct monst *mon, boolean multi)
                  (mflags3 & M3_COVETOUS) != M3_COVETOUS) &&
                 ((warnstr->match != M3_WAITFORU && warnstr->match != M3_CLOSE) ||
                  (mflags3 & M3_WAITMASK) != M3_WAITMASK))
-                returnwarnstr(warnstr->matchstr);
+                append_str_comma(outbuf, &outbufp, warnstr->matchstr);
         default:
             break;
         }
@@ -2847,10 +2854,8 @@ get_monwarnstr(const struct monst *mon, boolean multi)
     int i;
     for (i = 0; i < NUMMONS; i++) {
         if (pm[i] && !mlet[mons[i].mlet])
-            returnwarnstr(warnstr->matchstr);
+            append_str_comma(outbuf, &outbufp, warnstr->matchstr);
     }
-
-#undef returnwarnstr
 
     return msg_from_string(outbuf);
 }
@@ -3062,7 +3067,7 @@ enlighten_mon(struct monst *mon, int final, int show_source)
     add_eline(mon, INFRAVISION, monhas, "infravision");
     add_eline(mon, DETECT_MONSTERS, monis, "sensing the presence of monsters");
     add_eline(mon, WARN_OF_MON, monis,
-              msgcat("aware of the presence of ", get_monwarnstr(mon, TRUE)));
+              msgcat("aware of the presence of ", get_monwarnstr(mon, NULL)));
 
 
     /*** Appearance and behavior ***/

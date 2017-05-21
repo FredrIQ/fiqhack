@@ -128,7 +128,7 @@ mon_vision_summary(const struct monst *mtmp, char *outbuf)
         append_str_comma(outbuf, &outbufp, "monster detection");
     if (msense_status & MSENSE_WARNOFMON) {
         snprintf(wbuf, SIZE(wbuf), "warned of %s",
-                 makeplural(mtmp->data->mname));
+                 get_monwarnstr(&youmonst, mtmp));
         append_str_comma(outbuf, &outbufp,
                          Hallucination ? "paranoid delusion" : wbuf);
     }
