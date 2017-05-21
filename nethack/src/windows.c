@@ -1437,8 +1437,10 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
 
         if (key == KEY_OTHERFD) {
             key = 0;
+#ifdef NETCLIENT
             if (ui_flags.connected_to_server)
                 nhnet_check_socket_fd();
+#endif
         }
 
         if (key && !key_is_meaningful_in_context(key, context)) {

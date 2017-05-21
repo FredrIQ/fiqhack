@@ -16,12 +16,14 @@
 int
 network_motd(void)
 {
+#ifndef NETCLIENT
+    return 0;
+#endif
     char errmsg[256];
     char motdmsg[4096];
     int fd = -1;
 
     if (settings.show_motd == MOTD_TRUE) {
-
         fd = connect_server(MOTD_SERVER, MOTD_PORT, FALSE,
                             errmsg, sizeof errmsg);
         if (fd == -1)
