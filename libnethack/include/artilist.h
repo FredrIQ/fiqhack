@@ -138,11 +138,11 @@ static const struct artifact const_artilist[] = {
       PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 500L),
 
     A("Demonbane", LONG_SWORD,
-      SPFX_RESTR, 0, MTYP(MTYP_M2, M2_DEMON),
+      SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_M2, M2_DEMON),
       PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 2500L),
 
     A("Werebane", SILVER_SABER,
-      SPFX_RESTR, 0, MTYP(MTYP_M2, M2_WERE),
+      SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_M2, M2_WERE),
       PHYS(5, 0), DFNS(AD_WERE), NO_CARY, 0, A_NONE, NON_PM, NON_PM, 1500L),
 
     A("Grayswandir", SILVER_SABER,
@@ -150,15 +150,15 @@ static const struct artifact const_artilist[] = {
       PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 8000L),
 
     A("Giantslayer", LONG_SWORD,
-      SPFX_RESTR, 0, MTYP(MTYP_M2, M2_GIANT),
+      SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_M2, M2_GIANT),
       PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_NEUTRAL, NON_PM, NON_PM, 200L),
 
     A("Ogresmasher", WAR_HAMMER,
-      SPFX_RESTR, 0, MTYP(MTYP_S, S_OGRE),
+      SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_S, S_OGRE),
       PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
 
     A("Trollsbane", MORNING_STAR,
-      SPFX_RESTR, 0, MTYP(MTYP_S, S_TROLL),
+      SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_S, S_TROLL),
       PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
 /*
  *      Two problems:  1) doesn't let trolls regenerate heads,
@@ -181,7 +181,7 @@ static const struct artifact const_artilist[] = {
       PHYS(0, 8), NO_DFNS, NO_CARY, 0, A_LAWFUL, PM_SAMURAI, NON_PM, 1200L),
 
     A("Sunsword", LONG_SWORD,
-      SPFX_RESTR, 0, MTYP(MTYP_M2, M2_UNDEAD),
+      SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_M2, M2_UNDEAD),
       PHYS(5, 0), DFNS(AD_BLND), NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 1500L),
 
 /*
@@ -221,7 +221,7 @@ static const struct artifact const_artilist[] = {
       ENLIGHTENING, A_NEUTRAL, PM_MONK, NON_PM, 2500L),
 
     A("The Mitre of Holiness", HELM_OF_BRILLIANCE,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL), 0,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_WARNMON), 0,
       MTYP(MTYP_M2, M2_UNDEAD | M2_DEMON),
       NO_ATTK, NO_DFNS, CARY(AD_FIRE),
       ENERGY_BOOST, A_LAWFUL, PM_PRIEST, NON_PM, 2000L),
