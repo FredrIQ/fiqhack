@@ -191,8 +191,11 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     int prop = objects[otyp].oc_oprop;
     /* TODO: Effects that are redundant to racial properties. I'm not sure if
        this can actually come up, but we should handle it anyway. */
-    boolean redundant = !!(has_property(&youmonst, prop) & ~W_MASK(slot));
-    redundant = redundant && !worn_blocked(prop);
+    boolean redundant = FALSE;
+    if (prop) {
+        boolean redundant = !!(has_property(&youmonst, prop) & ~W_MASK(slot));
+        redundant = redundant && !worn_blocked(prop);
+    }
     boolean destroyed = 0;
 
     /* Change the item in the slot. */
