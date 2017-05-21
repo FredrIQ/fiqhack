@@ -30,6 +30,7 @@
 # define AT_SCRL 253    /* scrolls */
 # define AT_WAND 254    /* wands */
 # define AT_SPEL 255    /* spells */
+# define LAST_AT AT_SPEL
 
 /*      Add new damage types below.
  *
@@ -85,6 +86,7 @@
 
 # define AD_SAMU 252    /* hits, may steal Amulet (Wizard) */
 # define AD_CURS 253    /* random curse (ex. gremlin) */
+# define LAST_AD AD_CURS
 
 
 /*

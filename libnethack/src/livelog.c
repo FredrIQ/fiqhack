@@ -83,7 +83,7 @@ livelog_write_event(const char *buffer) {
                                    youmonst.m_lev,
                                    (flags.debug ? "debug" :
                                     flags.explore ? "explore" :
-                                    flags.setseed ? "setseed" :
+                                    *flags.setseed ? "setseed" :
                                     (flags.polyinit_mnum != -1) ?
                                     "polyinit" : "normal")));
 }
