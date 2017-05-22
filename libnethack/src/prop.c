@@ -760,8 +760,7 @@ set_property(struct monst *mon, enum youprop prop,
              int type, boolean forced)
 {
     /* Invalidate property cache */
-    if (prop && prop <= LAST_PROP)
-        mon->mintrinsic_cache[prop] &= ~W_MASK(os_cache);
+    mon->mintrinsic_cache[prop] = 0;
 
     boolean increased = FALSE;
     if (mon->mintrinsic[prop] & TIMEOUT_RAW && type > 0)
@@ -786,6 +785,9 @@ set_property(struct monst *mon, enum youprop prop,
         if (type == -2) /* ...and timeout */
             mon->mintrinsic[prop] &= ~TIMEOUT_RAW;
     }
+
+    /* Invalidate property cache again (since it's polled in this function) */
+    mon->mintrinsic_cache[prop] = 0;
 
     if (forced)
         return FALSE;

@@ -427,23 +427,20 @@ obj_is_pname(const struct obj * obj)
                        obj->oartifact && !objects[obj->otyp].oc_unique));
 }
 
+static boolean dont_reveal_dknown = FALSE;
+
 /* Give the name of an object seen at a distance. Unlike xname/doname, we don't
-   want to set dknown if it's not set already. The kludge used is to temporarily
-   set Blind so that xname() skips the dknown setting. This assumes that we
-   don't want to do this too often; if this function becomes frequently used,
-   it'd probably be better to pass a parameter to xname() or doname()
-   instead. */
+   want to set dknown if it's not set already. */
 const char *
 distant_name(const struct obj *obj, const char *(*func) (const struct obj *))
 {
     const char *str;
 
-    /* TODO: fix this, EotO screws it up */
-    long save_Blinded = property_timeout(&youmonst, BLINDED);
-
-    set_property(&youmonst, BLINDED, 1, TRUE);
+    /* We want less globals, not more. However, a global is less kludgy here than
+       messing with blindness state (which also breaks if EotO is involved) */
+    dont_reveal_dknown = TRUE;
     str = (*func) (obj);
-    set_property(&youmonst, BLINDED, save_Blinded ? save_Blinded : -2, TRUE);
+    dont_reveal_dknown = FALSE;
     return str;
 }
 
@@ -502,7 +499,8 @@ examine_object(struct obj *obj)
     /* clean up known when it's tied to oc_name_known, eg after AD_DRIN */
     if (!nn && ocl->oc_uses_known && ocl->oc_unique)
         obj->known = 0;
-    if (!Blind || (!corpsenm_is_relevant(typ) && !has_shuffled_appearance(typ)))
+    if ((!Blind && !dont_reveal_dknown) ||
+        (!corpsenm_is_relevant(typ) && !has_shuffled_appearance(typ)))
         obj->dknown = TRUE;
     if (Role_if(PM_PRIEST))
         obj->bknown = TRUE;
@@ -547,7 +545,7 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
        won't do any harm to leave it around in case amnesia is changed again. */
     if (!nn && ocl->oc_uses_known && ocl->oc_unique)
         known = 0;
-    if (!Blind)
+    if (!Blind && dont_reveal_dknown)
         dknown = TRUE;
     if (Role_if(PM_PRIEST))
         bknown = TRUE;
