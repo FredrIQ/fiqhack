@@ -302,10 +302,16 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
     pline(msgc_occstart, "You drop %s down the drain.", doname(obj));
     switch (obj->otyp) {        /* effects that can be noticed without eyes */
     case RIN_SEARCHING:
-        pline(msgc_consequence,
-              "You thought your %s got lost in the sink, but there it is!",
-              xname(obj));
-        goto giveback;
+        if (obj->spe >= 0) {
+            pline(msgc_consequence,
+                  "You thought your %s got lost in the sink, but there it is!",
+                  xname(obj));
+            goto giveback;
+        } else {
+            pline(msgc_info, "Oh no, you lost %s in the sink!",
+                  the(xname(obj)));
+            break;
+        }
     case RIN_SLOW_DIGESTION:
         pline(msgc_consequence, "The ring is regurgitated!");
     giveback:
@@ -426,15 +432,21 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
             break;
         }
     }
+    if (!ideed) {
+        You_hear(msgc_info, "the ring bouncing down the drainpipe.");
+
+        /* ID by elimination... */
+        if (obj->otyp == RIN_HUNGER && !Blind)
+            ideed = TRUE;
+    }
+
     if (ideed)
         makeknown(obj->otyp);
-    else
-        You_hear(msgc_info, "the ring bouncing down the drainpipe.");
 
     /* A custom RNG would be nice here, but I can't see a way to make it work
        without having a different RNG for each class of ring, which would be
        overkill. */
-    if (!rn2(20)) {
+    if (!rn2(20) && obj->otyp != RIN_SEARCHING) { /* disenchanted rings of searching */
         pline(msgc_youdiscover, "The sink backs up, leaving %s.", doname(obj));
         /* the caller has checked this is safe */
         dropx(obj);
