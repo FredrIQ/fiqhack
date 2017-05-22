@@ -755,6 +755,10 @@ boolean
 set_property(struct monst *mon, enum youprop prop,
              int type, boolean forced)
 {
+    /* Invalidate property cache */
+    if (prop && prop <= LAST_PROP)
+        mon->mintrinsic_cache[prop] &= ~W_MASK(os_cache);
+
     boolean increased = FALSE;
     if (mon->mintrinsic[prop] & TIMEOUT_RAW && type > 0)
         increased = TRUE;
