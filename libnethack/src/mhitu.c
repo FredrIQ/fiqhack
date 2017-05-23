@@ -1911,7 +1911,7 @@ explmu(struct monst *mtmp, const struct attack *mattk)
                       "You are caught in a blast of kaleidoscopic light!");
             inc_timeout(&youmonst, HALLUC, tmp, TRUE);
             pline(msgc_statusbad, "You %s.",
-                  !hallucinating(&youmonst) ?
+                  hallucinating(&youmonst) ?
                   "are freaked out" : "seem unaffected");
         }
         break;
