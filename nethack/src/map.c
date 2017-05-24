@@ -38,15 +38,14 @@ get_map_key(nh_bool place_cursor, nh_bool report_clicks,
     static int last_x = 0;
     static int last_y = 0;
 
-    /* Before sleeping, update the message buffer. This might end up leaving
-       room for a --More-- that isn't required, but it can't be helped; it's
-       better than not leaving room for a --More-- that is required. */
-    draw_messages_prekey(TRUE);
-
     if (context == krc_interrupt_long_action) {
         consecutive++;
         int timeout = settings.animation == ANIM_SLOW ? 4000 : 550;
 
+        /* Before sleeping, update the message buffer. This might end up leaving
+           room for a --More-- that isn't required, but it can't be helped; it's
+           better than not leaving room for a --More-- that is required. */
+        draw_messages_prekey(TRUE);
         wtimeout(mapwin, timeout / (consecutive + 10));
     } else
         consecutive = 0;
@@ -369,6 +368,8 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
     cx = xorig >= 0 && xorig < COLNO ? xorig : player.x;
     cy = yorig >= 0 && yorig < ROWNO ? yorig : player.y;
     wmove(mapwin, cy, cx);
+
+    draw_messages_prekey(TRUE);
 
     while (1) {
         dx = dy = 0;
