@@ -1879,12 +1879,13 @@ explmu(struct monst *mtmp, const struct attack *mattk)
                          dmgtype(youmonst.data, AD_STUN));
         if (!not_affected) {
             if (!Hallucination)
-                pline(msgc_statusbad,
-                      "You are caught in a blast of kaleidoscopic light!");
+                pline_implied(msgc_statusbad,
+                              "You are caught in a blast of kaleidoscopic light!");
             inc_timeout(&youmonst, HALLUC, tmp, TRUE);
-            pline(msgc_statusbad, "You %s.",
-                  !hallucinating(&youmonst) ?
-                  "are freaked out" : "seem unaffected");
+            if (hallucinating(&youmonst))
+                pline(msgc_statusbad, "You are freaked out.");
+            else
+                pline(msgc_playerimmune, "You seem unaffected.");
         }
         break;
 

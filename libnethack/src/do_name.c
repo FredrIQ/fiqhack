@@ -245,7 +245,7 @@ do_naming(const struct nh_cmd_arg *arg)
     if (flags.recently_broken_otyp != STRANGE_OBJECT) {
         const char *buf;
 
-        buf = msgprintf("Name %s (recently broken)",
+        buf = msgprintf("Name %s (recently used)",
                         an(obj_typename(flags.recently_broken_otyp)));
         add_menuitem(&menu, 6, buf, 'V', FALSE);
     }

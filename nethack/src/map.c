@@ -369,6 +369,8 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
     cy = yorig >= 0 && yorig < ROWNO ? yorig : player.y;
     wmove(mapwin, cy, cx);
 
+    draw_messages_prekey(TRUE);
+
     while (1) {
         dx = dy = 0;
         nh_curs_set(1);

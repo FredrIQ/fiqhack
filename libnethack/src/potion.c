@@ -2068,7 +2068,7 @@ dodip(const struct nh_cmd_arg *arg)
                     potion->otyp == POT_FULL_HEALING)) {
             pline(msgc_itemrepair, "A coating wears off %s.", the(xname(obj)));
             obj->opoisoned = 0;
-            /* trigger the "recently broken" prompt because there are
+            /* trigger the "recently used" prompt because there are
                multiple possibilities */
             if (!(objects[potion->otyp].oc_name_known) &&
                 !(objects[potion->otyp].oc_uname))
