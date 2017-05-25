@@ -2907,6 +2907,8 @@ searches_for_item(struct monst *mon, struct obj *obj)
             return is_mplayer(mon->data);
         if (typ == AMULET_OF_LIFE_SAVING) /* LS isn't desirable if nonliving */
             return (boolean) (!nonliving(mon->data));
+        if (!objects[typ].oc_oprop)
+            return FALSE; /* doesn't confer anything */
         return (!m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));
     case RING_CLASS:
         /* Should match the list in m_dowear_type */
