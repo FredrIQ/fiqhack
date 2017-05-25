@@ -356,7 +356,8 @@ m_has_property(const struct monst *mon, enum youprop property,
                 rv |= W_MASK(os_birthopt);
 
             /* External circumstances */
-            if (property == BLINDED && u_helpless(hm_unconscious))
+            if (property == BLINDED &&
+                (u_helpless(hm_unconscious) || u.ucreamed))
                 rv |= W_MASK(os_circumstance);
 
             /* Riding allows you to inherit a few properties from steeds */
