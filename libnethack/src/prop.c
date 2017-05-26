@@ -301,6 +301,9 @@ m_has_property(const struct monst *mon, enum youprop property,
     }
 
     unsigned rv = 0;
+
+    /* Cache equipment-related property information. Should be safe
+       since it all goes through update_property */
     rv = mon->mintrinsic_cache[property];
     if (!(rv & W_MASK(os_cache))) {
         rv = 0;
@@ -311,12 +314,6 @@ m_has_property(const struct monst *mon, enum youprop property,
 
         /* The general case for equipment */
         rv |= mworn_extrinsic(mon, property);
-
-        /* Timed and corpse/etc-granted */
-        if (mon->mintrinsic[property] & TIMEOUT_RAW)
-            rv |= W_MASK(os_timeout);
-        if (mon->mintrinsic[property] & FROMOUTSIDE_RAW)
-            rv |= W_MASK(os_outside);
 
         /* Polyform / role / race properties */
         const struct propxl *pmprop;
@@ -338,7 +335,6 @@ m_has_property(const struct monst *mon, enum youprop property,
         if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
             rv |= W_MASK(os_polyform);
 
-        /* External circumstances */
         /* Fumbling on ice */
         if (property == FUMBLING &&
             is_ice(m_dlevel(mon), m_mx(mon), m_my(mon)) &&
@@ -349,28 +345,12 @@ m_has_property(const struct monst *mon, enum youprop property,
                 rv |= W_MASK(os_circumstance);
         }
 
-        /* Blindness from being creamed */
-        if (property == BLINDED && creamed(mon))
-            rv |= W_MASK(os_circumstance);
-
-        /* Cases specific to the player */
-        if (mon == &youmonst) {
-            /* Birth options */
-            if ((property == BLINDED && flags.permablind) ||
-                (property == HALLUC && flags.permahallu) ||
-                (property == UNCHANGING && flags.polyinit_mnum != -1))
-                rv |= W_MASK(os_birthopt);
-
-            /* External circumstances */
-            if (property == BLINDED && u_helpless(hm_unconscious))
-                rv |= W_MASK(os_circumstance);
-
-            /* Riding allows you to inherit a few properties from steeds */
-            if ((property == FLYING || property == SWIMMING ||
-                 property == WWALKING || property == LEVITATION) &&
-                u.usteed && has_property(u.usteed, property))
-                rv |= W_MASK(os_saddle);
-        }
+        /* Riding allows you to inherit a few properties from steeds */
+        if (mon == &youmonst &&
+            (property == FLYING || property == SWIMMING ||
+             property == WWALKING || property == LEVITATION) &&
+            u.usteed && has_property(u.usteed, property))
+            rv |= W_MASK(os_saddle);
 
         /* Overrides
 
@@ -387,6 +367,32 @@ m_has_property(const struct monst *mon, enum youprop property,
             youmonst.mintrinsic_cache[property] = (rv | W_MASK(os_cache));
     }
     rv &= ~W_MASK(os_cache);
+
+    /* The rest */
+
+    /* Timed and corpse/etc-granted */
+    if (mon->mintrinsic[property] & TIMEOUT_RAW)
+        rv |= W_MASK(os_timeout);
+    if (mon->mintrinsic[property] & FROMOUTSIDE_RAW)
+        rv |= W_MASK(os_outside);
+
+    /* External circumstances */
+    /* Blindness from being creamed */
+    if (property == BLINDED && creamed(mon))
+        rv |= W_MASK(os_circumstance);
+
+    /* Player-specific cases */
+    if (mon == &youmonst) {
+        /* Birth options */
+        if ((property == BLINDED && flags.permablind) ||
+            (property == HALLUC && flags.permahallu) ||
+            (property == UNCHANGING && flags.polyinit_mnum != -1))
+            rv |= W_MASK(os_birthopt);
+
+        /* External circumstances */
+        if (property == BLINDED && u_helpless(hm_unconscious))
+            rv |= W_MASK(os_circumstance);
+    }
 
     /* If a property is blocked, turn off all flags except circumstance/birthopt,
        unless even_if_blocked is TRUE. Yes, including os_blocked, because not
