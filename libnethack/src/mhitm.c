@@ -735,7 +735,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             else
                 monstone(magr);
 
-            return (!uagr && DEADMONSTER(mdef)) ? MM_AGR_DIED : 0;
+            return (!uagr && DEADMONSTER(magr)) ? MM_AGR_DIED : 0;
         }
         if (visda && valid_range && !resists_ston(mdef)) {
             pline(combat_msgc(magr, mdef, cr_kill), "%s %s gaze.",
