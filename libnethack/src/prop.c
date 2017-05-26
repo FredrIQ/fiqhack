@@ -349,6 +349,10 @@ m_has_property(const struct monst *mon, enum youprop property,
                 rv |= W_MASK(os_circumstance);
         }
 
+        /* Blindness from being creamed */
+        if (property == BLINDED && creamed(mon))
+            rv |= W_MASK(os_circumstance);
+
         /* Cases specific to the player */
         if (mon == &youmonst) {
             /* Birth options */
@@ -358,8 +362,7 @@ m_has_property(const struct monst *mon, enum youprop property,
                 rv |= W_MASK(os_birthopt);
 
             /* External circumstances */
-            if (property == BLINDED &&
-                (u_helpless(hm_unconscious) || u.ucreamed))
+            if (property == BLINDED && u_helpless(hm_unconscious))
                 rv |= W_MASK(os_circumstance);
 
             /* Riding allows you to inherit a few properties from steeds */
