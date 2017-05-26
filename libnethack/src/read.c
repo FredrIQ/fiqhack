@@ -825,7 +825,7 @@ maybe_tame(struct monst *mon, struct monst *mtmp, struct obj *sobj)
     case 2:
         if (mx_eshk(mtmp))
             make_happy_shk(mtmp, FALSE);
-        else if (!resist(mon, mtmp, sobj->oclass, NOTELL, bcsign(sobj)))
+        else
             tamedog(mtmp, NULL);
     }
 }
