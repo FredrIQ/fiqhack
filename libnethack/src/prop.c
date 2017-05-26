@@ -1886,6 +1886,11 @@ update_property(struct monst *mon, enum youprop prop,
     case FIXED_ABIL:
         break;
     case FLYING:
+        if (!redundant && (you || vis))
+            pline(you && lost ? msgc_statusbad : you ? msgc_statusgood :
+                  msgc_monneutral, "%s %s buoyant.",
+                  M_verbs(mon, you ? "feel" : "look"), lost ? "less" : "more");
+
         if (mon == &youmonst)
             spoteffects(FALSE);
         else

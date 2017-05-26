@@ -831,6 +831,13 @@ run_maintained_spells(struct level *lev)
 static void
 run_maintained_spell(struct monst *mon, int spell)
 {
+    /* Find the skill for the given spell type category */
+    int skill = prof(mon, spell_skilltype(spell));
+
+    int leviprop = LEVITATION;
+    if (skill == P_EXPERT)
+        leviprop = FLYING;
+
     switch (spell) {
     case SPE_HASTE_SELF:
         if (property_timeout(mon, FAST) < 5)
@@ -841,8 +848,8 @@ run_maintained_spell(struct monst *mon, int spell)
             inc_timeout(mon, DETECT_MONSTERS, 20, TRUE);
         break;
     case SPE_LEVITATION:
-        if (property_timeout(mon, LEVITATION) < 5)
-            inc_timeout(mon, LEVITATION, 5, TRUE);
+        if (property_timeout(mon, leviprop) < 5)
+            inc_timeout(mon, leviprop, 5, TRUE);
         break;
     case SPE_INVISIBILITY:
         if (property_timeout(mon, INVIS) < 5)
@@ -1733,7 +1740,6 @@ spelleffects(boolean atme, const struct musable *m)
     case SPE_HASTE_SELF:
     case SPE_DETECT_TREASURE:
     case SPE_DETECT_MONSTERS:
-    case SPE_LEVITATION:
     case SPE_RESTORE_ABILITY:
         /* high skill yields effect equivalent to blessed potion */
         if (role_skill >= P_SKILLED)
@@ -1743,6 +1749,23 @@ spelleffects(boolean atme, const struct musable *m)
         peffects(mon, pseudo, &dummy2, &dummy3);
         break;
 
+    case SPE_LEVITATION:
+        if (!you && role_skill <= P_SKILLED) {
+            impossible("Monster casting levitation below Expert?");
+            break;
+        }
+        if (role_skill <= P_SKILLED) {
+            /* Skilled gives blessed !levi effect */
+            if (role_skill == P_SKILLED)
+                pseudo->blessed = 1;
+
+            peffects(mon, pseudo, &dummy2, &dummy3);
+            break;
+        }
+
+        /* Expert gives temporary flight instead */
+        set_property(mon, FLYING, rn1(50, 250), FALSE);
+        break;
     case SPE_CURE_BLINDNESS:
         healup(0, 0, FALSE, TRUE);
         break;
