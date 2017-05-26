@@ -701,7 +701,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 mon_reflects(mdef, magr, FALSE,
                              "%s gaze is reflected by %s %s.",
-                             uagr ? s_suffix(Monnam(magr)) : "Your");
+                             s_suffix(Monnam(magr)));
             if (reflecting(magr)) {
                 if (vis)
                     mon_reflects(magr, mdef, TRUE, 
