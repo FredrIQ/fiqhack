@@ -358,7 +358,8 @@ m_has_property(const struct monst *mon, enum youprop property,
                 rv |= W_MASK(os_birthopt);
 
             /* External circumstances */
-            if (property == BLINDED && u_helpless(hm_unconscious))
+            if (property == BLINDED &&
+                (u_helpless(hm_unconscious) || u.ucreamed))
                 rv |= W_MASK(os_circumstance);
 
             /* Riding allows you to inherit a few properties from steeds */
@@ -1497,20 +1498,28 @@ update_property(struct monst *mon, enum youprop prop,
             }
         } else {
             if (you || vis) {
-                if (timer == 4)
+                switch (timer) {
+                case 4:
                     pline(msgc, "%s slowing down.",
                           M_verbs(mon, "are"));
-                else if (timer == 3)
+                    break;
+                case 3:
                     pline(msgc, "%s limbs are stiffening.",
-                          you ? "Your" : s_suffix(Monnam(mon)));
-                else if (timer == 2)
+                          s_suffix(Monnam(mon)));
+                    break;
+                case 2:
                     pline(msgc, "%s limbs have turned to stone.",
-                          you ? "Your" : s_suffix(Monnam(mon)));
-                else if (timer == 1)
+                          s_suffix(Monnam(mon)));
+                    break;
+                case 1:
                     pline(msgc, "%s turned to stone.",
-                          M_verbs(mon, "are"));
-                else if (timer == 0)
+                          M_verbs(mon, "have"));
+                    break;
+                case 0:
+                default:
                     pline(msgc, "%s a statue.", M_verbs(mon, "are"));
+                    break;
+                }
                 effect = TRUE;
             }
             /* remove intrinsic speed, even if mon re-acquired it */

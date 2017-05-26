@@ -645,7 +645,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 mon_reflects(mdef, magr, FALSE,
                              "%s gaze is reflected by %s %s.",
-                             udef ? "Your" : s_suffix(Monnam(mdef)));
+                             s_suffix(Monnam(magr)));
             if (reflecting(magr)) {
                 if (vis)
                     mon_reflects(magr, mdef, TRUE, 
