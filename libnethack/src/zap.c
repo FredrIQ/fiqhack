@@ -729,7 +729,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             if (mdef->mspells || mdef->iswiz)
                 show_monster_spells(mdef);
             else
-                pline(msgc_info, "%s no spells.", M_verbs(mdef, "has"));
+                pline(msgc_info, "%s no spells.", M_verbs(mdef, "have"));
         }
         known = TRUE;
         break;
