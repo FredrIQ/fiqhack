@@ -236,10 +236,6 @@ enum monster_awareness_reasons {
                                 Displaced ? mar_guessing_displaced :    \
                                 mar_guessing_other)
 
-/* Is a monster using an item? Used to ensure that buzz() calls the correct kill
-   function. */
-extern boolean m_using;
-
 /* When a long worm is hit, is the hit on the head or thebody? */
 extern boolean notonhead;
 

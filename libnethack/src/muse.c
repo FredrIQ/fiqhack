@@ -7,8 +7,6 @@
 
 extern const int monstr[];
 
-boolean m_using = FALSE;
-
 /* This file handles the monster item use AI and the monster-player-symmetric argument
    conversion utilities */
 
