@@ -11,8 +11,6 @@
 
 extern const int monstr[];
 
-boolean m_using = FALSE;
-
 /*
  * Monster item usage logic.  General guidelines:
  * - Monsters do not play the ID game with object types (it is unfeasible)
