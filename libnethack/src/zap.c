@@ -876,7 +876,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             }
         }
 
-        wake = set_property(mdef, STONED, -2, FALSE); /* saved! */
+        set_property(mdef, STONED, -2, FALSE); /* saved! */
         /* but at a cost.. */
         if (selfzap) {
             bhitinv(mdef, otmp);
