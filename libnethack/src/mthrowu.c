@@ -905,7 +905,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
        except for disintegration */
     int breathlvl = 0;
     if (mtmp->data->mlet == S_DRAGON && extra_nasty(mtmp->data) &&
-        typ != AD_DISN && !rn2(3))
+        typ != AD_DISN && typ != AD_STUN && !rn2(3))
         breathlvl = (!rn2(3) ? P_SKILLED : !rn2(2) ? P_EXPERT : P_MASTER);
 
     if (linedup) {
