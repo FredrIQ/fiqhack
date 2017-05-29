@@ -2724,20 +2724,12 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
                   obj->otyp == EXPENSIVE_CAMERA ? "flash" : "beam",
                   mdef == &youmonst ? "your" : s_suffix(mon_nam(mdef)));
         }
-        /* modified by GAN to hit all objects */
-        int hitanything = 0;
-        struct obj *next_obj;
+        /* boulders block vision, so make them block camera flashes too... */
+        if (sobj_at(BOULDER, level, bhitpos.x, bhitpos.y) &&
+            obj->otyp == EXPENSIVE_CAMERA)
+            range = 0;
 
-        for (otmp = level->objects[bhitpos.x][bhitpos.y]; otmp;
-                otmp = next_obj) {
-            /* Fix for polymorph bug, Tim Wright */
-            next_obj = otmp->nexthere;
-            hitanything += bhito(otmp, obj);
-            /* boulders block vision, so make them block camera flashes too... */
-            if (otmp->otyp == BOULDER && obj->otyp == EXPENSIVE_CAMERA)
-                range = 0;
-        }
-        if (hitanything)
+        if (bhitpile(obj, bhito, bhitpos.x, bhitpos.y))
             range--;
         if (you && obj->otyp == WAN_PROBING &&
             level->locations[bhitpos.x][bhitpos.y].mem_invis) {
