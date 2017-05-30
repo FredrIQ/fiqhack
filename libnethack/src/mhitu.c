@@ -846,7 +846,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_MAGM:
         hitmsg(mtmp, mattk);
-        if (uncancelled) {
+        if (!cancelled(mtmp)) {
             pline(combat_msgc(mtmp, &youmonst, cr_hit),
                   "You're hit by a shower of missiles!");
             if (resists_magm(&youmonst)) {
