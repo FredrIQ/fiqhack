@@ -1656,6 +1656,7 @@ static const char *plurals_dictionary[][2] = {
     {"hypha", "hyphae"},
     {"larva", "larvae"},
     {"lotus", "lotuses"},     /* -us exception */
+    {"virus", "viruses"},     /* -us exception */
     {"wumpus", "wumpuses"},   /* -us exception */
     {"^bus", "buses"},        /* -us exception */
     {"us", "i"},              /* e.g. "fungus" */
