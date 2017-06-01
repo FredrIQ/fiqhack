@@ -381,7 +381,7 @@ rndcurse(struct monst *mtmp, struct monst *magr)
     if (nobj) {
         for (; cnt > 0; cnt--) {
             onum = rnd(nobj);
-            for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
+            for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj) {
                 /* as above */
                 if (otmp->oclass == COIN_CLASS)
                     continue;
