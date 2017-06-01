@@ -293,7 +293,7 @@ m_has_property(const struct monst *mon, enum youprop property,
         return 0;
 
     /* Simplify property checking by allowing 0 but always returning 0 in this case */
-    if (prop == NO_PROP)
+    if (property == NO_PROP)
         return FALSE;
 
     if (property > LAST_PROP) {
