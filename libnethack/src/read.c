@@ -2236,7 +2236,8 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
             mndx = monsndx(mon->data);
         ptr = &mons[mndx];
         buf = msg_from_string(ptr->mname);
-        if (you)
+        if (you || mon->data == youmonst.data || Your_Own_Role(monsndx(mon->data)) ||
+            Your_Own_Race(monsndx(mon->data)))
             killplayer++;
     } else {
         for (i = 0;; i++) {
@@ -2313,7 +2314,9 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
             }
             ptr = &mons[mndx];
 
-            if (!(ptr->geno & G_GENO)) {
+            if (!(ptr->geno & G_GENO) &&
+                !((you && (Your_Own_Role(mndx) || Your_Own_Race(mndx))) ||
+                  ptr == mon->data)) {
                 if (canhear()) {
                     /* fixme: unconditional "caverns" will be silly in some
                        circumstances */
@@ -2329,8 +2332,7 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
 
             /* Although "genus" is Latin for race, the hero benefits from both
                race and role; thus genocide affects either. */
-            if (you && (Your_Own_Role(mndx) || Your_Own_Race(mndx) ||
-                        ptr == youmonst.data)) {
+            if (Your_Own_Role(mndx) || Your_Own_Race(mndx) || ptr == youmonst.data) {
                 killplayer++;
                 break;
             }
@@ -2381,15 +2383,15 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
                 u.mh = -1;
 
             const char *killer;
-            if (how & PLAYER)
+            if (!you)
+                killer = killer_msg(GENOCIDED, "a monster's scroll of genocide");
+            else if (how & PLAYER)
                 killer = killer_msg(GENOCIDED, "genocidal confusion");
             else if (how & ONTHRONE)
                 /* player selected while on a throne */
                 killer = killer_msg(GENOCIDED, "an imperious order");
             else if (you)   /* selected player deliberately, not confused */
                 killer = killer_msg(GENOCIDED, "a scroll of genocide");
-            else
-                killer = killer_msg(GENOCIDED, "a monster's scroll of genocide");
 
             /* Polymorphed characters will die as soon as they're rehumanized. */
             /* KMH -- Unchanging prevents rehumanization */
