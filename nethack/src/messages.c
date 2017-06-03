@@ -71,7 +71,6 @@ static const int channel_color[] = {
     [msgc_hint] = CLR_BRIGHT_BLUE,
     [msgc_uiprompt] = CLR_BRIGHT_BLUE,
     [msgc_curprompt] = CLR_BRIGHT_BLUE,
-    [msgc_reminder] = CLR_BRIGHT_BLUE,    /* fades to dark blue immediately */
     [msgc_unpaid] = CLR_BRIGHT_BLUE,
 
     /* CLR_BRIGHT_MAGENTA: permanent non-spammy bad things, urgent warnings */
@@ -104,6 +103,7 @@ static const int channel_color[] = {
     [msgc_nospoil] = CLR_WHITE,
 
     /* Special handling, that violates normal rules */
+    [msgc_reminder] = 0,       /* never forces more */
     [msgc_intrloss_level] = 0, /* msgc_intrloss but never forces a more */
     [msgc_intrgain_level] = 0, /* msgc_intrgain but never forces a more */
     [msgc_fatal_predone] = 0,  /* msgc_fatal but never forces a more */
@@ -234,6 +234,8 @@ resolve_channel_color(enum msg_channel msgc)
         chcolor = channel_color[msgc_fatal] & no_forcing;
     else if (msgc == msgc_mispaste)
         chcolor = channel_color[msgc_cancelled] & no_forcing;
+    else if (msgc == msgc_reminder)
+        chcolor = channel_color[msgc_hint] & no_forcing;
     else
         chcolor = channel_color[msgc];
 

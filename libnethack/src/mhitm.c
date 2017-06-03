@@ -1063,7 +1063,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_MAGM:
-        if (cancelled) {
+        if (cancelled(magr)) {
             tmp = 0;
             break;
         }

@@ -1283,7 +1283,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_MAGM:
-        if (negated) {
+        if (cancelled(&youmonst)) {
             tmp = 0;
             break;
         }

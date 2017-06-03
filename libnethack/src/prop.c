@@ -295,7 +295,11 @@ m_has_property(const struct monst *mon, enum youprop property,
     if (property == HALLUC && mon != &youmonst)
         return 0;
 
-    if (property > LAST_PROP || property == NO_PROP) {
+    /* Simplify property checking by allowing 0 but always returning 0 in this case */
+    if (property == NO_PROP)
+        return FALSE;
+
+    if (property > LAST_PROP) {
         impossible("Invalid property: %d", property);
         return 0;
     }

@@ -1345,7 +1345,7 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
     if (!spec_dbon_applies) {
         /* since damage bonus didn't apply, nothing more to do; no further
            attacks have side-effects on inventory */
-        return vis;
+        return res;
     }
 
     /* Tsurugi of Muramasa, Vorpal Blade */

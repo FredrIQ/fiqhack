@@ -893,8 +893,8 @@ static void
 ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
 {
     /* Keep track of spells we've already gotten */
-    int gotspell[NUM_OBJECTS];
-    memset(&gotspell, 0, NUM_OBJECTS);
+    int gotspell[NUM_OBJECTS + 1];
+    memset(&gotspell, 0, sizeof (int) * (NUM_OBJECTS + 1));
 
     struct obj *obj;
     int otyp, i;
