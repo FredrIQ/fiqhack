@@ -1056,9 +1056,9 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
             }
         }
     } else if (otyp == SCR_STINKING_CLOUD ||
-        ((otyp == SPE_FIREBALL ||
-          otyp == SPE_CONE_OF_COLD) &&
-         mprof(mon, MP_SATTK) >= P_SKILLED))
+               ((otyp == SPE_FIREBALL ||
+                 otyp == SPE_CONE_OF_COLD) &&
+                mprof(mon, MP_SATTK) >= P_SKILLED))
         score = mon_choose_spectarget(mon, obj, tc);
     else
         score = mon_choose_dirtarget(mon, obj, tc);
@@ -1481,17 +1481,20 @@ find_item(struct monst *mon, struct musable *m)
         usable = find_item_single(obj, TRUE, &m2, mclose ? TRUE : FALSE, FALSE);
         if (usable && mon_allowed(spell)) {
             if (usable == 1) {
-                if (!rn2(randcount)) {
+                /* TODO: move summon nasty handling elsewhere */
+                if (spell == SPE_SUMMON_NASTY) {
+                    if (!mclose)
+                        impossible("Monster casting summon nasties when there is no target");
+                    if (!mcanspotmon(mon, mclose))
+                        mclose = NULL;
+                }
+                if ((mclose || spell != SPE_SUMMON_NASTY) && !rn2(randcount)) {
                     randcount++;
                     m->spell = spell;
                     m->x = m2.x;
                     m->y = m2.y;
                     m->z = m2.z;
                     if (spell == SPE_SUMMON_NASTY) {
-                        if (!mclose) {
-                            impossible("Monster casting summon nasties when there is no target");
-                            return FALSE;
-                        }
                         m->x = m_mx(mclose);
                         m->y = m_my(mclose);
                         m->z = 0;
