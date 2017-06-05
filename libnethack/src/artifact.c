@@ -510,7 +510,8 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
     if (!oart)
         return 0L;
 
-    if (oart->inv_prop == extrinsic)
+    if (oart->inv_prop == extrinsic &&
+        (otmp->owornmask & W_MASK(os_invoked)))
         return W_MASK(os_invoked);
 
     dtyp = oart->cary.adtyp;
