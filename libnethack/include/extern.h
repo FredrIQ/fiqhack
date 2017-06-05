@@ -184,6 +184,7 @@ extern int getbones(d_level * levnum);
 extern void bot(void);
 extern int title_to_mon(const char *, int *, int *);
 extern void max_rank_sz(void);
+extern int xlev_to_rank(int);
 extern const char *rank_of(int, short, boolean);
 extern int describe_level(char *);
 
