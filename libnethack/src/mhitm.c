@@ -173,14 +173,13 @@ noises(struct monst *magr, const struct attack *mattk)
 {
     boolean farq = (distu(magr->mx, magr->my) > 15);
 
-    /* Disable the timer for now, people find it annoying
-       if (farq != far_noise || moves - noisetime > 10) { */
-    far_noise = farq;
-    noisetime = moves;
-    You_hear(msgc_levelsound, "%s%s.",
-             (mattk->aatyp == AT_EXPL) ? "an explosion" : "some noises",
-             farq ? " in the distance" : " nearby");
-    /* } */
+    if (farq != far_noise || moves - noisetime > 1) {
+        far_noise = farq;
+        noisetime = moves;
+        You_hear(msgc_levelsound, "%s%s.",
+                 (mattk->aatyp == AT_EXPL) ? "an explosion" : "some noises",
+                 farq ? " in the distance" : " nearby");
+    }
 }
 
 static void
