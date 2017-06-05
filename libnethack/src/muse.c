@@ -955,9 +955,10 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
                 continue;
             if (IS_STWALL(level->locations[x][y].typ))
                 continue;
+
+            mtmp = um_at(level, x, y);
             if (!m_cansee(mon, x, y) ||
-                (!stink && (mtmp = um_at(level, x, y)) &&
-                 mcanspotmon(mon, mtmp)))
+                (!stink && (!mtmp || !mcanspotmon(mon, mtmp))))
                 continue;
             if (dist2(mon->mx, mon->my, x, y) > (globrange * globrange))
                 continue;
