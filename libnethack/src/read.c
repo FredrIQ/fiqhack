@@ -2504,7 +2504,7 @@ mon_choose_genocide(struct monst *mon, boolean class, int cur_try)
     struct monst *mtmp;
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
         /* do not genocide own kind */
-        if (mon->data == mtmp->data)
+        if (monsndx(mon->data) == monsndx(mtmp->data))
             continue;
         if (class && mon->data->mlet == mtmp->data->mlet)
             continue;
@@ -2514,14 +2514,14 @@ mon_choose_genocide(struct monst *mon, boolean class, int cur_try)
             return maybe_target_class(class, mndx[cur_try]);
     }
     /* ...and if it can see you... */
-    if (m_canseeu(mon) && !mon->mpeaceful)
+    if (m_canseeu(mon) && !mon->mpeaceful && monsndx((&youmonst)->data) != monsndx(mon->data))
         mndx[try++] = monsndx((&youmonst)->data);
     if (try > 4)
         return maybe_target_class(class, mndx[cur_try]);
 
     /* hostile monsters it can sense */
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (mon->data == mtmp->data)
+        if (monsndx(mon->data) == monsndx(mtmp->data))
             continue;
         if (class && mon->data->mlet == mtmp->data->mlet)
             continue;
