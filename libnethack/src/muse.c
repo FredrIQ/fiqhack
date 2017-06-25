@@ -3052,8 +3052,9 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
     unsigned reflect_reason = has_property(mon, REFLECTING);
     const char *mon_s;
     mon_s = (mon == &youmonst) ? "your" : s_suffix(mon_nam(mon));
+    enum objslot slot = os_invalid;
     if (reflect_reason) {
-#define refl(slot) (reflect_reason & W_MASK(slot))
+#define refl(rslot) ((slot = rslot) && reflect_reason & W_MASK(rslot))
         if (fmt && str)
             pline(combat_msgc(magr, mon, recursive ?
                               cr_miss : cr_immune),
@@ -3066,33 +3067,35 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
                   refl(os_race)     ? "scales" :
                   refl(os_polyform) ? "scales" :
                   refl(os_arm)      ? "armor"  :
+                  refl(os_armg)     ? "gloves" :
+                  refl(os_armf)     ? "boots"  :
+                  refl(os_armh)     ? "helmet" :
+                  refl(os_armu)     ? "shirt"  :
                   "something weird"); /* os_arm after role/etc to suppress
                                          "armor" if uskin() */
-        if (refl(os_arms)) {
+        if (slot == os_wep) {
+            struct obj *wep = m_mwep(mon);
+            if (wep)
+                learn_oprop(wep, opm_reflects);
+        } else if (slot == os_swapwep) {
+            if (mon != &youmonst)
+                return TRUE; /* shouldn't happen */
+
+            if (uswapwep)
+                learn_oprop(uswapwep, opm_reflects);
+        } else if (slot == os_arms) {
             struct obj *arms = which_armor(mon, os_arms);
             if (arms->otyp == SHIELD_OF_REFLECTION)
                 makeknown(arms->otyp);
             learn_oprop(arms, opm_reflects);
-        } else if (refl(os_wep)) {
-            struct obj *wep = m_mwep(mon);
-            if (wep)
-                learn_oprop(wep, opm_reflects);
-        } else if (refl(os_swapwep)) {
-            if (mon != &youmonst)
-                return TRUE;
-
-            if (uswapwep)
-                learn_oprop(uswapwep, opm_reflects);
-        } else if (refl(os_amul)) {
+        } else if (slot == os_armu) {
             struct obj *amul = which_armor(mon, os_amul);
             if (amul->otyp == AMULET_OF_REFLECTION)
                 makeknown(amul->otyp);
             learn_oprop(amul, opm_reflects);
-        } else if (refl(os_role) || refl(os_race) ||
-                   refl(os_polyform))
-            return TRUE;
-        else if (refl(os_arm)) {
-            struct obj *arm = which_armor(mon, os_arm);
+        } else if (slot != os_invalid && slot <= os_last_worn) {
+            /* which_armor also work for rings */
+            struct obj *arm = which_armor(mon, slot);
             learn_oprop(arm, opm_reflects);
         }
 #undef refl
