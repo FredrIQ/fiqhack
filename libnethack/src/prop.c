@@ -1176,6 +1176,12 @@ update_property(struct monst *mon, enum youprop prop,
             see_monsters(FALSE);
         break;
     case FAST:
+        /* No redundant messages */
+        if (mon == &youmonst &&
+            (slot == os_role || slot == os_race ||
+             slot == os_polyform || slot == os_outside))
+            break;
+
         /* only give the "new energy" message if the monster has redundant speed */
         if (redundant_intrinsic) {
             if (slot == os_inctimeout && you) {
