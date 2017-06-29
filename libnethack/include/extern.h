@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-22 */
+/* Last modified by Alex Smith, 2017-06-29 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -645,7 +645,8 @@ extern void lookaround(enum u_interaction_mode);
 extern int monster_nearby(void);
 extern void losehp(int, const char *);
 extern int weight_cap(void);
-extern int inv_weight(void);
+extern int inv_weight_over_cap(void);
+extern int inv_weight_total(void);
 extern int near_capacity(void);
 extern int calc_capacity(int);
 extern int max_capacity(void);
