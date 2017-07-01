@@ -2628,7 +2628,7 @@ try_again:
         return SCR_TELEPORTATION;
     case 8:
     case 10:
-        if (!rn2_on_rng(3, rng))
+        if (!rn2_on_rng(9, rng))
             return WAN_CREATE_MONSTER;
         /* else FALLTHRU */
     case 2:
