@@ -1522,6 +1522,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         }
         break;
     case AD_ZOMB:
+        hitmsg(mtmp, mattk);
         if (nonliving(youmonst.data) || izombie(&youmonst))
             break;
         zombie_timer = property_timeout(&youmonst, ZOMBIE);
