@@ -50,7 +50,6 @@ static int learn(void);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(const struct monst *, int);
 static int throwspell(boolean, schar *dx, schar *dy, const struct musable *arg);
-static boolean cast_protection(struct monst *, boolean);
 static void spell_backfire(int);
 static int spellindex_by_typ(int);
 static void run_maintained_spell(struct monst *, int);
@@ -853,7 +852,7 @@ run_maintained_spell(struct monst *mon, int spell)
             inc_timeout(mon, PASSES_WALLS, 20, TRUE);
         break;
     case SPE_PROTECTION:
-        if (cast_protection(mon, TRUE)) {
+        if (cast_protection(mon, TRUE, FALSE)) {
             if (mon == &youmonst) {
                 if (u.uen < 5) {
                     pline(msgc_intrloss, "Your energy level fizzles, preventing you "
@@ -1184,8 +1183,16 @@ mspell_skilltype(int booktype)
     return 0;
 }
 
-static boolean
-cast_protection(struct monst *mon, boolean autocast)
+/* Casts the protection spell.
+   autocast: Don't print messages if we don't gain anything
+   check_overprotection: Check if we have more AC than we're "supposed" to
+   from the protection. This prevents freezing the protection timer in
+   such a case if the protection spell is maintained, avoiding you to
+   gain more protection and keep it by maintaining the spell. In such a
+   case, we return FALSE if overprotected. */
+boolean
+cast_protection(struct monst *mon, boolean autocast,
+                boolean check_overprotection)
 {
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
@@ -1194,6 +1201,7 @@ cast_protection(struct monst *mon, boolean autocast)
     /* Monsters can be level 0, ensure that no oddities occur if that is the case. */
     if (l == 0)
         l = 1;
+    int speac = m_mspellprot(mon);
     int natac = find_mac(mon) + m_mspellprot(mon);
     int gain;
 
@@ -1229,7 +1237,15 @@ cast_protection(struct monst *mon, boolean autocast)
      *     32-63   0    0,  6, 10, 13, 15, 16, 17, 18
      *     32-63 -10    0,  6,  9, 11, 12
      */
-    gain = loglev - (int)m_mspellprot(mon) / (4 - min(3, (10 - natac) / 10));
+
+    /* Check for overprotection by decreasing speac by 1 and checking
+       if we gain nothing by the spell. */
+    if (check_overprotection)
+        speac--;
+    gain = loglev - speac / (4 - min(3, (10 - natac) / 10));
+
+    if (check_overprotection)
+        return (gain > 0);
 
     if (gain > 0) {
         if (!blind(&youmonst) && (you || vis)) {
@@ -1780,7 +1796,7 @@ spelleffects(boolean atme, struct musable *m)
         }
         break;
     case SPE_PROTECTION:
-        cast_protection(mon, FALSE);
+        cast_protection(mon, FALSE, FALSE);
         break;
     case SPE_JUMPING:
         if (!you) {
