@@ -77,7 +77,7 @@ static const struct propmsg prop_msg[] = {
     {DISPLACED, "Your outline shimmers and shifts.", "elusive",
      "You stop shimmering.", "exposed"},
     {SICK_RES, "You feel your immunity strengthen.", "immunized",
-     "Your immunity system fails!", "immunocompromised"},
+     "Your immune system fails!", "immunocompromised"},
     {DRAIN_RES, "You feel especially energetic.", "energic",
      "You feel less energic.", "less energic"},
     {CANCELLED, "You feel devoid of magic!", "magic-devoid",
