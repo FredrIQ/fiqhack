@@ -55,7 +55,7 @@ static const struct propmsg prop_msg[] = {
     {POLYMORPH, "Your body begins to shapeshift.", "shapeshifting",
      "You are no longer shapeshifting.", "less shapeshifting"},
     {POLYMORPH_CONTROL, "You feel in control of your shapeshifting", "shapeshift-controlled",
-     "You feel no lnger in control of your shapeshifting.", "less shapeshift-controlled"},
+     "You feel no longer in control of your shapeshifting.", "less shapeshift-controlled"},
     {STEALTH, "", "stealthy", "", "noisy"},
     {AGGRAVATE_MONSTER, "You feel attractive!", "attractive",
      "You feel less attractive.", "less attractive"},
