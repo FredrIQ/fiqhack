@@ -221,14 +221,17 @@ scroll_using_key(struct win_scrollable *s, int keycode, nh_bool *done)
     case '>':
     case ' ':
         if (keycode == ' ' &&
-            s->offset == (s->linecount - s->innerheight)) {
+            s->offset >= (s->linecount - s->innerheight)) {
             *done = TRUE;
             return TRUE;
         }
 
-        s->offset += s->innerheight;
-        if (s->offset >= s->linecount - s->innerheight)
-            s->offset = s->linecount - s->innerheight;
+        if (settings.menupaging == MP_LINES) {
+            s->offset += s->innerheight;
+            if (s->offset >= s->linecount - s->innerheight)
+                s->offset = s->linecount - s->innerheight;
+        } else if (s->offset < s->linecount - s->innerheight)
+            s->offset += s->innerheight;
         return TRUE;
 
     case KEY_HOME:      /* go to the top */
