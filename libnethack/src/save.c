@@ -673,7 +673,8 @@ savelev(struct memfile *mf, xchar levnum)
     save_dest_area(mf, lev->dndest);
 
     mtag(mf, levnum, MTAG_LFLAGS);
-    lflags = (lev->flags.noteleport << 22) |
+    lflags =
+        (lev->flags.vault_known << 23) | (lev->flags.noteleport << 22) |
         (lev->flags.hardfloor << 21) | (lev->flags.nommap << 20) |
         (lev->flags.hero_memory << 19) | (lev->flags.shortsighted << 18) |
         (lev->flags.graveyard << 17) | (lev->flags.is_maze_lev << 16) |

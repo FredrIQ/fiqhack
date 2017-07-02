@@ -1193,6 +1193,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     restore_dest_area(mf, &lev->dndest);
 
     lflags = mread32(mf);
+    lev->flags.vault_known = (lflags >> 23) & 1;
     lev->flags.noteleport = (lflags >> 22) & 1;
     lev->flags.hardfloor = (lflags >> 21) & 1;
     lev->flags.nommap = (lflags >> 20) & 1;
