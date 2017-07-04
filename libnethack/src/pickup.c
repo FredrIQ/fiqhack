@@ -1110,6 +1110,7 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
 struct obj *
 pick_obj(struct obj *otmp)
 {
+    otmp->owt = weight(otmp);
     obj_extract_self(otmp);
     if (!Engulfed && otmp != uball && costly_spot(otmp->ox, otmp->oy)) {
         char saveushops[5], fakeshop[2];
