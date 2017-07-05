@@ -188,8 +188,7 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
         if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
             ((lava && waterwalk < 2) ||
              (pool && !Swimming && !waterwalk)) &&
-            !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy)) {
-
+            !(lava ? is_lava(level, u.ux, u.uy) : is_pool(level, u.ux, u.uy))) {
             if (cansee(x, y))
                 pline(msgc_cancelled,
                       is_pool(level, x, y) ? "You never learned to swim!" :
