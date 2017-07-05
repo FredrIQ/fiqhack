@@ -899,20 +899,25 @@ doname_base(const struct obj *obj, boolean with_price)
            thus possibly enchanted), we automatically ID it. This takes weight
            into account too (as it's shown in inventory listings), which
            conveniently happens to distinguish between different description
-           groups when we need it to. */
-        if (obj->oclass != ARMOR_CLASS && obj->oclass != WEAPON_CLASS &&
+           groups when we need it to.
+           Tourists always ID shop objects. */
+        if ((Role_if(PM_TOURIST) ||
+             (obj->oclass != ARMOR_CLASS && obj->oclass != WEAPON_CLASS)) &&
             obj->oclass != GEM_CLASS) {
             int i;
             boolean id = TRUE;
 
-            for (i = 0; i < NUM_OBJECTS; i++) {
-                if (i == obj->otyp)
-                    continue;
-                if (objects[i].oc_cost == objects[obj->otyp].oc_cost &&
-                    objects[i].oc_class == objects[obj->otyp].oc_class &&
-                    objects[i].oc_weight == objects[obj->otyp].oc_weight)
-                    id = FALSE;
+            if (!Role_if(PM_TOURIST)) {
+                for (i = 0; i < NUM_OBJECTS; i++) {
+                    if (i == obj->otyp)
+                        continue;
+                    if (objects[i].oc_cost == objects[obj->otyp].oc_cost &&
+                        objects[i].oc_class == objects[obj->otyp].oc_class &&
+                        objects[i].oc_weight == objects[obj->otyp].oc_weight)
+                        id = FALSE;
+                }
             }
+
             /* tallow candles are unique by this check, wax ones aren't;
                special-case wax candles to make it consistent */
             if (id || obj->otyp == WAX_CANDLE)
