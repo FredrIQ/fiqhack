@@ -154,6 +154,15 @@ erode_obj(struct obj *otmp, const char *ostr, enum erode_type type,
         return FALSE;
     }
 
+    if (vulnerable && victim) {
+        /* Maybe a resistance prevents it */
+        vulnerable =
+            !(type == ERODE_BURN ? ehas_property(victim, FIRE_RES) :
+              type == ERODE_RUST ? ehas_property(victim, WATERPROOF) :
+              type == ERODE_CORRODE ? ehas_property(victim, ACID_RES) :
+              FALSE);
+    }
+
     int erosion = primary ? otmp->oeroded : otmp->oeroded2;
     if (!ostr)
         ostr = cxname(otmp);

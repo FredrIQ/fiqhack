@@ -484,10 +484,13 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
         return equipmask;
     if ((otmp->otyp == RED_DRAGON_SCALE_MAIL ||
-         otmp->otyp == RED_DRAGON_SCALES) && extrinsic == INFRAVISION)
+         otmp->otyp == RED_DRAGON_SCALES) &&
+        (extrinsic == INFRAVISION || extrinsic == WARNING ||
+         extrinsic == SEE_INVIS))
         return equipmask;
     if ((otmp->otyp == WHITE_DRAGON_SCALE_MAIL ||
-         otmp->otyp == WHITE_DRAGON_SCALES) && extrinsic == WATERPROOF)
+         otmp->otyp == WHITE_DRAGON_SCALES) &&
+        (extrinsic == WATERPROOF || extrinsic == SEARCHING))
         return equipmask;
     if ((otmp->otyp == ORANGE_DRAGON_SCALE_MAIL ||
          otmp->otyp == ORANGE_DRAGON_SCALES) && extrinsic == FREE_ACTION)

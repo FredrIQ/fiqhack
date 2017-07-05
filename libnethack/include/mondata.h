@@ -107,7 +107,6 @@
 # define hitbon(mon)            (mon_bon(mon, RIN_INCREASE_ACCURACY, (mon)->mhitinc))
 # define dambon(mon)            (mon_bon(mon, RIN_INCREASE_DAMAGE, (mon)->mdaminc))
 # define protbon(mon)           (mon_bon(mon, RIN_PROTECTION, (mon)->mac))
-# define searchbon(mon)         (mon_bon(mon, RIN_SEARCHING, (mon)->msearchinc))
 
 # define is_lminion(mon)        (pm_isminion((mon)->data) &&    \
                                  malign(mon) == A_LAWFUL)

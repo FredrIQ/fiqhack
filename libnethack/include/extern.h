@@ -1185,6 +1185,7 @@ extern boolean poly_when_stoned(const struct permonst *);
 extern boolean resists_blnd(const struct monst *);
 extern boolean can_blnd(struct monst *, struct monst *, uchar, struct obj *);
 extern int mon_bon(struct monst *, int, int);
+extern int searchbon(struct monst *);
 extern boolean ranged_attk(const struct permonst *);
 extern boolean hates_silver(const struct permonst *);
 extern boolean passes_bars(const struct monst *);
