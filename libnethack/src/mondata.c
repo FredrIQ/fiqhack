@@ -68,7 +68,7 @@ searchbon(struct monst *mon)
 {
     int ret = mon_bon(mon, RIN_SEARCHING, (mon)->msearchinc);
     struct obj *arm = which_armor(mon, os_arm);
-    if (arm && arm->otyp == WHITE_DRAGON_SCALES || arm->otyp == WHITE_DRAGON_SCALE_MAIL)
+    if (arm && (arm->otyp == WHITE_DRAGON_SCALES || arm->otyp == WHITE_DRAGON_SCALE_MAIL))
         ret += arm->spe;
     return ret;
 }

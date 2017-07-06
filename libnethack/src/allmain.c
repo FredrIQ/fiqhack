@@ -558,7 +558,7 @@ just_reloaded_save:
                 case DIR_W:
                 case DIR_N:
                     /* Move backwards one command. */
-                    log_sync(min(program_state.binary_save_location-1, 1),
+                    log_sync(program_state.binary_save_location-1,
                              TLU_BYTES, FALSE);
                     goto just_reloaded_save;
                 case DIR_NW:
@@ -570,8 +570,11 @@ just_reloaded_save:
                     log_sync(0, TLU_EOF, FALSE);
                     goto just_reloaded_save;
                 case DIR_NE:
-                    /* Move backwards 50 turns. */
-                    log_sync(min(moves - 50, 1), TLU_TURNS, FALSE);
+                    /* Move backwards 50 turns. Avoid wrap-around */
+                    if (moves <= 50)
+                        log_sync(1, TLU_TURNS, FALSE);
+                    else
+                        log_sync(moves - 50, TLU_TURNS, FALSE);
                     goto just_reloaded_save;
                 case DIR_SE:
                     /* Move forwards 50 turns. */
