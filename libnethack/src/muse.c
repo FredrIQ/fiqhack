@@ -3088,7 +3088,7 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
             if (arms->otyp == SHIELD_OF_REFLECTION)
                 makeknown(arms->otyp);
             learn_oprop(arms, opm_reflects);
-        } else if (slot == os_armu) {
+        } else if (slot == os_amul) {
             struct obj *amul = which_armor(mon, os_amul);
             if (amul->otyp == AMULET_OF_REFLECTION)
                 makeknown(amul->otyp);
