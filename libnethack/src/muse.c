@@ -3038,6 +3038,16 @@ searches_for_item(struct monst *mon, struct obj *obj)
     return FALSE;
 }
 
+/* Helper for mon_reflects */
+static boolean
+reflect_slot(unsigned reason, enum objslot rslot, enum objslot *slot)
+{
+    if (!(reason & W_MASK(rslot)))
+        return FALSE;
+    *slot = rslot;
+    return TRUE;
+}
+
 /* magr = monster whose attack or reflection is being reflected or NULL if
    the reflection wasn't caused by any monster (divine lightning zaps).
 
@@ -3054,7 +3064,7 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
     mon_s = (mon == &youmonst) ? "your" : s_suffix(mon_nam(mon));
     enum objslot slot = os_invalid;
     if (reflect_reason) {
-#define refl(rslot) ((slot = rslot) && reflect_reason & W_MASK(rslot))
+#define refl(rslot) (reflect_slot(reflect_reason, rslot, &slot))
         if (fmt && str)
             pline(combat_msgc(magr, mon, recursive ?
                               cr_miss : cr_immune),
@@ -3096,6 +3106,10 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
         } else if (slot != os_invalid && slot <= os_last_worn) {
             /* which_armor also work for rings */
             struct obj *arm = which_armor(mon, slot);
+            if (!arm) {
+                impossible("No armor for slot %d?", slot);
+                return TRUE;
+            }
             learn_oprop(arm, opm_reflects);
         }
 #undef refl
