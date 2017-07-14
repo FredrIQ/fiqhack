@@ -12,6 +12,7 @@ newuexp(int lev)
 {
     /* keep this synced with the status-drawing code in the clients */
     switch (lev) {
+    case  0: return      0;
     case  1: return     20; /* n^2 */
     case  2: return     40;
     case  3: return     80;
@@ -197,10 +198,13 @@ losexp(const char *killer, boolean override_res)
     else if (u.uen > u.uenmax)
         u.uen = u.uenmax;
 
-    if (u.ulevel > 1)
-        u.uexp = newuexp(u.ulevel - 1);
-    else
-        u.uexp = 0;
+    /* Compute the progress the hero did towards the next level. Scale back one level,
+       but keep the same progress. */
+    int expdiff_high = newuexp(u.ulevel + 1) - newuexp(u.ulevel);
+    int expdiff_low = newuexp(u.ulevel) - newuexp(u.ulevel - 1);
+    int pct = (u.uexp - newuexp(u.ulevel)) * 100 / expdiff_high;
+    u.uexp = newuexp(u.ulevel - 1);
+    u.uexp += pct * expdiff_low / 100;
 }
 
 /*
