@@ -962,9 +962,6 @@ do_permonst(const char *outfile)
     fprintf(ofp, "%s", Dont_Edit_Code);
     fprintf(ofp, "#ifndef PM_H\n#define PM_H\n");
 
-    if (strcmp(mons[0].mname, "playermon") != 0)
-        fprintf(ofp, "\n#define\tPM_PLAYERMON\t(-1)");
-
     for (i = 0; mons[i].mlet; i++) {
         fprintf(ofp, "\n#define\tPM_");
         if (mons[i].mlet == S_HUMAN && !strncmp(mons[i].mname, "were", 4))
