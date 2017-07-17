@@ -1033,7 +1033,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         if (in_mklev)
             if (x && y)
                 mkobj_at(0, lev, x, y, TRUE, stats_rng);
-        if (hides_under(ptr) && OBJ_AT_LEV(lev, x, y))
+        if (hides_under(ptr) && OBJ_AT_LEV(lev, x, y) && !mtmp->mpeaceful)
             mtmp->mundetected = TRUE;
         break;
     case S_EEL:

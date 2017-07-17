@@ -696,14 +696,18 @@ movemon(void)
             continue;
 
         if (is_hider(mtmp->data)) {
-            /* unwatched mimics and piercers may hide again [MRS] */
-            if (restrap(mtmp))
-                continue;
-            if (mtmp->m_ap_type == M_AP_FURNITURE ||
-                mtmp->m_ap_type == M_AP_OBJECT)
-                continue;
-            if (mtmp->mundetected)
-                continue;
+            if (mtmp->mpeaceful && !mtmp->m_ap_type)
+                mtmp->mundetected = FALSE;
+            else {
+                /* unwatched mimics and piercers may hide again [MRS] */
+                if (restrap(mtmp))
+                    continue;
+                if (mtmp->m_ap_type == M_AP_FURNITURE ||
+                    mtmp->m_ap_type == M_AP_OBJECT)
+                    continue;
+                if (mtmp->mundetected)
+                    continue;
+            }
         }
 
         /* This used to do a conflict check pass before checking for

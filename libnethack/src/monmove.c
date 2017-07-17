@@ -732,7 +732,7 @@ m_move(struct monst *mtmp, int after)
         mtmp->meating--;
         return 3;       /* still eating */
     }
-    if (hides_under(ptr) && OBJ_AT(mtmp->mx, mtmp->my) && rn2(10))
+    if (hides_under(ptr) && OBJ_AT(mtmp->mx, mtmp->my) && rn2(10) && !mtmp->mpeaceful)
         return 0;       /* do not leave hiding place */
 
     /* Note: we don't call set_apparxy() from here any more. When being called
