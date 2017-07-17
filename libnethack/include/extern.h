@@ -1987,7 +1987,7 @@ extern void setuswapwep(struct obj *);
 extern int dowield(const struct nh_cmd_arg *);
 extern int doswapweapon(const struct nh_cmd_arg *);
 extern int dowieldquiver(const struct nh_cmd_arg *);
-extern int wield_tool(struct obj *, const char *, enum occupation occupation);
+extern int wield_tool(struct obj *, const char *, enum occupation occupation, boolean);
 extern int can_twoweapon(void);
 extern void drop_uswapwep(void);
 extern int dotwoweapon(const struct nh_cmd_arg *);

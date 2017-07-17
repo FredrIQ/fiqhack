@@ -362,14 +362,15 @@ dowieldquiver(const struct nh_cmd_arg *arg)
    occupation itself, to save the caller the trouble. (The caller can still
    override it if, say, it wants to treat 7 and 3 differently message-wise.) */
 int
-wield_tool(struct obj *obj, const char *occ_txt, enum occupation occupation)
+wield_tool(struct obj *obj, const char *occ_txt, enum occupation occupation,
+           boolean force_pushweapon)
 {
     int rv;
 
     if (obj == uwep)
         return 1;
 
-    if (flags.pushweapon) {
+    if (flags.pushweapon || force_pushweapon) {
         u.utracked[tos_first_equip + os_swapwep] = uwep;
         u.uoccupation_progress[tos_first_equip + os_swapwep] = 0;
     }

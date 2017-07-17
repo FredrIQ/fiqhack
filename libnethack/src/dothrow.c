@@ -293,14 +293,33 @@ dofire(const struct nh_cmd_arg *arg)
        the proper launcher isn't wielded. */
     if (uquiver && is_ammo(uquiver) && uquiver->oclass != GEM_CLASS &&
         !ammo_and_launcher(uquiver, uwep)) {
-        /* This is useless, but is here because players expect a direction prompt
-           after firing, so avoid them taking a step they don't want to. */
-        schar dx, dy, dz;
-        getargdir(arg, NULL, &dx, &dy, &dz);
+        /* First however, check if we have the proper launcher in offhand and neither
+           is (knowingly) cursed. */
+        if (flags.autoswap && !u.twoweap && uswapwep &&
+            ammo_and_launcher(uquiver, uswapwep) &&
+            (!uwep || !uwep->cursed || !uwep->bknown) &&
+            (!uswapwep->cursed || !uswapwep->bknown)) {
+            if (uwep->cursed) {
+                weldmsg(msgc_cancelled1, uwep);
+                return 1;
+            }
 
-        pline(msgc_cancelled, "You aren't wielding the appropriate launcher.");
-        pline(msgc_controlhelp, "(Use the 'throw' command to fire anyway.)");
-        return 0;
+            int wtstatus = wield_tool(uswapwep, "preparing to wield something",
+                                      occ_prepare, TRUE);
+            if (wtstatus & 2)
+                return 1;
+            if (!(wtstatus & 1))
+                return 0;
+        } else {
+            /* This is useless, but is here because players expect a direction prompt
+               after firing, so avoid them taking a step they don't want to. */
+            schar dx, dy, dz;
+            getargdir(arg, NULL, &dx, &dy, &dz);
+
+            pline(msgc_cancelled, "You aren't wielding the appropriate launcher.");
+            pline(msgc_controlhelp, "(Use the 'throw' command to fire anyway.)");
+            return 0;
+        }
     }
 
     if (!uquiver) {

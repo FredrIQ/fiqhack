@@ -241,6 +241,7 @@ struct flag {
     boolean autodig;    /* MRKR: Automatically dig */
     boolean autodigdown;        /* autodigging works downwadrds */
     boolean autoquiver; /* Automatically fill quiver */
+    boolean autoswap; /* Automatically swap to/from launcher */
     boolean beginner;
     boolean bypasses;   /* bypass flag is set on at least one fobj */
     boolean cblock;

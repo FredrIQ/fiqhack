@@ -932,7 +932,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
     verb = ispick ? "dig" : "chop";
     verbing = ispick ? "digging" : "chopping";
 
-    wtstatus = wield_tool(obj, "preparing to dig", occ_dig);
+    wtstatus = wield_tool(obj, "preparing to dig", occ_dig, FALSE);
     if (wtstatus & 2)
         return 1;
     else if (!(wtstatus & 1))

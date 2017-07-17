@@ -1862,6 +1862,14 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                       mon_nam(mtmp), msgupcasefirst(mhe(mtmp)));
             }
         } else {
+            /* Possibly unwield launcher for ammo unless we're using forcefight. */
+            if (flags.autoswap && uquiver && is_ammo(uquiver) &&
+                ammo_and_launcher(uquiver, uwep) &&
+                (!uswapwep || !ammo_and_launcher(uquiver, uswapwep)) &&
+                (!uwep->cursed || !uwep->bknown) &&
+                (!uswapwep || !uswapwep->cursed || !uswapwep->bknown))
+                doswapweapon(arg);
+
             /* Try to perform the attack itself. We've already established that
                the player's willing to perform the attack. */
             enum attack_check_status attack_status =

@@ -1364,7 +1364,7 @@ dorub(const struct nh_cmd_arg *arg)
         int wtstatus = wield_tool(
             obj, obj->otyp == BRASS_LANTERN ?
             "preparing to rub your lantern" : "preparing to rub your lamp",
-            occ_prepare);
+            occ_prepare, FALSE);
         if (wtstatus & 2)
             return 1;
         if (!(wtstatus & 1))
@@ -2371,7 +2371,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
     schar dx, dy, dz;
     const char *buf;
 
-    int wtstatus = wield_tool(obj, "preparing to lash your whip", occ_prepare);
+    int wtstatus = wield_tool(obj, "preparing to lash your whip", occ_prepare, FALSE);
     if (wtstatus & 2)
         return 1;
     if (!(wtstatus & 1))
@@ -2649,7 +2649,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare);
+    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare, FALSE);
 
     if (wtstatus & 2)
         return 1;
@@ -2767,7 +2767,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    wtstatus = wield_tool(obj, "preparing to grapple", occ_prepare);
+    wtstatus = wield_tool(obj, "preparing to grapple", occ_prepare, FALSE);
 
     if (wtstatus & 2)
         return 1;
