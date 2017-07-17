@@ -155,7 +155,7 @@ static const struct nh_option_desc const_options[] = {
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"autoswap", "Commands and Confirmations",
      "automatically swap to off-hand launcher when firing ammo",
-     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"corridorbranch", "Commands and Confirmations",
      "branching corridors do not stop farmove",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
