@@ -59,6 +59,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
     uchar adtyp;
     int explmask[3][3];
 
+    int whattype = abs(type) % 10;
+    int buzztyp = (type <= -30 ? whattype : abs(type));
+    boolean wand = (buzztyp < 10);
+
     /* 0=normal explosion, 1=do shieldeff, 2=do nothing */
     boolean shopdamage = FALSE;
 
@@ -74,8 +78,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
             dispbuf = str;
         }
     } else {
-        int whattype = abs(type) % 10;
-
         adtyp = whattype + 1;
         boolean done = FALSE, hallu = Hallucination;
 
@@ -194,7 +196,9 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         break;
                     case AD_MAGM:
                         explmask[i][j] |= (raylevel < P_EXPERT &&
-                                           resists_magm(mtmp));
+                                           resists_magm(mtmp) &&
+                                           (mtmp != &youmonst || flags.mon_moving ||
+                                            wand));
                         break;
                     case AD_FIRE:
                         explmask[i][j] |= !!resists_fire(mtmp);

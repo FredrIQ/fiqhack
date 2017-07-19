@@ -3054,7 +3054,8 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     switch (abstype) {
     case ZT_MAGIC_MISSILE:
         if (resists_magm(mdef)) {
-            if (raylevel >= P_EXPERT) {
+            if (raylevel >= P_EXPERT &&
+                (magr != mdef || wand)) {
                 tmp = (tmp / 2) + 1;
                 if (oseen)
                     pline(combat_msgc(magr, mdef, cr_resist),
