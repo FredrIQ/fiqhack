@@ -256,6 +256,12 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     xlocale = mtmp->xlocale;
     ylocale = mtmp->ylocale;
 
+    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
+        if (!otmp->olev && otmp->timed)
+            panic("Unhandled timed obj %s carried by %s, try again "
+                  "later", killer_xname(otmp), k_monnam(mtmp));
+    }
+
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
         set_obj_level(mtmp->dlevel, otmp);
 
