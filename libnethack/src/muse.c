@@ -1261,9 +1261,10 @@ find_item(struct monst *mon, struct musable *m)
     }
 
     /* Fix other ailments */
-    if (confused(mon) || stunned(mon) || blind(mon) || sick(mon)) {
+    if (confused(mon) || stunned(mon) || blind(mon) || sick(mon) ||
+        zombifying(mon)) {
         /* Sickness */
-        if (sick(mon)) {
+        if (sick(mon) || zombifying(mon)) {
             if (mon_castable(mon, SPE_CURE_SICKNESS, FALSE)) {
                 m->spell = SPE_CURE_SICKNESS;
                 m->use = MUSE_SPE;
@@ -1281,7 +1282,7 @@ find_item(struct monst *mon, struct musable *m)
             return TRUE;
         }
         /* Unihorn-less sickness: look for healing potions */
-        if (sick(mon)) {
+        if (sick(mon) || zombifying(mon)) {
             if (find_item_obj(mon->minvent, m, FALSE, POT_EXTRA_HEALING) ||
                 find_item_obj(mon->minvent, m, FALSE, POT_FULL_HEALING))
                 return TRUE;
