@@ -765,6 +765,8 @@ run_maintained_spells(struct level *lev)
             int spell_level = objects[spell].oc_level;
             if (mon_has_amulet(&youmonst))
                 spell_level *= 2;
+            if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
+                spell_level *= 2; /* needs more to maintain manually, so increase cost */
             if (!(moves % moves_modulo)) {
                 if (u.uen < spell_level) {
                     pline(msgc_intrloss, "You lack the energy to maintain %s.",
@@ -826,6 +828,7 @@ run_maintained_spells(struct level *lev)
 static void
 run_maintained_spell(struct monst *mon, int spell)
 {
+    struct obj *pseudo;
     switch (spell) {
     case SPE_HASTE_SELF:
         if (property_timeout(mon, FAST) < 5)
@@ -864,6 +867,13 @@ run_maintained_spell(struct monst *mon, int spell)
             } else
                 mon->mspec_used++;
         }
+        break;
+    case SPE_LIGHT:
+        pseudo = mktemp_sobj(level, spell);
+        pseudo->blessed = pseudo->cursed = 0;
+        pseudo->quan = 20L; /* do not let useup get it */
+        litroom(mon, TRUE, pseudo, FALSE);
+        obfree(pseudo, NULL);
         break;
     default:
         impossible("%s maintaining an unmaintainable spell? (%d)",
@@ -1478,6 +1488,7 @@ spelleffects(boolean atme, struct musable *m)
         break;
 
     /* These spells can be toggled for whether or not to maintain it */
+    case SPE_LIGHT:
     case SPE_HASTE_SELF:
     case SPE_DETECT_MONSTERS:
     case SPE_LEVITATION:

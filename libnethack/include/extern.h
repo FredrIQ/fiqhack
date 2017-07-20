@@ -1533,7 +1533,7 @@ extern struct obj *mon_choose_recharge(struct monst *, int);
 extern void recharge(struct monst *, struct obj *, int);
 extern void forget_objects(int);
 extern int seffects(struct monst *, struct obj *scroll, boolean * known);
-extern void litroom(struct monst *, boolean, struct obj *);
+extern void litroom(struct monst *, boolean, struct obj *, boolean);
 extern void do_level_genocide(void);
 extern void do_genocide(struct monst *, int, boolean);
 extern void punish(struct obj *);

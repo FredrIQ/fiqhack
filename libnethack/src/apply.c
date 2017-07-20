@@ -3039,7 +3039,7 @@ do_break_wand(struct obj *obj, boolean intentional)
         pay_for_damage("dig into", FALSE);
 
     if (obj->otyp == WAN_LIGHT)
-        litroom(&youmonst, TRUE, obj);     /* only needs to be done once */
+        litroom(&youmonst, TRUE, obj, TRUE);     /* only needs to be done once */
 
 discard_broken_wand:
     obj = turnstate.tracked[ttos_wand]; /* [see dozap() and destroy_mitem()] */

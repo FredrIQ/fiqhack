@@ -2006,7 +2006,7 @@ zapnodir(struct monst *mon, struct obj *obj)
     switch (obj->otyp) {
     case WAN_LIGHT:
     case SPE_LIGHT:
-        litroom(mon, TRUE, obj);
+        litroom(mon, TRUE, obj, TRUE);
         if (!blind(&youmonst) && (you || vis))
             known = TRUE;
         break;

@@ -1433,7 +1433,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
     case SCR_LIGHT:
         if (!Blind)
             *known = TRUE;
-        litroom(mon, !confused && !sobj->cursed, sobj);
+        litroom(mon, !confused && !sobj->cursed, sobj, TRUE);
         break;
     case SCR_TELEPORTATION:
         if (confused || sobj->cursed) {
@@ -1858,7 +1858,7 @@ set_lit(int x, int y, void *val)
 }
 
 void
-litroom(struct monst *mon, boolean on, struct obj *obj)
+litroom(struct monst *mon, boolean on, struct obj *obj, boolean tell)
 {
     char is_lit;        /* value is irrelevant; we use its address as a `not
                            null' flag for set_lit() */
@@ -1887,24 +1887,25 @@ litroom(struct monst *mon, boolean on, struct obj *obj)
             /* Since engulfing will prevent set_lit(), douse lamps/etc here as well */
             for (otmp = invent; otmp; otmp = otmp->nobj)
                 snuff_lit(otmp);
-            pline(msgc_yafm, "It seems even darker in here than before.");
+            if (tell)
+                pline(msgc_yafm, "It seems even darker in here than before.");
             return;
         }
 
         if (!blind(&youmonst) && (you || vis)) {
             struct obj *wep = m_mwep(mon);
-            if (wep && artifact_light(wep) && wep->lamplit)
+            if (wep && artifact_light(wep) && wep->lamplit && tell)
                 pline(msgc_substitute,
                       "Suddenly, the only light left comes from %s!",
                       the(xname(wep)));
-            else
+            else if (tell)
                 pline(msgc_failcurse,
                       "%s %s surrounded by darkness!", you ? "You" : Monnam(mon),
                       you ? "are" : "is");
         }
     } else {
         if (you && Engulfed) {
-            if (!blind(&youmonst)) {
+            if (!blind(&youmonst) && tell) {
                 if (is_animal(u.ustuck->data))
                     pline(msgc_yafm, "%s %s is lit.", s_suffix(Monnam(u.ustuck)),
                           mbodypart(u.ustuck, STOMACH));
@@ -1916,7 +1917,7 @@ litroom(struct monst *mon, boolean on, struct obj *obj)
             return;
         }
 
-        if ((!blind(&youmonst) && you) || vis)
+        if (((!blind(&youmonst) && you) || vis) && tell)
             pline(you ? msgc_actionok : msgc_monneutral,
                   "A lit field surrounds %s!",
                   you ? "you" : mon_nam(mon));
