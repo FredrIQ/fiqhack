@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2017-07-20 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -75,15 +75,9 @@ main(int argc, char **argv)
             mvprintw(0, 0, "%d '", k);
             set_mouse_event(uncursed_mbutton_hover, 0, ERR);
 
-#ifdef AIMAKE_BUILDOS_linux
-            set_mouse_event(uncursed_mbutton_left, L'é', OK);
-            set_mouse_event(uncursed_mbutton_middle, L'ê', OK);
-            set_mouse_event(uncursed_mbutton_right, L'è', OK);
-#else
-            set_mouse_event(uncursed_mbutton_left, 'l', OK);
-            set_mouse_event(uncursed_mbutton_middle, 'm', OK);
-            set_mouse_event(uncursed_mbutton_right, 'r', OK);
-#endif
+            set_mouse_event(uncursed_mbutton_left, 0xe9, OK);
+            set_mouse_event(uncursed_mbutton_middle, 0xea, OK);
+            set_mouse_event(uncursed_mbutton_right, 0xe8, OK);
             set_mouse_event(uncursed_mbutton_wheelup, KEY_F17, KEY_CODE_YES);
             set_mouse_event(uncursed_mbutton_wheeldown, KEY_MAX+1, KEY_CODE_YES);
             add_wch(&ct);
