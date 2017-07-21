@@ -1910,6 +1910,12 @@ update_property(struct monst *mon, enum youprop prop,
                 u.utrap = 0;
                 turnstate.vision_full_recalc = TRUE;
             }
+
+            if (you && slot == os_timeout) {
+                pline(lost ? msgc_statusbad : msgc_statusgood, "You feel %s.",
+                      lost ? "more solid" : "etheral");
+                effect = TRUE;
+            }
         }
         break;
     case SLOW_DIGESTION:
