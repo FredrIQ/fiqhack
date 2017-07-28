@@ -117,7 +117,8 @@ enum pray_trouble {
     ptr_hands,
     ptr_blindfold,
     ptr_cancelled,
-    ptr_last_major = ptr_cancelled,
+    ptr_mercy,
+    ptr_last_major = ptr_mercy,
 
     ptr_first_minor,
     ptr_punished = ptr_first_minor,
@@ -240,6 +241,7 @@ struct flag {
     boolean autodig;    /* MRKR: Automatically dig */
     boolean autodigdown;        /* autodigging works downwadrds */
     boolean autoquiver; /* Automatically fill quiver */
+    boolean autoswap; /* Automatically swap to/from launcher */
     boolean beginner;
     boolean bypasses;   /* bypass flag is set on at least one fobj */
     boolean cblock;
@@ -262,6 +264,7 @@ struct flag {
     boolean pickup_thrown;      /* auto-pickup items you threw */
     boolean prayconfirm;        /* confirm before praying */
     boolean pushweapon; /* When wielding, push old weapon into second slot */
+    boolean servermail; /* check for messages from other players */
     boolean showrace;   /* show hero glyph by race rather than by role */
     boolean show_uncursed;      /* always show uncursed items as such */
     boolean sortpack;   /* sorted inventory */
@@ -284,7 +287,7 @@ struct flag {
     int pickup_burden;  /* maximum burden before prompt */
     int recently_broken_otyp;   /* object that broke recently */
     unsigned save_revision; /* save versioning to maintain save compatibility */
-# define SAVE_REVISION 1
+# define SAVE_REVISION 2
 
     /* Weird-sized structures */
     struct nh_autopickup_rules *ap_rules;

@@ -208,11 +208,13 @@ save_flags(struct memfile *mf)
     /* Save revision. Misplaced to maintain save compatibility. */
     flags.save_revision = SAVE_REVISION;
     mwrite32(mf, flags.save_revision);
+    mwrite8(mf, flags.servermail);
+    mwrite8(mf, flags.autoswap);
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 105; i++)
+    for (i = 0; i < 103; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));
@@ -672,7 +674,8 @@ savelev(struct memfile *mf, xchar levnum)
     save_dest_area(mf, lev->dndest);
 
     mtag(mf, levnum, MTAG_LFLAGS);
-    lflags = (lev->flags.noteleport << 22) |
+    lflags =
+        (lev->flags.vault_known << 23) | (lev->flags.noteleport << 22) |
         (lev->flags.hardfloor << 21) | (lev->flags.nommap << 20) |
         (lev->flags.hero_memory << 19) | (lev->flags.shortsighted << 18) |
         (lev->flags.graveyard << 17) | (lev->flags.is_maze_lev << 16) |
@@ -925,7 +928,10 @@ savefruitchn(struct memfile *mf)
     for (f1 = gamestate.fruits.chain; f1; f1 = f1->nextf)
         if (f1->fid >= 0)
             count++;
+    count += 65536; /* old bones detection */
     mwrite32(mf, count);
+    flags.save_revision = SAVE_REVISION;
+    mwrite32(mf, flags.save_revision); /* in case of bones */
 
     for (f1 = gamestate.fruits.chain; f1; f1 = f1->nextf) {
         if (f1->fid >= 0) {

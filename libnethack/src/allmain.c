@@ -570,8 +570,11 @@ just_reloaded_save:
                     log_sync(0, TLU_EOF, FALSE);
                     goto just_reloaded_save;
                 case DIR_NE:
-                    /* Move backwards 50 turns. */
-                    log_sync(moves - 50, TLU_TURNS, FALSE);
+                    /* Move backwards 50 turns. Avoid wrap-around */
+                    if (moves <= 50)
+                        log_sync(1, TLU_TURNS, FALSE);
+                    else
+                        log_sync(moves - 50, TLU_TURNS, FALSE);
                     goto just_reloaded_save;
                 case DIR_SE:
                     /* Move forwards 50 turns. */
@@ -588,6 +591,25 @@ just_reloaded_save:
                           "That direction has no meaning while replaying.");
                     continue;
                 }
+            } else if (!strcmp(cmd.cmd, "grope")) {
+                /* go to a specific turn */
+                int trycnt = 0;
+                int turn = 0;
+                const char *buf;
+                const char *qbuf = "To what turn would you like to go to?";
+                do {
+                    if (++trycnt == 2)
+                        qbuf = msgcat(qbuf, " [type a number above 0]");
+
+                    (*windowprocs.win_getlin) (qbuf, &buf, msg_getlin_callback);
+                } while (!turn && strcmp(buf, "\033") && !digit(buf[0]) && trycnt < 10);
+
+                if (trycnt == 10 || !strcmp(buf, "\033"))
+                    continue; /* aborted or refused to input a number 10 times */
+
+                turn = atoi(buf);
+                log_sync(turn, TLU_TURNS, FALSE);
+                goto just_reloaded_save;
             } else {
                 /* Internal commands weren't sent by the player, so don't
                    complain about them, just ignore them. Ditto for repeat. */
@@ -719,6 +741,9 @@ you_moved(void)
                taken 0 more actions than the global. */
 
             monscanmove = movemon();
+
+            if (flags.servermail)
+                checkformail();
 
             /* Now both players and monsters have taken 1 more action than the
                global... */
@@ -1495,7 +1520,7 @@ newgame(microseconds birthday, struct newgame_options *ngo)
     /* Stop autoexplore revisiting the entrance stairs (or position). */
     level->locations[u.ux][u.uy].mem_stepped = 1;
 
-    historic_event(FALSE,
+    historic_event(FALSE, FALSE,
                    "entered the Dungeons of Doom to retrieve the Amulet of "
                    "Yendor!");
 

@@ -139,7 +139,7 @@ mon_regen(struct monst *mon, boolean digest_meal)
 {
     /* Monster constitution is counted as 12 + ring bonuses/etc */
     if (mon->mhp < mon->mhpmax) {
-        if (mon->m_lev > 9 && (moves % 3))
+        if (mon->m_lev > 9 && !(moves % 3))
             mon->mhp += min((mon->m_lev - 9), acurr(mon, A_CON) <= 11 ? 1 :
                             rnd(acurr(mon, A_CON)));
         else if (regenerates(mon) || (mon->m_lev <= 9 && !(moves % (42 / (mon->m_lev + 2) + 1))))
@@ -514,11 +514,7 @@ dochug(struct monst *mtmp)
                 ty = mtmp->muy;
             }
 
-            /* Hack: check for Elbereth if the target is in melee and is you, to
-               fix a bug. This is a temporary fix until ranged combat logic is
-               rewritten. */
-            if (mtmp2 != &youmonst || !monnear(mtmp, u.ux, u.uy) ||
-                !onscary(u.ux, u.uy, mtmp)) {
+            if (!monnear(mtmp, tx, ty)) {
                 if (mattackq(mtmp, tx, ty) & MM_AGR_DIED)
                     return 1;       /* Oops. */
 
@@ -534,6 +530,10 @@ dochug(struct monst *mtmp)
         lepgold = findgold(mtmp->minvent);
     }
 
+    boolean dragon = FALSE;
+    if (mdat->mlet == S_DRAGON && extra_nasty(mdat))
+        dragon = TRUE;
+
     /* We have two AI branches: "immediately attack the player's apparent
        location", and "don't immediately attack the player's apparent location"
        (in which case attacking the player's apparent location is still an
@@ -542,6 +542,8 @@ dochug(struct monst *mtmp)
        first, and we decide to use it via this rather large if statement. */
 
     if (!nearby || mtmp->mflee || scared || confused(mtmp) || stunned(mtmp) ||
+        (dragon && !mtmp->mspec_used &&
+         mtmp->mhp <= (mtmp->mhpmax / 3)) || /* dragons at low HP step back to breathe */
         (invisible(mtmp) && !rn2(3)) ||
         (mdat->mlet == S_LEPRECHAUN && !ygold &&
          (lepgold || rn2(2))) || (is_wanderer(mdat) && !rn2(4)) ||
@@ -681,8 +683,7 @@ itsstuck(struct monst *mtmp)
  *    immediately attempt a melee or ranged attack on the player, if it's in a
  *    state (hostile/conflicted) in which it doesn't mind doing that, and it's
  *    on a map square from which it's physically capable of doing that.
- * 1: Moved, possibly can attack.
- *    This will only attempt an attack if a ranged attack is a possibility.
+ * 1: Moved
  * 2: Monster died.
  * 3: Did not move, and can't do anything else either.
  *
@@ -720,11 +721,18 @@ m_move(struct monst *mtmp, int after)
     }
     ptr = mtmp->data;   /* mintrap() can change mtmp->data -dlc */
 
+    /* Dragon pathfinding is a bit special */
+    boolean dragon = FALSE;
+
+    /* extra_nasty skips baby dragons */
+    if (ptr->mlet == S_DRAGON && extra_nasty(ptr))
+        dragon = TRUE;
+
     if (mtmp->meating) {
         mtmp->meating--;
         return 3;       /* still eating */
     }
-    if (hides_under(ptr) && OBJ_AT(mtmp->mx, mtmp->my) && rn2(10))
+    if (hides_under(ptr) && OBJ_AT(mtmp->mx, mtmp->my) && rn2(10) && !mtmp->mpeaceful)
         return 0;       /* do not leave hiding place */
 
     /* Note: we don't call set_apparxy() from here any more. When being called
@@ -911,32 +919,83 @@ not_special:
         int cnt, chcnt;
         int ndist, nidist;
         coord poss[9];
+        int ogx = gx;
+        int ogy = gy;
+        boolean forceline = FALSE;
 
         struct distmap_state ds;
 
+        /* Dragons try to avoid melee initiative, but there's no reason to avoid it if
+           their target is helpless */
+        boolean thelpless = FALSE;
+        if (dragon && mtmp->mstrategy == st_mon) {
+            if (gx == mtmp->mux && gy == mtmp->muy) {
+                /* player is target */
+                if (u_helpless(hm_all))
+                    thelpless = TRUE;
+            } else {
+                struct monst *targetmon = m_at(mtmp->dlevel, gx, gy);
+                if (targetmon && m_helpless(targetmon, hm_all))
+                    thelpless = TRUE;
+            }
+        }
+
+        /* Some monsters try to lineup but as far away as possible */
+        if (((ptr->mflags3 & M3_LINEUP) ||
+             (dragon && !mtmp->mspec_used)) &&
+            mtmp->mstrategy == st_mon) {
+            find_best_lineup(mtmp, &gx, &gy);
+            if (gx != ogx || gy != ogy)
+                forceline = TRUE;
+        }
+
         distmap_init(&ds, gx, gy, mtmp);
 
-        cnt = mfndpos(mtmp, poss, info, flag);
+        cnt = mfndpos(mtmp, poss, info, flag, 1);
         chcnt = 0;
         chi = -1;
         if (flag & OPENDOOR)
             ds.mmflags |= MM_IGNOREDOORS;
         nidist = distmap(&ds, omx, omy);
 
-        if (is_unicorn(ptr) && level->flags.noteleport) {
-            /* on noteleport levels, perhaps we cannot avoid hero */
-            for (i = 0; i < cnt; i++)
-                if (!(info[i] & NOTONL))
+        /* Check if we can actually force lineup */
+        if (forceline) {
+            forceline = FALSE;
+            for (i = 0; i < cnt; i++) {
+                if (info[i] & NOTONL) {
+                    forceline = TRUE;
+                    break;
+                }
+            }
+        } else if ((dragon && mtmp->mspec_used && !thelpless) ||
+                   (is_unicorn(ptr) && level->flags.noteleport)) {
+            /* On noteleport, perhaps we can't avoid lineup */
+            for (i = 0; i < cnt; i++) {
+                if (!(info[i] & NOTONL)) {
                     avoid = TRUE;
+                    break;
+                }
+            }
+
+            /* Dragons not already in line will always avoid being
+               in line */
+            if (dragon && mtmp->mspec_used &&
+                !linedup(mtmp->mx, mtmp->my, gx, gy))
+                avoid = TRUE;
         }
 
         for (i = 0; i < cnt; i++) {
             if (avoid && (info[i] & NOTONL))
                 continue;
+            else if (forceline && !(info[i] & NOTONL))
+                continue;
+
             nx = poss[i].x;
             ny = poss[i].y;
 
-            nearer = ((ndist = distmap(&ds, nx, ny)) < nidist);
+            ndist = distmap(&ds, nx, ny);
+
+            nearer = (ndist < nidist);
             distance_tie = (ndist == nidist);
 
             if ((appr == 1 && nearer) ||

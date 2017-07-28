@@ -105,6 +105,7 @@ struct overview_info {
     boolean branch, portal;     /* branch, magic portal on this level */
     struct d_level branch_dst, portal_dst;      /* where to? */
     boolean branch_dst_known, portal_dst_known; /* destination known? */
+    boolean vault; /* if the level has a money vault */
 };
 
 
@@ -123,6 +124,7 @@ struct overview_info {
 # define Is_waterlevel(x)       (on_level(x, &water_level))
 # define Is_firelevel(x)        (on_level(x, &fire_level))
 # define Is_airlevel(x)         (on_level(x, &air_level))
+# define Is_firstplane(x)       Is_earthlevel(x)
 # define Is_medusa_level(x)     (on_level(x, &medusa_level))
 # define Is_oracle_level(x)     (on_level(x, &oracle_level))
 # define Is_valley(x)           (on_level(x, &valley_level))

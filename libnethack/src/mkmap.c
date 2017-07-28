@@ -451,6 +451,17 @@ mkmap(struct level *lev, lev_init *init_lev)
     if (lit < 0)
         lit = (mklev_rn2(1 + abs(depth(&u.uz)), lev) < 10 &&
                mklev_rn2(77, lev)) ? 1 : 0;
+    else if (lit == 2) {
+        /* Always bright above Minetown. Always dark below
+           TODO: Figure out a better way to specify dungon level */
+        s_level *minetownslev = find_level("minetn");
+        if (!minetownslev)
+            panic("Failed to find minetown.");
+
+        struct d_level minetowndlev = minetownslev->dlevel;
+
+        lit = !!(depth(&lev->z) < depth(&minetownslev->dlevel));
+    }
 
     new_locations = malloc((WIDTH + 1) * HEIGHT);
 

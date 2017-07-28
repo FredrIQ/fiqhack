@@ -1364,7 +1364,7 @@ dorub(const struct nh_cmd_arg *arg)
         int wtstatus = wield_tool(
             obj, obj->otyp == BRASS_LANTERN ?
             "preparing to rub your lantern" : "preparing to rub your lamp",
-            occ_prepare);
+            occ_prepare, FALSE);
         if (wtstatus & 2)
             return 1;
         if (!(wtstatus & 1))
@@ -1730,7 +1730,7 @@ use_unicorn_horn(struct obj *obj)
     trouble_count = did_prop = did_attr = 0;
 
     /* collect property troubles */
-    if (sick(&youmonst))
+    if (sick(&youmonst) || zombifying(&youmonst))
         prop_trouble(SICK);
     if (property_timeout(&youmonst, BLINDED))
         prop_trouble(BLINDED);
@@ -1796,6 +1796,7 @@ use_unicorn_horn(struct obj *obj)
         switch (idx) {
         case prop2trbl(SICK):
             set_property(&youmonst, SICK, -2, FALSE);
+            set_property(&youmonst, ZOMBIE, -2, FALSE);
             did_prop++;
             break;
         case prop2trbl(BLINDED):
@@ -2370,7 +2371,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
     schar dx, dy, dz;
     const char *buf;
 
-    int wtstatus = wield_tool(obj, "preparing to lash your whip", occ_prepare);
+    int wtstatus = wield_tool(obj, "preparing to lash your whip", occ_prepare, FALSE);
     if (wtstatus & 2)
         return 1;
     if (!(wtstatus & 1))
@@ -2648,7 +2649,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare);
+    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare, FALSE);
 
     if (wtstatus & 2)
         return 1;
@@ -2698,7 +2699,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 
         bhitpos = cc;
         check_caitiff(mtmp);
-        thitmonst(mtmp, uwep);
+        thitmonst(mtmp, uwep, NULL);
         /* check the monster's HP because thitmonst() doesn't return an
            indication of whether it hit.  Not perfect (what if it's a
            non-silver weapon on a shade?) */
@@ -2766,7 +2767,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    wtstatus = wield_tool(obj, "preparing to grapple", occ_prepare);
+    wtstatus = wield_tool(obj, "preparing to grapple", occ_prepare, FALSE);
 
     if (wtstatus & 2)
         return 1;
@@ -2850,7 +2851,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
             return 1;
         } else if ((!bigmonst(mtmp->data) && !strongmonst(mtmp->data)) ||
                    rn2(4)) {
-            thitmonst(mtmp, uwep);
+            thitmonst(mtmp, uwep, NULL);
             return 1;
         }
         /* TODO: This fallthrough looks very suspicious, even though there's a
@@ -3038,10 +3039,10 @@ do_break_wand(struct obj *obj, boolean intentional)
         pay_for_damage("dig into", FALSE);
 
     if (obj->otyp == WAN_LIGHT)
-        litroom(&youmonst, TRUE, obj);     /* only needs to be done once */
+        litroom(&youmonst, TRUE, obj, TRUE);     /* only needs to be done once */
 
 discard_broken_wand:
-    obj = turnstate.tracked[ttos_wand]; /* [see dozap() and destroy_item()] */
+    obj = turnstate.tracked[ttos_wand]; /* [see dozap() and destroy_mitem()] */
     turnstate.tracked[ttos_wand] = 0;
     if (obj)
         delobj(obj);
@@ -3161,12 +3162,16 @@ doapply(const struct nh_cmd_arg *arg)
             use_magic_whistle(obj);
             /* sometimes the blessing will be worn off */
             if (!rn2_on_rng(49, rng_eucalyptus)) {
+                if (obj->quan > 1)
+                    obj = splitobj(obj, 1);
                 if (!Blind) {
                     pline(msgc_itemloss, "%s %s %s.", Shk_Your(obj),
                           aobjnam(obj, "glow"), hcolor("brown"));
                     obj->bknown = 1;
                 }
                 unbless(obj);
+                obj_extract_self(obj);
+                hold_another_object(obj, "You drop %s!", doname(obj), NULL);
             }
         } else {
             use_whistle(obj);

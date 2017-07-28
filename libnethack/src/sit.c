@@ -280,7 +280,8 @@ dosit(const struct nh_cmd_arg *arg)
                 pline(msgc_youdiscover, "You are granted an insight!");
                 if (invent)
                     /* rn2(5) agrees w/seffects() */
-                    identify_pack(&youmonst, rn2_on_rng(5, rng_throne_result));
+                    identify_pack(&youmonst, rn2_on_rng(5, rng_throne_result),
+                                  P_EXPERT);
                 else
                     rn2_on_rng(5, rng_throne_result); /* to match */
                 break;
@@ -380,7 +381,7 @@ rndcurse(struct monst *mtmp, struct monst *magr)
     if (nobj) {
         for (; cnt > 0; cnt--) {
             onum = rnd(nobj);
-            for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
+            for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj) {
                 /* as above */
                 if (otmp->oclass == COIN_CLASS)
                     continue;

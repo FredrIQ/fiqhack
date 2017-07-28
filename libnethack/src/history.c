@@ -41,7 +41,7 @@ dohistory(const struct nh_cmd_arg *arg)
 
 
 void
-historic_event(boolean hidden, const char *fmt, ...)
+historic_event(boolean hidden, boolean dolivelog, const char *fmt, ...)
 {
     const char *hbuf;
     va_list vargs;
@@ -49,6 +49,10 @@ historic_event(boolean hidden, const char *fmt, ...)
     va_start(vargs, fmt);
     hbuf = msgvprintf(fmt, vargs, TRUE);
     va_end(vargs);
+
+    if (dolivelog) {
+        livelog_write_event(msgprintf("historic_event=%s", hbuf));
+    }
 
     histevents =
         realloc(histevents, (histcount + 1) * sizeof (struct histevent));

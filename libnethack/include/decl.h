@@ -189,8 +189,9 @@ extern const char *const materialnm[];
 # define SUPPRESS_INVISIBLE     0x02
 # define SUPPRESS_HALLUCINATION 0x04
 # define SUPPRESS_SADDLE        0x08
-# define EXACT_NAME             0x0F
+# define EXACT_NAME             0x2F
 # define SUPPRESS_NAME          0x10
+# define SUPPRESS_ENSLAVEMENT   0x20
 
 /* Vision */
 extern char **viz_array;        /* could see/in sight row pointers */

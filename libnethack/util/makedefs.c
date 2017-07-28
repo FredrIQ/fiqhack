@@ -962,9 +962,6 @@ do_permonst(const char *outfile)
     fprintf(ofp, "%s", Dont_Edit_Code);
     fprintf(ofp, "#ifndef PM_H\n#define PM_H\n");
 
-    if (strcmp(mons[0].mname, "playermon") != 0)
-        fprintf(ofp, "\n#define\tPM_PLAYERMON\t(-1)");
-
     for (i = 0; mons[i].mlet; i++) {
         fprintf(ofp, "\n#define\tPM_");
         if (mons[i].mlet == S_HUMAN && !strncmp(mons[i].mname, "were", 4))
@@ -1289,13 +1286,7 @@ do_objs(const char *outfile)
         if (!(objnam = tmpdup(OBJ_NAME(objects[i]))))
             continue;
 
-        /* make sure probabilities add up to 1000 */
         if (objects[i].oc_class != class) {
-            if (sum && sum != 1000) {
-                fprintf(stderr, "prob error for class %d (%d%%)", class, sum);
-                fflush(stderr);
-                sumerr = TRUE;
-            }
             class = objects[i].oc_class;
             sum = 0;
         }

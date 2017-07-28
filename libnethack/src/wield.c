@@ -362,19 +362,30 @@ dowieldquiver(const struct nh_cmd_arg *arg)
    occupation itself, to save the caller the trouble. (The caller can still
    override it if, say, it wants to treat 7 and 3 differently message-wise.) */
 int
-wield_tool(struct obj *obj, const char *occ_txt, enum occupation occupation)
+wield_tool(struct obj *obj, const char *occ_txt, enum occupation occupation,
+           boolean force_pushweapon)
 {
     int rv;
 
     if (obj == uwep)
         return 1;
 
-    if (flags.pushweapon) {
+    if (flags.pushweapon || force_pushweapon) {
         u.utracked[tos_first_equip + os_swapwep] = uwep;
         u.uoccupation_progress[tos_first_equip + os_swapwep] = 0;
     }
 
     rv = equip_in_slot(obj, os_wep, TRUE);
+
+    /* If we lack skill with this weapon, set bashmsg to TRUE (Polearms will set it
+       elsewhere) since we probably only intended to wield for utility reason. */
+    if ((obj->oclass == WEAPON_CLASS || is_weptool(obj))) {
+        int skill = uwep_skill_type();
+        if (skill != P_NONE &&
+            (P_SKILL(skill) == P_ISRESTRICTED ||
+             P_SKILL(skill) == P_UNSKILLED))
+            u.bashmsg = TRUE;
+    }
 
     if (obj == uwep && rv == 0) /* it took no time */
         return 1;
@@ -550,6 +561,11 @@ chwepon(struct monst *mon, struct obj *otmp, int amount)
     boolean vis = canseemon(mon);
     const char *your = you ? "Your" : s_suffix(Monnam(mon));
     struct obj *twep = (m_mwep(mon));
+    enum objslot slot = os_invalid;
+    if (twep->owornmask & W_MASK(os_wep))
+        slot = os_wep;
+    else if (twep->owornmask & W_MASK(os_swapwep))
+        slot = os_swapwep;
 
     if (!twep || (twep->oclass != WEAPON_CLASS && !is_weptool(twep))) {
         const char *buf = msgprintf(
@@ -621,7 +637,11 @@ chwepon(struct monst *mon, struct obj *otmp, int amount)
                 mon->misc_worn_check &= ~twep->owornmask;
                 if (twep->otyp == SADDLE && mon == u.usteed)
                     dismount_steed(DISMOUNT_FELL);
-                update_property(mon, objects[twep->otyp].oc_oprop, which_slot(twep));
+                if (slot != os_invalid) {
+                    update_property(mon, objects[twep->otyp].oc_oprop,
+                                    slot);
+                    update_property_for_oprops(mon, twep, slot);
+                }
             }
             obfree(twep, NULL);
         }

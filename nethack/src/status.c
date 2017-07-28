@@ -8,6 +8,46 @@
 
 struct nh_player_info player;
 static void draw_statuses(struct nh_player_info *, nh_bool);
+static long xp(int);
+
+static long
+xp(int lev)
+{
+    /* keep this synced with newuexp() in the engine */
+    switch (lev) {
+    case  1: return     20; /* n^2 */
+    case  2: return     40;
+    case  3: return     80;
+    case  4: return    160;
+    case  5: return    320;
+    case  6: return    640;
+    case  7: return   1280;
+    case  8: return   2560;
+    case  9: return   5120;
+    case 10: return  10000; /* triangle numbers */
+    case 11: return  15000;
+    case 12: return  21000;
+    case 13: return  28000;
+    case 14: return  36000;
+    case 15: return  45000;
+    case 16: return  55000;
+    case 17: return  66000;
+    case 18: return  81000; /* n*n series */
+    case 19: return 100000;
+    case 20: return 142000;
+    case 21: return 188000;
+    case 22: return 238000;
+    case 23: return 292000;
+    case 24: return 350000;
+    case 25: return 412000;
+    case 26: return 478000;
+    case 27: return 548000;
+    case 28: return 622000;
+    case 29: return 700000;
+    case 30: return 800000; /* 100k per additional !oGL */
+    }
+    return 1000000; /* shouldn't be reached */
+}
 
 static int
 hpen_color(int val_cur, int val_max, nh_bool ishp)
@@ -223,6 +263,12 @@ draw_classic_status(struct nh_player_info *pi, nh_bool threeline)
     wprintw(statuswin, " T:%d", pi->moves);
     wclrtoeol(statuswin);
 
+    /* Clear the 3rd line if we have one */
+    if (threeline) {
+        wmove(statuswin, 2, 0);
+        wclrtoeol(statuswin);
+    }
+
     draw_statuses(pi, threeline);
 }
 
@@ -252,12 +298,7 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
             pi->monnum == pi->cur_monnum ? "Xp" : "HD", pi->level);
     if (threeline && pi->monnum == pi->cur_monnum) {
         /* keep this synced with newuexp in exper.c */
-        long newuexp = 10L * (1L << pi->level);
-
-        if (pi->level >= 10)
-            newuexp = 10000L * (1L << (pi->level - 10));
-        if (pi->level >= 20)
-            newuexp = 10000000L * ((long)(pi->level - 19));
+        long newuexp = xp(pi->level);
         wprintw(statuswin, "(%ld)", newuexp - pi->xp);
     }
     wprintw(statuswin, " %s", pi->level_desc);

@@ -50,7 +50,6 @@ static int learn(void);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(const struct monst *, int);
 static int throwspell(boolean, schar *dx, schar *dy, const struct musable *arg);
-static boolean cast_protection(struct monst *, boolean);
 static void spell_backfire(int);
 static int spellindex_by_typ(int);
 static void run_maintained_spell(struct monst *, int);
@@ -340,7 +339,7 @@ deadbook(struct obj *book2, boolean invoked)
             /* successful invocation */
             mkinvokearea();
             u.uevent.invoked = 1;
-            historic_event(FALSE, "performed the invocation.");
+            historic_event(FALSE, TRUE, "performed the invocation.");
             /* in case you haven't killed the Wizard yet, behave as if you just
                did */
             u.uevent.udemigod = 1;      /* wizdead() */
@@ -766,6 +765,8 @@ run_maintained_spells(struct level *lev)
             int spell_level = objects[spell].oc_level;
             if (mon_has_amulet(&youmonst))
                 spell_level *= 2;
+            if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
+                spell_level *= 2; /* needs more to maintain manually, so increase cost */
             if (!(moves % moves_modulo)) {
                 if (u.uen < spell_level) {
                     pline(msgc_intrloss, "You lack the energy to maintain %s.",
@@ -827,6 +828,7 @@ run_maintained_spells(struct level *lev)
 static void
 run_maintained_spell(struct monst *mon, int spell)
 {
+    struct obj *pseudo;
     switch (spell) {
     case SPE_HASTE_SELF:
         if (property_timeout(mon, FAST) < 5)
@@ -853,7 +855,7 @@ run_maintained_spell(struct monst *mon, int spell)
             inc_timeout(mon, PASSES_WALLS, 20, TRUE);
         break;
     case SPE_PROTECTION:
-        if (cast_protection(mon, TRUE)) {
+        if (cast_protection(mon, TRUE, FALSE)) {
             if (mon == &youmonst) {
                 if (u.uen < 5) {
                     pline(msgc_intrloss, "Your energy level fizzles, preventing you "
@@ -865,6 +867,13 @@ run_maintained_spell(struct monst *mon, int spell)
             } else
                 mon->mspec_used++;
         }
+        break;
+    case SPE_LIGHT:
+        pseudo = mktemp_sobj(level, spell);
+        pseudo->blessed = pseudo->cursed = 0;
+        pseudo->quan = 20L; /* do not let useup get it */
+        litroom(mon, TRUE, pseudo, FALSE);
+        obfree(pseudo, NULL);
         break;
     default:
         impossible("%s maintaining an unmaintainable spell? (%d)",
@@ -1184,8 +1193,16 @@ mspell_skilltype(int booktype)
     return 0;
 }
 
-static boolean
-cast_protection(struct monst *mon, boolean autocast)
+/* Casts the protection spell.
+   autocast: Don't print messages if we don't gain anything
+   check_overprotection: Check if we have more AC than we're "supposed" to
+   from the protection. This prevents freezing the protection timer in
+   such a case if the protection spell is maintained, avoiding you to
+   gain more protection and keep it by maintaining the spell. In such a
+   case, we return FALSE if overprotected. */
+boolean
+cast_protection(struct monst *mon, boolean autocast,
+                boolean check_overprotection)
 {
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
@@ -1194,6 +1211,7 @@ cast_protection(struct monst *mon, boolean autocast)
     /* Monsters can be level 0, ensure that no oddities occur if that is the case. */
     if (l == 0)
         l = 1;
+    int speac = m_mspellprot(mon);
     int natac = find_mac(mon) + m_mspellprot(mon);
     int gain;
 
@@ -1229,7 +1247,15 @@ cast_protection(struct monst *mon, boolean autocast)
      *     32-63   0    0,  6, 10, 13, 15, 16, 17, 18
      *     32-63 -10    0,  6,  9, 11, 12
      */
-    gain = loglev - (int)m_mspellprot(mon) / (4 - min(3, (10 - natac) / 10));
+
+    /* Check for overprotection by decreasing speac by 1 and checking
+       if we gain nothing by the spell. */
+    if (check_overprotection)
+        speac--;
+    gain = loglev - speac / (4 - min(3, (10 - natac) / 10));
+
+    if (check_overprotection)
+        return (gain > 0);
 
     if (gain > 0) {
         if (!blind(&youmonst) && (you || vis)) {
@@ -1347,6 +1373,10 @@ spelleffects(boolean atme, struct musable *m)
     int count = 0; /* for nasty */
     boolean amulet = FALSE;
 
+    /* for potions */
+    int dummy2 = 0;
+    int dummy3 = 0;
+
     if (spell < 0) {
         if (!you)
             impossible("Monster using a special ability?");
@@ -1458,6 +1488,7 @@ spelleffects(boolean atme, struct musable *m)
         break;
 
     /* These spells can be toggled for whether or not to maintain it */
+    case SPE_LIGHT:
     case SPE_HASTE_SELF:
     case SPE_DETECT_MONSTERS:
     case SPE_LEVITATION:
@@ -1512,7 +1543,8 @@ spelleffects(boolean atme, struct musable *m)
         if (u.uhunger <= 10) {
             pline(msgc_cancelled, "You are too hungry to cast that spell.");
             return 0;
-        } else if (!freehand()) {
+        } else if (!freehand() &&
+                   (!uwep || uwep->otyp != QUARTERSTAFF)) {
             pline(msgc_cancelled, "Your arms are not free to cast!");
             return 0;
         } else if (check_capacity
@@ -1726,7 +1758,7 @@ spelleffects(boolean atme, struct musable *m)
             pseudo->blessed = 1;
         /* fall through */
     case SPE_INVISIBILITY:
-        peffects(mon, pseudo);
+        peffects(mon, pseudo, &dummy2, &dummy3);
         break;
 
     case SPE_CURE_BLINDNESS:
@@ -1734,6 +1766,7 @@ spelleffects(boolean atme, struct musable *m)
         break;
     case SPE_CURE_SICKNESS:
         set_property(mon, SICK, -2, FALSE);
+        set_property(mon, ZOMBIE, -2, FALSE);
         set_property(mon, SLIMED, -2, FALSE);
         break;
     case SPE_CREATE_FAMILIAR:
@@ -1774,7 +1807,7 @@ spelleffects(boolean atme, struct musable *m)
         }
         break;
     case SPE_PROTECTION:
-        cast_protection(mon, FALSE);
+        cast_protection(mon, FALSE, FALSE);
         break;
     case SPE_JUMPING:
         if (!you) {
@@ -1842,6 +1875,17 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
     cc.y = m_my(mon);
     if (mgetargpos(m, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
+
+    /* Figure out what condition to mark the target square as
+       allowed */
+    boolean clearpath = FALSE;
+    if (m_cansee(mon, cc.x, cc.y))
+        clearpath = TRUE;
+
+    if (dist2(m_mx(mon), m_my(mon), cc.x, cc.y) <=
+        XRAY_RANGE * XRAY_RANGE && astral_vision(mon))
+        clearpath = TRUE;
+
     /* The number of moves from hero to where the spell drops. */
     if (distmin(m_mx(mon), m_my(mon), cc.x, cc.y) > 10) {
         pline(msgc_cancelled, "The spell dissipates over the distance!");
@@ -1858,13 +1902,10 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
         pline(msgc_cancelled,
               "You fail to sense a monster there!");
         return 0;
-    } else
-        if ((!m_cansee(mon, cc.x, cc.y) &&
-             (!um_at(level, cc.x, cc.y) ||
-              !mcanspotmon(mon, um_at(level, cc.x, cc.y)))) ||
-            IS_STWALL(level->locations[cc.x][cc.y].typ)) {
-            pline(msgc_cancelled,
-                  "Your mind fails to lock onto that location!");
+    } else if (!clearpath ||
+               IS_STWALL(level->locations[cc.x][cc.y].typ)) {
+        pline(msgc_cancelled,
+              "Your mind fails to lock onto that location!");
         return 0;
     } else {
         *dx = cc.x;
@@ -2002,6 +2043,7 @@ percent_success(const struct monst *mon, int spell)
         splcaster = 1;
         special = -3;
     }
+    struct obj *wep = m_mwep(mon);
     struct obj *arm = which_armor(mon, os_arm);
     struct obj *armc = which_armor(mon, os_armc);
     struct obj *arms = which_armor(mon, os_arms);
@@ -2011,6 +2053,10 @@ percent_success(const struct monst *mon, int spell)
     int spelarmr = you ? urole.spelarmr : 10;
     int spelshld = you ? urole.spelshld : 1;
     int xl = you ? u.ulevel : mon->m_lev;
+
+    /* Quarterstaves enhance spellcasting */
+    if (wep && wep->otyp == QUARTERSTAFF)
+        splcaster -= spelarmr;
 
     if (arm && is_metallic(arm))
         splcaster += (armc &&
@@ -2024,6 +2070,8 @@ percent_success(const struct monst *mon, int spell)
     if (armh && is_metallic(armh))
         if (armh->otyp != HELM_OF_BRILLIANCE)
             splcaster += uarmhbon;
+
+    /* Yes, uarm*bon is right, they're defined as fixed values */
     if (armg && is_metallic(armg))
         splcaster += uarmgbon;
     if (armf && is_metallic(armf))

@@ -997,7 +997,13 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     mtmp->dlevel = lev;
     place_monster(mtmp, x, y, FALSE);
     mtmp->mcanmove = TRUE;
-    mtmp->mpeaceful = (mmflags & MM_ANGRY) ? FALSE : peace_minded(ptr);
+    /* In sokoban, peaceful monsters are generally worse for the player
+       than hostile ones, so don't make them peaceful there.  Make an
+       exception to this for particularly nasty monsters. */
+    mtmp->mpeaceful = ((In_sokoban(&lev->z) && !extra_nasty(mtmp->data) &&
+                        !always_peaceful(mtmp->data)) ?
+                       FALSE : (mmflags & MM_ANGRY) ?
+                       FALSE : peace_minded(ptr));
 
     /* Calculate the monster's movement offset. The number of movement points a
        monster has at the start of a turn ranges over a range of 12 possible
@@ -1027,7 +1033,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         if (in_mklev)
             if (x && y)
                 mkobj_at(0, lev, x, y, TRUE, stats_rng);
-        if (hides_under(ptr) && OBJ_AT_LEV(lev, x, y))
+        if (hides_under(ptr) && OBJ_AT_LEV(lev, x, y) && !mtmp->mpeaceful)
             mtmp->mundetected = TRUE;
         break;
     case S_EEL:
@@ -2254,9 +2260,10 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     mon->mspells = mread64(mf);
     if (legacy < 1) {
         mon->spells_maintained = mread64(mf);
+        mon->former_player = mread16(mf);
 
         /* Some reserved space for further expansion */
-        for (i = 0; i < 200; i++)
+        for (i = 0; i < 198; i++)
             (void) mread8(mf);
     }
 
@@ -2365,14 +2372,15 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
            deterministic answer, so always set to lawful (or chaotic if normally
            lawful) */
         mon->maligntyp_temp = (mon->maligntyp == A_LAWFUL ? A_CHAOTIC : A_LAWFUL);
-        /* add new elements to mflags */
+        /* Kill now-unused flags, add new */
         mflags &= (0xffffff & ~(2|4|8|16));
         mflags |= (Align2asave(mon->maligntyp) << 1);
         mflags |= (Align2asave(mon->maligntyp_temp) << 3);
     } else if (xtyp == MX_YES)
         restore_mextra(mf, mon);
 
-    /* 8 free bits... */
+    /* 7 free bits... */
+    mon->uzombied = (mflags >> 24) & 1;
     mon->usicked = (mflags >> 23) & 1;
     mon->uslimed = (mflags >> 22) & 1;
     mon->ustoned = (mflags >> 21) & 1;
@@ -2415,7 +2423,10 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
        properly. */
     xchar mux = mon->mux;
     xchar muy = mon->muy;
-    if (mon->mux == mon->mx && mon->muy == mon->my) {
+    /* muxy is set to target dungeon (branch) + level if migrating,
+       check mxy if migrating or not */
+    if (mon->mx != COLNO && mon->my != ROWNO &&
+        mon->mux == mon->mx && mon->muy == mon->my) {
         impossible("save_mon: muxy and mxy are equal?");
         mux = COLNO;
         muy = ROWNO;
@@ -2509,15 +2520,15 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite8(mf, mon->wormno);
 
     mflags =
-        (mon->usicked << 23) | (mon->uslimed << 22) |
-        (mon->ustoned << 21) | (mon->levi_wary << 20) |
-        (mon->female << 19) | (mon->cham << 16) |
-        (mon->mundetected << 15) | (mon->mburied << 14) |
-        (mon->mrevived << 13) | (mon->mavenge << 12) |
-        (mon->mflee << 11) | (mon->mcanmove << 10) |
-        (mon->msleeping << 9) | (mon->mpeaceful << 8) |
-        (mon->mtrapped << 7) | (mon->mleashed << 6) |
-        (mon->msuspicious << 5) |
+        (mon->uzombied >> 24) | (mon->usicked << 23) |
+        (mon->uslimed << 22) | (mon->ustoned << 21) |
+        (mon->levi_wary << 20) | (mon->female << 19) |
+        (mon->cham << 16) | (mon->mundetected << 15) |
+        (mon->mburied << 14) | (mon->mrevived << 13) |
+        (mon->mavenge << 12) | (mon->mflee << 11) |
+        (mon->mcanmove << 10) | (mon->msleeping << 9) |
+        (mon->mpeaceful << 8) | (mon->mtrapped << 7) |
+        (mon->mleashed << 6) | (mon->msuspicious << 5) |
         (Align2asave(mon->maligntyp) << 3) |
         (Align2asave(mon->maligntyp) << 1) |
         (mon->iswiz << 0);
@@ -2540,8 +2551,9 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite8(mf, octet);
     mwrite64(mf, mon->mspells);
     mwrite64(mf, mon->spells_maintained);
+    mwrite16(mf, mon->former_player);
 
-    for (i = 0; i < 200; i++)
+    for (i = 0; i < 198; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */

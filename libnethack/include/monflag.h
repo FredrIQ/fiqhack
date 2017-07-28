@@ -199,6 +199,7 @@
 # define M3_STEALTHY     0x04000        /* stealthy (no effect on monsters atm) */
 # define M3_FAST         0x08000        /* intrinsic fast */
 # define M3_SEARCH       0x10000        /* intrinsic searching */
+# define M3_LINEUP       0x20000        /* stay far away but in line */
 
 # define MZ_TINY         0              /* < 2' */
 # define MZ_SMALL        1              /* 2-4' */

@@ -38,7 +38,7 @@ TTTTTT..TTTTTTTTTTTTTT......TTTTT...TTTTT...............T}........}}}...TTT.
 TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT...............}............}......
 ENDMAP
 # Dungeon Description
-REGION:(01,01,75,16),lit,"ordinary"
+REGION:(01,01,75,20),lit,"ordinary"
 # Stairs
 STAIR:(10,10),down
 # Portal arrival point; just about anywhere on the right hand side of the map
@@ -176,7 +176,6 @@ MONSTER:'s',"scorpion",random,hostile
 MONSTER:'s',random,random,hostile
 MONSTER:'s',random,random,hostile
 
-
 #
 #	The "goal" level for the quest.
 #
@@ -194,9 +193,9 @@ MAP
 }}}}}}}}}}}}}}}}}}}}}}............T...T..................................TTT
 }}}}}}}}}}}}}}}}.................T.T......................................TT
 }}}}}}}}}}}}}}}}}}}}}.            T  +                .TTTTTTTTTTTTTTTT...TT
-}}}}}}}}}}...........     .......    .                .TT.......TTTTTTTT.TTT
-}}}}}}.............................  .       ........ .T.........F..TTTT.TTT
-}}}}}}}............    .  ......     .       .      . .TT.......TTT..TTT.TTT
+}}}}}}}}}}...........     .......    .                .TT.....|.TTTTTTTT.TTT
+}}}}}}.............................  .       ........ .T......S.....TTTT.TTT
+}}}}}}}............    .  ......     .       .      . .TT.....|.TTT..TTT.TTT
 }}}}}}}}}.........}}}} .   ....      +       . ...  . .TTTTTTTTTTTTT..TT.TTT
 }}}}}}}}}}}}}}}}}}}}}} .         .........   .S.    .S...............TTT.TTT
 }}}}}}}}}}}}}}}}  ...  .         .........          . .TTTTTTTTTTTTTTTTT.TTT
@@ -258,6 +257,7 @@ DOOR:closed,(42,10)
 DOOR:locked,(46,08)
 DOOR:closed,(51,10)
 DOOR:locked,(53,08)
+DOOR:locked,(62,05)
 # Random monsters.
 MONSTER:'s',"Scorpius",place[0],hostile
 MONSTER:'C',"forest centaur",random,hostile
@@ -289,7 +289,6 @@ MONSTER:'s',"scorpion",random,hostile
 MONSTER:'s',random,random,hostile
 
 WALLIFY
-
 
 #
 #	The "fill" levels for the quest.

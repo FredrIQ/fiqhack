@@ -308,6 +308,8 @@ disclose(int how, boolean taken, long umoney)
                 for (obj = invent; obj; obj = obj->nobj) {
                     discover_object(obj->otyp, TRUE, FALSE, TRUE);
                     obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
+                    if (obj->oprops)
+                        learn_oprop(obj, obj_properties(obj));
                 }
                 display_inventory(NULL, FALSE);
                 container_contents(invent, TRUE, TRUE);
@@ -400,6 +402,8 @@ savelife(int how)
     /* cure impending doom of sickness hero won't have time to fix */
     if (property_timeout(&youmonst, SICK) == 1)
         set_property(&youmonst, SICK, -2, FALSE);
+    if (property_timeout(&youmonst, ZOMBIE) == 1)
+        set_property(&youmonst, ZOMBIE, -2, FALSE);
     if (how == CHOKING)
         init_uhunger();
 
@@ -759,7 +763,7 @@ check_survival(int how)
                 pline(msgc_fatal_predone,
                       "Unfortunately you are still genocided...");
             else {
-                historic_event(FALSE,
+                historic_event(FALSE, TRUE,
                                "were saved from death by your amulet of life "
                                "saving!");
                 return TRUE;
@@ -778,7 +782,7 @@ check_survival(int how)
         if (u.uhpmax <= 0)
             u.uhpmax = u.ulevel * 8;    /* arbitrary */
         savelife(how);
-        historic_event(FALSE, "were saved from death by your wizard powers!");
+        historic_event(FALSE, FALSE, "were saved from death by your wizard powers!");
         return TRUE;
     }
 
@@ -1058,6 +1062,7 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                         discover_object(obj->otyp, TRUE, FALSE, TRUE);
                         obj->known = obj->bknown = obj->dknown =
                             obj->rknown = 1;
+                        learn_oprop(obj, obj->oprops);
                     }
                     contents[icount++] = obj;
                 }

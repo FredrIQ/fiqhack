@@ -170,6 +170,8 @@ picklock(void)
     pline(msgc_actionok, "You succeed in %s.", lock_action());
     if (door) {
         if (door->doormask & D_TRAPPED) {
+            /* Don't give a "You stop picking the lock" message */
+            reset_pick();
             b_trapped("door", FINGER);
             door->doormask = D_NODOOR;
             unblock_point(x, y);

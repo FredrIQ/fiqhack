@@ -55,7 +55,7 @@ static const struct propmsg prop_msg[] = {
     {POLYMORPH, "Your body begins to shapeshift.", "shapeshifting",
      "You are no longer shapeshifting.", "less shapeshifting"},
     {POLYMORPH_CONTROL, "You feel in control of your shapeshifting", "shapeshift-controlled",
-     "You feel no lnger in control of your shapeshifting.", "less shapeshift-controlled"},
+     "You feel no longer in control of your shapeshifting.", "less shapeshift-controlled"},
     {STEALTH, "", "stealthy", "", "noisy"},
     {AGGRAVATE_MONSTER, "You feel attractive!", "attractive",
      "You feel less attractive.", "less attractive"},
@@ -77,7 +77,7 @@ static const struct propmsg prop_msg[] = {
     {DISPLACED, "Your outline shimmers and shifts.", "elusive",
      "You stop shimmering.", "exposed"},
     {SICK_RES, "You feel your immunity strengthen.", "immunized",
-     "Your immunity system fails!", "immunocompromised"},
+     "Your immune system fails!", "immunocompromised"},
     {DRAIN_RES, "You feel especially energetic.", "energic",
      "You feel less energic.", "less energic"},
     {CANCELLED, "You feel devoid of magic!", "magic-devoid",
@@ -292,82 +292,100 @@ m_has_property(const struct monst *mon, enum youprop property,
     if (property == HALLUC && mon != &youmonst)
         return 0;
 
+    /* Simplify property checking by allowing 0 but always returning 0 in this case */
+    if (property == NO_PROP)
+        return FALSE;
+
+    if (property > LAST_PROP) {
+        impossible("Invalid property: %d", property);
+        return 0;
+    }
+
     unsigned rv = 0;
-    const struct permonst *mdat_role = NULL;
-    const struct permonst *mdat_race = NULL;
-    const struct permonst *mdat_poly = NULL;
-    init_permonsts(mon, &mdat_role, &mdat_race, &mdat_poly);
+    rv = mon->mintrinsic_cache[property];
+    if (!(rv & W_MASK(os_cache))) {
+        rv = 0;
+        const struct permonst *mdat_role = NULL;
+        const struct permonst *mdat_race = NULL;
+        const struct permonst *mdat_poly = NULL;
+        init_permonsts(mon, &mdat_role, &mdat_race, &mdat_poly);
 
-    /* The general case for equipment */
-    rv |= mworn_extrinsic(mon, property);
+        /* The general case for equipment */
+        rv |= mworn_extrinsic(mon, property);
 
-    /* Timed and corpse/etc-granted */
-    if (mon->mintrinsic[property] & TIMEOUT_RAW)
-        rv |= W_MASK(os_timeout);
-    if (mon->mintrinsic[property] & FROMOUTSIDE_RAW)
-        rv |= W_MASK(os_outside);
+        /* Timed and corpse/etc-granted */
+        if (mon->mintrinsic[property] & TIMEOUT_RAW)
+            rv |= W_MASK(os_timeout);
+        if (mon->mintrinsic[property] & FROMOUTSIDE_RAW)
+            rv |= W_MASK(os_outside);
 
-    /* Polyform / role / race properties */
-    const struct propxl *pmprop;
-    for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
-         pmprop++) {
-        if (pmprop->prop == property &&
-            pmprop->xl <= (mon == &youmonst ? u.ulevel : mon->m_lev)) {
-            if (pmprop->mnum == monsndx(mdat_role))
-                rv |= W_MASK(os_role);
-            if (mdat_race && pmprop->mnum == monsndx(mdat_race))
-                rv |= W_MASK(os_race);
-            if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
-                rv |= W_MASK(os_polyform);
+        /* Polyform / role / race properties */
+        const struct propxl *pmprop;
+        for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
+             pmprop++) {
+            if (pmprop->prop == property &&
+                pmprop->xl <= (mon == &youmonst ? u.ulevel : mon->m_lev)) {
+                if (pmprop->mnum == monsndx(mdat_role))
+                    rv |= W_MASK(os_role);
+                if (mdat_race && pmprop->mnum == monsndx(mdat_race))
+                    rv |= W_MASK(os_race);
+                if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
+                    rv |= W_MASK(os_polyform);
+            }
         }
-    }
-    if (pm_has_property(mdat_role, property) > 0)
-        rv |= W_MASK(os_role);
-    if (mdat_race && pm_has_property(mdat_race, property) > 0)
-        rv |= W_MASK(os_race);
-    if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
-        rv |= W_MASK(os_polyform);
-
-    /* External circumstances */
-    /* Fumbling on ice */
-    if (property == FUMBLING &&
-        is_ice(m_dlevel(mon), m_mx(mon), m_my(mon)) &&
-        (mon != &youmonst || !u.usteed) && !flying(mon) &&
-        !levitates(mon) && !is_whirly(mon->data)) {
-        struct obj *armf = which_armor(mon, os_armf);
-        if (armf && armf->otyp == find_skates())
-            rv |= W_MASK(os_circumstance);
-    }
-
-    /* Cases specific to the player */
-    if (mon == &youmonst) {
-        /* Birth options */
-        if ((property == BLINDED && flags.permablind) ||
-            (property == HALLUC && flags.permahallu) ||
-            (property == UNCHANGING && flags.polyinit_mnum != -1))
-            rv |= W_MASK(os_birthopt);
+        if (pm_has_property(mdat_role, property) > 0)
+            rv |= W_MASK(os_role);
+        if (mdat_race && pm_has_property(mdat_race, property) > 0)
+            rv |= W_MASK(os_race);
+        if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
+            rv |= W_MASK(os_polyform);
 
         /* External circumstances */
-        if (property == BLINDED && u_helpless(hm_unconscious))
-            rv |= W_MASK(os_circumstance);
+        /* Fumbling on ice */
+        if (property == FUMBLING &&
+            is_ice(m_dlevel(mon), m_mx(mon), m_my(mon)) &&
+            (mon != &youmonst || !u.usteed) && !flying(mon) &&
+            !levitates(mon) && !is_whirly(mon->data)) {
+            struct obj *armf = which_armor(mon, os_armf);
+            if (!armf || strcmp(OBJ_DESCR(objects[armf->otyp]), "snow boots"))
+                rv |= W_MASK(os_circumstance);
+        }
 
-        /* Riding allows you to inherit a few properties from steeds */
-        if ((property == FLYING || property == SWIMMING ||
-            property == WWALKING || property == LEVITATION) &&
-            u.usteed && has_property(u.usteed, property))
-            rv |= W_MASK(os_saddle);
+        /* Cases specific to the player */
+        if (mon == &youmonst) {
+            /* Birth options */
+            if ((property == BLINDED && flags.permablind) ||
+                (property == HALLUC && flags.permahallu) ||
+                (property == UNCHANGING && flags.polyinit_mnum != -1))
+                rv |= W_MASK(os_birthopt);
+
+            /* External circumstances */
+            if (property == BLINDED &&
+                (u_helpless(hm_unconscious) || u.ucreamed))
+                rv |= W_MASK(os_circumstance);
+
+            /* Riding allows you to inherit a few properties from steeds */
+            if ((property == FLYING || property == SWIMMING ||
+                 property == WWALKING || property == LEVITATION) &&
+                u.usteed && has_property(u.usteed, property))
+                rv |= W_MASK(os_saddle);
+        }
+
+        /* Overrides
+
+           TODO: Monsters with no eyes are not considered blind. This doesn't
+           make much sense. However, changing it would be a major balance
+           change (due to Elbereth), and so it has been left alone for now. */
+        if ((property == BLINDED && !haseyes(mon->data)) ||
+            (property == HALLUC && resists_hallu(mon)) ||
+            (property == WWALKING && Is_waterlevel(m_mz(mon))) ||
+            mworn_blocked(mon, property))
+            rv |= (unsigned)(W_MASK(os_blocked));
+
+        if (mon == &youmonst)
+            youmonst.mintrinsic_cache[property] = (rv | W_MASK(os_cache));
     }
-
-    /* Overrides
-
-       TODO: Monsters with no eyes are not considered blind. This doesn't
-       make much sense. However, changing it would be a major balance
-       change (due to Elbereth), and so it has been left alone for now. */
-    if ((property == BLINDED && !haseyes(mon->data)) ||
-        (property == HALLUC && resists_hallu(mon)) ||
-        (property == WWALKING && Is_waterlevel(m_mz(mon))) ||
-        mworn_blocked(mon, property))
-        rv |= (unsigned)(W_MASK(os_blocked));
+    rv &= ~W_MASK(os_cache);
 
     /* If a property is blocked, turn off all flags except circumstance/birthopt,
        unless even_if_blocked is TRUE. Yes, including os_blocked, because not
@@ -441,11 +459,18 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
     case SPE_MAGIC_MISSILE:
         if (!prop_wary(user, target, ANTIMAGIC))
             return TRUE;
-        if (!user || obj->oclass != WAND_CLASS)
+        if (!user)
             return FALSE;
-        wandlevel = mprof(user, MP_WANDS);
-        if (obj->mbknown)
-            wandlevel = getwandlevel(user, obj);
+        if (obj->otyp == SPE_MAGIC_MISSILE) {
+            wandlevel = mprof(user, MP_SATTK);
+            if (wandlevel < P_SKILLED)
+                return FALSE;
+        } else {
+            wandlevel = mprof(user, MP_WANDS);
+            if (obj->mbknown)
+                wandlevel = getwandlevel(user, obj);
+        }
+
         if (wandlevel >= P_SKILLED)
             return TRUE;
         return FALSE;
@@ -543,7 +568,8 @@ decrease_property_timers(struct monst *mon)
         if (mon->mintrinsic[prop] & TIMEOUT_RAW) {
             /* Decrease protection at half speed at Expert and not at all if maintained */
             if (prop == PROTECTION &&
-                (spell_maintained(mon, SPE_PROTECTION) ||
+                ((spell_maintained(mon, SPE_PROTECTION) &&
+                  cast_protection(mon, FALSE, TRUE)) ||
                  (skill == P_EXPERT && (moves % 2))))
                 continue;
             mon->mintrinsic[prop]--;
@@ -735,6 +761,9 @@ boolean
 set_property(struct monst *mon, enum youprop prop,
              int type, boolean forced)
 {
+    /* Invalidate property cache */
+    mon->mintrinsic_cache[prop] = 0;
+
     boolean increased = FALSE;
     if (mon->mintrinsic[prop] & TIMEOUT_RAW && type > 0)
         increased = TRUE;
@@ -758,6 +787,9 @@ set_property(struct monst *mon, enum youprop prop,
         if (type == -2) /* ...and timeout */
             mon->mintrinsic[prop] &= ~TIMEOUT_RAW;
     }
+
+    /* Invalidate property cache again (since it's polled in this function) */
+    mon->mintrinsic_cache[prop] = 0;
 
     if (forced)
         return FALSE;
@@ -862,6 +894,9 @@ update_property(struct monst *mon, enum youprop prop,
     if (prop == NO_PROP)
         return FALSE;
 
+    /* Invalidate property cache */
+    mon->mintrinsic_cache[prop] &= ~W_MASK(os_cache);
+
     /* update_property() can run for monsters wearing armor during level creation,
        or potentially off-level, so level can be non-existent or outright wrong,
        take this into account when messing with this function */
@@ -916,7 +951,7 @@ update_property(struct monst *mon, enum youprop prop,
     struct obj *weapon;
     enum msg_channel msgc = msgc_monneutral;
 
-    /* Messages when properties are acquired/lost */
+    /* Messages when intrinsics are acquired/lost */
     if (mon == &youmonst &&
         (slot == os_role || slot == os_race ||
          slot == os_polyform || slot == os_outside)) {
@@ -1030,7 +1065,7 @@ update_property(struct monst *mon, enum youprop prop,
                 effect = TRUE;
             }
             newsym(u.ux, u.uy);
-        } else if (!redundant && vis_invis) {
+        } else if (!redundant && level && vis_invis) {
             if (see_invisible(&youmonst)) {
                 pline(msgc_monneutral,
                       lost ? "%s body seems to unfade..." :
@@ -1045,7 +1080,9 @@ update_property(struct monst *mon, enum youprop prop,
                       "%s suddenly disappears!",
                       msgupcasefirst(x_monnam(mon, ARTICLE_THE, NULL,
                                               (mx_name(mon) ? SUPPRESS_SADDLE : 0) |
-                                              SUPPRESS_IT | SUPPRESS_INVISIBLE,
+                                              SUPPRESS_IT |
+                                              SUPPRESS_INVISIBLE |
+                                              SUPPRESS_ENSLAVEMENT,
                                               FALSE)));
                 set_mimic_blocking();       /* do special mimic handling */
                 see_monsters(FALSE);        /* see invisible monsters */
@@ -1095,7 +1132,8 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case AGGRAVATE_MONSTER:
-        if (!you && !redundant) {
+        /* avoid running vision code offlevel */
+        if (!you && !redundant && level) {
             you_aggravate(mon);
             see_monsters(FALSE);
         }
@@ -1139,6 +1177,12 @@ update_property(struct monst *mon, enum youprop prop,
             see_monsters(FALSE);
         break;
     case FAST:
+        /* No redundant messages */
+        if (mon == &youmonst &&
+            (slot == os_role || slot == os_race ||
+             slot == os_polyform || slot == os_outside))
+            break;
+
         /* only give the "new energy" message if the monster has redundant speed */
         if (redundant_intrinsic) {
             if (slot == os_inctimeout && you) {
@@ -1151,8 +1195,8 @@ update_property(struct monst *mon, enum youprop prop,
         /* if "redundant" is set at this point, it is pointing
            at speed of the "other" kind (very fast if intrinsic, fast if extrinsic) */
 
-        /* speed boots */
-        if (slot == os_armf) {
+        /* speed boots/objects of speed */
+        if (W_MASK(slot) & W_EQUIP) {
             if (you || vis) {
                 pline(!you ? msgc_monneutral :
                       lost ? msgc_statusend :
@@ -1271,6 +1315,7 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case SICK:
         msgc = msgc_monneutral;
+
         if (you || mon->mtame) {
             msgc = msgc_statusheal;
             if (!lost)
@@ -1458,20 +1503,28 @@ update_property(struct monst *mon, enum youprop prop,
             }
         } else {
             if (you || vis) {
-                if (timer == 4)
+                switch (timer) {
+                case 4:
                     pline(msgc, "%s slowing down.",
                           M_verbs(mon, "are"));
-                else if (timer == 3)
+                    break;
+                case 3:
                     pline(msgc, "%s limbs are stiffening.",
-                          you ? "Your" : s_suffix(Monnam(mon)));
-                else if (timer == 2)
+                          s_suffix(Monnam(mon)));
+                    break;
+                case 2:
                     pline(msgc, "%s limbs have turned to stone.",
-                          you ? "Your" : s_suffix(Monnam(mon)));
-                else if (timer == 1)
+                          s_suffix(Monnam(mon)));
+                    break;
+                case 1:
                     pline(msgc, "%s turned to stone.",
-                          M_verbs(mon, "are"));
-                else if (timer == 0)
+                          M_verbs(mon, "have"));
+                    break;
+                case 0:
+                default:
                     pline(msgc, "%s a statue.", M_verbs(mon, "are"));
+                    break;
+                }
                 effect = TRUE;
             }
             /* remove intrinsic speed, even if mon re-acquired it */
@@ -1741,6 +1794,7 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case SICK_RES:
         set_property(mon, SICK, -2, FALSE);
+        set_property(mon, ZOMBIE, -2, FALSE);
         break;
     case DRAIN_RES:
         break;
@@ -1856,6 +1910,12 @@ update_property(struct monst *mon, enum youprop prop,
                 u.utrap = 0;
                 turnstate.vision_full_recalc = TRUE;
             }
+
+            if (you && slot == os_timeout) {
+                pline(lost ? msgc_statusbad : msgc_statusgood, "You feel %s.",
+                      lost ? "more solid" : "etheral");
+                effect = TRUE;
+            }
         }
         break;
     case SLOW_DIGESTION:
@@ -1924,7 +1984,7 @@ update_property(struct monst *mon, enum youprop prop,
             if (lost) {
                 if (you || vis) {
                     pline(you ? msgc_statusheal : msgc_monneutral,
-                          "%s zombifying disease wears off naturally.",
+                          "%s zombifying disease wears off.",
                           s_suffix(Monnam(mon)));
                     effect = TRUE;
                 }
@@ -2022,6 +2082,8 @@ update_property(struct monst *mon, enum youprop prop,
                 }
             }
         }
+        break;
+    case WATERPROOF:
         break;
     default:
         impossible("Unknown property: %u", prop);
@@ -2642,6 +2704,8 @@ enlighten_mon(struct monst *mon, int final)
         mon_is(&menu, mon, "petrification resistant");
     if (resists_hallu(mon))
         mon_is(&menu, mon, "hallucination resistant");
+    if (waterproof(mon))
+        mon_is(&menu, mon, "protected from water");
     if (mon == &youmonst && u.uinvulnerable)
         mon_is(&menu, mon, "invulnerable");
     if ((mon == &youmonst && u.uedibility) ||
@@ -2791,16 +2855,16 @@ enlighten_mon(struct monst *mon, int final)
     }
 
     /*** Physical attributes ***/
-    if (mon_hitbon(mon))
-        mon_has(&menu, mon, enlght_combatinc("to hit", mon_hitbon(mon), final));
-    if (mon_dambon(mon))
-        mon_has(&menu, mon, enlght_combatinc("damage", mon_dambon(mon), final));
+    if (hitbon(mon))
+        mon_has(&menu, mon, enlght_combatinc("to hit", hitbon(mon), final));
+    if (dambon(mon))
+        mon_has(&menu, mon, enlght_combatinc("damage", dambon(mon), final));
     if (slow_digestion(mon))
         mon_has(&menu, mon, "slower digestion");
     if (regenerates(mon))
         mon_x(&menu, mon, "regenerate");
-    if (protected(mon) || mon_protbon(mon)) {
-        int prot = mon_protbon(mon);
+    if (protected(mon) || protbon(mon)) {
+        int prot = protbon(mon);
         if (mon == &youmonst)
             prot += u.ublessed;
         prot += m_mspellprot(mon);
@@ -3018,6 +3082,8 @@ enlightenment(int final)
         you_are(&menu, "acid resistant");
     if (Stone_resistance)
         you_are(&menu, "petrification resistant");
+    if (waterproof(&youmonst))
+        you_are(&menu, "protected from water");
     if (u.uinvulnerable)
         you_are(&menu, "invulnerable");
     if (u.uedibility)
@@ -3154,16 +3220,16 @@ enlightenment(int final)
     }
 
         /*** Physical attributes ***/
-    if (mon_hitbon(&youmonst))
-        you_have(&menu, enlght_combatinc("to hit", mon_hitbon(&youmonst), final));
-    if (mon_dambon(&youmonst))
-        you_have(&menu, enlght_combatinc("damage", mon_dambon(&youmonst), final));
+    if (hitbon(&youmonst))
+        you_have(&menu, enlght_combatinc("to hit", hitbon(&youmonst), final));
+    if (dambon(&youmonst))
+        you_have(&menu, enlght_combatinc("damage", dambon(&youmonst), final));
     if (Slow_digestion)
         you_have(&menu, "slower digestion");
     if (Regeneration)
         enl_msg(&menu, "You regenerate", "", "d", "");
-    if (protected(&youmonst) || mon_protbon(&youmonst)) {
-        int prot = mon_protbon(&youmonst);
+    if (protected(&youmonst) || protbon(&youmonst)) {
+        int prot = protbon(&youmonst);
         prot += m_mspellprot(&youmonst);
         prot += u.ublessed;
 

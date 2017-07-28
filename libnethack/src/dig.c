@@ -292,12 +292,21 @@ dig(void)
         return 0;
     }
 
-    u.uoccupation_progress[tos_dig] +=
-        10 + rn2(5) + abon() + uwep->spe - greatest_erosion(uwep) + mon_dambon(&youmonst);
-    /* TODO: This formula looks /very/ suspicious, becuse the exponential
-       factor is going to override almost anyting else. */
+    int progress = 10;
+    progress += rn2(5);
+    progress += abon();
+    progress += uwep->spe;
+    progress -= greatest_erosion(uwep);
+    progress += dambon(&youmonst);
+    progress += (P_SKILL(is_pick(uwep) ? P_PICK_AXE : P_AXE) * 5);
+    if (progress < 1)
+        progress = 1;
+
     if (Race_if(PM_DWARF))
-        u.uoccupation_progress[tos_dig] *= 2;
+        progress *= 2;
+
+    u.uoccupation_progress[tos_dig] += progress;
+
     if (down) {
         struct trap *ttmp;
 
@@ -923,7 +932,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
     verb = ispick ? "dig" : "chop";
     verbing = ispick ? "digging" : "chopping";
 
-    wtstatus = wield_tool(obj, "preparing to dig", occ_dig);
+    wtstatus = wield_tool(obj, "preparing to dig", occ_dig, FALSE);
     if (wtstatus & 2)
         return 1;
     else if (!(wtstatus & 1))

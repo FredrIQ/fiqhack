@@ -256,6 +256,12 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     xlocale = mtmp->xlocale;
     ylocale = mtmp->ylocale;
 
+    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
+        if (!otmp->olev && otmp->timed)
+            panic("Unhandled timed obj %s carried by %s, try again "
+                  "later", killer_xname(otmp), k_monnam(mtmp));
+    }
+
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
         set_obj_level(mtmp->dlevel, otmp);
 
@@ -395,6 +401,9 @@ mon_arrive(struct monst *mtmp, boolean with_you)
                     get_obj_location(obj, &xlocale, &ylocale, 0);
                 }
             }
+
+            /* mkcorpstat will place it randomly if xylocale is still
+               ROWNO/COLNO */
             mkcorpstat(CORPSE, NULL, mtmp->data, level, xlocale, ylocale,
                        FALSE, rng_main);
             mongone(mtmp);
@@ -629,6 +638,12 @@ migrate_to_level(struct monst *mtmp, xchar tolev,       /* destination level */
         mtmp->mtame--;
         m_unleash(mtmp, TRUE);
     }
+    int x = COLNO;
+    int y = ROWNO;
+    if (displaced(mtmp)) {
+        x = mtmp->dx;
+        y = mtmp->dy;
+    }
     relmon(mtmp);
     mtmp->nmon = migrating_mons;
     migrating_mons = mtmp;
@@ -657,6 +672,8 @@ migrate_to_level(struct monst *mtmp, xchar tolev,       /* destination level */
     mtmp->muy = new_lev.dlevel;
     mtmp->mx = COLNO;
     mtmp->my = ROWNO;    /* this implies migration */
+    if (x != COLNO)
+        newsym(x, y);
 }
 
 

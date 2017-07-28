@@ -353,7 +353,7 @@ plname_handler(const char *str, void *plname_void)
     if (*str == '\033') /* cancelled */
         return;
 
-    if (*str && strlen(str) < PL_NSIZ) { /* ok */
+    if (*str && strlen(str) < (PL_NSIZ - 5)) { /* ok */
         *plname = strdup(str);
         return;
     }
@@ -450,11 +450,12 @@ rungame(nh_bool net)
         nh_cm_idx(*info, role, race, 1, align))
         sprintf(prompt + strlen(prompt), " %s", info->gendnames[gend]);
 
-    sprintf(prompt + strlen(prompt), " %s %s. What is your name?",
+    sprintf(prompt + strlen(prompt), " %s %s. What is your name [max %d characters]?",
             info->racenames[race], (gend &&
                                     info->
                                     rolenames_f[role] ? info->rolenames_f :
-                                    info->rolenames_m)[role]);
+                                    info->rolenames_m)[role],
+            PL_NSIZ - 5 - 1);
 
     if (nameopt->value.s && !*nameopt->value.s) {
         free(nameopt->value.s);

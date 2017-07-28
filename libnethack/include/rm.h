@@ -451,6 +451,7 @@ struct levelflags {
     unsigned graveyard:1;       /* has_morgue, but remains set */
     unsigned is_maze_lev:1;
     unsigned is_cavernous_lev:1;
+    unsigned vault_known:1;
 
     unsigned arboreal:1;        /* Trees replace rock */
     unsigned forgotten:1;       /* previously visited but forgotten (amnesia) */

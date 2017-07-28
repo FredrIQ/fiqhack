@@ -106,40 +106,97 @@ MONSTER: 'X',"xorn",(01,17)
 MAZE: "Mon-loca",' '
 GEOMETRY:center,center
 #         1         2         3         4         5         6         7 
-#123456789012345678901234567890123456789012345678901234567890123456789012345
+#123456789012345678901234567890123456789012345678901234567890123456789012
 MAP
-             ----------------------------------------------------   --------
-           ---.................................................-    --.....|
-         ---...--------........------........................---     ---...|
-       ---.....-      --.......-    ----..................----         --.--
-     ---.....----      ---------       --..................--         --..|
-   ---...-----                       ----.----.....----.....---      --..||
-----..----                       -----..---  |...---  |.......---   --...|
-|...---                       ----....---    |.---    |.........-- --...||
-|...-                      ----.....---     ----      |..........---....|
-|...----                ----......---       |         |...|.......-....||
-|......-----          ---.........-         |     -----...|............|
-|..........-----   ----...........---       -------......||...........||
-|..............-----................---     |............|||..........|
-|-S----...............................---   |...........|| |.........||
-|.....|..............------.............-----..........||  ||........|
-|.....|.............--    ---.........................||    |.......||
-|.....|.............-       ---.....................--|     ||......|
-|---S--------.......----      --.................----        |.....||
-|...........|..........--------..............-----           ||....|
-|...........|............................-----                |....|
-------------------------------------------                    ------
+        -----                                               -----        
+        |...|  ####          ###### -----               ### |...|   -----
+        |...S### ####     #####  ###|...S###  -----  ---S-##+...S#  |...|
+        |...|      #### ####       #S...| ### |...S# |...|  -----###S...|
+      ----S----      #####          -----  ###S...|##+...|    ####  |...|
+      |.......|                               -----  ----- ####     -----
+  -----.......-----               ----- ----- -----       ##             
+  |...............|      ####     |...---...---...|     --S-      ------ 
+ --.....-----.....--   ###  ###  --...............--   --..--     |....|L
+ |.....--LLL--.....+####      ###+.................|   |....S#####S....SL
+ --.....-----.....--   ###  ###  --...............--   --..--     |....|L
+  |...............|      ####     |...---...---...|     --S-      ------ 
+  -----.......-----               ----- ----- -----       ##             
+      |.......|                               -----  ----- ####     -----
+      ----S----      #####          -----  ###S...|##+...|    ####  |...|
+        |...|      #### ####       #S...| ### |...S# |...|  -----###S...|
+        |...S### ####     #####  ###|...S###  -----  ---S-##+...S#  |...|
+        |...|  ####          ###### -----               ### |...|   -----
+        -----                                               -----        
 ENDMAP
 # Random Monsters
 RANDOM_MONSTERS: 'E', 'X'
 # Dungeon Description
-REGION:(00,00,75,20),lit,"ordinary"
+REGION:(00,00,72,18),lit,"ordinary"
 # Stairs
-STAIR:random,up
-STAIR:random,down
-# Non diggable walls
-NON_DIGGABLE:(00,00,75,20)
+STAIR:(48,09),up
+STAIR:(69,09),down
+#
+# Doors
+DOOR:locked,(71,09)
+DOOR:locked,(66,09)
+DOOR:locked,(60,09)
+#
+DOOR:locked,(58,07)
+DOOR:locked,(68,03)
+DOOR:locked,(64,02)
+DOOR:locked,(60,02)
+DOOR:locked,(56,02)
+DOOR:locked,(53,04)
+DOOR:locked,(50,03)
+DOOR:locked,(46,04)
+DOOR:locked,(40,02)
+DOOR:locked,(36,03)
+DOOR:locked,(12,02)
+DOOR:locked,(10,04)
+#
+DOOR:locked,(58,11)
+DOOR:locked,(68,15)
+DOOR:locked,(64,16)
+DOOR:locked,(60,16)
+DOOR:locked,(56,16)
+DOOR:locked,(53,14)
+DOOR:locked,(50,15)
+DOOR:locked,(46,14)
+DOOR:locked,(40,16)
+DOOR:locked,(36,15)
+DOOR:locked,(12,16)
+DOOR:locked,(10,14)
+#
+DOOR:closed,(19,09)
+DOOR:closed,(33,09)
+#
 # Objects
+OBJECT:'`',"statue",(48,07),"xorn",1
+OBJECT:'`',"statue",(42,07),"xorn",1
+OBJECT:'`',"statue",(36,07),"xorn",1
+OBJECT:'`',"statue",(48,11),"xorn",1
+OBJECT:'`',"statue",(42,11),"xorn",1
+OBJECT:'`',"statue",(36,11),"xorn",1
+OBJECT:'`',"statue",(04,07),"earth elemental",1
+OBJECT:'`',"statue",(08,05),"deep ettin",1
+OBJECT:'`',"statue",(12,05),"deep ettin",1
+OBJECT:'`',"statue",(16,07),"earth elemental",1
+OBJECT:'`',"statue",(04,11),"earth elemental",1
+OBJECT:'`',"statue",(08,13),"deep ettin",1
+OBJECT:'`',"statue",(12,13),"deep ettin",1
+OBJECT:'`',"statue",(16,11),"earth elemental",1
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
+OBJECT:'`',"boulder",random
 OBJECT:random,random,random
 OBJECT:random,random,random
 OBJECT:random,random,random
@@ -186,6 +243,12 @@ MONSTER: 'X',"xorn",random
 MONSTER: 'X',"xorn",random
 MONSTER: 'X',"xorn",random
 MONSTER: 'X',"xorn",random
+
+OBJECT:')',"shuriken",random
+OBJECT:')',"shuriken",random
+OBJECT:')',"shuriken",random
+OBJECT:')',"shuriken",random
+OBJECT:')',"shuriken",random
 
 #
 #	The "goal" level for the quest.

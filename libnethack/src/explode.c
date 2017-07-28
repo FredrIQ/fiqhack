@@ -59,26 +59,13 @@ explode(int x, int y, int type, /* the same as in zap.c */
     uchar adtyp;
     int explmask[3][3];
 
+    int whattype = abs(type) % 10;
+    int buzztyp = (type <= -30 ? whattype : abs(type));
+    boolean wand = (buzztyp < 10);
+
     /* 0=normal explosion, 1=do shieldeff, 2=do nothing */
     boolean shopdamage = FALSE;
 
-#if 0
-    /* Damage reduction from wand explosions */
-    if (olet == WAND_CLASS)     /* retributive strike */
-        switch (Role_switch) {
-        case PM_PRIEST:
-        case PM_MONK:
-        case PM_WIZARD:
-            damu /= 5;
-            break;
-        case PM_HEALER:
-        case PM_KNIGHT:
-            damu /= 2;
-            break;
-        default:
-            break;
-        }
-#endif
     if (olet == MON_EXPLODE) {
         str = descr;
         adtyp = AD_PHYS;
@@ -91,8 +78,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
             dispbuf = str;
         }
     } else {
-        int whattype = abs(type) % 10;
-
         adtyp = whattype + 1;
         boolean done = FALSE, hallu = Hallucination;
 
@@ -158,7 +143,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     explmask[i][j] = 0;
                     break;
                 case AD_MAGM:
-                    explmask[i][j] = !!(raylevel >= P_EXPERT || Antimagic);
+                    explmask[i][j] = !!(raylevel < P_EXPERT && Antimagic);
                     break;
                 case AD_FIRE:
                     explmask[i][j] = !!Fire_resistance;
@@ -210,7 +195,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     case AD_PHYS:
                         break;
                     case AD_MAGM:
-                        explmask[i][j] |= (raylevel >= 4 || resists_magm(mtmp));
+                        explmask[i][j] |= (raylevel < P_EXPERT &&
+                                           resists_magm(mtmp) &&
+                                           (mtmp != &youmonst || flags.mon_moving ||
+                                            wand));
                         break;
                     case AD_FIRE:
                         explmask[i][j] |= !!resists_fire(mtmp);
@@ -468,10 +456,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
         }
         if (adtyp == AD_FIRE)
             burnarmor(&youmonst);
-        destroy_item(SCROLL_CLASS, (int)adtyp);
-        destroy_item(SPBOOK_CLASS, (int)adtyp);
-        destroy_item(POTION_CLASS, (int)adtyp);
-        destroy_item(WAND_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, SCROLL_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, SPBOOK_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, POTION_CLASS, (int)adtyp);
+        destroy_mitem(&youmonst, WAND_CLASS, (int)adtyp);
 
         ugolemeffects((int)adtyp, damu);
         if (uhurt == 2) {
@@ -656,7 +644,8 @@ scatter(int sx, int sy, /* location of objects to scatter */
                 } else if ((mtmp = m_at(lev, bhitpos.x, bhitpos.y)) != 0) {
                     if (scflags & MAY_HITMON) {
                         stmp->range--;
-                        if (ohitmon(mtmp, stmp->obj, NULL, 1, FALSE)) {
+                        if (ohitmon(mtmp, stmp->obj, NULL, NULL,
+                                    1, FALSE)) {
                             stmp->obj = NULL;
                             stmp->stopped = TRUE;
                         }

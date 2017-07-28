@@ -46,6 +46,7 @@ static const struct trobj Archeologist[] = {
     {LEATHER_JACKET, 0, ARMOR_CLASS, 1, UNDEF_BLESS},
     {FEDORA, 0, ARMOR_CLASS, 1, UNDEF_BLESS},
     {FOOD_RATION, 0, FOOD_CLASS, 3, 0},
+    {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
     {PICK_AXE, UNDEF_SPE, TOOL_CLASS, 1, UNDEF_BLESS},
     {TINNING_KIT, UNDEF_SPE, TOOL_CLASS, 1, UNDEF_BLESS},
     {TOUCHSTONE, 0, GEM_CLASS, 1, 0},
@@ -86,6 +87,7 @@ static const struct trobj Healer[] = {
     {SPE_STONE_TO_FLESH, 0, SPBOOK_CLASS, 1, 1},
     {APPLE, 0, FOOD_CLASS, 5, 0},
     {EUCALYPTUS_LEAF, 0, FOOD_CLASS, 6, 1},
+    {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
 
@@ -114,6 +116,7 @@ static const struct trobj Monk[] = {
     /* Yes, we know fortune cookies aren't really from China.  They were
        invented by George Jung in Los Angeles, California, USA in 1916. */
     {FORTUNE_COOKIE, 0, FOOD_CLASS, 3, UNDEF_BLESS},
+    {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
 
@@ -125,6 +128,7 @@ static const struct trobj Priest[] = {
     {CLOVE_OF_GARLIC, 0, FOOD_CLASS, 1, 0},
     {SPRIG_OF_WOLFSBANE, 0, FOOD_CLASS, 1, 0},
     {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 2, UNDEF_BLESS},
+    {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
 
@@ -148,6 +152,7 @@ static const struct trobj Rogue[] = {
     {LEATHER_ARMOR, 1, ARMOR_CLASS, 1, UNDEF_BLESS},
     {POT_SICKNESS, 0, POTION_CLASS, 1, 0},
     {LOCK_PICK, 9, TOOL_CLASS, 1, 0},
+    {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
     {SACK, 0, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
@@ -159,6 +164,7 @@ static const struct trobj Samurai[] = {
     {YUMI, 0, WEAPON_CLASS, 1, UNDEF_BLESS},
     {YA, 0, WEAPON_CLASS, 25, UNDEF_BLESS},     /* variable quan */
     {SPLINT_MAIL, 0, ARMOR_CLASS, 1, UNDEF_BLESS},
+    {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
 
@@ -169,8 +175,12 @@ static const struct trobj Tourist[] = {
     {POT_EXTRA_HEALING, 0, POTION_CLASS, 2, UNDEF_BLESS},
     {SCR_MAGIC_MAPPING, 0, SCROLL_CLASS, 4, UNDEF_BLESS},
     {HAWAIIAN_SHIRT, 0, ARMOR_CLASS, 1, UNDEF_BLESS},
-    {EXPENSIVE_CAMERA, UNDEF_SPE, TOOL_CLASS, 1, 0},
     {CREDIT_CARD, 0, TOOL_CLASS, 1, 0},
+    {EXPENSIVE_CAMERA, UNDEF_SPE, TOOL_CLASS, 1, 0},
+    {LEASH, 0, TOOL_CLASS, 1, 0},
+    {MAGIC_MARKER, UNDEF_SPE, TOOL_CLASS, 1, 0},
+    {TIN_OPENER, 0, TOOL_CLASS, 1, 0},
+    {TOWEL, 0, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
 
@@ -179,6 +189,7 @@ static const struct trobj Valkyrie[] = {
     {DAGGER, 0, WEAPON_CLASS, 1, UNDEF_BLESS},
     {SMALL_SHIELD, 3, ARMOR_CLASS, 1, UNDEF_BLESS},
     {FOOD_RATION, 0, FOOD_CLASS, 1, 0},
+    {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
 
@@ -187,64 +198,36 @@ static const struct trobj Wizard[] = {
 #define W_MULTEND       6
     {QUARTERSTAFF, 1, WEAPON_CLASS, 1, 1},
     {CLOAK_OF_MAGIC_RESISTANCE, 0, ARMOR_CLASS, 1, UNDEF_BLESS},
-    {UNDEF_TYP, UNDEF_SPE, WAND_CLASS, 1, UNDEF_BLESS},
-    {UNDEF_TYP, UNDEF_SPE, RING_CLASS, 2, UNDEF_BLESS},
-    {UNDEF_TYP, UNDEF_SPE, POTION_CLASS, 3, UNDEF_BLESS},
-    {UNDEF_TYP, UNDEF_SPE, SCROLL_CLASS, 3, UNDEF_BLESS},
+    {WAN_STRIKING, UNDEF_SPE, WAND_CLASS, 1, UNDEF_BLESS},
     {SPE_FORCE_BOLT, 0, SPBOOK_CLASS, 1, 1},
+    {SPE_MAGIC_MISSILE, 0, SPBOOK_CLASS, 1, 1},
     {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 1, UNDEF_BLESS},
-    {0, 0, 0, 0, 0}
-};
-
-/*
- * Optional extra inventory items.
- */
-
-static const struct trobj Tinopener[] = {
-    {TIN_OPENER, 0, TOOL_CLASS, 1, 0},
-    {0, 0, 0, 0, 0}
-};
-
-static const struct trobj Magicmarker[] = {
-    {MAGIC_MARKER, UNDEF_SPE, TOOL_CLASS, 1, 0},
-    {0, 0, 0, 0, 0}
-};
-
-static const struct trobj Lamp[] = {
-    {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
-    {0, 0, 0, 0, 0}
-};
-
-static const struct trobj Blindfold[] = {
+    {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 1, UNDEF_BLESS},
     {BLINDFOLD, 0, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
 
+/* Some get extra stuff */
+
+/* Elves get an instrument */
 static const struct trobj Instrument[] = {
     {WOODEN_FLUTE, 0, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
 
+/* Orcs start with extra food to offset drawbacks */
 static const struct trobj Xtra_food[] = {
     {UNDEF_TYP, UNDEF_SPE, FOOD_CLASS, 2, 0},
     {0, 0, 0, 0, 0}
 };
 
-static const struct trobj Leash[] = {
-    {LEASH, 0, TOOL_CLASS, 1, 0},
-    {0, 0, 0, 0, 0}
-};
-
-static const struct trobj Towel[] = {
-    {TOWEL, 0, TOOL_CLASS, 1, 0},
-    {0, 0, 0, 0, 0}
-};
-
+/* Explorer mode */
 static const struct trobj Wishing[] = {
     {WAN_WISHING, 3, WAND_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
 
+/* Needed for those who start with money */
 static const struct trobj Money[] = {
     {GOLD_PIECE, 0, COIN_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
@@ -498,7 +481,7 @@ static const struct def_skill Skill_V[] = {
 };
 
 static const struct def_skill Skill_W[] = {
-    {P_DAGGER, P_EXPERT}, {P_KNIFE, P_SKILLED},
+    {P_DAGGER, P_BASIC}, {P_KNIFE, P_SKILLED},
     {P_AXE, P_SKILLED}, {P_SHORT_SWORD, P_BASIC},
     {P_CLUB, P_SKILLED}, {P_MACE, P_BASIC},
     {P_QUARTERSTAFF, P_EXPERT}, {P_POLEARMS, P_SKILLED},
@@ -622,12 +605,6 @@ u_init_inv_skills(void)
     switch (Role_switch) {
     case PM_ARCHEOLOGIST:
         role_ini_inv(Archeologist, nclist);
-        if (!rolern2(10))
-            role_ini_inv(Tinopener, nclist);
-        else if (!rolern2(4))
-            role_ini_inv(Lamp, nclist);
-        else if (!rolern2(10))
-            role_ini_inv(Magicmarker, nclist);
         knows_object(SACK);
         knows_object(TOUCHSTONE);
         skill_init(Skill_A);
@@ -639,8 +616,6 @@ u_init_inv_skills(void)
             trobj_list[B_MINOR].trotyp = SHORT_SWORD;
         }
         role_ini_inv(trobj_list, nclist);
-        if (!rolern2(6))
-            role_ini_inv(Lamp, nclist);
         knows_class(WEAPON_CLASS);
         knows_class(ARMOR_CLASS);
         skill_init(Skill_B);
@@ -654,7 +629,6 @@ u_init_inv_skills(void)
     case PM_HEALER:
         u.umoney0 = 1001 + rolern2(1000);
         role_ini_inv(Healer, nclist);
-        role_ini_inv(Lamp, nclist);
         knows_object(POT_FULL_HEALING);
         skill_init(Skill_H);
         break;
@@ -678,19 +652,11 @@ u_init_inv_skills(void)
             break;
         }
         role_ini_inv(trobj_list, nclist);
-        if (!rolern2(5))
-            role_ini_inv(Magicmarker, nclist);
-        else if (!rolern2(10))
-            role_ini_inv(Lamp, nclist);
         knows_class(ARMOR_CLASS);
         skill_init(Skill_Mon);
         break;
     case PM_PRIEST:
         role_ini_inv(Priest, nclist);
-        if (!rolern2(10))
-            role_ini_inv(Magicmarker, nclist);
-        else if (!rolern2(10))
-            role_ini_inv(Lamp, nclist);
         knows_object(POT_WATER);
         skill_init(Skill_P);
         /* KMH, conduct -- Some may claim that this isn't agnostic, since they
@@ -710,8 +676,6 @@ u_init_inv_skills(void)
         trobj_list[R_DAGGERS].trquan = 6 + rolern2(10);
         u.umoney0 = 0;
         role_ini_inv(trobj_list, nclist);
-        if (!rolern2(5))
-            role_ini_inv(Blindfold, nclist);
         knows_object(SACK);
         skill_init(Skill_R);
         break;
@@ -719,8 +683,6 @@ u_init_inv_skills(void)
         trobj_list = copy_trobj_list(Samurai);
         trobj_list[S_ARROWS].trquan = 26 + rolern2(20);
         role_ini_inv(trobj_list, nclist);
-        if (!rolern2(5))
-            role_ini_inv(Blindfold, nclist);
         knows_class(WEAPON_CLASS);
         knows_class(ARMOR_CLASS);
         skill_init(Skill_S);
@@ -730,30 +692,16 @@ u_init_inv_skills(void)
         trobj_list[T_DARTS].trquan = 21 + rolern2(20);
         u.umoney0 = 1 + rolern2(1000);
         role_ini_inv(trobj_list, nclist);
-        if (!rolern2(25))
-            role_ini_inv(Tinopener, nclist);
-        else if (!rolern2(25))
-            role_ini_inv(Leash, nclist);
-        else if (!rolern2(25))
-            role_ini_inv(Towel, nclist);
-        else if (!rolern2(25))
-            role_ini_inv(Magicmarker, nclist);
         skill_init(Skill_T);
         break;
     case PM_VALKYRIE:
         role_ini_inv(Valkyrie, nclist);
-        if (!rolern2(6))
-            role_ini_inv(Lamp, nclist);
         knows_class(WEAPON_CLASS);
         knows_class(ARMOR_CLASS);
         skill_init(Skill_V);
         break;
     case PM_WIZARD:
         role_ini_inv(Wizard, nclist);
-        if (!rolern2(5))
-            role_ini_inv(Magicmarker, nclist);
-        if (!rolern2(5))
-            role_ini_inv(Blindfold, nclist);
         skill_init(Skill_W);
         break;
 
@@ -815,8 +763,8 @@ u_init_inv_skills(void)
 
     case PM_ORC:
         /* compensate for generally inferior equipment */
-        if (!Role_if(PM_WIZARD))
-            ini_inv(Xtra_food, nclist, rng_main);
+        ini_inv(Xtra_food, nclist, rng_main);
+
         /* Orcs can recognize all orcish objects */
         knows_object(ORCISH_SHORT_SWORD);
         knows_object(ORCISH_ARROW);
@@ -944,6 +892,10 @@ race_ini_inv(const struct trobj *trop, short nocreate[4])
 static void
 ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
 {
+    /* Keep track of spells we've already gotten */
+    int gotspell[NUM_OBJECTS + 1];
+    memset(&gotspell, 0, sizeof (int) * (NUM_OBJECTS + 1));
+
     struct obj *obj;
     int otyp, i;
     long trquan = trop->trquan;
@@ -991,8 +943,8 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
                    otyp == WAN_NOTHING
                    /* Monks don't use weapons */
                    || (otyp == SCR_ENCHANT_WEAPON && Role_if(PM_MONK))
-                   /* wizard patch -- they already have one */
-                   || (otyp == SPE_FORCE_BOLT && Role_if(PM_WIZARD))
+                   /* avoid already gotten spells */
+                   || gotspell[otyp]
                    /* powerful spells are either useless to low level players
                       or unbalancing; also spells in restricted skill
                       categories */
@@ -1037,6 +989,7 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
             if (objects[otyp].oc_uses_known)
                 obj->known = 1;
             obj->cursed = 0;
+            obj->oprops = obj->oprops_known = 0;
             if (obj->opoisoned && u.ualign.type != A_CHAOTIC)
                 obj->opoisoned = 0;
             if (obj->oclass == WEAPON_CLASS || obj->oclass == TOOL_CLASS) {
@@ -1089,8 +1042,10 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
             else if (!uswapwep)
                 setuswapwep(obj);
         }
-        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER)
+        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER) {
+            gotspell[obj->otyp] = 1;
             initialspell(obj);
+        }
 
         if (--trquan)
             continue;   /* make a similar object */

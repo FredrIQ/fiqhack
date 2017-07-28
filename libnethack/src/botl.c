@@ -36,12 +36,11 @@ static const char *const trap_stat[] = {
 static int mrank_sz = 0;        /* loaded by max_rank_sz (from u_init) */
 
 static const char *rank(void);
-static int xlev_to_rank(int);
 static long botl_score(void);
 
 
 /* convert experience level (1..30) to rank index (0..8) */
-static int
+int
 xlev_to_rank(int xlev)
 {
     return (xlev <= 2) ? 0 : (xlev <= 30) ? ((xlev + 2) / 4) : 8;

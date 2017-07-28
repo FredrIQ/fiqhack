@@ -176,11 +176,19 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
     if (!last_command_was("moveonly")) {
         boolean lava = l->mem_bg == S_lava;
         boolean pool = l->mem_bg == S_pool;
+        int waterwalk = 0;
+        /* set waterwalk to 1 if IDed, 2 if IDed fireproof (allows lava) */
+        if (uarmf && uarmf->otyp == WATER_WALKING_BOOTS && uarmf->dknown &&
+            objects[uarmf->otyp].oc_name_known) {
+            waterwalk++;
+            if (uarmf->rknown && uarmf->oerodeproof)
+                waterwalk++;
+        }
 
         if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
-            (lava || (pool && !Swimming)) &&
-            !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy)) {
-
+            ((lava && waterwalk < 2) ||
+             (pool && !Swimming && !waterwalk)) &&
+            !(lava ? is_lava(level, u.ux, u.uy) : is_pool(level, u.ux, u.uy))) {
             if (cansee(x, y))
                 pline(msgc_cancelled,
                       is_pool(level, x, y) ? "You never learned to swim!" :
@@ -563,7 +571,7 @@ still_chewing(xchar x, xchar y)
         u.utracked_location[tl_dig].y = y;
         /* solid rock takes more work & time to dig through */
         u.uoccupation_progress[tos_dig] =
-            (IS_ROCK(loc->typ) && !IS_TREE(loc->typ) ? 30 : 60) + mon_dambon(&youmonst);
+            (IS_ROCK(loc->typ) && !IS_TREE(loc->typ) ? 30 : 60) + dambon(&youmonst);
         pline(msgc_occstart, "You start chewing %s %s.",
               (boulder ||
                IS_TREE(loc->typ)) ? "on a" : "a hole in the",
@@ -571,7 +579,7 @@ still_chewing(xchar x, xchar y)
               "tree" : IS_ROCK(loc->typ) ? "rock" : "door");
         watch_warn(NULL, x, y, FALSE);
         return 1;
-    } else if ((u.uoccupation_progress[tos_dig] += (30 + mon_dambon(&youmonst))) <= 100) {
+    } else if ((u.uoccupation_progress[tos_dig] += (30 + dambon(&youmonst))) <= 100) {
         if (flags.verbose)
             /* TODO: surely should be checking continue_message? */
             pline(msgc_occstart, "You continue chewing on the %s.",
@@ -1854,6 +1862,14 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                       mon_nam(mtmp), msgupcasefirst(mhe(mtmp)));
             }
         } else {
+            /* Possibly unwield launcher for ammo unless we're using forcefight. */
+            if (flags.autoswap && uquiver && is_ammo(uquiver) &&
+                ammo_and_launcher(uquiver, uwep) &&
+                (!uswapwep || !ammo_and_launcher(uquiver, uswapwep)) &&
+                (!uwep->cursed || !uwep->bknown) &&
+                (!uswapwep || !uswapwep->cursed || !uswapwep->bknown))
+                doswapweapon(arg);
+
             /* Try to perform the attack itself. We've already established that
                the player's willing to perform the attack. */
             enum attack_check_status attack_status =

@@ -15,6 +15,7 @@ static int passiveum(const struct permonst *, struct monst *,
 static void mayberem(struct obj *, const char *);
 
 static boolean diseasemu(const struct permonst *, const char *);
+static void do_mercy(struct monst *, struct obj *, int);
 static int hitmu(struct monst *, const struct attack *);
 static int gulpmu(struct monst *, const struct attack *);
 static int explmu(struct monst *, const struct attack *);
@@ -200,9 +201,15 @@ mattacku(struct monst *mtmp)
     struct musable musable;
 
     const struct permonst *mdat = mtmp->data;
-    boolean ranged = (distu(mtmp->mx, mtmp->my) > 3);
 
-    /* Is it near you? Affects your actions */
+    /* Will monsters use ranged or melee attacks against you? */
+    boolean ranged = FALSE;
+    if (dist2(mtmp->mx, mtmp->my, u.ux, u.uy) > 2 ||
+        (mtmp->data->mlet == S_DRAGON && extra_nasty(mtmp->data) &&
+         !mtmp->mspec_used && (!cancelled(mtmp) || rn2(3))))
+        ranged = TRUE;
+
+    /* Is it near you at all? (Different from above) */
     boolean range2 = !monnear(mtmp, u.ux, u.uy);
 
     /* Can you see it? Affects messages. For long worms, if they're attacking
@@ -228,7 +235,8 @@ mattacku(struct monst *mtmp)
     if (Engulfed) {
         if (mtmp != u.ustuck)
             return 0;
-        range2 = 0;
+        range2 = FALSE;
+        ranged = FALSE;
         if (u.uinvulnerable)
             return 0;   /* stomachs can't hurt you! */
     }
@@ -403,7 +411,7 @@ mattacku(struct monst *mtmp)
         tmp -= 2;
     if (tmp <= 0)
         tmp = 1;
-    tmp += mon_hitbon(mtmp);
+    tmp += hitbon(mtmp);
 
     /* make eels visible the moment they hit/miss us */
     if (mdat->mlet == S_EEL && invisible(mtmp) && cansee(mtmp->mx, mtmp->my)) {
@@ -426,7 +434,7 @@ mattacku(struct monst *mtmp)
         if (mtmp == u.ustuck)
             pline(msgc_noconsequence, "%s loosens its grip slightly.",
                   Monnam(mtmp));
-        else if (!range2) {
+        else if (!ranged) {
             if (youseeit || sensemon(mtmp))
                 pline(msgc_noconsequence,
                       "%s starts to attack you, but pulls back.", Monnam(mtmp));
@@ -446,7 +454,6 @@ mattacku(struct monst *mtmp)
     }
 
     for (i = 0; i < NATTK; i++) {
-
         sum[i] = 0;
         mattk = getmattk(mdat, i, sum, &alt_attk);
         if (Engulfed && (mattk->aatyp != AT_ENGL))
@@ -459,7 +466,7 @@ mattacku(struct monst *mtmp)
         case AT_TUCH:
         case AT_BUTT:
         case AT_TENT:
-            if (!range2 &&
+            if (!ranged &&
                 (!MON_WEP(mtmp) || confused(mtmp) || Conflict ||
                  !touch_petrifies(youmonst.data))) {
                 if (tmp > (j = rnd(20 + i))) {
@@ -472,7 +479,7 @@ mattacku(struct monst *mtmp)
             break;
 
         case AT_HUGS:  /* automatic if prev two attacks succeed */
-            if ((!range2 && i >= 2 && sum[i - 1] && sum[i - 2])
+            if ((!ranged && i >= 2 && sum[i - 1] && sum[i - 2])
                 || mtmp == u.ustuck)
                 sum[i] = hitmu(mtmp, mattk);
             break;
@@ -486,12 +493,12 @@ mattacku(struct monst *mtmp)
 
         case AT_EXPL:
             /* explmu does hit calculations, but we have to check range */
-            if (!range2)
+            if (!ranged)
                 sum[i] = explmu(mtmp, mattk);
             break;
 
         case AT_ENGL:
-            if (!range2) {
+            if (!ranged) {
                 if (Engulfed || tmp > (j = rnd(20 + i))) {
                     /* Force swallowing monster to be displayed even when
                        player is moving away */
@@ -503,15 +510,15 @@ mattacku(struct monst *mtmp)
             }
             break;
         case AT_BREA:
-            if (range2)
+            if (ranged)
                 sum[i] = breamq(mtmp, u.ux, u.uy, mattk);
             break;
         case AT_SPIT:
-            if (range2)
+            if (ranged)
                 sum[i] = spitmq(mtmp, u.ux, u.uy, mattk);
             break;
         case AT_WEAP:
-            if (range2) {
+            if (ranged) {
                 if (!Is_rogue_level(&u.uz))
                     thrwmq(mtmp, u.ux, u.uy);
             } else {
@@ -631,16 +638,19 @@ diseasemu(const struct permonst *mdat, const char *hitmsg)
 static boolean
 u_slip_free(struct monst *mtmp, const struct attack *mattk)
 {
-    struct obj *obj = (uarmc ? uarmc : uarm);
+    struct obj *obj = (uarmc ? uarmc : uarm ? uarm : uarmu);
 
-    if (!obj)
-        obj = uarmu;
     if (mattk->adtyp == AD_DRIN)
         obj = uarmh;
 
+    uint64_t props = 0;
+    if (obj)
+        props = obj_properties(obj);
+
     /* if your cloak/armor is greased, monster slips off; this protection might
        fail (33% chance) when the armor is cursed */
-    if (obj && (obj->greased || obj->otyp == OILSKIN_CLOAK) &&
+    if (obj && (obj->greased || obj->otyp == OILSKIN_CLOAK ||
+                (props & opm_oilskin)) &&
         (!obj->cursed || rn2(3))) {
         pline(combat_msgc(mtmp, &youmonst, cr_miss), "%s %s your %s %s!",
               Monnam(mtmp), (mattk->adtyp == AD_WRAP) ? "slips off of" :
@@ -648,7 +658,8 @@ u_slip_free(struct monst *mtmp, const struct attack *mattk)
               obj->greased ? "greased" : "slippery",
               /* avoid "slippery slippery cloak" for undiscovered oilskin
                  cloak */
-              (obj->greased || objects[obj->otyp].oc_name_known) ?
+              (obj->greased || objects[obj->otyp].oc_name_known ||
+               obj->otyp != OILSKIN_CLOAK) ?
               xname(obj) : cloak_simple_name(obj));
 
         if (obj->greased && !rn2(2)) {
@@ -701,6 +712,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     const struct permonst *olduasmon = youmonst.data;
     int res;
     struct attack noseduce;
+    boolean mercy = FALSE;
 
     if (!flags.seduce_enabled && mattk->adtyp == AD_SSEX) {
         noseduce = *mattk;
@@ -739,7 +751,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     dmg = dice((int)mattk->damn, (int)mattk->damd);
     if (is_undead(mdat) && midnight())
         dmg += dice((int)mattk->damn, (int)mattk->damd); /* extra damage */
-    dmg += mon_dambon(mtmp);
+    dmg += dambon(mtmp);
 
     /* Next a cancellation factor. Use uncancelled when the cancellation factor
        takes into account certain armor's special magic protection.  Otherwise just
@@ -790,14 +802,18 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
                 if (dmg <= 0)
                     dmg = 1;
-                if (!(otmp->oartifact &&
+                if (!((otmp->oartifact || otmp->oprops) &&
                       artifact_hit(mtmp, &youmonst, otmp, &dmg, dieroll)))
                     hitmsg(mtmp, mattk);
+                if (obj_properties(otmp) & opm_mercy)
+                    mercy = TRUE;
+
                 if (!dmg)
                     break;
                 if (u.mh > 1 && u.mh > ((find_mac(&youmonst) > 0) ?
                                             dmg : dmg + find_mac(&youmonst)) &&
                     objects[otmp->otyp].oc_material == IRON &&
+                    !mercy &&
                     (u.umonnum == PM_BLACK_PUDDING ||
                      u.umonnum == PM_BROWN_PUDDING)) {
                     /* This redundancy is necessary because you have to take the
@@ -830,7 +846,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_MAGM:
         hitmsg(mtmp, mattk);
-        if (uncancelled) {
+        if (!cancelled(mtmp)) {
             pline(combat_msgc(mtmp, &youmonst, cr_hit),
                   "You're hit by a shower of missiles!");
             if (resists_magm(&youmonst)) {
@@ -859,11 +875,11 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                       "You're %s!", on_fire(youmonst.data, mattk));
             }
             if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(SCROLL_CLASS, AD_FIRE);
+                destroy_mitem(&youmonst, SCROLL_CLASS, AD_FIRE);
             if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(POTION_CLASS, AD_FIRE);
+                destroy_mitem(&youmonst, POTION_CLASS, AD_FIRE);
             if ((int)mtmp->m_lev > rn2(25))
-                destroy_item(SPBOOK_CLASS, AD_FIRE);
+                destroy_mitem(&youmonst, SPBOOK_CLASS, AD_FIRE);
             burn_away_slime(&youmonst);
         } else
             dmg = 0;
@@ -879,7 +895,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
                       "You're covered in frost!");
             if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(POTION_CLASS, AD_COLD);
+                destroy_mitem(&youmonst, POTION_CLASS, AD_COLD);
         } else
             dmg = 0;
         break;
@@ -892,7 +908,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             } else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit), "You get zapped!");
             if ((int)mtmp->m_lev > rn2(20))
-                destroy_item(WAND_CLASS, AD_ELEC);
+                destroy_mitem(&youmonst, WAND_CLASS, AD_ELEC);
         } else
             dmg = 0;
         break;
@@ -930,8 +946,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     dopois:
         hitmsg(mtmp, mattk);
         if (uncancelled && !rn2(8)) {
-            poisoned(msgprintf("%s %s", s_suffix(Monnam(mtmp)),
-                               mpoisons_subj(mtmp, mattk)),
+            poisoned(&youmonst, msgprintf("%s %s", s_suffix(Monnam(mtmp)),
+                                          mpoisons_subj(mtmp, mattk)),
                      ptmp, killer_msg_mon(POISONING, mtmp), 30);
         }
         break;
@@ -957,7 +973,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         }
         if (Half_physical_damage)
             dmg = (dmg + 1) / 2;
-        mdamageu(mtmp, dmg);
+        if (mercy)
+            do_mercy(mtmp, otmp, dmg);
+        else
+            mdamageu(mtmp, dmg);
 
         if (!uarmh || uarmh->otyp != DUNCE_CAP) {
             pline(ABASE(A_INT) <= ATTRMIN(A_INT) ?
@@ -1018,7 +1037,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_DRLI:
         hitmsg(mtmp, mattk);
-        if (uncancelled && !rn2(3) && !Drain_resistance) {
+        if (!cancelled(mtmp) && !rn2(3) && !Drain_resistance) {
             losexp(msgcat("drained of life by ", k_monnam(mtmp)), FALSE);
         }
         break;
@@ -1224,7 +1243,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
     case AD_SAMU:
         hitmsg(mtmp, mattk);
-        /* when the Wiz hits, 1/20 steals the amulet */
+        /* When covetous monsters hit, maybe steal the item */
         if (Uhave_amulet || Uhave_bell || Uhave_book || Uhave_menorah ||
             Uhave_questart)  /* carrying the Quest Artifact */
             if (!rn2(20))
@@ -1503,6 +1522,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         }
         break;
     case AD_ZOMB:
+        hitmsg(mtmp, mattk);
         if (nonliving(youmonst.data) || izombie(&youmonst))
             break;
         zombie_timer = property_timeout(&youmonst, ZOMBIE);
@@ -1580,7 +1600,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             /* else already at or below minimum threshold; do nothing */
         }
 
-        mdamageu(mtmp, dmg);
+        if (mercy)
+            do_mercy(mtmp, otmp, dmg);
+        else
+            mdamageu(mtmp, dmg);
     }
 
     if (dmg)
@@ -1885,12 +1908,13 @@ explmu(struct monst *mtmp, const struct attack *mattk)
                          dmgtype(youmonst.data, AD_STUN));
         if (!not_affected) {
             if (!Hallucination)
-                pline(msgc_statusbad,
-                      "You are caught in a blast of kaleidoscopic light!");
+                pline_implied(msgc_statusbad,
+                              "You are caught in a blast of kaleidoscopic light!");
             inc_timeout(&youmonst, HALLUC, tmp, TRUE);
-            pline(msgc_statusbad, "You %s.",
-                  !hallucinating(&youmonst) ?
-                  "are freaked out" : "seem unaffected");
+            if (hallucinating(&youmonst))
+                pline(msgc_statusbad, "You are freaked out.");
+            else
+                pline(msgc_playerimmune, "You seem unaffected.");
         }
         break;
 
@@ -1910,6 +1934,52 @@ explmu(struct monst *mtmp, const struct attack *mattk)
     return 2;   /* it dies */
 }
 
+
+static void
+do_mercy(struct monst *magr, struct obj *obj, int dmg)
+{
+    boolean restored_hp = FALSE;
+    boolean saw_something = FALSE;
+    if (Upolyd) {
+        if (u.mh < u.mhmax) {
+            u.mh += dmg;
+            if (u.mh > u.mh)
+                u.mh = u.mhmax;
+            restored_hp = TRUE;
+        }
+    } else {
+        if (u.uhp < u.uhpmax) {
+            u.uhp += dmg;
+            if (u.uhp > u.uhpmax)
+                u.uhp = u.uhpmax;
+            restored_hp = TRUE;
+        }
+    }
+
+    if (restored_hp) {
+        pline(msgc_statusgood, "You are healed!");
+        saw_something = TRUE;
+    }
+
+    if (obj) {
+        obj->mknown = 1;
+        obj->mbknown = 1;
+
+        if (!obj->cursed) {
+            if (canseemon(magr)) {
+                pline(msgc_monneutral, "%s %s for a moment.",
+                      Tobjnam(obj, "glow"), hcolor("black"));
+                saw_something = TRUE;
+            }
+            curse(obj);
+        }
+
+        if (saw_something) {
+            obj->bknown = 1;
+            learn_oprop(obj, opm_mercy);
+        }
+    }
+}
 
 /* mtmp hits you for n points damage */
 void

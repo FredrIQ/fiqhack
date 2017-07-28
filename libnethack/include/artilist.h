@@ -79,8 +79,7 @@ static const struct artifact const_artilist[] = {
  */
 
     A("Excalibur", LONG_SWORD,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_SEEK | SPFX_DEFN | SPFX_INTEL |
-       SPFX_SEARCH), 0, 0,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_DEFN | SPFX_INTEL), 0, 0,
       PHYS(5, 10), DRLI(0, 0), NO_CARY, 0, A_LAWFUL, PM_KNIGHT, NON_PM, 4000L),
 /*
  *      Stormbringer only has a 2 because it can drain a level,
@@ -124,7 +123,7 @@ static const struct artifact const_artilist[] = {
  *      Magicbane is a bit different!  Its magic fanfare
  *      unbalances victims in addition to doing some damage.
  */
-    A("Magicbane", ATHAME,
+    A("Magicbane", QUARTERSTAFF,
       (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN), 0, 0,
       STUN(3, 4), DFNS(AD_MAGM), NO_CARY, 0, A_NEUTRAL, PM_WIZARD, NON_PM,
       3500L),
@@ -242,8 +241,8 @@ static const struct artifact const_artilist[] = {
 
     A("The Tsurugi of Muramasa", TSURUGI,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_BEHEAD | SPFX_LUCK), 0, 0,
-      PHYS(0, 8), NO_DFNS, NO_CARY,
-      0, A_LAWFUL, PM_SAMURAI, NON_PM, 4500L),
+      PHYS(0, 0), NO_DFNS, NO_CARY,
+      SELF_UNCURSE, A_LAWFUL, PM_SAMURAI, NON_PM, 4500L),
 
     A("The Platinum Yendorian Express Card", CREDIT_CARD,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_DEFN),

@@ -344,7 +344,7 @@ dname_to_dnum(const char *s)
 s_level *
 find_level(const char *s)
 {
-    s_level *curr;
+    s_level *curr = NULL;
 
     for (curr = gamestate.sp_levchn; curr; curr = curr->next)
         if (!strcmpi(s, curr->proto))
@@ -1638,7 +1638,8 @@ print_branch(struct nh_menulist *menu, int dnum,
     }
 }
 
-/* Print available dungeon information. */
+/* Print available dungeon information.
+   This is wizmode levelport "?", overview uses another function */
 schar
 print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 {
@@ -1833,7 +1834,7 @@ overview_is_interesting(const struct level *lev, const struct overview_info *oi)
 
     /* if overview_scan found _anything_ the level is also interesting */
     if (oi->fountains || oi->sinks || oi->thrones || oi->trees || oi->temples ||
-        oi->altars || oi->shopcount || oi->branch || oi->portal)
+        oi->altars || oi->shopcount || oi->branch || oi->portal || oi->vault)
         return TRUE;
 
     /* "boring" describes this level very well */
@@ -1945,6 +1946,10 @@ overview_scan(const struct level *lev, struct overview_info *oi)
                 oi->portal_dst_known = FALSE;
             }
         }
+
+    /* Check if we know there's a vault in this level */
+    if (lev->flags.vault_known)
+        oi->vault = TRUE;
 }
 
 
@@ -2121,6 +2126,7 @@ overview_print_info(const struct overview_info *oi)
     ADDNTOBUF("sink", oi->sinks);
     ADDNTOBUF("throne", oi->thrones);
     ADDNTOBUF("tree", oi->trees);
+    ADDNTOBUF("vault", oi->vault);
 
     return buf;
 }

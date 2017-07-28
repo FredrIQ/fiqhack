@@ -102,6 +102,11 @@
 # define zombifying(mon)        (property_timeout(mon, ZOMBIE))
 /* living but under the power of undead (and immune to zombification) */
 # define izombie(mon)           (ihas_property(mon, ZOMBIE))
+# define waterproof(mon)        (has_property(mon, WATERPROOF))
+
+# define hitbon(mon)            (mon_bon(mon, RIN_INCREASE_ACCURACY, (mon)->mhitinc))
+# define dambon(mon)            (mon_bon(mon, RIN_INCREASE_DAMAGE, (mon)->mdaminc))
+# define protbon(mon)           (mon_bon(mon, RIN_PROTECTION, (mon)->mac))
 
 # define is_lminion(mon)        (pm_isminion((mon)->data) &&    \
                                  malign(mon) == A_LAWFUL)
@@ -237,6 +242,7 @@
 # define pm_invisible(ptr)      ((ptr) == &mons[PM_STALKER] || \
                                  (ptr) == &mons[PM_BLACK_LIGHT] || \
                                  (ptr) == &mons[PM_QUASIT])
+# define pm_zombie(ptr)         dmgtype(ptr, AD_ZOMB)
 
 /* could probably add more */
 # define likes_fire(ptr)        ((ptr) == &mons[PM_FIRE_VORTEX] || \

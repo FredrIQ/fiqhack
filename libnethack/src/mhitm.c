@@ -173,14 +173,13 @@ noises(struct monst *magr, const struct attack *mattk)
 {
     boolean farq = (distu(magr->mx, magr->my) > 15);
 
-    /* Disable the timer for now, people find it annoying
-       if (farq != far_noise || moves - noisetime > 10) { */
-    far_noise = farq;
-    noisetime = moves;
-    You_hear(msgc_levelsound, "%s%s.",
-             (mattk->aatyp == AT_EXPL) ? "an explosion" : "some noises",
-             farq ? " in the distance" : " nearby");
-    /* } */
+    if (farq != far_noise || moves - noisetime > 1) {
+        far_noise = farq;
+        noisetime = moves;
+        You_hear(msgc_levelsound, "%s%s.",
+                 (mattk->aatyp == AT_EXPL) ? "an explosion" : "some noises",
+                 farq ? " in the distance" : " nearby");
+    }
 }
 
 static void
@@ -218,6 +217,10 @@ fightm(struct monst *mon)
     int result;
     boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
                           m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
+    boolean mercy = FALSE;
+    if (mon->mw && (obj_properties(mon->mw) & opm_mercy) &&
+        mon->mw->mknown)
+        mercy = TRUE;
 
     /* perhaps we're holding it... */
     if (itsstuck(mon))
@@ -247,7 +250,11 @@ fightm(struct monst *mon)
         x = mon->mx + dirx[try[i]];
         y = mon->my + diry[try[i]];
         mtmp = m_at(level, x, y);
-        if (!mtmp || (!mm_aggression(mon, mtmp) && !conflicted))
+        if (!mtmp || (!mm_aggression(mon, mtmp) && !conflicted &&
+                      !mercy))
+            continue;
+        if (mercy && mon->mpeaceful != (mtmp == &youmonst ? 1 :
+                                        mtmp->mpeaceful))
             continue;
 
         /* TODO: why are these needed... */
@@ -343,7 +350,7 @@ mattackm(struct monst *magr, struct monst *mdef)
         tmp += 4;
         mdef->msleeping = 0;
     }
-    tmp += mon_hitbon(magr);
+    tmp += hitbon(magr);
 
     /* undetect monsters become un-hidden if they are attacked */
     if (mdef->mundetected &&
@@ -384,9 +391,16 @@ mattackm(struct monst *magr, struct monst *mdef)
         mattk = getmattk(pa, i, res, &alt_attk);
         otmp = NULL;
         attk = 1;
+
+        boolean ranged_ok = FALSE;
+        if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2 ||
+            (magr->data->mlet == S_DRAGON && extra_nasty(magr->data) &&
+             !magr->mspec_used && (!cancelled(magr) || rn2(3))))
+            ranged_ok = TRUE;
+
         switch (mattk->aatyp) {
         case AT_WEAP:  /* weapon attacks */
-            if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
+            if (ranged_ok) {
                 thrwmq(magr, mdef->mx, mdef->my);
                 if (tmphp > mdef->mhp)
                     res[i] = MM_HIT;
@@ -421,7 +435,7 @@ mattackm(struct monst *magr, struct monst *mdef)
         case AT_BUTT:
         case AT_TENT:
             /* Nymph that teleported away on first attack? */
-            if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
+            if (ranged_ok) {
                 strike = 0;
                 break;  /* might have more ranged attacks */
             }
@@ -444,6 +458,7 @@ mattackm(struct monst *magr, struct monst *mdef)
                 if ((mdef->data == &mons[PM_BLACK_PUDDING] ||
                      mdef->data == &mons[PM_BROWN_PUDDING])
                     && otmp && objects[otmp->otyp].oc_material == IRON &&
+                    !(obj_properties(otmp) & opm_mercy) &&
                     mdef->mhp >= 2 && !cancelled(mdef)) {
                     if (clone_mon(mdef, 0, 0)) {
                         if (vis) {
@@ -458,6 +473,9 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_HUGS:  /* automatic if prev two attacks succeed */
+            if (ranged_ok)
+                break;
+
             strike = (i >= 2 && res[i - 1] == MM_HIT && res[i - 2] == MM_HIT);
             if (strike)
                 res[i] = hitmm(magr, mdef, mattk);
@@ -465,7 +483,8 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_BREA:
-            breamq(magr, mdef->mx, mdef->my, mattk);
+            if (ranged_ok)
+                breamq(magr, mdef->mx, mdef->my, mattk);
             if (tmphp > mdef->mhp)
                 res[i] = MM_HIT;
             else
@@ -478,7 +497,8 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_SPIT:
-            spitmq(magr, mdef->mx, mdef->my, mattk);
+            if (ranged_ok)
+                spitmq(magr, mdef->mx, mdef->my, mattk);
             if (tmphp > mdef->mhp)
                 res[i] = MM_HIT;
             else
@@ -491,12 +511,13 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_GAZE:
+            /* both melee and ranged */
             strike = 0; /* will not wake up a sleeper */
             res[i] = gazemm(magr, mdef, mattk);
             break;
 
         case AT_EXPL:
-            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1) {
+            if (ranged_ok) {
                 strike = 0;
                 break;
             }
@@ -509,8 +530,7 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_ENGL:
-            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1 ||
-                (u.usteed && (mdef == u.usteed))) {
+            if (ranged_ok) {
                 strike = 0;
                 break;
             }
@@ -680,7 +700,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis)
                 mon_reflects(mdef, magr, FALSE,
                              "%s gaze is reflected by %s %s.",
-                             uagr ? s_suffix(Monnam(magr)) : "Your");
+                             s_suffix(Monnam(magr)));
             if (reflecting(magr)) {
                 if (vis)
                     mon_reflects(magr, mdef, TRUE, 
@@ -715,8 +735,6 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 monstone(magr);
 
             return (!uagr && DEADMONSTER(magr)) ? MM_AGR_DIED : 0;
-                break;
-            return MM_AGR_DIED;
         }
         if (visda && valid_range && !resists_ston(mdef)) {
             pline(combat_msgc(magr, mdef, cr_kill), "%s %s gaze.",
@@ -950,6 +968,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     const struct permonst *pd = mdef->data;
     int armpro, num, tmp = dice((int)mattk->damn, (int)mattk->damd);
     boolean cancelled;
+    boolean mercy = FALSE;
     int zombie_timer;
 
     if (touch_petrifies(pd) && !resists_ston(magr)) {
@@ -978,7 +997,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             return MM_AGR_DIED;
         }
     }
-    tmp += mon_dambon(magr);
+    tmp += dambon(magr);
 
     /* cancellation factor is the same as when attacking the hero */
     armpro = magic_negation(mdef);
@@ -1080,11 +1099,14 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     touch_petrifies(&mons[otmp->corpsenm]))
                     goto do_stone;
                 tmp += dmgval(otmp, mdef);
-                if (otmp->oartifact) {
+                if (otmp->oartifact ||
+                    otmp->oprops) {
                     artifact_hit(magr, mdef, otmp, &tmp, dieroll);
                     if (DEADMONSTER(mdef))
                         return (MM_DEF_DIED |
                                 (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
+                    if (obj_properties(otmp) & opm_mercy)
+                        mercy = TRUE;
                 }
                 if (tmp)
                     mrustm(magr, mdef, otmp);
@@ -1100,7 +1122,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_MAGM:
-        if (cancelled) {
+        if (cancelled(magr)) {
             tmp = 0;
             break;
         }
@@ -1187,8 +1209,6 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             golemeffects(mdef, AD_ELEC, tmp);
             tmp = 0;
         }
-        /* only rings damage resistant players in destroy_item */
-        tmp += destroy_mitem(mdef, RING_CLASS, AD_ELEC);
         break;
     case AD_ACID:
         if (cancelled(magr)) {
@@ -1406,7 +1426,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     } case AD_DRLI:
-        if (!cancelled && !rn2(3) && !resists_drli(mdef)) {
+        if (!cancelled(magr) && !rn2(3) && !resists_drli(mdef)) {
             tmp = dice(2, 6);
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit),
@@ -1446,6 +1466,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     setmnotwielded(mdef, otmp);
                 otmp->owornmask = 0L;
                 update_property(mdef, objects[otmp->otyp].oc_oprop, which_slot(otmp));
+                update_property_for_oprops(mdef, otmp,
+                                           which_slot(otmp));
             }
 
             /* add_to_minv() might free otmp [if it merges] */
@@ -1651,6 +1673,36 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     }
     if (!tmp)
         return MM_MISS;
+
+    if (mercy) {
+        otmp->mbknown = 1;
+        otmp->mknown = 1;
+        boolean saw_something = FALSE;
+        if (mdef->mhp < mdef->mhpmax) {
+            mdef->mhp += tmp;
+            if (mdef->mhp > mdef->mhpmax)
+                mdef->mhp = mdef->mhpmax;
+            if (canseemon(magr) || canseemon(mdef)) {
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s healed!", M_verbs(mdef, "are"));
+                saw_something = TRUE;
+            }
+        }
+
+        if (!otmp->cursed) {
+            if (canseemon(magr)) {
+                pline(msgc_monneutral, "%s %s for a moment.",
+                      Tobjnam(otmp, "glow"), hcolor("black"));
+                saw_something = TRUE;
+            }
+            curse(otmp);
+        }
+
+        if (saw_something) {
+            learn_oprop(otmp, opm_mercy);
+            otmp->bknown = 1; /* autocurses */
+        }
+    }
 
     if ((mdef->mhp -= tmp) < 1) {
         if (m_at(level, mdef->mx, mdef->my) == magr) {  /* see gulpmm() */
@@ -2055,10 +2107,8 @@ maurahitpile(struct monst *mon, int x, int y, const struct attack *mattk)
     for (obj = level->objects[x][y]; obj; obj = nexthere) {
         nexthere = obj->nexthere;
         if (obj->otyp == CORPSE) {
-            pline(msgc_debug, "?");
             if (ox_monst(obj)) {
                 omon = get_mtraits(obj, FALSE);
-                pline(msgc_debug, "?%d", omon->orig_mnum);
                 /* We can't use izombie() because normal property checks assume
                    proper values in the monst */
                 if ((nonliving(&mons[omon->orig_mnum]) ||
@@ -2066,6 +2116,9 @@ maurahitpile(struct monst *mon, int x, int y, const struct attack *mattk)
                     continue;
             }
             omon = revive(obj);
+            if (!omon)
+                continue;
+
             if (mon->mtame != omon->mtame) {
                 if (mon->mtame)
                     tamedog(omon, NULL);
@@ -2105,7 +2158,7 @@ maurahitpile(struct monst *mon, int x, int y, const struct attack *mattk)
                 pline(msgc_monneutral, "%s from the dead%s!",
                       M_verbs(omon, "raise"),
                       nonliving(omon->data) ? "" :
-                      msgcat_many("under ", mon_nam(mon), " power", NULL));
+                      msgcat_many(" under ", mon_nam(mon), " power", NULL));
             if (!nonliving(omon->data) && !izombie(omon))
                 set_property(omon, ZOMBIE, 0, TRUE);
         }

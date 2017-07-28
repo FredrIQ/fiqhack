@@ -7,7 +7,6 @@
 
 boolean notonhead = FALSE;
 
-static int nothing, unkn;
 static const char beverages_and_fountains[] =
     { ALLOW_NONE, NONE_ON_COMMA, POTION_CLASS, 0 };
 static const char beverages[] = { POTION_CLASS, 0 };
@@ -52,7 +51,8 @@ make_sick(struct monst *mon, long xtime, const char *cause,
         } else if (!flags.mon_moving) /* you made the monster sick */
             mon->usicked = 1;
     } else if ((old || zombifying(mon)) &&
-               (!you || (type & u.usick_type))) {
+               (!you || (type & u.usick_type) ||
+                zombifying(mon))) {
         /* TODO: usick_type equavilent for monsters */
         if (zombifying(mon)) {
             set_property(mon, ZOMBIE, -2, TRUE);
@@ -321,8 +321,9 @@ dopotion(struct obj *otmp)
     }
 
     otmp->in_use = TRUE;
-    nothing = unkn = 0;
-    if ((retval = peffects(&youmonst, otmp)) >= 0)
+    int nothing = 0;
+    int unkn = 0;
+    if ((retval = peffects(&youmonst, otmp, &nothing, &unkn)) >= 0)
         return retval;
 
     if (nothing) {
@@ -344,7 +345,7 @@ dopotion(struct obj *otmp)
 
 
 int
-peffects(struct monst *mon, struct obj *otmp)
+peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
 {
     int i, ii, lim;
     boolean you = (mon == &youmonst);
@@ -392,7 +393,7 @@ peffects(struct monst *mon, struct obj *otmp)
                    Equavilent to what "drain strength" does against monsters (but in reverse).
                 */
                 if (!vis)
-                    unkn++;
+                    *unkn = 1;
                 else
                     pline(msgc_monneutral,
                           "%s looks %s!", Monnam(mon), otmp->blessed ? "great" : "better");
@@ -442,8 +443,8 @@ peffects(struct monst *mon, struct obj *otmp)
             else if (vis)
                 pline(msgc_monneutral, "%s looks cross-eyed!", Monnam(mon));
         } else {
-            unkn++;
-            nothing++;
+            *unkn = 1;
+            *nothing = 1;
         }
         set_property(mon, prop, rn1(200, 600 - 300 * bcsign(otmp)), TRUE);
         break;
@@ -452,7 +453,7 @@ peffects(struct monst *mon, struct obj *otmp)
             if (you)
                 pline(msgc_actionok, "This tastes like water.");
             else
-                unkn++;
+                *unkn = 1;
             if (you) {
                 u.uhunger += rnd(10);
                 newuhs(FALSE);
@@ -461,7 +462,7 @@ peffects(struct monst *mon, struct obj *otmp)
             break;
         }
         if (!you && !vis)
-            unkn++;
+            *unkn = 1;
         if (is_undead(mon->data) || is_demon(mon->data) ||
             alignment == A_CHAOTIC) {
             if (otmp->blessed) {
@@ -509,6 +510,7 @@ peffects(struct monst *mon, struct obj *otmp)
                 if (you || vis)
                     pline(statusheal, "%s %s full of awe.", Mon, looks);
                 set_property(mon, SICK, -2, FALSE);
+                set_property(mon, ZOMBIE, -2, FALSE);
                 if (you) {
                     exercise(A_WIS, TRUE);
                     exercise(A_CON, TRUE);
@@ -550,7 +552,7 @@ peffects(struct monst *mon, struct obj *otmp)
         break;
     case POT_BOOZE:
         if (!you && !vis)
-            unkn++;
+            *unkn = 1;
         if (you)
             pline(statusbad, "Ooph!  This tastes like %s%s!",
                   otmp->odiluted ? "watered down " : "",
@@ -589,7 +591,7 @@ peffects(struct monst *mon, struct obj *otmp)
         break;
     case POT_ENLIGHTENMENT:
         if (otmp->cursed) {
-            unkn++;
+            *unkn = 1;
             if (you) {
                 pline(msgc_failcurse, "You have an uneasy feeling.");
                 exercise(A_WIS, FALSE);
@@ -623,9 +625,9 @@ peffects(struct monst *mon, struct obj *otmp)
         /* FALLTHRU */
     case POT_INVISIBILITY:
         if (blind(&youmonst) || (!you && !vis))
-            unkn++;
+            *unkn = 1;
         if (invisible(mon) || (blind(&youmonst) && you))
-            nothing++;
+            *nothing = 1;
         set_property(mon, INVIS, otmp->blessed ? 0 : rn1(15, 31), FALSE);
         newsym(m_mx(mon), m_my(mon));     /* update position */
         if (otmp->cursed) {
@@ -641,7 +643,7 @@ peffects(struct monst *mon, struct obj *otmp)
         /* tastes like fruit juice in Rogue */
     case POT_FRUIT_JUICE:
         {
-            unkn++;
+            *unkn = 1;
             if (otmp->cursed && you)
                 pline(msgc_failcurse, "Yecch!  This tastes %s.",
                       Hallucination ? "overripe" : "rotten");
@@ -662,7 +664,7 @@ peffects(struct monst *mon, struct obj *otmp)
                 set_property(mon, BLINDED, -2, FALSE);
             if (set_property(mon, SEE_INVIS, otmp->blessed ? 0 : rn1(100, 750), FALSE) &&
                 you)
-                unkn--;
+                *unkn = 0;
             break;
         }
     case POT_PARALYSIS:
@@ -711,10 +713,10 @@ peffects(struct monst *mon, struct obj *otmp)
     case SPE_DETECT_MONSTERS:
         if (otmp->blessed) {
             if (detects_monsters(mon)) {
-                nothing++;
-                unkn++;
+                *nothing = 1;
+                *unkn = 1;
             } else if (!you)
-                unkn++;
+                *unkn = 1;
             /* after a while, repeated uses become less effective */
             if (property_timeout(mon, DETECT_MONSTERS) >= 300)
                 i = 1;
@@ -725,7 +727,7 @@ peffects(struct monst *mon, struct obj *otmp)
         }
         /* TODO: uncursed (or unskilled/basic spell) for monsters */
         if (!you) {
-            unkn++;
+            *unkn = 1;
             if (vis)
                 pline(msgc_monneutral, "%s is granted an insight!", Mon);
         } else if (you && monster_detect(otmp, 0))
@@ -736,7 +738,7 @@ peffects(struct monst *mon, struct obj *otmp)
     case POT_OBJECT_DETECTION:
     case SPE_DETECT_TREASURE:
         if (!you) {
-            unkn++;
+            *unkn = 1;
             if (vis)
                 pline(msgc_monneutral, "%s is granted an insight!", Mon);
         } else if (object_detect(otmp, 0))
@@ -821,17 +823,17 @@ peffects(struct monst *mon, struct obj *otmp)
         break;
     case POT_CONFUSION:
         if (confused(mon))
-            nothing++;
+            *nothing = 1;
         inc_timeout(mon, CONFUSION, rn1(7, 16 - 8 * bcsign(otmp)), FALSE);
         break;
     case POT_GAIN_ABILITY:
         if (otmp->cursed) {
             if (you)
                 pline(msgc_failcurse, "Ulch!  That potion tasted foul!");
-            unkn++;
+            *unkn = 1;
             break;
         } else if (fixed_abilities(mon)) {
-            nothing++;
+            *nothing = 1;
             break;
         } else if (you) { /* If blessed, increase all; if not, try up to */
             int itmp;     /* 6 times to find one which can be increased. */
@@ -851,7 +853,7 @@ peffects(struct monst *mon, struct obj *otmp)
            noncursed */
     case POT_GAIN_LEVEL:
         if (otmp->cursed) {
-            unkn++;
+            *unkn = 1;
             /* they went up a level */
             if ((ledger_no(m_mz(mon)) == 1 && mon_has_amulet(mon)) ||
                 Can_rise_up(m_mx(mon), m_my(mon), m_mz(mon))) {
@@ -906,7 +908,7 @@ peffects(struct monst *mon, struct obj *otmp)
                 u.uexp = rndexp(TRUE);
         } else {
             if (!vis)
-                unkn++;
+                *unkn = 1;
             else {
                 if (otmp->otyp == POT_GAIN_LEVEL)
                     pline(msgc_monneutral, "%s seems more experienced.", Mon);
@@ -914,7 +916,7 @@ peffects(struct monst *mon, struct obj *otmp)
                     pline(msgc_monneutral, "%s abilities looks improved.", Mons);
             }
             if (!grow_up(mon, NULL))
-                return unkn;
+                return *unkn;
         }
         break;
     case POT_SPEED:
@@ -931,7 +933,7 @@ peffects(struct monst *mon, struct obj *otmp)
         break;
     case POT_BLINDNESS:
         if (blind(mon))
-            nothing++;
+            *nothing = 1;
         set_property(mon, BLINDED, rn1(200, 250 - 125 * bcsign(otmp)), FALSE);
         break;
     case POT_FULL_HEALING:
@@ -965,8 +967,10 @@ peffects(struct monst *mon, struct obj *otmp)
         if (healmax > 1 || !otmp->cursed)
             set_property(mon, BLINDED, -2, FALSE);
         /* cure sickness for noncursed EX/FH or blessed H */
-        if (otmp->blessed || (healmax > 1 && !otmp->cursed))
+        if (otmp->blessed || (healmax > 1 && !otmp->cursed)) {
             set_property(mon, SICK, -2, FALSE);
+            set_property(mon, ZOMBIE, -2, FALSE);
+        }
         /* cursed potions give no max HP gains */
         if (otmp->cursed)
             healmax = 0;
@@ -985,7 +989,7 @@ peffects(struct monst *mon, struct obj *otmp)
     case POT_LEVITATION:
     case SPE_LEVITATION:
         if (levitates(mon) && !otmp->cursed)
-            nothing++;
+            *nothing = 1;
         if (otmp->cursed) /* convert controlled->uncontrolled levi */
             /* TRUE to avoid float_down() */
             set_property(mon, LEVITATION, -1,
@@ -1075,7 +1079,7 @@ peffects(struct monst *mon, struct obj *otmp)
                 else
                     pline(badidea, "That was smooth!");
             } else
-                unkn++;
+                *unkn = 1;
             if (you)
                 exercise(A_WIS, good_for_you);
         }
@@ -1107,7 +1111,7 @@ peffects(struct monst *mon, struct obj *otmp)
             }
         }
         if (!set_property(mon, STONED, -2, FALSE))
-            unkn++; /* holy/unholy water can burn like acid too */
+            *unkn = 1; /* holy/unholy water can burn like acid too */
         break;
     case POT_POLYMORPH:
         if (you || vis) {
@@ -2046,7 +2050,7 @@ dodip(const struct nh_cmd_arg *arg)
                     potion->otyp == POT_FULL_HEALING)) {
             pline(msgc_itemrepair, "A coating wears off %s.", the(xname(obj)));
             obj->opoisoned = 0;
-            /* trigger the "recently broken" prompt because there are
+            /* trigger the "recently used" prompt because there are
                multiple possibilities */
             if (!(objects[potion->otyp].oc_name_known) &&
                 !(objects[potion->otyp].oc_uname))

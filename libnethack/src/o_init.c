@@ -101,18 +101,6 @@ init_objects(void)
                 break;
             }
         }
-    check:
-        sum = 0;
-        for (i = first; i < last; i++)
-            sum += objects[i].oc_prob;
-        if (sum == 0) {
-            for (i = first; i < last; i++)
-                objects[i].oc_prob = (1000 + i - first) / (last - first);
-            goto check;
-        }
-        if (sum != 1000)
-            raw_printf("init-prob error for class %d (%d%%)\n", oclass, sum);
-
         first = last;
     }
     /* shuffle descriptions */
@@ -221,7 +209,9 @@ find_skates(void)
     return -1;  /* not 0, or caller would try again each move */
 }
 
-
+/* Does a few dummy writes for things that doesn't change between games.
+   The reason that data is written at all has to do with earlier versions where that
+   data was written to the save, which causes issues when objects are modified. */
 static void
 saveobjclass(struct memfile *mf, struct objclass *ocl)
 {
@@ -231,36 +221,17 @@ saveobjclass(struct memfile *mf, struct objclass *ocl)
     /* no mtag useful; object classes are always saved in the same order and
        there are always the same number of them */
     oflags =
-        (ocl->oc_name_known << 31) | (ocl->oc_merge << 30) |
-        (ocl->oc_uses_known << 29) | (ocl->oc_pre_discovered << 28) |
-        (ocl->oc_magic << 27) | (ocl->oc_charged << 26) |
-        (ocl->oc_unique << 25) | (ocl->oc_nowish << 24) |
-        (ocl->oc_big << 23) | (ocl->oc_tough << 22) |
-        (ocl->oc_dir << 20) | (ocl->oc_material << 15) |
-        (ocl->oc_disclose_id << 14);
+        (ocl->oc_name_known << 31) | (ocl->oc_pre_discovered << 28) |
+        (ocl->oc_tough << 22) | (ocl->oc_material << 15);
     mwrite32(mf, oflags);
     mwrite16(mf, ocl->oc_name_idx);
     mwrite16(mf, ocl->oc_descr_idx);
-    mwrite16(mf, ocl->oc_weight);
-    mwrite16(mf, ocl->oc_prob);
-    mwrite16(mf, ocl->oc_cost);
-    mwrite16(mf, ocl->oc_nutrition);
+    mwrite64(mf, 0);
+    mwrite32(mf, 0);
 
-    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): to match restobjclass */
-    int oprop = ocl->oc_oprop;
-    if (ocl->oc_class == TOOL_CLASS && ocl->oc_material == CLOTH &&
-        ocl->oc_nutrition == 2)
-        oprop ^= BLINDED;
-
-    mwrite8(mf, ocl->oc_subtyp);
-    mwrite8(mf, oprop);
-    mwrite8(mf, ocl->oc_class);
-    mwrite8(mf, ocl->oc_delay);
     mwrite8(mf, ocl->oc_color);
-    mwrite8(mf, ocl->oc_wsdam);
-    mwrite8(mf, ocl->oc_wldam);
-    mwrite8(mf, ocl->oc_oc1);
-    mwrite8(mf, ocl->oc_oc2);
+
+    mwrite32(mf, 0);
 
     /* as long as we use only one version of Hack we need not save oc_name and
        oc_descr, but we must save oc_uname for all objects */
@@ -299,8 +270,8 @@ freenames(void)
         }
 }
 
-/* TODO: Why are we saving all this stuff? Most of it doesn't change
-   between games. */
+/* Does a few dummy reads for things that don't change between games (but can change
+   between versions) */
 static void
 restobjclass(struct memfile *mf, struct objclass *ocl)
 {
@@ -309,47 +280,19 @@ restobjclass(struct memfile *mf, struct objclass *ocl)
 
     oflags = mread32(mf);
     ocl->oc_name_known = (oflags >> 31) & 1;
-    ocl->oc_merge = (oflags >> 30) & 1;
-    ocl->oc_uses_known = (oflags >> 29) & 1;
     ocl->oc_pre_discovered = (oflags >> 28) & 1;
-    ocl->oc_magic = (oflags >> 27) & 1;
-    ocl->oc_charged = (oflags >> 26) & 1;
-    ocl->oc_unique = (oflags >> 25) & 1;
-    ocl->oc_nowish = (oflags >> 24) & 1;
-    ocl->oc_big = (oflags >> 23) & 1;
     ocl->oc_tough = (oflags >> 22) & 1;
-    ocl->oc_dir = (oflags >> 20) & 3;
     ocl->oc_material = (oflags >> 15) & 31;
-    ocl->oc_disclose_id = (oflags >> 14) & 1;
 
     ocl->oc_name_idx = mread16(mf);
     ocl->oc_descr_idx = mread16(mf);
-    ocl->oc_weight = mread16(mf);
-    ocl->oc_prob = mread16(mf);
-    ocl->oc_cost = mread16(mf);
-    ocl->oc_nutrition = mread16(mf);
 
-    ocl->oc_subtyp = mread8(mf);
-    ocl->oc_oprop = mread8(mf);
-    ocl->oc_class = mread8(mf);
-    ocl->oc_delay = mread8(mf);
+    mread64(mf);
+    mread32(mf);
+    
     ocl->oc_color = mread8(mf);
-    ocl->oc_wsdam = mread8(mf);
-    ocl->oc_wldam = mread8(mf);
-    ocl->oc_oc1 = mread8(mf);
-    ocl->oc_oc2 = mread8(mf);
 
-    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
-
-       4.3-beta1 save files have blindfolds recorded as not causing blindness.
-       Thus, we xor the object property for blindfolds and towels with BLINDED,
-       so that it's saved as 0. At this point in the code, we don't directly
-       know what object we're dealing with; however, we can use the description
-       "cloth tools with nutrition 2" instead, which covers blindfolds and
-       towels but nothing else. */
-    if (ocl->oc_class == TOOL_CLASS && ocl->oc_material == CLOTH &&
-        ocl->oc_nutrition == 2)
-        ocl->oc_oprop ^= BLINDED;
+    mread32(mf);
 
     ocl->oc_uname = NULL;
     namelen = mread32(mf);
@@ -357,7 +300,6 @@ restobjclass(struct memfile *mf, struct objclass *ocl)
         ocl->oc_uname = malloc(namelen);
         mread(mf, ocl->oc_uname, namelen);
     }
-
 }
 
 

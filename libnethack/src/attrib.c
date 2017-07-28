@@ -559,11 +559,20 @@ acurr(const struct monst *mon, int x)
     tmp += attr_bonus(mon, x);
 
     if (x == A_STR) {
-        struct obj *armg = which_armor(mon, os_armg);
-        if (armg && armg->otyp == GAUNTLETS_OF_POWER)
+        struct obj *obj;
+
+        obj = which_armor(mon, os_armg);
+        if (obj && obj->otyp == GAUNTLETS_OF_POWER)
             return 125;
-        else
-            return (schar) ((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
+
+        /* check for the "power" obj property, only functions on
+           worn armor. */
+        for (obj = m_minvent(mon); obj; obj = obj->nobj)
+            if ((obj->owornmask & W_ARMOR) &&
+                (obj_properties(obj) & opm_power))
+                return 125;
+
+        return (schar) ((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
     } else if (x == A_CHA) {
         if (tmp < 18 &&
             (mon->data->mlet == S_NYMPH || monsndx(mon->data) == PM_SUCCUBUS ||
@@ -633,12 +642,14 @@ attr_bonus(const struct monst *mon, int attrib)
     int ascore = 0;
     struct obj *obj;
     int otyp;
+    uint64_t props;
 
     for (obj = m_minvent(mon); obj; obj = obj->nobj) {
         /* is it worn properly */
         if (!(obj->owornmask & W_WORN))
             continue;
         otyp = obj->otyp;
+        props = obj_properties(obj);
         /* check if the equipment grants any bonus */
         if ((attrib == A_STR &&
              (otyp == RIN_GAIN_STRENGTH)) ||
@@ -647,11 +658,14 @@ attr_bonus(const struct monst *mon, int attrib)
             (attrib == A_CHA &&
              (otyp == RIN_ADORNMENT)) ||
             (attrib == A_DEX &&
-             (otyp == GAUNTLETS_OF_DEXTERITY)) ||
+             (otyp == GAUNTLETS_OF_DEXTERITY ||
+              (props & opm_dexterity))) ||
             (attrib == A_INT &&
-             (otyp == HELM_OF_BRILLIANCE)) ||
+             (otyp == HELM_OF_BRILLIANCE ||
+              (props & opm_brilliance))) ||
             (attrib == A_WIS &&
-             (otyp == HELM_OF_BRILLIANCE)))
+             (otyp == HELM_OF_BRILLIANCE ||
+              (props & opm_brilliance))))
             ascore += obj->spe;
         /* cornuthaums give +1/-1 cha depending on
            if you're a spellcaster or not */

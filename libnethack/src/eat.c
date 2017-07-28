@@ -574,27 +574,27 @@ cpostfx(struct monst *mon, int pm)
     switch (pm) {
     case PM_NEWT:
         /* MRKR: "eye of newt" may give small magical energy boost */
-        if ((you && 3 * u.uen <= 2 * u.uenmax) ||
-            (!you && mon->mspec_used > rn2(5))) {
-            if (you) {
-                int old_uen = u.uen;
-                msgc = msgc_statusheal;
+        if (you) {
+            int old_uen = u.uen;
+            msgc = msgc_statusheal;
 
-                u.uen += 1 + rn2_on_rng(3, rng_newt_pw_boost);
-                if (u.uen > u.uenmax) {
-                    u.uenmax++;
-                    u.uen = u.uenmax;
-                    if (you)
-                        msgc = msgc_intrgain;
-                }
-                if (old_uen != u.uen)
-                    pline(msgc, "You feel a mild buzz.");
-            } else {
-                mon->mspec_used -= min(mon->mspec_used, rnd(3));
-                if (vis)
-                    pline(msgc, "You sense a mild buzz coming from %s.",
-                          mon_nam(mon));
-            }
+            u.uen += 1 + rn2_on_rng(3, rng_newt_pw_boost);
+            if (u.uen > u.uenmax) {
+                u.uenmax++;
+                u.uen = u.uenmax;
+            } else
+                u.uenmax++;
+
+            if (you)
+                msgc = msgc_intrgain;
+
+            if (old_uen != u.uen)
+                pline(msgc, "You feel a mild buzz.");
+        } else if (mon->mspec_used > rn2(5)) {
+            mon->mspec_used -= min(mon->mspec_used, rnd(3));
+            if (vis)
+                pline(msgc, "You sense a mild buzz coming from %s.",
+                      mon_nam(mon));
         }
         break;
     case PM_WRAITH:
@@ -1634,6 +1634,7 @@ fpostfx(struct obj *otmp)
     case EUCALYPTUS_LEAF:
         if (!otmp->cursed) {
             set_property(&youmonst, SICK, -2, FALSE);
+            set_property(&youmonst, ZOMBIE, -2, FALSE);
             set_property(&youmonst, VOMITING, -2, FALSE);
         }
         break;

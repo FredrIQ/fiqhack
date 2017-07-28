@@ -11,11 +11,41 @@ long
 newuexp(int lev)
 {
     /* keep this synced with the status-drawing code in the clients */
-    if (lev < 10)
-        return 10L * (1L << lev);
-    if (lev < 20)
-        return 10000L * (1L << (lev - 10));
-    return 10000000L * ((long)(lev - 19));
+    switch (lev) {
+    case  0: return      0;
+    case  1: return     20; /* n^2 */
+    case  2: return     40;
+    case  3: return     80;
+    case  4: return    160;
+    case  5: return    320;
+    case  6: return    640;
+    case  7: return   1280;
+    case  8: return   2560;
+    case  9: return   5120;
+    case 10: return  10000; /* triangle numbers */
+    case 11: return  15000;
+    case 12: return  21000;
+    case 13: return  28000;
+    case 14: return  36000;
+    case 15: return  45000;
+    case 16: return  55000;
+    case 17: return  66000;
+    case 18: return  81000; /* n*n series */
+    case 19: return 100000;
+    case 20: return 142000;
+    case 21: return 188000;
+    case 22: return 238000;
+    case 23: return 292000;
+    case 24: return 350000;
+    case 25: return 412000;
+    case 26: return 478000;
+    case 27: return 548000;
+    case 28: return 622000;
+    case 29: return 700000;
+    case 30: return 800000; /* 100k per additional !oGL */
+    }
+    impossible("unknown level: %d", lev);
+    return 10000000;
 }
 
 static int
@@ -96,6 +126,20 @@ experience(struct monst *mtmp, int nk)
 void
 more_experienced(int exp, int rexp)
 {
+    if (u.ulevel < u.ulevelmax) {
+        /* We are drained. Boost EXP gain rate proportional to the levels lost */
+        int lev = u.ulevel;
+        while (lev++ < u.ulevelmax)
+            exp *= 2;
+
+        /* Only double up to each level threshould */
+        if ((u.uexp + exp) > newuexp(u.ulevel)) {
+            exp -= (newuexp(u.ulevel) - u.uexp);
+            u.uexp = newuexp(u.ulevel);
+            exp /= 2;
+        }
+    }
+
     u.uexp += exp;
     if (u.uexp >= (Role_if(PM_WIZARD) ? 250 : 500))
         flags.beginner = 0;
@@ -154,8 +198,13 @@ losexp(const char *killer, boolean override_res)
     else if (u.uen > u.uenmax)
         u.uen = u.uenmax;
 
-    if (u.uexp > 0)
-        u.uexp = newuexp(u.ulevel) - 1;
+    /* Compute the progress the hero did towards the next level. Scale back one level,
+       but keep the same progress. */
+    int expdiff_high = newuexp(u.ulevel + 1) - newuexp(u.ulevel);
+    int expdiff_low = newuexp(u.ulevel) - newuexp(u.ulevel - 1);
+    int pct = (u.uexp - newuexp(u.ulevel)) * 100 / expdiff_high;
+    u.uexp = newuexp(u.ulevel - 1);
+    u.uexp += pct * expdiff_low / 100;
 }
 
 /*
@@ -212,7 +261,8 @@ pluslvl(boolean incr)
         ++u.ulevel;
         if (u.ulevelmax < u.ulevel) {
             u.ulevelmax = u.ulevel;
-            historic_event(FALSE, "advanced to experience level %d.", u.ulevel);
+            historic_event(FALSE, FALSE,
+                           "advanced to experience level %d.", u.ulevel);
         }
         pline(msgc_intrgain, "Welcome to experience level %d.", u.ulevel);
         adjabil(u.ulevel - 1, u.ulevel);        /* give new intrinsics */

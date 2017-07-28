@@ -172,9 +172,10 @@ throw_obj(struct obj *obj, const struct nh_cmd_arg *arg,
             otmp = obj;
             if (otmp->owornmask)
                 remove_worn_item(otmp, FALSE);
+            obj = NULL;
         }
         freeinv(otmp);
-        throwit(otmp, wep_mask, twoweap, dx, dy, dz);
+        throwit(otmp, obj, wep_mask, twoweap, dx, dy, dz);
     }
     m_shot.n = m_shot.i = 0;
     m_shot.o = STRANGE_OBJECT;
@@ -286,6 +287,41 @@ dofire(const struct nh_cmd_arg *arg)
 
     if (check_capacity(NULL))
         return 0;
+
+    /* It can be reasonable to fire rocks without a sling. Otherwise,
+       force the usage of 't' for ammo that needs a launcher when
+       the proper launcher isn't wielded. */
+    if (uquiver && is_ammo(uquiver) && uquiver->oclass != GEM_CLASS &&
+        !ammo_and_launcher(uquiver, uwep)) {
+        /* First however, check if we have the proper launcher in offhand and neither
+           is (knowingly) cursed. */
+        if (flags.autoswap && !u.twoweap && uswapwep &&
+            ammo_and_launcher(uquiver, uswapwep) &&
+            (!uwep || !uwep->cursed || !uwep->bknown) &&
+            (!uswapwep->cursed || !uswapwep->bknown)) {
+            if (uwep->cursed) {
+                weldmsg(msgc_cancelled1, uwep);
+                return 1;
+            }
+
+            int wtstatus = wield_tool(uswapwep, "preparing to wield something",
+                                      occ_prepare, TRUE);
+            if (wtstatus & 2)
+                return 1;
+            if (!(wtstatus & 1))
+                return 0;
+        } else {
+            /* This is useless, but is here because players expect a direction prompt
+               after firing, so avoid them taking a step they don't want to. */
+            schar dx, dy, dz;
+            getargdir(arg, NULL, &dx, &dy, &dz);
+
+            pline(msgc_cancelled, "You aren't wielding the appropriate launcher.");
+            pline(msgc_controlhelp, "(Use the 'throw' command to fire anyway.)");
+            return 0;
+        }
+    }
+
     if (!uquiver) {
         if (!flags.autoquiver) {
             /* Don't automatically fill the quiver */
@@ -781,7 +817,7 @@ toss_up(struct obj *obj, boolean hitsroof)
         if (dmg > 1 && less_damage)
             dmg = 1;
         if (dmg > 0)
-            dmg += mon_dambon(&youmonst);
+            dmg += dambon(&youmonst);
         if (dmg < 0)
             dmg = 0;    /* beware negative rings of increase damage */
         if (Half_physical_damage)
@@ -1052,7 +1088,8 @@ boomhit(int dx, int dy)
 }
 
 void
-throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang 
+throwit(struct obj *obj, struct obj *stack,
+        long wep_mask, /* used to re-equip returning boomerang 
                                          */
         boolean twoweap,        /* used to restore twoweapon mode if wielded
                                    weapon returns */
@@ -1207,7 +1244,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
         }
         snuff_candle(obj);
         notonhead = (bhitpos.x != mon->mx || bhitpos.y != mon->my);
-        obj_gone = thitmonst(mon, obj);
+        obj_gone = thitmonst(mon, obj, stack);
         /* Monster may have been tamed; this frees old mon */
         mon = m_at(level, bhitpos.x, bhitpos.y);
 
@@ -1391,7 +1428,7 @@ tmiss(struct obj *obj, struct monst *mon)
  * 0 if caller must take care of it.
  */
 int
-thitmonst(struct monst *mon, struct obj *obj)
+thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
 {
     int tmp;    /* Base chance to hit */
     int disttmp;        /* distance modifier */
@@ -1405,7 +1442,7 @@ thitmonst(struct monst *mon, struct obj *obj)
        affected by traps, etc. Certain items which don't in themselves do
        damage ignore tmp. Distance and monster size affect chance to hit. */
     tmp =
-        -1 + Luck + find_mac(mon) + mon_hitbon(&youmonst) +
+        -1 + Luck + find_mac(mon) + hitbon(&youmonst) +
         maybe_polyd(youmonst.data->mlevel, u.ulevel);
     if (ACURR(A_DEX) < 4)
         tmp -= 3;
@@ -1496,6 +1533,23 @@ thitmonst(struct monst *mon, struct obj *obj)
             return 1;   /* caller doesn't need to place it */
         }
         return 0;
+    } else if (mon->mtame && mon->mcanmove &&
+               !is_animal(mon->data) && !mindless(mon->data) &&
+               !(uwep && ammo_and_launcher(obj, uwep))) {
+        /* thrown item at intelligent pet to let it use it */
+        pline(msgc_actionok, "%s %s.",
+              M_verbs(mon, "catch"), the(xname(obj)));
+        obj_extract_self(obj);
+        mpickobj(mon, obj, NULL);
+        if (attacktype(mon->data, AT_WEAP) &&
+            mon->weapon_check == NEED_WEAPON) {
+            mon->weapon_check = NEED_HTH_WEAPON;
+            mon_wield_item(mon);
+        }
+
+        m_dowear(mon, FALSE);
+        newsym(mon->mx, mon->my);
+        return 1;
     }
 
     if (obj->oclass == WEAPON_CLASS || is_weptool(obj) ||
@@ -1557,6 +1611,21 @@ thitmonst(struct monst *mon, struct obj *obj)
                     broken = !rn2(4);
                 if (obj->blessed && !rnl(4))
                     broken = 0;
+
+                uint64_t props = obj_properties(obj);
+                if (props & opm_detonate) {
+                    obj->in_use = TRUE;
+                    explode(bhitpos.x, bhitpos.y,
+                            ((props & opm_frost) ? AD_COLD :
+                             (props & opm_shock) ? AD_ELEC :
+                             AD_FIRE) - 1,
+                            dice(3, 6), WEAPON_CLASS,
+                            (props & (opm_frost | opm_shock)) ?
+                            EXPL_FROSTY : EXPL_FIERY, NULL, 0);
+                    broken = 1;
+                    if (stack)
+                        learn_oprop(stack, opm_detonate);
+                }
 
                 if (broken) {
                     if (*u.ushops)

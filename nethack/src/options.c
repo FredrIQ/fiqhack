@@ -147,7 +147,7 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"draw_detected", "Map Display",
      "mark detected monsters",
-     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"draw_rock", "Map Display",
      "make the walls of corridors visible",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
@@ -174,10 +174,13 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_ENUM, {.e = A_REVERSE}},
     {"mouse", "Terminal and Rendering",
      "accept mouse input (where supported)",
-     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"menupaging", "Messages and Menus",
      "scrolling behaviour of menus",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MP_LINES}},
+    {"msgcolor", "Screen Layout",
+     "color messages depending on context",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"msgheight", "Screen Layout",
      "message window height",
      nh_birth_ingame, OPTTYPE_INT, {.i = 8}},
@@ -234,6 +237,7 @@ static struct nhlib_boolopt_map boolopt_map[] = {
     {"darkgray", &settings.darkgray},
     {"extmenu", &settings.extmenu},
     {"invweight", &settings.invweight},
+    {"msgcolor", &settings.msgcolor},
     {"mouse", &settings.mouse},
     {"prompt_inline", &settings.prompt_inline},
     {"scores_own", &settings.end_own},
@@ -1495,7 +1499,7 @@ write_nh_config(void)
 
     if (get_config_name(filename, FALSE) &&
         (fp = open_config_file(filename))) {
-#if defined(PUBLIC_SERVER) && defined(UNIX)
+#ifdef UNIX
         fchmod(fileno(fp), 0644);
 #endif
         write_config_options(fp, nh_options);
@@ -1519,7 +1523,7 @@ write_ui_config(void)
 
     if (get_config_name(filename, TRUE) &&
         (fp = open_config_file(filename))) {
-#if defined(PUBLIC_SERVER) && defined(UNIX)
+#ifdef UNIX
         fchmod(fileno(fp), 0644);
 #endif
         write_config_options(fp, curses_options);

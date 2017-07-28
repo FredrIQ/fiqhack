@@ -97,7 +97,7 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
         dmg += rnd(4);
     if (uarmf)
         dmg += uarmf->spe;
-    dmg += mon_dambon(&youmonst);   /* add ring(s) of increase damage */
+    dmg += dambon(&youmonst);   /* add ring(s) of increase damage */
 
     /* Do passive counterattacks before damaging the monster. Otherwise, we get
        a dmonsfree crash if the monster and player kill each other
@@ -585,8 +585,11 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
         return !rn2(3) || martial();
     }
 
-    if (kickobj->quan > 1L && !isgold)
+    struct obj *stack = NULL;
+    if (kickobj->quan > 1L && !isgold) {
+        stack = kickobj;
         kickobj = splitobj(kickobj, 1L);
+    }
 
     if (slide && !Blind)
         pline(msgc_actionok, "Whee!  %s %s %s the %s.", Doname2(kickobj),
@@ -605,7 +608,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
             return 1;   /* alert shk caught it */
         notonhead = (mon->mx != bhitpos.x || mon->my != bhitpos.y);
         if (isgold ? ghitm(mon, kickobj) :      /* caught? */
-            thitmonst(mon, kickobj))    /* hit && used up? */
+            thitmonst(mon, kickobj, stack))    /* hit && used up? */
             return 1;
     }
 

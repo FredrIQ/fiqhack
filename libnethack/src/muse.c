@@ -11,8 +11,6 @@
 
 extern const int monstr[];
 
-boolean m_using = FALSE;
-
 /*
  * Monster item usage logic.  General guidelines:
  * - Monsters do not play the ID game with object types (it is unfeasible)
@@ -312,14 +310,15 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
     Role_switch = saverole;
     otmp->bknown = savebknown;
 
-    if (vismon && !blind(mtmp) && !haseyes(mtmp->data))
+    if (vismon && !blind(mtmp) && haseyes(mtmp->data))
         pline(combat_msgc(mtmp, NULL, cr_hit),
               "%s reads %s!", Monnam(mtmp), onambuf);
     else
         You_hear(combat_msgc(mtmp, NULL, cr_hit),
                  "%s pronouncing the formula on %s!",
                  x_monnam(mtmp, ARTICLE_A, NULL,
-                          (SUPPRESS_IT | SUPPRESS_INVISIBLE | SUPPRESS_SADDLE),
+                          (SUPPRESS_IT | SUPPRESS_INVISIBLE |
+                           SUPPRESS_SADDLE | SUPPRESS_ENSLAVEMENT),
                           FALSE), onambuf);
 
     if (confused(mtmp))
@@ -666,6 +665,10 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
         wandlevel = getwandlevel(mon, obj);
         if (!wandlevel) /* cursed wand is going to blow up */
             return 0;
+    } else if (obj->otyp == SPE_MAGIC_MISSILE) {
+        wandlevel = mprof(mon, MP_SATTK);
+        if (wandlevel < P_SKILLED)
+            wandlevel = 0;
     } else if (!wand)
         wandlevel = 0;
     struct monst *mtmp;
@@ -952,9 +955,10 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
                 continue;
             if (IS_STWALL(level->locations[x][y].typ))
                 continue;
+
+            mtmp = um_at(level, x, y);
             if (!m_cansee(mon, x, y) ||
-                (!stink && (mtmp = um_at(level, x, y)) &&
-                 mcanspotmon(mon, mtmp)))
+                (!stink && (!mtmp || !mcanspotmon(mon, mtmp))))
                 continue;
             if (dist2(mon->mx, mon->my, x, y) > (globrange * globrange))
                 continue;
@@ -1052,9 +1056,9 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
             }
         }
     } else if (otyp == SCR_STINKING_CLOUD ||
-        ((otyp == SPE_FIREBALL ||
-          otyp == SPE_CONE_OF_COLD) &&
-         mprof(mon, MP_SATTK) >= P_SKILLED))
+               ((otyp == SPE_FIREBALL ||
+                 otyp == SPE_CONE_OF_COLD) &&
+                mprof(mon, MP_SATTK) >= P_SKILLED))
         score = mon_choose_spectarget(mon, obj, tc);
     else
         score = mon_choose_dirtarget(mon, obj, tc);
@@ -1257,9 +1261,10 @@ find_item(struct monst *mon, struct musable *m)
     }
 
     /* Fix other ailments */
-    if (confused(mon) || stunned(mon) || blind(mon) || sick(mon)) {
+    if (confused(mon) || stunned(mon) || blind(mon) || sick(mon) ||
+        zombifying(mon)) {
         /* Sickness */
-        if (sick(mon)) {
+        if (sick(mon) || zombifying(mon)) {
             if (mon_castable(mon, SPE_CURE_SICKNESS, FALSE)) {
                 m->spell = SPE_CURE_SICKNESS;
                 m->use = MUSE_SPE;
@@ -1277,7 +1282,7 @@ find_item(struct monst *mon, struct musable *m)
             return TRUE;
         }
         /* Unihorn-less sickness: look for healing potions */
-        if (sick(mon)) {
+        if (sick(mon) || zombifying(mon)) {
             if (find_item_obj(mon->minvent, m, FALSE, POT_EXTRA_HEALING) ||
                 find_item_obj(mon->minvent, m, FALSE, POT_FULL_HEALING))
                 return TRUE;
@@ -1477,17 +1482,20 @@ find_item(struct monst *mon, struct musable *m)
         usable = find_item_single(obj, TRUE, &m2, mclose ? TRUE : FALSE, FALSE);
         if (usable && mon_allowed(spell)) {
             if (usable == 1) {
-                if (!rn2(randcount)) {
+                /* TODO: move summon nasty handling elsewhere */
+                if (spell == SPE_SUMMON_NASTY) {
+                    if (!mclose)
+                        impossible("Monster casting summon nasties when there is no target");
+                    if (!mcanspotmon(mon, mclose))
+                        mclose = NULL;
+                }
+                if ((mclose || spell != SPE_SUMMON_NASTY) && !rn2(randcount)) {
                     randcount++;
                     m->spell = spell;
                     m->x = m2.x;
                     m->y = m2.y;
                     m->z = m2.z;
                     if (spell == SPE_SUMMON_NASTY) {
-                        if (!mclose) {
-                            impossible("Monster casting summon nasties when there is no target");
-                            return FALSE;
-                        }
                         m->x = m_mx(mclose);
                         m->y = m_my(mclose);
                         m->z = 0;
@@ -1857,11 +1865,17 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
                 return 1;
 
     if (otyp == SPE_IDENTIFY ||
-        otyp == SCR_IDENTIFY)
+        otyp == SCR_IDENTIFY) {
+        int lvl = mprof(mon, MP_SDIVN);
+        if (otyp == SCR_IDENTIFY)
+            lvl = blessed ? P_EXPERT : cursed ? P_UNSKILLED : P_BASIC;
         for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
-            if (otmp->otyp != GOLD_PIECE && (!otmp->mknown || !otmp->mbknown) &&
+            if (otmp->otyp != GOLD_PIECE &&
+                ((!otmp->mknown && lvl >= P_BASIC) ||
+                 (!otmp->mbknown && lvl >= P_SKILLED)) &&
                 otmp != obj)
                 return 1;
+    }
 
     /* Defensive only */
     if (fraction < 35) {
@@ -2101,7 +2115,12 @@ use_item(struct musable *m)
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_POT:
         mquaffmsg(mon, obj);
-        peffects(mon, obj);
+        int nothing = 0; /* nothing happened (pelicular feeling) */
+        int unkn = 0; /* unknown for other reasons */
+        peffects(mon, obj, &nothing, &unkn);
+        if (!nothing && !unkn && oseen)
+            makeknown(obj->otyp);
+
         m_useup(mon, obj);
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_WAN:
@@ -2214,6 +2233,7 @@ use_item(struct musable *m)
             set_property(mon, CONFUSION, -2, FALSE);
             set_property(mon, STUNNED, -2, FALSE);
             set_property(mon, SICK, -2, FALSE);
+            set_property(mon, ZOMBIE, -2, FALSE);
         }
         return 2;
     case MUSE_DIRHORN:
@@ -2276,7 +2296,7 @@ use_item(struct musable *m)
                       "succeeds in picking the lock on",
                       an(xname(otmp)));
             if (otmp->otrapped)
-                chest_trap(mon, container, FINGER, FALSE);
+                chest_trap(mon, otmp, FINGER, FALSE);
             return DEADMONSTER(mon) ? 1 : 2; /* in case chest trap killed */
         }
         door = &level->locations[x][y];
@@ -2609,7 +2629,7 @@ try_again:
         return SCR_TELEPORTATION;
     case 8:
     case 10:
-        if (!rn2_on_rng(3, rng))
+        if (!rn2_on_rng(9, rng))
             return WAN_CREATE_MONSTER;
         /* else FALLTHRU */
     case 2:
@@ -2746,7 +2766,7 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp) {
         }
     }
     if (otyp == WAN_LIGHT)
-        litroom(mtmp, TRUE, otmp);     /* only needs to be done once */
+        litroom(mtmp, TRUE, otmp, TRUE);     /* only needs to be done once */
 }
 
 int
@@ -3001,6 +3021,8 @@ searches_for_item(struct monst *mon, struct obj *obj)
             return is_mplayer(mon->data);
         if (typ == AMULET_OF_LIFE_SAVING) /* LS isn't desirable if nonliving */
             return (boolean) (!nonliving(mon->data));
+        if (!objects[typ].oc_oprop)
+            return FALSE; /* doesn't confer anything */
         return (!m_has_property(mon, objects[typ].oc_oprop, ANY_PROPERTY, TRUE));
     case RING_CLASS:
         /* Should match the list in m_dowear_type */
@@ -3017,6 +3039,16 @@ searches_for_item(struct monst *mon, struct obj *obj)
     return FALSE;
 }
 
+/* Helper for mon_reflects */
+static boolean
+reflect_slot(unsigned reason, enum objslot rslot, enum objslot *slot)
+{
+    if (!(reason & W_MASK(rslot)))
+        return FALSE;
+    *slot = rslot;
+    return TRUE;
+}
+
 /* magr = monster whose attack or reflection is being reflected or NULL if
    the reflection wasn't caused by any monster (divine lightning zaps).
 
@@ -3031,27 +3063,58 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
     unsigned reflect_reason = has_property(mon, REFLECTING);
     const char *mon_s;
     mon_s = (mon == &youmonst) ? "your" : s_suffix(mon_nam(mon));
+    enum objslot slot = os_invalid;
     if (reflect_reason) {
-#define refl(slot) (reflect_reason & W_MASK(slot))
+#define refl(rslot) (reflect_slot(reflect_reason, rslot, &slot))
         if (fmt && str)
             pline(combat_msgc(magr, mon, recursive ?
                               cr_miss : cr_immune),
                   fmt, str, mon_s,
                   refl(os_arms)     ? "shield" :
                   refl(os_wep)      ? "weapon" :
+                  refl(os_swapwep)  ? "weapon" :
                   refl(os_amul)     ? "amulet" :
                   refl(os_role)     ? "scales" :
                   refl(os_race)     ? "scales" :
                   refl(os_polyform) ? "scales" :
                   refl(os_arm)      ? "armor"  :
+                  refl(os_armg)     ? "gloves" :
+                  refl(os_armf)     ? "boots"  :
+                  refl(os_armh)     ? "helmet" :
+                  refl(os_armu)     ? "shirt"  :
                   "something weird"); /* os_arm after role/etc to suppress
                                          "armor" if uskin() */
-        /* TODO: when object properties is a thing, change this */
-        if (refl(os_arms))
-            makeknown((which_armor(mon, os_arms))->otyp);
-        else if (refl(os_amul))
-            makeknown((which_armor(mon, os_amul))->otyp);
+        if (slot == os_wep) {
+            struct obj *wep = m_mwep(mon);
+            if (wep)
+                learn_oprop(wep, opm_reflects);
+        } else if (slot == os_swapwep) {
+            if (mon != &youmonst)
+                return TRUE; /* shouldn't happen */
+
+            if (uswapwep)
+                learn_oprop(uswapwep, opm_reflects);
+        } else if (slot == os_arms) {
+            struct obj *arms = which_armor(mon, os_arms);
+            if (arms->otyp == SHIELD_OF_REFLECTION)
+                makeknown(arms->otyp);
+            learn_oprop(arms, opm_reflects);
+        } else if (slot == os_amul) {
+            struct obj *amul = which_armor(mon, os_amul);
+            if (amul->otyp == AMULET_OF_REFLECTION)
+                makeknown(amul->otyp);
+            learn_oprop(amul, opm_reflects);
+        } else if (slot != os_invalid && slot <= os_last_worn) {
+            /* which_armor also work for rings */
+            struct obj *arm = which_armor(mon, slot);
+            if (!arm) {
+                impossible("No armor for slot %d?", slot);
+                return TRUE;
+            }
+            learn_oprop(arm, opm_reflects);
+        }
 #undef refl
+
         return TRUE;
     }
     return FALSE;

@@ -19,7 +19,8 @@ static void restobjchn(struct memfile *mf, struct level *lev,
                        struct trietable **table);
 static struct monst *restmonchn(struct memfile *mf, struct level *lev,
                                 boolean ghostly);
-static struct fruit *loadfruitchn(struct memfile *mf);
+static struct fruit *loadfruitchn(struct memfile *mf, boolean
+                                  ghostly);
 static void freefruitchn(struct fruit *);
 static void ghostfruit(struct obj *);
 static void restgamestate(struct memfile *mf);
@@ -327,13 +328,22 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
 
 
 static struct fruit *
-loadfruitchn(struct memfile *mf)
+loadfruitchn(struct memfile *mf, boolean ghostly)
 {
     struct fruit *flist = NULL, *fnext, *fcurr, *fprev;
     unsigned int count;
 
     mfmagic_check(mf, FRUITCHAIN_MAGIC);
     count = mread32(mf);
+
+    /* bones save version detection (fruit cap is 255) */
+    if (count >= 65536) {
+        count -= 65536;
+        flags.save_revision = mread32(mf);
+    } else if (ghostly) {
+        /* really old bones */
+        flags.save_revision = 0;
+    }
 
     if (!count)
         return flist;
@@ -472,7 +482,7 @@ restgamestate(struct memfile *mf)
     /* set it to NULL before loadfruitchn, otherwise loading a faulty fruit
        chain will crash in terminate -> freedynamicdata -> freefruitchn */
     gamestate.fruits.chain = NULL;
-    gamestate.fruits.chain = loadfruitchn(mf);
+    gamestate.fruits.chain = loadfruitchn(mf, FALSE);
 
     restnames(mf);
     restore_waterlevel(mf, lev);
@@ -822,9 +832,11 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->hide_implied = mread8(mf);
 
     f->save_revision = mread32(mf);
+    f->servermail = mread8(mf);
+    f->autoswap = mread8(mf);
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 105; i++)
+    for (i = 0; i < 103; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));
@@ -1135,7 +1147,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     /* Load the old fruit info.  We have to do it first, so the information is
        available when restoring the objects. */
     if (ghostly)
-        oldfruit = loadfruitchn(mf);
+        oldfruit = loadfruitchn(mf, ghostly);
 
     /* for bones files, there is fruit chain data before the level data */
     mfmagic_check(mf, LEVEL_MAGIC);
@@ -1182,6 +1194,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     restore_dest_area(mf, &lev->dndest);
 
     lflags = mread32(mf);
+    lev->flags.vault_known = (lflags >> 23) & 1;
     lev->flags.noteleport = (lflags >> 22) & 1;
     lev->flags.hardfloor = (lflags >> 21) & 1;
     lev->flags.nommap = (lflags >> 20) & 1;

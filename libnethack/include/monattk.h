@@ -28,6 +28,7 @@
 
 # define AT_AREA 253    /* area of effect ability */
 # define AT_WEAP 254    /* uses weapon */
+# define LAST_AT AT_WEAP
 
 /*      Add new damage types below.
  *
@@ -83,6 +84,7 @@
 
 # define AD_SAMU 252    /* hits, may steal Amulet (Wizard) */
 # define AD_CURS 253    /* random curse (ex. gremlin) */
+# define LAST_AD AD_CURS
 
 
 /*

@@ -150,6 +150,7 @@ struct monst {
 
     /* intrinsic format: os_outside:1, os_timeout:15 */
     short mintrinsic[LAST_PROP + 1]; /* monster intrinsics */
+    int mintrinsic_cache[LAST_PROP + 1]; /* cached from above */
 
     /* turnstate; doesn't count against bitfield bit count */
     unsigned deadmonster:1;     /* always 0 at neutral turnstate */
@@ -161,9 +162,12 @@ struct monst {
     xchar weapon_check;
     int misc_worn_check;
 
+    short former_player; /* info about this being the ghost or whatnot
+                            of a former player, from a bones file */
     int meating;        /* monster is eating timeout */
     schar mhitinc;      /* monster intrinsic to-hit bonus/penalty */
     schar mdaminc;      /* monster intrinsic damage bonus/penalty */
+    schar msearchinc;   /* monster intrinsic search bonus/penalty */
     schar mac;          /* monster AC bonus/penalty */
 };
 
@@ -235,10 +239,6 @@ enum monster_awareness_reasons {
                                 mar_guessing_invis :                    \
                                 Displaced ? mar_guessing_displaced :    \
                                 mar_guessing_other)
-
-/* Is a monster using an item? Used to ensure that buzz() calls the correct kill
-   function. */
-extern boolean m_using;
 
 /* When a long worm is hit, is the hit on the head or thebody? */
 extern boolean notonhead;

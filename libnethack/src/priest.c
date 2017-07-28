@@ -55,7 +55,7 @@ move_special(struct monst *mtmp, boolean in_his_shop, schar appr,
     }
     if (is_giant(mtmp->data))
         allowflags |= BUSTDOOR;
-    cnt = mfndpos(mtmp, poss, info, allowflags);
+    cnt = mfndpos(mtmp, poss, info, allowflags, 1);
 
     if (mx_eshk(mtmp) && avoid && uondoor) {    /* perhaps we cannot avoid him */
         for (i = 0; i < cnt; i++)

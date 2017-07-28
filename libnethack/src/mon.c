@@ -696,14 +696,18 @@ movemon(void)
             continue;
 
         if (is_hider(mtmp->data)) {
-            /* unwatched mimics and piercers may hide again [MRS] */
-            if (restrap(mtmp))
-                continue;
-            if (mtmp->m_ap_type == M_AP_FURNITURE ||
-                mtmp->m_ap_type == M_AP_OBJECT)
-                continue;
-            if (mtmp->mundetected)
-                continue;
+            if (mtmp->mpeaceful && !mtmp->m_ap_type)
+                mtmp->mundetected = FALSE;
+            else {
+                /* unwatched mimics and piercers may hide again [MRS] */
+                if (restrap(mtmp))
+                    continue;
+                if (mtmp->m_ap_type == M_AP_FURNITURE ||
+                    mtmp->m_ap_type == M_AP_OBJECT)
+                    continue;
+                if (mtmp->mundetected)
+                    continue;
+            }
         }
 
         /* This used to do a conflict check pass before checking for
@@ -1065,7 +1069,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
 
     boolean bag;
     boolean cursed_boh = FALSE; /* maybe zap cancellation later */
-    boolean found_castle_wand; /* only ignore the first wishing wand in the castle chest */
+    boolean found_castle_wand = FALSE; /* only ignore the first wishing wand in the castle chest */
     struct musable muse; /* unlocking tool, or cancellation for cursed BoH */
     init_musable(mon, &muse);
 
@@ -1127,7 +1131,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
                 continue;
             /* avoid taking the castle wand... */
             if (obj->otyp == WAN_WISHING && container && Is_stronghold(m_mz(mon)) &&
-                container->spe == 2 && !found_castle_wand) {
+                container->spe == 3 && !found_castle_wand) {
                 found_castle_wand = TRUE;
                 continue;
             }
@@ -1321,11 +1325,68 @@ can_carry(struct monst *mtmp, struct obj *otmp)
     return TRUE;
 }
 
+/* Adjust goalpoint to a good lineup to given gx/gy.
+   "Good" means as far away as possible but still in line and within
+   BOLT_LIM */
+void
+find_best_lineup(struct monst *mon, xchar *gx, xchar *gy)
+{
+    struct distmap_state ds;
+    struct level *lev = mon->dlevel;
+    distmap_init(&ds, *gx, *gy, mon);
+    int dist = distmap(&ds, mon->mx, mon->my);
+    if (dist > (BOLT_LIM * 2))
+        return; /* Don't bother */
+
+    dist = 1659; /* sentinel to figure out if there is a valid pos */
+    int tdist = 0;
+    int dx[8] = {0, 1, 0, -1, 1, 1, -1, -1};
+    int dy[8] = {1, 0, -1, 0, 1, -1, -1, 1};
+    int x, y, bx, by;
+    bx = *gx;
+    by = *gy;
+    int i, j;
+    struct monst *blocker;
+    for (i = 0; i < 8; i++) {
+        x = *gx;
+        y = *gy;
+
+        for (j = 0; j < BOLT_LIM; j++) {
+            x += dx[i];
+            y += dy[i];
+
+            if (!linedup(x, y, *gx, *gy))
+                break;
+
+            /* Is there something in the way? */
+            blocker = um_at(lev, x, y);
+            if (blocker && blocker != mon &&
+                msensem(mon, blocker))
+                break;
+        }
+        x -= dx[i];
+        y -= dy[i];
+        if (distmin(x, y, *gx, *gy) < 3)
+            continue; /* this direction is invalid */
+
+        distmap_init(&ds, x, y, mon);
+        tdist = distmap(&ds, mon->mx, mon->my);
+        if (tdist < dist) {
+            dist = tdist;
+            bx = x;
+            by = y;
+        }
+    }
+
+    *gx = bx;
+    *gy = by;
+}
+
 /* return number of acceptable neighbour positions */
 int
-mfndpos(struct monst *mon, coord * poss,        /* coord poss[9] */
+mfndpos(struct monst *mon, coord *poss,        /* coord poss[9] */
         long *info,     /* long info[9] */
-        long flag)
+        long flag, int topdist)
 {
     const struct permonst *mdat = mon->data;
     xchar x, y, nx, ny;
@@ -1377,12 +1438,14 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
     }
     if (blind(mon))
         flag |= ALLOW_SSM;
-    maxx = min(x + 1, COLNO - 1);
-    maxy = min(y + 1, ROWNO - 1);
-    for (nx = max(0, x - 1); nx <= maxx; nx++)
-        for (ny = max(0, y - 1); ny <= maxy; ny++) {
+
+    maxx = min(x + topdist, COLNO - 1);
+    maxy = min(y + topdist, ROWNO - 1);
+    for (nx = max(0, x - topdist); nx <= maxx; nx++)
+        for (ny = max(0, y - topdist); ny <= maxy; ny++) {
             if (nx == x && ny == y)
                 continue;
+
             if (IS_ROCK(ntyp = mlevel->locations[nx][ny].typ) &&
                 !((flag & ALLOW_WALL) && may_passwall(mlevel, nx, ny)) &&
                 !((IS_TREE(ntyp) ? treeok : rockok) && may_dig(mlevel, nx, ny)))
@@ -1715,9 +1778,11 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     }
     /* end anti-stupidity checks */
 
-    /* nonliving/izombie vs living */
-    if (((nonliving(magr->data) || izombie(magr)) ? 1 : 0) !=
-        ((nonliving(mdef->data) || izombie(mdef)) ? 1 : 0))
+    /* zombies/enslaved vs living */
+    if (((pm_zombie(magr->data) || izombie(magr)) &&
+         !nonliving(mdef->data)) ||
+        ((pm_zombie(mdef->data) || izombie(mdef)) &&
+         !nonliving(magr->data)))
         return ALLOW_M | ALLOW_TM;
 
     /* pets attack hostile monsters */
@@ -2003,6 +2068,12 @@ mondead(struct monst *mtmp)
     if (mvitals[tmp].died < 255)
         mvitals[tmp].died++;
 
+    /* The subroutine checks whether the monster is actually one that should be
+     * livelogged.  It would be neat if there could be different message wording
+     * depending on whether the player perpetrated the kill or not, but we don't
+     * seem to have that information at this point; it's not really essential. */
+    livelog_unique_monster(mtmp);
+
     /* if it's a (possibly polymorphed) quest leader, mark him as dead */
     if (mtmp->m_id == u.quest_status.leader_m_id)
         u.quest_status.leader_is_dead = TRUE;
@@ -2190,8 +2261,11 @@ monstone(struct monst *mdef)
         /* some objects may end up outside the statue */
         while ((obj = mdef->minvent) != 0) {
             obj_extract_self(obj);
-            if (obj->owornmask)
+            if (obj->owornmask) {
                 update_property(mdef, objects[obj->otyp].oc_oprop, which_slot(obj));
+                update_property_for_oprops(mdef, obj,
+                                           which_slot(obj));
+            }
             obj_no_longer_held(obj);
             if (obj->owornmask & W_MASK(os_wep))
                 setmnotwielded(mdef, obj);
@@ -2400,7 +2474,7 @@ xkilled(struct monst *mtmp, int dest)
 
     /* with lifesaving taken care of, history can record the heroic deed */
     if ((mtmp->data->geno & G_UNIQ)) {
-        historic_event(FALSE, "killed %s %s.",
+        historic_event(FALSE, FALSE, "killed %s %s.",
                        x_monnam(mtmp, ARTICLE_NONE, NULL, EXACT_NAME, TRUE),
                        hist_lev_name(&u.uz, TRUE));
     }
@@ -2753,72 +2827,100 @@ poisontell(int typ)
 }
 
 /* Cause should be a string suitable for passing to killer_msg, because the
-   actual death mechanism may vary. It should have an article if appropriate. */
+   actual death mechanism may vary. It should have an article if appropriate.
+   Note that this goes unused if the victim isn't the player. */
 void
-poisoned(const char *string, int typ, const char *killer, int fatal)
+poisoned(struct monst *mon, const char *string, int typ, const char *killer,
+         int permanent)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
     int i, plural;
-    boolean thrown_weapon = (fatal < 0);
+    boolean thrown_weapon = (permanent < 0);
     boolean resist_message_printed = FALSE;
 
     if (thrown_weapon)
-        fatal = -fatal;
+        permanent = -permanent;
 
-    fatal += 20 * thrown_weapon;
+    permanent += 20 * thrown_weapon;
     enum rng rng;
-    switch (fatal) {
-    case  8: rng = rng_deadlypoison_8;  break;
-    case 10: rng = rng_deadlypoison_10; break;
-    case 15: rng = rng_deadlypoison_15; break;
-    case 30: rng = rng_deadlypoison_30; break;
+    switch (permanent) {
+    case  8: rng = rng_permattrdmg_8;  break;
+    case 10: rng = rng_permattrdmg_10; break;
+    case 15: rng = rng_permattrdmg_15; break;
+    case 30: rng = rng_permattrdmg_30; break;
     default:
-        impossible("Unknown poison type %d", fatal);
+        impossible("Unknown poison type %d", permanent);
         rng = rng_main;
         break;
     }
 
-    i = Poison_resistance ? 0 : rn2_on_rng(fatal, rng);
+    /* Don't use custom RNGs for monsters */
+    if (!you)
+        rng = rng_main;
 
-    if (strcmp(string, "blast") && !thrown_weapon) {
+    i = resists_poison(mon) ? 0 : rn2_on_rng(permanent, rng);
+
+    if (vis && strcmp(string, "blast") && !thrown_weapon) {
         /* 'blast' has already given a 'poison gas' message */
         /* so have "poison arrow", "poison dart", etc... */
         plural = (string[strlen(string) - 1] == 's') ? 1 : 0;
         /* avoid "The" Orcus's sting was poisoned... */
-        pline(Poison_resistance ? msgc_playerimmune :
-              i == 0 ? msgc_fatal_predone : msgc_fatalavoid,
+        pline(resists_poison(mon) ?
+              combat_msgc(NULL, mon, cr_immune) :
+              i == 0 && you ? msgc_intrloss :
+              combat_msgc(NULL, mon, cr_hit),
               "%s%s %s poisoned%s", isupper(*string) ? "" : "The ",
-              string, plural ? "were" : "was", Poison_resistance ?
-              ", but doesn't affect you." : "!");
+              string, plural ? "were" : "was",
+              resists_poison(mon) ?
+              msgcat_many(", but doesn't affect ", mon_nam(mon), ".",
+                          NULL) : "!");
         resist_message_printed = TRUE;
     }
 
-    if (Poison_resistance) {
-        if (!strcmp(string, "blast"))
+    if (resists_poison(mon)) {
+        if (!strcmp(string, "blast") && vis)
             shieldeff(u.ux, u.uy);
-        if (!resist_message_printed)
-            pline(msgc_playerimmune, "You aren't poisoned.");
+        if (!resist_message_printed && vis)
+            pline(msgc_playerimmune, "%sn't poisoned.",
+                  M_verbs(mon, "are"));
         return;
     }
 
-    if (i == 0 && typ != A_CHA) {
-        pline(msgc_fatal_predone, "The poison was deadly...");
-        done(POISONING, killer);
-    } else if (i <= 5) {
-        /* Check that a stat change was made */
-        if (adjattrib(typ, thrown_weapon ? -1 : -rn1(3, 3), 1))
-            pline(msgc_intrloss, "You%s!", poiseff[typ]);
+    if (i <= 5) {
+        if (you) {
+            /* Check that a stat change was made */
+            if (adjattrib(typ, thrown_weapon ? -1 : -rn1(3, 3), 1)) {
+                pline(msgc_intrloss, "You%s%s!", poiseff[typ],
+                      !i ? " permanently" : "");
+                if (!i)
+                    AMAX(typ)--; /* Deal permanent attribute damage */
+            }
+        } else {
+            if (vis)
+                pline(combat_msgc(NULL, mon, cr_hit),
+                      "%s weaker!", M_verbs(mon, "look"));
+            mon->mhpmax -= (thrown_weapon ? 1 : rn1(3, 3));
+            if (mon->mhpmax < 1)
+                mon->mhpmax = 1;
+            if (mon->mhp > mon->mhpmax)
+                mon->mhp = mon->mhpmax;
+        }
     } else {
         i = thrown_weapon ? rnd(6) : rn1(10, 6);
         if (Half_physical_damage)
             i = (i + 1) / 2;
-        losehp(i, killer);
+        if (you)
+            losehp(i, killer);
+        else {
+            mon->mhp -= i;
+            if (mon->mhp <= 0)
+                monkilled(flags.mon_moving ? NULL : &youmonst, mon, string, AD_DRST);
+        }
     }
 
-    if (u.uhp < 1) {
-        impossible("Survived to the end of poisoned() with negative HP");
-        done(DIED, killer);
-    }
-    encumber_msg();
+    if (you)
+        encumber_msg();
 }
 
 /* monster responds to player action; not the same as a passive attack */

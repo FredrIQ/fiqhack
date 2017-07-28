@@ -198,9 +198,13 @@ found:
     }
     pen->spe -= actualcost;
 
+    int xlchance = u.ulevel;
+    if (Role_if(PM_PRIEST))
+        xlchance += 20;
+
     /* can't write if we don't know it - unless we're lucky */
     if (!(objects[new_obj->otyp].oc_name_known) &&
-        (rnl(Role_if(PM_WIZARD) ? 3 : 15))) {
+        rnd(50) > xlchance) {
         pline(msgc_failrandom, "You %s to write that!",
               by_descr ? "fail" : "don't know how");
         /* scrolls disappear, spellbooks don't */
