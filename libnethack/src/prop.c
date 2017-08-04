@@ -2440,7 +2440,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
     /* Monster detection. All that is needed (apart from same-level, which was
        checked earlier) is the property itself. */
-    if (detects_monsters(viewer))
+    if (detects_monsters(viewer) || (viewer->mtame && viewee == &youmonst))
         sensemethod |= MSENSE_MONDETECT;
 
     /* Warning versus monster class. (Actually implemented as monster
