@@ -839,7 +839,8 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                          obj->otyp == SPE_POLYMORPH) &&
                         mtmp == &youmonst && mon->mpeaceful)
                         helpful = FALSE;
-                    if (self) /* -40 or +40 depending on helpfulness */
+                    if (self || (mon->mtame && mtmp == &youmonst))
+                        /* -40 or +40 depending on helpfulness */
                         tilescore += (helpful ? 40 : -40);
                     /* target is hostile */
                     else if (mm_aggression(mon, mtmp))
