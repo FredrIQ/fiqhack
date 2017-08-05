@@ -2817,6 +2817,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
     int buzztyp = abs(type) % 30; /* % 30 to catch -30-39 */
     boolean selfreflect = FALSE;
     boolean selfzap = FALSE;
+    boolean spell = (buzztyp >= 10 && buzztyp <= 19);
     /* has nothing to do with absolute value. TODO: give this var a better name */
     int abstype = buzztyp % 10;
     /* you = buzz hits you, vis = you can see mon, yours = you created the buzz */
@@ -2923,6 +2924,8 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                     }
                     if (raylevel >= P_SKILLED) {
                         range = 0;
+                        if (spell)
+                            zap_hit_mon(magr, mon, type, nd, raylevel, selfzap);
                         continue;
                     }
                     dx = -dx;
@@ -2998,7 +3001,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
     tmpsym_end(tsym);
     if (buzztyp == ZT_SPELL(ZT_FIRE))
         explode(sx, sy, type, dice(12, 6), 0, EXPL_FIERY, NULL, 0);
-    if (raylevel >= P_SKILLED) {
+    if (raylevel >= P_SKILLED && !spell) {
         if (abstype == ZT_FIRE)
             expltype = EXPL_FIERY;
         else if (abstype == ZT_COLD)
