@@ -841,7 +841,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         helpful = FALSE;
                     if (self || (mon->mtame && mtmp == &youmonst))
                         /* -40 or +40 depending on helpfulness */
-                        tilescore += (helpful ? 40 : -40);
+                        tilescore += (helpful ? 60 : -60);
                     /* target is hostile */
                     else if (mm_aggression(mon, mtmp))
                         tilescore += (helpful ? -10 : 20);
