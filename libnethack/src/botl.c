@@ -250,6 +250,10 @@ make_player_info(struct nh_player_info *pi)
         pi->level = u.ulevel;
     pi->xp = u.uexp;
 
+    /* Inventory + weight info */
+    pi->invslots = inv_cnt(TRUE);
+    pi->wtcap = weight_cap();
+    pi->wt = pi->wtcap + inv_weight();
     cap = near_capacity();
 
     /* check if any skills could be anhanced */

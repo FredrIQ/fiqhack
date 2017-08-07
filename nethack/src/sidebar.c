@@ -106,7 +106,8 @@ draw_sidebar(void)
 
     if (invheight) {
         wattron(sidebar, A_UNDERLINE);
-        mvwaddstr(sidebar, 0, 0, "Inventory:");
+        mvwprintw(sidebar, 0, 0, "Inventory: %d/%dwt (%d of 52 slots)",
+                  player.wt, player.wtcap, player.invslots);
         wattroff(sidebar, A_UNDERLINE);
 
         invwh = invheight - 1;

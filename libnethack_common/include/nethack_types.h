@@ -581,6 +581,7 @@ struct nh_player_info {
     int st, st_extra, dx, co, in, wi, ch;
     int align, nr_items;
     int hp, hpmax, en, enmax, ac, level;
+    int wt, wtcap, invslots;
     char coinsym;
     int monnum, cur_monnum;
     nh_bool can_enhance;
