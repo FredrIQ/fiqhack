@@ -1714,6 +1714,9 @@ in_container(struct obj *obj)
     }
 
     if (current_container) {
+        if (current_container->otyp == BAG_OF_HOLDING && obj->owt > 1)
+            makeknown(BAG_OF_HOLDING);
+
         pline(msgc_actionboring, "You put %s into %s.", doname(obj),
               the(xname(current_container)));
 

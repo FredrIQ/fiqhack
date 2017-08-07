@@ -1034,6 +1034,12 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case ADORNED:
     case REGENERATION:
+        if (!redundant && you) {
+            pline(lost ? msgc_intrloss : msgc_intrgain,
+                  "You feel %sregenerative.", lost ? "less " : "");
+            effect = TRUE;
+        }
+        break;
     case SEARCHING:
         break;
     case SEE_INVIS:
