@@ -5,6 +5,7 @@
 
 #include "hack.h"
 
+static boolean is_callable(const struct obj *);
 
 int
 do_mname(const struct nh_cmd_arg *arg)
@@ -193,14 +194,43 @@ docall_inner(const struct nh_cmd_arg *arg, int otyp)
 }
 
 static const char callable[] = {
+    ALLOW_NONE, NONE_ON_COMMA,
     SCROLL_CLASS, POTION_CLASS, WAND_CLASS, RING_CLASS, AMULET_CLASS,
     GEM_CLASS, SPBOOK_CLASS, ARMOR_CLASS, TOOL_CLASS, 0
 };
 
+static boolean
+is_callable(const struct obj *obj)
+{
+    int i;
+    for (i = 2; callable[i]; i++)
+        if (obj->oclass == callable[i])
+            return TRUE;
+    return FALSE;
+}
+
 int
 do_tname(const struct nh_cmd_arg *arg)
 {
-    struct obj *obj = getargobj(arg, callable, "call");
+    boolean flooritem = FALSE;
+    struct obj *here;
+    if (can_reach_floor() && !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy) &&
+        level->objects[u.ux][u.uy])
+        flooritem = TRUE;
+
+    struct obj *obj = getargobj(arg, callable + (flooritem ? 0 : 2), "call");
+    if (obj == &zeroobj) {
+        struct object_pick *floorobj_list;
+        int n = query_objlist("Call what?", level->objects[u.ux][u.uy],
+                              BY_NEXTHERE | INVORDER_SORT | AUTOSELECT_SINGLE,
+                              &floorobj_list, PICK_ONE, is_callable);
+        if (n) {
+            obj = floorobj_list[0].obj;
+            free(floorobj_list);
+        } else
+            obj = NULL;
+    }
+
     if (obj) {
         /* behave as if examining it in inventory; this might set dknown if it 
            was picked up while blind and the hero can now see */
@@ -285,7 +315,7 @@ do_naming(const struct nh_cmd_arg *arg)
 
             if (*s != RING_CLASS && *s != AMULET_CLASS && *s != SCROLL_CLASS &&
                 *s != POTION_CLASS && *s != WAND_CLASS && *s != SPBOOK_CLASS &&
-                *s != ARMOR_CLASS)
+                *s != ARMOR_CLASS && *s != ROCK_CLASS)
                 continue;
             for (n = bases[(int)*s];
                  n < NUM_OBJECTS && objects[n].oc_class == *s; n++) {
