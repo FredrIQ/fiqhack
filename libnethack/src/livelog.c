@@ -138,7 +138,7 @@ livelog_unique_monster(const struct monst *mon) {
 
         livelog_write_event(msgprintf("bones_killed=%s:bones_align=%s:"
                                       "bones_race=%s:bones_gender=%s:"
-                                      "bones_role=%s:bones_rank:%s:"
+                                      "bones_role=%s:bones_rank=%s:"
                                       "bones_monst=%s",
                                       name, aligns[falign].adj,
                                       races[frace].adj, genders[fgend].adj,
