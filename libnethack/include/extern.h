@@ -1739,6 +1739,7 @@ extern int spelleffects(boolean, struct musable *);
 extern boolean cast_protection(struct monst *, boolean, boolean);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
+extern void quiver_spell(void);
 extern void dump_spells(void);
 extern void initialspell(struct obj *);
 

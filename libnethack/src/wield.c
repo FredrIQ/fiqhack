@@ -346,10 +346,16 @@ doswapweapon(const struct nh_cmd_arg *arg)
 int
 dowieldquiver(const struct nh_cmd_arg *arg)
 {
+    if (yn("Do you want to ready a spell?") == 'y') {
+        quiver_spell();
+        return 0;
+    }
+
     struct obj *newquiver = getargobj(arg, wield_objs, "quiver");
     if (!newquiver)
         return 0;
 
+    u.spellquiver = 0;
     return equip_in_slot(newquiver, os_quiver, FALSE);
 }
 

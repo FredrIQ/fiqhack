@@ -6,8 +6,9 @@
 #include "hack.h"
 
 /* spellmenu arguments; 0 thru n-1 used as spl_book[] index when swapping */
-#define SPELLMENU_CAST (-2)
-#define SPELLMENU_VIEW (-1)
+#define SPELLMENU_CAST (-3)
+#define SPELLMENU_VIEW (-2)
+#define SPELLMENU_QUIVER (-1)
 
 #define KEEN 20000
 #define MAX_SPELL_STUDY 3
@@ -1948,9 +1949,19 @@ dovspell(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+void
+quiver_spell(void)
+{
+    int splnum;
+    if (!dospellmenu("Choose which spell to ready", SPELLMENU_QUIVER, &splnum))
+        return;
+
+    u.spellquiver = spellid(splnum);
+}
+
 static boolean
 dospellmenu(const char *prompt,
-            int splaction,  /* SPELLMENU_CAST, SPELLMENU_VIEW, or
+            int splaction,  /* SPELLMENU_CAST, SPELLMENU_VIEW, SPELLMENU_QUIVER or
                                spl_book[] index */
             int *spell_no)
 {

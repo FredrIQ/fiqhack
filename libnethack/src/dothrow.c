@@ -279,6 +279,24 @@ int
 dofire(const struct nh_cmd_arg *arg)
 {
     boolean cancel_unquivers = FALSE;
+    struct musable m = arg_to_musable(arg);
+
+    if (u.spellquiver) {
+        int sp_no;
+        for (sp_no = 0;
+             sp_no < MAXSPELL && spl_book[sp_no].sp_id != u.spellquiver;
+             sp_no++)
+            ;
+
+        if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == u.spellquiver &&
+            spellknow(sp_no) > 0) {
+            m.spell = u.spellquiver;
+            return spelleffects(FALSE, &m);
+        }
+    }
+
+    /* Might have forgotten the spell, silently unready it */
+    u.spellquiver = 0;
 
     if (notake(youmonst.data)) {
         pline(msgc_cancelled, "You are physically incapable of doing that.");
@@ -327,14 +345,17 @@ dofire(const struct nh_cmd_arg *arg)
             /* Don't automatically fill the quiver */
             pline_implied(msgc_cancelled, "You have no ammunition readied!");
             dowieldquiver(&(struct nh_cmd_arg){.argtype = 0});
+            if (u.spellquiver)
+                return dofire(arg);
+
             /* Allow this quiver to be unset if the throw is cancelled, so
                vi-keys players don't have to do it manually after typo-ing an
                object when entering a firing direction. */
             cancel_unquivers = TRUE;
             if (!uquiver)
                 return dothrow(arg);
-        }
-        autoquiver();
+        } else
+            autoquiver();
         if (!uquiver) {
             pline_implied(msgc_cancelled,
                           "You have nothing appropriate for your quiver!");

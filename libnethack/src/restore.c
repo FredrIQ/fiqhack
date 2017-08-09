@@ -627,6 +627,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->twoweap = mread8(mf);
     y->bashmsg = mread8(mf);
     y->moveamt = mread8(mf);
+    y->spellquiver = mread16(mf);
 
     /* this is oddly placed due to save padding */
     /*len = mread32(mf);
@@ -640,7 +641,7 @@ restore_you(struct memfile *mf, struct you *y)
         }*/
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 511; i++)
+    for (i = 0; i < 510; i++)
         (void) mread8(mf);
 
     mread(mf, y->ever_extrinsic, sizeof (y->ever_extrinsic));

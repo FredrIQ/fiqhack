@@ -193,6 +193,7 @@ struct you {
     } delayed_killers;
 
     int lastinvnr;
+    int spellquiver;
 
     /* SAVEBREAK: for avoiding desyncs with old saves */
     unsigned char save_compat_bytes[3];
@@ -202,4 +203,3 @@ struct you {
 # define Upolyd (u.umonnum != u.umonster)
 
 #endif /* YOU_H */
-

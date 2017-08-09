@@ -497,6 +497,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->twoweap);
     mwrite8(mf, y->bashmsg);
     mwrite8(mf, y->moveamt);
+    mwrite16(mf, y->spellquiver);
 
     /* Padding to allow character information to be added without breaking save
        compatibility: add new options just before the padding, then remove the
@@ -508,7 +509,7 @@ save_you(struct memfile *mf, struct you *y)
     } else
     mwrite32(mf, 0);*/
 
-    for (i = 0; i < 511; i++)    /* savemap: ignore */
+    for (i = 0; i < 510; i++)    /* savemap: ignore */
         mwrite8(mf, 0);          /* savemap: 4088 */
 
     mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 72 */
