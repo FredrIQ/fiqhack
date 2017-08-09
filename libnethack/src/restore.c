@@ -641,7 +641,7 @@ restore_you(struct memfile *mf, struct you *y)
         }*/
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 510; i++)
+    for (i = 0; i < 509; i++)
         (void) mread8(mf);
 
     mread(mf, y->ever_extrinsic, sizeof (y->ever_extrinsic));
