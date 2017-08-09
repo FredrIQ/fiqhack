@@ -66,7 +66,7 @@ enum artigen_type {
 };
 
 # define nartifact_gifted() nartifact_value(ag_gift)
-# define nartifact_wished() nartifact_value(ag_wish)
+# define nartifact_wished() (nartifact_value(ag_wish) + nartifact_value(ag_monwish))
 
 /* invoked properties with special powers */
 # define TAMING         (LAST_PROP+1)
