@@ -57,12 +57,12 @@ struct artifact {
 
 enum artigen_type {
     ag_none,
+    ag_other, /* This is the value of old existing artifacts before this was implemented */
     ag_gift,
     ag_wish,
     ag_monwish,
     ag_named,
     ag_bones,
-    ag_other,
 };
 
 # define nartifact_gifted() nartifact_value(ag_gift)
