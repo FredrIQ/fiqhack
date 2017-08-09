@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artifact.h"
 
 static boolean is_callable(const struct obj *);
 
@@ -126,6 +127,8 @@ do_oname(const struct nh_cmd_arg *arg)
         buf = slipbuf;
     }
     oname(obj, buf);
+    if (obj->oartifact)
+        artifact_exists(obj, artiname(obj->oartifact), ag_named);
     return 0;
 }
 
@@ -144,7 +147,7 @@ oname(struct obj *obj, const char *name)
 
     christen_obj(obj, name);
     if (lth)
-        artifact_exists(obj, name, TRUE);
+        artifact_exists(obj, name, ag_other); /* caller changes if applicable */
     if (obj->oartifact) {
         /* can't dual-wield with artifact as secondary weapon */
         if (obj == uswapwep)
@@ -152,6 +155,10 @@ oname(struct obj *obj, const char *name)
     }
     if (carried(obj))
         update_inventory();
+
+    /* Update allowed properties */
+    obj->oprops = obj_properties(obj);
+
     return obj;
 }
 

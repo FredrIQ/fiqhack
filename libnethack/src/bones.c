@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artifact.h"
 #include "lev.h"
 #include "spell.h"
 
@@ -85,7 +86,7 @@ resetobjs(struct obj *ochain, boolean restore)
             otmp->oartifact = 0;
             christen_obj(otmp, NULL);
         } else if (otmp->oartifact && restore)
-            artifact_exists(otmp, ox_name(otmp), TRUE);
+            artifact_exists(otmp, ox_name(otmp), ag_bones);
         if (!restore) {
             /* do not zero out o_ids for ghost levels anymore */
 

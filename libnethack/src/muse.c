@@ -8,6 +8,7 @@
  */
 
 #include "hack.h"
+#include "artifact.h"
 
 extern const int monstr[];
 
@@ -509,17 +510,17 @@ mon_makewish(struct monst *mon)
        TODO: check luck */
     wishobj = mksobj(mon->dlevel, wishtyp, TRUE, FALSE, rng_main);
 
-    /* I kind of want to allow the wizard to cheat the artifact counter.
-       However, this could lead to cases where the players deliberately
-       donate a stack of smoky potions to the wizard, waiting until he
-       eventually performs a guranteed artiwish... */
+    /* Monsters and players share artiwish counter, monwish is for tracking who wished
+       for it. */
     if (wisharti) {
         wishobj = oname(wishobj, artiname(wisharti));
         wishobj->quan = 1L;
+        if (wishobj->oartifact)
+            artifact_exists(wishobj, ox_name(wishobj), ag_monwish);
         if (is_quest_artifact(wishobj) ||
              (wishobj->oartifact &&
-              rn2(nartifact_exist()) > 1)) {
-            artifact_exists(wishobj, ox_name(wishobj), FALSE);
+              rn2(nartifact_wished()))) {
+            artifact_exists(wishobj, ox_name(wishobj), ag_none);
             obfree(wishobj, NULL);
             wishobj = &zeroobj;
             if (canseemon(mon))

@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artifact.h"
 #include "hungerstatus.h"
 
 static struct obj *worst_cursed_item(void);
@@ -688,8 +689,10 @@ gcrownu(void)
                 pline(msgc_itemrepair,
                       "Your sword shines brightly for a moment.");
             obj = oname(obj, artiname(ART_EXCALIBUR));
-            if (obj && obj->oartifact == ART_EXCALIBUR)
+            if (obj && obj->oartifact == ART_EXCALIBUR) {
+                artifact_exists(obj, artiname(obj->oartifact), ag_gift);
                 u.ugifts++;
+            }
         }
         /* acquire Excalibur's skill regardless of weapon or gift */
         unrestrict_weapon_skill(P_LONG_SWORD);
@@ -705,6 +708,8 @@ gcrownu(void)
         } else if (!already_exists) {
             obj = mksobj(level, LONG_SWORD, FALSE, FALSE, rng_main);
             obj = oname(obj, artiname(ART_VORPAL_BLADE));
+            if (obj && obj->oartifact == ART_VORPAL_BLADE)
+                artifact_exists(obj, artiname(obj->oartifact), ag_gift);
             obj->spe = 1;
             at_your_feet("A sword");
             dropy(obj);
@@ -727,6 +732,8 @@ gcrownu(void)
             } else if (!already_exists) {
                 obj = mksobj(level, RUNESWORD, FALSE, FALSE, rng_main);
                 obj = oname(obj, artiname(ART_STORMBRINGER));
+                if (obj && obj->oartifact == ART_STORMBRINGER)
+                    artifact_exists(obj, artiname(obj->oartifact), ag_gift);
                 at_your_feet(An(swordbuf));
                 obj->spe = 1;
                 dropy(obj);
@@ -1569,7 +1576,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 }
             }
         } else {
-            int nartifacts = nartifact_exist();
+            int nartifacts = nartifact_gifted();
 
             /* you were already in pretty good standing */
             /* The player can gain an artifact */
@@ -1580,6 +1587,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     otmp = mk_artifact(level, NULL, a_align(u.ux, u.uy),
                                        rng_altar_gift);
                     if (otmp) {
+                        if (otmp && otmp->oartifact)
+                            artifact_exists(otmp, artiname(otmp->oartifact), ag_gift);
                         if (otmp->spe < 0)
                             otmp->spe = 0;
                         if (otmp->cursed)

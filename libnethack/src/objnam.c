@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artifact.h"
 
 /* Summary of all NetHack's object naming functions:
    obj_typename(otyp): entry in discovery list, from player's point of view
@@ -3148,6 +3149,7 @@ typfnd:
 
         otmp = oname(otmp, name);
         if (otmp->oartifact) {
+            artifact_exists(otmp, ox_name(otmp), ag_wish);
             otmp->quan = 1L;
             if (!flags.mon_moving)
                 break_conduct(conduct_artiwish);      /* KMH, conduct */
@@ -3156,10 +3158,12 @@ typfnd:
 
     /* more wishing abuse: don't allow wishing for certain artifacts */
     /* and make them pay; charge them for the wish anyway! */
+    if (otmp->oartifact)
+        pline(msgc_statusbad, "Debug: %d", nartifact_wished());
     if ((is_quest_artifact(otmp) ||
          (otmp->oartifact &&
-          rn2_on_rng(nartifact_exist(), rng_artifact_wish) > 1)) && !wizard) {
-        artifact_exists(otmp, ox_name(otmp), FALSE);
+          rn2_on_rng(nartifact_wished(), rng_artifact_wish))) && !wizard) {
+        artifact_exists(otmp, ox_name(otmp), ag_none);
         obfree(otmp, NULL);
         otmp = &zeroobj;
         if (!flags.mon_moving)
