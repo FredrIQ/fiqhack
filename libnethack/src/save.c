@@ -295,6 +295,7 @@ save_spellbook(struct memfile *mf)
         mwrite32(mf, save_encode_32(spl_book[i].sp_know, -moves, -moves));
         mwrite16(mf, spl_book[i].sp_id);
         mwrite8(mf, spl_book[i].sp_lev);
+        mwrite32(mf, spl_book[i].sp_key);
     }
 }
 

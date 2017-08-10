@@ -1051,7 +1051,27 @@ docast(const struct nh_cmd_arg *arg)
 int
 docastalias(const struct nh_cmd_arg *arg)
 {
-    pline(msgc_statusbad, "Input: %d", arg->key);
+    struct musable m = arg_to_musable(arg);
+    int i;
+    int splnum;
+
+    for (i = 0; i < MAXSPELL; i++) {
+        if (spellid(i) == NO_SPELL)
+            continue;
+
+        if (spellkey(i) == arg->key) {
+            m.spell = spellid(i);
+            pline(msgc_actionboring, "Using %s.", spellname(i));
+            return spelleffects(FALSE, &m);
+        }
+    }
+
+    if (!dospellmenu("Choose which spell to alias", SPELLMENU_QUIVER, &splnum))
+        return 0;
+    spl_book[splnum].sp_key = arg->key;
+
+    pline(msgc_actionok, "Aliased %s.", spellname(splnum));
+    pline(msgc_hint, "(You can unalias with 'spellbook', typically on +.)");
     return 0;
 }
 
@@ -1943,7 +1963,13 @@ dovspell(const struct nh_cmd_arg *arg)
 
     (void) arg;
 
-    while (dospellmenu("Your magical abilities", SPELLMENU_VIEW, &splnum)) {
+    while (dospellmenu("Your magical abilities (*: forgotten, #: aliased)",
+                       SPELLMENU_VIEW, &splnum)) {
+        if (spellkey(splnum) && yn("Remove the key alias for the spell?") == 'y') {
+            spl_book[splnum].sp_key = 0;
+            continue;
+        }
+
         qbuf = msgprintf("Reordering magic: adjust '%c' to",
                          spelllet_from_no(splnum));
         if (!dospellmenu(qbuf, splnum, &othnum))
@@ -1982,8 +2008,9 @@ dospellmenu(const char *prompt,
         if (spellid(i) == NO_SPELL)
             continue;
         const char *buf = SPELL_IS_FROM_SPELLBOOK(i) ?
-            msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
+            msgprintf("%s\t%-d%s%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
                       spellknow(i) ? " " : "*",
+                      !spellkey(i) ? " " : "#",
                       spelltypemnemonic(spell_skilltype(spellid(i))),
                       100 - percent_success(&youmonst, spellid(i)),
                       (spellknow(i) * 100 + (KEEN - 1)) / KEEN) :
