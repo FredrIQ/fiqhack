@@ -3158,8 +3158,6 @@ typfnd:
 
     /* more wishing abuse: don't allow wishing for certain artifacts */
     /* and make them pay; charge them for the wish anyway! */
-    if (otmp->oartifact)
-        pline(msgc_statusbad, "Debug: %d", nartifact_wished());
     if ((is_quest_artifact(otmp) ||
          (otmp->oartifact &&
           rn2_on_rng(nartifact_wished(), rng_artifact_wish))) && !wizard) {
