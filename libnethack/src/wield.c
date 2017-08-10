@@ -349,7 +349,7 @@ dowieldquiver(const struct nh_cmd_arg *arg)
     if (yn("Do you want to ready a spell?") == 'y') {
         quiver_spell();
         if (u.spellquiver)
-            equip_in_slot(NULL, os_quiver, FALSE);
+            setuqwep(NULL);
         return 0;
     }
 
