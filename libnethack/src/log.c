@@ -1437,6 +1437,8 @@ log_record_command(const char *cmd, const struct nh_cmd_arg *arg)
         lprintf(" S%c", arg->spelllet);
     if (arg->argtype & CMD_ARG_LIMIT)
         lprintf(" L%d", arg->limit);
+    if (arg->argtype & CMD_ARG_KEY)
+        lprintf(" K%d", arg->key);
 
     lprintf("\x0a");
 
@@ -1816,6 +1818,11 @@ log_replay_command(struct nh_cmd_and_arg *cmd)
         case 'L':
             cmd->arg.argtype |= CMD_ARG_LIMIT;
             cmd->arg.limit = parse_decimal_number(&lp);
+            break;
+
+        case 'K':
+            cmd->arg.argtype |= CMD_ARG_KEY;
+            cmd->arg.key = parse_decimal_number(&lp);
             break;
 
         default:

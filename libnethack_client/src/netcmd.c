@@ -462,6 +462,8 @@ cmd_request_command_inner(const struct nh_cmd_and_arg *cmd,
         json_object_set_new(jarg, "spelllet", json_integer(cmd->arg.spelllet));
     if (cmd->arg.argtype & CMD_ARG_LIMIT)
         json_object_set_new(jarg, "limit", json_integer(cmd->arg.limit));
+    if (cmd->arg.argtype & CMD_ARG_KEY)
+        json_object_set_new(jarg, "key", json_integer(cmd->arg.key));
 
     *json_t_p = json_pack("{ss,so}", "command", cmd->cmd, "arg", jarg);
 }

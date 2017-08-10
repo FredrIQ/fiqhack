@@ -210,11 +210,12 @@ save_flags(struct memfile *mf)
     mwrite32(mf, flags.save_revision);
     mwrite8(mf, flags.servermail);
     mwrite8(mf, flags.autoswap);
+    mwrite32(mf, flags.last_arg.key);
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 103; i++)
+    for (i = 0; i < 99; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));

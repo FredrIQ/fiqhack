@@ -155,6 +155,7 @@
 # define CMD_ARG_STR   (1 << 3)         /* param can be a string */
 # define CMD_ARG_SPELL (1 << 4)         /* param can be a spell letter */
 # define CMD_ARG_LIMIT (1 << 5)         /* param can be a limit */
+# define CMD_ARG_KEY   (1 << 6)         /* contains the exact keypress */
 
 /* command usage hints */
 # define CMD_EXT        (1 << 10)       /* an 'extended' command */
@@ -648,6 +649,7 @@ struct nh_cmd_arg {
     const char *str;           /* CMD_ARG_STR */
     char spelllet;             /* CMD_ARG_SPELL */
     int limit;                 /* CMD_ARG_LIMIT */
+    int key;                   /* CMD_ARG_KEY */
 };
 
 struct nh_cmd_and_arg {

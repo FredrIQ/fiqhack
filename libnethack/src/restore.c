@@ -836,8 +836,11 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->servermail = mread8(mf);
     f->autoswap = mread8(mf);
 
+    /* Seperate from other last_arg for save compat reasons */
+    f->last_arg.key = mread32(mf);
+
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 103; i++)
+    for (i = 0; i < 99; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));

@@ -1686,6 +1686,8 @@ do_command(int command, struct nh_cmd_arg *arg)
             flags.last_arg.spelllet = 0;
         if (!(flags.last_arg.argtype & CMD_ARG_LIMIT))
             flags.last_arg.limit = 0;
+        if (!(flags.last_arg.argtype & CMD_ARG_KEY))
+            flags.last_arg.key = 0;
     }
 
     /* Debug commands are now restricted to wizard mode here, rather than with
