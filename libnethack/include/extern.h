@@ -1730,6 +1730,7 @@ extern void age_spells(void);
 extern void update_supernatural_abilities(void);
 extern boolean supernatural_ability_available(int);
 extern int docast(const struct nh_cmd_arg *);
+extern int docastalias(const struct nh_cmd_arg *);
 extern boolean getspell(int *);
 extern int spell_skilltype(int);
 extern int mspell_skilltype(int);

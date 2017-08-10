@@ -1048,6 +1048,13 @@ docast(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+int
+docastalias(const struct nh_cmd_arg *arg)
+{
+    pline(msgc_statusbad, "Input: %d", arg->key);
+    return 0;
+}
+
 /*
  * Add SPID_* values to the player's spellbook, and remove those which are no
  * longer necessary.

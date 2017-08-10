@@ -487,6 +487,12 @@ get_command(void *callbackarg,
                 repeats_remaining = save_repeats;
             }
 
+            /* If the command wants key info, supply it */
+            if (cmd->flags & CMD_ARG_KEY) {
+                ncaa.arg.argtype |= CMD_ARG_KEY;
+                ncaa.arg.key = key;
+            }
+
             /* if the command requres an arg AND the arg isn't set yet (by
                handle_internal_cmd) */
             if (cmd->flags & CMD_ARG_DIR && cmd->flags & CMD_MOVE &&

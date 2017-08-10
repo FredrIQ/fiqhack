@@ -84,6 +84,8 @@ const struct cmd_desc cmdlist[] = {
      FALSE, doautoexplore, 0},
     {"cast", "use a magical or supernatural ability", 'Z', 0, TRUE, docast,
      CMD_ARG_SPELL | CMD_ARG_DIR | CMD_ARG_POS},
+    {"castalias", "alias spells to single input", 0, 0, TRUE, docastalias,
+     CMD_ARG_KEY},
     {"chat", "talk to someone", 'c', M('c'), TRUE, dotalk,
      CMD_ARG_DIR | CMD_EXT},     /* converse? */
     {"close", "close a door", 0, 0, FALSE, doclose, CMD_ARG_DIR},
