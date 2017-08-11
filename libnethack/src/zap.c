@@ -4047,7 +4047,7 @@ retry:
         if (!otmp)
             return;     /* for safety; should never happen */
     } else if (otmp == &nothing) {
-        historic_event(FALSE, TRUE, "refused a wish.");
+        historic_event(FALSE, TRUE, "refused a wish");
         /* explicitly wished for "nothing", presumeably attempting to retain
            wishless conduct */
         return;

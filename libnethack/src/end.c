@@ -763,9 +763,7 @@ check_survival(int how)
                 pline(msgc_fatal_predone,
                       "Unfortunately you are still genocided...");
             else {
-                historic_event(FALSE, TRUE,
-                               "were saved from death by your amulet of life "
-                               "saving!");
+                historic_event(FALSE, TRUE, "averted death");
                 return TRUE;
             }
         }
@@ -782,7 +780,7 @@ check_survival(int how)
         if (u.uhpmax <= 0)
             u.uhpmax = u.ulevel * 8;    /* arbitrary */
         savelife(how);
-        historic_event(FALSE, FALSE, "were saved from death by your wizard powers!");
+        historic_event(FALSE, FALSE, "decided not to die");
         return TRUE;
     }
 

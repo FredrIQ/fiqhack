@@ -627,14 +627,14 @@ gcrownu(void)
     case A_LAWFUL:
         u.uevent.uhand_of_elbereth = 1;
         verbalize(msgc_intrgain, "I crown thee...  The Hand of Elbereth!");
-        historic_event(FALSE, TRUE, "were crowned as the Hand of Elbereth!");
+        historic_event(FALSE, TRUE, "became the Hand of Elbereth");
         break;
     case A_NEUTRAL:
         u.uevent.uhand_of_elbereth = 2;
         in_hand = (uwep && uwep->oartifact == ART_VORPAL_BLADE);
         already_exists = exist_artifact(LONG_SWORD, artiname(ART_VORPAL_BLADE));
         verbalize(msgc_intrgain, "Thou shalt be my Envoy of Balance!");
-        historic_event(FALSE, TRUE, "were named as the Envoy of Balance!");
+        historic_event(FALSE, TRUE, "became the Envoy of Balance");
         break;
     case A_CHAOTIC:
         u.uevent.uhand_of_elbereth = 3;
@@ -642,9 +642,9 @@ gcrownu(void)
         already_exists = exist_artifact(RUNESWORD, artiname(ART_STORMBRINGER));
         verbalize(msgc_intrgain, "Thou art chosen to %s for My Glory!",
                   already_exists && !in_hand ? "take lives" : "steal souls");
-        historic_event(FALSE, TRUE, "were chosen to %s for your god's glory!",
+        historic_event(FALSE, TRUE, "were chosen to %s for the glory of %s",
                        already_exists &&
-                       !in_hand ? "take lives" : "steal souls");
+                       !in_hand ? "take lives" : "steal souls", u_gname());
         break;
     }
 
