@@ -280,6 +280,8 @@ map_object(struct obj *obj, int show, boolean reroll_hallu)
     loc->mem_obj = objtyp + 1;
     loc->mem_obj_mn = monnum + 1;
 
+    update_objpile(level, x, y);
+
     if (show)
         dbuf_set(x, y, loc->mem_bg, loc->mem_trap, loc->mem_obj,
                  loc->mem_obj_mn, 0, 0, 0, 0, dbuf_branding(level, x, y));
