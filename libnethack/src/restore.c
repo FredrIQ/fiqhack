@@ -91,11 +91,7 @@ find_lev_obj(struct level *lev)
     }
 }
 
-/* Things that were marked "in_use" when the game was saved (ex. via the
-   infamous "HUP" cheat) get used up here.
-
-   TODO: If this isn't a no-op, it's going to cause a desync and an unloadable
-   save file. */
+/* Validate in_use -- it should never be set in neutral turnstate */
 void
 inven_inuse(boolean quietly)
 {
@@ -103,11 +99,9 @@ inven_inuse(boolean quietly)
 
     for (otmp = invent; otmp; otmp = otmp2) {
         otmp2 = otmp->nobj;
-        if (otmp->in_use) {
-            if (!quietly)
-                pline(msgc_noidea, "Finishing off %s...", xname(otmp));
-            useup(otmp);
-        }
+        if (otmp->in_use)
+            panic("in_use set for %s at neutral turnstate",
+                  killer_xname(otmp));
     }
 }
 
