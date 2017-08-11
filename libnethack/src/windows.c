@@ -253,7 +253,16 @@ const char *
 show_ac(const char *formatstring, int ac)
 {
     const char *res;
-    (*windowprocs.win_show_ac) (formatstring, ac, &res, msg_getlin_callback);
+    (*windowprocs.win_format) (formatstring, FMT_SHOW_AC, ac, &res, msg_getlin_callback);
+    return res;
+}
+
+const char *
+friendly_key(const char *formatstring, int key)
+{
+    const char *res;
+    (*windowprocs.win_format) (formatstring, FMT_FRIENDLY_KEYNAME, key, &res,
+                               msg_getlin_callback);
     return res;
 }
 

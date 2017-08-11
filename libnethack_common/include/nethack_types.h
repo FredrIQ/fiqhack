@@ -113,6 +113,10 @@
 
 # define LDM_COUNT       13      /* number of level display modes */
 
+/* Special formatting types that need windowport input. */
+# define FMT_SHOW_AC              1       /* how AC should be formatted */
+# define FMT_FRIENDLY_KEYNAME     2       /* how keys should be formatted */
+
 /* Command parameters.
  *
  * A command description specifies a set of parameters that it understands. All
@@ -839,8 +843,9 @@ struct nh_window_procs {
                              char defchoice);
     void (*win_getlin) (const char *query, void *callbackarg,
                         void (*callback)(const char *lin, void *callbackarg));
-    void (*win_show_ac) (const char *formatstring, int ac, void *callbackarg,
-                         void (*callback)(const char *output, void *callbackarg));
+    void (*win_format) (const char *formatstring, int fmt_type, int param,
+                        void *callbackarg,
+                        void (*callback)(const char *output, void *callbackarg));
     void (*win_delay) (void);
     void (*win_load_progress) (int progress);
     void (*win_level_changed) (int displaymode);

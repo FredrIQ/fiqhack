@@ -2008,9 +2008,10 @@ dospellmenu(const char *prompt,
         if (spellid(i) == NO_SPELL)
             continue;
         const char *buf = SPELL_IS_FROM_SPELLBOOK(i) ?
-            msgprintf("%s\t%-d%s%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
+            msgprintf("%s\t%-d%s%s%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
                       spellknow(i) ? " " : "*",
-                      !spellkey(i) ? " " : "#",
+                      !spellkey(i) ? " " : "#:",
+                      !spellkey(i) ? "" : friendly_key("%s", spellkey(i)),
                       spelltypemnemonic(spell_skilltype(spellid(i))),
                       100 - percent_success(&youmonst, spellid(i)),
                       (spellknow(i) * 100 + (KEEN - 1)) / KEEN) :

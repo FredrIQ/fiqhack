@@ -35,7 +35,7 @@ struct nh_window_procs curses_windowprocs = {
     curses_getdir,
     curses_yn_function_game,
     curses_getline,
-    curses_show_ac,
+    curses_format,
     curses_delay_output,
     curses_load_progress,
     curses_notify_level_changed,
@@ -1655,8 +1655,8 @@ curses_delay_output(void)
 /* formatstring is printf-like, but doesn't use printf directly to
    avoid potential serverside exploits */
 void
-curses_show_ac(const char *formatstring, int ac, void *res,
-               void (*callback)(const char *, void *))
+curses_format(const char *formatstring, int fmt_type, int param, void *res,
+              void (*callback)(const char *, void *))
 {
     int len = strlen(formatstring);
     len += 4; /* +1 from \0, +1 from %s->Def, +2 for %d->-127 */
@@ -1664,16 +1664,17 @@ curses_show_ac(const char *formatstring, int ac, void *res,
     int i, j, k;
     int done_str = 0;
     int done_num = 0;
-    const char *str = "Def";
-    if (settings.show_ac)
-        str = "AC";
+    const char *str;
+    if (fmt_type == FMT_SHOW_AC) {
+        str = "Def";
+        if (settings.show_ac)
+            str = "AC";
+    } else
+        str = friendly_keyname(param);
 
-    char num[5];
-    if (ac < -128)
-        ac = -128;
-    if (ac > 127)
-        ac = 127;
-    snprintf(num, 5, "%d", settings.show_ac ? ac : 10 - ac);
+    char num[20] = "0";
+    snprintf(num, 20, "%d",
+             (settings.show_ac || fmt_type != FMT_SHOW_AC) ? param : 10 - param);
 
     j = 0;
     for (i = 0; formatstring[i]; i++) {
