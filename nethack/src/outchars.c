@@ -147,6 +147,10 @@ print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
                 branding = nhcurses_genbranding_stepped;
         }
     }
+    if (branding == nhcurses_no_branding && settings.hilite_obj_piles &&
+        dbe->branding & NH_BRANDING_PILE)
+        branding = nhcurses_genbranding_pile;
+
     if (branding != nhcurses_no_branding) {
         print_tile_number(win, TILESEQ_GENBRAND_OFF +
                           branding - nhcurses_genbranding_first,

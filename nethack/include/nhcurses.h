@@ -297,6 +297,7 @@ struct settings {
     nh_bool visible_rock;       /* render solid rock unlike unexplored */
     nh_bool extmenu;    /* extended commands use menu interface */
     nh_bool hilite_pet; /* hilight pets */
+    nh_bool hilite_obj_piles;   /* hilight object piles */
     nh_bool showexp;    /* show experience points */
     nh_bool use_inverse;        /* use inverse video for some things */
     nh_bool invweight;  /* show item weight in the inventory */

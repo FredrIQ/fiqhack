@@ -44,6 +44,7 @@ enum nhcurses_brandings {
     nhcurses_genbranding_stepped = nhcurses_genbranding_first,
     nhcurses_genbranding_locked,
     nhcurses_genbranding_unlocked,
+    nhcurses_genbranding_pile,
     nhcurses_genbranding_last,
     nhcurses_genbranding_trapped = nhcurses_genbranding_last,
     /* monster brandings */

@@ -671,6 +671,7 @@ struct nh_cmd_and_arg {
 # define NH_BRANDING_SEEN      0x0020   /* a square that is seen */
 # define NH_BRANDING_LIT       0x0040   /* a square that is permanently lit */
 # define NH_BRANDING_TEMP_LIT  0x0080   /* a square that is temporarily lit */
+# define NH_BRANDING_PILE      0x0100   /* an object pile */
 /* monster attitude could go here, but is in monflags instead as
    that's a more appropriate place */
 

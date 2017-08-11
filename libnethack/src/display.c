@@ -1584,6 +1584,9 @@ dbuf_branding(struct level *lev, int x, int y)
     else if (cansee(x, y) && templit(x, y))
         b |= NH_BRANDING_TEMP_LIT;
 
+    if (loc->pile)
+        b |= NH_BRANDING_PILE;
+
     return b;
 }
 
