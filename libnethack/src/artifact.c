@@ -156,7 +156,7 @@ mk_artifact(
         if ((!by_align ? a->otyp ==
              o_typ : (a->alignment == alignment ||
                       (a->alignment == A_NONE && u.ugifts > 0))) &&
-            (!(a->spfx & SPFX_NOGEN) || unique) && artigen[m] != ag_none) {
+            (!(a->spfx & SPFX_NOGEN) || unique) && artigen[m] == ag_none) {
             if (by_align && a->race != NON_PM && race_hostile(&mons[a->race]))
                 continue;       /* skip enemies' equipment */
             else if (by_align && Role_if(a->role))
@@ -172,7 +172,7 @@ mk_artifact(
         for (n = 0, a = artilist + 1, m = 1; a->otyp; a++, m++)
             if ((!by_align ? a->otyp ==
                  o_typ : (a->alignment == alignment || a->alignment == A_NONE)) &&
-                (!(a->spfx & SPFX_NOGEN) || unique) && artigen[m] != ag_none) {
+                (!(a->spfx & SPFX_NOGEN) || unique) && artigen[m] == ag_none) {
                 if (by_align && a->race != NON_PM && race_hostile(&mons[a->race]))
                     continue;       /* skip enemies' equipment */
                 else if (by_align && Role_if(a->role))
