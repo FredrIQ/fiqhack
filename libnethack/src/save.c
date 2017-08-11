@@ -385,7 +385,8 @@ save_location(struct memfile *mf, struct rm *loc)
         (loc->mem_obj_mn << 2) | (loc->mem_invis << 1) |
         (loc->mem_stepped << 0);
     rflags = (loc->flags << 11) | (loc->horizontal << 10) | (loc->lit << 9) |
-        (loc->waslit << 8) | (loc->roomno << 2) | (loc->edge << 1);
+        (loc->waslit << 8) | (loc->roomno << 2) | (loc->edge << 1) |
+        (loc->pile << 0);
     mwrite32(mf, memflags);
     mwrite8(mf, loc->typ);
     mwrite8(mf, loc->seenv);

@@ -332,6 +332,7 @@ struct rm {
     unsigned waslit:1;          /* remember if a location was lit */
     unsigned roomno:6;          /* room # for special rooms */
     unsigned edge:1;            /* marks boundaries for special rooms */
+    unsigned pile:1;            /* is an object pile */
 
     /* these values only have meaning if mem_bg is some sort of door, and are
        saved in mem_bg not in their own bits; they record what the player knows 

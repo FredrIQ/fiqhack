@@ -11,11 +11,20 @@
 #include "hack.h"
 #include "artifact.h"
 
-static struct obj *o_in(struct obj *, char);
-static struct obj *o_material(struct obj *, unsigned);
-static void do_dknown_of(struct obj *);
-static boolean check_map_spot(int, int, char, unsigned);
-static boolean clear_stale_map(char, unsigned);
+#define OBJDET_MON       (1 << 0)
+#define OBJDET_FLOOR     (1 << 1)
+#define OBJDET_CONTAINED (1 << 2)
+#define OBJDET_BURIED    (1 << 3)
+#define OBJDET_UNMAPPED  (1 << 4)
+#define OBJDET_SELF      (1 << 5)
+
+static int find_obj_map(boolean, char, unsigned);
+static int find_obj_tile(int, int, boolean, char, unsigned);
+static void find_obj(struct obj *, int, int, int, int *,
+                     boolean, char, unsigned);
+static boolean find_obj_content(struct obj *, struct obj **,
+                                boolean, char, unsigned);
+static boolean find_obj_match(struct obj *, boolean, char, unsigned);
 static void sense_trap(struct trap *, xchar, xchar, int);
 static void show_map_spot(int, int);
 static void findone(int, int, void *);
@@ -23,247 +32,273 @@ static void openone(int, int, void *);
 static void search_tile(int, int, struct monst *, int);
 static const char *level_distance(d_level *);
 
-/* Recursively search obj for an object in class oclass and return 1st found */
-static struct obj *
-o_in(struct obj *obj, char oclass)
+/*
+ * Returns nonzero if we found anything. Extra flags:
+ * OBJDET_UNMAPPED   Returned if we didn't find anything but unmapped
+ *                   previous knowledge
+ *
+ * OBJDET_SELF       We only found stuff in our inventory or below us
+ */
+static int
+find_obj_map(boolean set_dknown, char oclass, unsigned material)
 {
-    struct obj *otmp;
-    struct obj *temp;
+    int res = 0;
+    int ires = 0;
 
-    if (obj->oclass == oclass)
-        return obj;
+    int x, y;
+    for (x = 0; x < COLNO; x++) {
+        for (y = 0; y < ROWNO; y++) {
+            ires = find_obj_tile(x, y, set_dknown, oclass, material);
 
-    if (Has_contents(obj)) {
-        for (otmp = obj->cobj; otmp; otmp = otmp->nobj)
-            if (otmp->oclass == oclass)
-                return otmp;
-            else if (Has_contents(otmp) && (temp = o_in(otmp, oclass)))
-                return temp;
-    }
-    return NULL;
-}
-
-/* Recursively search obj for an object made of specified material and return
-   1st found */
-static struct obj *
-o_material(struct obj *obj, unsigned material)
-{
-    struct obj *otmp;
-    struct obj *temp;
-
-    if (objects[obj->otyp].oc_material == material)
-        return obj;
-
-    if (Has_contents(obj)) {
-        for (otmp = obj->cobj; otmp; otmp = otmp->nobj)
-            if (objects[otmp->otyp].oc_material == material)
-                return otmp;
-            else if (Has_contents(otmp) && (temp = o_material(otmp, material)))
-                return temp;
-    }
-    return NULL;
-}
-
-static void
-do_dknown_of(struct obj *obj)
-{
-    struct obj *otmp;
-
-    obj->dknown = 1;
-    if (Has_contents(obj)) {
-        for (otmp = obj->cobj; otmp; otmp = otmp->nobj)
-            do_dknown_of(otmp);
-    }
-}
-
-/* Check whether the location has an outdated object displayed on it. */
-static boolean
-check_map_spot(int x, int y, char oclass, unsigned material)
-{
-    int memobj;
-    struct obj *otmp;
-    struct monst *mtmp;
-
-    memobj = level->locations[x][y].mem_obj;
-    if (memobj) {
-        /* there's some object shown here */
-        if (oclass == ALL_CLASSES) {
-            return (!(level->objects[x][y] ||   /* stale if nothing here */
-                      ((mtmp = m_at(level, x, y)) != 0 && mtmp->minvent)));
-        } else {
-            if (material && objects[memobj - 1].oc_material == material) {
-                /* the object shown here is of interest because material
-                   matches */
-                for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
-                    if (o_material(otmp, GOLD))
-                        return FALSE;
-                /* didn't find it; perhaps a monster is carrying it */
-                if ((mtmp = m_at(level, x, y)) != 0) {
-                    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
-                        if (o_material(otmp, GOLD))
-                            return FALSE;
-                }
-                /* detection indicates removal of this object from the map */
-                return TRUE;
+            /* Don't mark UNMAPPED in res unless it's empty or only contains
+               player inventory */
+            if (ires & OBJDET_UNMAPPED) {
+                if (!res || (res & (OBJDET_MON | OBJDET_SELF)))
+                    res = ires;
+                ires = 0;
             }
-            if (oclass && objects[memobj - 1].oc_class == oclass) {
-                /* the object shown here is of interest because its class
-                   matches */
-                for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
-                    if (o_in(otmp, oclass))
-                        return FALSE;
-                /* didn't find it; perhaps a monster is carrying it */
-                if ((mtmp = m_at(level, x, y)) != 0) {
-                    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
-                        if (o_in(otmp, oclass))
-                            return FALSE;
-                }
-                /* detection indicates removal of this object from the map */
-                return TRUE;
+
+            if (ires) {
+                /* Only mark OBJDET_SELF if res is empty */
+                if ((ires & OBJDET_SELF) && res)
+                    ires &= ~OBJDET_SELF;
+
+                res = ires;
             }
         }
     }
+
+    return res;
+}
+
+/* Returns nonzero if we found anything on the square.
+   OBJDET_SELF is set if the square is the one the hero is standing on. */
+static int
+find_obj_tile(int x, int y,
+              boolean set_dknown, char oclass, unsigned material)
+{
+    int memobj;
+    struct monst *mon;
+    int res = 0;
+    int contained_res = 0;
+    boolean maybe_pile = FALSE;
+
+    memobj = level->locations[x][y].mem_obj;
+
+    /* Show objects in given priority: floor > player/monster > buried */
+    find_obj(level->buriedobjlist, x, y, OBJDET_BURIED, &res,
+             set_dknown, oclass, material);
+
+    for (mon = level->monlist; mon; mon = mon->nmon) {
+        if (mon->mx == x && mon->my == y) {
+            find_obj(mon->minvent, x, y, OBJDET_MON, &res,
+                     set_dknown, oclass, material);
+            break;
+        }
+    }
+
+    /* Regard the player as just another monster */
+    if (x == u.ux && y == u.uy)
+        find_obj(invent, x, y, OBJDET_MON, &res,
+                 set_dknown, oclass, material);
+
+    find_obj(level->objects[x][y], x, y,  OBJDET_FLOOR, &res,
+             set_dknown, oclass, material);
+
+    if (!res && memobj) {
+        /* If the remembered object is of a type we would have detected, unmap it */
+        memobj--; /* mem_obj is 1-indexed so that 0 means "nothing here" */
+
+        if ((material && objects[memobj].oc_material == material) ||
+            (oclass && objects[memobj].oc_class == oclass) ||
+            (!oclass && !material)) {
+            unmap_object(x, y);
+            unset_objpile(level, x, y);
+            res |= OBJDET_UNMAPPED;
+        }
+    }
+
+    if ((res & ~OBJDET_UNMAPPED) && x == u.ux && y == u.uy)
+        res |= OBJDET_SELF;
+
+    if (res)
+        newsym(x, y);
+
+    return res;
+}
+
+/* Updates res depending on if, and what, we found. */
+static void
+find_obj(struct obj *chain, int x, int y, int how, int *res,
+         boolean set_dknown, char oclass, unsigned material)
+{
+    struct obj *obj, *contained;;
+    for (obj = chain; obj; obj = ((how == OBJDET_FLOOR) ? obj->nexthere : obj->nobj)) {
+        /* If carried by a monster, update ox/oy so we can work on it properly */
+        if (how == OBJDET_MON) {
+            obj->ox = x;
+            obj->oy = y;
+        }
+
+        if (obj->ox != x || obj->oy != y)
+            continue;
+
+        if (find_obj_match(obj, set_dknown, oclass, material)) {
+            if (*res != how) {
+                *res = how;
+                map_object(obj, 1, TRUE);
+                unset_objpile(level, obj->ox, obj->oy);
+            } else {
+                set_objpile(level, obj->ox, obj->oy);
+                if (!set_dknown)
+                    break;
+            }
+            if (!set_dknown)
+                continue;
+        }
+
+        /* Check if there's any object of the material/class contained recursively */
+        contained = NULL;
+
+        if (find_obj_content(obj, &contained, set_dknown, oclass, material)) {
+            contained->ox = obj->ox;
+            contained->oy = obj->oy;
+            if (!(*res & how)) {
+                map_object(contained, 1, TRUE);
+                unset_objpile(level, contained->ox, contained->oy);
+                *res = (how | OBJDET_CONTAINED);
+            }
+        }
+    }
+}
+
+/* Returns TRUE if we found a matching object contained inside */
+static boolean
+find_obj_content(struct obj *container, struct obj **contained,
+                 boolean set_dknown, char oclass, unsigned material)
+{
+    struct obj *obj;
+    if (!Has_contents(container))
+        return FALSE;
+
+    for (obj = container->cobj; obj; obj = obj->nobj) {
+        if (find_obj_match(obj, set_dknown, oclass, material)) {
+            if (!(*contained)) {
+                *contained = obj;
+                if (!set_dknown)
+                    break;
+            }
+        }
+
+        find_obj_content(obj, contained, set_dknown, oclass, material);
+        if (*contained && !set_dknown)
+            break;
+    }
+
+    if (*contained)
+        return TRUE;
+
     return FALSE;
 }
 
-/*
-   When doing detection, remove stale data from the map display (corpses
-   rotted away, objects carried away by monsters, etc) so that it won't
-   reappear after the detection has completed.  Return true if noticeable
-   change occurs.
- */
+/* Returns TRUE if the object matches our filters in oclass/material and
+   sets dknown if applicable */
 static boolean
-clear_stale_map(char oclass, unsigned material)
+find_obj_match(struct obj *obj,
+               boolean set_dknown, char oclass, unsigned material)
 {
-    int zx, zy;
-    boolean change_made = FALSE;
+    boolean ret = FALSE;
+    if (!obj)
+        return ret;
 
-    for (zx = 0; zx < COLNO; zx++)
-        for (zy = 0; zy < ROWNO; zy++)
-            if (check_map_spot(zx, zy, oclass, material)) {
-                unmap_object(zx, zy);
-                change_made = TRUE;
-            }
+    ret = ((material && objects[obj->otyp].oc_material == material) ||
+           (oclass && obj->oclass == oclass) ||
+           (!oclass && !material));
+    if (ret && set_dknown)
+        obj->dknown = 1;
 
-    return change_made;
+    return ret;
 }
 
 /* look for gold, on the floor or in monsters' possession */
 int
 gold_detect(struct monst *mon, struct obj *sobj, boolean *scr_known)
 {
-    struct obj *obj;
-    struct monst *mtmp;
     int uw = u.uinwater;
-    struct obj *temp;
-    boolean stale;
     boolean you = (mon == &youmonst);
-
-    *scr_known = stale = clear_stale_map(COIN_CLASS, sobj->blessed ? GOLD : 0);
 
     if (!you) {
         impossible("monster using gold detection?");
         return 0;
     }
-    /* look for gold carried by monsters (might be in a container) */
-    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp))
-            continue;   /* probably not needed in this case but... */
-        if (findgold(mtmp->minvent) || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
-            *scr_known = TRUE;
 
-            goto outgoldmap;    /* skip further searching */
-        } else
-            for (obj = mtmp->minvent; obj; obj = obj->nobj)
-                if (sobj->blessed && o_material(obj, GOLD)) {
-                    *scr_known = TRUE;
-                    goto outgoldmap;
-                } else if (o_in(obj, COIN_CLASS)) {
-                    *scr_known = TRUE;
-                    goto outgoldmap;    /* skip further searching */
-                }
-    }
+    cls();
 
-    /* look for gold objects */
-    for (obj = level->objlist; obj; obj = obj->nobj) {
-        if (sobj->blessed && o_material(obj, GOLD)) {
-            *scr_known = TRUE;
-            if (obj->ox != u.ux || obj->oy != u.uy)
-                goto outgoldmap;
-        } else if (o_in(obj, COIN_CLASS)) {
-            *scr_known = TRUE;
-            if (obj->ox != u.ux || obj->oy != u.uy)
-                goto outgoldmap;
+    int obj_res = find_obj_map(sobj->blessed, COIN_CLASS, sobj->blessed ? GOLD : 0);
+    struct obj gold; /* Fake object to make map_object happy */
+    gold.otyp = GOLD_PIECE;
+    gold.quan = 2L;
+
+    /* Find gold golems */
+    struct monst *gmon;
+    for (gmon = level->monlist; gmon; gmon = gmon->nmon) {
+        if (DEADMONSTER(gmon))
+            continue;
+
+        if (monsndx(gmon->data) == PM_GOLD_GOLEM) {
+            obj_res = OBJDET_MON;
+            gold.ox = gmon->mx;
+            gold.oy = gmon->my;
+            map_object(&gold, 1, TRUE);
+            set_objpile(level, gmon->mx, gmon->my);
         }
     }
 
-    if (!*scr_known) {
-        /* no gold found on floor or monster's inventory. adjust message if you
-           have gold in your inventory */
+    /* Find the player as a gold golem */
+    if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
+        if (!obj_res)
+            obj_res = (OBJDET_MON | OBJDET_SELF);
+
+        gold.ox = u.ux;
+        gold.oy = u.uy;
+        map_object(&gold, 1, TRUE);
+        set_objpile(level, u.ux, u.uy);
+    }
+
+    *scr_known = !!obj_res;
+    obj_res &= ~OBJDET_UNMAPPED;
+
+    if (!obj_res || (obj_res & (OBJDET_MON | OBJDET_SELF))) {
+        /* No gold found, or gold only found in inventory, or
+           user is a gold golem */
         const char *buf;
 
+        doredraw();
         if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
             buf = msgprintf("You feel like a million %s!", currency(2L));
         } else if (hidden_gold() || money_cnt(invent))
             buf = "You feel worried about your future financial situation.";
         else
             buf = "You feel materially poor.";
-        strange_feeling(sobj, buf);
+        if (!(*scr_known))
+            strange_feeling(sobj, buf);
+        else
+            pline(msgc_failcurse, "%s", buf);
         return 1;
     }
-    /* only under me - no separate display required */
-    if (stale)
-        doredraw();
-    pline(msgc_youdiscover, "You notice some gold between your %s.",
-          makeplural(body_part(FOOT)));
-    return 0;
 
-outgoldmap:
-    cls();
+    /* only under user - no separate display required */
+    if (obj_res & OBJDET_SELF) {
+        doredraw();
+        pline(msgc_youdiscover, "You notice some gold %s%s.",
+              (obj_res & OBJDET_BURIED) ? "below you" : "between your ",
+              (obj_res & OBJDET_BURIED) ? "" :
+              makeplural(body_part(FOOT)));
+        return 0;
+    }
 
     u.uinwater = 0;
-    /* Discover gold locations. */
-    for (obj = level->objlist; obj; obj = obj->nobj) {
-        if (sobj->blessed && (temp = o_material(obj, GOLD))) {
-            if (temp != obj) {
-                temp->ox = obj->ox;
-                temp->oy = obj->oy;
-            }
-            map_object(temp, 1, TRUE);
-        } else if ((temp = o_in(obj, COIN_CLASS))) {
-            if (temp != obj) {
-                temp->ox = obj->ox;
-                temp->oy = obj->oy;
-            }
-            map_object(temp, 1, TRUE);
-        }
-    }
-    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp))
-            continue;   /* probably overkill here */
-        if (findgold(mtmp->minvent) || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
-            struct obj gold;
 
-            gold.otyp = GOLD_PIECE;
-            gold.ox = mtmp->mx;
-            gold.oy = mtmp->my;
-            map_object(&gold, 1, TRUE);
-        } else
-            for (obj = mtmp->minvent; obj; obj = obj->nobj)
-                if (sobj->blessed && (temp = o_material(obj, GOLD))) {
-                    temp->ox = mtmp->mx;
-                    temp->oy = mtmp->my;
-                    map_object(temp, 1, TRUE);
-                    break;
-                } else if ((temp = o_in(obj, COIN_CLASS))) {
-                    temp->ox = mtmp->mx;
-                    temp->oy = mtmp->my;
-                    map_object(temp, 1, TRUE);
-                    break;
-                }
-    }
-
-    newsym(u.ux, u.uy);
     pline(msgc_youdiscover, "You feel very greedy, and sense gold!");
     exercise(A_WIS, TRUE);
     win_pause_output(P_MAP);
@@ -279,118 +314,86 @@ outgoldmap:
 /* returns 1 if nothing was detected            */
 /* returns 0 if something was detected          */
 int
-food_detect(struct obj *sobj, boolean * scr_known)
+food_detect(struct obj *sobj, boolean *scr_known)
 {
-    struct obj *obj;
-    struct monst *mtmp;
-    int ct = 0, ctu = 0;
     boolean confused = (Confusion || (sobj && sobj->cursed)), stale;
     char oclass = confused ? POTION_CLASS : FOOD_CLASS;
     const char *what = confused ? "something" : "food";
     int uw = u.uinwater;
 
-    stale = clear_stale_map(oclass, 0);
+    cls();
 
-    for (obj = level->objlist; obj; obj = obj->nobj)
-        if (o_in(obj, oclass)) {
-            if (obj->ox == u.ux && obj->oy == u.uy)
-                ctu++;
-            else
-                ct++;
-        }
-    for (mtmp = level->monlist; mtmp && !ct; mtmp = mtmp->nmon) {
-        /* no DEADMONSTER(mtmp) check needed since dmons never have inventory */
-        for (obj = mtmp->minvent; obj; obj = obj->nobj)
-            if (o_in(obj, oclass)) {
-                ct++;
-                break;
-            }
-    }
+    int obj_res = find_obj_map(sobj->blessed, oclass, 0);
 
-    if (!ct && !ctu) {
-        *scr_known = stale && !confused;
-        if (stale) {
-            doredraw();
-            pline(msgc_notarget, "You sense a lack of %s nearby.", what);
-            if (sobj && sobj->blessed) {
-                if (!u.uedibility)
-                    pline(msgc_statusgood, "Your %s starts to tingle.",
-                          body_part(NOSE));
-                u.uedibility = 1;
-            }
-        } else if (sobj) {
-            const char *buf;
-
-            buf = msgprintf("Your %s twitches%s.", body_part(NOSE),
-                            (sobj->blessed &&
-                             !u.uedibility) ? " then starts to tingle" : "");
-            if (sobj->blessed && !u.uedibility) {
-                /* prevent non-delivery of message */
-                boolean savebeginner = flags.beginner;
-
-                flags.beginner = FALSE;
-                strange_feeling(sobj, buf);
-                flags.beginner = savebeginner;
-                u.uedibility = 1;
-            } else
-                strange_feeling(sobj, buf);
-        }
-        return !stale;
-    } else if (!ct) {
+    *scr_known = !!obj_res;
+    if (sobj && sobj->blessed && !u.uedibility)
         *scr_known = TRUE;
-        pline(msgc_youdiscover, "You %s %s nearby.",
-              sobj ? "smell" : "sense", what);
+
+    if (obj_res == OBJDET_UNMAPPED) {
+        /* Food was seen but is now gone */
+
+        doredraw();
+        pline(msgc_failcurse, "You sense a lack of %s nearby.", what);
+
         if (sobj && sobj->blessed) {
             if (!u.uedibility)
                 pline(msgc_statusgood, "Your %s starts to tingle.",
                       body_part(NOSE));
             u.uedibility = 1;
         }
-    } else {
-        struct obj *temp;
-
-        *scr_known = TRUE;
-        cls();
-        u.uinwater = 0;
-        for (obj = level->objlist; obj; obj = obj->nobj)
-            if ((temp = o_in(obj, oclass)) != 0) {
-                if (temp != obj) {
-                    temp->ox = obj->ox;
-                    temp->oy = obj->oy;
-                }
-                map_object(temp, 1, TRUE);
-            }
-        for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
-            /* no DEADMONSTER(mtmp) check needed since dmons never have
-               inventory */
-            for (obj = mtmp->minvent; obj; obj = obj->nobj)
-                if ((temp = o_in(obj, oclass)) != 0) {
-                    temp->ox = mtmp->mx;
-                    temp->oy = mtmp->my;
-                    map_object(temp, 1, TRUE);
-                    break;      /* skip rest of this monster's inventory */
-                }
-        newsym(u.ux, u.uy);
-        if (sobj) {
-            if (sobj->blessed) {
-                pline(u.uedibility ? msgc_youdiscover : msgc_statusgood,
-                      "Your %s %s to tingle and you smell %s.", body_part(NOSE),
-                      u.uedibility ? "continues" : "starts", what);
-                u.uedibility = 1;
-            } else
-                pline(msgc_youdiscover, "Your %s tingles and you smell %s.",
-                      body_part(NOSE), what);
-        } else
-            pline(msgc_youdiscover, "You sense %s.", what);
-        win_pause_output(P_MAP);
-        exercise(A_WIS, TRUE);
-        doredraw();
-        u.uinwater = uw;
-        if (Underwater)
-            under_water(2);
-        if (u.uburied)
-            under_ground(2);
+        return 1;
     }
+
+    obj_res &= ~OBJDET_UNMAPPED;
+
+    if (!obj_res || (obj_res & (OBJDET_MON | OBJDET_SELF))) {
+        /* nothing found, or only in user inventory */
+        doredraw();
+        const char *buf;
+        buf = msgprintf("Your %s twitches%s.",
+                        body_part(NOSE),
+                        !u.uedibility && sobj && sobj->blessed ?
+                        " then starts to tingle" : "");
+        if (*scr_known)
+            pline(msgc_failcurse, "%s", buf);
+        else
+            strange_feeling(sobj, buf);
+
+        if (sobj && sobj->blessed)
+            u.uedibility = 1;
+        return 1;
+    }
+
+    if (obj_res & OBJDET_SELF) {
+        /* only under user */
+        doredraw();
+        pline(msgc_youdiscover, "You smell %s nearby.", what);
+        if (sobj && sobj->blessed) {
+            if (!u.uedibility)
+                pline(msgc_statusgood, "Your %s starts to tingle.",
+                      body_part(NOSE));
+            u.uedibility = 1;
+        }
+        return 0;
+    }
+
+    if (sobj && sobj->blessed) {
+        pline(u.uedibility ? msgc_youdiscover : msgc_intrgain,
+              "Your %s %s to tingle and you smell %s.",
+              body_part(NOSE), u.uedibility ? "continues" : "starts",
+              what);
+        u.uedibility = 1;
+    } else
+        pline(msgc_youdiscover, "Your %s tingles and you smell %s.",
+              body_part(NOSE), what);
+    exercise(A_WIS, TRUE);
+    win_pause_output(P_MAP);
+    doredraw();
+    u.uinwater = uw;
+    if (Underwater)
+        under_water(2);
+    if (u.uburied)
+        under_ground(2);
     return 0;
 }
 
@@ -404,164 +407,61 @@ int
 object_detect(struct obj *detector,     /* object doing the detecting */
               int class /* an object class, 0 for all */ )
 {
-    int x, y;
+    int uw = u.uinwater;
     const char *stuff;
+    const char *buf;
     int is_cursed = (detector && detector->cursed);
     int do_dknown = (detector &&
                      (detector->oclass == POTION_CLASS ||
                       detector->oclass == SPBOOK_CLASS) && detector->blessed);
-    int ct = 0, ctu = 0;
-    struct obj *obj, *otmp = NULL;
-    struct monst *mtmp;
-    int uw = u.uinwater;
 
     if (class < 0 || class >= MAXOCLASSES) {
         impossible("object_detect:  illegal class %d", class);
         class = 0;
     }
 
+    cls();
+
+    int obj_res = find_obj_map(do_dknown, class, 0);
+
     if (Hallucination || (Confusion && class == SCROLL_CLASS))
         stuff = "something";
     else
         stuff = class ? oclass_names[class] : "objects";
 
-    if (do_dknown)
-        for (obj = invent; obj; obj = obj->nobj)
-            do_dknown_of(obj);
+    if (obj_res == OBJDET_UNMAPPED) {
+        /* Remembered objects are now gone */
 
-    for (obj = level->objlist; obj; obj = obj->nobj) {
-        if (!class || o_in(obj, class)) {
-            if (obj->ox == u.ux && obj->oy == u.uy)
-                ctu++;
-            else
-                ct++;
-        }
-        if (do_dknown)
-            do_dknown_of(obj);
+        doredraw();
+        pline(msgc_failcurse, "You feel a lack of %s.", stuff);
+
+        return 1;
     }
 
-    for (obj = level->buriedobjlist; obj; obj = obj->nobj) {
-        if (!class || o_in(obj, class)) {
-            if (obj->ox == u.ux && obj->oy == u.uy)
-                ctu++;
-            else
-                ct++;
-        }
-        if (do_dknown)
-            do_dknown_of(obj);
+    obj_res &= ~OBJDET_UNMAPPED;
+
+    buf = msgprintf("You sense the %s of %s.",
+                    (!obj_res || (obj_res & (OBJDET_MON | OBJDET_SELF))) ?
+                    "absence" : "presence", stuff);
+
+    if (!obj_res || (obj_res & (OBJDET_MON | OBJDET_SELF))) {
+        /* nothing found, or only in user inventory */
+        doredraw();
+        strange_feeling(detector, buf);
+
+        return 1;
     }
 
-    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp))
-            continue;
-        for (obj = mtmp->minvent; obj; obj = obj->nobj) {
-            if (!class || o_in(obj, class))
-                ct++;
-            if (do_dknown)
-                do_dknown_of(obj);
-        }
-        if ((is_cursed && mtmp->m_ap_type == M_AP_OBJECT &&
-             (!class || class == objects[mtmp->mappearance].oc_class)) ||
-            (findgold(mtmp->minvent) && (!class || class == COIN_CLASS))) {
-            ct++;
-            break;
-        }
-    }
-
-    if (!clear_stale_map(!class ? ALL_CLASSES : class, 0) && !ct) {
-        if (!ctu) {
-            if (detector)
-                strange_feeling(detector, "You feel a lack of something.");
-            return 1;
-        }
-
+    if (obj_res & OBJDET_SELF) {
+        /* only under user */
         pline(msgc_youdiscover, "You sense %s nearby.", stuff);
         return 0;
     }
 
-    cls();
-
-    u.uinwater = 0;
-/*
- * Map all buried objects first.
- */
-    for (obj = level->buriedobjlist; obj; obj = obj->nobj)
-        if (!class || (otmp = o_in(obj, class))) {
-            if (class) {
-                if (otmp != obj) {
-                    otmp->ox = obj->ox;
-                    otmp->oy = obj->oy;
-                }
-                map_object(otmp, 1, TRUE);
-            } else
-                map_object(obj, 1, TRUE);
-        }
-    /*
-     * If we are mapping all objects, map only the top object of a pile or
-     * the first object in a monster's inventory.  Otherwise, go looking
-     * for a matching object class and display the first one encountered
-     * at each location.
-     *
-     * Objects on the floor override buried objects.
-     */
-    for (x = 0; x < COLNO; x++)
-        for (y = 0; y < ROWNO; y++)
-            for (obj = level->objects[x][y]; obj; obj = obj->nexthere)
-                if (!class || (otmp = o_in(obj, class))) {
-                    if (class) {
-                        if (otmp != obj) {
-                            otmp->ox = obj->ox;
-                            otmp->oy = obj->oy;
-                        }
-                        map_object(otmp, 1, TRUE);
-                    } else
-                        map_object(obj, 1, TRUE);
-                    break;
-                }
-
-    /* Objects in the monster's inventory override floor objects. */
-    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp))
-            continue;
-        for (obj = mtmp->minvent; obj; obj = obj->nobj)
-            if (!class || (otmp = o_in(obj, class))) {
-                if (!class)
-                    otmp = obj;
-                otmp->ox = mtmp->mx;    /* at monster location */
-                otmp->oy = mtmp->my;
-                map_object(otmp, 1, TRUE);
-                break;
-            }
-        /* Allow a mimic to override the detected objects it is carrying. */
-        if (is_cursed && mtmp->m_ap_type == M_AP_OBJECT &&
-            (!class || class == objects[mtmp->mappearance].oc_class)) {
-            struct obj temp;
-
-            temp.otyp = mtmp->mappearance;      /* needed for obj_to_glyph() */
-            temp.ox = mtmp->mx;
-            temp.oy = mtmp->my;
-            temp.corpsenm = PM_TENGU;   /* if mimicing a corpse */
-            map_object(&temp, 1, TRUE);
-        } else if (findgold(mtmp->minvent) && (!class || class == COIN_CLASS)) {
-            struct obj gold;
-
-            gold.otyp = GOLD_PIECE;
-            gold.ox = mtmp->mx;
-            gold.oy = mtmp->my;
-            map_object(&gold, 1, TRUE);
-        }
-    }
-
-    newsym(u.ux, u.uy);
-    pline(ct ? msgc_youdiscover : msgc_notarget, "You detect the %s of %s.",
-          ct ? "presence" : "absence", stuff);
+    pline(msgc_youdiscover, "%s", buf);
+    exercise(A_WIS, TRUE);
     win_pause_output(P_MAP);
-    /*
-     * What are we going to do when the hero does an object detect while blind
-     * and the detected object covers a known pool?
-     */
-    doredraw(); /* this will correctly reset vision */
-
+    doredraw();
     u.uinwater = uw;
     if (Underwater)
         under_water(2);
@@ -1544,6 +1444,5 @@ sokoban_detect(struct level *lev)
             what_trap(ttmp->ttyp, -1, -1, rn2);
     }
 }
-
 
 /*detect.c*/

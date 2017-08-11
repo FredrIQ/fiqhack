@@ -1033,8 +1033,6 @@ unexplored(int x, int y)
 
     if (!isok(x, y))
         return FALSE;
-    if (level->locations[x][y].mem_stepped)
-        return FALSE;
     if (level->locations[x][y].mem_bg == S_vcdoor ||
         level->locations[x][y].mem_bg == S_hcdoor) {
         if (level->locations[x][y].mem_door_l &&
@@ -1046,16 +1044,22 @@ unexplored(int x, int y)
         return FALSE;
     if (level->locations[x][y].mem_obj == BOULDER + 1)
         return FALSE;
+
+    /* TODO: Replace with generic object check for autopickup */
     if (level->locations[x][y].mem_obj && inside_shop(level, x, y))
         return FALSE;
+
+    if (level->locations[x][y].mem_stepped)
+        return FALSE;
+
+    /* TODO: Change this to check for object pile */
+    if (level->locations[x][y].mem_obj)
+        return TRUE;
 
     if (mem_bg == S_altar || mem_bg == S_throne || mem_bg == S_sink ||
         mem_bg == S_fountain || mem_bg == S_dnstair || mem_bg == S_upstair ||
         mem_bg == S_dnsstair || mem_bg == S_upsstair || mem_bg == S_dnladder ||
         mem_bg == S_upladder)
-        return TRUE;
-
-    if (level->locations[x][y].mem_obj)
         return TRUE;
 
     for (i = -1; i <= 1; i++)

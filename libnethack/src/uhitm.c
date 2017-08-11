@@ -2389,6 +2389,7 @@ stumble_onto_mimic(struct monst *mtmp, schar dx, schar dy)
         pline(msgc_youdiscover, fmt, what);
 
     wakeup(mtmp, TRUE);       /* clears mimicking */
+    update_objpile(level, u.ux + dx, u.uy + dy);
 }
 
 static void

@@ -984,6 +984,7 @@ restore_location(struct memfile *mf, struct rm *loc)
     loc->waslit = (lflags2 >> 8) & 1;
     loc->roomno = (lflags2 >> 2) & 63;
     loc->edge = (lflags2 >> 1) & 1;
+    loc->pile = (lflags2 >> 0) & 1;
 
     /* unpack mem_door_l, mem_door_t from mem_bg */
     switch (loc->mem_bg) {

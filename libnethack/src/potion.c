@@ -741,8 +741,8 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
             *unkn = 1;
             if (vis)
                 pline(msgc_monneutral, "%s is granted an insight!", Mon);
-        } else if (object_detect(otmp, 0))
-            return 1;   /* nothing detected */
+        }
+        object_detect(otmp, 0);
         if (you)
             exercise(A_WIS, TRUE);
         break;

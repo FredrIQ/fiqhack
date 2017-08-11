@@ -285,6 +285,36 @@ map_object(struct obj *obj, int show, boolean reroll_hallu)
                  loc->mem_obj_mn, 0, 0, 0, 0, dbuf_branding(level, x, y));
 }
 
+void
+set_objpile(struct level *lev, int x, int y)
+{
+    if (!lev)
+        panic("set_objpile: lev is null");
+
+    lev->locations[x][y].pile = TRUE;
+}
+
+void
+unset_objpile(struct level *lev, int x, int y)
+{
+    if (!lev)
+        panic("set_objpile: lev is null");
+
+    lev->locations[x][y].pile = FALSE;
+}
+
+/* Only call this if player can definitely know the true state. */
+void
+update_objpile(struct level *lev, int x, int y)
+{
+    struct obj *obj;
+    if (!lev)
+        panic("set_objpile: lev is null");
+
+    obj = lev->objects[x][y];
+    lev->locations[x][y].pile = !!obj->nexthere;
+}
+
 /*
  * map_invisible()
  *

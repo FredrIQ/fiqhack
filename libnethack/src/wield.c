@@ -570,9 +570,9 @@ chwepon(struct monst *mon, struct obj *otmp, int amount)
     const char *your = you ? "Your" : s_suffix(Monnam(mon));
     struct obj *twep = (m_mwep(mon));
     enum objslot slot = os_invalid;
-    if (twep->owornmask & W_MASK(os_wep))
+    if (twep && (twep->owornmask & W_MASK(os_wep)))
         slot = os_wep;
-    else if (twep->owornmask & W_MASK(os_swapwep))
+    else if (twep && (twep->owornmask & W_MASK(os_swapwep)))
         slot = os_swapwep;
 
     if (!twep || (twep->oclass != WEAPON_CLASS && !is_weptool(twep))) {
