@@ -358,6 +358,7 @@ unmap_object(int x, int y)
     level->locations[x][y].mem_invis = 0;
     level->locations[x][y].mem_obj = 0;
     level->locations[x][y].mem_obj_mn = 0;
+    unset_objpile(level, x, y);
 }
 
 
