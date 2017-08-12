@@ -147,8 +147,7 @@ print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
                 branding = nhcurses_genbranding_stepped;
         }
     }
-    if (branding == nhcurses_no_branding && settings.hilite_obj_piles &&
-        dbe->branding & NH_BRANDING_PILE)
+    if ((dbe->branding & NH_BRANDING_PILE) && settings.hilite_obj_piles)
         branding = nhcurses_genbranding_pile;
 
     if (branding != nhcurses_no_branding) {
