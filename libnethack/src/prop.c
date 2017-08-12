@@ -2429,11 +2429,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        only item that gives astral vision also gives blindness immunity; this
        code assumes not. */
     boolean xray = astral_vision(viewer) && (!invisible || see_invisible);
-    if (vertical_loe && distance <= XRAY_RANGE * XRAY_RANGE && xray &&
-        (target_lit || infravision_ok)) {
+    if (vertical_loe && distance <= XRAY_RANGE * XRAY_RANGE && xray) {
         sensemethod |= MSENSE_XRAY;
-        if (distance_displaced <= XRAY_RANGE * XRAY_RANGE && xray &&
-            (target_lit_displaced || infravision_ok))
+        if (distance_displaced <= XRAY_RANGE * XRAY_RANGE && xray)
             sensemethod |= MSENSE_DISPLACED;
         if (invisible && see_invisible)
             sensemethod |= MSENSEF_KNOWNINVIS;
