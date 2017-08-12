@@ -314,7 +314,10 @@ update_objpile(struct level *lev, int x, int y)
         panic("set_objpile: lev is null");
 
     obj = lev->objects[x][y];
-    lev->locations[x][y].pile = !!obj->nexthere;
+    if (!obj)
+        lev->locations[x][y].pile = FALSE;
+    else
+        lev->locations[x][y].pile = !!obj->nexthere;
 }
 
 /*
