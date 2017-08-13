@@ -139,11 +139,21 @@ mon_regen(struct monst *mon, boolean digest_meal)
 {
     /* Monster constitution is counted as 12 + ring bonuses/etc */
     if (mon->mhp < mon->mhpmax) {
-        if (mon->m_lev > 9 && !(moves % 3))
-            mon->mhp += min((mon->m_lev - 9), acurr(mon, A_CON) <= 11 ? 1 :
-                            rnd(acurr(mon, A_CON)));
-        else if (regenerates(mon) || (mon->m_lev <= 9 && !(moves % (42 / (mon->m_lev + 2) + 1))))
-            mon->mhp++;
+        int hp_regen = 0;
+        if (regenerates(mon))
+            hp_regen += 100;
+
+        if (mon->data == &mons[PM_HEALER])
+            hp_regen += 33;
+
+        int con = acurr(mon, A_CON);
+        if (con > 10) {
+            con -= 10;
+            hp_regen += 3 * con;
+        }
+
+        hp_regen += 3 * mon->m_lev;
+        mon->mhp += regeneration_by_rate(hp_regen);
         if (mon->mhp > mon->mhpmax)
             mon->mhp = mon->mhpmax;
     }

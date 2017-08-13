@@ -904,23 +904,23 @@ you_moved(void)
                 }
             } else if (*hp < *hpmax &&
                        (wtcap < MOD_ENCUMBER || !u.umoved || Regeneration)) {
-                if (u.ulevel > 9 && !(moves % 3)) {
-                    int heal, Con = (int)ACURR(A_CON);
+                int hp_regen = 0;
+                if (Regeneration)
+                    hp_regen += 100;
 
-                    if (Con <= 12) {
-                        heal = 1;
-                    } else {
-                        heal = rnd(Con);
-                        if (heal > u.ulevel - 9)
-                            heal = u.ulevel - 9;
-                    }
-                    *hp += heal;
-                    if (*hp > *hpmax)
-                        *hp = *hpmax;
-                } else if (Regeneration ||
-                           (u.ulevel <= 9 &&
-                            !(moves % ((MAXULEV + 12) / (u.ulevel + 2) + 1))))
-                    *hp += 1;
+                if (Role_if(PM_HEALER))
+                    hp_regen += 33;
+
+                int con = ACURR(A_CON);
+                if (con > 10) {
+                    con -= 10;
+                    hp_regen += 3 * con;
+                }
+
+                hp_regen += 3 * u.ulevel;
+                *hp += regeneration_by_rate(hp_regen);
+                if (*hp > *hpmax)
+                    *hp = *hpmax;
             }
 
             /* moving around while encumbered is hard work */
