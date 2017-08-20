@@ -650,6 +650,19 @@ gcrownu(void)
     }
 
     class_gift = STRANGE_OBJECT;
+
+    if (Role_if(PM_MONK)) {
+        class_gift = MAGIC_MARKER;
+        obj = mksobj(level, class_gift, TRUE, FALSE, rng_main);
+        bless(obj);
+        obj->bknown = TRUE;
+        at_your_feet("A marker");
+        dropy(obj);
+        u.ugifts++;
+        if (ok_wep(uwep))
+            obj = uwep;
+    }
+
     /* 3.3.[01] had this in the A_NEUTRAL case below, preventing chaotic
        wizards from receiving a spellbook */
     if (Role_if(PM_WIZARD) &&
@@ -658,7 +671,6 @@ gcrownu(void)
           uwep->oartifact != ART_STORMBRINGER)) &&
         !carrying(SPE_FINGER_OF_DEATH)) {
         class_gift = SPE_FINGER_OF_DEATH;
-    make_splbk:
         obj = mksobj(level, class_gift, TRUE, FALSE, rng_main);
         bless(obj);
         obj->bknown = TRUE;
@@ -673,11 +685,6 @@ gcrownu(void)
                     obj = uwep; /* to be blessed,&c */
                 break;
             }
-    } else if (Role_if(PM_MONK) && (!uwep || !uwep->oartifact) &&
-               !carrying(SPE_RESTORE_ABILITY)) {
-        /* monks rarely wield a weapon */
-        class_gift = SPE_RESTORE_ABILITY;
-        goto make_splbk;
     }
 
     switch (u.ualign.type) {
