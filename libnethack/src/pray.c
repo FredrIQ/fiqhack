@@ -613,12 +613,13 @@ gcrownu(void)
     short class_gift;
     int sp_no;
 
-    set_property(&youmonst, SEE_INVIS, 0, FALSE);
     set_property(&youmonst, FIRE_RES, 0, TRUE);
     set_property(&youmonst, COLD_RES, 0, TRUE);
-    set_property(&youmonst, SHOCK_RES, 0, TRUE);
     set_property(&youmonst, SLEEP_RES, 0, TRUE);
+    set_property(&youmonst, SHOCK_RES, 0, TRUE);
     set_property(&youmonst, POISON_RES, 0, TRUE);
+    set_property(&youmonst, ACID_RES, 0, TRUE);
+    set_property(&youmonst, SEE_INVIS, 0, FALSE);
     godvoice(msgc_npcvoice, u.ualign.type, NULL);
 
     obj = ok_wep(uwep) ? uwep : 0;
@@ -749,6 +750,9 @@ gcrownu(void)
         obj = 0;        /* lint */
         break;
     }
+
+    /* Learn special role spell permanently */
+    learn_spell(urole.spelspec, FALSE, TRUE);
 
     /* enhance weapon regardless of alignment or artifact status */
     if (ok_wep(obj)) {

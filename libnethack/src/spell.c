@@ -11,8 +11,10 @@
 #define SPELLMENU_QUIVER (-1)
 
 #define KEEN 20000
+#define PERMA 30000
 #define MAX_SPELL_STUDY 3
 #define incrnknow(spell)        spl_book[spell].sp_know = KEEN
+#define permaknow(spell)        spl_book[spell].sp_know = PERMA
 
 #define spellev(spell)          spl_book[spell].sp_lev
 
@@ -473,58 +475,76 @@ learn(void)
     splname = msgprintf(objects[booktype].oc_name_known ?
                         "\"%s\"" : "the \"%s\" spell",
                         OBJ_NAME(objects[booktype]));
-    for (i = 0; i < MAXSPELL; i++) {
-        if (spellid(i) == booktype) {
-            already_known = TRUE;
-            if (u.utracked[tos_book]->spestudied > MAX_SPELL_STUDY) {
-                pline(msgc_failcurse,
-                      "This spellbook is too faint to be read any more.");
-                u.utracked[tos_book]->otyp = booktype = SPE_BLANK_PAPER;
-            } else if (spellknow(i) <= 1000) {
-                pline(msgc_actionok, "Your knowledge of %s is keener.",
-                      splname);
-                incrnknow(i);
-                u.utracked[tos_book]->spestudied++;
-                exercise(A_WIS, TRUE);  /* extra study */
-            } else {    /* spell known already, book studiable*/
-                pline(msgc_hint, "You know %s quite well already.", splname);
-                if (yn("Do you want to read the book anyway?") == 'y') {
-                    pline(msgc_actionok, "You refresh your knowledge of %s.",
-                          splname);
-                    incrnknow(i);
-                    u.utracked[tos_book]->spestudied++;
-                } else
-                    costly = FALSE;
-            }
-            /* make book become known even when spell is already known, in case
-               amnesia made you forget the book */
-            makeknown((int)booktype);
-            break;
-        } else if (spellid(i) == NO_SPELL &&
-                   (i < first_unknown ||
-                    i == spellno_from_let(objects[booktype].oc_defletter)))
-            first_unknown = i;
-        else
-            known_spells++;
-    }
 
-    if (first_unknown == MAXSPELL && !already_known)
-        panic("Too many spells memorized!");
-
-    if (!already_known) {
-        spl_book[first_unknown].sp_id = booktype;
-        spl_book[first_unknown].sp_lev = objects[booktype].oc_level;
-        incrnknow(first_unknown);
+    if (u.utracked[tos_book]->spestudied > MAX_SPELL_STUDY) {
+        pline(msgc_failcurse,
+              "This spellbook is too faint to be read any more.");
+        u.utracked[tos_book]->otyp = booktype = SPE_BLANK_PAPER;
+    } else if (learn_spell(booktype, TRUE, FALSE)) {
         u.utracked[tos_book]->spestudied++;
-        pline(msgc_actionok, known_spells > 0 ?
-              "You add %s to your repertoire." : "You learn %s.", splname);
-        makeknown((int)booktype);
-    }
+        exercise(A_WIS, TRUE);
+    } else
+        costly = FALSE;
 
     if (costly)
         check_unpaid(u.utracked[tos_book]);
     u.utracked[tos_book] = 0;
     return 0;
+}
+
+/* Learns/refreshes the spell. Returns FALSE if user declined to refresh knowledge. */
+boolean
+learn_spell(int spell, boolean from_book, boolean perma)
+{
+    int i;
+    int first_unknown = MAXSPELL;
+    int known_spells = 0;
+    char booklet = objects[spell].oc_defletter;
+    int spell_lev = objects[spell].oc_level;
+    for (i = 0; i < MAXSPELL; i++) {
+        if (spellid(i) == spell) {
+            if (perma) {
+                permaknow(i);
+                pline(msgc_statusgood, "You gain divine knowledge of %s.",
+                      spellname(i));
+                makeknown(spell);
+                return TRUE;
+            } else if (spellknow(i) > 1000 && from_book) {
+                pline(msgc_hint, "You know %s quite well already.", spellname(i));
+                if (yn("Do you want to read the book anyway?") == 'n')
+                    return FALSE;
+            }
+
+            incrnknow(i);
+            pline(msgc_actionok, "Your knowledge of %s is keener.", spellname(i));
+            makeknown(spell);
+            return TRUE;
+        } else if (spellid(i) == NO_SPELL &&
+                   (i < first_unknown ||
+                    i == spellno_from_let(booklet)))
+            first_unknown = i;
+        else
+            known_spells++;
+    }
+
+    if (first_unknown == MAXSPELL)
+        panic("Learned too many spells...?");
+
+    spl_book[first_unknown].sp_id = spell;
+    spl_book[first_unknown].sp_lev = spell_lev;
+    if (perma) {
+        permaknow(first_unknown);
+        pline(msgc_statusgood, "You gain divine knowledge of %s.",
+              spellname(first_unknown));
+    } else {
+        incrnknow(first_unknown);
+        pline(msgc_actionok, known_spells > 0 ?
+              "You add %s to your repertoire." : "You learn %s.",
+              spellname(first_unknown));
+    }
+
+    makeknown(spell);
+    return TRUE;
 }
 
 /* spellbook read success rate */
@@ -1011,7 +1031,7 @@ age_spells(void)
     for (i = 0; i < MAXSPELL; i++) {
         if (!SPELL_IS_FROM_SPELLBOOK(i))
             continue;
-        if (spellknow(i))
+        if (spellknow(i) && spellknow(i) != PERMA)
             decrnknow(i);
     }
     return;
@@ -2007,14 +2027,18 @@ dospellmenu(const char *prompt,
     for (i = 0; i < MAXSPELL; i++) {
         if (spellid(i) == NO_SPELL)
             continue;
+        const char *percent = "--";
+        if (SPELL_IS_FROM_SPELLBOOK(i) &&
+            spellknow(i) != PERMA)
+            percent = msgprintf("%-d%%", (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
+
         const char *buf = SPELL_IS_FROM_SPELLBOOK(i) ?
-            msgprintf("%s\t%-d%s%s%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
+            msgprintf("%s\t%-d%s%s%s\t%s\t%-d%%\t%s", spellname(i), spellev(i),
                       spellknow(i) ? " " : "*",
                       !spellkey(i) ? " " : "#:",
                       !spellkey(i) ? "" : friendly_key("%s", spellkey(i)),
                       spelltypemnemonic(spell_skilltype(spellid(i))),
-                      100 - percent_success(&youmonst, spellid(i)),
-                      (spellknow(i) * 100 + (KEEN - 1)) / KEEN) :
+                      100 - percent_success(&youmonst, spellid(i)), percent) :
             msgprintf("%s\t--\t%s\t?\t--", spellname(i),
                       (spellid(i) == SPID_PRAY || spellid(i) == SPID_TURN) ?
                       "divine" : "ability");

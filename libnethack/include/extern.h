@@ -1740,6 +1740,7 @@ extern int mspell_skilltype(int);
 extern int monspellprot(struct monst *);
 extern int mon_castable(const struct monst *, int, boolean);
 extern int spelleffects(boolean, struct musable *);
+extern boolean learn_spell(int, boolean, boolean);
 extern boolean cast_protection(struct monst *, boolean, boolean);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
