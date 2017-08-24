@@ -382,6 +382,7 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
     const char *your;
+    int timer_offset = 0; /* for lit objects */
     your = (you ? "Your" : s_suffix(Monnam(mon)));
 
     is_cursed = curse_bless < 0;
@@ -571,6 +572,12 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
             break;
         case OIL_LAMP:
         case BRASS_LANTERN:
+            if (obj->lamplit) {
+                timer_offset = report_timer(obj->olev, BURN_OBJECT,
+                                            (const void *)obj);
+                timer_offset -= moves;
+            }
+
             if (is_cursed) {
                 stripspe(mon, obj);
                 if (obj->lamplit) {
@@ -581,14 +588,14 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
                 }
             } else if (is_blessed) {
                 obj->spe = 1;
-                obj->age = 1500;
+                obj->age = 1500 - timer_offset;
                 if (you || vis)
                     p_glow2(msgc_itemrepair, mon, obj, "blue");
             } else {
                 obj->spe = 1;
                 obj->age += 750;
-                if (obj->age > 1500)
-                    obj->age = 1500;
+                if ((obj->age + timer_offset) > 1500)
+                    obj->age = 1500 - timer_offset;
                 if (you || vis)
                     p_glow1(msgc_itemrepair, mon, obj);
             }
