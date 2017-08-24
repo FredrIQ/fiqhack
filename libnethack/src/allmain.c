@@ -918,6 +918,7 @@ you_moved(void)
                 }
 
                 hp_regen += 3 * u.ulevel;
+                hp_regen += 10;
                 *hp += regeneration_by_rate(hp_regen);
                 if (*hp > *hpmax)
                     *hp = *hpmax;
