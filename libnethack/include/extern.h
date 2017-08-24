@@ -1293,6 +1293,8 @@ int mklev_rn2(int, struct level *);
 
 /* ### o_init.c ### */
 
+extern boolean is_new_object(int);
+extern int otyp_offset(int);
 extern void init_objects(void);
 extern boolean has_shuffled_appearance(int otyp);
 extern boolean corpsenm_is_relevant(int otyp);

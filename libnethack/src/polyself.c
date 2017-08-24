@@ -54,7 +54,7 @@ polyman(const char *fmt, const char *arg)
         u.umonnum = u.umonster;
         u.ufemale = u.mfemale;
     }
-    update_property_polymorph(&youmonst, u.umonster);
+    int old_pm = monsndx(youmonst.data);
     set_uasmon();
 
     u.mh = u.mhmax = 0;
@@ -86,6 +86,7 @@ polyman(const char *fmt, const char *arg)
     spoteffects(TRUE);
     see_monsters(FALSE);
     update_supernatural_abilities();
+    update_property_polymorph(&youmonst, old_pm);
 }
 
 void
@@ -486,6 +487,7 @@ polymon(int mntmp, boolean noisy)
         !Engulfed, dochange = FALSE;
     int mlvl;
 
+    int old_pm = monsndx(youmonst.data);
     if (mvitals[mntmp].mvflags & G_GENOD) {     /* allow G_EXTINCT */
         if (noisy)
             pline(msgc_noconsequence, "You feel rather %s-ish.",
@@ -493,10 +495,6 @@ polymon(int mntmp, boolean noisy)
         exercise(A_WIS, TRUE);
         return 0;
     }
-
-    int new_polymon = update_property_polymorph(&youmonst, mntmp);
-    if (new_polymon) /* update_property_polymorph polymorphed you again, bail out */
-        return 1; /* the player was polymorphed, even if it wasn't the target form */
 
     if (noisy)
         break_conduct(conduct_polyself);     /* KMH, conduct */
@@ -657,6 +655,11 @@ polymon(int mntmp, boolean noisy)
     exercise(A_WIS, TRUE);
     if (noisy)
         encumber_msg();
+
+    int new_polymon = update_property_polymorph(&youmonst, old_pm);
+    if (new_polymon) /* update_property_polymorph polymorphed you again, bail out */
+        return 1; /* the player was polymorphed, even if it wasn't the target form */
+
     return 1;
 }
 

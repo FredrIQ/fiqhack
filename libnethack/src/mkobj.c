@@ -1772,6 +1772,8 @@ restore_obj(struct memfile *mf)
 
     otmp->otyp = mread16(mf);
 
+    otmp->otyp += otyp_offset(otmp->otyp);
+
     otmp->ox = mread8(mf);
     otmp->oy = mread8(mf);
     otmp->spe = mread8(mf);

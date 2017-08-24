@@ -11,6 +11,55 @@ static const char beverages_and_fountains[] =
     { ALLOW_NONE, NONE_ON_COMMA, POTION_CLASS, 0 };
 static const char beverages[] = { POTION_CLASS, 0 };
 
+static int allowed_wonder[] = {
+    FIRE_RES,
+    COLD_RES,
+    SLEEP_RES,
+    DISINT_RES,
+    SHOCK_RES,
+    POISON_RES,
+    ACID_RES,
+    STONE_RES,
+    REGENERATION,
+    SEARCHING,
+    SEE_INVIS,
+    INVIS,
+    TELEPORT,
+    TELEPORT_CONTROL,
+    POLYMORPH,
+    POLYMORPH_CONTROL,
+    LEVITATION,
+    STEALTH,
+    AGGRAVATE_MONSTER,
+    CONFLICT,
+    PROT_FROM_SHAPE_CHANGERS,
+    WARNING,
+    TELEPAT,
+    FAST,
+    SLEEPING,
+    WWALKING,
+    HUNGER,
+    REFLECTING,
+    ANTIMAGIC,
+    DISPLACED,
+    CLAIRVOYANT,
+    ENERGY_REGENERATION,
+    MAGICAL_BREATHING,
+    SICK_RES,
+    DRAIN_RES,
+    CANCELLED,
+    FREE_ACTION,
+    SWIMMING,
+    FIXED_ABIL,
+    FLYING,
+    UNCHANGING,
+    PASSES_WALLS,
+    INFRAVISION,
+    SLOW,
+};
+
+static int allowed_wonder_size = sizeof(allowed_wonder) / sizeof(allowed_wonder[0]);
+
 static short mixtype(struct obj *, struct obj *);
 
 
@@ -1130,6 +1179,23 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
             else
                 newcham(mon, NULL, FALSE, FALSE);
         }
+        break;
+    case POT_WONDER:
+        if (you)
+            pline(msgc_actionok, "You feel a little %s...",
+                  Hallucination ? "normal" : "strange");
+        else
+            pline(msgc_monneutral, "%s a little %s...",
+                  M_verbs(mon, "look"),
+                  Hallucination ? "normal" : "strange");
+
+        int intrinsic = allowed_wonder[rn2(allowed_wonder_size)];
+        if (otmp->cursed)
+            set_property(mon, intrinsic, -1, FALSE);
+        else if (otmp->blessed)
+            set_property(mon, intrinsic, 0, FALSE);
+        else
+            inc_timeout(mon, intrinsic, 2000, FALSE);
         break;
     default:
         impossible("What a funny potion! (%u)", otmp->otyp);

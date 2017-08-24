@@ -41,10 +41,13 @@ static const struct propmsg prop_msg[] = {
      "You feel a little sick!", "sickly"},
     {ACID_RES, "Your skin feels leathery.", "thick-skinned",
      "Your skin feels less leathery.", "soft-skinned"},
-    {STONE_RES, "You feel extraordinarily limber.", "limber",
+    {STONE_RES, "You feel flexible.", "limber",
      "You feel stiff.", "stiff"},
-    {SEARCHING, "", "perceptive", "", "unfocused"},
-    {SEE_INVIS, "", "aware",
+    {REGENERATION, "You feel healthier than ever!", "regenerative",
+     "You don't feel as healthy anymore.",  "less regenerative"},
+    {SEARCHING, "You feel perceptive!", "perceptive",
+     "You feel unfocused.", "unfocused"},
+    {SEE_INVIS, "You feel aware.", "aware",
      "You thought you saw something!", "unaware"},
     {INVIS, "You feel hidden!", "hidden",
      "You feel paranoid.", "paranoid"},
@@ -59,7 +62,12 @@ static const struct propmsg prop_msg[] = {
     {STEALTH, "", "stealthy", "", "noisy"},
     {AGGRAVATE_MONSTER, "You feel observed.", "observed",
      "You feel less attractive.", "conspicuous"},
-    {WARNING, "", "sensitive", "", "insensitive"},
+    {CONFLICT, "The air around you turns hostile and conflicted.", "conflicted",
+     "The air around you calms down.", "calmed"},
+    {PROT_FROM_SHAPE_CHANGERS, "The air around you seems oddly fixed and static.",
+     "shapeshift-protected",
+     "The air around you briefly shifts in shape.", "less shapeshift-protected"},
+    {WARNING, "You feel sensitive.", "sensitive", "You feel insensitive.", "insensitive"},
     {TELEPAT, "You feel a strange mental acuity.", "telepathic",
      "Your senses fail!", "untelepathic"},
     {FAST, "", "quick", "", "slow"},
@@ -67,15 +75,20 @@ static const struct propmsg prop_msg[] = {
     {WWALKING, "You feel light on your feet.", "light",
      "You feel heavier.", "heavy"},
     {HUNGER, "You feel your metabolism speed up.", "hungry",
-     "Your metabolism slows down.", "full."},
+     "Your digestion calms down.", "full."},
     {REFLECTING, "Your body feels repulsive.", "repulsive",
      "You feel less repulsive.", "absorptive"},
     {LIFESAVED, "You feel a strange sense of immortality.", "immortal",
      "You lose your sense of immortality!", "mortal"},
     {ANTIMAGIC, "You feel resistant to magic.", "skeptical",
      "Your magic resistance fails!", "credulous"},
-    {DISPLACED, "Your outline shimmers and shifts.", "elusive",
-     "You stop shimmering.", "exposed"},
+    {DISPLACED, "", "elusive", "", "exposed"},
+    {CLAIRVOYANT, "You feel attuned to the dungeon.", "attuned to the dungeon",
+     "You don't feel attuned to the dungeon after all", "less dungeon-attuned"},
+    {ENERGY_REGENERATION, "You feel in touch with magic around you.", "magic-regenerative",
+     "Your touch with magic fails!", "less magic-regenerative"},
+    {MAGICAL_BREATHING, "Your breathing seem enhanced.", "breath-enhanced",
+     "Your breathing seems normal", "less breath-enhanced"},
     {SICK_RES, "You feel your immunity strengthen.", "immunized",
      "Your immune system fails!", "immunocompromised"},
     {DRAIN_RES, "You feel especially energetic.", "energic",
@@ -94,7 +107,8 @@ static const struct propmsg prop_msg[] = {
      "You feel less resistant to change.", "changed"},
     {PASSES_WALLS, "Your body unsolidifies", "unsolid",
      "Your body solidifies.", "solid"},
-    {INFRAVISION, "", "vision-enhanced", "", "half blind"},
+    {INFRAVISION, "Your vision capabilities are enhanced.", "vision-enhanced",
+     "You feel half blind!", "half blind"},
     {NO_PROP, "", "", "", ""}
 };
 
@@ -117,6 +131,8 @@ static const struct propmsg prop_msg_hallu[] = {
      "Your cosmic connection is no more!", "untelepathic"},
     {WWALKING, "You feel like Jesus himself.", "light",
      "You realize that you aren't Jesus after all.", "heavy"},
+    {MAGICAL_BREATHING, "You seem rather fishy...", "fishy",
+     "You don't seem so fishy after all.", "less fishy"},
     {DRAIN_RES, "You are bouncing off the walls!", "energetic",
      "You feel less bouncy.", "less energetic"},
     {FLYING, "You feel like a super hero!", "buoyant",
@@ -855,25 +871,27 @@ update_xl_properties(struct monst *mon, int oldlevel)
    Returns a monster index if that should override the current polymorph
    (used if you polymorph into a golem while petrifying). */
 int
-update_property_polymorph(struct monst *mon, int pm)
+update_property_polymorph(struct monst *mon, int old_pm)
 {
     int pmcur = monsndx(mon->data);
     enum youprop prop;
-    boolean hasprop, hasprop_poly, pm_hasprop, pm_blocks;
+    int hasprop, hasprop_poly;
+    boolean pm_hasprop, pm_blocks;
     for (prop = 0; prop <= LAST_PROP; prop++) {
         /* Permonst-specific blocks only happen for sliming/petrification, so
            bypassing update checks alltogether if a monster currently blocks is OK */
         if (m_has_property(mon, prop, ANY_PROPERTY, TRUE) & W_MASK(os_blocked))
             continue;
 
-        hasprop = !!has_property(mon, prop);
-        hasprop_poly = hasprop && !(has_property(mon, prop) & ~W_MASK(os_polyform));
-        pm_hasprop = pm_has_property(&mons[pm], prop) > 0;
-        pm_blocks = pm_has_property(&mons[pm], prop) < 0;
+        hasprop = has_property(mon, prop);
+        hasprop_poly = hasprop & W_MASK(os_polyform);
+
+        pm_hasprop = pm_has_property(&mons[old_pm], prop) > 0;
+        pm_blocks = pm_has_property(&mons[old_pm], prop) < 0;
         if ((hasprop && pm_blocks) || /* has property, target blocks */
             (hasprop_poly && !pm_hasprop) || /* has property from polyself only, target lacks */
             (!hasprop && pm_hasprop)) /* lacks property, target has */
-            update_property(mon, prop, os_newpolyform);
+            update_property(mon, prop, os_polyform);
 
         /* polymorphed as a result, bail out since this might no longer be relevant
            (the polymorph, if any happened, will have run this again anyway) */
@@ -906,19 +924,17 @@ update_property(struct monst *mon, enum youprop prop,
        since canseemon() wont work if the monster just turned
        itself invisible */
     boolean vis_invis = !offlevel && cansee(mon->mx, mon->my);
-    /* if slot is inctimeout or newpolyform, point real_slot to
-       timeout or polyform respectively -- new* is to give proper messages */
+    /* if slot is inctimeout, point real_slot to timeout */
     int real_slot = (slot == os_inctimeout  ? os_timeout  :
                      slot == os_dectimeout  ? os_timeout  :
-                     slot == os_newpolyform ? os_polyform :
                      slot);
     boolean lost = !(has_property(mon, prop) & W_MASK(real_slot));
     boolean blocked;
     blocked = !!(m_has_property(mon, prop, ANY_PROPERTY, TRUE) & W_MASK(os_blocked));
-    /* Unless this was called as a result of newpolyform/block, check whether or not the
+    /* Unless this was called as a result of block, check whether or not the
        property was actually lost, to avoid lost being set when gaining new properties
        if blocked. */
-    if (lost && blocked && slot != os_newpolyform && slot != os_blocked) {
+    if (lost && blocked && slot != os_blocked) {
         if (m_has_property(mon, prop, ANY_PROPERTY, TRUE) & W_MASK(real_slot))
             lost = FALSE;
         /* And if this is os_dectimeout, ensure that no pointless messages are printed */
@@ -1033,6 +1049,7 @@ update_property(struct monst *mon, enum youprop prop,
             set_property(mon, STONED, -2, FALSE);
         break;
     case ADORNED:
+        break;
     case REGENERATION:
         if (!redundant && you) {
             pline(lost ? msgc_intrloss : msgc_intrgain,
@@ -3020,6 +3037,7 @@ enlightenment(int final)
 {
     int ltmp;
     const char *title;
+    const char *buf;
     struct nh_menulist menu;
 
     init_menulist(&menu);
@@ -3056,7 +3074,7 @@ enlightenment(int final)
     else
         you_have(&menu, "transgressed");
     if (wizard) {
-        const char *buf = msgprintf(" %d", u.uhunger);
+        buf = msgprintf(" %d", u.uhunger);
         enl_msg(&menu, "Hunger level ", "is", "was", buf);
 
         buf = msgprintf(" %d / %ld", u.ualign.record, ALIGNLIM);
@@ -3140,10 +3158,9 @@ enlightenment(int final)
         you_are(&menu, "warned");
     if (warned_of_mon(&youmonst)) {
         int warntype = worn_warntype();
-        const char *buf = msgcat(
-            "aware of the presence of ",
-            (warntype & M2_ORC) ? "orcs" :
-            (warntype & M2_DEMON) ? "demons" : "something");
+        buf = msgcat("aware of the presence of ",
+                     (warntype & M2_ORC) ? "orcs" :
+                     (warntype & M2_DEMON) ? "demons" : "something");
         you_are(&menu, buf);
     }
     if (warned_of_undead(&youmonst))
@@ -3217,7 +3234,7 @@ enlightenment(int final)
     if (Engulfed)
         you_are(&menu, msgcat("swallowed by ", a_monnam(u.ustuck)));
     else if (u.ustuck) {
-        const char *buf = msgprintf(
+        buf = msgprintf(
             "%s %s", (Upolyd && sticks(youmonst.data)) ? "holding" : "held by",
             a_monnam(u.ustuck));
         you_are(&menu, buf);
@@ -3251,7 +3268,6 @@ enlightenment(int final)
     if (u.ulycn >= LOW_PM)
         you_are(&menu, an(mons[u.ulycn].mname));
     if (Upolyd) {
-        const char *buf;
         if (u.umonnum == u.ulycn)
             buf = "in beast form";
         else
