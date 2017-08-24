@@ -750,7 +750,7 @@ const struct objclass const_objects[] = {
     POTION("sleeping",          "effervescent",   1,   42,  100, CLR_GRAY),
     POTION("full healing",      "black",          1,    9,  200, CLR_BLACK),
     POTION("polymorph",         "golden",         1,    9,  200, CLR_YELLOW),
-    POTION("wonder",            "amber",          1,    9,  200, CLR_YELLOW),
+    POTION("wonder",            "amber",          1,    3,  200, CLR_YELLOW),
     POTION("booze",             "brown",          0,   42,   50, CLR_BROWN),
     POTION("sickness",          "fizzy",          0,   42,   50, CLR_CYAN),
     POTION("fruit juice",       "dark",           0,   42,   50, CLR_BLACK),
