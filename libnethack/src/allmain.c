@@ -910,15 +910,15 @@ you_moved(void)
 
                 if (Role_if(PM_HEALER))
                     hp_regen += 33;
+                hp_regen += 3 * u.ulevel;
 
                 int con = ACURR(A_CON);
-                if (con > 10) {
-                    con -= 10;
-                    hp_regen += 3 * con;
-                }
+                con -= 5;
+                hp_regen += 3 * con;
 
-                hp_regen += 3 * u.ulevel;
-                hp_regen += 10;
+                if (hp_regen < 1)
+                    hp_regen = 1;
+
                 *hp += regeneration_by_rate(hp_regen);
                 if (*hp > *hpmax)
                     *hp = *hpmax;

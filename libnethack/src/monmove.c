@@ -147,12 +147,13 @@ mon_regen(struct monst *mon, boolean digest_meal)
             hp_regen += 33;
 
         int con = acurr(mon, A_CON);
-        if (con > 10) {
-            con -= 10;
-            hp_regen += 3 * con;
-        }
+        con -= 5;
+        hp_regen += 3 * con;
 
         hp_regen += 3 * mon->m_lev;
+        if (hp_regen < 1)
+            hp_regen = 1;
+
         mon->mhp += regeneration_by_rate(hp_regen);
         if (mon->mhp > mon->mhpmax)
             mon->mhp = mon->mhpmax;
