@@ -1184,7 +1184,7 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
         if (you)
             pline(msgc_actionok, "You feel a little %s...",
                   Hallucination ? "normal" : "strange");
-        else
+        else if (vis)
             pline(msgc_monneutral, "%s a little %s...",
                   M_verbs(mon, "look"),
                   Hallucination ? "normal" : "strange");

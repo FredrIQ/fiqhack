@@ -88,7 +88,7 @@ static const struct propmsg prop_msg[] = {
     {ENERGY_REGENERATION, "You feel in touch with magic around you.", "magic-regenerative",
      "Your touch with magic fails!", "less magic-regenerative"},
     {MAGICAL_BREATHING, "Your breathing seem enhanced.", "breath-enhanced",
-     "Your breathing seems normal", "less breath-enhanced"},
+     "Your breathing seems normal.", "less breath-enhanced"},
     {SICK_RES, "You feel your immunity strengthen.", "immunized",
      "Your immune system fails!", "immunocompromised"},
     {DRAIN_RES, "You feel especially energetic.", "energic",

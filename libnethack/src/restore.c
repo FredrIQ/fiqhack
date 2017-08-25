@@ -443,6 +443,8 @@ restore_spellbook(struct memfile *mf)
     for (i = 0; i < MAXSPELL + 1; i++) {
         spl_book[i].sp_know = save_decode_32(mread32(mf), -moves, -moves);
         spl_book[i].sp_id = mread16(mf);
+        if (spl_book[i].sp_id > 0)
+            spl_book[i].sp_id += otyp_offset(spl_book[i].sp_id);
         spl_book[i].sp_lev = mread8(mf);
         if (flags.save_revision > 2)
             spl_book[i].sp_key = mread32(mf);
