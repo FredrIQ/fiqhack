@@ -99,7 +99,16 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             long_description => "Installs the tileset that traditionally ".
                                 "shipped with older versions of NetHack, ".
                                 "with enhancements from Slash'EM.",
-            object => qr=^path:tilesets/dat/catalogues/slashem-=,
+            object => qr=^path:tilesets/dat/catalogues/slashem-16=,
+            default => 1,
+            depends => 'gui',
+        },
+        slashem32_tiles => {
+            description => "Slash'EM 32px tileset",
+            long_description => "Installs a larger version of the tileset that ".
+                                "traditionally shipped with older versions of ".
+                                "NetHack, with enhancements from Slash'EM.",
+            object => qr=^path:tilesets/dat/catalogues/slashem-32=,
             default => 1,
             depends => 'gui',
         },
@@ -618,7 +627,12 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             install_feature => "dawnlike_tiles",
         },
         _install_slashem => {
-            object => qr{^bpath:tilesets/dat/merged/slashem-.*\.nh4ct$},
+            object => qr{^bpath:tilesets/dat/merged/slashem-16.*\.nh4ct$},
+            install_dir => "gamesdatadir",
+            install_feature => "slashem_tiles",
+        },
+        _install_slashem32 => {
+            object => qr{^bpath:tilesets/dat/merged/slashem-32.*\.nh4ct$},
             install_dir => "gamesdatadir",
             install_feature => "slashem_tiles",
         },
