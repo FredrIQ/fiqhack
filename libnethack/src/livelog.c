@@ -35,6 +35,9 @@ munge_llstring(char *dest, const char *src, int n)
 /* Locks the live log file and writes 'buffer' */
 void
 livelog_write_string(const char *buffer) {
+    if (program_state.followmode != FM_PLAY)
+        return;
+
     FILE* livelogfile;
     
     int fd = open_datafile(LIVELOG,
