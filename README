@@ -327,8 +327,26 @@ listed below.
 Build Instructions
 ==================
 
-General note
+Dependencies
 ------------
+
+To build FIQhack, you need make, zlib (which is probably already installed),
+libjansson (http://www.digip.org/jansson -- shipped with this source), and
+its development branch. You will also need `bison` and `flex`, as well as
+a C compiler (gcc or clang will both work).
+
+The default setup is to install to ~/fiqhackdir. If you want to change
+this, you can modify `GNUmakefile` -- file paths are set at the top.
+Once you are happy with the setup, to compile, you just do
+
+`make && make install`
+
+In case this doesn't work, please file an issue describing your error,
+perhaps documentation is lacking or something is missing. Enjoy!
+
+
+Old NetHack 4 instructions with aimake
+--------------------------------------
 
 The build instructions in this system are basic "do this, and things should
 work" advice, and do not go heavily into details of customizing a build.
