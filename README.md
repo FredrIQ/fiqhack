@@ -38,290 +38,24 @@ FIQHack is a fork of NetHack4, aimed at improving balance at places, test out
 new things, improving the codebase with internal changes and to promote
 consistency between how players and monsters work, and to improve the monster AI.
 
+More detailed information can be seen in `doc/CHANGELOG`.
+
 
 This repository
 ===============
 
-With the exception of initial tweaks before a first release, in which everything
-is worked on in master directly, the following guidelines are in place for this
-repository.
+This repository consists of the following branches
 
- * A master branch exist where changes are worked on directly. The only
-   restriction is that master are not allowed to perform a "savebreak", where a
-   change results in earlier save files being incompatible.
+ * A master branch exist containing general experimental in-development
+   changes which is unfinished and yet to be stable and ready for the
+   public. Saves can break at any moment.
 
- * A stable branch, which contains the last release. With the exception of
-   critical bug fixes, commits are not made here except when a new release is
-   made.
+ * One-off feature branches, for developing a certain new feature or
+   refactor
 
- * A savebreak branch, in case there is currently worked on changes that break
-   save compatibility.
-
- * Branches representing a certain version, used to push changes specific to a
-   certain version. With the exception of critical bug fixes, changes are only
-   pushed to the latest of the versions.
-
-
-History
-=======
-
-NetHack 4 was originally produced by merging two forks, Alex Smith's AceHack,
-and Daniel Thaler's NitroHack.  Since then it has incorporated changes from
-numerous other forks (especially the fertile sources of bugfixes that are
-GruntHack and UnNetHack), and has had many improvements of its own.
-
-NetHack 4 has come a long way since 2009, when AceHack began.  Out of all the
-lines of C, lex, and yacc source code currently in NetHack 4, less than half
-originally come from NetHack 3.4.3 or earlier – even if you don't count
-whitespace changes.  The rest are typically modifications or even rewrites of
-the old code with bugs fixed and style improved.  Many people have suggested
-rewriting NetHack from scratch to get rid of the bugs and improve the coding
-style, but doing so would be close to an impossible project.  Our continuous
-changes of NetHack from the inside will eventually accomplish a similar goal,
-but in a more realistic manner.
-
-The information about NetHack 4 in this README file mainly describes
-version 4.3, which focuses mostly on improvements to the game's
-internals, rather than gameplay changes.  The NetHack 4 developers are
-planning to make more substantial gameplay changes in 4.4.
-
-
-Frequently Asked Questions
-==========================
-
-See the file `faq.txt` (`doc/faq.txt` in the source code, or in the
-documentation directory in an installed version).
-
-
-Contact
-=======
-
-Bugs in FIQHack can be reported in the issues tab on the GitHub page for this
-repository, or to #fiqhack in irc.freenode.net. In case that there is likely
-probability of the bug existing in upstream (NetHack 4), you can also report
-the bug to the NetHack4 DevTeam at #nethack4 in irc.freenode.net, or its'
-bugtracker. Reporting FIQHack specific bugs within NetHack4's bug tracking is
-not recommended since it is unlikely to lead anywhere but annoyance.
-
-You can discuss NetHack 4 on IRC.  irc:irc.freenode.net/nethack4 is the
-specific channel for NetHack 4, and typically discusses development.  For
-gameplay advice, the best place is the general NetHack discussion channel at
-irc:irc.freenode.net/nethack (which also covers NetHack 3 and Slash'EM).  If
-you're more old-fashioned, you can use Usenet instead; the appropriate
-newsgroup is rec.games.roguelike.nethack (although they would appreciate it if
-you put `[NetHack 4]` in the subject line to make it clear that you aren't
-talking about NetHack 3).
-
-If you want to contact the developers directly, you can use IRC, or email;
-`FIQ` (Fredrik Ljungdahl) can receive email, at fredde1994 #at# gmail (dot) com.
-
-or, for NetHack4;
-`ais523` (Alex Smith) can receive email using that username, at nethack4.org.
-
-
-Selected Changes
-================
-
-For a full list of changes in NetHack 4 compared to the NetHack 3 series, see
-`doc/changelog.txt`.  Some of the most interesting or noticeable changes are
-listed below.
-
-  * Numerous bugfixes.  Over 150 of the numbered bugs in NetHack 3.4.3 have
-    been fixed *intentionally*; many more have been fixed as a side effect of
-    the improvements to NetHack's internals included in NetHack 4, and many
-    bugs have been fixed in NetHack 4 that aren't included in the NetHack
-    3.4.3 bug list (because the NetHack 3 devteam failed to add them, despite
-    being notified about them).
-
-  * A fully rewritten interface, that nonetheless is almost compatible at the
-    keystroke level with 3.4.3 (with a few exceptions to reduce the effect of
-    making typos, or to remove redundant prompts).  Just like previous
-    versions, both tiles and console ports are available; unlike previous
-    versions, these ports are keystroke-compatible with each other, so
-    more detailed graphics no longer have to be accompanied by a loss in
-    functionality on the keyboard.
-    
-    Features of the interface include:
-
-      * Status lines which visually represent health and magical power, and
-        which use color in order to draw attention to dangerous situations and
-        to allow a quick appraisal of the character out of the corner of your
-        eye – but stay gray if they have nothing urgent to say, so that they
-        are most visible when most necessary.
-        
-      * Improved support for large terminals:
-      
-          * Extra vertical space will be used to display more messages at once
-            (cutting down on the need to space through messages at the
-            infamous `--More--` prompt, and to present more information in the
-            status area.  If you have even more vertical space than that, the
-            spare space will be used for mouselook (showing information about
-            the map square the mouse is pointing over), and for reminders
-            about the controls.  (New players are recommended to use very
-            vertically large terminals.)
-        
-          * If you have spare horizontal space, it is used to maintain a
-            permanent display of the inventory and to show information about
-            the floor beneath your character's feet.
-
-      * More information shown on the game map.  You can see where your
-        character's been walking, see stairs and traps underneath items, and
-        tell at a glance which monsters are peaceful.
-
-      * A better rendering backend.  NetHack 3.4.3 could only use IBMgraphics
-        or DECgraphics for this, often with neither working without spending
-        time configuring your terminal.  NetHack 4 will automatically switch
-        between IBMgraphics and Unicode according to the needs of your
-        terminal, meaning that there is rarely a need to change settings.
-        Likewise, it will try its best to give you a working dark gray color
-        (although in emergencies, you can turn off dark gray in the options,
-        and the engine will redo its color schemes to avoid that color).
-
-      * Commands are now fully rebindable.  In most cases, though, you won't
-        need to; unlike NetHack 3, NetHack 4 understands most of the keys on
-        the keyboard, meaning that (especially with NumLock off) it can
-        distinguish the main keyboard and numeric keypad numbers, meaning that
-        there's no longer a need to mess around with the `numpad` option.  In
-        fact, you can even use the cursor keys for navigation (without losing
-        the ability to use diagonals), giving three styles of movement:
-        
-                  vi-keys           cursor keys         number keys
-                  y  k  u         Home  Up   PgUp         7  8  9
-                  h  .  l         Left  .   Right         4  .  6
-                  b  j  n         End  Down  PgDn         1  2  3
-
-        (This sadly cuts slightly into the convenience commands that numpad
-        players were used to.  Instead of `N` for `#name`, you can use `C`;
-        instead of `k` for kicking, you can use `^D`.  For command repeat,
-        just use the numbers on the main keyboard.  Alternatively, you can use
-        the options menu to change back to the old numpad bindings.)
-        
-        Another gain from this is that the `Meta-` shortcuts for many extended
-        commands, that do not work properly in 3.4.3 on many terminals, will
-        normally work in NetHack 4 (using the `Alt` key on the keyboard).
-
-      * Addition of some new, convenient, commands, without compromising the
-        original commands:
-        
-          * You can limit any command to a specific number of actions via
-            specifying a number of actions to stop after.  (Single-turn
-            commands will be repeated for that many actions instead, as in
-            3.4.3.)  You can also stop commands midway through by pressing any
-            key or clicking on the map, if your options are set to animate
-            long-running commands.
-
-          * `^A` is a lot more powerful; when repeating commands, it will
-            remember what choices you made, and if you use it after an
-            interrupted multi-turn command, it will resume that command for
-            you.
-
-          * You no longer have to remember the difference between `W` and `P`,
-            or between `R` and `T`; they're interchangeable now.  In fact, you
-            no longer have to remember any of those commands, nor `w`, `x`, or
-            `Q`, because you can now change your equipment around using `A`.
-            Also, your character will temporarily unequip armor in order to
-            manipulate armor beneath it, meaning that you don't have to
-            explicitly remove a suit in order to take off a shirt.
-
-          * There's no need to explicitly open doors any more; just use the
-            direction keys to walk towards them.  If they turn out to be
-            locked, you can now unlock them with `o`.
-
-          * Examining map squares using `;` still works, but if you have a
-            mouse available, you can also quickly examine them simply via
-            hovering the mouse pointer over them.
-
-          * If you find exploring empty areas tedious, you can let the game
-            take over for you; press `v`, and an AI will take over the
-            exploring for you until it finds something interesting or a
-            monster turns up.
-
-          * The game will remember information about other levels for you,
-            accessible via the `^O` command; not only will it give a quick
-            guide to interesting features on each level, but you can select a
-            level from the menu to view what you remember about its map.
-
-          * Fed up of typing out Elbereth by hand?  The `^E` command is a
-            quick shortcut to write an Elbereth in the dust.
-
-      * It's now harder to do things that are normally bad ideas by mistake –
-        but it's still possible to do them intentionally.  For instance,
-        moving towards a shopkeeper is interpreted as "pay" (`p`) rather than
-        "fight" (`F`); you'd need to give the `F` intentionally if you wanted
-        to attack.  Likewise, moving into lava (when not levitating, confused,
-        or the like) needs an `m` prefix, or the game will give a warning and
-        your character will wisely just stand there.
-
-      * Along similar lines, you now normally use `,` as an inventory letter
-        to interact with items on the floor (e.g. `e,` to eat them), because
-        the ambiguity of `ey` lead to many typo-related deaths back in 3.4.3.
-
-      * The game now tracks more information about your character, with a
-        "history" view that shows major events in your character's life, and
-        with dumplogs produced when the game ends to summarize the heroic
-        efforts and final defeat (or glorious victory) of your character.
-
-  * Customizing options no longer requires messing around with configuration
-    files; you can change options for one game using the in-game `O` command,
-    and options for all future games from the main menu.  There are numerous
-    improvements to the options themselves, too:
-    
-      * You can set various "birth options" for your game in order to control
-        what sort of game you want to play, ranging from something small like
-        turning off bones, to challenge modes where your character is
-        permanently blind or hallucinating.  There's no longer a need to
-        recompile the game if you want to do something like turn off Elbereth.
-        
-      * Autopickup is a lot more customizable than in 3.4.3, with the ability
-        to add rules that match various properties of items against patterns
-        to choose whether to pick them up.
-
-      * There are many more options for what the main movement keys do.  In
-        3.4.3, your choices are limited to choosing whether they displace pets
-        and whether they ask for confirmation when you attack peacefuls.  In
-        NetHack 4, you could for instance have them refuse to attack monsters
-        altogether, without losing the ability to pick up items (which is what
-        adding an `m` before every command would do).
-
-      * Finally, if you're a traditionalist, don't worry: the vast majority of
-        the new interface features from NetHack 4 can be turned off, leaving
-        you with an uninteresting 3.4.3-like ASCII view if you want.
-
-  * The save system has been rewritten (and we removed all the much-maligned
-    NitroHack save code, too).  Save files now contain a complete history of
-    the gamestate, allowing them to be reconstructed at any point, making it
-    possible to view a replay of a game with full character knowledge.  The
-    save files are also saved continuously; if something goes wrong, whether
-    it's a bug in the game or your terminal crashing, you'll be able to just
-    pick back up where you left.  You can even save in the middle of a turn!
-    (To do this, either close the window, or open the main menu using
-    Control-C and save that way.)  The game is also ever-vigilant for mistakes
-    in the save system; if at any point your game can no longer be restored
-    from its save, it will stop gameplay immediately, maximizing the chances
-    that the save file can be recovered, rather than letting you play on and
-    then losing all your progress since the moment it went wrong.
-
-  * There have been some gameplay changes, mostly to remove "difficulty" that
-    was created via relying on a bad interface and entirely avoidable via
-    playing slowly and taking lots of notes.  Most notably, floating eyes can
-    no longer be hit in melee unless you have protection from their gaze,
-    meaning that you'll never hit them by mistake, but you'll never be able to
-    hit them on purpose either.  Likewise, amnesia does not cause the
-    character to forget anything the player could have made out-of-game notes
-    about, but rather drains skill points and spells.
-    
-    There are also many gameplay changes intended to streamline the interface.
-    Try dropping a container full of unidentified items on an altar some time.
-    
-    Finally, there are some improvements in the monster AI.  For instance,
-    pets can use their special attacks now, and hostile monsters may attack
-    each other even without conflict if they dislike each other enough.
-    Monsters also have less spoiler knowledge than they did before; in
-    particular, they won't know where you are on the map without some way to
-    see or sense your location.
-
-  * Building the game from source is much easier than it was in NetHack
-    3.4.3.  See the build instructions below.
+ * Branches representing a certain version, used to push changes
+   specific to a certain version. With the exception of critical bug
+   fixes, changes are only pushed to the latest of the versions.
 
 
 Build Instructions
@@ -335,7 +69,7 @@ libjansson (http://www.digip.org/jansson -- shipped with this source), and
 its development branch. You will also need `bison` and `flex`, as well as
 a C compiler (gcc or clang will both work).
 
-The default setup is to install to ~/fiqhackdir. If you want to change
+The default setup is to install to `~/fiqhackdir`. If you want to change
 this, you can modify `GNUmakefile` -- file paths are set at the top.
 Once you are happy with the setup, to compile, you just do
 
