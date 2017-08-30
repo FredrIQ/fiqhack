@@ -1,7 +1,7 @@
 About this document:
 Last modified by Fredrik Ljungdahl, 2015-11-03
 
-Copyright (C) 2015 Fredrik Ljungdahl.
+Copyright (C) 2017 Fredrik Ljungdahl.
 
 This README file is licensed under the NetHack General Public License.  See
 libnethack/dat/license for details.
