@@ -534,6 +534,19 @@ mattacku(struct monst *mtmp)
                 }
                 otmp = MON_WEP(mtmp);
                 if (otmp) {
+                    if (obj_properties(otmp) & opm_nasty) {
+                        if (canseemon(mtmp)) {
+                            pline(combat_msgc(NULL, mtmp, cr_hit),
+                                  "The nasty weapon hurts %s!", mon_nam(mtmp));
+                            learn_oprop(otmp, opm_nasty);
+                        }
+                        mtmp->mhp -= rnd(6);
+                        if (mtmp->mhp <= 0) {
+                            mondied(mtmp);
+                            return 1;
+                        }
+                    }
+
                     hittmp = hitval(otmp, &youmonst);
                     tmp += hittmp;
                     mswingsm(mtmp, &youmonst, otmp);

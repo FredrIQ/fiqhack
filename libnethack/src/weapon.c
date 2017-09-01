@@ -305,6 +305,8 @@ dmgval(struct obj *otmp, struct monst *mon)
             bonus += rnd(4);
         if (objects[otyp].oc_material == SILVER && hates_silver(ptr))
             bonus += rnd(20);
+        if (obj_properties(otmp) & opm_nasty)
+            bonus += dice(3, 6);
 
         /* if the weapon is going to get a double damage bonus, adjust this
            bonus so that effectively it's added after the doubling */

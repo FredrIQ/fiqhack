@@ -3186,6 +3186,12 @@ weight_cap(void)
         if (carrcap < 0)
             carrcap = 0;
     }
+
+    struct obj *obj;
+    for (obj = invent; obj; obj = obj->nobj)
+        if ((obj->owornmask & W_ARMOR) && (obj_properties(obj) & opm_carrying))
+            carrcap = (carrcap * 11) / 10;
+
     return (int)carrcap;
 }
 

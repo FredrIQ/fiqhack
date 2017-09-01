@@ -347,6 +347,13 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
             }
         }
     } else {
+        if (!thrown && (obj_properties(obj) & opm_nasty)) {
+            pline(combat_msgc(NULL, &youmonst, cr_hit),
+                  "The nasty weapon hurts you!");
+            learn_oprop(obj, opm_nasty);
+            losehp(rnd(6), killer_msg(DIED, "a nasty weapon"));
+        }
+
         saved_oname = cxname(obj);
         if (obj->oclass == WEAPON_CLASS || is_weptool(obj) ||
             obj->oclass == GEM_CLASS) {
@@ -1899,6 +1906,13 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
             /* Potential problem: if the monster gets multiple weapon attacks,
                we currently allow the player to get each of these as a weapon
                attack.  Is this really desirable? */
+            if (uwep && (obj_properties(uwep) & opm_nasty)) {
+                pline(combat_msgc(NULL, &youmonst, cr_hit),
+                      "The nasty weapon hurts you!");
+                learn_oprop(uwep, opm_nasty);
+                losehp(rnd(6), killer_msg(DIED, "a nasty weapon"));
+            }
+
             hittmp = hitval(uwep, mon);
             hittmp += weapon_hit_bonus(uwep);
             tmp += hittmp;

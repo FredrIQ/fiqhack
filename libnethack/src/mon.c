@@ -1275,6 +1275,11 @@ max_mon_load(const struct monst *mtmp)
     if (maxload < 1)
         maxload = 1;
 
+    struct obj *obj;
+    for (obj = mtmp->minvent; obj; obj = obj->nobj)
+        if ((obj->owornmask & W_ARMOR) && (obj_properties(obj) & opm_carrying))
+            maxload = (maxload * 11) / 10;
+
     return (int)maxload;
 }
 

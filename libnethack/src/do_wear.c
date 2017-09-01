@@ -211,7 +211,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         update_property_for_oprops(&youmonst, o, slot);
         if (o->spe)
             learn_oprop(o, (opm_dexterity | opm_brilliance));
-        learn_oprop(o, opm_power | opm_oilskin);
+        learn_oprop(o, opm_power | opm_oilskin | opm_carrying);
         if (props & opm_power)
             encumber_msg();
         update_inventory();
@@ -358,7 +358,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         /* gauntlets of fumbling handled by the boots codepath */
     case GAUNTLETS_OF_POWER:
         makeknown(otyp);
-        encumber_msg();
         break;
 
         /* Amulets */
@@ -452,6 +451,10 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         }
         break;
     }
+
+    /* For gauntlets of power, etc */
+    encumber_msg();
+
     /* at this point o, otmp are invalid */
 
     /* Prevent wielding cockatrice when not wearing gloves */

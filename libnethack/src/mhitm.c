@@ -422,6 +422,19 @@ mattackm(struct monst *magr, struct monst *mdef)
             otmp = MON_WEP(magr);
 
             if (otmp) {
+                if (obj_properties(otmp) & opm_nasty) {
+                    if (vis) {
+                        pline(combat_msgc(NULL, magr, cr_hit),
+                              "The nasty weapon hurts %s!", mon_nam(magr));
+                        learn_oprop(otmp, opm_nasty);
+                    }
+                    magr->mhp -= rnd(6);
+                    if (magr->mhp <= 0) {
+                        mondied(magr);
+                        return 1;
+                    }
+                }
+
                 if (vis)
                     mswingsm(magr, mdef, otmp);
                 tmp += hitval(otmp, mdef);

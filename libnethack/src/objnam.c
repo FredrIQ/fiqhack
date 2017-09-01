@@ -145,6 +145,9 @@ static const struct opropdesc prop_desc[] = {
      "clairvoyance", NULL},
     {opm_mercy, 0, NULL, NULL,
      "mercy", NULL},
+    {opm_carrying, 0, NULL, "carry",
+     "carrying", NULL},
+    {opm_nasty, 0, "nasty", NULL, NULL, NULL},
     /* these below use "versus x" instead of "of x" for armor,
        checked via opm_vorpal */
     {opm_vorpal, 0, "vorpal", NULL, NULL, "beheading"},
@@ -2214,6 +2217,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
             props |= opm_vorpal;
         } else if (!strncmpi(bp, "thirsty ", l = 8)) {
             props |= opm_drain;
+        } else if (!strncmpi(bp, "nasty ", l = 6)) {
+            props |= opm_nasty;
         } else if (!strncmpi(bp, "magical ", l = 8)) {
             magical = TRUE;
         } else if (!strncmpi(bp, "oilskin ", l = 8) &&
@@ -2433,6 +2438,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
                 props |= opm_aggravate;
             } else if (!strncmpi(p + of, "mercy", l=5)) {
                 props |= opm_mercy;
+            } else if (!strncmpi(p + of, "carrying", l=8)) {
+                props |= opm_carrying;
             } else
                 l = 0;
 
@@ -2449,7 +2456,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
         strncmpi(bp, "wizard lock", 11) &&      /* not the "wizard" monster! */
         strncmpi(bp, "ninja-to", 8) &&          /* not the "ninja" rank */
         strncmpi(bp, "master key", 10) &&       /* not the "master" rank */
-        strncmpi(bp, "magenta", 7) &&            /* not the "mage" rank */
+        strncmpi(bp, "magenta", 7) &&           /* not the "mage" rank */
         mntmp < LOW_PM && strlen(bp) > 2 &&
         (mntmp = name_to_mon(bp)) >= LOW_PM) {
         int mntmptoo, mntmplen; /* double check for rank title */
