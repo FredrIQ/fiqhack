@@ -208,6 +208,9 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         break;
     case WAN_UNDEAD_TURNING:
     case SPE_TURN_UNDEAD:
+        if (tseen)
+            known = TRUE;
+
         wake = FALSE;
         if (wandlevel >= P_BASIC && unturn_dead(mdef))
             wake = TRUE;
@@ -253,6 +256,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                 monkilled(magr, mdef, "", AD_RBRE);
         } else if (tseen)
             pline(msgc_yafm, "%s in dread.", M_verbs(mdef, "shudder"));
+
         break;
     case WAN_POLYMORPH:
     case SPE_POLYMORPH:
