@@ -253,8 +253,13 @@ merged(struct obj **potmp, struct obj **pobj)
             otmp->age = ((otmp->age * otmp->quan) + (obj->age * obj->quan))
                 / (otmp->quan + obj->quan);
 
-        if (obj->bknown)
-            otmp->bknown = 1;
+        /* Combine ID states */
+        otmp->known |= obj->known;
+        otmp->dknown |= obj->dknown;
+        otmp->bknown |= obj->bknown;
+        otmp->rknown |= obj->rknown;
+        otmp->mknown |= obj->mknown;
+        otmp->mbknown |= obj->mbknown;
 
         otmp->oprops_known |= obj->oprops_known;
         otmp->oprops_known &= otmp->oprops; /* just in case */
@@ -2232,7 +2237,7 @@ mergable(struct obj *otmp, struct obj *obj)
         return FALSE;
 
     if ((obj->oclass == WEAPON_CLASS || obj->oclass == ARMOR_CLASS) &&
-        (obj->oerodeproof != otmp->oerodeproof || obj->rknown != otmp->rknown))
+        obj->oerodeproof != otmp->oerodeproof)
         return FALSE;
 
     if (obj->oclass == FOOD_CLASS &&
@@ -2277,7 +2282,7 @@ mergable(struct obj *otmp, struct obj *obj)
     if (obj->oartifact != otmp->oartifact)
         return FALSE;
 
-    if (obj->known == otmp->known || !objects[otmp->otyp].oc_uses_known) {
+    if (!objects[otmp->otyp].oc_uses_known) {
         return (boolean) (objects[obj->otyp].oc_merge);
     } else
         return FALSE;
