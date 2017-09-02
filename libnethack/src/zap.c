@@ -363,6 +363,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                     pline(msgc_statusheal, "%s opens its mouth!", Monnam(mdef));
             }
             expels(mdef, mdef->data, TRUE);
+            known = TRUE;
         } else if ((obj = which_armor(mdef, os_saddle))) {
             mdef->misc_worn_check &= ~obj->owornmask;
             obj->owornmask = 0L;
@@ -372,8 +373,11 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             place_object(obj, level, mdef->mx, mdef->my);
             /* call stackobj() if we ever drop anything that can merge */
             newsym(mdef->mx, mdef->my);
-        } else if (hityou && Punished)
+            known = TRUE;
+        } else if (hityou && Punished) {
             pline(msgc_yafm, "Your chain quivers for a moment.");
+            known = TRUE;
+        }
         break;
     case SPE_HEALING:
     case SPE_EXTRA_HEALING:
