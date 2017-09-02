@@ -523,6 +523,7 @@ void
 dropy(struct obj *obj)
 {
     unwield_silently(obj);
+    obj->owt = weight(obj);
 
     if (!Engulfed && flooreffects(obj, u.ux, u.uy, "drop"))
         return;
