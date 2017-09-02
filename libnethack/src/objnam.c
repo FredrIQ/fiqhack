@@ -485,6 +485,8 @@ examine_object(struct obj *obj)
         obj->dknown = TRUE;
     if (Role_if(PM_PRIEST))
         obj->bknown = TRUE;
+    if (weapon_type(obj) != P_NONE && P_SKILL(weapon_type(obj)) >= P_EXPERT)
+        obj->known = TRUE;
 }
 
 

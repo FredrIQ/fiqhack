@@ -725,6 +725,13 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
         /* [this assumes that `!thrown' implies wielded...] */
         wtype = thrown ? weapon_type(wep) : uwep_skill_type();
         use_skill(wtype, 1);
+        if (P_SKILL(wtype) >= P_BASIC && wep &&
+            (P_SKILL(wtype) >= P_EXPERT ||
+             !rn2(P_SKILL(wtype) == P_SKILLED ? 10 : 100))) {
+            pline(msgc_info,
+                  "You have successfully appraised this weapon's enchantment.");
+            wep->known = TRUE;
+        }
     }
 
     if (ispoisoned) {
