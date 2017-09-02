@@ -3411,6 +3411,7 @@ unspoilered_intrinsics(void)
     addmenu(DISINT_RES, "You are disintegration resistant.");
     addmenu(SHOCK_RES, "You are shock resistant.");
     addmenu(POISON_RES, "You are poison resistant.");
+    addmenu(ACID_RES, "You are acid resistant.");
     addmenu(DRAIN_RES, "You are level-drain resistant.");
     addmenu(SICK_RES, "You are immune to sickness.");
     addmenu(SEE_INVIS, "You see invisible.");
