@@ -1299,6 +1299,7 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
      * + Luck
      * + 5*searchbonus
      * + 5 with lenses
+     * + 10 for archeologists
      * This is divided by 20 * 2 ^ (Manhattan distance - 1) to form a search rate
      * This means that with no luck or other bonuses, you find things next to you
      * 20/20 of the time (100%), 2 tiles away 20/40 (1/2), 3 tiles away 20/80 (1/4), etc
@@ -1310,6 +1311,9 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
     struct obj *tool = which_armor(mon, os_tool);
     if (tool && tool->otyp == LENSES)
         baserate += 5;
+    if ((you && Role_if(PM_ARCHEOLOGIST)) ||
+        (!you && mon->data == &mons[PM_ARCHEOLOGIST]))
+        baserate += 10;
     if (baserate < 1)
         baserate = 1; /* Make it not impossible to find doors/etc */
 
