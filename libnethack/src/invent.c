@@ -2282,10 +2282,7 @@ mergable(struct obj *otmp, struct obj *obj)
     if (obj->oartifact != otmp->oartifact)
         return FALSE;
 
-    if (!objects[otmp->otyp].oc_uses_known) {
-        return (boolean) (objects[obj->otyp].oc_merge);
-    } else
-        return FALSE;
+    return (boolean) (objects[obj->otyp].oc_merge);
 }
 
 int
