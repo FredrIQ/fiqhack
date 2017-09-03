@@ -1839,6 +1839,8 @@ static const struct o_range o_ranges[] = {
     {"helm", ARMOR_CLASS, ELVEN_LEATHER_HELM, HELM_OF_TELEPATHY},
     {"gloves", ARMOR_CLASS, LEATHER_GLOVES, GAUNTLETS_OF_DEXTERITY},
     {"gauntlets", ARMOR_CLASS, LEATHER_GLOVES, GAUNTLETS_OF_DEXTERITY},
+    /* If you're adding more boots synonyms, make sure to add to the checks that
+       ensure that boots of speed/fumbling is parsed correctly. */
     {"boots", ARMOR_CLASS, LOW_BOOTS, LEVITATION_BOOTS},
     {"shoes", ARMOR_CLASS, LOW_BOOTS, IRON_SHOES},
     {"cloak", ARMOR_CLASS, MUMMY_WRAPPING, CLOAK_OF_DISPLACEMENT},
@@ -2597,8 +2599,19 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     /* "grey stone" check must be before general "stone" */
     for (i = 0; i < SIZE(o_ranges); i++)
         if (!strcmpi(bp, o_ranges[i].name)) {
-            typ = rnd_class(o_ranges[i].f_o_range, o_ranges[i].l_o_range,
-                            rng_main);
+            if ((!strcmpi(bp, "boots") ||
+                 !strcmpi(bp, "shoes")) &&
+                props) {
+                typ = 0;
+                if (props & opm_speed)
+                    typ = SPEED_BOOTS;
+                else if (props & opm_fumble)
+                    typ = FUMBLE_BOOTS;
+            }
+
+            if (!typ)
+                typ = rnd_class(o_ranges[i].f_o_range, o_ranges[i].l_o_range,
+                                rng_main);
             goto typfnd;
         }
 
