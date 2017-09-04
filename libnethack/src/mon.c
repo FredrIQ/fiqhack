@@ -1907,6 +1907,7 @@ relmon(struct monst *mon)
         panic("relmon: no level->monlist available.");
 
     mon->dlevel->monsters[mon->mx][mon->my] = NULL;
+    unset_displacement(mon);
 
     if (mon == mon->dlevel->monlist)
         mon->dlevel->monlist = mon->dlevel->monlist->nmon;
