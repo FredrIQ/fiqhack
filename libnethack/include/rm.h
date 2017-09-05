@@ -524,8 +524,6 @@ extern struct level *level;             /* pointer to an entry in levels */
 # define place_worm_seg(m,x,y)   (m)->dlevel->monsters[x][y] = m
 # define m_at(lev,x,y) \
              (MON_AT(lev,x,y) ? (lev)->monsters[x][y] : NULL)
-# define dm_at(lev,x,y) \
-             ((lev)->dmonsters[x][y])
 # define m_buried_at(x,y) \
              (MON_BURIED_AT(x,y) ? level->monsters[x][y] : NULL)
 

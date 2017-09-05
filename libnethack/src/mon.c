@@ -1881,6 +1881,10 @@ replmon(struct monst *mtmp, struct monst *mtmp2)
         /* here we rely on the fact that `mtmp' hasn't actually been deleted */
         del_light_source(mtmp->dlevel, LS_MONSTER, mtmp);
     }
+
+    if (displaced(mtmp2))
+        mtmp2->dlevel->dmonsters[mtmp2->dx][mtmp2->dy] = mtmp2;
+
     mtmp2->nmon = mtmp2->dlevel->monlist;
     mtmp2->dlevel->monlist = mtmp2;
     if (u.ustuck == mtmp)
@@ -1894,6 +1898,19 @@ replmon(struct monst *mtmp, struct monst *mtmp2)
         nmtmp = mtmp2;
 
     /* discard the old monster */
+
+    /* Ensure that we /really remove/ any displaced image. Don't use dm_at. */
+    struct level *lev = mtmp->dlevel;
+    int x, y;
+    for (x = 0; x < COLNO; x++)
+        for (y = 0; y < COLNO; y++)
+            if (mtmp == lev->dmonsters[x][y]) {
+                impossible("Displacement removal failed! "
+                           "Displaced at: %d,%d :: Found at: %d,%d",
+                      mtmp->dx, mtmp->dy, x, y);
+                level->dmonsters[x][y] = NULL;
+            }
+
     dealloc_monst(mtmp);
 }
 
@@ -1906,8 +1923,8 @@ relmon(struct monst *mon)
     if (mon->dlevel->monlist == NULL)
         panic("relmon: no level->monlist available.");
 
+    mon->dlevel->dmonsters[mon->dx][mon->dy] = NULL;
     mon->dlevel->monsters[mon->mx][mon->my] = NULL;
-    unset_displacement(mon);
 
     if (mon == mon->dlevel->monlist)
         mon->dlevel->monlist = mon->dlevel->monlist->nmon;
@@ -1952,6 +1969,24 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
         mtmp->deadmonster = 1;
     }
     mtmp->dlevel->flags.purge_monsters++;
+}
+
+struct monst *
+dm_at(struct level *lev, xchar x, xchar y)
+{
+    struct monst *mon = lev->dmonsters[x][y];
+    if (!mon)
+        return NULL;
+
+    if (mon->dx != x || mon->dy != y) {
+        impossible("Displacement mismatch: dx,dy: %d,%d :: actual x,y: %d,%d",
+                   mon->dx, mon->dy, x, y);
+        unset_displacement(mon);
+        level->dmonsters[x][y] = NULL;
+        return NULL;
+    }
+
+    return mon;
 }
 
 /* find the worn amulet of life saving which will save a monster */

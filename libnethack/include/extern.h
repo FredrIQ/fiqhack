@@ -1136,6 +1136,7 @@ extern int mcalcmove(struct monst *);
 extern void mcalcdistress(void);
 extern void replmon(struct monst *, struct monst *);
 extern void relmon(struct monst *);
+extern struct monst *dm_at(struct level *, xchar, xchar);
 extern struct obj *mlifesaver(struct monst *);
 extern boolean corpse_chance(struct monst *, struct monst *, boolean);
 extern void mondead(struct monst *);
