@@ -765,6 +765,9 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_CONF:
         conf = TRUE;
     case AD_STUN:
+        if (cancelled(magr) || !visda)
+            break;
+
         if (!has_property(mdef, conf ? CONFUSION : STUNNED)) {
             if (vis) {
                 if (conf)
@@ -808,6 +811,9 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_FIRE:
+        if (cancelled(magr) || !visda)
+            break;
+
         if (resists_fire(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_immune),
@@ -845,6 +851,9 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         ret |= MM_HIT;
         break;
     case AD_SLEE:
+        if (cancelled(magr) || !visda)
+            break;
+
         if (!resists_sleep(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit),
@@ -862,6 +871,9 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         ret |= MM_HIT;
         break;
     case AD_SLOW:
+        if (cancelled(magr) || !visda)
+            break;
+
         inc_timeout(mdef, SLOW, dmg, FALSE);
         if (udef)
             action_interrupted();
