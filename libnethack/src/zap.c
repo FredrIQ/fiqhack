@@ -729,6 +729,8 @@ montraits(struct obj *obj, coord * cc)
         mtmp2->dlevel = level;
         mtmp2->mx = mtmp->mx;
         mtmp2->my = mtmp->my;
+        mtmp2->dx = mtmp->dx;
+        mtmp2->dy = mtmp->dy;
         mtmp2->mux = COLNO;
         mtmp2->muy = ROWNO;
         mtmp2->mw = mtmp->mw;
