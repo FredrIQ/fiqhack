@@ -1247,13 +1247,14 @@ mspell_skilltype(int booktype)
    from the protection. This prevents freezing the protection timer in
    such a case if the protection spell is maintained, avoiding you to
    gain more protection and keep it by maintaining the spell. In such a
-   case, we return FALSE if overprotected. */
+   case, we return FALSE if overprotected.
+   This function can run during level gen, so check for level before doing canseemon */
 boolean
 cast_protection(struct monst *mon, boolean autocast,
                 boolean check_overprotection)
 {
     boolean you = (mon == &youmonst);
-    boolean vis = canseemon(mon);
+    boolean vis = level && canseemon(mon);
     int loglev = 0;
     int l = you ? u.ulevel : mon->m_lev;
     /* Monsters can be level 0, ensure that no oddities occur if that is the case. */
