@@ -963,6 +963,7 @@ update_property(struct monst *mon, enum youprop prop,
     boolean you = (mon == &youmonst);
     /* if something was said about the situation */
     boolean effect = FALSE;
+    boolean was_overprotected = !cast_protection(mon, FALSE, TRUE);
     int timer = property_timeout(mon, prop);
     struct obj *weapon;
     enum msg_channel msgc = msgc_monneutral;
@@ -1172,6 +1173,22 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case PROTECTION:
+        while (slot == os_dectimeout && !cast_protection(mon, FALSE, TRUE)) {
+            if ((mon->mintrinsic[PROTECTION] & TIMEOUT_RAW) > 10)
+                mon->mintrinsic[PROTECTION] -= 10;
+            else {
+                mon->mintrinsic[PROTECTION] &= ~TIMEOUT_RAW;
+                break;
+            }
+        }
+
+        if (slot == os_dectimeout && was_overprotected && (you || vis)) {
+            pline(you ? msgc_statusbad : msgc_monneutral,
+                  "The %s haze around %s fades rapidly.", hcolor("golden"),
+                  mon_nam(mon));
+            effect = TRUE;
+        }
+
         if (you && slot == os_armc && !lost) {
             pline(msgc_intrgain,
                   "Your cloak feels unusually protective.");
