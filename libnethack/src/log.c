@@ -1155,7 +1155,7 @@ log_neutral_turnstate(void)
 
     /* A heuristic to work out whether to use a save diff or save backup
        line. */
-    if ((program_state.binary_save.pos / 10) <
+    if ((program_state.binary_save.pos / 2) <
         (program_state.gamestate_location - program_state.save_backup_location)
         || !program_state.ok_to_diff)
 
