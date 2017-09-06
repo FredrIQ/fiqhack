@@ -606,6 +606,9 @@ strategy(struct monst *mtmp, boolean magical_target)
 int
 tactics(struct monst *mtmp)
 {
+    if (idle(mtmp))
+        panic("Covetous AI running on an idle monster?");
+
     long strat = mtmp->mstrategy;
 
     switch (strat) {
