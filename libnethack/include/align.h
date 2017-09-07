@@ -36,6 +36,17 @@ typedef struct align {  /* alignment & record */
 # define AM_SPLEV_CO    3
 # define AM_SPLEV_NONCO 7
 
+# define AR_PIOUS       20
+# define AR_DEVOUT      14
+# define AR_FERVENT     9
+# define AR_STRIDENT    4
+# define AR_OK          3
+# define AR_HALTING     1
+# define AR_NOMINAL     0
+# define AR_STRAYED     (-1)
+# define AR_SINNED      (-4)
+# define AR_TRANSGRESSED (-9)
+
 # define Amask2align(x) ((aligntyp) ((!(x)) ? A_NONE \
              : ((x) == AM_LAWFUL) ? A_LAWFUL : ((int)x) - 2))
 # define Align2amask(x) (((x) == A_NONE) ? AM_NONE \

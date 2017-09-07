@@ -2687,26 +2687,28 @@ enlighten_mon(struct monst *mon, int final)
             "the Glory of Arioch"
         };
         mon_is(&menu, mon, hofe_titles[u.uevent.uhand_of_elbereth - 1]);
-        if (u.ualign.record >= 20)
+        if (u.ualign.record >= AR_PIOUS)
             mon_is(&menu, mon, "piously aligned");
-        else if (u.ualign.record > 13)
+        else if (u.ualign.record >= AR_DEVOUT)
             mon_is(&menu, mon, "devoutly aligned");
-        else if (u.ualign.record > 8)
+        else if (u.ualign.record >= AR_FERVENT)
             mon_is(&menu, mon, "fervently aligned");
-        else if (u.ualign.record > 3)
+        else if (u.ualign.record >= AR_STRIDENT)
             mon_is(&menu, mon, "stridently aligned");
-        else if (u.ualign.record == 3)
+        else if (u.ualign.record == AR_OK)
             mon_is(&menu, mon, "aligned");
-        else if (u.ualign.record > 0)
+        else if (u.ualign.record >= AR_HALTING)
             mon_is(&menu, mon, "haltingly aligned");
-        else if (u.ualign.record == 0)
+        else if (u.ualign.record == AR_NOMINAL)
             mon_is(&menu, mon, "nominally aligned");
-        else if (u.ualign.record >= -3)
-            mon_is(&menu, mon, "strayed");
-        else if (u.ualign.record >= -8)
-            mon_is(&menu, mon, "sinned");
+        else if (u.ualign.record <= AR_TRANSGRESSED)
+            mon_has(&menu, mon, "transgressed");
+        else if (u.ualign.record <= AR_SINNED)
+            mon_has(&menu, mon, "sinned");
+        else if (u.ualign.record <= AR_STRAYED)
+            mon_has(&menu, mon, "strayed");
         else
-            mon_is(&menu, mon, "transgressed");
+            impossible("Unknown alignment threshould?");
         if (wizard) {
             buf = msgprintf(" %d", u.uhunger);
             enl_msg(&menu, "Hunger level ", "is", "was", buf);
