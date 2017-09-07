@@ -1851,6 +1851,7 @@ dodip(const struct nh_cmd_arg *arg)
 {
     struct obj *obj, *potion;
     struct obj *singlepotion;
+    boolean allowfloor = FALSE;
     const char *tmp;
     uchar here;
     char allowall[2] = { ALL_CLASSES, 0 };
@@ -1865,49 +1866,33 @@ dodip(const struct nh_cmd_arg *arg)
     if (!obj)
         return 0;
 
-    if (!(arg->argtype & CMD_ARG_OBJ)) {
-        here = level->locations[u.ux][u.uy].typ;
-        /* Is there a fountain to dip into here? */
-        if (IS_FOUNTAIN(here)) {
-            qbuf = msgprintf("Dip %s into the fountain?",
-                             safe_qbuf("", sizeof ("Dip  into the fountain?"),
-                                       the(xname(obj)),
-                                       the(simple_typename(obj->otyp)),
-                                       "this item"));
-            if (yn(qbuf) == 'y') {
-                dipfountain(obj);
-                return 1;
-            }
-        } else if (is_pool(level, u.ux, u.uy)) {
-            tmp = waterbody_name(u.ux, u.uy);
-            qbuf = msgprintf("Dip %s into the %s?",
-                             safe_qbuf("",
-                                       sizeof ("Dip  into the pool of water?"),
-                                       the(xname(obj)),
-                                       the(simple_typename(obj->otyp)),
-                                       "this item"), tmp);
-            if (yn(qbuf) == 'y') {
-                /* TODO: There are unmarked msgc_cancelled1 cases here. */
-                if (Levitation) {
-                    floating_above(tmp);
-                } else if (u.usteed && !swims(u.usteed) &&
-                           P_SKILL(P_RIDING) < P_BASIC) {
-                    rider_cant_reach(); /* not skilled enough to reach */
-                } else {
-                    water_damage(obj, NULL, TRUE);
-                    if (obj->otyp == POT_ACID)
-                        useup(obj);
-                }
-                return 1;
-            }
-        }
-    }
+    here = level->locations[u.ux][u.uy].typ;
+    /* Is there a fountain to dip into here? */
+    if ((IS_FOUNTAIN(here) || is_pool(level, u.ux, u.uy)) &&
+        !Levitation &&
+        !(u.usteed && !swims(u.usteed) &&
+          P_SKILL(P_RIDING) < P_BASIC &&
+          is_pool(level, u.ux, u.uy)))
+        allowfloor = TRUE;
+
     qbuf = msgprintf("dip %s into",
                      safe_qbuf("", sizeof ("dip  into"), the(xname(obj)),
                                the(simple_typename(obj->otyp)), "this item"));
-    potion = getargobj(arg, beverages, qbuf);
+    potion = getargobj(arg, allowfloor ? beverages_and_fountains :
+                       beverages, qbuf);
     if (!potion)
         return 0;
+
+    if (potion == &zeroobj) {
+        if (IS_FOUNTAIN(here))
+            dipfountain(obj);
+        else {
+            water_damage(obj, NULL, TRUE);
+            if (obj->otyp == POT_ACID)
+                useup(obj);
+        }
+        return 1;
+    }
 
     if (potion == obj && potion->quan == 1L) {
         pline(msgc_cancelled, "That is a potion bottle, not a Klein bottle!");
