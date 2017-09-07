@@ -1136,25 +1136,14 @@ pick_obj(struct obj *otmp)
     return addinv(otmp);        /* might merge it with other objects */
 }
 
-/*
- * Reset state for encumber_msg() so it doesn't bleed between games.
- */
-void
-reset_encumber_msg(void)
-{
-    u.oldcap = UNENCUMBERED;
-}
-
-/*
- * prints a message if encumbrance changed since the last check and
- * returns the new encumbrance value (from near_capacity()).
- */
+/* Prints a message if encumbrance changed since the last check and
+   returns the new encumbrance value (from near_capacity()). */
 int
-encumber_msg(void)
+encumber_msg(int oldcap)
 {
     int newcap = near_capacity();
 
-    if (u.oldcap < newcap) {
+    if (oldcap < newcap) {
         switch (newcap) {
         case 1:
             pline(msgc_statusbad,
@@ -1174,7 +1163,7 @@ encumber_msg(void)
                   newcap == 4 ? "can barely" : "can't even");
             break;
         }
-    } else if (u.oldcap > newcap) {
+    } else if (oldcap > newcap) {
         switch (newcap) {
         case 0:
             pline(msgc_statusheal, "Your movements are now unencumbered.");
@@ -1195,7 +1184,6 @@ encumber_msg(void)
         }
     }
 
-    u.oldcap = newcap;
     return newcap;
 }
 

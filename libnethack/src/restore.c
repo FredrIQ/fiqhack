@@ -569,7 +569,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->utraptype = mread32(mf);
     y->uhunger = save_decode_32(mread32(mf), -moves, -moves);
     y->uhs = mread32(mf);
-    y->oldcap = mread32(mf);
+    y->unused_oldcap = mread32(mf);
     y->umconf = save_decode_32(mread32(mf), -moves, -moves);
     y->nv_range = mread32(mf);
     y->bglyph = mread32(mf);

@@ -364,7 +364,6 @@ wiz_wish(const struct nh_cmd_arg *arg)
     flags.verbose = FALSE;
     makewish();
     flags.verbose = save_verbose;
-    encumber_msg();
 
     return 0;
 }

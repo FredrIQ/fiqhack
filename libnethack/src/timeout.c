@@ -558,9 +558,10 @@ burn_object(void *arg, long timeout)
             end_burn(obj, FALSE);
 
             if (menorah) {
+                int oldcap = near_capacity();
                 obj->spe = 0;
                 obj->owt = weight(obj); /* no more candles */
-                (void)encumber_msg();
+                (void)encumber_msg(oldcap);
             } else {
                 obj_extract_self(obj);
                 obfree(obj, NULL);

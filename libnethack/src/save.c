@@ -443,7 +443,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->utraptype);
     mwrite32(mf, save_encode_32(y->uhunger, -moves, -moves));
     mwrite32(mf, y->uhs);
-    mwrite32(mf, y->oldcap);
+    mwrite32(mf, y->unused_oldcap);
     mwrite32(mf, save_encode_32(y->umconf, -moves, -moves));
     mwrite32(mf, y->nv_range);
     mwrite32(mf, y->bglyph);

@@ -618,9 +618,10 @@ dismount_steed(int reason)
     /* Return the player to the floor */
     if (reason != DISMOUNT_ENGULFED) {
         in_steed_dismounting = TRUE;
+        int oldcap = near_capacity();
         set_property(&youmonst, LEVITATION, -2, FALSE);
         in_steed_dismounting = FALSE;
-        encumber_msg();
+        encumber_msg(oldcap);
         turnstate.vision_full_recalc = TRUE;
     } else
     /* polearms behave differently when not mounted */

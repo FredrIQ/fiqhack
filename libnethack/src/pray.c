@@ -378,10 +378,11 @@ fix_worst_trouble(int trouble)
             pline(msgc_intrgain, "There's a tiger in your tank.");
         else
             pline(msgc_intrgain, "You feel in good health again.");
+        int oldcap = near_capacity();
         for (i = 0; i < A_MAX; i++)
             if (ABASE(i) < AMAX(i))
                 ABASE(i) = AMAX(i);
-        encumber_msg();
+        encumber_msg(oldcap);
         break;
     case ptr_blind:
         set_property(&youmonst, BLINDED, -2, FALSE);

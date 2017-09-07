@@ -123,6 +123,7 @@ change_sex(void)
 static void
 newman(void)
 {
+    int oldcap = near_capacity();
     int tmp, oldlvl;
 
     tmp = u.uhpmax;
@@ -202,7 +203,7 @@ newman(void)
         set_property(&youmonst, SLIMED, 10, FALSE);
     }
     see_monsters(FALSE);
-    encumber_msg();
+    encumber_msg(oldcap);
 }
 
 void
@@ -483,6 +484,7 @@ mdomonability(const struct musable *m)
 int
 polymon(int mntmp, boolean noisy)
 {
+    int oldcap = near_capacity();
     boolean sticky = sticks(youmonst.data) && u.ustuck &&
         !Engulfed, dochange = FALSE;
     int mlvl;
@@ -654,7 +656,7 @@ polymon(int mntmp, boolean noisy)
     exercise(A_CON, FALSE);
     exercise(A_WIS, TRUE);
     if (noisy)
-        encumber_msg();
+        encumber_msg(oldcap);
 
     int new_polymon = update_property_polymorph(&youmonst, old_pm);
     if (new_polymon) /* update_property_polymorph polymorphed you again, bail out */
@@ -839,6 +841,7 @@ drop_weapon(int alone, boolean noisy)
 void
 rehumanize(int how, const char *killer)
 {
+    int oldcap = near_capacity();
     if (!killer && u.mh < 1)
         impossible("Monster HP dropped to 0 without a check for death");
 
@@ -867,7 +870,7 @@ rehumanize(int how, const char *killer)
     action_interrupted();
 
     turnstate.vision_full_recalc = TRUE;
-    encumber_msg();
+    encumber_msg(oldcap);
 }
 
 static int

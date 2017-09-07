@@ -692,6 +692,7 @@ extern const char *hist_lev_name(const d_level * l, boolean in_or_on);
 extern void assigninvlet(struct obj *);
 extern struct obj *merge_choice(struct obj *, struct obj *);
 extern int merged(struct obj **, struct obj **);
+extern struct obj *pickinv(struct obj *);
 extern struct obj *addinv(struct obj *);
 extern boolean can_hold(struct obj *);
 extern struct obj *hold_another_object(struct obj *, const char *, const char *,
@@ -1389,8 +1390,7 @@ extern int query_objlist(const char *, struct obj *, int, struct object_pick **,
 extern void add_objitem(struct nh_objlist *, enum nh_menuitem_role, int,
                         const char *, struct obj *, boolean);
 extern struct obj *pick_obj(struct obj *);
-extern void reset_encumber_msg(void);
-extern int encumber_msg(void);
+extern int encumber_msg(int);
 extern int doloot(const struct nh_cmd_arg *);
 extern void observe_quantum_cat(struct obj *);
 extern int use_container(struct obj *, int);

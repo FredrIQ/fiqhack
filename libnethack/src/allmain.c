@@ -147,8 +147,6 @@ nh_exit_game(int exit_type)
 void
 startup_common(boolean including_program_state)
 {
-    reset_encumber_msg();
-
     /* create mutable copies of object and artifact liss */
     init_objlist();
     init_artilist();
@@ -733,7 +731,7 @@ you_moved(void)
        global, and monsters have taken 0 more actions than the global. */
 
     do {        /* hero can't move this turn loop */
-        wtcap = encumber_msg();
+        wtcap = near_capacity();
 
         flags.mon_moving = TRUE;
         do {

@@ -2879,6 +2879,7 @@ poisoned(struct monst *mon, const char *string, int typ, const char *killer,
     int i, plural;
     boolean thrown_weapon = (permanent < 0);
     boolean resist_message_printed = FALSE;
+    int oldcap = near_capacity();
 
     if (thrown_weapon)
         permanent = -permanent;
@@ -2961,7 +2962,7 @@ poisoned(struct monst *mon, const char *string, int typ, const char *killer,
     }
 
     if (you)
-        encumber_msg();
+        encumber_msg(oldcap);
 }
 
 /* monster responds to player action; not the same as a passive attack */

@@ -174,6 +174,7 @@ on_msg(struct obj *otmp)
 boolean
 setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 {
+    int oldcap = near_capacity();
     /* o holds the item that is being equipped or removed. */
     struct obj *o = otmp;
     /* Work out whether we're equipping, unequipping, both, or neither. */
@@ -213,7 +214,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             learn_oprop(o, (opm_dexterity | opm_brilliance));
         learn_oprop(o, opm_power | opm_oilskin | opm_carrying);
         if (props & opm_power)
-            encumber_msg();
+            oldcap = encumber_msg(oldcap);
         update_inventory();
         if (msgtype != em_silent)
             on_msg(o);
@@ -252,7 +253,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             learn_oprop(o, (opm_dexterity | opm_brilliance));
         learn_oprop(o, opm_power);
         if (props & opm_power)
-            encumber_msg();
+            oldcap = encumber_msg(oldcap);
         update_inventory();
     }
 
@@ -453,7 +454,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     }
 
     /* For gauntlets of power, etc */
-    encumber_msg();
+    encumber_msg(oldcap);
 
     /* at this point o, otmp are invalid */
 

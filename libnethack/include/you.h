@@ -38,6 +38,9 @@ struct u_event {
 
 /*** Information about the player ***/
 struct you {
+    /* NOW UNUSED */
+    int unused_oldcap;  /* carry cap on previous turn */
+
     xchar ux, uy;
     xchar tx, ty;       /* destination of travel */
     xchar ux0, uy0;     /* initial position of a move */
@@ -63,8 +66,6 @@ struct you {
 
     int uhunger;        /* refd only in eat.c and shk.c */
     unsigned uhs;       /* hunger state - see eat.c */
-
-    int oldcap;         /* carry cap on previous turn */
 
     struct obj *utracked[tos_last_slot + 1];      /* occupation objects */
     int uoccupation_progress[tos_last_slot + 1];  /* time spent on occupation */

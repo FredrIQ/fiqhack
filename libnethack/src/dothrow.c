@@ -1170,8 +1170,7 @@ throwit(struct obj *obj, struct obj *stack,
             !impaired) {
             pline(msgc_yafm, "%s the %s and returns to your hand!",
                   Tobjnam(obj, "hit"), ceiling(u.ux, u.uy));
-            obj = addinv(obj);
-            encumber_msg();
+            obj = pickinv(obj);
             setuwep(obj);
             u.twoweap = twoweap;
         } else if (dz < 0 && !Is_airlevel(&u.uz) && !Underwater &&
@@ -1189,8 +1188,7 @@ throwit(struct obj *obj, struct obj *stack,
         mon = boomhit(dx, dy);
         if (mon == &youmonst) { /* the thing was caught */
             exercise(A_DEX, TRUE);
-            obj = addinv(obj);
-            encumber_msg();
+            obj = pickinv(obj);
             if (wep_mask && !(obj->owornmask & wep_mask)) {
                 setworn(obj, wep_mask);
                 u.twoweap = twoweap;
@@ -1295,8 +1293,7 @@ throwit(struct obj *obj, struct obj *stack,
             if (rn2_on_rng(100, rng_mjollnir_return) && !impaired) {
                 pline(msgc_actionok, "%s to your hand!",
                       Tobjnam(obj, "return"));
-                obj = addinv(obj);
-                encumber_msg();
+                obj = pickinv(obj);
                 setuwep(obj);
                 u.twoweap = twoweap;
                 if (cansee(bhitpos.x, bhitpos.y))
@@ -1545,8 +1542,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
 
                     sho_obj_return_to_u(obj, dx, dy);
                 }
-                addinv(obj);    /* back into your inventory */
-                encumber_msg();
+                pickinv(obj);    /* back into your inventory */
             } else {
                 /* angry leader caught it and isn't returning it */
                 mpickobj(mon, obj, NULL);
