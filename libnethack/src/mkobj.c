@@ -327,8 +327,13 @@ obj_properties(const struct obj *obj)
     uint64_t props = obj->oprops;
 
     /* Artifacts don't retain object properties they might have
-       had before being artifacts (Excalibur, Sting, etc) */
-    if (!props || obj->oartifact)
+       had before being artifacts (Excalibur, Sting, etc). Also,
+       don't allow invocation items to have properties. */
+    if (!props || obj->oartifact ||
+        obj->otyp == AMULET_OF_YENDOR ||
+        obj->otyp == BELL_OF_OPENING ||
+        obj->otyp == SPE_BOOK_OF_THE_DEAD ||
+        obj->otyp == CANDELABRUM_OF_INVOCATION)
         return 0;
 
     if (obj->oclass == WEAPON_CLASS &&
