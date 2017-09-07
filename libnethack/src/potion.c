@@ -1867,7 +1867,7 @@ dodip(const struct nh_cmd_arg *arg)
         return 0;
 
     here = level->locations[u.ux][u.uy].typ;
-    /* Is there a fountain to dip into here? */
+    /* Is there a fountain or pool to dip into here? */
     if ((IS_FOUNTAIN(here) || is_pool(level, u.ux, u.uy)) &&
         !Levitation &&
         !(u.usteed && !swims(u.usteed) &&
