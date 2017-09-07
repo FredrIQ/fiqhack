@@ -184,6 +184,16 @@ static const struct propxl prop_from_experience[] = {
     {PM_WIZARD, 15, WARNING},
     {PM_WIZARD, 17, TELEPORT_CONTROL},
     {PM_ELF, 4, SLEEP_RES},
+    {PM_RED_DRAGON, 10, INFRAVISION},
+    {PM_RED_DRAGON, 10, WARNING},
+    {PM_RED_DRAGON, 10, SEE_INVIS},
+    {PM_WHITE_DRAGON, 10, WATERPROOF},
+    {PM_WHITE_DRAGON, 10, SEARCHING},
+    {PM_ORANGE_DRAGON, 10, FREE_ACTION},
+    {PM_BLACK_DRAGON, 10, DRAIN_RES},
+    {PM_BLUE_DRAGON, 10, FAST},
+    {PM_GREEN_DRAGON, 10, SICK_RES},
+    /* Yellow dragons are acidic, so they have stone res already */
     {NON_PM, 0, 0}
 };
 
