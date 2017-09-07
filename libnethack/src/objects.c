@@ -730,9 +730,9 @@ const struct objclass const_objects[] = {
         OBJ(name,desc), BITS(0,1,0,0,mgc,0,0,0,0,0,0,P_NONE,GLASS), 0, \
             POTION_CLASS, prob, 0, 20, cost, 0, 0, 0, 0, 10, color )
     /*     name                 appearance    magic  prob  cost  color */
-    POTION("gain ability",      "ruby",           1,   42,  300, CLR_RED),
+    POTION("gain ability",      "ruby",           1,   40,  300, CLR_RED),
     POTION("restore ability",   "pink",           1,   40,  100, CLR_BRIGHT_MAGENTA),
-    POTION("confusion",         "orange",         1,   42,  100, CLR_ORANGE),
+    POTION("confusion",         "orange",         1,   40,  100, CLR_ORANGE),
     POTION("blindness",         "yellow",         1,   40,  150, CLR_YELLOW),
     POTION("paralysis",         "emerald",        1,   42,  300, CLR_BRIGHT_GREEN),
     POTION("speed",             "dark green",     1,   42,  200, CLR_GREEN),
@@ -748,13 +748,13 @@ const struct objclass const_objects[] = {
     POTION("object detection",  "smoky",          1,   42,  150, CLR_GRAY),
     POTION("gain energy",       "cloudy",         1,   42,  150, CLR_WHITE),
     POTION("sleeping",          "effervescent",   1,   42,  100, CLR_GRAY),
-    POTION("full healing",      "black",          1,    9,  200, CLR_BLACK),
-    POTION("polymorph",         "golden",         1,    9,  200, CLR_YELLOW),
-    POTION("wonder",            "amber",          1,    3,  200, CLR_YELLOW),
-    POTION("booze",             "brown",          0,   42,   50, CLR_BROWN),
-    POTION("sickness",          "fizzy",          0,   42,   50, CLR_CYAN),
-    POTION("fruit juice",       "dark",           0,   42,   50, CLR_BLACK),
-    POTION("acid",              "white",          0,    9,  250, CLR_WHITE),
+    POTION("full healing",      "black",          1,   10,  200, CLR_BLACK),
+    POTION("polymorph",         "golden",         1,   10,  200, CLR_YELLOW),
+    POTION("wonder",            "amber",          1,   10,  200, CLR_YELLOW),
+    POTION("booze",             "brown",          0,   40,   50, CLR_BROWN),
+    POTION("sickness",          "fizzy",          0,   40,   50, CLR_CYAN),
+    POTION("fruit juice",       "dark",           0,   40,   50, CLR_BLACK),
+    POTION("acid",              "white",          0,   10,  250, CLR_WHITE),
     POTION("oil",               "murky",          0,   30,  250, CLR_BROWN),
     POTION("water",             "clear",          0,   92,  100, CLR_CYAN),
 #undef POTION
