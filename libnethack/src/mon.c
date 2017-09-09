@@ -2399,7 +2399,8 @@ monkilled(struct monst *magr, struct monst *mdef, const char *fltxt, int how)
     if (magr == &youmonst) {
         xkilled(mdef, xkill);
         return;
-    }
+    } else if (magr)
+        grow_up(magr, mdef);
 
     if (xkill & 2)
         mondead(mdef); /* no corpse */

@@ -2165,6 +2165,8 @@ static boolean
 zap_steed(struct obj *obj)
 {
     int steedhit = FALSE;
+    int ox = u.ux;
+    int oy = u.uy;
 
     switch (obj->otyp) {
 
@@ -2182,8 +2184,7 @@ zap_steed(struct obj *obj)
     case SPE_TELEPORT_AWAY:
         /* you go together */
         tele();
-        if (Teleport_control || !couldsee(u.ux0, u.uy0) ||
-            (distu(u.ux0, u.uy0) >= 16))
+        if (Teleport_control || (ox != u.ux && oy != u.uy))
             makeknown(obj->otyp);
         steedhit = TRUE;
         break;

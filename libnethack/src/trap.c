@@ -2323,7 +2323,6 @@ mintrap(struct monst *mtmp)
     return mtmp->mtrapped;
 }
 
-
 /* Combine cockatrice checks into single functions to avoid repeating code. */
 int
 instapetrify(const char *str)
@@ -2339,24 +2338,34 @@ instapetrify(const char *str)
 
 /* magr is the monster/youmonst that made this happen, NULL for a trap */
 int
-minstapetrify(struct monst *mon, struct monst *magr)
+minstapetrify(struct monst *magr, struct monst *mdef)
 {
-    if (resists_ston(mon))
+    if (resists_ston(mdef))
         return 0;
-    if (poly_when_stoned(mon->data)) {
-        mon_to_stone(mon);
+    if (poly_when_stoned(mdef->data)) {
+        mon_to_stone(mdef);
         return 0;
     }
 
-    if (cansee(mon->mx, mon->my))
-        pline(combat_msgc(magr, mon, cr_kill),
-              "%s turns to stone.", Monnam(mon));
+    if (cansee(mdef->mx, mdef->my))
+        pline(combat_msgc(magr, mdef, cr_kill),
+              "%s turns to stone.", Monnam(mdef));
     if (magr == &youmonst) {
         stoned = TRUE;
-        xkilled(mon, 0);
+        xkilled(mdef, 0);
     } else
-        monstone(mon);
+        monstone(mdef);
     return 1;
+}
+
+/* Instapetrify function that works for players and monsters */
+int
+uminstapetrify(struct monst *magr, struct monst *mdef,
+               const char *str)
+{
+    if (mdef == &youmonst)
+        return instapetrify(str);
+    return minstapetrify(magr, mdef);
 }
 
 void
@@ -2399,7 +2408,7 @@ mselftouch(struct monst *mon, const char *arg, struct monst *culprit)
                   "%s%s touches the %s corpse.", arg ? arg : "",
                   arg ? mon_nam(mon) : Monnam(mon), mons[mwep->corpsenm].mname);
         }
-        minstapetrify(mon, culprit);
+        minstapetrify(culprit, mon);
     }
 }
 
@@ -3224,8 +3233,7 @@ drown(void)
     int i, x, y;
 
     /* happily wading in the same contiguous pool */
-    if (u.uinwater && (!u.umoved || is_pool(level, u.ux0, u.uy0)) &&
-        (Swimming || Breathless)) {
+    if (u.uinwater && (Swimming || Breathless)) {
         /* water effects on objects every now and then */
         if (!rn2(5))
             inpool_ok = TRUE;

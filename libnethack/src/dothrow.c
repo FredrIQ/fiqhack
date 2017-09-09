@@ -1712,7 +1712,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
         wakeup(mon, TRUE);
         if (obj->otyp == CORPSE && touch_petrifies(&mons[obj->corpsenm])) {
             if (is_animal(u.ustuck->data)) {
-                minstapetrify(u.ustuck, &youmonst);
+                minstapetrify(&youmonst, u.ustuck);
                 /* Don't leave a cockatrice corpse available in a statue */
                 if (!Engulfed) {
                     delobj(obj);

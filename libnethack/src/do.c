@@ -549,7 +549,7 @@ dropy(struct obj *obj)
                     set_property(u.ustuck, SLIMED, 10, FALSE);
                     delobj(obj);        /* corpse is digested */
                 } else if (could_petrify) {
-                    minstapetrify(u.ustuck, &youmonst);
+                    minstapetrify(&youmonst, u.ustuck);
                     /* Don't leave a cockatrice corpse in a statue */
                     if (!Engulfed)
                         delobj(obj);

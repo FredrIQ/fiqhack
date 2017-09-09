@@ -955,6 +955,7 @@ extern enum msg_channel combat_msgc(const struct monst *,
                                     const struct monst *,
                                     enum combatresult);
 extern int fightm(struct monst *);
+extern int damage(struct monst *, struct monst *, const struct attack *);
 extern int mattackm(struct monst *, struct monst *);
 extern int gazemm(struct monst *, struct monst *, const struct attack *);
 extern void mswingsm(struct monst *, struct monst *, struct obj *);
@@ -972,7 +973,10 @@ extern int mattackq(struct monst *, int, int);
 
 /* ### mhitu.c ### */
 
+extern void mhitmsg(struct monst *, struct monst *,
+                    const struct attack *);
 extern const char *mpoisons_subj(struct monst *, const struct attack *);
+extern void do_mercy(struct monst *, struct monst *, struct obj *, int);
 extern struct monst *cloneu(void);
 extern void expels(struct monst *, const struct permonst *, boolean);
 extern const struct attack *getmattk(const struct permonst *, int, int *,

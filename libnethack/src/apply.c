@@ -801,7 +801,7 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
                                   "%s isn't petrified.",
                                   Monnam(hitmon));
                     } else
-                        minstapetrify(hitmon, &youmonst);
+                        minstapetrify(&youmonst, hitmon);
                     /* not hitby -- that would credit hitby with the kill */
                     break;
                 }

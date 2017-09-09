@@ -25,6 +25,8 @@ static const char *mon_nam_too(struct monst *, struct monst *);
 static int hitmm(struct monst *, struct monst *, const struct attack *);
 static int gulpmm(struct monst *, struct monst *, const struct attack *);
 static int explmm(struct monst *, struct monst *, const struct attack *);
+static void do_damage(struct monst *, struct monst *, int,
+                      const struct attack *);
 static int mdamagem(struct monst *, struct monst *, const struct attack *);
 static void noises(struct monst *, const struct attack *);
 static void missmm(struct monst *, struct monst *, const struct attack *);
@@ -758,7 +760,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                                         msgprintf("catching the eye of %s",
                                                   k_monnam(magr))));
             } else
-                minstapetrify(mdef, magr);
+                minstapetrify(magr, mdef);
             return (!udef && DEADMONSTER(mdef)) ? MM_DEF_DIED : 0;
         }
         break;
@@ -984,6 +986,209 @@ explmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     return result;
 }
 
+/* See mattackm() for return values */
+int
+damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
+{
+    boolean uagr = (magr == &youmonst);
+    boolean udef = (mdef == &youmonst);
+    boolean vis = (uagr || udef ||
+                   cansee(magr->mx, magr->my) ||
+                   cansee(mdef->mx, mdef->my));
+    const struct permonst *pa = magr->data;
+    const struct permonst *pd = mdef->data;
+    struct obj *obj;
+    int armpro, num, tmp = dice((int)mattk->damn, (int)mattk->damd);
+    boolean cancelled;
+    boolean mercy = FALSE;
+    int zombie_timer;
+
+    if (touch_petrifies(pd) && !resists_ston(magr)) {
+        int protector = attk_protection((int)mattk->aatyp);
+        int wornitems = 0;
+        for (obj = m_minvent(magr); obj; obj = obj->nobj)
+            wornitems |= obj->owornmask;
+
+        /* wielded weapon gives same protection as gloves here */
+        if (m_mwep(magr))
+            wornitems |= W_MASK(os_armg);
+
+        if (protector == 0L ||
+            (protector != ~0L && (wornitems & protector) != protector)) {
+            if (poly_when_stoned(pa)) {
+                mon_to_stone(magr);
+                return MM_HIT;  /* no damage during the polymorph */
+            }
+            /* just petwarning here; we're about to give a petfatal */
+            if (vis)
+                pline(magr->mtame ? msgc_petwarning : msgc_monneutral,
+                      "%s turns to stone!", Monnam(magr));
+            monstone(magr);
+            if (!DEADMONSTER(magr))
+                return 0;
+            else if (magr->mtame && !vis)
+                pline(msgc_petfatal, brief_feeling, "peculiarly sad");
+            return MM_AGR_DIED;
+        }
+    }
+    tmp += dambon(magr);
+
+    /* cancellation factor is the same as when attacking the hero */
+    armpro = magic_negation(mdef);
+    cancelled = cancelled(magr) || !((rn2(3) >= armpro) || !rn2(50));
+
+    if (udef)
+        mhitmsg(magr, mdef, mattk);
+
+    /* for explosions, give a chance to resist similar to players.
+       SAVEBREAK: for next savebreak, add AT_FLSH instead for lights
+       as to avoid the S_LIGHT special case */
+    if (!cancelled(magr) && mattk->aatyp == AT_EXPL &&
+        magr->data->mlet != S_LIGHT) {
+        if (acurr(mdef, A_DEX) > rnd(20)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_resist),
+                      "%s ducks some of the blast.",
+                      Monnam(mdef));
+            tmp = (tmp + 1) / 2;
+        } else if (vis)
+            pline(combat_msgc(magr, mdef, cr_hit),
+                  "%s is blasted!", Monnam(mdef));
+    }
+
+
+    switch (mattk->adtyp) {
+    case AD_FIRE:
+        if (cancelled) {
+            tmp = 0;
+            break;
+        }
+        if (resists_fire(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s %s, but it doesn't do much.",
+                      M_verbs(mdef, "are"),
+                      on_fire(mdef->data, mattk));
+            shieldeff(mdef->mx, mdef->my);
+            golemeffects(mdef, AD_FIRE, tmp);
+            tmp = 0;
+        } else if (vis)
+            pline(combat_msgc(magr, mdef, cr_hit), "%s %s!",
+                  M_verbs(mdef, "are"),
+                  on_fire(mdef->data, mattk));
+
+        burn_away_slime(mdef);
+        tmp += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
+        tmp += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
+        /* only potions damage resistant players in destroy_item */
+        tmp += destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
+
+        if (resists_fire(mdef))
+            break;
+
+        if (pd == &mons[PM_STRAW_GOLEM] || pd == &mons[PM_PAPER_GOLEM]) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_kill),
+                      "%s!", M_verbs(mdef, "roast"));
+            if (udef)
+                rehumanize(BURNING, msgcat("roasted to death by ",
+                                           k_monnam(magr)));
+            else {
+                mondied(mdef);
+                if (!DEADMONSTER(mdef))
+                    return MM_MISS;
+                else if (mdef->mtame && !vis)
+                    pline(msgc_petfatal, "May %s roast in peace.",
+                          mon_nam(mdef));
+                return (MM_DEF_DIED |
+                        (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
+            }
+        }
+        break;
+    case AD_COLD:
+        if (cancelled) {
+            tmp = 0;
+            break;
+        }
+        if (resists_fire(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s coated in frost, but resist%s the effects.",
+                      M_verbs(mdef, "are"),
+                      udef ? "" : "s");
+            shieldeff(mdef->mx, mdef->my);
+            golemeffects(mdef, AD_COLD, tmp);
+            tmp = 0;
+        } else if (vis)
+            pline(combat_msgc(magr, mdef, cr_hit), "%s covered in frost!",
+                  M_verbs(mdef, "are"));
+
+        tmp += destroy_mitem(mdef, POTION_CLASS, AD_COLD);
+        break;
+    default:
+        impossible("Unknown attack in damage(): %d", mattk->adtyp);
+        tmp = 0;
+        break;
+    }
+    if (!tmp)
+        return MM_MISS;
+
+    /* Why doesn't this only run for physical attacks? Also, TODO: make Mitre undead
+       protection an extrinsic or something. */
+    obj = which_armor(mdef, os_armh);
+    if (half_phys_dam(mdef) ||
+        (((udef && Role_if(PM_PRIEST)) ||
+          (!udef && mdef->data == &mons[PM_PRIEST])) &&
+         obj && obj->oartifact == ART_MITRE_OF_HOLINESS &&
+         (is_undead(magr->data) || is_demon(magr->data))))
+        tmp = (tmp + 1) / 2;
+
+    obj = m_mwep(magr);
+    if (mercy) {
+        impossible("Running incomplete mercy checks");
+        do_mercy(magr, mdef, obj, tmp);
+    } else
+        do_damage(magr, mdef, tmp, mattk);
+
+    int ret = 0;
+    if (!udef && DEADMONSTER(mdef))
+        ret |= MM_DEF_DIED;
+    if (!uagr && DEADMONSTER(magr))
+        ret |= MM_AGR_DIED;
+
+    if (!ret)
+        ret |= MM_HIT;
+
+    return ret;
+}
+
+static void
+do_damage(struct monst *magr, struct monst *mdef, int dmg,
+          const struct attack *mattk)
+{
+    if (mdef != &youmonst) {
+        mdef->mhp -= dmg;
+        if (mdef->mhp < 1) {
+            if (m_at(level, mdef->mx, mdef->my) == magr) {  /* see gulpmm() */
+                remove_monster(level, mdef->mx, mdef->my);
+                mdef->mhp = 1;      /* otherwise place_monster will complain */
+                place_monster(mdef, mdef->mx, mdef->my, TRUE);
+                mdef->mhp = 0;
+            }
+
+            monkilled(magr, mdef, "", (int)mattk->adtyp);
+        }
+    } else if (Upolyd) {
+        u.mh -= dmg;
+        if (u.mh < 1)
+            rehumanize(DIED, killer_msg_mon(DIED, magr));
+    } else {
+        u.uhp -= dmg;
+        if (u.uhp < 1)
+            done_in_by(magr, NULL);
+    }
+}
+
 /* See comment at top of mattackm(), for return values. */
 static int
 mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
@@ -1159,64 +1364,13 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "The missiles bounce off!");
             shieldeff(mdef->mx, mdef->my);
-            golemeffects(mdef, AD_COLD, tmp);
+            golemeffects(mdef, AD_MAGM, tmp);
             tmp = 0;
         }
         break;
     case AD_FIRE:
-        if (cancelled) {
-            tmp = 0;
-            break;
-        }
-        if (vis && !resists_fire(mdef))
-            pline(combat_msgc(magr, mdef, cr_hit), "%s is %s!", Monnam(mdef),
-                  on_fire(mdef->data, mattk));
-        /* TODO: straw/paper golem with paper items in inventory, and/or who has
-           a fire resistance source (i.e. these are in the wrong order) */
-        if (pd == &mons[PM_STRAW_GOLEM] || pd == &mons[PM_PAPER_GOLEM]) {
-            if (vis)
-                pline(combat_msgc(magr, mdef, cr_kill),
-                      "%s burns completely!", Monnam(mdef));
-            mondied(mdef);
-            if (!DEADMONSTER(mdef))
-                return 0;
-            else if (mdef->mtame && !vis)
-                pline(msgc_petfatal, "May %s roast in peace.", mon_nam(mdef));
-            return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
-        }
-        burn_away_slime(mdef);
-        tmp += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
-        tmp += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
-        if (resists_fire(mdef)) {
-            if (vis)
-                pline(combat_msgc(magr, mdef, cr_immune),
-                      "%s is on fire, but it doesn't do much.", Monnam(mdef));
-            shieldeff(mdef->mx, mdef->my);
-            golemeffects(mdef, AD_FIRE, tmp);
-            tmp = 0;
-        }
-        /* only potions damage resistant players in destroy_item */
-        tmp += destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
-        break;
     case AD_COLD:
-        if (cancelled) {
-            tmp = 0;
-            break;
-        }
-        if (vis && !resists_cold(mdef))
-            pline(combat_msgc(magr, mdef, cr_hit),
-                  "%s is covered in frost!", Monnam(mdef));
-        if (resists_cold(mdef)) {
-            if (vis)
-                pline(combat_msgc(magr, mdef, cr_immune),
-                      "%s is coated in frost, but resists the effects.",
-                      Monnam(mdef));
-            shieldeff(mdef->mx, mdef->my);
-            golemeffects(mdef, AD_COLD, tmp);
-            tmp = 0;
-        }
-        tmp += destroy_mitem(mdef, POTION_CLASS, AD_COLD);
-        break;
+        return damage(magr, mdef, mattk);
     case AD_ELEC:
         if (cancelled) {
             tmp = 0;
