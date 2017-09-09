@@ -925,6 +925,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_COLD:
     case AD_ELEC:
     case AD_SLEE:
+    case AD_ACID:
         damage(mtmp, &youmonst, mattk);
         return 1;
     case AD_BLND:
@@ -1396,20 +1397,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             inc_timeout(&youmonst, STUNNED, dmg, FALSE);
             dmg /= 2;
         }
-        break;
-    case AD_ACID:
-        hitmsg(mtmp, mattk);
-        if (!cancelled(mtmp) && !rn2(3))
-            if (Acid_resistance) {
-                pline(combat_msgc(mtmp, &youmonst, cr_immune),
-                      "You're covered in acid, but it seems harmless.");
-                dmg = 0;
-            } else {
-                pline(combat_msgc(mtmp, &youmonst, cr_hit),
-                      "You're covered in acid! It burns!");
-                exercise(A_STR, FALSE);
-        } else
-            dmg = 0;
         break;
     case AD_SLOW:
         hitmsg(mtmp, mattk);

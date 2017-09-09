@@ -1169,6 +1169,36 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (!udef)
             slept_monst(mdef);
         break;
+    case AD_ACID:
+        if (cancelled(magr)) {
+            dmg = 0;
+            break;
+        }
+        if (resists_acid(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s covered in acid, but it seems harmless.",
+                      M_verbs(mdef, "are"));
+            shieldeff(mdef->mx, mdef->my);
+            golemeffects(mdef, AD_ACID, dmg);
+            dmg = 0;
+        } else {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_hit), "%s covered in acid!",
+                      M_verbs(mdef, "are"));
+            if (udef)
+                exercise(A_STR, FALSE);
+        }
+
+        if (!rn2(30))
+            hurtarmor(mdef, ERODE_CORRODE);
+        if (!rn2(3)) {
+            if (rn2(2))
+                acid_damage(m_mwep(mdef));
+            else if (udef && u.twoweap)
+                acid_damage(uswapwep);
+        }
+        break;
     default:
         impossible("Unknown attack in damage(): %d", mattk->adtyp);
         dmg = 0;
@@ -1400,29 +1430,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_COLD:
     case AD_ELEC:
     case AD_SLEE:
-        return damage(magr, mdef, mattk);
     case AD_ACID:
-        if (cancelled(magr)) {
-            tmp = 0;
-            break;
-        }
-        if (resists_acid(mdef)) {
-            if (vis)
-                pline(combat_msgc(magr, mdef, cr_immune),
-                      "%s is covered in acid, but it seems harmless.",
-                      Monnam(mdef));
-            tmp = 0;
-        } else if (vis) {
-            pline(combat_msgc(magr, mdef, cr_hit),
-                  "%s is covered in acid!", Monnam(mdef));
-            pline_implied(combat_msgc(magr, mdef, cr_hit),
-                          "It burns %s!", mon_nam(mdef));
-        }
-        if (!rn2(30))
-            hurtarmor(mdef, ERODE_CORRODE);
-        if (!rn2(6))
-            acid_damage(MON_WEP(mdef));
-        break;
+        return damage(magr, mdef, mattk);
     case AD_RUST:
         if (cancelled(magr))
             break;
