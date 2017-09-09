@@ -1882,6 +1882,7 @@ extern void seetrap(struct trap *);
 extern int mintrap(struct monst *);
 extern int instapetrify(const char *);
 extern int minstapetrify(struct monst *, struct monst *);
+extern int uminstapetrify(struct monst *, struct monst *, const char *);
 extern void mstiffen(struct monst *, struct monst *);
 extern void selftouch(const char *, const char *);
 extern void mselftouch(struct monst *, const char *, struct monst *);

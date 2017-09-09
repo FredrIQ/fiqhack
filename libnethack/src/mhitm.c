@@ -1015,19 +1015,21 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
         if (protector == 0L ||
             (protector != ~0L && (wornitems & protector) != protector)) {
-            if (poly_when_stoned(pa)) {
-                mon_to_stone(magr);
-                return MM_HIT;  /* no damage during the polymorph */
-            }
-            /* just petwarning here; we're about to give a petfatal */
-            if (vis)
-                pline(magr->mtame ? msgc_petwarning : msgc_monneutral,
-                      "%s turns to stone!", Monnam(magr));
-            monstone(magr);
-            if (!DEADMONSTER(magr))
-                return 0;
-            else if (magr->mtame && !vis)
-                pline(msgc_petfatal, brief_feeling, "peculiarly sad");
+            const char *killer = "attacking %s directly";
+            if (protector == W_MASK(os_armg))
+                killer = "punching %s barehanded";
+            else if (protector == W_MASK(os_armf))
+                killer = "kicking %s barefoot";
+            else if (protector == W_MASK(os_armh))
+                killer = "headbutting %s with no helmet";
+            else if (protector == (W_MASK(os_armc) | W_MASK(os_armg)))
+                killer = uarmc ? "hugging %s without gloves" :
+                    "hugging %s without a cloak";
+            uminstapetrify(magr, mdef,
+                           killer_msg(STONING, killer));
+            if (udef || !DEADMONSTER(mdef))
+                return MM_MISS; /* lifesaved */
+
             return MM_AGR_DIED;
         }
     }
@@ -1055,7 +1057,6 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             pline(combat_msgc(magr, mdef, cr_hit),
                   "%s is blasted!", Monnam(mdef));
     }
-
 
     switch (mattk->adtyp) {
     case AD_MAGM:
