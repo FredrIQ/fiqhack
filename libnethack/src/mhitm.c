@@ -1164,7 +1164,8 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
         magr->mspec_used += rnd(10);
         if (sleep_monst(magr, mdef, rnd(10), -1) && vis)
-            pline(msgc_statusbad, "%s put to sleep!",
+            pline(udef ? msgc_statusbad :
+                  combat_msgc(magr, mdef, cr_hit), "%s put to sleep!",
                   M_verbs(magr, "are"));
         if (!udef)
             slept_monst(mdef);
@@ -1209,6 +1210,21 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             else if (udef && u.twoweap)
                 acid_damage(uswapwep);
         }
+        break;
+    case AD_BLND:
+        if (can_blnd(magr, mdef, mattk->aatyp, NULL)) {
+            if (!blind(mdef) && vis)
+                pline(udef ? msgc_statusbad :
+                      combat_msgc(magr, mdef, cr_hit),
+                      "%s %s!", M_verbs(magr, "blind"), mon_nam(mdef));
+            inc_timeout(mdef, BLINDED, dmg, TRUE);
+            if (!blind(mdef) && vis)
+                pline(udef ? msgc_statusheal :
+                      combat_msgc(magr, mdef, cr_immune),
+                      "%s vision quickly clears.",
+                      s_suffix(Monnam(mdef)));
+        }
+        dmg = 0;
         break;
     default:
         impossible("Unknown attack in damage(): %d", mattk->adtyp);
@@ -1445,6 +1461,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_DRDX:
     case AD_DRCO:
     case AD_ACID:
+    case AD_BLND:
         return damage(magr, mdef, mattk);
     case AD_RUST:
         if (cancelled(magr))
@@ -1545,18 +1562,6 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (mdef->mstrategy == st_waiting)
                 mdef->mstrategy = st_none;
         }
-        break;
-    case AD_BLND:
-        if (can_blnd(magr, mdef, mattk->aatyp, NULL)) {
-            unsigned rnd_tmp;
-
-            if (vis && !blind(mdef))
-                pline(combat_msgc(magr, mdef, cr_hit),
-                      "%s is blinded.", Monnam(mdef));
-            rnd_tmp = dice((int)mattk->damn, (int)mattk->damd);
-            set_property(mdef, BLINDED, rnd_tmp, TRUE);
-        }
-        tmp = 0;
         break;
     case AD_HALU:
         if (!cancelled(magr) && haseyes(pd) && !blind(mdef) &&

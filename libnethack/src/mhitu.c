@@ -929,18 +929,9 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_DRDX:
     case AD_DRCO:
     case AD_ACID:
+    case AD_BLND:
         damage(mtmp, &youmonst, mattk);
         return 1;
-    case AD_BLND:
-        if (can_blnd(mtmp, &youmonst, mattk->aatyp, NULL)) {
-            if (!Blind)
-                pline(msgc_statusbad, "%s blinds you!", Monnam(mtmp));
-            inc_timeout(&youmonst, BLINDED, dmg, TRUE);
-            if (!blind(&youmonst))
-                pline(msgc_statusheal, "Your vision quickly clears.");
-        }
-        dmg = 0;
-        break;
     case AD_DRIN:
         /* Note about message channels: this is one of the most common ways I
            die, so treat any amount of intelligence drain as a potential
