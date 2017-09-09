@@ -924,21 +924,9 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_FIRE:
     case AD_COLD:
     case AD_ELEC:
+    case AD_SLEE:
         damage(mtmp, &youmonst, mattk);
         return 1;
-    case AD_SLEE:
-        hitmsg(mtmp, mattk);
-        if (uncancelled && !u_helpless(hm_all) && !rn2(5)) {
-            if (Sleep_resistance)
-                break;
-            helpless(rnd(10), hr_asleep, "sleeping", NULL);
-            if (Blind) /* TODO: should be cansee check? */
-                pline(msgc_statusbad, "You are put to sleep!");
-            else
-                pline(msgc_statusbad, "You are put to sleep by %s!",
-                      mon_nam(mtmp));
-        }
-        break;
     case AD_BLND:
         if (can_blnd(mtmp, &youmonst, mattk->aatyp, NULL)) {
             if (!Blind)

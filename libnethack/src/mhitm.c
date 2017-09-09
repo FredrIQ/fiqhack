@@ -1158,6 +1158,17 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
         dmg += destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
         break;
+    case AD_SLEE:
+        if (cancelled || magr->mspec_used || resists_sleep(mdef))
+            break;
+
+        magr->mspec_used += rnd(10);
+        if (sleep_monst(magr, mdef, rnd(10), -1) && vis)
+            pline(msgc_statusbad, "%s put to sleep!",
+                  M_verbs(magr, "are"));
+        if (!udef)
+            slept_monst(mdef);
+        break;
     default:
         impossible("Unknown attack in damage(): %d", mattk->adtyp);
         dmg = 0;
@@ -1388,6 +1399,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_FIRE:
     case AD_COLD:
     case AD_ELEC:
+    case AD_SLEE:
         return damage(magr, mdef, mattk);
     case AD_ACID:
         if (cancelled(magr)) {
@@ -1477,17 +1489,6 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (vis && !canspotmon(mdef) && mdef != u.usteed)
                 pline(combat_msgc(magr, mdef, cr_hit),
                       "%s suddenly disappears!", mdef_Monnam);
-        }
-        break;
-    case AD_SLEE:
-        if (!cancelled && !mdef->msleeping && sleep_monst(magr, mdef, rnd(10), -1)) {
-            if (vis)
-                pline(combat_msgc(magr, mdef, cr_hit),
-                      "%s is put to sleep by %s.", Monnam(mdef), mon_nam(magr));
-
-            if (mdef->mstrategy == st_waiting)
-                mdef->mstrategy = st_none;
-            slept_monst(mdef);
         }
         break;
     case AD_PLYS:
