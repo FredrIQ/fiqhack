@@ -998,7 +998,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     const struct permonst *pa = magr->data;
     const struct permonst *pd = mdef->data;
     struct obj *obj;
-    int armpro, num, tmp = dice((int)mattk->damn, (int)mattk->damd);
+    int armpro, num, dmg = dice((int)mattk->damn, (int)mattk->damd);
     boolean cancelled;
     boolean mercy = FALSE;
     int zombie_timer;
@@ -1031,7 +1031,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             return MM_AGR_DIED;
         }
     }
-    tmp += dambon(magr);
+    dmg += dambon(magr);
 
     /* cancellation factor is the same as when attacking the hero */
     armpro = magic_negation(mdef);
@@ -1050,7 +1050,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline(combat_msgc(magr, mdef, cr_resist),
                       "%s ducks some of the blast.",
                       Monnam(mdef));
-            tmp = (tmp + 1) / 2;
+            dmg = (dmg + 1) / 2;
         } else if (vis)
             pline(combat_msgc(magr, mdef, cr_hit),
                   "%s is blasted!", Monnam(mdef));
@@ -1058,9 +1058,22 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
 
     switch (mattk->adtyp) {
+    case AD_MAGM:
+        if (cancelled(magr)) {
+            dmg = 0;
+            break;
+        }
+        pline(combat_msgc(magr, mdef, cr_hit),
+              "You're hit by a shower of missiles!");
+        if (resists_magm(mdef)) {
+            pline(combat_msgc(magr, mdef, cr_immune),
+                  "The missiles bounce off!");
+            dmg = 0;
+        }
+        break;
     case AD_FIRE:
         if (cancelled) {
-            tmp = 0;
+            dmg = 0;
             break;
         }
         if (resists_fire(mdef)) {
@@ -1070,18 +1083,18 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                       M_verbs(mdef, "are"),
                       on_fire(mdef->data, mattk));
             shieldeff(mdef->mx, mdef->my);
-            golemeffects(mdef, AD_FIRE, tmp);
-            tmp = 0;
+            golemeffects(mdef, AD_FIRE, dmg);
+            dmg = 0;
         } else if (vis)
             pline(combat_msgc(magr, mdef, cr_hit), "%s %s!",
                   M_verbs(mdef, "are"),
                   on_fire(mdef->data, mattk));
 
         burn_away_slime(mdef);
-        tmp += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
-        tmp += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
+        dmg += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
+        dmg += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
         /* only potions damage resistant players in destroy_item */
-        tmp += destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
+        dmg += destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
 
         if (resists_fire(mdef))
             break;
@@ -1107,30 +1120,50 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         break;
     case AD_COLD:
         if (cancelled) {
-            tmp = 0;
+            dmg = 0;
             break;
         }
-        if (resists_fire(mdef)) {
+        if (resists_cold(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "%s coated in frost, but resist%s the effects.",
                       M_verbs(mdef, "are"),
                       udef ? "" : "s");
             shieldeff(mdef->mx, mdef->my);
-            golemeffects(mdef, AD_COLD, tmp);
-            tmp = 0;
+            golemeffects(mdef, AD_COLD, dmg);
+            dmg = 0;
         } else if (vis)
             pline(combat_msgc(magr, mdef, cr_hit), "%s covered in frost!",
                   M_verbs(mdef, "are"));
 
-        tmp += destroy_mitem(mdef, POTION_CLASS, AD_COLD);
+        dmg += destroy_mitem(mdef, POTION_CLASS, AD_COLD);
+        break;
+    case AD_ELEC:
+        if (cancelled) {
+            dmg = 0;
+            break;
+        }
+        if (resists_elec(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%s zapped, but do%sn't seem shocked.",
+                      M_verbs(mdef, "are"),
+                      udef ? "" : "es");
+            shieldeff(mdef->mx, mdef->my);
+            golemeffects(mdef, AD_ELEC, dmg);
+            dmg = 0;
+        } else if (vis)
+            pline(combat_msgc(magr, mdef, cr_hit), "%s zapped!",
+                  M_verbs(mdef, "are"));
+
+        dmg += destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
         break;
     default:
         impossible("Unknown attack in damage(): %d", mattk->adtyp);
-        tmp = 0;
+        dmg = 0;
         break;
     }
-    if (!tmp)
+    if (!dmg)
         return MM_MISS;
 
     /* Why doesn't this only run for physical attacks? Also, TODO: make Mitre undead
@@ -1141,14 +1174,14 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
           (!udef && mdef->data == &mons[PM_PRIEST])) &&
          obj && obj->oartifact == ART_MITRE_OF_HOLINESS &&
          (is_undead(magr->data) || is_demon(magr->data))))
-        tmp = (tmp + 1) / 2;
+        dmg = (dmg + 1) / 2;
 
     obj = m_mwep(magr);
     if (mercy) {
         impossible("Running incomplete mercy checks");
-        do_mercy(magr, mdef, obj, tmp);
+        do_mercy(magr, mdef, obj, dmg);
     } else
-        do_damage(magr, mdef, tmp, mattk);
+        do_damage(magr, mdef, dmg, mattk);
 
     int ret = 0;
     if (!udef && DEADMONSTER(mdef))
@@ -1352,43 +1385,10 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_MAGM:
-        if (cancelled(magr)) {
-            tmp = 0;
-            break;
-        }
-        if (vis)
-            pline(combat_msgc(magr, mdef, cr_hit),
-                  "%s is hit by a shower of missiles!", Monnam(mdef));
-        if (resists_magm(mdef)) {
-            if (vis)
-                pline(combat_msgc(magr, mdef, cr_immune),
-                      "The missiles bounce off!");
-            shieldeff(mdef->mx, mdef->my);
-            golemeffects(mdef, AD_MAGM, tmp);
-            tmp = 0;
-        }
-        break;
     case AD_FIRE:
     case AD_COLD:
-        return damage(magr, mdef, mattk);
     case AD_ELEC:
-        if (cancelled) {
-            tmp = 0;
-            break;
-        }
-        if (vis && !resists_elec(mdef))
-            pline(combat_msgc(magr, mdef, cr_hit),
-                  "%s gets zapped!", Monnam(mdef));
-        tmp += destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
-        if (resists_elec(mdef)) {
-            if (vis)
-                pline(combat_msgc(magr, mdef, cr_immune),
-                      "%s is zapped, but doesn't seem shocked.", Monnam(mdef));
-            shieldeff(mdef->mx, mdef->my);
-            golemeffects(mdef, AD_ELEC, tmp);
-            tmp = 0;
-        }
-        break;
+        return damage(magr, mdef, mattk);
     case AD_ACID:
         if (cancelled(magr)) {
             tmp = 0;

@@ -921,35 +921,11 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             dmg = 0;
         break;
     case AD_MAGM:
-        hitmsg(mtmp, mattk);
-        if (!cancelled(mtmp)) {
-            pline(combat_msgc(mtmp, &youmonst, cr_hit),
-                  "You're hit by a shower of missiles!");
-            if (resists_magm(&youmonst)) {
-                pline(combat_msgc(mtmp, &youmonst, cr_immune),
-                      "The missiles bounce off!");
-                dmg = 0;
-            }
-        } else
-            dmg = 0;
-        break;
     case AD_FIRE:
     case AD_COLD:
+    case AD_ELEC:
         damage(mtmp, &youmonst, mattk);
         return 1;
-    case AD_ELEC:
-        hitmsg(mtmp, mattk);
-        if (uncancelled) {
-            if (Shock_resistance) {
-                pline(msgc_playerimmune, "You get zapped, but aren't shocked.");
-                dmg = 0;
-            } else
-                pline(combat_msgc(mtmp, &youmonst, cr_hit), "You get zapped!");
-            if ((int)mtmp->m_lev > rn2(20))
-                destroy_mitem(&youmonst, WAND_CLASS, AD_ELEC);
-        } else
-            dmg = 0;
-        break;
     case AD_SLEE:
         hitmsg(mtmp, mattk);
         if (uncancelled && !u_helpless(hm_all) && !rn2(5)) {
