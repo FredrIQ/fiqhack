@@ -1169,6 +1169,17 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (!udef)
             slept_monst(mdef);
         break;
+    case AD_DRST:
+    case AD_DRDX:
+    case AD_DRCO:
+        if (cancelled || rn2(8))
+            break;
+        poisoned(mdef, msgprintf("%s %s", s_suffix(Monnam(magr)),
+                                 mpoisons_subj(magr, mattk)),
+                 mattk->adtyp == AD_DRDX ? A_DEX :
+                 mattk->adtyp == AD_DRCO ? A_CON : A_STR,
+                 killer_msg_mon(POISONING, magr), 30);
+        break;
     case AD_ACID:
         if (cancelled(magr)) {
             dmg = 0;
@@ -1430,6 +1441,9 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_COLD:
     case AD_ELEC:
     case AD_SLEE:
+    case AD_DRST:
+    case AD_DRDX:
+    case AD_DRCO:
     case AD_ACID:
         return damage(magr, mdef, mattk);
     case AD_RUST:
@@ -1686,31 +1700,6 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             }
         }
         tmp = 0;
-        break;
-    case AD_DRST:
-    case AD_DRDX:
-    case AD_DRCO:
-        if (!cancelled && !rn2(8)) {
-            if (resists_poison(mdef)) {
-                if (vis)
-                    pline(combat_msgc(magr, mdef, cr_immune),
-                          "%s is poisoned, but seems unaffected.",
-                          Monnam(mdef));
-            } else {
-                if (vis)
-                    pline(combat_msgc(magr, mdef, cr_hit),
-                          "%s %s was poisoned!", s_suffix(Monnam(magr)),
-                          mpoisons_subj(magr, mattk));
-                if (rn2(10))
-                    tmp += rn1(10, 6);
-                else {
-                    if (vis)
-                        pline(combat_msgc(magr, mdef, cr_kill0),
-                              "The poison was deadly...");
-                    tmp = mdef->mhp;
-                }
-            }
-        }
         break;
     case AD_DRIN:
         if (notonhead || !has_head(pd)) {

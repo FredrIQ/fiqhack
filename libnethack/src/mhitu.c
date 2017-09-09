@@ -925,6 +925,9 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_COLD:
     case AD_ELEC:
     case AD_SLEE:
+    case AD_DRST:
+    case AD_DRDX:
+    case AD_DRCO:
     case AD_ACID:
         damage(mtmp, &youmonst, mattk);
         return 1;
@@ -937,22 +940,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 pline(msgc_statusheal, "Your vision quickly clears.");
         }
         dmg = 0;
-        break;
-    case AD_DRST:
-        ptmp = A_STR;
-        goto dopois;
-    case AD_DRDX:
-        ptmp = A_DEX;
-        goto dopois;
-    case AD_DRCO:
-        ptmp = A_CON;
-    dopois:
-        hitmsg(mtmp, mattk);
-        if (uncancelled && !rn2(8)) {
-            poisoned(&youmonst, msgprintf("%s %s", s_suffix(Monnam(mtmp)),
-                                          mpoisons_subj(mtmp, mattk)),
-                     ptmp, killer_msg_mon(POISONING, mtmp), 30);
-        }
         break;
     case AD_DRIN:
         /* Note about message channels: this is one of the most common ways I
