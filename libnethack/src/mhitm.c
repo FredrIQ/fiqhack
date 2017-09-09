@@ -25,6 +25,7 @@ static const char *mon_nam_too(struct monst *, struct monst *);
 static int hitmm(struct monst *, struct monst *, const struct attack *);
 static int gulpmm(struct monst *, struct monst *, const struct attack *);
 static int explmm(struct monst *, struct monst *, const struct attack *);
+static int attack_result(struct monst *, struct monst *);
 static void do_damage(struct monst *, struct monst *, int,
                       const struct attack *);
 static int mdamagem(struct monst *, struct monst *, const struct attack *);
@@ -1108,14 +1109,11 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 rehumanize(BURNING, msgcat("roasted to death by ",
                                            k_monnam(magr)));
             else {
-                mondied(mdef);
-                if (!DEADMONSTER(mdef))
-                    return MM_MISS;
-                else if (mdef->mtame && !vis)
+                monkilled(magr, mdef, mdef->mtame ? NULL : "", mattk->adtyp);
+                if (!udef && mdef->mtame && DEADMONSTER(mdef))
                     pline(msgc_petfatal, "May %s roast in peace.",
                           mon_nam(mdef));
-                return (MM_DEF_DIED |
-                        (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
+                return attack_result(magr, mdef);
             }
         }
         break;
@@ -1181,6 +1179,8 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                  mattk->adtyp == AD_DRDX ? A_DEX :
                  mattk->adtyp == AD_DRCO ? A_CON : A_STR,
                  killer_msg_mon(POISONING, magr), 30);
+        if (!udef && DEADMONSTER(mdef))
+            return attack_result(magr, mdef);
         break;
     case AD_ACID:
         if (cancelled(magr)) {
@@ -1252,11 +1252,18 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     } else
         do_damage(magr, mdef, dmg, mattk);
 
+    return attack_result(magr, mdef);
+}
+
+/* Returns MM_HIT if both alive, otherwise MM_AGR_DIED|MM_DEF_DIED appropriately */
+static int
+attack_result(struct monst *magr, struct monst *mdef)
+{
     int ret = 0;
-    if (!udef && DEADMONSTER(mdef))
-        ret |= MM_DEF_DIED;
-    if (!uagr && DEADMONSTER(magr))
+    if (magr != &youmonst && DEADMONSTER(magr))
         ret |= MM_AGR_DIED;
+    if (mdef != &youmonst && DEADMONSTER(mdef))
+        ret |= MM_DEF_DIED;
 
     if (!ret)
         ret |= MM_HIT;
@@ -1264,6 +1271,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     return ret;
 }
 
+/* Deal the damage */
 static void
 do_damage(struct monst *magr, struct monst *mdef, int dmg,
           const struct attack *mattk)
