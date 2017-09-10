@@ -1993,12 +1993,12 @@ dm_at(struct level *lev, xchar x, xchar y)
 struct obj *
 mlifesaver(struct monst *mon)
 {
-    if (!nonliving(mon->data)) {
-        struct obj *otmp = which_armor(mon, os_amul);
+    if (!will_be_lifesaved(mon))
+        return NULL;
 
-        if (otmp && otmp->otyp == AMULET_OF_LIFE_SAVING)
-            return otmp;
-    }
+    struct obj *otmp = which_armor(mon, os_amul);
+    if (otmp && otmp->otyp == AMULET_OF_LIFE_SAVING)
+        return otmp;
     return NULL;
 }
 
