@@ -226,6 +226,7 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
                                         mdat == &mons[PM_GREEN_SLIME]        :
         property == STONED            ? poly_when_stoned(mdat)               :
         property == GLIB              ? nohands(mdat)                        :
+        property == LIFESAVED         ? nonliving(mdat)                      :
         0)
         return -1;
 
