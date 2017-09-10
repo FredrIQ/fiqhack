@@ -743,7 +743,7 @@ check_survival(int how)
 
     if (how <= LAST_KILLER) {
         u.umortality++;
-        if (Lifesaved) {
+        if (Lifesaved && !nonliving(youmonst.data)) {
             pline(msgc_statusheal, "But wait...");
             makeknown(AMULET_OF_LIFE_SAVING);
             pline_implied(msgc_statusheal, "Your medallion %s!",
