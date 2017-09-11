@@ -2394,7 +2394,8 @@ spoteffects(boolean pick)
     }
 
 stillinwater:
-    if (!Levitation && !u.ustuck && !Flying) {
+    if (!Levitation && !u.ustuck && !Flying &&
+        (!u.usteed || !is_clinger(youmonst.data))) {
         /* limit recursive calls through teleds() */
         if (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) {
             if (u.usteed && !flying(u.usteed) &&
