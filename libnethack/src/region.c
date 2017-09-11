@@ -739,8 +739,8 @@ inside_gas_cloud(void *p1, void *p2)
             if (cansee(mtmp->mx, mtmp->my))
                 pline(mtmp->mtame ? msgc_petfatal : msgc_levelsound,
                       "%s coughs!", Monnam(mtmp));
-            /* TODO: conditionalise on heros_fault? */
-            setmangry(mtmp);
+            if (heros_fault(reg))
+                setmangry(mtmp);
             if (haseyes(mtmp->data) && !blind(mtmp)) {
                 set_property(mtmp, BLINDED, 1, FALSE);
             }
