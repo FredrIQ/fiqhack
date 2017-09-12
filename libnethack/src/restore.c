@@ -918,12 +918,6 @@ dorecover(struct memfile *mf)
     for (otmp = level->objlist; otmp; otmp = otmp->nobj)
         if (otmp->owornmask)
             setworn(otmp, otmp->owornmask);
-    /*
-     * in_use processing must be after:
-     * + The inventory has been read so that freeinv() works.
-     * + The current level has been restored so billing information is
-     *   available. */
-    inven_inuse(FALSE);
 
     load_qtlist();      /* re-load the quest text info */
 
