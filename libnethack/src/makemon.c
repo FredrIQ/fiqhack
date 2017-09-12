@@ -995,6 +995,8 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         mtmp->mtrapseen |= (1L << (MAGIC_PORTAL - 1));
 
     mtmp->dlevel = lev;
+    mtmp->dx = COLNO;
+    mtmp->dy = ROWNO;
     place_monster(mtmp, x, y, FALSE);
     mtmp->mcanmove = TRUE;
     /* In sokoban, peaceful monsters are generally worse for the player
@@ -1163,8 +1165,6 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     if (!in_mklev && lev == level)
         newsym(mtmp->mx, mtmp->my);     /* make sure the mon shows up */
 
-    mtmp->dx = COLNO;
-    mtmp->dy = ROWNO;
     memset(mtmp->mintrinsic, 0, sizeof (mtmp->mintrinsic));
     mtmp->mhitinc = 0;
     mtmp->mdaminc = 0;
