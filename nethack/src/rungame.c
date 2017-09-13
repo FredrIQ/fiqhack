@@ -353,7 +353,7 @@ plname_handler(const char *str, void *plname_void)
     if (*str == '\033') /* cancelled */
         return;
 
-    if (*str && strlen(str) < (PL_NSIZ - 5)) { /* ok */
+    if (*str && strlen(str) < (PL_NSIZ)) { /* ok */
         *plname = strdup(str);
         return;
     }
@@ -455,7 +455,7 @@ rungame(nh_bool net)
                                     info->
                                     rolenames_f[role] ? info->rolenames_f :
                                     info->rolenames_m)[role],
-            PL_NSIZ - 5 - 1);
+            PL_NSIZ - 1);
 
     if (nameopt->value.s && !*nameopt->value.s) {
         free(nameopt->value.s);
