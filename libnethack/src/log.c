@@ -575,9 +575,9 @@ base64_decode(const char *in, char *out, int outlen)
     }
 
     i -= 4;
-    if ((in[i + 2] == '=' || !in[i + 2]) && (in[i + 3] == '=' || !in[i + 3]))
+    if (in[i + 3] == '=' || !in[i + 3])
         pos--;
-    if ((in[i + 1] == '=' || !in[i + 2]) && (in[i + 2] == '=' || !in[i + 3]))
+    if (in[i + 2] == '=' || !in[i + 2])
         pos--;
 
     if (pos < olen)
