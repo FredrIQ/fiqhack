@@ -801,7 +801,9 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->made_amulet = mread8(mf);
     f->menu_style = mread8(mf);
     f->mon_generation = mread8(mf);
-    f->mon_moving = mread8(mf);
+    int moving = mread8(mf);
+    if (moving)
+        raw_printf("old mon_moving was nonzero -- please report to FIQ");
     f->mon_polycontrol = mread8(mf);
     f->occupation = mread8(mf);
     f->permablind = mread8(mf);
@@ -838,9 +840,10 @@ restore_flags(struct memfile *mf, struct flag *f)
 
     /* Seperate from other last_arg for save compat reasons */
     f->last_arg.key = mread32(mf);
+    f->mon_moving = mread32(mf);
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 99; i++)
+    for (i = 0; i < 95; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));

@@ -733,7 +733,6 @@ you_moved(void)
     do {        /* hero can't move this turn loop */
         wtcap = near_capacity();
 
-        flags.mon_moving = TRUE;
         do {
             /* Players have taken 1 more action than the global, monsters have
                taken 0 more actions than the global. */
@@ -762,7 +761,7 @@ you_moved(void)
                incorrect because were about to overwrite it anyway. */
 
         } while (monscanmove);
-        flags.mon_moving = FALSE;
+        flags.mon_moving = 0;
 
         if (!monscanmove && !can_act_this_turn(&youmonst)) {
             /* both you and the monsters are out of steam this round */

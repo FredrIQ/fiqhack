@@ -255,7 +255,7 @@ struct flag {
     boolean legacy;     /* print game entry "story" */
     boolean made_amulet;
     boolean mon_generation;     /* debug: control monster generaion */
-    boolean mon_moving; /* monsters' turn to move */
+    unsigned int mon_moving; /* monsters' turn to move */
     boolean mon_polycontrol;    /* debug: control monster polymorphs */
     boolean hide_implied;       /* hide messages if other messages imply them */
     boolean incomplete; /* the requested action continues into future turns */

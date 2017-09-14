@@ -2019,7 +2019,7 @@ destroy_arm(struct monst *mon, struct obj *obj)
             touch_petrifies(&mons[weapon->corpsenm]))
             /* TODO: add culprit to destroy_arm */
             mselftouch(mon, "Losing gloves, ",
-                       !flags.mon_moving ? &youmonst : NULL);
+                       find_mid(mon->dlevel, flags.mon_moving, FM_EVERYWHERE));
     }
     return 1;
 }

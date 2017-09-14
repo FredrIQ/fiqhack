@@ -173,7 +173,7 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.made_amulet);
     mwrite8(mf, flags.menu_style);
     mwrite8(mf, flags.mon_generation);
-    mwrite8(mf, flags.mon_moving);
+    mwrite8(mf, 0);
     mwrite8(mf, flags.mon_polycontrol);
     mwrite8(mf, flags.occupation);
     mwrite8(mf, flags.permablind);
@@ -211,11 +211,12 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.servermail);
     mwrite8(mf, flags.autoswap);
     mwrite32(mf, flags.last_arg.key);
+    mwrite32(mf, flags.mon_moving);
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 99; i++)
+    for (i = 0; i < 95; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));

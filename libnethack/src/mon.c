@@ -604,6 +604,10 @@ mcalcdistress(void)
         if (DEADMONSTER(mtmp))
             continue;
 
+        /* Don't blame hero for monsters dying to intrinsics timing out or
+           similar. */
+        flags.mon_moving = mtmp->m_id;
+
         /* must check non-moving monsters once/turn in case they managed to end
            up in liquid */
         if (mtmp->data->mmove == 0) {
@@ -647,6 +651,9 @@ mcalcdistress(void)
         set_displacement(mtmp);
         /* FIXME: mtmp->mlstmv ought to be updated here */
     }
+
+    /* Now reset mon_moving */
+    flags.mon_moving = 0;
 }
 
 static struct monst *nmtmp = (struct monst *)0;
@@ -675,6 +682,7 @@ movemon(void)
        have problems. */
 
     for (mtmp = level->monlist; mtmp; mtmp = nmtmp) {
+        flags.mon_moving = mtmp->m_id;
         nmtmp = mtmp->nmon;
 
         /* Clear bypass flags */
@@ -720,6 +728,7 @@ movemon(void)
         if (dochugw(mtmp))      /* otherwise just move the monster */
             continue;
     }
+    flags.mon_moving = 0;
 
     /* Clear bypass flags for the last monster in the chain */
     if (flags.bypasses)

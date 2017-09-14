@@ -196,9 +196,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         break;
                     case AD_MAGM:
                         explmask[i][j] |= (raylevel < P_EXPERT &&
-                                           resists_magm(mtmp) &&
-                                           (mtmp != &youmonst || flags.mon_moving ||
-                                            wand));
+                                           resists_magm(mtmp));
                         break;
                     case AD_FIRE:
                         explmask[i][j] |= !!resists_fire(mtmp);
@@ -411,10 +409,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 if (mtmp->mhp <= 0) {
                     /* KMH -- Don't blame the player for pets killing gas
                        spores */
-                    if (!flags.mon_moving)
-                        killed(mtmp);
-                    else
-                        monkilled(NULL, mtmp, "", (int)adtyp);
+                    monkilled(find_mid(level, flags.mon_moving, FM_EVERYWHERE),
+                              mtmp, "", (int)adtyp);
                 } else if (!flags.mon_moving)
                     setmangry(mtmp);
             }
@@ -476,10 +472,16 @@ explode(int x, int y, int type, /* the same as in zap.c */
             if (olet == MON_EXPLODE) {
                 killer = killer_msg(death, an(str));
             } else if (type >= 0 && olet != SCROLL_CLASS) {
+                struct monst *offender = find_mid(level, flags.mon_moving,
+                                                  FM_EVERYWHERE);
+
                 /* check whether or not we were the source of the explosion */
-                if (!flags.mon_moving)
+                if (offender == &youmonst)
                     killer = msgprintf("caught %sself in %s own %s", uhim(),
                                        uhis(), str);
+                else if (offender)
+                    killer = msgprintf("killed by %s %s",
+                                       s_suffix(k_monnam(offender)), str);
                 else
                     killer = msgprintf("killed by a %s", str);
             } else if (!strcmp(str, "burning oil")) {

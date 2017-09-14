@@ -1041,7 +1041,8 @@ update_property(struct monst *mon, enum youprop prop,
             touch_petrifies(&mons[weapon->corpsenm])) {
             if (!you)
                 mselftouch(mon, "No longer petrify-resistant, ",
-                           !flags.mon_moving ? &youmonst : NULL);
+                           find_mid(mon->dlevel, flags.mon_moving,
+                                    FM_EVERYWHERE));
             else {
                 const char *kbuf;
                 kbuf = msgprintf("losing stone resistance while wielding %s",
@@ -1413,7 +1414,7 @@ update_property(struct monst *mon, enum youprop prop,
         }
 
         if (!you && !redundant)
-            mon->usicked = lost || !flags.mon_moving ? 0 : 1;
+            mon->usicked = lost || !flags.mon_moving ? 1 : 0;
         break;
     case BLINDED:
         if (slot == os_tool) {

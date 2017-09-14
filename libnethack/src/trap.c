@@ -2621,14 +2621,13 @@ float_down(struct monst *mon)
                                   Monnam(mon));
                             mon->mhp -= rnd(2);
                             if (mon->mhp <= 0) {
-                                if (!flags.mon_moving)
-                                    killed(mon);
-                                else
-                                    monkilled(NULL, mon, "", AD_RBRE);
+                                monkilled(find_mid(level, flags.mon_moving,
+                                                   FM_EVERYWHERE), mon, "",
+                                          AD_RBRE);
                             }
                             mselftouch(mon, "Falling, ",
-                                       !flags.mon_moving ?
-                                       &youmonst : NULL);
+                                       find_mid(level, flags.mon_moving,
+                                                FM_EVERYWHERE));
                         }
                     }
                 }
@@ -3126,12 +3125,9 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
                                       "an acidic potion"));
                 } else if (mon) {
                     mon->mhp -= dmg;
-                    if (mon->mhp <= 0) {
-                        if (!flags.mon_moving)
-                            monkilled(&youmonst, mon, "", AD_ACID);
-                        else
-                            mondied(mon);
-                    }
+                    if (mon->mhp <= 0)
+                        monkilled(find_mid(level, flags.mon_moving,
+                                           FM_EVERYWHERE), mon, "", AD_ACID);
                 }
             }
             return 3;
