@@ -211,12 +211,13 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.servermail);
     mwrite8(mf, flags.autoswap);
     mwrite32(mf, flags.last_arg.key);
-    mwrite32(mf, flags.mon_moving);
+    if (flags.mon_moving)
+        panic("flags.mon_moving is nonzero during neutral turnstate?");
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 95; i++)
+    for (i = 0; i < 99; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));
