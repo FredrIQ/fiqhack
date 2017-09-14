@@ -469,12 +469,12 @@ explode(int x, int y, int type, /* the same as in zap.c */
             int death = adtyp == AD_FIRE ? BURNING : DIED;
             const char *killer;
 
+            struct monst *offender = find_mid(level, flags.mon_moving,
+                                              FM_EVERYWHERE);
+
             if (olet == MON_EXPLODE) {
                 killer = killer_msg(death, an(str));
             } else if (type >= 0 && olet != SCROLL_CLASS) {
-                struct monst *offender = find_mid(level, flags.mon_moving,
-                                                  FM_EVERYWHERE);
-
                 /* check whether or not we were the source of the explosion */
                 if (offender == &youmonst)
                     killer = msgprintf("caught %sself in %s own %s", uhim(),
@@ -487,6 +487,11 @@ explode(int x, int y, int type, /* the same as in zap.c */
             } else if (!strcmp(str, "burning oil")) {
                 /* This manual check hack really sucks */
                 killer = killer_msg(death, str);
+            } else if (offender && offender != &youmonst) {
+                killer = killer_msg(death,
+                                    msgprintf("%s %s",
+                                              s_suffix(k_monnam(offender)),
+                                              str));
             } else {
                 killer = killer_msg(death, an(str));
             }
