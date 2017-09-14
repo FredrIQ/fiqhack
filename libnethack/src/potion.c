@@ -2024,18 +2024,9 @@ dodip(const struct nh_cmd_arg *arg)
             }
 
             /* Check if we can add anything by comparing properties valid after opm_all
-               filtering with current properties. Don't consider frost if we have fire
-               or vice versa. */
+               filtering with current properties. */
             obj->oprops = opm_all;
             obj->oprops = obj_properties(obj);
-            if (obj->oprops & (opm_fire | opm_frost))
-                obj->oprops |= (opm_fire | opm_frost);
-
-            if (current_props & (opm_fire | opm_frost)) {
-                obj->oprops &= ~opm_fire;
-                obj->oprops &= ~opm_frost;
-                obj->oprops |= current_props;
-            }
 
             int valid_props = obj->oprops;
             obj->oprops = current_props;
