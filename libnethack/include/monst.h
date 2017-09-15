@@ -70,7 +70,7 @@ struct monst {
     struct level *dlevel;       /* pointer to the level this monster is on */
     struct obj *minvent;
     struct obj *mw;             /* weapon */
-    struct monst *mstuck;       /* is the monster stuck to another monster */
+    unsigned int mstuck;        /* is the monster stuck to another monster */
     struct mextra *mextra;      /* extended data for some monsters (or names) */
     unsigned int m_id;
     int mhp, mhpmax;
