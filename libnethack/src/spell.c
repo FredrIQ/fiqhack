@@ -56,7 +56,7 @@ static int throwspell(boolean, schar *dx, schar *dy, const struct musable *arg);
 static void spell_backfire(int);
 static int spellindex_by_typ(int);
 static void run_maintained_spell(struct monst *, int);
-
+static boolean mon_wants_to_maintain(const struct monst *, int);
 static const char *spelltypemnemonic(int);
 
 /* The roles[] table lists the role-specific values for tuning
@@ -789,13 +789,13 @@ run_maintained_spells(struct level *lev)
             if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
                 spell_level *= 2; /* needs more to maintain manually, so increase cost */
             if (!(moves % moves_modulo)) {
-                if (u.uen < spell_level) {
+                if (youmonst.pw < spell_level) {
                     pline(msgc_intrloss, "You lack the energy to maintain %s.",
                           spellname(spell_index));
                     spell_unmaintain(&youmonst, spell);
                     continue;
                 }
-                u.uen -= spell_level;
+                youmonst.pw -= spell_level;
             }
 
             run_maintained_spell(&youmonst, spell);
@@ -807,9 +807,7 @@ run_maintained_spells(struct level *lev)
         if (DEADMONSTER(mon) || !spell_maintained(mon, spell))
             continue;
 
-        /* mspec_used check is arbitrary, but prevents mspec_used from going out of
-           hand */
-        if (confused(mon) || mon->mspec_used > 20) {
+        if (confused(mon)) {
             mon->spells_maintained = 0;
             continue;
         }
@@ -829,16 +827,22 @@ run_maintained_spells(struct level *lev)
                 break;
             }
             if (!moves_modulo) {
-                spell_unmaintain(&youmonst, spell);
+                spell_unmaintain(mon, spell);
                 continue;
             }
 
-            /* Increase mspec_used depending on level and proficiency */
             int spell_level = objects[spell].oc_level;
             if (mon_has_amulet(mon))
                 spell_level *= 2;
+            if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
+                spell_level *= 2; /* needs more to maintain manually, so increase cost */
             if (!(moves % moves_modulo)) {
-                mon->mspec_used += spell_level;
+                if (mon->pw < spell_level) {
+                    spell_unmaintain(mon, spell);
+                    continue;
+                }
+
+                mon->pw -= spell_level;
             }
 
             run_maintained_spell(mon, spell);
@@ -877,16 +881,20 @@ run_maintained_spell(struct monst *mon, int spell)
         break;
     case SPE_PROTECTION:
         if (cast_protection(mon, TRUE, FALSE)) {
-            if (mon == &youmonst) {
-                if (u.uen < 5) {
+            int pw_cost = 5;
+            if (mon_has_amulet(mon))
+                pw_cost += rn1(6, 5);
+
+            if (mon->pw < pw_cost) {
+                if (mon == &youmonst) {
                     pline(msgc_intrloss, "Your energy level fizzles, preventing you "
                           "from maintaining the protection spell!");
                     spell_unmaintain(mon, SPE_PROTECTION);
                     break;
                 }
-                u.uen -= 5;
-            } else
-                mon->mspec_used++;
+            }
+
+            mon->pw -= pw_cost;
         }
         break;
     case SPE_LIGHT:
@@ -1369,14 +1377,12 @@ spell_backfire(int spell)
    The side effect is that monsters with a 80% failure rate on a spell will only
    return nonzero 1/5 of the time, meaning that monsters will generally (try to)
    cast those spells much more rarely. This is by design.
-   If theoretical is true, bypass the random check and mspec_used, this is used
+   If theoretical is true, bypass the random check and pw, this is used
    to check if a spell is featured in the spell list, or get a realible fail rate
    (for example, to check if knock is realible enough for usage with doors) */
 int
 mon_castable(const struct monst *mon, int spell, boolean theoretical)
 {
-    if (mon->mspec_used && !theoretical)
-        return 0;
     /* Ghosts aren't allowed their former spellcasting abilities, if any. However,
        bones saved as ordinary players, or the occasional vampire/etc, is allowed to */
     if (mon->data == &mons[PM_GHOST])
@@ -1385,23 +1391,91 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
     if (cancelled(mon))
         return 0;
 
+    boolean clone_wiz = FALSE;
+    if (spell == SPE_BOOK_OF_THE_DEAD)
+        clone_wiz = TRUE;
+
+    if (clone_wiz && !mon->iswiz)
+        return 0;
+
     /* FIXME: don't rely on spell order */
     int mspellid = spell - SPE_DIG;
 
     if (!(mon->mspells & ((uint64_t)1 << mspellid)))
         return 0;
 
+    int pw_cost;
+    if (clone_wiz)
+        pw_cost = 7;
+    else
+        pw_cost = objects[spell].oc_level;
+    pw_cost *= 5;
+
+    if (mon_has_amulet(mon))
+        pw_cost += rnd(2 * pw_cost);
+
+    if (mon->pw < pw_cost && !theoretical)
+        return 0;
+
+    /* If we're low on Pw, cast more rarely */
+    if (!theoretical && mon->pw < (mon->pwmax / 3) &&
+        rn2(8))
+        return 0;
+
     /* calculate fail rate */
     /* Confusion also makes spells fail 100% of the time,
        but don't make monsters savvy about that for now. */
-    int chance = percent_success(mon, spell);
+    int chance;
+    if (clone_wiz)
+        chance = 100;
+    else
+        percent_success(mon, spell);
+
     if (rnd(100) > chance && !theoretical)
         return 0;
+
     /* for theoretical, return a minrate of 1% to mark the spell as known */
     if (theoretical)
         return max(chance, 1);
 
     return chance;
+}
+
+/* Returns TRUE if monster wants to maintain given spell. */
+static boolean
+mon_wants_to_maintain(const struct monst *mon, int spell)
+{
+    /* Don't maintain spells with a somewhat high failure rate. */
+    if (mon_castable(mon, spell, TRUE) > 33)
+        return FALSE;
+
+    /* Compare energy regeneration rate with spell drain. using a
+       priority list. */
+    int pw_regen = regen_rate(mon, TRUE);
+
+    int cost = 0;
+    int extra = 1;
+    if (mon_has_amulet(mon))
+        extra = 2;
+
+#define chk_spell(s)                                    \
+    cost = objects[s].oc_level * extra * 20;            \
+    if (s == SPE_LIGHT || s == SPE_PROTECTION)          \
+        cost *= 2;                                      \
+    if (mon_castable(mon, s, TRUE) < 33)                \
+        pw_regen -= cost;                               \
+    if (pw_regen < 20)                                  \
+        return FALSE;                                   \
+    if (spell == s)                                     \
+        return TRUE;
+
+    chk_spell(SPE_PROTECTION);
+    chk_spell(SPE_HASTE_SELF);
+    chk_spell(SPE_DETECT_MONSTERS);
+    chk_spell(SPE_PHASE);
+    chk_spell(SPE_INVISIBILITY);
+#undef chk_spell
+    return FALSE;
 }
 
 int
@@ -1545,13 +1619,14 @@ spelleffects(boolean atme, struct musable *m)
     case SPE_ASTRAL_EYESIGHT:
     case SPE_PHASE:
     case SPE_PROTECTION:
-        if (!you)
-            break; /* TODO */
-
         /* Detect monsters isn't useful to maintain on a lower level */
         if (spell == SPE_DETECT_MONSTERS && role_skill < P_SKILLED)
             break;
-        if (yn("Maintain the spell?") == 'y')
+
+        if (!you && !mon_wants_to_maintain(mon, spell))
+            break;
+
+        if (!you || yn("Maintain the spell?") == 'y')
             set_maintained = TRUE; /* set it below, past all the usual sanity checks */
         break;
 
@@ -1612,83 +1687,77 @@ spelleffects(boolean atme, struct musable *m)
     }
 
     /* Energy checks, and for players, hunger drain */
-    if (you) {
-        energy = (objects[spell].oc_level * 5);      /* 5 <= energy <= 35 */
-        if (Uhave_amulet) {
+    if (clone_wiz)
+        energy = 7;
+    else
+        energy = objects[spell].oc_level;
+    energy *= 5;
+
+    /* If the amulet drains too much, we want to set pw to 0. Check
+       if we have enough energy without the amulet drain to
+       determine if we should drain everything. */
+    boolean drain_pw = FALSE;
+    if (mon_has_amulet(mon)) {
+        if (energy <= mon->pw)
+            drain_pw = TRUE;
+        if (you)
             pline(msgc_substitute,
                   "You feel the amulet draining your energy away.");
-            energy += rnd(2 * energy);
-        }
-        if (energy > u.uen) {
-            pline(msgc_cancelled,
-                  "You don't have enough energy to cast that spell.");
-            return 0;
-        } else {
-            int hungr = energy * 2;
-
-            /*
-             * If hero is a wizard, their current intelligence
-             * (bonuses + temporary + current)
-             * affects hunger reduction in casting a spell.
-             * 1. int = 17-18 no hunger
-             * 2. int = 16    1/4 hungr
-             * 3. int = 15    1/2 hungr
-             * 4. int = 1-14  normal hunger
-             * The reason for this is:
-             * a) Intelligence affects the amount of exertion
-             * in thinking.
-             * b) Wizards have spent their life at magic and
-             * understand quite well how to cast spells.
-             */
-            intell = ACURR(A_INT);
-            if (!Role_if(PM_WIZARD))
-                intell = 10;
-            if (intell >= 17)
-                hungr = 0;
-            else if (intell == 16)
-                hungr /= 4;
-            else if (intell == 15)
-                hungr /= 2;
-
-            /* don't put player (quite) into fainting from casting a spell,
-               particularly since they might not even be hungry at the
-               beginning; however, this is low enough that they must eat before
-               casting anything else except detect food */
-            if (hungr > u.uhunger - 3)
-                hungr = u.uhunger - 3;
-            morehungry(hungr);
-        }
-    } else {
-        /* highlevel casters can cast more than lowlevel ones */
-        int cooldown = 10 - (mon->m_lev / 5);
-        if (cooldown < 4)
-            cooldown = 4;
-
-        /* make energy use unpredictable! */
-        cooldown = rn2(cooldown);
-
-        energy = ((clone_wiz ? 7 : objects[spell].oc_level) * cooldown);
-        if (mon_has_amulet(mon)) {
+        else
             amulet = TRUE;
-            if (!rn2(5)) {
-                if (vis)
-                    pline(msgc_monneutral,
-                          "%s tries to cast a spell, but the Amulet drains it!",
-                          Monnam(mon));
-                return 0;
-            }
-            if (energy)
-                energy += 2 * rnd(energy);
+        energy += rnd(2 * energy);
+    }
+
+    if (energy > mon->pw) {
+        if (you)
+            pline(drain_pw ? msgc_failrandom : msgc_cancelled,
+                  "You don't have enough energy to cast that spell.");
+        else if (vis)
+            pline(msgc_monneutral,
+                  "%s to cast a spell, but%s is out of energy!",
+                  M_verbs(mon, "try"), drain_pw ?
+                  ", due to the amulet draining magic," : "");
+
+        if (drain_pw) {
+            mon->pw = 0;
+            return 1;
         }
 
-        /* can't cast -- energy is used up! */
-        if (mon->mspec_used) {
-            if (vis)
-                pline(msgc_monneutral,
-                      "%s tries to cast a spell, but is out of energy!",
-                      Monnam(mon));
-            return 0;
-        }
+        return 0;
+    } else if (you) {
+        int hungr = energy * 2;
+
+        /*
+         * If hero is a wizard, their current intelligence
+         * (bonuses + temporary + current)
+         * affects hunger reduction in casting a spell.
+         * 1. int = 17-18 no hunger
+         * 2. int = 16    1/4 hungr
+         * 3. int = 15    1/2 hungr
+         * 4. int = 1-14  normal hunger
+         * The reason for this is:
+         * a) Intelligence affects the amount of exertion
+         * in thinking.
+         * b) Wizards have spent their life at magic and
+         * understand quite well how to cast spells.
+         */
+        intell = ACURR(A_INT);
+        if (!Role_if(PM_WIZARD))
+            intell = 10;
+        if (intell >= 17)
+            hungr = 0;
+        else if (intell == 16)
+            hungr /= 4;
+        else if (intell == 15)
+            hungr /= 2;
+
+        /* don't put player (quite) into fainting from casting a spell,
+           particularly since they might not even be hungry at the
+           beginning; however, this is low enough that they must eat before
+           casting anything else except detect food */
+        if (hungr > u.uhunger - 3)
+            hungr = u.uhunger - 3;
+        morehungry(hungr);
     }
 
     if (clone_wiz)
@@ -1696,20 +1765,21 @@ spelleffects(boolean atme, struct musable *m)
     else
         chance = percent_success(mon, spell);
     if (confused || (rnd(100) > chance)) {
-        if (you) {
+        if (you)
             pline(msgc_failrandom, "You fail to cast the spell correctly.");
-            u.uen -= energy / 2;
-        } else if (vis)
+        else if (vis)
             pline(msgc_monneutral, "%s tries, but fails, to cast a spell.",
                   Monnam(mon));
+
+        /* No sanity check needed, we determined that we had enough
+           to at least try earlier */
+        mon->pw -= energy / 2;
         return 1;
     }
 
-    if (you) {
-        u.uen -= energy;
+    mon->pw -= energy;
+    if (you)
         exercise(A_WIS, TRUE);
-    } else
-        mon->mspec_used += energy;
 
     if (!you) {
         if (vis)

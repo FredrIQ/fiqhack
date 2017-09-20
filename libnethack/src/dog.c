@@ -457,8 +457,7 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
 
     /* might finish eating or be able to use special ability again */
     mtmp->meating -= min(imv, mtmp->meating);
-    mtmp->mspec_used -= min(pw_regenerates(mtmp) ? imv :
-                            imv * 5, mtmp->mspec_used);
+    mtmp->mspec_used -= min(imv, mtmp->mspec_used);
 
     /* reduce tameness for every 150 moves you are separated */
     if (mtmp->mtame) {
@@ -494,13 +493,14 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
         m_unleash(mtmp, FALSE);
     }
 
-    /* recover lost hit points */
-    if (!regenerates(mtmp))
-        imv /= 20;
-    if (mtmp->mhp + imv >= mtmp->mhpmax)
+    /* recover lost hit points and energy */
+    mtmp->mhp += regeneration_by_rate(imv * regen_rate(mtmp, FALSE));
+    if (mtmp->mhp > mtmp->mhpmax)
         mtmp->mhp = mtmp->mhpmax;
-    else
-        mtmp->mhp += imv;
+
+    mtmp->pw += regeneration_by_rate(imv * regen_rate(mtmp, TRUE));
+    if (mtmp->pw > mtmp->pwmax)
+        mtmp->pw = mtmp->pwmax;
 }
 
 

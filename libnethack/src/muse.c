@@ -1447,9 +1447,24 @@ find_item(struct monst *mon, struct musable *m)
         return TRUE;
 
     /* Clone ourselves */
-    if (mon->iswiz && flags.no_of_wizards == 1 && !mon->mspec_used) {
+    if (flags.no_of_wizards == 1 &&
+        mon_castable(mon, SPE_BOOK_OF_THE_DEAD, FALSE)) {
         m->use = MUSE_SPE;
         m->spell = SPE_BOOK_OF_THE_DEAD; /* sentinel for double trouble */
+        return TRUE;
+    }
+
+    if (!very_fast(mon) && mon_castable(mon, SPE_HASTE_SELF, FALSE)) {
+        m->use = MUSE_SPE;
+        m->spell = SPE_HASTE_SELF;
+        return TRUE;
+    }
+
+    if (!m_mspellprot(mon) &&
+        mon_castable(mon, SPE_PROTECTION, FALSE) &&
+        !spell_maintained(mon, SPE_PROTECTION)) {
+        m->use = MUSE_SPE;
+        m->spell = SPE_PROTECTION;
         return TRUE;
     }
 
@@ -1982,12 +1997,6 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
 
     /* tame monsters wont zap wishing */
     if (otyp == WAN_WISHING && !mon->mtame)
-        return 1;
-
-    /* If there is partial protection already, cast it only 12% of the time to avoid this essentially being the default
-       (Protection is a level 1 spell -- the monster can afford occasionally wasting a few casts to avoid this code being
-       far more complex) */
-    if (otyp == SPE_PROTECTION && (!(protected(mon) & W_MASK(os_timeout)) || !rn2(8)))
         return 1;
 
     /* only quaff unIDed !oGL if we can't ID it somehow (prevents shopkeepers/priests from quaffing c!oGL mostly) */

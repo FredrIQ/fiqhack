@@ -232,8 +232,8 @@ make_player_info(struct nh_player_info *pi)
     if (pi->hp < 0)
         pi->hp = 0;
 
-    pi->en = u.uen;
-    pi->enmax = u.uenmax;
+    pi->en = youmonst.pw;
+    pi->enmax = youmonst.pwmax;
     pi->ac = find_mac(&youmonst);
 
     pi->gold = money_cnt(invent);

@@ -1532,13 +1532,11 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                 pline(you ? msgc_statusheal : msgc_monneutral,
                       "%s %s charged up!", you ? "You" : Monnam(mon),
                       you ? "feel" : "looks");
-            if (you) {
-                if (u.uen < u.uenmax)
-                    u.uen = u.uenmax;
-                else
-                    u.uen = (u.uenmax += dice(5, 4));
-            } else
-                mon->mspec_used = 0;
+            if (mon->pw < mon->pwmax)
+                mon->pw = mon->pwmax;
+            else
+                mon->pw = (mon->pwmax += dice(5, 4));
+
             /* cure cancellation too */
             set_property(mon, CANCELLED, -2, TRUE);
             break;

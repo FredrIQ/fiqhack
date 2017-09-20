@@ -40,6 +40,7 @@ struct u_event {
 struct you {
     /* NOW UNUSED */
     int unused_oldcap;  /* carry cap on previous turn */
+    int unused_uen, unused_uenmax; /* magical energy (Pw) */
 
     xchar ux, uy;
     xchar tx, ty;       /* destination of travel */
@@ -149,7 +150,6 @@ struct you {
     /* on moonlit nights 11 */
 # define LUCKMIN        (-10)
     int uhp, uhpmax;
-    int uen, uenmax;    /* magical energy - M. Stephenson */
     int ugangr; /* if the gods are angry at you */
     int ugifts; /* number of artifacts bestowed */
     int ublessed, ublesscnt;    /* blessing/duration from #pray */

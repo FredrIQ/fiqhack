@@ -588,10 +588,14 @@ extern void make_grave(struct level *lev, int x, int y, const char *str);
 extern int experience(struct monst *, int);
 extern void more_experienced(int, int);
 extern void losexp(const char *killer, boolean overrid_res);
+extern void mlosexp(struct monst *, struct monst *,
+                    const char *killer, boolean overrid_res);
 extern void newexplevel(void);
 extern void pluslvl(boolean);
 extern long rndexp(boolean);
 extern long newuexp(int);
+extern void initialize_mon_pw(struct monst *);
+extern const struct permonst *grow_up(struct monst *, struct monst *);
 
 /* ### explode.c ### */
 
@@ -858,7 +862,6 @@ extern void save_rndmonst_state(struct memfile *mf);
 extern void restore_rndmonst_state(struct memfile *mf);
 extern const struct permonst *mkclass(const d_level *dlev, char, int, enum rng);
 extern int adj_lev(const d_level *dlev, const struct permonst *ptr);
-extern const struct permonst *grow_up(struct monst *, struct monst *);
 extern int mongets(struct monst *, int, enum rng);
 extern int golemhp(int);
 extern boolean peace_minded(const struct permonst *);
@@ -1223,6 +1226,7 @@ extern short mprof(const struct monst *, int);
 
 extern boolean itsstuck(struct monst *);
 extern boolean mb_trapped(struct monst *);
+extern int regen_rate(const struct monst *, boolean);
 extern int regeneration_by_rate(int);
 extern void mon_regen(struct monst *, boolean);
 extern int dochugw(struct monst *);

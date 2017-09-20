@@ -74,6 +74,7 @@ struct monst {
     struct mextra *mextra;      /* extended data for some monsters (or names) */
     unsigned int m_id;
     int mhp, mhpmax;
+    int pw, pwmax;
     int mspec_used;             /* monster's special ability attack timeout */
     unsigned int mtrapseen;     /* bitmap of traps we've been trapped in */
     unsigned int mlstmv;        /* for catching up with lost time */

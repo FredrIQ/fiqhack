@@ -901,22 +901,8 @@ you_moved(void)
                 }
             } else if (*hp < *hpmax &&
                        (wtcap < MOD_ENCUMBER || !u.umoved || Regeneration)) {
-                int hp_regen = 0;
-                if (Regeneration)
-                    hp_regen += 100;
-
-                if (Role_if(PM_HEALER))
-                    hp_regen += 33;
-                hp_regen += 3 * u.ulevel;
-
-                int con = ACURR(A_CON);
-                con -= 5;
-                hp_regen += 3 * con;
-
-                if (hp_regen < 1)
-                    hp_regen = 1;
-
-                *hp += regeneration_by_rate(hp_regen);
+                *hp += regeneration_by_rate(regen_rate(&youmonst,
+                                                       FALSE));
                 if (*hp > *hpmax)
                     *hp = *hpmax;
             }
@@ -937,19 +923,11 @@ you_moved(void)
                 }
             }
 
-            int pw_regen = 0;
-            if (Energy_regeneration)
-                pw_regen += 100;
-            if (Role_if(PM_WIZARD))
-                pw_regen += 33;
-            int wis = ACURR(A_WIS);
-            if (wis > 3)
-                pw_regen += wis * 3;
-            pw_regen += u.ulevel * 3;
-            if (u.uen < u.uenmax && wtcap < MOD_ENCUMBER) {
-                u.uen += regeneration_by_rate(pw_regen);
-                if (u.uen > u.uenmax)
-                    u.uen = u.uenmax;
+            if (youmonst.pw < youmonst.pwmax && wtcap < MOD_ENCUMBER) {
+                youmonst.pw +=
+                    regeneration_by_rate(regen_rate(&youmonst, TRUE));
+                if (youmonst.pw > youmonst.pwmax)
+                    youmonst.pw = youmonst.pwmax;
             }
 
             if (!u.uinvulnerable) {

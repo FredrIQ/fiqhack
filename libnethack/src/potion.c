@@ -1084,15 +1084,14 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
         }
         int num;
         num = rnd(5) + 5 * otmp->blessed + 1;
-        if (you) {
-            u.uenmax += (otmp->cursed) ? -num : num;
-            u.uen += (otmp->cursed) ? -num : num;
-            if (u.uenmax <= 0)
-                u.uenmax = 0;
-            if (u.uen <= 0)
-                u.uen = 0;
+        mon->pwmax += (otmp->cursed) ? -num : num;
+        mon->pw += (otmp->cursed) ? -num : num;
+        if (mon->pwmax <= 0)
+            mon->pwmax = 0;
+        if (mon->pw <= 0)
+            mon->pw = 0;
+        if (you)
             exercise(A_WIS, otmp->cursed ? FALSE : TRUE);
-        }
         if (otmp->cursed)
             mon->mspec_used += num * 5;
         else

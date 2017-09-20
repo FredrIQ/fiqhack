@@ -312,6 +312,10 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
         if (ispriest(mtmp))
             restpriest(mtmp, ghostly);
 
+        /* Set up monster Pw if this is an old save. */
+        if (flags.save_revision < 5)
+            initialize_mon_pw(mtmp);
+
         mtmp2 = mtmp;
     }
     if (first && mtmp2->nmon) {
@@ -554,8 +558,8 @@ restore_you(struct memfile *mf, struct you *y)
 
     y->uhp = mread32(mf);
     y->uhpmax = mread32(mf);
-    y->uen = mread32(mf);
-    y->uenmax = mread32(mf);
+    y->unused_uen = mread32(mf);
+    y->unused_uenmax = mread32(mf);
     y->ulevel = mread32(mf);
     y->umoney0 = mread32(mf);
     y->uexp = mread32(mf);
@@ -900,6 +904,11 @@ dorecover(struct memfile *mf)
     youmonst = *mtmp;
     dealloc_monst(mtmp);
     set_uasmon();       /* fix up youmonst.data */
+
+    if (flags.save_revision < 5) {
+        youmonst.pw = u.unused_uen;
+        youmonst.pwmax = u.unused_uenmax;
+    }
 
     /* restore dungeon */
     restore_dungeon(mf);

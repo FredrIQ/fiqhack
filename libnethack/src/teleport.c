@@ -531,7 +531,7 @@ mdotele(struct musable *m)
         }
 
         energy = objects[SPE_TELEPORT_AWAY].oc_level * 7 / 2 - 2;
-        if (u.uen <= energy) {
+        if (youmonst.pw <= energy) {
             pline(msgc_cancelled1, "You lack the energy %s.",
                   castit ? "for a teleport spell" : "to teleport");
             return 1;
@@ -548,7 +548,7 @@ mdotele(struct musable *m)
             else
                 return 0;
         } else
-            u.uen -= energy;
+            youmonst.pw -= energy;
     }
 
     if (trap && trap->once) {

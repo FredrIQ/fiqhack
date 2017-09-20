@@ -430,8 +430,8 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, eflags);
     mwrite32(mf, y->uhp);
     mwrite32(mf, y->uhpmax);
-    mwrite32(mf, y->uen);
-    mwrite32(mf, y->uenmax);
+    mwrite32(mf, y->unused_uen);
+    mwrite32(mf, y->unused_uenmax);
     mwrite32(mf, y->ulevel);
     mwrite32(mf, y->umoney0);
     mwrite32(mf, y->uexp);

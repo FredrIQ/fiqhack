@@ -343,7 +343,8 @@ mstatusline(struct monst *mon)
                           (SUPPRESS_IT | SUPPRESS_INVISIBLE |
                            SUPPRESS_ENSLAVEMENT), FALSE));
 
-    pline(msgc_info, "Status of %s (%s%s):  Level %d  HP %d(%d)  %s%s.",
+    pline(msgc_info, "Status of %s (%s%s):  "
+          "Level %d  HP %d(%d)  Pw %d(%d)  %s%s.",
           monnambuf, (!you || u.ualign.record == 3) ? "" :
           (u.ualign.record >= 20) ? "piously " :
           (u.ualign.record > 13) ? "devoutly " :
@@ -355,6 +356,7 @@ mstatusline(struct monst *mon)
           you && Upolyd ? mons[u.umonnum].mlevel : you ? u.ulevel : mon->m_lev,
           you && Upolyd ? u.mh : m_mhp(mon),
           you && Upolyd ? u.mhmax : m_mhpmax(mon),
+          mon->pw, mon->pwmax,
           show_ac("%s %d", find_mac(mon)), info);
 }
 

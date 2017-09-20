@@ -574,28 +574,15 @@ cpostfx(struct monst *mon, int pm)
     switch (pm) {
     case PM_NEWT:
         /* MRKR: "eye of newt" may give small magical energy boost */
-        if (you) {
-            int old_uen = u.uen;
-            msgc = msgc_statusheal;
-
-            u.uen += 1 + rn2_on_rng(3, rng_newt_pw_boost);
-            if (u.uen > u.uenmax) {
-                u.uenmax++;
-                u.uen = u.uenmax;
-            } else
-                u.uenmax++;
-
-            if (you)
-                msgc = msgc_intrgain;
-
-            if (old_uen != u.uen)
-                pline(msgc, "You feel a mild buzz.");
-        } else if (mon->mspec_used > rn2(5)) {
-            mon->mspec_used -= min(mon->mspec_used, rnd(3));
-            if (vis)
-                pline(msgc, "You sense a mild buzz coming from %s.",
-                      mon_nam(mon));
-        }
+        mon->pwmax++;
+        mon->pw += 1 + rn2_on_rng(3, rng_newt_pw_boost);
+        if (mon->pw > mon->pwmax)
+            mon->pw = mon->pwmax;
+        if (you)
+            pline(msgc_intrgain, "You feel a mild buzz.");
+        else if (vis)
+            pline(msgc, "You sense a mild buzz coming from %s.",
+                  mon_nam(mon));
         break;
     case PM_WRAITH:
         if (you)

@@ -1912,7 +1912,7 @@ replmon(struct monst *mtmp, struct monst *mtmp2)
     struct level *lev = mtmp->dlevel;
     int x, y;
     for (x = 0; x < COLNO; x++)
-        for (y = 0; y < COLNO; y++)
+        for (y = 0; y < ROWNO; y++)
             if (mtmp == lev->dmonsters[x][y]) {
                 impossible("Displacement removal failed! "
                            "Displaced at: %d,%d :: Found at: %d,%d",

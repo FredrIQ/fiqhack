@@ -1362,20 +1362,10 @@ damageum(struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_DRLI:
-        if (!cancelled(&youmonst) && !rn2(3) && !resists_drli(mdef)) {
-            int xtmp = dice(2, 6);
-
-            pline(combat_msgc(&youmonst, mdef, cr_hit),
-                  "%s suddenly seems weaker!", Monnam(mdef));
-            mdef->mhpmax -= xtmp;
-            if ((mdef->mhp -= xtmp) <= 0 || !mdef->m_lev) {
-                pline(combat_msgc(&youmonst, mdef, cr_kill),
-                      "%s dies!", Monnam(mdef));
-                xkilled(mdef, 0);
-            } else
-                mdef->m_lev--;
+        if (!cancelled(&youmonst) && !rn2(3) && !resists_drli(mdef))
+            mlosexp(&youmonst, mdef, "", FALSE);
+        if (DEADMONSTER(mdef))
             tmp = 0;
-        }
         break;
     case AD_RUST:
         if (pd == &mons[PM_IRON_GOLEM]) {

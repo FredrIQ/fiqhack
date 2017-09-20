@@ -6,6 +6,8 @@
 #include "hack.h"
 
 static int enermod(int);
+static int menermod(const struct monst *, int);
+static int mon_pw_gain(const struct monst *);
 
 long
 newuexp(int lev)
@@ -51,7 +53,17 @@ newuexp(int lev)
 static int
 enermod(int en)
 {
-    switch (Role_switch) {
+    return menermod(&youmonst, en);
+}
+
+static int
+menermod(const struct monst *mon, int en)
+{
+    int pm = monsndx(mon->data);
+    if (mon == &youmonst)
+        pm = Role_switch;
+
+    switch (pm) {
     case PM_PRIEST:
     case PM_WIZARD:
         return 2 * en;
@@ -62,6 +74,16 @@ enermod(int en)
     case PM_VALKYRIE:
         return (3 * en) / 4;
     default:
+        if (mon != &youmonst) {
+            if (mon->iswiz)
+                return (5 * en) / 2;
+            if (mon->data->mflags3 & M3_SPELLCASTER)
+                return 2 * en;
+            if (mon->data->mflags1 & M1_MINDLESS)
+                return en / 2;
+            if (mon->data->mflags1 & M1_ANIMAL)
+                return (3 * en) / 4;
+        }
         return en;
     }
 }
@@ -189,14 +211,14 @@ losexp(const char *killer, boolean override_res)
             rn1((int)ACURR(A_WIS) / 2 + urole.enadv.hirnd + urace.enadv.hirnd,
                 urole.enadv.hifix + urace.enadv.hifix);
     num = enermod(num); /* M. Stephenson */
-    u.uenmax -= num;
-    if (u.uenmax < 0)
-        u.uenmax = 0;
-    u.uen -= num;
-    if (u.uen < 0)
-        u.uen = 0;
-    else if (u.uen > u.uenmax)
-        u.uen = u.uenmax;
+    youmonst.pwmax -= num;
+    if (youmonst.pwmax < 0)
+        youmonst.pwmax = 0;
+    youmonst.pw -= num;
+    if (youmonst.pw < 0)
+        youmonst.pw = 0;
+    else if (youmonst.pw > youmonst.pwmax)
+        youmonst.pw = youmonst.pwmax;
 
     /* Compute the progress the hero did towards the next level. Scale back one level,
        but keep the same progress. */
@@ -205,6 +227,38 @@ losexp(const char *killer, boolean override_res)
     int pct = (u.uexp - newuexp(u.ulevel)) * 100 / expdiff_high;
     u.uexp = newuexp(u.ulevel - 1);
     u.uexp += pct * expdiff_low / 100;
+}
+
+void
+mlosexp(struct monst *magr, struct monst *mdef, const char *killer,
+        boolean override_res)
+{
+    if (mdef == &youmonst) {
+        losexp(killer, override_res);
+        return;
+    }
+
+    if (!override_res && resists_drli(mdef))
+        return;
+
+    if (!mdef->m_lev) {
+        monkilled(magr, mdef, "", AD_DRLI);
+        return;
+    }
+
+    if (canseemon(mdef))
+        pline(combat_msgc(magr, mdef, cr_hit),
+              "%s suddenly seems weaker!", Monnam(mdef));
+
+    int hp_loss = min(mdef->mhpmax - 1, rnd(8));
+    mdef->mhpmax -= hp_loss;
+    mdef->mhp -= min(mdef->mhp - 1, hp_loss);
+
+    int pw_loss = min(mdef->pwmax, mon_pw_gain(mdef));
+    mdef->pwmax -= pw_loss;
+    mdef->pw -= min(mdef->pw, pw_loss);
+
+    mdef->m_lev--;
 }
 
 /*
@@ -247,8 +301,8 @@ pluslvl(boolean incr)
             rn1((int)ACURR(A_WIS) / 2 + urole.enadv.hirnd + urace.enadv.hirnd,
                 urole.enadv.hifix + urace.enadv.hifix);
     num = enermod(num); /* M. Stephenson */
-    u.uenmax += num;
-    u.uen += num;
+    youmonst.pwmax += num;
+    youmonst.pw += num;
     if (u.ulevel < MAXULEV) {
         if (incr) {
             long tmp = newuexp(u.ulevel + 1);
@@ -299,5 +353,150 @@ rndexp(boolean gaining)
     return result;
 }
 
-/*exper.c*/
+/* Gives monster appropriate Pw for its level.
+   Yes, a monster at XL0 has 0 Pw. */
+void
+initialize_mon_pw(struct monst *mon)
+{
+    int xl = mon->m_lev;
+    int pw_gain = 0;
+    while (xl--) {
+        pw_gain = mon_pw_gain(mon);
+        mon->pw += pw_gain;
+        mon->pwmax += pw_gain;
+    }
+}
 
+/* Returns an energy gain (or loss) for when a monster gains or loses
+   a level. Player equavilents:
+   potential is generally wis/2 + 1, but can be + 2 for casting roles,
+   might be different based on a special level cutoff value.
+   min is the same as below (except no M3_SPELLCASTER/nymph/iswiz case) */
+static int
+mon_pw_gain(const struct monst *mon)
+{
+    int potential, min, res;
+    potential = acurr(mon, A_WIS) / 2;
+    potential++;
+    if (mon->data->mflags3 & M3_SPELLCASTER)
+        potential++;
+
+    min = 1;
+
+    if (is_dwarf(mon->data))
+        min = 0;
+    else if (is_human(mon->data) || is_gnome(mon->data) ||
+             (mon->data->mflags3 & M3_SPELLCASTER) ||
+             mon->data->mlet == S_NYMPH)
+        min = 2;
+    else if (is_elf(mon->data) || mon->iswiz ||
+             mon->data->mlet == S_DRAGON)
+        min = 3;
+
+    res += rn1(potential, min);
+    res = menermod(mon, res);
+    return res;
+}
+
+const struct permonst *
+grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
+        struct monst *victim)
+{
+    int oldtype, newtype, max_increase, cur_increase, lev_limit, hp_threshold;
+    const struct permonst *ptr = mtmp->data;
+
+    /* monster died after killing enemy but before calling this function */
+    /* currently possible if killing a gas spore */
+    if (DEADMONSTER(mtmp))
+        return NULL;
+
+    /* note: none of the monsters with special hit point calculations have both
+       little and big forms */
+    oldtype = monsndx(ptr);
+    newtype = little_to_big(oldtype);
+    if (newtype == PM_PRIEST && mtmp->female)
+        newtype = PM_PRIESTESS;
+
+    /* growth limits differ depending on method of advancement */
+    if (victim) {       /* killed a monster */
+        /*
+         * The HP threshold is the maximum number of hit points for the
+         * current level; once exceeded, a level will be gained.
+         * Possible bug: if somehow the hit points are already higher
+         * than that, monster will gain a level without any increase in HP.
+         */
+        hp_threshold = mtmp->m_lev * 8; /* normal limit */
+        if (!mtmp->m_lev)
+            hp_threshold = 4;
+        else if (is_golem(ptr)) /* strange creatures */
+            hp_threshold = ((mtmp->mhpmax / 10) + 1) * 10 - 1;
+        else if (is_home_elemental(&mtmp->dlevel->z, ptr))
+            hp_threshold *= 3;
+        lev_limit = 3 * (int)ptr->mlevel / 2;   /* same as adj_lev() */
+        /* If they can grow up, be sure the level is high enough for that */
+        if (oldtype != newtype && mons[newtype].mlevel > lev_limit)
+            lev_limit = (int)mons[newtype].mlevel;
+        /* number of hit points to gain; unlike for the player, we put the
+           limit at the bottom of the next level rather than the top */
+        max_increase = rnd((int)victim->m_lev + 1);
+        if (mtmp->mhpmax + max_increase > hp_threshold + 1)
+            max_increase = max((hp_threshold + 1) - mtmp->mhpmax, 0);
+        cur_increase = (max_increase > 1) ? rn2(max_increase) : 0;
+    } else {
+        /* a gain level potion or wraith corpse; always go up a level unless
+           already at maximum (49 is hard upper limit except for demon lords,
+           who start at 50 and can't go any higher) */
+        max_increase = cur_increase = rnd(8);
+        hp_threshold = 0;       /* smaller than `mhpmax + max_increase' */
+        lev_limit = 50; /* recalc below */
+    }
+
+    mtmp->mhpmax += max_increase;
+    mtmp->mhp += cur_increase;
+    if (mtmp->mhpmax <= hp_threshold)
+        return ptr;     /* doesn't gain a level */
+
+    if (is_mplayer(ptr))
+        lev_limit = 30; /* same as player */
+    else if (lev_limit < 5)
+        lev_limit = 5;  /* arbitrary */
+    else if (lev_limit > 49)
+        lev_limit = (ptr->mlevel > 49 ? 50 : 49);
+
+    if ((int)++mtmp->m_lev >= mons[newtype].mlevel && newtype != oldtype) {
+        ptr = &mons[newtype];
+        if (mvitals[newtype].mvflags & G_GENOD) {       /* allow G_EXTINCT */
+            if (sensemon(mtmp))
+                pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                      "As %s grows up into %s, %s %s!", mon_nam(mtmp),
+                      an(ptr->mname), mhe(mtmp),
+                      nonliving(ptr) ? "expires" : "dies");
+            set_mon_data(mtmp, ptr);        /* keep mvitals[] accurate */
+            mondied(mtmp);
+            return NULL;
+        }
+        set_mon_data(mtmp, ptr);      /* preserve intrinsics */
+        if (mtmp->dlevel == level)
+            newsym(mtmp->mx, mtmp->my);     /* color may change */
+        lev_limit = (int)mtmp->m_lev;   /* never undo increment */
+
+        int pw_gain = mon_pw_gain(mtmp);
+        mtmp->pw += pw_gain;
+        mtmp->pwmax += pw_gain;
+    }
+    /* sanity checks */
+    if ((int)mtmp->m_lev > lev_limit) {
+        mtmp->m_lev--;  /* undo increment */
+        /* HP might have been allowed to grow when it shouldn't */
+        if (mtmp->mhpmax == hp_threshold + 1)
+            mtmp->mhpmax--;
+    }
+    if (mtmp->mhpmax > 50 * 8)
+        mtmp->mhpmax = 50 * 8;  /* absolute limit */
+    if (mtmp->mhp > mtmp->mhpmax)
+        mtmp->mhp = mtmp->mhpmax;
+
+    return ptr;
+}
+
+/*exper.c*/

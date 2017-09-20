@@ -386,21 +386,9 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         if (nonliving(mtmp->data) ||
                             is_demon(mtmp->data) ||
                             resists_magm(mtmp) ||
-                            raylevel == P_UNSKILLED) {
-                            /* monster is deathresistant or raylevel==unskilled,
-                               since monster apparently failed to resist earlier,
-                               monster must be vulnerable to drli */
-                            /* FIXME: make a generic losexp() for monsters */
-                            mdam = dice(2, 6);
-                            if (cansee(i + x - 1, j + y - 1))
-                                pline(combat_msgc(NULL, mtmp, cr_hit),
-                                      "%s suddenly seems weaker!", Monnam(mtmp));
-                            mtmp->mhpmax -= mdam;
-                            if (mtmp->m_lev == 0)
-                                mdam = mtmp->mhp;
-                            else
-                                mtmp->m_lev--;
-                        } else
+                            raylevel == P_UNSKILLED)
+                            mlosexp(NULL, mtmp, "", FALSE);
+                        else
                             mdam = mtmp->mhp; /* instadeath */
                     }
                     mtmp->mhp -= mdam;

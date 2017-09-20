@@ -536,21 +536,12 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             if (hityou || canseemon(mdef))
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "%sn't drained.", M_verbs(mdef, "are"));
-        } else if (hityou)
-            losexp(msgcat_many("drained by %s spell", s_suffix(k_monnam(magr)), NULL),
-                   FALSE);
-        else if (!resist(magr, mdef, otmp->oclass, TELL, bcsign(otmp))) {
-            mdef->mhp -= dmg;
-            mdef->mhpmax -= dmg;
-            if (mdef->mhp <= 0 || mdef->mhpmax <= 0 || mdef->m_lev < 1)
-                monkilled(magr, mdef, "", AD_DRLI);
-            else {
-                mdef->m_lev--;
-                if (canseemon(mdef))
-                    pline(combat_msgc(&youmonst, mdef, cr_hit),
-                          "%s suddenly seems weaker!", Monnam(mdef));
-            }
-        }
+        } else if (hityou ||
+                   !resist(magr, mdef, otmp->oclass, TELL,
+                           bcsign(otmp)))
+            mlosexp(magr, mdef,
+                    msgprintf("drained by %s spell",
+                              s_suffix(k_monnam(magr))), FALSE);
         break;
     default:
         impossible("What an interesting effect (%d)", otyp);
@@ -3174,24 +3165,9 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                                   "%s unaffected.", M_verbs(mdef, "are"));
                     }
                     break;
-                } else {
-                    if (you) {
-                        losexp("drained by a wand of death", FALSE);
-                        return;
-                    } else {
-                        tmp = dice(2, 6);
-                        if (oseen)
-                            pline(combat_msgc(magr, mdef, cr_hit),
-                                  "%s suddenly seems weaker!", Monnam(mdef));
-                        mdef->mhpmax -= tmp;
-                        mdef->mhp -= tmp;
-                        if (mdef->m_lev > 0) {
-                            mdef->m_lev--;
-                            return;
-                        }
-                        /* level 0 monsters are killed below */
-                    }
-                }
+                } else
+                    mlosexp(magr, mdef,
+                            "drained by a wand of death", FALSE);
             } else if (selfzap && (you || oseen))
                 pline(combat_msgc(magr, mdef, cr_kill),
                       "%s %sself with pure energy!", M_verbs(mdef, "irradiate"),

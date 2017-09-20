@@ -559,12 +559,12 @@ u_init(microseconds birthday)
 
     u.ulevel = 0;       /* set up some of the initial attributes */
     u.uhp = u.uhpmax = newhp();
-    u.uenmax = urole.enadv.infix + urace.enadv.infix;
+    youmonst.pwmax = urole.enadv.infix + urace.enadv.infix;
     if (urole.enadv.inrnd > 0)
-        u.uenmax += 1 + rolern2(urole.enadv.inrnd);
+        youmonst.pwmax += 1 + rolern2(urole.enadv.inrnd);
     if (urace.enadv.inrnd > 0)
-        u.uenmax += 1 + racern2(urace.enadv.inrnd);
-    u.uen = u.uenmax;
+        youmonst.pwmax += 1 + racern2(urace.enadv.inrnd);
+    youmonst.pw = youmonst.pwmax;
     adjabil(0, 1);
     u.ulevel = u.ulevelmax = 1;
 

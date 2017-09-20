@@ -962,19 +962,19 @@ magicbane_hit(struct monst *magr,   /* attacker */
             if (youdefend) {
                 if (youmonst.data != old_uasmon)
                     *dmgptr = 0;        /* rehumanized, so no more damage */
-                if (u.uenmax > 0) {
+                if (youmonst.pwmax > 0) {
                     pline(msgc_intrloss, "You lose magical energy!");
-                    u.uenmax--;
-                    if (u.uen > 0)
-                        u.uen--;
+                    youmonst.pwmax--;
+                    if (youmonst.pw > 0)
+                        youmonst.pw--;
                 }
             } else {
                 if (mdef->data == &mons[PM_CLAY_GOLEM])
                     mdef->mhp = 1;      /* cancelled clay golems will die */
                 if (youattack && spellcaster(mdef->data)) {
                     pline(msgc_intrgain, "You absorb magical energy!");
-                    u.uenmax++;
-                    u.uen++;
+                    youmonst.pwmax++;
+                    youmonst.pw++;
                 }
             }
         }
@@ -1517,15 +1517,15 @@ arti_invoke(struct obj *obj)
                 break;
             }
         case ENERGY_BOOST:{
-                int epboost = (u.uenmax + 1 - u.uen) / 2;
+                int epboost = (youmonst.pwmax + 1 - youmonst.pw) / 2;
 
                 if (epboost > 120)
                     epboost = 120;      /* arbitrary */
                 else if (epboost < 12)
-                    epboost = u.uenmax - u.uen;
+                    epboost = youmonst.pwmax - youmonst.pw;
                 if (epboost) {
                     pline(msgc_statusgood, "You feel re-energized.");
-                    u.uen += epboost;
+                    youmonst.pw += epboost;
                 } else
                     goto nothing_special;
                 break;

@@ -2177,11 +2177,11 @@ doseduce(struct monst *mon)
         switch (rn2_on_rng(5, rng_foocubus_results)) {
         case 0:
             pline(msgc_intrloss, "You feel drained of energy.");
-            u.uen = 0;
-            u.uenmax -= rnd(Half_physical_damage ? 5 : 10);
+            youmonst.pw = 0;
+            youmonst.pwmax -= rnd(Half_physical_damage ? 5 : 10);
             exercise(A_CON, FALSE);
-            if (u.uenmax < 0)
-                u.uenmax = 0;
+            if (youmonst.pwmax < 0)
+                youmonst.pwmax = 0;
             break;
         case 1:
             pline(msgc_statusbad, "You are down in the dumps.");
@@ -2226,7 +2226,7 @@ doseduce(struct monst *mon)
         case 0:
             pline(msgc_intrgain, "You feel raised to your full potential.");
             exercise(A_CON, TRUE);
-            u.uen = (u.uenmax += rnd(5));
+            youmonst.pw = (youmonst.pwmax += rnd(5));
             break;
         case 1:
             pline(msgc_statusgood, "You feel good enough to do it again.");

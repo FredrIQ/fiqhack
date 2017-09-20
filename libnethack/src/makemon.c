@@ -983,6 +983,8 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
             mtmp->mhpmax = (mtmp->mhp *= 3);
     }
 
+    initialize_mon_pw(mtmp);
+
     mtmp->female = rn2_on_rng(2, stats_rng);
     if (is_female(ptr))
         mtmp->female = TRUE;
@@ -1695,105 +1697,6 @@ adj_lev(const d_level * dlev, const struct permonst *ptr)
     return (tmp > tmp2) ? tmp2 : (tmp > 0 ? tmp : 0);   /* 0 lower limit */
 }
 
-
-const struct permonst *
-grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
-        struct monst *victim)
-{
-    int oldtype, newtype, max_increase, cur_increase, lev_limit, hp_threshold;
-    const struct permonst *ptr = mtmp->data;
-
-    /* monster died after killing enemy but before calling this function */
-    /* currently possible if killing a gas spore */
-    if (DEADMONSTER(mtmp))
-        return NULL;
-
-    /* note: none of the monsters with special hit point calculations have both
-       little and big forms */
-    oldtype = monsndx(ptr);
-    newtype = little_to_big(oldtype);
-    if (newtype == PM_PRIEST && mtmp->female)
-        newtype = PM_PRIESTESS;
-
-    /* growth limits differ depending on method of advancement */
-    if (victim) {       /* killed a monster */
-        /*
-         * The HP threshold is the maximum number of hit points for the
-         * current level; once exceeded, a level will be gained.
-         * Possible bug: if somehow the hit points are already higher
-         * than that, monster will gain a level without any increase in HP.
-         */
-        hp_threshold = mtmp->m_lev * 8; /* normal limit */
-        if (!mtmp->m_lev)
-            hp_threshold = 4;
-        else if (is_golem(ptr)) /* strange creatures */
-            hp_threshold = ((mtmp->mhpmax / 10) + 1) * 10 - 1;
-        else if (is_home_elemental(&mtmp->dlevel->z, ptr))
-            hp_threshold *= 3;
-        lev_limit = 3 * (int)ptr->mlevel / 2;   /* same as adj_lev() */
-        /* If they can grow up, be sure the level is high enough for that */
-        if (oldtype != newtype && mons[newtype].mlevel > lev_limit)
-            lev_limit = (int)mons[newtype].mlevel;
-        /* number of hit points to gain; unlike for the player, we put the
-           limit at the bottom of the next level rather than the top */
-        max_increase = rnd((int)victim->m_lev + 1);
-        if (mtmp->mhpmax + max_increase > hp_threshold + 1)
-            max_increase = max((hp_threshold + 1) - mtmp->mhpmax, 0);
-        cur_increase = (max_increase > 1) ? rn2(max_increase) : 0;
-    } else {
-        /* a gain level potion or wraith corpse; always go up a level unless
-           already at maximum (49 is hard upper limit except for demon lords,
-           who start at 50 and can't go any higher) */
-        max_increase = cur_increase = rnd(8);
-        hp_threshold = 0;       /* smaller than `mhpmax + max_increase' */
-        lev_limit = 50; /* recalc below */
-    }
-
-    mtmp->mhpmax += max_increase;
-    mtmp->mhp += cur_increase;
-    if (mtmp->mhpmax <= hp_threshold)
-        return ptr;     /* doesn't gain a level */
-
-    if (is_mplayer(ptr))
-        lev_limit = 30; /* same as player */
-    else if (lev_limit < 5)
-        lev_limit = 5;  /* arbitrary */
-    else if (lev_limit > 49)
-        lev_limit = (ptr->mlevel > 49 ? 50 : 49);
-
-    if ((int)++mtmp->m_lev >= mons[newtype].mlevel && newtype != oldtype) {
-        ptr = &mons[newtype];
-        if (mvitals[newtype].mvflags & G_GENOD) {       /* allow G_EXTINCT */
-            if (sensemon(mtmp))
-                pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
-                      "As %s grows up into %s, %s %s!", mon_nam(mtmp),
-                      an(ptr->mname), mhe(mtmp),
-                      nonliving(ptr) ? "expires" : "dies");
-            set_mon_data(mtmp, ptr);        /* keep mvitals[] accurate */
-            mondied(mtmp);
-            return NULL;
-        }
-        set_mon_data(mtmp, ptr);      /* preserve intrinsics */
-        if (mtmp->dlevel == level)
-            newsym(mtmp->mx, mtmp->my);     /* color may change */
-        lev_limit = (int)mtmp->m_lev;   /* never undo increment */
-    }
-    /* sanity checks */
-    if ((int)mtmp->m_lev > lev_limit) {
-        mtmp->m_lev--;  /* undo increment */
-        /* HP might have been allowed to grow when it shouldn't */
-        if (mtmp->mhpmax == hp_threshold + 1)
-            mtmp->mhpmax--;
-    }
-    if (mtmp->mhpmax > 50 * 8)
-        mtmp->mhpmax = 50 * 8;  /* absolute limit */
-    if (mtmp->mhp > mtmp->mhpmax)
-        mtmp->mhp = mtmp->mhpmax;
-
-    return ptr;
-}
-
-
 int
 mongets(struct monst *mtmp, int otyp, enum rng rng)
 {
@@ -2262,9 +2165,11 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         mon->spells_maintained = mread64(mf);
         mon->former_player = mread16(mf);
         mon->mstuck = mread32(mf);
+        mon->pw = mread32(mf);
+        mon->pwmax = mread32(mf);
 
         /* Some reserved space for further expansion */
-        for (i = 0; i < 194; i++)
+        for (i = 0; i < 186; i++)
             (void) mread8(mf);
     }
 
@@ -2554,8 +2459,10 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite64(mf, mon->spells_maintained);
     mwrite16(mf, mon->former_player);
     mwrite32(mf, mon->mstuck);
+    mwrite32(mf, mon->pw);
+    mwrite32(mf, mon->pwmax);
 
-    for (i = 0; i < 194; i++)
+    for (i = 0; i < 186; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */

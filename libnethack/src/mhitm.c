@@ -1643,18 +1643,12 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     } case AD_DRLI:
-        if (!cancelled(magr) && !rn2(3) && !resists_drli(mdef)) {
-            tmp = dice(2, 6);
-            if (vis)
-                pline(combat_msgc(magr, mdef, cr_hit),
-                      "%s suddenly seems weaker!", Monnam(mdef));
-            mdef->mhpmax -= tmp;
-            if (mdef->m_lev == 0)
-                tmp = mdef->mhp;
-            else
-                mdef->m_lev--;
-            /* Automatic kill if drained past level 0 */
-        }
+        if (!cancelled(magr) && !rn2(3) && !resists_drli(mdef))
+            mlosexp(magr, mdef, NULL, FALSE);
+
+        if (DEADMONSTER(mdef))
+            return attack_result(magr, mdef);
+
         break;
     case AD_SSEX:
     case AD_SITM:      /* for now these are the same */
