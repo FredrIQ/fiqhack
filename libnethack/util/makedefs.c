@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2017-07-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -958,9 +958,6 @@ do_permonst(const char *outfile)
 
     fprintf(ofp, "%s", Dont_Edit_Code);
     fprintf(ofp, "#ifndef PM_H\n#define PM_H\n");
-
-    if (strcmp(mons[0].mname, "playermon") != 0)
-        fprintf(ofp, "\n#define\tPM_PLAYERMON\t(-1)");
 
     for (i = 0; mons[i].mlet; i++) {
         fprintf(ofp, "\n#define\tPM_");

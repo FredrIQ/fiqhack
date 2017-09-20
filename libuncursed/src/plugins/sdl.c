@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-28 */
+/* Last modified by Alex Smith, 2017-09-01 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -30,8 +30,8 @@
 #include "uncursed_sdl.h"
 
 #ifdef AIMAKE_BUILDOS_MSWin32
-# include <Winsock2.h>
-# include <Ws2def.h>
+# include <winsock2.h>
+# include <ws2def.h>
 #else
 # include <sys/select.h>
 #endif
@@ -77,6 +77,8 @@ static fd_set monitored_fds;
 static int monitored_fds_count_or_max;
 
 static int debug = 0;
+
+static int getkeyorcodepoint_inner(int, int *);
 
 /* force the minimum size as 80x24; many programs don't function properly with
    less than that */
@@ -798,8 +800,24 @@ drain_userevents(void)
 }
 
 #define TEXTEDITING_FILTER_TIME 2       /* milliseconds */
+
 int
 sdl_hook_getkeyorcodepoint(int timeout_ms)
+{
+    /* Screen redrawing causes major lag (TODO: figure out why).
+       To avoid snowballing lag resulting by queueing up
+       WINDOWEVENT_EXPOSED (what causes redraws) cases,
+       only redraw once for every X events queued up. */
+    int redraw = 0;
+    int ret = getkeyorcodepoint_inner(timeout_ms, &redraw);
+    if (redraw)
+        sdl_hook_fullredraw();
+
+    return ret;
+}
+
+static int
+getkeyorcodepoint_inner(int timeout_ms, int *redraw)
 {
     long tick_target = SDL_GetTicks() + timeout_ms;
     long key_tick_target = -1;
@@ -809,6 +827,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
     if (hangup_mode)
         return KEY_HANGUP + KEY_BIAS;
 
+    *redraw = 0;
     in_getkeyorcodepoint = 1;
 
     do {
@@ -876,7 +895,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
                 resized_recently = 1;
 
             if (e.window.event == SDL_WINDOWEVENT_EXPOSED)
-                sdl_hook_fullredraw();
+                *redraw = 1;
 
             if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
                 hangup_mode = 1;
@@ -1542,7 +1561,6 @@ sdl_hook_fullredraw(void)
                            .w = fontwidth * winwidth,
                            .h = fontheight * winheight
                        });
-    sdl_hook_flush();
 
     for (j = 0; j < winheight; j++)
         for (i = 0; i < winwidth; i++)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2017-07-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -81,7 +81,7 @@ extern const struct permonst mons[];    /* the master list of monster types */
 # define FAST_SPEED 15
 # define VERY_FAST 24
 
-# define NON_PM     PM_PLAYERMON      /* "not a monster" */
+# define NON_PM     (-1)              /* "not a monster" */
 # define LOW_PM     (NON_PM+1)        /* first monster in mons[] */
 # define SPECIAL_PM PM_LONG_WORM_TAIL /* [normal] < ~ < [special] */
         /* mons[SPECIAL_PM] through mons[NUMMONS-1], inclusive, are never
