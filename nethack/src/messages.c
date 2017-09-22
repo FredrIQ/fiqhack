@@ -239,12 +239,12 @@ resolve_channel_color(enum msg_channel msgc)
     else
         chcolor = channel_color[msgc];
 
-    if (!settings.msgcolor) {
+    if (settings.msgcolor != MC_FULL) {
         /* make the color gray */
         chcolor &= ~0xFF;
-        if (settings.msgfading == MF_BLANK)
+        if (settings.msgcolor == MC_GRAY)
             chcolor |= CLR_GRAY;
-        else
+        else if (settings.msgcolor == MC_WHITE)
             chcolor |= CLR_WHITE;
     }
 
@@ -282,7 +282,7 @@ show_msgwin_core(enum moreforce more, WINDOW *win,
         wattrset(win, curses_color_attr(
                      (!chunk->seen || win != msgwin ||
                       settings.msgfading == MF_DONTCHANGE) ? color :
-                     !settings.msgcolor ? CLR_GRAY :
+                     settings.msgcolor == MC_WHITE ? CLR_GRAY :
                      color == CLR_GRAY || color == CLR_WHITE ?
                      CLR_DARK_GRAY : color & 7, 0));
         if (chunk->x < winwidth)

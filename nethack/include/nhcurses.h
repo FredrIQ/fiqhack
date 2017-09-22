@@ -265,6 +265,12 @@ enum nh_menupaging {
     MP_PAGES,
 };
 
+enum nh_msgcolor {
+    MC_FULL,
+    MC_GRAY,
+    MC_WHITE,
+};
+
 enum nh_msgfading {
     MF_FADE,
     MF_BLANK,
@@ -289,6 +295,7 @@ struct settings {
     enum nh_animation animation;     /* when to delay */
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
+    enum nh_msgcolor msgcolor; /* color messages based on context */
     enum nh_msgfading msgfading;
     enum prevmsg_style msg_window;
     enum nh_frame whichframes;
@@ -308,7 +315,6 @@ struct settings {
     nh_bool showexp;    /* show experience points */
     nh_bool use_inverse;        /* use inverse video for some things */
     nh_bool invweight;  /* show item weight in the inventory */
-    nh_bool msgcolor;   /* color messages depending on context */
     nh_bool bgbranding; /* show hidden traps/stairs with background */
     nh_bool floorcolor; /* draw stepped-on information for the floor */
     nh_bool status3;    /* draw 3 line status */

@@ -79,6 +79,14 @@ static struct nh_listitem menupaging_list[] = {
 static struct nh_enum_option menupaging_spec =
     { menupaging_list, listlen(menupaging_list) };
 
+static struct nh_listitem msgcolor_list[] = {
+    {MC_FULL, "full"},
+    {MC_GRAY, "gray"},
+    {MC_WHITE, "white"},
+};
+static struct nh_enum_option msgcolor_spec =
+    { msgcolor_list, listlen(msgcolor_list) };
+
 static struct nh_listitem msgfading_list[] = {
     {MF_FADE, "fade"},
     {MF_BLANK, "blank"},
@@ -191,7 +199,7 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MP_LINES}},
     {"msgcolor", "Screen Layout",
      "color messages depending on context",
-     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = MC_FULL}},
     {"msgfading", "Screen Layout",
      "how to display old messages",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MF_FADE}},
@@ -252,7 +260,6 @@ static struct nhlib_boolopt_map boolopt_map[] = {
     {"darkgray", &settings.darkgray},
     {"extmenu", &settings.extmenu},
     {"invweight", &settings.invweight},
-    {"msgcolor", &settings.msgcolor},
     {"mouse", &settings.mouse},
     {"prompt_inline", &settings.prompt_inline},
     {"scores_own", &settings.end_own},
@@ -403,6 +410,8 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.show_motd = option->value.e;
     } else if (!strcmp(option->name, "menupaging")) {
         settings.menupaging = option->value.e;
+    } else if (!strcmp(option->name, "msgcolor")) {
+        settings.msgcolor = option->value.e;
     } else if (!strcmp(option->name, "msgfading")) {
         settings.msgfading = option->value.e;
     } else if (!strcmp(option->name, "msg_window")) {
@@ -455,6 +464,7 @@ init_options(void)
     find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
     find_option("menupaging")->e = menupaging_spec;
+    find_option("msgcolor")->e = msgcolor_spec;
     find_option("msgfading")->e = msgfading_spec;
     find_option("msg_window")->e = msg_window_spec;
     find_option("palette")->e = palette_spec;
