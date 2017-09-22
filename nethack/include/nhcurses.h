@@ -265,6 +265,12 @@ enum nh_menupaging {
     MP_PAGES,
 };
 
+enum nh_msgfading {
+    MF_FADE,
+    MF_BLANK,
+    MF_DONTCHANGE,
+};
+
 enum nh_frame {
     FRAME_ALL,
     FRAME_MENUS,
@@ -283,6 +289,7 @@ struct settings {
     enum nh_animation animation;     /* when to delay */
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
+    enum nh_msgfading msgfading;
     enum prevmsg_style msg_window;
     enum nh_frame whichframes;
     enum nh_palette palette;         /* palette to use for text */
