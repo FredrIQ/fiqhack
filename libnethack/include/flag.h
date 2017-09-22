@@ -287,7 +287,7 @@ struct flag {
     int pickup_burden;  /* maximum burden before prompt */
     int recently_broken_otyp;   /* object that broke recently */
     unsigned save_revision; /* save versioning to maintain save compatibility */
-# define SAVE_REVISION 5
+# define SAVE_REVISION 6
 
     /* Weird-sized structures */
     struct nh_autopickup_rules *ap_rules;

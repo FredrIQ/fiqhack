@@ -120,7 +120,6 @@ struct obj {
     union {
         int corpsenm;           /* type of corpse is mons[corpsenm] */
         int leashmon;           /* gets m_id of attached pet */
-        int spestudied;         /* # of times a spellbook has been studied */
         int fromsink;           /* a potion from a sink */
         int lastused;           /* last time a tool was used */
     };

@@ -10,9 +10,8 @@
 #define SPELLMENU_VIEW (-2)
 #define SPELLMENU_QUIVER (-1)
 
-#define KEEN 20000
-#define PERMA 30000
-#define MAX_SPELL_STUDY 3
+#define KEEN 60000
+#define PERMA -1
 #define incrnknow(spell)        spl_book[spell].sp_know = KEEN
 #define permaknow(spell)        spl_book[spell].sp_know = PERMA
 
@@ -476,19 +475,16 @@ learn(void)
                         "\"%s\"" : "the \"%s\" spell",
                         OBJ_NAME(objects[booktype]));
 
-    if (u.utracked[tos_book]->spestudied > MAX_SPELL_STUDY) {
-        pline(msgc_failcurse,
-              "This spellbook is too faint to be read any more.");
-        u.utracked[tos_book]->otyp = booktype = SPE_BLANK_PAPER;
-    } else if (learn_spell(booktype, TRUE, FALSE)) {
-        u.utracked[tos_book]->spestudied++;
-        exercise(A_WIS, TRUE);
-    } else
-        costly = FALSE;
+    if (learn_spell(booktype, TRUE, FALSE)) {
+        pline(msgc_actionok, "The spellbook disappears.");
+        if (!u.utracked[tos_book])
+            impossible("Spellbook already gone?");
+        else {
+            obj_extract_self(u.utracked[tos_book]);
+            obfree(u.utracked[tos_book], NULL);
+        }
+    }
 
-    if (costly)
-        check_unpaid(u.utracked[tos_book]);
-    u.utracked[tos_book] = 0;
     return 0;
 }
 
@@ -516,8 +512,8 @@ learn_spell(int spell, boolean from_book, boolean perma)
             }
 
             incrnknow(i);
-            pline(msgc_actionok, "Your knowledge of %s is keener.", spellname(i));
-            makeknown(spell);
+            pline(msgc_actionok, "Your knowledge of %s is keener,",
+                  spellname(i));
             return TRUE;
         } else if (spellid(i) == NO_SPELL &&
                    (i < first_unknown ||
@@ -678,15 +674,6 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
     mon->mfrozen = min(delay, 5);
     mon->mcanmove = !mon->mfrozen; /* in case delay is 0 */
 
-    if (spellbook->spestudied > MAX_SPELL_STUDY) {
-        if (vis)
-            pline(msgc_itemloss,
-                  "But %s book is too faint to be read any more.",
-                  s_suffix(mon_nam(mon)));
-        spellbook->otyp = SPE_BLANK_PAPER;
-        return -1;
-    }
-
     if (vis) {
         if (mon->mspells)
             pline(msgc_monneutral,
@@ -694,9 +681,10 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
                   Monnam(mon), mhis(mon));
         else
             pline(msgc_monneutral, "%s learns a spell!", Monnam(mon));
+        pline(msgc_monneutral, "The spellbook disappears.");
     }
 
-    spellbook->spestudied++;
+    obfree(spellbook, NULL);
     return mon_addspell(mon, booktype);
 }
 

@@ -454,6 +454,9 @@ restore_spellbook(struct memfile *mf)
         spl_book[i].sp_lev = mread8(mf);
         if (flags.save_revision > 2)
             spl_book[i].sp_key = mread32(mf);
+        if (flags.save_revision < 6 &&
+            spl_book[i].sp_know == 30000)
+            spl_book[i].sp_know = -1; /* new perma number */
     }
 }
 

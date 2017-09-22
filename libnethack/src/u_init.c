@@ -127,7 +127,7 @@ static const struct trobj Priest[] = {
     {POT_WATER, 0, POTION_CLASS, 4, 1}, /* holy water */
     {CLOVE_OF_GARLIC, 0, FOOD_CLASS, 1, 0},
     {SPRIG_OF_WOLFSBANE, 0, FOOD_CLASS, 1, 0},
-    {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 2, UNDEF_BLESS},
+    {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 2, 1},
     {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
@@ -1042,10 +1042,8 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
             else if (!uswapwep)
                 setuswapwep(obj);
         }
-        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER) {
+        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER)
             gotspell[obj->otyp] = 1;
-            initialspell(obj);
-        }
 
         if (--trquan)
             continue;   /* make a similar object */

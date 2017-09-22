@@ -1505,8 +1505,6 @@ poly_obj(struct obj *obj, int id)
     case SPBOOK_CLASS:
         while (otmp->otyp == SPE_POLYMORPH)
             otmp->otyp = rnd_class(SPE_DIG, SPE_BLANK_PAPER, rng);
-        /* reduce spellbook abuse */
-        otmp->spestudied = obj->spestudied + 1;
         break;
 
     case RING_CLASS:
