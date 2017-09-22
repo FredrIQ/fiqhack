@@ -100,7 +100,7 @@ vpline(enum msg_channel msgc, boolean norepeat,
             &menu, "doing when this dialogue box came up.");
         add_menutext(&menu, "");
         add_menutext(
-            &menu, "Thank you for beta-testing NetHack 4!");
+            &menu, "Thank you for beta-testing FIQHack!");
         display_menu(&menu, "A Message from the NetHack 4 Developers",
                      PICK_NONE, PLHINT_ANYWHERE, NULL);
         msgc = msgc_nospoil;

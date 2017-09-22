@@ -64,7 +64,7 @@ Build Instructions
 Dependencies
 ------------
 
-To build FIQhack, you need make, zlib (which is probably already installed),
+To build FIQHack, you need make, zlib (which is probably already installed),
 libjansson (http://www.digip.org/jansson -- shipped with this source), and
 its development branch. You will also need `bison` and `flex`, as well as
 a C compiler (gcc or clang will both work).

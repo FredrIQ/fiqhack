@@ -262,7 +262,7 @@ game_ended(int status, fnchar *filename, nh_bool net)
         curses_raw_print("Error: Could not find the save file.");
         return;
     case ERR_BAD_FILE:
-        curses_raw_print("Error: This does not look like a NetHack 4 save "
+        curses_raw_print("Error: This does not look like a FIQHack save "
                          "file.");
         return;
     case ERR_IN_PROGRESS:
@@ -276,7 +276,7 @@ game_ended(int status, fnchar *filename, nh_bool net)
             curses_raw_print("Please contact the server administrator.");
         else
             curses_raw_print("If you cannot recover it yourself, contact "
-                             "the NetHack 4 developers for advice.");
+                             "the FIQHack developers for advice.");
         return;
     case ERR_RECOVER_REFUSED:
         /* The user has declined recovery, so we've already had a message

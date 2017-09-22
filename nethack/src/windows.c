@@ -395,7 +395,7 @@ init_curses_ui(const char *dataprefix)
     /* set up the default system locale by reading the environment variables */
     setlocale(LC_ALL, "");
 
-    uncursed_set_title("NetHack 4");
+    uncursed_set_title("FIQHack");
 
     if (!initscr()) {
         fprintf(stderr, "Could not initialise the UI.\n");
@@ -421,7 +421,7 @@ init_curses_ui(const char *dataprefix)
 
     while (LINES < ROWNO + 3 || COLS < COLNO + 1) {
         werase(stdscr);
-        mvprintw(0, 0, "Your terminal is too small for NetHack 4.\n");
+        mvprintw(0, 0, "Your terminal is too small for FIQHack.\n");
         printw("Current size: (%d, %d)\n", COLS, LINES);
         printw("Minimum size: (%d, %d)\n", COLNO + 1, ROWNO + 3);
         printw("Size your terminal larger, or press 'q' to quit.\n");
