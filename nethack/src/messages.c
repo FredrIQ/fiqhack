@@ -242,7 +242,10 @@ resolve_channel_color(enum msg_channel msgc)
     if (!settings.msgcolor) {
         /* make the color gray */
         chcolor &= ~0xFF;
-        chcolor |= CLR_WHITE;
+        if (settings.msgfading == MF_BLANK)
+            chcolor |= CLR_GRAY;
+        else
+            chcolor |= CLR_WHITE;
     }
 
     if (!chcolor)
