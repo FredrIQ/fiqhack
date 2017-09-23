@@ -514,9 +514,15 @@ mdiffwritecmd(struct memfile *mf, struct mdiff_command_instance *mdci)
                 mdiff_command_sizes[mdci->command].name,
                 (int_least64_t)mdci->arg1, (uint_least64_t)mdci->arg2);
 
-        i = usedbytes*8;
+        i = (usedbytes - splitbytes) * 8;
         while (i--) {
             fprintf(debuglog, "%d", (int)(1 & (encoding >> i)));
+            if (i && !(i%8))
+                fprintf(debuglog, " ");
+        }
+        i = splitbytes * 8;
+        while (i--) {
+            fprintf(debuglog, "%d", (int)(1 & (arg1_2c >> i)));
             if (i && !(i%8))
                 fprintf(debuglog, " ");
         }

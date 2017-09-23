@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
+/* Last modified by Alex Smith, 2017-06-29 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -212,7 +212,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
         return attack_status;
     }
 
-    i = -inv_weight();
+    i = -inv_weight_over_cap();
     j = weight_cap();
 
     if (i < (j * 3) / 10) {
@@ -823,7 +823,7 @@ dokick(const struct nh_cmd_arg *arg)
         if (Is_airlevel(&u.uz) || Levitation) {
             int range;
 
-            range = ((int)youmonst.data->cwt + (weight_cap() + inv_weight()));
+            range = ((int)youmonst.data->cwt + inv_weight_total());
             if (range < 1)
                 range = 1;      /* divide by zero avoidance */
             range = (3 * (int)mdat->cwt) / range;

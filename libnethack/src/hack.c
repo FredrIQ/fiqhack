@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-13 */
+/* Last modified by Alex Smith, 2017-06-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -898,7 +898,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                 pline(msgc_cancelled, "Your body is too large to fit through.");
             return FALSE;
         }
-        if (invent && (inv_weight() + weight_cap() > 600)) {
+        if (invent && (inv_weight_total() > 600)) {
             if (mode == DO_MOVE)
                 pline(msgc_cancelled,
                       "You are carrying too much to get through.");
@@ -945,7 +945,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
     /* Can we be blocked by a boulder? */
     if (!throws_rocks(youmonst.data) &&
         !(verysmall(youmonst.data) && !u.usteed) &&
-        !((!invent || inv_weight() <= -850) && !u.usteed)) {
+        !((!invent || inv_weight_over_cap() <= -850) && !u.usteed)) {
         /* We assume we can move boulders when we're at a distance from them.
            When it comes to actually do the move, resolve_uim() may replace the
            move with a #pushboulder command. If it doesn't, the move fails
@@ -3196,12 +3196,8 @@ weight_cap(void)
     return (int)carrcap;
 }
 
-static int wc;  /* current weight_cap(); valid after call to inv_weight() */
-
-/* returns how far beyond the normal capacity the player is currently. */
-/* inv_weight() is negative if the player is below normal capacity. */
 int
-inv_weight(void)
+inv_weight_total(void)
 {
     struct obj *otmp = invent;
     int wt = 0;
@@ -3213,9 +3209,17 @@ inv_weight(void)
             wt += otmp->owt;
         otmp = otmp->nobj;
     }
-    wc = weight_cap();
-    return wt - wc;
+    return wt;
 }
+
+/* Returns how far beyond the normal capacity the player is currently. Negative
+   if the player is below normal capacity. */
+int
+inv_weight_over_cap(void)
+{
+    return inv_weight_total() - weight_cap();
+}
+
 
 /*
  * Returns 0 if below normal capacity, or the number of "capacity units"
@@ -3224,7 +3228,8 @@ inv_weight(void)
 int
 calc_capacity(int xtra_wt)
 {
-    int cap, wt = inv_weight() + xtra_wt;
+    int wc = weight_cap();
+    int cap, wt = inv_weight_total() + xtra_wt - wc;
 
     if (wt <= 0)
         return UNENCUMBERED;
@@ -3243,9 +3248,9 @@ near_capacity(void)
 int
 max_capacity(void)
 {
-    int wt = inv_weight();
+    int wt = inv_weight_over_cap();
 
-    return wt - (2 * wc);
+    return wt - (2 * weight_cap());
 }
 
 boolean

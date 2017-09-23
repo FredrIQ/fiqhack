@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Alex Smith, 2017-07-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -907,7 +907,7 @@ doattributes(const struct nh_cmd_arg *arg)
     add_menutext(&menu, buf);
 
     wc = weight_cap();
-    buf = msgprintf("%-10s: %ld (", "burden", wc + inv_weight());
+    buf = msgprintf("%-10s: %d (", "burden", inv_weight_total());
 
     switch (calc_capacity(wc / 4)) {
     case UNENCUMBERED:

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Alex Smith, 2017-06-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3516,7 +3516,7 @@ try_disarm(struct trap *ttmp, boolean force_failure, schar dx, schar dy)
     /* duplicate tight-space checks from test_move */
     if (dx && dy && bad_rock(&youmonst, u.ux, ttmp->ty) &&
         bad_rock(&youmonst, ttmp->tx, u.uy)) {
-        if ((invent && (inv_weight() + weight_cap() > 600)) ||
+        if ((invent && (inv_weight_total() > 600)) ||
             bigmonst(youmonst.data)) {
             /* don't allow untrap if they can't get thru to it */
             pline(msgc_cancelled, "You are unable to reach the %s!",
@@ -3803,7 +3803,7 @@ help_monster_out(struct monst *mtmp, struct trap *ttmp)
     }
 
     /* is the monster too heavy? */
-    wt = inv_weight() + mtmp->data->cwt;
+    wt = inv_weight_over_cap() + mtmp->data->cwt;
     if (!try_lift(mtmp, ttmp, wt, FALSE))
         return 1;
 
