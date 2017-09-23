@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1459,7 +1459,9 @@ mon_wants_to_maintain(const struct monst *mon, int spell)
 
     chk_spell(SPE_PROTECTION);
     chk_spell(SPE_HASTE_SELF);
-    chk_spell(SPE_DETECT_MONSTERS);
+    if (mprof(mon, MP_SDIVN) >= P_SKILLED) {
+        chk_spell(SPE_DETECT_MONSTERS);
+    }
     chk_spell(SPE_PHASE);
     chk_spell(SPE_INVISIBILITY);
 #undef chk_spell
