@@ -1165,7 +1165,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (sleep_monst(magr, mdef, rnd(10), -1) && vis)
             pline(udef ? msgc_statusbad :
                   combat_msgc(magr, mdef, cr_hit), "%s put to sleep!",
-                  M_verbs(magr, "are"));
+                  M_verbs(mdef, "are"));
         if (!udef)
             slept_monst(mdef);
         break;
