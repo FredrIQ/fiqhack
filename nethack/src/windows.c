@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -452,7 +452,7 @@ exit_curses_ui(void)
 enum framechars {
     FC_HLINE, FC_VLINE,
     FC_ULCORNER, FC_URCORNER, FC_LLCORNER, FC_LRCORNER,
-    FC_LTEE, FC_RTEE, FC_TTEE, FC_BTEE
+    FC_LTEE, FC_RTEE, FC_TTEE, FC_BTEE, FC_PLUS
 };
 
 static const char ascii_borders[] = {
@@ -460,6 +460,7 @@ static const char ascii_borders[] = {
     [FC_ULCORNER] = '-', [FC_URCORNER] = '-',
     [FC_LLCORNER] = '-', [FC_LRCORNER] = '-',
     [FC_LTEE] = '|', [FC_RTEE] = '|', [FC_TTEE] = '-', [FC_BTEE] = '-',
+    [FC_PLUS] = '+',
 };
 
 /* We can't use an array for this; on Windows, you can't initialize a variable
@@ -479,6 +480,7 @@ unicode_border(enum framechars which)
     case FC_RTEE: return WACS_RTEE;
     case FC_TTEE: return WACS_TTEE;
     case FC_BTEE: return WACS_BTEE;
+    case FC_PLUS: return WACS_PLUS;
     }
     return WACS_CKBOARD; /* should be unreachable */
 }
@@ -573,12 +575,17 @@ nh_mvwaddch(WINDOW *win, int y, int x, enum framechars which)
     mvwadd_wch(win, y, x, &c);
 }
 
-static void
+void
 draw_frame(void)
 {
     int framewidth = !!ui_flags.draw_outer_frame_lines;
     int y = framewidth;
     int x = framewidth;
+    int sidebar_delim = sidebar_delimiter_pos();
+    int connections[LINES+1]; /* for joining up vertical frames */
+    int i;
+    for (i = 0; i < LINES; i++)
+        connections[i] = 0;
 
     if (framewidth) {
         nh_mvwvline(basewin, 0, 0, LINES);
@@ -605,35 +612,51 @@ draw_frame(void)
         }
     }
 
-    if (ui_flags.draw_horizontal_frame_lines) {
-        /* If we have vertical lines but not an outer frame, or vice versa,
-           connecting just one end of the lines looks ugly, so we leave them
-           disconnected. Exception: if both ends touch the frame, we don't
-           care about vertical lines. */
-        nh_bool connectends = framewidth &&
-            (ui_flags.draw_vertical_frame_lines || !ui_flags.sidebarwidth);
+    /* If we have vertical lines but not an outer frame, or vice versa,
+       connecting just one end of the lines looks ugly, so we leave them
+       disconnected. Exception: if both ends touch the frame, we don't
+       care about vertical lines. */
+    nh_bool connectends = framewidth &&
+        (ui_flags.draw_vertical_frame_lines || !ui_flags.sidebarwidth);
 
+    if (ui_flags.draw_horizontal_frame_lines) {
         y += ui_flags.msgheight;
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
-        if (connectends) {
-            nh_mvwaddch(basewin, y, 0, FC_LTEE);
-            nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
-        }
+        connections[y] |= 1;
 
         y += 1 + ui_flags.mapheight;
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
-        if (connectends) {
-            nh_mvwaddch(basewin, y, 0, FC_LTEE);
-            nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
-        }
+        connections[y] |= 1;
 
         if (ui_flags.extraheight) {
             y += 1 + ui_flags.statusheight;
             nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
+            connections[y] |= 1;
+        }
+    }
+
+    connections[sidebar_delim] |= 2;
+
+    int rtee;
+    for (i = 1; i <= LINES; i++) {
+        if (connections[i] & 2) {
+            if (framewidth) {
+                nh_mvwaddch(basewin, i, ui_flags.mapwidth + 1, FC_LTEE);
+                nh_mvwaddch(basewin, i, COLS-1, FC_RTEE);
+            } else if (ui_flags.sidebarwidth)
+                nh_mvwaddch(basewin, i, ui_flags.mapwidth, FC_LTEE);
+
+        }
+        if (connections[i] & 1) {
+            rtee = FC_RTEE;
+            if (connections[i] & 2)
+                rtee = FC_PLUS;
+
             if (connectends) {
-                nh_mvwaddch(basewin, y, 0, FC_LTEE);
-                nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
-            }
+                nh_mvwaddch(basewin, i, 0, FC_LTEE);
+                nh_mvwaddch(basewin, i, ui_flags.mapwidth + 1, rtee);
+            } else if (ui_flags.sidebarwidth)
+                nh_mvwaddch(basewin, i, ui_flags.mapwidth, rtee);
         }
     }
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -61,6 +61,27 @@ count_omitted_items(struct nh_objlist *list, int pos)
     return omitted;
 }
 
+/* Returns nonzero if we have both an inventory and flooritem part in sidebar,
+   for the purpose of joining borders. */
+int
+sidebar_delimiter_pos(void)
+{
+    if (!inventory.icount || !flooritems.icount)
+        return 0;
+
+    int viewheight = LINES - (ui_flags.draw_outer_frame_lines ? 2 : 0);
+    int invheight = min(inventory.icount + 1, viewheight / 2);
+    int flheight = min(flooritems.icount + 1, (viewheight - 1) / 2);
+    /* if there is need and available space, expand the floor item list up */
+    if (flooritems.icount + 1 > flheight &&
+        invheight < (viewheight + 1) / 2)
+        flheight =
+            min(flooritems.icount + 1, viewheight - invheight - 1);
+    /* assign all unused space to the inventory list whether it is needed
+       or not */
+    invheight = viewheight - flheight - 1;
+    return invheight + !!ui_flags.draw_outer_frame_lines;
+}
 
 void
 draw_sidebar(void)
@@ -110,6 +131,12 @@ draw_sidebar(void)
                   player.wt, player.wtcap, player.invslots);
         wattroff(sidebar, A_UNDERLINE);
 
+        if (!inventory.icount) {
+            mvwprintw(sidebar, 1, 0, "Not carrying anything");
+            wnoutrefresh(sidebar);
+            return;
+        }
+
         invwh = invheight - 1;
         if (invwh < inventory.icount) {
             invwh--;
@@ -138,7 +165,9 @@ draw_sidebar(void)
         draw_objlist(objwin, &flooritems, NULL, PICK_NONE);
     }
 
+    draw_frame();
     wnoutrefresh(sidebar);
+    wnoutrefresh(basewin);
 }
 
 void
