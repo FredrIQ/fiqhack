@@ -1015,7 +1015,7 @@ create_or_resize_game_windows(void (*wrapper)(WINDOW **, int, int, int, int))
     if (ui_flags.sidebarwidth) {
         x += ui_flags.mapwidth + !!ui_flags.draw_vertical_frame_lines;
         sidebar = derwin(basewin, LINES - 2 * outerframewidth,
-                         COLS - 2 * outerframewidth - x,
+                         COLS - 1 * outerframewidth - x,
                          outerframewidth, x);
     } else
         sidebar = NULL;
