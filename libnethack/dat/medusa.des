@@ -1,4 +1,4 @@
-# Last modified by Sean Hunt, 2014-02-16
+# Last modified by Fredrik Ljungdahl, 2017-09-24
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1990, 1991 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -54,8 +54,8 @@ BRANCH:levregion(00,00,78,20),(30,06,46,13)
 NON_DIGGABLE:(30,06,46,13)
 # Objects
 CONTAINER:'`',"statue",(36,10),uncursed,"knight",3,"Perseus"
-OBJECT[75%]:'[',"shield of reflection",contained,cursed,+0
-OBJECT[25%]:'[',"levitation boots",contained,random,+0
+OBJECT:'[',"shield of reflection",contained,cursed,+0
+OBJECT:'[',"levitation boots",contained,random,+0
 OBJECT[50%]:')',"scimitar",contained,blessed,+2
 OBJECT[50%]:'(',"sack",contained
 # These aren't really containers, but specifying CONTAINER forces them to be
@@ -152,8 +152,8 @@ NON_DIGGABLE:(01,02,06,17)
 NON_DIGGABLE:(60,02,73,17)
 # Objects
 CONTAINER:'`',"statue",(68,10),uncursed,"knight",3,"Perseus"
-OBJECT[25%]:'[',"shield of reflection",contained,cursed,+0
-OBJECT[75%]:'[',"levitation boots",contained,random,+0
+OBJECT:'[',"shield of reflection",contained,cursed,+0
+OBJECT:'[',"levitation boots",contained,random,+0
 OBJECT[50%]:')',"scimitar",contained,blessed,+2
 OBJECT[50%]:'(',"sack",contained
 CONTAINER:'`',"statue",(64,08)
