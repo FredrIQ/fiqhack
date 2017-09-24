@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -236,6 +236,9 @@ static struct nh_option_desc curses_options[] = {
     {"show_ac", "Screen Layout",
      "show armor value as AC instead of Def",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"show_uncursed", "Messages and Menus",
+     "always show uncursed status",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"sidebar", "Screen Layout",
      "when to draw the inventory sidebar",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = AB_AUTO}},
@@ -264,6 +267,7 @@ static struct nhlib_boolopt_map boolopt_map[] = {
     {"prompt_inline", &settings.prompt_inline},
     {"scores_own", &settings.end_own},
     {"show_ac", &settings.show_ac},
+    {"show_uncursed", &settings.show_uncursed},
     {"status3", &settings.status3},
     {NULL, NULL}
 };
@@ -358,7 +362,9 @@ curses_set_option(const char *name, union nh_optvalue value)
 
         if (!strcmp(option->name, "status3") ||
             !strcmp(option->name, "classic_status") ||
-            !strcmp(option->name, "show_ac")) {
+            !strcmp(option->name, "show_ac") ||
+            !strcmp(option->name, "show_uncursed")) {
+            /* TODO: show_uncursed refreshing doesn't work */
             rebuild_ui();
         } else if (!strcmp(option->name, "darkgray")) {
             set_darkgray();

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -822,7 +822,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->rogue_enabled = mread8(mf);
     f->seduce_enabled = mread8(mf);
     f->showrace = mread8(mf);
-    f->show_uncursed = mread8(mf);
+    mread8(mf); /* old show_uncursed */
     f->sortpack = mread8(mf);
     f->sparkle = mread8(mf);
     f->tombstone = mread8(mf);

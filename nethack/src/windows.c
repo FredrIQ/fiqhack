@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1658,20 +1658,28 @@ void
 curses_format(const char *formatstring, int fmt_type, int param, void *res,
               void (*callback)(const char *, void *))
 {
-    int len = strlen(formatstring);
-    len += 4; /* +1 from \0, +1 from %s->Def, +2 for %d->-127 */
-    char buf[len];
-    int i, j, k;
-    int done_str = 0;
-    int done_num = 0;
-    const char *str;
+    const char *str = "";
     if (fmt_type == FMT_SHOW_AC) {
         str = "Def";
         if (settings.show_ac)
             str = "AC";
-    } else
+    } else if (fmt_type == FMT_FRIENDLY_KEYNAME)
         str = friendly_keyname(param);
+    else { /* FMT_IMPLIED_UNCURSED */
+        str = "uncursed ";
+        if (!settings.show_uncursed)
+            str = "";
+    }
 
+    int len = strlen(formatstring);
+    len++; /* \0 */
+    len += strlen(str);
+    len += 2; /* +2 for %d->-127 */
+
+    char buf[len];
+    int i, j, k;
+    int done_str = 0;
+    int done_num = 0;
     char num[20] = "0";
     snprintf(num, 20, "%d",
              (settings.show_ac || fmt_type != FMT_SHOW_AC) ? param : 10 - param);
@@ -1696,6 +1704,7 @@ curses_format(const char *formatstring, int fmt_type, int param, void *res,
 
         buf[j++] = formatstring[i];
     }
+    buf[j] = '\0';
 
     callback(buf, res);
 }

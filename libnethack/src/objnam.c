@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -969,9 +969,8 @@ doname_base(const struct obj *obj, boolean with_price)
             prefix = msgcat(prefix, "cursed ");
         else if (obj->blessed)
             prefix = msgcat(prefix, "blessed ");
-        else if (flags.show_uncursed ||
-                 ((!obj->known || !objects[obj->otyp].oc_charged ||
-                   (obj->oclass == ARMOR_CLASS || obj->oclass == RING_CLASS))
+        else if ((!obj->known || !objects[obj->otyp].oc_charged ||
+                  (obj->oclass == ARMOR_CLASS || obj->oclass == RING_CLASS))
                   /* For most items with charges or +/-, if you know how many
                      charges are left or what the +/- is, then you must have
                      totally identified the item, so "uncursed" is unneccesary,
@@ -980,9 +979,11 @@ doname_base(const struct obj *obj, boolean with_price)
                      known, "uncursed" must be printed to avoid ambiguity
                      between an item whose curse status is unknown, and an item
                      known to be uncursed. */
-                  && obj->otyp != FAKE_AMULET_OF_YENDOR &&
-                  obj->otyp != AMULET_OF_YENDOR && !Role_if(PM_PRIEST)))
+                 && obj->otyp != FAKE_AMULET_OF_YENDOR &&
+                 obj->otyp != AMULET_OF_YENDOR && !Role_if(PM_PRIEST))
             prefix = msgcat(prefix, "uncursed ");
+        else
+            prefix = msgprintf("%s%s", prefix, implied_uncursed("%s"));
     }
 
     if (obj->greased)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -116,6 +116,7 @@
 /* Special formatting types that need windowport input. */
 # define FMT_SHOW_AC              1       /* how AC should be formatted */
 # define FMT_FRIENDLY_KEYNAME     2       /* how keys should be formatted */
+# define FMT_IMPLIED_UNCURSED     3       /* might hide uncursed if implied */
 
 /* Command parameters.
  *
