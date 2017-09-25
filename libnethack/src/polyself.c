@@ -34,7 +34,7 @@ static int domindblast(void);
 struct ability {
     enum monabil typ;
     const char *description;
-    int pw_cost;
+    int cost; /* positive: Pw, negative: mspec_used */
     char letter;
     boolean allowed_while_cancelled;
 };
@@ -42,16 +42,16 @@ struct ability {
 static const struct ability abil_data[] = {
     {abil_pray, "pray", 0, 'p', TRUE},
     {abil_turn, "turn undead", 0, 'T', FALSE},
-    {abil_tele, "teleport", 20, 't', FALSE},
-    {abil_jump, "jump", 0, 'j', FALSE},
+    {abil_tele, "teleport", -50, 't', FALSE},
+    {abil_jump, "jump", -15, 'j', FALSE},
     {abil_spit, "spit venom", 15, 'N', FALSE},
     {abil_remove_ball, "remove iron ball", 0, 'n', FALSE},
-    {abil_gaze, "gaze", 15, 'e', FALSE},
-    {abil_weresummon, "call for help", 10, 'd', FALSE},
-    {abil_web, "create web", 5, 's', FALSE},
+    {abil_gaze, "gaze", -5, 'e', FALSE},
+    {abil_weresummon, "call for help", -50, 'd', FALSE},
+    {abil_web, "create web", -5, 's', FALSE},
     {abil_hide, "hide", 0, 'S', FALSE},
-    {abil_mindblast, "release psychic static", 20, 'h', FALSE},
-    {abil_multiply, "multiply", 0, 'g', FALSE},
+    {abil_mindblast, "release psychic static", -25, 'h', FALSE},
+    {abil_multiply, "multiply", -10, 'g', FALSE},
     {abil_unihorn, "use horn", 0, 'u', FALSE},
     {abil_shriek, "shriek", 0, 'F', FALSE},
     {abil_breathe, "breathe", 20, 'D', FALSE},
@@ -195,7 +195,8 @@ check_or_do_ability(struct monst *mon, enum monabil typ,
             return -1;
         }
 
-        if (mon->pw < abil->pw_cost) {
+        if ((abil->cost > 0 && mon->pw < abil->cost) ||
+            (abil->cost < 0 && mon->mspec_used)) {
             if (you && msg)
                 pline(msgc_cancelled,
                       "You lack the energy to %s.", abil->description);
@@ -212,8 +213,9 @@ check_or_do_ability(struct monst *mon, enum monabil typ,
         if (is_demon(mon->data) && ma_align(mon) != A_CHAOTIC) {
             if (msg)
                 pline(msgc_cancelled,
-                      "The very idea of praying to a %s god is repugnant to you.",
-                      ma_align(mon) ? "lawful" : "neutral");
+                      "The very idea of praying to a %s god is repugnant to %s.",
+                      ma_align(mon) ? "lawful" : "neutral",
+                      mon_nam(mon));
             return 0;
         }
 
@@ -781,7 +783,6 @@ has_polyform_ability(const struct permonst *pm,
 int
 domonability(const struct musable *m)
 {
-    pline(msgc_debug, "ability number: %d", m->abil);
     if (m->abil)
         return use_ability(m);
 
@@ -793,10 +794,27 @@ domonability(const struct musable *m)
     const struct ability *abil;
     struct nh_menuitem items[last_abil + 1];
     int count = 0;
+    const char *buf;
+    set_menuitem(&items[count++], 0, MI_NORMAL,
+                 "Select a letter to use an ability.", 0, FALSE);
+    set_menuitem(&items[count++], 0, MI_NORMAL,
+                 "View ability descriptions.", '?', FALSE);
+    set_menuitem(&items[count++], 0, MI_NORMAL,
+                 "", 0, FALSE);
+    set_menuitem(&items[count++], 0, MI_HEADING,
+                 "Name\t\tCost/Turns", 0, FALSE);
     for (abil = abil_data; abil->typ != abil_none; abil++) {
-        if (ability_usable(&youmonst, abil->typ))
-            set_menuitem(&items[count++], abil->typ, MI_NORMAL, abil->description,
+        if (ability_usable(&youmonst, abil->typ)) {
+            if (!abil->cost)
+                buf = msgprintf("%s\t\t--", abil->description);
+            else
+                buf = msgprintf("%s\t\t%d %s", abil->description,
+                                abs(abil->cost),
+                                abil->cost > 0 ? "Pw" : "turns");
+
+            set_menuitem(&items[count++], abil->typ, MI_NORMAL, buf,
                          abil->letter, FALSE);
+        }
     }
 
     if (!count) {
@@ -812,7 +830,8 @@ domonability(const struct musable *m)
     int n;
     const int *selected;
     n = display_menu(&(struct nh_menulist){.items = items, .icount = count},
-                     "Abilities", PICK_ONE, PLHINT_ANYWHERE, &selected);
+                     "Special abilities", PICK_ONE, PLHINT_ANYWHERE,
+                     &selected);
 
     flags.last_arg.argtype &= ~CMD_ARG_ABILITY;
     if (n <= 0)
