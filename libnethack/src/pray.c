@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artifact.h"
 #include "hungerstatus.h"
 
 static struct obj *worst_cursed_item(void);
@@ -624,12 +625,13 @@ gcrownu(void)
     short class_gift;
     int sp_no;
 
-    set_property(&youmonst, SEE_INVIS, 0, FALSE);
     set_property(&youmonst, FIRE_RES, 0, TRUE);
     set_property(&youmonst, COLD_RES, 0, TRUE);
-    set_property(&youmonst, SHOCK_RES, 0, TRUE);
     set_property(&youmonst, SLEEP_RES, 0, TRUE);
+    set_property(&youmonst, SHOCK_RES, 0, TRUE);
     set_property(&youmonst, POISON_RES, 0, TRUE);
+    set_property(&youmonst, ACID_RES, 0, TRUE);
+    set_property(&youmonst, SEE_INVIS, 0, FALSE);
     godvoice(msgc_npcvoice, u.ualign.type, NULL);
 
     obj = ok_wep(uwep) ? uwep : 0;
@@ -638,14 +640,14 @@ gcrownu(void)
     case A_LAWFUL:
         u.uevent.uhand_of_elbereth = 1;
         verbalize(msgc_intrgain, "I crown thee...  The Hand of Elbereth!");
-        historic_event(FALSE, TRUE, "were crowned as the Hand of Elbereth!");
+        historic_event(FALSE, TRUE, "became the Hand of Elbereth");
         break;
     case A_NEUTRAL:
         u.uevent.uhand_of_elbereth = 2;
         in_hand = (uwep && uwep->oartifact == ART_VORPAL_BLADE);
         already_exists = exist_artifact(LONG_SWORD, artiname(ART_VORPAL_BLADE));
         verbalize(msgc_intrgain, "Thou shalt be my Envoy of Balance!");
-        historic_event(FALSE, TRUE, "were named as the Envoy of Balance!");
+        historic_event(FALSE, TRUE, "became the Envoy of Balance");
         break;
     case A_CHAOTIC:
         u.uevent.uhand_of_elbereth = 3;
@@ -653,13 +655,26 @@ gcrownu(void)
         already_exists = exist_artifact(RUNESWORD, artiname(ART_STORMBRINGER));
         verbalize(msgc_intrgain, "Thou art chosen to %s for My Glory!",
                   already_exists && !in_hand ? "take lives" : "steal souls");
-        historic_event(FALSE, TRUE, "were chosen to %s for your god's glory!",
+        historic_event(FALSE, TRUE, "were chosen to %s for the glory of %s",
                        already_exists &&
-                       !in_hand ? "take lives" : "steal souls");
+                       !in_hand ? "take lives" : "steal souls", u_gname());
         break;
     }
 
     class_gift = STRANGE_OBJECT;
+
+    if (Role_if(PM_MONK)) {
+        class_gift = MAGIC_MARKER;
+        obj = mksobj(level, class_gift, TRUE, FALSE, rng_main);
+        bless(obj);
+        obj->bknown = TRUE;
+        at_your_feet("A marker");
+        dropy(obj);
+        u.ugifts++;
+        if (ok_wep(uwep))
+            obj = uwep;
+    }
+
     /* 3.3.[01] had this in the A_NEUTRAL case below, preventing chaotic
        wizards from receiving a spellbook */
     if (Role_if(PM_WIZARD) &&
@@ -668,7 +683,6 @@ gcrownu(void)
           uwep->oartifact != ART_STORMBRINGER)) &&
         !carrying(SPE_FINGER_OF_DEATH)) {
         class_gift = SPE_FINGER_OF_DEATH;
-    make_splbk:
         obj = mksobj(level, class_gift, TRUE, FALSE, rng_main);
         bless(obj);
         obj->bknown = TRUE;
@@ -683,11 +697,6 @@ gcrownu(void)
                     obj = uwep; /* to be blessed,&c */
                 break;
             }
-    } else if (Role_if(PM_MONK) && (!uwep || !uwep->oartifact) &&
-               !carrying(SPE_RESTORE_ABILITY)) {
-        /* monks rarely wield a weapon */
-        class_gift = SPE_RESTORE_ABILITY;
-        goto make_splbk;
     }
 
     switch (u.ualign.type) {
@@ -700,8 +709,10 @@ gcrownu(void)
                 pline(msgc_itemrepair,
                       "Your sword shines brightly for a moment.");
             obj = oname(obj, artiname(ART_EXCALIBUR));
-            if (obj && obj->oartifact == ART_EXCALIBUR)
+            if (obj && obj->oartifact == ART_EXCALIBUR) {
+                artifact_exists(obj, artiname(obj->oartifact), ag_gift);
                 u.ugifts++;
+            }
         }
         /* acquire Excalibur's skill regardless of weapon or gift */
         unrestrict_weapon_skill(P_LONG_SWORD);
@@ -717,6 +728,8 @@ gcrownu(void)
         } else if (!already_exists) {
             obj = mksobj(level, LONG_SWORD, FALSE, FALSE, rng_main);
             obj = oname(obj, artiname(ART_VORPAL_BLADE));
+            if (obj && obj->oartifact == ART_VORPAL_BLADE)
+                artifact_exists(obj, artiname(obj->oartifact), ag_gift);
             obj->spe = 1;
             at_your_feet("A sword");
             dropy(obj);
@@ -739,6 +752,8 @@ gcrownu(void)
             } else if (!already_exists) {
                 obj = mksobj(level, RUNESWORD, FALSE, FALSE, rng_main);
                 obj = oname(obj, artiname(ART_STORMBRINGER));
+                if (obj && obj->oartifact == ART_STORMBRINGER)
+                    artifact_exists(obj, artiname(obj->oartifact), ag_gift);
                 at_your_feet(An(swordbuf));
                 obj->spe = 1;
                 dropy(obj);
@@ -754,6 +769,9 @@ gcrownu(void)
         obj = 0;        /* lint */
         break;
     }
+
+    /* Learn special role spell permanently */
+    learn_spell(urole.spelspec, FALSE, TRUE);
 
     /* enhance weapon regardless of alignment or artifact status */
     if (ok_wep(obj)) {
@@ -1582,7 +1600,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 }
             }
         } else {
-            int nartifacts = nartifact_exist();
+            int nartifacts = nartifact_gifted();
 
             /* you were already in pretty good standing */
             /* The player can gain an artifact */
@@ -1593,6 +1611,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     otmp = mk_artifact(level, NULL, a_align(youmonst.mx, youmonst.my),
                                        rng_altar_gift);
                     if (otmp) {
+                        if (otmp && otmp->oartifact)
+                            artifact_exists(otmp, artiname(otmp->oartifact), ag_gift);
                         if (otmp->spe < 0)
                             otmp->spe = 0;
                         if (otmp->cursed)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -113,6 +113,11 @@
 
 # define LDM_COUNT       13      /* number of level display modes */
 
+/* Special formatting types that need windowport input. */
+# define FMT_SHOW_AC              1       /* how AC should be formatted */
+# define FMT_FRIENDLY_KEYNAME     2       /* how keys should be formatted */
+# define FMT_IMPLIED_UNCURSED     3       /* might hide uncursed if implied */
+
 /* Command parameters.
  *
  * A command description specifies a set of parameters that it understands. All
@@ -155,7 +160,8 @@
 # define CMD_ARG_STR     (1 << 3)       /* param can be a string */
 # define CMD_ARG_SPELL   (1 << 4)       /* param can be a spell letter */
 # define CMD_ARG_LIMIT   (1 << 5)       /* param can be a limit */
-# define CMD_ARG_ABILITY (1 << 6)       /* param can be an ability letter */
+# define CMD_ARG_KEY     (1 << 6)       /* contains the exact keypress */
+# define CMD_ARG_ABILITY (1 << 7)       /* param can be an ability letter */
 
 /* command usage hints */
 # define CMD_EXT        (1 << 10)       /* an 'extended' command */
@@ -585,6 +591,7 @@ struct nh_player_info {
     int st, st_extra, dx, co, in, wi, ch;
     int align, nr_items;
     int hp, hpmax, en, enmax, ac, level;
+    int wt, wtcap, invslots;
     char coinsym;
     int monnum, cur_monnum;
     nh_bool can_enhance;
@@ -651,6 +658,7 @@ struct nh_cmd_arg {
     const char *str;           /* CMD_ARG_STR */
     char spelllet;             /* CMD_ARG_SPELL */
     int limit;                 /* CMD_ARG_LIMIT */
+    int key;                   /* CMD_ARG_KEY */
     int ability;               /* CMD_ARG_ABILITY */
 };
 
@@ -669,6 +677,7 @@ struct nh_cmd_and_arg {
 # define NH_BRANDING_SEEN      0x0020   /* a square that is seen */
 # define NH_BRANDING_LIT       0x0040   /* a square that is permanently lit */
 # define NH_BRANDING_TEMP_LIT  0x0080   /* a square that is temporarily lit */
+# define NH_BRANDING_PILE      0x0100   /* an object pile */
 /* monster attitude could go here, but is in monflags instead as
    that's a more appropriate place */
 
@@ -841,8 +850,9 @@ struct nh_window_procs {
                              char defchoice);
     void (*win_getlin) (const char *query, void *callbackarg,
                         void (*callback)(const char *lin, void *callbackarg));
-    void (*win_show_ac) (const char *formatstring, int ac, void *callbackarg,
-                         void (*callback)(const char *output, void *callbackarg));
+    void (*win_format) (const char *formatstring, int fmt_type, int param,
+                        void *callbackarg,
+                        void (*callback)(const char *output, void *callbackarg));
     void (*win_delay) (void);
     void (*win_load_progress) (int progress);
     void (*win_level_changed) (int displaymode);

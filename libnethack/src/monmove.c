@@ -133,28 +133,53 @@ regeneration_by_rate(int regen_rate)
     return ret;
 }
 
+/* Returns the regeneration rate for the monster.
+   Works on players. */
+int
+regen_rate(const struct monst *mon, boolean energy)
+{
+    int regen = 0;
+    int role = monsndx(mon->data);
+    if (mon == &youmonst)
+        role = Role_switch;
+
+    if (energy ? pw_regenerates(mon) : regenerates(mon))
+        regen += 100;
+
+    if (role == (energy ? PM_WIZARD : PM_HEALER))
+        regen += 33;
+
+    regen += 3 * m_mlev(mon);
+
+    int attrib = acurr(mon, energy ? A_WIS : A_CON);
+
+    if (!energy)
+        attrib -= 5;
+
+    if (!energy || attrib > 3)
+        regen += 3 * attrib;
+    if (regen < 1)
+        regen = 1;
+
+    return regen;
+}
+
 /* regenerate lost hit points */
 void
 mon_regen(struct monst *mon, boolean digest_meal)
 {
-    /* Monster constitution is counted as 12 + ring bonuses/etc */
-    if (mon->mhp < mon->mhpmax) {
-        if (mon->m_lev > 9 && !(moves % 3))
-            mon->mhp += min((mon->m_lev - 9), acurr(mon, A_CON) <= 11 ? 1 :
-                            rnd(acurr(mon, A_CON)));
-        else if (regenerates(mon) || (mon->m_lev <= 9 && !(moves % (42 / (mon->m_lev + 2) + 1))))
-            mon->mhp++;
-        if (mon->mhp > mon->mhpmax)
-            mon->mhp = mon->mhpmax;
-    }
-    if (mon->mspec_used) {
-        if (pw_regenerates(mon)) /* energy regeneration */
-            mon->mspec_used -= 5;
-        else
-            mon->mspec_used--;
-        if (mon->mspec_used < 0)
-            mon->mspec_used = 0;
-    }
+    mon->mhp += regeneration_by_rate(regen_rate(mon, FALSE));
+    if (mon->mhp > mon->mhpmax)
+        mon->mhp = mon->mhpmax;
+
+    mon->pw += regeneration_by_rate(regen_rate(mon, TRUE));
+    if (mon->pw > mon->pwmax)
+        mon->pw = mon->pwmax;
+
+    if (mon->mspec_used)
+        mon->mspec_used--;
+
+    /* Why is this here? */
     if (digest_meal) {
         if (mon->meating)
             mon->meating--;
@@ -727,7 +752,7 @@ m_move(struct monst *mtmp, int after)
         mtmp->meating--;
         return 3;       /* still eating */
     }
-    if (hides_under(ptr) && OBJ_AT(mtmp->mx, mtmp->my) && rn2(10))
+    if (hides_under(ptr) && OBJ_AT(mtmp->mx, mtmp->my) && rn2(10) && !mtmp->mpeaceful)
         return 0;       /* do not leave hiding place */
 
     /* Note: we don't call set_apparxy() from here any more. When being called
@@ -810,11 +835,11 @@ m_move(struct monst *mtmp, int after)
 
     /* check if there is a good reason to teleport at will, or occasioally
        do it anyway */
-    if (teleport_at_will(mtmp) && !mtmp->mspec_used && !cancelled(mtmp) &&
+    if (teleport_at_will(mtmp) && mtmp->pw >= 15 && !cancelled(mtmp) &&
         !tele_wary(mtmp) && mtmp->mstrategy != st_ascend) {
         if (mtmp->mstrategy == st_escape || st_target(mtmp) ||
             !rn2(25)) {
-            mtmp->mspec_used += 25;
+            mtmp->pw -= 15;
             mmoved = 1;
             mon_tele(mtmp, !!teleport_control(mtmp));
         }

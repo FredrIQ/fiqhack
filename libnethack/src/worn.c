@@ -780,7 +780,7 @@ extra_pref(const struct monst *mon, struct obj *obj)
         if (!obj->mknown && !obj->mbknown)
             return desire + 3;
         if (!obj->mknown && obj->mbknown && obj->cursed)
-            return 0; /* we don't know +N, but we know it's cursed, so avoid it */
+            return -1; /* we don't know +N, but we know it's cursed, so avoid it */
         return (desire + 3*(obj->spe));
     }
 

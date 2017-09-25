@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artifact.h"
 #include "lev.h"
 #include "spell.h"
 
@@ -85,7 +86,7 @@ resetobjs(struct obj *ochain, boolean restore)
             otmp->oartifact = 0;
             christen_obj(otmp, NULL);
         } else if (otmp->oartifact && restore)
-            artifact_exists(otmp, ox_name(otmp), TRUE);
+            artifact_exists(otmp, ox_name(otmp), ag_bones);
         if (!restore) {
             /* do not zero out o_ids for ghost levels anymore */
 
@@ -363,6 +364,8 @@ make_bones:
         mtmp->mhitinc = youmonst.mhitinc;
         mtmp->mdaminc = youmonst.mdaminc;
         mtmp->mac = youmonst.mac;
+        mtmp->pw = youmonst.pw;
+        mtmp->pwmax = youmonst.pwmax;
 
         /* retain spells */
         for (i = 0; i < MAXSPELL; i++) {

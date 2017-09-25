@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -173,7 +173,7 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.made_amulet);
     mwrite8(mf, flags.menu_style);
     mwrite8(mf, flags.mon_generation);
-    mwrite8(mf, flags.mon_moving);
+    mwrite8(mf, 0);
     mwrite8(mf, flags.mon_polycontrol);
     mwrite8(mf, flags.occupation);
     mwrite8(mf, flags.permablind);
@@ -185,7 +185,7 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.rogue_enabled);
     mwrite8(mf, flags.seduce_enabled);
     mwrite8(mf, flags.showrace);
-    mwrite8(mf, flags.show_uncursed);
+    mwrite8(mf, 0); /* old show_uncursed */
     mwrite8(mf, flags.sortpack);
     mwrite8(mf, flags.sparkle);
     mwrite8(mf, flags.tombstone);
@@ -210,12 +210,16 @@ save_flags(struct memfile *mf)
     mwrite32(mf, flags.save_revision);
 
     mwrite8(mf, flags.servermail);
+    mwrite8(mf, flags.autoswap);
+    mwrite32(mf, flags.last_arg.key);
     mwrite8(mf, flags.last_arg.ability);
+    if (flags.mon_moving)
+        panic("flags.mon_moving is nonzero during neutral turnstate?");
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 103; i++)
+    for (i = 0; i < 98; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));
@@ -295,6 +299,7 @@ save_spellbook(struct memfile *mf)
         mwrite32(mf, save_encode_32(spl_book[i].sp_know, -moves, -moves));
         mwrite16(mf, spl_book[i].sp_id);
         mwrite8(mf, spl_book[i].sp_lev);
+        mwrite32(mf, spl_book[i].sp_key);
     }
 }
 
@@ -385,7 +390,8 @@ save_location(struct memfile *mf, struct rm *loc)
         (loc->mem_obj_mn << 2) | (loc->mem_invis << 1) |
         (loc->mem_stepped << 0);
     rflags = (loc->flags << 11) | (loc->horizontal << 10) | (loc->lit << 9) |
-        (loc->waslit << 8) | (loc->roomno << 2) | (loc->edge << 1);
+        (loc->waslit << 8) | (loc->roomno << 2) | (loc->edge << 1) |
+        (loc->pile << 0);
     mwrite32(mf, memflags);
     mwrite8(mf, loc->typ);
     mwrite8(mf, loc->seenv);
@@ -425,8 +431,8 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, eflags);
     mwrite32(mf, y->uhp);
     mwrite32(mf, y->uhpmax);
-    mwrite32(mf, y->uen);
-    mwrite32(mf, y->uenmax);
+    mwrite32(mf, y->unused_uen);
+    mwrite32(mf, y->unused_uenmax);
     mwrite32(mf, y->unused_ulevel);
     mwrite32(mf, y->umoney0);
     mwrite32(mf, y->unused_uexp);
@@ -443,7 +449,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, save_encode_32(y->uhunger, -moves, -moves));
     mwrite32(mf, y->uhs);
     mwrite32(mf, y->unused_oldcap);
-    mwrite32(mf, save_encode_32(y->unused_umconf, -moves, -moves));
+    mwrite32(mf, save_encode_32(y->umconf, -moves, -moves));
     mwrite32(mf, y->nv_range);
     mwrite32(mf, y->bglyph);
     mwrite32(mf, y->cglyph);
@@ -499,6 +505,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->twoweap);
     mwrite8(mf, y->bashmsg);
     mwrite8(mf, y->moveamt);
+    mwrite16(mf, y->spellquiver);
 
     /* Padding to allow character information to be added without breaking save
        compatibility: add new options just before the padding, then remove the
@@ -510,7 +517,7 @@ save_you(struct memfile *mf, struct you *y)
     } else
     mwrite32(mf, 0);*/
 
-    for (i = 0; i < 511; i++)    /* savemap: ignore */
+    for (i = 0; i < 509; i++)    /* savemap: ignore */
         mwrite8(mf, 0);          /* savemap: 4088 */
 
     mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 72 */
@@ -676,7 +683,8 @@ savelev(struct memfile *mf, xchar levnum)
     save_dest_area(mf, lev->dndest);
 
     mtag(mf, levnum, MTAG_LFLAGS);
-    lflags = (lev->flags.noteleport << 22) |
+    lflags =
+        (lev->flags.vault_known << 23) | (lev->flags.noteleport << 22) |
         (lev->flags.hardfloor << 21) | (lev->flags.nommap << 20) |
         (lev->flags.hero_memory << 19) | (lev->flags.shortsighted << 18) |
         (lev->flags.graveyard << 17) | (lev->flags.is_maze_lev << 16) |

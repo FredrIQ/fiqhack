@@ -616,8 +616,13 @@ adjalign(int n)
     int cnt; /* for loop initial declarations are only allowed in C99 mode */
     int oldalign = u.ualign.record;
     int newalign = oldalign;
-    if (n < 0 && oldalign > 0)
-        newalign = 0;
+    if (n < 0) {
+        if (oldalign > 0)
+            newalign = 0;
+        if (oldalign > AR_TRANSGRESSED)
+            pline(msgc_alignbad, "Your conscience bothers you...");
+    }
+
     newalign += n;
     if (newalign > ALIGNLIM)
         newalign = ALIGNLIM;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2017-05-15 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -262,7 +262,7 @@ game_ended(int status, fnchar *filename, nh_bool net)
         curses_raw_print("Error: Could not find the save file.");
         return;
     case ERR_BAD_FILE:
-        curses_raw_print("Error: This does not look like a NetHack 4 save "
+        curses_raw_print("Error: This does not look like a FIQHack save "
                          "file.");
         return;
     case ERR_IN_PROGRESS:
@@ -276,7 +276,7 @@ game_ended(int status, fnchar *filename, nh_bool net)
             curses_raw_print("Please contact the server administrator.");
         else
             curses_raw_print("If you cannot recover it yourself, contact "
-                             "the NetHack 4 developers for advice.");
+                             "the FIQHack developers for advice.");
         return;
     case ERR_RECOVER_REFUSED:
         /* The user has declined recovery, so we've already had a message
@@ -353,7 +353,7 @@ plname_handler(const char *str, void *plname_void)
     if (*str == '\033') /* cancelled */
         return;
 
-    if (*str && strlen(str) < (PL_NSIZ - 5)) { /* ok */
+    if (*str && strlen(str) < (PL_NSIZ)) { /* ok */
         *plname = strdup(str);
         return;
     }
@@ -455,7 +455,7 @@ rungame(nh_bool net)
                                     info->
                                     rolenames_f[role] ? info->rolenames_f :
                                     info->rolenames_m)[role],
-            PL_NSIZ - 5 - 1);
+            PL_NSIZ - 1);
 
     if (nameopt->value.s && !*nameopt->value.s) {
         free(nameopt->value.s);

@@ -437,6 +437,7 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
     const char *your;
+    int timer_offset = 0; /* for lit objects */
     your = (you ? "Your" : s_suffix(Monnam(mon)));
 
     is_cursed = curse_bless < 0;
@@ -626,6 +627,12 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
             break;
         case OIL_LAMP:
         case BRASS_LANTERN:
+            if (obj->lamplit) {
+                timer_offset = report_timer(obj->olev, BURN_OBJECT,
+                                            (const void *)obj);
+                timer_offset -= moves;
+            }
+
             if (is_cursed) {
                 stripspe(mon, obj);
                 if (obj->lamplit) {
@@ -636,14 +643,14 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
                 }
             } else if (is_blessed) {
                 obj->spe = 1;
-                obj->age = 1500;
+                obj->age = 1500 - timer_offset;
                 if (you || vis)
                     p_glow2(msgc_itemrepair, mon, obj, "blue");
             } else {
                 obj->spe = 1;
                 obj->age += 750;
-                if (obj->age > 1500)
-                    obj->age = 1500;
+                if ((obj->age + timer_offset) > 1500)
+                    obj->age = 1500 - timer_offset;
                 if (you || vis)
                     p_glow1(msgc_itemrepair, mon, obj);
             }
@@ -1484,7 +1491,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
     case SCR_LIGHT:
         if (!Blind)
             *known = TRUE;
-        litroom(mon, !confused && !sobj->cursed, sobj);
+        litroom(mon, !confused && !sobj->cursed, sobj, TRUE);
         break;
     case SCR_TELEPORTATION:
         if (confused || sobj->cursed) {
@@ -1514,14 +1521,14 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (confused || sobj->cursed)
             return trap_detect(mon, sobj);
         else
-            return gold_detect(mon, sobj, known);
+            gold_detect(mon, sobj, known);
+        break;
     case SCR_FOOD_DETECTION:
         if (!you) {
             impossible("monster casting detect food?");
-            return 1;
+            break;
         }
-        if (food_detect(sobj, known))
-            return 1;   /* nothing detected */
+        food_detect(sobj, known);
         break;
     case SCR_IDENTIFY:
     case SPE_IDENTIFY:
@@ -1580,13 +1587,11 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                 pline(you ? msgc_statusheal : msgc_monneutral,
                       "%s %s charged up!", you ? "You" : Monnam(mon),
                       you ? "feel" : "looks");
-            if (you) {
-                if (u.uen < u.uenmax)
-                    u.uen = u.uenmax;
-                else
-                    u.uen = (u.uenmax += dice(5, 4));
-            } else
-                mon->mspec_used = 0;
+            if (mon->pw < mon->pwmax)
+                mon->pw = mon->pwmax;
+            else
+                mon->pw = (mon->pwmax += dice(5, 4));
+
             /* cure cancellation too */
             set_property(mon, CANCELLED, -2, TRUE);
             break;
@@ -1912,7 +1917,7 @@ set_lit(int x, int y, void *val)
 }
 
 void
-litroom(struct monst *mon, boolean on, struct obj *obj)
+litroom(struct monst *mon, boolean on, struct obj *obj, boolean tell)
 {
     char is_lit;        /* value is irrelevant; we use its address as a `not
                            null' flag for set_lit() */
@@ -1941,24 +1946,25 @@ litroom(struct monst *mon, boolean on, struct obj *obj)
             /* Since engulfing will prevent set_lit(), douse lamps/etc here as well */
             for (otmp = invent; otmp; otmp = otmp->nobj)
                 snuff_lit(otmp);
-            pline(msgc_yafm, "It seems even darker in here than before.");
+            if (tell)
+                pline(msgc_yafm, "It seems even darker in here than before.");
             return;
         }
 
         if (!blind(&youmonst) && (you || vis)) {
             struct obj *wep = m_mwep(mon);
-            if (wep && artifact_light(wep) && wep->lamplit)
+            if (wep && artifact_light(wep) && wep->lamplit && tell)
                 pline(msgc_substitute,
                       "Suddenly, the only light left comes from %s!",
                       the(xname(wep)));
-            else
+            else if (tell)
                 pline(msgc_failcurse,
                       "%s %s surrounded by darkness!", you ? "You" : Monnam(mon),
                       you ? "are" : "is");
         }
     } else {
         if (you && Engulfed) {
-            if (!blind(&youmonst)) {
+            if (!blind(&youmonst) && tell) {
                 if (is_animal(u.ustuck->data))
                     pline(msgc_yafm, "%s %s is lit.", s_suffix(Monnam(u.ustuck)),
                           mbodypart(u.ustuck, STOMACH));
@@ -1970,7 +1976,7 @@ litroom(struct monst *mon, boolean on, struct obj *obj)
             return;
         }
 
-        if ((!blind(&youmonst) && you) || vis)
+        if (((!blind(&youmonst) && you) || vis) && tell)
             pline(you ? msgc_actionok : msgc_monneutral,
                   "A lit field surrounds %s!",
                   you ? "you" : mon_nam(mon));
@@ -2558,7 +2564,7 @@ mon_choose_genocide(struct monst *mon, boolean class, int cur_try)
     struct monst *mtmp;
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
         /* do not genocide own kind */
-        if (mon->data == mtmp->data)
+        if (monsndx(mon->data) == monsndx(mtmp->data))
             continue;
         if (class && mon->data->mlet == mtmp->data->mlet)
             continue;
@@ -2568,14 +2574,14 @@ mon_choose_genocide(struct monst *mon, boolean class, int cur_try)
             return maybe_target_class(class, mndx[cur_try]);
     }
     /* ...and if it can see you... */
-    if (m_canseeu(mon) && !mon->mpeaceful)
+    if (m_canseeu(mon) && !mon->mpeaceful && monsndx((&youmonst)->data) != monsndx(mon->data))
         mndx[try++] = monsndx((&youmonst)->data);
     if (try > 4)
         return maybe_target_class(class, mndx[cur_try]);
 
     /* hostile monsters it can sense */
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (mon->data == mtmp->data)
+        if (monsndx(mon->data) == monsndx(mtmp->data))
             continue;
         if (class && mon->data->mlet == mtmp->data->mlet)
             continue;

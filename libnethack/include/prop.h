@@ -150,7 +150,6 @@ enum objslot {
 /* pseudo-slots */
     os_inctimeout,     /* increased timeout */
     os_dectimeout,     /* decreased timeout by decrease_property_timers() */
-    os_newpolyform,    /* new polymorph */
     os_cache,          /* whether the cache is valid or not */
 
     os_last = os_cache,

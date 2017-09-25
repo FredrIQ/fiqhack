@@ -1129,6 +1129,7 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
 struct obj *
 pick_obj(struct obj *otmp)
 {
+    otmp->owt = weight(otmp);
     obj_extract_self(otmp);
     if (!Engulfed && otmp != uball && costly_spot(otmp->ox, otmp->oy)) {
         char saveushops[5], fakeshop[2];
@@ -1154,8 +1155,8 @@ pick_obj(struct obj *otmp)
     return addinv(otmp);        /* might merge it with other objects */
 }
 
-/* Prints a message if encumbrance changed from oldcap. Returns the new value from
-   near_capacity(). */
+/* Prints a message if encumbrance changed since the last check and
+   returns the new encumbrance value (from near_capacity()). */
 int
 encumber_msg(int oldcap)
 {
@@ -1720,6 +1721,9 @@ in_container(struct obj *obj)
     }
 
     if (current_container) {
+        if (current_container->otyp == BAG_OF_HOLDING && obj->owt > 1)
+            makeknown(BAG_OF_HOLDING);
+
         pline(msgc_actionboring, "You put %s into %s.", doname(obj),
               the(xname(current_container)));
 

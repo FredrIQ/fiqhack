@@ -105,6 +105,7 @@ struct overview_info {
     boolean branch, portal;     /* branch, magic portal on this level */
     struct d_level branch_dst, portal_dst;      /* where to? */
     boolean branch_dst_known, portal_dst_known; /* destination known? */
+    boolean vault; /* if the level has a money vault */
 };
 
 

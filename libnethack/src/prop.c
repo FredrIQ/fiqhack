@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -42,10 +42,13 @@ static const struct propmsg prop_msg[] = {
      "You feel a little sick!", "sickly"},
     {ACID_RES, "Your skin feels leathery.", "thick-skinned",
      "Your skin feels less leathery.", "soft-skinned"},
-    {STONE_RES, "You feel extraordinarily limber.", "limber",
+    {STONE_RES, "You feel flexible.", "limber",
      "You feel stiff.", "stiff"},
-    {SEARCHING, "", "perceptive", "", "unfocused"},
-    {SEE_INVIS, "", "aware",
+    {REGENERATION, "You feel healthier than ever!", "regenerative",
+     "You don't feel as healthy anymore.",  "less regenerative"},
+    {SEARCHING, "You feel perceptive!", "perceptive",
+     "You feel unfocused.", "unfocused"},
+    {SEE_INVIS, "You feel aware.", "aware",
      "You thought you saw something!", "unaware"},
     {INVIS, "You feel hidden!", "hidden",
      "You feel paranoid.", "paranoid"},
@@ -59,9 +62,14 @@ static const struct propmsg prop_msg[] = {
      "shapeshift-controlled", "You feel no lnger in control of your shapeshifting.",
      "less shapeshift-controlled"},
     {STEALTH, "", "stealthy", "", "noisy"},
-    {AGGRAVATE_MONSTER, "You feel attractive!", "attractive",
-     "You feel less attractive.", "less attractive"},
-    {WARNING, "", "sensitive", "", "insensitive"},
+    {AGGRAVATE_MONSTER, "You feel observed.", "observed",
+     "You feel less attractive.", "conspicuous"},
+    {CONFLICT, "The air around you turns hostile and conflicted.", "conflicted",
+     "The air around you calms down.", "calmed"},
+    {PROT_FROM_SHAPE_CHANGERS, "The air around you seems oddly fixed and static.",
+     "shapeshift-protected",
+     "The air around you briefly shifts in shape.", "less shapeshift-protected"},
+    {WARNING, "You feel sensitive.", "sensitive", "You feel insensitive.", "insensitive"},
     {TELEPAT, "You feel a strange mental acuity.", "telepathic",
      "Your senses fail!", "untelepathic"},
     {FAST, "", "quick", "", "slow"},
@@ -69,17 +77,22 @@ static const struct propmsg prop_msg[] = {
     {WWALKING, "You feel light on your feet.", "light",
      "You feel heavier.", "heavy"},
     {HUNGER, "You feel your metabolism speed up.", "hungry",
-     "Your metabolism slows down.", "full."},
+     "Your digestion calms down.", "full."},
     {REFLECTING, "Your body feels repulsive.", "repulsive",
      "You feel less repulsive.", "absorptive"},
     {LIFESAVED, "You feel a strange sense of immortality.", "immortal",
      "You lose your sense of immortality!", "mortal"},
     {ANTIMAGIC, "You feel resistant to magic.", "skeptical",
      "Your magic resistance fails!", "credulous"},
-    {DISPLACED, "Your outline shimmers and shifts.", "elusive",
-     "You stop shimmering.", "exposed"},
+    {DISPLACED, "", "elusive", "", "exposed"},
+    {CLAIRVOYANT, "You feel attuned to the dungeon.", "attuned to the dungeon",
+     "You don't feel attuned to the dungeon after all", "less dungeon-attuned"},
+    {ENERGY_REGENERATION, "You feel in touch with magic around you.", "magic-regenerative",
+     "Your touch with magic fails!", "less magic-regenerative"},
+    {MAGICAL_BREATHING, "Your breathing seem enhanced.", "breath-enhanced",
+     "Your breathing seems normal.", "less breath-enhanced"},
     {SICK_RES, "You feel your immunity strengthen.", "immunized",
-     "Your immunity system fails!", "immunocompromised"},
+     "Your immune system fails!", "immunocompromised"},
     {DRAIN_RES, "You feel especially energetic.", "energic",
      "You feel less energic.", "less energic"},
     {CANCELLED, "You feel devoid of magic!", "magic-devoid",
@@ -96,7 +109,8 @@ static const struct propmsg prop_msg[] = {
      "You feel less resistant to change.", "changed"},
     {PASSES_WALLS, "Your body unsolidifies", "unsolid",
      "Your body solidifies.", "solid"},
-    {INFRAVISION, "", "vision-enhanced", "", "half blind"},
+    {INFRAVISION, "Your vision capabilities are enhanced.", "vision-enhanced",
+     "You feel half blind!", "half blind"},
     {NO_PROP, "", "", "", ""}
 };
 
@@ -119,6 +133,8 @@ static const struct propmsg prop_msg_hallu[] = {
      "Your cosmic connection is no more!", "untelepathic"},
     {WWALKING, "You feel like Jesus himself.", "light",
      "You realize that you aren't Jesus after all.", "heavy"},
+    {MAGICAL_BREATHING, "You seem rather fishy...", "fishy",
+     "You don't seem so fishy after all.", "less fishy"},
     {DRAIN_RES, "You are bouncing off the walls!", "energetic",
      "You feel less bouncy.", "less energetic"},
     {FLYING, "You feel like a super hero!", "buoyant",
@@ -170,6 +186,16 @@ static const struct propxl prop_from_experience[] = {
     {PM_WIZARD, 15, WARNING},
     {PM_WIZARD, 17, TELEPORT_CONTROL},
     {PM_ELF, 4, SLEEP_RES},
+    {PM_RED_DRAGON, 10, INFRAVISION},
+    {PM_RED_DRAGON, 10, WARNING},
+    {PM_RED_DRAGON, 10, SEE_INVIS},
+    {PM_WHITE_DRAGON, 10, WATERPROOF},
+    {PM_WHITE_DRAGON, 10, SEARCHING},
+    {PM_ORANGE_DRAGON, 10, FREE_ACTION},
+    {PM_BLACK_DRAGON, 10, DRAIN_RES},
+    {PM_BLUE_DRAGON, 10, FAST},
+    {PM_GREEN_DRAGON, 10, SICK_RES},
+    /* Yellow dragons are acidic, so they have stone res already */
     {NON_PM, 0, 0}
 };
 
@@ -203,6 +229,7 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
                                         mdat == &mons[PM_GREEN_SLIME]        :
         property == STONED            ? poly_when_stoned(mdat)               :
         property == GLIB              ? nohands(mdat)                        :
+        property == LIFESAVED         ? nonliving(mdat)                      :
         0)
         return -1;
 
@@ -867,25 +894,27 @@ update_xl_properties(struct monst *mon, int oldlevel)
    Returns a monster index if that should override the current polymorph
    (used if you polymorph into a golem while petrifying). */
 int
-update_property_polymorph(struct monst *mon, int pm)
+update_property_polymorph(struct monst *mon, int old_pm)
 {
     int pmcur = monsndx(mon->data);
     enum youprop prop;
-    boolean hasprop, hasprop_poly, pm_hasprop, pm_blocks;
+    int hasprop, hasprop_poly;
+    boolean pm_hasprop, pm_blocks;
     for (prop = 0; prop <= LAST_PROP; prop++) {
         /* Permonst-specific blocks only happen for sliming/petrification, so
            bypassing update checks alltogether if a monster currently blocks is OK */
         if (m_has_property(mon, prop, ANY_PROPERTY, TRUE) & W_MASK(os_blocked))
             continue;
 
-        hasprop = !!has_property(mon, prop);
-        hasprop_poly = hasprop && !(has_property(mon, prop) & ~W_MASK(os_polyform));
-        pm_hasprop = pm_has_property(&mons[pm], prop) > 0;
-        pm_blocks = pm_has_property(&mons[pm], prop) < 0;
+        hasprop = has_property(mon, prop);
+        hasprop_poly = hasprop & W_MASK(os_polyform);
+
+        pm_hasprop = pm_has_property(&mons[old_pm], prop) > 0;
+        pm_blocks = pm_has_property(&mons[old_pm], prop) < 0;
         if ((hasprop && pm_blocks) || /* has property, target blocks */
             (hasprop_poly && !pm_hasprop) || /* has property @polyself, target lacks */
             (!hasprop && pm_hasprop)) /* lacks property, target has */
-            update_property(mon, prop, os_newpolyform);
+            update_property(mon, prop, os_polyform);
 
         /* polymorphed as a result, bail out since this might no longer be relevant
            (the polymorph, if any happened, will have run this again anyway) */
@@ -918,19 +947,17 @@ update_property(struct monst *mon, enum youprop prop,
        since canseemon() wont work if the monster just turned
        itself invisible */
     boolean vis_invis = !offlevel && cansee(mon->mx, mon->my);
-    /* if slot is inctimeout or newpolyform, point real_slot to
-       timeout or polyform respectively -- new* is to give proper messages */
+    /* if slot is inctimeout, point real_slot to timeout */
     int real_slot = (slot == os_inctimeout  ? os_timeout  :
                      slot == os_dectimeout  ? os_timeout  :
-                     slot == os_newpolyform ? os_polyform :
                      slot);
     boolean lost = !(has_property(mon, prop) & W_MASK(real_slot));
     boolean blocked;
     blocked = !!(m_has_property(mon, prop, ANY_PROPERTY, TRUE) & W_MASK(os_blocked));
-    /* Unless this was called as a result of newpolyform/block, check whether or not the
+    /* Unless this was called as a result of block, check whether or not the
        property was actually lost, to avoid lost being set when gaining new properties
        if blocked. */
-    if (lost && blocked && slot != os_newpolyform && slot != os_blocked) {
+    if (lost && blocked && slot != os_blocked) {
         if (m_has_property(mon, prop, ANY_PROPERTY, TRUE) & W_MASK(real_slot))
             lost = FALSE;
         /* And if this is os_dectimeout, ensure that no pointless messages are printed */
@@ -959,6 +986,7 @@ update_property(struct monst *mon, enum youprop prop,
     boolean you = (mon == &youmonst);
     /* if something was said about the situation */
     boolean effect = FALSE;
+    boolean was_overprotected = !cast_protection(mon, FALSE, TRUE);
     int timer = property_timeout(mon, prop);
     struct obj *weapon;
     enum msg_channel msgc = msgc_monneutral;
@@ -1027,7 +1055,8 @@ update_property(struct monst *mon, enum youprop prop,
             touch_petrifies(&mons[weapon->corpsenm])) {
             if (!you)
                 mselftouch(mon, "No longer petrify-resistant, ",
-                           !flags.mon_moving ? &youmonst : NULL);
+                           find_mid(mon->dlevel, flags.mon_moving,
+                                    FM_EVERYWHERE));
             else {
                 const char *kbuf;
                 kbuf = msgprintf("losing stone resistance while wielding %s",
@@ -1047,7 +1076,14 @@ update_property(struct monst *mon, enum youprop prop,
             set_property(mon, STONED, -2, FALSE);
         break;
     case ADORNED:
+        break;
     case REGENERATION:
+        if (!redundant && you) {
+            pline(lost ? msgc_intrloss : msgc_intrgain,
+                  "You feel %sregenerative.", lost ? "less " : "");
+            effect = TRUE;
+        }
+        break;
     case SEARCHING:
         break;
     case SEE_INVIS:
@@ -1163,6 +1199,22 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case PROTECTION:
+        while (slot == os_dectimeout && !cast_protection(mon, FALSE, TRUE)) {
+            if ((mon->mintrinsic[PROTECTION] & TIMEOUT_RAW) > 10)
+                mon->mintrinsic[PROTECTION] -= 10;
+            else {
+                mon->mintrinsic[PROTECTION] &= ~TIMEOUT_RAW;
+                break;
+            }
+        }
+
+        if (slot == os_dectimeout && was_overprotected && (you || vis)) {
+            pline(you ? msgc_statusbad : msgc_monneutral,
+                  "The %s haze around %s fades rapidly.", hcolor("golden"),
+                  mon_nam(mon));
+            effect = TRUE;
+        }
+
         if (you && slot == os_armc && !lost) {
             pline(msgc_intrgain,
                   "Your cloak feels unusually protective.");
@@ -1191,6 +1243,12 @@ update_property(struct monst *mon, enum youprop prop,
             see_monsters(FALSE);
         break;
     case FAST:
+        /* No redundant messages */
+        if (mon == &youmonst &&
+            (slot == os_role || slot == os_race ||
+             slot == os_polyform || slot == os_outside))
+            break;
+
         /* only give the "new energy" message if the monster has redundant speed */
         if (redundant_intrinsic) {
             if (slot == os_inctimeout && you) {
@@ -1370,7 +1428,7 @@ update_property(struct monst *mon, enum youprop prop,
         }
 
         if (!you && !redundant)
-            mon->usicked = lost || !flags.mon_moving ? 0 : 1;
+            mon->usicked = lost || !flags.mon_moving ? 1 : 0;
         break;
     case BLINDED:
         if (slot == os_tool) {
@@ -1928,6 +1986,12 @@ update_property(struct monst *mon, enum youprop prop,
                 u.utrap = 0;
                 turnstate.vision_full_recalc = TRUE;
             }
+
+            if (you && slot == os_timeout) {
+                pline(lost ? msgc_statusbad : msgc_statusgood, "You feel %s.",
+                      lost ? "more solid" : "etheral");
+                effect = TRUE;
+            }
         }
         break;
     case SLOW_DIGESTION:
@@ -2161,7 +2225,7 @@ slip_or_trip(struct monst *mon)
     if (!you)
         pctload = (curr_mon_load(mon) * 100) / max_mon_load(mon);
     else
-        pctload = (inv_weight() * 100) / weight_cap();
+        pctload = (inv_weight_total() * 100) / weight_cap();
 
     if (!you && !vis) {
         if (pctload > 50 && canhear())
@@ -2459,11 +2523,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        only item that gives astral vision also gives blindness immunity; this
        code assumes not. */
     boolean xray = astral_vision(viewer) && (!invisible || see_invisible);
-    if (vertical_loe && distance <= XRAY_RANGE * XRAY_RANGE && xray &&
-        (target_lit || infravision_ok)) {
+    if (vertical_loe && distance <= XRAY_RANGE * XRAY_RANGE && xray) {
         sensemethod |= MSENSE_XRAY;
-        if (distance_displaced <= XRAY_RANGE * XRAY_RANGE && xray &&
-            (target_lit_displaced || infravision_ok))
+        if (distance_displaced <= XRAY_RANGE * XRAY_RANGE && xray)
             sensemethod |= MSENSE_DISPLACED;
         if (invisible && see_invisible)
             sensemethod |= MSENSEF_KNOWNINVIS;
@@ -2476,7 +2538,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
     /* Monster detection. All that is needed (apart from same-level, which was
        checked earlier) is the property itself. */
-    if (detects_monsters(viewer))
+    if (detects_monsters(viewer) || (viewer->mtame && viewee == &youmonst))
         sensemethod |= MSENSE_MONDETECT;
 
     /* Warning versus monster class. (Actually implemented as monster
@@ -3022,26 +3084,28 @@ enlighten_mon(struct monst *mon, int final, int show_source)
             "the Glory of Arioch"
         };
         eline(&menu, "%s %s", monis, hofe_titles[u.uevent.uhand_of_elbereth - 1]);
-        if (u.ualign.record >= 20)
+        if (u.ualign.record >= AR_PIOUS)
             eline(&menu, "%s piously aligned", monis);
-        else if (u.ualign.record > 13)
+        else if (u.ualign.record >= AR_DEVOUT)
             eline(&menu, "%s devoutly aligned", monis);
-        else if (u.ualign.record > 8)
+        else if (u.ualign.record >= AR_FERVENT)
             eline(&menu, "%s fervently aligned", monis);
-        else if (u.ualign.record > 3)
+        else if (u.ualign.record >= AR_STRIDENT)
             eline(&menu, "%s stridently aligned", monis);
-        else if (u.ualign.record == 3)
+        else if (u.ualign.record == AR_OK)
             eline(&menu, "%s aligned", monis);
-        else if (u.ualign.record > 0)
+        else if (u.ualign.record >= AR_HALTING)
             eline(&menu, "%s haltingly aligned", monis);
-        else if (u.ualign.record == 0)
+        else if (u.ualign.record == AR_NOMINAL)
             eline(&menu, "%s nominally aligned", monis);
-        else if (u.ualign.record >= -3)
-            eline(&menu, "%s strayed", monhas);
-        else if (u.ualign.record >= -8)
+        else if (u.ualign.record <= AR_TRANSGRESSE)
+            eline(&menu, "%s transgressed", monhas);
+        else if (u.ualign.record <= AR_SINNED)
             eline(&menu, "%s sinned", monhas);
+        else if (u.ualign.record <= AR_STRAYED)
+            eline(&menu, "%s strayed", monhas);
         else
-            eline(&menu, "%s devoutly aligned", monis);
+            impossible("Unknown alignment threshould?");
         if (wizard) {
             buf = msgprintf(" %d", u.uhunger);
             eline(&menu, "Hunger level %s %s", final ? "was" : "is", buf);
@@ -3342,6 +3406,7 @@ unspoilered_intrinsics(void)
     addmenu(DISINT_RES, "You are disintegration resistant.");
     addmenu(SHOCK_RES, "You are shock resistant.");
     addmenu(POISON_RES, "You are poison resistant.");
+    addmenu(ACID_RES, "You are acid resistant.");
     addmenu(DRAIN_RES, "You are level-drain resistant.");
     addmenu(SICK_RES, "You are immune to sickness.");
     addmenu(SEE_INVIS, "You see invisible.");

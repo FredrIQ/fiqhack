@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-28 */
+/* Last modified by Alex Smith, 2017-09-01 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -30,8 +30,8 @@
 #include "uncursed_sdl.h"
 
 #ifdef AIMAKE_BUILDOS_MSWin32
-# include <Winsock2.h>
-# include <Ws2def.h>
+# include <winsock2.h>
+# include <ws2def.h>
 #else
 # include <sys/select.h>
 #endif

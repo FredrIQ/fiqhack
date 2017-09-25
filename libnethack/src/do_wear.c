@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -212,9 +212,9 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         update_property_for_oprops(&youmonst, o, slot);
         if (o->spe)
             learn_oprop(o, (opm_dexterity | opm_brilliance));
-        learn_oprop(o, opm_power | opm_oilskin);
+        learn_oprop(o, opm_power | opm_oilskin | opm_carrying);
         if (props & opm_power)
-            encumber_msg(oldcap);
+            oldcap = encumber_msg(oldcap);
         update_inventory();
         if (msgtype != em_silent)
             on_msg(o);
@@ -253,7 +253,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             learn_oprop(o, (opm_dexterity | opm_brilliance));
         learn_oprop(o, opm_power);
         if (props & opm_power)
-            encumber_msg(oldcap);
+            oldcap = encumber_msg(oldcap);
         update_inventory();
     }
 
@@ -359,7 +359,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         /* gauntlets of fumbling handled by the boots codepath */
     case GAUNTLETS_OF_POWER:
         makeknown(otyp);
-        encumber_msg(oldcap);
+        oldcap = encumber_msg(oldcap);
         break;
 
         /* Amulets */
@@ -453,6 +453,10 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         }
         break;
     }
+
+    /* For gauntlets of power, etc */
+    encumber_msg(oldcap);
+
     /* at this point o, otmp are invalid */
 
     /* Prevent wielding cockatrice when not wearing gloves */
@@ -2017,7 +2021,7 @@ destroy_arm(struct monst *mon, struct obj *obj)
             touch_petrifies(&mons[weapon->corpsenm]))
             /* TODO: add culprit to destroy_arm */
             mselftouch(mon, "Losing gloves, ",
-                       !flags.mon_moving ? &youmonst : NULL);
+                       find_mid(mon->dlevel, flags.mon_moving, FM_EVERYWHERE));
     }
     return 1;
 }

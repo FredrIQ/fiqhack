@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artifact.h"
 
 /* Summary of all NetHack's object naming functions:
    obj_typename(otyp): entry in discovery list, from player's point of view
@@ -144,6 +145,9 @@ static const struct opropdesc prop_desc[] = {
      "clairvoyance", NULL},
     {opm_mercy, 0, NULL, NULL,
      "mercy", NULL},
+    {opm_carrying, 0, NULL, "carry",
+     "carrying", NULL},
+    {opm_nasty, 0, "nasty", NULL, NULL, NULL},
     /* these below use "versus x" instead of "of x" for armor,
        checked via opm_vorpal */
     {opm_vorpal, 0, "vorpal", NULL, NULL, "beheading"},
@@ -504,6 +508,8 @@ examine_object(struct obj *obj)
         obj->dknown = TRUE;
     if (Role_if(PM_PRIEST))
         obj->bknown = TRUE;
+    if (weapon_type(obj) != P_NONE && P_SKILL(weapon_type(obj)) >= P_EXPERT)
+        obj->known = TRUE;
 }
 
 
@@ -922,20 +928,25 @@ doname_base(const struct obj *obj, boolean with_price)
            thus possibly enchanted), we automatically ID it. This takes weight
            into account too (as it's shown in inventory listings), which
            conveniently happens to distinguish between different description
-           groups when we need it to. */
-        if (obj->oclass != ARMOR_CLASS && obj->oclass != WEAPON_CLASS &&
+           groups when we need it to.
+           Tourists always ID shop objects. */
+        if ((Role_if(PM_TOURIST) ||
+             (obj->oclass != ARMOR_CLASS && obj->oclass != WEAPON_CLASS)) &&
             obj->oclass != GEM_CLASS) {
             int i;
             boolean id = TRUE;
 
-            for (i = 0; i < NUM_OBJECTS; i++) {
-                if (i == obj->otyp)
-                    continue;
-                if (objects[i].oc_cost == objects[obj->otyp].oc_cost &&
-                    objects[i].oc_class == objects[obj->otyp].oc_class &&
-                    objects[i].oc_weight == objects[obj->otyp].oc_weight)
-                    id = FALSE;
+            if (!Role_if(PM_TOURIST)) {
+                for (i = 0; i < NUM_OBJECTS; i++) {
+                    if (i == obj->otyp)
+                        continue;
+                    if (objects[i].oc_cost == objects[obj->otyp].oc_cost &&
+                        objects[i].oc_class == objects[obj->otyp].oc_class &&
+                        objects[i].oc_weight == objects[obj->otyp].oc_weight)
+                        id = FALSE;
+                }
             }
+
             /* tallow candles are unique by this check, wax ones aren't;
                special-case wax candles to make it consistent */
             if (id || obj->otyp == WAX_CANDLE)
@@ -981,9 +992,8 @@ doname_base(const struct obj *obj, boolean with_price)
             prefix = msgcat(prefix, "cursed ");
         else if (obj->blessed)
             prefix = msgcat(prefix, "blessed ");
-        else if (flags.show_uncursed ||
-                 ((!obj->known || !objects[obj->otyp].oc_charged ||
-                   (obj->oclass == ARMOR_CLASS || obj->oclass == RING_CLASS))
+        else if ((!obj->known || !objects[obj->otyp].oc_charged ||
+                  (obj->oclass == ARMOR_CLASS || obj->oclass == RING_CLASS))
                   /* For most items with charges or +/-, if you know how many
                      charges are left or what the +/- is, then you must have
                      totally identified the item, so "uncursed" is unneccesary,
@@ -992,9 +1002,11 @@ doname_base(const struct obj *obj, boolean with_price)
                      known, "uncursed" must be printed to avoid ambiguity
                      between an item whose curse status is unknown, and an item
                      known to be uncursed. */
-                  && obj->otyp != FAKE_AMULET_OF_YENDOR &&
-                  obj->otyp != AMULET_OF_YENDOR && !Role_if(PM_PRIEST)))
+                 && obj->otyp != FAKE_AMULET_OF_YENDOR &&
+                 obj->otyp != AMULET_OF_YENDOR && !Role_if(PM_PRIEST))
             prefix = msgcat(prefix, "uncursed ");
+        else
+            prefix = msgprintf("%s%s", prefix, implied_uncursed("%s"));
     }
 
     if (obj->greased)
@@ -1851,6 +1863,8 @@ static const struct o_range o_ranges[] = {
     {"helm", ARMOR_CLASS, ELVEN_LEATHER_HELM, HELM_OF_TELEPATHY},
     {"gloves", ARMOR_CLASS, LEATHER_GLOVES, GAUNTLETS_OF_DEXTERITY},
     {"gauntlets", ARMOR_CLASS, LEATHER_GLOVES, GAUNTLETS_OF_DEXTERITY},
+    /* If you're adding more boots synonyms, make sure to add to the checks that
+       ensure that boots of speed/fumbling is parsed correctly. */
     {"boots", ARMOR_CLASS, LOW_BOOTS, LEVITATION_BOOTS},
     {"shoes", ARMOR_CLASS, LOW_BOOTS, IRON_SHOES},
     {"cloak", ARMOR_CLASS, MUMMY_WRAPPING, CLOAK_OF_DISPLACEMENT},
@@ -2231,6 +2245,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
             props |= opm_vorpal;
         } else if (!strncmpi(bp, "thirsty ", l = 8)) {
             props |= opm_drain;
+        } else if (!strncmpi(bp, "nasty ", l = 6)) {
+            props |= opm_nasty;
         } else if (!strncmpi(bp, "magical ", l = 8)) {
             magical = TRUE;
         } else if (!strncmpi(bp, "oilskin ", l = 8) &&
@@ -2450,6 +2466,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
                 props |= opm_aggravate;
             } else if (!strncmpi(p + of, "mercy", l=5)) {
                 props |= opm_mercy;
+            } else if (!strncmpi(p + of, "carrying", l=8)) {
+                props |= opm_carrying;
             } else
                 l = 0;
 
@@ -2466,7 +2484,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
         strncmpi(bp, "wizard lock", 11) &&      /* not the "wizard" monster! */
         strncmpi(bp, "ninja-to", 8) &&          /* not the "ninja" rank */
         strncmpi(bp, "master key", 10) &&       /* not the "master" rank */
-        strncmpi(bp, "magenta", 7) &&            /* not the "mage" rank */
+        strncmpi(bp, "magenta", 7) &&           /* not the "mage" rank */
         mntmp < LOW_PM && strlen(bp) > 2 &&
         (mntmp = name_to_mon(bp)) >= LOW_PM) {
         int mntmptoo, mntmplen; /* double check for rank title */
@@ -2605,8 +2623,19 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     /* "grey stone" check must be before general "stone" */
     for (i = 0; i < SIZE(o_ranges); i++)
         if (!strcmpi(bp, o_ranges[i].name)) {
-            typ = rnd_class(o_ranges[i].f_o_range, o_ranges[i].l_o_range,
-                            rng_main);
+            if ((!strcmpi(bp, "boots") ||
+                 !strcmpi(bp, "shoes")) &&
+                props) {
+                typ = 0;
+                if (props & opm_speed)
+                    typ = SPEED_BOOTS;
+                else if (props & opm_fumble)
+                    typ = FUMBLE_BOOTS;
+            }
+
+            if (!typ)
+                typ = rnd_class(o_ranges[i].f_o_range, o_ranges[i].l_o_range,
+                                rng_main);
             goto typfnd;
         }
 
@@ -3166,6 +3195,7 @@ typfnd:
 
         otmp = oname(otmp, name);
         if (otmp->oartifact) {
+            artifact_exists(otmp, ox_name(otmp), ag_wish);
             otmp->quan = 1L;
             if (!flags.mon_moving)
                 break_conduct(conduct_artiwish);      /* KMH, conduct */
@@ -3176,8 +3206,8 @@ typfnd:
     /* and make them pay; charge them for the wish anyway! */
     if ((is_quest_artifact(otmp) ||
          (otmp->oartifact &&
-          rn2_on_rng(nartifact_exist(), rng_artifact_wish) > 1)) && !wizard) {
-        artifact_exists(otmp, ox_name(otmp), FALSE);
+          rn2_on_rng(nartifact_wished(), rng_artifact_wish))) && !wizard) {
+        artifact_exists(otmp, ox_name(otmp), ag_none);
         obfree(otmp, NULL);
         otmp = &zeroobj;
         if (!flags.mon_moving)

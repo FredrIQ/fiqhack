@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -87,6 +87,8 @@ const struct cmd_desc cmdlist[] = {
      FALSE, ARG(doautoexplore), 0},
     {"cast", "use a magical or supernatural ability", 'Z', 0, TRUE, MUSE(docast),
      CMD_ARG_SPELL | CMD_ARG_DIR | CMD_ARG_POS | CMD_MUSABLE},
+    {"castalias", "alias spells to single input", 0, 0, TRUE, ARG(docastalias),
+     CMD_ARG_KEY},
     {"chat", "talk to someone", 'c', M('c'), TRUE, ARG(dotalk),
      CMD_ARG_DIR | CMD_EXT},     /* converse? */
     {"close", "close a door", 0, 0, FALSE, ARG(doclose), CMD_ARG_DIR},
@@ -910,7 +912,7 @@ doattributes(const struct nh_cmd_arg *arg)
     add_menutext(&menu, buf);
 
     wc = weight_cap();
-    buf = msgprintf("%-10s: %ld (", "burden", wc + inv_weight());
+    buf = msgprintf("%-10s: %d (", "burden", inv_weight_total());
 
     switch (calc_capacity(wc / 4)) {
     case UNENCUMBERED:
@@ -1699,6 +1701,8 @@ do_command(int command, struct nh_cmd_arg *arg)
             flags.last_arg.limit = 0;
         if (!(flags.last_arg.argtype & CMD_ARG_ABILITY))
             flags.last_arg.ability = 0;
+        if (!(flags.last_arg.argtype & CMD_ARG_KEY))
+            flags.last_arg.key = 0;
     }
 
     /* Debug commands are now restricted to wizard mode here, rather than with

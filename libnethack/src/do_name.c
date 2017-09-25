@@ -1,10 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artifact.h"
 
+static boolean is_callable(const struct obj *);
 
 int
 do_mname(const struct nh_cmd_arg *arg)
@@ -129,6 +131,8 @@ do_oname(const struct nh_cmd_arg *arg)
         break_conduct(conduct_illiterate);
     }
     oname(obj, buf);
+    if (obj->oartifact)
+        artifact_exists(obj, artiname(obj->oartifact), ag_named);
     return 0;
 }
 
@@ -147,7 +151,7 @@ oname(struct obj *obj, const char *name)
 
     christen_obj(obj, name);
     if (lth)
-        artifact_exists(obj, name, TRUE);
+        artifact_exists(obj, name, ag_other); /* caller changes if applicable */
     if (obj->oartifact) {
         /* can't dual-wield with artifact as secondary weapon */
         if (obj == uswapwep)
@@ -155,6 +159,10 @@ oname(struct obj *obj, const char *name)
     }
     if (carried(obj))
         update_inventory();
+
+    /* Update allowed properties */
+    obj->oprops = obj_properties(obj);
+
     return obj;
 }
 
@@ -197,14 +205,43 @@ docall_inner(const struct nh_cmd_arg *arg, int otyp)
 }
 
 static const char callable[] = {
+    ALLOW_NONE, NONE_ON_COMMA,
     SCROLL_CLASS, POTION_CLASS, WAND_CLASS, RING_CLASS, AMULET_CLASS,
     GEM_CLASS, SPBOOK_CLASS, ARMOR_CLASS, TOOL_CLASS, 0
 };
 
+static boolean
+is_callable(const struct obj *obj)
+{
+    int i;
+    for (i = 2; callable[i]; i++)
+        if (obj->oclass == callable[i])
+            return TRUE;
+    return FALSE;
+}
+
 int
 do_tname(const struct nh_cmd_arg *arg)
 {
-    struct obj *obj = getargobj(arg, callable, "call");
+    boolean flooritem = FALSE;
+    struct obj *here;
+    if (can_reach_floor() && !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy) &&
+        level->objects[u.ux][u.uy])
+        flooritem = TRUE;
+
+    struct obj *obj = getargobj(arg, callable + (flooritem ? 0 : 2), "call");
+    if (obj == &zeroobj) {
+        struct object_pick *floorobj_list;
+        int n = query_objlist("Call what?", level->objects[u.ux][u.uy],
+                              BY_NEXTHERE | INVORDER_SORT | AUTOSELECT_SINGLE,
+                              &floorobj_list, PICK_ONE, is_callable);
+        if (n) {
+            obj = floorobj_list[0].obj;
+            free(floorobj_list);
+        } else
+            obj = NULL;
+    }
+
     if (obj) {
         /* behave as if examining it in inventory; this might set dknown if it 
            was picked up while blind and the hero can now see */

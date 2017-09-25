@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -343,6 +343,23 @@ dofire(const struct nh_cmd_arg *arg)
     boolean cancel_unquivers = FALSE;
     struct musable m = arg_to_musable(arg);
 
+    if (u.spellquiver) {
+        int sp_no;
+        for (sp_no = 0;
+             sp_no < MAXSPELL && spl_book[sp_no].sp_id != u.spellquiver;
+             sp_no++)
+            ;
+
+        if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == u.spellquiver &&
+            spellknow(sp_no) > 0) {
+            m.spell = u.spellquiver;
+            return spelleffects(FALSE, &m);
+        }
+    }
+
+    /* Might have forgotten the spell, silently unready it */
+    u.spellquiver = 0;
+
     if (notake(youmonst.data)) {
         pline(msgc_cancelled, "You are physically incapable of doing that.");
         return 0;
@@ -356,14 +373,33 @@ dofire(const struct nh_cmd_arg *arg)
        the proper launcher isn't wielded. */
     if (uquiver && is_ammo(uquiver) && uquiver->oclass != GEM_CLASS &&
         !ammo_and_launcher(uquiver, uwep)) {
-        /* This is useless, but is here because players expect a direction prompt
-           after firing, so avoid them taking a step they don't want to. */
-        schar dx, dy, dz;
-        getargdir(arg, NULL, &dx, &dy, &dz);
+        /* First however, check if we have the proper launcher in offhand and neither
+           is (knowingly) cursed. */
+        if (flags.autoswap && !u.twoweap && uswapwep &&
+            ammo_and_launcher(uquiver, uswapwep) &&
+            (!uwep || !uwep->cursed || !uwep->bknown) &&
+            (!uswapwep->cursed || !uswapwep->bknown)) {
+            if (uwep && uwep->cursed) {
+                weldmsg(msgc_cancelled1, uwep);
+                return 1;
+            }
 
-        pline(msgc_cancelled, "You aren't wielding the appropriate launcher.");
-        pline(msgc_controlhelp, "(Use the 'throw' command to fire anyway.)");
-        return 0;
+            int wtstatus = wield_tool(uswapwep, "preparing to wield something",
+                                      occ_prepare, TRUE);
+            if (wtstatus & 2)
+                return 1;
+            if (!(wtstatus & 1))
+                return 0;
+        } else {
+            /* This is useless, but is here because players expect a direction prompt
+               after firing, so avoid them taking a step they don't want to. */
+            schar dx, dy, dz;
+            getargdir(arg, NULL, &dx, &dy, &dz);
+
+            pline(msgc_cancelled, "You aren't wielding the appropriate launcher.");
+            pline(msgc_controlhelp, "(Use the 'throw' command to fire anyway.)");
+            return 0;
+        }
     }
 
     if (!uquiver) {
@@ -371,14 +407,17 @@ dofire(const struct nh_cmd_arg *arg)
             /* Don't automatically fill the quiver */
             pline_implied(msgc_cancelled, "You have no ammunition readied!");
             dowieldquiver(&(struct nh_cmd_arg){.argtype = 0});
+            if (u.spellquiver)
+                return dofire(arg);
+
             /* Allow this quiver to be unset if the throw is cancelled, so
                vi-keys players don't have to do it manually after typo-ing an
                object when entering a firing direction. */
             cancel_unquivers = TRUE;
             if (!uquiver)
                 return dothrow(&m);
-        }
-        autoquiver();
+        } else
+            autoquiver();
         if (!uquiver) {
             pline_implied(msgc_cancelled,
                           "You have nothing appropriate for your quiver!");
@@ -561,7 +600,7 @@ hurtle_step(void *arg, int x, int y)
         }
         if ((youmonst.mx - x) && (youmonst.my - y) && bad_rock(&youmonst, youmonst.mx, y) &&
             bad_rock(&youmonst, x, youmonst.my)) {
-            boolean too_much = (invent && (inv_weight() + weight_cap() > 600));
+            boolean too_much = (invent && (inv_weight_total() > 600));
 
             /* Move at a diagonal. */
             if (bigmonst(youmonst.data) || too_much) {
@@ -1957,7 +1996,7 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj,
         wakeup(mdef, TRUE);
         if (obj->otyp == CORPSE && touch_petrifies(&mons[obj->corpsenm])) {
             if (is_animal(u.ustuck->data)) {
-                minstapetrify(u.ustuck, &youmonst);
+                minstapetrify(&youmonst, u.ustuck);
                 /* Don't leave a cockatrice corpse available in a statue */
                 if (!Engulfed) {
                     delobj(obj);

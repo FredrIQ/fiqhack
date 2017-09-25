@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
 #include "hack.h"
+#include "artifact.h"
 
 extern const int monstr[];
 
@@ -395,17 +396,17 @@ mon_makewish(struct monst *mon)
        TODO: check luck */
     wishobj = mksobj(mon->dlevel, wishtyp, TRUE, FALSE, rng_main);
 
-    /* I kind of want to allow the wizard to cheat the artifact counter.
-       However, this could lead to cases where the players deliberately
-       donate a stack of smoky potions to the wizard, waiting until he
-       eventually performs a guranteed artiwish... */
+    /* Monsters and players share artiwish counter, monwish is for tracking who wished
+       for it. */
     if (wisharti) {
         wishobj = oname(wishobj, artiname(wisharti));
         wishobj->quan = 1L;
+        if (wishobj->oartifact)
+            artifact_exists(wishobj, ox_name(wishobj), ag_monwish);
         if (is_quest_artifact(wishobj) ||
              (wishobj->oartifact &&
-              rn2(nartifact_exist()) > 1)) {
-            artifact_exists(wishobj, ox_name(wishobj), FALSE);
+              rn2(nartifact_wished()))) {
+            artifact_exists(wishobj, ox_name(wishobj), ag_none);
             obfree(wishobj, NULL);
             wishobj = &zeroobj;
             if (canseemon(mon))
@@ -832,8 +833,9 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                          obj->otyp == SPE_POLYMORPH) &&
                         mtmp == &youmonst && mon->mpeaceful)
                         helpful = FALSE;
-                    if (self) /* -40 or +40 depending on helpfulness */
-                        tilescore += (helpful ? 40 : -40);
+                    if (self || (mon->mtame && mtmp == &youmonst))
+                        /* -40 or +40 depending on helpfulness */
+                        tilescore += (helpful ? 60 : -60);
                     /* target is hostile */
                     else if (mm_aggression(mon, mtmp, Conflict))
                         tilescore += (helpful ? -10 : 20);
@@ -949,9 +951,10 @@ mon_choose_spectarget(const struct monst *mon, struct obj *obj, coord *cc)
                 continue;
             if (IS_STWALL(level->locations[x][y].typ))
                 continue;
+
+            mtmp = um_at(level, x, y);
             if (!m_cansee(mon, x, y) ||
-                (!stink && (mtmp = um_at(level, x, y)) &&
-                 mcanspotmon(mon, mtmp)))
+                (!stink && (!mtmp || !mcanspotmon(mon, mtmp))))
                 continue;
             if (dist2(mon->mx, mon->my, x, y) > (globrange * globrange))
                 continue;
@@ -1054,9 +1057,9 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc)
             }
         }
     } else if (otyp == SCR_STINKING_CLOUD ||
-        ((otyp == SPE_FIREBALL ||
-          otyp == SPE_CONE_OF_COLD) &&
-         mprof(mon, MP_SATTK) >= P_SKILLED))
+               ((otyp == SPE_FIREBALL ||
+                 otyp == SPE_CONE_OF_COLD) &&
+                mprof(mon, MP_SATTK) >= P_SKILLED))
         score = mon_choose_spectarget(mon, obj, tc);
     else
         score = mon_choose_dirtarget(mon, obj, tc);
@@ -1295,9 +1298,10 @@ find_item(struct monst *mon, struct musable *m)
     }
 
     /* Fix other ailments */
-    if (confused(mon) || stunned(mon) || blind(mon) || sick(mon)) {
+    if (confused(mon) || stunned(mon) || blind(mon) || sick(mon) ||
+        zombifying(mon)) {
         /* Sickness */
-        if (sick(mon)) {
+        if (sick(mon) || zombifying(mon)) {
             if (mon_castable(mon, SPE_CURE_SICKNESS, FALSE)) {
                 m->spell = SPE_CURE_SICKNESS;
                 m->use = MUSE_CAST;
@@ -1315,7 +1319,7 @@ find_item(struct monst *mon, struct musable *m)
             return TRUE;
         }
         /* Unihorn-less sickness: look for healing potions */
-        if (sick(mon)) {
+        if (sick(mon) || zombifying(mon)) {
             if (find_item_obj(mon->minvent, m, FALSE, POT_EXTRA_HEALING) ||
                 find_item_obj(mon->minvent, m, FALSE, POT_FULL_HEALING))
                 return TRUE;
@@ -1478,9 +1482,24 @@ find_item(struct monst *mon, struct musable *m)
         return TRUE;
 
     /* Clone ourselves */
-    if (mon->iswiz && flags.no_of_wizards == 1 && !mon->mspec_used) {
-        m->use = MUSE_CAST;
+    if (flags.no_of_wizards == 1 &&
+        mon_castable(mon, SPE_BOOK_OF_THE_DEAD, FALSE)) {
+        m->use = MUSE_SPE;
         m->spell = SPE_BOOK_OF_THE_DEAD; /* sentinel for double trouble */
+        return TRUE;
+    }
+
+    if (!very_fast(mon) && mon_castable(mon, SPE_HASTE_SELF, FALSE)) {
+        m->use = MUSE_SPE;
+        m->spell = SPE_HASTE_SELF;
+        return TRUE;
+    }
+
+    if (!m_mspellprot(mon) &&
+        mon_castable(mon, SPE_PROTECTION, FALSE) &&
+        !spell_maintained(mon, SPE_PROTECTION)) {
+        m->use = MUSE_SPE;
+        m->spell = SPE_PROTECTION;
         return TRUE;
     }
 
@@ -1515,7 +1534,14 @@ find_item(struct monst *mon, struct musable *m)
         usable = find_item_single(obj, TRUE, &m2, mclose ? TRUE : FALSE, FALSE);
         if (usable) {
             if (usable == 1) {
-                if (!rn2(randcount)) {
+                /* TODO: move summon nasty handling elsewhere */
+                if (spell == SPE_SUMMON_NASTY) {
+                    if (!mclose)
+                        impossible("Monster casting summon nasties when there is no target");
+                    if (!mcanspotmon(mon, mclose))
+                        mclose = NULL;
+                }
+                if ((mclose || spell != SPE_SUMMON_NASTY) && !rn2(randcount)) {
                     randcount++;
                     m->spell = spell;
                     m->x = m2.x;
@@ -2033,11 +2059,6 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
 
     /* tame monsters wont zap wishing */
     if (otyp == WAN_WISHING && !mon->mtame)
-        return 1;
-
-    /* If there is partial protection already, cast it only 12% of the time to avoid this
-       essentially being the default spell. */
-    if (otyp == SPE_PROTECTION && (!(protected(mon) & W_MASK(os_timeout)) || !rn2(8)))
         return 1;
 
     /* only quaff unIDed !oGL if we can't ID it somehow (prevents shopkeepers/priests
@@ -2628,7 +2649,7 @@ try_again:
         return SCR_TELEPORTATION;
     case 8:
     case 10:
-        if (!rn2_on_rng(3, rng))
+        if (!rn2_on_rng(9, rng))
             return WAN_CREATE_MONSTER;
         /* else FALLTHRU */
     case 2:
@@ -2923,6 +2944,16 @@ searches_for_item(struct monst *mon, struct obj *obj)
     return FALSE;
 }
 
+/* Helper for mon_reflects */
+static boolean
+reflect_slot(unsigned reason, enum objslot rslot, enum objslot *slot)
+{
+    if (!(reason & W_MASK(rslot)))
+        return FALSE;
+    *slot = rslot;
+    return TRUE;
+}
+
 /* magr = monster whose attack or reflection is being reflected or NULL if
    the reflection wasn't caused by any monster (divine lightning zaps).
 
@@ -2937,8 +2968,9 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
     unsigned reflect_reason = has_property(mon, REFLECTING);
     const char *mon_s;
     mon_s = (mon == &youmonst) ? "your" : s_suffix(mon_nam(mon));
+    enum objslot slot = os_invalid;
     if (reflect_reason) {
-#define refl(slot) (reflect_reason & W_MASK(slot))
+#define refl(rslot) (reflect_slot(reflect_reason, rslot, &slot))
         if (fmt && str)
             pline(combat_msgc(magr, mon, recursive ?
                               cr_miss : cr_immune),
@@ -2951,33 +2983,39 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
                   refl(os_race)     ? "scales" :
                   refl(os_polyform) ? "scales" :
                   refl(os_arm)      ? "armor"  :
+                  refl(os_armg)     ? "gloves" :
+                  refl(os_armf)     ? "boots"  :
+                  refl(os_armh)     ? "helmet" :
+                  refl(os_armu)     ? "shirt"  :
                   "something weird"); /* os_arm after role/etc to suppress
                                          "armor" if uskin() */
-        if (refl(os_arms)) {
+        if (slot == os_wep) {
+            struct obj *wep = m_mwep(mon);
+            if (wep)
+                learn_oprop(wep, opm_reflects);
+        } else if (slot == os_swapwep) {
+            if (mon != &youmonst)
+                return TRUE; /* shouldn't happen */
+
+            if (uswapwep)
+                learn_oprop(uswapwep, opm_reflects);
+        } else if (slot == os_arms) {
             struct obj *arms = which_armor(mon, os_arms);
             if (arms->otyp == SHIELD_OF_REFLECTION)
                 makeknown(arms->otyp);
             learn_oprop(arms, opm_reflects);
-        } else if (refl(os_wep)) {
-            struct obj *wep = m_mwep(mon);
-            if (wep)
-                learn_oprop(wep, opm_reflects);
-        } else if (refl(os_swapwep)) {
-            if (mon != &youmonst)
-                return TRUE;
-
-            if (uswapwep)
-                learn_oprop(uswapwep, opm_reflects);
-        } else if (refl(os_amul)) {
+        } else if (slot == os_amul) {
             struct obj *amul = which_armor(mon, os_amul);
             if (amul->otyp == AMULET_OF_REFLECTION)
                 makeknown(amul->otyp);
             learn_oprop(amul, opm_reflects);
-        } else if (refl(os_role) || refl(os_race) ||
-                   refl(os_polyform))
-            return TRUE;
-        else if (refl(os_arm)) {
-            struct obj *arm = which_armor(mon, os_arm);
+        } else if (slot != os_invalid && slot <= os_last_worn) {
+            /* which_armor also work for rings */
+            struct obj *arm = which_armor(mon, slot);
+            if (!arm) {
+                impossible("No armor for slot %d?", slot);
+                return TRUE;
+            }
             learn_oprop(arm, opm_reflects);
         }
 #undef refl

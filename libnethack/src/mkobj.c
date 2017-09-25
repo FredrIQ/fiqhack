@@ -243,11 +243,6 @@ assign_oprops(struct level *lev, struct obj *obj, enum rng rng,
     uint64_t props = obj_properties(obj);
     obj->oprops = props_old;
 
-    /* Fire+frost can't be combined, but ensure both are allowed
-       to generate seperately */
-    if (props & (opm_fire | opm_frost))
-        props |= (opm_fire | opm_frost);
-
     if (first) {
         /* Figure out if obj is allowed to have properties */
         obj->oprops = 0LLU;
@@ -308,12 +303,6 @@ assign_oprops(struct level *lev, struct obj *obj, enum rng rng,
     if (prop & opm_vorpal)
         return;
 
-    /* Add the property, unless it's fire and we have frost or
-       vice versa. */
-    if ((prop & (opm_fire | opm_frost)) &&
-        (props_old & (opm_fire | opm_frost)))
-        return;
-
     obj->oprops |= prop;
 
     /* Potentially generate more properties */
@@ -327,8 +316,13 @@ obj_properties(const struct obj *obj)
     uint64_t props = obj->oprops;
 
     /* Artifacts don't retain object properties they might have
-       had before being artifacts (Excalibur, Sting, etc) */
-    if (!props || obj->oartifact)
+       had before being artifacts (Excalibur, Sting, etc). Also,
+       don't allow invocation items to have properties. */
+    if (!props || obj->oartifact ||
+        obj->otyp == AMULET_OF_YENDOR ||
+        obj->otyp == BELL_OF_OPENING ||
+        obj->otyp == SPE_BOOK_OF_THE_DEAD ||
+        obj->otyp == CANDELABRUM_OF_INVOCATION)
         return 0;
 
     if (obj->oclass == WEAPON_CLASS &&
@@ -344,12 +338,6 @@ obj_properties(const struct obj *obj)
         props &= opm_jewelry;
     else
         props &= opm_oilskin; /* misc leather objects */
-
-    /* can only have either a fire or cold suffix on a weapon,
-       combining them would be weird */
-    if ((props & opm_fire) && (props & opm_frost) &&
-        (obj->oclass == WEAPON_CLASS || is_weptool(obj)))
-        props &= ~opm_frost; /* arbitrary but needs consistency */
 
     /* These make no sense on non-enchantable objects */
     if (!objects[obj->otyp].oc_charged)
@@ -1771,6 +1759,8 @@ restore_obj(struct memfile *mf)
     oflags = mread32(mf);
 
     otmp->otyp = mread16(mf);
+
+    otmp->otyp += otyp_offset(otmp->otyp);
 
     otmp->ox = mread8(mf);
     otmp->oy = mread8(mf);

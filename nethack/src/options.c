@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -79,6 +79,22 @@ static struct nh_listitem menupaging_list[] = {
 static struct nh_enum_option menupaging_spec =
     { menupaging_list, listlen(menupaging_list) };
 
+static struct nh_listitem msgcolor_list[] = {
+    {MC_FULL, "full"},
+    {MC_GRAY, "gray"},
+    {MC_WHITE, "white"},
+};
+static struct nh_enum_option msgcolor_spec =
+    { msgcolor_list, listlen(msgcolor_list) };
+
+static struct nh_listitem msgfading_list[] = {
+    {MF_FADE, "fade"},
+    {MF_BLANK, "blank"},
+    {MF_DONTCHANGE, "leave unchanged"},
+};
+static struct nh_enum_option msgfading_spec =
+    { msgfading_list, listlen(msgfading_list) };
+
 static struct nh_listitem optstyle_list[] = {
     {OPTSTYLE_DESC, "description only"},
     {OPTSTYLE_NAME, "name only"},
@@ -147,6 +163,9 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"draw_detected", "Map Display",
      "mark detected monsters",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"draw_piles", "Map Display",
+     "mark object piles",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"draw_rock", "Map Display",
      "make the walls of corridors visible",
@@ -174,13 +193,16 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_ENUM, {.e = A_REVERSE}},
     {"mouse", "Terminal and Rendering",
      "accept mouse input (where supported)",
-     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"menupaging", "Messages and Menus",
      "scrolling behaviour of menus",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MP_LINES}},
     {"msgcolor", "Screen Layout",
      "color messages depending on context",
-     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = MC_FULL}},
+    {"msgfading", "Screen Layout",
+     "how to display old messages",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = MF_FADE}},
     {"msgheight", "Screen Layout",
      "message window height",
      nh_birth_ingame, OPTTYPE_INT, {.i = 8}},
@@ -214,6 +236,9 @@ static struct nh_option_desc curses_options[] = {
     {"show_ac", "Screen Layout",
      "show armor value as AC instead of Def",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"show_uncursed", "Messages and Menus",
+     "always show uncursed status",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"sidebar", "Screen Layout",
      "when to draw the inventory sidebar",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = AB_AUTO}},
@@ -230,6 +255,7 @@ static struct nhlib_boolopt_map boolopt_map[] = {
     {"classic_status", &settings.classic_status},
     {"draw_branch", &settings.dungeoncolor},
     {"draw_detected", &settings.use_inverse},
+    {"draw_piles", &settings.hilite_obj_piles},
     {"draw_rock", &settings.visible_rock},
     {"draw_stepped", &settings.floorcolor},
     {"draw_tame", &settings.hilite_pet},
@@ -237,11 +263,11 @@ static struct nhlib_boolopt_map boolopt_map[] = {
     {"darkgray", &settings.darkgray},
     {"extmenu", &settings.extmenu},
     {"invweight", &settings.invweight},
-    {"msgcolor", &settings.msgcolor},
     {"mouse", &settings.mouse},
     {"prompt_inline", &settings.prompt_inline},
     {"scores_own", &settings.end_own},
     {"show_ac", &settings.show_ac},
+    {"show_uncursed", &settings.show_uncursed},
     {"status3", &settings.status3},
     {NULL, NULL}
 };
@@ -336,7 +362,9 @@ curses_set_option(const char *name, union nh_optvalue value)
 
         if (!strcmp(option->name, "status3") ||
             !strcmp(option->name, "classic_status") ||
-            !strcmp(option->name, "show_ac")) {
+            !strcmp(option->name, "show_ac") ||
+            !strcmp(option->name, "show_uncursed")) {
+            /* TODO: show_uncursed refreshing doesn't work */
             rebuild_ui();
         } else if (!strcmp(option->name, "darkgray")) {
             set_darkgray();
@@ -388,6 +416,10 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.show_motd = option->value.e;
     } else if (!strcmp(option->name, "menupaging")) {
         settings.menupaging = option->value.e;
+    } else if (!strcmp(option->name, "msgcolor")) {
+        settings.msgcolor = option->value.e;
+    } else if (!strcmp(option->name, "msgfading")) {
+        settings.msgfading = option->value.e;
     } else if (!strcmp(option->name, "msg_window")) {
         settings.msg_window = option->value.e;
     } else if (!strcmp(option->name, "optstyle")) {
@@ -438,6 +470,8 @@ init_options(void)
     find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
     find_option("menupaging")->e = menupaging_spec;
+    find_option("msgcolor")->e = msgcolor_spec;
+    find_option("msgfading")->e = msgfading_spec;
     find_option("msg_window")->e = msg_window_spec;
     find_option("palette")->e = palette_spec;
     find_option("scores_top")->i.max = 10000;

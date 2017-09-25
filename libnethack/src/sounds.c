@@ -82,7 +82,8 @@ dosounds(void)
         return;
     }
     if ((sroom = search_special(level, VAULT)) && !rn2(200)) {
-        if (gd_sound())
+        if (gd_sound()) {
+            level->flags.vault_known = TRUE;
             switch (rn2(2) + hallu) {
             case 1:{
                     boolean gold_in_vault = FALSE;
@@ -111,6 +112,7 @@ dosounds(void)
                 You_hear(msgc_levelsound, "Ebenezer Scrooge!");
                 break;
             }
+        }
         return;
     }
     if (search_special(level, BEEHIVE) && !rn2(200)) {

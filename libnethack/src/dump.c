@@ -116,7 +116,7 @@ dump_status(void)
     hp = Upolyd ? u.mh : u.uhp;
     fprintf(dumpfp, "  Health: %d(%d)\n", hp < 0 ? 0 : hp,
             Upolyd ? u.mhmax : u.uhpmax);
-    fprintf(dumpfp, "  Energy: %d(%d)\n", u.uen, u.uenmax);
+    fprintf(dumpfp, "  Energy: %d(%d)\n", youmonst.pw, youmonst.pwmax);
     fprintf(dumpfp, "  Def: %d\n", 10 - find_mac(&youmonst));
     fprintf(dumpfp, "  Gold: %ld\n", money_cnt(invent));
     fprintf(dumpfp, "  Moves: %u\n\n", moves);

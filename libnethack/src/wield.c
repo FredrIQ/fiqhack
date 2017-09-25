@@ -350,10 +350,18 @@ doswapweapon(const struct nh_cmd_arg *arg)
 int
 dowieldquiver(const struct nh_cmd_arg *arg)
 {
+    if (yn("Do you want to ready a spell?") == 'y') {
+        quiver_spell();
+        if (u.spellquiver)
+            setuqwep(NULL);
+        return 0;
+    }
+
     struct obj *newquiver = getargobj(arg, wield_objs, "quiver");
     if (!newquiver)
         return 0;
 
+    u.spellquiver = 0;
     return equip_in_slot(newquiver, os_quiver, FALSE);
 }
 
@@ -366,14 +374,15 @@ dowieldquiver(const struct nh_cmd_arg *arg)
    occupation itself, to save the caller the trouble. (The caller can still
    override it if, say, it wants to treat 7 and 3 differently message-wise.) */
 int
-wield_tool(struct obj *obj, const char *occ_txt, enum occupation occupation)
+wield_tool(struct obj *obj, const char *occ_txt, enum occupation occupation,
+           boolean force_pushweapon)
 {
     int rv;
 
     if (obj == uwep)
         return 1;
 
-    if (flags.pushweapon) {
+    if (flags.pushweapon || force_pushweapon) {
         u.utracked[tos_first_equip + os_swapwep] = uwep;
         u.uoccupation_progress[tos_first_equip + os_swapwep] = 0;
     }
@@ -565,9 +574,9 @@ chwepon(struct monst *mon, struct obj *otmp, int amount)
     const char *your = you ? "Your" : s_suffix(Monnam(mon));
     struct obj *twep = (m_mwep(mon));
     enum objslot slot = os_invalid;
-    if (twep->owornmask & W_MASK(os_wep))
+    if (twep && (twep->owornmask & W_MASK(os_wep)))
         slot = os_wep;
-    else if (twep->owornmask & W_MASK(os_swapwep))
+    else if (twep && (twep->owornmask & W_MASK(os_swapwep)))
         slot = os_swapwep;
 
     if (!twep || (twep->oclass != WEAPON_CLASS && !is_weptool(twep))) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -95,6 +95,16 @@ race(const struct monst *mon, boolean want_orig)
     if (mon != &youmonst && mon->orig_mnum && want_orig)
         return genus(mon->orig_mnum, 0);
     return genus(monsndx(mon->data), 0);
+
+}
+int
+searchbon(struct monst *mon)
+{
+    int ret = mon_bon(mon, RIN_SEARCHING, (mon)->msearchinc);
+    struct obj *arm = which_armor(mon, os_arm);
+    if (arm && (arm->otyp == WHITE_DRAGON_SCALES || arm->otyp == WHITE_DRAGON_SCALE_MAIL))
+        ret += arm->spe;
+    return ret;
 }
 
 /* TRUE iff monster is resistant to light-induced blindness */

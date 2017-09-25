@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,7 +35,7 @@ struct nh_window_procs curses_windowprocs = {
     curses_getdir,
     curses_yn_function_game,
     curses_getline,
-    curses_show_ac,
+    curses_format,
     curses_delay_output,
     curses_load_progress,
     curses_notify_level_changed,
@@ -395,7 +395,7 @@ init_curses_ui(const char *dataprefix)
     /* set up the default system locale by reading the environment variables */
     setlocale(LC_ALL, "");
 
-    uncursed_set_title("NetHack 4");
+    uncursed_set_title("FIQHack");
 
     if (!initscr()) {
         fprintf(stderr, "Could not initialise the UI.\n");
@@ -421,7 +421,7 @@ init_curses_ui(const char *dataprefix)
 
     while (LINES < ROWNO + 3 || COLS < COLNO + 1) {
         werase(stdscr);
-        mvprintw(0, 0, "Your terminal is too small for NetHack 4.\n");
+        mvprintw(0, 0, "Your terminal is too small for FIQHack.\n");
         printw("Current size: (%d, %d)\n", COLS, LINES);
         printw("Minimum size: (%d, %d)\n", COLNO + 1, ROWNO + 3);
         printw("Size your terminal larger, or press 'q' to quit.\n");
@@ -452,7 +452,7 @@ exit_curses_ui(void)
 enum framechars {
     FC_HLINE, FC_VLINE,
     FC_ULCORNER, FC_URCORNER, FC_LLCORNER, FC_LRCORNER,
-    FC_LTEE, FC_RTEE, FC_TTEE, FC_BTEE
+    FC_LTEE, FC_RTEE, FC_TTEE, FC_BTEE, FC_PLUS
 };
 
 static const char ascii_borders[] = {
@@ -460,6 +460,7 @@ static const char ascii_borders[] = {
     [FC_ULCORNER] = '-', [FC_URCORNER] = '-',
     [FC_LLCORNER] = '-', [FC_LRCORNER] = '-',
     [FC_LTEE] = '|', [FC_RTEE] = '|', [FC_TTEE] = '-', [FC_BTEE] = '-',
+    [FC_PLUS] = '+',
 };
 
 /* We can't use an array for this; on Windows, you can't initialize a variable
@@ -479,6 +480,7 @@ unicode_border(enum framechars which)
     case FC_RTEE: return WACS_RTEE;
     case FC_TTEE: return WACS_TTEE;
     case FC_BTEE: return WACS_BTEE;
+    case FC_PLUS: return WACS_PLUS;
     }
     return WACS_CKBOARD; /* should be unreachable */
 }
@@ -573,12 +575,17 @@ nh_mvwaddch(WINDOW *win, int y, int x, enum framechars which)
     mvwadd_wch(win, y, x, &c);
 }
 
-static void
+void
 draw_frame(void)
 {
     int framewidth = !!ui_flags.draw_outer_frame_lines;
     int y = framewidth;
     int x = framewidth;
+    int sidebar_delim = sidebar_delimiter_pos();
+    int connections[LINES+1]; /* for joining up vertical frames */
+    int i;
+    for (i = 0; i < LINES; i++)
+        connections[i] = 0;
 
     if (framewidth) {
         nh_mvwvline(basewin, 0, 0, LINES);
@@ -605,35 +612,51 @@ draw_frame(void)
         }
     }
 
-    if (ui_flags.draw_horizontal_frame_lines) {
-        /* If we have vertical lines but not an outer frame, or vice versa,
-           connecting just one end of the lines looks ugly, so we leave them
-           disconnected. Exception: if both ends touch the frame, we don't
-           care about vertical lines. */
-        nh_bool connectends = framewidth &&
-            (ui_flags.draw_vertical_frame_lines || !ui_flags.sidebarwidth);
+    /* If we have vertical lines but not an outer frame, or vice versa,
+       connecting just one end of the lines looks ugly, so we leave them
+       disconnected. Exception: if both ends touch the frame, we don't
+       care about vertical lines. */
+    nh_bool connectends = framewidth &&
+        (ui_flags.draw_vertical_frame_lines || !ui_flags.sidebarwidth);
 
+    if (ui_flags.draw_horizontal_frame_lines) {
         y += ui_flags.msgheight;
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
-        if (connectends) {
-            nh_mvwaddch(basewin, y, 0, FC_LTEE);
-            nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
-        }
+        connections[y] |= 1;
 
         y += 1 + ui_flags.mapheight;
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
-        if (connectends) {
-            nh_mvwaddch(basewin, y, 0, FC_LTEE);
-            nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
-        }
+        connections[y] |= 1;
 
         if (ui_flags.extraheight) {
             y += 1 + ui_flags.statusheight;
             nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
+            connections[y] |= 1;
+        }
+    }
+
+    connections[sidebar_delim] |= 2;
+
+    int rtee;
+    for (i = 1; i <= LINES; i++) {
+        if (connections[i] & 2) {
+            if (framewidth) {
+                nh_mvwaddch(basewin, i, ui_flags.mapwidth + 1, FC_LTEE);
+                nh_mvwaddch(basewin, i, COLS-1, FC_RTEE);
+            } else if (ui_flags.sidebarwidth)
+                nh_mvwaddch(basewin, i, ui_flags.mapwidth, FC_LTEE);
+
+        }
+        if (connections[i] & 1) {
+            rtee = FC_RTEE;
+            if (connections[i] & 2)
+                rtee = FC_PLUS;
+
             if (connectends) {
-                nh_mvwaddch(basewin, y, 0, FC_LTEE);
-                nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
-            }
+                nh_mvwaddch(basewin, i, 0, FC_LTEE);
+                nh_mvwaddch(basewin, i, ui_flags.mapwidth + 1, rtee);
+            } else if (ui_flags.sidebarwidth)
+                nh_mvwaddch(basewin, i, ui_flags.mapwidth, rtee);
         }
     }
 }
@@ -1015,7 +1038,7 @@ create_or_resize_game_windows(void (*wrapper)(WINDOW **, int, int, int, int))
     if (ui_flags.sidebarwidth) {
         x += ui_flags.mapwidth + !!ui_flags.draw_vertical_frame_lines;
         sidebar = derwin(basewin, LINES - 2 * outerframewidth,
-                         COLS - 2 * outerframewidth - x,
+                         COLS - 1 * outerframewidth - x,
                          outerframewidth, x);
     } else
         sidebar = NULL;
@@ -1655,25 +1678,34 @@ curses_delay_output(void)
 /* formatstring is printf-like, but doesn't use printf directly to
    avoid potential serverside exploits */
 void
-curses_show_ac(const char *formatstring, int ac, void *res,
-               void (*callback)(const char *, void *))
+curses_format(const char *formatstring, int fmt_type, int param, void *res,
+              void (*callback)(const char *, void *))
 {
+    const char *str = "";
+    if (fmt_type == FMT_SHOW_AC) {
+        str = "Def";
+        if (settings.show_ac)
+            str = "AC";
+    } else if (fmt_type == FMT_FRIENDLY_KEYNAME)
+        str = friendly_keyname(param);
+    else { /* FMT_IMPLIED_UNCURSED */
+        str = "uncursed ";
+        if (!settings.show_uncursed)
+            str = "";
+    }
+
     int len = strlen(formatstring);
-    len += 4; /* +1 from \0, +1 from %s->Def, +2 for %d->-127 */
+    len++; /* \0 */
+    len += strlen(str);
+    len += 2; /* +2 for %d->-127 */
+
     char buf[len];
     int i, j, k;
     int done_str = 0;
     int done_num = 0;
-    const char *str = "Def";
-    if (settings.show_ac)
-        str = "AC";
-
-    char num[5];
-    if (ac < -128)
-        ac = -128;
-    if (ac > 127)
-        ac = 127;
-    snprintf(num, 5, "%d", settings.show_ac ? ac : 10 - ac);
+    char num[20] = "0";
+    snprintf(num, 20, "%d",
+             (settings.show_ac || fmt_type != FMT_SHOW_AC) ? param : 10 - param);
 
     j = 0;
     for (i = 0; formatstring[i]; i++) {
@@ -1695,6 +1727,7 @@ curses_show_ac(const char *formatstring, int ac, void *res,
 
         buf[j++] = formatstring[i];
     }
+    buf[j] = '\0';
 
     callback(buf, res);
 }

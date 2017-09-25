@@ -802,7 +802,7 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
                                   "%s isn't petrified.",
                                   Monnam(hitmon));
                     } else
-                        minstapetrify(hitmon, &youmonst);
+                        minstapetrify(&youmonst, hitmon);
                     /* not hitby -- that would credit hitby with the kill */
                     break;
                 }
@@ -1365,7 +1365,7 @@ dorub(const struct nh_cmd_arg *arg)
         int wtstatus = wield_tool(
             obj, obj->otyp == BRASS_LANTERN ?
             "preparing to rub your lantern" : "preparing to rub your lamp",
-            occ_prepare);
+            occ_prepare, FALSE);
         if (wtstatus & 2)
             return 1;
         if (!(wtstatus & 1))
@@ -2389,7 +2389,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
     schar dx, dy, dz;
     const char *buf;
 
-    int wtstatus = wield_tool(obj, "preparing to lash your whip", occ_prepare);
+    int wtstatus = wield_tool(obj, "preparing to lash your whip", occ_prepare, FALSE);
     if (wtstatus & 2)
         return 1;
     if (!(wtstatus & 1))
@@ -2667,7 +2667,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare);
+    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare, FALSE);
 
     if (wtstatus & 2)
         return 1;
@@ -2785,7 +2785,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    wtstatus = wield_tool(obj, "preparing to grapple", occ_prepare);
+    wtstatus = wield_tool(obj, "preparing to grapple", occ_prepare, FALSE);
 
     if (wtstatus & 2)
         return 1;
@@ -3012,12 +3012,16 @@ doapply(const struct nh_cmd_arg *arg)
             use_magic_whistle(obj);
             /* sometimes the blessing will be worn off */
             if (!rn2_on_rng(49, rng_eucalyptus)) {
+                if (obj->quan > 1)
+                    obj = splitobj(obj, 1);
                 if (!Blind) {
                     pline(msgc_itemloss, "%s %s %s.", Shk_Your(obj),
                           aobjnam(obj, "glow"), hcolor("brown"));
                     obj->bknown = 1;
                 }
                 unbless(obj);
+                obj_extract_self(obj);
+                hold_another_object(obj, "You drop %s!", doname(obj), NULL);
             }
         } else {
             use_whistle(obj);

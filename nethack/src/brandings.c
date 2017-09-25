@@ -22,6 +22,7 @@ const char *const nhcurses_branding_names[(int)nhcurses_branding_count] = {
     [nhcurses_genbranding_locked] = "remembered as locked",
     [nhcurses_genbranding_unlocked] = "remembered as unlocked",
     [nhcurses_genbranding_trapped] = "remembered as trapped",
+    [nhcurses_genbranding_pile] = "remembered as object pile",
 
     [nhcurses_monbranding_tame] = "monster is tame",
     [nhcurses_monbranding_peaceful] = "monster is peaceful",

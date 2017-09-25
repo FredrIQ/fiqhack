@@ -446,6 +446,13 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
             }
         }
     } else {
+        if (!thrown && (obj_properties(obj) & opm_nasty)) {
+            pline(combat_msgc(NULL, &youmonst, cr_hit),
+                  "The nasty weapon hurts you!");
+            learn_oprop(obj, opm_nasty);
+            losehp(rnd(6), killer_msg(DIED, "a nasty weapon"));
+        }
+
         saved_oname = cxname(obj);
         if (obj->oclass == WEAPON_CLASS || is_weptool(obj) ||
             obj->oclass == GEM_CLASS) {
@@ -817,6 +824,13 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
         /* [this assumes that `!thrown' implies wielded...] */
         wtype = thrown ? weapon_type(wep) : uwep_skill_type();
         use_skill(wtype, 1);
+        if (wep && !wep->known && P_SKILL(wtype) >= P_BASIC &&
+            (P_SKILL(wtype) >= P_EXPERT ||
+             !rn2(P_SKILL(wtype) == P_SKILLED ? 10 : 100))) {
+            pline(msgc_info,
+                  "You have successfully appraised this weapon's enchantment.");
+            wep->known = TRUE;
+        }
     }
 
     if (ispoisoned) {
@@ -1448,20 +1462,10 @@ damageum(struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_DRLI:
-        if (!cancelled(&youmonst) && !rn2(3) && !resists_drli(mdef)) {
-            int xtmp = dice(2, 6);
-
-            pline(combat_msgc(&youmonst, mdef, cr_hit),
-                  "%s suddenly seems weaker!", Monnam(mdef));
-            mdef->mhpmax -= xtmp;
-            if ((mdef->mhp -= xtmp) <= 0 || !mdef->m_lev) {
-                pline(combat_msgc(&youmonst, mdef, cr_kill),
-                      "%s dies!", Monnam(mdef));
-                xkilled(mdef, 0);
-            } else
-                mdef->m_lev--;
+        if (!cancelled(&youmonst) && !rn2(3) && !resists_drli(mdef))
+            mlosexp(&youmonst, mdef, "", FALSE);
+        if (DEADMONSTER(mdef))
             tmp = 0;
-        }
         break;
     case AD_RUST:
         if (pd == &mons[PM_IRON_GOLEM]) {
@@ -1999,6 +2003,13 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
             /* Potential problem: if the monster gets multiple weapon attacks,
                we currently allow the player to get each of these as a weapon
                attack.  Is this really desirable? */
+            if (uwep && (obj_properties(uwep) & opm_nasty)) {
+                pline(combat_msgc(NULL, &youmonst, cr_hit),
+                      "The nasty weapon hurts you!");
+                learn_oprop(uwep, opm_nasty);
+                losehp(rnd(6), killer_msg(DIED, "a nasty weapon"));
+            }
+
             hittmp = hitval(uwep, mon);
             hittmp += weapon_hit_bonus(uwep);
             tmp += hittmp;
@@ -2489,6 +2500,7 @@ stumble_onto_mimic(struct monst *mtmp, schar dx, schar dy)
         pline(msgc_youdiscover, fmt, what);
 
     wakeup(mtmp, TRUE);       /* clears mimicking */
+    update_objpile(level, u.ux + dx, u.uy + dy);
 }
 
 static void

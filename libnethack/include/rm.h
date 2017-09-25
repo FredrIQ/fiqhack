@@ -332,6 +332,7 @@ struct rm {
     unsigned waslit:1;          /* remember if a location was lit */
     unsigned roomno:6;          /* room # for special rooms */
     unsigned edge:1;            /* marks boundaries for special rooms */
+    unsigned pile:1;            /* is an object pile */
 
     /* these values only have meaning if mem_bg is some sort of door, and are
        saved in mem_bg not in their own bits; they record what the player knows 
@@ -451,6 +452,7 @@ struct levelflags {
     unsigned graveyard:1;       /* has_morgue, but remains set */
     unsigned is_maze_lev:1;
     unsigned is_cavernous_lev:1;
+    unsigned vault_known:1;
 
     unsigned arboreal:1;        /* Trees replace rock */
     unsigned forgotten:1;       /* previously visited but forgotten (amnesia) */
@@ -522,8 +524,6 @@ extern struct level *level;             /* pointer to an entry in levels */
 # define place_worm_seg(m,x,y)   (m)->dlevel->monsters[x][y] = m
 # define m_at(lev,x,y) \
              (MON_AT(lev,x,y) ? (lev)->monsters[x][y] : NULL)
-# define dm_at(lev,x,y) \
-             ((lev)->dmonsters[x][y])
 # define m_buried_at(x,y) \
              (MON_BURIED_AT(x,y) ? level->monsters[x][y] : NULL)
 

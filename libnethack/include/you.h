@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -50,6 +50,7 @@ struct you {
     int unused_ulevelmax;
     int unused_uexp;
     int unused_oldcap;         /* carry cap on previous turn */
+    int unused_uen, unused_uenmax; /* magical energy (Pw) */
 
     /* USED */
     xchar tx, ty;       /* destination of travel */
@@ -153,11 +154,10 @@ struct you {
     /* on moonlit nights 11 */
 # define LUCKMIN        (-10)
     int uhp, uhpmax;
-    int uen, uenmax;    /* magical energy - M. Stephenson */
     int ugangr; /* if the gods are angry at you */
     int ugifts; /* number of artifacts bestowed */
     int ublessed, ublesscnt;    /* blessing/duration from #pray */
-    int umoney0;
+    int umoney0; /* Starting gold, for score calculation purposes */
     int urexp;
     int ucleansed;      /* to record moves when player was cleansed */
     int uinvault;
@@ -198,6 +198,7 @@ struct you {
     } delayed_killers;
 
     int lastinvnr;
+    int spellquiver;
 
     /* SAVEBREAK: for avoiding desyncs with old saves */
     unsigned char save_compat_bytes[3];

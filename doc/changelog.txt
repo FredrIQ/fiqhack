@@ -1,5 +1,186 @@
 About this document:
-Last modified by Alex Smith, 2016-03-08
+Last modified by Fredrik Ljungdahl, 2017-08-12
+
+Copyright (C) 2017 Fredrik Ljungdahl.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+Changes since Junethack 2017
+============================
+
+* Further buffs to dragon scale mail
+  - Red dragon scale (mail) now also gives warning and see invisible
+  - White dragon scale (mail) now also gives searching with enchantment
+    boosts
+
+* Fixed a bug where maintaining the protection spell would give you higher
+  Def/lower AC than supposed to
+
+* Wands of create monster generate more rarely for monsters
+
+* Extrinsic fire resistance now prevents items from burning
+
+* Being extrinsically waterproof prevents items from rusting
+
+* Extrinsic acid resistance prevents items from corroding
+
+* Rebalanced writing of unknown scrolls/spellbooks
+
+* New autoswap option: will swap weapons appropriately when meleeing or
+  firing ammo from an appropriate launcher
+
+* The inventory sidebar will now show weight/carrycap and slot count/52
+
+* Only wished-for artifacts affect further artifact wishing. Odds lowered to
+  compensate
+
+* You can now quiver spells
+
+* Added 'castalias' command: mapping keys to it allows mapping spells to
+  keys
+
+
+
+Changes since Junethack 2016
+============================
+
+* Removed poison instadeath
+
+* Conflict will no longer affect monster usage of ranged combat
+
+* Gloves enchantment now contribute to martial arts damage
+
+* Zombies can now give zombification disease and can revive corpses as
+  zombies
+
+* Added object properties: weapons of fire, helmet of cold resistance, etc.
+
+* Searching is now much more realible and can find things at a distance
+
+* Lenses give automatic searching
+
+* Changed mines brightness: upper mines is always bright, lower always dark
+
+* The Oracle can now provide enlightenment
+
+* Rings dropped in sinks can be retrieved by destroying the sink and
+  digging on the square
+
+* Scroll of identify/spellbook of identify mechanics changed
+  - Always identify 1/2/3/4/all regardless of BUC/skill
+  - Cursed/unskilled identifies less info, blessed/skilled-expert more
+
+* Shuffled some spell levels
+  - Dig is level 2, Identify is level 2, Cancellation is level 5,
+    Teleport away is level 5, Polymorph is level 7, Create familiar is
+    level 2
+
+* Magic missile does less damage depending on skill
+
+* Changed starting inventory for Tourist/Wizards, some minor tweaks to
+  others
+
+* Quarterstaves enhance spellcasting like a robe. You can still spellcast
+  if one is welded to your hand
+
+* Magicbane is now a quarterstaff
+
+* Leveling up past level 10 is much easier
+
+* Drain life now ignores magic cancellation
+
+* Regaining lost levels is much easier
+
+* Casters without melee attacks now stay at a distance
+
+* Dragons are faster, more intelligent, and dragonbreath can ignore
+  reflection
+
+* Armor weight in general was changed. Wearing armor makes it less
+  encumbering
+
+* Cloak of magic resistance is MC2, displacement is MC3
+
+* Crystal plate mail grants 10 Def instead of 7
+
+* Oilskin cloaks protects inventory from water damage
+
+* Wizard of Yendor will no longer steal your quest artifact
+
+* Sokoban monsters are never peaceful
+
+* Item destruction of potions/scrolls/books/wands will no longer happen
+  if you're extrinsically protected from the applicable damage type
+
+* Pets will catch items thrown to them
+
+* Wands of create monster summon less monsters and have less charges
+
+* Tsurugi of Muramasa grants double damage instead of a bonus and can
+  be invoked to uncurse it
+
+* Added 'classic_status' which gives the status bar a NetHack3 look
+
+* 'sparkle' is now a numeric option that gives amount of frames
+
+* Gave several dragon scale (mail) kinds new properties
+  - Silver, gray and shimmering dragon scale (mail) was unchanged
+  - Red: Infravision
+  - White: Waterproof (like the oilskin cloak)
+  - Orange: Free action
+  - Black: Drain resistance
+  - Blue: Extrinsic speed ("very fast")
+  - Green: Sickness resistance
+  - Yellow: Petrification resistance
+
+
+
+Changes since NetHack 4
+=======================
+
+* New wand skill -- wand potential now depends on wand skill. Monsters
+  have (static per monster) wand skill too
+
+* Energy regeneration without the extrinsic was increased
+
+* Added 4 spells:
+  - Charging: charges items
+  - Phase: allows you to walk through walls for some time
+  - Astral eyesight: temporary astral vision (xray)
+  - Summon nasties: summons allied monsters at target
+
+* Added spell maintenance, allowing you to maintain spell buffs without
+  manually recasting it
+
+* Monster AI improved, allowing them to use more items and make better
+  decisions in some cases
+
+* Players can be slowed or cancelled (use energy/pw gain sources to
+  uncancel, wait slowness out)
+
+* Monsters can now have the same extrinsics as players like
+  displacement, etc.
+
+* Monsters cast from the player pool of spells
+
+* Curse items is now much nastier since the monster spell was removed
+
+* Bones can be generated with a player monster, being more dangerous
+
+* Player monsters on Astral gets slightly better gear
+
+* Buffed #turn (undead): paralysis duration scales down with level
+
+* The Mitre of Holiness, when worn, allows praying and #turn in
+  Gehennom
+
+* You can wish for magic lamps
+
+
+
+NetHack 4
+=========
 
 Copyright (C) 2013 Alex Smith.
 

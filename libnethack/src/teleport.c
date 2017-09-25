@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -525,7 +525,7 @@ dotele(const struct musable *m)
         }
 
         energy = objects[SPE_TELEPORT_AWAY].oc_level * 7 / 2 - 2;
-        if (u.uen <= energy) {
+        if (youmonst.pw <= energy) {
             pline(msgc_cancelled1, "You lack the energy %s.",
                   castit ? "for a teleport spell" : "to teleport");
             return 1;
@@ -541,7 +541,7 @@ dotele(const struct musable *m)
             m_new.spell = SPE_TELEPORT_AWAY;
             return spelleffects(TRUE, &m_new);
         } else
-            u.uen -= energy;
+            youmonst.pw -= energy;
     }
 
     if (trap && trap->once) {

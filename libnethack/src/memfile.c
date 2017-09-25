@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2017-06-28 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -472,7 +472,7 @@ mdiffcmd_width(const struct memfile *mf, struct mdiff_command_instance *mdci,
 static void
 mdiffwritecmd(struct memfile *mf, struct mdiff_command_instance *mdci)
 {
-    int widenings, usedbits, usedbytes, i;
+    int widenings, usedbits, usedbytes, splitbytes, i;
 
     /* Count the number of widenings we need. */
     usedbytes = mdiffcmd_width(mf, mdci, &widenings);
@@ -490,24 +490,39 @@ mdiffwritecmd(struct memfile *mf, struct mdiff_command_instance *mdci)
     usedbits +=  mdiff_command_sizes[mdci->command].arg2;
     encoding |=  mdci->arg2;
 
-    /* Add the encoding of arg1. */
-    usedbits = usedbytes * 8 - usedbits;
-    encoding <<= usedbits;
-    unsigned long long arg1_2c = mdci->arg1 & ((1ULL << usedbits) - 1);
-    encoding |= arg1_2c;
+    /* Add the encoding of arg1.
 
-    i = usedbytes;
+       We have to be careful here: the MRU prefix + arg2 + arg1 might come to
+       more than 8 bytes (e.g. in the case of an eof_crc32 command with a very
+       large copy count).  As such, we split the largest possible whole number
+       of bytes off from the end of arg1. */
+    usedbits = usedbytes * 8 - usedbits;
+    splitbytes = usedbits / 8;
+    encoding <<= usedbits % 8;
+    unsigned long long arg1_2c = mdci->arg1 & ((1ULL << usedbits) - 1);
+    encoding |= arg1_2c >> (splitbytes * 8);
+
+    i = usedbytes - splitbytes;
     while (i--)
         mdiffwrite8(mf, encoding >> (i * 8));
+    i = splitbytes;
+    while (i--)
+        mdiffwrite8(mf, arg1_2c >> (i * 8));
 
     if (debuglog) {
         fprintf(debuglog, "%s %" PRIdLEAST64 " %" PRIuLEAST64 " (",
                 mdiff_command_sizes[mdci->command].name,
                 (int_least64_t)mdci->arg1, (uint_least64_t)mdci->arg2);
 
-        i = usedbytes*8;
+        i = (usedbytes - splitbytes) * 8;
         while (i--) {
             fprintf(debuglog, "%d", (int)(1 & (encoding >> i)));
+            if (i && !(i%8))
+                fprintf(debuglog, " ");
+        }
+        i = splitbytes * 8;
+        while (i--) {
+            fprintf(debuglog, "%d", (int)(1 & (arg1_2c >> i)));
             if (i && !(i%8))
                 fprintf(debuglog, " ");
         }

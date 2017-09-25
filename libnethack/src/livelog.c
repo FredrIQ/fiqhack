@@ -35,6 +35,9 @@ munge_llstring(char *dest, const char *src, int n)
 /* Locks the live log file and writes 'buffer' */
 void
 livelog_write_string(const char *buffer) {
+    if (program_state.followmode != FM_PLAY)
+        return;
+
     FILE* livelogfile;
     
     int fd = open_datafile(LIVELOG,
@@ -125,7 +128,7 @@ livelog_unique_monster(const struct monst *mon) {
     else if (mon->former_player > 0) {
         /* $player killed the $bones_monst of $bones_killed the former
          * $bones_rank on $turns on dungeon level $dlev! */
-        int   frace, falign, fgend;
+        int   frace, falign, fgend, frank;
         short fplayer = mon->former_player;
         struct Role frole;
         fplayer       = fplayer - (fplayer % 2); /* Throw away the 1. */
@@ -135,16 +138,22 @@ livelog_unique_monster(const struct monst *mon) {
         fplayer       = fplayer - falign;
         frace         = (fplayer % 256) / 32;
         frole         = roles[(fplayer - frace) / 256];
+        frank         = xlev_to_rank(mon->m_lev); /* properly handles levels beyond 1-30 */
 
         livelog_write_event(msgprintf("bones_killed=%s:bones_align=%s:"
                                       "bones_race=%s:bones_gender=%s:"
-                                      "bones_role=%s:bones_monst=%s",
+                                      "bones_role=%s:bones_rank=%s:"
+                                      "bones_monst=%s",
                                       name, aligns[falign].adj,
                                       races[frace].adj, genders[fgend].adj,
                                       (genders[fgend].allow == ROLE_FEMALE
                                        ? (frole.name.f ? frole.name.f
                                                        : frole.name.m)
                                        : (frole.name.m)),
+                                      (genders[fgend].allow == ROLE_FEMALE
+                                       ? (frole.rank[frank].f ? frole.rank[frank].f
+                                                              : frole.rank[frank].m)
+                                       : (frole.rank[frank].m)),
                                       mons[monsndx(mon->data)].mname));
     }
 }

@@ -239,10 +239,13 @@ resolve_channel_color(enum msg_channel msgc)
     else
         chcolor = channel_color[msgc];
 
-    if (!settings.msgcolor) {
+    if (settings.msgcolor != MC_FULL) {
         /* make the color gray */
         chcolor &= ~0xFF;
-        chcolor |= CLR_GRAY;
+        if (settings.msgcolor == MC_GRAY)
+            chcolor |= CLR_GRAY;
+        else if (settings.msgcolor == MC_WHITE)
+            chcolor |= CLR_WHITE;
     }
 
     if (!chcolor)
@@ -271,10 +274,15 @@ show_msgwin_core(enum moreforce more, WINDOW *win,
             continue;
         if ((chunk->y + y_offset) >= winheight)
             continue;
+        if (settings.msgfading == MF_BLANK &&
+            chunk->seen && win == msgwin)
+            continue;
 
         int color = resolve_channel_color(chunk->channel) & 15;
         wattrset(win, curses_color_attr(
-                     (!chunk->seen || win != msgwin) ? color :
+                     (!chunk->seen || win != msgwin ||
+                      settings.msgfading == MF_DONTCHANGE) ? color :
+                     settings.msgcolor == MC_WHITE ? CLR_GRAY :
                      color == CLR_GRAY || color == CLR_WHITE ?
                      CLR_DARK_GRAY : color & 7, 0));
         if (chunk->x < winwidth)

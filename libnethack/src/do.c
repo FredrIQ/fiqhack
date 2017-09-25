@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -563,6 +563,7 @@ void
 dropy(struct obj *obj)
 {
     unwield_silently(obj);
+    obj->owt = weight(obj);
 
     if (!Engulfed && flooreffects(obj, youmonst.mx, youmonst.my, "drop"))
         return;
@@ -588,7 +589,7 @@ dropy(struct obj *obj)
                     set_property(u.ustuck, SLIMED, 10, FALSE);
                     delobj(obj);        /* corpse is digested */
                 } else if (could_petrify) {
-                    minstapetrify(u.ustuck, &youmonst);
+                    minstapetrify(&youmonst, u.ustuck);
                     /* Don't leave a cockatrice corpse in a statue */
                     if (!Engulfed)
                         delobj(obj);
@@ -881,7 +882,7 @@ doup(void)
         return 1;
     }
     if (near_capacity() > SLT_ENCUMBER) {
-        /* No levitation check; inv_weight() already allows for it */
+        /* No levitation check; the weight check already allows for it */
         pline(msgc_cancelled1, "Your load is too heavy to climb the %s.",
               level->locations[youmonst.mx][youmonst.my].typ == STAIRS ? "stairs" : "ladder");
         return 1;
@@ -1024,7 +1025,9 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     if (!levels[new_ledger]) {
         /* entering this level for first time; make it now */
-        historic_event(FALSE, (Is_firstplane(&u.uz) || Is_astralevel(&u.uz)),
+        if (Is_firstplane(&u.uz))
+            livelog_write_event(msgprintf("historic_event=%s", "entered the Planes"));
+        historic_event(FALSE, Is_astralevel(&u.uz),
                        "reached %s.", hist_lev_name(&u.uz, FALSE));
         level = mklev(&u.uz);
         new = TRUE;     /* made the level */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -253,7 +253,25 @@ const char *
 show_ac(const char *formatstring, int ac)
 {
     const char *res;
-    (*windowprocs.win_show_ac) (formatstring, ac, &res, msg_getlin_callback);
+    (*windowprocs.win_format) (formatstring, FMT_SHOW_AC, ac, &res, msg_getlin_callback);
+    return res;
+}
+
+const char *
+friendly_key(const char *formatstring, int key)
+{
+    const char *res;
+    (*windowprocs.win_format) (formatstring, FMT_FRIENDLY_KEYNAME, key, &res,
+                               msg_getlin_callback);
+    return res;
+}
+
+const char *
+implied_uncursed(const char *formatstring)
+{
+    const char *res;
+    (*windowprocs.win_format) (formatstring, FMT_IMPLIED_UNCURSED, 0, &res,
+                               msg_getlin_callback);
     return res;
 }
 

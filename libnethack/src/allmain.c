@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -568,8 +568,11 @@ just_reloaded_save:
                     log_sync(0, TLU_EOF, FALSE);
                     goto just_reloaded_save;
                 case DIR_NE:
-                    /* Move backwards 50 turns. */
-                    log_sync(min(1, moves - 50), TLU_TURNS, FALSE);
+                    /* Move backwards 50 turns. Avoid wrap-around */
+                    if (moves <= 50)
+                        log_sync(1, TLU_TURNS, FALSE);
+                    else
+                        log_sync(moves - 50, TLU_TURNS, FALSE);
                     goto just_reloaded_save;
                 case DIR_SE:
                     /* Move forwards 50 turns. */
@@ -731,7 +734,6 @@ you_moved(void)
     do {        /* hero can't move this turn loop */
         wtcap = near_capacity();
 
-        flags.mon_moving = TRUE;
         do {
             /* Players have taken 1 more action than the global, monsters have
                taken 0 more actions than the global. */
@@ -760,7 +762,7 @@ you_moved(void)
                incorrect because were about to overwrite it anyway. */
 
         } while (monscanmove);
-        flags.mon_moving = FALSE;
+        flags.mon_moving = 0;
 
         if (!monscanmove && !actions_remaining(&youmonst)) {
             /* both you and the monsters are out of steam this round */
@@ -900,23 +902,10 @@ you_moved(void)
                 }
             } else if (*hp < *hpmax &&
                        (wtcap < MOD_ENCUMBER || !u.umoved || Regeneration)) {
-                if (youmonst.m_lev > 9 && !(moves % 3)) {
-                    int heal, Con = (int)ACURR(A_CON);
-
-                    if (Con <= 12) {
-                        heal = 1;
-                    } else {
-                        heal = rnd(Con);
-                        if (heal > youmonst.m_lev - 9)
-                            heal = youmonst.m_lev - 9;
-                    }
-                    *hp += heal;
-                    if (*hp > *hpmax)
-                        *hp = *hpmax;
-                } else if (Regeneration ||
-                           (youmonst.m_lev <= 9 &&
-                            !(moves % ((MAXULEV + 12) / (youmonst.m_lev + 2) + 1))))
-                    *hp += 1;
+                *hp += regeneration_by_rate(regen_rate(&youmonst,
+                                                       FALSE));
+                if (*hp > *hpmax)
+                    *hp = *hpmax;
             }
 
             /* moving around while encumbered is hard work */
@@ -935,19 +924,11 @@ you_moved(void)
                 }
             }
 
-            int pw_regen = 0;
-            if (Energy_regeneration)
-                pw_regen += 100;
-            if (Role_if(PM_WIZARD))
-                pw_regen += 33;
-            int wis = ACURR(A_WIS);
-            if (wis > 3)
-                pw_regen += wis * 3;
-            pw_regen += youmonst.m_lev * 3;
-            if (u.uen < u.uenmax && wtcap < MOD_ENCUMBER) {
-                u.uen += regeneration_by_rate(pw_regen);
-                if (u.uen > u.uenmax)
-                    u.uen = u.uenmax;
+            if (youmonst.pw < youmonst.pwmax && wtcap < MOD_ENCUMBER) {
+                youmonst.pw +=
+                    regeneration_by_rate(regen_rate(&youmonst, TRUE));
+                if (youmonst.pw > youmonst.pwmax)
+                    youmonst.pw = youmonst.pwmax;
             }
 
             if (!u.uinvulnerable) {

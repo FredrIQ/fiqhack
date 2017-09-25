@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -121,7 +121,7 @@ vpline(enum msg_channel msgc, boolean norepeat,
             &menu, "doing when this dialogue box came up.");
         add_menutext(&menu, "");
         add_menutext(
-            &menu, "Thank you for beta-testing NetHack 4!");
+            &menu, "Thank you for beta-testing FIQHack!");
         display_menu(&menu, "A Message from the NetHack 4 Developers",
                      PICK_NONE, PLHINT_ANYWHERE, NULL);
         msgc = msgc_nospoil;
@@ -364,7 +364,8 @@ mstatusline(struct monst *mon)
                           (SUPPRESS_IT | SUPPRESS_INVISIBLE |
                            SUPPRESS_ENSLAVEMENT), FALSE));
 
-    pline(msgc_info, "Status of %s (%s%s):  Level %d  HP %d(%d)  %s%s.",
+    pline(msgc_info, "Status of %s (%s%s):  "
+          "Level %d  HP %d(%d)  Pw %d(%d)  %s%s.",
           monnambuf, (!you || u.ualign.record == 3) ? "" :
           (u.ualign.record >= 20) ? "piously " :
           (u.ualign.record > 13) ? "devoutly " :
@@ -376,6 +377,7 @@ mstatusline(struct monst *mon)
           you && Upolyd ? mons[u.umonnum].mlevel : mon->m_lev,
           you && Upolyd ? u.mh : m_mhp(mon),
           you && Upolyd ? u.mhmax : m_mhpmax(mon),
+          mon->pw, mon->pwmax,
           show_ac("%s %d", find_mac(mon)), info);
 }
 

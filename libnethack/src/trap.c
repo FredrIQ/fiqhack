@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -152,6 +152,15 @@ erode_obj(struct obj *otmp, const char *ostr, enum erode_type type,
     default:
         impossible("Invalid erosion type in erode_obj");
         return FALSE;
+    }
+
+    if (vulnerable && victim) {
+        /* Maybe a resistance prevents it */
+        vulnerable =
+            !(type == ERODE_BURN ? ehas_property(victim, FIRE_RES) :
+              type == ERODE_RUST ? ehas_property(victim, WATERPROOF) :
+              type == ERODE_CORRODE ? ehas_property(victim, ACID_RES) :
+              FALSE);
     }
 
     int erosion = primary ? otmp->oeroded : otmp->oeroded2;
@@ -1134,7 +1143,7 @@ dotrap(struct trap *trap, unsigned trflags)
             losehp(rnd(10), killer_msg(DIED, "a magical explosion"));
             pline_implied(msgc_intrgain,
                           "Your body absorbs some of the magical energy!");
-            u.uen = (u.uenmax += 2);
+            youmonst.pw = (youmonst.pwmax += 2);
             if (cancelled(&youmonst)) {
                 set_property(&youmonst, CANCELLED, -2, TRUE);
                 pline(msgc_statusgood,
@@ -2204,7 +2213,7 @@ mintrap(struct monst *mtmp)
                     pline(msgc_monneutral,
                           "%s body absorbs some of the magical energy!",
                           s_suffix(Monnam(mtmp)));
-                mtmp->mspec_used = 0;
+                mtmp->pw = (mtmp->pwmax += 2);
                 if (cancelled(mtmp)) {
                     set_property(mtmp, CANCELLED, -2, TRUE);
                     if (see_it)
@@ -2316,7 +2325,6 @@ mintrap(struct monst *mtmp)
     return mtmp->mtrapped;
 }
 
-
 /* Combine cockatrice checks into single functions to avoid repeating code. */
 int
 instapetrify(const char *str)
@@ -2332,24 +2340,34 @@ instapetrify(const char *str)
 
 /* magr is the monster/youmonst that made this happen, NULL for a trap */
 int
-minstapetrify(struct monst *mon, struct monst *magr)
+minstapetrify(struct monst *magr, struct monst *mdef)
 {
-    if (resists_ston(mon))
+    if (resists_ston(mdef))
         return 0;
-    if (poly_when_stoned(mon->data)) {
-        mon_to_stone(mon);
+    if (poly_when_stoned(mdef->data)) {
+        mon_to_stone(mdef);
         return 0;
     }
 
-    if (cansee(mon->mx, mon->my))
-        pline(combat_msgc(magr, mon, cr_kill),
-              "%s turns to stone.", Monnam(mon));
+    if (cansee(mdef->mx, mdef->my))
+        pline(combat_msgc(magr, mdef, cr_kill),
+              "%s turns to stone.", Monnam(mdef));
     if (magr == &youmonst) {
         stoned = TRUE;
-        xkilled(mon, 0);
+        xkilled(mdef, 0);
     } else
-        monstone(mon);
+        monstone(mdef);
     return 1;
+}
+
+/* Instapetrify function that works for players and monsters */
+int
+uminstapetrify(struct monst *magr, struct monst *mdef,
+               const char *str)
+{
+    if (mdef == &youmonst)
+        return instapetrify(str);
+    return minstapetrify(magr, mdef);
 }
 
 void
@@ -2392,7 +2410,7 @@ mselftouch(struct monst *mon, const char *arg, struct monst *culprit)
                   "%s%s touches the %s corpse.", arg ? arg : "",
                   arg ? mon_nam(mon) : Monnam(mon), mons[mwep->corpsenm].mname);
         }
-        minstapetrify(mon, culprit);
+        minstapetrify(culprit, mon);
     }
 }
 
@@ -2605,14 +2623,13 @@ float_down(struct monst *mon)
                                   Monnam(mon));
                             mon->mhp -= rnd(2);
                             if (mon->mhp <= 0) {
-                                if (!flags.mon_moving)
-                                    killed(mon);
-                                else
-                                    monkilled(NULL, mon, "", AD_RBRE);
+                                monkilled(find_mid(level, flags.mon_moving,
+                                                   FM_EVERYWHERE), mon, "",
+                                          AD_RBRE);
                             }
                             mselftouch(mon, "Falling, ",
-                                       !flags.mon_moving ?
-                                       &youmonst : NULL);
+                                       find_mid(level, flags.mon_moving,
+                                                FM_EVERYWHERE));
                         }
                     }
                 }
@@ -3110,12 +3127,9 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
                                       "an acidic potion"));
                 } else if (mon) {
                     mon->mhp -= dmg;
-                    if (mon->mhp <= 0) {
-                        if (!flags.mon_moving)
-                            monkilled(&youmonst, mon, "", AD_ACID);
-                        else
-                            mondied(mon);
-                    }
+                    if (mon->mhp <= 0)
+                        monkilled(find_mid(level, flags.mon_moving,
+                                           FM_EVERYWHERE), mon, "", AD_ACID);
                 }
             }
             return 3;
@@ -3217,8 +3231,7 @@ drown(void)
     int i, x, y;
 
     /* happily wading in the same contiguous pool */
-    if (u.uinwater && (!u.umoved || is_pool(level, u.ux0, u.uy0)) &&
-        (Swimming || Breathless)) {
+    if (u.uinwater && (Swimming || Breathless)) {
         /* water effects on objects every now and then */
         if (!rn2(5))
             inpool_ok = TRUE;
@@ -3365,16 +3378,16 @@ crawl:
 void
 drain_en(int n)
 {
-    if (!u.uenmax)
+    if (!youmonst.pwmax)
         return;
-    pline(n > u.uen ? msgc_intrloss : msgc_statusbad,
+    pline(n > youmonst.pw ? msgc_intrloss : msgc_statusbad,
           "You feel your magical energy drain away!");
-    u.uen -= n;
-    if (u.uen < 0) {
-        u.uenmax += u.uen;
-        if (u.uenmax < 0)
-            u.uenmax = 0;
-        u.uen = 0;
+    youmonst.pw -= n;
+    if (youmonst.pw < 0) {
+        youmonst.pwmax += youmonst.pw;
+        if (youmonst.pwmax < 0)
+            youmonst.pwmax = 0;
+        youmonst.pw = 0;
     }
 }
 
@@ -3505,7 +3518,7 @@ try_disarm(struct trap *ttmp, boolean force_failure, schar dx, schar dy)
     /* duplicate tight-space checks from test_move */
     if (dx && dy && bad_rock(&youmonst, youmonst.mx, ttmp->ty) &&
         bad_rock(&youmonst, ttmp->tx, youmonst.my)) {
-        if ((invent && (inv_weight() + weight_cap() > 600)) ||
+        if ((invent && (inv_weight_total() > 600)) ||
             bigmonst(youmonst.data)) {
             /* don't allow untrap if they can't get thru to it */
             pline(msgc_cancelled, "You are unable to reach the %s!",
@@ -3792,7 +3805,7 @@ help_monster_out(struct monst *mtmp, struct trap *ttmp)
     }
 
     /* is the monster too heavy? */
-    wt = inv_weight() + mtmp->data->cwt;
+    wt = inv_weight_over_cap() + mtmp->data->cwt;
     if (!try_lift(mtmp, ttmp, wt, FALSE))
         return 1;
 

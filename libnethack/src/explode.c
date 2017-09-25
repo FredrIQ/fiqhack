@@ -59,6 +59,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
     uchar adtyp;
     int explmask[3][3];
 
+    int whattype = abs(type) % 10;
+    int buzztyp = (type <= -30 ? whattype : abs(type));
+    boolean wand = (buzztyp < 10);
+
     /* 0=normal explosion, 1=do shieldeff, 2=do nothing */
     boolean shopdamage = FALSE;
 
@@ -74,8 +78,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
             dispbuf = str;
         }
     } else {
-        int whattype = abs(type) % 10;
-
         adtyp = whattype + 1;
         boolean done = FALSE, hallu = Hallucination;
 
@@ -384,21 +386,9 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         if (nonliving(mtmp->data) ||
                             is_demon(mtmp->data) ||
                             resists_magm(mtmp) ||
-                            raylevel == P_UNSKILLED) {
-                            /* monster is deathresistant or raylevel==unskilled,
-                               since monster apparently failed to resist earlier,
-                               monster must be vulnerable to drli */
-                            /* FIXME: make a generic losexp() for monsters */
-                            mdam = dice(2, 6);
-                            if (cansee(i + x - 1, j + y - 1))
-                                pline(combat_msgc(NULL, mtmp, cr_hit),
-                                      "%s suddenly seems weaker!", Monnam(mtmp));
-                            mtmp->mhpmax -= mdam;
-                            if (mtmp->m_lev == 0)
-                                mdam = mtmp->mhp;
-                            else
-                                mtmp->m_lev--;
-                        } else
+                            raylevel == P_UNSKILLED)
+                            mlosexp(NULL, mtmp, "", FALSE);
+                        else
                             mdam = mtmp->mhp; /* instadeath */
                     }
                     mtmp->mhp -= mdam;
@@ -407,10 +397,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 if (mtmp->mhp <= 0) {
                     /* KMH -- Don't blame the player for pets killing gas
                        spores */
-                    if (!flags.mon_moving)
-                        killed(mtmp);
-                    else
-                        monkilled(NULL, mtmp, "", (int)adtyp);
+                    monkilled(find_mid(level, flags.mon_moving, FM_EVERYWHERE),
+                              mtmp, "", (int)adtyp);
                 } else if (!flags.mon_moving)
                     setmangry(mtmp);
             }
@@ -469,18 +457,29 @@ explode(int x, int y, int type, /* the same as in zap.c */
             int death = adtyp == AD_FIRE ? BURNING : DIED;
             const char *killer;
 
+            struct monst *offender = find_mid(level, flags.mon_moving,
+                                              FM_EVERYWHERE);
+
             if (olet == MON_EXPLODE) {
                 killer = killer_msg(death, an(str));
             } else if (type >= 0 && olet != SCROLL_CLASS) {
                 /* check whether or not we were the source of the explosion */
-                if (!flags.mon_moving)
+                if (offender == &youmonst)
                     killer = msgprintf("caught %sself in %s own %s", uhim(),
                                        uhis(), str);
+                else if (offender)
+                    killer = msgprintf("killed by %s %s",
+                                       s_suffix(k_monnam(offender)), str);
                 else
                     killer = msgprintf("killed by a %s", str);
             } else if (!strcmp(str, "burning oil")) {
                 /* This manual check hack really sucks */
                 killer = killer_msg(death, str);
+            } else if (offender && offender != &youmonst) {
+                killer = killer_msg(death,
+                                    msgprintf("%s %s",
+                                              s_suffix(k_monnam(offender)),
+                                              str));
             } else {
                 killer = killer_msg(death, an(str));
             }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -382,7 +382,7 @@ polyman(const char *fmt, const char *arg)
         u.umonnum = u.umonster;
         u.ufemale = u.mfemale;
     }
-    update_property_polymorph(&youmonst, u.umonster);
+    int old_pm = monsndx(youmonst.data);
     set_uasmon();
 
     u.mh = u.mhmax = 0;
@@ -414,6 +414,7 @@ polyman(const char *fmt, const char *arg)
     spoteffects(TRUE);
     see_monsters(FALSE);
     update_supernatural_abilities();
+    update_property_polymorph(&youmonst, old_pm);
 }
 
 void
@@ -492,11 +493,11 @@ newman(void)
 
     u.uhp = u.uhp * (long)u.uhpmax / tmp;
 
-    tmp = u.uenmax;
-    u.uenmax = u.uenmax * (long)youmonst.m_lev / oldlvl + 9 - rn2(19);
-    if (u.uenmax < 0)
-        u.uenmax = 0;
-    u.uen = (tmp ? u.uen * (long)u.uenmax / tmp : u.uenmax);
+    tmp = youmonst.pwmax;
+    youmonst.pwmax = youmonst.pwmax * (long)youmonst.m_lev / oldlvl + 9 - rn2(19);
+    if (youmonst.pwmax < 0)
+        youmonst.pwmax = 0;
+    youmonst.pw = (tmp ? youmonst.pw * (long)youmonst.pwmax / tmp : youmonst.pwmax);
 
     redist_attr();
     u.uhunger = rn1(500, 500);
@@ -836,6 +837,7 @@ polymon(int mntmp, boolean noisy)
         !Engulfed, dochange = FALSE;
     int mlvl;
 
+    int old_pm = monsndx(youmonst.data);
     if (mvitals[mntmp].mvflags & G_GENOD) {     /* allow G_EXTINCT */
         if (noisy)
             pline(msgc_noconsequence, "You feel rather %s-ish.",
@@ -843,10 +845,6 @@ polymon(int mntmp, boolean noisy)
         exercise(A_WIS, TRUE);
         return 0;
     }
-
-    int new_polymon = update_property_polymorph(&youmonst, mntmp);
-    if (new_polymon) /* update_property_polymorph polymorphed you again, bail out */
-        return 1; /* the player was polymorphed, even if it wasn't the target form */
 
     if (noisy)
         break_conduct(conduct_polyself);     /* KMH, conduct */
@@ -1007,6 +1005,11 @@ polymon(int mntmp, boolean noisy)
     exercise(A_WIS, TRUE);
     if (noisy)
         encumber_msg(oldcap);
+
+    int new_polymon = update_property_polymorph(&youmonst, old_pm);
+    if (new_polymon) /* update_property_polymorph polymorphed you again, bail out */
+        return 1; /* the player was polymorphed, even if it wasn't the target form */
+
     return 1;
 }
 
@@ -1228,11 +1231,11 @@ dobreathe(const struct musable *m)
         pline(msgc_cancelled, "You can't breathe.  Sorry.");
         return 0;
     }
-    if (u.uen < 15) {
+    if (youmonst.pw < 15) {
         pline(msgc_cancelled, "You don't have enough energy to breathe!");
         return 0;
     }
-    u.uen -= 15;
+    youmonst.pw -= 15;
 
     if (!mgetargdir(m, NULL, &dx, &dy, &dz))
         return 0;
@@ -1419,12 +1422,12 @@ dosummon(void)
 {
     int placeholder;
 
-    if (u.uen < 10) {
+    if (youmonst.pw < 10) {
         pline(msgc_cancelled,
               "You lack the energy to send forth a call for help!");
         return 0;
     }
-    u.uen -= 10;
+    youmonst.pw -= 10;
 
     /* TODO: This actionok is a little premature, but would need major code
        rearrangement to channelize correctly in the (rare) fail case while
@@ -1463,11 +1466,11 @@ dogaze(void)
         return 0;
     }
 
-    if (u.uen < 15) {
+    if (youmonst.pw < 15) {
         pline(msgc_cancelled, "You lack the energy to use your special gaze!");
         return 0;
     }
-    u.uen -= 15;
+    youmonst.pw -= 15;
 
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
@@ -1557,12 +1560,12 @@ domindblast(void)
     struct monst *mtmp, *nmon;
     int dmg;
 
-    if (u.uen < 10) {
+    if (youmonst.pw < 10) {
         pline(msgc_cancelled,
               "You concentrate but lack the energy to maintain doing so.");
         return 0;
     }
-    u.uen -= 10;
+    youmonst.pw -= 10;
 
     pline(msgc_occstart, "You concentrate.");
     pline_implied(msgc_occstart, "A wave of psychic energy pours out.");

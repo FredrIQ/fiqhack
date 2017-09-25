@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -91,11 +91,7 @@ find_lev_obj(struct level *lev)
     }
 }
 
-/* Things that were marked "in_use" when the game was saved (ex. via the
-   infamous "HUP" cheat) get used up here.
-
-   TODO: If this isn't a no-op, it's going to cause a desync and an unloadable
-   save file. */
+/* Validate in_use -- it should never be set in neutral turnstate */
 void
 inven_inuse(boolean quietly)
 {
@@ -105,7 +101,7 @@ inven_inuse(boolean quietly)
         otmp2 = otmp->nobj;
         if (otmp->in_use) {
             if (!quietly)
-                pline(msgc_noidea, "Finishing off %s...", xname(otmp));
+                impossible("obj %s inuse was set in neutral turnstate?", xname(otmp));
             useup(otmp);
         }
     }
@@ -314,6 +310,10 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
         if (ispriest(mtmp))
             restpriest(mtmp, ghostly);
 
+        /* Set up monster Pw if this is an old save. */
+        if (flags.save_revision < 5)
+            initialize_mon_pw(mtmp);
+
         mtmp2 = mtmp;
     }
     if (first && mtmp2->nmon) {
@@ -447,7 +447,14 @@ restore_spellbook(struct memfile *mf)
     for (i = 0; i < MAXSPELL + 1; i++) {
         spl_book[i].sp_know = save_decode_32(mread32(mf), -moves, -moves);
         spl_book[i].sp_id = mread16(mf);
+        if (spl_book[i].sp_id > 0)
+            spl_book[i].sp_id += otyp_offset(spl_book[i].sp_id);
         spl_book[i].sp_lev = mread8(mf);
+        if (flags.save_revision > 2)
+            spl_book[i].sp_key = mread32(mf);
+        if (flags.save_revision < 6 &&
+            spl_book[i].sp_know == 30000)
+            spl_book[i].sp_know = -1; /* new perma number */
     }
 }
 
@@ -552,8 +559,8 @@ restore_you(struct memfile *mf, struct you *y)
 
     y->uhp = mread32(mf);
     y->uhpmax = mread32(mf);
-    y->uen = mread32(mf);
-    y->uenmax = mread32(mf);
+    y->unused_uen = mread32(mf);
+    y->unused_uenmax = mread32(mf);
     y->unused_ulevel = mread32(mf);
     y->umoney0 = mread32(mf);
     y->unused_uexp = mread32(mf);
@@ -625,6 +632,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->twoweap = mread8(mf);
     y->bashmsg = mread8(mf);
     y->moveamt = mread8(mf);
+    y->spellquiver = mread16(mf);
 
     /* this is oddly placed due to save padding */
     /*len = mread32(mf);
@@ -638,7 +646,7 @@ restore_you(struct memfile *mf, struct you *y)
         }*/
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 511; i++)
+    for (i = 0; i < 509; i++)
         (void) mread8(mf);
 
     mread(mf, y->ever_extrinsic, sizeof (y->ever_extrinsic));
@@ -798,7 +806,9 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->made_amulet = mread8(mf);
     f->menu_style = mread8(mf);
     f->mon_generation = mread8(mf);
-    f->mon_moving = mread8(mf);
+    int moving = mread8(mf);
+    if (moving)
+        raw_printf("old mon_moving was nonzero -- please report to FIQ");
     f->mon_polycontrol = mread8(mf);
     f->occupation = mread8(mf);
     f->permablind = mread8(mf);
@@ -810,7 +820,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->rogue_enabled = mread8(mf);
     f->seduce_enabled = mread8(mf);
     f->showrace = mread8(mf);
-    f->show_uncursed = mread8(mf);
+    mread8(mf); /* old show_uncursed */
     f->sortpack = mread8(mf);
     f->sparkle = mread8(mf);
     f->tombstone = mread8(mf);
@@ -833,10 +843,14 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->save_revision = mread32(mf);
 
     f->servermail = mread8(mf);
+    f->autoswap = mread8(mf);
+
+    /* Seperate from other last_arg for save compat reasons */
+    f->last_arg.key = mread32(mf);
     f->last_arg.ability = mread8(mf);
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 103; i++)
+    for (i = 0; i < 98; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));
@@ -892,6 +906,11 @@ dorecover(struct memfile *mf)
     mtmp = restore_mon(mf, NULL, NULL);
     youmonst = *mtmp;
     dealloc_monst(mtmp);
+
+    if (flags.save_revision < 5) {
+        youmonst.pw = u.unused_uen;
+        youmonst.pwmax = u.unused_uenmax;
+    }
 
     /* restore dungeon */
     restore_dungeon(mf);
@@ -970,6 +989,7 @@ restore_location(struct memfile *mf, struct rm *loc)
     loc->waslit = (lflags2 >> 8) & 1;
     loc->roomno = (lflags2 >> 2) & 63;
     loc->edge = (lflags2 >> 1) & 1;
+    loc->pile = (lflags2 >> 0) & 1;
 
     /* unpack mem_door_l, mem_door_t from mem_bg */
     switch (loc->mem_bg) {
@@ -1186,6 +1206,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     restore_dest_area(mf, &lev->dndest);
 
     lflags = mread32(mf);
+    lev->flags.vault_known = (lflags >> 23) & 1;
     lev->flags.noteleport = (lflags >> 22) & 1;
     lev->flags.hardfloor = (lflags >> 21) & 1;
     lev->flags.nommap = (lflags >> 20) & 1;

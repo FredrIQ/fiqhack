@@ -9,7 +9,7 @@
 #include "lev.h"
 
 /*
- * Note:  both artilist[] and artiexist[] have a dummy element #0,
+ * Note:  both artilist[] and artigen[] have a dummy element #0,
  *        so loops over them should normally start at #1.  The primary
  *        exception is the save & restore code, which doesn't care about
  *        the contents, just the total size.
@@ -40,7 +40,7 @@ static boolean spfx_provides_extrinsic(const struct obj *,
 static int spec_dbon_applies = 0;
 
 /* flags including which artifacts have already been created */
-static boolean artiexist[1 + NROFARTIFACTS + 1];
+static boolean artigen[1 + NROFARTIFACTS + 1];
 
 /* and a discovery list for them (no dummy first entry here) */
 static xchar artidisco[NROFARTIFACTS];
@@ -84,7 +84,7 @@ hack_artifacts(void)
 void
 init_artifacts(void)
 {
-    memset(artiexist, 0, sizeof artiexist);
+    memset(artigen, 0, sizeof artigen);
     memset(artidisco, 0, sizeof artidisco);
     hack_artifacts();
 }
@@ -92,17 +92,17 @@ init_artifacts(void)
 void
 save_artifacts(struct memfile *mf)
 {
-    /* artiexist and artidisco are arrays of bytes, so writing them in one go
+    /* artigen and artidisco are arrays of bytes, so writing them in one go
        is safe and portable */
     mtag(mf, 0, MTAG_ARTIFACT);
-    mwrite(mf, artiexist, sizeof artiexist);
+    mwrite(mf, artigen, sizeof artigen);
     mwrite(mf, artidisco, sizeof artidisco);
 }
 
 void
 restore_artifacts(struct memfile *mf)
 {
-    mread(mf, artiexist, sizeof artiexist);
+    mread(mf, artigen, sizeof artigen);
     mread(mf, artidisco, sizeof artidisco);
     hack_artifacts();   /* redo non-saved special cases */
 }
@@ -155,7 +155,7 @@ mk_artifact(
         if ((!by_align ? a->otyp ==
              o_typ : (a->alignment == alignment ||
                       (a->alignment == A_NONE && u.ugifts > 0))) &&
-            (!(a->spfx & SPFX_NOGEN) || unique) && !artiexist[m]) {
+            (!(a->spfx & SPFX_NOGEN) || unique) && artigen[m] == ag_none) {
             if (by_align && a->race != NON_PM && race_hostile(&mons[a->race]))
                 continue;       /* skip enemies' equipment */
             else if (by_align && Role_if(a->role))
@@ -171,7 +171,7 @@ mk_artifact(
         for (n = 0, a = artilist + 1, m = 1; a->otyp; a++, m++)
             if ((!by_align ? a->otyp ==
                  o_typ : (a->alignment == alignment || a->alignment == A_NONE)) &&
-                (!(a->spfx & SPFX_NOGEN) || unique) && !artiexist[m]) {
+                (!(a->spfx & SPFX_NOGEN) || unique) && artigen[m] == ag_none) {
                 if (by_align && a->race != NON_PM && race_hostile(&mons[a->race]))
                     continue;       /* skip enemies' equipment */
                 else if (by_align && Role_if(a->role))
@@ -193,8 +193,6 @@ mk_artifact(
         if (by_align)
             otmp = mksobj(lev, (int)a->otyp, TRUE, FALSE, rng_main);
         otmp = oname(otmp, a->name);
-        otmp->oartifact = m;
-        artiexist[m] = TRUE;
     } else {
         /* nothing appropriate could be found; return the original object */
         if (by_align)
@@ -239,14 +237,14 @@ exist_artifact(int otyp, const char *name)
     boolean *arex;
 
     if (otyp && *name)
-        for (a = artilist + 1, arex = artiexist + 1; a->otyp; a++, arex++)
+        for (a = artilist + 1, arex = artigen + 1; a->otyp; a++, arex++)
             if ((int)a->otyp == otyp && !strcmp(a->name, name))
                 return *arex;
     return FALSE;
 }
 
 void
-artifact_exists(struct obj *otmp, const char *name, boolean mod)
+artifact_exists(struct obj *otmp, const char *name, int value)
 {
     const struct artifact *a;
 
@@ -255,11 +253,9 @@ artifact_exists(struct obj *otmp, const char *name, boolean mod)
             if (a->otyp == otmp->otyp && !strcmp(a->name, name)) {
                 int m = a - artilist;
 
-                otmp->oartifact = (char)(mod ? m : 0);
+                otmp->oartifact = (char)(value ? m : 0);
                 otmp->age = 0;
-                if (otmp->otyp == RIN_INCREASE_DAMAGE)
-                    otmp->spe = 0;
-                artiexist[m] = mod;
+                artigen[m] = value;
                 break;
             }
     return;
@@ -269,15 +265,27 @@ int
 nartifact_exist(void)
 {
     int a = 0;
-    int n = SIZE(artiexist);
+    int n = SIZE(artigen);
 
     while (n > 1)
-        if (artiexist[--n])
+        if (artigen[--n] != ag_none)
             a++;
 
     return a;
 }
 
+int
+nartifact_value(int value)
+{
+    int a = 0;
+    int n = SIZE(artigen);
+
+    while (n > 1)
+        if (artigen[--n] == value)
+            a++;
+
+    return a;
+}
 
 boolean
 spec_ability(struct obj * otmp, unsigned long abil)
@@ -480,10 +488,13 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
         return equipmask;
     if ((otmp->otyp == RED_DRAGON_SCALE_MAIL ||
-         otmp->otyp == RED_DRAGON_SCALES) && extrinsic == INFRAVISION)
+         otmp->otyp == RED_DRAGON_SCALES) &&
+        (extrinsic == INFRAVISION || extrinsic == WARNING ||
+         extrinsic == SEE_INVIS))
         return equipmask;
     if ((otmp->otyp == WHITE_DRAGON_SCALE_MAIL ||
-         otmp->otyp == WHITE_DRAGON_SCALES) && extrinsic == WATERPROOF)
+         otmp->otyp == WHITE_DRAGON_SCALES) &&
+        (extrinsic == WATERPROOF || extrinsic == SEARCHING))
         return equipmask;
     if ((otmp->otyp == ORANGE_DRAGON_SCALE_MAIL ||
          otmp->otyp == ORANGE_DRAGON_SCALES) && extrinsic == FREE_ACTION)
@@ -507,7 +518,8 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
     if (!oart)
         return 0L;
 
-    if (oart->inv_prop == extrinsic)
+    if (oart->inv_prop == extrinsic &&
+        (otmp->owornmask & W_MASK(os_invoked)))
         return W_MASK(os_invoked);
 
     dtyp = oart->cary.adtyp;
@@ -931,19 +943,19 @@ magicbane_hit(struct monst *magr,   /* attacker */
             if (youdefend) {
                 if (youmonst.data != old_uasmon)
                     *dmgptr = 0;        /* rehumanized, so no more damage */
-                if (u.uenmax > 0) {
+                if (youmonst.pwmax > 0) {
                     pline(msgc_intrloss, "You lose magical energy!");
-                    u.uenmax--;
-                    if (u.uen > 0)
-                        u.uen--;
+                    youmonst.pwmax--;
+                    if (youmonst.pw > 0)
+                        youmonst.pw--;
                 }
             } else {
                 if (mdef->data == &mons[PM_CLAY_GOLEM])
                     mdef->mhp = 1;      /* cancelled clay golems will die */
                 if (youattack && spellcaster(mdef->data)) {
                     pline(msgc_intrgain, "You absorb magical energy!");
-                    u.uenmax++;
-                    u.uen++;
+                    youmonst.pwmax++;
+                    youmonst.pw++;
                 }
             }
         }
@@ -1503,15 +1515,15 @@ arti_invoke(struct obj *obj)
                 break;
             }
         case ENERGY_BOOST:{
-                int epboost = (u.uenmax + 1 - u.uen) / 2;
+                int epboost = (youmonst.pwmax + 1 - youmonst.pw) / 2;
 
                 if (epboost > 120)
                     epboost = 120;      /* arbitrary */
                 else if (epboost < 12)
-                    epboost = u.uenmax - u.uen;
+                    epboost = youmonst.pwmax - youmonst.pw;
                 if (epboost) {
                     pline(msgc_statusgood, "You feel re-energized.");
-                    u.uen += epboost;
+                    youmonst.pw += epboost;
                 } else
                     goto nothing_special;
                 break;

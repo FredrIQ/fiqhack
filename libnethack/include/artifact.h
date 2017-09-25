@@ -62,6 +62,19 @@ struct artifact {
     short otyp;
 };
 
+enum artigen_type {
+    ag_none,
+    ag_other, /* This is the value of old existing artifacts before this was implemented */
+    ag_gift,
+    ag_wish,
+    ag_monwish,
+    ag_named,
+    ag_bones,
+};
+
+# define nartifact_gifted() nartifact_value(ag_gift)
+# define nartifact_wished() (nartifact_value(ag_wish) + nartifact_value(ag_monwish))
+
 /* invoked properties with special powers */
 # define TAMING         (LAST_PROP+1)
 # define HEALING        (LAST_PROP+2)

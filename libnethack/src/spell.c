@@ -1,17 +1,19 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
 /* spellmenu arguments; 0 thru n-1 used as spl_book[] index when swapping */
-#define SPELLMENU_CAST (-2)
-#define SPELLMENU_VIEW (-1)
+#define SPELLMENU_CAST (-3)
+#define SPELLMENU_VIEW (-2)
+#define SPELLMENU_QUIVER (-1)
 
-#define KEEN 20000
-#define MAX_SPELL_STUDY 3
+#define KEEN 60000
+#define PERMA -1
 #define incrnknow(spell)        spl_book[spell].sp_know = KEEN
+#define permaknow(spell)        spl_book[spell].sp_know = PERMA
 
 #define spellev(spell)          spl_book[spell].sp_lev
 
@@ -54,7 +56,7 @@ static int throwspell(boolean, schar *dx, schar *dy, const struct musable *arg);
 static void spell_backfire(int);
 static int spellindex_by_typ(int);
 static void run_maintained_spell(struct monst *, int);
-
+static boolean mon_wants_to_maintain(const struct monst *, int);
 static const char *spelltypemnemonic(int);
 
 /* The roles[] table lists the role-specific values for tuning
@@ -473,58 +475,73 @@ learn(void)
     splname = msgprintf(objects[booktype].oc_name_known ?
                         "\"%s\"" : "the \"%s\" spell",
                         OBJ_NAME(objects[booktype]));
+
+    if (learn_spell(booktype, TRUE, FALSE)) {
+        pline(msgc_actionok, "The spellbook disappears.");
+        if (!u.utracked[tos_book])
+            impossible("Spellbook already gone?");
+        else {
+            obj_extract_self(u.utracked[tos_book]);
+            obfree(u.utracked[tos_book], NULL);
+        }
+    }
+
+    return 0;
+}
+
+/* Learns/refreshes the spell. Returns FALSE if user declined to refresh knowledge. */
+boolean
+learn_spell(int spell, boolean from_book, boolean perma)
+{
+    int i;
+    int first_unknown = MAXSPELL;
+    int known_spells = 0;
+    char booklet = objects[spell].oc_defletter;
+    int spell_lev = objects[spell].oc_level;
     for (i = 0; i < MAXSPELL; i++) {
-        if (spellid(i) == booktype) {
-            already_known = TRUE;
-            if (u.utracked[tos_book]->spestudied > MAX_SPELL_STUDY) {
-                pline(msgc_failcurse,
-                      "This spellbook is too faint to be read any more.");
-                u.utracked[tos_book]->otyp = booktype = SPE_BLANK_PAPER;
-            } else if (spellknow(i) <= 1000) {
-                pline(msgc_actionok, "Your knowledge of %s is keener.",
-                      splname);
-                incrnknow(i);
-                u.utracked[tos_book]->spestudied++;
-                exercise(A_WIS, TRUE);  /* extra study */
-            } else {    /* spell known already, book studiable*/
-                pline(msgc_hint, "You know %s quite well already.", splname);
-                if (yn("Do you want to read the book anyway?") == 'y') {
-                    pline(msgc_actionok, "You refresh your knowledge of %s.",
-                          splname);
-                    incrnknow(i);
-                    u.utracked[tos_book]->spestudied++;
-                } else
-                    costly = FALSE;
+        if (spellid(i) == spell) {
+            if (perma) {
+                permaknow(i);
+                pline(msgc_statusgood, "You gain divine knowledge of %s.",
+                      spellname(i));
+                makeknown(spell);
+                return TRUE;
+            } else if (spellknow(i) > 1000 && from_book) {
+                pline(msgc_hint, "You know %s quite well already.", spellname(i));
+                if (yn("Do you want to read the book anyway?") == 'n')
+                    return FALSE;
             }
-            /* make book become known even when spell is already known, in case
-               amnesia made you forget the book */
-            makeknown((int)booktype);
-            break;
+
+            incrnknow(i);
+            pline(msgc_actionok, "Your knowledge of %s is keener,",
+                  spellname(i));
+            return TRUE;
         } else if (spellid(i) == NO_SPELL &&
                    (i < first_unknown ||
-                    i == spellno_from_let(objects[booktype].oc_defletter)))
+                    i == spellno_from_let(booklet)))
             first_unknown = i;
         else
             known_spells++;
     }
 
-    if (first_unknown == MAXSPELL && !already_known)
-        panic("Too many spells memorized!");
+    if (first_unknown == MAXSPELL)
+        panic("Learned too many spells...?");
 
-    if (!already_known) {
-        spl_book[first_unknown].sp_id = booktype;
-        spl_book[first_unknown].sp_lev = objects[booktype].oc_level;
+    spl_book[first_unknown].sp_id = spell;
+    spl_book[first_unknown].sp_lev = spell_lev;
+    if (perma) {
+        permaknow(first_unknown);
+        pline(msgc_statusgood, "You gain divine knowledge of %s.",
+              spellname(first_unknown));
+    } else {
         incrnknow(first_unknown);
-        u.utracked[tos_book]->spestudied++;
         pline(msgc_actionok, known_spells > 0 ?
-              "You add %s to your repertoire." : "You learn %s.", splname);
-        makeknown((int)booktype);
+              "You add %s to your repertoire." : "You learn %s.",
+              spellname(first_unknown));
     }
 
-    if (costly)
-        check_unpaid(u.utracked[tos_book]);
-    u.utracked[tos_book] = 0;
-    return 0;
+    makeknown(spell);
+    return TRUE;
 }
 
 /* spellbook read success rate */
@@ -661,15 +678,6 @@ mon_study_book(const struct musable *m)
     mon->mfrozen = min(delay, 5);
     mon->mcanmove = !mon->mfrozen; /* in case delay is 0 */
 
-    if (spellbook->spestudied > MAX_SPELL_STUDY) {
-        if (vis)
-            pline(msgc_itemloss,
-                  "But %s book is too faint to be read any more.",
-                  s_suffix(mon_nam(mon)));
-        spellbook->otyp = SPE_BLANK_PAPER;
-        return -1;
-    }
-
     if (vis) {
         if (mon->mspells)
             pline(msgc_monneutral,
@@ -677,9 +685,10 @@ mon_study_book(const struct musable *m)
                   Monnam(mon), mhis(mon));
         else
             pline(msgc_monneutral, "%s learns a spell!", Monnam(mon));
+        pline(msgc_monneutral, "The spellbook disappears.");
     }
 
-    spellbook->spestudied++;
+    obfree(spellbook, NULL);
     return mon_addspell(mon, booktype);
 }
 
@@ -770,14 +779,16 @@ run_maintained_spells(struct level *lev)
             int spell_level = objects[spell].oc_level;
             if (mon_has_amulet(&youmonst))
                 spell_level *= 2;
+            if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
+                spell_level *= 2; /* needs more to maintain manually, so increase cost */
             if (!(moves % moves_modulo)) {
-                if (u.uen < spell_level) {
+                if (youmonst.pw < spell_level) {
                     pline(msgc_intrloss, "You lack the energy to maintain %s.",
                           spellname(spell_index));
                     spell_unmaintain(&youmonst, spell);
                     continue;
                 }
-                u.uen -= spell_level;
+                youmonst.pw -= spell_level;
             }
 
             run_maintained_spell(&youmonst, spell);
@@ -789,9 +800,7 @@ run_maintained_spells(struct level *lev)
         if (DEADMONSTER(mon) || !spell_maintained(mon, spell))
             continue;
 
-        /* mspec_used check is arbitrary, but prevents mspec_used from going out of
-           hand */
-        if (confused(mon) || mon->mspec_used > 20) {
+        if (confused(mon)) {
             mon->spells_maintained = 0;
             continue;
         }
@@ -811,16 +820,22 @@ run_maintained_spells(struct level *lev)
                 break;
             }
             if (!moves_modulo) {
-                spell_unmaintain(&youmonst, spell);
+                spell_unmaintain(mon, spell);
                 continue;
             }
 
-            /* Increase mspec_used depending on level and proficiency */
             int spell_level = objects[spell].oc_level;
             if (mon_has_amulet(mon))
                 spell_level *= 2;
+            if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
+                spell_level *= 2; /* needs more to maintain manually, so increase cost */
             if (!(moves % moves_modulo)) {
-                mon->mspec_used += spell_level;
+                if (mon->pw < spell_level) {
+                    spell_unmaintain(mon, spell);
+                    continue;
+                }
+
+                mon->pw -= spell_level;
             }
 
             run_maintained_spell(mon, spell);
@@ -865,17 +880,28 @@ run_maintained_spell(struct monst *mon, int spell)
         break;
     case SPE_PROTECTION:
         if (cast_protection(mon, TRUE, FALSE)) {
-            if (mon == &youmonst) {
-                if (u.uen < 5) {
+            int pw_cost = 5;
+            if (mon_has_amulet(mon))
+                pw_cost += rn1(6, 5);
+
+            if (mon->pw < pw_cost) {
+                if (mon == &youmonst) {
                     pline(msgc_intrloss, "Your energy level fizzles, preventing you "
                           "from maintaining the protection spell!");
                     spell_unmaintain(mon, SPE_PROTECTION);
                     break;
                 }
-                u.uen -= 5;
-            } else
-                mon->mspec_used++;
+            }
+
+            mon->pw -= pw_cost;
         }
+        break;
+    case SPE_LIGHT:
+        pseudo = mktemp_sobj(level, spell);
+        pseudo->blessed = pseudo->cursed = 0;
+        pseudo->quan = 20L; /* do not let useup get it */
+        litroom(mon, TRUE, pseudo, FALSE);
+        obfree(pseudo, NULL);
         break;
     default:
         impossible("%s maintaining an unmaintainable spell? (%d)",
@@ -1016,7 +1042,7 @@ age_spells(void)
     for (i = 0; i < MAXSPELL; i++) {
         if (!SPELL_IS_FROM_SPELLBOOK(i))
             continue;
-        if (spellknow(i))
+        if (spellknow(i) && spellknow(i) != PERMA)
             decrnknow(i);
     }
     return;
@@ -1049,6 +1075,33 @@ docast(const struct musable *m)
         m_new.spell = spell;
         return spelleffects(FALSE, &m_new);
     }
+    return 0;
+}
+
+int
+docastalias(const struct nh_cmd_arg *arg)
+{
+    struct musable m = arg_to_musable(arg);
+    int i;
+    int splnum;
+
+    for (i = 0; i < MAXSPELL; i++) {
+        if (spellid(i) == NO_SPELL)
+            continue;
+
+        if (spellkey(i) == arg->key) {
+            m.spell = spellid(i);
+            pline(msgc_actionboring, "Using %s.", spellname(i));
+            return spelleffects(FALSE, &m);
+        }
+    }
+
+    if (!dospellmenu("Choose which spell to alias", SPELLMENU_QUIVER, &splnum))
+        return 0;
+    spl_book[splnum].sp_key = arg->key;
+
+    pline(msgc_actionok, "Aliased %s.", spellname(splnum));
+    pline(msgc_hint, "(You can unalias with 'spellbook', typically on +.)");
     return 0;
 }
 
@@ -1187,13 +1240,14 @@ mspell_skilltype(int booktype)
    from the protection. This prevents freezing the protection timer in
    such a case if the protection spell is maintained, avoiding you to
    gain more protection and keep it by maintaining the spell. In such a
-   case, we return FALSE if overprotected. */
+   case, we return FALSE if overprotected.
+   This function can run during level gen, so check for level before doing canseemon */
 boolean
 cast_protection(struct monst *mon, boolean autocast,
                 boolean check_overprotection)
 {
     boolean you = (mon == &youmonst);
-    boolean vis = canseemon(mon);
+    boolean vis = level && canseemon(mon);
     int loglev = 0;
     int l = you ? youmonst.m_lev : mon->m_lev;
     /* Monsters can be level 0, ensure that no oddities occur if that is the case. */
@@ -1308,14 +1362,12 @@ spell_backfire(int spell)
    The side effect is that monsters with a 80% failure rate on a spell will only
    return nonzero 1/5 of the time, meaning that monsters will generally (try to)
    cast those spells much more rarely. This is by design.
-   If theoretical is true, bypass the random check and mspec_used, this is used
+   If theoretical is true, bypass the random check and pw, this is used
    to check if a spell is featured in the spell list, or get a realible fail rate
    (for example, to check if knock is realible enough for usage with doors) */
 int
 mon_castable(const struct monst *mon, int spell, boolean theoretical)
 {
-    if (mon->mspec_used && !theoretical)
-        return 0;
     /* Ghosts aren't allowed their former spellcasting abilities, if any. However,
        bones saved as ordinary players, or the occasional vampire/etc, is allowed to */
     if (mon->data == &mons[PM_GHOST])
@@ -1324,23 +1376,93 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
     if (cancelled(mon))
         return 0;
 
+    boolean clone_wiz = FALSE;
+    if (spell == SPE_BOOK_OF_THE_DEAD)
+        clone_wiz = TRUE;
+
+    if (clone_wiz && !mon->iswiz)
+        return 0;
+
     /* FIXME: don't rely on spell order */
     int mspellid = spell - SPE_DIG;
 
     if (!(mon->mspells & ((uint64_t)1 << mspellid)))
         return 0;
 
+    int pw_cost;
+    if (clone_wiz)
+        pw_cost = 7;
+    else
+        pw_cost = objects[spell].oc_level;
+    pw_cost *= 5;
+
+    if (mon_has_amulet(mon))
+        pw_cost += rnd(2 * pw_cost);
+
+    if (mon->pw < pw_cost && !theoretical)
+        return 0;
+
+    /* If we're low on Pw, cast more rarely */
+    if (!theoretical && mon->pw < (mon->pwmax / 3) &&
+        rn2(8))
+        return 0;
+
     /* calculate fail rate */
     /* Confusion also makes spells fail 100% of the time,
        but don't make monsters savvy about that for now. */
-    int chance = percent_success(mon, spell);
+    int chance;
+    if (clone_wiz)
+        chance = 100;
+    else
+        percent_success(mon, spell);
+
     if (rnd(100) > chance && !theoretical)
         return 0;
+
     /* for theoretical, return a minrate of 1% to mark the spell as known */
     if (theoretical)
         return max(chance, 1);
 
     return chance;
+}
+
+/* Returns TRUE if monster wants to maintain given spell. */
+static boolean
+mon_wants_to_maintain(const struct monst *mon, int spell)
+{
+    /* Don't maintain spells with a somewhat high failure rate. */
+    if (mon_castable(mon, spell, TRUE) > 33)
+        return FALSE;
+
+    /* Compare energy regeneration rate with spell drain. using a
+       priority list. */
+    int pw_regen = regen_rate(mon, TRUE);
+
+    int cost = 0;
+    int extra = 1;
+    if (mon_has_amulet(mon))
+        extra = 2;
+
+#define chk_spell(s)                                    \
+    cost = objects[s].oc_level * extra * 20;            \
+    if (s == SPE_LIGHT || s == SPE_PROTECTION)          \
+        cost *= 2;                                      \
+    if (mon_castable(mon, s, TRUE) < 33)                \
+        pw_regen -= cost;                               \
+    if (pw_regen < 20)                                  \
+        return FALSE;                                   \
+    if (spell == s)                                     \
+        return TRUE;
+
+    chk_spell(SPE_PROTECTION);
+    chk_spell(SPE_HASTE_SELF);
+    if (mprof(mon, MP_SDIVN) >= P_SKILLED) {
+        chk_spell(SPE_DETECT_MONSTERS);
+    }
+    chk_spell(SPE_PHASE);
+    chk_spell(SPE_INVISIBILITY);
+#undef chk_spell
+    return FALSE;
 }
 
 int
@@ -1476,6 +1598,7 @@ spelleffects(boolean atme, const struct musable *m)
         break;
 
     /* These spells can be toggled for whether or not to maintain it */
+    case SPE_LIGHT:
     case SPE_HASTE_SELF:
     case SPE_DETECT_MONSTERS:
     case SPE_LEVITATION:
@@ -1483,13 +1606,14 @@ spelleffects(boolean atme, const struct musable *m)
     case SPE_ASTRAL_EYESIGHT:
     case SPE_PHASE:
     case SPE_PROTECTION:
-        if (!you)
-            break; /* TODO */
-
         /* Detect monsters isn't useful to maintain on a lower level */
         if (spell == SPE_DETECT_MONSTERS && role_skill < P_SKILLED)
             break;
-        if (yn("Maintain the spell?") == 'y')
+
+        if (!you && !mon_wants_to_maintain(mon, spell))
+            break;
+
+        if (!you || yn("Maintain the spell?") == 'y')
             set_maintained = TRUE; /* set it below, past all the usual sanity checks */
         break;
 
@@ -1550,83 +1674,77 @@ spelleffects(boolean atme, const struct musable *m)
     }
 
     /* Energy checks, and for players, hunger drain */
-    if (you) {
-        energy = (objects[spell].oc_level * 5);      /* 5 <= energy <= 35 */
-        if (Uhave_amulet) {
+    if (clone_wiz)
+        energy = 7;
+    else
+        energy = objects[spell].oc_level;
+    energy *= 5;
+
+    /* If the amulet drains too much, we want to set pw to 0. Check
+       if we have enough energy without the amulet drain to
+       determine if we should drain everything. */
+    boolean drain_pw = FALSE;
+    if (mon_has_amulet(mon)) {
+        if (energy <= mon->pw)
+            drain_pw = TRUE;
+        if (you)
             pline(msgc_substitute,
                   "You feel the amulet draining your energy away.");
-            energy += rnd(2 * energy);
-        }
-        if (energy > u.uen) {
-            pline(msgc_cancelled,
-                  "You don't have enough energy to cast that spell.");
-            return 0;
-        } else {
-            int hungr = energy * 2;
-
-            /*
-             * If hero is a wizard, their current intelligence
-             * (bonuses + temporary + current)
-             * affects hunger reduction in casting a spell.
-             * 1. int = 17-18 no hunger
-             * 2. int = 16    1/4 hungr
-             * 3. int = 15    1/2 hungr
-             * 4. int = 1-14  normal hunger
-             * The reason for this is:
-             * a) Intelligence affects the amount of exertion
-             * in thinking.
-             * b) Wizards have spent their life at magic and
-             * understand quite well how to cast spells.
-             */
-            intell = ACURR(A_INT);
-            if (!Role_if(PM_WIZARD))
-                intell = 10;
-            if (intell >= 17)
-                hungr = 0;
-            else if (intell == 16)
-                hungr /= 4;
-            else if (intell == 15)
-                hungr /= 2;
-
-            /* don't put player (quite) into fainting from casting a spell,
-               particularly since they might not even be hungry at the
-               beginning; however, this is low enough that they must eat before
-               casting anything else except detect food */
-            if (hungr > u.uhunger - 3)
-                hungr = u.uhunger - 3;
-            morehungry(hungr);
-        }
-    } else {
-        /* highlevel casters can cast more than lowlevel ones */
-        int cooldown = 10 - (mon->m_lev / 5);
-        if (cooldown < 4)
-            cooldown = 4;
-
-        /* make energy use unpredictable! */
-        cooldown = rn2(cooldown);
-
-        energy = ((clone_wiz ? 7 : objects[spell].oc_level) * cooldown);
-        if (mon_has_amulet(mon)) {
+        else
             amulet = TRUE;
-            if (!rn2(5)) {
-                if (vis)
-                    pline(msgc_monneutral,
-                          "%s tries to cast a spell, but the Amulet drains it!",
-                          Monnam(mon));
-                return 0;
-            }
-            if (energy)
-                energy += 2 * rnd(energy);
+        energy += rnd(2 * energy);
+    }
+
+    if (energy > mon->pw) {
+        if (you)
+            pline(drain_pw ? msgc_failrandom : msgc_cancelled,
+                  "You don't have enough energy to cast that spell.");
+        else if (vis)
+            pline(msgc_monneutral,
+                  "%s to cast a spell, but%s is out of energy!",
+                  M_verbs(mon, "try"), drain_pw ?
+                  ", due to the amulet draining magic," : "");
+
+        if (drain_pw) {
+            mon->pw = 0;
+            return 1;
         }
 
-        /* can't cast -- energy is used up! */
-        if (mon->mspec_used) {
-            if (vis)
-                pline(msgc_monneutral,
-                      "%s tries to cast a spell, but is out of energy!",
-                      Monnam(mon));
-            return 0;
-        }
+        return 0;
+    } else if (you) {
+        int hungr = energy * 2;
+
+        /*
+         * If hero is a wizard, their current intelligence
+         * (bonuses + temporary + current)
+         * affects hunger reduction in casting a spell.
+         * 1. int = 17-18 no hunger
+         * 2. int = 16    1/4 hungr
+         * 3. int = 15    1/2 hungr
+         * 4. int = 1-14  normal hunger
+         * The reason for this is:
+         * a) Intelligence affects the amount of exertion
+         * in thinking.
+         * b) Wizards have spent their life at magic and
+         * understand quite well how to cast spells.
+         */
+        intell = ACURR(A_INT);
+        if (!Role_if(PM_WIZARD))
+            intell = 10;
+        if (intell >= 17)
+            hungr = 0;
+        else if (intell == 16)
+            hungr /= 4;
+        else if (intell == 15)
+            hungr /= 2;
+
+        /* don't put player (quite) into fainting from casting a spell,
+           particularly since they might not even be hungry at the
+           beginning; however, this is low enough that they must eat before
+           casting anything else except detect food */
+        if (hungr > u.uhunger - 3)
+            hungr = u.uhunger - 3;
+        morehungry(hungr);
     }
 
     if (clone_wiz)
@@ -1634,20 +1752,21 @@ spelleffects(boolean atme, const struct musable *m)
     else
         chance = percent_success(mon, spell);
     if (confused || (rnd(100) > chance)) {
-        if (you) {
+        if (you)
             pline(msgc_failrandom, "You fail to cast the spell correctly.");
-            u.uen -= energy / 2;
-        } else if (vis)
+        else if (vis)
             pline(msgc_monneutral, "%s tries, but fails, to cast a spell.",
                   Monnam(mon));
+
+        /* No sanity check needed, we determined that we had enough
+           to at least try earlier */
+        mon->pw -= energy / 2;
         return 1;
     }
 
-    if (you) {
-        u.uen -= energy;
+    mon->pw -= energy;
+    if (you)
         exercise(A_WIS, TRUE);
-    } else
-        mon->mspec_used += !rn2(3) ? energy : 0;
 
     if (!you) {
         if (vis) {
@@ -1940,7 +2059,13 @@ dovspell(const struct nh_cmd_arg *arg)
 
     (void) arg;
 
-    while (dospellmenu(&youmonst, "Your magical abilities", SPELLMENU_VIEW, &splnum)) {
+    while (dospellmenu(&youmonst, "Your magical abilities (*: forgotten, #: aliased)",
+                       SPELLMENU_VIEW, &splnum)) {
+        if (spellkey(splnum) && yn("Remove the key alias for the spell?") == 'y') {
+            spl_book[splnum].sp_key = 0;
+            continue;
+        }
+
         qbuf = msgprintf("Reordering magic: adjust '%c' to",
                          spelllet_from_no(splnum));
         if (!dospellmenu(&youmonst, qbuf, splnum, &othnum))
@@ -1953,6 +2078,15 @@ dovspell(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+void
+quiver_spell(void)
+{
+    int splnum;
+    if (!dospellmenu("Choose which spell to ready", SPELLMENU_QUIVER, &splnum))
+        return;
+
+    u.spellquiver = spellid(splnum);
+}
 
 void
 show_monster_spells(const struct monst *mon)
@@ -1965,7 +2099,7 @@ show_monster_spells(const struct monst *mon)
 static boolean
 dospellmenu(const struct monst *mon,
             const char *prompt,
-            int splaction,  /* SPELLMENU_CAST, SPELLMENU_VIEW, or
+            int splaction,  /* SPELLMENU_CAST, SPELLMENU_VIEW, SPELLMENU_QUIVER or
                                spl_book[] index */
             int *spell_no)
 {
@@ -1982,12 +2116,18 @@ dospellmenu(const struct monst *mon,
         if (you) {
             if (spellid(i) == NO_SPELL)
                 continue;
-            buf = SPELL_IS_FROM_SPELLBOOK(i) ?
-                msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
+            const char *percent = "--";
+            if (SPELL_IS_FROM_SPELLBOOK(i) &&
+                spellknow(i) != PERMA)
+                percent = msgprintf("%-d%%", (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
+
+            const char *buf = SPELL_IS_FROM_SPELLBOOK(i) ?
+                msgprintf("%s\t%-d%s%s%s\t%s\t%-d%%\t%s", spellname(i), spellev(i),
                           spellknow(i) ? " " : "*",
+                          !spellkey(i) ? " " : "#:",
+                          !spellkey(i) ? "" : friendly_key("%s", spellkey(i)),
                           spelltypemnemonic(spell_skilltype(spellid(i))),
-                          100 - percent_success(&youmonst, spellid(i)),
-                          (spellknow(i) * 100 + (KEEN - 1)) / KEEN) :
+                          100 - percent_success(&youmonst, spellid(i)), percent) :
                 msgprintf("%s\t--\t%s\t?\t--", spellname(i),
                           (spellid(i) == SPID_PRAY || spellid(i) == SPID_TURN) ?
                           "divine" : "ability");

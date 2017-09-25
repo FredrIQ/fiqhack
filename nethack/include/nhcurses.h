@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -265,6 +265,18 @@ enum nh_menupaging {
     MP_PAGES,
 };
 
+enum nh_msgcolor {
+    MC_FULL,
+    MC_GRAY,
+    MC_WHITE,
+};
+
+enum nh_msgfading {
+    MF_FADE,
+    MF_BLANK,
+    MF_DONTCHANGE,
+};
+
 enum nh_frame {
     FRAME_ALL,
     FRAME_MENUS,
@@ -283,6 +295,8 @@ struct settings {
     enum nh_animation animation;     /* when to delay */
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
+    enum nh_msgcolor msgcolor; /* color messages based on context */
+    enum nh_msgfading msgfading;
     enum prevmsg_style msg_window;
     enum nh_frame whichframes;
     enum nh_palette palette;         /* palette to use for text */
@@ -297,16 +311,17 @@ struct settings {
     nh_bool visible_rock;       /* render solid rock unlike unexplored */
     nh_bool extmenu;    /* extended commands use menu interface */
     nh_bool hilite_pet; /* hilight pets */
+    nh_bool hilite_obj_piles;   /* hilight object piles */
     nh_bool showexp;    /* show experience points */
     nh_bool use_inverse;        /* use inverse video for some things */
     nh_bool invweight;  /* show item weight in the inventory */
-    nh_bool msgcolor;   /* color messages depending on context */
     nh_bool bgbranding; /* show hidden traps/stairs with background */
     nh_bool floorcolor; /* draw stepped-on information for the floor */
     nh_bool status3;    /* draw 3 line status */
     nh_bool mouse;      /* accept mouse input */
     nh_bool prompt_inline; /* draw prompts in the message window */
     nh_bool show_ac; /* whether to display armor value as AC or Def */
+    nh_bool show_uncursed; /* don't hide implied uncursed */
 };
 
 
@@ -624,6 +639,7 @@ extern fnchar **list_gamefiles(fnchar *dir, int *count);
 extern enum nh_play_status playgame(int fd_or_gameno, enum nh_followmode);
 
 /* sidebar.c */
+extern int sidebar_delimiter_pos(void);
 extern void draw_sidebar(void);
 extern void curses_list_items(struct nh_objlist *objlist, nh_bool invent);
 extern void curses_list_items_nonblocking(struct nh_objlist *objlist,
@@ -659,10 +675,11 @@ extern int nh_wgetch(WINDOW * win, enum keyreq_context context);
 extern struct gamewin *alloc_gamewin(int extra, nh_bool handle_messages);
 extern void delete_gamewin(struct gamewin *win);
 extern void delete_all_gamewins(void);
+extern void draw_frame(void);
 extern void curses_pause(enum nh_pause_reason reason);
 extern void curses_display_buffer(const char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);
-extern void curses_show_ac(const char *, int, void *, void (*)(const char *, void *));
+extern void curses_format(const char *, int, int, void *, void (*)(const char *, void *));
 extern void curses_delay_output(void);
 extern void curses_load_progress(int progress);
 extern void curses_server_cancel(void);

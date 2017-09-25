@@ -310,7 +310,7 @@ gotobj:
     mpickobj(mtmp, otmp, NULL);       /* may free otmp */
     if (could_petrify && !(mtmp->misc_worn_check & W_MASK(os_armg))) {
         /* TODO: Should this really break pacifism? */
-        minstapetrify(mtmp, &youmonst);
+        minstapetrify(&youmonst, mtmp);
         return -1;
     }
     return (slowly || u_helpless(hm_all)) ? 0 : 1;

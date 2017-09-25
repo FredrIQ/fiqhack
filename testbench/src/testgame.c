@@ -77,7 +77,7 @@ static struct nh_window_procs test_windowprocs = {
     .win_getdir = test_getdir,
     .win_yn_function = test_yn_function,
     .win_getlin = test_getlin,
-    .win_show_ac = test_show_ac,
+    .win_format = test_format,
     .win_delay = test_no_op_void,
     .win_load_progress = test_no_op_int,
     .win_level_changed = test_no_op_int,
@@ -1009,12 +1009,13 @@ test_no_op_int(int unused)
 }
 
 static void
-test_show_ac(const char *unused1, int unused2,
-             void (*unused3)(const char *))
+test_format(const char *unused1, int unused2, int unused3,
+            void (*unused4)(const char *))
 {
     (void) unused1;
     (void) unused2;
     (void) unused3;
+    (void) unused4;
 }
 
 static void

@@ -147,6 +147,9 @@ print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
                 branding = nhcurses_genbranding_stepped;
         }
     }
+    if (dbe->obj && (dbe->branding & NH_BRANDING_PILE) && settings.hilite_obj_piles)
+        branding = nhcurses_genbranding_pile;
+
     if (branding != nhcurses_no_branding) {
         print_tile_number(win, TILESEQ_GENBRAND_OFF +
                           branding - nhcurses_genbranding_first,
@@ -160,12 +163,12 @@ print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
     enum nhcurses_brandings branding = nhcurses_no_branding;
     unsigned long long substitution = dbe_substitution(dbe);
 
-    if ((dbe->monflags & MON_TAME) && settings.hilite_pet)
-        branding = nhcurses_monbranding_tame;
-    if ((dbe->monflags & MON_PEACEFUL) && settings.hilite_pet)
-        branding = nhcurses_monbranding_peaceful;
     if ((dbe->monflags & MON_DETECTED) && settings.use_inverse)
         branding = nhcurses_monbranding_detected;
+    if ((dbe->monflags & MON_PEACEFUL) && settings.hilite_pet)
+        branding = nhcurses_monbranding_peaceful;
+    if ((dbe->monflags & MON_TAME) && settings.hilite_pet)
+        branding = nhcurses_monbranding_tame;
 
     if (branding != nhcurses_no_branding) {
         print_tile_number(win, TILESEQ_MONBRAND_OFF + branding -

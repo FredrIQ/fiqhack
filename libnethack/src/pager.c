@@ -220,6 +220,10 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed,
     } else
         strcpy(buf, distant_name(otmp, xname));
 
+    boolean pile = level->locations[x][y].pile;
+    if (pile)
+        strcat(buf, " on other objects");
+
     typ = level->locations[x][y].typ;
     if (known_embed && IS_TREE(typ))
         strcat(buf, " stuck");

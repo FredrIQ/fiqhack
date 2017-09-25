@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -241,6 +241,7 @@ struct flag {
     boolean autodig;    /* MRKR: Automatically dig */
     boolean autodigdown;        /* autodigging works downwadrds */
     boolean autoquiver; /* Automatically fill quiver */
+    boolean autoswap; /* Automatically swap to/from launcher */
     boolean beginner;
     boolean cblock;
     boolean corridorbranch;     /* branching corridors are interesting */
@@ -253,7 +254,7 @@ struct flag {
     boolean legacy;     /* print game entry "story" */
     boolean made_amulet;
     boolean mon_generation;     /* debug: control monster generaion */
-    boolean mon_moving; /* monsters' turn to move */
+    unsigned int mon_moving; /* monsters' turn to move */
     boolean mon_polycontrol;    /* debug: control monster polymorphs */
     boolean hide_implied;       /* hide messages if other messages imply them */
     boolean incomplete; /* the requested action continues into future turns */
@@ -264,7 +265,6 @@ struct flag {
     boolean pushweapon; /* When wielding, push old weapon into second slot */
     boolean servermail; /* check for messages from other players */
     boolean showrace;   /* show hero glyph by race rather than by role */
-    boolean show_uncursed;      /* always show uncursed items as such */
     boolean sortpack;   /* sorted inventory */
     int sparkle;        /* show "resisting" special FX (Scott Bigham) */
     boolean tombstone;  /* print tombstone */
@@ -285,7 +285,7 @@ struct flag {
     int pickup_burden;  /* maximum burden before prompt */
     int recently_broken_otyp;   /* object that broke recently */
     unsigned save_revision; /* save versioning to maintain save compatibility */
-# define SAVE_REVISION 3
+# define SAVE_REVISION 7
 
     /* Weird-sized structures */
     struct nh_autopickup_rules *ap_rules;

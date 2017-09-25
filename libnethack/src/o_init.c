@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,6 +9,24 @@
 static void shuffle(int, int, boolean);
 static void shuffle_all(void);
 static boolean interesting_to_discover(int);
+
+/* Returns TRUE if the object is new */
+boolean
+is_new_object(int otyp)
+{
+    if (otyp == POT_WONDER && flags.save_revision < 4)
+        return TRUE;
+    return FALSE;
+}
+
+int
+otyp_offset(int otyp)
+{
+    int ret = 0;
+    if (otyp >= POT_WONDER && flags.save_revision < 4)
+        ret++;
+    return ret;
+}
 
 
 /* shuffle descriptions on objects o_low to o_high */
@@ -254,6 +272,14 @@ freenames(void)
         }
 }
 
+static void
+add_new_object(int oindx)
+{
+    /* object descriptions */
+    objects[oindx].oc_name_idx = objects[oindx].oc_descr_idx = oindx;
+    objects[oindx].oc_uname = NULL;
+}
+
 /* Does a few dummy reads for things that don't change between games (but can change
    between versions) */
 static void
@@ -271,6 +297,9 @@ restobjclass(struct memfile *mf, struct objclass *ocl)
     ocl->oc_name_idx = mread16(mf);
     ocl->oc_descr_idx = mread16(mf);
 
+    ocl->oc_name_idx += otyp_offset(ocl->oc_name_idx);
+    ocl->oc_descr_idx += otyp_offset(ocl->oc_descr_idx);
+
     mread64(mf);
     mread32(mf);
 
@@ -286,19 +315,51 @@ restobjclass(struct memfile *mf, struct objclass *ocl)
     }
 }
 
-
 void
 restnames(struct memfile *mf)
 {
-    int i;
+    int i, j;
 
     mfmagic_check(mf, OCLASSES_MAGIC);
 
-    for (i = 0; i < NUM_OBJECTS; i++)
-        disco[i] = mread32(mf);
+    /* The disco[] array is rather oddly constructed; it iterates sequentially
+       independently of object type generally, but for whatever reason remains
+       within the same object class space. So if we add new objects, we need to
+       figure out where those objects were added, and if there was any newly
+       added objects within given object class, insert zeroes at the end of said
+       object class area. */
+    int new_disco = 0;
+    int oclass = 0;
+
+    j = 0;
+    for (i = 0; i < NUM_OBJECTS; i++) {
+        if (oclass != objects[i].oc_class) {
+            oclass = objects[i].oc_class;
+            while (new_disco > 0) {
+                new_disco--;
+                disco[j++] = 0;
+            }
+        }
+
+        if (is_new_object(i))
+            new_disco++;
+        else {
+            disco[j] = mread32(mf);
+            disco[j] += otyp_offset(disco[j]);
+            j++;
+        }
+    }
+
+    while (new_disco > 0) {
+        new_disco--;
+        disco[j++] = 0;
+    }
 
     for (i = 0; i < NUM_OBJECTS; i++)
-        restobjclass(mf, &objects[i]);
+        if (!is_new_object(i))
+            restobjclass(mf, &objects[i]);
+        else
+            add_new_object(i);
 }
 
 

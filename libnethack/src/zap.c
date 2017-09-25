@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -594,6 +594,9 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         break;
     case WAN_UNDEAD_TURNING:
     case SPE_TURN_UNDEAD:
+        if (tseen)
+            known = TRUE;
+
         wake = FALSE;
         if (wandlevel >= P_BASIC && unturn_dead(mdef))
             wake = TRUE;
@@ -638,6 +641,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                 monkilled(magr, mdef, "", AD_RBRE);
         } else if (tseen)
             pline(msgc_yafm, "%s in dread.", M_verbs(mdef, "shudder"));
+
         break;
     case WAN_POLYMORPH:
     case SPE_POLYMORPH:
@@ -688,7 +692,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         break;
     case WAN_CANCELLATION:
     case SPE_CANCELLATION:
-        cancel_monst(mdef, otmp, &youmonst, TRUE, FALSE);
+        cancel_monst(mdef, otmp, magr, TRUE, FALSE);
         break;
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
@@ -744,6 +748,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                     pline(msgc_statusheal, "%s opens its mouth!", Monnam(mdef));
             }
             expels(mdef, mdef->data, TRUE);
+            known = TRUE;
         } else if ((obj = which_armor(mdef, os_saddle))) {
             mdef->misc_worn_check &= ~obj->owornmask;
             obj->owornmask = 0L;
@@ -753,8 +758,11 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             place_object(obj, level, mdef->mx, mdef->my);
             /* call stackobj() if we ever drop anything that can merge */
             newsym(mdef->mx, mdef->my);
-        } else if (hityou && Punished)
+            known = TRUE;
+        } else if (hityou && Punished) {
             pline(msgc_yafm, "Your chain quivers for a moment.");
+            known = TRUE;
+        }
         break;
     case SPE_HEALING:
     case SPE_EXTRA_HEALING:
@@ -910,21 +918,12 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             if (hityou || canseemon(mdef))
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "%sn't drained.", M_verbs(mdef, "are"));
-        } else if (hityou)
-            losexp(msgcat_many("drained by %s spell", s_suffix(k_monnam(magr)), NULL),
-                   FALSE);
-        else if (!resist(magr, mdef, otmp->oclass, TELL, bcsign(otmp))) {
-            mdef->mhp -= dmg;
-            mdef->mhpmax -= dmg;
-            if (mdef->mhp <= 0 || mdef->mhpmax <= 0 || mdef->m_lev < 1)
-                monkilled(magr, mdef, "", AD_DRLI);
-            else {
-                mdef->m_lev--;
-                if (canseemon(mdef))
-                    pline(combat_msgc(&youmonst, mdef, cr_hit),
-                          "%s suddenly seems weaker!", Monnam(mdef));
-            }
-        }
+        } else if (hityou ||
+                   !resist(magr, mdef, otmp->oclass, TELL,
+                           bcsign(otmp)))
+            mlosexp(magr, mdef,
+                    msgprintf("drained by %s spell",
+                              s_suffix(k_monnam(magr))), FALSE);
         break;
     default:
         impossible("What an interesting effect (%d)", otyp);
@@ -1103,6 +1102,8 @@ montraits(struct obj *obj, coord * cc)
         mtmp2->dlevel = level;
         mtmp2->mx = mtmp->mx;
         mtmp2->my = mtmp->my;
+        mtmp2->dx = mtmp->dx;
+        mtmp2->dy = mtmp->dy;
         mtmp2->mux = COLNO;
         mtmp2->muy = ROWNO;
         mtmp2->mw = mtmp->mw;
@@ -1888,8 +1889,6 @@ poly_obj(struct obj *obj, int id)
     case SPBOOK_CLASS:
         while (otmp->otyp == SPE_POLYMORPH)
             otmp->otyp = rnd_class(SPE_DIG, SPE_BLANK_PAPER, rng);
-        /* reduce spellbook abuse */
-        otmp->spestudied = obj->spestudied + 1;
         break;
 
     case RING_CLASS:
@@ -2181,7 +2180,7 @@ zapnodir(struct monst *mon, struct obj *obj)
     switch (obj->otyp) {
     case WAN_LIGHT:
     case SPE_LIGHT:
-        litroom(mon, TRUE, obj);
+        litroom(mon, TRUE, obj, TRUE);
         if (!blind(&youmonst) && (you || vis))
             known = TRUE;
         break;
@@ -2477,14 +2476,15 @@ static boolean
 zap_steed(struct obj *obj)
 {
     int steedhit = FALSE;
+    int ox = u.ux;
+    int oy = u.uy;
 
     switch (obj->otyp) {
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         /* you go together */
         tele();
-        if (Teleport_control || !couldsee(u.ux0, u.uy0) ||
-            (distu(u.ux0, u.uy0) >= 16))
+        if (Teleport_control || (ox != u.ux && oy != u.uy))
             makeknown(obj->otyp);
         steedhit = TRUE;
         break;
@@ -2997,6 +2997,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
     int buzztyp = abs(type) % 30; /* % 30 to catch -30-39 */
     boolean selfreflect = FALSE;
     boolean selfzap = FALSE;
+    boolean spell = (buzztyp >= 10 && buzztyp <= 19);
     /* has nothing to do with absolute value. TODO: give this var a better name */
     int abstype = buzztyp % 10;
     /* you = buzz hits you, vis = you can see mon, yours = you created the buzz */
@@ -3102,6 +3103,8 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                     }
                     if (raylevel >= P_SKILLED) {
                         range = 0;
+                        if (spell)
+                            zap_hit_mon(magr, mon, type, nd, raylevel, selfzap);
                         continue;
                     }
                     dx = -dx;
@@ -3177,7 +3180,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
     tmpsym_end(tsym);
     if (buzztyp == ZT_SPELL(ZT_FIRE))
         explode(sx, sy, type, dice(12, 6), 0, EXPL_FIERY, NULL, 0);
-    if (raylevel >= P_SKILLED) {
+    if (raylevel >= P_SKILLED && !spell) {
         if (abstype == ZT_FIRE)
             expltype = EXPL_FIERY;
         else if (abstype == ZT_COLD)
@@ -3233,7 +3236,8 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     switch (abstype) {
     case ZT_MAGIC_MISSILE:
         if (resists_magm(mdef)) {
-            if (raylevel >= P_EXPERT) {
+            if (raylevel >= P_EXPERT &&
+                (magr != mdef || wand)) {
                 tmp = (tmp / 2) + 1;
                 if (oseen)
                     pline(combat_msgc(magr, mdef, cr_resist),
@@ -3338,24 +3342,9 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                                   "%s unaffected.", M_verbs(mdef, "are"));
                     }
                     break;
-                } else {
-                    if (you) {
-                        losexp("drained by a wand of death", FALSE);
-                        return;
-                    } else {
-                        tmp = dice(2, 6);
-                        if (oseen)
-                            pline(combat_msgc(magr, mdef, cr_hit),
-                                  "%s suddenly seems weaker!", Monnam(mdef));
-                        mdef->mhpmax -= tmp;
-                        mdef->mhp -= tmp;
-                        if (mdef->m_lev > 0) {
-                            mdef->m_lev--;
-                            return;
-                        }
-                        /* level 0 monsters are killed below */
-                    }
-                }
+                } else
+                    mlosexp(magr, mdef,
+                            "drained by a wand of death", FALSE);
             } else if (selfzap && (you || oseen))
                 pline(combat_msgc(magr, mdef, cr_kill),
                       "%s %sself with pure energy!", M_verbs(mdef, "irradiate"),
@@ -4222,7 +4211,7 @@ retry:
         if (!otmp)
             return;     /* for safety; should never happen */
     } else if (otmp == &nothing) {
-        historic_event(FALSE, TRUE, "refused a wish.");
+        historic_event(FALSE, TRUE, "refused a wish");
         /* explicitly wished for "nothing", presumeably attempting to retain
            wishless conduct */
         return;

@@ -11,10 +11,12 @@
 # include <sys/time.h>
 #endif
 
-#include "tilesequence.h"
 #include "nhcurses.h"
 #include "brandings.h"
 #include <ctype.h>
+/* tilesequence.h must come last because it includes some definitions, like
+   'u', which break standard header files. */
+#include "tilesequence.h"
 
 #define sgn(x) ((x) >= 0 ? 1 : -1)
 

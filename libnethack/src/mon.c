@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -601,6 +601,10 @@ mcalcdistress(void)
         if (DEADMONSTER(mtmp))
             continue;
 
+        /* Don't blame hero for monsters dying to intrinsics timing out or
+           similar. */
+        flags.mon_moving = mtmp->m_id;
+
         /* must check non-moving monsters once/turn in case they managed to end
            up in liquid */
         if (mtmp->data->mmove == 0) {
@@ -644,6 +648,9 @@ mcalcdistress(void)
         set_displacement(mtmp);
         /* FIXME: mtmp->mlstmv ought to be updated here */
     }
+
+    /* Now reset mon_moving */
+    flags.mon_moving = 0;
 }
 
 static struct monst *nmtmp = (struct monst *)0;
@@ -672,6 +679,7 @@ movemon(void)
        have problems. */
 
     for (mtmp = level->monlist; mtmp; mtmp = nmtmp) {
+        flags.mon_moving = mtmp->m_id;
         nmtmp = mtmp->nmon;
 
         /* Find a monster that we have not treated yet.  */
@@ -689,14 +697,18 @@ movemon(void)
             continue;
 
         if (is_hider(mtmp->data)) {
-            /* unwatched mimics and piercers may hide again [MRS] */
-            if (restrap(mtmp))
-                continue;
-            if (mtmp->m_ap_type == M_AP_FURNITURE ||
-                mtmp->m_ap_type == M_AP_OBJECT)
-                continue;
-            if (mtmp->mundetected)
-                continue;
+            if (mtmp->mpeaceful && !mtmp->m_ap_type)
+                mtmp->mundetected = FALSE;
+            else {
+                /* unwatched mimics and piercers may hide again [MRS] */
+                if (restrap(mtmp))
+                    continue;
+                if (mtmp->m_ap_type == M_AP_FURNITURE ||
+                    mtmp->m_ap_type == M_AP_OBJECT)
+                    continue;
+                if (mtmp->mundetected)
+                    continue;
+            }
         }
 
         /* This used to do a conflict check pass before checking for
@@ -709,6 +721,7 @@ movemon(void)
         if (dochugw(mtmp))      /* otherwise just move the monster */
             continue;
     }
+    flags.mon_moving = 0;
 
     if (any_light_source())
         /* in case a mon moved with a light source */
@@ -1265,6 +1278,11 @@ max_mon_load(const struct monst *mtmp)
 
     if (maxload < 1)
         maxload = 1;
+
+    struct obj *obj;
+    for (obj = mtmp->minvent; obj; obj = obj->nobj)
+        if ((obj->owornmask & W_ARMOR) && (obj_properties(obj) & opm_carrying))
+            maxload = (maxload * 11) / 10;
 
     return (int)maxload;
 }
@@ -1868,6 +1886,10 @@ replmon(struct monst *mtmp, struct monst *mtmp2)
         /* here we rely on the fact that `mtmp' hasn't actually been deleted */
         del_light_source(mtmp->dlevel, LS_MONSTER, mtmp);
     }
+
+    if (displaced(mtmp2))
+        mtmp2->dlevel->dmonsters[mtmp2->dx][mtmp2->dy] = mtmp2;
+
     mtmp2->nmon = mtmp2->dlevel->monlist;
     mtmp2->dlevel->monlist = mtmp2;
     if (u.ustuck == mtmp)
@@ -1881,6 +1903,19 @@ replmon(struct monst *mtmp, struct monst *mtmp2)
         nmtmp = mtmp2;
 
     /* discard the old monster */
+
+    /* Ensure that we /really remove/ any displaced image. Don't use dm_at. */
+    struct level *lev = mtmp->dlevel;
+    int x, y;
+    for (x = 0; x < COLNO; x++)
+        for (y = 0; y < ROWNO; y++)
+            if (mtmp == lev->dmonsters[x][y]) {
+                impossible("Displacement removal failed! "
+                           "Displaced at: %d,%d :: Found at: %d,%d",
+                      mtmp->dx, mtmp->dy, x, y);
+                level->dmonsters[x][y] = NULL;
+            }
+
     dealloc_monst(mtmp);
 }
 
@@ -1893,6 +1928,7 @@ relmon(struct monst *mon)
     if (mon->dlevel->monlist == NULL)
         panic("relmon: no level->monlist available.");
 
+    mon->dlevel->dmonsters[mon->dx][mon->dy] = NULL;
     mon->dlevel->monsters[mon->mx][mon->my] = NULL;
 
     if (mon == mon->dlevel->monlist)
@@ -1940,16 +1976,34 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
     mtmp->dlevel->flags.purge_monsters++;
 }
 
+struct monst *
+dm_at(struct level *lev, xchar x, xchar y)
+{
+    struct monst *mon = lev->dmonsters[x][y];
+    if (!mon)
+        return NULL;
+
+    if (mon->dx != x || mon->dy != y) {
+        impossible("Displacement mismatch: dx,dy: %d,%d :: actual x,y: %d,%d",
+                   mon->dx, mon->dy, x, y);
+        unset_displacement(mon);
+        level->dmonsters[x][y] = NULL;
+        return NULL;
+    }
+
+    return mon;
+}
+
 /* find the worn amulet of life saving which will save a monster */
 struct obj *
 mlifesaver(struct monst *mon)
 {
-    if (!nonliving(mon->data)) {
-        struct obj *otmp = which_armor(mon, os_amul);
+    if (!will_be_lifesaved(mon))
+        return NULL;
 
-        if (otmp && otmp->otyp == AMULET_OF_LIFE_SAVING)
-            return otmp;
-    }
+    struct obj *otmp = which_armor(mon, os_amul);
+    if (otmp && otmp->otyp == AMULET_OF_LIFE_SAVING)
+        return otmp;
     return NULL;
 }
 
@@ -2350,7 +2404,8 @@ monkilled(struct monst *magr, struct monst *mdef, const char *fltxt, int how)
     if (magr == &youmonst) {
         xkilled(mdef, xkill);
         return;
-    }
+    } else if (magr)
+        grow_up(magr, mdef);
 
     if (xkill & 2)
         mondead(mdef); /* no corpse */

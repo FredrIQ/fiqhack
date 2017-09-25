@@ -253,8 +253,13 @@ merged(struct obj **potmp, struct obj **pobj)
             otmp->age = ((otmp->age * otmp->quan) + (obj->age * obj->quan))
                 / (otmp->quan + obj->quan);
 
-        if (obj->bknown)
-            otmp->bknown = 1;
+        /* Combine ID states */
+        otmp->known |= obj->known;
+        otmp->dknown |= obj->dknown;
+        otmp->bknown |= obj->bknown;
+        otmp->rknown |= obj->rknown;
+        otmp->mknown |= obj->mknown;
+        otmp->mbknown |= obj->mbknown;
 
         otmp->oprops_known |= obj->oprops_known;
         otmp->oprops_known &= otmp->oprops; /* just in case */
@@ -338,7 +343,7 @@ addinv_stats(struct obj *obj)
 
 /* Add obj to inventory and print potential encumbrance changes */
 struct obj *
-pickobj(struct obj *obj)
+pickinv(struct obj *obj)
 {
     int oldcap = near_capacity();
     struct obj *ret = addinv(obj);
@@ -448,7 +453,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
         if (!touch_artifact(obj, &youmonst)) {
             obj_extract_self(obj);      /* remove it from the floor */
             dropy(obj); /* now put it back again :-) */
-            encumber_msg(oldcap);
+            oldcap = encumber_msg(oldcap);
             return obj;
         } else if (wasUpolyd && !Upolyd) {
             /* loose your grip if you revert your form */
@@ -456,7 +461,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
                 pline(msgc_substitute, drop_fmt, drop_arg);
             obj_extract_self(obj);
             dropy(obj);
-            encumber_msg(oldcap);
+            oldcap = encumber_msg(oldcap);
             return obj;
         }
         obj_extract_self(obj);
@@ -471,7 +476,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
         dropy(obj);
     } else {
         long oquan = obj->quan;
-        int prev_encumbr = near_capacity(); /* before addinv */
+        int prev_encumbr = near_capacity(); /* before addinv() */
 
         /* encumbrance only matters if it would now become worse than max(
            current_value, stressed ) */
@@ -2299,7 +2304,7 @@ mergable(struct obj *otmp, struct obj *obj)
         return FALSE;
 
     if ((obj->oclass == WEAPON_CLASS || obj->oclass == ARMOR_CLASS) &&
-        (obj->oerodeproof != otmp->oerodeproof || obj->rknown != otmp->rknown))
+        obj->oerodeproof != otmp->oerodeproof)
         return FALSE;
 
     if (obj->oclass == FOOD_CLASS &&
@@ -2344,10 +2349,7 @@ mergable(struct obj *otmp, struct obj *obj)
     if (obj->oartifact != otmp->oartifact)
         return FALSE;
 
-    if (obj->known == otmp->known || !objects[otmp->otyp].oc_uses_known) {
-        return (boolean) (objects[obj->otyp].oc_merge);
-    } else
-        return FALSE;
+    return (boolean) (objects[obj->otyp].oc_merge);
 }
 
 int

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2016-07-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -575,9 +575,9 @@ base64_decode(const char *in, char *out, int outlen)
     }
 
     i -= 4;
-    if ((in[i + 2] == '=' || !in[i + 2]) && (in[i + 3] == '=' || !in[i + 3]))
+    if (in[i + 3] == '=' || !in[i + 3])
         pos--;
-    if ((in[i + 1] == '=' || !in[i + 2]) && (in[i + 2] == '=' || !in[i + 3]))
+    if (in[i + 2] == '=' || !in[i + 2])
         pos--;
 
     if (pos < olen)
@@ -1155,7 +1155,7 @@ log_neutral_turnstate(void)
 
     /* A heuristic to work out whether to use a save diff or save backup
        line. */
-    if (program_state.binary_save.pos <
+    if ((program_state.binary_save.pos / 2) <
         (program_state.gamestate_location - program_state.save_backup_location)
         || !program_state.ok_to_diff)
 
@@ -1439,6 +1439,8 @@ log_record_command(const char *cmd, const struct nh_cmd_arg *arg)
         lprintf(" L%d", arg->limit);
     if (arg->argtype & CMD_ARG_ABILITY)
         lprintf(" A%d", arg->ability);
+    if (arg->argtype & CMD_ARG_KEY)
+        lprintf(" K%d", arg->key);
 
     lprintf("\x0a");
 
@@ -1823,6 +1825,11 @@ log_replay_command(struct nh_cmd_and_arg *cmd)
         case 'A':
             cmd->arg.argtype |= CMD_ARG_ABILITY;
             cmd->arg.ability = parse_decimal_number(&lp);
+            break;
+
+        case 'K':
+            cmd->arg.argtype |= CMD_ARG_KEY;
+            cmd->arg.key = parse_decimal_number(&lp);
             break;
 
         default:

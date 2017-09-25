@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -188,9 +188,8 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
         if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
             ((lava && waterwalk < 2) ||
              (pool && !Swimming && !waterwalk)) &&
-            !is_pool(level, youmonst.mx, youmonst.my) &&
-            !is_lava(level, youmonst.mx, youmonst.my)) {
-
+            !(lava ? is_lava(level, youmonst.mx, youmonst.my) :
+              is_pool(level, youmonst.mx, youmonst.my))) {
             if (cansee(x, y))
                 pline(msgc_cancelled,
                       is_pool(level, x, y) ? "You never learned to swim!" :
@@ -902,7 +901,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                 pline(msgc_cancelled, "Your body is too large to fit through.");
             return FALSE;
         }
-        if (invent && (inv_weight() + weight_cap() > 600)) {
+        if (invent && (inv_weight_total() > 600)) {
             if (mode == DO_MOVE)
                 pline(msgc_cancelled,
                       "You are carrying too much to get through.");
@@ -949,7 +948,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
     /* Can we be blocked by a boulder? */
     if (!throws_rocks(youmonst.data) &&
         !(verysmall(youmonst.data) && !u.usteed) &&
-        !((!invent || inv_weight() <= -850) && !u.usteed)) {
+        !((!invent || inv_weight_over_cap() <= -850) && !u.usteed)) {
         /* We assume we can move boulders when we're at a distance from them.
            When it comes to actually do the move, resolve_uim() may replace the
            move with a #pushboulder command. If it doesn't, the move fails
@@ -1037,8 +1036,6 @@ unexplored(int x, int y)
 
     if (!isok(x, y))
         return FALSE;
-    if (level->locations[x][y].mem_stepped)
-        return FALSE;
     if (level->locations[x][y].mem_bg == S_vcdoor ||
         level->locations[x][y].mem_bg == S_hcdoor) {
         if (level->locations[x][y].mem_door_l &&
@@ -1050,16 +1047,22 @@ unexplored(int x, int y)
         return FALSE;
     if (level->locations[x][y].mem_obj == BOULDER + 1)
         return FALSE;
+
+    /* TODO: Replace with generic object check for autopickup */
     if (level->locations[x][y].mem_obj && inside_shop(level, x, y))
         return FALSE;
+
+    if (level->locations[x][y].mem_stepped)
+        return FALSE;
+
+    /* TODO: Change this to check for object pile */
+    if (level->locations[x][y].mem_obj)
+        return TRUE;
 
     if (mem_bg == S_altar || mem_bg == S_throne || mem_bg == S_sink ||
         mem_bg == S_fountain || mem_bg == S_dnstair || mem_bg == S_upstair ||
         mem_bg == S_dnsstair || mem_bg == S_upsstair || mem_bg == S_dnladder ||
         mem_bg == S_upladder)
-        return TRUE;
-
-    if (level->locations[x][y].mem_obj)
         return TRUE;
 
     for (i = -1; i <= 1; i++)
@@ -1867,6 +1870,14 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                       mon_nam(mtmp), msgupcasefirst(mhe(mtmp)));
             }
         } else {
+            /* Possibly unwield launcher for ammo unless we're using forcefight. */
+            if (flags.autoswap && uquiver && is_ammo(uquiver) &&
+                ammo_and_launcher(uquiver, uwep) &&
+                (!uswapwep || !ammo_and_launcher(uquiver, uswapwep)) &&
+                (!uwep->cursed || !uwep->bknown) &&
+                (!uswapwep || !uswapwep->cursed || !uswapwep->bknown))
+                doswapweapon(arg);
+
             /* Try to perform the attack itself. We've already established that
                the player's willing to perform the attack. */
             enum attack_check_status attack_status =
@@ -2389,7 +2400,8 @@ spoteffects(boolean pick)
     }
 
 stillinwater:
-    if (!Levitation && !u.ustuck && !Flying) {
+    if (!Levitation && !u.ustuck && !Flying &&
+        (!u.usteed || !is_clinger(youmonst.data))) {
         /* limit recursive calls through teleds() */
         if (is_pool(level, youmonst.mx, youmonst.my) || is_lava(level, youmonst.mx, youmonst.my)) {
             if (u.usteed && !flying(u.usteed) &&
@@ -3181,15 +3193,17 @@ weight_cap(void)
         if (carrcap < 0)
             carrcap = 0;
     }
+
+    struct obj *obj;
+    for (obj = invent; obj; obj = obj->nobj)
+        if ((obj->owornmask & W_ARMOR) && (obj_properties(obj) & opm_carrying))
+            carrcap = (carrcap * 11) / 10;
+
     return (int)carrcap;
 }
 
-static int wc;  /* current weight_cap(); valid after call to inv_weight() */
-
-/* returns how far beyond the normal capacity the player is currently. */
-/* inv_weight() is negative if the player is below normal capacity. */
 int
-inv_weight(void)
+inv_weight_total(void)
 {
     struct obj *otmp = invent;
     int wt = 0;
@@ -3201,9 +3215,17 @@ inv_weight(void)
             wt += otmp->owt;
         otmp = otmp->nobj;
     }
-    wc = weight_cap();
-    return wt - wc;
+    return wt;
 }
+
+/* Returns how far beyond the normal capacity the player is currently. Negative
+   if the player is below normal capacity. */
+int
+inv_weight_over_cap(void)
+{
+    return inv_weight_total() - weight_cap();
+}
+
 
 /*
  * Returns 0 if below normal capacity, or the number of "capacity units"
@@ -3212,7 +3234,8 @@ inv_weight(void)
 int
 calc_capacity(int xtra_wt)
 {
-    int cap, wt = inv_weight() + xtra_wt;
+    int wc = weight_cap();
+    int cap, wt = inv_weight_total() + xtra_wt - wc;
 
     if (wt <= 0)
         return UNENCUMBERED;
@@ -3231,9 +3254,9 @@ near_capacity(void)
 int
 max_capacity(void)
 {
-    int wt = inv_weight();
+    int wt = inv_weight_over_cap();
 
-    return wt - (2 * wc);
+    return wt - (2 * weight_cap());
 }
 
 boolean

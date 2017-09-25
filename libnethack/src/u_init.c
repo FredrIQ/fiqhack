@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -127,7 +127,7 @@ static const struct trobj Priest[] = {
     {POT_WATER, 0, POTION_CLASS, 4, 1}, /* holy water */
     {CLOVE_OF_GARLIC, 0, FOOD_CLASS, 1, 0},
     {SPRIG_OF_WOLFSBANE, 0, FOOD_CLASS, 1, 0},
-    {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 2, UNDEF_BLESS},
+    {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 2, 1},
     {OIL_LAMP, 1, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
@@ -559,12 +559,12 @@ u_init(microseconds birthday)
 
     youmonst.m_lev = 0;       /* set up some of the initial attributes */
     u.uhp = u.uhpmax = newhp();
-    u.uenmax = urole.enadv.infix + urace.enadv.infix;
+    youmonst.pwmax = urole.enadv.infix + urace.enadv.infix;
     if (urole.enadv.inrnd > 0)
-        u.uenmax += 1 + rolern2(urole.enadv.inrnd);
+        youmonst.pwmax += 1 + rolern2(urole.enadv.inrnd);
     if (urace.enadv.inrnd > 0)
-        u.uenmax += 1 + racern2(urace.enadv.inrnd);
-    u.uen = u.uenmax;
+        youmonst.pwmax += 1 + racern2(urace.enadv.inrnd);
+    youmonst.pw = youmonst.pwmax;
     adjabil(0, 1);
     youmonst.m_lev = youmonst.m_levmax = 1;
 
@@ -807,7 +807,7 @@ u_init_inv_skills(void)
         }
 
     /* make sure you can carry all you have - especially for Tourists */
-    while (inv_weight() > 0) {
+    while (inv_weight_over_cap() > 0) {
         if (adjattrib(A_STR, 1, TRUE))
             continue;
         if (adjattrib(A_CON, 1, TRUE))
@@ -1042,10 +1042,8 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
             else if (!uswapwep)
                 setuswapwep(obj);
         }
-        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER) {
+        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER)
             gotspell[obj->otyp] = 1;
-            initialspell(obj);
-        }
 
         if (--trquan)
             continue;   /* make a similar object */

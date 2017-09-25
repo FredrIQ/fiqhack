@@ -28,6 +28,7 @@ struct spell {
     short sp_id;        /* spell id (== object.otyp) */
     xchar sp_lev;       /* power level */
     int sp_know;        /* knowlege of spell */
+    int sp_key;         /* key alias */
 };
 
 /* levels of memory destruction with a scroll of amnesia */
@@ -37,6 +38,7 @@ struct spell {
 # define decrnknow(spell) spl_book[spell].sp_know--
 # define spellid(spell)   spl_book[spell].sp_id
 # define spellknow(spell) spl_book[spell].sp_know
+# define spellkey(spell)  spl_book[spell].sp_key
 
 extern const char *const flash_types[];
 
