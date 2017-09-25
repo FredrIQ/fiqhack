@@ -3098,7 +3098,7 @@ enlighten_mon(struct monst *mon, int final, int show_source)
             eline(&menu, "%s haltingly aligned", monis);
         else if (u.ualign.record == AR_NOMINAL)
             eline(&menu, "%s nominally aligned", monis);
-        else if (u.ualign.record <= AR_TRANSGRESSE)
+        else if (u.ualign.record <= AR_TRANSGRESSED)
             eline(&menu, "%s transgressed", monhas);
         else if (u.ualign.record <= AR_SINNED)
             eline(&menu, "%s sinned", monhas);

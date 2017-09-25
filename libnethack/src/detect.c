@@ -98,7 +98,7 @@ find_obj_tile(int x, int y,
     }
 
     /* Regard the player as just another monster */
-    if (x == u.ux && y == u.uy)
+    if (x == youmonst.mx && y == youmonst.my)
         find_obj(invent, x, y, OBJDET_MON, &res,
                  set_dknown, oclass, material);
 
@@ -118,7 +118,7 @@ find_obj_tile(int x, int y,
         }
     }
 
-    if ((res & ~OBJDET_UNMAPPED) && x == u.ux && y == u.uy)
+    if ((res & ~OBJDET_UNMAPPED) && x == youmonst.mx && y == youmonst.my)
         res |= OBJDET_SELF;
 
     if (res)
@@ -259,10 +259,10 @@ gold_detect(struct monst *mon, struct obj *sobj, boolean *scr_known)
         if (!obj_res)
             obj_res = (OBJDET_MON | OBJDET_SELF);
 
-        gold.ox = u.ux;
-        gold.oy = u.uy;
+        gold.ox = youmonst.mx;
+        gold.oy = youmonst.my;
         map_object(&gold, 1, TRUE);
-        set_objpile(level, u.ux, u.uy);
+        set_objpile(level, youmonst.mx, youmonst.my);
     }
 
     *scr_known = !!obj_res;

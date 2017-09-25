@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-06-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -379,7 +379,7 @@ ghitm(struct monst *magr, struct monst *mdef, struct obj * gold)
         if (!udef)
             add_to_minv(mdef, gold, NULL);
         else
-            pickobj(gold);
+            pickinv(gold);
         return TRUE;
     }
 

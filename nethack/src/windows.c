@@ -584,7 +584,7 @@ draw_frame(void)
     int sidebar_delim = sidebar_delimiter_pos();
     int connections[LINES+1]; /* for joining up vertical frames */
     int i;
-    for (i = 0; i < LINES; i++)
+    for (i = 0; i <= LINES; i++)
         connections[i] = 0;
 
     if (framewidth) {

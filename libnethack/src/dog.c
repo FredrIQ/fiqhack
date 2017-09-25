@@ -259,7 +259,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
         if (!otmp->olev && otmp->timed)
             panic("Unhandled timed obj %s carried by %s, try again "
-                  "later", killer_xname(otmp), k_monnam(mtmp));
+                  "later", killer_xname(otmp, FALSE), k_monnam(mtmp));
     }
 
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)

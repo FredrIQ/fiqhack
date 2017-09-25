@@ -1484,21 +1484,21 @@ find_item(struct monst *mon, struct musable *m)
     /* Clone ourselves */
     if (flags.no_of_wizards == 1 &&
         mon_castable(mon, SPE_BOOK_OF_THE_DEAD, FALSE)) {
-        m->use = MUSE_SPE;
+        m->use = MUSE_CAST;
         m->spell = SPE_BOOK_OF_THE_DEAD; /* sentinel for double trouble */
         return TRUE;
     }
 
     if (!very_fast(mon) && mon_castable(mon, SPE_HASTE_SELF, FALSE)) {
-        m->use = MUSE_SPE;
+        m->use = MUSE_CAST;
         m->spell = SPE_HASTE_SELF;
         return TRUE;
     }
 
-    if (!m_mspellprot(mon) &&
+    if (!spellprot(mon) &&
         mon_castable(mon, SPE_PROTECTION, FALSE) &&
         !spell_maintained(mon, SPE_PROTECTION)) {
-        m->use = MUSE_SPE;
+        m->use = MUSE_CAST;
         m->spell = SPE_PROTECTION;
         return TRUE;
     }

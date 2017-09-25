@@ -2396,7 +2396,7 @@ break_wand(struct monst *mtmp, struct obj *otmp)
         pay_for_damage(shop_damage == 1 ? "dig into" : "destroy", FALSE);
 
     if (otyp == WAN_LIGHT)
-        litroom(mtmp, TRUE, otmp);     /* only needs to be done once */
+        litroom(mtmp, TRUE, otmp, FALSE);     /* only needs to be done once */
     m_useup(mtmp, otmp);
 }
 
@@ -2476,15 +2476,15 @@ static boolean
 zap_steed(struct obj *obj)
 {
     int steedhit = FALSE;
-    int ox = u.ux;
-    int oy = u.uy;
+    int ox = youmonst.mx;
+    int oy = youmonst.my;
 
     switch (obj->otyp) {
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         /* you go together */
         tele();
-        if (Teleport_control || (ox != u.ux && oy != u.uy))
+        if (Teleport_control || (ox != youmonst.mx && oy != youmonst.my))
             makeknown(obj->otyp);
         steedhit = TRUE;
         break;

@@ -195,7 +195,7 @@ check_or_do_ability(struct monst *mon, enum monabil typ,
             return -1;
         }
 
-        if (you ? (u.uen < abil->pw_cost) : (mon->mspec_used)) {
+        if (mon->pw < abil->pw_cost) {
             if (you && msg)
                 pline(msgc_cancelled,
                       "You lack the energy to %s.", abil->description);

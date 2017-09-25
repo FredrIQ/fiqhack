@@ -848,6 +848,7 @@ run_maintained_spell(struct monst *mon, int spell)
 {
     /* Find the skill for the given spell type category */
     int skill = prof(mon, spell_skilltype(spell));
+    struct obj *pseudo;
 
     int leviprop = LEVITATION;
     if (skill == P_EXPERT)
@@ -1096,7 +1097,8 @@ docastalias(const struct nh_cmd_arg *arg)
         }
     }
 
-    if (!dospellmenu("Choose which spell to alias", SPELLMENU_QUIVER, &splnum))
+    if (!dospellmenu(&youmonst, "Choose which spell to alias",
+                     SPELLMENU_QUIVER, &splnum))
         return 0;
     spl_book[splnum].sp_key = arg->key;
 
@@ -2082,7 +2084,8 @@ void
 quiver_spell(void)
 {
     int splnum;
-    if (!dospellmenu("Choose which spell to ready", SPELLMENU_QUIVER, &splnum))
+    if (!dospellmenu(&youmonst, "Choose which spell to ready",
+                     SPELLMENU_QUIVER, &splnum))
         return;
 
     u.spellquiver = spellid(splnum);
@@ -2121,7 +2124,7 @@ dospellmenu(const struct monst *mon,
                 spellknow(i) != PERMA)
                 percent = msgprintf("%-d%%", (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
 
-            const char *buf = SPELL_IS_FROM_SPELLBOOK(i) ?
+            buf = SPELL_IS_FROM_SPELLBOOK(i) ?
                 msgprintf("%s\t%-d%s%s%s\t%s\t%-d%%\t%s", spellname(i), spellev(i),
                           spellknow(i) ? " " : "*",
                           !spellkey(i) ? " " : "#:",

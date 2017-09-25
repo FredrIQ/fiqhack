@@ -225,14 +225,16 @@ do_tname(const struct nh_cmd_arg *arg)
 {
     boolean flooritem = FALSE;
     struct obj *here;
-    if (can_reach_floor() && !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy) &&
-        level->objects[u.ux][u.uy])
+    if (can_reach_floor() && !is_pool(level, youmonst.mx, youmonst.my) &&
+        !is_lava(level, youmonst.mx, youmonst.my) &&
+        level->objects[youmonst.mx][youmonst.my])
         flooritem = TRUE;
 
     struct obj *obj = getargobj(arg, callable + (flooritem ? 0 : 2), "call");
     if (obj == &zeroobj) {
         struct object_pick *floorobj_list;
-        int n = query_objlist("Call what?", level->objects[u.ux][u.uy],
+        int n = query_objlist("Call what?",
+                              level->objects[youmonst.mx][youmonst.my],
                               BY_NEXTHERE | INVORDER_SORT | AUTOSELECT_SINGLE,
                               &floorobj_list, PICK_ONE, is_callable);
         if (n) {

@@ -912,6 +912,19 @@ dorecover(struct memfile *mf)
         youmonst.pwmax = u.unused_uenmax;
     }
 
+    if (flags.save_revision < 7) {
+        youmonst.mx = u.unused_ux;
+        youmonst.my = u.unused_uy;
+        youmonst.mundetected = u.unused_uundetected;
+        youmonst.confhits = u.unused_umconf;
+        if (u.unused_ucreamed)
+            set_property(&youmonst, CREAMED,
+                         u.unused_ucreamed, TRUE);
+        youmonst.m_lev = u.unused_ulevel;
+        youmonst.m_levmax = u.unused_ulevelmax;
+        youmonst.exp = u.unused_uexp;
+    }
+
     /* restore dungeon */
     restore_dungeon(mf);
     restlevchn(mf);

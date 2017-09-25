@@ -1883,9 +1883,10 @@ dodip(const struct nh_cmd_arg *arg)
     if (!obj)
         return 0;
 
-    here = level->locations[u.ux][u.uy].typ;
+    here = level->locations[youmonst.mx][youmonst.my].typ;
     /* Is there a fountain or pool to dip into here? */
-    if ((IS_FOUNTAIN(here) || is_pool(level, u.ux, u.uy)) &&
+    if ((IS_FOUNTAIN(here) ||
+         is_pool(level, youmonst.mx, youmonst.my)) &&
         !Levitation &&
         !(u.usteed && !swims(u.usteed) &&
           P_SKILL(P_RIDING) < P_BASIC &&
