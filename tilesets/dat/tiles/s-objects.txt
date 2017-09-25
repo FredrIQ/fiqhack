@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2015-04-02
+! Last modified by Fredrik Ljungdahl, 2017-09-25
 ! NetHack may be freely redistributed.  See license for details.
 A = (0, 0, 0)
 B = (0, 182, 255)
@@ -7712,7 +7712,7 @@ $ = (71, 108, 108)
   MMMMMMMEFDAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 405 (light brown spellbook / restore ability)
+# tile 405 (tartan spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -7750,7 +7750,7 @@ $ = (71, 108, 108)
   MMMMMMMPPPANMMMM
   MMMMMMMNMMMMMMMM
 }
-# tile 407 (cloth spellbook / light)
+# tile 407 (spotted spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8016,7 +8016,7 @@ $ = (71, 108, 108)
   MMMMMMMJJJAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 421 (wide spellbook / protection)
+# tile 421 (psychadelic spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8035,7 +8035,7 @@ $ = (71, 108, 108)
   MMMMMMMJJJAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 422 (big spellbook / resist poison)
+# tile 422 (canvas spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMKDMMMMMMMMM
@@ -8092,7 +8092,7 @@ $ = (71, 108, 108)
   MMMMMMMIIIAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 425 (spotted spellbook / endure heat)
+# tile 425 (wide spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8168,7 +8168,7 @@ $ = (71, 108, 108)
   MMMMMMMJCJAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 429 (torn spellbook / jumping)
+# tile 429 (colorful spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8339,7 +8339,7 @@ $ = (71, 108, 108)
   MMMMMMMIIIAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 438 (canvas spellbook / flame sphere)
+# tile 438 (spiral-bound spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8358,7 +8358,7 @@ $ = (71, 108, 108)
   MMMMMMMPPPAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 439 (hardcover spellbook / freeze sphere)
+# tile 439 (left-handed spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8396,7 +8396,7 @@ $ = (71, 108, 108)
   MMMMMMMFFFAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 441 (parchment spellbook / dig)
+# tile 441 (stapled spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8567,7 +8567,7 @@ $ = (71, 108, 108)
   MMMMMMMJJJAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 450 (colorful spellbook / acid stream)
+# tile 450 (cloth spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8586,7 +8586,7 @@ $ = (71, 108, 108)
   MMMMMMMJJJAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 451 (tartan spellbook)
+# tile 451 (big spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMPPPPAMMMMMM
@@ -8624,7 +8624,7 @@ $ = (71, 108, 108)
   MMMMMMMDCDAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 453 (psychedelic spellbook)
+# tile 453 (torn spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8643,7 +8643,7 @@ $ = (71, 108, 108)
   MMMMMMMPPPAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 454 (spiral-bound spellbook)
+# tile 454 (light brown spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8662,7 +8662,7 @@ $ = (71, 108, 108)
   MMMMMMMJJJAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 455 (left-handed spellbook)
+# tile 455 (hardcover spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8681,7 +8681,7 @@ $ = (71, 108, 108)
   MMMMMMMJJJAAMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 456 (stapled spellbook)
+# tile 456 (parchment spellbook)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
