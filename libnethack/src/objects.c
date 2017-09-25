@@ -902,11 +902,11 @@ const struct objclass const_objects[] = {
     SPELL("charging", "cyan", P_ENCHANTMENT_SPELL, 7, 10, 7, 1,
           NODIR, CLR_CYAN, 'g'),
     SPELL("astral eyesight", "black", P_DIVINATION_SPELL, 10, 4, 7, 1,
-          NODIR, CLR_BROWN, 'y'),
+          NODIR, CLR_BLACK, 'y'),
     SPELL("summon nasty", "striped", P_CLERIC_SPELL, 3, 12, 7, 1,
-          NODIR, CLR_BROWN, 'N'),
+          NODIR, CLR_RED, 'N'),
     SPELL("phase", "maroon", P_ESCAPE_SPELL, 10, 6, 7, 1,
-          NODIR, CLR_YELLOW, 'q'),
+          NODIR, CLR_RED, 'q'),
 /* blank spellbook must come last because it retains its description */
     SPELL("blank paper", "plain", P_NONE, 18, 0, 0, 0, 0, HI_PAPER, 0),
 /* a special, one of a kind, spellbook */
