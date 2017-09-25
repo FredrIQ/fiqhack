@@ -635,7 +635,7 @@ draw_frame(void)
         }
     }
 
-    connections[sidebar_delim] |= 2;
+    //connections[sidebar_delim] |= 2;
 
     int rtee;
     for (i = 1; i <= LINES; i++) {

@@ -165,9 +165,9 @@ draw_sidebar(void)
         draw_objlist(objwin, &flooritems, NULL, PICK_NONE);
     }
 
-    draw_frame();
+    //draw_frame();
     wnoutrefresh(sidebar);
-    wnoutrefresh(basewin);
+    //wnoutrefresh(basewin);
 }
 
 void
