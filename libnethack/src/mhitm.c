@@ -1033,7 +1033,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                   on_fire(mdef->data, mattk));
 
         burn_away_slime(mdef);
-        if (m_mlev(magr) > rn2(20)) {
+        if (magr->m_lev > rn2(20)) {
             dmg += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
             dmg += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
             /* only potions damage resistant players in destroy_item */
@@ -1077,7 +1077,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             pline(combat_msgc(magr, mdef, cr_hit), "%s covered in frost!",
                   M_verbs(mdef, "are"));
 
-        if (m_mlev(magr) > rn2(20))
+        if (magr->m_lev > rn2(20))
             dmg += destroy_mitem(mdef, POTION_CLASS, AD_COLD);
         break;
     case AD_ELEC:
@@ -1098,7 +1098,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             pline(combat_msgc(magr, mdef, cr_hit), "%s zapped!",
                   M_verbs(mdef, "are"));
 
-        if (m_mlev(magr) > rn2(20))
+        if (magr->m_lev > rn2(20))
             dmg += destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
         break;
     case AD_SLEE:

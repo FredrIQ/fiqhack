@@ -3571,7 +3571,53 @@ salamander
 	are smart enough to use weapons, not that they really need them when
 	their mere touch is enough to set their enemies on fire.
 pray
-	Prayer is good. Prayer is life. A prayer a day keeps death away.
+	Praying to your god can help saving you from some troubles, such as
+	being badly injurved or nearly starving. Be careful, however, for
+	gods do not take well to repeated begging.  People who are
+	sufficiently pious and have performed many sacrifices may even
+	receive favours by praying.
+turn undead
+	Turning undead involves reciting special prayers that take time,
+	which can help repel, or in some cases even destroy, undead.
+	During the time, the person remains helpless. This, however,
+	decreases with experience.
+teleport
+	You may invoke an innate teleportation spell, causing you to
+	teleport elsewhere. With the right tools, you can even control
+	your destination.
+
+	Teleporting will cause major exhaustion, causing you to have to
+	wait to reuse the ability.
+jump
+	Causes you to jump several steps in one go. You cannot jump
+	over other monsters.  This ability will exhaust you slightly.
+spit venom
+	Causes you to spit venom produced innately, with type depeding
+	on your physical form.
+remove iron ball
+	Allows you to unlock the chains of iron balls.
+gaze
+	Lets you perform a special gaze attack towards a monster of
+	your choice.
+call for help
+	Lets you call on your primal brethren for reinforcements.
+create web
+	Causes you to spin a web on a square of your choice, for trapping
+	foes in. Webs can also help you navigate in certain other trapped
+	terrain.
+hide
+	Lets you hide on the ceiling, under the floor or under an item,
+	depending on your current form.
+mind blast
+	Lets you release psychic static, assaulting monsters remotely
+	with a brain. Being able to see the target may help. Foes who
+	are attuned to telepathic sensing are generally more vulnerable.
+use horn
+	Lets you use your magical horn to cure various ailments.
+shriek
+	Causes you to shriek, attracting the attention of monsters.
+breathe
+	Lets you breathe elemental damage, depending on your form.
 # Do not leave blank rows below, it will be interpreted as part of
 # the last data.base entry.
 # TODO: player monsters (archeologist, barbarian, etc.)
