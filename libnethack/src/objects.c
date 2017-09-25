@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -901,11 +901,11 @@ const struct objclass const_objects[] = {
           IMMEDIATE, HI_PAPER, 'S'),
     SPELL("charging", "cyan", P_ENCHANTMENT_SPELL, 7, 10, 7, 1,
           NODIR, CLR_CYAN, 'g'),
-    SPELL("astral eyesight", "canvas", P_DIVINATION_SPELL, 10, 4, 7, 1,
+    SPELL("astral eyesight", "black", P_DIVINATION_SPELL, 10, 4, 7, 1,
           NODIR, CLR_BROWN, 'y'),
-    SPELL("summon nasty", "hardcover", P_CLERIC_SPELL, 3, 12, 7, 1,
+    SPELL("summon nasty", "striped", P_CLERIC_SPELL, 3, 12, 7, 1,
           NODIR, CLR_BROWN, 'N'),
-    SPELL("phase", "ochre", P_ESCAPE_SPELL, 10, 6, 7, 1,
+    SPELL("phase", "maroon", P_ESCAPE_SPELL, 10, 6, 7, 1,
           NODIR, CLR_YELLOW, 'q'),
 /* blank spellbook must come last because it retains its description */
     SPELL("blank paper", "plain", P_NONE, 18, 0, 0, 0, 0, HI_PAPER, 0),
