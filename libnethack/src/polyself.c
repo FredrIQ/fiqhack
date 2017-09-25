@@ -860,7 +860,7 @@ select_ability(struct monst *mon, enum monabil *typ)
 static void
 describe_ability(enum monabil typ)
 {
-    return;
+    checkfile(abil_data[typ].description, NULL, FALSE, TRUE);
 }
 
 /* The #monster command. Supported as a separate command for keystroke

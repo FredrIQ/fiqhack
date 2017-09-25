@@ -1,5 +1,5 @@
 # Emacs, the format of this file is: -*- mode:text;fill-column:86;tab-width:8;indent-tabs-mode:t -*-
-# Last modified by Alex Smith, 2014-05-05
+# Last modified by Fredrik Ljungdahl, 2017-09-25
 #	Copyright (c) 2010 by Alex Smith
 #	NetHack may be freely redistributed.
 #       See license for details.
@@ -3570,10 +3570,12 @@ salamander
 	the great subterranean salamanders found in the depths of the underworld
 	are smart enough to use weapons, not that they really need them when
 	their mere touch is enough to set their enemies on fire.
-
+pray
+	Prayer is good. Prayer is life. A prayer a day keeps death away.
+# Do not leave blank rows below, it will be interpreted as part of
+# the last data.base entry.
 # TODO: player monsters (archeologist, barbarian, etc.)
 # TODO: quest-specific monsters (leaders, guardians, nemeses).
-
 # Spellchecker words
 # LocalWords:  orcish shuriken yumi dwarvish athame crysknife swordsmithing de
 # LocalWords:  saber swordsmiths tsurugi runesword ranseur spetum glaive voulge

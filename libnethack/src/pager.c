@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,7 +19,6 @@ static void describe_bg(int x, int y, int bg, char *buf);
 static int describe_object(int x, int y, int votyp, char *buf, int known_embed,
                            boolean *feature_described);
 static void describe_mon(int x, int y, int monnum, char *buf);
-static void checkfile(const char *inp, struct permonst *, boolean, boolean);
 static int do_look(boolean, const struct nh_cmd_arg *);
 
 /* The explanations below are also used when the user gives a string
@@ -478,7 +477,7 @@ nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
  * whole name (user_typed_name == TRUE), or we've found a possible match
  * with a character/glyph.
  */
-static void
+void
 checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
           boolean without_asking)
 {

@@ -1380,6 +1380,7 @@ extern boolean set_option(const char *, union nh_optvalue,
 
 /* ### pager.c ### */
 
+extern void checkfile(const char *inp, struct permonst *, boolean, boolean);
 extern boolean append_str_comma(char *, char **, const char *);
 extern int dowhatis(const struct nh_cmd_arg *);
 extern int doquickwhatis(const struct nh_cmd_arg *);
