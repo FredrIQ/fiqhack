@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -360,10 +360,7 @@ read_engr_at(int x, int y)
                farmove, autoexplore, and travel. This can get quite spammy,
                though.", but maybe doesn't match reality any more; check to see
                if this code still makes sense */
-            if (flags.occupation == occ_move ||
-                flags.occupation == occ_travel ||
-                flags.occupation == occ_autoexplore)
-                action_interrupted();
+            interrupt_occupation(ocm_farmove);
         }
     }
 }

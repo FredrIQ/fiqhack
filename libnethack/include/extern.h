@@ -68,6 +68,7 @@ struct you;
 extern void startup_common(boolean);
 extern void action_incomplete(const char *gerund, enum occupation occupation);
 extern void action_interrupted(void);
+extern void interrupt_occupation(enum occupation_mask);
 extern void action_completed(void);
 extern void one_occupation_turn(int (*)(void), const char *, enum occupation);
 extern void helpless(int turns, enum helpless_reason reason, const char *cause,

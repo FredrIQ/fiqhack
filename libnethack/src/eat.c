@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2187,8 +2187,8 @@ newuhs(boolean incr)
                 pline(msgc, (!incr) ? "You don't feel so weak now." :
                       (u.uhunger < 145) ? "You feel hungry." :
                       "You are beginning to feel hungry.");
-            if (incr && flags.occupation != occ_food)
-                action_interrupted();
+            if (incr)
+                interrupt_occupation(~ocm_edibility);
             break;
         case WEAK:
             if (Hallucination)
@@ -2205,8 +2205,8 @@ newuhs(boolean incr)
                 pline(incr ? msgc_fatal : msgc_statusheal,
                       (!incr) ? "You feel less faint." : (u.uhunger < 45) ?
                       "You feel weak." : "You are beginning to feel weak.");
-            if (incr && flags.occupation != occ_food)
-                action_interrupted();
+            if (incr)
+                interrupt_occupation(~ocm_edibility);
             break;
         }
         if (newhs >= WEAK && u.uhs < WEAK)

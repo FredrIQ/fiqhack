@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -222,6 +222,31 @@ enum occupation {
     occ_wait,        /* waiting */
     occ_search,      /* searching */
     occ_prepare,     /* e.g. removing a shield to be able to use a mattock */
+    occ_first = occ_book,
+    occ_last = occ_prepare,
+};
+
+#define OCM(reason) ocm_##reason = 1 << occ_##reason
+enum FLAG_ENUM occupation_mask {
+    ocm_none = 0,
+    OCM(book),
+    OCM(food),
+    OCM(tin),
+    ocm_edibility = ocm_food | ocm_tin,
+    OCM(trap),
+    OCM(dig),
+    OCM(lock),
+    OCM(equip),
+    OCM(move),
+    OCM(travel),
+    OCM(autoexplore),
+    ocm_farmove = ocm_move | ocm_travel | ocm_autoexplore,
+    OCM(wipe),
+    OCM(wait),
+    OCM(search),
+    ocm_rest = ocm_wait | ocm_search,
+    OCM(prepare),
+    ocm_all = (1 << (occ_last + 1)) - 1,
 };
 
 /* Occupations generally track objects, but some track locations, or both. */
