@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -652,7 +652,7 @@ restore_you(struct memfile *mf, struct you *y)
     mread(mf, y->ever_extrinsic, sizeof (y->ever_extrinsic));
     mread(mf, y->ever_intrinsic, sizeof (y->ever_intrinsic));
     mread(mf, y->ever_temporary, sizeof (y->ever_temporary));
-    mread(mf, y->uwhybusy, sizeof (y->uwhybusy));
+    mread(mf, y->unused_uwhybusy, sizeof (y->unused_uwhybusy));
     mread(mf, y->urooms, sizeof (y->urooms));
     mread(mf, y->urooms0, sizeof (y->urooms0));
     mread(mf, y->uentered, sizeof (y->uentered));
@@ -905,6 +905,7 @@ dorecover(struct memfile *mf)
 
     mtmp = restore_mon(mf, NULL, NULL);
     youmonst = *mtmp;
+    mx_copy(&youmonst, mtmp);
     dealloc_monst(mtmp);
 
     if (flags.save_revision < 5) {
@@ -923,6 +924,8 @@ dorecover(struct memfile *mf)
         youmonst.m_lev = u.unused_ulevel;
         youmonst.m_levmax = u.unused_ulevelmax;
         youmonst.exp = u.unused_uexp;
+        if (u.unused_uwhybusy)
+            set_whybusy(&youmonst, u.unused_uwhybusy);
     }
 
     /* restore dungeon */

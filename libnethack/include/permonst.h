@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-07-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -34,12 +34,13 @@ enum mon_extypes {
 };
 
 /* new mxflags. EMIN is no more. */
-#define MX_NONE 0x00
-#define MX_EDOG 0x01
-#define MX_EPRI 0x02
-#define MX_ESHK 0x04
-#define MX_EGD  0x08
-#define MX_NAME 0x10
+#define MX_NONE    0x00
+#define MX_EDOG    0x01
+#define MX_EPRI    0x02
+#define MX_ESHK    0x04
+#define MX_EGD     0x08
+#define MX_NAME    0x10
+#define MX_WHYBUSY 0x20
 
 /* This structure covers all attack forms.
  * aatyp is the gross attack type (eg. claw, bite, breath, ...)

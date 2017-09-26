@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -523,7 +523,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 72 */
     mwrite(mf, y->ever_intrinsic, (sizeof y->ever_intrinsic)); /* savemap: 72 */
     mwrite(mf, y->ever_temporary, (sizeof y->ever_temporary)); /* savemap: 72 */
-    mwrite(mf, y->uwhybusy, (sizeof y->uwhybusy));           /* savemap: 2048 */
+    mwrite(mf, y->unused_uwhybusy, (sizeof y->unused_uwhybusy)); /* savemap: 2048 */
     mwrite(mf, y->urooms, sizeof (y->urooms));                 /* savemap: 40 */
     mwrite(mf, y->urooms0, sizeof (y->urooms0));               /* savemap: 40 */
     mwrite(mf, y->uentered, sizeof (y->uentered));             /* savemap: 40 */

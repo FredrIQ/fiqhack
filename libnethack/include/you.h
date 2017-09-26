@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,6 +51,7 @@ struct you {
     int unused_uexp;
     int unused_oldcap;         /* carry cap on previous turn */
     int unused_uen, unused_uenmax; /* magical energy (Pw) */
+    char unused_uwhybusy[BUFSZ]; /* occupation wording (You stop <whybusy>) */
 
     /* USED */
     xchar tx, ty;       /* destination of travel */
@@ -79,12 +80,6 @@ struct you {
     struct obj *utracked[tos_last_slot + 1];      /* occupation objects */
     int uoccupation_progress[tos_last_slot + 1];  /* time spent on occupation */
     coord utracked_location[tl_last_slot + 1];    /* occupation locations */
-
-    /* uwhybusy is the reason for an occupation occuring (e.g.  "You stop
-       uwhybusy.") This is undefined when flags.occupation is zero.
-    
-       TODO: This needs a better memory allocation scheme. */
-    char uwhybusy[BUFSZ];
 
 # define SICK_VOMITABLE 0x01
 # define SICK_NONVOMITABLE 0x02

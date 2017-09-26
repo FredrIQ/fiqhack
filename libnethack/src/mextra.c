@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Fredrik Ljungdahl, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -105,6 +105,33 @@ GEN_EXTYP(monst, obj, o, dealloc_monst) /* dealloc_monst frees mextra */
 #undef GEN_EXBASE
 #undef GEN_EXTYP
 
+char *
+mx_whybusy(const struct monst *mon)
+{
+    return (mon->mextra ? mon->mextra->whybusy : NULL);
+}
+
+void
+set_whybusy(struct monst *mon, const char *str) {
+    if (mx_whybusy(mon)) {
+        free(mon->mextra->whybusy);
+        mon->mextra->whybusy = NULL;
+    }
+    if (!str || !*str) {
+        mx_possiblyfree(mon);
+        return;
+    }
+    mx_new(mon);
+    int lth;
+    char buf[BUFSZ] = {0};
+    lth = (strlen(str) + 1);
+    strncpy(buf, str, BUFSZ - 1);
+    if (lth > BUFSZ)
+        lth = BUFSZ;
+    mon->mextra->whybusy = malloc((unsigned) lth);
+    strncpy(mon->mextra->whybusy, buf, lth);
+}
+
 void
 mx_copy(struct monst *mon, const struct monst *mtmp)
 {
@@ -117,6 +144,8 @@ mx_copy(struct monst *mon, const struct monst *mtmp)
         mon->mextra = NULL;
 
     christen_monst(mon, mx_name(mtmp));
+    set_whybusy(mon, mx_whybusy(mtmp));
+
     if (mx_edog(mtmp)) {
         mx_edog_new(mon);
         memcpy(mx_edog(mon), mx_edog(mtmp), sizeof (struct edog));
@@ -142,6 +171,7 @@ mx_free(struct monst *mon)
         return;
 
     christen_monst(mon, NULL);
+    set_whybusy(mon, NULL);
     mx_edog_free(mon);
     mx_epri_free(mon);
     mx_eshk_free(mon);
@@ -155,7 +185,7 @@ mx_possiblyfree(struct monst *mon)
 {
     struct mextra *mx = mon->mextra;
     if (!mx || mx->edog || mx->epri || mx->eshk || mx->egd ||
-        mx->name)
+        mx->name || mx->whybusy)
         return;
 
     free(mon->mextra);
@@ -208,6 +238,7 @@ mxcontent(const struct monst *mon)
     if (!mx)
         return 0;
     return
+        (mx->whybusy ? MX_WHYBUSY : 0) |
         (mx->name ? MX_NAME : 0) |
         (mx->edog ? MX_EDOG : 0) |
         (mx->epri ? MX_EPRI : 0) |
@@ -266,6 +297,15 @@ restore_mextra(struct memfile *mf, struct monst *mon)
         if (namelth) {
             mread(mf, namebuf, namelth);
             christen_monst(mon, namebuf);
+        }
+    }
+    if (extyp & MX_WHYBUSY) {
+        int namelth = mread8(mf);
+        char namebuf[namelth];
+
+        if (namelth) {
+            mread(mf, namebuf, namelth);
+            set_whybusy(mon, namebuf);
         }
     }
     if (extyp & MX_EDOG) {
@@ -380,6 +420,17 @@ save_mextra(struct memfile *mf, const struct monst *mon)
 
         mwrite8(mf, namelth);
         mwrite(mf, mx->name, namelth);
+    }
+
+    if (extyp & MX_WHYBUSY) {
+        int namelth = strlen(mx->whybusy) + 1;
+        if (namelth > BUFSZ) {
+            panic("save_mextra: monster name too long");
+            return;
+        }
+
+        mwrite8(mf, namelth);
+        mwrite(mf, mx->whybusy, namelth);
     }
 
     if (extyp & MX_EDOG) {
