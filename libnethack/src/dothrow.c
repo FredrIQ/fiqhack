@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1452,6 +1452,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
     int disttmp;        /* distance modifier */
     int otyp = obj->otyp;
     boolean guaranteed_hit = (Engulfed && mon == u.ustuck);
+    int dieroll = rnd(20);
 
     /* Differences from melee weapons: Dex still gives a bonus, but strength
        does not. Polymorphed players lacking attacks may still throw. There's a 
@@ -1606,8 +1607,9 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
             tmp += weapon_hit_bonus(obj);
         }
 
-        if (tmp >= rnd(20)) {
-            if (hmon(mon, obj, 1)) {    /* mon still alive */
+        if (tmp >= dieroll) {
+            if (hmon(mon, obj, 1, dieroll)) {
+                /* mon still alive */
                 cutworm(mon, bhitpos.x, bhitpos.y, obj);
             }
             exercise(A_DEX, TRUE);
@@ -1658,11 +1660,11 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
 
     } else if (otyp == HEAVY_IRON_BALL) {
         exercise(A_STR, TRUE);
-        if (tmp >= rnd(20)) {
+        if (tmp >= dieroll) {
             int was_swallowed = guaranteed_hit;
 
             exercise(A_DEX, TRUE);
-            if (!hmon(mon, obj, 1)) {   /* mon killed */
+            if (!hmon(mon, obj, 1, dieroll)) {   /* mon killed */
                 if (was_swallowed && !Engulfed && obj == uball)
                     return 1;   /* already did placebc() */
             }
@@ -1672,9 +1674,9 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
 
     } else if (otyp == BOULDER) {
         exercise(A_STR, TRUE);
-        if (tmp >= rnd(20)) {
+        if (tmp >= dieroll) {
             exercise(A_DEX, TRUE);
-            hmon(mon, obj, 1);
+            hmon(mon, obj, 1, dieroll);
         } else {
             tmiss(obj, mon);
         }
@@ -1682,7 +1684,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
     } else if ((otyp == EGG || otyp == CREAM_PIE || otyp == BLINDING_VENOM ||
                 otyp == ACID_VENOM)) {
         if ((guaranteed_hit || ACURR(A_DEX) > rnd(25))) {
-            hmon(mon, obj, 1);
+            hmon(mon, obj, 1, dieroll);
             return 1;   /* hmon used it up */
         }
         tmiss(obj, mon);

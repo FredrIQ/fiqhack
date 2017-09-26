@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -586,11 +586,12 @@ drag:
             pline(msgc_interrupted, "You are jerked back by the iron ball!");
             if ((victim = m_at(level, uchain->ox, uchain->oy)) != 0) {
                 int tmp;
+                int dieroll = rnd(20);
 
                 tmp = -2 + Luck + find_mac(victim);
                 tmp += omon_adj(victim, uball, TRUE);
-                if (tmp >= rnd(20))
-                    hmon(victim, uball, 1);
+                if (tmp >= dieroll)
+                    hmon(victim, uball, 1, dieroll);
                 else
                     miss(xname(uball), victim, &youmonst);
 
