@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -343,6 +343,11 @@ loadfruitchn(struct memfile *mf, boolean ghostly)
     } else if (ghostly) {
         /* really old bones */
         flags.save_revision = 0;
+    }
+    if (flags.save_revision > SAVE_REVISION) {
+        error_reading_save("Bones file save revision is later than "
+                           "the game version.");
+        return NULL;
     }
 
     if (!count)
@@ -842,6 +847,11 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->hide_implied = mread8(mf);
 
     f->save_revision = mread32(mf);
+    if (flags.save_revision > SAVE_REVISION) {
+        error_reading_save("Save file revision is later than "
+                           "the game version.");
+        return;
+    }
     f->servermail = mread8(mf);
     f->autoswap = mread8(mf);
 
