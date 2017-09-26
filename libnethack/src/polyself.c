@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -222,7 +222,7 @@ check_or_do_ability(struct monst *mon, enum monabil typ,
             return 0;
         }
 
-        if (checking)
+        if (can_use || checking)
             return 1;
         if (you && flags.prayconfirm)
             if (yn("Are you sure you want to pray?") == 'n')
