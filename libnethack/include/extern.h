@@ -66,10 +66,6 @@ struct you;
 /* ### allmain.c ### */
 
 extern void startup_common(boolean);
-extern void action_incomplete(const char *gerund, enum occupation occupation);
-extern void action_interrupted(void);
-extern void action_completed(void);
-extern void one_occupation_turn(int (*)(void), const char *, enum occupation);
 extern void helpless(int turns, enum helpless_reason reason, const char *cause,
                      const char *endmsg);
 extern void cancel_helplessness(enum helpless_mask mask, const char *msg);
@@ -1374,6 +1370,10 @@ extern const char *mimic_obj_name(const struct monst *mimic);
 
 extern char *whybusy(const struct monst *);
 extern void set_whybusy(struct monst *, const char *);
+extern void action_incomplete(const char *gerund, enum occupation occupation);
+extern void action_interrupted(void);
+extern void action_completed(void);
+extern void one_occupation_turn(int (*)(void), const char *, enum occupation);
 
 /* ### options.c ### */
 

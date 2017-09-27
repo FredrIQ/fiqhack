@@ -1322,67 +1322,6 @@ canhear(void)
 }
 
 
-/* Called from command implementations to indicate that they're multi-turn
-   commands; all but the last turn should call this */
-void
-action_incomplete(const char *reason, enum occupation ocode)
-{
-    set_whybusy(&youmonst, reason);
-    flags.incomplete = TRUE;
-    flags.occupation = ocode;
-}
-
-/* Called when an action is logically complete: it completes it and interrupts
-   it with no message. For single-action commands, this effectively means "I
-   know the action only takes one turn, but even if you gave a repeat count it
-   shouldn't be repeated." For multi-action commands, this means "I thought this
-   action might take more than one turn, but it didn't." */
-void
-action_completed(void)
-{
-    set_whybusy(&youmonst, NULL);
-    flags.incomplete = FALSE;
-    flags.interrupted = TRUE;
-    flags.occupation = occ_none;
-}
-
-/*
- * Called from just about anywhere to abort an interruptible multi-turn
- * command. This happens even if the server doesn't consider a multi-turn
- * command to be in progress; the current API allows the client to substitute
- * its own definition if it wants to.
- *
- * The general rule about which action_ function to use is:
- * - action_interrupted: if something surprises the character that is unrelated
- *   to the command they input
- * - action_completed: if the interruption is due to the action that the
- *   character was attempting, either because of invalid input, or something
- *   that interrupts that command in particular (such as walking onto an item
- *   while exploring).
- *
- * The user interface is aware of the difference between these functions.
- * However, no present interface treats them differently (apart from the message
- * that action_interrupted prints).
- */
-void
-action_interrupted(void)
-{
-    if (flags.incomplete && !flags.interrupted)
-        pline(msgc_interrupted, "You stop %s.", whybusy(&youmonst));
-    mx_eocc_free(&youmonst);
-    flags.interrupted = TRUE;
-}
-
-/* Helper function for occupations. */
-void
-one_occupation_turn(int (*callback)(void), const char *gerund,
-                    enum occupation ocode)
-{
-    action_incomplete(gerund, ocode);
-    if (!callback())
-        action_completed();
-}
-
 /* Record if/when a given conduct was broken. */
 void
 break_conduct(enum player_conduct conduct)
