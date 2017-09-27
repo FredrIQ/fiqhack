@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1596,9 +1596,17 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
     make_invlist(&objlist, lets);
 
     const struct nh_objresult *selected = NULL;
+    int wt, wtcap, invslots;
+    wtcap = weight_cap();
+    wt = inv_weight_total();
+    invslots = inv_cnt(TRUE);
+
+    const char *invbuf;
+    invbuf = msgprintf("Inventory: %d/%dwt (%d/52 slots)",
+                       wt, wtcap, invslots);
 
     if (objlist.icount)
-        n = display_objects(&objlist, want_reply ? NULL : "Inventory:",
+        n = display_objects(&objlist, want_reply ? NULL : invbuf,
                             want_reply ? PICK_ONE : PICK_NONE, PLHINT_INVENTORY,
                             &selected);
     else
