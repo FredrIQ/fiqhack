@@ -684,6 +684,7 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
         pline(msgc_monneutral, "The spellbook disappears.");
     }
 
+    obj_extract_self(spellbook);
     obfree(spellbook, NULL);
     return mon_addspell(mon, booktype);
 }
