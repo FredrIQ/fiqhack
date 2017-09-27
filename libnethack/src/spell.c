@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2044,7 +2044,7 @@ dovspell(const struct nh_cmd_arg *arg)
 
     (void) arg;
 
-    while (dospellmenu("Your magical abilities (*: forgotten, #: aliased)",
+    while (dospellmenu("Your magical abilities",
                        SPELLMENU_VIEW, &splnum)) {
         if (spellkey(splnum) && yn("Remove the key alias for the spell?") == 'y') {
             spl_book[splnum].sp_key = 0;
@@ -2083,6 +2083,14 @@ dospellmenu(const char *prompt,
     struct nh_menuitem items[MAXSPELL + 1];
     const int *selected;
 
+    set_menuitem(&items[count++], 0, MI_NORMAL,
+                 "Spells marked with '*' are forgotten.", 0, FALSE);
+    set_menuitem(&items[count++], 0, MI_NORMAL,
+                 "Spells marked with '!' are maintained.", 0, FALSE);
+    set_menuitem(&items[count++], 0, MI_NORMAL,
+                 "Spells marked with '#' are aliased with 'castalias'.", 0, FALSE);
+    set_menuitem(&items[count++], 0, MI_NORMAL,
+                 "", 0, FALSE);
     set_menuitem(&items[count++], 0, MI_HEADING,
                  "Name\tLevel\tCategory\tFail\tMemory", 0, FALSE);
     for (i = 0; i < MAXSPELL; i++) {
@@ -2094,8 +2102,10 @@ dospellmenu(const char *prompt,
             percent = msgprintf("%-d%%", (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
 
         const char *buf = SPELL_IS_FROM_SPELLBOOK(i) ?
-            msgprintf("%s\t%-d%s%s%s\t%s\t%-d%%\t%s", spellname(i), spellev(i),
+            msgprintf("%s\t%-d%s%s%s%s\t%s\t%-d%%\t%s", spellname(i), spellev(i),
                       spellknow(i) ? " " : "*",
+                      !spell_maintained(&youmonst, spellid(i)) ?
+                      " " : "!",
                       !spellkey(i) ? " " : "#:",
                       !spellkey(i) ? "" : friendly_key("%s", spellkey(i)),
                       spelltypemnemonic(spell_skilltype(spellid(i))),
