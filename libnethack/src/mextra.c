@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
 /* Copyright (c) Fredrik Ljungdahl, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -100,37 +100,11 @@ GEN_EXTYP(edog, monst, m, free)
 GEN_EXTYP(epri, monst, m, free)
 GEN_EXTYP(eshk, monst, m, free)
 GEN_EXTYP(egd, monst, m, free)
+GEN_EXTYP(eocc, monst, m, free)
 GEN_EXTYP(monst, obj, o, dealloc_monst) /* dealloc_monst frees mextra */
 
 #undef GEN_EXBASE
 #undef GEN_EXTYP
-
-char *
-mx_whybusy(const struct monst *mon)
-{
-    return (mon->mextra ? mon->mextra->whybusy : NULL);
-}
-
-void
-set_whybusy(struct monst *mon, const char *str) {
-    if (mx_whybusy(mon)) {
-        free(mon->mextra->whybusy);
-        mon->mextra->whybusy = NULL;
-    }
-    if (!str || !*str) {
-        mx_possiblyfree(mon);
-        return;
-    }
-    mx_new(mon);
-    int lth;
-    char buf[BUFSZ] = {0};
-    lth = (strlen(str) + 1);
-    strncpy(buf, str, BUFSZ - 1);
-    if (lth > BUFSZ)
-        lth = BUFSZ;
-    mon->mextra->whybusy = malloc((unsigned) lth);
-    strncpy(mon->mextra->whybusy, buf, lth);
-}
 
 void
 mx_copy(struct monst *mon, const struct monst *mtmp)
@@ -144,8 +118,6 @@ mx_copy(struct monst *mon, const struct monst *mtmp)
         mon->mextra = NULL;
 
     christen_monst(mon, mx_name(mtmp));
-    set_whybusy(mon, mx_whybusy(mtmp));
-
     if (mx_edog(mtmp)) {
         mx_edog_new(mon);
         memcpy(mx_edog(mon), mx_edog(mtmp), sizeof (struct edog));
@@ -162,6 +134,10 @@ mx_copy(struct monst *mon, const struct monst *mtmp)
         mx_egd_new(mon);
         memcpy(mx_egd(mon), mx_egd(mtmp), sizeof (struct egd));
     }
+    if (mx_eocc(mtmp)) {
+        mx_eocc_new(mon);
+        memcpy(mx_eocc(mon), mx_eocc(mtmp), sizeof (struct eocc));
+    }
 }
 
 void
@@ -171,11 +147,11 @@ mx_free(struct monst *mon)
         return;
 
     christen_monst(mon, NULL);
-    set_whybusy(mon, NULL);
     mx_edog_free(mon);
     mx_epri_free(mon);
     mx_eshk_free(mon);
     mx_egd_free(mon);
+    mx_eocc_free(mon);
     if (mon->mextra) /* the above frees run possiblyfree */
         panic("trying to free mextra failed?");
 }
@@ -184,8 +160,8 @@ void
 mx_possiblyfree(struct monst *mon)
 {
     struct mextra *mx = mon->mextra;
-    if (!mx || mx->edog || mx->epri || mx->eshk || mx->egd ||
-        mx->name || mx->whybusy)
+    if (!mx || mx->edog || mx->epri || mx->eshk ||
+        mx->egd || mx->eocc || mx->name)
         return;
 
     free(mon->mextra);
@@ -238,12 +214,12 @@ mxcontent(const struct monst *mon)
     if (!mx)
         return 0;
     return
-        (mx->whybusy ? MX_WHYBUSY : 0) |
         (mx->name ? MX_NAME : 0) |
         (mx->edog ? MX_EDOG : 0) |
         (mx->epri ? MX_EPRI : 0) |
         (mx->eshk ? MX_ESHK : 0) |
-        (mx->egd ? MX_EGD : 0);
+        (mx->egd ? MX_EGD : 0) |
+        (mx->eocc ? MX_EOCC : 0);
 }
 
 int
@@ -299,14 +275,20 @@ restore_mextra(struct memfile *mf, struct monst *mon)
             christen_monst(mon, namebuf);
         }
     }
-    if (extyp & MX_WHYBUSY) {
-        int namelth = mread8(mf);
-        char namebuf[namelth];
-
-        if (namelth) {
-            mread(mf, namebuf, namelth);
-            set_whybusy(mon, namebuf);
+    if (extyp & MX_EOCC) {
+        mread(mf, mx->eocc->whybusy, sizeof (mx->eocc->whybusy));
+        int tos_lastslot = mread8(mf);
+        int tl_lastslot = mread8(mf);
+        for (i = 0; i <= tos_lastslot; i++)
+            mx->eocc->oid[i] = mread32(mf);
+        for (i = 0; i <= tos_lastslot; i++)
+            mx->eocc->progress[i] = mread32(mf);
+        for (i = 0; i <= tl_lastslot; i++) {
+            mx->eocc->location[i].x = mread8(mf);
+            mx->eocc->location[i].y = mread8(mf);
         }
+
+        mx->eocc->current = mread8(mf);
     }
     if (extyp & MX_EDOG) {
         mx_edog_new(mon);
@@ -422,15 +404,23 @@ save_mextra(struct memfile *mf, const struct monst *mon)
         mwrite(mf, mx->name, namelth);
     }
 
-    if (extyp & MX_WHYBUSY) {
-        int namelth = strlen(mx->whybusy) + 1;
-        if (namelth > BUFSZ) {
-            panic("save_mextra: monster name too long");
-            return;
+    if (extyp & MX_EOCC) {
+        mwrite(mf, mx->eocc->whybusy, sizeof (mx->eocc->whybusy));
+
+        /* Write size of tos and tl enums. This allows us to add further values
+           without breaking saves. */
+        mwrite8(mf, tos_last_slot);
+        mwrite8(mf, tl_last_slot);
+        for (i = 0; i <= tos_last_slot; i++)
+            mwrite32(mf, mx->eocc->oid[i]);
+        for (i = 0; i <= tos_last_slot; i++)
+            mwrite32(mf, mx->eocc->progress[i]);
+        for (i = 0; i <= tl_last_slot; i++) {
+            mwrite8(mf, mx->eocc->location[i].x);
+            mwrite8(mf, mx->eocc->location[i].y);
         }
 
-        mwrite8(mf, namelth);
-        mwrite(mf, mx->whybusy, namelth);
+        mwrite8(mf, mx->eocc->current);
     }
 
     if (extyp & MX_EDOG) {

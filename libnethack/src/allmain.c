@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1368,8 +1368,8 @@ void
 action_interrupted(void)
 {
     if (flags.incomplete && !flags.interrupted)
-        pline(msgc_interrupted, "You stop %s.", mx_whybusy(&youmonst));
-    set_whybusy(&youmonst, NULL);
+        pline(msgc_interrupted, "You stop %s.", whybusy(&youmonst));
+    mx_eocc_free(&youmonst);
     flags.interrupted = TRUE;
 }
 

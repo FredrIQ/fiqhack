@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Izchak Miller, 1989.                             */
 /* Copyright (c) Fredrik Ljungdahl, 2015.                         */
@@ -119,16 +119,24 @@ struct pet_weapons {
     const struct obj *unihorn;
 };
 
+/* Occupation data, for eating, reading, etc. */
+struct eocc {
+    char whybusy[BUFSZ]; /* occupation wording */
+    int oid[tos_last_slot + 1]; /* occupation object IDs */
+    int progress[tos_last_slot + 1]; /* time spent */
+    coord location[tl_last_slot + 1]; /* location */
+    int current; /* Active occupation */
+};
 
 /* mextra struct itself */
 struct mextra {
     char *name;
-    char *whybusy;
     struct egd *egd;
     struct epri *epri;
     struct eshk *eshk;
     struct emin *emin;
     struct edog *edog;
+    struct eocc *eocc;
 };
 
 struct oextra {

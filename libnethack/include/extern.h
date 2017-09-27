@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -944,13 +944,12 @@ GEN_EXTYP_PROT(edog, monst, m)
 GEN_EXTYP_PROT(epri, monst, m)
 GEN_EXTYP_PROT(eshk, monst, m)
 GEN_EXTYP_PROT(egd, monst, m)
+GEN_EXTYP_PROT(eocc, monst, m)
 GEN_EXTYP_PROT(monst, obj, o)
 
 # undef GEN_EXTYP_PROT
 # undef GEN_EXBASE_PROT
 
-extern char *mx_whybusy(const struct monst *);
-extern void set_whybusy(struct monst *, const char *);
 extern void restore_fcorr(struct memfile *, struct fakecorridor *);
 extern void restore_shkbill(struct memfile *, struct bill_x *);
 
@@ -1370,6 +1369,11 @@ extern struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user);
 extern int rnd_class(int, int, enum rng);
 extern const char *cloak_simple_name(const struct obj *cloak);
 extern const char *mimic_obj_name(const struct monst *mimic);
+
+/* ### occupation.c */
+
+extern char *whybusy(const struct monst *);
+extern void set_whybusy(struct monst *, const char *);
 
 /* ### options.c ### */
 
