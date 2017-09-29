@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2290,6 +2290,7 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         restore_mextra(mf, mon);
 
     /* 7 free bits... */
+    mon->interrupted = (mflags >> 25) & 1;
     mon->uzombied = (mflags >> 24) & 1;
     mon->usicked = (mflags >> 23) & 1;
     mon->uslimed = (mflags >> 22) & 1;
@@ -2430,6 +2431,7 @@ save_mon(struct memfile *mf, struct monst *mon, const struct level *l)
     mwrite8(mf, mon->wormno);
 
     mflags =
+        (mon->interrupted >> 25) |
         (mon->uzombied >> 24) | (mon->usicked << 23) |
         (mon->uslimed << 22) | (mon->ustoned << 21) |
         (mon->levi_wary << 20) | (mon->female << 19) |

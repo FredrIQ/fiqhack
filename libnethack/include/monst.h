@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -149,6 +149,7 @@ struct monst {
     unsigned mleashed:1;        /* monster is on a leash */
     unsigned msuspicious:1;     /* monster is suspicious of the player */
     unsigned iswiz:1;           /* is the Wizard of Yendor */
+    unsigned interrupted:1;     /* interrupted during multiturn */
     uint64_t mspells;           /* known monster spells */
     uint64_t spells_maintained; /* maintained spells */
 
