@@ -232,12 +232,12 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt,
     munge_xlstring(buf, u.uplname, DTHSZ + 1);
     fprintf(rfile, SEP "charname=%s", buf);
     base64_encode(u.uplname, buf64);
-    fprintf(rfile, SEP "charname64=%s", buf);
+    fprintf(rfile, SEP "charname64=%s", buf64);
 
     munge_xlstring(buf, tt->death, DTHSZ + 1);
     fprintf(rfile, SEP "death=%s", buf);
     base64_encode(tt->death, buf64);
-    fprintf(rfile, SEP "death64=%s", buf);
+    fprintf(rfile, SEP "death64=%s", buf64);
 
     char buf2[strlen(dumpname) + 2];
     munge_xlstring(buf2, dumpname, sizeof buf2);
