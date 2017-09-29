@@ -812,6 +812,7 @@ extern int doclose(const struct nh_cmd_arg *);
 /* ### log.c ### */
 
 extern noreturn void error_reading_save(const char *);
+extern void base64_encode(const char *, char *);
 extern void log_newgame(microseconds);
 extern void log_neutral_turnstate(void);
 extern void log_backup_save(void);
