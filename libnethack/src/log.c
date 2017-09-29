@@ -481,7 +481,8 @@ base64size(int n)
 }
 
 static void
-base64_encode_binary(const unsigned char *in, char *out, int len)
+base64_encode_binary(const unsigned char *in, char *out, int len,
+    boolean no_compression)
 {
     int i, pos, rem;
     unsigned long olen = compressBound(len);
@@ -494,7 +495,7 @@ base64_encode_binary(const unsigned char *in, char *out, int len)
 
     pos = sprintf(out, "$%d$", len);
 
-    if (pos + olen >= len) {
+    if (no_compression || pos + olen >= len) {
         pos = 0;
         olen = len;
     } else
@@ -524,11 +525,12 @@ base64_encode_binary(const unsigned char *in, char *out, int len)
     out[pos] = '\0';
 }
 
-
+/* Encodes a string in base64 with no compression */
 void
 base64_encode(const char *in, char *out)
 {
-    base64_encode_binary((const unsigned char *)in, out, strlen(in));
+    base64_encode_binary((const unsigned char *)in, out,
+                         strlen(in), TRUE);
 }
 
 static int
@@ -699,7 +701,8 @@ log_binary(const char *buf, int buflen)
         return;
 
     b64buf = malloc(base64size(buflen));
-    base64_encode_binary((const unsigned char *)buf, b64buf, buflen);
+    base64_encode_binary((const unsigned char *)buf, b64buf,
+                         buflen, FALSE);
 
     /* don't use lprintf, b64buf might be too big for the buffer used by
        lprintf */
@@ -1023,7 +1026,8 @@ log_newgame(microseconds start_time)
     lprintf("%" SECOND_LOGLINE_LEN_STR "s\x0a", "(new game)");
     start_of_third_line = get_log_offset();
 
-    base64_encode(u.uplname, encbuf);
+    base64_encode_binary(u.uplname, encbuf,
+                         strlen(u.uplname), FALSE);
     lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\x0a",
             start_time_l64, 0, wizard ? MODE_WIZARD : discover ?
             MODE_EXPLORE : *flags.setseed ? MODE_SETSEED : MODE_NORMAL,
