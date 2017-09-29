@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1859,6 +1859,7 @@ extern int wiz_timeout_queue(const struct nh_cmd_arg *);
 
 /* ### topten.c ### */
 
+extern void munge_xlstring(char *, const char *, int);
 extern void update_topten(int how, const char *killer,
                           unsigned long carried, const char *dumpname);
 extern struct obj *tt_oname(struct obj *);

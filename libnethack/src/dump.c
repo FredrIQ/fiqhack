@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -68,6 +68,10 @@ begin_dump(int how)
                          timestamp, u.uplname, urole.filecode, urace.filecode,
                          genders[u.ufemale].filecode,
                          aligns[1 - u.ualign.type].filecode, status);
+    char dnbuf[strlen(dumpname) + 2];
+    munge_xlstring(dnbuf, dumpname, sizeof dnbuf);
+    dumpname = msgprintf("%s", dnbuf);
+
     dumpfp = fopen_datafile(dumpname, "w+", DUMPPREFIX);
     if (!dumpfp)
         return NULL;
