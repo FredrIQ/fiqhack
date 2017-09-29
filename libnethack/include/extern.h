@@ -1859,7 +1859,6 @@ extern int wiz_timeout_queue(const struct nh_cmd_arg *);
 
 /* ### topten.c ### */
 
-extern void munge_xlstring(char *, const char *, int);
 extern void update_topten(int how, const char *killer,
                           unsigned long carried, const char *dumpname);
 extern struct obj *tt_oname(struct obj *);

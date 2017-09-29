@@ -66,8 +66,7 @@ static char end_killer[DTHSZ + 1] = {0};
 #define SEP ":"
 #define SEPC (SEP[0])
 
-/* Also used to determine dumplog name */
-void
+static void
 munge_xlstring(char *dest, const char *src, int n)
 {
     int i;

@@ -68,10 +68,6 @@ begin_dump(int how)
                          timestamp, u.uplname, urole.filecode, urace.filecode,
                          genders[u.ufemale].filecode,
                          aligns[1 - u.ualign.type].filecode, status);
-    char dnbuf[strlen(dumpname) + 2];
-    munge_xlstring(dnbuf, dumpname, sizeof dnbuf);
-    dumpname = msgprintf("%s", dnbuf);
-
     dumpfp = fopen_datafile(dumpname, "w+", DUMPPREFIX);
     if (!dumpfp)
         return NULL;
