@@ -195,6 +195,7 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt,
               unsigned long carried, const char *dumpname)
 {
     char buf[DTHSZ + 1];
+    char buf64[DTHSZ * 2 + 1];
     char rngseedbuf[RNG_SEED_SIZE_BASE64];
     int i;
     const char *uname;
@@ -223,12 +224,18 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt,
         uname = "";
     munge_xlstring(buf, uname, DTHSZ + 1);
     fprintf(rfile, SEP "name=%s", buf);
+    base64_encode(uname, buf64);
+    fprintf(rfile, SEP "name64=%s", buf64);
 
     munge_xlstring(buf, u.uplname, DTHSZ + 1);
     fprintf(rfile, SEP "charname=%s", buf);
+    base64_encode(u.uplname, buf64);
+    fprintf(rfile, SEP "charname64=%s", buf);
 
     munge_xlstring(buf, tt->death, DTHSZ + 1);
     fprintf(rfile, SEP "death=%s", buf);
+    base64_encode(tt->death, buf64);
+    fprintf(rfile, SEP "death64=%s", buf);
 
     char buf2[strlen(dumpname) + 2];
     munge_xlstring(buf2, dumpname, sizeof buf2);
