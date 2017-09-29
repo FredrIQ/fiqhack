@@ -196,6 +196,8 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt,
 {
     char buf[DTHSZ + 1];
     char buf64[DTHSZ * 2 + 1];
+    static_assert(DTHSZ > PL_NSIZ,
+                  "DTHSZ larger than PL_NSIZ");
     char rngseedbuf[RNG_SEED_SIZE_BASE64];
     int i;
     const char *uname;
