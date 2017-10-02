@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -504,7 +504,7 @@ just_reloaded_save:
         } else {
 
             if (((program_state.followmode == FM_REPLAY &&
-                  (!flags.incomplete || flags.interrupted)) ||
+                  (!occ_incomplete(&youmonst) || youmonst.interrupted)) ||
                  !log_replay_command(&cmd))) {
                 if (program_state.followmode == FM_RECOVERQUIT) {
                     /* We shouldn't be here. */
@@ -516,7 +516,7 @@ just_reloaded_save:
                 }
                 (*windowprocs.win_request_command)
                     (wizard, program_state.followmode == FM_PLAY ?
-                     !flags.incomplete : 1, flags.interrupted,
+                     !occ_incomplete(&youmonst) : 1, youmonst.interrupted,
                      &cmd, msg_request_command_callback);
                 command_from_user = TRUE;
             }
@@ -630,16 +630,18 @@ just_reloaded_save:
 
         /* Proper incomplete/interrupted handling depends on knowing who sent
            the command (known here, but not elsewhere). So we save and restore
-           flags.incomplete/flags.interrupted here in viewing processes that
-           sent the command themselves. */
+           incomplete/interrupted here in viewing processes that sent the
+           command themselves. */
 
-        boolean save_incomplete = flags.incomplete;
-        boolean save_interrupted = flags.interrupted;
+        struct eocc *occ = mx_eocc(&youmonst);
+        boolean save_incomplete = (occ && occ->incomplete);
+        boolean save_interrupted = youmonst.interrupted;
 
         if (cmdlist[cmdidx].flags & CMD_NOTIME &&
             !(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
             program_state.followmode == FM_PLAY &&
-            (flags.incomplete || !flags.interrupted || flags.occupation)) {
+            (!youmonst.interrupted ||
+             (occ && (occ->incomplete || occ->current)))) {
 
             /* CMD_NOTIME actions don't set last_cmd/last_arg, so we need to
                ensure we interrupt them in order to avoid screwing up command
@@ -649,9 +651,11 @@ just_reloaded_save:
                commands made when playing the game, because the command repeat
                will still repeat the original command. */
 
-            flags.incomplete = FALSE;
-            flags.interrupted = FALSE; /* set to true by "interrupt" */
-            flags.occupation = occ_none;
+            youmonst.interrupted = FALSE; /* set to true by "interrupt" */
+            if ((occ = mx_eocc(&youmonst))) {
+                occ->incomplete = FALSE;
+                occ->current = occ_none;
+            }
 
             log_record_command("interrupt",
                                &(struct nh_cmd_arg){.argtype = 0});
@@ -662,11 +666,11 @@ just_reloaded_save:
 
         } else if (!(cmdlist[cmdidx].flags & CMD_NOTIME) ||
                    !(cmdlist[cmdidx].flags & CMD_INTERNAL)) {
-
-            flags.incomplete = FALSE;
-            flags.interrupted = FALSE;
-            flags.occupation = occ_none;
-
+            youmonst.interrupted = FALSE;
+            if ((occ = mx_eocc(&youmonst))) {
+                occ->incomplete = FALSE;
+                occ->current = occ_none;
+            }
         }
 
         program_state.in_zero_time_command =
@@ -685,23 +689,24 @@ just_reloaded_save:
         command_input(cmdidx, &(cmd.arg));
 
         if (command_from_user && program_state.followmode != FM_PLAY) {
-            flags.incomplete = save_incomplete;
-            flags.interrupted = save_interrupted;
+            if ((occ = mx_eocc(&youmonst)))
+                occ->incomplete = save_incomplete;
+            youmonst.interrupted = save_interrupted;
         }
 
         program_state.in_zero_time_command = FALSE;
 
         /* Record or revert the gamestate change, depending on what happened.
            A revert should be a no-op; it'll impossible() if it isn't.  The
-           flags.incomplete check is needed in case we interrupt an incomplete
+           occ->incomplete check is needed in case we interrupt an incomplete
            command with a server cancel; the incomplete command hasn't written a
            save file, so comparing against that save file will show a
            difference. */
         if (cmdlist[cmdidx].flags & CMD_NOTIME) {
-            if (!flags.incomplete)
+            if (!occ_incomplete(&youmonst))
                 log_revert_command(cmd.cmd);
-        } else if ((!flags.incomplete || flags.interrupted) &&
-                 !u_helpless(hm_all))
+        } else if ((!occ_incomplete(&youmonst) || youmonst.interrupted) &&
+                   !u_helpless(hm_all))
             neutral_turnstate_tasks();
         /* Note: neutral_turnstate_tasks() frees cmd (because it frees all
            messages, and we made cmd a message in our callback above), so don't
@@ -1114,9 +1119,9 @@ pre_move_tasks(boolean didmove, boolean loading_game)
             lookaround(uim_nointeraction);
         else if (last_command_was("run"))
             lookaround(uim_displace);
-        else if (flags.occupation == occ_autoexplore)
+        else if (busy(&youmonst) == occ_autoexplore)
             lookaround(uim_displace);
-        else if (flags.occupation == occ_travel)
+        else if (busy(&youmonst) == occ_travel)
             lookaround(uim_nointeraction);
         else if (monster_nearby())
             action_interrupted();
@@ -1124,7 +1129,7 @@ pre_move_tasks(boolean didmove, boolean loading_game)
 
     /* Running is the only thing that needs or wants persistence in
        travel direction. */
-    if (flags.interrupted || !last_command_was("run"))
+    if (youmonst.interrupted || !last_command_was("run"))
         clear_travel_direction();
 
     turnstate.intended_dx = 0;

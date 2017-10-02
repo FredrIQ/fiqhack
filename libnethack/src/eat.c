@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1931,8 +1931,10 @@ doeat(const struct nh_cmd_arg *arg)
 
     if (otmp == u.utracked[tos_food]) {
         /* Continuing a meal. */
-        if (turnstate.continue_message)
+        if (youmonst.interrupted || busy(&youmonst) != occ_food) {
+            pline(msgc_debug, "x: %d", busy(&youmonst));
             pline(msgc_occstart, "You resume your meal.");
+        }
 
         /* 3.4.3 indirectly has a cprefx check here, but it doesn't make sense
            that the number of cannibalism penalties you get depends on how many
@@ -2177,7 +2179,7 @@ newuhs(boolean incr)
                 pline(msgc, (!incr) ? "You don't feel so weak now." :
                       (u.uhunger < 145) ? "You feel hungry." :
                       "You are beginning to feel hungry.");
-            if (incr && flags.occupation != occ_food)
+            if (incr && busy(&youmonst) != occ_food)
                 action_interrupted();
             break;
         case WEAK:
@@ -2195,7 +2197,7 @@ newuhs(boolean incr)
                 pline(incr ? msgc_fatal : msgc_statusheal,
                       (!incr) ? "You feel less faint." : (u.uhunger < 45) ?
                       "You feel weak." : "You are beginning to feel weak.");
-            if (incr && flags.occupation != occ_food)
+            if (incr && busy(&youmonst) != occ_food)
                 action_interrupted();
             break;
         }

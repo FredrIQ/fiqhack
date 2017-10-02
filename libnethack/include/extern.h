@@ -918,7 +918,7 @@ extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
 /* ### mextra.c ### */
 
 # define GEN_EXBASE_PROT(entity, emo)                                   \
-    extern void emo##x_new(struct entity *);                            \
+    extern struct emo##extra *emo##x_new(struct entity *);              \
     extern void emo##x_free(struct entity *);                           \
     extern void emo##x_copy(struct entity *, const struct entity *);    \
     extern void emo##x_possiblyfree(struct entity *);                   \
@@ -931,7 +931,7 @@ extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
 
 # define GEN_EXTYP_PROT(extyp, entity, emo)                        \
     extern struct extyp *emo##x_##extyp(const struct entity *);    \
-    extern void emo##x_##extyp##_new(struct entity *);             \
+    extern struct extyp *emo##x_##extyp##_new(struct entity *);             \
     extern void emo##x_##extyp##_free(struct entity *);
 
 GEN_EXBASE_PROT(monst, m)
@@ -1371,10 +1371,14 @@ extern const char *mimic_obj_name(const struct monst *mimic);
 extern char *whybusy(const struct monst *);
 extern void set_whybusy(struct monst *, const char *);
 extern int mon_occupied(const struct monst *);
-extern void action_incomplete(const char *gerund, enum occupation occupation);
+extern void action_incomplete(const char *, enum occupation);
+extern void maction_incomplete(struct monst *, const char *, enum occupation);
 extern void action_interrupted(void);
+extern void maction_interrupted(struct monst *);
 extern void action_completed(void);
 extern void maction_completed(struct monst *);
+extern boolean occ_incomplete(struct monst *);
+extern enum occupation busy(const struct monst *);
 extern void one_occupation_turn(int (*)(void), const char *, enum occupation);
 
 /* ### options.c ### */

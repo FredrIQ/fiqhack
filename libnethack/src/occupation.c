@@ -10,10 +10,8 @@
 char *
 whybusy(const struct monst *mon)
 {
-    if (!mx_eocc(mon)) {
-        impossible("whybusy: no occupation?");
-        return NULL;
-    }
+    if (!mx_eocc(mon))
+        panic("whybusy: no occupation?");
 
     return mon->mextra->eocc->whybusy;
 }
@@ -43,9 +41,16 @@ mon_occupied(const struct monst *mon)
 void
 action_incomplete(const char *reason, enum occupation ocode)
 {
-    set_whybusy(&youmonst, reason);
-    flags.incomplete = TRUE;
-    flags.occupation = ocode;
+    maction_incomplete(&youmonst, reason, ocode);
+}
+
+void
+maction_incomplete(struct monst *mon, const char *reason, enum occupation ocode)
+{
+    struct eocc *occ = mx_eocc_new(mon);
+    set_whybusy(mon, reason);
+    occ->incomplete = TRUE;
+    occ->current = ocode;
 }
 
 /*
@@ -69,10 +74,19 @@ action_incomplete(const char *reason, enum occupation ocode)
 void
 action_interrupted(void)
 {
-    if (flags.incomplete && !flags.interrupted)
-        pline(msgc_interrupted, "You stop %s.", whybusy(&youmonst));
-    mx_eocc_free(&youmonst);
-    flags.interrupted = TRUE;
+    maction_interrupted(&youmonst);
+}
+
+void
+maction_interrupted(struct monst *mon)
+{
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
+
+    mon->interrupted = TRUE;
+    if (occ_incomplete(mon) && !mon->interrupted && vis)
+        pline(you ? msgc_interrupted : msgc_monneutral,
+              "%s %s.", M_verbs(mon, "stop"), whybusy(mon));
 }
 
 /* Called when an action is logically complete: it completes it and interrupts
@@ -92,9 +106,28 @@ maction_completed(struct monst *mon)
     mon->interrupted = TRUE;
     struct eocc *occ = mx_eocc(mon);
     if (!occ)
-        panic("maction_complete: no eocc?");
+        return;
 
-    mx_eocc_free(mon);
+    occ->incomplete = FALSE;
+    occ->current = occ_none;
+}
+
+boolean
+occ_incomplete(struct monst *mon)
+{
+    struct eocc *occ = mx_eocc(mon);
+    if (!occ)
+        return FALSE;
+    return occ->incomplete;
+}
+
+enum occupation
+busy(const struct monst *mon)
+{
+    const struct eocc *occ = mx_eocc(mon);
+    if (!occ)
+        return occ_none;
+    return occ->current;
 }
 
 /* Helper function for occupations. */

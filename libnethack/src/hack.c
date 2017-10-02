@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -763,7 +763,7 @@ dofight(const struct nh_cmd_arg *arg)
 static void
 autoexplore_msg(const char *text, int mode)
 {
-    if (flags.occupation == occ_autoexplore) {
+    if (busy(&youmonst) == occ_autoexplore) {
         pline(msgc_interrupted, "%s blocks your way.", msgupcasefirst(text));
     }
 }
@@ -771,8 +771,8 @@ autoexplore_msg(const char *text, int mode)
 boolean
 travelling(void)
 {
-    return flags.occupation == occ_travel ||
-        flags.occupation == occ_autoexplore;
+    return busy(&youmonst) == occ_travel ||
+        busy(&youmonst) == occ_autoexplore;
 }
 
 /* Repeatedly recalculating extrinsics takes too much time and causes the
@@ -1751,7 +1751,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
        change directions to round a corner. */
     if (last_command_was("run")) {
         lookaround(uim_displace);
-        if (flags.interrupted) {
+        if (youmonst.interrupted) {
             turnstate.move.dx = 0;
             turnstate.move.dy = 0;
             return 0;
@@ -2336,10 +2336,9 @@ invocation_message(void)
     if (invocation_pos(&u.uz, youmonst.mx, youmonst.my) && !On_stairs(youmonst.mx, youmonst.my)) {
         const char *buf;
         struct obj *otmp = carrying(CANDELABRUM_OF_INVOCATION);
+        enum occupation ocode = busy(&youmonst);
 
-        if (flags.occupation == occ_move ||
-            flags.occupation == occ_travel ||
-            flags.occupation == occ_autoexplore)
+        if (ocode == occ_move || ocode == occ_travel || ocode == occ_autoexplore)
             action_completed();
 
         if (u.usteed)
@@ -2856,7 +2855,7 @@ lookaround(enum u_interaction_mode uim)
     struct monst *mtmp;
     struct trap *trap;
     /* farmoving: occ_move, occ_travel, occ_autoexplore. */
-    boolean farmoving = travelling() || flags.occupation == occ_move;
+    boolean farmoving = travelling() || busy(&youmonst) == occ_move;
     /* aggressive_farmoving: I'm... not actually sure when this is true in any
        case that would matter.  Tempted to delete it with prejudice. */
     boolean aggressive_farmoving = uim != uim_nointeraction && !travelling();

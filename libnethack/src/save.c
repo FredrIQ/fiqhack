@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -166,16 +166,16 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.elbereth_enabled);
     mwrite8(mf, flags.end_disclose);
     mwrite8(mf, flags.friday13);
-    mwrite8(mf, flags.incomplete);
+    mwrite8(mf, flags.unused_incomplete);
     mwrite8(mf, flags.interaction_mode);
-    mwrite8(mf, flags.interrupted);
+    mwrite8(mf, flags.unused_interrupted);
     mwrite8(mf, flags.legacy);
     mwrite8(mf, flags.made_amulet);
     mwrite8(mf, flags.menu_style);
     mwrite8(mf, flags.mon_generation);
     mwrite8(mf, 0);
     mwrite8(mf, flags.mon_polycontrol);
-    mwrite8(mf, flags.occupation);
+    mwrite8(mf, flags.unused_occupation);
     mwrite8(mf, flags.permablind);
     mwrite8(mf, flags.permahallu);
     mwrite8(mf, flags.pickup);

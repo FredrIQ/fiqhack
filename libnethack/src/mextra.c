@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Fredrik Ljungdahl, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,12 +35,13 @@
    TODO: can we make x_possiblyfree/x_free common sanely without making
    the result unreadable? Also, this is probably makedefs.c material */
 #define GEN_EXBASE(entity, emo)                                         \
-    void                                                                \
+    struct emo##extra *                                                 \
     emo##x_new(struct entity *ent) {                                    \
         if (ent->emo##extra)                                            \
-            return;                                                     \
+            return ent->emo##extra;                                     \
         ent->emo##extra = malloc(sizeof (struct emo##extra));           \
         memset(ent->emo##extra, 0, sizeof (struct emo##extra));         \
+        return ent->emo##extra;                                         \
     }                                                                   \
                                                                         \
     char *                                                              \
@@ -75,13 +76,14 @@
         return (ent->emo##extra ? ent->emo##extra->extyp : NULL);       \
     }                                                                   \
                                                                         \
-    void                                                                \
+    struct extyp *                                                      \
     emo##x_##extyp##_new(struct entity *ent) {                          \
         if (ent->emo##extra && ent->emo##extra->extyp)                  \
-            return;                                                     \
+            return ent->emo##extra->extyp;                              \
         emo##x_new(ent);                                                \
         ent->emo##extra->extyp = malloc(sizeof (struct extyp));         \
         memset(ent->emo##extra->extyp, 0, sizeof (struct extyp));       \
+        return ent->emo##extra->extyp;                                  \
     }                                                                   \
                                                                         \
     void                                                                \
@@ -276,6 +278,7 @@ restore_mextra(struct memfile *mf, struct monst *mon)
         }
     }
     if (extyp & MX_EOCC) {
+        mx_eocc_new(mon);
         mread(mf, mx->eocc->whybusy, sizeof (mx->eocc->whybusy));
         int tos_lastslot = mread8(mf);
         int tl_lastslot = mread8(mf);
@@ -288,7 +291,10 @@ restore_mextra(struct memfile *mf, struct monst *mon)
             mx->eocc->location[i].y = mread8(mf);
         }
 
+        mx->eocc->incomplete = mread8(mf);
         mx->eocc->current = mread8(mf);
+        if (mx->eocc->current)
+            pline(msgc_debug, "!%s!%d", k_monnam(mon), mx->eocc->current);
     }
     if (extyp & MX_EDOG) {
         mx_edog_new(mon);
@@ -420,6 +426,7 @@ save_mextra(struct memfile *mf, const struct monst *mon)
             mwrite8(mf, mx->eocc->location[i].y);
         }
 
+        mwrite8(mf, mx->eocc->incomplete);
         mwrite8(mf, mx->eocc->current);
     }
 

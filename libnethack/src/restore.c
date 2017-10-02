@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -799,9 +799,9 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->elbereth_enabled = mread8(mf);
     f->end_disclose = mread8(mf);
     f->friday13 = mread8(mf);
-    f->incomplete = mread8(mf);
+    f->unused_incomplete = mread8(mf);
     f->interaction_mode = mread8(mf);
-    f->interrupted = mread8(mf);
+    f->unused_interrupted = mread8(mf);
     f->legacy = mread8(mf);
     f->made_amulet = mread8(mf);
     f->menu_style = mread8(mf);
@@ -810,7 +810,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     if (moving)
         raw_printf("old mon_moving was nonzero -- please report to FIQ");
     f->mon_polycontrol = mread8(mf);
-    f->occupation = mread8(mf);
+    f->unused_occupation = mread8(mf);
     f->permablind = mread8(mf);
     f->permahallu = mread8(mf);
     f->pickup = mread8(mf);

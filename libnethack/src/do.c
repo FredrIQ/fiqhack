@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -782,7 +782,7 @@ dodown(boolean autodig_ok)
             || (!can_fall_thru(level) && can_fall) || !trap->tseen) {
 
             if (flags.autodig && autodig_ok && flags.autodigdown &&
-                flags.occupation == occ_none && uwep && is_pick(uwep)) {
+                busy(&youmonst) == occ_none && uwep && is_pick(uwep)) {
                 struct nh_cmd_arg arg;
                 arg_from_delta(0, 0, 1, &arg);
                 return use_pick_axe(uwep, &arg);
@@ -826,7 +826,7 @@ dodown(boolean autodig_ok)
         if (trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) {
             if (u.utrap && (u.utraptype == TT_PIT)) {
                 if (flags.autodig && autodig_ok && flags.autodigdown &&
-                    flags.occupation == occ_none && uwep && is_pick(uwep)) {
+                    busy(&youmonst) == occ_none && uwep && is_pick(uwep)) {
                     struct nh_cmd_arg arg;
                     arg_from_delta(0, 0, 1, &arg);
                     return use_pick_axe(uwep, &arg);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -257,8 +257,9 @@ struct flag {
     unsigned int mon_moving; /* monsters' turn to move */
     boolean mon_polycontrol;    /* debug: control monster polymorphs */
     boolean hide_implied;       /* hide messages if other messages imply them */
-    boolean incomplete; /* the requested action continues into future turns */
-    boolean interrupted;/* something happened to make long actions stop */
+    /* Occupation stuff has moved to mx_eocc(), interrupted to monst.interrupted */
+    boolean unused_incomplete; /* the requested action continues into future turns */
+    boolean unused_interrupted; /* something happened to make long actions stop */
     boolean pickup;     /* whether you pickup or move and look */
     boolean pickup_thrown;      /* auto-pickup items you threw */
     boolean prayconfirm;        /* confirm before praying */
@@ -317,7 +318,7 @@ struct flag {
     int last_cmd;                             /* this or previous command */
     struct nh_cmd_arg last_arg;              /* this or previous argument */
     char *last_str_buf;       /* mutable last_arg.str, so it can be freed */
-    enum occupation occupation; /* internal code for a multi-turn command */
+    enum occupation unused_occupation; /* internal code for a multi-turn command */
     coord travelcc;                      /* previously traveled-to square */
 
     /* The current time is not part of the multi-turn command state, but has

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,7 +54,7 @@ check_here(boolean picked_some)
 {
     struct obj *obj;
     int ct = 0;
-    boolean autoexploring = flags.occupation == occ_autoexplore;
+    boolean autoexploring = busy(&youmonst) == occ_autoexplore;
 
     /* count the objects here */
     for (obj = level->objects[youmonst.mx][youmonst.my]; obj; obj = obj->nexthere) {
@@ -65,7 +65,7 @@ check_here(boolean picked_some)
     /* If there are objects here, take a look unless autoexploring a previously
        explored space. */
     if (ct && !(autoexploring && level->locations[youmonst.mx][youmonst.my].mem_stepped)) {
-        if (flags.occupation == occ_move || travelling())
+        if (busy(&youmonst) == occ_move || travelling())
             action_completed();
         flush_screen();
         look_here(ct, picked_some, FALSE, Blind);
@@ -228,8 +228,8 @@ pickup(int what, enum u_interaction_mode uim)
 
         /* If there's anything here, stop running and travel, but not
            autoexplore unless it picks something up, which is handled later. */
-        if (OBJ_AT(youmonst.mx, youmonst.my) && (flags.occupation == occ_move ||
-                                   flags.occupation == occ_travel))
+        if (OBJ_AT(youmonst.mx, youmonst.my) && (busy(&youmonst) == occ_move ||
+                                                 busy(&youmonst) == occ_travel))
             action_completed();
     }
 
@@ -295,7 +295,7 @@ menu_pickup:
 
     /* Stop autoexplore if this pile hasn't been explored or auto-pickup (tried 
        to) pick up anything. */
-    if (flags.occupation == occ_autoexplore &&
+    if (busy(&youmonst) == occ_autoexplore &&
         (!level->locations[youmonst.mx][youmonst.my].mem_stepped ||
          (autopickup && n_tried > 0)))
         action_completed();

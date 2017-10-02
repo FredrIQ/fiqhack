@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,8 +51,8 @@ watch_on_duty(struct monst *mtmp)
            working out which location command repeat would affect. (These cases
            are merged because they both affect map locations on an ongoing
            basis, so the code for both is much the same.) */
-        if ((flags.occupation == occ_dig ||
-             (flags.occupation == occ_lock &&
+        if ((busy(&youmonst) == occ_dig ||
+             (busy(&youmonst) == occ_lock &&
               u.utracked[tos_lock] == &zeroobj)) &&
             (flags.last_arg.argtype & CMD_ARG_DIR)) {
             schar dx, dy, dz;
