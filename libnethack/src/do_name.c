@@ -905,7 +905,7 @@ static struct {
         /* Angband */
     {"Morgoth", TRUE},
         /* ADOM */
-    {"cat lord", TRUE},
+    {"cat lord", FALSE}, /* unique would give weird wording */
         /* ZAPM and old sysadmin stories */
     {"Bastard Operator from Hell", TRUE},
         /* Babylon 5 */
