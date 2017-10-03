@@ -268,10 +268,11 @@ hitum(struct monst *mon, int tmp, const struct attack *uattk, schar dx,
         int y = m_my(&youmonst);
         struct monst *mtmp;
         while (i < 8) {
-            if (x + xdir[i] == mon->mx && y + ydir[i] == mon->my)
+            if (xdir[i] == dx && ydir[i] == dy)
                 break;
             i++;
         }
+
         if (i == 8)
             panic("hitum: failed to find target monster?");
         i += 2;
