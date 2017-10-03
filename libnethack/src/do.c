@@ -520,6 +520,7 @@ drop(struct obj *obj)
             return 0;
         }
     }
+    int oldcap = near_capacity();
     unwield_silently(obj);
 
     if (Engulfed) {
@@ -537,12 +538,14 @@ drop(struct obj *obj)
 
             freeinv(obj);
             hitfloor(&youmonst, obj);
+            encumber_msg(oldcap);
             return 1;
         }
         if (!IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ) && flags.verbose)
             pline(msgc_actionboring, "You drop %s.", doname(obj));
     }
     dropx(obj);
+    encumber_msg(oldcap);
     return 1;
 }
 

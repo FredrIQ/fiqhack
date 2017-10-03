@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1152,7 +1152,7 @@ pick_obj(struct obj *otmp)
         otmp->no_charge = 0;
     if (otmp->olev == level)
         newsym(otmp->ox, otmp->oy);
-    return addinv(otmp);        /* might merge it with other objects */
+    return pickinv(otmp);        /* might merge it with other objects */
 }
 
 /* Prints a message if encumbrance changed since the last check and
@@ -1795,7 +1795,7 @@ out_container(struct obj *obj)
         verbalize(msgc_npcvoice,
                   "You sneaky cad! Get out of here with that pick!");
 
-    otmp = addinv(obj);
+    otmp = pickinv(obj);
     loadlev = near_capacity();
     prinv(loadlev
           ? (loadlev <

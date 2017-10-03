@@ -1405,7 +1405,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
             if (mongold) {
                 obj_extract_self(mongold);
                 if (can_hold(mongold)) {
-                    addinv(mongold);
+                    pickinv(mongold);
                     pline(combat_msgc(&youmonst, mdef, cr_hit),
                           "Your purse feels heavier.");
                 } else {
