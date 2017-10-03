@@ -265,10 +265,13 @@ resolve_channel_color(enum msg_channel msgc)
    is required. */
 static void
 show_msgwin_core(enum moreforce more, WINDOW *win,
-                 unsigned winheight, unsigned winwidth, unsigned yskip)
+                 unsigned winheight, unsigned winwidth,
+                 int x_offset, unsigned yskip)
 {
     wattrset(win, 0);
     werase(win);
+    int lastturn = 0;
+    int lastturn_y = 0;
 
     FOR_EACH_ONRANGE_CHUNK(winheight + yskip)
     {
@@ -289,14 +292,26 @@ show_msgwin_core(enum moreforce more, WINDOW *win,
              CLR_DARK_GRAY : color & 7);
         wattrset(win, curses_color_attr(color, 0));
         if (chunk->x < winwidth)
-            mvwaddnstr(win, chunk->y + y_offset, chunk->x,
+            mvwaddnstr(win, chunk->y + y_offset, chunk->x + x_offset,
                        chunk->message, winwidth - chunk->x);
+
+        if (lastturn && lastturn != chunk->turn && win != msgwin) {
+            wattrset(win, curses_color_attr(CLR_GRAY, 0));
+            mvwprintw(win, lastturn_y, 0, "T:%d", lastturn);
+        }
+        lastturn = chunk->turn;
+        lastturn_y = chunk->y + y_offset;
+    }
+
+    if (win != msgwin) {
+        wattrset(win, curses_color_attr(CLR_GRAY, 0));
+        mvwprintw(win, lastturn_y, 0, "T:%d", lastturn);
     }
 
     /* Maybe draw a --More--. */
     if (more != mf_nomore) {
         wattrset(win, curses_color_attr(7, 7));
-        mvwaddstr(win, winheight - 1, winwidth - strlen(more_text),
+        mvwaddstr(win, winheight - 1, winwidth - strlen(more_text) + x_offset,
                   more == mf_more ? more_text : tab_text);
     }
 
@@ -308,7 +323,7 @@ show_msgwin_core(enum moreforce more, WINDOW *win,
 static void
 show_msgwin(enum moreforce more)
 {
-    show_msgwin_core(more, msgwin, ui_flags.msgheight, ui_flags.mapwidth,
+    show_msgwin_core(more, msgwin, ui_flags.msgheight, ui_flags.mapwidth, 0,
                      ui_flags.msghistory_yskip);
 }
 
@@ -490,10 +505,10 @@ limit_last_line_x(int max_ok_x)
    do nothing if there is no room for the message. */
 static void
 chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
-                         nh_bool even_if_no_space)
+                         nh_bool even_if_no_space, int msgwidth)
 {
     /* Avoid a segfault on very narrow windows. */
-    if (ui_flags.mapwidth < strlen(more_text))
+    if (msgwidth < strlen(more_text))
         room_for_more = FALSE;
 
     /* Clear out old messages from memory. */
@@ -508,7 +523,7 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
        might cause the message window to apparently scroll backwards. */
     if (last_chunk && last_chunk->x == 0 && !*(last_chunk->message) &&
         pending_message && strlen(pending_message) >
-        ui_flags.mapwidth - (room_for_more ? strlen(more_text) + 2 : 0)) {
+        msgwidth - (room_for_more ? strlen(more_text) + 2 : 0)) {
         struct message_chunk *temp = last_chunk->prev;
         free(last_chunk->message);
         free(last_chunk);
@@ -563,11 +578,11 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
            --More--, because the second half will be offscreen.) */
         nh_bool splitok = spare_lines > (entire_last_line ? 1 : 0);
         int usable_width_unsplit = (spare_lines > 1 || !room_for_more) ?
-            ui_flags.mapwidth : ui_flags.mapwidth - strlen(more_text) - 2;
+            msgwidth : msgwidth - strlen(more_text) - 2;
         int usable_width_split = (spare_lines > 1) ?
-            ui_flags.mapwidth : ui_flags.mapwidth - strlen(more_text) - 2;
+            msgwidth : msgwidth - strlen(more_text) - 2;
         int usable_width_share = (spare_lines > 0 || !room_for_more) ?
-            ui_flags.mapwidth : ui_flags.mapwidth - strlen(more_text) - 2;
+            msgwidth : msgwidth - strlen(more_text) - 2;
 
         /* Split it, or don't split it and try to use the whole thing if we
            can't. */
@@ -628,7 +643,7 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
        line). In this case we need to add a blank chunk at the start of the
        next line to force the screen up and leave room. */
     if (room_for_more)
-        limit_last_line_x(ui_flags.mapwidth - strlen(more_text));
+        limit_last_line_x(msgwidth - strlen(more_text));
 }
 
 /* Ensures that the message window is in a ready state to read a key (i.e. with
@@ -654,11 +669,13 @@ draw_messages_prekey(nh_bool room_for_more)
     if (pending_message)
         /* Let's try to fit all of this onscreen at once, so we don't have to
            give a --More--. */
-        chunkify_pending_message(room_for_more, TRUE, FALSE);
+        chunkify_pending_message(room_for_more, TRUE, FALSE,
+                                 ui_flags.mapwidth);
     if (pending_message)
         /* OK, then, let's try to fit as much onscreen as possible. Leave
            room for our inevitable --More--. */
-        chunkify_pending_message(TRUE, FALSE, FALSE);
+        chunkify_pending_message(TRUE, FALSE, FALSE,
+                                 ui_flags.mapwidth);
     if (pending_message) {
         /* We haven't shown all the messages yet, so we need to force a
            --More--. */
@@ -874,14 +891,14 @@ redraw_messages(void)
    it requires reversing the list); and handling horizontal resize of the
    message window (which requires messages to reflow onto the new window
    width). */
-void
-reconstruct_message_history(nh_bool reverse)
+static void
+reconstruct_message_history_width(nh_bool reverse, int msgwidth)
 {
     /* If we have a pending message (unlikely, but perhaps possible?), just put
        it onto the chunk list so that we can handle it the same way as
        everything else. How it's laid out is irrelevant, as we're about to redo
        the layout anyway. */
-    chunkify_pending_message(FALSE, FALSE, TRUE);
+    chunkify_pending_message(FALSE, FALSE, TRUE, msgwidth);
     if (pending_message)
         abort();
 
@@ -894,7 +911,7 @@ reconstruct_message_history(nh_bool reverse)
         /* If we're going backwards, lay out pending_message if we're looking at
            part of a new message. */
         if (reverse && temp->end_of_message && pending_message) {
-            chunkify_pending_message(FALSE, FALSE, TRUE);
+            chunkify_pending_message(FALSE, FALSE, TRUE, msgwidth);
             last_chunk->seen = pending_seen;
         }
 
@@ -903,6 +920,7 @@ reconstruct_message_history(nh_bool reverse)
         if (*(temp->message)) {
             pending_seen = temp->seen;
             pending_message_channel = temp->channel;
+            pending_message_turn = temp->turn;
         }
         if (!pending_message)
             pending_message = temp->message; /* steal ownership */
@@ -924,7 +942,7 @@ reconstruct_message_history(nh_bool reverse)
         /* If we're going forwards, lay out pending_message if we just finished
            reconstructing a complete message. */
         if (!reverse && temp->end_of_message && pending_message) {
-            chunkify_pending_message(FALSE, FALSE, TRUE);
+            chunkify_pending_message(FALSE, FALSE, TRUE, msgwidth);
             last_chunk->seen = pending_seen;
         }
 
@@ -936,15 +954,34 @@ reconstruct_message_history(nh_bool reverse)
     /* There isn't an end_of_message before the first message, so handle that
        here */
     if (reverse && pending_message) {
-        chunkify_pending_message(FALSE, FALSE, TRUE);
+        chunkify_pending_message(FALSE, FALSE, TRUE, msgwidth);
         last_chunk->seen = pending_seen;
     }
+}
+
+void
+reconstruct_message_history(nh_bool reverse)
+{
+    reconstruct_message_history_width(reverse, ui_flags.mapwidth);
 }
 
 /* Rendering code for message history. */
 static void
 draw_prev_messages(struct gamewin *gw)
 {
+    /* Figure out message width excluding "T:xxx " */
+    int msgwidth = ui_flags.mapwidth;
+    int highest_turn = 1;
+    struct message_chunk *chunk;
+    for (chunk = first_chunk; chunk; chunk = chunk->next)
+        if (chunk->turn > highest_turn)
+            highest_turn = chunk->turn;
+
+    msgwidth--;
+    while (highest_turn /= 10)
+        msgwidth--;
+    msgwidth -= 3; /* "T:" (turncount) " " */
+
     struct win_scrollable *s = (struct win_scrollable *)gw->extra;
     draw_scrollable_frame(gw);
     /* s->offset is the number of lines to skip at the /top/ of the message
@@ -952,12 +989,27 @@ draw_prev_messages(struct gamewin *gw)
        at the /bottom/. We thus subtract from the number of lines that exist
        total, minus one screenful. */
     show_msgwin_core(mf_nomore, gw->win2, s->innerheight, s->innerwidth,
+                     ui_flags.mapwidth - msgwidth,
                      s->linecount - s->innerheight - s->offset);
     draw_scrollbar(gw->win, s);
 }
 static void
 resize_prev_messages(struct gamewin *gw)
 {
+    /* Figure out message width excluding "T:xxx " */
+    int msgwidth = ui_flags.mapwidth;
+    int highest_turn = 1;
+    struct message_chunk *chunk;
+    for (chunk = first_chunk; chunk; chunk = chunk->next)
+        if (chunk->turn > highest_turn)
+            highest_turn = chunk->turn;
+
+    msgwidth--;
+    while (highest_turn /= 10)
+        msgwidth--;
+    msgwidth -= 3; /* "T:" (turncount) " " */
+
+    reconstruct_message_history_width(FALSE, msgwidth);
     layout_scrollable(gw);
     resize_scrollable_inner(gw);
     draw_prev_messages(gw);
@@ -970,6 +1022,9 @@ doprev_message(void)
     struct gamewin *gw;
     struct win_scrollable *s;
     nh_bool done = FALSE;
+    nh_bool reverse = FALSE;
+    if (settings.msg_window == PREVMSG_REVERSE)
+        reverse = TRUE;
 
     /* Can we implement this simply using yskip? */
     if (settings.msg_window == PREVMSG_SINGLE ||
@@ -987,9 +1042,21 @@ doprev_message(void)
     if (!last_chunk)
         return; /* nothing to show */
 
+    /* Figure out message width excluding "T:xxx " */
+    int msgwidth = ui_flags.mapwidth;
+    int highest_turn = 1;
+    struct message_chunk *chunk;
+    for (chunk = first_chunk; chunk; chunk = chunk->next)
+        if (chunk->turn > highest_turn)
+            highest_turn = chunk->turn;
+
+    msgwidth--;
+    while (highest_turn /= 10)
+        msgwidth--;
+    msgwidth -= 3; /* "T:" (turncount) " " */
+
     /* The user might want the messages in reverse order. */
-    if (settings.msg_window == PREVMSG_REVERSE)
-        reconstruct_message_history(TRUE);
+    reconstruct_message_history_width(reverse, msgwidth);
 
     /* If we view previous messages while watching, we want to pause our
        watching while the messages are shown (and catch up only afterwards).
@@ -1018,7 +1085,7 @@ doprev_message(void)
 
     layout_scrollable(gw);
     initialize_scrollable_windows(gw, 0, 0); /* aim for the top left corner */
-    if (settings.msg_window != PREVMSG_REVERSE)
+    if (!reverse)
         scroll_onscreen(s, s->linecount - 1);    /* scroll to the end */
 
     while (!done) {
@@ -1043,7 +1110,7 @@ doprev_message(void)
 
     /* Put the messages back into their original order, if required. */
     if (settings.msg_window == PREVMSG_REVERSE)
-        reconstruct_message_history(TRUE);
+        reconstruct_message_history_width(reverse, ui_flags.mapwidth);
 
     ui_flags.in_zero_time_command = save_zero_time;
     delete_gamewin(gw);
