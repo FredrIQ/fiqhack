@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -480,6 +480,7 @@ drop(struct obj *obj)
             return 0;
         }
     }
+    int oldcap = near_capacity();
     unwield_silently(obj);
 
     if (Engulfed) {
@@ -497,12 +498,14 @@ drop(struct obj *obj)
 
             freeinv(obj);
             hitfloor(obj);
+            encumber_msg(oldcap);
             return 1;
         }
         if (!IS_ALTAR(level->locations[u.ux][u.uy].typ) && flags.verbose)
             pline(msgc_actionboring, "You drop %s.", doname(obj));
     }
     dropx(obj);
+    encumber_msg(oldcap);
     return 1;
 }
 
