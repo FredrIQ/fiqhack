@@ -391,6 +391,7 @@ hmon(struct monst * mon, struct obj * obj, int thrown, int multishot_count,
 static boolean
 hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count,
             int dieroll)
+{
     int tmp;
     const struct permonst *mdat = mon->data;
     int barehand_silver_rings = 0;

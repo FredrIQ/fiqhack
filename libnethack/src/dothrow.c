@@ -1242,6 +1242,7 @@ boomhit(struct obj *obj, int dx, int dy)
     int boom = E_boomleft;      /* showsym[] index */
     struct monst *mtmp;
     struct tmp_sym *tsym;
+    int dieroll = rnd(20);
 
     bhitpos.x = youmonst.mx;
     bhitpos.y = youmonst.my;
@@ -1272,9 +1273,9 @@ boomhit(struct obj *obj, int dx, int dy)
             break;
         }
         if (bhitpos.x == youmonst.mx && bhitpos.y == youmonst.my) {   /* ct == 9 */
-            if (Fumbling || rn2(20) >= ACURR(A_DEX)) {
+            if (Fumbling || dieroll >= ACURR(A_DEX)) {
                 /* TODO: culprit */
-                mhmon(NULL, &youmonst, obj, 1, 0);
+                mhmon(NULL, &youmonst, obj, 1, 0, dieroll);
                 break;
             } else {    /* we catch it */
                 tmpsym_end(tsym);

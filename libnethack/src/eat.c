@@ -2180,7 +2180,7 @@ newuhs(boolean incr)
                       (u.uhunger < 145) ? "You feel hungry." :
                       "You are beginning to feel hungry.");
             if (incr)
-                interrupt_occupation(&youmonst, ~ocm_edibility)
+                interrupt_occupation(&youmonst, ~ocm_edibility);
             break;
         case WEAK:
             if (Hallucination)

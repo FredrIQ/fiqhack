@@ -2168,7 +2168,7 @@ dospellmenu(const struct monst *mon,
                             OBJ_NAME(objects[otyp]),
                             objects[otyp].oc_level, " ",
                             !spell_maintained(mon, spellid(i)) ?
-                            " " : "!", " ", ""
+                            " " : "!", " ", "",
                             spelltypemnemonic(spell_skilltype(otyp)),
                             100 - percent_success(mon, otyp),
                             100);

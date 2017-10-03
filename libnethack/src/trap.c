@@ -722,7 +722,8 @@ dotrap(struct trap *trap, unsigned trflags)
         if (u.usteed && !rn2(2) && steedintrap(trap, otmp))     /* nothing */
             ;
         else {
-            mhmon(NULL, &youmonst, otmp, 1, 0);
+            int dieroll = rnd(20);
+            mhmon(NULL, &youmonst, otmp, 1, 0, dieroll);
             place_object(otmp, level, youmonst.mx, youmonst.my);
             if (!Blind)
                 otmp->dknown = 1;
@@ -749,7 +750,8 @@ dotrap(struct trap *trap, unsigned trflags)
         if (u.usteed && !rn2(2) && steedintrap(trap, otmp))     /* nothing */
             ;
         else {
-            mhmon(NULL, &youmonst, otmp, 1, 0);
+            int dieroll = rnd(20);
+            mhmon(NULL, &youmonst, otmp, 1, 0, dieroll);
             place_object(otmp, level, youmonst.mx, youmonst.my);
             if (!Blind)
                 otmp->dknown = 1;
@@ -1518,7 +1520,8 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                     break;
                 }
             }
-            mhmon(credit_player ? &youmonst : NULL, mtmp, singleobj, 1, 0);
+            int dieroll = rnd(20);
+            mhmon(credit_player ? &youmonst : NULL, mtmp, singleobj, 1, 0, dieroll);
         }
         if (style == ROLL) {
             if (down_gate(bhitpos.x, bhitpos.y) != -1) {

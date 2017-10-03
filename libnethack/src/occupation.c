@@ -89,7 +89,7 @@ interrupt_occupation(struct monst *mon, enum occupation_mask ocm)
     boolean you = (mon == &youmonst);
     boolean vis = (you || canseemon(mon));
 
-    if (!(ocm & (1 << flags.occupation)))
+    if (!(ocm & (1 << busy(mon))))
         return;
 
     mon->interrupted = TRUE;
