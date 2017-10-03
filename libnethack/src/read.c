@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -790,46 +790,59 @@ maybe_tame(struct monst *mon, struct monst *mtmp, struct obj *sobj)
 {
     boolean you = (mon == &youmonst);
     /* cursed objects has no effect for peacefuls */
-    if (sobj->cursed && !mon->mtame && mon->mpeaceful)
+    if (sobj->cursed && !you && !mon->mtame && mon->mpeaceful)
         return;
+
     /* no effect on self */
     if (mon == mtmp)
         return;
+
+    /* if resisted, do nothing */
     if (!mx_eshk(mtmp) && resist(mon, mtmp, sobj->oclass, NOTELL, bcsign(sobj)))
         return;
 
-    boolean set_align = 1;
-    if (sobj->cursed)
-        set_align = -1;
-    if (mon != &youmonst && !mon->mtame)
-        set_align = -set_align;
-    if (mon->mpeaceful && !mon->mtame)
-        set_align = 0;
+    /* -1: hostile, 0: peaceful, 1: tame */
+    int tame_result = -1;
+    if (mon->mpeaceful && !you && !mon->mtame)
+        tame_result = 0;
+    else if (sobj->cursed ?
+             (!you && !mon->mtame) :
+             (you || mon->mtame))
+        tame_result = 1;
 
     if (mtmp == &youmonst) {
         /* taming on player increases or decreases the alignment record */
-        adjalign(set_align * 5);
-        if (set_align != 0)
-            pline(set_align > 0 ? msgc_intrgain : msgc_intrloss,
+        adjalign(tame_result * 5);
+        if (tame_result != 0)
+            pline(tame_result > 0 ? msgc_intrgain : msgc_intrloss,
                   "You feel %s %s.",
-                  set_align > 0 ? "appropriately" : "insufficiently",
+                  tame_result > 0 ? "appropriately" : "insufficiently",
                   align_str(u.ualign.type));
         return;
     }
 
-    set_align++;
-    switch (set_align) {
+    tame_result++;
+    switch (tame_result) {
     case 0:
+        if (!mtmp->mpeaceful && !mtmp->mtame)
+            break;
+
         if (!you) /* setmangry screws with your alignment */
             msethostility(mtmp, TRUE, FALSE);
         else
             setmangry(mtmp);
         break;
     case 1:
+        if (mtmp->mpeaceful && !mtmp->mtame)
+            break;
+
         if (!mx_eshk(mtmp)) /* peaceful taming keeps hostile shk */
             msethostility(mtmp, FALSE, FALSE);
         break;
     case 2:
+        if (mtmp->mtame)
+            break;
+
         if (mx_eshk(mtmp))
             make_happy_shk(mtmp, FALSE);
         else
