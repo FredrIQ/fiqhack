@@ -138,15 +138,15 @@ static const struct artifact const_artilist[] = {
 
     A("Dragonbane", LANCE,
       (SPFX_RESTR | SPFX_REFLECT | SPFX_DCLAS), 0, S_DRAGON,
-      PHYS(5, 10), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 500L),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 500L),
 
     A("Demonbane", LONG_SWORD,
       (SPFX_RESTR | SPFX_DFLAG2), 0, M2_DEMON,
-      PHYS(5, 10), NO_DFNS, NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 2500L),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 2500L),
 
     A("Werebane", SILVER_SABER,
       (SPFX_RESTR | SPFX_DFLAG2), 0, M2_WERE,
-      PHYS(5, 10), DFNS(AD_WERE), NO_CARY, 0, A_NONE, NON_PM, NON_PM, 1500L),
+      PHYS(5, 20), DFNS(AD_WERE), NO_CARY, 0, A_NONE, NON_PM, NON_PM, 1500L),
 
     A("Grayswandir", SILVER_SABER,
       (SPFX_RESTR | SPFX_HALRES), 0, 0,
@@ -154,15 +154,15 @@ static const struct artifact const_artilist[] = {
 
     A("Giantslayer", LONG_SWORD,
       (SPFX_RESTR | SPFX_DFLAG2), 0, M2_GIANT,
-      PHYS(5, 10), NO_DFNS, NO_CARY, 0, A_NEUTRAL, NON_PM, NON_PM, 200L),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_NEUTRAL, NON_PM, NON_PM, 200L),
 
     A("Ogresmasher", WAR_HAMMER,
       (SPFX_RESTR | SPFX_DCLAS), 0, S_OGRE,
-      PHYS(5, 10), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
 
     A("Trollsbane", MORNING_STAR,
       (SPFX_RESTR | SPFX_REGEN | SPFX_DCLAS), 0, S_TROLL,
-      PHYS(5, 10), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
 /*
  *      Two problems:  1) doesn't let trolls regenerate heads,
  *      2) doesn't give unusual message for 2-headed monsters (but
@@ -185,7 +185,7 @@ static const struct artifact const_artilist[] = {
 
     A("Sunsword", LONG_SWORD,
       (SPFX_RESTR | SPFX_DFLAG2), 0, M2_UNDEAD,
-      PHYS(5, 10), DFNS(AD_BLND), NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 1500L),
+      PHYS(5, 20), DFNS(AD_BLND), NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 1500L),
 
 /*
  *      The artifacts for the quest dungeon, all self-willed.
