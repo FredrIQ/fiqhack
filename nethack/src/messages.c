@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -149,6 +149,7 @@ struct message_chunk {
     unsigned x;                    /* x-position of the chunk */
     unsigned y;                    /* y-position of the chunk */
     enum msg_channel channel;      /* message channel for this chunk */
+    int turn;                      /* turn the message was seen */
     nh_bool seen : 1;              /* this chunk was on screen at a keypress */
     nh_bool end_of_message : 1;    /* this is the last chunk of this message */
 };
@@ -186,6 +187,7 @@ static struct message_chunk *last_chunk = NULL;
    another --More-- because the rest of the message won't fit).  */
 static char *pending_message = NULL;
 enum msg_channel pending_message_channel;
+enum msg_channel pending_message_turn;
 
 enum moreforce {mf_nomore, mf_more, mf_tab};
 
@@ -279,12 +281,13 @@ show_msgwin_core(enum moreforce more, WINDOW *win,
             continue;
 
         int color = resolve_channel_color(chunk->channel) & 15;
-        wattrset(win, curses_color_attr(
-                     (!chunk->seen || win != msgwin ||
-                      settings.msgfading == MF_DONTCHANGE) ? color :
-                     settings.msgcolor == MC_WHITE ? CLR_GRAY :
-                     color == CLR_GRAY || color == CLR_WHITE ?
-                     CLR_DARK_GRAY : color & 7, 0));
+        color =
+            ((!chunk->seen || win != msgwin ||
+              settings.msgfading == MF_DONTCHANGE) ? color :
+             settings.msgcolor == MC_WHITE ? CLR_GRAY :
+             color == CLR_GRAY || color == CLR_WHITE ?
+             CLR_DARK_GRAY : color & 7);
+        wattrset(win, curses_color_attr(color, 0));
         if (chunk->x < winwidth)
             mvwaddnstr(win, chunk->y + y_offset, chunk->x,
                        chunk->message, winwidth - chunk->x);
@@ -440,7 +443,8 @@ padded_xright(struct message_chunk *chunk)
 
 /* Adds a new chunk to the end of the list of chunks. */
 static void
-alloc_chunk(char *contents, enum msg_channel channel, int x, int y)
+alloc_chunk(char *contents, enum msg_channel channel, int turn,
+            int x, int y)
 {
     struct message_chunk *new_chunk = malloc(sizeof *new_chunk);
     new_chunk->message = contents;
@@ -449,6 +453,7 @@ alloc_chunk(char *contents, enum msg_channel channel, int x, int y)
     new_chunk->x = x;
     new_chunk->y = y;
     new_chunk->channel = channel;
+    new_chunk->turn = turn;
     new_chunk->seen = channel == msgc_reminder;
     new_chunk->end_of_message = FALSE; /* caller can override this later */
     if (last_chunk)
@@ -468,7 +473,7 @@ limit_last_line_x(int max_ok_x)
     if (last_chunk && padded_xright(last_chunk) > max_ok_x) {
         char *nullstring = malloc(1);
         *nullstring = '\0';
-        alloc_chunk(nullstring, msgc_mute, 0, last_chunk->y + 1);
+        alloc_chunk(nullstring, msgc_mute, 0, 0, last_chunk->y + 1);
         last_chunk->seen = TRUE; /* spacing chunks aren't visible */
     }
 }
@@ -596,13 +601,15 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
             usable_width_share) {
             /* We can. */
             alloc_chunk(firstpart, pending_message_channel,
+                        pending_message_turn,
                         padded_xright(last_chunk), last_chunk->y);
             last_chunk->end_of_message = TRUE;
         } else if (spare_lines > 0 && strlen(firstpart) <=
                    (pending_message ?
                     usable_width_split : usable_width_unsplit)) {
             /* We can't, but we have a spare line it fits on; use that. */
-            alloc_chunk(firstpart, pending_message_channel, 0,
+            alloc_chunk(firstpart, pending_message_channel,
+                        pending_message_turn, 0,
                         last_chunk ? last_chunk->y + 1 : 0);
             spare_lines--;
             last_chunk->end_of_message = !pending_message;
@@ -773,7 +780,7 @@ force_more(nh_bool require_tab)
    the channel is msgc_reminder (or there are shenanigans with window
    resizing). */
 void
-curses_print_message(enum msg_channel msgc, const char *msg)
+curses_print_message(int turn, enum msg_channel msgc, const char *msg)
 {
     /* When we get a new message, stop scrolling back into message history */
     ui_flags.msghistory_yskip = 0;
@@ -808,6 +815,7 @@ curses_print_message(enum msg_channel msgc, const char *msg)
     pending_message = malloc(strlen(msg) + 1);
     strcpy(pending_message, msg);
     pending_message_channel = msgc;
+    pending_message_turn = turn;
 
     /* Finally, do any More-forcing. */
     if (c & CLRFLAG_FORCETAB)
@@ -821,7 +829,7 @@ curses_print_message(enum msg_channel msgc, const char *msg)
 void
 curses_temp_message(const char *msg)
 {
-    curses_print_message(msgc_curprompt, msg);
+    curses_print_message(player.moves, msgc_curprompt, msg);
 }
 
 /* Clear the temporary messages from the buffer (via looking for the

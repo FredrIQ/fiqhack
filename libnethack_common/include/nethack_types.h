@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -816,7 +816,7 @@ struct nh_window_procs {
     void (*win_pause) (enum nh_pause_reason reason);
     void (*win_display_buffer) (const char *buf, nh_bool trymove);
     void (*win_update_status) (struct nh_player_info *pi);
-    void (*win_print_message) (enum msg_channel, const char *msg);
+    void (*win_print_message) (int turn, enum msg_channel, const char *msg);
     void (*win_request_command) (nh_bool debug, nh_bool completed,
                                  nh_bool interrupted, void *callbackarg,
                                  void (*callback)(

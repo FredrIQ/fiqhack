@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -37,7 +37,7 @@ static int last_monster_d, last_monster_x, last_monster_y;
 static void test_pause(enum nh_pause_reason);
 static void test_display_buffer(const char *, nh_bool);
 static void test_update_status(struct nh_player_info *);
-static void test_print_message(enum msg_channel, const char *);
+static void test_print_message(int, enum msg_channel, const char *);
 static void test_request_command(
     nh_bool, nh_bool, nh_bool, void *,
     void (*)(const struct nh_cmd_and_arg *, void *));
@@ -476,7 +476,7 @@ test_raw_print(const char *message)
    message to let the testbench know where the monster is. Although we're
    ignoring nearly all messages, we want to parse that one. */
 static void
-test_print_message(enum msg_channel msgc, const char *message)
+test_print_message(int turn, enum msg_channel msgc, const char *message)
 {
     (void) msgc;
 
@@ -490,7 +490,7 @@ test_print_message(enum msg_channel msgc, const char *message)
     }
 
     if (test_verbose)
-        tap_comment("pline: %s", message);
+        tap_comment("T:%d: %s", turn, message);
 }
 
 
