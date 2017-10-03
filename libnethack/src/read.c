@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -845,46 +845,59 @@ maybe_tame(struct monst *mon, struct monst *mtmp, struct obj *sobj)
 {
     boolean you = (mon == &youmonst);
     /* cursed objects has no effect for peacefuls */
-    if (sobj->cursed && !mon->mtame && mon->mpeaceful)
+    if (sobj->cursed && !you && !mon->mtame && mon->mpeaceful)
         return;
+
     /* no effect on self */
     if (mon == mtmp)
         return;
+
+    /* if resisted, do nothing */
     if (!mx_eshk(mtmp) && resist(mon, mtmp, sobj->oclass, NOTELL, bcsign(sobj)))
         return;
 
-    boolean set_align = 1;
-    if (sobj->cursed)
-        set_align = -1;
-    if (mon != &youmonst && !mon->mtame)
-        set_align = -set_align;
-    if (mon->mpeaceful && !mon->mtame)
-        set_align = 0;
+    /* -1: hostile, 0: peaceful, 1: tame */
+    int tame_result = -1;
+    if (mon->mpeaceful && !you && !mon->mtame)
+        tame_result = 0;
+    else if (sobj->cursed ?
+             (!you && !mon->mtame) :
+             (you || mon->mtame))
+        tame_result = 1;
 
     if (mtmp == &youmonst) {
         /* taming on player increases or decreases the alignment record */
-        adjalign(set_align * 5);
-        if (set_align != 0)
-            pline(set_align > 0 ? msgc_intrgain : msgc_intrloss,
+        adjalign(tame_result * 5);
+        if (tame_result != 0)
+            pline(tame_result > 0 ? msgc_intrgain : msgc_intrloss,
                   "You feel %s %s.",
-                  set_align > 0 ? "appropriately" : "insufficiently",
+                  tame_result > 0 ? "appropriately" : "insufficiently",
                   align_str(u.ualign.type));
         return;
     }
 
-    set_align++;
-    switch (set_align) {
+    tame_result++;
+    switch (tame_result) {
     case 0:
+        if (!mtmp->mpeaceful && !mtmp->mtame)
+            break;
+
         if (!you) /* setmangry screws with your alignment */
             msethostility(mtmp, TRUE, FALSE);
         else
             setmangry(mtmp);
         break;
     case 1:
+        if (mtmp->mpeaceful && !mtmp->mtame)
+            break;
+
         if (!mx_eshk(mtmp)) /* peaceful taming keeps hostile shk */
             msethostility(mtmp, FALSE, FALSE);
         break;
     case 2:
+        if (mtmp->mtame)
+            break;
+
         if (mx_eshk(mtmp))
             make_happy_shk(mtmp, FALSE);
         else
@@ -2720,70 +2733,43 @@ create_particular(const struct nh_cmd_arg *arg)
                 bufp++;
         }
 
-        while (parseadjective) {
-            parseadjective = FALSE;
+        int l;
+        for (;;) {
+            l = 0;
             /* allow the initial disposition to be specified */
-            if (!strncmpi(bufp, "tame ", 5)) {
-                bufp += 5;
-                parseadjective = maketame = TRUE;
-            } else if (!strncmpi(bufp, "peaceful ", 9)) {
-                bufp += 9;
-                parseadjective = makepeaceful = TRUE;
-            } else if (!strncmpi(bufp, "hostile ", 8)) {
-                bufp += 8;
-                parseadjective = makehostile = TRUE;
-            }
-            /* allow status effects to be specified */
-            if (!strncmpi(bufp, "cancelled ", 10)) {
-                bufp += 10;
-                parseadjective = cancelled = TRUE;
-            } else if (!strncmpi(bufp, "canceled ", 9)) {
-                bufp += 9;
-                parseadjective = cancelled = TRUE;
-            }
-            if (!strncmpi(bufp, "fast ", 5)) {
-                bufp += 5;
-                parseadjective = fast = TRUE;
-            } else if (!strncmpi(bufp, "slow ", 5)) {
-                bufp += 5;
-                parseadjective = slow = TRUE;
-            }
-            if (!strncmpi(bufp, "revived ", 8)) {
-                bufp += 9;
-                parseadjective = revived = TRUE;
-            }
-            if (!strncmpi(bufp, "fleeing ", 8)) {
-                bufp += 8;
-                parseadjective = fleeing = TRUE;
-            }
-            if (!strncmpi(bufp, "blind ", 6)) {
-                bufp += 6;
-                parseadjective = blind = TRUE;
-            }
-            if (!strncmpi(bufp, "paralyzed ", 10)) {
-                bufp += 10;
-                parseadjective = paralyzed = TRUE;
-            }
-            if (!strncmpi(bufp, "sleeping ", 9)) {
-                bufp += 9;
-                parseadjective = sleeping = TRUE;
-            }
-            if (!strncmpi(bufp, "stunned ", 8)) {
-                bufp += 8;
-                parseadjective = stunned = TRUE;
-            }
-            if (!strncmpi(bufp, "confused ", 9)) {
-                bufp += 9;
-                parseadjective = confused = TRUE;
-            }
-            if (!strncmpi(bufp, "suspicious ", 11)) {
-                bufp += 11;
-                parseadjective = suspicious = TRUE;
-            }
-            if (!strncmpi(bufp, "mavenge ", 8)) {
-                bufp += 8;
-                parseadjective = mavenge = TRUE;
-            }
+            if (!strncmpi(bufp, "tame ", l = 5))
+                maketame = TRUE;
+            else if (!strncmpi(bufp, "peaceful ", l = 9))
+                makepeaceful = TRUE;
+            else if (!strncmpi(bufp, "hostile ", l = 8))
+                makehostile = TRUE;
+            else if (!strncmpi(bufp, "cancelled ", l = 10) ||
+                     !strncmpi(bufp, "canceled ", l = 9))
+                cancelled = TRUE;
+            else if (!strncmpi(bufp, "fast ", l = 5))
+                fast = TRUE;
+            else if (!strncmpi(bufp, "slow ", l = 5))
+                slow = TRUE;
+            else if (!strncmpi(bufp, "revived ", l = 8))
+                revived = TRUE;
+            else if (!strncmpi(bufp, "fleeing ", l = 8))
+                fleeing = TRUE;
+            else if (!strncmpi(bufp, "blind ", l = 6) ||
+                     !strncmpi(bufp, "blinded ", l = 8))
+                blind = TRUE;
+            else if (!strncmpi(bufp, "paralyzed ", l = 10))
+                paralyzed = TRUE;
+            else if (!strncmpi(bufp, "sleeping ", l = 9))
+                sleeping = TRUE;
+            else if (!strncmpi(bufp, "stunned ", l = 8))
+                stunned = TRUE;
+            else if (!strncmpi(bufp, "confused ", l = 9))
+                confused = TRUE;
+            else if (!strncmpi(bufp, "mavenge ", l = 8))
+                mavenge = TRUE;
+            else
+                break;
+            bufp += l;
         }
             
         /* decide whether a valid monster was chosen */

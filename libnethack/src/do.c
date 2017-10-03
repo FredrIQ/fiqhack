@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -153,7 +153,9 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
                       vtense(NULL, verb), (mtmp) ? "" : " with you");
             if (mtmp) {
                 if (!phasing(mtmp) && !throws_rocks(mtmp->data)) {
-                    if (hmon(mtmp, obj, TRUE, 0) && !is_whirly(mtmp->data))
+                    int dieroll = rnd(20);
+                    if (hmon(mtmp, obj, TRUE, 0, dieroll) &&
+                        !is_whirly(mtmp->data))
                         return FALSE;   /* still alive */
                 }
                 mtmp->mtrapped = 0;

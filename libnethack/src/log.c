@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -74,7 +74,7 @@ status_from_string(const char * str) {
 /***** Error handling *****/
 
 /* The save file format was incorrect. */
-static noreturn void
+noreturn void
 error_reading_save(const char *reason)
 {
     if (strchr(reason, '%'))
@@ -481,7 +481,8 @@ base64size(int n)
 }
 
 static void
-base64_encode_binary(const unsigned char *in, char *out, int len)
+base64_encode_binary(const unsigned char *in, char *out, int len,
+    boolean no_compression)
 {
     int i, pos, rem;
     unsigned long olen = compressBound(len);
@@ -494,7 +495,7 @@ base64_encode_binary(const unsigned char *in, char *out, int len)
 
     pos = sprintf(out, "$%d$", len);
 
-    if (pos + olen >= len) {
+    if (no_compression || pos + olen >= len) {
         pos = 0;
         olen = len;
     } else
@@ -524,11 +525,12 @@ base64_encode_binary(const unsigned char *in, char *out, int len)
     out[pos] = '\0';
 }
 
-
-static void
+/* Encodes a string in base64 with no compression */
+void
 base64_encode(const char *in, char *out)
 {
-    base64_encode_binary((const unsigned char *)in, out, strlen(in));
+    base64_encode_binary((const unsigned char *)in, out,
+                         strlen(in), TRUE);
 }
 
 static int
@@ -699,7 +701,8 @@ log_binary(const char *buf, int buflen)
         return;
 
     b64buf = malloc(base64size(buflen));
-    base64_encode_binary((const unsigned char *)buf, b64buf, buflen);
+    base64_encode_binary((const unsigned char *)buf, b64buf,
+                         buflen, FALSE);
 
     /* don't use lprintf, b64buf might be too big for the buffer used by
        lprintf */
@@ -1023,7 +1026,8 @@ log_newgame(microseconds start_time)
     lprintf("%" SECOND_LOGLINE_LEN_STR "s\x0a", "(new game)");
     start_of_third_line = get_log_offset();
 
-    base64_encode(u.uplname, encbuf);
+    base64_encode_binary(u.uplname, encbuf,
+                         strlen(u.uplname), FALSE);
     lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\x0a",
             start_time_l64, 0, wizard ? MODE_WIZARD : discover ?
             MODE_EXPLORE : *flags.setseed ? MODE_SETSEED : MODE_NORMAL,

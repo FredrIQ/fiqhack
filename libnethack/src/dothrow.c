@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1738,6 +1738,7 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj,
     int otyp = obj->otyp;
     boolean guaranteed_hit = (uagr && Engulfed && mdef == u.ustuck);
     struct obj *mwep = m_mwep(magr);
+    int dieroll = rnd(20);
 
     /* Differences from melee weapons: Dex still gives a bonus, but strength
        does not. Polymorphed players lacking attacks may still throw. There's a 
@@ -1903,8 +1904,8 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj,
                 tmp += weapon_hit_bonus(obj);
         }
 
-        if (guaranteed_hit || tmp >= rnd(20)) {
-            if (mhmon(magr, mdef, obj, 1, count) && !udef) /* mon still alive */
+        if (guaranteed_hit || tmp >= dieroll) {
+            if (mhmon(magr, mdef, obj, 1, count, dieroll) && !udef) /* mon still alive */
                 cutworm(mdef, bhitpos.x, bhitpos.y, obj);
             if (uagr)
                 exercise(A_DEX, TRUE);
@@ -1963,7 +1964,7 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj,
              otyp == BOULDER))
             exercise(A_STR, TRUE);
         if (guaranteed_hit ||
-            ((otyp == HEAVY_IRON_BALL || otyp == BOULDER) ? tmp >= rnd(20) :
+            ((otyp == HEAVY_IRON_BALL || otyp == BOULDER) ? dieroll :
              acurr(magr, A_DEX) > rnd(25))) {
             int was_swallowed = guaranteed_hit;
 
@@ -1972,8 +1973,9 @@ thitmonst(struct monst *magr, struct monst *mdef, struct obj *obj,
             if (obj->oclass == POTION_CLASS) {
                 potionhit(mdef, obj, magr);
                 return 1; /* potionhit shatters the item */
-            } else if (!mhmon(magr, mdef, obj, 1, count) && otyp == HEAVY_IRON_BALL &&
-                     uagr && was_swallowed && !Engulfed && obj == uball)
+            } else if (!mhmon(magr, mdef, obj, 1, count, dieroll) &&
+                       otyp == HEAVY_IRON_BALL && uagr && was_swallowed &&
+                       !Engulfed && obj == uball)
                 return 1; /* already did placebc() */
         } else
             tmiss(magr, mdef, obj, count);

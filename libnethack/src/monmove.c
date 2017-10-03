@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -761,6 +761,12 @@ m_move(struct monst *mtmp, int after)
        first turn out, but we now ensure that muxy always has a sensible value,
        so nothing breaks. */
 
+    /* If the monster is a steed and no longer tame, force a dismount */
+    if (mtmp == u.usteed && !mtmp->mtame) {
+        dismount_steed(DISMOUNT_THROWN);
+        return 3;
+    }
+
     if (!Is_rogue_level(&u.uz))
         can_tunnel = tunnels(ptr);
     can_open = !(nohands(ptr) || verysmall(ptr));
@@ -770,6 +776,7 @@ m_move(struct monst *mtmp, int after)
     doorbuster = is_giant(ptr);
     if (mtmp->wormno)
         goto not_special;
+
     /* my dog gets special treatment */
     if (mtmp->mtame) {
         mmoved = dog_move(mtmp, after);

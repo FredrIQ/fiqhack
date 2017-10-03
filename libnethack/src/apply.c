@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2678,7 +2678,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
     pline(msgc_uiprompt, where_to_hit);
     cc.x = youmonst.mx;
     cc.y = youmonst.my;
-    if (getargpos(arg, &cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return 0;     /* user pressed ESC */
 
     /* Calculate range */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -80,8 +80,17 @@ action_interrupted(void)
 void
 maction_interrupted(struct monst *mon)
 {
+    interrupt_occupation(mon, ocm_all);
+}
+
+void
+interrupt_occupation(struct monst *mon, enum occupation_mask ocm)
+{
     boolean you = (mon == &youmonst);
     boolean vis = (you || canseemon(mon));
+
+    if (!(ocm & (1 << flags.occupation)))
+        return;
 
     mon->interrupted = TRUE;
     if (occ_incomplete(mon) && !mon->interrupted && vis)

@@ -1,15 +1,16 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
 static boolean known_hitum(struct monst *, int *, const struct attack *, schar,
-                           schar);
+                           schar, int);
 static void steal_it(struct monst *, const struct attack *);
 static boolean hitum(struct monst *, int, const struct attack *, schar, schar);
-static boolean hmon_hitmon(struct monst *, struct obj *, int, int);
+static boolean hmon_hitmon(struct monst *, struct obj *, int, int,
+                           int);
 static int joust(struct monst *, struct obj *);
 static boolean m_slips_free(struct monst *mtmp, const struct attack *mattk);
 static int explum(struct monst *, const struct attack *);
@@ -19,9 +20,6 @@ static int gulpum(struct monst *, const struct attack *);
 static boolean hmonas(struct monst *, int, schar, schar);
 static void nohandglow(struct monst *);
 static boolean shade_aware(struct obj *);
-
-/* The below might become a parameter instead if we use it a lot */
-static int dieroll;
 
 #define PROJECTILE(obj) ((obj) && is_ammo(obj))
 
@@ -195,7 +193,7 @@ attack(struct monst *mtmp, schar dx, schar dy, boolean confirmed)
 /* returns TRUE if monster still lives */
 static boolean
 known_hitum(struct monst *mon, int *mhit, const struct attack *uattk, schar dx,
-            schar dy)
+            schar dy, int dieroll)
 {
     boolean malive = TRUE;
 
@@ -219,10 +217,10 @@ known_hitum(struct monst *mon, int *mhit, const struct attack *uattk, schar dx,
         /* we hit the monster; be careful: it might die or be knocked into a
            different location */
         notonhead = (mon->mx != x || mon->my != y);
-        malive = hmon(mon, uwep, 0, 0);
+        malive = hmon(mon, uwep, 0, 0, dieroll);
         /* this assumes that Stormbringer was uwep not uswapwep */
         if (malive && u.twoweap && m_at(level, x, y) == mon)
-            malive = hmon(mon, uswapwep, 0, 0);
+            malive = hmon(mon, uswapwep, 0, 0, dieroll);
         if (malive) {
             /* monster still alive */
             if (!rn2(25) && mon->mhp < mon->mhpmax / 2 &&
@@ -260,11 +258,12 @@ hitum(struct monst *mon, int tmp, const struct attack *uattk, schar dx,
       schar dy)
 {
     boolean malive;
-    int mhit = (tmp > (dieroll = rnd(20)) || Engulfed);
+    int dieroll = rnd(20);
+    int mhit = (tmp > dieroll || Engulfed);
 
     if (tmp > dieroll)
         exercise(A_DEX, TRUE);
-    malive = known_hitum(mon, &mhit, uattk, dx, dy);
+    malive = known_hitum(mon, &mhit, uattk, dx, dy, dieroll);
     passive(mon, mhit, malive, AT_WEAP);
     return malive;
 }
@@ -275,7 +274,7 @@ hitum(struct monst *mon, int tmp, const struct attack *uattk, schar dx,
    magr can be NULL if the cause was from something other than a monster. */
 boolean
 mhmon(struct monst *magr, struct monst *mdef, struct obj *obj, int thrown,
-      int multishot_count)
+      int multishot_count, int dieroll)
 {
     if (!thrown) {
         impossible("mhmon: running on a non-thrown weapon?");
@@ -283,7 +282,7 @@ mhmon(struct monst *magr, struct monst *mdef, struct obj *obj, int thrown,
             return TRUE;
     }
     if (magr == &youmonst)
-        return hmon(mdef, obj, thrown, multishot_count);
+        return hmon(mdef, obj, thrown, multishot_count, dieroll);
 
     boolean udef = (mdef == &youmonst);
     boolean vis = (udef || canseemon(mdef) ||
@@ -366,7 +365,8 @@ mhmon(struct monst *magr, struct monst *mdef, struct obj *obj, int thrown,
 /* general "damage monster" routine */
 /* return TRUE if mon still alive */
 boolean
-hmon(struct monst * mon, struct obj * obj, int thrown, int multishot_count)
+hmon(struct monst * mon, struct obj * obj, int thrown, int multishot_count,
+     int dieroll)
 {
     if (mon == &youmonst) {
         impossible("hmon called with player as defender?");
@@ -379,7 +379,7 @@ hmon(struct monst * mon, struct obj * obj, int thrown, int multishot_count)
                     (ispriest(mon) || mx_eshk(mon) ||
                      mon->data == &mons[PM_WATCHMAN] ||
                      mon->data == &mons[PM_WATCH_CAPTAIN]));
-    result = hmon_hitmon(mon, obj, thrown, multishot_count);
+    result = hmon_hitmon(mon, obj, thrown, multishot_count, dieroll);
     if (ispriest(mon) && !rn2(2))
         ghod_hitsu(mon);
     if (anger_guards)
@@ -389,8 +389,8 @@ hmon(struct monst * mon, struct obj * obj, int thrown, int multishot_count)
 
 /* guts of hmon() */
 static boolean
-hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count)
-{
+hmon_hitmon(struct monst *mon, struct obj *obj, int thrown, int multishot_count,
+            int dieroll)
     int tmp;
     const struct permonst *mdat = mon->data;
     int barehand_silver_rings = 0;
@@ -1988,6 +1988,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
     int i, sum[NATTK], hittmp = 0;
     int nsum = 0;
     int dhit = 0;
+    int dieroll;
 
     for (i = 0; i < NATTK; i++) {
 
@@ -2018,7 +2019,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
             if (uwep)
                 tmp -= hittmp;
             /* Enemy dead, before any special abilities used */
-            if (!known_hitum(mon, &dhit, mattk, dx, dy)) {
+            if (!known_hitum(mon, &dhit, mattk, dx, dy, dieroll)) {
                 sum[i] = 2;
                 break;
             } else

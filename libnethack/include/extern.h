@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -816,6 +816,8 @@ extern int doclose(const struct nh_cmd_arg *);
 
 /* ### log.c ### */
 
+extern noreturn void error_reading_save(const char *);
+extern void base64_encode(const char *, char *);
 extern void log_newgame(microseconds);
 extern void log_neutral_turnstate(void);
 extern void log_backup_save(void);
@@ -1375,6 +1377,7 @@ extern void action_incomplete(const char *, enum occupation);
 extern void maction_incomplete(struct monst *, const char *, enum occupation);
 extern void action_interrupted(void);
 extern void maction_interrupted(struct monst *);
+extern void interrupt_occupation(struct monst *, enum occupation_mask);
 extern void action_completed(void);
 extern void maction_completed(struct monst *);
 extern boolean occ_incomplete(struct monst *);
@@ -1939,8 +1942,8 @@ extern void u_init_inv_skills(void);
 extern void check_caitiff(struct monst *);
 extern schar find_roll_to_hit(struct monst *);
 extern enum attack_check_status attack(struct monst *, schar, schar, boolean);
-extern boolean mhmon(struct monst *, struct monst *, struct obj *, int, int);
-extern boolean hmon(struct monst *, struct obj *, int, int);
+extern boolean mhmon(struct monst *, struct monst *, struct obj *, int, int, int);
+extern boolean hmon(struct monst *, struct obj *, int, int, int);
 extern int damageum(struct monst *, const struct attack *);
 extern void missum(struct monst *, const struct attack *);
 extern int passive(struct monst *, boolean, int, uchar);
