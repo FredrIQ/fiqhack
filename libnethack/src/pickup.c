@@ -1776,7 +1776,7 @@ out_container(struct obj *obj)
         verbalize(msgc_npcvoice,
                   "You sneaky cad! Get out of here with that pick!");
 
-    otmp = addinv(obj);
+    otmp = pickinv(obj);
     loadlev = near_capacity();
     prinv(loadlev
           ? (loadlev <
