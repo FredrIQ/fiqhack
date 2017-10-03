@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -258,8 +258,53 @@ hitum(struct monst *mon, int tmp, const struct attack *uattk, schar dx,
       schar dy)
 {
     boolean malive;
-    int dieroll = rnd(20);
-    int mhit = (tmp > dieroll || Engulfed);
+    int dieroll;
+    int mhit;
+    if (uwep && uwep->oartifact == ART_CLEAVER && !Engulfed &&
+        (!Upolyd || youmonst.data != &mons[PM_GRID_BUG])) {
+        /* cleaves */
+        int i = 0;
+        int x = m_mx(&youmonst);
+        int y = m_my(&youmonst);
+        struct monst *mtmp;
+        while (i < 8) {
+            if (x + xdir[i] == mon->mx && y + ydir[i] == mon->my)
+                break;
+            i++;
+        }
+        if (i == 8)
+            panic("hitum: failed to find target monster?");
+        i += 2;
+        if (i >= 8)
+            i -= 8;
+
+        int count = 3;
+        boolean result;
+        while (count--) {
+            if (!i)
+                i = 7;
+            else
+                i--;
+
+            mtmp = NULL;
+            if (isok(x + xdir[i], y + ydir[i]))
+                mtmp = um_at(level, x + xdir[i], y + ydir[i]);
+            if (!mtmp)
+                continue;
+
+            dieroll = rnd(20);
+            mhit = (tmp > dieroll);
+            result = known_hitum(mtmp, &mhit, uattk, xdir[i], ydir[i], dieroll);
+            passive(mon, mhit, DEADMONSTER(mtmp), AT_WEAP);
+            if (mon == mtmp)
+                malive = result;
+        }
+
+        return malive;
+    }
+
+    dieroll = rnd(20);
+    mhit = (tmp > dieroll || Engulfed);
 
     if (tmp > dieroll)
         exercise(A_DEX, TRUE);
