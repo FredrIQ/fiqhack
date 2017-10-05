@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -391,7 +391,7 @@ dopotion(struct monst *mon, struct obj *obj)
     obj->in_use = TRUE;
     int nothing = 0;
     int unkn = 0;
-    if ((retval = peffects(&youmonst, obj, &nothing, &unkn)) >= 0)
+    if ((retval = peffects(mon, obj, &nothing, &unkn)) >= 0)
         return retval;
 
     if (nothing) {
@@ -401,11 +401,11 @@ dopotion(struct monst *mon, struct obj *obj)
                   "You have a %s feeling for a moment, then it passes.",
                   Hallucination ? "normal" : "peculiar");
     }
-    if (obj->dknown && !objects[obj->otyp].oc_name_known) {
-        if (!unkn && vis) {
+    if (obj->dknown && !objects[obj->otyp].oc_name_known && vis) {
+        if (!unkn) {
             makeknown(obj->otyp);
             more_experienced(0, 10);
-        } else if (!objects[obj->otyp].oc_uname && vis)
+        } else if (!objects[obj->otyp].oc_uname)
             docall(obj);
     }
     m_useup(mon, obj);
