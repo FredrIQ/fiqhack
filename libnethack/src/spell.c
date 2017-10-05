@@ -1435,7 +1435,7 @@ static boolean
 mon_wants_to_maintain(const struct monst *mon, int spell)
 {
     /* Don't maintain spells with a somewhat high failure rate. */
-    if (mon_castable(mon, spell, TRUE) > 33)
+    if (mon_castable(mon, spell, TRUE) < 33)
         return FALSE;
 
     /* Compare energy regeneration rate with spell drain. using a
