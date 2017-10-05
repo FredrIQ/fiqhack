@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-05 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1392,7 +1392,7 @@ find_item(struct monst *mon, struct musable *m)
         }
     }
 
-    if (fraction < 35) {
+    if (fraction < 35 && mon != u.usteed) {
         if (lev->locations[x][y].typ == STAIRS && !stuck && !immobile) {
             if (x == lev->dnstair.sx && y == lev->dnstair.sy &&
                 !levitates(mon))
@@ -1414,7 +1414,7 @@ find_item(struct monst *mon, struct musable *m)
                 m->use = MUSE_DN_LADDER;
         }
     }
-    if (!stuck && !immobile && !m->use) { /* FIXME: cleanup */
+    if (!stuck && !immobile && !m->use && mon != u.usteed) { /* FIXME: cleanup */
         /* Note: trap doors take precedence over teleport traps. */
         int xx, yy;
 

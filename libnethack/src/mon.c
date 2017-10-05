@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1778,12 +1778,15 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
             (md->msound == MS_GUARDIAN || md->msound == MS_LEADER))
             return 0;
 
-        /* monsters won't attack enemies that are out of their league */
-        if (magr->mtame && mdef->m_lev > pet_attacks_up_to_difficulty(magr))
+        /* monsters won't attack enemies that are out of their league, unless
+           they're your steed (because then they will get attacked regardless) */
+        if (magr != u.usteed && magr->mtame &&
+            mdef->m_lev > pet_attacks_up_to_difficulty(magr))
             return 0;
         /* and for balance, hostiles won't attack pets that wouldn't attack
            back */
-        if (mdef->mtame && magr->m_lev > pet_attacks_up_to_difficulty(mdef))
+        if (mdef != u.usteed && mdef->mtame &&
+            magr->m_lev > pet_attacks_up_to_difficulty(mdef))
             return 0;
     }
     /* end anti-stupidity checks */

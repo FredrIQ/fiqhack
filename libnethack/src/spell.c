@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-05 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1389,7 +1389,7 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
     /* FIXME: don't rely on spell order */
     int mspellid = spell - SPE_DIG;
 
-    if (!(mon->mspells & ((uint64_t)1 << mspellid)))
+    if (!clone_wiz && !(mon->mspells & ((uint64_t)1 << mspellid)))
         return 0;
 
     int pw_cost;
@@ -1417,7 +1417,7 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
     if (clone_wiz)
         chance = 100;
     else
-        percent_success(mon, spell);
+        chance = percent_success(mon, spell);
 
     if (rnd(100) > chance && !theoretical)
         return 0;
@@ -1434,7 +1434,7 @@ static boolean
 mon_wants_to_maintain(const struct monst *mon, int spell)
 {
     /* Don't maintain spells with a somewhat high failure rate. */
-    if (mon_castable(mon, spell, TRUE) > 33)
+    if (mon_castable(mon, spell, TRUE) < 33)
         return FALSE;
 
     /* Compare energy regeneration rate with spell drain. using a

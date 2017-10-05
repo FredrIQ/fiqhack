@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -133,17 +133,17 @@ static const struct artifact const_artilist[] = {
       SPFX_RESTR, 0, ALL_MTYP,
       FIRE(5, 0), DFNS(AD_FIRE), NO_CARY, 0, A_NONE, NON_PM, NON_PM, 3000L),
 
-    A("Dragonbane", BROADSWORD,
-      SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_S, S_DRAGON),
-      PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 500L),
+    A("Dragonbane", LANCE,
+      SPFX_RESTR | SPFX_REFLECT | SPFX_WARNMON, 0, MTYP(MTYP_S, S_DRAGON),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 500L),
 
     A("Demonbane", LONG_SWORD,
       SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_M2, M2_DEMON),
-      PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 2500L),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 2500L),
 
     A("Werebane", SILVER_SABER,
       SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_M2, M2_WERE),
-      PHYS(5, 0), DFNS(AD_WERE), NO_CARY, 0, A_NONE, NON_PM, NON_PM, 1500L),
+      PHYS(5, 20), DFNS(AD_WERE), NO_CARY, 0, A_NONE, NON_PM, NON_PM, 1500L),
 
     A("Grayswandir", SILVER_SABER,
       (SPFX_RESTR | SPFX_HALRES), 0, ALL_MTYP,
@@ -151,15 +151,15 @@ static const struct artifact const_artilist[] = {
 
     A("Giantslayer", LONG_SWORD,
       SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_M2, M2_GIANT),
-      PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_NEUTRAL, NON_PM, NON_PM, 200L),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_NEUTRAL, NON_PM, NON_PM, 200L),
 
     A("Ogresmasher", WAR_HAMMER,
       SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_S, S_OGRE),
-      PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
 
     A("Trollsbane", MORNING_STAR,
-      SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_S, S_TROLL),
-      PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
+      SPFX_RESTR | SPFX_REGEN | SPFX_WARNMON, 0, MTYP(MTYP_S, S_TROLL),
+      PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
 /*
  *      Two problems:  1) doesn't let trolls regenerate heads,
  *      2) doesn't give unusual message for 2-headed monsters (but
@@ -182,7 +182,7 @@ static const struct artifact const_artilist[] = {
 
     A("Sunsword", LONG_SWORD,
       SPFX_RESTR | SPFX_WARNMON, 0, MTYP(MTYP_M2, M2_UNDEAD),
-      PHYS(5, 0), DFNS(AD_BLND), NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 1500L),
+      PHYS(5, 20), DFNS(AD_BLND), NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 1500L),
 
 /*
  *      The artifacts for the quest dungeon, all self-willed.
