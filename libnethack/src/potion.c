@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1188,13 +1188,41 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
                   M_verbs(mon, "look"),
                   Hallucination ? "normal" : "strange");
 
-        int intrinsic = allowed_wonder[rn2(allowed_wonder_size)];
+        /* If the potion isn't uncursed, figure out if we can
+           give or remove an intrinsic in first place. */
+        int intrinsic;
+        boolean usable = TRUE;
+
+        if (otmp->cursed || otmp->blessed) {
+            usable = FALSE;
+
+            for (intrinsic = 0; intrinsic < allowed_wonder_size;
+                 intrinsic++) {
+                if ((otmp->cursed &&
+                     ihas_property(mon, intrinsic)) ||
+                    (otmp->blessed &&
+                     !ihas_property(mon, intrinsic))) {
+                    usable = TRUE;
+                    break;
+                }
+            }
+        }
+
+        if (!usable) {
+            *nothing = 1;
+            break;
+        }
+
+        do {
+            intrinsic = allowed_wonder[rn2(allowed_wonder_size)];
+        } while (otmp->cursed ? !ihas_property(mon, intrinsic) :
+                 otmp->blessed ? ihas_property(mon, intrinsic) :
+                 0);
+
         if (otmp->cursed)
             set_property(mon, intrinsic, -1, FALSE);
-        else if (otmp->blessed)
-            set_property(mon, intrinsic, 0, FALSE);
         else
-            inc_timeout(mon, intrinsic, 2000, FALSE);
+            set_property(mon, intrinsic, 0, FALSE);
         break;
     default:
         impossible("What a funny potion! (%u)", otmp->otyp);
