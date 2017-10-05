@@ -293,6 +293,12 @@ hitum(struct monst *mon, int tmp, const struct attack *uattk, schar dx,
             if (!mtmp)
                 continue;
 
+            /* Unless the player was hitting a peaceful primarily,
+               let the player avoid noconfirm attacks vs peacefuls. */
+            if (!mon->mpeaceful && !mon->mtame &&
+                (mtmp->mpeaceful || mtmp->mtame))
+                continue;
+
             dieroll = rnd(20);
             mhit = (tmp > dieroll);
             result = known_hitum(mtmp, &mhit, uattk, xdir[i], ydir[i], dieroll);
