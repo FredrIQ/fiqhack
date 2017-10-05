@@ -293,6 +293,11 @@ hitum(struct monst *mon, int tmp, const struct attack *uattk, schar dx,
             if (!mtmp)
                 continue;
 
+            /* Don't hit stuff in an arc which we can't see */
+            if (mon != mtmp && !canspotmon(mtmp) &&
+                !level->locations[x + xdir[i]][y + ydir[i]].mem_invis)
+                continue;
+
             /* Unless the player was hitting a peaceful primarily,
                let the player avoid noconfirm attacks vs peacefuls. */
             if (!mon->mpeaceful && !mon->mtame &&
