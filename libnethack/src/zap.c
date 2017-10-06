@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3320,6 +3320,9 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
             hpmax = u.mhmax;
         tmp = min((40 * hpmax + 1) / 100, tmp);
     }
+    if (!tmp)
+        return;
+
     if (you)
         losehp(tmp, killer_msg(DIED, an(fltxt)));
     else {
