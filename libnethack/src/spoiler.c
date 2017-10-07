@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Nathan Eady, 2016-06-01 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-07 */
 /* File opening code based on the xlogfile code. */
 /* Object-looping code based on makedefs.c */
 /* Concept based on Autospoil, by Cristan Szmajda
@@ -316,6 +316,28 @@ spoiloneattack(const struct attack *attk)
                      attk->damn, attk->damd,
                      (attk->aatyp <= LAST_AT ? at[attk->aatyp] : "mysterious"),
                      (attk->adtyp <= LAST_AD ? ad[attk->adtyp] : "unknown damage"));
+}
+
+/* HTML-less version of the above, used for in-game lookup */
+const char *
+oneattack(const struct attack *attk)
+{
+    const char *dicestr = "";
+    if (!attk->aatyp && !attk->adtyp && !attk->damn && !attk->damd)
+        return NULL;
+    if (attk->damn || attk->damd) {
+        if (attk->damn)
+            dicestr = msgprintf("%dd%d ",
+                                attk->damn, attk->damd);
+        else
+            dicestr = msgprintf("(level+1)d%d ", attk->damd);
+    }
+
+    return msgprintf("%s%s %s", dicestr,
+                     (attk->aatyp <= LAST_AT ? at[attk->aatyp] :
+                      "mysterious"),
+                     (attk->adtyp <= LAST_AD ? ad[attk->adtyp] :
+                      "unknown damage"));
 }
 
 /* This relies on NATTK being small and known at code-writing time.
