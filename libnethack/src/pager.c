@@ -773,7 +773,7 @@ checkfile(const char *inp, const struct permonst *pm,
     if (found_in_file) {
         /* Try to parse as a monster name for monster info */
         int mndx = name_to_mon(dbase_str);
-        if (mndx)
+        if (mndx > 0)
             pm = &mons[mndx];
 
         long entry_offset;
