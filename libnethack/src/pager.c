@@ -770,12 +770,15 @@ checkfile(const char *inp, const struct permonst *pm,
         }
     }
 
-    if (found_in_file) {
+    if (!pm) {
         /* Try to parse as a monster name for monster info */
         int mndx = name_to_mon(dbase_str);
         if (mndx > 0)
             pm = &mons[mndx];
+    }
 
+    if (found_in_file) {
+        struct nh_menulist menu;
         long entry_offset;
         int entry_count;
         int i;
@@ -823,6 +826,13 @@ checkfile(const char *inp, const struct permonst *pm,
                          msgupcasefirst(dbase_str) : NULL,
                          FALSE, PLHINT_ANYWHERE, NULL);
         }
+    } else if (pm) {
+        struct nh_menulist menu;
+
+        init_menulist(&menu);
+        add_mon_info(&menu, pm);
+        display_menu(&menu, msgupcasefirst(pm->mname), FALSE,
+                     PLHINT_ANYWHERE, NULL);
     } else if (user_typed_name)
         pline(msgc_info, "I don't have any information on those things.");
 
