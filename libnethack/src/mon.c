@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-04 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -627,8 +627,11 @@ mcalcdistress(void)
         /* monsters with polymorphitis might get polymorphed */
         if (polymorphitis(mtmp) && !rn2(100))
             newcham(mtmp, NULL, FALSE, FALSE);
-        /* monsters with teleportitis might teleport */
-        if (teleportitis(mtmp) && !rn2(85))
+        /* Monsters with teleportitis might teleport.
+           Suppress this on Wizard's Tower to prevent
+           Wizard of Yendor oddities. */
+        if (teleportitis(mtmp) && !rn2(85) &&
+            !On_W_tower_level(m_mz(mtmp)))
             mon_tele(mtmp, !!teleport_control(mtmp));
 
         /* intrinsic timeouts */
