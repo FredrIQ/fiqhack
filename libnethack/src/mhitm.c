@@ -2230,8 +2230,7 @@ do_at_area(struct level *lev)
             continue;
         if ((areaatk[i] = attacktype_fordmg(magr->data, AT_AREA, AD_ANY))) {
             areamons[i] = magr;
-            area[COLNO][0] = 0;
-            area[COLNO][0] |= ((uint64_t)1 << i);
+            area[COLNO][0] = ((uint64_t)1 << i);
             do_clear_area(m_mx(magr), m_my(magr), areaatk[i]->damn,
                           set_at_area, &area);
             i++;
