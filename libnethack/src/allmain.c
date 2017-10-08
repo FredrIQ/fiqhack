@@ -931,8 +931,7 @@ you_moved(void)
             }
 
             if (!u.uinvulnerable) {
-                if (Teleportation && !rn2(85) &&
-                    !On_W_tower_level(m_mz(&youmonst))) {
+                if (Teleportation && !rn2(85)) {
                     xchar old_ux = u.ux, old_uy = u.uy;
 
                     tele();

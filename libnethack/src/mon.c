@@ -630,8 +630,7 @@ mcalcdistress(void)
         /* Monsters with teleportitis might teleport.
            Suppress this on Wizard's Tower to prevent
            Wizard of Yendor oddities. */
-        if (teleportitis(mtmp) && !rn2(85) &&
-            !On_W_tower_level(m_mz(mtmp)))
+        if (teleportitis(mtmp) && !rn2(85))
             mon_tele(mtmp, !!teleport_control(mtmp));
 
         /* intrinsic timeouts */
