@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-06 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1604,12 +1604,6 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
 
         if (Punished)
             unplacebc();        /* ball&chain go away */
-        remove_monster(level, mtmp->mx, mtmp->my);
-        mtmp->mtrapped = 0;     /* no longer on old trap */
-        place_monster(mtmp, u.ux, u.uy, TRUE);
-        u.ustuck = mtmp;
-        newsym(mtmp->mx, mtmp->my);
-
         if (is_animal(mtmp->data) && u.usteed) {
             /* Too many quirks presently if hero and steed are swallowed.
                Pretend purple worms don't like horses for now :-) */
@@ -1618,6 +1612,12 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
             dismount_steed(DISMOUNT_ENGULFED);
         } else
             pline(msgc_statusbad, "%s engulfs you!", Monnam(mtmp));
+        remove_monster(level, mtmp->mx, mtmp->my);
+        mtmp->mtrapped = 0;     /* no longer on old trap */
+        place_monster(mtmp, u.ux, u.uy, TRUE);
+        u.ustuck = mtmp;
+        newsym(mtmp->mx, mtmp->my);
+
         action_interrupted();
         reset_occupations(TRUE);    /* behave as if you had moved */
 
