@@ -4771,7 +4771,7 @@ C$ = (255, 255, 255)
   ________________________________________________________________
   ________________________________________________________________
 }
-# tile 144 (gray dragon)
+# tile 144 (ancient gray dragon)
 {
   AOAO__________________________________________AOAOAOAOAOAOAOAO__
   __AOAOAOAO__________________C$______C$C$AOAOAOAOBcBcBcBcBcBc____
@@ -4806,7 +4806,7 @@ C$ = (255, 255, 255)
   __________CPAO_ACPAO_AAOABCP_A_A_______A_A_ACPAO_AABBn_AABCP_A__
   ___________A_A_A_A_A_A_A_A_A_A_____________A_A_A_A_A_A_A_A_A____
 }
-# tile 145 (silver dragon)
+# tile 145 (ancient silver dragon)
 {
   BDBD__________________________________________BDBDBDBDBDBDBDBD__
   __BDBDBDBD__________________C$______C$C$BDBDBDBDBcBcBcBcBcBc____
@@ -4841,7 +4841,7 @@ C$ = (255, 255, 255)
   __________CVBD_ACVBD_ABDAeCV_A_A_______A_A_ACVBD_AAeCV_AAeCV_A__
   ___________A_A_A_A_A_A_A_A_A_A_____________A_A_A_A_A_A_A_A_A____
 }
-# tile 146 (shimmering dragon)
+# tile 146 (ancient shimmering dragon)
 {
   CHBU__________________________________________CLBHAoApBFAmAfBu__
   __BUAfAmBn__________________C$______C$C$BtCGCLCLBKBKBKBABKBK____
@@ -4876,7 +4876,7 @@ C$ = (255, 255, 255)
   __________CPBd_ACPBj_ABtBVCP_A_A_______A_A_ACPCj_ACxCP_ABVCP_A__
   ___________A_A_A_A_A_A_A_A_A_A_____________A_A_A_A_A_A_A_A_A____
 }
-# tile 147 (red dragon)
+# tile 147 (ancient red dragon)
 {
   BNBN__________________________________________BNBNBNBNBNBNBNBN__
   __BNBNBNBN__________________C$______C$C$BNBNBNBNBsBsBsBsBsBs____
@@ -4911,7 +4911,7 @@ C$ = (255, 255, 255)
   __________CPBN_ACPBN_ABNAqCP_A_A_______A_A_ACPBN_AAqCP_AAqCP_A__
   ___________A_A_A_A_A_A_A_A_A_A_____________A_A_A_A_A_A_A_A_A____
 }
-# tile 148 (white dragon)
+# tile 148 (ancient white dragon)
 {
   BdBd__________________________________________BdBdBdBdBdBdBdBd__
   __BdBdBdBd__________________C$______C$C$BdBdBdBdBKBKBKBKBKBK____
@@ -4946,7 +4946,7 @@ C$ = (255, 255, 255)
   __________CPBd_ACPBD_ABdAjCK_L_A_______A_A_ACPBd_ABDCP_ABJBn_z__
   ___________A_A_A_A_A_A_A_A_A_A_____________A_A_A_A_A_A_A_A_A____
 }
-# tile 149 (orange dragon)
+# tile 149 (ancient orange dragon)
 {
   BSBS__________________________________________BSBSBSBSBSBSBSBS__
   __BSBSBSBS__________________C$______C$C$BSBSBSBSCTBLCTBjBmBj____
@@ -4981,7 +4981,7 @@ C$ = (255, 255, 255)
   __________CPBS_ACPBS_ABSAwCP_A_A_______A_A_ACPBS_AAwCP_AAwCP_A__
   ___________A_A_A_A_A_A_A_A_A_A_____________A_A_A_A_A_A_A_A_A____
 }
-# tile 150 (black dragon)
+# tile 150 (ancient black dragon)
 {
   _M_M___________________________________________M_MAA_MA__M_M_z__
   ___MAK_M_M__________________C$______C$C$_MAA_MA_AeAeAeAeAeAe____
@@ -5016,7 +5016,7 @@ C$ = (255, 255, 255)
   __________CP_z_ACP_z_AAB_ACP_A_A_______A_A_ACP_z_A_ACP_A_ACP_A__
   ___________A_A_A_A_A_A_A_A_A_A_____________A_A_A_A_A_A_A_A_A____
 }
-# tile 151 (blue dragon)
+# tile 151 (ancient blue dragon)
 {
   _G_G___________________________________________G_G_G_G_G_G_G_G__
   ___G_G_G_G__________________C$______C$C$_G_G_G_GBzBzBzBzBzBz____
@@ -5051,7 +5051,7 @@ C$ = (255, 255, 255)
   __________CP_G_ACP_G_A_G_FCP_A_A_______A_A_ACP_G_A_FCP_A_FCP_A__
   ___________A_A_A_A_A_A_A_A_A_A_____________A_A_A_A_A_A_A_A_A____
 }
-# tile 152 (green dragon)
+# tile 152 (ancient green dragon)
 {
   _Y_Y___________________________________________Y_Y_Y_Y_Y_Y_Y_Y__
   ___Y_Y_Y_Y__________________C$______C$C$_Y_Y_Y_YAqAqAqAqAqAq____
@@ -5086,7 +5086,7 @@ C$ = (255, 255, 255)
   __________CP_U_ACP_Y_A_Y_UCP_A_A_______A_A_ACP_U_A_UCP_A_UCP_A__
   ___________A_A_A_A_A_A_A_A_A_A_____________A_A_A_A_A_A_A_A_A____
 }
-# tile 153 (yellow dragon)
+# tile 153 (ancient yellow dragon)
 {
   AzBW__________________________________________AzBWAzAgAzBWAzAg__
   __AzAgAzAz__________________C$______C$C$AzBWAzAgBsBsBsBsBsBs____
@@ -11595,4 +11595,39 @@ C$ = (255, 255, 255)
   ___________A_A_ABSBSBiBS_A_A_A_A_A_A_ABSBSBSBS_A_A_A_A_A________
   _____________A_ABSBSBSBS_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A__________
   _________________A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A______________
+}
+# tile 976 (island nymph)
+{
+  ________________________________________________________________
+  ________________________________________________________________
+  ____________________________AGAzAGAz____________________________
+  __________________________AGAzAGAzAGAG__________________________
+  __________________________C6C6CTAGAxAzAG________________________
+  __________________________AhC6AhCUAGAGAGAzAG____________________
+  __________________________C6CiCUCUArAzArAxAGAGAzAG______________
+  __________________________CUC6CTCUAGAxAzAGAzAG____AzAG__________
+  ______________________C6CiBICUCUBI_pAGAGAx____AGAz______________
+  ____________________C6CUBIBICTBIBIC6C6AGAGAGAz____AGAG__________
+  ____________________C6BIBIBIBIBIBICUC6C6____AGAGAz______________
+  __________________CUCUBIBIBIBIBIBI_pBvC6__________AGAz__________
+  ________________C6CU____BIBIBIBI_p_p__CTC6______________________
+  ________________C6CT_____p_pBIBI_p_p____CUC6____________________
+  ______________C6Bv________BIBIBI_p_p____CTC6____________________
+  ____________C6CT__________BIBI_p_p_p______BvC6__________________
+  ____________CU____________BIBI_p_p_J________CT__________________
+  _________________________p_J_J_J_HBIBI_p_p______________________
+  _________________________pBI_pBIBI_p_pBI_p_p_p_H_p______________
+  ______________________BI_pBI_p_pBIBI_p_pBI_J_H_p_p_p_H_H_p______
+  ______________________BI_pBIBI_p_pBIBI_H_HBIBIBIBI_J_e_e_e_e____
+  _______________________J_HBIBI_J_H_H_kBI_pBIBIBI_k_e_e_e_e_e____
+  ____________________BIBI_p_J_kBI_p_pBIBI_p_pBI_JAD_e_e_e________
+  ____________________BI_p_pBIBIBI_p_p_pBIBI_p_H_e_e_e_e__________
+  ____________________BI_p_p_pBIBI_p_p_p_p_H_JAD_e_e_____A_A_A_A__
+  _____________________k_J_p_p_pBIBI_J_H_H_e_e_e_A_A_A_A_A_A_A_A__
+  ___________________A_z_z_K_F_H_k_JCT_A_z_A_L_A_A_A_A_A_A_A_A_A__
+  _________________A_A_A_ACnCT_z_ACGCn_A_A_A_A_A_A_A_A_A_A_A_A____
+  _________________A_A_ACnCn_A_ACnCn_A_A_A_A_A_A_A_A_A_A_A________
+  _________________A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A____________
+  _________________A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A________________
+  ___________________A_A_A_A_A_A_A_A_A_A_A________________________
 }
