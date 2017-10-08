@@ -2348,7 +2348,8 @@ maurahitpile(struct monst *mon, int x, int y, const struct attack *mattk)
                 pline(msgc_monneutral, "%s from the dead%s!",
                       M_verbs(omon, "raise"),
                       nonliving(omon->data) ? "" :
-                      msgcat_many(" under ", mon_nam(mon), " power", NULL));
+                      msgcat_many(" under ", s_suffix(mon_nam(mon)),
+                                  " power", NULL));
             if (!nonliving(omon->data) && !izombie(omon))
                 set_property(omon, ZOMBIE, 0, TRUE);
         }
