@@ -915,6 +915,9 @@ dorecover(struct memfile *mf)
     pantheon_init(FALSE);
 
     mtmp = restore_mon(mf, NULL, NULL);
+    if (mtmp->minvent)
+        restobjchn(mf, NULL, FALSE, FALSE,
+                   &(mtmp->minvent), NULL);
     youmonst = *mtmp;
     dealloc_monst(mtmp);
     set_uasmon();       /* fix up youmonst.data */

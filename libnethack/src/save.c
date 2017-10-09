@@ -105,6 +105,8 @@ savegame(struct memfile *mf)
     save_flags(mf); /* note: cannot use save encoding until after save_flags */
     save_you(mf, &u);
     save_mon(mf, &youmonst, NULL);
+    if (youmonst.minvent)
+        saveobjchn(mf, youmonst.minvent);
 
     /* store dungeon layout */
     save_dungeon(mf);
