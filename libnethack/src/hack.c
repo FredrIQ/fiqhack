@@ -78,8 +78,12 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
         int peaceful = 0; /* how peaceful is the monster? */
 
         if (mtmp && !Hallucination && canclassifymon(mtmp)) {
-            if (mtmp->mtame || mtmp->mpeaceful)
+            if (mtmp->mtame || mtmp->mpeaceful) {
                 peaceful = 3; /* allow displacing peacefuls */
+                /* Don't allow displacing priests/shopkeepers */
+                if (mx_eshk(mtmp) || mx_epri(mtmp))
+                    peaceful = 1;
+            }
         } /* otherwise treat the monster as hostile */
 
         switch (uim) {
