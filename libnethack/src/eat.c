@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2062,9 +2062,12 @@ gethungry(void)
         u.uhunger--;    /* ordinary food consumption */
 
     if (moves % 2) {    /* odd turns */
+        int hp = Upolyd ? u.mh : u.uhp;
+        int hpmax = Upolyd ? u.mhmax : u.uhpmax;
         /* Regeneration uses up food, unless due to an artifact.  Note: assumes
            that only artifacts can confer regneration via wield. */
-        if (regenerates(&youmonst) & ~(W_ARTIFACT | W_MASK(os_wep)))
+        if (hp < hpmax &&
+            (regenerates(&youmonst) & ~(W_ARTIFACT | W_MASK(os_wep))))
             u.uhunger--;
         if (near_capacity() > SLT_ENCUMBER)
             u.uhunger--;
