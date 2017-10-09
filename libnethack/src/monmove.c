@@ -923,8 +923,7 @@ not_special:
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
         flag |= ALLOW_MUXY;
-    if (!mtmp->mpeaceful && !mtmp->mtame)
-        flag |= ALLOW_PEACEFUL;
+    flag |= ALLOW_PEACEFUL;
     if (pm_isminion(ptr) || is_rider(ptr) || is_mplayer(ptr))
         flag |= ALLOW_SANCT;
     /* unicorn may not be able to avoid hero on a noteleport level */
