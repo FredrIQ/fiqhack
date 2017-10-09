@@ -91,6 +91,17 @@ find_lev_obj(struct level *lev)
     }
 }
 
+static void
+setup_invent_olev(struct obj *chain)
+{
+    struct obj *obj;
+    for (obj = chain; obj; obj = obj->nobj) {
+        obj->olev = level;
+        if (Has_contents(obj))
+            setup_invent_olev(obj->cobj);
+    }
+}
+
 /* Validate in_use -- it should never be set in neutral turnstate */
 void
 inven_inuse(boolean quietly)
@@ -946,6 +957,9 @@ dorecover(struct memfile *mf)
 
     /* all data has been read, prepare for player */
     level = levels[ledger_no(&u.uz)];
+
+    /* set up olev on hero inventory */
+    setup_invent_olev(youmonst.minvent);
 
     max_rank_sz();      /* to recompute mrank_sz (botl.c) */
     /* take care of iron ball & chain */
