@@ -1540,7 +1540,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         swarmcount++;
 
                         if (!mtmp2->mpeaceful ||
-                            !(mmflag & ALLOW_PEACEFUL)) {
+                            !(mmflag & ALLOW_PEACEFUL) ||
+                            mx_eshk(mtmp2) || mx_epri(mtmp2)) {
                             if (!(mmflag & ALLOW_M))
                                 continue;
                             info[cnt] |= ALLOW_M;
