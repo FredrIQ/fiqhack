@@ -1857,7 +1857,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                       Monnam(mtmp));
                 action_completed();
                 return 1;
-            } else if (!mtmp->mtame) {
+            } else if ((!mtmp->mtame && !mtmp->mpeaceful) ||
+                       mx_eshk(mtmp) || mx_epri(mtmp)) {
                 /* can happen through stun/confusion */
                 pline(msgc_failrandom, "You bump into %s.  "
                       "%s's apparently unwilling to swap places.",
