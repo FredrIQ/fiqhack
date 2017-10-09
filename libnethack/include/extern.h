@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2042,7 +2042,7 @@ extern int display_menu(struct nh_menulist *, const char *, int, int,
                         const int **);
 extern int display_objects(struct nh_objlist *, const char *, int, int,
                            const struct nh_objresult **);
-extern void win_list_items(struct nh_objlist *, boolean invent);
+extern void win_list_items(struct nh_objlist *, boolean);
 
 /* ### wizard.c ### */
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -157,7 +157,6 @@ extern const char def_monsyms[MAXMCLASSES];     /* default class symbols */
 
 extern int lastinvnr;
 
-extern struct obj *invent;
 extern struct obj zeroobj;      /* init'd and defined in decl.c */
 
 
@@ -277,6 +276,7 @@ struct newgame_options {
 
 /* Compatibility macros. */
 # define u gamestate.us[0]
+# define invent youmonst.minvent
 
 # define dungeon_topology       gamestate.topology
 # define oracle_level           (dungeon_topology.d_oracle_level)
