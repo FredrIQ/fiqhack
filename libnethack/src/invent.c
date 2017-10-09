@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1332,7 +1332,7 @@ identify_pack(struct monst *mon, int id_limit,
 
     unid_cnt = 0;
     the_obj = 0;        /* if unid_cnt ends up 1, this will be it */
-    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
         if (you) {
             if (not_fully_identified(obj))
                 any_unid_cnt++;
@@ -1375,7 +1375,7 @@ identify_pack(struct monst *mon, int id_limit,
         } else {
 
             /* TODO: use fully_identify_obj and cornline/menu/whatever here */
-            for (obj = m_minvent(mon); obj; obj = obj->nobj)
+            for (obj = mon->minvent; obj; obj = obj->nobj)
                 if ((you &&
                      not_fully_identified_core(obj, FALSE, skill)) ||
                     (!you &&
@@ -1391,7 +1391,7 @@ identify_pack(struct monst *mon, int id_limit,
                       Monnam(mon), unid_cnt == 1 ? "a " : "",
                       unid_cnt == 1 ? "" : "s", mhis(mon));
             n = 0;
-            for (obj = m_minvent(mon); obj && n < id_limit; obj = obj->nobj) {
+            for (obj = mon->minvent; obj && n < id_limit; obj = obj->nobj) {
                 if (obj->otyp == GOLD_PIECE)
                     continue;
 

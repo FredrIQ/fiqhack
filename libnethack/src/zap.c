@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -505,7 +505,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             struct obj *otemp;
             struct obj *onext;
             boolean didmerge;
-            for (otemp = m_minvent(mdef); otemp; otemp = onext) {
+            for (otemp = mdef->minvent; otemp; otemp = onext) {
                 onext = otemp->nobj;
                 bhito(otemp, otmp);
             }
@@ -583,8 +583,8 @@ probe_monster(struct monst *mon)
     if (!you && notonhead)
         return; /* don't show minvent for long worm tail */
 
-    if (m_minvent(mon)) {
-        for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
+    if (mon->minvent) {
+        for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
             otmp->dknown = 1;   /* treat as "seen" */
         if (you)
             display_inventory(NULL, FALSE);

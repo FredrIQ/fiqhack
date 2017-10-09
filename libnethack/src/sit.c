@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,7 +14,7 @@ take_gold(struct monst *mon)
     struct obj *otmp, *nobj;
     int lost_money = 0;
 
-    for (otmp = m_minvent(mon); otmp; otmp = nobj) {
+    for (otmp = mon->minvent; otmp; otmp = nobj) {
         nobj = otmp->nobj;
         if (otmp->oclass == COIN_CLASS) {
             lost_money = 1;
@@ -361,7 +361,7 @@ rndcurse(struct monst *mtmp, struct monst *magr)
                   "the magic-absorbing blade");
         cnt = rn2_on_rng(6, rng);
     }
-    for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj) {
+    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
         /* gold isn't subject to being cursed or blessed */
         if (otmp->oclass == COIN_CLASS)
             continue;
@@ -381,7 +381,7 @@ rndcurse(struct monst *mtmp, struct monst *magr)
     if (nobj) {
         for (; cnt > 0; cnt--) {
             onum = rnd(nobj);
-            for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj) {
+            for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
                 /* as above */
                 if (otmp->oclass == COIN_CLASS)
                     continue;

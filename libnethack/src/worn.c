@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -46,7 +46,7 @@ mworn_extrinsic(const struct monst *mon, int extrinsic)
 {
     int warntype;
     boolean blocked;
-    return find_extrinsic(m_minvent(mon), extrinsic, &warntype, &blocked);
+    return find_extrinsic(mon->minvent, extrinsic, &warntype, &blocked);
 }
 
 boolean
@@ -54,7 +54,7 @@ mworn_blocked(const struct monst *mon, int extrinsic)
 {
     int warntype;
     boolean blocked;
-    find_extrinsic(m_minvent(mon), extrinsic, &warntype, &blocked);
+    find_extrinsic(mon->minvent, extrinsic, &warntype, &blocked);
     return blocked;
 }
 
@@ -63,7 +63,7 @@ mworn_warntype(const struct monst *mon)
 {
     int warntype;
     boolean blocked;
-    return find_extrinsic(m_minvent(mon), WARN_OF_MON, &warntype, &blocked)
+    return find_extrinsic(mon->minvent, WARN_OF_MON, &warntype, &blocked)
         ? warntype : 0;
 }
 
@@ -136,7 +136,7 @@ find_mac(struct monst *mon)
     struct obj *obj;
     int base = mon->data->ac;
 
-    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
         /* Armor transformed into dragon skin gives no AC bonus */
         if (mon == &youmonst && obj == uskin())
             continue;
@@ -559,7 +559,7 @@ which_armor(const struct monst *mon, enum objslot slot)
 {
     struct obj *obj;
 
-    for (obj = m_minvent(mon); obj; obj = obj->nobj)
+    for (obj = mon->minvent; obj; obj = obj->nobj)
         if (obj->owornmask & W_MASK(slot))
             return obj;
     return NULL;

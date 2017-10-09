@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -358,7 +358,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE, rng), NULL);
             /* if the monster acquired polymorph control as part of the
                randomness, then maybe they did some ring eating... */
-            if (m_carrying_recursive(mtmp, m_minvent(mtmp),
+            if (m_carrying_recursive(mtmp, mtmp->minvent,
                                      RIN_POLYMORPH_CONTROL, TRUE) &&
                 !rn2_on_rng(3, rng)) {
                 for (i = rn2_on_rng(11, rng); i; i--) {

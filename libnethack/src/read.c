@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -242,7 +242,7 @@ mon_choose_recharge(struct monst *mon, int bcsign)
     int score_best = -1;
     int otyp;
     /* count object amount */
-    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
         score = -1;
         otyp = obj->otyp;
         /* check for a valid object -- we can't use
@@ -1305,7 +1305,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                - Monster is wielding a sling: uncurse 1st found stackable gems
                - Otherwise: uncurse 1st found stackable weapon that isn't already wielded */
             struct obj *mquiver = NULL;
-            for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+            for (obj = mon->minvent; obj; obj = obj->nobj) {
                 long wornmask;
                 
                 /* gold isn't subject to cursing and blessing */
@@ -1531,7 +1531,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                 makeknown(SCR_IDENTIFY);
         }
 
-        if (m_minvent(mon) && !confused) {
+        if (mon->minvent && !confused) {
             identify_pack(mon, cval, idpower);
         }
         return 1;
@@ -1634,7 +1634,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
     case SCR_AMNESIA:
         if (!you) {
             /* forget items */
-            for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj) {
+            for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
                 otmp->mknown = 0;
                 otmp->mbknown = 0;
             }
@@ -1868,7 +1868,7 @@ set_lit(int x, int y, void *val)
         if (!mtmp && x == u.ux && y == u.uy)
             mtmp = &youmonst;
         if (mtmp)
-            for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj)
+            for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
                 snuff_lit(otmp);
     }
 }

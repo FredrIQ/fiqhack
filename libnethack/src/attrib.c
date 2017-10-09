@@ -572,7 +572,7 @@ acurr(const struct monst *mon, int x)
 
         /* check for the "power" obj property, only functions on
            worn armor. */
-        for (obj = m_minvent(mon); obj; obj = obj->nobj)
+        for (obj = mon->minvent; obj; obj = obj->nobj)
             if ((obj->owornmask & W_ARMOR) &&
                 (obj_properties(obj) & opm_power))
                 return 125;
@@ -650,7 +650,7 @@ attr_bonus(const struct monst *mon, int attrib)
     int otyp;
     uint64_t props;
 
-    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
         /* is it worn properly */
         if (!(obj->owornmask & W_WORN))
             continue;

@@ -1564,7 +1564,7 @@ can_ooze(struct monst *mtmp)
     if (!amorphous(mtmp->data))
         return FALSE;
 
-    chain = m_minvent(mtmp);
+    chain = mtmp->minvent;
 
     for (obj = chain; obj; obj = obj->nobj) {
         int typ = obj->otyp;

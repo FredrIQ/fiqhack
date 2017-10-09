@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -657,7 +657,7 @@ levitates_at_will(const struct monst *mon, boolean include_extrinsic,
         return (why ? lev_worn : 0);
 
     if (lev_worn) { /* armor/ring/slotless levitation active */
-        struct obj *chain = m_minvent(mon);
+        struct obj *chain = mon->minvent;
         int warntype;
         long itemtype;
         
@@ -695,7 +695,7 @@ mon_remove_levitation(struct monst *mon, boolean forced)
     }
 
     /* monster levitation comes from an extrinsic */
-    struct obj *chain = m_minvent(mon);
+    struct obj *chain = mon->minvent;
     int warntype;
     long itemtype;
     int slot;
@@ -2508,7 +2508,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     /* Smell of gold, approximating 3.4.3 behaviour (which was previously in
        set_apparxy in monmove.c). Xorns can sense any monster with gold in their
        inventory. */
-    if (viewer->data == &mons[PM_XORN] && money_cnt(m_minvent(viewee)))
+    if (viewer->data == &mons[PM_XORN] && money_cnt(viewee->minvent))
         sensemethod |= MSENSE_GOLDSMELL;
 
     /* Cooperative telepathy. Friendly monsters reveal themselves to each other
