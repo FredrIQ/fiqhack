@@ -1862,6 +1862,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 pline(msgc_failrandom, "You bump into %s.  "
                       "%s's apparently unwilling to swap places.",
                       mon_nam(mtmp), msgupcasefirst(mhe(mtmp)));
+                return 1;
             }
         } else {
             /* Possibly unwield launcher for ammo unless we're using forcefight. */
