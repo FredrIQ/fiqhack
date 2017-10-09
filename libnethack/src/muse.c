@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -273,8 +273,7 @@ mzapmsg(struct monst *mtmp, struct obj *otmp, boolean self)
 {
     if (!mon_visible(mtmp))
         You_hear(msgc_levelsound, "a %s zap.",
-                 (distu(mtmp->mx, mtmp->my) <=
-                  (BOLT_LIM + 1) * (BOLT_LIM + 1)) ? "nearby" : "distant");
+                 distant(mtmp) ? "distant" : "nearby");
     else if (self)
         pline(combat_msgc(mtmp, NULL, cr_hit), "%s zaps %sself with %s!",
               Monnam(mtmp), mhim(mtmp), doname(otmp));
@@ -2157,7 +2156,8 @@ use_item(struct musable *m)
                   "%s hurls %s!", Monnam(mon), singular(obj, doname));
         }
         m_throw(mon, mon->mx, mon->my, m->x, m->y,
-                distmin(mon->mx, mon->my, m->x, m->y), obj, TRUE);
+                distmin(mon->mx, mon->my, m->x, m->y), obj,
+                !distant(mon));
         return 2;
     case MUSE_EAT:
         dog_eat(mon, obj, mon->mx, mon->my, FALSE);
