@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-06-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -78,10 +78,8 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
         int peaceful = 0; /* how peaceful is the monster? */
 
         if (mtmp && !Hallucination && canclassifymon(mtmp)) {
-            if (mtmp->mtame)
-                peaceful = 3; /* tame */
-            else if (mtmp->mpeaceful)
-                peaceful = 1; /* 1=don't interact, 2=chat */
+            if (mtmp->mtame || mtmp->mpeaceful)
+                peaceful = 3; /* allow displacing peacefuls */
         } /* otherwise treat the monster as hostile */
 
         switch (uim) {
@@ -2197,7 +2195,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             remove_monster(level, x, y);
             place_monster(mtmp, u.ux0, u.uy0, TRUE);
             pline_once(mtmp->mtame ? msgc_petneutral : msgc_petfatal,
-                       "You %s %s.", mtmp->mtame ? "displace" : "frighten", pnambuf);
+                       "You %s %s.",
+                       mtmp->mtame || mtmp->mpeaceful ?
+                       "displace" : "frighten", pnambuf);
 
             /* check for displacing it into pools and traps */
             switch (minliquid(mtmp) ? 2 : mintrap(mtmp)) {

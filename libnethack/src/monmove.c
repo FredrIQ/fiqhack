@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -923,6 +923,8 @@ not_special:
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
         flag |= ALLOW_MUXY;
+    if (!mtmp->mpeaceful && !mtmp->mtame)
+        flag |= ALLOW_PEACEFUL;
     if (pm_isminion(ptr) || is_rider(ptr) || is_mplayer(ptr))
         flag |= ALLOW_SANCT;
     /* unicorn may not be able to avoid hero on a noteleport level */
@@ -988,6 +990,8 @@ not_special:
         chi = -1;
         if (flag & OPENDOOR)
             ds.mmflags |= MM_IGNOREDOORS;
+        if (flag & ALLOW_PEACEFUL)
+            ds.mmflags |= MM_IGNOREPEACE;
         nidist = distmap(&ds, omx, omy);
 
         /* Check if we can actually force lineup */
@@ -1200,8 +1204,22 @@ not_special:
             }
             /* doorbusters are taken care of in postmov */
         }
-        remove_monster(level, omx, omy);
-        place_monster(mtmp, nix, niy, TRUE);
+
+        struct monst *dmon = m_at(level, nix, niy);
+        if ((info[chi] & ALLOW_PEACEFUL) && dmon) {
+            if (cansee(mtmp->mx, mtmp->my) ||
+                cansee(dmon->mx, dmon->my))
+                pline(msgc_monneutral, "%s %s.",
+                      M_verbs(mtmp, "displace"),
+                      mon_nam(dmon));
+            remove_monster(level, omx, omy);
+            remove_monster(level, nix, niy);
+            place_monster(mtmp, nix, niy, TRUE);
+            place_monster(dmon, omx, omy, TRUE);
+        } else {
+            remove_monster(level, omx, omy);
+            place_monster(mtmp, nix, niy, TRUE);
+        }
 
         /* Place a segment at the old position. */
         if (mtmp->wormno)

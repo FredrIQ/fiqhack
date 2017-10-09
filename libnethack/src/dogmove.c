@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -735,7 +735,8 @@ dog_move(struct monst *mtmp, int after)
     if (appr == -2)
         return 0;
 
-    allowflags = ALLOW_TRAPS | ALLOW_SSM | ALLOW_SANCT;
+    allowflags = (ALLOW_TRAPS | ALLOW_SSM | ALLOW_SANCT |
+                  ALLOW_PEACEFUL);
     if (phasing(mtmp))
         allowflags |= (ALLOW_ROCK | ALLOW_WALL);
     if (passes_bars(mtmp))
@@ -968,8 +969,21 @@ newdogpos:
                 return 0;
         }
         /* insert a worm_move() if worms ever begin to eat things */
-        remove_monster(level, omx, omy);
-        place_monster(mtmp, nix, niy, TRUE);
+        struct monst *dmon = m_at(level, nix, niy);
+        if (info[chi] & ALLOW_PEACEFUL && dmon) {
+            if (cansee(mtmp->mx, mtmp->my) ||
+                cansee(dmon->mx, dmon->my))
+                pline(msgc_monneutral, "%s %s.",
+                      M_verbs(mtmp, "displace"),
+                      mon_nam(dmon));
+            remove_monster(level, omx, omy);
+            remove_monster(level, nix, niy);
+            place_monster(mtmp, nix, niy, TRUE);
+            place_monster(dmon, omx, omy, TRUE);
+        } else {
+            remove_monster(level, omx, omy);
+            place_monster(mtmp, nix, niy, TRUE);
+        }
         if (cursemsg[chi] && (cansee(omx, omy) || cansee(nix, niy)))
             pline(msgc_petneutral, "%s moves only reluctantly.", Monnam(mtmp));
         /* We have to know if the pet's gonna do a combined eat and move before

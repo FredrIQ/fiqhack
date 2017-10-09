@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1539,14 +1539,18 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
 
                         swarmcount++;
 
-                        if (!(mmflag & ALLOW_M))
-                            continue;
-                        info[cnt] |= ALLOW_M;
-                        if (mtmp2->mtame) {
-                            if (!(mmflag & ALLOW_TM))
+                        if (!mtmp2->mpeaceful ||
+                            !(mmflag & ALLOW_PEACEFUL)) {
+                            if (!(mmflag & ALLOW_M))
                                 continue;
-                            info[cnt] |= ALLOW_TM;
-                        }
+                            info[cnt] |= ALLOW_M;
+                            if (mtmp2->mtame) {
+                                if (!(mmflag & ALLOW_TM))
+                                    continue;
+                                info[cnt] |= ALLOW_TM;
+                            }
+                        } else
+                            info[cnt] |= ALLOW_PEACEFUL;
                     }
                     /* Note: ALLOW_SANCT only prevents movement, not attack,
                        into a temple. */
@@ -1655,7 +1659,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
 
         int i;
         for (i = 0; i < oldcnt; i++) {
-            if ((infocopy[i] & (ALLOW_MUXY | ALLOW_M))) {
+            if ((infocopy[i] &
+                 (ALLOW_MUXY | ALLOW_M | ALLOW_PEACEFUL))) {
                 info[cnt] = infocopy[i];
                 poss[cnt] = posscopy[i];
                 cnt++;
