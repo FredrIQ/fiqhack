@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -72,7 +72,7 @@ static struct obj *find_oid_lev(struct level *lev, unsigned id);
 long
 money2mon(struct monst *mon, long amount)
 {
-    struct obj *ygold = findgold(invent);
+    struct obj *ygold = findgold(youmonst.minvent);
 
     if (amount <= 0) {
         impossible("%s payment in money2mon!", amount ? "negative" : "zero");
@@ -234,7 +234,7 @@ setpaid(struct monst *shkp)
     struct obj *obj;
     struct monst *mtmp;
 
-    clear_unpaid(shkp, invent);
+    clear_unpaid(shkp, youmonst.minvent);
     clear_unpaid(shkp, level->objlist);
     clear_unpaid(shkp, level->buriedobjlist);
     if (thrownobj && onbill(thrownobj, shkp, TRUE))
@@ -1184,7 +1184,7 @@ proceed:
     }
 
     if (shkp != resident && shkp->mpeaceful) {
-        umoney = money_cnt(invent);
+        umoney = money_cnt(youmonst.minvent);
 
         if (!ltmp)
             pline(msgc_cancelled1, "You do not owe %s anything.",
@@ -1218,7 +1218,7 @@ proceed:
 
     /* ltmp is still eshkp->robbed here */
     if (!eshkp->billct && !eshkp->debit) {
-        umoney = money_cnt(invent);
+        umoney = money_cnt(youmonst.minvent);
 
         if (!ltmp && shkp->mpeaceful) {
             pline(msgc_cancelled1, "You do not owe %s anything.",
@@ -1284,7 +1284,7 @@ proceed:
         long loan = eshkp->loan;
         const char *sbuf;
 
-        umoney = money_cnt(invent);
+        umoney = money_cnt(youmonst.minvent);
         sbuf = msgprintf("You owe %s %ld %s ", mx_name(shkp), dtmp,
                          currency(dtmp));
         if (loan) {
@@ -1330,7 +1330,7 @@ proceed:
         boolean itemize;
         boolean oneitem_found = FALSE;
 
-        umoney = money_cnt(invent);
+        umoney = money_cnt(youmonst.minvent);
         if (!umoney && !eshkp->credit) {
             /* TODO: this can return 0 despite paying off a debt earlier (the
                reverse situation to msgc_cancelled1); we should check if we did
@@ -1441,7 +1441,7 @@ dopayobj(struct monst *shkp, struct bill_x *bp, struct obj **obj_p,
 {
     struct obj *obj = *obj_p;
     long ltmp, quan, save_quan;
-    long umoney = money_cnt(invent);
+    long umoney = money_cnt(youmonst.minvent);
     int buy;
     boolean stashed_gold = (hidden_gold() > 0L), consumed = (which == 0);
 
@@ -1599,7 +1599,7 @@ inherits(struct monst *shkp, int numsk, int croaked)
     if (roomno == eshkp->shoproom && inhishop(shkp) && !eshkp->billct &&
         !eshkp->robbed && !eshkp->debit && shkp->mpeaceful &&
         !eshkp->following) {
-        if (invent)
+        if (youmonst.minvent)
             pline(msgc_outrobad,
                   "%s gratefully inherits all your possessions.",
                   mx_name(shkp));
@@ -1616,9 +1616,9 @@ inherits(struct monst *shkp, int numsk, int croaked)
     }
 
     if (eshkp->following || !shkp->mpeaceful || take) {
-        if (!invent)
+        if (!youmonst.minvent)
             goto skip;
-        umoney = money_cnt(invent);
+        umoney = money_cnt(youmonst.minvent);
         const char *takes = "takes";
         if (distu(shkp->mx, shkp->my) > 2)
             takes = msgcat("comes and ", takes);
@@ -1698,7 +1698,7 @@ finish_paybill(void)
     /* normally done by savebones(), but that's too late in this case */
     unleash_all();
     /* transfer all of the character's inventory to the shop floor */
-    while ((otmp = invent) != 0) {
+    while ((otmp = youmonst.minvent) != 0) {
         otmp->owornmask = 0L;   /* perhaps we should call setnotworn? */
         otmp->lamplit = 0;      /* avoid "goes out" msg from freeinv */
         if (rn2(5))
@@ -1758,7 +1758,7 @@ find_oid(unsigned id)
         return obj;
 
     /* first check various obj lists directly */
-    if ((obj = o_on(id, invent)))
+    if ((obj = o_on(id, youmonst.minvent)))
         return obj;
 
     /* not found yet; check inventory for members of various monst lists */
@@ -3355,7 +3355,7 @@ shopdig(int fall)
         } else
             pline(msgc_itemloss, "%s %s your backpack!", mx_name(shkp), grabs);
 
-        for (obj = invent; obj; obj = obj2) {
+        for (obj = youmonst.minvent; obj; obj = obj2) {
             obj2 = obj->nobj;
             if ((obj->owornmask & ~(W_MASK(os_swapwep) |
                                     W_MASK(os_quiver))) != 0 ||
@@ -3501,7 +3501,8 @@ pay_for_damage(const char *dmgstr, boolean cant_mollify)
     }
 
     if ((um_dist(x, y, 1) && !uinshp) || cant_mollify ||
-        (money_cnt(invent) + mx_eshk(shkp)->credit) < cost_of_damage || !rn2(50)) {
+        (money_cnt(youmonst.minvent) + mx_eshk(shkp)->credit) < cost_of_damage ||
+        !rn2(50)) {
         if (um_dist(x, y, 1) && !uinshp) {
             pline(msgc_npcvoice, "%s shouts:", mx_name(shkp));
             verbalize(msgc_npcanger, "Who dared %s my %s?",

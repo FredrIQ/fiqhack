@@ -97,7 +97,7 @@ inven_inuse(boolean quietly)
 {
     struct obj *otmp, *otmp2;
 
-    for (otmp = invent; otmp; otmp = otmp2) {
+    for (otmp = youmonst.minvent; otmp; otmp = otmp2) {
         otmp2 = otmp->nobj;
         if (otmp->in_use) {
             if (!quietly)
@@ -479,7 +479,8 @@ restgamestate(struct memfile *mf)
     /* this stuff comes after potential aborted restore attempts */
     restore_timers(mf, lev, RANGE_GLOBAL, FALSE, 0L);
     restore_light_sources(mf, lev);
-    restobjchn(mf, lev, FALSE, FALSE, &youmonst.minvent, NULL);
+    if (flags.save_revision < 7)
+        restobjchn(mf, lev, FALSE, FALSE, &youmonst.minvent, NULL);
     migrating_mons = restmonchn(mf, NULL, FALSE);
     restore_mvitals(mf);
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -442,7 +442,8 @@ fill_topten_entry(struct toptenentry *newtt, int how, const char *killer)
     newtt->patchlevel = PATCHLEVEL;
     newtt->points = u.urexp > -1 ?      /* u.urexp stores score once invent is
                                            invalid */
-        u.urexp : calc_score(how, FALSE, money_cnt(invent) + hidden_gold());
+        u.urexp : calc_score(how, FALSE,
+                             money_cnt(youmonst.minvent) + hidden_gold());
     newtt->deathdnum = u.uz.dnum;
     newtt->deathlev = depth(&u.uz);
     newtt->maxlvl = deepest_lev_reached(TRUE);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -360,7 +360,7 @@ number_leashed(void)
     int i = 0;
     struct obj *obj;
 
-    for (obj = invent; obj; obj = obj->nobj)
+    for (obj = youmonst.minvent; obj; obj = obj->nobj)
         if (obj->otyp == LEASH && obj->leashmon != 0)
             i++;
     return i;
@@ -391,7 +391,7 @@ m_unleash(struct monst *mtmp, boolean feedback)
         else
             pline(msgc_petfatal, "Your leash falls slack.");
     }
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == LEASH && otmp->leashmon == (int)mtmp->m_id)
             otmp->leashmon = 0;
     mtmp->mleashed = 0;
@@ -403,7 +403,7 @@ unleash_all(void)
     struct obj *otmp;
     struct monst *mtmp;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == LEASH)
             otmp->leashmon = 0;
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
@@ -502,7 +502,7 @@ get_mleash(struct monst *mtmp)
 {       /* assuming mtmp->mleashed has been checked */
     struct obj *otmp;
 
-    otmp = invent;
+    otmp = youmonst.minvent;
     while (otmp) {
         if (otmp->otyp == LEASH && otmp->leashmon == (int)mtmp->m_id)
             return otmp;
@@ -525,7 +525,8 @@ next_to_u(void)
             if (distu(mtmp->mx, mtmp->my) > 2)
                 mnexto(mtmp);
             if (distu(mtmp->mx, mtmp->my) > 2) {
-                for (otmp = invent; otmp; otmp = otmp->nobj)
+                for (otmp = youmonst.minvent; otmp;
+                     otmp = otmp->nobj)
                     if (otmp->otyp == LEASH &&
                         otmp->leashmon == (int)mtmp->m_id) {
                         if (otmp->cursed)
@@ -551,7 +552,7 @@ check_leash(xchar x, xchar y)
     struct obj *otmp;
     struct monst *mtmp;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj) {
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
         if (otmp->otyp != LEASH || otmp->leashmon == 0)
             continue;
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
@@ -1229,17 +1230,19 @@ use_lamp(struct obj *obj)
             struct obj *otmp;
 
             /* This code is based on the code from doorganise. */
-            extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
-            for (otmp = invent; otmp;) {
+            extract_nobj(obj, &youmonst.minvent,
+                         &turnstate.floating_objects, OBJ_FREE);
+            for (otmp = youmonst.minvent; otmp;) {
                 if (merged(&otmp, &obj)) {
                     obj = otmp;
                     otmp = otmp->nobj;
-                    extract_nobj(obj, &invent,
+                    extract_nobj(obj, &youmonst.minvent,
                                  &turnstate.floating_objects, OBJ_FREE);
                 } else
                     otmp = otmp->nobj;
             }
-            extract_nobj(obj, &turnstate.floating_objects, &invent, OBJ_INVENT);
+            extract_nobj(obj, &turnstate.floating_objects,
+                         &youmonst.minvent, OBJ_INVENT);
             reorder_invent();
             update_inventory();
         }
@@ -3055,7 +3058,7 @@ uhave_graystone(void)
 {
     struct obj *otmp;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (is_graystone(otmp))
             return TRUE;
     return FALSE;

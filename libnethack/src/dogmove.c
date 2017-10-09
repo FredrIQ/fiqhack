@@ -54,7 +54,7 @@ is_better_armor(const struct monst *mtmp, struct obj *otmp)
     if (is_helmet(otmp) && !is_flimsy(otmp) && num_horns(mtmp->data) > 0)
         return FALSE;
 
-    obj = (mtmp == &youmonst) ? invent : mtmp->minvent;
+    obj = mtmp->minvent;
 
     for (; obj; obj = obj->nobj) {
         if (is_cloak(otmp) && !is_cloak(obj))
@@ -127,7 +127,8 @@ could_use_item(struct monst *mtmp, struct obj *otmp)
                 return (carrying(SACK) || carrying(OILSKIN_SACK) ||
                         carrying(BAG_OF_HOLDING));
 
-            if (m_carrying_recursive(&youmonst, invent, otmp->otyp, TRUE))
+            if (m_carrying_recursive(&youmonst, youmonst.minvent,
+                                     otmp->otyp, TRUE))
                 return TRUE;
         }
     }
@@ -635,7 +636,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
         }
         /* if you have dog food it'll follow you more closely */
         if (appr == 0) {
-            obj = invent;
+            obj = youmonst.minvent;
             while (obj) {
                 if (dogfood(mtmp, obj) == df_treat) {
                     appr = 1;

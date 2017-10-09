@@ -514,7 +514,8 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                until no merges. */
             do {
                 didmerge = FALSE;
-                for (otemp = invent; !didmerge && otemp; otemp = otemp->nobj)
+                for (otemp = youmonst.minvent; !didmerge && otemp;
+                     otemp = otemp->nobj)
                     for (onext = otemp->nobj; onext; onext = onext->nobj)
                         if (merged(&otemp, &onext)) {
                             didmerge = TRUE;
@@ -973,7 +974,7 @@ unturn_dead(struct monst *mon)
     const char *owner, *corpse = NULL;
 
     youseeit = (mon == &youmonst) ? TRUE : canseemon(mon);
-    otmp2 = (mon == &youmonst) ? invent : mon->minvent;
+    otmp2 = mon->minvent;
 
     while ((otmp = otmp2) != 0) {
         otmp2 = otmp->nobj;
@@ -2248,8 +2249,7 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
     if (self_cancel) {  /* 1st cancel inventory */
         struct obj *otmp;
 
-        for (otmp = (youdefend ? invent : mdef->minvent); otmp;
-             otmp = otmp->nobj)
+        for (otmp = mdef->minvent; otmp; otmp = otmp->nobj)
             cancel_item(otmp);
     }
 
@@ -3705,7 +3705,7 @@ destroy_item(int osym, int dmgtyp)
     enum destroy_msg_type dindx;
     const char *mult;
 
-    for (obj = invent; obj; obj = obj2) {
+    for (obj = youmonst.minvent; obj; obj = obj2) {
         obj2 = obj->nobj;
         if (obj->oclass != osym)
             continue;   /* test only objs of type osym */

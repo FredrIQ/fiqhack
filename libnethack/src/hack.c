@@ -695,7 +695,7 @@ dosinkfall(void)
         setequip(os_ringr, NULL, em_magicheal);
     if (uarmf && uarmf->otyp == LEVITATION_BOOTS)
         setequip(os_armf, NULL, em_magicheal);
-    for (obj = invent; obj; obj = obj->nobj) {
+    for (obj = youmonst.minvent; obj; obj = obj->nobj) {
         if (obj->oartifact && artifact_has_invprop(obj, LEVITATION))
             uninvoke_artifact(obj);
     }
@@ -900,7 +900,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                 pline(msgc_cancelled, "Your body is too large to fit through.");
             return FALSE;
         }
-        if (invent && (inv_weight_total() > 600)) {
+        if (youmonst.minvent && (inv_weight_total() > 600)) {
             if (mode == DO_MOVE)
                 pline(msgc_cancelled,
                       "You are carrying too much to get through.");
@@ -947,7 +947,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
     /* Can we be blocked by a boulder? */
     if (!throws_rocks(youmonst.data) &&
         !(verysmall(youmonst.data) && !u.usteed) &&
-        !((!invent || inv_weight_over_cap() <= -850) && !u.usteed)) {
+        !((!youmonst.minvent || inv_weight_over_cap() <= -850) && !u.usteed)) {
         /* We assume we can move boulders when we're at a distance from them.
            When it comes to actually do the move, resolve_uim() may replace the
            move with a #pushboulder command. If it doesn't, the move fails
@@ -3195,7 +3195,7 @@ weight_cap(void)
     }
 
     struct obj *obj;
-    for (obj = invent; obj; obj = obj->nobj)
+    for (obj = youmonst.minvent; obj; obj = obj->nobj)
         if ((obj->owornmask & W_ARMOR) && (obj_properties(obj) & opm_carrying))
             carrcap = (carrcap * 11) / 10;
 
@@ -3205,7 +3205,7 @@ weight_cap(void)
 int
 inv_weight_total(void)
 {
-    struct obj *otmp = invent;
+    struct obj *otmp = youmonst.minvent;
     int wt = 0;
 
     while (otmp) {
@@ -3277,7 +3277,7 @@ check_capacity(const char *str)
 int
 inv_cnt(boolean letter_only)
 {
-    struct obj *otmp = invent;
+    struct obj *otmp = youmonst.minvent;
     int ct = 0;
 
     while (otmp) {

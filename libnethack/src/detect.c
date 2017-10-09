@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2016-03-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -99,7 +99,7 @@ find_obj_tile(int x, int y,
 
     /* Regard the player as just another monster */
     if (x == u.ux && y == u.uy)
-        find_obj(invent, x, y, OBJDET_MON, &res,
+        find_obj(youmonst.minvent, x, y, OBJDET_MON, &res,
                  set_dknown, oclass, material);
 
     find_obj(level->objects[x][y], x, y,  OBJDET_FLOOR, &res,
@@ -276,7 +276,7 @@ gold_detect(struct monst *mon, struct obj *sobj, boolean *scr_known)
         doredraw();
         if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
             buf = msgprintf("You feel like a million %s!", currency(2L));
-        } else if (hidden_gold() || money_cnt(invent))
+        } else if (hidden_gold() || money_cnt(youmonst.minvent))
             buf = "You feel worried about your future financial situation.";
         else
             buf = "You feel materially poor.";

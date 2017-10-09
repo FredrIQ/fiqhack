@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -58,7 +58,7 @@ stealgold(struct monst *mtmp)
         fgold = fgold->nexthere;
 
     /* Do you have real gold? */
-    ygold = findgold(invent);
+    ygold = findgold(youmonst.minvent);
 
     if (fgold && (!ygold || fgold->quan > ygold->quan || !rn2(5))) {
         obj_extract_self(fgold);
@@ -75,7 +75,8 @@ stealgold(struct monst *mtmp)
     } else if (ygold) {
         const int gold_price = objects[GOLD_PIECE].oc_cost;
 
-        tmp = (somegold(money_cnt(invent)) + gold_price - 1) / gold_price;
+        tmp = ((somegold(money_cnt(youmonst.minvent)) + gold_price - 1) /
+               gold_price);
         tmp = min(tmp, ygold->quan);
         if (tmp < ygold->quan)
             ygold = splitobj(ygold, tmp);
@@ -133,7 +134,7 @@ steal(struct monst *mtmp, const char **objnambuf)
     if (!monnear(mtmp, u.ux, u.uy))
         return 0;
 
-    if (!invent || (inv_cnt(FALSE) == 1 && uskin())) {
+    if (!youmonst.minvent || (inv_cnt(FALSE) == 1 && uskin())) {
     nothing_to_steal:
         /* Not even a thousand men in armor can strip a naked man. */
         if (Blind)
@@ -158,7 +159,7 @@ steal(struct monst *mtmp, const char **objnambuf)
     }
 
     tmp = 0;
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if ((!uarm || otmp != uarmc) && otmp != uskin()
 #ifdef INVISIBLE_OBJECTS
             && (!otmp->oinvis || see_invisible(mtmp))
@@ -168,7 +169,7 @@ steal(struct monst *mtmp, const char **objnambuf)
     if (!tmp)
         goto nothing_to_steal;
     tmp = rn2(tmp);
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if ((!uarm || otmp != uarmc) && otmp != uskin()
 #ifdef INVISIBLE_OBJECTS
             && (!otmp->oinvis || see_invisible(mtmp))
@@ -357,7 +358,7 @@ stealamulet(struct monst *mtmp)
         real = AMULET_OF_YENDOR;
         fake = FAKE_AMULET_OF_YENDOR;
     } else if (Uhave_questart && mtmp->data != &mons[PM_WIZARD_OF_YENDOR]) {
-        for (otmp = invent; otmp; otmp = otmp->nobj)
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
             if (is_quest_artifact(otmp))
                 break;
         if (!otmp)
@@ -374,7 +375,7 @@ stealamulet(struct monst *mtmp)
 
     if (!otmp) {
         /* If we get here, real and fake have been set up. */
-        for (otmp = invent; otmp; otmp = otmp->nobj)
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
             if (otmp->otyp == real || (otmp->otyp == fake && !mtmp->iswiz))
                 break;
     }

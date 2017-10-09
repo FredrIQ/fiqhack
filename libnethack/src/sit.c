@@ -278,7 +278,7 @@ dosit(const struct nh_cmd_arg *arg)
                 break;
             case 12:
                 pline(msgc_youdiscover, "You are granted an insight!");
-                if (invent)
+                if (youmonst.minvent)
                     /* rn2(5) agrees w/seffects() */
                     identify_pack(&youmonst, rn2_on_rng(5, rng_throne_result),
                                   P_EXPERT);

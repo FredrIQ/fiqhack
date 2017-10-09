@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -892,7 +892,7 @@ dotrap(struct trap *trap, unsigned trflags)
             goto glovecheck;
         default:
             pline(msgc_nonmonbad, "%s you!", A_gush_of_water_hits);
-            for (otmp = invent; otmp; otmp = otmp->nobj)
+            for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
                 snuff_lit(otmp);
             if (uarmc)
                 water_damage(uarmc, cloak_simple_name(uarmc), TRUE);
@@ -3191,7 +3191,7 @@ emergency_disrobe(boolean * lostsome)
         /* Pick a random object */
         if (invc > 0) {
             i = rn2(invc);
-            for (obj = invent; obj; obj = obj->nobj) {
+            for (obj = youmonst.minvent; obj; obj = obj->nobj) {
                 /* Undroppables are: body armor (including skin), boots, gloves,
                    amulets, and rings because of the time and effort in removing
                    them; and loadstones and other cursed stuff for obvious
@@ -3250,7 +3250,7 @@ drown(void)
                           Hallucination ? "the Titanic" : "a rock");
     }
 
-    water_damage_chain(invent, FALSE);
+    water_damage_chain(youmonst.minvent, FALSE);
 
     if (u.umonnum == PM_GREMLIN && rn2(3))
         split_mon(&youmonst, NULL);
@@ -3520,7 +3520,7 @@ try_disarm(struct trap *ttmp, boolean force_failure, schar dx, schar dy)
     /* duplicate tight-space checks from test_move */
     if (dx && dy && bad_rock(&youmonst, u.ux, ttmp->ty) &&
         bad_rock(&youmonst, ttmp->tx, u.uy)) {
-        if ((invent && (inv_weight_total() > 600)) ||
+        if ((youmonst.minvent && (inv_weight_total() > 600)) ||
             bigmonst(youmonst.data)) {
             /* don't allow untrap if they can't get thru to it */
             pline(msgc_cancelled, "You are unable to reach the %s!",
@@ -4486,7 +4486,7 @@ lava_effects(void)
         } else
             pline(msgc_fatal_predone, "You fall into the lava!");
 
-        for (obj = invent; obj; obj = obj2) {
+        for (obj = youmonst.minvent; obj; obj = obj2) {
             obj2 = obj->nobj;
             /* 3.4.3 doesn't have a uskin check here. It's not clear what to do
                about embedded scales, but just leaving them alone is simplest,

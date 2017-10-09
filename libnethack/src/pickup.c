@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -815,7 +815,7 @@ carry_count(struct obj *obj,    /* object to pick up */
         carried(container), is_gold = obj->oclass == COIN_CLASS;
     int wt, iw, ow, oow;
     long qq, savequan;
-    long umoney = money_cnt(invent);
+    long umoney = money_cnt(youmonst.minvent);
     unsigned saveowt;
     const char *verb, *prefx1, *prefx2, *suffx, *obj_nambuf, *where;
 
@@ -924,7 +924,7 @@ carry_count(struct obj *obj,    /* object to pick up */
 
     if (!container)
         where = "here";  /* slightly shorter form */
-    if (invent || umoney) {
+    if (youmonst.minvent || umoney) {
         prefx1 = "you cannot ";
         prefx2 = "";
         suffx = " any more";
@@ -1336,7 +1336,8 @@ lootcont:
         struct obj *goldob;
 
         /* Find a money object to mess with */
-        for (goldob = invent; goldob; goldob = goldob->nobj) {
+        for (goldob = youmonst.minvent; goldob;
+             goldob = goldob->nobj) {
             if (goldob->oclass == COIN_CLASS)
                 break;
         }
@@ -1942,7 +1943,7 @@ use_container(struct obj *obj, int held)
             int t;
             char menuprompt[BUFSZ];
             boolean outokay = (cnt != 0);
-            boolean inokay = (invent != 0);
+            boolean inokay = (youmonst.minvent != 0);
 
             if (!outokay && !inokay) {
                 pline(msgc_info, "%s", emptymsg);
@@ -1971,7 +1972,7 @@ use_container(struct obj *obj, int held)
         pline(msgc_info, "%s", emptymsg);  /* <whatever> is empty. */
     }
 
-    if (!invent) {
+    if (!youmonst.minvent) {
         /* nothing to put in, but some feedback is necessary */
         pline(msgc_info, "You don't have anything to put in.");
         return used;
@@ -2029,7 +2030,8 @@ menu_loot(int retry, struct obj *container, boolean put_in)
         mflags =
             put_in ? ALL_TYPES | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED :
             ALL_TYPES | CHOOSE_ALL | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED;
-        n = query_category(buf, put_in ? invent : container->cobj, mflags,
+        n = query_category(buf, put_in ? youmonst.minvent :
+                           container->cobj, mflags,
                            &pick_list, PICK_ANY);
         if (!n)
             return 0;
@@ -2055,7 +2057,8 @@ menu_loot(int retry, struct obj *container, boolean put_in)
         if (put_in)
             mflags |= USE_INVLET;
         buf = msgprintf("%s what?", put_in ? putin : takeout);
-        n = query_objlist(buf, put_in ? invent : container->cobj, mflags,
+        n = query_objlist(buf, put_in ? youmonst.minvent :
+                          container->cobj, mflags,
                           &obj_pick_list, PICK_ANY,
                           all_categories ? allow_all : allow_category);
         if (n) {

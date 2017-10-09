@@ -672,7 +672,7 @@ level_tele_impl(struct monst *mon, boolean wizard_tele)
                           is_silent(youmonst.data) ? "writhe" : "scream");
             win_pause_output(P_MESSAGE);
             pline(msgc_fatal_predone, "You cease to exist.");
-            if (invent)
+            if (youmonst.minvent)
                 pline(msgc_consequence,
                       "Your possessions land on the %s with a thud.",
                       surface(u.ux, u.uy));
@@ -680,7 +680,7 @@ level_tele_impl(struct monst *mon, boolean wizard_tele)
             pline_implied(msgc_statusheal,
                           "An energized cloud of dust begins to coalesce.");
             pline_implied(msgc_statusheal, "Your body rematerializes%s.",
-                          invent ?
+                          youmonst.minvent ?
                           ", and you gather up all your possessions" : "");
             return;
         }

@@ -174,7 +174,7 @@ stone_luck(boolean parameter)
     struct obj *otmp;
     long bonchance = 0;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (confers_luck(otmp)) {
             if (otmp->cursed)
                 bonchance -= otmp->quan;

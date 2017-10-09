@@ -342,7 +342,6 @@ init_data(boolean including_program_state)
     gamestate.fruits.current = 0;
     gamestate.sp_levchn = NULL;
     in_mklev = stoned = FALSE;
-    invent = NULL;
     in_steed_dismounting = FALSE;
     wailmsg = 0;
     bhitpos.x = bhitpos.y = 0;

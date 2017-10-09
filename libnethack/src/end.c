@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -288,7 +288,7 @@ disclose(int how, boolean taken, long umoney)
     const char *qbuf;
     boolean ask = should_query_disclose_options(&defquery);
 
-    if (invent) {
+    if (youmonst.minvent) {
         if (taken)
             qbuf = msgprintf("Do you want to see what you had when you %s?",
                              (how == QUIT) ? "quit" : "died");
@@ -305,14 +305,15 @@ disclose(int how, boolean taken, long umoney)
             if (c == 'y') {
                 struct obj *obj;
 
-                for (obj = invent; obj; obj = obj->nobj) {
+                for (obj = youmonst.minvent; obj;
+                     obj = obj->nobj) {
                     discover_object(obj->otyp, TRUE, FALSE, TRUE);
                     obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
                     if (obj->oprops)
                         learn_oprop(obj, obj_properties(obj));
                 }
                 display_inventory(NULL, FALSE);
-                container_contents(invent, TRUE, TRUE);
+                container_contents(youmonst.minvent, TRUE, TRUE);
             }
             if (c == 'q')
                 done_stopprint++;
@@ -364,12 +365,12 @@ dump_disclose(int how)
 
     /* re-"display" all the disclosure menus */
     /* make sure the inventory is fully identified, even if DYWYPI = n */
-    for (obj = invent; obj; obj = obj->nobj) {
+    for (obj = youmonst.minvent; obj; obj = obj->nobj) {
         discover_object(obj->otyp, TRUE, FALSE, TRUE);
         obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
     }
     display_inventory(NULL, TRUE);
-    container_contents(invent, TRUE, TRUE);
+    container_contents(youmonst.minvent, TRUE, TRUE);
     dump_spells();
     dump_skills();
     enlightenment(how > LAST_KILLER ? 1 : 2);     /* final */
@@ -378,7 +379,7 @@ dump_disclose(int how)
     show_conduct(how > LAST_KILLER ? 1 : 2);
     dooverview(&(struct nh_cmd_arg){.argtype = 0});
     dohistory(&(struct nh_cmd_arg){.argtype = 0});
-    calc_score(how, TRUE, money_cnt(invent) + hidden_gold());
+    calc_score(how, TRUE, money_cnt(youmonst.minvent) + hidden_gold());
 
     /* make menus work normally again */
     dump_catch_menus(FALSE);
@@ -625,7 +626,7 @@ calc_score(int how, boolean show, long umoney)
             for (i = 0; i < val->size; i++) {
                 val->list[i].count = 0L;
             }
-        get_valuables(invent);
+        get_valuables(youmonst.minvent);
         for (val = valuables; val->list; val++)
             for (i = 0; i < val->size; i++)
                 if (val->list[i].count != 0L)
@@ -649,7 +650,7 @@ calc_score(int how, boolean show, long umoney)
     }
 
     /* Artifacts. */
-    category_raw = artifact_score(invent, TRUE, 0);
+    category_raw = artifact_score(youmonst.minvent, TRUE, 0);
     category_points = ilog2(category_raw + 1);
     total += category_points;
 
@@ -837,7 +838,7 @@ display_rip(int how, long umoney, const char *killer)
                          u.urexp, plur(u.urexp));
         add_menutext(&menu, pbuf);
 
-        artifact_score(invent, FALSE, &menu);       /* list artifacts */
+        artifact_score(youmonst.minvent, FALSE, &menu); /* list artifacts */
 
         /* list valuables here */
         for (val = valuables; val->list; val++) {
@@ -1005,10 +1006,11 @@ done_noreturn(int how, const char *killer)
     clearpriests();
 
     if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT)
-        disclose(how, taken, money_cnt(invent) + hidden_gold());
+        disclose(how, taken,
+                 money_cnt(youmonst.minvent) + hidden_gold());
 
     /* calculate score, before creating bones [container gold] */
-    umoney = money_cnt(invent) + hidden_gold();
+    umoney = money_cnt(youmonst.minvent) + hidden_gold();
     u.urexp = calc_score(how, FALSE, umoney);
 
     const char *dumpname = begin_dump(how);

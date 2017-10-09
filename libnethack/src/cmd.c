@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-07-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1000,7 +1000,8 @@ doattributes(const struct nh_cmd_arg *arg)
             n = doconduct(&(struct nh_cmd_arg){.argtype = 0});
             break;
         case 's':
-            calc_score(-1, TRUE, money_cnt(invent) + hidden_gold());
+            calc_score(-1, TRUE,
+                       money_cnt(youmonst.minvent) + hidden_gold());
             break;
         case 'w':
             if (wizard || discover)
@@ -1103,7 +1104,7 @@ nh_get_object_commands(int *count, char invlet)
     if (program_state.followmode != FM_PLAY)
         return NULL;
 
-    for (obj = invent; obj; obj = obj->nobj)
+    for (obj = youmonst.minvent; obj; obj = obj->nobj)
         if (obj->invlet == invlet)
             break;
 
@@ -1406,7 +1407,7 @@ contained(struct nh_menulist *menu, const char *src, long *total_count,
     long count = 0, size = 0;
     struct monst *mon;
 
-    count_obj(invent, &count, &size, FALSE, TRUE);
+    count_obj(youmonst.minvent, &count, &size, FALSE, TRUE);
     count_obj(level->objlist, &count, &size, FALSE, TRUE);
     count_obj(level->buriedobjlist, &count, &size, FALSE, TRUE);
     /* DEADMONSTER check not required in this loop since they have no
@@ -1462,7 +1463,8 @@ wiz_show_stats(const struct nh_cmd_arg *arg)
     add_menutext(&menu, "");
     add_menutext(&menu, count_str);
 
-    obj_chain(&menu, "invent", invent, &total_obj_count, &total_obj_size);
+    obj_chain(&menu, "invent", youmonst.minvent, &total_obj_count,
+              &total_obj_size);
     obj_chain(&menu, "level->objlist", level->objlist, &total_obj_count,
               &total_obj_size);
     obj_chain(&menu, "buried", level->buriedobjlist, &total_obj_count,
@@ -1575,7 +1577,7 @@ getargobj(const struct nh_cmd_arg *arg, const char *let, const char *word)
 
     /* Did the client specify an inventory letter? */
     if (arg->argtype & CMD_ARG_OBJ)
-        for (otmp = invent; otmp && !obj; otmp = otmp->nobj)
+        for (otmp = youmonst.minvent; otmp && !obj; otmp = otmp->nobj)
             if (otmp->invlet == arg->invlet)
                 obj = otmp;
 

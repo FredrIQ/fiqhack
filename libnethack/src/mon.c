@@ -3677,7 +3677,7 @@ kill_genocided_monsters(void)
             kill_eggs(mtmp->minvent);
     }
 
-    kill_eggs(invent);
+    kill_eggs(youmonst.minvent);
     kill_eggs(level->objlist);
     kill_eggs(level->buriedobjlist);
 }

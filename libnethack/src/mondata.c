@@ -90,7 +90,7 @@ resists_blnd(const struct monst * mon)
     o = is_you ? uwep : MON_WEP(mon);
     if (o && o->oartifact && defends(AD_BLND, o))
         return TRUE;
-    o = is_you ? invent : mon->minvent;
+    o = mon->minvent;
     for (; o; o = o->nobj)
         if (o->oartifact && protects(AD_BLND, o))
             return TRUE;
@@ -172,7 +172,7 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
 
     /* check if wearing a visor (only checked if visor might help) */
     if (check_visor) {
-        o = (mdef == &youmonst) ? invent : mdef->minvent;
+        o = mdef->minvent;
         for (; o; o = o->nobj)
             if ((o->owornmask & W_MASK(os_armh)) &&
                 (s = OBJ_DESCR(objects[o->otyp])) != NULL &&

@@ -276,7 +276,6 @@ struct newgame_options {
 
 /* Compatibility macros. */
 # define u gamestate.us[0]
-# define invent youmonst.minvent
 
 # define dungeon_topology       gamestate.topology
 # define oracle_level           (dungeon_topology.d_oracle_level)

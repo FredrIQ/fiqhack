@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -142,11 +142,11 @@ drop_upon_death(struct monst *mtmp, struct obj *cont, boolean charmed)
 
     /* This needs to come before we begin freeing objects from the inventory,
        or we'll panic when updating the cached list of items. */
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == SLIME_MOLD)
             goodfruit(otmp->spe);
 
-    while ((otmp = invent) != 0) {
+    while ((otmp = youmonst.minvent) != 0) {
         /* The desync detector dislikes floating wielded objects, even for a few
            lines of code. Also, we need to do mark it as unworn anyway to avoid
            worn items lying around on the ground for other players to find.

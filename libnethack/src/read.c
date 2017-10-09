@@ -1901,7 +1901,7 @@ litroom(struct monst *mon, boolean on, struct obj *obj, boolean tell)
 
         if (you && Engulfed) {
             /* Since engulfing will prevent set_lit(), douse lamps/etc here as well */
-            for (otmp = invent; otmp; otmp = otmp->nobj)
+            for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
                 snuff_lit(otmp);
             if (tell)
                 pline(msgc_yafm, "It seems even darker in here than before.");

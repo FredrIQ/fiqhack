@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -491,7 +491,7 @@ priest_talk(struct monst *priest)
         msethostility(priest, TRUE, FALSE);
         return;
     }
-    if (!money_cnt(invent)) {
+    if (!money_cnt(youmonst.minvent)) {
         if (coaligned && !strayed) {
             long pmoney = money_cnt(priest->minvent);
 
@@ -517,7 +517,7 @@ priest_talk(struct monst *priest)
             if (coaligned)
                 adjalign(-1);
         } else if (offer < (u.ulevel * 200)) {
-            if (money_cnt(invent) > (offer * 2L))
+            if (money_cnt(youmonst.minvent) > (offer * 2L))
                 verbalize(msgc_npcvoice, "Cheapskate.");
             else {
                 verbalize(msgc_npcvoice, "I thank thee for thy contribution.");
@@ -526,7 +526,7 @@ priest_talk(struct monst *priest)
             }
         } else if (offer < (u.ulevel * 400)) {
             verbalize(msgc_aligngood, "Thou art indeed a pious individual.");
-            if (money_cnt(invent) < (offer * 2L)) {
+            if (money_cnt(youmonst.minvent) < (offer * 2L)) {
                 if (coaligned && u.ualign.record <= ALGN_SINNED)
                     adjalign(1);
                 verbalize(msgc_intrgain, "I bestow upon thee a blessing.");
@@ -544,7 +544,7 @@ priest_talk(struct monst *priest)
         } else {
             verbalize(msgc_aligngood,
                       "Thy selfless generosity is deeply appreciated.");
-            if (money_cnt(invent) < (offer * 2L) && coaligned) {
+            if (money_cnt(youmonst.minvent) < (offer * 2L) && coaligned) {
                 if (strayed && (moves - u.ucleansed) > 5000L) {
                     u.ualign.record = 0;        /* cleanse thee */
                     u.ucleansed = moves;

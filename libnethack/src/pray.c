@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -184,7 +184,7 @@ worst_cursed_item(void)
 
     /* if strained or worse, check for loadstone first */
     if (near_capacity() >= HVY_ENCUMBER) {
-        for (otmp = invent; otmp; otmp = otmp->nobj)
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
             if (Cursed_obj(otmp, LOADSTONE))
                 return otmp;
     }
@@ -225,7 +225,7 @@ worst_cursed_item(void)
         otmp = uswapwep;
         /* all worn items ought to be handled by now */
     } else {
-        for (otmp = invent; otmp; otmp = otmp->nobj) {
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
             if (!otmp->cursed)
                 continue;
             if (otmp->otyp == LOADSTONE || confers_luck(otmp))
@@ -970,7 +970,8 @@ pleased(aligntyp g_align)
                 else
                     pline(msgc_aligngood, "You are surrounded by %s aura.",
                           an(hcolor("light blue")));
-                for (otmp = invent; otmp; otmp = otmp->nobj) {
+                for (otmp = youmonst.minvent; otmp;
+                     otmp = otmp->nobj) {
                     if (otmp->cursed) {
                         uncurse(otmp);
                         if (!Blind) {

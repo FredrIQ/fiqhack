@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,7 @@ static const char drop_types[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
 int
 dodrop(const struct nh_cmd_arg *arg)
 {
-    int result, i = (invent) ? 0 : (SIZE(drop_types) - 1);
+    int result, i = (youmonst.minvent) ? 0 : (SIZE(drop_types) - 1);
     struct obj *obj;
 
     if (*u.ushops)
@@ -639,7 +639,7 @@ menu_drop(int retry)
         all_categories = (retry == -2);
     } else if (flags.menu_style == MENU_FULL) {
         all_categories = FALSE;
-        n = query_category("Drop what type of items?", invent,
+        n = query_category("Drop what type of items?", youmonst.minvent,
                            UNPAID_TYPES | ALL_TYPES | CHOOSE_ALL | UNIDENTIFIED
                            | BUC_BLESSED | BUC_CURSED | BUC_UNCURSED |
                            BUC_UNKNOWN, &pick_list, PICK_ANY);
@@ -656,14 +656,15 @@ menu_drop(int retry)
     }
 
     if (drop_everything) {
-        for (otmp = invent; otmp; otmp = otmp2) {
+        for (otmp = youmonst.minvent; otmp; otmp = otmp2) {
             otmp2 = otmp->nobj;
             otmp->was_dropped = 1;
             n_dropped += drop(otmp);
         }
     } else {
         /* should coordinate with perm invent, maybe not show worn items */
-        n = query_objlist("What would you like to drop?", invent,
+        n = query_objlist("What would you like to drop?",
+                          youmonst.minvent,
                           USE_INVLET | INVORDER_SORT, &obj_pick_list, PICK_ANY,
                           all_categories ? allow_all : allow_category);
         if (n > 0) {
@@ -716,7 +717,7 @@ dodown(boolean autodig_ok)
         if (controlled_lev) {
             /* end controlled levitation */
             struct obj *obj;
-            for (obj = invent; obj; obj = obj->nobj) {
+            for (obj = youmonst.minvent; obj; obj = obj->nobj) {
                 if (obj->oartifact && artifact_has_invprop(obj, LEVITATION))
                     uninvoke_artifact(obj);
             }
@@ -1132,7 +1133,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         deliver_object(otmp2, u.uz.dnum, u.uz.dlevel, MIGR_NEAR_PLAYER);
     }
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         set_obj_level(level, otmp);
     losedogs();
     kill_genocided_monsters();  /* for those wiped out while in limbo */

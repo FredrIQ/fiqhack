@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -286,7 +286,7 @@ drinkfountain(void)
             pline(msgc_itemloss, "This water's no good!");
             morehungry(rn1(20, 11));
             exercise(A_CON, FALSE);
-            for (obj = invent; obj; obj = obj->nobj)
+            for (obj = youmonst.minvent; obj; obj = obj->nobj)
                 if (!rn2(5))
                     curse(obj);
             break;
@@ -478,14 +478,15 @@ dipfountain(struct obj *obj)
     case 28:   /* Strange feeling */
         pline(msgc_nonmonbad, "An urge to take a bath overwhelms you.");
         {
-            long money = money_cnt(invent);
+            long money = money_cnt(youmonst.minvent);
             struct obj *otmp;
 
             if (money > 10) {
                 /* Amount to loose.  Might get rounded up as fountains don't
                    pay change... */
                 money = somegold(money) / 10;
-                for (otmp = invent; otmp && money > 0; otmp = otmp->nobj)
+                for (otmp = youmonst.minvent; otmp && money > 0;
+                     otmp = otmp->nobj)
                     if (otmp->oclass == COIN_CLASS) {
                         int denomination = objects[otmp->otyp].oc_cost;
                         long coin_loss =

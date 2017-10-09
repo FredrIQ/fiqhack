@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -267,7 +267,7 @@ chat_with_leader(void)
     else if (Uhave_questart) {
         struct obj *otmp;
 
-        for (otmp = invent; otmp; otmp = otmp->nobj)
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
             if (is_quest_artifact(otmp))
                 break;
 

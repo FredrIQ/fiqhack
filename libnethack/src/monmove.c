@@ -551,7 +551,7 @@ dochug(struct monst *mtmp)
     /* Now the actual movement phase */
 
     if (mdat->mlet == S_LEPRECHAUN) {
-        ygold = findgold(invent);
+        ygold = findgold(youmonst.minvent);
         lepgold = findgold(mtmp->minvent);
     }
 

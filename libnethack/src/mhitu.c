@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1664,7 +1664,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         tim_tmp += -find_mac(&youmonst) + 10;
         u.uswldtim = (unsigned)((tim_tmp < 2) ? 2 : tim_tmp);
         swallowed(1);
-        for (otmp2 = invent; otmp2; otmp2 = otmp2->nobj)
+        for (otmp2 = youmonst.minvent; otmp2; otmp2 = otmp2->nobj)
             snuff_lit(otmp2);
     }
 
@@ -2052,7 +2052,7 @@ doseduce(struct monst *mon)
         pline(combat_msgc(mon, &youmonst, cr_hit),
               "You feel very attracted to %s.", mon_nam(mon));
 
-    for (ring = invent; ring; ring = nring) {
+    for (ring = youmonst.minvent; ring; ring = nring) {
         nring = ring->nobj;
         if (ring->otyp != RIN_ADORNMENT)
             continue;
@@ -2268,7 +2268,7 @@ doseduce(struct monst *mon)
               noit_Monnam(mon));
     else {
         long cost;
-        long umoney = money_cnt(invent);
+        long umoney = money_cnt(youmonst.minvent);
 
         /* TODO: This is possibly the best overflow check ever. The overflow
            check itself works, but what about the replacement? (int and long
