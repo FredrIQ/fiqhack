@@ -973,9 +973,9 @@ newdogpos:
         if (info[chi] & ALLOW_PEACEFUL && dmon) {
             if (cansee(mtmp->mx, mtmp->my) ||
                 cansee(dmon->mx, dmon->my))
-                pline(msgc_monneutral, "%s %s.",
-                      M_verbs(mtmp, "displace"),
-                      mon_nam(dmon));
+                pline_once(msgc_monneutral, "%s %s.",
+                           M_verbs(mtmp, "displace"),
+                           mon_nam(dmon));
             remove_monster(level, omx, omy);
             remove_monster(level, nix, niy);
             place_monster(mtmp, nix, niy, TRUE);
