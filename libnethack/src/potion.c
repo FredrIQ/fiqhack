@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -852,7 +852,7 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
                                killer_msg(DIED, "contaminated tap water"));
                     else if (you)
                         losehp(rnd(10) + 5 * ! !(otmp->cursed),
-                               killer_msg(DIED, "contaminated potion"));
+                               killer_msg(DIED, "a contaminated potion"));
                     else {
                         mon->mhp -= rnd(10) + 5;
                         if (mon->mhp <= 0)
