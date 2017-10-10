@@ -2502,11 +2502,7 @@ use_item(struct musable *m)
             }
         }
 
-        mtmp = m_at(mon->dlevel, m->x, m->y);
-        if (!mtmp) {
-            if (m->x == u.ux && m->y == u.uy)
-                mtmp = &youmonst;
-        }
+        mtmp = um_at(mon->dlevel, m->x, m->y);
         if (!mtmp) {
             /* can happen if a monster is confused or is trying to hit
                something invisible/displaced */

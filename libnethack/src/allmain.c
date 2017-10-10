@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -882,23 +882,24 @@ you_moved(void)
                 hp = &(u.mh);
                 hpmax = &(u.mhmax);
             }
+
+            boolean full = (*hp == *hpmax);
             if (u.uinvulnerable) {
                 /* for the moment at least, you're in tiptop shape */
                 wtcap = UNENCUMBERED;
             } else if (Upolyd && youmonst.data->mlet == S_EEL &&
                        !is_pool(level, u.ux, u.uy) && !Is_waterlevel(&u.uz)) {
-                if (u.mh > 1) {
-                    u.mh--;
-                } else if (u.mh < 1)
+                if (*hp > 1)
+                    (*hp)--;
+                else if (*hp < 1)
                     rehumanize(DIED, NULL);
             } else if (flags.polyinit_mnum == -1 &&
-                       Upolyd && u.mh < u.mhmax) {
-                if (u.mh < 1)
+                       Upolyd && *hp < *hpmax) {
+                if (*hp < 1)
                     rehumanize(DIED, NULL);
                 else if (Regeneration ||
-                         (wtcap < MOD_ENCUMBER && !(moves % 20))) {
-                    u.mh++;
-                }
+                         (wtcap < MOD_ENCUMBER && !(moves % 20)))
+                    (*hp)++;
             } else if (*hp < *hpmax &&
                        (wtcap < MOD_ENCUMBER || !u.umoved || Regeneration)) {
                 *hp += regeneration_by_rate(regen_rate(&youmonst,
@@ -923,11 +924,26 @@ you_moved(void)
                 }
             }
 
+            if (!full && *hp == *hpmax && flags.incomplete &&
+                !flags.interrupted &&
+                ((1 << flags.occupation) & ocm_rest)) {
+                pline(msgc_statusgood, "Health restored.");
+                interrupt_occupation(ocm_rest);
+            }
+
+            full = (youmonst.pw == youmonst.pwmax);
             if (youmonst.pw < youmonst.pwmax && wtcap < MOD_ENCUMBER) {
                 youmonst.pw +=
                     regeneration_by_rate(regen_rate(&youmonst, TRUE));
                 if (youmonst.pw > youmonst.pwmax)
                     youmonst.pw = youmonst.pwmax;
+            }
+
+            if (!full && youmonst.pw == youmonst.pwmax && flags.incomplete &&
+                !flags.interrupted &&
+                ((1 << flags.occupation) & ocm_rest)) {
+                pline(msgc_statusgood, "Energy restored.");
+                interrupt_occupation(ocm_rest);
             }
 
             if (!u.uinvulnerable) {
