@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2015-03-10
+! Last modified by Fredrik Ljungdahl, 2017-10-10
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed. See license for details.
 !
@@ -30,7 +30,7 @@ doorway: gray '·'
 open doors 0: brown '■'
 open doors 1: brown '■'
 iron bars: cyan '≡'
-fountain: blue '⌠'
+fountain: bright_blue '⌠'
 the floor of a room: bgblack gray regular '·'
 sub unlit the floor of a room: bgblack darkgray regular '·'
 corridor: bgblack gray regular '░'
