@@ -1559,8 +1559,47 @@ dofindobj(const struct nh_cmd_arg *arg)
         return 0;
 
     struct obj *obj = findobj_prompt(0, buf);
-    if (obj)
-        pline(msgc_actionok, "%s", distant_name(obj, doname));
+    struct obj *upper = obj; /* Points to uppermost container, or obj */
+    if (obj) {
+        while (upper->where == OBJ_CONTAINED)
+            upper = upper->ocontainer;
+        if (upper->where != OBJ_FLOOR) {
+            pline(msgc_cancelled, "%s is not on the floor.",
+                  distant_name(obj, doname));
+            return 0;
+        }
+
+        struct level *lev = upper->olev;
+        if (!lev) {
+            impossible("dofindobj: target obj olev is NULL "
+                       "but on the floor?");
+            return 0;
+        }
+
+        /* Display target level */
+        if (lev != level) {
+            int x, y;
+            for (x = 0; x < COLNO; x++)
+                for (y = 0; y < ROWNO; y++)
+                    dbuf_set_memory(lev, x, y);
+
+            pline(msgc_actionok, "Viewing %s.",
+                  describe_dungeon_level(lev));
+            notify_levelchange(&lev->z);
+            flush_screen_nopos();
+            win_pause_output(P_MAP);
+        }
+
+        /* Display object position */
+        cls();
+        dbuf_set_memory(lev, upper->ox, upper->oy);
+        pline(msgc_actionok, "%s is located here.",
+              The(distant_name(obj, cxname)));
+        flush_screen_nopos();
+        win_pause_output(P_MAP);
+        notify_levelchange(NULL);
+        doredraw();
+    }
     return 0;
 }
 
