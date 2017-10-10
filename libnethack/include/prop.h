@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -246,7 +246,7 @@ enum FLAG_ENUM occupation_mask {
     OCM(search),
     ocm_rest = ocm_wait | ocm_search,
     OCM(prepare),
-    ocm_all = (1 << (occ_last + 1)) - 1,
+    ocm_all = -1,
 };
 
 /* Occupations generally track objects, but some track locations, or both. */
