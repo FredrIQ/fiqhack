@@ -870,12 +870,6 @@ you_moved(void)
             if (u.ublesscnt)
                 u.ublesscnt--;
 
-            /* One possible result of prayer is healing. Whether or not you get
-               healed depends on your current hit points. If you are allowed to
-               regenerate during the prayer, the end-of-prayer calculation
-               messes up on this. Another possible result is rehumanization,
-               which requires that encumbrance and movement rate be
-               recalculated. */
             int *hp = &(u.uhp);
             int *hpmax = &(u.uhpmax);
             if (flags.polyinit_mnum != -1) {
@@ -883,7 +877,19 @@ you_moved(void)
                 hpmax = &(u.mhmax);
             }
 
+            /* Check if we just reestored HP and Pw to full. If we did,
+               give a message if we were resting (waiting/searching). */
             boolean hpfull = (*hp == *hpmax);
+            boolean hprestored = FALSE;
+            boolean pwfull = (youmonst.pw == youmonst.pwmax);
+            boolean pwrestored = FALSE;
+
+            /* One possible result of prayer is healing. Whether or not you get
+               healed depends on your current hit points. If you are allowed to
+               regenerate during the prayer, the end-of-prayer calculation
+               messes up on this. Another possible result is rehumanization,
+               which requires that encumbrance and movement rate be
+               recalculated. */
             if (u.uinvulnerable) {
                 /* for the moment at least, you're in tiptop shape */
                 wtcap = UNENCUMBERED;
@@ -924,7 +930,6 @@ you_moved(void)
                 }
             }
 
-            boolean pwfull = (youmonst.pw == youmonst.pwmax);
             if (youmonst.pw < youmonst.pwmax && wtcap < MOD_ENCUMBER) {
                 youmonst.pw +=
                     regeneration_by_rate(regen_rate(&youmonst, TRUE));
@@ -932,14 +937,16 @@ you_moved(void)
                     youmonst.pw = youmonst.pwmax;
             }
 
-            if (((!hpfull && *hp == *hpmax) ||
-                 (!pwfull && youmonst.pw == youmonst.pwmax)) &&
+            if (!hpfull && *hp == *hpmax)
+                hprestored = TRUE;
+            if (!pwfull && youmonst.pw == youmonst.pwmax)
+                pwrestored = TRUE;
+            if ((hprestored || pwrestored) &&
                 flags.incomplete && !flags.interrupted &&
                 ((1 << flags.occupation) & ocm_rest)) {
-                if (!hpfull && *hp == *hpmax)
+                if (hprestored)
                     pline(msgc_statusgood, "Health%s restored.",
-                          !pwfull && youmonst.pw == youmonst.pwmax ?
-                          " and energy" : "");
+                          pwrestored ? " and energy" : "");
                 else
                     pline(msgc_statusgood, "Energy restored.");
                 interrupt_occupation(ocm_rest);
