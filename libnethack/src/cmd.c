@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -114,6 +114,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_NOTIME | CMD_ARG_POS},
     {"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE,
      dofight, CMD_ARG_DIR},
+    {"find", "search remembered objects", C('f'), 0, FALSE,
+     dofindobj, CMD_ARG_STR | CMD_NOTIME},
     {"fire", "throw your quivered item", 'f', 0, FALSE, dofire,
      CMD_ARG_DIR | CMD_ARG_LIMIT},
     {"force", "force a lock", M('f'), 0, FALSE, doforce,
@@ -291,7 +293,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"wish", "(DEBUG) wish for an item", C('w'), 0, TRUE, wiz_wish,
      CMD_DEBUG},
-    {"wizport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
+    {"wizport", "(DEBUG) teleport without fail", 0, 0, TRUE,
      wiz_teleport, CMD_DEBUG},
     {"wmode", "(DEBUG) show wall modes", 0, 0, TRUE, wiz_show_wmodes,
      CMD_DEBUG | CMD_EXT | CMD_NOTIME},

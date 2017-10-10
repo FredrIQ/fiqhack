@@ -471,6 +471,7 @@ extern void free_dungeon(void);
 extern void save_d_flags(struct memfile *mf, d_flags f);
 extern void save_dlevel(struct memfile *mf, d_level d);
 extern void save_dungeon(struct memfile *mf);
+extern const char *describe_dungeon_level(const struct level *);
 extern d_flags restore_d_flags(struct memfile *mf);
 extern void restore_dlevel(struct memfile *mf, d_level *d);
 extern void restore_dungeon(struct memfile *mf);
@@ -1405,6 +1406,7 @@ extern void add_objitem(struct nh_objlist *, enum nh_menuitem_role, int,
 extern struct obj *pick_obj(struct obj *);
 extern int encumber_msg(int);
 extern int doloot(const struct nh_cmd_arg *);
+extern int dofindobj(const struct nh_cmd_arg *);
 extern void observe_quantum_cat(struct obj *);
 extern int use_container(struct obj *, int);
 extern int loot_mon(struct monst *, int *, boolean *);

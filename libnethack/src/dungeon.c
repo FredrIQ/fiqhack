@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2238,6 +2238,66 @@ dooverview(const struct nh_cmd_arg *arg)
     doredraw();
 
     return 0;
+}
+
+/* TODO: why is there no list of dungeon descriptions anywhere? */
+const char *
+describe_dungeon_level(const struct level *lev)
+{
+    if (!lev)
+        panic("describe_dungeon_level: lev is NULL");
+
+    const char *buf;
+    struct d_level dz = lev->z;
+
+    if (Is_oracle_level(&dz))
+        buf = "Oracle";
+    else if (Is_bigroom(&dz))
+        buf = "Big Room";
+    else if (Is_qstart(&dz))
+        buf = "Home";
+    else if (Is_qlocate(&dz))
+        buf = "Locate";
+    else if (Is_nemesis(&dz))
+        buf = "Goal";
+    else if (In_quest(&dz))
+        buf = msgprintf("level %d", dunlev(&dz));
+    else if (Is_rogue_level(&dz))
+        buf = "Rogue level";
+    else if (Is_knox(&dz))
+        buf = "Fort Ludios";
+    else if (Is_medusa_level(&dz))
+        buf = "Medusa's Island";
+    else if (Is_stronghold(&dz))
+        buf = "Castle";
+    else if (Is_valley(&dz))
+        buf = "Valley of the Dead";
+    else if (Is_asmo_level(&dz))
+        buf = "Asmodeus' Lair";
+    else if (Is_baal_level(&dz))
+        buf = "Baalzebub's Lair";
+    else if (Is_juiblex_level(&dz))
+        buf = "Juiblex's Swamp";
+    else if (on_level(&dz, &orcus_level))
+        buf = "Orcus' Town";
+    else if (Is_sanctum(&dz))
+        buf = "Moloch's Sanctum";
+    else if (Is_earthlevel(&dz))
+        return "Plane of Earth";
+    else if (Is_airlevel(&dz))
+        return "Plane of Air";
+    else if (Is_firelevel(&dz))
+        return "Plane of Fire";
+    else if (Is_waterlevel(&dz))
+        return "Plane of Water";
+    else if (Is_astralevel(&dz))
+        return "Astral Plane";
+    else
+        buf = msgprintf("level %d", depth(&dz));
+
+    buf = msgprintf("%s: %s", gamestate.dungeons[dz.dnum].dname,
+                    buf);
+    return buf;
 }
 
 /*dungeon.c*/

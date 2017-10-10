@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1439,6 +1439,129 @@ lootcont:
               underfoot ? "here" : "there");
     }
     return timepassed;
+}
+
+static struct obj *
+find_objects(struct level *lev, struct obj *chain, int *found,
+             boolean *did_header, const char *str,
+             struct nh_menulist *menu, int getobj)
+{
+    struct obj *obj;
+    struct obj *objfound;
+    const char *dname;
+    for (obj = chain; obj; obj = obj->nobj) {
+        dname = distant_name(obj, doname);
+        if (!strstri(dname, str)) {
+            if (Has_contents(obj)) {
+                objfound = find_objects(lev, obj->cobj, found,
+                                        did_header, str, menu,
+                                        getobj);
+                if (objfound)
+                    return objfound;
+            }
+            continue;
+        }
+        /* We have a match. */
+
+        /* If we didn't find anything beforehand, inititalize
+           the window now. */
+        if (!*found && !getobj) {
+            init_menulist(menu);
+            const char *buf = msgprintf("Searching for \"%s\".",
+                                        str);
+            add_menutext(menu, buf);
+        }
+        (*found)++;
+        if (getobj) {
+            if (*found == getobj)
+                return obj;
+        } else {
+            /* If this is our first object in level or inventory,
+               give a header. */
+            if (!*did_header) {
+                *did_header = TRUE;
+                add_menutext(menu, "");
+                const char *header = "Inventory";
+                if (lev)
+                    header = describe_dungeon_level(lev);
+
+                add_menuheading(menu, header);
+            }
+            add_menuitem(menu, *found, dname, 0, FALSE);
+        }
+
+        if (Has_contents(obj)) {
+            objfound = find_objects(lev, obj->cobj, found,
+                                    did_header, str, menu, getobj);
+            if (objfound)
+                return objfound;
+        }
+    }
+
+    return NULL;
+}
+
+struct obj *
+findobj_prompt(int getobj, const char *str)
+{
+    /* Find objects in levels */
+    const char *buf;
+    struct nh_menulist menu;
+    struct obj *objfound = NULL;
+    int found = 0;
+    boolean did_header;
+    int i;
+    for (i = 0; i <= maxledgerno(); i++) {
+        if (levels[i]) {
+            did_header = FALSE;
+            objfound = find_objects(levels[i], levels[i]->objlist,
+                                    &found, &did_header, str, &menu,
+                                    getobj);
+            if (objfound)
+                return objfound;
+        }
+    }
+
+    /* Find objects in player inventory. Useful in replaymode
+       (containers) */
+    objfound = find_objects(NULL, youmonst.minvent, &found,
+                            &did_header, str, &menu, 0);
+    if (objfound)
+        return objfound;
+
+    if (getobj)
+        return NULL;
+
+    if (!found) {
+        pline(msgc_actionok, "Failed to find any objects.");
+        return 0;
+    }
+
+    buf = msgprintf("Found %d object%s%s", found,
+                    found == 1 ? "" : "s",
+                    found >= 200 ? " (please be more specific)" :
+                    "");
+
+    const int *selected;
+    int n;
+    n = display_menu(&menu, buf, PICK_ONE, PLHINT_ANYWHERE, &selected);
+    if (n <= 0)
+        return NULL;
+    return findobj_prompt(selected[0], str);
+}
+
+int
+dofindobj(const struct nh_cmd_arg *arg)
+{
+    const char *buf;
+    buf = getlin("Search for what objects?", FALSE);
+    if (!*buf || *buf == '\033')
+        return 0;
+
+    struct obj *obj = findobj_prompt(0, buf);
+    if (obj)
+        pline(msgc_actionok, "%s", distant_name(obj, doname));
+    return 0;
 }
 
 /* loot_mon() returns amount of time passed. */
