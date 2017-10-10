@@ -883,7 +883,7 @@ you_moved(void)
                 hpmax = &(u.mhmax);
             }
 
-            boolean full = (*hp == *hpmax);
+            boolean hpfull = (*hp == *hpmax);
             if (u.uinvulnerable) {
                 /* for the moment at least, you're in tiptop shape */
                 wtcap = UNENCUMBERED;
@@ -924,14 +924,7 @@ you_moved(void)
                 }
             }
 
-            if (!full && *hp == *hpmax && flags.incomplete &&
-                !flags.interrupted &&
-                ((1 << flags.occupation) & ocm_rest)) {
-                pline(msgc_statusgood, "Health restored.");
-                interrupt_occupation(ocm_rest);
-            }
-
-            full = (youmonst.pw == youmonst.pwmax);
+            boolean pwfull = (youmonst.pw == youmonst.pwmax);
             if (youmonst.pw < youmonst.pwmax && wtcap < MOD_ENCUMBER) {
                 youmonst.pw +=
                     regeneration_by_rate(regen_rate(&youmonst, TRUE));
@@ -939,10 +932,16 @@ you_moved(void)
                     youmonst.pw = youmonst.pwmax;
             }
 
-            if (!full && youmonst.pw == youmonst.pwmax && flags.incomplete &&
-                !flags.interrupted &&
+            if (((!hpfull && *hp == *hpmax) ||
+                 (!pwfull && youmonst.pw == youmonst.pwmax)) &&
+                flags.incomplete && !flags.interrupted &&
                 ((1 << flags.occupation) & ocm_rest)) {
-                pline(msgc_statusgood, "Energy restored.");
+                if (!hpfull && *hp == *hpmax)
+                    pline(msgc_statusgood, "Health%s restored.",
+                          !pwfull && youmonst.pw == youmonst.pwmax ?
+                          " and energy" : "");
+                else
+                    pline(msgc_statusgood, "Energy restored.");
                 interrupt_occupation(ocm_rest);
             }
 
