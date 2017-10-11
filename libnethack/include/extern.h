@@ -921,6 +921,7 @@ extern void create_obj_memory(struct obj *);
 extern void update_obj_memory(struct obj *);
 extern void free_obj_memory(struct obj *);
 extern void free_memobj_chain(struct obj *);
+extern void free_memobj(void);
 extern void extract_obj_memory(struct obj *);
 
 /* ### mextra.c ### */

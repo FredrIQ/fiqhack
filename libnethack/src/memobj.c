@@ -341,9 +341,9 @@ free_memobj_chain(struct obj *chain)
     }
 }
 
-/* Clears object memories completely. */
+/* Frees object memories completely. */
 void
-clear_memobj(void)
+free_memobj(void)
 {
     /* Clear levels */
     int i;

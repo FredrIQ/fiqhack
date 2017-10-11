@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,6 +18,7 @@ static void save_utracked(struct memfile *mf, struct you *you);
 static void savelevchn(struct memfile *mf);
 static void savedamage(struct memfile *mf, struct level *lev);
 static void freedamage(struct level *lev);
+static void save_memobj(struct memfile *mf);
 static void saveobjchn(struct memfile *mf, struct obj *);
 static void free_objchn(struct obj *otmp);
 static void savemonchn(struct memfile *mf, struct monst *, struct level *lev);
@@ -335,6 +336,7 @@ savegamestate(struct memfile *mf)
     save_track(mf);
     save_rndmonst_state(mf);
     save_history(mf);
+    save_memobj(mf);
 }
 
 
@@ -820,6 +822,17 @@ free_objchn(struct obj *otmp)
     }
 }
 
+static void
+save_memobj(struct memfile *mf)
+{
+    int i;
+    for (i = 0; i <= maxledgerno(); i++) {
+        if (levels[i])
+            saveobjchn(mf, levels[i]->memobjlist);
+    }
+
+    saveobjchn(mf, youmonst.meminvent);
+}
 
 static void
 saveobjchn(struct memfile *mf, struct obj *otmp)
@@ -1018,6 +1031,7 @@ freedynamicdata(void)
     free_waterlevel();
     free_dungeon();
     free_history();
+    free_memobj();
 
     if (flags.last_str_buf) {
         free(flags.last_str_buf);

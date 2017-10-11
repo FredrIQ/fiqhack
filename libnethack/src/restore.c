@@ -126,6 +126,8 @@ restore_memobj(struct memfile *mf)
             find_lev_memobj(levels[i]);
         }
     }
+
+    restobjchn(mf, level, FALSE, FALSE, &(youmonst.meminvent), NULL);
 }
 
 static void
