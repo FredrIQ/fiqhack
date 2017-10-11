@@ -1020,6 +1020,7 @@ freedynamicdata(void)
 
     /* game-state data */
     free_monchn(migrating_mons);
+    free_objchn(youmonst.minvent);
     /* this should normally be NULL between turns, but might not be due to
        the game ending where pets can follow (e.g. ascension or dungeon escape)
        or due to panicing. */
