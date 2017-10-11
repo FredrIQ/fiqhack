@@ -22,7 +22,7 @@ find_objects(struct level *lev, struct obj *chain, int *found,
     const char *dname;
     for (obj = chain; obj; obj = obj->nobj) {
         dname = distant_name(obj, doname);
-        if (!strstri(dname, str)) {
+        if (!strstri(dname, str) || obj->memory == OM_MEMORY_LOST) {
             if (Has_contents(obj)) {
                 objfound = find_objects(lev, obj->cobj, found,
                                         did_header, str, menu,
