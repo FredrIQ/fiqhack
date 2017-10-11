@@ -250,11 +250,12 @@ update_obj_memory(struct obj *obj)
     ox_free(memobj);
 
     *memobj = *obj;
+    memobj->mem_obj = obj;
 
     /* give error conditions a chance at freeing the memory properly */
     memobj->where = OBJ_FREE;
     memobj->nobj = turnstate.floating_objects;
-    turnstate.floating_objects = obj;
+    turnstate.floating_objects = memobj;
 
     /* Set up fields that are different */
     ox_copy(memobj, obj);
@@ -287,8 +288,8 @@ update_obj_memory(struct obj *obj)
         panic("update_obj_memory: updating memory for a floating object?");
         /* NOTREACHED */ break;
     case OBJ_FLOOR:
-        memobj->nobj = lev->memobjlist;
-        lev->memobjlist = memobj;
+        extract_nobj(memobj, &turnstate.floating_objects,
+                     &memobj->olev->memobjlist, OBJ_FLOOR);
         memobj->nexthere = lev->memobjects[memobj->ox][memobj->oy];
         lev->memobjects[memobj->ox][memobj->oy] = memobj;
         break;
@@ -299,20 +300,16 @@ update_obj_memory(struct obj *obj)
             panic("update_obj_memory: container has no memory?");
 
         memobj->ocontainer = obj;
-        memobj->nobj = obj->cobj;
-        obj->cobj = memobj;
+        extract_nobj(memobj, &turnstate.floating_objects, &(obj->cobj),
+                     OBJ_CONTAINED);
         break;
     case OBJ_INVENT:
-        memobj->nobj = youmonst.meminvent;
-        youmonst.meminvent = memobj;
+        extract_nobj(memobj, &turnstate.floating_objects, &(youmonst.meminvent),
+                     OBJ_INVENT);
         break;
     default:
         panic("update_obj_memory: unknown location %d", obj->where);
     }
-
-    /* Remove it from the floating object chain */
-    turnstate.floating_objects = turnstate.floating_objects->nobj;
-    memobj->where = obj->where;
 }
 
 /* Frees an object memory */
