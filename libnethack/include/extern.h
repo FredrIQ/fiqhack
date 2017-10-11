@@ -1674,6 +1674,7 @@ extern int dopay(const struct nh_cmd_arg *);
 extern boolean paybill(int);
 extern void finish_paybill(void);
 extern struct obj *find_oid(unsigned id);
+extern struct obj *find_oid_lev(struct level *lev, unsigned id);
 extern int shop_item_cost(const struct obj *obj);
 extern long contained_cost(const struct obj *, struct monst *, long, boolean,
                            boolean);

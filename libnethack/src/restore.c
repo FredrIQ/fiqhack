@@ -12,6 +12,8 @@ static void restore_autopickup_rules(struct memfile *mf,
                                      struct nh_autopickup_rules *r);
 static void restore_utracked(struct memfile *mf, struct you *you);
 static void find_lev_obj(struct level *lev);
+static void find_lev_memobj(struct level *lev);
+static void restore_memobj(struct memfile *mf);
 static void restlevchn(struct memfile *mf);
 static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly);
 static void restobjchn(struct memfile *mf, struct level *lev,
@@ -88,6 +90,41 @@ find_lev_obj(struct level *lev)
     while ((otmp = fobjtmp) != 0) {
         fobjtmp = otmp->nexthere;
         place_object(otmp, lev, otmp->ox, otmp->oy);
+    }
+}
+
+/* Sets up lev->memobjects[x][y] */
+static void
+find_lev_memobj(struct level *lev)
+{
+    /* Reset current lists */
+    int x, y;
+    for (x = 0; x < COLNO; x++)
+        for (y = 0; y < ROWNO; y++)
+            lev->memobjects[x][y] = NULL;
+
+    /* Recreate the list */
+    struct obj *memobj;
+    for (memobj = lev->memobjlist; memobj; memobj = memobj->nobj) {
+        x = memobj->ox;
+        y = memobj->oy;
+        memobj->nexthere = lev->memobjects[x][y];
+        lev->memobjects[x][y] = memobj;
+    }
+}
+
+/* Restores object memories */
+static void
+restore_memobj(struct memfile *mf)
+{
+    int i;
+    for (i = 0; i <= maxledgerno(); i++) {
+        if (levels[i]) {
+            restobjchn(mf, levels[i], FALSE, FALSE, &(levels[i]->memobjlist),
+                       NULL);
+
+            find_lev_memobj(levels[i]);
+        }
     }
 }
 
@@ -530,6 +567,9 @@ restgamestate(struct memfile *mf)
     restore_track(mf);
     restore_rndmonst_state(mf);
     restore_history(mf);
+
+    /* must come after all objs are restored */
+    restore_memobj(mf);
 
     /* must come after all mons & objs are restored */
     relink_timers(FALSE, lev, NULL);

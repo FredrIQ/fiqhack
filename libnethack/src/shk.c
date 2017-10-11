@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,7 +54,6 @@ static void dropped_container(struct obj *, struct monst *, boolean);
 static void add_to_billobjs(struct obj *);
 static void bill_box_content(struct obj *, boolean, boolean, struct monst *);
 static boolean rob_shop(struct monst *);
-static struct obj *find_oid_lev(struct level *lev, unsigned id);
 
 /*
     invariants: obj->unpaid iff onbill(obj) [unless bp->useup]
@@ -1723,7 +1722,7 @@ bp_to_obj(struct bill_x *bp)
 }
 
 
-static struct obj *
+struct obj *
 find_oid_lev(struct level *lev, unsigned id)
 {
     struct obj *obj;
