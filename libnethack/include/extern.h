@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-11 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -913,6 +913,16 @@ extern void mfmagic_set(struct memfile *mf, int32_t magic);
 extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
                       const char **difference_reason);
 
+/* ### memobj.c ### */
+
+extern int dofindobj(const struct nh_cmd_arg *);
+extern void update_obj_memories_at(struct level *, int, int);
+extern void create_obj_memory(struct obj *);
+extern void update_obj_memory(struct obj *);
+extern void free_obj_memory(struct obj *);
+extern void free_memobj_chain(struct obj *);
+extern void extract_obj_memory(struct obj *);
+
 /* ### mextra.c ### */
 
 # define GEN_EXBASE_PROT(entity, emo)                                   \
@@ -1097,6 +1107,7 @@ extern void discard_minvent(struct monst *);
 extern void obj_extract_self(struct obj *);
 extern void extract_nobj(struct obj *, struct obj **,
                          struct obj **, enum obj_where);
+extern void extract_nexthere(struct obj *, struct obj **);
 extern int add_to_minv(struct monst *, struct obj *, struct obj **);
 extern struct obj *add_to_container(struct obj *, struct obj *);
 extern void add_to_buried(struct obj *obj);
@@ -1406,7 +1417,6 @@ extern void add_objitem(struct nh_objlist *, enum nh_menuitem_role, int,
 extern struct obj *pick_obj(struct obj *);
 extern int encumber_msg(int);
 extern int doloot(const struct nh_cmd_arg *);
-extern int dofindobj(const struct nh_cmd_arg *);
 extern void observe_quantum_cat(struct obj *);
 extern int use_container(struct obj *, int);
 extern int loot_mon(struct monst *, int *, boolean *);

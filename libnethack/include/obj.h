@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -48,7 +48,8 @@ struct obj {
     struct obj *cobj;   /* contents list for containers */
     struct oextra *oextra; /* extra object data */
     unsigned int o_id;
-    unsigned int o_orig_id; /* Original ID for remembered objects, otherwise 0 */
+    /* Points to the remembered object or vice versa */
+    struct obj *mem_obj;
     unsigned int m_id; /* monster ID for temporary monsters and bones ghosts */
     struct level *olev; /* the level it is on */
     xchar ox, oy;
@@ -116,7 +117,11 @@ struct obj {
     unsigned was_thrown:1;      /* thrown by the hero since last picked up */
     unsigned was_dropped:1;     /* last left inventory via d or D command */
     unsigned bypass:1;  /* mark this as an object to be skipped by bhito() */
-    /* 4 free bits */
+    unsigned memory:3;  /* object memory state */
+# define OM_NO_MEMORY   0 /* not an object memory */
+# define OM_MEMORY_OK   1 /* memory state is OK as far as we know */
+# define OM_MEMORY_LOST 2 /* we lost it, deallocate when mem_obj is NULL */
+    /* 2 free bits */
 
     union {
         int corpsenm;           /* type of corpse is mons[corpsenm] */
