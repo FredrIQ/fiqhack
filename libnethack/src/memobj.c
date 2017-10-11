@@ -164,8 +164,9 @@ dofindobj(const struct nh_cmd_arg *arg)
         /* Display object position */
         cls();
         dbuf_set_memory(lev, upper->ox, upper->oy);
-        pline(msgc_actionok, "%s is located here.",
-              The(distant_name(obj, cxname)));
+        const char *dname = The(distant_name(obj, cxname));
+        pline(msgc_actionok, "%s %s located here.", dname,
+              vtense(dname, "are"));
         flush_screen_nopos();
         win_pause_output(P_MAP);
         notify_levelchange(NULL);
