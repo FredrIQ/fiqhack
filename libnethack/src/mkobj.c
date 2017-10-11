@@ -1499,6 +1499,9 @@ discard_minvent(struct monst *mtmp)
 void
 obj_extract_self(struct obj *obj)
 {
+    if (obj->memory != OM_NO_MEMORY)
+        panic("obj_extract_self: object is a memory, use extract_obj_memory.");
+
     switch (obj->where) {
     case OBJ_FREE:
         break;
