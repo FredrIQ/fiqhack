@@ -531,6 +531,7 @@ bill_dummy_object(struct obj *otmp)
     dummy = newobj(otmp);
     dummy->o_id = next_ident();
     dummy->timed = 0;
+    dummy->mem_obj = NULL;
     ox_copy(dummy, otmp);
     if (Is_candle(dummy))
         dummy->lamplit = 0;
