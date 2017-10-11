@@ -319,10 +319,8 @@ update_obj_memory(struct obj *obj)
 void
 free_obj_memory(struct obj *memobj)
 {
-    if (memobj->mem_obj) {
-        impossible("free_obj_memory: original object hasn't disappeared.");
+    if (memobj->mem_obj)
         memobj->mem_obj->mem_obj = NULL;
-    }
 
     if (Has_contents(memobj))
         free_memobj_chain(memobj->cobj);
