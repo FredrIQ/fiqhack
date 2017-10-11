@@ -571,7 +571,8 @@ restgamestate(struct memfile *mf)
     restore_history(mf);
 
     /* must come after all objs are restored */
-    restore_memobj(mf);
+    if (flags.save_revision >= 8)
+        restore_memobj(mf);
 
     /* must come after all mons & objs are restored */
     relink_timers(FALSE, lev, NULL);

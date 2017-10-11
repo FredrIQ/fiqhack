@@ -225,6 +225,7 @@ create_obj_memory(struct obj *obj)
 
     /* Kill container information. */
     memobj->cobj = NULL;
+    memobj->memory = OM_MEMORY_OK;
 
     update_obj_memory(obj);
 }
@@ -251,8 +252,8 @@ update_obj_memory(struct obj *obj)
     *memobj = *obj;
 
     /* give error conditions a chance at freeing the memory properly */
-    obj->where = OBJ_FREE;
-    obj->nobj = turnstate.floating_objects;
+    memobj->where = OBJ_FREE;
+    memobj->nobj = turnstate.floating_objects;
     turnstate.floating_objects = obj;
 
     /* Set up fields that are different */
