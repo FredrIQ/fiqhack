@@ -50,6 +50,8 @@ struct obj {
     unsigned int o_id;
     /* Points to the remembered object or vice versa */
     struct obj *mem_obj;
+    /* Used during save/restore */
+    unsigned int mem_o_id;
     unsigned int m_id; /* monster ID for temporary monsters and bones ghosts */
     struct level *olev; /* the level it is on */
     xchar ox, oy;
@@ -109,6 +111,7 @@ struct obj {
     unsigned recharged:3;       /* number of times it's been recharged */
     unsigned lamplit:1;         /* a light-source -- can be lit */
 # ifdef INVISIBLE_OBJECTS
+    /* Note: there's no save/restore logic for oinvis */
     unsigned oinvis:1;          /* invisible */
 # endif
     unsigned greased:1;         /* covered with grease */
@@ -117,11 +120,11 @@ struct obj {
     unsigned was_thrown:1;      /* thrown by the hero since last picked up */
     unsigned was_dropped:1;     /* last left inventory via d or D command */
     unsigned bypass:1;  /* mark this as an object to be skipped by bhito() */
-    unsigned memory:3;  /* object memory state */
+    unsigned memory:2;  /* object memory state */
 # define OM_NO_MEMORY   0 /* not an object memory */
 # define OM_MEMORY_OK   1 /* memory state is OK as far as we know */
 # define OM_MEMORY_LOST 2 /* we lost it, deallocate when mem_obj is NULL */
-    /* 2 free bits */
+    /* 1 free bit */
 
     union {
         int corpsenm;           /* type of corpse is mons[corpsenm] */

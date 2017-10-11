@@ -1779,10 +1779,11 @@ restore_obj(struct memfile *mf)
     if (flags.save_revision >= 2) {
         otmp->oprops = mread64(mf);
         otmp->oprops_known = mread64(mf);
+        otmp->mem_o_id = mread32(mf);
         int i;
 
         /* Reserved for future extensions */
-        for (i = 0; i < 200; i++)
+        for (i = 0; i < 196; i++)
             (void) mread8(mf);
     }
 
@@ -1810,6 +1811,7 @@ restore_obj(struct memfile *mf)
     otmp->was_dropped = (oflags >> 5) & 1;
     otmp->mknown = (oflags >> 4) & 1;
     otmp->mbknown = (oflags >> 3) & 1;
+    otmp->memory = (oflags >> 1) & 3;
 
     otmp->m_id = 0;
     if (oattached != OATTACHED_NEW) {
@@ -1830,6 +1832,7 @@ restore_obj(struct memfile *mf)
         if (has_extra)
             restore_oextra(mf, otmp);
     }
+
     return otmp;
 }
 
@@ -1856,7 +1859,8 @@ save_obj(struct memfile *mf, struct obj *obj)
         (obj->greased << 11) | (OATTACHED_NEW << 9) |
         (obj->in_use << 8) | (obj->was_thrown << 7) |
         (obj->bypass << 6) | (obj->was_dropped << 5) |
-        (obj->mknown << 4) | (obj->mbknown << 3);
+        (obj->mknown << 4) | (obj->mbknown << 3) |
+        (obj->memory << 1);
 
     mfmagic_set(mf, OBJ_MAGIC);
     mtag(mf, obj->o_id, MTAG_OBJ);
@@ -1892,10 +1896,14 @@ save_obj(struct memfile *mf, struct obj *obj)
     }
     mwrite64(mf, obj->oprops);
     mwrite64(mf, obj->oprops_known);
+    obj->mem_o_id = 0;
+    if (obj->mem_obj)
+        obj->mem_o_id = obj->mem_obj->o_id;
+    mwrite32(mf, obj->mem_o_id);
 
     /* Reserved for future extensions */
     int i;
-    for (i = 0; i < 200; i++)
+    for (i = 0; i < 196; i++)
         mwrite8(mf, 0);
 
     mwrite32(mf, obj->m_id);

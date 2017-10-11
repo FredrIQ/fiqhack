@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -240,6 +240,15 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
         /* we might need to produce an index, for speed in relinking IDs */
         if (table)
             trietable_add(table, otmp->o_id, otmp);
+
+        /* If this is an object memory, relink it. */
+        if (otmp->mem_o_id && otmp->memory != OM_NO_MEMORY) {
+            otmp->mem_obj = find_oid(otmp->mem_o_id);
+            if (!otmp->mem_obj)
+                error_reading_save("Object memory link failed.");
+            else
+                otmp->mem_obj->mem_obj = otmp;
+        }
 
         /* get contents of a container or statue */
         if (Has_contents(otmp)) {
