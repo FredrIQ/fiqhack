@@ -193,7 +193,7 @@ update_obj_memories_at(struct level *lev, int x, int y)
     }
 
     /* Now check object memory and remove memories that disappeared. */
-    for (memobj = lev->memobjects[x][y]; memobj; memobj = memobj->nobj) {
+    for (memobj = lev->memobjects[x][y]; memobj; memobj = memobj->nexthere) {
         obj = memobj->mem_obj;
         if (!obj) {
             /* Apparently the object disappeared, deallocate it. */
