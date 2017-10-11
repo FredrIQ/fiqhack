@@ -179,7 +179,6 @@ dofindobj(const struct nh_cmd_arg *arg)
 void
 update_obj_memories_at(struct level *lev, int x, int y)
 {
-    return;
     struct obj *obj, *memobj;
 
     /* First, set up or update object memory for objects on the tile */
