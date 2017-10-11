@@ -352,7 +352,7 @@ free_memobj(void)
     }
 
     /* Clear player inventory */
-    free_memobj_chain(youmonst.minvent);
+    free_memobj_chain(youmonst.meminvent);
 }
 
 /* Moves an object memory to the floating object chain.
