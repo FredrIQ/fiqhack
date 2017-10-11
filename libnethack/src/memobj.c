@@ -341,6 +341,21 @@ free_memobj_chain(struct obj *chain)
     }
 }
 
+/* Clears object memories completely. */
+void
+clear_memobj(void)
+{
+    /* Clear levels */
+    int i;
+    for (i = 0; i <= maxledgerno(); i++) {
+        if (levels[i])
+            free_memobj_chain(levels[i]->memobjlist);
+    }
+
+    /* Clear player inventory */
+    free_memobj_chain(youmonst.minvent);
+}
+
 /* Moves an object memory to the floating object chain.
    Equavilent to obj_extract_self for real objects. */
 void
