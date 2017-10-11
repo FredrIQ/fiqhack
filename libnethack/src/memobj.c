@@ -361,6 +361,9 @@ clear_memobj(void)
 void
 extract_obj_memory(struct obj *memobj)
 {
+    if (memobj->memory == OM_NO_MEMORY)
+        panic("extract_obj_memory: memobj is not an object memorg.");
+
     switch (memobj->where) {
     case OBJ_FREE:
         break;
