@@ -243,7 +243,12 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
 
         /* If this is an object memory, relink it. */
         if (otmp->mem_o_id && otmp->memory != OM_NO_MEMORY) {
-            otmp->mem_obj = find_oid(otmp->mem_o_id);
+            /* try object's level first */
+            if (otmp->olev)
+                otmp->mem_obj = find_oid_lev(otmp->olev, otmp->mem_o_id);
+            /* try regular find_oid */
+            if (!otmp->mem_obj)
+                otmp->mem_obj = find_oid(otmp->mem_o_id);
             if (!otmp->mem_obj)
                 impossible("Object memory link failed.");
             else
