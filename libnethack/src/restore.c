@@ -245,7 +245,7 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
         if (otmp->mem_o_id && otmp->memory != OM_NO_MEMORY) {
             otmp->mem_obj = find_oid(otmp->mem_o_id);
             if (!otmp->mem_obj)
-                error_reading_save("Object memory link failed.");
+                impossible("Object memory link failed.");
             else
                 otmp->mem_obj->mem_obj = otmp;
         }
