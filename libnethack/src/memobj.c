@@ -95,7 +95,7 @@ findobj_prompt(int getobj, const char *str)
 
     /* Find objects in player inventory. Useful in replaymode
        (containers) */
-    objfound = find_objects(NULL, youmonst.minvent, &found,
+    objfound = find_objects(NULL, youmonst.meminvent, &found,
                             &did_header, str, &menu, 0);
     if (objfound)
         return objfound;
