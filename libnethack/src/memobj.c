@@ -146,8 +146,8 @@ dofindobj(const struct nh_cmd_arg *arg)
             if (obj == upper)
                 pline(msgc_cancelled, "Look in your inventory!");
             else
-                pline(msgc_actionok, "It's in %s.",
-                      Shk_Your(upper));
+                pline(msgc_actionok, "It's in %s %s.",
+                      shk_your(upper), cxname(upper));
             return 0;
         } else if (upper->where != OBJ_FLOOR) {
             impossible("Where did %s go? %d",
