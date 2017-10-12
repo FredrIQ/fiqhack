@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -120,6 +120,11 @@ const char *const defexplain[] = {
              "long staircase up",   /* upsstair */
              "long staircase down", /* dnsstair */
              "altar",               /* altar */
+             "lawful altar",        /* laltar */
+             "neutral altar",       /* naltar */
+             "chaotic altar",       /* caltar */
+             "unaligned altar",     /* ualtar */
+             "aligned altar",       /* aaltar */
              "grave",               /* grave */
              "opulent throne",      /* throne */
              "sink",                /* sink */
@@ -197,6 +202,11 @@ const struct nh_symdef defsyms[] = {
     {'<', "upsstair", CLR_YELLOW | HI_ULINE},
     {'>', "dnsstair", CLR_YELLOW | HI_ULINE},
     {'_', "altar", CLR_GRAY},
+    {'_', "laltar", CLR_WHITE},
+    {'_', "naltar", CLR_GRAY},
+    {'_', "caltar", CLR_BLACK},
+    {'_', "ualtar", CLR_RED},
+    {'_', "aaltar", CLR_BRIGHT_MAGENTA},
     {'|', "grave", CLR_BLACK},
     {'\\', "throne", HI_GOLD},
     {'#', "sink", CLR_GRAY},

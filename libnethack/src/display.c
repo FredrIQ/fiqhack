@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1758,7 +1758,15 @@ back_to_cmap(struct level *lev, xchar x, xchar y)
         idx = S_sink;
         break;
     case ALTAR:
-        idx = S_altar;
+        idx = S_aaltar;
+        if (!In_endgame(&lev->z)) {
+            aligntyp align = Amask2align(lev->locations[x][y].altarmask & AM_MASK);
+            idx =
+                (align == A_LAWFUL ? S_laltar :
+                 align == A_NEUTRAL ? S_naltar :
+                 align == A_CHAOTIC ? S_caltar :
+                 S_ualtar);
+        }
         break;
     case GRAVE:
         idx = S_grave;

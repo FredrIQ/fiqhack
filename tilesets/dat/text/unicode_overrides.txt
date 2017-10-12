@@ -1,4 +1,4 @@
-! Last modified by Fredrik Ljungdahl, 2017-10-10
+! Last modified by Fredrik Ljungdahl, 2017-10-13
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed. See license for details.
 !
@@ -36,6 +36,11 @@ sub unlit the floor of a room: bgblack darkgray regular '·'
 corridor: bgblack gray regular '░'
 sub lit corridor: bgblack white regular '▒'
 altar: gray 'Ω'
+lawful altar: white 'Ω'
+neutral altar: gray 'Ω'
+chaotic altar: black 'Ω'
+unaligned altar: red 'Ω'
+unaligned altar: bright_magenta 'Ω'
 ice: cyan '·'
 lowered drawbridges 0: brown '·'
 lowered drawbridges 1: brown '·'
