@@ -373,10 +373,9 @@ free_memobj(void)
 {
     /* Clear levels */
     int i;
-    for (i = 0; i <= maxledgerno(); i++) {
+    for (i = 0; i <= maxledgerno(); i++)
         if (levels[i])
             free_memobj_chain(levels[i]->memobjlist);
-    }
 
     /* Clear player inventory */
     free_memobj_chain(youmonst.meminvent);
