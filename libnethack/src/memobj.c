@@ -58,8 +58,6 @@ find_objects(struct level *lev, struct obj *chain, int *found,
 
                 add_menuheading(menu, header);
             }
-            dname = msgprintf("%d,%d:%s", obj->ox, obj->oy,
-                              dname);
             add_menuitem(menu, *found, dname, 0, FALSE);
         }
 
