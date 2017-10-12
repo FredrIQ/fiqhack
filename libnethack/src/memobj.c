@@ -58,6 +58,8 @@ find_objects(struct level *lev, struct obj *chain, int *found,
 
                 add_menuheading(menu, header);
             }
+            dname = msgprintf("%d,%d:%s", obj->ox, obj->oy,
+                              dname);
             add_menuitem(menu, *found, dname, 0, FALSE);
         }
 
@@ -177,6 +179,16 @@ dofindobj(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+void
+update_obj_memories(struct level *lev)
+{
+    int x, y;
+    for (x = 0; x < COLNO; x++)
+        for (y = 0; y < ROWNO; y++)
+            if (lev == level && cansee(x, y))
+                update_obj_memories_at(lev, x, y);
+}
+
 /* Refreshes object memories at location. Assumes the player can know
    whatever is here. */
 void
@@ -187,7 +199,7 @@ update_obj_memories_at(struct level *lev, int x, int y)
     if (program_state.in_zero_time_command)
         return;
 
-    struct obj *obj, *memobj;
+    struct obj *obj, *memobj, *next;
 
     /* First, set up or update object memory for objects on the tile */
     for (obj = lev->objects[x][y]; obj; obj = obj->nexthere) {
@@ -200,7 +212,8 @@ update_obj_memories_at(struct level *lev, int x, int y)
     }
 
     /* Now check object memory and remove memories that disappeared. */
-    for (memobj = lev->memobjects[x][y]; memobj; memobj = memobj->nexthere) {
+    for (memobj = lev->memobjects[x][y]; memobj; memobj = next) {
+        next = memobj->nexthere;
         obj = memobj->mem_obj;
         if (!obj) {
             /* Apparently the object disappeared, deallocate it. */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-12 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -916,6 +916,7 @@ extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
 /* ### memobj.c ### */
 
 extern int dofindobj(const struct nh_cmd_arg *);
+extern void update_obj_memories(struct level *);
 extern void update_obj_memories_at(struct level *, int, int);
 extern void create_obj_memory(struct obj *);
 extern void update_obj_memory(struct obj *);
