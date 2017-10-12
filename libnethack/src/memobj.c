@@ -95,8 +95,9 @@ findobj_prompt(int getobj, const char *str)
 
     /* Find objects in player inventory. Useful in replaymode
        (containers) */
+    did_header = FALSE;
     objfound = find_objects(NULL, youmonst.meminvent, &found,
-                            &did_header, str, &menu, 0);
+                            &did_header, str, &menu, getobj);
     if (objfound)
         return objfound;
 
@@ -134,9 +135,16 @@ dofindobj(const struct nh_cmd_arg *arg)
     if (obj) {
         while (upper->where == OBJ_CONTAINED)
             upper = upper->ocontainer;
-        if (upper->where != OBJ_FLOOR) {
-            pline(msgc_cancelled, "%s is not on the floor.",
-                  distant_name(obj, doname));
+        if (upper->where == OBJ_INVENT) {
+            if (obj == upper)
+                pline(msgc_cancelled, "Look in your inventory!");
+            else
+                pline(msgc_actionok, "It's in %s.",
+                      Shk_Your(upper));
+            return 0;
+        } else if (upper->where != OBJ_FLOOR) {
+            impossible("Where did %s go? %d",
+                       killer_xname(upper), upper->where);
             return 0;
         }
 
@@ -180,11 +188,38 @@ dofindobj(const struct nh_cmd_arg *arg)
 void
 update_obj_memories(struct level *lev)
 {
+    /* Update level */
     int x, y;
     for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++)
             if (lev == level && cansee(x, y))
                 update_obj_memories_at(lev, x, y);
+
+    /* Update inventory */
+    struct obj *obj, *memobj, *next;
+    for (obj = youmonst.minvent; obj; obj = obj->nobj) {
+        if (!obj->mem_obj) {
+            create_obj_memory(obj);
+            continue;
+        }
+
+        update_obj_memory(obj);
+    }
+
+    /* Free stale inventory memories */
+    for (memobj = youmonst.meminvent; memobj; memobj = next) {
+        next = memobj->nexthere;
+        obj = memobj->mem_obj;
+        if (!obj) {
+            /* Apparently the object disappeared, deallocate it. */
+            free_obj_memory(memobj);
+            continue;
+        }
+
+        if (obj->where != OBJ_INVENT)
+            /* The object still exists, but isn't here anymore... */
+            memobj->memory = OM_MEMORY_LOST;
+    }
 }
 
 /* Refreshes object memories at location. Assumes the player can know
