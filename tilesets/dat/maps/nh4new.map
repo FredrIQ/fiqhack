@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-03
+! Last modified by Fredrik Ljungdahl, 2017-10-12
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This tilemap lists the tiles in NetHack 4 that do not exist in
@@ -22,3 +22,4 @@ monster is detected
 monster is ridden
 gas cloud
 solid rock
+remembered as object pile

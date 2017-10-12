@@ -1,4 +1,4 @@
-! Last modified by Fredrik Ljungdahl, 2017-09-25
+! Last modified by Fredrik Ljungdahl, 2017-10-12
 ! Copyright (C) 2013 Alex Smith, in addition to the copyright on the
 ! tiles from Slash'EM (originally by Warwick Allison) on which this
 ! file is based.
@@ -2160,4 +2160,24 @@ $ = (71, 108, 108)
   $$$$$JJOOOOO$$$$
   $$$$$$MJJOOM$$$$
   $$$$$$$MMJJ$$$$$
+
+}
+# tile 1104 (remembered as object pile)
+{
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$V$$$$$$$$$$$$
+  $$VEV$$$$$$$$$$$
+  $VEEEV$$$$$$$$$$
+  $$VEV$$$$$$$$$$$
+  $$$V$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
 }

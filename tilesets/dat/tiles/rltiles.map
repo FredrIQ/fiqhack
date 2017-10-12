@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2015-04-02
+! Last modified by Fredrik Ljungdahl, 2017-10-12
 !
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed.  See license for details.
@@ -1997,7 +1997,7 @@ generic gem
 
 ! Currently unused brandings
 
-remembered as multiple items
+remembered as object pile
 
 ! Varying-size gold piles
 
