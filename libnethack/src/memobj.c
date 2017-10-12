@@ -197,14 +197,8 @@ update_obj_memories(struct level *lev)
 
     /* Update inventory */
     struct obj *obj, *memobj, *next;
-    for (obj = youmonst.minvent; obj; obj = obj->nobj) {
-        if (!obj->mem_obj) {
-            create_obj_memory(obj);
-            continue;
-        }
-
+    for (obj = youmonst.minvent; obj; obj = obj->nobj)
         update_obj_memory(obj);
-    }
 
     /* Free stale inventory memories */
     for (memobj = youmonst.meminvent; memobj; memobj = next) {
@@ -235,14 +229,8 @@ update_obj_memories_at(struct level *lev, int x, int y)
     struct obj *obj, *memobj, *next;
 
     /* First, set up or update object memory for objects on the tile */
-    for (obj = lev->objects[x][y]; obj; obj = obj->nexthere) {
-        if (!obj->mem_obj) {
-            create_obj_memory(obj);
-            continue;
-        }
-
+    for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
         update_obj_memory(obj);
-    }
 
     /* Now check object memory and remove memories that disappeared. */
     for (memobj = lev->memobjects[x][y]; memobj; memobj = next) {
@@ -261,37 +249,24 @@ update_obj_memories_at(struct level *lev, int x, int y)
     }
 }
 
-/* Creates a new object memory for the object */
-void
-create_obj_memory(struct obj *obj)
-{
-    if (obj->mem_obj)
-        panic("create_obj_memory: obj already has memory?");
-
-    struct obj *memobj = newobj(obj);
-
-    /* Map mem_obj to object and vice versa */
-    memobj->mem_obj = obj;
-    obj->mem_obj = memobj;
-
-    /* Assign a new object ID */
-    memobj->o_id = next_ident();
-
-    /* Kill container information. */
-    memobj->cobj = NULL;
-    memobj->memory = OM_MEMORY_OK;
-
-    update_obj_memory(obj);
-}
-
-/* Updates an object memory for given object */
+/* Creates or updates an object memory for given object */
 void
 update_obj_memory(struct obj *obj)
 {
-    if (!obj->mem_obj)
-        panic("update_obj_memory: no existing object memory?");
-
     struct obj *memobj = obj->mem_obj;
+    if (!memobj) {
+        /* Create a new memory */
+        memobj = newobj(obj);
+        obj->mem_obj = memobj;
+        memobj->mem_obj = obj;
+
+        /* Assign a new ID */
+        memobj->o_id = next_ident();
+
+        /* Kill container information */
+        memobj->cobj = NULL;
+        memobj->memory = OM_MEMORY_OK;
+    }
     struct level *lev = obj->olev;
 
     /* We are about to overwrite the content of the memory object with obj.
