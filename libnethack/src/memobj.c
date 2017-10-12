@@ -22,6 +22,12 @@ find_objects(struct level *lev, struct obj *chain, int *found,
     const char *dname;
     for (obj = chain; obj; obj = obj->nobj) {
         dname = distant_name(obj, doname);
+        if (obj->where == OBJ_CONTAINED) {
+            struct obj *container = obj->ocontainer;
+            dname = msgprintf("%s (inside %s)", dname,
+                              distant_name(container, doname));
+        }
+
         if (!strstri(dname, str) || obj->memory == OM_MEMORY_LOST) {
             if (Has_contents(obj)) {
                 objfound = find_objects(lev, obj->cobj, found,
@@ -58,6 +64,7 @@ find_objects(struct level *lev, struct obj *chain, int *found,
 
                 add_menuheading(menu, header);
             }
+
             add_menuitem(menu, *found, dname, 0, FALSE);
         }
 
@@ -195,12 +202,8 @@ update_obj_memories(struct level *lev)
             if (lev == level && cansee(x, y))
                 update_obj_memories_at(lev, x, y);
 
-    /* Update inventory */
+    /* First, mark memories as lost, or free them. */
     struct obj *obj, *memobj, *next;
-    for (obj = youmonst.minvent; obj; obj = obj->nobj)
-        update_obj_memory(obj);
-
-    /* Free stale inventory memories */
     for (memobj = youmonst.meminvent; memobj; memobj = next) {
         next = memobj->nexthere;
         obj = memobj->mem_obj;
@@ -210,10 +213,12 @@ update_obj_memories(struct level *lev)
             continue;
         }
 
-        if (obj->where != OBJ_INVENT)
-            /* The object still exists, but isn't here anymore... */
-            memobj->memory = OM_MEMORY_LOST;
+        memobj->memory = OM_MEMORY_LOST;
     }
+
+    /* Now set up up to date memories of objects inside. */
+    for (obj = youmonst.minvent; obj; obj = obj->nobj)
+        update_obj_memory(obj);
 }
 
 /* Refreshes object memories at location. Assumes the player can know
@@ -228,25 +233,48 @@ update_obj_memories_at(struct level *lev, int x, int y)
 
     struct obj *obj, *memobj, *next;
 
-    /* First, set up or update object memory for objects on the tile */
-    for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
-        update_obj_memory(obj);
-
-    /* Now check object memory and remove memories that disappeared. */
     for (memobj = lev->memobjects[x][y]; memobj; memobj = next) {
         next = memobj->nexthere;
         obj = memobj->mem_obj;
         if (!obj) {
-            /* Apparently the object disappeared, deallocate it. */
             free_obj_memory(memobj);
             continue;
         }
 
-        if (obj->ox != memobj->ox || obj->oy != memobj->oy ||
-            obj->olev != memobj->olev || obj->where != memobj->where)
-            /* The object still exists, but isn't here anymore... */
-            memobj->memory = OM_MEMORY_LOST;
+        memobj->memory = OM_MEMORY_LOST;
     }
+
+    for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
+        update_obj_memory(obj);
+}
+
+/* Updates container memory */
+void
+update_container_memory(struct obj *obj)
+{
+    if (!obj) {
+        impossible("update_container_memory: container is NULL?");
+        return;
+    }
+
+    /* Update container itself first. */
+    update_obj_memory(obj);
+
+    struct obj *memobj = obj->mem_obj;
+    struct obj *next;
+
+    for (memobj = memobj->cobj; memobj; memobj = next) {
+        next = memobj->nobj;
+        if (!memobj->mem_obj) {
+            free_obj_memory(memobj);
+            continue;
+        }
+
+        memobj->memory = OM_MEMORY_LOST;
+    }
+
+    for (obj = obj->cobj; obj; obj = obj->nobj)
+        update_obj_memory(obj);
 }
 
 /* Creates or updates an object memory for given object */

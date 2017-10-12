@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1302,6 +1302,9 @@ lootcont:
             c = 'y';
             for (i = 0; i < n; i++) {
                 cobj = lootlist[i].obj;
+                /* Ensure that the container is part of our
+                   object memory table. */
+                update_obj_memory(cobj);
                 if (cobj->olocked) {
                     pline(msgc_failcurse, "Hmmm, it seems to be locked.");
                     continue;
@@ -1318,6 +1321,10 @@ lootcont:
                         tmp = (tmp + 1) / 2;
                     losehp(tmp, killer_msg(DIED, "a carnivorous bag"));
                     makeknown(BAG_OF_TRICKS);
+
+                    /* Kill potential memory content */
+                    if (cobj->mem_obj)
+                        free_memobj_chain(cobj->mem_obj->cobj);
                     free(lootlist);
                     return 1;
                 }
@@ -1929,9 +1936,10 @@ use_container(struct obj *obj, int held)
               loss, currency(loss));
     obj->owt = weight(obj);     /* in case any items were lost */
 
+    update_container_memory(current_container);
     if (!cnt)
         emptymsg = msgprintf("%s is %sempty.", Yname2(obj),
-                             quantum_cat ? "now " : "");
+                             quantum_cat || loss ? "now " : "");
 
     if (cnt || flags.menu_style == MENU_FULL) {
         qbuf = "Do you want to take something out of ";
@@ -1955,8 +1963,10 @@ use_container(struct obj *obj, int held)
                 snprintf(menuprompt, SIZE(menuprompt), "%s ", emptymsg);
             strcat(menuprompt, "Do what?");
             t = in_or_out_menu(menuprompt, current_container, outokay, inokay);
-            if (t <= 0)
+            if (t <= 0) {
+                update_container_memory(current_container);
                 return 0;
+            }
             loot_out = (t & 0x01) != 0;
             loot_in = (t & 0x02) != 0;
         } else {        /* MENU_PARTIAL */
@@ -1975,6 +1985,7 @@ use_container(struct obj *obj, int held)
     if (!youmonst.minvent) {
         /* nothing to put in, but some feedback is necessary */
         pline(msgc_info, "You don't have anything to put in.");
+        update_container_memory(current_container);
         return used;
     }
     if (flags.menu_style != MENU_FULL) {
@@ -1993,6 +2004,7 @@ use_container(struct obj *obj, int held)
             break;
         case 'q':
         default:
+            update_container_memory(current_container);
             return used;
         }
     }
@@ -2005,6 +2017,7 @@ use_container(struct obj *obj, int held)
         used |= menu_loot(0, current_container, TRUE) > 0;
     }
 
+    update_container_memory(current_container);
     return used;
 }
 

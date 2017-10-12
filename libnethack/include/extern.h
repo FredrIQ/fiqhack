@@ -918,6 +918,7 @@ extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
 extern int dofindobj(const struct nh_cmd_arg *);
 extern void update_obj_memories(struct level *);
 extern void update_obj_memories_at(struct level *, int, int);
+extern void update_container_memory(struct obj *);
 extern void update_obj_memory(struct obj *);
 extern void free_obj_memory(struct obj *);
 extern void free_memobj_chain(struct obj *);
