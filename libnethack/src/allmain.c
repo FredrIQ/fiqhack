@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -786,29 +786,12 @@ you_moved(void)
                 makemon(NULL, level, COLNO, ROWNO, MM_SPECIESLEVRNG);
 
             int oldmoveamt = u.moveamt;
+            u.moveamt = mcalcmove(&youmonst);
 
-            /* Calculate how much movement you get this turn. (We cache this in
-               struct you because unlike for monsters, there's a random factor
-               in player movement.) */
-            if (u.usteed && u.umoved) {
-                /* your speed doesn't augment steed's speed */
-                u.moveamt = mcalcmove(u.usteed);
-            } else {
-                u.moveamt = youmonst.data->mmove;
-
-                if (very_fast(&youmonst)) { /* speed boots or potion */
-                    /* average movement is 1.67 times normal */
-                    u.moveamt += NORMAL_SPEED / 2;
-                    if (rn2(3) == 0)
-                        u.moveamt += NORMAL_SPEED / 2;
-                } else if (fast(&youmonst)) {
-                    /* average movement is 1.33 times normal */
-                    if (rn2(3) != 0)
-                        u.moveamt += NORMAL_SPEED / 2;
-                }
-
-                if (slow(&youmonst))
-                    u.moveamt -= (u.moveamt / 2);
+            /* If a player is fast, apply some randomization. */
+            if (fast(&youmonst) && !slow(&youmonst) && u.moveamt >= 4) {
+                u.moveamt -= 4;
+                u.moveamt += rn2(9);
             }
 
             switch (wtcap) {

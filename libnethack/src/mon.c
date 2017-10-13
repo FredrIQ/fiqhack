@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -558,12 +558,10 @@ can_act_this_turn(struct monst *mon)
 int
 mcalcmove(struct monst *mon)
 {
-    int mmove = mon->data->mmove;
+    if (mon == &youmonst && u.usteed)
+        mon = u.usteed;
 
-    if (mon == &youmonst) {
-        /* The player has different, and somewhat randomized, movment rules. */
-        return u.moveamt;
-    }
+    int mmove = mon->data->mmove;
 
     /* Note: slow's `+ 1' prevents slowed speed 1 getting reduced to 0;
        fast's `+ 2' prevents hasted speed 1 from becoming a no-op; both
@@ -573,8 +571,9 @@ mcalcmove(struct monst *mon)
         mmove = (5 * mmove + 1) / 3;
     else if (fast(mon))
         mmove = (4 * mmove + 2) / 3;
-    if (slow(mon) && mmove != 0) /* don't speed up speed 0 monsters */
-        mmove = mmove / 2 + 1;
+
+    if (slow(mon))
+        mmove = (mmove + 1) / 2;
 
     if (mon == u.usteed) {
         /* This used to have a flags.mv check, but that has been conclusively

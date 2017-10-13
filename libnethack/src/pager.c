@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -502,9 +502,20 @@ add_mon_info(struct nh_menulist *menu, const struct permonst *pm)
                     show_ac("%s %d", pm->ac), pm->mr);
     add_menutext(menu, buf);
 
+    /* Speed */
+    int uspeed = mcalcmove(&youmonst);
+    buf = msgprintf("Speed: %d (%s).", pm->mmove,
+                    !pm->mmove ? "immobile" :
+                    uspeed > pm->mmove ? "slower than you" :
+                    uspeed < pm->mmove ? "faster than you" :
+                    "equally fast as you");
+    add_menutext(menu, buf);
+
     /* Generation */
     if (uniq)
         buf = "Unique.";
+    else if (!freq)
+        buf = "Specially generated.";
     else
         buf = msgprintf("Normally %s%s, %s.",
                         hell ? "only appears in Gehennom" :
