@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -556,10 +556,12 @@ acurr(const struct monst *mon, int x)
             tmp = STR18(100);
         if (x == A_CON)
             tmp++; /* more HP regeneration */
-        if (x == A_INT && spellcaster(mon->data))
-            tmp = 18;
-        if (mon->iswiz && (x == A_INT || x == A_WIS))
-            tmp = 20;
+        if (x == A_INT || x == A_WIS) {
+            if (spellcaster(mon->data))
+                tmp = 18;
+            if (mon->iswiz)
+                tmp = 20;
+        }
     }
     tmp += attr_bonus(mon, x);
 
