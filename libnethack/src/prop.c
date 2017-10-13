@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -406,6 +406,7 @@ m_has_property(const struct monst *mon, enum youprop property,
         if ((property == BLINDED && !haseyes(mon->data)) ||
             (property == HALLUC && resists_hallu(mon)) ||
             (property == INVIS && aggravating(mon)) ||
+            (property == FAST && slow(mon)) ||
             (property == WWALKING && m_dlevel(mon) && Is_waterlevel(m_mz(mon))) ||
             mworn_blocked(mon, property))
             rv |= (unsigned)(W_MASK(os_blocked));

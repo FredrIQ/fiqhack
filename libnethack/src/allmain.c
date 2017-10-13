@@ -789,7 +789,7 @@ you_moved(void)
             u.moveamt = mcalcmove(&youmonst);
 
             /* If a player is fast, apply some randomization. */
-            if (fast(&youmonst) && !slow(&youmonst) && u.moveamt >= 4) {
+            if (fast(&youmonst) && u.moveamt >= 4) {
                 u.moveamt -= 4;
                 u.moveamt += rn2(9);
             }
