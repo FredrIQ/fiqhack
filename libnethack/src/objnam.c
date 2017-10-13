@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -486,6 +486,10 @@ examine_object(struct obj *obj)
     if (Role_if(PM_PRIEST))
         obj->bknown = TRUE;
     if (weapon_type(obj) != P_NONE && P_SKILL(weapon_type(obj)) >= P_EXPERT)
+        obj->known = TRUE;
+    if (obj->oclass == WAND_CLASS &&
+        (P_SKILL(P_WANDS) >= P_EXPERT ||
+         (P_SKILL(P_WANDS) == P_SKILLED && obj->spe < 1)))
         obj->known = TRUE;
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1828,7 +1828,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
     if ((oclass == WAND_CLASS ||
          (oclass == TOOL_CLASS &&
           !is_weptool(obj) && objects[otyp].oc_charged)) &&
-        spe <= 0 && obj->mknown &&
+        spe <= 0 && (obj->mknown || mprof(mon, P_WANDS) >= P_SKILLED) &&
         (otyp != WAN_WISHING || !recharged || close)) /* wrest wishing if safe */
         return 0;
 
