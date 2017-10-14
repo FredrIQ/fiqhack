@@ -1466,9 +1466,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     if (dz) {
         action_completed();
         if (dz < 0)
-            return doup();
+            return doup(arg);
         else
-            return dodown(TRUE);
+            return dodown(arg, TRUE);
     }
 
     /* Don't allow running, travel or autoexplore when stunned or confused. */

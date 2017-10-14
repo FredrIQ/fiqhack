@@ -337,8 +337,9 @@ extern void dropx(struct obj *);
 extern void dropy(struct obj *);
 extern void obj_no_longer_held(struct obj *);
 extern int doddrop(const struct nh_cmd_arg *);
-extern int dodown(boolean);
-extern int doup(void);
+extern int dotravel(const struct nh_cmd_arg *);
+extern int dodown(const struct nh_cmd_arg *, boolean);
+extern int doup(const struct nh_cmd_arg *);
 extern void notify_levelchange(const d_level *);
 extern void goto_level(d_level *, boolean, boolean, boolean);
 extern void schedule_goto(d_level *, boolean, boolean, int, const char *,

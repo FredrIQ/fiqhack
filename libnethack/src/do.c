@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -691,12 +691,84 @@ drop_done:
     return n_dropped;
 }
 
+static boolean
+find_remembered_stairs(boolean upstairs, coord *cc)
+{
+    xchar x, y;
+    int stair = S_dnstair;
+    int ladder = S_dnladder;
+    int branch = S_dnsstair;
+    if (upstairs) {
+        stair = S_upstair;
+        ladder = S_upladder;
+        branch = S_upsstair;
+    }
+
+    /* Prefer already marked travel positions. */
+    x = flags.travelcc.x;
+    y = flags.travelcc.y;
+    if (isok(x, y) &&
+        (level->locations[x][y].mem_bg == stair ||
+         level->locations[x][y].mem_bg == ladder ||
+         level->locations[x][y].mem_bg == branch)) {
+        cc->x = x;
+        cc->y = y;
+        return TRUE;
+    } else
+        pline(msgc_debug, "debug: %d vs %d", ladder,
+              level->locations[x][y].mem_bg);
+
+    /* We can't reference the stairs directly because mimics can mimic fake
+       ones. */
+    for (x = 0; x < COLNO; x++) {
+        for (y = 0; y < ROWNO; y++) {
+            if (level->locations[x][y].mem_bg == stair ||
+                level->locations[x][y].mem_bg == ladder ||
+                level->locations[x][y].mem_bg == branch) {
+                cc->x = x;
+                cc->y = y;
+                return TRUE;
+            }
+        }
+    }
+
+    /* failed to find stairs/ladder */
+    return FALSE;
+}
+
+int
+dotravel(const struct nh_cmd_arg *arg)
+{
+    /* Keyboard travel command */
+    coord cc;
+
+    cc.x = flags.travelcc.x;
+    cc.y = flags.travelcc.y;
+    if (cc.x == -1 && cc.y == -1) {
+        /* No cached destination, start attempt from current position */
+        cc.x = u.ux;
+        cc.y = u.uy;
+    }
+    if (!(arg->argtype & CMD_ARG_POS))
+        pline(msgc_uiprompt, "Where do you want to travel to?");
+    if (getargpos(arg, &cc, FALSE, "the desired destination") ==
+        NHCR_CLIENT_CANCEL) {
+        pline(msgc_cancelled, "Never mind.");
+        return 0;
+    }
+    flags.travelcc.x = u.tx = cc.x;
+    flags.travelcc.y = u.ty = cc.y;
+
+    action_incomplete("travelling", occ_travel);
+    return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
+                  exploration_interaction_status(), occ_travel);
+}
 
 /* on a ladder, used in goto_level */
 static boolean at_ladder = FALSE;
 
 int
-dodown(boolean autodig_ok)
+dodown(const struct nh_cmd_arg *arg, boolean autodig_ok)
 {
     struct trap *trap = 0;
     boolean stairs_down =
@@ -753,6 +825,13 @@ dodown(boolean autodig_ok)
                 arg_from_delta(0, 0, 1, &arg);
                 return use_pick_axe(uwep, &arg);
             } else {
+                coord cc;
+                if (find_remembered_stairs(FALSE, &cc)) {
+                    flags.travelcc.x = cc.x;
+                    flags.travelcc.y = cc.y;
+                    return dotravel(arg);
+                }
+
                 pline(msgc_mispaste, "You can't go down here.");
                 return 0;
             }
@@ -825,13 +904,21 @@ dodown(boolean autodig_ok)
     return 1;
 }
 
+/* Note: arg can be NULL */
 int
-doup(void)
+doup(const struct nh_cmd_arg *arg)
 {
     if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy)
         && (u.ux != level->upladder.sx || u.uy != level->upladder.sy)
         && (u.ux != level->sstairs.sx || u.uy != level->sstairs.sy ||
             !level->sstairs.up)) {
+        coord cc;
+        if (find_remembered_stairs(TRUE, &cc)) {
+            flags.travelcc.x = cc.x;
+            flags.travelcc.y = cc.y;
+            return dotravel(arg);
+        }
+
         pline(msgc_mispaste, "You can't go up here.");
         return 0;
     }
