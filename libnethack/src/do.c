@@ -821,6 +821,7 @@ dodown(const struct nh_cmd_arg *arg, boolean autodig_ok)
                 flags.occupation == occ_none && uwep && is_pick(uwep)) {
                 struct nh_cmd_arg arg;
                 arg_from_delta(0, 0, 1, &arg);
+                flags.interrupted = FALSE;
                 return use_pick_axe(uwep, &arg);
             } else {
                 coord cc;
@@ -873,6 +874,7 @@ dodown(const struct nh_cmd_arg *arg, boolean autodig_ok)
                     flags.occupation == occ_none && uwep && is_pick(uwep)) {
                     struct nh_cmd_arg arg;
                     arg_from_delta(0, 0, 1, &arg);
+                    flags.interrupted = FALSE;
                     return use_pick_axe(uwep, &arg);
                 } else {
                     /* TODO: could do with a better YAFM here */
