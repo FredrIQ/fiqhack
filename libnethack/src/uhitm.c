@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1288,8 +1288,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
             /* Don't return yet; keep hp<1 and tmp=0 for pet msg */
         }
         burn_away_slime(mdef);
-        tmp += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
-        tmp += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
+        tmp += destroy_mitem(mdef, ALL_CLASSES, AD_FIRE, NULL);
         if (resists_fire(mdef)) {
             if (!Blind)
                 pline(combat_msgc(&youmonst, mdef, cr_immune),
@@ -1298,8 +1297,6 @@ damageum(struct monst *mdef, const struct attack *mattk)
             shieldeff(mdef->mx, mdef->my);
             tmp = 0;
         }
-        /* only potions damage resistant players in destroy_item */
-        tmp += destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
         break;
     case AD_COLD:
         if (negated) {
@@ -1317,7 +1314,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
         } else if (!Blind)
             pline(combat_msgc(&youmonst, mdef, cr_hit),
                   "%s is covered in frost!", Monnam(mdef));
-        tmp += destroy_mitem(mdef, POTION_CLASS, AD_COLD);
+        tmp += destroy_mitem(mdef, ALL_CLASSES, AD_COLD, NULL);
         break;
     case AD_ELEC:
         if (negated) {
@@ -1327,7 +1324,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
         if (!Blind && !resists_elec(mdef))
             pline(combat_msgc(&youmonst, mdef, cr_hit),
                   "%s is zapped!", Monnam(mdef));
-        tmp += destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
+        tmp += destroy_mitem(mdef, ALL_CLASSES, AD_ELEC, NULL);
         if (resists_elec(mdef)) {
             if (!Blind)
                 pline(combat_msgc(&youmonst, mdef, cr_immune),

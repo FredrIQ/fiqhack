@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,6 +53,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
     int uhurt = 0;      /* 0=unhurt, 1=items damaged, 2=you and items damaged */
     const char *str;
     const char *dispbuf = "";   /* lint suppression; I think the code's OK */
+    const char *killer;
     boolean expl_needs_the = TRUE;
     int idamres, idamnonres;
     struct monst *mtmp;
@@ -350,10 +351,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                           expl_needs_the ? "the " : "", dispbuf);
                 }
 
-                idamres += destroy_mitem(mtmp, SCROLL_CLASS, (int)adtyp);
-                idamres += destroy_mitem(mtmp, SPBOOK_CLASS, (int)adtyp);
-                idamnonres += destroy_mitem(mtmp, POTION_CLASS, (int)adtyp);
-                idamnonres += destroy_mitem(mtmp, WAND_CLASS, (int)adtyp);
+                idamnonres += destroy_mitem(mtmp, ALL_CLASSES, (int)adtyp, NULL);
                 burn_away_slime(mtmp);
 
                 if (explmask[i][j] == 1) {
@@ -440,10 +438,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
         }
         if (adtyp == AD_FIRE)
             burnarmor(&youmonst);
-        destroy_mitem(&youmonst, SCROLL_CLASS, (int)adtyp);
-        destroy_mitem(&youmonst, SPBOOK_CLASS, (int)adtyp);
-        destroy_mitem(&youmonst, POTION_CLASS, (int)adtyp);
-        destroy_mitem(&youmonst, WAND_CLASS, (int)adtyp);
+        int item_dmg = destroy_mitem(&youmonst, ALL_CLASSES, (int)adtyp, &killer);
+        damu += item_dmg;
 
         ugolemeffects((int)adtyp, damu);
         if (uhurt == 2) {
@@ -455,11 +451,13 @@ explode(int x, int y, int type, /* the same as in zap.c */
 
         if (u.uhp <= 0 || (Upolyd && u.mh <= 0)) {
             int death = adtyp == AD_FIRE ? BURNING : DIED;
-            const char *killer;
 
             struct monst *offender = find_mid(level, flags.mon_moving,
                                               FM_EVERYWHERE);
 
+            /* Maybe the item destruction killed */
+            if (item_dmg && item_dmg >= rnd(damu + item_dmg))
+                ; /* killer is set above */
             if (olet == MON_EXPLODE) {
                 killer = killer_msg(death, an(str));
             } else if (type >= 0 && olet != SCROLL_CLASS) {

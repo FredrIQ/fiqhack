@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -831,11 +831,8 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             action_interrupted();
         burn_away_slime(mdef);
         if (m_mlev(magr) > rn2(20))
-            destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
-        if (m_mlev(magr) > rn2(20))
-            destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
-        if (m_mlev(magr) > rn2(25))
-            destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
+            dmg += destroy_mitem(mdef, ALL_CLASSES, AD_FIRE, NULL);
+
         /* this used to call mdamageu, but since mdamageu and mdamagem doesn't
            work even remotely similar (mdamageu is essentially a losehp() macro
            in function form, presumably made before losehp() existed), perform
@@ -1093,12 +1090,6 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                   on_fire(mdef->data, mattk));
 
         burn_away_slime(mdef);
-        if (m_mlev(magr) > rn2(20)) {
-            dmg += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
-            dmg += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
-            /* only potions damage resistant players in destroy_item */
-            dmg += destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
-        }
 
         if (resists_fire(mdef))
             break;
@@ -1136,9 +1127,6 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         } else if (vis)
             pline(combat_msgc(magr, mdef, cr_hit), "%s covered in frost!",
                   M_verbs(mdef, "are"));
-
-        if (m_mlev(magr) > rn2(20))
-            dmg += destroy_mitem(mdef, POTION_CLASS, AD_COLD);
         break;
     case AD_ELEC:
         if (cancelled) {
@@ -1157,9 +1145,6 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         } else if (vis)
             pline(combat_msgc(magr, mdef, cr_hit), "%s zapped!",
                   M_verbs(mdef, "are"));
-
-        if (m_mlev(magr) > rn2(20))
-            dmg += destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
         break;
     case AD_SLEE:
         if (cancelled || magr->mspec_used || resists_sleep(mdef))
@@ -1236,6 +1221,9 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         dmg = 0;
         break;
     }
+    if (!cancelled && m_mlev(magr) > rn2(20))
+        dmg += destroy_mitem(mdef, ALL_CLASSES, mattk->adtyp, NULL);
+
     if (!dmg)
         return MM_MISS;
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2765,9 +2765,15 @@ dofiretrap(struct monst *mon, struct obj *box)
     burn_away_slime(mon);
 
     if (burnarmor(mon) || rn2(3)) {
-        destroy_mitem(mon, SCROLL_CLASS, AD_FIRE);
-        destroy_mitem(mon, SPBOOK_CLASS, AD_FIRE);
-        destroy_mitem(mon, POTION_CLASS, AD_FIRE);
+        const char *killer;
+        num = destroy_mitem(mon, ALL_CLASSES, AD_FIRE, &killer);
+        if (you)
+            losehp(num, killer);
+        else {
+            mon->mhp -= num;
+            if (mon->mhp <= 0)
+                mondied(mon);
+        }
     }
     /* smell should be able to pass corners, but not walls,
        but that requires pathfinding... */
@@ -4243,7 +4249,7 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
                               you ? "You" : Monnam(mon), you ? "are" : "is");
                     dmg = dice(4, 4);
                 }
-                destroy_mitem(mon, WAND_CLASS, AD_ELEC);
+                dmg += destroy_mitem(mon, ALL_CLASSES, AD_ELEC, NULL);
                 if (dmg) {
                     if (you)
                         losehp(dmg, killer_msg(DIED, "an electric shock"));
@@ -4458,7 +4464,8 @@ boolean
 lava_effects(void)
 {
     struct obj *obj, *obj2;
-    int dmg;
+    int dmg = 0;
+    const char *killer;
 
     burn_away_slime(&youmonst);
     if (likes_lava(youmonst.data))
@@ -4514,6 +4521,8 @@ lava_effects(void)
         u.uhp = -1;
         pline(msgc_fatal_predone, "You burn to a crisp...");
         done(BURNING, killer_msg(BURNING, lava_killer));
+        if (Wwalking)
+            return TRUE; /* don't immediately kill again if water walking */
         while (!safe_teleds(TRUE)) {
             pline(msgc_fatal_predone, "You're still burning.");
             done(BURNING, killer_msg(BURNING, lava_killer));
@@ -4531,9 +4540,8 @@ lava_effects(void)
     }
 
 burn_stuff:
-    destroy_mitem(&youmonst, SCROLL_CLASS, AD_FIRE);
-    destroy_mitem(&youmonst, SPBOOK_CLASS, AD_FIRE);
-    destroy_mitem(&youmonst, POTION_CLASS, AD_FIRE);
+    dmg = destroy_mitem(&youmonst, ALL_CLASSES, AD_FIRE, &killer);
+    losehp(dmg, killer);
     return FALSE;
 }
 
