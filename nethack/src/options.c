@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -71,6 +71,13 @@ static struct nh_listitem animation_list[] = {
 };
 static struct nh_enum_option animation_spec =
     { animation_list, listlen(animation_list) };
+
+static struct nh_listitem extrawin_list[] = {
+    {EW_CONTROLS, "controls"},
+    {EW_DISABLED, "disabled"},
+};
+static struct nh_enum_option extrawin_spec =
+    { extrawin_list, listlen(extrawin_list) };
 
 static struct nh_listitem menupaging_list[] = {
     {MP_LINES, "by lines"},
@@ -182,6 +189,9 @@ static struct nh_option_desc curses_options[] = {
     {"extmenu", "Commands and Confirmations",
      "use a menu for selecting extended commands (#)",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"extrawin", "Screen Layout",
+     "what to display on the extra window",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = EW_CONTROLS}},
     {"invweight", "Messages and Menus",
      "show item weights in the inventory",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
@@ -412,6 +422,9 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.end_top = option->value.i;
     } else if (!strcmp(option->name, "scores_around")) {
         settings.end_around = option->value.i;
+    } else if (!strcmp(option->name, "extrawin")) {
+        settings.extrawin = option->value.e;
+        rebuild_ui();
     } else if (!strcmp(option->name, "networkmotd")) {
         settings.show_motd = option->value.e;
     } else if (!strcmp(option->name, "menupaging")) {
@@ -469,6 +482,7 @@ init_options(void)
     find_option("animation")->e = animation_spec;
     find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
+    find_option("extrawin")->e = extrawin_spec;
     find_option("menupaging")->e = menupaging_spec;
     find_option("msgcolor")->e = msgcolor_spec;
     find_option("msgfading")->e = msgfading_spec;

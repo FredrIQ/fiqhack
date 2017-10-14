@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -254,6 +254,11 @@ enum nh_animation {
     ANIM_SLOW,            /* animate all events, slowly */
 };
 
+enum nh_extrawin {
+    EW_DISABLED,
+    EW_CONTROLS,
+};
+
 enum nh_motd_setting {
     MOTD_TRUE,
     MOTD_FALSE,
@@ -293,6 +298,7 @@ struct settings {
 
     enum autoable_boolean sidebar;   /* whether to draw the inventory sidebar */
     enum nh_animation animation;     /* when to delay */
+    enum nh_extrawin extrawin;       /* extra window below game if there's room */
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
     enum nh_msgcolor msgcolor; /* color messages based on context */

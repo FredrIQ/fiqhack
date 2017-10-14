@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -825,7 +825,8 @@ layout_game_windows(void)
        make it at least 2 lines high. Otherwise, it's given to the message area,
        because it has to go /somewhere/, even if this makes the message area
        taller than the user wanted. */
-    if (y_remaining >= (ui_flags.draw_horizontal_frame_lines ? 3 : 2)) {
+    if (settings.extrawin != EW_DISABLED &&
+        y_remaining >= (ui_flags.draw_horizontal_frame_lines ? 3 : 2)) {
         if (ui_flags.draw_horizontal_frame_lines)
             y_remaining--;
         ui_flags.extraheight = y_remaining;
