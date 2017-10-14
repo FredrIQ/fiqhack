@@ -714,9 +714,7 @@ find_remembered_stairs(boolean upstairs, coord *cc)
         cc->x = x;
         cc->y = y;
         return TRUE;
-    } else
-        pline(msgc_debug, "debug: %d vs %d", ladder,
-              level->locations[x][y].mem_bg);
+    }
 
     /* We can't reference the stairs directly because mimics can mimic fake
        ones. */
