@@ -1279,7 +1279,6 @@ use_lamp(struct obj *obj)
             obj->otyp == BRASS_LANTERN) {
             check_unpaid(obj);
             pline(msgc_actionok, "%s lamp is now on.", Shk_Your(obj));
-            obj->bknown = TRUE; /* range is now BUC-dependant. */
         } else {        /* candle(s) */
             pline(msgc_actionok, "%s flame%s %s%s", s_suffix(Yname2(obj)),
                   plur(obj->quan), otense(obj, "burn"),
@@ -1292,9 +1291,11 @@ use_lamp(struct obj *obj)
                           ithem, ithem);
                 bill_dummy_object(obj);
             }
-            if (!Blind)
-                obj->bknown = TRUE;
         }
+
+        if (!Blind)
+            obj->bknown = TRUE;
+
         begin_burn(obj, FALSE);
     }
     return 1;
