@@ -3808,6 +3808,10 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp, const char **killer)
                 /* potentially update killer */
                 if (killer && cur_dmg >= rnd(dmg + cur_dmg)) {
                     *killer = destroy_messages[dindx].killer;
+                    if (cnt == 1)
+                        *killer = an(*killer);
+                    else
+                        *killer = makeplural(*killer);
                     if (obj->oclass == WAND_CLASS && cnt != quan)
                         *killer = (cnt == 1) ? "a wand spark" : "wand sparks";
                     *killer = killer_msg(DIED, *killer);
