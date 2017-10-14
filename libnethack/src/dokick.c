@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1114,7 +1114,7 @@ dokick(const struct nh_cmd_arg *arg)
 
         if (maploc->typ == STAIRS || maploc->typ == LADDER ||
             IS_STWALL(maploc->typ)) {
-            if (!IS_STWALL(maploc->typ) && maploc->ladder == LA_DOWN)
+            if (!IS_STWALL(maploc->typ) && maploc->flags == LA_DOWN)
                 goto dumb;
         ouch:
             pline(msgc_badidea, "Ouch!  That hurts!");
