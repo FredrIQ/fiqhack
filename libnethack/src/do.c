@@ -61,9 +61,9 @@ boulder_hits_pool(struct obj * otmp, int rx, int ry, boolean pushing)
 
             if (ltyp == DRAWBRIDGE_UP) {
                 /* clear lava */
-                level->locations[rx][ry].drawbridgemask &= ~DB_UNDER;
+                level->locations[rx][ry].flags &= ~DB_UNDER;
 
-                level->locations[rx][ry].drawbridgemask |= DB_FLOOR;
+                level->locations[rx][ry].flags |= DB_FLOOR;
             } else
                 level->locations[rx][ry].typ = ROOM;
 

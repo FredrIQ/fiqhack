@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,7 +221,7 @@ dryup(xchar x, xchar y, boolean isyou)
 
         /* replace the fountain with ordinary floor */
         level->locations[x][y].typ = ROOM;
-        level->locations[x][y].looted = 0;
+        level->locations[x][y].flags = 0;
         level->locations[x][y].blessedftn = 0;
         if (cansee(x, y))
             pline(msgc_consequence, "The fountain dries up!");
@@ -421,7 +421,7 @@ dipfountain(struct obj *obj)
         }
         update_inventory();
         level->locations[u.ux][u.uy].typ = ROOM;
-        level->locations[u.ux][u.uy].looted = 0;
+        level->locations[u.ux][u.uy].flags = 0;
         newsym(u.ux, u.uy);
         if (in_town(u.ux, u.uy))
             angry_guards(FALSE);
@@ -531,7 +531,7 @@ breaksink(int x, int y)
 {
     if (cansee(x, y) || (x == u.ux && y == u.uy))
         pline(msgc_consequence, "The pipes break!  Water spurts out!");
-    level->locations[x][y].doormask = 0;
+    level->locations[x][y].flags = 0;
     level->locations[x][y].typ = FOUNTAIN;
     newsym(x, y);
 }
@@ -591,10 +591,10 @@ drinksink(void)
         obfree(otmp, NULL);
         break;
     case 5:
-        if (!(level->locations[u.ux][u.uy].looted & S_LRING)) {
+        if (!(level->locations[u.ux][u.uy].flags & S_LRING)) {
             pline(msgc_youdiscover, "You find a ring in the sink!");
             mkobj_at(RING_CLASS, level, u.ux, u.uy, TRUE, rng_sink_ring);
-            level->locations[u.ux][u.uy].looted |= S_LRING;
+            level->locations[u.ux][u.uy].flags |= S_LRING;
             exercise(A_WIS, TRUE);
             newsym(u.ux, u.uy);
         } else

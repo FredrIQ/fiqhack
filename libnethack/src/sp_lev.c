@@ -106,7 +106,7 @@ set_wall_property(struct level *lev, xchar x1, xchar y1, xchar x2, xchar y2,
     for (y = y1; y <= y2; y++)
         for (x = x1; x <= x2; x++)
             if (IS_STWALL(lev->locations[x][y].typ))
-                lev->locations[x][y].wall_info |= prop;
+                lev->locations[x][y].flags |= prop;
 }
 
 /*
@@ -663,7 +663,7 @@ create_door(struct level *lev, room_door * dd, struct mkroom *broom)
     }
     add_door(lev, x, y, broom);
     lev->locations[x][y].typ = (dd->secret ? SDOOR : DOOR);
-    lev->locations[x][y].doormask = dd->mask;
+    lev->locations[x][y].flags = dd->mask;
 }
 
 /*
@@ -704,7 +704,7 @@ create_secret_door(struct level *lev, struct mkroom *croom, xchar walls)
 
         if (okdoor(lev, sx, sy)) {
             lev->locations[sx][sy].typ = SDOOR;
-            lev->locations[sx][sy].doormask = D_CLOSED;
+            lev->locations[sx][sy].flags = D_CLOSED;
             add_door(lev, sx, sy, croom);
             return;
         }
@@ -1143,7 +1143,7 @@ create_altar(struct level *lev, altar * a, struct mkroom *croom)
         (a->align < 0 ? ralign[-a->align - 1] : a->align);
 
     lev->locations[x][y].typ = ALTAR;
-    lev->locations[x][y].altarmask = amask;
+    lev->locations[x][y].flags = amask;
 
     if (a->shrine < 0)
         a->shrine = mrn2(2);     /* handle random case */
@@ -1153,9 +1153,9 @@ create_altar(struct level *lev, altar * a, struct mkroom *croom)
 
     if (a->shrine) {    /* Is it a shrine or sanctum? */
         priestini(lev, croom, x, y, (a->shrine > 1));
-        lev->locations[x][y].altarmask |= AM_SHRINE;
+        lev->locations[x][y].flags |= AM_SHRINE;
         if (a->shrine > 1) { /* It is a sanctum? */
-            lev->locations[x][y].altarmask |= AM_SANCTUM;
+            lev->locations[x][y].flags |= AM_SANCTUM;
         }
     }
 }
@@ -2221,7 +2221,7 @@ load_maze(struct level *lev, dlb * fd)
                     if (lev->locations[x][y].typ == SDOOR ||
                         IS_DOOR(lev->locations[x][y].typ)) {
                         if (lev->locations[x][y].typ == SDOOR)
-                            lev->locations[x][y].doormask = D_CLOSED;
+                            lev->locations[x][y].flags = D_CLOSED;
                         /* 
                          *  If there is a wall to the left that connects to a
                          *  (secret) door, then it is horizontal.  This does
@@ -2382,7 +2382,7 @@ load_maze(struct level *lev, dlb * fd)
                 if (typ < D_CLOSED)
                     typ = D_CLOSED;     /* force it to be closed */
             }
-            lev->locations[x][y].doormask = typ;
+            lev->locations[x][y].flags = typ;
 
             /* Now the complicated part, list it with each subroom */
             /* The dog move and mail daemon routines use this */

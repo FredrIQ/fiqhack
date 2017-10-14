@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2855,7 +2855,7 @@ srch:
                 al = A_NONE;
             else        /* -1 - A_CHAOTIC, 0 - A_NEUTRAL, 1 - A_LAWFUL */
                 al = (!rn2(6)) ? A_NONE : rn2((int)A_LAWFUL + 2) - 1;
-            level->locations[u.ux][u.uy].altarmask = Align2amask(al);
+            level->locations[u.ux][u.uy].flags = Align2amask(al);
             pline(msgc_info, "%s altar.", An(align_str(al)));
             newsym(u.ux, u.uy);
             return &zeroobj;

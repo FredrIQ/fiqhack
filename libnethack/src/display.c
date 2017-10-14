@@ -650,7 +650,7 @@ feel_location(xchar x, xchar y)
          *      + Everything else (hallways!)
          */
         if (IS_ROCK(loc->typ) ||
-            (IS_DOOR(loc->typ) && (loc->doormask & (D_LOCKED | D_CLOSED)))) {
+            (IS_DOOR(loc->typ) && (loc->flags & (D_LOCKED | D_CLOSED)))) {
             map_background(x, y, 1);
         } else if ((boulder = sobj_at(BOULDER, level, x, y)) != 0) {
             map_object(boulder, 1, TRUE);
@@ -1686,7 +1686,7 @@ flush_screen_nopos(void)
  * the screen symbol had the horizontal/vertical information set at
  * level generation time.
  *
- * I used the 'ladder' field (really doormask) for deciding if stairwells
+ * I used the 'ladder' field (really flags) for deciding if stairwells
  * were up or down.  I didn't want to check the upstairs and dnstairs
  * variables.
  */
@@ -1722,10 +1722,10 @@ back_to_cmap(struct level *lev, xchar x, xchar y)
         idx = ptr->seenv ? wall_angle(ptr) : S_stone;
         break;
     case DOOR:
-        if (ptr->doormask) {
-            if (ptr->doormask & D_BROKEN)
+        if (ptr->flags) {
+            if (ptr->flags & D_BROKEN)
                 idx = S_ndoor;
-            else if (ptr->doormask & D_ISOPEN)
+            else if (ptr->flags & D_ISOPEN)
                 idx = (ptr->horizontal) ? S_hodoor : S_vodoor;
             else        /* else is closed */
                 idx = (ptr->horizontal) ? S_hcdoor : S_vcdoor;
@@ -1760,7 +1760,7 @@ back_to_cmap(struct level *lev, xchar x, xchar y)
     case ALTAR:
         idx = S_aaltar;
         if (!In_endgame(&lev->z)) {
-            aligntyp align = Amask2align(lev->locations[x][y].altarmask & AM_MASK);
+            aligntyp align = Amask2align(lev->locations[x][y].flags & AM_MASK);
             idx =
                 (align == A_LAWFUL ? S_laltar :
                  align == A_NEUTRAL ? S_naltar :
@@ -1793,7 +1793,7 @@ back_to_cmap(struct level *lev, xchar x, xchar y)
         idx = (ptr->horizontal) ? S_hcdbridge : S_vcdbridge;
         break;
     case DRAWBRIDGE_UP:
-        switch (ptr->drawbridgemask & DB_UNDER) {
+        switch (ptr->flags & DB_UNDER) {
         case DB_MOAT:
             idx = S_pool;
             break;
@@ -1807,7 +1807,7 @@ back_to_cmap(struct level *lev, xchar x, xchar y)
             idx = S_room;
             break;
         default:
-            impossible("Strange db-under: %d", ptr->drawbridgemask & DB_UNDER);
+            impossible("Strange db-under: %d", ptr->flags & DB_UNDER);
             idx = S_room;       /* something is better than nothing */
             break;
         }
@@ -2099,7 +2099,7 @@ set_wall_state(struct level *lev)
             }
 
             if (wmode >= 0)
-                loc->wall_info = (loc->wall_info & ~WM_MASK) | wmode;
+                loc->flags = (loc->flags & ~WM_MASK) | wmode;
         }
 }
 
@@ -2196,7 +2196,7 @@ t_warn(struct rm *loc)
         wname = "tdwall";
     else
         wname = "unknown";
-    impossible(warn_str, wname, loc->wall_info & WM_MASK,
+    impossible(warn_str, wname, loc->flags & WM_MASK,
                (unsigned int)loc->seenv);
 }
 
@@ -2237,7 +2237,7 @@ wall_angle(struct rm *loc)
     case TDWALL:
         row = wall_matrix[T_d];
     do_twall:
-        switch (loc->wall_info & WM_MASK) {
+        switch (loc->flags & WM_MASK) {
         case 0:
             if (seenv == SV4) {
                 col = T_tlcorn;
@@ -2293,7 +2293,7 @@ wall_angle(struct rm *loc)
             break;
         default:
             impossible("wall_angle: unknown T wall mode %d",
-                       loc->wall_info & WM_MASK);
+                       loc->flags & WM_MASK);
             col = T_stone;
             break;
         }
@@ -2305,7 +2305,7 @@ wall_angle(struct rm *loc)
             goto horiz;
         /* fall through */
     case VWALL:
-        switch (loc->wall_info & WM_MASK) {
+        switch (loc->flags & WM_MASK) {
         case 0:
             idx = seenv ? S_vwall : S_stone;
             break;
@@ -2317,7 +2317,7 @@ wall_angle(struct rm *loc)
             break;
         default:
             impossible("wall_angle: unknown vwall mode %d",
-                       loc->wall_info & WM_MASK);
+                       loc->flags & WM_MASK);
             idx = S_stone;
             break;
         }
@@ -2325,7 +2325,7 @@ wall_angle(struct rm *loc)
 
     case HWALL:
     horiz:
-        switch (loc->wall_info & WM_MASK) {
+        switch (loc->flags & WM_MASK) {
         case 0:
             idx = seenv ? S_hwall : S_stone;
             break;
@@ -2337,20 +2337,20 @@ wall_angle(struct rm *loc)
             break;
         default:
             impossible("wall_angle: unknown hwall mode %d",
-                       loc->wall_info & WM_MASK);
+                       loc->flags & WM_MASK);
             idx = S_stone;
             break;
         }
         break;
 
 #define set_corner(idx, loc, which, outer, inner, name) \
-    switch ((loc)->wall_info & WM_MASK) {                                   \
+    switch ((loc)->flags & WM_MASK) {                                   \
         case 0:          idx = which; break;                                \
         case WM_C_OUTER: idx = seenv &  (outer) ? which : S_stone; break;   \
         case WM_C_INNER: idx = seenv & ~(inner) ? which : S_stone; break;   \
         default:                                                            \
             impossible("wall_angle: unknown %s mode %d", name,              \
-                (loc)->wall_info & WM_MASK);                                \
+                (loc)->flags & WM_MASK);                                \
             idx = S_stone;                                                  \
             break;                                                          \
     }
@@ -2370,7 +2370,7 @@ wall_angle(struct rm *loc)
 
 
     case CROSSWALL:
-        switch (loc->wall_info & WM_MASK) {
+        switch (loc->flags & WM_MASK) {
         case 0:
             if (seenv == SV0)
                 idx = S_brcorn;

@@ -2749,7 +2749,7 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
                 if (doorlock(obj, bhitpos.x, bhitpos.y)) {
                     if (you || vis)
                         makeknown(obj->otyp);
-                    if (level->locations[bhitpos.x][bhitpos.y].doormask ==
+                    if (level->locations[bhitpos.x][bhitpos.y].flags ==
                         D_BROKEN &&
                         *in_rooms(level, bhitpos.x, bhitpos.y, SHOPBASE)) {
                         shopdoor = TRUE;
@@ -2762,7 +2762,7 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
         if (!ZAP_POS(typ) ||
             (IS_DOOR(typ) &&
              (level->locations[bhitpos.x][bhitpos.y].
-              doormask & (D_LOCKED | D_CLOSED)))
+              flags & (D_LOCKED | D_CLOSED)))
             ) {
             bhitpos.x -= dx;
             bhitpos.y -= dy;
@@ -3401,10 +3401,10 @@ melt_ice(struct level *lev, xchar x, xchar y)
     boolean visible = (lev == level && cansee(x, y));
 
     if (loc->typ == DRAWBRIDGE_UP)
-        loc->drawbridgemask &= ~DB_ICE; /* revert to DB_MOAT */
+        loc->flags &= ~DB_ICE; /* revert to DB_MOAT */
     else {      /* loc->typ == ICE */
-        loc->typ = (loc->icedpool == ICED_POOL ? POOL : MOAT);
-        loc->icedpool = 0;
+        loc->typ = (loc->flags == ICED_POOL ? POOL : MOAT);
+        loc->flags = 0;
     }
     obj_ice_effects(lev, x, y, FALSE);
     unearth_objs(lev, x, y);
@@ -3498,11 +3498,11 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
         } else {
             rangemod -= 3;
             if (loc->typ == DRAWBRIDGE_UP) {
-                loc->drawbridgemask &= ~DB_UNDER;       /* clear lava */
-                loc->drawbridgemask |= (lava ? DB_FLOOR : DB_ICE);
+                loc->flags &= ~DB_UNDER;       /* clear lava */
+                loc->flags |= (lava ? DB_FLOOR : DB_ICE);
             } else {
                 if (!lava)
-                    loc->icedpool = (loc->typ == POOL ? ICED_POOL : ICED_MOAT);
+                    loc->flags = (loc->typ == POOL ? ICED_POOL : ICED_MOAT);
                 loc->typ = (lava ? ROOM : ICE);
             }
             bury_objs(level, x, y);
@@ -3597,7 +3597,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
                 } else  /* caused by monster */
                     add_damage(x, y, 0L);
             }
-            loc->doormask = new_doormask;
+            loc->flags = new_doormask;
             unblock_point(x, y);        /* vision */
             if (cansee(x, y)) {
                 pline(msgc_consequence, "%s", see_txt);

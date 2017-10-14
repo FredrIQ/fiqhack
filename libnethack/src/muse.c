@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1902,7 +1902,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
             /* monsters digging in Sokoban can ruin things */
             && !In_sokoban(m_mz(mon))
             /* digging wouldn't be effective; assume they know that */
-            && !(lev->locations[x][y].wall_info & W_NONDIGGABLE)
+            && !(lev->locations[x][y].flags & W_NONDIGGABLE)
             && !(Is_botlevel(m_mz(mon)) || In_endgame(m_mz(mon)))
             && !(is_ice(lev, x, y) || is_pool(lev, x, y) || is_lava(lev, x, y))
             && (!(mon->data == &mons[PM_VLAD_THE_IMPALER]
@@ -2312,14 +2312,14 @@ use_item(struct musable *m)
             return DEADMONSTER(mon) ? 1 : 2; /* in case chest trap killed */
         }
         door = &level->locations[x][y];
-        btrapped = (door->doormask & D_TRAPPED);
+        btrapped = (door->flags & D_TRAPPED);
         if (vismon)
             pline(msgc_levelwarning, "%s %s a door.", Monnam(mon),
                   obj->otyp == SKELETON_KEY ? "unlocks" :
                   "succeeds in picking the lock on");
         else
             You_hear(msgc_levelwarning, "a door unlock.");
-        door->doormask = btrapped ? D_NODOOR : D_CLOSED;
+        door->flags = btrapped ? D_NODOOR : D_CLOSED;
         newsym(x, y);
         unblock_point(x, y); /* vision */
         if (btrapped && mb_trapped(mon))

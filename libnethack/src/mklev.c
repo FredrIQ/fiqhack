@@ -360,18 +360,18 @@ dosdoor(struct level *lev, xchar x, xchar y, struct mkroom *aroom, int type)
     if (type == DOOR) {
         if (!mrn2(3)) {  /* locked, closed, or doorway? */
             if (!mrn2(5))
-                lev->locations[x][y].doormask = D_ISOPEN;
+                lev->locations[x][y].flags = D_ISOPEN;
             else if (!mrn2(6))
-                lev->locations[x][y].doormask = D_LOCKED;
+                lev->locations[x][y].flags = D_LOCKED;
             else
-                lev->locations[x][y].doormask = D_CLOSED;
+                lev->locations[x][y].flags = D_CLOSED;
 
-            if (lev->locations[x][y].doormask != D_ISOPEN && !shdoor &&
+            if (lev->locations[x][y].flags != D_ISOPEN && !shdoor &&
                 level_difficulty(&lev->z) >= 5 && !mrn2(25))
-                lev->locations[x][y].doormask |= D_TRAPPED;
+                lev->locations[x][y].flags |= D_TRAPPED;
         } else
-            lev->locations[x][y].doormask = (shdoor ? D_ISOPEN : D_NODOOR);
-        if (lev->locations[x][y].doormask & D_TRAPPED) {
+            lev->locations[x][y].flags = (shdoor ? D_ISOPEN : D_NODOOR);
+        if (lev->locations[x][y].flags & D_TRAPPED) {
             struct monst *mtmp;
 
             if (level_difficulty(&lev->z) >= 9 && !mrn2(5)) {
@@ -379,7 +379,7 @@ dosdoor(struct level *lev, xchar x, xchar y, struct mkroom *aroom, int type)
                    mimics not being genocided; makemon() is on the main RNG
                    because mkclass() won't necessarily always return the same
                    result (again, due to genocide) */
-                lev->locations[x][y].doormask = D_NODOOR;
+                lev->locations[x][y].flags = D_NODOOR;
                 mtmp = makemon(mkclass(&lev->z, S_MIMIC, 0, mrng()),
                                lev, x, y, NO_MM_FLAGS);
                 if (mtmp)
@@ -390,12 +390,12 @@ dosdoor(struct level *lev, xchar x, xchar y, struct mkroom *aroom, int type)
             newsym(x, y);
     } else {    /* SDOOR */
         if (shdoor || !mrn2(5))
-            lev->locations[x][y].doormask = D_LOCKED;
+            lev->locations[x][y].flags = D_LOCKED;
         else
-            lev->locations[x][y].doormask = D_CLOSED;
+            lev->locations[x][y].flags = D_CLOSED;
 
         if (!shdoor && level_difficulty(&lev->z) >= 4 && !mrn2(20))
-            lev->locations[x][y].doormask |= D_TRAPPED;
+            lev->locations[x][y].flags |= D_TRAPPED;
     }
 
     add_door(lev, x, y, aroom);
@@ -861,7 +861,7 @@ mineralize(struct level *lev)
             } else if (lev->locations[x][y].typ != STONE) {
                 /* this spot not eligible */
                 y += 1; /* next spot isn't eligible either */
-            } else if (!(lev->locations[x][y].wall_info & W_NONDIGGABLE) &&
+            } else if (!(lev->locations[x][y].flags & W_NONDIGGABLE) &&
                        lev->locations[x][y - 1].typ == STONE &&
                        lev->locations[x + 1][y - 1].typ == STONE &&
                        lev->locations[x - 1][y - 1].typ == STONE &&
@@ -1372,7 +1372,7 @@ mkaltar(struct level *lev, struct mkroom *croom)
 
     /* -1 - A_CHAOTIC, 0 - A_NEUTRAL, 1 - A_LAWFUL */
     al = mrn2((int)A_LAWFUL + 2) - 1;
-    lev->locations[m.x][m.y].altarmask = Align2amask(al);
+    lev->locations[m.x][m.y].flags = Align2amask(al);
 }
 
 static void
@@ -1524,7 +1524,7 @@ mkinvpos(xchar x, xchar y, int dist)
 
         /* fake out saved state */
         loc->seenv = 0;
-        loc->doormask = 0;
+        loc->flags = 0;
         if (dist < 6)
             loc->lit = TRUE;
         loc->waslit = TRUE;

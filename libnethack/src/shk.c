@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3064,7 +3064,7 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
             floordamage = TRUE;
         deltrap(lev, ttmp);
         if (IS_DOOR(tmp_dam->typ)) {
-            lev->locations[x][y].doormask = D_CLOSED;   /* arbitrary */
+            lev->locations[x][y].flags = D_CLOSED;   /* arbitrary */
             block_point(x, y);
         } else if (IS_WALL(tmp_dam->typ)) {
             lev->locations[x][y].typ = tmp_dam->typ;
@@ -3079,7 +3079,7 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
         return 1;
     }
     if ((tmp_dam->typ == lev->locations[x][y].typ) &&
-        (!IS_DOOR(tmp_dam->typ) || (lev->locations[x][y].doormask > D_BROKEN)))
+        (!IS_DOOR(tmp_dam->typ) || (lev->locations[x][y].flags > D_BROKEN)))
         /* No messages if player already replaced shop door */
         return 1;
     lev->locations[x][y].typ = tmp_dam->typ;
@@ -3130,11 +3130,11 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
 
     block_point(x, y);
     if (IS_DOOR(tmp_dam->typ)) {
-        lev->locations[x][y].doormask = D_CLOSED;       /* arbitrary */
+        lev->locations[x][y].flags = D_CLOSED;       /* arbitrary */
         if (lev == level)
             newsym(x, y);
     } else {
-        /* don't set doormask - it is (hopefully) the same as it was */
+        /* don't set flags - it is (hopefully) the same as it was */
         /* if not, perhaps save it with the damage array...  */
 
         if (IS_WALL(tmp_dam->typ) && cansee(x, y)) {
@@ -3939,7 +3939,7 @@ block_entry(xchar x, xchar y)
 
     if (!
         (IS_DOOR(level->locations[u.ux][u.uy].typ) &&
-         level->locations[u.ux][u.uy].doormask == D_BROKEN))
+         level->locations[u.ux][u.uy].flags == D_BROKEN))
         return FALSE;
 
     roomno = *in_rooms(level, x, y, SHOPBASE);

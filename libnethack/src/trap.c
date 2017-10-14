@@ -353,7 +353,7 @@ maketrap(struct level *lev, int x, int y, int typ, enum rng rng)
             add_damage(x, y,    /* schedule repair */
                        ((IS_DOOR(loc->typ) || IS_WALL(loc->typ))
                         && !flags.mon_moving) ? 200L : 0L);
-        loc->doormask = 0;      /* subsumes altarmask, icedpool... */
+        loc->flags = 0;      /* subsumes altarmask, icedpool... */
         if (IS_ROOM(loc->typ))  /* && !IS_AIR(loc->typ) */
             loc->typ = ROOM;
 
@@ -1386,7 +1386,7 @@ blow_up_landmine(struct trap *trap)
     del_engr_at(level, trap->tx, trap->ty);
     wake_nearto(trap->tx, trap->ty, 400);
     if (IS_DOOR(level->locations[trap->tx][trap->ty].typ))
-        level->locations[trap->tx][trap->ty].doormask = D_BROKEN;
+        level->locations[trap->tx][trap->ty].flags = D_BROKEN;
     if (!IS_DRAWBRIDGE(level->locations[trap->tx][trap->ty].typ)) {
         trap->ttyp = PIT;       /* explosion creates a pit */
         trap->madeby_u = FALSE; /* resulting pit isn't yours */
@@ -1618,7 +1618,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
             if (cansee(bhitpos.x, bhitpos.y))
                 pline(msgc_consequence,
                       "The boulder crashes through a door.");
-            level->locations[bhitpos.x][bhitpos.y].doormask = D_BROKEN;
+            level->locations[bhitpos.x][bhitpos.y].flags = D_BROKEN;
             if (dist)
                 unblock_point(bhitpos.x, bhitpos.y);
         }
@@ -4007,7 +4007,7 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
         return 0;
     }
 
-    switch (level->locations[x][y].doormask) {
+    switch (level->locations[x][y].flags) {
     case D_NODOOR:
         pline(msgc_cancelled, "You %s no door there.", Blind ? "feel" : "see");
         return 0;
@@ -4019,14 +4019,14 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
         return 0;
     }
 
-    if ((level->locations[x][y].doormask & D_TRAPPED &&
+    if ((level->locations[x][y].flags & D_TRAPPED &&
          (force || (!confused && rn2(MAXULEV - u.ulevel + 11) < 10)))
         || (!force && confused && !rn2(3))) {
         pline(msgc_youdiscover, "You find a trap on the door!");
         exercise(A_WIS, TRUE);
         if (ynq("Disarm it?") != 'y')
             return 1;
-        if (level->locations[x][y].doormask & D_TRAPPED) {
+        if (level->locations[x][y].flags & D_TRAPPED) {
             ch = 15 + (Role_if(PM_ROGUE) ? u.ulevel * 3 : u.ulevel);
             exercise(A_DEX, TRUE);
             if (!force &&
@@ -4034,7 +4034,7 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
                  rnd(75 + level_difficulty(&u.uz) / 2) > ch)) {
                 pline(msgc_substitute, "You set it off!");
                 b_trapped("door", FINGER);
-                level->locations[x][y].doormask = D_NODOOR;
+                level->locations[x][y].flags = D_NODOOR;
                 unblock_point(x, y);
                 newsym(x, y);
                 /* (probably ought to charge for this damage...) */
@@ -4042,7 +4042,7 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
                     add_damage(x, y, 0L);
             } else {
                 pline(msgc_actionok, "You disarm it!");
-                level->locations[x][y].doormask &= ~D_TRAPPED;
+                level->locations[x][y].flags &= ~D_TRAPPED;
             }
         } else
             pline(msgc_notarget, "This door was not trapped.");

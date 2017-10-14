@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -616,7 +616,7 @@ trap_detect(struct monst *mon, struct obj *sobj)
     }
     for (door = 0; door < level->doorindex; door++) {
         cc = level->doors[door];
-        if (level->locations[cc.x][cc.y].doormask & D_TRAPPED) {
+        if (level->locations[cc.x][cc.y].flags & D_TRAPPED) {
             if (cc.x != m_mx(mon) || cc.y != m_my(mon))
                 goto outtrapmap;
             else
@@ -664,7 +664,7 @@ outtrapmap:
         /* make the door, and its trapped status, show up on the player's
            memory */
         if (!sobj || !sobj->cursed) {
-            if (level->locations[cc.x][cc.y].doormask & D_TRAPPED) {
+            if (level->locations[cc.x][cc.y].flags & D_TRAPPED) {
                 if (reveal) {
                     level->locations[cc.x][cc.y].mem_door_t = 1;
                     map_background(cc.x, cc.y, TRUE);
@@ -979,7 +979,7 @@ do_vicinity_map(void)
 void
 cvt_sdoor_to_door(struct rm *loc, const d_level * dlev)
 {
-    int newmask = loc->doormask & ~WM_MASK;
+    int newmask = loc->flags & ~WM_MASK;
 
     if (Is_rogue_level(dlev))
         /* rogue didn't have doors, only doorways */
@@ -990,7 +990,7 @@ cvt_sdoor_to_door(struct rm *loc, const d_level * dlev)
         newmask |= D_CLOSED;
 
     loc->typ = DOOR;
-    loc->doormask = newmask;
+    loc->flags = newmask;
 }
 
 
@@ -1051,10 +1051,10 @@ openone(int zx, int zy, void *num)
     }
     if (level->locations[zx][zy].typ == SDOOR ||
         (level->locations[zx][zy].typ == DOOR &&
-         (level->locations[zx][zy].doormask & (D_CLOSED | D_LOCKED)))) {
+         (level->locations[zx][zy].flags & (D_CLOSED | D_LOCKED)))) {
         if (level->locations[zx][zy].typ == SDOOR)
             cvt_sdoor_to_door(&level->locations[zx][zy], &u.uz); /* typ=DOOR */
-        if (level->locations[zx][zy].doormask & D_TRAPPED) {
+        if (level->locations[zx][zy].flags & D_TRAPPED) {
             if (distu(zx, zy) < 3)
                 b_trapped("door", 0);
             else
@@ -1062,9 +1062,9 @@ openone(int zx, int zy, void *num)
                            cansee(zx, zy) ? "see" :
                            (canhear() ? "hear" : "feel the shock of"));
             wake_nearto(zx, zy, 11 * 11);
-            level->locations[zx][zy].doormask = D_NODOOR;
+            level->locations[zx][zy].flags = D_NODOOR;
         } else
-            level->locations[zx][zy].doormask = D_ISOPEN;
+            level->locations[zx][zy].flags = D_ISOPEN;
         unblock_point(zx, zy);
         newsym(zx, zy);
         (*(int *)num)++;

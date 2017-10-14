@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -217,7 +217,7 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
         mx_epri_new(priest);
         struct epri *epri = priest->mextra->epri;
         epri->shroom = (sroom - lev->rooms) + ROOMOFFSET;
-        priest->maligntyp = Amask2align(lev->locations[sx][sy].altarmask);
+        priest->maligntyp = Amask2align(lev->locations[sx][sy].flags);
         epri->shrpos.x = sx;
         epri->shrpos.y = sy;
         assign_level(&(mx_epri(priest)->shrlevel), &lev->z);
@@ -338,8 +338,8 @@ has_shrine(const struct monst *pri)
     if (!IS_ALTAR(loc->typ))
         return FALSE;
     /* not malign() -- we want the original alignment, not current */
-    return (pri->maligntyp == Amask2align(loc->altarmask & AM_MASK))
-        ? loc->altarmask & (AM_SHRINE | AM_SANCTUM) : 0;
+    return (pri->maligntyp == Amask2align(loc->flags & AM_MASK))
+        ? loc->flags & (AM_SHRINE | AM_SANCTUM) : 0;
 }
 
 struct monst *
@@ -717,7 +717,7 @@ angry_priest(void)
         loc = &level->locations
             [mx_epri(priest)->shrpos.x][mx_epri(priest)->shrpos.y];
         if (!IS_ALTAR(loc->typ) ||
-            ((aligntyp) Amask2align(loc->altarmask & AM_MASK) !=
+            ((aligntyp) Amask2align(loc->flags & AM_MASK) !=
              priest->maligntyp))
             mx_epri(priest)->shroom = 0; /* renegade now */
     }

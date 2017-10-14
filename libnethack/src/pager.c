@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -156,7 +156,7 @@ describe_bg(int x, int y, int bg, char *buf)
         if (!In_endgame(&u.uz))
             sprintf(buf, "%s altar",
                     align_str(Amask2align
-                              (level->locations[x][y].altarmask & AM_MASK)));
+                              (level->locations[x][y].flags & AM_MASK)));
         else
             sprintf(buf, "aligned altar");
         break;
@@ -164,7 +164,7 @@ describe_bg(int x, int y, int bg, char *buf)
     case S_ndoor:
         if (is_drawbridge_wall(x, y) >= 0)
             strcpy(buf, "open drawbridge portcullis");
-        else if ((level->locations[x][y].doormask & ~D_TRAPPED) == D_BROKEN)
+        else if ((level->locations[x][y].flags & ~D_TRAPPED) == D_BROKEN)
             strcpy(buf, "broken door");
         else
             strcpy(buf, "doorway");

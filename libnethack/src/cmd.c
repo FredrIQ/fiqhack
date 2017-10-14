@@ -748,7 +748,7 @@ wiz_show_wmodes(const struct nh_cmd_arg *arg)
             if (x == u.ux && y == u.uy)
                 row[x] = '@';
             else if (IS_WALL(loc->typ) || loc->typ == SDOOR)
-                row[x] = '0' + (loc->wall_info & WM_MASK);
+                row[x] = '0' + (loc->flags & WM_MASK);
             else if (loc->typ == CORR)
                 row[x] = '#';
             else if (IS_ROOM(loc->typ) || IS_DOOR(loc->typ))

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -145,7 +145,7 @@ does_block(struct level *lev, int x, int y)
     /* Features that block . . */
     if (IS_ROCK(loc->typ) || loc->typ == TREE ||
         (IS_DOOR(loc->typ) &&
-         (loc->doormask & (D_CLOSED | D_LOCKED | D_TRAPPED))))
+         (loc->flags & (D_CLOSED | D_LOCKED | D_TRAPPED))))
         return 1;
 
     if (loc->typ == CLOUD || loc->typ == WATER ||

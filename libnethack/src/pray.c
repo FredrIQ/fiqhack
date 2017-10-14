@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -75,10 +75,10 @@ but that's really hard.
 #define ugod_is_angry() (u.ualign.record < 0)
 #define on_altar()      (IS_ALTAR(level->locations[u.ux][u.uy].typ) && \
                          !Engulfed)
-#define on_shrine()     ((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) \
+#define on_shrine()     ((level->locations[u.ux][u.uy].flags & AM_SHRINE) \
                             != 0)
 #define a_align(x,y)    ((aligntyp)Amask2align( \
-                            level->locations[x][y].altarmask & AM_MASK))
+                            level->locations[x][y].flags & AM_MASK))
 
 static enum pray_trouble
 in_trouble(void)
@@ -1171,7 +1171,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
     int value = 0;
     int pm;
     aligntyp altaralign = a_align(u.ux, u.uy);
-    boolean sanctum = level->locations[u.ux][u.uy].altarmask & AM_SANCTUM;
+    boolean sanctum = level->locations[u.ux][u.uy].flags & AM_SANCTUM;
     int cnt; /* for loop initial declarations are only allowed in C99 mode */
     struct obj *otmp;
 
@@ -1240,9 +1240,9 @@ dosacrifice(const struct nh_cmd_arg *arg)
                       urace.adj);
                 if (!sanctum) {
                     /* This is supposed to be &= */
-                    level->locations[u.ux][u.uy].altarmask &=
+                    level->locations[u.ux][u.uy].flags &=
                         AM_SHRINE & AM_SANCTUM;
-                    level->locations[u.ux][u.uy].altarmask |= AM_CHAOTIC;
+                    level->locations[u.ux][u.uy].flags |= AM_CHAOTIC;
                 }
                 angry_priest();
             } else {
@@ -1256,7 +1256,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     pline(msgc_badidea, "The blood floods the altar, which "
                           "vanishes in %s cloud!", an(hcolor("black")));
                     level->locations[u.ux][u.uy].typ = ROOM;
-                    level->locations[u.ux][u.uy].altarmask = 0;
+                    level->locations[u.ux][u.uy].flags = 0;
                     newsym(u.ux, u.uy);
                     angry_priest();
                     demonless_msg = "cloud dissipates";
@@ -1497,9 +1497,9 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     exercise(A_WIS, TRUE);
                     change_luck(1);
                     /* Yes, this is supposed to be &=, not |= */
-                    level->locations[u.ux][u.uy].altarmask &=
+                    level->locations[u.ux][u.uy].flags &=
                         AM_SHRINE & AM_SANCTUM;
-                    level->locations[u.ux][u.uy].altarmask |=
+                    level->locations[u.ux][u.uy].flags |=
                         Align2amask(u.ualign.type);
                     if (!Blind)
                         pline_implied(

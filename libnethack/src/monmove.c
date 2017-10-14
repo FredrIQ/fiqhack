@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -370,7 +370,7 @@ dochug(struct monst *mtmp)
         for (x = 0; x < COLNO; x++) {
             for (y = 0; y < ROWNO; y++) {
                 if (mtmp->dlevel->locations[x][y].typ == ALTAR) {
-                    int mask = mtmp->dlevel->locations[x][y].altarmask;
+                    int mask = mtmp->dlevel->locations[x][y].flags;
                     int alignment = mtmp->data->maligntyp;
                     if ((mask & AM_LAWFUL && alignment > 0) ||
                         (mask & AM_NEUTRAL && alignment == 0) ||
@@ -1169,8 +1169,8 @@ not_special:
             !mtmp->iswiz && !is_rider(mtmp->data) && /* cheats */
             !phasing(mtmp) && !amorphous(mtmp->data)) { /* bypass doors */
             struct rm *door = &level->locations[nix][niy];
-            boolean btrapped = (door->doormask & D_TRAPPED);
-            if ((door->doormask & D_LOCKED) && can_unlock) {
+            boolean btrapped = (door->flags & D_TRAPPED);
+            if ((door->flags & D_LOCKED) && can_unlock) {
                 /* doorbusters are taken care of in postmov */
                 unlocker.x = nix - mtmp->mx;
                 unlocker.y = niy - mtmp->my;
@@ -1179,9 +1179,9 @@ not_special:
                     return 2;
                 return 3;
             }
-            if (door->doormask == D_CLOSED && can_open) {
+            if (door->flags == D_CLOSED && can_open) {
                 if (btrapped) {
-                    door->doormask = D_NODOOR;
+                    door->flags = D_NODOOR;
                     newsym(nix, niy);
                     unblock_point(nix, niy);      /* vision */
                     if (mb_trapped(mtmp))
@@ -1195,7 +1195,7 @@ not_special:
                             You_hear(msgc_levelwarning,
                                      "a door open.");
                     }
-                    door->doormask = D_ISOPEN;
+                    door->flags = D_ISOPEN;
                     newsym(nix, niy);
                     unblock_point(nix, niy);
                 }
@@ -1259,9 +1259,9 @@ postmov:
                 && !can_tunnel   /* taken care of below */
                 ) {
                 struct rm *here = &level->locations[mtmp->mx][mtmp->my];
-                boolean btrapped = (here->doormask & D_TRAPPED);
+                boolean btrapped = (here->flags & D_TRAPPED);
 
-                if (here->doormask & (D_LOCKED | D_CLOSED) && amorphous(ptr)) {
+                if (here->flags & (D_LOCKED | D_CLOSED) && amorphous(ptr)) {
                     /* monneutral even for pets; basically nothing is happening
                        here */
                     if (canseemon(mtmp))
@@ -1270,9 +1270,9 @@ postmov:
                               (ptr == &mons[PM_FOG_CLOUD] ||
                                ptr == &mons[PM_YELLOW_LIGHT])
                               ? "flows" : "oozes");
-                } else if (here->doormask & D_LOCKED && can_unlock) {
+                } else if (here->flags & D_LOCKED && can_unlock) {
                     if (btrapped) {
-                        here->doormask = D_NODOOR;
+                        here->flags = D_NODOOR;
                         newsym(mtmp->mx, mtmp->my);
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                         if (mb_trapped(mtmp))
@@ -1284,13 +1284,13 @@ postmov:
                         else
                             You_hear(msgc_levelsound,
                                      "a door unlock and open.");
-                        here->doormask = D_ISOPEN;
+                        here->flags = D_ISOPEN;
                         /* newsym(mtmp->mx, mtmp->my); */
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                     }
-                } else if (here->doormask == D_CLOSED && can_open) {
+                } else if (here->flags == D_CLOSED && can_open) {
                     if (btrapped) {
-                        here->doormask = D_NODOOR;
+                        here->flags = D_NODOOR;
                         newsym(mtmp->mx, mtmp->my);
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                         if (mb_trapped(mtmp))
@@ -1300,14 +1300,14 @@ postmov:
                             pline(msgc_monneutral, "You see a door open.");
                         else
                             You_hear(msgc_levelsound, "a door open.");
-                        here->doormask = D_ISOPEN;
+                        here->flags = D_ISOPEN;
                         /* newsym(mtmp->mx, mtmp->my); *//* done below */
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                     }
-                } else if (here->doormask & (D_LOCKED | D_CLOSED)) {
+                } else if (here->flags & (D_LOCKED | D_CLOSED)) {
                     /* mfndpos guarantees this must be a doorbuster */
                     if (btrapped) {
-                        here->doormask = D_NODOOR;
+                        here->flags = D_NODOOR;
                         newsym(mtmp->mx, mtmp->my);
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                         if (mb_trapped(mtmp))
@@ -1318,10 +1318,10 @@ postmov:
                                   "You see a door crash open.");
                         else
                             You_hear(msgc_levelsound, "a door crash open.");
-                        if (here->doormask & D_LOCKED && !rn2(2))
-                            here->doormask = D_NODOOR;
+                        if (here->flags & D_LOCKED && !rn2(2))
+                            here->flags = D_NODOOR;
                         else
-                            here->doormask = D_BROKEN;
+                            here->flags = D_BROKEN;
                         /* newsym(mtmp->mx, mtmp->my); *//* done below */
                         unblock_point(mtmp->mx, mtmp->my);  /* vision */
                     }
@@ -1410,7 +1410,7 @@ boolean
 closed_door(struct level * lev, int x, int y)
 {
     return (boolean) (IS_DOOR(lev->locations[x][y].typ) &&
-                      (lev->locations[x][y].doormask & (D_LOCKED | D_CLOSED)));
+                      (lev->locations[x][y].flags & (D_LOCKED | D_CLOSED)));
 }
 
 boolean

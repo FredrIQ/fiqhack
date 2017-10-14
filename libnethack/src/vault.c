@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -395,7 +395,7 @@ invault(void)
                 mx_egd(guard)->fakecorr[0].ftyp = VWALL;
         }
         level->locations[x][y].typ = DOOR;
-        level->locations[x][y].doormask = D_NODOOR;
+        level->locations[x][y].flags = D_NODOOR;
         unblock_point(x, y);    /* doesn't block light */
         mx_egd(guard)->fcend = 1;
         mx_egd(guard)->warncnt = 1;
@@ -457,7 +457,7 @@ wallify_vault(struct monst *grd)
                 else    /* not left or right side, must be top or bottom */
                     typ = HWALL;
                 level->locations[x][y].typ = typ;
-                level->locations[x][y].doormask = 0;
+                level->locations[x][y].flags = 0;
                 /* 
                  * hack: player knows walls are restored because of the
                  * message, below, so show this on the screen.
@@ -696,7 +696,7 @@ gd_move(struct monst *grd)
                         goto newpos;
                     crm->typ = (typ == SCORR) ? CORR : DOOR;
                     if (crm->typ == DOOR)
-                        crm->doormask = D_NODOOR;
+                        crm->flags = D_NODOOR;
                     goto proceed;
                 }
             }
@@ -720,7 +720,7 @@ nextpos:
         if (isok(nx + nx - x, ny + ny - y) && !IS_POOL(typ) &&
             IS_ROOM(level->locations[nx + nx - x][ny + ny - y].typ)) {
             crm->typ = DOOR;
-            crm->doormask = D_NODOOR;
+            crm->flags = D_NODOOR;
             goto proceed;
         }
         if (dy && nx != x) {
@@ -737,7 +737,7 @@ nextpos:
         /* I don't like this, but ... */
         if (IS_ROOM(typ)) {
             crm->typ = DOOR;
-            crm->doormask = D_NODOOR;
+            crm->flags = D_NODOOR;
             goto proceed;
         }
         break;

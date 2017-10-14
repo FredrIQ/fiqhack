@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1891,7 +1891,7 @@ overview_scan(const struct level *lev, struct overview_info *oi)
                 break;
 
             case S_altar:
-                if (lev->locations[x][y].altarmask & AM_SANCTUM) {
+                if (lev->locations[x][y].flags & AM_SANCTUM) {
                     oi->high_altars++;
                     /* Don't count high altars as altars to avoid leaking
                        alignment information. */
@@ -1899,11 +1899,11 @@ overview_scan(const struct level *lev, struct overview_info *oi)
                 }
                 oi->altars++;
                 /* Check altar's alignment. */
-                if (lev->locations[x][y].altarmask & AM_LAWFUL)
+                if (lev->locations[x][y].flags & AM_LAWFUL)
                     oi->lawful_altar = TRUE;
-                else if (lev->locations[x][y].altarmask & AM_NEUTRAL)
+                else if (lev->locations[x][y].flags & AM_NEUTRAL)
                     oi->neutral_altar = TRUE;
-                else if (lev->locations[x][y].altarmask & AM_CHAOTIC)
+                else if (lev->locations[x][y].flags & AM_CHAOTIC)
                     oi->chaotic_altar = TRUE;
                 else
                     oi->unaligned_altar = TRUE;

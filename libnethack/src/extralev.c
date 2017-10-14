@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright 1988, 1989 by Ken Arromdee                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -80,7 +80,7 @@ roguecorr(struct level *lev, int x, int y, int dir)
             if (!IS_WALL(lev->locations[fromx][fromy].typ))
                 impossible("down: no wall at %d,%d?", fromx, fromy);
             dodoor(lev, fromx, fromy, &lev->rooms[r[x][y].nroom]);
-            lev->locations[fromx][fromy].doormask = D_NODOOR;
+            lev->locations[fromx][fromy].flags = D_NODOOR;
             fromy++;
         }
         if (y >= 2) {
@@ -102,7 +102,7 @@ roguecorr(struct level *lev, int x, int y, int dir)
             if (!IS_WALL(lev->locations[tox][toy].typ))
                 impossible("up: no wall at %d,%d?", tox, toy);
             dodoor(lev, tox, toy, &lev->rooms[r[x][y].nroom]);
-            lev->locations[tox][toy].doormask = D_NODOOR;
+            lev->locations[tox][toy].flags = D_NODOOR;
             toy--;
         }
         roguejoin(lev, fromx, fromy, tox, toy, FALSE);
@@ -122,7 +122,7 @@ roguecorr(struct level *lev, int x, int y, int dir)
             if (!IS_WALL(lev->locations[fromx][fromy].typ))
                 impossible("down: no wall at %d,%d?", fromx, fromy);
             dodoor(lev, fromx, fromy, &lev->rooms[r[x][y].nroom]);
-            lev->locations[fromx][fromy].doormask = D_NODOOR;
+            lev->locations[fromx][fromy].flags = D_NODOOR;
             fromx++;
         }
         if (x >= 2) {
@@ -144,7 +144,7 @@ roguecorr(struct level *lev, int x, int y, int dir)
             if (!IS_WALL(lev->locations[tox][toy].typ))
                 impossible("left: no wall at %d,%d?", tox, toy);
             dodoor(lev, tox, toy, &lev->rooms[r[x][y].nroom]);
-            lev->locations[tox][toy].doormask = D_NODOOR;
+            lev->locations[tox][toy].flags = D_NODOOR;
             tox--;
         }
         roguejoin(lev, fromx, fromy, tox, toy, TRUE);

@@ -256,12 +256,12 @@ enum dungeon_symbols {
  */
 # define F_LOOTED       1
 # define F_WARNED       2
-# define FOUNTAIN_IS_WARNED(x,y)     (level->locations[x][y].looted & F_WARNED)
-# define FOUNTAIN_IS_LOOTED(x,y)     (level->locations[x][y].looted & F_LOOTED)
-# define SET_FOUNTAIN_WARNED(x,y)    level->locations[x][y].looted |= F_WARNED;
-# define SET_FOUNTAIN_LOOTED(x,y)    level->locations[x][y].looted |= F_LOOTED;
-# define CLEAR_FOUNTAIN_WARNED(x,y)  level->locations[x][y].looted &= ~F_WARNED;
-# define CLEAR_FOUNTAIN_LOOTED(x,y)  level->locations[x][y].looted &= ~F_LOOTED;
+# define FOUNTAIN_IS_WARNED(x,y)     (level->locations[x][y].flags & F_WARNED)
+# define FOUNTAIN_IS_LOOTED(x,y)     (level->locations[x][y].flags & F_LOOTED)
+# define SET_FOUNTAIN_WARNED(x,y)    level->locations[x][y].flags |= F_WARNED;
+# define SET_FOUNTAIN_LOOTED(x,y)    level->locations[x][y].flags |= F_LOOTED;
+# define CLEAR_FOUNTAIN_WARNED(x,y)  level->locations[x][y].flags &= ~F_WARNED;
+# define CLEAR_FOUNTAIN_LOOTED(x,y)  level->locations[x][y].flags &= ~F_LOOTED;
 
 /*
  * Doors are even worse :-) The special warning has a side effect
@@ -425,15 +425,6 @@ struct rm {
 # define SV6 0x40
 # define SV7 0x80
 # define SVALL 0xFF
-
-
-/* BUG: THIS IS NOT A GOOD IDEA */
-# define doormask       flags
-# define altarmask      flags
-# define wall_info      flags
-# define drawbridgemask flags
-# define looted         flags
-# define icedpool       flags
 
 # define blessedftn     horizontal      /* a fountain that grants attribs */
 # define disturbed      horizontal      /* a grave that has been disturbed */

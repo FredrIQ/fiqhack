@@ -864,21 +864,21 @@ dokick(const struct nh_cmd_arg *arg)
                 pline(msgc_youdiscover, "Crash!  %s a secret door!",
                       /* don't "kick open" when it's locked unless it also
                          happens to be trapped */
-                      (maploc->doormask & (D_LOCKED | D_TRAPPED)) ==
+                      (maploc->flags & (D_LOCKED | D_TRAPPED)) ==
                       D_LOCKED ? "Your kick uncovers" : "You kick open");
                 exercise(A_DEX, TRUE);
-                if (maploc->doormask & D_TRAPPED) {
-                    maploc->doormask = D_NODOOR;
+                if (maploc->flags & D_TRAPPED) {
+                    maploc->flags = D_NODOOR;
                     b_trapped("door", FOOT);
-                } else if (maploc->doormask != D_NODOOR &&
-                           !(maploc->doormask & D_LOCKED))
-                    maploc->doormask = D_ISOPEN;
+                } else if (maploc->flags != D_NODOOR &&
+                           !(maploc->flags & D_LOCKED))
+                    maploc->flags = D_ISOPEN;
                 if (Blind)
                     feel_location(x, y);        /* we know it's gone */
                 else
                     newsym(x, y);
-                if (maploc->doormask == D_ISOPEN ||
-                    maploc->doormask == D_NODOOR)
+                if (maploc->flags == D_ISOPEN ||
+                    maploc->flags == D_NODOOR)
                     unblock_point(x, y);        /* vision */
                 return 1;
             } else
@@ -908,9 +908,9 @@ dokick(const struct nh_cmd_arg *arg)
 
             if (Levitation)
                 goto dumb;
-            if ((Luck < 0 || maploc->doormask) && kickedloose) {
+            if ((Luck < 0 || maploc->flags) && kickedloose) {
                 maploc->typ = ROOM;
-                maploc->doormask = 0;   /* don't leave loose ends.. */
+                maploc->flags = 0;   /* don't leave loose ends.. */
                 mkgold(goldamt, level, x, y, rng_main);
                 if (Blind)
                     pline(msgc_substitute, "CRASH!  You destroy it.");
@@ -920,7 +920,7 @@ dokick(const struct nh_cmd_arg *arg)
                 }
                 exercise(A_DEX, TRUE);
                 return 1;
-            } else if (Luck > 0 && kickedloose && !maploc->looted) {
+            } else if (Luck > 0 && kickedloose && !maploc->flags) {
                 mkgold(goldamt + 301, level, x, y, rng_main);
                 i = Luck + 1;
                 if (i > 6)
@@ -937,7 +937,7 @@ dokick(const struct nh_cmd_arg *arg)
                     newsym(x, y);
                 }
                 /* prevent endless milking */
-                maploc->looted = T_LOOTED;
+                maploc->flags = T_LOOTED;
                 return 1;
             } else if (trapdoor) {
                 if (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz)) {
@@ -986,7 +986,7 @@ dokick(const struct nh_cmd_arg *arg)
                     You_hear(msgc_levelwarning, "a low buzzing.");
                 goto ouch;
             }
-            if (rn2(15) && !(maploc->looted & TREE_LOOTED) &&
+            if (rn2(15) && !(maploc->flags & TREE_LOOTED) &&
                 (treefruit = rnd_treefruit_at(x, y))) {
                 long nfruit = 8L - rnl(7), nfall;
                 short frtype = treefruit->otyp;
@@ -1011,9 +1011,9 @@ dokick(const struct nh_cmd_arg *arg)
                 exercise(A_DEX, TRUE);
                 exercise(A_WIS, TRUE);  /* discovered a new food source! */
                 newsym(x, y);
-                maploc->looted |= TREE_LOOTED;
+                maploc->flags |= TREE_LOOTED;
                 return 1;
-            } else if (!(maploc->looted & TREE_SWARM)) {
+            } else if (!(maploc->flags & TREE_SWARM)) {
                 int cnt = rnl(4) + 2;
                 int made = 0;
                 coord mm;
@@ -1031,7 +1031,7 @@ dokick(const struct nh_cmd_arg *arg)
                           "You've attracted the tree's former occupants!");
                 else
                     pline(msgc_substitute, "You smell stale honey.");
-                maploc->looted |= TREE_SWARM;
+                maploc->flags |= TREE_SWARM;
                 return 1;
             }
             goto ouch;
@@ -1056,7 +1056,7 @@ dokick(const struct nh_cmd_arg *arg)
                     pline(msgc_failrandom, "Klunk!");
                 exercise(A_DEX, TRUE);
                 return 1;
-            } else if (!(maploc->looted & S_LPUDDING) && pudding_available) {
+            } else if (!(maploc->flags & S_LPUDDING) && pudding_available) {
                 if (!(mvitals[PM_BLACK_PUDDING].mvflags & G_GONE)) {
                     if (Blind)
                         You_hear(msgc_levelwarning, "a gushing sound.");
@@ -1067,7 +1067,7 @@ dokick(const struct nh_cmd_arg *arg)
                     makemon(&mons[PM_BLACK_PUDDING], level, x, y, NO_MM_FLAGS);
                     exercise(A_DEX, TRUE);
                     newsym(x, y);
-                    maploc->looted |= S_LPUDDING;
+                    maploc->flags |= S_LPUDDING;
                 } else {
                     /* this message works even if blind */
                     pline(msgc_noconsequence,
@@ -1075,14 +1075,14 @@ dokick(const struct nh_cmd_arg *arg)
                           hcolor("black"));
                 }
                 return 1;
-            } else if (!(maploc->looted & S_LDWASHER) && dishwasher_available) {
+            } else if (!(maploc->flags & S_LDWASHER) && dishwasher_available) {
                 if (!(mvitals[washerndx].mvflags & G_GONE)) {
                     /* can't resist... */
                     pline(msgc_levelwarning, "%s returns!",
                           (Blind ? "Something" : "The dish washer"));
                     if (makemon(&mons[washerndx], level, x, y, NO_MM_FLAGS))
                         newsym(x, y);
-                    maploc->looted |= S_LDWASHER;
+                    maploc->flags |= S_LDWASHER;
                     exercise(A_DEX, TRUE);
                 } else {
                     pline(msgc_noconsequence,
@@ -1090,7 +1090,7 @@ dokick(const struct nh_cmd_arg *arg)
                 }
                 return 1;
             } else if (ring_available) {
-                if (!(maploc->looted & S_LRING)) {      /* once per sink */
+                if (!(maploc->flags & S_LRING)) {      /* once per sink */
                     if (!Blind)
                         pline(msgc_youdiscover, "Muddy waste backs up.  "
                               "There's a ring in its midst!");
@@ -1101,7 +1101,7 @@ dokick(const struct nh_cmd_arg *arg)
                     newsym(x, y);
                     exercise(A_DEX, TRUE);
                     exercise(A_WIS, TRUE);      /* a discovery! */
-                    maploc->looted |= S_LRING;
+                    maploc->flags |= S_LRING;
                 } else {
                     pline(msgc_noconsequence, "Flupp!  %s.",
                           (Blind ? "You hear a sloshing sound" :
@@ -1139,8 +1139,8 @@ dokick(const struct nh_cmd_arg *arg)
         goto dumb;
     }
 
-    if (maploc->doormask == D_ISOPEN || maploc->doormask == D_BROKEN ||
-        maploc->doormask == D_NODOOR) {
+    if (maploc->flags == D_ISOPEN || maploc->flags == D_BROKEN ||
+        maploc->flags == D_NODOOR) {
     dumb:
         exercise(A_DEX, FALSE);
         if (martial() || ACURR(A_DEX) >= 16 || rn2(3)) {
@@ -1168,20 +1168,20 @@ dokick(const struct nh_cmd_arg *arg)
         boolean shopdoor = *in_rooms(level, x, y, SHOPBASE) ? TRUE : FALSE;
 
         /* break the door */
-        if (maploc->doormask & D_TRAPPED) {
+        if (maploc->flags & D_TRAPPED) {
             pline(msgc_actionboring, "You kick the door.");
             exercise(A_STR, FALSE);
-            maploc->doormask = D_NODOOR;
+            maploc->flags = D_NODOOR;
             b_trapped("door", FOOT);
         } else if (ACURR(A_STR) > 18 && !rn2(5) && !shopdoor) {
             pline(msgc_actionok,
                   "As you kick the door, it shatters to pieces!");
             exercise(A_STR, TRUE);
-            maploc->doormask = D_NODOOR;
+            maploc->flags = D_NODOOR;
         } else {
             pline(msgc_actionok, "As you kick the door, it crashes open!");
             exercise(A_STR, TRUE);
-            maploc->doormask = D_BROKEN;
+            maploc->flags = D_BROKEN;
         }
         if (Blind)
             feel_location(x, y);        /* we know we broke it */
@@ -1225,14 +1225,14 @@ dokick(const struct nh_cmd_arg *arg)
                         pline(msgc_npcvoice, "%s yells:", Amonnam(mtmp));
                     else
                         You_hear(msgc_npcvoice, "someone yell:");
-                    if (level->locations[x][y].looted & D_WARNED) {
+                    if (level->locations[x][y].flags & D_WARNED) {
                         verbalize(msgc_npcanger,
                                   "Halt, vandal!  You're under arrest!");
                         angry_guards(FALSE);
                     } else {
                         verbalize(msgc_levelwarning,
                                   "Hey, stop damaging that door!");
-                        level->locations[x][y].looted |= D_WARNED;
+                        level->locations[x][y].flags |= D_WARNED;
                     }
                     break;
                 }

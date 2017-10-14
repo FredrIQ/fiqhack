@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -72,7 +72,7 @@ mkcavepos(xchar x, xchar y, int dist, boolean waslit, boolean rockit)
 
     /* fake out saved state */
     loc->seenv = 0;
-    loc->doormask = 0;
+    loc->flags = 0;
     if (dist < 3)
         loc->lit = (rockit ? FALSE : TRUE);
     if (waslit)
@@ -185,7 +185,7 @@ dig_check(struct monst *madeby, enum msg_channel msgc, int x, int y)
         return FALSE;
     } else if (IS_ALTAR(level->locations[x][y].typ) &&
                (madeby != BY_OBJECT ||
-                (level->locations[x][y].altarmask & AM_SANCTUM))) {
+                (level->locations[x][y].flags & AM_SANCTUM))) {
         pline(msgc, "The altar is too hard to break apart.");
         return FALSE;
     } else if (Is_airlevel(&u.uz)) {
@@ -196,7 +196,7 @@ dig_check(struct monst *madeby, enum msg_channel msgc, int x, int y)
         return FALSE;
     } else if ((IS_ROCK(level->locations[x][y].typ) &&
                 level->locations[x][y].typ != SDOOR &&
-                (level->locations[x][y].wall_info & W_NONDIGGABLE) != 0) ||
+                (level->locations[x][y].flags & W_NONDIGGABLE) != 0) ||
                (ttmp && (ttmp->ttyp == MAGIC_PORTAL ||
                          ttmp->ttyp == VIBRATING_SQUARE ||
                          !can_dig_down(level)))) {
@@ -395,22 +395,22 @@ dig(void)
                 loc->typ = CORR;
             } else {
                 loc->typ = DOOR;
-                loc->doormask = D_NODOOR;
+                loc->flags = D_NODOOR;
             }
             digtxt = "You make an opening in the wall.";
         } else if (loc->typ == SDOOR) {
             cvt_sdoor_to_door(loc, &u.uz);      /* ->typ = DOOR */
             digtxt = "You break through a secret door!";
-            if (!(loc->doormask & D_TRAPPED))
-                loc->doormask = D_BROKEN;
+            if (!(loc->flags & D_TRAPPED))
+                loc->flags = D_BROKEN;
         } else if (closed_door(level, dpx, dpy)) {
             digtxt = "You break through the door.";
             if (shopedge) {
                 add_damage(dpx, dpy, 400L);
                 dmgtxt = "break";
             }
-            if (!(loc->doormask & D_TRAPPED))
-                loc->doormask = D_BROKEN;
+            if (!(loc->flags & D_TRAPPED))
+                loc->flags = D_BROKEN;
         } else
             return 0;   /* statue or boulder got taken */
 
@@ -442,8 +442,8 @@ dig(void)
                 pline(msgc_levelwarning,
                       "The debris from your digging comes to life!");
         }
-        if (IS_DOOR(loc->typ) && (loc->doormask & D_TRAPPED)) {
-            loc->doormask = D_NODOOR;
+        if (IS_DOOR(loc->typ) && (loc->flags & D_TRAPPED)) {
+            loc->flags = D_NODOOR;
             b_trapped("door", 0);
             newsym(dpx, dpy);
         }
@@ -728,7 +728,7 @@ dighole(struct monst *mon, boolean pit_only, boolean instant)
     if ((ttmp &&
          (ttmp->ttyp == MAGIC_PORTAL || ttmp->ttyp == VIBRATING_SQUARE ||
           nohole)) || (IS_ROCK(loc->typ) && loc->typ != SDOOR &&
-                       (loc->wall_info & W_NONDIGGABLE) != 0)) {
+                       (loc->flags & W_NONDIGGABLE) != 0)) {
         if (you || vis)
             pline((ttmp && instant) ? msgc_yafm : msgc_failcurse,
                   "The %s here is too hard to dig in.",
@@ -796,8 +796,8 @@ dighole(struct monst *mon, boolean pit_only, boolean instant)
             return FALSE;
         }
 
-        loc->drawbridgemask = (loc->drawbridgemask & ~DB_UNDER);
-        loc->drawbridgemask |= (typ == LAVAPOOL) ? DB_LAVA : DB_MOAT;
+        loc->flags = (loc->flags & ~DB_UNDER);
+        loc->flags |= (typ == LAVAPOOL) ? DB_LAVA : DB_MOAT;
 
     liquid_flow:
         if (ttmp)
@@ -1201,8 +1201,8 @@ mdig_tunnel(struct monst *mtmp)
         if (*in_rooms(level, mtmp->mx, mtmp->my, SHOPBASE))
             add_damage(mtmp->mx, mtmp->my, 0L);
         unblock_point(mtmp->mx, mtmp->my);      /* vision */
-        if (here->doormask & D_TRAPPED) {
-            here->doormask = D_NODOOR;
+        if (here->flags & D_TRAPPED) {
+            here->flags = D_NODOOR;
             if (mb_trapped(mtmp)) {     /* mtmp is killed */
                 newsym(mtmp->mx, mtmp->my);
                 return TRUE;
@@ -1210,7 +1210,7 @@ mdig_tunnel(struct monst *mtmp)
         } else {
             if (!rn2(3) && flags.verbose)       /* not too often.. */
                 pline(msgc_levelsound, "You feel an unexpected draft.");
-            here->doormask = D_BROKEN;
+            here->flags = D_BROKEN;
         }
         newsym(mtmp->mx, mtmp->my);
         return FALSE;
@@ -1218,7 +1218,7 @@ mdig_tunnel(struct monst *mtmp)
         return FALSE;
 
     /* Only rock, trees, and walls fall through to this point. */
-    if ((here->wall_info & W_NONDIGGABLE) != 0) {
+    if ((here->flags & W_NONDIGGABLE) != 0) {
         impossible("mdig_tunnel:  %s at (%d,%d) is undiggable",
                    (IS_WALL(here->typ) ? "wall" : "stone"), (int)mtmp->mx,
                    (int)mtmp->my);
@@ -1238,7 +1238,7 @@ mdig_tunnel(struct monst *mtmp)
             here->typ = CORR;
         } else {
             here->typ = DOOR;
-            here->doormask = D_NODOOR;
+            here->flags = D_NODOOR;
         }
     } else if (IS_TREE(here->typ)) {
         here->typ = ROOM;
@@ -1367,7 +1367,7 @@ zap_dig(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
                       "The door is razed!");
             if (you)
                 watch_warn(NULL, zx, zy, TRUE);
-            room->doormask = D_NODOOR;
+            room->flags = D_NODOOR;
             unblock_point(zx, zy);      /* vision */
             digdepth -= 2;
             if (maze_dig)
@@ -1376,7 +1376,7 @@ zap_dig(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
             /* See dig() for comments about use of msgc_failcurse for undiggable
                walls */
             if (IS_WALL(room->typ)) {
-                if (!(room->wall_info & W_NONDIGGABLE)) {
+                if (!(room->flags & W_NONDIGGABLE)) {
                     if (*in_rooms(level, zx, zy, SHOPBASE)) {
                         add_damage(zx, zy, you ? 200L : 0L);
                         shopwall = TRUE;
@@ -1388,7 +1388,7 @@ zap_dig(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
                           "The wall glows then fades.");
                 break;
             } else if (IS_TREE(room->typ)) {    /* check trees before stone */
-                if (!(room->wall_info & W_NONDIGGABLE)) {
+                if (!(room->flags & W_NONDIGGABLE)) {
                     room->typ = ROOM;
                     unblock_point(zx, zy);      /* vision */
                 } else if (!blind(&youmonst) && (you || vis))
@@ -1396,7 +1396,7 @@ zap_dig(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
                           "The tree shudders but is unharmed.");
                 break;
             } else if (room->typ == STONE || room->typ == SCORR) {
-                if (!(room->wall_info & W_NONDIGGABLE)) {
+                if (!(room->flags & W_NONDIGGABLE)) {
                     room->typ = CORR;
                     unblock_point(zx, zy);      /* vision */
                 } else if (!blind(&youmonst) && (you || vis))
@@ -1418,7 +1418,7 @@ zap_dig(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
                     room->typ = CORR;
                 } else {
                     room->typ = DOOR;
-                    room->doormask = D_NODOOR;
+                    room->flags = D_NODOOR;
                 }
                 digdepth -= 2;
             } else if (IS_TREE(room->typ)) {

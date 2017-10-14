@@ -232,7 +232,7 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
        Another exception: if the door is /known/ to be locked. */
     if ((l->mem_bg == S_hcdoor || l->mem_bg == S_vcdoor) &&
         uim != uim_traditional &&
-        (!l->mem_door_l || (IS_DOOR(l->typ) && !(l->doormask & D_LOCKED))))
+        (!l->mem_door_l || (IS_DOOR(l->typ) && !(l->flags & D_LOCKED))))
         return uia_opendoor;
 
     /* This is an interactive mode (so autopicking up items is OK if autopickup
@@ -348,7 +348,7 @@ moverock(schar dx, schar dy)
             level->locations[rx][ry].typ != IRONBARS &&
             (!IS_DOOR(level->locations[rx][ry].typ) || !(dx && dy) ||
              (!Is_rogue_level(&u.uz) &&
-              (level->locations[rx][ry].doormask & ~D_BROKEN) == D_NODOOR)) &&
+              (level->locations[rx][ry].flags & ~D_BROKEN) == D_NODOOR)) &&
             !sobj_at(BOULDER, level, rx, ry)) {
             ttmp = t_at(level, rx, ry);
             mtmp = m_at(level, rx, ry);
@@ -626,18 +626,18 @@ still_chewing(xchar x, xchar y)
             loc->typ = CORR;
         } else {
             loc->typ = DOOR;
-            loc->doormask = D_NODOOR;
+            loc->flags = D_NODOOR;
         }
     } else if (IS_TREE(loc->typ)) {
         digtxt = "You chew through the tree.";
         loc->typ = ROOM;
     } else if (loc->typ == SDOOR) {
-        if (loc->doormask & D_TRAPPED) {
-            loc->doormask = D_NODOOR;
+        if (loc->flags & D_TRAPPED) {
+            loc->flags = D_NODOOR;
             b_trapped("secret door", 0);
         } else {
             digtxt = "You chew through the secret door.";
-            loc->doormask = D_BROKEN;
+            loc->flags = D_BROKEN;
         }
         loc->typ = DOOR;
 
@@ -646,12 +646,12 @@ still_chewing(xchar x, xchar y)
             add_damage(x, y, 400L);
             dmgtxt = "break";
         }
-        if (loc->doormask & D_TRAPPED) {
-            loc->doormask = D_NODOOR;
+        if (loc->flags & D_TRAPPED) {
+            loc->flags = D_NODOOR;
             b_trapped("door", 0);
         } else {
             digtxt = "You chew through the door.";
-            loc->doormask = D_BROKEN;
+            loc->flags = D_BROKEN;
         }
 
     } else {    /* STONE or SCORR */
@@ -722,14 +722,14 @@ boolean
 may_dig(struct level *lev, xchar x, xchar y)
 {
     return !(IS_STWALL(lev->locations[x][y].typ) &&
-             (lev->locations[x][y].wall_info & W_NONDIGGABLE));
+             (lev->locations[x][y].flags & W_NONDIGGABLE));
 }
 
 boolean
 may_passwall(struct level * lev, xchar x, xchar y)
 {
     return !(IS_STWALL(lev->locations[x][y].typ) &&
-             (lev->locations[x][y].wall_info & W_NONPASSWALL));
+             (lev->locations[x][y].flags & W_NONPASSWALL));
 }
 
 boolean
@@ -876,7 +876,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
         } else {
         testdiag:
             if (dx && dy && !cache->passwall &&
-                ((tmpr->doormask & ~D_BROKEN) || Is_rogue_level(&u.uz) ||
+                ((tmpr->flags & ~D_BROKEN) || Is_rogue_level(&u.uz) ||
                  block_door(x, y))) {
                 /* Diagonal moves into a door are not allowed. */
                 if (cache->blind && mode == DO_MOVE)
@@ -935,7 +935,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
 
     /* Now see if other things block our way. */
     if (dx && dy && !cache->passwall &&
-        (IS_DOOR(ust->typ) && ((ust->doormask & ~D_BROKEN)
+        (IS_DOOR(ust->typ) && ((ust->flags & ~D_BROKEN)
                                || Is_rogue_level(&u.uz)
                                || block_entry(x, y)))) {
         /* Can't move at a diagonal out of a doorway with door. */
@@ -1945,7 +1945,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
              ((tmpr->typ == LADDER) && (tmpr->flags != LA_DOWN)) ||
              IS_STWALL(tmpr->typ) || IS_TREE(tmpr->typ) ||
              (tmpr->typ == DOOR &&
-              !!(tmpr->doormask & (D_CLOSED|D_LOCKED))))) {
+              !!(tmpr->flags & (D_CLOSED|D_LOCKED))))) {
             hitsomething = TRUE;
             if (uwep && ((is_pick(uwep) && !IS_TREE(tmpr->typ)) ||
                          (is_axe(uwep) && IS_TREE(tmpr->typ))) &&

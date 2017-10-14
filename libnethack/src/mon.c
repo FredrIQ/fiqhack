@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1469,18 +1469,18 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
             if (ntyp == IRONBARS && !(flag & ALLOW_BARS))
                 continue;
             if (IS_DOOR(ntyp) && !amorphous(mdat) &&
-                ((mlevel->locations[nx][ny].doormask & D_CLOSED &&
+                ((mlevel->locations[nx][ny].flags & D_CLOSED &&
                   !(flag & OPENDOOR)) ||
-                 (mlevel->locations[nx][ny].doormask & D_LOCKED &&
+                 (mlevel->locations[nx][ny].flags & D_LOCKED &&
                   !(flag & UNLOCKDOOR))) && !thrudoor)
                 continue;
             if (nx != x && ny != y &&
                 (nodiag ||
                  ((IS_DOOR(nowtyp) &&
-                   ((mlevel->locations[x][y].doormask & ~D_BROKEN) ||
+                   ((mlevel->locations[x][y].flags & ~D_BROKEN) ||
                     Is_rogue_level(&u.uz))) ||
                   (IS_DOOR(ntyp) &&
-                   ((mlevel->locations[nx][ny].doormask & ~D_BROKEN) ||
+                   ((mlevel->locations[nx][ny].flags & ~D_BROKEN) ||
                     Is_rogue_level(&u.uz))))))
                 continue;
             if ((is_pool(mlevel, nx, ny) == wantpool || poolok) &&
