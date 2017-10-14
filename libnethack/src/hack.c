@@ -1464,6 +1464,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     }
 
     if (dz) {
+        action_completed();
         if (dz < 0)
             return doup(arg);
         else
@@ -2109,6 +2110,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         if (flags.autodig && uim != uim_nointeraction &&
             thismove != occ_move && uwep && is_pick(uwep)) {
             /* MRKR: Automatic digging when wielding the appropriate tool */
+            flags.interrupted = FALSE; /* undo action_complete() for dz checks */
             return use_pick_axe(uwep, &newarg);
         }
         action_completed();

@@ -827,6 +827,7 @@ dodown(const struct nh_cmd_arg *arg, boolean autodig_ok)
                 if (find_remembered_stairs(FALSE, &cc)) {
                     flags.travelcc.x = cc.x;
                     flags.travelcc.y = cc.y;
+                    flags.interrupted = FALSE;
                     return dotravel(arg);
                 }
 
@@ -911,9 +912,10 @@ doup(const struct nh_cmd_arg *arg)
         && (u.ux != level->sstairs.sx || u.uy != level->sstairs.sy ||
             !level->sstairs.up)) {
         coord cc;
-        if (find_remembered_stairs(TRUE, &cc)) {
+        if (arg && find_remembered_stairs(TRUE, &cc)) {
             flags.travelcc.x = cc.x;
             flags.travelcc.y = cc.y;
+            flags.interrupted = FALSE;
             return dotravel(arg);
         }
 
