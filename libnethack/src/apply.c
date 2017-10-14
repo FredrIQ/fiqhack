@@ -1022,6 +1022,9 @@ use_candelabrum(struct obj *obj)
         pline(msgc_actionok, "%s's %s burn%s", The(xname(obj)), s,
               (Blind ? "." : " brightly!"));
     }
+    if (!Blind)
+        obj->bknown = TRUE;
+
     if (!invocation_pos(&u.uz, u.ux, u.uy) || On_stairs(u.ux, u.uy)) {
         pline_implied(msgc_hint, "The %s %s being rapidly consumed!", s,
                       vtense(s, "are"));
