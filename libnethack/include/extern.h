@@ -787,7 +787,7 @@ extern boolean obj_sheds_light(struct obj *);
 extern boolean obj_is_burning(struct obj *);
 extern void obj_split_light_source(struct obj *, struct obj *);
 extern void obj_merge_light_sources(struct obj *, struct obj *);
-extern int candle_light_range(struct obj *);
+extern int obj_light_range(struct obj *);
 extern int wiz_light_sources(const struct nh_cmd_arg *);
 
 /* ### localtime.c ### */

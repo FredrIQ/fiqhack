@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1265,16 +1265,18 @@ use_lamp(struct obj *obj)
             pline(obj->bknown ? msgc_failrandom : msgc_failcurse,
                   "%s %s seem to have lit.", Yname2(obj),
                   obj->quan > 1L ? "don't" : "doesn't");
-        else
+        else {
             pline(obj->bknown ? msgc_failrandom : msgc_failcurse,
                   "%s for a moment, then %s.",
                   Tobjnam(obj, "flicker"), otense(obj, "die"));
-        obj->bknown = TRUE;
+            obj->bknown = TRUE;
+        }
     } else {
         if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
             obj->otyp == BRASS_LANTERN) {
             check_unpaid(obj);
             pline(msgc_actionok, "%s lamp is now on.", Shk_Your(obj));
+            obj->bknown = TRUE; /* range is now BUC-dependant. */
         } else {        /* candle(s) */
             pline(msgc_actionok, "%s flame%s %s%s", s_suffix(Yname2(obj)),
                   plur(obj->quan), otense(obj, "burn"),
@@ -1287,6 +1289,8 @@ use_lamp(struct obj *obj)
                           ithem, ithem);
                 bill_dummy_object(obj);
             }
+            if (!Blind)
+                obj->bknown = TRUE;
         }
         begin_burn(obj, FALSE);
     }
@@ -1318,6 +1322,9 @@ light_cocktail(struct obj *obj)
 
     pline(msgc_actionok, "You light %s potion.%s", shk_your(obj),
           Blind ? "" : "  It gives off a dim light.");
+    if (!Blind && obj->blessed)
+        obj->bknown = TRUE;
+
     if (obj->unpaid && costly_spot(u.ux, u.uy)) {
         /* Normally, we shouldn't both partially and fully charge for an item,
            but (Yendorian Fuel) Taxes are inevitable... */
