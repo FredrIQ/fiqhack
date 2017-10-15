@@ -1,4 +1,4 @@
-! Last modified by Fredrik Ljungdahl, 2017-10-13
+! Last modified by Fredrik Ljungdahl, 2017-10-15
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed. See license for details.
 !
@@ -40,7 +40,7 @@ lawful altar: white 'Ω'
 neutral altar: gray 'Ω'
 chaotic altar: black 'Ω'
 unaligned altar: red 'Ω'
-unaligned altar: bright_magenta 'Ω'
+aligned altar: bright_magenta 'Ω'
 ice: cyan '·'
 lowered drawbridges 0: brown '·'
 lowered drawbridges 1: brown '·'
