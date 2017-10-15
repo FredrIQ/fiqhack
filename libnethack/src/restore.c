@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1064,6 +1064,10 @@ restore_location(struct memfile *mf, struct rm *loc)
     loc->seenv = mread8(mf);
     lflags2 = mread16(mf);
     loc->mem_bg = (lflags1 >> 26) & 63;
+    if (flags.save_revision < 9) {
+        if (loc->mem_bg >= 36 && loc->mem_bg <= 56)
+            loc->mem_bg += 5;
+    }
     loc->mem_trap = (lflags1 >> 21) & 31;
     loc->mem_obj = (lflags1 >> 11) & 1023;
     loc->mem_obj_mn = (lflags1 >> 2) & 511;

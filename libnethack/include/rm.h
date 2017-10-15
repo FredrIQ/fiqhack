@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -130,9 +130,9 @@ enum dungeon_symbols {
     S_pool,
     S_air,
     S_cloud,
-/*20*/ S_water,
+    S_water,
     S_ice,
-    S_lava,
+/*20*/ S_lava,
     S_ndoor,
 
     S_vodoor,
@@ -141,8 +141,8 @@ enum dungeon_symbols {
     S_hcdoor,   /* closed door, horizontal wall */
     S_bars,     /* KMH -- iron bars */
     S_tree,     /* KMH */
-/*30*/ S_upstair,
-    S_dnstair,
+    S_upstair,
+/*30*/ S_dnstair,
     S_upladder,
     S_dnladder,
     S_upsstair,
@@ -152,11 +152,11 @@ enum dungeon_symbols {
     S_naltar,
     S_caltar,
     S_ualtar,
-    S_aaltar, /* Non-specific Astral altar */
+/*40*/ S_aaltar, /* Non-specific Astral altar */
     S_grave,
     S_throne,
     S_sink,
-/*40*/ S_fountain,
+     S_fountain,
     S_vodbridge,
     S_hodbridge,
     S_vcdbridge,        /* closed drawbridge, vertical wall */
@@ -166,17 +166,17 @@ enum dungeon_symbols {
 
     /* values used only in saving, to squeeze a bit more info into the memflags 
        dword */
-    S_vodoor_meml = S_cmap_COUNT,
+/*50*/ S_vodoor_meml = S_cmap_COUNT,
     S_vodoor_memt,
     S_vodoor_memlt,
     S_hodoor_meml,
     S_hodoor_memt,
-/*50*/ S_hodoor_memlt,
+    S_hodoor_memlt,
     S_vcdoor_meml,
     S_vcdoor_memt,
     S_vcdoor_memlt,
     S_hcdoor_meml,
-    S_hcdoor_memt,
+/*60*/ S_hcdoor_memt,
     S_hcdoor_memlt,
 
     MAXPCHARS,  /* maximum number of mapped characters */
