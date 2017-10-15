@@ -434,12 +434,6 @@ dipfountain(struct obj *obj)
             return;
     }
 
-    /* Acid and water don't mix */
-    if (obj->otyp == POT_ACID) {
-        useup(obj);
-        return;
-    }
-
     switch (rn2_on_rng(30, rng_fountain_result)) {
     case 16:   /* Curse the item */
         curse(obj);
