@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3092,8 +3092,13 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                           "%s unharmed!", M_verbs(mdef, "are"));
             }
         }
-        if (resists_cold(mdef))
+        if (resists_cold(mdef)) {
             tmp += dice(nd, 3);
+            if (oseen && hallucinating(&youmonst))
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "It's super effective!");
+        }
+
         if (!resisted && selfzap && oseen)
             pline(you ? msgc_badidea : msgc_yafm,
                   "%s set %sself on fire!", M_verbs(mdef, "have"),
@@ -3113,8 +3118,13 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         ztyp = "cold";
         if (resists_cold(mdef))
             resisted = 1;
-        if (resists_fire(mdef))
+        if (resists_fire(mdef)) {
             tmp += dice(nd, 3);
+            if (oseen && hallucinating(&youmonst))
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "It's super effective!");
+        }
+
         if (!resisted && selfzap && oseen)
             pline(you ? msgc_badidea : msgc_yafm,
                   "%s a popsicle!", M_verbs(mdef, "imitate"));
