@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -890,6 +890,10 @@ resurrect(void)
 void
 intervene(void)
 {
+    /* Do nothing if the Wizard is genocided */
+    if (mvitals[PM_WIZARD_OF_YENDOR].mvflags & G_GENOD)
+        return;
+
     int which = Is_astralevel(&u.uz) ?
         1 + rn2_on_rng(4, rng_intervention) : rn2_on_rng(6, rng_intervention);
     coord cc;
