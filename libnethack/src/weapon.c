@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -306,7 +306,7 @@ dmgval(struct obj *otmp, struct monst *mon)
         if (objects[otyp].oc_material == SILVER && hates_silver(ptr))
             bonus += rnd(20);
         if (obj_properties(otmp) & opm_nasty)
-            bonus += dice(3, 6);
+            bonus += dice(2, 6);
 
         /* if the weapon is going to get a double damage bonus, adjust this
            bonus so that effectively it's added after the doubling */
