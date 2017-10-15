@@ -463,7 +463,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             pline(combat_msgc(magr, mdef, cr_hit),
                   "%s blinded by the flash!", M_verbs(mdef, "are"));
 
-        if (dmg > 20 && !mx_eshk(mdef) && rn2(4)) {
+        if (!hityou && dmg > 20 && !mx_eshk(mdef) && rn2(4)) {
             if (rn2(4))
                 monflee(mdef, rnd(100), FALSE, TRUE);
             else
