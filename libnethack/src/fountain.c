@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -426,8 +426,13 @@ dipfountain(struct obj *obj)
         if (in_town(u.ux, u.uy))
             angry_guards(FALSE);
         return;
-    } else if (water_damage(obj, NULL, TRUE) >= 2 && !rn2(2))
-        return;
+    } else {
+        int res = water_damage(obj, NULL, TRUE);
+        if (res == 3)
+            return; /* it was destroyed */
+        else if (res == 2 && !rn2(2))
+            return;
+    }
 
     /* Acid and water don't mix */
     if (obj->otyp == POT_ACID) {
