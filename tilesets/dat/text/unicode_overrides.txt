@@ -1,4 +1,4 @@
-! Last modified by Fredrik Ljungdahl, 2017-10-15
+! Last modified by Fredrik Ljungdahl, 2017-10-16
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed. See license for details.
 !
@@ -31,19 +31,12 @@ open doors 0: basefg '■'
 open doors 1: basefg '■'
 iron bars: basefg '≡'
 fountain: basefg '⌠'
-the floor of a room: basefg '·'
-sub unlit the floor of a room: basefg '·'
+the floor of a room; sub unlit the floor of a room: basefg '·'
 corridor: basefg '░'
 sub lit corridor: basefg '▒'
-altar: basefg 'Ω'
-lawful altar: basefg 'Ω'
-neutral altar: basefg 'Ω'
-chaotic altar: basefg 'Ω'
-unaligned altar: basefg 'Ω'
-aligned altar: basefg 'Ω'
+altar; * altar: basefg 'Ω'
 ice: basefg '·'
-lowered drawbridges 0: basefg '·'
-lowered drawbridges 1: basefg '·'
+lowered drawbridges ?: basefg '·'
 water: basefg '≈'
 underwater: basefg '≈'
 lava: basefg '≈'
