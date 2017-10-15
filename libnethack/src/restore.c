@@ -1065,7 +1065,7 @@ restore_location(struct memfile *mf, struct rm *loc)
     lflags2 = mread16(mf);
     loc->mem_bg = (lflags1 >> 26) & 63;
     if (flags.save_revision < 9) {
-        if (loc->mem_bg >= 36 && loc->mem_bg <= 56)
+        if (loc->mem_bg >= 36 && loc->mem_bg <= 56 && loc->mem_bg != 44)
             loc->mem_bg += 5;
     }
     loc->mem_trap = (lflags1 >> 21) & 31;
