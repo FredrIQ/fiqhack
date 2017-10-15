@@ -208,7 +208,8 @@ find_obj_match(struct obj *obj,
     if (ret) {
         if (set_dknown)
             obj->dknown = TRUE;
-        update_obj_memory(obj);
+        if (obj->where == OBJ_FLOOR)
+            update_obj_memory(obj);
     }
 
     return ret;
