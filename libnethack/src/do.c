@@ -843,7 +843,7 @@ dodown(const struct nh_cmd_arg *arg, boolean autodig_ok)
               is_animal(u.ustuck->data) ? "swallowed" : "engulfed");
         return 1;
     }
-    if ((!trap || trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) &&
+    if ((!trap || trap->ttyp == TRAPDOOR || trap->ttyp == HOLE) &&
         on_level(&valley_level, &u.uz) && !u.uevent.gehennom_entered) {
         pline_implied(msgc_branchchange,
                       "You are standing at the gate to Gehennom.");
