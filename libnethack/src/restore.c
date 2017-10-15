@@ -290,7 +290,13 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
                 otmp->mem_obj = find_oid(otmp->mem_o_id);
             if (!otmp->mem_obj)
                 impossible("Object memory link failed.");
-            else
+            else if (otmp->mem_obj->mem_obj &&
+                     otmp->mem_obj->mem_obj != otmp) {
+                impossible("Duplicate object memory for %s.",
+                           killer_xname(otmp->mem_obj));
+                otmp->mem_obj = NULL;
+                /* will hopefully be cleaned up later */
+            } else
                 otmp->mem_obj->mem_obj = otmp;
         }
 
