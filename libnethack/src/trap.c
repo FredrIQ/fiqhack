@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -4111,8 +4111,8 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
         }
         if (msg && (you || vis))
             pline(you ? msgc_nonmongood : msgc_monneutral,
-                  "But luckily%s%s the %s!",
-                  you ? "" : "for ", you ? "" : mon_nam(mon), msg);
+                  "But luckily%s the %s!", you ? "" :
+                  msgcat_many(" for ", mon_nam(mon), ",", NULL), msg);
     } else {
         int result;
         if (!rn2(20))
