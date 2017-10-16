@@ -1160,7 +1160,7 @@ update_property(struct monst *mon, enum youprop prop,
             if (you)
                 pline(lost ? msgc_intrloss : msgc_intrgain,
                       lost ? "You sure are noisy." :
-                      "You walk very quietly");
+                      "You walk very quietly.");
             else if (vis)
                 pline(msgc_monneutral,
                       lost ? "%s sure is noisy." :
