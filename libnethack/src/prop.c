@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -1761,7 +1761,7 @@ update_property(struct monst *mon, enum youprop prop,
         if (blocked) /* no message, just remove timers */
             set_property(mon, prop, -2, TRUE);
         else if (you && lost && !redundant) {
-            pline(msgc_statusheal, "Your %s feels less slippery",
+            pline(msgc_statusheal, "Your %s feels less slippery.",
                   makeplural(body_part(FINGER)));
             effect = TRUE;
         }
@@ -1773,8 +1773,8 @@ update_property(struct monst *mon, enum youprop prop,
     case DISPLACED:
         if (you && !redundant) {
             pline(lost ? msgc_intrloss : msgc_intrgain,
-                  lost ? "You stop shimmering" :
-                  "Your outline shimmers and shifts");
+                  lost ? "You stop shimmering." :
+                  "Your outline shimmers and shifts.");
             effect = TRUE;
         }
         break;
