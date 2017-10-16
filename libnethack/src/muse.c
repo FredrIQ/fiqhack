@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2839,7 +2839,7 @@ you_aggravate(const struct monst *mtmp)
     
     /* msgc_info is used for detect monster results, so makes sense here */
     pline_implied(msgc_info, "You feel aggravated at %s.", noit_mon_nam(mtmp));
-    win_pause_output(P_MAP);
+    look_at_map(mtmp->mx, mtmp->my);
     doredraw();
     cancel_helplessness(hm_unconscious,
                         "Aggravated, you are jolted into full consciousness.");

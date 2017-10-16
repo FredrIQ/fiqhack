@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1554,6 +1554,18 @@ getargdir(const struct nh_cmd_arg *arg, const char *query,
 
     /* Otherwise, ask. */
     return getdir(query, dx, dy, dz, TRUE);
+}
+
+/* Calls a dummy getargpos to allow looking around. */
+void
+look_at_map(int x, int y)
+{
+    coord cc;
+    cc.x = u.ux;
+    cc.y = u.uy;
+    struct nh_cmd_arg dummyarg;
+    dummyarg.argtype = 0;
+    getargpos(&dummyarg, &cc, FALSE, "looking");
 }
 
 int

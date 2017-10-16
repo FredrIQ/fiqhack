@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -296,7 +296,8 @@ gold_detect(struct monst *mon, struct obj *sobj, boolean *scr_known)
 
     pline(msgc_youdiscover, "You feel very greedy, and sense gold!");
     exercise(A_WIS, TRUE);
-    win_pause_output(P_MAP);
+    look_at_map(u.ux, u.uy);
+
     doredraw();
     u.uinwater = uw;
     if (Underwater)
@@ -382,7 +383,7 @@ food_detect(struct obj *sobj, boolean *scr_known)
         pline(msgc_youdiscover, "Your %s tingles and you smell %s.",
               body_part(NOSE), what);
     exercise(A_WIS, TRUE);
-    win_pause_output(P_MAP);
+    look_at_map(u.ux, u.uy);
     doredraw();
     u.uinwater = uw;
     if (Underwater)
@@ -455,7 +456,7 @@ object_detect(struct obj *detector,     /* object doing the detecting */
 
     pline(msgc_youdiscover, "%s", buf);
     exercise(A_WIS, TRUE);
-    win_pause_output(P_MAP);
+    look_at_map(u.ux, u.uy);
     doredraw();
     u.uinwater = uw;
     if (Underwater)
@@ -532,7 +533,7 @@ monster_detect(struct obj *otmp,        /* detecting object (if any) */
         pline(msgc_youdiscover, "You sense the presence of monsters.");
         if (woken)
             pline(msgc_statusbad, "Monsters sense the presence of you.");
-        win_pause_output(P_MAP);
+        look_at_map(u.ux, u.uy);
         doredraw();
         if (Underwater)
             under_water(2);
@@ -676,7 +677,7 @@ outtrapmap:
         else
             pline(msgc_youdiscover, "%s is granted an insight, and shares it with you!",
                   Monnam(mon));
-        win_pause_output(P_MAP);
+        look_at_map(u.ux, u.uy);
         doredraw();
         u.uinwater = uw;
         if (Underwater)
@@ -944,7 +945,7 @@ do_mapping(void)
     u.uinwater = uw;
     if (!level->flags.hero_memory || Underwater) {
         flush_screen(); /* flush temp screen */
-        win_pause_output(P_MAP);        /* wait */
+        look_at_map(u.ux, u.uy); /* wait */
         doredraw();
     }
 }
@@ -965,7 +966,7 @@ do_vicinity_map(void)
 
     if (!level->flags.hero_memory || Underwater) {
         flush_screen(); /* flush temp screen */
-        win_pause_output(P_MAP);        /* wait */
+        look_at_map(u.ux, u.uy); /* wait */
         doredraw();
     }
 }
@@ -1145,7 +1146,7 @@ find_trap(struct trap *trap)
     pline(msgc_youdiscover, "You find %s.", an(trapexplain[tt - 1]));
 
     if (cleared) {
-        win_pause_output(P_MAP);        /* wait */
+        look_at_map(u.ux, u.uy); /* wait */
         doredraw();
     }
 }
