@@ -2653,7 +2653,6 @@ miss(const char *str, struct monst *mdef, struct monst *magr)
 static void
 bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
     struct monst *mdef;
-    struct obj *otmp;
     struct tmp_sym *tsym = NULL;
     uchar typ;
     boolean shopdoor = FALSE; /* for determining if you should pay for ruining a door */
@@ -3723,7 +3722,7 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp, const char **killer)
     long i, cnt, quan;
     enum destroy_msg_type dindx;
     boolean you = (mtmp == &youmonst);
-    boolean vis = canseemon(mtmp);
+    boolean vis = (you || canseemon(mtmp));
     const char *mult;
 
     for (obj = mtmp->minvent; obj; obj = obj2) {

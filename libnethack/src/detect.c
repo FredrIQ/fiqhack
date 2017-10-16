@@ -80,8 +80,6 @@ find_obj_tile(int x, int y,
     int memobj;
     struct monst *mon;
     int res = 0;
-    int contained_res = 0;
-    boolean maybe_pile = FALSE;
 
     memobj = level->locations[x][y].mem_obj;
 
@@ -312,7 +310,7 @@ gold_detect(struct monst *mon, struct obj *sobj, boolean *scr_known)
 int
 food_detect(struct obj *sobj, boolean *scr_known)
 {
-    boolean confused = (Confusion || (sobj && sobj->cursed)), stale;
+    boolean confused = (Confusion || (sobj && sobj->cursed));
     char oclass = confused ? POTION_CLASS : FOOD_CLASS;
     const char *what = confused ? "something" : "food";
     int uw = u.uinwater;
@@ -406,7 +404,6 @@ object_detect(struct obj *detector,     /* object doing the detecting */
     int uw = u.uinwater;
     const char *stuff;
     const char *buf;
-    int is_cursed = (detector && detector->cursed);
     int do_dknown = (detector &&
                      (detector->oclass == POTION_CLASS ||
                       detector->oclass == SPBOOK_CLASS) && detector->blessed);

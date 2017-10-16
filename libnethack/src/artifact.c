@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -36,9 +36,6 @@ static long spec_m2(const struct obj *);
    Note: this will still break if they have more than about half the number
    of hit points that will fit in a 15 bit integer. */
 #define FATAL_DAMAGE_MODIFIER 200
-
-/* coordinate effects from spec_dbon() with messages in artifact_hit() */
-static int spec_dbon_applies = 0;
 
 /* flags including which artifacts have already been created */
 static boolean artigen[1 + NROFARTIFACTS + 1];
@@ -419,7 +416,6 @@ item_provides_extrinsic(const struct obj *otmp, int extrinsic,
          (otmp->where == OBJ_INVENT && u.twoweap)))
         return res;
 
-    long equipmask;
     enum objslot slot = which_slot(otmp);
     if (slot == os_invalid) {
         if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp)) {
@@ -466,8 +462,6 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
     }
     const struct artifact *oart = get_artifact(otmp);
     uchar dtyp;
-    long spfx;
-    boolean equipped;
     long equipmask;
 
     /* Don't allow non-weapon equippables to provide an extrinsic

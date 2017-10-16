@@ -1333,6 +1333,7 @@ identify_pack(struct monst *mon, int id_limit,
     boolean vis = canseemon(mon);
 
     unid_cnt = 0;
+    any_unid_cnt = 0;
     the_obj = 0;        /* if unid_cnt ends up 1, this will be it */
     for (obj = mon->minvent; obj; obj = obj->nobj) {
         if (you) {

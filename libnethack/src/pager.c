@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -486,7 +486,6 @@ add_mon_info(struct nh_menulist *menu, const struct permonst *pm)
     mcon &= ~(MR_ACID | MR_STONE); /* these don't do anything */
     unsigned int mflag1 = pm->mflags1;
     unsigned int mflag2 = pm->mflags2;
-    unsigned int mflag3 = pm->mflags3;
 
     /* Misc */
     buf = msgprintf("Difficulty %d, %s, willpower %d.", diff,
@@ -784,7 +783,6 @@ checkfile(const char *inp, const struct permonst *pm,
     }
 
     if (found_in_file) {
-        struct nh_menulist menu;
         long entry_offset;
         int entry_count;
         int i;

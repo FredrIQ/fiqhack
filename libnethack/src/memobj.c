@@ -7,7 +7,7 @@
 
 static struct obj *find_objects(struct level *, struct obj *, int *, boolean *,
                                 const char *, struct nh_menulist *, int);
-static struct obj *findobj_propmt(int, const char *);
+static struct obj *findobj_prompt(int, const char *);
 
 /* Handles object memories to allow players to search for objects they remember
    seeing. */
@@ -85,7 +85,7 @@ find_objects(struct level *lev, struct obj *chain, int *found,
     return NULL;
 }
 
-struct obj *
+static struct obj *
 findobj_prompt(int getobj, const char *str)
 {
     /* Find objects in levels */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -581,7 +581,7 @@ draw_frame(void)
     int framewidth = !!ui_flags.draw_outer_frame_lines;
     int y = framewidth;
     int x = framewidth;
-    int sidebar_delim = sidebar_delimiter_pos();
+    //int sidebar_delim = sidebar_delimiter_pos();
     int connections[LINES+1]; /* for joining up vertical frames */
     int i;
     for (i = 0; i <= LINES; i++)

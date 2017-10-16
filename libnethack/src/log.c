@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1026,7 +1026,7 @@ log_newgame(microseconds start_time)
     lprintf("%" SECOND_LOGLINE_LEN_STR "s\x0a", "(new game)");
     start_of_third_line = get_log_offset();
 
-    base64_encode_binary(u.uplname, encbuf,
+    base64_encode_binary((const unsigned char *)u.uplname, encbuf,
                          strlen(u.uplname), FALSE);
     lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\x0a",
             start_time_l64, 0, wizard ? MODE_WIZARD : discover ?

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -125,7 +125,7 @@ mkobj_of_class(struct level *lev, char oclass, boolean artif, enum rng rng)
         impossible("mkobj_of_class called with RANDOM_CLASS");
 
     int i;
-    int first_id = bases[oclass];
+    int first_id = bases[(int)oclass];
     int final_id = bases[oclass + 1] - 1;
 
     /* Precious gems start off elsewhere depending on dungeon level */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -220,7 +220,6 @@ int
 do_tname(const struct nh_cmd_arg *arg)
 {
     boolean flooritem = FALSE;
-    struct obj *here;
     if (can_reach_floor() && !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy) &&
         level->objects[u.ux][u.uy])
         flooritem = TRUE;
