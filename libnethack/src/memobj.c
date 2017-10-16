@@ -199,6 +199,37 @@ dofindobj(const struct nh_cmd_arg *arg)
 }
 
 void
+show_obj_memories_at(struct level *lev, int x, int y)
+{
+    struct obj *memobj;
+    struct nh_objlist objlist;
+    const char *dfeature = NULL;
+    const char *fbuf;
+
+    if (!lev->memobjects[x][y])
+        return;
+
+    if (lev == level)
+        dfeature = dfeature_at(x, y);
+
+    if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
+        dfeature = NULL;
+
+    init_objmenulist(&objlist);
+
+    if (dfeature) {
+        fbuf = msgprintf("There is %s here.", an(dfeature));
+        add_objitem(&objlist, MI_TEXT, 0, fbuf, NULL, FALSE);
+        add_objitem(&objlist, MI_TEXT, 0, "", NULL, FALSE);
+    }
+
+    for (memobj = lev->memobjects[x][y]; memobj; memobj = memobj->nexthere)
+        add_objitem(&objlist, MI_NORMAL, 0, distant_name(memobj, doname), memobj, FALSE);
+
+    display_objects(&objlist, "Remembered objects", PICK_NONE, PLHINT_CONTAINER, NULL);
+}
+
+void
 update_obj_memories(struct level *lev)
 {
     /* Update level */

@@ -24,7 +24,6 @@ static void menu_identify(int, int);
 static boolean tool_in_use(struct obj *);
 static char obj_to_let(struct obj *);
 static int identify(struct monst *, struct obj *, int);
-static const char *dfeature_at(int, int);
 
 static void addinv_stats(struct obj *);
 static void freeinv_stats(struct obj *);
@@ -1867,7 +1866,7 @@ dotypeinv(const struct nh_cmd_arg *arg)
 
 /* return a string describing the dungeon feature at <x,y> if there
    is one worth mentioning at that location; otherwise null */
-static const char *
+const char *
 dfeature_at(int x, int y)
 {
     struct rm *loc = &level->locations[x][y];

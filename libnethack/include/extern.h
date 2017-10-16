@@ -738,6 +738,7 @@ extern void update_inventory(void);
 extern int display_binventory(int, int, boolean);
 extern struct obj *display_cinventory(struct obj *);
 extern struct obj *display_minventory(struct monst *, int, const char *);
+extern const char *dfeature_at(int, int);
 extern int dotypeinv(const struct nh_cmd_arg *arg);
 extern void update_location(boolean all_objects);
 extern int look_here(int, boolean, boolean, boolean);
@@ -918,6 +919,7 @@ extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
 /* ### memobj.c ### */
 
 extern int dofindobj(const struct nh_cmd_arg *);
+extern void show_obj_memories_at(struct level *, int, int);
 extern void update_obj_memories(struct level *);
 extern void update_obj_memories_at(struct level *, int, int);
 extern void update_container_memory(struct obj *);

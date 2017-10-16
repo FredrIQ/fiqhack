@@ -933,9 +933,12 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
                 firstmatch = descbuf.mondesc;
         }
 
-        if (append_str(&out_str, descbuf.objdesc, objplur, 0))
+        if (append_str(&out_str, descbuf.objdesc, objplur, 0)) {
             if (!firstmatch)
                 firstmatch = descbuf.objdesc;
+            if (level->locations[cc.x][cc.y].pile)
+                show_obj_memories_at(level, cc.x, cc.y);
+        }
 
         if (append_str(&out_str, descbuf.trapdesc, 0, 0))
             if (!firstmatch)
