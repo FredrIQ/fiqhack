@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -220,6 +220,11 @@ dbe_substitution(struct nh_dbuf_entry *dbe)
 
        Another option is to have multiple substitutions, but that's starting to
        get silly. */
+
+    /* Failsafe for saves made in the interim between altar colors and revision 9 */
+    while (dbe->bg >= default_drawing->num_bgelements)
+        dbe->bg--;
+
     short lit_branding =
         !strcmp("corr", default_drawing->bgelements[dbe->bg].symname) ?
         (NH_BRANDING_LIT | NH_BRANDING_TEMP_LIT) :
