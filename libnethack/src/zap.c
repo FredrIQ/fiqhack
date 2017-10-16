@@ -2719,7 +2719,7 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
                 map_invisible(bhitpos.x, bhitpos.y);
             if (obj->otyp != EXPENSIVE_CAMERA || !invisible(mdef))
                 range -= 3;
-            bhitm(mon, mdef, obj, min(range, 1));
+            bhitm(mon, mdef, obj, max(range, 1));
         } else if ((mdef = vismon_at(level, bhitpos.x, bhitpos.y))) {
             pline(combat_msgc(mon, mdef, cr_miss),
                   "The %s passes through %s displaced image!",
