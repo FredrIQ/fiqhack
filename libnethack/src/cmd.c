@@ -1561,8 +1561,8 @@ void
 look_at_map(int x, int y)
 {
     coord cc;
-    cc.x = u.ux;
-    cc.y = u.uy;
+    cc.x = x;
+    cc.y = y;
     struct nh_cmd_arg dummyarg;
     dummyarg.argtype = 0;
     getargpos(&dummyarg, &cc, FALSE, "looking");

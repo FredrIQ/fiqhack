@@ -179,7 +179,7 @@ dofindobj(const struct nh_cmd_arg *arg)
                   describe_dungeon_level(lev));
             notify_levelchange(&lev->z);
             flush_screen_nopos();
-            win_pause_output(P_MAP);
+            look_at_map(upper->ox, upper->oy);
         }
 
         /* Display object position */
@@ -191,7 +191,7 @@ dofindobj(const struct nh_cmd_arg *arg)
               vtense(dname, "are"), upper == obj ? "" :
               msgcat_many(", inside ", cdname, NULL));
         flush_screen_nopos();
-        win_pause_output(P_MAP);
+        look_at_map(upper->ox, upper->oy);
         notify_levelchange(NULL);
         doredraw();
     }
