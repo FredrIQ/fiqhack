@@ -1,4 +1,4 @@
-! Last modified by Fredrik Ljungdahl, 2017-10-12
+! Last modified by Fredrik Ljungdahl, 2017-10-16
 !
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed.  See license for details.
@@ -2163,3 +2163,8 @@ zap 8 0
 zap 8 1
 zap 8 2
 zap 8 3
+lawful altar
+neutral altar
+chaotic altar
+unaligned altar
+aligned altar
