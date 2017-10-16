@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -745,7 +745,7 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
     case POT_SLEEPING:
         if (resists_sleep(mon) || free_action(mon)) {
             if (you || vis)
-                pline(combat_msgc(NULL, mon, cr_immune), "%s", M_verbs(mon, "yawn"));
+                pline(combat_msgc(NULL, mon, cr_immune), "%s.", M_verbs(mon, "yawn"));
             break;
         }
         if (you || vis)
@@ -1707,7 +1707,7 @@ potionbreathe(struct monst *mon, struct obj *obj)
                         mon->mcanmove = 0;
                 }
             } else
-                pline(combat_msgc(NULL, mon, cr_immune), "%s", M_verbs(mon, "yawn"));
+                pline(combat_msgc(NULL, mon, cr_immune), "%s.", M_verbs(mon, "yawn"));
         }
         break;
     case POT_SPEED:
