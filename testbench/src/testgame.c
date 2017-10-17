@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -55,9 +55,9 @@ static struct nh_getpos_result test_getpos(int, int, nh_bool, const char *);
 static enum nh_direction test_getdir(const char *, nh_bool);
 static char test_yn_function(const char *, const char *, char);
 static void test_getlin(const char *, void *, void (*)(const char *, void *));
+static void test_format(const char *, int, int, void *, void (*)(const char *, void *));
 static void test_no_op_void(void);
 static void test_no_op_int(int);
-static void test_no_op_str(const char *, int, void (*)(const char *));
 static void test_outrip(struct nh_menulist *, nh_bool, const char *, int,
                         const char *, int, int);
 
@@ -1009,13 +1009,14 @@ test_no_op_int(int unused)
 }
 
 static void
-test_format(const char *unused1, int unused2, int unused3,
-            void (*unused4)(const char *))
+test_format(const char *unused1, int unused2, int unused3, void *unused4,
+            void (*unused5)(const char *, void *))
 {
     (void) unused1;
     (void) unused2;
     (void) unused3;
     (void) unused4;
+    (void) unused5;
 }
 
 static void
