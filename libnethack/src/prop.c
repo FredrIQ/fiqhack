@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-17 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -509,7 +509,7 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
     case WAN_SPEED_MONSTER:
         /* a monster might not know if a target is fast, but
            if not, he'd find that out rather fast */
-        return !very_fast(target);
+        return !very_fast(target) && !slow(target);
     case WAN_UNDEAD_TURNING:
     case SPE_TURN_UNDEAD:
         return is_undead(target->data);
