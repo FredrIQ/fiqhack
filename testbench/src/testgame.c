@@ -1009,14 +1009,14 @@ test_no_op_int(int unused)
 }
 
 static void
-test_format(const char *unused1, int unused2, int unused3, void *unused4,
-            void (*unused5)(const char *, void *))
+test_format(const char *formatstring, int fmt_type, int param, void *res,
+            void (*callback)(const char *, void *))
 {
-    (void) unused1;
-    (void) unused2;
-    (void) unused3;
-    (void) unused4;
-    (void) unused5;
+    /* We don't care about formatting stuff, but let's give somewhat sane values. */
+    (void) formatstring;
+    (void) fmt_type;
+    (void) param;
+    callback("ok", res);
 }
 
 static void
