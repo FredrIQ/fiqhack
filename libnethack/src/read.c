@@ -1476,10 +1476,9 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         break;
     case SCR_GOLD_DETECTION:
         if (confused || sobj->cursed)
-            trap_detect(mon, sobj);
+            return trap_detect(mon, sobj);
         else
             return gold_detect(mon, sobj, known);
-        break;
     case SCR_FOOD_DETECTION:
         if (!you) {
             impossible("monster casting detect food?");
