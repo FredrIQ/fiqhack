@@ -685,11 +685,16 @@ tactics(struct monst *mtmp)
                     return mattackq(mtmp, tx, ty) ? 2 : 1;
                 }
             } else if (mtmp->mx != tx || mtmp->my != ty) {
-                /* Maybe a boulder is in the way. */
-                if (!mvismon_at(mtmp, lev, tx, ty) && sobj_at(BOULDER, lev, tx, ty))
-                    return 0; /* use normal AI for force bolt/whatever */
+                /* Are we even near the tile?. */
+                if (!monnear(mtmp, tx, ty))
+                    return 0;
 
-                /* something is blocking our square; attack it */
+                /* Is there a monster there? Maybe a boulder is blocking it, or it's
+                   inside a wall, or similar. */
+                if (!mvismon_at(mtmp, lev, tx, ty))
+                    return 0;
+
+                /* Attack the tile */
                 return mattackq(mtmp, tx, ty) ? 2 : 1;
             } else {
                 /* fall through to the normal AI */
