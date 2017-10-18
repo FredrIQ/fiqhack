@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1608,7 +1608,8 @@ down_gate(xchar x, xchar y)
         return MIGR_LADDER_UP;
     }
 
-    if (((ttmp = t_at(level, x, y)) != 0 && ttmp->tseen) &&
+    if (((ttmp = t_at(level, x, y)) != 0 &&
+         (ttmp->tseen || !cansee(x, y))) &&
         (ttmp->ttyp == TRAPDOOR || ttmp->ttyp == HOLE)) {
         gate_str =
             (ttmp->ttyp ==
