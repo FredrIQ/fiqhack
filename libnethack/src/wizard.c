@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -610,6 +610,7 @@ tactics(struct monst *mtmp)
         panic("Covetous AI running on an idle monster?");
 
     long strat = mtmp->mstrategy;
+    struct level *lev = mtmp->dlevel;
 
     switch (strat) {
     case st_escape:   /* hide and recover */
@@ -684,6 +685,10 @@ tactics(struct monst *mtmp)
                     return mattackq(mtmp, tx, ty) ? 2 : 1;
                 }
             } else if (mtmp->mx != tx || mtmp->my != ty) {
+                /* Maybe a boulder is in the way. */
+                if (!mvismon_at(mtmp, lev, tx, ty) && sobj_at(BOULDER, lev, tx, ty))
+                    return 0; /* use normal AI for force bolt/whatever */
+
                 /* something is blocking our square; attack it */
                 return mattackq(mtmp, tx, ty) ? 2 : 1;
             } else {
