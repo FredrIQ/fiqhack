@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1968,8 +1968,10 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
     mtmp->mtrapped = 0;
     mtmp->mhp = 0;      /* simplify some tests: force mhp to 0 */
     relobj(mtmp, 0, FALSE);
-    if (isok(mtmp->mx, mtmp->my))
+    if (isok(mtmp->mx, mtmp->my)) {
         mtmp->dlevel->monsters[mtmp->mx][mtmp->my] = NULL;
+        mtmp->dlevel->dmonsters[mtmp->dx][mtmp->dy] = NULL;
+    }
     if (emits_light(mptr))
         del_light_source(mtmp->dlevel, LS_MONSTER, mtmp);
     if (mtmp->dlevel == level && isok(mtmp->mx, mtmp->my))
