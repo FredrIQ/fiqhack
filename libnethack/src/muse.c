@@ -1139,7 +1139,7 @@ find_item(struct monst *mon, struct musable *m)
     struct monst *mclose = NULL;
     if (mm_aggression(mon, &youmonst) && msensem(mon, &youmonst)) {
         hostsense++;
-        if (m_cansee(mon. u.ux, u.uy) ||
+        if (m_cansee(mon, u.ux, u.uy) ||
             (msensem(mon, &youmonst) & MSENSE_ANYVISION)) {
             hostvis++;
             hostrange = dist2(mon->mx, mon->my, u.ux, u.uy);
@@ -1153,8 +1153,8 @@ find_item(struct monst *mon, struct musable *m)
             !msensem(mon, mtmp))
             continue;
         hostsense++;
-        if (m_cansee(mon, mtmp->mx, mtmp->my)) {
-            (msensem(mon, mtmp) & MSENSE_ANYVISION) ||
+        if (m_cansee(mon, mtmp->mx, mtmp->my) ||
+            (msensem(mon, mtmp) & MSENSE_ANYVISION)) {
             hostvis++;
             if (!hostrange ||
                 hostrange > dist2(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
