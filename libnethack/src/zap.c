@@ -3854,6 +3854,9 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp, const char **killer)
                       xname(obj),
                       (cnt > 1L) ? destroy_messages[dindx].singular
                       : destroy_messages[dindx].plural);
+
+            if (cnt > obj->quan)
+                cnt = obj->quan; /* for wand sparks */
             for (i = 0; i < cnt; i++)
                 m_useup(mtmp, obj);
         }
