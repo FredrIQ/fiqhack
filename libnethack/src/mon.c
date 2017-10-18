@@ -2852,11 +2852,20 @@ mnearto(struct monst * mtmp, xchar x, xchar y, boolean move_other)
     if (!goodpos(level, newx, newy, mtmp, 0)) {
         /* actually we have real problems if enexto ever fails. migrating_mons
            that need to be placed will cause no end of trouble. */
-        if (!enexto(&mm, level, newx, newy, mtmp->data))
+        if (!enexto(&mm, level, newx, newy, mtmp->data)) {
+            /* Try water */
             if (!enexto_core(&mm, level, newx, newy, mtmp->data,
-                             MM_IGNOREWATER))
-                panic("Nowhere to place '%s' (at (%d, %d), wanted (%d, %d))",
-                      k_monnam(mtmp), mtmp->mx, mtmp->my, x, y);
+                             MM_IGNOREWATER)) {
+                /* Check if our current position is ok... */
+                if (goodpos(level, mtmp->mx, mtmp->my, mtmp, MM_IGNOREWATER)) {
+                    mm.x = mtmp->mx;
+                    mm.y = mtmp->my;
+                } else
+                    panic("Nowhere to place '%s' (at (%d, %d), wanted (%d, %d))",
+                          k_monnam(mtmp), mtmp->mx, mtmp->my, x, y);
+            }
+        }
+
         newx = mm.x;
         newy = mm.y;
     }
