@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1116,6 +1116,9 @@ boolean
 find_item(struct monst *mon, struct musable *m)
 {
     init_musable(mon, m);
+    if (is_animal(mon->data) || mindless(mon->data))
+        return FALSE;
+
     struct obj *obj = NULL;
     struct trap *t;
     int x = mon->mx, y = mon->my;
@@ -1164,9 +1167,6 @@ find_item(struct monst *mon, struct musable *m)
     /* range of 100 is the cap on fireball, cone of cold and summon nasty */
     if (mclose && hostrange > 100)
         mclose = NULL; /* no close targets */
-
-    if (is_animal(mon->data) || mindless(mon->data))
-        return FALSE;
 
     m->obj = NULL;
     m->spell = 0;
