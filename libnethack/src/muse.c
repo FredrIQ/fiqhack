@@ -1137,10 +1137,10 @@ find_item(struct monst *mon, struct musable *m)
     int hostrange = 0;
     struct monst *mtmp;
     struct monst *mclose = NULL;
-    if (msensem(mon, &youmonst) && mm_aggression(mon, &youmonst)) {
+    if (mm_aggression(mon, &youmonst) && msensem(mon, &youmonst)) {
         hostsense++;
-        if ((msensem(mon, &youmonst) & MSENSE_ANYVISION) ||
-            m_cansee(mon, u.ux, u.uy)) {
+        if (m_cansee(mon. u.ux, u.uy) ||
+            (msensem(mon, &youmonst) & MSENSE_ANYVISION)) {
             hostvis++;
             hostrange = dist2(mon->mx, mon->my, u.ux, u.uy);
             mclose = &youmonst;
@@ -1149,12 +1149,12 @@ find_item(struct monst *mon, struct musable *m)
 
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp) ||
-            !msensem(mon, mtmp) ||
-            (!mm_aggression(mon, mtmp)))
+            !mm_aggression(mon, mtmp) ||
+            !msensem(mon, mtmp))
             continue;
         hostsense++;
-        if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
-            m_cansee(mon, mtmp->mx, mtmp->my)) {
+        if (m_cansee(mon, mtmp->mx, mtmp->my)) {
+            (msensem(mon, mtmp) & MSENSE_ANYVISION) ||
             hostvis++;
             if (!hostrange ||
                 hostrange > dist2(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
