@@ -1893,13 +1893,14 @@ replmon(struct monst *mtmp, struct monst *mtmp2)
         place_monster(mtmp2, mtmp2->mx, mtmp2->my, FALSE);
     if (mtmp2->wormno)  /* update level->monsters[wseg->wx][wseg->wy] */
         place_wsegs(mtmp2);     /* locations to mtmp2 not mtmp. */
-    if (emits_light(mtmp2->data)) {
+    if (emits_light(mtmp2->data))
         /* since this is so rare, we don't have any `mon_move_light_source' */
         new_light_source(mtmp2->dlevel, mtmp2->mx, mtmp2->my,
                          emits_light(mtmp2->data), LS_MONSTER, mtmp2);
-        /* here we rely on the fact that `mtmp' hasn't actually been deleted */
+
+    if (emits_light(mtmp->data))
+        /* might not be the same (shapechangers...) */
         del_light_source(mtmp->dlevel, LS_MONSTER, mtmp);
-    }
 
     if (displaced(mtmp2))
         mtmp2->dlevel->dmonsters[mtmp2->dx][mtmp2->dy] = mtmp2;
