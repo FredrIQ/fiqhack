@@ -434,6 +434,8 @@ object_detect(struct obj *detector,     /* object doing the detecting */
 
         doredraw();
         pline(msgc_failcurse, "You feel a lack of %s.", stuff);
+        if (detector)
+            useup(detector);
 
         return 1;
     }
