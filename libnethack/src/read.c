@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -954,6 +954,7 @@ do_earth(struct level *lev, int x, int y, int confused,
     }
 }
 
+/* Returns 1 if object was used up already, otherwise 0 */
 int
 seffects(struct monst *mon, struct obj *sobj, boolean *known)
 {
@@ -1475,9 +1476,9 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         break;
     case SCR_GOLD_DETECTION:
         if (confused || sobj->cursed)
-            return trap_detect(mon, sobj);
+            trap_detect(mon, sobj);
         else
-            gold_detect(mon, sobj, known);
+            return gold_detect(mon, sobj, known);
         break;
     case SCR_FOOD_DETECTION:
         if (!you) {
