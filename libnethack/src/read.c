@@ -862,11 +862,7 @@ do_earth(struct level *lev, int x, int y, int confused,
     obj->quan = confused ? rn1(5, 2) : 1;
     obj->owt = weight(obj);
 
-    struct monst *mdef;
-    if (x == u.ux && y == u.uy)
-        mdef = &youmonst;
-    else
-        mdef = m_at(lev, x, y);
+    struct monst *mdef = um_at(lev, x, y);
 
     boolean uagr = (magr == &youmonst);
     boolean udef = (mdef == &youmonst);
@@ -874,16 +870,10 @@ do_earth(struct level *lev, int x, int y, int confused,
                    canseemon(mdef));
 
     boolean steed = (udef && u.usteed);
-
-    /* Must come before the hit to avoid bones oddities */
-    if (!flooreffects(obj, x, y, "fall")) {
-        place_object(obj, lev, x, y);
-        stackobj(obj);
-        newsym(x, y);   /* map the rock */
-    }
+    int dmg = 0;
+    int sdmg = 0; /* for the steed */
 
     struct obj *armh;
-    int dmg;
     if (mdef && !amorphous(mdef->data) &&
         !phasing(mdef) &&
         !noncorporeal(mdef->data) &&
@@ -912,16 +902,11 @@ do_earth(struct level *lev, int x, int y, int confused,
                 dmg = 2;
         }
 
-        if (!udef) {
-            mdef->mhp -= dmg;
-            if (mdef->mhp <= 0)
-                monkilled(magr, mdef, "", AD_PHYS);
-        } else {
+        if (udef) {
             /* Check steed */
-            int udmg = dmg;
             if (steed) {
                 armh = which_armor(u.usteed, os_armh);
-                dmg = dmgval(obj, u.usteed) * obj->quan;
+                sdmg = dmgval(obj, u.usteed) * obj->quan;
 
                 if (!armh || !is_metallic(armh))
                     pline(combat_msgc(magr, u.usteed, cr_hit),
@@ -933,24 +918,39 @@ do_earth(struct level *lev, int x, int y, int confused,
                           An(xname(obj)),
                           s_suffix(mon_nam(u.usteed)),
                           helmet_name(armh));
-                    if (dmg > 2)
-                        dmg = 2;
+                    if (sdmg > 2)
+                        sdmg = 2;
                 }
-
-                u.usteed->mhp -= dmg;
-                if (u.usteed->mhp <= 0)
-                monkilled(magr, u.usteed, "", AD_PHYS);
-            }
-
-            if (uagr)
-                losehp(udmg, killer_msg(DIED, "a scroll of earth"));
-            else {
-                const char *kbuf;
-                kbuf = msgprintf("%s scroll of earth",
-                                 s_suffix(k_monnam(magr)));
-                losehp(udmg, killer_msg(DIED, kbuf));
             }
         }
+    }
+
+    /* Must come before the hit to avoid bones oddities */
+    if (!flooreffects(obj, x, y, "fall")) {
+        place_object(obj, lev, x, y);
+        stackobj(obj);
+        newsym(x, y);   /* map the rock */
+    }
+
+    if (sdmg) {
+        u.usteed->mhp -= sdmg;
+        if (u.usteed->mhp <= 0)
+            monkilled(magr, u.usteed, "", AD_PHYS);
+    }
+
+    if (udef) {
+        if (uagr)
+            losehp(dmg, killer_msg(DIED, "a scroll of earth"));
+        else {
+            const char *kbuf;
+            kbuf = msgprintf("%s scroll of earth",
+                             s_suffix(k_monnam(magr)));
+            losehp(dmg, killer_msg(DIED, kbuf));
+        }
+    } else if (mdef) {
+        mdef->mhp -= dmg;
+        if (mdef->mhp <= 0)
+            monkilled(magr, mdef, "", AD_PHYS);
     }
 }
 
