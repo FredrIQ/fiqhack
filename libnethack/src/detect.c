@@ -277,7 +277,8 @@ gold_detect(struct monst *mon, struct obj *sobj, boolean *scr_known)
             strange_feeling(sobj, buf);
         else {
             pline(msgc_failcurse, "%s", buf);
-            useup(sobj);
+            if (sobj)
+                useup(sobj);
         }
         return 1;
     }
@@ -350,13 +351,17 @@ food_detect(struct obj *sobj, boolean *scr_known)
                         body_part(NOSE),
                         !u.uedibility && sobj && sobj->blessed ?
                         " then starts to tingle" : "");
-        if (*scr_known)
-            pline(msgc_failcurse, "%s", buf);
-        else
-            strange_feeling(sobj, buf);
 
         if (sobj && sobj->blessed)
             u.uedibility = 1;
+
+        if (*scr_known) {
+            pline(msgc_failcurse, "%s", buf);
+            if (sobj)
+                useup(sobj);
+        } else
+            strange_feeling(sobj, buf);
+
         return 1;
     }
 
@@ -617,9 +622,14 @@ trap_detect(struct monst *mon, struct obj *sobj)
         snprintf(buf, SIZE(buf), "Your %s stop itching.", makeplural(body_part(TOE)));
         if (you)
             strange_feeling(sobj, buf);
-        else if (vis)
-            pline(msgc_failcurse,
-                  "%s was unable to gain any insights.", Monnam(mon));
+        else {
+            if (vis)
+                pline(msgc_failcurse,
+                      "%s was unable to gain any insights.", Monnam(mon));
+            if (sobj)
+                m_useup(mon, sobj);
+        }
+
         return 1;
     }
     /* traps exist, but only under me - no separate display required */

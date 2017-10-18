@@ -1485,8 +1485,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             impossible("monster casting detect food?");
             break;
         }
-        food_detect(sobj, known);
-        break;
+        return food_detect(sobj, known);
     case SCR_IDENTIFY:
     case SPE_IDENTIFY:
         cval = rn2_on_rng(5, you ? rng_id_count : rng_main);
