@@ -933,7 +933,9 @@ do_earth(struct level *lev, int x, int y, int confused,
         newsym(x, y);   /* map the rock */
     }
 
-    if (sdmg) {
+    /* The monster/steed might have died already from flooreffects,
+       so we need to check for it. */
+    if (sdmg && u.usteed && !DEADMONSTER(u.usteed)) {
         u.usteed->mhp -= sdmg;
         if (u.usteed->mhp <= 0)
             monkilled(magr, u.usteed, "", AD_PHYS);
@@ -948,7 +950,7 @@ do_earth(struct level *lev, int x, int y, int confused,
                              s_suffix(k_monnam(magr)));
             losehp(dmg, killer_msg(DIED, kbuf));
         }
-    } else if (mdef) {
+    } else if (mdef && !DEADMONSTER(mdef)) {
         mdef->mhp -= dmg;
         if (mdef->mhp <= 0)
             monkilled(magr, mdef, "", AD_PHYS);
