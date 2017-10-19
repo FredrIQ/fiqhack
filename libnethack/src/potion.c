@@ -678,11 +678,14 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
         if (invisible(mon) || (blind(&youmonst) && you))
             *nothing = 1;
         int duration = rn1(15, 31);
+        if (otmp->blessed)
+            duration = 0; /* permanent */
+
         enum youprop prop = INVIS;
         if (otmp->cursed)
             prop = AGGRAVATE_MONSTER;
 
-        set_property(mon, prop, otmp->blessed ? 0 : duration, FALSE);
+        set_property(mon, prop, duration, FALSE);
         newsym(m_mx(mon), m_my(mon));     /* update position */
         if (otmp->cursed && you)
             pline(msgc_levelwarning,
