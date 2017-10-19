@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -677,16 +677,17 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
             *unkn = 1;
         if (invisible(mon) || (blind(&youmonst) && you))
             *nothing = 1;
-        set_property(mon, INVIS, otmp->blessed ? 0 : rn1(15, 31), FALSE);
+        int duration = rn1(15, 31);
+        enum youprop prop = INVIS;
+        if (otmp->cursed)
+            prop = AGGRAVATE_MONSTER;
+
+        set_property(mon, prop, otmp->blessed ? 0 : duration, FALSE);
         newsym(m_mx(mon), m_my(mon));     /* update position */
-        if (otmp->cursed) {
-            if (you) {
-                pline(msgc_levelwarning,
-                      "For some reason, you feel your presence is known.");
-                aggravate();
-            } else
-                you_aggravate(mon);
-        }
+        if (otmp->cursed && you)
+            pline(msgc_levelwarning,
+                  "For some reason, you feel your presence is known.");
+
         break;
     case POT_SEE_INVISIBLE:
         /* tastes like fruit juice in Rogue */
