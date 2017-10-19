@@ -1,4 +1,4 @@
-! Last modified by Fredrik Ljungdahl, 2017-10-16
+! Last modified by Fredrik Ljungdahl, 2017-10-19
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed. See license for details.
 !
@@ -31,7 +31,8 @@ open doors 0: basefg '■'
 open doors 1: basefg '■'
 iron bars: basefg '≡'
 fountain: basefg '⌠'
-the floor of a room; sub unlit the floor of a room: basefg '·'
+the floor of a room: basefg '·'
+sub unlit the floor of a room: bgblack darkgray regular '·'
 corridor: basefg '░'
 sub lit corridor: bgblack white regular '▒'
 altar; * altar: basefg 'Ω'
