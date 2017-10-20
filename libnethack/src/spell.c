@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-20 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,7 +51,6 @@ static boolean confused_book(struct monst *, struct obj *);
 static int learn(void);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(const struct monst *, int);
-static int throwspell(boolean, schar *dx, schar *dy, const struct musable *arg);
 static void spell_backfire(int);
 static int spellindex_by_typ(int);
 static void run_maintained_spell(struct monst *, int);
@@ -1547,7 +1546,7 @@ spelleffects(boolean atme, struct musable *m)
     case SPE_FIREBALL:
         /* If Skilled or better, get a specific space. */
         if (role_skill >= P_SKILLED) {
-            if (throwspell(thrownasty, &dx, &dy, m)) {
+            if (throwspell(FALSE, thrownasty, &dx, &dy, m)) {
                 dz = 0;
                 break;
             }
@@ -1951,8 +1950,9 @@ spelleffects(boolean atme, struct musable *m)
 
 /* Choose location where spell takes effect.
    Fireball/CoC and summon nasty have different conditions. */
-static int
-throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
+int
+throwspell(boolean testing, boolean nasty, schar *dx, schar *dy,
+           const struct musable *m)
 {
     struct monst *mon = m->mon;
     coord cc;
@@ -1960,10 +1960,12 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
     /* Don't bother checking mon!=you for plines here, the mere trigger shouldn't happen,
        and if it does, the caller should call impossible() */
     if (!nasty && m_underwater(mon)) {
-        pline(msgc_cancelled, "You're joking! In this weather?");
+        if (!testing)
+            pline(msgc_cancelled, "You're joking! In this weather?");
         return 0;
     } else if (!nasty && Is_waterlevel(m_mz(mon))) {
-        pline(msgc_cancelled, "You had better wait for the sun to come out.");
+        if (!testing)
+            pline(msgc_cancelled, "You had better wait for the sun to come out.");
         return 0;
     }
 
@@ -1974,10 +1976,15 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
             pline(msgc_uiprompt, "Where do you want to cast the spell?");
     }
 
-    cc.x = m_mx(mon);
-    cc.y = m_my(mon);
-    if (mgetargpos(m, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
-        return 0;       /* user pressed ESC */
+    if (testing) {
+        cc.x = *dx;
+        cc.y = *dy;
+    } else {
+        cc.x = m_mx(mon);
+        cc.y = m_my(mon);
+        if (mgetargpos(m, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
+            return 0;       /* user pressed ESC */
+    }
 
     /* Figure out what condition to mark the target square as
        allowed */
@@ -1991,9 +1998,13 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
 
     /* The number of moves from hero to where the spell drops. */
     if (distmin(m_mx(mon), m_my(mon), cc.x, cc.y) > 10) {
-        pline(msgc_cancelled, "The spell dissipates over the distance!");
+        if (!testing)
+            pline(msgc_cancelled, "The spell dissipates over the distance!");
         return 0;
     } else if (mon == &youmonst && Engulfed) {
+        if (testing)
+            return 0; /* valid, but a bad idea... */
+
         pline(msgc_badidea, "The spell is cut short!");
         exercise(A_WIS, FALSE); /* What were you THINKING! */
         *dx = 0;
@@ -2002,13 +2013,15 @@ throwspell(boolean nasty, schar *dx, schar *dy, const struct musable *m)
     } else if (nasty && (cc.x != m_mx(mon) || cc.y != m_my(mon)) &&
                (!um_at(level, cc.x, cc.y) ||
                 !mcanspotmon(mon, um_at(level, cc.x, cc.y)))) {
-        pline(msgc_cancelled,
-              "You fail to sense a monster there!");
+        if (!testing)
+            pline(msgc_cancelled,
+                  "You fail to sense a monster there!");
         return 0;
     } else if (!clearpath ||
                IS_STWALL(level->locations[cc.x][cc.y].typ)) {
-        pline(msgc_cancelled,
-              "Your mind fails to lock onto that location!");
+        if (!testing)
+            pline(msgc_cancelled,
+                  "Your mind fails to lock onto that location!");
         return 0;
     } else {
         *dx = cc.x;

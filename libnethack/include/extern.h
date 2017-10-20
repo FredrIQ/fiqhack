@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1299,7 +1299,7 @@ extern int mgetargpos(const struct musable *, coord *, boolean, const char *);
 extern struct obj *mgetargobj(const struct musable *, const char *, const char *);
 extern boolean mgetargspell(const struct musable *, int *);
 extern int mon_choose_dirtarget(const struct monst *, struct obj *, coord *);
-extern int mon_choose_spectarget(const struct monst *, struct obj *, coord *);
+extern int mon_choose_spectarget(struct musable *, struct obj *, coord *);
 extern boolean find_unlocker(struct monst *, struct musable *);
 extern boolean find_item(struct monst *, struct musable *);
 extern boolean find_item_obj(struct obj *, struct musable *, boolean, int);
@@ -1776,6 +1776,8 @@ extern int monspellprot(struct monst *);
 extern int mon_castable(const struct monst *, int, boolean);
 extern int spelleffects(boolean, struct musable *);
 extern boolean learn_spell(int, boolean, boolean);
+extern int throwspell(boolean, boolean, schar *dx, schar *dy,
+                      const struct musable *);
 extern boolean cast_protection(struct monst *, boolean, boolean);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
