@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1635,7 +1635,7 @@ spelleffects(boolean atme, struct musable *m)
             return 0;
         }
 
-        if (spellknow(spell_index) <= 0) {
+        if (!spellknow(spell_index)) {
             pline(msgc_substitute, "Your knowledge of this spell is twisted.");
             pline_implied(msgc_statusbad,
                           "It invokes nightmarish images in your mind...");
