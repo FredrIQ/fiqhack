@@ -130,6 +130,8 @@ savegame(struct memfile *mf)
 
     /* must come last, because it needs to be restored last */
     save_utracked(mf, &u);
+
+    update_whereis(FALSE);
 }
 
 

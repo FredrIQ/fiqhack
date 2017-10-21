@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-09-01 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1094,5 +1094,58 @@ paniclog(const char *type,      /* panic, impossible, trickery */
 }
 
 /* ----------  END PANIC/IMPOSSIBLE LOG ----------- */
+
+/* whereis handling, gives minor information on where the player is, for public server
+   purposes. */
+void
+update_whereis(boolean playing)
+{
+#ifdef WHEREIS
+    if (program_state.followmode != FM_PLAY)
+        return;
+
+    FILE *wfile;
+
+    const char *user = nh_getenv("NH4SERVERUSER");
+    if (!user)
+        user = nh_getenv("USER");
+    if (!user)
+        user = "";
+
+    /* What to write to whereis */
+    char charname[PL_NSIZ];
+    munge_xlstring(charname, u.uplname, PL_NSIZ);
+
+    int whereis_playstate = 0;
+    if (playing)
+        whereis_playstate = 1;
+
+    int score = calc_score(DIED, FALSE, money_cnt(youmonst.minvent) + hidden_gold());
+
+    const char *buf = msgprintf("player=%s:charname=%s:depth=%d:dnum=%d:dname=%s:"
+                                "hp=%d:maxhp=%d:turns=%d:score=%d:role=%s:race=%s:"
+                                "gender=%s:align=%s:conduct=0x%lx:amulet=%d:playing=%d",
+                                user, charname, depth(&u.uz), u.uz.dnum,
+                                gamestate.dungeons[u.uz.dnum].dname, u.uhp, u.uhpmax,
+                                moves, score, urole.filecode, urace.filecode,
+                                genders[u.ufemale].filecode,
+                                aligns[1 - u.ualign.type].filecode, encode_conduct(),
+                                Uhave_amulet ? 1 : 0, whereis_playstate);
+
+    const char *whereis = msgprintf("%s.whereis", user);
+    int fd = open_datafile(whereis, O_WRONLY | O_CREAT | O_TRUNC, SCOREPREFIX);
+    if (fd < 0)
+        panic("Failed to write to whereis.");
+
+    if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
+        wfile = fdopen(fd, "w");
+        fprintf(wfile, "%s", buf);
+        change_fd_lock(fd, FALSE, LT_NONE, 0);
+        fclose(wfile);
+    }
+
+#endif /* WHEREIS */
+    return;
+}
 
 /*files.c*/

@@ -1045,7 +1045,9 @@ dorecover(struct memfile *mf)
        change the save file, something that the save code detects as a
        desync. Therefore, this is now the caller's job. */
 
-    /* Success! */
+    /* Success! Update whereis. */
+    update_whereis(TRUE);
+
     mf->pos = temp_pos;
     return 1;
 }
