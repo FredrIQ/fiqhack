@@ -1926,7 +1926,8 @@ spelleffects(boolean atme, struct musable *m)
         set_property(mon, PASSES_WALLS, rn1(40, 21), FALSE);
         break;
     case SPE_BOOK_OF_THE_DEAD:
-        if (!mon->iswiz || flags.no_of_wizards != 1 || mon == &youmonst) {
+        if (!mon->iswiz || flags.no_of_wizards != 1 || flags.double_troubled ||
+            mon == &youmonst) {
             impossible("Invalid user of double trouble?");
             break;
         }
