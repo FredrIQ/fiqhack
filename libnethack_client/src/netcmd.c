@@ -776,7 +776,7 @@ cmd_getline(json_t *params, int display_only)
 }
 
 static json_t *
-cmd_getline(json_t *params, int display_only)
+cmd_format(json_t *params, int display_only)
 {
     const char *formatstring;
     int fmt_type;
@@ -789,7 +789,8 @@ cmd_getline(json_t *params, int display_only)
         return NULL;
     }
 
-    client_windowprocs.win_format(formatstring, fmt_type, param, &jobj, cmd_getlin_inner);
+    client_windowprocs.win_format(formatstring, fmt_type, param, &jobj, cmd_getline_inner);
+    return jobj;
 }
 
 

@@ -40,6 +40,8 @@ static struct nh_getpos_result srv_getpos(int xorig, int yorig,
 static enum nh_direction srv_getdir(const char *query, nh_bool restricted);
 static void srv_getline(const char *query, void *callbackarg,
                         void (*callback)(const char *, void *));
+static void srv_format(const char *formatstring, int fmt_type, int param,
+                       void *res, void (*callback)(const char *, void *));
 static void srv_server_cancel(void);
 
 /*---------------------------------------------------------------------------*/
