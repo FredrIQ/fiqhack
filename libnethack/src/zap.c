@@ -169,10 +169,29 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         break;
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
+        dmg = dice(3, 8);
         if (wandlevel)
-            inc_timeout(mdef, SLOW, rn1((4 * wandlevel), (6 * wandlevel)), FALSE);
-        else
-            inc_timeout(mdef, SLOW, dice(3, 8), FALSE);
+            dmg = rn1((4 * wandlevel), (6 * wandlevel));
+
+        if (free_action(mdef) && rn2(3))
+            dmg = 0;
+
+        obj = which_armor(mdef, os_arm);
+        if (obj &&
+            (obj->otyp == BLUE_DRAGON_SCALES ||
+             obj->otyp == BLUE_DRAGON_SCALE_MAIL)) {
+            dmg = 0;
+            wake = FALSE; /* always safe */
+        }
+
+        if (!dmg) {
+            pline(combat_msgc(magr, mdef, cr_immune),
+                              "%s down momentarily.",
+                              M_verbs(mdef, "slow"));
+            break;
+        }
+
+        inc_timeout(mdef, SLOW, dice(3, 8), FALSE);
         if (wandlevel == P_MASTER)
             set_property(mdef, FAST, -2, TRUE);
         else if (wandlevel >= P_SKILLED)

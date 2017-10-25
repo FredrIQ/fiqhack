@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -974,10 +974,13 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
         }
         break;
     case POT_SPEED:
-        if (leg_hurt(mon) && !otmp->cursed) {
+        if (leg_hurt(mon) && !otmp->cursed)
             heal_legs(mon, leg_hurtsides(mon));
-            break;
-        }       /* and fall through */
+
+        if (otmp->blessed)
+            set_property(mon, SLOW, -2, FALSE);
+
+        /* fallthrough */
     case SPE_HASTE_SELF:
         if (you)
             exercise(A_DEX, TRUE);
