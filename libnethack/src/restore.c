@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -934,8 +934,10 @@ restore_flags(struct memfile *mf, struct flag *f)
     /* Seperate from other last_arg for save compat reasons */
     f->last_arg.key = mread32(mf);
 
+    f->double_troubled = mread8(mf);
+
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 99; i++)
+    for (i = 0; i < 98; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));
@@ -1043,7 +1045,9 @@ dorecover(struct memfile *mf)
        change the save file, something that the save code detects as a
        desync. Therefore, this is now the caller's job. */
 
-    /* Success! */
+    /* Success! Update whereis. */
+    update_whereis(TRUE);
+
     mf->pos = temp_pos;
     return 1;
 }

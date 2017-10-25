@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -169,10 +169,31 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         break;
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
+        dmg = dice(3, 8);
         if (wandlevel)
-            inc_timeout(mdef, SLOW, rn1((4 * wandlevel), (6 * wandlevel)), FALSE);
-        else
-            inc_timeout(mdef, SLOW, dice(3, 8), FALSE);
+            dmg = rn1((4 * wandlevel), (6 * wandlevel));
+
+        if (resists_slow(mdef))
+            dmg = 0;
+
+        /* Redundant with above, but don't anger on
+           guranteed immunity. */
+        obj = which_armor(mdef, os_arm);
+        if (obj &&
+            (obj->otyp == BLUE_DRAGON_SCALES ||
+             obj->otyp == BLUE_DRAGON_SCALE_MAIL)) {
+            dmg = 0;
+            wake = FALSE; /* always safe */
+        }
+
+        if (!dmg) {
+            pline(combat_msgc(magr, mdef, cr_immune),
+                              "%s down momentarily.",
+                              M_verbs(mdef, "slow"));
+            break;
+        }
+
+        inc_timeout(mdef, SLOW, dmg, FALSE);
         if (wandlevel == P_MASTER)
             set_property(mdef, FAST, -2, TRUE);
         else if (wandlevel >= P_SKILLED)
@@ -1878,8 +1899,17 @@ bhito(struct obj *obj, struct obj *otmp)
         case SPE_TURN_UNDEAD:
             if (obj->otyp == EGG)
                 revive_egg(obj);
-            else
-                res = ! !revive(obj);
+            else if (obj->otyp == CORPSE) {
+                struct monst *revived = revive(obj);
+                if (revived && canseemon(revived)) {
+                    pline(msgc_monneutral,
+                          "%s %s again!", M_verbs(revived, "are"),
+                          nonliving(revived->data) ? "walking" :
+                          "alive");
+
+                    res = TRUE;
+                }
+            }
             break;
         case WAN_OPENING:
         case SPE_KNOCK:
@@ -3217,20 +3247,20 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                 if (is_suit(otmp) &&
                     (otmp2 = which_armor(mdef, os_armc))) {
                     if (!item_provides_extrinsic(otmp2, DISINT_RES, &dummy))
-                        destroy_arm(mdef, otmp2);
+                        disint_arm(mdef, otmp2);
                 }
 
                 if (!item_provides_extrinsic(otmp, DISINT_RES, &dummy))
-                    destroy_arm(mdef, otmp);
+                    disint_arm(mdef, otmp);
                 return;
             }
 
             if ((otmp = which_armor(mdef, os_armc)) &&
                 !item_provides_extrinsic(otmp, DISINT_RES, &dummy))
-                destroy_arm(mdef, otmp);
+                disint_arm(mdef, otmp);
             if ((otmp = which_armor(mdef, os_armu)) &&
                 !item_provides_extrinsic(otmp, DISINT_RES, &dummy))
-                destroy_arm(mdef, otmp);
+                disint_arm(mdef, otmp);
 
             if (resists_disint(mdef)) {
                 shieldeff(m_mx(mdef), m_my(mdef));

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -728,6 +728,7 @@ clonewiz(void)
     if ((mtmp2 =
          makemon(&mons[PM_WIZARD_OF_YENDOR], level, u.ux, u.uy,
                  NO_MM_FLAGS)) != 0) {
+        flags.double_troubled = TRUE;
         mtmp2->msleeping = 0;
         msethostility(mtmp2, TRUE, FALSE); /* TODO: reset alignment? */
         if (!Uhave_amulet && rn2(2)) {        /* give clone a fake */
@@ -856,6 +857,7 @@ resurrect(void)
         verb = "kill";
         mtmp =
             makemon(&mons[PM_WIZARD_OF_YENDOR], level, u.ux, u.uy, MM_NOWAIT);
+        flags.double_troubled = FALSE;
     } else {
         /* look for a migrating Wizard */
         verb = "elude";

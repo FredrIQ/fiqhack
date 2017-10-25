@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-22 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -32,6 +32,7 @@ static json_t *cmd_getpos(json_t *params, int display_only);
 static json_t *cmd_getdir(json_t *params, int display_only);
 static json_t *cmd_yn_function(json_t *params, int display_only);
 static json_t *cmd_getline(json_t *params, int display_only);
+static json_t *cmd_format(json_t *params, int display_only);
 static json_t *cmd_server_error(json_t *params, int display_only);
 
 
@@ -58,6 +59,7 @@ static struct netcmd netcmd_list[] = {
     {"getdir", cmd_getdir},
     {"yn", cmd_yn_function},
     {"getline", cmd_getline},
+    {"format", cmd_format},
 
     {"server_error", cmd_server_error},
     {NULL, NULL}
@@ -770,6 +772,24 @@ cmd_getline(json_t *params, int display_only)
     }
 
     client_windowprocs.win_getlin(query, &jobj, cmd_getline_inner);
+    return jobj;
+}
+
+static json_t *
+cmd_format(json_t *params, int display_only)
+{
+    const char *formatstring;
+    int fmt_type;
+    int param;
+    json_t *jobj;
+
+    if (json_unpack(params, "{ss,si,si!}", "formatstring", &formatstring,
+                    "fmt_type", &fmt_type, "param", &param) == -1) {
+        print_error("Incorrect parameter type in cmd_format");
+        return NULL;
+    }
+
+    client_windowprocs.win_format(formatstring, fmt_type, param, &jobj, cmd_getline_inner);
     return jobj;
 }
 

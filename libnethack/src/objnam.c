@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -529,7 +529,7 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
        won't do any harm to leave it around in case amnesia is changed again. */
     if (!nn && ocl->oc_uses_known && ocl->oc_unique)
         known = 0;
-    if (!Blind && dont_reveal_dknown)
+    if (!Blind && !dont_reveal_dknown)
         dknown = TRUE;
     if (Role_if(PM_PRIEST))
         bknown = TRUE;
@@ -1200,7 +1200,7 @@ not_fully_identified_core(const struct obj * otmp, boolean ignore_bknown,
 
     /* object property ID */
     if (obj_properties(otmp) &&
-        otmp->oprops_known != otmp->oprops && skill >= P_BASIC)
+        otmp->oprops != (otmp->oprops & otmp->oprops_known) && skill >= P_BASIC)
         return TRUE;
 
     /* otmj->rknown is the only item of interest if we reach here */

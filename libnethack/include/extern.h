@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -403,6 +403,7 @@ extern void glibr(void);
 extern struct obj *some_armor(struct monst *);
 extern struct obj *stuck_ring(struct obj *, int);
 extern struct obj *unchanger(void);
+extern int disint_arm(struct monst *, struct obj *);
 extern int destroy_arm(struct monst *, struct obj *);
 
 /* ### dog.c ### */
@@ -628,6 +629,7 @@ extern void paniclog(const char *, const char *);
 extern boolean change_fd_lock(int fd, boolean on_logfile,
                               enum locktype type, int timeout);
 extern void flush_logfile_watchers(void);
+extern void update_whereis(boolean);
 
 /* ### fountain.c ### */
 
@@ -1218,6 +1220,7 @@ extern const struct attack *attacktype_fordmg(const struct permonst *, int,
 extern boolean attacktype(const struct permonst *, int);
 extern boolean poly_when_stoned(const struct permonst *);
 extern boolean resists_blnd(const struct monst *);
+extern boolean resists_slow(const struct monst *);
 extern boolean can_blnd(struct monst *, struct monst *, uchar, struct obj *);
 extern int mon_bon(struct monst *, int, int);
 extern boolean distant(const struct monst *);
@@ -1299,7 +1302,7 @@ extern int mgetargpos(const struct musable *, coord *, boolean, const char *);
 extern struct obj *mgetargobj(const struct musable *, const char *, const char *);
 extern boolean mgetargspell(const struct musable *, int *);
 extern int mon_choose_dirtarget(const struct monst *, struct obj *, coord *);
-extern int mon_choose_spectarget(const struct monst *, struct obj *, coord *);
+extern int mon_choose_spectarget(struct musable *, struct obj *, coord *);
 extern boolean find_unlocker(struct monst *, struct musable *);
 extern boolean find_item(struct monst *, struct musable *);
 extern boolean find_item_obj(struct obj *, struct musable *, boolean, int);
@@ -1776,6 +1779,8 @@ extern int monspellprot(struct monst *);
 extern int mon_castable(const struct monst *, int, boolean);
 extern int spelleffects(boolean, struct musable *);
 extern boolean learn_spell(int, boolean, boolean);
+extern int throwspell(boolean, boolean, schar *dx, schar *dy,
+                      const struct musable *);
 extern boolean cast_protection(struct monst *, boolean, boolean);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
@@ -1881,6 +1886,8 @@ extern int wiz_timeout_queue(const struct nh_cmd_arg *);
 
 /* ### topten.c ### */
 
+extern void munge_xlstring(char *, const char *, int);
+extern unsigned long encode_conduct(void);
 extern void update_topten(int how, const char *killer,
                           unsigned long carried, const char *dumpname);
 extern struct obj *tt_oname(struct obj *);

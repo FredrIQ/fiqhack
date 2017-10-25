@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1381,8 +1381,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_SLOW:
         hitmsg(mtmp, mattk);
-        if (uncancelled && !defends(AD_SLOW, uwep) && !rn2(4))
-            inc_timeout(&youmonst, SLOW, dmg, FALSE);
+        if (!uncancelled || defends(AD_SLOW, uwep) || rn2(4) ||
+            resists_slow(&youmonst))
+            break;
+        inc_timeout(&youmonst, SLOW, dmg, FALSE);
         break;
     case AD_DREN:
         hitmsg(mtmp, mattk);
@@ -2425,10 +2427,19 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
                 /* TODO: rarely lose luck for monster */
                 break;
             }
+
             if (cancelled(&youmonst) ||
                 !(msensem(mtmp, &youmonst) & MSENSE_VISION) ||
                 !(msensem(&youmonst, mtmp) & MSENSE_VISION))
                 break;
+
+            if (resists_slow(mtmp)) {
+                pline(combat_msgc(&youmonst, mtmp, cr_immune),
+                      "%s down momentarily.",
+                      M_verbs(mtmp, "slow"));
+                break;
+            }
+
             if (!slow(mtmp) && canseemon(mtmp))
                 pline(combat_msgc(&youmonst, mtmp, cr_hit),
                       "%s down under your gaze!", M_verbs(mtmp, "slow"));

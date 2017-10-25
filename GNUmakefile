@@ -27,7 +27,7 @@ install: all
 CFLAGS = -g -O2
 CXXFLAGS = -g -O2
 
-CFLAGS += --std=c11 -DAIMAKE_NORETURN=_Noreturn
+CFLAGS += --std=c11 -DAIMAKE_NORETURN=_Noreturn -DWHEREIS
 
 EXTRAS = -pthread -ldl
 ifeq ($(shell uname), Linux)

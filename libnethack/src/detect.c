@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -528,11 +528,18 @@ monster_detect(struct obj *otmp,        /* detecting object (if any) */
                 woken = TRUE;
             }
         }
+
+        /* Temporarily set intrinsic monster detection to give a sane value for
+           farlooking. */
+        boolean had_previously = !!(detects_monsters(&youmonst) & W_MASK(os_outside));
+        set_property(&youmonst, DETECT_MONSTERS, 0, TRUE);
         display_self();
         pline(msgc_youdiscover, "You sense the presence of monsters.");
         if (woken)
             pline(msgc_statusbad, "Monsters sense the presence of you.");
         look_at_map(u.ux, u.uy);
+        if (!had_previously)
+            set_property(&youmonst, DETECT_MONSTERS, -1, TRUE);
         doredraw();
         if (Underwater)
             under_water(2);
@@ -1389,10 +1396,8 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
             }
         }
 
-        if (already) {
-            action_completed();
+        if (already)
             pline(msgc_yafm, "There's still a monster there.");
-        }
     }
 }
 

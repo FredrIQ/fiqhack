@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -130,6 +130,8 @@ savegame(struct memfile *mf)
 
     /* must come last, because it needs to be restored last */
     save_utracked(mf, &u);
+
+    update_whereis(FALSE);
 }
 
 
@@ -214,13 +216,14 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.servermail);
     mwrite8(mf, flags.autoswap);
     mwrite32(mf, flags.last_arg.key);
+    mwrite8(mf, flags.double_troubled);
     if (flags.mon_moving)
         panic("flags.mon_moving is nonzero during neutral turnstate?");
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 99; i++)
+    for (i = 0; i < 98; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));
