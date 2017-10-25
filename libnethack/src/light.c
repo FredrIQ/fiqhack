@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -211,6 +211,16 @@ transfer_lights(struct level *oldlev, struct level *newlev, unsigned int obj_id)
 {
     light_source **prev, *curr;
     boolean transfer;
+
+    /* If oldlev is NULL but obj_id exists,
+       search everywhere */
+    if (!oldlev && obj_id) {
+        int i;
+        for (i = 0; i <= maxledgerno(); i++)
+            if (levels[i])
+                transfer_timers(levels[i], newlev, obj_id);
+        return;
+    }
 
     if (newlev == oldlev)
         return;
