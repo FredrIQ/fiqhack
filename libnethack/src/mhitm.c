@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -874,6 +874,13 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (cancelled(magr) || !visda)
             break;
 
+        if (resists_slow(mdef)) {
+            pline(combat_msgc(magr, mdef, cr_immune),
+                  "%s down momentarily under %s gaze.",
+                  M_verbs(mdef, "slow"),
+                  s_suffix(mon_nam(mdef)));
+            break;
+        }
         inc_timeout(mdef, SLOW, dmg, FALSE);
         if (udef)
             action_interrupted();
@@ -2092,6 +2099,12 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                 tmp = 0;
                 break;
             }
+
+            if (resists_slow(mdef)) {
+                tmp = 0;
+                break;
+            }
+
             if (!slow(mdef) && canseemon(mdef))
                 pline(combat_msgc(mdef, magr, cr_hit),
                       "%s down under %s gaze!", M_verbs(magr, "slow"),
@@ -2360,6 +2373,10 @@ maurahitm(struct monst *magr, struct monst *mdef,
             !(udef || mdef->mtame) ||
             !(msensem(mdef, magr) & MSENSE_VISION))
             break;
+
+        if (resists_slow(mdef))
+            break;
+
         if (!slow(mdef) && (uagr || udef || vis))
             pline(combat_msgc(magr, mdef, cr_hit),
                   "%s down under %s gaze.",

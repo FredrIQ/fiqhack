@@ -1220,6 +1220,7 @@ extern const struct attack *attacktype_fordmg(const struct permonst *, int,
 extern boolean attacktype(const struct permonst *, int);
 extern boolean poly_when_stoned(const struct permonst *);
 extern boolean resists_blnd(const struct monst *);
+extern boolean resists_slow(const struct monst *);
 extern boolean can_blnd(struct monst *, struct monst *, uchar, struct obj *);
 extern int mon_bon(struct monst *, int, int);
 extern boolean distant(const struct monst *);

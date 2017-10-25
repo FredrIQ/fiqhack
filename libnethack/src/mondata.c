@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -101,6 +101,22 @@ resists_blnd(const struct monst * mon)
     for (; o; o = o->nobj)
         if (o->oartifact && protects(AD_BLND, o))
             return TRUE;
+    return FALSE;
+}
+
+/* TRUE if monster can be slowed. */
+boolean
+resists_slow(const struct monst *mon)
+{
+    if (free_action(mon) && rn2(3))
+        return TRUE;
+
+    struct obj *arm = which_armor(mon, os_arm);
+    if (arm &&
+        (arm->otyp == BLUE_DRAGON_SCALES ||
+         arm->otyp == BLUE_DRAGON_SCALE_MAIL))
+        return TRUE;
+
     return FALSE;
 }
 

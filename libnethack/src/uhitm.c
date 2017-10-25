@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1597,8 +1597,10 @@ damageum(struct monst *mdef, const struct attack *mattk)
                      (zombie_timer - 10), FALSE);
         break;
     case AD_SLOW:
-        if (!negated)
-            inc_timeout(mdef, SLOW, tmp, FALSE);
+        if (negated || resists_slow(mdef))
+            break;
+
+        inc_timeout(mdef, SLOW, tmp, FALSE);
         break;
     case AD_CONF:
         if (!cancelled(&youmonst))
@@ -2287,6 +2289,12 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
                 !(msensem(&youmonst, mon) & MSENSE_VISION) ||
                 !(msensem(mon, &youmonst) & MSENSE_VISION))
                 break;
+            if (resists_slow(&youmonst)) {
+                pline(combat_msgc(mon, &youmonst, cr_immune),
+                      "You slow down momentarily.");
+                break;
+            }
+
             if (slow(&youmonst))
                 pline(msgc_statusbad,
                       "You feel as if you will be slow for longer.");

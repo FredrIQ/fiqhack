@@ -173,9 +173,11 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         if (wandlevel)
             dmg = rn1((4 * wandlevel), (6 * wandlevel));
 
-        if (free_action(mdef) && rn2(3))
+        if (resists_slow(mdef))
             dmg = 0;
 
+        /* Redundant with above, but don't anger on
+           guranteed immunity. */
         obj = which_armor(mdef, os_arm);
         if (obj &&
             (obj->otyp == BLUE_DRAGON_SCALES ||
@@ -191,7 +193,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             break;
         }
 
-        inc_timeout(mdef, SLOW, dice(3, 8), FALSE);
+        inc_timeout(mdef, SLOW, dmg, FALSE);
         if (wandlevel == P_MASTER)
             set_property(mdef, FAST, -2, TRUE);
         else if (wandlevel >= P_SKILLED)
