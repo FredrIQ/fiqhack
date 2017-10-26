@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1890,13 +1890,16 @@ overview_scan(const struct level *lev, struct overview_info *oi)
                 oi->thrones++;  /* don't care about throne rooms */
                 break;
 
-            case S_altar:
-                if (lev->locations[x][y].flags & AM_SANCTUM) {
+            case S_aaltar:
+                oi->high_altars++;
+                break;
+            case S_laltar:
+            case S_naltar:
+            case S_caltar:
+            case S_ualtar:
+                if (lev->locations[x][y].flags & AM_SANCTUM)
                     oi->high_altars++;
-                    /* Don't count high altars as altars to avoid leaking
-                       alignment information. */
-                    break;
-                }
+
                 oi->altars++;
                 /* Check altar's alignment. */
                 if (lev->locations[x][y].flags & AM_LAWFUL)
