@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -611,10 +611,12 @@ cpostfx(struct monst *mon, int pm)
         set_property(mon, INVIS, invisible(mon) ? 0 : rn1(100, 50), FALSE);
         /* fall into next case */
     case PM_GIANT_BAT:
-        set_property(mon, STUNNED, 30, TRUE);
+        if (!resists_stun(mon))
+            set_property(mon, STUNNED, 30, TRUE);
         /* fall into next case */
     case PM_BAT:
-        set_property(mon, STUNNED, 30, TRUE);
+        if (!resists_stun(mon))
+            set_property(mon, STUNNED, 30, TRUE);
         break;
     case PM_GIANT_MIMIC:
         tmp += 10;
@@ -1857,7 +1859,8 @@ doeat(const struct nh_cmd_arg *arg)
         pline(msgc_statusbad, "Ulch!  That %s was rustproofed!", xname(otmp));
         /* The regurgitated object's rustproofing is gone now */
         otmp->oerodeproof = 0;
-        inc_timeout(&youmonst, STUNNED, rn2(10), FALSE);
+        if (!resists_stun(&youmonst))
+            inc_timeout(&youmonst, STUNNED, rn2(10), FALSE);
         pline(msgc_consequence, "You spit %s out onto the %s.",
               the(xname(otmp)),
               surface(u.ux, u.uy));

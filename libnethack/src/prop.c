@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -100,7 +100,7 @@ static const struct propmsg prop_msg[] = {
     {SWIMMING, "You feel more attuned to water.", "water-attuned",
      "You forget your swimming skills.", "less water-attuned"},
     {FIXED_ABIL, "You feel resistant to exercise", "ability-fixed",
-     "You feel less resistant to exercise", "ability-fixed"},
+     "You feel less resistant to exercise", "less ability-fixed"},
     {FLYING, "You feel more buoyant.", "buoyant",
      "You feel less buoyant.", "less buoyant"},
     {UNCHANGING, "You feel resistant to change.", "unchanged",
@@ -109,6 +109,8 @@ static const struct propmsg prop_msg[] = {
      "Your body solidifies.", "solid"},
     {INFRAVISION, "Your vision capabilities are enhanced.", "vision-enhanced",
      "You feel half blind!", "half blind"},
+    {STUN_RES, "You feel more in control of your body.", "flexible",
+     "You feel less in control of your body.", "inflexible"},
     {NO_PROP, "", "", "", ""}
 };
 
@@ -184,6 +186,7 @@ static const struct propxl prop_from_experience[] = {
     {PM_WIZARD, 15, WARNING},
     {PM_WIZARD, 17, TELEPORT_CONTROL},
     {PM_ELF, 4, SLEEP_RES},
+    {PM_SHIMMERING_DRAGON, 10, STUN_RES},
     {PM_RED_DRAGON, 10, INFRAVISION},
     {PM_RED_DRAGON, 10, WARNING},
     {PM_RED_DRAGON, 10, SEE_INVIS},
@@ -2139,6 +2142,10 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case WATERPROOF:
         break;
+    case STUN_RES:
+        if (!lost && set_property(mon, STUNNED, -2, FALSE))
+            effect = TRUE;
+        break;
     default:
         impossible("Unknown property: %u", prop);
         break;
@@ -2763,6 +2770,8 @@ enlighten_mon(struct monst *mon, int final)
         mon_is(&menu, mon, "petrification resistant");
     if (resists_hallu(mon))
         mon_is(&menu, mon, "hallucination resistant");
+    if (resists_stun(mon))
+        mon_is(&menu, mon, "resistant to stunning");
     if (waterproof(mon))
         mon_is(&menu, mon, "protected from water");
     if (mon == &youmonst && u.uinvulnerable)
@@ -3142,6 +3151,8 @@ enlightenment(int final)
         you_are(&menu, "acid resistant");
     if (Stone_resistance)
         you_are(&menu, "petrification resistant");
+    if (resists_stun(&youmonst))
+        you_are(&menu, "resistant to stunning");
     if (waterproof(&youmonst))
         you_are(&menu, "protected from water");
     if (u.uinvulnerable)

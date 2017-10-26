@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -484,6 +484,9 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
 
     /* Non-artifact item properties go here. */
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
+        return equipmask;
+    if ((otmp->otyp == SHIMMERING_DRAGON_SCALE_MAIL ||
+         otmp->otyp == SHIMMERING_DRAGON_SCALES) && extrinsic == STUN_RES)
         return equipmask;
     if ((otmp->otyp == RED_DRAGON_SCALE_MAIL ||
          otmp->otyp == RED_DRAGON_SCALES) &&
@@ -1010,6 +1013,9 @@ magicbane_hit(struct monst *magr,   /* attacker */
         }
         break;
     }
+    if (resists_stun(mdef))
+        do_stun = FALSE;
+
     /* stun if that was selected and a worse effect didn't occur */
     if (do_stun) {
         inc_timeout(mdef, STUNNED, 3, TRUE);

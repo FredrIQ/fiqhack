@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1223,11 +1223,16 @@ damageum(struct monst *mdef, const struct attack *mattk)
     }
     switch (mattk->adtyp) {
     case AD_STUN:
-        if (!Blind)
-            pline(combat_msgc(&youmonst, mdef, cr_hit),
-                  "%s %s for a moment.", Monnam(mdef),
-                  makeplural(stagger(mdef->data, "stagger")));
-        set_property(mdef, STUNNED, tmp, TRUE);
+        if (resists_stun(mdef))
+            pline(combat_msgc(&youmonst, mdef, cr_immune),
+                  "%s disoriented for a moment.", M_verbs(mdef, "look"));
+        else {
+            if (!Blind)
+                pline(combat_msgc(&youmonst, mdef, cr_hit),
+                      "%s %s for a moment.", Monnam(mdef),
+                      makeplural(stagger(mdef->data, "stagger")));
+            set_property(mdef, STUNNED, tmp, TRUE);
+        }
         goto physical;
     case AD_LEGS:
         /* if (u.ucancelled) { */
@@ -2337,7 +2342,10 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             }
             break;
         case AD_STUN:  /* specifically yellow mold */
-            if (!Stunned)
+            if (resists_stun(&youmonst))
+                pline(combat_msgc(mon, &youmonst, cr_immune),
+                      "You feel disoriented for a moment.");
+            else if (!Stunned)
                 inc_timeout(&youmonst, STUNNED, tmp, FALSE);
             break;
         case AD_FIRE:

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -4301,16 +4301,19 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
                     pline(msgc_statusbad, "You %s and get dizzy...",
                           stagger(youmonst.data, "stagger"));
                 else if (you || (vis && !blind(&youmonst))) {
-                    if (you)
+                    if (you && resists_stun(mon))
+                        pline(msgc_statusbad, "Your vision blurs...");
+                    else if (you)
                         pline(msgc_statusbad,
                               "You %s and your vision blurs...",
                               stagger(youmonst.data, "stagger"));
-                    else
+                    else if (!resists_stun(mon))
                         pline(msgc_monneutral, "%s %s...", Monnam(mon),
                               stagger(mon->data, "stagger"));
                 }
             }
-            inc_timeout(mon, STUNNED, rn1(7, 16), TRUE);
+            if (!resists_stun(mon))
+                inc_timeout(mon, STUNNED, rn1(7, 16), TRUE);
             inc_timeout(mon, you ? HALLUC : CONFUSION, rn1(5, 16), TRUE);
             break;
         default:

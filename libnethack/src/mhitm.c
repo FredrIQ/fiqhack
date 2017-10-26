@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -768,7 +768,8 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_CONF:
         conf = TRUE;
     case AD_STUN:
-        if (cancelled(magr) || !visda)
+        if (cancelled(magr) || !visda ||
+            (!conf && resists_stun(mdef)))
             break;
 
         if (!has_property(mdef, conf ? CONFUSION : STUNNED)) {
@@ -1410,7 +1411,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_STUN:
-        if (cancelled(magr))
+        if (cancelled(magr) || resists_stun(mdef))
             break;
         if (canseemon(mdef))
             pline(combat_msgc(magr, mdef, cr_hit),
@@ -2147,6 +2148,14 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                 split_mon(mdef, magr);
             break;
         case AD_STUN:
+            if (resists_stun(magr)) {
+                if (canseemon(magr))
+                    pline(combat_msgc(mdef, magr, cr_immune),
+                          "%s isn't stunned", Monnam(magr));
+                tmp = 0;
+                break;
+            }
+
             if (canseemon(magr)) {
                 if (stunned(magr))
                     pline(combat_msgc(mdef, magr, cr_hit),

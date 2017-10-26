@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1344,7 +1344,7 @@ spell_backfire(int spell)
                     rand <= 7 ? (2 * duration / 3) :
                     rand <= 9 ? (duration / 3) :
                     0, TRUE);
-    if (rand <= 4)
+    if (rand <= 4 && !resists_stun(&youmonst))
         inc_timeout(&youmonst, STUNNED,
                     rand <= 4 ? 0 :
                     rand <= 7 ? (duration / 3) :

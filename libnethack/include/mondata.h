@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -30,6 +30,7 @@
 # define resists_magm(mon)      (has_property(mon, ANTIMAGIC))
 # define resists_sick(mon)      (has_property(mon, SICK_RES))
 # define resists_hallu(mon)     (has_property(mon, HALLUC_RES))
+# define resists_stun(mon)      (has_property(mon, STUN_RES))
 # define reflecting(mon)        (has_property(mon, REFLECTING))
 # define half_spell_dam(mon)    (has_property(mon, HALF_SPDAM))
 # define half_phys_dam(mon)     (has_property(mon, HALF_PHDAM))

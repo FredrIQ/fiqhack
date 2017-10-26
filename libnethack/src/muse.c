@@ -2261,11 +2261,17 @@ use_item(struct musable *m)
             case 2:
                 prop = STUNNED;
             }
-            if (!has_property(mon, prop)) {
+            if (!has_property(mon, prop) &&
+                (prop != STUNNED || !resists_stun(mon))) {
                 /* well, they know it's cursed now... */
                 obj->mbknown = 1;
             }
-            set_property(mon, prop, rnd(100), FALSE);
+            if (prop == STUNNED && !resists_stun(mon)) {
+                if (vismon)
+                    pline(msgc_monneutral,
+                          "Nothing seems to happen.");
+            } else
+                set_property(mon, prop, rnd(100), FALSE);
         } else {
             set_property(mon, BLINDED, -2, FALSE);
             set_property(mon, CONFUSION, -2, FALSE);

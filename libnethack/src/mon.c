@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -785,7 +785,8 @@ meatmetal(struct monst *mtmp)
                 }
                 /* The object's rustproofing is gone now */
                 otmp->oerodeproof = 0;
-                set_property(mtmp, STUNNED, dice(4, 4), FALSE);
+                if (!resists_stun(mtmp))
+                    set_property(mtmp, STUNNED, dice(4, 4), FALSE);
                 if (canseemon(mtmp) && flags.verbose) {
                     pline_implied(mtmp->mtame ?
                                   msgc_petneutral : msgc_monneutral,

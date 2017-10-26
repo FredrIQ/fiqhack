@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -241,6 +241,12 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             flags.bypasses = TRUE;      /* for make_corpse() */
             if (hityou) {
                 if (wandlevel < P_SKILLED) {
+                    if (resists_stun(mdef)) {
+                        pline(combat_msgc(magr, mdef, cr_immune),
+                              "You feel disoriented for a moment.");
+                        break;
+                    }
+
                     pline(combat_msgc(magr, mdef, cr_hit),
                           Stunned ? "You struggle to keep your balance." :
                           "You reel...");
@@ -258,6 +264,12 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                         !resist(magr, mdef, otmp->oclass, NOTELL, bcsign(otmp))) ||
                        (wandlevel >= P_SKILLED &&
                         resist(magr, mdef, otmp->oclass, NOTELL, bcsign(otmp)))) {
+                if (resists_stun(mdef)) {
+                    pline(combat_msgc(magr, mdef, cr_immune),
+                          "%s disoriented for a moment.", M_verbs(mdef, "look"));
+                    break;
+                }
+
                 if (tseen) {
                     if (stunned(mdef))
                         pline(combat_msgc(magr, mdef, cr_hit),
@@ -3333,10 +3345,14 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         break;
     case ZT_STUN:
         ztyp = "stunned";
-        if (you)
-            exercise(A_DEX, FALSE);
-        inc_timeout(mdef, STUNNED, tmp, FALSE);
-        tmp = 0;
+        if (resists_stun(mdef))
+            resisted = 1;
+        else {
+            if (you)
+                exercise(A_DEX, FALSE);
+            inc_timeout(mdef, STUNNED, tmp, FALSE);
+            tmp = 0;
+        }
         break;
     }
     if (resisted) {
