@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1255,7 +1255,7 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_TURN_UNDEAD);
         if (monsndx(mon->data) != PM_ALIGNED_PRIEST) {
             mon_addspell(mon, SPE_SUMMON_NASTY);
-            mon_addspell(mon, SPE_HASTE_SELF);
+            mon_addspell(mon, SPE_SPEED_MONSTER);
             mon_addspell(mon, SPE_INVISIBILITY);
         }
         return;
@@ -1288,7 +1288,7 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_PROTECTION);
         mon_addspell(mon, SPE_CREATE_MONSTER);
         mon_addspell(mon, SPE_JUMPING);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         mon_addspell(mon, SPE_INVISIBILITY);
         mon_addspell(mon, SPE_TELEPORT_AWAY);
         mon_addspell(mon, SPE_PHASE);
@@ -1300,7 +1300,7 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_EXTRA_HEALING);
         mon_addspell(mon, SPE_SLOW_MONSTER);
         mon_addspell(mon, SPE_CREATE_MONSTER);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         return;
     case PM_MINION_OF_HUHETOTL:
         mon_addspell(mon, SPE_HEALING);
@@ -1321,32 +1321,32 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_PROTECTION);
         mon_addspell(mon, SPE_TURN_UNDEAD);
         mon_addspell(mon, SPE_SUMMON_NASTY);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         mon_addspell(mon, SPE_INVISIBILITY);
         mon_addspell(mon, SPE_CANCELLATION);
         return;
     case PM_CHROMATIC_DRAGON:
         mon_addspell(mon, SPE_HEALING);
         mon_addspell(mon, SPE_SLOW_MONSTER);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         return;
     case PM_IXOTH:
         mon_addspell(mon, SPE_DETECT_MONSTERS);
         mon_addspell(mon, SPE_PROTECTION);
         mon_addspell(mon, SPE_SUMMON_NASTY);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         return;
     case PM_MASTER_KAEN:
         mon_addspell(mon, SPE_HEALING);
         mon_addspell(mon, SPE_DETECT_MONSTERS);
         mon_addspell(mon, SPE_SLOW_MONSTER);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         mon_addspell(mon, SPE_PHASE);
         return;
     case PM_NALZOK:
         mon_addspell(mon, SPE_HEALING);
         mon_addspell(mon, SPE_PROTECTION);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         mon_addspell(mon, SPE_PHASE);
         return;
     default:

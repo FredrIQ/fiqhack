@@ -479,7 +479,7 @@ mon_makewish(struct monst *mon)
         else {
             int wish_spells[] = {
                 SPE_SUMMON_NASTY, SPE_TURN_UNDEAD, SPE_EXTRA_HEALING,
-                SPE_FINGER_OF_DEATH, SPE_MAGIC_MISSILE, SPE_HASTE_SELF,
+                SPE_FINGER_OF_DEATH, SPE_MAGIC_MISSILE, SPE_SPEED_MONSTER,
                 SPE_REMOVE_CURSE, SPE_CHARGING, SPE_IDENTIFY,
                 SPE_PROTECTION
             };
@@ -699,6 +699,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                 if (obj->otyp == SPE_HEALING ||
                     obj->otyp == SPE_EXTRA_HEALING ||
                     obj->otyp == SPE_STONE_TO_FLESH ||
+                    obj->otyp == SPE_SPEED_MONSTER ||
                     obj->otyp == WAN_SPEED_MONSTER ||
                     obj->otyp == WAN_MAKE_INVISIBLE)
                     helpful = TRUE;
@@ -1493,9 +1494,12 @@ find_item(struct monst *mon, struct musable *m)
     }
 
     if (!very_fast(mon) && !slow(mon) &&
-        mon_castable(mon, SPE_HASTE_SELF, FALSE)) {
+        mon_castable(mon, SPE_SPEED_MONSTER, FALSE)) {
         m->use = MUSE_SPE;
-        m->spell = SPE_HASTE_SELF;
+        m->spell = SPE_SPEED_MONSTER;
+        m->x = 0;
+        m->y = 0;
+        m->z = 0;
         return TRUE;
     }
 
@@ -2006,6 +2010,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
          otyp == WAN_POLYMORPH ||
          otyp == SPE_POLYMORPH ||
          otyp == WAN_SPEED_MONSTER ||
+         otyp == SPE_SPEED_MONSTER ||
          otyp == SPE_HEALING ||
          otyp == SPE_EXTRA_HEALING ||
          otyp == SPE_STONE_TO_FLESH ||
@@ -2049,8 +2054,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
         monstr[monsndx(mon->data)] < 6)
         return 1;
 
-    if ((otyp == SPE_HASTE_SELF ||
-         otyp == POT_SPEED) && !very_fast(mon))
+    if (otyp == POT_SPEED && !very_fast(mon))
         return 1;
 
     if (otyp == BULLWHIP && !rn2(2) && close &&

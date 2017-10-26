@@ -84,7 +84,7 @@ static const char *spelltypemnemonic(int);
  *
  *  spelspec, spelsbon:
  *      Arc map masters (SPE_MAGIC_MAPPING)
- *      Bar fugue/berserker (SPE_HASTE_SELF)
+ *      Bar fugue/berserker (SPE_SPEED_MONSTER)
  *      Cav born to dig (SPE_DIG)
  *      Hea to heal (SPE_CURE_SICKNESS)
  *      Kni to turn back evil (SPE_TURN_UNDEAD)
@@ -836,7 +836,7 @@ run_maintained_spell(struct monst *mon, int spell)
 {
     struct obj *pseudo;
     switch (spell) {
-    case SPE_HASTE_SELF:
+    case SPE_SPEED_MONSTER:
         if (property_timeout(mon, FAST) < 5)
             inc_timeout(mon, FAST, 50, TRUE);
         break;
@@ -1451,7 +1451,7 @@ mon_wants_to_maintain(const struct monst *mon, int spell)
         return TRUE;
 
     chk_spell(SPE_PROTECTION);
-    chk_spell(SPE_HASTE_SELF);
+    chk_spell(SPE_SPEED_MONSTER);
     if (mprof(mon, MP_SDIVN) >= P_SKILLED) {
         chk_spell(SPE_DETECT_MONSTERS);
     }
@@ -1577,6 +1577,7 @@ spelleffects(boolean atme, struct musable *m)
     case SPE_EXTRA_HEALING:
     case SPE_DRAIN_LIFE:
     case SPE_STONE_TO_FLESH:
+    case SPE_SPEED_MONSTER:
         if (atme)
             dx = dy = dz = 0;
         else if (!mgetargdir(m, NULL, &dx, &dy, &dz)) {
@@ -1592,10 +1593,14 @@ spelleffects(boolean atme, struct musable *m)
             return 0;
         }
         break;
+    default:
+        break;
+    }
 
     /* These spells can be toggled for whether or not to maintain it */
+    switch (spell) {
     case SPE_LIGHT:
-    case SPE_HASTE_SELF:
+    case SPE_SPEED_MONSTER:
     case SPE_DETECT_MONSTERS:
     case SPE_LEVITATION:
     case SPE_INVISIBILITY:
@@ -1829,6 +1834,7 @@ spelleffects(boolean atme, struct musable *m)
     case SPE_EXTRA_HEALING:
     case SPE_DRAIN_LIFE:
     case SPE_STONE_TO_FLESH:
+    case SPE_SPEED_MONSTER:
         weffects(mon, pseudo, dx, dy, dz);
         update_inventory();     /* spell may modify inventory */
         break;
@@ -1850,7 +1856,6 @@ spelleffects(boolean atme, struct musable *m)
         break;
 
         /* these are all duplicates of potion effects */
-    case SPE_HASTE_SELF:
     case SPE_DETECT_TREASURE:
     case SPE_DETECT_MONSTERS:
     case SPE_LEVITATION:

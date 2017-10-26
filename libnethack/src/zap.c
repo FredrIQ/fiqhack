@@ -210,6 +210,9 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             known = TRUE;
         }
         break;
+    case SPE_SPEED_MONSTER:
+        known = inc_timeout(mdef, FAST, rn1(100, 51), FALSE);
+        break;
     case WAN_SPEED_MONSTER:
         dmg = dice(2, 20);
         if (wandlevel >= P_BASIC)
@@ -1937,6 +1940,7 @@ bhito(struct obj *obj, struct obj *otmp)
         case WAN_SLOW_MONSTER: /* no effect on objects */
         case SPE_SLOW_MONSTER:
         case WAN_SPEED_MONSTER:
+        case SPE_SPEED_MONSTER:
         case WAN_NOTHING:
         case SPE_HEALING:
         case SPE_EXTRA_HEALING:
@@ -2235,6 +2239,7 @@ zap_steed(struct obj *obj)
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
     case WAN_SPEED_MONSTER:
+    case SPE_SPEED_MONSTER:
     case SPE_HEALING:
     case SPE_EXTRA_HEALING:
     case SPE_DRAIN_LIFE:

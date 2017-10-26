@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-09-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -78,7 +78,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {14, 0, 0, 10, 2, 0},      /* Hit points */
      {1, 0, 0, 1, 0, 1}, 10,    /* Energy */
-     10, 14, 0, 0, 8, A_INT, SPE_HASTE_SELF, -4},
+     10, 14, 0, 0, 8, A_INT, SPE_SPEED_MONSTER, -4},
     {{"Caveman", "Cavewoman"}, {
                                 {"Troglodyte", 0},
                                 {"Aborigine", 0},

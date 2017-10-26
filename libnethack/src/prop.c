@@ -510,6 +510,7 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
     case SPE_SLOW_MONSTER:
         return !prop_wary(user, target, SLOW);
     case WAN_SPEED_MONSTER:
+    case SPE_SPEED_MONSTER:
         /* a monster might not know if a target is fast, but
            if not, he'd find that out rather fast */
         return !very_fast(target) && !slow(target);
