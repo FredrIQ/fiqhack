@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1501,7 +1501,8 @@ void
 obj_extract_self(struct obj *obj)
 {
     if (obj->memory != OM_NO_MEMORY)
-        panic("obj_extract_self: object is a memory, use extract_obj_memory.");
+        panic("obj_extract_self: object %s is a memory, use extract_obj_memory.",
+              killer_xname(obj));
 
     switch (obj->where) {
     case OBJ_FREE:

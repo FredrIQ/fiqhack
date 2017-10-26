@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1663,8 +1663,9 @@ find_item_obj(struct obj *chain, struct musable *m,
                    another bag */
                 if (chain == mon->minvent) {
                     int vanish = 0;
-                    struct obj *otmp;
-                    for (otmp = obj->cobj; otmp; otmp = otmp->nobj) {
+                    struct obj *otmp, *nextotmp;
+                    for (otmp = obj->cobj; otmp; otmp = nextotmp) {
+                        nextotmp = otmp->nobj;
                         if (rn2(13))
                             continue;
                         /* something vanished, monster knows BUC now... */
