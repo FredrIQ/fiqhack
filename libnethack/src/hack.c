@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -189,12 +189,13 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
 
         if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
             ((lava && waterwalk < 2) ||
-             (pool && !Swimming && !waterwalk)) &&
+             (pool && (!Swimming || waterproof(&youmonst)) && !waterwalk)) &&
             !(lava ? is_lava(level, u.ux, u.uy) : is_pool(level, u.ux, u.uy))) {
             if (cansee(x, y))
                 pline(msgc_cancelled,
-                      is_pool(level, x, y) ? "You never learned to swim!" :
-                      "That lava looks rather dangerous...");
+                      is_pool(level, x, y) ? "You never learned to %s!" :
+                      "That lava looks rather dangerous...",
+                      Swimming ? "remain waterproof" : "swim");
             else
                 pline(msgc_cancelled, "As far as you can remember, it's "
                       "not safe to stand there.");
