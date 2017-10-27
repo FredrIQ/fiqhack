@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,7 +53,7 @@ find_obj_map(boolean set_dknown, char oclass, unsigned material)
             /* Don't mark UNMAPPED in res unless it's empty or only contains
                player inventory */
             if (ires & OBJDET_UNMAPPED) {
-                if (!res || (res & (OBJDET_MON | OBJDET_SELF)))
+                if (!res || !(res & ~(OBJDET_MON | OBJDET_SELF)))
                     res = ires;
                 ires = 0;
             }
@@ -63,7 +63,7 @@ find_obj_map(boolean set_dknown, char oclass, unsigned material)
                 if ((ires & OBJDET_SELF) && res)
                     ires &= ~OBJDET_SELF;
 
-                res = ires;
+                res |= ires;
             }
         }
     }
@@ -261,7 +261,7 @@ gold_detect(struct monst *mon, struct obj *sobj, boolean *scr_known)
     *scr_known = !!obj_res;
     obj_res &= ~OBJDET_UNMAPPED;
 
-    if (!obj_res || (obj_res & (OBJDET_MON | OBJDET_SELF))) {
+    if (!obj_res || !(obj_res & ~(OBJDET_MON | OBJDET_SELF))) {
         /* No gold found, or gold only found in inventory, or
            user is a gold golem */
         const char *buf;
@@ -343,7 +343,7 @@ food_detect(struct obj *sobj, boolean *scr_known)
 
     obj_res &= ~OBJDET_UNMAPPED;
 
-    if (!obj_res || (obj_res & (OBJDET_MON | OBJDET_SELF))) {
+    if (!obj_res || !(obj_res & ~(OBJDET_MON | OBJDET_SELF))) {
         /* nothing found, or only in user inventory */
         doredraw();
         const char *buf;
@@ -443,10 +443,10 @@ object_detect(struct obj *detector,     /* object doing the detecting */
     obj_res &= ~OBJDET_UNMAPPED;
 
     buf = msgprintf("You sense the %s of %s.",
-                    (!obj_res || (obj_res & (OBJDET_MON | OBJDET_SELF))) ?
+                    (!obj_res || !(obj_res & ~(OBJDET_MON | OBJDET_SELF))) ?
                     "absence" : "presence", stuff);
 
-    if (!obj_res || (obj_res & (OBJDET_MON | OBJDET_SELF))) {
+    if (!obj_res || !(obj_res & ~(OBJDET_MON | OBJDET_SELF))) {
         /* nothing found, or only in user inventory */
         doredraw();
         strange_feeling(detector, buf);
