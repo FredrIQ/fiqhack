@@ -2279,17 +2279,26 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
     if (resists_magm(mdef))
         has_mr = TRUE;
 
-    int wandlevel = 0;
+    int skill = P_BASIC;
     if (obj->oclass == WAND_CLASS)
-        wandlevel = getwandlevel(magr, obj);
+        skill = getwandlevel(magr, obj);
+    else if (obj->oclass == SPBOOK_CLASS)
+        skill = mprof(magr, MP_SMATR);
 
-    /* Cancel is averted with MR (or for non-players, resist() as well) 100% of the time
-       below expert wands (and for the spell), 90% of the time for expert wands,
-       50% at the time for master wands */
+    /*
+     * MR can avoid being cancelled, but doesn't always work.
+     * Unskilled: 100%
+     * Basic, or non-wand/non-spell: 80%
+     * Skilled: 66%
+     * Expert: 50%
+     * Master: 33%
+     */
     if (has_mr && magr != mdef &&
-        (!wandlevel || wandlevel < P_EXPERT ||
-         (wandlevel == P_EXPERT ? rn2(10) :
-          wandlevel == P_MASTER ? rn2(2) : 0)))
+        (skill == P_UNSKILLED ?    1 :
+         skill == P_BASIC   ? rn2(5) :
+         skill == P_SKILLED ? rn2(3) :
+         skill == P_EXPERT  ? rn2(2) :
+         skill == P_MASTER ? !rn2(3) : 1))
         return FALSE;
 
     if (self_cancel) {  /* 1st cancel inventory */
