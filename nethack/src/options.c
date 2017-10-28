@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-28 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -172,7 +172,7 @@ static struct nh_option_desc curses_options[] = {
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
     {"colorbuc", "Screen Layout",
      "blessed/uncursed/cursed colors in inventory",
-     nh_birth_ingame, OPTTYPE_ENUM, {.e = CBUC_CYAN_GRAY_RED}},
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = CBUC_GREEN_CYAN_RED}},
     {"comment", "Online and Tournaments",
      "no game effect, used to prove your ID in tournaments",
      nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
