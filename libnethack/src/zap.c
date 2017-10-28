@@ -2286,7 +2286,7 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
 
     if (vis)
         pline(combat_msgc(magr, mdef, cr_hit),
-              "You %s magical energies being absorbed from %s vicinity!",
+              "You %s magical energies being absorbed from %s vicinity.",
               udef ? "feel" : "sense", s_suffix(mon_nam(mdef)));
 
     /*
