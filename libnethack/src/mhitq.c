@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -262,9 +262,10 @@ mpreattack(struct monst *mtmp, boolean range2)
 
     /* Special demon handling code */
     if (!mtmp->cham && is_demon(mdat) && !range2 && !mtmp->mtame &&
-        mtmp->data != &mons[PM_BALROG]
-        && mtmp->data != &mons[PM_SUCCUBUS]
-        && mtmp->data != &mons[PM_INCUBUS])
+        !mtmp->mpeaceful &&
+        mtmp->data != &mons[PM_BALROG] &&
+        mtmp->data != &mons[PM_SUCCUBUS] &&
+        mtmp->data != &mons[PM_INCUBUS])
         if (!cancelled(mtmp) && !rn2(13))
             msummon(mtmp, &mtmp->dlevel->z);
 
