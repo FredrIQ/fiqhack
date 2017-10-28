@@ -3313,7 +3313,8 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
             done(DIED, killer_msg(DIED, an(fltxt)));
         } else {
             mdef->mhp = -1;
-            monkilled(magr, mdef, "", disintegrated ? -AD_RBRE : AD_RBRE);
+            monkilled(magr, mdef, disintegrated ? NULL : "",
+                      disintegrated ? -AD_RBRE : AD_RBRE);
         }
         return; /* lifesaved */
     case ZT_LIGHTNING:
