@@ -3214,11 +3214,28 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                 mdef->mhp = mdef->mhpmax;
                 return;
             }
+            /*
+             * Unskilled: leveldrain unless magic/drain resistant
+             * Basic-Skilled: death unless magic resistant
+             * >=Expert: death unless MR, otherwise leveldrain unless drain resistant
+             */
+            boolean death = TRUE;
+            boolean drain = FALSE;
+            if (raylevel == P_UNSKILLED) {
+                death = FALSE;
+                if (selfzap || !resists_magm(mdef))
+                    drain = TRUE;
+            }
+            if (raylevel >= P_EXPERT)
+                drain = TRUE;
+
             if (nonliving(mdef->data) || is_demon(mdef->data) ||
-                (!selfzap && resists_magm(mdef)) ||
-                raylevel == P_UNSKILLED) {
-                if (resists_drli(mdef) || raylevel <= P_SKILLED) {
-                    resisted = 2;
+                (!selfzap && resists_magm(mdef)))
+                death = FALSE;
+            if (resists_drli(mdef))
+                drain = FALSE;
+            if (!death) {
+                if (!drain) {
                     if (oseen) {
                         if (selfzap && wand)
                             pline(msgc_yafm, "The wand shoots an apparently "
@@ -3227,12 +3244,10 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                             pline(combat_msgc(magr, mdef, cr_immune),
                                   "%s unaffected.", M_verbs(mdef, "are"));
                     }
-                    break;
-                } else {
+                } else
                     mlosexp(magr, mdef,
                             "drained by a wand of death", FALSE);
-                    return;
-                }
+                return;
             } else if (selfzap && (you || oseen))
                 pline(combat_msgc(magr, mdef, cr_kill),
                       "%s %sself with pure energy!", M_verbs(mdef, "irradiate"),
