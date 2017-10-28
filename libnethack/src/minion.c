@@ -88,7 +88,7 @@ msummon(struct monst *mon, const d_level *dlev)
             mtmp->maligntyp = atyp;
             /* peaceful state should match too */
             if (mon->mpeaceful)
-                mtmp->mpeaceful = TRUE;
+                msethostility(mtmp, FALSE, TRUE);
             if (mon->mtame)
                 tamedog(mtmp, NULL);
         }
