@@ -348,7 +348,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         break;
     case WAN_CANCELLATION:
     case SPE_CANCELLATION:
-        cancel_monst(mdef, otmp, magr, TRUE, FALSE);
+        cancel_monst(mdef, otmp, magr, TRUE, selfzap);
         break;
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
@@ -2265,14 +2265,13 @@ boolean
 cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
              boolean allow_cancel_kill, boolean self_cancel)
 {
-    boolean youdefend = (mdef == &youmonst);
-    static const char writing_vanishes[] =
-        "Some writing vanishes from %s head!";
-    static const char your[] = "your";  /* should be extern */
+    boolean uagr = (magr == &youmonst);
+    boolean udef = (mdef == &youmonst);
+    boolean vis = (uagr || udef || canseemon(mdef));
 
     /* Nonplayers can use resist() in place of MR. */
     boolean has_mr = FALSE;
-    if (!youdefend) {
+    if (!udef) {
         if (magr != mdef && resist(magr, mdef, obj->oclass, NOTELL, bcsign(obj)))
             has_mr = TRUE;
     }
@@ -2285,6 +2284,11 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
     else if (obj->oclass == SPBOOK_CLASS)
         skill = mprof(magr, MP_SMATR);
 
+    if (vis)
+        pline(combat_msgc(magr, mdef, cr_hit),
+              "You %s magical energies being absorbed from %s vicinity!",
+              udef ? "feel" : "sense", s_suffix(mon_nam(mdef)));
+
     /*
      * MR can avoid being cancelled, but doesn't always work.
      * Unskilled: 100%
@@ -2293,13 +2297,16 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
      * Expert: 50%
      * Master: 33%
      */
-    if (has_mr && magr != mdef &&
+    if (has_mr && !self_cancel &&
         (skill == P_UNSKILLED ?    1 :
          skill == P_BASIC   ? rn2(5) :
          skill == P_SKILLED ? rn2(3) :
          skill == P_EXPERT  ? rn2(2) :
-         skill == P_MASTER ? !rn2(3) : 1))
+         skill == P_MASTER ? !rn2(3) : 1)) {
+        if (vis)
+            shieldeff(m_mx(mdef), m_my(mdef));
         return FALSE;
+    }
 
     if (self_cancel) {  /* 1st cancel inventory */
         struct obj *otmp;
@@ -2310,7 +2317,7 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
 
     set_property(mdef, CANCELLED, 0, FALSE);
     if (is_were(mdef->data) && mdef->data->mlet != S_HUMAN) {
-        if (youdefend)
+        if (udef)
             you_unwere(FALSE);
         else
             were_change(mdef);
@@ -2321,9 +2328,10 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
            see writing vanishing */
         if (canseemon(mdef))
             pline(combat_msgc(magr, mdef, allow_cancel_kill ? cr_kill : cr_hit),
-                  writing_vanishes, youdefend ? your : s_suffix(mon_nam(mdef)));
+                  "Some writing vanishes from %s %s!", s_suffix(mon_nam(mdef)),
+                  mbodypart(mdef, HEAD));
         if (allow_cancel_kill) {
-            if (youdefend)
+            if (udef)
                 rehumanize(DIED, "loss of magical runes");
             else
                 monkilled(magr, mdef, "", AD_RBRE);
