@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,6 +9,65 @@ static const struct attack *dmgtype_fromattack(const struct permonst *, int,
                                                int);
 
 /* These routines provide basic data for any type of monster. */
+
+/* Returns male name of monster */
+const char *
+pm_male(int pm)
+{
+    if (pm < LOW_PM || pm >= NUMMONS) {
+        impossible("pm_male: pm out of range (%d)", pm);
+        return "?m";
+    }
+
+    return mons[pm].mname;
+}
+
+/* Returns female name of monster */
+const char *
+pm_female(int pm)
+{
+    if (pm < LOW_PM || pm >= NUMMONS) {
+        impossible("pm_male: pm out of range (%d)", pm);
+        return "?f";
+    }
+
+    return mons[pm].fname;
+}
+
+/* Returns male or female name for mon appropriately */
+const char *
+pm_name(const struct monst *mon)
+{
+    boolean female = mon->female;
+    if (mon == &youmonst)
+        female = u.ufemale;
+
+    int pm = NON_PM;
+    if (mon != &youmonst)
+        pm = monsndx(mon->data);
+    else
+        pm = u.umonnum;
+
+    if (mon->female)
+        return pm_female(pm);
+    return pm_male(pm);
+}
+
+/* Returns male or female name for object mon appropriately. */
+const char *
+opm_name(const struct obj *obj)
+{
+    /* Check if we have a monst. */
+    struct monst *mon = ox_monst(obj);
+
+    if (mon)
+        return pm_name(mon);
+
+    /* Otherwise, use corpsenm */
+    if (obj->spe & OPM_FEMALE)
+        return pm_female(obj->corpsenm);
+    return pm_male(obj->corpsenm);
+}
 
 void
 set_mon_data(struct monst *mon, const struct permonst *ptr)
@@ -486,9 +545,17 @@ name_to_mon(const char *in_str)
     }
 
     for (len = 0, i = LOW_PM; i < NUMMONS; i++) {
+        boolean match = FALSE;
         int m_i_len = strlen(mons[i].mname);
+        int f_i_len = strlen(mons[i].fname);
+        if (m_i_len > len && !strncmpi(mons[i].mname, str, m_i_len))
+            match = TRUE;
+        else if (f_i_len > len && !strncmpi(mons[i].fname, str, f_i_len)) {
+            match = TRUE;
+            m_i_len = f_i_len;
+        }
 
-        if (m_i_len > len && !strncmpi(mons[i].mname, str, m_i_len)) {
+        if (match) {
             if (m_i_len == slen)
                 return i;       /* exact match */
             else if (slen > m_i_len &&

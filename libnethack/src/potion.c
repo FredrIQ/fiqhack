@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -527,7 +527,8 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
                 if ((you && u.ulycn >= LOW_PM) || is_were(mon->data)) {
                     if (you || vis)
                         pline(statusheal, "%s affinity to %s disappears!", Mons,
-                              makeplural(you ? mons[u.ulycn].mname : mon_nam(mon)));
+                              makeplural(you && u.ufemale ? mons[u.ulycn].fname :
+                                         you ? mons[u.ulycn].mname : mon_nam(mon)));
                     mon_unwere(mon, TRUE, FALSE);
                 }
                 if (you)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -507,7 +507,7 @@ x_monnam(const struct monst *mtmp,
             buf = msgcat(buf, "invisible ");
         if (do_enslavement)
             buf = msgcat(buf, "enslaved ");
-        buf = msgcat(buf, mdat->mname);
+        buf = msgcat(buf, pm_name(mtmp));
         return buf;
     }
 
@@ -542,7 +542,7 @@ x_monnam(const struct monst *mtmp,
             buf = msgprintf("%s%s ghost", buf, s_suffix(name));
             name_at_start = TRUE;
         } else if (called) {
-            buf = msgprintf("%s%s called %s", buf, mdat->mname, name);
+            buf = msgprintf("%s%s called %s", buf, pm_name(mtmp), name);
             name_at_start = (boolean) type_is_pname(mdat);
         } else if (is_mplayer(mdat) && ((bp = strstri(name, " the "))) != 0) {
             /* <name> the <adjective> <invisible> <saddled> <rank> */
@@ -559,7 +559,7 @@ x_monnam(const struct monst *mtmp,
                                                (boolean) mtmp->female)));
         name_at_start = FALSE;
     } else {
-        buf = msgcat(buf, mdat->mname);
+        buf = msgcat(buf, pm_name(mtmp));
         name_at_start = (boolean) type_is_pname(mdat);
     }
 
@@ -727,7 +727,7 @@ k_monnam(const struct monst *mtmp) {
            overrides the effect of Hallucination on priestname() */
         buf = msgcat(buf, m_monnam(mtmp));
     } else {
-        buf = msgcat(buf, mtmp->data->mname);
+        buf = msgcat(buf, pm_name(mtmp));
         if (mx_name(mtmp))
             buf = msgcat_many(buf, " called \"", mx_name(mtmp), "\"", NULL);
     }

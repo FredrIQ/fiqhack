@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -361,7 +361,7 @@ mattacku(struct monst *mtmp)
                           Monnam(mtmp));
                 else
                     pline(msgc_kill, "%s is killed by a falling %s (you)!",
-                          Monnam(mtmp), youmonst.data->mname);
+                          Monnam(mtmp), pm_name(&youmonst));
                 killed(mtmp);
                 newsym(u.ux, u.uy);
                 if (!DEADMONSTER(mtmp))
@@ -415,12 +415,11 @@ mattacku(struct monst *mtmp)
                     if (youmonst.data->mlet == S_EEL)
                         pline(msgc_youdiscover,
                               "Wait, %s!  There's a hidden %s named %s there!",
-                              m_monnam(mtmp), youmonst.data->mname, u.uplname);
+                              m_monnam(mtmp), pm_name(&youmonst), u.uplname);
                     else
                         pline(msgc_youdiscover, "Wait, %s!  There's a %s named "
-                              "%s hiding under %s!", m_monnam(mtmp),
-                              youmonst.data->mname, u.uplname,
-                              doname(level->objects[u.ux][u.uy]));
+                              "%s hiding under %s!", m_monnam(mtmp), pm_name(&youmonst),
+                              u.uplname, doname(level->objects[u.ux][u.uy]));
                     if (obj)
                         obj->spe = save_spe;
                 } else
@@ -440,7 +439,7 @@ mattacku(struct monst *mtmp)
             pline(msgc_interrupted, "It gets stuck on you.");
         else
             pline(msgc_interrupted, "Wait, %s!  That's a %s named %s!",
-                  m_monnam(mtmp), youmonst.data->mname, u.uplname);
+                  m_monnam(mtmp), pm_name(&youmonst), u.uplname);
         u.ustuck = mtmp;
         cancel_mimicking("");
         return 0;
@@ -455,11 +454,12 @@ mattacku(struct monst *mtmp)
         else
             pline(msgc_interrupted, "Wait, %s!  That %s is really %s named %s!",
                   m_monnam(mtmp), mimic_obj_name(&youmonst),
-                  an(mons[u.umonnum].mname), u.uplname);
+                  an(u.ufemale ? mons[u.umonnum].fname : mons[u.umonnum].mname),
+                  u.uplname);
 
         const char *buf;
         buf = msgprintf("You appear to be %s again.", Upolyd ?
-                        (const char *)an(youmonst.data->mname) :
+                        (const char *)an(pm_name(&youmonst)) :
                         (const char *)"yourself");
         cancel_mimicking(buf); /* immediately stop mimicking */
 
@@ -864,7 +864,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     dmg = 1;
                     pline(resists_ston(&youmonst) ? msgc_fatalavoid :
                           msgc_fatal, "%s hits you with the %s corpse.", Monnam(mtmp),
-                          mons[otmp->corpsenm].mname);
+                          opm_name(otmp));
                     if (!petrifying(&youmonst))
                         goto do_stone;
                 }
@@ -1131,7 +1131,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                                                   ? "the Plane of Water"
                                                   : a_waterbody(mtmp->mx,
                                                                 mtmp->my),
-                                              an(mtmp->data->mname))));
+                                              an(pm_name(mtmp)))));
                 } else if (mattk->aatyp == AT_HUGS)
                     pline(combat_msgc(mtmp, &youmonst, cr_hit),
                           "You are being crushed.");

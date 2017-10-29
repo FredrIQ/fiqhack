@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -595,8 +595,8 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown,
                         pline_implied(combat_msgc(&youmonst, mon, cr_hit),
                                       "You hit %s with %s %s.", mon_nam(mon),
                                       obj->dknown ?
-                                      the(mons[obj->corpsenm].mname) :
-                                      an(mons[obj->corpsenm].mname),
+                                      the(opm_name(obj)) :
+                                      an(opm_name(obj)),
                                       (obj->quan > 1) ?
                                       makeplural(withwhat) : withwhat);
                         mstiffen(mon, &youmonst);
@@ -632,8 +632,8 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown,
                                   "Splat! You hit %s with %s %s egg%s!",
                                   mon_nam(mon),
                                   obj->known ? "the" : cnt > 1L ? "some" : "a",
-                                  obj->known ? mons[obj->corpsenm].
-                                  mname : "petrifying", plur(cnt));
+                                  obj->known ? opm_name(obj) :
+                                  "petrifying", plur(cnt));
                             obj->known = 1;     /* (not much point...) */
                             useup_eggs(obj);
                             mstiffen(mon, &youmonst);
@@ -641,7 +641,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown,
                         } else {        /* ordinary egg(s) */
                             const char *eggp =
                                 (obj->corpsenm != NON_PM &&
-                                 obj->known) ? the(mons[obj->corpsenm].mname) :
+                                 obj->known) ? the(opm_name(obj)) :
                                 (cnt > 1L) ? "some" : "an";
 
                             pline(combat_msgc(&youmonst, mon, cr_hit),
@@ -1185,7 +1185,7 @@ steal_it(struct monst *mdef, const struct attack *mattk)
             !uarmg) {
             instapetrify(killer_msg(STONING,
                 msgprintf("stealing %s corpse",
-                          an(mons[otmp->corpsenm].mname))));
+                          an(opm_name(otmp)))));
             break;      /* stop the theft even if hero survives */
         }
         /* more take-away handling, after theft message */
@@ -1772,7 +1772,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                     pline(msgc_fatal_predone,
                           "Unfortunately, digesting any of it is fatal.");
                     end_engulf(mdef);
-                    done(DIED, msgcat("unwisely tried to eat ", mdef->data->mname));
+                    done(DIED, msgcat("unwisely tried to eat ", pm_name(mdef)));
                     return 0;   /* lifesaved */
                 }
 
@@ -1812,7 +1812,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                               "%s", msgbuf);
                     if (mdef->data == &mons[PM_GREEN_SLIME]) {
                         pline(msgc_fatal, "%s isn't sitting well with you.",
-                              The(mdef->data->mname));
+                              The(pm_name(mdef)));
                         if (!Unchanging && !unsolid(youmonst.data) &&
                             level->locations[u.ux][u.uy].typ != LAVAPOOL) {
                             set_property(&youmonst, SLIMED, 5, TRUE);
@@ -1920,7 +1920,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
         } else {
             pline(msgc_fatal, "You bite into %s.", mon_nam(mdef));
             instapetrify(killer_msg(STONING,
-                msgprintf("swallowing %s whole", an(mdef->data->mname))));
+                                    msgprintf("swallowing %s whole", an(pm_name(mdef)))));
         }
     }
     return 0;

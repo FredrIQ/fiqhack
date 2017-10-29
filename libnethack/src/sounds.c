@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -509,7 +509,7 @@ domonnoise(struct monst *mtmp)
                     } else if (vampindex == 1) {
                         verbl_msg = msgprintf(
                             vampmsg[vampindex],
-                            Upolyd ? an(mons[u.umonnum].mname) : an(racenoun));
+                            Upolyd ? an(pm_name(&youmonst)) : an(racenoun));
                     } else
                         verbl_msg = vampmsg[vampindex];
                 }
@@ -828,7 +828,7 @@ dotalk(const struct nh_cmd_arg *arg)
 
     if (is_silent(youmonst.data)) {
         pline(msgc_cancelled, "As %s, you cannot speak.",
-              an(youmonst.data->mname));
+              an(pm_name(&youmonst)));
         return 0;
     }
     if (strangled(&youmonst)) {

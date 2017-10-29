@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -306,7 +306,7 @@ polyself(boolean forcecontrol)
 
         if (Upolyd) {
             kbuf = msgprintf("polymorphing into %s while wielding",
-                             an(mons[u.umonnum].mname));
+                             an(pm_name(&youmonst)));
         } else {
             kbuf = msgprintf("returning to %s form while wielding", urace.adj);
         }
@@ -532,12 +532,14 @@ polymon(int mntmp, boolean noisy)
                   (u.umonnum != mntmp) ? "turn into a" : "feel like a new",
                   (is_male(&mons[mntmp]) ||
                    is_female(&mons[mntmp])) ? "" : u.ufemale ? "female " :
-                  "male ", mons[mntmp].mname);
+                  "male ", u.ufemale ? mons[mntmp].fname : mons[mntmp].mname);
     } else if (noisy) {
         if (u.umonnum != mntmp)
-            pline(msgc_statusbad, "You turn into %s!", an(mons[mntmp].mname));
+            pline(msgc_statusbad, "You turn into %s!",
+                  an(u.ufemale ? mons[mntmp].fname : mons[mntmp].mname));
         else
-            pline(msgc_statusend, "You feel like a new %s!", mons[mntmp].mname);
+            pline(msgc_statusend, "You feel like a new %s!",
+                  u.ufemale ? mons[mntmp].fname : mons[mntmp].mname);
     }
 
     u.mtimedone = rn1(500, 500);

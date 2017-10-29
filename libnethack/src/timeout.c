@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -140,6 +140,10 @@ hatch_egg(void *arg, long timeout)
                     !((mon = makemon(&mons[mnum], level,
                                      cc.x, cc.y, NO_MINVENT))))
                     break;
+
+                if (!(mon->data->mflags2 & (M2_MALE | M2_FEMALE)))
+                    mon->female = !!(egg->spe & OPM_FEMALE);
+
                 /* tame if your own egg hatches while you're on the same
                    dungeon level, or any dragon egg which hatches while it's in
                    your inventory */

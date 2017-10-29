@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -168,7 +168,7 @@ its_dead(int rx, int ry, int *resp)
         } else {
             ttmp = t_at(level, rx, ry);
             pline(msgc_yafm, "%s appears to be in %s health for a statue.",
-                  The(mons[otmp->corpsenm].mname),
+                  The(opm_name(otmp)),
                   (ttmp && ttmp->ttyp == STATUE_TRAP) ?
                   "extraordinary" : "excellent");
         }
@@ -1640,15 +1640,15 @@ use_tinning_kit(struct obj *obj)
         && !resists_ston(&youmonst) && !uarmg) {
         if (poly_when_stoned(youmonst.data))
             pline(msgc_consequence, "You tin %s without wearing gloves.",
-                  an(mons[corpse->corpsenm].mname));
+                  an(opm_name(corpse)));
         else
             pline(msgc_badidea,
                   "Tinning %s without wearing gloves is a fatal mistake...",
-                  an(mons[corpse->corpsenm].mname));
+                  an(opm_name(corpse)));
 
         instapetrify(killer_msg(STONING,
                                 msgprintf("trying to tin %s without gloves",
-                                          an(mons[corpse->corpsenm].mname))));
+                                          an(opm_name(corpse)))));
     }
     if (is_rider(&mons[corpse->corpsenm])) {
         revive_corpse(corpse);
@@ -1670,7 +1670,8 @@ use_tinning_kit(struct obj *obj)
         can->blessed = obj->blessed;
         can->owt = weight(can);
         can->known = 1;
-        can->spe = -1;  /* Mark tinned tins. No spinach allowed... */
+        can->spe = corpse->spe;
+        can->spe |= OPM_HOMEMADE; /* Mark tinned tins. No spinach allowed... */
         if (carried(corpse)) {
             if (corpse->unpaid)
                 verbalize(msgc_unpaid, you_buy_it);
@@ -1895,6 +1896,9 @@ fig_transform(void *arg, long timeout)
     cansee_spot = cansee(cc.x, cc.y);
     mtmp = make_familiar(&youmonst, figurine, cc.x, cc.y, TRUE);
     if (mtmp) {
+        if (!(mtmp->data->mflags2 & (M2_MALE | M2_FEMALE)))
+            mtmp->female = !!(figurine->spe & OPM_FEMALE);
+
         monnambuf = msgprintf("%s", an(m_monnam(mtmp)));
         switch (figurine->where) {
         case OBJ_INVENT:
@@ -2594,10 +2598,10 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                            information". */
                         pline(msgc_substitute,
                               "Snatching %s corpse is a fatal mistake.",
-                              an(mons[otmp->corpsenm].mname));
+                              an(opm_name(otmp)));
                         instapetrify(killer_msg(STONING,
                             msgprintf("snatching %s corpse",
-                                      an(mons[otmp->corpsenm].mname))));
+                                      an(opm_name(otmp)))));
                     }
                     hold_another_object(otmp, "You drop %s!", doname(otmp),
                                         NULL);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -124,7 +124,7 @@ mon_vision_summary(const struct monst *mtmp, char *outbuf)
         append_str_comma(outbuf, &outbufp, "monster detection");
     if (msense_status & MSENSE_WARNOFMON) {
         snprintf(wbuf, SIZE(wbuf), "warned of %s",
-                 makeplural(mtmp->data->mname));
+                 makeplural(pm_name(mtmp)));
         append_str_comma(outbuf, &outbufp,
                          Hallucination ? "paranoid delusion" : wbuf);
     }
@@ -279,7 +279,7 @@ describe_mon(int x, int y, int monnum, char *buf)
             snprintf(race, SIZE(race), "%s ", urace.adj);
 
         sprintf(buf, "%s%s%s called %s", Invis ? "invisible " : "", race,
-                mons[u.umonnum].mname, u.uplname);
+                u.ufemale ? mons[u.umonnum].fname : mons[u.umonnum].mname, u.uplname);
 
         if (u.usteed) {
             snprintf(steedbuf, SIZE(steedbuf), ", mounted on %s", y_monnam(u.usteed));

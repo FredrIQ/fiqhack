@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -336,6 +336,9 @@ maketrap(struct level *lev, int x, int y, int typ, enum rng rng)
                 add_to_container(statue, otmp);
             }
             statue->owt = weight(statue);
+            statue->spe = (mtmp->female ? OPM_FEMALE : OPM_MALE);
+            if (mtmp->data->geno & G_UNIQ)
+                statue->spe |= OPM_HISTORIC;
             mongone(mtmp);
             break;
         }
@@ -480,7 +483,7 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
     struct obj *item;
     coord cc;
     boolean historic = (Role_if(PM_ARCHEOLOGIST) && !flags.mon_moving &&
-                        (statue->spe & STATUE_HISTORIC));
+                        (statue->spe & OPM_HISTORIC));
     const char *statuename = the(xname(statue));
 
     if (ox_monst(statue)) {
@@ -522,6 +525,8 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
         } else
             mon = makemon(mptr, level, x, y, (cause == ANIMATE_SPELL) ?
                           (NO_MINVENT | MM_ADJACENTOK) : NO_MINVENT);
+        if (mon && !(mon->data->mflags2 & (M2_MALE | M2_FEMALE)))
+            mon->female = !!(statue->spe & OPM_FEMALE);
     }
 
     if (!mon) {
@@ -535,9 +540,9 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
         remove_worn_item(statue, TRUE);
 
     /* allow statues to be of a specific gender */
-    if (statue->spe & STATUE_MALE)
+    if (statue->spe & OPM_MALE)
         mon->female = FALSE;
-    else if (statue->spe & STATUE_FEMALE)
+    else if (statue->spe & OPM_FEMALE)
         mon->female = TRUE;
     /* if statue has been named, give same name to the monster */
     christen_monst(mon, ox_name(statue));
@@ -2376,10 +2381,10 @@ selftouch(const char *arg, const char *deathtype)
     if (uwep && uwep->otyp == CORPSE && touch_petrifies(&mons[uwep->corpsenm])
         && !Stone_resistance) {
         pline(msgc_fatal_predone, "%s touch the %s corpse.", arg,
-              mons[uwep->corpsenm].mname);
+              opm_name(uwep));
         instapetrify(killer_msg(STONING,
             msgprintf("%s %s corpse", deathtype,
-                      an(mons[uwep->corpsenm].mname))));
+                      an(opm_name(uwep)))));
         if (!Stone_resistance)
             uwepgone();
     }
@@ -2387,10 +2392,10 @@ selftouch(const char *arg, const char *deathtype)
     if (u.twoweap && uswapwep && uswapwep->otyp == CORPSE &&
         touch_petrifies(&mons[uswapwep->corpsenm]) && !Stone_resistance) {
         pline(msgc_fatal_predone, "%s touch the %s corpse.", arg,
-              mons[uswapwep->corpsenm].mname);
+              opm_name(uswapwep));
         instapetrify(killer_msg(STONING,
             msgprintf("%s %s corpse", deathtype,
-                      an(mons[uswapwep->corpsenm].mname))));
+                      an(opm_name(uswapwep)))));
         if (!Stone_resistance)
             uswapwepgone();
     }
@@ -2408,7 +2413,7 @@ mselftouch(struct monst *mon, const char *arg, struct monst *culprit)
             pline(combat_msgc(culprit, mon,
                               resists_ston(mon) ? cr_immune : cr_kill0),
                   "%s%s touches the %s corpse.", arg ? arg : "",
-                  arg ? mon_nam(mon) : Monnam(mon), mons[mwep->corpsenm].mname);
+                  arg ? mon_nam(mon) : Monnam(mon), opm_name(mwep));
         }
         minstapetrify(culprit, mon);
     }
@@ -3782,11 +3787,11 @@ help_monster_out(struct monst *mtmp, struct trap *ttmp)
     /* is it a cockatrice?... */
     if (!uarmg && touched_monster(mtmp->data - mons)) {
         pline(msgc_fatal_predone,
-              "You grab the trapped %s using your bare %s.", mtmp->data->mname,
+              "You grab the trapped %s using your bare %s.", pm_name(mtmp),
               makeplural(body_part(HAND)));
         instapetrify(killer_msg(STONING,
                                 msgprintf("trying to help %s out of a pit",
-                                          an(mtmp->data->mname))));
+                                          an(pm_name(mtmp)))));
         return 1;
     }
     /* need to do cockatrice check first if sleeping or paralyzed */

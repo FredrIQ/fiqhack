@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -189,6 +189,8 @@ static const short cham_to_pm[] = {
 static struct obj *
 make_corpse(struct monst *mtmp)
 {
+    boolean female = mtmp->female;
+    boolean unique = !!(mtmp->data->geno & G_UNIQ);
     const struct permonst *mdat = mtmp->data;
     int num;
     struct obj *obj = NULL;
@@ -235,6 +237,7 @@ make_corpse(struct monst *mtmp)
         /* include mtmp in the mkcorpstat() call */
         num = undead_to_corpse(mndx);
         obj = mkcorpstat(CORPSE, mtmp, &mons[num], level, x, y, TRUE, rng_main);
+        obj->spe = (female ? OPM_FEMALE : OPM_MALE);
         obj->age -= 100;        /* this is an *OLD* corpse */
         break;
     case PM_KOBOLD_MUMMY:
@@ -256,6 +259,7 @@ make_corpse(struct monst *mtmp)
         num = undead_to_corpse(mndx);
         obj = mkcorpstat(CORPSE, mtmp, &mons[num], level, x, y, TRUE,
                          rng_main);
+        obj->spe = (female ? OPM_FEMALE : OPM_MALE);
         obj->age -= 100;        /* this is an *OLD* corpse */
         break;
     case PM_IRON_GOLEM:
@@ -279,6 +283,9 @@ make_corpse(struct monst *mtmp)
         break;
     case PM_STONE_GOLEM:
         obj = mkcorpstat(STATUE, NULL, mdat, level, x, y, FALSE, rng_main);
+        obj->spe = (female ? OPM_FEMALE : OPM_MALE);
+        if (unique)
+            obj->spe |= OPM_HISTORIC;
         break;
     case PM_WOOD_GOLEM:
         num = dice(2, 4);
@@ -310,6 +317,7 @@ make_corpse(struct monst *mtmp)
             return NULL;
         obj = mkcorpstat(CORPSE, KEEPTRAITS(mtmp) ? mtmp : 0, mdat, level, x,
                          y, TRUE, rng_main);
+        obj->spe = (female ? OPM_FEMALE : OPM_MALE);
         break;
     }
     /* All special cases should precede the G_NOCORPSE check */
@@ -2200,7 +2208,7 @@ corpse_chance(struct monst *mon,
                           body_part(STOMACH));
                     if (Half_physical_damage)
                         tmp = (tmp + 1) / 2;
-                    losehp(tmp, msgprintf("%s explosion", s_suffix(mdat->mname)));
+                    losehp(tmp, msgprintf("%s explosion", s_suffix(pm_name(mon))));
                 } else {
                     You_hear(msgc_levelsound, "an explosion.");
                     magr->mhp -= tmp;
@@ -2219,7 +2227,7 @@ corpse_chance(struct monst *mon,
             }
 
             explode(mon->mx, mon->my, -1, tmp, MON_EXPLODE, EXPL_NOXIOUS,
-                    msgcat(s_suffix(mdat->mname), " explosion"), 0);
+                    msgcat(s_suffix(pm_name(mon)), " explosion"), 0);
             return FALSE;
         }
     }
@@ -2309,6 +2317,7 @@ monstone(struct monst *mdef)
     struct obj *otmp, *obj, *oldminvent;
     xchar x = mdef->mx, y = mdef->my;
     boolean wasinside = FALSE;
+    boolean female = mdef->female;
 
     /* we have to make the statue before calling mondead, to be able to put
        inventory in it, and we have to check for lifesaving before making the
@@ -2350,6 +2359,10 @@ monstone(struct monst *mdef)
            monster traits won't retain any stale item-conferred attributes */
         otmp = mkcorpstat(STATUE, KEEPTRAITS(mdef) ? mdef : 0, mdef->data,
                           level, x, y, FALSE, rng_main);
+        otmp->spe = (female ? OPM_FEMALE : OPM_MALE);
+        if (mdef->data->geno & G_UNIQ)
+            otmp->spe |= OPM_HISTORIC;
+
         if (mx_name(mdef))
             otmp = oname(otmp, mx_name(mdef));
         while ((obj = oldminvent) != 0) {
@@ -2663,7 +2676,7 @@ mon_to_stone(struct monst *mtmp)
         if (newcham(mtmp, &mons[PM_STONE_GOLEM], FALSE, FALSE)) {
             if (canseemon(mtmp))
                 pline_implied(mtmp->mtame ? msgc_petneutral : msgc_monneutral,
-                              "Now it's %s.", an(mtmp->data->mname));
+                              "Now it's %s.", an(pm_name(mtmp)));
         } else {
             if (canseemon(mtmp))
                 pline(msgc_noconsequence, "... and returns to normal.");

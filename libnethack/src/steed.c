@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -82,7 +82,7 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
     if (!uarmg && touched_monster(ptr - mons)) {
         pline(msgc_fatal_predone, "You touch %s.", mon_nam(mtmp));
         instapetrify(killer_msg(STONING, msgcat("attempting to saddle ",
-                                                an(mtmp->data->mname))));
+                                                an(pm_name(mtmp)))));
     }
     if (ptr == &mons[PM_INCUBUS] || ptr == &mons[PM_SUCCUBUS]) {
         pline(msgc_yafm, "Shame on you!");
@@ -249,7 +249,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
     if (touch_petrifies(ptr) && !Stone_resistance) {
         pline(msgc_cancelled, "You touch %s.", mon_nam(mtmp));
         instapetrify(killer_msg(STONING,
-            msgcat("attempting to ride ", an(mtmp->data->mname))));
+                                msgcat("attempting to ride ", an(pm_name(mtmp)))));
     }
     if (!mtmp->mtame || isminion(mtmp)) {
         pline(msgc_cancelled, "I think %s would mind.", mon_nam(mtmp));
@@ -520,7 +520,7 @@ dismount_steed(int reason)
         if (!mx_name(mtmp)) {
             pline(msgc_actionok,
                   "You've been through the dungeon on %s with no name.",
-                  an(mtmp->data->mname));
+                  an(pm_name(mtmp)));
             if (Hallucination)
                 pline_implied(msgc_actionok,
                               "It felt good to get out of the rain.");

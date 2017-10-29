@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -123,7 +123,7 @@ food_xname(struct obj *food, boolean the_pfx)
         result = msgprintf("%s%s corpse",
                            (the_pfx && !type_is_pname(&mons[mnum])) ?
                            "the " : "",
-                           s_suffix(mons[mnum].mname));
+                           s_suffix(opm_name(food)));
     } else {
         /* the ordinary case */
         result = singular(food, xname);
@@ -640,7 +640,7 @@ cpostfx(struct monst *mon, int pm)
                 Hallucination ?
                 "You suddenly dread being peeled and mimic %s again!" :
                 "You now prefer mimicking %s again.",
-                an(Upolyd ? youmonst.data->mname : urace.noun));
+                an(Upolyd ? pm_name(&youmonst) : urace.noun));
             helpless(tmp, hr_mimicking, "pretending to be a pile of gold", buf);
             youmonst.m_ap_type = M_AP_OBJECT;
             youmonst.mappearance = Hallucination ? ORANGE : GOLD_PIECE;
@@ -826,7 +826,7 @@ eat_tin_one_turn(void)
         goto use_me;
     }
     pline(msgc_actionok, "You succeed in opening the tin.");
-    if (u.utracked[tos_tin]->spe != 1) {
+    if (!(u.utracked[tos_tin]->spe & OPM_SPINACH)) {
         if (u.utracked[tos_tin]->corpsenm == NON_PM) {
             pline(msgc_noconsequence, "It turns out to be empty.");
             u.utracked[tos_tin]->dknown = u.utracked[tos_tin]->known = TRUE;
@@ -834,13 +834,13 @@ eat_tin_one_turn(void)
             goto use_me;
         }
         r = u.utracked[tos_tin]->cursed ? ROTTEN_TIN : /* cursed => rotten */
-            (u.utracked[tos_tin]->spe == -1) ? HOMEMADE_TIN :  /* player-made */
+            (u.utracked[tos_tin]->spe & OPM_HOMEMADE) ? HOMEMADE_TIN : /* player-made */
             rn2(TTSZ - 1);      /* else take your pick */
         if (r == ROTTEN_TIN &&
             (u.utracked[tos_tin]->corpsenm == PM_LIZARD ||
              u.utracked[tos_tin]->corpsenm == PM_LICHEN))
             r = HOMEMADE_TIN;   /* lizards don't rot */
-        else if (u.utracked[tos_tin]->spe == -1 &&
+        else if ((u.utracked[tos_tin]->spe & OPM_HOMEMADE) &&
                  !u.utracked[tos_tin]->blessed && !rn2(7))
             r = ROTTEN_TIN;     /* some homemade tins go bad */
         which = 0;      /* 0=>plural, 1=>as-is, 2=>"the" prefix */
@@ -854,7 +854,7 @@ eat_tin_one_turn(void)
             else
                 which = monnam_is_pname(idx) ? 1 : 0;
         } else {
-            what = mons[u.utracked[tos_tin]->corpsenm].mname;
+            what = opm_name(u.utracked[tos_tin]);
             if (mons[u.utracked[tos_tin]->corpsenm].geno & G_UNIQ)
                 which =
                     type_is_pname(&mons[u.utracked[tos_tin]->corpsenm]) ? 1 : 2;
@@ -875,7 +875,7 @@ eat_tin_one_turn(void)
         u.utracked[tos_food] = NULL;
 
         pline(msgc_actionok, "You consume %s %s.", tintxts[r].txt,
-              mons[u.utracked[tos_tin]->corpsenm].mname);
+              opm_name(u.utracked[tos_tin]));
 
         /* KMH, conduct */
         break_conduct(conduct_food);
@@ -1134,7 +1134,7 @@ eatcorpse(struct monst *mon, struct obj *otmp)
             else
                 buf = msgprintf("the rotted corpse of %s%s",
                                 !type_is_pname(&mons[mnum]) ? "the " : "",
-                                mons[mnum].mname);
+                                opm_name(otmp));
             make_sick(mon, sick_time, buf, TRUE, SICK_VOMITABLE);
         }
         if (mcarried(otmp))

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -86,10 +86,10 @@ throw_obj(struct obj *obj, const struct nh_cmd_arg *arg,
     if (!uarmg && !Stone_resistance &&
         (obj->otyp == CORPSE && touch_petrifies(&mons[obj->corpsenm]))) {
         pline(msgc_badidea, "You throw the %s corpse with your bare %s.",
-              mons[obj->corpsenm].mname, body_part(HAND));
+              opm_name(obj), body_part(HAND));
         instapetrify(killer_msg(STONING,
             msgprintf("throwing %s corpse without gloves",
-                      an(mons[obj->corpsenm].mname))));
+                      an(opm_name(obj)))));
     }
     if (welded(obj)) {
         weldmsg(msgc_cancelled1, obj);

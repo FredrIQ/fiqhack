@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -932,6 +932,11 @@ revive(struct obj *obj)
                 }
                 /* Monster retains its name */
                 christen_monst(mtmp, ox_name(obj));
+
+                /* And gender */
+                if (!(mtmp->data->mflags2 & (M2_MALE | M2_FEMALE)))
+                    mtmp->female = !!(obj->spe & OPM_FEMALE);
+
                 /* flag the quest leader as alive. */
                 if (mtmp->data->msound == MS_LEADER ||
                     mtmp->m_id == u.quest_status.leader_m_id) {
@@ -3779,7 +3784,7 @@ break_statue(struct obj *obj)
         place_object(item, level, obj->ox, obj->oy);
     }
     if (Role_if(PM_ARCHEOLOGIST) && !flags.mon_moving &&
-        (obj->spe & STATUE_HISTORIC)) {
+        (obj->spe & OPM_HISTORIC)) {
         if (cansee(obj->ox, obj->oy))
             pline(msgc_alignbad,
                   "You feel guilty about damaging such a historic statue.");

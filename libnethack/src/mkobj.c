@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -644,6 +644,12 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                        corpse instead, then */
                     otmp->corpsenm = PM_HUMAN;
                 }
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                 /* timer set below */
                 break;
             case EGG:
@@ -655,6 +661,12 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                             rndmonnum(&lev->z, rng_main));
                         if (mndx != NON_PM && !dead_species(mndx, TRUE)) {
                             otmp->corpsenm = mndx;      /* typed egg */
+                            if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                                otmp->spe |= OPM_FEMALE;
+                            else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                                otmp->spe |= OPM_MALE;
+                            else
+                                otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                             attach_egg_hatch_timeout(otmp);
                             break;
                         }
@@ -663,13 +675,19 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
             case TIN:
                 otmp->corpsenm = NON_PM;        /* empty (so far) */
                 if (!rn2_on_rng(6, rng))
-                    otmp->spe = 1;      /* spinach */
+                    otmp->spe |= OPM_SPINACH; /* spinach */
                 else
                     for (tryct = 200; tryct > 0; --tryct) {
                         mndx = undead_to_corpse(rndmonnum(&lev->z, rng));
                         if (mons[mndx].cnutrit &&
                             !(mvitals[mndx].mvflags & G_NOCORPSE)) {
                             otmp->corpsenm = mndx;
+                            if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                                otmp->spe |= OPM_FEMALE;
+                            else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                                otmp->spe |= OPM_MALE;
+                            else
+                                otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                             break;
                         }
                     }
@@ -755,6 +773,12 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                     while (is_human(&mons[otmp->corpsenm])
                            && tryct2++ < 30);
                     blessorcurse(otmp, 4, rng);
+                    if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                        otmp->spe |= OPM_FEMALE;
+                    else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                        otmp->spe |= OPM_MALE;
+                    else
+                        otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                     break;
                 }
             case BELL_OF_OPENING:
@@ -867,6 +891,12 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                     rn2_on_rng(level_difficulty(&lev->z) / 2 + 10, rng) > 10)
                     add_to_container(otmp,
                                      mkobj(lev, SPBOOK_CLASS, FALSE, rng));
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             }
             break;
         case COIN_CLASS:
@@ -1163,6 +1193,12 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
            struct monst *mtmp, const struct permonst *ptr, struct level *lev,
            int x, int y, boolean init, enum rng rng)
 {
+    boolean female = FALSE;
+    if (ptr->mflags2 & M2_FEMALE)
+        female = TRUE;
+    else if (!(ptr->mflags2 & M2_MALE))
+        female = !!rn2(2);
+
     struct obj *otmp;
 
     if (objtype != CORPSE && objtype != STATUE)
@@ -1174,11 +1210,16 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
     } else
         otmp = mksobj_at(objtype, lev, x, y, init, FALSE, rng);
     if (otmp) {
+        boolean historic = !!(otmp->spe & OPM_HISTORIC);
         if (mtmp) {
+            female = mtmp->female;
             if (!ptr)
                 ptr = mtmp->data;
             save_mtraits(otmp, mtmp);
         }
+        otmp->spe = female ? OPM_FEMALE : OPM_MALE;
+        if (historic)
+            otmp->spe |= OPM_HISTORIC;
 
         /* use the corpse or statue produced by mksobj() as-is unless `ptr' is
            non-null */
@@ -1839,6 +1880,31 @@ restore_obj(struct memfile *mf)
             restore_oextra(mf, otmp);
     }
 
+    /* Fix up spe on things where corpsenm matters. */
+    if (flags.save_revision < 10 &&
+        (otmp->otyp == CORPSE ||
+         /* Statues had previous logic but might need gender fixup still */
+         (otmp->otyp == STATUE && !(otmp->spe & (OPM_MALE | OPM_FEMALE))) ||
+         otmp->otyp == TIN || otmp->otyp == FIGURINE || otmp->otyp == EGG)) {
+        boolean base_spe = 0;
+        if (otmp->otyp == STATUE && (otmp->spe & OPM_HISTORIC))
+            base_spe = OPM_HISTORIC;
+        else if (otmp->otyp == TIN && otmp->spe == 1)
+            base_spe = OPM_SPINACH;
+        else if (otmp->otyp == TIN && otmp->spe == -1)
+            base_spe = OPM_HOMEMADE;
+        otmp->spe = base_spe;
+
+        /* Gender fixup */
+        if (otmp->otyp != TIN || !(otmp->spe & OPM_SPINACH)) {
+            struct monst *mon = ox_monst(otmp);
+            if (mon)
+                otmp->spe |= (mon->female ? OPM_FEMALE : OPM_MALE);
+            else
+                otmp->spe |= ((mons[otmp->corpsenm].mflags2 & M2_FEMALE) ?
+                              OPM_FEMALE : OPM_MALE);
+        }
+    }
     return otmp;
 }
 

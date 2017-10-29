@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -833,7 +833,8 @@ paygd(void)
         make_grave(level, gx, gy,
                    msgprintf(
                        "To Croesus: here's the gold recovered from %s the %s.",
-                       u.uplname, mons[u.umonster].mname));
+                       u.uplname, u.ufemale ? mons[u.umonster].fname :
+                       mons[u.umonster].mname));
     }
     
     for (coins = youmonst.minvent; coins; coins = nextcoins) {

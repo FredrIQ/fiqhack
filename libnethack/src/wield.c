@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -236,10 +236,10 @@ ready_weapon(struct obj *wep)
                touched_monster(wep->corpsenm)) {
         /* Prevent wielding cockatrice when not wearing gloves --KAA */
         pline(msgc_fatal_predone, "You wield the %s corpse in your bare %s.",
-              mons[wep->corpsenm].mname, makeplural(body_part(HAND)));
+              opm_name(wep), makeplural(body_part(HAND)));
         instapetrify(killer_msg(STONING,
             msgprintf("wielding %s corpse without gloves",
-                      an(mons[wep->corpsenm].mname))));
+                      an(opm_name(wep)))));
         /* if the player lifesaves from that, don't wield */
     } else if (wep->oartifact && !touch_artifact(wep, &youmonst)) {
         ; /* you got blasted, don't attempt to wield */
@@ -459,10 +459,10 @@ can_twoweapon(void)
              (uswapwep->otyp == CORPSE &&
               touch_petrifies(&mons[uswapwep->corpsenm]))) {
         pline(msgc_fatal_predone, "You wield the %s corpse with your bare %s.",
-              mons[uswapwep->corpsenm].mname, body_part(HAND));
+              opm_name(uswapwep), body_part(HAND));
         instapetrify(killer_msg(STONING,
             msgprintf("wielding %s corpse without gloves",
-                      an(mons[uswapwep->corpsenm].mname))));
+                      an(opm_name(uswapwep)))));
     } else if (slippery_fingers(&youmonst) || uswapwep->cursed) {
         if (!slippery_fingers(&youmonst))
             uswapwep->bknown = TRUE;

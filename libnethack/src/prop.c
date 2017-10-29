@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -2950,7 +2950,7 @@ enlighten_mon(struct monst *mon, int final)
     if (polymorph_control(mon))
         mon_has(&menu, mon, "polymorph control");
     if ((mon == &youmonst && u.ulycn >= LOW_PM) || is_were(mon->data))
-        mon_is(&menu, mon, an(mons[u.ulycn].mname));
+        mon_is(&menu, mon, an(u.ufemale ? mons[u.ulycn].fname : mons[u.ulycn].mname));
     if (mon == &youmonst && Upolyd) {
         const char *buf;
         if (u.umonnum == u.ulycn)
@@ -2958,7 +2958,7 @@ enlighten_mon(struct monst *mon, int final)
         else
             buf = msgprintf("%spolymorphed into %s",
                             flags.polyinit_mnum == -1 ? "" : "permanently ",
-                            an(youmonst.data->mname));
+                            an(pm_name(&youmonst)));
         if (wizard)
             buf = msgprintf("%s (%d)", buf, u.mtimedone);
         mon_is(&menu, mon, buf);
@@ -3316,14 +3316,14 @@ enlightenment(int final)
     if (Polymorph_control)
         you_have(&menu, "polymorph control");
     if (u.ulycn >= LOW_PM)
-        you_are(&menu, an(mons[u.ulycn].mname));
+        you_are(&menu, an(u.ufemale ? mons[u.ulycn].fname : mons[u.ulycn].mname));
     if (Upolyd) {
         if (u.umonnum == u.ulycn)
             buf = "in beast form";
         else
             buf = msgprintf("%spolymorphed into %s",
                             flags.polyinit_mnum == -1 ? "" : "permanently ",
-                            an(youmonst.data->mname));
+                            an(u.mfemale ? youmonst.data->fname : youmonst.data->mname));
         if (wizard)
             buf = msgprintf("%s (%d)", buf, u.mtimedone);
         you_are(&menu, buf);

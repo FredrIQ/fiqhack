@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -281,7 +281,7 @@ priestname(const struct monst *mon, boolean override_hallu)
         do_the = !monnam_is_pname(idx);
         gname_function = halu_gname;
     } else {
-        what = mon->data->mname;
+        what = pm_name(mon);
     }
 
     if (do_the)

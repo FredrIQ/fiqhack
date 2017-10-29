@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2207,11 +2207,11 @@ feel_cockatrice(struct obj *otmp, boolean force_touch, const char *verbing)
         if (poly_when_stoned(youmonst.data))
             pline(msgc_statusgood,
                   "You touched the %s corpse with your bare %s.",
-                  mons[otmp->corpsenm].mname, makeplural(body_part(HAND)));
+                  opm_name(otmp), makeplural(body_part(HAND)));
         else {
             pline(msgc_fatal_predone,
                   "Touching the %s corpse is a fatal mistake...",
-                  mons[otmp->corpsenm].mname);
+                  opm_name(otmp));
             rv = TRUE;
         }
         instapetrify(killer_msg(STONING,

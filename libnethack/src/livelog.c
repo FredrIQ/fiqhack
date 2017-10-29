@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Nathan Eady, 2015-04-04 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) 2014 Patric Mueller */
 /* Retrieved from https://github.com/bhaak/nethack-de/blob/master/patches/nethack.unfoog.de-livelog.patch */
 
@@ -153,6 +153,6 @@ livelog_unique_monster(const struct monst *mon) {
                                        ? (frole.rank[frank].f ? frole.rank[frank].f
                                                               : frole.rank[frank].m)
                                        : (frole.rank[frank].m)),
-                                      mons[monsndx(mon->data)].mname));
+                                      pm_name(mon)));
     }
 }

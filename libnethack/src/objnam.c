@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -585,7 +585,7 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
             buf = msgcat_many(buf, " called ", un, NULL);
 
         if (typ == FIGURINE)
-            buf = msgcat_many(buf, " of ", an(mons[obj->corpsenm].mname), NULL);
+            buf = msgcat_many(buf, " of ", an(opm_name(obj)), NULL);
         break;
 
     case ARMOR_CLASS:
@@ -650,14 +650,14 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
 
         buf = actualn;
         if (typ == TIN && known) {
-            if (obj->spe > 0)
+            if (obj->spe & OPM_SPINACH)
                 buf = "tin of spinach";
             else if (obj->corpsenm == NON_PM)
                 buf = "empty tin";
             else if (vegetarian(&mons[obj->corpsenm]))
-                buf = msgcat_many(buf, " of ", mons[obj->corpsenm].mname, NULL);
+                buf = msgcat_many(buf, " of ", opm_name(obj), NULL);
             else
-                buf = msgcat_many(buf, " of ", mons[obj->corpsenm].mname,
+                buf = msgcat_many(buf, " of ", opm_name(obj),
                                   " meat", NULL);
         }
 
@@ -674,13 +674,12 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
         if (typ == STATUE)
             buf = msgprintf("%s%s of %s%s",
                             (Role_if(PM_ARCHEOLOGIST) &&
-                             (obj->spe & STATUE_HISTORIC)) ? "historic " : "",
+                             (obj->spe & OPM_HISTORIC)) ? "historic " : "",
                             actualn,
                             type_is_pname(&mons[obj->corpsenm]) ? "" :
                             (mons[obj->corpsenm].geno & G_UNIQ) ? "the " :
-                            (strchr(vowels, *(mons[obj->corpsenm].mname)) ?
-                             "an " : "a "),
-                            mons[obj->corpsenm].mname);
+                            (strchr(vowels, *(opm_name(obj))) ?
+                             "an " : "a "), opm_name(obj));
         else
             buf = actualn;
 
@@ -1089,17 +1088,17 @@ doname_base(const struct obj *obj, boolean with_price)
             if (mons[obj->corpsenm].geno & G_UNIQ) {
                 prefix = msgcat_many(
                     (type_is_pname(&mons[obj->corpsenm]) ? "" : "the "),
-                    s_suffix(mons[obj->corpsenm].mname), " ", NULL);
+                    s_suffix(opm_name(obj)), " ", NULL);
                 if (obj->oeaten)
                     prefix = msgcat(prefix, "partly eaten ");
             } else {
-                prefix = msgcat(prefix, mons[obj->corpsenm].mname);
+                prefix = msgcat(prefix, opm_name(obj));
                 prefix = msgcat(prefix, " ");
             }
         } else if (obj->otyp == EGG) {
             if (obj->corpsenm >= LOW_PM &&
                 (obj->known || mvitals[obj->corpsenm].mvflags & MV_KNOWS_EGG)) {
-                prefix = msgcat(prefix, mons[obj->corpsenm].mname);
+                prefix = msgcat(prefix, opm_name(obj));
                 prefix = msgcat(prefix, " ");
                 if (obj->spe)
                     buf = msgcat(buf, " (laid by you)");
@@ -1231,7 +1230,7 @@ not_fully_identified(const struct obj * otmp)
 const char *
 corpse_xname(const struct obj *otmp, boolean ignore_oquan)
 {       /* to force singular */
-    const char *nambuf = msgcat(mons[otmp->corpsenm].mname, " corpse");
+    const char *nambuf = msgcat(opm_name(otmp), " corpse");
 
     if (ignore_oquan || otmp->quan < 2)
         return nambuf;
@@ -2974,7 +2973,7 @@ typfnd:
             otmp->spe = 0;
         } else if (contents == SPINACH) {
             otmp->corpsenm = NON_PM;
-            otmp->spe = 1;
+            otmp->spe = OPM_SPINACH;
         }
         break;
     case SLIME_MOLD:
@@ -3012,6 +3011,12 @@ typfnd:
                        !(mvitals[mntmp].mvflags & G_NOCORPSE) &&
                        mons[mntmp].cnutrit != 0) {
                 otmp->corpsenm = mntmp;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             }
             break;
         case CORPSE:
@@ -3033,6 +3038,12 @@ typfnd:
                     otmp->corpsenm = genus(mntmp, 1);
                 else
                     otmp->corpsenm = mntmp;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                 start_corpse_timeout(otmp);
             }
             break;
@@ -3040,11 +3051,23 @@ typfnd:
             if (!(mons[mntmp].geno & G_UNIQ)
                 && !is_human(&mons[mntmp]))
                 otmp->corpsenm = mntmp;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             break;
         case EGG:
             mntmp = can_be_hatched(mntmp);
             if (mntmp != NON_PM) {
                 otmp->corpsenm = mntmp;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                 if (!dead_species(mntmp, TRUE))
                     attach_egg_hatch_timeout(otmp);
                 else
@@ -3055,7 +3078,13 @@ typfnd:
             otmp->corpsenm = mntmp;
             if (Has_contents(otmp) && verysmall(&mons[mntmp]))
                 delete_contents(otmp);  /* no spellbook */
-            otmp->spe = ishistoric ? STATUE_HISTORIC : 0;
+            otmp->spe = (ishistoric ? OPM_HISTORIC : 0);
+            if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                otmp->spe |= OPM_FEMALE;
+            else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                otmp->spe |= OPM_MALE;
+            else
+                otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             break;
         case SCALE_MAIL:
             /* Dragon mail - depends on the order of objects & dragons. */
