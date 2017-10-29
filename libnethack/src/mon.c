@@ -1818,6 +1818,13 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
          !nonliving(magr->data)))
         return ALLOW_M | ALLOW_TM;
 
+    /* dogs vs cats unless both are tame */
+    if ((!magr->mtame || !mdef->mtame) &&
+        is_domestic(magr->data) && is_domestic(mdef->data) &&
+        ((magr->data->mlet == S_DOG && mdef->data->mlet == S_FELINE) ||
+         (magr->data->mlet == S_FELINE && mdef->data->mlet == S_DOG)))
+        return ALLOW_M | ALLOW_TM;
+
     /* pets attack hostile monsters */
     if (magr->mtame && !mdef->mpeaceful)
         return ALLOW_M | ALLOW_TM;
