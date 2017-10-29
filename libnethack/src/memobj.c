@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -169,7 +169,9 @@ dofindobj(const struct nh_cmd_arg *arg)
         }
 
         /* Display target level */
+        struct level *old_level = level;
         if (lev != level) {
+            level = lev;
             int x, y;
             for (x = 0; x < COLNO; x++)
                 for (y = 0; y < ROWNO; y++)
@@ -180,10 +182,12 @@ dofindobj(const struct nh_cmd_arg *arg)
             notify_levelchange(&lev->z);
             flush_screen_nopos();
             look_at_map(upper->ox, upper->oy);
+            level = old_level;
         }
 
         /* Display object position */
         cls();
+        level = lev;
         dbuf_set_memory(lev, upper->ox, upper->oy);
         const char *dname = The(distant_name(obj, cxname));
         const char *cdname = distant_name(upper, doname);
@@ -192,6 +196,7 @@ dofindobj(const struct nh_cmd_arg *arg)
               msgcat_many(", inside ", cdname, NULL));
         flush_screen_nopos();
         look_at_map(upper->ox, upper->oy);
+        level = old_level;
         notify_levelchange(NULL);
         doredraw();
     }
