@@ -57,13 +57,6 @@ pm_name(const struct monst *mon)
 const char *
 opm_name(const struct obj *obj)
 {
-    /* Check if we have a monst. */
-    struct monst *mon = ox_monst(obj);
-
-    if (mon)
-        return pm_name(mon);
-
-    /* Otherwise, use corpsenm */
     if (obj->spe & OPM_FEMALE)
         return pm_female(obj->corpsenm);
     return pm_male(obj->corpsenm);
