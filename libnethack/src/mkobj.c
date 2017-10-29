@@ -1194,9 +1194,9 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
            int x, int y, boolean init, enum rng rng)
 {
     boolean female = FALSE;
-    if (ptr->mflags2 & M2_FEMALE)
+    if (ptr && ptr->mflags2 & M2_FEMALE)
         female = TRUE;
-    else if (!(ptr->mflags2 & M2_MALE))
+    else if (ptr && !(ptr->mflags2 & M2_MALE))
         female = !!rn2(2);
 
     struct obj *otmp;
