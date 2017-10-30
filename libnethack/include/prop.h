@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-30 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -88,8 +88,8 @@ enum youprop {
     ZOMBIE                   = 70,
     WATERPROOF               = 71,
     STUN_RES                 = 72,
-/*  DEATH_RES                = 73, TODO */
-    LAST_PROP                = STUN_RES,
+    DEATH_RES                = 73,
+    LAST_PROP                = DEATH_RES,
     INVALID_PROP             = -1,
 };
 

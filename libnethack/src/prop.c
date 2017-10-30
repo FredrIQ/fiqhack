@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-30 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -111,6 +111,8 @@ static const struct propmsg prop_msg[] = {
      "You feel half blind!", "half blind"},
     {STUN_RES, "You feel more in control of your body.", "flexible",
      "You feel less in control of your body.", "inflexible"},
+    {DEATH_RES, "You feel bold at the thought of danger.", "less endangered",
+     "You feel like an endangered species.", "endangered"},
     {NO_PROP, "", "", "", ""}
 };
 
@@ -253,6 +255,9 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
         property == ANTIMAGIC         ? dmgtype(mdat, AD_MAGM) ||
                                         dmgtype(mdat, AD_RBRE) ||
                                         mdat == &mons[PM_BABY_GRAY_DRAGON]   :
+        property == DEATH_RES         ? nonliving(mdat) || is_demon(mdat) ||
+                                        mdat == &mons[PM_DEATH] ||
+                                        mdat->mlet == S_ANGEL                :
         property == STUNNED           ? mdat->mflags2 & M2_STUNNED           :
         property == BLINDED           ? !haseyes(mdat)                       :
         property == HALLUC            ? dmgtype(mdat, AD_HALU)               :
@@ -2147,6 +2152,8 @@ update_property(struct monst *mon, enum youprop prop,
         if (!lost && set_property(mon, STUNNED, -2, FALSE))
             effect = TRUE;
         break;
+    case DEATH_RES:
+        break;
     default:
         impossible("Unknown property: %u", prop);
         break;
@@ -2773,6 +2780,8 @@ enlighten_mon(struct monst *mon, int final)
         mon_is(&menu, mon, "hallucination resistant");
     if (resists_stun(mon))
         mon_is(&menu, mon, "resistant to stunning");
+    if (resists_death(mon))
+        mon_is(&menu, mon, "resistant to death magic");
     if (waterproof(mon))
         mon_is(&menu, mon, "protected from water");
     if (mon == &youmonst && u.uinvulnerable)
@@ -3154,6 +3163,8 @@ enlightenment(int final)
         you_are(&menu, "petrification resistant");
     if (resists_stun(&youmonst))
         you_are(&menu, "resistant to stunning");
+    if (resists_death(&youmonst))
+        you_are(&menu, "resistant to death magic");
     if (waterproof(&youmonst))
         you_are(&menu, "protected from water");
     if (u.uinvulnerable)

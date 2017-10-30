@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-30 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -157,8 +157,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     if (raylevel == P_UNSKILLED && Drain_resistance)
                         resist_death = TRUE;
                     /* why MR doesn't resist general deathfields is beyond me, but... */
-                    if (nonliving(youmonst.data) ||
-                        is_demon(youmonst.data))
+                    if (resists_death(&youmonst))
                         resist_death = TRUE;
                     if (raylevel && Antimagic)
                         resist_death = TRUE;
@@ -208,8 +207,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     case AD_DISN:
                         if (raylevel == P_UNSKILLED && resists_drli(mtmp))
                         resist_death = TRUE;
-                        if (nonliving(mtmp->data) ||
-                            is_demon(mtmp->data))
+                        if (resists_death(mtmp))
                             resist_death = TRUE;
                         if (raylevel && resists_magm(mtmp))
                             resist_death = TRUE;
@@ -379,9 +377,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         mdam = 0;
                     }
                     if (adtyp == AD_DISN && raylevel) {
-                        if (nonliving(mtmp->data) ||
-                            is_demon(mtmp->data) ||
-                            resists_magm(mtmp) ||
+                        if (resists_death(mtmp) || resists_magm(mtmp) ||
                             raylevel == P_UNSKILLED)
                             mlosexp(NULL, mtmp, "", FALSE);
                         else
@@ -422,9 +418,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 damu = 0;
             }
             if (adtyp == AD_DISN) {
-                if (nonliving(youmonst.data) ||
-                    is_demon(youmonst.data) ||
-                    Antimagic ||
+                if (resists_death(&youmonst) || Antimagic ||
                     raylevel == P_UNSKILLED) {
                     losexp("drained by a death field",FALSE);
                     damu = 0;
