@@ -89,6 +89,7 @@ enum youprop {
     WATERPROOF               = 71,
     STUN_RES                 = 72,
     DEATH_RES                = 73,
+    /* Remember to change savemap mapping in save.c for ever_trinsic if applicable */
     LAST_PROP                = DEATH_RES,
     INVALID_PROP             = -1,
 };

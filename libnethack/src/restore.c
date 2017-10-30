@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -717,6 +717,11 @@ restore_you(struct memfile *mf, struct you *y)
     y->moveamt = mread8(mf);
     y->spellquiver = mread16(mf);
 
+    int lastprop = mread8(mf);
+    if (!lastprop)
+        lastprop = 69; /* old saves */
+    int ever_trinsic_size = (lastprop + 7) / 8;
+
     /* this is oddly placed due to save padding */
     /*len = mread32(mf);
     if (len > 0) {
@@ -729,12 +734,12 @@ restore_you(struct memfile *mf, struct you *y)
         }*/
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 509; i++)
+    for (i = 0; i < 508; i++)
         (void) mread8(mf);
 
-    mread(mf, y->ever_extrinsic, sizeof (y->ever_extrinsic));
-    mread(mf, y->ever_intrinsic, sizeof (y->ever_intrinsic));
-    mread(mf, y->ever_temporary, sizeof (y->ever_temporary));
+    mread(mf, y->ever_extrinsic, ever_trinsic_size);
+    mread(mf, y->ever_intrinsic, ever_trinsic_size);
+    mread(mf, y->ever_temporary, ever_trinsic_size);
     mread(mf, y->uwhybusy, sizeof (y->uwhybusy));
     mread(mf, y->urooms, sizeof (y->urooms));
     mread(mf, y->urooms0, sizeof (y->urooms0));

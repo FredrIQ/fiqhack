@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -511,6 +511,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->bashmsg);
     mwrite8(mf, y->moveamt);
     mwrite16(mf, y->spellquiver);
+    mwrite8(mf, LAST_PROP);
 
     /* Padding to allow character information to be added without breaking save
        compatibility: add new options just before the padding, then remove the
@@ -522,12 +523,12 @@ save_you(struct memfile *mf, struct you *y)
     } else
     mwrite32(mf, 0);*/
 
-    for (i = 0; i < 509; i++)    /* savemap: ignore */
+    for (i = 0; i < 508; i++)    /* savemap: ignore */
         mwrite8(mf, 0);          /* savemap: 4088 */
 
-    mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 72 */
-    mwrite(mf, y->ever_intrinsic, (sizeof y->ever_intrinsic)); /* savemap: 72 */
-    mwrite(mf, y->ever_temporary, (sizeof y->ever_temporary)); /* savemap: 72 */
+    mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 80 */
+    mwrite(mf, y->ever_intrinsic, (sizeof y->ever_intrinsic)); /* savemap: 80 */
+    mwrite(mf, y->ever_temporary, (sizeof y->ever_temporary)); /* savemap: 80 */
     mwrite(mf, y->uwhybusy, (sizeof y->uwhybusy));           /* savemap: 2048 */
     mwrite(mf, y->urooms, sizeof (y->urooms));                 /* savemap: 40 */
     mwrite(mf, y->urooms0, sizeof (y->urooms0));               /* savemap: 40 */
