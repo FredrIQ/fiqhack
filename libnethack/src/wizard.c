@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -612,6 +612,7 @@ tactics(struct monst *mtmp)
     long strat = mtmp->mstrategy;
     struct level *lev = mtmp->dlevel;
     struct obj *obj;
+    struct monst *target;
 
     switch (strat) {
     case st_obj: /* object on floor */
@@ -633,11 +634,13 @@ tactics(struct monst *mtmp)
     case st_mon: /* object in monster inventory */
         /* If we're already next to our target square, don't teleport */
         if (monnear(mtmp, mtmp->sx, mtmp->sy)) {
-            /* Attack our target */
-            if (um_at(level, mtmp->sx, mtmp->sy))
-                return mattackq(mtmp, mtmp->sx, mtmp->sy) ? 2 : 1;
+            /* Attack our target unless we're tame and target is tame/player */
+            target = mvismon_at(mtmp, mtmp->dlevel, mtmp->sx, mtmp->sy);
+            if (!target ||
+                (mtmp->mtame && (target->mtame || target == &youmonst)))
+                return 0; /* Fallback to normal AI */
 
-            return 0; /* Fallback to normal AI */
+            return mattackq(mtmp, mtmp->sx, mtmp->sy) ? 2 : 1;
         }
 
         /* Otherwise, teleport to the target */
@@ -678,7 +681,6 @@ tactics(struct monst *mtmp)
             rloc(mtmp, TRUE);
 
             /* Try to figure out where pests are */
-            struct monst *target;
             int x = COLNO;
             int y = ROWNO;
             for (target = mtmp->dlevel->monlist; target; target = monnext(target)) {
