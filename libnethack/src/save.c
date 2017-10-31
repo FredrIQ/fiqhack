@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -516,14 +516,14 @@ save_you(struct memfile *mf, struct you *y)
     /* Padding to allow character information to be added without breaking save
        compatibility: add new options just before the padding, then remove the
        same amount of padding */
-    /*if (y->delayed_killers.zombie) {
+    if (y->delayed_killers.zombie) {
         int len = strlen(y->delayed_killers.zombie);
         mwrite32(mf, len);
         mwrite(mf, y->delayed_killers.zombie, len);
     } else
-    mwrite32(mf, 0);*/
+        mwrite32(mf, 0);
 
-    for (i = 0; i < 508; i++)    /* savemap: ignore */
+    for (i = 0; i < 504; i++)    /* savemap: ignore */
         mwrite8(mf, 0);          /* savemap: 4088 */
 
     mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 80 */
