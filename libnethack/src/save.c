@@ -524,7 +524,7 @@ save_you(struct memfile *mf, struct you *y)
         mwrite32(mf, 0);
 
     for (i = 0; i < 504; i++)    /* savemap: ignore */
-        mwrite8(mf, 0);          /* savemap: 4088 */
+        mwrite8(mf, 0);          /* savemap: 4032 */
 
     mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 80 */
     mwrite(mf, y->ever_intrinsic, (sizeof y->ever_intrinsic)); /* savemap: 80 */
