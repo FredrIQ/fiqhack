@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-31 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef RND_H
@@ -169,7 +169,7 @@ rnd(int x)
 static inline int
 dice(int n, int x)
 {
-    int tmp = n;
+    int tmp = n; /* start with number of dices, since rn2(x) is 0 to x-1 */
 
     while (n--)
         tmp += rn2(x);
