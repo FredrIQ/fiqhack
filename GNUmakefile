@@ -50,6 +50,11 @@ CPPFLAGS += -Inethack/include
 CPPFLAGS += -Itilesets/include
 CPPFLAGS += -Ilibuncursed/include
 
+# assume that if we have a .git repository, git is available
+SPECIFIC_VERSION = tarball
+ifneq ($(wildcard .git/.),)
+	SPECIFIC_VERSION = $(shell git log --pretty=format:'%h' -n 1)
+endif
 
 ### BINARIES ###
 
@@ -167,7 +172,7 @@ clean:: ; rm -f libnethack/src/readonly.c
 # reasons
 date.h: libnethack/include/date.h ;
 libnethack/include/date.h: libnethack/util/makedefs $(filter-out libnethack/src/version.o,$(GAME_O))
-	$< -v $@
+	$< -v $@ "$(SPECIFIC_VERSION)"
 clean:: ; rm -f libnethack/include/date.h
 
 verinfo.h: libnethack/include/verinfo.h ;
