@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1344,12 +1344,21 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
         }
     }
     if (attacks(AD_ELEC, otmp)) {
-        if (vis)
-            pline(combat_msgc(magr, mdef, cr_hit),
-                  "The %s hits%s %s%c",
-                  otmp->oartifact ? "massive hammer" : "weapon",
-                  resists_elec(mdef) ? "" : "!  Lightning strikes",
-                  mon_nam(mdef), !spec_dbon_applies ? '.' : '!');
+        if (vis) {
+            if (resists_elec(mdef))
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "Lightning strikes %s, but %s%s unfazed.",
+                      mon_nam(mdef), udef ? "you" : mhe(mdef),
+                      udef ? "'re" : " seems");
+            else {
+                if (otmp->oartifact)
+                    pline_implied(combat_msgc(magr, mdef, cr_hit),
+                                  "The massive hammer hits!");
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "Lightning strikes %s!", mon_nam(mdef));
+            }
+        }
+
         if (!rn2(5))
             *dmgptr += destroy_mitem(mdef, WAND_CLASS, AD_ELEC, NULL);
         if (otmp->oartifact)
@@ -1360,6 +1369,7 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
         }
     }
     if (attacks(AD_MAGM, otmp)) {
+        impossible("artifact (or object property) with magic damage?");
         if (vis)
             pline(combat_msgc(magr, mdef, cr_hit),
                   "The imaginary widget hits%s %s%c",
