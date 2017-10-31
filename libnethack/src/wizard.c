@@ -632,10 +632,14 @@ tactics(struct monst *mtmp)
         mnearto(mtmp, mtmp->sx, mtmp->sy, FALSE);
         return 0;
     case st_mon: /* object in monster inventory */
+        /* If we're tame and target is tame or player, usually run the normal AI */
+        target = mvismon_at(mtmp, mtmp->dlevel, mtmp->sx, mtmp->sy);
+        if (target && mtmp->mtame && (target->mtame || target == &youmonst) && rn2(10))
+            return 0;
+
         /* If we're already next to our target square, don't teleport */
         if (monnear(mtmp, mtmp->sx, mtmp->sy)) {
             /* Attack our target unless we're tame and target is tame/player */
-            target = mvismon_at(mtmp, mtmp->dlevel, mtmp->sx, mtmp->sy);
             if (!target ||
                 (mtmp->mtame && (target->mtame || target == &youmonst)))
                 return 0; /* Fallback to normal AI */
@@ -643,7 +647,7 @@ tactics(struct monst *mtmp)
             return mattackq(mtmp, mtmp->sx, mtmp->sy) ? 2 : 1;
         }
 
-        /* Otherwise, teleport to the target */
+        /* Otherwise, teleport to the target (only do it sometimes if we wont attack) */
         mnearto(mtmp, mtmp->sx, mtmp->sy, FALSE);
         return 0;
     case st_escape:   /* hide and recover */
