@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,6 +12,7 @@ static int untrap_prob(struct trap *ttmp);
 static void move_into_trap(struct trap *);
 static int try_disarm(struct trap *, boolean, schar, schar);
 static void reward_untrap(struct trap *, struct monst *);
+static void mdrain_en(struct monst *, int);
 static int disarm_holdingtrap(struct trap *, schar, schar);
 static int disarm_landmine(struct trap *, schar, schar);
 static int disarm_squeaky_board(struct trap *, schar, schar);
@@ -2230,6 +2231,14 @@ mintrap(struct monst *mtmp)
                 domagictrap(mtmp);
             break;
         case ANTI_MAGIC:
+            if (see_it) {
+                seetrap(trap);
+                if (resists_magm(mtmp))
+                    pline(msgc_monneutral, "%s momentarily lethargic.",
+                          M_verbs(mtmp, "seem"));
+            }
+            if (!resists_magm(mtmp))
+                mdrain_en(mtmp, dmg);
             break;
 
         case LANDMINE:
@@ -3393,16 +3402,27 @@ crawl:
 void
 drain_en(int n)
 {
-    if (!youmonst.pwmax)
+    mdrain_en(&youmonst, n);
+}
+
+static void
+mdrain_en(struct monst *mon, int n)
+{
+    if (!mon->pwmax)
         return;
-    pline(n > youmonst.pw ? msgc_intrloss : msgc_statusbad,
-          "You feel your magical energy drain away!");
-    youmonst.pw -= n;
-    if (youmonst.pw < 0) {
-        youmonst.pwmax += youmonst.pw;
-        if (youmonst.pwmax < 0)
-            youmonst.pwmax = 0;
-        youmonst.pw = 0;
+
+    if (mon == &youmonst)
+        pline(n > youmonst.pw ? msgc_intrloss : msgc_statusbad,
+              "You feel your magical energy drain away!");
+    else if (canseemon(mon))
+        pline(msgc_monneutral, "%s lethargic.", M_verbs(mon, "seem"));
+
+    mon->pw -= n;
+    if (mon->pw < 0) {
+        mon->pwmax += mon->pw;
+        if (mon->pwmax < 0)
+            mon->pwmax = 0;
+        mon->pw = 0;
     }
 }
 
