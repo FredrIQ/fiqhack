@@ -3542,7 +3542,7 @@ Q = (223, 239, 215)
   AAAAAAAACCCAAAAA
   AAAAAAAAAAAAAAAA
 }
-# tile 185 (succubus)
+# tile 185 (sub female incubus)
 {
   AAABKOOCAAAAAAAA
   AABKOOJGCAAAAAAA

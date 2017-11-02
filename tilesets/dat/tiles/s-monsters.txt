@@ -9137,7 +9137,7 @@ $ = (71, 108, 108)
   MMCDDAAMDDKMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 480 (succubus)
+# tile 480 (sub female incubus)
 {
   DDMOHHDMMMMMMMMM
   DDOHHDGDMMMMMMMM
