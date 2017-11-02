@@ -2122,7 +2122,6 @@ do_class_genocide(struct monst *mon)
                     /* This check must be first since player monsters might
                        have G_GENOD or !G_GENO. */
                     mvitals[i].mvflags |= (G_GENOD | G_NOCORPSE);
-                    reset_rndmonst(i);
                     kill_genocided_monsters();
                     update_inventory(); /* eggs & tins */
                     if (you)
@@ -2422,11 +2421,11 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
             } else
                 done(GENOCIDED, killer);
         }
-        reset_rndmonst(mndx);
+
         /* While endgame messages track whether you genocided
-         * by means other than looking at u.uconduct, call
-         * break_conduct anyway to correctly note the first turn
-         * in which it happened. */
+           by means other than looking at u.uconduct, call
+           break_conduct anyway to correctly note the first turn
+           in which it happened. */
         if (you)
             break_conduct(conduct_genocide);
         update_inventory();     /* in case identified eggs were affected */

@@ -10,6 +10,43 @@ static const struct attack *dmgtype_fromattack(const struct permonst *, int,
 
 /* These routines provide basic data for any type of monster. */
 
+/* Is the permonst newer than the save revision? */
+boolean
+is_new_pm(int pm)
+{
+    return FALSE; /* No new monsters so far */
+}
+
+boolean
+is_removed_pm(int pm)
+{
+    if (flags.save_revision < 11) {
+        if (pm == 290 /* old PM_INCUBUS */)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+int
+pm_offset(int pm)
+{
+    int offset = 0;
+    if (flags.save_revision < 11) {
+        if (pm >= 290 /* old PM_INCUBUS */)
+            offset--;
+    }
+    return offset;
+}
+
+/* Set up a new mvitals, for new monsters. */
+void
+new_mvitals(int pm)
+{
+    mvitals[pm].born = 0;
+    mvitals[pm].died = 0;
+    mvitals[pm].mvflags = mons[pm].geno & G_NOCORPSE;
+}
+
 /* Returns male name of monster */
 const char *
 pm_male(int pm)
@@ -515,7 +552,7 @@ name_to_mon(const char *in_str)
             { "arch lich", PM_ARCH_LICH },
             /* Some irregular plurals */
             { "incubi", PM_INCUBUS },
-            { "succubi", PM_SUCCUBUS },
+            { "succubi", PM_INCUBUS },
             { "violet fungi", PM_VIOLET_FUNGUS },
             { "homunculi", PM_HOMUNCULUS },
             { "baluchitheria", PM_BALUCHITHERIUM },

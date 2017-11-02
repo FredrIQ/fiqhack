@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2637,24 +2637,14 @@ const struct permonst mons[] = {
         M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         MP_WAND_BASIC, CLR_BROWN),
-#define SEDUCTION_ATTACKS \
+    FMON("incubus", "succubus", S_DEMON,
+        LVL(6, 12, 0, 70, -9), (G_NOCORPSE | 1),
         A(ATTK(AT_BITE, AD_SSEX, 2, 6), ATTK(AT_CLAW, AD_PHYS, 1, 3), \
-          ATTK(AT_CLAW, AD_PHYS, 1, 3), NO_ATTK, NO_ATTK, NO_ATTK)
-    MON("succubus", S_DEMON,
-        LVL(6, 12, 0, 70, -9), (G_NOCORPSE | 1),
-        SEDUCTION_ATTACKS,
+          ATTK(AT_CLAW, AD_PHYS, 1, 3), NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(WT_HUMAN, 400, 0, MS_SEDUCE, MZ_HUMAN), MR_FIRE | MR_POISON, 0,
         M1_HUMANOID | M1_FLY | M1_POIS,
-        M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY | M2_FEMALE,
+        M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY,
         M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_BASIC, CLR_GRAY),
-    MON("incubus", S_DEMON,
-        LVL(6, 12, 0, 70, -9), (G_NOCORPSE | 1),
-        SEDUCTION_ATTACKS,
-        SIZ(WT_HUMAN, 400, 0, MS_SEDUCE, MZ_HUMAN), MR_FIRE | MR_POISON, 0,
-        M1_HUMANOID | M1_FLY | M1_POIS,
-        M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY | M2_MALE,
-        M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_BASIC, CLR_GRAY),
-#undef SEDUCTION_ATTACKS
     /* Used by AD&D for a type of demon, originally one of the Furies */
     /* and spelled this way */
     MON("erinys", S_DEMON,

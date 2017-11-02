@@ -867,9 +867,6 @@ extern struct monst *makemon(const struct permonst *, struct level *lev, int,
                              int, int);
 extern boolean create_critters(int, const struct permonst *, int, int);
 extern const struct permonst *rndmonst(const d_level *, enum rng);
-extern void reset_rndmonst(int);
-extern void save_rndmonst_state(struct memfile *mf);
-extern void restore_rndmonst_state(struct memfile *mf);
 extern const struct permonst *mkclass(const d_level *dlev, char, int, enum rng);
 extern int adj_lev(const d_level *dlev, const struct permonst *ptr);
 extern int mongets(struct monst *, int, enum rng);
@@ -1214,6 +1211,10 @@ extern boolean grudge(const struct permonst *, const struct permonst *);
 
 /* ### mondata.c ### */
 
+extern boolean is_new_pm(int);
+extern boolean is_removed_pm(int);
+extern int pm_offset(int);
+extern void new_mvitals(int);
 extern const char *pm_male(int);
 extern const char *pm_female(int);
 extern const char *pm_name(const struct monst *);

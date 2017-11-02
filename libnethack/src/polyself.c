@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -110,13 +110,9 @@ change_sex(void)
 
     u.umonster = ((already_polyd ? u.mfemale : u.ufemale) &&
                   urole.femalenum != NON_PM) ? urole.femalenum : urole.malenum;
-    if (!already_polyd) {
+    if (!already_polyd)
         u.umonnum = u.umonster;
-    } else if (u.umonnum == PM_SUCCUBUS || u.umonnum == PM_INCUBUS) {
-        u.ufemale = !u.ufemale;
-        /* change monster type to match new sex */
-        u.umonnum = (u.umonnum == PM_SUCCUBUS) ? PM_INCUBUS : PM_SUCCUBUS;
-    }
+
     set_uasmon();
 }
 
@@ -149,7 +145,6 @@ newman(void)
         change_sex();
 
     adjabil(oldlvl, (int)u.ulevel);
-    reset_rndmonst(NON_PM);     /* new monster generation criteria */
 
     /* random experience points for the new experience level */
     u.uexp = rndexp(FALSE);
@@ -1338,7 +1333,7 @@ mbodypart(struct monst *mon, int part)
             return part == HAND ? "paw" : "pawed";
         if (humanoid(mptr) && attacktype(mptr, AT_CLAW) &&
             !strchr(not_claws, mptr->mlet) && mptr != &mons[PM_STONE_GOLEM] &&
-            mptr != &mons[PM_INCUBUS] && mptr != &mons[PM_SUCCUBUS])
+            mptr != &mons[PM_INCUBUS])
             return part == HAND ? "claw" : "clawed";
     }
     if ((mptr == &mons[PM_MUMAK] || mptr == &mons[PM_MASTODON]) && part == NOSE)

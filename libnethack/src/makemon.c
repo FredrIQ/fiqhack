@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -823,10 +823,9 @@ propagate(int mndx, boolean tally, boolean ghostly)
     if (mvitals[mndx].born < 255 && tally && (!ghostly || (ghostly && result)))
         mvitals[mndx].born++;
     if ((int)mvitals[mndx].born >= lim && !(mons[mndx].geno & G_NOGEN) &&
-        !(mvitals[mndx].mvflags & G_EXTINCT)) {
+        !(mvitals[mndx].mvflags & G_EXTINCT))
         mvitals[mndx].mvflags |= G_EXTINCT;
-        reset_rndmonst(mndx);
-    }
+
     return result;
 }
 
@@ -1418,36 +1417,6 @@ align_shift(const d_level *dlev, const struct permonst *ptr)
         break;
     }
     return alshift;
-}
-
-
-/* SAVEBREAK (4.3-beta1 -> 4.3-beta2): just get rid of these */
-
-/* called when you change level (experience or dungeon depth) or when
-   monster species can no longer be created (genocide or extinction) */
-/* mndx: particular species that can no longer be created */
-void
-reset_rndmonst(int mndx)
-{
-    /* rndmonst_state no longer exists */
-    (void) mndx;
-}
-void
-save_rndmonst_state(struct memfile *mf)
-{
-    mtag(mf, 0, MTAG_RNDMONST);
-    int i = 4 + SPECIAL_PM;
-
-    while (i--)
-        mwrite8(mf, 0);
-}
-void
-restore_rndmonst_state(struct memfile *mf)
-{
-    int i = 4 + SPECIAL_PM;
-
-    while (i--)
-        mread8(mf);
 }
 
 /* Select a random monster type.
@@ -2093,6 +2062,7 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         mon->data = NULL;
         break;
     default:
+        idx += pm_offset(idx);
         if (LOW_PM <= idx && idx < NUMMONS)
             mon->data = &mons[idx];
         else
@@ -2115,6 +2085,7 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     mon->xlocale = mread8(mf);
     mon->ylocale = mread8(mf);
     mon->orig_mnum = mread16(mf);
+    mon->orig_mnum += pm_offset(mon->orig_mnum);
     mon->mx = mread8(mf);
     mon->my = mread8(mf);
     mon->dx = mread8(mf);
@@ -2128,7 +2099,8 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     mon->m_ap_type = mread8(mf);
     mon->mfrozen = mread8(mf);
     mon->mappearance = mread32(mf);
-    
+    if (mon->m_ap_type == M_AP_MONSTER)
+        mon->mappearance += pm_offset(mon->mappearance);
 
     mon->mfleetim = save_decode_8(mread8(mf), -moves, l ? -l->lastmoves : 0);
     mon->weapon_check = mread8(mf);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -582,8 +582,7 @@ acurr(const struct monst *mon, int x)
         return (schar) ((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
     } else if (x == A_CHA) {
         if (tmp < 18 &&
-            (mon->data->mlet == S_NYMPH || monsndx(mon->data) == PM_SUCCUBUS ||
-             monsndx(mon->data) == PM_INCUBUS))
+            (mon->data->mlet == S_NYMPH || monsndx(mon->data) == PM_INCUBUS))
             return 18;
     } else if (x == A_INT || x == A_WIS) {
         struct obj *armh = which_armor(mon, os_armh);

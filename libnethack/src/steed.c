@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -84,7 +84,7 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
         instapetrify(killer_msg(STONING, msgcat("attempting to saddle ",
                                                 an(pm_name(mtmp)))));
     }
-    if (ptr == &mons[PM_INCUBUS] || ptr == &mons[PM_SUCCUBUS]) {
+    if (ptr == &mons[PM_INCUBUS]) {
         pline(msgc_yafm, "Shame on you!");
         exercise(A_WIS, FALSE);
         return 1;

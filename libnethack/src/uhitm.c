@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1216,8 +1216,8 @@ damageum(struct monst *mdef, const struct attack *mattk)
     /* since hero can't be cancelled, only defender's armor applies */
     negated = !(!cancelled(&youmonst) && (rn2(3) >= armpro || !rn2(50)));
 
-    if (is_demon(youmonst.data) && !rn2(13) && !uwep && u.umonnum != PM_SUCCUBUS
-        && u.umonnum != PM_INCUBUS && u.umonnum != PM_BALROG) {
+    if (is_demon(youmonst.data) && !rn2(13) && !uwep &&
+        u.umonnum != PM_INCUBUS && u.umonnum != PM_BALROG) {
         demonpet();
         return 0;
     }
@@ -2004,10 +2004,9 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
         case AT_CLAW:
             if (i == 0 && uwep && !cantwield(youmonst.data))
                 goto use_weapon;
-            /* succubi/incubi are humanoid, but their _second_ attack is
+            /* foocubi are humanoid, but their _second_ attack is
                AT_CLAW, not their first... */
-            if (i == 1 && uwep &&
-                (u.umonnum == PM_SUCCUBUS || u.umonnum == PM_INCUBUS))
+            if (i == 1 && uwep && u.umonnum == PM_INCUBUS)
                 goto use_weapon;
         case AT_KICK:
         case AT_BITE:
