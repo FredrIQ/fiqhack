@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -42,7 +42,7 @@ const struct Role roles[] = {
                            {"Curator", 0}},
      "Quetzalcoatl", "Camaxtli", "Huhetotl",    /* Central American */
      "Arc", "the College of Archeology", "the Tomb of the Toltec Kings",
-     PM_ARCHEOLOGIST, NON_PM, NON_PM,
+     PM_ARCHEOLOGIST, NON_PM,
      PM_LORD_CARNARVON, PM_STUDENT, PM_MINION_OF_HUHETOTL,
      NON_PM, PM_HUMAN_MUMMY, S_SNAKE, S_MUMMY,
      ART_ORB_OF_DETECTION,
@@ -67,7 +67,7 @@ const struct Role roles[] = {
                         {"Conqueror", "Conqueress"}},
      "Mitra", "Crom", "Set",    /* Hyborian */
      "Bar", "the Camp of the Duali Tribe", "the Duali Oasis",
-     PM_BARBARIAN, NON_PM, NON_PM,
+     PM_BARBARIAN, NON_PM,
      PM_PELIAS, PM_CHIEFTAIN, PM_THOTH_AMON,
      PM_OGRE, PM_TROLL, S_OGRE, S_TROLL,
      ART_HEART_OF_AHRIMAN,
@@ -91,7 +91,7 @@ const struct Role roles[] = {
                                 {"Pioneer", 0}},
      "Anu", "_Ishtar", "Anshar",        /* Babylonian */
      "Cav", "the Caves of the Ancestors", "the Dragon's Lair",
-     PM_CAVEMAN, PM_CAVEWOMAN, PM_LITTLE_DOG,
+     PM_CAVEMAN, PM_LITTLE_DOG,
      PM_SHAMAN_KARNOV, PM_NEANDERTHAL, PM_CHROMATIC_DRAGON,
      PM_BUGBEAR, PM_HILL_GIANT, S_HUMANOID, S_GIANT,
      ART_SCEPTRE_OF_MIGHT,
@@ -116,7 +116,7 @@ const struct Role roles[] = {
                      {"Chirurgeon", 0}},
      "_Athena", "Hermes", "Poseidon",   /* Greek */
      "Hea", "the Temple of Epidaurus", "the Temple of Coeus",
-     PM_HEALER, NON_PM, NON_PM,
+     PM_HEALER, NON_PM,
      PM_HIPPOCRATES, PM_ATTENDANT, PM_CYCLOPS,
      PM_GIANT_RAT, PM_SNAKE, S_RODENT, S_YETI,
      ART_STAFF_OF_AESCULAPIUS,
@@ -140,7 +140,7 @@ const struct Role roles[] = {
                      {"Paladin", 0}},
      "Lugh", "_Brigit", "Manannan Mac Lir",     /* Celtic */
      "Kni", "Camelot Castle", "the Isle of Glass",
-     PM_KNIGHT, NON_PM, PM_PONY,
+     PM_KNIGHT, PM_PONY,
      PM_KING_ARTHUR, PM_PAGE, PM_IXOTH,
      PM_QUASIT, PM_OCHRE_JELLY, S_IMP, S_JELLY,
      ART_MAGIC_MIRROR_OF_MERLIN,
@@ -165,7 +165,7 @@ const struct Role roles[] = {
      "Shan Lai Ching", "Chih Sung-tzu", "Huan Ti",      /* Chinese */
      "Mon", "the Monastery of Chan-Sune",
      "the Monastery of the Earth-Lord",
-     PM_MONK, NON_PM, NON_PM,
+     PM_MONK, NON_PM,
      PM_GRAND_MASTER, PM_ABBOT, PM_MASTER_KAEN,
      PM_EARTH_ELEMENTAL, PM_XORN, S_ELEMENTAL, S_XORN,
      ART_EYES_OF_THE_OVERWORLD,
@@ -190,7 +190,7 @@ const struct Role roles[] = {
                                {"High Priest", "High Priestess"}},
      0, 0, 0,   /* chosen randomly from among the other roles */
      "Pri", "the Great Temple", "the Temple of Nalzok",
-     PM_PRIEST, PM_PRIESTESS, NON_PM,
+     PM_PRIEST, NON_PM,
      PM_ARCH_PRIEST, PM_ACOLYTE, PM_NALZOK,
      PM_HUMAN_ZOMBIE, PM_WRAITH, S_ZOMBIE, S_WRAITH,
      ART_MITRE_OF_HOLINESS,
@@ -217,7 +217,7 @@ const struct Role roles[] = {
                     {"Thief", 0}},
      "Issek", "Mog", "Kos",     /* Nehwon */
      "Rog", "the Thieves' Guild Hall", "the Assassins' Guild Hall",
-     PM_ROGUE, NON_PM, NON_PM,
+     PM_ROGUE, NON_PM,
      PM_MASTER_OF_THIEVES, PM_THUG, PM_MASTER_ASSASSIN,
      PM_LEPRECHAUN, PM_GUARDIAN_NAGA, S_NYMPH, S_NAGA,
      ART_MASTER_KEY_OF_THIEVERY,
@@ -241,7 +241,7 @@ const struct Role roles[] = {
                      {"Marksman", "Markswoman"}},
      "Mercury", "_Venus", "Mars",       /* Roman/planets */
      "Ran", "Orion's camp", "the cave of the wumpus",
-     PM_RANGER, NON_PM, PM_LITTLE_DOG /* Orion & canis major */ ,
+     PM_RANGER, PM_LITTLE_DOG /* Orion & canis major */ ,
      PM_ORION, PM_HUNTER, PM_SCORPIUS,
      PM_FOREST_CENTAUR, PM_SCORPION, S_CENTAUR, S_SPIDER,
      ART_LONGBOW_OF_DIANA,
@@ -266,7 +266,7 @@ const struct Role roles[] = {
                       {"Shogun", 0}},   /* supreme commander, warlord */
      "_Amaterasu Omikami", "Raijin", "Susanowo",        /* Japanese */
      "Sam", "the Castle of the Taro Clan", "the Shogun's Castle",
-     PM_SAMURAI, NON_PM, PM_LITTLE_DOG,
+     PM_SAMURAI, PM_LITTLE_DOG,
      PM_LORD_SATO, PM_ROSHI, PM_ASHIKAGA_TAKAUJI,
      PM_WOLF, PM_STALKER, S_DOG, S_ELEMENTAL,
      ART_TSURUGI_OF_MURAMASA,
@@ -290,7 +290,7 @@ const struct Role roles[] = {
                       {"Adventurer", 0}},
      "Blind Io", "_The Lady", "Offler", /* Discworld */
      "Tou", "Ankh-Morpork", "the Thieves' Guild Hall",
-     PM_TOURIST, NON_PM, NON_PM,
+     PM_TOURIST, NON_PM,
      PM_TWOFLOWER, PM_GUIDE, PM_MASTER_OF_THIEVES,
      PM_GIANT_SPIDER, PM_FOREST_CENTAUR, S_SPIDER, S_CENTAUR,
      ART_YENDORIAN_EXPRESS_CARD,
@@ -314,7 +314,7 @@ const struct Role roles[] = {
                        {"Lord", "Lady"}},
      "Tyr", "Odin", "Loki",     /* Norse */
      "Val", "the Shrine of Destiny", "the cave of Surtur",
-     PM_VALKYRIE, NON_PM, NON_PM /* PM_WINTER_WOLF_CUB */ ,
+     PM_VALKYRIE, NON_PM /* PM_WINTER_WOLF_CUB */ ,
      PM_NORN, PM_WARRIOR, PM_LORD_SURTUR,
      PM_FIRE_ANT, PM_FIRE_GIANT, S_ANT, S_GIANT,
      ART_ORB_OF_FATE,
@@ -338,7 +338,7 @@ const struct Role roles[] = {
                      {"Mage", 0}},
      "Ptah", "Thoth", "Anhur",  /* Egyptian */
      "Wiz", "the Lonely Tower", "the Tower of Darkness",
-     PM_WIZARD, NON_PM, PM_KITTEN,
+     PM_WIZARD, PM_KITTEN,
      PM_NEFERET_THE_GREEN, PM_APPRENTICE, PM_DARK_ONE,
      PM_VAMPIRE_BAT, PM_XORN, S_BAT, S_WRAITH,
      ART_EYE_OF_THE_AETHIOPICA,
@@ -367,7 +367,7 @@ struct Role urole;
 const struct Race races[] = {
     {"human", "human", "humanity", "Hum",
      {"man", "woman"},
-     PM_HUMAN, NON_PM, PM_HUMAN_MUMMY, PM_HUMAN_ZOMBIE,
+     PM_HUMAN, PM_HUMAN_MUMMY, PM_HUMAN_ZOMBIE,
      MH_HUMAN | ROLE_MALE | ROLE_FEMALE | ROLE_LAWFUL | ROLE_NEUTRAL |
      ROLE_CHAOTIC,
      MH_HUMAN, 0, MH_GNOME | MH_ORC,
@@ -380,7 +380,7 @@ const struct Race races[] = {
      },
     {"elf", "elven", "elvenkind", "Elf",
      {0, 0},
-     PM_ELF, NON_PM, PM_ELF_MUMMY, PM_ELF_ZOMBIE,
+     PM_ELF, PM_ELF_MUMMY, PM_ELF_ZOMBIE,
      MH_ELF | ROLE_MALE | ROLE_FEMALE | ROLE_CHAOTIC,
      MH_ELF, MH_ELF, MH_ORC,
      /* Str Int Wis Dex Con Cha */
@@ -392,7 +392,7 @@ const struct Race races[] = {
      },
     {"dwarf", "dwarven", "dwarvenkind", "Dwa",
      {0, 0},
-     PM_DWARF, NON_PM, PM_DWARF_MUMMY, PM_DWARF_ZOMBIE,
+     PM_DWARF, PM_DWARF_MUMMY, PM_DWARF_ZOMBIE,
      MH_DWARF | ROLE_MALE | ROLE_FEMALE | ROLE_LAWFUL,
      MH_DWARF, MH_DWARF | MH_GNOME, MH_ORC,
      /* Str Int Wis Dex Con Cha */
@@ -404,7 +404,7 @@ const struct Race races[] = {
      },
     {"gnome", "gnomish", "gnomehood", "Gno",
      {0, 0},
-     PM_GNOME, NON_PM, PM_GNOME_MUMMY, PM_GNOME_ZOMBIE,
+     PM_GNOME, PM_GNOME_MUMMY, PM_GNOME_ZOMBIE,
      MH_GNOME | ROLE_MALE | ROLE_FEMALE | ROLE_NEUTRAL,
      MH_GNOME, MH_DWARF | MH_GNOME, MH_HUMAN,
      /* Str Int Wis Dex Con Cha */
@@ -416,7 +416,7 @@ const struct Race races[] = {
      },
     {"orc", "orcish", "orcdom", "Orc",
      {0, 0},
-     PM_ORC, NON_PM, PM_ORC_MUMMY, PM_ORC_ZOMBIE,
+     PM_ORC, PM_ORC_MUMMY, PM_ORC_ZOMBIE,
      MH_ORC | ROLE_MALE | ROLE_FEMALE | ROLE_CHAOTIC,
      MH_ORC, 0, MH_HUMAN | MH_ELF | MH_DWARF,
      /* Str Int Wis Dex Con Cha */
@@ -479,7 +479,7 @@ role_quest_artifact(int pm)
 {
     int i;
     for (i = 0; roles[i].name.m; i++) {
-        if (roles[i].malenum == pm || roles[i].femalenum == pm)
+        if (roles[i].num == pm)
             return roles[i].questarti;
     }
     return 0;
@@ -1127,21 +1127,7 @@ role_init(void)
         pm_nemesis.mflags3 |= M3_WANTSARTI | M3_WAITFORU;
     }
 
-    /* Fix up infravision */
-    pm_you_male = pm_you_female = mons[urole.malenum];
-    if (urole.femalenum != NON_PM)
-        pm_you_female = mons[urole.femalenum];
-    if (mons[urace.malenum].mflags3 & M3_INFRAVISION) {
-        /* although an infravision intrinsic is possible, infravision is purely 
-           a property of the physical race.  This means that we must put the
-           infravision flag in the player's current race (either that or have
-           separate permonst entries for elven/non-elven members of each
-           class).  The side effect is that all NPCs of that class will have
-           (probably bogus) infravision, but since infravision has no effect
-           for NPCs anyway we can ignore this. */
-        pm_you_male.mflags3 |= M3_INFRAVISION;
-        pm_you_female.mflags3 |= M3_INFRAVISION;
-    }
+    pm_you_male = pm_you_female = mons[urole.num];
 
     /* Artifacts are fixed in hack_artifacts() */
 

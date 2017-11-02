@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -171,7 +171,6 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 helm = STRANGE_OBJECT;
             break;
         case PM_CAVEMAN:
-        case PM_CAVEWOMAN:
             if (rn2_on_rng(4, rng))
                 weapon = MACE;
             else if (rn2_on_rng(2, rng))
@@ -204,7 +203,6 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 shield = STRANGE_OBJECT;
             break;
         case PM_PRIEST:
-        case PM_PRIESTESS:
             if (rn2_on_rng(2, rng))
                 weapon = MACE;
             if (rn2_on_rng(2, rng))
@@ -294,8 +292,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                                                    rng)], 0, TRUE);
             /* sometimes, you just make a small oopsie! [cannibalism] */
             if (!rn2_on_rng(40, rng) &&
-                mtmp->data != &mons[PM_CAVEMAN] &&
-                mtmp->data != &mons[PM_CAVEWOMAN])
+                mtmp->data != &mons[PM_CAVEMAN])
                 set_property(mtmp, AGGRAVATE_MONSTER, 0, TRUE);
             /* there is no "mblessed", so if the protection property was
                randomized, just give a boost to base AC */
@@ -453,9 +450,7 @@ mplayer_talk(struct monst *mtmp)
         return; /* will drop to humanoid talk */
 
     pline(msgc_npcvoice, "Talk? -- %s",
-          (mtmp->data == &mons[urole.malenum] ||
-           mtmp->data ==
-           &mons[urole.femalenum]) ? same_class_msg[rn2(3)] :
+          mtmp->data == &mons[urole.num] ? same_class_msg[rn2(3)] :
           other_class_msg[rn2(3)]);
 }
 

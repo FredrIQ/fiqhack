@@ -5,12 +5,8 @@
 
 #include "hack.h"
 
-#define Your_Own_Role(mndx) \
-        ((mndx) == urole.malenum || \
-         (urole.femalenum != NON_PM && (mndx) == urole.femalenum))
-#define Your_Own_Race(mndx) \
-        ((mndx) == urace.malenum || \
-         (urace.femalenum != NON_PM && (mndx) == urace.femalenum))
+#define Your_Own_Role(mndx) ((mndx) == urole.num)
+#define Your_Own_Race(mndx) ((mndx) == urace.num)
 
 static const char readable[] = { ALL_CLASSES, 0 };
 static const char all_count[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
@@ -2080,8 +2076,8 @@ do_class_genocide(struct monst *mon)
         }
         /* TODO[?]: If user's input doesn't match any class description,
            check individual species names. */
-        if (!goodcnt && ((you && class != mons[urole.malenum].mlet &&
-                          class != mons[urace.malenum].mlet) ||
+        if (!goodcnt && ((you && class != mons[urole.num].mlet &&
+                          class != mons[urace.num].mlet) ||
                          (!you && class != mon->data->mlet))) {
             if (gonecnt) {
                 if (you)
@@ -2145,10 +2141,8 @@ do_class_genocide(struct monst *mon)
                                show up. */
                             rehumanize(GENOCIDED, "arbitrary death reason");
                     }
-                    /* Self-genocide if it matches either your race or role.
-                       Assumption: male and female forms share same monster
-                       class. */
-                    if (i == urole.malenum || i == urace.malenum) {
+                    /* Self-genocide if it matches either your race or role. */
+                    if (i == urole.num || i == urace.num) {
                         u.uhp = -1;
                         if (Upolyd) {
                             if (!feel_dead++)
@@ -2388,16 +2382,6 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
         kill_genocided_monsters();
 
         if (killplayer) {
-            /* might need to wipe out dual role */
-            if (urole.femalenum != NON_PM && mndx == urole.malenum)
-                mvitals[urole.femalenum].mvflags |= (G_GENOD | G_NOCORPSE);
-            if (urole.malenum != NON_PM && mndx == urole.femalenum)
-                mvitals[urole.malenum].mvflags |= (G_GENOD | G_NOCORPSE);
-            if (urace.femalenum != NON_PM && mndx == urace.malenum)
-                mvitals[urace.femalenum].mvflags |= (G_GENOD | G_NOCORPSE);
-            if (urace.malenum != NON_PM && mndx == urace.femalenum)
-                mvitals[urace.malenum].mvflags |= (G_GENOD | G_NOCORPSE);
-
             u.uhp = -1;
             if (Upolyd)
                 u.mh = -1;
@@ -2661,7 +2645,7 @@ create_particular(const struct nh_cmd_arg *arg)
 
     tries = 0;
     do {
-        which = urole.malenum;  /* an arbitrary index into mons[] */
+        which = urole.num;  /* an arbitrary index into mons[] */
         maketame = makepeaceful = makehostile = FALSE;
         cancelled = fast = slow = revived = fleeing = blind = mavenge = FALSE;
         paralyzed = sleeping = stunned = confused = suspicious = FALSE;

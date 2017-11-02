@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -974,9 +974,7 @@ done_noreturn(int how, const char *killer)
             if (!Upolyd && !is_human(youmonst.data)) {
                 /* Base corpse on race when not poly'd since original u.umonnum 
                    is based on role, and all role monsters are human. */
-                mnum = (u.ufemale &&
-                        urace.femalenum !=
-                        NON_PM) ? urace.femalenum : urace.malenum;
+                mnum = urace.num;
             }
             corpse = mk_named_object(CORPSE, &mons[mnum], u.ux, u.uy,
                                      u.uplname);

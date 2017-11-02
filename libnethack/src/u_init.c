@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -550,8 +550,7 @@ u_init(microseconds birthday)
     u.umortality = 0;
     u.ugrave_arise = NON_PM;
 
-    u.umonnum = u.umonster = (u.ufemale && urole.femalenum != NON_PM) ?
-        urole.femalenum : urole.malenum;
+    u.umonnum = u.umonster = urole.num;
 
     u.lastinvnr = 51;
 
@@ -903,10 +902,10 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
     while (trop->trclass) {
         if (trop->trotyp != UNDEF_TYP) {
             otyp = (int)trop->trotyp;
-            if (urace.malenum != PM_HUMAN) {
+            if (urace.num != PM_HUMAN) {
                 /* substitute specific items for generic ones */
                 for (i = 0; inv_subs[i].race_pm != NON_PM; ++i)
-                    if (inv_subs[i].race_pm == urace.malenum &&
+                    if (inv_subs[i].race_pm == urace.num &&
                         otyp == inv_subs[i].item_otyp) {
                         otyp = inv_subs[i].subs_otyp;
                         break;

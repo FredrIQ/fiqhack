@@ -293,8 +293,8 @@ init_permonsts(const struct monst *mon, const struct permonst **role,
 {
     int racenum;
     if (mon == &youmonst) {
-        *role = &mons[urole.malenum];
-        *race = &mons[urace.malenum];
+        *role = &mons[urole.num];
+        *race = &mons[urace.num];
     } else {
         if (mon->orig_mnum)
             *role = &mons[mon->orig_mnum];

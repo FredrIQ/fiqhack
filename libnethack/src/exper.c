@@ -416,8 +416,6 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
        little and big forms */
     oldtype = monsndx(ptr);
     newtype = little_to_big(oldtype);
-    if (newtype == PM_PRIEST && mtmp->female)
-        newtype = PM_PRIESTESS;
 
     /* growth limits differ depending on method of advancement */
     if (victim) {       /* killed a monster */

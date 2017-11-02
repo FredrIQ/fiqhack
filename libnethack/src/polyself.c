@@ -68,12 +68,8 @@ polyman(const char *fmt, const char *arg)
     newsym(u.ux, u.uy);
 
     /* check whether player foolishly genocided self while poly'd */
-    if ((mvitals[urole.malenum].mvflags & G_GENOD) ||
-        (urole.femalenum != NON_PM &&
-         (mvitals[urole.femalenum].mvflags & G_GENOD)) ||
-        (mvitals[urace.malenum].mvflags & G_GENOD) ||
-        (urace.femalenum != NON_PM &&
-         (mvitals[urace.femalenum].mvflags & G_GENOD))) {
+    if ((mvitals[urole.num].mvflags & G_GENOD) ||
+        (mvitals[urace.num].mvflags & G_GENOD)) {
         pline(msgc_fatal_predone, "As you return to %s form, you die!",
               urace.adj);
         done(GENOCIDED, delayed_killer(GENOCIDED));
@@ -108,8 +104,7 @@ change_sex(void)
         u.mfemale = !u.mfemale;
     max_rank_sz();      /* [this appears to be superfluous] */
 
-    u.umonster = ((already_polyd ? u.mfemale : u.ufemale) &&
-                  urole.femalenum != NON_PM) ? urole.femalenum : urole.malenum;
+    u.umonster = urole.num;
     if (!already_polyd)
         u.umonnum = u.umonster;
 

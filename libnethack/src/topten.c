@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -570,10 +570,8 @@ classmon(char *plch, boolean fem)
     /* Look for this role in the role table */
     for (i = 0; roles[i].name.m; i++)
         if (!strncmp(plch, roles[i].filecode, ROLESZ)) {
-            if (fem && roles[i].femalenum != NON_PM)
-                return roles[i].femalenum;
-            else if (roles[i].malenum != NON_PM)
-                return roles[i].malenum;
+            if (roles[i].num != NON_PM)
+                return roles[i].num;
             else
                 return PM_HUMAN;
         }

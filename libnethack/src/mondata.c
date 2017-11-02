@@ -23,6 +23,10 @@ is_removed_pm(int pm)
     if (flags.save_revision < 11) {
         if (pm == 290 /* old PM_INCUBUS */)
             return TRUE;
+        if (pm == 331 /* old PM_CAVEWOMAN */)
+            return TRUE;
+        if (pm == 336 /* old PM_PRIESTESS */)
+            return TRUE;
     }
     return FALSE;
 }
@@ -32,7 +36,11 @@ pm_offset(int pm)
 {
     int offset = 0;
     if (flags.save_revision < 11) {
-        if (pm >= 290 /* old PM_INCUBUS */)
+        if (pm >= 290)
+            offset--;
+        if (pm >= 331)
+            offset--;
+        if (pm >= 336)
             offset--;
     }
     return offset;
@@ -558,7 +566,7 @@ name_to_mon(const char *in_str)
             { "baluchitheria", PM_BALUCHITHERIUM },
             { "lurkers above", PM_LURKER_ABOVE },
             { "cavemen", PM_CAVEMAN },
-            { "cavewomen", PM_CAVEWOMAN },
+            { "cavewomen", PM_CAVEMAN },
             { "djinn", PM_DJINNI },
             { "mumakil", PM_MUMAK },
             { "erinyes", PM_ERINYS },
@@ -738,7 +746,7 @@ const struct permonst *
 raceptr(struct monst *mtmp)
 {
     if (mtmp == &youmonst && !Upolyd)
-        return &mons[urace.malenum];
+        return &mons[urace.num];
     else
         return mtmp->data;
 }
