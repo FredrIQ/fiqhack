@@ -1,4 +1,4 @@
-! Last modified by Fredrik Ljungdahl, 2017-10-16
+! Last modified by Fredrik Ljungdahl, 2017-11-02
 !
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed.  See license for details.
@@ -349,12 +349,12 @@ long worm tail
 archeologist
 barbarian
 caveman
-cavewoman
+sub female caveman
 healer
 knight
 monk
 priest
-priestess
+sub female priest
 ranger
 rogue
 samurai
@@ -1838,12 +1838,12 @@ sub statue long worm tail
 sub statue archeologist
 sub statue barbarian
 sub statue caveman
-sub statue cavewoman
+sub statue sub female caveman
 sub statue healer
 sub statue knight
 sub statue monk
 sub statue priest
-sub statue priestess
+sub statue sub female priest
 sub statue ranger
 sub statue rogue
 sub statue samurai
@@ -1935,12 +1935,12 @@ sub statue sub orc wizard
 sub playermonster archeologist
 sub playermonster barbarian
 sub playermonster caveman
-sub playermonster cavewoman
+sub playermonster sub female caveman
 sub playermonster healer
 sub playermonster knight
 sub playermonster monk
 sub playermonster priest
-sub playermonster priestess
+sub playermonster sub female priest
 sub playermonster ranger
 sub playermonster rogue
 sub playermonster samurai

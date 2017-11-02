@@ -1,4 +1,4 @@
-! Last modified by Fredrik Ljungdahl, 2017-10-16
+! Last modified by Fredrik Ljungdahl, 2017-11-02
 !
 ! Copyright (C) Andrew Rios, 2014
 !
@@ -12244,7 +12244,7 @@ Q = (223, 239, 215)
   AAACCCBACOPBAAAA
   AAAAAAAACBBBAAAA
 }
-# tile 639 (sub gnome caveman; sub gnome cavewoman)
+# tile 639 (sub gnome caveman)
 {
   AAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAA
@@ -12548,7 +12548,7 @@ Q = (223, 239, 215)
   AACCCCBACOPKBAAA
   AAAAAAAACBBBBAAA
 }
-# tile 655 (priestess)
+# tile 655 (sub female priest)
 {
   AAAAACCCCBAAAAAA
   AAAACJKKJGBAAAAA
@@ -12567,7 +12567,7 @@ Q = (223, 239, 215)
   AAACCFGGJFGGBAAA
   AAAAACCCCBBBAAAA
 }
-# tile 656 (cavewoman)
+# tile 656 (sub female caveman)
 {
   AAAAAACCCBABBAAA
   AAAAACIIGFBGBAAA
@@ -12719,7 +12719,7 @@ Q = (223, 239, 215)
   ACFBGGIKKKIGGBBA
   AACBBBBBBBBBBAAA
 }
-# tile 664 (sub elf priestess)
+# tile 664 (sub elf sub female priest)
 {
   AAFOBCKKKBBAAAAA
   AFOQOBOOPGGBAAAA
@@ -12852,7 +12852,7 @@ Q = (223, 239, 215)
   AAACCCCBACOPKBAA
   AAAAAAAAABBBBBAA
 }
-# tile 671 (sub dwarf caveman; sub dwarf cavewoman)
+# tile 671 (sub dwarf caveman)
 {
   AAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAA
