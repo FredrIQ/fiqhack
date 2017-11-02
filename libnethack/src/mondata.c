@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -585,6 +585,9 @@ gender(struct monst *mtmp)
 int
 pronoun_gender(struct monst *mtmp)
 {
+    if (mtmp == &youmonst)
+        return (u.ufemale ? 1 : 0);
+
     if (is_neuter(mtmp->data) || !canclassifymon(mtmp))
         return 2;
     return (humanoid(mtmp->data) || (mtmp->data->geno & G_UNIQ) ||

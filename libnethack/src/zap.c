@@ -302,9 +302,8 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             shieldeff(m_mx(mdef), m_my(mdef));
             if (tseen)
                 pline(combat_msgc(magr, mdef, cr_immune),
-                      "%s %s momentarily different.",
-                      hityou ? "You" : Monnam(mdef),
-                      hityou ? "feel" : "looks");
+                      "%s %s momentarily different.", Monnam(mdef),
+                      mfeel(mdef));
             known = TRUE;
         } else if (hityou) {
             polyself(FALSE); /* FIXME: make skilled users able to affect the outcome */
@@ -445,9 +444,8 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                 } else
                     mimic_hit_msg(mdef, otyp);
             } else
-                pline(msgc_actionok, "%s %s%s better.",
-                      mdef == &youmonst ? "You" : Monnam(mdef),
-                      mdef == &youmonst ? "feel" : "looks",
+                pline(msgc_actionok, "%s %s%s better.", Monnam(mdef),
+                      mfeel(mdef),
                       otyp == SPE_EXTRA_HEALING ? " much" : "");
             if (yours && (mdef->mtame || mdef->mpeaceful)) {
                 adjalign(Role_if(PM_HEALER) ? 1 : sgn(u.ualign.type));
@@ -470,9 +468,8 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                 mdef->mhp = mdef->mhpmax;
             if (tseen)
                 pline(combat_msgc(magr, mdef, cr_immune),
-                      "%s %s strengthened by the flash!",
-                      hityou ? "You" : Monnam(mdef),
-                      hityou ? "feel" : "looks");
+                      "%s %s strengthened by the flash!", Monnam(mdef),
+                      mfeel(mdef));
             break;
         }
 

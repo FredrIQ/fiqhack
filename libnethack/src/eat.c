@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1189,9 +1189,7 @@ eatcorpse(struct monst *mon, struct obj *otmp)
         tp++;
         if (you || vis)
             pline(you ? msgc_statusbad : msgc_monneutral,
-                  "%s %s %ssick.",
-                  you ? "You" : Monnam(mon),
-                  you ? "feel" : "looks",
+                  "%s %s %ssick.", Monnam(mon), mfeel(mon),
                   (sick(mon)) ? "very " : "");
         if (you)
             losehp(rnd(8), killer_msg(DIED, "a cadaver"));

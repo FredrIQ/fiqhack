@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -1336,9 +1336,7 @@ update_property(struct monst *mon, enum youprop prop,
             } else {
                 if (lost)
                     pline(you ? msgc_statusheal : msgc_monneutral,
-                          "%s %s %s now.",
-                          you ? "You" : Monnam(mon),
-                          you ? "feel" : "looks",
+                          "%s %s %s now.", Monnam(mon), mfeel(mon),
                           you && hallu ? "less wobbly" : "a bit steadier");
                 else
                     pline(you ? msgc_statusbad : msgc_monneutral,
@@ -1555,9 +1553,7 @@ update_property(struct monst *mon, enum youprop prop,
                           acurr(mon, A_CHA) > 15 ? "fine " : "");
                 else
                     pline(you ? msgc_fatalavoid : msgc_monneutral,
-                          "%s %s more limber!",
-                          you ? "You" : Monnam(mon),
-                          you ? "feel" : "looks");
+                          "%s %s more limber!", Monnam(mon), mfeel(mon));
                 if (!you)
                     mon->ustoned = 0;
                 else
@@ -1809,9 +1805,7 @@ update_property(struct monst *mon, enum youprop prop,
         if (lost && slot != os_dectimeout) {
             if (you || vis) {
                 pline(you ? msgc_statusheal : msgc_monneutral,
-                      "%s %s much less nauseated now.",
-                      you ? "You" : Monnam(mon),
-                      you ? "feel" : "looks");
+                      "%s %s much less nauseated now.", Monnam(mon), mfeel(mon));
                 effect = TRUE;
             }
         } else if (slot == os_dectimeout) {
@@ -1821,16 +1815,14 @@ update_property(struct monst *mon, enum youprop prop,
                           you ? "You" : Monnam(mon),
                           you ? "are feeling" : "looks");
                 if (timer == 11)
-                    pline(msgc, "%s %s slightly confused.",
-                          you ? "You" : Monnam(mon),
-                          you ? "feel" : "looks");
+                    pline(msgc, "%s %s slightly confused.", Monnam(mon),
+                          mfeel(mon));
                 if (timer == 8)
                     pline(msgc, "%s can't seem to think straight.",
                           you ? "You" : Monnam(mon));
                 if (timer == 5)
-                    pline(msgc, "%s %s incredibly sick.",
-                          you ? "You" : Monnam(mon),
-                          you ? "feel" : "looks");
+                    pline(msgc, "%s %s incredibly sick.", Monnam(mon),
+                          mfeel(mon));
                 if (timer == 2)
                     pline(msgc, "%s suddenly vomit%s!",
                           you ? "You" : Monnam(mon),
@@ -1913,9 +1905,7 @@ update_property(struct monst *mon, enum youprop prop,
 
             if (you || vis) {
                 if (timer == 9)
-                    pline(msgc, "%s %s %s very well.",
-                          you ? "You" : Monnam(mon),
-                          you ? "don't" : "doesn't",
+                    pline(msgc, "%sn't %s very well.", M_verbs(mon, "do"),
                           you ? "feel" : "look");
                 else if (timer == 8)
                     pline(msgc, "%s %s turning a %s %s.",
