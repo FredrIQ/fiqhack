@@ -133,8 +133,9 @@ cursed_book(struct monst *mon, struct obj *bp)
         if (you) {
             pline(msgc_statusbad, "You feel threatened.");
             aggravate();
-        } else
-            you_aggravate(mon);
+        }
+
+        inc_timeout(mon, AGGRAVATE_MONSTER, 1, FALSE);
         break;
     case 2:
         set_property(mon, BLINDED, rn1(100, 250), FALSE);
