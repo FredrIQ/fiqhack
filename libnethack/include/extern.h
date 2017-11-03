@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -674,6 +674,7 @@ extern void losehp(int, const char *);
 extern int weight_cap(void);
 extern int inv_weight_over_cap(void);
 extern int inv_weight_total(void);
+extern int minv_weight_total(const struct monst *);
 extern int near_capacity(void);
 extern int calc_capacity(int);
 extern int max_capacity(void);
@@ -1269,7 +1270,7 @@ extern int m_move(struct monst *, int);
 extern boolean closed_door(struct level *lev, int x, int y);
 extern boolean accessible(int, int);
 extern void set_apparxy(struct monst *);
-extern boolean can_ooze(struct monst *);
+extern boolean can_ooze(const struct monst *);
 
 /* ### mplayer.c ### */
 

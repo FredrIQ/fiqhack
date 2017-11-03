@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -744,6 +744,56 @@ bad_rock(const struct monst *mon, xchar x, xchar y)
                        && !(phasing(mon) && may_passwall(level, x, y))));
 }
 
+/* Returns TRUE if the monster can squeeze through a tight diagonal */
+boolean
+can_diagonal_squeeze(const struct monst *mon, boolean msg)
+{
+    if (!mon)
+        panic("can_diagonal_squeeze: mon is NULL");
+
+    boolean you = (mon == &youmonst);
+    enum msg_channel msgc = msgc_monneutral;
+    if (you)
+        msgc = msgc_cancelled;
+    if (!you && !canseemon(mon))
+        msg = FALSE;
+
+    if (In_sokoban(m_mz(mon))) {
+        if (msg)
+            pline(msgc, "%s cannot pass that way.", Monnam(mon));
+        return FALSE;
+    }
+
+    if (bigmonst(mon->data) && !can_ooze(mon)) {
+        if (msg)
+            pline(msgc, "%s body is too large to fit through.",
+                  s_suffix(Monnam(mon)));
+        return FALSE;
+    }
+
+    if (mon->minvent && minv_weight_total(mon) > 600) {
+        /* If we have grease (or oilskin) on our outermost armor piece,
+           we might be able to fit through anyway. */
+        struct obj *arm = which_armor(mon, os_armc);
+        if (!arm)
+            arm = which_armor(mon, os_arm);
+        if (!arm)
+            arm = which_armor(mon, os_armu);
+
+        if (arm && minv_weight_total(mon) <= 1200 &&
+            (arm->greased || arm->otyp == OILSKIN_CLOAK ||
+             (obj_properties(arm) & opm_oilskin)))
+            return TRUE; /* Should grease be able to wear off? */
+
+        /* otherwise we can't after all */
+        if (msg)
+            pline(msgc, "%s carrying too much to get through.",
+                  M_verbs(mon, "are"));
+    }
+
+    return TRUE;
+}
+
 boolean
 invocation_pos(const d_level * dlev, xchar x, xchar y)
 {
@@ -889,25 +939,10 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
         }
     }
     if (dx && dy && bad_rock(&youmonst, ux, y) &&
-        bad_rock(&youmonst, x, uy)) {
-        /* Move at a diagonal. */
-        if (In_sokoban(&u.uz)) {
-            if (mode == DO_MOVE)
-                pline(msgc_cancelled, "You cannot pass that way.");
-            return FALSE;
-        }
-        if (bigmonst(youmonst.data) && !can_ooze(&youmonst)) {
-            if (mode == DO_MOVE)
-                pline(msgc_cancelled, "Your body is too large to fit through.");
-            return FALSE;
-        }
-        if (youmonst.minvent && (inv_weight_total() > 600)) {
-            if (mode == DO_MOVE)
-                pline(msgc_cancelled,
-                      "You are carrying too much to get through.");
-            return FALSE;
-        }
-    }
+        bad_rock(&youmonst, x, uy) &&
+        !can_diagonal_squeeze(&youmonst, (mode == DO_MOVE)))
+        return FALSE;
+
     /* Reduce our willingness to path through traps, water, and lava.  The
        character's current square is always safe to stand on, so don't worry
        about that. Check the character's memory, not the current square
@@ -3208,15 +3243,21 @@ weight_cap(void)
 int
 inv_weight_total(void)
 {
-    struct obj *otmp = youmonst.minvent;
+    return minv_weight_total(&youmonst);
+}
+
+int
+minv_weight_total(const struct monst *mon)
+{
+    struct obj *obj = mon->minvent;
     int wt = 0;
 
-    while (otmp) {
-        if (otmp->oclass == COIN_CLASS)
-            wt += (int)(((long)otmp->quan + 50L) / 100L);
-        else if (otmp->otyp != BOULDER || !throws_rocks(youmonst.data))
-            wt += otmp->owt;
-        otmp = otmp->nobj;
+    while (obj) {
+        if (obj->oclass == COIN_CLASS)
+            wt += (int)(((long)obj->quan + 50L) / 100L);
+        else if (obj->otyp != BOULDER || !throws_rocks(mon->data))
+            wt += obj->owt;
+        obj = obj->nobj;
     }
     return wt;
 }
