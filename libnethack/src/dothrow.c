@@ -308,7 +308,7 @@ dofire(const struct nh_cmd_arg *arg)
     if (!uquiver && uwep && is_pole(uwep) && use_pole(uwep, arg))
         return 1;
     else if (flags.autoswap && !uquiver && uswapwep && is_pole(uswapwep) &&
-             use_pole(uswapwep, arg))
+             (!uswapwep->cursed || !uswapwep->bknown) && use_pole(uswapwep, arg))
         return 1;
 
     if (check_capacity(NULL))
