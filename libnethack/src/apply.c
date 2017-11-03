@@ -2689,7 +2689,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
     int wtstatus, typ, max_range = 4, min_range = 4;
     coord cc;
     struct monst *mtmp;
-
+    boolean autofiring = last_command_was("fire");
 
     /* Are you allowed to use the pole? */
     if (Engulfed) {
@@ -2697,7 +2697,8 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare, FALSE);
+    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare,
+                          autofiring);
 
     if (wtstatus & 2)
         return 1;
@@ -2713,7 +2714,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
     else
         max_range = 8;
 
-    if (!last_command_was("fire")) {
+    if (!autofiring) {
         /* Prompt for a location */
         pline(msgc_uiprompt, where_to_hit);
         find_polearm_target(min_range, max_range, &cc);
