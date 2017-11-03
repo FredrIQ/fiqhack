@@ -26,7 +26,7 @@ static int use_trap(struct obj *, const struct nh_cmd_arg *);
 static int use_stone(struct obj *);
 static int set_trap(void);      /* occupation callback */
 static int use_whip(struct obj *, const struct nh_cmd_arg *);
-static void find_polearm_target(int, int, coord *);
+static boolean find_polearm_target(int, int, coord *);
 static int use_cream_pie(struct obj **);
 static int use_grapple(struct obj *, const struct nh_cmd_arg *);
 static boolean figurine_location_checks(struct obj *, coord *, boolean);
@@ -2649,7 +2649,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 }
 
 /* Choose an appropriate starting position for prompting */
-static void
+static boolean
 find_polearm_target(int minr, int maxr, coord *cc)
 {
     struct monst *mon;
@@ -2669,10 +2669,12 @@ find_polearm_target(int minr, int maxr, coord *cc)
             if (mon && !mon->mpeaceful) {
                 cc->x = x;
                 cc->y = y;
-                return;
+                return TRUE;
             }
         }
     }
+
+    return FALSE;
 }
 
 static const char
@@ -2697,6 +2699,22 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
+    /* Calculate range */
+    typ = weapon_type(obj);
+    if (typ == P_NONE || P_SKILL(typ) <= P_BASIC)
+        max_range = 4;
+    else if (P_SKILL(typ) == P_SKILLED)
+        max_range = 5;
+    else
+        max_range = 8;
+
+    /* See if we have an appropriate target to autofire */
+    if (autofiring && !find_polearm_target(min_range, max_range, &cc)) {
+        pline(msgc_cancelled,
+              "There doesn't seem to be an appropriate target to thrust.");
+        return 0;
+    }
+
     wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare,
                           autofiring);
 
@@ -2705,26 +2723,12 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
     if (!(wtstatus & 1))
         return 0;
 
-    /* Calculate range */
-    typ = weapon_type(uwep);
-    if (typ == P_NONE || P_SKILL(typ) <= P_BASIC)
-        max_range = 4;
-    else if (P_SKILL(typ) == P_SKILLED)
-        max_range = 5;
-    else
-        max_range = 8;
-
     if (!autofiring) {
         /* Prompt for a location */
         pline(msgc_uiprompt, where_to_hit);
         find_polearm_target(min_range, max_range, &cc);
         if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
             return 0;     /* user pressed ESC */
-    } else {
-        /* Automatically use it */
-        find_polearm_target(min_range, max_range, &cc);
-        if (cc.x == u.ux && cc.y == u.uy)
-            return 0;
     }
 
     if (distu(cc.x, cc.y) > max_range) {

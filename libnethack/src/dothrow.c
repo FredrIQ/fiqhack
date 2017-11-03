@@ -305,11 +305,11 @@ dofire(const struct nh_cmd_arg *arg)
 
     /* If we lack a quiver but are wielding a polearm, auto-apply it
        appropriately. */
-    if (!uquiver && uwep && is_pole(uwep) && use_pole(uwep, arg))
-        return 1;
+    if (!uquiver && uwep && is_pole(uwep))
+        return use_pole(uwep, arg);
     else if (flags.autoswap && !uquiver && uswapwep && is_pole(uswapwep) &&
-             (!uswapwep->cursed || !uswapwep->bknown) && use_pole(uswapwep, arg))
-        return 1;
+             (!uswapwep->cursed || !uswapwep->bknown))
+        return use_pole(uswapwep, arg);
 
     if (check_capacity(NULL))
         return 0;
