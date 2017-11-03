@@ -1583,8 +1583,6 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         tmp = 0;
         break;
     case AD_CURS:
-        if (!night() && (pa == &mons[PM_GREMLIN]))
-            break;
         if (!cancelled(magr) && !rn2(10)) {
             if (pd == &mons[PM_CLAY_GOLEM]) {
                 if (vis) {
