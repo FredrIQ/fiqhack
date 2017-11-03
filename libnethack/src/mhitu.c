@@ -828,6 +828,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
     /* First determine the base damage done */
     dmg = dice((int)mattk->damn, (int)mattk->damd);
+    /* extra damage */
     dmg += dambon(mtmp);
 
     /* Next a cancellation factor. Use uncancelled when the cancellation factor
