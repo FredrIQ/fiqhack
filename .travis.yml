@@ -13,3 +13,7 @@ script:
 
 notifications:
     irc: "chat.freenode.net#FIQHack"
+    use_notice: true
+    template:
+      - "%{commit_subject} (%{result} %{branch} #%{build_number}) %{build_url}
+        Diff: %{compare_url}"
