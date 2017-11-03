@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2678,13 +2678,6 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
     if (!(wtstatus & 1))
         return 0;
 
-    /* Prompt for a location */
-    pline(msgc_uiprompt, where_to_hit);
-    cc.x = u.ux;
-    cc.y = u.uy;
-    if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
-        return 0;     /* user pressed ESC */
-
     /* Calculate range */
     typ = weapon_type(uwep);
     if (typ == P_NONE || P_SKILL(typ) <= P_BASIC)
@@ -2693,6 +2686,32 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         max_range = 5;
     else
         max_range = 8;
+
+    /* Prompt for a location */
+    pline(msgc_uiprompt, where_to_hit);
+    cc.x = u.ux;
+    cc.y = u.uy;
+
+    /* Try to be intelligent about choosing a target */
+    int x, y;
+    for (x = (u.ux - 2); x <= (u.ux + 2); x++) {
+        for (y = (u.uy - 2); y <= (u.uy + 2); y++) {
+            if (!isok(x, y) || distu(x, y) < min_range ||
+                distu(x, y) > max_range || !couldsee(x, y))
+                continue;
+
+            mtmp = vismon_at(level, x, y);
+            if (mtmp && !mtmp->mpeaceful) {
+                cc.x = x;
+                cc.y = y;
+                break;
+            }
+        }
+    }
+
+    if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
+        return 0;     /* user pressed ESC */
+
     if (distu(cc.x, cc.y) > max_range) {
         pline(distu(cc.x, cc.y) > 20 ? msgc_mispaste : msgc_cancelled,
               "Too far!");
@@ -2701,10 +2720,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         pline(msgc_cancelled, "Too close!");
         return 0;
     } else if (!cansee(cc.x, cc.y) &&
-               ((mtmp = m_at(level, cc.x, cc.y)) == NULL || !canseemon(mtmp))) {
-        /* TODO: The if condition above looks a little suspicious: it lets you
-           hit monsters you can see with infravision, but not monsters you can
-           see with telepathy. */
+               (mtmp = vismon_at(level, cc.x, cc.y)) == NULL) {
         pline(msgc_cancelled, cant_see_spot);
         return 0;
     } else if (!couldsee(cc.x, cc.y)) { /* Eyes of the Overworld */
