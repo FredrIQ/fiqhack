@@ -1912,7 +1912,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 ((uquiver && is_ammo(uquiver) &&
                   ammo_and_launcher(uquiver, uwep) &&
                   (!uswapwep || !ammo_and_launcher(uquiver, uswapwep))) ||
-                 (!uquiver && is_pole(uwep) &&
+                 (!uquiver && is_pole(uwep) && !u.usteed &&
                   (!uswapwep || !is_pole(uswapwep)))) &&
                 (!uwep->cursed || !uwep->bknown) &&
                 (!uswapwep || !uswapwep->cursed || !uswapwep->bknown))
