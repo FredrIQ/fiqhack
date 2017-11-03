@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -432,7 +432,9 @@ get_command(void *callbackarg,
             cmd = keymap[key];
 
             /* Allow people to use ctrl+f for "find" without
-               adjusting their old settings. */
+               adjusting their old settings.
+               TODO: ui_flags.playmode isn't a reliable way to get current
+               play mode, it's only MODE_WIZARD if you started with '-D' */
             if (cmd == find_command("wizport") &&
                 ui_flags.playmode != MODE_WIZARD)
                 cmd = find_command("find");
