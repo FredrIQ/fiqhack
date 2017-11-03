@@ -26,6 +26,7 @@ static int use_trap(struct obj *, const struct nh_cmd_arg *);
 static int use_stone(struct obj *);
 static int set_trap(void);      /* occupation callback */
 static int use_whip(struct obj *, const struct nh_cmd_arg *);
+static void find_polearm_target(int, int, coord *);
 static int use_pole(struct obj *, const struct nh_cmd_arg *);
 static int use_cream_pie(struct obj **);
 static int use_grapple(struct obj *, const struct nh_cmd_arg *);
@@ -2648,6 +2649,32 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
     return 1;
 }
 
+/* Choose an appropriate starting position for prompting */
+static void
+find_polearm_target(int minr, int maxr, coord *cc)
+{
+    struct monst *mon;
+
+    /* Fallback */
+    cc->x = u.ux;
+    cc->y = u.uy;
+
+    int x, y;
+    for (x = (u.ux - 2); x <= (u.ux + 2); x++) {
+        for (y = (u.uy - 2); y <= (u.uy + 2); y++) {
+            if (!isok(x, y) || distu(x, y) < minr || distu(x, y) > maxr ||
+                !couldsee(x, y))
+                continue;
+
+            mon = vismon_at(level, x, y);
+            if (mon && !mon->mpeaceful) {
+                cc->x = x;
+                cc->y = y;
+                return;
+            }
+        }
+    }
+}
 
 static const char
      not_enough_room[] =
@@ -2689,26 +2716,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 
     /* Prompt for a location */
     pline(msgc_uiprompt, where_to_hit);
-    cc.x = u.ux;
-    cc.y = u.uy;
-
-    /* Try to be intelligent about choosing a target */
-    int x, y;
-    for (x = (u.ux - 2); x <= (u.ux + 2); x++) {
-        for (y = (u.uy - 2); y <= (u.uy + 2); y++) {
-            if (!isok(x, y) || distu(x, y) < min_range ||
-                distu(x, y) > max_range || !couldsee(x, y))
-                continue;
-
-            mtmp = vismon_at(level, x, y);
-            if (mtmp && !mtmp->mpeaceful) {
-                cc.x = x;
-                cc.y = y;
-                break;
-            }
-        }
-    }
-
+    find_polearm_target(min_range, max_range, &cc);
     if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return 0;     /* user pressed ESC */
 
