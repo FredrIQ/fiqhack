@@ -671,6 +671,7 @@ extern int dopickup(const struct nh_cmd_arg *);
 extern void lookaround(enum u_interaction_mode);
 extern int monster_nearby(void);
 extern void losehp(int, const char *);
+extern void xlosehp(int, const char *, boolean);
 extern int weight_cap(void);
 extern int inv_weight_over_cap(void);
 extern int inv_weight_total(void);

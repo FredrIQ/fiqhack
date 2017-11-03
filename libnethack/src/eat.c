@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1153,7 +1153,7 @@ eatcorpse(struct monst *mon, struct obj *otmp)
                   you ? "have" : "has");
         /* not body_part() */
         if (you)
-            losehp(rnd(15), killer_msg(DIED, "an acidic corpse"));
+            xlosehp(rnd(15), killer_msg(DIED, "an acidic corpse"), FALSE);
         else {
             mon->mhp -= rnd(15);
             if (mon->mhp <= 0) {
@@ -1171,7 +1171,8 @@ eatcorpse(struct monst *mon, struct obj *otmp)
         if (!resists_poison(mon)) {
             if (you) {
                 losestr(rnd(4), DIED, killer_msg(DIED, "a poisonous corpse"), NULL);
-                losehp(rnd(15), killer_msg(DIED, "a poisonous corpse"));
+                xlosehp(rnd(15), killer_msg(DIED, "a poisonous corpse"),
+                        FALSE);
             } else {
                 mon->mhp -= rnd(15);
                 if (mon->mhp <= 0) {
@@ -1192,7 +1193,7 @@ eatcorpse(struct monst *mon, struct obj *otmp)
                   "%s %s %ssick.", Monnam(mon), mfeel(mon),
                   (sick(mon)) ? "very " : "");
         if (you)
-            losehp(rnd(8), killer_msg(DIED, "a cadaver"));
+            xlosehp(rnd(8), killer_msg(DIED, "a cadaver"), FALSE);
         else {
             mon->mhp -= rnd(8);
             if (mon->mhp <= 0) {
@@ -1918,7 +1919,7 @@ doeat(const struct nh_cmd_arg *arg)
             if (!Poison_resistance) {
                 pline(msgc_intrloss, "Ecch - that must have been poisonous!");
                 losestr(rnd(4), DIED, killer_msg_obj(DIED, otmp), NULL);
-                losehp(rnd(15), killer_msg_obj(DIED, otmp));
+                xlosehp(rnd(15), killer_msg_obj(DIED, otmp), FALSE);
             } else /* now a single message, as with the poisonous() check for
                       corpses, but a different one for ID knowledge reasons */
                 pline(msgc_playerimmune, "Was that thing poisoned?");

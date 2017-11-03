@@ -3175,6 +3175,12 @@ maybe_wail(void)
 void
 losehp(int n, const char *killer)
 {
+    xlosehp(n, killer, TRUE);
+}
+
+void
+xlosehp(int n, const char *killer, boolean interrupt)
+{
     if (Upolyd) {
         u.mh -= n;
         if (u.mhmax < u.mh)
@@ -3189,7 +3195,7 @@ losehp(int n, const char *killer)
     u.uhp -= n;
     if (u.uhp > u.uhpmax)
         u.uhpmax = u.uhp;       /* perhaps n was negative */
-    else
+    else if (interrupt)
         action_interrupted(); /* taking damage stops command repeat */
     if (u.uhp < 1) {
         pline(msgc_fatal_predone, "You die...");
