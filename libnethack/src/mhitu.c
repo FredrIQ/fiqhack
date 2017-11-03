@@ -828,8 +828,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
     /* First determine the base damage done */
     dmg = dice((int)mattk->damn, (int)mattk->damd);
-    if (is_undead(mdat) && midnight())
-        dmg += dice((int)mattk->damn, (int)mattk->damd); /* extra damage */
     dmg += dambon(mtmp);
 
     /* Next a cancellation factor. Use uncancelled when the cancellation factor
@@ -1352,8 +1350,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_CURS:
         hitmsg(mtmp, mattk);
-        if (!night() && mdat == &mons[PM_GREMLIN])
-            break;
         if (!cancelled(mtmp) && !rn2(10)) {
             if (canhear()) {
                 /* OK to use a low-priority channel here; we're about to use
