@@ -27,7 +27,6 @@ static int use_stone(struct obj *);
 static int set_trap(void);      /* occupation callback */
 static int use_whip(struct obj *, const struct nh_cmd_arg *);
 static void find_polearm_target(int, int, coord *);
-static int use_pole(struct obj *, const struct nh_cmd_arg *);
 static int use_cream_pie(struct obj **);
 static int use_grapple(struct obj *, const struct nh_cmd_arg *);
 static boolean figurine_location_checks(struct obj *, coord *, boolean);
@@ -2684,7 +2683,7 @@ static const char
     "You can't reach that spot from here.";
 
 /* Distance attacks by pole-weapons */
-static int
+int
 use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     int wtstatus, typ, max_range = 4, min_range = 4;
@@ -2714,11 +2713,18 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
     else
         max_range = 8;
 
-    /* Prompt for a location */
-    pline(msgc_uiprompt, where_to_hit);
-    find_polearm_target(min_range, max_range, &cc);
-    if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
-        return 0;     /* user pressed ESC */
+    if (!last_command_was("fire")) {
+        /* Prompt for a location */
+        pline(msgc_uiprompt, where_to_hit);
+        find_polearm_target(min_range, max_range, &cc);
+        if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
+            return 0;     /* user pressed ESC */
+    } else {
+        /* Automatically use it */
+        find_polearm_target(min_range, max_range, &cc);
+        if (cc.x == u.ux && cc.y == u.uy)
+            return 0;
+    }
 
     if (distu(cc.x, cc.y) > max_range) {
         pline(distu(cc.x, cc.y) > 20 ? msgc_mispaste : msgc_cancelled,
