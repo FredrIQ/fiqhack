@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -146,6 +146,9 @@ save_flags(struct memfile *mf)
        debugging easier */
     mtag(mf, 0, MTAG_FLAGS);
 
+    if (flags.mon_moving)
+        panic("flags.mon_moving is nonzero during neutral turnstate?");
+
     mwrite64(mf, flags.turntime);
 
     mwrite64(mf, 0); /* old ghost/djinni count */
@@ -217,13 +220,12 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.autoswap);
     mwrite32(mf, flags.last_arg.key);
     mwrite8(mf, flags.double_troubled);
-    if (flags.mon_moving)
-        panic("flags.mon_moving is nonzero during neutral turnstate?");
+    mwrite8(mf, flags.autounlock);
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 98; i++)
+    for (i = 0; i < 97; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));

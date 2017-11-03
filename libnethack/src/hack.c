@@ -233,7 +233,8 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
        Another exception: if the door is /known/ to be locked. */
     if ((l->mem_bg == S_hcdoor || l->mem_bg == S_vcdoor) &&
         uim != uim_traditional &&
-        (!l->mem_door_l || (IS_DOOR(l->typ) && !(l->flags & D_LOCKED))))
+        (!l->mem_door_l || (IS_DOOR(l->typ) &&
+                            (!(l->flags & D_LOCKED) || flags.autounlock))))
         return uia_opendoor;
 
     /* This is an interactive mode (so autopicking up items is OK if autopickup
