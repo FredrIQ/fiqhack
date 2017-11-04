@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-01 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -877,35 +877,35 @@ dotrap(struct trap *trap, unsigned trflags)
         case 0:
             pline(msgc_nonmonbad, "%s you on the %s!", A_gush_of_water_hits,
                   body_part(HEAD));
-            water_damage(uarmh, maybe_helmet_name(uarmh), TRUE);
+            water_damage(uarmh, maybe_helmet_name(uarmh), FALSE);
             break;
         case 1:
             pline(msgc_nonmonbad, "%s your left %s!", A_gush_of_water_hits,
                   body_part(ARM));
-            if (water_damage(uarms, "shield", TRUE))
+            if (water_damage(uarms, "shield", FALSE))
                 break;
             if (u.twoweap || (uwep && bimanual(uwep)))
                 water_damage(u.twoweap ? uswapwep : uwep, NULL, TRUE);
         glovecheck:
-            water_damage(uarmg, "gauntlets", TRUE);
+            water_damage(uarmg, "gauntlets", FALSE);
             /* Not "metal gauntlets" since it gets called even if it's leather
                for the message */
             break;
         case 2:
             pline(msgc_nonmonbad, "%s your right %s!", A_gush_of_water_hits,
                   body_part(ARM));
-            water_damage(uwep, NULL, TRUE);
+            water_damage(uwep, NULL, FALSE);
             goto glovecheck;
         default:
             pline(msgc_nonmonbad, "%s you!", A_gush_of_water_hits);
             for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
                 snuff_lit(otmp);
             if (uarmc)
-                water_damage(uarmc, cloak_simple_name(uarmc), TRUE);
+                water_damage(uarmc, cloak_simple_name(uarmc), FALSE);
             else if (uarm)
-                water_damage(uarm, "armor", TRUE);
+                water_damage(uarm, "armor", FALSE);
             else if (uarmu)
-                water_damage(uarmu, "shirt", TRUE);
+                water_damage(uarmu, "shirt", FALSE);
         }
         update_inventory();
 
@@ -1969,7 +1969,7 @@ mintrap(struct monst *mtmp)
                               "%s %s on the %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, HEAD));
                     target = which_armor(mtmp, os_armh);
-                    water_damage(target, maybe_helmet_name(target), TRUE);
+                    water_damage(target, maybe_helmet_name(target), FALSE);
                     break;
                 case 1:
                     if (in_sight)
@@ -1977,22 +1977,22 @@ mintrap(struct monst *mtmp)
                               "%s %s's left %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, ARM));
                     target = which_armor(mtmp, os_arms);
-                    if (water_damage(target, "shield", TRUE))
+                    if (water_damage(target, "shield", FALSE))
                         break;
                     target = MON_WEP(mtmp);
                     if (target && bimanual(target))
-                        water_damage(target, NULL, TRUE);
+                        water_damage(target, NULL, FALSE);
                 glovecheck:
                     target =
                         which_armor(mtmp, os_armg);
-                    water_damage(target, "gauntlets", TRUE);
+                    water_damage(target, "gauntlets", FALSE);
                     break;
                 case 2:
                     if (in_sight)
                         pline(combat_msgc(culprit, mtmp, cr_hit),
                               "%s %s's right %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, ARM));
-                    water_damage(MON_WEP(mtmp), NULL, TRUE);
+                    water_damage(MON_WEP(mtmp), NULL, FALSE);
                     goto glovecheck;
                 default:
                     if (in_sight)
@@ -2002,14 +2002,14 @@ mintrap(struct monst *mtmp)
                         snuff_lit(otmp);
                     target = which_armor(mtmp, os_armc);
                     if (target)
-                        water_damage(target, cloak_simple_name(target), TRUE);
+                        water_damage(target, cloak_simple_name(target), FALSE);
                     else {
                         target = which_armor(mtmp, os_arm);
                         if (target)
-                            water_damage(target, "armor", TRUE);
+                            water_damage(target, "armor", FALSE);
                         else {
                             target = which_armor(mtmp, os_armu);
-                            water_damage(target, "shirt", TRUE);
+                            water_damage(target, "shirt", FALSE);
                         }
                     }
                 }
@@ -3064,6 +3064,7 @@ acid_damage(struct obj *obj)
  *  1 if obj is protected by grease
  *  2 if obj is changed but survived
  *  3 if obj is destroyed
+ * force is TRUE if this was a deliberate action
  */
 int
 water_damage(struct obj * obj, const char *ostr, boolean force)
@@ -3174,7 +3175,7 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
         }
     } else {
         int res = erode_obj(obj, ostr, ERODE_RUST, FALSE, !force);
-        if (!res && force)
+        if (!res && vis && force)
             pline(msgc_actionok, "%s %s wet.",
                   Shk_Your(obj), aobjnam(obj, "get"));
         return res ? 2 : 0;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-04 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -968,10 +968,8 @@ dokick(const struct nh_cmd_arg *arg)
                 goto ouch;
             /* make metal boots rust */
             if (uarmf && rn2(3))
-                if (!water_damage(uarmf, "metal boots", TRUE)) {
-                    pline(msgc_badidea, "Your boots get wet.");
-                    /* could cause short-lived fumbling here */
-                }
+                water_damage(uarmf, "metal boots", TRUE);
+
             exercise(A_DEX, TRUE);
             return 1;
         }
