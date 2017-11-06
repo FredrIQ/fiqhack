@@ -1905,7 +1905,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             }
         } else {
             /* Possibly unwield launcher for ammo unless we're using forcefight. */
-            if (flags.autoswap &&
+            if (flags.autoswap && uwep &&
                 ((uquiver && is_ammo(uquiver) &&
                   ammo_and_launcher(uquiver, uwep) &&
                   (!uswapwep || !ammo_and_launcher(uquiver, uswapwep))) ||
