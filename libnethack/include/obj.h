@@ -112,10 +112,6 @@ struct obj {
 
     unsigned recharged:3;       /* number of times it's been recharged */
     unsigned lamplit:1;         /* a light-source -- can be lit */
-# ifdef INVISIBLE_OBJECTS
-    /* Note: there's no save/restore logic for oinvis */
-    unsigned oinvis:1;          /* invisible */
-# endif
     unsigned greased:1;         /* covered with grease */
 
     unsigned in_use:1;          /* for magic items before useup items */

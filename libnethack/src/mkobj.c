@@ -608,9 +608,6 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
     otmp->o_id = next_ident();
 
     if (init) {
-#ifdef INVISIBLE_OBJECTS
-        otmp->oinvis = !rn2_on_rng(1250, rng);
-#endif
         switch (let) {
         case WEAPON_CLASS:
             otmp->quan = is_multigen(otmp) ? 6 + rn2_on_rng(6, rng) : 1;

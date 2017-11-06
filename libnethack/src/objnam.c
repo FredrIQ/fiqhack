@@ -955,11 +955,6 @@ doname_base(const struct obj *obj, boolean with_price)
     else
         prefix = "";
 
-#ifdef INVISIBLE_OBJECTS
-    if (obj->oinvis)
-        prefix = msgcat(prefix, "invisible ");
-#endif
-
     int contained = remembered_contained(obj);
     if (!contained)
         prefix = msgcat(prefix, "empty ");
@@ -2080,10 +2075,6 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     int cnt, spe, spesgn, typ, very, rechrg;
     int blessed, uncursed, iscursed, ispoisoned, isgreased;
     int eroded, eroded2, erodeproof;
-
-#ifdef INVISIBLE_OBJECTS
-    int isinvisible;
-#endif
     int halfeaten, mntmp, contents;
     int islit, unlabeled, ishistoric, isdiluted;
     const struct alt_spellings *as = spellings;
@@ -2111,9 +2102,6 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     boolean magical = FALSE; /* generic term for object properties */
 
     cnt = spe = spesgn = typ = very = rechrg = blessed = uncursed = iscursed =
-#ifdef INVISIBLE_OBJECTS
-        isinvisible =
-#endif
         ispoisoned = isgreased = eroded = eroded2 = erodeproof = halfeaten =
         islit = unlabeled = ishistoric = isdiluted = 0;
     mntmp = NON_PM;
@@ -2175,10 +2163,6 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
             iscursed = 1;
         } else if (!strncmpi(bp, "uncursed ", l = 9)) {
             uncursed = 1;
-#ifdef INVISIBLE_OBJECTS
-        } else if (!strncmpi(bp, "invisible ", l = 10)) {
-            isinvisible = 1;
-#endif
         } else if (!strncmpi(bp, "rustproof ", l = 10) ||
                    !strncmpi(bp, "erodeproof ", l = 11) ||
                    !strncmpi(bp, "corrodeproof ", l = 13) ||
@@ -3156,11 +3140,6 @@ typfnd:
             otmp->oprops = prop;
         }
     }
-
-#ifdef INVISIBLE_OBJECTS
-    if (isinvisible)
-        otmp->oinvis = 1;
-#endif
 
     /* set eroded */
     if (is_damageable(otmp) || otmp->otyp == CRYSKNIFE) {

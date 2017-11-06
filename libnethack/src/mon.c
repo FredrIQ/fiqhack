@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-04 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -337,11 +337,6 @@ make_corpse(struct monst *mtmp)
        substitutes the word "something" if the corpse's obj->dknown is 0. */
     if (Blind && !sensemon(mtmp))
         obj->dknown = 0;
-
-#ifdef INVISIBLE_OBJECTS
-    /* Invisible monster ==> invisible corpse */
-    obj->oinvis = invisible(mtmp);
-#endif
 
     stackobj(obj);
     if (mtmp->dlevel == level)
@@ -1042,10 +1037,6 @@ mpickstuff(struct monst *mon, boolean autopickup)
         /* we are dealing with a box, check if it has been inspected */
         if (otmp->mknown)
             continue; /* handle this later */
-#ifdef INVISIBLE_OBJECTS
-        if (obj->oinvis && !see_invisible(mtmp))
-            continue;
-#endif
         if (!otmp->mbknown && otmp->otyp != ICE_BOX) {
             /* we don't know if it is trapped or not, use SDD or detect
                unseen if we can */
@@ -1111,10 +1102,6 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             }
             continue;
         }
-#ifdef INVISIBLE_OBJECTS
-        if (obj->oinvis && !see_invisible(mtmp))
-            continue;
-#endif
         /* For bags, monsters only loot them if they aren't already interested in
            picking the bag up instead */
         bag = (obj->otyp == SACK || obj->otyp == OILSKIN_SACK ||

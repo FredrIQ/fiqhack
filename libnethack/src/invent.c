@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2124,10 +2124,6 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         if (dfeature)
             pline(msgc_info, "%s", fbuf);
         read_engr_at(u.ux, u.uy);
-#ifdef INVISIBLE_OBJECTS
-        if (otmp->oinvis && !See_invisible)
-            verb = "feel";
-#endif
         /* Don't show weight if the player shouldn't know what the weight is. */
         if (show_weight && (objects[otmp->otyp].oc_name_known || otmp->invlet))
             pline(msgc_info, "You %s here %s {%d}.", verb, doname_price(otmp),
@@ -2255,12 +2251,9 @@ mergable(struct obj *otmp, struct obj *obj)
         obj->dknown != otmp->dknown || obj->cursed != otmp->cursed ||
         obj->blessed != otmp->blessed || obj->no_charge != otmp->no_charge ||
         obj->obroken != otmp->obroken || obj->otrapped != otmp->otrapped ||
-        obj->lamplit != otmp->lamplit ||
-#ifdef INVISIBLE_OBJECTS
-        obj->oinvis != otmp->oinvis ||
-#endif
-        obj->greased != otmp->greased || obj->oeroded != otmp->oeroded ||
-        obj->oeroded2 != otmp->oeroded2 || obj->bypass != otmp->bypass)
+        obj->lamplit != otmp->lamplit || obj->greased != otmp->greased ||
+        obj->oeroded != otmp->oeroded || obj->oeroded2 != otmp->oeroded2 ||
+        obj->bypass != otmp->bypass)
         return FALSE;
 
     if ((obj->oclass == WEAPON_CLASS || obj->oclass == ARMOR_CLASS) &&

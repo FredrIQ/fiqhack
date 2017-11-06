@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2175,34 +2175,6 @@ dodip(const struct nh_cmd_arg *arg)
         useup(potion);
         return 1;
     }
-#ifdef INVISIBLE_OBJECTS
-    if (potion->otyp == POT_INVISIBILITY && !obj->oinvis) {
-        obj->oinvis = TRUE;
-        if (!Blind) {
-            if (!See_invisible)
-                pline(msgc_actionok, "Where did %s go?", the(xname(obj)));
-            else
-                pline(msgc_actionok, "You notice a little haziness around %s.",
-                      the(xname(obj)));
-        }
-        makeknown(POT_INVISIBILITY);
-        useup(potion);
-        return 1;
-    } else if (potion->otyp == POT_SEE_INVISIBLE && obj->oinvis) {
-        obj->oinvis = FALSE;
-        if (!Blind) {
-            if (!See_invisible)
-                pline(msgc_actionok, "So that's where %s went!",
-                      the(xname(obj)));
-            else
-                pline(msgc_actionok, "The haziness around %s disappears.",
-                      the(xname(obj)));
-        }
-        makeknown(POT_SEE_INVISIBLE);
-        useup(potion);
-        return 1;
-    }
-#endif
 
     if (is_poisonable(obj)) {
         if (potion->otyp == POT_SICKNESS && !obj->opoisoned) {

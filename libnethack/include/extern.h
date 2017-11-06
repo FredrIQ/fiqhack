@@ -273,9 +273,6 @@ extern void rot_corpse(void *, long);
 
 /* ### display.c ### */
 
-# ifdef INVISIBLE_OBJECTS
-extern struct obj *vobj_at(xchar, xchar);
-# endif/* INVISIBLE_OBJECTS */
 extern void clear_memory_glyph(schar x, schar y, int to);
 extern void magic_map_background(xchar, xchar, int);
 extern void map_background(xchar, xchar, int);

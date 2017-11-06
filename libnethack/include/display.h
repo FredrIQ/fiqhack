@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -9,11 +9,7 @@
 
 # include "vision.h"
 
-# ifndef INVISIBLE_OBJECTS
-#  define vobj_at(x,y) (level->objects[x][y])
-# endif
-
-
+# define vobj_at(x,y) (level->objects[x][y])
 # define dbuf_monid(mon, xx, yy, rng) \
     (what_mon(monsndx(mon->data), xx, yy, rng) + 1)
 # define dbuf_objid(obj, xx, yy, rng) (what_obj(obj->otyp, xx, yy, rng) + 1)

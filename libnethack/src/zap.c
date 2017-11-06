@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1134,10 +1134,6 @@ cancel_item(struct obj *obj)
         costly_cancel(obj);
     unbless(obj);
     uncurse(obj);
-#ifdef INVISIBLE_OBJECTS
-    if (obj->oinvis)
-        obj->oinvis = 0;
-#endif
     return;
 }
 
@@ -1912,12 +1908,6 @@ bhito(struct obj *obj, struct obj *otmp)
         case SPE_TELEPORT_AWAY:
             rloco(obj);
             break;
-        case WAN_MAKE_INVISIBLE:
-#ifdef INVISIBLE_OBJECTS
-            obj->oinvis = TRUE;
-            newsym(obj->ox, obj->oy);   /* make object disappear */
-#endif
-            break;
         case WAN_UNDEAD_TURNING:
         case SPE_TURN_UNDEAD:
             if (obj->otyp == EGG)
@@ -1945,7 +1935,8 @@ bhito(struct obj *obj, struct obj *otmp)
             if (res /* && otmp->oclass == WAND_CLASS */ )
                 makeknown(otmp->otyp);
             break;
-        case WAN_SLOW_MONSTER: /* no effect on objects */
+        case WAN_MAKE_INVISIBLE: /* no effect on objects */
+        case WAN_SLOW_MONSTER:
         case SPE_SLOW_MONSTER:
         case WAN_SPEED_MONSTER:
         case SPE_SPEED_MONSTER:

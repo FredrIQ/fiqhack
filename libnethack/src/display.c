@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -126,30 +126,6 @@ static void set_seenv(struct rm *, int, int, int, int);
 static void t_warn(struct rm *);
 static int wall_angle(struct rm *);
 static void dbuf_set_object(int x, int y, int oid, int omn);
-
-#ifdef INVISIBLE_OBJECTS
-/*
- * vobj_at()
- *
- * Returns a pointer to an object if the hero can see an object at the
- * given location.  This takes care of invisible objects.  NOTE, this
- * assumes that the hero is not blind and on top of the object pile.
- * It does NOT take into account that the location is out of sight, or,
- * say, one can see blessed, etc.
- */
-struct obj *
-vobj_at(xchar x, xchar y)
-{
-    struct obj *obj = level->objects[x][y];
-
-    while (obj) {
-        if (!obj->oinvis || See_invisible)
-            return obj;
-        obj = obj->nexthere;
-    }
-    return NULL;
-}
-#endif /* else vobj_at() is defined in display.h */
 
 /*
  * magic_map_background()
