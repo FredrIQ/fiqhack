@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -925,6 +925,7 @@ extern void show_obj_memories_at(struct level *, int, int);
 extern void update_obj_memories(struct level *);
 extern void update_obj_memories_at(struct level *, int, int);
 extern void update_container_memory(struct obj *);
+extern int remembered_contained(const struct obj *);
 extern void update_obj_memory(struct obj *);
 extern void free_obj_memory(struct obj *);
 extern void free_memobj_chain(struct obj *);

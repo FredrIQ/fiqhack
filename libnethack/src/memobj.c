@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -299,6 +299,9 @@ update_container_memory(struct obj *obj)
         return;
     }
 
+    /* Mark container as investigated */
+    obj->cknown = TRUE;
+
     /* Update container itself first. */
     update_obj_memory(obj);
 
@@ -317,6 +320,34 @@ update_container_memory(struct obj *obj)
 
     for (obj = obj->cobj; obj; obj = obj->nobj)
         update_obj_memory(obj);
+}
+
+/* Returns amount of remembered objects or -1 if not remembered/not a container */
+int
+remembered_contained(const struct obj *obj)
+{
+    if (!obj)
+        panic("remembered_contained: obj is NULL");
+
+    if (!obj->cknown)
+        return -1;
+
+    const struct obj *memobj = obj;
+    if (memobj->memory == OM_NO_MEMORY)
+        memobj = memobj->mem_obj;
+
+    if (!memobj)
+        panic("remembered_contained: obj->mem_obj is NULL");
+
+    if (!Is_container(memobj) ||
+        (memobj->otyp == BAG_OF_TRICKS && memobj->dknown &&
+         objects[BAG_OF_TRICKS].oc_name_known))
+        return -1;
+
+    int ret = 0;
+    for (obj = memobj->cobj; obj; obj = obj->nobj)
+        ret++;
+    return ret;
 }
 
 /* Creates or updates an object memory for given object */
