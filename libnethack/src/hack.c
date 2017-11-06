@@ -787,6 +787,7 @@ can_diagonal_squeeze(const struct monst *mon, boolean msg)
         if (msg)
             pline(msgc, "%s carrying too much to get through.",
                   M_verbs(mon, "are"));
+        return FALSE;
     }
 
     return TRUE;
