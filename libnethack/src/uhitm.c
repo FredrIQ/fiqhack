@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -619,7 +619,8 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown,
                            hand-to-hand attack should yield a "bashing" mesg */
                         if (obj == uwep)
                             u.bashmsg = FALSE;
-                        if (obj->spe && obj->corpsenm >= LOW_PM) {
+                        if ((obj->spe & OPM_YOULAID) &&
+                            obj->corpsenm >= LOW_PM) {
                             if (obj->quan < 5)
                                 change_luck((schar) - (obj->quan));
                             else
