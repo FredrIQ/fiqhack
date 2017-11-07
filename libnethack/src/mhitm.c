@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -754,7 +754,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         if (visda && valid_range && !resists_ston(mdef)) {
             pline(combat_msgc(magr, mdef, cr_kill), "%s %s gaze.",
-                  M_verbs(magr, "meet"), s_suffix(mon_nam(magr)));
+                  M_verbs(mdef, "meet"), s_suffix(mon_nam(magr)));
             if (udef) {
                 action_interrupted();
                 instapetrify(killer_msg(STONING,
