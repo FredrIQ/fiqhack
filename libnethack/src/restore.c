@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1013,7 +1013,7 @@ dorecover(struct memfile *mf)
     int count;
     xchar ltmp;
     struct obj *otmp;
-    struct monst *mtmp;
+    struct monst *mon;
 
     int temp_pos;       /* in case we're both reading and writing the file */
 
@@ -1038,12 +1038,17 @@ dorecover(struct memfile *mf)
     role_init();       /* Reset the initial role, race, gender, and alignment */
     pantheon_init(FALSE);
 
-    mtmp = restore_mon(mf, NULL, NULL);
-    if (mtmp->minvent)
+    mon = restore_mon(mf, NULL, NULL);
+    if (mon->minvent)
         restobjchn(mf, NULL, FALSE, FALSE,
-                   &(mtmp->minvent), NULL);
-    youmonst = *mtmp;
-    dealloc_monst(mtmp);
+                   &(mon->minvent), NULL);
+
+    if (flags.save_revision < 12)
+        mx_eyou_new(mon);
+
+    youmonst = *mon;
+    mx_copy(&youmonst, mon);
+    dealloc_monst(mon);
     set_uasmon();       /* fix up youmonst.data */
 
     if (flags.save_revision < 5) {

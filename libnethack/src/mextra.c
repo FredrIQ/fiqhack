@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (c) Fredrik Ljungdahl, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -96,6 +96,7 @@
 GEN_EXBASE(monst, m)
 GEN_EXBASE(obj, o)
 
+GEN_EXTYP(eyou, monst, m, free)
 GEN_EXTYP(edog, monst, m, free)
 GEN_EXTYP(epri, monst, m, free)
 GEN_EXTYP(eshk, monst, m, free)
@@ -117,6 +118,10 @@ mx_copy(struct monst *mon, const struct monst *mtmp)
         mon->mextra = NULL;
 
     christen_monst(mon, mx_name(mtmp));
+    if (mx_eyou(mtmp)) {
+        mx_eyou_new(mon);
+        memcpy(mx_eyou(mon), mx_eyou(mtmp), sizeof (struct eyou));
+    }
     if (mx_edog(mtmp)) {
         mx_edog_new(mon);
         memcpy(mx_edog(mon), mx_edog(mtmp), sizeof (struct edog));
@@ -142,6 +147,7 @@ mx_free(struct monst *mon)
         return;
 
     christen_monst(mon, NULL);
+    mx_eyou_free(mon);
     mx_edog_free(mon);
     mx_epri_free(mon);
     mx_eshk_free(mon);
@@ -154,7 +160,7 @@ void
 mx_possiblyfree(struct monst *mon)
 {
     struct mextra *mx = mon->mextra;
-    if (!mx || mx->edog || mx->epri || mx->eshk || mx->egd ||
+    if (!mx || mx->eyou || mx->edog || mx->epri || mx->eshk || mx->egd ||
         mx->name)
         return;
 
@@ -210,6 +216,7 @@ mxcontent(const struct monst *mon)
     return
         (mx->name ? MX_NAME : 0) |
         (mx->edog ? MX_EDOG : 0) |
+        (mx->eyou ? MX_EYOU : 0) |
         (mx->epri ? MX_EPRI : 0) |
         (mx->eshk ? MX_ESHK : 0) |
         (mx->egd ? MX_EGD : 0);
@@ -267,6 +274,14 @@ restore_mextra(struct memfile *mf, struct monst *mon)
             mread(mf, namebuf, namelth);
             christen_monst(mon, namebuf);
         }
+    }
+    if (extyp & MX_EYOU) {
+        mx_eyou_new(mon);
+        mx->eyou->last_pray_action = mread32(mf);
+        mx->eyou->prayed_result = mread8(mf);
+
+        for (i = 0; i < 1000; i++)
+            mread8(mf);
     }
     if (extyp & MX_EDOG) {
         mx_edog_new(mon);
@@ -382,6 +397,14 @@ save_mextra(struct memfile *mf, const struct monst *mon)
         mwrite(mf, mx->name, namelth);
     }
 
+    if (extyp & MX_EYOU) {
+        mtag(mf, mon->m_id, MTAG_MXEYOU);
+        mwrite32(mf, mx->eyou->last_pray_action);
+        mwrite8(mf, mx->eyou->prayed_result);
+
+        for (i = 0; i < 1000; i++)
+            mwrite8(mf, 0);
+    }
     if (extyp & MX_EDOG) {
         mtag(mf, mon->m_id, MTAG_MXEDOG);
         mwrite32(mf, mx->edog->droptime);

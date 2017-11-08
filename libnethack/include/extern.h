@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -950,6 +950,7 @@ extern void extract_obj_memory(struct obj *);
 
 GEN_EXBASE_PROT(monst, m)
 GEN_EXBASE_PROT(obj, o)
+GEN_EXTYP_PROT(eyou, monst, m)
 GEN_EXTYP_PROT(edog, monst, m)
 GEN_EXTYP_PROT(epri, monst, m)
 GEN_EXTYP_PROT(eshk, monst, m)
@@ -1244,7 +1245,7 @@ extern int max_passive_dmg(const struct monst *, const struct monst *);
 extern int monsndx(const struct permonst *);
 extern int name_to_mon(const char *);
 extern int gender(struct monst *);
-extern int pronoun_gender(struct monst *);
+extern int pronoun_gender(const struct monst *);
 extern boolean levl_follower(struct monst *);
 extern int little_to_big(int);
 extern int big_to_little(int);

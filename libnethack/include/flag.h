@@ -97,6 +97,9 @@ enum pray_type {
     pty_conversion,
     pty_favour,
     pty_smite_undead,
+    pty_gift,
+    pty_mollified,
+    pty_reconciled,
 };
 
 enum pray_trouble {
@@ -288,7 +291,7 @@ struct flag {
     int pickup_burden;  /* maximum burden before prompt */
     int recently_broken_otyp;   /* object that broke recently */
     unsigned save_revision; /* save versioning to maintain save compatibility */
-# define SAVE_REVISION 11
+# define SAVE_REVISION 12
 
     /* Weird-sized structures */
     struct nh_autopickup_rules *ap_rules;

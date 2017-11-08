@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,7 +14,10 @@ static boolean interesting_to_discover(int);
 boolean
 is_new_object(int otyp)
 {
-    if (otyp == POT_WONDER && flags.save_revision < 4)
+    if (flags.save_revision == SAVE_REVISION)
+        return FALSE;
+
+    if (otyp == 290 /* POT_WONDER */ && flags.save_revision < 4)
         return TRUE;
     return FALSE;
 }
@@ -22,8 +25,11 @@ is_new_object(int otyp)
 int
 otyp_offset(int otyp)
 {
+    if (flags.save_revision == SAVE_REVISION)
+        return 0;
+
     int ret = 0;
-    if (otyp >= POT_WONDER && flags.save_revision < 4)
+    if (otyp >= 290 /* POT_WONDER */ && flags.save_revision < 4)
         ret++;
     return ret;
 }

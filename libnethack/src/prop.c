@@ -2642,6 +2642,35 @@ enlght_line(struct nh_menulist *menu, const char *start, const char *middle,
     add_menutext(menu, buf);
 }
 
+/* Gives a reminder of your last god interaction that affected the prayer
+   timeout */
+static const char *
+last_blesscnt_effect(const struct monst *mon)
+{
+    struct eyou *you = mx_eyou(mon);
+    if (!you || !you->last_pray_action)
+        return NULL;
+
+    int turns = moves - you->last_pray_action;
+
+    const char *turns_ago = "just now.";
+    if (turns)
+        turns_ago = msgprintf("%d turn%s ago.", turns,
+                              turns == 1 ? "" : "s");
+    const char *what = "last prayed";
+    if (you->prayed_result == pty_anger)
+        what = msgprintf("angered %s god", mhis(mon));
+    else if (you->prayed_result == pty_gift)
+        what = msgprintf("got a gift from %s god", mhis(mon));
+    else if (you->prayed_result == pty_mollified)
+        what = msgprintf("mollified %s god", mhis(mon));
+    else if (you->prayed_result == pty_reconciled)
+        what = msgprintf("reconciled with %s god", mhis(mon));
+
+    const char *res = msgprintf(" %s %s", what, turns_ago);
+    return res;
+}
+
 /* format increased damage or chance to hit */
 static const char *
 enlght_combatinc(const char *inctyp, int incamt, int final)
@@ -2806,7 +2835,7 @@ enlighten_mon(struct monst *mon, int final)
     if (slippery_fingers(mon))
         mon_has(&menu, mon, msgcat("slippery ", makeplural(body_part(FINGER))));
     if (fumbling(mon))
-        mon_x(&menu, mon, "fumble");
+        mon_x(&menu, mon, " fumble");
     if (leg_hurt(mon))
         mon_has(&menu, mon, msgcat("wounded", makeplural(body_part(LEG))));;
     if (restful_sleep(mon))
@@ -2869,7 +2898,8 @@ enlighten_mon(struct monst *mon, int final)
     if (stealthy(mon))
         mon_is(&menu, mon, "stealthy");
     if (aggravating(mon))
-        mon_x(&menu, mon, "aggravate");
+        mon_x(&menu, mon, mon == &youmonst ? " aggravate monsters" :
+              " aggravates monsters");
     if (conflicting(mon))
         mon_is(&menu, mon, "conflicting");
 
@@ -2951,7 +2981,6 @@ enlighten_mon(struct monst *mon, int final)
     if ((mon == &youmonst && u.ulycn >= LOW_PM) || is_were(mon->data))
         mon_is(&menu, mon, an(u.ufemale ? mons[u.ulycn].fname : mons[u.ulycn].mname));
     if (mon == &youmonst && Upolyd) {
-        const char *buf;
         if (u.umonnum == u.ulycn)
             buf = "in beast form";
         else
@@ -2985,7 +3014,7 @@ enlighten_mon(struct monst *mon, int final)
     if (mon == &youmonst) {
         if (Luck) {
             ltmp = abs((int)Luck);
-            const char *buf = msgprintf(
+            buf = msgprintf(
                 "%s%slucky",
                 ltmp >= 10 ? "extremely " : ltmp >= 5 ? "very " : "",
                 Luck < 0 ? "un" : "");
@@ -3007,8 +3036,12 @@ enlighten_mon(struct monst *mon, int final)
                         " not time out for you");
         }
 
+        buf = last_blesscnt_effect(&youmonst);
+        if (buf)
+            mon_x(&menu, mon, buf);
+
         if (u.ugangr) {
-            const char *buf = msgprintf(
+            buf = msgprintf(
                 " %sangry with you",
                 u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
             if (wizard)
@@ -3020,7 +3053,7 @@ enlighten_mon(struct monst *mon, int final)
             * can change the value calculated by can_pray(), potentially
             * resulting in a false claim that you could have prayed safely.
             */
-            const char *buf = msgprintf(
+            buf = msgprintf(
                 "%ssafely pray", can_pray(FALSE) ? "" : "not ");
             /* can_pray sets some turnstate that needs to be reset. */
             turnstate.pray.align = A_NONE;
@@ -3031,7 +3064,8 @@ enlighten_mon(struct monst *mon, int final)
             you_can(&menu, buf);
         }
 
-        const char *p, *buf = "";
+        const char *p;
+        buf = "";
 
         if (final < 2) {       /* still in progress, or quit/escaped/ascended */
             p = "survived after being killed ";
@@ -3347,7 +3381,7 @@ enlightenment(int final)
         /*** Miscellany ***/
     if (Luck) {
         ltmp = abs((int)Luck);
-        const char *buf = msgprintf(
+        buf = msgprintf(
             "%s%slucky",
             ltmp >= 10 ? "extremely " : ltmp >= 5 ? "very " : "",
             Luck < 0 ? "un" : "");
@@ -3369,8 +3403,12 @@ enlightenment(int final)
                     " not time out for you");
     }
 
+    buf = last_blesscnt_effect(&youmonst);
+    if (buf)
+        enl_msg(&menu, "You", "", "", buf);
+
     if (u.ugangr) {
-        const char *buf = msgprintf(
+        buf = msgprintf(
             " %sangry with you",
             u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
         if (wizard)
@@ -3383,7 +3421,7 @@ enlightenment(int final)
          * resulting in a false claim that you could have prayed safely.
          */
     if (!final) {
-        const char *buf = msgprintf(
+        buf = msgprintf(
             "%ssafely pray", can_pray(FALSE) ? "" : "not ");
         /* can_pray sets some turnstate that needs to be reset. */
         turnstate.pray.align = A_NONE;
@@ -3395,7 +3433,8 @@ enlightenment(int final)
     }
 
     {
-        const char *p, *buf = "";
+        const char *p;
+        buf = "";
 
         if (final < 2) {       /* still in progress, or quit/escaped/ascended */
             p = "survived after being killed ";
@@ -3491,6 +3530,10 @@ unspoilered_intrinsics(void)
     addmenu(POLYMORPH, "You are polymorphing.");
     addmenu(POLYMORPH_CONTROL, "You have polymorph control.");
     addmenu(FAST, "You are fast.");
+
+    const char *buf = last_blesscnt_effect(&youmonst);
+    if (buf)
+        add_menutext(&menu, msgcat("You", buf));
 
 #undef addmenu
 
