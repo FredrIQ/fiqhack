@@ -532,7 +532,7 @@ obj_light_range(struct obj *obj)
          */
         radius = (obj->spe < 4) ? 2 : (obj->spe < 7) ? 3 : 4;
     } else if (Is_candle(obj))
-        /* Increase range quadratically with candle amount. */
+        /* Range 2 for 1 candle, 3 for 4 candles, 4 for 9, 5 for 16, etc. */
         radius = isqrt(obj->quan) + 1;
     else {
         radius = 1;
