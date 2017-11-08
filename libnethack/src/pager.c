@@ -930,6 +930,8 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
             mon = vismon_at(level, cc.x, cc.y);
             if (!mon && cc.x == u.ux && cc.y == u.uy)
                 mon = &youmonst;
+            if (!canclassifymon(mon) || Hallucination)
+                mon = NULL;
 
             if (!firstmatch)
                 firstmatch = descbuf.mondesc;
