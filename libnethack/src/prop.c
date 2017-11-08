@@ -2667,7 +2667,7 @@ last_blesscnt_effect(const struct monst *mon)
     else if (you->prayed_result == pty_reconciled)
         what = msgprintf("reconciled with %s god", mhis(mon));
 
-    const char *res = msgprintf(" %s %s", what, turns_ago);
+    const char *res = msgprintf("%s %s %s", Monnam(mon), what, turns_ago);
     return res;
 }
 
@@ -3036,9 +3036,9 @@ enlighten_mon(struct monst *mon, int final)
                         " not time out for you");
         }
 
-        buf = last_blesscnt_effect(&youmonst);
+        buf = last_blesscnt_effect(mon);
         if (buf)
-            mon_x(&menu, mon, buf);
+            add_menutext(&menu, buf);
 
         if (u.ugangr) {
             buf = msgprintf(
@@ -3405,7 +3405,7 @@ enlightenment(int final)
 
     buf = last_blesscnt_effect(&youmonst);
     if (buf)
-        enl_msg(&menu, "You", "", "", buf);
+        add_menutext(&menu, buf);
 
     if (u.ugangr) {
         buf = msgprintf(
@@ -3533,7 +3533,7 @@ unspoilered_intrinsics(void)
 
     const char *buf = last_blesscnt_effect(&youmonst);
     if (buf)
-        add_menutext(&menu, msgcat("You", buf));
+        add_menutext(&menu, buf);
 
 #undef addmenu
 
