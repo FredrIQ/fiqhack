@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2546,9 +2546,7 @@ use_item(struct musable *m)
             if (vis)
                 pline(combat_msgc(mon, mtmp, cr_hit),
                       "%s flicks a whip at %s%s!", Monnam(mon),
-                      !mtmp ? "thin air" :
-                      mtmp == &youmonst ? "your" :
-                      s_suffix(mon_nam(mtmp)),
+                      !mtmp ? "thin air" : s_suffix(mon_nam(mtmp)),
                       mtmp ? " displaced image" : "");
             return 1;
         }
@@ -2570,8 +2568,7 @@ use_item(struct musable *m)
         if (vismon)
             pline(combat_msgc(mon, mtmp, cr_hit),
                   "%s flicks a bullwhip towards %s %s!", Monnam(mon),
-                  mtmp == &youmonst ? "your" : s_suffix(mon_nam(mtmp)),
-                  hand);
+                  s_suffix(mon_nam(mtmp)), hand);
         if (otmp->otyp == HEAVY_IRON_BALL) {
             pline(combat_msgc(mon, mtmp, cr_immune),
                   "%s fails to wrap around %s.", The_whip, the_weapon);
@@ -2579,15 +2576,13 @@ use_item(struct musable *m)
         }
         pline(combat_msgc(mon, mtmp, cr_hit),
               "%s wraps around %s %s %s wielding!", The_whip, the_weapon,
-              mtmp == &youmonst ? "you" : mon_nam(mtmp),
-              mtmp == &youmonst ? "are" : "is");
+              m_verbs(mtmp, "are"));
         if ((mtmp == &youmonst && welded(otmp)) ||
             (otmp->cursed && otmp->otyp != CORPSE)) {
             pline(combat_msgc(mon, mtmp, cr_immune),
                   "%s welded to %s %s%c",
                   !is_plural(obj) ? "It is" : "They are", hand,
-                  mtmp == &youmonst ? "your" : s_suffix(mon_nam(mtmp)),
-                  !obj->bknown ? '!' : '.');
+                  s_suffix(mon_nam(mtmp)), !obj->bknown ? '!' : '.');
             otmp->bknown = 1;
             otmp->mbknown = 1;
             where_to = 0;
@@ -2615,8 +2610,7 @@ use_item(struct musable *m)
             pline(mtmp == &youmonst ? msgc_itemloss :
                   combat_msgc(mon, mtmp, cr_hit),
                   "%s yanks %s from %s %s!", Monnam(mon), the_weapon,
-                  mtmp == &youmonst ? "your" : s_suffix(mon_nam(mon)),
-                  hand);
+                  s_suffix(mon_nam(mon)), hand);
             place_object(otmp, level, mon->mx, mon->my);
             break;
         case 2:    /* onto floor beneath you */

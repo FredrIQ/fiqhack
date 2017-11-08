@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2236,9 +2236,7 @@ do_at_area(struct level *lev)
     /* Iterate the monlist, looking for AT_AREA. If one is found, perform a
        do_clear_area on the selected area, contained in the numdice attack
        number */
-    for (magr = lev->monlist; magr; magr = (magr->nmon ? magr->nmon :
-                                         magr == &youmonst ? NULL :
-                                         &youmonst)) {
+    for (magr = lev->monlist; magr; magr = monnext(magr)) {
         if (magr != &youmonst && DEADMONSTER(magr))
             continue;
         if ((areaatk[i] = attacktype_fordmg(magr->data, AT_AREA, AD_ANY))) {
@@ -2393,9 +2391,7 @@ maurahitm(struct monst *magr, struct monst *mdef,
 
         if (!slow(mdef) && (uagr || udef || vis))
             pline(combat_msgc(magr, mdef, cr_hit),
-                  "%s down under %s gaze.",
-                  M_verbs(mdef, "slow"),
-                  magr == &youmonst ? "your" :
+                  "%s down under %s gaze.", M_verbs(mdef, "slow"),
                   s_suffix(mon_nam(magr)));
         if (property_timeout(mdef, SLOW) < dmg)
             set_property(mdef, SLOW, dmg, TRUE);

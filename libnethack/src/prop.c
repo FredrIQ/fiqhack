@@ -2715,7 +2715,7 @@ enlighten_mon(struct monst *mon, int final)
     init_menulist(&menu);
     title = final ? "Final Attributes:" : "Current Attributes:";
     
-    const char *monname = (mon == &youmonst ? "You" : Monnam(mon));
+    const char *monname = Monnam(mon);
     const char *is = (mon == &youmonst ? " are " : " is ");
     const char *was = (mon == &youmonst ? " were " : " was ");
     const char *has = (mon == &youmonst ? " have " : " has ");
