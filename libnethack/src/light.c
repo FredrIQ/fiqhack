@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -531,23 +531,10 @@ obj_light_range(struct obj *obj)
          *          7 candles, range 4 (bright).
          */
         radius = (obj->spe < 4) ? 2 : (obj->spe < 7) ? 3 : 4;
-    } else if (Is_candle(obj)) {
-        /* 
-         *      Range is incremented by powers of 7 so that it will take
-         *      wizard mode quantities of candles to get more light than
-         *      from a lamp, without imposing an arbitrary limit.
-         *       1..6   candles, range 2;
-         *       7..48  candles, range 3;
-         *      49..342 candles, range 4; &c.
-         */
-        long n = obj->quan;
-
-        radius = 1;     /* always incremented at least once */
-        do {
-            radius++;
-            n /= 7L;
-        } while (n > 0L);
-    } else {
+    } else if (Is_candle(obj))
+        /* Increase range quadratically with candle amount. */
+        radius = sqrt(obj->quan);
+    else {
         radius = 1;
         if (obj->otyp == MAGIC_LAMP ||
             obj->otyp == BRASS_LANTERN ||
