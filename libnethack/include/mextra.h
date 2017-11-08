@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Izchak Miller, 1989.                             */
 /* Copyright (c) Fredrik Ljungdahl, 2015.                         */
@@ -17,6 +17,7 @@
 # include "align.h"
 # include "coord.h"
 # include "dungeon.h"
+# include "flag.h"
 # include "global.h"
 # include "nethack_types.h"
 
@@ -119,6 +120,11 @@ struct pet_weapons {
     const struct obj *unihorn;
 };
 
+/* New "u" replacement. */
+struct eyou {
+    int last_pray_action; /* prayer/artifact/etc turncount */
+    enum pray_type prayed_result;
+};
 
 /* mextra struct itself */
 struct mextra {
@@ -128,6 +134,7 @@ struct mextra {
     struct eshk *eshk;
     struct emin *emin;
     struct edog *edog;
+    struct eyou *eyou;
 };
 
 struct oextra {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -609,10 +609,36 @@ tactics(struct monst *mtmp)
     if (idle(mtmp))
         panic("Covetous AI running on an idle monster?");
 
+    struct monst *target;
+    int mclose = ROWNO * COLNO;
+    int x = COLNO;
+    int y = ROWNO;
+
+    if (mtmp->mtame) {
+        /* Harass monsters hostile to the player */
+        for (target = mtmp->dlevel->monlist; target; target = monnext(target)) {
+            if (DEADMONSTER(target))
+                continue;
+
+            if (mm_aggression(mtmp, target) && msensem(mtmp, target)) {
+                if (mclose > dist2(u.ux, u.uy, m_mx(target), m_my(target))) {
+                    mclose = dist2(u.ux, u.uy, m_mx(target), m_my(target));
+                    x = m_mx(target);
+                    y = m_my(target);
+                }
+            }
+        }
+
+        if (isok(x, y) &&
+            (mclose < (BOLT_LIM * BOLT_LIM) ? rn2(4) : !rn2(4))) {
+            mnearto(mtmp, x, y, FALSE);
+            return 0;
+        }
+    }
+
     long strat = mtmp->mstrategy;
     struct level *lev = mtmp->dlevel;
     struct obj *obj;
-    struct monst *target;
 
     switch (strat) {
     case st_obj: /* object on floor */
@@ -685,8 +711,6 @@ tactics(struct monst *mtmp)
             rloc(mtmp, TRUE);
 
             /* Try to figure out where pests are */
-            int x = COLNO;
-            int y = ROWNO;
             for (target = mtmp->dlevel->monlist; target; target = monnext(target)) {
                 if (DEADMONSTER(target))
                     continue;
