@@ -885,7 +885,7 @@ dotrap(struct trap *trap, unsigned trflags)
             if (water_damage(uarms, "shield", FALSE))
                 break;
             if (u.twoweap || (uwep && bimanual(uwep)))
-                water_damage(u.twoweap ? uswapwep : uwep, NULL, TRUE);
+                water_damage(u.twoweap ? uswapwep : uwep, NULL, FALSE);
         glovecheck:
             water_damage(uarmg, "gauntlets", FALSE);
             /* Not "metal gauntlets" since it gets called even if it's leather
