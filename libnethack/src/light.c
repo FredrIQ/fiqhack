@@ -533,7 +533,7 @@ obj_light_range(struct obj *obj)
         radius = (obj->spe < 4) ? 2 : (obj->spe < 7) ? 3 : 4;
     } else if (Is_candle(obj))
         /* Increase range quadratically with candle amount. */
-        radius = sqrt(obj->quan) + 1;
+        radius = isqrt(obj->quan) + 1;
     else {
         radius = 1;
         if (obj->otyp == MAGIC_LAMP ||
