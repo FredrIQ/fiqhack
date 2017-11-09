@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2252,15 +2252,31 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             case 1:    /* trapped */
             case 3:    /* changed levels */
                 /* there's already been a trap message, reinforce it */
-                abuse_dog(mtmp);
-                adjalign(-3);
+                if (mtmp->mtame) {
+                    abuse_dog(mtmp);
+                    adjalign(-3);
+                } else {
+                    if (mtmp->dlevel == level)
+                        setmangry(mtmp);
+                    else {
+                        msethostility(mtmp, TRUE, FALSE);
+                        pline(msgc_alignbad,
+                              "It didn't seem very pleased about what you just did...");
+                        adjalign(-5);
+                    }
+                }
                 break;
             case 2:
                 /* it may have drowned or died.  that's no way to treat a pet!
                    your god gets angry. */
                 if (rn2(4)) {
-                    pline(msgc_alignbad,
-                          "You feel guilty about losing your pet like this.");
+                    if (mtmp->mtame)
+                        pline(msgc_alignbad,
+                              "You feel guilty about losing your pet like this.");
+                    else
+                        pline(msgc_alignbad,
+                              "You feel guilty about killing %s like this...",
+                              mon_nam(mtmp));
                     u.ugangr++;
                     adjalign(-15);
                 }
