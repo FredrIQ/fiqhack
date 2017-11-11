@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1440,7 +1440,7 @@ poly_obj(struct obj *obj, int id)
         otmp->invlet = obj->invlet;
 
     /* avoid abusing eggs laid by you */
-    if (obj->otyp == EGG && obj->spe) {
+    if (obj->otyp == EGG && (obj->spe & OPM_YOULAID)) {
         int mnum, tryct = 100;
 
         /* first, turn into a generic egg */
@@ -1457,7 +1457,7 @@ poly_obj(struct obj *obj, int id)
         while (tryct--) {
             mnum = can_be_hatched(rn2(NUMMONS));
             if (mnum != NON_PM && !dead_species(mnum, TRUE)) {
-                otmp->spe = 1;  /* layed by hero */
+                otmp->spe |= OPM_YOULAID;  /* layed by hero */
                 otmp->corpsenm = mnum;
                 attach_egg_hatch_timeout(otmp);
                 break;
