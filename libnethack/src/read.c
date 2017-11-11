@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1493,11 +1493,12 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
 
         int idpower = P_UNSKILLED;
         if (confused) {
+            if (you || vis)
+                pline(msgc_substitute,
+                      "%s %sself.", M_verbs(mon, "identify"),
+                      mhim(mon));
             if (you)
-                pline(msgc_yafm, "You identify this as an identify scroll.");
-            else if (vis)
-                pline(msgc_monneutral,
-                      "%s identifies the scroll as an identify scroll.", Monnam(mon));
+                enlightenment(FALSE);
         }
         else {
             /* TODO: give msgc_itemloss if you lack identifiable objects */
@@ -1522,10 +1523,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (sobj->otyp == SCR_IDENTIFY) {
             if ((you || vis) && !objects[sobj->otyp].oc_name_known)
                 more_experienced(0, 10);
-            if (you)
-                useup(sobj);
-            else
-                m_useup(mon, sobj);
+            m_useup(mon, sobj);
             if (you || vis)
                 makeknown(SCR_IDENTIFY);
         }
