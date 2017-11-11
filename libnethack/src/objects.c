@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-11 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -820,7 +820,7 @@ const struct objclass const_objects[] = {
 #define SPELL(name,desc,sub,prob,delay,level,mgc,dir,color,deflet)      \
     OBJECT( OBJ(name,desc), BITS(0,0,0,0,mgc,0,0,0,0,0,dir,sub,PAPER), 0, \
             SPBOOK_CLASS, prob, delay,                                  \
-            50, level*100, 0, 0, deflet, level, 20, color )
+            level*5+30, level*100, 0, 0, deflet, level, 20, color )
     SPELL("dig", "parchment", P_MATTER_SPELL, 20, 6, 2, 1,
           RAY, HI_PAPER, 'd'),
     SPELL("magic missile", "vellum", P_ATTACK_SPELL, 45, 2, 2, 1,
