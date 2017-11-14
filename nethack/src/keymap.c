@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-14 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1355,7 +1355,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
             i = curses_msgwin(buf, krc_keybinding);
             if (i == KEY_ESCAPE || i > KEY_MAX)
                 continue;
-            if (keymap[i]) {
+            if (keymap[i] && strcmp(keymap[i]->name, "(nothing)")) {
                 snprintf(buf, ARRAY_SIZE(buf),
                          "That key is already in use by \"%s\"! Replace?",
                          keymap[i]->name);
