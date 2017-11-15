@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-15 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -975,44 +975,32 @@ static void
 autopickup_rules_help(void)
 {
     struct nh_menuitem items[] = {
-        {0, MI_TEXT, 0,
-         "The autopickup rules are only active if autopickup is on."},
-        {0, MI_TEXT, 0,
-         "If autopickup is on and you walk onto an item, the item is compared"},
-        {0, MI_TEXT, 0, "to each rule in turn until a matching rule is found."},
-        {0, MI_TEXT, 0,
-         "If a match is found, the action specified in that rule is taken"},
-        {0, MI_TEXT, 0, "and no other rules are considered."},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0,
-         "Each rule may match any combination of object name, object type,"},
-        {0, MI_TEXT, 0, "and object blessing (including unknown)."},
-        {0, MI_TEXT, 0, "A rule that specifies none of these matches everything."},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0, "Suppose your rules look like this:"},
-        {0, MI_TEXT, 0,
-         " 1. IF name matches \"*lizard*\" AND type is \"food\": < GRAB"},
-        {0, MI_TEXT, 0,
-         " 2. IF name matches \"*corpse*\" AND type is \"food\":   LEAVE >"},
-        {0, MI_TEXT, 0,
-         " 3. IF type is \"food\":                             < GRAB"},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0,
-         "A newt corpse will not match rule 1, but rule 2 applies, so"},
-        {0, MI_TEXT, 0,
-         "it won't be picked up and rule 3 won't be considered."},
-        {0, MI_TEXT, 0,
-         "(Strictly speaking, the \"type is food\" part of these rules is not"},
-        {0, MI_TEXT, 0, "necessary; it's purpose here is "
+        {0, MI_TEXT, "The autopickup rules are only active if autopickup is on."},
+        {0, MI_TEXT, "If autopickup is on and you walk onto an item, the item is compared"},
+        {0, MI_TEXT, "to each rule in turn until a matching rule is found."},
+        {0, MI_TEXT, "If a match is found, the action specified in that rule is taken"},
+        {0, MI_TEXT, "and no other rules are considered."},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "Each rule may match any combination of object name, object type,"},
+        {0, MI_TEXT, "and object blessing (including unknown)."},
+        {0, MI_TEXT, "A rule that specifies none of these matches everything."},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "Suppose your rules look like this:"},
+        {0, MI_TEXT, " 1. IF name matches \"*lizard*\" AND type is \"food\": < GRAB"},
+        {0, MI_TEXT, " 2. IF name matches \"*corpse*\" AND type is \"food\":   LEAVE >"},
+        {0, MI_TEXT, " 3. IF type is \"food\":                             < GRAB"},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "A newt corpse will not match rule 1, but rule 2 applies, so"},
+        {0, MI_TEXT, "it won't be picked up and rule 3 won't be considered."},
+        {0, MI_TEXT, "(Strictly speaking, the \"type is food\" part of these rules is not"},
+        {0, MI_TEXT, "necessary; it's purpose here is "
          "to make the example more interesting.)"},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0,
-         "A dagger will not match any of these rules and so it won't"},
-        {0, MI_TEXT, 0, "be picked up either."},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0,
-         "You may select any existing rule to edit it, change its position"},
-        {0, MI_TEXT, 0, "in the list, or delete it."},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "A dagger will not match any of these rules and so it won't"},
+        {0, MI_TEXT, "be picked up either."},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "You may select any existing rule to edit it, change its position"},
+        {0, MI_TEXT, "in the list, or delete it."},
     };
     curses_display_menu(STATIC_MENULIST(items), "Autopickup rules help:",
                         PICK_NONE, PLHINT_LEFT, NULL, null_menu_callback);
@@ -1023,11 +1011,11 @@ static enum nh_bucstatus
 get_autopickup_buc(enum nh_bucstatus cur)
 {
     struct nh_menuitem items[] = {
-        {B_DONT_CARE + 1, MI_NORMAL, 0, "all", 'a'},
-        {B_BLESSED + 1, MI_NORMAL, 0, "blessed", 'b'},
-        {B_CURSED + 1, MI_NORMAL, 0, "cursed", 'c'},
-        {B_UNCURSED + 1, MI_NORMAL, 0, "uncursed", 'u'},
-        {B_UNKNOWN + 1, MI_NORMAL, 0, "unknown", 'U'}
+        {B_DONT_CARE + 1, MI_NORMAL, "all", 'a'},
+        {B_BLESSED + 1, MI_NORMAL, "blessed", 'b'},
+        {B_CURSED + 1, MI_NORMAL, "cursed", 'c'},
+        {B_UNCURSED + 1, MI_NORMAL, "uncursed", 'u'},
+        {B_UNKNOWN + 1, MI_NORMAL, "unknown", 'U'}
     };
     int selected[1];
 

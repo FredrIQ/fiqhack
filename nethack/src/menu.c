@@ -314,45 +314,30 @@ menu_search_callback(const char *sbuf, void *mdat_void)
     if (i < mdat->s.linecount)
         scroll_onscreen(&(mdat->s), i);
 }
-static void
-objmenu_search_callback(const char *sbuf, void *mdat_void)
-{
-    struct win_objmenu *mdat = mdat_void;
-    int i;
 
-    for (i = 0; i < mdat->s.linecount; i++)
-        if (strstr(mdat->visitems[i]->caption, sbuf))
-            break;
-    if (i < mdat->s.linecount)
-        scroll_onscreen(&(mdat->s), i);
-}
-
-# define ASSIGN_MENU_ACCEL(menuitem)            \
-    int i;                                      \
-    char accel = 'a';                           \
-    for (i = 0; i < mdat->s.linecount; i++) {   \
-        if ((menuitem)->accel ||                \
-            (menuitem)->role != MI_NORMAL ||    \
-            (menuitem)->id == 0)                \
-            continue;                           \
-        (menuitem)->accel = accel;              \
-        if (accel == 'z')                       \
-            accel = 'A';                        \
-        else if (accel == 'Z')                  \
-            accel = 'a';                        \
-        else                                    \
-            accel++;                            \
-    }
-
-static void
-assign_objmenu_accelerators(struct win_objmenu *mdat)
-{
-    ASSIGN_MENU_ACCEL(mdat->visitems[i]);
-}
 static void
 assign_menu_accelerators(struct win_menu *mdat)
 {
-    ASSIGN_MENU_ACCEL(mdat->visitems[i]);
+    int i;
+    char accel = 'a';
+    struct nh_menuitem *mi;
+    for (i = 0; i < mdat->s.linecount; i++) {
+        mi = mdat->visitems[i];
+        if (mi->accel || mi->role != MI_NORMAL || mi->id == 0)
+            continue;
+        mi->accel = accel;
+        if (accel == 'z')
+            accel = 'A';
+        else if (accel == 'Z')
+            accel = 'a';
+        else
+            accel++;
+    }
+}
+static void
+assign_objmenu_accelerators(struct win_objmenu *mdat)
+{
+    assign_menu_accelerators((struct win_menu *)mdat);
 }
 
 /* Functions for non-object menus (specifically) */
@@ -1076,7 +1061,7 @@ curses_display_objects(
                 break;
 
             case ':':                              /* search for a menu item */
-                curses_getline("Search:", mdat, objmenu_search_callback);
+                curses_getline("Search:", mdat, menu_search_callback);
                 break;
 
             case KEY_BACKSPACE:                    /* edit selection count */

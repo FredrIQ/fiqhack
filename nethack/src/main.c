@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -43,28 +43,28 @@ enum menuitems {
 };
 
 static struct nh_menuitem mainmenu_items[] = {
-    {NEWGAME, MI_NORMAL, 0, "new game", 'n'},
-    {LOAD, MI_NORMAL, 0, "load game", 'l'},
+    {NEWGAME, MI_NORMAL, "new game", 'n'},
+    {LOAD, MI_NORMAL, "load game", 'l'},
 #ifndef PUBLIC_SERVER
-    {REPLAY, MI_NORMAL, 0, "view replay", 'v'},
+    {REPLAY, MI_NORMAL, "view replay", 'v'},
 #endif
-    {OPTIONS, MI_NORMAL, 0, "set options", 'o'},
-    {TOPTEN, MI_NORMAL, 0, "show score list", 's'},
+    {OPTIONS, MI_NORMAL, "set options", 'o'},
+    {TOPTEN, MI_NORMAL, "show score list", 's'},
 #if defined(NETCLIENT) && ! defined(PUBLIC_SERVER)
-    {NETWORK, MI_NORMAL, 0, "connect to server", 'c'},
+    {NETWORK, MI_NORMAL, "connect to server", 'c'},
 #endif
-    {EXITGAME, MI_NORMAL, 0, "quit", 'q', 'x'}
+    {EXITGAME, MI_NORMAL, "quit", 'q', 'x'}
 };
 
 static struct nh_menuitem mainmenu_items_noclient[] = {
-    {NEWGAME, MI_NORMAL, 0, "new game", 'n'},
-    {LOAD, MI_NORMAL, 0, "load game", 'l'},
+    {NEWGAME, MI_NORMAL, "new game", 'n'},
+    {LOAD, MI_NORMAL, "load game", 'l'},
 #ifndef PUBLIC_SERVER
-    {REPLAY, MI_NORMAL, 0, "view replay", 'v'},
+    {REPLAY, MI_NORMAL, "view replay", 'v'},
 #endif
-    {OPTIONS, MI_NORMAL, 0, "set options", 'o'},
-    {TOPTEN, MI_NORMAL, 0, "show score list", 's'},
-    {EXITGAME, MI_NORMAL, 0, "quit", 'q', 'x'}
+    {OPTIONS, MI_NORMAL, "set options", 'o'},
+    {TOPTEN, MI_NORMAL, "show score list", 's'},
+    {EXITGAME, MI_NORMAL, "quit", 'q', 'x'}
 };
 
 const char *nhlogo_small[11] = {        /* created using pbmtoascii */

@@ -422,9 +422,9 @@ struct win_scrollable {
 
 
 # define MAXCOLS 16
-/* Note: the win_scrollable must be the first entry of this struct (because
-   a struct win_menu pointer is sometimes cast to a struct win_scrollable
-   pointer) */
+/* Note: everything up to title must be kept in sync with win_objmenu, because
+   a win_objmenu can be cast as a win_menu. In addition, win_scrollable must
+   be the first item because it can also be case into a win_scrollable. */
 struct win_menu {
     struct win_scrollable s;
     struct nh_menuitem **visitems;
@@ -434,8 +434,7 @@ struct win_menu {
     int colpos[MAXCOLS], maxcol;
 };
 
-/* Note: the win_scrollable must be the first entry of this struct, for the same
-   reason as with win_menu */
+/* Note: everything up to title must be kept in sync with win_menu, see above */
 struct win_objmenu {
     struct win_scrollable s;
     struct nh_objitem **visitems;

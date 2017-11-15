@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-15 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -507,14 +507,6 @@ struct nh_menuitem {
        regular items can be selectable. */
     enum nh_menuitem_role role;
 
-    /* The nesting level of this item, for hierarchical/collapsible menus. In
-       most cases, this is 0 everywhere, for a flat menu. Each item is a child
-       of the previous menu item that has a smaller nesting level, thus allowing
-       a menu to have a tree structure. No entry may have a nesting level
-       greater by more than 1 than the previous item, and the first entry has
-       nesting level 0. */
-    unsigned level;
-
     /* The text to display for this item in the menu. */
     char caption[BUFSZ];
 
@@ -526,6 +518,14 @@ struct nh_menuitem {
        accelerators, it's reasonable to assign the same group accelerator to
        more than one item, to allow them to easily be selected as a group. */
     char group_accel;
+
+    /* The nesting level of this item, for hierarchical/collapsible menus. In
+       most cases, this is 0 everywhere, for a flat menu. Each item is a child
+       of the previous menu item that has a smaller nesting level, thus allowing
+       a menu to have a tree structure. No entry may have a nesting level
+       greater by more than 1 than the previous item, and the first entry has
+       nesting level 0. */
+    unsigned level;
 
     /* Initial selection state of this item, in a multiselect menu. On
        non-multiselect menus, mostly just chooses whether items are displayed
@@ -546,16 +546,21 @@ struct nh_menulist {
 };
 
 struct nh_objitem {
-    char caption[BUFSZ];
+    /* Keep these in the same order as nh_menuitem, in case
+       a nh_objitem is cast into a nh_menuitem (potentially
+       via win_objmenu->win_menu) */
     int id;
     enum nh_menuitem_role role;
+    char caption[BUFSZ];
+    char accel;
+    char group_accel;
+    /* End of things needing to be kept in sync -- things specific to
+       nh_objitem below */
     int count;
     int otype;
     int oclass;
     int weight; /* w < 0 == weight unknown */
     enum nh_bucstatus buc;
-    char accel;
-    char group_accel;
     nh_bool worn;
 };
 
