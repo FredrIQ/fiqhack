@@ -13,7 +13,7 @@ script:
 
 notifications:
     irc:
-        channels: "chat.freenode.net#FIQHack"
+        channels: "chat.freenode.net#nethack4"
         on_success: always
         on_failure: always
         skip_join: true
