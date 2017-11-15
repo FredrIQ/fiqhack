@@ -1089,7 +1089,7 @@ curses_display_objects(
                 idx = find_objaccel(key, mdat);
 
                 if (idx != -1) {    /* valid item accelerator */
-                    if (mdat->visselected[idx])
+                    if (*mdat->visselected[idx])
                         *mdat->visselected[idx] = 0;
                     else
                         *mdat->visselected[idx] = mdat->selcount;
