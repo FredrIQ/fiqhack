@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-15 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,16 +17,31 @@ struct buc_colors {
     int cursed;
 };
 
-static struct buc_colors buc_color[CBUC_AMOUNT] = {
-    [CBUC_CYAN_GRAY_RED] = {7, 0, 2},
-    [CBUC_CYAN_GREEN_RED] = {7, 3, 2},
-    [CBUC_GREEN_GRAY_RED] = {3, 0, 2},
-    [CBUC_GREEN_CYAN_RED] = {3, 7, 2},
-    [CBUC_GREEN_BROWN_RED] = {3, 4, 2},
-    [CBUC_NO_COLOR] = {0, 0, 0},
+static struct buc_colors buccol[CBUC_AMOUNT] = {
+    [CBUC_CYAN_GRAY_RED] = {CLR_CYAN, CLR_GRAY, CLR_RED},
+    [CBUC_CYAN_GREEN_RED] = {CLR_CYAN, CLR_GREEN, CLR_RED},
+    [CBUC_GREEN_GRAY_RED] = {CLR_GREEN, CLR_GRAY, CLR_RED},
+    [CBUC_GREEN_CYAN_RED] = {CLR_GREEN, CLR_CYAN, CLR_RED},
+    [CBUC_GREEN_BROWN_RED] = {CLR_GREEN, CLR_BROWN, CLR_RED},
+    [CBUC_NO_COLOR] = {CLR_GRAY, CLR_GRAY, CLR_GRAY},
 };
 
 /* Functions for scrollable windows */
+
+static attr_t
+buc_color(enum nh_bucstatus buc)
+{
+    switch (buc) {
+    case B_CURSED:
+        return curses_color_attr(buccol[settings.colorbuc].cursed, 0);
+    case B_UNCURSED:
+        return curses_color_attr(buccol[settings.colorbuc].uncursed, 0);
+    case B_BLESSED:
+        return curses_color_attr(buccol[settings.colorbuc].blessed, 0);
+    default:
+        /* NOTREACHED */ return 0;
+    }
+}
 
 void
 layout_scrollable(struct gamewin *gw)
@@ -855,19 +870,7 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
 
         if (olii->worn)
             txtattr |= A_BOLD;
-        switch (olii->buc) {
-        case B_CURSED:
-            txtattr |= COLOR_PAIR(buc_color[settings.colorbuc].cursed);
-            break;
-        case B_UNCURSED:
-            txtattr |= COLOR_PAIR(buc_color[settings.colorbuc].uncursed);
-            break;
-        case B_BLESSED:
-            txtattr |= COLOR_PAIR(buc_color[settings.colorbuc].blessed);
-            break;
-        default:
-            break;
-        }
+        txtattr |= buc_color(olii->buc);
         wattron(win, txtattr);
         pos += snprintf(buf + pos, BUFSZ - pos, "%s", olii->caption);
         if (settings.invweight && olii->weight != -1) {
