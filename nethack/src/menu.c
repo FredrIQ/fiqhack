@@ -10,6 +10,8 @@
 
 #define BORDERWIDTH  (settings.whichframes != FRAME_NONE ? 4 : 2)
 #define BORDERHEIGHT (settings.whichframes != FRAME_NONE ? 2 : 0)
+#define MAXROWS 52
+#define MAXLINES ((LINES - BORDERHEIGHT) > MAXROWS ? (MAXROWS + BORDERHEIGHT) : LINES)
 
 struct buc_colors {
     int blessed;
@@ -55,7 +57,7 @@ layout_scrollable(struct gamewin *gw)
     x1 = (s->x1 > 0) ? s->x1 : 0;
     y1 = (s->y1 > 0) ? s->y1 : 0;
     x2 = (s->x2 > 0 && s->x2 <= COLS) ? s->x2 : COLS;
-    y2 = (s->y2 > 0 && s->y2 <= LINES) ? s->y2 : LINES;
+    y2 = (s->y2 > 0 && s->y2 <= MAXLINES) ? s->y2 : MAXLINES;
 
     scrheight = y2 - y1;
     scrwidth = x2 - x1;
@@ -164,7 +166,7 @@ resize_scrollable_inner(struct gamewin *gw)
     wresize(gw->win, s->height, s->width);
     setup_scrollable_win2(gw->win, &(gw->win2), s->innerheight, s->innerwidth);
 
-    starty = (LINES - s->height) / 2;
+    starty = (MAXLINES - s->height) / 2;
     startx = (COLS - s->width) / 2;
 
     mvwin(gw->win, starty, startx);
@@ -539,7 +541,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     int selected[ml->icount ? ml->icount : 1];
     int results[ml->icount ? ml->icount : 1];
 
-    if (isendwin() || COLS < COLNO || LINES < ROWNO) {
+    if (isendwin() || COLS < COLNO || MAXLINES < ROWNO) {
         dealloc_menulist(ml);
         callback(results, -1, callbackarg);
         return;
@@ -586,11 +588,11 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     if (x1 < 0)
         x1 = COLS;
     if (y1 < 0)
-        y1 = LINES;
+        y1 = MAXLINES;
     if (x2 < 0)
         x2 = COLS;
     if (y2 < 0)
-        y2 = LINES;
+        y2 = MAXLINES;
 
     assign_menu_accelerators(mdat);
     layout_menu(gw);
@@ -928,7 +930,7 @@ curses_display_objects(
     if (msgwin)
         draw_messages_precover();
 
-    if (isendwin() || COLS < COLNO || LINES < ROWNO) {
+    if (isendwin() || COLS < COLNO || MAXLINES < ROWNO) {
         dealloc_objmenulist(objlist);
         callback(results, -1, callbackarg);
         return;
@@ -978,7 +980,7 @@ curses_display_objects(
         assign_objmenu_accelerators(mdat);
     layout_objmenu(gw);
 
-    starty = (LINES - mdat->s.height) / 2;
+    starty = (MAXLINES - mdat->s.height) / 2;
     startx = (COLS - mdat->s.width) / 2;
 
     if (placement_hint == PLHINT_INVENTORY ||
