@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-15 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,6 +19,13 @@ find_objects(struct level *lev, struct obj *chain, int *found,
 {
     struct obj *obj, *objfound, *upper;
     const char *dname;
+    boolean match;
+    int oclass = ALL_CLASSES;
+    if (strlen(str) == 1)
+        oclass = def_char_to_objclass(*str);
+    if (oclass == MAXOCLASSES)
+        oclass = ALL_CLASSES;
+
     for (obj = chain; obj; obj = obj->nobj) {
         dname = distant_name(obj, doname);
         if (obj->where == OBJ_CONTAINED) {
@@ -34,7 +41,10 @@ find_objects(struct level *lev, struct obj *chain, int *found,
                               distant_name(upper, doname));
         }
 
-        if (!strstri(dname, str) || obj->memory == OM_MEMORY_LOST) {
+        match = FALSE;
+        if (obj->memory == OM_MEMORY_LOST ||
+            ((oclass == ALL_CLASSES && !strstri(dname, str)) ||
+             (oclass != ALL_CLASSES && obj->oclass != oclass))) {
             if (Has_contents(obj)) {
                 objfound = find_objects(lev, obj->cobj, found,
                                         did_header, str, menu,
@@ -139,7 +149,7 @@ int
 dofindobj(const struct nh_cmd_arg *arg)
 {
     const char *buf;
-    buf = getlin("Search for what objects?", FALSE);
+    buf = getlin("Search for what objects (or enter a glyph)?", FALSE);
     if (!*buf || *buf == '\033')
         return 0;
 
