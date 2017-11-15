@@ -321,7 +321,7 @@ objmenu_search_callback(const char *sbuf, void *mdat_void)
     int i;
 
     for (i = 0; i < mdat->s.linecount; i++)
-        if (strstr(mdat->items[i].caption, sbuf))
+        if (strstr(mdat->visitems[i]->caption, sbuf))
             break;
     if (i < mdat->s.linecount)
         scroll_onscreen(&(mdat->s), i);
@@ -347,7 +347,7 @@ objmenu_search_callback(const char *sbuf, void *mdat_void)
 static void
 assign_objmenu_accelerators(struct win_objmenu *mdat)
 {
-    ASSIGN_MENU_ACCEL(&(mdat->items[i]));
+    ASSIGN_MENU_ACCEL(mdat->visitems[i]);
 }
 static void
 assign_menu_accelerators(struct win_menu *mdat)
@@ -551,7 +551,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     struct win_menu *mdat;
     int i, key, idx, rv, startx, starty, prevcurs;
     nh_bool done, cancelled, servercancelled;
-    char selected[ml->icount ? ml->icount : 1];
+    int selected[ml->icount ? ml->icount : 1];
     int results[ml->icount ? ml->icount : 1];
 
     if (isendwin() || COLS < COLNO || LINES < ROWNO) {
@@ -568,7 +568,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     struct nh_menuitem *visitem_pointers[ml->icount ? ml->icount : 1];
     for (i = 0; i < ml->icount; i++)
         visitem_pointers[i] = item_copy + i;
-    char *visselected_pointers[ml->icount ? ml->icount : 1];
+    int *visselected_pointers[ml->icount ? ml->icount : 1];
     for (i = 0; i < ml->icount; i++)
         visselected_pointers[i] = selected + i;
 
@@ -770,22 +770,24 @@ layout_objmenu(struct gamewin *gw)
     /* calc width */
     maxwidth = 0;
     for (i = 0; i < mdat->s.linecount; i++) {
-        itemwidth = strlen(mdat->items[i].caption);
+        itemwidth = strlen(mdat->visitems[i]->caption);
 
         /* Add extra space for an object symbol.
 
            TODO: We don't need this any more, do we? */
-        if (mdat->items[i].role == MI_NORMAL)
+        if (mdat->visitems[i]->role == MI_NORMAL)
             itemwidth += 2;
 
         /* If the weight is known, leave space to show it. */
-        if (settings.invweight && mdat->items[i].weight != -1) {
+        if (settings.invweight && mdat->visitems[i]->weight != -1) {
             snprintf(weightstr, ARRAY_SIZE(weightstr),
-                     " {%d}", mdat->items[i].weight);
+                     " {%d}", mdat->visitems[i]->weight);
             itemwidth += strlen(weightstr);
         }
-        if ((mdat->items[i].role == MI_NORMAL && mdat->items[i].accel) ||
-            (mdat->items[i].role == MI_HEADING && mdat->items[i].group_accel))
+        if ((mdat->visitems[i]->role == MI_NORMAL &&
+             mdat->visitems[i]->accel) ||
+            (mdat->visitems[i]->role == MI_HEADING &&
+             mdat->visitems[i]->group_accel))
             itemwidth += 4;     /* "a - " or " ')'" */
         maxwidth = max(maxwidth, itemwidth);
     }
@@ -875,8 +877,8 @@ draw_objmenu(struct gamewin *gw)
     draw_objlist(gw->win2,
                  &(struct nh_objlist){
                      .icount = mdat->s.linecount - mdat->s.offset,
-                     .items  = mdat->items       + mdat->s.offset},
-                 mdat->selected + mdat->s.offset, mdat->how);
+                         .items  = *mdat->visitems + mdat->s.offset},
+                 *mdat->visselected + mdat->s.offset, mdat->how);
 
     if (mdat->selcount > 0 && settings.whichframes != FRAME_NONE) {
         wmove(gw->win, getmaxy(gw->win) - 1, 1);
@@ -905,7 +907,7 @@ find_objaccel(int accel, struct win_objmenu *mdat)
        items */
     upper = min(mdat->s.linecount, mdat->s.offset + mdat->s.innerheight);
     for (i = mdat->s.offset; i < upper; i++)
-        if (mdat->items[i].accel == accel)
+        if (mdat->visitems[i]->accel == accel)
             return i;
 
     /* Don't handle group accelerators here, because they need special handling
@@ -915,7 +917,7 @@ find_objaccel(int accel, struct win_objmenu *mdat)
        among those entries too. */
     if (mdat->s.linecount > mdat->s.innerheight)
         for (i = 0; i < mdat->s.linecount; i++)
-            if (mdat->items[i].accel == accel) {
+            if (mdat->visitems[i]->accel == accel) {
                 scroll_onscreen(&(mdat->s), i);
                 return i;
             }
@@ -952,6 +954,12 @@ curses_display_objects(
     struct nh_objitem item_copy[objlist->icount ? objlist->icount : 1];
     if (objlist->icount)
         memcpy(item_copy, objlist->items, sizeof item_copy);
+    struct nh_objitem *visitem_pointers[objlist->icount ? objlist->icount : 1];
+    int *visselected_pointers[objlist->icount ? objlist->icount : 1];
+    for (i = 0; i < objlist->icount; i++) {
+        visitem_pointers[i] = item_copy + i;
+        visselected_pointers[i] = selected + i;
+    }
 
     memset(selected, 0, sizeof selected);
 
@@ -965,13 +973,13 @@ curses_display_objects(
     gw->resize = resize_objmenu;
 
     mdat = (struct win_objmenu *)gw->extra;
-    mdat->items = item_copy;
+    mdat->visitems = visitem_pointers;
     mdat->s.linecount = objlist->icount;
     mdat->s.maxlinecount = objlist->icount;
     mdat->s.title = title;
     mdat->how = inventory_special ? PICK_ONE : how;
     mdat->selcount = -1;
-    mdat->selected = selected;
+    mdat->visselected = visselected_pointers;
     mdat->s.x1 = 0;
     mdat->s.y1 = 0;
     mdat->s.x2 = 0;
@@ -1024,20 +1032,20 @@ curses_display_objects(
             case '.':                              /* select all */
                 if (mdat->how == PICK_ANY)
                     for (i = 0; i < mdat->s.linecount; i++)
-                        if (mdat->items[i].oclass != -1)
-                            mdat->selected[i] = -1;
+                        if (mdat->visitems[i]->oclass != -1)
+                            *mdat->visselected[i] = -1;
                 break;
 
             case '-':                              /* select none */
                 for (i = 0; i < mdat->s.linecount; i++)
-                    mdat->selected[i] = 0;
+                    *mdat->visselected[i] = 0;
                 break;
 
             case '@':                              /* invert all */
                 if (mdat->how == PICK_ANY)
                     for (i = 0; i < mdat->s.linecount; i++)
-                        if (mdat->items[i].oclass != -1)
-                            mdat->selected[i] = mdat->selected[i] ? 0 : -1;
+                        if (mdat->visitems[i]->oclass != -1)
+                            *mdat->visselected[i] = *mdat->visselected[i] ? 0 : -1;
                                 break;
 
             case ',':                              /* select page */
@@ -1046,15 +1054,15 @@ curses_display_objects(
 
                 for (i = mdat->s.offset; i < mdat->s.linecount &&
                          i < mdat->s.offset + mdat->s.innerheight; i++)
-                    if (mdat->items[i].oclass != -1)
-                        mdat->selected[i] = -1;
+                    if (mdat->visitems[i]->oclass != -1)
+                        *mdat->visselected[i] = -1;
                 break;
 
             case '\\':                             /* deselect page */
                 for (i = mdat->s.offset; i < mdat->s.linecount &&
                          i < mdat->s.offset + mdat->s.innerheight; i++)
-                    if (mdat->items[i].oclass != -1)
-                        mdat->selected[i] = 0;
+                    if (mdat->visitems[i]->oclass != -1)
+                        *mdat->visselected[i] = 0;
                 break;
 
             case '~':                              /* invert page */
@@ -1063,8 +1071,8 @@ curses_display_objects(
 
                 for (i = mdat->s.offset; i < mdat->s.linecount &&
                          i < mdat->s.offset + mdat->s.innerheight; i++)
-                    if (mdat->items[i].oclass != -1)
-                        mdat->selected[i] = mdat->selected[i] ? 0 : -1;
+                    if (mdat->visitems[i]->oclass != -1)
+                        *mdat->visselected[i] = *mdat->visselected[i] ? 0 : -1;
                 break;
 
             case ':':                              /* search for a menu item */
@@ -1094,16 +1102,16 @@ curses_display_objects(
                 idx = find_objaccel(key, mdat);
 
                 if (idx != -1) {    /* valid item accelerator */
-                    if (mdat->selected[idx])
-                        mdat->selected[idx] = 0;
+                    if (mdat->visselected[idx])
+                        *mdat->visselected[idx] = 0;
                     else
-                        mdat->selected[idx] = mdat->selcount;
+                        *mdat->visselected[idx] = mdat->selcount;
                     mdat->selcount = -1;
 
                     /* inventory special case: show item actions menu */
                     if (inventory_special) {
-                        mdat->selected[idx] = 0;
-                        if (do_item_actions(&mdat->items[idx]))
+                        *mdat->visselected[idx] = 0;
+                        if (do_item_actions(mdat->visitems[idx]))
                             done = TRUE;
                     } else if (mdat->how == PICK_ONE)
                         done = TRUE;
@@ -1112,12 +1120,12 @@ curses_display_objects(
                     int grouphits = 0;
 
                     for (i = 0; i < mdat->s.linecount; i++) {
-                        if (mdat->items[i].group_accel == key &&
-                            mdat->items[i].oclass != -1) {
-                            if (mdat->selected[i] == mdat->selcount)
-                                mdat->selected[i] = 0;
+                        if (mdat->visitems[i]->group_accel == key &&
+                            mdat->visitems[i]->oclass != -1) {
+                            if (*mdat->visselected[i] == mdat->selcount)
+                                *mdat->visselected[i] = 0;
                             else
-                                mdat->selected[i] = mdat->selcount;
+                                *mdat->visselected[i] = mdat->selcount;
                             grouphits++;
                         }
                     }
@@ -1134,9 +1142,9 @@ curses_display_objects(
     else {
         rv = 0;
         for (i = 0; i < mdat->s.linecount; i++) {
-            if (mdat->selected[i]) {
-                results[rv].id = mdat->items[i].id;
-                results[rv].count = mdat->selected[i];
+            if (*mdat->visselected[i]) {
+                results[rv].id = mdat->visitems[i]->id;
+                results[rv].count = *mdat->visselected[i];
                 rv++;
             }
         }
