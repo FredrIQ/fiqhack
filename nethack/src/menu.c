@@ -327,50 +327,32 @@ objmenu_search_callback(const char *sbuf, void *mdat_void)
         scroll_onscreen(&(mdat->s), i);
 }
 
-static void
-assign_menu_accelerators(struct win_menu *mdat)
-{
-    int i;
-    char accel = 'a';
-
-    for (i = 0; i < mdat->s.linecount; i++) {
-
-        if (mdat->visitems[i]->accel ||
-            mdat->visitems[i]->role != MI_NORMAL ||
-            mdat->visitems[i]->id == 0)
-            continue;
-
-        mdat->visitems[i]->accel = accel;
-
-        if (accel == 'z')
-            accel = 'A';
-        else if (accel == 'Z')
-            accel = 'a';
-        else
-            accel++;
+# define ASSIGN_MENU_ACCEL(menuitem)            \
+    int i;                                      \
+    char accel = 'a';                           \
+    for (i = 0; i < mdat->s.linecount; i++) {   \
+        if ((menuitem)->accel ||                \
+            (menuitem)->role != MI_NORMAL ||    \
+            (menuitem)->id == 0)                \
+            continue;                           \
+        (menuitem)->accel = accel;              \
+        if (accel == 'z')                       \
+            accel = 'A';                        \
+        else if (accel == 'Z')                  \
+            accel = 'a';                        \
+        else                                    \
+            accel++;                            \
     }
-}
+
 static void
 assign_objmenu_accelerators(struct win_objmenu *mdat)
 {
-    int i;
-    char accel = 'a';
-
-    for (i = 0; i < mdat->s.linecount; i++) {
-
-        if (mdat->items[i].accel || mdat->items[i].role != MI_NORMAL ||
-            mdat->items[i].id == 0)
-            continue;
-
-        mdat->items[i].accel = accel;
-
-        if (accel == 'z')
-            accel = 'A';
-        else if (accel == 'Z')
-            accel = 'a';
-        else
-            accel++;
-    }
+    ASSIGN_MENU_ACCEL(&(mdat->items[i]));
+}
+static void
+assign_menu_accelerators(struct win_menu *mdat)
+{
+    ASSIGN_MENU_ACCEL(mdat->visitems[i]);
 }
 
 /* Functions for non-object menus (specifically) */
