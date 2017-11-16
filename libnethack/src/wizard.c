@@ -531,7 +531,7 @@ strategy(struct monst *mtmp, boolean magical_target)
             if (goodpos(mtmp->dlevel, x, y, mtmp, 0)) {
                 int distm = distmap(&ds, x, y);
                 if (distm > dist && distm < COLNO * ROWNO) {
-                    distm = dist;
+                    dist = distm;
                     strat = STRAT(STRAT_GROUND, x, y, 0);
                 }
             }
