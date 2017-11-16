@@ -814,8 +814,8 @@ mmspell_would_be_useless(struct monst *magr, struct monst *mdef,
         if (!believed_loe && spellnum == CLC_INSECTS)
             return TRUE;
         /* blindness spell on blinded target */
-        if ((m_has_property(mdef, BLINDED, ANY_PROPERTY, TRUE) ||
-             !haseyes(mdef->data)) &&
+        if (mdef && (m_has_property(mdef, BLINDED, ANY_PROPERTY, TRUE) ||
+                     !haseyes(mdef->data)) &&
             spellnum == CLC_BLIND_YOU)
             return TRUE;
         /* spells that harm master while tame and not conflicted */
