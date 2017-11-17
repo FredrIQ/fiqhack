@@ -84,18 +84,18 @@ static const char *spelltypemnemonic(int);
  *
  *  spelspec, spelsbon:
  *      Arc map masters (SPE_MAGIC_MAPPING)
- *      Bar fugue/berserker (SPE_SPEED_MONSTER)
+ *      Bar to hunt down enemies (SPE_DETECT_MONSTERS)
  *      Cav born to dig (SPE_DIG)
- *      Hea to heal (SPE_CURE_SICKNESS)
- *      Kni to turn back evil (SPE_TURN_UNDEAD)
- *      Mon to preserve their abilities (SPE_RESTORE_ABILITY)
+ *      Hea to replace poor dead kittens (SPE_CREATE_FAMILIAR)
+ *      Kni to blast all evil, not just undead (SPE_MAGIC_MISSILE)
+ *      Mon to to be At One (SPE_CLAIRVOYANCE)
  *      Pri to bless (SPE_REMOVE_CURSE)
- *      Ran to hide (SPE_INVISIBILITY)
- *      Rog to find loot (SPE_DETECT_TREASURE)
+ *      Ran to shoot & scoot & kite & juke (SPE_SPEED_MONSTER)
+ *      Rog to locate things they can #untrap (SPE_DETECT_UNSEEN)
  *      Sam to be At One (SPE_CLAIRVOYANCE)
  *      Tou to smile (SPE_CHARM_MONSTER)
- *      Val control the cold (SPE_CONE_OF_COLD)
- *      Wiz all really, but SPE_MAGIC_MISSILE is their party trick
+ *      Val to choose the dead (SPE_DRAIN_LIFE)
+ *      Wiz isn't content to teleporting self (SPE_TELEPORT_AWAY)
  *
  *      See percent_success() below for more comments.
  *
