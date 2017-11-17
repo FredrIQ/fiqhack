@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-17 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -232,6 +232,7 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
         property == STONED            ? poly_when_stoned(mdat)               :
         property == GLIB              ? nohands(mdat)                        :
         property == LIFESAVED         ? nonliving(mdat)                      :
+        property == TELEPAT           ? mindless(mdat)                       :
         0)
         return -1;
 
