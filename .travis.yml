@@ -16,7 +16,6 @@ notifications:
         channels: "chat.freenode.net#nethack4"
         on_success: always
         on_failure: always
-        skip_join: true
         template:
           - "%{commit_subject} (%{result} %{branch} #%{build_number}) %{build_url}
             Diff: %{compare_url}"
