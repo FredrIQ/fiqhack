@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -97,7 +97,7 @@ static void
 read_json_option(json_t * jobj, struct nh_option_desc *opt)
 {
     json_t *joptval, *joptdesc, *jelem;
-    const char *name, *helptxt, *strval;
+    const char *name, *helptxt, *group, *strval;
     int size, i;
     struct nh_autopickup_rule *r;
 
@@ -105,9 +105,9 @@ read_json_option(json_t * jobj, struct nh_option_desc *opt)
 
     memset(opt, 0, sizeof (struct nh_option_desc));
     if (json_unpack
-        (jobj, "{ss,ss,si,so,so,si!}", "name", &name, "helptxt", &helptxt,
-         "type", &opt->type, "value", &joptval, "desc", &joptdesc,
-         "birth", &opt->birth_option) == -1) {
+        (jobj, "{ss,ss,ss,si,so,so,si!}", "name", &name, "group", &group,
+         "helptxt", &helptxt, "type", &opt->type, "value", &joptval,
+         "desc", &joptdesc, "birth", &opt->birth_option) == -1) {
         memset(opt, 0, sizeof (struct nh_option_desc));
         log_msg("broken option specification for option %s",
                 name ? name : "unknown");
@@ -115,6 +115,7 @@ read_json_option(json_t * jobj, struct nh_option_desc *opt)
     }
     opt->name = strdup(name);
     opt->helptxt = strdup(helptxt);
+    opt->group = strdup(group);
 
     switch (opt->type) {
     case OPTTYPE_BOOL:
@@ -770,7 +771,8 @@ json_option(const struct nh_option_desc *option)
     }
 
     jopt =
-        json_pack_ex(&jerr, 0, "{ss,ss,si,so,so,si}", "name", option->name,
+        json_pack_ex(&jerr, 0, "{ss,ss,ss,si,so,so,si}",
+                     "name", option->name, "group", option->group,
                      "helptxt", option->helptxt, "type", option->type,
                      "value", joptval, "desc", joptdesc,
                      "birth", option->birth_option);

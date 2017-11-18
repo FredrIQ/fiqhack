@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -435,7 +435,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
         } else if (wasUpolyd && !Upolyd) {
             /* loose your grip if you revert your form */
             if (drop_fmt)
-                pline(drop_fmt, drop_arg);
+                pline(msgc_substitute, drop_fmt, drop_arg);
             obj_extract_self(obj);
             dropy(obj);
             return obj;
@@ -448,7 +448,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
     }
     if (Fumbling) {
         if (drop_fmt)
-            pline(drop_fmt, drop_arg);
+            pline(msgc_substitute, drop_fmt, drop_arg);
         dropy(obj);
     } else {
         long oquan = obj->quan;
@@ -463,7 +463,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
         if (obj->invlet == NOINVSYM || ((obj->otyp != LOADSTONE || !obj->cursed)
                                         && near_capacity() > prev_encumbr)) {
             if (drop_fmt)
-                pline(drop_fmt, drop_arg);
+                pline(msgc_substitute, drop_fmt, drop_arg);
             /* undo any merge which took place */
             if (obj->quan > oquan)
                 obj = splitobj(obj, oquan);
@@ -994,7 +994,7 @@ getobj(const char *let, const char *word, boolean isarg)
 
     /* TODO: Get rid of this! */
     if (!*altbuf && !allowall) {
-        pline("You don't have anything to %s.", word);
+        pline(msgc_cancelled, "You don't have anything to %s.", word);
         return NULL;
     }
 
@@ -1020,8 +1020,7 @@ getobj(const char *let, const char *word, boolean isarg)
             cnt = 0;
 
         if (strchr(quitchars, ilet)) {
-            if (flags.verbose)
-                pline("Never mind.");
+            pline(msgc_cancelled, "Never mind.");
             return NULL;
         }
         if (ilet == nonechar) {
@@ -1039,8 +1038,8 @@ getobj(const char *let, const char *word, boolean isarg)
                and did interesting things to your money supply.  The LRS is the
                tax bureau from Larn. */
             if (cnt < 0) {
-                pline("The LRS would be very interested to know you have that "
-                      "much.");
+                pline(msgc_cancelled, "The LRS would be very interested to "
+                      "know you have that much.");
                 return NULL;
             }
         }
@@ -1059,8 +1058,7 @@ getobj(const char *let, const char *word, boolean isarg)
                 allowcnt = 2;
             }
             if (ilet == '\033') {
-                if (flags.verbose)
-                    pline("Never mind.");
+                pline(msgc_cancelled, "Never mind.");
                 return NULL;
             }
             /* they typed a letter (not a space) at the prompt */
@@ -1075,7 +1073,7 @@ getobj(const char *let, const char *word, boolean isarg)
                 return NULL;
             /* TODO: This is simply factually incorrect. Daggerstorm, anyone? */
             if (cnt > 1) {
-                pline("You can only throw one item at a time.");
+                pline(msgc_hint, "You can only throw one item at a time.");
                 continue;
             }
         }
@@ -1084,10 +1082,11 @@ getobj(const char *let, const char *word, boolean isarg)
             if (otmp->invlet == ilet)
                 break;
         if (!otmp) {
-            pline("You don't have that object.");
+            pline(msgc_mispaste, "You don't have that object.");
             continue;
         } else if (cnt < 0 || otmp->quan < cnt) {
-            pline("You don't have that many!  You have only %ld.",
+            pline(msgc_cancelled,
+                  "You don't have that many!  You have only %ld.",
                   (long)otmp->quan);
             continue;
         }
@@ -1103,11 +1102,12 @@ getobj(const char *let, const char *word, boolean isarg)
         if (cnt != otmp->quan) {
             if (split_letter) {
                 if (otmp->otyp == LOADSTONE && otmp->cursed) {
-                    pline("You can't seem to get them apart.");
+                    pline(msgc_cancelled, "You can't seem to get them apart.");
                     return NULL;
                 }
                 else if (inv_cnt(TRUE) >= 52) {
-                    pline("You don't have room to handle those separately.");
+                    pline(msgc_cancelled,
+                          "You don't have room to handle those separately.");
                     return NULL;
                 }
 
@@ -1165,7 +1165,7 @@ validate_object(struct obj * obj, const char *lets, const char *word)
 void
 silly_thing(const char *word, struct obj *otmp)
 {
-    pline("That is a silly thing to %s.", word);
+    pline(msgc_mispaste, "That is a silly thing to %s.", word);
 }
 
 
@@ -1233,7 +1233,7 @@ menu_identify(int id_limit)
             free(pick_list);
         } else {
             if (n < 0)
-                pline("That was all.");
+                pline(msgc_info, "That was all.");
             id_limit = 0;       /* Stop now */
         }
         first = 0;
@@ -1254,7 +1254,8 @@ identify_pack(int id_limit)
             ++unid_cnt, the_obj = obj;
 
     if (!unid_cnt) {
-        pline("You have already identified all of your possessions.");
+        pline(msgc_info,
+              "You have already identified all of your possessions.");
     } else if (!id_limit) {
         /* identify everything */
         if (unid_cnt == 1) {
@@ -1293,7 +1294,7 @@ prinv(const char *prefix, struct obj *obj, long quan)
 {
     if (!prefix)
         prefix = "";
-    pline("%s%s%s", prefix, *prefix ? " " : "",
+    pline(msgc_info, "%s%s%s", prefix, *prefix ? " " : "",
           xprname(obj, NULL, obj_to_let(obj), TRUE, 0L, quan));
 }
 
@@ -1344,7 +1345,7 @@ ddoinv(const struct nh_cmd_arg *arg)
 {
     (void) arg;
     if (!invent)
-        pline("You are not carrying anything.");
+        pline(msgc_info, "You are not carrying anything.");
     else
         display_inventory(NULL, FALSE);
     return 0;
@@ -1438,7 +1439,7 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
        not be an issue if empty checks are done before hand and the call to
        here is short circuited away. */
     if (!invent && !(!lets && !want_reply)) {
-        pline("Not carrying anything.");
+        pline(msgc_info, "Not carrying anything.");
         return 0;
     }
 
@@ -1447,7 +1448,8 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
         ret = '\0';
         for (otmp = invent; otmp; otmp = otmp->nobj) {
             if (otmp->invlet == lets[0]) {
-                pline("%s", xprname(otmp, NULL, lets[0], TRUE, 0L, 0L));
+                pline(msgc_info, "%s",
+                      xprname(otmp, NULL, lets[0], TRUE, 0L, 0L));
                 if (out_cnt)
                     *out_cnt = -1L;     /* select all */
                 break;
@@ -1590,7 +1592,7 @@ dounpaid(void)
             if (marker == otmp)
                 break;
 
-        pline("%s",
+        pline(msgc_info, "%s",
               xprname(otmp, distant_name(otmp, doname),
                       marker ? otmp->invlet : CONTAINED_SYM, TRUE, 0, 0L));
         return;
@@ -1683,7 +1685,7 @@ dotypeinv(const struct nh_cmd_arg *arg)
     (void) arg;
 
     if (!invent && !billx) {
-        pline("You aren't carrying anything.");
+        pline(msgc_info, "You aren't carrying anything.");
         return 0;
     }
     unpaid_count = count_unpaid(invent);
@@ -1700,14 +1702,14 @@ dotypeinv(const struct nh_cmd_arg *arg)
         if (billx)
             doinvbill(1);
         else
-            pline("No used-up objects on your shopping bill.");
+            pline(msgc_cancelled, "No used-up objects on your shopping bill.");
         return 0;
     }
     if (c == 'u') {
         if (unpaid_count)
             dounpaid();
         else
-            pline("You are not carrying any unpaid objects.");
+            pline(msgc_cancelled, "You are not carrying any unpaid objects.");
         return 0;
     }
 
@@ -1876,8 +1878,8 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         feeling ? "Things that you feel here:" : "Things that are here:";
 
     if (Blind && !feeling) {
-        pline("You can't see!  (You can feel around with 'grope', typically on"
-              " ^G.)");
+        pline(msgc_controlhelp, "You can't see!  "
+              "(You can feel around with 'grope', typically on ^G.)");
         return 0;
     }
 
@@ -1899,7 +1901,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         fbuf = msgprintf("Contents of %s %s", s_suffix(mon_nam(mtmp)),
                          mbodypart(mtmp, STOMACH));
         /* Skip "Contents of " by using fbuf index 12 */
-        pline("You %s to %s what is lying in %s.",
+        pline(msgc_occstart, "You %s to %s what is lying in %s.",
               feeling ? "try" : "look around", verb, fbuf + 12);
         otmp = mtmp->minvent;
         if (otmp) {
@@ -1916,12 +1918,12 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
                 fbuf = "You feel";
             display_minventory(mtmp, MINV_ALL, msgcat(fbuf, ":"));
         } else {
-            pline("You %s no objects here.", verb);
+            pline(msgc_info, "You %s no objects here.", verb);
         }
-        return ! !feeling;
+        return !!feeling;
     }
     if (looked_explicitly && (trap = t_at(level, u.ux, u.uy)) && trap->tseen)
-        pline("There is %s here.", an(trapexplain[trap->ttyp - 1]));
+        pline(msgc_info, "There is %s here.", an(trapexplain[trap->ttyp - 1]));
 
     otmp = level->objects[u.ux][u.uy];
     dfeature = dfeature_at(u.ux, u.uy);
@@ -1933,16 +1935,19 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
 
         if (dfeature && !strncmp(dfeature, "altar ", 6)) {
             /* don't say "altar" twice, dfeature has more info */
-            pline("You try to feel what is here.");
+            pline(msgc_occstart, "You try to feel what is here.");
         } else {
-            pline("You try to feel what is %s%s.",
+            pline(msgc_occstart, "You try to feel what is %s%s.",
                   drift ? "floating here" : "lying here on the ",
                   drift ? "" : surface(u.ux, u.uy));
         }
         if (dfeature && !drift && !strcmp(dfeature, surface(u.ux, u.uy)))
             dfeature = NULL;    /* ice already identifed */
         if (!can_reach_floor()) {
-            pline("But you can't reach it!");
+            /* Don't assume a msg_occstart message was printed (it's a
+               reasonable category to turn off); probably "floor" is nicer than
+               surface() here */
+            pline(msgc_cancelled, "You can't reach the floor!");
             return 0;
         }
     }
@@ -1953,26 +1958,26 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
     if (!otmp || is_lava(level, u.ux, u.uy) ||
         (is_pool(level, u.ux, u.uy) && !Underwater)) {
         if (dfeature)
-            pline("%s", fbuf);
+            pline(msgc_info, "%s", fbuf);
         read_engr_at(u.ux, u.uy);
         if (looked_explicitly && (feeling || !dfeature))
-            pline("You %s no objects here.", verb);
-        return ! !feeling;
+            pline(msgc_info, "You %s no objects here.", verb);
+        return !!feeling;
     }
     /* we know there is something here */
 
     if (otmp->nexthere && !looked_explicitly) {
         /* multiple objects here, and this is an autopickup command */
         if (dfeature)
-            pline("%s", fbuf);
+            pline(msgc_info, "%s", fbuf);
         read_engr_at(u.ux, u.uy);
-        pline("There are %s%s objects here.",
+        pline(msgc_info, "There are %s%s objects here.",
               (obj_cnt <= 4) ? "a few" :
               (obj_cnt <= 10) ? "several" : "many", picked_some ? " more" : "");
     } else if (!otmp->nexthere) {
         /* only one object */
         if (dfeature)
-            pline("%s", fbuf);
+            pline(msgc_info, "%s", fbuf);
         read_engr_at(u.ux, u.uy);
 #ifdef INVISIBLE_OBJECTS
         if (otmp->oinvis && !See_invisible)
@@ -1980,9 +1985,10 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
 #endif
         /* Don't show weight if the player shouldn't know what the weight is. */
         if (show_weight && (objects[otmp->otyp].oc_name_known || otmp->invlet))
-            pline("You %s here %s {%d}.", verb, doname_price(otmp), otmp->owt);
+            pline(msgc_info, "You %s here %s {%d}.", verb, doname_price(otmp),
+                  otmp->owt);
         else
-            pline("You %s here %s.", verb, doname_price(otmp));
+            pline(msgc_info, "You %s here %s.", verb, doname_price(otmp));
         /* This is the same death message as beow, contrary to the normal rules
            for death messages, because petrifying yourself on a cockatrice works
            the same way whether there's one or many items on the square. */
@@ -2054,10 +2060,12 @@ feel_cockatrice(struct obj *otmp, boolean force_touch, const char *verbing)
     boolean rv = FALSE;
     if (will_feel_cockatrice(otmp, force_touch)) {
         if (poly_when_stoned(youmonst.data))
-            pline("You touched the %s corpse with your bare %s.",
+            pline(msgc_statusgood,
+                  "You touched the %s corpse with your bare %s.",
                   mons[otmp->corpsenm].mname, makeplural(body_part(HAND)));
         else {
-            pline("Touching the %s corpse is a fatal mistake...",
+            pline(msgc_fatal_predone,
+                  "Touching the %s corpse is a fatal mistake...",
                   mons[otmp->corpsenm].mname);
             rv = TRUE;
         }
@@ -2164,9 +2172,10 @@ doprgold(const struct nh_cmd_arg *arg)
     long umoney = money_cnt(invent);
 
     if (!umoney)
-        pline("Your wallet is empty.");
+        pline(msgc_info, "Your wallet is empty.");
     else
-        pline("Your wallet contains %ld %s.", umoney, currency(umoney));
+        pline(msgc_info, "Your wallet contains %ld %s.",
+              umoney, currency(umoney));
 
     shopper_financial_report();
     return 0;
@@ -2179,7 +2188,7 @@ doprwep(const struct nh_cmd_arg *arg)
     (void) arg;
 
     if (!uwep) {
-        pline("You are empty %s.", body_part(HANDED));
+        pline(msgc_info, "You are empty %s.", body_part(HANDED));
     } else {
         prinv(NULL, uwep, 0L);
         if (u.twoweap)
@@ -2193,7 +2202,7 @@ doprarm(const struct nh_cmd_arg *arg)
 {
     (void) arg;
     if (!wearing_armor())
-        pline("You are not wearing any armor.");
+        pline(msgc_info, "You are not wearing any armor.");
     else {
         char lets[8];
         int ct = 0;
@@ -2223,7 +2232,7 @@ doprring(const struct nh_cmd_arg *arg)
 {
     (void) arg;
     if (!uleft && !uright)
-        pline("You are not wearing any rings.");
+        pline(msgc_info, "You are not wearing any rings.");
     else {
         char lets[3];
         int ct = 0;
@@ -2243,7 +2252,7 @@ dopramulet(const struct nh_cmd_arg *arg)
 {
     (void) arg;
     if (!uamul)
-        pline("You are not wearing an amulet.");
+        pline(msgc_info, "You are not wearing an amulet.");
     else
         prinv(NULL, uamul, 0L);
     return 0;
@@ -2274,7 +2283,7 @@ doprtool(const struct nh_cmd_arg *arg)
             lets[ct++] = obj_to_let(otmp);
     lets[ct] = '\0';
     if (!ct)
-        pline("You are not using any tools.");
+        pline(msgc_info, "You are not using any tools.");
     else
         display_inventory(lets, FALSE);
     return 0;
@@ -2296,7 +2305,7 @@ doprinuse(const struct nh_cmd_arg *arg)
             lets[ct++] = obj_to_let(otmp);
     lets[ct] = '\0';
     if (!ct)
-        pline("You are not wearing or wielding anything.");
+        pline(msgc_info, "You are not wearing or wielding anything.");
     else
         display_inventory(lets, FALSE);
     return 0;
@@ -2426,11 +2435,11 @@ doorganize(const struct nh_cmd_arg *arg)
         qbuf = msgprintf("Adjust letter to what [%s]?", cbuf);
         let = query_key(qbuf, NQKF_LETTER_REASSIGNMENT, NULL);
         if (strchr(quitchars, let)) {
-            pline("Never mind.");
+            pline(msgc_cancelled, "Never mind.");
             goto cleansplit;
         }
         if (let == '@' || !letter(let))
-            pline("Select an inventory slot letter.");
+            pline(msgc_uiprompt, "Select an inventory slot letter.");
         else
             break;
     }
@@ -2477,7 +2486,7 @@ doorganize(const struct nh_cmd_arg *arg)
             assigninvlet(obj);
 
             if (obj->invlet == NOINVSYM) {
-                pline("There's nowhere to put that.");
+                pline(msgc_cancelled, "There's nowhere to put that.");
                 obj->invlet = oldlet;
                 goto cleansplit;
             }

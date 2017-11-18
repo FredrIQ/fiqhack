@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -37,10 +37,7 @@ static void charm_monsters(int);
 static void do_earthquake(int);
 static int do_improvisation(struct obj *, const struct nh_cmd_arg *);
 
-/*
- * Wake every monster in range...
- */
-
+/* Wake every monster in range... */
 static void
 awaken_monsters(int distance)
 {
@@ -64,10 +61,7 @@ awaken_monsters(int distance)
     }
 }
 
-/*
- * Make monsters fall asleep.  Note that they may resist the spell.
- */
-
+/* Make monsters fall asleep.  Note that they may resist the spell. */
 static void
 put_monsters_to_sleep(int distance)
 {
@@ -83,9 +77,7 @@ put_monsters_to_sleep(int distance)
     }
 }
 
-/*
- * Charm snakes in range.  Note that the snakes are NOT tamed.
- */
+/* Charm snakes in range.  Note that the snakes are NOT tamed. */
 static void
 charm_snakes(int distance)
 {
@@ -102,10 +94,12 @@ charm_snakes(int distance)
             msethostility(mtmp, FALSE, FALSE); /* does a newsym() */
             if (canseemon(mtmp)) {
                 if (!could_see_mon)
-                    pline("You notice %s, swaying with the music.",
+                    pline(msgc_youdiscover,
+                          "You notice %s, swaying with the music.",
                           a_monnam(mtmp));
                 else
-                    pline("%s freezes, then sways with the music%s.",
+                    pline(msgc_actionok,
+                          "%s freezes, then sways with the music%s.",
                           Monnam(mtmp),
                           was_peaceful ? "" : ", and now seems quieter");
             }
@@ -114,9 +108,7 @@ charm_snakes(int distance)
     }
 }
 
-/*
- * Calm nymphs in range.
- */
+/* Calm nymphs in range. */
 static void
 calm_nymphs(int distance)
 {
@@ -129,7 +121,8 @@ calm_nymphs(int distance)
             msethostility(mtmp, FALSE, FALSE);
             mtmp->mavenge = 0;
             if (canseemon(mtmp))
-                pline("%s listens cheerfully to the music, then seems quieter.",
+                pline(msgc_actionok,
+                      "%s listens cheerfully to the music, then seems quieter.",
                       Monnam(mtmp));
         }
         mtmp = mtmp->nmon;
@@ -138,7 +131,7 @@ calm_nymphs(int distance)
 
 /* Awake only soldiers of the level. */
 void
-awaken_soldiers(void)
+awaken_soldiers(struct monst *culprit)
 {
     struct monst *mtmp;
 
@@ -150,16 +143,18 @@ awaken_soldiers(void)
             mtmp->mcanmove = 1;
             mtmp->msleeping = 0;
             if (canseemon(mtmp))
-                pline("%s is now ready for battle!", Monnam(mtmp));
+                pline(culprit == &youmonst ? msgc_actionok :
+                      msgc_moncombatbad, "%s is now ready for battle!",
+                      Monnam(mtmp));
             else
-                pline_once("You hear the rattle of battle gear being readied.");
+                pline_once(msgc_levelsound,
+                           "You hear the rattle of battle gear being readied.");
         }
     }
 }
 
-/* Charm monsters in range.  Note that they may resist the spell.
- * If swallowed, range is reduced to 0.
- */
+/* Charm monsters in range. Note that they may resist the spell.  If swallowed,
+   range is reduced to 0. */
 static void
 charm_monsters(int distance)
 {
@@ -183,9 +178,9 @@ charm_monsters(int distance)
 
 }
 
-/* Generate earthquake :-) of desired force.
- * That is:  create random chasms (pits).
- */
+/* Generate earthquake :-) of desired force. That is: create random chasms
+   (pits). Currently assumes that the player created it (you'll need to change
+   at least messages, angering, and kill credit if you generalize it). */
 static void
 do_earthquake(int force)
 {
@@ -214,15 +209,15 @@ do_earthquake(int force)
                 if (mtmp->mundetected && is_hider(mtmp->data)) {
                     mtmp->mundetected = 0;
                     if (cansee(x, y))
-                        pline("%s is shaken loose from %s!", Amonnam(mtmp),
-                              mtmp->data ==
-                              &mons[PM_TRAPPER] ? "its hiding place" :
-                              the(ceiling(u.ux, u.uy)));
+                        pline(msgc_youdiscover, "%s is shaken loose from %s!",
+                              Amonnam(mtmp), mtmp->data == &mons[PM_TRAPPER] ?
+                              "its hiding place" : the(ceiling(u.ux, u.uy)));
                     else
-                        You_hear("a thumping sound.");
+                        You_hear(msgc_levelsound, "a thumping sound.");
                     if (x == u.ux && y == u.uy &&
                         mtmp->data != &mons[PM_TRAPPER])
-                        pline("You easily dodge the falling %s.",
+                        pline(msgc_moncombatgood,
+                              "You easily dodge the falling %s.",
                               mon_nam(mtmp));
                     newsym(x, y);
                 }
@@ -231,26 +226,31 @@ do_earthquake(int force)
                 switch (level->locations[x][y].typ) {
                 case FOUNTAIN: /* Make the fountain disappear */
                     if (cansee(x, y))
-                        pline("The fountain falls into a chasm.");
+                        pline(msgc_consequence,
+                              "The fountain falls into a chasm.");
                     goto do_pit;
                 case SINK:
                     if (cansee(x, y))
-                        pline("The kitchen sink falls into a chasm.");
+                        pline(msgc_consequence,
+                              "The kitchen sink falls into a chasm.");
                     goto do_pit;
                 case ALTAR:
                     if (level->locations[x][y].altarmask & AM_SANCTUM)
                         break;
 
                     if (cansee(x, y))
-                        pline("The altar falls into a chasm.");
+                        pline(msgc_consequence,
+                              "The altar falls into a chasm.");
                     goto do_pit;
                 case GRAVE:
                     if (cansee(x, y))
-                        pline("The headstone topples into a chasm.");
+                        pline(msgc_consequence,
+                              "The headstone topples into a chasm.");
                     goto do_pit;
                 case THRONE:
                     if (cansee(x, y))
-                        pline("The throne falls into a chasm.");
+                        pline(msgc_consequence,
+                              "The throne falls into a chasm.");
                     /* Falls into next case */
                 case ROOM:
                 case CORR:     /* Try to make a pit */
@@ -286,7 +286,8 @@ do_earthquake(int force)
 
                     if ((otmp = sobj_at(BOULDER, level, x, y)) != 0) {
                         if (cansee(x, y))
-                            pline("KADOOM! The boulder falls into a chasm%s!",
+                            pline(msgc_consequence,
+                                  "KADOOM! The boulder falls into a chasm%s!",
                                   ((x == u.ux) &&
                                    (y == u.uy)) ? " below you" : "");
                         if (mtmp)
@@ -303,16 +304,17 @@ do_earthquake(int force)
                         if (!is_flyer(mtmp->data) && !is_clinger(mtmp->data)) {
                             mtmp->mtrapped = 1;
                             if (cansee(x, y))
-                                pline("%s falls into a chasm!", Monnam(mtmp));
+                                pline(combat_msgc(&youmonst, mtmp, cr_hit),
+                                      "%s falls into a chasm!", Monnam(mtmp));
                             else if (humanoid(mtmp->data))
-                                You_hear("a scream!");
-                            mselftouch(mtmp, "Falling, ", TRUE);
+                                You_hear(msgc_levelsound, "a scream!");
+                            mselftouch(mtmp, "Falling, ", &youmonst);
                             if (!DEADMONSTER(mtmp))
                                 if ((mtmp->mhp -= rnd(6)) <= 0) {
                                     if (!cansee(x, y))
-                                        pline("It is destroyed!");
+                                        pline(msgc_kill, "It is destroyed!");
                                     else {
-                                        pline("You destroy %s!",
+                                        pline(msgc_petfatal, "You destroy %s!",
                                               mtmp->mtame ?
                                               x_monnam(mtmp, ARTICLE_THE,
                                                        "poor", mtmp->mnamelth ?
@@ -324,10 +326,11 @@ do_earthquake(int force)
                         }
                     } else if (!u.utrap && x == u.ux && y == u.uy) {
                         if (Levitation || Flying || is_clinger(youmonst.data)) {
-                            pline("A chasm opens up under you!");
-                            pline("You don't fall in!");
+                            pline(msgc_noconsequence,
+                                  "A chasm opens up under you!");
+                            pline(msgc_noconsequence, "You don't fall in!");
                         } else {
-                            pline("You fall into a chasm!");
+                            pline(msgc_badidea, "You fall into a chasm!");
                             u.utrap = rn1(6, 2);
                             u.utraptype = TT_PIT;
                             turnstate.vision_full_recalc = TRUE;
@@ -342,7 +345,7 @@ do_earthquake(int force)
                     if (level->locations[x][y].doormask == D_NODOOR)
                         goto do_pit;
                     if (cansee(x, y))
-                        pline("The door collapses.");
+                        pline(msgc_consequence, "The door collapses.");
                     if (*in_rooms(level, x, y, SHOPBASE))
                         add_damage(x, y, 0L);
                     level->locations[x][y].doormask = D_NODOOR;
@@ -353,32 +356,31 @@ do_earthquake(int force)
         }
 }
 
-/*
- * The player is trying to extract something from his/her instrument.
- */
+/* The player is trying to extract something from his/her instrument. */
 static int
 do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
 {
     int damage, do_spec = !Confusion;
 
     if (!do_spec)
-        pline("What you produce is quite far from music...");
+        pline(msgc_yafm, "What you produce is quite far from music...");
     else
-        pline("You start playing %s.", the(xname(instr)));
+        pline(msgc_occstart, "You start playing %s.", the(xname(instr)));
 
     switch (instr->otyp) {
     case MAGIC_FLUTE:  /* Make monster fall asleep */
         if (do_spec && instr->spe > 0) {
             consume_obj_charge(instr, TRUE);
 
-            pline("You produce soft music.");
+            pline(msgc_actionok, "You produce soft music.");
             put_monsters_to_sleep(u.ulevel * 5);
             exercise(A_DEX, TRUE);
             break;
         }       /* else FALLTHRU */
     case WOODEN_FLUTE: /* May charm snakes */
         do_spec &= (rn2(ACURR(A_DEX)) + u.ulevel > 25);
-        pline("%s.", Tobjnam(instr, do_spec ? "trill" : "toot"));
+        pline(do_spec ? msgc_actionok : msgc_failrandom, "%s.",
+              Tobjnam(instr, do_spec ? "trill" : "toot"));
         if (do_spec)
             charm_snakes(u.ulevel * 3);
         exercise(A_DEX, TRUE);
@@ -391,7 +393,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             consume_obj_charge(instr, TRUE);
 
             if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
-                pline("%s.", Tobjnam(instr, "vibrate"));
+                pline(msgc_yafm, "%s.", Tobjnam(instr, "vibrate"));
                 break;
             } else if (!dx && !dy && !dz) {
                 if ((damage = zapyourself(instr, TRUE)) != 0) {
@@ -409,27 +411,30 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             break;
         }       /* else FALLTHRU */
     case TOOLED_HORN:  /* Awaken or scare monsters */
-        pline("You produce a frightful, grave sound.");
+        pline(msgc_actionok, "You produce a frightful, grave sound.");
         awaken_monsters(u.ulevel * 30);
         exercise(A_WIS, FALSE);
         break;
     case BUGLE:        /* Awaken & attract soldiers */
-        pline("You extract a loud noise from %s.", the(xname(instr)));
-        awaken_soldiers();
+        pline(msgc_actionok, "You extract a loud noise from %s.",
+              the(xname(instr)));
+        awaken_soldiers(&youmonst);
         exercise(A_WIS, FALSE);
         break;
     case MAGIC_HARP:   /* Charm monsters */
         if (do_spec && instr->spe > 0) {
             consume_obj_charge(instr, TRUE);
 
-            pline("%s very attractive music.", Tobjnam(instr, "produce"));
+            pline(msgc_actionok, "%s very attractive music.",
+                  Tobjnam(instr, "produce"));
             charm_monsters((u.ulevel - 1) / 3 + 1);
             exercise(A_DEX, TRUE);
             break;
         }       /* else FALLTHRU */
     case WOODEN_HARP:  /* May calm Nymph */
         do_spec &= (rn2(ACURR(A_DEX)) + u.ulevel > 25);
-        pline("%s %s.", The(xname(instr)),
+        pline(do_spec ? msgc_actionok : msgc_failrandom,
+              "%s %s.", The(xname(instr)),
               do_spec ? "produces a lilting melody" : "twangs");
         if (do_spec)
             calm_nymphs(u.ulevel * 3);
@@ -439,8 +444,9 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
         if (do_spec && instr->spe > 0) {
             consume_obj_charge(instr, TRUE);
 
-            pline("You produce a heavy, thunderous rolling!");
-            pline("The entire dungeon is shaking around you!");
+            pline(msgc_occstart, "You produce a heavy, thunderous rolling!");
+            pline_implied(msgc_occstart,
+                          "The entire dungeon is shaking around you!");
             do_earthquake((u.ulevel - 1) / 3 + 1);
             /* shake up monsters in a much larger radius... */
             awaken_monsters(ROWNO * COLNO);
@@ -448,7 +454,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             break;
         }       /* else FALLTHRU */
     case LEATHER_DRUM: /* Awaken monsters */
-        pline("You beat a deafening row!");
+        pline(msgc_actionok, "You beat a deafening row!");
         awaken_monsters(u.ulevel * 40);
         exercise(A_WIS, FALSE);
         break;
@@ -459,6 +465,9 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
     return 2;   /* That takes time */
 }
 
+/* Some countries name the notes of the scale A to G. In others, "B" refers
+   specifically to B flat, and a B natural is called H. This function places
+   both onto the same seven-note scale. */
 static char
 highc_htob(char c)
 {
@@ -466,9 +475,7 @@ highc_htob(char c)
     return c == 'H' ? 'B' : c;
 }
 
-/*
- * So you want music...
- */
+/* So you want music... */
 int
 do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
 {
@@ -478,14 +485,15 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
     boolean ok;
 
     if (Underwater) {
-        pline("You can't play music underwater!");
+        pline(msgc_cancelled, "You can't play music underwater!");
         return 0;
     }
     if (Upolyd && !can_blow_instrument(youmonst.data) &&
         (instr->otyp == BUGLE || instr->otyp == WOODEN_FLUTE ||
          instr->otyp == MAGIC_FLUTE || instr->otyp == TOOLED_HORN ||
          instr->otyp == FIRE_HORN || instr->otyp == FROST_HORN)) {
-        pline("You are incapable of playing %s in your current form!",
+        pline(msgc_cancelled,
+              "You are incapable of playing %s in your current form!",
               the(xname(instr)));
         return 0;
     }
@@ -505,7 +513,8 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
             /* convert to uppercase and change any "H" to the expected "B" */
             buf = msgcaseconv(buf, highc_htob, highc_htob, highc_htob);
         }
-        pline("You extract a strange sound from %s!", the(xname(instr)));
+        pline(msgc_occstart, "You extract a strange sound from %s!",
+              the(xname(instr)));
 
         /* Check if there was the Stronghold drawbridge near and if the tune
            conforms to what we're waiting for. */
@@ -563,14 +572,16 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
                         }
                     if (tumblers)
                         if (gears)
-                            You_hear("%d tumbler%s click and %d gear%s turn.",
+                            You_hear(msgc_hint,
+                                     "%d tumbler%s click and %d gear%s turn.",
                                      tumblers, plur(tumblers), gears,
                                      plur(gears));
                         else
-                            You_hear("%d tumbler%s click.", tumblers,
+                            You_hear(msgc_hint, "%d tumbler%s click.", tumblers,
                                      plur(tumblers));
                     else if (gears) {
-                        You_hear("%d gear%s turn.", gears, plur(gears));
+                        You_hear(msgc_hint, "%d gear%s turn.", gears,
+                                 plur(gears));
                         /* could only get `gears == 5' by playing five correct
                            notes followed by excess; otherwise, tune would have 
                            matched above */

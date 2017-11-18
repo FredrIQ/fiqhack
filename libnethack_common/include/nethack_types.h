@@ -1,7 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
+
+#include "messagechannel.h"
 
 /*
  * System autodetection: greatly simplified, as we only care about
@@ -474,6 +476,7 @@ enum nh_optbirth {
    so that they can safely be freed with nhlib_free_optlist. */
 struct nh_option_desc {
     const char *name;
+    const char *group;
     const char *helptxt;
     enum nh_optbirth birth_option;
     enum nh_opttype type;
@@ -487,11 +490,40 @@ struct nh_option_desc {
 };
 
 struct nh_menuitem {
+    /* Mostly opaque ID number used by the caller to recognise items being
+       chosen; menu display functions return lists of IDs. The exception to the
+       opaqueness is that items with an ID of 0 won't be selectable unless the
+       caller gives them an accelerator explicitly. (Also, for save file size
+       optimization, try to keep to small positive numbers and -1, -2, -3.) */
     int id;
+
+    /* The formatting of this item (text, regular item, or heading).  Only
+       regular items can be selectable. */
     enum nh_menuitem_role role;
+
+    /* The nesting level of this item, for hierarchical/collapsible menus. In
+       most cases, this is 0 everywhere, for a flat menu. Each item is a child
+       of the previous menu item that has a smaller nesting level, thus allowing
+       a menu to have a tree structure. No entry may have a nesting level
+       greater by more than 1 than the previous item, and the first entry has
+       nesting level 0. */
+    unsigned level;
+
+    /* The text to display for this item in the menu. */
     char caption[BUFSZ];
+
+    /* The key that selects/toggles/expands this item. One will be allocated
+       for you if the role is MI_NORMAL and the id is nonzero. */
     char accel;
+
+    /* A different key that selects/toggles/expands this item. Unlike
+       accelerators, it's reasonable to assign the same group accelerator to
+       more than one item, to allow them to easily be selected as a group. */
     char group_accel;
+
+    /* Initial selection state of this item, in a multiselect menu. On
+       non-multiselect menus, mostly just chooses whether items are displayed
+       with a + or - next to their accelerator. */
     nh_bool selected;
 };
 
@@ -775,7 +807,7 @@ struct nh_window_procs {
     void (*win_pause) (enum nh_pause_reason reason);
     void (*win_display_buffer) (const char *buf, nh_bool trymove);
     void (*win_update_status) (struct nh_player_info *pi);
-    void (*win_print_message) (int turn, const char *msg);
+    void (*win_print_message) (enum msg_channel, const char *msg);
     void (*win_request_command) (nh_bool debug, nh_bool completed,
                                  nh_bool interrupted, void *callbackarg,
                                  void (*callback)(
@@ -810,7 +842,6 @@ struct nh_window_procs {
     void (*win_outrip) (struct nh_menulist *menulist,
                         nh_bool tombstone, const char *name, int gold,
                         const char *killbuf, int end_how, int year);
-    void (*win_print_message_nonblocking) (int turn, const char *msg);
     void (*win_server_cancel) (void);
 };
 

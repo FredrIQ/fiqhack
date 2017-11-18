@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2365,7 +2365,7 @@ srch:
                     && !can_fall_thru(level))
                     trap = ROCKTRAP;
                 maketrap(level, u.ux, u.uy, trap, rng_main);
-                pline("%s.", An(tname));
+                pline(msgc_info, "%s.", An(tname));
                 return &zeroobj;
             }
         }
@@ -2375,27 +2375,27 @@ srch:
             level->locations[u.ux][u.uy].typ = FOUNTAIN;
             if (!strncmpi(bp, "magic ", 6))
                 level->locations[u.ux][u.uy].blessedftn = 1;
-            pline("A %sfountain.",
+            pline(msgc_info, "A %sfountain.",
                   level->locations[u.ux][u.uy].blessedftn ? "magic " : "");
             newsym(u.ux, u.uy);
             return &zeroobj;
         }
         if (!BSTRCMP(bp, p - 6, "throne")) {
             level->locations[u.ux][u.uy].typ = THRONE;
-            pline("A throne.");
+            pline(msgc_info, "A throne.");
             newsym(u.ux, u.uy);
             return &zeroobj;
         }
         if (!BSTRCMP(bp, p - 4, "sink")) {
             level->locations[u.ux][u.uy].typ = SINK;
-            pline("A sink.");
+            pline(msgc_info, "A sink.");
             newsym(u.ux, u.uy);
             return &zeroobj;
         }
         if (!BSTRCMP(bp, p - 4, "pool")) {
             level->locations[u.ux][u.uy].typ = POOL;
             del_engr_at(level, u.ux, u.uy);
-            pline("A pool.");
+            pline(msgc_info, "A pool.");
             /* Must manually make kelp! */
             water_damage_chain(level->objects[u.ux][u.uy], TRUE);
             newsym(u.ux, u.uy);
@@ -2404,7 +2404,7 @@ srch:
         if (!BSTRCMP(bp, p - 4, "lava")) {      /* also matches "molten lava" */
             level->locations[u.ux][u.uy].typ = LAVAPOOL;
             del_engr_at(level, u.ux, u.uy);
-            pline("A pool of molten lava.");
+            pline(msgc_info, "A pool of molten lava.");
             if (!(Levitation || Flying))
                 lava_effects();
             newsym(u.ux, u.uy);
@@ -2426,21 +2426,21 @@ srch:
             else        /* -1 - A_CHAOTIC, 0 - A_NEUTRAL, 1 - A_LAWFUL */
                 al = (!rn2(6)) ? A_NONE : rn2((int)A_LAWFUL + 2) - 1;
             level->locations[u.ux][u.uy].altarmask = Align2amask(al);
-            pline("%s altar.", An(align_str(al)));
+            pline(msgc_info, "%s altar.", An(align_str(al)));
             newsym(u.ux, u.uy);
             return &zeroobj;
         }
 
         if (!BSTRCMP(bp, p - 5, "grave") || !BSTRCMP(bp, p - 9, "headstone")) {
             make_grave(level, u.ux, u.uy, NULL);
-            pline("A grave.");
+            pline(msgc_info, "A grave.");
             newsym(u.ux, u.uy);
             return &zeroobj;
         }
 
         if (!BSTRCMP(bp, p - 4, "tree")) {
             level->locations[u.ux][u.uy].typ = TREE;
-            pline("A tree.");
+            pline(msgc_info, "A tree.");
             newsym(u.ux, u.uy);
             block_point(u.ux, u.uy);
             return &zeroobj;
@@ -2448,7 +2448,7 @@ srch:
 
         if (!BSTRCMP(bp, p - 4, "bars")) {
             level->locations[u.ux][u.uy].typ = IRONBARS;
-            pline("Iron bars.");
+            pline(msgc_info, "Iron bars.");
             newsym(u.ux, u.uy);
             return &zeroobj;
         }
@@ -2722,7 +2722,8 @@ typfnd:
         artifact_exists(otmp, ONAME(otmp), FALSE);
         obfree(otmp, NULL);
         otmp = &zeroobj;
-        pline("For a moment, you feel something in your %s, but it disappears!",
+        pline(msgc_nospoil,
+              "For a moment, you feel something in your %s, but it disappears!",
               makeplural(body_part(HAND)));
     }
 

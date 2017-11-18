@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,9 +47,12 @@ msg_from_string(const char *string)
 
 /* Returns a message produced according to the given printf-style format string
    and varargs list. With sanitize_whitespace set, the only whitespace allowed
-   in the output will be spaces (TODO: this seems not to be implemented?). */
+   in the output will be spaces (TODO: this seems not to be implemented?). Note
+   "int" not "boolean" because it makes the dependency graph much flatter, which
+   both speeds compilation and makes the code easier to understand and less
+   fragile. */
 const char *
-msgvprintf(const char *fmt, va_list args, boolean sanitize_whitespace)
+msgvprintf(const char *fmt, va_list args, int sanitize_whitespace)
 {
     return xmvasprintf(&turnstate.message_chain, fmt, args);
 }

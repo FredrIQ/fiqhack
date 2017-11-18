@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-14 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -287,6 +287,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
                     nh_bool include_debug)
 {
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_RUN | DIRCMD_GO);
+    nh_bool cancel_yskip = TRUE;
 
     ui_flags.in_zero_time_command = TRUE;
 
@@ -343,6 +344,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
 
     case UICMD_PREVMSG:
         doprev_message();
+        cancel_yskip = FALSE;
         *cmd = NULL;
         break;
 
@@ -361,6 +363,10 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
         break;
     }
     ui_flags.in_zero_time_command = FALSE;
+
+    /* We cancel the yskip on all commands exept UICMD_PREVMSG. */
+    if (cancel_yskip)
+        ui_flags.msghistory_yskip = 0;
 }
 
 void
@@ -387,12 +393,16 @@ get_command(void *callbackarg,
     }
 
     do {
-        mark_showlines_seen();
         multi = 0;
         cmd = NULL;
         ncaa.arg.argtype = 0;
 
+        draw_messages_prekey(FALSE);
         key = get_map_key(TRUE, TRUE, krc_get_command);
+        /* TODO: If we get a /spurious/ server cancel, we should avoid greying
+           messages as a result (problematic because a non-spurious server
+           cancel will quite possibly display messages). */
+        draw_messages_postkey();
 
         if (key <= KEY_MAX && keymap[key] == find_command("repeatcount")) {
             do {
@@ -409,10 +419,10 @@ get_command(void *callbackarg,
                      (multi > 0 && key == KEY_BACKSPACE));
         }
 
-        if (key == '\x1b' || key == KEY_ESCAPE)
+        if (key == '\x1b' || key == KEY_ESCAPE) {
             continue;
+        }
 
-        new_action();   /* use a new message line for this action */
         if (key == KEY_SIGNAL) {
             cmd = find_command("servercancel");
         } else if (key <= KEY_MAX) {
@@ -437,7 +447,8 @@ get_command(void *callbackarg,
         if (key >= KEY_MAX + 256) {
             /* This range of user-defined keys is used for clicks on the map. */
 
-            /* For now, these don't do anything. */
+            /* For now, these don't do anything, and don't cause a
+               draw_messages_postkey() either (safe beacuse they're no-ops). */
             continue;
         }
 
@@ -449,6 +460,10 @@ get_command(void *callbackarg,
                 if (!cmd)       /* command was fully handled internally */
                     continue;
             }
+
+            /* When we know for certain that the command wasn't a prevmsg
+               command, cancel any prevmsg scroll in progress. */
+            ui_flags.msghistory_yskip = 0;
 
             if (multi && cmd->flags & CMD_ARG_LIMIT) {
                 ncaa.arg.argtype |= CMD_ARG_LIMIT;
@@ -497,7 +512,7 @@ get_command(void *callbackarg,
         if (!cmd) {
             snprintf(line, ARRAY_SIZE(line), "Bad command: '%s'.",
                      friendly_keyname(key));
-            curses_print_message(player.moves, line);
+            curses_print_message(msgc_cancelled, line);
         }
     } while (!cmd);
 
@@ -1899,7 +1914,7 @@ keymap_action_game_submenu(void)
 static nh_bool
 set_command_keys(struct win_menu *mdat, int idx)
 {
-    int id = mdat->items[idx].id;
+    int id = mdat->visitems[idx]->id;
     struct nh_cmd_desc *cmd;
 
     if (id == RESET_BINDINGS_ID) {

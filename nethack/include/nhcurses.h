@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-01 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -122,13 +122,22 @@ enum game_dirs {
 };
 
 /* A boolean that can be "pinned" at a particular value, or that can be left to
-   have its value chosen automatically. 
+   have its value chosen automatically.
 
    I'm /so/ tempted to just use FALSE, TRUE, and ENOENT instead... */
 enum autoable_boolean {
     AB_FALSE,
     AB_TRUE,
     AB_AUTO,
+};
+
+/* People have been complaining about not having their favourite msg_window
+   settings, so let's implement the entire set from 3.4.0. */
+enum prevmsg_style {
+    PREVMSG_SINGLE,
+    PREVMSG_COMBINATION,
+    PREVMSG_FULL,
+    PREVMSG_REVERSE
 };
 
 /* Any extra space on the terminal is used to give advice about controls. This
@@ -148,7 +157,9 @@ enum keyreq_context {
     krc_getpos,
     krc_menu,
     krc_objmenu,
+    krc_prevmsg,
     krc_more,
+    krc_moretab,
     krc_pause_map,
     krc_notification,
     krc_keybinding,
@@ -161,6 +172,10 @@ enum keyreq_context {
     krc_query_key_letter_reassignment,
 };
 
+/* Message "colors" that suggest special handling; ORed with a color */
+#define CLRFLAG_HIDE      256             /* hide the message */
+#define CLRFLAG_FORCEMORE 512             /* force a --More-- */
+#define CLRFLAG_FORCETAB  1024            /* force a --Press Tab-- */
 
 struct interface_flags {
     int done_hup;
@@ -206,6 +221,11 @@ struct interface_flags {
        x, y pair while it is. */
     int maphoverx;
     int maphovery;
+
+    /* Implementation of "single" and "combination" msg_window modes: this
+       scrolls the message window "up" that many lines, hiding the newest
+       messages and showing older ones. */
+    int msghistory_yskip;
 
     nh_bool want_cursor;       /* delayed-action cursor setting */
 
@@ -263,6 +283,7 @@ struct settings {
     enum nh_animation animation;     /* when to delay */
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
+    enum prevmsg_style msg_window;
     enum nh_frame whichframes;
     enum nh_palette palette;         /* palette to use for text */
 
@@ -306,7 +327,7 @@ struct curses_drawing_info {
     struct curses_symdef *objects;
     /* invisible monster symbol: show this if nh_dbuf_entry.invis is true */
     struct curses_symdef *invis;
-    /* monster layer symbols: nh_dbuf_entry.mon symbols with id <= num_monsters 
+    /* monster layer symbols: nh_dbuf_entry.mon symbols with id <= num_monsters
        are actual monsters, followed by warnings */
     struct curses_symdef *monsters;
     struct curses_symdef *warnings;
@@ -345,26 +366,47 @@ struct gamewin {
     void *extra[];
 };
 
-
-# define MAXCOLS 16
-struct win_menu {
-    struct nh_menuitem *items;
-    char *selected;
+/* Structure for menu-like things that might or might not be actual menus.  This
+   handles scrolling, borders, scrollbars etc. but doesn't make assumptions
+   about what's shown on the inside.  It respects MP_LINES/MP_PAGES, and thus
+   whatever is scrolled must be happy to scroll to arbitrary positions,
+   including beyond the end (although not necessarily before the start). */
+struct win_scrollable {
     const char *title;
-    int icount, how, offset, placement_hint;
-    int height, frameheight, innerheight;
-    int width, innerwidth, colpos[MAXCOLS], maxcol;
-    int x1, y1, x2, y2;
-    int dismissable;
+    int linecount;      /* (changeable) lines in the underlying document */
+    int maxlinecount;   /* (fixed) bound which linecount won't exceed */
+    int innerwidth, innerheight; /* dimensions of the viewport into it */
+    int frameheight;    /* height of the frame */
+    int width, height;  /* dimensions of viewport + scrollbars/frame/etc. */
+    int x1, y1, x2, y2; /* parameters for placement algorithm */
+    int wanted_width;   /* "ideal" innerwidth; use when handling resize */
+    int offset;         /* scroll position, expressed as the number of lines
+                           currently hidden above the top of the viewport */
+    int dismissable;    /* what style of frame to render */
 };
 
+
+# define MAXCOLS 16
+/* Note: the win_scrollable must be the first entry of this struct (because
+   a struct win_menu pointer is sometimes cast to a struct win_scrollable
+   pointer) */
+struct win_menu {
+    struct win_scrollable s;
+    struct nh_menuitem **visitems;
+    char **visselected;
+    const char *title;
+    int how;
+    int colpos[MAXCOLS], maxcol;
+};
+
+/* Note: the win_scrollable must be the first entry of this struct, for the same
+   reason as with win_menu */
 struct win_objmenu {
+    struct win_scrollable s;
     struct nh_objitem *items;
     int *selected;
     const char *title;
-    int icount, how, offset, selcount, placement_hint;
-    int height, frameheight, innerheight;
-    int width, innerwidth;
+    int how, selcount;
 };
 
 struct win_getline {
@@ -479,6 +521,16 @@ extern nh_bool monflag_is_at(short monflag, int x, int y);
 extern nh_bool apikey_is_at(const char *apikey, int x, int y);
 
 /* menu.c */
+extern void layout_scrollable(struct gamewin *gw);
+extern void initialize_scrollable_windows(struct gamewin *gw,
+                                          int startx, int starty);
+extern void draw_scrollable_frame(struct gamewin *gw);
+extern void scroll_onscreen(struct win_scrollable *s, int onscreen_offset);
+extern void resize_scrollable_inner(struct gamewin *gw);
+extern void draw_scrollbar(WINDOW *win, struct win_scrollable *s);
+extern nh_bool scroll_using_key(struct win_scrollable *s, int keycode,
+                                nh_bool *done);
+
 extern void draw_menu(struct gamewin *gw);
 extern void curses_menu_callback(const int *results, int nresults, void *arg);
 extern void curses_display_menu(
@@ -498,20 +550,18 @@ extern void draw_objlist(WINDOW * win, struct nh_objlist *objlist,
 extern nh_bool do_item_actions(const struct nh_objitem *);
 
 /* messages.c */
-extern void alloc_hist_array(void);
-extern void setup_showlines(void);
-extern void redo_showlines(void);
-extern void curses_print_message(int turn, const char *msg);
-extern void curses_print_message_nonblocking(int turn, const char *inmsg);
+extern void discard_message_history(int lines_to_keep);
+extern void curses_print_message(enum msg_channel msgc, const char *msg);
 extern void curses_temp_message(const char *msg);
 extern void curses_clear_temp_messages(void);
-extern void draw_msgwin(void);
-extern void mark_showlines_seen(void);
-extern void fresh_message_line(nh_bool blocking);
-extern void pause_messages(void);
+extern void redraw_messages(void);
+extern void reconstruct_message_history(nh_bool reverse);
+extern void fresh_message_line(void);
+extern void draw_messages_prekey(nh_bool room_for_more);
+extern void draw_messages_postkey(void);
+extern void draw_messages_precover(void);
+extern void force_more(nh_bool require_tab);
 extern void doprev_message(void);
-extern void cleanup_messages(void);
-extern void new_action(void);
 extern void wrap_text(int width, const char *input, int *output_count,
                       char ***output);
 extern void free_wrap(char **wrap_output);
@@ -603,7 +653,7 @@ extern void redraw_game_windows(void);
 extern void handle_resize(void);
 extern void rebuild_ui(void);
 extern int nh_wgetch(WINDOW * win, enum keyreq_context context);
-extern struct gamewin *alloc_gamewin(int extra);
+extern struct gamewin *alloc_gamewin(int extra, nh_bool handle_messages);
 extern void delete_gamewin(struct gamewin *win);
 extern void delete_all_gamewins(void);
 extern void curses_pause(enum nh_pause_reason reason);

@@ -519,7 +519,7 @@ rungame(nh_bool net)
     close(fd);
 
     destroy_game_windows();
-    cleanup_messages();
+    discard_message_history(0);
 
     game_ended(ret, net ? NULL : filename, net);
 
@@ -734,7 +734,7 @@ loadgame(void)
     close(fd);
 
     destroy_game_windows();
-    cleanup_messages();
+    discard_message_history(0);
     game_ended(ret, filename, FALSE);
 
     return TRUE;

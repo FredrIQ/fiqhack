@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2015-05-22
+# Last modified by Alex Smith, 2017-11-18
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -26,6 +26,7 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
                        # These warnings are probably worth fixing eventually,
                        # but have too many false positives to be able to show
                        # them right now
+                       '-Wno-implicit-fallthrough '.
                        '-Wno-unused-parameter -Wno-sign-compare '.
                        '-Wold-style-definition -Wstrict-prototypes '.
                        '-Wmissing-prototypes -Wmissing-declarations '.

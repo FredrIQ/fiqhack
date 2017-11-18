@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-08-22 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -103,6 +103,15 @@ static struct nh_listitem autoable_boolean_list[] = {
 static struct nh_enum_option autoable_boolean_spec =
     { autoable_boolean_list, listlen(autoable_boolean_list) };
 
+static struct nh_listitem msg_window_list[] = {
+    {PREVMSG_SINGLE,      "single"},
+    {PREVMSG_COMBINATION, "combination"},
+    {PREVMSG_FULL,        "full"},
+    {PREVMSG_REVERSE,     "reverse"}
+};
+static struct nh_enum_option msg_window_spec =
+    { msg_window_list, listlen(msg_window_list) };
+
 static struct nh_listitem frame_list[] = {
     {FRAME_ALL,   "screen and menus"},
     {FRAME_MENUS, "menus only"},
@@ -115,65 +124,97 @@ static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
 static struct nh_option_desc curses_options[] = {
-    {"alt_is_esc", "interpret Alt-letter as ESC letter",
+    {"alt_is_esc", "Terminal and Rendering",
+     "interpret Alt-letter as ESC letter",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"animation", "what to animate, and how fast",
+    {"animation", "Commands and Confirmations",
+     "which commands to run slowly",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = ANIM_ALL}},
-    {"border", "what to draw borders around",
+    {"border", "Screen Layout",
+     "what to draw borders around",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = FRAME_ALL}},
-    {"comment", "has no effect",
+    {"comment", "Online and Tournaments",
+     "no game effect, used to prove your ID in tournaments",
      nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
-    {"darkgray", "try to show 'black' as dark gray instead of dark blue",
+    {"darkgray", "Terminal and Rendering",
+     "try to show 'black' as dark gray instead of dark blue",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_branch", "use different renderings for different branches",
+    {"draw_branch", "Map Display",
+     "use different renderings for different branches",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_detected", "mark detected monsters",
+    {"draw_detected", "Map Display",
+     "mark detected monsters",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_rock", "make the walls of corridors visible",
+    {"draw_rock", "Map Display",
+     "make the walls of corridors visible",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"draw_stepped", "mark squares you have walked on",
+    {"draw_stepped", "Map Display",
+     "mark squares you have walked on",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_tame", "mark tame and peaceful monsters",
+    {"draw_tame", "Map Display",
+     "mark tame and peaceful monsters",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"draw_terrain", "mark concealed traps and stairs",
+    {"draw_terrain", "Map Display",
+     "mark concealed traps and stairs",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"extmenu", "use a menu for selecting extended commands (#)",
+    {"extmenu", "Commands and Confirmations",
+     "use a menu for selecting extended commands (#)",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"invweight", "show item weights in the inventory",
+    {"invweight", "Messages and Menus",
+     "show item weights in the inventory",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"keymap", "alter the key to command mapping",
+    {"keymap", "Commands and Confirmations",
+     "alter the key to command mapping",
      nh_birth_ingame, (enum nh_opttype)OPTTYPE_KEYMAP, {0}},
-    {"menu_headings", "display style for menu headings",
+    {"menu_headings", "Messages and Menus",
+     "display style for menu headings",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = A_REVERSE}},
-    {"mouse", "accept mouse input (where supported)",
+    {"mouse", "Terminal and Rendering",
+     "accept mouse input (where supported)",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"menupaging", "scrolling behaviour of menus",
+    {"menupaging", "Messages and Menus",
+     "scrolling behaviour of menus",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MP_LINES}},
-    {"msgheight", "message window height",
+    {"msgheight", "Screen Layout",
+     "message window height",
      nh_birth_ingame, OPTTYPE_INT, {.i = 8}},
-    {"msghistory", "number of messages saved for prevmsg",
+    {"msghistory", "Messages and Menus",
+     "number of messages lines viewable via prevmsg",
      nh_birth_ingame, OPTTYPE_INT, {.i = 256}},
-    {"networkmotd", "get tips and announcements from the Internet",
+    {"msg_window", "Messages and Menus",
+     "behaviour of the 'previous message' command",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = PREVMSG_FULL}},
+    {"networkmotd", "Online and Tournaments",
+     "get tips and announcements from the Internet",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = MOTD_ASK}},
-    {"optstyle", "option menu display style",
+    {"optstyle", "Messages and Menus",
+     "option menu display style",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = OPTSTYLE_FULL}},
-    {"palette", "color palette used for text",
+    {"palette", "Terminal and Rendering",
+     "color palette used for text",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = PALETTE_DEFAULT}},
-    {"prompt_inline", "place prompts in the message window",
+    {"prompt_inline", "Messages and Menus",
+     "place prompts in the message window",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"scores_own", "show all your own scores in the list",
+    {"scores_own", "Endgame Sequence",
+      "show all your own scores in the list",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
-    {"scores_top", "how many top scores to show",
+    {"scores_top", "Endgame Sequence",
+      "how many top scores to show",
      nh_birth_ingame, OPTTYPE_INT, {.i = 3}},
-    {"scores_around", "the number of scores shown around your score",
+    {"scores_around", "Endgame Sequence",
+      "the number of scores shown around your score",
      nh_birth_ingame, OPTTYPE_INT, {.i = 2}},
-    {"sidebar", "when to draw the inventory sidebar",
+    {"sidebar", "Screen Layout",
+     "when to draw the inventory sidebar",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = AB_AUTO}},
-    {"status3", "3 line status display",
+    {"status3", "Screen Layout",
+     "3 line status display",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
-    {"tileset", "text or graphics for map drawing",
+    {"tileset", "Terminal and Rendering",
+     "text or graphics for map drawing",
      nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
-    {NULL, NULL, nh_birth_ingame, OPTTYPE_BOOL, {NULL}}};
+    {NULL, NULL, NULL, nh_birth_ingame, OPTTYPE_BOOL, {NULL}}};
 
 static struct nhlib_boolopt_map boolopt_map[] = {
     {"alt_is_esc", &settings.alt_is_esc},
@@ -333,6 +374,8 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.show_motd = option->value.e;
     } else if (!strcmp(option->name, "menupaging")) {
         settings.menupaging = option->value.e;
+    } else if (!strcmp(option->name, "msg_window")) {
+        settings.msg_window = option->value.e;
     } else if (!strcmp(option->name, "optstyle")) {
         settings.optstyle = option->value.e;
     } else if (!strcmp(option->name, "msgheight")) {
@@ -340,7 +383,7 @@ curses_set_option(const char *name, union nh_optvalue value)
         rebuild_ui();
     } else if (!strcmp(option->name, "msghistory")) {
         settings.msghistory = option->value.i;
-        alloc_hist_array();
+        discard_message_history(settings.msghistory);
     }
     else
         return FALSE;
@@ -381,6 +424,7 @@ init_options(void)
     find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
     find_option("menupaging")->e = menupaging_spec;
+    find_option("msg_window")->e = msg_window_spec;
     find_option("palette")->e = palette_spec;
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
@@ -447,31 +491,65 @@ print_option_string(struct nh_option_desc *option, char *buf)
 }
 
 
+static int
+compare_options(const void *opt1_void, const void *opt2_void)
+{
+    struct nh_option_desc *const *opt1 = opt1_void;
+    struct nh_option_desc *const *opt2 = opt2_void;
+    int d = strcmp((*opt1)->group, (*opt2)->group);
+    if (!d)
+        d = strcmp((*opt1)->name, (*opt2)->name);
+    return d;
+}
+
 /* add a list of options to the given selection menu */
 static int
 menu_add_options(struct nh_menulist *menu, int listid,
                  struct nh_option_desc *options, enum nh_optbirth birth,
                  nh_bool read_only)
 {
-    int i, id;
+    int i, j, noptions, id;
     char optbuf[256];
+    const char *last_group = "";
 
-    for (i = 0; options[i].name; i++) {
+    /* Count the number of options. */
+    for (noptions = 0; options[noptions].name; noptions++)
+        ;
+    if (!noptions)
+        return 0;
+
+    /* Make an array of pointers into the options list (we don't want to change
+       the one we're given, so we sort the pointers instead). */
+    struct nh_option_desc *opt_ptrs[noptions];
+    for (i = 0; i < noptions; i++)
+        opt_ptrs[i] = options + i;
+
+    /* Sort the options by group, then by name. */
+    qsort(opt_ptrs, noptions, sizeof *opt_ptrs, compare_options);
+
+    for (j = 0; j < noptions; j++) {
+        i = (opt_ptrs[j] - options);
         id = (listid << 10) | i;
         if (options[i].birth_option != birth)
             continue;
+
+        if (strcmp(last_group, options[i].group) != 0) {
+            last_group = options[i].group;
+            add_menu_txt(menu, last_group, MI_TEXT);
+        }
 
         print_option_string(&options[i], optbuf);
         if (read_only)
             add_menu_txt(menu, optbuf, MI_TEXT);
         else
             add_menu_item(menu, id, optbuf, 0, 0);
+        menu->items[menu->icount - 1].level = 1;
     }
 
     /* add an empty line */
     add_menu_txt(menu, "", MI_TEXT);
 
-    return i;
+    return noptions;
 }
 
 
@@ -599,8 +677,8 @@ query_new_value(struct win_menu *mdat, int idx)
     struct nh_option_desc *option, *optlist;
     struct nh_option_desc optioncopy;
     struct nh_option_desc *optioncopy_p = &optioncopy;
-    int listid = mdat->items[idx].id >> 10;
-    int id = mdat->items[idx].id & 0x1ff;
+    int listid = mdat->visitems[idx]->id >> 10;
+    int id = mdat->visitems[idx]->id & 0x1ff;
     int prev_optstyle = settings.optstyle;
     enum nh_menupaging prev_menupaging = settings.menupaging;
     nh_bool prev_menuborder = settings.whichframes != FRAME_NONE;
@@ -684,7 +762,7 @@ query_new_value(struct win_menu *mdat, int idx)
             option = &optlist[id];
         }
 
-        print_option_string(option, mdat->items[idx].caption);
+        print_option_string(option, mdat->visitems[idx]->caption);
     }
 
     /* We need to deallocate any string that might have been allocated by
@@ -817,43 +895,44 @@ static void
 autopickup_rules_help(void)
 {
     struct nh_menuitem items[] = {
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0,
          "The autopickup rules are only active if autopickup is on."},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0,
          "If autopickup is on and you walk onto an item, the item is compared"},
-        {0, MI_TEXT, "to each rule in turn until a matching rule is found."},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0, "to each rule in turn until a matching rule is found."},
+        {0, MI_TEXT, 0,
          "If a match is found, the action specified in that rule is taken"},
-        {0, MI_TEXT, "and no other rules are considered."},
-        {0, MI_TEXT, ""},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0, "and no other rules are considered."},
+        {0, MI_TEXT, 0, ""},
+        {0, MI_TEXT, 0,
          "Each rule may match any combination of object name, object type,"},
-        {0, MI_TEXT, "and object blessing (including unknown)."},
-        {0, MI_TEXT, "A rule that specifies none of these matches everything."},
-        {0, MI_TEXT, ""},
-        {0, MI_TEXT, "Suppose your rules look like this:"},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0, "and object blessing (including unknown)."},
+        {0, MI_TEXT, 0, "A rule that specifies none of these matches everything."},
+        {0, MI_TEXT, 0, ""},
+        {0, MI_TEXT, 0, "Suppose your rules look like this:"},
+        {0, MI_TEXT, 0,
          " 1. IF name matches \"*lizard*\" AND type is \"food\": < GRAB"},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0,
          " 2. IF name matches \"*corpse*\" AND type is \"food\":   LEAVE >"},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0,
          " 3. IF type is \"food\":                             < GRAB"},
-        {0, MI_TEXT, ""},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0, ""},
+        {0, MI_TEXT, 0,
          "A newt corpse will not match rule 1, but rule 2 applies, so"},
-        {0, MI_TEXT, "it won't be picked up and rule 3 won't be considered."},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0,
+         "it won't be picked up and rule 3 won't be considered."},
+        {0, MI_TEXT, 0,
          "(Strictly speaking, the \"type is food\" part of these rules is not"},
-        {0, MI_TEXT, "necessary; it's purpose here is to make the example more "
-         "interesting.)"},
-        {0, MI_TEXT, ""},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0, "necessary; it's purpose here is "
+         "to make the example more interesting.)"},
+        {0, MI_TEXT, 0, ""},
+        {0, MI_TEXT, 0,
          "A dagger will not match any of these rules and so it won't"},
-        {0, MI_TEXT, "be picked up either."},
-        {0, MI_TEXT, ""},
-        {0, MI_TEXT,
+        {0, MI_TEXT, 0, "be picked up either."},
+        {0, MI_TEXT, 0, ""},
+        {0, MI_TEXT, 0,
          "You may select any existing rule to edit it, change its position"},
-        {0, MI_TEXT, "in the list, or delete it."},
+        {0, MI_TEXT, 0, "in the list, or delete it."},
     };
     curses_display_menu(STATIC_MENULIST(items), "Autopickup rules help:",
                         PICK_NONE, PLHINT_LEFT, NULL, null_menu_callback);
@@ -864,11 +943,11 @@ static enum nh_bucstatus
 get_autopickup_buc(enum nh_bucstatus cur)
 {
     struct nh_menuitem items[] = {
-        {B_DONT_CARE + 1, MI_NORMAL, "all", 'a'},
-        {B_BLESSED + 1, MI_NORMAL, "blessed", 'b'},
-        {B_CURSED + 1, MI_NORMAL, "cursed", 'c'},
-        {B_UNCURSED + 1, MI_NORMAL, "uncursed", 'u'},
-        {B_UNKNOWN + 1, MI_NORMAL, "unknown", 'U'}
+        {B_DONT_CARE + 1, MI_NORMAL, 0, "all", 'a'},
+        {B_BLESSED + 1, MI_NORMAL, 0, "blessed", 'b'},
+        {B_CURSED + 1, MI_NORMAL, 0, "cursed", 'c'},
+        {B_UNCURSED + 1, MI_NORMAL, 0, "uncursed", 'u'},
+        {B_UNKNOWN + 1, MI_NORMAL, 0, "unknown", 'U'}
     };
     int selected[1];
 
