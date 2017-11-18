@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -37,7 +37,9 @@ ai_use_at_range(int n)
     return !rn2(n);
 }
 
-/* hero is hit by something other than a monster */
+/* Hero is hit by something other than a monster.
+
+   TODO: track whether a monster is responsible */
 int
 thitu(int tlev, int dam, struct obj *obj, const char *name)
 {       /* if null, then format `obj' */
@@ -59,27 +61,27 @@ thitu(int tlev, int dam, struct obj *obj, const char *name)
 
     if (get_player_ac() + tlev <= rnd(20)) {
         if (Blind || !flags.verbose)
-            pline("It misses.");
+            pline(msgc_nonmongood, "It misses.");
         else
-            pline("You are almost hit by %s.", onm);
+            pline(msgc_nonmongood, "You are almost hit by %s.", onm);
         return 0;
     } else {
         if (Blind || !flags.verbose)
-            pline("You are hit!");
+            pline(msgc_nonmonbad, "You are hit!");
         else
-            pline("You are hit by %s%s", onm, exclam(dam));
+            pline(msgc_nonmonbad, "You are hit by %s%s", onm, exclam(dam));
 
         if (obj && objects[obj->otyp].oc_material == SILVER &&
             hates_silver(youmonst.data)) {
             dam += rnd(20);
-            pline("The silver sears your flesh!");
+            pline(msgc_statusbad, "The silver sears your flesh!");
             exercise(A_CON, FALSE);
         }
         if (is_acid && Acid_resistance)
-            pline("It doesn't seem to hurt you.");
+            pline(msgc_playerimmune, "It doesn't seem to hurt you.");
         else {
             if (is_acid)
-                pline("It burns!");
+                pline(msgc_statusbad, "It burns!");
             if (Half_physical_damage)
                 dam = (dam + 1) / 2;
             losehp(dam, killer);
@@ -90,9 +92,9 @@ thitu(int tlev, int dam, struct obj *obj, const char *name)
 }
 
 /* Be sure this corresponds with what happens to player-thrown objects in
- * dothrow.c (for consistency). --KAA
- * Returns 0 if object still exists (not destroyed).
- */
+   dothrow.c (for consistency). --KAA
+
+   Returns 0 if object still exists (not destroyed). */
 static int
 drop_throw(struct obj *obj, boolean ohit, int x, int y)
 {
@@ -140,11 +142,12 @@ drop_throw(struct obj *obj, boolean ohit, int x, int y)
 int
 ohitmon(struct monst *mtmp, /* accidental target */
         struct obj *otmp,   /* missile; might be destroyed by drop_throw */
+        struct monst *magr, /* attacker; NULL if not a monster */
         int range,  /* how much farther will object travel if it misses */
         /* Use -1 to signify to keep going even after hit, unless it's gone
            (used for rolling_boulder_traps) */
-        boolean verbose) {  /* give message(s) even when you can't see what
-                               happened */
+        boolean spoil_unseen) {  /* give message(s) even when you can't see
+                                    what happened */
     int damage, tmp;
     boolean vis, ismimic;
     int objgone = 1;
@@ -156,9 +159,9 @@ ohitmon(struct monst *mtmp, /* accidental target */
     if (tmp < rnd(20)) {
         if (!ismimic) {
             if (vis)
-                miss(distant_name(otmp, mshot_xname), mtmp);
-            else if (verbose)
-                pline("It is missed.");
+                miss(distant_name(otmp, mshot_xname), mtmp, magr);
+            else if (spoil_unseen)
+                pline(combat_msgc(magr, mtmp, cr_miss), "It is missed.");
         }
         if (!range) {   /* Last position; object drops */
             if (is_pole(otmp))
@@ -173,7 +176,7 @@ ohitmon(struct monst *mtmp, /* accidental target */
         mtmp->msleeping = 0;
         if (vis)
             otmp->dknown = 1;
-        potionhit(mtmp, otmp, FALSE);
+        potionhit(mtmp, otmp, NULL);
         return 1;
     } else {
         damage = dmgval(otmp, mtmp);
@@ -184,21 +187,24 @@ ohitmon(struct monst *mtmp, /* accidental target */
             seemimic(mtmp);
         mtmp->msleeping = 0;
         if (vis)
-            hit(distant_name(otmp, mshot_xname), mtmp, exclam(damage));
-        else if (verbose)
-            pline("%s is hit%s", Monnam(mtmp), exclam(damage));
+            hit(distant_name(otmp, mshot_xname), mtmp, exclam(damage), magr);
+        else if (spoil_unseen)
+            pline(combat_msgc(magr, mtmp, cr_hit), "%s is hit%s", Monnam(mtmp),
+                  exclam(damage));
 
         if (otmp->opoisoned && is_poisonable(otmp)) {
             if (resists_poison(mtmp)) {
                 if (vis)
-                    pline("The poison doesn't seem to affect %s.",
+                    pline(combat_msgc(magr, mtmp, cr_immune),
+                          "The poison doesn't seem to affect %s.",
                           mon_nam(mtmp));
             } else {
                 if (rn2(30)) {
                     damage += rnd(6);
                 } else {
                     if (vis)
-                        pline("The poison was deadly...");
+                        pline(combat_msgc(magr, mtmp, cr_kill),
+                              "The poison was deadly...");
                     damage = mtmp->mhp;
                 }
             }
@@ -206,26 +212,31 @@ ohitmon(struct monst *mtmp, /* accidental target */
         if (objects[otmp->otyp].oc_material == SILVER &&
             hates_silver(mtmp->data)) {
             if (vis)
-                pline("The silver sears %s flesh!", s_suffix(mon_nam(mtmp)));
-            else if (verbose)
-                pline("Its flesh is seared!");
+                pline(combat_msgc(magr, mtmp, cr_hit),
+                      "The silver sears %s flesh!", s_suffix(mon_nam(mtmp)));
+            else if (spoil_unseen)
+                pline(combat_msgc(magr, mtmp, cr_hit),
+                      "Its flesh is seared!");
         }
         if (otmp->otyp == ACID_VENOM && cansee(mtmp->mx, mtmp->my)) {
             if (resists_acid(mtmp)) {
-                if (vis || verbose)
-                    pline("%s is unaffected.", Monnam(mtmp));
+                if (vis || spoil_unseen)
+                    pline(combat_msgc(magr, mtmp, cr_immune),
+                          "%s is unaffected.", Monnam(mtmp));
                 damage = 0;
             } else {
                 if (vis)
-                    pline("The acid burns %s!", mon_nam(mtmp));
-                else if (verbose)
-                    pline("It is burned!");
+                    pline(combat_msgc(magr, mtmp, cr_hit),
+                          "The acid burns %s!", mon_nam(mtmp));
+                else if (spoil_unseen)
+                    pline(combat_msgc(magr, mtmp, cr_hit), "It is burned!");
             }
         }
         mtmp->mhp -= damage;
         if (mtmp->mhp < 1) {
-            if (vis || verbose)
-                pline("%s is %s!", Monnam(mtmp),
+            if (vis || spoil_unseen)
+                pline(combat_msgc(magr, mtmp, cr_kill),
+                      "%s is %s!", Monnam(mtmp),
                       (nonliving(mtmp->data) || !canclassifymon(mtmp))
                       ? "destroyed" : "killed");
             /* don't blame hero for unknown rolling boulder trap */
@@ -241,7 +252,8 @@ ohitmon(struct monst *mtmp, /* accidental target */
              (uchar) (otmp->otyp == BLINDING_VENOM ? AT_SPIT : AT_WEAP),
              otmp)) {
             if (vis && mtmp->mcansee)
-                pline("%s is blinded by %s.", Monnam(mtmp), the(xname(otmp)));
+                pline(combat_msgc(magr, mtmp, cr_hit),
+                      "%s is blinded by %s.", Monnam(mtmp), the(xname(otmp)));
             mtmp->mcansee = 0;
             tmp = (int)mtmp->mblinded + rnd(25) + 20;
             if (tmp > 127)
@@ -306,10 +318,11 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
     if ((singleobj->cursed || singleobj->greased) && (dx || dy) && !rn2(7)) {
         if (canseemon(mon) && flags.verbose) {
             if (is_ammo(singleobj))
-                pline("%s misfires!", Monnam(mon));
+                pline(combat_msgc(mon, NULL, cr_miss), "%s misfires!",
+                      Monnam(mon));
             else
-                pline("%s as %s throws it!", Tobjnam(singleobj, "slip"),
-                      mon_nam(mon));
+                pline(combat_msgc(mon, NULL, cr_miss), "%s as %s throws it!",
+                      Tobjnam(singleobj, "slip"), mon_nam(mon));
         }
         dx = rn2(3) - 1;
         dy = rn2(3) - 1;
@@ -341,7 +354,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
         bhitpos.x += dx;
         bhitpos.y += dy;
         if ((mtmp = m_at(level, bhitpos.x, bhitpos.y)) != 0) {
-            if (ohitmon(mtmp, singleobj, range, verbose))
+            if (ohitmon(mtmp, singleobj, mon, range, verbose))
                 break;
         } else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
             action_interrupted();
@@ -351,14 +364,16 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 /* 9 glass colors */
                 && is_unicorn(youmonst.data) && !u_helpless(hm_all)) {
                 if (singleobj->otyp > LAST_GEM) {
-                    pline("You catch the %s.", xname(singleobj));
-                    pline("You are not interested in %s junk.",
+                    pline_implied(msgc_playerimmune, "You catch the %s.",
+                          xname(singleobj));
+                    pline(msgc_moncombatgood,
+                          "You are not interested in %s junk.",
                           s_suffix(mon_nam(mon)));
                     makeknown(singleobj->otyp);
                     dropy(singleobj);
                 } else {
-                    pline("You accept %s gift in the spirit in which it was "
-                          "intended.", s_suffix(mon_nam(mon)));
+                    pline(msgc_consequence, "You accept %s gift in the spirit "
+                          "in which it was intended.", s_suffix(mon_nam(mon)));
                     hold_another_object(singleobj, "You catch, but drop, %s.",
                                         xname(singleobj), "You catch:");
                 }
@@ -367,7 +382,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
             if (singleobj->oclass == POTION_CLASS) {
                 if (!Blind)
                     singleobj->dknown = 1;
-                potionhit(&youmonst, singleobj, FALSE);
+                potionhit(&youmonst, singleobj, mon);
                 break;
             }
             switch (singleobj->otyp) {
@@ -417,20 +432,21 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 blindinc = rnd(25);
                 if (singleobj->otyp == CREAM_PIE) {
                     if (!Blind)
-                        pline("Yecch!  You've been creamed.");
+                        pline(msgc_statusbad, "Yecch!  You've been creamed.");
                     else
-                        pline("There's something sticky all over your %s.",
+                        pline(msgc_statusbad,
+                              "There's something sticky all over your %s.",
                               body_part(FACE));
                 } else if (singleobj->otyp == BLINDING_VENOM) {
                     int num_eyes = eyecount(youmonst.data);
 
                     /* venom in the eyes */
                     if (!Blind)
-                        pline("The venom blinds you.");
+                        pline(msgc_statusbad, "The venom blinds you.");
                     else
-                        pline("Your %s sting%s.",
-                              (num_eyes ==
-                               1) ? body_part(EYE) : makeplural(body_part(EYE)),
+                        pline(msgc_statusbad, "Your %s sting%s.",
+                              (num_eyes == 1) ? body_part(EYE) :
+                              makeplural(body_part(EYE)),
                               (num_eyes == 1) ? "s" : "");
                 }
             }
@@ -472,9 +488,10 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
         u.ucreamed += blindinc;
         make_blinded(Blinded + (long)blindinc, FALSE);
         if (!Blind)
-            pline("Your vision quickly clears.");
-        else if (flags.verbose)
-            pline("Use the command #wipe to clean your %s.", body_part(FACE));
+            pline(msgc_statusheal, "Your vision quickly clears.");
+        else
+            pline(msgc_controlhelp,
+                  "Use the command #wipe to clean your %s.", body_part(FACE));
     }
 }
 
@@ -527,9 +544,11 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
             (xdef == u.ux && ydef == u.uy && !couldsee(mtmp->mx, mtmp->my)))
             return;     /* Out of range, or intervening wall */
 
+        /* TODO: Rearrange the code around here to make the messages less
+           spammy / better channelized. */
         if (mon_visible(mtmp)) {
             onm = singular(otmp, xname);
-            pline("%s thrusts %s.", Monnam(mtmp),
+            pline(msgc_monneutral, "%s thrusts %s.", Monnam(mtmp),
                   obj_is_pname(otmp) ? the(onm) : an(onm));
         }
 
@@ -549,9 +568,9 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
             action_interrupted();
 
         } else if (MON_AT(level, xdef, ydef))
-            (void)ohitmon(m_at(level, xdef, ydef), otmp, 0, FALSE);
+            (void)ohitmon(m_at(level, xdef, ydef), otmp, mtmp, 0, FALSE);
         else if (mon_visible(mtmp))
-            pline("But it misses wildly.");
+            pline(combat_msgc(mtmp, NULL, cr_miss), "But it misses wildly.");
 
         return;
     }
@@ -615,7 +634,9 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
             onm = obj_is_pname(otmp) ? the(onm) : an(onm);
         }
         m_shot.s = ammo_and_launcher(otmp, mwep) ? TRUE : FALSE;
-        pline("%s %s %s!", Monnam(mtmp), m_shot.s ? "shoots" : "throws", onm);
+        /* TODO: better channelization */
+        pline(msgc_monneutral, "%s %s %s!", Monnam(mtmp),
+              m_shot.s ? "shoots" : "throws", onm);
         m_shot.o = otmp->otyp;
     } else {
         m_shot.o = STRANGE_OBJECT;      /* don't give multishot feedback */
@@ -776,7 +797,8 @@ spitmq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
 
     if (mtmp->mcan) {
         if (canhear())
-            pline("A dry rattle comes from %s throat.",
+            pline(combat_msgc(mtmp, NULL, cr_miss),
+                  "A dry rattle comes from %s throat.",
                   s_suffix(mon_nam(mtmp)));
         return 0;
     }
@@ -797,7 +819,9 @@ spitmq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
         }
 
         if (mon_visible(mtmp)) {
-            pline("%s spits venom!", Monnam(mtmp));
+            /* TODO: channelize based on attack result */
+            pline(combat_msgc(mtmp, NULL, cr_hit),
+                  "%s spits venom!", Monnam(mtmp));
             action_interrupted();
         }
         m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
@@ -826,16 +850,19 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
         if (mtmp->mcan) {
             if (canhear()) {
                 if (mon_visible(mtmp))
-                    pline("%s coughs.", Monnam(mtmp));
+                    pline(combat_msgc(mtmp, NULL, cr_miss),
+                          "%s coughs.", Monnam(mtmp));
                 else
-                    You_hear("a cough.");
+                    You_hear(msgc_levelsound, "a cough.");
             }
             return 0;
         }
         if (!mtmp->mspec_used && rn2(3)) {
             if ((typ >= AD_MAGM) && (typ <= AD_ACID)) {
                 if (mon_visible(mtmp)) {
-                    pline("%s breathes %s!", Monnam(mtmp), breathwep[typ - 1]);
+                    /* TODO: channelize based on result */
+                    pline(combat_msgc(mtmp, NULL, cr_hit), "%s breathes %s!",
+                          Monnam(mtmp), breathwep[typ - 1]);
                     action_interrupted();
                 }
                 buzz((int)(-20 - (typ - 1)), (int)mattk->damn, mtmp->mx,
@@ -985,13 +1012,13 @@ hits_bars(struct obj ** obj_p, /* *obj_p will be set to NULL if object breaks */
             *obj_p = otmp = 0;  /* object is now gone */
         /* breakage makes its own noises */
         else if (obj_type == BOULDER || obj_type == HEAVY_IRON_BALL)
-            pline("Whang!");
+            pline(msgc_levelsound, "Whang!");
         else if (otmp->oclass == COIN_CLASS ||
                  objects[obj_type].oc_material == GOLD ||
                  objects[obj_type].oc_material == SILVER)
-            pline("Clink!");
+            pline(msgc_levelsound, "Clink!");
         else
-            pline("Clonk!");
+            pline(msgc_levelsound, "Clonk!");
     }
 
     return hits;

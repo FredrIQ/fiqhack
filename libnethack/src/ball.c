@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-02 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,7 +18,7 @@ ballfall(void)
     gets_hit = (((uball->ox != u.ux) || (uball->oy != u.uy)) &&
                 ((uwep == uball) ? FALSE : (boolean) rn2(5)));
     if (carried(uball)) {
-        pline("Startled, you drop the iron ball.");
+        pline(msgc_statusbad, "Startled, you drop the iron ball.");
         unwield_silently(uball);
         if (uwep != uball)
             freeinv(uball);
@@ -26,13 +26,16 @@ ballfall(void)
     if (gets_hit) {
         int dmg = rn1(7, 25);
 
-        pline("The iron ball falls on your %s.", body_part(HEAD));
+        pline(uarmh && is_metallic(uarmh) ? msgc_playerimmune : msgc_nonmonbad,
+              "The iron ball falls on your %s.", body_part(HEAD));
         if (uarmh) {
             if (is_metallic(uarmh)) {
-                pline("Fortunately, you are wearing a hard helmet.");
+                pline_implied(msgc_playerimmune,
+                              "Fortunately, you are wearing a hard helmet.");
                 dmg = 3;
-            } else if (flags.verbose)
-                pline("Your %s does not protect you.", xname(uarmh));
+            } else
+                pline_implied(msgc_notresisted,
+                              "Your %s does not protect you.", xname(uarmh));
         }
         losehp(dmg, "crunched in the head by an iron ball");
     }
@@ -546,7 +549,7 @@ drag_ball(xchar x, xchar y, int *bc_control, xchar * ballx, xchar * bally,
 drag:
 
     if (near_capacity() > SLT_ENCUMBER && dist2(x, y, u.ux, u.uy) <= 2) {
-        pline("You cannot %sdrag the heavy iron ball.",
+        pline(msgc_cancelled1, "You cannot %sdrag the heavy iron ball.",
               invent ? "carry all that and also " : "");
         action_completed();
         return FALSE;
@@ -562,13 +565,13 @@ drag:
              t->ttyp == TRAPDOOR))) {
 
         if (Levitation) {
-            pline("You feel a tug from the iron ball.");
+            pline(msgc_nonmongood, "You feel a tug from the iron ball.");
             if (t)
                 t->tseen = 1;
         } else {
             struct monst *victim;
 
-            pline("You are jerked back by the iron ball!");
+            pline(msgc_interrupted, "You are jerked back by the iron ball!");
             if ((victim = m_at(level, uchain->ox, uchain->oy)) != 0) {
                 int tmp;
 
@@ -577,7 +580,7 @@ drag:
                 if (tmp >= rnd(20))
                     hmon(victim, uball, 1);
                 else
-                    miss(xname(uball), victim);
+                    miss(xname(uball), victim, &youmonst);
 
             }   /* now check again in case mon died */
             if (!m_at(level, uchain->ox, uchain->oy)) {
@@ -643,26 +646,27 @@ drop_ball(xchar x, xchar y, schar dx, schar dy)
         if (u.utrap && u.utraptype != TT_INFLOOR) {
             switch (u.utraptype) {
             case TT_PIT:
-                pline(pullmsg, "pit");
+                pline(msgc_actionok, pullmsg, "pit");
                 break;
             case TT_WEB:
-                pline(pullmsg, "web");
-                pline("The web is destroyed!");
+                pline(msgc_actionok, pullmsg, "web");
+                pline_implied(msgc_consequence, "The web is destroyed!");
                 deltrap(level, t_at(level, u.ux, u.uy));
                 break;
             case TT_LAVA:
-                pline(pullmsg, "lava");
+                pline(msgc_actionok, pullmsg, "lava");
                 break;
             case TT_BEARTRAP:{
                     long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
 
-                    pline(pullmsg, "bear trap");
+                    pline(msgc_badidea, pullmsg, "bear trap");
                     set_wounded_legs(side, rn1(1000, 500));
 
                     if (!u.usteed) {
-                        pline("Your %s %s is severely damaged.",
-                              (side == LEFT_SIDE) ? "left" : "right",
-                              body_part(LEG));
+                        pline_implied(
+                            msgc_badidea, "Your %s %s is severely damaged.",
+                            (side == LEFT_SIDE) ? "left" : "right",
+                            body_part(LEG));
                         losehp(2, killer_msg(DIED, "leg damage from being "
                                              "pulled out of a bear trap"));
                     }
@@ -724,7 +728,8 @@ litter(void)
         if ((otmp != uball) && (rnd(capacity) <= (int)otmp->owt) &&
             !otmp->owornmask) {
             if (canletgo(otmp, "")) {
-                pline("Your %s you down the stairs.", aobjnam(otmp, "follow"));
+                pline(msgc_consequence, "Your %s you down the stairs.",
+                      aobjnam(otmp, "follow"));
                 dropx(otmp);
             }
         }
@@ -750,23 +755,23 @@ drag_down(void)
     forward = carried(uball) && (uwep == uball || !uwep || !rn2(3));
 
     if (carried(uball))
-        pline("You lose your grip on the iron ball.");
+        pline_implied(msgc_statusbad, "You lose your grip on the iron ball.");
 
     if (forward) {
         if (rn2(6)) {
-            pline("The iron ball drags you downstairs!");
+            pline(msgc_nonmonbad, "The iron ball drags you downstairs!");
             losehp(rnd(6), "dragged downstairs by an iron ball");
             litter();
         }
     } else {
         if (rn2(2)) {
-            pline("The iron ball smacks into you!");
+            pline(msgc_nonmonbad, "The iron ball smacks into you!");
             losehp(rnd(20), killer_msg(DIED, "an iron ball collision"));
             exercise(A_STR, FALSE);
             dragchance -= 2;
         }
         if ((int)dragchance >= rnd(6)) {
-            pline("The iron ball drags you downstairs!");
+            pline(msgc_nonmonbad, "The iron ball drags you downstairs!");
             losehp(rnd(3), "dragged downstairs by an iron ball");
             exercise(A_STR, FALSE);
             litter();

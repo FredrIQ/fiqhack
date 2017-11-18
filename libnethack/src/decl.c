@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -143,6 +143,7 @@ static const struct turnstate default_turnstate = {
     .tracked = {0},
     .message_chain = NULL,
     .continue_message = TRUE,
+    .force_more_pending_until_done = FALSE,
     .vision_full_recalc = FALSE,
     .delay_flushing = FALSE,
     .generating_bones = FALSE,
@@ -212,6 +213,8 @@ neutral_turnstate_tasks(void)
         impossible("turnstate.tracked persisted between turns");
     if (!turnstate.continue_message)
         impossible("turnstate.continue_message persisted between turns");
+    if (turnstate.force_more_pending_until_done)
+        impossible("player character death scheduled, but didn't happen");
     if (turnstate.vision_full_recalc)
         impossible("vision not recalculated when needed during a turn");
     if (turnstate.delay_flushing)

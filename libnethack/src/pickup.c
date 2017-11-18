@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-12 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -219,7 +219,8 @@ pickup(int what, enum u_interaction_mode uim)
 
         if (notake(youmonst.data)) {
             if (!autopickup)
-                pline("You are physically incapable of picking anything up.");
+                pline(msgc_cancelled,
+                      "You are physically incapable of picking anything up.");
             else
                 check_here(FALSE);
             return 0;
@@ -902,7 +903,7 @@ carry_count(struct obj *obj,    /* object to pick up */
     /* we can carry qq of them */
     if (qq > 0) {
         if (qq < count)
-            pline("You can only %s %s of the %s %s.", verb,
+            pline(msgc_substitute, "You can only %s %s of the %s %s.", verb,
                   (qq == 1L) ? "one" : "some", obj_nambuf, where);
         *wt_after = wt;
         return qq;
@@ -919,8 +920,9 @@ carry_count(struct obj *obj,    /* object to pick up */
         prefx2 = "is too heavy for you to ";
         suffx = "";
     }
-    pline("There %s %s %s, but %s%s%s%s.", otense(obj, "are"), obj_nambuf,
-          where, prefx1, prefx2, verb, suffx);
+    /* tries and fails, thus msgc_yafm, not msgc_cancelled or msgc_cancelled1 */
+    pline(msgc_yafm, "There %s %s %s, but %s%s%s%s.", otense(obj, "are"),
+          obj_nambuf, where, prefx1, prefx2, verb, suffx);
 
     /* *wt_after = iw; */
     return 0L;
@@ -934,8 +936,8 @@ lift_object(struct obj *obj, struct obj *container, long *cnt_p,
     int result, old_wt, new_wt, prev_encumbr, next_encumbr;
 
     if (obj->otyp == BOULDER && In_sokoban(&u.uz)) {
-        pline("You cannot get your %s around this %s.", body_part(HAND),
-              xname(obj));
+        pline(msgc_yafm, "You cannot get your %s around this %s.",
+              body_part(HAND), xname(obj));
         return -1;
     }
     if (obj->otyp == LOADSTONE)
@@ -948,7 +950,7 @@ lift_object(struct obj *obj, struct obj *container, long *cnt_p,
     if (*cnt_p < 1L) {
         result = -1;    /* nothing lifted */
     } else if (!can_hold(obj)) {
-        pline("Your knapsack cannot accommodate any more items.");
+        pline(msgc_yafm, "Your knapsack cannot accommodate any more items.");
         result = -1;    /* nothing lifted */
     } else {
         result = 1;
@@ -1048,7 +1050,7 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
             return -1;
 
         if (is_rider(&mons[obj->corpsenm])) {
-            pline("At your %s, the corpse suddenly moves...",
+            pline(msgc_substitute, "At your %s, the corpse suddenly moves...",
                   telekinesis ? "attempted acquisition" : "touch");
             revive_corpse(obj);
             exercise(A_WIS, FALSE);
@@ -1060,7 +1062,8 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
         else if (!obj->spe && !obj->cursed)
             obj->spe = 1;
         else {
-            pline("The scroll%s %s to dust as you %s %s up.", plur(obj->quan),
+            pline(msgc_substitute,
+                  "The scroll%s %s to dust as you %s %s up.", plur(obj->quan),
                   otense(obj, "turn"), telekinesis ? "raise" : "pick",
                   (obj->quan == 1L) ? "it" : "them");
             if (!(objects[SCR_SCARE_MONSTER].oc_name_known) &&
@@ -1140,33 +1143,39 @@ encumber_msg(void)
     if (u.oldcap < newcap) {
         switch (newcap) {
         case 1:
-            pline("Your movements are slowed slightly because of your load.");
+            pline(msgc_statusbad,
+                  "Your movements are slowed slightly because of your load.");
             break;
         case 2:
-            pline("You rebalance your load.  Movement is difficult.");
+            pline(msgc_statusbad,
+                  "You rebalance your load.  Movement is difficult.");
             break;
         case 3:
-            pline("You %s under your heavy load.  Movement is very hard.",
+            pline(msgc_statusbad,
+                  "You %s under your heavy load.  Movement is very hard.",
                   stagger(youmonst.data, "stagger"));
             break;
         default:
-            pline("You %s move a handspan with this load!",
+            pline(msgc_fatal, "You %s move a handspan with this load!",
                   newcap == 4 ? "can barely" : "can't even");
             break;
         }
     } else if (u.oldcap > newcap) {
         switch (newcap) {
         case 0:
-            pline("Your movements are now unencumbered.");
+            pline(msgc_statusheal, "Your movements are now unencumbered.");
             break;
         case 1:
-            pline("Your movements are only slowed slightly by your load.");
+            pline(msgc_statusheal,
+                  "Your movements are only slowed slightly by your load.");
             break;
         case 2:
-            pline("You rebalance your load.  Movement is still difficult.");
+            pline(msgc_statusheal,
+                  "You rebalance your load.  Movement is still difficult.");
             break;
         case 3:
-            pline("You %s under your load.  Movement is still very hard.",
+            pline(msgc_statusheal,
+                  "You %s under your load.  Movement is still very hard.",
                   stagger(youmonst.data, "stagger"));
             break;
         }
@@ -1201,18 +1210,19 @@ able_to_loot(int x, int y)
         if (u.usteed && P_SKILL(P_RIDING) < P_BASIC)
             rider_cant_reach(); /* not skilled enough to reach */
         else
-            pline("You cannot reach the %s.", surface(x, y));
+            pline(msgc_cancelled, "You cannot reach the %s.", surface(x, y));
         return FALSE;
     } else if (is_pool(level, x, y) || is_lava(level, x, y)) {
         /* at present, can't loot in water even when Underwater */
-        pline("You cannot loot things that are deep in the %s.",
+        pline(msgc_cancelled, "You cannot loot things that are deep in the %s.",
               is_lava(level, x, y) ? "lava" : "water");
         return FALSE;
     } else if (nolimbs(youmonst.data)) {
-        pline("Without limbs, you cannot loot anything.");
+        pline(msgc_cancelled, "Without limbs, you cannot loot anything.");
         return FALSE;
     } else if (!freehand()) {
-        pline("Without a free %s, you cannot loot anything.", body_part(HAND));
+        pline(msgc_cancelled, "Without a free %s, you cannot loot anything.",
+              body_part(HAND));
         return FALSE;
     }
     return TRUE;
@@ -1263,7 +1273,7 @@ doloot(const struct nh_cmd_arg *arg)
         return 0;
     }
     if (nohands(youmonst.data)) {
-        pline("You have no hands!");    /* not `body_part(HAND)' */
+        pline(msgc_cancelled, "You have no hands!"); /* not `body_part(HAND)' */
         return 0;
     }
     cc.x = u.ux;
@@ -1291,14 +1301,16 @@ lootcont:
             for (i = 0; i < n; i++) {
                 cobj = lootlist[i].obj;
                 if (cobj->olocked) {
-                    pline("Hmmm, it seems to be locked.");
+                    pline(msgc_failcurse, "Hmmm, it seems to be locked.");
                     continue;
                 }
                 if (cobj->otyp == BAG_OF_TRICKS) {
                     int tmp;
 
-                    pline("You carefully open the bag...");
-                    pline("It develops a huge set of teeth and bites you!");
+                    pline_implied(msgc_occstart,
+                                  "You carefully open the bag...");
+                    pline(msgc_substitute,
+                          "It develops a huge set of teeth and bites you!");
                     tmp = rnd(10);
                     if (Half_physical_damage)
                         tmp = (tmp + 1) / 2;
@@ -1308,7 +1320,8 @@ lootcont:
                     return 1;
                 }
 
-                pline("You carefully open %s...", the(xname(cobj)));
+                pline(msgc_occstart, "You carefully open %s...",
+                      the(xname(cobj)));
                 timepassed |= use_container(cobj, 0);
                 if (u_helpless(hm_all)) {        /* e.g. a chest trap */
                     free(lootlist);
@@ -1346,7 +1359,8 @@ lootcont:
             gotit:
                 if (coffers) {
                     verbalize
-                        ("Thank you for your contribution to reduce the debt.");
+                        (msgc_npcvoice,
+                         "Thank you for your contribution to reduce the debt.");
                     add_to_container(coffers, goldob);
                     coffers->owt = weight(coffers);
                 } else {
@@ -1355,18 +1369,20 @@ lootcont:
 
                     if (mon) {
                         add_to_minv(mon, goldob);
-                        pline("The exchequer accepts your contribution.");
+                        pline(msgc_levelwarning,
+                              "The exchequer accepts your contribution.");
                     } else {
                         dropy(goldob);
                     }
                 }
             } else {
                 dropy(goldob);
-                pline("Ok, now there is loot here.");
+                pline(msgc_substitute, "Ok, now there is loot here.");
             }
         }
     } else if (IS_GRAVE(level->locations[cc.x][cc.y].typ)) {
-        pline("You need to dig up the grave to effectively loot it...");
+        pline(msgc_hint,
+              "You need to dig up the grave to effectively loot it...");
     }
     /* 
      * 3.3.1 introduced directional looting for some things.
@@ -1385,8 +1401,8 @@ lootcont:
         } else
             underfoot = FALSE;
         if (dz < 0) {
-            pline("You %s to loot on the %s.", dont_find_anything,
-                  ceiling(cc.x, cc.y));
+            pline(msgc_cancelled1, "You %s to loot on the %s.",
+                  dont_find_anything, ceiling(cc.x, cc.y));
             timepassed = 1;
             return timepassed;
         }
@@ -1400,20 +1416,23 @@ lootcont:
         if (!underfoot) {
             if (container_at(cc.x, cc.y, FALSE)) {
                 if (mtmp) {
-                    pline("You can't loot anything %sthere with %s in the way.",
+                    pline(msgc_cancelled,
+                          "You can't loot anything %sthere with %s in the way.",
                           prev_inquiry ? "else " : "", mon_nam(mtmp));
                     return timepassed;
                 } else {
-                    pline("You have to be at a container to loot it.");
+                    pline(msgc_cancelled,
+                          "You have to be at a container to loot it.");
                 }
             } else {
-                pline("You %s %sthere to loot.", dont_find_anything,
+                pline(msgc_cancelled, "You %s %sthere to loot.",
+                      dont_find_anything,
                       (prev_inquiry || prev_loot) ? "else " : "");
                 return timepassed;
             }
         }
     } else if (c != 'y' && c != 'n') {
-        pline("You %s %s to loot.", dont_find_anything,
+        pline(msgc_cancelled, "You %s %s to loot.", dont_find_anything,
               underfoot ? "here" : "there");
     }
     return timepassed;
@@ -1441,15 +1460,17 @@ loot_mon(struct monst *mtmp, int *passed_info, boolean * prev_loot)
                                   SUPPRESS_SADDLE, FALSE));
         if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
             if (nolimbs(youmonst.data)) {
-                pline("You can't do that without limbs.");
+                pline(msgc_cancelled, "You can't do that without limbs.");
                 /* not body_part(HAND); we're talking about an appendage that
                    we /don't/ have */
                 return 0;
             }
             if (otmp->cursed) {
-                pline("You can't. The saddle seems to be stuck to %s.",
+                pline(otmp->bknown ? msgc_cancelled1 : msgc_failcurse,
+                      "You can't. The saddle seems to be stuck to %s.",
                       x_monnam(mtmp, ARTICLE_THE, NULL, SUPPRESS_SADDLE,
                                FALSE));
+                otmp->bknown = TRUE;
                 /* the attempt costs you time */
                 return 1;
             }
@@ -1479,11 +1500,10 @@ loot_mon(struct monst *mtmp, int *passed_info, boolean * prev_loot)
     return timepassed;
 }
 
-/*
- * Decide whether an object being placed into a magic bag will cause
- * it to explode.  If the object is a bag itself, check recursively.
- * Return value: 0 = no explosion, 1 = explosion, 2 = disallow one item
- */
+/* Decide whether an object being placed into a magic bag will cause it to
+   explode.  If the object is a bag itself, check recursively. 
+
+   Return value: 0 = no explosion, 1 = explosion, 2 = disallow one item */
 static int
 mbag_explodes(struct obj *obj, int depthin)
 {
@@ -1493,23 +1513,31 @@ mbag_explodes(struct obj *obj, int depthin)
         return 0;
     else if (obj->otyp == WAN_CANCELLATION || obj->otyp == BAG_OF_TRICKS) {
         if (obj->where == OBJ_CONTAINED)
-            pline("As you nest the bags, you see a crazily bright glow.");
+            pline(msgc_substitute,
+                  "As you nest the bags, you see a crazily bright glow.");
         else
-            pline("As you put %s inside, it glows crazily bright for a while.",
+            pline(msgc_substitute,
+                  "As you put %s inside, it glows crazily bright for a while.",
                   doname(obj));
-        pline("Then you feel a strange absence of magical power...");
+        pline(msgc_itemloss,
+              "Then you feel a strange absence of magical power...");
         obj->spe = 0;   /* charge a lot for the free identify, as this would
                            have destroyed the item and the bag in vanila */
         obj->known = TRUE;      /* mark the absence of charges, so players know
                                    what happened */
+        /* TODO: alert monsters that can see within LOE? */
         makeknown(obj->otyp);
         return 0;
     } else if (Is_mbag(obj) && depthin < 2) {
         /* There's a legitimate use to try nesting BoHes, but we don't want it
-           to happen by mistake. You always get an explosion unless there are
-           at least two layers of sacks in between. */
-        pline("You feel too much resistance trying to nest the bags.");
-        pline("Perhaps you need more padding? But that could be risky...");
+           to happen by mistake. You always get an explosion unless there are at
+           least two layers of sacks in between, and so "100% chance of things
+           going wrong" is a good heuristic to see if it's intentional. */
+        pline(msgc_yafm,
+              "You feel too much resistance trying to nest the bags.");
+        pline_implied(
+            msgc_hint,
+            "Perhaps you need more padding? But that could be risky...");
         return 2;
     }
 
@@ -1519,7 +1547,7 @@ mbag_explodes(struct obj *obj, int depthin)
        action to be worth it. */
     if ((Is_mbag(obj) || obj->otyp == WAN_CANCELLATION) &&
         (rn2(1 << (depthin > 7 ? 7 : depthin)) <= depthin))
-        return TRUE;
+        return 1;
     else if (Has_contents(obj)) {
         struct obj *otmp;
 
@@ -1530,7 +1558,7 @@ mbag_explodes(struct obj *obj, int depthin)
                 return i;
         }
     }
-    return FALSE;
+    return 0;
 }
 
 /* A variable set in use_container(), to be used by the callback routines   */
@@ -1548,14 +1576,15 @@ in_container(struct obj *obj)
     int mbag_explodes_reason = 0;
 
     if (obj == uball || obj == uchain) {
-        pline("You must be kidding.");
+        pline(msgc_yafm, "You must be kidding.");
         return 0;
     } else if (obj == current_container && objects[obj->otyp].oc_name_known &&
                obj->otyp == BAG_OF_HOLDING) {
-        pline("Creating an artificial black hole could ruin your whole day!");
+        pline(msgc_yafm,
+              "Creating an artificial black hole could ruin your whole day!");
         return 0;
     } else if (obj == current_container) {
-        pline("That would be an interesting topological exercise.");
+        pline(msgc_yafm, "That would be an interesting topological exercise.");
         return 0;
     }
     /* must check for obj == current_container before doing this */
@@ -1565,12 +1594,13 @@ in_container(struct obj *obj)
         return 0;
 
     if (obj->owornmask & W_WORN) {
-        pline_once("You cannot %s something you are wearing.",
+        pline_once(msgc_yafm, "You cannot %s something you are wearing.",
                    Icebox ? "refrigerate" : "stash");
         return 0;
     } else if ((obj->otyp == LOADSTONE) && obj->cursed) {
         obj->bknown = 1;
-        pline("The stone%s won't leave your person.", plur(obj->quan));
+        pline(msgc_failcurse, "The stone%s won't leave your person.",
+              plur(obj->quan));
         return 0;
     } else if (obj->otyp == AMULET_OF_YENDOR ||
                obj->otyp == CANDELABRUM_OF_INVOCATION ||
@@ -1579,14 +1609,15 @@ in_container(struct obj *obj)
         /* Prohibit Amulets in containers; if you allow it, monsters can't
            steal them.  It also becomes a pain to check to see if someone has
            the Amulet.  Ditto for the Candelabrum, the Bell and the Book. */
-        pline("%s cannot be confined in such trappings.", The(xname(obj)));
+        pline(msgc_failcurse, "%s cannot be confined in such trappings.",
+              The(xname(obj)));
         return 0;
     } else if (obj->otyp == LEASH && obj->leashmon != 0) {
-        pline("%s attached to your pet.", Tobjnam(obj, "are"));
+        pline(msgc_failcurse, "%s attached to your pet.", Tobjnam(obj, "are"));
         return 0;
     } else if (obj == uwep) {
         if (welded(obj)) {
-            weldmsg(obj);
+            weldmsg(msgc_yafm, obj);
             return 0;
         }
         setuwep(NULL);
@@ -1610,7 +1641,7 @@ in_container(struct obj *obj)
     /* boxes, boulders, and big statues can't fit into any container */
     if (obj->otyp == ICE_BOX || Is_box(obj) || obj->otyp == BOULDER ||
         (obj->otyp == STATUE && bigmonst(&mons[obj->corpsenm]))) {
-        pline("You cannot fit %s into %s.",
+        pline(msgc_failcurse, "You cannot fit %s into %s.",
               the(xname(obj)),
               the(xname(current_container)));
         return 0;
@@ -1647,7 +1678,8 @@ in_container(struct obj *obj)
         }
     } else if (mbag_explodes_reason == 1) {
         /* explicitly mention what item is triggering the explosion */
-        pline("As you put %s inside, you are blasted by a magical explosion!",
+        pline(msgc_substitute,
+              "As you put %s inside, you are blasted by a magical explosion!",
               doname(obj));
         /* did not actually insert obj yet */
         if (was_unpaid)
@@ -1668,7 +1700,7 @@ in_container(struct obj *obj)
     }
 
     if (current_container) {
-        pline("You put %s into %s.", doname(obj),
+        pline(msgc_actionboring, "You put %s into %s.", doname(obj),
               the(xname(current_container)));
 
         /* gold in container always needs to be added to credit */
@@ -1736,7 +1768,8 @@ out_container(struct obj *obj)
     }
     if (is_pick(obj) && !obj->unpaid && *u.ushops &&
         shop_keeper(level, *u.ushops))
-        verbalize("You sneaky cad! Get out of here with that pick!");
+        verbalize(msgc_npcvoice,
+                  "You sneaky cad! Get out of here with that pick!");
 
     otmp = addinv(obj);
     loadlev = near_capacity();
@@ -1759,9 +1792,11 @@ mbag_item_gone(int held, struct obj *item)
     long loss = 0L;
 
     if (item->dknown)
-        pline("%s %s vanished!", Doname2(item), otense(item, "have"));
+        pline(msgc_itemloss, "%s %s vanished!",
+              Doname2(item), otense(item, "have"));
     else
-        pline("You %s %s disappear!", Blind ? "notice" : "see", doname(item));
+        pline(msgc_itemloss, "You %s %s disappear!", Blind ? "notice" : "see",
+              doname(item));
 
     if (*u.ushops && (shkp = shop_keeper(level, *u.ushops)) != 0) {
         if (held ? (boolean) item->unpaid : costly_spot(u.ux, u.uy))
@@ -1799,9 +1834,11 @@ observe_quantum_cat(struct obj *box)
     if (livecat) {
         msethostility(livecat, FALSE, TRUE);
         if (!canspotmon(livecat))
-            pline("You think something brushed your %s.", body_part(FOOT));
+            pline(msgc_levelsound, "You think something brushed your %s.",
+                  body_part(FOOT));
         else
-            pline("%s inside the box is still alive!", Monnam(livecat));
+            pline(msgc_monneutral, "%s inside the box is still alive!",
+                  Monnam(livecat));
         christen_monst(livecat, sc);
     } else {
         deadcat =
@@ -1814,12 +1851,12 @@ observe_quantum_cat(struct obj *box)
             int idx = rndmonidx();
             boolean pname = monnam_is_pname(idx);
 
-            pline("%s%s inside the box%s is dead!",
+            pline(msgc_monneutral, "%s%s inside the box%s is dead!",
                   pname ? monnam_for_index(idx)
                   : The(monnam_for_index(idx)), pname ? "," : "",
                   pname ? "," : "");
         } else {
-            pline("The housecat inside the box is dead!");
+            pline(msgc_monneutral, "The housecat inside the box is dead!");
         }
 
     }
@@ -1840,20 +1877,20 @@ use_container(struct obj *obj, int held)
 
     emptymsg = "";
     if (nohands(youmonst.data)) {
-        pline("You have no hands!");    /* not `body_part(HAND)' */
+        pline(msgc_cancelled, "You have no hands!"); /* not `body_part(HAND)' */
         return 0;
     } else if (!freehand()) {
-        pline("You have no free %s.", body_part(HAND));
+        pline(msgc_cancelled, "You have no free %s.", body_part(HAND));
         return 0;
     }
     if (obj->olocked) {
-        pline("%s to be locked.", Tobjnam(obj, "seem"));
+        pline(msgc_cancelled, "%s to be locked.", Tobjnam(obj, "seem"));
         if (held)
-            pline("You must put it down to unlock.");
+            pline_implied(msgc_hint, "You must put it down to unlock.");
         return 0;
     } else if (obj->otrapped) {
         if (held)
-            pline("You open %s...", the(xname(obj)));
+            pline(msgc_occstart, "You open %s...", the(xname(obj)));
         chest_trap(obj, HAND, FALSE);
         /* even if the trap fails, you've used up this turn */
         action_interrupted();
@@ -1882,7 +1919,8 @@ use_container(struct obj *obj, int held)
     }
 
     if (loss)   /* magic bag lost some shop goods */
-        pline("You owe %ld %s for lost merchandise.", loss, currency(loss));
+        pline(msgc_unpaid, "You owe %ld %s for lost merchandise.",
+              loss, currency(loss));
     obj->owt = weight(obj);     /* in case any items were lost */
 
     if (!cnt)
@@ -1902,8 +1940,8 @@ use_container(struct obj *obj, int held)
             boolean inokay = (invent != 0);
 
             if (!outokay && !inokay) {
-                pline("%s", emptymsg);
-                pline("You don't have anything to put in.");
+                pline(msgc_info, "%s", emptymsg);
+                pline(msgc_info, "You don't have anything to put in.");
                 return used;
             }
             menuprompt[0] = '\0';
@@ -1925,12 +1963,12 @@ use_container(struct obj *obj, int held)
         }
 
     } else {
-        pline("%s", emptymsg);  /* <whatever> is empty. */
+        pline(msgc_info, "%s", emptymsg);  /* <whatever> is empty. */
     }
 
     if (!invent) {
         /* nothing to put in, but some feedback is necessary */
-        pline("You don't have anything to put in.");
+        pline(msgc_info, "You don't have anything to put in.");
         return used;
     }
     if (flags.menu_style != MENU_FULL) {

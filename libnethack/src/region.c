@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -370,7 +370,7 @@ in_out_region(struct level *lev, xchar x, xchar y)
             !inside_region(lev->regions[i], x, y)) {
             clear_hero_inside(lev->regions[i]);
             if (lev->regions[i]->leave_msg != NULL)
-                pline("%s", lev->regions[i]->leave_msg);
+                pline(msgc_noidea, "%s", lev->regions[i]->leave_msg);
             if ((f_indx = lev->regions[i]->leave_f) != NO_CALLBACK)
                 (void)(*callbacks[f_indx]) (lev->regions[i], 0);
         }
@@ -381,7 +381,7 @@ in_out_region(struct level *lev, xchar x, xchar y)
             inside_region(lev->regions[i], x, y)) {
             set_hero_inside(lev->regions[i]);
             if (lev->regions[i]->enter_msg != NULL)
-                pline("%s", lev->regions[i]->enter_msg);
+                pline(msgc_noidea, "%s", lev->regions[i]->enter_msg);
             if ((f_indx = lev->regions[i]->enter_f) != NO_CALLBACK)
                 (void)(*callbacks[f_indx]) (lev->regions[i], 0);
         }
@@ -715,19 +715,20 @@ inside_gas_cloud(void *p1, void *p2)
         if (nonliving(youmonst.data) || u.uinvulnerable)
             return FALSE;
         /* If you will unblind next turn, extend the blindness so that you do
-         * not get a "You can see again!" message immediately before being
-         * blinded again. */
+           not get a "You can see again!" message immediately before being
+           blinded again. */
         if (!Blind || Blinded == 1)
             make_blinded(2L, FALSE);
         if (Breathless)
             return FALSE;
         if (!Poison_resistance) {
-            pline("Something is burning your %s!", makeplural(body_part(LUNG)));
-            pline("You cough and spit blood!");
+            pline(msgc_statusbad, "Something is burning your %s!",
+                  makeplural(body_part(LUNG)));
+            pline_implied(msgc_statusbad, "You cough and spit blood!");
             losehp(rnd(dam) + 5, killer_msg(DIED, "a gas cloud"));
             return FALSE;
         } else {
-            pline("You cough!");
+            pline(msgc_playerimmune, "You cough!");
             return FALSE;
         }
     } else {    /* A monster is inside the cloud */
@@ -736,7 +737,9 @@ inside_gas_cloud(void *p1, void *p2)
         /* Non living and non breathing monsters are not concerned */
         if (!nonliving(mtmp->data) && !breathless(mtmp->data)) {
             if (cansee(mtmp->mx, mtmp->my))
-                pline("%s coughs!", Monnam(mtmp));
+                pline(mtmp->mtame ? msgc_petfatal : msgc_levelsound,
+                      "%s coughs!", Monnam(mtmp));
+            /* TODO: conditionalise on heros_fault? */
             setmangry(mtmp);
             if (haseyes(mtmp->data) && mtmp->mcansee) {
                 mtmp->mblinded = 1;
@@ -749,7 +752,7 @@ inside_gas_cloud(void *p1, void *p2)
                 if (heros_fault(reg))
                     killed(mtmp);
                 else
-                    monkilled(mtmp, "gas cloud", AD_DRST);
+                    monkilled(NULL, mtmp, "gas cloud", AD_DRST);
                 if (DEADMONSTER(mtmp)) {   /* not lifesaved */
                     return TRUE;
                 }

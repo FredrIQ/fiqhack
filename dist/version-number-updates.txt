@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-04-01
+Last modified by Alex Smith, 2015-11-11
 
 Copyright (C) 2013 Alex Smith.
 
@@ -24,6 +24,8 @@ you produced a new version, what's the minimum that has to change?"):
   * doc/changelog.txt (detailed description of the changes)
   * libnethack_common/include/nethack.h (this is the central place
     from which most C code should be pulling the version number)
+  * libnethack/src/pline.c has special code for communicating with
+    beta testers, which needs disabling in a release version
   * README (describe the new version)
   * scripts/build-debian-package (filename of the newly created
     package)

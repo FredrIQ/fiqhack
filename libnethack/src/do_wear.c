@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -149,7 +149,7 @@ on_msg(struct obj *otmp)
         if (otmp->otyp == TOWEL)
             how = msgprintf(" around your %s", body_part(HEAD));
 
-        pline("You are now %s %s%s.%s",
+        pline(msgc_actionboring, "You are now %s %s%s.%s",
               otmp->owornmask & W_MASK(os_arms) ? "holding" : "wearing",
               obj_is_pname(otmp) ? the(xname(otmp)) : an(xname(otmp)), how,
               Hallucination && otmp->otyp == BLACK_DRAGON_SCALE_MAIL
@@ -208,8 +208,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         if (o->cursed && !o->bknown) {
             o->bknown = TRUE;
             if (msgtype != em_silent)
-                pline("Oops; %s deathly cold.", is_plural(o) ? "they feel"
-                                                             : "that feels");
+                pline(msgc_substitute, "Oops!  %s deathly cold.",
+                      is_plural(o) ? "They feel" : "That feels");
         }
     } else {
         setworn(NULL, W_MASK(slot));
@@ -224,10 +224,10 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
            items that trigger the case where it wouldn't work. */
         if (o->oartifact)
             uninvoke_artifact(o);
-        if (msgtype == em_voluntary && flags.verbose)
-            pline("You take off %s.", yname(o));
-        else if (msgtype == em_magical)
-            pline("%s falls off your %s!", Yname2(o),
+        if (msgtype == em_voluntary)
+            pline(msgc_actionboring, "You take off %s.", yname(o));
+        else if (msgtype == em_magicheal)
+            pline(msgc_statusheal, "%s falls off your %s!", Yname2(o),
                   (slot == os_ringl || slot == os_ringr) ?
                   body_part(FINGER) :
                   slot == os_amul ? body_part(NECK) :
@@ -243,6 +243,9 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
        WARNING: Some of these can destroy objects. That includes the object
        we're trying to equip! Thus, o and otmp should not be used after this
        switch returns. (Checking EQUIP(slot) is fine, though.) */
+    enum msg_channel good_msgc = redundant ? msgc_statusextend :
+        equipping ? msgc_statusgood : msgc_statusend;
+    enum msg_channel bad_msgc = equipping ? msgc_statusbad : msgc_statusheal;
     switch (otyp) {
         /* Boots */
     case LOW_BOOTS:
@@ -253,7 +256,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case JUMPING_BOOTS:
         /* jumping is obvious no matter what the situation */
         makeknown(otyp);
-        pline("Your %s feel %s.", makeplural(body_part(LEG)),
+        pline(good_msgc, "Your %s feel %s.", makeplural(body_part(LEG)),
               equipping ? "longer" : "shorter");
         break;
     case WATER_WALKING_BOOTS:
@@ -269,7 +272,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
            than potion speed */
         if (!redundant_extrinsic && !(HFast & ~INTRINSIC)) {
             makeknown(otyp);
-            pline("You feel yourself %s%s.",
+            pline(good_msgc, "You feel yourself %s%s.",
                   equipping ? "speed up" : "slow down",
                   (redundant) ? " slightly" : "");
         }
@@ -278,9 +281,9 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         if (!redundant) {
             makeknown(otyp);
             if (equipping)
-                pline("You walk very quietly.");
+                pline(good_msgc, "You walk very quietly.");
             else
-                pline("You sure are noisy.");
+                pline(good_msgc, "You sure are noisy.");
         }
         break;
     case FUMBLE_BOOTS:
@@ -312,7 +315,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
            can't just use Invis directly. */
         if (u_have_property(INVIS, ANY_PROPERTY, TRUE) && !Blind) {
             newsym(u.ux, u.uy);
-            pline("You can %s!",
+            pline(equipping ? msgc_statusend : msgc_statusgood, "You can %s!",
                   equipping ?
                   (See_invisible ? "no longer see through yourself" :
                    see_yourself) :
@@ -324,7 +327,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         if (!redundant && !Blind) {
             makeknown(otyp);
             newsym(u.ux, u.uy);
-            pline("Suddenly you can%s yourself.",
+            pline(good_msgc, "Suddenly you can%s yourself.",
                   equipping ?
                   (See_invisible ? " see through" : "not see") :
                   (See_invisible ? " no longer see through" : " see"));
@@ -332,7 +335,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         break;
     case OILSKIN_CLOAK:
         if (equipping) {
-            pline("%s very tightly.", Tobjnam(o, "fit"));
+            pline(good_msgc, "%s very tightly.", Tobjnam(o, "fit"));
             makeknown(otyp);
         }
         break;
@@ -371,22 +374,23 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case DUNCE_CAP:
         if (equipping && !o->cursed) {
             if (Blind)
-                pline("%s for a moment.", Tobjnam(o, "vibrate"));
+                pline(bad_msgc, "%s for a moment.", Tobjnam(o, "vibrate"));
             else
-                pline("%s %s for a moment.", Tobjnam(o, "glow"),
+                pline(bad_msgc, "%s %s for a moment.", Tobjnam(o, "glow"),
                       hcolor("black"));
             curse(o);
             o->bknown = TRUE;
         }
         if (Hallucination) {
-            pline("My brain hurts!");   /* Monty Python's Flying Circus */
+            /* from Monty Python's Flying Circus */
+            pline(bad_msgc, "My brain hurts!");
         } else if (equipping && otyp == DUNCE_CAP) {
-            pline("You feel %s.",       /* track INT change; ignore WIS */
+            pline(bad_msgc, "You feel %s.",   /* track INT change; ignore WIS */
                   ACURR(A_INT) <=
                   (ABASE(A_INT) + ABON(A_INT) +
                    ATEMP(A_INT)) ? "like sitting in a corner" : "giddy");
         } else if (otyp == HELM_OF_OPPOSITE_ALIGNMENT) {
-            pline("Your mind oscillates briefly.");
+            pline(bad_msgc, "Your mind oscillates briefly.");
         }
         makeknown(otyp);
         break;
@@ -428,13 +432,13 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             change_sex();
             /* Don't use same message as polymorph */
             if (orig_sex != poly_gender())
-                pline("You are suddenly very %s!",
+                pline(msgc_intrloss, "You are suddenly very %s!",
                       u.ufemale ? "feminine" : "masculine");
             else
                 /* already polymorphed into single-gender monster; only changed
                    the character's base sex */
-                pline("You don't feel like yourself.");
-            pline("The amulet disintegrates!");
+                pline(msgc_intrloss, "You don't feel like yourself.");
+            pline(msgc_consequence, "The amulet disintegrates!");
             destroyed = 1;
             makeknown(otyp);
             useup(o);
@@ -443,10 +447,10 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case AMULET_OF_STRANGULATION:
         makeknown(otyp);
         if (equipping && !Strangled) {
-            pline("It constricts your throat!");
+            pline(msgc_fatal, "It constricts your throat!");
             Strangled = 6;
         } else if (Strangled) {
-            pline("You can breathe more easily!");
+            pline(msgc_statusheal, "You can breathe more easily!");
             Strangled = 0;
         }
         break;
@@ -492,7 +496,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 
         if (Invis && !redundant && !perceives(youmonst.data) && !Blind) {
             newsym(u.ux, u.uy);
-            pline(equipping ? "Suddenly you are transparent, but there!" :
+            pline(good_msgc,
+                  equipping ? "Suddenly you are transparent, but there!" :
                   "Suddenly you cannot see yourself.");
             makeknown(otyp);
         }
@@ -504,7 +509,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             if (equipping)
                 self_invis_message();
             else
-                pline("Your body seems to unfade%s.",
+                pline(good_msgc, "Your body seems to unfade%s.",
                       See_invisible ? " completely" : "..");
         }
         break;
@@ -569,13 +574,15 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case LENSES:
         if (Blind && !already_blind) {
             if (flags.verbose)
-                pline("You can't see any more.");
+                pline(bad_msgc, "You can't see any more.");
             /* set ball&chain variables before the hero goes blind */
             if (Punished)
                 set_bc(0);
         } else if (already_blind && !Blind) {
-            /* "You are now wearing the Eyes of the Overworld." */
-            pline("You can see!");
+            /* "You are now wearing the Eyes of the Overworld." Can't use
+               pline_implied here, though, as that message is msgc_actionboring
+               and thus many players may hide it. */
+            pline(good_msgc, "You can see!");
         }
         if (Blind_telepat || Infravision)
             see_monsters(FALSE);
@@ -595,8 +602,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     /* Prevent wielding cockatrice when not wearing gloves */
     if (uwep && !uarmg && uwep->otyp == CORPSE &&
         touch_petrifies(&mons[uwep->corpsenm])) {
-        pline("You wield the %s in your bare %s.", corpse_xname(uwep, TRUE),
-              makeplural(body_part(HAND)));
+        pline(msgc_badidea, "You wield the %s in your bare %s.",
+              corpse_xname(uwep, TRUE), makeplural(body_part(HAND)));
         instapetrify(killer_msg(STONING,
             msgprintf("removing %s gloves while wielding %s", uhis(),
                       an(corpse_xname(uwep, TRUE)))));
@@ -607,8 +614,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     if (u.twoweap && uswapwep && uswapwep->otyp == CORPSE &&
         touch_petrifies(&mons[uswapwep->corpsenm])) {
 
-        pline("You wield the %s in your bare %s.", corpse_xname(uswapwep, TRUE),
-              body_part(HAND));
+        pline(msgc_badidea, "You wield the %s in your bare %s.",
+              corpse_xname(uswapwep, TRUE), body_part(HAND));
         instapetrify(killer_msg(STONING,
             msgprintf("removing %s gloves while wielding %s", uhis(),
                       an(corpse_xname(uwep, TRUE)))));
@@ -760,7 +767,7 @@ equip_heartbeat(void)
            change the slot. (We might nonetheless remove the object, if it's
            blocking an equip that the player wants to do.) */
         if (current && desired == current) {
-            pline("You are already %s %s.",
+            pline(msgc_mispaste, "You are already %s %s.",
                   islot == os_wep ? "wielding" :
                   islot == os_swapwep ? "readying" :
                   islot == os_quiver ? "quivering" : "wearing", yname(current));
@@ -770,7 +777,8 @@ equip_heartbeat(void)
         /* Likewise, we have a special case for trying to unequip an object
            over an empty slot. */
         if (!current && desired == &zeroobj) {
-            pline("You have no %s equipped.", c_slotnames[islot]);
+            pline(msgc_mispaste, "You have no %s equipped.",
+                  c_slotnames[islot]);
             u.utracked[tos_first_equip + islot] = desired = NULL;
         }
 
@@ -1009,7 +1017,8 @@ equip_heartbeat(void)
                 if (uwep == current) { /* it worked */
                     setuswapwep(desired == &zeroobj ? NULL : desired);
                     if (desired == &zeroobj)
-                        pline("You have no secondary weapon readied.");
+                        pline(msgc_actionboring,
+                              "You have no secondary weapon readied.");
                     else
                         prinv(NULL, desired, 0L);
                 } else { /* something went wrong equipping */
@@ -1020,7 +1029,8 @@ equip_heartbeat(void)
                 if (desired != &zeroobj && !(desired->owornmask & W_EQUIP))
                     setuswapwep(desired == &zeroobj ? NULL : desired);
                     if (desired == &zeroobj)
-                        pline("You have no secondary weapon readied.");
+                        pline(msgc_actionboring,
+                              "You have no secondary weapon readied.");
                     else
                         prinv(NULL, desired, 0L);
             }
@@ -1043,14 +1053,15 @@ equip_heartbeat(void)
             if (u.twoweap && !can_twoweapon())
                 untwoweapon();
             if (desired == &zeroobj)
-                pline("You have no secondary weapon readied.");
+                pline(msgc_actionboring,
+                      "You have no secondary weapon readied.");
             else
                 prinv(NULL, desired, 0L);
         } else if (islot == os_quiver) {
             if (desired != &zeroobj) unwield_silently(desired);
             setuqwep(desired == &zeroobj ? NULL : desired);
             if (desired == &zeroobj)
-                pline("You now have no ammunition readied.");
+                pline(msgc_actionboring, "You now have no ammunition readied.");
             else
                 prinv(NULL, desired, 0L);
         } else if (equip_order[i].direction == ed_unequip) {
@@ -1118,9 +1129,11 @@ equip_in_slot(struct obj *otmp, enum objslot slot, boolean keep_swapwep)
         otmp = &zeroobj;
 
     /* Equipping a two-handed weapon while holding a shield and cblock is
-       actually interpreted as unequipping the shield, with equipping the
-       weapon being a multistage consequence. This greatly reduces the
-       number of special cases required. */
+       actually implemented by setting the equipment state up as though we
+       were intending to unequip the shield, but temporarily unequipped the
+       weapon in order to do so. This means that the code will unequip the
+       shield, and then equip the weapon afterwards, without needing extra
+       codepaths and thus minimizing on special cases. */
     if (flags.cblock && slot == os_wep && otmp != &zeroobj &&
         bimanual(otmp) && uarms) {
         weapon = otmp;
@@ -1185,11 +1198,11 @@ equip_in_slot(struct obj *otmp, enum objslot slot, boolean keep_swapwep)
     if (flags.verbose && slot <= os_last_armor) {
         if (otmp != &zeroobj && otmp != EQUIP(slot)) {
             if (!resuming || turnstate.continue_message)
-                pline("You %s equipping %s.",
+                pline(msgc_occstart, "You %s equipping %s.",
                       resuming ? "continue" : "start", yname(otmp));
         } else if (otmp == &zeroobj && EQUIP(slot)) {
             if (!resuming || turnstate.continue_message)
-                pline("You %s removing %s.",
+                pline(msgc_occstart, "You %s removing %s.",
                       resuming ? "continue" : "start", yname(EQUIP(slot)));
         } else {
             /* Either we're putting items back on, or else we're not making any
@@ -1197,7 +1210,8 @@ equip_in_slot(struct obj *otmp, enum objslot slot, boolean keep_swapwep)
             if (turnstate.continue_message)
                 for (j = 0; j <= os_last_equip; j++) {
                     if (u.utracked[tos_first_equip + j] != NULL && j != slot) {
-                        pline("You start putting your other items back on.");
+                        pline(msgc_occstart,
+                              "You start putting your other items back on.");
                         break;
                     }
                 }
@@ -1247,7 +1261,7 @@ dounequip(const struct nh_cmd_arg *arg)
         /* Either it isn't equipment at all, or else the slot's covered by a
            cursed item, or else it's a ring. In all these cases, we can't
            sensibly continue, especially not without manual confirmation. */
-        pline("You are not wearing that.");
+        pline(msgc_mispaste, "You are not wearing that.");
         return 0;
     }
 
@@ -1260,7 +1274,7 @@ dounequip(const struct nh_cmd_arg *arg)
         if (mask & W_MASK(j) && !EQUIP(j))
             return equip_in_slot(NULL, j, FALSE);
 
-    pline("You are not wearing that.");
+    pline(msgc_mispaste, "You are not wearing that.");
     return 0;
 }
 
@@ -1294,10 +1308,10 @@ dowear(const struct nh_cmd_arg *arg)
                move the ring to the other hand. For the time being, though, we
                don't do that unless explicitly requested with A, to avoid
                ridiculous accidents. */
-            pline("That ring is already on your finger!");
+            pline(msgc_mispaste, "That ring is already on your finger!");
             return 0;
         } else {
-            pline("Both your ring fingers are already full.");
+            pline(msgc_cancelled, "Both your ring fingers are already full.");
             return 0;
         }
     }
@@ -1321,7 +1335,9 @@ dowear(const struct nh_cmd_arg *arg)
 static void
 already_wearing(const char *cc)
 {
-    pline("You are already wearing %s%c", cc, (cc == c_that_) ? '!' : '.');
+    pline(cc == c_that_ ? msgc_mispaste : msgc_cancelled,
+          "You are already wearing %s%c", cc,
+          (cc == c_that_) ? '!' : '.');
 }
 
 /* welded() sets bknown; so only call it if the wielded weapon is bknown or
@@ -1362,7 +1378,8 @@ slot_count(struct monst *mon, enum objslot slot, boolean noisy)
         /* Hobbits have an os_arm slot that can be used for elven armor only */
         (raceptr(mon) != &mons[PM_HOBBIT] || slot != os_arm)) {
         if (noisy)
-            pline("The %s will not fit on your body.", c_slotnames[slot]);
+            pline(msgc_cancelled, "The %s will not fit on your body.",
+                  c_slotnames[slot]);
         return 0;
     }
     /* Horned monsters /do/ have a head slot; they can wear elven leather helms
@@ -1374,14 +1391,15 @@ slot_count(struct monst *mon, enum objslot slot, boolean noisy)
     if ((slot == os_armg || slot == os_arms || slot == os_armh) &&
         (nohands(mon->data) || verysmall(mon->data))) {
         if (noisy)
-            pline("You can't balance the %s on your body.", c_slotnames[slot]);
+            pline(msgc_cancelled, "You can't balance the %s on your body.",
+                  c_slotnames[slot]);
         return 0;
     }
     if (slot == os_armf &&
         ((nohands(mon->data) || verysmall(mon->data) ||
           slithy(mon->data) || mon->data->mlet == S_CENTAUR))) {
         if (noisy)
-            pline("You can't fit boots on your %s.",
+            pline(msgc_cancelled, "You can't fit boots on your %s.",
                   makeplural(mbodypart(mon, FOOT)));
         return 0;
     }
@@ -1389,7 +1407,8 @@ slot_count(struct monst *mon, enum objslot slot, boolean noisy)
     /* for doequip() */
     if (slot == os_wep && cantwield(mon->data)) {
         if (noisy)
-            pline("You are physically incapable of holding items.");
+            pline(msgc_cancelled,
+                  "You are physically incapable of holding items.");
         return 0;
     }
 
@@ -1458,6 +1477,9 @@ canwearobj(struct obj *otmp, long *mask,
     enum objslot slot = os_invalid;
     int temp_mask;
 
+    enum msg_channel msgc =
+        !noisy ? msgc_mute : spoil ? msgc_failcurse : msgc_cancelled;
+    
     if (is_suit(otmp))
         slot = os_arm;
     else if (is_cloak(otmp))
@@ -1488,8 +1510,7 @@ canwearobj(struct obj *otmp, long *mask,
     } if ((verysmall(youmonst.data) || nohands(youmonst.data)) &&
           slot != os_amul && slot != os_ringl && slot != os_ringr &&
           slot != os_tool) {
-        if (noisy)
-            pline("You are in no state to equip armor!");
+        pline(msgc, "You are in no state to equip armor!");
         return FALSE;
     } else if (otmp->owornmask & W_WORN && !cblock) {
         if (noisy)
@@ -1501,10 +1522,9 @@ canwearobj(struct obj *otmp, long *mask,
         return FALSE;
     } else if (slot == os_arm || slot == os_armu || slot == os_ringl) {
         if (uwep && bimanual(uwep) && known_welded(spoil)) {
-            if (noisy)
-                pline("You cannot do that while your hands "
-                      "are welded to your %s.",
-                      is_sword(uwep) ? "sword" : c_slotnames[os_wep]);
+            pline(msgc, "You cannot do that while your hands "
+                  "are welded to your %s.",
+                  is_sword(uwep) ? "sword" : c_slotnames[os_wep]);
             return FALSE;
         }
     }
@@ -1536,17 +1556,17 @@ canwearobj(struct obj *otmp, long *mask,
     case os_armh:
         if (Upolyd && has_horns(youmonst.data) && !is_flimsy(otmp)) {
             /* (flimsy exception matches polyself handling) */
-            if (noisy)
-                pline("The %s won't fit over your horn%s.", helmet_name(otmp),
-                      plur(num_horns(youmonst.data)));
+            pline(msgc, "The %s won't fit over your horn%s.", helmet_name(otmp),
+                  plur(num_horns(youmonst.data)));
             return FALSE;
         }
         if (otmp->otyp == HELM_OF_OPPOSITE_ALIGNMENT &&
             qstart_level.dnum == u.uz.dnum && spoil) {   /* in quest */
             if (u.ualignbase[A_CURRENT] == u.ualignbase[A_ORIGINAL])
-                pline("You narrowly avoid losing all chance at your goal.");
+                pline(msgc,
+                      "You narrowly avoid losing all chance at your goal.");
             else    /* converted */
-                pline("You are suddenly overcome with shame "
+                pline(msgc, "You are suddenly overcome with shame "
                       "and change your mind.");
             u.ublessed = 0; /* lose your god's protection */
             makeknown(otmp->otyp);
@@ -1556,11 +1576,10 @@ canwearobj(struct obj *otmp, long *mask,
 
     case os_arms:
         if (CBLOCK(uwep) && uwep && bimanual(uwep)) {
-            if (noisy)
-                pline
-                    ("You cannot wear a shield while wielding a two-handed %s.",
-                     is_sword(uwep) ? "sword" :
-                     (uwep->otyp == BATTLE_AXE) ? "axe" : "weapon");
+            pline(msgc,
+                  "You cannot wear a shield while wielding a two-handed %s.",
+                  is_sword(uwep) ? "sword" :
+                  (uwep->otyp == BATTLE_AXE) ? "axe" : "weapon");
             return FALSE;
         }
         break;
@@ -1569,12 +1588,10 @@ canwearobj(struct obj *otmp, long *mask,
         if (u.utrap &&
                    (u.utraptype == TT_BEARTRAP || u.utraptype == TT_INFLOOR)) {
             if (u.utraptype == TT_BEARTRAP) {
-                if (noisy)
-                    pline("Your %s is trapped!", body_part(FOOT));
+                pline(msgc, "Your %s is trapped!", body_part(FOOT));
             } else {
-                if (noisy)
-                    pline("Your %s are stuck in the %s!",
-                          makeplural(body_part(FOOT)), surface(u.ux, u.uy));
+                pline(msgc, "Your %s are stuck in the %s!",
+                      makeplural(body_part(FOOT)), surface(u.ux, u.uy));
             }
             return FALSE;
         }
@@ -1584,35 +1601,31 @@ canwearobj(struct obj *otmp, long *mask,
 
     case os_armg:
         if (known_welded(spoil)) {
-            if (noisy)
-                pline("You cannot wear gloves over your %s.",
-                      (uwep && is_sword(uwep)) ? "sword" : "weapon");
+            pline(msgc, "You cannot wear gloves over your %s.",
+                  (uwep && is_sword(uwep)) ? "sword" : "weapon");
             return FALSE;
         }
         break;
 
     case os_armu:
         if (CBLOCK(uarm) || CBLOCK(uarmc)) {
-            if (noisy)
-                pline("You can't wear that over your %s.",
-                      (uarm && !uarmc) ? "armor" : cloak_simple_name(uarmc));
+            pline(msgc, "You can't wear that over your %s.",
+                  (uarm && !uarmc) ? "armor" : cloak_simple_name(uarmc));
             return FALSE;
         }
         break;
 
     case os_arm:
         if (CBLOCK(uarmc)) {
-            if (noisy)
-                pline("You cannot wear armor over a %s.",
-                      cloak_simple_name(uarmc));
+            pline(msgc, "You cannot wear armor over a %s.",
+                  cloak_simple_name(uarmc));
             return FALSE;
         }
         if (youmonst.data->msize == MZ_SMALL &&
             racial_exception(&youmonst, otmp) < 1) {
             /* The different message is to imply that some small monsters may
                be able to wear some sorts of armor. */
-            if (noisy)
-                pline("The armor almost fits, but is slightly too large.");
+            pline(msgc, "The armor almost fits, but is slightly too large.");
             return FALSE;
         }
         break;
@@ -1620,8 +1633,7 @@ canwearobj(struct obj *otmp, long *mask,
     case os_ringl:
     case os_ringr:
         if (nolimbs(youmonst.data)) {
-            if (noisy)
-                pline("You cannot make the ring stick to your body.");
+            pline(msgc, "You cannot make the ring stick to your body.");
             return FALSE;
         }
         /* It's possible to have cursed gloves and not know it. In such a case,
@@ -1630,8 +1642,7 @@ canwearobj(struct obj *otmp, long *mask,
         if (uarmg && uarmg->cursed && spoil)
             uarmg->bknown = TRUE;
         if (uarmg && uarmg->cursed && uarmg->bknown) {
-            if (noisy)
-                pline("You cannot remove your gloves to put on the ring.");
+            pline(msgc, "You cannot remove your gloves to put on the ring.");
             return FALSE;
         }
         if (known_welded(spoil)) {
@@ -1644,8 +1655,8 @@ canwearobj(struct obj *otmp, long *mask,
                (neither for glove nor ring).  Should it be? */
             temp_mask &= ~W_MASK(os_ringr);
             if (!temp_mask) {
-                if (noisy)
-                    pline("You cannot free your weapon hand to wear the ring.");
+                pline(msgc,
+                      "You cannot free your weapon hand to wear the ring.");
                 return FALSE;
             }
         }
@@ -1685,9 +1696,11 @@ canwearobjon(struct obj *otmp, enum objslot slot,
     /* Is this an attempt to wear a ring on a blocked hand, when the other
        hand is available? */
     if (mask & W_RING && (slot == os_ringl || slot == os_ringr))
-        pline("%s will only fit on your other hand.", Yname2(otmp));
+        pline(spoil ? msgc_failcurse : msgc_cancelled,
+              "%s will only fit on your other hand.", Yname2(otmp));
     else
-        pline("%s won't fit on that part of your body.", Yname2(otmp));
+        pline(spoil ? msgc_failcurse : msgc_cancelled,
+              "%s won't fit on that part of your body.", Yname2(otmp));
 
     return FALSE;
 }
@@ -1710,11 +1723,14 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
 {
     struct obj *why;
 
+    enum msg_channel msgc =
+        !noisy ? msgc_mute : spoil ? msgc_failcurse : msgc_cancelled;
+    
     if (!otmp || otmp == &zeroobj)
         return FALSE;
     if (!(otmp->owornmask & W_EQUIP)) {   /* to unequip, it must be equipped */
         if (noisy)
-            pline("You are not wearing %s", yname(otmp));
+            pline(msgc_mispaste, "You are not wearing %s.", yname(otmp));
         return FALSE;
     }
 
@@ -1723,8 +1739,7 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
         const char *buf = NULL;
 
         if (nolimbs(youmonst.data)) {
-            if (noisy)
-                pline("The ring is stuck.");
+            pline(msgc, "The ring is stuck.");
             return 0;
         }
 
@@ -1739,8 +1754,7 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
         }
 
         if (why) {
-            if (noisy)
-                pline("You cannot %s to remove the ring.", buf);
+            pline(msgc, "You cannot %s to remove the ring.", buf);
             if (spoil)
                 why->bknown = TRUE;
             return FALSE;
@@ -1749,31 +1763,27 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
     /* special glove checks */
     if (otmp->owornmask & W_MASK(os_armg)) {
         if (uwep && known_welded(spoil)) {
-            if (noisy) {
-                pline("You are unable to take off your gloves "
-                      "while wielding that %s.",
-                      is_sword(uwep) ? "sword" : "weapon");
+            pline(msgc, "You are unable to take off your gloves "
+                  "while wielding that %s.",
+                  is_sword(uwep) ? "sword" : "weapon");
+            if (spoil)
                 uwep->bknown = TRUE;
-            }
             return FALSE;
         } else if (Glib) {
-            if (noisy)
-                pline("You can't take off the slippery gloves "
-                      "with your slippery %s.", makeplural(body_part(FINGER)));
+            pline(msgc, "You can't take off the slippery gloves "
+                  "with your slippery %s.", makeplural(body_part(FINGER)));
             return FALSE;
         }
     }
     /* special boot checks */
     if (otmp->owornmask & W_MASK(os_armf)) {
         if (u.utrap && u.utraptype == TT_BEARTRAP) {
-            if (noisy)
-                pline("The bear trap prevents you from pulling your %s out.",
-                      body_part(FOOT));
+            pline(msgc, "The bear trap prevents you from pulling your %s out.",
+                  body_part(FOOT));
             return FALSE;
         } else if (u.utrap && u.utraptype == TT_INFLOOR) {
-            if (noisy)
-                pline("You are stuck in the %s, and cannot pull your %s out.",
-                      surface(u.ux, u.uy), makeplural(body_part(FOOT)));
+            pline(msgc, "You are stuck in the %s, and cannot pull your %s out.",
+                  surface(u.ux, u.uy), makeplural(body_part(FOOT)));
             return FALSE;
         }
     }
@@ -1799,20 +1809,18 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
                                message */
         }
         if (why) {
-            if (noisy) {
-                if (!cblock)
-                    pline("You cannot take off %s with %s in the way.",
-                          the(xname(otmp)), an(xname(why)));
-                else
-                    pline("You cannot %s to take off %s.", buf, the(xname(otmp)));
-            }
+            if (!cblock)
+                pline(msgc, "You cannot take off %s with %s in the way.",
+                      the(xname(otmp)), an(xname(why)));
+            else
+                pline(msgc, "You cannot %s to take off %s.", buf,
+                      the(xname(otmp)));
             return FALSE;
         }
         if (otmp == uskin()) {
-            if (noisy)
-                pline("The %s is merged with your skin!",
-                      otmp->otyp >= GRAY_DRAGON_SCALES ?
-                      "dragon scales are" : "dragon scale mail is");
+            pline(msgc, "The %s is merged with your skin!",
+                  otmp->otyp >= GRAY_DRAGON_SCALES ?
+                  "dragon scales are" : "dragon scale mail is");
         }
     }
     /* basic curse checks: anything welds in equip slots, only specific items
@@ -1821,14 +1829,14 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
         if (spoil && otmp->cursed)
             otmp->bknown = TRUE;
         if (otmp->cursed && otmp->bknown) {
-            if (noisy)
-                pline("You can't remove %s.  It is cursed.", the(xname(otmp)));
+            pline(msgc, "You can't remove %s.  It is cursed.",
+                  the(xname(otmp)));
             return FALSE;
         }
     }
     if (otmp->owornmask & W_MASK(os_wep) && known_welded(spoil)) {
         if (noisy)
-            weldmsg(otmp);
+            weldmsg(msgc, otmp);
         return FALSE;
     }
 
@@ -1849,7 +1857,7 @@ glibr(void)
     rightfall = (uright && !uright->cursed && (!welded(uwep)));
     if (!uarmg && (leftfall || rightfall) && !nolimbs(youmonst.data)) {
         /* changed so cursed rings don't fall off, GAN 10/30/86 */
-        pline("Your %s off your %s.",
+        pline(msgc_statusbad, "Your %s off your %s.",
               (leftfall && rightfall) ? "rings slip" : "ring slips",
               (leftfall && rightfall) ?
               makeplural(body_part(FINGER)) : body_part(FINGER));
@@ -1870,8 +1878,8 @@ glibr(void)
     if (u.twoweap && otmp) {
         otherwep = is_sword(otmp) ? "sword" :
             makesingular(oclass_names[(int)otmp->oclass]);
-        pline("Your %s %sslips from your %s.", otherwep, xfl ? "also " : "",
-              makeplural(body_part(HAND)));
+        pline(msgc_statusbad, "Your %s %sslips from your %s.", otherwep,
+              xfl ? "also " : "", makeplural(body_part(HAND)));
         setuswapwep(NULL);
         xfl++;
         if (otmp->otyp != LOADSTONE || !otmp->cursed)
@@ -1888,7 +1896,8 @@ glibr(void)
             otherwep = 0;
 
         /* changed so cursed weapons don't fall, GAN 10/30/86 */
-        pline("Your %s%s %sslips from your %s.", otherwep ? "other " : "",
+        pline(msgc_statusbad, "Your %s%s %sslips from your %s.",
+              otherwep ? "other " : "",
               thiswep, xfl ? "also " : "", makeplural(body_part(HAND)));
         setuwep(NULL);
         if (otmp->otyp != LOADSTONE || !otmp->cursed)
@@ -2084,7 +2093,8 @@ doequip(const struct nh_cmd_arg *arg)
 
     /* we can get here upon control-A after equipping is finished */
     if (!changes) {
-        pline("You have already finished changing your equipment.");
+        pline(msgc_mispaste,
+              "You have already finished changing your equipment.");
         return 0;
     }
 
@@ -2092,7 +2102,8 @@ doequip(const struct nh_cmd_arg *arg)
        because this will probably take multiple turns. */
     if (time_consuming_changes >= 2 && flags.verbose &&
         (!resuming || turnstate.continue_message))
-        pline("You %s equipping yourself.", resuming ? "continue" : "start");
+        pline(msgc_occstart, "You %s equipping yourself.",
+              resuming ? "continue" : "start");
 
     /* Do the equip. */
     n = equip_heartbeat();
@@ -2114,36 +2125,38 @@ destroy_arm(struct obj *atmp)
     /* For anyone confused by the following code: DESTROY_ARM sets otmp as a
        side effect. Yes, it's confusing. */
     if (DESTROY_ARM(uarmc)) {
-        pline("Your %s crumbles and turns to dust!", cloak_simple_name(uarmc));
+        pline(msgc_itemloss, "Your %s crumbles and turns to dust!",
+              cloak_simple_name(uarmc));
         setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarm)) {
-        pline("Your armor turns to dust and falls to the %s!",
+        pline(msgc_itemloss, "Your armor turns to dust and falls to the %s!",
               surface(u.ux, u.uy));
         setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarmu)) {
-        pline("Your shirt crumbles into tiny threads and falls apart!");
+        pline(msgc_itemloss,
+              "Your shirt crumbles into tiny threads and falls apart!");
         setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarmh)) {
-        pline("Your helmet turns to dust and is blown away!");
+        pline(msgc_itemloss, "Your helmet turns to dust and is blown away!");
         setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarmg)) {
         const char *kbuf;
 
         kbuf = msgprintf("losing %s gloves while wielding", uhis());
-        pline("Your gloves vanish!");
+        pline(msgc_itemloss, "Your gloves vanish!");
         setunequip(otmp);
         useup(otmp);
         selftouch("You", kbuf);
     } else if (DESTROY_ARM(uarmf)) {
-        pline("Your boots disintegrate!");
+        pline(msgc_itemloss, "Your boots disintegrate!");
         setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarms)) {
-        pline("Your shield crumbles away!");
+        pline(msgc_itemloss, "Your shield crumbles away!");
         setunequip(otmp);
         useup(otmp);
     } else {
