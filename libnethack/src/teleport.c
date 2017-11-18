@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-09-20 */
+/* Last modified by Alex Smith, 2017-11-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -206,10 +206,13 @@ tele_jump_ok(struct level *mdl, int x1, int y1, int x2, int y2)
             return FALSE;
     }
     if (mdl->updest.nlx != COLNO) {        /* ditto */
+        if (within_bounded_area
             (x1, y1, mdl->updest.nlx, mdl->updest.nly, mdl->updest.nhx,
              mdl->updest.nhy) &&
             !within_bounded_area(x2, y2, mdl->updest.nlx, mdl->updest.nly,
                                  mdl->updest.nhx, mdl->updest.nhy))
+            return FALSE;
+        if (!within_bounded_area
             (x1, y1, mdl->updest.nlx, mdl->updest.nly, mdl->updest.nhx,
              mdl->updest.nhy) &&
             within_bounded_area(x2, y2, mdl->updest.nlx, mdl->updest.nly,
@@ -1004,7 +1007,7 @@ rloc(struct monst *mtmp,        /* mx==COLNO implies migrating monster arrival *
         do {
             x = rn2(COLNO);
             y = rn2(ROWNO);
-            if ((trycount < 500) ? rloc_pos_ok(x, y, mtmp)
+            if ((trycount < 500) ? rloc_pos_ok(x, y, mtmp, lev)
                 : goodpos(mdl, x, y, mtmp, gpflags))
                 goto found_xy;
         } while (++trycount < 1000);

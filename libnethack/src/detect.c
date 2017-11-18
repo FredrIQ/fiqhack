@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-09-20 */
+/* Last modified by Alex Smith, 2017-11-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1353,7 +1353,7 @@ dosearch0(int aflag)
 
     if (already) {
         action_completed();
-        pline("There's still a monster there.");
+        pline(msgc_actionok, "There's still a monster there.");
         return 1;
     }
 
