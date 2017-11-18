@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1178,7 +1178,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         break;
     case SCR_CONFUSE_MONSTER:
     case SPE_CONFUSE_MONSTER:
-        if (mon->data->mlet != S_HUMAN /* why? */ || sobj->cursed)
+        if (sobj->cursed)
             inc_timeout(mon, CONFUSION, rnd(100), FALSE);
         else if (confused) {
             if (!sobj->blessed) {
