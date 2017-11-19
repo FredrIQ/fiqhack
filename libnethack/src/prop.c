@@ -432,20 +432,23 @@ m_has_property(const struct monst *mon, enum youprop property,
     return rv & reasons;
 }
 
-/* Returns TRUE if mon has an immunity. Supposed to be used with resistances.
-   This is true if monster has it extrinsically, or as part of their base form
-   excluding level-up trinsics (Example: Fire elementals are immune to fire,
-   level 11 Monks are not.) */
-boolean
+/* Returns a bitmask containing all slots that confer immunities.
+   Immunities are generally gained from extrinsics and from innate trinsics which you
+   always had. */
+unsigned
 has_immunity(const struct monst *mon, enum youprop property)
 {
     unsigned rv = has_property(mon, property);
-    if (!rv)
-        return FALSE;
-    if (rv & EXTRINSIC)
-        return TRUE;
+
+    /* Amulets of restful sleep give a sleep *resistance*, not an immunity. */
+    if (property == SLEEP_RES) {
+        struct obj *amul = which_armor(mon, os_amul);
+        if (amul && amul->otyp == AMULET_OF_RESTFUL_SLEEP)
+            rv &= ~W_MASK(os_amul);
+    }
+
     if (!(rv & FROMFORM))
-        return FALSE;
+        return (rv & EXTRINSIC);
 
     /* Now check the innate ones. */
     rv &= ~FROMFORM;
@@ -462,8 +465,7 @@ has_immunity(const struct monst *mon, enum youprop property)
     if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
         rv |= W_MASK(os_polyform);
 
-    if (rv & FROMFORM)
-        return TRUE;
+    return (rv & (EXTRINSIC | FROMFORM));
 }
 
 /* Check if an object/spell/whatever would have any effect on a target */
@@ -1537,13 +1539,12 @@ update_property(struct monst *mon, enum youprop prop,
                     effect = TRUE;
                 }
                 sleep_monst(NULL, mon, sleeptime, -1);
+                if (!you)
+                    slept_monst(mon);
             }
 
-            int next_sleep = sleeptime + rnd(100);
-            if (resists_sleep(mon))
-                next_sleep *= 2;
             if (restful_sleep(mon))
-                set_property(mon, prop, next_sleep, TRUE);
+                set_property(mon, prop, sleeptime + rnd(100), TRUE);
         }
         break;
     case LWOUNDED_LEGS:
@@ -3178,16 +3179,21 @@ unspoilered_intrinsics(void)
     n = menu.icount;
 
 #define addmenu(x,y) if (ihas_property(&youmonst, x))   \
-                          add_menutext(&menu, y);
+        add_menutext(&menu, y);
+#define addmenu2(x,y,z)                         \
+    if (has_immunity(&youmonst, x) & INTRINSIC) \
+        add_menutext(&menu, z);                 \
+    else if (ihas_property(&youmonst, x))       \
+        add_menutext(&menu, y);
 
     /* Resistances */
-    addmenu(FIRE_RES, "You are fire resistant.");
-    addmenu(COLD_RES, "You are cold resistant.");
-    addmenu(SLEEP_RES, "You are sleep resistant.");
+    addmenu2(FIRE_RES, "You are fire resistant.", "You are immune to fire.");
+    addmenu2(COLD_RES, "You are cold resistant.", "You are immune to cold.");
+    addmenu2(SLEEP_RES, "You are sleep resistant.", "You are immune to sleep.");
     addmenu(DISINT_RES, "You are disintegration resistant.");
-    addmenu(SHOCK_RES, "You are shock resistant.");
-    addmenu(POISON_RES, "You are poison resistant.");
-    addmenu(ACID_RES, "You are acid resistant.");
+    addmenu2(SHOCK_RES, "You are shock resistant.", "You are immune to electricity.");
+    addmenu2(POISON_RES, "You are poison resistant.", "You are immune to poison.");
+    addmenu2(ACID_RES, "You are acid resistant.", "You are immune to acid.");
     addmenu(DRAIN_RES, "You are level-drain resistant.");
     addmenu(SICK_RES, "You are immune to sickness.");
     addmenu(SEE_INVIS, "You see invisible.");

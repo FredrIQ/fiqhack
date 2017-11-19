@@ -483,6 +483,8 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
         return equipmask;
 
     /* Non-artifact item properties go here. */
+    if (otmp->otyp == AMULET_OF_RESTFUL_SLEEP && extrinsic == SLEEP_RES)
+        return equipmask; /* gives a sleep resistance, but not a sleep immunity. */
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
         return equipmask;
     if ((otmp->otyp == SHIMMERING_DRAGON_SCALE_MAIL ||

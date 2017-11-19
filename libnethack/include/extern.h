@@ -1542,7 +1542,7 @@ extern boolean any_property(struct monst *);
 extern int pm_has_property(const struct permonst *, enum youprop);
 extern unsigned m_has_property(const struct monst *, enum youprop,
                                unsigned, boolean);
-extern boolean has_immunity(const struct monst *, enum youprop);
+extern unsigned has_immunity(const struct monst *, enum youprop);
 extern boolean m_helpless(const struct monst *, enum helpless_mask mask);
 extern boolean u_helpless(enum helpless_mask mask);
 extern unsigned msensem_xy(struct monst *, struct monst *,

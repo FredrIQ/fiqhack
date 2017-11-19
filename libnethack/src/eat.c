@@ -1403,6 +1403,9 @@ eataccessory(struct monst *mon, struct obj *otmp)
             if (typ == RIN_CONFLICT && !you)
                 break;
 
+            if (typ == AMULET_OF_RESTFUL_SLEEP)
+                set_property(mon, SLEEP_RES, 0, FALSE); /* give this too */
+
             if (set_property(mon, objects[typ].oc_oprop, 0, FALSE))
                 accessory_has_effect(mon, otmp);
 
