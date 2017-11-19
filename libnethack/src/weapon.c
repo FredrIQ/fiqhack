@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -304,7 +304,7 @@ dmgval(struct obj *otmp, struct monst *mon)
 
         /* if the weapon is going to get a double damage bonus, adjust this
            bonus so that effectively it's added after the doubling */
-        boolean dummy;
+        int dummy;
         if (bonus > 1 && otmp->oartifact &&
             spec_dbon(otmp, mon, 25, &dummy) >= 25)
             bonus = (bonus + 1) / 2;

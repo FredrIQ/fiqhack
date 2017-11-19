@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -349,15 +349,17 @@ drinkfountain(void)
             dogushforth(TRUE);
             break;
         case 26:       /* Poisonous; strange tingling in dipfountain */
-            if (Poison_resistance) {
+            if (resists_poison(&youmonst)) {
                 /* change from 3.4.3: removed the "is contaminated" message in
                    the case where you resist it, to reduce message spam and to
                    make the message channeling more consistent */
-                pline(msgc_nonmonbad,
+                pline(immune_to_poison(&youmonst) ? msgc_playerimmune :
+                      msgc_nonmonbad,
                       "Is this water runoff from the nearby %s farm?",
                       fruitname(FALSE));
-                losehp(rnd(4),
-                       killer_msg(DIED, "an unrefrigerated sip of juice"));
+                if (!immune_to_poison(&youmonst))
+                    losehp(rnd(4),
+                           killer_msg(DIED, "an unrefrigerated sip of juice"));
                 break;
             }
             pline(msgc_intrloss, "The water is contaminated!");
@@ -553,11 +555,16 @@ drinksink(void)
         pline(msgc_failrandom, "You take a sip of very warm water.");
         break;
     case 2:
-        if (Fire_resistance) {
+        if (immune_to_fire(&youmonst)) {
             pline(msgc_playerimmune, "This scalding hot water is quite tasty!");
         } else {
             pline(msgc_nonmonbad, "You take a sip of scalding hot water.");
-            losehp(rnd(6), killer_msg(DIED, "sipping boiling water"));
+            int dmg;
+            if (resists_fire(&youmonst))
+                dmg = rnd(3);
+            else
+                dmg = rnd(6);
+            losehp(dmg, killer_msg(DIED, "sipping boiling water"));
         }
         break;
     case 3:

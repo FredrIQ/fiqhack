@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,12 +25,7 @@
 
 /*** Resistances to troubles ***/
 /* With intrinsics and extrinsics */
-# define Fire_resistance        uhas_property(FIRE_RES)
-# define Cold_resistance        uhas_property(COLD_RES)
-# define Sleep_resistance       uhas_property(SLEEP_RES)
 # define Disint_resistance      uhas_property(DISINT_RES)
-# define Shock_resistance       uhas_property(SHOCK_RES)
-# define Poison_resistance      uhas_property(POISON_RES)
 # define Drain_resistance       uhas_property(DRAIN_RES)
 
 /* Intrinsics only */
@@ -38,7 +33,6 @@
 
 /* Extrinsics and polyforms only */
 # define Antimagic              uhas_property(ANTIMAGIC)
-# define Acid_resistance        uhas_property(ACID_RES)
 # define Stone_resistance       uhas_property(STONE_RES)
 
 

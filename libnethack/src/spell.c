@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -158,6 +158,13 @@ cursed_book(struct monst *mon, struct obj *bp)
                       ERODE_CORRODE, TRUE, TRUE);
             break;
         }
+        if (immune_to_poison(mon)) {
+            if (you || canseemon(mon))
+                pline(combat_msgc(NULL, mon, cr_immune),
+                      "%s unharmed.", M_verbs(mon, "seem"));
+            break;
+        }
+
         /* Temporarily disable in_use; death should not destroy the book.
 
            Paranoia: ensure that we don't turn /on/ in_use, that causes a
@@ -167,9 +174,9 @@ cursed_book(struct monst *mon, struct obj *bp)
         was_inuse = bp->in_use;
         bp->in_use = FALSE;
         if (you) {
-            losestr(Poison_resistance ? rn1(2, 1) : rn1(4, 3), DIED,
+            losestr(resists_poison(&youmonst) ? rn1(2, 1) : rn1(4, 3), DIED,
                     killer_msg(DIED, "a contact-poisoned spellbook"), NULL);
-            losehp(rnd(Poison_resistance ? 6 : 10),
+            losehp(rnd(resists_poison(&youmonst) ? 6 : 10),
                    killer_msg(DIED, "a contact-poisoned spellbook"));
         } else {
             /* do a bit more damage since monsters can't lose str */

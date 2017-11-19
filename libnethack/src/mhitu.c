@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1711,7 +1711,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         }
         break;
     case AD_ACID:
-        if (Acid_resistance) {
+        if (immune_to_acid(&youmonst)) {
             pline(msgc_playerimmune,
                   "You are covered with a seemingly harmless goo.");
             tmp = 0;
@@ -1721,8 +1721,12 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
                       "Ouch!  You've been slimed!");
             else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
-                      "You are covered in slime!  It burns!");
-            exercise(A_STR, FALSE);
+                      "You are covered in slime!%s",
+                      !resists_acid(&youmonst) ? "  It burns!" : "");
+            if (resists_acid(&youmonst))
+                tmp = (tmp + 1) / 2;
+            else
+                exercise(A_STR, FALSE);
         }
         break;
     case AD_BLND:
@@ -1738,27 +1742,34 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_ELEC:
         if (!cancelled(mtmp) && rn2(2)) {
-            if (Shock_resistance) {
+            if (immune_to_elec(&youmonst)) {
                 shieldeff(u.ux, u.uy);
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "Electricity sparks around, avoiding you.");
                 ugolemeffects(AD_ELEC, tmp);
                 tmp = 0;
-            } else {
+            } else if (resists_elec(&youmonst)) {
+                pline(combat_msgc(mtmp, &youmonst, cr_resist),
+                      "Electricity sparks around, hurting you a bit!");
+                tmp = (tmp + 1) / 2;
+            } else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
                       "The air around you crackles with electricity.");
-            }
         } else
             tmp = 0;
         break;
     case AD_COLD:
         if (!cancelled(mtmp) && rn2(2)) {
-            if (Cold_resistance) {
+            if (immune_to_cold(&youmonst)) {
                 shieldeff(u.ux, u.uy);
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "You feel mildly chilly.");
                 ugolemeffects(AD_COLD, tmp);
                 tmp = 0;
+            } else if (resists_cold(&youmonst)) {
+                pline(combat_msgc(mtmp, &youmonst, cr_resist),
+                      "You feel very chilly!");
+                tmp = (tmp + 1) / 2;
             } else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
                       "You are freezing to death!");
@@ -1767,12 +1778,16 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_FIRE:
         if (!cancelled(mtmp) && rn2(2)) {
-            if (Fire_resistance) {
+            if (immune_to_fire(&youmonst)) {
                 shieldeff(u.ux, u.uy);
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "You feel mildly hot.");
                 ugolemeffects(AD_FIRE, tmp);
                 tmp = 0;
+            } else if (resists_fire(&youmonst)) {
+                pline(combat_msgc(mtmp, &youmonst, cr_resist),
+                      "You feel very hot!");
+                tmp = (tmp + 1) / 2;
             } else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
                       "You are burning to a crisp!");
@@ -1823,6 +1838,7 @@ explmu(struct monst *mtmp, const struct attack *mattk)
 
     int tmp = dice((int)mattk->damn, (int)mattk->damd);
     boolean not_affected = defends((int)mattk->adtyp, uwep);
+    int hurt = 0;
 
     hitmsg(mtmp, mattk);
     remove_monster(level, mtmp->mx, mtmp->my);
@@ -1830,16 +1846,24 @@ explmu(struct monst *mtmp, const struct attack *mattk)
 
     switch (mattk->adtyp) {
     case AD_COLD:
-        not_affected |= Cold_resistance;
+        if (!immune_to_cold(&youmonst))
+            hurt++;
+        if (!resists_cold(&youmonst))
+            hurt++;
         goto common;
     case AD_FIRE:
-        not_affected |= Fire_resistance;
+        if (!immune_to_fire(&youmonst))
+            hurt++;
+        if (!resists_fire(&youmonst))
+            hurt++;
         goto common;
     case AD_ELEC:
-        not_affected |= Shock_resistance;
+        if (!immune_to_elec(&youmonst))
+            hurt++;
+        if (!resists_elec(&youmonst))
+            hurt++;
     common:
-
-        if (!not_affected) {
+        if (hurt) {
             if (ACURR(A_DEX) > rnd(20)) {
                 pline(combat_msgc(mtmp, &youmonst, cr_resist),
                       "You duck some of the blast.");
@@ -1847,6 +1871,11 @@ explmu(struct monst *mtmp, const struct attack *mattk)
             } else {
                 pline_implied(combat_msgc(mtmp, &youmonst, cr_hit),
                               "You get blasted!");
+            }
+            if (hurt == 1) {
+                pline(combat_msgc(mtmp, &youmonst, cr_resist),
+                      "%s!", M_verbs(&youmonst, "resist"));
+                tmp = (tmp + 1) / 2;
             }
             if (mattk->adtyp == AD_FIRE)
                 burn_away_slime(&youmonst);
@@ -2354,14 +2383,17 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
     switch (olduasmon->mattk[i].adtyp) {
     case AD_ACID:
         if (!rn2(2)) {
-            if (resists_acid(mtmp)) {
+            if (immune_to_acid(mtmp)) {
                 pline(combat_msgc(&youmonst, mtmp, cr_immune),
                       "%s is splashed by your acid, but doesn't care.",
                       Monnam(mtmp));
                 tmp = 0;
-            } else
+            } else {
                 pline(combat_msgc(&youmonst, mtmp, cr_hit),
                       "%s is splashed by your acid!", Monnam(mtmp));
+                if (resists_acid(mtmp))
+                    tmp = (tmp + 1) / 2;
+            }
         } else
             tmp = 0;
         if (!rn2(30))
@@ -2458,16 +2490,20 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
             mtmp->mfrozen = min(tmp, 127);
             return 3;
         case AD_COLD:  /* Brown mold or blue jelly */
-            if (resists_cold(mtmp)) {
+            if (immune_to_cold(mtmp)) {
                 shieldeff(mtmp->mx, mtmp->my);
-                pline(combat_msgc(&youmonst, mtmp, cr_miss),
+                pline(combat_msgc(&youmonst, mtmp, cr_immune),
                       "%s is mildly chilly.", Monnam(mtmp));
                 golemeffects(mtmp, AD_COLD, tmp);
                 tmp = 0;
                 break;
-            }
-            pline(combat_msgc(&youmonst, mtmp, cr_hit),
-                  "%s is suddenly very cold!", Monnam(mtmp));
+            } else if (resists_cold(mtmp)) {
+                pline(combat_msgc(&youmonst, mtmp, cr_resist),
+                      "%s very chilly!", M_verbs(mtmp, "are"));
+                tmp = (tmp + 1) / 2;
+            } else
+                pline(combat_msgc(&youmonst, mtmp, cr_hit),
+                      "%s is suddenly very cold!", Monnam(mtmp));
             u.mh += tmp / 2;
             if (u.mhmax < u.mh)
                 u.mhmax = u.mh;
@@ -2484,28 +2520,37 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
             tmp = 0;
             break;
         case AD_FIRE:  /* Red mold */
-            if (resists_fire(mtmp)) {
+            if (immune_to_fire(mtmp)) {
                 shieldeff(mtmp->mx, mtmp->my);
                 pline(combat_msgc(&youmonst, mtmp, cr_miss),
                       "%s is mildly warm.", Monnam(mtmp));
                 golemeffects(mtmp, AD_FIRE, tmp);
                 tmp = 0;
                 break;
+            } else if (resists_fire(mtmp)) {
+                pline(combat_msgc(&youmonst, mtmp, cr_resist),
+                      "%s mildly hot!", M_verbs(mtmp, "are"));
+                tmp = (tmp + 1) / 2;
+                break;
             }
             pline(combat_msgc(&youmonst, mtmp, cr_hit),
                   "%s is suddenly very hot!", Monnam(mtmp));
             break;
         case AD_ELEC:
-            if (resists_elec(mtmp)) {
+            if (immune_to_elec(mtmp)) {
                 shieldeff(mtmp->mx, mtmp->my);
-                pline(combat_msgc(&youmonst, mtmp, cr_miss),
+                pline(combat_msgc(&youmonst, mtmp, cr_immune),
                       "%s is slightly tingled.", Monnam(mtmp));
                 golemeffects(mtmp, AD_ELEC, tmp);
                 tmp = 0;
                 break;
-            }
-            pline(combat_msgc(&youmonst, mtmp, cr_hit),
-                  "%s is jolted with your electricity!", Monnam(mtmp));
+            } else if (resists_elec(mtmp)) {
+                pline(combat_msgc(&youmonst, mtmp, cr_resist),
+                      "%s jolted slightly.", M_verbs(mtmp, "are"));
+                tmp = (tmp + 1) / 2;
+            } else
+                pline(combat_msgc(&youmonst, mtmp, cr_hit),
+                      "%s is jolted with your electricity!", Monnam(mtmp));
             break;
         default:
             tmp = 0;

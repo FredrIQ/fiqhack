@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,6 +32,12 @@
 # define resists_hallu(mon)     (has_property(mon, HALLUC_RES))
 # define resists_stun(mon)      (has_property(mon, STUN_RES))
 # define resists_death(mon)     (has_property(mon, DEATH_RES))
+# define immune_to_fire(mon)    (has_immunity(mon, FIRE_RES))
+# define immune_to_cold(mon)    (has_immunity(mon, COLD_RES))
+# define immune_to_sleep(mon)   (has_immunity(mon, SLEEP_RES))
+# define immune_to_elec(mon)    (has_immunity(mon, SHOCK_RES))
+# define immune_to_poison(mon)  (has_immunity(mon, POISON_RES))
+# define immune_to_acid(mon)    (has_immunity(mon, ACID_RES))
 # define reflecting(mon)        (has_property(mon, REFLECTING))
 # define half_spell_dam(mon)    (has_property(mon, HALF_SPDAM))
 # define half_phys_dam(mon)     (has_property(mon, HALF_PHDAM))

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -106,10 +106,11 @@ boulder_hits_pool(struct obj * otmp, int rx, int ry, boolean pushing)
                 pline(msgc_consequence, "You find yourself on dry land again!");
             } else if (lava && distu(rx, ry) <= 2) {
                 pline(msgc_nonmonbad, "You are hit by molten lava%c",
-                      Fire_resistance ? '.' : '!');
+                      resists_fire(&youmonst) ? '.' : '!');
                 burn_away_slime(&youmonst);
-                losehp(dice((Fire_resistance ? 1 : 3), 6),
-                       killer_msg(DIED, "molten lava"));
+                if (!immune_to_fire(&youmonst))
+                    losehp(dice((resists_fire(&youmonst) ? 1 : 3), 6),
+                           killer_msg(DIED, "molten lava"));
             } else if (!fills_up && (pushing ? !Blind : cansee(rx, ry)))
                 pline(msgc_noconsequence, "It sinks without a trace!");
         }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -435,7 +435,7 @@ god_zaps_you(aligntyp resp_god)
         pline(msgc_alignbad,
               "Suddenly a bolt of lightning comes down at you from the "
               "heavens!");
-        if (!resists_elec(u.ustuck)) {
+        if (!immune_to_elec(u.ustuck)) {
             pline(combat_msgc(NULL, u.ustuck, cr_hit),
                   "%s is hit by it, and fries to a crisp!", Monnam(u.ustuck));
             /* Yup, you get experience.  It takes guts to successfully pull off
@@ -453,7 +453,9 @@ god_zaps_you(aligntyp resp_god)
             else
                 mon_reflects(&youmonst, NULL, FALSE, 
                              "%s reflects from %s %s.", "It");
-        } else if (Shock_resistance) {
+        } else if (immune_to_elec(&youmonst)) {
+            /* You need full immunity to be protected, gods aren't deterred
+               by resistances. */
             shieldeff(u.ux, u.uy);
             pline(msgc_playerimmune, "It seems not to affect you.");
         } else

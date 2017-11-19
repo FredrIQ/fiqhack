@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -152,18 +152,18 @@ dosit(const struct nh_cmd_arg *arg)
         /* must be WWalking */
         pline(msgc_yafm, sit_message, "lava");
         burn_away_slime(&youmonst);
-        if (likes_lava(youmonst.data)) {
+        if (likes_lava(youmonst.data) || immune_to_fire(&youmonst)) {
             pline(msgc_yafm, "The lava feels warm.");
             return 1;
         }
         pline(msgc_badidea, "The lava burns you!");
-        losehp(dice((Fire_resistance ? 2 : 10), 10),
+        losehp(dice((resists_fire(&youmonst) ? 2 : 10), 10),
                killer_msg(DIED, "sitting on lava"));
 
     } else if (is_ice(level, u.ux, u.uy)) {
 
         pline(msgc_yafm, sit_message, defexplain[S_ice]);
-        if (!Cold_resistance)
+        if (!immune_to_cold(&youmonst))
             pline(msgc_yafm, "The ice feels cold.");
 
     } else if (typ == DRAWBRIDGE_DOWN) {
@@ -184,10 +184,16 @@ dosit(const struct nh_cmd_arg *arg)
                 adjattrib(rn2_on_rng(A_MAX, rng_throne_result), 1, FALSE);
                 break;
             case 3:
-                pline(Shock_resistance ? msgc_notresisted : msgc_nonmonbad,
+                if (immune_to_elec(&youmonst)) {
+                    pline(msgc_yafm, "The throne tingles!");
+                    break;
+                }
+
+                pline(resists_elec(&youmonst) ? msgc_notresisted :
+                      msgc_nonmonbad,
                       "A%s electric shock shoots through your body!",
-                      (Shock_resistance) ? "n" : " massive");
-                losehp(Shock_resistance ? rnd(6) : rnd(30),
+                      resists_elec(&youmonst) ? "n" : " massive");
+                losehp(resists_elec(&youmonst) ? rnd(6) : rnd(30),
                        killer_msg(DIED, "an electric chair"));
                 exercise(A_CON, FALSE);
                 break;

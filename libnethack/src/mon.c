@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-06 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -396,7 +396,8 @@ minliquid(struct monst *mtmp)
            protect their stuff. Fire resistant monsters can only protect
            themselves  --ALI */
         burn_away_slime(mtmp);
-        if (!is_clinger(mtmp->data) && !likes_lava(mtmp->data)) {
+        if (!is_clinger(mtmp->data) && !likes_lava(mtmp->data) &&
+            !immune_to_fire(mtmp)) {
             /* check if water walking boots should burn */
             struct obj *armf = which_armor(mtmp, os_armf);
             if (waterwalks(mtmp) && armf && is_organic(armf) &&
@@ -1604,11 +1605,11 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                                  && !is_clinger(mdat))
                              || In_sokoban(&u.uz))
                             && (ttmp->ttyp != SLP_GAS_TRAP ||
-                                !resists_sleep(mon))
+                                !immune_to_sleep(mon))
                             && (ttmp->ttyp != BEAR_TRAP ||
                                 (mdat->msize > MZ_SMALL && !amorphous(mdat) &&
                                  !flying(mon)))
-                            && (ttmp->ttyp != FIRE_TRAP || !resists_fire(mon))
+                            && (ttmp->ttyp != FIRE_TRAP || !immune_to_fire(mon))
                             && (ttmp->ttyp != SQKY_BOARD || !flying(mon) ||
                                 !levitates(mon))
                             && (ttmp->ttyp != WEB ||
@@ -2937,20 +2938,24 @@ poisoned(struct monst *mon, const char *string, int typ, const char *killer,
     if (!you)
         rng = rng_main;
 
-    i = resists_poison(mon) ? 0 : rn2_on_rng(permanent, rng);
+    /* With resistance, you only lose attributes 1/3 as often.
+       Also, the attribute loss, when it happens, is smaller,
+       as done later. */
+    i = immune_to_poison(mon) ? 0 : rn2_on_rng(permanent * 3, rng);
+    if (!resists_poison(mon))
+        i /= 3;
 
     if (vis && strcmp(string, "blast") && !thrown_weapon) {
         /* 'blast' has already given a 'poison gas' message */
         /* so have "poison arrow", "poison dart", etc... */
         plural = (string[strlen(string) - 1] == 's') ? 1 : 0;
         /* avoid "The" Orcus's sting was poisoned... */
-        pline(resists_poison(mon) ?
-              combat_msgc(NULL, mon, cr_immune) :
+        pline(immune_to_poison(mon) ? combat_msgc(NULL, mon, cr_immune) :
               i == 0 && you ? msgc_intrloss :
               combat_msgc(NULL, mon, cr_hit),
               "%s%s %s poisoned%s", isupper(*string) ? "" : "The ",
               string, plural ? "were" : "was",
-              resists_poison(mon) ?
+              immune_to_poison(mon) ?
               msgcat_many(", but doesn't affect ", mon_nam(mon), ".",
                           NULL) : "!");
         resist_message_printed = TRUE;
@@ -2960,15 +2965,22 @@ poisoned(struct monst *mon, const char *string, int typ, const char *killer,
         if (!strcmp(string, "blast") && vis)
             shieldeff(u.ux, u.uy);
         if (!resist_message_printed && vis)
-            pline(msgc_playerimmune, "%sn't poisoned.",
-                  M_verbs(mon, "are"));
-        return;
+            pline(combat_msgc(NULL, mon, immune_to_poison(mon) ? cr_immune :
+                              cr_resist),
+                  "%s%s poisoned.", M_verbs(mon, "are"),
+                  immune_to_poison(mon) ? "n't" : " only slightly");
+        if (immune_to_poison(mon))
+            return;
     }
 
     if (i <= 5) {
+        int dmg = 3 + rn2_on_rng(3, permanent);
+        if (resists_poison(mon))
+            dmg = (dmg + 2) / 3;
+
         if (you) {
             /* Check that a stat change was made */
-            if (adjattrib(typ, thrown_weapon ? -1 : -rn1(3, 3), 1)) {
+            if (adjattrib(typ, thrown_weapon ? -1 : -dmg, 1)) {
                 pline(msgc_intrloss, "You%s%s!", poiseff[typ],
                       !i ? " permanently" : "");
                 if (!i)
@@ -2978,7 +2990,7 @@ poisoned(struct monst *mon, const char *string, int typ, const char *killer,
             if (vis)
                 pline(combat_msgc(NULL, mon, cr_hit),
                       "%s weaker!", M_verbs(mon, "look"));
-            mon->mhpmax -= (thrown_weapon ? 1 : rn1(3, 3));
+            mon->mhpmax -= (thrown_weapon ? 1 : dmg);
             if (mon->mhpmax < 1)
                 mon->mhpmax = 1;
             if (mon->mhp > mon->mhpmax)
@@ -2986,7 +2998,7 @@ poisoned(struct monst *mon, const char *string, int typ, const char *killer,
         }
     } else {
         i = thrown_weapon ? rnd(6) : rn1(10, 6);
-        if (Half_physical_damage)
+        if (resists_poison(mon))
             i = (i + 1) / 2;
         if (you)
             losehp(i, killer);

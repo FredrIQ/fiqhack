@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -818,12 +818,18 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (cancelled(magr) || !visda)
             break;
 
-        if (resists_fire(mdef)) {
+        if (immune_to_fire(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "%s at %s, but %s to catch fire.", M_verbs(magr, "glare"),
                       udef ? "you" : mon_nam(mdef), m_verbs(mdef, "fail"));
             dmg = 0;
+        } else if (resists_fire(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_resist),
+                      "%s at %s, but %s!", M_verbs(magr, "glare"),
+                      mon_nam(mdef), m_verbs(mdef, "resist"));
+            dmg = (dmg + 1) / 2;
         } else if (vis)
             pline(combat_msgc(magr, mdef, cr_hit),
                   "%s %s with a fiery gaze!", M_verbs(magr, "attack"),
@@ -855,12 +861,12 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (cancelled(magr) || !visda)
             break;
 
-        if (!resists_sleep(mdef)) {
+        if (!immune_to_sleep(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit),
-                      "%s gaze makes %s very sleepy...",
-                      uagr ? "Your" : s_suffix(Monnam(mdef)),
-                      udef ? "you" : mon_nam(mdef));
+                      "%s gaze makes %s %s sleepy...",
+                      s_suffix(Monnam(magr)), mon_nam(mdef),
+                      resists_sleep(mdef) ? "a bit" : "very");
             sleep_monst(magr, mdef, dmg, 0);
             if (!udef)
                 slept_monst(mdef);
@@ -1081,7 +1087,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             dmg = 0;
             break;
         }
-        if (resists_fire(mdef)) {
+        if (immune_to_fire(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "%s %s, but it doesn't do much.",
@@ -1094,11 +1100,12 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             pline(combat_msgc(magr, mdef, cr_hit), "%s %s!",
                   M_verbs(mdef, "are"),
                   on_fire(mdef->data, mattk));
-
         burn_away_slime(mdef);
 
-        if (resists_fire(mdef))
+        if (immune_to_fire(mdef))
             break;
+        if (resists_fire(mdef))
+            dmg = (dmg + 1) / 2;
 
         if (pd == &mons[PM_STRAW_GOLEM] || pd == &mons[PM_PAPER_GOLEM]) {
             if (vis)
@@ -1121,7 +1128,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             dmg = 0;
             break;
         }
-        if (resists_cold(mdef)) {
+        if (immune_to_cold(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "%s coated in frost, but resist%s the effects.",
@@ -1130,6 +1137,12 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             shieldeff(mdef->mx, mdef->my);
             golemeffects(mdef, AD_COLD, dmg);
             dmg = 0;
+        } else if (resists_cold(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_resist),
+                      "%s coated in frost, but parially resist%s the effects.",
+                      M_verbs(mdef, "are"), udef ? "" : "s");
+            dmg = (dmg + 1) / 2;
         } else if (vis)
             pline(combat_msgc(magr, mdef, cr_hit), "%s covered in frost!",
                   M_verbs(mdef, "are"));
@@ -1139,7 +1152,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             dmg = 0;
             break;
         }
-        if (resists_elec(mdef)) {
+        if (immune_to_elec(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "%s zapped, but do%sn't seem shocked.",
@@ -1151,9 +1164,11 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         } else if (vis)
             pline(combat_msgc(magr, mdef, cr_hit), "%s zapped!",
                   M_verbs(mdef, "are"));
+        if (resists_elec(mdef))
+            dmg = (dmg + 1) / 2;
         break;
     case AD_SLEE:
-        if (cancelled || magr->mspec_used || resists_sleep(mdef))
+        if (cancelled || magr->mspec_used || immune_to_sleep(mdef))
             break;
 
         magr->mspec_used += rnd(10);
@@ -1182,7 +1197,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             dmg = 0;
             break;
         }
-        if (resists_acid(mdef)) {
+        if (immune_to_acid(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_immune),
                       "%s covered in acid, but it seems harmless.",
@@ -1190,6 +1205,12 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             shieldeff(mdef->mx, mdef->my);
             golemeffects(mdef, AD_ACID, dmg);
             dmg = 0;
+        } else if (resists_acid(mdef)) {
+            if (vis)
+                pline(combat_msgc(magr, mdef, cr_resist),
+                      "%s covered in acid, but it only burns a bit!",
+                      M_verbs(mdef, "are"));
+            dmg = (dmg + 1) / 2;
         } else {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_hit), "%s covered in acid!",
@@ -1942,13 +1963,16 @@ noattacks(const struct permonst *ptr)
 int
 sleep_monst(struct monst *magr, struct monst *mdef, int amt, int how)
 {
-    if (resists_sleep(mdef) || (how >= 0 && mdef != &youmonst &&
-                                resist(magr, mdef, (char)how, TELL, 0))) {
+    if (immune_to_sleep(mdef) || (how >= 0 && mdef != &youmonst &&
+                                  resist(magr, mdef, (char)how, TELL, 0))) {
         shieldeff(m_mx(mdef), m_my(mdef));
         return 0;
     }
     if (mdef == &youmonst ? u_helpless(hm_asleep) : !mdef->mcanmove)
         return 0;
+
+    if (resists_sleep(mdef))
+        amt = (amt + 2) / 3;
 
     if (mdef == &youmonst) {
         helpless(amt, hr_asleep, "sleeping", NULL);
@@ -2038,9 +2062,11 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
     switch (mddat->mattk[i].adtyp) {
     case AD_ACID:
         if (mhit && !rn2(2)) {
-            if (resists_acid(magr))
+            if (immune_to_acid(magr))
                 tmp = 0;
             if (canseemon(magr)) {
+                if (resists_acid(magr))
+                    tmp = (tmp + 1) / 2;
                 if (tmp)
                     pline(combat_msgc(mdef, magr, cr_hit),
                           "%s is splashed by %s acid!",
@@ -2134,16 +2160,20 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
             magr->mfrozen = min(tmp, 127);
             return mdead | mhit;
         case AD_COLD:
-            if (resists_cold(magr)) {
+            if (immune_to_cold(magr)) {
                 if (canseemon(magr)) {
-                    pline(combat_msgc(mdef, magr, cr_miss),
+                    pline(combat_msgc(mdef, magr, cr_immune),
                           "%s is mildly chilly.", Monnam(magr));
                     golemeffects(magr, AD_COLD, tmp);
                 }
                 tmp = 0;
                 break;
-            }
-            if (canseemon(magr))
+            } else if (resists_cold(magr)) {
+                if (canseemon(magr))
+                    pline(combat_msgc(mdef, magr, cr_resist),
+                          "%s very chilly!", M_verbs(magr, "are"));
+                tmp = (tmp + 1) / 2;
+            } else if (canseemon(magr))
                 pline(combat_msgc(mdef, magr, cr_hit),
                       "%s is suddenly very cold!", Monnam(magr));
             mdef->mhp += tmp / 2;
@@ -2176,13 +2206,19 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
             break;
         case AD_FIRE:
             burn_away_slime(magr);
-            if (resists_fire(magr)) {
+            if (immune_to_fire(magr)) {
                 if (canseemon(magr)) {
-                    pline(combat_msgc(mdef, magr, cr_miss),
+                    pline(combat_msgc(mdef, magr, cr_immune),
                           "%s is mildly warmed.", Monnam(magr));
                     golemeffects(magr, AD_FIRE, tmp);
                 }
                 tmp = 0;
+                break;
+            } else if (resists_fire(magr)) {
+                if (canseemon(magr))
+                    pline(combat_msgc(mdef, magr, cr_resist),
+                          "%s mildly hot!", M_verbs(magr, "are"));
+                tmp = (tmp + 1) / 2;
                 break;
             }
             if (canseemon(magr))
@@ -2190,16 +2226,20 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                       "%s is suddenly very hot!", Monnam(magr));
             break;
         case AD_ELEC:
-            if (resists_elec(magr)) {
+            if (immune_to_elec(magr)) {
                 if (canseemon(magr)) {
-                    pline(combat_msgc(mdef, magr, cr_miss),
+                    pline(combat_msgc(mdef, magr, cr_immune),
                           "%s is mildly tingled.", Monnam(magr));
                     golemeffects(magr, AD_ELEC, tmp);
                 }
                 tmp = 0;
                 break;
-            }
-            if (canseemon(magr))
+            } else if (resists_elec(magr)) {
+                if (canseemon(magr))
+                    pline(combat_msgc(mdef, magr, cr_resist),
+                          "%s mildly jolted.", M_verbs(magr, "are"));
+                tmp = (tmp + 1) / 2;
+            } else if (canseemon(magr))
                 pline(combat_msgc(mdef, magr, cr_hit),
                       "%s is jolted with electricity!", Monnam(magr));
             break;

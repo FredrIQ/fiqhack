@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -80,12 +80,15 @@ thitu(int tlev, int dam, struct obj *obj, const char *name)
             pline(msgc_statusbad, "The silver sears your flesh!");
             exercise(A_CON, FALSE);
         }
-        if (is_acid && Acid_resistance)
+        if (is_acid && immune_to_acid(&youmonst))
             pline(msgc_playerimmune, "It doesn't seem to hurt you.");
         else {
-            if (is_acid)
-                pline(msgc_statusbad, "It burns!");
-            if (Half_physical_damage)
+            if (is_acid) {
+                if (!resists_acid(&youmonst))
+                    pline(msgc_statusbad, "It burns!");
+                else
+                    dam = (dam + 1) / 2;
+            } else if (Half_physical_damage)
                 dam = (dam + 1) / 2;
             losehp(dam, killer);
             exercise(A_STR, FALSE);
@@ -186,8 +189,12 @@ ohitmon(struct monst *mtmp, /* accidental target */
     } else {
         damage = dmgval(otmp, mtmp);
 
-        if (otmp->otyp == ACID_VENOM && resists_acid(mtmp))
-            damage = 0;
+        if (otmp->otyp == ACID_VENOM) {
+            if (immune_to_acid(mtmp))
+                damage = 0;
+            else if (resists_acid(mtmp))
+                damage = (damage + 1) / 2;
+        }
         if (ismimic)
             seemimic(mtmp);
         mtmp->msleeping = 0;
@@ -225,7 +232,7 @@ ohitmon(struct monst *mtmp, /* accidental target */
         }
         if (!DEADMONSTER(mtmp) && otmp->otyp == ACID_VENOM &&
             cansee(mtmp->mx, mtmp->my)) {
-            if (resists_acid(mtmp)) {
+            if (immune_to_acid(mtmp)) {
                 if (vis || spoil_unseen)
                     pline(combat_msgc(magr, mtmp, cr_immune),
                           "%s is unaffected.", Monnam(mtmp));
@@ -233,9 +240,12 @@ ohitmon(struct monst *mtmp, /* accidental target */
             } else {
                 if (vis)
                     pline(combat_msgc(magr, mtmp, cr_hit),
-                          "The acid burns %s!", mon_nam(mtmp));
+                          "The acid burns %s%s!", mon_nam(mtmp),
+                          resists_acid(mtmp) ? " a bit" : "");
                 else if (spoil_unseen)
                     pline(combat_msgc(magr, mtmp, cr_hit), "It is burned!");
+                if (resists_acid(mtmp))
+                    damage = (damage + 1) / 2;
             }
         }
 

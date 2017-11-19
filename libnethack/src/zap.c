@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3091,7 +3091,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
 {
     int tmp = dice(nd, 6);
     int abstype = abs(type) % 10;
-    int resisted = 0; /* 1=show msg, 2=don't */
+    int resisted = 0; /* 1=show msg, 2=don't, 3=partially resist (half damage) */
     const char *ztyp;
     const char *fltxt;
     boolean oseen = FALSE;
@@ -3148,7 +3148,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         break;
     case ZT_FIRE:
         ztyp = "hot";
-        if (resists_fire(mdef)) {
+        if (immune_to_fire(mdef)) {
             resisted = 1;
             if (likes_fire(mdef->data)) {
                 /* innately hot creatures probably look hot... */
@@ -3157,8 +3157,9 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
                     pline(combat_msgc(magr, mdef, cr_immune),
                           "%s unharmed!", M_verbs(mdef, "are"));
             }
-        }
-        if (resists_cold(mdef)) {
+        } else if (resists_fire(mdef))
+            resisted = 3;
+        else if (resists_cold(mdef)) {
             tmp += dice(nd, 3);
             if (oseen && hallucinating(&youmonst))
                 pline(combat_msgc(magr, mdef, cr_hit),
@@ -3182,9 +3183,11 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         break;
     case ZT_COLD:
         ztyp = "cold";
-        if (resists_cold(mdef))
+        if (immune_to_cold(mdef))
             resisted = 1;
-        if (resists_fire(mdef)) {
+        else if (resists_cold(mdef))
+            resisted = 3;
+        else if (resists_fire(mdef)) {
             tmp += dice(nd, 3);
             if (oseen && hallucinating(&youmonst))
                 pline(combat_msgc(magr, mdef, cr_hit),
@@ -3201,10 +3204,16 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     case ZT_SLEEP:
         ztyp = "sleepy";
         tmp = 0;
-        if (resists_sleep(mdef))
+        if (immune_to_sleep(mdef))
             resisted = 1;
         else {
-            sleep_monst(magr, mdef, dice(nd, 6),
+            int turns = dice(nd, 6);
+            if (resists_sleep(mdef) &&
+                (mdef == &youmonst || canseemon(mdef)))
+                pline(combat_msgc(magr, mdef, cr_resist),
+                      "%s a bit %s.", M_verbs(mdef, "feel"), ztyp);
+
+            sleep_monst(magr, mdef, turns,
                         buzztyp == ZT_WAND(ZT_SLEEP) ? WAND_CLASS : '\0');
             if (!you)
                 slept_monst(mdef);
@@ -3331,8 +3340,10 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         return; /* lifesaved */
     case ZT_LIGHTNING:
         ztyp = "shocked";
-        if (resists_elec(mdef))
+        if (immune_to_elec(mdef))
             resisted = 1;
+        else if (resists_elec(mdef))
+            resisted = 3;
         else if (you)
             exercise(A_CON, FALSE);
         if (!resisted && selfzap && oseen)
@@ -3354,7 +3365,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         break;
     case ZT_POISON_GAS:
         ztyp = "affected";
-        if (resists_poison(mdef)) {
+        if (immune_to_poison(mdef)) {
             resisted = 1;
             break;
         }
@@ -3364,8 +3375,10 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         break;
     case ZT_ACID:
         ztyp = "burned";
-        if (resists_acid(mdef))
+        if (immune_to_acid(mdef))
             resisted = 1;
+        else if (resists_acid(mdef))
+            resisted = 3;
         else if (you) {
             pline_implied(combat_msgc(magr, mdef, cr_hit),
                           "The acid burns!");
@@ -3393,13 +3406,15 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     }
     if (resisted) {
         shieldeff(m_mx(mdef), m_my(mdef));
-        if (ztyp && resisted == 1)
-            pline(combat_msgc(magr, mdef, cr_immune),
-                  "%s %s %s.",
-                  you ? "You" : Monnam(mdef),
-                  you ? "don't feel" : "doesn't seem",
-                  ztyp);
-        return;
+        if (ztyp) {
+            if (resisted == 1) {
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "%sn't feel %s.", M_verbs(mdef, "do"), ztyp);
+                return;
+            } else if (resisted == 3)
+                pline(combat_msgc(magr, mdef, cr_resist),
+                      "%s a bit %s.", M_verbs(mdef, "feel"), ztyp);
+        }
     }
     if (tmp && spellcaster)
         tmp += spell_damage_bonus();
@@ -3411,6 +3426,8 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
         tmp /= 2;
     if (half_spell_dam(mdef) && tmp && buzztyp < ZT_BREATH(0))
         tmp = (tmp + 1) / 2;
+    if (resisted == 3)
+        tmp /= 2;
     if (tmp < 0)
         tmp = 0;        /* don't allow negative damage */
     if (raylevel == P_UNSKILLED) {

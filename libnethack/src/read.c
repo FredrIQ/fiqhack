@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1679,13 +1679,14 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (confused) {
             if (!you && vis)
                 pline(msgc_monneutral, "Oh, look, what a pretty fire!");
-            if (resists_fire(mon))
+            if (immune_to_fire(mon))
                 shieldeff(m_mx(mon), m_my(mon));
             if (you) {
-                if (!resists_fire(mon))
+                if (!immune_to_fire(mon))
                     pline(msgc_substitute,
-                          "The scroll catches fire and you burn your %s.",
-                          makeplural(body_part(HAND)));
+                          "The scroll catches fire and you burn your %s%s.",
+                          makeplural(body_part(HAND)),
+                          resists_fire(&youmonst) ? " a bit" : "");
                 else if (!blind(&youmonst))
                     pline(msgc_playerimmune,
                           "Oh, look, what a pretty fire in your %s.",
@@ -1695,11 +1696,15 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                           "You feel a pleasant warmth in your %s.",
                           makeplural(body_part(HAND)));
             }
-            if (!resists_fire(mon)) {
+            if (!immune_to_fire(mon)) {
+                int dmg = 1;
+                if (!resists_fire(mon))
+                    dmg++;
+
                 if (you)
-                    losehp(1, killer_msg(DIED, "a scroll of fire"));
+                    losehp(dmg, killer_msg(DIED, "a scroll of fire"));
                 else {
-                    mon->mhp -= 1;
+                    mon->mhp -= dmg;
                     if (mon->mhp <= 0)
                         mondied(mon);
                 }

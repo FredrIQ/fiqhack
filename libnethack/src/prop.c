@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -145,20 +145,18 @@ static const struct propmsg prop_msg_hallu[] = {
 };
 
 
-/* Intrinsics roles gain by level up
-   Yes, this makes it theoretically possible to give level-based
-   intrinsics for monsters. This technique is not currently used
-   besides the fact that player monsters are granted relevant
-   intrinsics.
-   XL1 intrinsics are stored in permonst (Adding XL1 properties
-   here *works*, but is not the right way to do it IMO -FIQ).
-   TODO: make this part of permonst... somehow
+/* Intrinsics monsters gain by level up. Note that for resistances, trinsics
+   noted here are regarded as a resistance rather than an immunity. This
+   means that if you want something to have fire resistance, but not immunity,
+   you can add them here for XL0 (not 1 since monsters can be level 0).
+   To give an immunity instead, set immunity to TRUE.
    TODO: if this thing ever grants fly/lev/similar, monster XL
    change needs to call update_property properly. */
 struct propxl {
     unsigned int mnum;
     unsigned int xl;
     unsigned int prop;
+    boolean immunity; /* only matters for resistances */
 };
 
 static const struct propxl prop_from_experience[] = {
@@ -434,6 +432,39 @@ m_has_property(const struct monst *mon, enum youprop property,
     return rv & reasons;
 }
 
+/* Returns TRUE if mon has an immunity. Supposed to be used with resistances.
+   This is true if monster has it extrinsically, or as part of their base form
+   excluding level-up trinsics (Example: Fire elementals are immune to fire,
+   level 11 Monks are not.) */
+boolean
+has_immunity(const struct monst *mon, enum youprop property)
+{
+    unsigned rv = has_property(mon, property);
+    if (!rv)
+        return FALSE;
+    if (rv & EXTRINSIC)
+        return TRUE;
+    if (!(rv & FROMFORM))
+        return FALSE;
+
+    /* Now check the innate ones. */
+    rv &= ~FROMFORM;
+
+    const struct permonst *mdat_role = NULL;
+    const struct permonst *mdat_race = NULL;
+    const struct permonst *mdat_poly = NULL;
+    init_permonsts(mon, &mdat_role, &mdat_race, &mdat_poly);
+
+    if (pm_has_property(mdat_role, property) > 0)
+        rv |= W_MASK(os_role);
+    if (mdat_race && pm_has_property(mdat_race, property) > 0)
+        rv |= W_MASK(os_race);
+    if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
+        rv |= W_MASK(os_polyform);
+
+    if (rv & FROMFORM)
+        return TRUE;
+}
 
 /* Check if an object/spell/whatever would have any effect on a target */
 boolean
@@ -1494,7 +1525,7 @@ update_property(struct monst *mon, enum youprop prop,
 
         if (lost && slot == os_dectimeout) {
             int sleeptime = 0;
-            if (!resists_sleep(mon) &&
+            if (!immune_to_sleep(mon) &&
                 ((you && !u_helpless(hm_unconscious)) ||
                  (!you && mon->mcanmove)))
                 sleeptime = rnd(20);
@@ -1508,8 +1539,11 @@ update_property(struct monst *mon, enum youprop prop,
                 sleep_monst(NULL, mon, sleeptime, -1);
             }
 
+            int next_sleep = sleeptime + rnd(100);
+            if (resists_sleep(mon))
+                next_sleep *= 2;
             if (restful_sleep(mon))
-                set_property(mon, prop, sleeptime + rnd(100), TRUE);
+                set_property(mon, prop, next_sleep, TRUE);
         }
         break;
     case LWOUNDED_LEGS:
@@ -2477,8 +2511,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        or for the telepathy to be extrinsic and the viewer within BOLT_LIM. */
     if (!mindless(viewee->data) && !m_helpless(viewer, hm_unconscious)) {
         unsigned telepathy_reason = telepathic(viewer);
+        boolean strong_telepathy = has_immunity(viewer, TELEPAT);
         if ((telepathy_reason && blinded) ||
-            (telepathy_reason & (W_EQUIP | W_ARTIFACT) &&
+            (strong_telepathy &&
              distance <= BOLT_LIM * BOLT_LIM))
             sensemethod |= MSENSE_TELEPATHY;
     }
@@ -2528,8 +2563,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        easily they sense each other. If both has, they can be seen everywhere */
     if (!mindless(viewer->data) && !m_helpless(viewer, hm_unconscious)) {
         unsigned telepathy_reason = telepathic(viewee);
+        boolean strong_telepathy = has_immunity(viewer, TELEPAT);
         if ((telepathy_reason && blinded) ||
-            (telepathy_reason & (W_EQUIP | W_ARTIFACT) &&
+            (strong_telepathy &&
              distance <= BOLT_LIM * BOLT_LIM))
             sensemethod |= MSENSE_TEAMTELEPATHY;
         if (telepathic(viewer) && telepathic(viewee))
@@ -2623,9 +2659,6 @@ static const char
 
 #define enl_msg(menu,prefix,present,past,suffix) \
             enlght_line(menu,prefix, final ? past : present, suffix)
-#define you_are(menu,attr)            enl_msg(menu,You_,are,were,attr)
-#define you_have(menu,attr)           enl_msg(menu,You_,have,had,attr)
-#define you_can(menu,attr)            enl_msg(menu,You_,can,could,attr)
 #define you_have_been(menu,goodthing) enl_msg(menu,You_,have_been,were, \
                                               goodthing)
 #define you_have_never(menu,badthing) \
@@ -2774,17 +2807,27 @@ enlighten_mon(struct monst *mon, int final)
 
 
         /*** Resistances to troubles ***/
-    if (resists_fire(mon))
+    if (immune_to_fire(mon))
+        mon_is(&menu, mon, "immune to fire");
+    else if (resists_fire(mon))
         mon_is(&menu, mon, "fire resistant");
-    if (resists_cold(mon))
+    if (immune_to_cold(mon))
+        mon_is(&menu, mon, "immune to cold");
+    else if (resists_cold(mon))
         mon_is(&menu, mon, "cold resistant");
-    if (resists_sleep(mon))
+    if (immune_to_sleep(mon))
+        mon_is(&menu, mon, "immune to sleep");
+    else if (resists_sleep(mon))
         mon_is(&menu, mon, "sleep resistant");
     if (resists_disint(mon))
         mon_is(&menu, mon, "disintegration-resistant");
-    if (resists_elec(mon))
+    if (immune_to_elec(mon))
+        mon_is(&menu, mon, "immune to electricity");
+    else if (resists_elec(mon))
         mon_is(&menu, mon, "shock resistant");
-    if (resists_poison(mon))
+    if (immune_to_poison(mon))
+        mon_is(&menu, mon, "immune to poison");
+    else if (resists_poison(mon))
         mon_is(&menu, mon, "poison resistant");
     if (resists_magm(mon))
         mon_is(&menu, mon, "magic resistant");
@@ -2792,7 +2835,9 @@ enlighten_mon(struct monst *mon, int final)
         mon_is(&menu, mon, "level-drain resistant");
     if (resists_sick(mon))
         mon_is(&menu, mon, "immune to sickness");
-    if (resists_acid(mon))
+    if (immune_to_acid(mon))
+        mon_is(&menu, mon, "immune to acid");
+    else if (resists_acid(mon))
         mon_is(&menu, mon, "acid resistant");
     if (resists_ston(mon))
         mon_is(&menu, mon, "petrification resistant");
@@ -2822,7 +2867,7 @@ enlighten_mon(struct monst *mon, int final)
     if (sick(mon)) {
         if (mon == &youmonst && (u.usick_type & SICK_VOMITABLE))
             mon_is(&menu, mon, "sick from food poisoning");
-        else
+        if (mon != &youmonst || (u.usick_type & SICK_NONVOMITABLE))
             mon_is(&menu, mon, "sick from illness");
     }
     if (petrifying(mon))
@@ -3021,13 +3066,13 @@ enlighten_mon(struct monst *mon, int final)
                 Luck < 0 ? "un" : "");
             if (wizard)
                 buf = msgprintf("%s (%d)", buf, Luck);
-            you_are(&menu, buf);
+            mon_is(&menu, mon, buf);
         } else if (mon == &youmonst && wizard)
             enl_msg(&menu, "Your luck ", "is", "was", " zero");
         if (u.moreluck > 0)
-            you_have(&menu, "extra luck");
+            mon_has(&menu, mon, "extra luck");
         else if (u.moreluck < 0)
-            you_have(&menu, "reduced luck");
+            mon_has(&menu, mon, "reduced luck");
         if (carrying(LUCKSTONE) || stone_luck(TRUE)) {
             ltmp = stone_luck(FALSE);
             if (ltmp <= 0)
@@ -3062,7 +3107,7 @@ enlighten_mon(struct monst *mon, int final)
             turnstate.pray.trouble = ptr_invalid;
             if (wizard)
                 buf = msgprintf("%s (%d)", buf, u.ublesscnt);
-            you_can(&menu, buf);
+            mon_can(&menu, mon, buf);
         }
 
         const char *p;
@@ -3112,370 +3157,10 @@ enlighten_mon(struct monst *mon, int final)
     return;
 }
 
-/* TODO: replace with enlighten_mon() */
 void
 enlightenment(int final)
-    /* final: 0 => still in progress; 1 => over, survived; 2 => dead */
 {
-    int ltmp;
-    const char *title;
-    const char *buf;
-    struct nh_menulist menu;
-
-    init_menulist(&menu);
-    title = final ? "Final Attributes:" : "Current Attributes:";
-
-    if (flags.elbereth_enabled && u.uevent.uhand_of_elbereth) {
-        static const char *const hofe_titles[3] = {
-            "the Hand of Elbereth",
-            "the Envoy of Balance",
-            "the Glory of Arioch"
-        };
-        you_are(&menu, hofe_titles[u.uevent.uhand_of_elbereth - 1]);
-    }
-
-    /* note: piousness 20 matches MIN_QUEST_ALIGN (quest.h) */
-    if (u.ualign.record >= 20)
-        you_are(&menu, "piously aligned");
-    else if (u.ualign.record > 13)
-        you_are(&menu, "devoutly aligned");
-    else if (u.ualign.record > 8)
-        you_are(&menu, "fervently aligned");
-    else if (u.ualign.record > 3)
-        you_are(&menu, "stridently aligned");
-    else if (u.ualign.record == 3)
-        you_are(&menu, "aligned");
-    else if (u.ualign.record > 0)
-        you_are(&menu, "haltingly aligned");
-    else if (u.ualign.record == 0)
-        you_are(&menu, "nominally aligned");
-    else if (u.ualign.record >= -3)
-        you_have(&menu, "strayed");
-    else if (u.ualign.record >= -8)
-        you_have(&menu, "sinned");
-    else
-        you_have(&menu, "transgressed");
-    if (wizard) {
-        buf = msgprintf(" %d", u.uhunger);
-        enl_msg(&menu, "Hunger level ", "is", "was", buf);
-
-        buf = msgprintf(" %d / %ld", u.ualign.record, ALIGNLIM);
-        enl_msg(&menu, "Your alignment ", "is", "was", buf);
-    }
-
-        /*** Resistances to troubles ***/
-    if (Fire_resistance)
-        you_are(&menu, "fire resistant");
-    if (Cold_resistance)
-        you_are(&menu, "cold resistant");
-    if (Sleep_resistance)
-        you_are(&menu, "sleep resistant");
-    if (Disint_resistance)
-        you_are(&menu, "disintegration-resistant");
-    if (Shock_resistance)
-        you_are(&menu, "shock resistant");
-    if (Poison_resistance)
-        you_are(&menu, "poison resistant");
-    if (Drain_resistance)
-        you_are(&menu, "level-drain resistant");
-    if (Sick_resistance)
-        you_are(&menu, "immune to sickness");
-    if (Antimagic)
-        you_are(&menu, "magic-protected");
-    if (Acid_resistance)
-        you_are(&menu, "acid resistant");
-    if (Stone_resistance)
-        you_are(&menu, "petrification resistant");
-    if (resists_stun(&youmonst))
-        you_are(&menu, "resistant to stunning");
-    if (resists_death(&youmonst))
-        you_are(&menu, "resistant to death magic");
-    if (waterproof(&youmonst))
-        you_are(&menu, "protected from water");
-    if (u.uinvulnerable)
-        you_are(&menu, "invulnerable");
-    if (u.uedibility)
-        you_can(&menu, "recognize detrimental food");
-
-        /*** Troubles ***/
-    if (Halluc_resistance)
-        enl_msg(&menu, "You resist", "", "ed", " hallucinations");
-    if (final) {
-        if (hallucinating(&youmonst))
-            you_are(&menu, "hallucinating");
-        if (stunned(&youmonst))
-            you_are(&menu, "stunned");
-        if (confused(&youmonst))
-            you_are(&menu, "confused");
-        if (blind(&youmonst))
-            you_are(&menu, "blinded");
-        if (sick(&youmonst)) {
-            if (u.usick_type & SICK_VOMITABLE)
-                you_are(&menu, "sick from food poisoning");
-            if (u.usick_type & SICK_NONVOMITABLE)
-                you_are(&menu, "sick from illness");
-        }
-    }
-    if (petrifying(&youmonst))
-        you_are(&menu, "turning to stone");
-    if (sliming(&youmonst))
-        you_are(&menu, "turning into slime");
-    if (strangled(&youmonst))
-        you_are(&menu, (u.uburied) ? "buried" : "being strangled");
-    if (cancelled(&youmonst))
-        you_are(&menu, "cancelled");
-    if (slippery_fingers(&youmonst))
-        you_have(&menu, msgcat("slippery ", makeplural(body_part(FINGER))));
-    if (fumbling(&youmonst))
-        enl_msg(&menu, "You fumble", "", "d", "");
-    if (leg_hurt(&youmonst))
-        you_have(&menu, msgcat("wounded ", makeplural(body_part(LEG))));;
-    if (restful_sleep(&youmonst))
-        enl_msg(&menu, "You ", "fall", "fell", " asleep");
-    if (hunger(&youmonst))
-        enl_msg(&menu, "You hunger", "", "ed", " rapidly");
-
-        /*** Vision and senses ***/
-    if (see_invisible(&youmonst))
-        enl_msg(&menu, You_, "see", "saw", " invisible");
-    if (telepathic(&youmonst))
-        you_are(&menu, "telepathic");
-    if (warned(&youmonst))
-        you_are(&menu, "warned");
-    if (warned_of_mon(&youmonst)) {
-        int warntype = worn_warntype();
-        buf = msgcat("aware of the presence of ",
-                     (warntype & M2_ORC) ? "orcs" :
-                     (warntype & M2_DEMON) ? "demons" : "something");
-        you_are(&menu, buf);
-    }
-    if (warned_of_undead(&youmonst))
-        you_are(&menu, "warned of undead");
-    if (Searching)
-        you_have(&menu, "automatic searching");
-    if (Clairvoyant)
-        you_are(&menu, "clairvoyant");
-    if (Infravision)
-        you_have(&menu, "infravision");
-    if (Detect_monsters)
-        you_are(&menu, "sensing the presence of monsters");
-    if (u.umconf)
-        you_are(&menu, "going to confuse monsters");
-
-        /*** Appearance and behavior ***/
-    if (Adornment) {
-        int adorn = 0;
-
-        if (uleft && uleft->otyp == RIN_ADORNMENT)
-            adorn += uleft->spe;
-        if (uright && uright->otyp == RIN_ADORNMENT)
-            adorn += uright->spe;
-        if (adorn < 0)
-            you_are(&menu, "poorly adorned");
-        else
-            you_are(&menu, "adorned");
-    }
-    if (Invisible)
-        you_are(&menu, "invisible");
-    else if (Invis)
-        you_are(&menu, "invisible to others");
-    /* ordinarily "visible" is redundant; this is a special case for the
-       situation when invisibility would be an expected attribute */
-    else if (binvisible(&youmonst))
-        you_are(&menu, "visible");
-    if (Displaced)
-        you_are(&menu, "displaced");
-    if (Stealth)
-        you_are(&menu, "stealthy");
-    if (Aggravate_monster)
-        enl_msg(&menu, "You aggravate", "", "d", " monsters");
-    if (Conflict)
-        enl_msg(&menu, "You cause", "", "d", " conflict");
-
-        /*** Transportation ***/
-    if (Jumping)
-        you_can(&menu, "jump");
-    if (Teleportation)
-        you_can(&menu, "teleport");
-    if (Teleport_control)
-        you_have(&menu, "teleport control");
-    if (Lev_at_will)
-        you_are(&menu, "levitating, at will");
-    else if (Levitation)
-        you_are(&menu, "levitating");   /* without control */
-    else if (Flying)
-        you_can(&menu, "fly");
-    if (Wwalking)
-        you_can(&menu, "walk on water");
-    if (Swimming)
-        you_can(&menu, "swim");
-    if (Breathless)
-        you_can(&menu, "survive without air");
-    if (Passes_walls)
-        you_can(&menu, "walk through walls");
-
-    /* FIXME: This is printed even if you die in a riding accident. */
-    if (u.usteed)
-        you_are(&menu, msgcat("riding ", y_monnam(u.usteed)));
-    if (Engulfed)
-        you_are(&menu, msgcat("swallowed by ", a_monnam(u.ustuck)));
-    else if (u.ustuck) {
-        buf = msgprintf(
-            "%s %s", (Upolyd && sticks(youmonst.data)) ? "holding" : "held by",
-            a_monnam(u.ustuck));
-        you_are(&menu, buf);
-    }
-
-        /*** Physical attributes ***/
-    if (hitbon(&youmonst))
-        you_have(&menu, enlght_combatinc("to hit", hitbon(&youmonst), final));
-    if (dambon(&youmonst))
-        you_have(&menu, enlght_combatinc("damage", dambon(&youmonst), final));
-    if (Slow_digestion)
-        you_have(&menu, "slower digestion");
-    if (Regeneration)
-        enl_msg(&menu, "You regenerate", "", "d", "");
-    if (protected(&youmonst) || protbon(&youmonst)) {
-        int prot = protbon(&youmonst);
-        prot += m_mspellprot(&youmonst);
-        prot += u.ublessed;
-
-        if (prot < 0)
-            you_are(&menu, "ineffectively protected");
-        else
-            you_are(&menu, "protected");
-    }
-    if (Protection_from_shape_changers)
-        you_are(&menu, "protected from shape changers");
-    if (Polymorph)
-        you_are(&menu, "polymorphing");
-    if (Polymorph_control)
-        you_have(&menu, "polymorph control");
-    if (u.ulycn >= LOW_PM)
-        you_are(&menu, an(u.ufemale ? mons[u.ulycn].fname : mons[u.ulycn].mname));
-    if (Upolyd) {
-        if (u.umonnum == u.ulycn)
-            buf = "in beast form";
-        else
-            buf = msgprintf("%spolymorphed into %s",
-                            flags.polyinit_mnum == -1 ? "" : "permanently ",
-                            an(u.mfemale ? youmonst.data->fname : youmonst.data->mname));
-        if (wizard)
-            buf = msgprintf("%s (%d)", buf, u.mtimedone);
-        you_are(&menu, buf);
-    }
-    if (Unchanging)
-        you_can(&menu, "not change from your current form");
-    if (fast(&youmonst))
-        you_are(&menu, very_fast(&youmonst) ? "very fast" : "fast");
-    if (Reflecting)
-        you_have(&menu, "reflection");
-    if (Free_action)
-        you_have(&menu, "free action");
-    if (Fixed_abil)
-        you_have(&menu, "fixed abilities");
-    if (Lifesaved)
-        enl_msg(&menu, "Your life ", "will be", "would have been", " saved");
-    if (u.twoweap)
-        you_are(&menu, "wielding two weapons at once");
-
-        /*** Miscellany ***/
-    if (Luck) {
-        ltmp = abs((int)Luck);
-        buf = msgprintf(
-            "%s%slucky",
-            ltmp >= 10 ? "extremely " : ltmp >= 5 ? "very " : "",
-            Luck < 0 ? "un" : "");
-        if (wizard)
-            buf = msgprintf("%s (%d)", buf, Luck);
-        you_are(&menu, buf);
-    } else if (wizard)
-        enl_msg(&menu, "Your luck ", "is", "was", " zero");
-    if (u.moreluck > 0)
-        you_have(&menu, "extra luck");
-    else if (u.moreluck < 0)
-        you_have(&menu, "reduced luck");
-    if (carrying(LUCKSTONE) || stone_luck(TRUE)) {
-        ltmp = stone_luck(FALSE);
-        if (ltmp <= 0)
-            enl_msg(&menu, "Bad luck ", "does", "did", " not time out for you");
-        if (ltmp >= 0)
-            enl_msg(&menu, "Good luck ", "does", "did",
-                    " not time out for you");
-    }
-
-    buf = last_blesscnt_effect(&youmonst);
-    if (buf)
-        add_menutext(&menu, buf);
-
-    if (u.ugangr) {
-        buf = msgprintf(
-            " %sangry with you",
-            u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
-        if (wizard)
-            buf = msgprintf("%s (%d)", buf, u.ugangr);
-        enl_msg(&menu, u_gname(), " is", " was", buf);
-    } else
-        /*
-         * We need to suppress this when the game is over, because death
-         * can change the value calculated by can_pray(), potentially
-         * resulting in a false claim that you could have prayed safely.
-         */
-    if (!final) {
-        buf = msgprintf(
-            "%ssafely pray", can_pray(FALSE) ? "" : "not ");
-        /* can_pray sets some turnstate that needs to be reset. */
-        turnstate.pray.align = A_NONE;
-        turnstate.pray.type = pty_invalid;
-        turnstate.pray.trouble = ptr_invalid;
-        if (wizard)
-            buf = msgprintf("%s (%d)", buf, u.ublesscnt);
-        you_can(&menu, buf);
-    }
-
-    {
-        const char *p;
-        buf = "";
-
-        if (final < 2) {       /* still in progress, or quit/escaped/ascended */
-            p = "survived after being killed ";
-            switch (u.umortality) {
-            case 0:
-                p = !final ? NULL : "survived";
-                break;
-            case 1:
-                buf = "once";
-                break;
-            case 2:
-                buf = "twice";
-                break;
-            case 3:
-                buf = "thrice";
-                break;
-            default:
-                buf = msgprintf("%d times", u.umortality);
-                break;
-            }
-        } else {        /* game ended in character's death */
-            p = "are dead";
-            switch (u.umortality) {
-            case 0:
-                impossible("dead without dying?");
-            case 1:
-                break;  /* just "are dead" */
-            default:
-                buf = msgprintf(" (%d%s time!)", u.umortality,
-                                ordin(u.umortality));
-                break;
-            }
-        }
-        if (p)
-            enl_msg(&menu, You_, "have been killed ", p, buf);
-    }
-
-    display_menu(&menu, title, PICK_NONE, PLHINT_ANYWHERE,
-                 NULL);
-    return;
+    enlighten_mon(&youmonst, final);
 }
 
 void

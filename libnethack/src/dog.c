@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -722,10 +722,10 @@ dogfood(const struct monst *mon, struct obj *obj)
         case CORPSE:
             if ((corpse_rot_status(obj, TRUE) <= corpserot_last_harmful &&
                  !resists_sick(mon)) ||
-                (acidic(pm) && !resists_acid(mon)) ||
+                (acidic(pm) && !immune_to_acid(mon)) ||
                 ((dmgtype(pm, AD_STUN) || dmgtype(pm, AD_HALU)) &&
                  !resists_hallu(mon)) ||
-                (poisonous(pm) && !resists_poison(mon)))
+                (poisonous(pm) && !immune_to_poison(mon)))
                 return df_harmful;
             else if (vegan(fptr))
                 return herbi ? df_good : df_manfood;

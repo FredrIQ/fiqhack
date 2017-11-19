@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -858,11 +858,11 @@ dotrap(struct trap *trap, unsigned trflags)
 
     case SLP_GAS_TRAP:
         seetrap(trap);
-        if (Sleep_resistance || breathless(youmonst.data)) {
+        if (immune_to_sleep(&youmonst) || breathless(youmonst.data)) {
             pline(msgc_playerimmune, "You are enveloped in a cloud of gas!");
         } else {
             pline(msgc_statusbad, "A cloud of gas puts you to sleep!");
-            helpless(rnd(25), hr_asleep, "sleeping", NULL);
+            sleep_monst(NULL, &youmonst, rnd(25), -1);
         }
         steedintrap(trap, NULL);
         break;
@@ -1322,13 +1322,15 @@ steedintrap(struct trap *trap, struct obj *otmp)
         steedhit = TRUE;
         break;
     case SLP_GAS_TRAP:
-        if (!resists_sleep(mtmp) && !breathless(mptr) && !mtmp->msleeping &&
+        if (!immune_to_sleep(mtmp) && !breathless(mptr) && !mtmp->msleeping &&
             mtmp->mcanmove) {
-            mtmp->mcanmove = 0;
-            mtmp->mfrozen = rnd(25);
-            if (in_sight) {
-                pline(msgc_petwarning, "%s suddenly falls asleep!",
-                      Monnam(mtmp));
+            if (sleep_monst(NULL, mtmp, rnd(25), -1)) {
+                if (in_sight) {
+                    pline(msgc_petwarning, "%s suddenly falls asleep!",
+                          Monnam(mtmp));
+                }
+                if (mtmp != &youmonst)
+                    slept_monst(mtmp);
             }
         }
         steedhit = TRUE;
@@ -1944,14 +1946,16 @@ mintrap(struct monst *mtmp)
             break;
 
         case SLP_GAS_TRAP:
-            if (!resists_sleep(mtmp) && !breathless(mptr) && !mtmp->msleeping &&
-                mtmp->mcanmove) {
-                mtmp->mcanmove = 0;
-                mtmp->mfrozen = rnd(25);
-                if (in_sight) {
-                    pline(combat_msgc(culprit, mtmp, cr_hit),
-                          "%s suddenly falls asleep!", Monnam(mtmp));
-                    seetrap(trap);
+            if (!immune_to_sleep(mtmp) && !breathless(mptr) &&
+                !mtmp->msleeping && mtmp->mcanmove) {
+                if (sleep_monst(NULL, mtmp, rnd(25), -1)) {
+                    if (in_sight) {
+                        pline(combat_msgc(culprit, mtmp, cr_hit),
+                              "%s suddenly falls asleep!", Monnam(mtmp));
+                        seetrap(trap);
+                    }
+                    if (mtmp != &youmonst)
+                        slept_monst(mtmp);
                 }
             }
             break;
@@ -2721,14 +2725,16 @@ dofiretrap(struct monst *mon, struct obj *box)
         return;
     }
     if (you || vis || see_it)
-        pline(combat_msgc(NULL, mon, resists_fire(mon) ?
-                          cr_resist : cr_hit),
+        pline(combat_msgc(NULL, mon, immune_to_fire(mon) ? cr_immune :
+                          resists_fire(mon) ? cr_resist : cr_hit),
               "A tower of flame %s from %s!", box ? "bursts" : "erupts",
               the(box ? xname(box) : surface(m_mx(mon), m_my(mon))));
     if (resists_fire(mon)) {
         if (you || vis)
             shieldeff(m_mx(mon), m_my(mon));
-        num = rn2(2);
+        num = 0;
+        if (!immune_to_fire(mon))
+            num = dice(1, 4);
     } else if (Upolyd || !you) {
         num = dice(2, 4);
         alt = you ? u.mhmax : mon->mhpmax;
@@ -3134,8 +3140,12 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
             delobj(obj);
             if (carried) {
                 int dmg = rnd(10);
-                if (mon && resists_acid(mon))
-                    dmg /= 2;
+                if (mon) {
+                    if (immune_to_acid(mon))
+                        dmg = 0;
+                    else if (resists_acid(mon))
+                        dmg /= 2;
+                }
 
                 if (vis)
                     makeknown(POT_ACID);
@@ -4261,7 +4271,7 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
         case 6:{
                 int dmg;
 
-                if (resists_elec(mon)) {
+                if (immune_to_elec(mon)) {
                     if (you || vis) {
                         shieldeff(m_mx(mon), m_my(mon));
                         pline(combat_msgc(NULL, mon, cr_immune),
@@ -4269,11 +4279,17 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
                               you ? "you" : mon_nam(mon));
                     }
                     dmg = 0;
+                } else if (resists_elec(mon)) {
+                    if (you || vis)
+                        pline(combat_msgc(NULL, mon, cr_resist),
+                              "%s jolted by a surge of electricity, "
+                              "but partially resists!", M_verbs(mon, "are"));
+                    dmg = dice(2, 4);
                 } else {
                     if (you || vis)
                         pline(combat_msgc(NULL, mon, cr_hit),
-                              "%s %s jolted by a surge of electricity!",
-                              you ? "You" : Monnam(mon), you ? "are" : "is");
+                              "%s jolted by a surge of electricity!",
+                              M_verbs(mon, "are"));
                     dmg = dice(4, 4);
                 }
                 dmg += destroy_mitem(mon, ALL_CLASSES, AD_ELEC, NULL);
@@ -4498,7 +4514,7 @@ lava_effects(void)
     const char *killer;
 
     burn_away_slime(&youmonst);
-    if (likes_lava(youmonst.data))
+    if (likes_lava(youmonst.data) || immune_to_fire(&youmonst))
         return FALSE;
 
     /* Check whether we should burn away boots *first* so we know whether to
@@ -4512,7 +4528,7 @@ lava_effects(void)
         useupall(obj);
     }
 
-    if (!Fire_resistance) {
+    if (!resists_fire(&youmonst)) {
         if (Wwalking) {
             dmg = dice(6, 6);
             pline(msgc_statusbad, "The lava here burns you!");

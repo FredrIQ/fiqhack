@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -711,6 +711,7 @@ inside_gas_cloud(void *p1, void *p2)
 
     reg = (struct region *)p1;
     dam = (long)reg->arg;
+    dam = rnd(dam) + 5;
     if (p2 == NULL) {   /* This means *YOU* Bozo! */
         if (nonliving(youmonst.data) || u.uinvulnerable)
             return FALSE;
@@ -721,11 +722,13 @@ inside_gas_cloud(void *p1, void *p2)
             inc_timeout(&youmonst, BLINDED, 2, TRUE);
         if (Breathless)
             return FALSE;
-        if (!Poison_resistance) {
+        if (!immune_to_poison(&youmonst)) {
             pline(msgc_statusbad, "Something is burning your %s!",
                   makeplural(body_part(LUNG)));
             pline_implied(msgc_statusbad, "You cough and spit blood!");
-            losehp(rnd(dam) + 5, killer_msg(DIED, "a gas cloud"));
+            if (resists_poison(&youmonst))
+                dam = (dam + 1) / 2;
+            losehp(dam, killer_msg(DIED, "a gas cloud"));
             return FALSE;
         } else {
             pline(msgc_playerimmune, "You cough!");
@@ -744,9 +747,11 @@ inside_gas_cloud(void *p1, void *p2)
             if (haseyes(mtmp->data) && !blind(mtmp)) {
                 set_property(mtmp, BLINDED, 1, FALSE);
             }
-            if (resists_poison(mtmp))
+            if (immune_to_poison(mtmp))
                 return FALSE;
-            mtmp->mhp -= rnd(dam) + 5;
+            if (resists_poison(mtmp))
+                dam = (dam + 1) / 2;
+            mtmp->mhp -= dam;
             if (mtmp->mhp <= 0) {
                 if (heros_fault(reg))
                     killed(mtmp);

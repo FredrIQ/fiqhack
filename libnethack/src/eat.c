@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1144,14 +1144,19 @@ eatcorpse(struct monst *mon, struct obj *otmp)
         else
             useupf(otmp, 1L);
         return 2;
-    } else if (acidic(&mons[mnum]) && !Acid_resistance) {
+    } else if (acidic(&mons[mnum]) && !immune_to_acid(mon)) {
         tp++;
+
+        /* not body_part() */
         if (you || vis)
             pline(you ? msgc_badidea : msgc_monneutral,
-                  "%s %s a very bad case of stomach acid.",
-                  you ? "You" : Monnam(mon),
-                  you ? "have" : "has");
-        /* not body_part() */
+                  "%s a %sbad case of stomach acid.", M_verbs(mon, "have"),
+                  resists_acid(mon) ? "" : "very ");
+
+        int dmg = rnd(15);
+        if (resists_acid(mon))
+            dmg = (dmg + 1) / 2;
+
         if (you)
             xlosehp(rnd(15), killer_msg(DIED, "an acidic corpse"), FALSE);
         else {
@@ -1168,13 +1173,14 @@ eatcorpse(struct monst *mon, struct obj *otmp)
         else if (vis)
             pline(msgc_monneutral, "%s was poisoned by %s meal!",
                   Monnam(mon), mhis(mon));
-        if (!resists_poison(mon)) {
+        if (!immune_to_poison(mon)) {
             if (you) {
-                losestr(rnd(4), DIED, killer_msg(DIED, "a poisonous corpse"), NULL);
-                xlosehp(rnd(15), killer_msg(DIED, "a poisonous corpse"),
-                        FALSE);
+                losestr(resists_poison(mon) ? 1 : rnd(4), DIED,
+                        killer_msg(DIED, "a poisonous corpse"), NULL);
+                xlosehp(resists_poison(mon) ? rnd(5) : rnd(15),
+                        killer_msg(DIED, "a poisonous corpse"), FALSE);
             } else {
-                mon->mhp -= rnd(15);
+                mon->mhp -= resists_poison(mon) ? rnd(5) : rnd(15);
                 if (mon->mhp <= 0) {
                     mondied(mon);
                     retcode = 2;
@@ -1729,7 +1735,7 @@ edibility_prompts(struct obj *otmp)
         else
             return 2;
     }
-    if (cadaver && poisonous(&mons[mnum]) && !Poison_resistance) {
+    if (cadaver && poisonous(&mons[mnum]) && !immune_to_poison(&youmonst)) {
         /* poisonous */
         buf = msgprintf("%s like %s might be poisonous! %s", foodsmell,
                         it_or_they, eat_it_anyway);
@@ -1748,7 +1754,9 @@ edibility_prompts(struct obj *otmp)
             return 2;
     }
     /* HP check is needed to stop this being annoying */
-    if (cadaver && acidic(&mons[mnum]) && !Acid_resistance && u.uhp < 20) {
+    if (cadaver && acidic(&mons[mnum]) &&
+        ((!resists_acid(&youmonst) && u.uhp < 20) ||
+         (!immune_to_acid(&youmonst) && u.uhp < 10))) {
         buf = msgprintf("%s rather acidic, and you're low on health. %s",
                         foodsmell, eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
@@ -1916,10 +1924,12 @@ doeat(const struct nh_cmd_arg *arg)
             rottenfood(otmp);
 
         if (otmp->oclass == WEAPON_CLASS && otmp->opoisoned) {
-            if (!Poison_resistance) {
+            if (!immune_to_poison(&youmonst)) {
                 pline(msgc_intrloss, "Ecch - that must have been poisonous!");
-                losestr(rnd(4), DIED, killer_msg_obj(DIED, otmp), NULL);
-                xlosehp(rnd(15), killer_msg_obj(DIED, otmp), FALSE);
+                losestr(resists_poison(&youmonst) ? 1 : rnd(4), DIED,
+                        killer_msg_obj(DIED, otmp), NULL);
+                xlosehp(resists_poison(&youmonst) ? rnd(5) : rnd(15),
+                        killer_msg_obj(DIED, otmp), FALSE);
             } else /* now a single message, as with the poisonous() check for
                       corpses, but a different one for ID knowledge reasons */
                 pline(msgc_playerimmune, "Was that thing poisoned?");
