@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -324,8 +324,8 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             int ring;
             int rings[] = {
                 RIN_INVISIBILITY, RIN_TELEPORT_CONTROL,
-                RIN_FIRE_RESISTANCE, RIN_COLD_RESISTANCE,
-                RIN_SHOCK_RESISTANCE, RIN_POISON_RESISTANCE,
+                RIN_FIRE_IMMUNITY, RIN_COLD_IMMUNITY,
+                RIN_SHOCK_IMMUNITY, RIN_POISON_IMMUNITY,
                 RIN_INCREASE_ACCURACY, RIN_INCREASE_DAMAGE,
                 RIN_PROTECTION, RIN_SEE_INVISIBLE,
                 RIN_REGENERATION, RIN_SLOW_DIGESTION,

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -517,11 +517,11 @@ const struct objclass const_objects[] = {
          150, 1, 0, 9, GEMSTONE, CLR_BLUE),
     RING("conflict", CONFLICT, "ruby", 300, 1, 0, 9, GEMSTONE, CLR_RED),
     RING("warning", WARNING, "diamond", 100, 1, 0, 10, GEMSTONE, CLR_WHITE),
-    RING("poison resistance", POISON_RES, "pearl",
+    RING("poison immunity", POISON_RES, "pearl",
          150, 1, 0, 4, BONE, CLR_WHITE),
-    RING("fire resistance", FIRE_RES, "iron", 200, 1, 0, 5, IRON, HI_METAL),
-    RING("cold resistance", COLD_RES, "brass", 150, 1, 0, 4, COPPER, HI_COPPER),
-    RING("shock resistance", SHOCK_RES, "copper",
+    RING("fire immunity", FIRE_RES, "iron", 200, 1, 0, 5, IRON, HI_METAL),
+    RING("cold immunity", COLD_RES, "brass", 150, 1, 0, 4, COPPER, HI_COPPER),
+    RING("shock immunity", SHOCK_RES, "copper",
          150, 1, 0, 3, COPPER, HI_COPPER),
     RING("free action", FREE_ACTION, "twisted",
          200, 1, 0, 6, IRON, HI_METAL),

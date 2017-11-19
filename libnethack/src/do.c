@@ -291,13 +291,13 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
     case RIN_LEVITATION:
         pline(msgc_info, "The sink quivers upward for a moment.");
         break;
-    case RIN_POISON_RESISTANCE:
+    case RIN_POISON_IMMUNITY:
         pline(msgc_info, "You smell rotten %s.", makeplural(fruitname(FALSE)));
         break;
     case RIN_AGGRAVATE_MONSTER:
         pline(msgc_info, "Several flies buzz angrily around the sink.");
         break;
-    case RIN_SHOCK_RESISTANCE:
+    case RIN_SHOCK_IMMUNITY:
         pline(msgc_info, "Static electricity surrounds the sink.");
         break;
     case RIN_CONFLICT:
@@ -366,11 +366,11 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
             pline(msgc_info,
                   "The sink seems to blend into the floor for a moment.");
             break;
-        case RIN_FIRE_RESISTANCE:
+        case RIN_FIRE_IMMUNITY:
             pline(msgc_info,
                   "The hot water faucet flashes brightly for a moment.");
             break;
-        case RIN_COLD_RESISTANCE:
+        case RIN_COLD_IMMUNITY:
             pline(msgc_info,
                   "The cold water faucet flashes brightly for a moment.");
             break;
