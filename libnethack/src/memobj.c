@@ -324,11 +324,6 @@ update_obj_memories_at(struct level *lev, int x, int y)
         obj->oy = y;
         update_obj_memory(obj);
 
-        /* Kill the mem_obj pointers */
-        struct obj *memobj = obj->mem_obj;
-        obj->mem_obj = NULL;
-        memobj->mem_obj = NULL;
-
         /* Now put the fake object back where it was and get rid of it. */
         obj->where = save_where;
         obfree(obj, NULL);
