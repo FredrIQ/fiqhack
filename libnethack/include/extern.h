@@ -923,7 +923,7 @@ extern void update_obj_memories(struct level *);
 extern void update_obj_memories_at(struct level *, int, int);
 extern void update_container_memory(struct obj *);
 extern int remembered_contained(const struct obj *);
-extern void update_obj_memory(struct obj *);
+extern void update_obj_memory(struct obj *, struct monst *);
 extern void free_obj_memory(struct obj *);
 extern void free_memobj_chain(struct obj *);
 extern void free_memobj(void);

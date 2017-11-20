@@ -270,7 +270,7 @@ update_obj_memories(struct level *lev)
 
     /* Now set up up to date memories of objects inside. */
     for (obj = youmonst.minvent; obj; obj = obj->nobj)
-        update_obj_memory(obj);
+        update_obj_memory(obj, NULL);
 }
 
 /* Refreshes object memories at location. Assumes the player can know
@@ -304,7 +304,7 @@ update_obj_memories_at(struct level *lev, int x, int y)
     }
 
     for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
-        update_obj_memory(obj);
+        update_obj_memory(obj, NULL);
 
     /* If there is a mimic on the tile, create a fake object memory. */
     struct monst *mon = m_at(lev, x, y);
@@ -312,22 +312,8 @@ update_obj_memories_at(struct level *lev, int x, int y)
         return;
     if (m_helpless(mon, 1 << hr_mimicking) &&
         (lev != level || !Protection_from_shape_changers) &&
-        (msensem(&youmonst, mon) & MSENSE_ITEMMIMIC)) {
-        /* Create a temporary object to base our object memory on. */
-        int otyp = mon->mappearance;
-        struct obj *obj = mktemp_sobj(lev, otyp);
-
-        /* Pretend that it is on the floor... */
-        int save_where = obj->where;
-        obj->where = OBJ_FLOOR;
-        obj->ox = x;
-        obj->oy = y;
-        update_obj_memory(obj);
-
-        /* Now put the fake object back where it was and get rid of it. */
-        obj->where = save_where;
-        obfree(obj, NULL);
-    }
+        (msensem(&youmonst, mon) & MSENSE_ITEMMIMIC))
+        update_obj_memory(NULL, mon);
 }
 
 /* Updates container memory */
@@ -343,7 +329,7 @@ update_container_memory(struct obj *obj)
     obj->cknown = TRUE;
 
     /* Update container itself first. */
-    update_obj_memory(obj);
+    update_obj_memory(obj, NULL);
 
     struct obj *memobj = obj->mem_obj;
     struct obj *next;
@@ -359,7 +345,7 @@ update_container_memory(struct obj *obj)
     }
 
     for (obj = obj->cobj; obj; obj = obj->nobj)
-        update_obj_memory(obj);
+        update_obj_memory(obj, NULL);
 }
 
 /* Returns amount of remembered objects or -1 if not remembered/not a container */
@@ -395,10 +381,26 @@ remembered_contained(const struct obj *obj)
     return ret;
 }
 
-/* Creates or updates an object memory for given object */
+/* Creates or updates an object memory for given object, or for a mimic. */
 void
-update_obj_memory(struct obj *obj)
+update_obj_memory(struct obj *obj, struct monst *mon)
 {
+    if (!obj) {
+        if (!mon) {
+            impossible("update_obj_memory: both obj and mon is NULL?");
+            return;
+        }
+
+        /* Create a pseudo-object based on a mimic's appearance. */
+        obj = mktemp_sobj(m_dlevel(mon), mon->mappearance);
+        obj->ox = m_mx(mon);
+        obj->oy = m_my(mon);
+    } else if (obj && mon) {
+        /* which one is it, object or monster? */
+        impossible("update_obj_memory: both obj and mon is non-NULL?");
+        return;
+    }
+
     struct obj *memobj = obj->mem_obj;
     if (!memobj) {
         /* Create a new memory */
@@ -456,17 +458,21 @@ update_obj_memory(struct obj *obj)
         memobj->cobj = NULL;
     }
 
-    /* Add to memory chain */
-    switch (obj->where) {
-    case OBJ_FREE:
-        panic("update_obj_memory: updating memory for a floating object?");
-        /* NOTREACHED */ break;
-    case OBJ_FLOOR:
+    if (obj->where == OBJ_FLOOR || mon) {
         extract_nobj(memobj, &turnstate.floating_objects,
                      &memobj->olev->memobjlist, OBJ_FLOOR);
         memobj->nexthere = lev->memobjects[memobj->ox][memobj->oy];
         lev->memobjects[memobj->ox][memobj->oy] = memobj;
-        break;
+
+        if (mon)
+            obfree(obj, NULL); /* get rid of the pseudo-object */
+        return;
+    }
+
+    switch (obj->where) {
+    case OBJ_FREE:
+        panic("update_obj_memory: updating memory for a floating object?");
+        /* NOTREACHED */ break;
     case OBJ_CONTAINED:
         obj = obj->ocontainer->mem_obj;
         /* We must have a memory for the container, or something is wrong */
