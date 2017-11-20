@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-20 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -281,6 +281,13 @@ update_obj_memories_at(struct level *lev, int x, int y)
     /* Screen redraws end up calling this. We don't want to
        change the gamestate in this case, so check for it. */
     if (program_state.in_zero_time_command)
+        return;
+
+    /* Maybe we can't see underwater/lava... In that case, leave memories
+       untouched (don't lose memories either) so that the hero can still
+       remember them if object detection or similar was used. */
+    if (is_lava(lev, x, y) ||
+        (is_pool(lev, x, y) && !Underwater))
         return;
 
     struct obj *obj, *memobj, *next;
