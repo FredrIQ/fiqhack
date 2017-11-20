@@ -127,7 +127,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {11, 0, 0, 8, 1, 0},       /* Hit points */
      {1, 4, 0, 1, 0, 2}, 20,    /* Energy */
-     10, 3, -3, 2, 10, A_WIS, SPE_CURE_SICKNESS, -4},
+     10, 3, -3, 2, 10, A_WIS, SPE_CREATE_FAMILIAR, -4},
     {{"Knight", 0}, {
                      {"Gallant", 0},
                      {"Esquire", 0},
@@ -151,7 +151,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {14, 0, 0, 8, 2, 0},       /* Hit points */
      {1, 4, 0, 1, 0, 2}, 10,    /* Energy */
-     10, 8, -2, 0, 9, A_WIS, SPE_TURN_UNDEAD, -4},
+     10, 8, -2, 0, 9, A_WIS, SPE_MAGIC_MISSILE, -4},
     {{"Monk", 0}, {
                    {"Candidate", 0},
                    {"Novice", 0},
@@ -253,7 +253,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {13, 0, 0, 6, 1, 0},       /* Hit points */
      {1, 0, 0, 1, 0, 1}, 12,    /* Energy */
-     10, 9, 2, 1, 10, A_INT, SPE_INVISIBILITY, -4},
+     10, 9, 2, 1, 10, A_INT, SPE_SPEED_MONSTER, -4},
     {{"Samurai", 0}, {
                       {"Hatamoto", 0},  /* Banner Knight */
                       {"Ronin", 0},     /* no allegiance */
@@ -277,7 +277,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {13, 0, 0, 8, 1, 0},       /* Hit points */
      {1, 0, 0, 1, 0, 1}, 11,    /* Energy */
-     10, 10, 0, 0, 8, A_INT, SPE_CLAIRVOYANCE, -4},
+     10, 10, 0, 0, 8, A_INT, SPE_CONFUSE_MONSTER, -4},
     {{"Tourist", 0}, {
                       {"Rambler", 0},
                       {"Sightseer", 0},
@@ -350,7 +350,7 @@ const struct Role roles[] = {
      /* Init Lower Higher */
      {10, 0, 0, 8, 1, 0},       /* Hit points */
      {4, 3, 0, 2, 0, 3}, 12,    /* Energy */
-     0, 1, 0, 3, 10, A_INT, SPE_MAGIC_MISSILE, -4},
+     0, 1, 0, 3, 10, A_INT, SPE_TELEPORT_AWAY, -4},
 /* Array terminator */
     {{0, 0}}
 };
