@@ -612,6 +612,7 @@ prop_wary(const struct monst *mon, struct monst *target, enum youprop prop)
        or for allies/peacefuls, or for WoY, always be accurate */
     if (!mon ||
         prop == INVIS || /* "the invisible X" */
+        prop == TELEPAT || /* "seen: cooperative telepathy" */
         prop == AGGRAVATE_MONSTER || /* "seen: aggravate monster" */
         (target == &youmonst && mon->mpeaceful) ||
         (target != &youmonst && mon->mpeaceful == target->mpeaceful) ||
