@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1033,9 +1033,11 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
                       vibrate ? " The axe-handle vibrates violently!" : "");
                 if (vibrate)
                     losehp(2, killer_msg(DIED, "axing a hard object"));
-            } else
+            } else {
                 pline(msgc_notarget, "You swing your %s through thin air.",
                       aobjnam(obj, NULL));
+                action_interrupted(); /* in case this was from travel */
+            }
         } else {
             static const char *const d_action[6] = {
                 "swinging",
