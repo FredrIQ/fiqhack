@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-20 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -597,6 +597,17 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
 boolean
 prop_wary(const struct monst *mon, struct monst *target, enum youprop prop)
 {
+    /* For elemental resistances that can be made immune to,
+       return FALSE unconditionally 50% of the time if the monster
+       isn't immune. */
+    boolean immunity = TRUE;
+    if (prop == FIRE_RES || prop == COLD_RES || prop == SLEEP_RES ||
+        prop == SHOCK_RES || prop == POISON_RES || prop == ACID_RES)
+        immunity = !!has_immunity(mon, prop);
+
+    if (!immunity && !rn2(2))
+        return FALSE;
+
     /* If !mon, or for some properties that is always announced,
        or for allies/peacefuls, or for WoY, always be accurate */
     if (!mon ||
