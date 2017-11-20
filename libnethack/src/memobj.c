@@ -305,6 +305,34 @@ update_obj_memories_at(struct level *lev, int x, int y)
 
     for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
         update_obj_memory(obj);
+
+    /* If there is a mimic on the tile, create a fake object memory. */
+    struct monst *mon = m_at(lev, x, y);
+    if (!mon || mon->m_ap_type != M_AP_OBJECT)
+        return;
+    if (m_helpless(mon, 1 << hr_mimicking) &&
+        (lev != level || !Protection_from_shape_changers) &&
+        (msensem(&youmonst, mon) & MSENSE_ITEMMIMIC)) {
+        /* Create a temporary object to base our object memory on. */
+        int otyp = mon->mappearance;
+        struct obj *obj = mktemp_sobj(lev, otyp);
+
+        /* Pretend that it is on the floor... */
+        int save_where = obj->where;
+        obj->where = OBJ_FLOOR;
+        obj->ox = x;
+        obj->oy = y;
+        update_obj_memory(obj);
+
+        /* Kill the mem_obj pointers */
+        struct obj *memobj = obj->mem_obj;
+        obj->mem_obj = NULL;
+        memobj->mem_obj = NULL;
+
+        /* Now put the fake object back where it was and get rid of it. */
+        obj->where = save_where;
+        obfree(obj, NULL);
+    }
 }
 
 /* Updates container memory */
