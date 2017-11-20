@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -245,8 +245,8 @@ doaltarobj(struct obj *obj)
                       otense(obj, "land"));
         obj->bknown = 1;
     }
-    /* Also BCU one level deep inside containers */
-    if (Has_contents(obj)) {
+    /* Also BCU one level deep inside containers unless it's locked */
+    if (Has_contents(obj) && !obj->olocked && obj->cknown) {
         int bcucount = 0;
         struct obj *otmp;
 
