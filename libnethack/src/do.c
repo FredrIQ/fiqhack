@@ -226,45 +226,76 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
 
 
 void
-doaltarobj(struct obj *obj)
+doaltarobj(struct monst *mon, struct obj *obj)
 {       /* obj is an object dropped on an altar */
-    if (Blind)
-        return;
+    boolean you = (mon == &youmonst);
+    /* does a monster that isn't you see it? */
+    boolean mvis = (!you && !blind(mon));
+    /* do you? */
+    boolean vis = (!blind(&youmonst) && (you || mon == u.usteed));
+    /* not canseemon() -- those are too faint */
 
-    /* KMH, conduct */
-    break_conduct(conduct_gnostic);
+    /* Only if you drop it, or if you steed does (which is rare and
+       controllable), will you see flashes (or lack of), and break conduct.
+       This is avoidable by your own actions, and thus shouldn't cause
+       frustration. */
+    if (vis)
+        break_conduct(conduct_gnostic);
 
     if ((obj->blessed || obj->cursed) && obj->oclass != COIN_CLASS) {
-        pline_implied(msgc_hint, "There is %s flash as %s %s the altar.",
-                      an(hcolor(obj->blessed ? "amber" : "black")), doname(obj),
-                      otense(obj, "hit"));
-        if (!Hallucination)
+        if (vis)
+            pline_implied(msgc_hint, "There is %s flash as %s %s the altar.",
+                          an(hcolor(obj->blessed ? "amber" : "black")),
+                          doname(obj), otense(obj, "hit"));
+        if (vis && !hallucinating(&youmonst))
             obj->bknown = 1;
+        if (mvis && !hallucinating(mon))
+            obj->mbknown = 1;
     } else {
-        pline_implied(msgc_noconsequence, "%s %s on the altar.", Doname2(obj),
-                      otense(obj, "land"));
-        obj->bknown = 1;
+        if (vis) {
+            pline_implied(msgc_noconsequence, "%s %s on the altar.",
+                          Doname2(obj), otense(obj, "land"));
+            obj->bknown = 1;
+        }
+        if (mvis)
+            obj->mbknown = 1;
     }
     /* Also BCU one level deep inside containers unless it's locked */
     if (Has_contents(obj) && !obj->olocked && obj->cknown) {
-        int bcucount = 0;
+        int blessed = 0;
+        int cursed = 0;
+        int bccount = 0;
         struct obj *otmp;
 
         for (otmp = obj->cobj; otmp; otmp = otmp->nobj) {
             if (otmp->blessed || otmp->cursed)
-                bcucount++;
-            if (!Hallucination)
+                bccount++;
+            if (otmp->blessed)
+                blessed++;
+            if (otmp->cursed)
+                cursed++;
+            /* yes, also for uncursed, it's hard to make things out */
+            if (hallucinating(mon))
+                continue;
+            /* Not vis, if you are on a mount, you can't "look into the
+               container" */
+            if (you)
                 otmp->bknown = 1;
+            if (mvis)
+                otmp->mbknown = 1;
         }
-        if (bcucount == 1) {
-            pline_implied(msgc_hint,
-                          "Looking inside %s, you see a colored flash.",
-                          the(xname(obj)));
-        } else if (bcucount > 1) {
-            pline_implied(msgc_hint,
-                          "Looking inside %s, you see colored flashes.",
-                          the(xname(obj)));
-        }
+        if (!you)
+            return; /* no messages for monsters about this */
+
+        if (bccount)
+            pline_implied(msgc_info,
+                          "Looking inside %s, you see %s flash%s.",
+                          the(xname(obj)), bccount == 1 ?
+                          an(hcolor(blessed ? "amber" : "black")) :
+                          !cursed ? hcolor("amber") :
+                          !blessed ? hcolor("black") :
+                          hallucinating(&youmonst) ? "pretty rainbow-colored" :
+                          "colored", bccount == 1 ? "" : "es");
     }
 }
 
@@ -520,7 +551,7 @@ dropx(struct obj *obj)
         if (ship_object(obj, u.ux, u.uy, FALSE))
             return;
         if (IS_ALTAR(level->locations[u.ux][u.uy].typ))
-            doaltarobj(obj);    /* set bknown */
+            doaltarobj(&youmonst, obj);    /* set bknown */
     }
     dropy(obj);
 }

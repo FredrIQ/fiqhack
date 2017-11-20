@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -330,7 +330,7 @@ extern void set_wall_state(struct level *lev);
 extern int dodrop(const struct nh_cmd_arg *);
 extern boolean boulder_hits_pool(struct obj *, int, int, boolean);
 extern boolean flooreffects(struct obj *, int, int, const char *);
-extern void doaltarobj(struct obj *);
+extern void doaltarobj(struct monst *, struct obj *);
 extern boolean canletgo(struct obj *, const char *);
 extern void dropx(struct obj *);
 extern void dropy(struct obj *);
