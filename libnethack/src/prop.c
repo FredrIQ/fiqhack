@@ -2772,7 +2772,7 @@ enlighten_mon(struct monst *mon, int final)
     const char *can = " can ";
     const char *could = " could ";
     const char *see = (mon == &youmonst ? " see " : " sees ");
-    const char *saw = " saw";
+    const char *saw = " saw ";
     n = menu.icount;
 
 #define mon_is(menu,mon,attr)         enl_msg(menu,monname,is,was,attr)
