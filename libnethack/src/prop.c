@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-21 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -64,6 +64,8 @@ static const struct propmsg prop_msg[] = {
      "You feel less attractive.", "conspicuous"},
     {CONFLICT, "The air around you turns hostile and conflicted.", "conflicted",
      "The air around you calms down.", "calmed"},
+    {PROTECTION, "You feel protected.", "protected",
+     "You feel vulnerable.", "vulnerable"},
     {PROT_FROM_SHAPE_CHANGERS, "The air around you seems oddly fixed and static.",
      "shapeshift-protected",
      "The air around you briefly shifts in shape.", "less shapeshift-protected"},
@@ -121,10 +123,10 @@ static const struct propmsg prop_msg_hallu[] = {
      "You feel warmer.", "warmer"},
     {DISINT_RES, "You feel totally together, man.", "firm",
      "You feel split up.", "less firm"},
-    {SHOCK_RES, "You feel grounded in reality.", "insulated",
+    {SHOCK_RES, "You feel grounded in reality.", "grounded",
      "You feel less grounded.", "conductive"},
     {SEE_INVIS, "", "attentive",
-     "You tawt you taw a puttie tat!", "unattentive"},
+     "You tawt you taw a puttie tat!", "inattentive"},
     {TELEPORT, "You feel diffuse.", "jumpy",
      "You feel less jumpy.", "less jumpy"},
     {TELEPORT_CONTROL, "You feel centered in your personal space.", "controlled",
