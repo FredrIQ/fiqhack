@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -858,6 +858,7 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
     int i, ans = 0, objplur = 0, is_in;
     coord cc;   /* screen pos of unknown glyph */
     boolean from_screen;        /* question from the screen */
+    boolean is_warning = FALSE; /* is a warning symbol */
     struct nh_desc_buf descbuf;
     struct obj *otmp;
 
@@ -909,6 +910,8 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
         }
 
         nh_describe_pos(cc.x, cc.y, &descbuf, &is_in);
+        if (dbuf_get_mon(cc.x, cc.y) > NUMMONS)
+            is_warning = TRUE;
 
         otmp = vobj_at(cc.x, cc.y);
         if (otmp && is_plural(otmp))
@@ -957,7 +960,7 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
         if (firstmatch) {
             pline(msgc_info, "%s.", msgupcasefirst(out_str));
             /* check the data file for information about this thing */
-            if (firstmatch && ans != NHCR_CONTINUE &&
+            if (firstmatch && ans != NHCR_CONTINUE && !is_warning &&
                 (ans == NHCR_MOREINFO ||
                  ans == NHCR_MOREINFO_CONTINUE || !quick)) {
                 checkfile(firstmatch, mon ? mon->data : NULL, FALSE,

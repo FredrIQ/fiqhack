@@ -1,4 +1,4 @@
-# Last modified by Fredrik Ljungdahl, 2017-10-16
+# Last modified by Fredrik Ljungdahl, 2017-11-21
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # FIQHack: aimake configuration.
@@ -26,6 +26,7 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
                        # These warnings are probably worth fixing eventually,
                        # but have too many false positives to be able to show
                        # them right now
+                       '-Wno-implicit-fallthrough '.
                        '-Wno-unused-parameter -Wno-sign-compare '.
                        '-Wold-style-definition -Wstrict-prototypes '.
                        '-Wmissing-prototypes -Wmissing-declarations '.
