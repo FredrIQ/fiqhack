@@ -2779,7 +2779,7 @@ enlighten_mon(struct monst *mon, int final)
 #define mon_has(menu,mon,attr)        enl_msg(menu,monname,has,had,attr)
 #define mon_can(menu,mon,attr)        enl_msg(menu,monname,can,could,attr)
 #define mon_sees(menu,mon,attr)       enl_msg(menu,monname,see,saw,attr)
-#define mon_x(menu,mon,attr)          enl_msg(menu,monname,"","d",attr)
+#define mon_x(menu,mon,attr)          enl_msg(menu,monname,"","",attr)
     
     if (mon == &youmonst && flags.elbereth_enabled &&
         u.uevent.uhand_of_elbereth) {
@@ -2896,7 +2896,8 @@ enlighten_mon(struct monst *mon, int final)
     if (slippery_fingers(mon))
         mon_has(&menu, mon, msgcat("slippery ", makeplural(body_part(FINGER))));
     if (fumbling(mon))
-        mon_x(&menu, mon, " fumble");
+        mon_x(&menu, mon, final ? " fumbled" :
+              mon == &youmonst ? " fumble" : "fumbles");
     if (leg_hurt(mon))
         mon_has(&menu, mon, msgcat("wounded", makeplural(body_part(LEG))));;
     if (restful_sleep(mon))
@@ -2959,7 +2960,8 @@ enlighten_mon(struct monst *mon, int final)
     if (stealthy(mon))
         mon_is(&menu, mon, "stealthy");
     if (aggravating(mon))
-        mon_x(&menu, mon, mon == &youmonst ? " aggravate monsters" :
+        mon_x(&menu, mon, final ? " aggravated monsters" :
+              mon == &youmonst ? " aggravate monsters" :
               " aggravates monsters");
     if (conflicting(mon))
         mon_is(&menu, mon, "conflicting");
@@ -3021,7 +3023,8 @@ enlighten_mon(struct monst *mon, int final)
     if (slow_digestion(mon))
         mon_has(&menu, mon, "slower digestion");
     if (regenerates(mon))
-        mon_x(&menu, mon, mon == &youmonst ? " regenerate" : " regenerates");
+        mon_x(&menu, mon, final ? " regenerated" :
+              mon == &youmonst ? " regenerate" : " regenerates");
     if (protected(mon) || protbon(mon)) {
         int prot = protbon(mon);
         if (mon == &youmonst)
