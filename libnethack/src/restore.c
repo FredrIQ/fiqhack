@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1359,6 +1359,8 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     restore_dest_area(mf, &lev->dndest);
 
     lflags = mread32(mf);
+    if (flags.save_revision < 13)
+        lflags &= ~((lflags >> 13) & 1); /* old forgotten flag */
     lev->flags.vault_known = (lflags >> 23) & 1;
     lev->flags.noteleport = (lflags >> 22) & 1;
     lev->flags.hardfloor = (lflags >> 21) & 1;
@@ -1369,7 +1371,6 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     lev->flags.is_maze_lev = (lflags >> 16) & 1;
     lev->flags.is_cavernous_lev = (lflags >> 15) & 1;
     lev->flags.arboreal = (lflags >> 14) & 1;
-    lev->flags.forgotten = (lflags >> 13) & 1;
 
     restore_coords(mf, lev->doors, DOORMAX);
     rest_rooms(mf, lev);        /* No joke :-) */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1555,8 +1555,8 @@ lev_by_name(const char *nam)
              (u.uz.dnum == valley_level.dnum && dlev.dnum == medusa_level.dnum)
              || (u.uz.dnum == medusa_level.dnum &&
                  dlev.dnum == valley_level.dnum)) &&
-            /* either wizard mode or else seen and not forgotten */
-            (wizard || (levels[idx] && !levels[idx]->flags.forgotten))) {
+            /* either wizard mode or else seen */
+            (wizard || levels[idx])) {
             lev = depth(&slev->dlevel);
         }
     } else {    /* not a specific level; try branch names */
@@ -1568,11 +1568,9 @@ lev_by_name(const char *nam)
         if (idx >= 0) {
             idxtoo = (idx >> 8) & 0x00FF;
             idx &= 0x00FF;
-            if (        /* either wizard mode, or else _both_ sides of branch
-                           seen */
-                   wizard || ((levels[idx] && !levels[idx]->flags.forgotten) &&
-                              (levels[idxtoo] &&
-                               !levels[idxtoo]->flags.forgotten))) {
+            /* either wizard mode, or else _both_ sides of branch
+               seen */
+            if (wizard || (levels[idx] && levels[idxtoo])) {
                 if (ledger_to_dnum(idxtoo) == u.uz.dnum)
                     idx = idxtoo;
                 dlev.dnum = ledger_to_dnum(idx);

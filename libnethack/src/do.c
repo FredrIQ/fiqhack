@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1034,7 +1034,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     xchar new_ledger;
     boolean up = (depth(newlevel) < depth(&u.uz)), newdungeon =
         (u.uz.dnum != newlevel->dnum), was_in_W_tower =
-        In_W_tower(u.ux, u.uy, &u.uz), familiar = FALSE;
+        In_W_tower(u.ux, u.uy, &u.uz);
     boolean new = FALSE;        /* made a new level? */
     struct monst *mtmp, *mtmp2;
     struct obj *otmp;
@@ -1299,11 +1299,6 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     if (Is_waterlevel(&u.uz))
         movebubbles();
 
-    if (level->flags.forgotten) {
-        familiar = TRUE;
-        level->flags.forgotten = FALSE;
-    }
-
     notify_levelchange(NULL);   /* inform window code of the level change */
 
     /* Reset the screen. */
@@ -1329,35 +1324,6 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
             You_hear(msgc_levelsound, "groans and moans everywhere.");
         } else
             pline(msgc_branchchange, "It is hot here.  You smell smoke...");
-    }
-
-    /* TODO: This is probably all dead code. */
-    if (familiar) {
-        static const char *const fam_msgs[4] = {
-            "You have a sense of deja vu.",
-            "You feel like you've been here before.",
-            "This place %s familiar...",
-            0   /* no message */
-        };
-        static const char *const halu_fam_msgs[4] = {
-            "Whoa!  Everything %s different.",
-            "You are surrounded by twisty little passages, all alike.",
-            "Gee, this %s like uncle Conan's place...",
-            0   /* no message */
-        };
-        
-        const char *mesg;
-        int which = rn2(4);
-
-        if (Hallucination)
-            mesg = halu_fam_msgs[which];
-        else
-            mesg = fam_msgs[which];
-        if (mesg && strchr(mesg, '%')) {
-            mesg = (msgprintf)(mesg, !Blind ? "looks" : "seems");
-        }
-        if (mesg)
-            pline(msgc_levelwarning, "%s", mesg);
     }
 
     if (new && Is_rogue_level(&u.uz))
