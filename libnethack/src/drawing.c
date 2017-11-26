@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -224,21 +224,21 @@ const struct nh_symdef trapsyms[] = {
     {'^', "squeaky board", CLR_BROWN},
     {'^', "bear trap", HI_METAL},
     {'^', "land mine", CLR_RED},
-    {'^', "rolling boulder trap", CLR_GRAY},
-    {'^', "sleeping gas trap", HI_ZAP},
+    {'^', "rolling boulder trap", CLR_WHITE},
+    {'^', "sleeping gas trap", CLR_BRIGHT_CYAN},
     {'^', "rust trap", CLR_BLUE},
     {'^', "fire trap", CLR_ORANGE},
 /*10*/ {'^', "pit", CLR_BLACK},
     {'^', "spiked pit", CLR_BLACK},
-    {'^', "hole", CLR_BROWN},
-    {'^', "trap door", CLR_BROWN},
+    {'^', "hole", CLR_GREEN},
+    {'^', "trap door", CLR_GREEN},
     {'^', "vibrating square", CLR_YELLOW},
     {'^', "teleportation trap", CLR_MAGENTA},
-    {'^', "level teleporter", CLR_MAGENTA},
+    {'^', "level teleporter", CLR_BRIGHT_MAGENTA},
     {'^', "magic portal", CLR_BRIGHT_MAGENTA},
     {'^', "web", CLR_GRAY},
     {'^', "statue trap", CLR_GRAY},
-/*20*/ {'^', "magic trap", HI_ZAP},
+/*20*/ {'^', "magic trap", CLR_YELLOW},
     {'^', "anti-magic field", HI_ZAP},
     {'^', "polymorph trap", CLR_BRIGHT_GREEN}
 };
@@ -279,12 +279,12 @@ const struct nh_symdef zapsyms[NUM_ZAP] = {
 const struct nh_symdef zaptypes[NUM_ZAP] = {
     {0, "missile", HI_ZAP},
     {0, "fire", CLR_ORANGE},
-    {0, "frost", CLR_WHITE},
-    {0, "sleep", HI_ZAP},
+    {0, "frost", CLR_CYAN},
+    {0, "sleep", CLR_MAGENTA},
     {0, "death", CLR_BLACK},
     {0, "lightning", CLR_WHITE},
-    {0, "poison gas", CLR_YELLOW},
-    {0, "acid", CLR_GREEN},
+    {0, "poison gas", CLR_GREEN},
+    {0, "acid", CLR_YELLOW},
     {0, "stun", CLR_BROWN}
 };
 
@@ -297,7 +297,7 @@ const struct nh_symdef effectsyms[] = {
     {'#', "shield2", HI_ZAP},
     {'@', "shield3", HI_ZAP},
     {'*', "shield4", HI_ZAP},
-    {'#', "gascloud", CLR_GRAY}
+    {'#', "gascloud", CLR_BRIGHT_GREEN}
 };
 
 const struct nh_symdef swallowsyms[] = {
