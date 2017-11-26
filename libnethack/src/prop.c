@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -984,6 +984,11 @@ update_property(struct monst *mon, enum youprop prop,
 
     /* Invalidate property cache */
     mon->mintrinsic_cache[prop] &= ~W_MASK(os_cache);
+
+    /* Don't do anything during initialization. This is safe, and prevents
+       messages pertaining to trinsics from showing during newgame. */
+    if (turnstate.in_newgame)
+        return FALSE;
 
     /* update_property() can run for monsters wearing armor during level creation,
        or potentially off-level, so level can be non-existent or outright wrong,

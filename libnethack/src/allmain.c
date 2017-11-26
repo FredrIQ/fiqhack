@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1473,6 +1473,7 @@ newgame(microseconds birthday, struct newgame_options *ngo)
 {
     int i;
 
+    turnstate.in_newgame = TRUE;
     flags.ident = FIRST_PERMANENT_IDENT; /* lower values are temporaries */
 
     for (i = 0; i < NUMMONS; i++)
@@ -1525,6 +1526,7 @@ newgame(microseconds birthday, struct newgame_options *ngo)
 
     u.moveamt = NORMAL_SPEED;   /* hero is normal speed on turn 1 */
     post_init_tasks();
+    turnstate.in_newgame = FALSE;
 }
 
 /*allmain.c*/
