@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -545,11 +545,15 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
             break;
         }
+        if (cansee(bhitpos.x, bhitpos.y)) {
+            tmpsym_at(tsym, bhitpos.x, bhitpos.y);
+            win_delay_output();
+        }
+    }
+    if (cansee(bhitpos.x, bhitpos.y)) {
         tmpsym_at(tsym, bhitpos.x, bhitpos.y);
         win_delay_output();
     }
-    tmpsym_at(tsym, bhitpos.x, bhitpos.y);
-    win_delay_output();
     tmpsym_end(tsym);
 
     if (blindinc) {
