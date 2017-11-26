@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -70,21 +70,6 @@ struct dgn_topology {    /* special dungeon levels for speed */
 };
 
 
-/* This structure is being used as part of the globals purge.
-
-   Current meaning: "globals associated with the player character that aren't
-   part of struct you".
-
-   Eventual meaning: "values associated with a player that aren't associated
-   with a monster".
-
-   Ideally, we'll continuously deform one into the other. (Also, this is in the
-   wrong file; you.h would make more sense.) */
-struct youaux {
-    int unused;
-};
-
-
 /* The big gamestate structure that holds all saved data. */
 extern struct gamestate {
 
@@ -106,7 +91,6 @@ extern struct gamestate {
        just be a single monster chain.  But that's a *long* way off at the
        moment.) */
     struct you us[1];
-    struct youaux us_aux[1];
 
     /* Fruit state. Arguably should be in flags. Currently, this is attached to
        a dungeon as a whole /or/ a bones level, which is weird enough as it is;
