@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1853,7 +1853,7 @@ restore_obj(struct memfile *mf)
     int oattached = (oflags >> 9) & 3; /* old saves */
     otmp->in_use = (oflags >> 8) & 1;
     otmp->was_thrown = (oflags >> 7) & 1;
-    otmp->bypass = (oflags >> 6) & 1;
+    /* old bypass flag */
     otmp->was_dropped = (oflags >> 5) & 1;
     otmp->mknown = (oflags >> 4) & 1;
     otmp->mbknown = (oflags >> 3) & 1;
@@ -1921,6 +1921,9 @@ save_obj(struct memfile *mf, struct obj *obj)
         return;
     }
 
+    if (obj->to_be_hit) /* Not saved, so not a major issue, but this shouldn't happen */
+        impossible("obj->to_be_hit was set in neutral turnstate?");
+
     oflags =
         (obj->cursed << 31) | (obj->blessed << 30) |
         (obj->unpaid << 29) | (obj->no_charge << 28) |
@@ -1932,7 +1935,7 @@ save_obj(struct memfile *mf, struct obj *obj)
         (obj->recharged << 13) | (obj->lamplit << 12) |
         (obj->greased << 11) | (OATTACHED_NEW << 9) |
         (obj->in_use << 8) | (obj->was_thrown << 7) |
-        (obj->bypass << 6) | (obj->was_dropped << 5) |
+        (0 << 6 /* old bypass */ ) | (obj->was_dropped << 5) |
         (obj->mknown << 4) | (obj->mbknown << 3) |
         (obj->memory << 1) | (obj->cknown << 0);
 

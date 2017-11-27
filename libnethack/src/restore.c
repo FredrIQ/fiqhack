@@ -310,8 +310,6 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
             for (otmp3 = otmp->cobj; otmp3; otmp3 = otmp3->nobj)
                 otmp3->ocontainer = otmp;
         }
-        if (otmp->bypass)
-            otmp->bypass = 0;
     }
 }
 
@@ -1032,7 +1030,6 @@ dorecover(struct memfile *mf)
     level = NULL;       /* level restore must not use this pointer */
 
     restore_flags(mf, &flags);
-    flags.bypasses = 0; /* never use a saved value of bypasses */
 
     restore_you(mf, &u);
     role_init();       /* Reset the initial role, race, gender, and alignment */

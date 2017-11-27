@@ -1450,12 +1450,6 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     if (turnstate.vision_full_recalc)
         vision_recalc(0);       /* vision! */
 
-    /* We must do this /before/ the monsters get their turn, to prevent bypass
-       flags persisting from one action to the next. (TODO: The bypass system
-       could really do with an overhaul.) */
-    if (flags.bypasses)
-        clear_bypasses();
-
     if (didmove)
         you_moved();
 

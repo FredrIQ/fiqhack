@@ -253,7 +253,6 @@ savebones(struct obj *corpse, boolean take_items)
 
     /* caller has already checked `can_make_bones()' */
 
-    clear_bypasses();
     make_bones_id(bonesid, &u.uz);
     fd = open_bonesfile(bonesid);
     if (fd >= 0) {

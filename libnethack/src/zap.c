@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "zap.h"
 
 static int poly_zapped;
 
@@ -19,25 +20,10 @@ static void cancel_item(struct obj *);
 static boolean obj_shudders(struct obj *);
 static void do_osshock(struct obj *);
 static void bhit(struct monst *, int, int, int, struct obj *);
+static void bhitpile_pre(struct monst *, struct obj *, int, int);
+static int bhitpile_post(struct monst *, struct obj *, int, int);
 static int zap_hit_check(int, int);
 static int spell_hit_bonus(int);
-
-#define ZT_MAGIC_MISSILE        (AD_MAGM-1)
-#define ZT_FIRE                 (AD_FIRE-1)
-#define ZT_COLD                 (AD_COLD-1)
-#define ZT_SLEEP                (AD_SLEE-1)
-#define ZT_DEATH                (AD_DISN-1)     /* or disintegration */
-#define ZT_LIGHTNING            (AD_ELEC-1)
-#define ZT_POISON_GAS           (AD_DRST-1)
-#define ZT_ACID                 (AD_ACID-1)
-#define ZT_STUN                 (AD_STUN-1)
-/* 9 is currently unassigned */
-
-#define ZT_WAND(x)              (x)
-#define ZT_SPELL(x)             (10+(x))
-#define ZT_BREATH(x)            (20+(x))
-
-#define is_hero_spell(type)     ((type) >= 10 && (type) < 20)
 
 const char *const flash_types[] = {   /* also used in buzzmu(mcastu.c) */
     "magic missile",    /* Wands must be 0-9 */
@@ -241,7 +227,6 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             reveal_invis = TRUE;
             wake = TRUE;
             known = TRUE;
-            flags.bypasses = TRUE;      /* for make_corpse() */
             if (hityou) {
                 if (wandlevel < P_SKILLED) {
                     if (resists_stun(mdef)) {
@@ -314,15 +299,9 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                metabolism...) */
             if (mdef->cham == CHAM_ORDINARY && !rn2(25) &&
                 (!tame || wandlevel < P_EXPERT)) {
-                if (canseemon(mdef)) {
+                if (canseemon(mdef))
                     pline(combat_msgc(magr, mdef, cr_kill),
                           "%s shudders!", Monnam(mdef));
-                }
-                /* dropped inventory shouldn't be hit by this zap */
-                for (obj = mdef->minvent; obj; obj = obj->nobj)
-                    bypass_obj(obj);
-                /* flags.bypasses = TRUE; ## for make_corpse() */
-                /* no corpse after system shock */
                 monkilled(magr, mdef, "", -AD_RBRE);
                 break;
             }
@@ -540,13 +519,10 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         set_property(mdef, STONED, -2, FALSE); /* saved! */
         /* but at a cost.. */
         if (selfzap) {
+            bhitinv(mdef, otmp);
             struct obj *otemp;
             struct obj *onext;
             boolean didmerge;
-            for (otemp = mdef->minvent; otemp; otemp = onext) {
-                onext = otemp->nobj;
-                bhito(otemp, otmp);
-            }
             /* It is possible that we can now merge some inventory.
                Do a higly paranoid merge.  Restart from the beginning
                until no merges. */
@@ -1215,8 +1191,10 @@ polyuse(struct obj *objhdr, int mat, int minwt)
         otmp2 = otmp->nexthere;
         if (otmp == uball || otmp == uchain)
             continue;
+        if (!otmp->to_be_hit)
+            continue; /* it wasn't here originally */
         if (obj_resists(otmp, 0, 0))
-            continue;   /* preserve unique objects */
+            continue; /* preserve unique objects */
 
         if (((int)objects[otmp->otyp].oc_material == mat) ==
             (rn2(minwt + 1) != 0)) {
@@ -1754,13 +1732,14 @@ end:
     newsym(refresh_x, refresh_y);
     return res;
 
-makecorpse:;
-    struct obj *item;
-
+makecorpse:
     if (mons[obj->corpsenm].geno & (G_NOCORPSE | G_UNIQ)) {
         res = 0;
         goto end;
     }
+
+    struct obj *item;
+
     /* Unlikely to get here since genociding
        monsters also sets the G_NOCORPSE flag.
        Drop the contents, poly_obj loses them. */
@@ -1772,39 +1751,15 @@ makecorpse:;
     goto end;
 }
 
-/*
- * Object obj was hit by the effect of the wand/spell otmp.  Return
- * non-zero if the wand/spell had any effect.
- */
+/* Object obj was hit by the effect of the wand/spell otmp.  Return non-zero if the
+   wand/spell had any effect. */
 int
 bhito(struct obj *obj, struct obj *otmp)
 {
-    int res = 1;        /* affected object by default */
+    int res = 1; /* affected object by default */
 
-    if (obj->bypass) {
-        /* The bypass bit is currently only used as follows: POLYMORPH - When a
-           monster being polymorphed drops something from its inventory as a
-           result of the change.  If the items fall to the floor, they are not
-           subject to direct subsequent polymorphing themselves on that same
-           zap. This makes it consistent with items that remain in the
-           monster's inventory. They are not polymorphed either. UNDEAD_TURNING
-           - When an undead creature gets killed via undead turning, prevent
-           its corpse from being immediately revived by the same effect. The
-           bypass bit on all objects is reset each turn, whenever
-           flags.bypasses is set. We check the obj->bypass bit above AND
-           flags.bypasses as a safeguard against any stray occurrence left in
-           an obj struct someplace, although that should never happen. */
-        if (flags.bypasses)
-            return 0;
-        else
-            obj->bypass = 0;
-    }
-
-    /*
-     * Some parts of this function expect the object to be on the floor
-     * obj->{ox,oy} to be valid.  The exception to this (so far) is
-     * for the STONE_TO_FLESH spell.
-     */
+    /* Some parts of this function expect the object to be on the floor (ox/oy is valid).
+       The exception to this is cancellation and stone to flesh, so far */
     if (!(obj->where == OBJ_FLOOR || otmp->otyp == SPE_STONE_TO_FLESH))
         impossible("bhito: obj is not floor or Stone To Flesh spell");
 
@@ -1899,7 +1854,8 @@ bhito(struct obj *obj, struct obj *otmp)
         case WAN_CANCELLATION:
         case SPE_CANCELLATION:
             cancel_item(obj);
-            newsym(obj->ox, obj->oy);   /* might change color */
+            if (obj->where == OBJ_FLOOR)
+                newsym(obj->ox, obj->oy); /* might change color */
             break;
         case SPE_DRAIN_LIFE:
             drain_item(obj);
@@ -1941,6 +1897,8 @@ bhito(struct obj *obj, struct obj *otmp)
         case WAN_SPEED_MONSTER:
         case SPE_SPEED_MONSTER:
         case WAN_NOTHING:
+        case WAN_SLEEP: /* (broken wand) */
+        case WAN_LIGHT: /* (broken wand) */
         case SPE_HEALING:
         case SPE_EXTRA_HEALING:
         case EXPENSIVE_CAMERA:
@@ -1956,35 +1914,73 @@ bhito(struct obj *obj, struct obj *otmp)
     return res;
 }
 
-/* returns nonzero if something was hit */
+/* Hit inventory */
+void
+bhitinv(struct monst *mon, struct obj *obj)
+{
+    struct obj *otmp;
+    for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
+        bhito(otmp, obj);
+}
+
+/* Hit an object pile at location */
 int
-bhitpile(struct obj *obj, int (*fhito) (struct obj *, struct obj *), int tx,
-         int ty)
+bhitpile(struct monst *mon, struct obj *obj, int x, int y)
+{
+    bhitpile_pre(mon, obj, x, y);
+    return bhitpile_post(mon, obj, x, y);
+}
+
+/* Sets to_be_hit for objects on the specified x/y */
+static void
+bhitpile_pre(struct monst *mon, struct obj *obj, int x, int y)
+{
+    struct obj *otmp;
+    for (otmp = m_dlevel(mon)->objects[x][y]; otmp; otmp = otmp->nexthere)
+        otmp->to_be_hit = 1;
+}
+
+static int
+bhitpile_post(struct monst *mon, struct obj *obj, int x, int y)
 {
     int hitanything = 0;
-    struct obj *otmp, *next_obj;
+    struct obj *otmp;
 
     if (obj->otyp == SPE_FORCE_BOLT || obj->otyp == WAN_STRIKING) {
-        struct trap *t = t_at(level, tx, ty);
+        struct trap *t = t_at(level, x, y);
 
         /* We can't settle for the default calling sequence of bhito(otmp) ->
            break_statue(otmp) -> activate_statue_trap(ox,oy) because that last
            call might end up operating on our `next_obj' (below), rather than
            on the current object, if it happens to encounter a statue which
            mustn't become animated. */
-        if (t && t->ttyp == STATUE_TRAP && activate_statue_trap(t, tx, ty, TRUE)
-            && obj->otyp == WAN_STRIKING)
+        if (t && t->ttyp == STATUE_TRAP && activate_statue_trap(t, x, y, TRUE)
+            && obj->otyp == WAN_STRIKING &&
+            (mon == &youmonst || cansee(x, y)))
             makeknown(obj->otyp);
     }
 
     poly_zapped = -1;
-    for (otmp = level->objects[tx][ty]; otmp; otmp = next_obj) {
+    struct obj *nexthere;
+    for (otmp = m_dlevel(mon)->objects[x][y]; otmp; otmp = nexthere) {
         /* Fix for polymorph bug, Tim Wright */
-        next_obj = otmp->nexthere;
-        hitanything += (*fhito) (otmp, obj);
+        nexthere = otmp->nexthere;
+        if (!otmp->to_be_hit)
+            continue;
+
+        hitanything += bhito(otmp, obj);
+
+        /* Reset to_be_hit. However, leave it present for polymorph, because
+           create_polymon should only affect objects that was here in the first place. */
+        if (obj->otyp != WAN_POLYMORPH && obj->otyp != SPE_POLYMORPH)
+            otmp->to_be_hit = 0;
     }
     if (poly_zapped >= 0)
-        create_polymon(level->objects[tx][ty], poly_zapped);
+        create_polymon(level->objects[x][y], poly_zapped);
+
+    /* Reset to_be_hit post-polymorph */
+    for (otmp = m_dlevel(mon)->objects[x][y]; otmp; otmp = otmp->nexthere)
+        otmp->to_be_hit = 0;
 
     return hitanything;
 }
@@ -2307,12 +2303,8 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
         return FALSE;
     }
 
-    if (self_cancel) {  /* 1st cancel inventory */
-        struct obj *otmp;
-
-        for (otmp = mdef->minvent; otmp; otmp = otmp->nobj)
-            cancel_item(otmp);
-    }
+    if (self_cancel)
+        bhitinv(mdef, obj); /* cancel inventory */
 
     set_property(mdef, CANCELLED, 0, FALSE);
     if (is_were(mdef->data) && mdef->data->mlet != S_HUMAN) {
@@ -2369,7 +2361,7 @@ zap_updown(struct monst *mon, struct obj *obj, schar dz)
                       ceiling(m_mx(mon), m_my(mon)));
         } else {
             if (you)
-                ptmp += bhitpile(obj, bhito, x, y);
+                ptmp += bhitpile(mon, obj, x, y);
             if (you || vis)
                 pline(you ? msgc_info : msgc_monneutral,
                       "%s beneath the %s.",
@@ -2485,7 +2477,7 @@ zap_updown(struct monst *mon, struct obj *obj, schar dz)
 
     if (dz > 0) {
         /* zapping downward */
-        bhitpile(obj, bhito, x, y);
+        bhitpile(mon, obj, x, y);
 
         /* subset of engraving effects; none sets `disclose' */
         if ((e = engr_at(level, x, y)) != 0 && e->engr_type != HEADSTONE) {
@@ -2711,129 +2703,170 @@ miss(const char *str, struct monst *mdef, struct monst *magr)
 
 /* bhit() -- zap immediate wand in any direction. */
 static void
-bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj) {
-    struct monst *mdef;
+bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj)
+{
+    struct level *lev = m_dlevel(mon);
+    struct monst *dmon;
     struct tmp_sym *tsym = NULL;
-    uchar typ;
-    boolean shopdoor = FALSE; /* for determining if you should pay for ruining a door */
     boolean you = (mon == &youmonst);
-    boolean vis = canseemon(mon);
 
-    bhitpos.x = m_mx(mon);
-    bhitpos.y = m_my(mon);
+    boolean shopdam = FALSE;
+    int x = m_mx(mon);
+    int y = m_my(mon);
     if (obj->otyp == EXPENSIVE_CAMERA)
         tsym = tmpsym_init(DISP_BEAM, dbuf_effect(E_MISC, E_flashbeam));
 
     while (range-- > 0) {
-        int x, y;
+        x += dx;
+        y += dy;
 
-        bhitpos.x += dx;
-        bhitpos.y += dy;
-        x = bhitpos.x;
-        y = bhitpos.y;
-
-        if (!isok(x, y)) {
-            bhitpos.x -= dx;
-            bhitpos.y -= dy;
+        /* Check if we reached the level border */
+        if (!isok(x, y))
             break;
-        }
-        
-        typ = level->locations[bhitpos.x][bhitpos.y].typ;
+
         if (tsym) {
-            tmpsym_at(tsym, bhitpos.x, bhitpos.y);
+            tmpsym_at(tsym, x, y);
             win_delay_output();
         }
-        if (find_drawbridge(&x, &y))
-            switch (obj->otyp) {
-            case WAN_OPENING:
-            case SPE_KNOCK:
-                if (is_db_wall(bhitpos.x, bhitpos.y)) {
-                    if (cansee(x, y) || cansee(bhitpos.x, bhitpos.y))
-                        if (you || vis)
-                            makeknown(obj->otyp);
-                    open_drawbridge(x, y);
-                }
-                break;
-            case WAN_LOCKING:
-            case SPE_WIZARD_LOCK:
-                if ((cansee(x, y) || cansee(bhitpos.x, bhitpos.y))
-                    && level->locations[x][y].typ == DRAWBRIDGE_DOWN)
-                    if (you || vis)
-                        makeknown(obj->otyp);
-                close_drawbridge(x, y);
-                break;
-            case WAN_STRIKING:
-            case SPE_FORCE_BOLT:
-                if (typ != DRAWBRIDGE_UP)
-                    destroy_drawbridge(x, y);
-                if (you || vis)
-                    makeknown(obj->otyp);
-                break;
-            }
-        mdef = m_at(level, bhitpos.x, bhitpos.y);
-        if (!mdef && bhitpos.x == u.ux && bhitpos.y == u.uy)
-            mdef = &youmonst;
-        if (mdef) {
-            if (cansee(bhitpos.x, bhitpos.y) && !canspotmon(mdef))
-                map_invisible(bhitpos.x, bhitpos.y);
-            if (obj->otyp != EXPENSIVE_CAMERA || !invisible(mdef))
-                range -= 3;
-            bhitm(mon, mdef, obj, max(range, 1));
-        } else if ((mdef = vismon_at(level, bhitpos.x, bhitpos.y))) {
-            pline(combat_msgc(mon, mdef, cr_miss),
-                  "The %s passes through %s displaced image!",
-                  obj->otyp == EXPENSIVE_CAMERA ? "flash" : "beam",
-                  s_suffix(mon_nam(mdef)));
-        }
+
+        int ret = bhit_at(mon, obj, x, y, range);
+
         /* boulders block vision, so make them block camera flashes too... */
-        if (sobj_at(BOULDER, level, bhitpos.x, bhitpos.y) &&
-            obj->otyp == EXPENSIVE_CAMERA)
+        if (sobj_at(BOULDER, lev, x, y) ||
+            (ret & BHIT_OBSTRUCT))
             range = 0;
 
-        if (bhitpile(obj, bhito, bhitpos.x, bhitpos.y))
+        /* camera flashes aren't bothered by objects otherwise */
+        if (obj->otyp != EXPENSIVE_CAMERA && (ret & BHIT_OBJ))
             range--;
-        if (you && obj->otyp == WAN_PROBING &&
-            level->locations[bhitpos.x][bhitpos.y].mem_invis) {
-            level->locations[bhitpos.x][bhitpos.y].mem_invis = 0;
-            newsym(x, y);
-        }
-        if (IS_DOOR(typ) || typ == SDOOR) {
-            switch (obj->otyp) {
-            case WAN_OPENING:
-            case WAN_LOCKING:
-            case WAN_STRIKING:
-            case SPE_KNOCK:
-            case SPE_WIZARD_LOCK:
-            case SPE_FORCE_BOLT:
-                if (doorlock(obj, bhitpos.x, bhitpos.y)) {
-                    if (you || vis)
-                        makeknown(obj->otyp);
-                    if (level->locations[bhitpos.x][bhitpos.y].flags ==
-                        D_BROKEN &&
-                        *in_rooms(level, bhitpos.x, bhitpos.y, SHOPBASE)) {
-                        shopdoor = TRUE;
-                        add_damage(bhitpos.x, bhitpos.y, you ? 400L : 0L);
-                    }
-                }
-                break;
-            }
-        }
-        if (!ZAP_POS(typ) ||
-            (IS_DOOR(typ) &&
-             (level->locations[bhitpos.x][bhitpos.y].
-              flags & (D_LOCKED | D_CLOSED)))
-            ) {
-            bhitpos.x -= dx;
-            bhitpos.y -= dy;
-            break;
-        }
+
+        if (ret & BHIT_MON)
+            range -= 3;
+        else if ((ret & BHIT_DMON) &&
+                 (dmon = vismon_at(lev, x, y)))
+            pline(combat_msgc(mon, dmon, cr_miss),
+                  "The %s passes through %s displaced image!",
+                  obj->otyp == EXPENSIVE_CAMERA ? "flash" : "beam",
+                  dmon == &youmonst ? "your" : s_suffix(mon_nam(dmon)));
+        if (ret & BHIT_SHOPDAM)
+            shopdam = TRUE;
     }
 
     if (tsym)
         tmpsym_end(tsym);
 
-    if (you && shopdoor)
+    if (you && shopdam)
         pay_for_damage("destroy", FALSE);
+}
+
+/*
+ * Beam hit a specific tile, used for regular zaps and wand destruction.
+ * Returns a bitfield:
+ *   - BHIT_NONE (0x0) - nothing was hit
+ *   - BHIT_MON        - a monster was hit
+ *   - BHIT_OBJ        - one (or several) objects was hit
+ *   - BHIT_OBSTRUCT   - some obstruction was hit (wall, door, etc...), stop range
+ *   - BHIT_SHOPDAM    - a shopdoor or similar was hit for damage
+ */
+int
+bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
+{
+    if (!isok(x, y))
+        return BHIT_OBSTRUCT;
+
+    struct level *lev = m_dlevel(mon);
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
+    int ret = BHIT_NONE;
+    uchar typ = lev->locations[x][y].typ;
+
+    /* Drawbridge handling */
+    int oldx = x;
+    int oldy = y;
+    if (find_drawbridge(&x, &y)) {
+        switch (obj->otyp) {
+        case WAN_OPENING:
+        case SPE_KNOCK:
+            if (is_db_wall(oldx, oldy)) {
+                if (cansee(x, y) || cansee(oldx, oldy))
+                    if (vis)
+                        makeknown(obj->otyp);
+                open_drawbridge(x, y);
+            }
+            break;
+        case WAN_LOCKING:
+        case SPE_WIZARD_LOCK:
+            if ((cansee(x, y) || cansee(oldx, oldy))
+                && lev->locations[x][y].typ == DRAWBRIDGE_DOWN)
+                if (you || vis)
+                    makeknown(obj->otyp);
+            close_drawbridge(x, y);
+            break;
+        case WAN_STRIKING:
+        case SPE_FORCE_BOLT:
+            if (typ != DRAWBRIDGE_UP)
+                destroy_drawbridge(x, y);
+            if (you || vis)
+                makeknown(obj->otyp);
+            break;
+        }
+    }
+
+    /* Reset x/y in case a drawbridge messed with them */
+    x = oldx;
+    y = oldy;
+
+    if (IS_DOOR(typ) || typ == SDOOR) {
+        switch (obj->otyp) {
+        case WAN_OPENING:
+        case SPE_KNOCK:
+        case WAN_LOCKING:
+        case SPE_WIZARD_LOCK:
+        case WAN_STRIKING:
+        case SPE_FORCE_BOLT:
+            if (doorlock(obj, x, y)) {
+                if (vis)
+                    makeknown(obj->otyp);
+                if (lev->locations[x][y].flags == D_BROKEN &&
+                    *in_rooms(lev, x, y, SHOPBASE)) {
+                    ret |= BHIT_SHOPDAM;
+                    add_damage(x, y, you ? 400L : 0L);
+                }
+            }
+            break;
+        }
+    }
+
+    /* Object/monster handling. First bhitpile_pre sets a flag for objects to be hit,
+       then bhitm affects monsters at the tile, then bhitpile_post finishes the work.
+       However, to avoid race conditions with autopickup, teleportation magic hits
+       objects first. */
+    if (obj->otyp == WAN_TELEPORTATION || obj->otyp == SPE_TELEPORT_AWAY) {
+        if (bhitpile(mon, obj, x, y))
+            ret |= BHIT_OBJ;
+    } else
+        bhitpile_pre(mon, obj, x, y);
+
+    struct monst *mdef = um_at(lev, x, y);
+    if (mdef) {
+        if (!canseemon(mdef) && cansee(x, y))
+            map_invisible(x, y);
+        bhitm(mon, mdef, obj, min(range, 1));
+        ret |= BHIT_MON;
+    } else if ((mdef = vismon_at(lev, x, y)))
+        ret |= BHIT_DMON;
+
+    if (obj->otyp != WAN_TELEPORTATION && obj->otyp != SPE_TELEPORT_AWAY &&
+        bhitpile_post(mon, obj, x, y))
+        ret |= BHIT_OBJ;
+
+    /* Is the rest of the range obstructed? */
+    if (!ZAP_POS(typ) ||
+        (IS_DOOR(typ) &&
+         (lev->locations[x][y].flags & (D_LOCKED | D_CLOSED))))
+        ret |= BHIT_OBSTRUCT;
+
+    return ret;
 }
 
 /* will zap/spell/breath attack score a hit against armor class `ac'? */

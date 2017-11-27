@@ -721,7 +721,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 if (vis)
                     mon_reflects(magr, mdef, TRUE, 
                                  "%s gaze is reflected further by %s %s!",
-                                 uagr ? s_suffix(Monnam(magr)) : "Your");
+                                 uagr ? "Your" : s_suffix(Monnam(magr)));
                 break;
             }
             if (!visad) { /* probably you're invisible */

@@ -98,7 +98,7 @@
 
 extern coord bhitpos;   /* place where throw or zap hits or stops */
 
-/* types of calls to bhit() */
+/* types of calls to fire_obj() */
 # define THROWN_WEAPON  1
 # define KICKED_WEAPON  2
 
