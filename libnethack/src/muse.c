@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1396,7 +1396,7 @@ find_item(struct monst *mon, struct musable *m)
         }
     }
 
-    if (fraction < 35 && mon != u.usteed) {
+    if (fraction < 35 && mon != u.usteed && mon != u.ustuck) {
         if (lev->locations[x][y].typ == STAIRS && !stuck && !immobile) {
             if (x == lev->dnstair.sx && y == lev->dnstair.sy &&
                 !levitates(mon))
