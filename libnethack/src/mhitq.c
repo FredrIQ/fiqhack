@@ -255,7 +255,8 @@ mpreattack(struct monst *magr, struct monst *mdef, boolean range2)
 {
     const struct permonst *mdat = magr->data;
 
-    if (DEADMONSTER(magr) || (Underwater && !swims(magr)))
+    if (DEADMONSTER(magr) || (mdef == &youmonst && Underwater &&
+                              !swims(magr)))
         return FALSE;
 
     /* Special demon handling code */
