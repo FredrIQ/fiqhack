@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -255,9 +255,20 @@ m_initweap(struct level *lev, struct monst *mtmp, enum rng rng)
             otmp = mksobj(lev, LONG_SWORD, FALSE, FALSE, rng);
 
             /* maybe make it special */
-            if (!rn2_on_rng(20, rng) || is_lord(ptr))
-                otmp = oname(otmp, artiname(rn2_on_rng(2, rng) ?
-                                            ART_DEMONBANE : ART_SUNSWORD));
+            if (!otmp->oartifact &&
+                (!rn2_on_rng(20, rng) || is_lord(ptr))) {
+                int arti_res = rn2_on_rng(2, rng);
+                /* Demonbane is now a silver saber. */
+                if (!arti_res)
+                    otmp->otyp = SILVER_SABER;
+                otmp = oname(otmp, artiname(arti_res ? ART_SUNSWORD :
+                                            ART_DEMONBANE));
+                /* Revert it to a long sword if we didn't create
+                   an artifact. */
+                if (!otmp->oartifact)
+                    otmp->otyp = LONG_SWORD;
+                otmp->owt = weight(otmp);
+            }
             bless(otmp);
             otmp->oerodeproof = TRUE;
             spe2 = rn2_on_rng(4, rng);

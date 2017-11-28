@@ -140,7 +140,7 @@ static const struct artifact const_artilist[] = {
       (SPFX_RESTR | SPFX_REFLECT | SPFX_DCLAS | SPFX_WTREDUC), 0, S_DRAGON,
       PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_LAWFUL, PM_KNIGHT, NON_PM, 500L),
 
-    A("Demonbane", LONG_SWORD,
+    A("Demonbane", SILVER_SABER,
       (SPFX_RESTR | SPFX_DFLAG2), 0, M2_DEMON,
       PHYS(5, 20), NO_DFNS, NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 2500L),
 
