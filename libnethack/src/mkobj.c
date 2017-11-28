@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artilist.h"
 #include "prop.h"
 
 #include <limits.h>
@@ -1082,6 +1083,13 @@ int
 weight(struct obj *obj)
 {
     int wt = objects[obj->otyp].oc_weight;
+
+
+    if (obj->oartifact) {
+        const struct artifact *arti = &artilist[obj->oartifact];
+        if (arti && (arti->spfx & SPFX_WTREDUC))
+            wt = (wt + 1) / 2;
+    }
 
     if (obj->otyp == LARGE_BOX && obj->spe == 1)        /* Schroedinger's Cat */
         wt += mons[PM_HOUSECAT].cwt;
