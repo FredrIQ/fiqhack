@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-06-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -830,7 +830,7 @@ toss_up(struct obj *obj, boolean hitsroof)
         boolean less_damage = uarmh && is_metallic(uarmh), artimsg = FALSE;
         int dmg = dmgval(obj, &youmonst);
 
-        if (obj->oartifact)
+        if (obj->oartifact || obj->oprops)
             /* need a fake die roll here; rn1(18,2) avoids 1 and 20 */
             artimsg = artifact_hit(NULL, &youmonst, obj, &dmg, rn1(18, 2));
 
