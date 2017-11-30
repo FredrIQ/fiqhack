@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1482,6 +1482,9 @@ poly_obj(struct obj *obj, int id)
     /* no box contents --KAA */
     if (Has_contents(otmp))
         delete_contents(otmp);
+
+    /* No object properties. Sorry. */
+    otmp->oprops = 0;
 
     /* 'n' merged objects may be fused into 1 object */
     if (otmp->quan > 1L &&
