@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -193,7 +193,7 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed,
             strcpy(buf, "strange object");
         } else {
             otmp = mktemp_sobj(level, votyp);
-            otmp->corpsenm = PM_TENGU;
+            otmp->corpsenm = PM_TENGU; /* consistent with memobj.c */
             /* (basic object only, no random features) */
             if (otmp->oclass == COIN_CLASS)
                 otmp->quan = 1L;        /* to force pluralization off */
