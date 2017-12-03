@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-03 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,6 @@ static void gods_upset(aligntyp);
 static void consume_offering(struct obj *);
 static boolean water_prayer(boolean);
 static boolean blocked_boulder(int, int);
-static void set_prayreminder(struct monst *, enum pray_type);
 
 /* simplify a few tests */
 #define Cursed_obj(obj,typ) ((obj) && (obj)->otyp == (typ) && (obj)->cursed)
@@ -2123,7 +2122,7 @@ blocked_boulder(int dx, int dy)
     return FALSE;
 }
 
-static void
+void
 set_prayreminder(struct monst *mon, enum pray_type result)
 {
     struct eyou *you = mx_eyou(mon);

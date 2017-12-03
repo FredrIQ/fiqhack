@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-03 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1500,6 +1500,7 @@ extern const char *align_gname(aligntyp);
 extern const char *halu_gname(aligntyp);
 extern const char *align_gtitle(aligntyp);
 extern void altar_wrath(int, int);
+extern void set_prayreminder(struct monst *, enum pray_type);
 
 /* ### priest.c ### */
 
