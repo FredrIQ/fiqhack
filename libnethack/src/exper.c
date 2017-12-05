@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,11 +221,13 @@ losexp(const char *killer, boolean override_res)
 
     /* Compute the progress the hero did towards the next level. Scale back one level,
        but keep the same progress. */
-    int expdiff_high = newuexp(u.ulevel + 1) - newuexp(u.ulevel);
-    int expdiff_low = newuexp(u.ulevel) - newuexp(u.ulevel - 1);
-    int pct = (u.uexp - newuexp(u.ulevel)) * 100 / expdiff_high;
-    u.uexp = newuexp(u.ulevel - 1);
-    u.uexp += pct * expdiff_low / 100;
+    if (u.uexp) {
+        int expdiff_high = newuexp(u.ulevel + 1) - newuexp(u.ulevel);
+        int expdiff_low = newuexp(u.ulevel) - newuexp(u.ulevel - 1);
+        int pct = (u.uexp - newuexp(u.ulevel)) * 100 / expdiff_high;
+        u.uexp = newuexp(u.ulevel - 1);
+        u.uexp += pct * expdiff_low / 100;
+    }
 }
 
 void
