@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -328,7 +328,7 @@ use_magic_whistle(struct obj *obj)
         pline(msgc_substitute, "You produce a high-pitched humming noise.");
         wake_nearby(FALSE);
     } else if (!obj->blessed && level->flags.noteleport)
-        pline(msgc_substitute, "But nothing happens.");
+        pline(msgc_substitute, "A mysterious force interferes with the magic!");
     else {
         pline(msgc_actionok, whistle_str, Hallucination ? "normal" : "strange");
         for (mtmp = level->monlist; mtmp; mtmp = nextmon) {

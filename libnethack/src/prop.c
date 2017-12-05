@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-05 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -2578,17 +2578,18 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     if (viewer->data == &mons[PM_XORN] && money_cnt(viewee->minvent))
         sensemethod |= MSENSE_GOLDSMELL;
 
-    /* Cooperative telepathy. Friendly monsters reveal themselves to each other
-       with telepathy. If one has telepathy, that one's telepathy determines how
-       easily they sense each other. If both has, they can be seen everywhere */
-    if (!mindless(viewer->data) && !m_helpless(viewer, hm_unconscious)) {
-        unsigned telepathy_reason = telepathic(viewee);
-        boolean strong_telepathy = has_immunity(viewer, TELEPAT);
-        if ((telepathy_reason && blinded) ||
-            (strong_telepathy &&
-             distance <= BOLT_LIM * BOLT_LIM))
-            sensemethod |= MSENSE_TEAMTELEPATHY;
+    /* Cooperative telepathy. Telepathy works in both directions. If both the
+       viewer and the viewee have telepathy, they can see each other
+       everywhere. */
+    if (!mindless(viewer->data) && !m_helpless(viewer, hm_unconscious) &&
+        !mindless(viewee->data) && !(sensemethod & MSENSE_TELEPATHY)) {
+        unsigned itelepat = (telepathic(viewer) | telepathic(viewee));
+        unsigned etelepat = has_immunity(viewer, TELEPAT);
+        etelepat |= has_immunity(viewee, TELEPAT);
         if (telepathic(viewer) && telepathic(viewee))
+            sensemethod |= MSENSE_TEAMTELEPATHY;
+        else if ((etelepat && distance <= BOLT_LIM * BOLT_LIM) ||
+                 (itelepat && blinded))
             sensemethod |= MSENSE_TEAMTELEPATHY;
     }
 
