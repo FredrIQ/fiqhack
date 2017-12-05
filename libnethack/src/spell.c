@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-05 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1804,11 +1804,14 @@ spelleffects(boolean atme, struct musable *m)
     case SPE_CONE_OF_COLD:
     case SPE_FIREBALL:
         if (role_skill >= P_SKILLED) {
+            int expltyp = pseudo->otyp - SPE_MAGIC_MISSILE + 10;
+            if (!you)
+                expltyp = -expltyp;
             cc.x = dx;
             cc.y = dy;
             n = rnd(8) + 1;
             while (n--) {
-                explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
+                explode(dx, expltyp,
                         m_mlev(mon) / 2 + 1 + (you ? spell_damage_bonus() : 0), 0,
                         (pseudo->otyp ==
                          SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
