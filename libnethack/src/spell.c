@@ -1883,7 +1883,7 @@ spelleffects(boolean atme, struct musable *m)
         break;
 
     case SPE_CURE_BLINDNESS:
-        healup(0, 0, FALSE, TRUE);
+        set_property(mon, BLINDED, -2, FALSE);
         break;
     case SPE_CURE_SICKNESS:
         set_property(mon, SICK, -2, FALSE);
