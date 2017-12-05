@@ -1811,7 +1811,7 @@ spelleffects(boolean atme, struct musable *m)
             cc.y = dy;
             n = rnd(8) + 1;
             while (n--) {
-                explode(dx, expltyp,
+                explode(dx, dy, expltyp,
                         m_mlev(mon) / 2 + 1 + (you ? spell_damage_bonus() : 0), 0,
                         (pseudo->otyp ==
                          SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
