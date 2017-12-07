@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -115,7 +115,7 @@ log_recover_core_reasons(struct nh_menulist *menu, const char *message,
                      "Here is additional information about this save rewind:");
     } else {
         add_menutext(menu,
-            "You can report this error at <https://github.com/FredrIQ/fiqhack/issues>.");
+            "You can report this error at <http://trac.nethack4.org>.");
         add_menutext(menu, "Please include the following information:");
     }
     add_menutext(menu, "");
