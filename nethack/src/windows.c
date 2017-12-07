@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -405,7 +405,9 @@ init_curses_ui(const char *dataprefix)
     }
 
     tileprefix = strdup(dataprefix);
-    set_font_file("font14.png");
+    char font_file[BUFSZ];
+    snprintf(font_file, BUFSZ, "font%s.png", settings.fontfile);
+    set_font_file(font_file);
     setup_tiles();
 
     setup_palette();
@@ -1204,6 +1206,13 @@ redraw_game_windows(void)
 void
 rebuild_ui(void)
 {
+    if (tileprefix) {
+        char font_file[BUFSZ];
+        snprintf(font_file, BUFSZ, "font%s.png", settings.fontfile);
+        set_font_file(font_file);
+        refresh();
+    }
+
     if (ui_flags.ingame) {
         wclear(basewin);
         resize_game_windows();
