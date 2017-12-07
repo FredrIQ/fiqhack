@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -860,7 +860,7 @@ you_moved(void)
 
             int *hp = &(u.uhp);
             int *hpmax = &(u.uhpmax);
-            if (flags.polyinit_mnum != -1) {
+            if (Upolyd) {
                 hp = &(u.mh);
                 hpmax = &(u.mhmax);
             }
@@ -883,17 +883,17 @@ you_moved(void)
                 wtcap = UNENCUMBERED;
             } else if (Upolyd && youmonst.data->mlet == S_EEL &&
                        !is_pool(level, u.ux, u.uy) && !Is_waterlevel(&u.uz)) {
-                if (*hp > 1)
-                    (*hp)--;
-                else if (*hp < 1)
+                if (u.mh > 1)
+                    u.mh--;
+                else if (u.mh < 1)
                     rehumanize(DIED, NULL);
             } else if (flags.polyinit_mnum == -1 &&
-                       Upolyd && *hp < *hpmax) {
-                if (*hp < 1)
+                       Upolyd && u.mh < u.mhmax) {
+                if (u.mh < 1)
                     rehumanize(DIED, NULL);
                 else if (Regeneration ||
                          (wtcap < MOD_ENCUMBER && !(moves % 20)))
-                    (*hp)++;
+                    u.mh++;
             } else if (*hp < *hpmax &&
                        (wtcap < MOD_ENCUMBER || !u.umoved || Regeneration)) {
                 *hp += regeneration_by_rate(regen_rate(&youmonst,
