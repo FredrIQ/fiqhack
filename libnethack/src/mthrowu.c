@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -278,12 +278,13 @@ ohitmon(struct monst *mtmp, /* accidental target */
             return 1;
 
         if (props & opm_detonate) {
+            int type = ((props & opm_frost) ? AD_COLD :
+                        (props & opm_shock) ? AD_ELEC :
+                        AD_FIRE) - 1;
+            type += 30;
+            type = -type;
             otmp->in_use = TRUE;
-            explode(bhitpos.x, bhitpos.y,
-                    ((props & opm_frost) ? AD_COLD :
-                     (props & opm_shock) ? AD_ELEC :
-                     AD_FIRE) - 1,
-                    dice(3, 6), WEAPON_CLASS,
+            explode(bhitpos.x, bhitpos.y, type, dice(3, 6), WEAPON_CLASS,
                     (props & (opm_frost | opm_shock)) ? EXPL_FROSTY :
                     EXPL_FIERY, NULL, 0);
             if (stack)
@@ -507,12 +508,13 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
 
             if (props & opm_detonate) {
                 /* shock uses "frosty" too, similar to lightning rays */
+                int type = ((props & opm_frost) ? AD_COLD :
+                            (props & opm_shock) ? AD_ELEC :
+                            AD_FIRE) - 1;
+                type += 30;
+                type = -type;
                 singleobj->in_use = TRUE;
-                explode(u.ux, u.uy,
-                        ((props & opm_frost) ? AD_COLD :
-                         (props & opm_shock) ? AD_ELEC :
-                         AD_FIRE) - 1,
-                        dice(3, 6), WEAPON_CLASS,
+                explode(u.ux, u.uy, type, dice(3, 6), WEAPON_CLASS,
                         (props & (opm_frost | opm_shock)) ? EXPL_FROSTY :
                         EXPL_FIERY, NULL, 0);
                 if (obj)
