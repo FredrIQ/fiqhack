@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Alex Smith, 2017-12-07 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -160,6 +160,9 @@ static struct nh_option_desc curses_options[] = {
     {"extmenu", "Commands and Confirmations",
      "use a menu for selecting extended commands (#)",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"fontsize", "Terminal and Rendering",
+     "font size (in graphical mode)",
+     nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
     {"invweight", "Messages and Menus",
      "show item weights in the inventory",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
@@ -338,6 +341,12 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.tileset = malloc(strlen(option->value.s) + 1);
         strcpy(settings.tileset, option->value.s);
         rebuild_ui();
+    } else if (!strcmp(option->name, "fontsize")) {
+        if (settings.fontfile)
+            free(settings.fontfile);
+        settings.fontfile = malloc(strlen(option->value.s) + 1);
+        strcpy(settings.fontfile, option->value.s);
+        rebuild_ui();
     } else if (!strcmp(option->name, "border")) {
         settings.whichframes = option->value.e;
         rebuild_ui();
@@ -412,6 +421,9 @@ init_options(void)
 
     find_option("border")->e = frame_spec;
     find_option("comment")->s.maxlen = BUFSZ;
+    find_option("fontsize")->s.maxlen = BUFSZ;
+    find_option("fontsize")->value.s = malloc(sizeof "14");
+    strcpy(find_option("fontsize")->value.s, "14");
     find_option("tileset")->s.maxlen = BUFSZ;
     find_option("tileset")->value.s = malloc(sizeof "textunicode");
     strcpy(find_option("tileset")->value.s, "textunicode");
@@ -646,6 +658,35 @@ select_tileset_value(union nh_optvalue *value, struct nh_option_desc *option)
     strcpy(value->s, newname);
 }
 
+/* TODO: don't hardcode font values */
+static const char *fontsizes[] = {"8", "14", "20", "22", NULL};
+
+static void
+select_font_value(union nh_optvalue *value, struct nh_option_desc *option)
+{
+    struct nh_menulist menu;
+    int i;
+
+    init_menulist(&menu);
+
+    add_menu_txt(&menu, option->helptxt, MI_TEXT);
+    add_menu_txt(&menu, "", MI_TEXT);
+
+    for (i = 0; fontsizes[i]; i++)
+        add_menu_item(&menu, i + 1, fontsizes[i], 0, 0);
+
+    int pick_list[1];
+    curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT, pick_list,
+                        curses_menu_callback);
+
+    const char *newname = option->value.s;
+    if (pick_list[0] != CURSES_MENU_CANCELLED)
+        newname = fontsizes[pick_list[0] - 1];
+
+    value->s = malloc(strlen(newname) + 1);
+    strcpy(value->s, newname);
+}
+
 static void
 getlin_option_callback(const char *str, void *option_void)
 {
@@ -725,9 +766,11 @@ query_new_value(struct win_menu *mdat, int idx)
         break;
 
     case OPTTYPE_STRING:
-        if (!strcmp(optioncopy.name, "tileset")) {
+        if (!strcmp(optioncopy.name, "tileset"))
             select_tileset_value(&optioncopy.value, option);
-        } else {
+        else if (!strcmp(optioncopy.name, "fontsize"))
+            select_font_value(&optioncopy.value, option);
+        else {
             char query[strlen(optioncopy.name) + 1 +
                        sizeof "New value for  (text)"];
             sprintf(query, "New value for %s (text)", optioncopy.name);

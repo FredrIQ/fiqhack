@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2017-11-18
+# Last modified by Alex Smith, 2017-12-07
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -422,12 +422,11 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             verb => 'merged',
         },
         _build_fonts => {
-            object => qr=^path:tilesets/dat/fonts/font14\.txt=s,
+            object => qr=^path:tilesets/dat/fonts/font\d+\.txt=s,
             command => ["bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
                         "optpath:-o :extend:.png:",
-                        "optstring:-z 8 14", "optstring:-b 0 0 0",
-                        "optstring:-t image", "optstring:-u",
-                        "optpath::"],
+                        "optstring:-b 0 0 0", "optstring:-t image",
+                        "optstring:-u", "optpath::"],
             output_from_optpath => '-o ',
         },
         _readme_dumps => {
