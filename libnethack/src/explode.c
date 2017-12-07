@@ -467,7 +467,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
 
             /* Maybe the item destruction killed */
             if (item_dmg && item_dmg >= rnd(damu + item_dmg))
-                ; /* killer is set above */
+                (void) 0; /* killer is set above */
             if (olet == MON_EXPLODE) {
                 killer = killer_msg(death, an(str));
             } else if (type >= 0 && olet != SCROLL_CLASS) {

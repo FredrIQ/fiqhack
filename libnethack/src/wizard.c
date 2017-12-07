@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -610,13 +610,14 @@ tactics(struct monst *mtmp)
         panic("Covetous AI running on an idle monster?");
 
     struct monst *target;
+    struct level *lev = mtmp->dlevel;
     int mclose = ROWNO * COLNO;
     int x = COLNO;
     int y = ROWNO;
 
     if (mtmp->mtame) {
         /* Harass monsters hostile to the player */
-        for (target = mtmp->dlevel->monlist; target; target = monnext(target)) {
+        for (target = lev->monlist; target; target = monnext(target)) {
             if (DEADMONSTER(target))
                 continue;
 
@@ -637,7 +638,6 @@ tactics(struct monst *mtmp)
     }
 
     long strat = mtmp->mstrategy;
-    struct level *lev = mtmp->dlevel;
     struct obj *obj;
 
     switch (strat) {
@@ -681,14 +681,14 @@ tactics(struct monst *mtmp)
         /* unless, of course, there are no stairs (e.g. endlevel) */
         mtmp->mavenge = 1;      /* covetous monsters attack while fleeing */
         if (In_W_tower(mtmp->mx, mtmp->my, &u.uz) ||
-            (mtmp->iswiz && isok(level->upstair.sx, level->upstair.sy) &&
+            (mtmp->iswiz && isok(lev->upstair.sx, lev->upstair.sy) &&
              !mon_has_amulet(mtmp))) {
             if (!rn2(3 + mtmp->mhp / 10))
                 rloc(mtmp, TRUE);
-        } else if (isok(level->upstair.sx, level->upstair.sy) &&
-                   (mtmp->mx != level->upstair.sx ||
-                    mtmp->my != level->upstair.sy)) {
-            mnearto(mtmp, level->upstair.sx, level->upstair.sy, FALSE);
+        } else if (isok(lev->upstair.sx, lev->upstair.sy) &&
+                   (mtmp->mx != lev->upstair.sx ||
+                    mtmp->my != lev->upstair.sy)) {
+            mnearto(mtmp, lev->upstair.sx, lev->upstair.sy, FALSE);
         }
         if (distu(mtmp->mx, mtmp->my) > (BOLT_LIM * BOLT_LIM)) {
             /* if you're not around, cast healing spells
@@ -711,7 +711,7 @@ tactics(struct monst *mtmp)
             rloc(mtmp, TRUE);
 
             /* Try to figure out where pests are */
-            for (target = mtmp->dlevel->monlist; target; target = monnext(target)) {
+            for (target = lev->monlist; target; target = monnext(target)) {
                 if (DEADMONSTER(target))
                     continue;
 

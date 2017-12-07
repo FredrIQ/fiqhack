@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-01 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,7 +19,6 @@ find_objects(struct level *lev, struct obj *chain, int *found,
 {
     struct obj *obj, *objfound, *upper;
     const char *dname;
-    boolean match;
     int oclass = ALL_CLASSES;
     if (strlen(str) == 1)
         oclass = def_char_to_objclass(*str);
@@ -41,7 +40,6 @@ find_objects(struct level *lev, struct obj *chain, int *found,
                               distant_name(upper, doname));
         }
 
-        match = FALSE;
         if (obj->memory == OM_MEMORY_LOST ||
             ((oclass == ALL_CLASSES && !strstri(dname, str)) ||
              (oclass != ALL_CLASSES && obj->oclass != oclass))) {
