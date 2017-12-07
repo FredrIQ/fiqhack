@@ -103,7 +103,8 @@ onscary(int x, int y, const struct monst *mtmp)
 {
     if (mx_eshk(mtmp) || mx_egd(mtmp) || mtmp->iswiz || blind(mtmp) ||
         mtmp->mpeaceful || mtmp->data->mlet == S_HUMAN || is_lminion(mtmp) ||
-        mtmp->data == &mons[PM_ANGEL] || is_rider(mtmp->data))
+        mtmp->data == &mons[PM_ANGEL] || is_rider(mtmp->data) ||
+        (mtmp->data->geno & G_UNIQ))
         return FALSE;
 
     return (boolean) (sobj_at(SCR_SCARE_MONSTER, level, x, y)
