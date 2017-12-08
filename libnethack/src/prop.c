@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-05 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-08 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -490,6 +490,8 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
         /* fallthrough */
     case WAN_SLEEP:
     case SPE_SLEEP:
+        if (m_helpless(target, hm_all))
+            return FALSE;
         return !prop_wary(user, target, SLEEP_RES);
     case WAN_LIGHTNING:
         return !prop_wary(user, target, SHOCK_RES);
