@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1248,25 +1248,38 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
     return -1;
 }
 
-void
+/* Returns TRUE if we were healed. */
+boolean
 healup(int nhp, int nxtra, boolean curesick, boolean cureblind)
 {
+    int res = 0;
     if (nhp) {
         if (Upolyd) {
-            u.mh += nhp;
-            if (u.mh > u.mhmax)
-                u.mh = (u.mhmax += nxtra);
+            if (u.mh < u.mhmax) {
+                u.mh += nhp;
+                if (u.mh > u.mhmax)
+                    u.mh = (u.mhmax += nxtra);
+                res++;
+            }
         } else {
-            u.uhp += nhp;
-            if (u.uhp > u.uhpmax)
-                u.uhp = (u.uhpmax += nxtra);
+            if (u.uhp < u.uhpmax) {
+                u.uhp += nhp;
+                if (u.uhp > u.uhpmax)
+                    u.uhp = (u.uhpmax += nxtra);
+                res++;
+            }
         }
     }
-    if (cureblind)
-        set_property(&youmonst, BLINDED, -2, FALSE);
-    if (curesick)
+    if (cureblind && set_property(&youmonst, BLINDED, -2, FALSE))
+        res++;
+    if (curesick && sick(&youmonst)) {
         make_sick(&youmonst, 0L, NULL, TRUE, SICK_ALL);
-    return;
+        res++;
+    }
+
+    if (res)
+        return TRUE;
+    return FALSE;
 }
 
 void

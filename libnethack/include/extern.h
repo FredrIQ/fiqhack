@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-08 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1475,7 +1475,7 @@ extern void make_sick(struct monst *, long, const char *, boolean, int);
 extern int dodrink(const struct nh_cmd_arg *);
 extern int dopotion(struct obj *);
 extern int peffects(struct monst *, struct obj *, int *, int *);
-extern void healup(int, int, boolean, boolean);
+extern boolean healup(int, int, boolean, boolean);
 extern void strange_feeling(struct obj *, const char *);
 extern void potionhit(struct monst *, struct obj *, struct monst *);
 extern void potionbreathe(struct monst *, struct obj *);

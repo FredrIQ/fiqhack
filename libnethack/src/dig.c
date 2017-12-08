@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -971,9 +971,34 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
         dam = rnd(2) + dbon() + obj->spe;
         if (dam <= 0)
             dam = 1;
+        enum msg_channel msgc = msgc_badidea;
+        if (uwep->oprops & opm_mercy)
+            msgc = msgc_actionok;
+
         pline(msgc_badidea, "You hit yourself with %s.", yname(uwep));
-        buf = msgprintf("%s own %s", uhis(), OBJ_NAME(objects[obj->otyp]));
-        losehp(dam, killer_msg(DIED, buf));
+        if (uwep->oprops & opm_mercy) {
+            /* Autocurse it */
+            if (!uwep->cursed) {
+                if (Blind)
+                    pline(msgc_statusbad, "%s for a moment.",
+                          Tobjnam(obj, "vibrate"));
+                else
+                    pline(msgc_statusbad, "%s %s for a moment.",
+                          Tobjnam(obj, "glow"), hcolor("black"));
+                curse(uwep);
+
+                uwep->bknown = TRUE;
+            }
+
+            if (healup(dam, 0, FALSE, FALSE)) {
+                pline(msgc_actionok, "You're healed!");
+                learn_oprop(uwep, opm_mercy);
+            } else
+                pline(msgc_failrandom, "Nothing happens.");
+        } else {
+            buf = msgprintf("%s own %s", uhis(), OBJ_NAME(objects[obj->otyp]));
+            losehp(dam, killer_msg(DIED, buf));
+        }
         return 1;
     } else if (dz == 0) {
 
