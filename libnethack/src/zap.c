@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1754,16 +1754,17 @@ makecorpse:
     goto end;
 }
 
-/* Object obj was hit by the effect of the wand/spell otmp.  Return non-zero if the
-   wand/spell had any effect. */
+/* Object obj was hit by the effect of the wand/spell otmp.  Return non-zero if
+   the wand/spell had any effect. */
 int
 bhito(struct obj *obj, struct obj *otmp)
 {
     int res = 1; /* affected object by default */
 
-    /* Some parts of this function expect the object to be on the floor (ox/oy is valid).
+    /* Some parts of this function expect the object to be on the floor.
        The exception to this is cancellation and stone to flesh, so far */
-    if (!(obj->where == OBJ_FLOOR || otmp->otyp == SPE_STONE_TO_FLESH))
+    if (!(obj->where == OBJ_FLOOR || otmp->otyp == SPE_STONE_TO_FLESH ||
+          otmp->otyp == SPE_CANCELLATION || otmp->otyp == WAN_CANCELLATION))
         impossible("bhito: obj is not floor or Stone To Flesh spell");
 
     if (obj == uball) {

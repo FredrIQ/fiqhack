@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-01 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,9 +54,10 @@ enum u_interaction_mode {
                            anyone trying to achieve moral conduct. */
     uim_traditional,    /* Attack if hostile. Prompt about whether to attack
                            peacefuls. Interact with monsters only by attacking,
-                           but with items as normal. This is user-specified only,
-                           and intended for all those crazy foodless players who
-                           liked to turn safe_pet off in previous versions. */
+                           but with items as normal. This is user-specified
+                           only and intended for all those crazy foodless
+                           players who liked to turn safe_pet off in previous
+                           versions. */
     uim_standard,       /* Attack hostiles, chat to always-peacefuls, interact
                            with items as normal, etc.. The default interaction
                            mode, so although it's user-specified only, most
@@ -287,7 +288,7 @@ struct flag {
 # define NEW_MOON       0
 # define FULL_MOON      4
     unsigned no_of_wizards;     /* 0, 1 or 2 (wizard and his shadow) */
-    boolean double_troubled; /* whether double trouble has been used this spawn */
+    boolean double_troubled; /* if double trouble has been used this spawn */
     int pickup_burden;  /* maximum burden before prompt */
     int recently_broken_otyp;   /* object that broke recently */
     unsigned save_revision; /* save versioning to maintain save compatibility */
