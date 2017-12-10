@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-10 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -483,7 +483,8 @@ learn(void)
     return 0;
 }
 
-/* Learns/refreshes the spell. Returns FALSE if user declined to refresh knowledge. */
+/* Learns/refreshes the spell. Returns FALSE if user declined to refresh
+   knowledge. */
 boolean
 learn_spell(int spell, boolean from_book, boolean perma)
 {
@@ -728,31 +729,30 @@ void
 run_maintained_spells(struct level *lev)
 {
     int spell;
-    /* First check the player if the level is the one the player is on */
-    if (lev == level) {
-        /* Check forgotten spells */
+    struct monst *mon;
+    const char *splname = NULL;
+    for (mon = monlist(lev); mon; mon = monnext(mon)) {
+        if (DEADMONSTER(mon))
+            continue;
+
         for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
-            if (!spell_maintained(&youmonst, spell))
+            if (!spell_maintained(mon, spell))
                 continue;
 
-            int spell_index = spellindex_by_typ(spell);
-            boolean knows_spell = FALSE; /* might not be true if amnesia removed it */
-            if (spell_index >= 0)
-                knows_spell = TRUE;
+            splname = OBJ_NAME(objects[spell]);
+            if (!mon_castable(mon, spell, TRUE) ||
+                confused(mon)) {
+                if (mon == &youmonst)
+                    pline(msgc_intrloss, "You can no longer maintain %s.",
+                          splname);
 
-            /* We can't use spellname() but need to use OBJ_NAME directly, because
-               amnesia can delete any trace of spell index... */
-            if (!knows_spell || spellknow(spell_index) <= 0 || confused(&youmonst) ||
-                cancelled(&youmonst)) {
-                pline(msgc_intrloss, "You can no longer maintain %s.",
-                      OBJ_NAME(objects[spell]));
-                spell_unmaintain(&youmonst, spell);
+                spell_unmaintain(mon, spell);
                 continue;
             }
 
-            /* Decrease power depending on spell level and proficiency.
-               If an attempted cast fails 5 times in a row, unmaintain the spell. */
-            int chance = percent_success(&youmonst, spell);
+            /* Decrease power depending on spell level and proficiency. If an
+               attempted cast fails 5 times in a row, unmaintain the spell. */
+            int chance = percent_success(mon, spell);
             int moves_modulo = 5;
             while (moves_modulo) {
                 if (rnd(100) > chance) {
@@ -762,56 +762,9 @@ run_maintained_spells(struct level *lev)
                 break;
             }
             if (!moves_modulo) {
-                pline(msgc_intrloss, "Your limited ability with %s causes you to fumble "
-                      "and lose maintaining of it!", spellname(spell_index));
-                spell_unmaintain(&youmonst, spell);
-                continue;
-            }
-
-            int spell_level = objects[spell].oc_level;
-            if (mon_has_amulet(&youmonst))
-                spell_level *= 2;
-            if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
-                spell_level *= 2; /* needs more to maintain manually, so increase cost */
-            if (!(moves % moves_modulo)) {
-                if (youmonst.pw < spell_level) {
-                    pline(msgc_intrloss, "You lack the energy to maintain %s.",
-                          spellname(spell_index));
-                    spell_unmaintain(&youmonst, spell);
-                    continue;
-                }
-                youmonst.pw -= spell_level;
-            }
-
-            run_maintained_spell(&youmonst, spell);
-        }
-    }
-
-    struct monst *mon;
-    for (mon = lev->monlist; mon; mon = mon->nmon) {
-        if (DEADMONSTER(mon))
-            continue;
-
-        if (confused(mon)) {
-            mon->spells_maintained = 0;
-            continue;
-        }
-
-        for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
-            if (!spell_maintained(mon, spell))
-                continue;
-
-            /* Decrease power depending on spell level and proficiency.
-               If an attempted cast fails 5 times in a row, unmaintain the spell. */
-            int moves_modulo = 5;
-            while (moves_modulo) {
-                if (!mon_castable(mon, spell, FALSE)) {
-                    moves_modulo--;
-                    continue;
-                }
-                break;
-            }
-            if (!moves_modulo) {
+                if (mon == &youmonst)
+                    pline(msgc_intrloss, "Your limited ability with %s causes "
+                          "you to fumble and lose maintaining of it!", splname);
                 spell_unmaintain(mon, spell);
                 continue;
             }
@@ -820,17 +773,20 @@ run_maintained_spells(struct level *lev)
             if (mon_has_amulet(mon))
                 spell_level *= 2;
             if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
-                spell_level *= 2; /* needs more to maintain manually, so increase cost */
+                spell_level *= 2; /* needs more to maintain manually */
             if (!(moves % moves_modulo)) {
                 if (mon->pw < spell_level) {
-                    spell_unmaintain(mon, spell);
+                    if (mon == &youmonst)
+                        pline(msgc_intrloss,
+                              "You lack the energy to maintain %s.",
+                              splname);
+                    spell_unmaintain(&youmonst, spell);
                     continue;
                 }
-
                 mon->pw -= spell_level;
             }
 
-            run_maintained_spell(mon, spell);
+            run_maintained_spell(&youmonst, spell);
         }
     }
 }
@@ -1358,20 +1314,22 @@ spell_backfire(int spell)
                     duration, TRUE);
 }
 
-/* Can a monster cast a specific spell? If the monster doesn't even know the spell
-   in first place, this will always return 0. Otherwise, it will return a value
-   based on the percentage success of the spell, if it first passes a random check.
-   The side effect is that monsters with a 80% failure rate on a spell will only
-   return nonzero 1/5 of the time, meaning that monsters will generally (try to)
-   cast those spells much more rarely. This is by design.
-   If theoretical is true, bypass the random check and pw, this is used
-   to check if a spell is featured in the spell list, or get a realible fail rate
-   (for example, to check if knock is realible enough for usage with doors) */
+/* Can a monster cast a specific spell? If the monster doesn't even know the
+   spell in first place, this will always return 0. Otherwise, it will return a
+   value based on the percentage success of the spell, if it first passes a
+   random check. The side effect is that monsters with a 80% failure rate on a
+   spell will only return nonzero 1/5 of the time, meaning that monsters will
+   generally (try to) cast those spells much more rarely. This is by design.
+   If theoretical is true, bypass the random check and pw, this is used to check
+   if a spell is featured in the spell list, or get a realible fail rate (for
+   example, to check if knock is realible enough for usage with doors).
+   Works on players, allthough you probably only want to check theoretically. */
 int
 mon_castable(const struct monst *mon, int spell, boolean theoretical)
 {
-    /* Ghosts aren't allowed their former spellcasting abilities, if any. However,
-       bones saved as ordinary players, or the occasional vampire/etc, is allowed to */
+    /* Ghosts aren't allowed their former spellcasting abilities, if any.
+       However, bones saved as ordinary players, or the occasional vampire/etc,
+       is allowed to */
     if (mon->data == &mons[PM_GHOST])
         return 0;
 
@@ -1388,7 +1346,19 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
     /* FIXME: don't rely on spell order */
     int mspellid = spell - SPE_DIG;
 
-    if (!clone_wiz && !(mon->mspells & ((uint64_t)1 << mspellid)))
+    if (mon == &youmonst) {
+        /* Players can't cast Double Trouble */
+        if (clone_wiz)
+            return 0;
+
+        int spell_index = spellindex_by_typ(spell);
+        boolean knows_spell = FALSE; /* in case amnesia removed it */
+        if (spell_index >= 0)
+            knows_spell = TRUE;
+
+        if (!knows_spell || spellknow(spell_index <= 0))
+            return 0;
+    } else if (!clone_wiz && !(mon->mspells & ((uint64_t)1 << mspellid)))
         return 0;
 
     int pw_cost;

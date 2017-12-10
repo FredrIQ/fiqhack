@@ -275,8 +275,8 @@ dig(void)
                           mon_nam(u.usteed));
                 else
                     pline(msgc_substitute, "Ouch!  Your %s %s and %s %s!",
-                          xname(uwep), otense(uwep, "bounce"), otense(uwep, "hit"),
-                          u.usteed ? "your steed" : "you");
+                          xname(uwep), otense(uwep, "bounce"),
+                          otense(uwep, "hit"), u.usteed ? "your steed" : "you");
                 set_wounded_legs(u.usteed ? u.usteed : &youmonst,
                                  RIGHT_SIDE, 5 + rnd(5));
             }
@@ -792,7 +792,8 @@ dighole(struct monst *mon, boolean pit_only, boolean instant)
                the drawbridge.  The following is a cop-out. --dlc */
             if (you || vis)
                 pline(you ? msgc_failcurse : msgc_monneutral,
-                      "The %s here is too hard to dig in.", surface(u.ux, u.uy));
+                      "The %s here is too hard to dig in.",
+                      surface(u.ux, u.uy));
             return FALSE;
         }
 
@@ -870,7 +871,8 @@ dig_up_grave(const struct monst *mon)
             pline(msgc_alignchaos, "You disturb the honorable dead!");
         } else if ((u.ualign.type == A_LAWFUL) && (u.ualign.record > -10)) {
             adjalign(-sgn(u.ualign.type));
-            pline(msgc_alignbad, "You have violated the sanctity of this grave!");
+            pline(msgc_alignbad,
+                  "You have violated the sanctity of this grave!");
         }
     }
 
@@ -1009,7 +1011,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
             (Stunned || Confusion) ? msgc_failrandom : msgc_cancelled1;
         enum msg_channel worse_msgc =
             (Stunned || Confusion) ? msgc_substitute : msgc_badidea;
-             
+
         if (Stunned || (Confusion && !rn2(5)))
             confdir(&dx, &dy);
         rx = u.ux + dx;
@@ -1329,7 +1331,8 @@ zap_dig(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
                               ((m_mx(mon) == level->dnladder.sx &&
                                 m_my(mon) == level->dnladder.sy) ||
                                (m_mx(mon) == level->upladder.sx &&
-                                m_my(mon) == level->upladder.sy)) ? "ladder" : "stairs",
+                                m_my(mon) == level->upladder.sy)) ?
+                              "ladder" : "stairs",
                               ceiling(m_mx(mon), m_my(mon)));
                     pline(you ? msgc_badidea : msgc_monneutral,
                           "%s loosen%s a rock from the %s.",
@@ -1351,8 +1354,8 @@ zap_dig(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
                     if (mon->mhp <= 0)
                         mondied(mon);
                 }
-                otmp = mksobj_at(ROCK, level, m_mx(mon), m_my(mon), FALSE, FALSE,
-                                 rng_main);
+                otmp = mksobj_at(ROCK, level, m_mx(mon), m_my(mon), FALSE,
+                                 FALSE, rng_main);
                 if (otmp) {
                     if (you || vis)
                         examine_object(otmp); /* set dknown, maybe bknown */

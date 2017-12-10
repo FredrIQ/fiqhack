@@ -582,7 +582,8 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             !canspotmon(mdef))
             map_invisible(bhitpos.x, bhitpos.y);
     }
-    if (known && useen && tseen && (otmp->oclass == WAND_CLASS || otmp->oclass == POTION_CLASS))
+    if (known && useen && tseen &&
+        (otmp->oclass == WAND_CLASS || otmp->oclass == POTION_CLASS))
         makeknown(otyp);
     return 0;
 }
@@ -1975,7 +1976,8 @@ bhitpile_post(struct monst *mon, struct obj *obj, int x, int y)
         hitanything += bhito(otmp, obj);
 
         /* Reset to_be_hit. However, leave it present for polymorph, because
-           create_polymon should only affect objects that was here in the first place. */
+           create_polymon should only affect objects that was here in the first
+           place. */
         if (obj->otyp != WAN_POLYMORPH && obj->otyp != SPE_POLYMORPH)
             otmp->to_be_hit = 0;
     }
