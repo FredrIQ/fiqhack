@@ -2248,7 +2248,7 @@ mintrap(struct monst *mtmp)
                 xl = 1;
 
             if (!resists_magm(mtmp))
-                mdrain_en(mtmp, xl + 1);
+                mdrain_en(mtmp, rnd(xl) + 1);
             break;
 
         case LANDMINE:
