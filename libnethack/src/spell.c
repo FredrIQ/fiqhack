@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-11 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -780,13 +780,13 @@ run_maintained_spells(struct level *lev)
                         pline(msgc_intrloss,
                               "You lack the energy to maintain %s.",
                               splname);
-                    spell_unmaintain(&youmonst, spell);
+                    spell_unmaintain(mon, spell);
                     continue;
                 }
                 mon->pw -= spell_level;
             }
 
-            run_maintained_spell(&youmonst, spell);
+            run_maintained_spell(mon, spell);
         }
     }
 }
