@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-22 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1257,11 +1257,9 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         set_obj_level(level, otmp);
     losedogs();
     kill_genocided_monsters();  /* for those wiped out while in limbo */
-    /* 
-     * Expire all timers that have gone off while away.  Must be
-     * after migrating monsters and objects are delivered
-     * (losedogs and obj_delivery).
-     */
+    /* Expire all timers that have gone off while away.  Must be
+       after migrating monsters and objects are delivered
+       (losedogs and obj_delivery). */
     run_timers();
 
     initrack();
@@ -1307,9 +1305,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     flush_screen_enable();
     flush_screen();
 
-    /* 
-     *  Move all plines beyond the screen reset.
-     */
+    /* Move all plines beyond the screen reset. */
 
     /* give room entrance message, if any */
     check_special_room(FALSE);
