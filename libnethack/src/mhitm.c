@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1085,7 +1085,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_FIRE:
-        if (cancelled) {
+        if (cancelled(magr)) {
             dmg = 0;
             break;
         }
@@ -1126,7 +1126,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_COLD:
-        if (cancelled) {
+        if (cancelled(magr)) {
             dmg = 0;
             break;
         }
@@ -1150,7 +1150,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                   M_verbs(mdef, "are"));
         break;
     case AD_ELEC:
-        if (cancelled) {
+        if (cancelled(magr)) {
             dmg = 0;
             break;
         }
@@ -1170,7 +1170,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             dmg = (dmg + 1) / 2;
         break;
     case AD_SLEE:
-        if (cancelled || magr->mspec_used || immune_to_sleep(mdef))
+        if (cancelled(magr) || magr->mspec_used || immune_to_sleep(mdef))
             break;
 
         magr->mspec_used += rnd(10);
@@ -1184,7 +1184,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     case AD_DRST:
     case AD_DRDX:
     case AD_DRCO:
-        if (cancelled || rn2(8))
+        if (cancelled(magr) || rn2(8))
             break;
         poisoned(mdef, msgprintf("%s %s", s_suffix(Monnam(magr)),
                                  mpoisons_subj(magr, mattk)),
