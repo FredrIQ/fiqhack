@@ -576,12 +576,12 @@ const struct objclass const_objects[] = {
     TOOLX(name,desc,kn,mrg,mgc,chg,0,prob,wt,cost,mat,color,0)
 #define TOOLD(name,desc,kn,mrg,mgc,chg,dir,prob,wt,cost,mat,color)      \
     TOOLX(name,desc,kn,mrg,mgc,chg,dir,prob,wt,cost,mat,color,0)
-#define LIGHTSOURCE(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color)    \
-    OBJECT( OBJ(name,desc),                                             \
-            BITS(kn,mrg,1,0,mgc,chg,0,0,0,0,0,P_NONE,mat),              \
-            0, TOOL_CLASS, prob, 0,                                     \
+#define LIGHT(name,desc,kn,mrg,prob,wt,cost,mat,color)  \
+    OBJECT( OBJ(name,desc),                             \
+            BITS(kn,mrg,1,0,0,0,0,0,0,0,0,P_NONE,mat),  \
+            0, TOOL_CLASS, prob, 0,                     \
             wt, cost, 0, 0, 0, 0, wt, color )
-#define CONTAINER(name,desc,kn,mgc,chg,prob,wt,cost,mat,color)  \
+#define CONT(name,desc,kn,mgc,chg,prob,wt,cost,mat,color)       \
     OBJECT( OBJ(name,desc),                                     \
             BITS(kn,0,chg,1,mgc,chg,0,0,0,0,0,P_NONE,mat),      \
             0, TOOL_CLASS, prob, 0,                             \
@@ -591,27 +591,27 @@ const struct objclass const_objects[] = {
             BITS(kn,0,1,0,mgc,1,0,0,bi,0,hitbon,sub,mat),               \
             0, TOOL_CLASS, prob, 0,                                     \
             wt, cost, sdam, ldam, hitbon, 0, wt, clr )
-/* containers */
-    CONTAINER("large box", NULL, 1, 0, 0, 40, 350, 8, WOOD, HI_WOOD),
-    CONTAINER("chest", NULL, 1, 0, 0, 35, 600, 16, WOOD, HI_WOOD),
-    CONTAINER("ice box", NULL, 1, 0, 0, 5, 900, 42, PLASTIC, CLR_WHITE),
-    CONTAINER("sack", "bag", 0, 0, 0, 35, 15, 2, CLOTH, HI_CLOTH),
-    CONTAINER("oilskin sack", "bag", 0, 0, 0, 0, 15, 100, CLOTH, HI_CLOTH),
-    CONTAINER("bag of holding", "bag", 0, 1, 0, 20, 15, 100, CLOTH, HI_CLOTH),
-    CONTAINER("bag of tricks", "bag", 0, 1, 1, 20, 15, 100, CLOTH, HI_CLOTH),
-#undef CONTAINER
+/* containers   name        desc kn mgc chg prob   wt cost      mat  color */
+    CONT("large box",       NULL, 1,  0,  0,  40, 350,   8,    WOOD, HI_WOOD),
+    CONT("chest",           NULL, 1,  0,  0,  35, 600,  16,    WOOD, HI_WOOD),
+    CONT("ice box",         NULL, 1,  0,  0,   5, 900,  42, PLASTIC, CLR_WHITE),
+    CONT("sack",           "bag", 0,  0,  0,  35,  15,   2,   CLOTH, HI_CLOTH),
+    CONT("oilskin sack",   "bag", 0,  0,  0,   0,  15, 100,   CLOTH, HI_CLOTH),
+    CONT("bag of holding", "bag", 0,  1,  0,  20,  15, 100,   CLOTH, HI_CLOTH),
+    CONT("bag of tricks",  "bag", 0,  1,  1,  20,  15, 100,   CLOTH, HI_CLOTH),
+#undef CONT
 
-/* lock opening tools */
-    TOOL("skeleton key", "key", 0, 0, 0, 0, 80, 3, 10, IRON, HI_METAL),
-    TOOL("lock pick", NULL, 1, 0, 0, 0, 60, 4, 20, IRON, HI_METAL),
-    TOOL("credit card", NULL, 1, 0, 0, 0, 15, 1, 10, PLASTIC, CLR_WHITE),
-/* light sources */
-    LIGHTSOURCE("tallow candle", "candle", 0, 1, 0, 0, 20, 2, 10, WAX,
-                CLR_WHITE),
-    LIGHTSOURCE("wax candle", "candle", 0, 1, 0, 0, 5, 2, 20, WAX, CLR_WHITE),
-    LIGHTSOURCE("brass lantern", NULL, 1, 0, 0, 0, 30, 30, 12, COPPER,
-                CLR_YELLOW),
-    LIGHTSOURCE("oil lamp", "lamp", 0, 0, 0, 0, 45, 20, 10, COPPER, CLR_YELLOW),
+/* locktools       name   desc kn mrg mgc chg prob wt cost      mat  color */
+    TOOL("skeleton key", "key", 0,  0,  0,  0,  80, 3,  10,    IRON, HI_METAL),
+    TOOL("lock pick",     NULL, 1,  0,  0,  0,  60, 4,  20,    IRON, HI_METAL),
+    TOOL("credit card",   NULL, 1,  0,  0,  0,  15, 1,  10, PLASTIC, CLR_WHITE),
+
+/* lights            name      desc kn mrg prob  wt cost     mat  color */
+    LIGHT("tallow candle", "candle", 0,  1,  20,  2,  10,    WAX, CLR_WHITE),
+    LIGHT("wax candle",    "candle", 0,  1,   5,  2,  20,    WAX, CLR_WHITE),
+    LIGHT("brass lantern",     NULL, 1,  0,  30, 30,  12, COPPER, CLR_YELLOW),
+    LIGHT("oil lamp",        "lamp", 0,  0,  45, 20,  10, COPPER, CLR_YELLOW),
+#undef LIGHT
 /* magic lamps can't run out, so are marked as TOOL instead */
     TOOL("magic lamp", "lamp", 0, 0, 1, 0, 15, 20, 50, COPPER, CLR_YELLOW),
 /* other tools */
@@ -1078,4 +1078,3 @@ init_objlist(void)
 #endif /* !OBJECTS_PASS_2_ */
 
 /*objects.c*/
-
