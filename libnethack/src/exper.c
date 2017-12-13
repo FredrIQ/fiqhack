@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -117,7 +117,7 @@ losexp(const char *killer, boolean override_res)
         return;
 
     if (u.ulevel > 1) {
-        pline("%s level %d.", Goodbye(), u.ulevel--);
+        pline(msgc_intrloss, "%s level %d.", Goodbye(), u.ulevel--);
         /* remove intrinsic abilities */
         adjabil(u.ulevel + 1, u.ulevel);
         reset_rndmonst(NON_PM); /* new monster selection */
@@ -182,7 +182,7 @@ pluslvl(boolean incr)
     int num;
 
     if (!incr)
-        pline("You feel more experienced.");
+        pline(msgc_intrgain, "You feel more experienced.");
     num = newhp();
     u.uhpmax += num;
     u.uhp += num;
@@ -216,7 +216,7 @@ pluslvl(boolean incr)
             u.ulevelmax = u.ulevel;
             historic_event(FALSE, "advanced to experience level %d.", u.ulevel);
         }
-        pline("Welcome to experience level %d.", u.ulevel);
+        pline(msgc_intrgain, "Welcome to experience level %d.", u.ulevel);
         adjabil(u.ulevel - 1, u.ulevel);        /* give new intrinsics */
         reset_rndmonst(NON_PM); /* new monster selection */
     }

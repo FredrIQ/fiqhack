@@ -299,8 +299,8 @@ handling (to place the files in the right place).
 
 =item LEXFLAGS
 
-Command-line arguments to pass to C<lex>.  The default is to pass C<--warn>,
-which tells C<flex> (the default C<lex> implementation) to produce warnings.
+Command-line arguments to pass to C<lex>.  The default is an empty set of
+options.
 
 =back
 
@@ -10820,7 +10820,7 @@ EOF
 
         default_lexflags => {
             output => 'optionset:LEXFLAGS',
-            outdepends => ['optstring:--warn'],
+            outdepends => [],
             verb => 'determined',
             low_message_priority => 1,
             command_line_override => 'LEXFLAGS',

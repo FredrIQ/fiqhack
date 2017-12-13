@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -979,6 +979,8 @@ const struct objclass const_objects[] = {
     GEM("obsidian", "black", 9, 1, 200, 15, 6, GEMSTONE, CLR_BLACK),
     GEM("agate", "orange", 12, 1, 200, 15, 6, GEMSTONE, CLR_ORANGE),
     GEM("jade", "green", 10, 1, 300, 15, 6, GEMSTONE, CLR_GREEN),
+    /* Warning: some code in mthrowu.c assumes there are exactly 9 of these.
+       (Search for "LAST_GEM + 9".) */
     GEM("worthless piece of white glass", "white", 77, 1, 0, 6, 5, GLASS,
         CLR_WHITE),
     GEM("worthless piece of blue glass", "blue", 77, 1, 0, 6, 5, GLASS,

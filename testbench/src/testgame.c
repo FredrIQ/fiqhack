@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-05-31 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -37,7 +37,7 @@ static int last_monster_d, last_monster_x, last_monster_y;
 static void test_pause(enum nh_pause_reason);
 static void test_display_buffer(const char *, nh_bool);
 static void test_update_status(struct nh_player_info *);
-static void test_print_message(int, const char *);
+static void test_print_message(enum msg_channel, const char *);
 static void test_request_command(
     nh_bool, nh_bool, nh_bool, void *,
     void (*)(const struct nh_cmd_and_arg *, void *));
@@ -80,7 +80,6 @@ static struct nh_window_procs test_windowprocs = {
     .win_load_progress = test_no_op_int,
     .win_level_changed = test_no_op_int,
     .win_outrip = test_outrip,
-    .win_print_message_nonblocking = test_print_message,
     .win_server_cancel = test_no_op_void
 };
 
@@ -475,9 +474,9 @@ test_raw_print(const char *message)
    message to let the testbench know where the monster is. Although we're
    ignoring nearly all messages, we want to parse that one. */
 static void
-test_print_message(int turncount, const char *message)
+test_print_message(enum msg_channel msgc, const char *message)
 {
-    (void) turncount;
+    (void) msgc;
 
     int dummy[3];
 

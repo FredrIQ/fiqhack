@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -287,10 +287,21 @@ draw_extrawin(enum keyreq_context context)
                  "elect all   -:select none"             );
         break;
 
+    case krc_prevmsg:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Scroll the list of messages with '<' and"
+                 "'>'. Press Return when finished."      );
+        break;
+
     case krc_more:
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Press Space to see the remaining message"
                  "s, or ESC to skip messages this turn." );
+        break;
+    case krc_moretab:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("This is an important message. Press Tab "
+                 "to dismiss it."                        );
         break;
 
     case krc_pause_map:

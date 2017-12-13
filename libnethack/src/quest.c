@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -109,18 +109,20 @@ ok_to_quest(boolean verbose)
     if (!(Qstat(got_quest)) && !(Qstat(got_thanks))) {
         if (verbose) {
             if (Hallucination)
-                You_hear("the man telling you what you can and can't do.");
+                You_hear(msgc_hint,
+                         "the man telling you what you can and can't do.");
             else
-                You_hear("a mysterious voice say "
+                You_hear(msgc_hint, "a mysterious voice say "
                          "\"You must have permission to descend.\"");
         }
     } else if (is_pure(TRUE) <= 0) {
         if (verbose) {
             if (Hallucination)
-                You_hear("someone whining about how you should treat %s "
+                You_hear(msgc_hint,
+                         "someone whining about how you should treat %s "
                          "better.", halu_gname(u.ualignbase[A_ORIGINAL]));
             else
-                You_hear("a mysterious voice say "
+                You_hear(msgc_hint, "a mysterious voice say "
                          "\"Only the faithful of %s may descend.\"",
                          align_gname(u.ualignbase[A_ORIGINAL]));
         }
@@ -129,9 +131,10 @@ ok_to_quest(boolean verbose)
 
     if (verbose) {
         if (Hallucination)
-            pline("This staircase is a lie, man!");
+            pline(msgc_hint, "This staircase is a lie, man!");
         else
-            pline("A mysterious force prevents you from descending.");
+            pline(msgc_hint,
+                  "A mysterious force prevents you from descending.");
     }
     return FALSE;
 }
@@ -150,13 +153,13 @@ is_pure(boolean talk)
 
     if (wizard && talk) {
         if (u.ualign.type != original_alignment) {
-            pline("You are currently %s instead of %s.",
+            pline(msgc_debug, "You are currently %s instead of %s.",
                   align_str(u.ualign.type), align_str(original_alignment));
         } else if (u.ualignbase[A_CURRENT] != original_alignment) {
-            pline("You have converted.");
+            pline(msgc_debug, "You have converted.");
         } else if (u.ualign.record < MIN_QUEST_ALIGN) {
-            pline("You are currently %d and require %d.", u.ualign.record,
-                  MIN_QUEST_ALIGN);
+            pline(msgc_debug, "You are currently %d and require %d.",
+                  u.ualign.record, MIN_QUEST_ALIGN);
             if (yn_function("adjust?", ynchars, 'y') == 'y')
                 u.ualign.record = MIN_QUEST_ALIGN;
         }
@@ -170,12 +173,10 @@ is_pure(boolean talk)
     return purity;
 }
 
-/*
- * Expell the player to the stairs on the parent of the quest dungeon.
- *
- * This assumes that the hero is currently _in_ the quest dungeon and that
- * there is a single branch to and from it.
- */
+/* Expel the player to the stairs on the parent of the quest dungeon.
+
+   This assumes that the hero is currently _in_ the quest dungeon and that there
+   is a single branch to and from it. */
 static void
 expulsion(boolean seal)
 {
@@ -196,7 +197,7 @@ expulsion(boolean seal)
         historic_event(FALSE, "were expelled from the quest.");
         /* Delete the near portal now; the far (main dungeon side) portal will
            be deleted as part of arrival on that level. If monster movement is
-           in progress, any who haven't moved yet will now miss out on a chance 
+           in progress, any who haven't moved yet will now miss out on a chance
            to wander through it... */
         for (t = level->lev_traps; t; t = t->ntrap)
             if (t->ttyp == MAGIC_PORTAL)
@@ -236,7 +237,7 @@ finish_quest(struct obj *obj)
     if (obj) {
         u.uevent.qcompleted = 1;        /* you did it! */
         historic_event(FALSE, "completed the quest!");
-        /* behave as if leader imparts sufficient info about the quest artifact 
+        /* behave as if leader imparts sufficient info about the quest artifact
          */
         fully_identify_obj(obj);
         update_inventory();
@@ -383,8 +384,8 @@ prisoner_speaks(struct monst *mtmp)
         (mtmp->mstrategy & STRAT_WAITMASK)) {
         /* Awaken the prisoner */
         if (canseemon(mtmp))
-            pline("%s speaks:", Monnam(mtmp));
-        verbalize("I'm finally free!");
+            pline(msgc_npcvoice, "%s speaks:", Monnam(mtmp));
+        verbalize(msgc_aligngood, "I'm finally free!");
         mtmp->mstrategy &= ~STRAT_WAITMASK;
         msethostility(mtmp, FALSE, FALSE); /* TODO: reset alignment? */
 
@@ -436,4 +437,3 @@ quest_stat_check(struct monst *mtmp)
 }
 
 /*quest.c*/
-

@@ -1,228 +1,304 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include <ctype.h>
 
 #include "nhcurses.h"
+#include "messagechannel.h"
 
-struct msghist_entry {
-    int turn;               /* for displaying in the UI */
-    char *message;          /* the message; can be NULL if this slot is empty */
-    nh_bool old;            /* true if the user has acted since seeing it */
-    nh_bool unseen;         /* true if the user must see it but has not, yet */
-    nh_bool nomerge;        /* don't merge this message with the next one */
-    nh_bool temp;           /* true if the message is temporary (to be erased) */
+/* Default colors for each message channel. We have eight possible message
+   colours: the seven bold/bright colours that aren't dark gray, and light
+   gray. CLRFLAG_* constants can also be ORed in. */
+static const int channel_color[] = {
+    /* CLR_GRAY: normal misses, cancelled actions, etc. */
+    [msgc_nonmongood] = CLR_GRAY,
+    [msgc_moncombatgood] = CLR_GRAY,
+    [msgc_playerimmune] = CLR_GRAY,
+    [msgc_petcombatbad] = CLR_GRAY,
+    [msgc_cancelled] = CLR_GRAY,
+    [msgc_failrandom] = CLR_GRAY,
+    [msgc_trapescape] = CLR_GRAY,
+    [msgc_notarget] = CLR_GRAY,
+    [msgc_yafm] = CLR_GRAY,
+
+    /* also CLR_GRAY: low-priority messages with no real implications */
+    [msgc_alignchaos] = CLR_GRAY, /* e.g. chaotic action as a neutral */
+    [msgc_monneutral] = CLR_GRAY,
+    [msgc_npcvoice] = CLR_GRAY,
+    [msgc_petneutral] = CLR_GRAY,
+    [msgc_occstart] = CLR_GRAY,
+    [msgc_levelsound] = CLR_GRAY,
+    [msgc_branchchange] = CLR_GRAY,
+    [msgc_rumor] = CLR_GRAY,
+    [msgc_consequence] = CLR_GRAY,
+
+    /* CLR_ORANGE: actions going wrong due to spoiler info; also warnings
+       that are not important enough to be bright magenta */
+    [msgc_notresisted] = CLR_ORANGE,
+    [msgc_petwarning] = CLR_ORANGE,
+    [msgc_substitute] = CLR_ORANGE,
+    [msgc_failcurse] = CLR_ORANGE,
+    [msgc_combatimmune] = CLR_ORANGE,
+    [msgc_unpaid] = CLR_ORANGE,
+    [msgc_cancelled1] = CLR_ORANGE, /* here because it wasted time */
+    [msgc_levelwarning] = CLR_ORANGE,
+
+    /* CLR_BRIGHT_GREEN: permanent non-spammy good things */
+    [msgc_intrgain] = CLR_BRIGHT_GREEN,
+    [msgc_outrogood] = CLR_BRIGHT_GREEN,
+
+    /* CLR_YELLOW: spammy/common bad events (e.g. being hit in combat) */
+    [msgc_moncombatbad] = CLR_YELLOW,
+    [msgc_itemloss] = CLR_YELLOW,
+    [msgc_statusbad] = CLR_YELLOW,
+    [msgc_statusend] = CLR_YELLOW,
+    [msgc_alignbad] = CLR_YELLOW,
+    [msgc_interrupted] = CLR_YELLOW,
+    [msgc_nonmonbad] = CLR_YELLOW,
+    [msgc_badidea] = CLR_YELLOW,
+    [msgc_outrobad] = CLR_YELLOW,
+
+    /* CLR_BRIGHT_BLUE: metagame messages, hints, debug messages, etc. */
+    [msgc_emergency] = CLR_BRIGHT_BLUE,
+    [msgc_impossible] = CLR_BRIGHT_BLUE,
+    [msgc_saveload] = CLR_BRIGHT_BLUE,
+    [msgc_debug] = CLR_BRIGHT_BLUE,
+    [msgc_noidea] = CLR_BRIGHT_BLUE,
+    [msgc_intro] = CLR_BRIGHT_BLUE,
+    [msgc_info] = CLR_BRIGHT_BLUE,
+    [msgc_controlhelp] = CLR_BRIGHT_BLUE,
+    [msgc_hint] = CLR_BRIGHT_BLUE,
+    [msgc_uiprompt] = CLR_BRIGHT_BLUE,
+    [msgc_curprompt] = CLR_BRIGHT_BLUE,
+    [msgc_reminder] = CLR_BRIGHT_BLUE,    /* fades to dark blue immediately */
+
+    /* CLR_BRIGHT_MAGENTA: permanent non-spammy bad things, urgent warnings */
+    [msgc_fatal] = CLR_BRIGHT_MAGENTA | CLRFLAG_FORCETAB,
+    [msgc_fatalavoid] = CLR_BRIGHT_MAGENTA | CLRFLAG_FORCEMORE,
+    [msgc_petfatal] = CLR_BRIGHT_MAGENTA,
+    [msgc_npcanger] = CLR_BRIGHT_MAGENTA,
+    [msgc_intrloss] = CLR_BRIGHT_MAGENTA,
+
+    /* CLR_BRIGHT_CYAN: healing and temporary status gains; unexpected good
+       events that need to look different from CLR_WHITE; may be somewhat
+       spammy */
+    [msgc_statusgood] = CLR_BRIGHT_CYAN,
+    [msgc_statusheal] = CLR_BRIGHT_CYAN,
+    [msgc_itemrepair] = CLR_BRIGHT_CYAN,
+    [msgc_aligngood] = CLR_BRIGHT_CYAN,
+    [msgc_combatalert] = CLR_BRIGHT_CYAN,
+    [msgc_discoverportal] = CLR_BRIGHT_CYAN | CLRFLAG_FORCEMORE,
+    [msgc_youdiscover] = CLR_BRIGHT_CYAN,
+
+    /* CLR_WHITE: spammy/common good events (e.g. hitting in combat) */
+    [msgc_statusextend] = CLR_WHITE,
+    [msgc_petkill] = CLR_WHITE,
+    [msgc_petcombatgood] = CLR_WHITE,
+    [msgc_kill] = CLR_WHITE,
+    [msgc_combatgood] = CLR_WHITE,
+    [msgc_actionok] = CLR_WHITE,
+    [msgc_actionboring] = CLR_WHITE,
+    [msgc_nospoil] = CLR_WHITE,
+
+    /* Special handling, that violates normal rules */
+    [msgc_intrloss_level] = 0, /* msgc_intrloss but never forces a more */
+    [msgc_intrgain_level] = 0, /* msgc_intrgain but never forces a more */
+    [msgc_fatal_predone] = 0,  /* msgc_fatal but never forces a more */
+    [msgc_mispaste] = 0,       /* msgc_cancelled but triggers mispaste code */
+    [msgc_offlevel] = 0,       /* should never reach the client */
+    [msgc_mute] = 0,           /* should never reach the client */
 };
 
-static struct msghist_entry *histlines; /* circular buffer */
-static int histlines_alloclen;          /* allocated length of histlines */
-static int histlines_pointer;           /* next unused histline entry */
-static int first_unseen = -1;           /* first unseen histline entry */
-static int first_new = -1;              /* first non-"old" histline entry */
-static nh_bool stopmore = 0;            /* stop doing input at --More-- */
+/* these should be the same length */
+static const char *const more_text = "--More--";   /* "press space or return" */
+static const char *const tab_text  = "--Tab!--";   /* "press Tab" */
 
-static struct msghist_entry *showlines; /* lines to be displayed; noncircular.
-                                           showlines[0] is bottom message. */
-static int num_showlines;               /* number of lines in the message buf */
 
-static const char* more_text = " --More--";   /* The string to use in more
-                                                 prompts */
+/* The message display works via using the concept of "chunks".  A chunk is one
+   line high, and can potentially be as wide as the message buffer (but can be
+   narrower); a longer message is broken into multiple chunks. At any given
+   point, either all the messages, or all but one, are converted into chunk
+   form; the last is kept around until we request a key, then chunked depending
+   on whether the keypress is for a --More-- (i.e. we need to leave space) or
+   for some other reason.
 
-/* Allocates space for settings.msghistory lines of message history, or adjusts
-   the message history to the given amount of space if it's already been
-   allocated. We actually allocate an extra line, so that histlines_pointer can
-   always point to a blank line; this simplifies the code. */
+   Chunks conceptually form a coordinate system that scrolls vertically forever
+   (positive x to the right, with 0 being the leftmost column, positive y going
+   downwards, with arbitrary zero). However, once a chunk scrolls too far off
+   the top of the screen (a distance of settings.msghistory), we deallocate
+   it. The chunks are stored in a doubly linked list, sorted by increasing y and
+   then by increasing x; we keep pointers to the first and last chunk in sort
+   order.
+
+   The chunks don't have to be seen in contiguous order (and often won't be due
+   to reminder chunks and spacing chunks). However, we only try to keep unseen
+   chunks visible to the user while they're actually on the screen; if one
+   escapes the screen while it's unseen (say due to the window being resized),
+   its unseen status is ignored unless it somehow gets back onto the screen
+   again. This case should hardly ever come up (and we can assume that a user
+   who's resizing the screen looked at the messages on it before the resize, so
+   it doesn't harm anything). */
+struct message_chunk;
+struct message_chunk {
+    char *message;                 /* text of the chunk */
+    struct message_chunk *next;    /* next chunk */
+    struct message_chunk *prev;    /* previous chunk */
+    unsigned x;                    /* x-position of the chunk */
+    unsigned y;                    /* y-position of the chunk */
+    enum msg_channel channel;      /* message channel for this chunk */
+    nh_bool seen : 1;              /* this chunk was on screen at a keypress */
+    nh_bool end_of_message : 1;    /* this is the last chunk of this message */
+};
+
+static struct message_chunk *first_chunk = NULL;
+static struct message_chunk *last_chunk = NULL;
+
+/* We want to draw the last chunk at a position of ui_flags.msgheight - 1;
+   adding this value of y_offset thus gives us the coordinates of a chunk. To
+   handle wraparound correctly, we use unsigned arithmetic for everything, with
+   the "in range" values being 0 to ui_flags.msgheight - 1 and the "out of
+   range" values being everything higher. (In most cases, y_offset will be a
+   "negative", very large, number, but that doesn't matter; it'll wrap back
+   around when we add y_offset to an appropriately sized value.)
+
+   Coded as a macro because without using gcc extensions, the version with a
+   callback function is considerably harder to read. */
+#define FOR_EACH_ONRANGE_CHUNK(height)                            \
+    const unsigned y_offset = !last_chunk ? 0 :                   \
+        (unsigned)(height) - 1 - last_chunk->y;                   \
+    struct message_chunk *chunk;                                  \
+    for (chunk = last_chunk;                                      \
+         chunk && (chunk->y + y_offset < (height));               \
+         chunk = chunk->prev)
+#define FOR_EACH_ONSCREEN_CHUNK() FOR_EACH_ONRANGE_CHUNK(ui_flags.msgheight)
+
+/* We leave one message unchunkified untill just before we request a key (or
+   perform a delay, which has similar message timing properties). At that point,
+   some, none or all of the message may be fit on the screen. If all of it does,
+   then we just chunkify it and move on (taking into account the reason that the
+   key was requested; we may need to leave room for a --More-- in the case that
+   the server sends us a message pause request). If some of it doesn't, then we
+   chunkify as much as will fit beside a --More--, force a --More--, then go
+   back to what we were doing (which may in extreme cases involve forcing
+   another --More-- because the rest of the message won't fit).  */
+static char *pending_message = NULL;
+enum msg_channel pending_message_channel;
+
+enum moreforce {mf_nomore, mf_more, mf_tab};
+
+/* Someone pressed Esc recently: automatically dismiss all --More--s. */
+static nh_bool stopmore = FALSE;
+/* Is more_io currently running? Used for resizing the message window at a
+   --More-- prompt.*/
+static enum moreforce in_more_io = mf_nomore;
+
 void
-alloc_hist_array(void)
+discard_message_history(int lines_to_keep)
 {
-    static struct msghist_entry *newhistlines;
-    int i, j;
+    while (first_chunk && last_chunk->y - first_chunk->y >= lines_to_keep) {
+        struct message_chunk *temp = first_chunk->next;
+        free(first_chunk->message);
 
-    newhistlines = calloc((settings.msghistory + 1), sizeof *newhistlines);
-
-    if (!newhistlines)
-        return;                            /* just keep using the old array */
-
-    i = histlines_pointer + 1;
-    j = 0;
-
-    first_unseen = -1;
-    first_new = -1;
-
-    if (histlines) {
-        while (i != histlines_pointer) {
-            if (histlines[i].message) {
-                newhistlines[j] = histlines[i];
-
-                if (histlines[j].unseen && first_unseen == -1)
-                    first_unseen = j;
-                if (!histlines[j].old && first_new == -1)
-                    first_new = j;
-
-                j++;
-                j %= settings.msghistory + 1;
-            }
-            i++;
-            i %= histlines_alloclen;
+        if (!temp) { /* i.e. first_chunk == last_chunk */
+            free(first_chunk);
+            first_chunk = NULL;
+            last_chunk = NULL;
+            /* If we're freeing everything, get rid of the pending message
+               too (if any). */
+            free(pending_message);
+            pending_message = NULL;
+            return;
         }
-        free(histlines);
+        temp->prev = NULL;
+        free(first_chunk);
+        first_chunk = temp;
     }
-    histlines = newhistlines;
-    histlines_pointer = j;
-    histlines_alloclen = settings.msghistory + 1;
 }
 
-/* Deallocate and reset state used by the messages code. */
-void
-cleanup_messages(void)
+/* Returns the appropriate color to use for the given message channel,
+   perhaps including CLRFLAG_ constants (the caller can mask those out if it
+   doesn't care). */
+static int
+resolve_channel_color(enum msg_channel msgc)
 {
-    int i;
-    if (histlines)
-        for (i = 0; i < histlines_alloclen; i++)
-            free(histlines[i].message);            /* free(NULL) is legal */
-    free(histlines);
-    histlines = 0;
-    histlines_alloclen = 0;
-    histlines_pointer = 0;
-    first_unseen = -1;
-    first_new = -1;
-
-    if (showlines)
-        for (i = 0; i < num_showlines; i++)
-            free(showlines[i].message);
-    free(showlines);
-    num_showlines = 0;
+    const int no_forcing = ~(CLRFLAG_FORCEMORE | CLRFLAG_FORCETAB);
+    if (msgc == msgc_intrloss_level)
+        return channel_color[msgc_intrloss] & no_forcing;
+    else if (msgc == msgc_intrgain_level)
+        return channel_color[msgc_intrgain] & no_forcing;
+    else if (msgc == msgc_fatal_predone)
+        return channel_color[msgc_fatal] & no_forcing;
+    else if (msgc == msgc_mispaste)
+        return channel_color[msgc_cancelled];
+    else if (channel_color[msgc] == 0)
+        /* something's gone badly wrong here */
+        return CLR_GREEN; /* the least common color in the message window */
+    else
+        return channel_color[msgc];
 }
 
-/* Allocate showlines. */
-void
-setup_showlines(void)
-{
-    num_showlines = getmaxy(msgwin);
-    showlines = calloc((num_showlines + 1), sizeof *showlines);
-    int i;
-    for (i = 0; i < num_showlines; i++) {
-        showlines[i].turn = -1;
-        showlines[i].message = NULL;
-        showlines[i].old = FALSE;
-        showlines[i].unseen = FALSE;
-        showlines[i].nomerge = FALSE;
-        showlines[i].temp = FALSE;
-    }
-}
-
-/* Reallocate showlines (preserving existing messages where possible) if the
-   window gets resized. */
-void
-redo_showlines(void)
-{
-    int new_num_showlines = getmaxy(msgwin);
-    static struct msghist_entry *new_showlines;
-    new_showlines = calloc((new_num_showlines + 1), sizeof *new_showlines);
-    int i;
-    for (i = 0; i < new_num_showlines && i < num_showlines; i++) {
-        new_showlines[i].turn = showlines[i].turn;
-        new_showlines[i].message = showlines[i].message;
-        new_showlines[i].old = showlines[i].old;
-        new_showlines[i].unseen = showlines[i].unseen;
-        new_showlines[i].nomerge = showlines[i].nomerge;
-        new_showlines[i].temp = showlines[i].temp;
-    }
-    /* At most one of the following loops will execute at all. */
-    for (; i < new_num_showlines; i++) {
-        new_showlines[i].turn = -1;
-        new_showlines[i].message = NULL;
-        new_showlines[i].old = TRUE;
-        new_showlines[i].unseen = FALSE;
-        new_showlines[i].nomerge = FALSE;
-        new_showlines[i].temp = FALSE;
-    }
-    for (; i < num_showlines; i++) {
-        free(showlines[i].message);
-    }
-    free(showlines);
-    showlines = new_showlines;
-    num_showlines = new_num_showlines;
-}
-
-/* Appends second to the end of first, which will be reallocated larger to fit
-   if necessary. The allocated length of first is stored in first_alloclen.
-   *first can be NULL, in which case *first_alloclen must be 0; first itself
-   must point to a valid char pointer. If second is NULL, the function returns
-   without doing anything. */
+/* The lowest-level message window drawing function. Draws the message window
+   (or the given window, treated as the message window) up to and including the
+   last chunk (except that the window will be scrolled down by yskip lines), and
+   also renders a --More-- or --Tab!-- if requested. Does not do any asking for
+   input, and does not chunkify the pending message.  Should only be called in a
+   state in which we've left room for the --More-- during chunkification, if one
+   is required. */
 static void
-realloc_strcat(char **first, int *first_alloclen, const char *second)
+show_msgwin_core(enum moreforce more, WINDOW *win,
+                 unsigned winheight, unsigned winwidth, unsigned yskip)
 {
-    int strlen_first = *first ? strlen(*first) : 0;
-    int strlen_second = second ? strlen(second) : 0;
+    wattrset(win, 0);
+    werase(win);
 
-    if (!second)
-        return;
-
-    if (strlen_first + strlen_second >= *first_alloclen) {
-        int first_was_null = !*first;
-
-        *first_alloclen = ((strlen_first + strlen_second + 1) / 256)
-                          * 256 + 256;
-        *first = realloc(*first, *first_alloclen);
-
-        if (first_was_null)
-            **first = 0;
-    }
-
-    strcat(*first, second);
-}
-
-static void
-show_msgwin(nh_bool more)
-{
-    werase(msgwin);
-    int i;
-    for (i = num_showlines - 1; i >= 0; i--) {
-        wmove(msgwin, num_showlines - 1 - i, 0);
-        if(!showlines[i].message)
+    FOR_EACH_ONRANGE_CHUNK(winheight + yskip)
+    {
+        if (!*(chunk->message))
             continue;
-        const char *p = showlines[i].message;
-        attr_t color_attr = showlines[i].old ?
-            curses_color_attr(COLOR_BLACK, 0) :
-            curses_color_attr(COLOR_WHITE, 0);
-        while (*p)
-            waddch(msgwin, *p++ | color_attr);
-        if (i == 0 && more) {
-            p = more_text;
-            while (*p)
-                waddch(msgwin, *p++ | curses_color_attr(COLOR_WHITE + 8, 0));
-        }
+        if ((chunk->y + y_offset) >= winheight)
+            continue;
+
+        int color = resolve_channel_color(chunk->channel) & 15;
+        wattrset(win, curses_color_attr(
+                     (!chunk->seen || win != msgwin) ? color :
+                     color == CLR_GRAY || color == CLR_WHITE ?
+                     CLR_DARK_GRAY : color & 7, 0));
+        if (chunk->x < winwidth)
+            mvwaddnstr(win, chunk->y + y_offset, chunk->x,
+                       chunk->message, winwidth - chunk->x);
     }
-    wnoutrefresh(msgwin);
+
+    /* Maybe draw a --More--. */
+    if (more != mf_nomore) {
+        wattrset(win, curses_color_attr(7, 7));
+        mvwaddstr(win, winheight - 1, winwidth - strlen(more_text),
+                  more == mf_more ? more_text : tab_text);
+    }
+
+    wnoutrefresh(win);
 }
 
+/* show_msgwin_core's usual parameter set: draw the most recent messages to the
+   message window (or slightly older ones with msghistory_yskip set). */
 static void
-mark_all_seen(nh_bool mark_old)
+show_msgwin(enum moreforce more)
 {
-    int i;
-    for (i = 0; i < num_showlines; i++) {
-        showlines[i].unseen = FALSE;
-        showlines[i].nomerge = TRUE;
-        if (mark_old)
-            showlines[i].old = TRUE;
-    }
+    show_msgwin_core(more, msgwin, ui_flags.msgheight, ui_flags.mapwidth,
+                     ui_flags.msghistory_yskip);
 }
 
+/* Implementation of --More--. Assumes that the rendering has already happened,
+   and does the I/O parts. */
 static void
-keypress_at_more(void)
+more_io(nh_bool block_until_tab)
 {
-    int continue_looping = 1;
-    /* Well, we've at least tried to give a --More--.  Any failure to see
-       the currently-visible messages is the players own fault. */
-    mark_all_seen(FALSE);
-    if (stopmore)
-        return;
+    in_more_io = block_until_tab ? mf_tab : mf_more;
 
-    while (continue_looping) {
-        switch (get_map_key(FALSE, FALSE, krc_more)) {
+    while (!stopmore || block_until_tab) {
+        switch (get_map_key(FALSE, FALSE,
+                            block_until_tab ? krc_moretab : krc_more)) {
         case KEY_SIGNAL:
             /* This happens when a watcher is stuck at a --More-- when the
                watchee gives a command. Just move on, so we don't end up behind
@@ -231,494 +307,720 @@ keypress_at_more(void)
                This mechanism is needed even when we don't think we're watching;
                disconnected processes get forced into implicit watch mode if the
                user reconnects before the process times out, and so a process
-               that thought it was playing might unexpectely get a signal. */
+               that thought it was playing might unexpectely get a signal.
+
+               This can also override block_until_tab; it has to, because a tab
+               input by the watchee needs to move on for the watcher too. (Not
+               to mention that the watcher might have a tab-block set on an
+               action which the watchee doesn't even have a more on.) */
             uncursed_signal_getch();
             stopmore = 1;
-            continue_looping = 0;
-            break;
+            goto more_dismissed;
 
         case KEY_ESCAPE:
         case '\x1b':
+            if (block_until_tab)
+                break;
             stopmore = 1;
-            continue_looping = 0;
-            break;
+            goto more_dismissed;
 
         case ' ':
         case 10:
         case 13:
         case KEY_ENTER:
-            continue_looping = 0;
+            if (block_until_tab)
+                break;
+            goto more_dismissed;
+
+        case 9: /* tab: used to dismiss the most urgent force-mores */
+            if (!block_until_tab)
+                break;
+            goto more_dismissed;
+        }
+    }
+more_dismissed: /* multilevel break out of loop */
+    draw_messages_postkey();
+
+    in_more_io = mf_nomore;
+}
+
+/* Breaks off the first n characters of the pending message, or less if there's
+   somewhere convenient to split at, like a space. Returns the first portion of
+   the message, leaving the rest of the message (if any) in pending_message. */
+static char *
+split_pending_message_at(int n)
+{
+    char *rv;
+
+    /* We didn't have to split it at all. How convenient. */
+    if (strlen(pending_message) <= n) {
+        rv = pending_message;
+        pending_message = NULL;
+        return rv;
+    }
+
+    /* Find the last space in the region we can split, and split there. */
+    char *ptr;
+    for (ptr = pending_message + n; ptr > pending_message; ptr--)
+        if (*ptr == ' ') {
+            /* Find the first space in this run of spaces. */
+            char *preptr = ptr;
+            while (preptr > pending_message && *preptr == ' ')
+                preptr--;
+            preptr++;
+
+            /* And the last (this can be different from ptr if there happened to
+               be a run of spaces right at pending_message + n). */
+            char *postptr = ptr;
+            while (*postptr == ' ')
+                postptr++;
+
+            /* Our return value will be the same buffer as pending_message, just
+               with a '\0' inserted to shorten it. (Potential TODO: realloc rv
+               shorter. Most likely it won't produce noticeable memory gains,
+               though, unless someone is sending very very long messages.) */
+            *preptr = '\0';
+            rv = pending_message;
+
+            if (*postptr == '\0')
+                /* the message was too long, but not after trimming trailing
+                   spaces */
+                pending_message = NULL;
+            else {
+                /* duplicate the portion after the run of spaces back into
+                   pending_message */
+                pending_message = malloc(strlen(postptr) + 1);
+                strcpy(pending_message, postptr);
+            }
+            return rv;
+        }
+
+    /* If we get here, there was a continuous string of nonspaces too wide for
+       the requested width. Just break anywhere. As above, pending_message's
+       existing memory is used for the return value (by inserting a '\0'), and
+       we allocate a new pending_message. */
+    rv = pending_message;
+    ptr = pending_message + n;
+    pending_message = malloc(strlen(ptr) + 1);
+    strcpy(pending_message, ptr);
+    *ptr = '\0'; /* trims rv down to width n */
+    return rv;
+}
+
+/* We leave two spaces between chunks, so calculate the width of a chunk plus
+   2. Exception: sometimes we use empty chunks to take up a blank line, and
+   those don't need padding. */
+static int
+padded_xright(struct message_chunk *chunk)
+{
+    if (!*(chunk->message))
+        return chunk->x;
+    return strlen(chunk->message) + 2 + chunk->x;
+}
+
+/* Adds a new chunk to the end of the list of chunks. */
+static void
+alloc_chunk(char *contents, enum msg_channel channel, int x, int y)
+{
+    struct message_chunk *new_chunk = malloc(sizeof *new_chunk);
+    new_chunk->message = contents;
+    new_chunk->next = NULL;
+    new_chunk->prev = last_chunk;
+    new_chunk->x = x;
+    new_chunk->y = y;
+    new_chunk->channel = channel;
+    new_chunk->seen = channel == msgc_reminder;
+    new_chunk->end_of_message = FALSE; /* caller can override this later */
+    if (last_chunk)
+        last_chunk->next = new_chunk;
+    last_chunk = new_chunk;
+    if (!first_chunk)
+        first_chunk = new_chunk;
+}
+
+/* If we're currently using more than the given amount of padded width on the
+   last message line, add a new blank line below it (via placing a spacing chunk
+   at the start of the line). The caller must check that there's room, i.e. no
+   seen messages on the top line. */
+static void
+limit_last_line_x(int max_ok_x)
+{
+    if (last_chunk && padded_xright(last_chunk) > max_ok_x) {
+        char *nullstring = malloc(1);
+        *nullstring = '\0';
+        alloc_chunk(nullstring, msgc_mute, 0, last_chunk->y + 1);
+        last_chunk->seen = TRUE; /* spacing chunks aren't visible */
+    }
+}
+
+/* Attempts to break off chunks from the start of the pending message, adding
+   them to the end of the list of chunks; however, will not scroll an unseen
+   message off the screen in the process unless even_if_no_space is set. If
+   entire_last_line is set, will leave one line blank unless the entire message
+   can be chunkfied (so that a caller can leave room for a --More-- if and only
+   if the entire message doesn't fit without it). Otherwise, might chunkify only
+   part of the message. If room_for_more is set, will ensure that the --More--
+   region in the bottom right of the message area is left blank (via leaving a
+   blank line if necessary). In any case, it is possible that the function will
+   do nothing if there is no room for the message. */
+static void
+chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
+                         nh_bool even_if_no_space)
+{
+    /* Avoid a segfault on very narrow windows. */
+    if (ui_flags.mapwidth < strlen(more_text))
+        room_for_more = FALSE;
+
+    /* Clear out old messages from memory. */
+    discard_message_history(settings.msghistory);
+
+    /* Do we have a "spacing chunk" at the start of the last line? If so, we can
+       get rid of it safely for the time being (we might add it back later), and
+       it's going to prevent us splitting a message on its line and the line
+       after (because that would count as both spanning and sharing). However,
+       this is pointless if there's no pending message, or if the pending
+       message fits onto the line anyway, and potentially harmful because it
+       might cause the message window to apparently scroll backwards. */
+    if (last_chunk && last_chunk->x == 0 && !*(last_chunk->message) &&
+        pending_message && strlen(pending_message) >
+        ui_flags.mapwidth - (room_for_more ? strlen(more_text) + 2 : 0)) {
+        struct message_chunk *temp = last_chunk->prev;
+        free(last_chunk->message);
+        free(last_chunk);
+        last_chunk = temp;
+        if (temp)
+            temp->next = NULL;
+        else
+            first_chunk = NULL;
+    }
+
+    int spare_lines = ui_flags.msgheight;
+    if (even_if_no_space)
+        spare_lines = INT_MAX; /* act as though the window were infinite */
+    else {
+        FOR_EACH_ONSCREEN_CHUNK() /* sets chunk, y_offset */
+        {
+            /* If the last unseen chunk is on line y, then we have y lines spare
+               (if it's on line 0 we have 0 lines spare). */
+            if (!chunk->seen)
+                spare_lines = chunk->y + y_offset;
+        }
+    }
+
+    while (pending_message)
+    {
+        /* Are we allowed to split this message? Don't split it if there's any
+           doubt about whether we can actually create a chunk (because then we
+           clobber pending_message). Also don't let the message both split and
+           share a line.
+
+           Luckily, in all cases, we can determine in advance that either a
+           split will definitely have somewhere to put the first part, or a
+           split definitely won't help:
+
+           - If we have two spare lines, then we can put the first part on the
+             first of those lines without breaking any rules;
+
+           - If we have one spare line and an entire_last_line requirement, then
+             by definition we can only use the last line if we fit the entire
+             message in; splitting it would occupy the last line with the first
+             part, and thus there'd be nowhere else to put the rest;
+
+           - If we have one spare line and no entire_last_line requirement, then
+             we can just put the first part of the split onto that spare line;
+
+           - If we have no spare lines, then the message will have to share a
+             line, and thus can't also split.
+
+           We calculate how much of the line is usable in the cases that we
+           share, split, or do neither. (If we split, and we're using the last
+           line for the first half, we'll definitely need room for a
+           --More--, because the second half will be offscreen.) */
+        nh_bool splitok = spare_lines > (entire_last_line ? 1 : 0);
+        int usable_width_unsplit = (spare_lines > 1 || !room_for_more) ?
+            ui_flags.mapwidth : ui_flags.mapwidth - strlen(more_text) - 2;
+        int usable_width_split = (spare_lines > 1) ?
+            ui_flags.mapwidth : ui_flags.mapwidth - strlen(more_text) - 2;
+        int usable_width_share = (spare_lines > 0 || !room_for_more) ?
+            ui_flags.mapwidth : ui_flags.mapwidth - strlen(more_text) - 2;
+
+        /* Split it, or don't split it and try to use the whole thing if we
+           can't. */
+        char *firstpart = splitok ?
+            split_pending_message_at(usable_width_split) : pending_message;
+        if (!splitok)
+            pending_message = NULL;
+
+        /*
+         * Can we fit this message alongside an existing message? The existing
+         * message has to be not yet seen to make that possible.
+         *
+         * Note that this isn't quite perfect in the following case:
+         * |abc  01234567890123456|
+         * |012345678901  --More--|
+         * (in which the numbers represent usable space). Imagine a 14
+         * character message in this (admittedly implausible) situation. We'd
+         * have room to fit the entire message on the line above, but we split
+         * it at 12 characters in case we had to fit it next to a --More--, and
+         * now it doesn't fit on either line because it's two lines high. The
+         * result is that we'll get the first half of the message next to the
+         * --More--, and the second half after the --More--.
+         *
+         * For now, we don't worry about this case because a) the result isn't
+         * outright wrong (just less efficient than it could be), and b) it
+         * requires a message that's 7 characters or less on the previous line,
+         * and the game doesn't produce many if any of those.
+         */
+        if (last_chunk && (!last_chunk->seen || !*(last_chunk->message)) &&
+            !pending_message && strlen(firstpart) + padded_xright(last_chunk) <
+            usable_width_share) {
+            /* We can. */
+            alloc_chunk(firstpart, pending_message_channel,
+                        padded_xright(last_chunk), last_chunk->y);
+            last_chunk->end_of_message = TRUE;
+        } else if (spare_lines > 0 && strlen(firstpart) <=
+                   (pending_message ?
+                    usable_width_split : usable_width_unsplit)) {
+            /* We can't, but we have a spare line it fits on; use that. */
+            alloc_chunk(firstpart, pending_message_channel, 0,
+                        last_chunk ? last_chunk->y + 1 : 0);
+            spare_lines--;
+            last_chunk->end_of_message = !pending_message;
+        } else if (!splitok) {
+            /* It doesn't fit; better put it back into pending_message
+               and stop trying. */
+            pending_message = firstpart;
+            break;
+        } else
+            abort(); /* should be impossible */
+    }
+
+    /* We guarantee that we leave space for a --More-- if room_for_more is set.
+       However, we might have used the entirety of the last line if there's a
+       spare line (on the basis that we could put the --More-- onto the spare
+       line). In this case we need to add a blank chunk at the start of the
+       next line to force the screen up and leave room. */
+    if (room_for_more)
+        limit_last_line_x(ui_flags.mapwidth - strlen(more_text));
+}
+
+/* Ensures that the message window is in a ready state to read a key (i.e. with
+   all messages so far showing). Can force a --More-- if one is required to fit
+   all the messages so far onto the screen (which will happen before it returns
+   and you can read your key, if it does). After it returns, the message window
+   will be up to date. This should be called before any key input that has the
+   message window visible.
+
+   The room_for_more argument is used externally to handle a particularly
+   awkward case: the game fills the message area exactly with messages, does a
+   delay, and then forces a --More-- as part of the same turn without printing
+   any further messages. If it's set to TRUE, the last portion of the message
+   area (where the --More-- goes) will be left empty, in case you subsequently
+   need to render a --More-- there. If it's set to FALSE, you're promising that
+   after this function returns, you will call draw_messages_postkey() before the
+   next event that might potentially force a --More--. (The argument is also
+   used for internal purposes a lot, in situations where we know we're about to
+   show a --More--.) */
+void
+draw_messages_prekey(nh_bool room_for_more)
+{
+    if (pending_message)
+        /* Let's try to fit all of this onscreen at once, so we don't have to
+           give a --More--. */
+        chunkify_pending_message(room_for_more, TRUE, FALSE);
+    if (pending_message)
+        /* OK, then, let's try to fit as much onscreen as possible. Leave
+           room for our inevitable --More--. */
+        chunkify_pending_message(TRUE, FALSE, FALSE);
+    if (pending_message) {
+        /* We haven't shown all the messages yet, so we need to force a
+           --More--. */
+        show_msgwin(mf_more);
+        more_io(FALSE);
+        /* Now the user's had a chance to mark some chunks as seen, there
+           will be more room, so try again. */
+        draw_messages_prekey(room_for_more);
+        return;
+    }
+
+    /* All the messages fit onscreen. It's just time to draw them. */
+    show_msgwin(mf_nomore);
+}
+
+/* Marks all currently onscreen message chunks as having been read by the
+   user, allowing them to scroll off the screen without issue. */
+void
+draw_messages_postkey(void)
+{
+    FOR_EACH_ONSCREEN_CHUNK()
+    {
+        chunk->seen = TRUE;
+    }
+    if (!in_more_io)
+        stopmore = FALSE;
+
+    redraw_messages();
+}
+
+/* Ensures that all messages so far can be read by the user, even with the
+   bottom message line blank. This will fit them into the last-but-one lines of
+   the message area without a --More--, if possible. Otherwise, it will force a
+   --More-- using the entire space of the message area, and then scroll messages
+   up to leave the last line blank. The intended use is before drawing a prompt
+   that covers the bottom line of the message area. */
+void
+fresh_message_line(void)
+{
+    /* Get any pending message onto the screen, leaving space for a --More--
+       (we'll need to print one if we don't have a spare line at the bottom;
+       note that draw_message_prekey will use the entirety of the line before if
+       it can, and in preference to splitting a message to make room for a
+       --More--). This means that we don't need to handle the pending message
+       ourself. */
+    draw_messages_prekey(TRUE);
+
+    /* Is the top line in use? Is the bottom line in use? If they both are,
+       we'll need to force our --More--. */
+    nh_bool top_line_in_use = FALSE;
+    FOR_EACH_ONSCREEN_CHUNK()
+    {
+        if (chunk->y + y_offset == 0 && !chunk->seen)
+            top_line_in_use = TRUE;
+    }
+    if (top_line_in_use /* implies last_chunk != NULL*/ &&
+        padded_xright(last_chunk) != 0) {
+        /* Yep, both in use. Force our --More--. */
+        show_msgwin(mf_more);
+        more_io(FALSE);
+    }
+    /* more_io marks every line on screen (thus at least the top line) as no
+       longer in use. So we can now scroll the screen upwards safely; either we
+       verified that it was safe, or more_io made it safe. */
+    limit_last_line_x(0); /* i.e. require that the whole line is blank */
+    redraw_messages();
+}
+
+/* Ensures that all messages so far have been read by the user. This is a more
+   stringent requirement than on draw_messages_prekey; if there's even one
+   unread message, there will be a --More-- even if there is plenty of room for
+   more messages. The idea is to call this before the message window gets
+   covered up by some other window, so that messages don't get stuck behind
+   it. */
+void
+draw_messages_precover(void)
+{
+    /* Get all the messages onto the screen, leaving room for a --More--. */
+    draw_messages_prekey(TRUE);
+
+    /* Are there any unseen messages? */
+    nh_bool any_unseen = FALSE;
+    FOR_EACH_ONSCREEN_CHUNK()
+    {
+        if (!chunk->seen) {
+            any_unseen = TRUE;
             break;
         }
     }
+
+    /* Yep, force a --More-- for those too. */
+    if (any_unseen) {
+        show_msgwin(mf_more);
+        more_io(FALSE);
+    }
 }
 
-/* Draws messages on the screen. Any messages drawn since the last call to
-   new_action() are in white; others are in blue. This routine adapts to the
-   size of the message buffer.
-
-   This never asks for user input; it's more low-level than that. When adding a
-   new message line, the caller will need to arrange for --More-- to be shown
-   appropriately by itself. Typically, it's used to redraw the message window
-   if it hasn't changed since the last time it was drawn. */
+/* An even more stringent version of draw_messages_precover; waits for the user
+   to dismiss a --More-- even if there are zero unread messages. If the argument
+   is set, will use a --Tab!-- instead, that cannot be dismissed in the normal
+   way. */
 void
-draw_msgwin(void)
+force_more(nh_bool require_tab)
 {
-    show_msgwin(FALSE);
-}
+    /* ensure the --More--/--Tab!-- is alongside the most recent message, even
+       if we Ctrl-P'ed in between */
+    ui_flags.msghistory_yskip = 0;
 
+    /* Get all messages onto the screen. */
+    draw_messages_prekey(TRUE);
 
-/* When called, previous messages should be blued out. Assumes that there has
-   been user input with the message window visible since the last message was
-   written. */
-void
-new_action(void)
-{
-    mark_all_seen(TRUE);
-    draw_msgwin();
-
-    int hp = first_new;
-    int last_hp = hp;
-    if (hp == -1)
-        return;
-
-    if (!histlines)
-        alloc_hist_array();
-
-    /* Don't merge histlines from different actions. */
-    while (hp != histlines_pointer) {
-        last_hp = hp;
-        hp++;
-        hp %= histlines_alloclen;
-    }
-    histlines[last_hp].nomerge = 1;
-
-    first_new = -1;
-    stopmore = 0;
-}
-
-/* Accepts negative numbers */
-static void
-move_lines_upward(int num_to_bump)
-{
-    int i;
-    if (num_to_bump > 0) {
-        for (i = num_showlines - 1; i >= num_showlines - num_to_bump; i--)
-            free(showlines[i].message);
-        for (i = num_showlines - 1; i >= num_to_bump; i--) {
-            showlines[i].message = showlines[i - num_to_bump].message;
-            showlines[i].turn = showlines[i - num_to_bump].turn;
-            showlines[i].old = showlines[i - num_to_bump].old;
-            showlines[i].unseen = showlines[i - num_to_bump].unseen;
-            showlines[i].nomerge = showlines[i - num_to_bump].nomerge;
-            showlines[i].temp = showlines[i - num_to_bump].temp;
-        }
-        for (; i >= 0; i--) {
-            showlines[i].message = NULL;
-            showlines[i].turn = -1;
-            showlines[i].old = FALSE;
-            showlines[i].unseen = FALSE;
-            showlines[i].nomerge = FALSE;
-            showlines[i].temp = FALSE;
-        }
-    } else if (num_to_bump < 0) {
-        num_to_bump = -num_to_bump;
-        for (i = 0; i < num_to_bump; ++i)
-            free(showlines[i].message);
-        for (i = 0; i < num_showlines - num_to_bump; ++i) {
-            showlines[i].message = showlines[i + num_to_bump].message;
-            showlines[i].turn = showlines[i + num_to_bump].turn;
-            showlines[i].old = showlines[i + num_to_bump].old;
-            showlines[i].nomerge = showlines[i + num_to_bump].nomerge;
-            showlines[i].unseen = showlines[i + num_to_bump].unseen;
-            showlines[i].temp = showlines[i + num_to_bump].temp;
-        }
-        for (; i < num_showlines; ++i) {
-            showlines[i].message = NULL;
-            showlines[i].turn = -1;
-            showlines[i].old = FALSE;
-            showlines[i].unseen = FALSE;
-            showlines[i].nomerge = FALSE;
-            showlines[i].temp = FALSE;
-        }
-    }
-}
-
-/* Update the showlines array with new string text from intermediate.
-   Returns TRUE if we're going to need a --More-- and another pass. */
-static nh_bool
-update_showlines(char **intermediate, int *length, nh_bool force_more,
-                 nh_bool important, nh_bool temporary)
-{
-    /*
-     * Each individual step in this can be ugly, but the overall logic isn't
-     * terribly complicated.
-     * STEP 1: Determine whether the string already present in showlines[0]
-     *         (that is, the one at the bottom of the message window) should be
-     *         merged with the text in intermediate.  Create a new buffer, buf,
-     *         out of the combination of (possibly) the text from showlines[0]
-     *         and the text from intermediate.
-     * STEP 2: Wrap the buffer we got in Step 1.  Count how many showlines we
-     *         can and should bump upward to make room for the new text.  If
-     *         we can't make enough room to fit all of the wrapped lines from
-     *         buf, make a note that we're going to need another pass/more.
-     * STEP 3: Shift the showlines messages, freeing the ones that fall off the
-     *         end, and put the wrapped lines in the freed slots.
-     * STEP 4: Eliminate the first part of intermediate as needed by traversing
-     *         the buffer.  Check each of the newly-displayed showlines' length,
-     *         and for each one have a char pointer called "marker" jump that
-     *         many characters ahead.
-     * STEP 5: If we need another pass, strip tokens off the end of showlines[0]
-     *         and simultaneously rewind marker one token at a time until we
-     *         have room for a more prompt.
-     */
-
-    /* Step 1 begins here. */
-    int messagelen = 0;
-    nh_bool merging = FALSE;
-    /* Unimportant messages are not marked as unseen, unless the previous
-     * message was also unseen. This is so that the unseen messages always form
-     * a contiguous block at the end of the message array.
-     *
-     * TODO: Replace msghist_entry.unseen with a num_unseen variable.
-     */
-    nh_bool mark_unseen = important || showlines[0].unseen;
-    nh_bool need_more = force_more && showlines[0].unseen;
-    if (showlines[0].message)
-        messagelen = strlen(showlines[0].message);
-
-    char buf[strlen(*intermediate) + messagelen + 3];
-
-    if (!showlines[0].nomerge && showlines[0].message &&
-        /* Compare negations because 2 != 1 but !2 == !1 */
-        (!showlines[0].temp == !temporary)) {
-        strcpy(buf, showlines[0].message);
-        strcat(buf, "  ");
-        strcat(buf, *intermediate);
-        merging = TRUE;
-    }
-    else if (!showlines[0].message) {
-        /* Setting merging to TRUE means showlines[0].message will be freed,
-           but free(NULL) is legal. */
-        strcpy(buf, *intermediate);
-        merging = TRUE;
-    }
-    else
-        strcpy(buf, *intermediate);
-
-    /* Step 2 begins here. */
-    char **wrapped_buf = NULL;
-    int num_buflines = 0;
-    wrap_text(getmaxx(msgwin), buf, &num_buflines, &wrapped_buf);
-    /* Sometimes, this function will be called with an empty string to format
-       properly for a --More--.  This avoids any resulting awkwardness. */
-    if(strlen(wrapped_buf[0]) == 0) {
-        free_wrap(wrapped_buf);
-        wrapped_buf = NULL;
-        num_buflines = 0;
-        merging = FALSE;
-    }
-    /* Determine the number of entries in showlines to bump off the top and
-       into the gaping maw of free().  It is bounded above by:
-       1: num_buflines
-       2: the number of showlines that have been seen and can legally be
-          bumped. */
-    int num_can_bump = 0;
-    int i;
-    for (i = 0; i < num_showlines; i++)
-        if (!showlines[i].unseen)
-            num_can_bump++;
-
-    int num_to_bump = num_can_bump;
-    if (num_to_bump >= num_buflines)
-        num_to_bump = num_buflines;
-    //XXX: num_to_bump is sometimes negative, particularly when quitting
-    //XXX: FIX THIS
-    if (merging && num_to_bump > 0)
-        num_to_bump--;
-
-    /* If we're merging, we'll need a --More-- if num_to_bump is strictly
-       smaller than num_buflines - 1.
-       If we're not merging, we'll need a --More-- if num_to_bump is strictly
-       smaller than num_buflines. */
-    if ((num_to_bump < num_buflines - 1) ||
-        (!merging && num_to_bump < num_buflines))
-        need_more = TRUE;
-
-    if (merging)
-        free(showlines[0].message);
-
-    /* Step 3 begins here. */
-    move_lines_upward(num_to_bump);
-
-    if (!merging) {
-        for (i = num_to_bump - 1; i >= 0; i--)
-        {
-            showlines[i].message =
-                malloc(strlen(wrapped_buf[num_to_bump - 1 - i]) + 1);
-            strcpy(showlines[i].message, wrapped_buf[num_to_bump - 1 - i]);
-            showlines[i].unseen = mark_unseen;
-            showlines[i].nomerge = FALSE;
-            showlines[i].temp = temporary;
-        }
-    }
-    else {
-        for (i = num_to_bump; i >= 0; i--)
-        {
-            showlines[i].message =
-                malloc(strlen(wrapped_buf[num_to_bump - i]) + 1);
-            strcpy(showlines[i].message, wrapped_buf[num_to_bump - i]);
-            showlines[i].unseen = mark_unseen;
-            showlines[i].nomerge = FALSE;
-            showlines[i].old = FALSE;
-            showlines[i].temp = temporary;
-        }
-    }
-
-    /* Step 4 begins here. */
-    /* marker will walk across buf until it reaches text that wasn't printed */
-    char* marker = buf;
-    for (i = 0; i < (merging ? num_to_bump + 1 : num_to_bump); i++) {
-        marker += strlen(wrapped_buf[i]);
-        while(*marker == ' ')
-            marker++; /* Traverse forward past whitespace */
-    }
-
-    /* Step 5 begins here. */
-    while (showlines[0].message && need_more &&
-           strlen(showlines[0].message) > getmaxx(msgwin) - strlen(more_text)) {
-        /* Find the last space in the current showlines[0]. */
-        char *last;
-        last = strrchr(showlines[0].message, ' ');
-        if (last) {
-            /* rewind marker so the token will wind up in the buffer again.
-               n.b.: to_rewind will always be at least two if there's two
-               spaces to go back (end of a sentence), because of the ending
-               punctuation mark. */
-            while (marker > buf && *(marker - 1) != ' ')
-                marker--; /* might've been more than one space */
-            int to_rewind = strlen(last);
-            marker -= to_rewind;
-            /* NULL out the space in showlines[0] */
-            *last = '\0';
-        }
-        else {
-            /* If the showlines[0] string doesn't *have* any whitespace, just
-               kind of split it up anyway.  This case will usually come up on
-               squares with dozens of Elbereths on them and probably nowhere
-               else. */
-            last = showlines[0].message + getmaxx(msgwin) - strlen(more_text);
-            marker -= strlen(last);
-            *last = '\0';
-        }
-    }
-    /* At this point, *marker might be NULL if we printed everything in buf.
-       Doesn't matter, though. */
-    strcpy(*intermediate, "");
-    realloc_strcat(intermediate, length, marker);
-
-    free_wrap(wrapped_buf);
-    return need_more;
-}
-
-/* Marks all showlines as seen.  Called at the start of each turn to ensure that
-   no extraneous --More-- stuff gets printed if the player opens a Count: window
-   or something similar. */
-void
-mark_showlines_seen(void)
-{
-    int i;
-    for (i = 0; i < num_showlines; i++) {
-        showlines[0].unseen = FALSE;
-    }
-}
-
-/* Guarantee the player sees the current message buffer by forcing a more prompt
-   if this is legal. */
-static void
-force_seen(void)
-{
-    /* dummy is just "" initially, but forcing a more in update_showlines might
-       lop a few tokens off the end of showlines[0].message and put them into
-       dummy.  That's why we need to call update_showlines in a loop. */
-    char* dummy = malloc(1);
-    int dummy_length = 1;
-    strcpy(dummy, "");
-    nh_bool keep_going = TRUE;
-    showlines[0].nomerge = FALSE;
-    while (keep_going) {
-        keep_going = update_showlines(&dummy, &dummy_length, TRUE, FALSE, FALSE);
-        show_msgwin(keep_going);
-        if (keep_going)
-            keypress_at_more();
-    }
-    free(dummy);
-}
-
-/* Make sure the bottom message line is empty. If this would scroll something
-   off the screen, do a --More-- first if necessary. */
-void
-fresh_message_line(nh_bool canblock)
-{
-    /* If the top line is already seen, just bump the messages without
-       calling force_seen. */
-    if (showlines[num_showlines - 1].unseen)
-        force_seen();
-    if (showlines[0].message)
-        move_lines_upward(1);
-}
-
-static void
-curses_print_message_core(int turn, const char *msg, nh_bool important)
-{
-    /* First, add the message to the message history.  Do this before deciding
-       whether to print it; "unimportant" messages always show up in ^P. */
-    struct msghist_entry *h;
-    nh_bool temporary = turn < 0;
-
-    if (!histlines)
-        alloc_hist_array();
-
-    if (!temporary) {
-        h = histlines + histlines_pointer;
-
-        free(h->message); /* in case there was something there */
-        h->turn = turn;
-        h->message = malloc(strlen(msg)+1);
-        strcpy(h->message, msg);
-        h->nomerge = 0;
-
-        if (first_new == -1)
-            first_new = histlines_pointer;
-
-        histlines_pointer++;
-        histlines_pointer %= histlines_alloclen;
-
-        free(histlines[histlines_pointer].message);
-        histlines[histlines_pointer].message = 0;
-    }
-
-    /* If we're in a small terminal, suppress certain messages, like the one
-       asking in which direction to kick. */
-    if (!important && num_showlines == 1)
-        return;
-
-    /* Now actually print the message. */
-    nh_bool keep_going = TRUE;
-
-    char *intermediate;
-    intermediate = calloc(strlen(msg) + 1, sizeof (char));
-    int intermediate_size = strlen(msg) + 1;
-    strcpy(intermediate, msg);
-    while (keep_going) {
-        keep_going = update_showlines(&intermediate, &intermediate_size, FALSE,
-                                      important, temporary);
-        show_msgwin(keep_going);
-        if (keep_going)
-            keypress_at_more();
-    }
-    free(intermediate);
+    /* Do the --More--. */
+    show_msgwin(require_tab ? mf_tab : mf_more);
+    more_io(require_tab);
 }
 
 /* Prints a message onto the screen, and into message history. The code will
-   ensure that the user sees the message (e.g. with --More--). */
+   ensure that the user eventually sees the message (e.g. with --More--), unless
+   the channel is msgc_reminder (or there are shenanigans with window
+   resizing). */
 void
-curses_print_message(int turn, const char *inmsg)
+curses_print_message(enum msg_channel msgc, const char *msg)
 {
-    curses_print_message_core(turn, inmsg, TRUE);
+    /* When we get a new message, stop scrolling back into message history */
+    ui_flags.msghistory_yskip = 0;
+
+    /* Sanity: ignore blank messages */
+    if (!*msg)
+        return;
+
+    /* Do we want to force a --More--? Or ignore the message altogether? Return
+       now if the message is ignored, otherwise remember it for later. */
+    int c = resolve_channel_color(msgc);
+    if (c & CLRFLAG_HIDE)
+        return;
+
+    /* At all times (other than between draw_messages_prekey(FALSE) and
+       draw_messages_postkey), we ensure that we have room to place a --More--
+       on screen, in case it becomes necessary. We do this via working one
+       message behind until such time as key input or delays are required,
+       storing the most recent message in pending_message.
+
+       Thus, we need to evict any message that's already there to make room for
+       our new one, then store our new message there. We can evict the existing
+       message using draw_messages_prekey(TRUE), which will leave space for a
+       hypothetical --More-- (and there won't be any wasted space as a result;
+       if the message area is full enough that the amount of space left for a
+       --More-- becomes relevant, then there won't be enough room for this
+       message unless it's very short, and so the --More-- will actually be
+       required). */
+    draw_messages_prekey(TRUE); /* forces pending_message to NULL */
+
+    /* Now just take a copy of our message and store it in pending_message. */
+    pending_message = malloc(strlen(msg) + 1);
+    strcpy(pending_message, msg);
+    pending_message_channel = msgc;
+
+    /* Finally, do any More-forcing. */
+    if (c & CLRFLAG_FORCETAB)
+        force_more(TRUE);
+    else if (c & CLRFLAG_FORCEMORE)
+        force_more(FALSE);
 }
 
-/* Prints a message into message history, and shows it onscreen unless there are
-   more important messages to show. */
-void
-curses_print_message_nonblocking(int turn, const char *inmsg)
-{
-    curses_print_message_core(turn, inmsg, FALSE);
-}
-
-/* Prints a message to the message history with the expectation it will be
-   erased later. */
+/* Prints a message to the message history that can be erased later (assuming
+   no messages are printed in the meantime). */
 void
 curses_temp_message(const char *msg)
 {
-    curses_print_message_core(-1, msg, TRUE);
+    curses_print_message(msgc_curprompt, msg);
 }
 
-/* Clear the temporary messages from the buffer. Assumes that they are
-   contiguous at the end. */
+/* Clear the temporary messages from the buffer (via looking for the
+   msgc_curprompt chunks they produce). Assumes that they are contiguous at the
+   end (possibly intermixed with empty spacing chunks). */
 void
 curses_clear_temp_messages(void)
 {
-    int i = 0;
-    while (i < num_showlines && showlines[i].temp)
-        ++i;
-
-    move_lines_upward(-i);
+    while (last_chunk && (last_chunk->channel == msgc_curprompt ||
+                          !*(last_chunk->message))) {
+        struct message_chunk *temp = last_chunk->prev;
+        free(last_chunk->message);
+        free(last_chunk);
+        if (temp)
+            temp->next = NULL;
+        else
+            first_chunk = NULL;
+        last_chunk = temp;
+    }
 }
 
-/* Ensure that the user has seen all messages printed so far, before
-   continuing to run the rest of the program. */
+/* Re-renders the message window, without trying to force a --More--. Used if
+   you know it hasn't changed, or in cases like the message window being resized
+   due to the screen being resized. This may cause unseen messages at the top of
+   the window to be lost, if the message window has become smaller (although in
+   most cases in which you call this, it's reasonable to assume that all
+   onscreen messages have been read already). */
 void
-pause_messages(void)
+redraw_messages(void)
 {
-    stopmore = 0;
-    force_seen();
+    show_msgwin(in_more_io);
+}
+
+/* Reconstructs all messages from the list of chunks, then breaks them back into
+   chunks again, optionally reversing the order in the process. No room will be
+   left for a --More--, and every message will be marked as seen. (The
+   assumption is that the caller is going to immediately follow up by rendering
+   the message window, then waiting for a key, either as a command input or to
+   dismiss the message history.) Does not do rendering itself.
+
+   This is used in two contexts: displaying the message history (in cases where
+   it requires reversing the list); and handling horizontal resize of the
+   message window (which requires messages to reflow onto the new window
+   width). */
+void
+reconstruct_message_history(nh_bool reverse)
+{
+    /* If we have a pending message (unlikely, but perhaps possible?), just put
+       it onto the chunk list so that we can handle it the same way as
+       everything else. How it's laid out is irrelevant, as we're about to redo
+       the layout anyway. */
+    chunkify_pending_message(FALSE, FALSE, TRUE);
+    if (pending_message)
+        abort();
+
+    struct message_chunk *temp = reverse ? last_chunk : first_chunk;
+    first_chunk = NULL;
+    last_chunk = NULL;
+    nh_bool pending_seen = TRUE;
+
+    while (temp) {
+        /* If we're going backwards, lay out pending_message if we're looking at
+           part of a new message. */
+        if (reverse && temp->end_of_message && pending_message) {
+            chunkify_pending_message(FALSE, FALSE, TRUE);
+            last_chunk->seen = pending_seen;
+        }
+
+        /* Append/prepend this chunk's message onto pending_message, freeing
+           it in the process. */
+        if (*(temp->message)) {
+            pending_seen = temp->seen;
+            pending_message_channel = temp->channel;
+        }
+        if (!pending_message)
+            pending_message = temp->message; /* steal ownership */
+        else if (reverse) {
+            temp->message =
+                realloc(temp->message,
+                        strlen(temp->message) + strlen(pending_message) + 1);
+            strcat(temp->message, pending_message);
+            free(pending_message);
+            pending_message = temp->message; /* steal ownership */
+        } else {
+            pending_message =
+                realloc(pending_message,
+                        strlen(pending_message) + strlen(temp->message) + 1);
+            strcat(pending_message, temp->message);
+            free(temp->message);
+        }
+
+        /* If we're going forwards, lay out pending_message if we just finished
+           reconstructing a complete message. */
+        if (!reverse && temp->end_of_message && pending_message) {
+            chunkify_pending_message(FALSE, FALSE, TRUE);
+            last_chunk->seen = pending_seen;
+        }
+
+        struct message_chunk *temp2 = reverse ? temp->prev : temp->next;
+        free(temp);
+        temp = temp2;
+    }
+
+    /* There isn't an end_of_message before the first message, so handle that
+       here */
+    if (reverse && pending_message) {
+        chunkify_pending_message(FALSE, FALSE, TRUE);
+        last_chunk->seen = pending_seen;
+    }
+}
+
+/* Rendering code for message history. */
+static void
+draw_prev_messages(struct gamewin *gw)
+{
+    struct win_scrollable *s = (struct win_scrollable *)gw->extra;
+    draw_scrollable_frame(gw);
+    /* s->offset is the number of lines to skip at the /top/ of the message
+       history, but show_msgwin_core wants to know the number of lines to skip
+       at the /bottom/. We thus subtract from the number of lines that exist
+       total, minus one screenful. */
+    show_msgwin_core(mf_nomore, gw->win2, s->innerheight, s->innerwidth,
+                     s->linecount - s->innerheight - s->offset);
+    draw_scrollbar(gw->win, s);
+}
+static void
+resize_prev_messages(struct gamewin *gw)
+{
+    layout_scrollable(gw);
+    resize_scrollable_inner(gw);
+    draw_prev_messages(gw);
 }
 
 /* Displays the message history. */
 void
 doprev_message(void)
 {
-    int i, j, curlinelen = 0, lines = 0;
-    struct nh_menulist menu;
-    char *curline = NULL;
-    char **buf = NULL;
+    struct gamewin *gw;
+    struct win_scrollable *s;
+    nh_bool done = FALSE;
 
-    init_menulist(&menu);
+    /* Can we implement this simply using yskip? */
+    if (settings.msg_window == PREVMSG_SINGLE ||
+        (settings.msg_window == PREVMSG_COMBINATION &&
+         ui_flags.msghistory_yskip < 2)) {
+        ui_flags.msghistory_yskip++;
+        redraw_messages();
+        return;
+    }
 
-    if (!histlines)
-        alloc_hist_array();
+    ui_flags.msghistory_yskip = 0;
 
-    i = histlines_pointer;
-    do {
-        if (!histlines[i].message) {
-            i = (i + 1) % settings.msghistory;
-            continue;
-        }
-        realloc_strcat(&curline, &curlinelen, histlines[i].message);
-        /* This'll mean the string always has two spaces at the end, but
-           wrap_text will take care of them for us. */
-        realloc_strcat(&curline, &curlinelen, "  ");
-        /* If either the next line is where we wrap around or the next line
-           is the start of a new turn's worth of messages, quit appending.
-           Otherwise, make another append pass. */
-        if (!histlines[i].nomerge &&
-            ((i + 1) % settings.msghistory != histlines_pointer)) {
-            i = (i + 1) % settings.msghistory;
-            continue;
-        }
-        /* Subtracting 3 is necessary to prevent curses_display_menu in
-           smallterm games from eating the last part of the message here.
-           Subtracting 4 allows slight indentation where appropriate. */
-        wrap_text(getmaxx(msgwin) - 4, curline, &lines, &buf);
-        free(curline);
-        curline = NULL;
-        curlinelen = 0;
-        for (j = 0; j < lines; j++) {
-            /* If a message wraps, very slightly indent the additional lines
-               to make them obvious. */
-            char tempstr[getmaxx(msgwin)];
-            sprintf(tempstr, "%s%s", j == 0 ? "" : " ", buf[j]);
-            add_menu_txt(&menu, tempstr, MI_TEXT);
-        }
-        free_wrap(buf);
-        buf = NULL;
-        i = (i + 1) % settings.msghistory;
-    } while (i != histlines_pointer);
+    if (COLS < COLNO || LINES < ROWNO)
+        return; /* don't try to render this on a subsize terminal */
+    if (!last_chunk)
+        return; /* nothing to show */
 
-    curses_display_menu_core(
-        &menu, "Previous messages:", PICK_NONE, NULL,
-        null_menu_callback, 0, 0, -1, -1, TRUE, NULL, TRUE);
+    /* The user might want the messages in reverse order. */
+    if (settings.msg_window == PREVMSG_REVERSE)
+        reconstruct_message_history(TRUE);
+
+    /* If we view previous messages while watching, we want to pause our
+       watching while the messages are shown (and catch up only afterwards).
+       This also gives us a purple "accepts input" frame despite being in watch
+       mode. */
+    int save_zero_time = ui_flags.in_zero_time_command;
+    ui_flags.in_zero_time_command = TRUE;
+
+    int prevcurs = nh_curs_set(0);
+
+    gw = alloc_gamewin(sizeof (struct win_scrollable), FALSE);
+    gw->draw = draw_prev_messages;
+    gw->resize = resize_prev_messages;
+
+    s = (struct win_scrollable *)gw->extra;
+    s->linecount = (last_chunk->y - first_chunk->y) + 1;
+    s->maxlinecount = s->linecount;
+    s->title = "Previous messages";
+    s->x1 = 0;
+    s->y1 = 0;
+    s->x2 = 0;
+    s->y2 = 0;
+    s->dismissable = 2;
+    s->offset = 0;               /* for now; we don't know the height yet */
+    s->wanted_width = ui_flags.mapwidth;
+
+    layout_scrollable(gw);
+    initialize_scrollable_windows(gw, 0, 0); /* aim for the top left corner */
+    if (settings.msg_window != PREVMSG_REVERSE)
+        scroll_onscreen(s, s->linecount - 1);    /* scroll to the end */
+
+    while (!done) {
+        draw_prev_messages(gw);
+
+        int key = nh_wgetch(gw->win, krc_prevmsg);
+        if (!scroll_using_key(s, key, &done))
+            switch (key) {
+            case KEY_ESCAPE:
+            case '\x1b':
+                done = TRUE;
+                break;
+
+            case KEY_SIGNAL:
+                uncursed_signal_getch();        /* delay it for later */
+                break;
+
+            default:
+                break;        /* ignore most non-scrolling keypresses */
+            }
+    }
+
+    /* Put the messages back into their original order, if required. */
+    if (settings.msg_window == PREVMSG_REVERSE)
+        reconstruct_message_history(TRUE);
+
+    ui_flags.in_zero_time_command = save_zero_time;
+    delete_gamewin(gw);
+    redraw_game_windows();
+    nh_curs_set(prevcurs);
 }
 
 /* Given the string "input", generate a series of strings of the given maximum

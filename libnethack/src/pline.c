@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-04 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,56 +8,41 @@
 #include "emin.h"
 #include "edog.h"
 
+static void vpline(enum msg_channel msgc, boolean norepeat,
+                   const char *, va_list) PRINTFLIKE(3,0);
 
-/*VARARGS1*/
-/* Note that these declarations rely on knowledge of the internals
- * of the variable argument handling stuff in "tradstdc.h"
- */
-
-static void vpline(boolean nonblocking, boolean norepeat, const char *, va_list)
-    PRINTFLIKE(3,0);
-
-
-#define pline_body(line, nonblocking, norepeat) \
-    do { \
-    va_list the_args; \
-    va_start (the_args, line); \
-    vpline(nonblocking, norepeat, line, the_args); \
-    va_end(the_args); \
+#define pline_body(msgc, line, norepeat)        \
+    do {                                        \
+        va_list the_args;                       \
+        va_start (the_args, line);              \
+        vpline(msgc, norepeat, line, the_args); \
+        va_end(the_args);                       \
     } while (0)
 
 
 void
-pline(const char *line, ...)
+pline(enum msg_channel msgc, const char *line, ...)
 {
-    pline_body(line, FALSE, FALSE);
+    pline_body(msgc, line, FALSE);
 }
 
-
 void
-pline_nomore(const char *line, ...)
+pline_implied(enum msg_channel msgc, const char *line, ...)
 {
-    pline_body(line, TRUE, FALSE);
+    if (!flags.hide_implied)
+        pline_body(msgc, line, FALSE);
 }
 
-
 void
-pline_once(const char *line, ...)
+pline_once(enum msg_channel msgc, const char *line, ...)
 {
-    pline_body(line, FALSE, TRUE);
-}
-
-
-void
-pline_once_nomore(const char *line, ...)
-{
-    pline_body(line, TRUE, TRUE);
+    pline_body(msgc, line, TRUE);
 }
 
 
 static void
-vpline(boolean nonblocking, boolean norepeat, const char *line,
-       va_list the_args)
+vpline(enum msg_channel msgc, boolean norepeat,
+       const char *line, va_list the_args)
 {
     const char *pbuf;
     boolean repeated;
@@ -93,6 +78,48 @@ vpline(boolean nonblocking, boolean norepeat, const char *line,
     if (u.ux)
         flush_screen();
 
+    /* Some message channels need special handling. */
+    if (msgc == msgc_emergency) {
+        raw_printf("%s", line);
+        return;
+    } else if (msgc == msgc_impossible) {
+        impossible("Message in bad context: '%s'", line);
+        msgc = msgc_debug;
+    } else if (msgc == msgc_noidea) {
+        struct nh_menulist menu;
+        init_menulist(&menu);
+        add_menutext(
+            &menu, "Hello, and thanks for playing our game.");
+        add_menutext(&menu, "");
+        add_menutext(
+            &menu, "We've been trying to figure out if this part of the code");
+        add_menutext(
+            &menu, "is still in use. If you're seeing this message, then I");
+        add_menutext(
+            &menu, "guess it is. Please contact us (e.g. via sending an email");
+        add_menutext(
+            &menu, "to <ais523@nethack4.org>), and let us know what you were");
+        add_menutext(
+            &menu, "doing when this dialogue box came up.");
+        add_menutext(&menu, "");
+        add_menutext(
+            &menu, "Thank you for beta-testing NetHack 4!");
+        display_menu(&menu, "A Message from the NetHack 4 Developers",
+                     PICK_NONE, PLHINT_ANYWHERE, NULL);
+        msgc = msgc_nospoil;
+    } else if (msgc == msgc_debug && !flags.debug)
+        return;
+    else if (msgc == msgc_alignchaos && u.ualign.type == A_LAWFUL)
+        msgc = msgc_alignbad;
+    else if (msgc == msgc_fatal_predone)
+        turnstate.force_more_pending_until_done = TRUE;
+    else if (msgc == msgc_offlevel) {
+        /* if (the game is not multiplayer) */
+        impossible("Offlevel pline in a single-player game?");
+        return;
+    } else if (msgc == msgc_mute)
+        return;
+
     if (repeated) {
         toplines_count[lastline]++;
     } else {
@@ -101,16 +128,12 @@ vpline(boolean nonblocking, boolean norepeat, const char *line,
         curline++;
         curline %= MSGCOUNT;
     }
-    if (nonblocking)
-        (*windowprocs.win_print_message_nonblocking) (moves, line);
-    else
-        print_message(moves, line);
+    print_message(msgc, line);
 }
 
 
-/*VARARGS1*/
 void
-You_hear(const char *line, ...)
+You_hear(enum msg_channel msgc, const char *line, ...)
 {
     /* You can't hear while unconscious. */
     if (!canhear())
@@ -119,14 +142,13 @@ You_hear(const char *line, ...)
     va_list the_args;
 
     va_start(the_args, line);
-    vpline(FALSE, FALSE, msgcat_many("You ", Underwater ? "barely " : "",
-                                     "hear ", line, NULL), the_args);
+    vpline(msgc, FALSE, msgcat_many("You ", Underwater ? "barely " : "",
+                                    "hear ", line, NULL), the_args);
     va_end(the_args);
 }
 
-/*VARARGS1*/
 void
-verbalize(const char *line, ...)
+verbalize(enum msg_channel msgc, const char *line, ...)
 {
     va_list the_args;
 
@@ -134,12 +156,12 @@ verbalize(const char *line, ...)
         return;
 
     va_start(the_args, line);
-    vpline(FALSE, FALSE, msgcat_many("\"", line, "\"", NULL), the_args);
+    vpline(msgc, FALSE, msgcat_many("\"", line, "\"", NULL), the_args);
     va_end(the_args);
 }
 
-static void vraw_printf(const char *, va_list);
 
+static void vraw_printf(const char *, va_list);
 void
 raw_printf(const char *line, ...)
 {
@@ -172,7 +194,6 @@ vraw_printf(const char *line, va_list the_args)
 }
 
 
-/*VARARGS1*/
 void
 impossible_core(const char *file, int line, const char *s, ...)
 {
@@ -185,7 +206,7 @@ impossible_core(const char *file, int line, const char *s, ...)
     if (program_state.in_impossible)
         panic("impossible called impossible");
     program_state.in_impossible = 1;
-    
+
     pbuf = msgvprintf(s, args, TRUE);
     paniclog("impossible", pbuf);
     DEBUG_LOG_BACKTRACE("impossible() called: %s\n", pbuf);
@@ -284,9 +305,9 @@ mstatusline(struct monst *mtmp)
     monnambuf = x_monnam(mtmp, ARTICLE_THE, NULL,
                          (SUPPRESS_IT | SUPPRESS_INVISIBLE), FALSE);
 
-    pline("Status of %s (%s):  Level %d  HP %d(%d)  Def %d%s.", monnambuf,
-          align_str(alignment), mtmp->m_lev, mtmp->mhp, mtmp->mhpmax,
-          10 - find_mac(mtmp), info);
+    pline(msgc_info, "Status of %s (%s):  Level %d  HP %d(%d)  Def %d%s.",
+          monnambuf, align_str(alignment), mtmp->m_lev, mtmp->mhp,
+          mtmp->mhpmax, 10 - find_mac(mtmp), info);
 }
 
 void
@@ -351,7 +372,8 @@ ustatusline(void)
         info = msgcat(info, mon_nam(u.ustuck));
     }
 
-    pline("Status of %s (%s%s):  Level %d  HP %d(%d)  Def %d%s.", u.uplname,
+    pline(msgc_info, "Status of %s (%s%s):  Level %d  HP %d(%d)  Def %d%s.",
+          u.uplname,
           (u.ualign.record >= 20) ? "piously " :
           (u.ualign.record > 13) ? "devoutly " :
           (u.ualign.record > 8) ? "fervently " :
@@ -367,11 +389,10 @@ ustatusline(void)
 void
 self_invis_message(void)
 {
-    pline("%s %s.",
+    pline(msgc_statusgood, "%s %s.",
           Hallucination ? "Far out, man!  You" : "Gee!  All of a sudden, you",
           See_invisible ? "can see right through yourself" :
           "can't see yourself");
 }
 
 /*pline.c*/
-

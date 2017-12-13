@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -204,11 +204,12 @@ save_flags(struct memfile *mf)
     /* these are out of sequence for backwards compatibility */
     mwrite8(mf, flags.actions);
     mwrite8(mf, flags.save_encoding);
+    mwrite8(mf, flags.hide_implied);
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 110; i++)
+    for (i = 0; i < 109; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));

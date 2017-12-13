@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-10-11 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -179,20 +179,21 @@ realtime_messages(boolean moon, boolean fri13)
     if (moon) {
         switch (flags.moonphase) {
         case FULL_MOON:
-            pline("You are lucky!  Full moon tonight.");
+            pline(msgc_intro, "You are lucky!  Full moon tonight.");
             break;
         case NEW_MOON:
-            pline("Be careful!  New moon tonight.");
+            pline(msgc_intro, "Be careful!  New moon tonight.");
             break;
         default:
             /* special moonphase time period ended */
-            pline("The moon seems less notable tonight...");
+            pline(msgc_intro, "The moon seems less notable tonight...");
             break;
         }
     }
 
     if (fri13 && flags.friday13)
-        pline("Watch out!  Bad things can happen on Friday the 13th.");
+        pline(msgc_intro,
+              "Watch out!  Bad things can happen on Friday the 13th.");
 }
 
 /* Called at the end of each command to synchronize the game to realtime.  (This
@@ -447,7 +448,8 @@ nh_play_game(int fd, enum nh_followmode followmode)
            failure and exit the program. */
     IF_ANY_API_EXCEPTION():
         paniclog("panic", "impossible program termination");
-        pline("Internal error: program terminated in an impossible way.");
+        pline(msgc_emergency,
+              "Internal error: program terminated in an impossible way.");
         ret = GAME_DETACHED;
         goto normal_exit;
     }
@@ -486,8 +488,8 @@ just_reloaded_save:
     update_inventory();
 
     if (replay_forced) {
-        pline("This game ended while you were loading it.");
-        pline("Loading in replay mode instead.");
+        pline(msgc_saveload, "This game ended while you were loading it.");
+        pline(msgc_saveload, "Loading in replay mode instead.");
         replay_forced = FALSE;
     }
 
@@ -525,7 +527,7 @@ just_reloaded_save:
         }
 
         if (cmdidx < 0) {
-            pline("Unrecognised command '%s'", cmd.cmd);
+            pline(msgc_mispaste, "Unrecognised command '%s'", cmd.cmd);
             continue;
         }
 
@@ -582,7 +584,8 @@ just_reloaded_save:
                     }
                     goto just_reloaded_save;
                 default:
-                    pline("That direction has no meaning while replaying.");
+                    pline(msgc_mispaste,
+                          "That direction has no meaning while replaying.");
                     continue;
                 }
             } else {
@@ -590,7 +593,8 @@ just_reloaded_save:
                    complain about them, just ignore them. Ditto for repeat. */
                 if (!(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
                     cmdlist[cmdidx].func)
-                    pline("Command '%s' is unavailable while %s.", cmd.cmd,
+                    pline(msgc_cancelled,
+                          "Command '%s' is unavailable while %s.", cmd.cmd,
                           program_state.followmode == FM_WATCH ?
                           "watching" : "replaying");
                 continue;
@@ -892,7 +896,7 @@ you_moved(void)
                     } else if (!Upolyd && u.uhp > 1) {
                         u.uhp--;
                     } else {
-                        pline("You pass out from exertion!");
+                        pline(msgc_statusbad, "You pass out from exertion!");
                         exercise(A_CON, FALSE);
                         helpless(10, hr_fainted, "passed out from exertion",
                                  NULL);
@@ -1035,10 +1039,10 @@ handle_lava_trap(boolean didmove)
     else if (!u.uinvulnerable) {
         u.utrap -= 1 << 8;
         if (u.utrap < 1 << 8) {
-            pline("You sink below the surface and die.");
+            pline(msgc_fatal_predone, "You sink below the surface and die.");
             done(DISSOLVED, killer_msg(DISSOLVED, "molten lava"));
         } else if (didmove && !u.umoved) {
-            pline_once("You sink deeper into the lava.");
+            pline_once(msgc_fatal, "You sink deeper into the lava.");
             u.utrap += rnd(4);
         }
     }
@@ -1223,12 +1227,12 @@ cancel_helplessness(enum helpless_mask mask, const char *msg)
             turnstate.helpless_timers[i] = 0;
             *turnstate.helpless_causes[i] = '\0';
             if (!msg && *turnstate.helpless_endmsgs[i])
-                pline("%s", turnstate.helpless_endmsgs[i]);
+                pline(msgc_statusheal, "%s", turnstate.helpless_endmsgs[i]);
             *turnstate.helpless_endmsgs[i] = '\0';
         }
 
     if (mask && msg && *msg)
-        pline("%s", msg);
+        pline(msgc_statusheal, "%s", msg);
 
     if (previously_unconscious && !u_helpless(hm_unconscious)) {
         turnstate.vision_full_recalc = 1;
@@ -1284,7 +1288,8 @@ cancel_mimicking(const char* msg)
         turnstate.helpless_timers[hr_mimicking] = 0;
         *turnstate.helpless_causes[hr_mimicking] = '\0';
         if (!msg && *turnstate.helpless_endmsgs[hr_mimicking])
-            pline("%s", turnstate.helpless_endmsgs[hr_mimicking]);
+            pline(msgc_statusend, "%s",
+                  turnstate.helpless_endmsgs[hr_mimicking]);
         *turnstate.helpless_endmsgs[hr_mimicking] = '\0';
         youmonst.m_ap_type = M_AP_NOTHING;
         youmonst.mappearance = 0;
@@ -1294,7 +1299,7 @@ cancel_mimicking(const char* msg)
         return;
 
     if (msg && *msg)
-        pline("%s", msg);
+        pline(msgc_statusend, "%s", msg);
 }
 
 boolean
@@ -1327,7 +1332,8 @@ action_completed(void)
     flags.occupation = occ_none;
 }
 
-/* Called from just about anywhere to abort an interruptible multi-turn
+/*
+ * Called from just about anywhere to abort an interruptible multi-turn
  * command. This happens even if the server doesn't consider a multi-turn
  * command to be in progress; the current API allows the client to substitute
  * its own definition if it wants to.
@@ -1348,7 +1354,7 @@ void
 action_interrupted(void)
 {
     if (flags.incomplete && !flags.interrupted)
-        pline("You stop %s.", u.uwhybusy);
+        pline(msgc_interrupted, "You stop %s.", u.uwhybusy);
     flags.interrupted = TRUE;
 }
 
@@ -1372,7 +1378,7 @@ break_conduct(enum player_conduct conduct)
 
     /* Monks avoid breaking vegetarian conduct. */
     if(conduct == conduct_vegetarian && Role_if(PM_MONK)) {
-        pline("You feel guilty.");
+        pline(msgc_alignbad, "You feel guilty.");
         adjalign(-1);
     }
 }
@@ -1386,15 +1392,17 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     if (!u_helpless(hm_all)) {
         switch (do_command(cmdidx, arg)) {
         case COMMAND_UNKNOWN:
-            pline("Unrecognised command.");
+            pline(msgc_mispaste, "Unrecognised command.");
             action_interrupted();
             return;
         case COMMAND_DEBUG_ONLY:
-            pline("That command is only available in debug mode.");
+            pline(msgc_mispaste,
+                  "That command is only available in debug mode.");
             action_interrupted();
             return;
         case COMMAND_BAD_ARG:
-            pline("I don't understand what you want that command to apply to.");
+            pline(msgc_mispaste,
+                  "I don't understand what you want that command to apply to.");
             action_interrupted();
             return;
         case COMMAND_ZERO_TIME:

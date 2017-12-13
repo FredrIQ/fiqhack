@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-20 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -142,21 +142,24 @@ adjattrib(int ndx, int incr, int msgflg)
     if ((ndx == A_INT || ndx == A_WIS)
         && uarmh && uarmh->otyp == DUNCE_CAP) {
         if (msgflg == 0)
-            pline("Your cap constricts briefly, then relaxes again.");
+            pline(msgc_playerimmune,
+                  "Your cap constricts briefly, then relaxes again.");
         return FALSE;
     }
 
     if (incr > 0) {
         if ((AMAX(ndx) >= ATTRMAX(ndx)) && (ACURR(ndx) >= AMAX(ndx))) {
             if (msgflg == 0 && flags.verbose)
-                pline("You're already as %s as you can get.", plusattr[ndx]);
+                pline(msgc_playerimmune, "You're already as %s as you can get.",
+                      plusattr[ndx]);
             ABASE(ndx) = AMAX(ndx) = ATTRMAX(ndx);      /* just in case */
             return FALSE;
         }
 
         if (ABASE(ndx) == ATTRMAX(ndx)) {
             if (msgflg == 0 && flags.verbose)
-                pline("You're as %s as you can be right now.", plusattr[ndx]);
+                pline(msgc_playerimmune,
+                      "You're as %s as you can be right now.", plusattr[ndx]);
             return FALSE;
         }
 
@@ -171,14 +174,16 @@ adjattrib(int ndx, int incr, int msgflg)
     } else {
         if (ABASE(ndx) <= ATTRMIN(ndx)) {
             if (msgflg == 0 && flags.verbose)
-                pline("You're already as %s as you can get.", minusattr[ndx]);
+                pline(msgc_playerimmune, "You're already as %s as you can get.",
+                      minusattr[ndx]);
             ABASE(ndx) = ATTRMIN(ndx);  /* just in case */
             return FALSE;
         }
 
         if (ABASE(ndx) == ATTRMIN(ndx)) {
             if (msgflg == 0 && flags.verbose)
-                pline("You're as %s as you can be right now.", minusattr[ndx]);
+                pline(msgc_playerimmune,
+                      "You're as %s as you can be right now.", minusattr[ndx]);
             return FALSE;
         }
 
@@ -192,7 +197,8 @@ adjattrib(int ndx, int incr, int msgflg)
         }
     }
     if (msgflg <= 0)
-        pline("You feel %s%s!", (incr > 1 || incr < -1) ? "very " : "",
+        pline((incr > 0) ? msgc_intrgain : msgc_intrloss,
+              "You feel %s%s!", (incr > 1 || incr < -1) ? "very " : "",
               (incr > 0) ? plusattr[ndx] : minusattr[ndx]);
     if (moves > 1 && (ndx == A_STR || ndx == A_CON))
         encumber_msg();
@@ -233,8 +239,12 @@ losestr(int num, int how, const char *killer, struct monst *magr)
             u.mhmax -= 6;
 
             if (u.mh <= 0) {
+                /* Would normally be only msgc_statusend, but the player will
+                   presumably still be in serious nutrition trouble, so treat
+                   it as an extra warning of impending doom */
                 if (how == STARVING)
-                    pline("You can't go on any more like this.");
+                    pline(msgc_fatal,
+                          "You can't go on any more like this.");
                 rehumanize(how, killer);
             }
         } else {
@@ -243,7 +253,8 @@ losestr(int num, int how, const char *killer, struct monst *magr)
 
             if (u.uhp <= 0) {
                 if (how == STARVING)
-                    pline("You die from hunger and exhaustion.");
+                    pline(msgc_fatal_predone,
+                          "You die from hunger and exhaustion.");
 
                 if (magr) /* don't give at the same time as STARVING */
                     done_in_by(magr, killer);
@@ -452,24 +463,25 @@ exerchk(void)
                 /* then print an explanation */
                 switch (i) {
                 case A_STR:
-                    pline((mod_val >
-                           0) ? "You must have been exercising." :
-                          "You must have been abusing your body.");
+                    pline_implied(msgc_hint, (mod_val > 0) ?
+                                  "You must have been exercising." :
+                                  "You must have been abusing your body.");
                     break;
                 case A_WIS:
-                    pline((mod_val >
-                           0) ? "You must have been very observant." :
-                          "You haven't been paying attention.");
+                    pline_implied(msgc_hint, (mod_val > 0) ?
+                                  "You must have been very observant." :
+                                  "You haven't been paying attention.");
                     break;
                 case A_DEX:
-                    pline((mod_val >
-                           0) ? "You must have been working on your reflexes." :
-                          "You haven't been working on reflexes lately.");
+                    pline_implied(
+                        msgc_hint, (mod_val > 0) ?
+                        "You must have been working on your reflexes." :
+                        "You haven't been working on reflexes lately.");
                     break;
                 case A_CON:
-                    pline((mod_val >
-                           0) ? "You must be leading a healthy life-style." :
-                          "You haven't been watching your health.");
+                    pline_implied(msgc_hint, (mod_val > 0) ?
+                                  "You must be leading a healthy life-style." :
+                                  "You haven't been watching your health.");
                     break;
                 }
             }
@@ -659,15 +671,16 @@ adjabil(int oldlevel, int newlevel)
                 *(abil->ability) |= mask;
             if (!(*(abil->ability) & INTRINSIC & ~mask)) {
                 if (*(abil->gainstr))
-                    pline("You feel %s!", abil->gainstr);
+                    pline(msgc_intrgain_level, "You feel %s!", abil->gainstr);
             }
         } else if (oldlevel >= abil->ulevel && newlevel < abil->ulevel) {
             *(abil->ability) &= ~mask;
             if (!(*(abil->ability) & INTRINSIC)) {
                 if (*(abil->losestr))
-                    pline("You feel %s!", abil->losestr);
+                    pline(msgc_intrloss_level, "You feel %s!", abil->losestr);
                 else if (*(abil->gainstr))
-                    pline("You feel less %s!", abil->gainstr);
+                    pline(msgc_intrloss_level, "You feel less %s!",
+                          abil->gainstr);
             }
         }
         if (prevabil != *(abil->ability))       /* it changed */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-07-21 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -76,7 +76,8 @@ static const char *const killer_preposition[] = {
 
 
 static const char *
-add_killer_notes(int how, boolean carried, const char *killer) {
+add_killer_notes(int how, boolean carried, const char *killer)
+{
     if (how == QUIT && u.uhp < 1)
         killer = msgcat(killer, " while already on Charon's boat");
 
@@ -110,7 +111,8 @@ add_killer_notes(int how, boolean carried, const char *killer) {
 
 
 const char *
-killer_msg(int how, const char *killer) {
+killer_msg(int how, const char *killer)
+{
     return msgcat(killer_verb[how],
                   killer ? msgcat_many(" ", killer_preposition[how], " ",
                                        killer, NULL) : "");
@@ -118,19 +120,22 @@ killer_msg(int how, const char *killer) {
 
 
 const char *
-killer_msg_mon(int how, struct monst *mtmp) {
+killer_msg_mon(int how, struct monst *mtmp)
+{
     return killer_msg(how, k_monnam(mtmp));
 }
 
 
 const char *
-killer_msg_obj(int how, struct obj *obj) {
+killer_msg_obj(int how, struct obj *obj)
+{
     return killer_msg(how, killer_xname(obj));
 }
 
 
 static char**
-delayed_killer_var(int how) {
+delayed_killer_var(int how)
+{
     switch (how) {
     case POISONING:
         return &u.delayed_killers.illness;
@@ -152,7 +157,8 @@ delayed_killer_var(int how) {
 
 
 void
-set_delayed_killer(int how, const char *killer) {
+set_delayed_killer(int how, const char *killer)
+{
     char **var = delayed_killer_var(how);
 
     if (!var)
@@ -173,7 +179,8 @@ set_delayed_killer(int how, const char *killer) {
 
 
 const char *
-delayed_killer(int how) {
+delayed_killer(int how)
+{
     char **var = delayed_killer_var(how);
 
     return var ? *var : NULL;
@@ -181,7 +188,8 @@ delayed_killer(int how) {
 
 
 void
-clear_delayed_killers(void) {
+clear_delayed_killers(void)
+{
     set_delayed_killer(POISONING, NULL);
     set_delayed_killer(STONING, NULL);
     set_delayed_killer(TURNED_SLIME, NULL);
@@ -191,7 +199,7 @@ clear_delayed_killers(void) {
 void
 done_in_by(struct monst *mtmp, const char *override_msg)
 {
-    pline("You die...");
+    pline(msgc_fatal_predone, "You die...");
 
     if (mtmp->data->mlet == S_WRAITH && !noncorporeal(mtmp->data))
         u.ugrave_arise = PM_WRAITH;
@@ -373,6 +381,10 @@ dump_disclose(int how)
 static void
 savelife(int how)
 {
+    /* just swallow any --More--s that were waiting until we died; if the player
+       has a force-more on msgc_fatalavoid, they'll get a --More-- anyway, and
+       if they don't, they probably don't want one */
+    turnstate.force_more_pending_until_done = FALSE;
     u.uswldtim = 0;
     u.uhp = u.uhpmax;
     if (u.uhunger < 500) {
@@ -389,7 +401,7 @@ savelife(int how)
 
     /* Note: this is different timing properties from 3.4.3. Mostly because the
        timing properties in 3.4.3 don't make sense at all. */
-    pline("You survived that attempt on your life.");
+    pline(msgc_fatalavoid, "You survived that attempt on your life.");
     cancel_helplessness(hm_all, "");
 
     if (u.utrap && u.utraptype == TT_LAVA)
@@ -712,7 +724,7 @@ check_survival(int how)
 {
     if (how == TRICKED) {
         if (wizard) {
-            pline("You are a very tricky wizard, it seems.");
+            pline(msgc_debug, "You are a very tricky wizard, it seems.");
             return TRUE;
         }
     }
@@ -720,13 +732,14 @@ check_survival(int how)
     if (how <= LAST_KILLER) {
         u.umortality++;
         if (Lifesaved) {
-            pline("But wait...");
+            pline(msgc_statusheal, "But wait...");
             makeknown(AMULET_OF_LIFE_SAVING);
-            pline("Your medallion %s!", !Blind ? "begins to glow" : "feels warm");
+            pline_implied(msgc_statusheal, "Your medallion %s!",
+                          !Blind ? "begins to glow" : "feels warm");
             if (how == CHOKING)
-                pline("You vomit ...");
-            pline("You feel much better!");
-            pline("The medallion crumbles to dust!");
+                pline_implied(msgc_statusheal, "You vomit ...");
+            pline_implied(msgc_statusheal, "You feel much better!");
+            pline_implied(msgc_itemloss, "The medallion crumbles to dust!");
             if (uamul)
                 useup(uamul);
 
@@ -735,7 +748,8 @@ check_survival(int how)
                 u.uhpmax = 10;      /* arbitrary */
             savelife(how);
             if (how == GENOCIDED)
-                pline("Unfortunately you are still genocided...");
+                pline(msgc_fatal_predone,
+                      "Unfortunately you are still genocided...");
             else {
                 historic_event(FALSE,
                                "were saved from death by your amulet of life "
@@ -747,7 +761,12 @@ check_survival(int how)
     if ((wizard || discover) && (how <= LAST_KILLER)) {
         if (yn("Die?") == 'y')
             return FALSE;
-        pline("OK, so you don't %s.", (how == CHOKING) ? "choke" : "die");
+        /* we can't use msgc_debug here because explore-mode players won't be
+           able to see it; msgc_saveload is most appropriate (and documented as
+           allowing this sort of thing), because although it isn't technically
+           a savescum, it has a similar effect */
+        pline(msgc_saveload, "OK, so you don't %s.",
+              (how == CHOKING) ? "choke" : "die");
         if (u.uhpmax <= 0)
             u.uhpmax = u.ulevel * 8;    /* arbitrary */
         savelife(how);
@@ -768,9 +787,6 @@ display_rip(int how, long umoney, const char *killer)
 
     if (!program_state.game_running)
         return;
-
-    /* clean up unneeded windows */
-    win_pause_output(P_MESSAGE);
 
     init_menulist(&menu);
 
@@ -913,10 +929,14 @@ done_noreturn(int how, const char *killer)
        gone prior to inventory disclosure and creation of bones data */
     inven_inuse(TRUE);
 
+    if (turnstate.force_more_pending_until_done)
+        win_pause_output(P_MESSAGE);
+    
     /* Sometimes you die on the first move.  Life's not fair. On those rare
        occasions you get hosed immediately, go out smiling... :-) -3. */
     if (moves <= 1 && how <= LAST_KILLER)   /* You die... --More-- */
-        pline("Do not pass go.  Do not collect 200 %s.", currency(200L));
+        pline(msgc_outrobad, "Do not pass go.  Do not collect 200 %s.",
+              currency(200L));
 
     bones_ok = how <= LAST_KILLER && how != GENOCIDED && can_make_bones(&u.uz);
 
@@ -970,8 +990,6 @@ done_noreturn(int how, const char *killer)
     taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));
     paygd();
     clearpriests();
-
-    win_pause_output(P_MESSAGE);
 
     if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT)
         disclose(how, taken, money_cnt(invent) + hidden_gold());
@@ -1051,7 +1069,7 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                     container_contents(box->cobj, identified, TRUE);
 
             } else if (!done_stopprint) {
-                pline("%s empty.", Tobjnam(box, "are"));
+                pline(msgc_info, "%s empty.", Tobjnam(box, "are"));
                 win_pause_output(P_MESSAGE);
             }
         }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-11-11 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -159,10 +159,10 @@ account_menu(struct server_info *server)
     int menuresult[1] = {0};
 
     static struct nh_menuitem netmenu_items[] = {
-        {1, MI_NORMAL, "change email address", 'e', 0, 0},
-        {2, MI_NORMAL, "change password", 'p', 0, 0},
-        {0, MI_NORMAL, "", 0, 0, 0},
-        {3, MI_NORMAL, "back to main menu", 'x', 0, 0}
+        {1, MI_NORMAL, 0, "change email address", 'e', 0, 0},
+        {2, MI_NORMAL, 0, "change password", 'p', 0, 0},
+        {0, MI_NORMAL, 0, "", 0, 0, 0},
+        {3, MI_NORMAL, 0, "back to main menu", 'x', 0, 0}
     };
 
     while (*menuresult != CURSES_MENU_CANCELLED) {
@@ -609,19 +609,20 @@ netgame_mainmenu(struct server_info *server)
     const char *const *copybanner = nh_get_copyright_banner();
 
     static struct nh_menuitem netmenu_items[] = {
-        {NEWGAME, MI_NORMAL, "new game", 'n', 0, 0},
-        {LOAD, MI_NORMAL, "load game", 'l', 0, 0},
-        {REPLAY, MI_NORMAL, "view a game", 'v', 0, 0},
-        {OPTIONS, MI_NORMAL, "set options", 'o', 0, 0},
-        {TOPTEN, MI_NORMAL, "show score list", 's', 0},
-        {ACCOUNT, MI_NORMAL, "account settings", 'a', 0},
-        {DISCONNECT, MI_NORMAL, "disconnect", 'q', 'x', 0}
+        {NEWGAME, MI_NORMAL, 0, "new game", 'n', 0, 0},
+        {LOAD, MI_NORMAL, 0, "load game", 'l', 0, 0},
+        {REPLAY, MI_NORMAL, 0, "view a game", 'v', 0, 0},
+        {OPTIONS, MI_NORMAL, 0, "set options", 'o', 0, 0},
+        {TOPTEN, MI_NORMAL, 0, "show score list", 's', 0},
+        {ACCOUNT, MI_NORMAL, 0, "account settings", 'a', 0},
+        {DISCONNECT, MI_NORMAL, 0, "disconnect", 'q', 'x', 0}
     };
 
-    snprintf(verstr, ARRAY_SIZE(verstr), "Client version: %d.%d.%d", VERSION_MAJOR, VERSION_MINOR,
-            PATCHLEVEL);
-    snprintf(server_verstr, ARRAY_SIZE(server_verstr), "Server version: %d.%d.%d", nhnet_server_ver.major,
-            nhnet_server_ver.minor, nhnet_server_ver.patchlevel);
+    snprintf(verstr, ARRAY_SIZE(verstr), "Client version: %d.%d.%d",
+             VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+    snprintf(server_verstr, ARRAY_SIZE(server_verstr),
+             "Server version: %d.%d.%d", nhnet_server_ver.major,
+             nhnet_server_ver.minor, nhnet_server_ver.patchlevel);
 
     /* In connection-only mode, we can't read the config file until we're
        already logged into the server. So do it now. */
