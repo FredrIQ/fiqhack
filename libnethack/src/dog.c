@@ -797,7 +797,8 @@ tamedog(struct monst *mtmp, struct obj *obj)
        realtime effects means that this won't really sync anyway; this also
        calls set_malign (thus there's no need for the caller to call it after
        calling tamedog()) */
-    msethostility(mtmp, FALSE, TRUE);
+    if (!mtmp->mtame)
+        msethostility(mtmp, FALSE, TRUE);
     if (flags.moonphase == FULL_MOON && night() && rn2(6) && obj &&
         mtmp->data->mlet == S_DOG)
         return NULL;
