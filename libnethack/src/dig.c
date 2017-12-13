@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -386,7 +386,7 @@ dig(void)
             }
         } else if (IS_WALL(loc->typ)) {
             if (shopedge) {
-                add_damage(dpx, dpy, 10L * ACURRSTR);
+                add_damage(dpx, dpy, 10L * ACURR(A_STR));
                 dmgtxt = "damage";
             }
             if (level->flags.is_maze_lev) {

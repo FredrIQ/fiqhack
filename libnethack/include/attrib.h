@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright 1988, Mike Stephenson                                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,7 +23,6 @@
 # define ABASE(x)   (u.acurr.a[x])
 # define AEXE(x)    (u.aexe.a[x])
 # define ACURR(x)   (acurr(&youmonst, x))
-# define ACURRSTR   (acurrstr())
 /* should be: */
 /* #define ACURR(x) (ABON(x) + ATEMP(x) + (Upolyd  ? MBASE(x) : ABASE(x)) */
 # define MCURR(x)   (u.macurr.a[x])
@@ -33,18 +32,13 @@
 # define ATEMP(x)   (u.atemp.a[x])
 # define ATIME(x)   (u.atime.a[x]) /* TODO: is this actually used? */
 
-/* KMH -- Conveniences when dealing with strength constants */
-# define STR18(x)   (18+(x))    /* 18/xx */
-# define STR19(x)   (100+(x))   /* For 19 and above */
-
 struct attribs {
     schar a[A_MAX];
 };
 
 # define ATTRMAX(x) \
-    ((x == A_STR && Upolyd && strongmonst(youmonst.data)) ? STR18(100) \
-                                                          : urace.attrmax[x])
+    ((x == A_STR && Upolyd && strongmonst(youmonst.data)) ? 21 :        \
+     urace.attrmax[x])
 # define ATTRMIN(x) (urace.attrmin[x])
 
 #endif /* ATTRIB_H */
-

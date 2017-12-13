@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -73,7 +73,7 @@ throw_obj(struct obj *obj, const struct nh_cmd_arg *arg,
               The(xname(obj)));
         return 0;
     }
-    if ((obj->oartifact == ART_MJOLLNIR && ACURR(A_STR) < STR19(25))
+    if ((obj->oartifact == ART_MJOLLNIR && ACURR(A_STR) < 25)
         || (obj->otyp == BOULDER && !throws_rocks(youmonst.data))) {
         pline(msgc_cancelled1, "It's too heavy.");
         return 1;
@@ -1208,7 +1208,7 @@ throwit(struct obj *obj, struct obj *stack,
     } else {
         boolean obj_destroyed;
 
-        urange = (int)(ACURRSTR) / 2;
+        urange = (int)(ACURR(A_STR)) / 2;
         /* balls are easy to throw or at least roll */
         /* also, this insures the maximum range of a ball is greater than 1, so 
            the effects from throwing attached balls are actually possible */
@@ -2072,7 +2072,7 @@ throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
         bhitpos.y = u.uy;
     } else {
         /* consistent with range for normal objects */
-        range = (int)((ACURRSTR) / 2 - obj->owt / 40);
+        range = (int)((ACURR(A_STR)) / 2 - obj->owt / 40);
 
         /* see if the gold has a place to move into */
         odx = u.ux + dx;

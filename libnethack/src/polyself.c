@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -539,7 +539,7 @@ polymon(int mntmp, boolean noisy)
     /* New stats for monster, to last only as long as polymorphed. Currently
        only strength gets changed. */
     if (strongmonst(&mons[mntmp]))
-        ABASE(A_STR) = AMAX(A_STR) = STR18(100);
+        ABASE(A_STR) = AMAX(A_STR) = 21;
 
     /* mlvl = adj_lev(&mons[mntmp]);
 

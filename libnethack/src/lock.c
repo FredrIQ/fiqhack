@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -677,7 +677,7 @@ doopen(const struct nh_cmd_arg *arg)
     }
 
     /* door is known to be CLOSED */
-    if (rnl(20) < (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
+    if (rnl(20) < (ACURR(A_STR) + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
         pline(msgc_actionok, "The door opens.");
         if (door->flags & D_TRAPPED) {
             b_trapped("door", FINGER);
@@ -798,7 +798,7 @@ doclose(const struct nh_cmd_arg *arg)
             return 0;
         }
         if (u.usteed ||
-            rn2(25) < (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
+            rn2(25) < (ACURR(A_STR) + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
             pline(msgc_actionok, "The door closes.");
             door->flags = D_CLOSED;
             door->mem_door_l = 1;

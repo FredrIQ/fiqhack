@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -242,8 +242,6 @@ srv_update_status(struct nh_player_info *pi)
         json_object_set_new(jobj, "moves", json_integer(pi->moves));
     if (all || pi->st != oi->st)
         json_object_set_new(jobj, "st", json_integer(pi->st));
-    if (all || pi->st_extra != oi->st_extra)
-        json_object_set_new(jobj, "st_extra", json_integer(pi->st_extra));
     if (all || pi->dx != oi->dx)
         json_object_set_new(jobj, "dx", json_integer(pi->dx));
     if (all || pi->co != oi->co)

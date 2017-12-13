@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-06-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,7 +25,7 @@ static void
 kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
 {
     int mdx, mdy;
-    int dmg = (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 15;
+    int dmg = (ACURR(A_STR) + ACURR(A_DEX) + ACURR(A_CON)) / 15;
     int kick_skill = P_NONE;
     int blessed_foot_damage = 0;
     boolean trapkilled = FALSE;
@@ -474,7 +474,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
 
     /* range < 2 means the object will not move. */
     /* maybe dexterity should also figure here.  */
-    range = (int)((ACURRSTR) / 2 - kickobj->owt / 40);
+    range = (int)((ACURR(A_STR)) / 2 - kickobj->owt / 40);
 
     if (martial())
         range += rnd(3);
@@ -760,7 +760,7 @@ dokick(const struct nh_cmd_arg *arg)
     if (uarmf && uarmf->otyp == KICKING_BOOTS)
         avrg_attrib = 99;
     else
-        avrg_attrib = (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 3;
+        avrg_attrib = (ACURR(A_STR) + ACURR(A_DEX) + ACURR(A_CON)) / 3;
 
     if (Engulfed) {
         switch (rn2(3)) {

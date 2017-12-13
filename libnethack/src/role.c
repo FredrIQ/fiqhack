@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -373,7 +373,7 @@ const struct Race races[] = {
      MH_HUMAN, 0, MH_GNOME | MH_ORC,
      /* Str Int Wis Dex Con Cha */
      {3, 3, 3, 3, 3, 3},
-     {STR18(100), 18, 18, 18, 18, 18},
+     {21, 18, 18, 18, 18, 18},
      /* Init Lower Higher */
      {2, 0, 0, 2, 1, 0},        /* Hit points */
      {1, 0, 2, 0, 2, 0} /* Energy */
@@ -397,7 +397,7 @@ const struct Race races[] = {
      MH_DWARF, MH_DWARF | MH_GNOME, MH_ORC,
      /* Str Int Wis Dex Con Cha */
      {3, 3, 3, 3, 3, 3},
-     {STR18(100), 16, 16, 20, 20, 16},
+     {21, 16, 16, 20, 20, 16},
      /* Init Lower Higher */
      {4, 0, 0, 3, 2, 0},        /* Hit points */
      {0, 0, 0, 0, 0, 0} /* Energy */
@@ -409,7 +409,7 @@ const struct Race races[] = {
      MH_GNOME, MH_DWARF | MH_GNOME, MH_HUMAN,
      /* Str Int Wis Dex Con Cha */
      {3, 3, 3, 3, 3, 3},
-     {STR18(50), 19, 18, 18, 18, 18},
+     {19, 19, 18, 18, 18, 18},
      /* Init Lower Higher */
      {1, 0, 0, 1, 0, 0},        /* Hit points */
      {2, 0, 2, 0, 2, 0} /* Energy */
@@ -421,7 +421,7 @@ const struct Race races[] = {
      MH_ORC, 0, MH_HUMAN | MH_ELF | MH_DWARF,
      /* Str Int Wis Dex Con Cha */
      {3, 3, 3, 3, 3, 3},
-     {STR18(50), 16, 16, 18, 18, 16},
+     {20, 16, 16, 18, 18, 16},
      /* Init Lower Higher */
      {1, 0, 0, 1, 0, 0},        /* Hit points */
      {1, 0, 1, 0, 1, 0} /* Energy */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1001,7 +1001,7 @@ start_tin(struct obj *otmp)
                 stackobj(otmp);
             return FALSE;
         }
-        tmp = rn1(1 + 500 / ((int)(ACURR(A_DEX) + ACURRSTR)), 10);
+        tmp = rn1(1 + 500 / ((int)(ACURR(A_DEX) + ACURR(A_STR))), 10);
     }
     u.uoccupation_progress[tos_tin] = tmp;
     if (tmp > 50) /* attempts are abandoned after 50 moves */
@@ -1600,7 +1600,7 @@ fpostfx(struct obj *otmp)
         break;
     case LUMP_OF_ROYAL_JELLY:
         /* This stuff seems to be VERY healthy! */
-        gainstr(otmp, 1);
+        gainstr(otmp, 0);
         if (Upolyd) {
             u.mh += otmp->cursed ? -rnd(20) : rnd(20);
             if (u.mh > u.mhmax) {

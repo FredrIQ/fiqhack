@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -589,7 +589,7 @@ struct nh_player_info {
     char statusitems[STATUSITEMS_MAX][ITEMLEN];
     int score, xp, gold, moves;
     int max_rank_sz;
-    int st, st_extra, dx, co, in, wi, ch;
+    int st, dx, co, in, wi, ch;
     int align, nr_items;
     int hp, hpmax, en, enmax, ac, level;
     int wt, wtcap, invslots;

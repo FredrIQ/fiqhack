@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -159,7 +159,6 @@ extern void redist_attr(void);
 extern void adjabil(int, int);
 extern int newhp(void);
 extern schar acurr(const struct monst *, int);
-extern schar acurrstr(void);
 extern void adjalign(int);
 extern void calc_attr_bonus(void);
 extern const char *beautiful(void);

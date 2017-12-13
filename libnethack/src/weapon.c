@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -806,9 +806,9 @@ abon(void)
         sbon = -1;
     else if (str < 17)
         sbon = 0;
-    else if (str <= STR18(50))
-        sbon = 1;       /* up to 18/50 */
-    else if (str < STR18(100))
+    else if (str <= 19)
+        sbon = 1;
+    else if (str < 21)
         sbon = 2;
     else
         sbon = 3;
@@ -844,15 +844,15 @@ dbon(void)
     else if (str < 18)
         return 1;
     else if (str == 18)
-        return 2;       /* up to 18 */
-    else if (str <= STR18(75))
-        return 3;       /* up to 18/75 */
-    else if (str <= STR18(90))
-        return 4;       /* up to 18/90 */
-    else if (str < STR18(100))
-        return 5;       /* up to 18/99 */
+        return 2;
+    else if (str <= 19)
+        return 3;
+    else if (str <= 20)
+        return 4;
+    else if (str <= 21)
+        return 5;
     else
-        return 6;
+        return 6; /* ring of gain strength or gauntlets of power */
 }
 
 

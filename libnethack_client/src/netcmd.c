@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -216,8 +216,6 @@ cmd_update_status(json_t *params, int display_only)
         player.max_rank_sz = json_integer_value(p);
     if ((p = json_object_get(params, "st")))
         player.st = json_integer_value(p);
-    if ((p = json_object_get(params, "st_extra")))
-        player.st_extra = json_integer_value(p);
     if ((p = json_object_get(params, "dx")))
         player.dx = json_integer_value(p);
     if ((p = json_object_get(params, "co")))

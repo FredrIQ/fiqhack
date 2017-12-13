@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -615,7 +615,7 @@ still_chewing(xchar x, xchar y)
 
     } else if (IS_WALL(loc->typ)) {
         if (*in_rooms(level, x, y, SHOPBASE)) {
-            add_damage(x, y, 10L * ACURRSTR);
+            add_damage(x, y, 10L * ACURR(A_STR));
             dmgtxt = "damage";
         }
         digtxt = "You chew a hole in the wall.";
@@ -3231,7 +3231,7 @@ weight_cap(void)
 {
     long carrcap;
 
-    carrcap = 25 * (ACURRSTR + ACURR(A_CON)) + 50;
+    carrcap = 25 * (ACURR(A_STR) + ACURR(A_CON)) + 50;
     if (Upolyd) {
         /* consistent with can_carry() in mon.c */
         if (youmonst.data->mlet == S_NYMPH)
