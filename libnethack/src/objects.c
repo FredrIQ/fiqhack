@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-05 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -596,7 +596,7 @@ const struct objclass const_objects[] = {
     CONTAINER("chest", NULL, 1, 0, 0, 35, 600, 16, WOOD, HI_WOOD),
     CONTAINER("ice box", NULL, 1, 0, 0, 5, 900, 42, PLASTIC, CLR_WHITE),
     CONTAINER("sack", "bag", 0, 0, 0, 35, 15, 2, CLOTH, HI_CLOTH),
-    CONTAINER("oilskin sack", "bag", 0, 0, 0, 5, 15, 100, CLOTH, HI_CLOTH),
+    CONTAINER("oilskin sack", "bag", 0, 0, 0, 0, 15, 100, CLOTH, HI_CLOTH),
     CONTAINER("bag of holding", "bag", 0, 1, 0, 20, 15, 100, CLOTH, HI_CLOTH),
     CONTAINER("bag of tricks", "bag", 0, 1, 1, 20, 15, 100, CLOTH, HI_CLOTH),
 #undef CONTAINER
@@ -623,7 +623,7 @@ const struct objclass const_objects[] = {
     TOOLX("lenses", NULL, 1, 0, 0, 0, 0, 5, 3, 80, GLASS, HI_GLASS, SEARCHING),
     TOOLX("blindfold", NULL, 1, 0, 0, 0, 0, 50, 2, 20, CLOTH, CLR_BLACK, BLINDED),
     TOOLX("towel", NULL, 1, 0, 0, 0, 0, 50, 2, 50, CLOTH, CLR_MAGENTA, BLINDED),
-    TOOL("saddle", NULL, 1, 0, 0, 0, 5, 200, 150, LEATHER, HI_LEATHER),
+    TOOL("saddle", NULL, 1, 0, 0, 0, 10, 200, 150, LEATHER, HI_LEATHER),
     TOOL("leash", NULL, 1, 0, 0, 0, 65, 12, 20, LEATHER, HI_LEATHER),
     TOOL("stethoscope", NULL, 1, 0, 0, 0, 25, 4, 75, IRON, HI_METAL),
     TOOL("tinning kit", NULL, 1, 0, 0, 1, 15, 100, 30, IRON, HI_METAL),
