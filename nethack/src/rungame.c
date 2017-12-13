@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-05-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -511,6 +511,7 @@ rungame(nh_bool net)
      
     /* Create the game, then immediately load it. */
     ret = ERR_CREATE_FAILED;
+#ifdef NETCLIENT
     if (net) {
 #ifdef NETCLIENT
         fd = nhnet_create_game(new_opts);
@@ -521,9 +522,12 @@ rungame(nh_bool net)
         goto cleanup;
 #endif
     } else {
+#endif
         if (nh_create_game(fd, new_opts) == NHCREATE_OK)
             ret = playgame(fd, FM_PLAY);
+#ifdef NETCLIENT
     }
+#endif
 
     close(fd);
 
