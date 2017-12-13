@@ -571,16 +571,14 @@ acurr(const struct monst *mon, int x)
 
         obj = which_armor(mon, os_armg);
         if (obj && obj->otyp == GAUNTLETS_OF_POWER)
-            return 125;
+            return 25;
 
         /* check for the "power" obj property, only functions on
            worn armor. */
         for (obj = mon->minvent; obj; obj = obj->nobj)
             if ((obj->owornmask & W_ARMOR) &&
                 (obj_properties(obj) & opm_power))
-                return 125;
-
-        return (schar) ((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
+                return 25;
     } else if (x == A_CHA) {
         if (tmp < 18 &&
             (mon->data->mlet == S_NYMPH || monsndx(mon->data) == PM_INCUBUS))
