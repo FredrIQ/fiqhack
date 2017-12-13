@@ -1008,7 +1008,7 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
             heal = dice(6 + 2 * bcsign(otmp), 8);
             healmax = otmp->blessed ? 5 : 2;
             if (you || vis)
-                pline(statusheal, "%s %s much better", Mon, looks);
+                pline(statusheal, "%s %s much better.", Mon, looks);
         }
         set_property(mon, HALLUC, -2, FALSE);
         if (you)
