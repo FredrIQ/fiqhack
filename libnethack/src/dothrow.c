@@ -289,7 +289,7 @@ dofire(const struct nh_cmd_arg *arg)
             ;
 
         if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == u.spellquiver &&
-            spellknow(sp_no) > 0) {
+            spellknow(sp_no)) {
             m.spell = u.spellquiver;
             return spelleffects(FALSE, &m);
         }

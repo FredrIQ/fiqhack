@@ -1356,7 +1356,7 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
         if (spell_index >= 0)
             knows_spell = TRUE;
 
-        if (!knows_spell || spellknow(spell_index) <= 0)
+        if (!knows_spell || !spellknow(spell_index))
             return 0;
     } else if (!clone_wiz && !(mon->mspells & ((uint64_t)1 << mspellid)))
         return 0;
