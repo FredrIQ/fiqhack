@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -808,7 +808,8 @@ extern microseconds time_for_time_line(void);
 
 /* ### lock.c ### */
 
-extern int pick_lock(struct obj *, const struct nh_cmd_arg *);
+extern struct obj *get_current_unlock_tool(void);
+extern int pick_lock(struct obj *, const struct nh_cmd_arg *, struct obj *);
 extern int doforce(const struct nh_cmd_arg *);
 extern boolean boxlock(struct obj *, struct obj *);
 extern boolean doorlock(struct obj *, int, int);

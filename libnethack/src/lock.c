@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,7 +9,6 @@ static boolean uwep_can_force(void);
 static int reset_pick(void);
 static int picklock(void);
 static int forcelock(void);
-static struct obj *get_current_unlock_tool(void);
 static int get_unlock_chance(void);
 static const char *lock_action(void);
 static boolean obstructed(int, int, enum msg_channel);
@@ -42,7 +41,7 @@ reset_pick(void)
 }
 
 /* Finds the current or most recently used unlocking tool. */
-static struct obj *
+struct obj *
 get_current_unlock_tool(void) {
     struct obj *bestpick, *otmp;
     bestpick = NULL;
@@ -150,7 +149,7 @@ picklock(void)
             return reset_pick();
         }
     }
-    
+
     if (!chance) {
         pline(msgc_interrupted, "You seem to have lost your unlocking tools.");
         return reset_pick();
@@ -163,10 +162,10 @@ picklock(void)
             exercise(A_DEX, TRUE);  /* even if you don't succeed */
         return reset_pick();
     }
-    
+
     if (rn2(100) >= chance)
         return 1;       /* still busy */
-    
+
     pline(msgc_actionok, "You succeed in %s.", lock_action());
     if (door) {
         if (door->flags & D_TRAPPED) {
@@ -301,17 +300,19 @@ forcelock(void)
 
 /* pick a lock on a chest or door with a given object */
 int
-pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
+pick_lock(struct obj *pick, const struct nh_cmd_arg *arg, struct obj *cobj)
 {
     int picktyp, c;
     coord cc;
-    schar dx, dy, dz;
+    schar dx = 0, dy = 0, dz = 0;
     struct rm *door;
     struct obj *otmp;
     const char *qbuf;
 
-    if (!getargdir(arg, NULL, &dx, &dy, &dz))
-        return 0;
+    if (!cobj) {
+        if (!getargdir(arg, NULL, &dx, &dy, &dz))
+            return 0;
+    }
     cc.x = u.ux + dx;
     cc.y = u.uy + dy;
     if (!isok(cc.x, cc.y))
@@ -388,7 +389,8 @@ pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
         count = 0;
         c = 'n';        /* in case there are no boxes here */
         for (otmp = level->objects[cc.x][cc.y]; otmp; otmp = otmp->nexthere)
-            if (Is_box(otmp)) {
+            if (Is_box(otmp) &&
+                (!cobj || cobj == otmp)) {
                 ++count;
                 if (!can_reach_floor()) {
                     pline(msgc_cancelled, "You can't reach %s from up here.",
@@ -658,7 +660,7 @@ doopen(const struct nh_cmd_arg *arg)
                           "Use an unlocking tool manually so I know "
                           "which one you want to use.");
                 else
-                    return pick_lock(bestpick, &newarg);
+                    return pick_lock(bestpick, &newarg, NULL);
             }
             door->mem_door_l = 1;
             map_background(cc.x, cc.y, TRUE);
@@ -1067,4 +1069,3 @@ chest_shatter_msg(struct obj *otmp)
 }
 
 /*lock.c*/
-
