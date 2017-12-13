@@ -636,7 +636,7 @@ restgamestate(struct memfile *mf)
     }
 }
 
-void
+static void
 fixstr(struct attribs *attr)
 {
     /* A_STR was 0 at this point */

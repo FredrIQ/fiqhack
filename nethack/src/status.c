@@ -216,7 +216,7 @@ draw_classic_status(struct nh_player_info *pi, nh_bool threeline)
     /* line 1 */
     wmove(statuswin, 0, 0);
     sprintf(buf, " St:%-1d Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
-            buf, pi->st, pi->dx, pi->co, pi->in, pi->wi, pi->ch);
+            pi->st, pi->dx, pi->co, pi->in, pi->wi, pi->ch);
     sprintf(buf, "%s %s", buf,
             pi->align == A_CHAOTIC ? "Chaotic" :
             pi->align == A_NEUTRAL ? "Neutral" :
