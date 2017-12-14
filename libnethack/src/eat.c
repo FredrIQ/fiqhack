@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,7 +15,7 @@ static void nutrition_calculations(struct obj *, unsigned *,
                                    unsigned *, unsigned *);
 static void touchfood(void);
 static void done_eating(boolean);
-static void cprefx(struct monst *, int);
+static void cprefx(struct monst *, int, boolean);
 static int intrinsic_possible(int, const struct permonst *);
 static void givit(struct monst *, int, const struct permonst *ptr, int);
 static void cpostfx(struct monst *, int);
@@ -360,11 +360,11 @@ maybe_cannibal(int pm, boolean allowmsg)
 }
 
 static void
-cprefx(struct monst *mon, int pm)
+cprefx(struct monst *mon, int pm, boolean resumed)
 {
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
-    if (you)
+    if (you && !resumed)
         maybe_cannibal(pm, TRUE);
     /* Note: can't use touched_monster here, Medusa acts differently on touching
        and eating */
@@ -887,7 +887,7 @@ eat_tin_one_turn(void)
             break_conduct(conduct_vegetarian);
 
         u.utracked[tos_tin]->dknown = u.utracked[tos_tin]->known = TRUE;
-        cprefx(&youmonst, u.utracked[tos_tin]->corpsenm);
+        cprefx(&youmonst, u.utracked[tos_tin]->corpsenm, FALSE);
         /* We call action_completed() here directly, so that the action is not
          * interruped if the player becomes helpless due to cpostfx. */
         action_completed();
@@ -1252,7 +1252,7 @@ eatcorpse(struct monst *mon, struct obj *otmp)
     }
 
     if (!retcode) {
-        cprefx(mon, mnum);
+        cprefx(mon, mnum, FALSE);
         /* If it was a monster's food, it will be done right away */
         if (!you) {
             cpostfx(mon, mnum);
@@ -1961,10 +1961,8 @@ doeat(const struct nh_cmd_arg *arg)
         if (turnstate.continue_message)
             pline(msgc_occstart, "You resume your meal.");
 
-        /* 3.4.3 indirectly has a cprefx check here, but it doesn't make sense
-           that the number of cannibalism penalties you get depends on how many
-           times you get interrupted. TODO: We still want to check some things,
-           like stoning. Probably cprefx needs an argument. */
+        if (otmp->otyp == CORPSE)
+            cprefx(&youmonst, otmp->corpsenm, TRUE);
     } else if (otmp->otyp == TIN) {
         /* special case */
         if (otmp != u.utracked[tos_tin] && !start_tin(otmp))
