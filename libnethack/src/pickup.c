@@ -1745,6 +1745,7 @@ out_container(struct obj *obj)
     boolean is_gold = (obj->oclass == COIN_CLASS);
     int res, loadlev;
     long count;
+    int oldcap = near_capacity();
 
     if (!current_container) {
         impossible("<out> no current_container?");
@@ -1790,7 +1791,8 @@ out_container(struct obj *obj)
         verbalize(msgc_npcvoice,
                   "You sneaky cad! Get out of here with that pick!");
 
-    otmp = pickinv(obj);
+    otmp = addinv(obj);
+    encumber_msg(oldcap);
     loadlev = near_capacity();
     prinv(loadlev
           ? (loadlev <
