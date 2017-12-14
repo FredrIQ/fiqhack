@@ -1425,48 +1425,62 @@ dojump(const struct nh_cmd_arg *arg)
     struct musable m = arg_to_musable(arg);
 
     /* Physical jump */
-    return jump(&m, 0);
+    return jump(&m, FALSE);
 }
 
-/* Meaning of "magic" argument: 0 means physical; otherwise skill level.
-   Returns 0 if the jump should be aborted. */
+/* Returns 0 if we can't jump, 1 if we can, 2 if our attempt ends the turn
+   without actually performing a jump. If checking is TRUE, we're only checking
+   if we can jump in first place. */
 int
-get_jump_coords(const struct musable *m, coord *cc, int magic)
+validate_jump(const struct musable *m, coord *cc, boolean magic,
+              boolean checking)
 {
+    struct monst *mon = m->mon;
+    boolean you = (mon == &youmonst);
     /* Used to point at the right monster for wounded legs */
-    struct monst *maybe_steed = u.usteed ? u.usteed : &youmonst;
-    if (!magic && (nolimbs(youmonst.data) || slithy(youmonst.data))) {
-        /* normally (nolimbs || slithy) implies !Jumping, but that isn't
-           necessarily the case for knights */
-        pline(msgc_cancelled, "You can't jump; you have no legs!");
+    struct monst *maybe_steed = you && u.usteed ? u.usteed : mon;
+    boolean show = !checking && (you || canseemon(mon));
+    int trinsic = jumps(mon);
+    int ox = m_mx(mon);
+    int oy = m_my(mon);
+
+    if (!magic && (nolimbs(mon->data) || slithy(mon->data))) {
+        bpline(msgc_cancelled, show, "You can't jump; you have no legs!");
         return 0;
-    } else if (!magic && !Jumping) {
-        pline(msgc_cancelled, "You can't jump very far.");
+    } else if (!magic && !trinsic) {
+        bpline(msgc_cancelled, show, "You can't jump very far.");
         return 0;
-    } else if (Engulfed) {
-        pline(msgc_cancelled, "You've got to be kidding!");
+    } else if (you && Engulfed) {
+        bpline(msgc_cancelled, show, "You've got to be kidding!!");
         return 0;
-    } else if (u.uinwater) {
-        pline(msgc_cancelled, "This calls for swimming, not jumping!");
+    } else if (m_underwater(mon)) {
+        bpline(msgc_cancelled, show, "This calls for swimming, not jumping!");
         return 0;
-    } else if (u.ustuck) {
+    } else if (mon == u.ustuck || (you && u.ustuck)) {
         if (u.ustuck->mtame && !Conflict && !confused(u.ustuck)) {
-            pline(msgc_actionok, "You pull free from %s.", mon_nam(u.ustuck));
-            u.ustuck = 0;
-            return 1;
+            if (!checking) {
+                bpline(msgc_actionok, show, "%s free from %s.",
+                       M_verbs(mon, "pull"), !you ? "you" : mon_nam(u.ustuck));
+                u.ustuck = 0;
+                return 2;
+            }
+        } else {
+            /* TODO: this spoils something (no conflict/pet confusion) under
+               some circumstances, which shouldn't be the case for
+               msgc_cancelled */
+            bpline(msgc_cancelled, show, "You cannot escape from %s!",
+                   mon_nam(u.ustuck));
+            return 0;
         }
-        /* TODO: this spoils something (no conflict/pet confusion) under
-           some circumstances, which shouldn't be the case for msgc_cancelled */
-        pline(msgc_cancelled, "You cannot escape from %s!", mon_nam(u.ustuck));
+    } else if (levitates(mon) || Is_airlevel(m_mz(mon)) ||
+               Is_waterlevel(m_mz(mon))) {
+        bpline(msgc_cancelled, show, "You don't have enough traction to jump.");
         return 0;
-    } else if (Levitation || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)) {
-        pline(msgc_cancelled, "You don't have enough traction to jump.");
+    } else if (!magic && you && near_capacity() > UNENCUMBERED) {
+        bpline(msgc_cancelled, show, "You are carrying too much to jump!");
         return 0;
-    } else if (!magic && near_capacity() > UNENCUMBERED) {
-        pline(msgc_cancelled, "You are carrying too much to jump!");
-        return 0;
-    } else if (!magic && (u.uhunger <= 100 || ACURR(A_STR) < 6)) {
-        pline(msgc_cancelled, "You lack the strength to jump!");
+    } else if (!magic && you && (u.uhunger <= 100 || ACURR(A_STR) < 6)) {
+        bpline(msgc_cancelled, show, "You lack the strength to jump!");
         return 0;
     } else if (leg_hurt(maybe_steed)) {
         const char *bp = body_part(LEG);
@@ -1474,95 +1488,140 @@ get_jump_coords(const struct musable *m, coord *cc, int magic)
         if (leg_hurtl(maybe_steed) && leg_hurtr(maybe_steed))
             bp = makeplural(bp);
         if (u.usteed)
-            pline(msgc_cancelled, "%s is in no shape for jumping.",
-                  Monnam(u.usteed));
+            bpline(msgc_cancelled, show, "%s is in no shape for jumping.",
+                   Monnam(u.usteed));
         else
-            pline(msgc_cancelled, "Your %s%s %s in no shape for jumping.",
-                  (!leg_hurtr(maybe_steed)) ? "left " :
-                  (!leg_hurtl(maybe_steed)) ? "right " : "",
-                  bp, (leg_hurtl(maybe_steed) &&
-                       leg_hurtr(maybe_steed)) ? "are" : "is");
+            bpline(msgc_cancelled, show,
+                   "Your %s%s %s in no shape for jumping.",
+                   (!leg_hurtr(maybe_steed)) ? "left " :
+                   (!leg_hurtl(maybe_steed)) ? "right " : "",
+                   bp, (leg_hurtl(maybe_steed) &&
+                        leg_hurtr(maybe_steed)) ? "are" : "is");
         return 0;
-    } else if (msgc_cancelled && u.usteed && u.utrap) {
-        pline(msgc_cancelled, "%s is stuck in a trap.", Monnam(u.usteed));
+    } else if (you && u.usteed && u.utrap) {
+        bpline(msgc_cancelled, show, "%s is stuck in a trap.",
+               Monnam(u.usteed));
         return 0;
-    } else if (msgc_cancelled && u.usteed && !u.usteed->mcanmove) {
-        pline(msgc_cancelled, "%s won't move sideways, much less upwards.",
-              Monnam(u.usteed));
+    } else if (you && u.usteed && !u.usteed->mcanmove) {
+        bpline(msgc_cancelled, show,
+               "%s won't move sideways, much less upwards.",
+               Monnam(u.usteed));
         return 0;
     }
 
-    pline(msgc_uiprompt, "Where do you want to jump?");
-    cc->x = u.ux;
-    cc->y = u.uy;
-    if (mgetargpos(m, cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
-        return 0;       /* user pressed ESC */
-    if (!magic && !(jumps(&youmonst) & ~INTRINSIC) &&
-        distu(cc->x, cc->y) != 5) {
-        /* The Knight jumping restriction still applies when riding a horse.
-           After all, what shape is the knight piece in chess? */
-        pline(distu(cc->x, cc->y) > 20 ? msgc_mispaste : msgc_cancelled,
-              "Illegal move!");
-        return 0;
-    } else if (distu(cc->x, cc->y) > (magic ? 6 + magic * 3 : 9)) {
-        pline(distu(cc->x, cc->y) > 20 ? msgc_mispaste : msgc_cancelled,
-              "Too far!");
-        return 0;
-    } else if (!cansee(cc->x, cc->y)) {
-        pline(msgc_cancelled, "You cannot see where to land!");
-        return 0;
-    } else if (!isok(cc->x, cc->y)) {
-        /* TODO: surely this check should be before cansee() (and probably
-           before some of the other checks too)? Most likely it's
-           unreachable. */
-        pline(msgc_cancelled, "You cannot jump there!");
-        return 0;
-    } else {
-        if (u.utrap) {
-            switch (u.utraptype) {
-            case TT_BEARTRAP:{
-                    long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
+    if (!checking) {
+        if (you)
+            bpline(msgc_uiprompt, show, "Where do you want to jump?");
+        cc->x = ox;
+        cc->y = oy;
+        if (mgetargpos(m, cc, FALSE,
+                       "the desired position") == NHCR_CLIENT_CANCEL)
+            return 0;       /* user pressed ESC */
+    }
 
-                    pline(msgc_badidea,
-                          "You rip yourself free of the bear trap!  Ouch!");
-                    if (!u.usteed)
-                        losehp(rnd(10), killer_msg(DIED, "jumping out of a bear trap"));
-                    else {
-                        u.usteed->mhp -= rnd(10);
-                        if (u.usteed->mhp <= 0)
-                            killed(u.usteed);
-                    }
+    if (!isok(cc->x, cc->y)) {
+        bpline(msgc_cancelled, show, "You cannot jump there!");
+        return 0;
+    } else if (!magic && !(trinsic & EXTRINSIC) &&
+               dist2(ox, oy, cc->x, cc->y) != 5) {
+        bpline(dist2(ox, oy, cc->x, cc->y) > 20 ? msgc_mispaste :
+               msgc_cancelled, show, "Illegal move!");
+        return 0;
+    }
 
-                    set_wounded_legs(u.usteed ? u.usteed : &youmonst,
-                                     side, rn1(1000, 500));
-                    break;
-                }
-            case TT_PIT:
-                pline(msgc_actionok, "You leap from the pit!");
-                break;
-            case TT_WEB:
-                pline(msgc_actionok,
-                      "You tear the web apart as you pull yourself free!");
-                deltrap(level, t_at(level, u.ux, u.uy));
-                break;
-            case TT_LAVA:
-                pline(msgc_actionok, "You pull yourself above the lava!");
-                u.utrap = 0;
+    /* Figure out allowed distance */
+    int skill = P_SKILL(spell_skilltype(SPE_JUMPING));
+    if (!you)
+        skill = mprof(mon, mspell_skilltype(SPE_JUMPING));
+    if (skill < 1)
+        skill = 1;
+
+    int dist = 9;
+    if (magic)
+        dist = 6 + skill * 3;
+
+    if (dist2(ox, oy, cc->x, cc->y) > dist) {
+        bpline(dist2(ox, oy, cc->x, cc->y) > 20 ? msgc_mispaste :
+               msgc_cancelled, show, "Too far!");
+        return 0;
+    } else if (!m_cansee(mon, cc->x, cc->y)) {
+        bpline(msgc_cancelled, show, "You cannot see where to land!");
+        return 0;
+    }
+
+    if (you ? u.utrap : mon->mtrapped) {
+        long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
+        unsigned traptype;
+        struct trap *t = t_at(m_dlevel(mon), ox, oy);
+        traptype = (t->ttyp == PIT || t->ttyp == SPIKED_PIT ? TT_PIT :
+                    t->ttyp == BEAR_TRAP ? TT_BEARTRAP :
+                    t->ttyp == WEB ? TT_WEB : 0);
+        if (you)
+            traptype = u.utraptype;
+
+        switch (u.utraptype) {
+        case TT_BEARTRAP:
+            bpline(you ? msgc_badidea : msgc_monneutral, show,
+                   "%s %sself free of the bear trap!  Ouch!",
+                   M_verbs(mon, "rip"), mhim(mon));
+
+            if (checking)
                 return 1;
-            case TT_INFLOOR:
-                pline(msgc_badidea, "You strain your %s, "
-                      "but you're still stuck in the floor.",
-                      makeplural(body_part(LEG)));
-                set_wounded_legs(&youmonst, LEFT_SIDE, rn1(10, 11));
-                set_wounded_legs(&youmonst, RIGHT_SIDE, rn1(10, 11));
+
+            if (maybe_steed == &youmonst)
+                losehp(rnd(10),
+                       killer_msg(DIED, "jumping out of a bear trap"));
+            else {
+                maybe_steed->mhp -= rnd(10);
+                if (maybe_steed->mhp <= 0) {
+                    if (you)
+                        killed(maybe_steed);
+                    else
+                        mondied(maybe_steed);
+                    return 2;
+                }
             }
+
+            set_wounded_legs(u.usteed ? u.usteed : &youmonst,
+                             side, rn1(1000, 500));
+            break;
+        case TT_PIT:
+            bpline(msgc_actionok, show,  "You leap from the pit!");
+            break;
+        case TT_WEB:
+            bpline(msgc_actionok, show,
+                   "%s the web apart as %s pull %sself free!",
+                   M_verbs(mon, "tear"), mhe(mon), mhim(mon));
+            if (!checking)
+                deltrap(level, t_at(level, u.ux, u.uy));
+            break;
+        case TT_LAVA:
+            bpline(msgc_actionok, show, "%s %sself above the lava!",
+                   M_verbs(mon, "pull"), mhim(mon));
+            if (!checking) {
+                if (you)
+                    u.utrap = 0;
+                else
+                    mon->mtrapped = 0;
+            }
+            return 2;
+        case TT_INFLOOR:
+            bpline(you ? msgc_badidea : msgc_monneutral, show,
+                   "%s %s %s, but %s still stuck in the floor.",
+                   M_verbs(mon, "strain"), mhis(mon),
+                   makeplural(mbodypart(mon, LEG)),
+                   m_verbs(mon, "are"));
+            set_wounded_legs(mon, LEFT_SIDE, rn1(10, 11));
+            set_wounded_legs(mon, RIGHT_SIDE, rn1(10, 11));
+            return 2;
         }
     }
+
     return 1;
 }
 
 void
-jump_to_coords(coord *cc)
+jump_to_coords(struct monst *mon, coord *cc)
 {
     coord uc;
     int range, temp;
@@ -1572,8 +1631,8 @@ jump_to_coords(coord *cc)
      * location.  The final position actually reached will be
      * in cc.
      */
-    uc.x = u.ux;
-    uc.y = u.uy;
+    uc.x = m_mx(mon);
+    uc.y = m_my(mon);
     /* calculate max(abs(dx), abs(dy)) as the range */
     range = cc->x - uc.x;
     if (range < 0)
@@ -1583,29 +1642,33 @@ jump_to_coords(coord *cc)
         temp = -temp;
     if (range < temp)
         range = temp;
-    walk_path(&uc, cc, hurtle_step, &range);
+    if (mon == &youmonst) {
+        walk_path(&uc, cc, hurtle_step, &range);
+        teleds(cc->x, cc->y, TRUE);
+        helpless(1, hr_moving, "jumping around", NULL);
+        morehungry(rnd(25));
+    } else {
+        if (canseemon(mon))
+            pline(msgc_monneutral, "%s!", M_verbs(mon, "jump"));
 
-    /* A little Sokoban guilt... */
-    if (In_sokoban(&u.uz))
-        change_luck(-1);
-
-    teleds(cc->x, cc->y, TRUE);
-    helpless(1, hr_moving, "jumping around", NULL);
-    morehungry(rnd(25));
+        walk_path(&uc, cc, mhurtle_step, mon);
+        mon->mfrozen = 1;
+        mon->mcanmove = 0;
+    }
 }
 
-/* Meaning of "magic" argument: 0 means physical; otherwise skill level */
 int
-jump(const struct musable *m, int magic)
+jump(const struct musable *m, boolean magic)
 {
     coord cc;
 
     /* Get the coordinates.  This might involve aborting. */
-    if(!get_jump_coords(m, &cc, magic))
-        return 0;
+    int res = validate_jump(m, &cc, magic, FALSE);
+    if (res != 1)
+        return !!res;
 
     /* Now do the actual jumping. */
-    jump_to_coords(&cc);
+    jump_to_coords(m->mon, &cc);
     return 1;
 }
 
@@ -2962,12 +3025,13 @@ do_break_wand(struct obj *obj, boolean intentional)
     const char *confirm, *the_wand;
 
     if (intentional) {
-	the_wand = yname(obj);
-    	confirm = msgprintf("Are you really sure you want to break %s?",
+        the_wand = yname(obj);
+        confirm = msgprintf("Are you really sure you want to break %s?",
                              safe_qbuf("", sizeof
                                        "Are you really sure you want to break ?",
-                                       the_wand, ysimple_name(obj), "the wand"));
-	if (yn(confirm) == 'n')
+                                       the_wand, ysimple_name(obj),
+                                       "the wand"));
+        if (yn(confirm) == 'n')
             return 0;
         if (nohands(youmonst.data)) {
             pline(msgc_cancelled, "You can't break %s without hands!", the_wand);

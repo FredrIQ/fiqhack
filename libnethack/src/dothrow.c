@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,7 +17,6 @@ static void breakobj(struct obj *, xchar, xchar, boolean, boolean);
 static void breakmsg(struct obj *, boolean);
 static boolean toss_up(struct obj *, boolean);
 static void sho_obj_return_to_u(struct obj *obj, schar, schar);
-static boolean mhurtle_step(void *, int, int);
 
 
 static const char toss_objs[] =
@@ -615,23 +614,35 @@ hurtle_step(void *arg, int x, int y)
     return TRUE;
 }
 
-static boolean
+boolean
+mhurtle_step_ok(void *arg, int x, int y)
+{
+    struct monst *mon = arg;
+    if (!goodpos(level, x, y, mon, 0) || !m_in_out_region(mon, x, y))
+        return FALSE;
+    return TRUE;
+}
+
+boolean
 mhurtle_step(void *arg, int x, int y)
 {
-    struct monst *mon = (struct monst *)arg;
+    if (!mhurtle_step_ok(arg, x, y))
+        return FALSE;
+    struct monst *mon = arg;
 
     /* TODO: Treat walls, doors, iron bars, pools, lava, etc. specially rather
        than just stopping before. */
-    if (goodpos(level, x, y, mon, 0) && m_in_out_region(mon, x, y)) {
-        remove_monster(level, mon->mx, mon->my);
-        newsym(mon->mx, mon->my);
-        place_monster(mon, x, y, TRUE);
-        newsym(mon->mx, mon->my);
-        set_apparxy(mon);
-        mintrap(mon);
-        return TRUE;
-    }
-    return FALSE;
+    int ox = mon->mx;
+    int oy = mon->my;
+    remove_monster(level, mon->mx, mon->my);
+    newsym(mon->mx, mon->my);
+    place_monster(mon, x, y, TRUE);
+    newsym(x, y);
+    set_apparxy(mon);
+    mintrap(mon);
+    if (cansee(ox, oy) && cansee(x, y))
+        win_delay_output();
+    return TRUE;
 }
 
 /*
@@ -706,7 +717,7 @@ mhurtle(struct monst *mon, int dx, int dy, int range)
     if (!mon->mfrozen)
         mon->mfrozen = 1;
 
-    /* Is the monster stuck or too heavy to push? (very large monsters have too 
+    /* Is the monster stuck or too heavy to push? (very large monsters have too
        much inertia, even floaters and flyers) */
     if (mon->data->msize >= MZ_HUGE || mon == u.ustuck || mon->mtrapped)
         return;

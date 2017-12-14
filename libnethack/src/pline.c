@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -36,6 +36,12 @@ pline_once(enum msg_channel msgc, const char *line, ...)
     pline_body(msgc, line, TRUE);
 }
 
+void
+bpline(enum msg_channel msgc, boolean show, const char *line, ...)
+{
+    if (show)
+        pline_body(msgc, line, FALSE);
+}
 
 static void
 vpline(enum msg_channel msgc, boolean norepeat,

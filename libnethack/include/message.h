@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* Copyright (c) Alex Smith, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -11,7 +11,7 @@
 # include "messagechannel.h"
 # include <stdarg.h>
 
-/* 
+/*
  * This file contains two sets of message-handling code:
  *
  * - pline() and friends, which handle printing messages;
@@ -49,6 +49,10 @@ extern void pline_once(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
 /* Like pline(), but the message can be deduced from other messages shown (and
    thus experienced players may want to hide it). */
 extern void pline_implied(enum msg_channel, const char *, ...) PRINTFLIKE(2,3);
+
+/* Like pline(), but takes a boolean to show or not. Simplifies conditional
+   plines (which can be a lot when vision checks are involved). */
+extern void bpline(enum msg_channel, boolean, const char *, ...) PRINTFLIKE(3,4);
 
 /* Typically pline("You hear %s"), but with checks to ensure that the character
    actually can hear. */

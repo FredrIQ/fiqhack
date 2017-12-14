@@ -83,9 +83,9 @@ extern void break_conduct(enum player_conduct);
 extern int doapply(const struct nh_cmd_arg *);
 extern int dorub(const struct nh_cmd_arg *);
 extern int dojump(const struct nh_cmd_arg *);
-extern int get_jump_coords(const struct musable *, coord *, int);
-extern void jump_to_coords(coord *cc);
-extern int jump(const struct musable *, int);
+extern int validate_jump(const struct musable *, coord *, boolean, boolean);
+extern void jump_to_coords(struct monst *, coord *);
+extern int jump(const struct musable *, boolean);
 extern int number_leashed(void);
 extern void o_unleash(struct obj *);
 extern void m_unleash(struct monst *, boolean);
@@ -443,6 +443,7 @@ extern void deliver_object(struct obj *obj, xchar dnum, xchar dlevel,
 extern int dothrow(const struct nh_cmd_arg *);
 extern int dofire(const struct nh_cmd_arg *);
 extern void hitfloor(struct obj *);
+extern boolean mhurtle_step_ok(void *, int, int);
 extern void hurtle(int, int, int, boolean);
 extern void mhurtle(struct monst *, int, int, int);
 extern boolean throwing_weapon(const struct obj *);
@@ -458,6 +459,8 @@ extern boolean breaktest(struct obj *);
 extern boolean walk_path(coord *, coord *, boolean(*)(void *, int, int),
                          void *);
 extern boolean hurtle_step(void *, int, int);
+extern boolean mhurtle_step(void *, int, int);
+extern boolean mhurtle_step_ok(void *, int, int);
 
 /* ### dump.c ### */
 
@@ -1158,11 +1161,13 @@ extern boolean mpickstuff(struct monst *, boolean);
 extern int curr_mon_load(const struct monst *);
 extern int max_mon_load(const struct monst *);
 extern boolean can_carry(struct monst *, struct obj *);
+extern int jump_ok(struct monst *);
+extern int mon_jump(struct monst *, int, int);
 extern void find_best_lineup(struct monst *, xchar *, xchar *);
 extern int mfndpos(struct monst *, coord *, long *, long, int);
 extern boolean monnear(struct monst *, int, int);
 extern void dmonsfree(struct level *lev);
-extern boolean can_act_this_turn(struct monst *);
+extern int can_act_this_turn(struct monst *);
 extern void adjust_move_offset(struct monst *, int, int);
 extern int mcalcmove(struct monst *);
 extern void mcalcdistress(void);

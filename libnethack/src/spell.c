@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1454,6 +1454,7 @@ spelleffects(boolean atme, struct musable *m)
     boolean thrownasty = FALSE;
     int count = 0; /* for nasty */
     boolean amulet = FALSE;
+    int res;
 
     /* for potions */
     int dummy2 = 0;
@@ -1476,7 +1477,7 @@ spelleffects(boolean atme, struct musable *m)
             case SPID_RLOC:
                 return mdotele(m);
             case SPID_JUMP:
-                return jump(m, 0);
+                return jump(m, FALSE);
             case SPID_MONS:
                 return mdomonability(m);
             default:
@@ -1563,11 +1564,9 @@ spelleffects(boolean atme, struct musable *m)
         }
         break;
     case SPE_JUMPING:
-        if(!get_jump_coords(m, &cc, max(role_skill, 1))) {
-            /* No jumping after all, I guess. */
-            pline(msgc_cancelled, "Spell canceled.");
-            return 0;
-        }
+        res = validate_jump(m, &cc, TRUE, FALSE);
+        if (res != 1)
+            return !!res;
         break;
     default:
         break;
@@ -1901,7 +1900,7 @@ spelleffects(boolean atme, struct musable *m)
             break;
         }
 
-        jump_to_coords(&cc);
+        jump_to_coords(mon, &cc);
         break;
     case SPE_ASTRAL_EYESIGHT:
         set_property(mon, XRAY_VISION, rn1(20, 11), FALSE);

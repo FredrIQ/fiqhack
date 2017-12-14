@@ -1,11 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef MFNDPOS_H
 # define MFNDPOS_H
 
+# define ALLOW_JUMP     0x00008000L     /* can jump */
 # define ALLOW_PEACEFUL 0x00010000L     /* can displace peacefuls */
 # define ALLOW_TRAPS    0x00020000L     /* can enter traps */
 # define ALLOW_MUXY     0x00040000L     /* can attack your believed location */
@@ -25,4 +26,3 @@
 # define NOGARLIC       0x80000000UL    /* hates garlic */
 
 #endif /* MFNDPOS_H */
-

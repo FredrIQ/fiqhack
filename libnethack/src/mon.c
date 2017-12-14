@@ -520,7 +520,7 @@ adjust_move_offset(struct monst *mon, int oldspeed, int newspeed)
         NORMAL_SPEED;
 }
 
-boolean
+int
 can_act_this_turn(struct monst *mon)
 {
     /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
@@ -551,7 +551,10 @@ can_act_this_turn(struct monst *mon)
 
     /* We can move if we've done fewer actions this turn than we have
        available. */
-    return flags.actions < actions_this_turn;
+    if (flags.actions >= actions_this_turn)
+        return 0;
+
+    return (actions_this_turn - flags.actions);
 }
 
 int
@@ -1324,6 +1327,100 @@ can_carry(struct monst *mtmp, struct obj *otmp)
     return TRUE;
 }
 
+/* If monster is willing to jump, return max distance. Otherwise, return
+   0. */
+int
+jump_ok(struct monst *mon)
+{
+    /* We're only willing to jump if this is our last action for this turn. */
+    if (can_act_this_turn(mon) != 1)
+        return 0;
+
+    /* Check for the jumping spell. Only consider it if we have plenty of Pw
+       left. */
+    if (mon_castable(mon, SPE_JUMPING, TRUE) > 80 &&
+        ((mon->pw * 100) / mon->pwmax) > 75 &&
+        mon->pw >= objects[SPE_JUMPING].oc_level * mon_has_amulet(mon) ? 15 : 5)
+        return 4;
+
+    int res = jumps(mon);
+    if (!res)
+        return 0;
+
+    if (res & EXTRINSIC)
+        return 3;
+
+    /* knight jumps */
+    return 2;
+}
+
+static boolean
+valid_jump(struct monst *mon, int x, int y)
+{
+    /* Are we actually willing, and able to, jump? */
+    int jumpok = jump_ok(mon);
+    if (!jumpok)
+        return FALSE;
+
+    /* Check if we can even attempt the jump in first place */
+    coord cc;
+    cc.x = x;
+    cc.y = y;
+    struct musable m;
+    init_musable(mon, &m);
+    int res = validate_jump(&m, &cc, jumpok == 4 ? TRUE : FALSE, TRUE);
+    if (res != 1)
+        return FALSE;
+
+    /* Check if jumping here will actually work */
+    coord src, dest;
+    src.x = mon->mx;
+    src.y = mon->my;
+    dest.x = x;
+    dest.y = y;
+    if (!walk_path(&src, &dest, mhurtle_step_ok, mon))
+        return FALSE;
+    return TRUE;
+}
+
+/* Perform a jump as a monster. Returns 1 (turn used), 2 (died) or
+   0 (can still act this turn). */
+int
+mon_jump(struct monst *mon, int x, int y)
+{
+    int res;
+
+    /* Try nonmagic first, that way we don't waste Pw. This will return 0
+       if we aren't able to jump nonmagically. */
+    boolean magic = FALSE;
+    coord cc;
+    cc.x = x;
+    cc.y = y;
+    struct musable m;
+    init_musable(mon, &m);
+    m.x = x;
+    m.y = y;
+    m.z = 0;
+
+    res = validate_jump(&m, &cc, magic, TRUE);
+    if (!res) {
+        magic = TRUE;
+        res = validate_jump(&m, &cc, magic, TRUE);
+        if (!res)
+            panic("Monster jump checks contradict each other.");
+        m.spell = SPE_JUMPING;
+        m.use = MUSE_SPE;
+        return use_item(&m);
+    }
+
+    res = jump(&m, FALSE);
+    if (!res)
+        return 0;
+    if (DEADMONSTER(mon))
+        return 2;
+    return 1;
+}
+
 /* Adjust goalpoint to a good lineup to given gx/gy.
    "Good" means as far away as possible but still in line and within
    BOLT_LIM */
@@ -1611,6 +1708,13 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         }
                     }
                 }
+
+                if ((flag & ALLOW_JUMP) && !monnear(mon, nx, ny)) {
+                    if (!valid_jump(mon, nx, ny))
+                        continue;
+                    info[cnt] |= ALLOW_JUMP;
+                }
+
                 poss[cnt].x = nx;
                 poss[cnt].y = ny;
                 cnt++;
