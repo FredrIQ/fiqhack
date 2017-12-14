@@ -1339,7 +1339,7 @@ jump_ok(struct monst *mon)
     /* Check for the jumping spell. Only consider it if we have plenty of Pw
        left. */
     if (mon_castable(mon, SPE_JUMPING, TRUE) > 80 &&
-        ((mon->pw * 100) / mon->pwmax) > 75 &&
+        ((mon->pw * 100) / mon->pwmax) > 40 &&
         mon->pw >= objects[SPE_JUMPING].oc_level * mon_has_amulet(mon) ? 15 : 5)
         return 4;
 
