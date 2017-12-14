@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-03 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1610,14 +1610,29 @@ dosacrifice(const struct nh_cmd_arg *arg)
                                        rng_altar_gift);
                     if (otmp) {
                         if (otmp && otmp->oartifact)
-                            artifact_exists(otmp, artiname(otmp->oartifact), ag_gift);
+                            artifact_exists(otmp, artiname(otmp->oartifact),
+                                            ag_gift);
                         if (otmp->spe < 0)
                             otmp->spe = 0;
                         if (otmp->cursed)
                             uncurse(otmp);
                         otmp->oerodeproof = TRUE;
                         dropy(otmp);
-                        at_your_feet("An object");
+                        /* if we gave a lance, also give a saddle */
+                        struct obj *saddle = NULL;
+                        if (otmp->otyp == LANCE)
+                            saddle = mksobj(level, SADDLE, FALSE, FALSE,
+                                            rng_altar_gift);
+
+                        if (saddle) {
+                            if (saddle->cursed)
+                                uncurse(saddle);
+                            saddle->oerodeproof = TRUE;
+                            dropy(saddle);
+                            at_your_feet("Some items");
+                            unrestrict_weapon_skill(P_RIDING);
+                        } else
+                            at_your_feet("An object");
                         godvoice(msgc_aligngood, u.ualign.type,
                                  "Use my gift wisely!");
                         historic_event(FALSE, FALSE, "received %s from %s.",
