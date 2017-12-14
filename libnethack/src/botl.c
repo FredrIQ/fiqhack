@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -256,7 +256,7 @@ make_player_info(struct nh_player_info *pi)
     }
     pi->can_enhance = advskills > 0;
 
-    /* add status items for various problems there can be at most 24 items here 
+    /* add status items for various problems there can be at most 24 items here
        at any one time or we overflow the buffer */
     if (hu_stat[u.uhs]) /* 1 */
         strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);
@@ -338,4 +338,3 @@ bot(void)
 }
 
 /*botl.c*/
-

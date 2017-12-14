@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1206,11 +1206,9 @@ not_fully_identified_core(const struct obj * otmp, boolean ignore_bknown,
         return TRUE;
 
     /* otmj->rknown is the only item of interest if we reach here */
-    /* 
-     *  Note:  if a revision ever allows scrolls to become fireproof or
-     *  rings to become shockproof, this checking will need to be revised.
-     *  `rknown' ID only matters if xname() will provide the info about it.
-     */
+    /* Note: if a revision ever allows scrolls to become fireproof or rings
+       to become shockproof, this checking will need to be revised. `rknown'
+       ID only matters if xname() will provide the info about it. */
     if (skill == P_EXPERT &&
         (otmp->rknown || (otmp->oclass != ARMOR_CLASS &&
                           otmp->oclass != WEAPON_CLASS &&
