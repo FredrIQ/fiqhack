@@ -1651,6 +1651,7 @@ jump_to_coords(struct monst *mon, coord *cc)
         walk_path(&uc, cc, mhurtle_step, mon);
         mon->mfrozen = 1;
         mon->mcanmove = 0;
+        mintrap(mon);
     }
 }
 

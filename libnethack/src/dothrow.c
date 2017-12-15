@@ -639,7 +639,6 @@ mhurtle_step(void *arg, int x, int y)
     place_monster(mon, x, y, TRUE);
     newsym(x, y);
     set_apparxy(mon);
-    mintrap(mon);
     flush_screen();
     if (cansee(ox, oy) && cansee(x, y))
         win_delay_output();
@@ -735,6 +734,7 @@ mhurtle(struct monst *mon, int dx, int dy, int range)
     cc.x = mon->mx + (dx * range);
     cc.y = mon->my + (dy * range);
     walk_path(&mc, &cc, mhurtle_step, mon);
+    mintrap(mon);
     return;
 }
 
