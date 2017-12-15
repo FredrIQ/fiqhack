@@ -1060,10 +1060,11 @@ not_special:
                 }
             }
 
-            if (info[chi] & ALLOW_JUMP) {
+            if (mmoved && info[chi] & ALLOW_JUMP) {
                 int jumpres = mon_jump(mtmp, nix, niy);
                 if (jumpres)
                     return jumpres;
+                mmoved = 0;
             } else
                 break;
         }
