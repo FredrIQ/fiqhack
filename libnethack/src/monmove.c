@@ -729,7 +729,7 @@ m_move(struct monst *mtmp, int after)
     boolean avoid = FALSE;
     const struct permonst *ptr;
     schar mmoved = 0;   /* not strictly nec.: chi >= 0 will do */
-    long info[17 * 17];
+    long info[ROWNO * COLNO];
     long flag;
     int omx = mtmp->mx, omy = mtmp->my;
     struct obj *mw_tmp;
@@ -957,7 +957,7 @@ not_special:
         int i, nx, ny, nearer, distance_tie;
         int cnt, chcnt;
         int ndist, nidist;
-        coord poss[17 * 17];
+        coord poss[ROWNO * COLNO];
         int ogx = gx;
         int ogy = gy;
         boolean forceline = FALSE;

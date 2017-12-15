@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -677,13 +677,13 @@ dog_move(struct monst *mtmp, int after)
     struct edog *edog = mx_edog(mtmp);
     struct obj *obj = NULL;
     xchar otyp;
-    boolean has_edog, cursemsg[9], do_eat = FALSE;
+    boolean has_edog, cursemsg[ROWNO * COLNO], do_eat = FALSE;
     xchar nix, niy;     /* position mtmp is (considering) moving to */
     int nx, ny; /* temporary coordinates */
     xchar cnt, uncursedcnt, chcnt;
     int chi = -1, nidist, ndist;
-    coord poss[9];
-    long info[9], allowflags;
+    coord poss[ROWNO * COLNO];
+    long info[ROWNO * COLNO], allowflags;
     struct musable m;
     struct distmap_state ds;
     boolean mercy = FALSE;

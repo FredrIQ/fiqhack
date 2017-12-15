@@ -1406,8 +1406,14 @@ mon_jump(struct monst *mon, int x, int y)
     if (!res) {
         magic = TRUE;
         res = validate_jump(&m, &cc, magic, TRUE);
-        if (!res)
+        if (!res) {
+            /* give the fail condition first, safe since we are about to
+               panic */
+            res = validate_jump(&m, &cc, magic, FALSE);
+            pline(msgc_fatal, "xy:%d,%d cxy:%d,%d mxy:%d,%d", x, y, cc.x, cc.y,
+                  m.x, m.y);
             panic("Monster jump checks contradict each other.");
+        }
         m.spell = SPE_JUMPING;
         m.use = MUSE_SPE;
         return use_item(&m);
@@ -1480,8 +1486,8 @@ find_best_lineup(struct monst *mon, xchar *gx, xchar *gy)
 
 /* return number of acceptable neighbour positions */
 int
-mfndpos(struct monst *mon, coord *poss,        /* coord poss[9] */
-        long *info,     /* long info[9] */
+mfndpos(struct monst *mon, coord *poss,        /* coord poss[ROWNO * COLNO] */
+        long *info,     /* long info[ROWNO * COLNO] */
         long flag, int topdist)
 {
     const struct permonst *mdat = mon->data;
@@ -1736,8 +1742,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
        places). This also means that in large mobs, enemies with ranged weapons
        will get more of a chance to use them. */
     if (swarmcount >= 6) {
-        long infocopy[9];
-        coord posscopy[9];
+        long infocopy[ROWNO * COLNO];
+        coord posscopy[ROWNO * COLNO];
         int oldcnt;
 
         memcpy(infocopy, info, sizeof infocopy);
