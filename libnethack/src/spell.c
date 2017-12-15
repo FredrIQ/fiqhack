@@ -1621,7 +1621,8 @@ spelleffects(boolean atme, struct musable *m)
                           "It invokes nightmarish images in your mind...");
             spell_backfire(spell);
             return 0;
-        } else if (spellknow(spell_index) <= 200) {       /* 1% */
+        } else if (spellknow(spell_index) <= 200 &&
+                   spellknow(spell_index) > 0) {       /* 1% */
             pline(msgc_hint, "You strain to recall the spell.");
         } else if (spellknow(spell_index) <= 1000) {      /* 5% */
             pline(msgc_hint, "Your knowledge of this spell is growing faint.");
