@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-15 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1895,11 +1895,6 @@ spelleffects(boolean atme, struct musable *m)
         cast_protection(mon, FALSE, FALSE);
         break;
     case SPE_JUMPING:
-        if (!you) {
-            impossible("Monster attempted to cast jumping, which isn't implemented...");
-            break;
-        }
-
         jump_to_coords(mon, &cc);
         break;
     case SPE_ASTRAL_EYESIGHT:
