@@ -1559,7 +1559,7 @@ validate_jump(const struct musable *m, coord *cc, boolean magic,
         if (you)
             traptype = u.utraptype;
 
-        switch (u.utraptype) {
+        switch (traptype) {
         case TT_BEARTRAP:
             bpline(you ? msgc_badidea : msgc_monneutral, show,
                    "%s %sself free of the bear trap!  Ouch!",
@@ -2550,7 +2550,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
         dropx(obj);
 
     } else if (u.utrap && u.utraptype == TT_PIT) {
-        /* 
+        /*
          *     Assumptions:
          *
          *      if you're in a pit
