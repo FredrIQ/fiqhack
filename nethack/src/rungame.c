@@ -707,47 +707,61 @@ loadgame(nh_bool autoload)
     }
 
     files = list_gamefiles(savedir, &size);
-    if (!size) {
-        if (!autoload) {
-            curses_msgwin("No saved games found.", krc_notification);
-            return FALSE;
-        }
-
-        struct nh_menulist wmenu;
-        int attempt = 0;
-        while (!size) {
-            attempt++;
-            char notyet[BUFSZ];
-            strncpy(notyet, "The player hasn't created any saves.", BUFSZ);
-            if (attempt > 1)
-                snprintf(notyet, BUFSZ, "(Attempt %d) "
-                         "The player hasn't created any saves.", attempt);
-
-            init_menulist(&wmenu);
-            add_menu_item(&wmenu, 1, "Retry", 'r', FALSE);
-            add_menu_item(&wmenu, 2, "Quit", 'q', FALSE);
-            curses_display_menu(&wmenu, notyet, PICK_ONE, PLHINT_ANYWHERE,
-                                pick, curses_menu_callback);
-
-            switch (pick[0]) {
-            case CURSES_MENU_CANCELLED:
-            case 2:
-                return FALSE;
-            default:
-                files = list_gamefiles(savedir, &size);
-                break;
-            }
-        }
+    if (!autoload && !size) {
+        curses_msgwin("No saved games found.", krc_notification);
+        return FALSE;
     }
 
-    if (autoload) {
-        fd = sys_open(files[0], O_RDONLY, FILE_OPEN_MASK);
-        create_game_windows();
+    struct nh_menulist wmenu;
+    int attempt = 0;
+    nh_bool was_loaded = FALSE;
+    while (autoload) {
+        attempt++;
+        char notyet[BUFSZ];
+        files = list_gamefiles(savedir, &size);
+        if (size && !was_loaded) {
+            was_loaded = TRUE;
+            fd = sys_open(files[0], O_RDONLY, FILE_OPEN_MASK);
+            create_game_windows();
 
-        ret = playgame(fd, FM_WATCH);
+            ret = playgame(fd, FM_WATCH);
 
-        close(fd);
-        return FALSE;
+            close(fd);
+
+            destroy_game_windows();
+            discard_message_history(0);
+            game_ended(ret, filename, FALSE);
+
+            continue;
+        }
+
+        strncpy(notyet, "The player hasn't created any saves.", BUFSZ);
+        if (attempt > 1)
+            snprintf(notyet, BUFSZ, "(Attempt %d) "
+                     "The player hasn't created any saves.", attempt);
+        if (was_loaded) {
+            wclear(basewin);
+            refresh();
+            strncpy(notyet, "Load another game?", BUFSZ);
+            attempt = 0;
+        }
+
+        init_menulist(&wmenu);
+        add_menu_item(&wmenu, 1, was_loaded ? "Load another" : "Retry",
+                      'r', FALSE);
+        add_menu_item(&wmenu, 2, "Quit", 'q', FALSE);
+        curses_display_menu(&wmenu, notyet, PICK_ONE, PLHINT_ANYWHERE,
+                            pick, curses_menu_callback);
+
+        switch (pick[0]) {
+        case CURSES_MENU_CANCELLED:
+        case 2:
+            return FALSE;
+        default:
+            was_loaded = FALSE;
+            files = list_gamefiles(savedir, &size);
+            break;
+        }
     }
 
     init_menulist(&menu);
