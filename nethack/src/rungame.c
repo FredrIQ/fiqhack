@@ -714,13 +714,12 @@ loadgame(nh_bool autoload)
 
     struct nh_menulist wmenu;
     int attempt = 0;
-    nh_bool was_loaded = FALSE;
+    nh_bool in_load = FALSE;
     while (autoload) {
         attempt++;
         char notyet[BUFSZ];
         files = list_gamefiles(savedir, &size);
-        if (size && !was_loaded) {
-            was_loaded = TRUE;
+        if (size && in_load) {
             fd = sys_open(files[0], O_RDONLY, FILE_OPEN_MASK);
             create_game_windows();
 
@@ -731,34 +730,34 @@ loadgame(nh_bool autoload)
             destroy_game_windows();
             discard_message_history(0);
             game_ended(ret, filename, FALSE);
-
-            continue;
+            return TRUE;
         }
 
-        strncpy(notyet, "The player hasn't created any saves.", BUFSZ);
-        if (attempt > 1)
+        if (in_load)
             snprintf(notyet, BUFSZ, "(Attempt %d) "
-                     "The player hasn't created any saves.", attempt);
-        if (was_loaded) {
-            wclear(basewin);
-            refresh();
-            strncpy(notyet, "Load another game?", BUFSZ);
+                     "No saves found for X", attempt);
+        else {
+            strncpy(notyet, "Watching X", BUFSZ);
             attempt = 0;
         }
 
         init_menulist(&wmenu);
-        add_menu_item(&wmenu, 1, was_loaded ? "Load another" : "Retry",
-                      'r', FALSE);
-        add_menu_item(&wmenu, 2, "Quit", 'q', FALSE);
+        add_menu_item(&wmenu, 1, !in_load ? "load game" : "retry",
+                      'l', FALSE);
+        add_menu_item(&wmenu, 2, "send mail", 'm', FALSE);
+        add_menu_item(&wmenu, 3, "quit", 'q', FALSE);
         curses_display_menu(&wmenu, notyet, PICK_ONE, PLHINT_ANYWHERE,
                             pick, curses_menu_callback);
 
         switch (pick[0]) {
         case CURSES_MENU_CANCELLED:
-        case 2:
+            return TRUE;
+        case 3:
             return FALSE;
+        case 2:
+            return TRUE;
         default:
-            was_loaded = FALSE;
+            in_load = TRUE;
             files = list_gamefiles(savedir, &size);
             break;
         }

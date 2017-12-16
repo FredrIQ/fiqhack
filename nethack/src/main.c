@@ -256,12 +256,6 @@ mainmenu(void)
 
     load_keymap(); /* netgame() assumes the keymap isn't loaded */
 
-    if (ui_flags.autoload) {
-        loadgame(TRUE);
-        free_keymap();
-        return;
-    }
-
     while (n >= 0) {
         if (COLS >= 100) {
             nhlogo = nhlogo_large;
@@ -283,6 +277,13 @@ mainmenu(void)
         mvwaddstr(basewin, LINES - 1, 0, copybanner[2]);
         mvwaddstr(basewin, LINES - 4, COLS - strlen(verstr), verstr);
         wnoutrefresh(basewin);
+
+        if (ui_flags.autoload) {
+            nh_bool res = loadgame(TRUE);
+            if (!res)
+                break;
+            continue;
+        }
 
         if (first) {
             network_motd();
