@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-12-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-16 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -182,6 +182,7 @@ struct interface_flags {
     nh_bool initialized;  /* false before init_curses_ui() */
     nh_bool ingame;
     nh_bool connected_to_server;
+    nh_bool autoload;
     enum nh_followmode current_followmode;
     enum nh_followmode available_followmode;
     nh_bool in_zero_time_command;
@@ -651,7 +652,7 @@ extern void curses_request_command(nh_bool debug, nh_bool completed,
 extern void describe_game(char *buf, enum nh_log_status status,
                           struct nh_game_info *gi);
 extern void rungame(nh_bool net);
-extern nh_bool loadgame(void);
+extern nh_bool loadgame(nh_bool autoload);
 extern void game_ended(int status, fnchar *filename, nh_bool net);
 extern fnchar **list_gamefiles(fnchar *dir, int *count);
 extern enum nh_play_status playgame(int fd_or_gameno, enum nh_followmode);
