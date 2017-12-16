@@ -708,8 +708,36 @@ loadgame(nh_bool autoload)
 
     files = list_gamefiles(savedir, &size);
     if (!size) {
-        curses_msgwin("No saved games found.", krc_notification);
-        return FALSE;
+        if (!autoload) {
+            curses_msgwin("No saved games found.", krc_notification);
+            return FALSE;
+        }
+
+        struct nh_menulist wmenu;
+        int attempt = 0;
+        while (!size) {
+            attempt++;
+            char notyet[BUFSZ];
+            strncpy(notyet, "The player hasn't created any saves.", BUFSZ);
+            if (attempt > 1)
+                snprintf(notyet, BUFSZ, "(Attempt %d) "
+                         "The player hasn't created any saves.", attempt);
+
+            init_menulist(&wmenu);
+            add_menu_item(&wmenu, 1, "Retry", 'r', FALSE);
+            add_menu_item(&wmenu, 2, "Quit", 'q', FALSE);
+            curses_display_menu(&wmenu, notyet, PICK_ONE, PLHINT_ANYWHERE,
+                                pick, curses_menu_callback);
+
+            switch (pick[0]) {
+            case CURSES_MENU_CANCELLED:
+            case 2:
+                return FALSE;
+            default:
+                files = list_gamefiles(savedir, &size);
+                break;
+            }
+        }
     }
 
     if (autoload) {
