@@ -718,6 +718,7 @@ loadgame(nh_bool autoload)
     while (autoload) {
         attempt++;
         char notyet[BUFSZ];
+        char *uname = getenv("USER");
         files = list_gamefiles(savedir, &size);
         if (size && in_load) {
             fd = sys_open(files[0], O_RDONLY, FILE_OPEN_MASK);
@@ -735,9 +736,9 @@ loadgame(nh_bool autoload)
 
         if (in_load)
             snprintf(notyet, BUFSZ, "(Attempt %d) "
-                     "No saves found for X", attempt);
+                     "No saves found for %s", attempt, uname);
         else {
-            strncpy(notyet, "Watching X", BUFSZ);
+            snprintf(notyet, BUFSZ, "Watching %s", uname);
             attempt = 0;
         }
 
