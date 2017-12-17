@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-17 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,20 +25,24 @@
 nh_bool
 get_gamedir(enum game_dirs dirtype, wchar_t *buf)
 {
+    const char *overrider = override_userdir;
+    if (dirtype == SAVE_DIR && override_savedir)
+        overrider = override_savedir;
+
     wchar_t *subdir;
     wchar_t appPath[MAX_PATH], nhPath[MAX_PATH];
 
-    if (override_userdir) {
+    if (overrider) {
         /* TODO: make override_userdir a wchar_t on Windows. (This means using
            an alternative command line parser.) */
         wchar_t *r1 = nhPath;
-        char *r2 = override_userdir;
+        char *r2 = overrider;
 
         while (*r2)
             *r1++ = *r2++;
     } else {
         /* Get the location of "AppData\Roaming" (Vista, 7) or "Application
-           Data" (XP). The returned Path does not include a trailing backslash. 
+           Data" (XP). The returned Path does not include a trailing backslash.
          */
         if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appPath)))
             return FALSE;
@@ -64,7 +68,7 @@ get_gamedir(enum game_dirs dirtype, wchar_t *buf)
         return FALSE;
     }
 
-    if (!override_userdir)
+    if (!overrider)
         snwprintf(nhPath, MAX_PATH, L"%s\\FIQHack", appPath);
     _wmkdir(nhPath);
 
@@ -80,14 +84,18 @@ get_gamedir(enum game_dirs dirtype, wchar_t *buf)
 nh_bool
 get_gamedirA(enum game_dirs dirtype, char *buf)
 {
+    const char *overrider = override_userdir;
+    if (dirtype == SAVE_DIR && override_savedir)
+        overrider = override_savedir;
+
     char *subdir;
     char appPath[MAX_PATH], nhPath[MAX_PATH];
 
-    if (override_userdir) {
-        strncpy(nhPath, override_userdir, MAX_PATH);
+    if (overrider) {
+        strncpy(nhPath, overrider, MAX_PATH);
     } else {
         /* Get the location of "AppData\Roaming" (Vista, 7) or "Application
-           Data" (XP). The returned Path does not include a trailing backslash. 
+           Data" (XP). The returned Path does not include a trailing backslash.
          */
         if (!SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, appPath)))
             return FALSE;
@@ -113,7 +121,7 @@ get_gamedirA(enum game_dirs dirtype, char *buf)
         return FALSE;
     }
 
-    if (!override_userdir)
+    if (!overrider)
         snprintf(nhPath, MAX_PATH, "%s\\FIQHack", appPath);
     mkdir(nhPath);
 
@@ -128,6 +136,10 @@ get_gamedirA(enum game_dirs dirtype, char *buf)
 nh_bool
 get_gamedir(enum game_dirs dirtype, char *buf)
 {
+    const char *overrider = override_userdir;
+    if (dirtype == SAVE_DIR && override_savedir)
+        overrider = override_savedir;
+
     const char *envval, *subdir;
     mode_t mask;
 
@@ -151,8 +163,8 @@ get_gamedir(enum game_dirs dirtype, char *buf)
         return FALSE;
     }
 
-    if (override_userdir && getgid() == getegid()) {
-        snprintf(buf, BUFSZ, "%s/%s", override_userdir, subdir);
+    if (overrider && getgid() == getegid()) {
+        snprintf(buf, BUFSZ, "%s/%s", overrider, subdir);
     } else {
         /* look in regular location */
         envval = getenv("XDG_CONFIG_HOME");

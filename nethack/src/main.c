@@ -30,7 +30,7 @@ int cmdline_gend = ROLE_NONE, cmdline_align = ROLE_NONE;
 char cmdline_name[BUFSZ] = {0};
 nh_bool random_player = FALSE;
 
-char *override_hackdir, *override_userdir;
+char *override_hackdir, *override_userdir, *override_savedir;
 
 enum menuitems {
     NEWGAME = 1,
@@ -436,7 +436,7 @@ process_args(int argc, char *argv[])
                 puts("-k          connection-only mode");
                 puts("-D          start games in wizard mode");
                 puts("-X          start games in explore mode");
-                puts("-W          autoload first game in watchmode");
+                puts("-W [dir]    load watchmode with optional save dir");
                 puts("-u name     specify player name");
                 puts("-p role     specify role");
                 puts("-r race     specify race");
@@ -469,6 +469,18 @@ process_args(int argc, char *argv[])
 
         case 'W':
             ui_flags.autoload = TRUE;
+#ifdef UNIX
+            if (setregid(getgid(), getgid()) < 0)
+                exit(14);
+#endif
+            if (argv[0][2]) {
+                override_savedir = argv[0] + 2;
+            } else if (argc > 1) {
+                argc--;
+                argv++;
+                override_savedir = argv[0];
+            }
+            break;
             break;
 
         case 'u':
