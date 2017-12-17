@@ -26,7 +26,7 @@ nh_bool
 get_gamedir(enum game_dirs dirtype, wchar_t *buf)
 {
     const char *overrider = override_userdir;
-    if (dirtype == SAVE_DIR && override_savedir)
+    if ((dirtype == SAVE_DIR || dirtype == LOG_DIR) && override_savedir)
         overrider = override_savedir;
 
     wchar_t *subdir;
@@ -85,7 +85,7 @@ nh_bool
 get_gamedirA(enum game_dirs dirtype, char *buf)
 {
     const char *overrider = override_userdir;
-    if (dirtype == SAVE_DIR && override_savedir)
+    if ((dirtype == SAVE_DIR || dirtype == LOG_DIR) && override_savedir)
         overrider = override_savedir;
 
     char *subdir;
@@ -137,7 +137,7 @@ nh_bool
 get_gamedir(enum game_dirs dirtype, char *buf)
 {
     const char *overrider = override_userdir;
-    if (dirtype == SAVE_DIR && override_savedir)
+    if ((dirtype == SAVE_DIR || dirtype == LOG_DIR) && override_savedir)
         overrider = override_savedir;
 
     const char *envval, *subdir;
