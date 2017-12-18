@@ -25,6 +25,9 @@ checkformail(void)
 #  define MAILBOXENVVAR "NHMAILBOX"
 # endif
 
+static char prev_who[PL_NSIZ] = {0};
+static char prev_text[BUFSZ] = {0};
+
 static int mailhashname(const char *str);
 static void delivermail(const char *from, const char *message);
 
@@ -63,6 +66,7 @@ checkformail(void)
     if (fcntl (fileno (mb), F_SETLKW, &fl) == -1)
         return;
 
+    boolean first = TRUE;
     while (fgets(curline, 102, mb) != NULL) {
         const char *who;
         const char *thetext;
@@ -87,6 +91,17 @@ checkformail(void)
 
         msg[strlen(msg) - 1] = '\0'; /* kill newline */
         thetext = msgprintf("%s", msg);
+        if (first) {
+            first = FALSE;
+            if (prev_who[0] && !strncmp(who, prev_who, PL_NSIZ) &&
+                prev_text[0] && !strncmp(thetext, prev_text, BUFSZ)) {
+                fclose(mb);
+                return;
+            }
+
+            strncpy(prev_who, who, PL_NSIZ);
+            strncpy(prev_text, thetext, BUFSZ);
+        }
         delivermail(who, thetext);
 
         fl.l_type = F_RDLCK;
