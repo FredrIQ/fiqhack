@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-18 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,6 +22,7 @@ enum internal_commands {
     UICMD_OPTIONS = DIR_SELF + 1,
     UICMD_EXTCMD,
     UICMD_HELP,
+    UICMD_MAIL,
     UICMD_MAINMENU,
     UICMD_DETACH,
     UICMD_STOP,
@@ -223,6 +224,7 @@ static struct nh_cmd_desc builtin_commands[] = {
     {"extcommand", "perform an extended command", '#', 0,
      CMD_UI | UICMD_EXTCMD},
     {"help", "show the help menu", '?', 0, CMD_UI | UICMD_HELP},
+    {"mail", "send mail to the player", 0, 0, CMD_UI | UICMD_MAIL},
     {"mainmenu", "show the main menu", '!', Ctrl('c'), CMD_UI | UICMD_MAINMENU},
     {"options", "show or change option settings", 'O', 0,
      CMD_UI | UICMD_OPTIONS},
@@ -289,6 +291,11 @@ void
 handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
                     nh_bool include_debug)
 {
+    /* Some might be overrides of game commands */
+    if (*cmd == find_command("moveonly") &&
+        ui_flags.current_followmode == FM_WATCH)
+        *cmd = find_command("mail");
+
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_RUN | DIRCMD_GO);
     nh_bool cancel_yskip = TRUE;
 
@@ -328,6 +335,16 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
     case UICMD_HELP:
         arg->argtype = 0;
         *cmd = show_help();
+        break;
+
+    case UICMD_MAIL:
+        /* TODO: server-mode mail */
+        if (ui_flags.connected_to_server)
+            curses_print_message(player.moves, msgc_cancelled,
+                                 "Mail isn't available in server mode.");
+        else
+            sendmail();
+        *cmd = NULL;
         break;
 
     case UICMD_MAINMENU:
@@ -466,7 +483,9 @@ get_command(void *callbackarg,
         if (cmd != NULL) {
             /* handle internal commands. The command handler may alter *cmd,
                and arg (although not all this functionality is currently used) */
-            if (cmd->flags & CMD_UI) {
+            if ((cmd->flags & CMD_UI) ||
+                (ui_flags.current_followmode == FM_WATCH &&
+                 cmd == find_command("moveonly"))) {
                 handle_internal_cmd(&cmd, &ncaa.arg, include_debug);
                 if (!cmd)       /* command was fully handled internally */
                     continue;
