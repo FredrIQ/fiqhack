@@ -58,7 +58,8 @@ livelog_write_string(const char *buffer) {
 }
 
 void
-livelog_write_event(const char *buffer) {
+livelog_write_event(const char *buffer)
+{
     const char *uname;
     uname = nh_getenv("NH4SERVERUSER");
     char buf[ENTRYSIZE + 1];
