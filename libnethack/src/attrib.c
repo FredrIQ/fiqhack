@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -601,8 +601,12 @@ adjalign(int n)
     int cnt; /* for loop initial declarations are only allowed in C99 mode */
     int oldalign = u.ualign.record;
     int newalign = oldalign;
-    if (n < 0 && oldalign > AR_TRANSGRESSED)
-        pline(msgc_alignbad, "Your conscience bothers you...");
+    if (n < 0) {
+        if (oldalign > 0)
+            newalign = 0;
+        if (oldalign > AR_TRANSGRESSED)
+            pline(msgc_alignbad, "Your conscience bothers you...");
+    }
 
     newalign += n;
     if (newalign > ALIGNLIM)
