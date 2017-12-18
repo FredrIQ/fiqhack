@@ -43,8 +43,6 @@ sendmail(void)
 
     char *box;
     FILE* mb;
-    char curline[102];
-    struct flock fl = { 0 };
 
     box = getenv(MAILBOXENVVAR);
     if (!box) {
