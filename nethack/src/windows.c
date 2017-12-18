@@ -630,9 +630,15 @@ draw_frame(void)
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
         if (player.followmode == FM_WATCH) {
             wattron(basewin, A_BOLD | COLOR_PAIR(4));
+            const char *player = getenv("NH4SERVERUSER");
+            if (!player || !*player)
+                player = getenv("USER");
+            if (!player || !*player)
+                player = "?";
+
             mvwprintw(basewin, y, 2,
                       "WATCH MODE (watching %s, 'm' to mail, 'q' to quit)",
-                      getenv("USER"));
+                      player);
             wattroff(basewin, A_BOLD | COLOR_PAIR(4));
         } else if (player.followmode == FM_REPLAY) {
             wattron(basewin, A_BOLD | COLOR_PAIR(4));
