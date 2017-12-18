@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-18 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -726,7 +726,7 @@ loadgame(nh_bool autoload)
 
     struct nh_menulist wmenu;
     int attempt = 0;
-    nh_bool in_load = FALSE;
+    nh_bool in_load = !!size;
     while (autoload) {
         attempt++;
         char notyet[BUFSZ];
@@ -743,7 +743,7 @@ loadgame(nh_bool autoload)
             destroy_game_windows();
             discard_message_history(0);
             game_ended(ret, filename, FALSE);
-            return TRUE;
+            return FALSE;
         }
 
         if (in_load)
@@ -757,18 +757,14 @@ loadgame(nh_bool autoload)
         init_menulist(&wmenu);
         add_menu_item(&wmenu, 1, !in_load ? "load game" : "retry",
                       'l', FALSE);
-        add_menu_item(&wmenu, 2, "send mail", 'm', FALSE);
-        add_menu_item(&wmenu, 3, "quit", 'q', FALSE);
+        add_menu_item(&wmenu, 2, "quit", 'q', FALSE);
         curses_display_menu(&wmenu, notyet, PICK_ONE, PLHINT_ANYWHERE,
                             pick, curses_menu_callback);
 
         switch (pick[0]) {
         case CURSES_MENU_CANCELLED:
-            return TRUE;
-        case 3:
-            return FALSE;
         case 2:
-            return TRUE;
+            return FALSE;
         default:
             in_load = TRUE;
             files = list_gamefiles(savedir, &size);
