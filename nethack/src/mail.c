@@ -72,10 +72,10 @@ sendmail(void)
         return;
     }
 
-    curses_print_message(player.moves, msgc_actionok, "Mail sent!");
-
     fprintf(mb, "%s:%s\n", who, msg);
     fclose(mb);
+
+    curses_print_message(player.moves, msgc_actionok, "Mail sent!");
 }
 
 #endif
