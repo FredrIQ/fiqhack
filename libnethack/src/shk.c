@@ -458,7 +458,7 @@ u_entered_shop(char *enterstring)
         if (!strchr(empty_shops, *enterstring) &&
             in_rooms(level, u.ux, u.uy, SHOPBASE) !=
             in_rooms(level, u.ux0, u.uy0, SHOPBASE))
-            pline(msgc_info, no_shk);
+            pline(msgc_info, "%s", no_shk);
         strcpy(empty_shops, u.ushops);
         u.ushops[0] = '\0';
         return;
@@ -470,7 +470,7 @@ u_entered_shop(char *enterstring)
         /* dump core when referenced */
         eshkp->bill_inactive = TRUE;
         if (!strchr(empty_shops, *enterstring))
-            pline(msgc_info, no_shk);
+            pline(msgc_info, "%s", no_shk);
         strcpy(empty_shops, u.ushops);
         u.ushops[0] = '\0';
         return;
