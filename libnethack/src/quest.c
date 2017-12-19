@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -106,6 +106,9 @@ artitouch(void)
 boolean
 ok_to_quest(boolean verbose)
 {
+    if (Qstat(leader_is_dead))
+        return TRUE;
+
     if (!(Qstat(got_quest)) && !(Qstat(got_thanks))) {
         if (verbose) {
             if (Hallucination)
@@ -283,8 +286,11 @@ chat_with_leader(void)
             qt_pager(QT_FIRSTLEADER);
             Qstat(met_leader) = TRUE;
             Qstat(not_ready) = 0;
-        } else
+        } else if (!Qstat(pissed_off))
             qt_pager(QT_NEXTLEADER);
+        else
+            verbalize(msgc_badidea, "Your bones shall serve to warn others.");
+
         /* the quest leader might have passed through the portal into the
            regular dungeon; none of the remaining make sense there */
         if (!on_level(&u.uz, &qstart_level))
@@ -295,18 +301,18 @@ chat_with_leader(void)
             exercise(A_WIS, TRUE);
             expulsion(FALSE);
         } else if (is_pure(TRUE) < 0) {
-            com_pager(QT_BANISHED);
-            expulsion(TRUE);
-        } else if (is_pure(FALSE) == 0) {
-            qt_pager(QT_BADALIGN);
-            if (Qstat(not_ready) == MAX_QUEST_TRIES) {
-                qt_pager(QT_LASTLEADER);
-                expulsion(TRUE);
-            } else {
-                Qstat(not_ready)++;
-                exercise(A_WIS, TRUE);
+            /* don't keep lecturing once the player's been kicked out once. */
+            if (!Qstat(pissed_off)) {
+                com_pager(QT_BANISHED);
+                Qstat(pissed_off) = TRUE;
                 expulsion(FALSE);
             }
+        } else if (is_pure(FALSE) == 0) {
+            /* Don't end the game for too many tries anymore, that's silly */
+            qt_pager(QT_BADALIGN);
+            Qstat(not_ready) = 1;
+            exercise(A_WIS, TRUE);
+            expulsion(FALSE);
         } else {        /* You are worthy! */
             qt_pager(QT_ASSIGNQUEST);
             exercise(A_WIS, TRUE);
@@ -321,6 +327,12 @@ leader_speaks(struct monst *mtmp)
 {
     /* maybe you attacked leader? */
     if (!mtmp->mpeaceful) {
+        if (!Qstat(pissed_off)) {
+            /* again, don't end it permanently if the leader gets angry since
+               you're going to have to kill him to go questing... :)
+               ...but do only show this once. */
+            qt_pager(QT_LASTLEADER);
+        }
         Qstat(pissed_off) = TRUE;
         mtmp->mstrategy = st_none;
     }
@@ -329,11 +341,14 @@ leader_speaks(struct monst *mtmp)
     if (!on_level(&u.uz, &qstart_level))
         return;
 
-    if (Qstat(pissed_off)) {
-        qt_pager(QT_LASTLEADER);
-        expulsion(TRUE);
-    } else
+    if (!Qstat(pissed_off))
         chat_with_leader();
+
+    /* leader might have become pissed during the chat */
+    if (Qstat(pissed_off)) {
+        mtmp->mstrategy = st_none;
+        msethostility(mtmp, TRUE, FALSE);
+    }
 }
 
 static void
