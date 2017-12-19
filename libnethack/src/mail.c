@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,9 +24,6 @@ checkformail(void)
    in the environment at runtime to know where to look for the mailbox file. */
 #  define MAILBOXENVVAR "NHMAILBOX"
 # endif
-
-static char prev_who[PL_NSIZ] = {0};
-static char prev_text[BUFSZ] = {0};
 
 static int mailhashname(const char *str);
 static void delivermail(const char *from, const char *message);
@@ -66,7 +63,6 @@ checkformail(void)
     if (fcntl (fileno (mb), F_SETLKW, &fl) == -1)
         return;
 
-    boolean first = TRUE;
     while (fgets(curline, 102, mb) != NULL) {
         const char *who;
         const char *thetext;
@@ -91,17 +87,6 @@ checkformail(void)
 
         msg[strlen(msg) - 1] = '\0'; /* kill newline */
         thetext = msgprintf("%s", msg);
-        if (first) {
-            first = FALSE;
-            if (prev_who[0] && !strncmp(who, prev_who, PL_NSIZ) &&
-                prev_text[0] && !strncmp(thetext, prev_text, BUFSZ)) {
-                fclose(mb);
-                return;
-            }
-
-            strncpy(prev_who, who, PL_NSIZ);
-            strncpy(prev_text, thetext, BUFSZ);
-        }
         delivermail(who, thetext);
 
         fl.l_type = F_RDLCK;
