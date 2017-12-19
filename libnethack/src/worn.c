@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -196,7 +196,7 @@ m_dowear(struct monst *mon, boolean creation)
     if (in_mklev)
         creation = TRUE;
 
-    /* Note the restrictions here are the same as in dowear in do_wear.c except 
+    /* Note the restrictions here are the same as in dowear in do_wear.c except
        for the additional restriction on intelligence.  (Players are always
        intelligent, even if polymorphed). */
     if (verysmall(mon->data) || nohands(mon->data) || is_animal(mon->data))
@@ -334,7 +334,7 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
         /* I'd like to define a VISIBLE_ARM_BONUS which doesn't assume the
            monster knows obj->spe, but if I did that, a monster would keep
            switching forever between two -2 caps since when it took off one it
-           would forget spe and once again think the object is better than what 
+           would forget spe and once again think the object is better than what
            it already has. */
         if (best &&
             (ARM_BONUS(best) + extra_pref(mon, best) >=
@@ -433,7 +433,7 @@ equip(struct monst *mon, struct obj *obj,
         else if (is_shirt(obj) && (mon->misc_worn_check & W_MASK(os_arm)))
             return do_equip(mon, which_armor(mon, os_arm), FALSE, verbose);
     }
-    
+
     if (obj->oclass == RING_CLASS) {
         /* For rings, normally gloves are bypassed. However, rings can't be
            put on/off if the gloves are cursed, so we need to check for this
@@ -449,7 +449,7 @@ equip(struct monst *mon, struct obj *obj,
             }
         }
     }
-    
+
     /* slot taken by something else */
     if (mon->misc_worn_check & W_MASK(slot)) {
         if (obj->oclass == RING_CLASS) {
@@ -466,7 +466,7 @@ equip(struct monst *mon, struct obj *obj,
             return do_equip(mon, which_armor(mon, W_MASK(slot)),
                             FALSE, verbose);
     }
-    
+
     return do_equip(mon, obj, on, verbose);
 }
 
@@ -514,7 +514,7 @@ do_equip(struct monst *mon, struct obj *obj,
         if (!mon->mhp) /* died (lost a critical property) */
             return 2;
     }
-    
+
     mon->mfrozen += objects[obj->otyp].oc_delay;
     if (mon->mfrozen)
         mon->mcanmove = 0;
@@ -748,12 +748,26 @@ mon_break_armor(struct monst *mon, boolean polyspot)
 }
 
 /* Bias a monster's preferences towards armor that has special benefits.
-   Currently does speed boots and various rings. */
+   Currently does speed boots, various rings and for tame monsters, items
+   thrown at it. */
 int
 extra_pref(const struct monst *mon, struct obj *obj)
 {
     if (!obj)
         return 0;
+
+    /* Check for throwntime */
+    if (obj->thrown_time) {
+        /* Figure out which item was thrown last for the appropriate slot. */
+        struct obj *oobj;
+        for (oobj = mon->minvent; oobj; oobj = oobj->nobj)
+            if (oobj != obj && which_slot(oobj) == which_slot(obj) &&
+                oobj->thrown_time > obj->thrown_time)
+                break;
+
+        if (!oobj)
+            return 100;
+    }
 
     /* Check for speed boots */
     if (obj->otyp == SPEED_BOOTS && !very_fast(mon))

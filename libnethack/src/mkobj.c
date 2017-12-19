@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-05 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1834,10 +1834,11 @@ restore_obj(struct memfile *mf)
         otmp->oprops = mread64(mf);
         otmp->oprops_known = mread64(mf);
         otmp->mem_o_id = mread32(mf);
+        otmp->thrown_time = mread32(mf);
         int i;
 
         /* Reserved for future extensions */
-        for (i = 0; i < 196; i++)
+        for (i = 0; i < 192; i++)
             (void) mread8(mf);
     }
 
@@ -1991,10 +1992,11 @@ save_obj(struct memfile *mf, struct obj *obj)
     if (obj->mem_obj)
         obj->mem_o_id = obj->mem_obj->o_id;
     mwrite32(mf, obj->mem_o_id);
+    mwrite32(mf, obj->thrown_time);
 
     /* Reserved for future extensions */
     int i;
-    for (i = 0; i < 196; i++)
+    for (i = 0; i < 192; i++)
         mwrite8(mf, 0);
 
     mwrite32(mf, obj->m_id);

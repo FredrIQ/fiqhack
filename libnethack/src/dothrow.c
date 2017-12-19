@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1578,6 +1578,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
         /* thrown item at intelligent pet to let it use it */
         pline(msgc_actionok, "%s %s.",
               M_verbs(mon, "catch"), the(xname(obj)));
+        obj->thrown_time = moves;
         obj_extract_self(obj);
         mpickobj(mon, obj, NULL);
         if (attacktype(mon->data, AT_WEAP) &&
