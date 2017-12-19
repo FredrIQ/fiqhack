@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -813,6 +813,18 @@ loadgame(nh_bool autoload)
     return TRUE;
 }
 
+/* Set followmode in ui flags. Made into a function because it may need
+   refreshing of the frame. */
+void
+set_uifollowmode(enum nh_followmode followmode, nh_bool avail_too)
+{
+    ui_flags.current_followmode = followmode;
+    if (avail_too)
+        ui_flags.available_followmode = followmode;
+    draw_frame();
+    wrefresh(basewin);
+}
+
 
 enum nh_play_status
 playgame(int fd_or_gameno, enum nh_followmode followmode)
@@ -820,8 +832,7 @@ playgame(int fd_or_gameno, enum nh_followmode followmode)
     enum nh_play_status ret;
     int reconnect_tries_upon_network_error = 3;
 
-    ui_flags.current_followmode =
-        ui_flags.available_followmode = followmode;
+    set_uifollowmode(followmode, TRUE);
     ui_flags.gameload_message = NULL;
 
     game_is_running = TRUE;
@@ -846,7 +857,7 @@ playgame(int fd_or_gameno, enum nh_followmode followmode)
                                  "but weren't replaying?");
                 ret = GAME_DETACHED;
             } else if (ui_flags.available_followmode != FM_REPLAY) {
-                ui_flags.current_followmode = ui_flags.available_followmode;
+                set_uifollowmode(ui_flags.available_followmode, FALSE);
                 if (ui_flags.current_followmode == FM_PLAY)
                     ui_flags.gameload_message =
                         "The replay has caught up to the current situation of "
@@ -863,7 +874,7 @@ playgame(int fd_or_gameno, enum nh_followmode followmode)
         } else if (ret == GAME_DETACHED && ui_flags.current_followmode !=
                    ui_flags.available_followmode) {
             /* Exiting a replay that was nested inside a play or watch. */
-            ui_flags.current_followmode = ui_flags.available_followmode;
+            set_uifollowmode(ui_flags.available_followmode, FALSE);
             ret = RESTART_PLAY;
         }
 

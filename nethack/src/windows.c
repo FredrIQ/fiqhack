@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -628,7 +628,7 @@ draw_frame(void)
 
         y += 1 + ui_flags.mapheight;
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
-        if (player.followmode == FM_WATCH) {
+        if (ui_flags.current_followmode == FM_WATCH) {
             wattron(basewin, A_BOLD | COLOR_PAIR(4));
             const char *player = getenv("NH4SERVERUSER");
             if (!player || !*player)
@@ -640,7 +640,7 @@ draw_frame(void)
                       "WATCH MODE (watching %s, 'm' to mail, 'q' to quit)",
                       player);
             wattroff(basewin, A_BOLD | COLOR_PAIR(4));
-        } else if (player.followmode == FM_REPLAY) {
+        } else if (ui_flags.current_followmode == FM_REPLAY) {
             wattron(basewin, A_BOLD | COLOR_PAIR(4));
             mvwaddstr(basewin, y, 2, "REPLAY MODE");
             wattroff(basewin, A_BOLD | COLOR_PAIR(4));

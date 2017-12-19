@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -593,7 +593,6 @@ struct nh_player_info {
     int align, nr_items;
     int hp, hpmax, en, enmax, ac, level;
     int wt, wtcap, invslots;
-    enum nh_followmode followmode;
     char coinsym;
     int monnum, cur_monnum;
     nh_bool can_enhance;
