@@ -2617,7 +2617,7 @@ doorganize(const struct nh_cmd_arg *arg)
             }
         }
 
-        if (!merging) {
+        if (!merging && obj->quan > 1) {
             /* Try splitting the object */
             otmp = splitobj(obj, obj->quan - 1);
             assigninvlet(otmp);
