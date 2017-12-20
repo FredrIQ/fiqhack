@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-11 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -839,7 +839,8 @@ dodown(const struct nh_cmd_arg *arg, boolean autodig_ok)
         }
         return 0;       /* didn't move */
     }
-    if (!stairs_down && !ladder_down) {
+    if (!turnstate.continue_message ||
+        (!stairs_down && !ladder_down)) {
         boolean can_fall;
 
         trap = t_at(level, u.ux, u.uy);
@@ -942,10 +943,11 @@ dodown(const struct nh_cmd_arg *arg, boolean autodig_ok)
 int
 doup(const struct nh_cmd_arg *arg)
 {
-    if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy)
-        && (u.ux != level->upladder.sx || u.uy != level->upladder.sy)
-        && (u.ux != level->sstairs.sx || u.uy != level->sstairs.sy ||
-            !level->sstairs.up)) {
+    if (!turnstate.continue_message ||
+        ((u.ux != level->upstair.sx || u.uy != level->upstair.sy) &&
+         (u.ux != level->upladder.sx || u.uy != level->upladder.sy) &&
+         (u.ux != level->sstairs.sx || u.uy != level->sstairs.sy ||
+          !level->sstairs.up))) {
         coord cc;
         if (arg && find_remembered_stairs(TRUE, &cc)) {
             flags.travelcc.x = cc.x;
