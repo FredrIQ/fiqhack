@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1593,7 +1593,7 @@ mk_knox_portal(struct level *lev, xchar x, xchar y)
     }
 
     /* Already set or 2/3 chance of deferring until a later level. */
-    if (source->dnum < n_dgns || (mrn2(3) && !wizard))
+    if (source->dnum < n_dgns)
         return;
 
     if (!(lev->z.dnum == oracle_level.dnum      /* in main dungeon */
