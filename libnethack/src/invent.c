@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2596,22 +2596,38 @@ doorganize(const struct nh_cmd_arg *arg)
     if (let == obj->invlet) {
         otmp = obj;
     } else {
-        for (otmp = youmonst.minvent; otmp && (otmp == obj ||
-                                               otmp->invlet != let);
-             otmp = otmp->nobj) {}
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
+            if (otmp->invlet == let)
+                break;
     }
 
     if (!otmp)
         adj_type = "Moving:";
     else if (otmp == obj) {
+        /* Figure out if we're merging or splitting */
+        boolean merging = FALSE;
         adj_type = "Merging:";
         for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
             if (obj != otmp && mergable(otmp, obj)) {
+                merging = TRUE;
                 extract_nobj(obj, &youmonst.minvent,
                              &turnstate.floating_objects, OBJ_FREE);
                 merged(&otmp, &obj);
                 obj = otmp;
             }
+        }
+
+        if (!merging) {
+            /* Try splitting the object */
+            otmp = splitobj(obj, obj->quan - 1);
+            assigninvlet(otmp);
+            if (otmp->invlet == NOINVSYM) {
+                merged(&obj, &otmp);
+                otmp = obj;
+                pline(msgc_cancelled, "There's nowhere to put that.");
+                goto cleansplit;
+            } else
+                adj_type = "Splitting";
         }
     } else if (mergable(otmp, obj)) {
         adj_type = "Merging:";
