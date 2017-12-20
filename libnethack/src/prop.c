@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-20 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -460,6 +460,21 @@ has_immunity(const struct monst *mon, enum youprop property)
     const struct permonst *mdat_poly = NULL;
     init_permonsts(mon, &mdat_role, &mdat_race, &mdat_poly);
 
+    const struct propxl *pmprop;
+    for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
+         pmprop++) {
+        if (pmprop->prop == property &&
+            pmprop->xl <= (mon == &youmonst ? u.ulevel : mon->m_lev) &&
+            pmprop->immunity) {
+            if (pmprop->mnum == monsndx(mdat_role))
+                rv |= W_MASK(os_role);
+            if (mdat_race && pmprop->mnum == monsndx(mdat_race))
+                rv |= W_MASK(os_race);
+            if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
+                rv |= W_MASK(os_polyform);
+        }
+    }
+
     if (pm_has_property(mdat_role, property) > 0)
         rv |= W_MASK(os_role);
     if (mdat_race && pm_has_property(mdat_race, property) > 0)
@@ -690,7 +705,7 @@ teleport_at_will(const struct monst *mon)
     }
     return FALSE;
 }
-    
+
 /* Checks whether or not a monster has controlled levitation.
    "Controlled" levitation here means that the monster can
    end it on its' own accord. include_extrinsic also includes
@@ -720,7 +735,7 @@ levitates_at_will(const struct monst *mon, boolean include_extrinsic,
         struct obj *chain = mon->minvent;
         int warntype;
         long itemtype;
-        
+
         while (chain) {
             /* worn item or slotless unremoveable item */
             itemtype = item_provides_extrinsic(chain, LEVITATION, &warntype);
@@ -730,7 +745,7 @@ levitates_at_will(const struct monst *mon, boolean include_extrinsic,
             chain = chain->nobj;
         }
     }
-    
+
     return lev;
 }
 
@@ -785,7 +800,7 @@ mon_remove_levitation(struct monst *mon, boolean forced)
         }
         chain = chain->nobj;
     }
-    
+
     if (!forced || levitates(mon)) {
         /* at this point, only polyform levitation is left */
         if (forced) {
@@ -795,7 +810,7 @@ mon_remove_levitation(struct monst *mon, boolean forced)
         }
         return dropped ? 1 : 0;
     }
-    
+
     if (lev_source) {
         if (cansee(mon->mx, mon->my))
             pline(mon->mtame ? msgc_petwarning : msgc_monneutral,
@@ -1075,7 +1090,7 @@ update_property(struct monst *mon, enum youprop prop,
                     else if (prop == POISON_RES && !lost && redundant) /* special msg */
                         pline(msgc_intrgain, "You feel especially healthy.");
                     else
-                        pline(lost ? msgc_intrloss : msgc_intrgain, "%s", 
+                        pline(lost ? msgc_intrloss : msgc_intrgain, "%s",
                               lost ? msg->loseoutside : msg->gainoutside);
                     effect = TRUE;
                     break;
