@@ -493,7 +493,7 @@ base64_encode_binary(const unsigned char *in, char *out, int len,
         olen = LZ4_compress_default(in, o, len, olen);
         if (!olen) {
             free(o);
-            panic("Could not compress input data (%d)!", olen);
+            panic("Could not compress input data (%uld)!", olen);
         }
     }
 
