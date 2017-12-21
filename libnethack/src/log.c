@@ -1,8 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "lz4.h"
 #include "hack.h"
 #include "patchlevel.h"
 #include "iomodes.h"
@@ -477,23 +478,28 @@ static const char b64d[256] = {
 static int
 base64size(int n)
 {
-    return compressBound(n) * 4 / 3 + 4 + 12;   /* 12 for $4294967296$ */
+    return LZ4_compressBound(n) * 4 / 3 + 4 + 12;   /* 12 for #4294967296# */
 }
 
 static void
 base64_encode_binary(const unsigned char *in, char *out, int len,
-    boolean no_compression)
+                     boolean no_compression)
 {
     int i, pos, rem;
-    unsigned long olen = compressBound(len);
+    unsigned long olen = LZ4_compressBound(len);
     unsigned char *o = malloc(olen);
 
-    if (compress2(o, &olen, in, len, Z_BEST_COMPRESSION) != Z_OK) {
-        panic("Could not compress input data!");
+    if (!no_compression) {
+        olen = LZ4_compress_default(in, o, len, olen);
+        if (!olen) {
+            free(o);
+            panic("Could not compress input data (%d)!", olen);
+        }
     }
+
     MARK_INITIALIZED(o, olen);
 
-    pos = sprintf(out, "$%d$", len);
+    pos = sprintf(out, "#%d#", len);
 
     if (no_compression || pos + olen >= len) {
         pos = 0;
@@ -538,7 +544,7 @@ base64_strlen(const char *in)
 {
     /* If the input is uncompressed, just return its size. If it's compressed,
        read the size from the header. */
-    if (*in != '$')
+    if (*in != '$' && *in != '#')
         return strlen(in);
     return atoi(in + 1);
 }
@@ -551,17 +557,17 @@ base64_decode(const char *in, char *out, int outlen)
     char *o = out;
 
     olen = outlen;
-    if (*in == '$') {
+    if (*in == '$' || *in == '#') {
         o = malloc(len);
         olen = len;
     }
 
     for (i = 0; i < len; i += 4) {
 
-        /* skip data between $ signs, it's used for the header for compressed
-           binary data */
-        if (in[i] == '$')
-            for (i += 2; in[i - 1] != '$' && in[i]; i++) {}
+        /* skip data between $/# signs, it's used for the header for compressed
+           binary data ($ for zlib, # for lz4) */
+        if (in[i] == '$' || in[i] == '#')
+            for (i += 2; in[i - 1] != '$' && in[i - 1] != '#' && in[i]; i++) {}
 
         /* decode blocks; padding '=' are converted to 0 in the decoding table
            */
@@ -587,25 +593,37 @@ base64_decode(const char *in, char *out, int outlen)
     else
         error_reading_save("Uncompressed base64 data was too long at %ld\n");
 
-    if (*in == '$') {
+    if (*in == '$' || *in == '#') {
 
         unsigned long blen = base64_strlen(in);
         if (blen > outlen) {
             free(o);
             error_reading_save("Compressed base64 data was too long at %ld\n");
         }
-        int errcode = uncompress((unsigned char *)out, &blen,
-                                 (unsigned char *)o, pos);
 
-        free(o);
-        if (errcode != Z_OK) {
-            raw_printf("Decompressing save file failed at %ld: %s\n",
-                       get_log_offset(),
-                       errcode == Z_MEM_ERROR ? "Out of memory" : errcode ==
-                       Z_BUF_ERROR ? "Invalid size" : errcode ==
-                       Z_DATA_ERROR ? "Corrupted file" : "(unknown error)");
-            error_reading_save("");
-        }
+        if (*in == '$') {
+            /* zlib-compressed */
+            int errcode = uncompress((unsigned char *)out, &blen,
+                                     (unsigned char *)o, pos);
+
+            free(o);
+            if (errcode != Z_OK) {
+                raw_printf("zlib-decompressing save file failed at %ld: %s\n",
+                           get_log_offset(),
+                           errcode == Z_MEM_ERROR ? "Out of memory" : errcode ==
+                           Z_BUF_ERROR ? "Invalid size" : errcode ==
+                           Z_DATA_ERROR ? "Corrupted file" : "(unknown error)");
+                error_reading_save("");
+            }
+        } else if (*in == '#') {
+            /* lz4-compressed */
+            int result = LZ4_decompress_safe(o, out, pos, blen);
+            if (result < 0) {
+                raw_printf("lz4-decompressing save failed\n");
+                error_reading_save("");
+            }
+        } else
+            error_reading_save("Unknown compression format\n");
 
         MARK_INITIALIZED(out, blen);
     }
