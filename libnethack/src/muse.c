@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1363,10 +1363,21 @@ find_item(struct monst *mon, struct musable *m)
             (obj = m_carrying(mon, POT_FULL_HEALING))) {
             m->obj = obj;
             m->use = MUSE_POT;
+            return TRUE;
         }
     }
 
     fraction = (100 * mon->mhp) / mon->mhpmax;
+
+    /* Fix cancellation */
+    if (cancelled(mon) && !nohands(mon->data)) {
+        if ((obj = m_carrying(mon, POT_GAIN_ENERGY)) &&
+            (!obj->cursed || !obj->mbknown)) {
+            m->obj = obj;
+            m->use = MUSE_POT;
+            return TRUE;
+        }
+    }
 
     /* !FH -> +EH -> +H -> !EH -> !H */
     if (mon->mpeaceful && fraction < 35) {
@@ -2970,6 +2981,7 @@ searches_for_item(struct monst *mon, struct obj *obj)
             typ == POT_FULL_HEALING ||
             typ == POT_POLYMORPH ||
             typ == POT_GAIN_LEVEL ||
+            typ == POT_GAIN_ENERGY ||
             typ == POT_MONSTER_DETECTION ||
             typ == POT_PARALYSIS ||
             typ == POT_SLEEPING ||
