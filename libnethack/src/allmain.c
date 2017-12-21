@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-18 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -384,7 +384,8 @@ nh_play_game(int fd, enum nh_followmode followmode)
             followmode = FM_REPLAY; /* force into replay mode */
             file_done = TRUE;
 #endif
-        }
+        } else if (followmode == FM_REPLAY)
+            file_done = TRUE;
         break;
     case LS_CRASHED:
         return ERR_RESTORE_FAILED;
@@ -478,6 +479,10 @@ nh_play_game(int fd, enum nh_followmode followmode)
     program_state.game_running = TRUE;
     post_init_tasks();
 
+    int replay_target = 1;
+    int replay_action = 1;
+    int beginning_state = program_state.end_of_gamestate_location;
+
 just_reloaded_save:
     /* While loading a save file, we don't do rendering, and we don't run
        the vision system. Do all that stuff now. */
@@ -501,15 +506,21 @@ just_reloaded_save:
         int cmdidx;
         nh_bool command_from_user = FALSE;
 
-        if (u_helpless(hm_all)) {
+        if (u_helpless(hm_all) ||
+            (program_state.followmode == FM_REPLAY &&
+             replay_target != replay_action)) {
             cmd.cmd = "wait";
             cmdidx = get_command_idx("wait");
             cmd.arg.argtype = 0;
+            if (!u_helpless(hm_all))
+                command_from_user = TRUE;
         } else {
 
-            if (((program_state.followmode == FM_REPLAY &&
-                  (!flags.incomplete || flags.interrupted)) ||
-                 !log_replay_command(&cmd))) {
+            if (program_state.replaying)
+                replay_reset_windowport();
+
+            if (program_state.followmode == FM_REPLAY ||
+                !log_replay_command(&cmd)) {
                 if (program_state.followmode == FM_RECOVERQUIT) {
                     /* We shouldn't be here. */
                     paniclog("recoverquit",
@@ -536,58 +547,60 @@ just_reloaded_save:
         if (program_state.followmode != FM_PLAY && command_from_user &&
             !(cmdlist[cmdidx].flags & CMD_NOTIME)) {
 
-            /* TODO: Add a "seek to specific turn" command */
-
-            /* If we got a direction as part of the command, and we're
-               replaying, move forwards or backwards respectively. */
             if (program_state.followmode == FM_REPLAY &&
-                cmd.arg.argtype & CMD_ARG_DIR) {
-                int moveswas = moves;
-                switch (cmd.arg.dir) {
-                case DIR_E:
-                case DIR_S:
-                forward_one_turn:
-                    /* Move forwards one command (and thus to the next neutral
-                       turnstate, because we don't ask for a command outside
-                       neutral turnstate on a replay). */
+                replay_target != replay_action) {
+                if (replay_target < replay_action) {
+                    log_sync(1, TLU_TURNS, FALSE);
+                    replay_action = 1;
+                    program_state.end_of_gamestate_location = beginning_state;
+                    program_state.binary_save_location =
+                        program_state.end_of_gamestate_location;
+                    goto just_reloaded_save;
+                } else if (replay_target > replay_action) {
+                    if (!program_state.replaying)
+                        replay_set_windowport();
+
+                    replay_action++;
                     log_replay_command(&cmd);
                     command_from_user = FALSE;
                     cmdidx = get_command_idx(cmd.cmd);
                     if (cmdidx < 0)
                         panic("Invalid command '%s' replayed from save file",
                               cmd.cmd);
-                    break;
-                case DIR_W:
-                case DIR_N:
-                    /* Move backwards one command. */
-                    log_sync(program_state.binary_save_location-1,
-                             TLU_BYTES, FALSE);
-                    goto just_reloaded_save;
-                case DIR_NW:
-                    /* Move to turn 1. */
-                    log_sync(1, TLU_TURNS, FALSE);
-                    goto just_reloaded_save;
-                case DIR_SW:
-                    /* Move to the end of the replay. */
-                    log_sync(0, TLU_EOF, FALSE);
-                    goto just_reloaded_save;
-                case DIR_NE:
-                    /* Move backwards 50 turns. Avoid wrap-around */
-                    if (moves <= 50)
-                        log_sync(1, TLU_TURNS, FALSE);
-                    else
-                        log_sync(moves - 50, TLU_TURNS, FALSE);
-                    goto just_reloaded_save;
+                }
+            } else if (program_state.followmode == FM_REPLAY &&
+                       cmd.arg.argtype & CMD_ARG_DIR) {
+                /* If we got a direction as part of the command, and we're
+                   replaying, move forwards or backwards respectively. */
+                switch (cmd.arg.dir) {
                 case DIR_SE:
                     /* Move forwards 50 turns. */
-                    log_sync(moves + 50, TLU_TURNS, FALSE);
-                    if (moves == moveswas) {
-                        /* If we moved forwards no more than a turn (because
-                           the following turn had a >50-move action), go to
-                           the move after that. */
-                        goto forward_one_turn;
-                    }
-                    goto just_reloaded_save;
+                    replay_target = replay_action + 50;
+                    continue;
+                case DIR_E:
+                case DIR_S:
+                    replay_target++;
+                    continue;
+                case DIR_W:
+                case DIR_N:
+                    if (replay_target > 1)
+                        replay_target--;
+                    continue;
+                case DIR_NW:
+                    replay_target = 1;
+                    continue;
+                case DIR_SW:
+                    /* Move to the end of the replay. */
+                    /* TODO */
+                    replay_target = 1;
+                    continue;
+                case DIR_NE:
+                    /* Move backwards 50 turns. Avoid wrap-around */
+                    if (replay_target <= 50)
+                        replay_target = 1;
+                    else
+                        replay_target -= 50;
+                    continue;
                 default:
                     pline(msgc_mispaste,
                           "That direction has no meaning while replaying.");
@@ -707,8 +720,9 @@ just_reloaded_save:
         if (cmdlist[cmdidx].flags & CMD_NOTIME) {
             if (!flags.incomplete)
                 log_revert_command(cmd.cmd);
-        } else if ((!flags.incomplete || flags.interrupted) &&
-                 !u_helpless(hm_all))
+        } else if (!u_helpless(hm_all) &&
+                   (program_state.followmode == FM_REPLAY ||
+                    !flags.incomplete || flags.interrupted))
             neutral_turnstate_tasks();
         /* Note: neutral_turnstate_tasks() frees cmd (because it frees all
            messages, and we made cmd a message in our callback above), so don't

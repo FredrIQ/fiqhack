@@ -2465,13 +2465,17 @@ log_replay_save_line(void)
 
     if (*logline == '~') {
 
-        bsave = program_state.binary_save;
-        program_state.binary_save_allocated = FALSE;
-        apply_save_diff(logline, &bsave);
-        mfree(&bsave);
+        if (program_state.followmode != FM_REPLAY) {
+            bsave = program_state.binary_save;
+            program_state.binary_save_allocated = FALSE;
+            apply_save_diff(logline, &bsave);
+            mfree(&bsave);
+        } else
+            program_state.end_of_gamestate_location = get_log_offset();
         program_state.binary_save_location =
             program_state.end_of_gamestate_location;
-        load_gamestate_from_binary_save(TRUE);
+        if (program_state.followmode != FM_REPLAY)
+            load_gamestate_from_binary_save(TRUE);
 
     } else if (*logline == '*') {
 

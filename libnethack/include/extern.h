@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -855,6 +855,11 @@ extern void log_init(int fd);
 extern void log_uninit(void);
 extern void log_game_over(const char *death);
 extern void log_game_state(void);
+
+/* ### logreplay.c ### */
+
+extern void replay_set_windowport(void);
+extern void replay_reset_windowport(void);
 
 /* ### mail.c ### */
 

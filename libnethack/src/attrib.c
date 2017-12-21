@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -569,15 +569,12 @@ acurr(const struct monst *mon, int x)
     if (x == A_STR) {
         struct obj *obj;
 
-        obj = which_armor(mon, os_armg);
-        if (obj && obj->otyp == GAUNTLETS_OF_POWER)
-            return 25;
-
         /* check for the "power" obj property, only functions on
            worn armor. */
         for (obj = mon->minvent; obj; obj = obj->nobj)
             if ((obj->owornmask & W_ARMOR) &&
-                (obj_properties(obj) & opm_power))
+                (obj_properties(obj) & opm_power) ||
+                obj->otyp == GAUNTLETS_OF_POWER)
                 return 25;
     } else if (x == A_CHA) {
         if (tmp < 18 &&
