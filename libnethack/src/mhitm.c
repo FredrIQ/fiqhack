@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -721,12 +721,12 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                              s_suffix(Monnam(magr)));
             if (reflecting(magr)) {
                 if (vis)
-                    mon_reflects(magr, mdef, TRUE, 
+                    mon_reflects(magr, mdef, TRUE,
                                  "%s gaze is reflected further by %s %s!",
                                  uagr ? "Your" : s_suffix(Monnam(magr)));
                 break;
             }
-            if (!visad) { /* probably you're invisible */
+            if (!visad || hallucinating(magr)) { /* probably you're invisible */
                 /* not msgc_combatimmune because this may not be an intentional
                    attempt to reflection-petrify, so we shouldn't give alerts
                    that it isn't working; "hostile monster fails to commit
@@ -754,7 +754,8 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
             return (!uagr && DEADMONSTER(magr)) ? MM_AGR_DIED : 0;
         }
-        if (visda && valid_range && !resists_ston(mdef)) {
+        if (visda && valid_range && !resists_ston(mdef) &&
+            (!hallucinating(mdef) || magr->data != &mons[PM_MEDUSA])) {
             pline(combat_msgc(magr, mdef, cr_kill), "%s %s gaze.",
                   M_verbs(mdef, "meet"), s_suffix(mon_nam(magr)));
             if (udef) {
