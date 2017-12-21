@@ -426,7 +426,8 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
     }
 
     /* when it happens at all, happens too often to be worth a custom RNG */
-    if ((Uhave_amulet || On_W_tower_level(&u.uz)) && !rn2(3)) {
+    if (!wizard_tele &&
+        (Uhave_amulet || On_W_tower_level(&u.uz)) && !rn2(3)) {
         pline(msgc_failrandom, "You feel disoriented for a moment.");
         return 1;
     }
