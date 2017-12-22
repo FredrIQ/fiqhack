@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-10 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -487,7 +487,7 @@ strategy(struct monst *mtmp, boolean magical_target)
        tracks. */
     if (can_track(mtmp->data) && chases_player) {
         coord *cp;
-        
+
         cp = gettrack(mtmp->mx, mtmp->my);
         if (cp) {
             mtmp->mstrategy = st_mon;
@@ -506,7 +506,7 @@ strategy(struct monst *mtmp, boolean magical_target)
         mtmp->mstrategy == st_wander || randcheck) {
         struct distmap_state ds;
         distmap_init(&ds, mtmp->mx, mtmp->my, mtmp);
-        
+
         /* Check to see if there are any items around that the monster might
            want. (This code was moved from monmove.c, and slightly edited;
            previously, monsters would interrupt chasing the player to look for
@@ -531,7 +531,12 @@ strategy(struct monst *mtmp, boolean magical_target)
                    item */
                 if (otmp->otyp == ROCK)
                     continue;
-                if (distmap(&ds, otmp->ox, otmp->oy) <= minr) {
+
+                /* distmin is *much* faster than distmap, and distmap will never
+                   give a smaller result, so try distmin first. */
+                int curr;
+                if (distmin(mtmp->mx, mtmp->my, otmp->ox, otmp->oy) <= minr &&
+                    (curr = distmap(&ds, otmp->ox, otmp->oy)) <= minr) {
                     /* don't get stuck circling around an object that's
                        underneath an immobile or hidden monster; paralysis
                        victims excluded */
@@ -550,7 +555,7 @@ strategy(struct monst *mtmp, boolean magical_target)
                         (throws_rocks(mtmp->data) ||
                          !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
                         !(onscary(otmp->ox, otmp->oy, mtmp))) {
-                        minr = distmap(&ds, otmp->ox, otmp->oy) - 1;
+                        minr = curr - 1;
                         gx = otmp->ox;
                         gy = otmp->oy;
                     }
