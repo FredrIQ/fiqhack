@@ -532,6 +532,8 @@ strategy(struct monst *mtmp, boolean magical_target)
                 if (otmp->otyp == ROCK)
                     continue;
 
+                /* distmin is *much* faster than distmap, and distmap will never
+                   give a smaller result, so try distmin first. */
                 int curr;
                 if (distmin(mtmp->mx, mtmp->my, otmp->ox, otmp->oy) <= minr &&
                     (curr = distmap(&ds, otmp->ox, otmp->oy)) <= minr) {

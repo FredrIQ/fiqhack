@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -236,22 +236,14 @@ fightm(struct monst *mon)
     int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
     int diry[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
 
-    /* try each in a random order, so do a shuffle */
-    int try[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-    int i, old, change;
-    for (i = 0; i < 8; i++) {
-        change = rn2(8);
-        old = try[i];
-        try[i] = try[change];
-        try[change] = old;
-    }
-
     /* check for monsters on positions */
     struct monst *mtmp;
-    int x, y;
+    int x, y, i;
+    int nummon = 0;
+    struct monst *mdef = NULL;
     for (i = 0; i < 8; i++) {
-        x = mon->mx + dirx[try[i]];
-        y = mon->my + diry[try[i]];
+        x = mon->mx + dirx[i];
+        y = mon->my + diry[i];
         mtmp = m_at(level, x, y);
         if (!mtmp || (!mm_aggression(mon, mtmp) && !conflicted &&
                       !mercy))
@@ -260,11 +252,16 @@ fightm(struct monst *mon)
                                         mtmp->mpeaceful))
             continue;
 
+        if (!rn2(++nummon))
+            mdef = mtmp;
+    }
+
+    if (mdef) {
         /* TODO: why are these needed... */
-        bhitpos.x = mtmp->mx;
-        bhitpos.y = mtmp->my;
+        bhitpos.x = mdef->mx;
+        bhitpos.y = mdef->my;
         notonhead = 0; /* what if it is? */
-        result = mattackm(mon, mtmp);
+        result = mattackm(mon, mdef);
 
         /* For engulfers, a spent turn also gives an opportunity to continue
            hitting the hero (digestion, cold attacks, whatever) */
@@ -281,12 +278,13 @@ fightm(struct monst *mon)
            since this is no longer exclusively called by conflict */
         if ((result & MM_HIT) && !(result & MM_DEF_DIED)) {
             notonhead = 0;
-            mattackm(mtmp, mon); /* retaliation */
+            mattackm(mdef, mon); /* retaliation */
         }
 
         /* Turn is spent, so return 1. This used to return 0 if the attack was
-           a miss or if the monster has you engulfed, but missing attacks shouldn't
-           allow further movement, and engulfement is taken care of above */
+           a miss or if the monster has you engulfed, but missing attacks
+           shouldn't allow further movement, and engulfement is taken care of
+           above */
         return 1;
     }
     return 0; /* no suitable target */
