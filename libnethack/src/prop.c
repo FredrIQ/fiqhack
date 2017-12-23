@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-23 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -2617,8 +2617,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
     /* Warning. This partial-senses monsters that are hostile to the viewer, and
        have a level of 4 or greater, and a distance of 100 or less. */
-    if (distance <= 100 && m_mlev(viewee) >= 4 &&
-        warned(viewer) &&
+    if (distance <= 100 && warned(viewer) &&
         mm_aggression(viewee, viewer) & ALLOW_M) {
         sensemethod |= MSENSE_WARNING;
     }
