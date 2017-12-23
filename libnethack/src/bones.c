@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -302,8 +302,8 @@ make_bones:
         if (!statue)
             return;     /* couldn't make statue */
         mtmp = NULL;
-    } else if (u.ugrave_arise < LOW_PM && (rn2(3) || !corpse)) {
-        /* 33% of the time, Rodney shows up, undeadturns you and charms you to do his bidding */
+    } else if (u.ugrave_arise < LOW_PM && (rn2(2) || !corpse)) {
+        /* 50% of the time, Rodney shows up, undeadturns you and charms you to do his bidding */
         /* drop everything */
         drop_upon_death(NULL, NULL, FALSE);
         /* trick makemon() into allowing monster creation on your location */
