@@ -404,11 +404,13 @@ make_bones:
         ttmp->madeby_u = 0;
         ttmp->tseen = (ttmp->ttyp == HOLE);
     }
-    /* This will reset names; put them back for the corpse and/or statue. */
+    /* This will reset names; put them back for the corpse and/or statue.
+       Use msgprintf to create a copy of the string since the name will
+       be deallocated by resetobjs */
     if (corpse)
-        cname = ox_name(corpse);
+        cname = msg_from_string(ox_name(corpse));
     if (statue)
-        sname = ox_name(statue);
+        sname = msg_from_string(ox_name(statue));
     resetobjs(level->objlist, FALSE);
     resetobjs(level->buriedobjlist, FALSE);
     if (corpse)
