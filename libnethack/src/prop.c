@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-23 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -3344,12 +3344,13 @@ show_conduct(int final)
         you_have_X(&menu, buf);
     }
 
-    ngenocided = num_genocides();
-    if (ngenocided == 0) {
+    if (!u.uconduct[conduct_genocide])
         you_have_never(&menu, "genocided any monsters");
-    } else {
+    else {
         buf = msgprintf("genocided %d type%s of monster%s, starting on turn %d",
-                        ngenocided, plur(ngenocided), plur(ngenocided),
+                        u.uconduct[conduct_genocide],
+                        plur(u.uconduct[conduct_genocide]),
+                        plur(u.uconduct[conduct_genocide]),
                         u.uconduct_time[conduct_genocide]);
         you_have_X(&menu, buf);
     }
