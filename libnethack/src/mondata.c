@@ -1,10 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
+static int pm_gender(int);
 static const struct attack *dmgtype_fromattack(const struct permonst *, int,
                                                int);
 
@@ -86,6 +87,8 @@ pm_name(const struct monst *mon)
     boolean female = mon->female;
     if (mon == &youmonst)
         female = u.ufemale;
+    if (is_neuter(mon->data))
+        female = FALSE;
 
     int pm = NON_PM;
     if (mon != &youmonst)
@@ -102,9 +105,17 @@ pm_name(const struct monst *mon)
 const char *
 opm_name(const struct obj *obj)
 {
-    if (obj->spe & OPM_FEMALE)
+    int gender = obj_gender(obj);
+    if (!strcmp(pm_male(obj->corpsenm), pm_female(obj->corpsenm)) &&
+        gender != 2) {
+        if (gender == 1)
+            return msgprintf("female %s", pm_female(obj->corpsenm));
+        return msgprintf("male %s", pm_male(obj->corpsenm));
+    }
+
+    if (gender == 1)
         return pm_female(obj->corpsenm);
-    return pm_male(obj->corpsenm);
+    return pm_male(obj->corpsenm); /* or neuter */
 }
 
 void
@@ -625,6 +636,41 @@ gender(struct monst *mtmp)
         return 2;
     return mtmp->female;
 }
+
+/* returns 3 values (0=male, 1=female, 2=neuter, 3=varies) */
+static int
+pm_gender(int pm)
+{
+    if (pm < LOW_PM || pm > NUMMONS)
+        panic("pm_gender: permonst out of range (%d)", pm);
+
+    const struct permonst *mdat = &mons[pm];
+    if (is_neuter(mdat))
+        return 2;
+    if (is_male(mdat))
+        return 0;
+    if (is_female(mdat))
+        return 1;
+    return 3;
+}
+
+/* returns 3 values (0=male, 1=female, 2=none) */
+int
+obj_gender(const struct obj *obj)
+{
+    if (!corpsenm_is_relevant(obj->otyp))
+        return 2;
+    if (obj->otyp == TIN && (obj->spe & OPM_SPINACH))
+        return 2;
+    if (obj->otyp == EGG && obj->corpsenm == NON_PM)
+        return 2;
+
+    int fixedgend = pm_gender(obj->corpsenm);
+    if (fixedgend == 3)
+        return ((obj->spe & OPM_MALE) ? 0 : 1);
+    return fixedgend;
+}
+
 
 /* Like gender(), but lower animals and such are still "it". */
 /* This is the one we want to use when printing messages. */

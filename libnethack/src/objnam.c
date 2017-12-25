@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3001,6 +3001,7 @@ typfnd:
                        !(mvitals[mntmp].mvflags & G_NOCORPSE) &&
                        mons[mntmp].cnutrit != 0) {
                 otmp->corpsenm = mntmp;
+                otmp->spe &= ~OPM_GENDER;
                 if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
                     otmp->spe |= OPM_FEMALE;
                 else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
@@ -3028,6 +3029,7 @@ typfnd:
                     otmp->corpsenm = genus(mntmp, 1);
                 else
                     otmp->corpsenm = mntmp;
+                otmp->spe &= ~OPM_GENDER;
                 if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
                     otmp->spe |= OPM_FEMALE;
                 else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
@@ -3041,6 +3043,7 @@ typfnd:
             if (!(mons[mntmp].geno & G_UNIQ)
                 && !is_human(&mons[mntmp]))
                 otmp->corpsenm = mntmp;
+                otmp->spe &= ~OPM_GENDER;
                 if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
                     otmp->spe |= OPM_FEMALE;
                 else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
@@ -3052,6 +3055,7 @@ typfnd:
             mntmp = can_be_hatched(mntmp);
             if (mntmp != NON_PM) {
                 otmp->corpsenm = mntmp;
+                otmp->spe &= ~OPM_GENDER;
                 if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
                     otmp->spe |= OPM_FEMALE;
                 else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
@@ -3069,6 +3073,7 @@ typfnd:
             if (Has_contents(otmp) && verysmall(&mons[mntmp]))
                 delete_contents(otmp);  /* no spellbook */
             otmp->spe = (ishistoric ? OPM_HISTORIC : 0);
+            otmp->spe &= ~OPM_GENDER;
             if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
                 otmp->spe |= OPM_FEMALE;
             else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
