@@ -148,7 +148,9 @@ print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
         }
     }
     if (dbe->obj && (dbe->branding & NH_BRANDING_PILE) &&
-        settings.hilite_obj_piles && !dbe->mon && !dbe->trap)
+        settings.hilite_obj_piles && !dbe->mon && !dbe->trap &&
+        !strstr(default_drawing->bgelements[dbe->bg].symname, "stair") &&
+        !strstr(default_drawing->bgelements[dbe->bg].symname, "ladder"))
         branding = nhcurses_genbranding_pile;
 
     if (branding != nhcurses_no_branding) {
