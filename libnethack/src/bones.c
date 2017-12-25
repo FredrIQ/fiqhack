@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -292,6 +292,10 @@ make_bones:
     for (f = gamestate.fruits.chain; f; f = f->nextf)
         f->fid = -f->fid;
 
+    /* for killing level temporary so that update_property doesn't do weird
+       things because of assuming we are alive on the level... */
+    struct level *oldlev = level;
+
     /* dispose of your possessions, usually cursed */
     if (u.ugrave_arise == (NON_PM - 1)) {
         /* embed your possessions in your statue */
@@ -347,9 +351,6 @@ make_bones:
         win_pause_output(P_MESSAGE);
         drop_upon_death(mtmp, NULL, charmed);
 
-        /* Kill level temporary so that update_property doesn't do weird things
-           because of assuming we are alive on the level... */
-        struct level *oldlev = level;
         level = NULL;
         m_dowear(mtmp, TRUE);
         level = oldlev;
@@ -360,16 +361,14 @@ make_bones:
         mtmp->female = u.ufemale;
         mtmp->msleeping = 1;
 
-        /* set intrinsics */
+        /* set intrinsics (not temporary ones, they disappear with death) */
+        level = NULL;
         int i;
-        int propmask;
-        for (i = 1; i <= LAST_PROP; i++) {
-            if (!(propmask = m_has_property(&youmonst, i, ANY_PROPERTY, TRUE)))
-                continue;
-            if ((propmask & W_MASK(os_outside)) && i <= 64)
-                set_property(mtmp, i, 0, TRUE);
-            /* arguably timeouts should be set, but those are likely gone already */
-        }
+        for (i = 1; i <= LAST_PROP; i++)
+            if (m_has_property(&youmonst, i, W_MASK(os_outside), TRUE))
+                set_property(mtmp, i, 0, FALSE);
+
+        level = oldlev;
         mtmp->mhitinc = youmonst.mhitinc;
         mtmp->mdaminc = youmonst.mdaminc;
         mtmp->mac = youmonst.mac;
