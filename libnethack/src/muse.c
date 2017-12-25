@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -373,8 +373,19 @@ mon_makewish(struct monst *mon)
         wishtyp = rn1((LAST_GEM - FIRST_GEM) + 1, FIRST_GEM);
     else if (is_undead(mdat))
         wishtyp = WAN_DEATH;
-    else if (is_mplayer(mdat) && !Role_if(monsndx(mdat)))
+    else if (is_mplayer(mdat) && !Role_if(monsndx(mdat))) {
         wisharti = role_quest_artifact(pm);
+        wishtyp = artityp(wisharti);
+        if (exist_artifact(wishtyp, artiname(wisharti)) ||
+            wisharti == role_quest_artifact(monsndx((&youmonst)->data))) {
+            /* either we wished for it already or it exist for other reasons */
+            wisharti = 0;
+
+            /* TODO: wish optimization */
+            wishtyp = SCR_GENOCIDE;
+        }
+    }
+
     else if (mdat->mlet == S_ANGEL && (!mon->mw || !mon->mw->oartifact))
         wisharti = rn2(2) ? ART_SUNSWORD : ART_DEMONBANE;
     else if (mon->iswiz) {
@@ -393,7 +404,8 @@ mon_makewish(struct monst *mon)
             else if (!exist_artifact(CRYSTAL_BALL, artiname(ART_ORB_OF_DETECTION)))
                 wisharti = ART_ORB_OF_DETECTION;
         }
-        if (!wisharti || wisharti == role_quest_artifact(monsndx((&youmonst)->data))) {
+        if (!wisharti ||
+            wisharti == role_quest_artifact(monsndx((&youmonst)->data))) {
             wisharti = 0;
             wishtyp = SCR_GENOCIDE; /* Destroy the thief, my pets! */
         }
@@ -462,7 +474,8 @@ mon_makewish(struct monst *mon)
     if (wisharti) {
         wishtyp = artityp(wisharti);
         /* 1/5 of the time, try anyway! */
-        if (rn2(5) && exist_artifact(wishtyp, artiname(wisharti))) {
+        if ((rn2(5) && exist_artifact(wishtyp, artiname(wisharti))) ||
+            wisharti == role_quest_artifact(monsndx((&youmonst)->data))) {
             wisharti = 0;
             wishtyp = 0;
         }
