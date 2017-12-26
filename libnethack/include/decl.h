@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -318,6 +318,7 @@ extern struct sinfo {
     boolean suppress_screen_updates;
     boolean restoring_binary_save;
     boolean in_zero_time_command;
+    boolean eof_reached;
 
     /*
      * Invariants:
