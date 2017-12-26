@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-20 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2249,7 +2249,22 @@ mergable(struct obj *otmp, struct obj *obj)
     if (obj->oclass == COIN_CLASS)
         return TRUE;
 
-    if (obj->unpaid != otmp->unpaid || obj->spe != otmp->spe ||
+    /* allow stacking different gender spe for neuter mons or mons who
+       have both genders by mistake */
+    int objspe = obj->spe;
+    int otmpspe = otmp->spe;
+    if (corpsenm_is_relevant(obj->otyp)) {
+        if (objspe & OPM_MALE)
+            objspe &= ~OPM_FEMALE;
+        if (otmpspe & OPM_MALE)
+            otmpspe &= ~OPM_FEMALE;
+        if (obj_gender(obj) == 2) {
+            objspe &= ~(OPM_MALE | OPM_FEMALE);
+            otmpspe &= ~(OPM_MALE | OPM_FEMALE);
+        }
+    }
+
+    if (obj->unpaid != otmp->unpaid || objspe != otmpspe ||
         obj->dknown != otmp->dknown || obj->cursed != otmp->cursed ||
         obj->blessed != otmp->blessed || obj->no_charge != otmp->no_charge ||
         obj->obroken != otmp->obroken || obj->otrapped != otmp->otrapped ||

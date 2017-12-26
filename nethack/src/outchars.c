@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-16 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -147,7 +147,10 @@ print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
                 branding = nhcurses_genbranding_stepped;
         }
     }
-    if (dbe->obj && (dbe->branding & NH_BRANDING_PILE) && settings.hilite_obj_piles)
+    if (dbe->obj && (dbe->branding & NH_BRANDING_PILE) &&
+        settings.hilite_obj_piles && !dbe->mon && !dbe->trap &&
+        !strstr(default_drawing->bgelements[dbe->bg].symname, "stair") &&
+        !strstr(default_drawing->bgelements[dbe->bg].symname, "ladder"))
         branding = nhcurses_genbranding_pile;
 
     if (branding != nhcurses_no_branding) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1232,6 +1232,7 @@ extern const char *pm_male(int);
 extern const char *pm_female(int);
 extern const char *pm_name(const struct monst *);
 extern const char *opm_name(const struct obj *);
+extern int obj_gender(const struct obj *);
 extern void set_mon_data(struct monst *, const struct permonst *);
 extern const struct attack *attacktype_fordmg(const struct permonst *, int,
                                               int);

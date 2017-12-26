@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -901,8 +901,8 @@ display_rip(int how, long umoney, const char *killer)
                      u.ulevel, u.uhpmax, plur(u.uhpmax), ends[how]);
     add_menutext(&menu, pbuf);
     add_menutext(&menu, "");
-    
-    outrip(&menu, how <= LAST_KILLER && flags.tombstone, 
+
+    outrip(&menu, how <= LAST_KILLER && flags.tombstone,
            u.uplname, umoney, killer, how, getyear());
 }
 
@@ -1252,12 +1252,14 @@ void
 list_genocided(char defquery, boolean ask)
 {
     int i;
-    int ngenocided, nextincted;
+    int ngenocided, ungenocided, mngenocided, nextincted;
     char c;
     const char *query, *title, *buf;
     struct nh_menulist menu;
 
     ngenocided = num_genocides();
+    ungenocided = u.uconduct[conduct_genocide];
+    mngenocided = ngenocided - ungenocided;
     nextincted = num_extinctions();
 
     /* genocided species list */
@@ -1287,6 +1289,9 @@ list_genocided(char defquery, boolean ask)
 
             add_menutext(&menu, "");
             buf = msgprintf("%d species genocided.", ngenocided);
+            if (mngenocided)
+                buf = msgprintf("%d species genocided by you, %d by monsters",
+                                ungenocided, mngenocided);
             if (ngenocided)
                 add_menutext(&menu, buf);
             buf = msgprintf("%d species extinct.", nextincted);
@@ -1303,4 +1308,3 @@ list_genocided(char defquery, boolean ask)
 }
 
 /*end.c*/
-

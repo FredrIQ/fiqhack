@@ -1,4 +1,4 @@
-# Last modified by Khor, 2017-05-15
+# Last modified by Fredrik Ljungdahl, 2017-12-24
 #	Copyright (c) 1989-95 by Jean-Christophe Collet
 #	Copyright (c) 1991-95 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -1029,8 +1029,8 @@ TRAP:random,random
 TRAP:random,random
 TRAP:random,random
 # One-time annoyance factor
-TRAP:"level teleport",place[0]
-TRAP:"level teleport",place[1]
+TRAP:"teleport",place[0]
+TRAP:"teleport",place[1]
 MONSTER:'M',random,random
 MONSTER:'M',random,random
 MONSTER:'M',random,random

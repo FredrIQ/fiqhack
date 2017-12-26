@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-24 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1624,7 +1624,8 @@ spelleffects(boolean atme, struct musable *m)
         } else if (spellknow(spell_index) <= 200 &&
                    spellknow(spell_index) > 0) {       /* 1% */
             pline(msgc_hint, "You strain to recall the spell.");
-        } else if (spellknow(spell_index) <= 1000) {      /* 5% */
+        } else if (spellknow(spell_index) <= 1000 &&
+                   spellknow(spell_index) > 0) {      /* 5% */
             pline(msgc_hint, "Your knowledge of this spell is growing faint.");
         }
 
