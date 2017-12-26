@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-21 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-27 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,7 @@
 
 static struct nh_window_procs orig_winprocs = {0};
 
-/* Replaymode windowport handling */
+/* Replaymode handling + replaymode windowport stuff */
 
 static void replay_pause(enum nh_pause_reason);
 static void replay_display_buffer(const char *, boolean);
@@ -60,6 +60,15 @@ static struct nh_window_procs replay_windowprocs = {
     .win_outrip = replay_outrip,
     .win_server_cancel = replay_no_op_void
 };
+
+struct checkpoint {
+    struct checkpoint *next;
+    struct sinfo program_state;
+    int action;
+    struct memfile binary_save;
+};
+
+static struct checkpoint *checkpoints = NULL;
 
 static void
 replay_pause(enum nh_pause_reason unused)
@@ -247,4 +256,56 @@ replay_panic(const char *str)
 {
     replay_reset_windowport();
     panic("Replaymode requested invalid command: %s", str);
+}
+
+/* Creates a checkpoint. action tells what action this checkpoint is for */
+void
+replay_create_checkpoint(int action)
+{
+    /* Check if one exists already */
+    struct checkpoint *chk, *lchk;
+    lchk = NULL;
+    for (chk = checkpoints; chk; chk = chk->next) {
+        if (chk->action == action)
+            return;
+
+        lchk = chk;
+    }
+
+    /* Create a new checkpoint at this location */
+    chk = malloc(sizeof (struct checkpoint));
+    memset(chk, 0, sizeof (struct checkpoint));
+    if (lchk)
+        lchk->next = chk;
+    else
+        checkpoints = chk;
+
+    chk->action = action;
+    chk->program_state = program_state;
+    savegame(&chk->binary_save);
+}
+
+/* Loads the checkpoint closest before given action.
+   Returns the action of the checpoint. */
+int
+replay_load_checkpoint(int action)
+{
+    struct checkpoint *chk, *lchk;
+    lchk = NULL;
+    for (chk = checkpoints; chk; chk = chk->next) {
+        if (chk->action > action)
+            break;
+
+        lchk = chk;
+    }
+
+    if (!lchk)
+        panic("Failed to find a checkpoint to restore");
+
+    freedynamicdata();
+    init_data(FALSE);
+    startup_common(FALSE);
+    dorecover(&lchk->binary_save);
+    program_state =  lchk->program_state;
+    return lchk->action;
 }

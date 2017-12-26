@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -482,6 +482,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
     int replay_target = 1;
     int replay_action = 1;
     int beginning_state = program_state.end_of_gamestate_location;
+    replay_create_checkpoint(1);
 
 just_reloaded_save:
     /* While loading a save file, we don't do rendering, and we don't run
@@ -550,13 +551,14 @@ just_reloaded_save:
             if (program_state.followmode == FM_REPLAY &&
                 replay_target != replay_action) {
                 if (replay_target < replay_action) {
-                    log_sync(1, TLU_TURNS, FALSE);
-                    replay_action = 1;
+                    replay_action = replay_load_checkpoint(replay_target);
                     program_state.end_of_gamestate_location = beginning_state;
                     program_state.binary_save_location =
                         program_state.end_of_gamestate_location;
                     goto just_reloaded_save;
                 } else if (replay_target > replay_action) {
+                    if (!(replay_action % 50))
+                        replay_create_checkpoint(replay_action);
                     if (!program_state.replaying)
                         replay_set_windowport();
 
