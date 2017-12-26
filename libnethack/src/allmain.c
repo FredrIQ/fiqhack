@@ -552,13 +552,11 @@ just_reloaded_save:
                 replay_target != replay_action) {
                 if (replay_target < replay_action) {
                     replay_action = replay_load_checkpoint(replay_target);
-                    program_state.end_of_gamestate_location = beginning_state;
-                    program_state.binary_save_location =
-                        program_state.end_of_gamestate_location;
-                    goto just_reloaded_save;
-                } else if (replay_target > replay_action) {
-                    if (!(replay_action % 50))
-                        replay_create_checkpoint(replay_action);
+                    replay_reset_windowport();
+                    continue;
+                }
+
+                if (replay_target > replay_action) {
                     if (!program_state.replaying)
                         replay_set_windowport();
 
@@ -724,8 +722,12 @@ just_reloaded_save:
                 log_revert_command(cmd.cmd);
         } else if (!u_helpless(hm_all) &&
                    (program_state.followmode == FM_REPLAY ||
-                    !flags.incomplete || flags.interrupted))
+                    !flags.incomplete || flags.interrupted)) {
             neutral_turnstate_tasks();
+            if (program_state.followmode == FM_REPLAY && !(replay_action % 50))
+                replay_create_checkpoint(replay_action);
+        }
+
         /* Note: neutral_turnstate_tasks() frees cmd (because it frees all
            messages, and we made cmd a message in our callback above), so don't
            use it past this point */

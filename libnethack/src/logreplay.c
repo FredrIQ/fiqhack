@@ -262,11 +262,11 @@ replay_panic(const char *str)
 void
 replay_create_checkpoint(int action)
 {
-    /* Check if one exists already */
+    /* Check if one exists already at or beyond this point */
     struct checkpoint *chk, *lchk;
     lchk = NULL;
     for (chk = checkpoints; chk; chk = chk->next) {
-        if (chk->action == action)
+        if (chk->action >= action)
             return;
 
         lchk = chk;
