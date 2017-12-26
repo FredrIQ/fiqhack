@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-27 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -180,6 +180,9 @@ log_recover_core(long offset, boolean canreturn, const char *message,
     const char *buf;
     struct nh_menulist menu;
     boolean ok = TRUE;
+
+    /* reset the windowport for replaymode */
+    replay_reset_windowport();
 
     program_state.emergency_recover_location = 0;
 
