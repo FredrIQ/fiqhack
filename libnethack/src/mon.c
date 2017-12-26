@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-15 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -344,7 +344,7 @@ make_corpse(struct monst *mtmp)
 int
 minliquid(struct monst *mtmp)
 {
-    boolean vis = canseemon(mtmp);
+    boolean vis = (level && canseemon(mtmp));
     boolean inpool, inlava, infountain;
 
     inpool = is_pool(level, mtmp->mx, mtmp->my) && !flying(mtmp) &&
@@ -370,7 +370,7 @@ minliquid(struct monst *mtmp)
     } else if (mtmp->data == &mons[PM_IRON_GOLEM] && inpool && !rn2(5)) {
         int dam = dice(2, 6);
 
-        if (cansee(mtmp->mx, mtmp->my))
+        if (level && cansee(mtmp->mx, mtmp->my))
             pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                   "%s rusts.", Monnam(mtmp));
         mtmp->mhp -= dam;
@@ -418,7 +418,7 @@ minliquid(struct monst *mtmp)
                     if (mtmp->mhp <= 0)
                         mondied(mtmp);
                 } else {
-                    if (cansee(mtmp->mx, mtmp->my))
+                    if (level && cansee(mtmp->mx, mtmp->my))
                         pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                               "%s %s.", Monnam(mtmp),
                               mtmp->data ==
@@ -457,7 +457,7 @@ minliquid(struct monst *mtmp)
            water damage to dead monsters' inventory, but survivors need to be
            handled here.  Swimmers are able to protect their stuff... */
         if (!is_clinger(mtmp->data) && !swims(mtmp)) {
-            if (cansee(mtmp->mx, mtmp->my) && !unbreathing(mtmp)) {
+            if (level && cansee(mtmp->mx, mtmp->my) && !unbreathing(mtmp)) {
                 pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                       "%s drowns.", Monnam(mtmp));
             }
