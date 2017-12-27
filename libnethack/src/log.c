@@ -2433,6 +2433,26 @@ log_sync(long target_location, enum target_location_units tlu,
         panic("Could not downgrade to monitor lock on logfile");
 }
 
+/* Returns the amount of actions in the log.
+   Clobbers program_state, expected to be used in logreplay only. */
+int
+replay_count_actions(void)
+{
+    long loglineloc;
+    char *logline;
+    int res;
+    for ((loglineloc = get_log_offset()),
+             (logline = lgetline_malloc(program_state.logfile));
+         logline;
+         free(logline), (loglineloc = get_log_offset()),
+             (logline = lgetline_malloc(program_state.logfile))) {
+        if (*logline >= 'a' && *logline <= 'z')
+            res++;
+    }
+
+    return res;
+}
+
 
 /* This is called in situations where we wanted to produce a save backup or
    diff, but found there was already something there.

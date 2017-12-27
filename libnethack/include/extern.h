@@ -830,6 +830,7 @@ extern void log_backup_save(void);
 
 extern void log_sync(long, enum target_location_units, boolean);
 
+extern int replay_count_actions(void);
 extern void log_revert_command(const char *);
 extern void log_recover_core(long, boolean, const char *, const char *, int);
 extern noreturn void log_recover_noreturn(
@@ -863,7 +864,6 @@ extern void replay_set_windowport(void);
 extern void replay_reset_windowport(void);
 extern void replay_create_checkpoint(int);
 extern int replay_load_checkpoint(int);
-extern int replay_count_actions(void);
 
 /* ### mail.c ### */
 

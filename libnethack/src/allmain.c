@@ -480,9 +480,11 @@ nh_play_game(int fd, enum nh_followmode followmode)
     post_init_tasks();
 
     int replay_target = 1;
-    int replay_action = 1;
+    int replay_action = 0;
+    replay_create_checkpoint(0);
     int replay_max = replay_count_actions();
-    replay_create_checkpoint(1);
+    replay_max--; /* exclude initial welcome */
+    replay_load_checkpoint(0);
 
 just_reloaded_save:
     /* While loading a save file, we don't do rendering, and we don't run
@@ -578,7 +580,10 @@ just_reloaded_save:
                     continue;
                 case DIR_E:
                 case DIR_S:
-                    replay_target++;
+                    if (replay_target < replay_max)
+                        replay_target++;
+                    else
+                        pline(msgc_cancelled, "(end of replay)");
                     continue;
                 case DIR_W:
                 case DIR_N:

@@ -308,10 +308,3 @@ replay_load_checkpoint(int action)
     dorecover(&lchk->binary_save);
     return lchk->action;
 }
-
-/* Counts the amount of actions in a replay. */
-int
-replay_count_actions(void)
-{
-    return 5;
-}
