@@ -480,11 +480,12 @@ nh_play_game(int fd, enum nh_followmode followmode)
     post_init_tasks();
 
     int replay_target = 1;
-    int replay_action = 0;
+    program_state.replay_action = 0;
     replay_create_checkpoint(0);
     int replay_max = replay_count_actions();
-    replay_max--; /* exclude initial welcome */
+    replay_max -= 2; /* exclude initial welcome and we start at 1 */
     replay_load_checkpoint(0);
+    program_state.replay_max = replay_max;
 
 just_reloaded_save:
     /* While loading a save file, we don't do rendering, and we don't run
@@ -511,7 +512,7 @@ just_reloaded_save:
 
         if (u_helpless(hm_all) ||
             (program_state.followmode == FM_REPLAY &&
-             replay_target != replay_action)) {
+             replay_target != program_state.replay_action)) {
             cmd.cmd = "wait";
             cmdidx = get_command_idx("wait");
             cmd.arg.argtype = 0;
@@ -551,17 +552,17 @@ just_reloaded_save:
             !(cmdlist[cmdidx].flags & CMD_NOTIME)) {
 
             if (program_state.followmode == FM_REPLAY &&
-                replay_target != replay_action) {
-                if (replay_target < replay_action) {
-                    replay_action = replay_load_checkpoint(replay_target);
+                replay_target != program_state.replay_action) {
+                if (replay_target < program_state.replay_action) {
+                    replay_load_checkpoint(replay_target);
                     continue;
                 }
 
-                if (replay_target > replay_action) {
+                if (replay_target > program_state.replay_action) {
                     if (!program_state.replaying)
                         replay_set_windowport();
 
-                    replay_action++;
+                    program_state.replay_action++;
                     log_replay_command(&cmd);
                     command_from_user = FALSE;
                     cmdidx = get_command_idx(cmd.cmd);
@@ -576,14 +577,16 @@ just_reloaded_save:
                 switch (cmd.arg.dir) {
                 case DIR_SE:
                     /* Move forwards 50 turns. */
-                    replay_target = replay_action + 50;
+                    replay_target = program_state.replay_action + 50;
                     continue;
                 case DIR_E:
                 case DIR_S:
-                    if (replay_target < replay_max)
+                    if (replay_target < program_state.replay_max)
                         replay_target++;
                     else
-                        pline(msgc_cancelled, "(end of replay)");
+                        pline(msgc_cancelled, "(end of replay)",
+                              program_state.replay_action,
+                              program_state.replay_max);
                     continue;
                 case DIR_W:
                 case DIR_N:
@@ -728,8 +731,9 @@ just_reloaded_save:
                      !check_turnstate_move(FALSE)) ||
                     !flags.incomplete || flags.interrupted)) {
             neutral_turnstate_tasks();
-            if (program_state.followmode == FM_REPLAY && !(replay_action % 50))
-                replay_create_checkpoint(replay_action);
+            if (program_state.followmode == FM_REPLAY &&
+                !(program_state.replay_action % 50))
+                replay_create_checkpoint(program_state.replay_action);
         }
 
         /* Note: neutral_turnstate_tasks() frees cmd (because it frees all
