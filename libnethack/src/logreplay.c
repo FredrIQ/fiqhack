@@ -9,6 +9,13 @@ static struct nh_window_procs orig_winprocs = {0};
 
 /* Replaymode handling + replaymode windowport stuff */
 
+struct checkpoint {
+    struct checkpoint *next;
+    struct sinfo program_state;
+    int action;
+    struct memfile binary_save;
+};
+
 static void replay_pause(enum nh_pause_reason);
 static void replay_display_buffer(const char *, boolean);
 static void replay_update_status(struct nh_player_info *);
@@ -36,6 +43,8 @@ static void replay_no_op_int(int);
 static void replay_outrip(struct nh_menulist *, boolean, const char *, int,
                           const char *, int, int);
 static void replay_panic(const char *);
+static void replay_save_checkpoint(int, struct checkpoint *);
+static int replay_restore_checkpoint(struct checkpoint *);
 
 static struct nh_window_procs replay_windowprocs = {
     .win_pause = replay_pause,
@@ -59,13 +68,6 @@ static struct nh_window_procs replay_windowprocs = {
     .win_level_changed = replay_no_op_int,
     .win_outrip = replay_outrip,
     .win_server_cancel = replay_no_op_void
-};
-
-struct checkpoint {
-    struct checkpoint *next;
-    struct sinfo program_state;
-    int action;
-    struct memfile binary_save;
 };
 
 static struct checkpoint *checkpoints = NULL;
@@ -255,6 +257,20 @@ replay_panic(const char *str)
     panic("Replaymode requested invalid command: %s", str);
 }
 
+/* (Re)initializes replay variables */
+void
+replay_init(void)
+{
+    struct checkpoint *chk, *chknext;
+    for (chk = checkpoints; chk; chk = chknext) {
+        chknext = chk->next;
+        mfree(&chk->binary_save);
+        free(chk);
+    }
+    checkpoints = NULL;
+    replay_create_checkpoint(0);
+}
+
 /* Creates a checkpoint. action tells what action this checkpoint is for */
 void
 replay_create_checkpoint(int action)
@@ -277,6 +293,12 @@ replay_create_checkpoint(int action)
     else
         checkpoints = chk;
 
+    replay_save_checkpoint(action, chk);
+}
+
+static void
+replay_save_checkpoint(int action, struct checkpoint *chk)
+{
     chk->action = action;
     chk->program_state = program_state;
     savegame(&chk->binary_save);
@@ -299,14 +321,29 @@ replay_load_checkpoint(int action)
     if (!lchk)
         panic("Failed to find a checkpoint to restore");
 
+    return replay_restore_checkpoint(lchk);
+}
+
+static int
+replay_restore_checkpoint(struct checkpoint *chk)
+{
     struct memfile old_ps_binary = program_state.binary_save;
     int replay_max = program_state.replay_max;
-    program_state = lchk->program_state;
+    program_state = chk->program_state;
     program_state.binary_save = old_ps_binary;
     program_state.replay_max = replay_max;
     freedynamicdata();
     init_data(FALSE);
     startup_common(FALSE);
-    dorecover(&lchk->binary_save);
-    return lchk->action;
+    dorecover(&chk->binary_save);
+    return chk->action;
+}
+
+/* Figure out what action we are on. Assumes replay_max is
+   accurate. */
+void
+replay_set_action(void)
+{
+    int action = program_state.replay_max - replay_count_actions();
+    program_state.replay_action = action;
 }

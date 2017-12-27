@@ -481,13 +481,20 @@ nh_play_game(int fd, enum nh_followmode followmode)
 
     int replay_target = 1;
     program_state.replay_action = 0;
-    replay_create_checkpoint(0);
     int replay_max = replay_count_actions();
-    replay_max -= 2; /* exclude initial welcome and we start at 1 */
-    replay_load_checkpoint(0);
     program_state.replay_max = replay_max;
+    replay_init();
 
 just_reloaded_save:
+    /* If replay_action is -1, that means we jumped to a turn. Figure out
+       what action this is. */
+    if (program_state.replay_action == -1) {
+        replay_set_action();
+        replay_target = program_state.replay_action;
+        if (!replay_target)
+            replay_target = 1; /* skip welcome */
+    }
+
     /* While loading a save file, we don't do rendering, and we don't run
        the vision system. Do all that stuff now. */
     vision_reset();
@@ -632,6 +639,7 @@ just_reloaded_save:
 
                 turn = atoi(buf);
                 log_sync(turn, TLU_TURNS, FALSE);
+                program_state.replay_action = -1;
                 goto just_reloaded_save;
             } else if (!strcmp(cmd.cmd, "drink")) {
                 terminate(GAME_DETACHED);

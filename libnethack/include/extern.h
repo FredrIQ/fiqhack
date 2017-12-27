@@ -862,8 +862,10 @@ extern void log_game_state(void);
 
 extern void replay_set_windowport(void);
 extern void replay_reset_windowport(void);
+extern void replay_init(void);
 extern void replay_create_checkpoint(int);
 extern int replay_load_checkpoint(int);
+extern void replay_set_action(void);
 
 /* ### mail.c ### */
 

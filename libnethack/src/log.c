@@ -2433,14 +2433,14 @@ log_sync(long target_location, enum target_location_units tlu,
         panic("Could not downgrade to monitor lock on logfile");
 }
 
-/* Returns the amount of actions in the log.
-   Clobbers program_state, expected to be used in logreplay only. */
+/* Returns the amount of actions in the log. starting from current position. */
 int
 replay_count_actions(void)
 {
+    struct sinfo ps = program_state;
     long loglineloc;
     char *logline;
-    int res;
+    int res = 0;
     for ((loglineloc = get_log_offset()),
              (logline = lgetline_malloc(program_state.logfile));
          logline;
@@ -2450,6 +2450,7 @@ replay_count_actions(void)
             res++;
     }
 
+    program_state = ps;
     return res;
 }
 
