@@ -302,10 +302,12 @@ replay_load_checkpoint(int action)
     if (!lchk)
         panic("Failed to find a checkpoint to restore");
 
+    struct memfile old_ps_binary = program_state.binary_save;
+    program_state = lchk->program_state;
+    program_state.binary_save = old_ps_binary;
     freedynamicdata();
     init_data(FALSE);
     startup_common(FALSE);
     dorecover(&lchk->binary_save);
-    program_state =  lchk->program_state;
     return lchk->action;
 }
