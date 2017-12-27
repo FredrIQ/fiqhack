@@ -481,7 +481,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
 
     int replay_target = 1;
     int replay_action = 1;
-    int beginning_state = program_state.end_of_gamestate_location;
+    int replay_max = replay_count_actions();
     replay_create_checkpoint(1);
 
 just_reloaded_save:
@@ -552,7 +552,6 @@ just_reloaded_save:
                 replay_target != replay_action) {
                 if (replay_target < replay_action) {
                     replay_action = replay_load_checkpoint(replay_target);
-                    replay_reset_windowport();
                     continue;
                 }
 
@@ -626,8 +625,7 @@ just_reloaded_save:
                 turn = atoi(buf);
                 log_sync(turn, TLU_TURNS, FALSE);
                 goto just_reloaded_save;
-            } else if (!strcmp(cmd.cmd, "drink") &&
-                       program_state.followmode == FM_WATCH) {
+            } else if (!strcmp(cmd.cmd, "drink")) {
                 terminate(GAME_DETACHED);
             } else {
                 /* Internal commands weren't sent by the player, so don't
@@ -721,7 +719,8 @@ just_reloaded_save:
             if (!flags.incomplete)
                 log_revert_command(cmd.cmd);
         } else if (!u_helpless(hm_all) &&
-                   (program_state.followmode == FM_REPLAY ||
+                   ((program_state.followmode == FM_REPLAY &&
+                     !check_turnstate_move(FALSE)) ||
                     !flags.incomplete || flags.interrupted)) {
             neutral_turnstate_tasks();
             if (program_state.followmode == FM_REPLAY && !(replay_action % 50))

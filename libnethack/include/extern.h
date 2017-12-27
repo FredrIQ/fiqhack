@@ -233,6 +233,7 @@ extern void destroy_drawbridge(int, int);
 
 extern void init_turnstate(void);
 extern void abort_turnstate(void);
+extern boolean check_turnstate_move(boolean);
 extern void neutral_turnstate_tasks(void);
 extern void init_data(boolean);
 
@@ -862,6 +863,7 @@ extern void replay_set_windowport(void);
 extern void replay_reset_windowport(void);
 extern void replay_create_checkpoint(int);
 extern int replay_load_checkpoint(int);
+extern int replay_count_actions(void);
 
 /* ### mail.c ### */
 

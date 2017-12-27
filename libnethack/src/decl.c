@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -189,6 +189,34 @@ abort_turnstate(void)
     xmalloc_cleanup(&turnstate.message_chain);
 }
 
+/* Validates turnstate.move being empty. Returns TRUE if it isn't.
+   If do_impossible is TRUE, impossible if nonzero. */
+boolean
+check_turnstate_move(boolean do_impossible)
+{
+    int i, j;
+
+    int res = FALSE;
+    if (turnstate.move.dx || turnstate.move.dy) {
+        res = TRUE;
+        if (do_impossible)
+            impossible("turnstate dx and dy persisted between turns");
+    }
+
+    for (i = 0; i < COLNO; i++) {
+        for (j = 0; j < ROWNO; j++) {
+            if (turnstate.move.stepped_on[i][j]) {
+                res = TRUE;
+                if (do_impossible)
+                    impossible("turnstate stepped-on persisted between turns");
+                return TRUE;
+            }
+        }
+    }
+
+    return res;
+}
+
 /* Called between turns (i.e. when turnstate becomes neutral). Most of this is
    verifying the invariants on turnstate, but it also updates the save file and
    does garbage collection on messages (easy, because they're all garbage at
@@ -196,7 +224,7 @@ abort_turnstate(void)
 void
 neutral_turnstate_tasks(void)
 {
-    int i, j;
+    int i;
 
     xmalloc_cleanup(&turnstate.message_chain);
 
@@ -271,13 +299,7 @@ neutral_turnstate_tasks(void)
     if (turnstate.pray.trouble != ptr_invalid)
         impossible("prayer trouble persisted between turns");
 
-    if (turnstate.move.dx || turnstate.move.dy)
-        impossible("turnstate dx and dy persisted between turns");
-
-    for (i = 0; i < COLNO; i++)
-        for (j = 0; j < ROWNO; j++)
-            if (turnstate.move.stepped_on[i][j])
-                impossible("turnstate stepped-on persisted between turns");
+    check_turnstate_move(TRUE);
 
     if (turnstate.goto_info.flags)
         impossible("turnstate deferred goto persisted between turns");

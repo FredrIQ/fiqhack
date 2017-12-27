@@ -143,9 +143,7 @@ replay_update_screen(struct nh_dbuf_entry unused1[ROWNO][COLNO],
 static void
 replay_raw_print(const char *message)
 {
-    /* Show the print first */
     orig_winprocs.win_raw_print(message);
-    replay_panic("replay_raw_print");
 }
 
 static struct nh_query_key_result
@@ -249,12 +247,11 @@ replay_reset_windowport(void)
     update_inventory();
 }
 
-/* Resets the windowport and panics. Used if the engine requested a command that
-   should never be requested in replaymode. */
+/* Used if the engine requested a command that should never be requested in
+   replaymode. */
 static void
 replay_panic(const char *str)
 {
-    replay_reset_windowport();
     panic("Replaymode requested invalid command: %s", str);
 }
 
@@ -310,4 +307,11 @@ replay_load_checkpoint(int action)
     startup_common(FALSE);
     dorecover(&lchk->binary_save);
     return lchk->action;
+}
+
+/* Counts the amount of actions in a replay. */
+int
+replay_count_actions(void)
+{
+    return 5;
 }
