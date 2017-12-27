@@ -621,6 +621,7 @@ base64_decode(const char *in, char *out, int outlen)
         } else if (*in == '#') {
             /* lz4-compressed */
             int result = LZ4_decompress_safe(o, out, pos, blen);
+            free(o);
             if (result < 0) {
                 raw_printf("lz4-decompressing save failed\n");
                 error_reading_save("");
