@@ -1,9 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-28 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+
+/* How often we create checkpoints */
+#define CHECKPOINT_FREQ 50
 
 static struct nh_window_procs orig_winprocs = {0};
 
@@ -11,10 +14,27 @@ static struct nh_window_procs orig_winprocs = {0};
 
 struct checkpoint {
     struct checkpoint *next;
+    struct checkpoint *prev;
     struct sinfo program_state;
     int action;
+    int move;
+    int submove;
     struct memfile binary_save;
 };
+
+struct replayinfo {
+    int action; /* current action */
+    int max; /* last action */
+    int target; /* target action or move */
+    boolean target_is_move; /* whether target is by action or by move */
+    boolean replaying; /* if we are using the replay "windowport" */
+    int move; /* current turncount (stored to make move_action accurate) */
+    int submove; /* action during this move (starting from 0) */
+    struct checkpoint *checkpoints; /* checkpoint list */
+    struct checkpoint *revcheckpoints; /* last checkpoint */
+};
+
+static struct replayinfo replay = {0};
 
 static void replay_pause(enum nh_pause_reason);
 static void replay_display_buffer(const char *, boolean);
@@ -42,9 +62,12 @@ static void replay_no_op_void(void);
 static void replay_no_op_int(int);
 static void replay_outrip(struct nh_menulist *, boolean, const char *, int,
                           const char *, int, int);
+static void replay_set_windowport(void);
 static void replay_panic(const char *);
-static void replay_save_checkpoint(int, struct checkpoint *);
-static int replay_restore_checkpoint(struct checkpoint *);
+static void replay_create_checkpoint(void);
+static int replay_load_checkpoint(int, boolean);
+static void replay_save_checkpoint(struct checkpoint *);
+static void replay_restore_checkpoint(struct checkpoint *);
 
 static struct nh_window_procs replay_windowprocs = {
     .win_pause = replay_pause,
@@ -146,6 +169,9 @@ static void
 replay_raw_print(const char *message)
 {
     orig_winprocs.win_raw_print(message);
+
+    /* This means something went wrong. Force-revert the windowport. */
+    replay_reset_windowport();
 }
 
 static struct nh_query_key_result
@@ -219,13 +245,13 @@ replay_no_op_int(int unused)
 /* End of windowprocs commands */
 
 /* Sets the windowport to the replay windowport */
-void
+static void
 replay_set_windowport(void)
 {
-    if (program_state.replaying)
+    if (replay.replaying)
         return;
 
-    program_state.replaying = TRUE;
+    replay.replaying = TRUE;
     orig_winprocs = windowprocs;
     windowprocs = replay_windowprocs;
 }
@@ -234,10 +260,10 @@ replay_set_windowport(void)
 void
 replay_reset_windowport(void)
 {
-    if (!program_state.replaying)
+    if (!replay.replaying)
         return;
 
-    program_state.replaying = FALSE;
+    replay.replaying = FALSE;
     if (orig_winprocs.win_request_command)
         windowprocs = orig_winprocs;
 
@@ -261,89 +287,187 @@ replay_panic(const char *str)
 void
 replay_init(void)
 {
+    /* reset the windowport in case we left it in the replay one */
+    replay_reset_windowport();
+
+    /* are we even in replaymode? */
+    if (program_state.followmode != FM_REPLAY)
+        return;
+
+    /* deallocate checkpoints */
     struct checkpoint *chk, *chknext;
-    for (chk = checkpoints; chk; chk = chknext) {
+    for (chk = replay.checkpoints; chk; chk = chknext) {
         chknext = chk->next;
         mfree(&chk->binary_save);
         free(chk);
     }
-    checkpoints = NULL;
-    replay_create_checkpoint(0);
+
+    /* clear the replay struct, we don't have anything else to do with it */
+    memset(&replay, 0, sizeof (struct replayinfo));
+
+    replay.max = replay_count_actions();
+
+    /* we don't care about the initial welcome message */
+    replay.target = 1;
+}
+
+/* Returns TRUE if we are in replaymode and want user input */
+boolean
+replay_want_userinput(void)
+{
+    if (program_state.followmode != FM_REPLAY)
+        return FALSE;
+
+    /* maybe we want to load a checkpoint */
+    replay_set_windowport();
+
+    boolean just_reloaded = FALSE;
+    if (replay.target_is_move ?
+        ((replay.target < replay.move) ||
+         (replay.target == replay.move && replay.submove)) :
+        (replay.target < replay.action)) {
+        replay_load_checkpoint(replay.target, replay.target_is_move);
+        just_reloaded = TRUE;
+    }
+
+    /* check if we reached the end */
+    if (replay.action == replay.max) {
+        replay.target = replay.action;
+        replay.target_is_move = FALSE;
+    }
+
+    if (replay.target_is_move ?
+        (replay.target == replay.move && !replay.submove) :
+        (replay.target == replay.action)) {
+        replay_reset_windowport();
+        return TRUE;
+    }
+
+    if (just_reloaded)
+        return FALSE;
+
+    if (moves != replay.move) {
+        replay.move = moves;
+        replay.submove = 0;
+    } else
+        replay.submove++;
+    replay.action++;
+
+    /* if this action is past a certain point, or if none exist, create a
+       checkpoint */
+    if (!replay.revcheckpoints ||
+        (replay.revcheckpoints->action + CHECKPOINT_FREQ <= replay.action &&
+         !check_turnstate_move(FALSE)))
+        replay_create_checkpoint();
+
+    return FALSE;
 }
 
 /* Creates a checkpoint. action tells what action this checkpoint is for */
-void
-replay_create_checkpoint(int action)
+static void
+replay_create_checkpoint(void)
 {
     /* Check if one exists already at or beyond this point */
-    struct checkpoint *chk, *lchk;
-    lchk = NULL;
-    for (chk = checkpoints; chk; chk = chk->next) {
-        if (chk->action >= action)
-            return;
-
-        lchk = chk;
-    }
+    struct checkpoint *chk = replay.revcheckpoints;
+    if (chk && chk->action >= replay.action)
+        return;
 
     /* Create a new checkpoint at this location */
-    chk = malloc(sizeof (struct checkpoint));
-    memset(chk, 0, sizeof (struct checkpoint));
-    if (lchk)
-        lchk->next = chk;
-    else
-        checkpoints = chk;
+    struct checkpoint *nchk = malloc(sizeof (struct checkpoint));
+    memset(nchk, 0, sizeof (struct checkpoint));
+    if (chk) {
+        chk->next = nchk;
+        nchk->prev = chk;
+    } else
+        replay.checkpoints = nchk;
 
-    replay_save_checkpoint(action, chk);
+    replay.revcheckpoints = nchk;
+
+    replay_save_checkpoint(nchk);
 }
 
 static void
-replay_save_checkpoint(int action, struct checkpoint *chk)
+replay_save_checkpoint(struct checkpoint *chk)
 {
-    chk->action = action;
+    chk->action = replay.action;
+    chk->move = replay.move;
+    chk->submove = replay.submove;
     chk->program_state = program_state;
     savegame(&chk->binary_save);
 }
 
 /* Loads the checkpoint closest before given action.
    Returns the action of the checpoint. */
-int
-replay_load_checkpoint(int action)
+static int
+replay_load_checkpoint(int target, boolean target_is_move)
 {
-    struct checkpoint *chk, *lchk;
-    lchk = NULL;
-    for (chk = checkpoints; chk; chk = chk->next) {
-        if (chk->action > action)
+    struct checkpoint *chk;
+    for (chk = replay.revcheckpoints; chk; chk = chk->prev) {
+        if ((target_is_move) ?
+            (chk->move < target ||
+             (chk->move == target && !chk->submove)) :
+            (chk->action <= target))
             break;
-
-        lchk = chk;
     }
 
-    if (!lchk)
+    if (!chk)
         panic("Failed to find a checkpoint to restore");
 
-    return replay_restore_checkpoint(lchk);
+    replay_restore_checkpoint(chk);
 }
 
-static int
+static void
 replay_restore_checkpoint(struct checkpoint *chk)
 {
     struct memfile old_ps_binary = program_state.binary_save;
-    int replay_max = program_state.replay_max;
     program_state = chk->program_state;
     program_state.binary_save = old_ps_binary;
-    program_state.replay_max = replay_max;
     freedynamicdata();
     init_data(FALSE);
     startup_common(FALSE);
     dorecover(&chk->binary_save);
-    return chk->action;
+    replay.action = chk->action;
+    replay.move = chk->move;
+    replay.submove = chk->submove;
 }
 
-/* Figure out what action we are on. Assumes replay_max is
-   accurate. */
+/* Go N turns forward/backwards in move/actions */
 void
-replay_set_action(void)
+replay_seek(int target, boolean target_is_move)
 {
-    int action = program_state.replay_max - replay_count_actions();
-    program_state.replay_action = action;
+    replay.target = (target_is_move ? replay.move : replay.action);
+    replay.target += target;
+    if (replay.target < 1)
+        replay.target = 1;
+    replay.target_is_move = target_is_move;
+}
+
+/* Go to move/action N. Target being 0 means "go to the end" */
+void
+replay_goto(int target, boolean target_is_move)
+{
+    if (!target) {
+        replay.target_is_move = FALSE;
+        replay.target = replay.max;
+        return;
+    }
+
+    replay.target = target;
+    if (replay.target < 1)
+        replay.target = 1;
+    replay.target_is_move = target_is_move;
+}
+
+/* Returns current action */
+int
+replay_action(void)
+{
+    return replay.action;
+}
+
+/* Returns total actions */
+int
+replay_max(void)
+{
+    return replay.max;
 }

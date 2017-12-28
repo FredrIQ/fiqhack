@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -479,22 +479,9 @@ nh_play_game(int fd, enum nh_followmode followmode)
     program_state.game_running = TRUE;
     post_init_tasks();
 
-    int replay_target = 1;
-    program_state.replay_action = 0;
-    int replay_max = replay_count_actions();
-    program_state.replay_max = replay_max;
     replay_init();
 
 just_reloaded_save:
-    /* If replay_action is -1, that means we jumped to a turn. Figure out
-       what action this is. */
-    if (program_state.replay_action == -1) {
-        replay_set_action();
-        replay_target = program_state.replay_action;
-        if (!replay_target)
-            replay_target = 1; /* skip welcome */
-    }
-
     /* While loading a save file, we don't do rendering, and we don't run
        the vision system. Do all that stuff now. */
     vision_reset();
@@ -517,20 +504,12 @@ just_reloaded_save:
         int cmdidx;
         nh_bool command_from_user = FALSE;
 
-        if (u_helpless(hm_all) ||
-            (program_state.followmode == FM_REPLAY &&
-             replay_target != program_state.replay_action)) {
+        if (u_helpless(hm_all)) {
             cmd.cmd = "wait";
             cmdidx = get_command_idx("wait");
             cmd.arg.argtype = 0;
-            if (!u_helpless(hm_all))
-                command_from_user = TRUE;
         } else {
-
-            if (program_state.replaying)
-                replay_reset_windowport();
-
-            if (program_state.followmode == FM_REPLAY ||
+            if (replay_want_userinput() ||
                 !log_replay_command(&cmd)) {
                 if (program_state.followmode == FM_RECOVERQUIT) {
                     /* We shouldn't be here. */
@@ -559,61 +538,32 @@ just_reloaded_save:
             !(cmdlist[cmdidx].flags & CMD_NOTIME)) {
 
             if (program_state.followmode == FM_REPLAY &&
-                replay_target != program_state.replay_action) {
-                if (replay_target < program_state.replay_action) {
-                    replay_load_checkpoint(replay_target);
-                    continue;
-                }
-
-                if (replay_target > program_state.replay_action) {
-                    if (!program_state.replaying)
-                        replay_set_windowport();
-
-                    program_state.replay_action++;
-                    log_replay_command(&cmd);
-                    command_from_user = FALSE;
-                    cmdidx = get_command_idx(cmd.cmd);
-                    if (cmdidx < 0)
-                        panic("Invalid command '%s' replayed from save file",
-                              cmd.cmd);
-                }
-            } else if (program_state.followmode == FM_REPLAY &&
                        cmd.arg.argtype & CMD_ARG_DIR) {
                 /* If we got a direction as part of the command, and we're
                    replaying, move forwards or backwards respectively. */
                 switch (cmd.arg.dir) {
                 case DIR_SE:
                     /* Move forwards 50 turns. */
-                    replay_target = program_state.replay_action + 50;
+                    replay_seek(50, TRUE);
                     continue;
                 case DIR_E:
                 case DIR_S:
-                    if (replay_target < program_state.replay_max)
-                        replay_target++;
-                    else
-                        pline(msgc_cancelled, "(end of replay)",
-                              program_state.replay_action,
-                              program_state.replay_max);
+                    replay_seek(1, FALSE);
                     continue;
                 case DIR_W:
                 case DIR_N:
-                    if (replay_target > 1)
-                        replay_target--;
+                    replay_seek(-1, FALSE);
                     continue;
                 case DIR_NW:
-                    replay_target = 1;
+                    replay_goto(1, FALSE);
                     continue;
                 case DIR_SW:
                     /* Move to the end of the replay. */
-                    /* TODO */
-                    replay_target = 1;
+                    replay_goto(0, FALSE);
                     continue;
                 case DIR_NE:
-                    /* Move backwards 50 turns. Avoid wrap-around */
-                    if (replay_target <= 50)
-                        replay_target = 1;
-                    else
-                        replay_target -= 50;
+                    /* Move backwards 50 turns. */
+                    replay_seek(-50, TRUE);
                     continue;
                 default:
                     pline(msgc_mispaste,
@@ -638,9 +588,8 @@ just_reloaded_save:
                     continue; /* aborted or refused to input a number 10 times */
 
                 turn = atoi(buf);
-                log_sync(turn, TLU_TURNS, FALSE);
-                program_state.replay_action = -1;
-                goto just_reloaded_save;
+                replay_goto(turn, TRUE);
+                continue;
             } else if (!strcmp(cmd.cmd, "drink")) {
                 terminate(GAME_DETACHED);
             } else {
@@ -737,12 +686,8 @@ just_reloaded_save:
         } else if (!u_helpless(hm_all) &&
                    ((program_state.followmode == FM_REPLAY &&
                      !check_turnstate_move(FALSE)) ||
-                    !flags.incomplete || flags.interrupted)) {
+                    !flags.incomplete || flags.interrupted))
             neutral_turnstate_tasks();
-            if (program_state.followmode == FM_REPLAY &&
-                !(program_state.replay_action % 50))
-                replay_create_checkpoint(program_state.replay_action);
-        }
 
         /* Note: neutral_turnstate_tasks() frees cmd (because it frees all
            messages, and we made cmd a message in our callback above), so don't
