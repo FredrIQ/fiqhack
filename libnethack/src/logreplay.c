@@ -4,6 +4,9 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#define __STDC_FORMAT_MACROS
+#include <stdint.h>
+#include <inttypes.h>
 
 /* How often we create checkpoints */
 #define CHECKPOINT_FREQ 50
@@ -32,6 +35,7 @@ struct replayinfo {
     int submove; /* action during this move (starting from 0) */
     struct checkpoint *checkpoints; /* checkpoint list */
     struct checkpoint *revcheckpoints; /* last checkpoint */
+    char *game_id;
 };
 
 static struct replayinfo replay = {0};
@@ -293,6 +297,23 @@ replay_init(void)
     if (program_state.followmode != FM_REPLAY)
         return;
 
+    /* get game id */
+    const char *game_id = msgprintf("%s_%" PRIdLEAST64 "", u.uplname,
+                                    (int_least64_t)u.ubirthday / 1000000L);
+
+    /* if it's the same, reuse the replay state but force target to be
+       right before our current point unless it's at the beginning */
+    if (replay.game_id && !strcmp(game_id, replay.game_id)) {
+        replay.target = replay.action - 1;
+        if (replay.target) {
+            replay.target_is_move = FALSE;
+            return;
+        }
+    }
+
+    if (replay.game_id)
+        free(replay.game_id);
+
     /* deallocate checkpoints */
     struct checkpoint *chk, *chknext;
     for (chk = replay.checkpoints; chk; chk = chknext) {
@@ -305,6 +326,10 @@ replay_init(void)
     memset(&replay, 0, sizeof (struct replayinfo));
 
     replay.max = replay_count_actions();
+
+    /* set game id */
+    replay.game_id = malloc(strlen(game_id) + 1);
+    strcpy(replay.game_id, game_id);
 
     if (!replay.max) {
         /* user requested instant replay, go back to the beginning and playback
