@@ -150,10 +150,9 @@ replay_display_objects(
 }
 
 static void
-replay_list_items(struct nh_objlist *ml, boolean unused)
+replay_list_items(struct nh_objlist *ml, boolean invent)
 {
-    dealloc_objmenulist(ml);
-    (void) unused;
+    orig_winprocs.win_list_items(ml, invent);
 }
 
 static void
@@ -307,6 +306,15 @@ replay_init(void)
 
     replay.max = replay_count_actions();
 
+    if (!replay.max) {
+        /* user requested instant replay, go back to the beginning and playback
+           here */
+        log_sync(1, TLU_TURNS, FALSE);
+        replay.max = replay_count_actions();
+        replay_goto(0, FALSE);
+        return;
+    }
+
     /* we don't care about the initial welcome message */
     replay.target = 1;
 }
@@ -435,6 +443,7 @@ replay_restore_checkpoint(struct checkpoint *chk)
 void
 replay_seek(int target, boolean target_is_move)
 {
+    /* ensure that target holds the correct thing we can offset */
     replay.target = (target_is_move ? replay.move : replay.action);
     replay.target += target;
     if (replay.target < 1)
