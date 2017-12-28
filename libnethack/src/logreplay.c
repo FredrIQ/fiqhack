@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-29 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -36,6 +36,12 @@ struct replayinfo {
     struct checkpoint *checkpoints; /* checkpoint list */
     struct checkpoint *revcheckpoints; /* last checkpoint */
     char *game_id;
+
+    /* Replay loading may not be near-instantaneous. Avoid queueing up
+       several commands just beecaus replay reload took a bit of time by
+       swallowing commands briefly. */
+    microseconds last_load;
+#define LOAD_DELAY 10000
 };
 
 static struct replayinfo replay = {0};
@@ -276,6 +282,25 @@ replay_reset_windowport(void)
     bot();
     flush_screen();
     update_inventory();
+    replay.last_load = utc_time();
+}
+
+/* Returns TRUE if we should swallow the command */
+boolean
+replay_delay(void)
+{
+    if (program_state.followmode != FM_REPLAY)
+        return FALSE;
+
+    /* Handle time travel properly */
+    int cur_time = utc_time();
+    if (replay.last_load > cur_time)
+        replay.last_load = cur_time;
+
+    if (replay.last_load + LOAD_DELAY > cur_time)
+        return TRUE;
+
+    return FALSE;
 }
 
 /* Used if the engine requested a command that should never be requested in
