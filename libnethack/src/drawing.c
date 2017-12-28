@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-28 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -71,9 +71,9 @@ const char *const warnexplain[] = {
 const char *const invismonexplain = "invisible monster";
 
 const struct nh_symdef warnsyms[WARNCOUNT] = {
-    {'0', "warn1", CLR_WHITE},  /* white warning */
-    {'1', "warn2", CLR_RED},    /* pink warning */
-    {'2', "warn3", CLR_RED},    /* red warning */
+    {'0', "warn1", CLR_GREEN},  /* white warning */
+    {'1', "warn2", CLR_YELLOW},    /* pink warning */
+    {'2', "warn3", CLR_ORANGE},    /* red warning */
     {'3', "warn4", CLR_RED},    /* ruby warning */
     {'4', "warn5", CLR_MAGENTA},        /* purple warning */
     {'5', "warn6", CLR_BRIGHT_MAGENTA}  /* black warning */
