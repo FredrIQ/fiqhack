@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2844,17 +2844,21 @@ bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
         }
     }
 
-    /* Object/monster handling. First bhitpile_pre sets a flag for objects to be hit,
-       then bhitm affects monsters at the tile, then bhitpile_post finishes the work.
-       However, to avoid race conditions with autopickup, teleportation magic hits
-       objects first. */
-    if (obj->otyp == WAN_TELEPORTATION || obj->otyp == SPE_TELEPORT_AWAY) {
+    struct monst *mdef = um_at(lev, x, y);
+
+    /* Object/monster handling. First bhitpile_pre sets a flag for objects to be
+       hit, then bhitm affects monsters at the tile, then bhitpile_post finishes
+       the work. However, to avoid race conditions with autopickup,
+       teleportation magic hits objects first. This also happens if wands hit
+       the player, since the game always end immediately if we die, and we don't
+       want to leave stale to_be_hit flags. */
+    if (obj->otyp == WAN_TELEPORTATION || obj->otyp == SPE_TELEPORT_AWAY ||
+        mdef == &youmonst) {
         if (bhitpile(mon, obj, x, y))
             ret |= BHIT_OBJ;
     } else
         bhitpile_pre(mon, obj, x, y);
 
-    struct monst *mdef = um_at(lev, x, y);
     if (mdef) {
         if (!canseemon(mdef) && cansee(x, y))
             map_invisible(x, y);
@@ -2863,8 +2867,7 @@ bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
     } else if ((mdef = vismon_at(lev, x, y)))
         ret |= BHIT_DMON;
 
-    if (obj->otyp != WAN_TELEPORTATION && obj->otyp != SPE_TELEPORT_AWAY &&
-        bhitpile_post(mon, obj, x, y))
+    if (bhitpile_post(mon, obj, x, y))
         ret |= BHIT_OBJ;
 
     /* Is the rest of the range obstructed? */
