@@ -356,8 +356,7 @@ replay_init(void)
 
         /* reload from a checkpoint */
         if (replay.revcheckpoints)
-            replay_load_checkpoint(replay.revcheckpoints->action + 1, FALSE);
-        replay.action--;
+            replay_load_checkpoint(replay.revcheckpoints->action, FALSE);
         return;
     }
 
@@ -427,7 +426,6 @@ replay_want_userinput(void)
     replay.in_load = TRUE;
 
     /* maybe we want to load a checkpoint */
-    boolean just_reloaded = FALSE;
     if (replay.target_is_move ?
         (replay.target < replay.move) :
         (replay.target < replay.action)) {
@@ -438,7 +436,6 @@ replay_want_userinput(void)
             return TRUE;
         }
         replay_load_checkpoint(replay.target, replay.target_is_move);
-        just_reloaded = TRUE;
         replay.jumped = TRUE;
     }
 
@@ -453,11 +450,6 @@ replay_want_userinput(void)
         (replay.target == replay.action)) {
         replay_goal_reached();
         return TRUE;
-    }
-
-    if (!just_reloaded) {
-        replay.move = moves;
-        replay.action++;
     }
 
     /* If this pending action will cause a desync, reload from a checkpoint */
@@ -486,6 +478,17 @@ replay_want_userinput(void)
         replay_create_checkpoint();
 
     return FALSE;
+}
+
+/* Updates replay.move/replay.action for a new action */
+void
+replay_set_action(void)
+{
+    if (program_state.followmode != FM_REPLAY)
+        return;
+
+    replay.move = moves;
+    replay.action++;
 }
 
 /* Creates a checkpoint. */
