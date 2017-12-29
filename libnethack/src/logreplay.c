@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -21,7 +21,6 @@ struct checkpoint {
     struct sinfo program_state;
     int action;
     int move;
-    int submove;
     struct memfile binary_save;
 };
 
@@ -41,7 +40,6 @@ struct replayinfo {
     boolean target_is_move; /* whether target is by action or by move */
     boolean replaying; /* if we are using the replay "windowport" */
     int move; /* current turncount (stored to make move_action accurate) */
-    int submove; /* action during this move (starting from 0) */
     struct checkpoint *checkpoints; /* checkpoint list */
     struct checkpoint *revcheckpoints; /* last checkpoint */
     char *game_id; /* unique for each game */
@@ -60,6 +58,7 @@ struct replayinfo {
     struct desync *next_desync;
     int desyncs;
     boolean in_load; /* Used to check for a desync */
+    boolean jumped; /* Used to keep track on if we already jumped backwards */
 };
 
 static struct replayinfo replay = {0};
@@ -93,6 +92,7 @@ static void replay_outrip(struct nh_menulist *, boolean, const char *, int,
                           const char *, int, int);
 static void replay_set_windowport(void);
 static void replay_panic(const char *);
+static void replay_goal_reached(void);
 static void replay_create_checkpoint(void);
 static int replay_load_checkpoint(int, boolean);
 static void replay_save_checkpoint(struct checkpoint *);
@@ -353,13 +353,11 @@ replay_init(void)
             replay.action--;
             replay_add_desync();
         }
-        replay.target = replay.action++; /* forces a checkpoint reload */
 
-        /* If this is true, we desynced on the *very first action*. Oops. */
-        if (replay.target < 1)
-            panic("Loading existing replay data failed.");
-
-        replay.target_is_move = FALSE;
+        /* reload from a checkpoint */
+        if (replay.revcheckpoints)
+            replay_load_checkpoint(replay.revcheckpoints->action + 1, FALSE);
+        replay.action--;
         return;
     }
 
@@ -407,6 +405,17 @@ replay_init(void)
     replay.target = 1;
 }
 
+/* Sets target as if we reached our goal. Used if we actually did reach it, or
+   if we arrived as close as we could. */
+static void
+replay_goal_reached(void)
+{
+    replay_reset_windowport();
+    replay.target = replay.action;
+    replay.target_is_move = FALSE;
+    replay.in_load = FALSE;
+}
+
 /* Returns TRUE if we are in replaymode and want user input */
 boolean
 replay_want_userinput(void)
@@ -414,51 +423,47 @@ replay_want_userinput(void)
     if (program_state.followmode != FM_REPLAY)
         return FALSE;
 
-    /* maybe we want to load a checkpoint */
     replay_set_windowport();
     replay.in_load = TRUE;
 
+    /* maybe we want to load a checkpoint */
     boolean just_reloaded = FALSE;
     if (replay.target_is_move ?
-        ((replay.target < replay.move) ||
-         (replay.target == replay.move && replay.submove)) :
+        (replay.target < replay.move) :
         (replay.target < replay.action)) {
+        if (replay.jumped) {
+            /* We already did a jump -- this can happen if we are seeking a
+               turn and helplessness (or desync) made us overshoot our target */
+            replay_goal_reached();
+            return TRUE;
+        }
         replay_load_checkpoint(replay.target, replay.target_is_move);
         just_reloaded = TRUE;
+        replay.jumped = TRUE;
     }
 
     /* check if we reached the end */
     if (replay.action == replay.max) {
-        replay.target = replay.action;
-        replay.target_is_move = FALSE;
+        replay_goal_reached();
+        return TRUE;
     }
 
     if (replay.target_is_move ?
-        (replay.target == replay.move && !replay.submove) :
+        (replay.target == replay.move) :
         (replay.target == replay.action)) {
-        replay_reset_windowport();
-        replay.in_load = FALSE;
+        replay_goal_reached();
         return TRUE;
     }
 
     if (!just_reloaded) {
-        if (moves != replay.move) {
-            replay.move = moves;
-            replay.submove = 0;
-        } else
-            replay.submove++;
+        replay.move = moves;
         replay.action++;
     }
 
     /* If this pending action will cause a desync, reload from a checkpoint */
-    if (replay.next_desync && replay.next_desync->action == replay.action) {
-        if (just_reloaded) {
-            /* If we just reloaded, loading the next checkpoint will not go
-               far enough, and potentially not move at all, so bail out. */
-            replay_reset_windowport();
-            replay.target = replay.action;
-            replay.target_is_move = FALSE;
-            replay.in_load = FALSE;
+    if (replay.next_desync && replay.next_desync->action <= replay.action) {
+        if (replay.jumped) {
+            replay_goal_reached();
             return TRUE;
         }
 
@@ -468,10 +473,7 @@ replay_want_userinput(void)
         if (replay.target_is_move ?
             (replay.target <= replay.move) :
             (replay.target <= replay.action)) {
-            replay_reset_windowport();
-            replay.target = replay.action;
-            replay.target_is_move = FALSE;
-            replay.in_load = FALSE;
+            replay_goal_reached();
             return TRUE;
         }
     }
@@ -514,7 +516,6 @@ replay_save_checkpoint(struct checkpoint *chk)
 {
     chk->action = replay.action;
     chk->move = replay.move;
-    chk->submove = replay.submove;
     chk->program_state = program_state;
     savegame(&chk->binary_save);
 }
@@ -527,12 +528,13 @@ replay_load_checkpoint(int target, boolean target_is_move)
     struct checkpoint *chk;
     for (chk = replay.revcheckpoints; chk; chk = chk->prev) {
         if ((target_is_move) ?
-            (chk->move < target ||
-             (chk->move == target && !chk->submove)) :
+            (chk->move <= target) :
             (chk->action <= target))
             break;
     }
 
+    if (!chk)
+        chk = replay.revcheckpoints;
     if (!chk)
         panic("Failed to find a checkpoint to restore");
 
@@ -553,10 +555,9 @@ replay_restore_checkpoint(struct checkpoint *chk)
     dorecover(&chk->binary_save);
     replay.action = chk->action;
     replay.move = chk->move;
-    replay.submove = chk->submove;
 
     /* Figure out if we need to reposition desync-wise. */
-    while (replay.prev_desync && replay.prev_desync->action > replay.action) {
+    while (replay.prev_desync && replay.prev_desync->action >= replay.action) {
         replay.next_desync = replay.prev_desync;
         replay.prev_desync = replay.next_desync->prev;
     }
@@ -574,7 +575,7 @@ replay_add_desync(void)
     if (!replay.desyncs)
         raw_printf("Some commands appears to be made on an obsolete engine.  "
                    "These will use diffs instead.  "
-                   "Some messages may be misleading or omitted as a result.");
+                   "Some actions may be skipped.");
 
     if (replay.next_desync) {
         //panic("Inconsistent replay."); FIXME
@@ -583,6 +584,7 @@ replay_add_desync(void)
 
     /* Create a new desync entry. */
     struct desync *ds = malloc(sizeof (struct desync));
+    memset(ds, 0, sizeof (struct desync));
     ds->prev = replay.prev_desync;
     if (ds->prev)
         ds->prev->next = ds;
@@ -628,6 +630,7 @@ replay_seek(int target, boolean target_is_move)
     if (replay.target < 1)
         replay.target = 1;
     replay.target_is_move = target_is_move;
+    replay.jumped = FALSE;
 }
 
 /* Go to move/action N. Target being 0 means "go to the end" */
@@ -644,6 +647,7 @@ replay_goto(int target, boolean target_is_move)
     if (replay.target < 1)
         replay.target = 1;
     replay.target_is_move = target_is_move;
+    replay.jumped = FALSE;
 }
 
 /* Returns current action */
