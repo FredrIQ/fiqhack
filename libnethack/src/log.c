@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-27 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-29 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2200,6 +2200,9 @@ relative_to_target(long bsl, long targetpos, enum target_location_units tlu)
         program_state.binary_save.pos = temp_pos;
         break;
 
+    case TLU_NEXT:
+        return -1;
+
     default:
         panic("Invalid target_location_units");
     }
@@ -2423,6 +2426,10 @@ log_sync(long target_location, enum target_location_units tlu,
         }
 
         free(logline);
+
+        /* If we just wanted to load the next state diff-wise, we're done */
+        if (tlu == TLU_NEXT)
+            break;
     }
 
     /* Fix the invariant on the gamestate. */
