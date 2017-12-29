@@ -293,11 +293,11 @@ replay_delay(void)
         return FALSE;
 
     /* Handle time travel properly */
-    int cur_time = utc_time();
+    microseconds cur_time = utc_time();
     if (replay.last_load > cur_time)
         replay.last_load = cur_time;
 
-    if (replay.last_load + LOAD_DELAY > cur_time)
+    if ((replay.last_load + LOAD_DELAY) > cur_time)
         return TRUE;
 
     return FALSE;
