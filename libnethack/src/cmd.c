@@ -661,7 +661,7 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
 {
     struct nh_menulist menu;
     int x, y, v;
-    char row[COLNO + 1];
+    char row[COLNO + 1] = {0};
 
     (void) arg;
 
