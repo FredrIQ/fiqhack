@@ -77,6 +77,7 @@ extern void cancel_helplessness(enum helpless_mask mask, const char *msg);
 extern void cancel_mimicking(const char *msg);
 extern boolean canhear(void);
 extern void break_conduct(enum player_conduct);
+extern void command_input(int, struct nh_cmd_arg *);
 
 /* ### apply.c ### */
 
@@ -864,6 +865,8 @@ extern void replay_reset_windowport(void);
 extern boolean replay_delay(void);
 extern void replay_init(void);
 extern boolean replay_want_userinput(void);
+extern boolean replay_parse_command(const struct nh_cmd_and_arg);
+extern noreturn void replay_done_noreturn(void);
 extern void replay_set_action(void);
 extern void replay_seek(int, boolean);
 extern void replay_goto(int, boolean);

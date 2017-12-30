@@ -479,6 +479,119 @@ replay_want_userinput(void)
     return FALSE;
 }
 
+/* Parses a non-notime command in replaymode (used for replay navigation).
+   Returns TRUE if we are about to change target as a result. */
+boolean
+replay_parse_command(const struct nh_cmd_and_arg cmd)
+{
+    int cmdidx = get_command_idx(cmd.cmd);
+
+    if (cmd.arg.argtype & CMD_ARG_DIR) {
+        /* If we got a direction as part of the command, and we're
+           replaying, move forwards or backwards respectively. */
+        switch (cmd.arg.dir) {
+        case DIR_SE:
+            /* Move forwards 50 turns. */
+            replay_seek(50, TRUE);
+            break;
+        case DIR_E:
+        case DIR_S:
+            replay_seek(1, FALSE);
+            break;
+        case DIR_W:
+        case DIR_N:
+            replay_seek(-1, FALSE);
+            break;
+        case DIR_NW:
+            replay_goto(1, FALSE);
+            break;
+        case DIR_SW:
+            /* Move to the end of the replay. */
+            replay_goto(0, FALSE);
+            break;
+        case DIR_NE:
+            /* Move backwards 50 turns. */
+            replay_seek(-50, TRUE);
+            break;
+        default:
+            pline(msgc_mispaste,
+                  "That direction has no meaning while replaying.");
+            break;
+        }
+    } else if (!strcmp(cmd.cmd, "grope")) {
+        /* go to a specific turn */
+        int trycnt = 0;
+        int turn = 0;
+        const char *buf;
+        const char *qbuf = "To what turn would you like to go to?";
+        do {
+            if (++trycnt == 2)
+                qbuf = msgcat(qbuf, " [type a number above 0]");
+
+            (*windowprocs.win_getlin) (qbuf, &buf, msg_getlin_callback);
+        } while (!turn && strcmp(buf, "\033") && !digit(buf[0]) && trycnt < 10);
+
+        if (trycnt == 10 || !strcmp(buf, "\033"))
+            return FALSE; /* aborted or refused to input a number 10 times */
+
+        turn = atoi(buf);
+        replay_goto(turn, TRUE);
+    } else {
+        /* Internal commands weren't sent by the player, so don't
+           complain about them, just ignore them. Ditto for repeat. */
+        if (!(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
+            cmdlist[cmdidx].func)
+            pline(msgc_cancelled, "Command '%s' is unavailable while replaying.",
+                  cmd.cmd);
+    }
+
+    int cur_location = replay.action;
+    if (replay.target_is_move)
+        cur_location = replay.move;
+    if (cur_location != replay.target)
+        return TRUE;
+    return FALSE;
+}
+
+/* Handles game completion in replaymode. We may not necessarily want to exit
+   the game. */
+noreturn void
+replay_done_noreturn(void)
+{
+    /* If we aren't at our last action yet, this means that we ended up dying
+       (or otherwise) earlier than we were supposed to. Treat this as if we
+       desynced. */
+    if (replay.action != replay.max) {
+        replay.in_load = TRUE;
+        terminate(RESTART_PLAY);
+    }
+
+    /* Otherwise, we simply reached the end. We can't safely return into the
+       main loop from this point, so reset the windowport and parse commands
+       until we switch target, then restart and let replay_init do what is
+       needed. */
+    replay_reset_windowport();
+    replay.in_load = FALSE;
+
+    struct nh_cmd_and_arg cmd;
+    int cmdidx;
+
+    while (1) {
+        do {
+            (*windowprocs.win_request_command)
+                (wizard, 1, flags.interrupted, &cmd,
+                 msg_request_command_callback);
+        } while (replay_delay());
+        cmdidx = get_command_idx(cmd.cmd);
+
+        if (cmdlist[cmdidx].flags & CMD_NOTIME) {
+            program_state.in_zero_time_command = TRUE;
+            command_input(cmdidx, &(cmd.arg));
+        } else if (replay_parse_command(cmd))
+            terminate(RESTART_PLAY);
+    }
+}
+
 /* Updates replay.move/replay.action for a new action */
 void
 replay_set_action(void)

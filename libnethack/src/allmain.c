@@ -24,8 +24,6 @@ static void newgame(microseconds birthday, struct newgame_options *ngo);
 
 static void handle_lava_trap(boolean didmove);
 
-static void command_input(int cmdidx, struct nh_cmd_arg *arg);
-
 static void decrement_helplessness(void);
 
 const char *const *
@@ -540,70 +538,17 @@ just_reloaded_save:
         if (program_state.followmode != FM_PLAY && command_from_user &&
             !(cmdlist[cmdidx].flags & CMD_NOTIME)) {
 
-            if (program_state.followmode == FM_REPLAY &&
-                       cmd.arg.argtype & CMD_ARG_DIR) {
-                /* If we got a direction as part of the command, and we're
-                   replaying, move forwards or backwards respectively. */
-                switch (cmd.arg.dir) {
-                case DIR_SE:
-                    /* Move forwards 50 turns. */
-                    replay_seek(50, TRUE);
-                    continue;
-                case DIR_E:
-                case DIR_S:
-                    replay_seek(1, FALSE);
-                    continue;
-                case DIR_W:
-                case DIR_N:
-                    replay_seek(-1, FALSE);
-                    continue;
-                case DIR_NW:
-                    replay_goto(1, FALSE);
-                    continue;
-                case DIR_SW:
-                    /* Move to the end of the replay. */
-                    replay_goto(0, FALSE);
-                    continue;
-                case DIR_NE:
-                    /* Move backwards 50 turns. */
-                    replay_seek(-50, TRUE);
-                    continue;
-                default:
-                    pline(msgc_mispaste,
-                          "That direction has no meaning while replaying.");
-                    continue;
-                }
-            } else if (!strcmp(cmd.cmd, "grope") &&
-                       program_state.followmode == FM_REPLAY) {
-                /* go to a specific turn */
-                int trycnt = 0;
-                int turn = 0;
-                const char *buf;
-                const char *qbuf = "To what turn would you like to go to?";
-                do {
-                    if (++trycnt == 2)
-                        qbuf = msgcat(qbuf, " [type a number above 0]");
-
-                    (*windowprocs.win_getlin) (qbuf, &buf, msg_getlin_callback);
-                } while (!turn && strcmp(buf, "\033") && !digit(buf[0]) && trycnt < 10);
-
-                if (trycnt == 10 || !strcmp(buf, "\033"))
-                    continue; /* aborted or refused to input a number 10 times */
-
-                turn = atoi(buf);
-                replay_goto(turn, TRUE);
+            if (program_state.followmode == FM_REPLAY) {
+                replay_parse_command(cmd);
                 continue;
-            } else if (!strcmp(cmd.cmd, "drink")) {
-                terminate(GAME_DETACHED);
             } else {
                 /* Internal commands weren't sent by the player, so don't
                    complain about them, just ignore them. Ditto for repeat. */
                 if (!(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
                     cmdlist[cmdidx].func)
                     pline(msgc_cancelled,
-                          "Command '%s' is unavailable while %s.", cmd.cmd,
-                          program_state.followmode == FM_WATCH ?
-                          "watching" : "replaying");
+                          "Command '%s' is unavailable while watching.",
+                          cmd.cmd);
                 continue;
             }
         }
@@ -1403,7 +1348,7 @@ break_conduct(enum player_conduct conduct)
 }
 
 /* perform the command given by cmdidx (an index into cmdlist in cmd.c) */
-static void
+void
 command_input(int cmdidx, struct nh_cmd_arg *arg)
 {
     boolean didmove = TRUE;
