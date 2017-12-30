@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-24 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -999,6 +999,9 @@ rloc_pos_ok(int x, int y,       /* coordinates of candidate location */
 void
 rloc_to(struct monst *mtmp, int x, int y)
 {
+    if (u.ustuck == mtmp && Engulfed && level->flags.noteleport)
+        unstuck(mtmp);
+
     int oldx = mtmp->mx, oldy = mtmp->my;
     boolean resident_shk = mx_eshk(mtmp) && inhishop(mtmp);
     struct level *lev = mtmp->dlevel;
