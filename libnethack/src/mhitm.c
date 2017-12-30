@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-22 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1141,7 +1141,7 @@ damage(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         } else if (resists_cold(mdef)) {
             if (vis)
                 pline(combat_msgc(magr, mdef, cr_resist),
-                      "%s coated in frost, but parially resist%s the effects.",
+                      "%s coated in frost, but partially resist%s the effects.",
                       M_verbs(mdef, "are"), udef ? "" : "s");
             dmg = (dmg + 1) / 2;
         } else if (vis)

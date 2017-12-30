@@ -374,7 +374,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
         return ERR_BAD_FILE;
     case LS_DONE:
         if (followmode != FM_REPLAY && followmode != FM_RECOVERQUIT) {
-#ifdef PUBLIC_SERVER
+#if 0
             /* assume only one process at most, so this is safe */
             followmode = FM_RECOVERQUIT;
 #else

@@ -1669,7 +1669,7 @@ update_property(struct monst *mon, enum youprop prop,
                 effect = TRUE;
             }
         } else {
-            if (you || vis) {
+            if (slot == os_dectimeout && (you || vis)) {
                 switch (timer) {
                 case 4:
                     pline(msgc, "%s slowing down.",
@@ -1760,7 +1760,7 @@ update_property(struct monst *mon, enum youprop prop,
             break;
         }
 
-        if (you || vis) {
+        if (slot == os_dectimeout && (you || vis)) {
             if (unbreathing(mon) || !rn2(50)) {
                 if (timer == 4)
                     pline(msgc, "%s %s is becoming constricted.",
@@ -2011,7 +2011,7 @@ update_property(struct monst *mon, enum youprop prop,
             if (you)
                 exercise(A_DEX, FALSE);
 
-            if (you || vis) {
+            if (slot == os_dectimeout && (you || vis)) {
                 if (timer == 9)
                     pline(msgc, "%sn't %s very well.", M_verbs(mon, "do"),
                           you ? "feel" : "look");

@@ -2846,17 +2846,21 @@ bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
         }
     }
 
-    /* Object/monster handling. First bhitpile_pre sets a flag for objects to be hit,
-       then bhitm affects monsters at the tile, then bhitpile_post finishes the work.
-       However, to avoid race conditions with autopickup, teleportation magic hits
-       objects first. */
-    if (obj->otyp == WAN_TELEPORTATION || obj->otyp == SPE_TELEPORT_AWAY) {
+    struct monst *mdef = um_at(lev, x, y);
+
+    /* Object/monster handling. First bhitpile_pre sets a flag for objects to be
+       hit, then bhitm affects monsters at the tile, then bhitpile_post finishes
+       the work. However, to avoid race conditions with autopickup,
+       teleportation magic hits objects first. This also happens if wands hit
+       the player, since the game always end immediately if we die, and we don't
+       want to leave stale to_be_hit flags. */
+    if (obj->otyp == WAN_TELEPORTATION || obj->otyp == SPE_TELEPORT_AWAY ||
+        mdef == &youmonst) {
         if (bhitpile(mon, obj, x, y))
             ret |= BHIT_OBJ;
     } else
         bhitpile_pre(mon, obj, x, y);
 
-    struct monst *mdef = um_at(lev, x, y);
     if (mdef) {
         if (!canseemon(mdef) && cansee(x, y))
             map_invisible(x, y);
@@ -2865,8 +2869,7 @@ bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
     } else if ((mdef = vismon_at(lev, x, y)))
         ret |= BHIT_DMON;
 
-    if (obj->otyp != WAN_TELEPORTATION && obj->otyp != SPE_TELEPORT_AWAY &&
-        bhitpile_post(mon, obj, x, y))
+    if (bhitpile_post(mon, obj, x, y))
         ret |= BHIT_OBJ;
 
     /* Is the rest of the range obstructed? */
