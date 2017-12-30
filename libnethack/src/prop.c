@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -1633,7 +1633,7 @@ update_property(struct monst *mon, enum youprop prop,
                 effect = TRUE;
             }
         } else {
-            if (you || vis) {
+            if (slot == os_dectimeout && (you || vis)) {
                 switch (timer) {
                 case 4:
                     pline(msgc, "%s slowing down.",
@@ -1724,7 +1724,7 @@ update_property(struct monst *mon, enum youprop prop,
             break;
         }
 
-        if (you || vis) {
+        if (slot == os_dectimeout && (you || vis)) {
             if (unbreathing(mon) || !rn2(50)) {
                 if (timer == 4)
                     pline(msgc, "%s %s is becoming constricted.",
@@ -1975,7 +1975,7 @@ update_property(struct monst *mon, enum youprop prop,
             if (you)
                 exercise(A_DEX, FALSE);
 
-            if (you || vis) {
+            if (slot == os_dectimeout && (you || vis)) {
                 if (timer == 9)
                     pline(msgc, "%sn't %s very well.", M_verbs(mon, "do"),
                           you ? "feel" : "look");
