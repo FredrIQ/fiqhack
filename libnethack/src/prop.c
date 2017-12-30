@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -328,7 +328,8 @@ m_has_property(const struct monst *mon, enum youprop property,
     if (property == HALLUC && mon != &youmonst)
         return 0;
 
-    /* Simplify property checking by allowing 0 but always returning 0 in this case */
+    /* Simplify property checking by allowing 0 but always returning 0 in this
+       case */
     if (property == NO_PROP)
         return FALSE;
 
@@ -338,7 +339,7 @@ m_has_property(const struct monst *mon, enum youprop property,
     }
 
     unsigned rv = 0;
-    rv = mon->mintrinsic_cache[property];
+    rv = property_cache(mon, property);
     if (!(rv & W_MASK(os_cache))) {
         rv = 0;
         const struct permonst *mdat_role = NULL;
@@ -347,7 +348,8 @@ m_has_property(const struct monst *mon, enum youprop property,
         init_permonsts(mon, &mdat_role, &mdat_race, &mdat_poly);
 
         /* The general case for equipment */
-        rv |= mworn_extrinsic(mon, property);
+        if (reasons & W_EQUIP)
+            rv |= mworn_extrinsic(mon, property);
 
         /* Timed and corpse/etc-granted */
         if (mon->mintrinsic[property] & TIMEOUT_RAW)
@@ -357,24 +359,26 @@ m_has_property(const struct monst *mon, enum youprop property,
 
         /* Polyform / role / race properties */
         const struct propxl *pmprop;
-        for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
-             pmprop++) {
-            if (pmprop->prop == property &&
-                pmprop->xl <= (mon == &youmonst ? u.ulevel : mon->m_lev)) {
-                if (pmprop->mnum == monsndx(mdat_role))
-                    rv |= W_MASK(os_role);
-                if (mdat_race && pmprop->mnum == monsndx(mdat_race))
-                    rv |= W_MASK(os_race);
-                if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
-                    rv |= W_MASK(os_polyform);
+        if (reasons & FROMFORM) {
+            for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
+                 pmprop++) {
+                if (pmprop->prop == property &&
+                    pmprop->xl <= (mon == &youmonst ? u.ulevel : mon->m_lev)) {
+                    if (pmprop->mnum == monsndx(mdat_role))
+                        rv |= W_MASK(os_role);
+                    if (mdat_race && pmprop->mnum == monsndx(mdat_race))
+                        rv |= W_MASK(os_race);
+                    if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
+                        rv |= W_MASK(os_polyform);
+                }
             }
+            if (pm_has_property(mdat_role, property) > 0)
+                rv |= W_MASK(os_role);
+            if (mdat_race && pm_has_property(mdat_race, property) > 0)
+                rv |= W_MASK(os_race);
+            if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
+                rv |= W_MASK(os_polyform);
         }
-        if (pm_has_property(mdat_role, property) > 0)
-            rv |= W_MASK(os_role);
-        if (mdat_race && pm_has_property(mdat_race, property) > 0)
-            rv |= W_MASK(os_race);
-        if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
-            rv |= W_MASK(os_polyform);
 
         /* External circumstances */
         /* Fumbling on ice */
@@ -416,27 +420,59 @@ m_has_property(const struct monst *mon, enum youprop property,
             (property == HALLUC && resists_hallu(mon)) ||
             (property == INVIS && aggravating(mon)) ||
             (property == FAST && slow(mon)) ||
-            (property == WWALKING && m_dlevel(mon) && Is_waterlevel(m_mz(mon))) ||
-            mworn_blocked(mon, property))
+            (property == WWALKING && m_dlevel(mon) &&
+             Is_waterlevel(m_mz(mon))) ||
+            ((reasons & W_EQUIP) && mworn_blocked(mon, property)))
             rv |= (unsigned)(W_MASK(os_blocked));
 
-        if (mon == &youmonst)
-            youmonst.mintrinsic_cache[property] = (rv | W_MASK(os_cache));
+        if (reasons == ANY_PROPERTY)
+            set_property_cache(mon, property, rv);
     }
     rv &= ~W_MASK(os_cache);
 
-    /* If a property is blocked, turn off all flags except circumstance/birthopt,
-       unless even_if_blocked is TRUE. Yes, including os_blocked, because not
-       doing that would interfere with macros and whatnot. */
+    /* If a property is blocked, turn off all flags except
+       circumstance/birthopt, unless even_if_blocked is TRUE. Yes, including
+       os_blocked, because not doing that would interfere with macros and
+       whatnot. */
     if ((rv & W_MASK(os_blocked)) && !even_if_blocked)
         rv &= (unsigned)(W_MASK(os_circumstance) |
                          W_MASK(os_birthopt));
     return rv & reasons;
 }
 
+void
+set_property_cache(const struct monst *mon, enum youprop prop, unsigned reason)
+{
+    struct ecache *cache = mx_ecache(mon);
+    if (!cache)
+        panic("No property cache for %s.", pm_male(monsndx(mon->data)));
+
+    cache->intrinsic[prop] = (reason | W_MASK(os_cache));
+}
+
+void
+clear_property_cache(const struct monst *mon, enum youprop prop)
+{
+    struct ecache *cache = mx_ecache(mon);
+    if (!cache)
+        panic("No property cache for %s.", pm_male(monsndx(mon->data)));
+
+    cache->intrinsic[prop] = 0;
+}
+
+unsigned
+property_cache(const struct monst *mon, enum youprop prop)
+{
+    struct ecache *cache = mx_ecache(mon);
+    if (!cache)
+        panic("No property cache for %s.", pm_male(monsndx(mon->data)));
+
+    return cache->intrinsic[prop];
+}
+
 /* Returns a bitmask containing all slots that confer immunities.
-   Immunities are generally gained from extrinsics and from innate trinsics which you
-   always had. */
+   Immunities are generally gained from extrinsics and from innate trinsics
+   which you always had. */
 unsigned
 has_immunity(const struct monst *mon, enum youprop property)
 {
@@ -865,7 +901,7 @@ set_property(struct monst *mon, enum youprop prop,
              int type, boolean forced)
 {
     /* Invalidate property cache */
-    mon->mintrinsic_cache[prop] = 0;
+    clear_property_cache(mon, prop);
 
     boolean increased = FALSE;
     if (mon->mintrinsic[prop] & TIMEOUT_RAW && type > 0)
@@ -892,7 +928,7 @@ set_property(struct monst *mon, enum youprop prop,
     }
 
     /* Invalidate property cache again (since it's polled in this function) */
-    mon->mintrinsic_cache[prop] = 0;
+    clear_property_cache(mon, prop);
 
     if (forced)
         return FALSE;
@@ -1000,7 +1036,7 @@ update_property(struct monst *mon, enum youprop prop,
         return FALSE;
 
     /* Invalidate property cache */
-    mon->mintrinsic_cache[prop] &= ~W_MASK(os_cache);
+    clear_property_cache(mon, prop);
 
     /* Don't do anything during initialization. This is safe, and prevents
        messages pertaining to trinsics from showing during newgame. */

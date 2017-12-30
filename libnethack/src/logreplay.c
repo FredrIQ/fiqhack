@@ -283,9 +283,11 @@ replay_set_windowport(void)
     windowprocs = replay_windowprocs;
 }
 
-/* Resets back to the original windowport and refreshes the screen */
+/* Resets back to the original windowport and refreshes the screen. Use silent
+   to avoid refreshing the screen -- used if you need to i.e. panic, which needs
+   to avoid the refresh itself chaining panics. */
 void
-replay_reset_windowport(void)
+replay_reset_windowport(boolean silent)
 {
     if (!replay.replaying)
         return;
@@ -293,6 +295,9 @@ replay_reset_windowport(void)
     replay.replaying = FALSE;
     if (orig_winprocs.win_request_command)
         windowprocs = orig_winprocs;
+
+    if (silent)
+        return;
 
     vision_reset();
     doredraw();
@@ -335,7 +340,7 @@ void
 replay_init(void)
 {
     /* reset the windowport in case we left it in the replay one */
-    replay_reset_windowport();
+    replay_reset_windowport(FALSE);
 
     /* are we even in replaymode? */
     if (program_state.followmode != FM_REPLAY)
@@ -408,7 +413,7 @@ replay_init(void)
 static void
 replay_goal_reached(void)
 {
-    replay_reset_windowport();
+    replay_reset_windowport(FALSE);
     replay.target = replay.action;
     replay.target_is_move = FALSE;
     replay.in_load = FALSE;
@@ -570,7 +575,7 @@ replay_done_noreturn(void)
        main loop from this point, so reset the windowport and parse commands
        until we switch target, then restart and let replay_init do what is
        needed. */
-    replay_reset_windowport();
+    replay_reset_windowport(FALSE);
     replay.in_load = FALSE;
 
     struct nh_cmd_and_arg cmd;

@@ -861,7 +861,7 @@ extern void log_game_state(void);
 
 /* ### logreplay.c ### */
 
-extern void replay_reset_windowport(void);
+extern void replay_reset_windowport(boolean);
 extern boolean replay_delay(void);
 extern void replay_init(void);
 extern boolean replay_want_userinput(void);
@@ -976,6 +976,7 @@ GEN_EXTYP_PROT(edog, monst, m)
 GEN_EXTYP_PROT(epri, monst, m)
 GEN_EXTYP_PROT(eshk, monst, m)
 GEN_EXTYP_PROT(egd, monst, m)
+GEN_EXTYP_PROT(ecache, monst, m)
 GEN_EXTYP_PROT(monst, obj, o)
 
 # undef GEN_EXTYP_PROT
@@ -1567,6 +1568,9 @@ extern boolean any_property(struct monst *);
 extern int pm_has_property(const struct permonst *, enum youprop);
 extern unsigned m_has_property(const struct monst *, enum youprop,
                                unsigned, boolean);
+extern void set_property_cache(const struct monst *, enum youprop, unsigned);
+extern void clear_property_cache(const struct monst *, enum youprop);
+extern unsigned property_cache(const struct monst *, enum youprop);
 extern unsigned has_immunity(const struct monst *, enum youprop);
 extern boolean m_helpless(const struct monst *, enum helpless_mask mask);
 extern boolean u_helpless(enum helpless_mask mask);

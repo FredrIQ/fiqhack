@@ -1110,7 +1110,7 @@ helpless(int turns, enum helpless_reason reason, const char *cause,
 
     if (reason == hr_asleep || reason == hr_fainted) {
         /* Reset blindness trinsic cache */
-        youmonst.mintrinsic_cache[BLINDED] = 0;
+        clear_property_cache(&youmonst, BLINDED);
         turnstate.vision_full_recalc = 1;
         see_monsters(FALSE);
         see_objects(FALSE);

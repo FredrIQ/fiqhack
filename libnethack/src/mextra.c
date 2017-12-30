@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
 /* Copyright (c) Fredrik Ljungdahl, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -101,6 +101,7 @@ GEN_EXTYP(edog, monst, m, free)
 GEN_EXTYP(epri, monst, m, free)
 GEN_EXTYP(eshk, monst, m, free)
 GEN_EXTYP(egd, monst, m, free)
+GEN_EXTYP(ecache, monst, m, free)
 GEN_EXTYP(monst, obj, o, dealloc_monst) /* dealloc_monst frees mextra */
 
 #undef GEN_EXBASE
@@ -138,6 +139,9 @@ mx_copy(struct monst *mon, const struct monst *mtmp)
         mx_egd_new(mon);
         memcpy(mx_egd(mon), mx_egd(mtmp), sizeof (struct egd));
     }
+
+    /* Do not copy cache, but make a new one */
+    mx_ecache_new(mon);
 }
 
 void
@@ -152,6 +156,7 @@ mx_free(struct monst *mon)
     mx_epri_free(mon);
     mx_eshk_free(mon);
     mx_egd_free(mon);
+    mx_ecache_free(mon);
     if (mon->mextra) /* the above frees run possiblyfree */
         panic("trying to free mextra failed?");
 }
@@ -161,7 +166,7 @@ mx_possiblyfree(struct monst *mon)
 {
     struct mextra *mx = mon->mextra;
     if (!mx || mx->eyou || mx->edog || mx->epri || mx->eshk || mx->egd ||
-        mx->name)
+        mx->ecache || mx->name)
         return;
 
     free(mon->mextra);
@@ -219,7 +224,8 @@ mxcontent(const struct monst *mon)
         (mx->eyou ? MX_EYOU : 0) |
         (mx->epri ? MX_EPRI : 0) |
         (mx->eshk ? MX_ESHK : 0) |
-        (mx->egd ? MX_EGD : 0);
+        (mx->egd ? MX_EGD : 0) |
+        (mx->ecache ? MX_ECACHE : 0);
 }
 
 int
@@ -462,6 +468,9 @@ save_mextra(struct memfile *mf, const struct monst *mon)
         mwrite8(mf, mx->egd->gddone);
         for (i = 0; i < FCSIZ; i++)
             save_fcorr(mf, &(mx->egd)->fakecorr[i]);
+    }
+    if (extyp & MX_ECACHE) {
+        /* not saved */
     }
 }
 

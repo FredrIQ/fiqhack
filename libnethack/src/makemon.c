@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -770,6 +770,7 @@ clone_mon(struct monst *mon, xchar x, xchar y)
 
     m2->minvent = NULL; /* objects don't clone */
     m2->mextra = NULL; /* created later if necessary */
+    mx_ecache_new(m2);
     m2->mleashed = FALSE;
     /* Max HP the same, but current HP halved for both.  The caller might want
        to override this by halving the max HP also. When current HP is odd, the
@@ -948,6 +949,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     propagate(mndx, countbirth, FALSE);
 
     mtmp = newmonst();
+    mx_ecache_new(mtmp);
     if (mmflags & MM_EDOG)
         mx_edog_new(mtmp);
     else if (mmflags & MM_EMIN)
@@ -2051,6 +2053,7 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         mon->dlevel = l;
     } else
         mon = mtmp;
+    mx_ecache_new(mon);
 
     idx = mread32(mf);
     switch (idx) {
