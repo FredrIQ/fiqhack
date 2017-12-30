@@ -182,7 +182,7 @@ replay_display_objects(
 static void
 replay_list_items(struct nh_objlist *ml, boolean invent)
 {
-    orig_winprocs.win_list_items(ml, invent);
+    dealloc_objmenulist(ml);
 }
 
 static void
@@ -197,10 +197,8 @@ replay_update_screen(struct nh_dbuf_entry unused1[ROWNO][COLNO],
 static void
 replay_raw_print(const char *message)
 {
-    orig_winprocs.win_raw_print(message);
-
-    /* This means something went wrong. Force-revert the windowport. */
-    replay_reset_windowport();
+    if (!replay.desyncs)
+        orig_winprocs.win_raw_print(message);
 }
 
 static struct nh_query_key_result
@@ -300,8 +298,9 @@ replay_reset_windowport(void)
     doredraw();
     notify_levelchange(NULL);
     bot();
-    flush_screen();
     update_inventory();
+    update_location(FALSE);
+    flush_screen();
     replay.last_load = utc_time();
 }
 

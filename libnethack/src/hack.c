@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-26 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -835,7 +835,7 @@ init_test_move_cache(struct test_move_cache *cache)
     cache->halluc = !!Hallucination;
     cache->passwall = !!Passes_walls;
     cache->grounded = !!Ground_based;
-
+    cache->wt_over_cap = inv_weight_over_cap();
     cache->instead_of_pushing_boulder = FALSE;
 }
 
@@ -982,7 +982,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
     /* Can we be blocked by a boulder? */
     if (!throws_rocks(youmonst.data) &&
         !(verysmall(youmonst.data) && !u.usteed) &&
-        !((!youmonst.minvent || inv_weight_over_cap() <= -850) && !u.usteed)) {
+        !((!youmonst.minvent || cache->wt_over_cap <= -850) && !u.usteed)) {
         /* We assume we can move boulders when we're at a distance from them.
            When it comes to actually do the move, resolve_uim() may replace the
            move with a #pushboulder command. If it doesn't, the move fails
