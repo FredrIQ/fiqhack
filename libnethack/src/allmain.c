@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -631,10 +631,8 @@ just_reloaded_save:
         if (cmdlist[cmdidx].flags & CMD_NOTIME) {
             if (!flags.incomplete)
                 log_revert_command(cmd.cmd);
-        } else if (!u_helpless(hm_all) &&
-                   ((program_state.followmode == FM_REPLAY &&
-                     !check_turnstate_move(FALSE)) ||
-                    !flags.incomplete || flags.interrupted))
+        } else if ((!flags.incomplete || flags.interrupted) &&
+                   !u_helpless(hm_all))
             neutral_turnstate_tasks();
 
         /* Note: neutral_turnstate_tasks() frees cmd (because it frees all
