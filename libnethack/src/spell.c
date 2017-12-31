@@ -1862,13 +1862,6 @@ spelleffects(boolean atme, struct musable *m)
     case SPE_SUMMON_NASTY:
         cc.x = dx;
         cc.y = dy;
-        count = nasty(mon, cc);
-        if (count) {
-            pline(you ? msgc_actionok : msgc_levelwarning,
-                  "%s from nowhere!", count > 1 ? "Monsters appear" :
-                  "A monster appears");
-        } else if (you)
-            pline(msgc_substitute, "You feel lonely.");
         /* summoning aggravates the target */
         struct monst *mtmp = m_at(level, cc.x, cc.y);
         if (mtmp && you) {
@@ -1877,6 +1870,13 @@ spelleffects(boolean atme, struct musable *m)
             else if (mtmp->mpeaceful)
                 setmangry(mtmp);
         }
+        count = nasty(mon, cc);
+        if (count) {
+            pline(you ? msgc_actionok : msgc_levelwarning,
+                  "%s from nowhere!", count > 1 ? "Monsters appear" :
+                  "A monster appears");
+        } else if (you)
+            pline(msgc_substitute, "You feel lonely.");
         break;
     case SPE_CLAIRVOYANCE:
         if (!you) {
