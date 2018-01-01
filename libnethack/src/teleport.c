@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -21,6 +21,9 @@ static void mvault_tele(struct monst *);
  *
  * This function might be called during level generation, so should return
  * deterministic results.
+ *
+ * This function, via distmap, is the most commonly called function in the
+ * entire game, so logic order matters.
  */
 boolean
 goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
@@ -38,6 +41,22 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
     if (mtmp != &youmonst && x == u.ux && y == u.uy &&
         (!u.usteed || mtmp != u.usteed) && !(gpflags & MM_IGNOREMONST))
         return FALSE;
+
+    if (mtmp) {
+        mdat = mtmp->data;
+        if (IS_STWALL(lev->locations[x][y].typ)) {
+            /* phasing(mtmp) */
+            if (pm_phasing(mdat) && may_passwall(lev, x, y))
+                return TRUE;
+            if (gpflags & MM_CHEWROCK && may_dig(lev, x, y))
+                return TRUE;
+        }
+    }
+
+    if (!ACCESSIBLE(lev->locations[x][y].typ)) {
+        if (!(is_pool(lev, x, y) && ignorewater))
+            return FALSE;
+    }
 
     if (mtmp) {
         struct monst *mtmp2 = (gpflags & MM_IGNOREMONST) ?
@@ -58,7 +77,6 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
         if (mtmp2 && (mtmp2 != mtmp || mtmp->wormno))
             return FALSE;
 
-        mdat = mtmp->data;
         /* TODO: this function depends on mtmp not necessarily being fully valid.
            thus, we can't check general properties for now... */
         if (is_pool(lev, x, y) && !ignorewater) {
@@ -80,24 +98,13 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
             /* return (!!levitates(mtmp) || !!flying(mtmp) ||
                likes_lava(mtmp->data)); */
         }
-        if (IS_STWALL(lev->locations[x][y].typ)) {
-            /* phasing(mtmp) */
-            if (pm_phasing(mdat) && may_passwall(lev, x, y))
-                return TRUE;
-            if (gpflags & MM_CHEWROCK && may_dig(lev, x, y))
-                return TRUE;
-        }
-    }
-    if (!ACCESSIBLE(lev->locations[x][y].typ)) {
-        if (!(is_pool(lev, x, y) && ignorewater))
-            return FALSE;
     }
 
     if (!(gpflags & MM_IGNOREDOORS) && closed_door(lev, x, y) &&
         (!mdat || !amorphous(mdat)))
         return FALSE;
-    if (!(gpflags & MM_IGNOREDOORS) && sobj_at(BOULDER, lev, x, y) &&
-        (!mdat || !throws_rocks(mdat)))
+    if (!(gpflags & MM_IGNOREDOORS) && (!mdat || !throws_rocks(mdat)) &&
+        sobj_at(BOULDER, lev, x, y))
         return FALSE;
     return TRUE;
 }

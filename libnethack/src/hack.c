@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1158,6 +1158,8 @@ void
 distmap_init(struct distmap_state *ds, int x1, int y1, struct monst *mtmp)
 {
     memset(ds->onmap, 0, sizeof ds->onmap);
+    memset(ds->goodpos, 0, sizeof ds->goodpos);
+    memset(ds->goodpos_cached, 0, sizeof ds->goodpos_cached);
 
     ds->curdist = 0;
     ds->tslen = 1;
@@ -1202,8 +1204,13 @@ distmap(struct distmap_state *ds, int x2, int y2)
                 for (dx = -1; dx <= 1; dx++) {
                     if (!isok(x + dx, y + dy))
                         continue;
-                    if (!goodpos(ds->mon->dlevel, x + dx, y + dy,
-                                 ds->mon, ds->mmflags))
+                    if (!ds->goodpos_cached[x + dx][y + dy]) {
+                        ds->goodpos_cached[x + dx][y + dy] = TRUE;
+                        ds->goodpos[x + dx][y + dy] =
+                            goodpos(ds->mon->dlevel, x + dx, y + dy,
+                                    ds->mon, ds->mmflags);
+                    }
+                    if (!ds->goodpos[x + dx][y + dy])
                         continue;
 
                     ds->travelstepx[(ds->curdist + 1) % 2][ds->tslen] = x + dx;
