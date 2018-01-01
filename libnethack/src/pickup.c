@@ -2180,11 +2180,11 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
     menuitem(':', "Look inside %s", TRUE);
     menuitem('o', "Take something out of %s", outokay);
     menuitem('i', "Put something into %s", inokay);
-    menuitem('b', "both; take out, then put in", outokay);
-    menuitem('r', "both reversed; put in, then take out", inokay);
-    menuitem('s', "stash one item into %s", inokay);
-    menuitem('n', "loot next container", more_containers);
-    menuitem('q', alreadyused ? "done" : "do nothing", TRUE);
+    menuitem('b', "Both; take out, then put in", outokay);
+    menuitem('r', "Both reversed; put in, then take out", inokay);
+    menuitem('s', "Stash one item into %s", inokay);
+    menuitem('n', "Loot next container", more_containers);
+    menuitem('q', alreadyused ? "Done" : "Do nothing", TRUE);
 #undef menuitem
 
     n = display_menu(&menu, prompt, PICK_ONE, PLHINT_CONTAINER, &selection);
