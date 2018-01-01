@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-28 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -922,11 +922,21 @@ you_moved(void)
                 }
             }
 
-            if (youmonst.pw < youmonst.pwmax && wtcap < MOD_ENCUMBER) {
-                youmonst.pw +=
-                    regeneration_by_rate(regen_rate(&youmonst, TRUE));
+            int pwrate = regeneration_by_rate(regen_rate(&youmonst, TRUE));
+            if (pwrate < 0 ||
+                (youmonst.pw < youmonst.pwmax && wtcap < MOD_ENCUMBER)) {
+                youmonst.pw += pwrate;
+
                 if (youmonst.pw > youmonst.pwmax)
                     youmonst.pw = youmonst.pwmax;
+                else if (youmonst.pw < 0) {
+                    youmonst.pw = 0;
+                    if (youmonst.spells_maintained) {
+                        pline(msgc_intrloss,
+                              "You can no longer maintain any spells.");
+                        youmonst.spells_maintained = 0;
+                    }
+                }
             }
 
             if (!hpfull && *hp == *hpmax)

@@ -1785,6 +1785,7 @@ extern boolean spell_maintained(const struct monst *, int);
 extern void spell_maintain(struct monst *, int);
 extern void spell_unmaintain(struct monst *, int);
 extern void run_maintained_spells(struct level *);
+extern int maintenance_pw_drain(const struct monst *);
 extern int study_book(struct obj *, const struct nh_cmd_arg *);
 extern void age_spells(void);
 extern void update_supernatural_abilities(void);

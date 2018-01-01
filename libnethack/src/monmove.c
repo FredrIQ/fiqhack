@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -119,18 +119,19 @@ onscary(int x, int y, const struct monst *mtmp)
 int
 regeneration_by_rate(int regen_rate)
 {
+    int absrate = abs(regen_rate);
     int ret = regen_rate / 100;
-    regen_rate %= 100;
+    absrate %= 100;
     int movecount = moves % 100;
     int rate_counter = 0;
     int i;
     for (i = 0; i <= movecount; i++) {
         if (rate_counter >= 100)
             rate_counter -= 100;
-        rate_counter += regen_rate;
+        rate_counter += absrate;
     }
     if (rate_counter >= 100)
-        ret++;
+        ret += sgn(regen_rate);
     return ret;
 }
 
@@ -162,6 +163,9 @@ regen_rate(const struct monst *mon, boolean energy)
     if (regen < 1)
         regen = 1;
 
+    if (energy)
+        regen -= maintenance_pw_drain(mon);
+
     return regen;
 }
 
@@ -176,6 +180,10 @@ mon_regen(struct monst *mon, boolean digest_meal)
     mon->pw += regeneration_by_rate(regen_rate(mon, TRUE));
     if (mon->pw > mon->pwmax)
         mon->pw = mon->pwmax;
+    if (mon->pw < 0) {
+        mon->pw = 0;
+        mon->spells_maintained = 0;
+    }
 
     if (mon->mspec_used)
         mon->mspec_used--;

@@ -750,18 +750,18 @@ run_maintained_spells(struct level *lev)
                 continue;
             }
 
-            /* Decrease power depending on spell level and proficiency. If an
-               attempted cast fails 5 times in a row, unmaintain the spell. */
+            /* If an attempted cast fails 5 times in a row,
+               unmaintain the spell. */
             int chance = percent_success(mon, spell);
-            int moves_modulo = 5;
-            while (moves_modulo) {
+            int tries = 5;
+            while (tries) {
                 if (rnd(100) > chance) {
-                    moves_modulo--;
+                    tries--;
                     continue;
                 }
                 break;
             }
-            if (!moves_modulo) {
+            if (!tries) {
                 if (mon == &youmonst)
                     pline(msgc_intrloss, "Your limited ability with %s causes "
                           "you to fumble and lose maintaining of it!", splname);
@@ -769,26 +769,41 @@ run_maintained_spells(struct level *lev)
                 continue;
             }
 
-            int spell_level = objects[spell].oc_level;
-            if (mon_has_amulet(mon))
-                spell_level *= 2;
-            if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
-                spell_level *= 2; /* needs more to maintain manually */
-            if (!(moves % moves_modulo)) {
-                if (mon->pw < spell_level) {
-                    if (mon == &youmonst)
-                        pline(msgc_intrloss,
-                              "You lack the energy to maintain %s.",
-                              splname);
-                    spell_unmaintain(mon, spell);
-                    continue;
-                }
-                mon->pw -= spell_level;
-            }
-
             run_maintained_spell(mon, spell);
         }
     }
+}
+
+/* Returns the energy regeneration rate penalty caused by spell maintenance.
+   Spells you have lower success% in drain more. */
+int
+maintenance_pw_drain(const struct monst *mon)
+{
+    int spell;
+    int total_cost = 0;
+    for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
+        if (!spell_maintained(mon, spell))
+            continue;
+
+        int cost = objects[spell].oc_level;
+        cost *= 25;
+        if (mon_has_amulet(mon))
+            cost *= 2;
+        if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
+            cost *= 2; /* needs more to maintain manually */
+
+        int chance = percent_success(mon, spell);
+        if (!chance)
+            cost *= 100;
+        else {
+            cost *= 100;
+            cost /= chance;
+        }
+
+        total_cost += cost;
+    }
+
+    return total_cost;
 }
 
 static void
