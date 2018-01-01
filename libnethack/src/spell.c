@@ -501,6 +501,10 @@ learn_spell(int spell, boolean from_book, boolean perma)
                       spellname(i));
                 makeknown(spell);
                 return TRUE;
+            } else if (spellknow(i) == PERMA) {
+                pline(msgc_cancelled,
+                      "You already have perfect knowledge of %s.",
+                      spellname(i));
             } else if (spellknow(i) > 1000 && from_book) {
                 pline(msgc_hint, "You know %s quite well already.", spellname(i));
                 if (yn("Do you want to read the book anyway?") == 'n')
