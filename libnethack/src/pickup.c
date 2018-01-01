@@ -2181,8 +2181,8 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
     menuitem('o', "Take something out of %s", outokay);
     menuitem('i', "Put something into %s", inokay);
     menuitem('b', "both; take out, then put in", outokay);
-    menuitem('r', "both reversed; put in, then take out", outokay);
-    menuitem('s', "stash one item into %s", outokay);
+    menuitem('r', "both reversed; put in, then take out", inokay);
+    menuitem('s', "stash one item into %s", inokay);
     menuitem('n', "loot next container", more_containers);
     menuitem('q', alreadyused ? "done" : "do nothing", TRUE);
 #undef menuitem
