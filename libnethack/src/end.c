@@ -1095,8 +1095,7 @@ container_contents(struct obj *list, boolean identified,
             } else if (ingame || !done_stopprint) {
                 pline(msgc_info, "%s %sempty.", Tobjnam(box, "are"),
                       quantum_cat ? "now " : "");
-                if (!ingame)
-                    win_pause_output(P_MESSAGE);
+                win_pause_output(P_MESSAGE);
             }
         }
         if (!all_containers)
