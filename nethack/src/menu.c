@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-15 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -636,10 +636,13 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
                 break;
 
             case ':':                       /* search for a menu item */
-                curses_getline("Search:", mdat, menu_search_callback);
-                break;
-
-            /* try to find an item for this key and, if one is found, select it */
+                /* check if we have a ':' accelerator, just in case */
+                idx = find_accel(key, mdat);
+                if (idx == -1) {
+                    curses_getline("Search:", mdat, menu_search_callback);
+                    break;
+                }
+                /* else fall through */
             default:
                 if (mdat->how == PICK_LETTER) {
                     if (key >= 'a' && key <= 'z') {
@@ -1062,16 +1065,20 @@ curses_display_objects(
                         *mdat->visselected[i] = *mdat->visselected[i] ? 0 : -1;
                 break;
 
-            case ':':                              /* search for a menu item */
-                curses_getline("Search:", mdat, menu_search_callback);
-                break;
-
             case KEY_BACKSPACE:                    /* edit selection count */
                 mdat->selcount /= 10;
                 if (mdat->selcount == 0)
                     mdat->selcount = -1;    /* -1: select all */
                 break;
 
+            case ':':                              /* search for a menu item */
+                /* check if we have a ':' accelerator, just in case */
+                idx = find_objaccel(key, mdat);
+                if (idx == -1) {
+                    curses_getline("Search:", mdat, menu_search_callback);
+                    break;
+                }
+                /* else fall through */
             default:
                 /* selection allows an item count */
                 if (key >= '0' && key <= '9') {

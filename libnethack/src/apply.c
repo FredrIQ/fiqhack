@@ -3237,7 +3237,9 @@ doapply(const struct nh_cmd_arg *arg)
     case SACK:
     case BAG_OF_HOLDING:
     case OILSKIN_SACK:
-        res = use_container(obj, 1);
+        res = use_container(obj, 1, FALSE, FALSE);
+        if (res < 0)
+            res = 0;
         break;
     case BAG_OF_TRICKS:
         bagotricks(obj);

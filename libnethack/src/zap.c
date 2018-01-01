@@ -1835,7 +1835,7 @@ bhito(struct obj *obj, struct obj *otmp)
                     /* view contents (not recursively) */
                     for (o = obj->cobj; o; o = o->nobj)
                         o->dknown = 1;  /* "seen", even if blind */
-                    display_cinventory(obj);
+                    container_contents(obj, FALSE, FALSE, TRUE);
                 }
                 res = 1;
             }

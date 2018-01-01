@@ -548,6 +548,7 @@ extern void set_delayed_killer(int how, const char *killer);
 extern const char *delayed_killer(int how);
 extern void clear_delayed_killers(void);
 extern void nonfatal_dump_core(void);
+extern void container_contents(struct obj *, boolean, boolean, boolean);
 extern noreturn void terminate(enum nh_play_status);
 extern noreturn void panic_core(const char *, int, const char *, ...)
     PRINTFLIKE(3,4);
@@ -1442,7 +1443,7 @@ extern struct obj *pick_obj(struct obj *);
 extern int encumber_msg(int);
 extern int doloot(const struct nh_cmd_arg *);
 extern void observe_quantum_cat(struct obj *);
-extern int use_container(struct obj *, int);
+extern int use_container(struct obj *, int, boolean, boolean);
 extern int loot_mon(struct monst *, int *, boolean *);
 extern const char *safe_qbuf(const char *, unsigned, const char *, const char *,
                              const char *);

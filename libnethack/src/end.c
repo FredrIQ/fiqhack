@@ -47,7 +47,6 @@ static int artifact_score(struct obj *, boolean, struct nh_menulist *);
 static void savelife(int);
 static boolean check_survival(int how);
 static boolean should_query_disclose_options(char *defquery);
-static void container_contents(struct obj *, boolean, boolean);
 
 #define done_stopprint program_state.stopprint
 
@@ -313,7 +312,7 @@ disclose(int how, boolean taken, long umoney)
                         learn_oprop(obj, obj_properties(obj));
                 }
                 display_inventory(NULL, FALSE);
-                container_contents(youmonst.minvent, TRUE, TRUE);
+                container_contents(youmonst.minvent, TRUE, TRUE, FALSE);
             }
             if (c == 'q')
                 done_stopprint++;
@@ -370,7 +369,7 @@ dump_disclose(int how)
         obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
     }
     display_inventory(NULL, TRUE);
-    container_contents(youmonst.minvent, TRUE, TRUE);
+    container_contents(youmonst.minvent, TRUE, TRUE, FALSE);
     dump_spells();
     dump_skills();
     enlightenment(how > LAST_KILLER ? 1 : 2);     /* final */
@@ -1035,8 +1034,9 @@ done_noreturn(int how, const char *killer)
 }
 
 
-static void
-container_contents(struct obj *list, boolean identified, boolean all_containers)
+void
+container_contents(struct obj *list, boolean identified,
+                   boolean all_containers, boolean ingame)
 {
     struct obj *box, *obj;
     int i, icount;
@@ -1044,11 +1044,19 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
 
     for (box = list; box; box = box->nobj) {
         if (Is_container(box) || box->otyp == STATUE) {
-            if (box->otyp == BAG_OF_TRICKS) {
+            if (box->otyp == BAG_OF_TRICKS)
                 continue;       /* wrong type of container */
-            } else if (box->cobj) {
-                /* count contained objects */
 
+            boolean quantum_cat = FALSE;
+
+            if ((box->spe == 1) && (box->otyp != STATUE) &&
+                ingame) {
+                observe_quantum_cat(box);
+                quantum_cat = TRUE;
+            }
+
+            if (box->cobj) {
+                /* count contained objects */
                 icount = 0;
                 for (obj = box->cobj; obj; obj = obj->nobj)
                     icount++;
@@ -1082,11 +1090,13 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                                 PICK_NONE, PLHINT_CONTAINER, NULL);
 
                 if (all_containers)
-                    container_contents(box->cobj, identified, TRUE);
+                    container_contents(box->cobj, identified, TRUE, FALSE);
 
-            } else if (!done_stopprint) {
-                pline(msgc_info, "%s empty.", Tobjnam(box, "are"));
-                win_pause_output(P_MESSAGE);
+            } else if (ingame || !done_stopprint) {
+                pline(msgc_info, "%s %sempty.", Tobjnam(box, "are"),
+                      quantum_cat ? "now " : "");
+                if (!ingame)
+                    win_pause_output(P_MESSAGE);
             }
         }
         if (!all_containers)

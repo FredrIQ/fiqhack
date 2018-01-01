@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,8 @@ static int in_container(struct obj *);
 static int out_container(struct obj *);
 static long mbag_item_gone(int, struct obj *);
 static int menu_loot(int, struct obj *, boolean);
-static int in_or_out_menu(const char *, struct obj *, boolean, boolean);
+static int in_or_out_menu(const char *, struct obj *, boolean, boolean,
+                          boolean, boolean);
 static int container_at(int, int, boolean);
 static boolean able_to_loot(int, int);
 static boolean mon_beside(int, int);
@@ -1338,7 +1339,13 @@ lootcont:
 
                 pline(msgc_occstart, "You carefully open %s...",
                       the(xname(cobj)));
-                timepassed |= use_container(cobj, 0);
+                int res = use_container(cobj, 0, !!timepassed,
+                                        (i + 1) < n);
+                if (res == -1)
+                    break;
+
+                timepassed |= res;
+
                 if (u_helpless(hm_all)) {        /* e.g. a chest trap */
                     free(lootlist);
                     return 1;
@@ -1888,14 +1895,19 @@ observe_quantum_cat(struct obj *box)
 
 #undef Icebox
 
+static const char stashable[] = {ALL_CLASSES, ALLOW_COUNT, 0};
+
 int
-use_container(struct obj *obj, int held)
+use_container(struct obj *obj, int held, boolean alreadyused,
+              boolean more_containers)
 {
     struct obj *curr, *otmp;
     boolean quantum_cat = FALSE, loot_out = FALSE, loot_in = FALSE;
     const char *qbuf, *emptymsg;
     long loss = 0L;
     int cnt = 0, used = 0, menu_on_request;
+    boolean reverse = FALSE;
+    boolean loot_in_single = FALSE;
 
     emptymsg = "";
     if (nohands(youmonst.data)) {
@@ -1958,7 +1970,7 @@ use_container(struct obj *obj, int held)
 
         if (flags.menu_style == MENU_FULL) {
             int t;
-            char menuprompt[BUFSZ];
+            const char *menuprompt;
             boolean outokay = (cnt != 0);
             boolean inokay = (youmonst.minvent != 0);
 
@@ -1967,24 +1979,47 @@ use_container(struct obj *obj, int held)
                 pline(msgc_info, "You don't have anything to put in.");
                 return used;
             }
-            menuprompt[0] = '\0';
+            menuprompt = "Do what?";
             if (!cnt)
-                snprintf(menuprompt, SIZE(menuprompt), "%s ", emptymsg);
-            strcat(menuprompt, "Do what?");
-            t = in_or_out_menu(menuprompt, current_container, outokay, inokay);
-            if (t <= 0) {
+                menuprompt = msgprintf("%s is empty.  %s",
+                                       The(xname(current_container)),
+                                       menuprompt);
+            do {
+                t = in_or_out_menu(menuprompt, current_container, outokay, inokay,
+                                   alreadyused, more_containers);
+                if (t == ':') {
+                    container_contents(current_container, FALSE, FALSE, TRUE);
+                    update_container_memory(current_container);
+                }
+            } while (t == ':');
+
+            if (!t || t == 'n') {
                 update_container_memory(current_container);
                 return 0;
+            } else if (t == 'q') {
+                update_container_memory(current_container);
+                return -1; /* completely cancelled */
             }
-            loot_out = (t & 0x01) != 0;
-            loot_in = (t & 0x02) != 0;
+
+            if (strchr("ibrs", t)) {
+                loot_in = TRUE;
+                if (t == 's')
+                    loot_in_single = TRUE;
+            }
+
+            if (strchr("obr", t))
+                loot_out = TRUE;
+
+            if (t == 'r')
+                reverse = TRUE;
         } else {        /* MENU_PARTIAL */
             loot_out = (yn_function(qbuf, ynqchars, 'n') == 'y');
         }
 
-        if (loot_out) {
+        if (loot_out && !reverse) {
             add_valid_menu_class(0);    /* reset */
             used |= menu_loot(0, current_container, FALSE) > 0;
+            loot_out = FALSE;
         }
 
     } else {
@@ -1993,9 +2028,11 @@ use_container(struct obj *obj, int held)
 
     if (!youmonst.minvent) {
         /* nothing to put in, but some feedback is necessary */
-        pline(msgc_info, "You don't have anything to put in.");
+        pline(msgc_info, "You don't have anything to %s.",
+              loot_in_single ? "stash" : "put in");
         update_container_memory(current_container);
-        return used;
+        if (!loot_out)
+            return used;
     }
     if (flags.menu_style != MENU_FULL) {
         qbuf = "Do you wish to put something in?";
@@ -2022,8 +2059,23 @@ use_container(struct obj *obj, int held)
      * putting things in an ice chest.
      */
     if (loot_in) {
-        add_valid_menu_class(0);        /* reset */
-        used |= menu_loot(0, current_container, TRUE) > 0;
+        if (!loot_in_single) {
+            add_valid_menu_class(0);        /* reset */
+            used |= menu_loot(0, current_container, TRUE) > 0;
+        } else {
+            struct obj *to_stash = getobj(stashable, "stash", FALSE);
+            if (to_stash && in_container(to_stash))
+                used = 1;
+        }
+    }
+
+    if (loot_out) {
+        if (current_container->cobj) {
+            add_valid_menu_class(0);    /* reset */
+            used |= menu_loot(0, current_container, FALSE) > 0;
+        } else
+            pline(msgc_info, "%s %sempty.", Tobjnam(current_container, "are"),
+                  quantum_cat ? "now " : "");
     }
 
     update_container_memory(current_container);
@@ -2109,31 +2161,39 @@ menu_loot(int retry, struct obj *container, boolean put_in)
 
 static int
 in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
-               boolean inokay)
+               boolean inokay, boolean alreadyused, boolean more_containers)
 {
-    struct nh_menuitem items[3];
+    struct nh_menulist menu;
     const int *selection;
     const char *buf;
     int n, nr = 0;
 
-    if (outokay) {
-        buf = msgprintf("Take something out of %s", the(xname(obj)));
-        set_menuitem(&items[nr++], 1, MI_NORMAL, buf, 'o', FALSE);
+    init_menulist(&menu);
+
+#define menuitem(acc, str, ok)                                          \
+    n++;                                                                \
+    if (ok) {                                                           \
+        buf = msgprintf(str, the(xname(obj)));                          \
+        add_menuitem(&menu, acc, buf, acc, FALSE);                      \
     }
 
-    if (inokay) {
-        buf = msgprintf("Put something into %s", the(xname(obj)));
-        set_menuitem(&items[nr++], 2, MI_NORMAL, buf, 'i', FALSE);
-    }
+    menuitem(':', "Look inside %s", TRUE);
+    menuitem('o', "Take something out of %s", outokay);
+    menuitem('i', "Put something into %s", inokay);
+    menuitem('b', "both; take out, then put in", outokay);
+    menuitem('r', "both reversed; put in, then take out", outokay);
+    menuitem('s', "stash one item into %s", outokay);
+    menuitem('n', "loot next container", more_containers);
+    menuitem('q', alreadyused ? "done" : "do nothing", TRUE);
+#undef menuitem
 
-    if (outokay && inokay)
-        set_menuitem(&items[nr++], 3, MI_NORMAL, "Both of the above", 'b',
-                     FALSE);
-
-    n = display_menu(&(struct nh_menulist){.items = items, .icount = nr},
-                     prompt, PICK_ONE, PLHINT_CONTAINER, &selection);
+    n = display_menu(&menu, prompt, PICK_ONE, PLHINT_CONTAINER, &selection);
     if (n > 0)
         n = selection[0];
+    else if (n == -1)
+        n = 'q';
+    else
+        n = 0;
 
     return n;
 }
