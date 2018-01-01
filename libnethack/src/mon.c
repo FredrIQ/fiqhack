@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1070,7 +1070,8 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
 
     boolean bag;
     boolean cursed_boh = FALSE; /* maybe zap cancellation later */
-    boolean found_castle_wand = FALSE; /* only ignore the first wishing wand in the castle chest */
+    /* only ignore the first wishing wand in the castle chest */
+    boolean found_castle_wand = FALSE;
     struct musable muse; /* unlocking tool, or cancellation for cursed BoH */
     init_musable(mon, &muse);
 
@@ -1080,17 +1081,13 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
         /* if this is a cursed BoH, 1/13 of the items vanishes, but only
            if the monster isn't levitating (otherwise it will unlevi before
            looting the bag) */
-        if (container && container->otyp == BAG_OF_HOLDING && container->cursed &&
-            !levitates(mon) && !rn2(13)) {
+        if (container && container->otyp == BAG_OF_HOLDING &&
+            container->cursed && !levitates(mon) && !rn2(13)) {
             obj_extract_self(obj);
             obfree(obj, NULL);
             vanish++;
             container->mbknown = 1; /* monster knows BUC now... */
             cursed_boh = TRUE;
-            if (canseemon(mon)) {
-                makeknown(BAG_OF_HOLDING);
-                container->bknown = 1; /* and so do you, if you saw it happen */
-            }
             continue;
         }
         /* For bags, monsters only loot them if they aren't already interested in
@@ -1150,17 +1147,21 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             /* unblock point after extract, before pickup */
             if (obj->otyp == BOULDER)
                 unblock_point(obj->ox, obj->oy); /* vision */
-            mpickobj(mon, obj, pickobj ? &pickobj : NULL); /* may merge and free obj */
+            /* may merge and free obj */
+            mpickobj(mon, obj, pickobj ? &pickobj : NULL);
             newsym(mon->mx, mon->my);
         }
     }
     if (vanish) {
-        if (canseemon(mon))
+        if (canseemon(mon)) {
             pline(msgc_monneutral,
                   "You barely notice %s item%s disappearing!",
                   vanish > 5 ? "several" :
                   vanish > 1 ? "a few" :
                   "an", vanish != 1 ? "s" : "");
+            tell_discovery(container);
+            container->bknown = 1; /* and so do you, if you saw it happen */
+        }
         container->owt = weight(container);
     }
     if (picked || (container && !container->mknown)) {
@@ -2143,7 +2144,6 @@ lifesaved_monster(struct monst *mtmp)
             pline(combat_msgc(mtmp, NULL, cr_hit),
                   "But wait...  %s medallion begins to glow!",
                   s_suffix(Monnam(mtmp)));
-            makeknown(AMULET_OF_LIFE_SAVING);
             if (attacktype(mtmp->data, AT_EXPL)
                 || attacktype(mtmp->data, AT_BOOM))
                 pline_implied(msgc, "%s reconstitutes!", Monnam(mtmp));
@@ -2152,6 +2152,7 @@ lifesaved_monster(struct monst *mtmp)
             else
                 pline_implied(msgc, "%s seems much better!", Monnam(mtmp));
             pline_implied(msgc, "The medallion crumbles to dust!");
+            tell_discovery(lifesave);
         }
         m_useup(mtmp, lifesave);
         mtmp->mcanmove = 1;

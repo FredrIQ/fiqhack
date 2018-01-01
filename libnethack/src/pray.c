@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1092,7 +1092,7 @@ water_prayer(boolean bless_water)
             otmp->cursed = !bless_water;
             otmp->bknown = bc_known;
             if (bc_known)
-                makeknown(POT_WATER);
+                tell_discovery(otmp);
             changed += otmp->quan;
         } else if (otmp->oclass == POTION_CLASS)
             other = TRUE;

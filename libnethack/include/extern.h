@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1352,6 +1352,7 @@ extern int find_skates(void);
 extern void freenames(void);
 extern void savenames(struct memfile *mf);
 extern void restnames(struct memfile *mf);
+extern void tell_discovery(struct obj *obj);
 extern void discover_object(int, boolean, boolean, boolean);
 extern void undiscover_object(int);
 extern int dodiscovered(const struct nh_cmd_arg *);
@@ -1757,6 +1758,7 @@ extern void yelp(struct monst *);
 extern void whimper(struct monst *);
 extern void beg(struct monst *);
 extern int dotalk(const struct nh_cmd_arg *);
+extern void explain_msg(enum message_hint, xchar);
 
 /* ### sp_lev.c ### */
 

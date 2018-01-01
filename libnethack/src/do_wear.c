@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -247,7 +247,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
                   slot == os_amul ? body_part(NECK) :
                   slot == os_tool ? body_part(FACE) : "body");
         if (update_property(&youmonst, prop, slot))
-            makeknown(o->otyp);
+            tell_discovery(o);
         update_property_for_oprops(&youmonst, o, slot);
         if (o->spe)
             learn_oprop(o, (opm_dexterity | opm_brilliance));

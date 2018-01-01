@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -134,7 +134,7 @@ static struct nh_autopickup_rules def_autopickup =
 
 /* This is statically allocated, which means a pointer to it must never escape
    this file (since nh_option_desc is supposed to be dynamically allocated).
-   
+
    The only valid use of this, therefore, is to copy it to a new
    dynamically-allocated copy and go from there. */
 static const struct nh_option_desc const_options[] = {
@@ -174,6 +174,9 @@ static const struct nh_option_desc const_options[] = {
     {"message_abbrev", "Messages and Menus",
      "abbreviate multiline messages",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"message_hints", "Messages and Menus",
+     "explain more vague game messages",
+     nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
     {"movecommand", "Commands and Confirmations",
      "what the movement keys do",
      nh_birth_ingame, OPTTYPE_ENUM, {.e = uim_standard}},
@@ -293,6 +296,7 @@ static const struct nhlib_boolopt_map boolopt_map[] = {
     {"autounlock", &flags.autounlock},
     {"corridorbranch", &flags.corridorbranch},
     {"message_abbrev", &flags.hide_implied},
+    {"message_hints", &flags.msg_hints},
     {"multistage_equip", &flags.cblock},
     {"legacy", &flags.legacy},
     {"pickup_thrown", &flags.pickup_thrown},

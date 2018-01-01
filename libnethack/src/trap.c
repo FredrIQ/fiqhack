@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1469,6 +1469,8 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
         if (otyp == BOULDER) {
             You_hear(msgc_levelsound, Hallucination ? "someone bowling." :
                      "rumbling in the distance.");
+            if (canhear())
+                explain_msg(MSGH_BOULDERTRAP, 0);
         }
         style &= ~LAUNCH_UNSEEN;
         goto roll;
@@ -2280,9 +2282,11 @@ mintrap(struct monst *mtmp)
                           "KAABLAMM!!!  %s triggers %s land mine!",
                           Monnam(mtmp), a_your[trap->madeby_u]);
                 }
-                if (!in_sight)
+                if (!in_sight) {
                     pline(msgc_levelsound,
                           "Kaablamm!  You hear an explosion in the distance!");
+                    explain_msg(MSGH_LANDMINE, 0);
+                }
                 blow_up_landmine(trap);
                 if (DEADMONSTER(mtmp))
                     trapkilled = TRUE;
@@ -3140,9 +3144,12 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
         }
     } else if (obj->oclass == POTION_CLASS) {
         if (obj->otyp == POT_ACID) {
-            if (vis)
-            pline(msgc_itemloss, "%s %s!",
-                  Shk_Your(obj), aobjnam(obj, "explode"));
+            if (vis) {
+                pline(msgc_itemloss, "%s %s!",
+                      Shk_Your(obj), aobjnam(obj, "explode"));
+                if (carried)
+                    tell_discovery(obj);
+            }
             delobj(obj);
             if (carried) {
                 int dmg = rnd(10);
@@ -3153,8 +3160,6 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
                         dmg /= 2;
                 }
 
-                if (vis)
-                    makeknown(POT_ACID);
                 if (you) {
                     update_inventory();
                     losehp(dmg,
@@ -3730,8 +3735,8 @@ disarm_squeaky_board(struct trap *ttmp, schar dx, schar dy)
     if (obj->otyp == CAN_OF_GREASE) {
         consume_obj_charge(obj, TRUE);
     } else {
+        tell_discovery(obj);
         useup(obj);     /* oil */
-        makeknown(POT_OIL);
     }
     pline(msgc_actionok, "You repair %s squeaky board.",
           the_your[ttmp->madeby_u]);

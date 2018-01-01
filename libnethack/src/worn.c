@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -401,14 +401,14 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
     if (old) {
         old->owt = weight(old);
         if (update_property(mon, objects[old->otyp].oc_oprop, slot))
-            makeknown(old->otyp);
+            tell_discovery(old);
         update_property_for_oprops(mon, old, slot);
     }
     mon->misc_worn_check |= W_MASK(slot);
     best->owornmask |= W_MASK(slot);
     best->owt = weight(best);
     if (update_property(mon, objects[best->otyp].oc_oprop, slot))
-        makeknown(best->otyp);
+        tell_discovery(best);
     update_property_for_oprops(mon, best, slot);
 }
 
@@ -509,7 +509,7 @@ do_equip(struct monst *mon, struct obj *obj,
     obj->owt = weight(obj);
     if (!redundant) {
         if (update_property(mon, prop, slot))
-            makeknown(obj->otyp);
+            tell_discovery(obj);
         update_property_for_oprops(mon, obj, slot);
         if (!mon->mhp) /* died (lost a critical property) */
             return 2;

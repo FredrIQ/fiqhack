@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-28 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2093,14 +2093,15 @@ doseduce(struct monst *mon)
                               ("\"That  looks pretty.  May I have it?\""),
                               xname(ring), simple_typename(ring->otyp),
                               "ring"));
-                makeknown(RIN_ADORNMENT);
-                if (yn(qbuf) == 'n')
+                if (yn(qbuf) == 'n') {
+                    tell_discovery(ring);
                     continue;
+                }
             } else
                 pline(msgc_itemloss,
                       "%s decides she'd like your %s, and takes it.",
                       Blind ? "She" : Monnam(mon), xname(ring));
-            makeknown(RIN_ADORNMENT);
+            tell_discovery(ring);
             unwield_silently(ring);
             setunequip(ring);
             freeinv(ring);
@@ -2120,16 +2121,17 @@ doseduce(struct monst *mon)
                                           "you wear it for me?\""),
                               xname(ring), simple_typename(ring->otyp),
                               "ring"));
-                makeknown(RIN_ADORNMENT);
-                if (yn(qbuf) == 'n')
+                if (yn(qbuf) == 'n') {
+                    tell_discovery(ring);
                     continue;
+                }
             } else {
                 pline(msgc_statusbad,
                       "%s decides you'd look prettier wearing your %s,",
                       Blind ? "He" : Monnam(mon), xname(ring));
                 pline(msgc_statusbad, "and puts it on your finger.");
             }
-            makeknown(RIN_ADORNMENT);
+            tell_discovery(ring);
             if (!uright) {
                 pline_implied(msgc_info, "%s puts %s on your right %s.",
                               Blind ? "He" : Monnam(mon), the(xname(ring)),

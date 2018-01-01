@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-31 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1890,7 +1890,7 @@ spelleffects(boolean atme, struct musable *m)
         else if (uarmh && uarmh->otyp == CORNUTHAUM) {
             pline(msgc_failcurse, "You sense a pointy hat on top of your %s.",
                   body_part(HEAD));
-            makeknown(CORNUTHAUM);
+            tell_discovery(uarmh);
         }
         break;
     case SPE_PROTECTION:

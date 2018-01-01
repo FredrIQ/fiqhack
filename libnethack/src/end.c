@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -747,15 +747,16 @@ check_survival(int how)
         u.umortality++;
         if (Lifesaved) {
             pline(msgc_statusheal, "But wait...");
-            makeknown(AMULET_OF_LIFE_SAVING);
             pline_implied(msgc_statusheal, "Your medallion %s!",
                           !Blind ? "begins to glow" : "feels warm");
             if (how == CHOKING)
                 pline_implied(msgc_statusheal, "You vomit ...");
             pline_implied(msgc_statusheal, "You feel much better!");
             pline_implied(msgc_itemloss, "The medallion crumbles to dust!");
-            if (uamul)
+            if (uamul) {
+                tell_discovery(uamul);
                 useup(uamul);
+            }
 
             adjattrib(A_CON, -1, TRUE);
             if (u.uhpmax <= 0)
@@ -943,7 +944,7 @@ done_noreturn(int how, const char *killer)
 
     if (turnstate.force_more_pending_until_done)
         win_pause_output(P_MESSAGE);
-    
+
     /* Sometimes you die on the first move.  Life's not fair. On those rare
        occasions you get hosed immediately, go out smiling... :-) -3. */
     if (moves <= 1 && how <= LAST_KILLER)   /* You die... --More-- */

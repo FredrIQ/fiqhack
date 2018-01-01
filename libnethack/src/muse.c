@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1711,7 +1711,7 @@ find_item_obj(struct obj *chain, struct musable *m,
                               "an", vanish != 1 ? "s" : "",
                               mon_nam(mon));
                         obj->bknown = 1;
-                        makeknown(obj->otyp);
+                        tell_discovery(obj);
                     }
                 }
             }
@@ -2167,7 +2167,7 @@ use_item(struct musable *m)
         if (!seffects(mon, obj, &known)) {
             if (!objects[obj->otyp].oc_name_known) {
                 if (known) {
-                    makeknown(obj->otyp);
+                    tell_discovery(obj);
                     more_experienced(0, 10);
                 } else if (!objects[obj->otyp].oc_uname)
                     docall(obj);
@@ -2184,7 +2184,7 @@ use_item(struct musable *m)
         int unkn = 0; /* unknown for other reasons */
         peffects(mon, obj, &nothing, &unkn);
         if (!nothing && !unkn && oseen)
-            makeknown(obj->otyp);
+            tell_discovery(obj);
 
         m_useup(mon, obj);
         return DEADMONSTER(mon) ? 1 : 2;
@@ -2324,7 +2324,7 @@ use_item(struct musable *m)
         }
         obj->spe--;
         if (oseen)
-            makeknown(obj->otyp);
+            tell_discovery(obj);
         buzz(-30 - ((obj->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1),
              m_mlev(mon), mon->mx, mon->my, m->x, m->y, 0);
         return DEADMONSTER(mon) ? 1 : 2;
@@ -2349,7 +2349,7 @@ use_item(struct musable *m)
         obj->spe--;
         if (create_critters(!rn2(23) ? rn1(7, 2) : 1,
                             NULL, mon->mx, mon->my))
-            makeknown(BAG_OF_TRICKS);
+            tell_discovery(obj);
         return 2;
     case MUSE_KEY:
         x = mon->mx + m->x; /* revert from delta */
@@ -3143,12 +3143,12 @@ mon_reflects(const struct monst *mon, const struct monst *magr,
         } else if (slot == os_arms) {
             struct obj *arms = which_armor(mon, os_arms);
             if (arms->otyp == SHIELD_OF_REFLECTION)
-                makeknown(arms->otyp);
+                tell_discovery(arms);
             learn_oprop(arms, opm_reflects);
         } else if (slot == os_amul) {
             struct obj *amul = which_armor(mon, os_amul);
             if (amul->otyp == AMULET_OF_REFLECTION)
-                makeknown(amul->otyp);
+                tell_discovery(amul);
             learn_oprop(amul, opm_reflects);
         } else if (slot != os_invalid && slot <= os_last_worn) {
             /* which_armor also work for rings */
