@@ -1177,7 +1177,7 @@ update_whereis(boolean playing)
         sortval += (depth(&u.uz));
     }
 
-    buf = msgprintf("%s %c", buf, amulet ? 'A' : ' ');
+    buf = msgprintf("%d|%s %c", sortval, buf, amulet ? 'A' : ' ');
 
     const char *extrainfo = msgprintf(EXTRAINFO_FN, user);
     fd = open_datafile(extrainfo, O_WRONLY | O_CREAT | O_TRUNC, SCOREPREFIX);
