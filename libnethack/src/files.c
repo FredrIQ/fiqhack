@@ -1188,7 +1188,13 @@ update_whereis(boolean playing)
     buf = msgprintf("%d|%s %c", sortval, buf, amulet ? 'A' : ' ');
 
     const char *extrainfo = msgprintf(EXTRAINFO_FN, user);
-    fd = open_datafile(extrainfo, O_WRONLY | O_CREAT | O_TRUNC, SCOREPREFIX);
+#ifdef S_IRGRP   /* the OS has per-group permissions */
+    fd = open(extrainfo, O_WRONLY | O_CREAT | O_TRUNC,
+              S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+#else            /* the OS doesn't have per-group permissions */
+    fd = open(extrainfo, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+#endif
+
     if (fd < 0) {
         if (!extrainfo_failed)
             raw_printf("Failed to write to extrainfo at %s (%s).", extrainfo,
