@@ -1095,6 +1095,10 @@ paniclog(const char *type,      /* panic, impossible, trickery */
 
 /* ----------  END PANIC/IMPOSSIBLE LOG ----------- */
 
+/* don't kill games just in case these are set up wrong... */
+static boolean whereis_failed = FALSE;
+static boolean extrainfo_failed = FALSE;
+
 /* whereis handling, gives minor information on where the player is, for public
    server purposes. Creates a whereris file, and for dgl purposes, an extrainfo
    file. */
@@ -1135,8 +1139,12 @@ update_whereis(boolean playing)
 
     const char *whereis = msgprintf("%s.whereis", user);
     int fd = open_datafile(whereis, O_WRONLY | O_CREAT | O_TRUNC, SCOREPREFIX);
-    if (fd < 0)
-        panic("Failed to write to whereis.");
+    if (fd < 0) {
+        if (!whereis_failed)
+            raw_printf("Failed to write to whereis at %s (%s).", whereis,
+                       strerror(errno));
+        whereis_failed = TRUE;
+    }
 
     if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
         wfile = fdopen(fd, "w");
@@ -1181,9 +1189,12 @@ update_whereis(boolean playing)
 
     const char *extrainfo = msgprintf(EXTRAINFO_FN, user);
     fd = open_datafile(extrainfo, O_WRONLY | O_CREAT | O_TRUNC, SCOREPREFIX);
-    if (fd < 0)
-        panic("Failed to write to extrainfo at %s (%s).", extrainfo,
-              strerror(errno));
+    if (fd < 0) {
+        if (!extrainfo_failed)
+            raw_printf("Failed to write to extrainfo at %s (%s).", extrainfo,
+                       strerror(errno));
+        extrainfo_failed = TRUE;
+    }
 
     if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
         wfile = fdopen(fd, "w");
