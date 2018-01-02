@@ -98,7 +98,7 @@ static void replay_create_checkpoint(void);
 static int replay_load_checkpoint(int, boolean);
 static void replay_save_checkpoint(struct checkpoint *);
 static void replay_restore_checkpoint(struct checkpoint *);
-static void replay_add_desync(void);
+static void replay_add_desync(boolean);
 
 static struct nh_window_procs replay_windowprocs = {
     .win_pause = replay_pause,
@@ -360,7 +360,7 @@ replay_init(void)
         if (replay.in_load) {
             replay.action--;
             replay.msg = 0;
-            replay_add_desync();
+            replay_add_desync(FALSE);
         }
 
         /* reload from a checkpoint */
@@ -602,7 +602,7 @@ replay_done_noreturn(void)
     }
 }
 
-/* Updates replay.move/replay.action for a new action */
+/* Updates replay.move/replay.action for a new action. */
 void
 replay_set_action(void)
 {
@@ -612,6 +612,15 @@ replay_set_action(void)
     replay.move = moves;
     replay.action++;
     replay.msg = 0;
+}
+
+/* Forces the next action to read a diff/binary checkpoint. Done by forcing
+   this action to be treated as a desync. */
+void
+replay_force_diff(void)
+{
+    if (program_state.followmode == FM_REPLAY)
+        replay_add_desync(TRUE);
 }
 
 /* Creates a checkpoint. */
@@ -697,16 +706,20 @@ replay_restore_checkpoint(struct checkpoint *chk)
 /* Add a note about this action causing a desync and create a checkpoint to
    handle it. */
 static void
-replay_add_desync(void)
+replay_add_desync(boolean by_interrupt)
 {
-    if (!replay.desyncs)
-        raw_printf("Some commands appears to be made on an obsolete engine.  "
-                   "These will use diffs instead.  "
-                   "Some actions may be skipped.");
+    if (!by_interrupt) {
+        if (!replay.desyncs)
+            raw_printf("Some commands appears to be made on an obsolete engine.  "
+                       "These will use diffs instead.  "
+                       "Some actions may be skipped.");
 
-    if (replay.next_desync) {
-        //panic("Inconsistent replay."); FIXME
-        return;
+        if (replay.next_desync) {
+            //panic("Inconsistent replay."); FIXME
+            return;
+        }
+
+        replay.desyncs++;
     }
 
     /* Create a new desync entry. */
@@ -717,8 +730,10 @@ replay_add_desync(void)
         ds->prev->next = ds;
 
     ds->action = replay.action;
-    replay.prev_desync = ds;
-    replay.desyncs++;
+    if (by_interrupt)
+        replay.prev_desync = ds;
+    else
+        replay.next_desync = ds;
 
     /* Reset the binary save location. This will greatly speed up seeking of
        later parts of the game since at this point, we are at the very beginning

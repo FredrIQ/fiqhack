@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2453,7 +2453,8 @@ replay_count_actions(void)
          logline;
          free(logline), (loglineloc = get_log_offset()),
              (logline = lgetline_malloc(program_state.logfile))) {
-        if (*logline >= 'a' && *logline <= 'z')
+        if (*logline >= 'a' && *logline <= 'z' &&
+            (strcmp("interrupt", logline)))
             res++;
     }
 
