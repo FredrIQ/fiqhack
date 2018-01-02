@@ -795,6 +795,14 @@ getlin_option_callback(const char *str, void *option_void)
 static nh_bool
 query_new_value(struct win_menu *mdat, int idx)
 {
+    if (ui_flags.autoload && !watcher_username()) {
+        /* In a watchmode setup, NH4WATCHER not existing means the user isn't
+           logged in. Don't allow modifying options then. */
+        curses_msgwin("you must be logged in to edit options",
+                      krc_notification);
+        return FALSE;
+    }
+
     struct nh_option_desc *option, *optlist;
     struct nh_option_desc optioncopy;
     struct nh_option_desc *optioncopy_p = &optioncopy;
@@ -873,12 +881,7 @@ query_new_value(struct win_menu *mdat, int idx)
 
     /* getlin_option_callback NULLs out optioncopy_p to indicate that setting
        was cancelled */
-    if (ui_flags.autoload && !watcher_username()) {
-        /* In a watchmode setup, NH4WATCHER not existing means the user isn't
-           logged in. Don't allow modifying options then. */
-        curses_msgwin("you must be logged in to edit options",
-                      krc_notification);
-    } else if (optioncopy_p &&
+    if (optioncopy_p &&
                !curses_set_option(optioncopy.name, optioncopy.value)) {
         char query[strlen(optioncopy.name) + 1 +
                    sizeof "new value for  rejected"];
