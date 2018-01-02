@@ -32,6 +32,15 @@ mailstr_callback(const char *str, void *vmsg)
     strcpy(msg, str);
 }
 
+const char *
+watcher_username(void)
+{
+    const char *who = getenv("NH4WATCHER");
+    if (!who || !*who)
+        return NULL;
+    return who;
+}
+
 void
 sendmail(void)
 {
@@ -52,8 +61,8 @@ sendmail(void)
         return;
     }
 
-    const char *who = getenv("NH4WATCHER");
-    if (!who || !*who) {
+    const char *who = watcher_username();
+    if (!who) {
         curses_print_message(player.moves, msgc_failcurse,
                              "You need to be logged in to send mail!");
         return;
