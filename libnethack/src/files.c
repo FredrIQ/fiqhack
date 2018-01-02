@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1095,8 +1095,9 @@ paniclog(const char *type,      /* panic, impossible, trickery */
 
 /* ----------  END PANIC/IMPOSSIBLE LOG ----------- */
 
-/* whereis handling, gives minor information on where the player is, for public server
-   purposes. */
+/* whereis handling, gives minor information on where the player is, for public
+   server purposes. Creates a whereris file, and for dgl purposes, an extrainfo
+   file. */
 void
 update_whereis(boolean playing)
 {
@@ -1144,6 +1145,52 @@ update_whereis(boolean playing)
         fclose(wfile);
     }
 
+# ifdef EXTRAINFO_FN
+    int sortval = 0;
+    boolean amulet = carrying(AMULET_OF_YENDOR);
+    if (amulet)
+        sortval += 1024;
+
+    if (Is_knox(&u.uz)) {
+        buf = "Knx";
+        sortval += 245;
+    } else if (In_quest(&u.uz)) {
+        buf = "Q";
+        sortval += 250;
+    } else if (In_endgame(&u.uz)) {
+        buf = "End";
+        sortval += 256;
+    } else if (In_tower(&u.uz)) {
+        buf = "T";
+        sortval += 235;
+    } else if (In_sokoban(&u.uz)) {
+        buf = "S";
+        sortval += 225;
+    } else if (In_mines(&u.uz)) {
+        buf = "M";
+        sortval += 215;
+    } else
+        buf = "D";
+
+    if (!Is_knox(&u.uz) && !In_endgame(&u.uz)) {
+        buf = msgprintf("%s%d", buf, depth(&u.uz));
+        sortval += (depth(&u.uz));
+    }
+
+    buf = msgprintf("%s %c", buf, carrying(AMULET_OF_YENDOR) ? 'A' : ' ');
+
+    const char *extrainfo = msgprintf(EXTRAINFO_FN, user);
+    fd = open_datafile(extrainfo, O_WRONLY | O_CREA | O_TRUNC, SCOREPREFIX);
+    if (fd < 0)
+        panic("Failed to write to extrainfo.");
+
+    if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
+        wfile = fdopen(fd, "w");
+        fprintf(wfile, "%s", buf);
+        change_fd_lock(fd, FALSE, LT_NONE, 0);
+        fclose(wfile);
+    }
+# endif /* EXTRAINFO_FN */
 #endif /* WHEREIS */
     return;
 }
