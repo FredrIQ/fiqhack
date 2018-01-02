@@ -362,11 +362,6 @@ curses_set_option(const char *name, union nh_optvalue value)
         game_option = TRUE;
     }
 
-    /* In a watchmode setup, NH4WATCHER not existing means the user isn't logged
-       in. Don't allow modifying options then. */
-    if (!game_option && ui_flags.autoload && !watcher_username())
-        return FALSE;
-
     if ((int)option->type == OPTTYPE_KEYMAP) {
         return FALSE;
     }
@@ -878,7 +873,13 @@ query_new_value(struct win_menu *mdat, int idx)
 
     /* getlin_option_callback NULLs out optioncopy_p to indicate that setting
        was cancelled */
-    if (optioncopy_p && !curses_set_option(optioncopy.name, optioncopy.value)) {
+    if (ui_flags.autoload && !watcher_username()) {
+        /* In a watchmode setup, NH4WATCHER not existing means the user isn't
+           logged in. Don't allow modifying options then. */
+        curses_msgwin("you must be logged in to edit options",
+                      krc_notification);
+    } else if (optioncopy_p &&
+               !curses_set_option(optioncopy.name, optioncopy.value)) {
         char query[strlen(optioncopy.name) + 1 +
                    sizeof "new value for  rejected"];
         sprintf(query, "new value for %s rejected", optioncopy.name);
