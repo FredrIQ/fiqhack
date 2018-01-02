@@ -1182,7 +1182,8 @@ update_whereis(boolean playing)
     const char *extrainfo = msgprintf(EXTRAINFO_FN, user);
     fd = open_datafile(extrainfo, O_WRONLY | O_CREAT | O_TRUNC, SCOREPREFIX);
     if (fd < 0)
-        panic("Failed to write to extrainfo at %s.", extrainfo);
+        panic("Failed to write to extrainfo at %s (%s).", extrainfo,
+              strerror(errno));
 
     if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
         wfile = fdopen(fd, "w");
