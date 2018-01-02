@@ -1147,7 +1147,7 @@ update_whereis(boolean playing)
 
 # ifdef EXTRAINFO_FN
     int sortval = 0;
-    boolean amulet = carrying(AMULET_OF_YENDOR);
+    boolean amulet = !!Uhave_amulet;
     if (amulet)
         sortval += 1024;
 
@@ -1177,10 +1177,10 @@ update_whereis(boolean playing)
         sortval += (depth(&u.uz));
     }
 
-    buf = msgprintf("%s %c", buf, carrying(AMULET_OF_YENDOR) ? 'A' : ' ');
+    buf = msgprintf("%s %c", buf, amulet ? 'A' : ' ');
 
     const char *extrainfo = msgprintf(EXTRAINFO_FN, user);
-    fd = open_datafile(extrainfo, O_WRONLY | O_CREA | O_TRUNC, SCOREPREFIX);
+    fd = open_datafile(extrainfo, O_WRONLY | O_CREAT | O_TRUNC, SCOREPREFIX);
     if (fd < 0)
         panic("Failed to write to extrainfo.");
 
