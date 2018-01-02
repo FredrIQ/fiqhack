@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -265,17 +265,20 @@ cmd_update_status(json_t *params, int display_only)
 static json_t *
 cmd_print_message(json_t *params, int display_only)
 {
+    int action;
+    int id;
     int turn;
     int channel;
     const char *msg;
 
-    if (json_unpack(params, "{si, si,ss!}", "turn", &turn,
+    if (json_unpack(params, "{si,si,si,si,ss!}", "action", action,
+                    "id", id, "turn", &turn,
                     "channel", &channel, "msg", &msg) == -1) {
         print_error("Incorrect parameters in cmd_print_message");
         return NULL;
     }
 
-    client_windowprocs.win_print_message(turn, channel, msg);
+    client_windowprocs.win_print_message(action, id, turn, channel, msg);
     return NULL;
 }
 

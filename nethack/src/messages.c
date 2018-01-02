@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -149,6 +149,8 @@ struct message_chunk {
     unsigned x;                    /* x-position of the chunk */
     unsigned y;                    /* y-position of the chunk */
     enum msg_channel channel;      /* message channel for this chunk */
+    int action;                    /* action in replaymode */
+    int id;                        /* message id in replay mode */
     int turn;                      /* turn the message was seen */
     nh_bool seen : 1;              /* this chunk was on screen at a keypress */
     nh_bool end_of_message : 1;    /* this is the last chunk of this message */
@@ -186,8 +188,10 @@ static struct message_chunk *last_chunk = NULL;
    back to what we were doing (which may in extreme cases involve forcing
    another --More-- because the rest of the message won't fit).  */
 static char *pending_message = NULL;
-enum msg_channel pending_message_channel;
-enum msg_channel pending_message_turn;
+static enum msg_channel pending_message_channel;
+static int pending_message_turn;
+static int pending_message_action;
+static int pending_message_id;
 
 enum moreforce {mf_nomore, mf_more, mf_tab};
 
@@ -462,7 +466,7 @@ padded_xright(struct message_chunk *chunk)
 /* Adds a new chunk to the end of the list of chunks. */
 static void
 alloc_chunk(char *contents, enum msg_channel channel, int turn,
-            int x, int y)
+            int action, int id, int x, int y)
 {
     struct message_chunk *new_chunk = malloc(sizeof *new_chunk);
     new_chunk->message = contents;
@@ -472,6 +476,8 @@ alloc_chunk(char *contents, enum msg_channel channel, int turn,
     new_chunk->y = y;
     new_chunk->channel = channel;
     new_chunk->turn = turn;
+    new_chunk->action = action;
+    new_chunk->id = id;
     new_chunk->seen = channel == msgc_reminder;
     new_chunk->end_of_message = FALSE; /* caller can override this later */
     if (last_chunk)
@@ -491,7 +497,7 @@ limit_last_line_x(int max_ok_x)
     if (last_chunk && padded_xright(last_chunk) > max_ok_x) {
         char *nullstring = malloc(1);
         *nullstring = '\0';
-        alloc_chunk(nullstring, msgc_mute, 0, 0, last_chunk->y + 1);
+        alloc_chunk(nullstring, msgc_mute, 0, 0, 0, 0, last_chunk->y + 1);
         last_chunk->seen = TRUE; /* spacing chunks aren't visible */
     }
 }
@@ -619,7 +625,8 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
             usable_width_share) {
             /* We can. */
             alloc_chunk(firstpart, pending_message_channel,
-                        pending_message_turn,
+                        pending_message_turn, pending_message_action,
+                        pending_message_id,
                         padded_xright(last_chunk), last_chunk->y);
             last_chunk->end_of_message = TRUE;
         } else if (spare_lines > 0 && strlen(firstpart) <=
@@ -627,7 +634,8 @@ chunkify_pending_message(nh_bool room_for_more, nh_bool entire_last_line,
                     usable_width_split : usable_width_unsplit)) {
             /* We can't, but we have a spare line it fits on; use that. */
             alloc_chunk(firstpart, pending_message_channel,
-                        pending_message_turn, 0,
+                        pending_message_turn, pending_message_action,
+                        pending_message_id, 0,
                         last_chunk ? last_chunk->y + 1 : 0);
             spare_lines--;
             last_chunk->end_of_message = !pending_message;
@@ -800,8 +808,45 @@ force_more(nh_bool require_tab)
    the channel is msgc_reminder (or there are shenanigans with window
    resizing). */
 void
-curses_print_message(int turn, enum msg_channel msgc, const char *msg)
+curses_print_message(int action, int id, int turn, enum msg_channel msgc,
+                     const char *msg)
 {
+    if (ui_flags.current_followmode == FM_REPLAY && action) {
+        /* Erase messages past and including this action/id pair. */
+        struct message_chunk *chunk;
+        for (chunk = first_chunk; chunk; chunk = chunk->next)
+            if (chunk->action &&
+                (chunk->action > action ||
+                 (chunk->action == action && chunk->id >= id)))
+                break;
+
+        if (chunk) {
+            /* Delete everything past this point */
+            struct message_chunk *nextchunk;
+            struct message_chunk *prevchunk = chunk->prev;
+
+            /* If there's no previous chunk, we're freeing everything. */
+            if (!prevchunk) {
+                first_chunk = NULL;
+                last_chunk = NULL;
+            } else {
+                last_chunk = prevchunk;
+                prevchunk->next = NULL;
+            }
+
+            if (pending_message)
+                free(pending_message);
+
+            for (; chunk; chunk = nextchunk) {
+                nextchunk = chunk->next;
+                free(chunk->message);
+                free(chunk);
+            }
+
+            redraw_messages();
+        }
+    }
+
     /* When we get a new message, stop scrolling back into message history */
     ui_flags.msghistory_yskip = 0;
 
@@ -836,6 +881,8 @@ curses_print_message(int turn, enum msg_channel msgc, const char *msg)
     strcpy(pending_message, msg);
     pending_message_channel = msgc;
     pending_message_turn = turn;
+    pending_message_action = turn;
+    pending_message_id = turn;
 
     /* Finally, do any More-forcing. */
     if (c & CLRFLAG_FORCETAB)
@@ -849,7 +896,7 @@ curses_print_message(int turn, enum msg_channel msgc, const char *msg)
 void
 curses_temp_message(const char *msg)
 {
-    curses_print_message(player.moves, msgc_curprompt, msg);
+    curses_print_message(0, 0, player.moves, msgc_curprompt, msg);
 }
 
 /* Clear the temporary messages from the buffer (via looking for the
@@ -924,6 +971,8 @@ reconstruct_message_history_width(nh_bool reverse, int msgwidth)
             pending_seen = temp->seen;
             pending_message_channel = temp->channel;
             pending_message_turn = temp->turn;
+            pending_message_action = temp->action;
+            pending_message_id = temp->id;
         }
         if (!pending_message)
             pending_message = temp->message; /* steal ownership */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -12,7 +12,8 @@
 static void srv_raw_print(const char *str);
 static void srv_pause(enum nh_pause_reason r);
 static void srv_update_status(struct nh_player_info *pi);
-static void srv_print_message(int turn, enum msg_channel msgc, const char *msg);
+static void srv_print_message(int action, int id, int turn,
+                              enum msg_channel msgc, const char *msg);
 static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux,
                               int uy);
 static void srv_delay_output(void);
@@ -286,9 +287,11 @@ srv_update_status(struct nh_player_info *pi)
 
 
 static void
-srv_print_message(int turn, enum msg_channel msgc, const char *msg)
+srv_print_message(int action, int id, int turn, enum msg_channel msgc,
+                  const char *msg)
 {
-    json_t *jobj = json_pack("{si,si,ss}", "turn", turn,
+    json_t *jobj = json_pack("{si,si,si,si,ss}", "action", action,
+                             "id", id, "turn", turn,
                              "channel", msgc, "msg", msg);
 
     add_display_data("print_message", jobj);

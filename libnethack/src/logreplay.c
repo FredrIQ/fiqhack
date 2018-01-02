@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-31 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,6 +35,7 @@ struct desync {
 
 struct replayinfo {
     int action; /* current action */
+    int msg; /* msg within action -- to allow proper message history */
     int max; /* last action */
     int target; /* target action or move */
     boolean target_is_move; /* whether target is by action or by move */
@@ -66,7 +67,7 @@ static struct replayinfo replay = {0};
 static void replay_pause(enum nh_pause_reason);
 static void replay_display_buffer(const char *, boolean);
 static void replay_update_status(struct nh_player_info *);
-static void replay_print_message(int, enum msg_channel, const char *);
+static void replay_print_message(int, int, int, enum msg_channel, const char *);
 static void replay_request_command(
     boolean, boolean, boolean, void *,
     void (*)(const struct nh_cmd_and_arg *, void *));
@@ -145,9 +146,12 @@ replay_update_status(struct nh_player_info *unused)
 }
 
 static void
-replay_print_message(int turn, enum msg_channel msgc, const char *message)
+replay_print_message(int action, int id, int turn, enum msg_channel msgc,
+                     const char *message)
 {
-    orig_winprocs.win_print_message(turn, msgc, message);
+    orig_winprocs.win_print_message(replay.action, replay.msg, turn, msgc,
+                                    message);
+    replay.msg++;
 }
 
 static void
@@ -355,6 +359,7 @@ replay_init(void)
     if (replay.game_id && !strcmp(game_id, replay.game_id)) {
         if (replay.in_load) {
             replay.action--;
+            replay.msg = 0;
             replay_add_desync();
         }
 
@@ -606,6 +611,7 @@ replay_set_action(void)
 
     replay.move = moves;
     replay.action++;
+    replay.msg = 0;
 }
 
 /* Creates a checkpoint. */
@@ -674,6 +680,7 @@ replay_restore_checkpoint(struct checkpoint *chk)
     startup_common(FALSE);
     dorecover(&chk->binary_save);
     replay.action = chk->action;
+    replay.msg = 0;
     replay.move = chk->move;
 
     /* Figure out if we need to reposition desync-wise. */
@@ -727,6 +734,7 @@ replay_add_desync(void)
     }
 
     replay.action = cur_action;
+    replay.msg = 0;
     replay_create_checkpoint();
 
     struct checkpoint *chk;
