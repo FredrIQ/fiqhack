@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,6 +32,7 @@ enum internal_commands {
     UICMD_REPEATCOUNT,
     UICMD_NOTHING,
     UICMD_SERVERCANCEL,
+    UICMD_INTERRUPT,
 };
 
 enum select_cmd {
@@ -240,6 +241,9 @@ static struct nh_cmd_desc builtin_commands[] = {
      0, CMD_UI | UICMD_REPEATCOUNT},
     {"(nothing)", "bind keys to this command to suppress \"Bad command\"", 0,
      0, CMD_UI | UICMD_NOTHING},
+
+    {"interrupt", "(internal use only) forces the game into neutral turnstate",
+     0, 0, CMD_UI | CMD_INTERNAL | UICMD_INTERRUPT},
 
     {"servercancel", "(internal use only) the server already has a command",
      0, 0, CMD_UI | CMD_INTERNAL | UICMD_SERVERCANCEL},
@@ -487,7 +491,7 @@ get_command(void *callbackarg,
                 (ui_flags.current_followmode == FM_WATCH &&
                  cmd == find_command("moveonly"))) {
                 handle_internal_cmd(&cmd, &ncaa.arg, include_debug);
-                if (!cmd)       /* command was fully handled internally */
+                if (!cmd) /* command was fully handled internally */
                     continue;
             }
 
@@ -926,10 +930,17 @@ dotogglepickup(void)
     }
 
     val.b = !option->value.b;
-    curses_set_option("autopickup", val);
+    if (!curses_set_option("autopickup", val)) {
+        if (ui_flags.current_followmode != FM_PLAY)
+            curses_msgwin("You can't toggle autopickup while "
+                          "replaying/watching.", krc_notification);
+        else /* shouldn't happen */
+            curses_msgwin("Error toggling autopickup.",
+                          krc_notification);
+    } else
+        curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF",
+                      krc_notification);
 
-    curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF",
-                  krc_notification);
     nhlib_free_optlist(options);
 }
 
