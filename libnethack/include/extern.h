@@ -550,6 +550,7 @@ extern void set_delayed_killer(int how, const char *killer);
 extern const char *delayed_killer(int how);
 extern void clear_delayed_killers(void);
 extern void nonfatal_dump_core(void);
+extern void container_contents(struct obj *, boolean, boolean, boolean);
 extern noreturn void terminate(enum nh_play_status);
 extern noreturn void panic_core(const char *, int, const char *, ...)
     PRINTFLIKE(3,4);
@@ -1371,6 +1372,7 @@ extern int find_skates(void);
 extern void freenames(void);
 extern void savenames(struct memfile *mf);
 extern void restnames(struct memfile *mf);
+extern void tell_discovery(struct obj *obj);
 extern void discover_object(int, boolean, boolean, boolean);
 extern void undiscover_object(int);
 extern int dodiscovered(const struct nh_cmd_arg *);
@@ -1460,7 +1462,7 @@ extern struct obj *pick_obj(struct obj *);
 extern int encumber_msg(int);
 extern int doloot(const struct nh_cmd_arg *);
 extern void observe_quantum_cat(struct obj *);
-extern int use_container(struct obj *, int);
+extern int use_container(struct obj *, int, boolean, boolean);
 extern int loot_mon(struct monst *, int *, boolean *);
 extern const char *safe_qbuf(const char *, unsigned, const char *, const char *,
                              const char *);
@@ -1779,6 +1781,7 @@ extern void yelp(struct monst *);
 extern void whimper(struct monst *);
 extern void beg(struct monst *);
 extern int dotalk(const struct nh_cmd_arg *);
+extern void explain_msg(enum message_hint, xchar);
 
 /* ### sp_lev.c ### */
 
@@ -1804,6 +1807,7 @@ extern boolean spell_maintained(const struct monst *, int);
 extern void spell_maintain(struct monst *, int);
 extern void spell_unmaintain(struct monst *, int);
 extern void run_maintained_spells(struct level *);
+extern int maintenance_pw_drain(const struct monst *);
 extern int study_book(struct obj *, const struct nh_cmd_arg *);
 extern void age_spells(void);
 extern void update_supernatural_abilities(void);

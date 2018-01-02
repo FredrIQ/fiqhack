@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -237,13 +237,16 @@ fightm(struct monst *mon)
     int diry[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
 
     /* check for monsters on positions */
-    struct monst *mtmp;
+    struct monst *mtmp = NULL;
     int x, y, i;
     int nummon = 0;
     struct monst *mdef = NULL;
     for (i = 0; i < 8; i++) {
         x = mon->mx + dirx[i];
         y = mon->my + diry[i];
+        if (!isok(x, y))
+            continue;
+
         mtmp = m_at(level, x, y);
         if (!mtmp || (!mm_aggression(mon, mtmp) && !conflicted &&
                       !mercy))

@@ -540,6 +540,7 @@ extern void handle_nested_key(int key);
 extern enum nh_direction key_to_dir(int key, int* range);
 
 /* mail.c */
+extern const char *watcher_username(void);
 extern void sendmail(void);
 
 /* main.c */

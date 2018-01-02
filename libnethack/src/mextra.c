@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Fredrik Ljungdahl, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -286,7 +286,11 @@ restore_mextra(struct memfile *mf, struct monst *mon)
         mx->eyou->last_pray_action = mread32(mf);
         mx->eyou->prayed_result = mread8(mf);
 
-        for (i = 0; i < 1000; i++)
+        int msghints = mread16(mf);
+        for (i = 0; i < msghints; i++)
+            mx->eyou->msg_hint[i] = mread8(mf);
+
+        for (i = 0; i < 998; i++)
             mread8(mf);
     }
     if (extyp & MX_EDOG) {
@@ -407,8 +411,11 @@ save_mextra(struct memfile *mf, const struct monst *mon)
         mtag(mf, mon->m_id, MTAG_MXEYOU);
         mwrite32(mf, mx->eyou->last_pray_action);
         mwrite8(mf, mx->eyou->prayed_result);
+        mwrite16(mf, LAST_MSGH + 1);
+        for (i = 0; i <= LAST_MSGH; i++)
+            mwrite8(mf, mx->eyou->msg_hint[i]);
 
-        for (i = 0; i < 1000; i++)
+        for (i = 0; i < 998; i++)
             mwrite8(mf, 0);
     }
     if (extyp & MX_EDOG) {

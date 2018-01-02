@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-24 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -501,6 +501,10 @@ learn_spell(int spell, boolean from_book, boolean perma)
                       spellname(i));
                 makeknown(spell);
                 return TRUE;
+            } else if (spellknow(i) == PERMA) {
+                pline(msgc_cancelled,
+                      "You already have perfect knowledge of %s.",
+                      spellname(i));
             } else if (spellknow(i) > 1000 && from_book) {
                 pline(msgc_hint, "You know %s quite well already.", spellname(i));
                 if (yn("Do you want to read the book anyway?") == 'n')
@@ -750,18 +754,18 @@ run_maintained_spells(struct level *lev)
                 continue;
             }
 
-            /* Decrease power depending on spell level and proficiency. If an
-               attempted cast fails 5 times in a row, unmaintain the spell. */
+            /* If an attempted cast fails 5 times in a row,
+               unmaintain the spell. */
             int chance = percent_success(mon, spell);
-            int moves_modulo = 5;
-            while (moves_modulo) {
+            int tries = 5;
+            while (tries) {
                 if (rnd(100) > chance) {
-                    moves_modulo--;
+                    tries--;
                     continue;
                 }
                 break;
             }
-            if (!moves_modulo) {
+            if (!tries) {
                 if (mon == &youmonst)
                     pline(msgc_intrloss, "Your limited ability with %s causes "
                           "you to fumble and lose maintaining of it!", splname);
@@ -769,26 +773,41 @@ run_maintained_spells(struct level *lev)
                 continue;
             }
 
-            int spell_level = objects[spell].oc_level;
-            if (mon_has_amulet(mon))
-                spell_level *= 2;
-            if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
-                spell_level *= 2; /* needs more to maintain manually */
-            if (!(moves % moves_modulo)) {
-                if (mon->pw < spell_level) {
-                    if (mon == &youmonst)
-                        pline(msgc_intrloss,
-                              "You lack the energy to maintain %s.",
-                              splname);
-                    spell_unmaintain(mon, spell);
-                    continue;
-                }
-                mon->pw -= spell_level;
-            }
-
             run_maintained_spell(mon, spell);
         }
     }
+}
+
+/* Returns the energy regeneration rate penalty caused by spell maintenance.
+   Spells you have lower success% in drain more. */
+int
+maintenance_pw_drain(const struct monst *mon)
+{
+    int spell;
+    int total_cost = 0;
+    for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
+        if (!spell_maintained(mon, spell))
+            continue;
+
+        int cost = objects[spell].oc_level;
+        cost *= 25;
+        if (mon_has_amulet(mon))
+            cost *= 2;
+        if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
+            cost *= 2; /* needs more to maintain manually */
+
+        int chance = percent_success(mon, spell);
+        if (!chance)
+            cost *= 100;
+        else {
+            cost *= 100;
+            cost /= chance;
+        }
+
+        total_cost += cost;
+    }
+
+    return total_cost;
 }
 
 static void
@@ -1862,6 +1881,14 @@ spelleffects(boolean atme, struct musable *m)
     case SPE_SUMMON_NASTY:
         cc.x = dx;
         cc.y = dy;
+        /* summoning aggravates the target */
+        struct monst *mtmp = m_at(level, cc.x, cc.y);
+        if (mtmp && you) {
+            if (mtmp->mtame)
+                abuse_dog(mtmp);
+            else if (mtmp->mpeaceful)
+                setmangry(mtmp);
+        }
         count = nasty(mon, cc);
         if (count) {
             pline(you ? msgc_actionok : msgc_levelwarning,
@@ -1869,14 +1896,6 @@ spelleffects(boolean atme, struct musable *m)
                   "A monster appears");
         } else if (you)
             pline(msgc_substitute, "You feel lonely.");
-        /* summoning aggravates the target */
-        struct monst *mtmp = m_at(level, cc.x, cc.y);
-        if (mtmp) {
-            if (mtmp->mtame)
-                abuse_dog(mtmp);
-            else if (mtmp->mpeaceful)
-                setmangry(mtmp);
-        }
         break;
     case SPE_CLAIRVOYANCE:
         if (!you) {
@@ -1890,7 +1909,7 @@ spelleffects(boolean atme, struct musable *m)
         else if (uarmh && uarmh->otyp == CORNUTHAUM) {
             pline(msgc_failcurse, "You sense a pointy hat on top of your %s.",
                   body_part(HEAD));
-            makeknown(CORNUTHAUM);
+            tell_discovery(uarmh);
         }
         break;
     case SPE_PROTECTION:

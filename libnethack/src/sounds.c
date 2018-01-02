@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -36,7 +36,10 @@ dosounds(void)
             "the splashing of a naiad.",
             "a soda fountain!",
         };
-        You_hear(msgc_levelsound, "%s", fountain_msg[rn2(3) + hallu]);
+        int which = rn2(3) + hallu;
+        You_hear(msgc_levelsound, "%s", fountain_msg[which]);
+        if (canhear())
+            explain_msg(MSGH_FOUNTAIN, which);
     }
 
     if (has_terrain(level, SINK) && !rn2(300)) {
@@ -45,7 +48,10 @@ dosounds(void)
             "a gurgling noise.",
             "dishes being washed!",
         };
-        You_hear(msgc_levelsound, "%s", sink_msg[rn2(2) + hallu]);
+        int which = rn2(2) + hallu;
+        You_hear(msgc_levelsound, "%s", sink_msg[which]);
+        if (canhear())
+            explain_msg(MSGH_SINK, which);
     }
 
     if (search_special(level, COURT) && !rn2(200)) {
@@ -64,10 +70,14 @@ dosounds(void)
                 /* finding one is enough, at least for now */
                 int which = rn2(3) + hallu;
 
-                if (which != 2)
+                if (which != 2) {
                     You_hear(msgc_levelsound, "%s", throne_msg[which]);
-                else
+                    if (canhear())
+                        explain_msg(MSGH_THRONE, which);
+                } else {
                     pline(msgc_levelsound, throne_msg[2], uhis());
+                    explain_msg(MSGH_THRONE, which);
+                }
                 return;
             }
         }
@@ -83,8 +93,8 @@ dosounds(void)
     }
     if ((sroom = search_special(level, VAULT)) && !rn2(200)) {
         if (gd_sound()) {
-            level->flags.vault_known = TRUE;
-            switch (rn2(2) + hallu) {
+            int which = rn2(2) + hallu;
+            switch (which) {
             case 1:{
                     boolean gold_in_vault = FALSE;
 
@@ -105,12 +115,18 @@ dosounds(void)
                     /* fall into... (yes, even for hallucination) */
                 }
             case 0:
+                which = 0;
                 You_hear(msgc_levelsound,
                          "the footsteps of a guard on patrol.");
                 break;
             case 2:
                 You_hear(msgc_levelsound, "Ebenezer Scrooge!");
                 break;
+            }
+
+            if (!level->flags.vault_known) {
+                explain_msg(MSGH_VAULT, which);
+                level->flags.vault_known = TRUE;
             }
         }
         return;
@@ -121,7 +137,8 @@ dosounds(void)
                 continue;
             if (is_bee(mtmp->data) &&
                 mon_in_room(mtmp, BEEHIVE)) {
-                switch (rn2(2) + hallu) {
+                int which = rn2(2) + hallu;
+                switch (which) {
                 case 0:
                     You_hear(msgc_levelsound, "a low buzzing.");
                     break;
@@ -133,6 +150,7 @@ dosounds(void)
                              uarmh ? "" : "(nonexistent) ");
                     break;
                 }
+                explain_msg(MSGH_BEEHIVE, which);
                 return;
             }
         }
@@ -142,7 +160,8 @@ dosounds(void)
             if (DEADMONSTER(mtmp))
                 continue;
             if (is_undead(mtmp->data) && mon_in_room(mtmp, MORGUE)) {
-                switch (rn2(2) + hallu) {
+                int which = rn2(2) + hallu;
+                switch (which) {
                 case 1:
                     if (!strcmp(body_part(HAIR), "hair")) {
                         pline(msgc_levelsound,
@@ -152,6 +171,7 @@ dosounds(void)
                     }
                     /* fall through */
                 case 2:
+                    which = 2;
                     if (!strcmp(body_part(HAIR), "hair")) {
                         pline(msgc_levelsound,
                               "The %s on your %s seems to stand up.",
@@ -160,10 +180,12 @@ dosounds(void)
                     }
                     /* fall through */
                 case 0:
+                    which = 0;
                     pline(msgc_levelsound,
                           "You suddenly realize it is unnaturally quiet.");
                     break;
                 }
+                explain_msg(MSGH_GRAVEYARD, which);
                 return;
             }
         }
@@ -183,7 +205,10 @@ dosounds(void)
             if (is_mercenary(mtmp->data) && mon_in_room(mtmp, BARRACKS) &&
                 /* sleeping implies not-yet-disturbed (usually) */
                 (mtmp->msleeping || ++count > 5)) {
-                You_hear(msgc_levelsound, "%s", barracks_msg[rn2(3) + hallu]);
+                int which = rn2(3) + hallu;
+                You_hear(msgc_levelsound, "%s", barracks_msg[which]);
+                if (canhear())
+                    explain_msg(MSGH_BARRACKS, which);
                 return;
             }
         }
@@ -199,7 +224,10 @@ dosounds(void)
                 continue;
             if ((mtmp->msleeping || is_animal(mtmp->data)) &&
                 mon_in_room(mtmp, ZOO)) {
-                You_hear(msgc_levelsound, "%s", zoo_msg[rn2(2) + hallu]);
+                int which = rn2(2) + hallu;
+                You_hear(msgc_levelsound, "%s", zoo_msg[which]);
+                if (canhear())
+                    explain_msg(MSGH_ZOO, which);
                 return;
             }
         }
@@ -215,7 +243,10 @@ dosounds(void)
                 "the chime of a cash register.",
                 "Neiman and Marcus arguing!",
             };
-            You_hear(msgc_levelsound, shop_msg[rn2(2) + hallu], name);
+            int which = rn2(2) + hallu;
+            You_hear(msgc_levelsound, shop_msg[which], name);
+            if (canhear())
+                explain_msg(MSGH_SHOP, which);
         }
         return;
     }
@@ -233,7 +264,10 @@ dosounds(void)
                 "someone say \"No more woodchucks!\"",
                 "a loud ZOT!"   /* both rec.humor.oracle */
             };
-            You_hear(msgc_levelsound, "%s", ora_msg[rn2(3) + hallu * 2]);
+            int which = rn2(3) + hallu * 2;
+            You_hear(msgc_levelsound, "%s", ora_msg[which]);
+            if (canhear())
+                explain_msg(MSGH_DELPHI, which);
         }
         return;
     }
@@ -937,6 +971,47 @@ dotalk(const struct nh_cmd_arg *arg)
     }
 
     return domonnoise(mtmp);
+}
+
+static const char *msg_explanations[LAST_MSGH + 1] = {
+    [MSGH_BOULDERTRAP] = "Someone must have triggered a rolling boulder trap.",
+    [MSGH_LANDMINE] = "Someone must have triggered a land mine.",
+    [MSGH_FOUNTAIN] = "There must be a fountain on the level.",
+    [MSGH_SINK] = "There must be a sink on the level.",
+    [MSGH_THRONE] = "This level must be housing a throne room.",
+    [MSGH_VAULT] = "This level must be housing a vault.",
+    [MSGH_BEEHIVE] = "This level must be housing a beehive.",
+    [MSGH_GRAVEYARD] = "This level must be housing a graveyard.",
+    [MSGH_BARRACKS] = "This level must be housing a barracks.",
+    [MSGH_ZOO] = "This level must be housing a zoo.",
+    [MSGH_SHOP] = "This level must be housing a shop.",
+    [MSGH_DELPHI] = "The Oracle must be nearby.",
+};
+
+/* Gives explanations for some arguably vague messages the game has, if the
+   option is enabled. Allows up to 8 varieties per type, each tracked
+   individually. */
+void
+explain_msg(enum message_hint typ, xchar id)
+{
+    if (id > 7 || id < 0) {
+        impossible("explain_msg: id out of range (%d)", id);
+        return;
+    }
+
+    if (typ < 0 || typ > LAST_MSGH) {
+        impossible("explain_msg: typ out of range (%d)", typ);
+        return;
+    }
+
+    if (!flags.msg_hints)
+        return;
+
+    struct eyou *you = youmonst.mextra->eyou;
+    if (you->msg_hint[typ] & (1 << id))
+        return;
+    you->msg_hint[typ] |= (1 << id);
+    pline(msgc_info, "%s", msg_explanations[typ]);
 }
 
 /*sounds.c*/

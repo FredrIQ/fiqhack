@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -402,6 +402,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             pline(msgc_actionok, "You produce soft music.");
             put_monsters_to_sleep(u.ulevel * 5);
             exercise(A_DEX, TRUE);
+            tell_discovery(instr);
             break;
         }       /* else FALLTHRU */
     case WOODEN_FLUTE: /* May charm snakes */
@@ -426,7 +427,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
                 buzz((instr->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1,
                      u.ulevel, u.ux, u.uy, dx, dy, 0);
             }
-            makeknown(instr->otyp);
+            tell_discovery(instr);
             break;
         }       /* else FALLTHRU */
     case TOOLED_HORN:  /* Awaken or scare monsters */
@@ -448,6 +449,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
                   Tobjnam(instr, "produce"));
             charm_monsters((u.ulevel - 1) / 3 + 1);
             exercise(A_DEX, TRUE);
+            tell_discovery(instr);
             break;
         }       /* else FALLTHRU */
     case WOODEN_HARP:  /* May calm Nymph */
@@ -469,7 +471,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             do_earthquake((u.ulevel - 1) / 3 + 1);
             /* shake up monsters in a much larger radius... */
             awaken_monsters(&youmonst, ROWNO * COLNO);
-            makeknown(DRUM_OF_EARTHQUAKE);
+            tell_discovery(instr);
             break;
         }       /* else FALLTHRU */
     case LEATHER_DRUM: /* Awaken monsters */

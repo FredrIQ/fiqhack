@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2016,7 +2016,7 @@ bagotricks(struct obj *bag)
     } else {
         consume_obj_charge(bag, TRUE);
         if (create_critters(!rn2(23) ? rn1(7, 2) : 1, NULL, u.ux, u.uy))
-            makeknown(BAG_OF_TRICKS);
+            tell_discovery(bag);
     }
 }
 

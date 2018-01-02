@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -795,6 +795,14 @@ getlin_option_callback(const char *str, void *option_void)
 static nh_bool
 query_new_value(struct win_menu *mdat, int idx)
 {
+    if (ui_flags.autoload && !watcher_username()) {
+        /* In a watchmode setup, NH4WATCHER not existing means the user isn't
+           logged in. Don't allow modifying options then. */
+        curses_msgwin("you must be logged in to edit options",
+                      krc_notification);
+        return FALSE;
+    }
+
     struct nh_option_desc *option, *optlist;
     struct nh_option_desc optioncopy;
     struct nh_option_desc *optioncopy_p = &optioncopy;
@@ -873,7 +881,8 @@ query_new_value(struct win_menu *mdat, int idx)
 
     /* getlin_option_callback NULLs out optioncopy_p to indicate that setting
        was cancelled */
-    if (optioncopy_p && !curses_set_option(optioncopy.name, optioncopy.value)) {
+    if (optioncopy_p &&
+               !curses_set_option(optioncopy.name, optioncopy.value)) {
         char query[strlen(optioncopy.name) + 1 +
                    sizeof "new value for  rejected"];
         sprintf(query, "new value for %s rejected", optioncopy.name);

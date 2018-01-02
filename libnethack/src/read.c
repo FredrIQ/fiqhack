@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -140,9 +140,10 @@ doread(const struct nh_cmd_arg *arg)
         }
     }
     if (!seffects(&youmonst, scroll, &known)) {
-        if (!objects[scroll->otyp].oc_name_known) {
+        if (!objects[scroll->otyp].oc_name_known &&
+            scroll->oclass != SPBOOK_CLASS) {
             if (known) {
-                makeknown(scroll->otyp);
+                tell_discovery(scroll);
                 more_experienced(0, 10);
             } else if (!objects[scroll->otyp].oc_uname)
                 docall(scroll);
@@ -1169,7 +1170,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                     otmp->spe--;
                     if (you && (otmp->otyp == HELM_OF_BRILLIANCE ||
                                 otmp->otyp == GAUNTLETS_OF_DEXTERITY))
-                        makeknown(otmp->otyp);
+                        tell_discovery(otmp);
                 }
                 if (!resists_stun(mon))
                     inc_timeout(mon, STUNNED, rn1(10, 10), FALSE);
@@ -1670,12 +1671,12 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (you || vis)
             if (!objects[sobj->otyp].oc_name_known)
                 more_experienced(0, 10);
+        if (you || vis)
+            tell_discovery(sobj);
         if (you)
             useup(sobj);
         else
             m_useup(mon, sobj);
-        if (you || vis)
-            makeknown(SCR_FIRE);
         if (confused) {
             if (!you && vis)
                 pline(msgc_monneutral, "Oh, look, what a pretty fire!");

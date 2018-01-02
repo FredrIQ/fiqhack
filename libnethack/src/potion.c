@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -383,7 +383,7 @@ dopotion(struct obj *otmp)
     }
     if (otmp->dknown && !objects[otmp->otyp].oc_name_known) {
         if (!unkn) {
-            makeknown(otmp->otyp);
+            tell_discovery(otmp);
             more_experienced(0, 10);
         } else if (!objects[otmp->otyp].oc_uname)
             docall(otmp);
@@ -1825,7 +1825,7 @@ potionbreathe(struct monst *mon, struct obj *obj)
     /* note: no obfree() */
     if (obj->dknown) {
         if (kn)
-            makeknown(obj->otyp);
+            tell_discovery(obj);
         else if (!objects[obj->otyp].oc_name_known &&
                  !objects[obj->otyp].oc_uname)
             docall(obj);
@@ -2031,7 +2031,7 @@ dodip(const struct nh_cmd_arg *arg)
             usedup = TRUE;
 
         if (usedup) {
-            makeknown(POT_WATER);
+            tell_discovery(potion);
             potion->bknown = TRUE;
             useup(potion);
             return 1;
@@ -2050,7 +2050,7 @@ dodip(const struct nh_cmd_arg *arg)
             obj = poly_obj(obj, STRANGE_OBJECT);
 
             if (!obj || obj->otyp != save_otyp) {
-                makeknown(POT_POLYMORPH);
+                tell_discovery(potion);
                 useup(potion);
                 if (obj && !(obj->owornmask & W_EQUIP))
                     /* If equipped, this will already have been done. */
@@ -2063,7 +2063,7 @@ dodip(const struct nh_cmd_arg *arg)
                    giveaway that something is up */
                 pline(msgc_failrandom,
                       "The object you dipped changed slightly.");
-                makeknown(POT_POLYMORPH);
+                tell_discovery(potion);
                 useup(potion);
                 return 1;
             }
@@ -2153,7 +2153,7 @@ dodip(const struct nh_cmd_arg *arg)
             }
 
             if (did_anything) {
-                makeknown(POT_WONDER);
+                tell_discovery(potion);
                 useup(potion);
                 return 1;
             } else
@@ -2238,7 +2238,7 @@ dodip(const struct nh_cmd_arg *arg)
             pline(msgc_itemrepair, "%s forms a coating on %s.", buf,
                   the(xname(obj)));
             obj->opoisoned = TRUE;
-            makeknown(POT_SICKNESS);
+            tell_discovery(potion);
             useup(potion);
             return 1;
         } else if (obj->opoisoned &&
@@ -2317,7 +2317,7 @@ dodip(const struct nh_cmd_arg *arg)
             wisx = TRUE;
         }
         exercise(A_WIS, wisx);
-        makeknown(potion->otyp);
+        tell_discovery(potion);
         useup(potion);
         return 1;
     }
@@ -2341,16 +2341,17 @@ more_dips:
         if (obj->age > 1000L) {
             pline(msgc_yafm, "%s %s full.", Yname2(obj), otense(obj, "are"));
             potion->in_use = FALSE;     /* didn't go poof */
+            tell_discovery(potion);
         } else {
             pline(msgc_actionok, "You fill %s with oil.", yname(obj));
             check_unpaid(potion);       /* Yendorian Fuel Tax */
             obj->age += 2 * potion->age;        /* burns more efficiently */
             if (obj->age > 1500L)
                 obj->age = 1500L;
+            tell_discovery(potion);
             useup(potion);
             exercise(A_WIS, TRUE);
         }
-        makeknown(POT_OIL);
         obj->spe = 1;
         update_inventory();
         return 1;

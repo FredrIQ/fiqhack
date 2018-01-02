@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -409,7 +409,7 @@ enum nh_create_response {
 enum nh_client_response {
     NHCR_ACCEPTED,
     NHCR_CLIENT_CANCEL,
-    NHCR_CONTINUE, 
+    NHCR_CONTINUE,
     NHCR_MOREINFO,
     NHCR_MOREINFO_CONTINUE,
     NHCR_SERVER_CANCEL,

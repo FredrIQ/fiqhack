@@ -32,12 +32,22 @@ mailstr_callback(const char *str, void *vmsg)
     strcpy(msg, str);
 }
 
+const char *
+watcher_username(void)
+{
+    const char *who = getenv("NH4WATCHER");
+    if (!who || !*who)
+        return NULL;
+    return who;
+}
+
 void
 sendmail(void)
 {
-    if (ui_flags.current_followmode != FM_WATCH) {
+    if (ui_flags.current_followmode != FM_WATCH &&
+        ui_flags.current_followmode != FM_PLAY) {
         curses_print_message(0, 0, player.moves, msgc_failcurse,
-                             "Mail can only be sent while watching.");
+                             "Mail can't be sent while replaying.");
         return;
     }
 
@@ -51,8 +61,8 @@ sendmail(void)
         return;
     }
 
-    const char *who = getenv("NH4WATCHER");
-    if (!who || !*who) {
+    const char *who = watcher_username();
+    if (!who) {
         curses_print_message(0, 0, player.moves, msgc_failcurse,
                              "You need to be logged in to send mail!");
         return;

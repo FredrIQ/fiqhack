@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -584,7 +584,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
     }
     if (known && useen && tseen &&
         (otmp->oclass == WAND_CLASS || otmp->oclass == POTION_CLASS))
-        makeknown(otyp);
+        tell_discovery(otmp);
     return 0;
 }
 
@@ -1775,7 +1775,8 @@ bhito(struct obj *obj, struct obj *otmp)
     } else if (obj == uchain) {
         if (otmp->otyp == WAN_OPENING || otmp->otyp == SPE_KNOCK) {
             unpunish();
-            makeknown(otmp->otyp);
+            if (otmp->oclass != SPBOOK_CLASS)
+                tell_discovery(otmp);
         } else
             res = 0;
     } else
@@ -1799,8 +1800,9 @@ bhito(struct obj *obj, struct obj *otmp)
                 boxlock(obj, otmp);
 
             if (obj_shudders(obj)) {
-                if (cansee(obj->ox, obj->oy))
-                    makeknown(otmp->otyp);
+                if (cansee(obj->ox, obj->oy) &&
+                    otmp->oclass != SPBOOK_CLASS)
+                    tell_discovery(otmp);
                 do_osshock(obj);
                 break;
             }
@@ -1835,12 +1837,12 @@ bhito(struct obj *obj, struct obj *otmp)
                     /* view contents (not recursively) */
                     for (o = obj->cobj; o; o = o->nobj)
                         o->dknown = 1;  /* "seen", even if blind */
-                    display_cinventory(obj);
+                    container_contents(obj, FALSE, FALSE, TRUE);
                 }
                 res = 1;
             }
             if (res)
-                makeknown(WAN_PROBING);
+                tell_discovery(otmp);
             break;
         case WAN_STRIKING:
         case SPE_FORCE_BOLT:
@@ -1856,7 +1858,8 @@ bhito(struct obj *obj, struct obj *otmp)
                 res = 0;
             }
             /* BUG[?]: shouldn't this depend upon you seeing it happen? */
-            makeknown(otmp->otyp);
+            if (otmp->oclass != SPBOOK_CLASS)
+                tell_discovery(otmp);
             break;
         case WAN_CANCELLATION:
         case SPE_CANCELLATION:
@@ -1895,8 +1898,8 @@ bhito(struct obj *obj, struct obj *otmp)
                 res = boxlock(obj, otmp);
             else
                 res = 0;
-            if (res /* && otmp->oclass == WAND_CLASS */ )
-                makeknown(otmp->otyp);
+            if (res && otmp->oclass != SPBOOK_CLASS)
+                tell_discovery(otmp);
             break;
         case WAN_MAKE_INVISIBLE: /* no effect on objects */
         case WAN_SLOW_MONSTER:
@@ -1964,7 +1967,7 @@ bhitpile_post(struct monst *mon, struct obj *obj, int x, int y)
         if (t && t->ttyp == STATUE_TRAP && activate_statue_trap(t, x, y, TRUE)
             && obj->otyp == WAN_STRIKING &&
             (mon == &youmonst || cansee(x, y)))
-            makeknown(obj->otyp);
+            tell_discovery(obj);
     }
 
     poly_zapped = -1;
@@ -2119,8 +2122,9 @@ zapnodir(struct monst *mon, struct obj *obj)
         }
         break;
     }
-    if (known && !objects[obj->otyp].oc_name_known) {
-        makeknown(obj->otyp);
+    if (known && !objects[obj->otyp].oc_name_known &&
+        obj->oclass != SPBOOK_CLASS) {
+        tell_discovery(obj);
         more_experienced(0, 10);
     }
 }
@@ -2218,15 +2222,16 @@ zap_steed(struct obj *obj)
          */
     case WAN_PROBING:
         probe_monster(u.usteed);
-        makeknown(WAN_PROBING);
+        tell_discovery(obj);
         steedhit = TRUE;
         break;
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         /* you go together */
         tele();
-        if (Teleport_control || (ox != u.ux && oy != u.uy))
-            makeknown(obj->otyp);
+        if ((Teleport_control || (ox != u.ux && oy != u.uy)) &&
+            obj->oclass != SPBOOK_CLASS)
+            tell_discovery(obj);
         steedhit = TRUE;
         break;
 
@@ -2533,6 +2538,7 @@ void
 weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
 {
     int otyp = obj->otyp;
+    int oclass = obj->oclass;
     int wandlevel = 0;
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
@@ -2542,7 +2548,8 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
         use_skill(P_WANDS, wandlevel); /* successful wand use exercises */
     boolean disclose = FALSE, was_unkn = !objects[otyp].oc_name_known;
 
-    if (!dx && !dy && !dz && objects[otyp].oc_dir == IMMEDIATE) { /* zapped self */
+    if (!dx && !dy && !dz && objects[otyp].oc_dir == IMMEDIATE) {
+        /* zapped self */
         bhitm(mon, mon, obj, 7);
         return;
     }
@@ -2605,7 +2612,12 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
                        objects[otyp].oc_dir);
         disclose = TRUE;
     }
-    if (disclose && (you || vis) && was_unkn) {
+
+    /* TODO: figure out a good way to do tell_discovery -- we can't do so
+       unconditionally because obj may no longer exist
+       (obj zaps priest, god smites you with lightning, lightning destroys
+       the wand) */
+    if (disclose && (you || vis) && was_unkn && oclass != SPBOOK_CLASS) {
         makeknown(otyp);
         more_experienced(0, 10);
     }
@@ -2798,8 +2810,8 @@ bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
         case SPE_KNOCK:
             if (is_db_wall(oldx, oldy)) {
                 if (cansee(x, y) || cansee(oldx, oldy))
-                    if (vis)
-                        makeknown(obj->otyp);
+                    if (vis && obj->oclass != SPBOOK_CLASS)
+                        tell_discovery(obj);
                 open_drawbridge(x, y);
             }
             break;
@@ -2807,16 +2819,16 @@ bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
         case SPE_WIZARD_LOCK:
             if ((cansee(x, y) || cansee(oldx, oldy))
                 && lev->locations[x][y].typ == DRAWBRIDGE_DOWN)
-                if (you || vis)
-                    makeknown(obj->otyp);
+                if ((you || vis) && obj->oclass != SPBOOK_CLASS)
+                    tell_discovery(obj);
             close_drawbridge(x, y);
             break;
         case WAN_STRIKING:
         case SPE_FORCE_BOLT:
             if (typ != DRAWBRIDGE_UP)
                 destroy_drawbridge(x, y);
-            if (you || vis)
-                makeknown(obj->otyp);
+            if ((you || vis) && obj->oclass != SPBOOK_CLASS)
+                tell_discovery(obj);
             break;
         }
     }
@@ -2834,8 +2846,8 @@ bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
         case WAN_STRIKING:
         case SPE_FORCE_BOLT:
             if (doorlock(obj, x, y)) {
-                if (vis)
-                    makeknown(obj->otyp);
+                if (vis && obj->oclass != SPBOOK_CLASS)
+                    tell_discovery(obj);
                 if (lev->locations[x][y].flags == D_BROKEN &&
                     *in_rooms(lev, x, y, SHOPBASE)) {
                     ret |= BHIT_SHOPDAM;

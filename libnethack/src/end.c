@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,7 +47,6 @@ static int artifact_score(struct obj *, boolean, struct nh_menulist *);
 static void savelife(int);
 static boolean check_survival(int how);
 static boolean should_query_disclose_options(char *defquery);
-static void container_contents(struct obj *, boolean, boolean);
 
 #define done_stopprint program_state.stopprint
 
@@ -313,7 +312,7 @@ disclose(int how, boolean taken, long umoney)
                         learn_oprop(obj, obj_properties(obj));
                 }
                 display_inventory(NULL, FALSE);
-                container_contents(youmonst.minvent, TRUE, TRUE);
+                container_contents(youmonst.minvent, TRUE, TRUE, FALSE);
             }
             if (c == 'q')
                 done_stopprint++;
@@ -370,7 +369,7 @@ dump_disclose(int how)
         obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
     }
     display_inventory(NULL, TRUE);
-    container_contents(youmonst.minvent, TRUE, TRUE);
+    container_contents(youmonst.minvent, TRUE, TRUE, FALSE);
     dump_spells();
     dump_skills();
     enlightenment(how > LAST_KILLER ? 1 : 2);     /* final */
@@ -747,15 +746,16 @@ check_survival(int how)
         u.umortality++;
         if (Lifesaved) {
             pline(msgc_statusheal, "But wait...");
-            makeknown(AMULET_OF_LIFE_SAVING);
             pline_implied(msgc_statusheal, "Your medallion %s!",
                           !Blind ? "begins to glow" : "feels warm");
             if (how == CHOKING)
                 pline_implied(msgc_statusheal, "You vomit ...");
             pline_implied(msgc_statusheal, "You feel much better!");
             pline_implied(msgc_itemloss, "The medallion crumbles to dust!");
-            if (uamul)
+            if (uamul) {
+                tell_discovery(uamul);
                 useup(uamul);
+            }
 
             adjattrib(A_CON, -1, TRUE);
             if (u.uhpmax <= 0)
@@ -946,7 +946,7 @@ done_noreturn(int how, const char *killer)
 
     if (turnstate.force_more_pending_until_done)
         win_pause_output(P_MESSAGE);
-    
+
     /* Sometimes you die on the first move.  Life's not fair. On those rare
        occasions you get hosed immediately, go out smiling... :-) -3. */
     if (moves <= 1 && how <= LAST_KILLER)   /* You die... --More-- */
@@ -1037,8 +1037,9 @@ done_noreturn(int how, const char *killer)
 }
 
 
-static void
-container_contents(struct obj *list, boolean identified, boolean all_containers)
+void
+container_contents(struct obj *list, boolean identified,
+                   boolean all_containers, boolean ingame)
 {
     struct obj *box, *obj;
     int i, icount;
@@ -1046,11 +1047,19 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
 
     for (box = list; box; box = box->nobj) {
         if (Is_container(box) || box->otyp == STATUE) {
-            if (box->otyp == BAG_OF_TRICKS) {
+            if (box->otyp == BAG_OF_TRICKS)
                 continue;       /* wrong type of container */
-            } else if (box->cobj) {
-                /* count contained objects */
 
+            boolean quantum_cat = FALSE;
+
+            if ((box->spe == 1) && (box->otyp != STATUE) &&
+                ingame) {
+                observe_quantum_cat(box);
+                quantum_cat = TRUE;
+            }
+
+            if (box->cobj) {
+                /* count contained objects */
                 icount = 0;
                 for (obj = box->cobj; obj; obj = obj->nobj)
                     icount++;
@@ -1084,10 +1093,11 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                                 PICK_NONE, PLHINT_CONTAINER, NULL);
 
                 if (all_containers)
-                    container_contents(box->cobj, identified, TRUE);
+                    container_contents(box->cobj, identified, TRUE, FALSE);
 
-            } else if (!done_stopprint) {
-                pline(msgc_info, "%s empty.", Tobjnam(box, "are"));
+            } else if (ingame || !done_stopprint) {
+                pline(msgc_info, "%s %sempty.", Tobjnam(box, "are"),
+                      quantum_cat ? "now " : "");
                 win_pause_output(P_MESSAGE);
             }
         }

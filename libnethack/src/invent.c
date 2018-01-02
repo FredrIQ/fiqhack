@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2768,34 +2768,6 @@ display_minventory(struct monst *mon, int dflags, const char *title)
         free(selected);
     } else
         ret = NULL;
-    return ret;
-}
-
-/*
- * Display the contents of a container in inventory style.
- * Currently, this is only used for statues, via wand of probing.
- */
-struct obj *
-display_cinventory(struct obj *obj)
-{
-    struct obj *ret = NULL;
-    const char *qbuf = msgprintf("Contents of %s:", doname(obj));
-    int n;
-    struct object_pick *selected = 0;
-
-    if (obj->cobj) {
-        n = query_objlist(qbuf, obj->cobj, INVORDER_SORT, &selected,
-                          PICK_NONE, allow_all);
-    } else {
-        invdisp_nothing(qbuf, "(empty)");
-        n = 0;
-    }
-
-    if (n > 0) {
-        ret = selected[0].obj;
-        free(selected);
-    }
-
     return ret;
 }
 

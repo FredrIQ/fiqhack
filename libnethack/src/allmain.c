@@ -847,11 +847,21 @@ you_moved(void)
                 }
             }
 
-            if (youmonst.pw < youmonst.pwmax && wtcap < MOD_ENCUMBER) {
-                youmonst.pw +=
-                    regeneration_by_rate(regen_rate(&youmonst, TRUE));
+            int pwrate = regeneration_by_rate(regen_rate(&youmonst, TRUE));
+            if (pwrate < 0 ||
+                (youmonst.pw < youmonst.pwmax && wtcap < MOD_ENCUMBER)) {
+                youmonst.pw += pwrate;
+
                 if (youmonst.pw > youmonst.pwmax)
                     youmonst.pw = youmonst.pwmax;
+                else if (youmonst.pw < 0) {
+                    youmonst.pw = 0;
+                    if (youmonst.spells_maintained) {
+                        pline(msgc_intrloss,
+                              "You can no longer maintain any spells.");
+                        youmonst.spells_maintained = 0;
+                    }
+                }
             }
 
             if (!hpfull && *hp == *hpmax)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -317,7 +317,7 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
     giveback:
         /* this is safe, the ring was unwielded by the caller */
         dropx(obj);
-        makeknown(obj->otyp);
+        tell_discovery(obj);
         return;
     case RIN_LEVITATION:
         pline(msgc_info, "The sink quivers upward for a moment.");
@@ -433,9 +433,14 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
         }
     }
     if (ideed)
-        makeknown(obj->otyp);
-    else
+        tell_discovery(obj);
+    else {
         You_hear(msgc_info, "the ring bouncing down the drainpipe.");
+
+        /* only rings of hunger do this if not blind, so ID it anyway. */
+        if (!Blind && obj->otyp == RIN_HUNGER)
+            tell_discovery(obj);
+    }
 
     /* A custom RNG would be nice here, but I can't see a way to make it work
        without having a different RNG for each class of ring, which would be

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-15 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -303,7 +303,7 @@ use_whistle(struct obj *obj)
         return 0;
     }
     pline(msgc_actionok, whistle_str, obj->cursed ? "shrill" : "high");
-    makeknown(obj->otyp);
+    tell_discovery(obj);
     wake_nearby(TRUE);
 
     struct monst *mtmp;
@@ -347,7 +347,7 @@ use_magic_whistle(struct obj *obj)
             }
         }
     }
-    makeknown(obj->otyp);
+    tell_discovery(obj);
     return 1;
 }
 
@@ -983,7 +983,7 @@ use_bell(struct obj **optr)
     }   /* charged BofO */
 
     if (learno) {
-        makeknown(BELL_OF_OPENING);
+        tell_discovery(obj);
         obj->known = 1;
     }
     if (wakem)
@@ -1205,7 +1205,7 @@ catch_lit(struct obj * obj)
             pline(msgc_consequence, "%s %s light!", Yname2(obj),
                   otense(obj, "catch"));
         if (obj->otyp == POT_OIL)
-            makeknown(obj->otyp);
+            tell_discovery(obj);
         if (obj->unpaid && costly_spot(u.ux, u.uy) &&
             obj->where == OBJ_INVENT) {
             /* if it catches while you have it, then it's your tough luck */
@@ -1346,7 +1346,7 @@ light_cocktail(struct obj *obj)
                   "That's in addition to the cost of the potion, of course.");
         bill_dummy_object(obj);
     }
-    makeknown(obj->otyp);
+    tell_discovery(obj);
 
     if (obj->quan > 1L) {
         obj = splitobj(obj, 1L);
@@ -1405,9 +1405,10 @@ dorub(const struct nh_cmd_arg *arg)
                 begin_burn(uwep, TRUE);
             djinni_from_bottle(&youmonst, uwep);
             update_inventory();
-        } else if (rn2(2) && !Blind)
+        } else if (rn2(2) && !Blind) {
             pline(msgc_failrandom, "You see a puff of smoke.");
-        else
+            tell_discovery(obj);
+        } else
             pline(msgc_failrandom, "Nothing happens.");
     } else if (obj->otyp == BRASS_LANTERN) {
         /* message from Adventure */
@@ -2234,6 +2235,7 @@ use_stone(struct obj *tstone)
 
     do_scratch = FALSE;
     streak_color = 0;
+    boolean id_touchstone = FALSE;
 
     switch (obj->oclass) {
     case GEM_CLASS:    /* these have class-specific handling below */
@@ -2244,14 +2246,16 @@ use_stone(struct obj *tstone)
                    (tstone->blessed ||
                     (!tstone->cursed &&
                      (Role_if(PM_ARCHEOLOGIST) || Race_if(PM_GNOME))))) {
-            makeknown(TOUCHSTONE);
             makeknown(obj->otyp);
             prinv(NULL, obj, 0L);
+            tell_discovery(tstone);
             return 1;
         } else {
             /* either a ring or the touchstone was not effective */
             if (objects[obj->otyp].oc_material == GLASS) {
                 do_scratch = TRUE;
+                if (obj->oclass == GEM_CLASS)
+                    id_touchstone = TRUE;
                 break;
             }
         }
@@ -2308,6 +2312,8 @@ use_stone(struct obj *tstone)
               streak_color, stonebuf);
     else
         pline(msgc_actionok, scritch);
+    if (id_touchstone)
+        tell_discovery(tstone);
     return 1;
 }
 
@@ -3088,7 +3094,7 @@ do_break_wand(struct obj *obj, boolean intentional)
     wanexpl:
         explode(u.ux, u.uy, (obj->otyp - WAN_MAGIC_MISSILE), dmg, WAND_CLASS,
                 expltype, NULL, 0);
-        makeknown(obj->otyp);   /* explode described the effect */
+        tell_discovery(obj);   /* explode described the effect */
         goto discard_broken_wand;
     case WAN_STRIKING:
         /* we want this before the explosion instead of at the very end */
@@ -3231,7 +3237,9 @@ doapply(const struct nh_cmd_arg *arg)
     case SACK:
     case BAG_OF_HOLDING:
     case OILSKIN_SACK:
-        res = use_container(obj, 1);
+        res = use_container(obj, 1, FALSE, FALSE);
+        if (res < 0)
+            res = 0;
         break;
     case BAG_OF_TRICKS:
         bagotricks(obj);
@@ -3382,12 +3390,15 @@ doapply(const struct nh_cmd_arg *arg)
                    ICE) ? "Oops!  %s away from you!" :
                 "Oops!  %s to the floor!",
                 The(aobjnam(otmp, "slip")), NULL);
-            makeknown(HORN_OF_PLENTY);
         } else {
             pline(obj->known ? msgc_cancelled1 : msgc_failcurse,
                   "You feel an absence of magical power.");
             obj->known = TRUE;
         }
+
+        /* other horns make frightful sounds if discharged, so we know it's a
+           horn of plenty no matter what. */
+        tell_discovery(obj);
         break;
     case LAND_MINE:
     case BEARTRAP:
