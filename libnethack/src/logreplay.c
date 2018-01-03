@@ -496,9 +496,10 @@ replay_want_userinput(void)
     /* if this action is past a certain point, or if none exist, create a
        checkpoint */
     if (!replay.next_checkpoint &&
+        (!flags.incomplete || flags.interrupted) &&
+        !u_helpless(hm_all) &&
         (!replay.prev_checkpoint ||
-         (replay.prev_checkpoint->action + CHECKPOINT_FREQ <= replay.action &&
-          !check_turnstate_move(FALSE))))
+         replay.prev_checkpoint->action + CHECKPOINT_FREQ <= replay.action))
         replay_create_checkpoint();
 
     return FALSE;
@@ -682,6 +683,7 @@ replay_restore_checkpoint(struct checkpoint *chk)
 
     replay.prev_checkpoint = chk;
     replay.next_checkpoint = chk->next;
+    vision_reset();
 }
 
 /* Add a note about this action causing a desync and create a checkpoint to
