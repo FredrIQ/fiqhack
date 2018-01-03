@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-03 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -730,7 +730,10 @@ loadgame(nh_bool autoload)
     while (autoload) {
         attempt++;
         char notyet[BUFSZ];
-        char *uname = getenv("USER");
+        const char *uname = getenv("NH4SERVERUSER");
+        if (!uname || !*uname)
+            uname = getenv("USER");
+
         files = list_gamefiles(savedir, &size);
         if (size && in_load) {
             fd = sys_open(files[0], O_RDONLY, FILE_OPEN_MASK);
