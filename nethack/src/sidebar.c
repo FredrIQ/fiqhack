@@ -165,6 +165,7 @@ draw_sidebar(void)
         draw_objlist(objwin, &flooritems, NULL, PICK_NONE);
     }
 
+    draw_frame();
     redraw_game_windows();
 }
 
