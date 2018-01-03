@@ -411,6 +411,7 @@ replay_goal_reached(void)
     replay.target = replay.action;
     replay.target_is_move = FALSE;
     replay.in_load = FALSE;
+    replay.msg = 0;
 }
 
 /* Returns TRUE if we are in replaymode and want user input */
@@ -720,7 +721,9 @@ replay_add_desync(boolean by_interrupt)
         if (by_interrupt && cur_action == to_action)
             break;
 
-        log_sync(0, TLU_NEXT, FALSE);
+        while (cur_action++ <= to_action)
+            log_sync(0, TLU_NEXT, FALSE);
+
         cur_action = replay.max - replay_count_actions();
     }
 

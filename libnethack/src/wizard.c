@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -532,33 +532,32 @@ strategy(struct monst *mtmp, boolean magical_target)
                 if (otmp->otyp == ROCK)
                     continue;
 
+                /* don't get stuck circling around an object that's
+                   underneath an immobile or hidden monster; paralysis
+                   victims excluded */
+                if ((mtoo = m_at(mtmp->dlevel, otmp->ox, otmp->oy)) &&
+                    (mtoo->msleeping || mtoo->mundetected ||
+                     (mtoo->mappearance && !mtoo->iswiz) ||
+                     !mtoo->data->mmove))
+                    continue;
+
                 /* distmin is *much* faster than distmap, and distmap will never
                    give a smaller result, so try distmin first. */
                 int curr;
-                if (distmin(mtmp->mx, mtmp->my, otmp->ox, otmp->oy) <= minr &&
+                if (((monster_would_take_item(mtmp, otmp) &&
+                      can_carry(mtmp, otmp)) ||
+                     ((Is_box(otmp) || otmp->otyp == ICE_BOX) &&
+                      !otmp->mknown && !nohands(mtmp->data) &&
+                      !is_animal(mtmp->data) &&
+                      !mindless(mtmp->data))) &&
+                    (throws_rocks(mtmp->data) ||
+                     !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
+                    !onscary(otmp->ox, otmp->oy, mtmp) &&
+                    distmin(mtmp->mx, mtmp->my, otmp->ox, otmp->oy) <= minr &&
                     (curr = distmap(&ds, otmp->ox, otmp->oy)) <= minr) {
-                    /* don't get stuck circling around an object that's
-                       underneath an immobile or hidden monster; paralysis
-                       victims excluded */
-                    if ((mtoo = m_at(mtmp->dlevel, otmp->ox, otmp->oy)) &&
-                        (mtoo->msleeping || mtoo->mundetected ||
-                         (mtoo->mappearance && !mtoo->iswiz) ||
-                         !mtoo->data->mmove))
-                        continue;
-
-                    if (((monster_would_take_item(mtmp, otmp) &&
-                          can_carry(mtmp, otmp)) ||
-                         ((Is_box(otmp) || otmp->otyp == ICE_BOX) &&
-                          !otmp->mknown && !nohands(mtmp->data) &&
-                          !is_animal(mtmp->data) &&
-                          !mindless(mtmp->data))) &&
-                        (throws_rocks(mtmp->data) ||
-                         !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
-                        !(onscary(otmp->ox, otmp->oy, mtmp))) {
-                        minr = curr - 1;
-                        gx = otmp->ox;
-                        gy = otmp->oy;
-                    }
+                    minr = curr - 1;
+                    gx = otmp->ox;
+                    gy = otmp->oy;
                 }
             }
         }

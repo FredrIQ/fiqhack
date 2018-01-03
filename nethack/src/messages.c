@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-03 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -815,9 +815,8 @@ curses_print_message(int action, int id, int turn, enum msg_channel msgc,
         /* Erase messages past and including this action/id pair. */
         struct message_chunk *chunk;
         for (chunk = first_chunk; chunk; chunk = chunk->next)
-            if (chunk->action &&
-                (chunk->action > action ||
-                 (chunk->action == action && chunk->id >= id)))
+            if (chunk->action > action ||
+                (chunk->action == action && chunk->id >= id))
                 break;
 
         if (chunk) {
@@ -881,8 +880,8 @@ curses_print_message(int action, int id, int turn, enum msg_channel msgc,
     strcpy(pending_message, msg);
     pending_message_channel = msgc;
     pending_message_turn = turn;
-    pending_message_action = turn;
-    pending_message_id = turn;
+    pending_message_action = action;
+    pending_message_id = id;
 
     /* Finally, do any More-forcing. */
     if (c & CLRFLAG_FORCETAB)
