@@ -835,6 +835,7 @@ curses_print_message(int action, int id, int turn, enum msg_channel msgc,
 
             if (pending_message)
                 free(pending_message);
+            pending_message = NULL;
 
             for (; chunk; chunk = nextchunk) {
                 nextchunk = chunk->next;
