@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1252,6 +1252,7 @@ extern boolean dmgtype(const struct permonst *, int);
 extern int max_passive_dmg(const struct monst *, const struct monst *);
 extern int monsndx(const struct permonst *);
 extern int name_to_mon(const char *);
+extern int gname_to_mon(const char *, int *);
 extern int gender(struct monst *);
 extern int pronoun_gender(const struct monst *);
 extern boolean levl_follower(struct monst *);
