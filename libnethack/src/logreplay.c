@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,6 +35,7 @@ struct replayinfo {
     boolean target_is_move; /* whether target is by action or by move */
     boolean replaying; /* if we are using the replay "windowport" */
     int move; /* current turncount (stored to make move_action accurate) */
+    char cmd[BUFSZ]; /* command ID of next command */
     struct checkpoint *prev_checkpoint;
     struct checkpoint *next_checkpoint;
     char *game_id; /* unique for each game */
@@ -291,6 +292,7 @@ replay_reset_windowport(boolean silent)
         return;
 
     replay.replaying = FALSE;
+    replay_next_cmd(replay.cmd);
     if (orig_winprocs.win_request_command)
         windowprocs = orig_winprocs;
 
@@ -347,6 +349,8 @@ replay_init(void)
     /* get game id */
     const char *game_id = msgprintf("%s_%" PRIdLEAST64 "", u.uplname,
                                     (int_least64_t)u.ubirthday / 1000000L);
+
+    strncpy(replay.cmd, "???", BUFSZ);
 
     /* if it's the same, reuse the replay state but force target to be
        right before our current point unless it's at the beginning */
@@ -648,7 +652,11 @@ replay_create_checkpoint(void)
     memset(chk, 0, sizeof (struct checkpoint));
     chk->prev = replay.prev_checkpoint;
     replay.prev_checkpoint = chk;
+    if (chk->prev)
+        chk->prev->next = chk;
     chk->next = replay.next_checkpoint;
+    if (chk->next)
+        chk->next->prev = chk;
     replay_save_checkpoint(chk);
     return chk;
 }
@@ -683,7 +691,15 @@ replay_restore_checkpoint(struct checkpoint *chk)
 
     replay.prev_checkpoint = chk;
     replay.next_checkpoint = chk->next;
+
+    /* These are needed to completely refresh our gamestate as it should be set
+       up. */
     vision_reset();
+    doredraw();
+    notify_levelchange(NULL);
+    bot();
+    flush_screen();
+    update_inventory();
 }
 
 /* Add a note about this action causing a desync and create a checkpoint to
@@ -704,11 +720,34 @@ replay_add_desync(boolean by_interrupt)
 
     if (!by_interrupt) {
         if (!replay.desyncs)
-            raw_printf("Some commands appears to be made on an obsolete engine.  "
-                       "These will use diffs instead.  "
-                       "Some actions may be skipped.");
+            raw_printf("Some commands appears to be made on an obsolete engine."
+                       "  Replay will use diffs instead.");
 
         replay.desyncs++;
+        if (replay.desyncs == 1) {
+            /* Free all checkpoints */
+            struct checkpoint *chknext;
+            for (chk = replay.next_checkpoint; chk; chk = chknext) {
+                chknext = chk->next;
+                mfree(&chk->binary_save);
+                free(chk);
+            }
+            for (chk = replay.prev_checkpoint; chk; chk = chknext) {
+                chknext = chk->next;
+                mfree(&chk->binary_save);
+                free(chk);
+            }
+
+            replay.action = 0;
+            replay.msg = 0;
+            replay.move = 0;
+            replay.prev_checkpoint = NULL;
+            replay.next_checkpoint = NULL;
+            replay.jumped = FALSE;
+            program_state.binary_save_location = 0;
+            log_sync(1, TLU_TURNS, FALSE);
+            return;
+        }
     }
 
     /* Reset the binary save location. This will greatly speed up seeking of
@@ -743,6 +782,14 @@ replay_add_desync(boolean by_interrupt)
         mnew(&chk->binary_save, NULL);
         savegame(&chk->binary_save);
     }
+}
+
+/* Returns TRUE if we want to ignore diffs. We want to do that unless we have
+   desynced. */
+boolean
+replay_ignore_diff(void)
+{
+    return !replay.desyncs;
 }
 
 /* Go N turns forward/backwards in move/actions */
@@ -787,4 +834,11 @@ int
 replay_max(void)
 {
     return replay.max;
+}
+
+/* Returns the upcoming command. */
+char *
+replay_cmd(void)
+{
+    return replay.cmd;
 }

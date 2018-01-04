@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -833,6 +833,7 @@ extern void log_backup_save(void);
 extern void log_sync(long, enum target_location_units, boolean);
 
 extern int replay_count_actions(void);
+extern void replay_next_cmd(char *);
 extern void log_revert_command(const char *);
 extern void log_recover_core(long, boolean, const char *, const char *, int);
 extern noreturn void log_recover_noreturn(
@@ -870,10 +871,12 @@ extern boolean replay_parse_command(const struct nh_cmd_and_arg);
 extern noreturn void replay_done_noreturn(void);
 extern void replay_set_action(void);
 extern void replay_force_diff(void);
+extern boolean replay_ignore_diff(void);
 extern void replay_seek(int, boolean);
 extern void replay_goto(int, boolean);
 extern int replay_action(void);
 extern int replay_max(void);
+extern char *replay_cmd(void);
 
 /* ### mail.c ### */
 

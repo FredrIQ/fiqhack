@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,6 +11,7 @@
 /* stdint.h, inttypes.h let us printf long longs portably */
 #define __STDC_FORMAT_MACROS
 #include <stdint.h>
+#include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <errno.h>
@@ -2462,6 +2463,45 @@ replay_count_actions(void)
     return res;
 }
 
+/* Returns the next command in line, if any, to cmd. */
+void
+replay_next_cmd(char cmd[BUFSZ])
+{
+    struct sinfo ps = program_state;
+    long loglineloc;
+    char *logline;
+    for ((loglineloc = get_log_offset()),
+             (logline = lgetline_malloc(program_state.logfile));
+         logline;
+         free(logline), (loglineloc = get_log_offset()),
+             (logline = lgetline_malloc(program_state.logfile)))
+        if (*logline >= 'a' && *logline <= 'z' &&
+            (strcmp("interrupt", logline)))
+            break;
+
+    if (!logline)
+        strncpy(cmd, "<end>", BUFSZ);
+    else if (!strcmp(logline, "repeat"))
+        strncpy(cmd, "<continue>", BUFSZ);
+    else {
+        /* read until the first space, or to the end */
+        int len = min(BUFSZ, strlen(logline));
+        int i;
+        for (i = 0; i < len; i++) {
+            if (isspace(logline[i]))
+                break;
+
+            cmd[i] = logline[i];
+        }
+        if (i >= BUFSZ)
+            i = BUFSZ - 1;
+        cmd[i] = '\0';
+    }
+
+    if (logline)
+        free(logline);
+    program_state = ps;
+}
 
 /* This is called in situations where we wanted to produce a save backup or
    diff, but found there was already something there.
@@ -2510,19 +2550,21 @@ log_replay_save_line(void)
         return;
     }
 
-    if (*logline == '~') {
-
-        if (program_state.followmode != FM_REPLAY) {
-            bsave = program_state.binary_save;
-            program_state.binary_save_allocated = FALSE;
-            apply_save_diff(logline, &bsave);
-            mfree(&bsave);
-        } else
+    if (replay_ignore_diff()) {
+        if (*logline == '~' || *logline == '*') {
             program_state.end_of_gamestate_location = get_log_offset();
+            program_state.binary_save_location =
+                program_state.end_of_gamestate_location;
+        }
+    } else if (*logline == '~') {
+
+        bsave = program_state.binary_save;
+        program_state.binary_save_allocated = FALSE;
+        apply_save_diff(logline, &bsave);
+        mfree(&bsave);
         program_state.binary_save_location =
             program_state.end_of_gamestate_location;
-        if (program_state.followmode != FM_REPLAY)
-            load_gamestate_from_binary_save(TRUE);
+        load_gamestate_from_binary_save(TRUE);
 
     } else if (*logline == '*') {
 

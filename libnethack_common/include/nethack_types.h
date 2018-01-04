@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -580,6 +580,7 @@ struct nh_objresult {
 # define STATUSITEMS_MAX 24
 struct nh_player_info {
     char plname[PL_NSIZ];
+    char cmd[BUFSZ];
     int x, y, z;
     char rank[PL_NSIZ];
     char rolename[PL_NSIZ];
