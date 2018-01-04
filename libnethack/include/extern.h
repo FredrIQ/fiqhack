@@ -25,6 +25,7 @@
 /* forward definitions of structures */
 struct attack;
 struct bill_x;
+struct checkpoint;
 struct damage;
 struct def_skill;
 struct distmap_state;
@@ -832,7 +833,7 @@ extern void log_backup_save(void);
 
 extern void log_sync(long, enum target_location_units, boolean);
 
-extern int replay_count_actions(void);
+extern int replay_count_actions(boolean);
 extern void replay_next_cmd(char *);
 extern void log_revert_command(const char *);
 extern void log_recover_core(long, boolean, const char *, const char *, int);
@@ -870,6 +871,7 @@ extern boolean replay_want_userinput(void);
 extern boolean replay_parse_command(const struct nh_cmd_and_arg);
 extern noreturn void replay_done_noreturn(void);
 extern void replay_set_action(void);
+extern struct checkpoint *replay_create_checkpoint(int);
 extern void replay_force_diff(void);
 extern boolean replay_ignore_diff(void);
 extern void replay_seek(int, boolean);

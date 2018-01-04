@@ -2441,25 +2441,49 @@ log_sync(long target_location, enum target_location_units tlu,
         panic("Could not downgrade to monitor lock on logfile");
 }
 
-/* Returns the amount of actions in the log. starting from current position. */
+/* Returns the amount of actions in the log. starting from current position.
+   If load_checkpoints is TRUE, give in-file binary checkpoints to the replay
+   handler, for the purpose of setting up replay checkpoints for them. */
 int
-replay_count_actions(void)
+replay_count_actions(boolean load_checkpoints)
 {
     struct sinfo ps = program_state;
-    long loglineloc;
     char *logline;
     int res = 0;
-    for ((loglineloc = get_log_offset()),
-             (logline = lgetline_malloc(program_state.logfile));
-         logline;
-         free(logline), (loglineloc = get_log_offset()),
-             (logline = lgetline_malloc(program_state.logfile))) {
+    program_state.binary_save_allocated = FALSE;
+    while (TRUE) {
+        lseek(program_state.logfile,
+              program_state.end_of_gamestate_location, SEEK_SET);
+
+        logline = lgetline_malloc(program_state.logfile);
+        if (!logline)
+            break;
+
+        if (*logline == '*' && load_checkpoints) {
+            load_save_backup_from_string(logline);
+            program_state.binary_save_location =
+                program_state.save_backup_location =
+                program_state.end_of_gamestate_location;
+            load_gamestate_from_binary_save(TRUE);
+            replay_create_checkpoint(res);
+            continue;
+        }
+
         if (*logline >= 'a' && *logline <= 'z' &&
             (strcmp("interrupt", logline)))
             res++;
+
+        program_state.end_of_gamestate_location = get_log_offset();
+        program_state.binary_save_location =
+            program_state.end_of_gamestate_location;
     }
 
+    if (program_state.binary_save_allocated)
+        mfree(&program_state.binary_save);
+
     program_state = ps;
+    if (load_checkpoints)
+        log_sync(program_state.end_of_gamestate_location, TLU_BYTES, FALSE);
     return res;
 }
 
