@@ -47,11 +47,7 @@ struct replayinfo {
     microseconds last_load;
 #define LOAD_DELAY 10000
 
-    /* Desync management. If at any point we encounter a desync, we invoke the
-       normal save differ to load the closest following action and then store it
-       in a list with a corresponding checkpoint (which is added as part of the
-       usual checkpoint list). */
-    int desyncs;
+    boolean desync;
     boolean in_load; /* Used to check for a desync */
 
     /* Mark that we have already jumped backwards once. This is needed to avoid
@@ -196,7 +192,7 @@ replay_update_screen(struct nh_dbuf_entry unused1[ROWNO][COLNO],
 static void
 replay_raw_print(const char *message)
 {
-    if (!replay.desyncs)
+    if (!replay.desync)
         orig_winprocs.win_raw_print(message);
 }
 
@@ -737,35 +733,11 @@ replay_add_desync(boolean by_interrupt)
         chk = NULL;
 
     if (!by_interrupt) {
-        if (!replay.desyncs)
+        if (!replay.desync)
             raw_printf("Some commands appears to be made on an obsolete engine."
                        "  Replay will use diffs instead.");
 
-        replay.desyncs++;
-        if (replay.desyncs == 1) {
-            /* Free all checkpoints */
-            struct checkpoint *chknext;
-            for (chk = replay.next_checkpoint; chk; chk = chknext) {
-                chknext = chk->next;
-                mfree(&chk->binary_save);
-                free(chk);
-            }
-            for (chk = replay.prev_checkpoint; chk; chk = chknext) {
-                chknext = chk->next;
-                mfree(&chk->binary_save);
-                free(chk);
-            }
-
-            replay.action = 0;
-            replay.msg = 0;
-            replay.move = 0;
-            replay.prev_checkpoint = NULL;
-            replay.next_checkpoint = NULL;
-            replay.jumped = FALSE;
-            program_state.binary_save_location = 0;
-            log_sync(1, TLU_TURNS, FALSE);
-            return;
-        }
+        replay.desync = TRUE;
     }
 
     /* Reset the binary save location. This will greatly speed up seeking of
@@ -807,7 +779,8 @@ replay_add_desync(boolean by_interrupt)
 boolean
 replay_ignore_diff(void)
 {
-    return !replay.desyncs;
+    return TRUE;
+    return !replay.desync;
 }
 
 /* Go N turns forward/backwards in move/actions */
