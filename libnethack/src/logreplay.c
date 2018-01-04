@@ -289,6 +289,10 @@ replay_reset_windowport(boolean silent)
 
     replay.replaying = FALSE;
     replay_next_cmd(replay.cmd);
+    if (!strcmp(replay.cmd, "<end>") && replay.action != replay.max) {
+        /* probably caused by a rewind, change replay.max accordingly */
+        replay.max = replay.action;
+    }
     if (orig_winprocs.win_request_command)
         windowprocs = orig_winprocs;
 
@@ -399,6 +403,7 @@ replay_init(void)
     if (!replay.max) {
         /* user requested instant replay, go back to the beginning and playback
            here */
+        log_sync(1, TLU_TURNS, FALSE);
         replay.max = replay_count_actions(TRUE);
         chk = replay.prev_checkpoint;
         while (chk && chk->prev)
