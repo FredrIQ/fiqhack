@@ -289,7 +289,8 @@ replay_reset_windowport(boolean silent)
 
     replay.replaying = FALSE;
     replay_next_cmd(replay.cmd);
-    if (!strcmp(replay.cmd, "<end>") && replay.action != replay.max) {
+    if (!strcmp(replay.cmd, "<end>") && replay.action != replay.max &&
+        !silent) {
         /* probably caused by a rewind, change replay.max accordingly */
         replay.max = replay.action;
     }
@@ -340,7 +341,7 @@ void
 replay_init(void)
 {
     /* reset the windowport in case we left it in the replay one */
-    replay_reset_windowport(FALSE);
+    replay_reset_windowport(TRUE);
 
     /* are we even in replaymode? */
     if (program_state.followmode != FM_REPLAY)
@@ -356,15 +357,29 @@ replay_init(void)
     /* if it's the same, reuse the replay state but force target to be
        right before our current point unless it's at the beginning */
     if (!strcmp(game_id, replay.game_id)) {
+        boolean by_desync = FALSE;
+        boolean at_end = FALSE;
         if (replay.in_load) {
+            by_desync = TRUE;
             replay.action--;
             replay.msg = 0;
             replay_add_desync(FALSE);
+        } else {
+            if (!replay_count_actions(FALSE))
+                at_end = TRUE;
+
+            log_sync(1, TLU_TURNS, FALSE);
+            replay.max = replay_count_actions(FALSE);
         }
 
         /* reload from a checkpoint */
         if (replay.prev_checkpoint)
             replay_restore_checkpoint(replay.prev_checkpoint);
+
+        if (at_end) {
+            replay.target = replay.max;
+            replay.target_is_move = FALSE;
+        }
         return;
     }
 
@@ -412,6 +427,8 @@ replay_init(void)
             replay.prev_checkpoint = NULL;
             replay.next_checkpoint = chk;
         }
+        log_sync(1, TLU_TURNS, FALSE);
+        replay_create_checkpoint(0);
         replay_goto(0, FALSE);
         return;
     }
