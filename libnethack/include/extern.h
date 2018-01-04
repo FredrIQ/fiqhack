@@ -1276,6 +1276,7 @@ extern boolean dmgtype(const struct permonst *, int);
 extern int max_passive_dmg(const struct monst *, const struct monst *);
 extern int monsndx(const struct permonst *);
 extern int name_to_mon(const char *);
+extern int gname_to_mon(const char *, int *);
 extern int gender(struct monst *);
 extern int pronoun_gender(const struct monst *);
 extern boolean levl_follower(struct monst *);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2075,6 +2075,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     int eroded, eroded2, erodeproof;
     int halfeaten, mntmp, contents;
     int islit, unlabeled, ishistoric, isdiluted;
+    int male, female;
     const struct alt_spellings *as = spellings;
     struct fruit *f;
     int ftype = gamestate.fruits.current;
@@ -2352,6 +2353,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
         int l = 0;
         int of = 4;
         char *tmpp;
+        boolean last_was_gender = FALSE;
 
         p = bp;
         while (p != NULL) {
@@ -2376,6 +2378,10 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
                 } else if ((tmpp = strstri_mutable(p, ", "))) {
                     of = 2;
                     p = tmpp;
+                } else if (last_was_gender &&
+                           (tmpp = strstri_mutable(p, " "))) {
+                    of = 1;
+                    p = tmpp;
                 } else {
                     p = NULL;
                     break;
@@ -2383,10 +2389,33 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
             }
 
             l = 0;
+            last_was_gender = FALSE;
 
-            if ((mntmp = name_to_mon(p + of)) >= LOW_PM) {
+            int gend = 2;
+            if ((mntmp = gname_to_mon(p + of, &gend)) >= LOW_PM) {
+                if (gend != 2 && !male && !female) {
+                    if (gend == 0)
+                        male = 1;
+                    else if (gend == 1)
+                        female = 1;
+                }
+
                 *p = '\0';
                 p = NULL;
+            } else if (!strncmpi(p + of, "a male", l=6) ||
+                       !strncmpi(p + of, "male", l=4) ||
+                       !strncmpi(p + of, "a boy", l=5) ||
+                       !strncmpi(p + of, "boy", l=3)) {
+                male = 1;
+                female = 0;
+                last_was_gender = TRUE;
+            } else if (!strncmpi(p + of, "a female", l=8) ||
+                       !strncmpi(p + of, "female", l=6) ||
+                       !strncmpi(p + of, "a girl", l=6) ||
+                       !strncmpi(p + of, "girl", l=4)) {
+                female = 1;
+                male = 0;
+                last_was_gender = TRUE;
             } else if (!strncmpi(p + of, "fire", l=4)) {
                 props |= opm_fire;
             } else if (!strncmpi(p + of, "frost", l=5) ||
@@ -2766,7 +2795,7 @@ srch:
     }
 
     /* Let wizards wish for traps --KAA */
-    /* must come after objects check so wizards can still wish for trap objects 
+    /* must come after objects check so wizards can still wish for trap objects
        like beartraps */
     if (wizard && from_user) {
         int trap;
@@ -3006,6 +3035,10 @@ typfnd:
                     otmp->spe |= OPM_FEMALE;
                 else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
                     otmp->spe |= OPM_MALE;
+                else if (female)
+                    otmp->spe |= OPM_FEMALE;
+                else if (male)
+                    otmp->spe |= OPM_MALE;
                 else
                     otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             }
@@ -3034,6 +3067,10 @@ typfnd:
                     otmp->spe |= OPM_FEMALE;
                 else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
                     otmp->spe |= OPM_MALE;
+                else if (female)
+                    otmp->spe |= OPM_FEMALE;
+                else if (male)
+                    otmp->spe |= OPM_MALE;
                 else
                     otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                 start_corpse_timeout(otmp);
@@ -3048,6 +3085,10 @@ typfnd:
                     otmp->spe |= OPM_FEMALE;
                 else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
                     otmp->spe |= OPM_MALE;
+                else if (female)
+                    otmp->spe |= OPM_FEMALE;
+                else if (male)
+                    otmp->spe |= OPM_MALE;
                 else
                     otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             break;
@@ -3059,6 +3100,10 @@ typfnd:
                 if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
                     otmp->spe |= OPM_FEMALE;
                 else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else if (female)
+                    otmp->spe |= OPM_FEMALE;
+                else if (male)
                     otmp->spe |= OPM_MALE;
                 else
                     otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
@@ -3077,6 +3122,10 @@ typfnd:
             if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
                 otmp->spe |= OPM_FEMALE;
             else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                otmp->spe |= OPM_MALE;
+            else if (female)
+                otmp->spe |= OPM_FEMALE;
+            else if (male)
                 otmp->spe |= OPM_MALE;
             else
                 otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;

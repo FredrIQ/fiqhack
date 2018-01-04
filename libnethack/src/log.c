@@ -2494,6 +2494,9 @@ replay_next_cmd(char cmd[BUFSZ])
     struct sinfo ps = program_state;
     long loglineloc;
     char *logline;
+    lseek(program_state.logfile,
+          program_state.end_of_gamestate_location, SEEK_SET);
+
     for ((loglineloc = get_log_offset()),
              (logline = lgetline_malloc(program_state.logfile));
          logline;

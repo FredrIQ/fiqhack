@@ -730,7 +730,10 @@ loadgame(nh_bool autoload)
     while (autoload) {
         attempt++;
         char notyet[BUFSZ];
-        char *uname = getenv("USER");
+        const char *uname = getenv("NH4SERVERUSER");
+        if (!uname || !*uname)
+            uname = getenv("USER");
+
         files = list_gamefiles(savedir, &size);
         if (size && in_load) {
             fd = sys_open(files[0], O_RDONLY, FILE_OPEN_MASK);

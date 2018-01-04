@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-03 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -577,6 +577,13 @@ handle_nested_key(int key)
         save_menu();
     if (keymap[key] == find_command("mainmenu"))
         show_mainmenu(TRUE, FALSE);
+    if (keymap[key] == find_command("redraw")) {
+        handle_resize();
+        redraw_game_windows();
+        clear();
+        refresh();
+        rebuild_ui();
+    }
 
     /* Perhaps we should support various other commands that are either
        entirely client-side, or else zero-time and can be supported via

@@ -583,7 +583,7 @@ draw_frame(void)
     int framewidth = !!ui_flags.draw_outer_frame_lines;
     int y = framewidth;
     int x = framewidth;
-    //int sidebar_delim = sidebar_delimiter_pos();
+    int sidebar_delim = sidebar_delimiter_pos();
     int connections[LINES+1]; /* for joining up vertical frames */
     int i;
     for (i = 0; i <= LINES; i++)
@@ -655,7 +655,7 @@ draw_frame(void)
         }
     }
 
-    //connections[sidebar_delim] |= 2;
+    connections[sidebar_delim] |= 2;
 
     int rtee;
     for (i = 1; i <= LINES; i++) {
