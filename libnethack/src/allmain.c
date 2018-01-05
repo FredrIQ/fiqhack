@@ -714,9 +714,6 @@ you_moved(void)
         wtcap = encumber_msg();
         calc_attr_bonus();
 
-        if (flags.servermail)
-            checkformail();
-
         flags.mon_moving = TRUE;
         do {
             /* Players have taken 1 more action than the global, monsters have
@@ -752,6 +749,7 @@ you_moved(void)
             /* turn boundary handling starts here */
             /**************************************/
 
+            checkformail();
             mcalcdistress();    /* adjust monsters' trap, blind, etc */
 
             /* No actions have happened yet this turn. (Combined with the change
