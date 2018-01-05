@@ -36,7 +36,6 @@ mail_filename(char *error)
 {
 #ifndef UNIX
     MAILERROR("Mail isn't available on this operating system.");
-    return NULL;
 #else
     if (getgid() != getegid() || getuid() != geteuid())
         MAILERROR("You're not allowed to send mail in this environment.");

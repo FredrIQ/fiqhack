@@ -30,7 +30,7 @@ sendmail(void)
 {
     if (ui_flags.current_followmode != FM_WATCH &&
         ui_flags.current_followmode != FM_PLAY) {
-        curses_print_message(msgc_failcurse,
+        curses_print_message(msgc_cancelled,
                              "Mail can't be sent while replaying.");
         return;
     }
@@ -38,14 +38,14 @@ sendmail(void)
     char error[BUFSZ];
     const char *box = mail_filename(error);
     if (!box) {
-        curses_print_message(msgc_failcurse, error);
+        curses_print_message(msgc_cancelled, error);
         return;
     }
 
     FILE* mb;
     const char *who = watcher_username();
     if (!who) {
-        curses_print_message(msgc_failcurse,
+        curses_print_message(msgc_cancelled,
                              "You need to be logged in to send mail!");
         return;
     }
@@ -57,7 +57,7 @@ sendmail(void)
 
     mb = fopen(box, "a");
     if (!mb) {
-        curses_print_message(msgc_failcurse,
+        curses_print_message(msgc_cancelled,
                              "Error sending mail.");
         return;
     }
