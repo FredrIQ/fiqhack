@@ -824,6 +824,7 @@ set_uifollowmode(enum nh_followmode followmode, nh_bool avail_too)
     ui_flags.current_followmode = followmode;
     if (avail_too)
         ui_flags.available_followmode = followmode;
+    draw_frame();
     redraw_game_windows();
 }
 

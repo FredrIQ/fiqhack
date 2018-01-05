@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "mail.h"
 
 #ifdef WIN32
 # include "extern.h"
@@ -17,13 +18,6 @@ checkformail(void)
 # include <string.h>
 # include <fcntl.h>
 # include "extern.h"
-
-# ifndef MAILBOXENVVAR
-/* Server admins: you can use -DMAILBOXENVVAR in CFLAGS to set the name of this
-   environment variable.  The game will then check for the variable you specify
-   in the environment at runtime to know where to look for the mailbox file. */
-#  define MAILBOXENVVAR "NHMAILBOX"
-# endif
 
 static void delivermail(const char *from, const char *message);
 
@@ -40,12 +34,13 @@ checkformail(void)
         program_state.followmode != FM_WATCH)
         return;
 
-    char *box, *msg;
+    const char *box;
+    char *msg;
     FILE* mb;
     char curline[102];
     struct flock fl = { 0 };
 
-    box = nh_getenv(MAILBOXENVVAR);
+    box = mail_filename(NULL);
     if (!box)
         return;
 
