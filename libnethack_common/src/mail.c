@@ -19,28 +19,31 @@
 # define MAILBOXENVVAR "NHMAILBOX"
 #endif
 
-# define mailerror(str)                         \
+# define MAILERROR(str)                         \
     do {                                        \
-        if (error)                              \
+        if (error) {                            \
             strncpy(error, (str), BUFSZ);       \
+            error[BUFSZ - 1] = '\0';            \
+        }                                       \
         return NULL;                            \
     } while (0)
 
 /* Returns mail filename, or NULL if we encounter an error. If error isn't NULL,
-   it is populated with an error message. */
+   it is populated with an error message.
+   error is assumed to be of size BUFSZ. */
 const char *
 mail_filename(char *error)
 {
 #ifndef UNIX
-    mailerror("Mail isn't available on this operating system.");
+    MAILERROR("Mail isn't available on this operating system.");
     return NULL;
 #else
     if (getgid() != getegid() || getuid() != geteuid())
-        mailerror("You're not allowed to send mail in this environment.");
+        MAILERROR("You're not allowed to send mail in this environment.");
 
     const char *box = getenv(MAILBOXENVVAR);
     if (!box)
-        mailerror("Mail is disabled in this installation.");
+        MAILERROR("Mail is disabled in this installation.");
 
     return box;
 #endif
