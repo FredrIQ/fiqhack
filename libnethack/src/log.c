@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -602,7 +602,10 @@ base64_decode(const char *in, char *out, int outlen)
         unsigned long blen = base64_strlen(in);
         if (blen > outlen) {
             free(o);
-            error_reading_save("Compressed base64 data was too long at %ld\n");
+            const char *err;
+            err = msgprintf("Compressed base64 data was too long (%ld > %d) "
+                            "at %%ld\n", blen, outlen);
+            error_reading_save(err);
         }
 
         if (*in == '$') {
