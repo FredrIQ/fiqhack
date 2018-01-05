@@ -19,13 +19,6 @@ checkformail(void)
 # include <fcntl.h>
 # include "extern.h"
 
-# ifndef MAILBOXENVVAR
-/* Server admins: you can use -DMAILBOXENVVAR in CFLAGS to set the name of this
-   environment variable.  The game will then check for the variable you specify
-   in the environment at runtime to know where to look for the mailbox file. */
-#  define MAILBOXENVVAR "NHMAILBOX"
-# endif
-
 static int mailhashname(const char *str);
 static void delivermail(const char *from, const char *message);
 
