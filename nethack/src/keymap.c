@@ -29,6 +29,7 @@ enum internal_commands {
     UICMD_REPEATCOUNT,
     UICMD_NOTHING,
     UICMD_SERVERCANCEL,
+    UICMD_INTERRUPT,
 };
 
 enum select_cmd {
@@ -44,8 +45,8 @@ enum order_cmd {
     ORDER_CMD_NAME    /* sort commands by names */
 };
 
-static_assert(UICMD_SERVERCANCEL < CMD_UI, "CMD_UI too small");
-static_assert(UICMD_SERVERCANCEL < CMD_INTERNAL, "CMD_INTERNAL too small");
+static_assert(UICMD_INTERRUPT < CMD_UI, "CMD_UI too small");
+static_assert(UICMD_INTERRUPT < CMD_INTERNAL, "CMD_INTERNAL too small");
 
 #define RESET_BINDINGS_ID (-10000)
 #define KEYMAP_ACTIONS_ID (-1000)
@@ -237,6 +238,9 @@ static struct nh_cmd_desc builtin_commands[] = {
      0, CMD_UI | UICMD_REPEATCOUNT},
     {"(nothing)", "bind keys to this command to suppress \"Bad command\"", 0,
      0, CMD_UI | UICMD_NOTHING},
+
+    {"interrupt", "(internal use only) forces the game into neutral turnstate",
+     0, 0, CMD_UI | CMD_INTERNAL | UICMD_INTERRUPT},
 
     {"servercancel", "(internal use only) the server already has a command",
      0, 0, CMD_UI | CMD_INTERNAL | UICMD_SERVERCANCEL},
