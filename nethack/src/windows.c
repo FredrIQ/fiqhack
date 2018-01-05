@@ -3,6 +3,7 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "mail.h"
 #include "nhcurses.h"
 #include <signal.h>
 #include <locale.h>
@@ -633,8 +634,8 @@ draw_frame(void)
                 player = "?";
 
             mvwprintw(basewin, y, 2,
-                      "WATCH MODE (watching %s, 'm' to mail, 'q' to quit)",
-                      player);
+                      "WATCH MODE (watching %s, %s'q' to quit)",
+                      player, mail_filename(NULL) ? "'m' to mail, " : "");
             wattroff(basewin, A_BOLD | COLOR_PAIR(4));
         } else if (ui_flags.current_followmode == FM_REPLAY) {
             wattron(basewin, A_BOLD | COLOR_PAIR(4));

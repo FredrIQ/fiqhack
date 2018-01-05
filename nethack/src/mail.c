@@ -3,27 +3,11 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "mail.h"
 #include "nhcurses.h"
-
-#ifdef WIN32
-void
-sendmail(void)
-{
-    curses_print_message(msgc_failcurse,
-                         "Mail isn't available on this operating system.");
-    return;
-}
-#else
-# include <stdio.h>
-# include <string.h>
-# include <fcntl.h>
-
-# ifndef MAILBOXENVVAR
-/* Server admins: you can use -DMAILBOXENVVAR in CFLAGS to set the name of this
-   environment variable.  The game will then check for the variable you specify
-   in the environment at runtime to know where to look for the mailbox file. */
-#  define MAILBOXENVVAR "NHMAILBOX"
-# endif
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
 
 static void
 mailstr_callback(const char *str, void *vmsg)
@@ -51,16 +35,14 @@ sendmail(void)
         return;
     }
 
-    char *box;
-    FILE* mb;
-
-    box = getenv(MAILBOXENVVAR);
+    char error[BUFSZ];
+    const char *box = mail_filename(error);
     if (!box) {
-        curses_print_message(msgc_failcurse,
-                             "Mail is disabled in this installation.");
+        curses_print_message(msgc_failcurse, error);
         return;
     }
 
+    FILE* mb;
     const char *who = watcher_username();
     if (!who) {
         curses_print_message(msgc_failcurse,
@@ -85,5 +67,3 @@ sendmail(void)
 
     curses_print_message(msgc_actionok, "Mail sent!");
 }
-
-#endif

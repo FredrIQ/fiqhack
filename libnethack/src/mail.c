@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "mail.h"
 
 #ifdef WIN32
 # include "extern.h"
@@ -41,12 +42,13 @@ checkformail(void)
         program_state.followmode != FM_WATCH)
         return;
 
-    char *box, *msg;
+    const char *box;
+    char *msg;
     FILE* mb;
     char curline[102];
     struct flock fl = { 0 };
 
-    box = nh_getenv(MAILBOXENVVAR);
+    box = mail_filename(NULL);
     if (!box)
         return;
 
