@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -713,6 +713,9 @@ you_moved(void)
     do {        /* hero can't move this turn loop */
         wtcap = encumber_msg();
         calc_attr_bonus();
+
+        if (flags.servermail)
+            checkformail();
 
         flags.mon_moving = TRUE;
         do {

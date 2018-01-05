@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-12-07 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -574,7 +574,7 @@ nh_mvwaddch(WINDOW *win, int y, int x, enum framechars which)
     mvwadd_wch(win, y, x, &c);
 }
 
-static void
+void
 draw_frame(void)
 {
     int framewidth = !!ui_flags.draw_outer_frame_lines;
@@ -616,6 +616,7 @@ draw_frame(void)
 
         y += ui_flags.msgheight;
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
+
         if (connectends) {
             nh_mvwaddch(basewin, y, 0, FC_LTEE);
             nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
@@ -623,6 +624,23 @@ draw_frame(void)
 
         y += 1 + ui_flags.mapheight;
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
+        if (ui_flags.current_followmode == FM_WATCH) {
+            wattron(basewin, A_BOLD | COLOR_PAIR(4));
+            const char *player = getenv("NH4SERVERUSER");
+            if (!player || !*player)
+                player = getenv("USER");
+            if (!player || !*player)
+                player = "?";
+
+            mvwprintw(basewin, y, 2,
+                      "WATCH MODE (watching %s, 'm' to mail, 'q' to quit)",
+                      player);
+            wattroff(basewin, A_BOLD | COLOR_PAIR(4));
+        } else if (ui_flags.current_followmode == FM_REPLAY) {
+            wattron(basewin, A_BOLD | COLOR_PAIR(4));
+            mvwprintw(basewin, y, 2, "REPLAY MODE");
+            wattroff(basewin, A_BOLD | COLOR_PAIR(4));
+        }
         if (connectends) {
             nh_mvwaddch(basewin, y, 0, FC_LTEE);
             nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);

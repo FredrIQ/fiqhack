@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-05 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,6 +19,7 @@ enum internal_commands {
     UICMD_OPTIONS = DIR_SELF + 1,
     UICMD_EXTCMD,
     UICMD_HELP,
+    UICMD_MAIL,
     UICMD_MAINMENU,
     UICMD_DETACH,
     UICMD_STOP,
@@ -220,6 +221,7 @@ static struct nh_cmd_desc builtin_commands[] = {
     {"extcommand", "perform an extended command", '#', 0,
      CMD_UI | UICMD_EXTCMD},
     {"help", "show the help menu", '?', 0, CMD_UI | UICMD_HELP},
+    {"mail", "send mail to the player", 0, 0, CMD_UI | UICMD_MAIL},
     {"mainmenu", "show the main menu", '!', Ctrl('c'), CMD_UI | UICMD_MAINMENU},
     {"options", "show or change option settings", 'O', 0,
      CMD_UI | UICMD_OPTIONS},
@@ -325,6 +327,16 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
     case UICMD_HELP:
         arg->argtype = 0;
         *cmd = show_help();
+        break;
+
+    case UICMD_MAIL:
+        /* TODO: server-mode mail */
+        if (ui_flags.connected_to_server)
+            curses_print_message(msgc_cancelled,
+                                 "Mail isn't available in server mode.");
+        else
+            sendmail();
+        *cmd = NULL;
         break;
 
     case UICMD_MAINMENU:
@@ -453,6 +465,14 @@ get_command(void *callbackarg,
         }
 
         if (cmd != NULL) {
+            /* Command aliases */
+            if (cmd == find_command("moveonly") &&
+                ui_flags.current_followmode == FM_WATCH)
+                cmd = find_command("mail");
+            if (cmd == find_command("drink") &&
+                ui_flags.current_followmode != FM_PLAY)
+                cmd = find_command("save");
+
             /* handle internal commands. The command handler may alter *cmd,
                and arg (although not all this functionality is currently used) */
             if (cmd->flags & CMD_UI) {
@@ -533,7 +553,9 @@ handle_nested_key(int key)
     int save_zero_time = ui_flags.in_zero_time_command;
     ui_flags.in_zero_time_command = TRUE;
 
-    if (keymap[key] == find_command("save"))
+    if (keymap[key] == find_command("save") ||
+        (ui_flags.current_followmode != FM_PLAY &&
+         keymap[key] == find_command("drink")))
         save_menu();
     if (keymap[key] == find_command("mainmenu"))
         show_mainmenu(TRUE, FALSE);
@@ -789,7 +811,7 @@ show_mainmenu(nh_bool inside_another_command, nh_bool include_debug_commands)
 static void
 instant_replay(void)
 {
-    ui_flags.current_followmode = FM_REPLAY;
+    set_uifollowmode(FM_REPLAY, FALSE);
     if (ui_flags.available_followmode == FM_WATCH)
         ui_flags.gameload_message =
             "You are now in replay mode.  To return to watching the game "
@@ -890,10 +912,16 @@ dotogglepickup(void)
     }
 
     val.b = !option->value.b;
-    curses_set_option("autopickup", val);
-
-    curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF",
-                  krc_notification);
+    if (!curses_set_option("autopickup", val)) {
+        if (ui_flags.current_followmode != FM_PLAY)
+            curses_msgwin("You can't toggle autopickup while "
+                          "replaying/watching.", krc_notification);
+        else /* shouldn't happen */
+            curses_msgwin("Error toggling autopickup.",
+                          krc_notification);
+    } else
+        curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF",
+                      krc_notification);
     nhlib_free_optlist(options);
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-12-07 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-05 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -182,6 +182,7 @@ struct interface_flags {
     nh_bool initialized;  /* false before init_curses_ui() */
     nh_bool ingame;
     nh_bool connected_to_server;
+    nh_bool autoload;
     enum nh_followmode current_followmode;
     enum nh_followmode available_followmode;
     nh_bool in_zero_time_command;
@@ -443,7 +444,7 @@ extern nh_bool random_player;
 extern struct gamewin *firstgw, *lastgw;
 extern struct nh_cmd_desc *keymap[KEY_MAX + 1];
 extern const char *nhlogo_small[11], *nhlogo_large[14];
-extern char *override_hackdir, *override_userdir;
+extern char *override_hackdir, *override_userdir, *override_savedir;
 extern int repeats_remaining;
 extern char *tiletable;
 extern int tiletable_len;
@@ -503,6 +504,10 @@ extern void free_keymap(void);
 extern void show_keymap_menu(nh_bool readonly);
 extern void handle_nested_key(int key);
 extern enum nh_direction key_to_dir(int key, int* range);
+
+/* mail.c */
+extern const char *watcher_username(void);
+extern void sendmail(void);
 
 /* main.c */
 extern void curses_impossible(const char *msg);
@@ -616,9 +621,10 @@ extern void curses_request_command(nh_bool debug, nh_bool completed,
 extern void describe_game(char *buf, enum nh_log_status status,
                           struct nh_game_info *gi);
 extern void rungame(nh_bool net);
-extern nh_bool loadgame(void);
+extern nh_bool loadgame(nh_bool autoload);
 extern void game_ended(int status, fnchar *filename, nh_bool net);
 extern fnchar **list_gamefiles(fnchar *dir, int *count);
+extern void set_uifollowmode(enum nh_followmode, nh_bool);
 extern enum nh_play_status playgame(int fd_or_gameno, enum nh_followmode);
 
 /* sidebar.c */
@@ -657,6 +663,7 @@ extern int nh_wgetch(WINDOW * win, enum keyreq_context context);
 extern struct gamewin *alloc_gamewin(int extra, nh_bool handle_messages);
 extern void delete_gamewin(struct gamewin *win);
 extern void delete_all_gamewins(void);
+extern void draw_frame(void);
 extern void curses_pause(enum nh_pause_reason reason);
 extern void curses_display_buffer(const char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);
