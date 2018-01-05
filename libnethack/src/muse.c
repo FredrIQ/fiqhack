@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-13 */
+/* Last modified by Alex Smith, 2018-01-03 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1522,12 +1522,10 @@ use_offensive(struct monst *mtmp, struct musable *m)
                   Monnam(mtmp), singular(otmp, doname));
         }
         /* Wow, this is a twisty mess of ugly global variables. */
-        if (!aware_of_u(mtmp))
-            panic("Monster throws potion while unaware!");
         if (engulfing_u(mtmp))
             panic("Monster throws potion while engulfing you!");
         m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
-                distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy), otmp, TRUE);
+                distmin(0, 0, tbx, tby), otmp, TRUE);
         return 2;
     case 0:
         return 0;       /* i.e. an exploded wand */

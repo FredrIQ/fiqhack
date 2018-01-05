@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2016-06-14 */
+/* Last modified by Alex Smith, 2017-12-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -474,7 +474,7 @@ toofar:
         mtmp->mlstmv != moves) {
         struct monst *mtmp2 = mfind_target(mtmp);
 
-        int tx = mtmp2->mx, ty = mtmp2->my;
+        int tx = mtmp2 ? mtmp2->mx : COLNO, ty = mtmp2 ? mtmp2->my : ROWNO;
         if (mtmp2 == &youmonst) {
             /* use muxy */
             tx = mtmp->mux;
