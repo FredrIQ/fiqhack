@@ -627,15 +627,33 @@ draw_frame(void)
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
         if (ui_flags.current_followmode == FM_WATCH) {
             wattron(basewin, A_BOLD | COLOR_PAIR(4));
+            mvwprintw(basewin, y, 2, "WATCH MODE");
+
+            const char *delim = " (";
             const char *player = getenv("NH4SERVERUSER");
             if (!player || !*player)
                 player = getenv("USER");
-            if (!player || !*player)
-                player = "?";
+            if (player && *player) {
+                wprintw(basewin, "%swatching %s", delim, player);
+                delim = ", ";
+            }
 
-            mvwprintw(basewin, y, 2,
-                      "WATCH MODE (watching %s, %s'q' to quit)",
-                      player, mail_filename(NULL) ? "'m' to mail, " : "");
+            char keybind[BUFSZ];
+            if (get_command_key("mail", keybind, FALSE) ||
+                get_command_key("moveonly", keybind, FALSE)) {
+                wprintw(basewin, "%s'%s' to mail", delim, keybind);
+                delim = ", ";
+            }
+
+            if (get_command_key("save", keybind, FALSE) ||
+                get_command_key("drink", keybind, FALSE)) {
+                wprintw(basewin, "%s'%s' to stop watching", delim, keybind);
+                delim = ", ";
+            }
+
+            /* end parenthesis */
+            if (!strcmp(delim, ", "))
+                wprintw(basewin, ")");
             wattroff(basewin, A_BOLD | COLOR_PAIR(4));
         } else if (ui_flags.current_followmode == FM_REPLAY) {
             wattron(basewin, A_BOLD | COLOR_PAIR(4));

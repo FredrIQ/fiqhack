@@ -495,6 +495,8 @@ extern void curses_getline_pw(const char *query, void *callbackarg,
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd,
                                 struct nh_cmd_arg *arg,
                                 nh_bool include_debug);
+extern nh_bool get_command_key(const char *cmd_name, char key_name[BUFSZ],
+                               nh_bool);
 extern void get_command(void *callbackarg,
                         void (*callback)(const struct nh_cmd_and_arg *, void *),
                         nh_bool include_debug);

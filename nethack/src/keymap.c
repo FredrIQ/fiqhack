@@ -385,6 +385,33 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
         ui_flags.msghistory_yskip = 0;
 }
 
+/* Returns a keyname for a key mapped to the given command into key_name,
+   and returns TRUE, or returns FALSE and leaves key_name untouched if
+   no keymapping exists. */
+nh_bool
+get_command_key(const char *cmd_name, char key_name[BUFSZ],
+                nh_bool prefer_shift)
+{
+    int key;
+    for (key = 0; key <= KEY_MAX; key++) {
+        if (settings.alt_is_esc &&
+            key == (KEY_ALT | (key & 0xff)))
+            continue;
+        if (keymap[key] && !strcmp(keymap[key]->name, cmd_name))
+            break;
+    }
+
+    if (key <= KEY_MAX) {
+        strncpy(key_name, friendly_keyname(key), BUFSZ);
+        key_name[BUFSZ - 1] = '\0';
+        if (!prefer_shift && key >= 'A' && key <= 'Z')
+            snprintf(key_name, BUFSZ, "%c", key);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 void
 get_command(void *callbackarg,
             void (*callback) (const struct nh_cmd_and_arg *, void *),
