@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-06 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -451,7 +451,6 @@ extern void hurtle(int, int, int, boolean);
 extern void mhurtle(struct monst *, int, int, int);
 extern boolean throwing_weapon(const struct obj *);
 extern struct monst *fire_obj(int, int, int, int, struct obj *, boolean *);
-extern struct monst *boomhit(int, int);
 extern void throwit(struct obj *, struct obj *, long, boolean,
                     schar, schar, schar);
 extern int omon_adj(struct monst *, struct obj *, boolean);
