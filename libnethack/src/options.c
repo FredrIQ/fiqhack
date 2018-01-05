@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -288,6 +288,7 @@ static const struct nhlib_boolopt_map boolopt_map[] = {
     {"pickup_thrown", &flags.pickup_thrown},
     {"prayconfirm", &flags.prayconfirm},
     {"pushweapon", &flags.pushweapon},
+    {"server_messages", &flags.servermail},
     {"show_uncursed", &flags.show_uncursed},
     {"showrace", &flags.showrace},
     {"sortpack", &flags.sortpack},

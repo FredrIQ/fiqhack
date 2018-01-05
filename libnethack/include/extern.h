@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-06-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-05 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -824,6 +824,10 @@ extern void log_init(int fd);
 extern void log_uninit(void);
 extern void log_game_over(const char *death);
 extern void log_game_state(void);
+
+/* ### mail.c ### */
+
+extern void checkformail(void);
 
 /* ### makemon.c ### */
 
