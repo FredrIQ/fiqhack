@@ -19,7 +19,6 @@ checkformail(void)
 # include <fcntl.h>
 # include "extern.h"
 
-static int mailhashname(const char *str);
 static void delivermail(const char *from, const char *message);
 
 static void
