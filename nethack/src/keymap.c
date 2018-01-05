@@ -295,14 +295,6 @@ void
 handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
                     nh_bool include_debug)
 {
-    /* Some might be overrides of game commands */
-    if (*cmd == find_command("moveonly") &&
-        ui_flags.current_followmode == FM_WATCH)
-        *cmd = find_command("mail");
-    if (*cmd == find_command("drink") &&
-        ui_flags.current_followmode != FM_PLAY)
-        *cmd = find_command("save");
-
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_RUN | DIRCMD_GO);
     nh_bool cancel_yskip = TRUE;
 
@@ -488,6 +480,14 @@ get_command(void *callbackarg,
         }
 
         if (cmd != NULL) {
+            /* Command aliases */
+            if (cmd == find_command("moveonly") &&
+                ui_flags.current_followmode == FM_WATCH)
+                cmd = find_command("mail");
+            if (cmd == find_command("drink") &&
+                ui_flags.current_followmode != FM_PLAY)
+                cmd = find_command("save");
+
             /* handle internal commands. The command handler may alter *cmd,
                and arg (although not all this functionality is currently used) */
             if ((cmd->flags & CMD_UI) ||
