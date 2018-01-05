@@ -639,8 +639,9 @@ draw_frame(void)
             }
 
             char keybind[BUFSZ];
-            if (get_command_key("mail", keybind, FALSE) ||
-                get_command_key("moveonly", keybind, FALSE)) {
+            if (mail_filename(NULL) &&
+                (get_command_key("mail", keybind, FALSE) ||
+                 get_command_key("moveonly", keybind, FALSE))) {
                 wprintw(basewin, "%s'%s' to mail", delim, keybind);
                 delim = ", ";
             }
