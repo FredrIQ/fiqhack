@@ -1976,7 +1976,7 @@ extern int float_down(struct monst *);
 extern int fire_damage(struct obj *, boolean, boolean, xchar, xchar);
 extern void acid_damage(struct obj *);
 extern int water_damage(struct obj *, const char *, boolean);
-extern void water_damage_chain(struct obj *, boolean);
+extern int water_damage_chain(struct obj *, boolean);
 extern boolean drown(void);
 extern void drain_en(int);
 extern int dountrap(const struct nh_cmd_arg *);
