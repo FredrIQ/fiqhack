@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2956,9 +2956,8 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
             update_inventory();
         return 1;
     } else if (Is_container(obj) && !Is_box(obj) &&
-                (obj->otyp != OILSKIN_SACK || (obj->cursed && !rn2(3)))) {
-        water_damage_chain(obj->cobj, FALSE);
-        return 0;
+               (obj->otyp != OILSKIN_SACK || (obj->cursed && !rn2(3)))) {
+        return water_damage_chain(obj->cobj, FALSE);
     } else if (!force && (Luck + 5) > rn2(20)) {
         /* chance per item of sustaining damage: max luck (full moon): 5%
             max luck (elsewhen): 10% avg luck (Luck==0): 75% awful luck
@@ -3009,16 +3008,25 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
     return 0;
 }
 
-void
+/* Returns 0-2 like above for how things are affected. Something being
+   destroyed (returning 3) is treated as 2. */
+int
 water_damage_chain(struct obj *obj, boolean here)
 {
+    int top_res = 0;
+    int res = 0;
     struct obj *otmp;
 
     for (; obj; obj = otmp) {
         otmp = here ? obj->nexthere : obj->nobj;
 
-        water_damage(obj, NULL, FALSE);
+        res = water_damage(obj, NULL, FALSE);
+        top_res = max(top_res, res);
     }
+
+    if (top_res == 3)
+        top_res = 2;
+    return top_res;
 }
 
 /*
