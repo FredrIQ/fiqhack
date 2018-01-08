@@ -1233,6 +1233,8 @@ assign_skills(struct monst *mon, int start)
     for (i = start; i < P_NUM_SKILLS; i++) {
         MP_SKILL(mon, i) = P_ISRESTRICTED;
         MP_MAX_SKILL(mon, i) = mprof(mon->data, i);
+        if (MP_MAX_SKILL(mon, i) == P_UNSKILLED)
+            MP_MAX_SKILL(mon, i) = P_ISRESTRICTED;
         MP_ADVANCE(mon, i) = 0;
 
         if (mon != &youmonst)
