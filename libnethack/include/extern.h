@@ -871,6 +871,7 @@ extern boolean replay_parse_command(const struct nh_cmd_and_arg);
 extern noreturn void replay_done_noreturn(void);
 extern void replay_set_action(void);
 extern struct checkpoint *replay_create_checkpoint(int, long);
+extern void replay_announce_desync(const char *);
 extern void replay_force_diff(void);
 extern boolean replay_ignore_diff(void);
 extern void replay_set_diffstate(int);
@@ -880,6 +881,7 @@ extern void replay_goto(int, boolean);
 extern int replay_action(void);
 extern int replay_max(void);
 extern char *replay_cmd(void);
+extern boolean replay_desynced(void);
 
 /* ### mail.c ### */
 

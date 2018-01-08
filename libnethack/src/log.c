@@ -2017,10 +2017,18 @@ load_gamestate_from_binary_save(boolean maybe_old_version,
 
     mnew(&mf, NULL);
     savegame(&mf);
+    boolean want_msg = maybe_old_version;
+    if (program_state.followmode == FM_REPLAY && !replay_desynced() &&
+        save_too)
+        want_msg = TRUE;
 
     boolean res = TRUE;
-    if (!mequal(&program_state.binary_save, &mf, maybe_old_version ? NULL :
+    if (!mequal(&program_state.binary_save, &mf, !want_msg ? NULL :
                 &mequal_message)) {
+
+        if (program_state.followmode == FM_REPLAY && !replay_desynced() &&
+            save_too)
+            replay_announce_desync(mequal_message);
 
         res = FALSE;
         mfree(&mf);

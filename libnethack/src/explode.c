@@ -446,7 +446,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
         }
         if (adtyp == AD_FIRE)
             burnarmor(&youmonst);
-        int item_dmg = destroy_mitem(&youmonst, ALL_CLASSES, (int)adtyp, &killer);
+        int item_dmg = destroy_mitem(&youmonst, ALL_CLASSES, (int)adtyp,
+                                     &killer);
         damu += item_dmg;
 
         ugolemeffects((int)adtyp, damu);

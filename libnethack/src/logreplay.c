@@ -756,6 +756,22 @@ replay_restore_checkpoint(struct checkpoint *chk)
     update_inventory();
 }
 
+void
+replay_announce_desync(const char *why)
+{
+    /* Check for nonzero action to ensure we've initialized. */
+    if (!replay.action || replay.desync)
+        return;
+
+    if (why)
+        raw_printf("%s", why);
+
+    raw_printf("Some commands appears to be made on an old version."
+               "  Replay will use diffs instead.");
+
+    replay.desync = TRUE;
+}
+
 /* Add a note about this action causing a desync and create a checkpoint to
    handle it. */
 static void
@@ -772,13 +788,8 @@ replay_add_desync(boolean by_interrupt)
     else
         chk = NULL;
 
-    if (!by_interrupt) {
-        if (!replay.desync)
-            raw_printf("Some commands appears to be made on an obsolete engine."
-                       "  Replay will use diffs instead.");
-
-        replay.desync = TRUE;
-    }
+    if (!by_interrupt)
+        replay_announce_desync(NULL);
 
     /* Reset the binary save location. This will greatly speed up seeking of
        later parts of the game since at this point, we are at the very beginning
@@ -922,4 +933,10 @@ char *
 replay_cmd(void)
 {
     return replay.cmd;
+}
+
+boolean
+replay_desynced(void)
+{
+    return replay.desync;
 }
