@@ -155,10 +155,9 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     explmask[i][j] = !!immune_to_sleep(&youmonst);
                     break;
                 case AD_DISN:
-                    if (Drain_resistance)
+                    if (raylevel == P_UNSKILLED && Drain_resistance)
                         resist_death = TRUE;
-                    /* why MR doesn't resist general deathfields is beyond me,
-                       but... */
+                    /* why MR doesn't resist general deathfields is beyond me, but... */
                     if (resists_death(&youmonst))
                         resist_death = TRUE;
                     if (raylevel && Antimagic)
@@ -207,8 +206,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     case AD_SLEE:
                         explmask[i][j] |= !!immune_to_sleep(mtmp);
                     case AD_DISN:
-                        if (resists_drli(mtmp))
-                            resist_death = TRUE;
+                        if (raylevel == P_UNSKILLED && resists_drli(mtmp))
+                        resist_death = TRUE;
                         if (resists_death(mtmp))
                             resist_death = TRUE;
                         if (raylevel && resists_magm(mtmp))
@@ -387,8 +386,11 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         mdam = 0;
                     }
                     if (adtyp == AD_DISN && raylevel) {
-                        mlosexp(NULL, mtmp, "", FALSE);
-                        mdam = 0;
+                        if (resists_death(mtmp) || resists_magm(mtmp) ||
+                            raylevel == P_UNSKILLED)
+                            mlosexp(NULL, mtmp, "", FALSE);
+                        else
+                            mdam = mtmp->mhp; /* instadeath */
                     }
                     mtmp->mhp -= mdam;
                     mtmp->mhp -= (idamres + idamnonres);
@@ -434,8 +436,14 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 damu = 0;
             }
             if (adtyp == AD_DISN) {
-                losexp("drained by a death field",FALSE);
-                damu = 0;
+                if (resists_death(&youmonst) || Antimagic ||
+                    raylevel == P_UNSKILLED) {
+                    losexp("drained by a death field",FALSE);
+                    damu = 0;
+                } else {
+                    done(DIED, "killed by a death field");
+                    damu = 0; /* lifesaved */
+                }
             }
         }
         if (adtyp == AD_FIRE)
