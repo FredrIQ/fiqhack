@@ -421,10 +421,18 @@ make_bones:
     if (statue)
         christen_obj(statue, sname);
 
+    /* Clear shop visit counter, which is also used as a flag as to whether
+       or not we've been in the shop and seen the shopkeeper
+       (avoids "Your hear Izchak cursing shoplifters" when not seen). */
+    struct mkroom *sroom = search_special(level, ANY_SHOP);
+    if (sroom && tended_shop(sroom))
+        sroom->resident->mextra->eshk->visitct = 0;
+
     /* Hero is no longer on the map. */
     u.ux = u.uy = 0;
 
     /* Clear all memory from the level. */
+    level->flags.vault_known = FALSE;
     for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++) {
             level->locations[x][y].seenv = 0;
