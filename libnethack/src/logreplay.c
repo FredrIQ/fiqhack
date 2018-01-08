@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,6 +25,7 @@ struct checkpoint {
     boolean by_desync;
     struct sinfo program_state;
     struct memfile binary_save;
+    long file_location;
 };
 
 struct replayinfo {
@@ -35,7 +36,6 @@ struct replayinfo {
     boolean reverse; /* if seeking in reverse */
     boolean target_is_move; /* whether target is by action or by move */
     boolean replaying; /* if we are using the replay "windowport" */
-    int move; /* current turncount (stored to make move_action accurate) */
     char cmd[BUFSZ]; /* command ID of next command */
     struct checkpoint *prev_checkpoint;
     struct checkpoint *next_checkpoint;
@@ -428,7 +428,7 @@ replay_init(void)
             replay.next_checkpoint = chk;
         }
         log_sync(1, TLU_TURNS, FALSE);
-        replay_create_checkpoint(0);
+        replay_create_checkpoint(0, 0);
         replay_goto(0, FALSE);
         return;
     }
@@ -540,7 +540,7 @@ replay_want_userinput(void)
         (!replay.next_checkpoint ||
          replay.next_checkpoint->action - CHECKPOINT_FREQ >= replay.action ||
          (replay.next_checkpoint->action && !replay.action)))
-        replay_create_checkpoint(replay.action);
+        replay_create_checkpoint(replay.action, 0);
 
     return FALSE;
 }
@@ -613,7 +613,7 @@ replay_parse_command(const struct nh_cmd_and_arg cmd)
 
     int cur_location = replay.action;
     if (replay.target_is_move)
-        cur_location = replay.move;
+        cur_location = moves;
     if (cur_location != replay.target)
         return TRUE;
     return FALSE;
@@ -658,14 +658,13 @@ replay_done_noreturn(void)
     }
 }
 
-/* Updates replay.move/replay.action for a new action. */
+/* Updates replay.action for a new action. */
 void
 replay_set_action(void)
 {
     if (program_state.followmode != FM_REPLAY)
         return;
 
-    replay.move = moves;
     replay.action++;
     replay.msg = 0;
 }
@@ -681,7 +680,7 @@ replay_force_diff(void)
 
 /* Creates a checkpoint. */
 struct checkpoint *
-replay_create_checkpoint(int action)
+replay_create_checkpoint(int action, long file_location)
 {
     /* Create a new checkpoint at this location */
     struct checkpoint *chk = malloc(sizeof (struct checkpoint));
@@ -698,7 +697,9 @@ replay_create_checkpoint(int action)
     chk->from_action = action;
     chk->from_move = moves;
     chk->program_state = program_state;
-    replay_save_checkpoint(chk);
+    chk->file_location = file_location;
+    if (!file_location)
+        replay_save_checkpoint(chk);
     return chk;
 }
 
@@ -717,13 +718,19 @@ replay_restore_checkpoint(struct checkpoint *chk)
     program_state = chk->program_state;
     program_state.binary_save = old_ps_binary;
     program_state.binary_save_allocated = old_ps_allocation;
-    freedynamicdata();
-    init_data(FALSE);
-    startup_common(FALSE);
-    dorecover(&chk->binary_save);
+    if (!chk->file_location) {
+        freedynamicdata();
+        init_data(FALSE);
+        startup_common(FALSE);
+        dorecover(&chk->binary_save);
+    } else {
+        /* Clear the binary save location, to ensure we load immediately from
+           the binary save location, rather than trying to replay to it. */
+        program_state.binary_save_location = 0;
+        log_sync(chk->file_location, TLU_BYTES, FALSE);
+    }
     replay.action = chk->action;
     replay.msg = 0;
-    replay.move = chk->move;
 
     replay.prev_checkpoint = chk;
     replay.next_checkpoint = chk->next;
@@ -746,7 +753,7 @@ replay_add_desync(boolean by_interrupt)
     /* Check if we have an existing checkpoint caused by a desync, we might
        simply need to go further on that one. */
     int from_action = replay.action;
-    int from_move = replay.move;
+    int from_move = moves;
     int to_action = replay.action;
     struct checkpoint *chk = replay.prev_checkpoint;
     if (chk->action == replay.action && chk->by_desync)
@@ -768,7 +775,7 @@ replay_add_desync(boolean by_interrupt)
     program_state.binary_save_location = 0;
 
     /* Make the differ do its thing. */
-    log_sync(replay.move, TLU_TURNS, FALSE);
+    log_sync(moves, TLU_TURNS, FALSE);
     int cur_action = replay.max - replay_count_actions(FALSE);
     while (cur_action <= to_action) {
         if (by_interrupt && cur_action == to_action)
@@ -783,13 +790,13 @@ replay_add_desync(boolean by_interrupt)
     replay.action = cur_action;
     replay.msg = 0;
     if (!chk) {
-        chk = replay_create_checkpoint(replay.action);
+        chk = replay_create_checkpoint(replay.action, 0);
         chk->from_action = from_action;
         chk->from_move = from_move;
         chk->by_desync = TRUE;
     } else {
         chk->action = replay.action;
-        chk->move = replay.move;
+        chk->move = moves;
         mfree(&chk->binary_save);
         mnew(&chk->binary_save, NULL);
         savegame(&chk->binary_save);
@@ -811,7 +818,7 @@ replay_seek(int target, boolean target_is_move)
 {
     /* ensure that target holds the correct thing we can offset */
     replay.jumped = FALSE;
-    replay.target = (target_is_move ? replay.move : replay.action);
+    replay.target = (target_is_move ? moves : replay.action);
     replay.target += target;
     if (replay.target < 1)
         replay.target = 1;

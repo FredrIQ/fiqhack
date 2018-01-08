@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -30,7 +30,8 @@ static char *lgetline_malloc(int);
 static enum nh_log_status read_log_header(
     int fd, struct nh_game_info *si, int *recovery_count, boolean do_locking);
 
-static void load_gamestate_from_binary_save(boolean maybe_old_version);
+static void load_gamestate_from_binary_save(boolean maybe_old_version,
+                                            boolean save_too);
 static void log_replay_save_line(void);
 
 static boolean full_read(int fd, void *buffer, int len);
@@ -1162,7 +1163,7 @@ log_backup_save(void)
 
     /* Verify that the save file loads correctly; it's better to fail fast
        than end up with a corrupted save. */
-    load_gamestate_from_binary_save(FALSE);
+    load_gamestate_from_binary_save(FALSE, TRUE);
 }
 
 static noreturn void
@@ -1243,7 +1244,7 @@ log_neutral_turnstate(void)
         stop_updating_logfile(1);
 
         /* Check the gamestate, for the same reason as in log_backup_save(). */
-        load_gamestate_from_binary_save(FALSE);
+        load_gamestate_from_binary_save(FALSE, TRUE);
 
         program_state.emergency_recover_location = 0;
     }
@@ -1990,7 +1991,8 @@ nh_get_savegame_status(int fd, struct nh_game_info *si)
    loading and immediately re-saving does not produce an identical file, we
    force the next save-related line to be a backup not a diff. */
 static void
-load_gamestate_from_binary_save(boolean maybe_old_version)
+load_gamestate_from_binary_save(boolean maybe_old_version,
+                                boolean save_too)
 {
     struct memfile mf;
     const char *mequal_message;
@@ -2008,6 +2010,11 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
     dorecover(&program_state.binary_save);
 
     /* Save the loaded game. */
+    if (!save_too) {
+        program_state.ok_to_diff = FALSE;
+        return;
+    }
+
     mnew(&mf, NULL);
     savegame(&mf);
 
@@ -2381,7 +2388,7 @@ log_sync(long target_location, enum target_location_units tlu,
                correct, so we just need to get the gamestate and its location
                correct. */
             if (!inconsistent)
-                load_gamestate_from_binary_save(TRUE);
+                load_gamestate_from_binary_save(TRUE, TRUE);
             if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
                 panic("Could not downgrade to monitor lock on logfile");
             return;
@@ -2414,7 +2421,7 @@ log_sync(long target_location, enum target_location_units tlu,
             program_state.binary_save = bsave;
 
             if (!inconsistent)
-                load_gamestate_from_binary_save(TRUE);
+                load_gamestate_from_binary_save(TRUE, TRUE);
             if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
                 panic("Could not downgrade to monitor lock on logfile");
             return;
@@ -2438,7 +2445,7 @@ log_sync(long target_location, enum target_location_units tlu,
 
     /* Fix the invariant on the gamestate. */
     if (!inconsistent)
-        load_gamestate_from_binary_save(TRUE);
+        load_gamestate_from_binary_save(TRUE, TRUE);
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
         panic("Could not downgrade to monitor lock on logfile");
@@ -2467,8 +2474,9 @@ replay_count_actions(boolean load_checkpoints)
             program_state.binary_save_location =
                 program_state.save_backup_location =
                 program_state.end_of_gamestate_location;
-            load_gamestate_from_binary_save(TRUE);
-            replay_create_checkpoint(res);
+            load_gamestate_from_binary_save(TRUE, FALSE);
+            replay_create_checkpoint(res,
+                                     program_state.end_of_gamestate_location);
             continue;
         }
 
@@ -2580,6 +2588,10 @@ log_replay_save_line(void)
         return;
     }
 
+    boolean save_too = FALSE;
+    if (program_state.followmode == FM_PLAY)
+        save_too = TRUE;
+
     if (replay_ignore_diff()) {
         if (*logline == '~' || *logline == '*') {
             program_state.end_of_gamestate_location = get_log_offset();
@@ -2594,7 +2606,7 @@ log_replay_save_line(void)
         mfree(&bsave);
         program_state.binary_save_location =
             program_state.end_of_gamestate_location;
-        load_gamestate_from_binary_save(TRUE);
+        load_gamestate_from_binary_save(TRUE, save_too);
 
     } else if (*logline == '*') {
 
@@ -2602,7 +2614,7 @@ log_replay_save_line(void)
         program_state.binary_save_location =
             program_state.save_backup_location =
             program_state.end_of_gamestate_location;
-        load_gamestate_from_binary_save(TRUE);
+        load_gamestate_from_binary_save(TRUE, save_too);
 
     } else if (*logline == 'Q') {
 
