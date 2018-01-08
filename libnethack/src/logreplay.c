@@ -400,7 +400,7 @@ replay_init(void)
             free(chk);
         }
         for (chk = replay.prev_checkpoint; chk; chk = chknext) {
-            chknext = chk->next;
+            chknext = chk->prev;
             mfree(&chk->binary_save);
             free(chk);
         }
@@ -759,8 +759,13 @@ replay_restore_checkpoint(struct checkpoint *chk)
 void
 replay_announce_desync(const char *why)
 {
-    /* Check for nonzero action to ensure we've initialized. */
-    if (!replay.action || replay.desync)
+    /* Check for equal game ID to ensure we've initialized. */
+    /* get game id */
+    char game_id[BUFSZ];
+    snprintf(game_id, BUFSZ, "%s_%" PRIdLEAST64 "", u.uplname,
+             (int_least64_t)u.ubirthday / 1000000L);
+
+    if (strcmp(game_id, replay.game_id) || replay.desync)
         return;
 
     if (why)

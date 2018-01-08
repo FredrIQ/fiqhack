@@ -2604,7 +2604,7 @@ log_replay_save_line(void)
     if (program_state.followmode == FM_PLAY)
         save_too = TRUE;
     if (program_state.followmode == FM_REPLAY &&
-        !replay_get_diffstate())
+        !replay_get_diffstate() && *logline == '~')
         save_too = TRUE;
 
     if (replay_ignore_diff()) {
