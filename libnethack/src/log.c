@@ -2281,6 +2281,9 @@ log_sync(long target_location, enum target_location_units tlu,
     struct memfile bsave;
     long sloc, loglineloc, last_sloc;
     char *logline;
+    boolean save_too = TRUE;
+    if (program_state.followmode == FM_REPLAY)
+        save_too = FALSE;
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
         panic("Could not upgrade to read lock on logfile");
@@ -2399,7 +2402,7 @@ log_sync(long target_location, enum target_location_units tlu,
                correct, so we just need to get the gamestate and its location
                correct. */
             if (!inconsistent)
-                load_gamestate_from_binary_save(TRUE, TRUE);
+                load_gamestate_from_binary_save(TRUE, save_too);
             if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
                 panic("Could not downgrade to monitor lock on logfile");
             return;
@@ -2432,7 +2435,7 @@ log_sync(long target_location, enum target_location_units tlu,
             program_state.binary_save = bsave;
 
             if (!inconsistent)
-                load_gamestate_from_binary_save(TRUE, TRUE);
+                load_gamestate_from_binary_save(TRUE, save_too);
             if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
                 panic("Could not downgrade to monitor lock on logfile");
             return;
@@ -2456,7 +2459,7 @@ log_sync(long target_location, enum target_location_units tlu,
 
     /* Fix the invariant on the gamestate. */
     if (!inconsistent)
-        load_gamestate_from_binary_save(TRUE, TRUE);
+        load_gamestate_from_binary_save(TRUE, save_too);
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
         panic("Could not downgrade to monitor lock on logfile");
@@ -2487,7 +2490,8 @@ replay_count_actions(boolean load_checkpoints)
                 program_state.end_of_gamestate_location;
             load_gamestate_from_binary_save(TRUE, FALSE);
             replay_create_checkpoint(res,
-                                     program_state.end_of_gamestate_location);
+                                     program_state.end_of_gamestate_location,
+                                     0);
             continue;
         }
 
@@ -2631,8 +2635,10 @@ log_replay_save_line(void)
         program_state.binary_save_location =
             program_state.save_backup_location =
             program_state.end_of_gamestate_location;
-        if (!load_gamestate_from_binary_save(TRUE, save_too))
+        if (!load_gamestate_from_binary_save(TRUE, save_too)) {
+            replay_create_checkpoint(replay_action(), 0, 1);
             res = 2;
+        }
 
     } else if (*logline == 'Q') {
 

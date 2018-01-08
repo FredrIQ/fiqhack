@@ -22,7 +22,7 @@ struct checkpoint {
     int move;
     int from_action;
     int from_move;
-    boolean by_desync;
+    int by_desync;
     struct sinfo program_state;
     struct memfile binary_save;
     long file_location;
@@ -435,7 +435,7 @@ replay_init(void)
             replay.next_checkpoint = chk;
         }
         log_sync(1, TLU_TURNS, FALSE);
-        replay_create_checkpoint(0, 0);
+        replay_create_checkpoint(0, 0, 0);
         replay_goto(0, FALSE);
         return;
     }
@@ -547,7 +547,7 @@ replay_want_userinput(void)
         (!replay.next_checkpoint ||
          replay.next_checkpoint->action - CHECKPOINT_FREQ >= replay.action ||
          (replay.next_checkpoint->action && !replay.action)))
-        replay_create_checkpoint(replay.action, 0);
+        replay_create_checkpoint(replay.action, 0, 0);
 
     return FALSE;
 }
@@ -688,7 +688,7 @@ replay_force_diff(void)
 
 /* Creates a checkpoint. */
 struct checkpoint *
-replay_create_checkpoint(int action, long file_location)
+replay_create_checkpoint(int action, long file_location, int by_desync)
 {
     /* Create a new checkpoint at this location */
     struct checkpoint *chk = malloc(sizeof (struct checkpoint));
@@ -706,6 +706,7 @@ replay_create_checkpoint(int action, long file_location)
     chk->from_move = moves;
     chk->program_state = program_state;
     chk->file_location = file_location;
+    chk->by_desync = 2;
     if (!file_location)
         replay_save_checkpoint(chk);
     return chk;
@@ -742,6 +743,32 @@ replay_restore_checkpoint(struct checkpoint *chk)
     replay.action = chk->action;
     replay.move = chk->move;
     replay.msg = 0;
+
+    /* Cleanup temporary checkpoints */
+    if (chk->by_desync != 1) {
+        struct checkpoint *dschk = chk->prev;
+        struct checkpoint *chknext;
+        while (dschk && dschk->by_desync == 1) {
+            chknext = dschk->prev;
+            mfree(&dschk->binary_save);
+            free(dschk);
+        }
+
+        chk->prev = dschk;
+        if (chk->prev)
+            chk->prev->next = chk;
+
+        dschk = chk->next;
+        while (dschk && dschk->by_desync == 1) {
+            chknext = dschk->next;
+            mfree(&dschk->binary_save);
+            free(dschk);
+        }
+
+        chk->next = dschk;
+        if (chk->next)
+            chk->next->prev = chk;
+    }
 
     replay.prev_checkpoint = chk;
     replay.next_checkpoint = chk->next;
@@ -788,7 +815,7 @@ replay_add_desync(boolean by_interrupt)
     int from_move = moves;
     int to_action = replay.action;
     struct checkpoint *chk = replay.prev_checkpoint;
-    if (chk->action == replay.action && chk->by_desync)
+    if (chk->action == replay.action && chk->by_desync == 2)
         to_action++;
     else
         chk = NULL;
@@ -817,16 +844,17 @@ replay_add_desync(boolean by_interrupt)
     replay.action = cur_action;
     replay.msg = 0;
     if (!chk) {
-        chk = replay_create_checkpoint(replay.action, 0);
+        chk = replay_create_checkpoint(replay.action,
+                                       program_state.end_of_gamestate_location,
+                                       2);
         chk->from_action = from_action;
         chk->from_move = from_move;
-        chk->by_desync = TRUE;
     } else {
         chk->action = replay.action;
         chk->move = moves;
         mfree(&chk->binary_save);
-        mnew(&chk->binary_save, NULL);
-        savegame(&chk->binary_save);
+        program_state.binary_save_allocated = FALSE;
+        mclone(&chk->binary_save, &program_state.binary_save);
     }
 }
 

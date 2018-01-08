@@ -870,7 +870,7 @@ extern boolean replay_want_userinput(void);
 extern boolean replay_parse_command(const struct nh_cmd_and_arg);
 extern noreturn void replay_done_noreturn(void);
 extern void replay_set_action(void);
-extern struct checkpoint *replay_create_checkpoint(int, long);
+extern struct checkpoint *replay_create_checkpoint(int, long, int);
 extern void replay_announce_desync(const char *);
 extern void replay_force_diff(void);
 extern boolean replay_ignore_diff(void);
