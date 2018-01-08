@@ -390,7 +390,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                             raylevel == P_UNSKILLED)
                             mlosexp(NULL, mtmp, "", FALSE);
                         else
-                            mdam = mtmp->mhp; /* instadeath */
+                            mdam = mtmp->mhp / 2 + dice(6, 6);
                     }
                     mtmp->mhp -= mdam;
                     mtmp->mhp -= (idamres + idamnonres);
@@ -440,10 +440,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     raylevel == P_UNSKILLED) {
                     losexp("drained by a death field",FALSE);
                     damu = 0;
-                } else {
-                    done(DIED, "killed by a death field");
-                    damu = 0; /* lifesaved */
-                }
+                } else
+                    damu = (Upolyd ? u.mh : u.uhp) / 2 + dice(6, 6);
             }
         }
         if (adtyp == AD_FIRE)
