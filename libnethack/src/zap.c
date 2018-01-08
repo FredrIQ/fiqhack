@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2290,7 +2290,7 @@ cancel_monst(struct monst *mdef, struct obj *obj, struct monst *magr,
     if (obj->oclass == WAND_CLASS)
         skill = getwandlevel(magr, obj);
     else if (obj->oclass == SPBOOK_CLASS)
-        skill = mprof(magr, MP_SMATR);
+        skill = MP_SKILL(magr, P_MATTER_SPELL);
 
     if (vis)
         pline(combat_msgc(magr, mdef, cr_hit),
@@ -2581,11 +2581,7 @@ weffects(struct monst *mon, struct obj *obj, schar dx, schar dy, schar dz)
             int divisor = 2;
             int wandlvl = 0;
             if (otyp == SPE_MAGIC_MISSILE) {
-                int skill;
-                if (you)
-                    skill = P_SKILL(P_ATTACK_SPELL);
-                else
-                    skill = mprof(mon, MP_SATTK);
+                int skill = MP_SKILL(mon, P_ATTACK_SPELL);
                 divisor = (skill == P_UNSKILLED ? 5 :
                            skill == P_BASIC ? 4 :
                            skill == P_SKILLED ? 3 :
@@ -3165,9 +3161,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     struct obj *otmp;
 
     /* we need to figure out BUC for potential wand for resist() */
-    int wandlevel = P_SKILL(P_WANDS);
-    if (magr && magr != &youmonst)
-        wandlevel = mprof(magr, MP_WANDS);
+    int wandlevel = MP_SKILL(magr, P_WANDS);
     if (raylevel)
         bcsign = raylevel - wandlevel;
 
@@ -4036,9 +4030,7 @@ resist(const struct monst *magr, const struct monst *mdef,
     case WAND_CLASS:
         alev = 12;
         if (magr) {
-            int wandlevel = P_SKILL(P_WANDS);
-            if (magr != &youmonst)
-                wandlevel = mprof(magr, MP_WANDS);
+            int wandlevel = MP_SKILL(magr, P_WANDS);
             wandlevel += buc;
             alev = (wandlevel == P_UNSKILLED ? 5 :
                     wandlevel == P_BASIC ? 10 :
@@ -4159,13 +4151,9 @@ retry:
 
 int
 getwandlevel(const struct monst *user, struct obj *obj) {
-    int wandlevel;
-    if (user == &youmonst) {
-        wandlevel = P_SKILL(P_WANDS);
-        if (!wandlevel) /* restricted users would return a 0 */
-            wandlevel++;
-    } else
-        wandlevel = mprof(user, MP_WANDS);
+    int wandlevel = MP_SKILL(user, P_WANDS);
+    if (!wandlevel) /* restricted users would return a 0 */
+        wandlevel++;
 
     /* wandlevel is 0-5 depending on skill + BUC combination */
     if (!obj || obj->oclass != WAND_CLASS) {

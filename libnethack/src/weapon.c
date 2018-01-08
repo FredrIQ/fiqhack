@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1132,7 +1132,7 @@ dump_skills(void)
             if (i == skill_ranges[pass].first)
                 add_menuheading(&menu, skill_ranges[pass].name);
 
-            if (P_RESTRICTED(i) || u.weapon_skills[i].skill == P_UNSKILLED)
+            if (P_RESTRICTED(i) || P_SKILL(i) == P_UNSKILLED)
                 continue;
 
             buf = msgprintf(" %s\t[%s]", P_NAME(i),
@@ -1493,7 +1493,7 @@ skill_init(const struct def_skill *class_skill)
         P_SKILL(P_ATTACK_SPELL) = P_BASIC;
         P_SKILL(P_ENCHANTMENT_SPELL) = P_BASIC;
     }
-    
+
     /* set wand skills */
     if (!Role_if(PM_BARBARIAN) && !Role_if(PM_CAVEMAN))
         P_SKILL(P_WANDS) = P_BASIC;
@@ -1516,10 +1516,8 @@ skill_init(const struct def_skill *class_skill)
     if (urole.petnum == PM_PONY)
         P_SKILL(P_RIDING) = P_BASIC;
 
-    /* 
-     * Make sure we haven't missed setting the max on a skill
-     * & set advance
-     */
+    /* Make sure we haven't missed setting the max on a skill, and set
+       advance. */
     for (skill = 0; skill < P_NUM_SKILLS; skill++) {
         if (!P_RESTRICTED(skill)) {
             if (P_MAX_SKILL(skill) < P_SKILL(skill)) {
@@ -1547,4 +1545,3 @@ setmnotwielded(struct monst *mon, struct obj *obj)
 }
 
 /*weapon.c*/
-

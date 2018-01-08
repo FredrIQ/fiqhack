@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -824,9 +824,9 @@ restore_you(struct memfile *mf, struct you *y)
         y->uconduct_time[i] = mread32(mf);
     }
     for (i = 0; i < P_NUM_SKILLS; i++) {
-        y->weapon_skills[i].skill = mread8(mf);
-        y->weapon_skills[i].max_skill = mread8(mf);
-        y->weapon_skills[i].advance = mread16(mf);
+        y->unused_weapon_skills[i].skill = mread8(mf);
+        y->unused_weapon_skills[i].max_skill = mread8(mf);
+        y->unused_weapon_skills[i].advance = mread16(mf);
     }
 
     restore_quest_status(mf, &y->quest_status);
@@ -1077,6 +1077,16 @@ dorecover(struct memfile *mf)
     if (flags.save_revision < 5) {
         youmonst.pw = u.unused_uen;
         youmonst.pwmax = u.unused_uenmax;
+    }
+    if (flags.save_revision < 16) {
+        /* Don't use a macro, we want to iterate as many as we had by the time
+           we added this logic. */
+        int i;
+        for (i = 0; i < 40; i++) {
+            P_SKILL(i) = u.unused_weapon_skills[i].skill;
+            P_MAX_SKILL(i) = u.unused_weapon_skills[i].max_skill;
+            P_ADVANCE(i) = u.unused_weapon_skills[i].advance;
+        }
     }
 
     /* restore dungeon */

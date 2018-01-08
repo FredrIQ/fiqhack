@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -891,14 +891,27 @@ on_fire(const struct permonst *mptr, const struct attack *mattk)
     return what;
 }
 
+static int skill_to_mskill[P_NUM_SKILLS] = {
+    [P_ATTACK_SPELL] = MP_SATTK,
+    [P_HEALING_SPELL] = MP_SHEAL,
+    [P_DIVINATION_SPELL] = MP_SDIVN,
+    [P_ENCHANTMENT_SPELL] = MP_SENCH,
+    [P_CLERIC_SPELL] = MP_SCLRC,
+    [P_ESCAPE_SPELL] = MP_SESCA,
+    [P_MATTER_SPELL] = MP_SMATR,
+    [P_WANDS] = MP_WANDS,
+};
 
 /* check monster proficiency */
 short
-mprof(const struct monst * mon, int proficiency)
+mprof(const struct permonst *mdat, int proficiency)
 {
-    const struct permonst *ptr = mon->data;
+    int mskill = skill_to_mskill[proficiency];
+    if (!mskill)
+        return P_ISRESTRICTED;
+
     /* return the relevant bits. */
-    return (short) ((((ptr)->mskill / proficiency) % 4) + 1);
+    return (short) ((((mdat)->mskill / mskill) % 4) + 1);
 }
 
 /*mondata.c*/

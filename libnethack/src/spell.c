@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1186,31 +1186,6 @@ spell_skilltype(int booktype)
     return objects[booktype].oc_skill;
 }
 
-/* P_* -> MP_* conversion */
-int
-mspell_skilltype(int booktype)
-{
-    int pskill = spell_skilltype(booktype);
-    switch (pskill) {
-    case P_ATTACK_SPELL:
-        return MP_SATTK;
-    case P_ESCAPE_SPELL:
-        return MP_SESCA;
-    case P_CLERIC_SPELL:
-        return MP_SCLRC;
-    case P_DIVINATION_SPELL:
-        return MP_SDIVN;
-    case P_MATTER_SPELL:
-        return MP_SMATR;
-    case P_ENCHANTMENT_SPELL:
-        return MP_SENCH;
-    case P_HEALING_SPELL:
-        return MP_SHEAL;
-    }
-    impossible("invalid monster proficiency: %d for obj %d", pskill, booktype);
-    return 0;
-}
-
 /* Casts the protection spell.
    autocast: Don't print messages if we don't gain anything
    check_overprotection: Check if we have more AC than we're "supposed" to
@@ -1447,7 +1422,7 @@ mon_wants_to_maintain(const struct monst *mon, int spell)
 
     chk_spell(SPE_PROTECTION);
     chk_spell(SPE_SPEED_MONSTER);
-    if (mprof(mon, MP_SDIVN) >= P_SKILLED) {
+    if (MP_SKILL(mon, P_DIVINATION_SPELL) >= P_SKILLED) {
         chk_spell(SPE_DETECT_MONSTERS);
     }
     chk_spell(SPE_PHASE);
@@ -1513,13 +1488,8 @@ spelleffects(boolean atme, struct musable *m)
         clone_wiz = TRUE;
 
     /* Find the skill for the given spell type category */
-    if (you) {
-        skill = clone_wiz ? P_CLERIC_SPELL : spell_skilltype(spell);
-        role_skill = P_SKILL(skill);
-    } else {
-        skill = clone_wiz ? MP_SCLRC : mspell_skilltype(spell);
-        role_skill = mprof(mon, skill);
-    }
+    skill = clone_wiz ? P_CLERIC_SPELL : spell_skilltype(spell);
+    role_skill = MP_SKILL(mon, skill);
 
     if (maintained) {
         spell_unmaintain(mon, spell);
@@ -2297,10 +2267,7 @@ percent_success(const struct monst *mon, int spell)
      * The difficulty is based on the hero's level and their skill level
      * in that spell type.
      */
-    if (you)
-        skill = P_SKILL(spell_skilltype(spell));
-    else
-        skill = mprof(mon, mspell_skilltype(spell));
+    skill = MP_SKILL(mon, spell_skilltype(spell));
     skill = max(skill, P_UNSKILLED) - 1;        /* unskilled => 0 */
     difficulty = (objects[spell].oc_level - 1) * 4 - ((skill * 6) + (xl / 3) + 1);
 

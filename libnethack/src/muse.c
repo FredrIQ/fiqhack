@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -502,7 +502,7 @@ mon_makewish(struct monst *mon)
                 wishtyp = wish_spells[rn2(SIZE(wish_spells))];
                 /* avoid spells in schools we lack or already know */
                 if (mon_castable(mon, wishtyp, TRUE) ||
-                    mprof(mon, mspell_skilltype(wishtyp)) == P_UNSKILLED)
+                    MP_SKILL(mon, spell_skilltype(wishtyp)) == P_UNSKILLED)
                     wishtyp = 0;
                 if (wishtyp) /* found a good spellbook */
                     break;
@@ -657,7 +657,7 @@ int
 mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
 {
     int oc_dir = objects[obj->otyp].oc_dir;
-    int wandlevel = mprof(mon, MP_WANDS);
+    int wandlevel = MP_SKILL(mon, P_WANDS);
     int range;
     int score = 0;
     int score_best = 0;
@@ -679,7 +679,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
         if (!wandlevel) /* cursed wand is going to blow up */
             return 0;
     } else if (obj->otyp == SPE_MAGIC_MISSILE) {
-        wandlevel = mprof(mon, MP_SATTK);
+        wandlevel = MP_SKILL(mon, P_ATTACK_SPELL);
         if (wandlevel < P_SKILLED)
             wandlevel = 0;
     } else if (!wand)
@@ -1110,7 +1110,7 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc,
     } else if (otyp == SCR_STINKING_CLOUD ||
                ((otyp == SPE_FIREBALL ||
                  otyp == SPE_CONE_OF_COLD) &&
-                mprof(mon, MP_SATTK) >= P_SKILLED))
+                MP_SKILL(mon, P_ATTACK_SPELL) >= P_SKILLED))
         score = mon_choose_spectarget(m, obj, tc);
     else if (otyp == SPE_SUMMON_NASTY)
         score = summon_nasty_score(m, tc);
@@ -1303,7 +1303,7 @@ find_item(struct monst *mon, struct musable *m)
         if (mon_castable(mon, SPE_FIREBALL, FALSE)) {
             m->spell = SPE_FIREBALL;
             m->use = MUSE_SPE;
-            if (mprof(mon, MP_SATTK) >= P_SKILLED) {
+            if (MP_SKILL(mon, P_ATTACK_SPELL) >= P_SKILLED) {
                 /* target self -- for basic/unskilled and for wands, x/y is delta,
                    so there is no setting of it there, but it is needed here */
                 m->x = mon->mx;
@@ -1558,9 +1558,9 @@ find_item(struct monst *mon, struct musable *m)
         obj->quan = 20L;
         /* when adding more spells where this matters, change this */
         if (((obj->otyp == SPE_DETECT_MONSTERS) &&
-             mprof(mon, MP_SDIVN) >= P_SKILLED) ||
+             MP_SKILL(mon, P_DIVINATION_SPELL) >= P_SKILLED) ||
             ((obj->otyp == SPE_REMOVE_CURSE) &&
-             mprof(mon, MP_SCLRC) >= P_SKILLED))
+             MP_SKILL(mon, P_CLERIC_SPELL) >= P_SKILLED))
             obj->blessed = 1;
 
         usable = find_item_single(obj, TRUE, &m2, mclose ? TRUE : FALSE, FALSE);
@@ -1874,14 +1874,14 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
     }
 
     /* this wand would explode on use */
-    if (oclass == WAND_CLASS && mprof(mon, MP_WANDS) == P_UNSKILLED && cursed)
+    if (oclass == WAND_CLASS && MP_SKILL(mon, P_WANDS) == P_UNSKILLED && cursed)
         return 0;
 
     /* discharged wand/tool */
     if ((oclass == WAND_CLASS ||
          (oclass == TOOL_CLASS &&
           !is_weptool(obj) && objects[otyp].oc_charged)) &&
-        spe <= 0 && (obj->mknown || mprof(mon, P_WANDS) >= P_SKILLED) &&
+        spe <= 0 && (obj->mknown || MP_SKILL(mon, P_WANDS) >= P_SKILLED) &&
         (otyp != WAN_WISHING || !recharged || close)) /* wrest wishing if safe */
         return 0;
 
@@ -1936,7 +1936,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
 
     if (otyp == SPE_IDENTIFY ||
         otyp == SCR_IDENTIFY) {
-        int lvl = mprof(mon, MP_SDIVN);
+        int lvl = MP_SKILL(mon, P_DIVINATION_SPELL);
         if (otyp == SCR_IDENTIFY)
             lvl = blessed ? P_EXPERT : cursed ? P_UNSKILLED : P_BASIC;
         for (otmp = mon->minvent; otmp; otmp = otmp->nobj)

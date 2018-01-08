@@ -1289,7 +1289,7 @@ extern const char *locomotion(const struct permonst *, const char *);
 extern const char *stagger(const struct permonst *, const char *);
 extern const char *on_fire(const struct permonst *, const struct attack *);
 extern const struct permonst *raceptr(struct monst *);
-extern short mprof(const struct monst *, int);
+extern short mprof(const struct permonst *, int);
 
 /* ### monmove.c ### */
 
@@ -1825,7 +1825,6 @@ extern int docast(const struct nh_cmd_arg *);
 extern int docastalias(const struct nh_cmd_arg *);
 extern boolean getspell(int *);
 extern int spell_skilltype(int);
-extern int mspell_skilltype(int);
 extern int monspellprot(struct monst *);
 extern int mon_castable(const struct monst *, int, boolean);
 extern int spelleffects(boolean, struct musable *);

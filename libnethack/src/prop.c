@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -587,7 +587,7 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
         /* skilled users of /oInvis can uninvis */
         wandlevel = 0;
         if (obj->oclass == WAND_CLASS) {
-            wandlevel = mprof(user, MP_WANDS);
+            wandlevel = MP_SKILL(user, P_WANDS);
             if (obj->mbknown)
                 wandlevel = getwandlevel(user, obj);
             if (wandlevel >= P_SKILLED &&
@@ -610,11 +610,11 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
         if (!user)
             return FALSE;
         if (obj->otyp == SPE_MAGIC_MISSILE) {
-            wandlevel = mprof(user, MP_SATTK);
+            wandlevel = MP_SKILL(user, P_ATTACK_SPELL);
             if (wandlevel < P_SKILLED)
                 return FALSE;
         } else {
-            wandlevel = mprof(user, MP_WANDS);
+            wandlevel = MP_SKILL(user, P_WANDS);
             if (obj->mbknown)
                 wandlevel = getwandlevel(user, obj);
         }
@@ -644,7 +644,7 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
             return TRUE;
         if (!user || obj->oclass != WAND_CLASS)
             return FALSE;
-        wandlevel = mprof(user, MP_WANDS);
+        wandlevel = MP_SKILL(user, P_WANDS);
         if (obj->mbknown)
             wandlevel = getwandlevel(user, obj);
         if (wandlevel >= P_EXPERT)
@@ -723,8 +723,7 @@ decrease_property_timers(struct monst *mon)
 {
     enum youprop prop;
     int skill = 0;
-    skill = (mon == &youmonst ? P_SKILL(P_CLERIC_SPELL) :
-             mprof(mon, MP_SCLRC));
+    skill = MP_SKILL(mon, P_CLERIC_SPELL);
     for (prop = 0; prop <= LAST_PROP; prop++) {
         if (mon->mintrinsic[prop] & TIMEOUT_RAW) {
             /* Decrease protection at half speed at Expert and not at all if maintained */

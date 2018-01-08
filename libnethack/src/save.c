@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -554,9 +554,9 @@ save_you(struct memfile *mf, struct you *y)
         mwrite32(mf, y->uconduct_time[i]);
     }
     for (i = 0; i < P_NUM_SKILLS; i++) {
-        mwrite8(mf, y->weapon_skills[i].skill);
-        mwrite8(mf, y->weapon_skills[i].max_skill);
-        mwrite16(mf, y->weapon_skills[i].advance);
+        mwrite8(mf, y->unused_weapon_skills[i].skill);
+        mwrite8(mf, y->unused_weapon_skills[i].max_skill);
+        mwrite16(mf, y->unused_weapon_skills[i].advance);
     }
 
     save_quest_status(mf, &y->quest_status);

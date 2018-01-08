@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -210,7 +210,7 @@ can_make_bones(d_level *lev)
         (!rn2chance             /* fewer ghosts on low levels */
          && !wizard))
         return FALSE;
-    /* don't let multiple restarts generate multiple copies of objects in bones 
+    /* don't let multiple restarts generate multiple copies of objects in bones
        files */
     if (discover)
         return FALSE;
@@ -385,6 +385,10 @@ make_bones:
                 continue;
             mon_addspell(mtmp, spellid(i));
         }
+
+        /* skills */
+        for (i = 0; i < P_NUM_SKILLS; i++)
+            mtmp->skills[i] = youmonst.skills[i];
 
         mtmp->former_player = 1 + /* Guarantee former_player > 0 */
             (2 * u.initgend    /*   2 * (0-2) = 0-4 */) +

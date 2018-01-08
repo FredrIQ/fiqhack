@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,6 +20,7 @@ static void m_initgrp(struct monst *, struct level *lev, int, int, int, int);
 static void m_initthrow(struct monst *, int, int, enum rng);
 static void m_initweap(struct level *lev, struct monst *, enum rng);
 static void m_initinv(struct monst *, enum rng);
+static void assign_skills(struct monst *, int);
 static void assign_spells(struct monst *, enum rng);
 
 struct monst zeromonst; /* only address matters, value is irrelevant */
@@ -1155,6 +1156,8 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         }
     }
 
+    assign_skills(mtmp, 0);
+
     mtmp->mspells = 0;
     assign_spells(mtmp, stats_rng);
 
@@ -1219,6 +1222,28 @@ create_critters(int cnt, const struct permonst *mptr, int x, int y)
             known = TRUE;
     }
     return known;
+}
+
+/* Assign skills based on the permonst. start is used if we're appending new
+   skills for a monster. */
+static void
+assign_skills(struct monst *mon, int start)
+{
+    int i;
+    for (i = start; i < P_NUM_SKILLS; i++) {
+        MP_SKILL(mon, i) = P_ISRESTRICTED;
+        MP_MAX_SKILL(mon, i) = mprof(mon->data, i);
+        MP_ADVANCE(mon, i) = 0;
+
+        if (mon != &youmonst)
+            MP_SKILL(mon, i) = mprof(mon->data, i);
+        else if (MP_MAX_SKILL(mon, i) != P_ISRESTRICTED)
+            MP_SKILL(mon, i) = P_UNSKILLED; /* good enough */
+
+        if (MP_SKILL(mon, i) != P_ISRESTRICTED)
+            MP_ADVANCE(mon, i) =
+                practice_needed_to_advance(MP_SKILL(mon, i) - 1);
+    }
 }
 
 /* Assign spells based on proficiencies */
@@ -1367,7 +1392,7 @@ assign_spells(struct monst *mon, enum rng rng)
 
     /* Failsafe: if the monster has at least Basic in attack school,
        give force bolt for free */
-    if (mprof(mon, MP_SATTK) >= P_BASIC)
+    if (MP_SKILL(mon, P_ATTACK_SPELL) >= P_BASIC)
         mon_addspell(mon, SPE_FORCE_BOLT);
 
     /*
@@ -1392,7 +1417,7 @@ assign_spells(struct monst *mon, enum rng rng)
     while (i-- > 0) {
         /* FIXME: make first_spell/etc... */
         spell = rn1(SPE_BLANK_PAPER - SPE_DIG, SPE_DIG);
-        addspell_prob = mprof(mon, mspell_skilltype(spell));
+        addspell_prob = MP_SKILL(mon, spell_skilltype(spell));
         addspell_prob *= 3;
         addspell_prob -= objects[spell].oc_level;
         if (rn2_on_rng(6, rng) <= addspell_prob) {
@@ -2154,8 +2179,18 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         mon->pw = mread32(mf);
         mon->pwmax = mread32(mf);
 
+        int skill_amount = mread8(mf);
+        for (i = 0; i < skill_amount; i++) {
+            MP_SKILL(mon, i) = mread8(mf);
+            MP_MAX_SKILL(mon, i) = mread8(mf);
+            MP_ADVANCE(mon, i) = mread16(mf);
+        }
+
+        if (skill_amount < P_NUM_SKILLS && mon->data)
+            assign_skills(mon, skill_amount);
+
         /* Some reserved space for further expansion */
-        for (i = 0; i < 186; i++)
+        for (i = 0; i < 185; i++)
             (void) mread8(mf);
     }
 
@@ -2447,8 +2482,15 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite32(mf, mon->mstuck);
     mwrite32(mf, mon->pw);
     mwrite32(mf, mon->pwmax);
+    mwrite8(mf, P_NUM_SKILLS);
 
-    for (i = 0; i < 186; i++)
+    for (i = 0; i < P_NUM_SKILLS; i++) {
+        mwrite8(mf, MP_SKILL(mon, i));
+        mwrite8(mf, MP_MAX_SKILL(mon, i));
+        mwrite16(mf, MP_ADVANCE(mon, i));
+    }
+
+    for (i = 0; i < 185; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */
