@@ -30,6 +30,7 @@ struct checkpoint {
 
 struct replayinfo {
     int action; /* current action */
+    int move; /* current move */
     int msg; /* msg within action -- to allow proper message history */
     int max; /* last action */
     int target; /* target action or move */
@@ -53,6 +54,9 @@ struct replayinfo {
     /* Mark that we have already jumped backwards once. This is needed to avoid
        a loop by a move we are seeking to being skipped. */
     boolean jumped;
+    char *diff_ok;
+    boolean diff_allocated;
+    int max_old;
 };
 
 static struct replayinfo replay = {0};
@@ -387,6 +391,9 @@ replay_init(void)
 
     /* if game id is non-empty, we have existing stuff, free it */
     if (*replay.game_id) {
+        if (replay.diff_allocated)
+            free(replay.diff_ok);
+
         for (chk = replay.next_checkpoint; chk; chk = chknext) {
             chknext = chk->next;
             mfree(&chk->binary_save);
@@ -666,6 +673,7 @@ replay_set_action(void)
         return;
 
     replay.action++;
+    replay.move = moves;
     replay.msg = 0;
 }
 
@@ -706,18 +714,20 @@ replay_create_checkpoint(int action, long file_location)
 static void
 replay_save_checkpoint(struct checkpoint *chk)
 {
-    savegame(&chk->binary_save);
+    program_state.binary_save_allocated = FALSE;
+    mclone(&chk->binary_save, &program_state.binary_save);
 }
 
 /* Restores the given checkpoint */
 static void
 replay_restore_checkpoint(struct checkpoint *chk)
 {
-    struct memfile old_ps_binary = program_state.binary_save;
-    boolean old_ps_allocation = program_state.binary_save_allocated;
+    if (program_state.binary_save_allocated)
+        mfree(&program_state.binary_save);
     program_state = chk->program_state;
-    program_state.binary_save = old_ps_binary;
-    program_state.binary_save_allocated = old_ps_allocation;
+    mnew(&program_state.binary_save, NULL);
+    mclone(&program_state.binary_save, &chk->binary_save);
+    program_state.binary_save_allocated = TRUE;
     if (!chk->file_location) {
         freedynamicdata();
         init_data(FALSE);
@@ -730,6 +740,7 @@ replay_restore_checkpoint(struct checkpoint *chk)
         log_sync(chk->file_location, TLU_BYTES, FALSE);
     }
     replay.action = chk->action;
+    replay.move = chk->move;
     replay.msg = 0;
 
     replay.prev_checkpoint = chk;
@@ -775,7 +786,7 @@ replay_add_desync(boolean by_interrupt)
     program_state.binary_save_location = 0;
 
     /* Make the differ do its thing. */
-    log_sync(moves, TLU_TURNS, FALSE);
+    log_sync(replay.move, TLU_TURNS, FALSE);
     int cur_action = replay.max - replay_count_actions(FALSE);
     while (cur_action <= to_action) {
         if (by_interrupt && cur_action == to_action)
@@ -803,13 +814,63 @@ replay_add_desync(boolean by_interrupt)
     }
 }
 
+static void
+replay_maybe_create_diffstate(void)
+{
+    char *new_diff;
+    if (!replay.diff_allocated || replay.max != replay.max_old) {
+        new_diff = malloc(replay.max + 1);
+        memset(new_diff, 0, replay.max + 1);
+        if (replay.diff_allocated) {
+            /* already allocated, copy over the existing data */
+            int i;
+            for (i = 0; i <= replay.max && i <= replay.max_old; i++)
+                new_diff[i] = replay.diff_ok[i];
+
+            free(replay.diff_ok);
+        }
+
+        replay.diff_ok = new_diff;
+        replay.max_old = replay.max;
+        replay.diff_allocated = TRUE;
+    }
+}
+
 /* Returns TRUE if we want to ignore diffs. We want to do that unless we have
    desynced. */
 boolean
 replay_ignore_diff(void)
 {
-    return TRUE;
-    return !replay.desync;
+    replay_maybe_create_diffstate();
+
+    if (replay.diff_ok[replay.action] == 1)
+        return TRUE;
+    return FALSE;
+}
+
+void
+replay_set_diffstate(int res)
+{
+    /* If we're marking a desync (res == 1), make older actions inherit this
+       until we reach our previous checkpoint. */
+    if (res == 2) {
+        int i;
+        int prev_checkpoint = 0;
+        if (replay.prev_checkpoint)
+            prev_checkpoint = replay.prev_checkpoint->action;
+        for (i = replay.action; i > prev_checkpoint; i--)
+            replay.diff_ok[i] = res;
+    }
+
+    replay_maybe_create_diffstate();
+    replay.diff_ok[replay.action] = res;
+}
+
+int
+replay_get_diffstate(void)
+{
+    replay_maybe_create_diffstate();
+    return replay.diff_ok[replay.action];
 }
 
 /* Go N turns forward/backwards in move/actions */

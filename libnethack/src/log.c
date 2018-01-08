@@ -30,8 +30,8 @@ static char *lgetline_malloc(int);
 static enum nh_log_status read_log_header(
     int fd, struct nh_game_info *si, int *recovery_count, boolean do_locking);
 
-static void load_gamestate_from_binary_save(boolean maybe_old_version,
-                                            boolean save_too);
+static boolean load_gamestate_from_binary_save(boolean maybe_old_version,
+                                               boolean save_too);
 static void log_replay_save_line(void);
 
 static boolean full_read(int fd, void *buffer, int len);
@@ -1990,7 +1990,7 @@ nh_get_savegame_status(int fd, struct nh_game_info *si)
    true, then we allow backwards-compatible changes to the save format; if
    loading and immediately re-saving does not produce an identical file, we
    force the next save-related line to be a backup not a diff. */
-static void
+static boolean
 load_gamestate_from_binary_save(boolean maybe_old_version,
                                 boolean save_too)
 {
@@ -2012,19 +2012,21 @@ load_gamestate_from_binary_save(boolean maybe_old_version,
     /* Save the loaded game. */
     if (!save_too) {
         program_state.ok_to_diff = FALSE;
-        return;
+        return FALSE;
     }
 
     mnew(&mf, NULL);
     savegame(&mf);
 
+    boolean res = TRUE;
     if (!mequal(&program_state.binary_save, &mf, maybe_old_version ? NULL :
                 &mequal_message)) {
 
+        res = FALSE;
         mfree(&mf);
         if (maybe_old_version) {
             program_state.ok_to_diff = FALSE;
-            return;
+            return res;
         }
 
         /* To recover from this, we need to go back to the binary save before
@@ -2041,6 +2043,7 @@ load_gamestate_from_binary_save(boolean maybe_old_version,
     mfree(&program_state.binary_save);
     program_state.binary_save = mf;
     program_state.ok_to_diff = TRUE;
+    return res;
 }
 
 static noreturn void
@@ -2589,7 +2592,11 @@ log_replay_save_line(void)
     }
 
     boolean save_too = FALSE;
+    int res = 1;
     if (program_state.followmode == FM_PLAY)
+        save_too = TRUE;
+    if (program_state.followmode == FM_REPLAY &&
+        !replay_get_diffstate())
         save_too = TRUE;
 
     if (replay_ignore_diff()) {
@@ -2604,9 +2611,11 @@ log_replay_save_line(void)
         program_state.binary_save_allocated = FALSE;
         apply_save_diff(logline, &bsave);
         mfree(&bsave);
+
         program_state.binary_save_location =
             program_state.end_of_gamestate_location;
-        load_gamestate_from_binary_save(TRUE, save_too);
+        if (!load_gamestate_from_binary_save(TRUE, save_too))
+            res = 2;
 
     } else if (*logline == '*') {
 
@@ -2614,13 +2623,17 @@ log_replay_save_line(void)
         program_state.binary_save_location =
             program_state.save_backup_location =
             program_state.end_of_gamestate_location;
-        load_gamestate_from_binary_save(TRUE, save_too);
+        if (!load_gamestate_from_binary_save(TRUE, save_too))
+            res = 2;
 
     } else if (*logline == 'Q') {
 
         terminate(GAME_ALREADY_OVER);
 
     }
+
+    if (save_too && program_state.followmode == FM_REPLAY)
+        replay_set_diffstate(res);
 
     free(logline);
 

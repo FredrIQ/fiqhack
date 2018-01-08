@@ -873,6 +873,8 @@ extern void replay_set_action(void);
 extern struct checkpoint *replay_create_checkpoint(int, long);
 extern void replay_force_diff(void);
 extern boolean replay_ignore_diff(void);
+extern void replay_set_diffstate(int);
+extern int replay_get_diffstate(void);
 extern void replay_seek(int, boolean);
 extern void replay_goto(int, boolean);
 extern int replay_action(void);
