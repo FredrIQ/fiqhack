@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -155,9 +155,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     explmask[i][j] = !!immune_to_sleep(&youmonst);
                     break;
                 case AD_DISN:
-                    if (raylevel == P_UNSKILLED && Drain_resistance)
+                    if (Drain_resistance)
                         resist_death = TRUE;
-                    /* why MR doesn't resist general deathfields is beyond me, but... */
+                    /* why MR doesn't resist general deathfields is beyond me,
+                       but... */
                     if (resists_death(&youmonst))
                         resist_death = TRUE;
                     if (raylevel && Antimagic)
@@ -206,8 +207,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     case AD_SLEE:
                         explmask[i][j] |= !!immune_to_sleep(mtmp);
                     case AD_DISN:
-                        if (raylevel == P_UNSKILLED && resists_drli(mtmp))
-                        resist_death = TRUE;
+                        if (resists_drli(mtmp))
+                            resist_death = TRUE;
                         if (resists_death(mtmp))
                             resist_death = TRUE;
                         if (raylevel && resists_magm(mtmp))
@@ -386,11 +387,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         mdam = 0;
                     }
                     if (adtyp == AD_DISN && raylevel) {
-                        if (resists_death(mtmp) || resists_magm(mtmp) ||
-                            raylevel == P_UNSKILLED)
-                            mlosexp(NULL, mtmp, "", FALSE);
-                        else
-                            mdam = mtmp->mhp; /* instadeath */
+                        mlosexp(NULL, mtmp, "", FALSE);
+                        mdam = 0;
                     }
                     mtmp->mhp -= mdam;
                     mtmp->mhp -= (idamres + idamnonres);
@@ -436,14 +434,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 damu = 0;
             }
             if (adtyp == AD_DISN) {
-                if (resists_death(&youmonst) || Antimagic ||
-                    raylevel == P_UNSKILLED) {
-                    losexp("drained by a death field",FALSE);
-                    damu = 0;
-                } else {
-                    done(DIED, "killed by a death field");
-                    damu = 0; /* lifesaved */
-                }
+                losexp("drained by a death field",FALSE);
+                damu = 0;
             }
         }
         if (adtyp == AD_FIRE)
