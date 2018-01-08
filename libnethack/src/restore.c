@@ -1082,7 +1082,7 @@ dorecover(struct memfile *mf)
         /* Don't use a macro, we want to iterate as many as we had by the time
            we added this logic. */
         int i;
-        for (i = 0; i < 40; i++) {
+        for (i = 0; i < 41; i++) {
             P_SKILL(i) = u.unused_weapon_skills[i].skill;
             P_MAX_SKILL(i) = u.unused_weapon_skills[i].max_skill;
             P_ADVANCE(i) = u.unused_weapon_skills[i].advance;
