@@ -2475,6 +2475,10 @@ replay_count_actions(boolean load_checkpoints)
     char *logline;
     int res = 0;
     program_state.binary_save_allocated = FALSE;
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
+
     while (TRUE) {
         lseek(program_state.logfile,
               program_state.end_of_gamestate_location, SEEK_SET);
@@ -2503,6 +2507,9 @@ replay_count_actions(boolean load_checkpoints)
         program_state.binary_save_location =
             program_state.end_of_gamestate_location;
     }
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+        panic("Could not downgrade to monitor lock on logfile");
 
     if (program_state.binary_save_allocated)
         mfree(&program_state.binary_save);
