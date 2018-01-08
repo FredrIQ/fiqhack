@@ -1296,16 +1296,18 @@ update_property(struct monst *mon, enum youprop prop,
     case STEALTH:
         if (slot == os_armf && !redundant &&
             !levitates(mon) && !flying(mon)) {
-            if (you)
+            if (you) {
                 pline(lost ? msgc_intrloss : msgc_intrgain,
                       lost ? "You sure are noisy." :
                       "You walk very quietly.");
-            else if (vis)
+                effect = TRUE;
+            } else if (vis) {
                 pline(msgc_monneutral,
                       lost ? "%s sure is noisy." :
                       "%s walks very quietly.",
                       Monnam(mon));
-            effect = TRUE;
+                effect = TRUE;
+            }
         }
         break;
     case AGGRAVATE_MONSTER:
