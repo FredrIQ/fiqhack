@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,7 +16,7 @@ static int passiveum(const struct permonst *, struct monst *,
 static void mayberem(struct obj *, const char *);
 
 static boolean diseasemu(const struct permonst *, const char *);
-static int hitmu(struct monst *, const struct attack *);
+static int hitmu(struct monst *, const struct attack *, int);
 static int gulpmu(struct monst *, const struct attack *);
 static int explmu(struct monst *, const struct attack *);
 static void missmu(struct monst *, boolean, const struct attack *);
@@ -468,6 +468,7 @@ mattacku(struct monst *mtmp)
 
     /* Work out the armor class differential   */
     tmp = AC_VALUE(find_mac(&youmonst)) + 10; /* tmp ~= 0 - 20 */
+    int ac_after_rnd = tmp;
     tmp += mtmp->m_lev;
     if (u_helpless(hm_all))
         tmp += 4;
@@ -538,7 +539,7 @@ mattacku(struct monst *mtmp)
                 if (tmp > (j = rnd(20 + i))) {
                     if (mattk->aatyp != AT_KICK ||
                         !thick_skinned(youmonst.data))
-                        sum[i] = hitmu(mtmp, mattk);
+                        sum[i] = hitmu(mtmp, mattk, ac_after_rnd);
                 } else
                     missmu(mtmp, (tmp == j), mattk);
             }
@@ -547,7 +548,7 @@ mattacku(struct monst *mtmp)
         case AT_HUGS:  /* automatic if prev two attacks succeed */
             if ((!ranged && i >= 2 && sum[i - 1] && sum[i - 2])
                 || mtmp == u.ustuck)
-                sum[i] = hitmu(mtmp, mattk);
+                sum[i] = hitmu(mtmp, mattk, ac_after_rnd);
             break;
 
         case AT_GAZE:  /* can affect you either ranged or not */
@@ -618,7 +619,7 @@ mattacku(struct monst *mtmp)
                     mswingsm(mtmp, &youmonst, otmp);
                 }
                 if (tmp > (j = dieroll = rnd(20 + i)))
-                    sum[i] = hitmu(mtmp, mattk);
+                    sum[i] = hitmu(mtmp, mattk, ac_after_rnd);
                 else
                     missmu(mtmp, (tmp == j), mattk);
                 /* KMH -- Don't accumulate to-hit bonuses */
@@ -783,7 +784,7 @@ magic_negation(struct monst *mon)
  *            attacking you
  */
 static int
-hitmu(struct monst *mtmp, const struct attack *mattk)
+hitmu(struct monst *mtmp, const struct attack *mattk, int ac_after_rnd)
 {
     const struct permonst *mdat = mtmp->data;
     int uncancelled;
@@ -1516,8 +1517,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
     /* Negative armor class reduces damage done instead of fully protecting
        against hits. */
-    if (dmg && find_mac(&youmonst) < 0) {
-        dmg -= rnd(-find_mac(&youmonst));
+    if (dmg && ac_after_rnd < 0) {
+        dmg += AC_VALUE(ac_after_rnd);
         if (dmg < 1)
             dmg = 1;
     }
