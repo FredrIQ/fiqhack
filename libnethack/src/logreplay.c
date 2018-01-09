@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -146,7 +146,8 @@ replay_print_message(int action, int id, int turn, enum msg_channel msgc,
 {
     orig_winprocs.win_print_message(replay.action, replay.msg, turn, msgc,
                                     message);
-    replay.msg++;
+    if (msgc != msgc_setaction)
+        replay.msg++;
 }
 
 static void
@@ -449,6 +450,33 @@ replay_init(void)
 static void
 replay_goal_reached(void)
 {
+    /* Cleanup temporary checkpoints */
+    struct checkpoint *chk;
+    struct checkpoint *chkprev;
+    struct checkpoint *firstchk = NULL;
+    int allowed = 100;
+
+    for (chk = replay.prev_checkpoint; chk; chk = chkprev) {
+        chkprev = chk->prev;
+        if (chk->by_desync != 1)
+            continue;
+
+        if (allowed) {
+            if (!--allowed)
+                firstchk = chk;
+            continue;
+        }
+
+        if (firstchk) {
+            firstchk->prev = chkprev;
+            if (chkprev)
+                chkprev->next = firstchk;
+        }
+
+        mfree(&chk->binary_save);
+        free(chk);
+    }
+
     replay_reset_windowport(FALSE);
     replay.target = replay.action;
     replay.target_is_move = FALSE;
@@ -489,7 +517,7 @@ replay_want_userinput(void)
 
             if (replay.target < chkaction(chk))
                 replay.target = chkaction(chk);
-        } else {
+        } else if (replay.target > (replaction() + 200)) {
             chk = replay.next_checkpoint;
             if (chk && replay.target < chkfromaction(chk))
                 chk = NULL;
@@ -682,31 +710,42 @@ replay_set_action(void)
 void
 replay_force_diff(void)
 {
-    if (program_state.followmode == FM_REPLAY)
-        replay_add_desync(TRUE);
+    replay.action--;
+    replay_set_diffstate(2);
 }
 
 /* Creates a checkpoint. */
 struct checkpoint *
 replay_create_checkpoint(int action, long file_location, int by_desync)
 {
-    /* Create a new checkpoint at this location */
-    struct checkpoint *chk = malloc(sizeof (struct checkpoint));
-    memset(chk, 0, sizeof (struct checkpoint));
-    chk->prev = replay.prev_checkpoint;
-    replay.prev_checkpoint = chk;
-    if (chk->prev)
-        chk->prev->next = chk;
-    chk->next = replay.next_checkpoint;
-    if (chk->next)
-        chk->next->prev = chk;
+    /* Don't create duplicate checkpoints */
+    struct checkpoint *chk;
+    if (replay.prev_checkpoint && replay.prev_checkpoint->action == action) {
+        chk = replay.prev_checkpoint;
+        mfree(&chk->binary_save);
+    } else if (replay.next_checkpoint &&
+               replay.next_checkpoint->action == action) {
+        chk = replay.next_checkpoint;
+        mfree(&chk->binary_save);
+    } else {
+        /* Create a new checkpoint at this location */
+        chk = malloc(sizeof (struct checkpoint));
+        memset(chk, 0, sizeof (struct checkpoint));
+        chk->prev = replay.prev_checkpoint;
+        replay.prev_checkpoint = chk;
+        if (chk->prev)
+            chk->prev->next = chk;
+        chk->next = replay.next_checkpoint;
+        if (chk->next)
+            chk->next->prev = chk;
+    }
     chk->action = action;
     chk->move = moves;
     chk->from_action = action;
     chk->from_move = moves;
     chk->program_state = program_state;
     chk->file_location = file_location;
-    chk->by_desync = 2;
+    chk->by_desync = by_desync;
     if (!file_location)
         replay_save_checkpoint(chk);
     return chk;
@@ -744,32 +783,6 @@ replay_restore_checkpoint(struct checkpoint *chk)
     replay.move = chk->move;
     replay.msg = 0;
 
-    /* Cleanup temporary checkpoints */
-    if (chk->by_desync != 1) {
-        struct checkpoint *dschk = chk->prev;
-        struct checkpoint *chknext;
-        while (dschk && dschk->by_desync == 1) {
-            chknext = dschk->prev;
-            mfree(&dschk->binary_save);
-            free(dschk);
-        }
-
-        chk->prev = dschk;
-        if (chk->prev)
-            chk->prev->next = chk;
-
-        dschk = chk->next;
-        while (dschk && dschk->by_desync == 1) {
-            chknext = dschk->next;
-            mfree(&dschk->binary_save);
-            free(dschk);
-        }
-
-        chk->next = dschk;
-        if (chk->next)
-            chk->next->prev = chk;
-    }
-
     replay.prev_checkpoint = chk;
     replay.next_checkpoint = chk->next;
 
@@ -781,6 +794,8 @@ replay_restore_checkpoint(struct checkpoint *chk)
     bot();
     flush_screen();
     update_inventory();
+    if (replay.reverse)
+        pline(msgc_setaction, "set");
 }
 
 void

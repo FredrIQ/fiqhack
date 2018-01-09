@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -110,6 +110,7 @@ static const int channel_color[] = {
     [msgc_mispaste] = 0,       /* msgc_cancelled but triggers mispaste code */
     [msgc_offlevel] = 0,       /* should never reach the client */
     [msgc_mute] = 0,           /* should never reach the client */
+    [msgc_setaction] = 0,      /* don't display anything, but update action */
 };
 
 /* these should be the same length */
@@ -816,7 +817,8 @@ curses_print_message(int action, int id, int turn, enum msg_channel msgc,
         struct message_chunk *chunk;
         for (chunk = first_chunk; chunk; chunk = chunk->next)
             if (chunk->action > action ||
-                (chunk->action == action && chunk->id >= id))
+                (chunk->action == action &&
+                 (msgc == msgc_setaction ? chunk->id > id : chunk->id >= id)))
                 break;
 
         if (chunk) {
@@ -833,9 +835,11 @@ curses_print_message(int action, int id, int turn, enum msg_channel msgc,
                 prevchunk->next = NULL;
             }
 
-            if (pending_message)
-                free(pending_message);
-            pending_message = NULL;
+            if (msgc != msgc_setaction) {
+                if (pending_message)
+                    free(pending_message);
+                pending_message = NULL;
+            }
 
             for (; chunk; chunk = nextchunk) {
                 nextchunk = chunk->next;
@@ -847,12 +851,15 @@ curses_print_message(int action, int id, int turn, enum msg_channel msgc,
         }
     }
 
-    /* When we get a new message, stop scrolling back into message history */
-    ui_flags.msghistory_yskip = 0;
+    if (msgc == msgc_setaction)
+        return;
 
     /* Sanity: ignore blank messages */
     if (!*msg)
         return;
+
+    /* When we get a new message, stop scrolling back into message history */
+    ui_flags.msghistory_yskip = 0;
 
     /* Do we want to force a --More--? Or ignore the message altogether? Return
        now if the message is ignored, otherwise remember it for later. */
