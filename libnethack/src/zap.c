@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3161,7 +3161,12 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     struct obj *otmp;
 
     /* we need to figure out BUC for potential wand for resist() */
-    int wandlevel = MP_SKILL(magr, P_WANDS);
+    int wandlevel;
+    if (magr)
+        wandlevel = MP_SKILL(magr, P_WANDS);
+    else
+        wandlevel = P_BASIC;
+
     if (raylevel)
         bcsign = raylevel - wandlevel;
 
