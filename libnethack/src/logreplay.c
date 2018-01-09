@@ -900,6 +900,9 @@ replay_maybe_create_diffstate(void)
 boolean
 replay_ignore_diff(void)
 {
+    if (program_state.followmode != FM_REPLAY)
+        return FALSE;
+
     replay_maybe_create_diffstate();
 
     if (replay.diff_ok[replay.action] == 1)
@@ -910,6 +913,9 @@ replay_ignore_diff(void)
 void
 replay_set_diffstate(int res)
 {
+    if (program_state.followmode != FM_REPLAY)
+        return;
+
     /* If we're marking a desync (res == 1), make older actions inherit this
        until we reach our previous checkpoint. */
     if (res == 2) {
@@ -928,6 +934,9 @@ replay_set_diffstate(int res)
 int
 replay_get_diffstate(void)
 {
+    if (program_state.followmode != FM_REPLAY)
+        return 0;
+
     replay_maybe_create_diffstate();
     return replay.diff_ok[replay.action];
 }
