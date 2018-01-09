@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-06 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1073,7 +1073,7 @@ fire_obj(int ddx, int ddy, int range,   /* direction and range */
 
 void
 throwit(struct obj *obj, struct obj *stack,
-        long wep_mask, /* used to re-equip returning boomerang 
+        long wep_mask, /* used to re-equip returning boomerang
                                          */
         boolean twoweap,        /* used to restore twoweapon mode if wielded
                                    weapon returns */
@@ -1137,8 +1137,11 @@ throwit(struct obj *obj, struct obj *stack,
             pline(msgc_yafm, "%s the %s and returns to your hand!",
                   Tobjnam(obj, "hit"), ceiling(u.ux, u.uy));
             obj = pickinv(obj);
-            setuwep(obj);
-            u.twoweap = twoweap;
+            if (wep_mask & W_MASK(os_wep)) {
+                setuwep(obj);
+                u.twoweap = twoweap;
+            } else
+                obj->owornmask = wep_mask;
         } else if (dz < 0 && !Is_airlevel(&u.uz) && !Underwater &&
                    !Is_waterlevel(&u.uz)) {
             toss_up(obj, rn2(5));
@@ -1245,8 +1248,11 @@ throwit(struct obj *obj, struct obj *stack,
                 pline(msgc_actionok, "%s to your hand!",
                       Tobjnam(obj, "return"));
                 obj = pickinv(obj);
-                setuwep(obj);
-                u.twoweap = twoweap;
+                if (wep_mask & W_MASK(os_wep)) {
+                    setuwep(obj);
+                    u.twoweap = twoweap;
+                } else
+                    obj->owornmask = wep_mask;
                 if (cansee(bhitpos.x, bhitpos.y))
                     newsym(bhitpos.x, bhitpos.y);
             } else {
