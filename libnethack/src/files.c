@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-06 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1096,8 +1096,12 @@ paniclog(const char *type,      /* panic, impossible, trickery */
 /* ----------  END PANIC/IMPOSSIBLE LOG ----------- */
 
 /* don't kill games just in case these are set up wrong... */
+#ifdef WHEREIS
 static boolean whereis_failed = FALSE;
+# ifdef EXTRAINFO_FN
 static boolean extrainfo_failed = FALSE;
+# endif
+#endif
 
 /* whereis handling, gives minor information on where the player is, for public
    server purposes. Creates a whereris file, and for dgl purposes, an extrainfo

@@ -119,8 +119,6 @@ static struct nh_window_procs replay_windowprocs = {
     .win_server_cancel = replay_no_op_void
 };
 
-static struct checkpoint *checkpoints = NULL;
-
 static void
 replay_pause(enum nh_pause_reason unused)
 {
@@ -362,10 +360,8 @@ replay_init(void)
     /* if it's the same, reuse the replay state but force target to be
        right before our current point unless it's at the beginning */
     if (!strcmp(game_id, replay.game_id)) {
-        boolean by_desync = FALSE;
         boolean at_end = FALSE;
         if (replay.in_load) {
-            by_desync = TRUE;
             replay.action--;
             replay.msg = 0;
             replay_add_desync(FALSE);

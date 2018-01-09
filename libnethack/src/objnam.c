@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2075,7 +2075,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     int eroded, eroded2, erodeproof;
     int halfeaten, mntmp, contents;
     int islit, unlabeled, ishistoric, isdiluted;
-    int male, female;
+    int male = 0;
+    int female = 0;
     const struct alt_spellings *as = spellings;
     struct fruit *f;
     int ftype = gamestate.fruits.current;

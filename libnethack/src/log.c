@@ -498,7 +498,7 @@ base64_encode_binary(const unsigned char *in, char *out, int len,
         olen = LZ4_compress_default(in, o, len, olen);
         if (!olen) {
             free(o);
-            panic("Could not compress input data (%uld)!", olen);
+            panic("Could not compress input data (%lu)!", olen);
         }
     }
 
@@ -2525,15 +2525,14 @@ void
 replay_next_cmd(char cmd[BUFSZ])
 {
     struct sinfo ps = program_state;
-    long loglineloc;
     char *logline;
     lseek(program_state.logfile,
           program_state.end_of_gamestate_location, SEEK_SET);
 
-    for ((loglineloc = get_log_offset()),
+    for (get_log_offset(),
              (logline = lgetline_malloc(program_state.logfile));
          logline;
-         free(logline), (loglineloc = get_log_offset()),
+         free(logline), get_log_offset(),
              (logline = lgetline_malloc(program_state.logfile)))
         if (*logline >= 'a' && *logline <= 'z' &&
             (strcmp("interrupt", logline)))
