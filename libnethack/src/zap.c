@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -137,18 +137,16 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                     pline(msgc_yafm, "%s %sself!", M_verbs(mdef, "bash"),
                           hityou ? "your" : mhim(mdef));
             }
-            if (hityou) {
-                const char *kbuf;
-                kbuf = msgprintf("%s%s %s", yours ? mhis(magr) : s_suffix(k_monnam(magr)),
-                                yours ? " own" : "", zap_type_text);
-                losehp(dmg, killer_msg(DIED, kbuf));
-            } else {
-                if (resist(magr, mdef, otmp->oclass, TELL, bcsign(otmp)))
-                    dmg = dmg / 2 + 1;
-                mdef->mhp -= dmg;
-                if (mdef->mhp <= 0)
-                    monkilled(magr, mdef, "", AD_RBRE);
-            }
+
+            const char *kbuf;
+            kbuf = msgprintf("%s%s %s", yours ? umhis(magr) :
+                             s_suffix(k_monnam(magr)),
+                             yours ? " own" : "", zap_type_text);
+
+            if (!hityou && resist(magr, mdef, otmp->oclass, TELL, bcsign(otmp)))
+                dmg = dmg / 2 + 1;
+
+            mlosehp(magr, mdef, dmg, "", AD_RBRE, killer_msg(DIED, kbuf));
         } else
             miss(zap_type_text, mdef, magr);
         known = TRUE;
@@ -3498,13 +3496,7 @@ zap_hit_mon(struct monst *magr, struct monst *mdef, int type,
     if (!tmp)
         return;
 
-    if (you)
-        losehp(tmp, killer_msg(DIED, an(fltxt)));
-    else {
-        mdef->mhp -= tmp;
-        if (mdef->mhp <= 0)
-            monkilled(magr, mdef, fltxt, AD_RBRE);
-    }
+    mlosehp(magr, mdef, tmp, fltxt, AD_RBRE, killer_msg(DIED, an(fltxt)));
     return;
 }
 
