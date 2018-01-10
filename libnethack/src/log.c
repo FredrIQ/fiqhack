@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2614,15 +2614,14 @@ log_replay_save_line(void)
     if (program_state.followmode == FM_PLAY)
         save_too = TRUE;
     if (program_state.followmode == FM_REPLAY &&
-        !replay_get_diffstate() && *logline == '~')
+        !replay_get_diffstate())
         save_too = TRUE;
 
-    if (replay_ignore_diff()) {
-        if (*logline == '~' || *logline == '*') {
-            program_state.end_of_gamestate_location = get_log_offset();
-            program_state.binary_save_location =
-                program_state.end_of_gamestate_location;
-        }
+    if (*logline == '~' && replay_ignore_diff()) {
+        program_state.end_of_gamestate_location = get_log_offset();
+        program_state.binary_save_location =
+            program_state.end_of_gamestate_location;
+        res = 0;
     } else if (*logline == '~') {
 
         bsave = program_state.binary_save;
