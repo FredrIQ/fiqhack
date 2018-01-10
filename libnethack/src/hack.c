@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3198,13 +3198,39 @@ maybe_wail(void)
     }
 }
 
-void
-losehp(int n, const char *killer)
+/* Returns TRUE if the HP loss resulted in a death, or would have if not
+   polymorphed/lifesaved. */
+boolean
+mlosehp(struct monst *magr, struct monst *mdef, int n, const char *mkiller,
+        int adtyp, const char *killer)
 {
-    xlosehp(n, killer, TRUE);
+    if (mdef == &youmonst)
+        return losehp(n, killer);
+
+    if (DEADMONSTER(mdef)) {
+        panic("Attempting to damage an already dead monster?");
+        return TRUE; /* well, it's dead, so... */
+    }
+
+    mdef->mhp -= n;
+    if (mdef->mhp <= 0) {
+        monkilled(magr, mdef, mkiller, adtyp);
+        return TRUE;
+    }
+
+    if (mdef->mhpmax < mdef->mhp)
+        mdef->mhpmax = mdef->mhp; /* n was negative */
+
+    return FALSE;
 }
 
-void
+boolean
+losehp(int n, const char *killer)
+{
+    return xlosehp(n, killer, TRUE);
+}
+
+boolean
 xlosehp(int n, const char *killer, boolean interrupt)
 {
     /* taking damage wakes you up if sleep resistant. */
@@ -3214,11 +3240,12 @@ xlosehp(int n, const char *killer, boolean interrupt)
         u.mh -= n;
         if (u.mhmax < u.mh)
             u.mhmax = u.mh;
-        if (u.mh < 1)
+        if (u.mh < 1) {
             rehumanize(DIED, killer);
-        else if (n > 0 && u.mh * 10 < u.mhmax && Unchanging)
+            return TRUE;
+        } else if (n > 0 && u.mh * 10 < u.mhmax && Unchanging)
             maybe_wail();
-        return;
+        return FALSE;
     }
 
     u.uhp -= n;
@@ -3229,9 +3256,12 @@ xlosehp(int n, const char *killer, boolean interrupt)
     if (u.uhp < 1) {
         pline(msgc_fatal_predone, "You die...");
         done(DIED, killer);
+        return TRUE;
     } else if (n > 0 && u.uhp * 10 < u.uhpmax) {
         maybe_wail();
     }
+
+    return FALSE;
 }
 
 int
