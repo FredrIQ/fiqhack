@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -939,7 +939,7 @@ you_moved(void)
                 under_ground(0);
 
             if (!u.umoved && (Is_waterlevel(&u.uz) ||
-                              !(Flying || Levitation))) {
+                              !aboveliquid(&youmonst))) {
                 if (Underwater)
                     drown();
                 else if (is_lava(level, u.ux, u.uy))

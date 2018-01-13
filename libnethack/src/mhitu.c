@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1034,7 +1034,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk, int ac_after_rnd)
                general very good at considering height--most short monsters
                still _can_ attack you when you're flying or mounted. [TODO:
                why can't a flying attacker overcome this?] */
-            if (u.usteed || Levitation || Flying) {
+            if (u.usteed || levitates(&youmonst) || Flying) {
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "%s tries to reach your %s %s!", Monnam(mtmp), sidestr,
                       body_part(LEG));

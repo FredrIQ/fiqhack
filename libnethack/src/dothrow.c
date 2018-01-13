@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1178,7 +1178,7 @@ throwit(struct obj *obj, struct obj *stack,
                 range /= 2;
         }
 
-        if (Is_airlevel(&u.uz) || Levitation) {
+        if (Is_airlevel(&u.uz) || levitates(&youmonst)) {
             /* action, reaction... */
             urange -= range;
             if (urange < 1)
@@ -1202,7 +1202,7 @@ throwit(struct obj *obj, struct obj *stack,
         mon = fire_obj(dx, dy, range, THROWN_WEAPON, obj, &obj_destroyed);
 
         /* have to do this after fire_obj() so u.ux & u.uy are correct */
-        if (Is_airlevel(&u.uz) || Levitation)
+        if (Is_airlevel(&u.uz) || levitates(&youmonst))
             hurtle(-dx, -dy, urange, TRUE);
 
         if (obj_destroyed)
@@ -1260,7 +1260,7 @@ throwit(struct obj *obj, struct obj *stack,
                     pline(msgc_substitute, Blind ? "%s lands %s your %s." :
                           "%s back to you, landing %s your %s.",
                           Blind ? "Something" : Tobjnam(obj, "return"),
-                          Levitation ? "beneath" : "at",
+                          levitates(&youmonst) ? "beneath" : "at",
                           makeplural(body_part(FOOT)));
                 } else {
                     dmg += rnd(3);

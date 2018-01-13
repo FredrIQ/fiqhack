@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -241,7 +241,7 @@ drinkfountain(void)
     int fate = rn2_on_rng(30, (mgkftn && u.uluck >= 0) ?
                           rng_fountain_magic : rng_fountain_result);
 
-    if (Levitation) {
+    if (levitates(&youmonst)) {
         floating_above("fountain");
         return;
     }
@@ -386,7 +386,7 @@ drinkfountain(void)
 void
 dipfountain(struct obj *obj)
 {
-    if (Levitation) {
+    if (levitates(&youmonst)) {
         floating_above("fountain");
         return;
     }
@@ -543,7 +543,7 @@ drinksink(void)
     struct obj *otmp;
     struct monst *mtmp;
 
-    if (Levitation) {
+    if (levitates(&youmonst)) {
         floating_above("sink");
         return;
     }

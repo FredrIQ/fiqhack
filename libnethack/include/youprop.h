@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -81,15 +81,12 @@
 # define Jumping                uhas_property(JUMPING)
 # define Teleportation          uhas_property(TELEPORT)
 # define Teleport_control       uhas_property(TELEPORT_CONTROL)
-# define Levitation             uhas_property(LEVITATION)
 # define Flying                 uhas_property(FLYING)
 # define Wwalking               uhas_property(WWALKING)
 # define Swimming               uhas_property(SWIMMING)
 # define Breathless             uhas_property(MAGICAL_BREATHING)
 # define Passes_walls           uhas_property(PASSES_WALLS)
 
-# define Ground_based           (!Levitation && !Flying &&      \
-                                 !is_clinger(youmonst.data))
 # define Engulfed               (u.uswallow)
 # define Underwater             (u.uinwater)
 /* Note that Underwater and u.uinwater are both used in code.

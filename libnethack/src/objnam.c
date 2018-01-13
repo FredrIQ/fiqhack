@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2085,8 +2085,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     /* Fruits may not mess up the ability to wish for real objects (since you
        can leave a fruit in a bones file and it will be added to another
        person's game), so they must be checked for last, after stripping all
-       the possible prefixes and seeing if there's a real name in there.  So we 
-       have to save the full original name.  However, it's still possible to do 
+       the possible prefixes and seeing if there's a real name in there.  So we
+       have to save the full original name.  However, it's still possible to do
        things like "uncursed burnt Alaska", or worse yet, "2 burned 5 course
        meals", so we need to loop to strip off the prefixes again, this time
        stripping only the ones possible on food. We could get even more
@@ -2851,7 +2851,7 @@ srch:
             level->locations[u.ux][u.uy].typ = LAVAPOOL;
             del_engr_at(level, u.ux, u.uy);
             pline(msgc_info, "A pool of molten lava.");
-            if (!(Levitation || Flying))
+            if (!aboveliquid(&youmonst))
                 lava_effects();
             newsym(u.ux, u.uy);
             return &zeroobj;

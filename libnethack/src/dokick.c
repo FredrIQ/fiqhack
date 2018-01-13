@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -205,7 +205,8 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
         return attack_status;
     }
 
-    if (Levitation && !rn2(3) && verysmall(mon->data) && !flying(mon)) {
+    if (levitates(&youmonst) && !rn2(3) && verysmall(mon->data) &&
+        !flying(mon)) {
         pline(msgc_failrandom, "Floating in the air, you miss wildly!");
         exercise(A_DEX, FALSE);
         passive(mon, FALSE, 1, AT_KICK);
@@ -782,7 +783,7 @@ dokick(const struct nh_cmd_arg *arg)
         pline(msgc_cancelled, "Now is not the time to think outside the box.");
         return 0;
     }
-    if (Levitation) {
+    if (levitates(&youmonst)) {
         int xx, yy;
 
         xx = u.ux - dx;
@@ -820,7 +821,7 @@ dokick(const struct nh_cmd_arg *arg)
 
         reveal_monster_at(x, y, TRUE);
 
-        if (Is_airlevel(&u.uz) || Levitation) {
+        if (Is_airlevel(&u.uz) || levitates(&youmonst)) {
             int range;
 
             range = ((int)youmonst.data->cwt + inv_weight_total());
@@ -847,7 +848,7 @@ dokick(const struct nh_cmd_arg *arg)
     }
 
     if (OBJ_AT(x, y) &&
-        (!Levitation || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)
+        (!levitates(&youmonst) || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)
          || sobj_at(BOULDER, level, x, y))) {
         if (kick_object(x, y, dx, dy, &kickobj)) {
             if (Is_airlevel(&u.uz))
@@ -859,7 +860,7 @@ dokick(const struct nh_cmd_arg *arg)
 
     if (!IS_DOOR(maploc->typ)) {
         if (maploc->typ == SDOOR) {
-            if (!Levitation && rn2(30) < avrg_attrib) {
+            if (!levitates(&youmonst) && rn2(30) < avrg_attrib) {
                 cvt_sdoor_to_door(maploc, &u.uz);       /* ->typ = DOOR */
                 pline(msgc_youdiscover, "Crash!  %s a secret door!",
                       /* don't "kick open" when it's locked unless it also
@@ -885,7 +886,7 @@ dokick(const struct nh_cmd_arg *arg)
                 goto ouch;
         }
         if (maploc->typ == SCORR) {
-            if (!Levitation && rn2(30) < avrg_attrib) {
+            if (!levitates(&youmonst) && rn2(30) < avrg_attrib) {
                 pline(msgc_youdiscover,
                       "Crash!  You kick open a secret passage!");
                 exercise(A_DEX, TRUE);
@@ -906,7 +907,7 @@ dokick(const struct nh_cmd_arg *arg)
             int goldamt = rn2_on_rng(200, rng_throne_loot);
             boolean trapdoor = !rn2_on_rng(4, rng_throne_loot);
 
-            if (Levitation)
+            if (levitates(&youmonst))
                 goto dumb;
             if ((Luck < 0 || maploc->flags) && kickedloose) {
                 maploc->typ = ROOM;
@@ -949,7 +950,7 @@ dokick(const struct nh_cmd_arg *arg)
             goto ouch;
         }
         if (IS_ALTAR(maploc->typ)) {
-            if (Levitation)
+            if (levitates(&youmonst))
                 goto dumb;
             pline(msgc_badidea, "You kick %s.",
                   (Blind ? "something" : "the altar"));
@@ -960,7 +961,7 @@ dokick(const struct nh_cmd_arg *arg)
             return 1;
         }
         if (IS_FOUNTAIN(maploc->typ)) {
-            if (Levitation)
+            if (levitates(&youmonst))
                 goto dumb;
             pline(msgc_badidea, "You kick %s.",
                   (Blind ? "something" : "the fountain"));
@@ -1042,7 +1043,7 @@ dokick(const struct nh_cmd_arg *arg)
             boolean ring_available = !rn2_on_rng(3, rng_sink_kick);
             struct monst *sink_mon;
 
-            if (Levitation)
+            if (levitates(&youmonst))
                 goto dumb;
             if (rn2_on_rng(5, rng_sink_kick)) {
                 if (canhear())
@@ -1132,7 +1133,7 @@ dokick(const struct nh_cmd_arg *arg)
                 set_wounded_legs(&youmonst, RIGHT_SIDE, rn1(6, 5));
             losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5),
                    killer_msg(DIED, kickstr(kickobj)));
-            if (Is_airlevel(&u.uz) || Levitation)
+            if (Is_airlevel(&u.uz) || levitates(&youmonst))
                 hurtle(-dx, -dy, rn1(2, 4), TRUE);      /* assume it's heavy */
             return 1;
         }
@@ -1152,14 +1153,14 @@ dokick(const struct nh_cmd_arg *arg)
             exercise(A_STR, FALSE);
             set_wounded_legs(&youmonst, RIGHT_SIDE, rn1(6, 5));
         }
-        if ((Is_airlevel(&u.uz) || Levitation) && rn2(2))
+        if ((Is_airlevel(&u.uz) || levitates(&youmonst)) && rn2(2))
             hurtle(-dx, -dy, 1, TRUE);
 
         return 1;       /* you moved, so use up a turn */
     }
 
     /* not enough leverage to kick open doors while levitating */
-    if (Levitation)
+    if (levitates(&youmonst))
         goto ouch;
 
     exercise(A_DEX, TRUE);

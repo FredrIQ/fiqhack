@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-10 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -177,7 +177,7 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
        wall. Again, this can be overriden using "moveonly". */
     if (!last_command_was("moveonly")) {
         boolean lava = l->mem_bg == S_lava;
-        boolean pool = l->mem_bg == S_pool;
+        boolean pool = (l->mem_bg == S_pool);
         int waterwalk = 0;
         /* set waterwalk to 1 if IDed, 2 if IDed fireproof (allows lava) */
         if (uarmf && uarmf->otyp == WATER_WALKING_BOOTS && uarmf->dknown &&
@@ -187,7 +187,7 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
                 waterwalk++;
         }
 
-        if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
+        if (!aboveliquid(&youmonst) &&
             ((lava && waterwalk < 2) ||
              (pool && (!Swimming || waterproof(&youmonst)) && !waterwalk)) &&
             !(lava ? is_lava(level, u.ux, u.uy) : is_pool(level, u.ux, u.uy))) {
@@ -329,7 +329,7 @@ moverock(schar dx, schar dy)
         rx = u.ux + 2 * dx;     /* boulder destination position */
         ry = u.uy + 2 * dy;
         action_completed();
-        if (Levitation || Is_airlevel(&u.uz)) {
+        if (levitates(&youmonst) || Is_airlevel(&u.uz)) {
             if (Blind)
                 feel_location(sx, sy);
             pline(msgc_yafm, "You don't have enough leverage to push %s.",
@@ -834,7 +834,7 @@ init_test_move_cache(struct test_move_cache *cache)
     cache->fumbling = !!Fumbling;
     cache->halluc = !!Hallucination;
     cache->passwall = !!Passes_walls;
-    cache->grounded = !!Ground_based;
+    cache->grounded = aboveliquid(&youmonst);
     cache->wt_over_cap = inv_weight_over_cap();
     cache->instead_of_pushing_boulder = FALSE;
 }
@@ -843,7 +843,7 @@ init_test_move_cache(struct test_move_cache *cache)
    TEST_MOVE, TEST_TRAV or TEST_SLOW.
 
    This function takes the values of Blind, Stunned, Fumbling, Hallucination,
-   Passes_walls, and Ground_based as arguments; repeatedly recalculating them
+   Passes_walls, and aboveliquid as arguments; repeatedly recalculating them
    was taking up 34% of the runtime of the entire program before this change. */
 boolean
 test_move(int ux, int uy, int dx, int dy, int dz, int mode,
@@ -1170,8 +1170,7 @@ distmap_init(struct distmap_state *ds, int x1, int y1, struct monst *mtmp)
     ds->mon = mtmp;
     ds->mmflags = MM_IGNOREMONST;
 
-    if (flying(mtmp) || levitates(mtmp) || waterwalks(mtmp) ||
-        unbreathing(mtmp))
+    if (aboveliquid(mtmp) || waterwalks(mtmp) || unbreathing(mtmp))
         ds->mmflags |= MM_IGNOREWATER;
 
     struct obj *monwep = MON_WEP(ds->mon);
@@ -1659,7 +1658,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         u.uy = y = u.ustuck->my;
         mtmp = u.ustuck;
     } else {
-        if (Is_airlevel(&u.uz) && rn2(4) && !Levitation && !Flying) {
+        if (Is_airlevel(&u.uz) && rn2(4) && !levitates(&youmonst) && !Flying) {
             switch (rn2(3)) {
             case 0:
                 pline(msgc_failrandom, "You tumble in place.");
@@ -2045,7 +2044,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         return 1;
     } else if (!youmonst.data->mmove) {
         pline(msgc_cancelled1, "You are rooted %s.",
-              Levitation || Is_airlevel(&u.uz) ||
+              levitates(&youmonst) || Is_airlevel(&u.uz) ||
               Is_waterlevel(&u.uz) ? "in place" : "to the ground");
         action_completed();
         return 1;
@@ -2060,7 +2059,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             } else if (!(--u.utrap)) {
                 pline(msgc_actionok, "You %s to the edge of the pit.",
                       (In_sokoban(&u.uz) &&
-                       Levitation) ?
+                       levitates(&youmonst)) ?
                       "struggle against the air currents and float" : u.usteed ?
                       "ride" : "crawl");
                 fill_pit(level, u.ux, u.uy);
@@ -2408,7 +2407,7 @@ invocation_message(void)
 
         if (u.usteed)
             buf = msgprintf("beneath %s", y_monnam(u.usteed));
-        else if (Levitation || Flying)
+        else if (levitates(&youmonst) || Flying)
             buf = "beneath you";
         else
             buf = msgprintf("under your %s", makeplural(body_part(FOOT)));
@@ -2447,9 +2446,9 @@ spoteffects(boolean pick)
                       is_ice(level, u.ux, u.uy) ? "ice" : "land");
         } else if (Is_waterlevel(&u.uz))
             goto stillinwater;
-        else if (Levitation)
+        else if (levitates_proper(&youmonst))
             pline(msgc_consequence, "You pop out of the water like a cork!");
-        else if (Flying)
+        else if (flying_proper(&youmonst))
             pline(msgc_consequence, "You fly out of the water.");
         else if (Wwalking)
             pline(msgc_consequence, "You slowly rise above the surface.");
@@ -2464,12 +2463,12 @@ spoteffects(boolean pick)
     }
 
 stillinwater:
-    if (!Levitation && !u.ustuck && !Flying &&
+    if (!levfly_proper(&youmonst) && !u.ustuck &&
         (!u.usteed || !is_clinger(youmonst.data))) {
         /* limit recursive calls through teleds() */
         if (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) {
             if (u.usteed && !flying(u.usteed) &&
-                !levitates(u.usteed) && !is_clinger(u.usteed->data)) {
+                !levfly_proper(u.usteed) && !is_clinger(u.usteed->data)) {
                 dismount_steed(Underwater ? DISMOUNT_FELL : DISMOUNT_GENERIC);
                 /* dismount_steed() -> float_down() -> pickup() */
                 if (!Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz))
@@ -2482,7 +2481,7 @@ stillinwater:
         }
     }
     check_special_room(FALSE);
-    if (IS_SINK(level->locations[u.ux][u.uy].typ) && Levitation)
+    if (IS_SINK(level->locations[u.ux][u.uy].typ) && levitates(&youmonst))
         dosinkfall();
     if (!in_steed_dismounting) {        /* if dismounting, we'll check again
                                            later */
@@ -3072,7 +3071,7 @@ lookaround(enum u_interaction_mode uim)
             } else if (is_pool(level, x, y) || is_lava(level, x, y)) {
                 /* Water and lava only stop you if directly in front, and stop
                    you even if you are running. */
-                if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
+                if (!aboveliquid(&youmonst) &&
                     x == u.ux + turnstate.move.dx &&
                     y == u.uy + turnstate.move.dy)
                     /* No Wwalking check; otherwise they'd be able to test
@@ -3282,7 +3281,7 @@ weight_cap(void)
             carrcap = (carrcap * (long)youmonst.data->cwt / WT_HUMAN);
     }
 
-    if (Levitation || Is_airlevel(&u.uz)        /* pugh@cornell */
+    if (levitates(&youmonst) || Is_airlevel(&u.uz)        /* pugh@cornell */
         ||(u.usteed && strongmonst(u.usteed->data)))
         carrcap = MAX_CARR_CAP;
     else {

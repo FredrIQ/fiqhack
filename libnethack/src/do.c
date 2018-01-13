@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -195,14 +195,14 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
         return fire_damage(obj, FALSE, TRUE, x, y);
     } else if (is_pool(lev, x, y)) {
         /* Reasonably bulky objects (arbitrary) splash when dropped. If you're
-           floating above the water even small things make noise. Stuff dropped 
+           floating above the water even small things make noise. Stuff dropped
            near fountains always misses. */
-        if ((Blind || (Levitation || Flying)) && canhear() &&
+        if ((Blind || aboveliquid(&youmonst)) && canhear() &&
             ((x == u.ux) && (y == u.uy))) {
             if (!Underwater) {
                 if (weight(obj) > 9) {
                     pline(msgc_consequence, "Splash!");
-                } else if (Levitation || Flying) {
+                } else if (aboveliquid(&youmonst)) {
                     pline(msgc_consequence, "Plop!");
                 }
             }
@@ -611,7 +611,7 @@ dropy(struct obj *obj)
         else
             sellobj(obj, u.ux, u.uy);
         stackobj(obj);
-        if (Blind && Levitation)
+        if (Blind && levitates(&youmonst))
             map_object(obj, 0, FALSE);
         newsym(u.ux, u.uy);     /* remap location under self */
     }
@@ -819,7 +819,7 @@ dodown(const struct nh_cmd_arg *arg, boolean autodig_ok)
     } else if (u.usteed && u.usteed->meating) {
         pline(msgc_cancelled, "%s is still eating.", Monnam(u.usteed));
         return 0;
-    } else if (Levitation) {
+    } else if (levitates(&youmonst)) {
         unsigned controlled_lev = levitates_at_will(&youmonst, FALSE, FALSE);
         if (controlled_lev) {
             /* end controlled levitation */
@@ -1184,7 +1184,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
                     u_on_dnstairs();
             }
             /* Remove bug which crashes with levitation/punishment KAA */
-            if (Punished && !Levitation) {
+            if (Punished && !levitates(&youmonst)) {
                 pline(msgc_actionboring,
                       "With great effort you climb the %s.",
                       at_ladder ? "ladder" : "stairs");

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -304,10 +304,14 @@ make_player_info(struct nh_player_info *pi)
         strncpy(pi->statusitems[pi->nr_items++], "Cancelled", ITEMLEN);
     if (slow(&youmonst))
         strncpy(pi->statusitems[pi->nr_items++], "Slow", ITEMLEN);
-    if (Levitation)     /* 14 */
+    if (levitates_proper(&youmonst))     /* 14 */
         strncpy(pi->statusitems[pi->nr_items++], "Lev", ITEMLEN);
-    else if (Flying)
+    else if (levitates(&youmonst))
+        strncpy(pi->statusitems[pi->nr_items++], "-Lev", ITEMLEN);
+    if (flying_proper(&youmonst))
         strncpy(pi->statusitems[pi->nr_items++], "Fly", ITEMLEN);
+    else if (flying(&youmonst))
+        strncpy(pi->statusitems[pi->nr_items++], "-Fly", ITEMLEN);
     if (uwep && is_pick(uwep)) /* 15 (first case) */
         strncpy(pi->statusitems[pi->nr_items++], "Dig", ITEMLEN);
     else if (uwep && is_launcher(uwep))

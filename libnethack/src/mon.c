@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-10 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -347,16 +347,16 @@ minliquid(struct monst *mtmp)
     boolean vis = (level && canseemon(mtmp));
     boolean inpool, inlava, infountain;
 
-    inpool = is_pool(level, mtmp->mx, mtmp->my) && !flying(mtmp) &&
-        !levitates(mtmp) && !waterwalks(mtmp);
+    inpool = is_pool(level, mtmp->mx, mtmp->my) && !aboveliquid(mtmp) &&
+        !waterwalks(mtmp);
     /* Not waterwalks() for lava, the source might burn up... */
-    inlava = is_lava(level, mtmp->mx, mtmp->my) && !flying(mtmp) &&
+    inlava = is_lava(level, mtmp->mx, mtmp->my) && !aboveliquid(mtmp);
+    infountain = IS_FOUNTAIN(level->locations[mtmp->mx][mtmp->my].typ) &&
         !levitates(mtmp);
-    infountain = IS_FOUNTAIN(level->locations[mtmp->mx][mtmp->my].typ);
 
     /* Flying and levitation keeps our steed out of the liquid */
     /* (but not water-walking or swimming) */
-    if (mtmp == u.usteed && (Flying || Levitation))
+    if (mtmp == u.usteed && levfly_proper(&youmonst))
         return 0;
 
     /* Gremlin multiplying won't go on forever since the hit points keep going
@@ -1006,7 +1006,7 @@ mpickstuff(struct monst *mon, boolean autopickup)
     /* objects underwater can't be taken if flying, levitating
        or waterwalking */
     if (is_pool(mon->dlevel, mon->mx, mon->my) &&
-        (levitates(mon) || flying(mon) || waterwalks(mon)))
+        (aboveliquid(mon) || waterwalks(mon)))
         return FALSE;
 
     /* non-tame monsters normally don't go shopping */

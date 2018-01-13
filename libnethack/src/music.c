@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -352,7 +352,8 @@ do_earthquake(int force)
                                 }
                         }
                     } else if (!u.utrap && x == u.ux && y == u.uy) {
-                        if (Levitation || Flying || is_clinger(youmonst.data)) {
+                        if (levitates(&youmonst) || Flying ||
+                            is_clinger(youmonst.data)) {
                             pline(msgc_noconsequence,
                                   "A chasm opens up under you!");
                             pline(msgc_noconsequence, "You don't fall in!");

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -81,10 +81,11 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
            thus, we can't check general properties for now... */
         if (is_pool(lev, x, y) && !ignorewater) {
             if (mtmp == &youmonst)
-                return !!(Levitation || Flying || Wwalking || Swimming ||
-                          Breathless);
+                return !!(aboveliquid(&youmonst) || Wwalking ||
+                          Swimming || Breathless);
             else
-                return (is_flyer(mdat) || pm_swims(mdat) || is_clinger(mdat));
+                return (!Is_waterlevel(&(lev->z)) &&
+                        (is_flyer(mdat) || pm_swims(mdat) || is_clinger(mdat)));
             /* return (levitates(mtmp) || swims(mtmp) || flying(mtmp) ||
                waterwalks(mtmp) || unbreathing(mtmp)); */
         }
@@ -92,9 +93,10 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
             return FALSE;
         else if (is_lava(lev, x, y)) {
             if (mtmp == &youmonst)
-                return !!Levitation;
+                return !!aboveliquid(&youmonst);
             else
-                return is_flyer(mdat) || likes_lava(mdat);
+                return (!Is_waterlevel(&(lev->z)) &&
+                        (is_flyer(mdat) || likes_lava(mdat)));
             /* return (!!levitates(mtmp) || !!flying(mtmp) ||
                likes_lava(mtmp->data)); */
         }
@@ -809,7 +811,7 @@ level_tele_impl(struct monst *mon, boolean wizard_tele)
 
         if (killer) {
             ;   /* arrival in heaven is pending */
-        } else if (Levitation) {
+        } else if (levitates(&youmonst)) {
             escape_by_flying = "float gently down to earth";
         } else if (Flying) {
             escape_by_flying = "fly down to the ground";
@@ -928,7 +930,7 @@ void
 level_tele_trap(struct trap *trap)
 {
     pline_implied(msgc_nonmonbad, "You %s onto a level teleport trap!",
-                  Levitation ? (const char *)"float" :
+                  levitates(&youmonst) ? (const char *)"float" :
                   locomotion(youmonst.data, "step"));
     if (Antimagic) {
         shieldeff(u.ux, u.uy);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -348,12 +348,10 @@ e_survives_at(struct entity *etmp, int x, int y)
         return TRUE;
     if (is_pool(level, x, y))
         return (boolean) (waterwalks(etmp->emon) || unbreathing(etmp->emon) ||
-                          swims(etmp->emon) || flying(etmp->emon) ||
-                          levitates(etmp->emon));
+                          swims(etmp->emon) || aboveliquid(etmp->emon));
     /* must force call to lava_effects in e_died if is_u */
     if (is_lava(level, x, y))
-        return (boolean) (likes_lava(etmp->edata) || flying(etmp->emon) ||
-                          levitates(etmp->emon));
+        return (boolean) (likes_lava(etmp->edata) || aboveliquid(etmp->emon));
     if (is_db_wall(x, y))
         return !!phasing(etmp->emon);
     return TRUE;
@@ -433,7 +431,7 @@ e_missed(struct entity *etmp, boolean chunks)
          : (etmp->emon->mcanmove && !etmp->emon->msleeping)))
         /* flying requires mobility */
         misses = 5;     /* out of 8 */
-    else if (levitates(etmp->emon) || (is_u(etmp) && Levitation))
+    else if (levitates_proper(etmp->emon))
         /* doesn't require mobility */
         misses = 3;
     else if (chunks && is_pool(level, etmp->ex, etmp->ey))
@@ -618,7 +616,7 @@ do_entity(struct entity *etmp)
         if (is_pool(level, etmp->ex, etmp->ey) && !e_inview)
             You_hear(msgc_levelsound, "a splash.");
         if (e_survives_at(etmp, etmp->ex, etmp->ey)) {
-            if (e_inview && !flying(etmp->emon) && !levitates(etmp->emon))
+            if (e_inview && !aboveliquid(etmp->emon))
                 pline(miss_msgc, "%s from the bridge.", E_phrase(etmp, "fall"));
             return;
         }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -286,7 +286,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
     }
 
     /* Is the player impaired? */
-    if (!force && !levitates(mtmp) && !flying(mtmp) && Levitation &&
+    if (!force && !levitates(mtmp) && !flying(mtmp) && levitates(&youmonst) &&
         !Lev_at_will) {
         pline(msgc_cancelled, "You cannot reach %s.", mon_nam(mtmp));
         return FALSE;
@@ -302,7 +302,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
          slippery_fingers(&youmonst) || leg_hurt(&youmonst) ||
          otmp->cursed ||
          (u.ulevel + mtmp->mtame < rnd(MAXULEV / 2 + 5)))) {
-        if (Levitation) {
+        if (levitates(&youmonst)) {
             pline(msgc_failrandom, "%s slips away from you.", Monnam(mtmp));
             return FALSE;
         }
@@ -322,7 +322,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
 
     /* Success */
     if (!force) {
-        if (Levitation && !levitates(mtmp) && !flying(mtmp))
+        if (levitates(&youmonst) && !levitates(mtmp) && !flying(mtmp))
             /* Must have Lev_at_will at this point */
             pline_implied(msgc_consequence, "%s magically floats up!",
                           Monnam(mtmp));

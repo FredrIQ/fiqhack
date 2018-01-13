@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-10 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2335,10 +2335,10 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
         what = is_animal(u.ustuck->data) ? "while swallowed" : "while engulfed";
     else if (Underwater)
         what = "underwater";
-    else if (Levitation)
-        what = "while levitating";
     else if (is_pool(level, u.ux, u.uy))
         what = "in water", mispasting = 1;
+    else if (levitates(&youmonst))
+        what = "while levitating";
     else if (is_lava(level, u.ux, u.uy))
         what = "in lava", mispasting = 1;
     else if (On_stairs(u.ux, u.uy))
@@ -2525,7 +2525,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             return 1;
         }
 
-        if (Levitation || u.usteed) {
+        if (levitates(&youmonst) || u.usteed) {
             /* Have a shot at snaring something on the floor */
             otmp = level->objects[u.ux][u.uy];
             if (otmp && otmp->otyp == CORPSE && otmp->corpsenm == PM_HORSE) {

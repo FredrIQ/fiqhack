@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -811,7 +811,7 @@ dighole(struct monst *mon, boolean pit_only, boolean instant)
                   "As %s dig%s, the hole fills with %s!",
                   you ? "you" : mon_nam(mon), you ? "" : "s",
                   typ == LAVAPOOL ? "lava" : "water");
-        if (!levitates(mon) && !flying(mon)) {
+        if (!aboveliquid(mon)) {
             if (you) {
                 if (typ == LAVAPOOL)
                     lava_effects();
@@ -961,7 +961,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
         pline(msgc_cancelled1, "Turbulence torpedoes your %s attempts.",
               verbing);
     } else if (dz < 0) {
-        if (Levitation || Flying)
+        if (levitates(&youmonst) || Flying)
             pline(msgc_cancelled1, "You don't have enough leverage.");
         else
             pline(msgc_cancelled1, "You can't reach the %s.",

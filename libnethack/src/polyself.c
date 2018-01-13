@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -209,7 +209,7 @@ polyself(boolean forcecontrol)
     boolean iswere = (u.ulycn >= LOW_PM || is_were(youmonst.data));
     boolean isvamp = (youmonst.data->mlet == S_VAMPIRE ||
                       u.umonnum == PM_VAMPIRE_BAT);
-    boolean was_floating = (Levitation || Flying);
+    boolean was_floating = aboveliquid(&youmonst);
 
     if (!Polymorph_control && !forcecontrol && !draconian && !iswere && !isvamp) {
         int dam = 1 + rn2_on_rng(30, rng_system_shock);
@@ -316,7 +316,8 @@ made_change:
             new_light_source(level, u.ux, u.uy, new_light, LS_MONSTER,
                              &youmonst);
     }
-    if (is_pool(level, u.ux, u.uy) && was_floating && !(Levitation || Flying) &&
+    if (is_pool(level, u.ux, u.uy) && was_floating &&
+        !aboveliquid(&youmonst) &&
         !unbreathing(&youmonst) && !Swimming)
         drown();
 }
@@ -943,7 +944,7 @@ dospinweb(void)
 {
     struct trap *ttmp = t_at(level, u.ux, u.uy);
 
-    if (Levitation || Is_airlevel(&u.uz) ||
+    if (levitates(&youmonst) || Is_airlevel(&u.uz) ||
         Underwater || Is_waterlevel(&u.uz)) {
         pline(msgc_cancelled, "You must be on the ground to spin a web.");
         return 0;
