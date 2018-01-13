@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2240,12 +2240,17 @@ use_item(struct musable *m)
                 int contained = 0;
                 for (otmp = mon->minvent; otmp; otmp = nobj) {
                     nobj = otmp->nobj;
+
+                    /* Don't stash unique items */
+                    if (obj_resists(otmp, 0, 0))
+                        continue;
+
                     if ((otmp->oclass == SPBOOK_CLASS ||
                          otmp->oclass == SCROLL_CLASS ||
                          otmp->oclass == POTION_CLASS ||
                          otmp->oclass == WAND_CLASS) &&
                         ((otmp->otyp != WAN_CANCELLATION &&
-                          otmp->otyp != BAG_OF_TRICKS && /* should never happen in current code */
+                          otmp->otyp != BAG_OF_TRICKS && /* shouldn't happen */
                           otmp->otyp != BAG_OF_HOLDING) ||
                          container->otyp != BAG_OF_HOLDING)) {
                         obj_extract_self(otmp);
