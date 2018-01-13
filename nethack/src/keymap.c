@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1254,7 +1254,7 @@ init_keymap(void)
     keymap[KEY_A3] = find_command("north_east");
     keymap[KEY_C1] = find_command("south_west");
     keymap[KEY_C3] = find_command("south_east");
-    keymap[KEY_B2] = find_command("go");
+    keymap[KEY_B2] = find_command("run");
     keymap[KEY_D1] = find_command("inventory");
     /* otherwise we have to do it like this */
     keymap[KEY_HOME] = find_command("north_west");
