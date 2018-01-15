@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1200,6 +1200,18 @@ cast_protection(struct monst *mon, boolean autocast,
 {
     boolean you = (mon == &youmonst);
     boolean vis = level && canseemon(mon);
+
+    if (which_armor(mon, os_arm)) {
+        if (check_overprotection)
+            return !!m_mspellprot(mon);
+
+        if (you)
+            pline(msgc_failcurse, "Your body armor interferes with the spell.");
+
+        spell_unmaintain(mon, SPE_PROTECTION);
+        return FALSE;
+    }
+
     int loglev = 0;
     int l = you ? u.ulevel : mon->m_lev;
     /* Monsters can be level 0, ensure that no oddities occur if that is the case. */
@@ -1263,8 +1275,7 @@ cast_protection(struct monst *mon, boolean autocast,
                       (Underwater || Is_waterlevel(&u.uz)) ? "water" :
                       Engulfed ? mbodypart(u.ustuck, STOMACH) :
                       IS_STWALL(level->locations[u.ux][u.uy].typ) ? "stone" :
-                      "air", you ? "you" : mon_nam(mon),
-                      an(hcolor("golden")));
+                      "air", mon_nam(mon), an(hcolor("golden")));
         } else if (you) {
             if (m_mspellprot(mon))
                 pline(msgc_statusgood, "Your skin begins feeling warmer.");
