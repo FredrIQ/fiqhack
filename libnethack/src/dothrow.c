@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -316,7 +316,8 @@ dofire(const struct nh_cmd_arg *arg)
     /* It can be reasonable to fire rocks without a sling. Otherwise,
        force the usage of 't' for ammo that needs a launcher when
        the proper launcher isn't wielded. */
-    if (uquiver && is_ammo(uquiver) && uquiver->oclass != GEM_CLASS &&
+    if (uquiver && is_ammo(uquiver) &&
+        (uquiver->oclass != GEM_CLASS || carrying(SLING)) &&
         !ammo_and_launcher(uquiver, uwep)) {
         /* First however, check if we have the proper launcher in offhand and neither
            is (knowingly) cursed. */
