@@ -295,21 +295,21 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                          intrinsics[rn2_on_rng(SIZE(intrinsics),
                                                rng)], 0, TRUE);
 
+        /* there is no "mblessed", so if the protection property was
+           randomized, just give a boost to base AC */
+        if (protected(mtmp) & INTRINSIC)
+                mtmp->mac += 2 + rn2_on_rng(8, rng);
+
+        /* approximate accidental cannibalism rate */
+        if (!rn2_on_rng(40, rng) &&
+            mtmp->data != &mons[PM_CAVEMAN])
+            set_property(mtmp, AGGRAVATE_MONSTER, 0, TRUE);
+
         if (special) {
             if (!rn2_on_rng(5, rng))
                 mongets(mtmp, rn2_on_rng(5, rng) ? LUCKSTONE : LOADSTONE, rng);
             if (rn2_on_rng(4, rng)) /* unihorns are nice */
                 mongets(mtmp, UNICORN_HORN, rng);
-
-            /* approximate accidental cannibalism rate */
-            if (!rn2_on_rng(40, rng) &&
-                mtmp->data != &mons[PM_CAVEMAN])
-                set_property(mtmp, AGGRAVATE_MONSTER, 0, TRUE);
-
-            /* there is no "mblessed", so if the protection property was
-               randomized, just give a boost to base AC */
-            if (protected(mtmp) & INTRINSIC)
-                mtmp->mac += 2 + rn2_on_rng(8, rng);
 
             /* give armor */
             mk_mplayer_armor(mtmp, armor, rng);
