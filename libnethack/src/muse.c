@@ -2696,7 +2696,7 @@ try_again:
         return SCR_TELEPORTATION;
     case 8:
     case 10:
-        if (!rn2_on_rng(9, rng))
+        if (!rn2_on_rng(4, rng))
             return WAN_CREATE_MONSTER;
         /* else FALLTHRU */
     case 2:
@@ -2851,7 +2851,9 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
     case 6:
         return POT_PARALYSIS;
     case 7:
-        return WAN_CREATE_MONSTER;
+        if (!rn2_on_rng(4, rng))
+            return WAN_CREATE_MONSTER;
+        /* fallthrough */
     case 8:
         return WAN_MAGIC_MISSILE;
     case 9:
@@ -2875,7 +2877,7 @@ you_aggravate(const struct monst *mtmp)
     dbuf_set(mtmp->mx, mtmp->my, S_unexplored, 0, 0, 0, 0,
              dbuf_monid(mtmp, mtmp->mx, mtmp->my, rn2), 0, 0, 0);
     display_self();
-    
+
     /* msgc_info is used for detect monster results, so makes sense here */
     pline_implied(msgc_info, "You feel aggravated at %s.", noit_mon_nam(mtmp));
     look_at_map(mtmp->mx, mtmp->my);
