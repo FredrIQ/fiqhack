@@ -105,9 +105,10 @@ mk_mplayer_armor(struct monst *mon, short typ, enum rng rng)
     /* Most players who get to the endgame who have cursed equipment have it
        because the wizard or other monsters cursed it, so its chances of having
        plusses is the same as usual.... */
-    obj->spe = rn2_on_rng(10, rng) ?
-        (rn2_on_rng(3, rng) ? rn2_on_rng(5, rng) : 4 + rn2_on_rng(4, rng)) :
-        - 1 - rn2_on_rng(3, rng);
+    if (objects[typ].oc_charged)
+        obj->spe = rn2_on_rng(10, rng) ?
+            (rn2_on_rng(3, rng) ? rn2_on_rng(5, rng) : 4 + rn2_on_rng(4, rng)) :
+            - 1 - rn2_on_rng(3, rng);
 
     /* if not an artifact, try a bunch of times to assign object properties */
     int prop_tries = 10;
@@ -359,10 +360,10 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 RIN_FREE_ACTION, RIN_POLYMORPH_CONTROL,
             };
             if (rn2_on_rng(8, rng) || monsndx(ptr) == PM_WIZARD) {
-                for (i=0; i<2 && (rn2_on_rng(2, rng) ||
-                                  monsndx(ptr) == PM_WIZARD); i++) {
+                for (i=0; i < 2; i++) {
                     do ring = rings[rn2_on_rng(SIZE(rings), rng)];
-                    while (ring != RIN_PROTECTION && ring != RIN_INCREASE_DAMAGE &&
+                    while (ring != RIN_PROTECTION &&
+                           ring != RIN_INCREASE_DAMAGE &&
                            ring != RIN_INCREASE_ACCURACY &&
                            m_has_property(mtmp, objects[ring].oc_oprop,
                                           ANY_PROPERTY, TRUE));
