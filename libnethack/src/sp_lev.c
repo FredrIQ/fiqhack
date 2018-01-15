@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -830,7 +830,7 @@ create_monster(struct level *lev, monster * m, struct mkroom *croom)
                              fallback_to_random ? NO_MM_FLAGS : MM_ALLLEVRNG);
         else if (PM_ARCHEOLOGIST <= m->id && m->id <= PM_WIZARD)
             mtmp = mk_mplayer(pm, lev, x, y, FALSE, fallback_to_random ?
-                              rng_main : mrng());
+                              rng_main : mrng(), 0);
         else
             mtmp = makemon(pm, lev, x, y, fallback_to_random ?
                            NO_MM_FLAGS : MM_ALLLEVRNG);

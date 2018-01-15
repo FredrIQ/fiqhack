@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -108,13 +108,21 @@ mk_mplayer_armor(struct monst *mon, short typ, enum rng rng)
     obj->spe = rn2_on_rng(10, rng) ?
         (rn2_on_rng(3, rng) ? rn2_on_rng(5, rng) : 4 + rn2_on_rng(4, rng)) :
         - 1 - rn2_on_rng(3, rng);
+
+    /* if not an artifact, try a bunch of times to assign object properties */
+    int prop_tries = 10;
+    if (!obj->oartifact &&
+        (obj->oclass == WEAPON_CLASS || obj->oclass == ARMOR_CLASS))
+        while (!obj->oprops && prop_tries--)
+            assign_oprops(mon->dlevel, obj, rng, TRUE);
+
     mpickobj(mon, obj, NULL);
 }
 
 /* assumes rng is rng_main or rng_for_level(&lev->z) */
 struct monst *
 mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
-           boolean special, enum rng rng)
+           boolean special, enum rng rng, int mmflags)
 {
     struct monst *mtmp;
     char nam[PL_NSIZ];
@@ -125,11 +133,14 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
     if (MON_AT(lev, x, y))
         rloc(m_at(lev, x, y), FALSE);   /* insurance */
 
-    if (!In_endgame(&u.uz))
+    if (!In_endgame(&(lev->z)) && !In_hell(&(lev->z)))
         special = FALSE;
 
-    if ((mtmp = makemon(ptr, lev, x, y,
-                        rng == rng_main ? NO_MM_FLAGS : MM_ALLLEVRNG)) != 0) {
+    mmflags |= MM_PLAYERMONST;
+    if (rng != rng_main)
+        mmflags |= MM_ALLLEVRNG;
+
+    if ((mtmp = makemon(ptr, lev, x, y, mmflags))) {
         short weapon = rn2_on_rng(2, rng) ?
             LONG_SWORD : rnd_class(SPEAR, BULLWHIP, rng);
         short armor =
@@ -151,7 +162,8 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             get_mplname(mtmp, nam);
             christen_monst(mtmp, nam);
             /* that's why they are "stuck" in the endgame :-) */
-            mongets(mtmp, FAKE_AMULET_OF_YENDOR, rng);
+            if (In_endgame(&u.uz))
+                mongets(mtmp, FAKE_AMULET_OF_YENDOR, rng);
         }
         msethostility(mtmp, TRUE, TRUE);
 
@@ -165,8 +177,6 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 weapon = rn2_on_rng(2, rng) ? TWO_HANDED_SWORD : BATTLE_AXE;
                 shield = STRANGE_OBJECT;
             }
-            if (rn2_on_rng(2, rng))
-                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL, rng);
             if (helm == HELM_OF_BRILLIANCE)
                 helm = STRANGE_OBJECT;
             break;
@@ -192,8 +202,6 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         case PM_KNIGHT:
             if (rn2_on_rng(4, rng))
                 weapon = LONG_SWORD;
-            if (rn2_on_rng(2, rng))
-                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL, rng);
             break;
         case PM_MONK:
             weapon = STRANGE_OBJECT;
@@ -205,8 +213,6 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         case PM_PRIEST:
             if (rn2_on_rng(2, rng))
                 weapon = MACE;
-            if (rn2_on_rng(2, rng))
-                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL, rng);
             if (rn2_on_rng(4, rng))
                 cloak = ROBE;
             if (rn2_on_rng(4, rng))
@@ -233,17 +239,12 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         case PM_VALKYRIE:
             if (rn2_on_rng(2, rng))
                 weapon = WAR_HAMMER;
-            if (rn2_on_rng(2, rng))
-                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL, rng);
             break;
         case PM_WIZARD:
             if (rn2_on_rng(4, rng))
                 weapon = rn2_on_rng(2, rng) ? QUARTERSTAFF : ATHAME;
-            if (rn2_on_rng(2, rng)) {
-                armor = rn2_on_rng(2, rng) ?
-                    BLACK_DRAGON_SCALE_MAIL : SILVER_DRAGON_SCALE_MAIL;
+            if (rn2_on_rng(2, rng))
                 cloak = CLOAK_OF_MAGIC_RESISTANCE;
-            }
             if (rn2_on_rng(4, rng))
                 helm = HELM_OF_BRILLIANCE;
             shield = STRANGE_OBJECT;
@@ -263,15 +264,36 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 otmp->greased = 1;
             if (special && rn2_on_rng(2, rng))
                 otmp = mk_artifact(lev, otmp, A_NONE, rng);
-            if (otmp->oartifact) /* likely wished for or gifted, make erodeproof */
+            if (otmp->oartifact) /* likely wished for or gifted, make
+                                    erodeproof */
                 otmp->oerodeproof = 1;
             /* mplayers knew better than to overenchant Magicbane */
             if (otmp->oartifact == ART_MAGICBANE)
                 /* +2 magicbane is generally regarded as the best enchantment,
                    this is debatable but since this is a *player* monster... */
                 otmp->spe = rn2_on_rng(3, rng) ? 2 : 1 + rn2_on_rng(4, rng);
+
+            /* if not an artifact, try a bunch of times to assign object
+               properties */
+            int prop_tries = 10;
+            if (!otmp->oartifact)
+                while (!otmp->oprops && prop_tries--)
+                    assign_oprops(lev, otmp, rng, TRUE);
+
             mpickobj(mtmp, otmp, NULL);
         }
+
+        /* give random intrinsics */
+        int intrinsics[] = {
+            POISON_RES, FIRE_RES, COLD_RES, SHOCK_RES, SLEEP_RES, DISINT_RES,
+            TELEPAT, INVIS, SEE_INVIS, PROTECTION /* blessed */
+        };
+        int i = 5 + rn2_on_rng(6, rng);
+        /* some will probably end up redundant, but keep it at that */
+        while (i--)
+            set_property(mtmp,
+                         intrinsics[rn2_on_rng(SIZE(intrinsics),
+                                               rng)], 0, TRUE);
 
         if (special) {
             if (!rn2_on_rng(5, rng))
@@ -279,21 +301,11 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             if (rn2_on_rng(4, rng)) /* unihorns are nice */
                 mongets(mtmp, UNICORN_HORN, rng);
 
-            /* give random intrinsics */
-            int intrinsics[] = {
-                POISON_RES, FIRE_RES, COLD_RES, SHOCK_RES, SLEEP_RES, DISINT_RES,
-                TELEPAT, INVIS, SEE_INVIS, PROTECTION /* blessed */
-            };
-            int i = 5 + rn2_on_rng(6, rng);
-            /* some will probably end up redundant, but keep it at that */
-            while (i--)
-                set_property(mtmp,
-                             intrinsics[rn2_on_rng(SIZE(intrinsics),
-                                                   rng)], 0, TRUE);
-            /* sometimes, you just make a small oopsie! [cannibalism] */
+            /* approximate accidental cannibalism rate */
             if (!rn2_on_rng(40, rng) &&
                 mtmp->data != &mons[PM_CAVEMAN])
                 set_property(mtmp, AGGRAVATE_MONSTER, 0, TRUE);
+
             /* there is no "mblessed", so if the protection property was
                randomized, just give a boost to base AC */
             if (protected(mtmp) & INTRINSIC)
@@ -320,28 +332,6 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 for (i = rn2_on_rng(5, rng); i; i--)
                     mk_mplayer_armor(mtmp, AMULET_OF_LIFE_SAVING, rng);
             }
-            /* done after wearing the dragon mail so the resists checks work */
-            int ring;
-            int rings[] = {
-                RIN_INVISIBILITY, RIN_TELEPORT_CONTROL,
-                RIN_FIRE_IMMUNITY, RIN_COLD_IMMUNITY,
-                RIN_SHOCK_IMMUNITY, RIN_POISON_IMMUNITY,
-                RIN_INCREASE_ACCURACY, RIN_INCREASE_DAMAGE,
-                RIN_PROTECTION, RIN_SEE_INVISIBLE,
-                RIN_REGENERATION, RIN_SLOW_DIGESTION,
-                RIN_FREE_ACTION, RIN_POLYMORPH_CONTROL,
-            };
-            if (rn2_on_rng(8, rng) || monsndx(ptr) == PM_WIZARD) {
-                for (i=0; i<2 && (rn2_on_rng(2, rng) ||
-                                  monsndx(ptr) == PM_WIZARD); i++) {
-                    do ring = rings[rn2_on_rng(SIZE(rings), rng)];
-                    while (ring != RIN_PROTECTION && ring != RIN_INCREASE_DAMAGE &&
-                           ring != RIN_INCREASE_ACCURACY &&
-                           m_has_property(mtmp, objects[ring].oc_oprop, ANY_PROPERTY, TRUE));
-                    mk_mplayer_armor(mtmp, ring, rng);
-                    m_dowear(mtmp, TRUE);
-                }
-            }
 
             quan = rn2_on_rng(3, rng) ?
                 rn2_on_rng(3, rng) : rn2_on_rng(16, rng);
@@ -353,6 +343,33 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             quan = rn2_on_rng(10, rng);
             while (quan--)
                 mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE, rng), NULL);
+        }
+
+        /* done after wearing the dragon mail so the resists checks work */
+        int ring;
+        int rings[] = {
+            RIN_INVISIBILITY, RIN_TELEPORT_CONTROL,
+            RIN_FIRE_IMMUNITY, RIN_COLD_IMMUNITY,
+            RIN_SHOCK_IMMUNITY, RIN_POISON_IMMUNITY,
+            RIN_INCREASE_ACCURACY, RIN_INCREASE_DAMAGE,
+            RIN_PROTECTION, RIN_SEE_INVISIBLE,
+            RIN_REGENERATION, RIN_SLOW_DIGESTION,
+            RIN_FREE_ACTION, RIN_POLYMORPH_CONTROL,
+        };
+        if (rn2_on_rng(8, rng) || monsndx(ptr) == PM_WIZARD) {
+            for (i=0; i<2 && (rn2_on_rng(2, rng) ||
+                              monsndx(ptr) == PM_WIZARD); i++) {
+                do ring = rings[rn2_on_rng(SIZE(rings), rng)];
+                while (ring != RIN_PROTECTION && ring != RIN_INCREASE_DAMAGE &&
+                       ring != RIN_INCREASE_ACCURACY &&
+                       m_has_property(mtmp, objects[ring].oc_oprop,
+                                      ANY_PROPERTY, TRUE));
+                mk_mplayer_armor(mtmp, ring, rng);
+                m_dowear(mtmp, TRUE);
+            }
+        }
+
+        if (special) {
             /* if the monster acquired polymorph control as part of the
                randomness, then maybe they did some ring eating... */
             if (m_carrying_recursive(mtmp, mtmp->minvent,
@@ -376,6 +393,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 }
             }
         }
+
         quan = 1 + rn2_on_rng(3, rng);
         while (quan--)
             mongets(mtmp, rnd_offensive_item(mtmp, rng), rng);
@@ -385,6 +403,10 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         quan = 1 + rn2_on_rng(3, rng);
         while (quan--)
             mongets(mtmp, rnd_misc_item(mtmp, rng), rng);
+
+        /* Give a bag */
+        mongets(mtmp, special && rn2_on_rng(5, rng) ? BAG_OF_HOLDING : SACK,
+                rng);
     }
 
     return mtmp;
@@ -428,7 +450,8 @@ create_mplayers(int num, boolean special)
         if (tryct > 50)
             return;
 
-        mk_mplayer(&mons[pm], level, (xchar) x, (xchar) y, special, rng);
+        mk_mplayer(&mons[pm], level, (xchar) x, (xchar) y, special, rng,
+                   0);
         num--;
     }
 }
