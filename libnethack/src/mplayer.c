@@ -157,8 +157,8 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
 
         mtmp->m_lev = rn2_on_rng(16, rng) + (special ? 15 : 1);
         mtmp->mhp = mtmp->mhpmax =
-            4 * mtmp->m_lev + rn2_on_rng(mtmp->m_lev * 3 + 1, rng) + 30 +
-            (special ? rn2_on_rng(30, rng) : 0);
+            5 * mtmp->m_lev + rn2_on_rng(mtmp->m_lev * 5 + 1, rng) + 10 +
+            (special ? rn2_on_rng(50, rng) : 0);
         if (special) {
             get_mplname(mtmp, nam);
             christen_monst(mtmp, nam);
