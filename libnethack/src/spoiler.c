@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-07 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* File opening code based on the xlogfile code. */
 /* Object-looping code based on makedefs.c */
 /* Concept based on Autospoil, by Cristan Szmajda
@@ -669,6 +669,10 @@ spoilarteffects(struct artifact *art, unsigned long spfx, struct attack attk)
                       "<span class=\"spfx spfxxray\">xray</span> " : ""),
                      ((spfx & SPFX_REFLECT) ?
                       "<span class=\"spfx spfxreflect\">reflect</span>" : ""),
+                     ((spfx & SPFX_WTREDUC) ?
+                      "<span class=\"spfx spfxwtreduc\">half-wght</span>" : ""),
+                     ((spfx & SPFX_FREEACT) ?
+                      "<span class=\"spfx spfxfreeact\">freeaction</span>" : ""),
                      msgprintf("<span class=\"artattk\">%s</span>",
                                /* TODO: handle attk.damn and attk.damd */
                                (attk.adtyp && attk.adtyp == AD_MAGM) ? "MR" :
