@@ -126,6 +126,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
 {
     struct monst *mtmp;
     char nam[PL_NSIZ];
+    boolean allow_minvent = !(mmflags & NO_MINVENT);
 
     if (!is_mplayer(ptr))
         return NULL;
@@ -255,7 +256,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             break;
         }
 
-        if (weapon != STRANGE_OBJECT) {
+        if (weapon != STRANGE_OBJECT && allow_minvent) {
             otmp = mksobj(level, weapon, TRUE, FALSE, rng);
             otmp->spe = (special ? 4 + rn2_on_rng(5, rng) : rn2_on_rng(4, rng));
             if (!rn2_on_rng(3, rng))
@@ -305,7 +306,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             mtmp->data != &mons[PM_CAVEMAN])
             set_property(mtmp, AGGRAVATE_MONSTER, 0, TRUE);
 
-        if (special) {
+        if (special && allow_minvent) {
             if (!rn2_on_rng(5, rng))
                 mongets(mtmp, rn2_on_rng(5, rng) ? LUCKSTONE : LOADSTONE, rng);
             if (rn2_on_rng(4, rng)) /* unihorns are nice */
@@ -346,67 +347,71 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         }
 
         /* done after wearing the dragon mail so the resists checks work */
-        int ring;
-        int rings[] = {
-            RIN_INVISIBILITY, RIN_TELEPORT_CONTROL,
-            RIN_FIRE_IMMUNITY, RIN_COLD_IMMUNITY,
-            RIN_SHOCK_IMMUNITY, RIN_POISON_IMMUNITY,
-            RIN_INCREASE_ACCURACY, RIN_INCREASE_DAMAGE,
-            RIN_PROTECTION, RIN_SEE_INVISIBLE,
-            RIN_REGENERATION, RIN_SLOW_DIGESTION,
-            RIN_FREE_ACTION, RIN_POLYMORPH_CONTROL,
-        };
-        if (rn2_on_rng(8, rng) || monsndx(ptr) == PM_WIZARD) {
-            for (i=0; i<2 && (rn2_on_rng(2, rng) ||
-                              monsndx(ptr) == PM_WIZARD); i++) {
-                do ring = rings[rn2_on_rng(SIZE(rings), rng)];
-                while (ring != RIN_PROTECTION && ring != RIN_INCREASE_DAMAGE &&
-                       ring != RIN_INCREASE_ACCURACY &&
-                       m_has_property(mtmp, objects[ring].oc_oprop,
-                                      ANY_PROPERTY, TRUE));
-                mk_mplayer_armor(mtmp, ring, rng);
-                m_dowear(mtmp, TRUE);
+        if (allow_minvent) {
+            int ring;
+            int rings[] = {
+                RIN_INVISIBILITY, RIN_TELEPORT_CONTROL,
+                RIN_FIRE_IMMUNITY, RIN_COLD_IMMUNITY,
+                RIN_SHOCK_IMMUNITY, RIN_POISON_IMMUNITY,
+                RIN_INCREASE_ACCURACY, RIN_INCREASE_DAMAGE,
+                RIN_PROTECTION, RIN_SEE_INVISIBLE,
+                RIN_REGENERATION, RIN_SLOW_DIGESTION,
+                RIN_FREE_ACTION, RIN_POLYMORPH_CONTROL,
+            };
+            if (rn2_on_rng(8, rng) || monsndx(ptr) == PM_WIZARD) {
+                for (i=0; i<2 && (rn2_on_rng(2, rng) ||
+                                  monsndx(ptr) == PM_WIZARD); i++) {
+                    do ring = rings[rn2_on_rng(SIZE(rings), rng)];
+                    while (ring != RIN_PROTECTION && ring != RIN_INCREASE_DAMAGE &&
+                           ring != RIN_INCREASE_ACCURACY &&
+                           m_has_property(mtmp, objects[ring].oc_oprop,
+                                          ANY_PROPERTY, TRUE));
+                    mk_mplayer_armor(mtmp, ring, rng);
+                    m_dowear(mtmp, TRUE);
+                }
             }
-        }
 
-        if (special) {
-            /* if the monster acquired polymorph control as part of the
-               randomness, then maybe they did some ring eating... */
-            if (m_carrying_recursive(mtmp, mtmp->minvent,
-                                     RIN_POLYMORPH_CONTROL, TRUE) &&
-                !rn2_on_rng(3, rng)) {
-                for (i = rn2_on_rng(11, rng); i; i--) {
-                    ring = rings[rn2_on_rng(SIZE(rings), rng)];
-                    if (ring == RIN_SLOW_DIGESTION ||
-                        (objects[ring].oc_material != WOOD &&
-                         objects[ring].oc_material < IRON &&
-                         objects[ring].oc_material > MITHRIL))
-                        continue;
-                    if (ring == RIN_INCREASE_ACCURACY)
-                        mtmp->mhitinc += rn2_on_rng(5, rng);
-                    else if (ring == RIN_INCREASE_DAMAGE)
-                        mtmp->mdaminc += rn2_on_rng(5, rng);
-                    else if (ring == RIN_PROTECTION)
-                        mtmp->mac += rn2_on_rng(5, rng);
-                    else
-                        set_property(mtmp, objects[ring].oc_oprop, 0, TRUE);
+            if (special) {
+                /* if the monster acquired polymorph control as part of the
+                   randomness, then maybe they did some ring eating... */
+                if (m_carrying_recursive(mtmp, mtmp->minvent,
+                                         RIN_POLYMORPH_CONTROL, TRUE) &&
+                    !rn2_on_rng(3, rng)) {
+                    for (i = rn2_on_rng(11, rng); i; i--) {
+                        ring = rings[rn2_on_rng(SIZE(rings), rng)];
+                        if (ring == RIN_SLOW_DIGESTION ||
+                            (objects[ring].oc_material != WOOD &&
+                             objects[ring].oc_material < IRON &&
+                             objects[ring].oc_material > MITHRIL))
+                            continue;
+                        if (ring == RIN_INCREASE_ACCURACY)
+                            mtmp->mhitinc += rn2_on_rng(5, rng);
+                        else if (ring == RIN_INCREASE_DAMAGE)
+                            mtmp->mdaminc += rn2_on_rng(5, rng);
+                        else if (ring == RIN_PROTECTION)
+                            mtmp->mac += rn2_on_rng(5, rng);
+                        else
+                            set_property(mtmp, objects[ring].oc_oprop, 0, TRUE);
+                    }
                 }
             }
         }
 
-        quan = 1 + rn2_on_rng(3, rng);
-        while (quan--)
-            mongets(mtmp, rnd_offensive_item(mtmp, rng), rng);
-        quan = 1 + rn2_on_rng(3, rng);
-        while (quan--)
-            mongets(mtmp, rnd_defensive_item(mtmp, rng), rng);
-        quan = 1 + rn2_on_rng(3, rng);
-        while (quan--)
-            mongets(mtmp, rnd_misc_item(mtmp, rng), rng);
+        if (allow_minvent) {
+            quan = 1 + rn2_on_rng(3, rng);
+            while (quan--)
+                mongets(mtmp, rnd_offensive_item(mtmp, rng), rng);
+            quan = 1 + rn2_on_rng(3, rng);
+            while (quan--)
+                mongets(mtmp, rnd_defensive_item(mtmp, rng), rng);
+            quan = 1 + rn2_on_rng(3, rng);
+            while (quan--)
+                mongets(mtmp, rnd_misc_item(mtmp, rng), rng);
 
-        /* Give a bag */
-        mongets(mtmp, special && rn2_on_rng(5, rng) ? BAG_OF_HOLDING : SACK,
-                rng);
+            /* Give a bag */
+            mongets(mtmp, special && rn2_on_rng(5, rng) ? BAG_OF_HOLDING : SACK,
+                    rng);
+        }
     }
 
     return mtmp;
