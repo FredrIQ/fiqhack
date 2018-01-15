@@ -398,13 +398,18 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         }
 
         if (allow_minvent) {
-            quan = 1 + rn2_on_rng(3, rng);
+            int amtrange = 3;
+            if (special)
+                amtrange = 6;
+
+            /* Only generate a single item of create monster */
+            quan = 1 + rn2_on_rng(amtrange, rng);
             while (quan--)
                 mongets(mtmp, rnd_offensive_item(mtmp, rng), rng);
-            quan = 1 + rn2_on_rng(3, rng);
+            quan = 1 + rn2_on_rng(amtrange, rng);
             while (quan--)
                 mongets(mtmp, rnd_defensive_item(mtmp, rng), rng);
-            quan = 1 + rn2_on_rng(3, rng);
+            quan = 1 + rn2_on_rng(amtrange, rng);
             while (quan--)
                 mongets(mtmp, rnd_misc_item(mtmp, rng), rng);
 
