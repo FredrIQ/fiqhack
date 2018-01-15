@@ -139,7 +139,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         special = FALSE;
 
     mmflags |= MM_PLAYERMONST;
-    if (rng != rng_main)
+    if (rng == rng_for_level(&lev->z))
         mmflags |= MM_ALLLEVRNG;
 
     if ((mtmp = makemon(ptr, lev, x, y, mmflags))) {
