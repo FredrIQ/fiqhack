@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -145,12 +145,6 @@ hitval(struct obj *otmp, struct monst *mon)
     /* Picks used against xorns and earth elementals */
     if (is_pick(otmp) && (phasing(mon) && thick_skinned(ptr)))
         tmp += 2;
-
-#ifdef INVISIBLE_OBJECTS
-    /* Invisible weapons against monsters who can't see invisible */
-    if (otmp->oinvis && !see_invisible(mon))
-        tmp += 3;
-#endif
 
     /* Check specially named weapon "to hit" bonuses */
     if (otmp->oartifact)
@@ -306,11 +300,11 @@ dmgval(struct obj *otmp, struct monst *mon)
         if (objects[otyp].oc_material == SILVER && hates_silver(ptr))
             bonus += rnd(20);
         if (obj_properties(otmp) & opm_nasty)
-            bonus += dice(3, 6);
+            bonus += dice(2, 6);
 
         /* if the weapon is going to get a double damage bonus, adjust this
            bonus so that effectively it's added after the doubling */
-        boolean dummy;
+        int dummy;
         if (bonus > 1 && otmp->oartifact &&
             spec_dbon(otmp, mon, 25, &dummy) >= 25)
             bonus = (bonus + 1) / 2;
@@ -812,9 +806,9 @@ abon(void)
         sbon = -1;
     else if (str < 17)
         sbon = 0;
-    else if (str <= STR18(50))
-        sbon = 1;       /* up to 18/50 */
-    else if (str < STR18(100))
+    else if (str <= 19)
+        sbon = 1;
+    else if (str < 21)
         sbon = 2;
     else
         sbon = 3;
@@ -850,15 +844,15 @@ dbon(void)
     else if (str < 18)
         return 1;
     else if (str == 18)
-        return 2;       /* up to 18 */
-    else if (str <= STR18(75))
-        return 3;       /* up to 18/75 */
-    else if (str <= STR18(90))
-        return 4;       /* up to 18/90 */
-    else if (str < STR18(100))
-        return 5;       /* up to 18/99 */
+        return 2;
+    else if (str <= 19)
+        return 3;
+    else if (str <= 20)
+        return 4;
+    else if (str <= 21)
+        return 5;
     else
-        return 6;
+        return 6; /* ring of gain strength or gauntlets of power */
 }
 
 
@@ -1138,7 +1132,7 @@ dump_skills(void)
             if (i == skill_ranges[pass].first)
                 add_menuheading(&menu, skill_ranges[pass].name);
 
-            if (P_RESTRICTED(i) || u.weapon_skills[i].skill == P_UNSKILLED)
+            if (P_RESTRICTED(i) || P_SKILL(i) == P_UNSKILLED)
                 continue;
 
             buf = msgprintf(" %s\t[%s]", P_NAME(i),
@@ -1482,7 +1476,7 @@ skill_init(const struct def_skill *class_skill)
     }
 
     /* Set skill for all weapons in inventory to be basic */
-    for (obj = invent; obj; obj = obj->nobj) {
+    for (obj = youmonst.minvent; obj; obj = obj->nobj) {
         if (obj->otyp == TOUCHSTONE || obj->otyp == LUCKSTONE)
             continue;
         skill = weapon_type(obj);
@@ -1499,7 +1493,7 @@ skill_init(const struct def_skill *class_skill)
         P_SKILL(P_ATTACK_SPELL) = P_BASIC;
         P_SKILL(P_ENCHANTMENT_SPELL) = P_BASIC;
     }
-    
+
     /* set wand skills */
     if (!Role_if(PM_BARBARIAN) && !Role_if(PM_CAVEMAN))
         P_SKILL(P_WANDS) = P_BASIC;
@@ -1522,10 +1516,8 @@ skill_init(const struct def_skill *class_skill)
     if (urole.petnum == PM_PONY)
         P_SKILL(P_RIDING) = P_BASIC;
 
-    /* 
-     * Make sure we haven't missed setting the max on a skill
-     * & set advance
-     */
+    /* Make sure we haven't missed setting the max on a skill, and set
+       advance. */
     for (skill = 0; skill < P_NUM_SKILLS; skill++) {
         if (!P_RESTRICTED(skill)) {
             if (P_MAX_SKILL(skill) < P_SKILL(skill)) {

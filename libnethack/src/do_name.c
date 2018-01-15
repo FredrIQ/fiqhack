@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -224,7 +224,6 @@ int
 do_tname(const struct nh_cmd_arg *arg)
 {
     boolean flooritem = FALSE;
-    struct obj *here;
     if (can_reach_floor() && !is_pool(level, youmonst.mx, youmonst.my) &&
         !is_lava(level, youmonst.mx, youmonst.my) &&
         level->objects[youmonst.mx][youmonst.my])
@@ -245,7 +244,7 @@ do_tname(const struct nh_cmd_arg *arg)
     }
 
     if (obj) {
-        /* behave as if examining it in inventory; this might set dknown if it 
+        /* behave as if examining it in inventory; this might set dknown if it
            was picked up while blind and the hero can now see */
         examine_object(obj);
 
@@ -514,7 +513,7 @@ x_monnam(const struct monst *mtmp,
             buf = msgcat(buf, "invisible ");
         if (do_enslavement)
             buf = msgcat(buf, "enslaved ");
-        buf = msgcat(buf, mdat->mname);
+        buf = msgcat(buf, pm_name(mtmp));
         return buf;
     }
 
@@ -549,7 +548,7 @@ x_monnam(const struct monst *mtmp,
             buf = msgprintf("%s%s ghost", buf, s_suffix(name));
             name_at_start = TRUE;
         } else if (called) {
-            buf = msgprintf("%s%s called %s", buf, mdat->mname, name);
+            buf = msgprintf("%s%s called %s", buf, pm_name(mtmp), name);
             name_at_start = (boolean) type_is_pname(mdat);
         } else if (is_mplayer(mdat) && ((bp = strstri(name, " the "))) != 0) {
             /* <name> the <adjective> <invisible> <saddled> <rank> */
@@ -566,7 +565,7 @@ x_monnam(const struct monst *mtmp,
                                                (boolean) mtmp->female)));
         name_at_start = FALSE;
     } else {
-        buf = msgcat(buf, mdat->mname);
+        buf = msgcat(buf, pm_name(mtmp));
         name_at_start = (boolean) type_is_pname(mdat);
     }
 
@@ -734,7 +733,7 @@ k_monnam(const struct monst *mtmp) {
            overrides the effect of Hallucination on priestname() */
         buf = msgcat(buf, m_monnam(mtmp));
     } else {
-        buf = msgcat(buf, mtmp->data->mname);
+        buf = msgcat(buf, pm_name(mtmp));
         if (mx_name(mtmp))
             buf = msgcat_many(buf, " called \"", mx_name(mtmp), "\"", NULL);
     }
@@ -759,6 +758,16 @@ s_suffix(const char *s)
         return msgcat(s, "'");
     else
         return msgcat(s, "'s");
+}
+
+/* Monster version of otense. */
+const char *
+mtense(const struct monst *mon, const char *verb)
+{
+    if (mon == &youmonst)
+        return verb;
+    else
+        return vtense(NULL, verb);
 }
 
 /* Given a monster (or &youmonst) and a verb as an argument, produces "the

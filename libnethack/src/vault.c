@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -359,7 +359,7 @@ invault(void)
             return;
         }
         verbalize(msgc_npcvoice, "I don't know you.");
-        umoney = money_cnt(invent);
+        umoney = money_cnt(youmonst.minvent);
         if (!umoney && !hidden_gold())
             verbalize(msgc_hint, "Please follow me.");
         else {
@@ -396,7 +396,7 @@ invault(void)
                 mx_egd(guard)->fakecorr[0].ftyp = VWALL;
         }
         level->locations[x][y].typ = DOOR;
-        level->locations[x][y].doormask = D_NODOOR;
+        level->locations[x][y].flags = D_NODOOR;
         unblock_point(x, y);    /* doesn't block light */
         mx_egd(guard)->fcend = 1;
         mx_egd(guard)->warncnt = 1;
@@ -458,7 +458,7 @@ wallify_vault(struct monst *grd)
                 else    /* not left or right side, must be top or bottom */
                     typ = HWALL;
                 level->locations[x][y].typ = typ;
-                level->locations[x][y].doormask = 0;
+                level->locations[x][y].flags = 0;
                 /* 
                  * hack: player knows walls are restored because of the
                  * message, below, so show this on the screen.
@@ -504,7 +504,7 @@ gd_move(struct monst *grd)
         vault_occupied(u.urooms) ? TRUE : FALSE, grd_in_vault =
         *in_rooms(level, grd->mx, grd->my, VAULT) ? TRUE : FALSE;
     boolean disappear_msg_seen = FALSE, semi_dead = DEADMONSTER(grd);
-    long umoney = money_cnt(invent);
+    long umoney = money_cnt(youmonst.minvent);
     boolean u_carry_gold = ((umoney + hidden_gold()) > 0L);
     boolean see_guard;
 
@@ -697,7 +697,7 @@ gd_move(struct monst *grd)
                         goto newpos;
                     crm->typ = (typ == SCORR) ? CORR : DOOR;
                     if (crm->typ == DOOR)
-                        crm->doormask = D_NODOOR;
+                        crm->flags = D_NODOOR;
                     goto proceed;
                 }
             }
@@ -721,7 +721,7 @@ nextpos:
         if (isok(nx + nx - x, ny + ny - y) && !IS_POOL(typ) &&
             IS_ROOM(level->locations[nx + nx - x][ny + ny - y].typ)) {
             crm->typ = DOOR;
-            crm->doormask = D_NODOOR;
+            crm->flags = D_NODOOR;
             goto proceed;
         }
         if (dy && nx != x) {
@@ -738,7 +738,7 @@ nextpos:
         /* I don't like this, but ... */
         if (IS_ROOM(typ)) {
             crm->typ = DOOR;
-            crm->doormask = D_NODOOR;
+            crm->flags = D_NODOOR;
             goto proceed;
         }
         break;
@@ -810,7 +810,7 @@ void
 paygd(void)
 {
     struct monst *grd = findgd();
-    long umoney = money_cnt(invent);
+    long umoney = money_cnt(youmonst.minvent);
     struct obj *coins, *nextcoins;
     int gx, gy;
 
@@ -834,10 +834,11 @@ paygd(void)
         make_grave(level, gx, gy,
                    msgprintf(
                        "To Croesus: here's the gold recovered from %s the %s.",
-                       u.uplname, mons[u.umonster].mname));
+                       u.uplname, u.ufemale ? mons[u.umonster].fname :
+                       mons[u.umonster].mname));
     }
     
-    for (coins = invent; coins; coins = nextcoins) {
+    for (coins = youmonst.minvent; coins; coins = nextcoins) {
         nextcoins = coins->nobj;
         if (objects[coins->otyp].oc_class == COIN_CLASS) {
             unwield_silently(coins);
@@ -855,7 +856,7 @@ hidden_gold(void)
     long value = 0L;
     struct obj *obj;
 
-    for (obj = invent; obj; obj = obj->nobj)
+    for (obj = youmonst.minvent; obj; obj = obj->nobj)
         if (Has_contents(obj))
             value += contained_gold(obj);
     /* unknown gold stuck inside statues may cause some consternation... */

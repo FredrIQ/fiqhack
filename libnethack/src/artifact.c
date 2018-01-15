@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,11 +18,11 @@
 #define get_artifact(o) \
                 (((o)&&(o)->oartifact) ? &artilist[(int) (o)->oartifact] : 0)
 
-static boolean spec_applies(const struct artifact *, const struct monst *);
+static int spec_applies(const struct artifact *, const struct monst *);
 static int arti_invoke(struct obj *);
 static boolean magicbane_hit(struct monst *magr, struct monst *mdef,
                              struct obj *, int *, int, boolean,
-                             const char *, boolean);
+                             const char *, int);
 static boolean spfx_provides_extrinsic(const struct obj *,
                                        unsigned long, int);
 
@@ -35,9 +35,6 @@ static boolean spfx_provides_extrinsic(const struct obj *,
    Note: this will still break if they have more than about half the number
    of hit points that will fit in a 15 bit integer. */
 #define FATAL_DAMAGE_MODIFIER 200
-
-/* coordinate effects from spec_dbon() with messages in artifact_hit() */
-static int spec_dbon_applies = 0;
 
 /* flags including which artifacts have already been created */
 static boolean artigen[1 + NROFARTIFACTS + 1];
@@ -416,7 +413,6 @@ item_provides_extrinsic(const struct obj *otmp, int extrinsic)
          (otmp->where == OBJ_INVENT && u.twoweap)))
         return res;
 
-    long equipmask;
     enum objslot slot = which_slot(otmp);
     if (slot == os_invalid) {
         if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp)) {
@@ -462,8 +458,6 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
     }
     const struct artifact *oart = get_artifact(otmp);
     uchar dtyp;
-    long spfx;
-    boolean equipped;
     long equipmask;
 
     /* Don't allow non-weapon equippables to provide an extrinsic
@@ -485,7 +479,12 @@ item_provides_extrinsic_before_oprop(const struct obj *otmp,
         return equipmask;
 
     /* Non-artifact item properties go here. */
+    if (otmp->otyp == AMULET_OF_RESTFUL_SLEEP && extrinsic == SLEEP_RES)
+        return equipmask; /* gives a sleep resistance, but not a sleep immunity. */
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
+        return equipmask;
+    if ((otmp->otyp == SHIMMERING_DRAGON_SCALE_MAIL ||
+         otmp->otyp == SHIMMERING_DRAGON_SCALES) && extrinsic == STUN_RES)
         return equipmask;
     if ((otmp->otyp == RED_DRAGON_SCALE_MAIL ||
          otmp->otyp == RED_DRAGON_SCALES) &&
@@ -569,7 +568,8 @@ spfx_provides_extrinsic(const struct obj *obj, unsigned long spfx,
         (spfx & SPFX_REFLECT && extrinsic == REFLECTING) ||
         (spfx & SPFX_XRAY    && extrinsic == XRAY_VISION) ||
         (spfx & SPFX_WARN    && extrinsic == WARNING) ||
-        (spfx & SPFX_WARNMON && extrinsic == WARN_OF_MON))
+        (spfx & SPFX_WARNMON && extrinsic == WARN_OF_MON) ||
+        (spfx & SPFX_FREEACT && extrinsic == FREE_ACTION))
         return TRUE;
     return FALSE;
 }
@@ -644,7 +644,7 @@ touch_artifact(struct obj *obj, const struct monst *mon)
 
 
 /* decide whether an artifact's special attacks or mon warning apply against mtmp */
-static boolean
+static int
 spec_applies(const struct artifact *weap, const struct monst *mtmp)
 {
     const struct permonst *ptr = mtmp->data;
@@ -654,30 +654,31 @@ spec_applies(const struct artifact *weap, const struct monst *mtmp)
     /* Check specific targets */
     switch (weap->mtype.matchtyp) {
     case MTYP_PM:
-        return ptr == &mons[match];
+        return (ptr == &mons[match]) ? 2 : 0;
     case MTYP_S:
-        return ptr->mlet == match;
+        return (match == (unsigned long)ptr->mlet) ? 2 : 0;
     case MTYP_M1:
-        return (ptr->mflags1 & match);
+        return (ptr->mflags1 & match) ? 2 : 0;
     case MTYP_M2:
-        /* check player properly, player may not have the proper flags (racial/lycn) */
+        /* check player properly, player may not have the proper flags
+           (racial/lycn) */
         if (yours) {
             unsigned uflags2 = ptr->mflags2;
             if (u.ulycn)
                 uflags2 |= M2_WERE;
             if (!Upolyd)
                 uflags2 |= urace.selfmask;
-            return (uflags2 & match);
+            return (uflags2 & match) ? 2 : 0;
         }
-        return (ptr->mflags2 & match);
+        return (ptr->mflags2 & match) ? 2 : 0;
     case MTYP_M3:
-        return (ptr->mflags3 & match);
+        return (ptr->mflags3 & match) ? 2 : 0;
     case MTYP_ALIGN:
         return (malign(mtmp) == A_LAWFUL ? !!(match & AM_LAWFUL) :
                 malign(mtmp) == A_NEUTRAL ? !!(match & AM_NEUTRAL) :
                 malign(mtmp) == A_CHAOTIC ? !!(match & AM_CHAOTIC) :
                 malign(mtmp) == A_NONE ? !!(match & AM_UNALIGNED) :
-                0);
+                0) ? 2 : 0;
     case MTYP_ALL:
     default:
         break; /* No specific target, check below */
@@ -690,24 +691,29 @@ spec_applies(const struct artifact *weap, const struct monst *mtmp)
         return 0;
 
     if (weap->attk.adtyp == AD_PHYS)
-        return 1;
+        return 2;
 
     switch (weap->attk.adtyp) {
     case AD_FIRE:
-        return !resists_fire(mtmp);
+        return (!resists_fire(mtmp) ? 2 :
+                !immune_to_fire(mtmp) ? 1 : 0);
     case AD_COLD:
-        return !resists_cold(mtmp);
+        return (!resists_cold(mtmp) ? 2 :
+                !immune_to_cold(mtmp) ? 1 : 0);
     case AD_ELEC:
-        return !resists_elec(mtmp);
+        return (!resists_elec(mtmp) ? 2 :
+                !immune_to_elec(mtmp) ? 1 : 0);
     case AD_MAGM:
+        return (!resists_magm(mtmp) ? 2 : 0);
     case AD_STUN:
-        return !resists_magm(mtmp);
+        return (!resists_stun(mtmp) ? 2 : 0);
     case AD_DRST:
-        return !resists_poison(mtmp);
+        return (!resists_poison(mtmp) ? 2 :
+                !immune_to_poison(mtmp) ? 1 : 0);
     case AD_DRLI:
-        return !resists_drli(mtmp);
+        return (!resists_drli(mtmp) ? 2 : 0);
     case AD_STON:
-        return !resists_ston(mtmp);
+        return (!resists_ston(mtmp) ? 2 : 0);
     default:
         return 0;
     }
@@ -721,7 +727,7 @@ spec_abon(struct obj *otmp, struct monst *mon)
 {
     const struct artifact *weap = get_artifact(otmp);
 
-    /* no need for an extra check for `NO_ATTK' because this will always return 
+    /* no need for an extra check for `NO_ATTK' because this will always return
        0 for any artifact which has that attribute */
 
     if (weap && weap->attk.damn && spec_applies(weap, mon))
@@ -732,27 +738,42 @@ spec_abon(struct obj *otmp, struct monst *mon)
 /* special damage bonus */
 int
 spec_dbon(struct obj *otmp, struct monst *mon, int tmp,
-          boolean *spec_dbon_applies)
+          int *spec_dbon_applies)
 {
     if (!otmp->oartifact) {
         uint64_t props = obj_properties(otmp);
         int bonus = 0;
-        *spec_dbon_applies = FALSE;
-        if ((props & opm_drain) && !resists_drli(mon))
-            *spec_dbon_applies = TRUE;
+        *spec_dbon_applies = 0;
+        if ((props & opm_drain) && !resists_drli(mon)) {
+            *spec_dbon_applies = 2;
+            if (resists_drli(mon))
+                *spec_dbon_applies = 1;
+        }
         if (props & opm_vorpal)
-            *spec_dbon_applies = TRUE;
-        if ((props & opm_fire) && !resists_fire(mon)) {
-            *spec_dbon_applies = TRUE;
-            bonus += rnd(6);
+            *spec_dbon_applies = 2;
+        if ((props & opm_fire) && !immune_to_fire(mon)) {
+            *spec_dbon_applies = 2;
+            if (resists_fire(mon)) {
+                *spec_dbon_applies = 1;
+                bonus += rnd(3);
+            } else
+                bonus += rnd(6);
         }
-        if ((props & opm_frost) && !resists_cold(mon)) {
-            *spec_dbon_applies = TRUE;
-            bonus += rnd(6);
+        if ((props & opm_frost) && !immune_to_cold(mon)) {
+            *spec_dbon_applies = 2;
+            if (resists_cold(mon)) {
+                *spec_dbon_applies = 1;
+                bonus += rnd(3);
+            } else
+                bonus += rnd(6);
         }
-        if ((props & opm_shock) && !resists_elec(mon)) {
-            *spec_dbon_applies = TRUE;
-            bonus += rnd(6);
+        if ((props & opm_shock) && !immune_to_elec(mon)) {
+            *spec_dbon_applies = 2;
+            if (resists_elec(mon)) {
+                *spec_dbon_applies = 1;
+                bonus += rnd(3);
+            } else
+                bonus += rnd(6);
         }
 
         return bonus;
@@ -762,12 +783,16 @@ spec_dbon(struct obj *otmp, struct monst *mon, int tmp,
 
     if (!weap || (weap->attk.adtyp == AD_PHYS &&       /* check for `NO_ATTK' */
                   weap->attk.damn == 0 && weap->attk.damd == 0))
-        *spec_dbon_applies = FALSE;
+        *spec_dbon_applies = 0;
     else
         *spec_dbon_applies = spec_applies(weap, mon);
 
-    if (*spec_dbon_applies)
-        return weap->attk.damd ? rnd((int)weap->attk.damd) : max(tmp, 1);
+    if (*spec_dbon_applies) {
+        int res = weap->attk.damd ? rnd((int)weap->attk.damd) : max(tmp, 1);
+        if (*spec_dbon_applies == 1)
+            res = (res + 1) / 2;
+        return res;
+    }
     return 0;
 }
 
@@ -870,7 +895,7 @@ magicbane_hit(struct monst *magr,   /* attacker */
               int dieroll,          /* d20 that has already scored a hit */
               boolean vis,          /* whether the action can be seen */
               const char *hittee,   /* target's name: "you" or mon_nam(mdef) */
-              boolean spec_dbon_applies
+              int spec_dbon_applies
     )
 {
     const struct permonst *old_uasmon;
@@ -995,6 +1020,9 @@ magicbane_hit(struct monst *magr,   /* attacker */
         }
         break;
     }
+    if (resists_stun(mdef))
+        do_stun = FALSE;
+
     /* stun if that was selected and a worse effect didn't occur */
     if (do_stun) {
         inc_timeout(mdef, STUNNED, 3, TRUE);
@@ -1225,7 +1253,8 @@ artifact_hit_drainlife(struct monst *magr, struct monst *mdef, struct obj *otmp,
             pline(msgc, "The %s blade drains your life!", hcolor("black"));
         else
             pline(msgc, "%s drains your life!", The(distant_name(otmp, xname)));
-        losexp(msgcat("drained of life by ", artiname(otmp->oartifact)), FALSE);
+        losexp(msgcat("drained of life by ", otmp->oartifact ?
+                      artiname(otmp->oartifact) : "a thirsty weapon"), FALSE);
         if (magr && magr->mhp < magr->mhpmax) {
             magr->mhp += (oldhpmax - u.uhpmax) / 2;
             if (magr->mhp > magr->mhpmax)
@@ -1270,7 +1299,7 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
                    (mdef && canseemon(mdef)));
     boolean res = FALSE;
     const char *hittee = mon_nam(mdef);
-    boolean spec_dbon_applies = FALSE;
+    int spec_dbon_applies = 0;
 
     /* The following takes care of most of the damage, but not all-- the
        exception being for level draining, which is specially handled. Messages 
@@ -1287,17 +1316,17 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
         if (vis)
             pline(combat_msgc(magr, mdef, cr_hit), "The %s %s %s%c",
                   otmp->oartifact ? "fiery blade" : "weapon",
-                  resists_fire(mdef) ? "hits" : (mdef->data ==
-                                                 &mons[PM_WATER_ELEMENTAL]) ?
+                  !spec_dbon_applies ? "hits" : (mdef->data ==
+                                                &mons[PM_WATER_ELEMENTAL]) ?
                   "vaporizes part of" : "burns", mon_nam(mdef),
                   !spec_dbon_applies ? '.' : '!');
 
         if (!rn2(4))
-            destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
+            *dmgptr += destroy_mitem(mdef, POTION_CLASS, AD_FIRE, NULL);
         if (!rn2(4))
-            destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
+            *dmgptr += destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE, NULL);
         if (!rn2(7))
-            destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
+            *dmgptr += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE, NULL);
         if (sliming(mdef))
             burn_away_slime(mdef);
         if (otmp->oartifact)
@@ -1311,10 +1340,10 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
         if (vis)
             pline(combat_msgc(magr, mdef, cr_hit), "The %s %s %s%c",
                   otmp->oartifact ? "ice-cold blade" : "weapon",
-                  resists_cold(mdef) ? "hits" : "freezes",
+                  !spec_dbon_applies ? "hits" : "freezes",
                   mon_nam(mdef), !spec_dbon_applies ? '.' : '!');
         if (!rn2(4))
-            destroy_mitem(mdef, POTION_CLASS, AD_COLD);
+            *dmgptr += destroy_mitem(mdef, POTION_CLASS, AD_COLD, NULL);
         if (otmp->oartifact)
             return vis;
         if (vis) {
@@ -1323,14 +1352,23 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
         }
     }
     if (attacks(AD_ELEC, otmp)) {
-        if (vis)
-            pline(combat_msgc(magr, mdef, cr_hit),
-                  "The %s hits%s %s%c",
-                  otmp->oartifact ? "massive hammer" : "weapon",
-                  resists_elec(mdef) ? "" : "!  Lightning strikes",
-                  mon_nam(mdef), !spec_dbon_applies ? '.' : '!');
+        if (vis) {
+            if (immune_to_elec(mdef))
+                pline(combat_msgc(magr, mdef, cr_immune),
+                      "Lightning strikes %s, but %s%s unfazed.",
+                      mon_nam(mdef), udef ? "you" : mhe(mdef),
+                      udef ? "'re" : " seems");
+            else {
+                if (otmp->oartifact)
+                    pline_implied(combat_msgc(magr, mdef, cr_hit),
+                                  "The massive hammer hits!");
+                pline(combat_msgc(magr, mdef, cr_hit),
+                      "Lightning strikes %s!", mon_nam(mdef));
+            }
+        }
+
         if (!rn2(5))
-            destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
+            *dmgptr += destroy_mitem(mdef, WAND_CLASS, AD_ELEC, NULL);
         if (otmp->oartifact)
             return vis;
         if (vis) {
@@ -1339,6 +1377,7 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
         }
     }
     if (attacks(AD_MAGM, otmp)) {
+        impossible("artifact (or object property) with magic damage?");
         if (vis)
             pline(combat_msgc(magr, mdef, cr_hit),
                   "The imaginary widget hits%s %s%c",

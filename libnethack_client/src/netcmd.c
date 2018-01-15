@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -32,6 +32,7 @@ static json_t *cmd_getpos(json_t *params, int display_only);
 static json_t *cmd_getdir(json_t *params, int display_only);
 static json_t *cmd_yn_function(json_t *params, int display_only);
 static json_t *cmd_getline(json_t *params, int display_only);
+static json_t *cmd_format(json_t *params, int display_only);
 static json_t *cmd_server_error(json_t *params, int display_only);
 
 
@@ -58,6 +59,7 @@ static struct netcmd netcmd_list[] = {
     {"getdir", cmd_getdir},
     {"yn", cmd_yn_function},
     {"getline", cmd_getline},
+    {"format", cmd_format},
 
     {"server_error", cmd_server_error},
     {NULL, NULL}
@@ -214,8 +216,6 @@ cmd_update_status(json_t *params, int display_only)
         player.max_rank_sz = json_integer_value(p);
     if ((p = json_object_get(params, "st")))
         player.st = json_integer_value(p);
-    if ((p = json_object_get(params, "st_extra")))
-        player.st_extra = json_integer_value(p);
     if ((p = json_object_get(params, "dx")))
         player.dx = json_integer_value(p);
     if ((p = json_object_get(params, "co")))
@@ -265,17 +265,20 @@ cmd_update_status(json_t *params, int display_only)
 static json_t *
 cmd_print_message(json_t *params, int display_only)
 {
+    int action;
+    int id;
     int turn;
     int channel;
     const char *msg;
 
-    if (json_unpack(params, "{si, si,ss!}", "turn", &turn,
+    if (json_unpack(params, "{si,si,si,si,ss!}", "action", action,
+                    "id", id, "turn", &turn,
                     "channel", &channel, "msg", &msg) == -1) {
         print_error("Incorrect parameters in cmd_print_message");
         return NULL;
     }
 
-    client_windowprocs.win_print_message(turn, channel, msg);
+    client_windowprocs.win_print_message(action, id, turn, channel, msg);
     return NULL;
 }
 
@@ -772,6 +775,24 @@ cmd_getline(json_t *params, int display_only)
     }
 
     client_windowprocs.win_getlin(query, &jobj, cmd_getline_inner);
+    return jobj;
+}
+
+static json_t *
+cmd_format(json_t *params, int display_only)
+{
+    const char *formatstring;
+    int fmt_type;
+    int param;
+    json_t *jobj;
+
+    if (json_unpack(params, "{ss,si,si!}", "formatstring", &formatstring,
+                    "fmt_type", &fmt_type, "param", &param) == -1) {
+        print_error("Incorrect parameter type in cmd_format");
+        return NULL;
+    }
+
+    client_windowprocs.win_format(formatstring, fmt_type, param, &jobj, cmd_getline_inner);
     return jobj;
 }
 

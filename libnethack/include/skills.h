@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by FIQ, 2015-08-23 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -106,10 +106,16 @@ struct skills {
     unsigned short advance;
 };
 
-# define P_SKILL(type)          (u.weapon_skills[type].skill)
-# define P_MAX_SKILL(type)      (u.weapon_skills[type].max_skill)
-# define P_ADVANCE(type)        (u.weapon_skills[type].advance)
-# define P_RESTRICTED(type)     (u.weapon_skills[type].skill == P_ISRESTRICTED)
+# define P_SKILL(type)          MP_SKILL(&youmonst, type)
+# define P_MAX_SKILL(type)      MP_MAX_SKILL(&youmonst, type)
+# define P_ADVANCE(type)        MP_ADVANCE(&youmonst, type)
+# define P_RESTRICTED(type)     MP_RESTRICTED(&youmonst, type)
+
+/* Player/monster-symmetric versions */
+# define MP_SKILL(m, type)      ((m)->skills[type].skill)
+# define MP_MAX_SKILL(m, type)  ((m)->skills[type].max_skill)
+# define MP_ADVANCE(m, type)    ((m)->skills[type].advance)
+# define MP_RESTRICTED(m, type) ((m)->skills[type].skill == P_ISRESTRICTED)
 
 # define P_SKILL_LIMIT 60       /* Max number of skill advancements */
 

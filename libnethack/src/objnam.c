@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -128,10 +128,10 @@ static const struct opropdesc prop_desc[] = {
     {opm_warn, WARNING, NULL, "warn", "warning", NULL},
     {opm_aggravate, AGGRAVATE_MONSTER, NULL, "aggravates",
      "aggravate monster", NULL},
-    {opm_fire, FIRE_RES, NULL, NULL, "fire", "fire resistance"},
-    {opm_frost, COLD_RES, NULL, NULL, "frost", "cold resistance"},
+    {opm_fire, FIRE_RES, NULL, NULL, "fire", "fire immunity"},
+    {opm_frost, COLD_RES, NULL, NULL, "frost", "cold immunity"},
     {opm_shock, SHOCK_RES, NULL, "shock", "lightning",
-     "shock resistance"},
+     "shock immunity"},
     {opm_drain, DRAIN_RES, "thirsty", "drain", NULL,
      "drain resistance"},
     {opm_speed, FAST, NULL, NULL, "speed", NULL},
@@ -227,9 +227,6 @@ display_oprops(const struct obj *obj, const char *input)
     const struct opropdesc *desc;
     const struct opropdesc *olddesc = NULL;
     int suffixes = 0;
-
-    struct objclass *ocl = &objects[obj->otyp];
-    int known = ocl->oc_name_known;
 
     /* TODO: this can probably be made saner */
     if (strstr(buf, " of ") &&
@@ -510,6 +507,10 @@ examine_object(struct obj *obj)
         obj->bknown = TRUE;
     if (weapon_type(obj) != P_NONE && P_SKILL(weapon_type(obj)) >= P_EXPERT)
         obj->known = TRUE;
+    if (obj->oclass == WAND_CLASS &&
+        (P_SKILL(P_WANDS) >= P_EXPERT ||
+         (P_SKILL(P_WANDS) == P_SKILLED && obj->spe < 1)))
+        obj->known = TRUE;
 }
 
 
@@ -551,7 +552,7 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
        won't do any harm to leave it around in case amnesia is changed again. */
     if (!nn && ocl->oc_uses_known && ocl->oc_unique)
         known = 0;
-    if (!Blind && dont_reveal_dknown)
+    if (!Blind && !dont_reveal_dknown)
         dknown = TRUE;
     if (Role_if(PM_PRIEST))
         bknown = TRUE;
@@ -607,7 +608,7 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
             buf = msgcat_many(buf, " called ", un, NULL);
 
         if (typ == FIGURINE)
-            buf = msgcat_many(buf, " of ", an(mons[obj->corpsenm].mname), NULL);
+            buf = msgcat_many(buf, " of ", an(opm_name(obj)), NULL);
         break;
 
     case ARMOR_CLASS:
@@ -672,14 +673,14 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
 
         buf = actualn;
         if (typ == TIN && known) {
-            if (obj->spe > 0)
+            if (obj->spe & OPM_SPINACH)
                 buf = "tin of spinach";
             else if (obj->corpsenm == NON_PM)
                 buf = "empty tin";
             else if (vegetarian(&mons[obj->corpsenm]))
-                buf = msgcat_many(buf, " of ", mons[obj->corpsenm].mname, NULL);
+                buf = msgcat_many(buf, " of ", opm_name(obj), NULL);
             else
-                buf = msgcat_many(buf, " of ", mons[obj->corpsenm].mname,
+                buf = msgcat_many(buf, " of ", opm_name(obj),
                                   " meat", NULL);
         }
 
@@ -696,13 +697,12 @@ xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
         if (typ == STATUE)
             buf = msgprintf("%s%s of %s%s",
                             (Role_if(PM_ARCHEOLOGIST) &&
-                             (obj->spe & STATUE_HISTORIC)) ? "historic " : "",
+                             (obj->spe & OPM_HISTORIC)) ? "historic " : "",
                             actualn,
                             type_is_pname(&mons[obj->corpsenm]) ? "" :
                             (mons[obj->corpsenm].geno & G_UNIQ) ? "the " :
-                            (strchr(vowels, *(mons[obj->corpsenm].mname)) ?
-                             "an " : "a "),
-                            mons[obj->corpsenm].mname);
+                            (strchr(vowels, *(opm_name(obj))) ?
+                             "an " : "a "), opm_name(obj));
         else
             buf = actualn;
 
@@ -978,10 +978,9 @@ doname_base(const struct obj *obj, boolean with_price)
     else
         prefix = "";
 
-#ifdef INVISIBLE_OBJECTS
-    if (obj->oinvis)
-        prefix = msgcat(prefix, "invisible ");
-#endif
+    int contained = remembered_contained(obj);
+    if (!contained)
+        prefix = msgcat(prefix, "empty ");
 
     if (obj->bknown && obj->oclass != COIN_CLASS &&
         (obj->otyp != POT_WATER || !objects[POT_WATER].oc_name_known ||
@@ -1011,6 +1010,10 @@ doname_base(const struct obj *obj, boolean with_price)
 
     if (obj->greased)
         prefix = msgcat(prefix, "greased ");
+
+    if (contained > 0)
+        buf = msgprintf("%s containing %d item%s", buf, contained,
+                        contained == 1 ? "" : "s");
 
     switch (obj->oclass) {
     case AMULET_CLASS:
@@ -1111,19 +1114,19 @@ doname_base(const struct obj *obj, boolean with_price)
             if (mons[obj->corpsenm].geno & G_UNIQ) {
                 prefix = msgcat_many(
                     (type_is_pname(&mons[obj->corpsenm]) ? "" : "the "),
-                    s_suffix(mons[obj->corpsenm].mname), " ", NULL);
+                    s_suffix(opm_name(obj)), " ", NULL);
                 if (obj->oeaten)
                     prefix = msgcat(prefix, "partly eaten ");
             } else {
-                prefix = msgcat(prefix, mons[obj->corpsenm].mname);
+                prefix = msgcat(prefix, opm_name(obj));
                 prefix = msgcat(prefix, " ");
             }
         } else if (obj->otyp == EGG) {
             if (obj->corpsenm >= LOW_PM &&
                 (obj->known || mvitals[obj->corpsenm].mvflags & MV_KNOWS_EGG)) {
-                prefix = msgcat(prefix, mons[obj->corpsenm].mname);
+                prefix = msgcat(prefix, opm_name(obj));
                 prefix = msgcat(prefix, " ");
-                if (obj->spe)
+                if (obj->spe & OPM_YOULAID)
                     buf = msgcat(buf, " (laid by you)");
             }
         }
@@ -1222,15 +1225,13 @@ not_fully_identified_core(const struct obj * otmp, boolean ignore_bknown,
 
     /* object property ID */
     if (obj_properties(otmp) &&
-        otmp->oprops_known != otmp->oprops && skill >= P_BASIC)
+        otmp->oprops != (otmp->oprops & otmp->oprops_known) && skill >= P_BASIC)
         return TRUE;
 
     /* otmj->rknown is the only item of interest if we reach here */
-    /* 
-     *  Note:  if a revision ever allows scrolls to become fireproof or
-     *  rings to become shockproof, this checking will need to be revised.
-     *  `rknown' ID only matters if xname() will provide the info about it.
-     */
+    /* Note: if a revision ever allows scrolls to become fireproof or rings
+       to become shockproof, this checking will need to be revised. `rknown'
+       ID only matters if xname() will provide the info about it. */
     if (skill == P_EXPERT &&
         (otmp->rknown || (otmp->oclass != ARMOR_CLASS &&
                           otmp->oclass != WEAPON_CLASS &&
@@ -1253,7 +1254,7 @@ not_fully_identified(const struct obj * otmp)
 const char *
 corpse_xname(const struct obj *otmp, boolean ignore_oquan)
 {       /* to force singular */
-    const char *nambuf = msgcat(mons[otmp->corpsenm].mname, " corpse");
+    const char *nambuf = msgcat(opm_name(otmp), " corpse");
 
     if (ignore_oquan || otmp->quan < 2)
         return nambuf;
@@ -2095,12 +2096,10 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     int cnt, spe, spesgn, typ, very, rechrg;
     int blessed, uncursed, iscursed, ispoisoned, isgreased;
     int eroded, eroded2, erodeproof;
-
-#ifdef INVISIBLE_OBJECTS
-    int isinvisible;
-#endif
     int halfeaten, mntmp, contents;
     int islit, unlabeled, ishistoric, isdiluted;
+    int male = 0;
+    int female = 0;
     const struct alt_spellings *as = spellings;
     struct fruit *f;
     int ftype = gamestate.fruits.current;
@@ -2109,8 +2108,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     /* Fruits may not mess up the ability to wish for real objects (since you
        can leave a fruit in a bones file and it will be added to another
        person's game), so they must be checked for last, after stripping all
-       the possible prefixes and seeing if there's a real name in there.  So we 
-       have to save the full original name.  However, it's still possible to do 
+       the possible prefixes and seeing if there's a real name in there.  So we
+       have to save the full original name.  However, it's still possible to do
        things like "uncursed burnt Alaska", or worse yet, "2 burned 5 course
        meals", so we need to loop to strip off the prefixes again, this time
        stripping only the ones possible on food. We could get even more
@@ -2126,9 +2125,6 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     boolean magical = FALSE; /* generic term for object properties */
 
     cnt = spe = spesgn = typ = very = rechrg = blessed = uncursed = iscursed =
-#ifdef INVISIBLE_OBJECTS
-        isinvisible =
-#endif
         ispoisoned = isgreased = eroded = eroded2 = erodeproof = halfeaten =
         islit = unlabeled = ishistoric = isdiluted = 0;
     mntmp = NON_PM;
@@ -2190,10 +2186,6 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
             iscursed = 1;
         } else if (!strncmpi(bp, "uncursed ", l = 9)) {
             uncursed = 1;
-#ifdef INVISIBLE_OBJECTS
-        } else if (!strncmpi(bp, "invisible ", l = 10)) {
-            isinvisible = 1;
-#endif
         } else if (!strncmpi(bp, "rustproof ", l = 10) ||
                    !strncmpi(bp, "erodeproof ", l = 11) ||
                    !strncmpi(bp, "corrodeproof ", l = 13) ||
@@ -2385,6 +2377,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
         int l = 0;
         int of = 4;
         char *tmpp;
+        boolean last_was_gender = FALSE;
 
         p = bp;
         while (p != NULL) {
@@ -2409,6 +2402,10 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
                 } else if ((tmpp = strstri_mutable(p, ", "))) {
                     of = 2;
                     p = tmpp;
+                } else if (last_was_gender &&
+                           (tmpp = strstri_mutable(p, " "))) {
+                    of = 1;
+                    p = tmpp;
                 } else {
                     p = NULL;
                     break;
@@ -2416,10 +2413,33 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
             }
 
             l = 0;
+            last_was_gender = FALSE;
 
-            if ((mntmp = name_to_mon(p + of)) >= LOW_PM) {
+            int gend = 2;
+            if ((mntmp = gname_to_mon(p + of, &gend)) >= LOW_PM) {
+                if (gend != 2 && !male && !female) {
+                    if (gend == 0)
+                        male = 1;
+                    else if (gend == 1)
+                        female = 1;
+                }
+
                 *p = '\0';
                 p = NULL;
+            } else if (!strncmpi(p + of, "a male", l=6) ||
+                       !strncmpi(p + of, "male", l=4) ||
+                       !strncmpi(p + of, "a boy", l=5) ||
+                       !strncmpi(p + of, "boy", l=3)) {
+                male = 1;
+                female = 0;
+                last_was_gender = TRUE;
+            } else if (!strncmpi(p + of, "a female", l=8) ||
+                       !strncmpi(p + of, "female", l=6) ||
+                       !strncmpi(p + of, "a girl", l=6) ||
+                       !strncmpi(p + of, "girl", l=4)) {
+                female = 1;
+                male = 0;
+                last_was_gender = TRUE;
             } else if (!strncmpi(p + of, "fire", l=4)) {
                 props |= opm_fire;
             } else if (!strncmpi(p + of, "frost", l=5) ||
@@ -2799,7 +2819,7 @@ srch:
     }
 
     /* Let wizards wish for traps --KAA */
-    /* must come after objects check so wizards can still wish for trap objects 
+    /* must come after objects check so wizards can still wish for trap objects
        like beartraps */
     if (wizard && from_user) {
         int trap;
@@ -2854,7 +2874,7 @@ srch:
             level->locations[youmonst.mx][youmonst.my].typ = LAVAPOOL;
             del_engr_at(level, youmonst.mx, youmonst.my);
             pline(msgc_info, "A pool of molten lava.");
-            if (!(Levitation || Flying))
+            if (!aboveliquid(&youmonst))
                 lava_effects();
             newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
@@ -2874,7 +2894,7 @@ srch:
                 al = A_NONE;
             else        /* -1 - A_CHAOTIC, 0 - A_NEUTRAL, 1 - A_LAWFUL */
                 al = (!rn2(6)) ? A_NONE : rn2((int)A_LAWFUL + 2) - 1;
-            level->locations[youmonst.mx][youmonst.my].altarmask = Align2amask(al);
+            level->locations[youmonst.mx][youmonst.my].flags = Align2amask(al);
             pline(msgc_info, "%s altar.", An(align_str(al)));
             newsym(youmonst.mx, youmonst.my);
             return &zeroobj;
@@ -2996,7 +3016,7 @@ typfnd:
             otmp->spe = 0;
         } else if (contents == SPINACH) {
             otmp->corpsenm = NON_PM;
-            otmp->spe = 1;
+            otmp->spe = OPM_SPINACH;
         }
         break;
     case SLIME_MOLD:
@@ -3034,6 +3054,17 @@ typfnd:
                        !(mvitals[mntmp].mvflags & G_NOCORPSE) &&
                        mons[mntmp].cnutrit != 0) {
                 otmp->corpsenm = mntmp;
+                otmp->spe &= ~OPM_GENDER;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else if (female)
+                    otmp->spe |= OPM_FEMALE;
+                else if (male)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             }
             break;
         case CORPSE:
@@ -3055,6 +3086,17 @@ typfnd:
                     otmp->corpsenm = genus(mntmp, 1);
                 else
                     otmp->corpsenm = mntmp;
+                otmp->spe &= ~OPM_GENDER;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else if (female)
+                    otmp->spe |= OPM_FEMALE;
+                else if (male)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                 start_corpse_timeout(otmp);
             }
             break;
@@ -3062,11 +3104,33 @@ typfnd:
             if (!(mons[mntmp].geno & G_UNIQ)
                 && !is_human(&mons[mntmp]))
                 otmp->corpsenm = mntmp;
+                otmp->spe &= ~OPM_GENDER;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else if (female)
+                    otmp->spe |= OPM_FEMALE;
+                else if (male)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             break;
         case EGG:
             mntmp = can_be_hatched(mntmp);
             if (mntmp != NON_PM) {
                 otmp->corpsenm = mntmp;
+                otmp->spe &= ~OPM_GENDER;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else if (female)
+                    otmp->spe |= OPM_FEMALE;
+                else if (male)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                 if (!dead_species(mntmp, TRUE))
                     attach_egg_hatch_timeout(otmp);
                 else
@@ -3077,7 +3141,18 @@ typfnd:
             otmp->corpsenm = mntmp;
             if (Has_contents(otmp) && verysmall(&mons[mntmp]))
                 delete_contents(otmp);  /* no spellbook */
-            otmp->spe = ishistoric ? STATUE_HISTORIC : 0;
+            otmp->spe = (ishistoric ? OPM_HISTORIC : 0);
+            otmp->spe &= ~OPM_GENDER;
+            if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                otmp->spe |= OPM_FEMALE;
+            else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                otmp->spe |= OPM_MALE;
+            else if (female)
+                otmp->spe |= OPM_FEMALE;
+            else if (male)
+                otmp->spe |= OPM_MALE;
+            else
+                otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             break;
         case SCALE_MAIL:
             /* Dragon mail - depends on the order of objects & dragons. */
@@ -3117,7 +3192,7 @@ typfnd:
             if (otmp->oprops) {
                 otmp->oprops = 0LLU;
                 while (!otmp->oprops)
-                    assign_oprops(level, otmp, rng_main, FALSE);
+                    assign_oprops(level, otmp, rng_main, TRUE);
                 props = otmp->oprops;
             }
         }
@@ -3141,11 +3216,6 @@ typfnd:
             otmp->oprops = prop;
         }
     }
-
-#ifdef INVISIBLE_OBJECTS
-    if (isinvisible)
-        otmp->oinvis = 1;
-#endif
 
     /* set eroded */
     if (is_damageable(otmp) || otmp->otyp == CRYSKNIFE) {

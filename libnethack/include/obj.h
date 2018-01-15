@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -48,6 +48,10 @@ struct obj {
     struct obj *cobj;   /* contents list for containers */
     struct oextra *oextra; /* extra object data */
     unsigned int o_id;
+    /* Points to the remembered object or vice versa */
+    struct obj *mem_obj;
+    /* Used during save/restore */
+    unsigned int mem_o_id;
     unsigned int m_id; /* monster ID for temporary monsters and bones ghosts */
     struct level *olev; /* the level it is on */
     xchar ox, oy;
@@ -65,12 +69,16 @@ struct obj {
                  * historic and gender for statues
                  * last used movement for a stethoscope
                  */
-# define STATUE_HISTORIC 0x01
-# define STATUE_MALE     0x02
-# define STATUE_FEMALE   0x04
+# define OPM_HISTORIC 0x01 /* statues only */
+# define OPM_SPINACH  0x01 /* tins only */
+# define OPM_YOULAID  0x01 /* eggs only */
+# define OPM_MALE     0x02
+# define OPM_FEMALE   0x04
+# define OPM_GENDER   0x06
+# define OPM_HOMEMADE 0x08 /* tins only */
     char oclass;                /* object class */
     char invlet;                /* designation in inventory */
-    char oartifact;             /* artifact array index */
+    unsigned char oartifact;    /* artifact array index */
 
     xchar where;                /* where the object thinks it is */
     xchar timed;                /* # of fuses (timers) attached to this obj */
@@ -106,16 +114,18 @@ struct obj {
 
     unsigned recharged:3;       /* number of times it's been recharged */
     unsigned lamplit:1;         /* a light-source -- can be lit */
-# ifdef INVISIBLE_OBJECTS
-    unsigned oinvis:1;          /* invisible */
-# endif
     unsigned greased:1;         /* covered with grease */
 
     unsigned in_use:1;          /* for magic items before useup items */
     unsigned was_thrown:1;      /* thrown by the hero since last picked up */
     unsigned was_dropped:1;     /* last left inventory via d or D command */
-    unsigned to_be_hit:1;  /* mark this as an object to be hit by bhitpile */
-    /* 4 free bits */
+    unsigned to_be_hit:1;       /* to be hit by bhitpile */
+    unsigned memory:2;  /* object memory state */
+# define OM_NO_MEMORY   0 /* not an object memory */
+# define OM_MEMORY_OK   1 /* memory state is OK as far as we know */
+# define OM_MEMORY_LOST 2 /* we lost it, deallocate when mem_obj is NULL */
+    unsigned cknown:1;  /* container has been investigated */
+    /* No free bits */
 
     union {
         int corpsenm;           /* type of corpse is mons[corpsenm] */
@@ -124,6 +134,7 @@ struct obj {
         int lastused;           /* last time a tool was used */
     };
     unsigned oeaten;            /* nutrition left in food, if partly eaten */
+    int thrown_time;            /* when an item was thrown to a pet */
 
     int age;                    /* creation date */
     int owornmask;
@@ -379,6 +390,10 @@ struct objloc {
 /* misc */
 # define is_flimsy(otmp)      (objects[(otmp)->otyp].oc_material <= LEATHER || \
                                (otmp)->otyp == RUBBER_HOSE)
+
+/* helpers, simple enough to be macros */
+# define is_plural(o)   ((o)->quan > 1 || \
+                         (o)->oartifact == ART_EYES_OF_THE_OVERWORLD)
 
 /* Flags for get_obj_location(). */
 # define CONTAINED_TOO  0x1

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -12,7 +12,8 @@
 static void srv_raw_print(const char *str);
 static void srv_pause(enum nh_pause_reason r);
 static void srv_update_status(struct nh_player_info *pi);
-static void srv_print_message(int turn, enum msg_channel msgc, const char *msg);
+static void srv_print_message(int action, int id, int turn,
+                              enum msg_channel msgc, const char *msg);
 static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux,
                               int uy);
 static void srv_delay_output(void);
@@ -40,6 +41,8 @@ static struct nh_getpos_result srv_getpos(int xorig, int yorig,
 static enum nh_direction srv_getdir(const char *query, nh_bool restricted);
 static void srv_getline(const char *query, void *callbackarg,
                         void (*callback)(const char *, void *));
+static void srv_format(const char *formatstring, int fmt_type, int param,
+                       void *res, void (*callback)(const char *, void *));
 static void srv_server_cancel(void);
 
 /*---------------------------------------------------------------------------*/
@@ -67,6 +70,7 @@ struct nh_window_procs server_windowprocs = {
     srv_getdir,
     srv_yn_function,
     srv_getline,
+    srv_format,
     srv_delay_output,
     srv_load_progress,
     srv_level_changed,
@@ -239,8 +243,6 @@ srv_update_status(struct nh_player_info *pi)
         json_object_set_new(jobj, "moves", json_integer(pi->moves));
     if (all || pi->st != oi->st)
         json_object_set_new(jobj, "st", json_integer(pi->st));
-    if (all || pi->st_extra != oi->st_extra)
-        json_object_set_new(jobj, "st_extra", json_integer(pi->st_extra));
     if (all || pi->dx != oi->dx)
         json_object_set_new(jobj, "dx", json_integer(pi->dx));
     if (all || pi->co != oi->co)
@@ -285,9 +287,11 @@ srv_update_status(struct nh_player_info *pi)
 
 
 static void
-srv_print_message(int turn, enum msg_channel msgc, const char *msg)
+srv_print_message(int action, int id, int turn, enum msg_channel msgc,
+                  const char *msg)
 {
-    json_t *jobj = json_pack("{si,si,ss}", "turn", turn,
+    json_t *jobj = json_pack("{si,si,si,si,ss}", "action", action,
+                             "id", id, "turn", turn,
                              "channel", msgc, "msg", msg);
 
     add_display_data("print_message", jobj);
@@ -693,6 +697,24 @@ srv_getline(const char *query, void *callbackarg,
         exit_client("Bad parameters for getline", 0);
 
     callback(str, callbackarg);
+    json_decref(jobj);
+}
+
+static void
+srv_format(const char *formatstring, int fmt_type, int param, void *res,
+           void (*callback)(const char *, void *))
+{
+    json_t *jobj;
+    const char *str;
+
+    jobj = json_pack("{ss,si,si}", "formatstring", formatstring, "fmt_type", fmt_type,
+                     "param", param);
+    jobj = client_request("format", jobj);
+
+    if (json_unpack(jobj, "{ss!}", "line", &str) == -1)
+        exit_client("Bad parameters for getline", 0);
+
+    callback(str, res);
     json_decref(jobj);
 }
 

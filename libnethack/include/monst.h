@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,6 +10,7 @@
 # include "coord.h"
 # include "monuse.h"
 # include "prop.h"
+# include "skills.h"
 
 /* The weapon_check flag is used two ways:
  * 1) When calling mon_wield_item, is 2-6 depending on what is desired.
@@ -60,7 +61,7 @@ enum monstrat {
     st_lasttarget = st_wander,
     st_escape,                          /* escaping from STRAT_GOAL[XY] */
     st_heal,                            /* heal up self (covetous) */
-    st_lineup,                          /* find position in line of STRAT_GOAL */
+    st_lineup,                          /* find position in line of goal */
     st_nolineup,                        /* same as above, but avoid it */
 };
 
@@ -69,6 +70,7 @@ struct monst {
     const struct permonst *data;
     struct level *dlevel;       /* pointer to the level this monster is on */
     struct obj *minvent;
+    struct obj *meminvent;
     struct obj *mw;             /* weapon */
     unsigned int mstuck;        /* is the monster stuck to another monster */
     struct mextra *mextra;      /* extended data for some monsters (or names) */
@@ -82,7 +84,7 @@ struct monst {
 
     int mstrategy;              /* Current monster strategy */
     xchar sx, sy;               /* Monster strategy coordinates */
-    xchar mstratprio;           /* strategy priority -- what the monster is willing to afford */
+    xchar mstratprio;           /* what the monster is willing to afford */
 
     /* migration */
     uchar xyloc, xyflags, xlocale, ylocale;
@@ -90,19 +92,20 @@ struct monst {
     short orig_mnum;            /* monster ID pre-polyself */
     int orig_hp;                /* monster HP pre-polyself */
     int orig_hpmax;             /* monster maxHP pre-polyself */
-    uchar polyself_timer;       /* polyelf timer (0-255, decreases at 1/4 turnspeed) */
+    uchar polyself_timer;       /* polyself timer */
     uchar m_lev;                /* adjusted difficulty level of monster */
     uchar m_levmax;             /* highest level of monster before leveldrain/etc */
     unsigned exp;               /* experience points */
     xchar mx, my;               /* monster location */
-    xchar dx, dy;               /* monster's displaced image, COLNO/ROWNO if none */
-    xchar mux, muy;             /* where the monster thinks you are; if it doesn't know
-                                   where you are, this is (COLNO, ROWNO) */
+    xchar dx, dy;               /* displaced image, COLNO/ROWNO if none */
+    xchar mux, muy;             /* where the monster thinks you are; if it
+                                   doesn't know where you are, this is
+                                   (COLNO, ROWNO) */
     /* TODO: find a saner name for malign */
-    aligntyp malign;            /* alignment of this monster, relative to the player
+    aligntyp malign;            /* align of this monster, relative to the player
                                    (positive = good to kill) */
     aligntyp maligntyp;         /* monster alignment */
-    aligntyp maligntyp_temp;    /* temporary alignment from opposite alignment */
+    aligntyp maligntyp_temp;    /* alignment from opposite alignment */
     short moveoffset;           /* how this monster's actions map onto turns */
     schar mtame;                /* level of tameness, implies peaceful */
     uchar m_ap_type;            /* what mappearance is describing: */
@@ -155,7 +158,6 @@ struct monst {
 
     /* intrinsic format: os_outside:1, os_timeout:15 */
     short mintrinsic[LAST_PROP + 1]; /* monster intrinsics */
-    int mintrinsic_cache[LAST_PROP + 1]; /* cached from above */
 
     /* turnstate; doesn't count against bitfield bit count */
     unsigned deadmonster:1;     /* always 0 at neutral turnstate */
@@ -169,6 +171,9 @@ struct monst {
 
     short former_player; /* info about this being the ghost or whatnot
                             of a former player, from a bones file */
+
+    struct skills skills[P_NUM_SKILLS];
+
     int meating;        /* monster is eating timeout */
     schar mhitinc;      /* monster intrinsic to-hit bonus/penalty */
     schar mdaminc;      /* monster intrinsic damage bonus/penalty */
@@ -179,7 +184,7 @@ struct monst {
 # define MON_WEP(mon)     (m_mwep(mon))
 # define MON_NOWEP(mon)   ((mon)->mw = NULL)
 
-# define DEADMONSTER(mon) ((mon)->deadmonster)
+# define DEADMONSTER(mon) ((mon) == &youmonst ? FALSE : (mon)->deadmonster)
 
 # define onmap(mon) (isok((mon)->mx, (mon)->my))
 
@@ -189,9 +194,16 @@ struct monst {
    DEFERRED: mburied appears to be a deferred feature, it's not set anywhere in
    the code. */
 # define m_mburied(mon) ((mon) == &youmonst ? u.uburied : (mon)->mburied)
+/* Iterator helpers that includes youmonst */
+# define monlist(lev) ((lev)->monlist ? (lev)->monlist :                \
+                       (lev) == level ? &youmonst : NULL)
+# define monnext(mon) (!(mon) ? NULL :                                  \
+                       (mon) == &youmonst ? NULL :                      \
+                       (mon)->nmon ? (mon)->nmon :                      \
+                       (mon)->dlevel && (mon)->dlevel == level ? &youmonst : \
+                       NULL)
 # define m_underwater(mon) ((mon) == &youmonst ? Underwater :           \
                             (mon)->data->mlet == S_EEL && (mon)->mundetected)
-# define m_minvent(mon) ((mon) == &youmonst ? invent : (mon)->minvent)
 /* TODO: does the hero have a true mon->dlevel equavilent? */
 # define m_dlevel(mon) ((mon) == &youmonst ? level : (mon)->dlevel)
 # define m_mx(mon) ((mon)->mx)

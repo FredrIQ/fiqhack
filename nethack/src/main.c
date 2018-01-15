@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -30,7 +30,7 @@ int cmdline_gend = ROLE_NONE, cmdline_align = ROLE_NONE;
 char cmdline_name[BUFSZ] = {0};
 nh_bool random_player = FALSE;
 
-char *override_hackdir, *override_userdir;
+char *override_hackdir, *override_userdir, *override_savedir;
 
 enum menuitems {
     NEWGAME = 1,
@@ -43,28 +43,28 @@ enum menuitems {
 };
 
 static struct nh_menuitem mainmenu_items[] = {
-    {NEWGAME, MI_NORMAL, 0, "new game", 'n'},
-    {LOAD, MI_NORMAL, 0, "load game", 'l'},
-#ifndef PUBLIC_SERVER
-    {REPLAY, MI_NORMAL, 0, "view replay", 'v'},
+    {NEWGAME, MI_NORMAL, "new game", 'n'},
+    {LOAD, MI_NORMAL, "load game", 'l'},
+#if !defined(PUBLIC_SERVER) || defined(ALLOW_REPLAY)
+    {REPLAY, MI_NORMAL, "view replay", 'v'},
 #endif
-    {OPTIONS, MI_NORMAL, 0, "set options", 'o'},
-    {TOPTEN, MI_NORMAL, 0, "show score list", 's'},
+    {OPTIONS, MI_NORMAL, "set options", 'o'},
+    {TOPTEN, MI_NORMAL, "show score list", 's'},
 #if defined(NETCLIENT) && ! defined(PUBLIC_SERVER)
-    {NETWORK, MI_NORMAL, 0, "connect to server", 'c'},
+    {NETWORK, MI_NORMAL, "connect to server", 'c'},
 #endif
-    {EXITGAME, MI_NORMAL, 0, "quit", 'q', 'x'}
+    {EXITGAME, MI_NORMAL, "quit", 'q', 'x'}
 };
 
 static struct nh_menuitem mainmenu_items_noclient[] = {
-    {NEWGAME, MI_NORMAL, 0, "new game", 'n'},
-    {LOAD, MI_NORMAL, 0, "load game", 'l'},
+    {NEWGAME, MI_NORMAL, "new game", 'n'},
+    {LOAD, MI_NORMAL, "load game", 'l'},
 #ifndef PUBLIC_SERVER
-    {REPLAY, MI_NORMAL, 0, "view replay", 'v'},
+    {REPLAY, MI_NORMAL, "view replay", 'v'},
 #endif
-    {OPTIONS, MI_NORMAL, 0, "set options", 'o'},
-    {TOPTEN, MI_NORMAL, 0, "show score list", 's'},
-    {EXITGAME, MI_NORMAL, 0, "quit", 'q', 'x'}
+    {OPTIONS, MI_NORMAL, "set options", 'o'},
+    {TOPTEN, MI_NORMAL, "show score list", 's'},
+    {EXITGAME, MI_NORMAL, "quit", 'q', 'x'}
 };
 
 const char *nhlogo_small[11] = {        /* created using pbmtoascii */
@@ -278,6 +278,11 @@ mainmenu(void)
         mvwaddstr(basewin, LINES - 4, COLS - strlen(verstr), verstr);
         wnoutrefresh(basewin);
 
+        if (ui_flags.autoload) {
+            loadgame(TRUE);
+            break;
+        }
+
         if (first) {
             network_motd();
             first = FALSE;
@@ -304,7 +309,7 @@ mainmenu(void)
             break;
 
         case LOAD:
-            loadgame();
+            loadgame(FALSE);
             break;
 
         case REPLAY:
@@ -424,11 +429,12 @@ process_args(int argc, char *argv[])
         switch (argv[0][1]) {
         case '-':
             if (!strcmp(argv[0], "--help")) {
-                puts("Usage: nethack4 [--interface PLUGIN] [OPTIONS]");
+                puts("Usage: fiqhack [--interface PLUGIN] [OPTIONS]");
                 puts("");
                 puts("-k          connection-only mode");
                 puts("-D          start games in wizard mode");
                 puts("-X          start games in explore mode");
+                puts("-W [dir]    load watchmode with optional save dir");
                 puts("-u name     specify player name");
                 puts("-p role     specify role");
                 puts("-r race     specify race");
@@ -457,6 +463,21 @@ process_args(int argc, char *argv[])
 
         case 'X':
             ui_flags.playmode = MODE_EXPLORE;
+            break;
+
+        case 'W':
+            ui_flags.autoload = TRUE;
+#ifdef UNIX
+            if (setregid(getgid(), getgid()) < 0)
+                exit(14);
+#endif
+            if (argv[0][2]) {
+                override_savedir = argv[0] + 2;
+            } else if (argc > 1) {
+                argc--;
+                argv++;
+                override_savedir = argv[0];
+            }
             break;
 
         case 'u':

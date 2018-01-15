@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,7 +26,7 @@ static int use_trap(struct obj *, const struct nh_cmd_arg *);
 static int use_stone(struct obj *);
 static int set_trap(void);      /* occupation callback */
 static int use_whip(struct obj *, const struct nh_cmd_arg *);
-static int use_pole(struct obj *, const struct nh_cmd_arg *);
+static boolean find_polearm_target(int, int, coord *);
 static int use_cream_pie(struct obj **);
 static int use_grapple(struct obj *, const struct nh_cmd_arg *);
 static boolean figurine_location_checks(struct obj *, coord *, boolean);
@@ -169,7 +169,7 @@ its_dead(int rx, int ry, int *resp)
         } else {
             ttmp = t_at(level, rx, ry);
             pline(msgc_yafm, "%s appears to be in %s health for a statue.",
-                  The(mons[otmp->corpsenm].mname),
+                  The(opm_name(otmp)),
                   (ttmp && ttmp->ttyp == STATUE_TRAP) ?
                   "extraordinary" : "excellent");
         }
@@ -208,6 +208,9 @@ use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
 
     res = (moves == obj->lastused) && (flags.actions == obj->spe);
+    if (obj->blessed)
+        res = 0;
+
     obj->lastused = moves;
     obj->spe = flags.actions;
 
@@ -303,7 +306,7 @@ use_whistle(struct obj *obj)
         return 0;
     }
     pline(msgc_actionok, whistle_str, obj->cursed ? "shrill" : "high");
-    makeknown(obj->otyp);
+    tell_discovery(obj);
     wake_nearby(TRUE);
 
     struct monst *mtmp;
@@ -327,7 +330,9 @@ use_magic_whistle(struct obj *obj)
     if (obj->cursed && !rn2(2)) {
         pline(msgc_substitute, "You produce a high-pitched humming noise.");
         wake_nearby(FALSE);
-    } else {
+    } else if (!obj->blessed && level->flags.noteleport)
+        pline(msgc_substitute, "A mysterious force interferes with the magic!");
+    else {
         pline(msgc_actionok, whistle_str, Hallucination ? "normal" : "strange");
         for (mtmp = level->monlist; mtmp; mtmp = nextmon) {
             nextmon = mtmp->nmon;       /* trap might kill mon */
@@ -345,7 +350,7 @@ use_magic_whistle(struct obj *obj)
             }
         }
     }
-    makeknown(obj->otyp);
+    tell_discovery(obj);
     return 1;
 }
 
@@ -361,7 +366,7 @@ number_leashed(void)
     int i = 0;
     struct obj *obj;
 
-    for (obj = invent; obj; obj = obj->nobj)
+    for (obj = youmonst.minvent; obj; obj = obj->nobj)
         if (obj->otyp == LEASH && obj->leashmon != 0)
             i++;
     return i;
@@ -392,7 +397,7 @@ m_unleash(struct monst *mtmp, boolean feedback)
         else
             pline(msgc_petfatal, "Your leash falls slack.");
     }
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == LEASH && otmp->leashmon == (int)mtmp->m_id)
             otmp->leashmon = 0;
     mtmp->mleashed = 0;
@@ -404,7 +409,7 @@ unleash_all(void)
     struct obj *otmp;
     struct monst *mtmp;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == LEASH)
             otmp->leashmon = 0;
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
@@ -503,7 +508,7 @@ get_mleash(struct monst *mtmp)
 {       /* assuming mtmp->mleashed has been checked */
     struct obj *otmp;
 
-    otmp = invent;
+    otmp = youmonst.minvent;
     while (otmp) {
         if (otmp->otyp == LEASH && otmp->leashmon == (int)mtmp->m_id)
             return otmp;
@@ -526,7 +531,8 @@ next_to_u(void)
             if (distu(mtmp->mx, mtmp->my) > 2)
                 mnexto(mtmp);
             if (distu(mtmp->mx, mtmp->my) > 2) {
-                for (otmp = invent; otmp; otmp = otmp->nobj)
+                for (otmp = youmonst.minvent; otmp;
+                     otmp = otmp->nobj)
                     if (otmp->otyp == LEASH &&
                         otmp->leashmon == (int)mtmp->m_id) {
                         if (otmp->cursed)
@@ -552,7 +558,7 @@ check_leash(xchar x, xchar y)
     struct obj *otmp;
     struct monst *mtmp;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj) {
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
         if (otmp->otyp != LEASH || otmp->leashmon == 0)
             continue;
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
@@ -801,8 +807,13 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
                             pline(combat_msgc(hitby, hitmon, cr_immune),
                                   "%s isn't petrified.",
                                   Monnam(hitmon));
-                    } else
+                    } else if (!resists_ston(hitmon))
                         minstapetrify(&youmonst, hitmon);
+                    else { /* Medusa */
+                        pline(msgc_kill, "%s turned to stone!",
+                              M_verbs(hitmon, "are"));
+                        monstone(hitmon);
+                    }
                     /* not hitby -- that would credit hitby with the kill */
                     break;
                 }
@@ -831,8 +842,9 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
             if (!self)
                 continue; /* the rest of the things only affect self-reflects */
             if (!cancelled(hitmon) &&
-                (hitmon->data->mlet == S_NYMPH ||
-                 hitmon->data == &mons[PM_SUCCUBUS])) {
+                ((hitmon->data->mlet == S_NYMPH ||
+                  hitmon->data == &mons[PM_INCUBUS]) &&
+                 hitmon->female)) {
                 if (vis) {
                     pline(msgc_actionok, "%s admires herself in your %s.",
                           Monnam(hitmon), simple_typename(obj->otyp));
@@ -974,7 +986,7 @@ use_bell(struct obj **optr)
     }   /* charged BofO */
 
     if (learno) {
-        makeknown(BELL_OF_OPENING);
+        tell_discovery(obj);
         obj->known = 1;
     }
     if (wakem)
@@ -1022,7 +1034,11 @@ use_candelabrum(struct obj *obj)
         pline(msgc_actionok, "%s's %s burn%s", The(xname(obj)), s,
               (Blind ? "." : " brightly!"));
     }
-    if (!invocation_pos(&u.uz, youmonst.mx, youmonst.my) || On_stairs(youmonst.mx, youmonst.my)) {
+    if (!Blind)
+        obj->bknown = TRUE;
+
+    if (!invocation_pos(&u.uz, youmonst.mx, youmonst.my) ||
+        On_stairs(youmonst.mx, youmonst.my)) {
         pline_implied(msgc_hint, "The %s %s being rapidly consumed!", s,
                       vtense(s, "are"));
         obj->age = (obj->age + 1) / 2;
@@ -1193,7 +1209,7 @@ catch_lit(struct obj * obj)
             pline(msgc_consequence, "%s %s light!", Yname2(obj),
                   otense(obj, "catch"));
         if (obj->otyp == POT_OIL)
-            makeknown(obj->otyp);
+            tell_discovery(obj);
         if (obj->unpaid && costly_spot(youmonst.mx, youmonst.my) &&
             obj->where == OBJ_INVENT) {
             /* if it catches while you have it, then it's your tough luck */
@@ -1230,17 +1246,19 @@ use_lamp(struct obj *obj)
             struct obj *otmp;
 
             /* This code is based on the code from doorganise. */
-            extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
-            for (otmp = invent; otmp;) {
+            extract_nobj(obj, &youmonst.minvent,
+                         &turnstate.floating_objects, OBJ_FREE);
+            for (otmp = youmonst.minvent; otmp;) {
                 if (merged(&otmp, &obj)) {
                     obj = otmp;
                     otmp = otmp->nobj;
-                    extract_nobj(obj, &invent,
+                    extract_nobj(obj, &youmonst.minvent,
                                  &turnstate.floating_objects, OBJ_FREE);
                 } else
                     otmp = otmp->nobj;
             }
-            extract_nobj(obj, &turnstate.floating_objects, &invent, OBJ_INVENT);
+            extract_nobj(obj, &turnstate.floating_objects,
+                         &youmonst.minvent, OBJ_INVENT);
             reorder_invent();
             update_inventory();
         }
@@ -1263,11 +1281,12 @@ use_lamp(struct obj *obj)
             pline(obj->bknown ? msgc_failrandom : msgc_failcurse,
                   "%s %s seem to have lit.", Yname2(obj),
                   obj->quan > 1L ? "don't" : "doesn't");
-        else
+        else {
             pline(obj->bknown ? msgc_failrandom : msgc_failcurse,
                   "%s for a moment, then %s.",
                   Tobjnam(obj, "flicker"), otense(obj, "die"));
-        obj->bknown = TRUE;
+            obj->bknown = TRUE;
+        }
     } else {
         if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
             obj->otyp == BRASS_LANTERN) {
@@ -1286,6 +1305,10 @@ use_lamp(struct obj *obj)
                 bill_dummy_object(obj);
             }
         }
+
+        if (!Blind)
+            obj->bknown = TRUE;
+
         begin_burn(obj, FALSE);
     }
     return 1;
@@ -1316,6 +1339,9 @@ light_cocktail(struct obj *obj)
 
     pline(msgc_actionok, "You light %s potion.%s", shk_your(obj),
           Blind ? "" : "  It gives off a dim light.");
+    if (!Blind && obj->blessed)
+        obj->bknown = TRUE;
+
     if (obj->unpaid && costly_spot(youmonst.mx, youmonst.my)) {
         /* Normally, we shouldn't both partially and fully charge for an item,
            but (Yendorian Fuel) Taxes are inevitable... */
@@ -1324,7 +1350,7 @@ light_cocktail(struct obj *obj)
                   "That's in addition to the cost of the potion, of course.");
         bill_dummy_object(obj);
     }
-    makeknown(obj->otyp);
+    tell_discovery(obj);
 
     if (obj->quan > 1L) {
         obj = splitobj(obj, 1L);
@@ -1383,9 +1409,10 @@ dorub(const struct nh_cmd_arg *arg)
                 begin_burn(uwep, TRUE);
             djinni_from_bottle(&youmonst, uwep);
             update_inventory();
-        } else if (rn2(2) && !Blind)
+        } else if (rn2(2) && !Blind) {
             pline(msgc_failrandom, "You see a puff of smoke.");
-        else
+            tell_discovery(obj);
+        } else
             pline(msgc_failrandom, "Nothing happens.");
     } else if (obj->otyp == BRASS_LANTERN) {
         /* message from Adventure */
@@ -1403,161 +1430,201 @@ dojump(const struct nh_cmd_arg *arg)
     struct musable m = arg_to_musable(arg);
 
     /* Physical jump */
-    return jump(&m, 0);
+    return jump(&m, FALSE);
 }
 
-/* Returns TRUE if we can jump, FALSE otherwise. This doesn't check for
-   whether or not we actually have the ability to jump in first place,
-   abil_usable does that. */
-boolean
-can_jump(const struct monst *mon, boolean msg)
+/* Returns 0 if we can't jump, 1 if we can, 2 if our attempt ends the turn
+   without actually performing a jump. If checking is TRUE, we're only checking
+   if we can jump in first place. */
+int
+validate_jump(const struct musable *m, coord *cc, boolean magic,
+              boolean checking)
 {
+    struct monst *mon = m->mon;
     boolean you = (mon == &youmonst);
-    boolean vis = (you || canseemon(mon));
     /* Used to point at the right monster for wounded legs */
-    const struct monst *maybe_steed = (you && u.usteed) ? u.usteed : mon;
+    struct monst *maybe_steed = you && u.usteed ? u.usteed : mon;
+    boolean show = !checking && (you || canseemon(mon));
+    int trinsic = jumps(mon);
+    int ox = mon->mx;
+    int oy = mon->my;
 
-    if (you && Engulfed) {
-        if (msg)
-            pline(msgc_cancelled, "You've got to be kidding!");
-        return FALSE;
+    if (!magic && (nolimbs(mon->data) || slithy(mon->data))) {
+        bpline(show, msgc_cancelled, "You can't jump; you have no legs!");
+        return 0;
+    } else if (!magic && !trinsic) {
+        bpline(show, msgc_cancelled, "You can't jump very far.");
+        return 0;
+    } else if (you && Engulfed) {
+        bpline(show, msgc_cancelled, "You've got to be kidding!!");
+        return 0;
     } else if (m_underwater(mon)) {
-        if (msg && you)
-            pline(msgc_cancelled, "This calls for swimming, not jumping!");
-        return FALSE;
-    } else if (((you && u.ustuck) || (mon == u.ustuck)) &&
-               ((you && !u.ustuck->mtame) ||
-                (!you && mon->mtame) ||
-                Conflict || confused(you ? u.ustuck : &youmonst))) {
-        /* TODO: this spoils something (no conflict/pet confusion) under
-           some circumstances, which shouldn't be the case for
-           msgc_cancelled */
-        if (msg && you)
-            pline(msgc_cancelled, "You cannot escape from %s!",
-                  mon_nam(u.ustuck));
-        return FALSE;
+        bpline(show, msgc_cancelled, "This calls for swimming, not jumping!");
+        return 0;
+    } else if (mon == u.ustuck || (you && u.ustuck)) {
+        if (u.ustuck->mtame && !Conflict && !confused(u.ustuck)) {
+            if (!checking) {
+                bpline(show, msgc_actionok, "%s free from %s.",
+                       M_verbs(mon, "pull"), !you ? "you" : mon_nam(u.ustuck));
+                u.ustuck = 0;
+                return 2;
+            }
+        } else {
+            /* TODO: this spoils something (no conflict/pet confusion) under
+               some circumstances, which shouldn't be the case for
+               msgc_cancelled */
+            bpline(show, msgc_cancelled, "You cannot escape from %s!",
+                   mon_nam(u.ustuck));
+            return 0;
+        }
     } else if (levitates(mon) || Is_airlevel(m_mz(mon)) ||
                Is_waterlevel(m_mz(mon))) {
-        if (msg && you)
-            pline(msgc_cancelled,
-                  "You don't have enough traction to jump.");
-        return FALSE;
+        bpline(show, msgc_cancelled, "You don't have enough traction to jump.");
+        return 0;
+    } else if (!magic && you && near_capacity() > UNENCUMBERED) {
+        bpline(show, msgc_cancelled, "You are carrying too much to jump!");
+        return 0;
+    } else if (!magic && you && (u.uhunger <= 100 || ACURR(A_STR) < 6)) {
+        bpline(show, msgc_cancelled, "You lack the strength to jump!");
+        return 0;
     } else if (leg_hurt(maybe_steed)) {
         const char *bp = mbodypart(maybe_steed, LEG);
 
         if (leg_hurtl(maybe_steed) && leg_hurtr(maybe_steed))
             bp = makeplural(bp);
-        if (msg && you && u.usteed)
-            pline(msgc_cancelled, "%s is in no shape for jumping.",
-                  Monnam(u.usteed));
-        else if (msg && you)
-            pline(msgc_cancelled, "Your %s%s %s in no shape for jumping.",
-                  (!leg_hurtr(maybe_steed)) ? "left " :
-                  (!leg_hurtl(maybe_steed)) ? "right " : "",
-                  bp, (leg_hurtl(maybe_steed) &&
-                       leg_hurtr(maybe_steed)) ? "are" : "is");
-        return FALSE;
+        if (u.usteed)
+            bpline(show, msgc_cancelled, "%s is in no shape for jumping.",
+                   Monnam(u.usteed));
+        else
+            bpline(show, msgc_cancelled,
+                   "Your %s%s %s in no shape for jumping.",
+                   (!leg_hurtr(maybe_steed)) ? "left " :
+                   (!leg_hurtl(maybe_steed)) ? "right " : "",
+                   bp, (leg_hurtl(maybe_steed) &&
+                        leg_hurtr(maybe_steed)) ? "are" : "is");
+        return 0;
     } else if (you && u.usteed && u.utrap) {
-        if (msg && you)
-            pline(msgc_cancelled, "%s is stuck in a trap.",
-                  Monnam(u.usteed));
-        return FALSE;
+        bpline(show, msgc_cancelled, "%s is stuck in a trap.",
+               Monnam(u.usteed));
+        return 0;
     } else if (you && u.usteed && !u.usteed->mcanmove) {
-        if (msg && you)
-            pline(msgc_cancelled,
-                  "%s won't move sideways, much less upwards.",
-                  Monnam(u.usteed));
-        return FALSE;
-    }
-    return TRUE;
-}
-
-/* Meaning of "magic" argument: 0 means physical; otherwise skill level.
-   Returns 0 if the jump should be aborted. */
-int
-get_jump_coords(const struct musable *m, coord *cc, int magic)
-{
-    /* Used to point at the right monster for wounded legs */
-    struct monst *maybe_steed = u.usteed ? u.usteed : &youmonst;
-    if (!can_jump(m->mon, TRUE))
+        bpline(show, msgc_cancelled,
+               "%s won't move sideways, much less upwards.",
+               Monnam(u.usteed));
         return 0;
-    if (u.ustuck) {
-        pline(msgc_actionok, "You pull free from %s.", mon_nam(u.ustuck));
-        u.ustuck = 0;
-        return 1;
     }
 
-    pline(msgc_uiprompt, "Where do you want to jump?");
-    cc->x = youmonst.mx;
-    cc->y = youmonst.my;
-    if (!mgetargpos(m, cc, FALSE, "the desired position"))
-        return 0;       /* user pressed ESC */
-    if (!magic && !(jumps(&youmonst) & ~INTRINSIC) &&
-        distu(cc->x, cc->y) != 5) {
-        /* The Knight jumping restriction still applies when riding a horse.
-           After all, what shape is the knight piece in chess? */
-        pline(distu(cc->x, cc->y) > 20 ? msgc_mispaste : msgc_cancelled,
-              "Illegal move!");
-        return 0;
-    } else if (distu(cc->x, cc->y) > (magic ? 6 + magic * 3 : 9)) {
-        pline(distu(cc->x, cc->y) > 20 ? msgc_mispaste : msgc_cancelled,
-              "Too far!");
-        return 0;
-    } else if (!cansee(cc->x, cc->y)) {
-        pline(msgc_cancelled, "You cannot see where to land!");
-        return 0;
-    } else if (!isok(cc->x, cc->y)) {
-        /* TODO: surely this check should be before cansee() (and probably
-           before some of the other checks too)? Most likely it's
-           unreachable. */
-        pline(msgc_cancelled, "You cannot jump there!");
-        return 0;
-    } else {
-        if (u.utrap) {
-            switch (u.utraptype) {
-            case TT_BEARTRAP:{
-                    long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
+    if (!checking) {
+        if (you)
+            bpline(show, msgc_uiprompt, "Where do you want to jump?");
+        cc->x = ox;
+        cc->y = oy;
+        if (mgetargpos(m, cc, FALSE,
+                       "the desired position") == NHCR_CLIENT_CANCEL)
+            return 0;       /* user pressed ESC */
+    }
 
-                    pline(msgc_badidea,
-                          "You rip yourself free of the bear trap!  Ouch!");
-                    if (!u.usteed)
-                        losehp(rnd(10), killer_msg(DIED, "jumping out of a bear trap"));
-                    else {
-                        u.usteed->mhp -= rnd(10);
-                        if (u.usteed->mhp <= 0)
-                            killed(u.usteed);
-                    }
+    if (!isok(cc->x, cc->y)) {
+        bpline(show, msgc_cancelled, "You cannot jump there!");
+        return 0;
+    } else if (!magic && !(trinsic & EXTRINSIC) &&
+               dist2(ox, oy, cc->x, cc->y) != 5) {
+        bpline(show, dist2(ox, oy, cc->x, cc->y) > 20 ? msgc_mispaste :
+               msgc_cancelled, "Illegal move!");
+        return 0;
+    }
 
-                    set_wounded_legs(u.usteed ? u.usteed : &youmonst,
-                                     side, rn1(1000, 500));
-                    break;
-                }
-            case TT_PIT:
-                pline(msgc_actionok, "You leap from the pit!");
-                break;
-            case TT_WEB:
-                pline(msgc_actionok,
-                      "You tear the web apart as you pull yourself free!");
-                deltrap(level, t_at(level, youmonst.mx, youmonst.my));
-                break;
-            case TT_LAVA:
-                pline(msgc_actionok, "You pull yourself above the lava!");
-                u.utrap = 0;
+    /* Figure out allowed distance */
+    int skill = MP_SKILL(mon, spell_skilltype(SPE_JUMPING));
+    if (skill < P_UNSKILLED)
+        skill = P_UNSKILLED;
+
+    int dist = 9;
+    if (magic)
+        dist = 6 + skill * 3;
+
+    if (dist2(ox, oy, cc->x, cc->y) > dist) {
+        bpline(show, dist2(ox, oy, cc->x, cc->y) > 20 ? msgc_mispaste :
+               msgc_cancelled, "Too far!");
+        return 0;
+    } else if (!m_cansee(mon, cc->x, cc->y)) {
+        bpline(show, msgc_cancelled, "You cannot see where to land!");
+        return 0;
+    }
+
+    if (you ? u.utrap : mon->mtrapped) {
+        long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
+        unsigned traptype;
+        struct trap *t = t_at(m_dlevel(mon), ox, oy);
+        traptype = (t->ttyp == PIT || t->ttyp == SPIKED_PIT ? TT_PIT :
+                    t->ttyp == BEAR_TRAP ? TT_BEARTRAP :
+                    t->ttyp == WEB ? TT_WEB : 0);
+        if (you)
+            traptype = u.utraptype;
+
+        switch (traptype) {
+        case TT_BEARTRAP:
+            bpline(show, you ? msgc_badidea : msgc_monneutral,
+                   "%s %sself free of the bear trap!  Ouch!",
+                   M_verbs(mon, "rip"), mhim(mon));
+
+            if (checking)
                 return 1;
-            case TT_INFLOOR:
-                pline(msgc_badidea, "You strain your %s, "
-                      "but you're still stuck in the floor.",
-                      makeplural(body_part(LEG)));
-                set_wounded_legs(&youmonst, LEFT_SIDE, rn1(10, 11));
-                set_wounded_legs(&youmonst, RIGHT_SIDE, rn1(10, 11));
+
+            if (maybe_steed == &youmonst)
+                losehp(rnd(10),
+                       killer_msg(DIED, "jumping out of a bear trap"));
+            else {
+                maybe_steed->mhp -= rnd(10);
+                if (maybe_steed->mhp <= 0) {
+                    if (you)
+                        killed(maybe_steed);
+                    else
+                        mondied(maybe_steed);
+                    return 2;
+                }
             }
+
+            set_wounded_legs(u.usteed ? u.usteed : &youmonst,
+                             side, rn1(1000, 500));
+            break;
+        case TT_PIT:
+            bpline(show, msgc_actionok,  "You leap from the pit!");
+            break;
+        case TT_WEB:
+            bpline(show, msgc_actionok,
+                   "%s the web apart as %s pull %sself free!",
+                   M_verbs(mon, "tear"), mhe(mon), mhim(mon));
+            if (!checking)
+                deltrap(level, t_at(level, youmonst.mx, youmonst.my));
+            break;
+        case TT_LAVA:
+            bpline(show, msgc_actionok, "%s %sself above the lava!",
+                   M_verbs(mon, "pull"), mhim(mon));
+            if (!checking) {
+                if (you)
+                    u.utrap = 0;
+                else
+                    mon->mtrapped = 0;
+            }
+            return 2;
+        case TT_INFLOOR:
+            bpline(show, you ? msgc_badidea : msgc_monneutral,
+                   "%s %s %s, but %s still stuck in the floor.",
+                   M_verbs(mon, "strain"), mhis(mon),
+                   makeplural(mbodypart(mon, LEG)),
+                   m_verbs(mon, "are"));
+            set_wounded_legs(mon, LEFT_SIDE, rn1(10, 11));
+            set_wounded_legs(mon, RIGHT_SIDE, rn1(10, 11));
+            return 2;
         }
     }
+
     return 1;
 }
 
 void
-jump_to_coords(coord *cc)
+jump_to_coords(struct monst *mon, coord *cc)
 {
     coord uc;
     int range, temp;
@@ -1567,8 +1634,8 @@ jump_to_coords(coord *cc)
      * location.  The final position actually reached will be
      * in cc.
      */
-    uc.x = youmonst.mx;
-    uc.y = youmonst.my;
+    uc.x = mon->mx;
+    uc.y = mon->my;
     /* calculate max(abs(dx), abs(dy)) as the range */
     range = cc->x - uc.x;
     if (range < 0)
@@ -1578,29 +1645,31 @@ jump_to_coords(coord *cc)
         temp = -temp;
     if (range < temp)
         range = temp;
-    walk_path(&uc, cc, hurtle_step, &range);
-
-    /* A little Sokoban guilt... */
-    if (In_sokoban(&u.uz))
-        change_luck(-1);
-
-    teleds(cc->x, cc->y, TRUE);
-    helpless(1, hr_moving, "jumping around", NULL);
-    morehungry(rnd(25));
+    if (mon == &youmonst) {
+        walk_path(&uc, cc, hurtle_step, &range);
+        teleds(cc->x, cc->y, TRUE);
+        helpless(1, hr_moving, "jumping around", NULL);
+        morehungry(rnd(25));
+    } else {
+        walk_path(&uc, cc, mhurtle_step, mon);
+        mon->mfrozen = 1;
+        mon->mcanmove = 0;
+        mintrap(mon);
+    }
 }
 
-/* Meaning of "magic" argument: 0 means physical; otherwise skill level */
 int
-jump(const struct musable *m, int magic)
+jump(const struct musable *m, boolean magic)
 {
     coord cc;
 
     /* Get the coordinates.  This might involve aborting. */
-    if(!get_jump_coords(m, &cc, magic))
-        return 0;
+    int res = validate_jump(m, &cc, magic, FALSE);
+    if (res != 1)
+        return !!res;
 
     /* Now do the actual jumping. */
-    jump_to_coords(&cc);
+    jump_to_coords(m->mon, &cc);
     return 1;
 }
 
@@ -1644,15 +1713,15 @@ use_tinning_kit(struct obj *obj)
         && !resists_ston(&youmonst) && !uarmg) {
         if (poly_when_stoned(youmonst.data))
             pline(msgc_consequence, "You tin %s without wearing gloves.",
-                  an(mons[corpse->corpsenm].mname));
+                  an(opm_name(corpse)));
         else
             pline(msgc_badidea,
                   "Tinning %s without wearing gloves is a fatal mistake...",
-                  an(mons[corpse->corpsenm].mname));
+                  an(opm_name(corpse)));
 
         instapetrify(killer_msg(STONING,
                                 msgprintf("trying to tin %s without gloves",
-                                          an(mons[corpse->corpsenm].mname))));
+                                          an(opm_name(corpse)))));
     }
     if (is_rider(&mons[corpse->corpsenm])) {
         revive_corpse(corpse);
@@ -1674,7 +1743,8 @@ use_tinning_kit(struct obj *obj)
         can->blessed = obj->blessed;
         can->owt = weight(can);
         can->known = 1;
-        can->spe = -1;  /* Mark tinned tins. No spinach allowed... */
+        can->spe = corpse->spe;
+        can->spe |= OPM_HOMEMADE; /* Mark tinned tins. No spinach allowed... */
         if (carried(corpse)) {
             if (corpse->unpaid)
                 verbalize(msgc_unpaid, you_buy_it);
@@ -1725,7 +1795,10 @@ use_unicorn_horn(struct obj *obj)
             inc_timeout(&youmonst, CONFUSION, lcount, TRUE);
             break;
         case 3:
-            inc_timeout(&youmonst, STUNNED, lcount, FALSE);
+            if (!resists_stun(&youmonst))
+                inc_timeout(&youmonst, STUNNED, lcount, FALSE);
+            else
+                pline(msgc_failrandom, "Nothing seems to happen.");
             break;
         case 4:
             adjattrib(rn2(A_MAX), -1, FALSE);
@@ -1896,6 +1969,9 @@ fig_transform(void *arg, long timeout)
     cansee_spot = cansee(cc.x, cc.y);
     mtmp = make_familiar(&youmonst, figurine, cc.x, cc.y, TRUE);
     if (mtmp) {
+        if (!(mtmp->data->mflags2 & (M2_MALE | M2_FEMALE)))
+            mtmp->female = !!(figurine->spe & OPM_FEMALE);
+
         monnambuf = msgprintf("%s", an(m_monnam(mtmp)));
         switch (figurine->where) {
         case OBJ_INVENT:
@@ -2161,6 +2237,7 @@ use_stone(struct obj *tstone)
 
     do_scratch = FALSE;
     streak_color = 0;
+    boolean id_touchstone = FALSE;
 
     switch (obj->oclass) {
     case GEM_CLASS:    /* these have class-specific handling below */
@@ -2171,14 +2248,16 @@ use_stone(struct obj *tstone)
                    (tstone->blessed ||
                     (!tstone->cursed &&
                      (Role_if(PM_ARCHEOLOGIST) || Race_if(PM_GNOME))))) {
-            makeknown(TOUCHSTONE);
             makeknown(obj->otyp);
             prinv(NULL, obj, 0L);
+            tell_discovery(tstone);
             return 1;
         } else {
             /* either a ring or the touchstone was not effective */
             if (objects[obj->otyp].oc_material == GLASS) {
                 do_scratch = TRUE;
+                if (obj->oclass == GEM_CLASS)
+                    id_touchstone = TRUE;
                 break;
             }
         }
@@ -2235,6 +2314,8 @@ use_stone(struct obj *tstone)
               streak_color, stonebuf);
     else
         pline(msgc_actionok, scritch);
+    if (id_touchstone)
+        tell_discovery(tstone);
     return 1;
 }
 
@@ -2255,10 +2336,10 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
         what = is_animal(u.ustuck->data) ? "while swallowed" : "while engulfed";
     else if (Underwater)
         what = "underwater";
-    else if (Levitation)
-        what = "while levitating";
     else if (is_pool(level, youmonst.mx, youmonst.my))
         what = "in water", mispasting = 1;
+    else if (levitates(&youmonst))
+        what = "while levitating";
     else if (is_lava(level, youmonst.mx, youmonst.my))
         what = "in lava", mispasting = 1;
     else if (On_stairs(youmonst.mx, youmonst.my))
@@ -2445,7 +2526,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             return 1;
         }
 
-        if (Levitation || u.usteed) {
+        if (levitates(&youmonst) || u.usteed) {
             /* Have a shot at snaring something on the floor */
             otmp = level->objects[youmonst.mx][youmonst.my];
             if (otmp && otmp->otyp == CORPSE && otmp->corpsenm == PM_HORSE) {
@@ -2478,7 +2559,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
         dropx(obj);
 
     } else if (u.utrap && u.utraptype == TT_PIT) {
-        /* 
+        /*
          *     Assumptions:
          *
          *      if you're in a pit
@@ -2595,10 +2676,10 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                            information". */
                         pline(msgc_substitute,
                               "Snatching %s corpse is a fatal mistake.",
-                              an(mons[otmp->corpsenm].mname));
+                              an(opm_name(otmp)));
                         instapetrify(killer_msg(STONING,
                             msgprintf("snatching %s corpse",
-                                      an(mons[otmp->corpsenm].mname))));
+                                      an(opm_name(otmp)))));
                     }
                     hold_another_object(otmp, "You drop %s!", doname(otmp),
                                         NULL);
@@ -2644,6 +2725,34 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
     return 1;
 }
 
+/* Choose an appropriate starting position for prompting */
+static boolean
+find_polearm_target(int minr, int maxr, coord *cc)
+{
+    struct monst *mon;
+
+    /* Fallback */
+    cc->x = youmonst.mx;
+    cc->y = youmonst.my;
+
+    int x, y;
+    for (x = (youmonst.mx - 2); x <= (youmonst.mx + 2); x++) {
+        for (y = (youmonst.my - 2); y <= (youmonst.my + 2); y++) {
+            if (!isok(x, y) || distu(x, y) < minr || distu(x, y) > maxr ||
+                !couldsee(x, y))
+                continue;
+
+            mon = vismon_at(level, x, y);
+            if (mon && !mon->mpeaceful) {
+                cc->x = x;
+                cc->y = y;
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
+}
 
 static const char
      not_enough_room[] =
@@ -2653,13 +2762,13 @@ static const char
     "You can't reach that spot from here.";
 
 /* Distance attacks by pole-weapons */
-static int
+int
 use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     int wtstatus, typ, max_range = 4, min_range = 4;
     coord cc;
     struct monst *mtmp;
-
+    boolean autofiring = last_command_was("fire");
 
     /* Are you allowed to use the pole? */
     if (Engulfed) {
@@ -2667,28 +2776,38 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare, FALSE);
-
-    if (wtstatus & 2)
-        return 1;
-    if (!(wtstatus & 1))
-        return 0;
-
-    /* Prompt for a location */
-    pline(msgc_uiprompt, where_to_hit);
-    cc.x = youmonst.mx;
-    cc.y = youmonst.my;
-    if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
-        return 0;     /* user pressed ESC */
-
     /* Calculate range */
-    typ = uwep_skill_type();
+    typ = weapon_type(obj);
     if (typ == P_NONE || P_SKILL(typ) <= P_BASIC)
         max_range = 4;
     else if (P_SKILL(typ) == P_SKILLED)
         max_range = 5;
     else
         max_range = 8;
+
+    /* See if we have an appropriate target to autofire */
+    if (autofiring && !find_polearm_target(min_range, max_range, &cc)) {
+        pline(msgc_cancelled,
+              "There doesn't seem to be an appropriate target to thrust.");
+        return 0;
+    }
+
+    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare,
+                          autofiring);
+
+    if (wtstatus & 2)
+        return 1;
+    if (!(wtstatus & 1))
+        return 0;
+
+    if (!autofiring) {
+        /* Prompt for a location */
+        pline(msgc_uiprompt, where_to_hit);
+        find_polearm_target(min_range, max_range, &cc);
+        if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
+            return 0;     /* user pressed ESC */
+    }
+
     if (distu(cc.x, cc.y) > max_range) {
         pline(distu(cc.x, cc.y) > 20 ? msgc_mispaste : msgc_cancelled,
               "Too far!");
@@ -2697,10 +2816,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         pline(msgc_cancelled, "Too close!");
         return 0;
     } else if (!cansee(cc.x, cc.y) &&
-               ((mtmp = m_at(level, cc.x, cc.y)) == NULL || !canseemon(mtmp))) {
-        /* TODO: The if condition above looks a little suspicious: it lets you
-           hit monsters you can see with infravision, but not monsters you can
-           see with telepathy. */
+               (mtmp = vismon_at(level, cc.x, cc.y)) == NULL) {
         pline(msgc_cancelled, cant_see_spot);
         return 0;
     } else if (!couldsee(cc.x, cc.y)) { /* Eyes of the Overworld */
@@ -2905,7 +3021,7 @@ uhave_graystone(void)
 {
     struct obj *otmp;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (is_graystone(otmp))
             return TRUE;
     return FALSE;
@@ -2977,7 +3093,9 @@ doapply(const struct nh_cmd_arg *arg)
     case SACK:
     case BAG_OF_HOLDING:
     case OILSKIN_SACK:
-        res = use_container(obj, 1);
+        res = use_container(obj, 1, FALSE, FALSE);
+        if (res < 0)
+            res = 0;
         break;
     case BAG_OF_TRICKS:
         bagotricks(obj);
@@ -2988,7 +3106,7 @@ doapply(const struct nh_cmd_arg *arg)
     case LOCK_PICK:
     case CREDIT_CARD:
     case SKELETON_KEY:
-        res = pick_lock(obj, arg);
+        res = pick_lock(obj, arg, NULL);
         break;
     case TINNING_KIT:
         res = use_tinning_kit(obj);
@@ -3128,12 +3246,15 @@ doapply(const struct nh_cmd_arg *arg)
                    ICE) ? "Oops!  %s away from you!" :
                 "Oops!  %s to the floor!",
                 The(aobjnam(otmp, "slip")), NULL);
-            makeknown(HORN_OF_PLENTY);
         } else {
             pline(obj->known ? msgc_cancelled1 : msgc_failcurse,
                   "You feel an absence of magical power.");
             obj->known = TRUE;
         }
+
+        /* other horns make frightful sounds if discharged, so we know it's a
+           horn of plenty no matter what. */
+        tell_discovery(obj);
         break;
     case LAND_MINE:
     case BEARTRAP:

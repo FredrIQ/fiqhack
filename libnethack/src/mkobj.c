@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artilist.h"
 #include "prop.h"
 
 #include <limits.h>
@@ -13,7 +14,6 @@ static struct obj *mksobj_basic(struct level *lev, int otyp);
 static void obj_timer_checks(struct obj *, xchar, xchar, int);
 static void container_weight(struct obj *);
 static void save_mtraits(struct obj *, struct monst *);
-static void extract_nexthere(struct obj *, struct obj **);
 
 struct icp {
     int iprob;  /* probability of an item type */
@@ -126,7 +126,7 @@ mkobj_of_class(struct level *lev, char oclass, boolean artif, enum rng rng)
         impossible("mkobj_of_class called with RANDOM_CLASS");
 
     int i;
-    int first_id = bases[oclass];
+    int first_id = bases[(int)oclass];
     int final_id = bases[oclass + 1] - 1;
 
     /* Precious gems start off elsewhere depending on dungeon level */
@@ -424,6 +424,7 @@ splitobj(struct obj *obj, long num)
     otmp->timed = 0;    /* not timed, yet */
     otmp->lamplit = 0;  /* ditto */
     otmp->owornmask = 0L;       /* new object isn't worn */
+    otmp->mem_obj = NULL;
     obj->quan -= num;
     obj->owt = weight(obj);
     otmp->quan = num;
@@ -468,7 +469,8 @@ replace_object(struct obj *obj, struct obj *otmp)
     case OBJ_INVENT:
         otmp->nobj = obj->nobj;
         obj->nobj = otmp;
-        extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
+        extract_nobj(obj, &youmonst.minvent, &turnstate.floating_objects,
+                     OBJ_FREE);
         break;
     case OBJ_CONTAINED:
         otmp->nobj = obj->nobj;
@@ -531,6 +533,7 @@ bill_dummy_object(struct obj *otmp)
     dummy = newobj(otmp);
     dummy->o_id = next_ident();
     dummy->timed = 0;
+    dummy->mem_obj = NULL;
     ox_copy(dummy, otmp);
     if (Is_candle(dummy))
         dummy->lamplit = 0;
@@ -606,9 +609,6 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
     otmp->o_id = next_ident();
 
     if (init) {
-#ifdef INVISIBLE_OBJECTS
-        otmp->oinvis = !rn2_on_rng(1250, rng);
-#endif
         switch (let) {
         case WEAPON_CLASS:
             otmp->quan = is_multigen(otmp) ? 6 + rn2_on_rng(6, rng) : 1;
@@ -642,6 +642,13 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                        corpse instead, then */
                     otmp->corpsenm = PM_HUMAN;
                 }
+                otmp->spe &= ~OPM_GENDER;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                 /* timer set below */
                 break;
             case EGG:
@@ -653,6 +660,13 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                             rndmonnum(&lev->z, rng_main));
                         if (mndx != NON_PM && !dead_species(mndx, TRUE)) {
                             otmp->corpsenm = mndx;      /* typed egg */
+                            otmp->spe &= ~OPM_GENDER;
+                            if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                                otmp->spe |= OPM_FEMALE;
+                            else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                                otmp->spe |= OPM_MALE;
+                            else
+                                otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                             attach_egg_hatch_timeout(otmp);
                             break;
                         }
@@ -661,13 +675,20 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
             case TIN:
                 otmp->corpsenm = NON_PM;        /* empty (so far) */
                 if (!rn2_on_rng(6, rng))
-                    otmp->spe = 1;      /* spinach */
+                    otmp->spe |= OPM_SPINACH; /* spinach */
                 else
                     for (tryct = 200; tryct > 0; --tryct) {
                         mndx = undead_to_corpse(rndmonnum(&lev->z, rng));
                         if (mons[mndx].cnutrit &&
                             !(mvitals[mndx].mvflags & G_NOCORPSE)) {
                             otmp->corpsenm = mndx;
+                            otmp->spe &= ~OPM_GENDER;
+                            if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                                otmp->spe |= OPM_FEMALE;
+                            else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                                otmp->spe |= OPM_MALE;
+                            else
+                                otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                             break;
                         }
                     }
@@ -753,6 +774,13 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                     while (is_human(&mons[otmp->corpsenm])
                            && tryct2++ < 30);
                     blessorcurse(otmp, 4, rng);
+                    otmp->spe &= ~OPM_GENDER;
+                    if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                        otmp->spe |= OPM_FEMALE;
+                    else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                        otmp->spe |= OPM_MALE;
+                    else
+                        otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
                     break;
                 }
             case BELL_OF_OPENING:
@@ -865,6 +893,13 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                     rn2_on_rng(level_difficulty(&lev->z) / 2 + 10, rng) > 10)
                     add_to_container(otmp,
                                      mkobj(lev, SPBOOK_CLASS, FALSE, rng));
+                otmp->spe &= ~OPM_GENDER;
+                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                    otmp->spe |= OPM_FEMALE;
+                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                    otmp->spe |= OPM_MALE;
+                else
+                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             }
             break;
         case COIN_CLASS:
@@ -1054,6 +1089,13 @@ weight(struct obj *obj)
 {
     int wt = objects[obj->otyp].oc_weight;
 
+
+    if (obj->oartifact) {
+        const struct artifact *arti = &artilist[obj->oartifact];
+        if (arti && (arti->spfx & SPFX_WTREDUC))
+            wt = (wt + 1) / 2;
+    }
+
     if (obj->otyp == LARGE_BOX && obj->spe == 1)        /* Schroedinger's Cat */
         wt += mons[PM_HOUSECAT].cwt;
     if (Is_container(obj) || obj->otyp == STATUE) {
@@ -1161,6 +1203,12 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
            struct monst *mtmp, const struct permonst *ptr, struct level *lev,
            int x, int y, boolean init, enum rng rng)
 {
+    boolean female = FALSE;
+    if (ptr && ptr->mflags2 & M2_FEMALE)
+        female = TRUE;
+    else if (ptr && !(ptr->mflags2 & M2_MALE))
+        female = !!rn2(2);
+
     struct obj *otmp;
 
     if (objtype != CORPSE && objtype != STATUE)
@@ -1172,11 +1220,17 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
     } else
         otmp = mksobj_at(objtype, lev, x, y, init, FALSE, rng);
     if (otmp) {
+        boolean historic = !!(otmp->spe & OPM_HISTORIC);
         if (mtmp) {
+            female = mtmp->female;
             if (!ptr)
                 ptr = mtmp->data;
             save_mtraits(otmp, mtmp);
         }
+        otmp->spe &= ~OPM_GENDER;
+        otmp->spe = female ? OPM_FEMALE : OPM_MALE;
+        if (historic)
+            otmp->spe |= OPM_HISTORIC;
 
         /* use the corpse or statue produced by mksobj() as-is unless `ptr' is
            non-null */
@@ -1498,6 +1552,10 @@ discard_minvent(struct monst *mtmp)
 void
 obj_extract_self(struct obj *obj)
 {
+    if (obj->memory != OM_NO_MEMORY)
+        panic("obj_extract_self: object %s is a memory, use extract_obj_memory.",
+              killer_xname(obj, FALSE));
+
     switch (obj->where) {
     case OBJ_FREE:
         break;
@@ -1690,6 +1748,10 @@ dealloc_obj(struct obj *obj)
     if (obj->where != OBJ_FREE)
         panic("dealloc_obj: obj not free");
 
+    /* Don't free the object memory but unassign its mem_obj pointer. */
+    if (obj->mem_obj)
+        obj->mem_obj->mem_obj = NULL;
+
     /* free up any timers attached to the object */
     if (obj->timed)
         obj_stop_timers(obj);
@@ -1734,7 +1796,6 @@ set_obj_level(struct level *lev, struct obj *obj)
         set_obj_level(lev, cobj);
 }
 
-
 /* Loads an object onto the floating objects chain, but with the OBJ_WHERE from
    the save file. */
 struct obj *
@@ -1759,6 +1820,8 @@ restore_obj(struct memfile *mf)
     oflags = mread32(mf);
 
     otmp->otyp = mread16(mf);
+    if (corpsenm_is_relevant(otmp->otyp))
+        otmp->corpsenm += pm_offset(otmp->corpsenm);
 
     otmp->otyp += otyp_offset(otmp->otyp);
 
@@ -1776,10 +1839,12 @@ restore_obj(struct memfile *mf)
     if (flags.save_revision >= 2) {
         otmp->oprops = mread64(mf);
         otmp->oprops_known = mread64(mf);
+        otmp->mem_o_id = mread32(mf);
+        otmp->thrown_time = mread32(mf);
         int i;
 
         /* Reserved for future extensions */
-        for (i = 0; i < 200; i++)
+        for (i = 0; i < 192; i++)
             (void) mread8(mf);
     }
 
@@ -1807,6 +1872,8 @@ restore_obj(struct memfile *mf)
     otmp->was_dropped = (oflags >> 5) & 1;
     otmp->mknown = (oflags >> 4) & 1;
     otmp->mbknown = (oflags >> 3) & 1;
+    otmp->memory = (oflags >> 1) & 3;
+    otmp->cknown = (oflags >> 0) & 1;
 
     otmp->m_id = 0;
     if (oattached != OATTACHED_NEW) {
@@ -1826,6 +1893,41 @@ restore_obj(struct memfile *mf)
         otmp->m_id = mread32(mf);
         if (has_extra)
             restore_oextra(mf, otmp);
+    }
+
+    /* Fix up spe on things where corpsenm matters. */
+    if (flags.save_revision < 10 &&
+        (otmp->otyp == CORPSE ||
+         /* Statues had previous logic but might need gender fixup still */
+         (otmp->otyp == STATUE && !(otmp->spe & (OPM_MALE | OPM_FEMALE))) ||
+         otmp->otyp == TIN || otmp->otyp == FIGURINE || otmp->otyp == EGG)) {
+        boolean base_spe = 0;
+        if (otmp->otyp == STATUE && (otmp->spe & OPM_HISTORIC))
+            base_spe = OPM_HISTORIC;
+        else if (otmp->otyp == TIN && otmp->spe == 1)
+            base_spe = OPM_SPINACH;
+        else if (otmp->otyp == TIN && otmp->spe == -1)
+            base_spe = OPM_HOMEMADE;
+        else if (otmp->otyp == EGG && otmp->spe == 1)
+            base_spe = OPM_YOULAID;
+        otmp->spe = base_spe;
+
+        /* Gender fixup */
+        if (otmp->otyp != TIN || !(otmp->spe & OPM_SPINACH)) {
+            struct monst *mon = ox_monst(otmp);
+            otmp->spe &= ~OPM_GENDER;
+            if (mon)
+                otmp->spe |= (mon->female ? OPM_FEMALE : OPM_MALE);
+            else
+                otmp->spe |= ((mons[otmp->corpsenm].mflags2 & M2_FEMALE) ?
+                              OPM_FEMALE : OPM_MALE);
+        }
+    } else if (flags.save_revision < 14 && otmp->memory &&
+               otmp->corpsenm == -1 &&
+               (otmp->otyp == STATUE || otmp->otyp == TIN ||
+                otmp->otyp == FIGURINE || otmp->otyp == EGG)) {
+        /* Hotfix for mimic object memories */
+        otmp->corpsenm = PM_TENGU;
     }
     return otmp;
 }
@@ -1856,7 +1958,8 @@ save_obj(struct memfile *mf, struct obj *obj)
         (obj->greased << 11) | (OATTACHED_NEW << 9) |
         (obj->in_use << 8) | (obj->was_thrown << 7) |
         (0 << 6 /* old bypass */ ) | (obj->was_dropped << 5) |
-        (obj->mknown << 4) | (obj->mbknown << 3);
+        (obj->mknown << 4) | (obj->mbknown << 3) |
+        (obj->memory << 1) | (obj->cknown << 0);
 
     mfmagic_set(mf, OBJ_MAGIC);
     mtag(mf, obj->o_id, MTAG_OBJ);
@@ -1892,10 +1995,15 @@ save_obj(struct memfile *mf, struct obj *obj)
     }
     mwrite64(mf, obj->oprops);
     mwrite64(mf, obj->oprops_known);
+    obj->mem_o_id = 0;
+    if (obj->mem_obj)
+        obj->mem_o_id = obj->mem_obj->o_id;
+    mwrite32(mf, obj->mem_o_id);
+    mwrite32(mf, obj->thrown_time);
 
     /* Reserved for future extensions */
     int i;
-    for (i = 0; i < 200; i++)
+    for (i = 0; i < 192; i++)
         mwrite8(mf, 0);
 
     mwrite32(mf, obj->m_id);

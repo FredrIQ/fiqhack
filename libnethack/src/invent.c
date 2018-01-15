@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,7 +24,6 @@ static void menu_identify(int, int);
 static boolean tool_in_use(struct obj *);
 static char obj_to_let(struct obj *);
 static int identify(struct monst *, struct obj *, int);
-static const char *dfeature_at(int, int);
 
 static void addinv_stats(struct obj *);
 static void freeinv_stats(struct obj *);
@@ -96,7 +95,7 @@ assigninvlet(struct obj *otmp)
         otmp->oclass == CHAIN_CLASS)
         should_displace = TRUE;
 
-    for (obj = invent; obj; obj = obj->nobj)
+    for (obj = youmonst.minvent; obj; obj = obj->nobj)
         if (obj != otmp) {
             i = obj->invlet;
             if ('a' <= i && i <= 'z')
@@ -176,14 +175,14 @@ reorder_invent(void)
          * isn't nearly as inefficient as it may first appear.
          */
         need_more_sorting = FALSE;
-        for (otmp = invent, prev = 0; otmp;) {
+        for (otmp = youmonst.minvent, prev = 0; otmp;) {
             next = otmp->nobj;
             if (next && inv_rank(next) < inv_rank(otmp)) {
                 need_more_sorting = TRUE;
                 if (prev)
                     prev->nobj = next;
                 else
-                    invent = next;
+                    youmonst.minvent = next;
                 otmp->nobj = next->nobj;
                 next->nobj = otmp;
                 prev = next;
@@ -212,7 +211,7 @@ merge_choice(struct obj *objlist, struct obj *obj)
        carried are different from what they are now; prevent that from
        eliciting an incorrect result from mergable() */
     save_nocharge = obj->no_charge;
-    if (objlist == invent && obj->where == OBJ_FLOOR &&
+    if (objlist == youmonst.minvent && obj->where == OBJ_FLOOR &&
         (shkp =
          shop_keeper(level, inside_shop(obj->olev, obj->ox, obj->oy))) != 0) {
         if (obj->no_charge)
@@ -341,7 +340,9 @@ addinv_stats(struct obj *obj)
     }
 }
 
-/* Add obj to inventory and print potential encumbrance changes */
+/* Add obj to inventory and print potential encumbrance changes.
+   Before replacing addinv with pickinv: consider if there's a reason that it
+   uses addinv. */
 struct obj *
 pickinv(struct obj *obj)
 {
@@ -371,7 +372,7 @@ addinv(struct obj *obj)
     examine_object(obj);
 
     /* merge if possible; find end of chain in the process */
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (merged(&otmp, &obj)) {
             obj = otmp;
             goto added;
@@ -379,7 +380,8 @@ addinv(struct obj *obj)
 
     /* didn't merge, so insert into chain */
     assigninvlet(obj);
-    extract_nobj(obj, &turnstate.floating_objects, &invent, OBJ_INVENT);
+    extract_nobj(obj, &turnstate.floating_objects,
+                 &youmonst.minvent, OBJ_INVENT);
     reorder_invent();
 
     /* fill empty quiver if obj was thrown */
@@ -418,7 +420,7 @@ can_hold(struct obj *obj)
 {
     if (obj->oclass == COIN_CLASS)
         return TRUE;
-    if (merge_choice(invent, obj))
+    if (merge_choice(youmonst.minvent, obj))
         return TRUE;
     if (inv_cnt(TRUE) < 52)
         return TRUE;
@@ -608,7 +610,8 @@ freeinv(struct obj *obj)
         impossible("dropping item before unreadying it");
         uwepgone();
     }
-    extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
+    extract_nobj(obj, &youmonst.minvent, &turnstate.floating_objects,
+                 OBJ_FREE);
     freeinv_stats(obj);
     update_inventory();
 }
@@ -692,7 +695,7 @@ carrying_questart(void)
 {
     struct obj *otmp;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp->oartifact && is_quest_artifact(otmp))
             return otmp;
     return NULL;
@@ -702,8 +705,7 @@ carrying_questart(void)
 struct obj *
 m_carrying(const struct monst *mon, int type)
 {
-    return m_carrying_recursive(mon, m_minvent(mon),
-                                type, FALSE);
+    return m_carrying_recursive(mon, mon->minvent, type, FALSE);
 }
 
 /* Check if a monster is carrying a particular item, recursively. */
@@ -754,7 +756,7 @@ have_lizard(void)
 {
     struct obj *otmp;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == CORPSE && otmp->corpsenm == PM_LIZARD)
             return TRUE;
     return FALSE;
@@ -1005,7 +1007,7 @@ getobj(const char *let, const char *word, boolean isarg)
 
     /* Count the number of items that may end up in "buf". */
     int bufmaxlen = 0;
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         bufmaxlen++;
     bufmaxlen += 9; /* ", " ITEMS " or ?*\0" */
 
@@ -1028,7 +1030,7 @@ getobj(const char *let, const char *word, boolean isarg)
     /* This code is massively refactored from the 3.4.3 version because the
        old version was such a pain to follow (e.g. "bp" and "ap" used entirely
        different storage). */
-    for (otmp = invent; otmp; otmp = otmp->nobj) {
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
         if (!*let || strchr(let, otmp->oclass)) {
             switch (object_selection_checks(otmp, word)) {
             case CURRENTLY_NOT_USABLE:
@@ -1150,7 +1152,7 @@ getobj(const char *let, const char *word, boolean isarg)
             }
         }
 
-        for (otmp = invent; otmp; otmp = otmp->nobj)
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
             if (otmp->invlet == ilet)
                 break;
         if (!otmp) {
@@ -1348,7 +1350,7 @@ menu_identify(int id_limit, int skill)
     while (id_limit) {
         buf = msgprintf("What would you like to identify %s?",
                         first ? "first" : "next");
-        n = query_objlist(buf, invent,
+        n = query_objlist(buf, youmonst.minvent,
                           SIGNAL_NOMENU | USE_INVLET | INVORDER_SORT,
                           &pick_list, PICK_ANY,
                           skill == P_UNSKILLED ? not_fully_identified1 :
@@ -1382,8 +1384,9 @@ identify_pack(struct monst *mon, int id_limit,
     boolean vis = canseemon(mon);
 
     unid_cnt = 0;
+    any_unid_cnt = 0;
     the_obj = 0;        /* if unid_cnt ends up 1, this will be it */
-    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
         if (you) {
             if (not_fully_identified(obj))
                 any_unid_cnt++;
@@ -1426,7 +1429,7 @@ identify_pack(struct monst *mon, int id_limit,
         } else {
 
             /* TODO: use fully_identify_obj and cornline/menu/whatever here */
-            for (obj = m_minvent(mon); obj; obj = obj->nobj)
+            for (obj = mon->minvent; obj; obj = obj->nobj)
                 if ((you &&
                      not_fully_identified_core(obj, FALSE, skill)) ||
                     (!you &&
@@ -1442,7 +1445,7 @@ identify_pack(struct monst *mon, int id_limit,
                       Monnam(mon), unid_cnt == 1 ? "a " : "",
                       unid_cnt == 1 ? "" : "s", mhis(mon));
             n = 0;
-            for (obj = m_minvent(mon); obj && n < id_limit; obj = obj->nobj) {
+            for (obj = mon->minvent; obj && n < id_limit; obj = obj->nobj) {
                 if (obj->otyp == GOLD_PIECE)
                     continue;
 
@@ -1529,7 +1532,7 @@ int
 ddoinv(const struct nh_cmd_arg *arg)
 {
     (void) arg;
-    if (!invent)
+    if (!youmonst.minvent)
         pline(msgc_info, "You are not carrying anything.");
     else
         display_inventory(NULL, FALSE);
@@ -1579,7 +1582,7 @@ make_invlist(struct nh_objlist *objlist, const char *lets)
 
 nextclass:
     classcount = 0;
-    for (otmp = invent; otmp; otmp = otmp->nobj) {
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
         ilet = otmp->invlet;
         if (!lets || !*lets || strchr(lets, ilet)) {
             if (!flags.sortpack || otmp->oclass == *invlet) {
@@ -1623,7 +1626,7 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
        empty -- because we don't know at this level if its up or not.  This may
        not be an issue if empty checks are done before hand and the call to
        here is short circuited away. */
-    if (!invent && !(!lets && !want_reply)) {
+    if (!youmonst.minvent && !(!lets && !want_reply)) {
         pline(msgc_info, "Not carrying anything.");
         return 0;
     }
@@ -1631,7 +1634,7 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
     if (lets && strlen(lets) == 1) {
         /* when only one item of interest, use pline instead of menus */
         ret = '\0';
-        for (otmp = invent; otmp; otmp = otmp->nobj) {
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
             if (otmp->invlet == lets[0]) {
                 pline(msgc_info, "%s",
                       xprname(otmp, NULL, lets[0], TRUE, 0L, 0L));
@@ -1774,14 +1777,14 @@ dounpaid(void)
     long cost, totcost;
     struct nh_menulist menu;
 
-    count = count_unpaid(invent);
+    count = count_unpaid(youmonst.minvent);
 
     if (count == 1) {
         marker = NULL;
-        otmp = find_unpaid(invent, &marker);
+        otmp = find_unpaid(youmonst.minvent, &marker);
 
         /* see if the unpaid item is in the top level inventory */
-        for (marker = invent; marker; marker = marker->nobj)
+        for (marker = youmonst.minvent; marker; marker = marker->nobj)
             if (marker == otmp)
                 break;
 
@@ -1798,7 +1801,7 @@ dounpaid(void)
 
     do {
         classcount = 0;
-        for (otmp = invent; otmp; otmp = otmp->nobj) {
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
             ilet = otmp->invlet;
             if (otmp->unpaid) {
                 if (!flags.sortpack || otmp->oclass == *invlet) {
@@ -1831,7 +1834,7 @@ dounpaid(void)
          * unpaid items.  The top level inventory items have already
          * been listed.
          */
-        for (otmp = invent; otmp; otmp = otmp->nobj) {
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
             if (Has_contents(otmp)) {
                 marker = NULL;  /* haven't found any */
                 while (find_unpaid(otmp->cobj, &marker)) {
@@ -1877,16 +1880,16 @@ dotypeinv(const struct nh_cmd_arg *arg)
 
     (void) arg;
 
-    if (!invent && !billx) {
+    if (!youmonst.minvent && !billx) {
         pline(msgc_info, "You aren't carrying anything.");
         return 0;
     }
-    unpaid_count = count_unpaid(invent);
+    unpaid_count = count_unpaid(youmonst.minvent);
 
     i = UNPAID_TYPES;
     if (billx)
         i |= BILLED_TYPES;
-    n = query_category(prompt, invent, i, &pick_list, PICK_ONE);
+    n = query_category(prompt, youmonst.minvent, i, &pick_list, PICK_ONE);
     if (!n)
         return 0;
     this_type = c = pick_list[0];
@@ -1907,15 +1910,15 @@ dotypeinv(const struct nh_cmd_arg *arg)
     }
 
     if (query_objlist
-        (NULL, invent, USE_INVLET | INVORDER_SORT, &dummy, PICK_NONE,
-         this_type_only) > 0)
+        (NULL, youmonst.minvent, USE_INVLET | INVORDER_SORT, &dummy,
+         PICK_NONE, this_type_only) > 0)
         free(dummy);
     return 0;
 }
 
 /* return a string describing the dungeon feature at <x,y> if there
    is one worth mentioning at that location; otherwise null */
-static const char *
+const char *
 dfeature_at(int x, int y)
 {
     struct rm *loc = &level->locations[x][y];
@@ -1923,7 +1926,7 @@ dfeature_at(int x, int y)
     const char *dfeature = NULL;
 
     if (IS_DOOR(ltyp)) {
-        switch (loc->doormask) {
+        switch (loc->flags) {
         case D_NODOOR:
             cmap = S_ndoor;
             break;      /* "doorway" */
@@ -1954,7 +1957,7 @@ dfeature_at(int x, int y)
         cmap = S_sink;  /* "sink" */
     else if (IS_ALTAR(ltyp))
         dfeature = msgprintf("altar to %s (%s)", a_gname(),
-                             align_str(Amask2align(loc->altarmask & AM_MASK)));
+                             align_str(Amask2align(loc->flags & AM_MASK)));
     else if (x == level->sstairs.sx && y == level->sstairs.sy &&
                level->sstairs.up)
         cmap = S_upsstair;      /* "long ladder up" */
@@ -2143,6 +2146,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
             pline(msgc_cancelled, "You can't reach the floor!");
             return 0;
         }
+        update_obj_memories_at(level, youmonst.mx, youmonst.my);
     }
 
     if (dfeature)
@@ -2172,10 +2176,6 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         if (dfeature)
             pline(msgc_info, "%s", fbuf);
         read_engr_at(youmonst.mx, youmonst.my);
-#ifdef INVISIBLE_OBJECTS
-        if (otmp->oinvis && !See_invisible)
-            verb = "feel";
-#endif
         /* Don't show weight if the player shouldn't know what the weight is. */
         if (show_weight && (objects[otmp->otyp].oc_name_known || otmp->invlet))
             pline(msgc_info, "You %s here %s {%d}.", verb, doname_price(otmp),
@@ -2255,11 +2255,11 @@ feel_cockatrice(struct obj *otmp, boolean force_touch, const char *verbing)
         if (poly_when_stoned(youmonst.data))
             pline(msgc_statusgood,
                   "You touched the %s corpse with your bare %s.",
-                  mons[otmp->corpsenm].mname, makeplural(body_part(HAND)));
+                  opm_name(otmp), makeplural(body_part(HAND)));
         else {
             pline(msgc_fatal_predone,
                   "Touching the %s corpse is a fatal mistake...",
-                  mons[otmp->corpsenm].mname);
+                  opm_name(otmp));
             rv = TRUE;
         }
         instapetrify(killer_msg(STONING,
@@ -2299,16 +2299,28 @@ mergable(struct obj *otmp, struct obj *obj)
     if (obj->oclass == COIN_CLASS)
         return TRUE;
 
-    if (obj->unpaid != otmp->unpaid || obj->spe != otmp->spe ||
+    /* allow stacking different gender spe for neuter mons or mons who
+       have both genders by mistake */
+    int objspe = obj->spe;
+    int otmpspe = otmp->spe;
+    if (corpsenm_is_relevant(obj->otyp)) {
+        if (objspe & OPM_MALE)
+            objspe &= ~OPM_FEMALE;
+        if (otmpspe & OPM_MALE)
+            otmpspe &= ~OPM_FEMALE;
+        if (obj_gender(obj) == 2) {
+            objspe &= ~(OPM_MALE | OPM_FEMALE);
+            otmpspe &= ~(OPM_MALE | OPM_FEMALE);
+        }
+    }
+
+    if (obj->unpaid != otmp->unpaid || objspe != otmpspe ||
         obj->dknown != otmp->dknown || obj->cursed != otmp->cursed ||
         obj->blessed != otmp->blessed || obj->no_charge != otmp->no_charge ||
         obj->obroken != otmp->obroken || obj->otrapped != otmp->otrapped ||
-        obj->lamplit != otmp->lamplit ||
-#ifdef INVISIBLE_OBJECTS
-        obj->oinvis != otmp->oinvis ||
-#endif
-        obj->greased != otmp->greased || obj->oeroded != otmp->oeroded ||
-        obj->oeroded2 != otmp->oeroded2 || obj->to_be_hit != otmp->to_be_hit)
+        obj->lamplit != otmp->lamplit || obj->greased != otmp->greased ||
+        obj->oeroded != otmp->oeroded || obj->oeroded2 != otmp->oeroded2 ||
+        obj->to_be_hit != otmp->to_be_hit)
         return FALSE;
 
     if ((obj->oclass == WEAPON_CLASS || obj->oclass == ARMOR_CLASS) &&
@@ -2367,7 +2379,7 @@ doprgold(const struct nh_cmd_arg *arg)
 
     /* the messages used to refer to "carrying gold", but that didn't take
        containers into account */
-    long umoney = money_cnt(invent);
+    long umoney = money_cnt(youmonst.minvent);
 
     if (!umoney)
         pline(msgc_info, "Your wallet is empty.");
@@ -2476,7 +2488,7 @@ doprtool(const struct nh_cmd_arg *arg)
 
     (void) arg;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (tool_in_use(otmp))
             lets[ct++] = obj_to_let(otmp);
     lets[ct] = '\0';
@@ -2498,7 +2510,7 @@ doprinuse(const struct nh_cmd_arg *arg)
 
     (void) arg;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (is_worn(otmp) || tool_in_use(otmp))
             lets[ct++] = obj_to_let(otmp);
     lets[ct] = '\0';
@@ -2605,7 +2617,7 @@ doorganize(const struct nh_cmd_arg *arg)
 
     /* blank out all the letters currently in use in the inventory */
     /* except those that will be merged with the selected object */
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp != obj && !mergable(otmp, obj)) {
             if (otmp->invlet == '$')
                 continue;       /* can't adjust to or from $ (gold) */
@@ -2646,31 +2658,49 @@ doorganize(const struct nh_cmd_arg *arg)
     if (let == obj->invlet) {
         otmp = obj;
     } else {
-        for (otmp = invent; otmp && (otmp == obj || otmp->invlet != let);
-             otmp = otmp->nobj) {}
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
+            if (otmp->invlet == let)
+                break;
     }
 
     if (!otmp)
         adj_type = "Moving:";
     else if (otmp == obj) {
+        /* Figure out if we're merging or splitting */
+        boolean merging = FALSE;
         adj_type = "Merging:";
-        for (otmp = invent; otmp; otmp = otmp->nobj) {
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
             if (obj != otmp && mergable(otmp, obj)) {
-                extract_nobj(obj, &invent, &turnstate.floating_objects,
-                             OBJ_FREE);
+                merging = TRUE;
+                extract_nobj(obj, &youmonst.minvent,
+                             &turnstate.floating_objects, OBJ_FREE);
                 merged(&otmp, &obj);
                 obj = otmp;
             }
         }
+
+        if (!merging && obj->quan > 1) {
+            /* Try splitting the object */
+            otmp = splitobj(obj, obj->quan - 1);
+            assigninvlet(otmp);
+            if (otmp->invlet == NOINVSYM) {
+                merged(&obj, &otmp);
+                otmp = obj;
+                pline(msgc_cancelled, "There's nowhere to put that.");
+                goto cleansplit;
+            } else
+                adj_type = "Splitting";
+        }
     } else if (mergable(otmp, obj)) {
         adj_type = "Merging:";
-        extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
+        extract_nobj(obj, &youmonst.minvent, &turnstate.floating_objects,
+                     OBJ_FREE);
         merged(&otmp, &obj);
         obj = otmp;
     } else {
         struct obj *otmp2;
 
-        for (otmp2 = invent;
+        for (otmp2 = youmonst.minvent;
              otmp2 && (otmp2 == obj || otmp2->invlet != obj->invlet);
              otmp2 = otmp2->nobj) {}
 
@@ -2695,9 +2725,11 @@ doorganize(const struct nh_cmd_arg *arg)
     /* inline addinv (assuming !merged) */
     /* don't use freeinv/addinv to avoid double-touching artifacts, dousing
        lamps, losing luck, cursing loadstone, etc. */
-    extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
+    extract_nobj(obj, &youmonst.minvent, &turnstate.floating_objects,
+                 OBJ_FREE);
     obj->invlet = let;
-    extract_nobj(obj, &turnstate.floating_objects, &invent, OBJ_INVENT);
+    extract_nobj(obj, &turnstate.floating_objects,
+                 &youmonst.minvent, OBJ_INVENT);
     reorder_invent();
 
     prinv(adj_type, obj, 0L);
@@ -2707,7 +2739,7 @@ doorganize(const struct nh_cmd_arg *arg)
     return 0;
 
 cleansplit:
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp != obj && otmp->invlet == obj->invlet)
             merged(&otmp, &obj);
 
@@ -2783,34 +2815,6 @@ display_minventory(struct monst *mon, int dflags, const char *title)
         free(selected);
     } else
         ret = NULL;
-    return ret;
-}
-
-/*
- * Display the contents of a container in inventory style.
- * Currently, this is only used for statues, via wand of probing.
- */
-struct obj *
-display_cinventory(struct obj *obj)
-{
-    struct obj *ret = NULL;
-    const char *qbuf = msgprintf("Contents of %s:", doname(obj));
-    int n;
-    struct object_pick *selected = 0;
-
-    if (obj->cobj) {
-        n = query_objlist(qbuf, obj->cobj, INVORDER_SORT, &selected,
-                          PICK_NONE, allow_all);
-    } else {
-        invdisp_nothing(qbuf, "(empty)");
-        n = 0;
-    }
-
-    if (n > 0) {
-        ret = selected[0].obj;
-        free(selected);
-    }
-
     return ret;
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,7 +47,6 @@ static int artifact_score(struct obj *, boolean, struct nh_menulist *);
 static void savelife(int);
 static boolean check_survival(int how);
 static boolean should_query_disclose_options(char *defquery);
-static void container_contents(struct obj *, boolean, boolean);
 
 #define done_stopprint program_state.stopprint
 
@@ -308,7 +307,7 @@ disclose(int how, boolean taken, long umoney)
     const char *qbuf;
     boolean ask = should_query_disclose_options(&defquery);
 
-    if (invent) {
+    if (youmonst.minvent) {
         if (taken)
             qbuf = msgprintf("Do you want to see what you had when you %s?",
                              (how == QUIT) ? "quit" : "died");
@@ -325,14 +324,15 @@ disclose(int how, boolean taken, long umoney)
             if (c == 'y') {
                 struct obj *obj;
 
-                for (obj = invent; obj; obj = obj->nobj) {
+                for (obj = youmonst.minvent; obj;
+                     obj = obj->nobj) {
                     discover_object(obj->otyp, TRUE, FALSE, TRUE);
                     obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
                     if (obj->oprops)
                         learn_oprop(obj, obj_properties(obj));
                 }
                 display_inventory(NULL, FALSE);
-                container_contents(invent, TRUE, TRUE);
+                container_contents(youmonst.minvent, TRUE, TRUE, FALSE);
             }
             if (c == 'q')
                 done_stopprint++;
@@ -384,12 +384,12 @@ dump_disclose(int how)
 
     /* re-"display" all the disclosure menus */
     /* make sure the inventory is fully identified, even if DYWYPI = n */
-    for (obj = invent; obj; obj = obj->nobj) {
+    for (obj = youmonst.minvent; obj; obj = obj->nobj) {
         discover_object(obj->otyp, TRUE, FALSE, TRUE);
         obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
     }
     display_inventory(NULL, TRUE);
-    container_contents(invent, TRUE, TRUE);
+    container_contents(youmonst.minvent, TRUE, TRUE, FALSE);
     dump_spells();
     dump_skills();
     enlighten_mon(&youmonst, how > LAST_KILLER ? 1 : 2, 1);     /* final */
@@ -398,7 +398,7 @@ dump_disclose(int how)
     show_conduct(how > LAST_KILLER ? 1 : 2);
     dooverview(&(struct nh_cmd_arg){.argtype = 0});
     dohistory(&(struct nh_cmd_arg){.argtype = 0});
-    calc_score(how, TRUE, money_cnt(invent) + hidden_gold());
+    calc_score(how, TRUE, money_cnt(youmonst.minvent) + hidden_gold());
 
     /* make menus work normally again */
     dump_catch_menus(FALSE);
@@ -415,6 +415,7 @@ savelife(int how)
     turnstate.force_more_pending_until_done = FALSE;
     u.uswldtim = 0;
     u.uhp = u.uhpmax;
+    u.mh = u.mhmax;
     if (u.uhunger < 500) {
         u.uhunger = 500;
         newuhs(FALSE);
@@ -645,7 +646,7 @@ calc_score(int how, boolean show, long umoney)
             for (i = 0; i < val->size; i++) {
                 val->list[i].count = 0L;
             }
-        get_valuables(invent);
+        get_valuables(youmonst.minvent);
         for (val = valuables; val->list; val++)
             for (i = 0; i < val->size; i++)
                 if (val->list[i].count != 0L)
@@ -669,7 +670,7 @@ calc_score(int how, boolean show, long umoney)
     }
 
     /* Artifacts. */
-    category_raw = artifact_score(invent, TRUE, 0);
+    category_raw = artifact_score(youmonst.minvent, TRUE, 0);
     category_points = ilog2(category_raw + 1);
     total += category_points;
 
@@ -765,15 +766,16 @@ check_survival(int how)
         u.umortality++;
         if (Lifesaved) {
             pline(msgc_statusheal, "But wait...");
-            makeknown(AMULET_OF_LIFE_SAVING);
             pline_implied(msgc_statusheal, "Your medallion %s!",
                           !Blind ? "begins to glow" : "feels warm");
             if (how == CHOKING)
                 pline_implied(msgc_statusheal, "You vomit ...");
             pline_implied(msgc_statusheal, "You feel much better!");
             pline_implied(msgc_itemloss, "The medallion crumbles to dust!");
-            if (uamul)
+            if (uamul) {
+                tell_discovery(uamul);
                 useup(uamul);
+            }
 
             adjattrib(A_CON, -1, TRUE);
             if (u.uhpmax <= 0)
@@ -857,7 +859,7 @@ display_rip(int how, long umoney, const char *killer)
                          u.urexp, plur(u.urexp));
         add_menutext(&menu, pbuf);
 
-        artifact_score(invent, FALSE, &menu);       /* list artifacts */
+        artifact_score(youmonst.minvent, FALSE, &menu); /* list artifacts */
 
         /* list valuables here */
         for (val = valuables; val->list; val++) {
@@ -919,8 +921,8 @@ display_rip(int how, long umoney, const char *killer)
                      youmonst.m_lev, u.uhpmax, plur(u.uhpmax), ends[how]);
     add_menutext(&menu, pbuf);
     add_menutext(&menu, "");
-    
-    outrip(&menu, how <= LAST_KILLER && flags.tombstone, 
+
+    outrip(&menu, how <= LAST_KILLER && flags.tombstone,
            u.uplname, umoney, killer, how, getyear());
 }
 
@@ -929,6 +931,9 @@ done(int how, const char *killer)
 {
     if (check_survival(how))
         return;
+
+    if (program_state.followmode == FM_REPLAY)
+        replay_done_noreturn();
 
     done_noreturn(how, killer);
 }
@@ -961,7 +966,7 @@ done_noreturn(int how, const char *killer)
 
     if (turnstate.force_more_pending_until_done)
         win_pause_output(P_MESSAGE);
-    
+
     /* Sometimes you die on the first move.  Life's not fair. On those rare
        occasions you get hosed immediately, go out smiling... :-) -3. */
     if (moves <= 1 && how <= LAST_KILLER)   /* You die... --More-- */
@@ -993,9 +998,7 @@ done_noreturn(int how, const char *killer)
             if (!Upolyd && !is_human(youmonst.data)) {
                 /* Base corpse on race when not poly'd since original u.umonnum 
                    is based on role, and all role monsters are human. */
-                mnum = (u.ufemale &&
-                        urace.femalenum !=
-                        NON_PM) ? urace.femalenum : urace.malenum;
+                mnum = urace.num;
             }
             corpse = mk_named_object(CORPSE, &mons[mnum], youmonst.mx, youmonst.my,
                                      u.uplname);
@@ -1025,10 +1028,11 @@ done_noreturn(int how, const char *killer)
     clearpriests();
 
     if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT)
-        disclose(how, taken, money_cnt(invent) + hidden_gold());
+        disclose(how, taken,
+                 money_cnt(youmonst.minvent) + hidden_gold());
 
     /* calculate score, before creating bones [container gold] */
-    umoney = money_cnt(invent) + hidden_gold();
+    umoney = money_cnt(youmonst.minvent) + hidden_gold();
     u.urexp = calc_score(how, FALSE, umoney);
 
     const char *dumpname = begin_dump(how);
@@ -1053,8 +1057,9 @@ done_noreturn(int how, const char *killer)
 }
 
 
-static void
-container_contents(struct obj *list, boolean identified, boolean all_containers)
+void
+container_contents(struct obj *list, boolean identified,
+                   boolean all_containers, boolean ingame)
 {
     struct obj *box, *obj;
     int i, icount;
@@ -1062,11 +1067,19 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
 
     for (box = list; box; box = box->nobj) {
         if (Is_container(box) || box->otyp == STATUE) {
-            if (box->otyp == BAG_OF_TRICKS) {
+            if (box->otyp == BAG_OF_TRICKS)
                 continue;       /* wrong type of container */
-            } else if (box->cobj) {
-                /* count contained objects */
 
+            boolean quantum_cat = FALSE;
+
+            if ((box->spe == 1) && (box->otyp != STATUE) &&
+                ingame) {
+                observe_quantum_cat(box);
+                quantum_cat = TRUE;
+            }
+
+            if (box->cobj) {
+                /* count contained objects */
                 icount = 0;
                 for (obj = box->cobj; obj; obj = obj->nobj)
                     icount++;
@@ -1100,10 +1113,11 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                                 PICK_NONE, PLHINT_CONTAINER, NULL);
 
                 if (all_containers)
-                    container_contents(box->cobj, identified, TRUE);
+                    container_contents(box->cobj, identified, TRUE, FALSE);
 
-            } else if (!done_stopprint) {
-                pline(msgc_info, "%s empty.", Tobjnam(box, "are"));
+            } else if (ingame || !done_stopprint) {
+                pline(msgc_info, "%s %sempty.", Tobjnam(box, "are"),
+                      quantum_cat ? "now " : "");
                 win_pause_output(P_MESSAGE);
             }
         }
@@ -1271,12 +1285,14 @@ void
 list_genocided(char defquery, boolean ask)
 {
     int i;
-    int ngenocided, nextincted;
+    int ngenocided, ungenocided, mngenocided, nextincted;
     char c;
     const char *query, *title, *buf;
     struct nh_menulist menu;
 
     ngenocided = num_genocides();
+    ungenocided = u.uconduct[conduct_genocide];
+    mngenocided = ngenocided - ungenocided;
     nextincted = num_extinctions();
 
     /* genocided species list */
@@ -1306,6 +1322,9 @@ list_genocided(char defquery, boolean ask)
 
             add_menutext(&menu, "");
             buf = msgprintf("%d species genocided.", ngenocided);
+            if (mngenocided)
+                buf = msgprintf("%d species genocided by you, %d by monsters",
+                                ungenocided, mngenocided);
             if (ngenocided)
                 add_menutext(&menu, buf);
             buf = msgprintf("%d species extinct.", nextincted);

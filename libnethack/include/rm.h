@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -130,9 +130,9 @@ enum dungeon_symbols {
     S_pool,
     S_air,
     S_cloud,
-/*20*/ S_water,
+    S_water,
     S_ice,
-    S_lava,
+/*20*/ S_lava,
     S_ndoor,
 
     S_vodoor,
@@ -141,17 +141,22 @@ enum dungeon_symbols {
     S_hcdoor,   /* closed door, horizontal wall */
     S_bars,     /* KMH -- iron bars */
     S_tree,     /* KMH */
-/*30*/ S_upstair,
-    S_dnstair,
+    S_upstair,
+/*30*/ S_dnstair,
     S_upladder,
     S_dnladder,
     S_upsstair,
     S_dnsstair,
     S_altar,
+    S_laltar,
+    S_naltar,
+    S_caltar,
+    S_ualtar,
+/*40*/ S_aaltar, /* Non-specific Astral altar */
     S_grave,
     S_throne,
     S_sink,
-/*40*/ S_fountain,
+     S_fountain,
     S_vodbridge,
     S_hodbridge,
     S_vcdbridge,        /* closed drawbridge, vertical wall */
@@ -161,17 +166,17 @@ enum dungeon_symbols {
 
     /* values used only in saving, to squeeze a bit more info into the memflags 
        dword */
-    S_vodoor_meml = S_cmap_COUNT,
+/*50*/ S_vodoor_meml = S_cmap_COUNT,
     S_vodoor_memt,
     S_vodoor_memlt,
     S_hodoor_meml,
     S_hodoor_memt,
-/*50*/ S_hodoor_memlt,
+    S_hodoor_memlt,
     S_vcdoor_meml,
     S_vcdoor_memt,
     S_vcdoor_memlt,
     S_hcdoor_meml,
-    S_hcdoor_memt,
+/*60*/ S_hcdoor_memt,
     S_hcdoor_memlt,
 
     MAXPCHARS,  /* maximum number of mapped characters */
@@ -251,12 +256,12 @@ enum dungeon_symbols {
  */
 # define F_LOOTED       1
 # define F_WARNED       2
-# define FOUNTAIN_IS_WARNED(x,y)     (level->locations[x][y].looted & F_WARNED)
-# define FOUNTAIN_IS_LOOTED(x,y)     (level->locations[x][y].looted & F_LOOTED)
-# define SET_FOUNTAIN_WARNED(x,y)    level->locations[x][y].looted |= F_WARNED;
-# define SET_FOUNTAIN_LOOTED(x,y)    level->locations[x][y].looted |= F_LOOTED;
-# define CLEAR_FOUNTAIN_WARNED(x,y)  level->locations[x][y].looted &= ~F_WARNED;
-# define CLEAR_FOUNTAIN_LOOTED(x,y)  level->locations[x][y].looted &= ~F_LOOTED;
+# define FOUNTAIN_IS_WARNED(x,y)     (level->locations[x][y].flags & F_WARNED)
+# define FOUNTAIN_IS_LOOTED(x,y)     (level->locations[x][y].flags & F_LOOTED)
+# define SET_FOUNTAIN_WARNED(x,y)    level->locations[x][y].flags |= F_WARNED;
+# define SET_FOUNTAIN_LOOTED(x,y)    level->locations[x][y].flags |= F_LOOTED;
+# define CLEAR_FOUNTAIN_WARNED(x,y)  level->locations[x][y].flags &= ~F_WARNED;
+# define CLEAR_FOUNTAIN_LOOTED(x,y)  level->locations[x][y].flags &= ~F_LOOTED;
 
 /*
  * Doors are even worse :-) The special warning has a side effect
@@ -335,7 +340,7 @@ struct rm {
     unsigned pile:1;            /* is an object pile */
 
     /* these values only have meaning if mem_bg is some sort of door, and are
-       saved in mem_bg not in their own bits; they record what the player knows 
+       saved in mem_bg not in their own bits; they record what the player knows
        about a door's locked/trapped status, not whether they think it /is/
        locked/trapped */
     unsigned mem_door_l:1;      /* player knows whether door is locked */
@@ -421,16 +426,6 @@ struct rm {
 # define SV7 0x80
 # define SVALL 0xFF
 
-
-
-# define doormask       flags
-# define altarmask      flags
-# define wall_info      flags
-# define ladder         flags
-# define drawbridgemask flags
-# define looted         flags
-# define icedpool       flags
-
 # define blessedftn     horizontal      /* a fountain that grants attribs */
 # define disturbed      horizontal      /* a grave that has been disturbed */
 
@@ -455,7 +450,6 @@ struct levelflags {
     unsigned vault_known:1;
 
     unsigned arboreal:1;        /* Trees replace rock */
-    unsigned forgotten:1;       /* previously visited but forgotten (amnesia) */
 };
 
 /* worm segment structure */
@@ -470,9 +464,11 @@ struct level {
     char levname[64];   /* as given by the player via donamelevel */
     struct rm locations[COLNO][ROWNO];
     struct obj *objects[COLNO][ROWNO];
+    struct obj *memobjects[COLNO][ROWNO];
     struct monst *monsters[COLNO][ROWNO];
     struct monst *dmonsters[COLNO][ROWNO]; /* displacement */
     struct obj *objlist;
+    struct obj *memobjlist;
     struct obj *buriedobjlist;
     struct obj *billobjs;       /* objects not yet paid for */
     struct monst *monlist;

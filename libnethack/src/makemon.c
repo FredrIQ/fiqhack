@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,6 +20,7 @@ static void m_initgrp(struct monst *, struct level *lev, int, int, int, int);
 static void m_initthrow(struct monst *, int, int, enum rng);
 static void m_initweap(struct level *lev, struct monst *, enum rng);
 static void m_initinv(struct monst *, enum rng);
+static void assign_skills(struct monst *, int);
 static void assign_spells(struct monst *, enum rng);
 
 struct monst zeromonst; /* only address matters, value is irrelevant */
@@ -255,9 +256,20 @@ m_initweap(struct level *lev, struct monst *mtmp, enum rng rng)
             otmp = mksobj(lev, LONG_SWORD, FALSE, FALSE, rng);
 
             /* maybe make it special */
-            if (!rn2_on_rng(20, rng) || is_lord(ptr))
-                otmp = oname(otmp, artiname(rn2_on_rng(2, rng) ?
-                                            ART_DEMONBANE : ART_SUNSWORD));
+            if (!otmp->oartifact &&
+                (!rn2_on_rng(20, rng) || is_lord(ptr))) {
+                int arti_res = rn2_on_rng(2, rng);
+                /* Demonbane is now a silver saber. */
+                if (!arti_res)
+                    otmp->otyp = SILVER_SABER;
+                otmp = oname(otmp, artiname(arti_res ? ART_SUNSWORD :
+                                            ART_DEMONBANE));
+                /* Revert it to a long sword if we didn't create
+                   an artifact. */
+                if (!otmp->oartifact)
+                    otmp->otyp = LONG_SWORD;
+                otmp->owt = weight(otmp);
+            }
             bless(otmp);
             otmp->oerodeproof = TRUE;
             spe2 = rn2_on_rng(4, rng);
@@ -759,6 +771,7 @@ clone_mon(struct monst *mon, xchar x, xchar y)
 
     m2->minvent = NULL; /* objects don't clone */
     m2->mextra = NULL; /* created later if necessary */
+    mx_ecache_new(m2);
     m2->mleashed = FALSE;
     /* Max HP the same, but current HP halved for both.  The caller might want
        to override this by halving the max HP also. When current HP is odd, the
@@ -823,10 +836,9 @@ propagate(int mndx, boolean tally, boolean ghostly)
     if (mvitals[mndx].born < 255 && tally && (!ghostly || (ghostly && result)))
         mvitals[mndx].born++;
     if ((int)mvitals[mndx].born >= lim && !(mons[mndx].geno & G_NOGEN) &&
-        !(mvitals[mndx].mvflags & G_EXTINCT)) {
+        !(mvitals[mndx].mvflags & G_EXTINCT))
         mvitals[mndx].mvflags |= G_EXTINCT;
-        reset_rndmonst(mndx);
-    }
+
     return result;
 }
 
@@ -935,9 +947,15 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     else if (mndx == quest_info(MS_NEMESIS))
         ptr = &pm_nemesis;
 
+    if (is_mplayer(ptr) && !(mmflags & MM_PLAYERMONST))
+        return mk_mplayer(ptr, lev, x, y,
+                          !!(In_endgame(&(lev->z)) || In_hell(&(lev->z))),
+                          stats_rng, mmflags);
+
     propagate(mndx, countbirth, FALSE);
 
     mtmp = newmonst();
+    mx_ecache_new(mtmp);
     if (mmflags & MM_EDOG)
         mx_edog_new(mtmp);
     else if (mmflags & MM_EMIN)
@@ -1143,6 +1161,8 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         }
     }
 
+    assign_skills(mtmp, 0);
+
     mtmp->mspells = 0;
     assign_spells(mtmp, stats_rng);
 
@@ -1209,6 +1229,30 @@ create_critters(int cnt, const struct permonst *mptr, int x, int y)
     return known;
 }
 
+/* Assign skills based on the permonst. start is used if we're appending new
+   skills for a monster. */
+static void
+assign_skills(struct monst *mon, int start)
+{
+    int i;
+    for (i = start; i < P_NUM_SKILLS; i++) {
+        MP_SKILL(mon, i) = P_ISRESTRICTED;
+        MP_MAX_SKILL(mon, i) = mprof(mon->data, i);
+        if (MP_MAX_SKILL(mon, i) == P_UNSKILLED)
+            MP_MAX_SKILL(mon, i) = P_ISRESTRICTED;
+        MP_ADVANCE(mon, i) = 0;
+
+        if (mon != &youmonst)
+            MP_SKILL(mon, i) = mprof(mon->data, i);
+        else if (MP_MAX_SKILL(mon, i) != P_ISRESTRICTED)
+            MP_SKILL(mon, i) = P_UNSKILLED; /* good enough */
+
+        if (MP_SKILL(mon, i) != P_ISRESTRICTED)
+            MP_ADVANCE(mon, i) =
+                practice_needed_to_advance(MP_SKILL(mon, i) - 1);
+    }
+}
+
 /* Assign spells based on proficiencies */
 static void
 assign_spells(struct monst *mon, enum rng rng)
@@ -1255,7 +1299,7 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_TURN_UNDEAD);
         if (monsndx(mon->data) != PM_ALIGNED_PRIEST) {
             mon_addspell(mon, SPE_SUMMON_NASTY);
-            mon_addspell(mon, SPE_HASTE_SELF);
+            mon_addspell(mon, SPE_SPEED_MONSTER);
             mon_addspell(mon, SPE_INVISIBILITY);
         }
         return;
@@ -1288,7 +1332,7 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_PROTECTION);
         mon_addspell(mon, SPE_CREATE_MONSTER);
         mon_addspell(mon, SPE_JUMPING);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         mon_addspell(mon, SPE_INVISIBILITY);
         mon_addspell(mon, SPE_TELEPORT_AWAY);
         mon_addspell(mon, SPE_PHASE);
@@ -1300,7 +1344,7 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_EXTRA_HEALING);
         mon_addspell(mon, SPE_SLOW_MONSTER);
         mon_addspell(mon, SPE_CREATE_MONSTER);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         return;
     case PM_MINION_OF_HUHETOTL:
         mon_addspell(mon, SPE_HEALING);
@@ -1321,32 +1365,32 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_PROTECTION);
         mon_addspell(mon, SPE_TURN_UNDEAD);
         mon_addspell(mon, SPE_SUMMON_NASTY);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         mon_addspell(mon, SPE_INVISIBILITY);
         mon_addspell(mon, SPE_CANCELLATION);
         return;
     case PM_CHROMATIC_DRAGON:
         mon_addspell(mon, SPE_HEALING);
         mon_addspell(mon, SPE_SLOW_MONSTER);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         return;
     case PM_IXOTH:
         mon_addspell(mon, SPE_DETECT_MONSTERS);
         mon_addspell(mon, SPE_PROTECTION);
         mon_addspell(mon, SPE_SUMMON_NASTY);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         return;
     case PM_MASTER_KAEN:
         mon_addspell(mon, SPE_HEALING);
         mon_addspell(mon, SPE_DETECT_MONSTERS);
         mon_addspell(mon, SPE_SLOW_MONSTER);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         mon_addspell(mon, SPE_PHASE);
         return;
     case PM_NALZOK:
         mon_addspell(mon, SPE_HEALING);
         mon_addspell(mon, SPE_PROTECTION);
-        mon_addspell(mon, SPE_HASTE_SELF);
+        mon_addspell(mon, SPE_SPEED_MONSTER);
         mon_addspell(mon, SPE_PHASE);
         return;
     default:
@@ -1355,7 +1399,7 @@ assign_spells(struct monst *mon, enum rng rng)
 
     /* Failsafe: if the monster has at least Basic in attack school,
        give force bolt for free */
-    if (mprof(mon, MP_SATTK) >= P_BASIC)
+    if (MP_SKILL(mon, P_ATTACK_SPELL) >= P_BASIC)
         mon_addspell(mon, SPE_FORCE_BOLT);
 
     /*
@@ -1380,7 +1424,7 @@ assign_spells(struct monst *mon, enum rng rng)
     while (i-- > 0) {
         /* FIXME: make first_spell/etc... */
         spell = rn1(SPE_BLANK_PAPER - SPE_DIG, SPE_DIG);
-        addspell_prob = mprof(mon, mspell_skilltype(spell));
+        addspell_prob = MP_SKILL(mon, spell_skilltype(spell));
         addspell_prob *= 3;
         addspell_prob -= objects[spell].oc_level;
         if (rn2_on_rng(6, rng) <= addspell_prob) {
@@ -1418,36 +1462,6 @@ align_shift(const d_level *dlev, const struct permonst *ptr)
         break;
     }
     return alshift;
-}
-
-
-/* SAVEBREAK (4.3-beta1 -> 4.3-beta2): just get rid of these */
-
-/* called when you change level (experience or dungeon depth) or when
-   monster species can no longer be created (genocide or extinction) */
-/* mndx: particular species that can no longer be created */
-void
-reset_rndmonst(int mndx)
-{
-    /* rndmonst_state no longer exists */
-    (void) mndx;
-}
-void
-save_rndmonst_state(struct memfile *mf)
-{
-    mtag(mf, 0, MTAG_RNDMONST);
-    int i = 4 + SPECIAL_PM;
-
-    while (i--)
-        mwrite8(mf, 0);
-}
-void
-restore_rndmonst_state(struct memfile *mf)
-{
-    int i = 4 + SPECIAL_PM;
-
-    while (i--)
-        mread8(mf);
 }
 
 /* Select a random monster type.
@@ -1519,7 +1533,7 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
             ptr = NULL;                                /* wrong monster class */
         if (ptr && geno & (G_NOGEN | G_UNIQ))
             ptr = NULL;              /* monsters that don't randomly generate */
-        if (is_mplayer(ptr) && rn2_on_rng(20, rng))
+        if (is_mplayer(ptr) && rn2_on_rng(2, rng))
             ptr = NULL;            /* player monsters are extra rare */
         if (ptr && rogue && !class && !isupper(def_monsyms[(int)(ptr->mlet)]))
             ptr = NULL;            /* lowercase or punctuation on Rogue level */
@@ -2033,8 +2047,9 @@ bagotricks(struct obj *bag)
         bag->known = 1;
     } else {
         consume_obj_charge(bag, TRUE);
-        if (create_critters(!rn2(23) ? rn1(7, 2) : 1, NULL, youmonst.mx, youmonst.my))
-            makeknown(BAG_OF_TRICKS);
+        if (create_critters(!rn2(23) ? rn1(7, 2) : 1, NULL,
+                            youmonst.mx, youmonst.my))
+            tell_discovery(bag);
     }
 }
 
@@ -2071,6 +2086,7 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         mon->dlevel = l;
     } else
         mon = mtmp;
+    mx_ecache_new(mon);
 
     idx = mread32(mf);
     switch (idx) {
@@ -2093,6 +2109,7 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         mon->data = NULL;
         break;
     default:
+        idx += pm_offset(idx);
         if (LOW_PM <= idx && idx < NUMMONS)
             mon->data = &mons[idx];
         else
@@ -2115,6 +2132,7 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     mon->xlocale = mread8(mf);
     mon->ylocale = mread8(mf);
     mon->orig_mnum = mread16(mf);
+    mon->orig_mnum += pm_offset(mon->orig_mnum);
     mon->mx = mread8(mf);
     mon->my = mread8(mf);
     mon->dx = mread8(mf);
@@ -2128,7 +2146,8 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
     mon->m_ap_type = mread8(mf);
     mon->mfrozen = mread8(mf);
     mon->mappearance = mread32(mf);
-    
+    if (mon->m_ap_type == M_AP_MONSTER)
+        mon->mappearance += pm_offset(mon->mappearance);
 
     mon->mfleetim = save_decode_8(mread8(mf), -moves, l ? -l->lastmoves : 0);
     mon->weapon_check = mread8(mf);
@@ -2168,12 +2187,23 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         mon->mstuck = mread32(mf);
         mon->pw = mread32(mf);
         mon->pwmax = mread32(mf);
+
+        int skill_amount = mread8(mf);
+        for (i = 0; i < skill_amount; i++) {
+            MP_SKILL(mon, i) = mread8(mf);
+            MP_MAX_SKILL(mon, i) = mread8(mf);
+            MP_ADVANCE(mon, i) = mread16(mf);
+        }
+
+        if (skill_amount < P_NUM_SKILLS && mon->data)
+            assign_skills(mon, skill_amount);
+
         mon->confhits = mread8(mf);
         mon->m_levmax = mread8(mf);
         mon->exp = mread32(mf);
 
         /* Some reserved space for further expansion */
-        for (i = 0; i < 180; i++)
+        for (i = 0; i < 179; i++)
             (void) mread8(mf);
     }
 
@@ -2343,6 +2373,7 @@ save_mon(struct memfile *mf, struct monst *mon, const struct level *l)
         muy = ROWNO;
     }
 
+    int i;
     int idx;
     unsigned int mflags;
 
@@ -2467,12 +2498,18 @@ save_mon(struct memfile *mf, struct monst *mon, const struct level *l)
     mwrite32(mf, mon->mstuck);
     mwrite32(mf, mon->pw);
     mwrite32(mf, mon->pwmax);
+    mwrite8(mf, P_NUM_SKILLS);
+
+    for (i = 0; i < P_NUM_SKILLS; i++) {
+        mwrite8(mf, MP_SKILL(mon, i));
+        mwrite8(mf, MP_MAX_SKILL(mon, i));
+        mwrite16(mf, MP_ADVANCE(mon, i));
+    }
     mwrite8(mf, mon->confhits);
     mwrite8(mf, mon->m_levmax);
     mwrite32(mf, mon->exp);
 
-    int i;
-    for (i = 0; i < 180; i++)
+    for (i = 0; i < 179; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */

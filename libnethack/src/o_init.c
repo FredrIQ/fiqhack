@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,7 +14,10 @@ static boolean interesting_to_discover(int);
 boolean
 is_new_object(int otyp)
 {
-    if (otyp == POT_WONDER && flags.save_revision < 4)
+    if (flags.save_revision == SAVE_REVISION)
+        return FALSE;
+
+    if (otyp == 290 /* POT_WONDER */ && flags.save_revision < 4)
         return TRUE;
     return FALSE;
 }
@@ -22,8 +25,11 @@ is_new_object(int otyp)
 int
 otyp_offset(int otyp)
 {
+    if (flags.save_revision == SAVE_REVISION)
+        return 0;
+
     int ret = 0;
-    if (otyp >= POT_WONDER && flags.save_revision < 4)
+    if (otyp >= 290 /* POT_WONDER */ && flags.save_revision < 4)
         ret++;
     return ret;
 }
@@ -80,7 +86,7 @@ shuffle(int o_low, int o_high, boolean domaterial)
 void
 init_objects(void)
 {
-    int i, first, last, sum;
+    int i, first, last;
     char oclass;
 
     /* initialize object descriptions */
@@ -362,6 +368,23 @@ restnames(struct memfile *mf)
             add_new_object(i);
 }
 
+/* Marks object as known and announces the discovery, unless it was already
+   known. */
+void
+tell_discovery(struct obj *obj)
+{
+    if (objects[obj->otyp].oc_name_known)
+        return;
+
+    makeknown(obj->otyp);
+
+    /* Temporary mark as dknown so we can announce it properly. */
+    boolean save_dknown = obj->dknown;
+    obj->dknown = TRUE;
+    pline(msgc_info, "%s must be %s.", is_plural(obj) ? "They" : "It",
+          doname(obj));
+    obj->dknown = save_dknown;
+}
 
 void
 discover_object(int oindx, boolean mark_as_known, boolean credit_hero,

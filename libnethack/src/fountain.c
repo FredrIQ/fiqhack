@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -262,7 +262,7 @@ dryup(xchar x, xchar y, boolean isyou)
 
         /* replace the fountain with ordinary floor */
         level->locations[x][y].typ = ROOM;
-        level->locations[x][y].looted = 0;
+        level->locations[x][y].flags = 0;
         level->locations[x][y].blessedftn = 0;
         if (cansee(x, y))
             pline(msgc_consequence, "The fountain dries up!");
@@ -376,7 +376,7 @@ drinkfountain(struct monst *mon)
         /* note: must match dipfountain() so that wishes and the like line up
            between dippers and quaffers */
         switch (fate) {
-        case 16:       /* Curse items */ 
+        case 16:       /* Curse items */
         {
             struct obj *obj;
 
@@ -386,7 +386,7 @@ drinkfountain(struct monst *mon)
                 morehungry(rn1(20, 11));
                 exercise(A_CON, FALSE);
             }
-            for (obj = m_minvent(mon); obj; obj = obj->nobj)
+            for (obj = mon->minvent; obj; obj = obj->nobj)
                 if (!rn2(5))
                     curse(obj);
             break;
@@ -464,32 +464,34 @@ drinkfountain(struct monst *mon)
             dogushforth(mon, TRUE);
             break;
         case 26:       /* Poisonous; strange tingling in dipfountain */
-            /* avoid this message if we are about to print another one to avoid msgspam */
-            if (!resists_poison(mon) || (!you && vis))
-                pline(you ? msgc_intrloss : msgc_monneutral,
-                      "The water is contaminated!");
-            int dmg = resists_poison(mon) ? rnd(4) : rn1(4, 3);
-            if (resists_poison(mon)) {
-                if (you)
-                    pline(msgc_nonmonbad,
-                          "Is this water runoff from the nearby %s farm?",
-                          fruitname(FALSE));
-                if (you)
-                    losehp(dmg, killer_msg(DIED, "an unrefrigerated sip of juice"));
-                else {
-                    mon->mhp -= dmg;
-                    if (mon->mhp <= 0)
-                        mondied(mon);
-                }
+            if (immune_to_poison(mon)) {
+                /* change from 3.4.3: removed the "is contaminated" message in
+                   the case where you resist it, to reduce message spam and to
+                   make the message channeling more consistent */
+                bpline(you, immune_to_poison(&youmonst) ? msgc_playerimmune :
+                       msgc_nonmonbad,
+                       "Is this water runoff from the nearby %s farm?",
+                       fruitname(FALSE));
                 break;
             }
+
+            if (you)
+                pline(msgc_intrloss, "The water is contaminated!");
+
+            int dmg = resists_poison(mon) ? rnd(4) : rnd(10);
+            if (!resists_poison(mon)) {
+                if (you)
+                    losestr(rn1(4, 3), DIED,
+                            killer_msg(DIED, "contaminated water"), NULL);
+                else
+                    mon->mhp -= dice(rn1(4, 3), 8); /* check death below */
+            }
+
             if (you) {
-                losestr(dmg, DIED, killer_msg(DIED, "contaminated water"), NULL);
-                losehp(rnd(10), killer_msg(DIED, "contaminated water"));
+                losehp(dmg, killer_msg(DIED, "contaminated water"));
                 exercise(A_CON, FALSE);
             } else {
-                mon->mhp -= dice(dmg, 8);
-                mon->mhp -= rnd(10); /* and the 1-10 additional HP like players... */
+                mon->mhp -= dmg;
                 if (mon->mhp <= 0)
                     mondied(mon);
             }
@@ -517,7 +519,7 @@ drinkfountain(struct monst *mon)
 void
 dipfountain(struct obj *obj)
 {
-    if (Levitation) {
+    if (levitates(&youmonst)) {
         floating_above("fountain");
         return;
     }
@@ -554,18 +556,17 @@ dipfountain(struct obj *obj)
         }
         update_inventory();
         level->locations[youmonst.mx][youmonst.my].typ = ROOM;
-        level->locations[youmonst.mx][youmonst.my].looted = 0;
+        level->locations[youmonst.mx][youmonst.my].flags = 0;
         newsym(youmonst.mx, youmonst.my);
         if (in_town(youmonst.mx, youmonst.my))
             angry_guards(FALSE);
         return;
-    } else if (water_damage(obj, NULL, TRUE) >= 2 && !rn2(2))
-        return;
-
-    /* Acid and water don't mix */
-    if (obj->otyp == POT_ACID) {
-        useup(obj);
-        return;
+    } else {
+        int res = water_damage(obj, NULL, TRUE);
+        if (res == 3)
+            return; /* it was destroyed */
+        else if (res == 2 && !rn2(2))
+            return;
     }
 
     switch (rn2_on_rng(30, rng_fountain_result)) {
@@ -611,14 +612,15 @@ dipfountain(struct obj *obj)
     case 28:   /* Strange feeling */
         pline(msgc_nonmonbad, "An urge to take a bath overwhelms you.");
         {
-            long money = money_cnt(invent);
+            long money = money_cnt(youmonst.minvent);
             struct obj *otmp;
 
             if (money > 10) {
                 /* Amount to loose.  Might get rounded up as fountains don't
                    pay change... */
                 money = somegold(money) / 10;
-                for (otmp = invent; otmp && money > 0; otmp = otmp->nobj)
+                for (otmp = youmonst.minvent; otmp && money > 0;
+                     otmp = otmp->nobj)
                     if (otmp->oclass == COIN_CLASS) {
                         int denomination = objects[otmp->otyp].oc_cost;
                         long coin_loss =
@@ -663,7 +665,7 @@ breaksink(int x, int y)
 {
     if (cansee(x, y) || (x == youmonst.mx && y == youmonst.my))
         pline(msgc_consequence, "The pipes break!  Water spurts out!");
-    level->locations[x][y].doormask = 0;
+    level->locations[x][y].flags = 0;
     level->locations[x][y].typ = FOUNTAIN;
     newsym(x, y);
 }
@@ -688,29 +690,33 @@ drinksink(struct monst *mon)
         pline(msgc_monneutral, "%s from the sink.", M_verbs(mon, "drink"));
 
     int result = rn2_on_rng(20, you ? rng_sink_quaff : rng_main);
+    int dmg;
     switch (result) {
     case 0:
     case 1:
     case 2:
+        dmg = rnd(6);
+        if (resists_fire(mon))
+            dmg = rnd(3);
         if (!you) {
-            if (result == 2 && !resists_fire(mon)) {
+            if (result == 2 && !immune_to_fire(mon)) {
                 if (vis)
                     pline(msgc_monneutral, "%s scalded!", M_verbs(mon, "are"));
-                mon->mhp -= rnd(6);
+                mon->mhp -= dmg;
                 if (mon->mhp <= 0)
                     mondied(mon);
             }
             break;
         }
 
-        if (result == 2 && you && resists_fire(mon))
+        if (result == 2 && you && immune_to_fire(mon))
             pline(msgc_playerimmune, "This scalding hot water is quite tasty!");
         else if (vis)
             pline(msgc_failrandom, "You take a sip of %s %s water.",
                   result == 2 ? "scalding " : "very ", !result ? "cold" :
                   result == 1 ? "warm" : "hot");
         if (result == 2)
-            losehp(rnd(6), killer_msg(DIED, "sipping boiling water"));
+            losehp(dmg, killer_msg(DIED, "sipping boiling water"));
         break;
     case 3:
         if (!(mvitals[PM_SEWER_RAT].mvflags & G_GONE)) {
@@ -748,12 +754,12 @@ drinksink(struct monst *mon)
         obfree(otmp, NULL);
         break;
     case 5:
-        if (!(level->locations[youmonst.mx][youmonst.my].looted & S_LRING)) {
+        if (!(level->locations[youmonst.mx][youmonst.my].flags & S_LRING)) {
             if (vis)
                 pline(msgc_youdiscover, "%s a ring in the sink!",
                       M_verbs(mon, "find"));
             mkobj_at(RING_CLASS, level, mon->mx, mon->my, TRUE, rng_sink_ring);
-            level->locations[mon->mx][mon->my].looted |= S_LRING;
+            level->locations[mon->mx][mon->my].flags |= S_LRING;
             if (you)
                 exercise(A_WIS, TRUE);
             newsym(mon->mx, mon->my);

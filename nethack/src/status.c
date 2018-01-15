@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -44,7 +44,7 @@ xp(int lev)
     case 27: return 548000;
     case 28: return 622000;
     case 29: return 700000;
-    case 30: return 800000; /* 100k per additional !oGL */
+    default: return -1;
     }
     return 1000000; /* shouldn't be reached */
 }
@@ -179,7 +179,9 @@ static const struct {
       { "NonWeap", CLR_ORANGE, -1 },
       { "cWielded", CLR_YELLOW, -1 },
       { "Lev", CLR_BROWN, -1 },
+      { "-Lev", CLR_RED, -1 },
       { "Fly", CLR_GREEN, -1 },
+      { "-Fly", CLR_RED, -1 },
       /* trapped */
       { "Held", CLR_RED, -1 },
       { "Pit", CLR_RED, -1 },
@@ -215,15 +217,8 @@ draw_classic_status(struct nh_player_info *pi, nh_bool threeline)
 
     /* line 1 */
     wmove(statuswin, 0, 0);
-    sprintf(buf, " St:%-1d", pi->st);
-    if (pi->st == 18 && pi->st_extra) {
-        if (pi->st_extra < 100)
-            sprintf(buf, "%s/%02d", buf, pi->st_extra);
-        else
-            sprintf(buf, "%s/**", buf);
-    }
-    sprintf(buf, "%s Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
-            buf, pi->dx, pi->co, pi->in, pi->wi, pi->ch);
+    sprintf(buf, " St:%-1d Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
+            pi->st, pi->dx, pi->co, pi->in, pi->wi, pi->ch);
     sprintf(buf, "%s %s", buf,
             pi->align == A_CHAOTIC ? "Chaotic" :
             pi->align == A_NEUTRAL ? "Neutral" :
@@ -299,7 +294,10 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
     if (threeline && pi->monnum == pi->cur_monnum) {
         /* keep this synced with newuexp in exper.c */
         long newuexp = xp(pi->level);
-        wprintw(statuswin, "(%ld)", newuexp - pi->xp);
+        if (newuexp < 0)
+            wprintw(statuswin, "(0)");
+        else
+            wprintw(statuswin, "(%ld)", newuexp - pi->xp);
     }
     wprintw(statuswin, " %s", pi->level_desc);
     wclrtoeol(statuswin);
@@ -331,13 +329,9 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
 
     /* abilities (in threeline mode) "In:18 Wi:18 Ch:18" = 17 chars */
     if (threeline) {
-        wmove(statuswin, 0, getmaxx(statuswin) - (pi->st == 18 ? 20 : 17));
-        wprintw(statuswin, "Dx:%-2d Co:%-2d St:%-2d", pi->dx, pi->co, pi->st);
-        if (pi->st == 18 && pi->st_extra == 100)
-            wprintw(statuswin, "/**");
-        else if (pi->st == 18)
-            wprintw(statuswin, "/%02d", pi->st_extra);
-        wmove(statuswin, 1, getmaxx(statuswin) - (pi->st == 18 ? 20 : 17));
+        wmove(statuswin, 0, getmaxx(statuswin) - 17);
+        wprintw(statuswin, "St:%-2d Dx:%-2d Co:%-2d", pi->st, pi->dx, pi->co);
+        wmove(statuswin, 1, getmaxx(statuswin) - 17);
         wprintw(statuswin, "In:%-2d Wi:%-2d Ch:%-2d", pi->in, pi->wi, pi->ch);
     }
 }
@@ -393,8 +387,10 @@ draw_statuses(struct nh_player_info *pi, nh_bool threeline)
 void
 curses_update_status(struct nh_player_info *pi)
 {
-    if (pi)
+    if (pi) {
         player = *pi;
+        redraw_game_windows();
+    }
 
     if (!game_is_running)
         return; /* called before the game is running */

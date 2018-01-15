@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,15 +98,7 @@ dump_status(void)
             rank_of(youmonst.m_lev, Role_switch, u.ufemale));
     fprintf(dumpfp, "  Experience level: %d\n", youmonst.m_lev);
 
-    if (ACURR(A_STR) > 18) {
-        if (ACURR(A_STR) < 118)
-            fprintf(dumpfp, "  Strength: 18/%02d\n", ACURR(A_STR) - 18);
-        else if (ACURR(A_STR) == 118)
-            fprintf(dumpfp, "  Strength: 18/**\n");
-        else
-            fprintf(dumpfp, "  Strength: %-1d\n", ACURR(A_STR) - 100);
-    } else
-        fprintf(dumpfp, "  Strength: %-1d\n", ACURR(A_STR));
+    fprintf(dumpfp, "  Strength: %-1d\n", ACURR(A_STR));
 
     fprintf(dumpfp, "  Dexterity: %-1d\n  Constitution: %-1d\n", ACURR(A_DEX),
             ACURR(A_CON));
@@ -118,7 +110,7 @@ dump_status(void)
             Upolyd ? u.mhmax : u.uhpmax);
     fprintf(dumpfp, "  Energy: %d(%d)\n", youmonst.pw, youmonst.pwmax);
     fprintf(dumpfp, "  Def: %d\n", 10 - find_mac(&youmonst));
-    fprintf(dumpfp, "  Gold: %ld\n", money_cnt(invent));
+    fprintf(dumpfp, "  Gold: %ld\n", money_cnt(youmonst.minvent));
     fprintf(dumpfp, "  Moves: %u\n\n", moves);
 
     get_initial_rng_seed(rngseedbuf);

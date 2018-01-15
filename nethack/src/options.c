@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,7 +47,7 @@ static struct nh_enum_option menu_headings_spec =
     { menu_headings_list, listlen(menu_headings_list) };
 
 static struct nh_listitem palette_list[] = {
-    {PALETTE_NONE,      "terminal default (may require new window)"},
+    {PALETTE_NONE,      "terminal default"},
     {PALETTE_DEFAULT,   "uncursed default"},
     {PALETTE_SATURATED, "saturated bold"},
     {PALETTE_TERTIARY,  "tertiary colors"},
@@ -71,6 +71,24 @@ static struct nh_listitem animation_list[] = {
 };
 static struct nh_enum_option animation_spec =
     { animation_list, listlen(animation_list) };
+
+static struct nh_listitem colorbuc_list[] = {
+    {CBUC_CYAN_GRAY_RED, "cyan/gray/red"},
+    {CBUC_CYAN_GREEN_RED, "cyan/green/red"},
+    {CBUC_GREEN_GRAY_RED, "green/gray/red"},
+    {CBUC_GREEN_CYAN_RED, "green/cyan/red"},
+    {CBUC_GREEN_BROWN_RED, "green/brown/red"},
+    {CBUC_NO_COLOR, "no colors"},
+};
+static struct nh_enum_option colorbuc_spec =
+    { colorbuc_list, listlen(colorbuc_list) };
+
+static struct nh_listitem extrawin_list[] = {
+    {EW_CONTROLS, "controls"},
+    {EW_DISABLED, "disabled"},
+};
+static struct nh_enum_option extrawin_spec =
+    { extrawin_list, listlen(extrawin_list) };
 
 static struct nh_listitem menupaging_list[] = {
     {MP_LINES, "by lines"},
@@ -152,6 +170,9 @@ static struct nh_option_desc curses_options[] = {
     {"classic_status", "Screen Layout",
      "use classic NetHack layout for status lines",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"colorbuc", "Screen Layout",
+     "blessed/uncursed/cursed colors in inventory",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = CBUC_GREEN_CYAN_RED}},
     {"comment", "Online and Tournaments",
      "no game effect, used to prove your ID in tournaments",
      nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
@@ -182,6 +203,12 @@ static struct nh_option_desc curses_options[] = {
     {"extmenu", "Commands and Confirmations",
      "use a menu for selecting extended commands (#)",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = FALSE}},
+    {"extrawin", "Screen Layout",
+     "what to display on the extra window",
+     nh_birth_ingame, OPTTYPE_ENUM, {.e = EW_CONTROLS}},
+    {"fontsize", "Terminal and Rendering",
+     "font size (in graphical mode)",
+     nh_birth_ingame, OPTTYPE_STRING, {.s = NULL}},
     {"invweight", "Messages and Menus",
      "show item weights in the inventory",
      nh_birth_ingame, OPTTYPE_BOOL, {.b = TRUE}},
@@ -380,6 +407,12 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.tileset = malloc(strlen(option->value.s) + 1);
         strcpy(settings.tileset, option->value.s);
         rebuild_ui();
+    } else if (!strcmp(option->name, "fontsize")) {
+        if (settings.fontfile)
+            free(settings.fontfile);
+        settings.fontfile = malloc(strlen(option->value.s) + 1);
+        strcpy(settings.fontfile, option->value.s);
+        rebuild_ui();
     } else if (!strcmp(option->name, "border")) {
         settings.whichframes = option->value.e;
         rebuild_ui();
@@ -412,6 +445,12 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.end_top = option->value.i;
     } else if (!strcmp(option->name, "scores_around")) {
         settings.end_around = option->value.i;
+    } else if (!strcmp(option->name, "colorbuc")) {
+        settings.colorbuc = option->value.e;
+        rebuild_ui();
+    } else if (!strcmp(option->name, "extrawin")) {
+        settings.extrawin = option->value.e;
+        rebuild_ui();
     } else if (!strcmp(option->name, "networkmotd")) {
         settings.show_motd = option->value.e;
     } else if (!strcmp(option->name, "menupaging")) {
@@ -458,6 +497,9 @@ init_options(void)
 
     find_option("border")->e = frame_spec;
     find_option("comment")->s.maxlen = BUFSZ;
+    find_option("fontsize")->s.maxlen = BUFSZ;
+    find_option("fontsize")->value.s = malloc(sizeof "14");
+    strcpy(find_option("fontsize")->value.s, "14");
     find_option("tileset")->s.maxlen = BUFSZ;
     find_option("tileset")->value.s = malloc(sizeof "textunicode");
     strcpy(find_option("tileset")->value.s, "textunicode");
@@ -469,6 +511,8 @@ init_options(void)
     find_option("animation")->e = animation_spec;
     find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
+    find_option("colorbuc")->e = colorbuc_spec;
+    find_option("extrawin")->e = extrawin_spec;
     find_option("menupaging")->e = menupaging_spec;
     find_option("msgcolor")->e = msgcolor_spec;
     find_option("msgfading")->e = msgfading_spec;
@@ -694,6 +738,35 @@ select_tileset_value(union nh_optvalue *value, struct nh_option_desc *option)
     strcpy(value->s, newname);
 }
 
+/* TODO: don't hardcode font values */
+static const char *fontsizes[] = {"8", "14", "20", "22", NULL};
+
+static void
+select_font_value(union nh_optvalue *value, struct nh_option_desc *option)
+{
+    struct nh_menulist menu;
+    int i;
+
+    init_menulist(&menu);
+
+    add_menu_txt(&menu, option->helptxt, MI_TEXT);
+    add_menu_txt(&menu, "", MI_TEXT);
+
+    for (i = 0; fontsizes[i]; i++)
+        add_menu_item(&menu, i + 1, fontsizes[i], 0, 0);
+
+    int pick_list[1];
+    curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT, pick_list,
+                        curses_menu_callback);
+
+    const char *newname = option->value.s;
+    if (pick_list[0] != CURSES_MENU_CANCELLED)
+        newname = fontsizes[pick_list[0] - 1];
+
+    value->s = malloc(strlen(newname) + 1);
+    strcpy(value->s, newname);
+}
+
 static void
 getlin_option_callback(const char *str, void *option_void)
 {
@@ -722,6 +795,14 @@ getlin_option_callback(const char *str, void *option_void)
 static nh_bool
 query_new_value(struct win_menu *mdat, int idx)
 {
+    if (ui_flags.autoload && !watcher_username()) {
+        /* In a watchmode setup, NH4WATCHER not existing means the user isn't
+           logged in. Don't allow modifying options then. */
+        curses_msgwin("you must be logged in to edit options",
+                      krc_notification);
+        return FALSE;
+    }
+
     struct nh_option_desc *option, *optlist;
     struct nh_option_desc optioncopy;
     struct nh_option_desc *optioncopy_p = &optioncopy;
@@ -773,9 +854,11 @@ query_new_value(struct win_menu *mdat, int idx)
         break;
 
     case OPTTYPE_STRING:
-        if (!strcmp(optioncopy.name, "tileset")) {
+        if (!strcmp(optioncopy.name, "tileset"))
             select_tileset_value(&optioncopy.value, option);
-        } else {
+        else if (!strcmp(optioncopy.name, "fontsize"))
+            select_font_value(&optioncopy.value, option);
+        else {
             char query[strlen(optioncopy.name) + 1 +
                        sizeof "New value for  (text)"];
             sprintf(query, "New value for %s (text)", optioncopy.name);
@@ -798,7 +881,8 @@ query_new_value(struct win_menu *mdat, int idx)
 
     /* getlin_option_callback NULLs out optioncopy_p to indicate that setting
        was cancelled */
-    if (optioncopy_p && !curses_set_option(optioncopy.name, optioncopy.value)) {
+    if (optioncopy_p &&
+               !curses_set_option(optioncopy.name, optioncopy.value)) {
         char query[strlen(optioncopy.name) + 1 +
                    sizeof "new value for  rejected"];
         sprintf(query, "new value for %s rejected", optioncopy.name);
@@ -943,44 +1027,32 @@ static void
 autopickup_rules_help(void)
 {
     struct nh_menuitem items[] = {
-        {0, MI_TEXT, 0,
-         "The autopickup rules are only active if autopickup is on."},
-        {0, MI_TEXT, 0,
-         "If autopickup is on and you walk onto an item, the item is compared"},
-        {0, MI_TEXT, 0, "to each rule in turn until a matching rule is found."},
-        {0, MI_TEXT, 0,
-         "If a match is found, the action specified in that rule is taken"},
-        {0, MI_TEXT, 0, "and no other rules are considered."},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0,
-         "Each rule may match any combination of object name, object type,"},
-        {0, MI_TEXT, 0, "and object blessing (including unknown)."},
-        {0, MI_TEXT, 0, "A rule that specifies none of these matches everything."},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0, "Suppose your rules look like this:"},
-        {0, MI_TEXT, 0,
-         " 1. IF name matches \"*lizard*\" AND type is \"food\": < GRAB"},
-        {0, MI_TEXT, 0,
-         " 2. IF name matches \"*corpse*\" AND type is \"food\":   LEAVE >"},
-        {0, MI_TEXT, 0,
-         " 3. IF type is \"food\":                             < GRAB"},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0,
-         "A newt corpse will not match rule 1, but rule 2 applies, so"},
-        {0, MI_TEXT, 0,
-         "it won't be picked up and rule 3 won't be considered."},
-        {0, MI_TEXT, 0,
-         "(Strictly speaking, the \"type is food\" part of these rules is not"},
-        {0, MI_TEXT, 0, "necessary; it's purpose here is "
+        {0, MI_TEXT, "The autopickup rules are only active if autopickup is on."},
+        {0, MI_TEXT, "If autopickup is on and you walk onto an item, the item is compared"},
+        {0, MI_TEXT, "to each rule in turn until a matching rule is found."},
+        {0, MI_TEXT, "If a match is found, the action specified in that rule is taken"},
+        {0, MI_TEXT, "and no other rules are considered."},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "Each rule may match any combination of object name, object type,"},
+        {0, MI_TEXT, "and object blessing (including unknown)."},
+        {0, MI_TEXT, "A rule that specifies none of these matches everything."},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "Suppose your rules look like this:"},
+        {0, MI_TEXT, " 1. IF name matches \"*lizard*\" AND type is \"food\": < GRAB"},
+        {0, MI_TEXT, " 2. IF name matches \"*corpse*\" AND type is \"food\":   LEAVE >"},
+        {0, MI_TEXT, " 3. IF type is \"food\":                             < GRAB"},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "A newt corpse will not match rule 1, but rule 2 applies, so"},
+        {0, MI_TEXT, "it won't be picked up and rule 3 won't be considered."},
+        {0, MI_TEXT, "(Strictly speaking, the \"type is food\" part of these rules is not"},
+        {0, MI_TEXT, "necessary; it's purpose here is "
          "to make the example more interesting.)"},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0,
-         "A dagger will not match any of these rules and so it won't"},
-        {0, MI_TEXT, 0, "be picked up either."},
-        {0, MI_TEXT, 0, ""},
-        {0, MI_TEXT, 0,
-         "You may select any existing rule to edit it, change its position"},
-        {0, MI_TEXT, 0, "in the list, or delete it."},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "A dagger will not match any of these rules and so it won't"},
+        {0, MI_TEXT, "be picked up either."},
+        {0, MI_TEXT, ""},
+        {0, MI_TEXT, "You may select any existing rule to edit it, change its position"},
+        {0, MI_TEXT, "in the list, or delete it."},
     };
     curses_display_menu(STATIC_MENULIST(items), "Autopickup rules help:",
                         PICK_NONE, PLHINT_LEFT, NULL, null_menu_callback);
@@ -991,11 +1063,11 @@ static enum nh_bucstatus
 get_autopickup_buc(enum nh_bucstatus cur)
 {
     struct nh_menuitem items[] = {
-        {B_DONT_CARE + 1, MI_NORMAL, 0, "all", 'a'},
-        {B_BLESSED + 1, MI_NORMAL, 0, "blessed", 'b'},
-        {B_CURSED + 1, MI_NORMAL, 0, "cursed", 'c'},
-        {B_UNCURSED + 1, MI_NORMAL, 0, "uncursed", 'u'},
-        {B_UNKNOWN + 1, MI_NORMAL, 0, "unknown", 'U'}
+        {B_DONT_CARE + 1, MI_NORMAL, "all", 'a'},
+        {B_BLESSED + 1, MI_NORMAL, "blessed", 'b'},
+        {B_CURSED + 1, MI_NORMAL, "cursed", 'c'},
+        {B_UNCURSED + 1, MI_NORMAL, "uncursed", 'u'},
+        {B_UNKNOWN + 1, MI_NORMAL, "unknown", 'U'}
     };
     int selected[1];
 
@@ -1341,7 +1413,8 @@ read_config_line(char *line)
 
     optval = nhlib_string_to_optvalue(option, value);
     curses_set_option(name, optval);
-    if (option->type == OPTTYPE_AUTOPICKUP_RULES) {
+    if (option->type == OPTTYPE_AUTOPICKUP_RULES &&
+        optval.ar) {
         free(optval.ar->rules);
         free(optval.ar);
     }
@@ -1441,8 +1514,8 @@ get_config_name(fnchar * buf, nh_bool ui)
 #endif
 
     fnncat(buf, ui_flags.connection_only ? usernamew :
-                ui ? FN("curses.conf") :
-                FN("FIQHack.conf"),
+           ui ? FN("curses.conf") :
+           FN("FIQHack.conf"),
            BUFSZ - fnlen(buf) - 1);
     if (ui_flags.connection_only)
         fnncat(buf, ui ? FN(".curses.rc") : FN(".FIQHack.rc"),

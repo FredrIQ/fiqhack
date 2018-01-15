@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2016-02-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,8 +24,8 @@ move_special(struct monst *mtmp, boolean in_his_shop, schar appr,
     xchar nx, ny, nix, niy;
     schar i;
     schar chcnt, cnt;
-    coord poss[9];
-    long info[9];
+    coord poss[ROWNO * COLNO];
+    long info[ROWNO * COLNO];
     long allowflags;
     struct obj *ib = NULL;
 
@@ -128,7 +128,8 @@ histemple_at(struct monst *priest, xchar x, xchar y)
         panic("histemple_at: priest has no MX_EPRI?");
 
     return ((boolean)
-            ((mx_epri(priest)->shroom == *in_rooms(level, x, y, TEMPLE)) &&
+            (mx_epri(priest) &&
+             mx_epri(priest)->shroom == *in_rooms(level, x, y, TEMPLE) &&
              on_level(&(mx_epri(priest)->shrlevel), &u.uz)));
 }
 
@@ -220,7 +221,7 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
         mx_epri_new(priest);
         struct epri *epri = priest->mextra->epri;
         epri->shroom = (sroom - lev->rooms) + ROOMOFFSET;
-        priest->maligntyp = Amask2align(lev->locations[sx][sy].altarmask);
+        priest->maligntyp = Amask2align(lev->locations[sx][sy].flags);
         epri->shrpos.x = sx;
         epri->shrpos.y = sy;
         assign_level(&(mx_epri(priest)->shrlevel), &lev->z);
@@ -283,7 +284,7 @@ priestname(const struct monst *mon, boolean override_hallu)
         do_the = !monnam_is_pname(idx);
         gname_function = halu_gname;
     } else {
-        what = mon->data->mname;
+        what = pm_name(mon);
     }
 
     if (do_the)
@@ -341,8 +342,8 @@ has_shrine(const struct monst *pri)
     if (!IS_ALTAR(loc->typ))
         return FALSE;
     /* not malign() -- we want the original alignment, not current */
-    return (pri->maligntyp == Amask2align(loc->altarmask & AM_MASK))
-        ? loc->altarmask & (AM_SHRINE | AM_SANCTUM) : 0;
+    return (pri->maligntyp == Amask2align(loc->flags & AM_MASK))
+        ? loc->flags & (AM_SHRINE | AM_SANCTUM) : 0;
 }
 
 struct monst *
@@ -494,7 +495,7 @@ priest_talk(struct monst *priest)
         msethostility(priest, TRUE, FALSE);
         return;
     }
-    if (!money_cnt(invent)) {
+    if (!money_cnt(youmonst.minvent)) {
         if (coaligned && !strayed) {
             long pmoney = money_cnt(priest->minvent);
 
@@ -520,7 +521,7 @@ priest_talk(struct monst *priest)
             if (coaligned)
                 adjalign(-1);
         } else if (offer < (youmonst.m_lev * 200)) {
-            if (money_cnt(invent) > (offer * 2L))
+            if (money_cnt(youmonst.minvent) > (offer * 2L))
                 verbalize(msgc_npcvoice, "Cheapskate.");
             else {
                 verbalize(msgc_npcvoice, "I thank thee for thy contribution.");
@@ -529,7 +530,7 @@ priest_talk(struct monst *priest)
             }
         } else if (offer < (youmonst.m_lev * 400)) {
             verbalize(msgc_aligngood, "Thou art indeed a pious individual.");
-            if (money_cnt(invent) < (offer * 2L)) {
+            if (money_cnt(youmonst.minvent) < (offer * 2L)) {
                 if (coaligned && u.ualign.record <= ALGN_SINNED)
                     adjalign(1);
                 verbalize(msgc_intrgain, "I bestow upon thee a blessing.");
@@ -547,7 +548,7 @@ priest_talk(struct monst *priest)
         } else {
             verbalize(msgc_aligngood,
                       "Thy selfless generosity is deeply appreciated.");
-            if (money_cnt(invent) < (offer * 2L) && coaligned) {
+            if (money_cnt(youmonst.minvent) < (offer * 2L) && coaligned) {
                 if (strayed && (moves - u.ucleansed) > 5000L) {
                     u.ualign.record = 0;        /* cleanse thee */
                     u.ucleansed = moves;
@@ -720,7 +721,7 @@ angry_priest(void)
         loc = &level->locations
             [mx_epri(priest)->shrpos.x][mx_epri(priest)->shrpos.y];
         if (!IS_ALTAR(loc->typ) ||
-            ((aligntyp) Amask2align(loc->altarmask & AM_MASK) !=
+            ((aligntyp) Amask2align(loc->flags & AM_MASK) !=
              priest->maligntyp))
             mx_epri(priest)->shroom = 0; /* renegade now */
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -247,7 +247,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
                   slot == os_amul ? body_part(NECK) :
                   slot == os_tool ? body_part(FACE) : "body");
         if (update_property(&youmonst, prop, slot))
-            makeknown(o->otyp);
+            tell_discovery(o);
         update_property_for_oprops(&youmonst, o, slot);
         if (o->spe)
             learn_oprop(o, (opm_dexterity | opm_brilliance));
@@ -404,10 +404,10 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case RIN_STEALTH:
     case RIN_HUNGER:
     case RIN_AGGRAVATE_MONSTER:
-    case RIN_POISON_RESISTANCE:
-    case RIN_FIRE_RESISTANCE:
-    case RIN_COLD_RESISTANCE:
-    case RIN_SHOCK_RESISTANCE:
+    case RIN_POISON_IMMUNITY:
+    case RIN_FIRE_IMMUNITY:
+    case RIN_COLD_IMMUNITY:
+    case RIN_SHOCK_IMMUNITY:
     case RIN_CONFLICT:
     case RIN_TELEPORT_CONTROL:
     case RIN_POLYMORPH:
@@ -1953,6 +1953,40 @@ doequip(const struct nh_cmd_arg *arg)
     if (n == 2)
         action_incomplete("changing your equipment", occ_equip);
     return n > 0;
+}
+
+/* hit by disintegration, reduce enchantment or destroy if
+   no longer conferring any base AC. */
+int
+disint_arm(struct monst *mon, struct obj *obj)
+{
+    boolean you = mon == &youmonst;
+    boolean vis = canseemon(mon);
+    const char *dname = distant_name(obj, cxname);
+
+    /* See if the object is disintegration resistant. */
+    if (ehas_property(mon, DISINT_RES) ||
+        item_provides_extrinsic(obj, DISINT_RES)) {
+        if (vis)
+            pline(combat_msgc(NULL, mon, cr_immune),
+                  "%s %s %s not disintegrated.",
+                  Shk_Your(obj), dname,
+                  vtense(dname, "are"));
+        return 0;
+    }
+
+    /* See if the object confers any AC. */
+    if (ARM_BONUS(obj) >= 1) {
+        if (vis)
+            pline(you ? msgc_itemloss : msgc_monneutral,
+                  "%s %s %s!", Shk_Your(obj), dname,
+                  vtense(dname, "shudder"));
+        obj->spe--;
+        return 1;
+    }
+
+    /* Destroy the object */
+    return destroy_arm(mon, obj);
 }
 
 /* hit by destroy armor scroll/black dragon breath */

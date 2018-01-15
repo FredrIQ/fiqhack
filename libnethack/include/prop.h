@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -87,8 +87,11 @@ enum youprop {
     SLOW                     = 69,
     ZOMBIE                   = 70,
     WATERPROOF               = 71,
-    CREAMED                  = 72,
-/*  DEATH_RES                = 73, TODO */
+    STUN_RES                 = 72,
+    DEATH_RES                = 73,
+    CREAMED                  = 74,
+    /* Remember to change savemap mapping in save.c for ever_trinsic if
+       applicable */
     LAST_PROP                = CREAMED,
     INVALID_PROP             = -1,
 };
@@ -224,7 +227,7 @@ enum occupation {
     occ_search,      /* searching */
     occ_prepare,     /* e.g. removing a shield to be able to use a mattock */
     occ_first = occ_book,
-    occ_last = occ_prepare,
+    occ_last = occ_prepare
 };
 
 #define OCM(reason) ocm_##reason = 1 << occ_##reason
@@ -247,7 +250,7 @@ enum FLAG_ENUM occupation_mask {
     OCM(search),
     ocm_rest = ocm_wait | ocm_search,
     OCM(prepare),
-    ocm_all = (1 << (occ_last + 1)) - 1,
+    ocm_all = -1,
 };
 
 /* Occupations generally track objects, but some track locations, or both. */
@@ -310,12 +313,13 @@ enum tracked_location {
 # define FROMROLE     ((unsigned)W_MASK(os_role))
 # define FROMRACE     ((unsigned)W_MASK(os_race))
 # define FROMPOLY     ((unsigned)W_MASK(os_polyform))
+# define FROMFORM     (FROMROLE|FROMRACE|FROMPOLY)
 # define FROMOUTSIDE  ((unsigned)W_MASK(os_outside))
 # define TIMEOUT      ((unsigned)W_MASK(os_timeout))
-# define INTRINSIC    (FROMOUTSIDE|FROMRACE|FROMROLE|FROMPOLY)
+/* timeout is regarded as an extrinsic */
+# define INTRINSIC    (FROMOUTSIDE|FROMFORM)
 # define EXTRINSIC    ~INTRINSIC
 /* Control flags */
-# define I_SPECIAL    ((unsigned)W_MASK(os_special))
 # define ANY_PROPERTY ((unsigned)-1)
 
 #endif /* PROP_H */

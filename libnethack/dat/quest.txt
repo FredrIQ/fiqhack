@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-12-23
+# Last modified by Fredrik Ljungdahl, 2018-01-15
 #	Copyright (c) 1991 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
 #
@@ -3475,7 +3475,7 @@ Go now!  You are banished from this place.
 %Cc - 00099
  %p:	return(plname);
  %c:	return(pl_character);
- %r:	return((char *)rank_of(u.ulevel));
+ %r:	return((char *)rank_of(youmonst.m_lev));
  %R:	return((char *)rank_of(MIN_QUEST_LEVEL));
  %s:	return((u.ufemale) ? "sister" : "brother" );
  %S:	return((u.ufemale) ? "daughter" : "son" );

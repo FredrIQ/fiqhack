@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -182,6 +182,7 @@ struct interface_flags {
     nh_bool initialized;  /* false before init_curses_ui() */
     nh_bool ingame;
     nh_bool connected_to_server;
+    nh_bool autoload;
     enum nh_followmode current_followmode;
     enum nh_followmode available_followmode;
     nh_bool in_zero_time_command;
@@ -254,6 +255,21 @@ enum nh_animation {
     ANIM_SLOW,            /* animate all events, slowly */
 };
 
+enum nh_colorbuc {
+    CBUC_CYAN_GRAY_RED,
+    CBUC_CYAN_GREEN_RED,
+    CBUC_GREEN_GRAY_RED,
+    CBUC_GREEN_CYAN_RED,
+    CBUC_GREEN_BROWN_RED,
+    CBUC_NO_COLOR,
+    CBUC_AMOUNT,
+};
+
+enum nh_extrawin {
+    EW_DISABLED,
+    EW_CONTROLS,
+};
+
 enum nh_motd_setting {
     MOTD_TRUE,
     MOTD_FALSE,
@@ -293,6 +309,8 @@ struct settings {
 
     enum autoable_boolean sidebar;   /* whether to draw the inventory sidebar */
     enum nh_animation animation;     /* when to delay */
+    enum nh_extrawin colorbuc;       /* how to color BUC in inventory */
+    enum nh_extrawin extrawin;       /* extra window below game if there's room */
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
     enum nh_msgcolor msgcolor; /* color messages based on context */
@@ -302,6 +320,7 @@ struct settings {
     enum nh_palette palette;         /* palette to use for text */
 
     char *tileset;                   /* tileset file name */
+    char *fontfile;                  /* font file name */
 
     nh_bool alt_is_esc; /* parse Alt-letter as ESC letter */
     nh_bool classic_status; /* mimic NH3's status bar */
@@ -405,24 +424,23 @@ struct win_scrollable {
 
 
 # define MAXCOLS 16
-/* Note: the win_scrollable must be the first entry of this struct (because
-   a struct win_menu pointer is sometimes cast to a struct win_scrollable
-   pointer) */
+/* Note: everything up to title must be kept in sync with win_objmenu, because
+   a win_objmenu can be cast as a win_menu. In addition, win_scrollable must
+   be the first item because it can also be case into a win_scrollable. */
 struct win_menu {
     struct win_scrollable s;
     struct nh_menuitem **visitems;
-    char **visselected;
+    int **visselected;
     const char *title;
     int how;
     int colpos[MAXCOLS], maxcol;
 };
 
-/* Note: the win_scrollable must be the first entry of this struct, for the same
-   reason as with win_menu */
+/* Note: everything up to title must be kept in sync with win_menu, see above */
 struct win_objmenu {
     struct win_scrollable s;
-    struct nh_objitem *items;
-    int *selected;
+    struct nh_objitem **visitems;
+    int **visselected;
     const char *title;
     int how, selcount;
 };
@@ -460,7 +478,7 @@ extern nh_bool random_player;
 extern struct gamewin *firstgw, *lastgw;
 extern struct nh_cmd_desc *keymap[KEY_MAX + 1];
 extern const char *nhlogo_small[11], *nhlogo_large[14];
-extern char *override_hackdir, *override_userdir;
+extern char *override_hackdir, *override_userdir, *override_savedir;
 extern int repeats_remaining;
 extern char *tiletable;
 extern int tiletable_len;
@@ -511,6 +529,8 @@ extern void curses_getline_pw(const char *query, void *callbackarg,
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd,
                                 struct nh_cmd_arg *arg,
                                 nh_bool include_debug);
+extern nh_bool get_command_key(const char *cmd_name, char key_name[BUFSZ],
+                               nh_bool);
 extern void get_command(void *callbackarg,
                         void (*callback)(const struct nh_cmd_and_arg *, void *),
                         nh_bool include_debug);
@@ -520,6 +540,10 @@ extern void free_keymap(void);
 extern void show_keymap_menu(nh_bool readonly);
 extern void handle_nested_key(int key);
 extern enum nh_direction key_to_dir(int key, int* range);
+
+/* mail.c */
+extern const char *watcher_username(void);
+extern void sendmail(void);
 
 /* main.c */
 extern void curses_impossible(const char *msg);
@@ -569,8 +593,8 @@ extern nh_bool do_item_actions(const struct nh_objitem *);
 
 /* messages.c */
 extern void discard_message_history(int lines_to_keep);
-extern void curses_print_message(int turn, enum msg_channel msgc,
-                                 const char *msg);
+extern void curses_print_message(int action, int id, int turn,
+                                 enum msg_channel msgc, const char *msg);
 extern void curses_temp_message(const char *msg);
 extern void curses_clear_temp_messages(void);
 extern void redraw_messages(void);
@@ -634,9 +658,10 @@ extern void curses_request_command(nh_bool debug, nh_bool completed,
 extern void describe_game(char *buf, enum nh_log_status status,
                           struct nh_game_info *gi);
 extern void rungame(nh_bool net);
-extern nh_bool loadgame(void);
+extern nh_bool loadgame(nh_bool autoload);
 extern void game_ended(int status, fnchar *filename, nh_bool net);
 extern fnchar **list_gamefiles(fnchar *dir, int *count);
+extern void set_uifollowmode(enum nh_followmode, nh_bool);
 extern enum nh_play_status playgame(int fd_or_gameno, enum nh_followmode);
 
 /* sidebar.c */

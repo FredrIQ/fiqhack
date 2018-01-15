@@ -1,0 +1,14 @@
+32 32
+Slash'EM32
+s-mon32mi.txt
+s-mon32se.txt
+s-mon32alg.txt
+s-mon32aw.txt
+s-obj32mi.txt
+s-obj32se.txt
+s-obj32alg.txt
+s-oth32mi.txt
+s-oth32se.txt
+s-oth32alg.txt
+n-343-32.txt
+n-4-32.txt

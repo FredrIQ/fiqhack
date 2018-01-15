@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,6 +51,7 @@ struct you {
     int unused_uexp;
     int unused_oldcap;         /* carry cap on previous turn */
     int unused_uen, unused_uenmax; /* magical energy (Pw) */
+    struct skills unused_weapon_skills[P_NUM_SKILLS];
     char unused_uwhybusy[BUFSZ]; /* occupation wording (You stop <whybusy>) */
 
     /* USED */
@@ -168,7 +169,6 @@ struct you {
     int weapon_slots;   /* unused skill slots */
     int skills_advanced;        /* # of advances made so far */
     xchar skill_record[P_SKILL_LIMIT];  /* skill advancements */
-    struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap;    /* KMH -- Using two-weapon combat */
     boolean bashmsg;    /* control for the "begin bashing mosnters" message */
 

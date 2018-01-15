@@ -1,8 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "lz4.h"
 #include "hack.h"
 #include "patchlevel.h"
 #include "iomodes.h"
@@ -10,6 +11,7 @@
 /* stdint.h, inttypes.h let us printf long longs portably */
 #define __STDC_FORMAT_MACROS
 #include <stdint.h>
+#include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <errno.h>
@@ -28,7 +30,8 @@ static char *lgetline_malloc(int);
 static enum nh_log_status read_log_header(
     int fd, struct nh_game_info *si, int *recovery_count, boolean do_locking);
 
-static void load_gamestate_from_binary_save(boolean maybe_old_version);
+static boolean load_gamestate_from_binary_save(boolean maybe_old_version,
+                                               boolean save_too);
 static void log_replay_save_line(void);
 
 static boolean full_read(int fd, void *buffer, int len);
@@ -115,7 +118,7 @@ log_recover_core_reasons(struct nh_menulist *menu, const char *message,
                      "Here is additional information about this save rewind:");
     } else {
         add_menutext(menu,
-            "You can report this error at <https://github.com/FredrIQ/fiqhack/issues>.");
+            "You can report this error at <http://trac.nethack4.org>.");
         add_menutext(menu, "Please include the following information:");
     }
     add_menutext(menu, "");
@@ -179,6 +182,9 @@ log_recover_core(long offset, boolean canreturn, const char *message,
     const char *buf;
     struct nh_menulist menu;
     boolean ok = TRUE;
+
+    /* reset the windowport for replaymode */
+    replay_reset_windowport(TRUE);
 
     program_state.emergency_recover_location = 0;
 
@@ -477,23 +483,28 @@ static const char b64d[256] = {
 static int
 base64size(int n)
 {
-    return compressBound(n) * 4 / 3 + 4 + 12;   /* 12 for $4294967296$ */
+    return LZ4_compressBound(n) * 4 / 3 + 4 + 12;   /* 12 for #4294967296# */
 }
 
 static void
 base64_encode_binary(const unsigned char *in, char *out, int len,
-    boolean no_compression)
+                     boolean no_compression)
 {
     int i, pos, rem;
-    unsigned long olen = compressBound(len);
+    unsigned long olen = LZ4_compressBound(len);
     unsigned char *o = malloc(olen);
 
-    if (compress2(o, &olen, in, len, Z_BEST_COMPRESSION) != Z_OK) {
-        panic("Could not compress input data!");
+    if (!no_compression) {
+        olen = LZ4_compress_default(in, o, len, olen);
+        if (!olen) {
+            free(o);
+            panic("Could not compress input data (%lu)!", olen);
+        }
     }
+
     MARK_INITIALIZED(o, olen);
 
-    pos = sprintf(out, "$%d$", len);
+    pos = sprintf(out, "#%d#", len);
 
     if (no_compression || pos + olen >= len) {
         pos = 0;
@@ -538,7 +549,7 @@ base64_strlen(const char *in)
 {
     /* If the input is uncompressed, just return its size. If it's compressed,
        read the size from the header. */
-    if (*in != '$')
+    if (*in != '$' && *in != '#')
         return strlen(in);
     return atoi(in + 1);
 }
@@ -551,17 +562,17 @@ base64_decode(const char *in, char *out, int outlen)
     char *o = out;
 
     olen = outlen;
-    if (*in == '$') {
+    if (*in == '$' || *in == '#') {
         o = malloc(len);
         olen = len;
     }
 
     for (i = 0; i < len; i += 4) {
 
-        /* skip data between $ signs, it's used for the header for compressed
-           binary data */
-        if (in[i] == '$')
-            for (i += 2; in[i - 1] != '$' && in[i]; i++) {}
+        /* skip data between $/# signs, it's used for the header for compressed
+           binary data ($ for zlib, # for lz4) */
+        if (in[i] == '$' || in[i] == '#')
+            for (i += 2; in[i - 1] != '$' && in[i - 1] != '#' && in[i]; i++) {}
 
         /* decode blocks; padding '=' are converted to 0 in the decoding table
            */
@@ -587,25 +598,41 @@ base64_decode(const char *in, char *out, int outlen)
     else
         error_reading_save("Uncompressed base64 data was too long at %ld\n");
 
-    if (*in == '$') {
+    if (*in == '$' || *in == '#') {
 
         unsigned long blen = base64_strlen(in);
         if (blen > outlen) {
             free(o);
-            error_reading_save("Compressed base64 data was too long at %ld\n");
+            const char *err;
+            err = msgprintf("Compressed base64 data was too long (%ld > %d) "
+                            "at %%ld\n", blen, outlen);
+            error_reading_save(err);
         }
-        int errcode = uncompress((unsigned char *)out, &blen,
-                                 (unsigned char *)o, pos);
 
-        free(o);
-        if (errcode != Z_OK) {
-            raw_printf("Decompressing save file failed at %ld: %s\n",
-                       get_log_offset(),
-                       errcode == Z_MEM_ERROR ? "Out of memory" : errcode ==
-                       Z_BUF_ERROR ? "Invalid size" : errcode ==
-                       Z_DATA_ERROR ? "Corrupted file" : "(unknown error)");
-            error_reading_save("");
-        }
+        if (*in == '$') {
+            /* zlib-compressed */
+            int errcode = uncompress((unsigned char *)out, &blen,
+                                     (unsigned char *)o, pos);
+
+            free(o);
+            if (errcode != Z_OK) {
+                raw_printf("zlib-decompressing save file failed at %ld: %s\n",
+                           get_log_offset(),
+                           errcode == Z_MEM_ERROR ? "Out of memory" : errcode ==
+                           Z_BUF_ERROR ? "Invalid size" : errcode ==
+                           Z_DATA_ERROR ? "Corrupted file" : "(unknown error)");
+                error_reading_save("");
+            }
+        } else if (*in == '#') {
+            /* lz4-compressed */
+            int result = LZ4_decompress_safe(o, out, pos, blen);
+            free(o);
+            if (result < 0) {
+                raw_printf("lz4-decompressing save failed\n");
+                error_reading_save("");
+            }
+        } else
+            error_reading_save("Unknown compression format\n");
 
         MARK_INITIALIZED(out, blen);
     }
@@ -1026,7 +1053,7 @@ log_newgame(microseconds start_time)
     lprintf("%" SECOND_LOGLINE_LEN_STR "s\x0a", "(new game)");
     start_of_third_line = get_log_offset();
 
-    base64_encode_binary(u.uplname, encbuf,
+    base64_encode_binary((const unsigned char *)u.uplname, encbuf,
                          strlen(u.uplname), FALSE);
     lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\x0a",
             start_time_l64, 0, wizard ? MODE_WIZARD : discover ?
@@ -1136,7 +1163,7 @@ log_backup_save(void)
 
     /* Verify that the save file loads correctly; it's better to fail fast
        than end up with a corrupted save. */
-    load_gamestate_from_binary_save(FALSE);
+    load_gamestate_from_binary_save(FALSE, TRUE);
 }
 
 static noreturn void
@@ -1217,7 +1244,7 @@ log_neutral_turnstate(void)
         stop_updating_logfile(1);
 
         /* Check the gamestate, for the same reason as in log_backup_save(). */
-        load_gamestate_from_binary_save(FALSE);
+        load_gamestate_from_binary_save(FALSE, TRUE);
 
         program_state.emergency_recover_location = 0;
     }
@@ -1759,10 +1786,22 @@ log_replay_command(struct nh_cmd_and_arg *cmd)
         return FALSE;
 
     if (*logline < 'a' || *logline > 'z') {
-        c = *logline;
-        free(logline);
-        log_desync(c, 'a');
+        if (program_state.eof_reached) {
+            program_state.eof_reached = FALSE;
+            log_replay_save_line();
+            logline = start_replaying_logfile(0);
+            if (!logline)
+                return FALSE;
+        }
+
+        if (*logline < 'a' || *logline > 'z') {
+            c = *logline;
+            free(logline);
+            log_desync(c, 'a');
+        }
     }
+
+    program_state.eof_reached = FALSE;
 
     lp = strchr(logline, ' ');
     cmd->cmd = lp ?
@@ -1958,8 +1997,9 @@ nh_get_savegame_status(int fd, struct nh_game_info *si)
    true, then we allow backwards-compatible changes to the save format; if
    loading and immediately re-saving does not produce an identical file, we
    force the next save-related line to be a backup not a diff. */
-static void
-load_gamestate_from_binary_save(boolean maybe_old_version)
+static boolean
+load_gamestate_from_binary_save(boolean maybe_old_version,
+                                boolean save_too)
 {
     struct memfile mf;
     const char *mequal_message;
@@ -1977,16 +2017,31 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
     dorecover(&program_state.binary_save);
 
     /* Save the loaded game. */
+    if (!save_too) {
+        program_state.ok_to_diff = FALSE;
+        return FALSE;
+    }
+
     mnew(&mf, NULL);
     savegame(&mf);
+    boolean want_msg = maybe_old_version;
+    if (program_state.followmode == FM_REPLAY && !replay_desynced() &&
+        save_too)
+        want_msg = TRUE;
 
-    if (!mequal(&program_state.binary_save, &mf, maybe_old_version ? NULL :
+    boolean res = TRUE;
+    if (!mequal(&program_state.binary_save, &mf, !want_msg ? NULL :
                 &mequal_message)) {
 
+        if (program_state.followmode == FM_REPLAY && !replay_desynced() &&
+            save_too)
+            replay_announce_desync(mequal_message);
+
+        res = FALSE;
         mfree(&mf);
         if (maybe_old_version) {
             program_state.ok_to_diff = FALSE;
-            return;
+            return res;
         }
 
         /* To recover from this, we need to go back to the binary save before
@@ -2003,6 +2058,7 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
     mfree(&program_state.binary_save);
     program_state.binary_save = mf;
     program_state.ok_to_diff = TRUE;
+    return res;
 }
 
 static noreturn void
@@ -2173,6 +2229,9 @@ relative_to_target(long bsl, long targetpos, enum target_location_units tlu)
         program_state.binary_save.pos = temp_pos;
         break;
 
+    case TLU_NEXT:
+        return -1;
+
     default:
         panic("Invalid target_location_units");
     }
@@ -2229,6 +2288,9 @@ log_sync(long target_location, enum target_location_units tlu,
     struct memfile bsave;
     long sloc, loglineloc, last_sloc;
     char *logline;
+    boolean save_too = TRUE;
+    if (program_state.followmode == FM_REPLAY)
+        save_too = FALSE;
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
         panic("Could not upgrade to read lock on logfile");
@@ -2347,7 +2409,7 @@ log_sync(long target_location, enum target_location_units tlu,
                correct, so we just need to get the gamestate and its location
                correct. */
             if (!inconsistent)
-                load_gamestate_from_binary_save(TRUE);
+                load_gamestate_from_binary_save(TRUE, save_too);
             if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
                 panic("Could not downgrade to monitor lock on logfile");
             return;
@@ -2380,7 +2442,7 @@ log_sync(long target_location, enum target_location_units tlu,
             program_state.binary_save = bsave;
 
             if (!inconsistent)
-                load_gamestate_from_binary_save(TRUE);
+                load_gamestate_from_binary_save(TRUE, save_too);
             if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
                 panic("Could not downgrade to monitor lock on logfile");
             return;
@@ -2396,16 +2458,116 @@ log_sync(long target_location, enum target_location_units tlu,
         }
 
         free(logline);
+
+        /* If we just wanted to load the next state diff-wise, we're done */
+        if (tlu == TLU_NEXT)
+            break;
     }
 
     /* Fix the invariant on the gamestate. */
     if (!inconsistent)
-        load_gamestate_from_binary_save(TRUE);
+        load_gamestate_from_binary_save(TRUE, save_too);
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
         panic("Could not downgrade to monitor lock on logfile");
 }
 
+/* Returns the amount of actions in the log. starting from current position.
+   If load_checkpoints is TRUE, give in-file binary checkpoints to the replay
+   handler, for the purpose of setting up replay checkpoints for them. */
+int
+replay_count_actions(boolean load_checkpoints)
+{
+    struct sinfo ps = program_state;
+    char *logline;
+    int res = 0;
+    program_state.binary_save_allocated = FALSE;
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
+
+    while (TRUE) {
+        lseek(program_state.logfile,
+              program_state.end_of_gamestate_location, SEEK_SET);
+
+        logline = lgetline_malloc(program_state.logfile);
+        if (!logline)
+            break;
+
+        if (*logline == '*' && load_checkpoints) {
+            load_save_backup_from_string(logline);
+            program_state.binary_save_location =
+                program_state.save_backup_location =
+                program_state.end_of_gamestate_location;
+            load_gamestate_from_binary_save(TRUE, FALSE);
+            replay_create_checkpoint(res,
+                                     program_state.end_of_gamestate_location,
+                                     0);
+            continue;
+        }
+
+        if (*logline >= 'a' && *logline <= 'z' &&
+            (strcmp("interrupt", logline)))
+            res++;
+
+        program_state.end_of_gamestate_location = get_log_offset();
+        program_state.binary_save_location =
+            program_state.end_of_gamestate_location;
+    }
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+        panic("Could not downgrade to monitor lock on logfile");
+
+    if (program_state.binary_save_allocated)
+        mfree(&program_state.binary_save);
+
+    program_state = ps;
+    if (load_checkpoints)
+        log_sync(program_state.end_of_gamestate_location, TLU_BYTES, FALSE);
+    return res;
+}
+
+/* Returns the next command in line, if any, to cmd. */
+void
+replay_next_cmd(char cmd[BUFSZ])
+{
+    struct sinfo ps = program_state;
+    char *logline;
+    lseek(program_state.logfile,
+          program_state.end_of_gamestate_location, SEEK_SET);
+
+    for (get_log_offset(),
+             (logline = lgetline_malloc(program_state.logfile));
+         logline;
+         free(logline), get_log_offset(),
+             (logline = lgetline_malloc(program_state.logfile)))
+        if (*logline >= 'a' && *logline <= 'z' &&
+            (strcmp("interrupt", logline)))
+            break;
+
+    if (!logline)
+        strncpy(cmd, "<end>", BUFSZ);
+    else if (!strcmp(logline, "repeat"))
+        strncpy(cmd, "<continue>", BUFSZ);
+    else {
+        /* read until the first space, or to the end */
+        int len = min(BUFSZ, strlen(logline));
+        int i;
+        for (i = 0; i < len; i++) {
+            if (isspace(logline[i]))
+                break;
+
+            cmd[i] = logline[i];
+        }
+        if (i >= BUFSZ)
+            i = BUFSZ - 1;
+        cmd[i] = '\0';
+    }
+
+    if (logline)
+        free(logline);
+    program_state = ps;
+}
 
 /* This is called in situations where we wanted to produce a save backup or
    diff, but found there was already something there.
@@ -2448,19 +2610,38 @@ log_replay_save_line(void)
 
     } while (!logline && tries--);
 
-    if (!logline)
-        return; /* will probably cause an error if watching but that's what we
-                   want */
+    if (!logline) {
+        /* maybe we find a diff/binary save later */
+        program_state.eof_reached = TRUE;
+        return;
+    }
 
-    if (*logline == '~') {
+    boolean save_too = FALSE;
+    int res = 1;
+    if (program_state.followmode == FM_PLAY)
+        save_too = TRUE;
+    if (program_state.followmode == FM_REPLAY &&
+        !replay_get_diffstate())
+        save_too = TRUE;
+
+    if (*logline == '~' && replay_ignore_diff()) {
+        program_state.end_of_gamestate_location = get_log_offset();
+        program_state.binary_save_location =
+            program_state.end_of_gamestate_location;
+        res = 0;
+    } else if (*logline == '~') {
 
         bsave = program_state.binary_save;
         program_state.binary_save_allocated = FALSE;
         apply_save_diff(logline, &bsave);
         mfree(&bsave);
+
         program_state.binary_save_location =
             program_state.end_of_gamestate_location;
-        load_gamestate_from_binary_save(TRUE);
+        if (!load_gamestate_from_binary_save(TRUE, save_too)) {
+            replay_create_checkpoint(replay_action(), 0, 1);
+            res = 2;
+        }
 
     } else if (*logline == '*') {
 
@@ -2468,13 +2649,17 @@ log_replay_save_line(void)
         program_state.binary_save_location =
             program_state.save_backup_location =
             program_state.end_of_gamestate_location;
-        load_gamestate_from_binary_save(TRUE);
+        if (!load_gamestate_from_binary_save(TRUE, save_too))
+            res = 2;
 
     } else if (*logline == 'Q') {
 
         terminate(GAME_ALREADY_OVER);
 
     }
+
+    if (save_too && program_state.followmode == FM_REPLAY)
+        replay_set_diffstate(res);
 
     free(logline);
 

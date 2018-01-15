@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -418,7 +418,7 @@ drag_ball(xchar x, xchar y, int *bc_control, xchar * ballx, xchar * bally,
 #define IS_CHAIN_ROCK(x,y) \
     (IS_ROCK(level->locations[x][y].typ) || \
      (IS_DOOR(level->locations[x][y].typ) && \
-      (level->locations[x][y].doormask & (D_CLOSED|D_LOCKED))))
+      (level->locations[x][y].flags & (D_CLOSED|D_LOCKED))))
 /* Don't ever move the chain into solid rock.  If we have to, then instead
  * undo the move_bc() and jump to the drag ball code.  Note that this also
  * means the "cannot carry and drag" message will not appear, since unless we
@@ -562,7 +562,7 @@ drag:
 
     if (near_capacity() > SLT_ENCUMBER && dist2(x, y, youmonst.mx, youmonst.my) <= 2) {
         pline(msgc_cancelled1, "You cannot %sdrag the heavy iron ball.",
-              invent ? "carry all that and also " : "");
+              youmonst.minvent ? "carry all that and also " : "");
         action_completed();
         return FALSE;
     }
@@ -576,7 +576,7 @@ drag:
             (t->ttyp == PIT || t->ttyp == SPIKED_PIT || t->ttyp == HOLE ||
              t->ttyp == TRAPDOOR))) {
 
-        if (Levitation) {
+        if (levitates(&youmonst)) {
             pline(msgc_nonmongood, "You feel a tug from the iron ball.");
             if (t)
                 t->tseen = 1;
@@ -694,7 +694,7 @@ drop_ball(xchar x, xchar y, schar dx, schar dy)
 
         u.ux0 = youmonst.mx;
         u.uy0 = youmonst.my;
-        if (!Levitation && !MON_AT(level, x, y) && !u.utrap &&
+        if (!levitates(&youmonst) && !MON_AT(level, x, y) && !u.utrap &&
             (is_pool(level, x, y) ||
              ((t = t_at(level, x, y)) &&
               (t->ttyp == PIT || t->ttyp == SPIKED_PIT || t->ttyp == TRAPDOOR ||
@@ -737,7 +737,7 @@ drop_ball(xchar x, xchar y, schar dx, schar dy)
 static void
 litter(void)
 {
-    struct obj *otmp = invent, *nextobj;
+    struct obj *otmp = youmonst.minvent, *nextobj;
     int capacity = weight_cap();
 
     while (otmp) {

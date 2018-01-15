@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -179,7 +179,7 @@ can_reach_floor(void)
     return (boolean) (!Engulfed &&
                       /* Restricted/unskilled riders can't reach the floor */
                       !(u.usteed && P_SKILL(P_RIDING) < P_BASIC) &&
-                      (!Levitation || Is_airlevel(&u.uz) ||
+                      (!levitates(&youmonst) || Is_airlevel(&u.uz) ||
                        Is_waterlevel(&u.uz)));
 }
 
@@ -650,7 +650,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         if (zappable(&youmonst, otmp)) {
             check_unpaid(otmp);
             zapwand = TRUE;
-            if (Levitation)
+            if (levitates(&youmonst))
                 ptext = FALSE;
 
             switch (otmp->otyp) {
@@ -900,7 +900,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     /* Identify stylus */
     if (doknown) {
-        makeknown(otmp->otyp);
+        tell_discovery(otmp);
         more_experienced(0, 10);
     }
 
@@ -1191,7 +1191,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         pline(msgc_info, "%s", post_engr_text);
 
     if (doknown_after) {
-        makeknown(otmp->otyp);
+        tell_discovery(otmp);
         more_experienced(0, 10);
     }
 

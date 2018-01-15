@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,7 +9,6 @@ static boolean uwep_can_force(void);
 static int reset_pick(void);
 static int picklock(void);
 static int forcelock(void);
-static struct obj *get_current_unlock_tool(void);
 static int get_unlock_chance(void);
 static const char *lock_action(void);
 static boolean obstructed(int, int, enum msg_channel);
@@ -42,12 +41,12 @@ reset_pick(void)
 }
 
 /* Finds the current or most recently used unlocking tool. */
-static struct obj *
+struct obj *
 get_current_unlock_tool(void) {
     struct obj *bestpick, *otmp;
     bestpick = NULL;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj) {
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
         if (otmp->otyp == LOCK_PICK || otmp->otyp == CREDIT_CARD ||
             otmp->otyp == SKELETON_KEY) {
             if (!bestpick || otmp->lastused > bestpick->lastused)
@@ -106,7 +105,7 @@ lock_action(void)
     }
 
     /* if the target is currently unlocked, we're trying to lock it now */
-    if (door && !(door->doormask & D_LOCKED))
+    if (door && !(door->flags & D_LOCKED))
         return actions[0] + 2;  /* "locking the door" */
     else if (box && !box->olocked)
         return box->otyp == CHEST ? actions[1] + 2 : actions[2] + 2;
@@ -138,7 +137,7 @@ picklock(void)
             return reset_pick();
     } else { /* door */
         door = &(level->locations[x][y]);
-        switch (door->doormask) {
+        switch (door->flags) {
         case D_NODOOR:
             pline(msgc_cancelled, "This doorway has no door.");
             return reset_pick();
@@ -150,7 +149,7 @@ picklock(void)
             return reset_pick();
         }
     }
-    
+
     if (!chance) {
         pline(msgc_interrupted, "You seem to have lost your unlocking tools.");
         return reset_pick();
@@ -163,24 +162,24 @@ picklock(void)
             exercise(A_DEX, TRUE);  /* even if you don't succeed */
         return reset_pick();
     }
-    
+
     if (rn2(100) >= chance)
         return 1;       /* still busy */
-    
+
     pline(msgc_actionok, "You succeed in %s.", lock_action());
     if (door) {
-        if (door->doormask & D_TRAPPED) {
+        if (door->flags & D_TRAPPED) {
             /* Don't give a "You stop picking the lock" message */
             reset_pick();
             b_trapped("door", FINGER);
-            door->doormask = D_NODOOR;
+            door->flags = D_NODOOR;
             unblock_point(x, y);
             if (*in_rooms(level, x, y, SHOPBASE))
                 add_damage(x, y, 0L);
-        } else if (door->doormask & D_LOCKED)
-            door->doormask = D_CLOSED;
+        } else if (door->flags & D_LOCKED)
+            door->flags = D_CLOSED;
         else
-            door->doormask = D_LOCKED;
+            door->flags = D_LOCKED;
 
         /* player now knows the door's open/closed status, and its
            locked/unlocked status, and also that it isn't trapped (it would have
@@ -301,17 +300,19 @@ forcelock(void)
 
 /* pick a lock on a chest or door with a given object */
 int
-pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
+pick_lock(struct obj *pick, const struct nh_cmd_arg *arg, struct obj *cobj)
 {
     int picktyp, c;
     coord cc;
-    schar dx, dy, dz;
+    schar dx = 0, dy = 0, dz = 0;
     struct rm *door;
     struct obj *otmp;
     const char *qbuf;
 
-    if (!getargdir(arg, NULL, &dx, &dy, &dz))
-        return 0;
+    if (!cobj) {
+        if (!getargdir(arg, NULL, &dx, &dy, &dz))
+            return 0;
+    }
     cc.x = youmonst.mx + dx;
     cc.y = youmonst.my + dy;
     if (!isok(cc.x, cc.y))
@@ -372,7 +373,7 @@ pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
 
         if (dz < 0) {
             pline(msgc_cancelled, "There isn't any sort of lock up %s.",
-                  Levitation ? "here" : "there");
+                  levitates(&youmonst) ? "here" : "there");
             return 0;
         } else if (is_lava(level, youmonst.mx, youmonst.my)) {
             pline(msgc_cancelled, "Doing that would probably melt your %s.",
@@ -388,7 +389,8 @@ pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
         count = 0;
         c = 'n';        /* in case there are no boxes here */
         for (otmp = level->objects[cc.x][cc.y]; otmp; otmp = otmp->nexthere)
-            if (Is_box(otmp)) {
+            if (Is_box(otmp) &&
+                (!cobj || cobj == otmp)) {
                 ++count;
                 if (!can_reach_floor()) {
                     pline(msgc_cancelled, "You can't reach %s from up here.",
@@ -473,7 +475,7 @@ pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
                       Blind ? "feel" : "see");
             return 0;
         }
-        switch (door->doormask) {
+        switch (door->flags) {
         case D_NODOOR:
             pline(msgc_cancelled, "This doorway has no door.");
             return 0;
@@ -485,7 +487,7 @@ pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
             return 0;
         default:
             /* credit cards are only good for unlocking */
-            if (picktyp == CREDIT_CARD && !(door->doormask & D_LOCKED)) {
+            if (picktyp == CREDIT_CARD && !(door->flags & D_LOCKED)) {
                 pline(msgc_cancelled,
                       "You can't lock a door with a credit card.");
                 return 0;
@@ -619,16 +621,16 @@ doopen(const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    if (door->doormask == D_ISOPEN) {
+    if (door->flags == D_ISOPEN) {
         struct nh_cmd_arg newarg;
         arg_from_delta(dx, dy, dz, &newarg);
         return doclose(&newarg);
     }
 
-    if (!(door->doormask & D_CLOSED)) {
+    if (!(door->flags & D_CLOSED)) {
         const char *mesg;
 
-        switch (door->doormask) {
+        switch (door->flags) {
         case D_BROKEN:
             mesg = " is broken";
             break;
@@ -639,7 +641,8 @@ doopen(const struct nh_cmd_arg *arg)
             mesg = " is already open";
             break;
         default:
-            if (last_command_was("open") && door->mem_door_l) {
+            if ((flags.autounlock || last_command_was("open")) &&
+                door->mem_door_l) {
 
                 /* With the "open" command given explicitly (rather than
                    implicitly via doorbumping), unlock the door. */
@@ -657,7 +660,7 @@ doopen(const struct nh_cmd_arg *arg)
                           "Use an unlocking tool manually so I know "
                           "which one you want to use.");
                 else
-                    return pick_lock(bestpick, &newarg);
+                    return pick_lock(bestpick, &newarg, NULL);
             }
             door->mem_door_l = 1;
             map_background(cc.x, cc.y, TRUE);
@@ -676,15 +679,15 @@ doopen(const struct nh_cmd_arg *arg)
     }
 
     /* door is known to be CLOSED */
-    if (rnl(20) < (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
+    if (rnl(20) < (ACURR(A_STR) + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
         pline(msgc_actionok, "The door opens.");
-        if (door->doormask & D_TRAPPED) {
+        if (door->flags & D_TRAPPED) {
             b_trapped("door", FINGER);
-            door->doormask = D_NODOOR;
+            door->flags = D_NODOOR;
             if (*in_rooms(level, cc.x, cc.y, SHOPBASE))
                 add_damage(cc.x, cc.y, 0L);
         } else
-            door->doormask = D_ISOPEN;
+            door->flags = D_ISOPEN;
         if (Blind)
             feel_location(cc.x, cc.y);  /* the hero knows she opened it */
         else
@@ -773,7 +776,7 @@ doclose(const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    if (door->doormask == D_NODOOR) {
+    if (door->flags == D_NODOOR) {
         pline(msgc_cancelled, "This doorway has no door.");
         return 0;
     }
@@ -781,25 +784,25 @@ doclose(const struct nh_cmd_arg *arg)
     if (obstructed(cc.x, cc.y, msgc_cancelled))
         return 0;
 
-    if (door->doormask == D_BROKEN) {
+    if (door->flags == D_BROKEN) {
         pline(msgc_cancelled, "This door is broken.");
         return 0;
     }
 
-    if (door->doormask & (D_CLOSED | D_LOCKED)) {
+    if (door->flags & (D_CLOSED | D_LOCKED)) {
         pline(msgc_cancelled, "This door is already closed.");
         return 0;
     }
 
-    if (door->doormask == D_ISOPEN) {
+    if (door->flags == D_ISOPEN) {
         if (verysmall(youmonst.data) && !u.usteed) {
             pline(msgc_cancelled, "You're too small to push the door closed.");
             return 0;
         }
         if (u.usteed ||
-            rn2(25) < (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
+            rn2(25) < (ACURR(A_STR) + ACURR(A_DEX) + ACURR(A_CON)) / 3) {
             pline(msgc_actionok, "The door closes.");
-            door->doormask = D_CLOSED;
+            door->flags = D_CLOSED;
             door->mem_door_l = 1;
             /* map_background here sets the mem_door flags correctly; and it's
                redundant to both feel_location and newsym with a door.
@@ -876,7 +879,7 @@ doorlock(struct obj * otmp, int x, int y)
         case WAN_STRIKING:
         case SPE_FORCE_BOLT:
             door->typ = DOOR;
-            door->doormask = D_CLOSED | (door->doormask & D_TRAPPED);
+            door->flags = D_CLOSED | (door->flags & D_TRAPPED);
             newsym(x, y);
             if (cansee(x, y))
                 pline(msgc_youdiscover, "A door appears in the wall!");
@@ -920,7 +923,7 @@ doorlock(struct obj * otmp, int x, int y)
         /* Don't allow doors to close over traps.  This is for pits */
         /* & trap doors, but is it ever OK for anything else? */
         if (t_at(level, x, y)) {
-            /* maketrap() clears doormask, so it should be NODOOR */
+            /* maketrap() clears flags, so it should be NODOOR */
             pline(msgc_yafm, "%s springs up in the doorway, but %s.",
                   dustcloud, quickly_dissipates);
             return FALSE;
@@ -933,7 +936,7 @@ doorlock(struct obj * otmp, int x, int y)
             return TRUE;
         }
 
-        switch (door->doormask & ~D_TRAPPED) {
+        switch (door->flags & ~D_TRAPPED) {
         case D_CLOSED:
             msg = "The door locks!";
             break;
@@ -952,21 +955,21 @@ doorlock(struct obj * otmp, int x, int y)
             break;
         }
         block_point(x, y);
-        door->doormask = D_LOCKED | (door->doormask & D_TRAPPED);
+        door->flags = D_LOCKED | (door->flags & D_TRAPPED);
         newsym(x, y);
         break;
     case WAN_OPENING:
     case SPE_KNOCK:
-        if (door->doormask & D_LOCKED) {
+        if (door->flags & D_LOCKED) {
             msg = "The door unlocks!";
-            door->doormask = D_CLOSED | (door->doormask & D_TRAPPED);
+            door->flags = D_CLOSED | (door->flags & D_TRAPPED);
         } else
             res = FALSE;
         break;
     case WAN_STRIKING:
     case SPE_FORCE_BOLT:
-        if (door->doormask & (D_LOCKED | D_CLOSED)) {
-            if (door->doormask & D_TRAPPED) {
+        if (door->flags & (D_LOCKED | D_CLOSED)) {
+            if (door->flags & D_TRAPPED) {
                 if (MON_AT(level, x, y))
                     mb_trapped(m_at(level, x, y));
                 else {
@@ -976,13 +979,13 @@ doorlock(struct obj * otmp, int x, int y)
                     else
                         You_hear(msgc_levelsound, "a distant explosion.");
                 }
-                door->doormask = D_NODOOR;
+                door->flags = D_NODOOR;
                 unblock_point(x, y);
                 newsym(x, y);
                 loudness = 40;
                 break;
             }
-            door->doormask = D_BROKEN;
+            door->flags = D_BROKEN;
             if (cansee(x, y))
                 pline(msgc_actionok, "The door crashes open!");
             else

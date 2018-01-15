@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2013-09-24
+! Last modified by Fredrik Ljungdahl, 2017-11-02
 ! NetHack may be freely redistributed.  See license for details.
 __ = (0, 0, 0)
 _A = (128, 96, 0)
@@ -276,7 +276,7 @@ Cv = (0, 0, 255)
   AzAzAzAzAzAzAzAzAzAz____CHCHB7CHA$CHA5CHCHB7________AzAzAzAzAzAz
   AzAzAzAzAzAzAzAzAzAzAzAz________________________AzAzAzAzAzAzAzAz
 }
-# tile 344 (priestess)
+# tile 344 (sub female priest)
 {
   AzAzAzAzAzAzAzAzAzAzAzAzAzBwCOCOCBBwA$CH_FAzAzAzAzAzAzAzAzAzAzAz
   AzAzAzAzAzAzB0CCAzAzAzAzBwCOCOCOCOCBBkA$CH_NAzAzAzAzAzAzAzAzAzAz

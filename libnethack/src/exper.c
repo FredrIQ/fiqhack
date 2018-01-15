@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -184,7 +184,6 @@ losexp(const char *killer, boolean override_res)
         pline(msgc_intrloss, "%s level %d.", Goodbye(), youmonst.m_lev--);
         /* remove intrinsic abilities */
         adjabil(youmonst.m_lev + 1, youmonst.m_lev);
-        reset_rndmonst(NON_PM); /* new monster selection */
     } else {
         if (killer)
             done(DIED, killer);
@@ -222,11 +221,14 @@ losexp(const char *killer, boolean override_res)
 
     /* Compute the progress the hero did towards the next level. Scale back one level,
        but keep the same progress. */
-    int expdiff_high = newuexp(youmonst.m_lev + 1) - newuexp(youmonst.m_lev);
-    int expdiff_low = newuexp(youmonst.m_lev) - newuexp(youmonst.m_lev - 1);
-    int pct = (youmonst.exp - newuexp(youmonst.m_lev)) * 100 / expdiff_high;
-    youmonst.exp = newuexp(youmonst.m_lev - 1);
-    youmonst.exp += pct * expdiff_low / 100;
+    if (youmonst.exp) {
+        int expdiff_high = newuexp(youmonst.m_lev + 1) -
+            newuexp(youmonst.m_lev);
+        int expdiff_low = newuexp(youmonst.m_lev) - newuexp(youmonst.m_lev - 1);
+        int pct = (youmonst.exp - newuexp(youmonst.m_lev)) * 100 / expdiff_high;
+        youmonst.exp = newuexp(youmonst.m_lev - 1);
+        youmonst.exp += pct * expdiff_low / 100;
+    }
 }
 
 void
@@ -250,11 +252,13 @@ mlosexp(struct monst *magr, struct monst *mdef, const char *killer,
         pline(combat_msgc(magr, mdef, cr_hit),
               "%s suddenly seems weaker!", Monnam(mdef));
 
-    int hp_loss = min(mdef->mhpmax - 1, rnd(8));
+    int hp_loss = rnd(8);
+    hp_loss = min(mdef->mhpmax - 1, hp_loss);
     mdef->mhpmax -= hp_loss;
     mdef->mhp -= min(mdef->mhp - 1, hp_loss);
 
-    int pw_loss = min(mdef->pwmax, mon_pw_gain(mdef));
+    int pw_loss = mon_pw_gain(mdef);
+    pw_loss = min(mdef->pwmax, pw_loss);
     mdef->pwmax -= pw_loss;
     mdef->pw -= min(mdef->pw, pw_loss);
 
@@ -319,8 +323,7 @@ pluslvl(boolean incr)
                            "advanced to experience level %d.", youmonst.m_lev);
         }
         pline(msgc_intrgain, "Welcome to experience level %d.", youmonst.m_lev);
-        adjabil(youmonst.m_lev - 1, youmonst.m_lev);        /* give new intrinsics */
-        reset_rndmonst(NON_PM); /* new monster selection */
+        adjabil(youmonst.m_lev - 1, youmonst.m_lev); /* give new intrinsics */
     }
 }
 
@@ -368,7 +371,7 @@ initialize_mon_pw(struct monst *mon)
 }
 
 /* Returns an energy gain (or loss) for when a monster gains or loses
-   a level. Player equavilents:
+   a level. Player equivalents:
    potential is generally wis/2 + 1, but can be + 2 for casting roles,
    might be different based on a special level cutoff value.
    min is the same as below (except no M3_SPELLCASTER/nymph/iswiz case) */
@@ -376,6 +379,8 @@ static int
 mon_pw_gain(const struct monst *mon)
 {
     int potential, min, res;
+    res = 0;
+
     potential = acurr(mon, A_WIS) / 2;
     potential++;
     if (mon->data->mflags3 & M3_SPELLCASTER)
@@ -414,8 +419,6 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
        little and big forms */
     oldtype = monsndx(ptr);
     newtype = little_to_big(oldtype);
-    if (newtype == PM_PRIEST && mtmp->female)
-        newtype = PM_PRIESTESS;
 
     /* growth limits differ depending on method of advancement */
     if (victim) {       /* killed a monster */
@@ -469,7 +472,7 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
             if (sensemon(mtmp))
                 pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                       "As %s grows up into %s, %s %s!", mon_nam(mtmp),
-                      an(ptr->mname), mhe(mtmp),
+                      an(mtmp->female ? ptr->fname : ptr->mname), mhe(mtmp),
                       nonliving(ptr) ? "expires" : "dies");
             set_mon_data(mtmp, ptr);        /* keep mvitals[] accurate */
             mondied(mtmp);

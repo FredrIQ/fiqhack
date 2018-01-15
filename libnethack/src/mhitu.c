@@ -1,11 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "artifact.h"
 #include "hungerstatus.h"
+#include "mfndpos.h"
 
 static struct obj *otmp;
 
@@ -15,7 +16,7 @@ static int passiveum(const struct permonst *, struct monst *,
 static void mayberem(struct obj *, const char *);
 
 static boolean diseasemu(const struct permonst *, const char *);
-static int hitmu(struct monst *, const struct attack *);
+static int hitmu(struct monst *, const struct attack *, int);
 static int gulpmu(struct monst *, const struct attack *);
 static int explmu(struct monst *, const struct attack *);
 static void missmu(struct monst *, boolean, const struct attack *);
@@ -307,13 +308,15 @@ mattacku(struct monst *mtmp)
             if (i & MM_DEF_DIED || u.umoved)
                 return 0;
             /* Let your steed retaliate */
-            return !!(mattackm(u.usteed, mtmp) & MM_DEF_DIED);
+            if ((mm_aggression(u.usteed, mtmp, Conflict) & ALLOW_M))
+                return !!(mattackm(u.usteed, mtmp) & MM_DEF_DIED);
+            return 0;
         }
     }
 
     /* must be called after the above mattackm check, or the monster could
        summon at both you and your steed in the same attack */
-    if (!mpreattack(mtmp))
+    if (!mpreattack(mtmp, &youmonst, FALSE))
         return 0;
 
     if (youmonst.mundetected && !Engulfed) {
@@ -347,7 +350,7 @@ mattacku(struct monst *mtmp)
                           Monnam(mtmp));
                 else
                     pline(msgc_kill, "%s is killed by a falling %s (you)!",
-                          Monnam(mtmp), youmonst.data->mname);
+                          Monnam(mtmp), pm_name(&youmonst));
                 killed(mtmp);
                 newsym(youmonst.mx, youmonst.my);
                 if (!DEADMONSTER(mtmp))
@@ -401,11 +404,11 @@ mattacku(struct monst *mtmp)
                     if (youmonst.data->mlet == S_EEL)
                         pline(msgc_youdiscover,
                               "Wait, %s!  There's a hidden %s named %s there!",
-                              m_monnam(mtmp), youmonst.data->mname, u.uplname);
+                              m_monnam(mtmp), pm_name(&youmonst), u.uplname);
                     else
                         pline(msgc_youdiscover, "Wait, %s!  There's a %s named "
                               "%s hiding under %s!", m_monnam(mtmp),
-                              youmonst.data->mname, u.uplname,
+                              pm_name(&youmonst), u.uplname,
                               doname(level->objects[youmonst.mx][youmonst.my]));
                     if (obj)
                         obj->spe = save_spe;
@@ -426,7 +429,7 @@ mattacku(struct monst *mtmp)
             pline(msgc_interrupted, "It gets stuck on you.");
         else
             pline(msgc_interrupted, "Wait, %s!  That's a %s named %s!",
-                  m_monnam(mtmp), youmonst.data->mname, u.uplname);
+                  m_monnam(mtmp), pm_name(&youmonst), u.uplname);
         u.ustuck = mtmp;
         cancel_mimicking("");
         return 0;
@@ -441,11 +444,12 @@ mattacku(struct monst *mtmp)
         else
             pline(msgc_interrupted, "Wait, %s!  That %s is really %s named %s!",
                   m_monnam(mtmp), mimic_obj_name(&youmonst),
-                  an(mons[u.umonnum].mname), u.uplname);
+                  an(u.ufemale ? mons[u.umonnum].fname : mons[u.umonnum].mname),
+                  u.uplname);
 
         const char *buf;
         buf = msgprintf("You appear to be %s again.", Upolyd ?
-                        (const char *)an(youmonst.data->mname) :
+                        (const char *)an(pm_name(&youmonst)) :
                         (const char *)"yourself");
         cancel_mimicking(buf); /* immediately stop mimicking */
 
@@ -454,6 +458,7 @@ mattacku(struct monst *mtmp)
 
     /* Work out the armor class differential   */
     tmp = AC_VALUE(find_mac(&youmonst)) + 10; /* tmp ~= 0 - 20 */
+    int ac_after_rnd = tmp;
     tmp += mtmp->m_lev;
     if (u_helpless(hm_all))
         tmp += 4;
@@ -526,7 +531,7 @@ mattacku(struct monst *mtmp)
                 if (tmp > (j = rnd(20 + i))) {
                     if (mattk->aatyp != AT_KICK ||
                         !thick_skinned(youmonst.data))
-                        sum[i] = hitmu(mtmp, mattk);
+                        sum[i] = hitmu(mtmp, mattk, ac_after_rnd);
                 } else
                     missmu(mtmp, (tmp == j), mattk);
             }
@@ -535,7 +540,7 @@ mattacku(struct monst *mtmp)
         case AT_HUGS:  /* automatic if prev two attacks succeed */
             if ((i >= 2 && sum[i - 1] && sum[i - 2])
                 || mtmp == u.ustuck)
-                sum[i] = hitmu(mtmp, mattk);
+                sum[i] = hitmu(mtmp, mattk, ac_after_rnd);
             break;
 
         case AT_GAZE:  /* can affect you either ranged or not */
@@ -576,7 +581,7 @@ mattacku(struct monst *mtmp)
                 mswingsm(mtmp, &youmonst, otmp);
             }
             if (tmp > (j = dieroll = rnd(20 + i)))
-                sum[i] = hitmu(mtmp, mattk);
+                sum[i] = hitmu(mtmp, mattk, ac_after_rnd);
             else
                 missmu(mtmp, (tmp == j), mattk);
             /* KMH -- Don't accumulate to-hit bonuses */
@@ -739,10 +744,10 @@ magic_negation(struct monst *mon)
  *            attacking you
  */
 static int
-hitmu(struct monst *mtmp, const struct attack *mattk)
+hitmu(struct monst *mtmp, const struct attack *mattk, int ac_after_rnd)
 {
     const struct permonst *mdat = mtmp->data;
-    int uncancelled, ptmp;
+    int uncancelled;
     int dmg, armpro, permdmg, zombie_timer;
     const struct permonst *olduasmon = youmonst.data;
     int res;
@@ -784,8 +789,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
     /* First determine the base damage done */
     dmg = dice((int)mattk->damn, (int)mattk->damd);
-    if (is_undead(mdat) && midnight())
-        dmg += dice((int)mattk->damn, (int)mattk->damd); /* extra damage */
+    /* extra damage */
     dmg += dambon(mtmp);
 
     /* Next a cancellation factor. Use uncancelled when the cancellation factor
@@ -820,7 +824,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     dmg = 1;
                     pline(resists_ston(&youmonst) ? msgc_fatalavoid :
                           msgc_fatal, "%s hits you with the %s corpse.", Monnam(mtmp),
-                          mons[otmp->corpsenm].mname);
+                          opm_name(otmp));
                     if (!petrifying(&youmonst))
                         goto do_stone;
                 }
@@ -990,7 +994,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                general very good at considering height--most short monsters
                still _can_ attack you when you're flying or mounted. [TODO:
                why can't a flying attacker overcome this?] */
-            if (u.usteed || Levitation || Flying) {
+            if (u.usteed || levitates(&youmonst) || Flying) {
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "%s tries to reach your %s %s!", Monnam(mtmp), sidestr,
                       body_part(LEG));
@@ -1087,7 +1091,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                                                   ? "the Plane of Water"
                                                   : a_waterbody(mtmp->mx,
                                                                 mtmp->my),
-                                              an(mtmp->data->mname))));
+                                              an(pm_name(mtmp)))));
                 } else if (mattk->aatyp == AT_HUGS)
                     pline(combat_msgc(mtmp, &youmonst, cr_hit),
                           "You are being crushed.");
@@ -1308,8 +1312,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_CURS:
         hitmsg(mtmp, mattk);
-        if (!night() && mdat == &mons[PM_GREMLIN])
-            break;
         if (!cancelled(mtmp) && !rn2(10)) {
             if (canhear()) {
                 /* OK to use a low-priority channel here; we're about to use
@@ -1331,14 +1333,17 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_STUN:
         hitmsg(mtmp, mattk);
         if (!cancelled(mtmp) && !rn2(4)) {
-            inc_timeout(&youmonst, STUNNED, dmg, FALSE);
+            if (!resists_stun(&youmonst))
+                inc_timeout(&youmonst, STUNNED, dmg, FALSE);
             dmg /= 2;
         }
         break;
     case AD_SLOW:
         hitmsg(mtmp, mattk);
-        if (uncancelled && !defends(AD_SLOW, uwep) && !rn2(4))
-            inc_timeout(&youmonst, SLOW, dmg, FALSE);
+        if (!uncancelled || defends(AD_SLOW, uwep) || rn2(4) ||
+            resists_slow(&youmonst))
+            break;
+        inc_timeout(&youmonst, SLOW, dmg, FALSE);
         break;
     case AD_DREN:
         hitmsg(mtmp, mattk);
@@ -1359,7 +1364,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         dmg = 0;
         break;
     case AD_DETH:
-        if (is_undead(youmonst.data)) {
+        if (resists_death(&youmonst)) {
             pline(msgc_fatalavoid,
                   "%s touches you!  Was that the touch of death?",
                   Monnam(mtmp));
@@ -1472,8 +1477,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
     /* Negative armor class reduces damage done instead of fully protecting
        against hits. */
-    if (dmg && find_mac(&youmonst) < 0) {
-        dmg -= rnd(-find_mac(&youmonst));
+    if (dmg && ac_after_rnd < 0) {
+        dmg += AC_VALUE(ac_after_rnd);
         if (dmg < 1)
             dmg = 1;
     }
@@ -1560,12 +1565,6 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
 
         if (Punished)
             unplacebc();        /* ball&chain go away */
-        remove_monster(level, mtmp->mx, mtmp->my);
-        mtmp->mtrapped = 0;     /* no longer on old trap */
-        place_monster(mtmp, youmonst.mx, youmonst.my, TRUE);
-        u.ustuck = mtmp;
-        newsym(mtmp->mx, mtmp->my);
-
         if (is_animal(mtmp->data) && u.usteed) {
             /* Too many quirks presently if hero and steed are swallowed.
                Pretend purple worms don't like horses for now :-) */
@@ -1574,6 +1573,12 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
             dismount_steed(DISMOUNT_ENGULFED);
         } else
             pline(msgc_statusbad, "%s engulfs you!", Monnam(mtmp));
+        remove_monster(level, mtmp->mx, mtmp->my);
+        mtmp->mtrapped = 0;     /* no longer on old trap */
+        place_monster(mtmp, youmonst.mx, youmonst.my, TRUE);
+        u.ustuck = mtmp;
+        newsym(mtmp->mx, mtmp->my);
+
         action_interrupted();
         reset_occupations(TRUE);    /* behave as if you had moved */
 
@@ -1620,7 +1625,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         tim_tmp += -find_mac(&youmonst) + 10;
         u.uswldtim = (unsigned)((tim_tmp < 2) ? 2 : tim_tmp);
         swallowed(1);
-        for (otmp2 = invent; otmp2; otmp2 = otmp2->nobj)
+        for (otmp2 = youmonst.minvent; otmp2; otmp2 = otmp2->nobj)
             snuff_lit(otmp2);
     }
 
@@ -1667,7 +1672,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         }
         break;
     case AD_ACID:
-        if (Acid_resistance) {
+        if (immune_to_acid(&youmonst)) {
             pline(msgc_playerimmune,
                   "You are covered with a seemingly harmless goo.");
             tmp = 0;
@@ -1677,8 +1682,12 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
                       "Ouch!  You've been slimed!");
             else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
-                      "You are covered in slime!  It burns!");
-            exercise(A_STR, FALSE);
+                      "You are covered in slime!%s",
+                      !resists_acid(&youmonst) ? "  It burns!" : "");
+            if (resists_acid(&youmonst))
+                tmp = (tmp + 1) / 2;
+            else
+                exercise(A_STR, FALSE);
         }
         break;
     case AD_BLND:
@@ -1694,27 +1703,34 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_ELEC:
         if (!cancelled(mtmp) && rn2(2)) {
-            if (Shock_resistance) {
+            if (immune_to_elec(&youmonst)) {
                 shieldeff(youmonst.mx, youmonst.my);
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "Electricity sparks around, avoiding you.");
                 ugolemeffects(AD_ELEC, tmp);
                 tmp = 0;
-            } else {
+            } else if (resists_elec(&youmonst)) {
+                pline(combat_msgc(mtmp, &youmonst, cr_resist),
+                      "Electricity sparks around, hurting you a bit!");
+                tmp = (tmp + 1) / 2;
+            } else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
                       "The air around you crackles with electricity.");
-            }
         } else
             tmp = 0;
         break;
     case AD_COLD:
         if (!cancelled(mtmp) && rn2(2)) {
-            if (Cold_resistance) {
+            if (immune_to_cold(&youmonst)) {
                 shieldeff(youmonst.mx, youmonst.my);
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "You feel mildly chilly.");
                 ugolemeffects(AD_COLD, tmp);
                 tmp = 0;
+            } else if (resists_cold(&youmonst)) {
+                pline(combat_msgc(mtmp, &youmonst, cr_resist),
+                      "You feel very chilly!");
+                tmp = (tmp + 1) / 2;
             } else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
                       "You are freezing to death!");
@@ -1723,12 +1739,16 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_FIRE:
         if (!cancelled(mtmp) && rn2(2)) {
-            if (Fire_resistance) {
+            if (immune_to_fire(&youmonst)) {
                 shieldeff(youmonst.mx, youmonst.my);
                 pline(combat_msgc(mtmp, &youmonst, cr_immune),
                       "You feel mildly hot.");
                 ugolemeffects(AD_FIRE, tmp);
                 tmp = 0;
+            } else if (resists_fire(&youmonst)) {
+                pline(combat_msgc(mtmp, &youmonst, cr_resist),
+                      "You feel very hot!");
+                tmp = (tmp + 1) / 2;
             } else
                 pline(combat_msgc(mtmp, &youmonst, cr_hit),
                       "You are burning to a crisp!");
@@ -1779,6 +1799,7 @@ explmu(struct monst *mtmp, const struct attack *mattk)
 
     int tmp = dice((int)mattk->damn, (int)mattk->damd);
     boolean not_affected = defends((int)mattk->adtyp, uwep);
+    int hurt = 0;
 
     hitmsg(mtmp, mattk);
     remove_monster(level, mtmp->mx, mtmp->my);
@@ -1786,16 +1807,24 @@ explmu(struct monst *mtmp, const struct attack *mattk)
 
     switch (mattk->adtyp) {
     case AD_COLD:
-        not_affected |= Cold_resistance;
+        if (!immune_to_cold(&youmonst))
+            hurt++;
+        if (!resists_cold(&youmonst))
+            hurt++;
         goto common;
     case AD_FIRE:
-        not_affected |= Fire_resistance;
+        if (!immune_to_fire(&youmonst))
+            hurt++;
+        if (!resists_fire(&youmonst))
+            hurt++;
         goto common;
     case AD_ELEC:
-        not_affected |= Shock_resistance;
+        if (!immune_to_elec(&youmonst))
+            hurt++;
+        if (!resists_elec(&youmonst))
+            hurt++;
     common:
-
-        if (!not_affected) {
+        if (hurt) {
             if (ACURR(A_DEX) > rnd(20)) {
                 pline(combat_msgc(mtmp, &youmonst, cr_resist),
                       "You duck some of the blast.");
@@ -1803,6 +1832,11 @@ explmu(struct monst *mtmp, const struct attack *mattk)
             } else {
                 pline_implied(combat_msgc(mtmp, &youmonst, cr_hit),
                               "You get blasted!");
+            }
+            if (hurt == 1) {
+                pline(combat_msgc(mtmp, &youmonst, cr_resist),
+                      "%s!", M_verbs(&youmonst, "resist"));
+                tmp = (tmp + 1) / 2;
             }
             if (mattk->adtyp == AD_FIRE)
                 burn_away_slime(&youmonst);
@@ -1969,8 +2003,7 @@ could_seduce(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         return 0;
 
     if (pagr->mlet != S_NYMPH &&
-        ((pagr != &mons[PM_INCUBUS] && pagr != &mons[PM_SUCCUBUS])
-         || (mattk && mattk->adtyp != AD_SSEX)))
+        (pagr != &mons[PM_INCUBUS] || (mattk && mattk->adtyp != AD_SSEX)))
         return 0;
 
     if (genagr == 1 - gendef)
@@ -1985,7 +2018,7 @@ int
 doseduce(struct monst *mon)
 {
     struct obj *ring, *nring;
-    boolean fem = (mon->data == &mons[PM_SUCCUBUS]);    /* otherwise incubus */
+    boolean fem = mon->female;
     const char *qbuf;
 
     if (cancelled(mon) || mon->mspec_used) {
@@ -2008,7 +2041,7 @@ doseduce(struct monst *mon)
         pline(combat_msgc(mon, &youmonst, cr_hit),
               "You feel very attracted to %s.", mon_nam(mon));
 
-    for (ring = invent; ring; ring = nring) {
+    for (ring = youmonst.minvent; ring; ring = nring) {
         nring = ring->nobj;
         if (ring->otyp != RIN_ADORNMENT)
             continue;
@@ -2021,14 +2054,15 @@ doseduce(struct monst *mon)
                               ("\"That  looks pretty.  May I have it?\""),
                               xname(ring), simple_typename(ring->otyp),
                               "ring"));
-                makeknown(RIN_ADORNMENT);
-                if (yn(qbuf) == 'n')
+                if (yn(qbuf) == 'n') {
+                    tell_discovery(ring);
                     continue;
+                }
             } else
                 pline(msgc_itemloss,
                       "%s decides she'd like your %s, and takes it.",
                       Blind ? "She" : Monnam(mon), xname(ring));
-            makeknown(RIN_ADORNMENT);
+            tell_discovery(ring);
             unwield_silently(ring);
             setunequip(ring);
             freeinv(ring);
@@ -2048,16 +2082,17 @@ doseduce(struct monst *mon)
                                           "you wear it for me?\""),
                               xname(ring), simple_typename(ring->otyp),
                               "ring"));
-                makeknown(RIN_ADORNMENT);
-                if (yn(qbuf) == 'n')
+                if (yn(qbuf) == 'n') {
+                    tell_discovery(ring);
                     continue;
+                }
             } else {
                 pline(msgc_statusbad,
                       "%s decides you'd look prettier wearing your %s,",
                       Blind ? "He" : Monnam(mon), xname(ring));
                 pline(msgc_statusbad, "and puts it on your finger.");
             }
-            makeknown(RIN_ADORNMENT);
+            tell_discovery(ring);
             if (!uright) {
                 pline_implied(msgc_info, "%s puts %s on your right %s.",
                               Blind ? "He" : Monnam(mon), the(xname(ring)),
@@ -2224,7 +2259,7 @@ doseduce(struct monst *mon)
               noit_Monnam(mon));
     else {
         long cost;
-        long umoney = money_cnt(invent);
+        long umoney = money_cnt(youmonst.minvent);
 
         /* TODO: This is possibly the best overflow check ever. The overflow
            check itself works, but what about the replacement? (int and long
@@ -2311,14 +2346,17 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
     switch (olduasmon->mattk[i].adtyp) {
     case AD_ACID:
         if (!rn2(2)) {
-            if (resists_acid(mtmp)) {
+            if (immune_to_acid(mtmp)) {
                 pline(combat_msgc(&youmonst, mtmp, cr_immune),
                       "%s is splashed by your acid, but doesn't care.",
                       Monnam(mtmp));
                 tmp = 0;
-            } else
+            } else {
                 pline(combat_msgc(&youmonst, mtmp, cr_hit),
                       "%s is splashed by your acid!", Monnam(mtmp));
+                if (resists_acid(mtmp))
+                    tmp = (tmp + 1) / 2;
+            }
         } else
             tmp = 0;
         if (!rn2(30))
@@ -2381,10 +2419,19 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
                 /* TODO: rarely lose luck for monster */
                 break;
             }
+
             if (cancelled(&youmonst) ||
                 !(msensem(mtmp, &youmonst) & MSENSE_VISION) ||
                 !(msensem(&youmonst, mtmp) & MSENSE_VISION))
                 break;
+
+            if (resists_slow(mtmp)) {
+                pline(combat_msgc(&youmonst, mtmp, cr_immune),
+                      "%s down momentarily.",
+                      M_verbs(mtmp, "slow"));
+                break;
+            }
+
             if (!slow(mtmp) && canseemon(mtmp))
                 pline(combat_msgc(&youmonst, mtmp, cr_hit),
                       "%s down under your gaze!", M_verbs(mtmp, "slow"));
@@ -2406,16 +2453,20 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
             mtmp->mfrozen = min(tmp, 127);
             return 3;
         case AD_COLD:  /* Brown mold or blue jelly */
-            if (resists_cold(mtmp)) {
+            if (immune_to_cold(mtmp)) {
                 shieldeff(mtmp->mx, mtmp->my);
-                pline(combat_msgc(&youmonst, mtmp, cr_miss),
+                pline(combat_msgc(&youmonst, mtmp, cr_immune),
                       "%s is mildly chilly.", Monnam(mtmp));
                 golemeffects(mtmp, AD_COLD, tmp);
                 tmp = 0;
                 break;
-            }
-            pline(combat_msgc(&youmonst, mtmp, cr_hit),
-                  "%s is suddenly very cold!", Monnam(mtmp));
+            } else if (resists_cold(mtmp)) {
+                pline(combat_msgc(&youmonst, mtmp, cr_resist),
+                      "%s very chilly!", M_verbs(mtmp, "are"));
+                tmp = (tmp + 1) / 2;
+            } else
+                pline(combat_msgc(&youmonst, mtmp, cr_hit),
+                      "%s is suddenly very cold!", Monnam(mtmp));
             u.mh += tmp / 2;
             if (u.mhmax < u.mh)
                 u.mhmax = u.mh;
@@ -2423,35 +2474,46 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
                 split_mon(&youmonst, mtmp);
             break;
         case AD_STUN:  /* Yellow mold */
-            inc_timeout(mtmp, STUNNED, tmp, TRUE);
-            pline(combat_msgc(&youmonst, mtmp, cr_hit),
-                  "%s %s.", Monnam(mtmp),
-                  makeplural(stagger(mtmp->data, "stagger")));
+            if (!resists_stun(mtmp)) {
+                inc_timeout(mtmp, STUNNED, tmp, TRUE);
+                pline(combat_msgc(&youmonst, mtmp, cr_hit),
+                      "%s %s.", Monnam(mtmp),
+                      makeplural(stagger(mtmp->data, "stagger")));
+            }
             tmp = 0;
             break;
         case AD_FIRE:  /* Red mold */
-            if (resists_fire(mtmp)) {
+            if (immune_to_fire(mtmp)) {
                 shieldeff(mtmp->mx, mtmp->my);
                 pline(combat_msgc(&youmonst, mtmp, cr_miss),
                       "%s is mildly warm.", Monnam(mtmp));
                 golemeffects(mtmp, AD_FIRE, tmp);
                 tmp = 0;
                 break;
+            } else if (resists_fire(mtmp)) {
+                pline(combat_msgc(&youmonst, mtmp, cr_resist),
+                      "%s mildly hot!", M_verbs(mtmp, "are"));
+                tmp = (tmp + 1) / 2;
+                break;
             }
             pline(combat_msgc(&youmonst, mtmp, cr_hit),
                   "%s is suddenly very hot!", Monnam(mtmp));
             break;
         case AD_ELEC:
-            if (resists_elec(mtmp)) {
+            if (immune_to_elec(mtmp)) {
                 shieldeff(mtmp->mx, mtmp->my);
-                pline(combat_msgc(&youmonst, mtmp, cr_miss),
+                pline(combat_msgc(&youmonst, mtmp, cr_immune),
                       "%s is slightly tingled.", Monnam(mtmp));
                 golemeffects(mtmp, AD_ELEC, tmp);
                 tmp = 0;
                 break;
-            }
-            pline(combat_msgc(&youmonst, mtmp, cr_hit),
-                  "%s is jolted with your electricity!", Monnam(mtmp));
+            } else if (resists_elec(mtmp)) {
+                pline(combat_msgc(&youmonst, mtmp, cr_resist),
+                      "%s jolted slightly.", M_verbs(mtmp, "are"));
+                tmp = (tmp + 1) / 2;
+            } else
+                pline(combat_msgc(&youmonst, mtmp, cr_hit),
+                      "%s is jolted with your electricity!", Monnam(mtmp));
             break;
         default:
             tmp = 0;

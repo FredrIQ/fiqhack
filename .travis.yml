@@ -12,4 +12,10 @@ script:
     - make install
 
 notifications:
-    irc: "chat.freenode.net#FIQHack"
+    irc:
+        channels: "chat.freenode.net#nethack4"
+        on_success: always
+        on_failure: always
+        template:
+          - "%{commit_subject} (%{result} %{branch} #%{build_number}) %{build_url}
+            Diff: %{compare_url}"

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,6 +19,7 @@ static void describe_bg(int x, int y, int bg, char *buf);
 static int describe_object(int x, int y, int votyp, char *buf, int known_embed,
                            boolean *feature_described);
 static void describe_mon(int x, int y, int monnum, char *buf);
+static void add_mon_info(struct nh_menulist *, const struct permonst *);
 static int do_look(boolean, const struct nh_cmd_arg *);
 
 /* The explanations below are also used when the user gives a string
@@ -155,19 +156,10 @@ describe_bg(int x, int y, int bg, char *buf)
     }
 
     switch (bg) {
-    case S_altar:
-        if (!In_endgame(&u.uz))
-            sprintf(buf, "%s altar",
-                    align_str(Amask2align
-                              (level->locations[x][y].altarmask & AM_MASK)));
-        else
-            sprintf(buf, "aligned altar");
-        break;
-
     case S_ndoor:
         if (is_drawbridge_wall(x, y) >= 0)
             strcpy(buf, "open drawbridge portcullis");
-        else if ((level->locations[x][y].doormask & ~D_TRAPPED) == D_BROKEN)
+        else if ((level->locations[x][y].flags & ~D_TRAPPED) == D_BROKEN)
             strcpy(buf, "broken door");
         else
             strcpy(buf, "doorway");
@@ -205,7 +197,7 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed,
             strcpy(buf, "strange object");
         } else {
             otmp = mktemp_sobj(level, votyp);
-            otmp->corpsenm = PM_TENGU;
+            otmp->corpsenm = PM_TENGU; /* consistent with memobj.c */
             /* (basic object only, no random features) */
             if (otmp->oclass == COIN_CLASS)
                 otmp->quan = 1L;        /* to force pluralization off */
@@ -291,7 +283,7 @@ describe_mon(int x, int y, int monnum, char *buf)
             snprintf(race, SIZE(race), "%s ", urace.adj);
 
         sprintf(buf, "%s%s%s called %s", Invis ? "invisible " : "", race,
-                mons[u.umonnum].mname, u.uplname);
+                u.ufemale ? mons[u.umonnum].fname : mons[u.umonnum].mname, u.uplname);
 
         if (u.usteed) {
             snprintf(steedbuf, SIZE(steedbuf), ", mounted on %s", y_monnam(u.usteed));
@@ -327,6 +319,8 @@ describe_mon(int x, int y, int monnum, char *buf)
         monnum -= NUMMONS;
         if (monnum < WARNCOUNT)
             strcat(buf, warnexplain[monnum]);
+
+        return;
     }
 
     mtmp = vismon_at(level, x, y);
@@ -472,14 +466,209 @@ nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
     API_EXIT();
 }
 
-/*
- * Look in the "data" file for more info.  Called if the user typed in the
- * whole name (user_typed_name == TRUE), or we've found a possible match
- * with a character/glyph.
- */
+#define ADDPROP(prop, str)                              \
+    if (pm_has_property(pm, (prop)))                    \
+        buf = msgprintf("%s%s", buf && *buf ?           \
+                        msgcat(buf, ", ") : "", str);
+#define ADDMR(field, res, str)                          \
+    if (field & (res))                                  \
+        buf = msgprintf("%s%s", buf && *buf ?           \
+                        msgcat(buf, ", ") : "", str);
+#define APPENDC(cond, str)                              \
+    if (cond)                                           \
+        buf = msgprintf("%s%s", buf && *buf ?           \
+                        msgcat(buf, ", ") : "", str);
+static void
+add_mon_info(struct nh_menulist *menu, const struct permonst *pm)
+{
+    const char *buf;
+    int diff = monstr[monsndx(pm)];
+    int gen = pm->geno;
+    int freq = (gen & G_FREQ);
+    boolean uniq = !!(gen & G_UNIQ);
+    boolean hell = !!(gen & G_HELL);
+    boolean nohell = !!(gen & G_NOHELL);
+    uchar mcon = pm->mconveys;
+    mcon &= ~(MR_ACID | MR_STONE); /* these don't do anything */
+    unsigned int mflag1 = pm->mflags1;
+    unsigned int mflag2 = pm->mflags2;
+
+    /* Misc */
+    buf = msgprintf("Difficulty %d, %s, willpower %d.", diff,
+                    show_ac("%s %d", pm->ac), pm->mr);
+    add_menutext(menu, buf);
+
+    /* Speed */
+    int uspeed = mcalcmove(&youmonst);
+    buf = msgprintf("Speed: %d (%s).", pm->mmove,
+                    !pm->mmove ? "immobile" :
+                    uspeed > pm->mmove ? "slower than you" :
+                    uspeed < pm->mmove ? "faster than you" :
+                    "equally fast as you");
+    add_menutext(menu, buf);
+
+    /* Generation */
+    if (uniq)
+        buf = "Unique.";
+    else if (!freq)
+        buf = "Specially generated.";
+    else
+        buf = msgprintf("Normally %s%s, %s.",
+                        hell ? "only appears in Gehennom" :
+                        nohell ? "only appears outside Gehennom" :
+                        "appears everywhere",
+                        (gen & G_SGROUP) ? " in groups" :
+                        (gen & G_LGROUP) ? " in large groups" : "",
+                        freq >= 5 ? "very common" :
+                        freq == 4 ? "common" :
+                        freq == 3 ? "slightly rare" :
+                        freq == 2 ? "rare" :
+                        freq == 1 ? "very rare" :
+                        "not randomly generated");
+    add_menutext(menu, buf);
+
+    /* Resistances */
+    buf = NULL;
+    ADDPROP(FIRE_RES, "fire");
+    ADDPROP(COLD_RES, "cold");
+    ADDPROP(SLEEP_RES, "sleep");
+    ADDPROP(DISINT_RES, "disintegration");
+    ADDPROP(SHOCK_RES, "shock");
+    ADDPROP(POISON_RES, "poison");
+    ADDPROP(ACID_RES, "acid");
+    ADDPROP(STONE_RES, "petrification");
+    ADDPROP(DRAIN_RES, "life-drain");
+    ADDPROP(SICK_RES, "sickness");
+    ADDPROP(ANTIMAGIC, "magic");
+    if (buf)
+        buf = msgprintf("Resists %s.", buf);
+    else
+        buf = "Has no resistances.";
+    add_menutext(menu, buf);
+
+    /* Corpse conveyances */
+    buf = NULL;
+    ADDMR(mcon, MR_FIRE, "fire");
+    ADDMR(mcon, MR_COLD, "cold");
+    ADDMR(mcon, MR_SLEEP, "sleep");
+    ADDMR(mcon, MR_DISINT, "disintegration");
+    ADDMR(mcon, MR_ELEC, "shock");
+    ADDMR(mcon, MR_POISON, "poison");
+    if (buf)
+        buf = msgprintf("%s resistance", buf);
+    ADDMR(mflag1, M1_TPORT, "teleportitis");
+    ADDMR(mflag1, M1_TPORT_CNTRL, "teleport control");
+    ADDMR(mflag2, M2_TELEPATHIC, "telepathy");
+    if (!(gen & G_NOCORPSE)) {
+        if (buf)
+            buf = msgprintf("Corpse conveys %s.", buf);
+        else
+            buf = "Corpse conveys nothing.";
+        add_menutext(menu, buf);
+    }
+    else
+        add_menutext(menu, "Leaves no corpse.");
+
+    /* Flag descriptions */
+    buf = NULL;
+    APPENDC(pm->msize == MZ_TINY, "tiny");
+    APPENDC(pm->msize == MZ_SMALL, "small");
+    APPENDC(pm->msize == MZ_LARGE, "large");
+    APPENDC(pm->msize == MZ_HUGE, "huge");
+    APPENDC(pm->msize == MZ_GIGANTIC, "gigantic");
+    if (!buf) {
+        /* for nonstandard sizes */
+        APPENDC(verysmall(pm), "small");
+        if (!buf)
+            APPENDC(bigmonst(pm), "big");
+    }
+
+    APPENDC(!(gen & G_GENO), "ungenocideable");
+    APPENDC(breathless(pm), "breathless");
+    if (!breathless(pm))
+        APPENDC(amphibious(pm), "amphibious");
+    APPENDC(amorphous(pm), "amorphous");
+    APPENDC(noncorporeal(pm), "unsolid");
+    APPENDC(acidic(pm), "acidic");
+    APPENDC(poisonous(pm), "poisonous");
+    APPENDC(pm->mflags1 & M1_REGEN, "regenerating");
+    APPENDC(is_reviver(pm), "reviving");
+    APPENDC(is_floater(pm), "floating");
+    APPENDC(pm_invisible(pm), "invisible");
+    APPENDC(is_undead(pm), "undead");
+    if (!is_undead(pm))
+        APPENDC(nonliving(pm), "nonliving");
+    if (buf) {
+        buf = msgprintf("Is %s.", buf);
+        add_menutext(menu, buf);
+        buf = NULL;
+    }
+
+    APPENDC(is_hider(pm), "hide");
+    APPENDC(pm_swims(pm), "swim");
+    if (!is_floater(pm)) /* overrides */
+        APPENDC(pm->mflags1 & M1_FLY, "fly");
+    APPENDC(pm->mflags1 & M1_WALLWALK, "phase through walls");
+    APPENDC(pm->mflags1 & M1_TPORT, "teleport");
+    APPENDC(is_clinger(pm), "cling");
+    APPENDC(needspick(pm), "mine");
+    if (!needspick(pm))
+        APPENDC(tunnels(pm), "dig");
+    if (buf) {
+        buf = msgprintf("Can %s.", buf);
+        add_menutext(menu, buf);
+        buf = NULL;
+    }
+
+    /* Full-line remarks. */
+    if (touch_petrifies(pm))
+        add_menutext(menu, "Petrifies by touch.");
+    if (pm->mflags1 & M1_SEE_INVIS)
+        add_menutext(menu, "Can see invisible.");
+    if (pm->mflags1 & M1_TPORT_CNTRL)
+        add_menutext(menu, "Has teleport control.");
+    if (your_race(pm))
+        add_menutext(menu, "Is the same race as you.");
+    if (!(gen & G_NOCORPSE)) {
+        if (vegan(pm))
+            add_menutext(menu, "May be eaten by vegans.");
+        else if (vegetarian(pm))
+            add_menutext(menu, "May be eaten by vegetarians.");
+    }
+    buf = msgprintf("Is %sa valid polymorph form.",
+                    polyok(pm) ? "" : "not ");
+    add_menutext(menu, buf);
+
+    /* Attacks */
+    buf = NULL;
+    const char *atkbuf;
+    int i;
+    for (i = 0; i < 6; i++) {
+        atkbuf = oneattack(&pm->mattk[i]);
+        if (!atkbuf)
+            break;
+        if (!(i % 2)) {
+            if (buf) /* more attacks to follow */
+                add_menutext(menu, msgcat(buf, ","));
+            buf = msgprintf("%s%s", !i ?
+                            "Attacks: " :
+                            "         ", atkbuf);
+        } else
+            buf = msgprintf("%s, %s", buf, atkbuf);
+    }
+    if (buf)
+        add_menutext(menu, buf);
+}
+#undef APPENDC
+#undef ADDMR
+#undef ADDPROP
+
+/* Look in the "data" file for more info.  Called if the user typed in the
+   whole name (user_typed_name == TRUE), or we've found a possible match
+   with a character/glyph. */
 void
-checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
-          boolean without_asking)
+checkfile(const char *inp, const struct permonst *pm,
+          boolean user_typed_name, boolean without_asking)
 {
     dlb *fp;
     char buf[BUFSZ], newstr[BUFSZ];
@@ -592,6 +781,13 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
         }
     }
 
+    if (!pm) {
+        /* Try to parse as a monster name for monster info */
+        int mndx = name_to_mon(dbase_str);
+        if (mndx >= 0)
+            pm = &mons[mndx];
+    }
+
     if (found_in_file) {
         long entry_offset;
         int entry_count;
@@ -620,6 +816,11 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
 
             init_menulist(&menu);
 
+            if (pm) {
+                add_mon_info(&menu, pm);
+                add_menutext(&menu, "");
+            }
+
             for (i = 0; i < entry_count; i++) {
                 if (!dlb_fgets(buf, BUFSZ, fp))
                     goto bad_data_file;
@@ -630,9 +831,18 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
                 add_menutext(&menu, buf + 1);
             }
 
-            display_menu(&menu, NULL, FALSE, PLHINT_ANYWHERE,
-                         NULL);
+            display_menu(&menu,
+                         dbase_str && *dbase_str ?
+                         msgupcasefirst(dbase_str) : NULL,
+                         FALSE, PLHINT_ANYWHERE, NULL);
         }
+    } else if (pm) {
+        struct nh_menulist menu;
+
+        init_menulist(&menu);
+        add_mon_info(&menu, pm);
+        display_menu(&menu, msgupcasefirst(pm->mname), FALSE,
+                     PLHINT_ANYWHERE, NULL);
     } else if (user_typed_name)
         pline(msgc_info, "I don't have any information on those things.");
 
@@ -652,6 +862,7 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
     int i, ans = 0, objplur = 0, is_in;
     coord cc;   /* screen pos of unknown glyph */
     boolean from_screen;        /* question from the screen */
+    boolean is_warning = FALSE; /* is a warning symbol */
     struct nh_desc_buf descbuf;
     struct obj *otmp;
 
@@ -687,9 +898,7 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    /* 
-     * we're identifying from the screen.
-     */
+    /* we're identifying from the screen. */
     do {
         /* Reset some variables. */
         firstmatch = NULL;
@@ -705,6 +914,8 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
         }
 
         nh_describe_pos(cc.x, cc.y, &descbuf, &is_in);
+        if (dbuf_get_mon(cc.x, cc.y) > NUMMONS)
+            is_warning = TRUE;
 
         otmp = vobj_at(cc.x, cc.y);
         if (otmp && obj_isplural(otmp))
@@ -721,13 +932,24 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
 
         /* We already have a/an added by describe_mon; don't add it again,
            because that'll fail in cases like "Dudley's ghost" */
-        if (append_str(&out_str, descbuf.mondesc, 1, 0))
+        struct monst *mon = NULL;
+        if (append_str(&out_str, descbuf.mondesc, 1, 0)) {
+            mon = vismon_at(level, cc.x, cc.y);
+            if (!mon && cc.x == youmonst.mx && cc.y == youmonst.my)
+                mon = &youmonst;
+            if (!canclassifymon(mon) || Hallucination)
+                mon = NULL;
+
             if (!firstmatch)
                 firstmatch = descbuf.mondesc;
+        }
 
-        if (append_str(&out_str, descbuf.objdesc, objplur, 0))
+        if (append_str(&out_str, descbuf.objdesc, objplur, 0)) {
             if (!firstmatch)
                 firstmatch = descbuf.objdesc;
+            if (level->locations[cc.x][cc.y].pile)
+                show_obj_memories_at(level, cc.x, cc.y);
+        }
 
         if (append_str(&out_str, descbuf.trapdesc, 0, 0))
             if (!firstmatch)
@@ -742,10 +964,10 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
         if (firstmatch) {
             pline(msgc_info, "%s.", msgupcasefirst(out_str));
             /* check the data file for information about this thing */
-            if (firstmatch && ans != NHCR_CONTINUE &&
+            if (firstmatch && ans != NHCR_CONTINUE && !is_warning &&
                 (ans == NHCR_MOREINFO ||
                  ans == NHCR_MOREINFO_CONTINUE || !quick)) {
-                checkfile(firstmatch, NULL, FALSE,
+                checkfile(firstmatch, mon ? mon->data : NULL, FALSE,
                           ans == NHCR_MOREINFO ||
                           ans == NHCR_MOREINFO_CONTINUE);
             }

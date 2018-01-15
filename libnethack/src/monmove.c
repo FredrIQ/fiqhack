@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,8 @@ mb_trapped(struct monst *mtmp)
         You_hear(msgc_levelsound, "a distant explosion.");
     wake_nearto(mtmp->mx, mtmp->my, 7 * 7);
     int dmg = rnd(15);
-    set_property(mtmp, STUNNED, dmg, TRUE);
+    if (!resists_stun(mtmp))
+        set_property(mtmp, STUNNED, dmg, TRUE);
     mtmp->mhp -= dmg;
     if (mtmp->mhp <= 0) {
         mondied(mtmp);
@@ -103,7 +104,7 @@ onscary(int x, int y, const struct monst *mtmp)
     if (mx_eshk(mtmp) || mx_egd(mtmp) || mtmp->iswiz || blind(mtmp) ||
         mtmp->mpeaceful || mtmp->data->mlet == S_HUMAN || is_lminion(mtmp) ||
         mtmp->data == &mons[PM_ANGEL] || is_rider(mtmp->data) ||
-        mtmp->data == &mons[PM_MINOTAUR])
+        (mtmp->data->geno & G_UNIQ))
         return FALSE;
 
     return (boolean) (sobj_at(SCR_SCARE_MONSTER, level, x, y)
@@ -118,18 +119,19 @@ onscary(int x, int y, const struct monst *mtmp)
 int
 regeneration_by_rate(int regen_rate)
 {
+    int absrate = abs(regen_rate);
     int ret = regen_rate / 100;
-    regen_rate %= 100;
+    absrate %= 100;
     int movecount = moves % 100;
     int rate_counter = 0;
     int i;
     for (i = 0; i <= movecount; i++) {
         if (rate_counter >= 100)
             rate_counter -= 100;
-        rate_counter += regen_rate;
+        rate_counter += absrate;
     }
     if (rate_counter >= 100)
-        ret++;
+        ret += sgn(regen_rate);
     return ret;
 }
 
@@ -149,7 +151,7 @@ regen_rate(const struct monst *mon, boolean energy)
     if (role == (energy ? PM_WIZARD : PM_HEALER))
         regen += 33;
 
-    regen += 3 * mon->m_lev;
+    regen += (energy ? 4 : 3) * mon->m_lev;
 
     int attrib = acurr(mon, energy ? A_WIS : A_CON);
 
@@ -157,9 +159,12 @@ regen_rate(const struct monst *mon, boolean energy)
         attrib -= 5;
 
     if (!energy || attrib > 3)
-        regen += 3 * attrib;
+        regen += (energy ? 2 : 3) * attrib;
     if (regen < 1)
         regen = 1;
+
+    if (energy)
+        regen -= maintenance_pw_drain(mon);
 
     return regen;
 }
@@ -175,6 +180,10 @@ mon_regen(struct monst *mon, boolean digest_meal)
     mon->pw += regeneration_by_rate(regen_rate(mon, TRUE));
     if (mon->pw > mon->pwmax)
         mon->pw = mon->pwmax;
+    if (mon->pw < 0) {
+        mon->pw = 0;
+        mon->spells_maintained = 0;
+    }
 
     if (mon->mspec_used)
         mon->mspec_used--;
@@ -499,7 +508,7 @@ dochug(struct monst *mtmp)
     /* Now the actual movement phase */
 
     if (mdat->mlet == S_LEPRECHAUN) {
-        ygold = findgold(invent);
+        ygold = findgold(youmonst.minvent);
         lepgold = findgold(mtmp->minvent);
     }
 
@@ -723,7 +732,7 @@ m_move(struct monst *mtmp, int after)
     boolean avoid = FALSE;
     const struct permonst *ptr;
     schar mmoved = 0;   /* not strictly nec.: chi >= 0 will do */
-    long info[9];
+    long info[ROWNO * COLNO];
     long flag;
     int omx = mtmp->mx, omy = mtmp->my;
     struct obj *mw_tmp;
@@ -889,7 +898,7 @@ not_special:
     if ((!mtmp->mpeaceful || !rn2(10)) && (!Is_rogue_level(&u.uz))) {
         boolean in_line = find_ranged(mtmp, &youmonst, NULL) &&
             (distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <=
-             (throws_rocks(youmonst.data) ? 20 : ACURRSTR / 2 + 1));
+             (throws_rocks(youmonst.data) ? 20 : ACURR(A_STR) / 2 + 1));
 
         if (appr != 1 || !in_line)
             setlikes = TRUE;
@@ -911,6 +920,8 @@ not_special:
          dist2(mtmp->mx, mtmp->my, gx, gy) <= 8))
         can_tunnel = FALSE;
 
+    int jump = jump_ok(mtmp);
+
     nix = omx;
     niy = omy;
     flag = 0L;
@@ -923,6 +934,8 @@ not_special:
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
         flag |= ALLOW_MUXY;
+    if (!mtmp->mpeaceful || mtmp->mtame)
+        flag |= ALLOW_PEACEFUL;
     if (pm_isminion(ptr) || is_rider(ptr) || is_mplayer(ptr))
         flag |= ALLOW_SANCT;
     /* unicorn may not be able to avoid hero on a noteleport level */
@@ -946,20 +959,22 @@ not_special:
         flag |= UNLOCKDOOR;
     if (doorbuster)
         flag |= BUSTDOOR;
+    if (jump)
+        flag |= ALLOW_JUMP;
     {
         int i, nx, ny, better, score_tie;
         int cnt, chcnt;
         int score = 0;
         int score_best = 0;
-        coord poss[9];
+        coord poss[ROWNO * COLNO];
         int ogx = gx;
         int ogy = gy;
         boolean forceline = FALSE;
 
         struct distmap_state ds;
 
-        /* Dragons try to avoid melee initiative, but there's no reason to avoid it if
-           their target is helpless */
+        /* Dragons try to avoid melee initiative, but there's no reason to
+           avoid it if their target is helpless */
         boolean thelpless = FALSE;
         if (dragon && mtmp->mstrategy == st_mon) {
             if (gx == mtmp->mux && gy == mtmp->muy) {
@@ -984,14 +999,14 @@ not_special:
 
         distmap_init(&ds, gx, gy, mtmp);
 
-        cnt = mfndpos(mtmp, poss, info, flag, 1);
+        cnt = mfndpos(mtmp, poss, info, flag, jump ? jump : 1);
         chcnt = 0;
         chi = -1;
         if (flag & OPENDOOR)
             ds.mmflags |= MM_IGNOREDOORS;
+        if (flag & ALLOW_PEACEFUL)
+            ds.mmflags |= MM_IGNOREPEACE;
         score_best = distmap(&ds, omx, omy);
-        if (appr == 1) /* more is better for score, appr=1 wants low dist */
-            score_best = -score_best;
 
         /* Check if we can actually force lineup */
         if (forceline) {
@@ -1019,33 +1034,48 @@ not_special:
                 avoid = TRUE;
         }
 
-        for (i = 0; i < cnt; i++) {
-            if (avoid && (info[i] & NOTONL))
-                continue;
-            else if (forceline && !(info[i] & NOTONL))
-                continue;
+        /* Do 2 passes. Don't check for jumping on the 2nd pass, in case
+           our jumping attempt failed (spellcast failure) */
+        int pass = 2;
+        while (pass--) {
+            for (i = 0; i < cnt; i++) {
+                if (avoid && (info[i] & NOTONL))
+                    continue;
+                else if (forceline && !(info[i] & NOTONL))
+                    continue;
+                else if (!pass && (info[i] & ALLOW_JUMP))
+                    continue;
 
-            nx = poss[i].x;
-            ny = poss[i].y;
+                nx = poss[i].x;
+                ny = poss[i].y;
 
-            score = pathfind_score(mtmp, appr, &ds, nx, ny);
-            better = (score > score_best);
-            score_tie = (score == score_best);
+                score = pathfind_score(mtmp, appr, &ds, nx, ny);
+                better = (score > score_best);
+                score_tie = (score == score_best);
 
-            if (!mmoved ||
-                (!appr && !rn2(++chcnt)) ||
-                (appr &&
-                 ((score_tie && !rn2(++chcnt)) ||
-                  better))) {
-                nix = nx;
-                niy = ny;
-                score_best = score;
-                chi = i;
-                mmoved = 1;
+                if (!mmoved ||
+                    (!appr && !rn2(++chcnt)) ||
+                    (appr &&
+                     ((score_tie && !rn2(++chcnt)) ||
+                      better))) {
+                    nix = nx;
+                    niy = ny;
+                    score_best = score;
+                    chi = i;
+                    mmoved = 1;
 
-                if (appr && !score_tie)
-                    chcnt = 1;
+                    if (appr && !score_tie)
+                        chcnt = 1;
+                }
             }
+
+            if (mmoved && info[chi] & ALLOW_JUMP) {
+                int jumpres = mon_jump(mtmp, nix, niy);
+                if (jumpres)
+                    return jumpres;
+                mmoved = 0;
+            } else
+                break;
         }
     }
 
@@ -1169,8 +1199,8 @@ not_special:
             !mtmp->iswiz && !is_rider(mtmp->data) && /* cheats */
             !phasing(mtmp) && !amorphous(mtmp->data)) { /* bypass doors */
             struct rm *door = &level->locations[nix][niy];
-            boolean btrapped = (door->doormask & D_TRAPPED);
-            if ((door->doormask & D_LOCKED) && can_unlock) {
+            boolean btrapped = (door->flags & D_TRAPPED);
+            if ((door->flags & D_LOCKED) && can_unlock) {
                 /* doorbusters are taken care of in postmov */
                 unlocker.x = nix - mtmp->mx;
                 unlocker.y = niy - mtmp->my;
@@ -1179,9 +1209,9 @@ not_special:
                     return 2;
                 return 3;
             }
-            if (door->doormask == D_CLOSED && can_open) {
+            if (door->flags == D_CLOSED && can_open) {
                 if (btrapped) {
-                    door->doormask = D_NODOOR;
+                    door->flags = D_NODOOR;
                     newsym(nix, niy);
                     unblock_point(nix, niy);      /* vision */
                     if (mb_trapped(mtmp))
@@ -1195,7 +1225,7 @@ not_special:
                             You_hear(msgc_levelwarning,
                                      "a door open.");
                     }
-                    door->doormask = D_ISOPEN;
+                    door->flags = D_ISOPEN;
                     newsym(nix, niy);
                     unblock_point(nix, niy);
                 }
@@ -1203,8 +1233,21 @@ not_special:
             }
             /* doorbusters are taken care of in postmov */
         }
-        remove_monster(level, omx, omy);
-        place_monster(mtmp, nix, niy, TRUE);
+
+        struct monst *dmon = m_at(level, nix, niy);
+        if ((info[chi] & ALLOW_PEACEFUL) && dmon) {
+            if (canseemon(mtmp) && canseemon(dmon))
+                pline_once(msgc_monneutral, "%s %s.",
+                           M_verbs(mtmp, "displace"),
+                           mon_nam(dmon));
+            remove_monster(level, omx, omy);
+            remove_monster(level, nix, niy);
+            place_monster(mtmp, nix, niy, TRUE);
+            place_monster(dmon, omx, omy, TRUE);
+        } else {
+            remove_monster(level, omx, omy);
+            place_monster(mtmp, nix, niy, TRUE);
+        }
 
         /* Place a segment at the old position. */
         if (mtmp->wormno)
@@ -1245,9 +1288,9 @@ postmov:
                 && !can_tunnel   /* taken care of below */
                 ) {
                 struct rm *here = &level->locations[mtmp->mx][mtmp->my];
-                boolean btrapped = (here->doormask & D_TRAPPED);
+                boolean btrapped = (here->flags & D_TRAPPED);
 
-                if (here->doormask & (D_LOCKED | D_CLOSED) && amorphous(ptr)) {
+                if (here->flags & (D_LOCKED | D_CLOSED) && amorphous(ptr)) {
                     /* monneutral even for pets; basically nothing is happening
                        here */
                     if (canseemon(mtmp))
@@ -1256,9 +1299,9 @@ postmov:
                               (ptr == &mons[PM_FOG_CLOUD] ||
                                ptr == &mons[PM_YELLOW_LIGHT])
                               ? "flows" : "oozes");
-                } else if (here->doormask & D_LOCKED && can_unlock) {
+                } else if (here->flags & D_LOCKED && can_unlock) {
                     if (btrapped) {
-                        here->doormask = D_NODOOR;
+                        here->flags = D_NODOOR;
                         newsym(mtmp->mx, mtmp->my);
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                         if (mb_trapped(mtmp))
@@ -1270,13 +1313,13 @@ postmov:
                         else
                             You_hear(msgc_levelsound,
                                      "a door unlock and open.");
-                        here->doormask = D_ISOPEN;
+                        here->flags = D_ISOPEN;
                         /* newsym(mtmp->mx, mtmp->my); */
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                     }
-                } else if (here->doormask == D_CLOSED && can_open) {
+                } else if (here->flags == D_CLOSED && can_open) {
                     if (btrapped) {
-                        here->doormask = D_NODOOR;
+                        here->flags = D_NODOOR;
                         newsym(mtmp->mx, mtmp->my);
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                         if (mb_trapped(mtmp))
@@ -1286,14 +1329,14 @@ postmov:
                             pline(msgc_monneutral, "You see a door open.");
                         else
                             You_hear(msgc_levelsound, "a door open.");
-                        here->doormask = D_ISOPEN;
+                        here->flags = D_ISOPEN;
                         /* newsym(mtmp->mx, mtmp->my); *//* done below */
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                     }
-                } else if (here->doormask & (D_LOCKED | D_CLOSED)) {
+                } else if (here->flags & (D_LOCKED | D_CLOSED)) {
                     /* mfndpos guarantees this must be a doorbuster */
                     if (btrapped) {
-                        here->doormask = D_NODOOR;
+                        here->flags = D_NODOOR;
                         newsym(mtmp->mx, mtmp->my);
                         unblock_point(mtmp->mx, mtmp->my);      /* vision */
                         if (mb_trapped(mtmp))
@@ -1304,10 +1347,10 @@ postmov:
                                   "You see a door crash open.");
                         else
                             You_hear(msgc_levelsound, "a door crash open.");
-                        if (here->doormask & D_LOCKED && !rn2(2))
-                            here->doormask = D_NODOOR;
+                        if (here->flags & D_LOCKED && !rn2(2))
+                            here->flags = D_NODOOR;
                         else
-                            here->doormask = D_BROKEN;
+                            here->flags = D_BROKEN;
                         /* newsym(mtmp->mx, mtmp->my); *//* done below */
                         unblock_point(mtmp->mx, mtmp->my);  /* vision */
                     }
@@ -1392,7 +1435,7 @@ boolean
 closed_door(struct level * lev, int x, int y)
 {
     return (boolean) (IS_DOOR(lev->locations[x][y].typ) &&
-                      (lev->locations[x][y].doormask & (D_LOCKED | D_CLOSED)));
+                      (lev->locations[x][y].flags & (D_LOCKED | D_CLOSED)));
 }
 
 boolean
@@ -1540,14 +1583,14 @@ set_apparxy(struct monst *mtmp)
 
 
 boolean
-can_ooze(struct monst *mtmp)
+can_ooze(const struct monst *mtmp)
 {
     struct obj *chain, *obj;
 
     if (!amorphous(mtmp->data))
         return FALSE;
 
-    chain = m_minvent(mtmp);
+    chain = mtmp->minvent;
 
     for (obj = chain; obj; obj = obj->nobj) {
         int typ = obj->otyp;

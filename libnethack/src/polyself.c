@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -280,8 +280,8 @@ check_or_do_ability(struct monst *mon, enum monabil typ,
 
         /* Don't merge the function called from here to this, because it
            is also used for spellcasting purposes. */
-        if (!can_use && !can_jump(mon, msg))
-            return 0;
+//        if (!can_use && !can_jump(mon, msg, checking))
+//            return 0;
         break;
 
         /* Formely #monster abilities */
@@ -401,12 +401,8 @@ polyman(const char *fmt, const char *arg)
     newsym(youmonst.mx, youmonst.my);
 
     /* check whether player foolishly genocided self while poly'd */
-    if ((mvitals[urole.malenum].mvflags & G_GENOD) ||
-        (urole.femalenum != NON_PM &&
-         (mvitals[urole.femalenum].mvflags & G_GENOD)) ||
-        (mvitals[urace.malenum].mvflags & G_GENOD) ||
-        (urace.femalenum != NON_PM &&
-         (mvitals[urace.femalenum].mvflags & G_GENOD))) {
+    if ((mvitals[urole.num].mvflags & G_GENOD) ||
+        (mvitals[urace.num].mvflags & G_GENOD)) {
         pline(msgc_fatal_predone, "As you return to %s form, you die!",
               urace.adj);
         done(GENOCIDED, delayed_killer(GENOCIDED));
@@ -441,15 +437,10 @@ change_sex(void)
         u.mfemale = !u.mfemale;
     max_rank_sz();      /* [this appears to be superfluous] */
 
-    u.umonster = ((already_polyd ? u.mfemale : u.ufemale) &&
-                  urole.femalenum != NON_PM) ? urole.femalenum : urole.malenum;
-    if (!already_polyd) {
+    u.umonster = urole.num;
+    if (!already_polyd)
         u.umonnum = u.umonster;
-    } else if (u.umonnum == PM_SUCCUBUS || u.umonnum == PM_INCUBUS) {
-        u.ufemale = !u.ufemale;
-        /* change monster type to match new sex */
-        u.umonnum = (u.umonnum == PM_SUCCUBUS) ? PM_INCUBUS : PM_SUCCUBUS;
-    }
+
     set_uasmon();
 }
 
@@ -482,7 +473,6 @@ newman(void)
         change_sex();
 
     adjabil(oldlvl, (int)youmonst.m_lev);
-    reset_rndmonst(NON_PM);     /* new monster generation criteria */
 
     /* random experience points for the new experience level */
     youmonst.exp = rndexp(FALSE);
@@ -552,7 +542,7 @@ polyself(boolean forcecontrol)
     boolean iswere = (u.ulycn >= LOW_PM || is_were(youmonst.data));
     boolean isvamp = (youmonst.data->mlet == S_VAMPIRE ||
                       u.umonnum == PM_VAMPIRE_BAT);
-    boolean was_floating = (Levitation || Flying);
+    boolean was_floating = aboveliquid(&youmonst);
 
     if (!Polymorph_control && !forcecontrol && !draconian && !iswere && !isvamp) {
         int dam = 1 + rn2_on_rng(30, rng_system_shock);
@@ -639,7 +629,7 @@ polyself(boolean forcecontrol)
 
         if (Upolyd) {
             kbuf = msgprintf("polymorphing into %s while wielding",
-                             an(mons[u.umonnum].mname));
+                             an(pm_name(&youmonst)));
         } else {
             kbuf = msgprintf("returning to %s form while wielding", urace.adj);
         }
@@ -656,11 +646,11 @@ made_change:
         if (new_light == 1)
             ++new_light;        /* otherwise it's undetectable */
         if (new_light)
-            new_light_source(level, youmonst.mx, youmonst.my, new_light, LS_MONSTER,
-                             &youmonst);
+            new_light_source(level, youmonst.mx, youmonst.my, new_light,
+                             LS_MONSTER, &youmonst);
     }
-    if (is_pool(level, youmonst.mx, youmonst.my) && was_floating && !(Levitation || Flying) &&
-        !unbreathing(&youmonst) && !Swimming)
+    if (is_pool(level, youmonst.mx, youmonst.my) && was_floating &&
+        !aboveliquid(&youmonst) && !unbreathing(&youmonst) && !Swimming)
         drown();
 }
 
@@ -944,12 +934,14 @@ polymon(int mntmp, boolean noisy)
                   (u.umonnum != mntmp) ? "turn into a" : "feel like a new",
                   (is_male(&mons[mntmp]) ||
                    is_female(&mons[mntmp])) ? "" : u.ufemale ? "female " :
-                  "male ", mons[mntmp].mname);
+                  "male ", u.ufemale ? mons[mntmp].fname : mons[mntmp].mname);
     } else if (noisy) {
         if (u.umonnum != mntmp)
-            pline(msgc_statusbad, "You turn into %s!", an(mons[mntmp].mname));
+            pline(msgc_statusbad, "You turn into %s!",
+                  an(u.ufemale ? mons[mntmp].fname : mons[mntmp].mname));
         else
-            pline(msgc_statusend, "You feel like a new %s!", mons[mntmp].mname);
+            pline(msgc_statusend, "You feel like a new %s!",
+                  u.ufemale ? mons[mntmp].fname : mons[mntmp].mname);
     }
 
     u.mtimedone = rn1(500, 500);
@@ -959,7 +951,7 @@ polymon(int mntmp, boolean noisy)
     /* New stats for monster, to last only as long as polymorphed. Currently
        only strength gets changed. */
     if (strongmonst(&mons[mntmp]))
-        ABASE(A_STR) = AMAX(A_STR) = STR18(100);
+        ABASE(A_STR) = AMAX(A_STR) = 21;
 
     /* mlvl = adj_lev(&mons[mntmp]);
 
@@ -1363,7 +1355,7 @@ dospinweb(void)
 {
     struct trap *ttmp = t_at(level, youmonst.mx, youmonst.my);
 
-    if (Levitation || Is_airlevel(&u.uz) ||
+    if (levitates(&youmonst) || Is_airlevel(&u.uz) ||
         Underwater || Is_waterlevel(&u.uz)) {
         pline(msgc_cancelled, "You must be on the ground to spin a web.");
         return 0;
@@ -1749,7 +1741,7 @@ mbodypart(const struct monst *mon, int part)
             return part == HAND ? "paw" : "pawed";
         if (humanoid(mptr) && attacktype(mptr, AT_CLAW) &&
             !strchr(not_claws, mptr->mlet) && mptr != &mons[PM_STONE_GOLEM] &&
-            mptr != &mons[PM_INCUBUS] && mptr != &mons[PM_SUCCUBUS])
+            mptr != &mons[PM_INCUBUS])
             return part == HAND ? "claw" : "clawed";
     }
     if ((mptr == &mons[PM_MUMAK] || mptr == &mons[PM_MASTODON]) && part == NOSE)

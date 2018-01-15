@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,6 +22,7 @@ enum internal_commands {
     UICMD_OPTIONS = DIR_SELF + 1,
     UICMD_EXTCMD,
     UICMD_HELP,
+    UICMD_MAIL,
     UICMD_MAINMENU,
     UICMD_DETACH,
     UICMD_STOP,
@@ -31,6 +32,7 @@ enum internal_commands {
     UICMD_REPEATCOUNT,
     UICMD_NOTHING,
     UICMD_SERVERCANCEL,
+    UICMD_INTERRUPT,
 };
 
 enum select_cmd {
@@ -46,8 +48,8 @@ enum order_cmd {
     ORDER_CMD_NAME    /* sort commands by names */
 };
 
-static_assert(UICMD_SERVERCANCEL < CMD_UI, "CMD_UI too small");
-static_assert(UICMD_SERVERCANCEL < CMD_INTERNAL, "CMD_INTERNAL too small");
+static_assert(UICMD_INTERRUPT < CMD_UI, "CMD_UI too small");
+static_assert(UICMD_INTERRUPT < CMD_INTERNAL, "CMD_INTERNAL too small");
 
 #define RESET_BINDINGS_ID (-10000)
 #define KEYMAP_ACTIONS_ID (-1000)
@@ -223,6 +225,7 @@ static struct nh_cmd_desc builtin_commands[] = {
     {"extcommand", "perform an extended command", '#', 0,
      CMD_UI | UICMD_EXTCMD},
     {"help", "show the help menu", '?', 0, CMD_UI | UICMD_HELP},
+    {"mail", "send mail to the player", 0, 0, CMD_UI | UICMD_MAIL},
     {"mainmenu", "show the main menu", '!', Ctrl('c'), CMD_UI | UICMD_MAINMENU},
     {"options", "show or change option settings", 'O', 0,
      CMD_UI | UICMD_OPTIONS},
@@ -238,6 +241,9 @@ static struct nh_cmd_desc builtin_commands[] = {
      0, CMD_UI | UICMD_REPEATCOUNT},
     {"(nothing)", "bind keys to this command to suppress \"Bad command\"", 0,
      0, CMD_UI | UICMD_NOTHING},
+
+    {"interrupt", "(internal use only) forces the game into neutral turnstate",
+     0, 0, CMD_UI | CMD_INTERNAL | UICMD_INTERRUPT},
 
     {"servercancel", "(internal use only) the server already has a command",
      0, 0, CMD_UI | CMD_INTERNAL | UICMD_SERVERCANCEL},
@@ -330,6 +336,16 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
         *cmd = show_help();
         break;
 
+    case UICMD_MAIL:
+        /* TODO: server-mode mail */
+        if (ui_flags.connected_to_server)
+            curses_print_message(0, 0, player.moves, msgc_cancelled,
+                                 "Mail isn't available in server mode.");
+        else
+            sendmail();
+        *cmd = NULL;
+        break;
+
     case UICMD_MAINMENU:
         arg->argtype = 0;
         *cmd = show_mainmenu(FALSE, include_debug);
@@ -370,6 +386,33 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
     /* We cancel the yskip on all commands exept UICMD_PREVMSG. */
     if (cancel_yskip)
         ui_flags.msghistory_yskip = 0;
+}
+
+/* Returns a keyname for a key mapped to the given command into key_name,
+   and returns TRUE, or returns FALSE and leaves key_name untouched if
+   no keymapping exists. */
+nh_bool
+get_command_key(const char *cmd_name, char key_name[BUFSZ],
+                nh_bool prefer_shift)
+{
+    int key;
+    for (key = 0; key <= KEY_MAX; key++) {
+        if (settings.alt_is_esc &&
+            key == (KEY_ALT | (key & 0xff)))
+            continue;
+        if (keymap[key] && !strcmp(keymap[key]->name, cmd_name))
+            break;
+    }
+
+    if (key <= KEY_MAX) {
+        strncpy(key_name, friendly_keyname(key), BUFSZ);
+        key_name[BUFSZ - 1] = '\0';
+        if (!prefer_shift && key >= 'A' && key <= 'Z')
+            snprintf(key_name, BUFSZ, "%c", key);
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 void
@@ -430,6 +473,14 @@ get_command(void *callbackarg,
             cmd = find_command("servercancel");
         } else if (key <= KEY_MAX) {
             cmd = keymap[key];
+
+            /* Allow people to use ctrl+f for "find" without
+               adjusting their old settings.
+               TODO: ui_flags.playmode isn't a reliable way to get current
+               play mode, it's only MODE_WIZARD if you started with '-D' */
+            if (cmd == find_command("wizport") &&
+                ui_flags.playmode != MODE_WIZARD)
+                cmd = find_command("find");
             current_cmd_key = key;
         } else
             cmd = NULL;
@@ -456,11 +507,21 @@ get_command(void *callbackarg,
         }
 
         if (cmd != NULL) {
+            /* Command aliases */
+            if (cmd == find_command("moveonly") &&
+                ui_flags.current_followmode == FM_WATCH)
+                cmd = find_command("mail");
+            if (cmd == find_command("drink") &&
+                ui_flags.current_followmode != FM_PLAY)
+                cmd = find_command("save");
+
             /* handle internal commands. The command handler may alter *cmd,
                and arg (although not all this functionality is currently used) */
-            if (cmd->flags & CMD_UI) {
+            if ((cmd->flags & CMD_UI) ||
+                (ui_flags.current_followmode == FM_WATCH &&
+                 cmd == find_command("moveonly"))) {
                 handle_internal_cmd(&cmd, &ncaa.arg, include_debug);
-                if (!cmd)       /* command was fully handled internally */
+                if (!cmd) /* command was fully handled internally */
                     continue;
             }
 
@@ -521,7 +582,7 @@ get_command(void *callbackarg,
         if (!cmd) {
             snprintf(line, ARRAY_SIZE(line), "Bad command: '%s'.",
                      friendly_keyname(key));
-            curses_print_message(player.moves, msgc_cancelled, line);
+            curses_print_message(0, 0, player.moves, msgc_cancelled, line);
         }
     } while (!cmd);
 
@@ -542,10 +603,19 @@ handle_nested_key(int key)
     int save_zero_time = ui_flags.in_zero_time_command;
     ui_flags.in_zero_time_command = TRUE;
 
-    if (keymap[key] == find_command("save"))
+    if (keymap[key] == find_command("save") ||
+        (ui_flags.current_followmode != FM_PLAY &&
+         keymap[key] == find_command("drink")))
         save_menu();
     if (keymap[key] == find_command("mainmenu"))
         show_mainmenu(TRUE, FALSE);
+    if (keymap[key] == find_command("redraw")) {
+        handle_resize();
+        redraw_game_windows();
+        clear();
+        refresh();
+        rebuild_ui();
+    }
 
     /* Perhaps we should support various other commands that are either
        entirely client-side, or else zero-time and can be supported via
@@ -798,7 +868,7 @@ show_mainmenu(nh_bool inside_another_command, nh_bool include_debug_commands)
 static void
 instant_replay(void)
 {
-    ui_flags.current_followmode = FM_REPLAY;
+    set_uifollowmode(FM_REPLAY, FALSE);
     if (ui_flags.available_followmode == FM_WATCH)
         ui_flags.gameload_message =
             "You are now in replay mode.  To return to watching the game "
@@ -899,10 +969,17 @@ dotogglepickup(void)
     }
 
     val.b = !option->value.b;
-    curses_set_option("autopickup", val);
+    if (!curses_set_option("autopickup", val)) {
+        if (ui_flags.current_followmode != FM_PLAY)
+            curses_msgwin("You can't toggle autopickup while "
+                          "replaying/watching.", krc_notification);
+        else /* shouldn't happen */
+            curses_msgwin("Error toggling autopickup.",
+                          krc_notification);
+    } else
+        curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF",
+                      krc_notification);
 
-    curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF",
-                  krc_notification);
     nhlib_free_optlist(options);
 }
 
@@ -1177,7 +1254,7 @@ init_keymap(void)
     keymap[KEY_A3] = find_command("north_east");
     keymap[KEY_C1] = find_command("south_west");
     keymap[KEY_C3] = find_command("south_east");
-    keymap[KEY_B2] = find_command("go");
+    keymap[KEY_B2] = find_command("run");
     keymap[KEY_D1] = find_command("inventory");
     /* otherwise we have to do it like this */
     keymap[KEY_HOME] = find_command("north_west");
@@ -1347,7 +1424,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
             i = curses_msgwin(buf, krc_keybinding);
             if (i == KEY_ESCAPE || i > KEY_MAX)
                 continue;
-            if (keymap[i]) {
+            if (keymap[i] && strcmp(keymap[i]->name, "(nothing)")) {
                 snprintf(buf, ARRAY_SIZE(buf),
                          "That key is already in use by \"%s\"! Replace?",
                          keymap[i]->name);

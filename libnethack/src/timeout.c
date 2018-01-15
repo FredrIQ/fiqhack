@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2017-06-29 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -124,7 +124,8 @@ hatch_egg(void *arg, long timeout)
     mon = mon2 = NULL;
     mnum = big_to_little(egg->corpsenm);
     /* The identity of one's father is learned, not innate */
-    yours = (egg->spe || (!u.ufemale && carried(egg) && !rn2(2)));
+    yours = ((egg->spe & OPM_YOULAID) ||
+             (!u.ufemale && carried(egg) && !rn2(2)));
     silent = (timeout != moves);        /* hatched while away */
 
     /* only can hatch when in INVENT, FLOOR, MINVENT */
@@ -138,6 +139,10 @@ hatch_egg(void *arg, long timeout)
                     !((mon = makemon(&mons[mnum], level,
                                      cc.x, cc.y, NO_MINVENT))))
                     break;
+
+                if (!(mon->data->mflags2 & (M2_MALE | M2_FEMALE)))
+                    mon->female = !!(egg->spe & OPM_FEMALE);
+
                 /* tame if your own egg hatches while you're on the same
                    dungeon level, or any dragon egg which hatches while it's in
                    your inventory */
@@ -623,7 +628,7 @@ burn_object(void *arg, long timeout)
 void
 begin_burn(struct obj *obj, boolean already_lit)
 {
-    int radius = 3;
+    int radius = obj_light_range(obj);
     long turns = 0;
     boolean do_timer = TRUE;
 
@@ -638,7 +643,6 @@ begin_burn(struct obj *obj, boolean already_lit)
 
     case POT_OIL:
         turns = obj->age;
-        radius = 1;     /* very dim light */
         break;
 
     case BRASS_LANTERN:
@@ -666,7 +670,6 @@ begin_burn(struct obj *obj, boolean already_lit)
             turns = obj->age - 15L;
         else
             turns = obj->age;
-        radius = candle_light_range(obj);
         break;
 
     default:
@@ -674,7 +677,6 @@ begin_burn(struct obj *obj, boolean already_lit)
         if (artifact_light(obj)) {
             obj->lamplit = 1;
             do_timer = FALSE;
-            radius = 2;
         } else {
             impossible("begin burn: unexpected %s", xname(obj));
             turns = obj->age;
@@ -1085,6 +1087,8 @@ obj_stop_timers(struct obj *obj)
 {
     timer_element *curr, *prev, *next_timer = 0;
 
+    if (!obj->olev)
+        panic("obj_stop_timers: no olev?");
     for (prev = 0, curr = obj->olev->lev_timers; curr; curr = next_timer) {
         next_timer = curr->next;
         if (curr->kind == TIMER_OBJECT && curr->arg == obj) {
@@ -1301,6 +1305,16 @@ transfer_timers(struct level *oldlev, struct level *newlev,
                 unsigned int obj_id)
 {
     timer_element *curr, *prev = NULL, *next_timer = NULL;
+
+    /* If oldlev is NULL but obj_id exists,
+       search everywhere */
+    if (!oldlev && obj_id) {
+        int i;
+        for (i = 0; i <= maxledgerno(); i++)
+            if (levels[i])
+                transfer_timers(levels[i], newlev, obj_id);
+        return;
+    }
 
     if (newlev == oldlev)
         return;

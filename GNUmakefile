@@ -27,7 +27,7 @@ install: all
 CFLAGS = -g -O2
 CXXFLAGS = -g -O2
 
-CFLAGS += --std=c11 -DAIMAKE_NORETURN=_Noreturn
+CFLAGS += --std=c11 -DAIMAKE_NORETURN=_Noreturn -DWHEREIS
 
 EXTRAS = -pthread -ldl
 ifeq ($(shell uname), Linux)
@@ -50,15 +50,20 @@ CPPFLAGS += -Inethack/include
 CPPFLAGS += -Itilesets/include
 CPPFLAGS += -Ilibuncursed/include
 
+# assume that if we have a .git repository, git is available
+SPECIFIC_VERSION = tarball
+ifneq ($(wildcard .git/.),)
+	SPECIFIC_VERSION = $(shell git log --pretty=format:'%h' -n 1)
+endif
 
 ### BINARIES ###
 
 # nethack: everything but netgame and netplay
-GAME_O = $(addprefix nethack/src/,brandings.o color.o dialog.o extrawin.o gameover.o getline.o keymap.o main.o map.o menu.o messages.o motd.o options.o outchars.o playerselect.o replay.o rungame.o sidebar.o status.o topten.o windows.o)
+GAME_O = $(addprefix nethack/src/,brandings.o color.o dialog.o extrawin.o gameover.o getline.o keymap.o mail.o main.o map.o menu.o messages.o motd.o options.o outchars.o playerselect.o replay.o rungame.o sidebar.o status.o topten.o windows.o)
 # libnethack: everything plus readonly
-GAME_O += $(addprefix libnethack/src/,allmain.o apply.o artifact.o attrib.o ball.o bones.o botl.o cmd.o dbridge.o decl.o detect.o dig.o display.o dlb.o do.o do_name.o do_wear.o dog.o dogmove.o dokick.o dothrow.o drawing.o dump.o dungeon.o eat.o end.o engrave.o exper.o explode.o extralev.o files.o fountain.o hack.o history.o invent.o level.o light.o livelog.o localtime.o lock.o log.o mail.o makemon.o memfile.o messages.o mextra.o mhitm.o mhitq.o mhitu.o minion.o mklev.o mkmap.o mkmaze.o mkobj.o mkroom.o mon.o mondata.o monmove.o monst.o mplayer.o muse.o music.o newrng.o o_init.o objects.o objnam.o occupation.o options.o pager.o pickup.o pline.o polyself.o potion.o pray.o priest.o prop.o quest.o questpgr.o read.o readonly.o rect.o region.o restore.o role.o rumors.o save.o shk.o shknam.o sit.o sounds.o sp_lev.o spell.o spoiler.o steal.o steed.o symclass.o teleport.o timeout.o topten.o track.o trap.o u_init.o uhitm.o vault.o version.o vision.o weapon.o were.o wield.o windows.o wizard.o worm.o worn.o write.o zap.o)
+GAME_O += $(addprefix libnethack/src/,allmain.o apply.o artifact.o attrib.o ball.o bones.o botl.o cmd.o dbridge.o decl.o detect.o dig.o display.o dlb.o do.o do_name.o do_wear.o dog.o dogmove.o dokick.o dothrow.o drawing.o dump.o dungeon.o eat.o end.o engrave.o exper.o explode.o extralev.o files.o fountain.o hack.o history.o invent.o level.o light.o livelog.o localtime.o lock.o log.o logreplay.o lz4.o mail.o makemon.o memfile.o memobj.o messages.o mextra.o mhitm.o mhitq.o mhitu.o minion.o mklev.o mkmap.o mkmaze.o mkobj.o mkroom.o mon.o mondata.o monmove.o monst.o mplayer.o muse.o music.o newrng.o o_init.o objects.o objnam.o occupation.o options.o pager.o pickup.o pline.o polyself.o potion.o pray.o priest.o prop.o quest.o questpgr.o read.o readonly.o rect.o region.o restore.o role.o rumors.o save.o shk.o shknam.o sit.o sounds.o sp_lev.o spell.o spoiler.o steal.o steed.o symclass.o teleport.o timeout.o topten.o track.o trap.o u_init.o uhitm.o vault.o version.o vision.o weapon.o were.o wield.o windows.o wizard.o worm.o worn.o write.o zap.o)
 # libnethack_common: everything but netconnect
-GAME_O += $(addprefix libnethack_common/src/,common_options.o hacklib.o menulist.o trietable.o utf8conv.o xmalloc.o)
+GAME_O += $(addprefix libnethack_common/src/,common_options.o hacklib.o mail.o menulist.o trietable.o utf8conv.o xmalloc.o)
 GAME_O += tilesets/src/tilesequence.o
 # libuncursed with tty
 GAME_O += $(addprefix libuncursed/src/,libuncursed.o plugins.o plugins/tty.o plugins/wrap_tty.o)
@@ -167,7 +172,7 @@ clean:: ; rm -f libnethack/src/readonly.c
 # reasons
 date.h: libnethack/include/date.h ;
 libnethack/include/date.h: libnethack/util/makedefs $(filter-out libnethack/src/version.o,$(GAME_O))
-	$< -v $@
+	$< -v $@ "$(SPECIFIC_VERSION)"
 clean:: ; rm -f libnethack/include/date.h
 
 verinfo.h: libnethack/include/verinfo.h ;

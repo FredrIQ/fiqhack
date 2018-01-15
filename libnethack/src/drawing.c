@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-10-22 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-28 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -71,9 +71,9 @@ const char *const warnexplain[] = {
 const char *const invismonexplain = "invisible monster";
 
 const struct nh_symdef warnsyms[WARNCOUNT] = {
-    {'0', "warn1", CLR_WHITE},  /* white warning */
-    {'1', "warn2", CLR_RED},    /* pink warning */
-    {'2', "warn3", CLR_RED},    /* red warning */
+    {'0', "warn1", CLR_GREEN},  /* white warning */
+    {'1', "warn2", CLR_YELLOW},    /* pink warning */
+    {'2', "warn3", CLR_ORANGE},    /* red warning */
     {'3', "warn4", CLR_RED},    /* ruby warning */
     {'4', "warn5", CLR_MAGENTA},        /* purple warning */
     {'5', "warn6", CLR_BRIGHT_MAGENTA}  /* black warning */
@@ -120,6 +120,11 @@ const char *const defexplain[] = {
              "long staircase up",   /* upsstair */
              "long staircase down", /* dnsstair */
              "altar",               /* altar */
+             "lawful altar",        /* laltar */
+             "neutral altar",       /* naltar */
+             "chaotic altar",       /* caltar */
+             "unaligned altar",     /* ualtar */
+             "aligned altar",       /* aaltar */
              "grave",               /* grave */
              "opulent throne",      /* throne */
              "sink",                /* sink */
@@ -197,10 +202,15 @@ const struct nh_symdef defsyms[] = {
     {'<', "upsstair", CLR_YELLOW | HI_ULINE},
     {'>', "dnsstair", CLR_YELLOW | HI_ULINE},
     {'_', "altar", CLR_GRAY},
+    {'_', "laltar", CLR_WHITE},
+    {'_', "naltar", CLR_GRAY},
+    {'_', "caltar", CLR_BLACK},
+    {'_', "ualtar", CLR_RED},
+    {'_', "aaltar", CLR_YELLOW},
     {'|', "grave", CLR_BLACK},
     {'\\', "throne", HI_GOLD},
     {'#', "sink", CLR_GRAY},
-/*40*/ {'{', "fountain", CLR_BLUE},
+/*40*/ {'{', "fountain", CLR_BRIGHT_BLUE},
     {'#', "vodbridge", CLR_BROWN},
     {'#', "hodbridge", CLR_BROWN},
     {'+', "vcdbridge", CLR_YELLOW},
@@ -214,21 +224,21 @@ const struct nh_symdef trapsyms[] = {
     {'^', "squeaky board", CLR_BROWN},
     {'^', "bear trap", HI_METAL},
     {'^', "land mine", CLR_RED},
-    {'^', "rolling boulder trap", CLR_GRAY},
-    {'^', "sleeping gas trap", HI_ZAP},
+    {'^', "rolling boulder trap", CLR_WHITE},
+    {'^', "sleeping gas trap", CLR_BRIGHT_CYAN},
     {'^', "rust trap", CLR_BLUE},
     {'^', "fire trap", CLR_ORANGE},
 /*10*/ {'^', "pit", CLR_BLACK},
     {'^', "spiked pit", CLR_BLACK},
-    {'^', "hole", CLR_BROWN},
-    {'^', "trap door", CLR_BROWN},
+    {'^', "hole", CLR_GREEN},
+    {'^', "trap door", CLR_GREEN},
     {'^', "vibrating square", CLR_YELLOW},
     {'^', "teleportation trap", CLR_MAGENTA},
-    {'^', "level teleporter", CLR_MAGENTA},
+    {'^', "level teleporter", CLR_BRIGHT_MAGENTA},
     {'^', "magic portal", CLR_BRIGHT_MAGENTA},
     {'^', "web", CLR_GRAY},
     {'^', "statue trap", CLR_GRAY},
-/*20*/ {'^', "magic trap", HI_ZAP},
+/*20*/ {'^', "magic trap", CLR_YELLOW},
     {'^', "anti-magic field", HI_ZAP},
     {'^', "polymorph trap", CLR_BRIGHT_GREEN}
 };
@@ -269,12 +279,12 @@ const struct nh_symdef zapsyms[NUM_ZAP] = {
 const struct nh_symdef zaptypes[NUM_ZAP] = {
     {0, "missile", HI_ZAP},
     {0, "fire", CLR_ORANGE},
-    {0, "frost", CLR_WHITE},
-    {0, "sleep", HI_ZAP},
+    {0, "frost", CLR_CYAN},
+    {0, "sleep", CLR_MAGENTA},
     {0, "death", CLR_BLACK},
     {0, "lightning", CLR_WHITE},
-    {0, "poison gas", CLR_YELLOW},
-    {0, "acid", CLR_GREEN},
+    {0, "poison gas", CLR_GREEN},
+    {0, "acid", CLR_YELLOW},
     {0, "stun", CLR_BROWN}
 };
 
@@ -287,7 +297,7 @@ const struct nh_symdef effectsyms[] = {
     {'#', "shield2", HI_ZAP},
     {'@', "shield3", HI_ZAP},
     {'*', "shield4", HI_ZAP},
-    {'#', "gascloud", CLR_GRAY}
+    {'#', "gascloud", CLR_BRIGHT_GREEN}
 };
 
 const struct nh_symdef swallowsyms[] = {

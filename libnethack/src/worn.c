@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,7 +14,8 @@ static unsigned do_equip(struct monst *, struct obj *, boolean, boolean);
 /* TODO: maybe make this into a real function */
 #define w_blocks(o,m) \
     ((o->otyp == MUMMY_WRAPPING && ((m) & W_MASK(os_armc))) ? INVIS :   \
-     (o->oartifact == ART_EYES_OF_THE_OVERWORLD &&                      \
+     ((o->oartifact == ART_EYES_OF_THE_OVERWORLD ||                     \
+       o->oartifact == ART_SUNSWORD) &&                                 \
       ((m) & W_MASK(os_tool))) ? BLINDED :                              \
      (o->otyp == CORNUTHAUM && ((m) & W_MASK(os_armh)) &&               \
       !Role_if (PM_WIZARD)) ? CLAIRVOYANT : 0)
@@ -44,14 +45,14 @@ long
 mworn_extrinsic(const struct monst *mon, int extrinsic)
 {
     boolean blocked;
-    return find_extrinsic(m_minvent(mon), extrinsic, &blocked);
+    return find_extrinsic(mon->minvent, extrinsic, &blocked);
 }
 
 boolean
 mworn_blocked(const struct monst *mon, int extrinsic)
 {
     boolean blocked;
-    find_extrinsic(m_minvent(mon), extrinsic, &blocked);
+    find_extrinsic(mon->minvent, extrinsic, &blocked);
     return blocked;
 }
 
@@ -124,7 +125,7 @@ find_mac(struct monst *mon)
     struct obj *obj;
     int base = mon->data->ac;
 
-    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
         /* Armor transformed into dragon skin gives no AC bonus */
         if (mon == &youmonst && obj == uskin())
             continue;
@@ -183,7 +184,7 @@ m_dowear(struct monst *mon, boolean creation)
     if (in_mklev)
         creation = TRUE;
 
-    /* Note the restrictions here are the same as in dowear in do_wear.c except 
+    /* Note the restrictions here are the same as in dowear in do_wear.c except
        for the additional restriction on intelligence.  (Players are always
        intelligent, even if polymorphed). */
     if (verysmall(mon->data) || nohands(mon->data) || is_animal(mon->data))
@@ -266,10 +267,10 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
                  obj->otyp != RIN_HUNGER &&
                  obj->otyp != RIN_AGGRAVATE_MONSTER &&
                  obj->otyp != RIN_WARNING &&
-                 obj->otyp != RIN_POISON_RESISTANCE &&
-                 obj->otyp != RIN_FIRE_RESISTANCE &&
-                 obj->otyp != RIN_COLD_RESISTANCE &&
-                 obj->otyp != RIN_SHOCK_RESISTANCE &&
+                 obj->otyp != RIN_POISON_IMMUNITY &&
+                 obj->otyp != RIN_FIRE_IMMUNITY &&
+                 obj->otyp != RIN_COLD_IMMUNITY &&
+                 obj->otyp != RIN_SHOCK_IMMUNITY &&
                  obj->otyp != RIN_FREE_ACTION &&
                  obj->otyp != RIN_SLOW_DIGESTION &&
                  obj->otyp != RIN_TELEPORTATION &&
@@ -321,7 +322,7 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
         /* I'd like to define a VISIBLE_ARM_BONUS which doesn't assume the
            monster knows obj->spe, but if I did that, a monster would keep
            switching forever between two -2 caps since when it took off one it
-           would forget spe and once again think the object is better than what 
+           would forget spe and once again think the object is better than what
            it already has. */
         if (best &&
             (ARM_BONUS(best) + extra_pref(mon, best) >=
@@ -388,14 +389,14 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
     if (old) {
         old->owt = weight(old);
         if (update_property(mon, objects[old->otyp].oc_oprop, slot))
-            makeknown(old->otyp);
+            tell_discovery(old);
         update_property_for_oprops(mon, old, slot);
     }
     mon->misc_worn_check |= W_MASK(slot);
     best->owornmask |= W_MASK(slot);
     best->owt = weight(best);
     if (update_property(mon, objects[best->otyp].oc_oprop, slot))
-        makeknown(best->otyp);
+        tell_discovery(best);
     update_property_for_oprops(mon, best, slot);
 }
 
@@ -420,7 +421,7 @@ equip(struct monst *mon, struct obj *obj,
         else if (is_shirt(obj) && (mon->misc_worn_check & W_MASK(os_arm)))
             return do_equip(mon, which_armor(mon, os_arm), FALSE, verbose);
     }
-    
+
     if (obj->oclass == RING_CLASS) {
         /* For rings, normally gloves are bypassed. However, rings can't be
            put on/off if the gloves are cursed, so we need to check for this
@@ -436,7 +437,7 @@ equip(struct monst *mon, struct obj *obj,
             }
         }
     }
-    
+
     /* slot taken by something else */
     if (mon->misc_worn_check & W_MASK(slot)) {
         if (obj->oclass == RING_CLASS) {
@@ -453,7 +454,7 @@ equip(struct monst *mon, struct obj *obj,
             return do_equip(mon, which_armor(mon, W_MASK(slot)),
                             FALSE, verbose);
     }
-    
+
     return do_equip(mon, obj, on, verbose);
 }
 
@@ -496,12 +497,12 @@ do_equip(struct monst *mon, struct obj *obj,
     obj->owt = weight(obj);
     if (!redundant) {
         if (update_property(mon, prop, slot))
-            makeknown(obj->otyp);
+            tell_discovery(obj);
         update_property_for_oprops(mon, obj, slot);
         if (!mon->mhp) /* died (lost a critical property) */
             return 2;
     }
-    
+
     mon->mfrozen += objects[obj->otyp].oc_delay;
     if (mon->mfrozen)
         mon->mcanmove = 0;
@@ -547,7 +548,7 @@ which_armor(const struct monst *mon, enum objslot slot)
 {
     struct obj *obj;
 
-    for (obj = m_minvent(mon); obj; obj = obj->nobj)
+    for (obj = mon->minvent; obj; obj = obj->nobj)
         if (obj->owornmask & W_MASK(slot))
             return obj;
     return NULL;
@@ -727,7 +728,7 @@ mon_break_armor(struct monst *mon, boolean polyspot)
         if (touch_petrifies(u.usteed->data) && !Stone_resistance && rnl(3)) {
             pline(msgc_fatal_predone, "You touch %s.", mon_nam(u.usteed));
             instapetrify(killer_msg(STONING,
-                msgcat("falling of ", an(u.usteed->data->mname))));
+                                    msgcat("falling of ", an(pm_name(u.usteed)))));
         }
         dismount_steed(DISMOUNT_FELL);
     }
@@ -735,12 +736,26 @@ mon_break_armor(struct monst *mon, boolean polyspot)
 }
 
 /* Bias a monster's preferences towards armor that has special benefits.
-   Currently does speed boots and various rings. */
+   Currently does speed boots, various rings and for tame monsters, items
+   thrown at it. */
 int
 extra_pref(const struct monst *mon, struct obj *obj)
 {
     if (!obj)
         return 0;
+
+    /* Check for throwntime */
+    if (obj->thrown_time) {
+        /* Figure out which item was thrown last for the appropriate slot. */
+        struct obj *oobj;
+        for (oobj = mon->minvent; oobj; oobj = oobj->nobj)
+            if (oobj != obj && which_slot(oobj) == which_slot(obj) &&
+                oobj->thrown_time > obj->thrown_time)
+                break;
+
+        if (!oobj)
+            return 100;
+    }
 
     /* Check for speed boots */
     if (obj->otyp == SPEED_BOOTS && !very_fast(mon))
@@ -772,7 +787,6 @@ extra_pref(const struct monst *mon, struct obj *obj)
         /* nymphs or foocubi like adornment */
         if (obj->otyp == RIN_ADORNMENT &&
             (mon->data->mlet == S_NYMPH ||
-             monsndx(mon->data) == PM_SUCCUBUS ||
              monsndx(mon->data) == PM_INCUBUS))
             desire += 20;
         else if (obj->spe <= 0 && obj->mknown) /* even if they're badly enchanted */
@@ -801,7 +815,7 @@ extra_pref(const struct monst *mon, struct obj *obj)
     case RIN_FREE_ACTION:
     case RIN_SLOW_DIGESTION: /* only way for monsters to avoid digestion instadeath */
         return 50;
-    case RIN_POISON_RESISTANCE:
+    case RIN_POISON_IMMUNITY:
     case RIN_REGENERATION:
     case AMULET_OF_REFLECTION:
         return 40;
@@ -809,9 +823,9 @@ extra_pref(const struct monst *mon, struct obj *obj)
     case AMULET_VERSUS_POISON:
     case AMULET_OF_ESP:
         return 30;
-    case RIN_FIRE_RESISTANCE:
-    case RIN_COLD_RESISTANCE:
-    case RIN_SHOCK_RESISTANCE:
+    case RIN_FIRE_IMMUNITY:
+    case RIN_COLD_IMMUNITY:
+    case RIN_SHOCK_IMMUNITY:
     case AMULET_OF_MAGICAL_BREATHING:
     case AMULET_OF_UNCHANGING:
         return 20;

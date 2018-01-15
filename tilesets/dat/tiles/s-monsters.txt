@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2013-09-24
+! Last modified by Fredrik Ljungdahl, 2017-11-02
 ! NetHack may be freely redistributed.  See license for details.
 A = (0, 0, 0)
 B = (0, 182, 255)
@@ -9137,7 +9137,7 @@ $ = (71, 108, 108)
   MMCDDAAMDDKMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 480 (succubus)
+# tile 480 (sub female incubus)
 {
   DDMOHHDMMMMMMMMM
   DDOHHDGDMMMMMMMM
@@ -10391,7 +10391,7 @@ $ = (71, 108, 108)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 546 (cavewoman)
+# tile 546 (sub female caveman)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -10543,7 +10543,7 @@ $ = (71, 108, 108)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 554 (priestess)
+# tile 554 (sub female priest)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMJJMMMMMMM

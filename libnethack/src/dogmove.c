@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,7 +54,7 @@ is_better_armor(const struct monst *mtmp, struct obj *otmp)
     if (is_helmet(otmp) && !is_flimsy(otmp) && num_horns(mtmp->data) > 0)
         return FALSE;
 
-    obj = (mtmp == &youmonst) ? invent : mtmp->minvent;
+    obj = mtmp->minvent;
 
     for (; obj; obj = obj->nobj) {
         if (is_cloak(otmp) && !is_cloak(obj))
@@ -125,7 +125,8 @@ could_use_item(struct monst *mtmp, struct obj *otmp)
                 return (carrying(SACK) || carrying(OILSKIN_SACK) ||
                         carrying(BAG_OF_HOLDING));
 
-            if (m_carrying_recursive(&youmonst, invent, otmp->otyp, TRUE))
+            if (m_carrying_recursive(&youmonst, youmonst.minvent,
+                                     otmp->otyp, TRUE))
                 return TRUE;
         }
     }
@@ -367,7 +368,8 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
         is_metallic(obj)) {
         /* The object's rustproofing is gone now */
         obj->oerodeproof = 0;
-        set_property(mtmp, STUNNED, dice(4, 4), FALSE);
+        if (!resists_stun(mtmp))
+            set_property(mtmp, STUNNED, dice(4, 4), FALSE);
         if (canseemon(mtmp) && flags.verbose) {
             pline(msgc_petwarning, "%s spits %s out in disgust!", Monnam(mtmp),
                   distant_name(obj, doname));
@@ -591,6 +593,9 @@ dog_goal(struct monst *mon, struct edog *edog, int after, int udist,
             ny = obj->oy;
             if (nx >= min_x && nx <= max_x && ny >= min_y && ny <= max_y) {
                 otyp = dogfood(mon, obj);
+                if (edog->hungrytime >+ moves + DOG_SATIATED)
+                    otyp = df_nofood;
+
                 /* skip inferior goals */
                 if (otyp < gtyp || otyp == df_nofood)
                     continue;
@@ -639,7 +644,7 @@ dog_goal(struct monst *mon, struct edog *edog, int after, int udist,
         }
         /* if you have dog food it'll follow you more closely */
         if (appr == 0) {
-            obj = invent;
+            obj = youmonst.minvent;
             while (obj) {
                 if (dogfood(mon, obj) == df_treat) {
                     appr = 1;
@@ -679,13 +684,13 @@ dog_move(struct monst *mtmp, int after)
     struct edog *edog = mx_edog(mtmp);
     struct obj *obj = NULL;
     xchar otyp;
-    boolean has_edog, cursemsg[9], do_eat = FALSE;
+    boolean has_edog, cursemsg[ROWNO * COLNO], do_eat = FALSE;
     xchar nix, niy;     /* position mtmp is (considering) moving to */
     int nx, ny; /* temporary coordinates */
     xchar cnt, uncursedcnt, chcnt;
     int chi = -1, nidist, ndist;
-    coord poss[9];
-    long info[9], allowflags;
+    coord poss[ROWNO * COLNO];
+    long info[ROWNO * COLNO], allowflags;
     struct musable m;
     struct distmap_state ds;
     boolean mercy = FALSE;
@@ -739,7 +744,8 @@ dog_move(struct monst *mtmp, int after)
     if (appr == -2)
         return 0;
 
-    allowflags = ALLOW_TRAPS | ALLOW_SSM | ALLOW_SANCT;
+    allowflags = (ALLOW_TRAPS | ALLOW_SSM | ALLOW_SANCT |
+                  ALLOW_PEACEFUL);
     if (phasing(mtmp))
         allowflags |= (ALLOW_ROCK | ALLOW_WALL);
     if (passes_bars(mtmp))
@@ -959,8 +965,20 @@ newdogpos:
                 return 0;
         }
         /* insert a worm_move() if worms ever begin to eat things */
-        remove_monster(level, omx, omy);
-        place_monster(mtmp, nix, niy, TRUE);
+        struct monst *dmon = m_at(level, nix, niy);
+        if (info[chi] & ALLOW_PEACEFUL && dmon) {
+            if (canseemon(mtmp) && canseemon(dmon))
+                pline_once(msgc_monneutral, "%s %s.",
+                           M_verbs(mtmp, "displace"),
+                           mon_nam(dmon));
+            remove_monster(level, omx, omy);
+            remove_monster(level, nix, niy);
+            place_monster(mtmp, nix, niy, TRUE);
+            place_monster(dmon, omx, omy, TRUE);
+        } else {
+            remove_monster(level, omx, omy);
+            place_monster(mtmp, nix, niy, TRUE);
+        }
         if (cursemsg[chi] && (cansee(omx, omy) || cansee(nix, niy)))
             pline(msgc_petneutral, "%s moves only reluctantly.", Monnam(mtmp));
         /* We have to know if the pet's gonna do a combined eat and move before
@@ -1055,7 +1073,7 @@ can_reach_location(struct monst *mon, xchar mx, xchar my, xchar fx, xchar fy)
                 && (!may_dig(level, i, j) || !tunnels(mon->data)))
                 continue;
             if (IS_DOOR(level->locations[i][j].typ) &&
-                (level->locations[i][j].doormask & (D_CLOSED | D_LOCKED)))
+                (level->locations[i][j].flags & (D_CLOSED | D_LOCKED)))
                 continue;
             if (!could_reach_item(mon, i, j))
                 continue;

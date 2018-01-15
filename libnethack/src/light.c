@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-08 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -124,6 +124,10 @@ do_light_sources(char **cs_rows)
     char *row;
 
     for (ls = level->lev_lights; ls; ls = ls->next) {
+        /* Update range */
+        if (ls->type == LS_OBJECT)
+            ls->range = obj_light_range((struct obj *)ls->id);
+
         ls->flags &= ~LSF_SHOW;
 
         /* Check for moved light sources.  It may be possible to
@@ -207,6 +211,16 @@ transfer_lights(struct level *oldlev, struct level *newlev, unsigned int obj_id)
 {
     light_source **prev, *curr;
     boolean transfer;
+
+    /* If oldlev is NULL but obj_id exists,
+       search everywhere */
+    if (!oldlev && obj_id) {
+        int i;
+        for (i = 0; i <= maxledgerno(); i++)
+            if (levels[i])
+                transfer_timers(levels[i], newlev, obj_id);
+        return;
+    }
 
     if (newlev == oldlev)
         return;
@@ -475,8 +489,6 @@ obj_split_light_source(struct obj *src, struct obj *dest)
             *new_ls = *ls;
             if (Is_candle(src)) {
                 /* split candles may emit less light than original group */
-                ls->range = candle_light_range(src);
-                new_ls->range = candle_light_range(dest);
                 turnstate.vision_full_recalc = TRUE; /* in case range changed */
             }
             new_ls->id = dest;
@@ -499,16 +511,14 @@ obj_merge_light_sources(struct obj *src, struct obj *dest)
 
     for (ls = level->lev_lights; ls; ls = ls->next)
         if (ls->type == LS_OBJECT && ls->id == dest) {
-            ls->range = candle_light_range(dest);
             turnstate.vision_full_recalc = TRUE;     /* in case range changed */
             break;
         }
 }
 
-/* Candlelight is proportional to the number of candles;
-   minimum range is 2 rather than 1 for playability. */
+/* Returns the range for the given object(s) */
 int
-candle_light_range(struct obj *obj)
+obj_light_range(struct obj *obj)
 {
     int radius;
 
@@ -521,27 +531,26 @@ candle_light_range(struct obj *obj)
          *          7 candles, range 4 (bright).
          */
         radius = (obj->spe < 4) ? 2 : (obj->spe < 7) ? 3 : 4;
-    } else if (Is_candle(obj)) {
-        /* 
-         *      Range is incremented by powers of 7 so that it will take
-         *      wizard mode quantities of candles to get more light than
-         *      from a lamp, without imposing an arbitrary limit.
-         *       1..6   candles, range 2;
-         *       7..48  candles, range 3;
-         *      49..342 candles, range 4; &c.
-         */
-        long n = obj->quan;
-
-        radius = 1;     /* always incremented at least once */
-        do {
-            radius++;
-            n /= 7L;
-        } while (n > 0L);
-    } else {
-        /* we're only called for lit candelabrum or candles */
-        /* impossible("candlelight for %d?", obj->otyp); */
-        radius = 3;     /* lamp's value */
+    } else if (Is_candle(obj))
+        /* Range 2 for 1 candle, 3 for 4 candles, 4 for 9, 5 for 16, etc. */
+        radius = isqrt(obj->quan) + 1;
+    else {
+        radius = 1;
+        if (obj->otyp == MAGIC_LAMP ||
+            obj->otyp == BRASS_LANTERN ||
+            obj->otyp == OIL_LAMP)
+            radius = 3;
     }
+
+    if (artifact_light(obj))
+        radius++;
+    if (obj->blessed)
+        radius++;
+    if (obj->cursed)
+        radius--;
+    if (radius < 1)
+        radius = 1;
+
     return radius;
 }
 

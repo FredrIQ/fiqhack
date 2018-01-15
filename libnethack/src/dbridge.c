@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -52,7 +52,7 @@ is_lava(struct level * lev, int x, int y)
     ltyp = lev->locations[x][y].typ;
     if (ltyp == LAVAPOOL ||
         (ltyp == DRAWBRIDGE_UP &&
-         (lev->locations[x][y].drawbridgemask & DB_UNDER) == DB_LAVA))
+         (lev->locations[x][y].flags & DB_UNDER) == DB_LAVA))
         return TRUE;
     return FALSE;
 }
@@ -67,7 +67,7 @@ is_ice(struct level * lev, int x, int y)
     ltyp = lev->locations[x][y].typ;
     if (ltyp == ICE ||
         (ltyp == DRAWBRIDGE_UP &&
-         (lev->locations[x][y].drawbridgemask & DB_UNDER) == DB_ICE))
+         (lev->locations[x][y].flags & DB_UNDER) == DB_ICE))
         return TRUE;
     return FALSE;
 }
@@ -83,7 +83,7 @@ is_moat(struct level * lev, int x, int y)
     if (!Is_juiblex_level(&lev->z) &&
         (ltyp == MOAT ||
          (ltyp == DRAWBRIDGE_UP &&
-          (lev->locations[x][y].drawbridgemask & DB_UNDER) == DB_MOAT)))
+          (lev->locations[x][y].flags & DB_UNDER) == DB_MOAT)))
         return TRUE;
     return FALSE;
 }
@@ -105,16 +105,16 @@ is_drawbridge_wall(int x, int y)
         return -1;
 
     if (IS_DRAWBRIDGE(level->locations[x + 1][y].typ) &&
-        (level->locations[x + 1][y].drawbridgemask & DB_DIR) == DB_WEST)
+        (level->locations[x + 1][y].flags & DB_DIR) == DB_WEST)
         return DB_WEST;
     if (IS_DRAWBRIDGE(level->locations[x - 1][y].typ) &&
-        (level->locations[x - 1][y].drawbridgemask & DB_DIR) == DB_EAST)
+        (level->locations[x - 1][y].flags & DB_DIR) == DB_EAST)
         return DB_EAST;
     if (IS_DRAWBRIDGE(level->locations[x][y - 1].typ) &&
-        (level->locations[x][y - 1].drawbridgemask & DB_DIR) == DB_SOUTH)
+        (level->locations[x][y - 1].flags & DB_DIR) == DB_SOUTH)
         return DB_SOUTH;
     if (IS_DRAWBRIDGE(level->locations[x][y + 1].typ) &&
-        (level->locations[x][y + 1].drawbridgemask & DB_DIR) == DB_NORTH)
+        (level->locations[x][y + 1].flags & DB_DIR) == DB_NORTH)
         return DB_NORTH;
 
     return -1;
@@ -171,7 +171,7 @@ find_drawbridge(int *x, int *y)
 static void
 get_wall_for_db(int *x, int *y)
 {
-    switch (level->locations[*x][*y].drawbridgemask & DB_DIR) {
+    switch (level->locations[*x][*y].flags & DB_DIR) {
     case DB_NORTH:
         (*y)--;
         break;
@@ -229,18 +229,18 @@ create_drawbridge(struct level *lev, int x, int y, int dir, boolean flag)
     if (flag) { /* We want the bridge open */
         lev->locations[x][y].typ = DRAWBRIDGE_DOWN;
         lev->locations[x2][y2].typ = DOOR;
-        lev->locations[x2][y2].doormask = D_NODOOR;
+        lev->locations[x2][y2].flags = D_NODOOR;
     } else {
         lev->locations[x][y].typ = DRAWBRIDGE_UP;
         lev->locations[x2][y2].typ = DBWALL;
         /* Drawbridges are non-diggable. */
-        lev->locations[x2][y2].wall_info = W_NONDIGGABLE;
+        lev->locations[x2][y2].flags = W_NONDIGGABLE;
     }
     lev->locations[x][y].horizontal = !horiz;
     lev->locations[x2][y2].horizontal = horiz;
-    lev->locations[x][y].drawbridgemask = dir;
+    lev->locations[x][y].flags = dir;
     if (lava)
-        lev->locations[x][y].drawbridgemask |= DB_LAVA;
+        lev->locations[x][y].flags |= DB_LAVA;
     return TRUE;
 }
 
@@ -348,12 +348,10 @@ e_survives_at(struct entity *etmp, int x, int y)
         return TRUE;
     if (is_pool(level, x, y))
         return (boolean) (waterwalks(etmp->emon) || unbreathing(etmp->emon) ||
-                          swims(etmp->emon) || flying(etmp->emon) ||
-                          levitates(etmp->emon));
+                          swims(etmp->emon) || aboveliquid(etmp->emon));
     /* must force call to lava_effects in e_died if is_u */
     if (is_lava(level, x, y))
-        return (boolean) (likes_lava(etmp->edata) || flying(etmp->emon) ||
-                          levitates(etmp->emon));
+        return (boolean) (likes_lava(etmp->edata) || aboveliquid(etmp->emon));
     if (is_db_wall(x, y))
         return !!phasing(etmp->emon);
     return TRUE;
@@ -433,7 +431,7 @@ e_missed(struct entity *etmp, boolean chunks)
          : (etmp->emon->mcanmove && !etmp->emon->msleeping)))
         /* flying requires mobility */
         misses = 5;     /* out of 8 */
-    else if (levitates(etmp->emon) || (is_u(etmp) && Levitation))
+    else if (levitates_proper(etmp->emon))
         /* doesn't require mobility */
         misses = 3;
     else if (chunks && is_pool(level, etmp->ex, etmp->ey))
@@ -618,7 +616,7 @@ do_entity(struct entity *etmp)
         if (is_pool(level, etmp->ex, etmp->ey) && !e_inview)
             You_hear(msgc_levelsound, "a splash.");
         if (e_survives_at(etmp, etmp->ex, etmp->ey)) {
-            if (e_inview && !flying(etmp->emon) && !levitates(etmp->emon))
+            if (e_inview && !aboveliquid(etmp->emon))
                 pline(miss_msgc, "%s from the bridge.", E_phrase(etmp, "fall"));
             return;
         }
@@ -667,7 +665,7 @@ close_drawbridge(int x, int y)
     loc1->typ = DRAWBRIDGE_UP;
     loc2 = &level->locations[x2][y2];
     loc2->typ = DBWALL;
-    switch (loc1->drawbridgemask & DB_DIR) {
+    switch (loc1->flags & DB_DIR) {
     case DB_NORTH:
     case DB_SOUTH:
         loc2->horizontal = TRUE;
@@ -677,7 +675,7 @@ close_drawbridge(int x, int y)
         loc2->horizontal = FALSE;
         break;
     }
-    loc2->wall_info = W_NONDIGGABLE;
+    loc2->flags = W_NONDIGGABLE;
     set_entity(x, y, &(occupants[0]));
     set_entity(x2, y2, &(occupants[1]));
     do_entity(&(occupants[0])); /* Do set_entity after first */
@@ -720,7 +718,7 @@ open_drawbridge(int x, int y)
     loc1->typ = DRAWBRIDGE_DOWN;
     loc2 = &level->locations[x2][y2];
     loc2->typ = DOOR;
-    loc2->doormask = D_NODOOR;
+    loc2->flags = D_NODOOR;
     set_entity(x, y, &(occupants[0]));
     set_entity(x2, y2, &(occupants[1]));
     do_entity(&(occupants[0])); /* do set_entity after first */
@@ -758,10 +756,10 @@ destroy_drawbridge(int x, int y)
     y2 = y;
     get_wall_for_db(&x2, &y2);
     loc2 = &level->locations[x2][y2];
-    if ((loc1->drawbridgemask & DB_UNDER) == DB_MOAT ||
-        (loc1->drawbridgemask & DB_UNDER) == DB_LAVA) {
+    if ((loc1->flags & DB_UNDER) == DB_MOAT ||
+        (loc1->flags & DB_UNDER) == DB_LAVA) {
         struct obj *otmp;
-        boolean lava = (loc1->drawbridgemask & DB_UNDER) == DB_LAVA;
+        boolean lava = (loc1->flags & DB_UNDER) == DB_LAVA;
 
         if (loc1->typ == DRAWBRIDGE_UP) {
             if (cansee(x2, y2))
@@ -779,7 +777,7 @@ destroy_drawbridge(int x, int y)
                 You_hear(msgc_levelsound, "a loud *SPLASH*!");
         }
         loc1->typ = lava ? LAVAPOOL : MOAT;
-        loc1->drawbridgemask = 0;
+        loc1->flags = 0;
         if ((otmp = sobj_at(BOULDER, level, x, y)) != 0) {
             obj_extract_self(otmp);
             flooreffects(otmp, x, y, "fall");
@@ -789,12 +787,12 @@ destroy_drawbridge(int x, int y)
             pline(msgc_consequence, "The drawbridge disintegrates!");
         else
             You_hear(msgc_levelsound, "a loud *CRASH*!");
-        loc1->typ = ((loc1->drawbridgemask & DB_ICE) ? ICE : ROOM);
-        loc1->icedpool = ((loc1->drawbridgemask & DB_ICE) ? ICED_MOAT : 0);
+        loc1->typ = ((loc1->flags & DB_ICE) ? ICE : ROOM);
+        loc1->flags = ((loc1->flags & DB_ICE) ? ICED_MOAT : 0);
     }
     wake_nearto(x, y, 500);
     loc2->typ = DOOR;
-    loc2->doormask = D_NODOOR;
+    loc2->flags = D_NODOOR;
     if ((t = t_at(level, x, y)) != 0)
         deltrap(level, t);
     if ((t = t_at(level, x2, y2)) != 0)

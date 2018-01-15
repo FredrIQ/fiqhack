@@ -437,7 +437,7 @@ cornuthaum
 	attacks of monsters with a good success rate. It helps focus the mental powers
 	of wizards, making their natural arrogance more effective and occasionally
 	giving them a sense of the surrounding area; but only wizards can pull this
-	feat off, with other classes merely looking stupid wearing such a hat.
+	feat off, with other adventurers merely looking stupid wearing such a hat.
 *corpse
 	A dead monster. The bodies of monsters can always be eaten, but eating the
 	wrong sort of monster might be dangerous or even fatal; on the other hand,
@@ -2696,8 +2696,8 @@ tiger
 
 # g - gargoyles and such
 gremlin
-	This hideous green gargoyle-like creature multiplies in water and is
-	especially dangerous at night.
+	This hideous green gargoyle-like creature multiplies in water and strips
+	away your innate magical defenses when it attacks.
 ~wing
 gargoyle
 	Made of stone carved into hideous features, the gargoyle is inherently
@@ -3348,7 +3348,7 @@ elvenking
 	Generally regarded as one of the wiser and more intelligent races, elves
 	make up for their lack of physical prowess by keeping lore that allows
 	them to fashion generally superior equipment.  Elves do not fear the name
-	of Elbereth, for the consider her to be on their side.
+	of Elbereth, for they consider her to be on their side.
 doppelganger
 sandestin
 chameleon

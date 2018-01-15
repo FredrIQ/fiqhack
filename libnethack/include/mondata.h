@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -30,6 +30,14 @@
 # define resists_magm(mon)      (has_property(mon, ANTIMAGIC))
 # define resists_sick(mon)      (has_property(mon, SICK_RES))
 # define resists_hallu(mon)     (has_property(mon, HALLUC_RES))
+# define resists_stun(mon)      (has_property(mon, STUN_RES))
+# define resists_death(mon)     (has_property(mon, DEATH_RES))
+# define immune_to_fire(mon)    (has_immunity(mon, FIRE_RES))
+# define immune_to_cold(mon)    (has_immunity(mon, COLD_RES))
+# define immune_to_sleep(mon)   (has_immunity(mon, SLEEP_RES))
+# define immune_to_elec(mon)    (has_immunity(mon, SHOCK_RES))
+# define immune_to_poison(mon)  (has_immunity(mon, POISON_RES))
+# define immune_to_acid(mon)    (has_immunity(mon, ACID_RES))
 # define reflecting(mon)        (has_property(mon, REFLECTING))
 # define half_spell_dam(mon)    (has_property(mon, HALF_SPDAM))
 # define half_phys_dam(mon)     (has_property(mon, HALF_PHDAM))
@@ -49,6 +57,8 @@
 # define polymorphitis(mon)     (has_property(mon, POLYMORPH))
 # define polymorph_control(mon) (has_property(mon, POLYMORPH_CONTROL))
 # define levitates(mon)         (has_property(mon, LEVITATION))
+# define levitates_proper(mon)  (!!(levitates(mon) && levitation_useful(mon)))
+# define levitation_useful(mon) (!Is_waterlevel(m_mz(mon)))
 # define stealthy(mon)          (has_property(mon, STEALTH))
 # define aggravating(mon)       (has_property(mon, AGGRAVATE_MONSTER))
 # define conflicting(mon)       (has_property(mon, CONFLICT))
@@ -92,6 +102,11 @@
 # define sliming(mon)           (has_property(mon, SLIMED))
 # define fixed_abilities(mon)   (has_property(mon, FIXED_ABIL))
 # define flying(mon)            (has_property(mon, FLYING))
+# define flying_proper(mon)     (!!(flying(mon) && levitation_useful(mon)))
+# define levfly_proper(mon)     (levitates_proper(mon) || flying_proper(mon))
+# define aboveliquid(mon)       (levfly_proper(mon) ||          \
+                                 (is_clinger((mon)->data) &&    \
+                                  levitation_useful(mon)))
 # define unchanging(mon)        (has_property(mon, UNCHANGING))
 # define phasing(mon)           (has_property(mon, PASSES_WALLS))
 # define slow_digestion(mon)    (has_property(mon, SLOW_DIGESTION))

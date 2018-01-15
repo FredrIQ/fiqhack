@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -256,12 +256,6 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     xlocale = mtmp->xlocale;
     ylocale = mtmp->ylocale;
 
-    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
-        if (!otmp->olev && otmp->timed)
-            panic("Unhandled timed obj %s carried by %s, try again "
-                  "later", killer_xname(otmp, FALSE), k_monnam(mtmp));
-    }
-
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
         set_obj_level(mtmp->dlevel, otmp);
 
@@ -404,8 +398,9 @@ mon_arrive(struct monst *mtmp, boolean with_you)
 
             /* mkcorpstat will place it randomly if xylocale is still
                ROWNO/COLNO */
-            mkcorpstat(CORPSE, NULL, mtmp->data, level, xlocale, ylocale,
-                       FALSE, rng_main);
+            obj = mkcorpstat(CORPSE, NULL, mtmp->data, level, xlocale, ylocale,
+                             FALSE, rng_main);
+            obj->spe = mtmp->female ? OPM_FEMALE : OPM_MALE;
             mongone(mtmp);
         }
     }
@@ -441,7 +436,7 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
         if (mtmp->mintrinsic[prop] & TIMEOUT_RAW) {
             dec = imv;
             if (prop == PROTECTION &&
-                mprof(mtmp, MP_SCLRC) < P_EXPERT)
+                MP_SKILL(mtmp, P_CLERIC_SPELL) < P_EXPERT)
                 dec /= 2;
             mtmp->mintrinsic[prop] -= min(dec, mtmp->mintrinsic[prop] - 1);
         }
@@ -504,6 +499,10 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
     mtmp->pw += regeneration_by_rate(imv * regen_rate(mtmp, TRUE));
     if (mtmp->pw > mtmp->pwmax)
         mtmp->pw = mtmp->pwmax;
+    if (mtmp->pw < 0) {
+        mtmp->pw = 0;
+        mtmp->spells_maintained = 0;
+    }
 }
 
 
@@ -689,6 +688,9 @@ dogfood(const struct monst *mon, struct obj *obj)
     boolean herbi = herbivorous(mon->data);
     const struct permonst *fptr = &mons[obj->corpsenm];
     boolean starving;
+    const struct permonst *pm = NULL;
+    if (obj->otyp == EGG || obj->otyp == CORPSE)
+        pm = &mons[obj->corpsenm];
 
     if (is_quest_artifact(obj) || obj_resists(obj, 0, 95))
         return obj->cursed ? df_tabu : df_apport;
@@ -727,8 +729,10 @@ dogfood(const struct monst *mon, struct obj *obj)
         case CORPSE:
             if ((corpse_rot_status(obj, TRUE) <= corpserot_last_harmful &&
                  !resists_sick(mon)) ||
-                (acidic(&mons[obj->corpsenm]) && !resists_acid(mon)) ||
-                (poisonous(&mons[obj->corpsenm]) && !resists_poison(mon)))
+                (acidic(pm) && !immune_to_acid(mon)) ||
+                ((dmgtype(pm, AD_STUN) || dmgtype(pm, AD_HALU)) &&
+                 !resists_hallu(mon)) ||
+                (poisonous(pm) && !immune_to_poison(mon)))
                 return df_harmful;
             else if (vegan(fptr))
                 return herbi ? df_good : df_manfood;
@@ -798,7 +802,8 @@ tamedog(struct monst *mtmp, struct obj *obj)
        realtime effects means that this won't really sync anyway; this also
        calls set_malign (thus there's no need for the caller to call it after
        calling tamedog()) */
-    msethostility(mtmp, FALSE, TRUE);
+    if (!mtmp->mtame)
+        msethostility(mtmp, FALSE, TRUE);
     if (flags.moonphase == FULL_MOON && night() && rn2(6) && obj &&
         mtmp->data->mlet == S_DOG)
         return NULL;

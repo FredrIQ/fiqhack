@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -111,7 +111,7 @@ wildmiss(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 
 
 /* mattackq: monster attacks a square
-   
+
    This function is called when the monster believes it's attacking something,
    but might potentially be mistaken about what's actually there. Returns 1 if
    the monster dies during the attack, 0 otherwise.
@@ -140,7 +140,7 @@ mattackq(struct monst *mtmp, int x, int y)
 
         if (mstatus & MM_AGR_DIED)  /* aggressor died */
             return 2;
-        
+
         if ((mstatus & MM_HIT) && !(mstatus & MM_DEF_DIED) && rn2(4)) {
             notonhead = 0;
             mstatus = mattackm(mdef, mtmp);        /* return attack */
@@ -153,7 +153,7 @@ mattackq(struct monst *mtmp, int x, int y)
     if (!mdef)
         mdef = &youmonst; /* it is assumed that it tried to attack you */
 
-    mpreattack(mtmp);
+    mpreattack(mtmp, mdef, FALSE);
 
     int sum[NATTK];
     struct attack alt_attk;
@@ -235,52 +235,54 @@ mattackq(struct monst *mtmp, int x, int y)
    The code here was moved here from mattacku (which ran in both the "player"
    and "empty space" codepaths in 4.3, but not the "monster" codepath). */
 boolean
-mpreattack(struct monst *mtmp)
+mpreattack(struct monst *magr, struct monst *mdef, boolean range2)
 {
-    const struct permonst *mdat = mtmp->data;
+    const struct permonst *mdat = magr->data;
 
-    if (DEADMONSTER(mtmp) || (Underwater && !swims(mtmp)))
+    if (DEADMONSTER(magr) || (mdef == &youmonst && Underwater &&
+                              !swims(magr)))
         return FALSE;
 
     /* Special demon handling code */
-    if (!mtmp->cham && is_demon(mdat) && !mtmp->mtame &&
-        mtmp->data != &mons[PM_BALROG]
-        && mtmp->data != &mons[PM_SUCCUBUS]
-        && mtmp->data != &mons[PM_INCUBUS])
-        if (!cancelled(mtmp) && !rn2(13))
-            msummon(mtmp, &mtmp->dlevel->z);
+    if (!magr->cham && is_demon(mdat) && !range2 && !magr->mtame &&
+        !magr->mpeaceful &&
+        magr->data != &mons[PM_BALROG] &&
+        magr->data != &mons[PM_INCUBUS] &&
+        !(m_mwep(mdef) && m_mwep(mdef)->oartifact == ART_DEMONBANE))
+        if (!cancelled(magr) && !rn2(13))
+            msummon(magr, &magr->dlevel->z);
 
     /* Special lycanthrope handling code */
-    if (!mtmp->cham && is_were(mdat)) {
+    if (!magr->cham && is_were(mdat) && !range2) {
 
         if (is_human(mdat)) {
-            if (!rn2(5 - (night() * 2)) && !cancelled(mtmp))
-                new_were(mtmp);
-        } else if (!rn2(30) && !cancelled(mtmp))
-            new_were(mtmp);
+            if (!rn2(5 - (night() * 2)) && !cancelled(magr))
+                new_were(magr);
+        } else if (!rn2(30) && !cancelled(magr))
+            new_were(magr);
 
-        if (!rn2(10) && !cancelled(mtmp) && !mtmp->mtame) {
+        if (!rn2(10) && !cancelled(magr) && !magr->mtame) {
             int numseen, numhelp;
             const char *buf, *genericwere;
 
             genericwere = "creature";
 
-            numhelp = were_summon(mtmp, &numseen, &genericwere);
-            if (canseemon(mtmp)) {
+            numhelp = were_summon(magr, &numseen, &genericwere);
+            if (canseemon(magr)) {
                 if (numhelp > 0) {
-                    pline(combat_msgc(mtmp, NULL, cr_hit),
-                          "%s summons help!", Monnam(mtmp));
+                    pline(combat_msgc(magr, NULL, cr_hit),
+                          "%s summons help!", Monnam(magr));
                     if (numseen == 0)
                         pline(msgc_levelwarning, "You feel hemmed in.");
                 } else
-                    pline(combat_msgc(mtmp, NULL, cr_miss),
-                          "%s summons help, but none comes.", Monnam(mtmp));
+                    pline(combat_msgc(magr, NULL, cr_miss),
+                          "%s summons help, but none comes.", Monnam(magr));
             } else {
                 const char *from_nowhere;
 
                 if (canhear()) {
                     pline(msgc_levelwarning, "Something %s!",
-                          makeplural(growl_sound(mtmp)));
+                          makeplural(growl_sound(magr)));
                     from_nowhere = "";
                 } else
                     from_nowhere = " from nowhere";

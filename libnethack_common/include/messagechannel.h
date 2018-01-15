@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-09 */
 /* Copyright (c) Alex Smith, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -146,6 +146,7 @@ enum msg_channel {
 
     /* Messages that don't directly pertain to the game at all. */
     msgc_mail,         /* another player on the public server sends a message */
+    msgc_setaction,    /* used to tell the client to hide newer messages */
 };
 
 /*

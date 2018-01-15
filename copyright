@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Fredrik Ljungdahl, 2015-11-17
+Last-Modified: Last modified by Fredrik Ljungdahl, 2017-12-26
 Comment:
  .
  This file is Copyright (C) Alex Smith 2013-2015, except as explained below
@@ -154,6 +154,10 @@ Files: libnethack/include/magic.h
 License: NGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
 
+Files: libnethack/include/lz4.h
+License: BSD-2
+Copyright: Copyright (C) 2011-2017, Yann Collet.
+
 Files: libnethack/include/memfile.h
 License: NGPL
 Copyright: Copyright (c) 2015 Alex Smith
@@ -297,6 +301,10 @@ Copyright:
 Files: libnethack/src/log*.c
 License: NGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
+
+Files: libnethack/src/lz4.c
+License: BSD-2
+Copyright: Copyright (C) 2011-2017, Yann Collet.
 
 Files: libnethack/src/memfile.c
 License: NGPL
@@ -2099,3 +2107,28 @@ License: GPL-3
  the library.  If this is what you want to do, use the GNU Lesser General
  Public License instead of this License.  But first, please read
  <http://www.gnu.org/philosophy/why-not-lgpl.html>.
+
+License: BSD-2
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+   1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ .
+   2. Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

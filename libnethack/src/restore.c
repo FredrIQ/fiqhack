@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,6 +12,8 @@ static void restore_autopickup_rules(struct memfile *mf,
                                      struct nh_autopickup_rules *r);
 static void restore_utracked(struct memfile *mf, struct you *you);
 static void find_lev_obj(struct level *lev);
+static void find_lev_memobj(struct level *lev);
+static void restore_memobj(struct memfile *mf);
 static void restlevchn(struct memfile *mf);
 static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly);
 static void restobjchn(struct memfile *mf, struct level *lev,
@@ -91,13 +93,61 @@ find_lev_obj(struct level *lev)
     }
 }
 
+/* Sets up lev->memobjects[x][y] */
+static void
+find_lev_memobj(struct level *lev)
+{
+    /* Reset current lists */
+    int x, y;
+    for (x = 0; x < COLNO; x++)
+        for (y = 0; y < ROWNO; y++)
+            lev->memobjects[x][y] = NULL;
+
+    /* Recreate the list */
+    struct obj *memobj;
+    for (memobj = lev->memobjlist; memobj; memobj = memobj->nobj) {
+        x = memobj->ox;
+        y = memobj->oy;
+        memobj->nexthere = lev->memobjects[x][y];
+        lev->memobjects[x][y] = memobj;
+    }
+}
+
+/* Restores object memories */
+static void
+restore_memobj(struct memfile *mf)
+{
+    int i;
+    for (i = 0; i <= maxledgerno(); i++) {
+        if (levels[i]) {
+            restobjchn(mf, levels[i], FALSE, FALSE, &(levels[i]->memobjlist),
+                       NULL);
+
+            find_lev_memobj(levels[i]);
+        }
+    }
+
+    restobjchn(mf, level, FALSE, FALSE, &(youmonst.meminvent), NULL);
+}
+
+static void
+setup_invent_olev(struct obj *chain)
+{
+    struct obj *obj;
+    for (obj = chain; obj; obj = obj->nobj) {
+        obj->olev = level;
+        if (Has_contents(obj))
+            setup_invent_olev(obj->cobj);
+    }
+}
+
 /* Validate in_use -- it should never be set in neutral turnstate */
 void
 inven_inuse(boolean quietly)
 {
     struct obj *otmp, *otmp2;
 
-    for (otmp = invent; otmp; otmp = otmp2) {
+    for (otmp = youmonst.minvent; otmp; otmp = otmp2) {
         otmp2 = otmp->nobj;
         if (otmp->in_use) {
             if (!quietly)
@@ -229,6 +279,27 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
         /* we might need to produce an index, for speed in relinking IDs */
         if (table)
             trietable_add(table, otmp->o_id, otmp);
+
+        /* If this is an object memory, relink it. */
+        if (otmp->mem_o_id && otmp->memory != OM_NO_MEMORY) {
+            /* try object's level first */
+            if (otmp->olev)
+                otmp->mem_obj = find_oid_lev(otmp->olev, otmp->mem_o_id);
+            /* try regular find_oid */
+            if (!otmp->mem_obj)
+                otmp->mem_obj = find_oid(otmp->mem_o_id);
+            if (!otmp->mem_obj)
+                impossible("Object memory link failed for: %s",
+                           killer_xname(otmp, FALSE));
+            else if (otmp->mem_obj->mem_obj &&
+                     otmp->mem_obj->mem_obj != otmp) {
+                impossible("Duplicate object memory for %s.",
+                           killer_xname(otmp->mem_obj, FALSE));
+                otmp->mem_obj = NULL;
+                /* will hopefully be cleaned up later */
+            } else
+                otmp->mem_obj->mem_obj = otmp;
+        }
 
         /* get contents of a container or statue */
         if (Has_contents(otmp)) {
@@ -406,12 +477,38 @@ ghostfruit(struct obj *otmp)
 static void
 restore_mvitals(struct memfile *mf)
 {
-    int i;
+    int i, j;
 
+    j = 0;
     for (i = 0; i < NUMMONS; i++) {
-        mvitals[i].born = mread8(mf);
-        mvitals[i].died = mread8(mf);
-        mvitals[i].mvflags = mread8(mf);
+        while (is_removed_pm(j)) {
+            /* One or more monster ids vanished. This is the only case where
+               we handle removed permonsts at the moment. The reason is that
+               in other cases, we can safely revert to the monster right above
+               in the monster table (because the only removals were duplicates
+               due to female monster names), and this is the only part where
+               actual "permonst" (really mvitals, but similar) data is saved. */
+            mread8(mf);
+            mread8(mf);
+            mread8(mf);
+            j++;
+        }
+        if (is_new_pm(i))
+            new_mvitals(i);
+        else {
+            mvitals[i].born = mread8(mf);
+            mvitals[i].died = mread8(mf);
+            mvitals[i].mvflags = mread8(mf);
+        }
+        j++;
+    }
+
+    /* In case monsters was removed from the end */
+    while (is_removed_pm(j)) {
+        mread8(mf);
+        mread8(mf);
+        mread8(mf);
+        j++;
     }
 }
 
@@ -477,7 +574,8 @@ restgamestate(struct memfile *mf)
     /* this stuff comes after potential aborted restore attempts */
     restore_timers(mf, lev, RANGE_GLOBAL, FALSE, 0L);
     restore_light_sources(mf, lev);
-    restobjchn(mf, lev, FALSE, FALSE, &invent, NULL);
+    if (flags.save_revision < 7)
+        restobjchn(mf, lev, FALSE, FALSE, &youmonst.minvent, NULL);
     migrating_mons = restmonchn(mf, NULL, FALSE);
     restore_mvitals(mf);
 
@@ -500,8 +598,20 @@ restgamestate(struct memfile *mf)
     mread(mf, flags.rngstate, sizeof flags.rngstate);
 
     restore_track(mf);
-    restore_rndmonst_state(mf);
+
+    /* old rndmonst data: no longer saved */
+    if (flags.save_revision < 11) {
+        int i = 347; /* was SPECIAL_PM + 4 */
+
+        while (i--)
+            mread8(mf);
+    }
+
     restore_history(mf);
+
+    /* must come after all objs are restored */
+    if (flags.save_revision >= 8)
+        restore_memobj(mf);
 
     /* must come after all mons & objs are restored */
     relink_timers(FALSE, lev, NULL);
@@ -524,6 +634,24 @@ restgamestate(struct memfile *mf)
         u.usteed = mtmp;
         remove_monster(lev, mtmp->mx, mtmp->my);
     }
+}
+
+static void
+fixstr(struct attribs *attr)
+{
+    /* A_STR was 0 at this point */
+    if (flags.save_revision >= 15 ||
+        attr->a[0] <= 18)
+        return;
+
+    if (attr->a[0] <= 68)
+        attr->a[0] = 19;
+    else if (attr->a[0] <= 103)
+        attr->a[0] = 20;
+    else if (attr->a[0] <= 121)
+        attr->a[0] = 21;
+    else
+        attr->a[0] -= 100;
 }
 
 void
@@ -572,11 +700,14 @@ restore_you(struct memfile *mf, struct you *y)
     y->urexp = mread32(mf);
     y->unused_ulevelmax = mread32(mf);
     y->umonster = mread32(mf);
+    y->umonster += pm_offset(y->umonster);
     y->umonnum = mread32(mf);
+    y->umonnum += pm_offset(y->umonnum);
     y->mh = mread32(mf);
     y->mhmax = mread32(mf);
     y->mtimedone = mread32(mf);
     y->ulycn = mread32(mf);
+    y->ulycn += pm_offset(y->ulycn);
     y->utrap = save_decode_32(mread32(mf), -moves, -moves);
     y->utraptype = mread32(mf);
     y->uhunger = save_decode_32(mread32(mf), -moves, -moves);
@@ -603,6 +734,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->urideturns = mread32(mf);
     y->umortality = mread32(mf);
     y->ugrave_arise = mread32(mf);
+    y->ugrave_arise += pm_offset(y->ugrave_arise);
     y->weapon_slots = mread32(mf);
     y->skills_advanced = mread32(mf);
     y->initrole = mread32(mf);
@@ -639,8 +771,13 @@ restore_you(struct memfile *mf, struct you *y)
     y->moveamt = mread8(mf);
     y->spellquiver = mread16(mf);
 
+    int lastprop = mread8(mf);
+    if (!lastprop)
+        lastprop = 69; /* old saves */
+    int ever_trinsic_size = (lastprop + 7) / 8;
+
     /* this is oddly placed due to save padding */
-    /*len = mread32(mf);
+    len = mread32(mf);
     if (len > 0) {
         char *buf = malloc(len + 1);
         mread(mf, buf, len);
@@ -648,15 +785,15 @@ restore_you(struct memfile *mf, struct you *y)
         y->delayed_killers.zombie = buf;
     } else {
         y->delayed_killers.zombie = NULL;
-        }*/
+    }
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 509; i++)
+    for (i = 0; i < 504; i++)
         (void) mread8(mf);
 
-    mread(mf, y->ever_extrinsic, sizeof (y->ever_extrinsic));
-    mread(mf, y->ever_intrinsic, sizeof (y->ever_intrinsic));
-    mread(mf, y->ever_temporary, sizeof (y->ever_temporary));
+    mread(mf, y->ever_extrinsic, ever_trinsic_size);
+    mread(mf, y->ever_intrinsic, ever_trinsic_size);
+    mread(mf, y->ever_temporary, ever_trinsic_size);
     mread(mf, y->unused_uwhybusy, sizeof (y->unused_uwhybusy));
     mread(mf, y->urooms, sizeof (y->urooms));
     mread(mf, y->urooms0, sizeof (y->urooms0));
@@ -666,12 +803,19 @@ restore_you(struct memfile *mf, struct you *y)
     mread(mf, y->ushops_entered, sizeof (y->ushops_entered));
     mread(mf, y->ushops_left, sizeof (y->ushops_left));
     mread(mf, y->macurr.a, sizeof (y->macurr.a));
+    fixstr(&y->macurr);
     mread(mf, y->mamax.a, sizeof (y->mamax.a));
+    fixstr(&y->mamax);
     mread(mf, y->acurr.a, sizeof (y->acurr.a));
+    fixstr(&y->acurr);
     mread(mf, y->aexe.a, sizeof (y->aexe.a));
+    /* exercise already handles strength like other things */
     mread(mf, y->amax.a, sizeof (y->amax.a));
+    fixstr(&y->amax);
     mread(mf, y->atemp.a, sizeof (y->atemp.a));
+    fixstr(&y->atemp);
     mread(mf, y->atime.a, sizeof (y->atime.a));
+    fixstr(&y->atime);
     mread(mf, y->skill_record, sizeof (y->skill_record));
     mread(mf, y->uplname, sizeof (y->uplname));
 
@@ -680,9 +824,9 @@ restore_you(struct memfile *mf, struct you *y)
         y->uconduct_time[i] = mread32(mf);
     }
     for (i = 0; i < P_NUM_SKILLS; i++) {
-        y->weapon_skills[i].skill = mread8(mf);
-        y->weapon_skills[i].max_skill = mread8(mf);
-        y->weapon_skills[i].advance = mread16(mf);
+        y->unused_weapon_skills[i].skill = mread8(mf);
+        y->unused_weapon_skills[i].max_skill = mread8(mf);
+        y->unused_weapon_skills[i].advance = mread16(mf);
     }
 
     restore_quest_status(mf, &y->quest_status);
@@ -851,6 +995,9 @@ restore_flags(struct memfile *mf, struct flag *f)
                            "the game version.");
         return;
     }
+    f->polyinit_mnum += pm_offset(f->polyinit_mnum);
+    f->recently_broken_otyp += otyp_offset(f->recently_broken_otyp);
+
     f->servermail = mread8(mf);
     f->autoswap = mread8(mf);
 
@@ -858,8 +1005,12 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->last_arg.key = mread32(mf);
     f->last_arg.ability = mread8(mf);
 
+    f->double_troubled = mread8(mf);
+    f->autounlock = mread8(mf);
+    f->msg_hints = mread8(mf);
+
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 98; i++)
+    for (i = 0; i < 95; i++)
         (void) mread8(mf);
 
     mread(mf, f->setseed, sizeof (f->setseed));
@@ -888,7 +1039,7 @@ dorecover(struct memfile *mf)
     int count;
     xchar ltmp;
     struct obj *otmp;
-    struct monst *mtmp;
+    struct monst *mon;
 
     int temp_pos;       /* in case we're both reading and writing the file */
 
@@ -912,17 +1063,35 @@ dorecover(struct memfile *mf)
     role_init();       /* Reset the initial role, race, gender, and alignment */
     pantheon_init(FALSE);
 
-    mtmp = restore_mon(mf, NULL, NULL);
-    youmonst = *mtmp;
-    mx_copy(&youmonst, mtmp);
-    dealloc_monst(mtmp);
+    mon = restore_mon(mf, NULL, NULL);
+    if (mon->minvent)
+        restobjchn(mf, NULL, FALSE, FALSE,
+                   &(mon->minvent), NULL);
+
+    if (flags.save_revision < 12)
+        mx_eyou_new(mon);
+
+    youmonst = *mon;
+    mx_copy(&youmonst, mon);
+    dealloc_monst(mon);
 
     if (flags.save_revision < 5) {
         youmonst.pw = u.unused_uen;
         youmonst.pwmax = u.unused_uenmax;
     }
+    if (flags.save_revision < 16) {
+        /* Don't use a macro, we want to iterate as many as we had by the time
+           we added this logic. */
+        int i;
+        for (i = 0; i < 41; i++) {
+            P_SKILL(i) = u.unused_weapon_skills[i].skill;
+            P_MAX_SKILL(i) = u.unused_weapon_skills[i].max_skill;
+            P_ADVANCE(i) = u.unused_weapon_skills[i].advance;
+        }
+    }
 
-    if (flags.save_revision < 7) {
+    /* MASTER SAVE */
+    if (flags.save_revision < 17) {
         youmonst.mx = u.unused_ux;
         youmonst.my = u.unused_uy;
         youmonst.mundetected = u.unused_uundetected;
@@ -933,8 +1102,10 @@ dorecover(struct memfile *mf)
         youmonst.m_lev = u.unused_ulevel;
         youmonst.m_levmax = u.unused_ulevelmax;
         youmonst.exp = u.unused_uexp;
-        if (u.unused_uwhybusy)
+        if (u.unused_uwhybusy) {
+            mx_eocc_new(&youmonst);
             set_whybusy(&youmonst, u.unused_uwhybusy);
+        }
     }
 
     /* restore dungeon */
@@ -957,6 +1128,9 @@ dorecover(struct memfile *mf)
     /* all data has been read, prepare for player */
     level = levels[ledger_no(&u.uz)];
 
+    /* set up olev on hero inventory */
+    setup_invent_olev(youmonst.minvent);
+
     max_rank_sz();      /* to recompute mrank_sz (botl.c) */
     /* take care of iron ball & chain */
     for (otmp = level->objlist; otmp; otmp = otmp->nobj)
@@ -975,7 +1149,9 @@ dorecover(struct memfile *mf)
        change the save file, something that the save code detects as a
        desync. Therefore, this is now the caller's job. */
 
-    /* Success! */
+    /* Success! Update whereis. */
+    update_whereis(TRUE);
+
     mf->pos = temp_pos;
     return 1;
 }
@@ -1003,6 +1179,10 @@ restore_location(struct memfile *mf, struct rm *loc)
     loc->seenv = mread8(mf);
     lflags2 = mread16(mf);
     loc->mem_bg = (lflags1 >> 26) & 63;
+    if (flags.save_revision < 9) {
+        if (loc->mem_bg >= 36 && loc->mem_bg <= 56 && loc->mem_bg != 44)
+            loc->mem_bg += 5;
+    }
     loc->mem_trap = (lflags1 >> 21) & 31;
     loc->mem_obj = (lflags1 >> 11) & 1023;
     loc->mem_obj_mn = (lflags1 >> 2) & 511;
@@ -1231,6 +1411,8 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     restore_dest_area(mf, &lev->dndest);
 
     lflags = mread32(mf);
+    if (flags.save_revision < 13)
+        lflags &= ~((lflags >> 13) & 1); /* old forgotten flag */
     lev->flags.vault_known = (lflags >> 23) & 1;
     lev->flags.noteleport = (lflags >> 22) & 1;
     lev->flags.hardfloor = (lflags >> 21) & 1;
@@ -1241,7 +1423,6 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     lev->flags.is_maze_lev = (lflags >> 16) & 1;
     lev->flags.is_cavernous_lev = (lflags >> 15) & 1;
     lev->flags.arboreal = (lflags >> 14) & 1;
-    lev->flags.forgotten = (lflags >> 13) & 1;
 
     restore_coords(mf, lev->doors, DOORMAX);
     rest_rooms(mf, lev);        /* No joke :-) */

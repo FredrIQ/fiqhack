@@ -120,10 +120,7 @@ LADDER:(14,11),down
 # Non diggable walls everywhere
 NON_DIGGABLE:(00,00,27,12)
 #
-NON_PASSWALL:(00,00,06,12)
-NON_PASSWALL:(06,00,27,02)
-NON_PASSWALL:(16,02,27,12)
-NON_PASSWALL:(06,12,16,12)
+NON_PASSWALL:(00,00,27,12)
 # Random traps.
 TRAP:"spiked pit",random
 TRAP:"sleep gas",random

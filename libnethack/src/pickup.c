@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,8 @@ static int in_container(struct obj *);
 static int out_container(struct obj *);
 static long mbag_item_gone(int, struct obj *);
 static int menu_loot(int, struct obj *, boolean);
-static int in_or_out_menu(const char *, struct obj *, boolean, boolean);
+static int in_or_out_menu(const char *, struct obj *, boolean, boolean,
+                          boolean, boolean);
 static int container_at(int, int, boolean);
 static boolean able_to_loot(int, int);
 static boolean mon_beside(int, int);
@@ -293,7 +294,7 @@ menu_pickup:
             check_here(n_picked > 0);
     }
 
-    /* Stop autoexplore if this pile hasn't been explored or auto-pickup (tried 
+    /* Stop autoexplore if this pile hasn't been explored or auto-pickup (tried
        to) pick up anything. */
     if (busy(&youmonst) == occ_autoexplore &&
         (!level->locations[youmonst.mx][youmonst.my].mem_stepped ||
@@ -561,7 +562,7 @@ obj_compare(const void *o1, const void *o2)
  *      USE_INVLET        - Use object's invlet.
  *      INVORDER_SORT     - Use hero's pack order.
  *      SIGNAL_NOMENU     - Return -1 rather than 0 if nothing passes "allow".
- *	SIGNAL_ESCAPE	  - Return -2 rather than 0 if menu is escaped.
+ *      SIGNAL_ESCAPE     - Return -2 rather than 0 if menu is escaped.
  */
 int
 query_objlist(const char *qstr, /* query string */
@@ -834,7 +835,7 @@ carry_count(struct obj *obj,    /* object to pick up */
         carried(container), is_gold = obj->oclass == COIN_CLASS;
     int wt, iw, ow, oow;
     long qq, savequan;
-    long umoney = money_cnt(invent);
+    long umoney = money_cnt(youmonst.minvent);
     unsigned saveowt;
     const char *verb, *prefx1, *prefx2, *suffx, *obj_nambuf, *where;
 
@@ -943,7 +944,7 @@ carry_count(struct obj *obj,    /* object to pick up */
 
     if (!container)
         where = "here";  /* slightly shorter form */
-    if (invent || umoney) {
+    if (youmonst.minvent || umoney) {
         prefx1 = "you cannot ";
         prefx2 = "";
         suffx = " any more";
@@ -1067,10 +1068,7 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
     /* In case of auto-pickup, where we haven't had a chance to look at it yet; 
        affects docall(SCR_SCARE_MONSTER). */
     if (!Blind)
-#ifdef INVISIBLE_OBJECTS
-        if (!obj->oinvis || See_invisible)
-#endif
-            obj->dknown = 1;
+        obj->dknown = 1;
 
     if (obj == uchain) {        /* do not pick up attached chain */
         return 0;
@@ -1321,10 +1319,23 @@ lootcont:
             c = 'y';
             for (i = 0; i < n; i++) {
                 cobj = lootlist[i].obj;
+                /* Ensure that the container is part of our
+                   object memory table. */
                 if (cobj->olocked) {
-                    pline(msgc_failcurse, "Hmmm, it seems to be locked.");
+                    if (!flags.autounlock || turnstate.continue_message)
+                        pline(msgc_failcurse, "Hmmm, it seems to be locked.");
+                    if (flags.autounlock) {
+                        struct obj *key = get_current_unlock_tool();
+                        if (key && key->lastused)
+                            return pick_lock(key, arg, cobj);
+                        else if (key)
+                            pline(msgc_hint,
+                                  "Use an unlocking tool manually so I know "
+                                  "which one you want to use.");
+                    }
                     continue;
                 }
+                update_obj_memory(cobj, NULL);
                 if (cobj->otyp == BAG_OF_TRICKS) {
                     int tmp;
 
@@ -1337,13 +1348,23 @@ lootcont:
                         tmp = (tmp + 1) / 2;
                     losehp(tmp, killer_msg(DIED, "a carnivorous bag"));
                     makeknown(BAG_OF_TRICKS);
+
+                    /* Kill potential memory content */
+                    if (cobj->mem_obj)
+                        free_memobj_chain(cobj->mem_obj->cobj);
                     free(lootlist);
                     return 1;
                 }
 
                 pline(msgc_occstart, "You carefully open %s...",
                       the(xname(cobj)));
-                timepassed |= use_container(cobj, 0);
+                int res = use_container(cobj, 0, !!timepassed,
+                                        (i + 1) < n);
+                if (res == -1)
+                    break;
+
+                timepassed |= res;
+
                 if (u_helpless(hm_all)) {        /* e.g. a chest trap */
                     free(lootlist);
                     return 1;
@@ -1355,7 +1376,8 @@ lootcont:
         struct obj *goldob;
 
         /* Find a money object to mess with */
-        for (goldob = invent; goldob; goldob = goldob->nobj) {
+        for (goldob = youmonst.minvent; goldob;
+             goldob = goldob->nobj) {
             if (goldob->oclass == COIN_CLASS)
                 break;
         }
@@ -1750,6 +1772,7 @@ out_container(struct obj *obj)
     boolean is_gold = (obj->oclass == COIN_CLASS);
     int res, loadlev;
     long count;
+    int oldcap = near_capacity();
 
     if (!current_container) {
         impossible("<out> no current_container?");
@@ -1795,7 +1818,8 @@ out_container(struct obj *obj)
         verbalize(msgc_npcvoice,
                   "You sneaky cad! Get out of here with that pick!");
 
-    otmp = pickinv(obj);
+    otmp = addinv(obj);
+    encumber_msg(oldcap);
     loadlev = near_capacity();
     prinv(loadlev
           ? (loadlev <
@@ -1890,14 +1914,19 @@ observe_quantum_cat(struct obj *box)
 
 #undef Icebox
 
+static const char stashable[] = {ALL_CLASSES, ALLOW_COUNT, 0};
+
 int
-use_container(struct obj *obj, int held)
+use_container(struct obj *obj, int held, boolean alreadyused,
+              boolean more_containers)
 {
     struct obj *curr, *otmp;
     boolean quantum_cat = FALSE, loot_out = FALSE, loot_in = FALSE;
     const char *qbuf, *emptymsg;
     long loss = 0L;
     int cnt = 0, used = 0, menu_on_request;
+    boolean reverse = FALSE;
+    boolean loot_in_single = FALSE;
 
     emptymsg = "";
     if (nohands(youmonst.data)) {
@@ -1947,9 +1976,10 @@ use_container(struct obj *obj, int held)
               loss, currency(loss));
     obj->owt = weight(obj);     /* in case any items were lost */
 
+    update_container_memory(current_container);
     if (!cnt)
         emptymsg = msgprintf("%s is %sempty.", Yname2(obj),
-                             quantum_cat ? "now " : "");
+                             quantum_cat || loss ? "now " : "");
 
     if (cnt || flags.menu_style == MENU_FULL) {
         qbuf = "Do you want to take something out of ";
@@ -1959,41 +1989,69 @@ use_container(struct obj *obj, int held)
 
         if (flags.menu_style == MENU_FULL) {
             int t;
-            char menuprompt[BUFSZ];
+            const char *menuprompt;
             boolean outokay = (cnt != 0);
-            boolean inokay = (invent != 0);
+            boolean inokay = (youmonst.minvent != 0);
 
             if (!outokay && !inokay) {
                 pline(msgc_info, "%s", emptymsg);
                 pline(msgc_info, "You don't have anything to put in.");
                 return used;
             }
-            menuprompt[0] = '\0';
+            menuprompt = "Do what?";
             if (!cnt)
-                snprintf(menuprompt, SIZE(menuprompt), "%s ", emptymsg);
-            strcat(menuprompt, "Do what?");
-            t = in_or_out_menu(menuprompt, current_container, outokay, inokay);
-            if (t <= 0)
+                menuprompt = msgprintf("%s is empty.  %s",
+                                       The(xname(current_container)),
+                                       menuprompt);
+            do {
+                t = in_or_out_menu(menuprompt, current_container, outokay, inokay,
+                                   alreadyused, more_containers);
+                if (t == ':') {
+                    container_contents(current_container, FALSE, FALSE, TRUE);
+                    update_container_memory(current_container);
+                }
+            } while (t == ':');
+
+            if (!t || t == 'n') {
+                update_container_memory(current_container);
                 return 0;
-            loot_out = (t & 0x01) != 0;
-            loot_in = (t & 0x02) != 0;
+            } else if (t == 'q') {
+                update_container_memory(current_container);
+                return -1; /* completely cancelled */
+            }
+
+            if (strchr("ibrs", t)) {
+                loot_in = TRUE;
+                if (t == 's')
+                    loot_in_single = TRUE;
+            }
+
+            if (strchr("obr", t))
+                loot_out = TRUE;
+
+            if (t == 'r')
+                reverse = TRUE;
         } else {        /* MENU_PARTIAL */
             loot_out = (yn_function(qbuf, ynqchars, 'n') == 'y');
         }
 
-        if (loot_out) {
+        if (loot_out && !reverse) {
             add_valid_menu_class(0);    /* reset */
             used |= menu_loot(0, current_container, FALSE) > 0;
+            loot_out = FALSE;
         }
 
     } else {
         pline(msgc_info, "%s", emptymsg);  /* <whatever> is empty. */
     }
 
-    if (!invent) {
+    if (!youmonst.minvent) {
         /* nothing to put in, but some feedback is necessary */
-        pline(msgc_info, "You don't have anything to put in.");
-        return used;
+        pline(msgc_info, "You don't have anything to %s.",
+              loot_in_single ? "stash" : "put in");
+        update_container_memory(current_container);
+        if (!loot_out)
+            return used;
     }
     if (flags.menu_style != MENU_FULL) {
         qbuf = "Do you wish to put something in?";
@@ -2011,18 +2069,35 @@ use_container(struct obj *obj, int held)
             break;
         case 'q':
         default:
+            update_container_memory(current_container);
             return used;
         }
     }
-    /* 
+    /*
      * Gone: being nice about only selecting food if we know we are
      * putting things in an ice chest.
      */
     if (loot_in) {
-        add_valid_menu_class(0);        /* reset */
-        used |= menu_loot(0, current_container, TRUE) > 0;
+        if (!loot_in_single) {
+            add_valid_menu_class(0);        /* reset */
+            used |= menu_loot(0, current_container, TRUE) > 0;
+        } else {
+            struct obj *to_stash = getobj(stashable, "stash", FALSE);
+            if (to_stash && in_container(to_stash))
+                used = 1;
+        }
     }
 
+    if (loot_out) {
+        if (current_container->cobj) {
+            add_valid_menu_class(0);    /* reset */
+            used |= menu_loot(0, current_container, FALSE) > 0;
+        } else
+            pline(msgc_info, "%s %sempty.", Tobjnam(current_container, "are"),
+                  quantum_cat ? "now " : "");
+    }
+
+    update_container_memory(current_container);
     return used;
 }
 
@@ -2048,7 +2123,8 @@ menu_loot(int retry, struct obj *container, boolean put_in)
         mflags =
             put_in ? ALL_TYPES | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED :
             ALL_TYPES | CHOOSE_ALL | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED;
-        n = query_category(buf, put_in ? invent : container->cobj, mflags,
+        n = query_category(buf, put_in ? youmonst.minvent :
+                           container->cobj, mflags,
                            &pick_list, PICK_ANY);
         if (!n)
             return 0;
@@ -2074,7 +2150,8 @@ menu_loot(int retry, struct obj *container, boolean put_in)
         if (put_in)
             mflags |= USE_INVLET;
         buf = msgprintf("%s what?", put_in ? putin : takeout);
-        n = query_objlist(buf, put_in ? invent : container->cobj, mflags,
+        n = query_objlist(buf, put_in ? youmonst.minvent :
+                          container->cobj, mflags,
                           &obj_pick_list, PICK_ANY,
                           all_categories ? allow_all : allow_category);
         if (n) {
@@ -2103,31 +2180,39 @@ menu_loot(int retry, struct obj *container, boolean put_in)
 
 static int
 in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
-               boolean inokay)
+               boolean inokay, boolean alreadyused, boolean more_containers)
 {
-    struct nh_menuitem items[3];
+    struct nh_menulist menu;
     const int *selection;
     const char *buf;
-    int n, nr = 0;
+    int n = 0;
 
-    if (outokay) {
-        buf = msgprintf("Take something out of %s", the(xname(obj)));
-        set_menuitem(&items[nr++], 1, MI_NORMAL, buf, 'o', FALSE);
+    init_menulist(&menu);
+
+#define menuitem(acc, str, ok)                                          \
+    n++;                                                                \
+    if (ok) {                                                           \
+        buf = msgprintf(str, the(xname(obj)));                          \
+        add_menuitem(&menu, acc, buf, acc, FALSE);                      \
     }
 
-    if (inokay) {
-        buf = msgprintf("Put something into %s", the(xname(obj)));
-        set_menuitem(&items[nr++], 2, MI_NORMAL, buf, 'i', FALSE);
-    }
+    menuitem(':', "Look inside %s", TRUE);
+    menuitem('o', "Take something out of %s", outokay);
+    menuitem('i', "Put something into %s", inokay);
+    menuitem('b', "Both; take out, then put in", outokay);
+    menuitem('r', "Both reversed; put in, then take out", inokay);
+    menuitem('s', "Stash one item into %s", inokay);
+    menuitem('n', "Loot next container", more_containers);
+    menuitem('q', alreadyused ? "Done" : "Do nothing", TRUE);
+#undef menuitem
 
-    if (outokay && inokay)
-        set_menuitem(&items[nr++], 3, MI_NORMAL, "Both of the above", 'b',
-                     FALSE);
-
-    n = display_menu(&(struct nh_menulist){.items = items, .icount = nr},
-                     prompt, PICK_ONE, PLHINT_CONTAINER, &selection);
+    n = display_menu(&menu, prompt, PICK_ONE, PLHINT_CONTAINER, &selection);
     if (n > 0)
         n = selection[0];
+    else if (n == -1)
+        n = 'q';
+    else
+        n = 0;
 
     return n;
 }

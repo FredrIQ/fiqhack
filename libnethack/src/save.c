@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,6 +18,7 @@ static void save_utracked(struct memfile *mf, struct you *you);
 static void savelevchn(struct memfile *mf);
 static void savedamage(struct memfile *mf, struct level *lev);
 static void freedamage(struct level *lev);
+static void save_memobj(struct memfile *mf);
 static void saveobjchn(struct memfile *mf, struct obj *);
 static void free_objchn(struct obj *otmp);
 static void savemonchn(struct memfile *mf, struct monst *, struct level *lev);
@@ -105,6 +106,8 @@ savegame(struct memfile *mf)
     save_flags(mf); /* note: cannot use save encoding until after save_flags */
     save_you(mf, &u);
     save_mon(mf, &youmonst, NULL);
+    if (youmonst.minvent)
+        saveobjchn(mf, youmonst.minvent);
 
     /* store dungeon layout */
     save_dungeon(mf);
@@ -127,6 +130,8 @@ savegame(struct memfile *mf)
 
     /* must come last, because it needs to be restored last */
     save_utracked(mf, &u);
+
+    update_whereis(FALSE);
 }
 
 
@@ -140,6 +145,9 @@ save_flags(struct memfile *mf)
     /* this is a fixed distance after version, but we tag it anyway to make
        debugging easier */
     mtag(mf, 0, MTAG_FLAGS);
+
+    if (flags.mon_moving)
+        panic("flags.mon_moving is nonzero during neutral turnstate?");
 
     mwrite64(mf, flags.turntime);
 
@@ -212,6 +220,9 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.servermail);
     mwrite8(mf, flags.autoswap);
     mwrite32(mf, flags.last_arg.key);
+    mwrite8(mf, flags.double_troubled);
+    mwrite8(mf, flags.autounlock);
+    mwrite8(mf, flags.msg_hints);
     mwrite8(mf, flags.last_arg.ability);
     if (flags.mon_moving)
         panic("flags.mon_moving is nonzero during neutral turnstate?");
@@ -219,7 +230,7 @@ save_flags(struct memfile *mf)
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 98; i++)
+    for (i = 0; i < 95; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.setseed, sizeof (flags.setseed));
@@ -315,7 +326,7 @@ savegamestate(struct memfile *mf)
     save_light_sources(mf, level, RANGE_GLOBAL);
 
     inven_inuse(FALSE);
-    saveobjchn(mf, invent);
+
     savemonchn(mf, migrating_mons, NULL);
     save_mvitals(mf);
 
@@ -333,8 +344,8 @@ savegamestate(struct memfile *mf)
     mwrite(mf, flags.rngstate, sizeof flags.rngstate);
 
     save_track(mf);
-    save_rndmonst_state(mf);
     save_history(mf);
+    save_memobj(mf);
 }
 
 
@@ -506,23 +517,24 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->bashmsg);
     mwrite8(mf, y->moveamt);
     mwrite16(mf, y->spellquiver);
+    mwrite8(mf, LAST_PROP);
 
     /* Padding to allow character information to be added without breaking save
        compatibility: add new options just before the padding, then remove the
        same amount of padding */
-    /*if (y->delayed_killers.zombie) {
+    if (y->delayed_killers.zombie) {
         int len = strlen(y->delayed_killers.zombie);
         mwrite32(mf, len);
         mwrite(mf, y->delayed_killers.zombie, len);
     } else
-    mwrite32(mf, 0);*/
+        mwrite32(mf, 0);
 
-    for (i = 0; i < 509; i++)    /* savemap: ignore */
-        mwrite8(mf, 0);          /* savemap: 4088 */
+    for (i = 0; i < 504; i++)    /* savemap: ignore */
+        mwrite8(mf, 0);          /* savemap: 4032 */
 
-    mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 72 */
-    mwrite(mf, y->ever_intrinsic, (sizeof y->ever_intrinsic)); /* savemap: 72 */
-    mwrite(mf, y->ever_temporary, (sizeof y->ever_temporary)); /* savemap: 72 */
+    mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 80 */
+    mwrite(mf, y->ever_intrinsic, (sizeof y->ever_intrinsic)); /* savemap: 80 */
+    mwrite(mf, y->ever_temporary, (sizeof y->ever_temporary)); /* savemap: 80 */
     mwrite(mf, y->unused_uwhybusy, (sizeof y->unused_uwhybusy)); /* savemap: 2048 */
     mwrite(mf, y->urooms, sizeof (y->urooms));                 /* savemap: 40 */
     mwrite(mf, y->urooms0, sizeof (y->urooms0));               /* savemap: 40 */
@@ -546,9 +558,9 @@ save_you(struct memfile *mf, struct you *y)
         mwrite32(mf, y->uconduct_time[i]);
     }
     for (i = 0; i < P_NUM_SKILLS; i++) {
-        mwrite8(mf, y->weapon_skills[i].skill);
-        mwrite8(mf, y->weapon_skills[i].max_skill);
-        mwrite16(mf, y->weapon_skills[i].advance);
+        mwrite8(mf, y->unused_weapon_skills[i].skill);
+        mwrite8(mf, y->unused_weapon_skills[i].max_skill);
+        mwrite16(mf, y->unused_weapon_skills[i].advance);
     }
 
     save_quest_status(mf, &y->quest_status);
@@ -688,8 +700,7 @@ savelev(struct memfile *mf, xchar levnum)
         (lev->flags.hardfloor << 21) | (lev->flags.nommap << 20) |
         (lev->flags.hero_memory << 19) | (lev->flags.shortsighted << 18) |
         (lev->flags.graveyard << 17) | (lev->flags.is_maze_lev << 16) |
-        (lev->flags.is_cavernous_lev << 15) | (lev->flags.arboreal << 14) |
-        (lev->flags.forgotten << 13);
+        (lev->flags.is_cavernous_lev << 15) | (lev->flags.arboreal << 14);
     mwrite32(mf, lflags);
     save_coords(mf, lev->doors, DOORMAX);
 
@@ -820,6 +831,17 @@ free_objchn(struct obj *otmp)
     }
 }
 
+static void
+save_memobj(struct memfile *mf)
+{
+    int i;
+    for (i = 0; i <= maxledgerno(); i++) {
+        if (levels[i])
+            saveobjchn(mf, levels[i]->memobjlist);
+    }
+
+    saveobjchn(mf, youmonst.meminvent);
+}
 
 static void
 saveobjchn(struct memfile *mf, struct obj *otmp)
@@ -977,6 +999,7 @@ freedynamicdata(void)
 
     abort_turnstate();
 
+    free_memobj();
     unload_qtlist();
     tmpsym_freeall();   /* temporary display effects */
     clear_delayed_killers();
@@ -1006,8 +1029,9 @@ freedynamicdata(void)
     }
 
     /* game-state data */
-    free_objchn(invent);
     free_monchn(migrating_mons);
+    free_objchn(youmonst.minvent);
+    mx_free(&youmonst);
     /* this should normally be NULL between turns, but might not be due to
        the game ending where pets can follow (e.g. ascension or dungeon escape)
        or due to panicing. */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,7 @@ static const char drop_types[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
 int
 dodrop(const struct nh_cmd_arg *arg)
 {
-    int result, i = (invent) ? 0 : (SIZE(drop_types) - 1);
+    int result, i = (youmonst.minvent) ? 0 : (SIZE(drop_types) - 1);
     struct obj *obj;
 
     if (*u.ushops)
@@ -61,9 +61,9 @@ boulder_hits_pool(struct obj * otmp, int rx, int ry, boolean pushing)
 
             if (ltyp == DRAWBRIDGE_UP) {
                 /* clear lava */
-                level->locations[rx][ry].drawbridgemask &= ~DB_UNDER;
+                level->locations[rx][ry].flags &= ~DB_UNDER;
 
-                level->locations[rx][ry].drawbridgemask |= DB_FLOOR;
+                level->locations[rx][ry].flags |= DB_FLOOR;
             } else
                 level->locations[rx][ry].typ = ROOM;
 
@@ -106,10 +106,11 @@ boulder_hits_pool(struct obj * otmp, int rx, int ry, boolean pushing)
                 pline(msgc_consequence, "You find yourself on dry land again!");
             } else if (lava && distu(rx, ry) <= 2) {
                 pline(msgc_nonmonbad, "You are hit by molten lava%c",
-                      Fire_resistance ? '.' : '!');
+                      resists_fire(&youmonst) ? '.' : '!');
                 burn_away_slime(&youmonst);
-                losehp(dice((Fire_resistance ? 1 : 3), 6),
-                       killer_msg(DIED, "molten lava"));
+                if (!immune_to_fire(&youmonst))
+                    losehp(dice((resists_fire(&youmonst) ? 1 : 3), 6),
+                           killer_msg(DIED, "molten lava"));
             } else if (!fills_up && (pushing ? !Blind : cansee(rx, ry)))
                 pline(msgc_noconsequence, "It sinks without a trace!");
         }
@@ -194,14 +195,14 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
         return fire_damage(obj, FALSE, TRUE, x, y);
     } else if (is_pool(lev, x, y)) {
         /* Reasonably bulky objects (arbitrary) splash when dropped. If you're
-           floating above the water even small things make noise. Stuff dropped 
+           floating above the water even small things make noise. Stuff dropped
            near fountains always misses. */
-        if ((Blind || (Levitation || Flying)) && canhear() &&
+        if ((Blind || aboveliquid(&youmonst)) && canhear() &&
             ((x == youmonst.mx) && (y == youmonst.my))) {
             if (!Underwater) {
                 if (weight(obj) > 9) {
                     pline(msgc_consequence, "Splash!");
-                } else if (Levitation || Flying) {
+                } else if (aboveliquid(&youmonst)) {
                     pline(msgc_consequence, "Plop!");
                 }
             }
@@ -228,21 +229,24 @@ void
 doaltarobj(struct monst *mon, struct obj *obj)
 {       /* obj is an object dropped on an altar */
     boolean you = (mon == &youmonst);
-    boolean mvis = (!you && !blind(mon)); /* does a monster that isn't you see it? */
-    boolean vis = (!blind(&youmonst) && (you || mon == u.usteed)); /* do you? */
+    /* does a monster that isn't you see it? */
+    boolean mvis = (!you && !blind(mon));
+    /* do you? */
+    boolean vis = (!blind(&youmonst) && (you || mon == u.usteed));
     /* not canseemon() -- those are too faint */
 
-    /* Only if you drop it, or if you steed does (which is rare and controllable), will
-       you see flashes (or lack of), and break conduct. This is avoidable by your own
-       actions, and thus shouldn't cause frustration. */
+    /* Only if you drop it, or if you steed does (which is rare and
+       controllable), will you see flashes (or lack of), and break conduct.
+       This is avoidable by your own actions, and thus shouldn't cause
+       frustration. */
     if (vis)
         break_conduct(conduct_gnostic);
 
     if ((obj->blessed || obj->cursed) && obj->oclass != COIN_CLASS) {
         if (vis)
             pline_implied(msgc_hint, "There is %s flash as %s %s the altar.",
-                          an(hcolor(obj->blessed ? "amber" : "black")), doname(obj),
-                          otense(obj, "hit"));
+                          an(hcolor(obj->blessed ? "amber" : "black")),
+                          doname(obj), otense(obj, "hit"));
         if (vis && !hallucinating(&youmonst))
             obj->bknown = 1;
         if (!mvis && !hallucinating(mon))
@@ -258,23 +262,23 @@ doaltarobj(struct monst *mon, struct obj *obj)
     }
     /* Also BCU one level deep inside containers */
     if (Has_contents(obj)) {
-        int blesscount = 0;
-        int cursecount = 0;
+        int blessed = 0;
+        int cursed = 0;
         int bccount = 0;
         struct obj *otmp;
 
         for (otmp = obj->cobj; otmp; otmp = otmp->nobj) {
-            if (otmp->blessed || otmp->cursed) {
+            if (otmp->blessed || otmp->cursed)
                 bccount++;
-                if (otmp->blessed)
-                    blesscount++;
-                else if (otmp->cursed)
-                    cursecount++;
-            }
+            if (otmp->blessed)
+                blessed++;
+            if (otmp->cursed)
+                cursed++;
+            /* yes, also for uncursed, it's hard to make things out */
             if (hallucinating(mon))
                 continue;
-
-            /* Not vis, if you are on a mount, you can't "look into the container" */
+            /* Not vis, if you are on a mount, you can't "look into the
+               container" */
             if (you)
                 otmp->bknown = 1;
             if (mvis)
@@ -284,14 +288,14 @@ doaltarobj(struct monst *mon, struct obj *obj)
             return; /* no messages for monsters about this */
 
         if (bccount)
-            pline_implied(msgc_hint,
+            pline_implied(msgc_info,
                           "Looking inside %s, you see %s flash%s.",
-                          the(xname(obj)),
-                          bccount == 1 ? an(hcolor(blesscount ? "amber" : "black")) :
-                          !cursecount ? hcolor("amber") :
-                          !blesscount ? hcolor("black") :
-                          hallucinating(mon) ? "pretty rainbow-colored" : "colored",
-                          bccount == 1 ? "" : "es");
+                          the(xname(obj)), bccount == 1 ?
+                          an(hcolor(blessed ? "amber" : "black")) :
+                          !cursed ? hcolor("amber") :
+                          !blessed ? hcolor("black") :
+                          hallucinating(&youmonst) ? "pretty rainbow-colored" :
+                          "colored", bccount == 1 ? "" : "es");
     }
 }
 
@@ -319,18 +323,18 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
     giveback:
         /* this is safe, the ring was unwielded by the caller */
         dropx(obj);
-        makeknown(obj->otyp);
+        tell_discovery(obj);
         return;
     case RIN_LEVITATION:
         pline(msgc_info, "The sink quivers upward for a moment.");
         break;
-    case RIN_POISON_RESISTANCE:
+    case RIN_POISON_IMMUNITY:
         pline(msgc_info, "You smell rotten %s.", makeplural(fruitname(FALSE)));
         break;
     case RIN_AGGRAVATE_MONSTER:
         pline(msgc_info, "Several flies buzz angrily around the sink.");
         break;
-    case RIN_SHOCK_RESISTANCE:
+    case RIN_SHOCK_IMMUNITY:
         pline(msgc_info, "Static electricity surrounds the sink.");
         break;
     case RIN_CONFLICT:
@@ -399,11 +403,11 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
             pline(msgc_info,
                   "The sink seems to blend into the floor for a moment.");
             break;
-        case RIN_FIRE_RESISTANCE:
+        case RIN_FIRE_IMMUNITY:
             pline(msgc_info,
                   "The hot water faucet flashes brightly for a moment.");
             break;
-        case RIN_COLD_RESISTANCE:
+        case RIN_COLD_IMMUNITY:
             pline(msgc_info,
                   "The cold water faucet flashes brightly for a moment.");
             break;
@@ -443,7 +447,7 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
     }
 
     if (ideed)
-        makeknown(obj->otyp);
+        tell_discovery(obj);
 
     /* A custom RNG would be nice here, but I can't see a way to make it work
        without having a different RNG for each class of ring, which would be
@@ -614,7 +618,7 @@ dropy(struct obj *obj)
         else
             sellobj(obj, youmonst.mx, youmonst.my);
         stackobj(obj);
-        if (Blind && Levitation)
+        if (Blind && levitates(&youmonst))
             map_object(obj, 0, FALSE);
         newsym(youmonst.mx, youmonst.my);     /* remap location under self */
     }
@@ -679,7 +683,7 @@ menu_drop(int retry)
         all_categories = (retry == -2);
     } else if (flags.menu_style == MENU_FULL) {
         all_categories = FALSE;
-        n = query_category("Drop what type of items?", invent,
+        n = query_category("Drop what type of items?", youmonst.minvent,
                            UNPAID_TYPES | ALL_TYPES | CHOOSE_ALL | UNIDENTIFIED
                            | BUC_BLESSED | BUC_CURSED | BUC_UNCURSED |
                            BUC_UNKNOWN, &pick_list, PICK_ANY);
@@ -696,14 +700,15 @@ menu_drop(int retry)
     }
 
     if (drop_everything) {
-        for (otmp = invent; otmp; otmp = otmp2) {
+        for (otmp = youmonst.minvent; otmp; otmp = otmp2) {
             otmp2 = otmp->nobj;
             otmp->was_dropped = 1;
             n_dropped += drop(otmp);
         }
     } else {
         /* should coordinate with perm invent, maybe not show worn items */
-        n = query_objlist("What would you like to drop?", invent,
+        n = query_objlist("What would you like to drop?",
+                          youmonst.minvent,
                           USE_INVLET | INVORDER_SORT, &obj_pick_list, PICK_ANY,
                           all_categories ? allow_all : allow_category);
         if (n > 0) {
@@ -730,12 +735,82 @@ drop_done:
     return n_dropped;
 }
 
+static boolean
+find_remembered_stairs(boolean upstairs, coord *cc)
+{
+    xchar x, y;
+    int stair = S_dnstair;
+    int ladder = S_dnladder;
+    int branch = S_dnsstair;
+    if (upstairs) {
+        stair = S_upstair;
+        ladder = S_upladder;
+        branch = S_upsstair;
+    }
+
+    /* Prefer already marked travel positions. */
+    x = flags.travelcc.x;
+    y = flags.travelcc.y;
+    if (isok(x, y) &&
+        (level->locations[x][y].mem_bg == stair ||
+         level->locations[x][y].mem_bg == ladder ||
+         level->locations[x][y].mem_bg == branch)) {
+        cc->x = x;
+        cc->y = y;
+        return TRUE;
+    }
+
+    /* We can't reference the stairs directly because mimics can mimic fake
+       ones. */
+    for (x = 0; x < COLNO; x++) {
+        for (y = 0; y < ROWNO; y++) {
+            if (level->locations[x][y].mem_bg == stair ||
+                level->locations[x][y].mem_bg == ladder ||
+                level->locations[x][y].mem_bg == branch) {
+                cc->x = x;
+                cc->y = y;
+                return TRUE;
+            }
+        }
+    }
+
+    /* failed to find stairs/ladder */
+    return FALSE;
+}
+
+int
+dotravel(const struct nh_cmd_arg *arg)
+{
+    /* Keyboard travel command */
+    coord cc;
+
+    cc.x = flags.travelcc.x;
+    cc.y = flags.travelcc.y;
+    if (cc.x == -1 && cc.y == -1) {
+        /* No cached destination, start attempt from current position */
+        cc.x = youmonst.mx;
+        cc.y = youmonst.my;
+    }
+    if (!(arg->argtype & CMD_ARG_POS))
+        pline(msgc_uiprompt, "Where do you want to travel to?");
+    if (getargpos(arg, &cc, FALSE, "the desired destination") ==
+        NHCR_CLIENT_CANCEL) {
+        pline(msgc_cancelled, "Never mind.");
+        return 0;
+    }
+    flags.travelcc.x = u.tx = cc.x;
+    flags.travelcc.y = u.ty = cc.y;
+
+    action_incomplete("travelling", occ_travel);
+    return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
+                  exploration_interaction_status(), occ_travel);
+}
 
 /* on a ladder, used in goto_level */
 static boolean at_ladder = FALSE;
 
 int
-dodown(boolean autodig_ok)
+dodown(const struct nh_cmd_arg *arg, boolean autodig_ok)
 {
     struct trap *trap = 0;
     boolean stairs_down =
@@ -751,12 +826,12 @@ dodown(boolean autodig_ok)
     } else if (u.usteed && u.usteed->meating) {
         pline(msgc_cancelled, "%s is still eating.", Monnam(u.usteed));
         return 0;
-    } else if (Levitation) {
+    } else if (levitates(&youmonst)) {
         unsigned controlled_lev = levitates_at_will(&youmonst, FALSE, FALSE);
         if (controlled_lev) {
             /* end controlled levitation */
             struct obj *obj;
-            for (obj = invent; obj; obj = obj->nobj) {
+            for (obj = youmonst.minvent; obj; obj = obj->nobj) {
                 if (obj->oartifact && artifact_has_invprop(obj, LEVITATION))
                     uninvoke_artifact(obj);
             }
@@ -776,7 +851,8 @@ dodown(boolean autodig_ok)
         }
         return 0;       /* didn't move */
     }
-    if (!stairs_down && !ladder_down) {
+    if (!turnstate.continue_message ||
+        (!stairs_down && !ladder_down)) {
         boolean can_fall;
 
         trap = t_at(level, youmonst.mx, youmonst.my);
@@ -790,8 +866,17 @@ dodown(boolean autodig_ok)
                 busy(&youmonst) == occ_none && uwep && is_pick(uwep)) {
                 struct nh_cmd_arg arg;
                 arg_from_delta(0, 0, 1, &arg);
+                youmonst.interrupted = FALSE;
                 return use_pick_axe(uwep, &arg);
             } else {
+                coord cc;
+                if (find_remembered_stairs(FALSE, &cc)) {
+                    flags.travelcc.x = cc.x;
+                    flags.travelcc.y = cc.y;
+                    youmonst.interrupted = FALSE;
+                    return dotravel(arg);
+                }
+
                 pline(msgc_mispaste, "You can't go down here.");
                 return 0;
             }
@@ -803,7 +888,8 @@ dodown(boolean autodig_ok)
               is_animal(u.ustuck->data) ? "swallowed" : "engulfed");
         return 1;
     }
-    if (on_level(&valley_level, &u.uz) && !u.uevent.gehennom_entered) {
+    if ((!trap || trap->ttyp == TRAPDOOR || trap->ttyp == HOLE) &&
+        on_level(&valley_level, &u.uz) && !u.uevent.gehennom_entered) {
         pline_implied(msgc_branchchange,
                       "You are standing at the gate to Gehennom.");
         pline_implied(msgc_branchchange,
@@ -834,6 +920,7 @@ dodown(boolean autodig_ok)
                     busy(&youmonst) == occ_none && uwep && is_pick(uwep)) {
                     struct nh_cmd_arg arg;
                     arg_from_delta(0, 0, 1, &arg);
+                    youmonst.interrupted = FALSE;
                     return use_pick_axe(uwep, &arg);
                 } else {
                     /* TODO: could do with a better YAFM here */
@@ -864,13 +951,26 @@ dodown(boolean autodig_ok)
     return 1;
 }
 
+/* Note: arg can be NULL */
 int
-doup(void)
+doup(const struct nh_cmd_arg *arg)
 {
-    if ((youmonst.mx != level->upstair.sx || youmonst.my != level->upstair.sy)
-        && (youmonst.mx != level->upladder.sx || youmonst.my != level->upladder.sy)
-        && (youmonst.mx != level->sstairs.sx || youmonst.my != level->sstairs.sy ||
-            !level->sstairs.up)) {
+    if (!turnstate.continue_message ||
+        ((youmonst.mx != level->upstair.sx ||
+          youmonst.my != level->upstair.sy) &&
+         (youmonst.mx != level->upladder.sx ||
+          youmonst.my != level->upladder.sy) &&
+         (youmonst.mx != level->sstairs.sx ||
+          youmonst.my != level->sstairs.sy ||
+          !level->sstairs.up))) {
+        coord cc;
+        if (arg && find_remembered_stairs(TRUE, &cc)) {
+            flags.travelcc.x = cc.x;
+            flags.travelcc.y = cc.y;
+            youmonst.interrupted = FALSE;
+            return dotravel(arg);
+        }
+
         pline(msgc_mispaste, "You can't go up here.");
         return 0;
     }
@@ -951,7 +1051,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     xchar new_ledger;
     boolean up = (depth(newlevel) < depth(&u.uz)), newdungeon =
         (u.uz.dnum != newlevel->dnum), was_in_W_tower =
-        In_W_tower(youmonst.mx, youmonst.my, &u.uz), familiar = FALSE;
+        In_W_tower(youmonst.mx, youmonst.my, &u.uz);
     boolean new = FALSE;        /* made a new level? */
     struct monst *mtmp, *mtmp2;
     struct obj *otmp;
@@ -1022,8 +1122,6 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         if (dunlev_reached(&u.uz) > dunlev(&u.uz) || !dunlev_reached(&u.uz))
             dunlev_reached(&u.uz) = dunlev(&u.uz);
     }
-
-    reset_rndmonst(NON_PM);     /* u.uz change affects monster generation */
 
     origlev = level;
     level = NULL;
@@ -1096,7 +1194,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
                     u_on_dnstairs();
             }
             /* Remove bug which crashes with levitation/punishment KAA */
-            if (Punished && !Levitation) {
+            if (Punished && !levitates(&youmonst)) {
                 pline(msgc_actionboring,
                       "With great effort you climb the %s.",
                       at_ladder ? "ladder" : "stairs");
@@ -1172,15 +1270,13 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         deliver_object(otmp2, u.uz.dnum, u.uz.dlevel, MIGR_NEAR_PLAYER);
     }
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         set_obj_level(level, otmp);
     losedogs();
     kill_genocided_monsters();  /* for those wiped out while in limbo */
-    /* 
-     * Expire all timers that have gone off while away.  Must be
-     * after migrating monsters and objects are delivered
-     * (losedogs and obj_delivery).
-     */
+    /* Expire all timers that have gone off while away.  Must be
+       after migrating monsters and objects are delivered
+       (losedogs and obj_delivery). */
     run_timers();
 
     initrack();
@@ -1218,11 +1314,6 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     if (Is_waterlevel(&u.uz))
         movebubbles();
 
-    if (level->flags.forgotten) {
-        familiar = TRUE;
-        level->flags.forgotten = FALSE;
-    }
-
     notify_levelchange(NULL);   /* inform window code of the level change */
 
     /* Reset the screen. */
@@ -1231,9 +1322,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     flush_screen_enable();
     flush_screen();
 
-    /* 
-     *  Move all plines beyond the screen reset.
-     */
+    /* Move all plines beyond the screen reset. */
 
     /* give room entrance message, if any */
     check_special_room(FALSE);
@@ -1248,35 +1337,6 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
             You_hear(msgc_levelsound, "groans and moans everywhere.");
         } else
             pline(msgc_branchchange, "It is hot here.  You smell smoke...");
-    }
-
-    /* TODO: This is probably all dead code. */
-    if (familiar) {
-        static const char *const fam_msgs[4] = {
-            "You have a sense of deja vu.",
-            "You feel like you've been here before.",
-            "This place %s familiar...",
-            0   /* no message */
-        };
-        static const char *const halu_fam_msgs[4] = {
-            "Whoa!  Everything %s different.",
-            "You are surrounded by twisty little passages, all alike.",
-            "Gee, this %s like uncle Conan's place...",
-            0   /* no message */
-        };
-        
-        const char *mesg;
-        int which = rn2(4);
-
-        if (Hallucination)
-            mesg = halu_fam_msgs[which];
-        else
-            mesg = fam_msgs[which];
-        if (mesg && strchr(mesg, '%')) {
-            mesg = (msgprintf)(mesg, !Blind ? "looks" : "seems");
-        }
-        if (mesg)
-            pline(msgc_levelwarning, "%s", mesg);
     }
 
     if (new && Is_rogue_level(&u.uz))
@@ -1489,10 +1549,6 @@ revive_corpse(struct obj *corpse)
     struct obj *container = NULL;
     int container_where = 0;
 
-#ifdef INVISIBLE_OBJECTS
-    boolean vis = !corpse->oinvis || See_invisible;
-#endif
-
     where = corpse->where;
     is_uwep = corpse == uwep;
     cname = corpse_xname(corpse, TRUE); 
@@ -1524,11 +1580,7 @@ revive_corpse(struct obj *corpse)
             break;
 
         case OBJ_FLOOR:
-            if (cansee(mtmp->mx, mtmp->my)
-#ifdef INVISIBLE_OBJECTS
-                && vis
-#endif
-                )
+            if (cansee(mtmp->mx, mtmp->my))
                 pline(msgc_levelwarning, "%s rises from the dead!",
                       chewed ? Adjmonnam(mtmp, "bite-covered") : Monnam(mtmp));
             break;

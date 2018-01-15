@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2015-04-02
+! Last modified by Fredrik Ljungdahl, 2017-11-02
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This is the sequence in which tiles normally appear in Slash'EM 7E7F3
@@ -495,7 +495,7 @@ water demon
 horned devil
 spined devil
 bearded devil
-succubus
+sub female incubus
 incubus
 erinys
 barbed devil
@@ -561,7 +561,7 @@ Vecna
 archeologist
 barbarian
 caveman
-cavewoman
+sub female caveman
 flame mage
 healer
 ice mage
@@ -569,7 +569,7 @@ knight
 monk
 necromancer
 priest
-priestess
+sub female priest
 ranger
 rogue
 samurai

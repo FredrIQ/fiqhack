@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -21,6 +21,9 @@ static void mvault_tele(struct monst *);
  *
  * This function might be called during level generation, so should return
  * deterministic results.
+ *
+ * This function, via distmap, is the most commonly called function in the
+ * entire game, so logic order matters.
  */
 boolean
 goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
@@ -40,8 +43,27 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
         return FALSE;
 
     if (mtmp) {
+        mdat = mtmp->data;
+        if (IS_STWALL(lev->locations[x][y].typ)) {
+            /* phasing(mtmp) */
+            if (pm_phasing(mdat) && may_passwall(lev, x, y))
+                return TRUE;
+            if (gpflags & MM_CHEWROCK && may_dig(lev, x, y))
+                return TRUE;
+        }
+    }
+
+    if (!ACCESSIBLE(lev->locations[x][y].typ)) {
+        if (!(is_pool(lev, x, y) && ignorewater))
+            return FALSE;
+    }
+
+    if (mtmp) {
         struct monst *mtmp2 = (gpflags & MM_IGNOREMONST) ?
             NULL : m_at(lev, x, y);
+        if (mtmp2 && mtmp2->mpeaceful &&
+            (gpflags & MM_IGNOREPEACE))
+            mtmp2 = NULL;
 
         /* Be careful with long worms.  A monster may be placed back in its own
            location.  Normally, if m_at() returns the same monster that we're
@@ -55,15 +77,15 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
         if (mtmp2 && (mtmp2 != mtmp || mtmp->wormno))
             return FALSE;
 
-        mdat = mtmp->data;
         /* TODO: this function depends on mtmp not necessarily being fully valid.
            thus, we can't check general properties for now... */
         if (is_pool(lev, x, y) && !ignorewater) {
             if (mtmp == &youmonst)
-                return !!(Levitation || Flying || Wwalking || Swimming ||
-                          Breathless);
+                return !!(aboveliquid(&youmonst) || Wwalking ||
+                          Swimming || Breathless);
             else
-                return (is_flyer(mdat) || pm_swims(mdat) || is_clinger(mdat));
+                return (!Is_waterlevel(&(lev->z)) &&
+                        (is_flyer(mdat) || pm_swims(mdat) || is_clinger(mdat)));
             /* return (levitates(mtmp) || swims(mtmp) || flying(mtmp) ||
                waterwalks(mtmp) || unbreathing(mtmp)); */
         }
@@ -71,30 +93,20 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
             return FALSE;
         else if (is_lava(lev, x, y)) {
             if (mtmp == &youmonst)
-                return !!Levitation;
+                return !!aboveliquid(&youmonst);
             else
-                return is_flyer(mdat) || likes_lava(mdat);
+                return (!Is_waterlevel(&(lev->z)) &&
+                        (is_flyer(mdat) || likes_lava(mdat)));
             /* return (!!levitates(mtmp) || !!flying(mtmp) ||
                likes_lava(mtmp->data)); */
         }
-        if (IS_STWALL(lev->locations[x][y].typ)) {
-            /* phasing(mtmp) */
-            if (pm_phasing(mdat) && may_passwall(lev, x, y))
-                return TRUE;
-            if (gpflags & MM_CHEWROCK && may_dig(lev, x, y))
-                return TRUE;
-        }
-    }
-    if (!ACCESSIBLE(lev->locations[x][y].typ)) {
-        if (!(is_pool(lev, x, y) && ignorewater))
-            return FALSE;
     }
 
     if (!(gpflags & MM_IGNOREDOORS) && closed_door(lev, x, y) &&
         (!mdat || !amorphous(mdat)))
         return FALSE;
-    if (!(gpflags & MM_IGNOREDOORS) && sobj_at(BOULDER, lev, x, y) &&
-        (!mdat || !throws_rocks(mdat)))
+    if (!(gpflags & MM_IGNOREDOORS) && (!mdat || !throws_rocks(mdat)) &&
+        sobj_at(BOULDER, lev, x, y))
         return FALSE;
     return TRUE;
 }
@@ -423,7 +435,8 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
     }
 
     /* when it happens at all, happens too often to be worth a custom RNG */
-    if ((Uhave_amulet || On_W_tower_level(&u.uz)) && !rn2(3)) {
+    if (!wizard_tele &&
+        (Uhave_amulet || On_W_tower_level(&u.uz)) && !rn2(3)) {
         pline(msgc_failrandom, "You feel disoriented for a moment.");
         return 1;
     }
@@ -437,6 +450,10 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
                   u.usteed ? msgcat(" and ", mon_nam(u.usteed)) : "");
             cc.x = youmonst.mx;
             cc.y = youmonst.my;
+
+            if (flags.travelcc.x != COLNO && flags.travelcc.y != ROWNO)
+                cc = flags.travelcc;
+
             if (getpos(&cc, FALSE, "the teleport target", FALSE)
                 == NHCR_CLIENT_CANCEL)
                 return 0; /* abort */
@@ -662,7 +679,7 @@ level_tele_impl(struct monst *mon, boolean wizard_tele)
                           is_silent(youmonst.data) ? "writhe" : "scream");
             win_pause_output(P_MESSAGE);
             pline(msgc_fatal_predone, "You cease to exist.");
-            if (invent)
+            if (youmonst.minvent)
                 pline(msgc_consequence,
                       "Your possessions land on the %s with a thud.",
                       surface(youmonst.mx, youmonst.my));
@@ -670,7 +687,7 @@ level_tele_impl(struct monst *mon, boolean wizard_tele)
             pline_implied(msgc_statusheal,
                           "An energized cloud of dust begins to coalesce.");
             pline_implied(msgc_statusheal, "Your body rematerializes%s.",
-                          invent ?
+                          youmonst.minvent ?
                           ", and you gather up all your possessions" : "");
             return;
         }
@@ -787,7 +804,7 @@ level_tele_impl(struct monst *mon, boolean wizard_tele)
 
         if (killer) {
             ;   /* arrival in heaven is pending */
-        } else if (Levitation) {
+        } else if (levitates(&youmonst)) {
             escape_by_flying = "float gently down to earth";
         } else if (Flying) {
             escape_by_flying = "fly down to the ground";
@@ -906,7 +923,7 @@ void
 level_tele_trap(struct trap *trap)
 {
     pline_implied(msgc_nonmonbad, "You %s onto a level teleport trap!",
-                  Levitation ? (const char *)"float" :
+                  levitates(&youmonst) ? (const char *)"float" :
                   locomotion(youmonst.data, "step"));
     if (Antimagic) {
         shieldeff(youmonst.mx, youmonst.my);
@@ -920,8 +937,6 @@ level_tele_trap(struct trap *trap)
               "You are momentarily blinded by a flash of light.");
     else
         pline(msgc_nonmonbad, "You are momentarily disoriented.");
-    deltrap(level, trap);
-    newsym(youmonst.mx, youmonst.my); /* get rid of trap symbol */
     level_tele();
 }
 
@@ -986,6 +1001,9 @@ rloc_pos_ok(int x, int y,       /* coordinates of candidate location */
 void
 rloc_to(struct monst *mtmp, int x, int y)
 {
+    if (u.ustuck == mtmp && Engulfed && level->flags.noteleport)
+        unstuck(mtmp);
+
     int oldx = mtmp->mx, oldy = mtmp->my;
     boolean resident_shk = mx_eshk(mtmp) && inhishop(mtmp);
     struct level *lev = mtmp->dlevel;
@@ -1009,7 +1027,7 @@ rloc_to(struct monst *mtmp, int x, int y)
     if (mtmp->wormno)   /* now put down tail */
         place_worm_tail_randomly(mtmp, x, y, rng_main);
 
-    if (u.ustuck == mtmp) { /* implying mtmp is on the current level */
+    if (u.ustuck == mtmp) { /* implies mtmp->dlevel == level */
         if (Engulfed) {
             youmonst.mx = x;
             youmonst.my = y;
@@ -1165,6 +1183,11 @@ mon_tele(struct monst *mon, boolean free_will)
     /* uncontrolled teleport */
     if (!free_will)
         return rloc(mon, TRUE);
+
+    /* monsters with controlled teleport should not teleport if they can
+       avoid it */
+    if (free_will && idle(mon))
+        return FALSE;
 
     /* at this point, we will teleport at least once, but if it for some reason
        fails, bail out early */

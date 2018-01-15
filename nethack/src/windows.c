@@ -1,8 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "mail.h"
 #include "nhcurses.h"
 #include <signal.h>
 #include <locale.h>
@@ -405,7 +406,9 @@ init_curses_ui(const char *dataprefix)
     }
 
     tileprefix = strdup(dataprefix);
-    set_font_file("font14.png");
+    char font_file[BUFSZ];
+    snprintf(font_file, BUFSZ, "font%s.png", settings.fontfile);
+    set_font_file(font_file);
     setup_tiles();
 
     setup_palette();
@@ -626,6 +629,43 @@ draw_frame(void)
 
         y += 1 + ui_flags.mapheight;
         nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
+        if (ui_flags.current_followmode == FM_WATCH) {
+            wattron(basewin, A_BOLD | COLOR_PAIR(4));
+            mvwprintw(basewin, y, 2, "WATCH MODE");
+
+            const char *delim = " (";
+            const char *player = getenv("NH4SERVERUSER");
+            if (!player || !*player)
+                player = getenv("USER");
+            if (player && *player) {
+                wprintw(basewin, "%swatching %s", delim, player);
+                delim = ", ";
+            }
+
+            char keybind[BUFSZ];
+            if (mail_filename(NULL) &&
+                (get_command_key("mail", keybind, FALSE) ||
+                 get_command_key("moveonly", keybind, FALSE))) {
+                wprintw(basewin, "%s'%s' to mail", delim, keybind);
+                delim = ", ";
+            }
+
+            if (get_command_key("save", keybind, FALSE) ||
+                get_command_key("drink", keybind, FALSE)) {
+                wprintw(basewin, "%s'%s' to stop watching", delim, keybind);
+                delim = ", ";
+            }
+
+            /* end parenthesis */
+            if (!strcmp(delim, ", "))
+                wprintw(basewin, ")");
+            wattroff(basewin, A_BOLD | COLOR_PAIR(4));
+        } else if (ui_flags.current_followmode == FM_REPLAY) {
+            wattron(basewin, A_BOLD | COLOR_PAIR(4));
+            mvwprintw(basewin, y, 2, "REPLAY action %d/%d; next command: %s",
+                      player.action, player.max_action, player.cmd);
+            wattroff(basewin, A_BOLD | COLOR_PAIR(4));
+        }
         connections[y] |= 1;
 
         if (ui_flags.extraheight) {
@@ -635,7 +675,7 @@ draw_frame(void)
         }
     }
 
-    //connections[sidebar_delim] |= 2;
+    connections[sidebar_delim] |= 2;
 
     int rtee;
     for (i = 1; i <= LINES; i++) {
@@ -825,7 +865,8 @@ layout_game_windows(void)
        make it at least 2 lines high. Otherwise, it's given to the message area,
        because it has to go /somewhere/, even if this makes the message area
        taller than the user wanted. */
-    if (y_remaining >= (ui_flags.draw_horizontal_frame_lines ? 3 : 2)) {
+    if (settings.extrawin != EW_DISABLED &&
+        y_remaining >= (ui_flags.draw_horizontal_frame_lines ? 3 : 2)) {
         if (ui_flags.draw_horizontal_frame_lines)
             y_remaining--;
         ui_flags.extraheight = y_remaining;
@@ -1203,6 +1244,13 @@ redraw_game_windows(void)
 void
 rebuild_ui(void)
 {
+    if (tileprefix) {
+        char font_file[BUFSZ];
+        snprintf(font_file, BUFSZ, "font%s.png", settings.fontfile);
+        set_font_file(font_file);
+        refresh();
+    }
+
     if (ui_flags.ingame) {
         wclear(basewin);
         resize_game_windows();

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -55,7 +55,7 @@ rank_of(int lev, short monnum, boolean female)
 
     /* Find the role */
     for (role = roles; role->name.m; role++)
-        if (monnum == role->malenum || monnum == role->femalenum)
+        if (monnum == role->num)
             break;
     if (!role->name.m)
         role = &urole;
@@ -99,7 +99,7 @@ title_to_mon(const char *str, int *rank_indx, int *title_length)
                     *rank_indx = j;
                 if (title_length)
                     *title_length = strlen(roles[i].rank[j].m);
-                return roles[i].malenum;
+                return roles[i].num;
             }
             if (roles[i].rank[j].f &&
                 !strncmpi(str, roles[i].rank[j].f,
@@ -108,8 +108,7 @@ title_to_mon(const char *str, int *rank_indx, int *title_length)
                     *rank_indx = j;
                 if (title_length)
                     *title_length = strlen(roles[i].rank[j].f);
-                return ((roles[i].femalenum !=
-                         NON_PM) ? roles[i].femalenum : roles[i].malenum);
+                return roles[i].num;
             }
         }
     return NON_PM;
@@ -135,7 +134,7 @@ max_rank_sz(void)
 static long
 botl_score(void)
 {
-    long umoney = money_cnt(invent) + hidden_gold();
+    long umoney = money_cnt(youmonst.minvent) + hidden_gold();
 
     return calc_score(DIED, FALSE, umoney);
 }
@@ -175,6 +174,9 @@ make_player_info(struct nh_player_info *pi)
 
     memset(pi, 0, sizeof (struct nh_player_info));
 
+    pi->action = replay_action();
+    pi->max_action = replay_max();
+    strncpy(pi->cmd, replay_cmd(), BUFSZ);
     pi->moves = moves;
     strncpy(pi->plname, u.uplname, sizeof (pi->plname));
     pi->align = u.ualign.type;
@@ -194,7 +196,7 @@ make_player_info(struct nh_player_info *pi)
     pi->z = u.uz.dlevel;
 
     if (Upolyd) {
-        strncpy(pi->rank, msgtitlecase(mons[u.umonnum].mname),
+        strncpy(pi->rank, msgtitlecase(pm_name(&youmonst)),
                 sizeof (pi->rank));
     } else
         strncpy(pi->rank, rank(), sizeof (pi->rank));
@@ -209,15 +211,6 @@ make_player_info(struct nh_player_info *pi)
 
     /* abilities */
     pi->st = ACURR(A_STR);
-    pi->st_extra = 0;
-    if (pi->st > 118) {
-        pi->st = pi->st - 100;
-        pi->st_extra = 0;
-    } else if (pi->st > 18) {
-        pi->st_extra = pi->st - 18;
-        pi->st = 18;
-    }
-
     pi->dx = ACURR(A_DEX);
     pi->co = ACURR(A_CON);
     pi->in = ACURR(A_INT);
@@ -236,7 +229,7 @@ make_player_info(struct nh_player_info *pi)
     pi->enmax = youmonst.pwmax;
     pi->ac = find_mac(&youmonst);
 
-    pi->gold = money_cnt(invent);
+    pi->gold = money_cnt(youmonst.minvent);
     pi->coinsym = def_oc_syms[COIN_CLASS];
     describe_level(pi->level_desc);
 
@@ -266,7 +259,7 @@ make_player_info(struct nh_player_info *pi)
     }
     pi->can_enhance = advskills > 0;
 
-    /* add status items for various problems there can be at most 24 items here 
+    /* add status items for various problems there can be at most 24 items here
        at any one time or we overflow the buffer */
     if (hu_stat[u.uhs]) /* 1 */
         strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);
@@ -311,10 +304,14 @@ make_player_info(struct nh_player_info *pi)
         strncpy(pi->statusitems[pi->nr_items++], "Cancelled", ITEMLEN);
     if (slow(&youmonst))
         strncpy(pi->statusitems[pi->nr_items++], "Slow", ITEMLEN);
-    if (Levitation)     /* 14 */
+    if (levitates_proper(&youmonst))     /* 14 */
         strncpy(pi->statusitems[pi->nr_items++], "Lev", ITEMLEN);
-    else if (Flying)
+    else if (levitates(&youmonst))
+        strncpy(pi->statusitems[pi->nr_items++], "-Lev", ITEMLEN);
+    if (flying_proper(&youmonst))
         strncpy(pi->statusitems[pi->nr_items++], "Fly", ITEMLEN);
+    else if (flying(&youmonst))
+        strncpy(pi->statusitems[pi->nr_items++], "-Fly", ITEMLEN);
     if (uwep && is_pick(uwep)) /* 15 (first case) */
         strncpy(pi->statusitems[pi->nr_items++], "Dig", ITEMLEN);
     else if (uwep && is_launcher(uwep))

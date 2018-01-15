@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,7 +17,6 @@
 #define CMD_TRAVEL (char)0x90
 
 static int doservercancel(const struct nh_cmd_arg *);
-static int dotravel(const struct nh_cmd_arg *);
 static int doautoexplore(const struct nh_cmd_arg *);
 static int dowelcome(const struct nh_cmd_arg *);
 static int dointerrupt(const struct nh_cmd_arg *);
@@ -117,6 +116,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_NOTIME | CMD_ARG_POS},
     {"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE,
      ARG(dofight), CMD_ARG_DIR},
+    {"find", "search remembered objects", C('f'), 0, TRUE,
+     ARG(dofindobj), CMD_ARG_STR | CMD_NOTIME},
     {"fire", "throw your quivered item", 'f', 0, FALSE, ARG(dofire),
      CMD_ARG_DIR | CMD_ARG_LIMIT},
     {"force", "force a lock", M('f'), 0, FALSE, ARG(doforce),
@@ -296,7 +297,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"wish", "(DEBUG) wish for an item", C('w'), 0, TRUE, ARG(wiz_wish),
      CMD_DEBUG},
-    {"wizport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
+    {"wizport", "(DEBUG) teleport without fail", 0, 0, TRUE,
      ARG(wiz_teleport), CMD_DEBUG},
     {"wmode", "(DEBUG) show wall modes", 0, 0, TRUE, ARG(wiz_show_wmodes),
      CMD_DEBUG | CMD_EXT | CMD_NOTIME},
@@ -702,7 +703,7 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
 {
     struct nh_menulist menu;
     int x, y, v;
-    char row[COLNO + 1];
+    char row[COLNO + 1] = {0};
 
     (void) arg;
 
@@ -752,7 +753,7 @@ wiz_show_wmodes(const struct nh_cmd_arg *arg)
             if (x == youmonst.mx && y == youmonst.my)
                 row[x] = '@';
             else if (IS_WALL(loc->typ) || loc->typ == SDOOR)
-                row[x] = '0' + (loc->wall_info & WM_MASK);
+                row[x] = '0' + (loc->flags & WM_MASK);
             else if (loc->typ == CORR)
                 row[x] = '#';
             else if (IS_ROOM(loc->typ) || IS_DOOR(loc->typ))
@@ -848,6 +849,7 @@ dointerrupt(const struct nh_cmd_arg *arg)
     (void) arg;
 
     action_interrupted();
+    replay_force_diff();
     return 0;
 }
 
@@ -876,8 +878,9 @@ doattributes(const struct nh_cmd_arg *arg)
     /* Starting and current name, race, role, gender, alignment, abilities */
     buf = msgprintf(fmtstr_noorig, "name", u.uplname);
     add_menutext(&menu, buf);
-    buf = msgprintf(fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun,
-                    urace.noun);
+    buf = msgprintf(fmtstr, "race", !Upolyd ? urace.noun :
+                    u.ufemale ? youmonst.data->fname :
+                    youmonst.data->mname, urace.noun);
     add_menutext(&menu, buf);
     buf = msgprintf(fmtstr_noorig, "role",
                     ((Upolyd ? u.mfemale : u.ufemale) &&
@@ -890,18 +893,10 @@ doattributes(const struct nh_cmd_arg *arg)
     buf = msgprintf(fmtstr, "alignment", align_str(u.ualign.type),
                     align_str(u.ualignbase[A_ORIGINAL]));
     add_menutext(&menu, buf);
-    if (ACURR(A_STR) > 18) {
-        if (ACURR(A_STR) > STR18(100))
-            buf = msgprintf("abilities : St:%2d ", ACURR(A_STR) - 100);
-        else if (ACURR(A_STR) < STR18(100))
-            buf = msgprintf("abilities : St:18/%02d ", ACURR(A_STR) - 18);
-        else
-            buf = msgprintf("abilities : St:18/** ");
-    } else
-        buf = msgprintf("abilities : St:%-1d ", ACURR(A_STR));
 
-    buf = msgprintf("%s Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
-                    buf, ACURR(A_DEX), ACURR(A_CON),
+    buf = msgprintf("abilities : "
+                    "St:%-1d Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
+                    ACURR(A_STR), ACURR(A_DEX), ACURR(A_CON),
                     ACURR(A_INT), ACURR(A_WIS), ACURR(A_CHA));
     add_menutext(&menu, buf);
     if (youmonst.m_lev < 30)
@@ -1005,7 +1000,8 @@ doattributes(const struct nh_cmd_arg *arg)
             n = doconduct(&(struct nh_cmd_arg){.argtype = 0});
             break;
         case 's':
-            calc_score(-1, TRUE, money_cnt(invent) + hidden_gold());
+            calc_score(-1, TRUE,
+                       money_cnt(youmonst.minvent) + hidden_gold());
             break;
         case 'w':
             if (wizard || discover)
@@ -1112,7 +1108,12 @@ nh_get_object_commands(int *count, char invlet)
 
     xmalloc_cleanup(&api_blocklist);
 
-    for (obj = invent; obj; obj = obj->nobj)
+    /* returning a list of commands when viewing doesn't hurt anything, but
+       since they won't work there is no point. */
+    if (program_state.followmode != FM_PLAY)
+        return NULL;
+
+    for (obj = youmonst.minvent; obj; obj = obj->nobj)
         if (obj->invlet == invlet)
             break;
 
@@ -1414,7 +1415,7 @@ contained(struct nh_menulist *menu, const char *src, long *total_count,
     long count = 0, size = 0;
     struct monst *mon;
 
-    count_obj(invent, &count, &size, FALSE, TRUE);
+    count_obj(youmonst.minvent, &count, &size, FALSE, TRUE);
     count_obj(level->objlist, &count, &size, FALSE, TRUE);
     count_obj(level->buriedobjlist, &count, &size, FALSE, TRUE);
     /* DEADMONSTER check not required in this loop since they have no
@@ -1470,7 +1471,8 @@ wiz_show_stats(const struct nh_cmd_arg *arg)
     add_menutext(&menu, "");
     add_menutext(&menu, count_str);
 
-    obj_chain(&menu, "invent", invent, &total_obj_count, &total_obj_size);
+    obj_chain(&menu, "invent", youmonst.minvent, &total_obj_count,
+              &total_obj_size);
     obj_chain(&menu, "level->objlist", level->objlist, &total_obj_count,
               &total_obj_size);
     obj_chain(&menu, "buried", level->buriedobjlist, &total_obj_count,
@@ -1561,6 +1563,18 @@ getargdir(const struct nh_cmd_arg *arg, const char *query,
     return getdir(query, dx, dy, dz, TRUE);
 }
 
+/* Calls a dummy getargpos to allow looking around. */
+void
+look_at_map(int x, int y)
+{
+    coord cc;
+    cc.x = x;
+    cc.y = y;
+    struct nh_cmd_arg dummyarg;
+    dummyarg.argtype = 0;
+    getargpos(&dummyarg, &cc, FALSE, "looking");
+}
+
 int
 getargpos(const struct nh_cmd_arg *arg, coord *cc, boolean force,
           const char *goal)
@@ -1583,7 +1597,7 @@ getargobj(const struct nh_cmd_arg *arg, const char *let, const char *word)
 
     /* Did the client specify an inventory letter? */
     if (arg->argtype & CMD_ARG_OBJ)
-        for (otmp = invent; otmp && !obj; otmp = otmp->nobj)
+        for (otmp = youmonst.minvent; otmp && !obj; otmp = otmp->nobj)
             if (otmp->invlet == arg->invlet)
                 obj = otmp;
 
@@ -1828,34 +1842,6 @@ doautoexplore(const struct nh_cmd_arg *arg)
     action_incomplete("exploring", occ_autoexplore);
     return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
                   exploration_interaction_status(), occ_autoexplore);
-}
-
-static int
-dotravel(const struct nh_cmd_arg *arg)
-{
-    /* Keyboard travel command */
-    coord cc;
-
-    cc.x = flags.travelcc.x;
-    cc.y = flags.travelcc.y;
-    if (cc.x == -1 && cc.y == -1) {
-        /* No cached destination, start attempt from current position */
-        cc.x = youmonst.mx;
-        cc.y = youmonst.my;
-    }
-    if (!(arg->argtype & CMD_ARG_POS))
-        pline(msgc_uiprompt, "Where do you want to travel to?");
-    if (getargpos(arg, &cc, FALSE, "the desired destination") ==
-        NHCR_CLIENT_CANCEL) {
-        pline(msgc_cancelled, "Never mind.");
-        return 0;
-    }
-    flags.travelcc.x = u.tx = cc.x;
-    flags.travelcc.y = u.ty = cc.y;
-
-    action_incomplete("travelling", occ_travel);
-    return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
-                  exploration_interaction_status(), occ_travel);
 }
 
 /*cmd.c*/

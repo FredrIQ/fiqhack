@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -25,138 +25,163 @@ static boolean slip_or_trip(struct monst *);
 struct propmsg {
     unsigned int prop;
     const char *gainoutside, *gainpm, *loseoutside, *losepm;
+    const char *name;
 };
 
 static const struct propmsg prop_msg[] = {
     {FIRE_RES, "You feel a momentary chill.", "cool",
-     "You feel warmer.", "warmer"},
+     "You feel warmer.", "warmer", "fire resistance"},
     {COLD_RES, "You feel full of hot air.", "warm",
-     "You feel cooler.", "cooler"},
+     "You feel cooler.", "cooler", "cold resistance"},
     {SLEEP_RES, "You feel wide awake.", "awake",
-     "You feel tired!", "tired"},
+     "You feel tired!", "tired", "sleep resistance"},
     {DISINT_RES, "You feel very firm.", "firm",
-     "You feel less firm.", "less firm"},
+     "You feel less firm.", "less firm", "disintegration resistance"},
     {SHOCK_RES, "Your health currently feels amplified!", "insulated",
-     "You feel conductive.", "conductive"},
+     "You feel conductive.", "conductive", "shock resistance"},
     {POISON_RES, "You feel healthy.", "hardy",
-     "You feel a little sick!", "sickly"},
+     "You feel a little sick!", "sickly", "poison resistance"},
     {ACID_RES, "Your skin feels leathery.", "thick-skinned",
-     "Your skin feels less leathery.", "soft-skinned"},
+     "Your skin feels less leathery.", "soft-skinned", "acid resistance"},
     {STONE_RES, "You feel flexible.", "limber",
-     "You feel stiff.", "stiff"},
+     "You feel stiff.", "stiff", "petrification resistance"},
     {REGENERATION, "You feel healthier than ever!", "regenerative",
-     "You don't feel as healthy anymore.",  "less regenerative"},
+     "You don't feel as healthy anymore.",  "less regenerative",
+     "regeneration"},
     {SEARCHING, "You feel perceptive!", "perceptive",
-     "You feel unfocused.", "unfocused"},
+     "You feel unfocused.", "unfocused", "automatic searching"},
     {SEE_INVIS, "You feel aware.", "aware",
-     "You thought you saw something!", "unaware"},
+     "You thought you saw something!", "unaware", "see invisible"},
     {INVIS, "You feel hidden!", "hidden",
-     "You feel paranoid.", "paranoid"},
+     "You feel paranoid.", "paranoid", "invisibility"},
     {TELEPORT, "You feel very jumpy.", "jumpy",
-     "You feel less jumpy.", "less jumpy"},
+     "You feel less jumpy.", "less jumpy", "teleportitis"},
     {TELEPORT_CONTROL, "You feel in control of yourself.", "controlled",
-     "You feel less in control.", "uncontrolled"},
+     "You feel less in control.", "uncontrolled", "teleport control"},
     {POLYMORPH, "Your body begins to shapeshift.", "shapeshifting",
-     "You are no longer shapeshifting.", "less shapeshifting"},
+     "You are no longer shapeshifting.", "less shapeshifting",
+     "polymorphitis"},
     {POLYMORPH_CONTROL, "You feel in control of your shapeshifting",
-     "shapeshift-controlled", "You feel no lnger in control of your shapeshifting.",
-     "less shapeshift-controlled"},
-    {STEALTH, "", "stealthy", "", "noisy"},
+     "shapeshift-controlled",
+     "You feel no longer in control of your shapeshifting.",
+     "less shapeshift-controlled", "polymorph control"},
+    {STEALTH, "", "stealthy", "", "noisy", "stealth"},
     {AGGRAVATE_MONSTER, "You feel observed.", "observed",
-     "You feel less attractive.", "conspicuous"},
+     "You feel less attractive.", "conspicuous", "aggravate monster"},
     {CONFLICT, "The air around you turns hostile and conflicted.", "conflicted",
-     "The air around you calms down.", "calmed"},
+     "The air around you calms down.", "calmed", "conflict"},
+    {PROTECTION, "You feel protected.", "protected",
+     "You feel vulnerable.", "vulnerable", "protection"},
     {PROT_FROM_SHAPE_CHANGERS, "The air around you seems oddly fixed and static.",
      "shapeshift-protected",
-     "The air around you briefly shifts in shape.", "less shapeshift-protected"},
-    {WARNING, "You feel sensitive.", "sensitive", "You feel insensitive.", "insensitive"},
+     "The air around you briefly shifts in shape.", "less shapeshift-protected",
+     "protection from shape changers"},
+    {WARNING, "You feel sensitive.", "sensitive", "You feel insensitive.",
+     "insensitive", "warning"},
     {TELEPAT, "You feel a strange mental acuity.", "telepathic",
-     "Your senses fail!", "untelepathic"},
-    {FAST, "", "quick", "", "slow"},
-    {SLEEPING, "You feel drowsy.", "drowsy", "You feel awake.", "awake"},
+     "Your senses fail!", "untelepathic", "telepathy"},
+    {FAST, "", "quick", "", "slow", "speed"},
+    {SLEEPING, "You feel drowsy.", "drowsy", "You feel awake.", "awake",
+     "restful sleep"},
     {WWALKING, "You feel light on your feet.", "light",
-     "You feel heavier.", "heavy"},
+     "You feel heavier.", "heavy", "water walking"},
     {HUNGER, "You feel your metabolism speed up.", "hungry",
-     "Your digestion calms down.", "full."},
+     "Your digestion calms down.", "full.", "rapid hunger"},
     {REFLECTING, "Your body feels repulsive.", "repulsive",
-     "You feel less repulsive.", "absorptive"},
+     "You feel less repulsive.", "absorptive", "reflection"},
     {LIFESAVED, "You feel a strange sense of immortality.", "immortal",
-     "You lose your sense of immortality!", "mortal"},
+     "You lose your sense of immortality!", "mortal", "life saving"},
     {ANTIMAGIC, "You feel resistant to magic.", "skeptical",
-     "Your magic resistance fails!", "credulous"},
-    {DISPLACED, "", "elusive", "", "exposed"},
+     "Your magic resistance fails!", "credulous", "magic resistance"},
+    {DISPLACED, "", "elusive", "", "exposed", "displacement"},
     {CLAIRVOYANT, "You feel attuned to the dungeon.", "attuned to the dungeon",
-     "You don't feel attuned to the dungeon after all", "less dungeon-attuned"},
-    {ENERGY_REGENERATION, "You feel in touch with magic around you.", "magic-regenerative",
-     "Your touch with magic fails!", "less magic-regenerative"},
+     "You don't feel attuned to the dungeon after all", "less dungeon-attuned",
+     "clairvoyance"},
+    {ENERGY_REGENERATION, "You feel in touch with magic around you.",
+     "magic-regenerative",
+     "Your touch with magic fails!", "less magic-regenerative",
+     "energy regeneration"},
     {MAGICAL_BREATHING, "Your breathing seem enhanced.", "breath-enhanced",
-     "Your breathing seems normal.", "less breath-enhanced"},
+     "Your breathing seems normal.", "less breath-enhanced",
+     "magical breathing"},
     {SICK_RES, "You feel your immunity strengthen.", "immunized",
-     "Your immune system fails!", "immunocompromised"},
+     "Your immune system fails!", "immunocompromised", "sickness resistance"},
     {DRAIN_RES, "You feel especially energetic.", "energic",
-     "You feel less energic.", "less energic"},
+     "You feel less energic.", "less energic", "drain resistance"},
     {CANCELLED, "You feel devoid of magic!", "magic-devoid",
-     "Your magic returns.", "magical"},
+     "Your magic returns.", "magical", "cancellation"},
     {FREE_ACTION, "You feel especially agile.", "agile",
-     "You feel less agile.", "less agile"},
+     "You feel less agile.", "less agile", "free action"},
     {SWIMMING, "You feel more attuned to water.", "water-attuned",
-     "You forget your swimming skills.", "less water-attuned"},
+     "You forget your swimming skills.", "less water-attuned",
+     "swimming"},
     {FIXED_ABIL, "You feel resistant to exercise", "ability-fixed",
-     "You feel less resistant to exercise", "ability-fixed"},
+     "You feel less resistant to exercise", "less ability-fixed",
+     "fixed abilities"},
     {FLYING, "You feel more buoyant.", "buoyant",
-     "You feel less buoyant.", "less buoyant"},
+     "You feel less buoyant.", "less buoyant", "flying"},
     {UNCHANGING, "You feel resistant to change.", "unchanged",
-     "You feel less resistant to change.", "changed"},
+     "You feel less resistant to change.", "changed", "unchanging"},
     {PASSES_WALLS, "Your body unsolidifies", "unsolid",
-     "Your body solidifies.", "solid"},
+     "Your body solidifies.", "solid", "phasing"},
     {INFRAVISION, "Your vision capabilities are enhanced.", "vision-enhanced",
-     "You feel half blind!", "half blind"},
-    {NO_PROP, "", "", "", ""}
+     "You feel half blind!", "half blind", "infravision"},
+    {STUN_RES, "You feel more in control of your body.", "flexible",
+     "You feel less in control of your body.", "inflexible",
+     "stun resistance"},
+    {DEATH_RES, "You feel bold at the thought of danger.", "less endangered",
+     "You feel like an endangered species.", "endangered",
+     "resistance to death magic"},
+    {NO_PROP, "", "", "", "", ""}
 };
 
 static const struct propmsg prop_msg_hallu[] = {
     {FIRE_RES, "You be chillin'.", "cool",
-     "You feel warmer.", "warmer"},
+     "You feel warmer.", "warmer", "fire resistance"},
     {DISINT_RES, "You feel totally together, man.", "firm",
-     "You feel split up.", "less firm"},
-    {SHOCK_RES, "You feel grounded in reality.", "insulated",
-     "You feel less grounded.", "conductive"},
+     "You feel split up.", "less firm", "disintegration resistance"},
+    {SHOCK_RES, "You feel grounded in reality.", "grounded",
+     "You feel less grounded.", "conductive", "shock resistance"},
     {SEE_INVIS, "", "attentive",
-     "You tawt you taw a puttie tat!", "unattentive"},
+     "You tawt you taw a puttie tat!", "inattentive", "see invisible"},
     {TELEPORT, "You feel diffuse.", "jumpy",
-     "You feel less jumpy.", "less jumpy"},
-    {TELEPORT_CONTROL, "You feel centered in your personal space.", "controlled",
-     "You feel less in control.", "uncontrolled"},
+     "You feel less jumpy.", "less jumpy", "teleportitis"},
+    {TELEPORT_CONTROL, "You feel centered in your personal space.",
+     "controlled",
+     "You feel less in control.", "uncontrolled", "teleport control"},
     {POLYMORPH, "You feel like a chameleon.", "shapeshifting",
-     "You no longer feel like a chameleon.", "less shapeshifting"},
+     "You no longer feel like a chameleon.", "less shapeshifting",
+     "polymorphitis"},
     {TELEPAT, "You feel in touch with the cosmos.", "telepathic",
-     "Your cosmic connection is no more!", "untelepathic"},
+     "Your cosmic connection is no more!", "untelepathic",
+     "telepathy"},
     {WWALKING, "You feel like Jesus himself.", "light",
-     "You realize that you aren't Jesus after all.", "heavy"},
+     "You realize that you aren't Jesus after all.", "heavy",
+     "water walking"},
     {MAGICAL_BREATHING, "You seem rather fishy...", "fishy",
-     "You don't seem so fishy after all.", "less fishy"},
+     "You don't seem so fishy after all.", "less fishy",
+     "magical breathing"},
     {DRAIN_RES, "You are bouncing off the walls!", "energetic",
-     "You feel less bouncy.", "less energetic"},
+     "You feel less bouncy.", "less energetic", "drain resistance"},
     {FLYING, "You feel like a super hero!", "buoyant",
-     "You sadly lose your heroic abilities.", "less buoyant"},
-    {NO_PROP, "", "", "", ""}
+     "You sadly lose your heroic abilities.", "less buoyant",
+     "flying"},
+    {NO_PROP, "", "", "", "", ""}
 };
 
 
-/* Intrinsics roles gain by level up
-   Yes, this makes it theoretically possible to give level-based
-   intrinsics for monsters. This technique is not currently used
-   besides the fact that player monsters are granted relevant
-   intrinsics.
-   XL1 intrinsics are stored in permonst (Adding XL1 properties
-   here *works*, but is not the right way to do it IMO -FIQ).
-   TODO: make this part of permonst... somehow
+/* Intrinsics monsters gain by level up. Note that for resistances, trinsics
+   noted here are regarded as a resistance rather than an immunity. This
+   means that if you want something to have fire resistance, but not immunity,
+   you can add them here for XL0 (not 1 since monsters can be level 0).
+   To give an immunity instead, set immunity to TRUE.
    TODO: if this thing ever grants fly/lev/similar, monster XL
    change needs to call update_property properly. */
 struct propxl {
     unsigned int mnum;
     unsigned int xl;
     unsigned int prop;
+    boolean immunity; /* only matters for resistances */
 };
 
 static const struct propxl prop_from_experience[] = {
@@ -186,6 +211,7 @@ static const struct propxl prop_from_experience[] = {
     {PM_WIZARD, 15, WARNING},
     {PM_WIZARD, 17, TELEPORT_CONTROL},
     {PM_ELF, 4, SLEEP_RES},
+    {PM_SHIMMERING_DRAGON, 10, STUN_RES},
     {PM_RED_DRAGON, 10, INFRAVISION},
     {PM_RED_DRAGON, 10, WARNING},
     {PM_RED_DRAGON, 10, SEE_INVIS},
@@ -230,6 +256,7 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
         property == STONED            ? poly_when_stoned(mdat)               :
         property == GLIB              ? nohands(mdat)                        :
         property == LIFESAVED         ? nonliving(mdat)                      :
+        property == TELEPAT           ? mindless(mdat)                       :
         0)
         return -1;
 
@@ -253,6 +280,9 @@ pm_has_property(const struct permonst *mdat, enum youprop property)
         property == ANTIMAGIC         ? dmgtype(mdat, AD_MAGM) ||
                                         dmgtype(mdat, AD_RBRE) ||
                                         mdat == &mons[PM_BABY_GRAY_DRAGON]   :
+        property == DEATH_RES         ? nonliving(mdat) || is_demon(mdat) ||
+                                        mdat == &mons[PM_DEATH] ||
+                                        mdat->mlet == S_ANGEL                :
         property == STUNNED           ? mdat->mflags2 & M2_STUNNED           :
         property == BLINDED           ? !haseyes(mdat)                       :
         property == HALLUC            ? dmgtype(mdat, AD_HALU)               :
@@ -288,8 +318,8 @@ init_permonsts(const struct monst *mon, const struct permonst **role,
 {
     int racenum;
     if (mon == &youmonst) {
-        *role = &mons[urole.malenum];
-        *race = &mons[urace.malenum];
+        *role = &mons[urole.num];
+        *race = &mons[urace.num];
     } else {
         if (mon->orig_mnum)
             *role = &mons[mon->orig_mnum];
@@ -322,7 +352,8 @@ m_has_property(const struct monst *mon, enum youprop property,
     if (property == HALLUC && mon != &youmonst)
         return 0;
 
-    /* Simplify property checking by allowing 0 but always returning 0 in this case */
+    /* Simplify property checking by allowing 0 but always returning 0 in this
+       case */
     if (property == NO_PROP)
         return FALSE;
 
@@ -332,10 +363,7 @@ m_has_property(const struct monst *mon, enum youprop property,
     }
 
     unsigned rv = 0;
-
-    /* Cache equipment-related property information. Should be safe
-       since it all goes through update_property */
-    rv = mon->mintrinsic_cache[property];
+    rv = property_cache(mon, property);
     if (!(rv & W_MASK(os_cache))) {
         rv = 0;
         const struct permonst *mdat_role = NULL;
@@ -344,27 +372,31 @@ m_has_property(const struct monst *mon, enum youprop property,
         init_permonsts(mon, &mdat_role, &mdat_race, &mdat_poly);
 
         /* The general case for equipment */
-        rv |= mworn_extrinsic(mon, property);
+        if (reasons & W_EQUIP)
+            rv |= mworn_extrinsic(mon, property);
 
         /* Polyform / role / race properties */
         const struct propxl *pmprop;
-        for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
-             pmprop++) {
-            if (pmprop->prop == property && pmprop->xl <= mon->m_lev) {
-                if (pmprop->mnum == monsndx(mdat_role))
-                    rv |= W_MASK(os_role);
-                if (mdat_race && pmprop->mnum == monsndx(mdat_race))
-                    rv |= W_MASK(os_race);
-                if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
-                    rv |= W_MASK(os_polyform);
+        if (reasons & FROMFORM) {
+            for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
+                 pmprop++) {
+                if (pmprop->prop == property &&
+                    pmprop->xl <= mon->m_lev) {
+                    if (pmprop->mnum == monsndx(mdat_role))
+                        rv |= W_MASK(os_role);
+                    if (mdat_race && pmprop->mnum == monsndx(mdat_race))
+                        rv |= W_MASK(os_race);
+                    if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
+                        rv |= W_MASK(os_polyform);
+                }
             }
+            if (pm_has_property(mdat_role, property) > 0)
+                rv |= W_MASK(os_role);
+            if (mdat_race && pm_has_property(mdat_race, property) > 0)
+                rv |= W_MASK(os_race);
+            if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
+                rv |= W_MASK(os_polyform);
         }
-        if (pm_has_property(mdat_role, property) > 0)
-            rv |= W_MASK(os_role);
-        if (mdat_race && pm_has_property(mdat_race, property) > 0)
-            rv |= W_MASK(os_race);
-        if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
-            rv |= W_MASK(os_polyform);
 
         /* Fumbling on ice */
         if (property == FUMBLING &&
@@ -390,12 +422,15 @@ m_has_property(const struct monst *mon, enum youprop property,
            change (due to Elbereth), and so it has been left alone for now. */
         if ((property == BLINDED && !haseyes(mon->data)) ||
             (property == HALLUC && resists_hallu(mon)) ||
-            (property == WWALKING && m_dlevel(mon) && Is_waterlevel(m_mz(mon))) ||
-            mworn_blocked(mon, property))
+            (property == INVIS && aggravating(mon)) ||
+            (property == FAST && slow(mon)) ||
+            (property == WWALKING && m_dlevel(mon) &&
+             Is_waterlevel(m_mz(mon))) ||
+            ((reasons & W_EQUIP) && mworn_blocked(mon, property)))
             rv |= (unsigned)(W_MASK(os_blocked));
 
-        if (mon == &youmonst)
-            youmonst.mintrinsic_cache[property] = (rv | W_MASK(os_cache));
+        if (reasons == ANY_PROPERTY)
+            set_property_cache(mon, property, rv);
     }
     rv &= ~W_MASK(os_cache);
 
@@ -425,15 +460,96 @@ m_has_property(const struct monst *mon, enum youprop property,
             rv |= W_MASK(os_circumstance);
     }
 
-    /* If a property is blocked, turn off all flags except circumstance/birthopt,
-       unless even_if_blocked is TRUE. Yes, including os_blocked, because not
-       doing that would interfere with macros and whatnot. */
+    /* If a property is blocked, turn off all flags except
+       circumstance/birthopt, unless even_if_blocked is TRUE. Yes, including
+       os_blocked, because not doing that would interfere with macros and
+       whatnot. */
     if ((rv & W_MASK(os_blocked)) && !even_if_blocked)
         rv &= (unsigned)(W_MASK(os_circumstance) |
                          W_MASK(os_birthopt));
     return rv & reasons;
 }
 
+void
+set_property_cache(const struct monst *mon, enum youprop prop, unsigned reason)
+{
+    struct ecache *cache = mx_ecache(mon);
+    if (!cache)
+        panic("No property cache for %s.", pm_male(monsndx(mon->data)));
+
+    cache->intrinsic[prop] = (reason | W_MASK(os_cache));
+}
+
+void
+clear_property_cache(const struct monst *mon, enum youprop prop)
+{
+    struct ecache *cache = mx_ecache(mon);
+    if (!cache)
+        panic("No property cache for %s.", pm_male(monsndx(mon->data)));
+
+    cache->intrinsic[prop] = 0;
+}
+
+unsigned
+property_cache(const struct monst *mon, enum youprop prop)
+{
+    struct ecache *cache = mx_ecache(mon);
+    if (!cache)
+        panic("No property cache for %s.", pm_male(monsndx(mon->data)));
+
+    return cache->intrinsic[prop];
+}
+
+/* Returns a bitmask containing all slots that confer immunities.
+   Immunities are generally gained from extrinsics and from innate trinsics
+   which you always had. */
+unsigned
+has_immunity(const struct monst *mon, enum youprop property)
+{
+    unsigned rv = has_property(mon, property);
+
+    /* Amulets of restful sleep give a sleep *resistance*, not an immunity. */
+    if (property == SLEEP_RES) {
+        struct obj *amul = which_armor(mon, os_amul);
+        if (amul && amul->otyp == AMULET_OF_RESTFUL_SLEEP)
+            rv &= ~W_MASK(os_amul);
+    }
+
+    if (!(rv & FROMFORM))
+        return (rv & EXTRINSIC);
+
+    /* Now check the innate ones. */
+    rv &= ~FROMFORM;
+
+    const struct permonst *mdat_role = NULL;
+    const struct permonst *mdat_race = NULL;
+    const struct permonst *mdat_poly = NULL;
+    init_permonsts(mon, &mdat_role, &mdat_race, &mdat_poly);
+
+    const struct propxl *pmprop;
+    for (pmprop = prop_from_experience; pmprop->mnum != NON_PM;
+         pmprop++) {
+        if (pmprop->prop == property &&
+            pmprop->xl <= mon->m_lev &&
+            pmprop->immunity) {
+            if (pmprop->mnum == monsndx(mdat_role))
+                rv |= W_MASK(os_role);
+            if (mdat_race && pmprop->mnum == monsndx(mdat_race))
+                rv |= W_MASK(os_race);
+            if (mdat_poly && pmprop->mnum == monsndx(mdat_poly))
+                rv |= W_MASK(os_polyform);
+        }
+    }
+
+    if (pm_has_property(mdat_role, property) > 0)
+        rv |= W_MASK(os_role);
+    if (mdat_race && pm_has_property(mdat_race, property) > 0)
+        rv |= W_MASK(os_race);
+    if (mdat_poly && pm_has_property(mdat_poly, property) > 0)
+        rv |= W_MASK(os_polyform);
+
+    return (rv & (EXTRINSIC | FROMFORM));
+}
 
 /* Check if an object/spell/whatever would have any effect on a target */
 boolean
@@ -455,6 +571,8 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
         /* fallthrough */
     case WAN_SLEEP:
     case SPE_SLEEP:
+        if (m_helpless(target, hm_all))
+            return FALSE;
         return !prop_wary(user, target, SLEEP_RES);
     case WAN_LIGHTNING:
         return !prop_wary(user, target, SHOCK_RES);
@@ -477,7 +595,7 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
         /* skilled users of /oInvis can uninvis */
         wandlevel = 0;
         if (obj->oclass == WAND_CLASS) {
-            wandlevel = mprof(user, MP_WANDS);
+            wandlevel = MP_SKILL(user, P_WANDS);
             if (obj->mbknown)
                 wandlevel = getwandlevel(user, obj);
             if (wandlevel >= P_SKILLED &&
@@ -500,11 +618,11 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
         if (!user)
             return FALSE;
         if (obj->otyp == SPE_MAGIC_MISSILE) {
-            wandlevel = mprof(user, MP_SATTK);
+            wandlevel = MP_SKILL(user, P_ATTACK_SPELL);
             if (wandlevel < P_SKILLED)
                 return FALSE;
         } else {
-            wandlevel = mprof(user, MP_WANDS);
+            wandlevel = MP_SKILL(user, P_WANDS);
             if (obj->mbknown)
                 wandlevel = getwandlevel(user, obj);
         }
@@ -516,9 +634,10 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
     case SPE_SLOW_MONSTER:
         return !prop_wary(user, target, SLOW);
     case WAN_SPEED_MONSTER:
+    case SPE_SPEED_MONSTER:
         /* a monster might not know if a target is fast, but
            if not, he'd find that out rather fast */
-        return !very_fast(target);
+        return !very_fast(target) && !slow(target);
     case WAN_UNDEAD_TURNING:
     case SPE_TURN_UNDEAD:
         return is_undead(target->data);
@@ -533,7 +652,7 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
             return TRUE;
         if (!user || obj->oclass != WAND_CLASS)
             return FALSE;
-        wandlevel = mprof(user, MP_WANDS);
+        wandlevel = MP_SKILL(user, P_WANDS);
         if (obj->mbknown)
             wandlevel = getwandlevel(user, obj);
         if (wandlevel >= P_EXPERT)
@@ -563,10 +682,22 @@ obj_affects(const struct monst *user, struct monst *target, struct obj *obj)
 boolean
 prop_wary(const struct monst *mon, struct monst *target, enum youprop prop)
 {
+    /* For elemental resistances that can be made immune to,
+       return FALSE unconditionally 50% of the time if the monster
+       isn't immune. */
+    boolean immunity = TRUE;
+    if (prop == FIRE_RES || prop == COLD_RES || prop == SLEEP_RES ||
+        prop == SHOCK_RES || prop == POISON_RES || prop == ACID_RES)
+        immunity = !!has_immunity(mon, prop);
+
+    if (!immunity && !rn2(2))
+        return FALSE;
+
     /* If !mon, or for some properties that is always announced,
        or for allies/peacefuls, or for WoY, always be accurate */
     if (!mon ||
         prop == INVIS || /* "the invisible X" */
+        prop == TELEPAT || /* "seen: cooperative telepathy" */
         prop == AGGRAVATE_MONSTER || /* "seen: aggravate monster" */
         prop == DISPLACED || /* seen: displacement */
         (target == &youmonst && mon->mpeaceful) ||
@@ -601,8 +732,7 @@ decrease_property_timers(struct monst *mon)
 {
     enum youprop prop;
     int skill = 0;
-    skill = (mon == &youmonst ? P_SKILL(P_CLERIC_SPELL) :
-             mprof(mon, MP_SCLRC));
+    skill = MP_SKILL(mon, P_CLERIC_SPELL);
     for (prop = 0; prop <= LAST_PROP; prop++) {
         if (mon->mintrinsic[prop] & TIMEOUT_RAW) {
             /* Decrease protection less at Expert and not at all if maintained,
@@ -643,7 +773,7 @@ teleport_at_will(const struct monst *mon)
     }
     return FALSE;
 }
-    
+
 /* Checks whether or not a monster has controlled levitation.
    "Controlled" levitation here means that the monster can
    end it on its' own accord. include_extrinsic also includes
@@ -670,9 +800,9 @@ levitates_at_will(const struct monst *mon, boolean include_extrinsic,
         return (why ? lev_worn : 0);
 
     if (lev_worn) { /* armor/ring/slotless levitation active */
-        struct obj *chain = m_minvent(mon);
+        struct obj *chain = mon->minvent;
         long itemtype;
-        
+
         while (chain) {
             /* worn item or slotless unremoveable item */
             itemtype = item_provides_extrinsic(chain, LEVITATION);
@@ -682,7 +812,7 @@ levitates_at_will(const struct monst *mon, boolean include_extrinsic,
             chain = chain->nobj;
         }
     }
-    
+
     return lev;
 }
 
@@ -707,7 +837,7 @@ mon_remove_levitation(struct monst *mon, boolean forced)
     }
 
     /* monster levitation comes from an extrinsic */
-    struct obj *chain = m_minvent(mon);
+    struct obj *chain = mon->minvent;
     long itemtype;
     int slot;
     boolean dropped; /* Monsters can drop several items in a single turn,
@@ -736,7 +866,7 @@ mon_remove_levitation(struct monst *mon, boolean forced)
         }
         chain = chain->nobj;
     }
-    
+
     if (!forced || levitates(mon)) {
         /* at this point, only polyform levitation is left */
         if (forced) {
@@ -746,7 +876,7 @@ mon_remove_levitation(struct monst *mon, boolean forced)
         }
         return dropped ? 1 : 0;
     }
-    
+
     if (lev_source) {
         if (cansee(mon->mx, mon->my))
             pline(mon->mtame ? msgc_petwarning : msgc_monneutral,
@@ -801,7 +931,7 @@ set_property(struct monst *mon, enum youprop prop,
              int type, boolean forced)
 {
     /* Invalidate property cache */
-    mon->mintrinsic_cache[prop] = 0;
+    clear_property_cache(mon, prop);
 
     boolean increased = FALSE;
     if (mon->mintrinsic[prop] & TIMEOUT_RAW && type > 0)
@@ -828,7 +958,7 @@ set_property(struct monst *mon, enum youprop prop,
     }
 
     /* Invalidate property cache again (since it's polled in this function) */
-    mon->mintrinsic_cache[prop] = 0;
+    clear_property_cache(mon, prop);
 
     if (forced)
         return FALSE;
@@ -936,7 +1066,12 @@ update_property(struct monst *mon, enum youprop prop,
         return FALSE;
 
     /* Invalidate property cache */
-    mon->mintrinsic_cache[prop] &= ~W_MASK(os_cache);
+    clear_property_cache(mon, prop);
+
+    /* Don't do anything during initialization. This is safe, and prevents
+       messages pertaining to trinsics from showing during newgame. */
+    if (turnstate.in_newgame)
+        return FALSE;
 
     /* update_property() can run for monsters wearing armor during level creation,
        or potentially off-level, so level can be non-existent or outright wrong,
@@ -1005,7 +1140,7 @@ update_property(struct monst *mon, enum youprop prop,
                               "You feel %s!",
                               lost ? msg->losepm : msg->gainpm);
                     else
-                        pline(lost ? msgc_intrloss : msgc_intrgain, "%s", 
+                        pline(lost ? msgc_intrloss : msgc_intrgain, "%s",
                               lost ? msg->loseoutside : msg->gainoutside);
                     effect = TRUE;
                     break;
@@ -1021,13 +1156,16 @@ update_property(struct monst *mon, enum youprop prop,
                     else if (prop == POISON_RES && !lost && redundant) /* special msg */
                         pline(msgc_intrgain, "You feel especially healthy.");
                     else
-                        pline(lost ? msgc_intrloss : msgc_intrgain, "%s", 
+                        pline(lost ? msgc_intrloss : msgc_intrgain, "%s",
                               lost ? msg->loseoutside : msg->gainoutside);
                     effect = TRUE;
                     break;
                 }
             }
         }
+        if (effect && flags.msg_hints)
+            pline(msgc_info, "You must have %s %s.", lost ? "lost" : "gained",
+                  msg->name);
     }
 
     /* Additional work for gained/lost properties. Properties are in order, hence
@@ -1169,16 +1307,18 @@ update_property(struct monst *mon, enum youprop prop,
     case STEALTH:
         if (slot == os_armf && !redundant &&
             !levitates(mon) && !flying(mon)) {
-            if (you)
+            if (you) {
                 pline(lost ? msgc_intrloss : msgc_intrgain,
                       lost ? "You sure are noisy." :
-                      "You walk very quietly");
-            else if (vis)
+                      "You walk very quietly.");
+                effect = TRUE;
+            } else if (vis) {
                 pline(msgc_monneutral,
                       lost ? "%s sure is noisy." :
                       "%s walks very quietly.",
                       Monnam(mon));
-            effect = TRUE;
+                effect = TRUE;
+            }
         }
         break;
     case AGGRAVATE_MONSTER:
@@ -1339,9 +1479,7 @@ update_property(struct monst *mon, enum youprop prop,
             } else {
                 if (lost)
                     pline(you ? msgc_statusheal : msgc_monneutral,
-                          "%s %s %s now.",
-                          you ? "You" : Monnam(mon),
-                          you ? "feel" : "looks",
+                          "%s %s %s now.", Monnam(mon), mfeel(mon),
                           you && hallu ? "less wobbly" : "a bit steadier");
                 else
                     pline(you ? msgc_statusbad : msgc_monneutral,
@@ -1498,7 +1636,7 @@ update_property(struct monst *mon, enum youprop prop,
 
         if (lost && slot == os_dectimeout) {
             int sleeptime = 0;
-            if (!resists_sleep(mon) &&
+            if (!immune_to_sleep(mon) &&
                 ((you && !u_helpless(hm_unconscious)) ||
                  (!you && mon->mcanmove)))
                 sleeptime = rnd(20);
@@ -1510,6 +1648,8 @@ update_property(struct monst *mon, enum youprop prop,
                     effect = TRUE;
                 }
                 sleep_monst(NULL, mon, sleeptime, -1);
+                if (!you)
+                    slept_monst(mon);
             }
 
             if (restful_sleep(mon))
@@ -1558,9 +1698,7 @@ update_property(struct monst *mon, enum youprop prop,
                           acurr(mon, A_CHA) > 15 ? "fine " : "");
                 else
                     pline(you ? msgc_fatalavoid : msgc_monneutral,
-                          "%s %s more limber!",
-                          you ? "You" : Monnam(mon),
-                          you ? "feel" : "looks");
+                          "%s %s more limber!", Monnam(mon), mfeel(mon));
                 if (!you)
                     mon->ustoned = 0;
                 else
@@ -1568,7 +1706,7 @@ update_property(struct monst *mon, enum youprop prop,
                 effect = TRUE;
             }
         } else {
-            if (you || vis) {
+            if (slot == os_dectimeout && (you || vis)) {
                 switch (timer) {
                 case 4:
                     pline(msgc, "%s slowing down.",
@@ -1659,7 +1797,7 @@ update_property(struct monst *mon, enum youprop prop,
             break;
         }
 
-        if (you || vis) {
+        if (slot == os_dectimeout && (you || vis)) {
             if (unbreathing(mon) || !rn2(50)) {
                 if (timer == 4)
                     pline(msgc, "%s %s is becoming constricted.",
@@ -1773,7 +1911,7 @@ update_property(struct monst *mon, enum youprop prop,
         if (blocked) /* no message, just remove timers */
             set_property(mon, prop, -2, TRUE);
         else if (you && lost && !redundant) {
-            pline(msgc_statusheal, "Your %s feels less slippery",
+            pline(msgc_statusheal, "Your %s feels less slippery.",
                   makeplural(body_part(FINGER)));
             effect = TRUE;
         }
@@ -1785,8 +1923,8 @@ update_property(struct monst *mon, enum youprop prop,
     case DISPLACED:
         if (you && !redundant) {
             pline(lost ? msgc_intrloss : msgc_intrgain,
-                  lost ? "You stop shimmering" :
-                  "Your outline shimmers and shifts");
+                  lost ? "You stop shimmering." :
+                  "Your outline shimmers and shifts.");
             effect = TRUE;
         }
         break;
@@ -1812,9 +1950,7 @@ update_property(struct monst *mon, enum youprop prop,
         if (lost && slot != os_dectimeout) {
             if (you || vis) {
                 pline(you ? msgc_statusheal : msgc_monneutral,
-                      "%s %s much less nauseated now.",
-                      you ? "You" : Monnam(mon),
-                      you ? "feel" : "looks");
+                      "%s %s much less nauseated now.", Monnam(mon), mfeel(mon));
                 effect = TRUE;
             }
         } else if (slot == os_dectimeout) {
@@ -1824,16 +1960,14 @@ update_property(struct monst *mon, enum youprop prop,
                           you ? "You" : Monnam(mon),
                           you ? "are feeling" : "looks");
                 if (timer == 11)
-                    pline(msgc, "%s %s slightly confused.",
-                          you ? "You" : Monnam(mon),
-                          you ? "feel" : "looks");
+                    pline(msgc, "%s %s slightly confused.", Monnam(mon),
+                          mfeel(mon));
                 if (timer == 8)
                     pline(msgc, "%s can't seem to think straight.",
                           you ? "You" : Monnam(mon));
                 if (timer == 5)
-                    pline(msgc, "%s %s incredibly sick.",
-                          you ? "You" : Monnam(mon),
-                          you ? "feel" : "looks");
+                    pline(msgc, "%s %s incredibly sick.", Monnam(mon),
+                          mfeel(mon));
                 if (timer == 2)
                     pline(msgc, "%s suddenly vomit%s!",
                           you ? "You" : Monnam(mon),
@@ -1917,11 +2051,9 @@ update_property(struct monst *mon, enum youprop prop,
             if (you)
                 exercise(A_DEX, FALSE);
 
-            if (you || vis) {
+            if (slot == os_dectimeout && (you || vis)) {
                 if (timer == 9)
-                    pline(msgc, "%s %s %s very well.",
-                          you ? "You" : Monnam(mon),
-                          you ? "don't" : "doesn't",
+                    pline(msgc, "%sn't %s very well.", M_verbs(mon, "do"),
                           you ? "feel" : "look");
                 else if (timer == 8)
                     pline(msgc, "%s %s turning a %s %s.",
@@ -2161,6 +2293,12 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case WATERPROOF:
         break;
+    case STUN_RES:
+        if (!lost && set_property(mon, STUNNED, -2, FALSE))
+            effect = TRUE;
+        break;
+    case DEATH_RES:
+        break;
     case CREAMED:
         if ((!you && !vis) || (slot == os_dectimeout))
             break;
@@ -2179,10 +2317,16 @@ update_property(struct monst *mon, enum youprop prop,
 
         if (!lost)
             pline(msgc_statusbad, "Yeech!  %s been creamed.", M_verbs(mon, "have"));
+        break;
     default:
         impossible("Unknown property: %u", prop);
         break;
     }
+
+    /* If a property timed out, interrupt the player. */
+    if (you && lost && slot == os_dectimeout && effect && prop != CLAIRVOYANT)
+        action_interrupted();
+
     return effect;
 }
 
@@ -2512,8 +2656,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        or for the telepathy to be extrinsic and the viewer within BOLT_LIM. */
     if (!mindless(viewee->data) && !m_helpless(viewer, hm_unconscious)) {
         unsigned telepathy_reason = telepathic(viewer);
+        boolean strong_telepathy = has_immunity(viewer, TELEPAT);
         if ((telepathy_reason && blinded) ||
-            (telepathy_reason & (W_EQUIP | W_ARTIFACT) &&
+            (strong_telepathy &&
              distance <= BOLT_LIM * BOLT_LIM))
             sensemethod |= MSENSE_TELEPATHY;
     }
@@ -2555,19 +2700,21 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     /* Smell of gold, approximating 3.4.3 behaviour (which was previously in
        set_apparxy in monmove.c). Xorns can sense any monster with gold in their
        inventory. */
-    if (viewer->data == &mons[PM_XORN] && money_cnt(m_minvent(viewee)))
+    if (viewer->data == &mons[PM_XORN] && money_cnt(viewee->minvent))
         sensemethod |= MSENSE_GOLDSMELL;
 
-    /* Cooperative telepathy. Friendly monsters reveal themselves to each other
-       with telepathy. If one has telepathy, that one's telepathy determines how
-       easily they sense each other. If both has, they can be seen everywhere */
-    if (!mindless(viewer->data) && !m_helpless(viewer, hm_unconscious)) {
-        unsigned telepathy_reason = telepathic(viewee);
-        if ((telepathy_reason && blinded) ||
-            (telepathy_reason & (W_EQUIP | W_ARTIFACT) &&
-             distance <= BOLT_LIM * BOLT_LIM))
-            sensemethod |= MSENSE_TEAMTELEPATHY;
+    /* Cooperative telepathy. Telepathy works in both directions. If both the
+       viewer and the viewee have telepathy, they can see each other
+       everywhere. */
+    if (!mindless(viewer->data) && !m_helpless(viewer, hm_unconscious) &&
+        !mindless(viewee->data) && !(sensemethod & MSENSE_TELEPATHY)) {
+        unsigned itelepat = (telepathic(viewer) | telepathic(viewee));
+        unsigned etelepat = has_immunity(viewer, TELEPAT);
+        etelepat |= has_immunity(viewee, TELEPAT);
         if (telepathic(viewer) && telepathic(viewee))
+            sensemethod |= MSENSE_TEAMTELEPATHY;
+        else if ((etelepat && distance <= BOLT_LIM * BOLT_LIM) ||
+                 (itelepat && blinded))
             sensemethod |= MSENSE_TEAMTELEPATHY;
     }
 
@@ -2578,8 +2725,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
     /* Warning. This partial-senses monsters that are hostile to the viewer, and
        have a level of 4 or greater, and a distance of 100 or less. */
-    if (distance <= 100 && viewee->m_lev >= 4 &&
-        warned(viewer) &&
+    if (distance <= 100 && warned(viewer) &&
         mm_aggression(viewee, viewer, Conflict) & ALLOW_M) {
         sensemethod |= MSENSE_WARNING;
     }
@@ -2815,7 +2961,7 @@ set_monwarn_vars(const struct monst *mon, const struct monst *target,
         return FALSE; /* chain might not be linked yet */
 
     struct obj *obj;
-    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
         if (!obj->oartifact || !item_provides_extrinsic(obj, WARN_OF_MON))
             continue;
 
@@ -2985,6 +3131,35 @@ eline(struct nh_menulist *menu, const char *format, ...)
     add_menutext(menu, buf);
 }
 
+/* Gives a reminder of your last god interaction that affected the prayer
+   timeout */
+static const char *
+last_blesscnt_effect(const struct monst *mon)
+{
+    struct eyou *you = mx_eyou(mon);
+    if (!you || !you->last_pray_action)
+        return NULL;
+
+    int turns = moves - you->last_pray_action;
+
+    const char *turns_ago = "just now.";
+    if (turns)
+        turns_ago = msgprintf("%d turn%s ago.", turns,
+                              turns == 1 ? "" : "s");
+    const char *what = "last prayed";
+    if (you->prayed_result == pty_anger)
+        what = msgprintf("angered %s god", mhis(mon));
+    else if (you->prayed_result == pty_gift)
+        what = msgprintf("got a gift from %s god", mhis(mon));
+    else if (you->prayed_result == pty_mollified)
+        what = msgprintf("mollified %s god", mhis(mon));
+    else if (you->prayed_result == pty_reconciled)
+        what = msgprintf("reconciled with %s god", mhis(mon));
+
+    const char *res = msgprintf("%s %s %s", Monnam(mon), what, turns_ago);
+    return res;
+}
+
 /* format increased damage or chance to hit */
 static const char *
 enl_combatinc(const char *inctyp, int incamt, int final)
@@ -3016,45 +3191,58 @@ enl_combatinc(const char *inctyp, int incamt, int final)
     return msgprintf("%s %s %s", an(modif), bonus, inctyp);
 }
 
+#define EL_SOURCE 1
+#define EL_IMMUNITY 2
+#define EL_BLOCKED 4
+
 /* Adds a menu entry for the given property if the monster has it.
    If show_source is nonzero, also tell the source of the property.
    If the property given is negative, give the message if the monster
    would have the property, but it is blocked in some way. */
 static void
-add_property_eline(struct nh_menulist *menu, int show_source, const struct monst *mon,
+add_property_eline(struct nh_menulist *menu, int eflags, const struct monst *mon,
                    int proparg, const char *who, const char *what)
 {
-    boolean blocked = 0;
+    boolean immunity = (eflags & EL_IMMUNITY);
+    boolean blocked = (eflags & EL_BLOCKED);
     int prop = proparg;
     if (prop < 0) {
-        blocked = 1;
+        blocked = TRUE;
         prop = -prop;
     }
 
-    /* The monster doesn't actually have the property, or blocked is checked and the
-       property is either not blocked, or the block is dormant */
+    /* The monster doesn't actually have the property, or blocked is checked and
+       the property is either not blocked, or the block is dormant */
     if ((!blocked && !has_property(mon, prop)) ||
         (blocked &&
          (!bhas_property(mon, prop) ||
           !(m_has_property(mon, prop, ANY_PROPERTY, TRUE) & ~W_MASK(os_blocked)))))
         return;
 
+    if (immunity && !has_immunity(mon, prop))
+        return;
+
     eline(menu, "%s %s", who, what);
 }
 
 #define add_eline(mon, prop, who, what)                                 \
-    add_property_eline(&menu, show_source, (mon), (prop), (who), (what))
+    add_property_eline(&menu, (show_source) ? EL_SOURCE : 0, (mon),     \
+                       (prop), (who), (what))
+#define add_elineimm(mon, prop, who, what, imm)                         \
+    add_property_eline(&menu, (show_source) ? EL_SOURCE : 0, (mon),     \
+                       (prop), (who),                                   \
+                       has_immunity(mon, prop) ? (what) : (imm))
 
 /* final: 0 => still in progress; 1 => over, survived; 2 => dead */
 void
-enlighten_mon(struct monst *mon, int final, int show_source)
+enlighten_mon(struct monst *mon, int final, boolean show_source)
 {
     int ltmp;
     int n;
     const char *title;
     const char *buf;
     struct nh_menulist menu;
-    
+
     init_menulist(&menu);
     title = final ? "Final Attributes:" : "Current Attributes:";
 
@@ -3117,13 +3305,15 @@ enlighten_mon(struct monst *mon, int final, int show_source)
 
 
     /*** Resistances to troubles ***/
-    add_eline(mon, FIRE_RES, monis, "fire resistant");
-    add_eline(mon, COLD_RES, monis, "cold resistant");
-    add_eline(mon, SLEEP_RES, monis, "sleep resistant");
+    add_elineimm(mon, FIRE_RES, monis, "fire resistant", "immune to fire");
+    add_elineimm(mon, COLD_RES, monis, "cold resistant", "immune to cold");
+    add_elineimm(mon, SLEEP_RES, monis, "sleep resistant", "immune to sleep");
     add_eline(mon, DISINT_RES, monis, "disintegration-resistant");
-    add_eline(mon, SHOCK_RES, monis, "shock resistant");
-    add_eline(mon, POISON_RES, monis, "poison resistant");
-    add_eline(mon, ACID_RES, monis, "acid resistant");
+    add_elineimm(mon, SHOCK_RES, monis, "shock resistant",
+                 "immune to electricity");
+    add_elineimm(mon, POISON_RES, monis, "poison resistant",
+                 "immune to poison");
+    add_elineimm(mon, ACID_RES, monis, "acid resistant", "immune to acid");
     add_eline(mon, STONE_RES, monis, "petrification resistant");
     add_eline(mon, DRAIN_RES, monis, "drain resistant");
     add_eline(mon, ANTIMAGIC, monis, "magic resistant");
@@ -3235,7 +3425,6 @@ enlighten_mon(struct monst *mon, int final, int show_source)
                   "holding" : "held by", you ? a_monnam(u.ustuck) : "you");
     }
 
-
     /*** Physical attributes ***/
     add_eline(mon, UNCHANGING, moncan, "not change form");
     if (!unchanging(mon)) {
@@ -3304,7 +3493,7 @@ enlighten_mon(struct monst *mon, int final, int show_source)
             eline(&menu, "%s wielding two weapons at once", monis);
         if (Luck) {
             ltmp = abs((int)Luck);
-            const char *buf = msgprintf(
+            buf = msgprintf(
                 "%s%slucky",
                 ltmp >= 10 ? "extremely " : ltmp >= 5 ? "very " : "",
                 Luck < 0 ? "un" : "");
@@ -3325,8 +3514,12 @@ enlighten_mon(struct monst *mon, int final, int show_source)
                       mon_nam(mon));
         }
 
+        buf = last_blesscnt_effect(mon);
+        if (buf)
+            add_menutext(&menu, buf);
+
         if (u.ugangr) {
-            const char *buf = msgprintf(
+            buf = msgprintf(
                 " %sangry with you",
                 u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
             if (wizard)
@@ -3337,7 +3530,7 @@ enlighten_mon(struct monst *mon, int final, int show_source)
             /* We need to suppress this when the game is over, because death
                can change the value calculated by can_pray(), potentially
                resulting in a false claim that you could have prayed safely. */
-            const char *buf = msgprintf(
+            buf = msgprintf(
                 "%ssafely pray", can_pray(FALSE) ? "" : "not ");
             /* can_pray sets some turnstate that needs to be reset. */
             turnstate.pray.align = A_NONE;
@@ -3381,7 +3574,6 @@ enlighten_mon(struct monst *mon, int final, int show_source)
     return;
 }
 
-
 void
 unspoilered_intrinsics(void)
 {
@@ -3397,16 +3589,21 @@ unspoilered_intrinsics(void)
     n = menu.icount;
 
 #define addmenu(x,y) if (ihas_property(&youmonst, x))   \
-                          add_menutext(&menu, y);
+        add_menutext(&menu, y);
+#define addmenu2(x,y,z)                         \
+    if (has_immunity(&youmonst, x) & INTRINSIC) \
+        add_menutext(&menu, z);                 \
+    else if (ihas_property(&youmonst, x))       \
+        add_menutext(&menu, y);
 
     /* Resistances */
-    addmenu(FIRE_RES, "You are fire resistant.");
-    addmenu(COLD_RES, "You are cold resistant.");
-    addmenu(SLEEP_RES, "You are sleep resistant.");
+    addmenu2(FIRE_RES, "You are fire resistant.", "You are immune to fire.");
+    addmenu2(COLD_RES, "You are cold resistant.", "You are immune to cold.");
+    addmenu2(SLEEP_RES, "You are sleep resistant.", "You are immune to sleep.");
     addmenu(DISINT_RES, "You are disintegration resistant.");
-    addmenu(SHOCK_RES, "You are shock resistant.");
-    addmenu(POISON_RES, "You are poison resistant.");
-    addmenu(ACID_RES, "You are acid resistant.");
+    addmenu2(SHOCK_RES, "You are shock resistant.", "You are immune to electricity.");
+    addmenu2(POISON_RES, "You are poison resistant.", "You are immune to poison.");
+    addmenu2(ACID_RES, "You are acid resistant.", "You are immune to acid.");
     addmenu(DRAIN_RES, "You are level-drain resistant.");
     addmenu(SICK_RES, "You are immune to sickness.");
     addmenu(SEE_INVIS, "You see invisible.");
@@ -3435,6 +3632,10 @@ unspoilered_intrinsics(void)
     addmenu(POLYMORPH, "You are polymorphing.");
     addmenu(POLYMORPH_CONTROL, "You have polymorph control.");
     addmenu(FAST, "You are fast.");
+
+    const char *buf = last_blesscnt_effect(&youmonst);
+    if (buf)
+        add_menutext(&menu, buf);
 
 #undef addmenu
 
@@ -3478,7 +3679,6 @@ conductline(struct nh_menulist *menu, boolean final, enum player_conduct conduct
 void
 show_conduct(int final)
 {
-    int ngenocided;
     struct nh_menulist menu;
     const char *buf;
 
@@ -3507,17 +3707,20 @@ show_conduct(int final)
     cline(conduct_lostalign, TRUE,
           "violated your moral code", "never violated your moral code", have);
 
-    ngenocided = num_genocides();
+    int ngenocided = num_genocides();
     if (!u.uconduct[conduct_genocide])
         eline(&menu, "You %snever genocided any monsters%s", have,
               ngenocided ? ", but other monsters did" : "");
     else {
         buf = msgprintf("%d", u.uconduct[conduct_genocide]);
-        if (ngenocided != u.uconduct[conduct_genocide]) /* other monster genocides */
-            buf = msgprintf("%d (out of %d)", u.uconduct[conduct_genocide], ngenocided);
-        eline(&menu, "You %sgenocided %s type%s of monster%s, starting on turn %d", have,
-              buf, plur(u.uconduct[conduct_genocide]),
-              plur(u.uconduct[conduct_genocide]), u.uconduct_time[conduct_genocide]);
+        if (ngenocided != u.uconduct[conduct_genocide])
+            buf = msgprintf("%d (out of %d)", u.uconduct[conduct_genocide],
+                            ngenocided);
+        eline(&menu,
+              "You %sgenocided %s type%s of monster%s, starting on turn %d",
+              have, buf, plur(u.uconduct[conduct_genocide]),
+              plur(u.uconduct[conduct_genocide]),
+              u.uconduct_time[conduct_genocide]);
     }
 
     /* birth options */

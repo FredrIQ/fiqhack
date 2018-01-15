@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
 #ifndef ROLE_H
 # define ROLE_H
 
@@ -41,8 +41,7 @@ struct Role {
     const char *intermed;       /* quest intermediate goal (from questpgr.c) */
 
         /*** Indices of important monsters and objects ***/
-    short malenum,      /* index (PM_) as a male (botl.c) */
-          femalenum,    /* ...or as a female (NON_PM == same) */
+    short num,          /* index (PM_) for the role (botl.c) */
           petnum,       /* PM_ of preferred pet (NON_PM == random) */
           ldrnum,       /* PM_ of quest leader (questpgr.c) */
           guardnum,     /* PM_ of quest guardians (questpgr.c) */
@@ -98,8 +97,8 @@ struct Role {
 extern const struct Role roles[];       /* table of available roles */
 extern struct Role urole;
 
-# define Role_if(X)     (urole.malenum == (X))
-# define Role_switch    (urole.malenum)
+# define Role_if(X)     (urole.num == (X))
+# define Role_switch    (urole.num)
 
 /*** Unified structure specifying race information ***/
 
@@ -112,8 +111,7 @@ struct Race {
     struct RoleName individual; /* individual as a noun ("man", "elf") */
 
         /*** Indices of important monsters and objects ***/
-    short malenum,      /* PM_ as a male monster */
-          femalenum,    /* ...or as a female (NON_PM == same) */
+    short num,      /* PM_ normally */
           mummynum,     /* PM_ as a mummy */
           zombienum;    /* PM_ as a zombie */
 
@@ -142,8 +140,8 @@ struct Race {
 extern const struct Race races[];       /* Table of available races */
 extern struct Race urace;
 
-# define Race_if(X)     (urace.malenum == (X))
-# define Race_switch    (urace.malenum)
+# define Race_if(X)     (urace.num == (X))
+# define Race_switch    (urace.num)
 
 /*** Unified structure specifying gender information ***/
 struct Gender {
@@ -160,17 +158,13 @@ extern const struct Gender genders[];   /* table of available genders */
 # define uhe()          (genders[u.ufemale ? 1 : 0].he)
 # define uhim()         (genders[u.ufemale ? 1 : 0].him)
 # define uhis()         (genders[u.ufemale ? 1 : 0].his)
-
-/* Gives hero in 2nd person */
-# define mhe(mtmp)      ((mtmp) == &youmonst ? "you" : genders[pronoun_gender(mtmp)].he)
-# define mhim(mtmp)     ((mtmp) == &youmonst ? "you" : genders[pronoun_gender(mtmp)].him)
-# define mhis(mtmp)     ((mtmp) == &youmonst ? "your" : genders[pronoun_gender(mtmp)].his)
-
-/* Gives hero in 3rd person */
-# define mhe3(mtmp)     ((mtmp) == &youmonst ? uhe() : genders[pronoun_gender(mtmp)].he)
-# define mhim3(mtmp)    ((mtmp) == &youmonst ? uhim() : genders[pronoun_gender(mtmp)].him)
-# define mhis3(mtmp)    ((mtmp) == &youmonst ? uhis() : genders[pronoun_gender(mtmp)].his)
-
+# define umhe(mon)      (genders[pronoun_gender(mon)].he)
+# define umhim(mon)     (genders[pronoun_gender(mon)].him)
+# define umhis(mon)     (genders[pronoun_gender(mon)].his)
+# define mhe(mon)       ((mon) == &youmonst ? "you" : umhe(mon))
+# define mhim(mon)      ((mon) == &youmonst ? "you" : umhim(mon))
+# define mhis(mon)      ((mon) == &youmonst ? "your" : umhis(mon))
+# define mfeel(mon)     ((mon) == &youmonst ? "feel" : "looks")
 
 /*** Unified structure specifying alignment information ***/
 struct Align {
@@ -181,8 +175,6 @@ struct Align {
     aligntyp value;     /* equivalent A_ value */
 };
 
-
 extern const struct Align aligns[];     /* table of available alignments */
-
 
 #endif /* ROLE_H */

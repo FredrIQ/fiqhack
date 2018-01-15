@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-18 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -261,7 +261,7 @@ do_earthquake(int force)
                               "The kitchen sink falls into a chasm.");
                     goto do_pit;
                 case ALTAR:
-                    if (level->locations[x][y].altarmask & AM_SANCTUM)
+                    if (level->locations[x][y].flags & AM_SANCTUM)
                         break;
 
                     if (cansee(x, y))
@@ -306,7 +306,7 @@ do_earthquake(int force)
                         break;  /* no pit if portal at that location */
                     chasm->tseen = 1;
 
-                    level->locations[x][y].doormask = 0;
+                    level->locations[x][y].flags = 0;
 
                     mtmp = m_at(level, x, y);
 
@@ -351,8 +351,10 @@ do_earthquake(int force)
                                     xkilled(mtmp, 0);
                                 }
                         }
-                    } else if (!u.utrap && x == youmonst.mx && y == youmonst.my) {
-                        if (Levitation || Flying || is_clinger(youmonst.data)) {
+                    } else if (!u.utrap &&
+                               x == youmonst.mx && y == youmonst.my) {
+                        if (levitates(&youmonst) || Flying ||
+                            is_clinger(youmonst.data)) {
                             pline(msgc_noconsequence,
                                   "A chasm opens up under you!");
                             pline(msgc_noconsequence, "You don't fall in!");
@@ -369,13 +371,13 @@ do_earthquake(int force)
                         newsym(x, y);
                     break;
                 case DOOR:     /* Make the door collapse */
-                    if (level->locations[x][y].doormask == D_NODOOR)
+                    if (level->locations[x][y].flags == D_NODOOR)
                         goto do_pit;
                     if (cansee(x, y))
                         pline(msgc_consequence, "The door collapses.");
                     if (*in_rooms(level, x, y, SHOPBASE))
                         add_damage(x, y, 0L);
-                    level->locations[x][y].doormask = D_NODOOR;
+                    level->locations[x][y].flags = D_NODOOR;
                     unblock_point(x, y);
                     newsym(x, y);
                     break;
@@ -402,6 +404,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             pline(msgc_actionok, "You produce soft music.");
             put_monsters_to_sleep(youmonst.m_lev * 5);
             exercise(A_DEX, TRUE);
+            tell_discovery(instr);
             break;
         }       /* else FALLTHRU */
     case WOODEN_FLUTE: /* May charm snakes */
@@ -424,9 +427,9 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
                 break;
             } else {
                 buzz((instr->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1,
-                     rn1(6, 6), youmonst.mx, youmonst.my, dx, dy, 0);
+                     youmonst.m_lev, youmonst.mx, youmonst.my, dx, dy, 0);
             }
-            makeknown(instr->otyp);
+            tell_discovery(instr);
             break;
         }       /* else FALLTHRU */
     case TOOLED_HORN:  /* Awaken or scare monsters */
@@ -448,6 +451,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
                   Tobjnam(instr, "produce"));
             charm_monsters((youmonst.m_lev - 1) / 3 + 1);
             exercise(A_DEX, TRUE);
+            tell_discovery(instr);
             break;
         }       /* else FALLTHRU */
     case WOODEN_HARP:  /* May calm Nymph */
@@ -469,7 +473,7 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
             do_earthquake((youmonst.m_lev - 1) / 3 + 1);
             /* shake up monsters in a much larger radius... */
             awaken_monsters(&youmonst, ROWNO * COLNO);
-            makeknown(DRUM_OF_EARTHQUAKE);
+            tell_discovery(instr);
             break;
         }       /* else FALLTHRU */
     case LEATHER_DRUM: /* Awaken monsters */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2017-12-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -178,7 +178,7 @@ static const struct trobj Tourist[] = {
     {CREDIT_CARD, 0, TOOL_CLASS, 1, 0},
     {EXPENSIVE_CAMERA, UNDEF_SPE, TOOL_CLASS, 1, 0},
     {LEASH, 0, TOOL_CLASS, 1, 0},
-    {MAGIC_MARKER, UNDEF_SPE, TOOL_CLASS, 1, 0},
+    {MAGIC_MARKER, 0, TOOL_CLASS, 1, 0},
     {TIN_OPENER, 0, TOOL_CLASS, 1, 0},
     {TOWEL, 0, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
@@ -201,8 +201,8 @@ static const struct trobj Wizard[] = {
     {WAN_STRIKING, UNDEF_SPE, WAND_CLASS, 1, UNDEF_BLESS},
     {SPE_FORCE_BOLT, 0, SPBOOK_CLASS, 1, 1},
     {SPE_MAGIC_MISSILE, 0, SPBOOK_CLASS, 1, 1},
-    {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 1, UNDEF_BLESS},
-    {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 1, UNDEF_BLESS},
+    {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 1, 1},
+    {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 1, 1},
     {BLINDFOLD, 0, TOOL_CLASS, 1, 0},
     {0, 0, 0, 0, 0}
 };
@@ -550,8 +550,7 @@ u_init(microseconds birthday)
     u.umortality = 0;
     u.ugrave_arise = NON_PM;
 
-    u.umonnum = u.umonster = (u.ufemale && urole.femalenum != NON_PM) ?
-        urole.femalenum : urole.malenum;
+    u.umonnum = u.umonster = urole.num;
 
     u.lastinvnr = 51;
 
@@ -575,18 +574,18 @@ u_init(microseconds birthday)
     for (i = 0; i <= MAXSPELL; i++)
         spl_book[i].sp_id = NO_SPELL;
     update_supernatural_abilities();
-    
+
     u.ublesscnt = 300;  /* no prayers just yet */
     u.ualignbase[A_CURRENT] = u.ualignbase[A_ORIGINAL] = u.ualign.type =
         aligns[u.initalign].value;
     u.ulycn = NON_PM;
-    
+
     u.ubirthday = birthday;
-    
+
     /* For now, everyone starts out with a night vision range of 1. */
     u.nv_range = 1;
     u.next_attr_check = 600;    /* arbitrary initial setting */
-    
+
     u.delayed_killers.genocide = u.delayed_killers.illness =
         u.delayed_killers.stoning = u.delayed_killers.sliming =
         u.delayed_killers.zombie = NULL;
@@ -903,10 +902,10 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
     while (trop->trclass) {
         if (trop->trotyp != UNDEF_TYP) {
             otyp = (int)trop->trotyp;
-            if (urace.malenum != PM_HUMAN) {
+            if (urace.num != PM_HUMAN) {
                 /* substitute specific items for generic ones */
                 for (i = 0; inv_subs[i].race_pm != NON_PM; ++i)
-                    if (inv_subs[i].race_pm == urace.malenum &&
+                    if (inv_subs[i].race_pm == urace.num &&
                         otyp == inv_subs[i].item_otyp) {
                         otyp = inv_subs[i].subs_otyp;
                         break;
@@ -1051,7 +1050,5 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
         trquan = trop->trquan;
     }
 }
-
-
 
 /*u_init.c*/

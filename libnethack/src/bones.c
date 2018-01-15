@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-24 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -92,7 +92,7 @@ resetobjs(struct obj *ochain, boolean restore)
 
             if (objects[otmp->otyp].oc_uses_known)
                 otmp->known = 0;
-            otmp->dknown = otmp->bknown = 0;
+            otmp->dknown = otmp->bknown = otmp->cknown = 0;
             otmp->oprops_known = 0;
             otmp->rknown = 0;
             otmp->invlet = 0;
@@ -142,11 +142,11 @@ drop_upon_death(struct monst *mtmp, struct obj *cont, boolean charmed)
 
     /* This needs to come before we begin freeing objects from the inventory,
        or we'll panic when updating the cached list of items. */
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (otmp->otyp == SLIME_MOLD)
             goodfruit(otmp->spe);
 
-    while ((otmp = invent) != 0) {
+    while ((otmp = youmonst.minvent) != 0) {
         /* The desync detector dislikes floating wielded objects, even for a few
            lines of code. Also, we need to do mark it as unworn anyway to avoid
            worn items lying around on the ground for other players to find.
@@ -210,7 +210,7 @@ can_make_bones(d_level *lev)
         (!rn2chance             /* fewer ghosts on low levels */
          && !wizard))
         return FALSE;
-    /* don't let multiple restarts generate multiple copies of objects in bones 
+    /* don't let multiple restarts generate multiple copies of objects in bones
        files */
     if (discover)
         return FALSE;
@@ -245,6 +245,9 @@ savebones(struct obj *corpse, boolean take_items)
 
     if (take_items)
         finish_paybill();
+
+    /* Don't leave any stale object memories */
+    free_memobj();
 
     mnew(&mf, NULL);
 
@@ -289,6 +292,10 @@ make_bones:
     for (f = gamestate.fruits.chain; f; f = f->nextf)
         f->fid = -f->fid;
 
+    /* for killing level temporary so that update_property doesn't do weird
+       things because of assuming we are alive on the level... */
+    struct level *oldlev = level;
+
     /* dispose of your possessions, usually cursed */
     if (u.ugrave_arise == (NON_PM - 1)) {
         /* embed your possessions in your statue */
@@ -299,13 +306,14 @@ make_bones:
         if (!statue)
             return;     /* couldn't make statue */
         mtmp = NULL;
-    } else if (u.ugrave_arise < LOW_PM && (rn2(3) || !corpse)) {
-        /* 33% of the time, Rodney shows up, undeadturns you and charms you to do his bidding */
+    } else if (u.ugrave_arise < LOW_PM && (rn2(2) || !corpse)) {
+        /* 50% of the time, Rodney shows up, undeadturns you and charms you to do his bidding */
         /* drop everything */
         drop_upon_death(NULL, NULL, FALSE);
         /* trick makemon() into allowing monster creation on your location */
         in_mklev = TRUE;
-        mtmp = makemon(&mons[PM_GHOST], level, youmonst.mx, youmonst.my, MM_NONAME);
+        mtmp = makemon(&mons[PM_GHOST], level, youmonst.mx, youmonst.my,
+                       MM_NONAME | NO_MINVENT);
         in_mklev = FALSE;
         if (!mtmp)
             return;
@@ -330,7 +338,8 @@ make_bones:
         }
         /* give your possessions to the monster you become */
         in_mklev = TRUE;
-        mtmp = makemon(&mons[u.ugrave_arise], level, youmonst.mx, youmonst.my, NO_MM_FLAGS);
+        mtmp = makemon(&mons[u.ugrave_arise], level, youmonst.mx, youmonst.my,
+                       NO_MINVENT);
         in_mklev = FALSE;
         if (!mtmp) {
             drop_upon_death(NULL, NULL, FALSE);
@@ -340,10 +349,13 @@ make_bones:
         newsym(youmonst.mx, youmonst.my);
         if (!charmed)
             pline(msgc_outrobad, "Your body rises from the dead as %s...",
-                  an(mons[u.ugrave_arise].mname));
+                  an(u.ufemale ? mons[u.ugrave_arise].fname : mons[u.ugrave_arise].mname));
         win_pause_output(P_MESSAGE);
         drop_upon_death(mtmp, NULL, charmed);
+
+        level = NULL;
         m_dowear(mtmp, TRUE);
+        level = oldlev;
     }
     if (mtmp) {
         mtmp->m_lev = (youmonst.m_lev ? youmonst.m_lev : 1);
@@ -351,16 +363,14 @@ make_bones:
         mtmp->female = u.ufemale;
         mtmp->msleeping = 1;
 
-        /* set intrinsics */
+        /* set intrinsics (not temporary ones, they disappear with death) */
+        level = NULL;
         int i;
-        int propmask;
-        for (i = 1; i <= LAST_PROP; i++) {
-            if (!(propmask = m_has_property(&youmonst, i, ANY_PROPERTY, TRUE)))
-                continue;
-            if ((propmask & W_MASK(os_outside)) && i <= 64)
-                set_property(mtmp, i, 0, TRUE);
-            /* arguably timeouts should be set, but those are likely gone already */
-        }
+        for (i = 1; i <= LAST_PROP; i++)
+            if (m_has_property(&youmonst, i, W_MASK(os_outside), TRUE))
+                set_property(mtmp, i, 0, FALSE);
+
+        level = oldlev;
         mtmp->mhitinc = youmonst.mhitinc;
         mtmp->mdaminc = youmonst.mdaminc;
         mtmp->mac = youmonst.mac;
@@ -377,6 +387,10 @@ make_bones:
                 continue;
             mon_addspell(mtmp, spellid(i));
         }
+
+        /* skills */
+        for (i = 0; i < P_NUM_SKILLS; i++)
+            mtmp->skills[i] = youmonst.skills[i];
 
         mtmp->former_player = 1 + /* Guarantee former_player > 0 */
             (2 * u.initgend    /*   2 * (0-2) = 0-4 */) +
@@ -395,11 +409,13 @@ make_bones:
         ttmp->madeby_u = 0;
         ttmp->tseen = (ttmp->ttyp == HOLE);
     }
-    /* This will reset names; put them back for the corpse and/or statue. */
+    /* This will reset names; put them back for the corpse and/or statue.
+       Use msgprintf to create a copy of the string since the name will
+       be deallocated by resetobjs */
     if (corpse)
-        cname = ox_name(corpse);
+        cname = msg_from_string(ox_name(corpse));
     if (statue)
-        sname = ox_name(statue);
+        sname = msg_from_string(ox_name(statue));
     resetobjs(level->objlist, FALSE);
     resetobjs(level->buriedobjlist, FALSE);
     if (corpse)
@@ -407,10 +423,18 @@ make_bones:
     if (statue)
         christen_obj(statue, sname);
 
+    /* Clear shop visit counter, which is also used as a flag as to whether
+       or not we've been in the shop and seen the shopkeeper
+       (avoids "Your hear Izchak cursing shoplifters" when not seen). */
+    struct mkroom *sroom = search_special(level, ANY_SHOP);
+    if (sroom && tended_shop(sroom))
+        sroom->resident->mextra->eshk->visitct = 0;
+
     /* Hero is no longer on the map. */
     youmonst.mx = youmonst.my = 0;
 
     /* Clear all memory from the level. */
+    level->flags.vault_known = FALSE;
     for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++) {
             level->locations[x][y].seenv = 0;

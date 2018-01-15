@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,6 +53,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
     int uhurt = 0;      /* 0=unhurt, 1=items damaged, 2=you and items damaged */
     const char *str;
     const char *dispbuf = "";   /* lint suppression; I think the code's OK */
+    const char *killer;
     boolean expl_needs_the = TRUE;
     int idamres, idamnonres;
     struct monst *mtmp;
@@ -60,8 +61,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
     int explmask[3][3];
 
     int whattype = abs(type) % 10;
-    int buzztyp = (type <= -30 ? whattype : abs(type));
-    boolean wand = (buzztyp < 10);
 
     /* 0=normal explosion, 1=do shieldeff, 2=do nothing */
     boolean shopdamage = FALSE;
@@ -143,23 +142,23 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     explmask[i][j] = 0;
                     break;
                 case AD_MAGM:
-                    explmask[i][j] = !!(raylevel < P_EXPERT && Antimagic);
+                    explmask[i][j] = !!(raylevel < P_EXPERT &&
+                                        resists_magm(&youmonst));
                     break;
                 case AD_FIRE:
-                    explmask[i][j] = !!Fire_resistance;
+                    explmask[i][j] = !!immune_to_fire(&youmonst);
                     break;
                 case AD_COLD:
-                    explmask[i][j] = !!Cold_resistance;
+                    explmask[i][j] = !!immune_to_cold(&youmonst);
                     break;
                 case AD_SLEE:
-                    explmask[i][j] = !!Sleep_resistance;
+                    explmask[i][j] = !!immune_to_sleep(&youmonst);
                     break;
                 case AD_DISN:
                     if (raylevel == P_UNSKILLED && Drain_resistance)
                         resist_death = TRUE;
                     /* why MR doesn't resist general deathfields is beyond me, but... */
-                    if (nonliving(youmonst.data) ||
-                        is_demon(youmonst.data))
+                    if (resists_death(&youmonst))
                         resist_death = TRUE;
                     if (raylevel && Antimagic)
                         resist_death = TRUE;
@@ -170,13 +169,13 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         !!Disint_resistance;
                     break;
                 case AD_ELEC:
-                    explmask[i][j] = !!Shock_resistance;
+                    explmask[i][j] = !!immune_to_elec(&youmonst);
                     break;
                 case AD_DRST:
-                    explmask[i][j] = !!Poison_resistance;
+                    explmask[i][j] = !!immune_to_poison(&youmonst);
                     break;
                 case AD_ACID:
-                    explmask[i][j] = !!Acid_resistance;
+                    explmask[i][j] = !!immune_to_acid(&youmonst);
                     break;
                 default:
                     impossible("explosion type %d?", adtyp);
@@ -199,18 +198,17 @@ explode(int x, int y, int type, /* the same as in zap.c */
                                            resists_magm(mtmp));
                         break;
                     case AD_FIRE:
-                        explmask[i][j] |= !!resists_fire(mtmp);
+                        explmask[i][j] |= !!immune_to_fire(mtmp);
                         break;
                     case AD_COLD:
-                        explmask[i][j] |= !!resists_cold(mtmp);
+                        explmask[i][j] |= !!immune_to_cold(mtmp);
                         break;
                     case AD_SLEE:
-                        explmask[i][j] |= !!resists_sleep(mtmp);
+                        explmask[i][j] |= !!immune_to_sleep(mtmp);
                     case AD_DISN:
                         if (raylevel == P_UNSKILLED && resists_drli(mtmp))
                         resist_death = TRUE;
-                        if (nonliving(mtmp->data) ||
-                            is_demon(mtmp->data))
+                        if (resists_death(mtmp))
                             resist_death = TRUE;
                         if (raylevel && resists_magm(mtmp))
                             resist_death = TRUE;
@@ -221,13 +219,13 @@ explode(int x, int y, int type, /* the same as in zap.c */
                                resists_disint(mtmp));
                         break;
                     case AD_ELEC:
-                        explmask[i][j] |= !!resists_elec(mtmp);
+                        explmask[i][j] |= !!immune_to_elec(mtmp);
                         break;
                     case AD_DRST:
-                        explmask[i][j] |= !!resists_poison(mtmp);
+                        explmask[i][j] |= !!immune_to_poison(mtmp);
                         break;
                     case AD_ACID:
-                        explmask[i][j] |= !!resists_acid(mtmp);
+                        explmask[i][j] |= !!immune_to_acid(mtmp);
                         break;
                     default:
                         impossible("explosion type %d?", adtyp);
@@ -303,9 +301,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 if (i + x - 1 == youmonst.mx && j + y - 1 == youmonst.my)
                     uhurt = (explmask[i][j] == 1) ? 1 : 2;
                 idamres = idamnonres = 0;
-                if (type >= 0)
-                    zap_over_floor((xchar) (i + x - 1), (xchar) (j + y - 1),
-                                   type, &shopdamage);
+                zap_over_floor((xchar) (i + x - 1), (xchar) (j + y - 1),
+                               type, &shopdamage);
 
                 mtmp = m_at(level, i + x - 1, j + y - 1);
                 if (!mtmp && i + x - 1 == youmonst.mx && j + y - 1 == youmonst.my)
@@ -350,11 +347,11 @@ explode(int x, int y, int type, /* the same as in zap.c */
                           expl_needs_the ? "the " : "", dispbuf);
                 }
 
-                idamres += destroy_mitem(mtmp, SCROLL_CLASS, (int)adtyp);
-                idamres += destroy_mitem(mtmp, SPBOOK_CLASS, (int)adtyp);
-                idamnonres += destroy_mitem(mtmp, POTION_CLASS, (int)adtyp);
-                idamnonres += destroy_mitem(mtmp, WAND_CLASS, (int)adtyp);
-                burn_away_slime(mtmp);
+                if (adtyp == AD_FIRE)
+                    burnarmor(mtmp);
+                idamnonres += destroy_mitem(mtmp, ALL_CLASSES, (int)adtyp, NULL);
+                if (adtyp == AD_FIRE)
+                    burn_away_slime(mtmp);
 
                 if (explmask[i][j] == 1) {
                     golemeffects(mtmp, (int)adtyp, dam + idamres);
@@ -362,34 +359,38 @@ explode(int x, int y, int type, /* the same as in zap.c */
                 } else {
                     int mdam = dam;
 
-                    if (resist(NULL, mtmp, olet, FALSE, 0)) {
+                    if (((adtyp != AD_DISN || !raylevel) &&
+                         resist(NULL, mtmp, olet, FALSE, 0)) ||
+                        (adtyp == AD_PHYS && half_phys_dam(mtmp)) ||
+                        (adtyp == AD_MAGM && resists_magm(mtmp)) ||
+                        (adtyp == AD_FIRE && resists_fire(mtmp)) ||
+                        (adtyp == AD_COLD && resists_cold(mtmp)) ||
+                        (adtyp == AD_SLEE && resists_sleep(mtmp)) ||
+                        (adtyp == AD_ELEC && resists_elec(mtmp)) ||
+                        (adtyp == AD_DRST && resists_poison(mtmp)) ||
+                        (adtyp == AD_ACID && resists_acid(mtmp))) {
                         /* TODO: again, message channel is a guess */
                         if (cansee(i + x - 1, j + y - 1))
                             pline(msgc_monneutral,
                                   "%s resists %s%s!", Monnam(mtmp),
                                   expl_needs_the ? "the " : "", dispbuf);
-                        mdam = dam / 2;
+                        if (adtyp != AD_SLEE) /* reduced in sleep_monst */
+                            mdam = dam / 2;
                     }
-                    if (mtmp == u.ustuck)
-                        mdam *= 2;
                     if (resists_cold(mtmp) && adtyp == AD_FIRE)
                         mdam *= 2;
                     else if (resists_fire(mtmp) && adtyp == AD_COLD)
                         mdam *= 2;
-                    if (adtyp == AD_MAGM && raylevel >= P_EXPERT && resists_magm(mtmp))
-                        mdam = (mdam + 1) / 2;
                     if (adtyp == AD_SLEE && raylevel) {
                         sleep_monst(NULL, mtmp, mdam, WAND_CLASS);
                         mdam = 0;
                     }
                     if (adtyp == AD_DISN && raylevel) {
-                        if (nonliving(mtmp->data) ||
-                            is_demon(mtmp->data) ||
-                            resists_magm(mtmp) ||
+                        if (resists_death(mtmp) || resists_magm(mtmp) ||
                             raylevel == P_UNSKILLED)
                             mlosexp(NULL, mtmp, "", FALSE);
                         else
-                            mdam = mtmp->mhp; /* instadeath */
+                            mdam = mtmp->mhp / 2 + dice(6, 6);
                     }
                     mtmp->mhp -= mdam;
                     mtmp->mhp -= (idamres + idamnonres);
@@ -416,34 +417,38 @@ explode(int x, int y, int type, /* the same as in zap.c */
         if (u.uinvulnerable) {
             damu = 0;
             pline(msgc_playerimmune, "You are unharmed!");
-        } else if (Half_physical_damage && adtyp == AD_PHYS)
-            damu = (damu + 1) / 2;
-        else if (raylevel && uhurt == 2) {
-            if (adtyp == AD_MAGM && Antimagic)
+        } else if ((adtyp == AD_PHYS && half_phys_dam(&youmonst)) ||
+                   (adtyp == AD_MAGM && resists_magm(&youmonst)) ||
+                   (adtyp == AD_FIRE && resists_fire(&youmonst)) ||
+                   (adtyp == AD_COLD && resists_cold(&youmonst)) ||
+                   (adtyp == AD_SLEE && resists_sleep(&youmonst)) ||
+                   (adtyp == AD_ELEC && resists_elec(&youmonst)) ||
+                   (adtyp == AD_DRST && resists_poison(&youmonst)) ||
+                   (adtyp == AD_ACID && resists_acid(&youmonst))) {
+            pline(combat_msgc(NULL, &youmonst, cr_resist),
+                  "You resist %s%s", expl_needs_the ? "the " : "", dispbuf);
+            if (adtyp != AD_SLEE)
                 damu = (damu + 1) / 2;
+        }
+        if (damu && raylevel && uhurt == 2) {
             if (adtyp == AD_SLEE) {
-                helpless(damu, hr_asleep, "sleeping", NULL);
+                sleep_monst(NULL, &youmonst, damu, WAND_CLASS);
                 damu = 0;
             }
             if (adtyp == AD_DISN) {
-                if (nonliving(youmonst.data) ||
-                    is_demon(youmonst.data) ||
-                    Antimagic ||
+                if (resists_death(&youmonst) || Antimagic ||
                     raylevel == P_UNSKILLED) {
                     losexp("drained by a death field",FALSE);
                     damu = 0;
-                } else {
-                    done(DIED, "killed by a death field");
-                    damu = 0; /* lifesaved */
-                }
+                } else
+                    damu = (Upolyd ? u.mh : u.uhp) / 2 + dice(6, 6);
             }
         }
         if (adtyp == AD_FIRE)
             burnarmor(&youmonst);
-        destroy_mitem(&youmonst, SCROLL_CLASS, (int)adtyp);
-        destroy_mitem(&youmonst, SPBOOK_CLASS, (int)adtyp);
-        destroy_mitem(&youmonst, POTION_CLASS, (int)adtyp);
-        destroy_mitem(&youmonst, WAND_CLASS, (int)adtyp);
+        int item_dmg = destroy_mitem(&youmonst, ALL_CLASSES, (int)adtyp,
+                                     &killer);
+        damu += item_dmg;
 
         ugolemeffects((int)adtyp, damu);
         if (uhurt == 2) {
@@ -455,11 +460,13 @@ explode(int x, int y, int type, /* the same as in zap.c */
 
         if (u.uhp <= 0 || (Upolyd && u.mh <= 0)) {
             int death = adtyp == AD_FIRE ? BURNING : DIED;
-            const char *killer;
 
             struct monst *offender = find_mid(level, flags.mon_moving,
                                               FM_EVERYWHERE);
 
+            /* Maybe the item destruction killed */
+            if (item_dmg && item_dmg >= rnd(damu + item_dmg))
+                (void) 0; /* killer is set above */
             if (olet == MON_EXPLODE) {
                 killer = killer_msg(death, an(str));
             } else if (type >= 0 && olet != SCROLL_CLASS) {

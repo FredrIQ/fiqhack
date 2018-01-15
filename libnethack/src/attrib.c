@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -111,9 +111,10 @@ gainstr(struct obj *otmp, int incr)
         int large_gain_amount = rn2_on_rng(6, rng);
         if (ABASE(A_STR) < 18)
             num = (gain_is_small ? 1 : large_gain_amount + 1);
-        else if (ABASE(A_STR) < STR18(85)) {
-            num = large_gain_amount + 3;
-        }
+        else if (gain_is_small)
+            return;
+        else
+            num = 1;
     }
     adjattrib(A_STR, cursed ? -num : num, TRUE);
 }
@@ -174,7 +175,7 @@ stone_luck(boolean parameter)
     struct obj *otmp;
     long bonchance = 0;
 
-    for (otmp = invent; otmp; otmp = otmp->nobj)
+    for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
         if (confers_luck(otmp)) {
             if (otmp->cursed)
                 bonchance -= otmp->quan;
@@ -400,10 +401,10 @@ init_attr(int np)
     /* The starting ability distribution has changed slightly since 3.4.3 so
        that players with different races but the same role will have the same
        stats, as far as is possible. Instead of capping scores at the racial
-       maximum, we cap them at STR18(100) for Strength, or 20 for other
-       stats. Then, if any stats end up over the racial cap, we reduce them to
-       the cap and redistribute them on rng_main.  The result is that the number
-       of seeds consumed from rng_charstats_role depends purely on role.
+       maximum, we cap them at 21 for Strength, or 20 for other stats. Then,
+       if any stats end up over the racial cap, we reduce them to the cap and
+       redistribute them on rng_main.  The result is that the number of seeds
+       consumed from rng_charstats_role depends purely on role.
 
        Note: there were previously two loops here, one to top up to np points,
        one to cut down to np points. The latter was dead code, and has been
@@ -421,7 +422,7 @@ init_attr(int np)
                 continue;   /* impossible */
 
             int current_max = (pass == 1 ? ATTRMAX(i) :
-                               i == A_STR ? STR18(100) : 20);
+                               i == A_STR ? 21 : 20);
 
             if (ABASE(i) >= current_max) {
                 tryct++;
@@ -553,35 +554,31 @@ acurr(const struct monst *mon, int x)
     } else {
         tmp = 11;
         if (x == A_STR && strongmonst(mon->data))
-            tmp = STR18(100);
+            tmp = 21;
         if (x == A_CON)
             tmp++; /* more HP regeneration */
-        if (x == A_INT && spellcaster(mon->data))
-            tmp = 18;
-        if (mon->iswiz && (x == A_INT || x == A_WIS))
-            tmp = 20;
+        if (x == A_INT || x == A_WIS) {
+            if (spellcaster(mon->data))
+                tmp = 18;
+            if (mon->iswiz)
+                tmp = 20;
+        }
     }
     tmp += attr_bonus(mon, x);
 
     if (x == A_STR) {
         struct obj *obj;
 
-        obj = which_armor(mon, os_armg);
-        if (obj && obj->otyp == GAUNTLETS_OF_POWER)
-            return 125;
-
         /* check for the "power" obj property, only functions on
            worn armor. */
-        for (obj = m_minvent(mon); obj; obj = obj->nobj)
+        for (obj = mon->minvent; obj; obj = obj->nobj)
             if ((obj->owornmask & W_ARMOR) &&
-                (obj_properties(obj) & opm_power))
-                return 125;
-
-        return (schar) ((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
+                ((obj_properties(obj) & opm_power) ||
+                 obj->otyp == GAUNTLETS_OF_POWER))
+                return 25;
     } else if (x == A_CHA) {
         if (tmp < 18 &&
-            (mon->data->mlet == S_NYMPH || monsndx(mon->data) == PM_SUCCUBUS ||
-             monsndx(mon->data) == PM_INCUBUS))
+            (mon->data->mlet == S_NYMPH || monsndx(mon->data) == PM_INCUBUS))
             return 18;
     } else if (x == A_INT || x == A_WIS) {
         struct obj *armh = which_armor(mon, os_armh);
@@ -591,21 +588,6 @@ acurr(const struct monst *mon, int x)
             return 6;
     }
     return (schar) ((tmp >= 25) ? 25 : (tmp <= 3) ? 3 : tmp);
-}
-
-/* condense clumsy ACURR(A_STR) value into value that fits into game formulas
- */
-schar
-acurrstr(void)
-{
-    int str = ACURR(A_STR);
-
-    if (str <= 18)
-        return (schar) str;
-    if (str <= 121)
-        return (schar) (19 + str / 50); /* map to 19-21 */
-    else
-        return (schar) (str - 100);
 }
 
 /* Avoid possible problems with alignment overflow, and provide a centralized
@@ -654,7 +636,7 @@ attr_bonus(const struct monst *mon, int attrib)
     int otyp;
     uint64_t props;
 
-    for (obj = m_minvent(mon); obj; obj = obj->nobj) {
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
         /* is it worn properly */
         if (!(obj->owornmask & W_WORN))
             continue;

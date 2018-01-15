@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-09-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -75,10 +75,10 @@ but that's really hard.
 #define ugod_is_angry() (u.ualign.record < 0)
 #define on_altar()      (IS_ALTAR(level->locations[youmonst.mx][youmonst.my].typ) && \
                          !Engulfed)
-#define on_shrine()     ((level->locations[youmonst.mx][youmonst.my].altarmask & AM_SHRINE) \
-                            != 0)
+#define on_shrine()     ((level->locations[youmonst.mx][youmonst.my].flags & \
+                          AM_SHRINE) != 0)
 #define a_align(x,y)    ((aligntyp)Amask2align( \
-                            level->locations[x][y].altarmask & AM_MASK))
+                            level->locations[x][y].flags & AM_MASK))
 
 /* Returns alignment for an altar a monster is standing on, or own alignment if none */
 aligntyp
@@ -86,7 +86,7 @@ ma_align(const struct monst *mon)
 {
     struct level *lev = m_dlevel(mon);
     if (IS_ALTAR(lev->locations[mon->mx][mon->my].typ) && !engulfed(mon))
-        return Amask2align(lev->locations[mon->mx][mon->my].altarmask & AM_MASK);
+        return Amask2align(lev->locations[mon->mx][mon->my].flags & AM_MASK);
     return malign(mon);
 }
 
@@ -194,7 +194,7 @@ worst_cursed_item(void)
 
     /* if strained or worse, check for loadstone first */
     if (near_capacity() >= HVY_ENCUMBER) {
-        for (otmp = invent; otmp; otmp = otmp->nobj)
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj)
             if (Cursed_obj(otmp, LOADSTONE))
                 return otmp;
     }
@@ -236,7 +236,7 @@ worst_cursed_item(void)
         otmp = uswapwep;
         /* all worn items ought to be handled by now */
     } else {
-        for (otmp = invent; otmp; otmp = otmp->nobj) {
+        for (otmp = youmonst.minvent; otmp; otmp = otmp->nobj) {
             if (!otmp->cursed)
                 continue;
             if (otmp->otyp == LOADSTONE || confers_luck(otmp))
@@ -445,7 +445,7 @@ god_zaps_you(aligntyp resp_god)
         pline(msgc_alignbad,
               "Suddenly a bolt of lightning comes down at you from the "
               "heavens!");
-        if (!resists_elec(u.ustuck)) {
+        if (!immune_to_elec(u.ustuck)) {
             pline(combat_msgc(NULL, u.ustuck, cr_hit),
                   "%s is hit by it, and fries to a crisp!", Monnam(u.ustuck));
             /* Yup, you get experience.  It takes guts to successfully pull off
@@ -463,7 +463,9 @@ god_zaps_you(aligntyp resp_god)
             else
                 mon_reflects(&youmonst, NULL, FALSE, 
                              "%s reflects from %s %s.", "It");
-        } else if (Shock_resistance) {
+        } else if (immune_to_elec(&youmonst)) {
+            /* You need full immunity to be protected, gods aren't deterred
+               by resistances. */
             shieldeff(youmonst.mx, youmonst.my);
             pline(msgc_playerimmune, "It seems not to affect you.");
         } else
@@ -595,6 +597,7 @@ angrygods(aligntyp resp_god)
         break;
     }
     u.ublesscnt = rnz(300);
+    set_prayreminder(&youmonst, pty_anger);
     return;
 }
 
@@ -612,7 +615,8 @@ at_your_feet(const char *str)
     } else {
         pline(msgc_youdiscover,
               "%s %s %s your %s!", str, Blind ? "lands" : vtense(str, "appear"),
-              Levitation ? "beneath" : "at", makeplural(body_part(FOOT)));
+              levitates(&youmonst) ? "beneath" : "at",
+              makeplural(body_part(FOOT)));
     }
 }
 
@@ -982,7 +986,8 @@ pleased(aligntyp g_align)
                 else
                     pline(msgc_aligngood, "You are surrounded by %s aura.",
                           an(hcolor("light blue")));
-                for (otmp = invent; otmp; otmp = otmp->nobj) {
+                for (otmp = youmonst.minvent; otmp;
+                     otmp = otmp->nobj) {
                     if (otmp->cursed) {
                         uncurse(otmp);
                         if (!Blind) {
@@ -1079,6 +1084,7 @@ pleased(aligntyp g_align)
     if (kick_on_butt)
         u.ublesscnt += kick_on_butt * rnz(1000);
 
+    set_prayreminder(&youmonst, pty_favour);
     return;
 }
 
@@ -1098,6 +1104,8 @@ water_prayer(boolean bless_water)
             otmp->blessed = bless_water;
             otmp->cursed = !bless_water;
             otmp->bknown = bc_known;
+            if (bc_known)
+                tell_discovery(otmp);
             changed += otmp->quan;
         } else if (otmp->oclass == POTION_CLASS)
             other = TRUE;
@@ -1182,7 +1190,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
     int value = 0;
     int pm;
     aligntyp altaralign = a_align(youmonst.mx, youmonst.my);
-    boolean sanctum = level->locations[youmonst.mx][youmonst.my].altarmask & AM_SANCTUM;
+    boolean sanctum =
+        level->locations[youmonst.mx][youmonst.my].flags & AM_SANCTUM;
     int cnt; /* for loop initial declarations are only allowed in C99 mode */
     struct obj *otmp;
 
@@ -1251,9 +1260,10 @@ dosacrifice(const struct nh_cmd_arg *arg)
                       urace.adj);
                 if (!sanctum) {
                     /* This is supposed to be &= */
-                    level->locations[youmonst.mx][youmonst.my].altarmask &=
+                    level->locations[youmonst.mx][youmonst.my].flags &=
                         AM_SHRINE & AM_SANCTUM;
-                    level->locations[youmonst.mx][youmonst.my].altarmask |= AM_CHAOTIC;
+                    level->locations[youmonst.mx][youmonst.my].flags |=
+                        AM_CHAOTIC;
                 }
                 angry_priest();
             } else {
@@ -1267,7 +1277,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     pline(msgc_badidea, "The blood floods the altar, which "
                           "vanishes in %s cloud!", an(hcolor("black")));
                     level->locations[youmonst.mx][youmonst.my].typ = ROOM;
-                    level->locations[youmonst.mx][youmonst.my].altarmask = 0;
+                    level->locations[youmonst.mx][youmonst.my].flags = 0;
                     newsym(youmonst.mx, youmonst.my);
                     angry_priest();
                     demonless_msg = "cloud dissipates";
@@ -1482,6 +1492,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     /* Beware, Conversion is costly */
                     change_luck(-3);
                     u.ublesscnt += 300;
+                    set_prayreminder(&youmonst, pty_conversion);
                     adjalign((int)(u.ualignbase[A_ORIGINAL] * (ALIGNLIM / 2)));
                 } else {
                     u.ugangr += 3;
@@ -1508,9 +1519,9 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     exercise(A_WIS, TRUE);
                     change_luck(1);
                     /* Yes, this is supposed to be &=, not |= */
-                    level->locations[youmonst.mx][youmonst.my].altarmask &=
+                    level->locations[youmonst.mx][youmonst.my].flags &=
                         AM_SHRINE & AM_SANCTUM;
-                    level->locations[youmonst.mx][youmonst.my].altarmask |=
+                    level->locations[youmonst.mx][youmonst.my].flags |=
                         Align2amask(u.ualign.type);
                     if (!Blind)
                         pline_implied(
@@ -1560,6 +1571,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
 
                     if ((int)u.uluck < 0)
                         u.uluck = 0;
+                    set_prayreminder(&youmonst, pty_mollified);
                 }
             } else {    /* not satisfied yet */
                 if (Hallucination)
@@ -1597,6 +1609,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                               "You have a feeling of reconciliation.");
                     if ((int)u.uluck < 0)
                         u.uluck = 0;
+                    set_prayreminder(&youmonst, pty_reconciled);
                 }
             }
         } else {
@@ -1612,20 +1625,36 @@ dosacrifice(const struct nh_cmd_arg *arg)
                                        rng_altar_gift);
                     if (otmp) {
                         if (otmp && otmp->oartifact)
-                            artifact_exists(otmp, artiname(otmp->oartifact), ag_gift);
+                            artifact_exists(otmp, artiname(otmp->oartifact),
+                                            ag_gift);
                         if (otmp->spe < 0)
                             otmp->spe = 0;
                         if (otmp->cursed)
                             uncurse(otmp);
                         otmp->oerodeproof = TRUE;
                         dropy(otmp);
-                        at_your_feet("An object");
+                        /* if we gave a lance, also give a saddle */
+                        struct obj *saddle = NULL;
+                        if (otmp->otyp == LANCE)
+                            saddle = mksobj(level, SADDLE, FALSE, FALSE,
+                                            rng_altar_gift);
+
+                        if (saddle) {
+                            if (saddle->cursed)
+                                uncurse(saddle);
+                            saddle->oerodeproof = TRUE;
+                            dropy(saddle);
+                            at_your_feet("Some items");
+                            unrestrict_weapon_skill(P_RIDING);
+                        } else
+                            at_your_feet("An object");
                         godvoice(msgc_aligngood, u.ualign.type,
                                  "Use my gift wisely!");
                         historic_event(FALSE, FALSE, "received %s from %s.",
                                        artiname(otmp->oartifact), u_gname());
                         u.ugifts++;
                         u.ublesscnt = rnz(300 + (50 * nartifacts));
+                        set_prayreminder(&youmonst, pty_gift);
                         exercise(A_WIS, TRUE);
                         /* make sure we can use this weapon */
                         unrestrict_weapon_skill(weapon_type(otmp));
@@ -2116,6 +2145,17 @@ blocked_boulder(int dx, int dy)
         return TRUE;
 
     return FALSE;
+}
+
+void
+set_prayreminder(struct monst *mon, enum pray_type result)
+{
+    struct eyou *you = mx_eyou(mon);
+    if (!you)
+        return;
+
+    you->last_pray_action = moves;
+    you->prayed_result = result;
 }
 
 /*pray.c*/

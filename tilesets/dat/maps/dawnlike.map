@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2015-04-02
+! Last modified by Fredrik Ljungdahl, 2017-11-02
 !
 ! Copyright (C) 2014 Alex Smith
 !
@@ -1196,7 +1196,7 @@ Croesus: [Humanoid0.png] 0x7A
 
 water demon: [Demon0.png] 0x28
 horned devil: [Demon0.png] 0x1A
-succubus: [Demon0.png] 0x30
+sub female incubus: [Demon0.png] 0x30
 incubus: [Demon0.png] 0x31
 ! MISSING: erinys
 ! MISSING: barbed devil
@@ -1263,9 +1263,9 @@ sub female sub orc barbarian: [Player0.png] 0x65
 caveman: [Player0.png] 0x25
 sub dwarf caveman: [Player0.png] 0x58
 sub gnome caveman: [Player0.png] 0xD
-cavewoman: [Player0.png] 0x2A
-sub dwarf cavewoman: [Player0.png] 0x58
-sub gnome cavewoman: [Player0.png] 0xD
+sub female caveman: [Player0.png] 0x2A
+sub dwarf sub female caveman: [Player0.png] 0x58
+sub gnome sub female caveman: [Player0.png] 0xD
 
 healer: [Player0.png] 0x21
 sub gnome healer: [Player0.png] 0xE
@@ -1276,8 +1276,8 @@ monk: [Player0.png] 0x1E
 
 priest: [Player0.png] 0x20
 sub elf priest: [Player0.png] 0x3F
-priestess: [Player0.png] 0x29
-sub elf priestess: [Player0.png] 0x40
+sub female priest: [Player0.png] 0x29
+sub elf sub female priest: [Player0.png] 0x40
 
 rogue: [Player0.png] 0x22
 sub orc rogue: [Player0.png] 0x42
