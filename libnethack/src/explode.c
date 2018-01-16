@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -426,7 +426,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                    (adtyp == AD_DRST && resists_poison(&youmonst)) ||
                    (adtyp == AD_ACID && resists_acid(&youmonst))) {
             pline(combat_msgc(NULL, &youmonst, cr_resist),
-                  "You resist %s%s", expl_needs_the ? "the " : "", dispbuf);
+                  "You resist %s%s.", expl_needs_the ? "the " : "", dispbuf);
             if (adtyp != AD_SLEE)
                 damu = (damu + 1) / 2;
         }
