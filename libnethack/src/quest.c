@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -347,7 +347,7 @@ leader_speaks(struct monst *mtmp)
     /* leader might have become pissed during the chat */
     if (Qstat(pissed_off)) {
         mtmp->mstrategy = st_none;
-        msethostility(mtmp, TRUE, FALSE);
+        sethostility(mtmp, TRUE, FALSE);
     }
 }
 
@@ -401,7 +401,7 @@ prisoner_speaks(struct monst *mtmp)
             pline(msgc_npcvoice, "%s speaks:", Monnam(mtmp));
         verbalize(msgc_aligngood, "I'm finally free!");
         mtmp->mstrategy = st_none;
-        msethostility(mtmp, FALSE, FALSE); /* TODO: reset alignment? */
+        sethostility(mtmp, FALSE, FALSE); /* TODO: reset alignment? */
 
         /* Your god is happy... */
         adjalign(3);

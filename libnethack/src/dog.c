@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -95,7 +95,7 @@ make_familiar(struct monst *mon, struct obj *otmp, xchar x, xchar y, boolean qui
     else if (mon->mpeaceful)
         mtmp->mpeaceful = 1;
     else
-        msethostility(mtmp, TRUE, TRUE);
+        sethostility(mtmp, TRUE, TRUE);
     mtmp->msleeping = 0;
     if (otmp) { /* figurine; resulting monster might not become a pet */
         chance = rn2_on_rng(10, you ? rng_figurine_effect : rng_main);
@@ -111,7 +111,7 @@ make_familiar(struct monst *mon, struct obj *otmp, xchar x, xchar y, boolean qui
                     pline(msgc_substitute, "You get a %s feeling about this.",
                           tame ? "bad" : "good");
                 if (tame)
-                    msethostility(mtmp, TRUE, TRUE);
+                    sethostility(mtmp, TRUE, TRUE);
                 else
                     initedog(mtmp);
             }
@@ -462,7 +462,7 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
            changes.  This gives better results than rng_main, and we can't match
            exactly due to different pet-wrangling habits.
 
-           Note: not msethostility; we're off-level right now. */
+           Note: not sethostility; we're off-level right now. */
         if (mtmp->mtame > wilder)
             mtmp->mtame -= wilder;      /* less tame */
         else if (mtmp->mtame > rn2_on_rng(wilder, rng_dog_untame))
@@ -800,7 +800,7 @@ tamedog(struct monst *mtmp, struct obj *obj)
        calls set_malign (thus there's no need for the caller to call it after
        calling tamedog()) */
     if (!mtmp->mtame)
-        msethostility(mtmp, FALSE, TRUE);
+        sethostility(mtmp, FALSE, TRUE);
     if (flags.moonphase == FULL_MOON && night() && rn2(6) && obj &&
         mtmp->data->mlet == S_DOG)
         return NULL;
@@ -904,10 +904,10 @@ wary_dog(struct monst *mtmp, boolean was_dead)
     }
 
     if (edog && (edog->killed_by_u == 1 || edog->abuse > 2)) {
-        msethostility(mtmp, TRUE, FALSE);
+        sethostility(mtmp, TRUE, FALSE);
         if (edog->abuse >= 0 && edog->abuse < 10)
             if (!rn2_on_rng(edog->abuse + 1, rng_dog_untame))
-                msethostility(mtmp, FALSE, FALSE);
+                sethostility(mtmp, FALSE, FALSE);
         if (!quietly && cansee(mtmp->mx, mtmp->my)) {
             if (haseyes(youmonst.data)) {
                 if (haseyes(mtmp->data))
@@ -922,7 +922,7 @@ wary_dog(struct monst *mtmp, boolean was_dead)
     } else {
         /* chance it goes wild anyway - Pet Semetary */
         if (rn2_on_rng(mtmp->mtame, rng_dog_untame) == mtmp->mtame - 1)
-            msethostility(mtmp, TRUE, FALSE);
+            sethostility(mtmp, TRUE, FALSE);
     }
     if (!mtmp->mtame) {
         newsym(mtmp->mx, mtmp->my);

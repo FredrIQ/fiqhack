@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -89,7 +89,7 @@ msummon(struct monst *mon, const d_level *dlev)
             /* peaceful state should match too */
             if (mon) {
                 if (mon->mpeaceful)
-                    msethostility(mtmp, FALSE, TRUE);
+                    sethostility(mtmp, FALSE, TRUE);
                 if (mon->mtame)
                     tamedog(mtmp, NULL);
             }
@@ -139,7 +139,7 @@ summon_minion(aligntyp alignment, boolean talk)
                 pline(msgc_levelwarning, "%s appears before you.",
                       Amonnam(mon));
         }
-        msethostility(mon, TRUE, FALSE);
+        sethostility(mon, TRUE, FALSE);
         /* don't call set_malign(); player was naughty */
     }
 }
@@ -188,7 +188,7 @@ demon_talk(struct monst *mtmp)
 
     if (uwep && uwep->oartifact == ART_EXCALIBUR) {
         pline(msgc_npcanger, "%s looks very angry.", Amonnam(mtmp));
-        msethostility(mtmp, TRUE, TRUE);
+        sethostility(mtmp, TRUE, TRUE);
         return 0;
     }
 
@@ -213,7 +213,7 @@ demon_talk(struct monst *mtmp)
         (100 * (1 + (sgn(u.ualign.type) == sgn(mtmp->data->maligntyp))));
 
     if (!demand) {      /* you have no gold */
-        msethostility(mtmp, TRUE, TRUE);
+        sethostility(mtmp, TRUE, TRUE);
         return 0;
     } else {
         /* make sure that the demand is unmeetable if the monster has the
@@ -234,7 +234,7 @@ demon_talk(struct monst *mtmp)
                   "%s scowls at you menacingly, then vanishes.", Amonnam(mtmp));
         } else {
             pline(msgc_npcanger, "%s gets angry...", Amonnam(mtmp));
-            msethostility(mtmp, TRUE, TRUE);
+            sethostility(mtmp, TRUE, TRUE);
             return 0;
         }
     }

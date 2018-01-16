@@ -392,7 +392,7 @@ intemple(int roomno)
                 if (priest->mpeaceful) {
                     msg1 = "Infidel, you have entered Moloch's Sanctum!";
                     msg2 = "Be gone!";
-                    msethostility(priest, TRUE, TRUE);
+                    sethostility(priest, TRUE, TRUE);
                 } else
                     msg1 = "You desecrate this place by your presence!";
             } else {
@@ -432,7 +432,7 @@ intemple(int roomno)
             if (!rn2(5)) {
                 struct monst *mtmp;
 
-                if (!((mtmp = makemon(&mons[PM_GHOST], level, 
+                if (!((mtmp = makemon(&mons[PM_GHOST], level,
                                       u.ux, u.uy, NO_MM_FLAGS))))
                     return;
                 if (!Blind || sensemon(mtmp))
@@ -440,8 +440,8 @@ intemple(int roomno)
                           "An enormous ghost appears next to you!");
                 else
                     pline(msgc_statusbad, "You sense a presence close by!");
-                msethostility(mtmp, TRUE, TRUE);
-                pline_implied(msgc_statusbad, 
+                sethostility(mtmp, TRUE, TRUE);
+                pline_implied(msgc_statusbad,
                     "You are frightened to death, and unable to move.");
                 helpless(3, hr_afraid, "frightened to death",
                          "You regain your composure.");
@@ -462,7 +462,7 @@ priest_talk(struct monst *priest)
     if (priest->mflee || (!ispriest(priest) && coaligned && strayed)) {
         pline(msgc_npcanger, "%s doesn't want anything to do with you!",
               Monnam(priest));
-        msethostility(priest, TRUE, FALSE);
+        sethostility(priest, TRUE, FALSE);
         return;
     }
 
@@ -481,7 +481,7 @@ priest_talk(struct monst *priest)
             priest->mfrozen = priest->msleeping = 0;
             priest->mcanmove = 1;
         }
-        msethostility(priest, TRUE, FALSE);
+        sethostility(priest, TRUE, FALSE);
         verbalize(msgc_npcanger, "%s", cranky_msg[rn2(3)]);
         return;
     }
@@ -492,7 +492,7 @@ priest_talk(struct monst *priest)
         verbalize
             (msgc_npcanger,
              "Begone!  Thou desecratest this holy place with thy presence.");
-        msethostility(priest, TRUE, FALSE);
+        sethostility(priest, TRUE, FALSE);
         return;
     }
     if (!money_cnt(youmonst.minvent)) {
@@ -581,7 +581,7 @@ mk_roamer(const struct permonst *ptr, aligntyp alignment, struct level *lev,
     if (coaligned && !peaceful)
         mx_epri(roamer)->shroom = 0;
     roamer->mtrapseen = ~0;     /* traps are known */
-    msethostility(roamer, !peaceful, TRUE); /* TODO: handle in_mklev */
+    sethostility(roamer, !peaceful, TRUE); /* TODO: handle in_mklev */
     roamer->msleeping = 0;
 
     /* MORE TO COME */
@@ -597,7 +597,7 @@ reset_hostility(struct monst *roamer)
         return;
 
     if (malign(roamer) != u.ualign.type)
-        msethostility(roamer, TRUE, TRUE);
+        sethostility(roamer, TRUE, TRUE);
 }
 
 boolean

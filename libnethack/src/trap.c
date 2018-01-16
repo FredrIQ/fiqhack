@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2940,7 +2940,7 @@ domagictrap(struct monst *mon)
                         if (you || mon->mtame)
                             tamedog(mtmp, NULL);
                         else
-                            msethostility(mtmp, mon->mpeaceful, FALSE);
+                            sethostility(mtmp, mon->mpeaceful, FALSE);
                     }
                 }
             break;
@@ -3668,7 +3668,7 @@ reward_untrap(struct trap *ttmp, struct monst *mtmp)
         if (rnl(10) < 8 && !mtmp->mpeaceful && !mtmp->msleeping &&
             !mtmp->mfrozen && !mindless(mtmp->data) &&
             mtmp->data->mlet != S_HUMAN) {
-            msethostility(mtmp, FALSE, TRUE);
+            sethostility(mtmp, FALSE, TRUE);
             pline(msgc_npcvoice, "%s is grateful.", Monnam(mtmp));
         }
         /* Helping someone out of a trap is a nice thing to do, A lawful may be
@@ -3801,7 +3801,7 @@ try_lift(struct monst *mtmp, struct trap *ttmp, int wt, boolean stuff)
         if (!ttmp->madeby_u && !mtmp->mpeaceful && mtmp->mcanmove &&
             !mindless(mtmp->data) && mtmp->data->mlet != S_HUMAN &&
             rnl(10) < 3) {
-            msethostility(mtmp, FALSE, TRUE);
+            sethostility(mtmp, FALSE, TRUE);
             pline(msgc_npcvoice, "%s thinks it was nice of you to try.",
                   Monnam(mtmp));
         }

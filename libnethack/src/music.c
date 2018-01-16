@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -117,7 +117,7 @@ charm_snakes(int distance)
             mtmp->mavenge = 0;
             could_see_mon = canspotmon(mtmp);
             mtmp->mundetected = 0;
-            msethostility(mtmp, FALSE, FALSE); /* does a newsym() */
+            sethostility(mtmp, FALSE, FALSE); /* does a newsym() */
             if (canseemon(mtmp)) {
                 if (!could_see_mon)
                     pline(msgc_youdiscover,
@@ -144,7 +144,7 @@ calm_nymphs(int distance)
         if (!DEADMONSTER(mtmp) && mtmp->data->mlet == S_NYMPH && mtmp->mcanmove
             && distu(mtmp->mx, mtmp->my) < distance) {
             mtmp->msleeping = 0;
-            msethostility(mtmp, FALSE, FALSE);
+            sethostility(mtmp, FALSE, FALSE);
             mtmp->mavenge = 0;
             if (canseemon(mtmp))
                 pline(msgc_actionok,
@@ -165,7 +165,7 @@ awaken_soldiers(struct monst *culprit)
         if (!DEADMONSTER(mtmp) && is_mercenary(mtmp->data) &&
             !mx_egd(mtmp)) {
             mtmp->mfrozen = 0;
-            msethostility(mtmp, TRUE, FALSE);
+            sethostility(mtmp, TRUE, FALSE);
             mtmp->mcanmove = 1;
             mtmp->msleeping = 0;
             if (canseemon(mtmp))

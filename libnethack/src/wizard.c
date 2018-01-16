@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -762,7 +762,7 @@ clonewiz(void)
                  NO_MM_FLAGS)) != 0) {
         flags.double_troubled = TRUE;
         mtmp2->msleeping = 0;
-        msethostility(mtmp2, TRUE, FALSE); /* TODO: reset alignment? */
+        sethostility(mtmp2, TRUE, FALSE); /* TODO: reset alignment? */
         if (!Uhave_amulet && rn2(2)) {        /* give clone a fake */
             add_to_minv(mtmp2, mksobj(level, FAKE_AMULET_OF_YENDOR,
                                       TRUE, FALSE, rng_main), NULL);
@@ -866,7 +866,7 @@ nasty(struct monst *mcast, coord bypos)
                     mon_wield_item(mtmp);
                 }
             } else
-                msethostility(mtmp, TRUE, TRUE);
+                sethostility(mtmp, TRUE, TRUE);
             newsym(mtmp->mx, mtmp->my);
             /* Give number of seen monsters to return later */
             if (canseemon(mtmp))
@@ -921,7 +921,7 @@ resurrect(void)
 
     if (mtmp) {
         mtmp->msleeping = 0;
-        msethostility(mtmp, TRUE, TRUE);
+        sethostility(mtmp, TRUE, TRUE);
         pline(msgc_npcvoice, "A voice booms out...");
         verbalize(msgc_npcanger,
                   "So thou thought thou couldst %s me, fool.", verb);

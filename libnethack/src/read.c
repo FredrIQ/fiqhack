@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -826,7 +826,7 @@ maybe_tame(struct monst *mon, struct monst *mtmp, struct obj *sobj)
             break;
 
         if (!you) /* setmangry screws with your alignment */
-            msethostility(mtmp, TRUE, FALSE);
+            sethostility(mtmp, TRUE, FALSE);
         else
             setmangry(mtmp);
         break;
@@ -835,7 +835,7 @@ maybe_tame(struct monst *mon, struct monst *mtmp, struct obj *sobj)
             break;
 
         if (!mx_eshk(mtmp)) /* peaceful taming keeps hostile shk */
-            msethostility(mtmp, FALSE, FALSE);
+            sethostility(mtmp, FALSE, FALSE);
         break;
     case 2:
         if (mtmp->mtame)
@@ -2725,7 +2725,7 @@ create_particular(const struct nh_cmd_arg *arg)
             } else {
                 mtmp = makemon(whichpm, level, u.ux, u.uy, NO_MM_FLAGS);
                 if ((makepeaceful || makehostile) && mtmp)
-                    msethostility(mtmp, !makepeaceful, TRUE);
+                    sethostility(mtmp, !makepeaceful, TRUE);
             }
             if (mtmp) {
                 madeany = TRUE;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -271,7 +271,7 @@ invault(void)
         if (!(guard = makemon(&mons[PM_GUARD], level, x, y, NO_MM_FLAGS)))
             return;
         mx_egd_new(guard);
-        msethostility(guard, FALSE, TRUE);
+        sethostility(guard, FALSE, TRUE);
         mx_egd(guard)->gddone = 0;
         mx_egd(guard)->ogx = x;
         mx_egd(guard)->ogy = y;
@@ -546,7 +546,7 @@ gd_move(struct monst *grd)
                 mnexto(grd);
                 level->locations[m][n].typ = egrd->fakecorr[0].ftyp;
                 newsym(m, n);
-                msethostility(grd, TRUE, FALSE);
+                sethostility(grd, TRUE, FALSE);
                 return -1;
             }
             /* not fair to get mad when (s)he's fainted or paralyzed */
@@ -562,7 +562,7 @@ gd_move(struct monst *grd)
                 rloc(grd, FALSE);
                 level->locations[m][n].typ = egrd->fakecorr[0].ftyp;
                 newsym(m, n);
-                msethostility(grd, TRUE, FALSE);
+                sethostility(grd, TRUE, FALSE);
             letknow:
                 if (!cansee(grd->mx, grd->my) || !mon_visible(grd))
                     You_hear(msgc_npcanger,
@@ -606,7 +606,7 @@ gd_move(struct monst *grd)
                 return 0;
             } else {
                 verbalize(msgc_npcanger, "So be it, rogue!");
-                msethostility(grd, TRUE, FALSE);
+                sethostility(grd, TRUE, FALSE);
                 return -1;
             }
         }
@@ -836,7 +836,7 @@ paygd(void)
                        u.uplname, u.ufemale ? mons[u.umonster].fname :
                        mons[u.umonster].mname));
     }
-    
+
     for (coins = youmonst.minvent; coins; coins = nextcoins) {
         nextcoins = coins->nobj;
         if (objects[coins->otyp].oc_class == COIN_CLASS) {

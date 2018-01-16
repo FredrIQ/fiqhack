@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2206,7 +2206,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         if (mtmp->mtrapped && !mtmp->mpeaceful) {
             if (!rn2(mtmp->mtame)) {
                 mtmp->msleeping = 0;
-                msethostility(mtmp, TRUE, FALSE);
+                sethostility(mtmp, TRUE, FALSE);
                 if (mtmp->mleashed)
                     m_unleash(mtmp, TRUE);
                 growl(mtmp);
@@ -2265,7 +2265,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                     if (mtmp->dlevel == level)
                         setmangry(mtmp);
                     else {
-                        msethostility(mtmp, TRUE, FALSE);
+                        sethostility(mtmp, TRUE, FALSE);
                         pline(msgc_alignbad,
                               "It didn't seem very pleased about what you just did...");
                         adjalign(-5);
@@ -2534,7 +2534,7 @@ stillinwater:
             else if (mtmp->mpeaceful) {
                 pline(msgc_levelwarning, "You surprise %s!", Blind &&
                       !sensemon(mtmp) ? "something" : a_monnam(mtmp));
-                msethostility(mtmp, TRUE, FALSE);
+                sethostility(mtmp, TRUE, FALSE);
             } else
                 pline(msgc_levelwarning, "%s attacks you by surprise!",
                       Amonnam(mtmp));

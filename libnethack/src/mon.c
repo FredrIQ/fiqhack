@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1328,6 +1328,13 @@ can_carry(struct monst *mtmp, struct obj *otmp)
     return TRUE;
 }
 
+/* Returns monster that mon is angry at, or NULL if none or offlevel */
+struct monst *
+angr_at(const struct monst *mon)
+{
+    return find_mid(mon->dlevel, mon->angr, FM_FMON);
+}
+
 /* If monster is willing to jump, return max distance. Otherwise, return
    0. */
 int
@@ -1929,6 +1936,10 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
 
     /* Grudges */
     if (grudge(ma, md))
+        return ALLOW_M | ALLOW_TM;
+
+    /* Monster anger targets */
+    if (angr_at(magr) == mdef || angr_at(mdef) == magr)
         return ALLOW_M | ALLOW_TM;
 
     return 0L;
@@ -3141,6 +3152,46 @@ m_respond(struct monst *mtmp)
     }
 }
 
+/* Variant of sethostility that works on monsters */
+void
+msethostility(struct monst *offender, struct monst *victim,
+              boolean hostile, boolean adjust_malign)
+{
+    if (offender == victim)
+        return;
+
+    if (offender == &youmonst) {
+        sethostility(victim, hostile, adjust_malign);
+        return;
+    }
+
+    if (victim == &youmonst) {
+        /* also change peacefulness, but don't penalize you for it */
+        sethostility(offender, hostile, TRUE);
+        return;
+    }
+
+    /* Allow for limited multi-angering by making angerings two-way */
+
+    struct monst *oangr = angr_at(offender);
+    struct monst *vangr = angr_at(victim);
+
+    if (!hostile) {
+        if (oangr == victim)
+            victim->angr = 0;
+        if (vangr == offender)
+            victim->angr = 0;
+        return;
+    }
+
+    if (vangr == offender)
+        return;
+
+    if (oangr && oangr != victim && !vangr)
+        victim->angr = offender->m_id;
+    else
+        offender->angr = victim->m_id;
+}
 
 /* Marks a monster as peaceful (hostile = FALSE) or hostile (hostile = TRUE),
    while handling appropriate side effects (brandings, etc.); note that this
@@ -3159,7 +3210,7 @@ m_respond(struct monst *mtmp)
    For general angering when it's the player's fault (attacking a monster,
    etc.), see setmangry. */
 void
-msethostility(struct monst *mtmp, boolean hostile, boolean adjust_malign)
+sethostility(struct monst *mtmp, boolean hostile, boolean adjust_malign)
 {
     mtmp->mpeaceful = !hostile;
     mtmp->mtame = 0;
@@ -3171,6 +3222,43 @@ msethostility(struct monst *mtmp, boolean hostile, boolean adjust_malign)
         set_malign(mtmp);
 }
 
+/* setmangry that works on monsters too */
+void
+msetmangry(struct monst *offender, struct monst *victim)
+{
+    if (offender == victim)
+        return;
+
+    if (!offender)
+        panic("msetmangry: no offender");
+
+    if (offender == &youmonst)
+        setmangry(victim);
+    else if (victim == &youmonst) {
+        if (offender->mpeaceful && !offender->mtame && !Conflict) {
+            sethostility(offender, TRUE, TRUE);
+            offender->mavenge = TRUE;
+            pline(msgc_consequence,
+                  "You feel aggravated at %s!", mon_nam(offender));
+        }
+    } else {
+        if (angr_at(victim) == offender || angr_at(offender) == victim)
+            return; /* already angry at this monster */
+
+        if (couldsee(victim->mx, victim->my)) {
+            /* use combat_msgc since the offender will probably be hit */
+            if (humanoid(victim->data) || mx_eshk(victim) || mx_egd(victim))
+                pline(combat_msgc(victim, offender, cr_hit),
+                      "%s angry at %s!", M_verbs(victim, "get"),
+                      mon_nam(offender));
+            else
+                growl(victim);
+        }
+
+        msethostility(offender, victim, TRUE, FALSE);
+    }
+}
+
 void
 setmangry(struct monst *mtmp)
 {
@@ -3180,7 +3268,7 @@ setmangry(struct monst *mtmp)
         return;
     if (mtmp->mtame)
         return;
-    msethostility(mtmp, TRUE, FALSE);
+    sethostility(mtmp, TRUE, FALSE);
 
     if (ispriest(mtmp)) {
         if (p_coaligned(mtmp))
@@ -3208,7 +3296,7 @@ setmangry(struct monst *mtmp)
         for (mon = level->monlist; mon; mon = mon->nmon)
             if (!DEADMONSTER(mon) && mon->data == &pm_guardian &&
                 mon->mpeaceful) {
-                msethostility(mtmp, TRUE, FALSE);
+                sethostility(mtmp, TRUE, FALSE);
                 if (canseemon(mon))
                     ++got_mad;
             }
@@ -3863,7 +3951,7 @@ angry_guards(boolean silent)
                 slct++;
                 mtmp->msleeping = mtmp->mfrozen = 0;
             }
-            msethostility(mtmp, TRUE, FALSE);
+            sethostility(mtmp, TRUE, FALSE);
         }
     }
     if (ct) {
@@ -3900,7 +3988,7 @@ pacify_guards(void)
             continue;
         if (mtmp->data == &mons[PM_WATCHMAN] ||
             mtmp->data == &mons[PM_WATCH_CAPTAIN])
-            msethostility(mtmp, FALSE, FALSE);
+            sethostility(mtmp, FALSE, FALSE);
     }
 }
 

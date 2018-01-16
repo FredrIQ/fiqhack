@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1191,6 +1191,7 @@ extern boolean mpickstuff(struct monst *, boolean);
 extern int curr_mon_load(const struct monst *);
 extern int max_mon_load(const struct monst *);
 extern boolean can_carry(struct monst *, struct obj *);
+extern struct monst *angr_at(const struct monst *);
 extern int jump_ok(struct monst *);
 extern int mon_jump(struct monst *, int, int);
 extern void find_best_lineup(struct monst *, xchar *, xchar *);
@@ -1226,7 +1227,8 @@ extern void poisontell(int);
 extern void poisoned(struct monst *, const char *, int, const char *, int);
 extern void m_respond(struct monst *);
 extern void setmangry(struct monst *);
-extern void msethostility(struct monst *, boolean, boolean);
+extern void sethostility(struct monst *, boolean, boolean);
+extern void msethostility(struct monst *, struct monst *, boolean, boolean);
 extern void wakeup(struct monst *, boolean);
 extern void wake_nearby(boolean);
 extern void mwake_nearby(const struct monst *, boolean);

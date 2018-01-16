@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -346,7 +346,7 @@ shkinit(const struct shclass *shp, struct level *lev, struct mkroom *sroom)
     if (!(shk = makemon(&mons[PM_SHOPKEEPER], lev, sx, sy, MM_ALLLEVRNG)))
         return -1;
     mx_eshk_new(shk);
-    msethostility(shk, FALSE, TRUE);
+    sethostility(shk, FALSE, TRUE);
     shk->msleeping = 0;
     shk->mtrapseen = ~0;        /* we know all the traps already */
     mx_eshk(shk)->shoproom = (sroom - lev->rooms) + ROOMOFFSET;

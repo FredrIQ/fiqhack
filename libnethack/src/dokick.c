@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -349,7 +349,7 @@ ghitm(struct monst * mtmp, struct obj * gold)
                     if (value >
                         goldreqd + (money_cnt(youmonst.minvent) +
                                     u.ulevel * rn2(5)) / ACURR(A_CHA))
-                        msethostility(mtmp, FALSE, FALSE);
+                        sethostility(mtmp, FALSE, FALSE);
                 }
             }
             if (mtmp->mpeaceful)
