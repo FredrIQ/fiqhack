@@ -262,15 +262,12 @@ djinni_from_bottle(struct monst *mon, struct obj *obj)
     case 0:
         if (speak)
             verbalize(msgc, "You disturbed me, fool!");
-        mtmp->mpeaceful = (you ? 0 : !mon->mpeaceful);
-        /* TODO: allow monster specific grudges */
-        if (!you && !mon->mpeaceful)
-            tamedog(mtmp, NULL);
+        msethostility(mon, mtmp, TRUE, TRUE);
         break;
     case 1:
         if (speak)
             verbalize(msgc, "Thank you for freeing me!");
-        mtmp->mpeaceful = (you || mon->mpeaceful);
+        sethostility(mtmp, !(you || mon->mpeaceful || mon->mtame), TRUE);
         if (you || mon->mtame)
             tamedog(mtmp, NULL);
         break;
