@@ -298,7 +298,7 @@ priestname(const struct monst *mon, boolean override_hallu)
             pname = msgcat(pname, "guardian ");
         if (mon->data != &mons[PM_ALIGNED_PRIEST] &&
             mon->data != &mons[PM_HIGH_PRIEST]) {
-            pname = msgcat_many(pname, what, " ", NULL);
+            pname = msgcat(pname, what);
         }
         if (mon->data != &mons[PM_ANGEL]) {
             if (isminion(mon))

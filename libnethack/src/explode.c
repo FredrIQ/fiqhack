@@ -426,7 +426,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
                    (adtyp == AD_DRST && resists_poison(&youmonst)) ||
                    (adtyp == AD_ACID && resists_acid(&youmonst))) {
             pline(combat_msgc(NULL, &youmonst, cr_resist),
-                  "You resist %s%s", expl_needs_the ? "the " : "", dispbuf);
+                  "You resist %s%s.", expl_needs_the ? "the " : "", dispbuf);
             if (adtyp != AD_SLEE)
                 damu = (damu + 1) / 2;
         }
