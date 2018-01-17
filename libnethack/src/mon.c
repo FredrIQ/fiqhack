@@ -1956,7 +1956,7 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
            see invisible (can /you/ determine whether a floating eye can see
            invisible by looking at it?) */
         if (md == &mons[PM_FLOATING_EYE] && rn2(10) &&
-            !blind(magr) && haseyes(ma))
+            !blind(magr) && haseyes(ma) && !reflecting(magr))
             ret &= ~ALLOW_MELEE;
         if (md == &mons[PM_GELATINOUS_CUBE] && rn2(10))
             ret &= ~ALLOW_MELEE;
