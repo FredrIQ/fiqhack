@@ -1328,6 +1328,74 @@ can_carry(struct monst *mtmp, struct obj *otmp)
     return TRUE;
 }
 
+/* Returns monster that mon is tame to, or NULL if none or offlevel */
+struct monst *
+tame_to(const struct monst *mon)
+{
+    if (mon->mtame)
+        return &youmonst;
+    if (!mon->master)
+        return NULL;
+
+    return find_mid(mon->dlevel, mon->master, FM_FMON);
+}
+
+/* Makes pet tame to master. Returns FALSE if we failed to do so. */
+boolean
+mtamedog(struct monst *master, struct monst *pet, struct obj *obj)
+{
+    if (master == pet)
+        panic("mtamedog: making mon pet to itself?");
+    if (pet == &youmonst)
+        return FALSE; /* no */
+    if (tame_to(master) == pet)
+        return FALSE;
+
+    /* pet fixup */
+    struct monst *pets_pet = NULL;
+    while (mnextpet(pet, &pets_pet)) {
+        msethostility(master, pets_pet, FALSE, TRUE);
+        sethostility(pets_pet,
+                     !(pet == &youmonst || pet->mpeaceful ||
+                       pet->mtame), TRUE);
+    }
+
+    if (master == &youmonst)
+        tamedog(pet, obj);
+    else {
+        if (obj)
+            panic("mtamedog with object isn't implemented for non-player");
+
+        pet->master = master->m_id;
+        sethostility(pet, !(master->mpeaceful || master->mtame), TRUE);
+    }
+
+    if (tame_to(pet) == master)
+        return TRUE;
+    return FALSE;
+}
+
+/* Used to iterate through all pets to mon on the current level.
+   pet: NULL if we're starting the iteration, otherwise the next
+   pet in line. Returns FALSE once we run out of pets. */
+boolean
+mnextpet(const struct monst *master, struct monst **pet)
+{
+    if (!*pet) {
+        *pet = m_dlevel(master)->monlist;
+        if (*pet && tame_to(*pet) == master)
+            return TRUE;
+    }
+
+    while (*pet) {
+        *pet = (*pet)->nmon;
+        if (*pet && tame_to(*pet) == master)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 /* Returns monster that mon is angry at, or NULL if none or offlevel */
 struct monst *
 angr_at(const struct monst *mon)
@@ -1869,6 +1937,9 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     const struct permonst *ma = magr->data;
     const struct permonst *md = mdef->data;
 
+    if (tame_to(magr) == mdef || tame_to(mdef) == magr)
+        return 0;
+
     /* magr or mdef as the player is a special case; not checking Conflict is
        correct, because it shouldn't suddenly warn you of peacefuls */
     if (magr == &youmonst)
@@ -1965,6 +2036,10 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     if (angr_at(magr) == mdef || angr_at(mdef) == magr)
         return ALLOW_M | ALLOW_TM;
 
+    /* Inherit master's aggressions */
+    struct monst *master = tame_to(magr);
+    if (master && master != &youmonst)
+        return mm_aggression(master, mdef, conflicted);
     return 0L;
 }
 
@@ -3186,6 +3261,11 @@ msethostility(struct monst *offender, struct monst *victim,
     if (offender == victim)
         return;
 
+    /* pet fixup */
+    struct monst *pet = NULL;
+    while (mnextpet(victim, &pet))
+        msethostility(offender, pet, hostile, adjust_malign);
+
     if (offender == &youmonst) {
         sethostility(victim, hostile, adjust_malign);
         return;
@@ -3238,6 +3318,11 @@ msethostility(struct monst *offender, struct monst *victim,
 void
 sethostility(struct monst *mtmp, boolean hostile, boolean adjust_malign)
 {
+    /* pet fixup */
+    struct monst *pet = NULL;
+    while (mnextpet(mtmp, &pet))
+        sethostility(pet, hostile, adjust_malign);
+
     mtmp->mpeaceful = !hostile;
     mtmp->mtame = 0;
 
@@ -3291,6 +3376,25 @@ setmangry(struct monst *mtmp)
         return;
     if (mtmp->mtame)
         return;
+    struct monst *master = tame_to(mtmp);
+    if (master) {
+        if (master->mtame) {
+            /* this is not ok */
+            pline(msgc_badidea, "%s doesn't appreciate it...",
+                  Monnam(mtmp));
+            if (u.ualign.record >= 0)
+                adjalign(-1);
+            else if (Luck >= 0)
+                change_luck(-1);
+            else {
+                /* set master to peaceful so we can anger it */
+                sethostility(master, FALSE, TRUE);
+                setmangry(master);
+                return;
+            }
+        }
+    }
+
     sethostility(mtmp, TRUE, FALSE);
 
     if (ispriest(mtmp)) {
@@ -3329,6 +3433,9 @@ setmangry(struct monst *mtmp)
                   pm_guardian.mname : makeplural(pm_guardian.mname),
                   got_mad == 1 ? "s" : "");
     }
+
+    if (master && master->mpeaceful)
+        setmangry(master);
 }
 
 

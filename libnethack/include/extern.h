@@ -1191,6 +1191,8 @@ extern boolean mpickstuff(struct monst *, boolean);
 extern int curr_mon_load(const struct monst *);
 extern int max_mon_load(const struct monst *);
 extern boolean can_carry(struct monst *, struct obj *);
+extern struct monst *tame_to(const struct monst *);
+extern boolean mnextpet(const struct monst *, struct monst **);
 extern struct monst *angr_at(const struct monst *);
 extern int jump_ok(struct monst *);
 extern int mon_jump(struct monst *, int, int);

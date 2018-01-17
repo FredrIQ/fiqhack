@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -794,6 +794,11 @@ tamedog(struct monst *mtmp, struct obj *obj)
     if (mtmp->iswiz || mtmp->data == &mons[PM_MEDUSA]
         || (mtmp->data->mflags3 & M3_WANTSARTI))
         return NULL;
+
+    /* pet fixup */
+    struct monst *pet = NULL;
+    while (mnextpet(mtmp, &pet))
+        sethostility(pet, FALSE, TRUE);
 
     /* worst case, at least it'll be peaceful; this uses the main RNG because
        realtime effects means that this won't really sync anyway; this also

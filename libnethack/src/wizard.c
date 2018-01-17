@@ -790,10 +790,7 @@ int
 nasty(struct monst *mcast, coord bypos)
 {
     struct monst *mtmp;
-    struct monst *mtarget = m_at(level, bypos.x, bypos.y);
-    /* m_at doesn't work on you */
-    if (bypos.x == u.ux && bypos.y == u.uy)
-        mtarget = &youmonst;
+    struct monst *mtarget = um_at(level, bypos.x, bypos.y);
     int i, j, tmp;
     int castalign = (mcast ? mcast->data->maligntyp : -1);
     int count = 0;
