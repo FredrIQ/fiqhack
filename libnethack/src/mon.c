@@ -1348,8 +1348,14 @@ mtamedog(struct monst *master, struct monst *pet, struct obj *obj)
         panic("mtamedog: making mon pet to itself?");
     if (pet == &youmonst)
         return FALSE; /* no */
-    if (tame_to(master) == pet)
-        return FALSE;
+
+    /* Prevent infinite loops */
+    struct monst *petchain;
+    for (petchain = tame_to(master); petchain;
+         petchain = tame_to(petchain)) {
+        if (tame_to(petchain) == pet)
+            return FALSE;
+    }
 
     /* pet fixup */
     struct monst *pets_pet = NULL;
