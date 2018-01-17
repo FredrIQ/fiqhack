@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -319,7 +319,7 @@ mattacku(struct monst *mtmp)
             if (i & MM_DEF_DIED || u.umoved)
                 return 0;
             /* Let your steed retaliate */
-            if ((mm_aggression(u.usteed, mtmp) & ALLOW_M))
+            if ((mm_aggression(u.usteed, mtmp, Conflict) & ALLOW_M))
                 return !!(mattackm(u.usteed, mtmp) & MM_DEF_DIED);
             return 0;
         }

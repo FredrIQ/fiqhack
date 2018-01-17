@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -857,7 +857,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         /* -40 or +40 depending on helpfulness */
                         tilescore += (helpful ? 60 : -60);
                     /* target is hostile */
-                    else if (mm_aggression(mon, mtmp))
+                    else if (mm_aggression(mon, mtmp, Conflict))
                         tilescore += (helpful ? -10 : 20);
                     /* ally/peaceful -- we can't just perform "else" here, because pets
                        would heal hostiles that are too dangerous for it to target */
@@ -1013,7 +1013,7 @@ mon_choose_spectarget(struct musable *m, struct obj *obj, coord *cc)
                     else if (!mcanspotmon(mon, mtmp))
                         continue;
                     /* target is hostile */
-                    else if (mm_aggression(mon, mtmp))
+                    else if (mm_aggression(mon, mtmp, Conflict))
                         tilescore += 20;
                     /* ally/peaceful */
                     else if ((mtmp == &youmonst && mon->mpeaceful) ||
@@ -1055,7 +1055,7 @@ summon_nasty_score(struct musable *m, coord *tc)
 
         x = m_mx(target);
         y = m_my(target);
-        if (mm_aggression(mon, target) && msensem(mon, target) &&
+        if (mm_aggression(mon, target, Conflict) && msensem(mon, target) &&
             throwspell(TRUE, TRUE, &x, &y, m)) {
             tc->x = x;
             tc->y = y;
@@ -1089,7 +1089,7 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc,
                     if (x != u.ux || y != u.uy)
                         continue;
                 }
-                if (!mm_aggression(mon, mtmp))
+                if (!mm_aggression(mon, mtmp, Conflict))
                     continue;
                 if (otyp == BULLWHIP && m_mwep(mtmp)) {
                     tc->x = x;
@@ -1190,7 +1190,7 @@ find_item(struct monst *mon, struct musable *m)
     int hostrange = 0;
     struct monst *mtmp;
     struct monst *mclose = NULL;
-    if (mm_aggression(mon, &youmonst) && msensem(mon, &youmonst)) {
+    if (mm_aggression(mon, &youmonst, Conflict) && msensem(mon, &youmonst)) {
         hostsense++;
         if (m_cansee(mon, u.ux, u.uy) ||
             (msensem(mon, &youmonst) & MSENSE_ANYVISION)) {
@@ -1202,7 +1202,7 @@ find_item(struct monst *mon, struct musable *m)
 
     for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp) ||
-            !mm_aggression(mon, mtmp) ||
+            !mm_aggression(mon, mtmp, Conflict) ||
             !msensem(mon, mtmp))
             continue;
         hostsense++;

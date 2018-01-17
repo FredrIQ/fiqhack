@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1332,7 +1332,29 @@ can_carry(struct monst *mtmp, struct obj *otmp)
 struct monst *
 angr_at(const struct monst *mon)
 {
+    if (!mon->angr)
+        return NULL;
+
     return find_mid(mon->dlevel, mon->angr, FM_FMON);
+}
+
+/* Returns TRUE if adding an anger state would have an effect. */
+static boolean
+angr_useful(const struct monst *magr, const struct monst *mdef)
+{
+    if (!magr || !mdef || magr == mdef || (Conflict && magr != &youmonst))
+        return FALSE;
+
+    if (magr == &youmonst)
+        return (mdef->mpeaceful || mdef->mtame);
+    else if (mdef == &youmonst)
+        return (magr->mpeaceful && !magr->mtame);
+
+    int res = mm_aggression(magr, mdef, TRUE);
+    res &= mm_aggression(mdef, magr, TRUE);
+    if (res & ALLOW_M)
+        return FALSE;
+    return TRUE;
 }
 
 /* If monster is willing to jump, return max distance. Otherwise, return
@@ -1629,7 +1651,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                 } else {
                     if (MON_AT(mlevel, nx, ny)) {
                         struct monst *mtmp2 = m_at(mlevel, nx, ny);
-                        long mmflag = flag | mm_aggression(mon, mtmp2);
+                        long mmflag = flag | mm_aggression(mon, mtmp2,
+                                                           Conflict);
 
                         swarmcount++;
 
@@ -1840,7 +1863,8 @@ do_grudge(const struct permonst *pm1, const struct permonst *pm2)
    that would attack them, unless pacifist. */
 long
 mm_aggression(const struct monst *magr, /* monster that might attack */
-              const struct monst *mdef) /* the monster it might attack  */
+              const struct monst *mdef, /* the monster it might attack */
+              boolean conflicted)
 {
     const struct permonst *ma = magr->data;
     const struct permonst *md = mdef->data;
@@ -1856,7 +1880,7 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     /* anti-stupidity checks moved here from dog_move, so that hostile monsters
        benefit from the improved AI when attacking pets too: */
 
-    if (!Conflict) {
+    if (!conflicted) {
         /* monsters have a 9/10 chance of rejecting an attack on a monster that
            would paralyze them; in a change from 3.4.3, they don't check whether
            a floating eye they're attacking is blind (because it's not obvious
@@ -1881,9 +1905,8 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
         if (touch_petrifies(ma) && !resists_ston(mdef))
             return 0;
 
-        /* tame monsters won't attack peaceful guardians or leaders, unless
-           conflicted */
-        if (magr->mtame && mdef->mpeaceful && !Conflict &&
+        /* tame monsters won't attack peaceful guardians or leaders */
+        if (magr->mtame && mdef->mpeaceful &&
             (md->msound == MS_GUARDIAN || md->msound == MS_LEADER))
             return 0;
 
@@ -3157,6 +3180,9 @@ void
 msethostility(struct monst *offender, struct monst *victim,
               boolean hostile, boolean adjust_malign)
 {
+    if (hostile && !angr_useful(offender, victim))
+        return;
+
     if (offender == victim)
         return;
 
@@ -3226,11 +3252,8 @@ sethostility(struct monst *mtmp, boolean hostile, boolean adjust_malign)
 void
 msetmangry(struct monst *offender, struct monst *victim)
 {
-    if (offender == victim)
+    if (!angr_useful(offender, victim))
         return;
-
-    if (!offender)
-        panic("msetmangry: no offender");
 
     if (offender == &youmonst)
         setmangry(victim);

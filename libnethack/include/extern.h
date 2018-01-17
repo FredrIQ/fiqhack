@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1227,6 +1227,7 @@ extern void poisontell(int);
 extern void poisoned(struct monst *, const char *, int, const char *, int);
 extern void m_respond(struct monst *);
 extern void setmangry(struct monst *);
+extern void msetmangry(struct monst *, struct monst *);
 extern void sethostility(struct monst *, boolean, boolean);
 extern void msethostility(struct monst *, struct monst *, boolean, boolean);
 extern void wakeup(struct monst *, boolean);
@@ -1246,7 +1247,7 @@ extern void kill_genocided_monsters(void);
 extern void golemeffects(struct monst *, int, int);
 extern boolean angry_guards(boolean);
 extern void pacify_guards(void);
-extern long mm_aggression(const struct monst *, const struct monst *);
+extern long mm_aggression(const struct monst *, const struct monst *, boolean);
 extern boolean grudge(const struct permonst *, const struct permonst *);
 
 /* ### mondata.c ### */

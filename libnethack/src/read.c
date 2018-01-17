@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2509,7 +2509,8 @@ mon_choose_genocide(struct monst *mon, boolean class, int cur_try)
             continue;
         if (class && mon->data->mlet == mtmp->data->mlet)
             continue;
-        if (mm_aggression(mon, mtmp) && (msensem(mon, mtmp) & MSENSE_ANYVISION))
+        if (mm_aggression(mon, mtmp, TRUE) &&
+            (msensem(mon, mtmp) & MSENSE_ANYVISION))
             mndx[try++] = monsndx(mtmp->data);
         if (try > 4)
             return maybe_target_class(class, mndx[cur_try]);
@@ -2522,8 +2523,8 @@ mon_choose_genocide(struct monst *mon, boolean class, int cur_try)
         if (class && mon->data->mlet == mtmp->data->mlet)
             continue;
         /* not sensed only by warning, because that doesn't tell the mlet */
-        if (mm_aggression(mon, mtmp) && (msensem(mon, mtmp) &
-                                         (~MSENSE_ANYVISION & ~MSENSE_WARNING)))
+        if (mm_aggression(mon, mtmp, TRUE) &&
+            (msensem(mon, mtmp) & (~MSENSE_ANYVISION & ~MSENSE_WARNING)))
             mndx[try++] = monsndx(mtmp->data);
         if (try > 4)
             return maybe_target_class(class, mndx[cur_try]);

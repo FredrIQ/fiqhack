@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -810,7 +810,7 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
            the above MS_LEADER case). */
         if (mat && (msensem(magr, mat) & ~MSENSE_ITEMMIMIC) &&
             !confused(magr)) {
-            if (mm_aggression(magr, mat) & ALLOW_M && !helpful) {
+            if (mm_aggression(magr, mat, Conflict) & ALLOW_M && !helpful) {
                 /* we want to target this monster */
                 if (mdef)
                     *mdef = mat;
