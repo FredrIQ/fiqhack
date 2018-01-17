@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -267,9 +267,7 @@ djinni_from_bottle(struct monst *mon, struct obj *obj)
     case 1:
         if (speak)
             verbalize(msgc, "Thank you for freeing me!");
-        sethostility(mtmp, !(you || mon->mpeaceful || mon->mtame), TRUE);
-        if (you || mon->mtame)
-            tamedog(mtmp, NULL);
+        mtamedog(mon, mtmp, NULL);
         break;
     case 2:
         if (speak)
