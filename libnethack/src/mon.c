@@ -1349,14 +1349,6 @@ mtamedog(struct monst *master, struct monst *pet, struct obj *obj)
     if (pet == &youmonst)
         return FALSE; /* no */
 
-    /* Prevent infinite loops */
-    struct monst *petchain;
-    for (petchain = tame_to(master); petchain;
-         petchain = tame_to(petchain)) {
-        if (tame_to(petchain) == pet)
-            return FALSE;
-    }
-
     /* pet fixup */
     struct monst *pets_pet = NULL;
     while (mnextpet(pet, &pets_pet)) {
@@ -1376,6 +1368,7 @@ mtamedog(struct monst *master, struct monst *pet, struct obj *obj)
         sethostility(pet, !(master->mpeaceful || master->mtame), TRUE);
     }
 
+    pline(msgc_fatal, "!");
     clear_pet_loops(pet);
 
     if (tame_to(pet) == master)

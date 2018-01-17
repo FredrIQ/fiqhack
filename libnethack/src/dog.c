@@ -54,7 +54,7 @@ make_familiar(struct monst *mon, struct obj *otmp, xchar x, xchar y, boolean qui
     int chance, trycnt = 100;
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
-    boolean tame = (you || mon->mtame);
+    boolean tame = you;
 
     do {
         if (otmp) {     /* figurine; otherwise spell */
@@ -91,12 +91,11 @@ make_familiar(struct monst *mon, struct obj *otmp, xchar x, xchar y, boolean qui
     if (is_pool(level, mtmp->mx, mtmp->my) && minliquid(mtmp))
         return NULL;
 
-    if (tame)
+    if (mon == &youmonst)
         initedog(mtmp);
-    else if (mon->mpeaceful)
-        mtmp->mpeaceful = 1;
     else
-        sethostility(mtmp, TRUE, TRUE);
+        mtamedog(mon, mtmp, NULL);
+
     mtmp->msleeping = 0;
     if (otmp) { /* figurine; resulting monster might not become a pet */
         chance = rn2_on_rng(10, you ? rng_figurine_effect : rng_main);
@@ -106,15 +105,13 @@ make_familiar(struct monst *mon, struct obj *otmp, xchar x, xchar y, boolean qui
             chance = otmp->blessed ? 0 : !otmp->cursed ? 1 : 2;
         if (chance > 0) {
             mtmp->mtame = 0;    /* not tame after all */
-            mtmp->mpeaceful = 1;
+            mtmp->master = 0;
+            sethostility(mtmp, FALSE, TRUE);
             if (chance == 2) {  /* hostile (cursed figurine) */
                 if (!quietly && (you || vis))
                     pline(msgc_substitute, "You get a %s feeling about this.",
                           tame ? "bad" : "good");
-                if (tame)
-                    sethostility(mtmp, TRUE, TRUE);
-                else
-                    initedog(mtmp);
+                msethostility(mon, mtmp, TRUE, TRUE);
             }
         }
         /* if figurine has been named, give same name to the monster */
@@ -242,6 +239,7 @@ clear_pet_loops(struct monst *mon)
             pet->master = 0;
             break;
         }
+        pet = tame_to(pet);
     }
 
     if (i > MAX_PET_CHAIN) {

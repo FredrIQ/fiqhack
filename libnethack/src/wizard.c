@@ -797,16 +797,31 @@ nasty(struct monst *mcast, coord bypos)
     boolean you = (mcast && mcast == &youmonst);
     if (you)
         castalign = u.ualign.type;
-    boolean tame = (you || (mcast && mcast->mtame));
-    if (mtarget && (!mtarget->mpeaceful || mtarget->mtame)) {
-        /* create monsters hostile to the target */
-        tame = TRUE;
-        if (mtarget == &youmonst || mtarget->mpeaceful)
-            tame = FALSE;
+    int peace = 0;
+    if (you)
+        peace = 3;
+    else if (mcast && mcast->mtame)
+        peace = 2;
+    else if (mcast && mcast->mpeaceful)
+        peace = 1;
+    else
+        peace = 0;
+
+    boolean tame = FALSE;
+    if (mtarget) {
+        if (mcast && mcast->mpeaceful == mtarget->mpeaceful &&
+            !(mcast->mtame || you) == !mtarget->mtame)
+            tame = TRUE;
+        else {
+            if (!mtarget->mpeaceful)
+                peace = 1;
+            else
+                peace = 0;
+        }
     }
 
     if (!rn2(10) && Inhell) {
-        if (tame)
+        if (peace >= 2)
             demonpet();
         else
             msummon(mcast, &level->z);       /* summons like WoY */
@@ -847,25 +862,25 @@ nasty(struct monst *mcast, coord bypos)
                         &mons[makeindex]))
                 continue;
             mtmp = makemon(&mons[makeindex], level, bypos.x, bypos.y,
-                           tame ? MM_EDOG : NO_MM_FLAGS);
+                           (peace == 3) ? MM_EDOG : NO_MM_FLAGS);
             if (!mtmp) {
                 /* probably genocided, try a random monster */
                 mtmp = makemon(NULL, level, bypos.x, bypos.y,
-                               tame ? MM_EDOG : NO_MM_FLAGS);
+                               (peace == 3) ? MM_EDOG : NO_MM_FLAGS);
                 if (!mtmp) /* failed again? */
                     continue;
             }
             mtmp->msleeping = 0;
-            if (tame) {
+
+            if (tame)
+                mtamedog(mcast, mtmp, NULL);
+            else if (peace == 3)
                 initedog(mtmp);
-                set_malign(mtmp);
-                /* tame monsters drop items, ensure they don't drop weapon selection */
-                if (mtmp->mtame && attacktype(mtmp->data, AT_WEAP)) {
-                    mtmp->weapon_check = NEED_HTH_WEAPON;
-                    mon_wield_item(mtmp);
-                }
-            } else
-                sethostility(mtmp, TRUE, TRUE);
+            else
+                sethostility(mtmp, !peace, TRUE);
+
+            if (mtarget)
+                msethostility(mtarget, mtmp, TRUE, TRUE);
             newsym(mtmp->mx, mtmp->my);
             /* Give number of seen monsters to return later */
             if (canseemon(mtmp))

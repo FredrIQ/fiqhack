@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -401,8 +401,6 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
                     res = 'i';
                 else if (dmcd.results[0] == 3)
                     res = 'b';
-                else
-                    panic("Invalid menu selection");
 
                 for (j = 0;
                      j < menu_copy.icount && item_copy[j].id != res;

@@ -819,33 +819,14 @@ maybe_tame(struct monst *mon, struct monst *mtmp, struct obj *sobj)
         return;
     }
 
-    tame_result++;
-    switch (tame_result) {
-    case 0:
-        if (!mtmp->mpeaceful && !mtmp->mtame)
-            break;
+    if (tame_result == 2 && mx_eshk(mtmp))
+        make_happy_shk(mtmp, FALSE);
+    sethostility(mtmp, FALSE, FALSE);
 
-        if (!you) /* setmangry screws with your alignment */
-            sethostility(mtmp, TRUE, FALSE);
-        else
-            setmangry(mtmp);
-        break;
-    case 1:
-        if (mtmp->mpeaceful && !mtmp->mtame)
-            break;
-
-        if (!mx_eshk(mtmp)) /* peaceful taming keeps hostile shk */
-            sethostility(mtmp, FALSE, FALSE);
-        break;
-    case 2:
-        if (mtmp->mtame)
-            break;
-
-        if (mx_eshk(mtmp))
-            make_happy_shk(mtmp, FALSE);
-        else
-            tamedog(mtmp, NULL);
-    }
+    if (sobj->cursed)
+        msethostility(mon, mtmp, TRUE, FALSE);
+    else
+        mtamedog(mon, mtmp, NULL);
 }
 
 static void
