@@ -326,17 +326,21 @@ describe_mon(int x, int y, int monnum, char *buf)
     bhitpos.x = x;
     bhitpos.y = y;
 
+    struct monst *master = tame_to(mtmp);
+
     if (mtmp->data == &mons[PM_COYOTE] && accurate && !mtmp->mpeaceful)
         name = an(coyotename(mtmp));
     else
         name = distant_monnam(
             mtmp, (mtmp->mtame && accurate) ? "tame" :
+            (mtmp->mpeaceful && master && master->mtame) ? "friendly" :
             (mtmp->mpeaceful && accurate) ? "peaceful" : NULL,
             ARTICLE_A);
 
-    name = msgprintf("%s (aligned to %s)", name,
-                     tame_to(mtmp) ? mon_nam(tame_to(mtmp)) :
-                     "nobody");
+    /* list monster allegiance if to a tame monster */
+    if (master && master != &youmonst && master->mtame)
+        name = msgprintf("%s (%s pet)", name,
+                         s_suffix(mon_nam(master)));
 
     boolean spotted = canspotmon(mtmp);
 
