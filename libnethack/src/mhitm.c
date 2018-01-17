@@ -2363,14 +2363,8 @@ maurahitpile(struct monst *mon, int x, int y, const struct attack *mattk)
             if (!omon)
                 continue;
 
-            if (mon->mtame != omon->mtame) {
-                if (mon->mtame)
-                    tamedog(omon, NULL);
-                else
-                    omon->mtame = 0; /* no longer tame */
-            }
-            if (!mon->mtame)
-                sethostility(omon, !mon->mpeaceful, TRUE);
+            mtamedog(mon, omon, NULL);
+
             /* turn into a zombie if applicable */
             int mndx = NON_PM;
             if (is_human(omon->data))

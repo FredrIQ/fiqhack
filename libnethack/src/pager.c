@@ -340,7 +340,7 @@ describe_mon(int x, int y, int monnum, char *buf)
     /* list monster allegiance if to a tame monster */
     if (master && master != &youmonst && master->mtame)
         name = msgprintf("%s (%s pet)", name,
-                         s_suffix(mon_nam(master)));
+                         s_suffix(y_monnam(master)));
 
     boolean spotted = canspotmon(mtmp);
 
