@@ -1376,6 +1376,8 @@ mtamedog(struct monst *master, struct monst *pet, struct obj *obj)
         sethostility(pet, !(master->mpeaceful || master->mtame), TRUE);
     }
 
+    clear_pet_loops(pet);
+
     if (tame_to(pet) == master)
         return TRUE;
     return FALSE;

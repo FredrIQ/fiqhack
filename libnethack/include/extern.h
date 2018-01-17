@@ -413,6 +413,7 @@ extern struct monst *make_familiar(struct monst *, struct obj *, xchar, xchar, b
 extern struct monst *makedog(struct newgame_options *);
 extern void update_mlstmv(void);
 extern void losedogs(void);
+extern void clear_pet_loops(struct monst *);
 extern void mon_arrive(struct monst *, boolean);
 extern void mon_catchup_elapsed_time(struct monst *, long);
 extern void keepdogs(boolean);

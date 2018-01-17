@@ -765,6 +765,7 @@ montraits(struct obj *obj, coord * cc)
         /* the corpse may have been moved, set the monster's location from the
            corpse's location */
         mtmp2->dlevel = object_dlevel(obj);
+        clear_pet_loops(mtmp2);
         replmon(mtmp, mtmp2);
     }
     return mtmp2;

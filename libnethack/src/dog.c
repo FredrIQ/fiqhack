@@ -6,6 +6,7 @@
 #include "hack.h"
 #include "hungerstatus.h"
 
+static void clear_pet_loops_recursed(struct monst *, struct monst *);
 static int pet_type(struct newgame_options *);
 
 void
@@ -227,6 +228,49 @@ losedogs(void)
     }
 }
 
+/* Clears pet loops tied to given mon. */
+void
+clear_pet_loops(struct monst *mon)
+{
+    /* Find out the topmost monster in the pet chain */
+    struct monst *pet, *next;
+    pet = tame_to(mon);
+    int i = 0;
+    while (pet && tame_to(pet)) {
+        i++;
+        if (tame_to(pet) == mon) {
+            pet->master = 0;
+            break;
+        }
+    }
+
+    if (i > MAX_PET_CHAIN) {
+        /* unassign pet state */
+        mon->master = 0;
+        return;
+    }
+
+    if (pet)
+        clear_pet_loops_recursed(pet, pet);
+    else
+        clear_pet_loops_recursed(mon, mon);
+}
+
+static void
+clear_pet_loops_recursed(struct monst *mon,
+                         struct monst *parent)
+{
+    struct monst *pet = NULL;
+    while (mnextpet(mon, &pet)) {
+        if (pet == parent)
+            pet->master = 0;
+        else {
+            clear_pet_loops_recursed(pet, parent);
+            clear_pet_loops_recursed(pet, pet);
+        }
+    }
+}
+
 /* called from resurrect() in addition to losedogs() */
 void
 mon_arrive(struct monst *mtmp, boolean with_you)
@@ -236,6 +280,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     xchar xlocale, ylocale, xyloc, xyflags, wander;
     int num_segs;
 
+    clear_pet_loops(mtmp);
     mtmp->dlevel = level;
     mtmp->nmon = level->monlist;
     level->monlist = mtmp;
