@@ -1274,6 +1274,10 @@ assign_spells(struct monst *mon, enum rng rng)
     case PM_BARROW_WIGHT:
         mon_addspell(mon, SPE_SLEEP);
         return;
+    case PM_NURSE:
+        mon_addspell(mon, SPE_HEALING);
+        mon_addspell(mon, SPE_EXTRA_HEALING);
+        return;
     case PM_SHOPKEEPER:
         if (rn2_on_rng(3, rng))
             mon_addspell(mon, SPE_FORCE_BOLT);
