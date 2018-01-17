@@ -1421,7 +1421,7 @@ angr_useful(const struct monst *magr, const struct monst *mdef)
 
     int res = mm_aggression(magr, mdef, TRUE);
     res &= mm_aggression(mdef, magr, TRUE);
-    if (res & ALLOW_M)
+    if (res)
         return FALSE;
     return TRUE;
 }
@@ -1728,14 +1728,9 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         if (!mtmp2->mpeaceful || mtmp2->mtame ||
                             !(mmflag & ALLOW_PEACEFUL) ||
                             mx_eshk(mtmp2) || mx_epri(mtmp2)) {
-                            if (!(mmflag & ALLOW_M))
+                            if (!(mmflag & ALLOW_MELEE))
                                 continue;
-                            info[cnt] |= ALLOW_M;
-                            if (mtmp2->mtame) {
-                                if (!(mmflag & ALLOW_TM))
-                                    continue;
-                                info[cnt] |= ALLOW_TM;
-                            }
+                            info[cnt] |= ALLOW_MELEE;
                         } else
                             info[cnt] |= ALLOW_PEACEFUL;
                     }
@@ -1854,7 +1849,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
         int i;
         for (i = 0; i < oldcnt; i++) {
             if ((infocopy[i] &
-                 (ALLOW_MUXY | ALLOW_M | ALLOW_PEACEFUL))) {
+                 (ALLOW_MUXY | ALLOW_MELEE | ALLOW_PEACEFUL))) {
                 info[cnt] = infocopy[i];
                 poss[cnt] = posscopy[i];
                 cnt++;
@@ -1937,6 +1932,7 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
 {
     const struct permonst *ma = magr->data;
     const struct permonst *md = mdef->data;
+    long ret = ALLOW_M | ALLOW_MELEE | ALLOW_RANGED;
 
     if (tame_to(magr) == mdef || tame_to(mdef) == magr)
         return 0;
@@ -1945,9 +1941,9 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
        correct, because it shouldn't suddenly warn you of peacefuls */
     if (magr == &youmonst)
         return (mdef->mpeaceful || !u.uconduct[conduct_killer])
-            ? 0 : (ALLOW_M | ALLOW_TM);
+            ? 0 : ret;
     if (mdef == &youmonst)
-        return magr->mpeaceful ? 0 : (ALLOW_M | ALLOW_TM);
+        return magr->mpeaceful ? 0 : ret;
 
     /* anti-stupidity checks moved here from dog_move, so that hostile monsters
        benefit from the improved AI when attacking pets too: */
@@ -1961,21 +1957,21 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
            invisible by looking at it?) */
         if (md == &mons[PM_FLOATING_EYE] && rn2(10) &&
             !blind(magr) && haseyes(ma))
-            return 0;
+            ret &= ~ALLOW_MELEE;
         if (md == &mons[PM_GELATINOUS_CUBE] && rn2(10))
-            return 0;
+            ret &= ~ALLOW_MELEE;
 
         /* monsters won't make an attack that would kill them with the passive
            damage they'd take in response */
         if (max_passive_dmg(mdef, magr) >= magr->mhp)
-            return 0;
+            ret &= ~ALLOW_MELEE;
 
         /* monsters won't make an attack that would petrify them */
         if (touch_petrifies(md) && !resists_ston(magr))
-            return 0;
+            ret &= ~ALLOW_MELEE;
         /* and for balance, the reverse */
         if (touch_petrifies(ma) && !resists_ston(mdef))
-            return 0;
+            ret &= ~ALLOW_MELEE;
 
         /* tame monsters won't attack peaceful guardians or leaders */
         if (magr->mtame && mdef->mpeaceful &&
@@ -2000,42 +1996,42 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
          !(nonliving(mdef->data) || izombie(mdef))) ||
         ((pm_zombie(mdef->data) || izombie(mdef)) &&
          !(nonliving(magr->data) || izombie(magr))))
-        return ALLOW_M | ALLOW_TM;
+        return ret;
 
     /* dogs vs cats unless both are tame */
     if ((!magr->mtame || !mdef->mtame) &&
         is_domestic(magr->data) && is_domestic(mdef->data) &&
         ((magr->data->mlet == S_DOG && mdef->data->mlet == S_FELINE) ||
          (magr->data->mlet == S_FELINE && mdef->data->mlet == S_DOG)))
-        return ALLOW_M | ALLOW_TM;
+        return ret;
 
     /* pets attack hostile monsters */
     if (magr->mtame && !mdef->mpeaceful)
-        return ALLOW_M | ALLOW_TM;
+        return ret;
 
     /* and vice versa */
     if (mdef->mtame && !magr->mpeaceful)
-        return ALLOW_M | ALLOW_TM;
+        return ret;
 
     /* Player monsters heading for ascension attacks anything in its' way */
     if (magr->mstrategy == st_ascend)
-        return ALLOW_M | ALLOW_TM;
+        return ret;
 
     /* Since the quest guardians are under siege, it makes sense to have them
        fight hostiles.  (But don't put the quest leader in danger.) */
     if (ma->msound == MS_GUARDIAN && mdef->mpeaceful == FALSE)
-        return ALLOW_M | ALLOW_TM;
+        return ret;
     /* ... and vice versa */
     if (md->msound == MS_GUARDIAN && magr->mpeaceful == FALSE)
-        return ALLOW_M | ALLOW_TM;
+        return ret;
 
     /* Grudges */
     if (grudge(ma, md))
-        return ALLOW_M | ALLOW_TM;
+        return ret;
 
     /* Monster anger targets */
     if (angr_at(magr) == mdef || angr_at(mdef) == magr)
-        return ALLOW_M | ALLOW_TM;
+        return ret;
 
     /* Inherit master's aggressions */
     struct monst *master = tame_to(magr);
@@ -3261,6 +3257,13 @@ msethostility(struct monst *offender, struct monst *victim,
 
     if (offender == victim)
         return;
+
+    if (hostile) {
+        if (tame_to(victim) == offender)
+            victim->master = 0;
+        if (tame_to(offender) == victim)
+            offender->master = 0;
+    }
 
     /* pet fixup */
     struct monst *pet = NULL;

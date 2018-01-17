@@ -4,7 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "mfndpos.h"    /* ALLOW_M */
+#include "mfndpos.h"    /* ALLOW_RANGED */
 
 static int drop_throw(struct obj *, boolean, int, int);
 static boolean qlined_up(const struct monst *mtmp, int ax, int ay,
@@ -810,7 +810,8 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
            the above MS_LEADER case). */
         if (mat && (msensem(magr, mat) & ~MSENSE_ITEMMIMIC) &&
             !confused(magr)) {
-            if (mm_aggression(magr, mat, Conflict) & ALLOW_M && !helpful) {
+            if ((mm_aggression(magr, mat, Conflict) & ALLOW_RANGED) &&
+                !helpful) {
                 /* we want to target this monster */
                 if (mdef)
                     *mdef = mat;

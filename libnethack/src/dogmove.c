@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -749,7 +749,7 @@ dog_move(struct monst *mtmp, int after)
     if (throws_rocks(mtmp->data))
         allowflags |= ALLOW_ROCK;
     if (Conflict && !resist(&youmonst, mtmp, RING_CLASS, 0, 0)) {
-        allowflags |= ALLOW_MUXY | ALLOW_M;
+        allowflags |= ALLOW_MUXY | ALLOW_MELEE;
         if (!has_edog) {
             coord mm;
 
@@ -823,7 +823,8 @@ dog_move(struct monst *mtmp, int after)
     for (i = 0; i < cnt; i++) {
         nx = poss[i].x;
         ny = poss[i].y;
-        if (MON_AT(level, nx, ny) && !(info[i] & ALLOW_M))
+        if (MON_AT(level, nx, ny) &&
+            !(info[i] & ALLOW_MELEE))
             continue;
         if (cursed_object_at(nx, ny))
             continue;
@@ -854,7 +855,8 @@ dog_move(struct monst *mtmp, int after)
 
         mtmp2 = m_at(level, nx, ny);
         if (mtmp2 &&
-            ((mtmp2->mtame && mercy) || (info[i] & ALLOW_M))) {
+            ((mtmp2->mtame && mercy) ||
+             (info[i] & ALLOW_MELEE))) {
             int mstatus;
 
             /* anti-stupidity checks moved to mm_aggression in mon.c */

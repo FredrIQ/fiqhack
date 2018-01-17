@@ -319,7 +319,7 @@ mattacku(struct monst *mtmp)
             if (i & MM_DEF_DIED || u.umoved)
                 return 0;
             /* Let your steed retaliate */
-            if ((mm_aggression(u.usteed, mtmp, Conflict) & ALLOW_M))
+            if ((mm_aggression(u.usteed, mtmp, Conflict) & ALLOW_MELEE))
                 return !!(mattackm(u.usteed, mtmp) & MM_DEF_DIED);
             return 0;
         }
