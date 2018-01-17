@@ -179,7 +179,7 @@ static const short cham_to_pm[] = {
                          /* intrinsics or spells */                     \
                          (mon)->mspells || any_property(mon) ||         \
                          (mon)->mhitinc || (mon)->mdaminc ||            \
-                         (mon)->mac)
+                         (mon)->mac || (mon)->angr || (mon)->master)
 
 /* Creates a monster corpse, a "special" corpse, or nothing if it doesn't
  * leave corpses.  Monsters which leave "special" corpses should have
