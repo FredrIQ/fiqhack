@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -163,8 +163,8 @@ const struct cmd_desc cmdlist[] = {
     {"pickup", "take items from the floor", ',', 0, FALSE, dopickup,
      CMD_ARG_LIMIT},
     {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_EXT},
-    {"quit", "don't use this, use 'save' instead", M('q'), 0, TRUE, doquit,
-     CMD_EXT | CMD_NOTIME},
+    {"quit", "give up on the current game", M('q'), 0, TRUE, doquit,
+     CMD_EXT},
     {"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver,
      CMD_ARG_OBJ},
     {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread, CMD_ARG_OBJ},
@@ -1804,9 +1804,34 @@ dospoilers(const struct nh_cmd_arg *arg)
 static int
 doquit(const struct nh_cmd_arg *arg)
 {
-    (void) arg;
-    pline(msgc_controlhelp,
-          "To quit the game, use the 'save' command (typically on 'S').");
+    struct nh_menulist menu;
+    const int *selection;
+    int n = 0;
+
+    init_menulist(&menu);
+    add_menu_item(&menu, '!', "Abandon the game.", '!', FALSE);
+    add_menu_txt(&menu, "You will see your statistics, as if you had died;",
+                 MI_NORMAL);
+    add_menu_txt(&menu, "the save file will be deleted (although a replay",
+                 MI_NORMAL);
+    add_menu_txt(&menu, "will be kept). You will not be able to resume the",
+                 MI_NORMAL);
+    add_menu_txt(&menu, "game, not even from an earlier save file.", MI_NORMAL);
+    add_menu_txt(&menu, "", MI_NORMAL);
+    add_menu_item(&menu, 'n', "Keep playing.", 'n', FALSE);
+    display_menu(&menu, "Do you want to stop playing?", PICK_ONE,
+                 PLHINT_URGENT, &selection);
+
+    if (*selection == '!') {
+        /* do a 2nd confirmation, just in case */
+        init_menulist(&menu);
+        add_menu_item(&menu, 'n', "No, I want to keep playing", 'n', FALSE);
+        add_menu_item(&menu, 'y', "Yes, delete the save file", 'y', FALSE);
+        display_menu(&menu, "Do you want to stop playing?", PICK_ONE,
+                     PLHINT_URGENT, &selection);
+        if (*selection == 'y')
+            done(QUIT, NULL);
+    }
 
     return 0;
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-19 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -893,21 +893,7 @@ save_menu(void)
     init_menulist(&menu);
 
     add_menu_item(&menu, 1, "Close the game.", 'y', FALSE);
-    add_menu_txt(&menu, "Your save file will remain stored on disk, and",
-                 MI_NORMAL);
-    add_menu_txt(&menu, "you can resume the game later.", MI_NORMAL);
-    add_menu_txt(&menu, "", MI_NORMAL);
-
     add_menu_item(&menu, 2, "Abandon the game.", '!', FALSE);
-    add_menu_txt(&menu, "You will see your statistics, as if you had died;",
-                 MI_NORMAL);
-    add_menu_txt(&menu, "the save file will be deleted (although a replay",
-                 MI_NORMAL);
-    add_menu_txt(&menu, "will be kept). You will not be able to resume the",
-                 MI_NORMAL);
-    add_menu_txt(&menu, "game, not even from an earlier save file.", MI_NORMAL);
-    add_menu_txt(&menu, "", MI_NORMAL);
-
     add_menu_item(&menu, 3, "Keep playing.", 'n', FALSE);
 
     curses_display_menu(&menu, "Do you want to stop playing?", PICK_ONE,
@@ -922,16 +908,9 @@ save_menu(void)
         nh_exit_game(EXIT_SAVE);
         return;
     case 2:
-        /* Ask for a second confirmation, this is really dangerous! */
-        init_menulist(&menu);
-        add_menu_item(&menu, 1, "Yes, delete the save file", 'y', FALSE);
-        add_menu_item(&menu, 2, "No, I want to keep playing", 'n', FALSE);
-        curses_display_menu(&menu, "Really delete the save file?", PICK_ONE,
-                            PLHINT_URGENT, selected, curses_menu_callback);
-
-        if (*selected == 1)
-            nh_exit_game(EXIT_QUIT);
-
+        curses_print_message(0, 0, player.moves, msgc_controlhelp,
+                             "To abandon the game, "
+                             "use the #quit extended command.");
         return;
     }
 
