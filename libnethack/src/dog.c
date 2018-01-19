@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -230,7 +230,7 @@ void
 clear_pet_loops(struct monst *mon)
 {
     /* Find out the topmost monster in the pet chain */
-    struct monst *pet, *next;
+    struct monst *pet;
     pet = tame_to(mon);
     int i = 0;
     while (pet && tame_to(pet)) {
@@ -278,8 +278,8 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     xchar xlocale, ylocale, xyloc, xyflags, wander;
     int num_segs;
 
-    clear_pet_loops(mtmp);
     mtmp->dlevel = level;
+    clear_pet_loops(mtmp);
     mtmp->nmon = level->monlist;
     level->monlist = mtmp;
     if (mx_eshk(mtmp))

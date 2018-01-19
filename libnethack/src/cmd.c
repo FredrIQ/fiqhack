@@ -1806,7 +1806,6 @@ doquit(const struct nh_cmd_arg *arg)
 {
     struct nh_menulist menu;
     const int *selection;
-    int n = 0;
 
     init_menulist(&menu);
     add_menu_item(&menu, '!', "Abandon the game.", '!', FALSE);
