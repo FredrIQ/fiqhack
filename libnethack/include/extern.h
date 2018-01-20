@@ -1971,6 +1971,7 @@ extern boolean erode_obj(struct obj *, const char *, enum erode_type, boolean,
 extern boolean grease_protect(struct obj *, const char *,
                               struct monst *, struct monst *);
 extern struct trap *maketrap(struct level *, int x, int y, int typ, enum rng);
+extern void check_sokoban_completion(struct level *);
 extern void fall_through(boolean);
 extern struct monst *animate_statue(struct obj *, xchar, xchar, int, int *);
 extern struct monst *activate_statue_trap(struct trap *, xchar, xchar, boolean);

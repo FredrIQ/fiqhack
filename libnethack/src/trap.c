@@ -386,8 +386,28 @@ maketrap(struct level *lev, int x, int y, int typ, enum rng rng)
     if (!oldplace) {
         ttmp->ntrap = lev->lev_traps;
         lev->lev_traps = ttmp;
-    }
+    } else if (Sokoban_lev(lev))
+        check_sokoban_completion(lev);
+
     return ttmp;
+}
+
+/* Possibly unset sokoban rules if there's no pits/holes on the level. */
+void
+check_sokoban_completion(struct level *lev)
+{
+    if (!In_sokoban(&lev->z))
+        return;
+
+    struct trap *trap;
+    for (trap = lev->lev_traps; trap; trap = trap->ntrap)
+        if (trap->ttyp == PIT || trap->ttyp == HOLE)
+            return;
+
+    Sokoban_lev(lev) = FALSE;
+
+    pline(lev == level ? msgc_levelsound : msgc_offlevel,
+          "You feel some arcane magic being lifted from the area.");
 }
 
 void
@@ -399,7 +419,7 @@ fall_through(boolean td)
     const char *msgbuf;
 
     /* KMH -- You can't escape the Sokoban level traps */
-    if (Blind && levitates(&youmonst) && !In_sokoban(&u.uz))
+    if (Blind && levitates(&youmonst) && !Sokoban)
         return;
 
     do
@@ -411,7 +431,7 @@ fall_through(boolean td)
         struct trap *t = t_at(level, u.ux, u.uy);
 
         seetrap(t);
-        if (!In_sokoban(&u.uz)) {
+        if (!Sokoban) {
             if (t->ttyp == TRAPDOOR)
                 pline(msgc_statusbad, "A trap door opens up under you!");
             else
@@ -420,7 +440,7 @@ fall_through(boolean td)
     } else
         pline(msgc_statusbad, "The %s opens up under you!", surface(u.ux, u.uy));
 
-    if (In_sokoban(&u.uz) && can_fall_thru(level))
+    if (Sokoban && can_fall_thru(level))
         ;
     /* KMH -- You can't escape the Sokoban level traps */
     else if (levitates(&youmonst) || u.ustuck || !can_fall_thru(level)
@@ -673,7 +693,7 @@ dotrap(struct trap *trap, unsigned trflags)
     action_interrupted();
 
     /* KMH -- You can't escape the Sokoban level traps */
-    if (In_sokoban(&u.uz) &&
+    if (Sokoban &&
         (ttype == PIT || ttype == SPIKED_PIT || ttype == HOLE ||
          ttype == TRAPDOOR)) {
         /* The "air currents" message is still appropriate -- even when the
@@ -931,10 +951,10 @@ dotrap(struct trap *trap, unsigned trflags)
     case PIT:
     case SPIKED_PIT:
         /* KMH -- You can't escape the Sokoban level traps */
-        if (!In_sokoban(&u.uz) && (levitates(&youmonst) || Flying))
+        if (!Sokoban && (levitates(&youmonst) || Flying))
             break;
         seetrap(trap);
-        if (!In_sokoban(&u.uz) && is_clinger(youmonst.data)) {
+        if (!Sokoban && is_clinger(youmonst.data)) {
             if (trap->tseen) {
                 pline(msgc_playerimmune, "You see %s %spit below you.",
                       a_your[trap->madeby_u],
@@ -947,7 +967,7 @@ dotrap(struct trap *trap, unsigned trflags)
             }
             break;
         }
-        if (!In_sokoban(&u.uz)) {
+        if (!Sokoban) {
             const char *verbbuf;
 
             if (u.usteed) {
@@ -1822,7 +1842,7 @@ mintrap(struct monst *mtmp)
     } else {
         int tt = trap->ttyp;
         boolean in_sight, tear_web, see_it, inescapable =
-            ((tt == HOLE || tt == PIT) && In_sokoban(&u.uz) && !trap->madeby_u);
+            ((tt == HOLE || tt == PIT) && Sokoban && !trap->madeby_u);
         const char *fallverb;
 
         /* true when called from dotrap, inescapable is not an option */
@@ -2630,7 +2650,7 @@ float_down(struct monst *mon)
         /* u.uinwater msgs already in spoteffects()/drown() */
         else if ((!you || !u.uinwater) && !no_msg) {
             if (!you || !in_steed_dismounting) {
-                boolean sokoban_trap = (In_sokoban(m_mz(mon)) && trap);
+                boolean sokoban_trap = (Sokoban_lev(m_dlevel(mon)) && trap);
 
                 if ((you || vis) && hallucinating(&youmonst)) {
                     if (you)
@@ -4443,6 +4463,8 @@ deltrap(struct level *lev, struct trap *trap)
         ttmp->ntrap = trap->ntrap;
     }
     dealloc_trap(trap);
+
+    check_sokoban_completion(lev);
 }
 
 boolean

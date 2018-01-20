@@ -776,7 +776,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                     /* Boulders generally make the life harder for monsters, because they
                        have pretty much no control over them. Thus, give a scoring bonus
                        if they're nearby (but not for sokoban boulders!). */
-                    tilescore += In_sokoban(m_mz(mon)) ? -20 : +20;
+                    tilescore += Sokoban_lev(m_dlevel(mon)) ? -20 : +20;
                 if (sobj_at(CORPSE, level, sx, sy) &&
                     (obj->otyp == WAN_UNDEAD_TURNING ||
                      obj->otyp == SPE_TURN_UNDEAD))
@@ -1953,7 +1953,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
             !mx_eshk(mon) && !mx_egd(mon) && !ispriest(mon) &&
             !levitates(mon)
             /* monsters digging in Sokoban can ruin things */
-            && !In_sokoban(m_mz(mon))
+            && !Sokoban_lev(m_dlevel(mon))
             /* digging wouldn't be effective; assume they know that */
             && !(lev->locations[x][y].flags & W_NONDIGGABLE)
             && !(Is_botlevel(m_mz(mon)) || In_endgame(m_mz(mon)))
@@ -1967,7 +1967,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
         /* c!oGL is pretty much reverse digging */
         if (otyp == POT_GAIN_LEVEL && cursed &&
             !mx_eshk(mon) && !mx_egd(mon) && !ispriest(mon) &&
-            !In_sokoban(m_mz(mon)) &&
+            !Sokoban_lev(m_dlevel(mon)) &&
             !In_endgame(m_mz(mon)))
             return 1;
 

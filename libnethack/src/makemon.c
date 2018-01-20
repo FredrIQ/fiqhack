@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1022,7 +1022,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     /* In sokoban, peaceful monsters are generally worse for the player
        than hostile ones, so don't make them peaceful there.  Make an
        exception to this for particularly nasty monsters. */
-    mtmp->mpeaceful = ((In_sokoban(&lev->z) && !extra_nasty(mtmp->data) &&
+    mtmp->mpeaceful = ((Sokoban_lev(lev) && !extra_nasty(mtmp->data) &&
                         !always_peaceful(mtmp->data)) ?
                        FALSE : (mmflags & MM_ANGRY) ?
                        FALSE : peace_minded(ptr));

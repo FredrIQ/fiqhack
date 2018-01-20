@@ -613,8 +613,8 @@ level_tele_impl(struct monst *mon, boolean wizard_tele)
        that the hero will have a hard time tracking down said pet (and for
        pacifism in particular, is essentially an instadeath), justifies
        using petfatal for messages involving these */
-    if ((mon_has_amulet(mon) || In_endgame(m_mz(mon)) || In_sokoban(m_mz(mon))) &&
-        !wizard_tele) {
+    if ((mon_has_amulet(mon) || In_endgame(m_mz(mon)) ||
+         Sokoban_lev(m_dlevel(mon))) && !wizard_tele) {
         if (you || vis)
             pline(msgc_hint, "%s %s very disoriented for a moment.",
                   you ? "You" : Monnam(mon),

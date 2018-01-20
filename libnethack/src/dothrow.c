@@ -566,7 +566,7 @@ hurtle_step(void *arg, int x, int y)
     if ((u.ux - x) && (u.uy - y) && bad_rock(&youmonst, u.ux, y) &&
         bad_rock(&youmonst, x, u.uy)) {
         /* Move at a diagonal. */
-        if (In_sokoban(&u.uz)) {
+        if (Sokoban) {
             pline(msgc_cancelled1, "You come to an abrupt halt!");
             return FALSE;
         }
@@ -594,7 +594,7 @@ hurtle_step(void *arg, int x, int y)
             dotrap(ttmp, 0);
         } else if ((ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT ||
                     ttmp->ttyp == HOLE || ttmp->ttyp == TRAPDOOR) &&
-                   In_sokoban(&u.uz)) {
+                   Sokoban) {
             /* Air currents overcome the recoil */
             dotrap(ttmp, 0);
             *range = 0;
@@ -697,7 +697,7 @@ hurtle(int dx, int dy, int range, boolean verbose)
                       m_shot.s ? "shoot" : "throw", m_shot.s ? "shot" : "toss");
         m_shot.n = m_shot.i;    /* make current shot be the last */
     }
-    if (In_sokoban(&u.uz))
+    if (Sokoban)
         change_luck(-1);        /* Sokoban guilt */
     uc.x = u.ux;
     uc.y = u.uy;
@@ -1056,7 +1056,7 @@ fire_obj(int ddx, int ddy, int range,   /* direction and range */
                         pline(msgc_yafm, "%s jerks to an abrupt halt.",
                               The(distant_name(obj, xname))); /* lame */
                     range = 0;
-                } else if (In_sokoban(&u.uz) && (t = t_at(level, x, y)) != 0 &&
+                } else if (Sokoban && (t = t_at(level, x, y)) != 0 &&
                            (t->ttyp == PIT || t->ttyp == SPIKED_PIT ||
                             t->ttyp == HOLE || t->ttyp == TRAPDOOR)) {
                     /* hero falls into the trap, so ball stops */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1385,7 +1385,7 @@ poly_obj(struct obj *obj, int id)
         return obj;
     }
 
-    if (obj->otyp == BOULDER && In_sokoban(&u.uz))
+    if (obj->otyp == BOULDER && Sokoban)
         change_luck(-1);        /* Sokoban guilt */
     if (id == STRANGE_OBJECT) { /* preserve symbol */
         int try_limit = 3;
@@ -3805,7 +3805,7 @@ void
 fracture_rock(struct obj *obj)
 {
     /* A little Sokoban guilt... */
-    if (obj->otyp == BOULDER && In_sokoban(&u.uz) && !flags.mon_moving)
+    if (obj->otyp == BOULDER && Sokoban && !flags.mon_moving)
         change_luck(-1);
 
     obj->otyp = ROCK;

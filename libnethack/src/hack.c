@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -353,7 +353,7 @@ moverock(schar dx, schar dy)
             mtmp = m_at(level, rx, ry);
 
             /* KMH -- Sokoban doesn't let you push boulders diagonally */
-            if (In_sokoban(&u.uz) && dx && dy) {
+            if (Sokoban && dx && dy) {
                 if (Blind)
                     feel_location(sx, sy);
                 pline(msgc_yafm, "%s won't roll diagonally on this %s.",
@@ -735,7 +735,7 @@ boolean
 bad_rock(const struct monst *mon, xchar x, xchar y)
 {
     const struct permonst *mdat = mon->data;
-    return (boolean) ((In_sokoban(&u.uz) && sobj_at(BOULDER, level, x, y)) ||
+    return (boolean) ((Sokoban && sobj_at(BOULDER, level, x, y)) ||
                       (IS_ROCK(level->locations[x][y].typ)
                        && (!tunnels(mdat) || needspick(mdat) ||
                            !may_dig(level, x, y))
@@ -756,7 +756,7 @@ can_diagonal_squeeze(const struct monst *mon, boolean msg)
     if (!you && !canseemon(mon))
         msg = FALSE;
 
-    if (In_sokoban(m_mz(mon))) {
+    if (Sokoban_lev(m_dlevel(mon))) {
         if (msg)
             pline(msgc, "%s cannot pass that way.", Monnam(mon));
         return FALSE;
@@ -989,9 +989,9 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
            (unless we're somehow able to move onto a boulder square). Thus, this
            is checking sobj_at (what's actually there), not memory. */
         if (mode == DO_MOVE && sobj_at(BOULDER, level, x, y) &&
-            (In_sokoban(&u.uz) || !cache->passwall)) {
+            (Sokoban || !cache->passwall)) {
             if (!tunnels(youmonst.data) || needspick(youmonst.data) ||
-                In_sokoban(&u.uz) || still_chewing(x, y)) {
+                Sokoban || still_chewing(x, y)) {
                 /* TODO: this codepath seems to be unreachable (in favour
                    of the Oof! codepath) */
                 if (!cache->instead_of_pushing_boulder)
@@ -1009,7 +1009,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
            boulders can be time-consuming, and it's more intuitive if travel
            always picks the same path.) */
         if (mode == TEST_TRAV && level->locations[x][y].mem_obj == BOULDER + 1) {
-            if (In_sokoban(&u.uz))
+            if (Sokoban)
                 return FALSE;
             if (level->locations[ux][uy].mem_obj == BOULDER + 1 &&
                 !cache->passwall &&
@@ -1038,7 +1038,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                   throws_rocks(youmonst.data) ? " aside" : "",
                   cache->instead_of_pushing_boulder ? " instead" : "");
 
-            if (In_sokoban(&u.uz))
+            if (Sokoban)
                 change_luck(-1);    /* Sokoban guilt */
         }
     }
@@ -2058,7 +2058,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 pline(msgc_statusheal, "You free your %s.", body_part(LEG));
             } else if (!(--u.utrap)) {
                 pline(msgc_actionok, "You %s to the edge of the pit.",
-                      (In_sokoban(&u.uz) &&
+                      (Sokoban &&
                        levitates(&youmonst)) ?
                       "struggle against the air currents and float" : u.usteed ?
                       "ride" : "crawl");

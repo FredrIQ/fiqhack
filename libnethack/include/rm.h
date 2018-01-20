@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-11 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -448,6 +448,7 @@ struct levelflags {
     unsigned is_maze_lev:1;
     unsigned is_cavernous_lev:1;
     unsigned vault_known:1;
+    unsigned sokoban_rules:1;   /* whether or not the level has Sokoban rules */
 
     unsigned arboreal:1;        /* Trees replace rock */
 };
@@ -510,6 +511,9 @@ extern struct level *level;             /* pointer to an entry in levels */
 # define OBJ_AT(x,y)           (level->objects[x][y] != NULL)
 # define OBJ_AT_LEV(lev, x,y)  ((lev)->objects[x][y] != NULL)
 
+# define Sokoban               (level->flags.sokoban_rules)
+# define Sokoban_lev(lev)      ((lev)->flags.sokoban_rules)
+
 /*
  * Macros for encapsulation of level->monsters references.
  */
@@ -524,4 +528,3 @@ extern struct level *level;             /* pointer to an entry in levels */
              (MON_BURIED_AT(x,y) ? level->monsters[x][y] : NULL)
 
 #endif /* RM_H */
-
