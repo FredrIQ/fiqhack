@@ -387,14 +387,15 @@ maketrap(struct level *lev, int x, int y, int typ, enum rng rng)
         ttmp->ntrap = lev->lev_traps;
         lev->lev_traps = ttmp;
     } else if (Sokoban_lev(lev))
-        check_sokoban_completion(lev);
+        check_sokoban_completion(lev, FALSE);
 
     return ttmp;
 }
 
-/* Possibly unset sokoban rules if there's no pits/holes on the level. */
+/* Possibly unset sokoban rules if there's no pits/holes on the level.
+   silent is used when checking completion state on older saves. */
 void
-check_sokoban_completion(struct level *lev)
+check_sokoban_completion(struct level *lev, boolean silent)
 {
     if (!In_sokoban(&lev->z))
         return;
@@ -406,8 +407,9 @@ check_sokoban_completion(struct level *lev)
 
     Sokoban_lev(lev) = FALSE;
 
-    pline(lev == level ? msgc_levelsound : msgc_offlevel,
-          "You feel some arcane magic being lifted from the area.");
+    if (!silent)
+        pline(lev == level ? msgc_levelsound : msgc_offlevel,
+              "You feel some arcane magic being lifted from the area.");
 }
 
 void
@@ -4464,7 +4466,7 @@ deltrap(struct level *lev, struct trap *trap)
     }
     dealloc_trap(trap);
 
-    check_sokoban_completion(lev);
+    check_sokoban_completion(lev, FALSE);
 }
 
 boolean

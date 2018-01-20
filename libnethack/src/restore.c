@@ -1406,6 +1406,10 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     lev->flags.arboreal = (lflags >> 14) & 1;
     lev->flags.sokoban_rules = (lflags >> 13) & 1;
 
+    if (flags.save_revision < 17)
+        if (In_sokoban(&lev->z))
+            lev->flags.sokoban_rules = TRUE;
+
     restore_coords(mf, lev->doors, DOORMAX);
     rest_rooms(mf, lev);        /* No joke :-) */
     if (lev->nroom)
@@ -1438,6 +1442,9 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 
     rest_worm(mf, lev); /* restore worm information */
     lev->lev_traps = restore_traps(mf);
+    if (flags.save_revision < 17)
+        check_sokoban_completion(lev, TRUE);
+
     restobjchn(mf, lev, ghostly, FALSE, &lev->objlist, &table);
     find_lev_obj(lev);
     /* restobjchn()'s `frozen' argument probably ought to be a callback routine
