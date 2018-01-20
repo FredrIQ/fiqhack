@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1032,7 +1032,7 @@ docast(const struct nh_cmd_arg *arg)
 
     if (mgetargspell(&m, &spell)) {
         m.spell = spell;
-        return spelleffects(FALSE, &m);
+        return spelleffects(FALSE, &m, TRUE);
     }
     return 0;
 }
@@ -1051,7 +1051,7 @@ docastalias(const struct nh_cmd_arg *arg)
         if (spellkey(i) == arg->key) {
             m.spell = spellid(i);
             pline(msgc_actionboring, "Using %s.", spellname(i));
-            return spelleffects(FALSE, &m);
+            return spelleffects(FALSE, &m, FALSE);
         }
     }
 
@@ -1442,7 +1442,7 @@ mon_wants_to_maintain(const struct monst *mon, int spell)
 }
 
 int
-spelleffects(boolean atme, struct musable *m)
+spelleffects(boolean atme, struct musable *m, boolean prompt_maintenance)
 {
     int spell = m->spell;
     struct monst *mon = m->mon;
@@ -1588,8 +1588,9 @@ spelleffects(boolean atme, struct musable *m)
         if (!you && !mon_wants_to_maintain(mon, spell))
             break;
 
-        if (!you || yn("Maintain the spell?") == 'y')
-            set_maintained = TRUE; /* set it below, past all the usual sanity checks */
+        if (prompt_maintenance &&
+            (!you || yn("Maintain the spell?") == 'y'))
+            set_maintained = TRUE;
         break;
 
     /* The rest of the spells don't have targeting. */

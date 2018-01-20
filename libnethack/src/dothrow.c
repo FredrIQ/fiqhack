@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -290,7 +290,7 @@ dofire(const struct nh_cmd_arg *arg)
         if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == u.spellquiver &&
             spellknow(sp_no)) {
             m.spell = u.spellquiver;
-            return spelleffects(FALSE, &m);
+            return spelleffects(FALSE, &m, FALSE);
         }
     }
 

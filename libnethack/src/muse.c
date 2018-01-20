@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2159,7 +2159,7 @@ use_item(struct musable *m)
 
     switch (m->use) {
     case MUSE_SPE:
-        spelleffects(FALSE, m);
+        spelleffects(FALSE, m, TRUE);
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_SCR:
         mreadmsg(mon, obj);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1837,7 +1837,7 @@ extern boolean getspell(int *);
 extern int spell_skilltype(int);
 extern int monspellprot(struct monst *);
 extern int mon_castable(const struct monst *, int, boolean);
-extern int spelleffects(boolean, struct musable *);
+extern int spelleffects(boolean, struct musable *, boolean);
 extern boolean learn_spell(int, boolean, boolean);
 extern int throwspell(boolean, boolean, schar *dx, schar *dy,
                       const struct musable *);
