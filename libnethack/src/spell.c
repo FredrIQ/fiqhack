@@ -2085,10 +2085,23 @@ dospellmenu(const struct monst *mon,
                  "Spells marked with '*' are forgotten.", 0, FALSE);
     set_menuitem(&items[count++], 0, MI_NORMAL,
                  "Spells marked with '!' are maintained.", 0, FALSE);
+    if (u.spellquiver)
+        set_menuitem(&items[count++], 0, MI_NORMAL,
+                     "Spells marked with ':' is quivered.", 0, FALSE);
     set_menuitem(&items[count++], 0, MI_NORMAL,
                  "Spells marked with '#' are aliased with 'castalias'.", 0, FALSE);
     set_menuitem(&items[count++], 0, MI_NORMAL,
                  "", 0, FALSE);
+    if (splaction != SPELLMENU_QUIVER)
+        set_menuitem(&items[count++], ':', MI_NORMAL,
+                     "Quiver a spell", ':', FALSE);
+    else
+        set_menuitem(&items[count++], '-', MI_NORMAL,
+                     "Empty quiver", '-', FALSE);
+
+    set_menuitem(&items[count++], 0, MI_NORMAL,
+                 "", 0, FALSE);
+
     set_menuitem(&items[count++], 0, MI_HEADING,
                  "Name\tLevel\tCategory\tFail\tMemory", 0, FALSE);
     for (i = 0; i < MAXSPELL; i++) {
@@ -2103,11 +2116,12 @@ dospellmenu(const struct monst *mon,
                 percent = msgprintf("%-d%%", (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
 
             buf = SPELL_IS_FROM_SPELLBOOK(i) ?
-                msgprintf("%s\t%-d%s%s%s%s\t%s\t%-d%%\t%s", spellname(i), spellev(i),
+                msgprintf("%s\t%-d%s%s%s%s%s\t%s\t%-d%%\t%s", spellname(i), spellev(i),
                           spellknow(i) ? " " : "*",
                           !spell_maintained(mon, spellid(i)) ?
                           " " : "!",
-                          !spellkey(i) ? " " : "#:",
+                          !spellkey(i) ? " " : "#",
+                          u.spellquiver != spellid(i) ? " " : ":",
                           !spellkey(i) ? "" : friendly_key("%s", spellkey(i)),
                           spelltypemnemonic(spell_skilltype(spellid(i))),
                           100 - percent_success(&youmonst, spellid(i)), percent) :
@@ -2158,7 +2172,22 @@ dospellmenu(const struct monst *mon,
         return FALSE;
 
     if (n > 0) {
+        if (selected[0] == ':') {
+            quiver_spell();
+            return FALSE;
+        } else if (selected[0] == '-') {
+            pline(msgc_actionok, "You %shavve no spell quivered.",
+                  u.spellquiver ? "now " : "");
+            u.spellquiver = 0;
+            return FALSE;
+        }
+
         *spell_no = selected[0] - 1;
+        if (!SPELL_IS_FROM_SPELLBOOK(*spell_no)) {
+            pline(msgc_mispaste, "You can't quiver abilities!");
+            return FALSE;
+        }
+
         /* menu selection for `PICK_ONE' does not de-select any preselected
            entry */
         if (n > 1 && *spell_no == splaction)
