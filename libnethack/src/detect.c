@@ -1453,7 +1453,7 @@ sokoban_detect(struct level *lev)
             what_trap(ttmp->ttyp, -1, -1, rn2);
         /* set sokoban_rules when there is at least one pit or hole */
         if (ttmp->ttyp == PIT || ttmp->ttyp == HOLE)
-            Sokoban = TRUE;
+            Sokoban_lev(lev) = TRUE;
     }
 }
 
