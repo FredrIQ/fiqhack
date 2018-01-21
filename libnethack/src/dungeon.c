@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2041,9 +2041,9 @@ seen_string(xchar x, const char *obj)
     }
 }
 
-
-#define COMMA (i++ > 0 ? ", " : "      ")
-#define ADDNTOBUF(nam, var) do { \
+#define INDENT "      "
+#define COMMA (i++ > 0 ? ", " : INDENT)
+#define ADDNTOBUF(nam, var) do {                                        \
         if (var)                                                        \
             buf = msgprintf("%s%s%s " nam "%s", buf, COMMA,             \
                             seen_string((var), (nam)),                  \
@@ -2144,21 +2144,21 @@ overview_print_branch(const struct overview_info *oi)
 
     if (oi->portal) {
         if (oi->portal_dst_known) {
-            buf = msgprintf("      portal to %s",
+            buf = msgprintf(INDENT "portal to %s",
                             find_dungeon(&oi->portal_dst).dname);
         } else {
-            buf = "      a magic portal";
+            buf = INDENT "a magic portal";
         }
     } else if (oi->branch) {
         if (oi->branch_dst_known) {
-            buf = msgprintf("      stairs to %s",
+            buf = msgprintf(INDENT "stairs to %s",
                             find_dungeon(&oi->branch_dst).dname);
         } else {
-            buf = "      a long staircase";
+            buf = INDENT "a long staircase";
         }
     } else {
         impossible("branch connected badly?");
-        buf = "      a connection";
+        buf = INDENT "a connection";
     }
 
     return buf;
@@ -2173,7 +2173,7 @@ dooverview(const struct nh_cmd_arg *arg)
     struct nh_menulist menu;
     int i, n, x, y, dnum;
     const int *selected;
-    struct level *lev;
+    struct level *lev = NULL;
     const char *buf;
 
     (void) arg;
@@ -2189,6 +2189,8 @@ dooverview(const struct nh_cmd_arg *arg)
     for (i = 0; i <= maxledgerno(); i++) {
         if (!levels[i])
             continue;
+
+        lev = levels[i];
         overview_scan(levels[i], &oinfo);
 
         if (levels[i]->z.dnum != dnum) {
@@ -2210,6 +2212,11 @@ dooverview(const struct nh_cmd_arg *arg)
         buf = overview_print_info(&oinfo);
         if (*buf)
             add_menutext(&menu, buf);
+
+        if (In_sokoban(&lev->z))
+            add_menutext(&menu,
+                         msgcat(INDENT,
+                                Sokoban_lev(lev) ? "Unsolved" : "Solved"));
 
         /* "Stairs to the Gnomish Mines" */
         if (oinfo.branch || oinfo.portal) {
