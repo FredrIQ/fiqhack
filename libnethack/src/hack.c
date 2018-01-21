@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -177,7 +177,7 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
        wall. Again, this can be overriden using "moveonly". */
     if (!last_command_was("moveonly")) {
         boolean lava = l->mem_bg == S_lava;
-        boolean pool = (l->mem_bg == S_pool);
+        boolean pool = (l->mem_bg == S_pool || l->mem_bg == S_water);
         int waterwalk = 0;
         /* set waterwalk to 1 if IDed, 2 if IDed fireproof (allows lava) */
         if (uarmf && uarmf->otyp == WATER_WALKING_BOOTS && uarmf->dknown &&
@@ -193,12 +193,19 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
             !(lava ? is_lava(level, u.ux, u.uy) : is_pool(level, u.ux, u.uy))) {
             if (cansee(x, y))
                 pline(msgc_cancelled,
-                      is_pool(level, x, y) ? "You never learned to %s!" :
+                      pool ? "You never learned to %s!" :
                       "That lava looks rather dangerous...",
                       Swimming ? "remain waterproof" : "swim");
             else
                 pline(msgc_cancelled, "As far as you can remember, it's "
                       "not safe to stand there.");
+            pline(msgc_controlhelp,
+                  "(Use the 'moveonly' command to move there anyway.)");
+            return uia_halt;
+        }
+
+        if (known_harmful_trap(&youmonst, x, y)) {
+            pline(msgc_cancelled, "There's a trap there!");
             pline(msgc_controlhelp,
                   "(Use the 'moveonly' command to move there anyway.)");
             return uia_halt;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1697,6 +1697,77 @@ seetrap(struct trap *trap)
     }
 }
 
+/* Returns 0 if there isn't a trap, we don't know about it, or it's harmless.
+   Returns 1 if the trap is potentially harmful.
+   Returns -1 if the trap is potentially harmful to our items. */
+int
+known_harmful_trap(const struct monst *mon, int x, int y)
+{
+    struct level *lev = m_dlevel(mon);
+    struct trap *trap = t_at(lev, x, y);
+    if (!trap)
+        return 0;
+    if (mon == &youmonst && !trap->tseen)
+        return 0;
+    if (mon != &youmonst &&
+        !(mon->mtrapseen & (1 << (trap->ttyp - 1))))
+        return 0;
+
+    switch (trap->ttyp) {
+    case BEAR_TRAP:
+        if (flying(mon) || levitates(mon) || amorphous(mon->data) ||
+            is_whirly(mon->data) || unsolid(mon->data) ||
+            ((mon != &youmonst || !u.usteed) && mon->data->msize <= MZ_SMALL))
+            return 0;
+        return 1;
+    case PIT:
+    case SPIKED_PIT:
+        if (phasing(mon))
+            return 0; /* even overrides Sokoban magic */
+        /* fallthrough */
+    case HOLE:
+    case TRAPDOOR:
+        if (Sokoban_lev(lev))
+            return 1;
+        /* fallthrough */
+    case SQKY_BOARD:
+        if (flying(mon) || levitates(mon))
+            return 0;
+        return 1;
+    case SLP_GAS_TRAP:
+        if (immune_to_sleep(mon) || breathless(mon->data))
+            return 0;
+        return 1;
+    case RUST_TRAP:
+        return -1;
+    case FIRE_TRAP:
+        if (!immune_to_fire(mon))
+            return 1;
+        return -1;
+    case TELEP_TRAP:
+    case LEVEL_TELEP:
+    case ANTI_MAGIC:
+    case POLY_TRAP:
+        if (resists_magm(mon))
+            return 0;
+        return 1;
+    case MAGIC_PORTAL:
+    case VIBRATING_SQUARE:
+        return 0;
+    case WEB:
+        if (amorphous(mon->data) || is_whirly(mon->data) ||
+            unsolid(mon->data) || acidic(mon->data) ||
+            mon->data == &mons[PM_FIRE_ELEMENTAL] ||
+            webmaker(mon->data) ||
+            (m_mwep(mon) && m_mwep(mon)->oartifact == ART_STING))
+            return 0;
+        return 1;
+    default:
+        return 1;
+    }
+
+    /* NOTREACHED */ return 1;
+}
 
 static int
 mkroll_launch(struct trap *ttmp, struct level *lev, xchar x, xchar y,
