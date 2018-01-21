@@ -2203,7 +2203,8 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
                             100);
         }
         set_menuitem(&items[count++], i + 1, MI_NORMAL, buf,
-                     you ? spelllet_from_no(i) : objects[otyp].oc_defletter, FALSE);
+                     you ? spelllet_from_no(i) : objects[otyp].oc_defletter,
+                     you && splaction == i);
         if (!you && otyp == SPE_BOOK_OF_THE_DEAD)
             break;
     }
