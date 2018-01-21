@@ -553,13 +553,15 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     if (ml->icount)
         memcpy(item_copy, ml->items, sizeof item_copy);
     struct nh_menuitem *visitem_pointers[ml->icount ? ml->icount : 1];
-    for (i = 0; i < ml->icount; i++)
-        visitem_pointers[i] = item_copy + i;
     int *visselected_pointers[ml->icount ? ml->icount : 1];
-    for (i = 0; i < ml->icount; i++)
-        visselected_pointers[i] = selected + i;
 
     memset(selected, 0, sizeof selected);
+
+    for (i = 0; i < ml->icount; i++) {
+        visitem_pointers[i] = item_copy + i;
+        visselected_pointers[i] = selected + i;
+        selected[i] = visitem_pointers[i]->selected;
+    }
 
     prevcurs = nh_curs_set(0);
 
@@ -947,12 +949,12 @@ curses_display_objects(
         memcpy(item_copy, objlist->items, sizeof item_copy);
     struct nh_objitem *visitem_pointers[objlist->icount ? objlist->icount : 1];
     int *visselected_pointers[objlist->icount ? objlist->icount : 1];
+    memset(selected, 0, sizeof selected);
+
     for (i = 0; i < objlist->icount; i++) {
         visitem_pointers[i] = item_copy + i;
         visselected_pointers[i] = selected + i;
     }
-
-    memset(selected, 0, sizeof selected);
 
     if (inventory_special)
         placement_hint = PLHINT_INVENTORY;
