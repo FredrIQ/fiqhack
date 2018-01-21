@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -359,6 +359,19 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
     terminate(GAME_CREATED);
 }
 
+static void
+print_missed_turncount(void)
+{
+    struct eyou *you = mx_eyou(&youmonst);
+    if (!you)
+        return;
+
+    int oldmoves = you->oldmoves;
+    you->oldmoves = moves;
+    if (oldmoves && (moves - oldmoves) > 1)
+        pline(msgc_actionboring, "[%d turns]", moves - oldmoves);
+}
+
 enum nh_play_status
 nh_play_game(int fd, enum nh_followmode followmode)
 {
@@ -506,6 +519,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
             cmdidx = get_command_idx("wait");
             cmd.arg.argtype = 0;
         } else {
+            print_missed_turncount();
             if (replay_want_userinput() ||
                 !log_replay_command(&cmd)) {
                 if (program_state.followmode == FM_RECOVERQUIT) {
@@ -723,31 +737,6 @@ you_moved(void)
                 u.moveamt -= 4;
                 u.moveamt += rn2(9);
             }
-
-            switch (wtcap) {
-            case UNENCUMBERED:
-                break;
-            case SLT_ENCUMBER:
-                u.moveamt -= (u.moveamt / 4);
-                break;
-            case MOD_ENCUMBER:
-                u.moveamt -= (u.moveamt / 2);
-                break;
-            case HVY_ENCUMBER:
-                u.moveamt -= ((u.moveamt * 3) / 4);
-                break;
-            case EXT_ENCUMBER:
-                u.moveamt -= ((u.moveamt * 7) / 8);
-                break;
-            default:
-                break;
-            }
-
-            /* Avoid an infinite loop on corner cases (e.g. polyinit to blue
-               jelly), by limiting how long the player can be stuck without
-               movement points. */
-            if (u.moveamt < 1)
-                u.moveamt = 1;
 
             /* Adjust the move offset for the change in speed. */
             adjust_move_offset(&youmonst, oldmoveamt, u.moveamt);
