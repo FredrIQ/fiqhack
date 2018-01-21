@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-18 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -410,9 +410,11 @@ log_desync(char found, char expected)
     /* If desyncs shouldn't be happening, warn the user.
 
        Right now, they shouldn't be happening. */
-    raw_printf("Warning: Desync in save file: "
-               "found '%c' expected '%c' offset %ld\n",
-               found, expected, (long)program_state.gamestate_location);
+    if (program_state.followmode != FM_REPLAY ||
+        !replay_desynced())
+        raw_printf("Warning: Desync in save file: "
+                   "found '%c' expected '%c' offset %ld\n",
+                   found, expected, (long)program_state.gamestate_location);
 
     /*
      * The behaviour we want for this function:
