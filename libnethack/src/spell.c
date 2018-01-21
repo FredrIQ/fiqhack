@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2092,15 +2092,16 @@ dospellmenu(const struct monst *mon,
                  "Spells marked with '#' are aliased with 'castalias'.", 0, FALSE);
     set_menuitem(&items[count++], 0, MI_NORMAL,
                  "", 0, FALSE);
-    if (splaction != SPELLMENU_QUIVER)
-        set_menuitem(&items[count++], ':', MI_NORMAL,
-                     "Quiver a spell", ':', FALSE);
-    else
-        set_menuitem(&items[count++], '-', MI_NORMAL,
-                     "Empty quiver", '-', FALSE);
-
-    set_menuitem(&items[count++], 0, MI_NORMAL,
-                 "", 0, FALSE);
+    if (splaction < 0) {
+        if (splaction != SPELLMENU_QUIVER)
+            set_menuitem(&items[count++], ':', MI_NORMAL,
+                         "Quiver a spell", ':', FALSE);
+        else
+            set_menuitem(&items[count++], '-', MI_NORMAL,
+                         "Empty quiver", '-', FALSE);
+        set_menuitem(&items[count++], 0, MI_NORMAL,
+                     "", 0, FALSE);
+    }
 
     set_menuitem(&items[count++], 0, MI_HEADING,
                  "Name\tLevel\tCategory\tFail\tMemory", 0, FALSE);
@@ -2183,7 +2184,7 @@ dospellmenu(const struct monst *mon,
         }
 
         *spell_no = selected[0] - 1;
-        if (!SPELL_IS_FROM_SPELLBOOK(*spell_no)) {
+        if (!SPELL_IS_FROM_SPELLBOOK(*spell_no) && splaction < 0) {
             pline(msgc_mispaste, "You can't quiver abilities!");
             return FALSE;
         }
