@@ -2107,9 +2107,11 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
             set_menuitem(&items[count++], 0, MI_NORMAL,
                          "", 0, FALSE);
         if (splaction < 0 && splaction != SPELLMENU_VIEW) {
+            const char *quiverspell =
+                msgprintf("Quiver a%s spell.", u.spellquiver ? "nother" : "");
             if (splaction != SPELLMENU_QUIVER)
                 set_menuitem(&items[count++], ':', MI_NORMAL,
-                             "Quiver a spell", ':', FALSE);
+                             quiverspell, ':', FALSE);
             else
                 set_menuitem(&items[count++], '-', MI_NORMAL,
                              "Empty quiver", '-', FALSE);
@@ -2223,7 +2225,7 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
             quiver_spell();
             return 0;
         } else if (selected[0] == '-') {
-            pline(msgc_actionok, "You %shavve no spell quivered.",
+            pline(msgc_actionok, "You %shave no spell quivered.",
                   u.spellquiver ? "now " : "");
             u.spellquiver = 0;
             return 0;
