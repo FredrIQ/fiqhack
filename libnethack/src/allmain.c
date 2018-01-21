@@ -362,6 +362,10 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
 static void
 print_missed_turncount(void)
 {
+    if (!flags.interrupted && flags.incomplete &&
+        flags.occupation != ocm_farmove)
+        return;
+
     struct eyou *you = mx_eyou(&youmonst);
     if (!you)
         return;
