@@ -6,9 +6,16 @@
 #include "hack.h"
 
 /* spellmenu arguments; 0 thru n-1 used as spl_book[] index when swapping */
+#define SPELLMENU_STATS (-5)
+#define SPELLMENU_REORDER (-4)
 #define SPELLMENU_CAST (-3)
 #define SPELLMENU_VIEW (-2)
 #define SPELLMENU_QUIVER (-1)
+
+#define SM_FORGOTTEN 1
+#define SM_MAINTAINED 2
+#define SM_QUIVERED 4
+#define SM_ALIASED 8
 
 #define KEEN 60000
 #define PERMA -1
@@ -2033,7 +2040,7 @@ dovspell(const struct nh_cmd_arg *arg)
     (void) arg;
 
     while (dospellmenu(&youmonst, "Your magical abilities",
-                       SPELLMENU_VIEW, &splnum)) {
+                       SPELLMENU_REORDER, &splnum)) {
         if (spellkey(splnum) && yn("Remove the key alias for the spell?") == 'y') {
             spl_book[splnum].sp_key = 0;
             continue;
@@ -2060,6 +2067,8 @@ quiver_spell(void)
         return;
 
     u.spellquiver = spellid(splnum);
+    pline(msgc_actionok, "You now have the %s spell quivered.",
+          spellname(splnum));
 }
 
 void
@@ -2070,47 +2079,74 @@ show_monster_spells(const struct monst *mon)
 }
 
 static boolean
-dospellmenu(const struct monst *mon,
-            const char *prompt,
-            int splaction,  /* SPELLMENU_CAST, SPELLMENU_VIEW, SPELLMENU_QUIVER or
-                               spl_book[] index */
+dospellmenu(const struct monst *mon, const char *prompt, int splaction,
             int *spell_no)
 {
     boolean you = (mon == &youmonst);
     int i, n, how, count = 0;
     struct nh_menuitem items[MAXSPELL + 1];
     const int *selected;
+    int stats = 0;
 
-    set_menuitem(&items[count++], 0, MI_NORMAL,
-                 "Spells marked with '*' are forgotten.", 0, FALSE);
-    set_menuitem(&items[count++], 0, MI_NORMAL,
-                 "Spells marked with '!' are maintained.", 0, FALSE);
-    if (u.spellquiver)
-        set_menuitem(&items[count++], 0, MI_NORMAL,
-                     "Spells marked with ':' is quivered.", 0, FALSE);
-    set_menuitem(&items[count++], 0, MI_NORMAL,
-                 "Spells marked with '#' are aliased with 'castalias'.", 0, FALSE);
-    set_menuitem(&items[count++], 0, MI_NORMAL,
-                 "", 0, FALSE);
-    if (splaction < 0) {
-        if (splaction != SPELLMENU_QUIVER)
-            set_menuitem(&items[count++], ':', MI_NORMAL,
-                         "Quiver a spell", ':', FALSE);
-        else
-            set_menuitem(&items[count++], '-', MI_NORMAL,
-                         "Empty quiver", '-', FALSE);
-        set_menuitem(&items[count++], 0, MI_NORMAL,
-                     "", 0, FALSE);
+    if (splaction != SPELLMENU_STATS) {
+        stats = dospellmenu(mon, prompt, SPELLMENU_STATS, spell_no);
+        if (stats & SM_FORGOTTEN)
+            set_menuitem(&items[count++], 0, MI_NORMAL,
+                         "Spells marked with '*' are forgotten.", 0, FALSE);
+        if (stats & SM_MAINTAINED)
+            set_menuitem(&items[count++], 0, MI_NORMAL,
+                         "Spells marked with '!' are maintained.", 0, FALSE);
+        if (stats & SM_QUIVERED)
+            set_menuitem(&items[count++], 0, MI_NORMAL,
+                         "Spell marked with ':' is quivered.", 0, FALSE);
+        if (stats & SM_ALIASED)
+            set_menuitem(&items[count++], 0, MI_NORMAL,
+                         "Spells marked with '#' are aliased with 'castalias'.",
+                         0, FALSE);
+        if (stats)
+            set_menuitem(&items[count++], 0, MI_NORMAL,
+                         "", 0, FALSE);
+        if (splaction < 0 && splaction != SPELLMENU_VIEW) {
+            if (splaction != SPELLMENU_QUIVER)
+                set_menuitem(&items[count++], ':', MI_NORMAL,
+                             "Quiver a spell", ':', FALSE);
+            else
+                set_menuitem(&items[count++], '-', MI_NORMAL,
+                             "Empty quiver", '-', FALSE);
+            set_menuitem(&items[count++], 0, MI_NORMAL,
+                         "", 0, FALSE);
+        } else if (splaction >= 0) {
+            set_menuitem(&items[count++], 0, MI_NORMAL,
+                         "You may also choose any other letter a-zA-Z.",
+                         0, FALSE);
+            set_menuitem(&items[count++], 0, MI_NORMAL,
+                         "", 0, FALSE);
+        }
+
+        set_menuitem(&items[count++], 0, MI_HEADING,
+                     "Name\tLevel\tCategory\tFail\tMemory", 0, FALSE);
     }
 
-    set_menuitem(&items[count++], 0, MI_HEADING,
-                 "Name\tLevel\tCategory\tFail\tMemory", 0, FALSE);
     for (i = 0; i < MAXSPELL; i++) {
         int otyp = 0;
         const char *buf;
         if (you) {
             if (spellid(i) == NO_SPELL)
                 continue;
+
+            if (SPELL_IS_FROM_SPELLBOOK(i) &&
+                splaction == SPELLMENU_STATS) {
+                if (!spellknow(i))
+                    stats |= SM_FORGOTTEN;
+                if (spell_maintained(mon, spellid(i)))
+                    stats |= SM_MAINTAINED;
+                if (spellkey(i))
+                    stats |= SM_ALIASED;
+                if (u.spellquiver && u.spellquiver == spellid(i))
+                    stats |= SM_QUIVERED;
+                continue;
+            }
+
             const char *percent = "--";
             if (SPELL_IS_FROM_SPELLBOOK(i) &&
                 spellknow(i) != PERMA)
@@ -2131,7 +2167,7 @@ dospellmenu(const struct monst *mon,
                           "divine" : "ability");
         } else {
             /* Book of the Dead ('b') is used as sentinel for WoY double trouble */
-            if (i == 1) {
+            if (i == 1 && splaction != SPELLMENU_STATS) {
                 if (!mon->iswiz)
                     continue;
                 buf = msgprintf("double trouble\t%-d \tclerical\t%-d%%\t%-d%%", 7, 0,
@@ -2148,6 +2184,13 @@ dospellmenu(const struct monst *mon,
                 continue;
             if (!mon_castable(mon, otyp, TRUE))
                 continue;
+
+            if (splaction == SPELLMENU_STATS) {
+                if (spell_maintained(mon, spellid(i)))
+                    stats |= SM_MAINTAINED;
+                continue;
+            }
+
             buf = msgprintf("%s\t%-d%s%s%s%s\t%s\t%-d%%\t%-d%%",
                             OBJ_NAME(objects[otyp]),
                             objects[otyp].oc_level, " ",
@@ -2163,6 +2206,9 @@ dospellmenu(const struct monst *mon,
             break;
     }
 
+    if (splaction == SPELLMENU_STATS)
+        return stats;
+
     how = PICK_ONE;
     if (splaction >= 0)
         how = PICK_LETTER;      /* We're swapping spells. */
@@ -2170,23 +2216,24 @@ dospellmenu(const struct monst *mon,
     n = display_menu(&(struct nh_menulist){.items = items, .icount = count},
                      prompt, how, PLHINT_ANYWHERE, &selected);
     if (!you)
-        return FALSE;
+        return 0;
 
     if (n > 0) {
         if (selected[0] == ':') {
             quiver_spell();
-            return FALSE;
+            return 0;
         } else if (selected[0] == '-') {
             pline(msgc_actionok, "You %shavve no spell quivered.",
                   u.spellquiver ? "now " : "");
             u.spellquiver = 0;
-            return FALSE;
+            return 0;
         }
 
         *spell_no = selected[0] - 1;
-        if (!SPELL_IS_FROM_SPELLBOOK(*spell_no) && splaction < 0) {
+        if (!SPELL_IS_FROM_SPELLBOOK(*spell_no) &&
+            splaction == SPELLMENU_QUIVER) {
             pline(msgc_mispaste, "You can't quiver abilities!");
-            return FALSE;
+            return 0;
         }
 
         /* menu selection for `PICK_ONE' does not de-select any preselected
@@ -2197,14 +2244,14 @@ dospellmenu(const struct monst *mon,
            swap it with anything */
         if (*spell_no == splaction)
             return FALSE;
-        return TRUE;
+        return 1;
     } else if (splaction >= 0) {
         /* explicit de-selection of preselected spell means that user is still
            swapping but not for the current spell */
         *spell_no = splaction;
-        return TRUE;
+        return 1;
     }
-    return FALSE;
+    return 0;
 }
 
 
