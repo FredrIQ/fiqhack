@@ -1739,10 +1739,14 @@ known_harmful_trap(const struct monst *mon, int x, int y)
             return 0;
         return 1;
     case RUST_TRAP:
+        if (waterproof(mon))
+            return 0;
         return -1;
     case FIRE_TRAP:
         if (!immune_to_fire(mon))
             return 1;
+        if (ehas_property(mon, FIRE_RES))
+            return 0;
         return -1;
     case TELEP_TRAP:
     case LEVEL_TELEP:
