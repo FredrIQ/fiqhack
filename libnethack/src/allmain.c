@@ -363,7 +363,7 @@ static void
 print_missed_turncount(void)
 {
     if (!flags.interrupted && flags.incomplete &&
-        flags.occupation != ocm_farmove)
+        !((1 << flags.occupation) & ocm_farmove))
         return;
 
     struct eyou *you = mx_eyou(&youmonst);
