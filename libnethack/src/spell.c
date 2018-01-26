@@ -1,11 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-24 */
+/* Last modified by Fredrik Ljungdahl, 2018-01-26 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
 /* spellmenu arguments; 0 thru n-1 used as spl_book[] index when swapping */
+#define SPELLMENU_ALIAS (-6)
 #define SPELLMENU_STATS (-5)
 #define SPELLMENU_REORDER (-4)
 #define SPELLMENU_CAST (-3)
@@ -1063,7 +1064,7 @@ docastalias(const struct nh_cmd_arg *arg)
     }
 
     if (!dospellmenu(&youmonst, "Choose which spell to alias",
-                     SPELLMENU_QUIVER, &splnum))
+                     SPELLMENU_ALIAS, &splnum))
         return 0;
     spl_book[splnum].sp_key = arg->key;
 
@@ -2106,21 +2107,24 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
         if (stats)
             set_menuitem(&items[count++], 0, MI_NORMAL,
                          "", 0, FALSE);
-        if (splaction < 0 && splaction != SPELLMENU_VIEW) {
-            const char *quiverspell =
-                msgprintf("Quiver a%s spell.", u.spellquiver ? "nother" : "");
-            if (splaction != SPELLMENU_QUIVER)
-                set_menuitem(&items[count++], ':', MI_NORMAL,
-                             quiverspell, ':', FALSE);
-            else
-                set_menuitem(&items[count++], '-', MI_NORMAL,
-                             "Empty quiver", '-', FALSE);
-            set_menuitem(&items[count++], 0, MI_NORMAL,
-                         "", 0, FALSE);
-        } else if (splaction >= 0) {
-            set_menuitem(&items[count++], 0, MI_NORMAL,
-                         "You may also choose any other letter a-zA-Z.",
-                         0, FALSE);
+        const char *extra_item = NULL;
+        char extra_acc = 0;
+        char extra_id = 0;
+        if (splaction == SPELLMENU_REORDER || splaction == SPELLMENU_CAST) {
+            extra_item = msgprintf("Quiver a%s spell.",
+                                   u.spellquiver ? "nother" : "");
+            extra_acc = ':';
+            extra_id = 100;
+        } else if (splaction == SPELLMENU_QUIVER) {
+            extra_item = "Empty quiver";
+            extra_acc = '-';
+            extra_id = 101;
+        } else if (splaction >= 0)
+            extra_item = "You may also choose any other letter a-zA-Z.";
+
+        if (extra_item) {
+            set_menuitem(&items[count++], extra_id, MI_NORMAL,
+                         extra_item, extra_acc, FALSE);
             set_menuitem(&items[count++], 0, MI_NORMAL,
                          "", 0, FALSE);
         }
@@ -2222,10 +2226,10 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
         return 0;
 
     if (n > 0) {
-        if (selected[0] == ':') {
+        if (selected[0] == 100) {
             quiver_spell();
             return 0;
-        } else if (selected[0] == '-') {
+        } else if (selected[0] == 101) {
             pline(msgc_actionok, "You %shave no spell quivered.",
                   u.spellquiver ? "now " : "");
             u.spellquiver = 0;
@@ -2243,6 +2247,7 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
            entry */
         if (n > 1 && *spell_no == splaction)
             *spell_no = selected[1] - 1;
+
         /* default selection of preselected spell means that user chose not to
            swap it with anything */
         if (*spell_no == splaction)
