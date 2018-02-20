@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -27,7 +27,10 @@ static int use_trap(struct obj *, const struct nh_cmd_arg *);
 static int use_stone(struct obj *);
 static int set_trap(void);      /* occupation callback */
 static int use_whip(struct obj *, const struct nh_cmd_arg *);
-static boolean find_polearm_target(int, int, coord *);
+static boolean find_polearm_target(struct obj *, int, int, coord *);
+static boolean update_polearm_target(struct obj *, int, int, coord *);
+static boolean find_polearm_target_recurse(struct obj *, int, int, coord *,
+                                           boolean, boolean);
 static int use_cream_pie(struct obj **);
 static int use_grapple(struct obj *, const struct nh_cmd_arg *);
 static boolean figurine_location_checks(struct obj *, coord *, boolean);
@@ -2726,17 +2729,51 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 
 /* Choose an appropriate starting position for prompting */
 static boolean
-find_polearm_target(int minr, int maxr, coord *cc)
+find_polearm_target(struct obj *obj, int minr, int maxr, coord *cc)
+{
+    if (!find_polearm_target_recurse(obj, minr, maxr, cc, TRUE, FALSE))
+        return find_polearm_target_recurse(obj, minr, maxr, cc, FALSE, FALSE);
+    return TRUE;
+}
+
+static boolean
+update_polearm_target(struct obj *obj, int minr, int maxr, coord *cc)
+{
+    return find_polearm_target_recurse(obj, minr, maxr, cc, FALSE, TRUE);
+}
+
+static boolean
+find_polearm_target_recurse(struct obj *obj, int minr, int maxr, coord *cc,
+                            boolean use_poledir, boolean update_poledir)
 {
     struct monst *mon;
 
     /* Fallback */
-    cc->x = u.ux;
-    cc->y = u.uy;
+    if (!update_poledir) {
+        cc->x = u.ux;
+        cc->y = u.uy;
+    }
 
     int x, y;
+    int i = 0;
+    int poledir = 0;
+    if (obj && use_poledir)
+        poledir = obj->poledir;
+
     for (x = (u.ux - 2); x <= (u.ux + 2); x++) {
         for (y = (u.uy - 2); y <= (u.uy + 2); y++) {
+            i++;
+            if (update_poledir) {
+                if (x == cc->x && y == cc->y) {
+                    obj->poledir = i;
+                    return TRUE;
+                }
+                continue;
+            }
+
+            if (poledir && i != poledir)
+                continue;
+
             if (!isok(x, y) || distu(x, y) < minr || distu(x, y) > maxr ||
                 !couldsee(x, y))
                 continue;
@@ -2785,7 +2822,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         max_range = 8;
 
     /* See if we have an appropriate target to autofire */
-    if (autofiring && !find_polearm_target(min_range, max_range, &cc)) {
+    if (autofiring && !find_polearm_target(NULL, min_range, max_range, &cc)) {
         pline(msgc_cancelled,
               "There doesn't seem to be an appropriate target to thrust.");
         return 0;
@@ -2802,7 +2839,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
     if (!autofiring) {
         /* Prompt for a location */
         pline(msgc_uiprompt, where_to_hit);
-        find_polearm_target(min_range, max_range, &cc);
+        find_polearm_target(obj, min_range, max_range, &cc);
         if (getargpos(arg, &cc, FALSE, "the spot to hit") == NHCR_CLIENT_CANCEL)
             return 0;     /* user pressed ESC */
     }
@@ -2825,6 +2862,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 
     /* Attack the monster there */
     if ((mtmp = m_at(level, cc.x, cc.y)) != NULL) {
+        update_polearm_target(obj, min_range, max_range, &cc);
         int oldhp = mtmp->mhp;
 
         if (resolve_uim(flags.interaction_mode, TRUE, cc.x, cc.y) == uia_halt)

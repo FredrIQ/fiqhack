@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -96,21 +96,30 @@ struct obj {
     unsigned mknown:1;          /* enchantment/charge/container content known */
     unsigned mbknown:1;         /* monster BUC/trapped known */
 
-    unsigned oeroded:2;         /* rusted/burnt weapon/armor */
-    unsigned oeroded2:2;        /* corroded/rotted weapon/armor */
-# define greatest_erosion(otmp) \
+    union {
+        unsigned oeroded:2;     /* rusted/burnt weapon/armor */
+        unsigned orotten:2;
+        unsigned odiluted:2;
+    };
+
+    union {
+        unsigned oeroded2:2;    /* corroded/rotted weapon/armor */
+        unsigned norevive:2;
+    };
+
+# define greatest_erosion(otmp)                                \
     (int)((otmp)->oeroded > (otmp)->oeroded2 ? (otmp)->oeroded \
                                              : (otmp)->oeroded2)
 # define MAX_ERODE 3
-# define orotten oeroded        /* rotten food */
-# define odiluted oeroded       /* diluted potions */
-# define norevive oeroded2
     unsigned oerodeproof:1;     /* erodeproof weapon/armor */
     unsigned olocked:1;         /* object is locked */
     unsigned obroken:1;         /* lock has been broken */
-    unsigned otrapped:1;        /* container is trapped */
+
+    union {
+        unsigned otrapped:1;    /* container is trapped */
+        unsigned opoisoned:1;   /* object (weapon) is coated with poison */
+    };
     /* or accidental tripped rolling boulder trap */
-# define opoisoned otrapped     /* object (weapon) is coated with poison */
 
     unsigned recharged:3;       /* number of times it's been recharged */
     unsigned lamplit:1;         /* a light-source -- can be lit */
@@ -132,6 +141,7 @@ struct obj {
         int leashmon;           /* gets m_id of attached pet */
         int fromsink;           /* a potion from a sink */
         int lastused;           /* last time a tool was used */
+        int poledir;            /* last used polearm direction */
     };
     unsigned oeaten;            /* nutrition left in food, if partly eaten */
     int thrown_time;            /* when an item was thrown to a pet */
