@@ -343,12 +343,12 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                                         FALSE : !!teleport_control(mdef)));
         break;
     case WAN_MAKE_INVISIBLE:
-        if (wandlevel >= P_SKILLED && invisible(mdef))
+        if (wandlevel == P_MASTER && invisible(mdef))
             known = set_property(mdef, INVIS, -2, FALSE);
-        else if (wandlevel == P_UNSKILLED)
+        else if (wandlevel <= P_BASIC)
             known = inc_timeout(mdef, INVIS, rnd(50), FALSE);
         else
-            known = set_property(mdef, INVIS, 0, FALSE);
+            known = inc_timeout(mdef, INVIS, rn1(100, 50), FALSE);
         break;
     case WAN_NOTHING:
     case WAN_LOCKING:

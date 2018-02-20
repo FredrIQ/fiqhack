@@ -680,7 +680,7 @@ peffects(struct monst *mon, struct obj *otmp, int *nothing, int *unkn)
             *nothing = 1;
         int duration = rn1(15, 31);
         if (otmp->blessed)
-            duration = 0; /* permanent */
+            duration = rn1(2222, 1111); /* permanent-ish */
 
         enum youprop prop = INVIS;
         if (otmp->cursed)

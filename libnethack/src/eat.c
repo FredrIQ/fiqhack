@@ -610,7 +610,8 @@ cpostfx(struct monst *mon, int pm)
     case PM_STALKER:
         if (invisible(mon))
             set_property(mon, SEE_INVIS, 0, FALSE);
-        set_property(mon, INVIS, invisible(mon) ? 0 : rn1(100, 50), FALSE);
+        set_property(mon, INVIS, invisible(mon) ? rn1(500, 1000) :
+                     rn1(100, 50), FALSE);
         /* fall into next case */
     case PM_GIANT_BAT:
         if (!resists_stun(mon))
