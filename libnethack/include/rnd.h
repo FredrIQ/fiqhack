@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-31 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-21 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef RND_H
@@ -89,7 +89,7 @@ enum rng {
     rng_intrinsic_poison,/* ditto poison resistance */
     rng_intrinsic_itis,  /* ditto teleportitis */
     rng_intrinsic_tc,    /* ditto teleport control */
-    rng_newt_pw_boost,   /* Pw boost from newts */
+    rng_unbless_unihorn, /* Unblessing unicorn horn */
     rng_50percent_a_int, /* 50% chance of gaining intelligence */
     rng_ddeath_d10p9,    /* d10+9 rolls for delayed instadeath timeouts */
     rng_ddeath_dconp20,  /* d(constitution)+20 rolls, likewise */

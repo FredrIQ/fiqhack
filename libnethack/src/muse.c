@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-21 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2282,36 +2282,8 @@ use_item(struct musable *m)
                 pline(msgc_monneutral,
                       "The tip of %s's horn glows!", mon_nam(mon));
         }
-        if (obj && obj->cursed) {
-            enum youprop prop = 0;
-            switch (rn2(3)) {
-            case 0:
-                prop = BLINDED;
-                break;
-            case 1:
-                prop = CONFUSION;
-                break;
-            case 2:
-                prop = STUNNED;
-            }
-            if (!has_property(mon, prop) &&
-                (prop != STUNNED || !resists_stun(mon))) {
-                /* well, they know it's cursed now... */
-                obj->mbknown = 1;
-            }
-            if (prop == STUNNED && !resists_stun(mon)) {
-                if (vismon)
-                    pline(msgc_monneutral,
-                          "Nothing seems to happen.");
-            } else
-                set_property(mon, prop, rnd(100), FALSE);
-        } else {
-            set_property(mon, BLINDED, -2, FALSE);
-            set_property(mon, CONFUSION, -2, FALSE);
-            set_property(mon, STUNNED, -2, FALSE);
-            set_property(mon, SICK, -2, FALSE);
-            set_property(mon, ZOMBIE, -2, FALSE);
-        }
+
+        use_unicorn_horn(mon, obj);
         return 2;
     case MUSE_DIRHORN:
         if (oseen)

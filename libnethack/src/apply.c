@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1763,178 +1763,85 @@ use_tinning_kit(struct obj *obj)
     return 1;
 }
 
+/* Using an unicorn horn. A cursed one selects a random trouble out of
+   Conf/Ill/Blind/Stun/Hallu to give for 1-100 turns. A blessed one will fix
+   all these troubles, but has a 10% of unblessing. An uncursed one will select
+   one at random to cure if the player has it. */
 void
-use_unicorn_horn(struct obj *obj)
+use_unicorn_horn(struct monst *mon, struct obj *obj)
 {
-#define PROP_COUNT 6    /* number of properties we're dealing with */
-#define ATTR_COUNT (A_MAX*3)    /* number of attribute points we might fix */
-    int idx, val, val_limit, trouble_count, unfixable_trbl, did_prop, did_attr;
-    int trouble_list[PROP_COUNT + ATTR_COUNT];
+    int trouble[] = {SICK, BLINDED, HALLUC, CONFUSION, STUNNED};
+    int resist[] = {SICK_RES, 0, HALLUC_RES, 0, STUN_RES};
+    int turns = rnd(100);
+    boolean cursed = (obj && obj->cursed);
+    boolean blessed = (obj && obj->blessed);
+    int cure = rn2_on_rng(5, cursed ? rng_cursed_unihorn : rng_main);
+    boolean res = FALSE;
+    boolean any_trouble = FALSE;
+    if (vomiting(mon) || zombifying(mon))
+        any_trouble = TRUE;
 
-    if (obj && obj->cursed) {
-        long lcount = (long)rnd(100);
-
-        /* players often apply known-cursed unihorns out of habit because they
-           haven't looked in inventory recently; ensure we have a
-           msgc_substitute message so that the player can see they used a cursed
-           object */
-        pline_once(msgc_substitute,
-                   "Something is wrong with your unicorn horn.");
-        obj->bknown = TRUE;
-
-        switch (rn2_on_rng(6, rng_cursed_unihorn)) {
-        case 0:
-            make_sick(&youmonst, (unsigned long)rn1(ACURR(A_CON), 20),
-                      killer_xname(obj), TRUE, SICK_NONVOMITABLE);
-            break;
-        case 1:
-            inc_timeout(&youmonst, BLINDED, lcount, FALSE);
-            break;
-        case 2:
-            if (!Confusion)
-                pline(msgc_statusbad, "You suddenly feel %s.",
-                      Hallucination ? "trippy" : "confused");
-            inc_timeout(&youmonst, CONFUSION, lcount, TRUE);
-            break;
-        case 3:
-            if (!resists_stun(&youmonst))
-                inc_timeout(&youmonst, STUNNED, lcount, FALSE);
-            else
-                pline(msgc_failrandom, "Nothing seems to happen.");
-            break;
-        case 4:
-            adjattrib(rn2(A_MAX), -1, FALSE);
-            break;
-        case 5:
-            inc_timeout(&youmonst, HALLUC, lcount, FALSE);
-            break;
-        }
-        return;
+    /* players often apply known-cursed unihorns out of habit because they
+       haven't looked in inventory recently; ensure we have a
+       msgc_substitute message so that the player can see they used a cursed
+       object */
+    if (cursed) {
+        if (mon == &youmonst) {
+            pline_once(msgc_substitute,
+                       "Something is wrong with your unicorn horn.");
+            obj->bknown = TRUE;
+        } else
+            obj->mbknown = TRUE;
     }
 
-/*
- * Entries in the trouble list use a very simple encoding scheme.
- */
-#define prop2trbl(X)    ((X) + A_MAX)
-#define attr2trbl(Y)    (Y)
-#define prop_trouble(X) trouble_list[trouble_count++] = prop2trbl(X)
-#define attr_trouble(Y) trouble_list[trouble_count++] = attr2trbl(Y)
+    int i;
+    for (i = 0; i < SIZE(trouble); i++) {
+        if (cursed && has_property(mon, resist[i]))
+            continue;
 
-    trouble_count = did_prop = did_attr = 0;
+        if (has_property(mon, trouble[i]))
+            any_trouble = TRUE;
 
-    /* collect property troubles */
-    if (sick(&youmonst) || zombifying(&youmonst))
-        prop_trouble(SICK);
-    if (property_timeout(&youmonst, BLINDED))
-        prop_trouble(BLINDED);
-    if (property_timeout(&youmonst, HALLUC)) /* black light polyself */
-        prop_trouble(HALLUC);
-    if (vomiting(&youmonst))
-        prop_trouble(VOMITING);
-    if (confused(&youmonst))
-        prop_trouble(CONFUSION);
-    if (property_timeout(&youmonst, STUNNED)) /* some polyforms are stunned */
-        prop_trouble(STUNNED);
+        if (!blessed && i != cure)
+            continue;
 
-    unfixable_trbl = unfixable_trouble_count(TRUE);
-
-    /* collect attribute troubles */
-    for (idx = 0; idx < A_MAX; idx++) {
-        val_limit = AMAX(idx);
-        /* don't recover strength lost from hunger */
-        if (idx == A_STR && u.uhs >= WEAK)
-            val_limit--;
-        /* don't recover more than 3 points worth of any attribute */
-        if (val_limit > ABASE(idx) + 3)
-            val_limit = ABASE(idx) + 3;
-
-        for (val = ABASE(idx); val < val_limit; val++)
-            attr_trouble(idx);
-        /* keep track of unfixed trouble, for message adjustment below */
-        unfixable_trbl += (AMAX(idx) - val_limit);
-    }
-
-    if (trouble_count == 0) {
-        pline(msgc_notarget, "Nothing happens.");
-        return;
-    } else if (trouble_count > 1) {     /* shuffle */
-        int i, j, k;
-
-        for (i = trouble_count - 1; i > 0; i--)
-            if ((j = rn2(i + 1)) != i) {
-                k = trouble_list[j];
-                trouble_list[j] = trouble_list[i];
-                trouble_list[i] = k;
+        if (!i) {
+            if (cursed) {
+                make_sick(mon, (unsigned long)rn1(ACURR(A_CON), 20),
+                          killer_xname(obj), TRUE, SICK_NONVOMITABLE);
+                res = TRUE;
+            } else {
+                res |= set_property(mon, SICK, -2, FALSE);
+                res |= set_property(mon, VOMITING, -2, FALSE);
+                res |= set_property(mon, ZOMBIE, -2, FALSE);
             }
-    }
-
-    /* 
-     *              Chances for number of troubles to be fixed
-     *               0      1      2      3      4      5      6      7
-     *   blessed:  22.7%  22.7%  19.5%  15.4%  10.7%   5.7%   2.6%   0.8%
-     *  uncursed:  35.4%  35.4%  22.9%   6.3%    0      0      0      0
-     *
-     * We don't use a separate RNG for blessed unihorns; unlike cursed unihorns
-     * (which might be used once or twice per game by accident), blessed
-     * unihorns are normally used frequently all through the game.
-     */
-    val_limit = rn2(dice(2, (obj && obj->blessed) ? 4 : 2));
-    if (val_limit > trouble_count)
-        val_limit = trouble_count;
-
-    /* fix [some of] the troubles */
-    for (val = 0; val < val_limit; val++) {
-        idx = trouble_list[val];
-
-        switch (idx) {
-        case prop2trbl(SICK):
-            set_property(&youmonst, SICK, -2, FALSE);
-            set_property(&youmonst, ZOMBIE, -2, FALSE);
-            did_prop++;
-            break;
-        case prop2trbl(BLINDED):
-            set_property(&youmonst, BLINDED, -2, FALSE);
-            did_prop++;
-            break;
-        case prop2trbl(HALLUC):
-            set_property(&youmonst, HALLUC, -2, FALSE);
-            did_prop++;
-            break;
-        case prop2trbl(VOMITING):
-            set_property(&youmonst, VOMITING, -2, FALSE);
-            did_prop++;
-            break;
-        case prop2trbl(CONFUSION):
-            set_property(&youmonst, CONFUSION, -2, FALSE);
-            did_prop++;
-            break;
-        case prop2trbl(STUNNED):
-            set_property(&youmonst, STUNNED, -2, FALSE);
-            did_prop++;
-            break;
-        default:
-            if (idx >= 0 && idx < A_MAX) {
-                ABASE(idx) += 1;
-                did_attr++;
-            } else
-                panic("use_unicorn_horn: bad trouble? (%d)", idx);
-            break;
+        } else {
+            if (cursed)
+                res |= inc_timeout(mon, trouble[i], turns, FALSE);
+            else
+                res |= set_property(mon, trouble[i], -2, FALSE);
         }
     }
 
-    if (did_attr)
-        pline(msgc_actionok, "This makes you feel %s!",
-              (did_prop + did_attr) ==
-              (trouble_count + unfixable_trbl) ? "great" : "better");
-    else if (!did_prop)
-        pline(msgc_failrandom, "Nothing seems to happen.");
+    if (!res && mon == &youmonst) {
+        if (any_trouble || cursed)
+            pline(msgc_failrandom, "Nothing seems to happen.");
+        else
+            pline(msgc_actionok, "Nothing happens.");
+    }
 
-#undef PROP_COUNT
-#undef ATTR_COUNT
-#undef prop2trbl
-#undef attr2trbl
-#undef prop_trouble
-#undef attr_trouble
+    if (blessed && !rn2_on_rng(10, mon == &youmonst ? rng_unbless_unihorn :
+                               rng_main)) {
+        if (!blind(mon)) {
+            if (mon == &youmonst) {
+                pline(msgc_itemloss, "%s %s %s.", Shk_Your(obj),
+                      aobjnam(obj, "glow"), hcolor("brown"));
+                obj->bknown = TRUE;
+            } else
+                obj->mbknown = TRUE;
+        }
+        unbless(obj);
+    }
 }
 
 /*
@@ -3382,7 +3289,7 @@ doapply(const struct nh_cmd_arg *arg)
         res = use_figurine(&obj, arg);
         break;
     case UNICORN_HORN:
-        use_unicorn_horn(obj);
+        use_unicorn_horn(&youmonst, obj);
         break;
     case WOODEN_FLUTE:
     case MAGIC_FLUTE:
