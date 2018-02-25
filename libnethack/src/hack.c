@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2931,6 +2931,10 @@ lookaround(enum u_interaction_mode uim)
        case that would matter.  Tempted to delete it with prejudice. */
     boolean aggressive_farmoving = uim != uim_nointeraction && !travelling();
 
+    boolean corridorbranch = flags.corridorbranch;
+    if (flags.occupation == occ_travel)
+        corridorbranch = TRUE;
+
     /* We need to do three things here.  First, make a few checks that are
        independent of the surrounding terrain.  Second, check whether the
        terrain around us makes us want to stop.  And third, if we're doing an
@@ -3040,7 +3044,7 @@ lookaround(enum u_interaction_mode uim)
                        To that end, we check all the corridor spaces around us,
                        and see which one comes closest to the one we came into
                        this function intending to walk into. */
-                    if (flags.corridorbranch) {
+                    if (corridorbranch) {
                         /* i = Euclidean distance between intended space and
                            current candidate.  Use Euclidean distance so that
                            directly adjacent spaces get priority over diagonally
@@ -3103,7 +3107,7 @@ lookaround(enum u_interaction_mode uim)
             }
         }       /* end for loops */
 
-    if (corrct > 1 && !flags.corridorbranch)
+    if (corrct > 1 && !corridorbranch)
         /* Whoops, we found a branch; we hates those, precious. Better stop.
            This behavior is going to be incredibly annoying, and it'd probably
            be better to fix it so that directed (not directional) fartravel
@@ -3120,7 +3124,7 @@ lookaround(enum u_interaction_mode uim)
     }
 #endif
     /* Check whether it's time to turn. */
-    if (flags.corridorbranch && !noturn && !m0 && i0 &&
+    if (corridorbranch && !noturn && !m0 && i0 &&
         (corrct == 1 || (corrct == 2 && i0 == 1))) {
         turnstate.move.dx = x0 - u.ux;
         turnstate.move.dy = y0 - u.uy;
