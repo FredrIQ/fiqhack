@@ -80,7 +80,7 @@ give_may_advance_msg(int skill)
           P_LAST_SPELL ? "spell casting " : "fighting ");
 }
 
-static int check_weapon_skill(void);
+static int check_weapon_skill(boolean);
 static boolean could_advance(int);
 static boolean peaked_skill(int);
 static int slots_required(int);
@@ -986,17 +986,17 @@ static const struct skill_range {
 int
 enhance_weapon_skill(const struct nh_cmd_arg *arg)
 {
-    return check_weapon_skill();
+    return check_weapon_skill(FALSE);
 }
 
 int
 enhance_weapon_skill_notime(const struct nh_cmd_arg *arg)
 {
-    return check_weapon_skill();
+    return check_weapon_skill(TRUE);
 }
 
 static int
-check_weapon_skill(void)
+check_weapon_skill(boolean readonly)
 {
     int pass, i, n, len, longest, id, to_advance, eventually_advance,
         maxxed_cnt;
@@ -1004,9 +1004,6 @@ check_weapon_skill(void)
     const char *prefix, *buf;
     struct nh_menulist menu;
     boolean speedy = FALSE;
-    boolean readonly = FALSE;
-    if (program_state.followmode != FM_PLAY)
-        readonly = TRUE;
 
     if (!readonly && wizard && yn("Advance skills without practice?") == 'y')
         speedy = TRUE;
@@ -1113,7 +1110,8 @@ check_weapon_skill(void)
             if (readonly) {
                 pline(msgc_mispaste, "You can't enhance skills while %s.",
                       program_state.followmode == FM_WATCH ? "watching" :
-                      "replaying");
+                      program_state.followmode == FM_REPLAY ? "replaying" :
+                      "using this command");
                 break;
             }
 
