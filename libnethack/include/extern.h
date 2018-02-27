@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1844,6 +1844,7 @@ extern int throwspell(boolean, boolean, schar *dx, schar *dy,
 extern boolean cast_protection(struct monst *, boolean, boolean);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
+extern int dovspell_notime(const struct nh_cmd_arg *arg);
 extern void show_monster_spells(const struct monst *);
 extern void quiver_spell(void);
 extern void dump_spells(void);
@@ -2066,6 +2067,7 @@ extern int mon_wield_item(struct monst *);
 extern int abon(void);
 extern int dbon(void);
 extern int enhance_weapon_skill(const struct nh_cmd_arg *);
+extern int enhance_weapon_skill_notime(const struct nh_cmd_arg *);
 extern int dump_skills(void);
 extern void unrestrict_weapon_skill(int);
 extern void use_skill(int, int);

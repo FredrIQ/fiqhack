@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -106,6 +106,8 @@ const struct cmd_desc cmdlist[] = {
      0},
     {"enhance", "advance or check your character's skills", M('e'), 0, TRUE,
      enhance_weapon_skill, CMD_EXT | CMD_MAINMENU},
+    {"enhanceview", "check your character's skills", 0, 0, TRUE,
+     enhance_weapon_skill_notime, CMD_NOTIME},
     {"engrave", "write on the floor", 'E', 0, FALSE, doengrave,
      CMD_ARG_OBJ | CMD_ARG_STR},
     {"equip", "change your equipment", 'A', '*', FALSE, doequip, CMD_MAINMENU},
@@ -195,6 +197,8 @@ const struct cmd_desc cmdlist[] = {
     {"sit", "sit down", M('s'), 0, FALSE, dosit, CMD_EXT},
     {"spellbook", "display and organise your magical abilities", '+', 0, TRUE,
      dovspell, CMD_MAINMENU},
+    {"spellbookview", "display your magical abilities", 0, 0, TRUE,
+     dovspell_notime, CMD_NOTIME},
     {"swapweapon", "exchange wielded and alternate weapon", 'x', 0, FALSE,
      doswapweapon, 0},
     {"spoilers", "generate spoilers automatically", 0, 0, TRUE,

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2059,6 +2059,14 @@ dovspell(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+/* Replay/watch version of the '+' command */
+int
+dovspell_notime(const struct nh_cmd_arg *arg)
+{
+    dospellmenu(&youmonst, "Your magical abilities", SPELLMENU_VIEW, NULL);
+    return 0;
+}
+
 void
 quiver_spell(void)
 {
@@ -2222,7 +2230,8 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
 
     n = display_menu(&(struct nh_menulist){.items = items, .icount = count},
                      prompt, how, PLHINT_ANYWHERE, &selected);
-    if (!you)
+
+    if (splaction == SPELLMENU_VIEW || !you)
         return 0;
 
     if (n > 0) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -507,11 +507,13 @@ get_command(void *callbackarg,
         }
 
         if (cmd != NULL) {
-            /* Command aliases */
+            /* Internal command aliases. We *can* do the others here too, but
+               this breaks the ability to alias the extended command entry of
+               them. */
             if (cmd == find_command("moveonly") &&
                 ui_flags.current_followmode == FM_WATCH)
                 cmd = find_command("mail");
-            if (cmd == find_command("drink") &&
+            else if (cmd == find_command("drink") &&
                 ui_flags.current_followmode != FM_PLAY)
                 cmd = find_command("save");
 
@@ -524,6 +526,14 @@ get_command(void *callbackarg,
                 if (!cmd) /* command was fully handled internally */
                     continue;
             }
+
+            /* Non-internal command aliases. */
+            if (cmd == find_command("enhance") &&
+                ui_flags.current_followmode != FM_PLAY)
+                cmd = find_command("enhanceview");
+            else if (cmd == find_command("spellbook") &&
+                ui_flags.current_followmode != FM_PLAY)
+                cmd = find_command("spellbookview");
 
             /* When we know for certain that the command wasn't a prevmsg
                command, cancel any prevmsg scroll in progress. */

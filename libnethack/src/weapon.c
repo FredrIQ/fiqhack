@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -80,7 +80,7 @@ give_may_advance_msg(int skill)
           P_LAST_SPELL ? "spell casting " : "fighting ");
 }
 
-
+static int check_weapon_skill(void);
 static boolean could_advance(int);
 static boolean peaked_skill(int);
 static int slots_required(int);
@@ -986,16 +986,29 @@ static const struct skill_range {
 int
 enhance_weapon_skill(const struct nh_cmd_arg *arg)
 {
+    return check_weapon_skill();
+}
+
+int
+enhance_weapon_skill_notime(const struct nh_cmd_arg *arg)
+{
+    return check_weapon_skill();
+}
+
+static int
+check_weapon_skill(void)
+{
     int pass, i, n, len, longest, id, to_advance, eventually_advance,
         maxxed_cnt;
     const int *selected;
     const char *prefix, *buf;
     struct nh_menulist menu;
     boolean speedy = FALSE;
+    boolean readonly = FALSE;
+    if (program_state.followmode != FM_PLAY)
+        readonly = TRUE;
 
-    (void) arg;
-
-    if (wizard && yn("Advance skills without practice?") == 'y')
+    if (!readonly && wizard && yn("Advance skills without practice?") == 'y')
         speedy = TRUE;
 
     do {
@@ -1097,6 +1110,13 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
         n = display_menu(&menu, buf, to_advance ? PICK_ONE : PICK_NONE,
                          PLHINT_ANYWHERE, &selected);
         if (n == 1) {
+            if (readonly) {
+                pline(msgc_mispaste, "You can't enhance skills while %s.",
+                      program_state.followmode == FM_WATCH ? "watching" :
+                      "replaying");
+                break;
+            }
+
             n = selected[0] - 1;        /* get item selected */
             skill_advance(n);
             /* check for more skills able to advance, if so then .. */
