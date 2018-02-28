@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-02-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1376,6 +1376,15 @@ mtamedog(struct monst *master, struct monst *pet, struct obj *obj)
         panic("mtamedog: making mon pet to itself?");
     if (pet == &youmonst)
         return FALSE; /* no */
+
+    /* avoid loops */
+    struct monst *pmon = master;
+    while (pmon) {
+        if (tame_to(pmon) == pet)
+            return FALSE;
+
+        pmon = tame_to(pmon);
+    }
 
     /* pet fixup */
     struct monst *pets_pet = NULL;
