@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -308,7 +308,7 @@ hitum(struct monst *mon, int tmp, const struct attack *uattk, schar dx,
             dieroll = rnd(20);
             mhit = (tmp > dieroll);
             result = known_hitum(mtmp, &mhit, uattk, xdir[i], ydir[i], dieroll);
-            passive(mon, mhit, DEADMONSTER(mtmp), AT_WEAP);
+            passive(mon, mhit, !DEADMONSTER(mtmp), AT_WEAP);
             if (mon == mtmp)
                 malive = result;
         }
