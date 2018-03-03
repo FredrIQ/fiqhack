@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1309,7 +1309,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk, int ac_after_rnd)
                 if (u.uhp > u.uhpmax)
                     u.uhp = u.uhpmax;
             }
-            
+
             /* Don't have the same message in these cases; they can be
                distinguished anyway from the message line, belong in different
                channels, and the channel shouldn't really be a spoiler */
@@ -1320,9 +1320,9 @@ hitmu(struct monst *mtmp, const struct attack *mattk, int ac_after_rnd)
                 pline(msgc_statusheal, "%s hits!  (I hope you don't mind.)",
                       Monnam(mtmp));
             else
-                pline(msgc_monneutral, "%s hits!  (But nothing happpened?)",
+                pline(msgc_monneutral, "%s hits!  (But nothing happened?)",
                       Monnam(mtmp));
-            
+
             if (!rn2(3))
                 exercise(A_STR, TRUE);
             if (!rn2(3))
@@ -1340,7 +1340,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk, int ac_after_rnd)
             }
             dmg = 0;
             passiveum(olduasmon, mtmp, mattk);
-            
         } else {
             if (Role_if(PM_HEALER)) {
                 if (!(moves % 5))
