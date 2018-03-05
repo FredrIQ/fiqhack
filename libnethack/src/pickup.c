@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1078,9 +1078,7 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
                   "The scroll%s %s to dust as you %s %s up.", plur(obj->quan),
                   otense(obj, "turn"), telekinesis ? "raise" : "pick",
                   (obj->quan == 1L) ? "it" : "them");
-            if (!(objects[SCR_SCARE_MONSTER].oc_name_known) &&
-                !(objects[SCR_SCARE_MONSTER].oc_uname))
-                docall(obj);
+            tell_discovery(obj);
             useupf(obj, obj->quan);
             return 1;   /* tried to pick something up and failed, but don't
                            want to terminate pickup loop yet */
