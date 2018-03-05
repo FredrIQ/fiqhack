@@ -645,7 +645,6 @@ nh_play_game(int fd, enum nh_followmode followmode)
                 log_revert_command(cmd.cmd);
         } else if ((!flags.incomplete || flags.interrupted) &&
                    !u_helpless(hm_all)) {
-            print_missed_turncount(FALSE);
             neutral_turnstate_tasks();
         }
 
@@ -715,7 +714,6 @@ you_moved(void)
             /* turn boundary handling starts here */
             /**************************************/
 
-            checkformail();
             mcalcdistress();    /* adjust monsters' trap, blind, etc */
             do_at_area(level);  /* perform AT_AREA attacks */
 
