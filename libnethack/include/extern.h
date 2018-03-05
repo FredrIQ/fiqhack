@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-05 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -76,6 +76,7 @@ extern void helpless(int turns, enum helpless_reason reason, const char *cause,
                      const char *endmsg);
 extern void cancel_helplessness(enum helpless_mask mask, const char *msg);
 extern void cancel_mimicking(const char *msg);
+extern void print_missed_turncount(boolean);
 extern boolean canhear(void);
 extern void break_conduct(enum player_conduct);
 extern void command_input(int, struct nh_cmd_arg *);

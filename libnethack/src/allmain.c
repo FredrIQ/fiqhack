@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -359,23 +359,16 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
     terminate(GAME_CREATED);
 }
 
-static void
-print_missed_turncount(void)
+void
+print_missed_turncount(boolean silent)
 {
-#if 0
-    /* BUG: causes desyncs */
-    if (!flags.interrupted && flags.incomplete &&
-        !((1 << flags.occupation) & ocm_farmove))
-        return;
-#endif
-
     struct eyou *you = mx_eyou(&youmonst);
     if (!you)
         return;
 
     int oldmoves = you->oldmoves;
     you->oldmoves = moves;
-    if (oldmoves && (moves - oldmoves) > 1)
+    if (!silent && oldmoves && (moves - oldmoves) > 1)
         pline(msgc_actionboring, "[%d turns]", moves - oldmoves);
 }
 
@@ -526,7 +519,6 @@ nh_play_game(int fd, enum nh_followmode followmode)
             cmdidx = get_command_idx("wait");
             cmd.arg.argtype = 0;
         } else {
-            print_missed_turncount();
             if (replay_want_userinput() ||
                 !log_replay_command(&cmd)) {
                 if (program_state.followmode == FM_RECOVERQUIT) {
@@ -652,8 +644,10 @@ nh_play_game(int fd, enum nh_followmode followmode)
             if (!flags.incomplete)
                 log_revert_command(cmd.cmd);
         } else if ((!flags.incomplete || flags.interrupted) &&
-                   !u_helpless(hm_all))
+                   !u_helpless(hm_all)) {
+            print_missed_turncount(FALSE);
             neutral_turnstate_tasks();
+        }
 
         /* Note: neutral_turnstate_tasks() frees cmd (because it frees all
            messages, and we made cmd a message in our callback above), so don't
