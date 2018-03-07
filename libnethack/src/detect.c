@@ -1398,7 +1398,7 @@ search_tile(int x, int y, struct monst *mon, int autosearch)
 
         if (already) {
             pline(msgc_yafm, "There's still a monster there.");
-            if (!(OCCMASK & ocm_farmove))
+            if (OCCMASK & ocm_farmove)
                 action_completed();
         }
     }
