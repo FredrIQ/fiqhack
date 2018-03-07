@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1644,7 +1644,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     case uia_chat:
         return dotalk(&newarg);
     case uia_search:
-        return dosearch(&newarg);
+        return dosearch0(0);
     case uia_halt:
         return 0;
     }
@@ -1838,6 +1838,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 else
                     pline(msgc_youdiscover,
                           "Wait!  There's something there you can't see!");
+                action_completed();
             } else
                 pline(msgc_yafm, "You bump into %s.", mon_nam(mtmp));
             return 1;
