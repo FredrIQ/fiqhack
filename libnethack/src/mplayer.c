@@ -1,12 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-08 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
-static const char *dev_name(void);
-static void get_mplname(struct monst *, char *);
+static const char *dev_name(struct level *);
+static void get_mplname(struct level *, struct monst *, char *);
 static void mk_mplayer_armor(struct monst *, short, enum rng);
 
 /* These are the names of those who
@@ -41,7 +41,7 @@ static const char *const developers[] = {
 
 /* return a randomly chosen developer name */
 static const char *
-dev_name(void)
+dev_name(struct level *lev)
 {
     int i, m = 0, n = SIZE(developers);
     struct monst *mtmp;
@@ -50,7 +50,7 @@ dev_name(void)
     do {
         match = FALSE;
         i = rn2(n);
-        for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
+        for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon) {
             if (!is_mplayer(mtmp->data) || !mx_name(mtmp))
                 continue;
             if (!strncmp(developers[i], mx_name(mtmp), strlen(developers[i]))) {
@@ -67,12 +67,12 @@ dev_name(void)
 }
 
 static void
-get_mplname(struct monst *mtmp, char *nam)
+get_mplname(struct level *lev, struct monst *mtmp, char *nam)
 {
     boolean fmlkind = is_female(mtmp->data);
     const char *devnam;
 
-    devnam = dev_name();
+    devnam = dev_name(lev);
     if (!devnam)
         strcpy(nam, fmlkind ? "Eve" : "Adam");
     else if (fmlkind && ! !strcmp(devnam, "Janet"))
@@ -161,7 +161,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             5 * mtmp->m_lev + rn2_on_rng(mtmp->m_lev * 5 + 1, rng) + 10 +
             (special ? rn2_on_rng(50, rng) : 0);
         if (special) {
-            get_mplname(mtmp, nam);
+            get_mplname(lev, mtmp, nam);
             christen_monst(mtmp, nam);
             /* that's why they are "stuck" in the endgame :-) */
             if (In_endgame(&u.uz))
@@ -258,7 +258,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         }
 
         if (weapon != STRANGE_OBJECT && allow_minvent) {
-            otmp = mksobj(level, weapon, TRUE, FALSE, rng);
+            otmp = mksobj(lev, weapon, TRUE, FALSE, rng);
             otmp->spe = (special ? 4 + rn2_on_rng(5, rng) : rn2_on_rng(4, rng));
             if (!rn2_on_rng(3, rng))
                 otmp->oerodeproof = 1;
@@ -344,7 +344,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             mkmonmoney(mtmp, rn2_on_rng(1000, rng), rng);
             quan = rn2_on_rng(10, rng);
             while (quan--)
-                mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE, rng), NULL);
+                mpickobj(mtmp, mkobj(lev, RANDOM_CLASS, FALSE, rng), NULL);
         }
 
         /* done after wearing the dragon mail so the resists checks work */
