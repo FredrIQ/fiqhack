@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-12 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -2509,10 +2509,10 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        related things, but simply removing the checks probably breaks
        other things, figure out how to deal with this */
     if (viewer != &youmonst)
-        if (!onmap(viewer) || DEADMONSTER(viewer))
+        if (!onmap(viewer))
             return 0;
     if (viewee != &youmonst)
-        if (!onmap(viewee) || DEADMONSTER(viewee))
+        if (!onmap(viewee))
             return 0;
     if (!level) {
         impossible("vision calculations during level creation: %s->%s",
