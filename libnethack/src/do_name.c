@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-10 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -489,11 +489,11 @@ x_monnam(const struct monst *mtmp,
     }
 
     /* Shopkeepers: use shopkeeper name.  For normal shopkeepers, just
-       "Asidonhopo"; for unusual ones, "Asidonhopo the invisible shopkeeper" or 
+       "Asidonhopo"; for unusual ones, "Asidonhopo the invisible shopkeeper" or
        "Asidonhopo the blue dragon".  If hallucinating, none of this applies. */
     if (mx_eshk(mtmp) && !do_hallu) {
         if (adjective && article == ARTICLE_THE) {
-            /* pathological case: "the angry Asidonhopo the blue dragon" sounds 
+            /* pathological case: "the angry Asidonhopo the blue dragon" sounds
                silly */
             return msgcat_many("the ", adjective, " ", mx_name(mtmp), NULL);
         }
