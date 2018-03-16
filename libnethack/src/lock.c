@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -598,8 +598,8 @@ doopen(const struct nh_cmd_arg *arg)
     if (!isok(cc.x, cc.y))
         return 0;
 
-    if ((cc.x == u.ux) && (cc.y == u.uy))
-        return 0;
+    if (cc.x == u.ux && cc.y == u.uy)
+        return doloot(arg);
 
     if ((mtmp = m_at(level, cc.x, cc.y)) && mtmp->m_ap_type == M_AP_FURNITURE &&
         (mtmp->mappearance == S_hcdoor || mtmp->mappearance == S_vcdoor) &&
