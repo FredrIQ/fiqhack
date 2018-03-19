@@ -1702,30 +1702,6 @@ spelleffects(boolean atme, struct musable *m, boolean prompt_maintenance)
     } else if (you) {
         int hungr = energy * 2;
 
-        /*
-         * If hero is a wizard, their current intelligence
-         * (bonuses + temporary + current)
-         * affects hunger reduction in casting a spell.
-         * 1. int = 17-18 no hunger
-         * 2. int = 16    1/4 hungr
-         * 3. int = 15    1/2 hungr
-         * 4. int = 1-14  normal hunger
-         * The reason for this is:
-         * a) Intelligence affects the amount of exertion
-         * in thinking.
-         * b) Wizards have spent their life at magic and
-         * understand quite well how to cast spells.
-         */
-        intell = ACURR(A_INT);
-        if (!Role_if(PM_WIZARD))
-            intell = 10;
-        if (intell >= 17)
-            hungr = 0;
-        else if (intell == 16)
-            hungr /= 4;
-        else if (intell == 15)
-            hungr /= 2;
-
         /* don't put player (quite) into fainting from casting a spell,
            particularly since they might not even be hungry at the
            beginning; however, this is low enough that they must eat before
