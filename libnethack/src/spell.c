@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-19 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -64,6 +64,7 @@ static int spellindex_by_typ(int);
 static void run_maintained_spell(struct monst *, int);
 static boolean mon_wants_to_maintain(const struct monst *, int);
 static const char *spelltypemnemonic(int);
+static int spellcost(const struct monst *, int);
 
 /* The roles[] table lists the role-specific values for tuning
  * percent_success().
@@ -797,20 +798,10 @@ maintenance_pw_drain(const struct monst *mon)
         if (!spell_maintained(mon, spell))
             continue;
 
-        int cost = objects[spell].oc_level;
-        cost *= 25;
-        if (mon_has_amulet(mon))
-            cost *= 2;
+        int cost = spellcost(mon, spell);
+        cost *= 5; /* same as casting every 20 turns */
         if (spell == SPE_PROTECTION || spell == SPE_LIGHT)
             cost *= 2; /* needs more to maintain manually */
-
-        int chance = percent_success(mon, spell);
-        if (!chance)
-            cost *= 100;
-        else {
-            cost *= 100;
-            cost /= chance;
-        }
 
         total_cost += cost;
     }
@@ -1186,6 +1177,36 @@ spelltypemnemonic(int skill)
         impossible("Unknown spell skill, %d;", skill);
         return "";
     }
+}
+
+/* Returns the cost of the spell for the given monster */
+static int
+spellcost(const struct monst *mon, int spell)
+{
+    /* Base cost. Book of the Dead is sentinel for Double Trouble */
+    int cost = 7;
+    if (spell != SPE_BOOK_OF_THE_DEAD)
+        cost = objects[spell].oc_level;
+
+    cost *= 5;
+
+    /* Double cost with the Amulet */
+    if (mon_has_amulet(mon))
+        cost *= 2;
+
+    if (spell == SPE_BOOK_OF_THE_DEAD)
+        return cost; /* always 0% fail */
+
+    /* Cost is doubled with 50% fail, quadrupled with 75%, etc */
+    int chance = percent_success(mon, spell);
+    if (!chance)
+        cost *= 200; /* Clamp to 99.5% fail */
+    else {
+        cost *= 100;
+        cost /= chance;
+    }
+
+    return cost;
 }
 
 int
@@ -1660,42 +1681,23 @@ spelleffects(boolean atme, struct musable *m, boolean prompt_maintenance)
     }
 
     /* Energy checks, and for players, hunger drain */
-    if (clone_wiz)
-        energy = 7;
-    else
-        energy = objects[spell].oc_level;
-    energy *= 5;
-
-    /* If the amulet drains too much, we want to set pw to 0. Check
-       if we have enough energy without the amulet drain to
-       determine if we should drain everything. */
-    boolean drain_pw = FALSE;
-    if (mon_has_amulet(mon)) {
-        if (energy <= mon->pw)
-            drain_pw = TRUE;
+    energy = spellcost(mon, spell);
+    if (mon_has_amulet(mon) && you) {
         if (you)
             pline(msgc_substitute,
                   "You feel the amulet draining your energy away.");
         else
-            amulet = TRUE;
-        energy += rnd(2 * energy);
+            amulet = TRUE; /* print message later */
     }
 
     if (energy > mon->pw) {
         if (you)
-            pline(drain_pw ? msgc_failrandom : msgc_cancelled,
+            pline(msgc_cancelled,
                   "You don't have enough energy to cast that spell.");
         else if (vis)
             pline(msgc_monneutral,
-                  "%s to cast a spell, but%s is out of energy!",
-                  M_verbs(mon, "try"), drain_pw ?
-                  ", due to the amulet draining magic," : "");
-
-        if (drain_pw) {
-            mon->pw = 0;
-            return 1;
-        }
-
+                  "%s to cast a spell, but is out of energy!",
+                  M_verbs(mon, "try"));
         return 0;
     } else if (you) {
         int hungr = energy * 2;
@@ -1733,26 +1735,16 @@ spelleffects(boolean atme, struct musable *m, boolean prompt_maintenance)
         morehungry(hungr);
     }
 
-    if (clone_wiz)
-        chance = 100;
-    else
-        chance = percent_success(mon, spell);
-    if (confused || (rnd(100) > chance)) {
+    if (confused) {
         if (you)
-            pline(msgc_failrandom, "You fail to cast the spell correctly.");
+            pline(msgc_cancelled, "You fail to cast the spell correctly.");
         else if (vis)
             pline(msgc_monneutral, "%s tries, but fails, to cast a spell.",
                   Monnam(mon));
-
-        /* No sanity check needed, we determined that we had enough
-           to at least try earlier */
-        mon->pw -= energy / 2;
-        return 1;
+        return 0;
     }
 
     mon->pw -= energy;
-    if (you)
-        exercise(A_WIS, TRUE);
 
     if (!you) {
         if (vis)
@@ -2138,7 +2130,7 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
         }
 
         set_menuitem(&items[count++], 0, MI_HEADING,
-                     "Name\tLevel\tCategory\tFail\tMemory", 0, FALSE);
+                     "Name\tLevel\tCategory\tCost\tMemory", 0, FALSE);
     }
 
     for (i = 0; i < MAXSPELL; i++) {
@@ -2167,7 +2159,17 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
                 percent = msgprintf("%-d%%", (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
 
             buf = SPELL_IS_FROM_SPELLBOOK(i) ?
-                msgprintf("%s\t%-d%s%s%s%s%s\t%s\t%-d%%\t%s", spellname(i), spellev(i),
+                msgprintf("%s\t" /* name */
+                          "%-d" /* level */
+                          "%s" /* forgotten */
+                          "%s" /* maintained */
+                          "%s" /* alias */
+                          "%s" /* quivered */
+                          "%s\t" /* aliased key */
+                          "%s\t" /* category */
+                          "%-dpw\t" /* cost */
+                          "%s", /* memory */
+                          spellname(i), spellev(i),
                           spellknow(i) ? " " : "*",
                           !spell_maintained(mon, spellid(i)) ?
                           " " : "!",
@@ -2175,7 +2177,7 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
                           u.spellquiver != spellid(i) ? " " : ":",
                           !spellkey(i) ? "" : friendly_key("%s", spellkey(i)),
                           spelltypemnemonic(spell_skilltype(spellid(i))),
-                          100 - percent_success(&youmonst, spellid(i)), percent) :
+                          spellcost(&youmonst, spellid(i)), percent) :
                 msgprintf("%s\t--\t%s\t?\t--", spellname(i),
                           (spellid(i) == SPID_PRAY || spellid(i) == SPID_TURN) ?
                           "divine" : "ability");
@@ -2184,7 +2186,7 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
             if (i == 1 && splaction != SPELLMENU_STATS) {
                 if (!mon->iswiz)
                     continue;
-                buf = msgprintf("double trouble\t%-d \tclerical\t%-d%%\t%-d%%", 7, 0,
+                buf = msgprintf("double trouble\t%-d \tclerical\t%-dpw\t%-d%%", 7, 0,
                                 100);
                 set_menuitem(&items[count++], i + 1, MI_NORMAL, buf,
                              'b', FALSE);
@@ -2208,10 +2210,10 @@ dospellmenu(const struct monst *mon, const char *prompt, int splaction,
             buf = msgprintf("%s\t%-d%s%s%s%s\t%s\t%-d%%\t%-d%%",
                             OBJ_NAME(objects[otyp]),
                             objects[otyp].oc_level, " ",
-                            !spell_maintained(mon, spellid(i)) ?
+                            !spell_maintained(mon, otyp) ?
                             " " : "!", " ", "",
                             spelltypemnemonic(spell_skilltype(otyp)),
-                            100 - percent_success(mon, otyp),
+                            spellcost(mon, otyp),
                             100);
         }
         set_menuitem(&items[count++], i + 1, MI_NORMAL, buf,
