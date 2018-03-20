@@ -180,7 +180,7 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
         boolean pool = (l->mem_bg == S_pool || l->mem_bg == S_water);
 
         /* Plane of water is weird */
-        if (Is_waterlevel(&u.uz) && cansee(x, y ))
+        if (Is_waterlevel(&u.uz) && cansee(x, y))
             pool = is_pool(level, x, y);
 
         int waterwalk = 0;
