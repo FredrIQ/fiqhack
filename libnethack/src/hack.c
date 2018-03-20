@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-07 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -178,6 +178,11 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
     if (!last_command_was("moveonly")) {
         boolean lava = l->mem_bg == S_lava;
         boolean pool = (l->mem_bg == S_pool || l->mem_bg == S_water);
+
+        /* Plane of water is weird */
+        if (Is_waterlevel(&u.uz) && cansee(x, y ))
+            pool = is_pool(level, x, y);
+
         int waterwalk = 0;
         /* set waterwalk to 1 if IDed, 2 if IDed fireproof (allows lava) */
         if (uarmf && uarmf->otyp == WATER_WALKING_BOOTS && uarmf->dknown &&
