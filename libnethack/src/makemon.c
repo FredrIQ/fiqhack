@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1537,7 +1537,7 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
             ptr = NULL;                                /* wrong monster class */
         if (ptr && geno & (G_NOGEN | G_UNIQ))
             ptr = NULL;              /* monsters that don't randomly generate */
-        if (is_mplayer(ptr) && rn2_on_rng(2, rng))
+        if (is_mplayer(ptr) && rn2_on_rng(8, rng))
             ptr = NULL;            /* player monsters are extra rare */
         if (ptr && rogue && !class && !isupper(def_monsyms[(int)(ptr->mlet)]))
             ptr = NULL;            /* lowercase or punctuation on Rogue level */
