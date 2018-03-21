@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-12 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-21 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -1919,7 +1919,12 @@ update_property(struct monst *mon, enum youprop prop,
         break;
     case CLAIRVOYANT:
         if (slot == os_dectimeout && !(timer % 15)) {
-            if (you && !blocked) {
+            /* Doing clairvoyance on The Plane of Water causes a farlook prompt,
+               for historical reasons (the game used to only draw your own water
+               bubble, so magic mapping and clairvoyance paused the screen to
+               let you see all bubbles in that moment). Since we now draw all
+               bubbles anyway, just ignore clairvoyance here. */
+            if (you && !blocked && !Is_waterlevel(&u.uz)) {
                 do_vicinity_map();
                 effect = TRUE;
             }
