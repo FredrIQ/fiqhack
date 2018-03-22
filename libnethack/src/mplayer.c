@@ -312,6 +312,8 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
                 mongets(mtmp, rn2_on_rng(5, rng) ? LUCKSTONE : LOADSTONE, rng);
             if (rn2_on_rng(4, rng)) /* unihorns are nice */
                 mongets(mtmp, UNICORN_HORN, rng);
+            if (rn2_on_rng(8, rng)) /* lizards are also nice */
+                xmongets(mtmp, CORPSE, PM_LIZARD, 0, rng);
 
             /* give armor */
             mk_mplayer_armor(mtmp, armor, rng);
