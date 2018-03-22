@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-12 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-22 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -325,15 +325,20 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             if (rn2_on_rng(8, rng))
                 mk_mplayer_armor(mtmp, rnd_class(LOW_BOOTS,
                                                  LEVITATION_BOOTS, rng), rng);
-            m_dowear(mtmp, TRUE);
-
-            /* if the player lacks reflection for whatever reason,
-               maybe give some amulets */
-            if (!reflecting(mtmp) && rn2_on_rng(3, rng)) {
+            /* 50% reflection or life saving, 100% life saving if the playermon
+               already has reflection. 20% of getting several life saving ones
+               if they get one. */
+            if (!reflecting(mtmp) && rn2_on_rng(2, rng))
                 mk_mplayer_armor(mtmp, AMULET_OF_REFLECTION, rng);
-                for (i = rn2_on_rng(5, rng); i; i--)
-                    mk_mplayer_armor(mtmp, AMULET_OF_LIFE_SAVING, rng);
+            else {
+                mk_mplayer_armor(mtmp, AMULET_OF_LIFE_SAVING, rng);
+                if (!rn2_on_rng(5, rng)) {
+                    for (i = rn2_on_rng(5, rng); i; i--)
+                        mk_mplayer_armor(mtmp, AMULET_OF_LIFE_SAVING, rng);
+                }
             }
+
+            m_dowear(mtmp, TRUE);
 
             quan = rn2_on_rng(3, rng) ?
                 rn2_on_rng(3, rng) : rn2_on_rng(16, rng);
