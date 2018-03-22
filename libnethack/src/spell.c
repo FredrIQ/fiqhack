@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-22 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1394,16 +1394,7 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
     } else if (!clone_wiz && !(mon->mspells & ((uint64_t)1 << mspellid)))
         return 0;
 
-    int pw_cost;
-    if (clone_wiz)
-        pw_cost = 7;
-    else
-        pw_cost = objects[spell].oc_level;
-    pw_cost *= 5;
-
-    if (mon_has_amulet(mon))
-        pw_cost += rnd(2 * pw_cost);
-
+    int pw_cost = spellcost(mon, spell);
     if (mon->pw < pw_cost && !theoretical)
         return 0;
 
