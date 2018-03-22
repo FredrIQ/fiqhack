@@ -288,9 +288,13 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         /* give random intrinsics */
         int intrinsics[] = {
             POISON_RES, FIRE_RES, COLD_RES, SHOCK_RES, SLEEP_RES, DISINT_RES,
-            TELEPAT, INVIS, SEE_INVIS, PROTECTION /* blessed */
+            TELEPAT, INVIS, SEE_INVIS, PROTECTION, /* blessed */
+            TELEPORT, TELEPORT_CONTROL,
         };
         int i = 5 + rn2_on_rng(6, rng);
+        if (special)
+            i += 5;
+
         /* some will probably end up redundant, but keep it at that */
         while (i--)
             set_property(mtmp,
