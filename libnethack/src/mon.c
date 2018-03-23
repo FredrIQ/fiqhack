@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-28 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1365,7 +1365,20 @@ tame_to(const struct monst *mon)
     if (!mon->master)
         return NULL;
 
-    return find_mid(mon->dlevel, mon->master, FM_FMON);
+    /* Infinite loop protection */
+    struct monst *mmon, *omon;
+    omon = find_mid(mon->dlevel, mon->master, FM_FMON);
+    mmon = omon;
+    while (mmon && mmon->master) {
+        if (mmon->master == mon->m_id) {
+            mmon->master = 0;
+            break;
+        }
+
+        mmon = find_mid(mmon->dlevel, mmon->master, FM_FMON);
+    }
+
+    return omon;
 }
 
 /* Makes pet tame to master. Returns FALSE if we failed to do so. */
