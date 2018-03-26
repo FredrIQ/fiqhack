@@ -10,16 +10,17 @@ static void shuffle(int, int, boolean);
 static void shuffle_all(void);
 static boolean interesting_to_discover(int);
 
-/* Returns TRUE if the object is new. Also change otyp_offset. */
+/* Returns TRUE if the object is new. Also change otyp_offset.
+   Use constants, not raw numbers. */
 boolean
 is_new_object(int otyp)
 {
     if (flags.save_revision == SAVE_REVISION)
         return FALSE;
 
-    if (otyp == 290 /* POT_WONDER */ && flags.save_revision < 4)
+    if (otyp == POT_WONDER && flags.save_revision < 4)
         return TRUE;
-    if (otyp == 157 /* RIN_CARRYING */ && flags.save_revision < 18)
+    if (otyp == RIN_CARRYING && flags.save_revision < 18)
         return TRUE;
     return FALSE;
 }
