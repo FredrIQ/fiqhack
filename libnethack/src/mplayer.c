@@ -286,9 +286,12 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             /* if not an artifact, try a bunch of times to assign object
                properties */
             int prop_tries = 10;
-            if (!otmp->oartifact)
-                while (!otmp->oprops && prop_tries--)
+            if (!otmp->oartifact) {
+                while (!otmp->oprops && prop_tries--) {
                     assign_oprops(lev, otmp, rng, TRUE);
+                    otmp->oprops &= ~opm_mercy;
+                }
+            }
 
             mpickobj(mtmp, otmp, NULL);
         }
