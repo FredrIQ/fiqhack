@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -113,9 +113,17 @@ mk_mplayer_armor(struct monst *mon, short typ, enum rng rng)
     /* if not an artifact, try a bunch of times to assign object properties */
     int prop_tries = 10;
     if (!obj->oartifact &&
-        (obj->oclass == WEAPON_CLASS || obj->oclass == ARMOR_CLASS))
+        (obj->oclass == WEAPON_CLASS || obj->oclass == ARMOR_CLASS)) {
         while (!obj->oprops && prop_tries--)
             assign_oprops(mon->dlevel, obj, rng, TRUE);
+
+        if (otmp->oclass == TOOL_CLASS && !is_weptool(otmp))
+            obj->oprops = 0;
+        if (rn2(20) &&
+            (objects[otmp->otyp].oc_magic ||
+             objects[otmp->otyp].oc_oprop))
+            obj->oprops = 0;
+    }
 
     mpickobj(mon, obj, NULL);
 }
