@@ -2169,20 +2169,22 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
 
     init_menulist(&menu);
 
-#define MENUITEM(acc, str, ok)                                          \
+#define MENUITEM(acc, str, ok, name)                                    \
     if (ok) {                                                           \
-        buf = msgprintf(str, the(xname(obj)));                          \
+        buf = str;                                                      \
+        if (name)                                                       \
+            buf = msgcat(buf, the(xname(obj)));                         \
         add_menuitem(&menu, acc, buf, acc, FALSE);                      \
     }
 
-    MENUITEM(':', "Look inside %s", TRUE);
-    MENUITEM('o', "Take something out of %s", outokay);
-    MENUITEM('i', "Put something into %s", inokay);
-    MENUITEM('b', "Both; take out, then put in", outokay);
-    MENUITEM('r', "Both reversed; put in, then take out", inokay);
-    MENUITEM('s', "Stash one item into %s", inokay);
-    MENUITEM('n', "Loot next container", more_containers);
-    MENUITEM('q', alreadyused ? "Done" : "Do nothing", TRUE);
+    MENUITEM(':', "Look inside ", TRUE, TRUE);
+    MENUITEM('o', "Take something out of ", outokay, TRUE);
+    MENUITEM('i', "Put something into ", inokay, TRUE);
+    MENUITEM('b', "Both; take out, then put in", outokay, FALSE);
+    MENUITEM('r', "Both reversed; put in, then take out", inokay, FALSE);
+    MENUITEM('s', "Stash one item into ", inokay, TRUE);
+    MENUITEM('n', "Loot next container", more_containers, FALSE);
+    MENUITEM('q', alreadyused ? "Done" : "Do nothing", TRUE, FALSE);
 #undef MENUITEM
 
     n = display_menu(&menu, prompt, PICK_ONE, PLHINT_CONTAINER, &selection);
