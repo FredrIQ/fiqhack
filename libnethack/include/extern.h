@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1864,7 +1864,7 @@ extern void stealgold(struct monst *);
 extern void remove_worn_item(struct obj *, boolean);
 extern int steal(struct monst *, const char **);
 extern int mpickobj(struct monst *, struct obj *, struct obj **);
-extern void stealamulet(struct monst *);
+extern void stealamulet(struct monst *, struct monst *);
 extern void mdrop_obj(struct monst *, struct obj *, boolean);
 extern void mdrop_special_objs(struct monst *);
 extern void relobj(struct monst *, int, boolean);

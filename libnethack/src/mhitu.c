@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -939,6 +939,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk, int ac_after_rnd)
     case AD_DRCO:
     case AD_ACID:
     case AD_BLND:
+    case AD_SAMU:
         damage(mtmp, &youmonst, mattk);
         return 1;
     case AD_DRIN:
@@ -1229,15 +1230,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk, int ac_after_rnd)
         if (could_seduce(mtmp, &youmonst, mattk) == 1 && !cancelled(mtmp))
             if (doseduce(mtmp))
                 return 3;
-        break;
-
-    case AD_SAMU:
-        hitmsg(mtmp, mattk);
-        /* When covetous monsters hit, maybe steal the item */
-        if (Uhave_amulet || Uhave_bell || Uhave_book || Uhave_menorah ||
-            Uhave_questart)  /* carrying the Quest Artifact */
-            if (!rn2(20))
-                stealamulet(mtmp);
         break;
 
     case AD_TLPT:
