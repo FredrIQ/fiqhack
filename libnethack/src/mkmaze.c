@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-10-14 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -706,7 +706,6 @@ movebubbles(void)
     if (!wportal)
         set_wportal(level);
 
-    vision_recalc(2);
     /* keep attached ball&chain separate from bubble objects */
     if (Punished)
         unplacebc();
@@ -796,7 +795,6 @@ movebubbles(void)
                     }
 
                     level->locations[x][y] = water_pos;
-                    block_point(x, y);
                 }
     }
 
@@ -1119,7 +1117,6 @@ mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boolean ini)
             if (b->bm[j + 2] & (1 << i)) {
                 lev->locations[x][y].typ = AIR;
                 lev->locations[x][y].lit = 1;
-                unblock_point(x, y);
             }
 
     /* replace contents of bubble */
