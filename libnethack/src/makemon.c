@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2212,8 +2212,10 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         mon->angr = mread32(mf);
         mon->master = mread32(mf);
 
+        mon->carryinc = mread32(mf);
+
         /* Some reserved space for further expansion */
-        for (i = 0; i < 177; i++)
+        for (i = 0; i < 173; i++)
             (void) mread8(mf);
     }
 
@@ -2516,7 +2518,9 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite32(mf, mon->angr);
     mwrite32(mf, mon->master);
 
-    for (i = 0; i < 177; i++)
+    mwrite32(mf, mon->carryinc);
+
+    for (i = 0; i < 173; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */

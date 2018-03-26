@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -177,6 +177,7 @@ struct monst {
     schar mdaminc;      /* monster intrinsic damage bonus/penalty */
     schar msearchinc;   /* monster intrinsic search bonus/penalty */
     schar mac;          /* monster AC bonus/penalty */
+    int carryinc;       /* carry cap bonus/penalty */
 };
 
 # define MON_WEP(mon)     (m_mwep(mon))

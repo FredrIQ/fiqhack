@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,7 +10,7 @@ static void shuffle(int, int, boolean);
 static void shuffle_all(void);
 static boolean interesting_to_discover(int);
 
-/* Returns TRUE if the object is new */
+/* Returns TRUE if the object is new. Also change otyp_offset. */
 boolean
 is_new_object(int otyp)
 {
@@ -19,9 +19,16 @@ is_new_object(int otyp)
 
     if (otyp == 290 /* POT_WONDER */ && flags.save_revision < 4)
         return TRUE;
+    if (otyp == 157 /* RIN_CARRYING */ && flags.save_revision < 18)
+        return TRUE;
     return FALSE;
 }
 
+/* IMPORTANT: Add the checks sequentially to progressively
+   offset the otyp over time with new revisions.
+   Use the raw numbers, not constants, since constants can
+   change in new revisions, but we need to keep the offset
+   change constant. Also change is_new_object. */
 int
 otyp_offset(int otyp)
 {
@@ -30,6 +37,8 @@ otyp_offset(int otyp)
 
     int ret = 0;
     if (otyp >= 290 /* POT_WONDER */ && flags.save_revision < 4)
+        ret++;
+    if (otyp >= 157 /* RIN_CARRYING */ && flags.save_revision < 18)
         ret++;
     return ret;
 }
