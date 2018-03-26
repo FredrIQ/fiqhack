@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2165,26 +2165,25 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
     struct nh_menulist menu;
     const int *selection;
     const char *buf;
-    int n = 0;
+    int n;
 
     init_menulist(&menu);
 
-#define menuitem(acc, str, ok)                                          \
-    n++;                                                                \
+#define MENUITEM(acc, str, ok)                                          \
     if (ok) {                                                           \
         buf = msgprintf(str, the(xname(obj)));                          \
         add_menuitem(&menu, acc, buf, acc, FALSE);                      \
     }
 
-    menuitem(':', "Look inside %s", TRUE);
-    menuitem('o', "Take something out of %s", outokay);
-    menuitem('i', "Put something into %s", inokay);
-    menuitem('b', "Both; take out, then put in", outokay);
-    menuitem('r', "Both reversed; put in, then take out", inokay);
-    menuitem('s', "Stash one item into %s", inokay);
-    menuitem('n', "Loot next container", more_containers);
-    menuitem('q', alreadyused ? "Done" : "Do nothing", TRUE);
-#undef menuitem
+    MENUITEM(':', "Look inside %s", TRUE);
+    MENUITEM('o', "Take something out of %s", outokay);
+    MENUITEM('i', "Put something into %s", inokay);
+    MENUITEM('b', "Both; take out, then put in", outokay);
+    MENUITEM('r', "Both reversed; put in, then take out", inokay);
+    MENUITEM('s', "Stash one item into %s", inokay);
+    MENUITEM('n', "Loot next container", more_containers);
+    MENUITEM('q', alreadyused ? "Done" : "Do nothing", TRUE);
+#undef MENUITEM
 
     n = display_menu(&menu, prompt, PICK_ONE, PLHINT_CONTAINER, &selection);
     if (n > 0)
