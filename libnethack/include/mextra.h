@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Izchak Miller, 1989.                             */
 /* Copyright (c) Fredrik Ljungdahl, 2015.                         */
@@ -97,6 +97,17 @@ enum dogfood {
     df_treat,
 };
 
+/* Ascending into progressively more complex tactics */
+enum tactic {
+    /* Mindless */
+    tac_follow, /* Follow the hero */
+    /* Animals */
+    tac_wait, /* Wait */
+    tac_attack, /* Go after enemies */
+    /* Intelligent monsters */
+    tac_lineup, /* Line up with enemies */
+};
+
 struct edog {
     unsigned int droptime;      /* moment dog dropped object */
     unsigned int dropdist;      /* dist of drpped obj from @ */
@@ -107,6 +118,7 @@ struct edog {
     int revivals;       /* count pet deaths */
     int mhpmax_penalty; /* while starving, points reduced */
     unsigned killed_by_u:1;     /* you attempted to kill him */
+    enum tactic tactic; /* longterm tactic chosen */
 };
 
 struct pet_weapons {

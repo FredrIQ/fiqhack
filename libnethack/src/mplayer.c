@@ -117,11 +117,11 @@ mk_mplayer_armor(struct monst *mon, short typ, enum rng rng)
         while (!obj->oprops && prop_tries--)
             assign_oprops(mon->dlevel, obj, rng, TRUE);
 
-        if (otmp->oclass == TOOL_CLASS && !is_weptool(otmp))
+        if (obj->oclass == TOOL_CLASS && !is_weptool(obj))
             obj->oprops = 0;
         if (rn2(20) &&
-            (objects[otmp->otyp].oc_magic ||
-             objects[otmp->otyp].oc_oprop))
+            (objects[obj->otyp].oc_magic ||
+             objects[obj->otyp].oc_oprop))
             obj->oprops = 0;
     }
 
