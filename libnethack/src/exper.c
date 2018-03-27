@@ -382,8 +382,9 @@ initialize_mon_pw(struct monst *mon, enum rng rng)
 {
     int xl = mon->m_lev;
     int pw_gain = get_advmod_total(acurr(mon, A_WIS), mon, TRUE);
-    /* Fuzz between 0.5x and 1.5x */
-    pw_gain = rn2_on_rng(max(pw_gain, 1), rng) + (pw_gain / 2);
+    /* Fuzz between 0.75x and 1.25x */
+    pw_gain += rn2_on_rng(max(pw_gain / 2, 1), rng) - (pw_gain / 4);
+    pw_gain++;
     if (pw_gain < 0)
         pw_gain = 0;
     mon->pw += pw_gain;
@@ -416,7 +417,8 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
 
     /* Experience from killing stuff */
     if (victim) {       /* killed a monster */
-        hpincr = rn2(max(victim->m_lev - mtmp->m_lev, 1));
+        hpincr = rnd(max(victim->m_lev - mtmp->m_lev, 1));
+        pline(msgc_debug, "hp incr: %d", hpincr);
         int threshold = !mtmp->m_lev ? 4 : mnewadv(mtmp, FALSE);
 
         /* Don't allow gaining enough HP for more than a
