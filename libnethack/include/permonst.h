@@ -63,6 +63,7 @@ struct attack {
 /* Generic advancement for monsters */
 #define HPADV {4,1,2,4,5,6,7,8,9}
 #define ENADV {0,1,1,2,2,3,3,4,4}
+#define SPADV {5,1,2,3,5,6,7,8,9} /* energy for casters */
 
 /* Max # of attacks for any given monster.
  */
