@@ -563,13 +563,16 @@ get_advmod_total(int attrib, const struct monst *mon, boolean enadv)
     int xl;
     get_roleadv(mon, &roleadv, &raceadv, enadv);
     xl = m_mlev(mon);
-    if (mon != &youmonst)
-        xl++; /* Monster level starts at 0 */
 
     int total = 0;
     int i = 0;
-    for (i = 0; i < xl; i++)
+    /* Starting HP/Pw */
+    total += get_advmod(0, attrib, roleadv, raceadv);
+
+    /* Gained through levels */
+    for (i = 1; i < xl; i++)
         total += get_advmod(i, attrib, roleadv, raceadv);
+
     return total;
 }
 

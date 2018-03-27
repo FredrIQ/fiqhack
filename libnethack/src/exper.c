@@ -350,8 +350,10 @@ rndexp(boolean gaining)
 void
 initialize_mon_hp(struct monst *mon, enum rng rng)
 {
-    int xl = mon->m_lev;
     int hp_gain = get_advmod_total(acurr(mon, A_CON), mon, FALSE);
+    if (mon->m_lev == 0)
+        hp_gain /= 2;
+
     /* Fuzz between 0.75x and 1.25x */
     hp_gain += rn2_on_rng(max(hp_gain / 2, 1), rng) - (hp_gain / 4);
     hp_gain++;
@@ -380,8 +382,10 @@ initialize_mon_hp(struct monst *mon, enum rng rng)
 void
 initialize_mon_pw(struct monst *mon, enum rng rng)
 {
-    int xl = mon->m_lev;
     int pw_gain = get_advmod_total(acurr(mon, A_WIS), mon, TRUE);
+    if (mon->m_lev == 0)
+        pw_gain /= 2;
+
     /* Fuzz between 0.75x and 1.25x */
     pw_gain += rn2_on_rng(max(pw_gain / 2, 1), rng) - (pw_gain / 4);
     pw_gain++;
@@ -418,7 +422,6 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
     /* Experience from killing stuff */
     if (victim) {       /* killed a monster */
         hpincr = rnd(max(victim->m_lev - mtmp->m_lev, 1));
-        pline(msgc_debug, "hp incr: %d", hpincr);
         int threshold = !mtmp->m_lev ? 4 : mnewadv(mtmp, FALSE);
 
         /* Don't allow gaining enough HP for more than a
