@@ -353,7 +353,7 @@ initialize_mon_hp(struct monst *mon, enum rng rng)
     int xl = mon->m_lev;
     int hp_gain = get_advmod_total(acurr(mon, A_CON), mon, FALSE);
     /* Fuzz between 0.75x and 1.25x */
-    hp_gain += rn2_on_rng(hp_gain / 2, rng) - (hp_gain / 4);
+    hp_gain += rn2_on_rng(max(hp_gain / 2, 1), rng) - (hp_gain / 4);
     hp_gain++;
 
     if (hp_gain < 4)
@@ -370,7 +370,7 @@ initialize_mon_hp(struct monst *mon, enum rng rng)
         hp_gain = 2 * (mon->data->mlevel - 6);
         mon->m_lev = hp_gain / 4;    /* approximation */
     } else if (is_home_elemental(&mon->dlevel->z, mon->data))
-        hp_gain *= 3;
+        hp_gain *= 2;
 
     mon->mhp += hp_gain;
     mon->mhpmax += hp_gain;
@@ -383,7 +383,7 @@ initialize_mon_pw(struct monst *mon, enum rng rng)
     int xl = mon->m_lev;
     int pw_gain = get_advmod_total(acurr(mon, A_WIS), mon, TRUE);
     /* Fuzz between 0.5x and 1.5x */
-    pw_gain = rn2_on_rng(pw_gain, rng) + (pw_gain / 2);
+    pw_gain = rn2_on_rng(max(pw_gain, 1), rng) + (pw_gain / 2);
     if (pw_gain < 0)
         pw_gain = 0;
     mon->pw += pw_gain;

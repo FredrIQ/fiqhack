@@ -654,7 +654,7 @@ acurr(const struct monst *mon, int x)
         if (x == A_STR && strongmonst(mon->data))
             tmp = 21;
         if (x == A_CON)
-            tmp++; /* more HP regeneration */
+            tmp += 3; /* more HP regeneration */
         if (x == A_INT || x == A_WIS) {
             if (spellcaster(mon->data))
                 tmp = 18;
@@ -664,7 +664,9 @@ acurr(const struct monst *mon, int x)
     }
     tmp += attr_bonus(mon, x);
 
-    if (x == A_STR) {
+    if (x == A_CON && is_home_elemental(&mon->dlevel->z, mon->data))
+        return 25; /* very healthy when at home! */
+    else if (x == A_STR) {
         struct obj *obj;
 
         /* check for the "power" obj property, only functions on
