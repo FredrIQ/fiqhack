@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -974,34 +974,12 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     mtmp->orig_mnum = mndx;
 
     mtmp->m_lev = adj_lev(&lev->z, ptr);
-    if (is_golem(ptr)) {
-        mtmp->mhpmax = mtmp->mhp = golemhp(mndx);
-        rn2_on_rng(30, stats_rng); /* reduce desyncs as far as possible */
-    } else if (is_rider(ptr)) {
-        /* We want low HP, but a high mlevel so they can attack well */
-        mtmp->mhpmax = mtmp->mhp = 30 + rn2_on_rng(31, stats_rng);
-    } else if (ptr->mlevel > 49) {
-        /* "special" fixed hp monster the hit points are encoded in the mlevel
-           in a somewhat strange way to fit in the 50..127 positive range of a
-           signed character above the 1..49 that indicate "normal" monster
-           levels */
-        mtmp->mhpmax = mtmp->mhp = 2 * (ptr->mlevel - 6);
-        mtmp->m_lev = mtmp->mhp / 4;    /* approximation */
-    } else if (ptr->mlet == S_DRAGON && mndx >= PM_GRAY_DRAGON) {
-        /* adult dragons */
-        mtmp->mhpmax = mtmp->mhp =
-            (In_endgame(&lev->z) ? (8 * mtmp->m_lev)
-             : (6 * mtmp->m_lev + rn2_on_rng(mtmp->m_lev + 1, stats_rng)));
-    } else if (!mtmp->m_lev) {
-        mtmp->mhpmax = mtmp->mhp = 1 + rn2_on_rng(4, stats_rng);
-    } else {
-        mtmp->mhpmax = mtmp->mhp =
-            mtmp->m_lev * 3 + rn2_on_rng(mtmp->m_lev * 3 + 1, stats_rng);
-        if (is_home_elemental(&lev->z, ptr))
-            mtmp->mhpmax = (mtmp->mhp *= 3);
-    }
+    mtmp->dlevel = lev;
 
-    initialize_mon_pw(mtmp);
+    /* Needs to come after dungeon level because elementals
+       get a max HP bonus on their home plane */
+    initialize_mon_hp(mtmp, stats_rng);
+    initialize_mon_pw(mtmp, stats_rng);
 
     mtmp->female = rn2_on_rng(2, stats_rng);
     if (is_female(ptr))
@@ -1014,7 +992,6 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     if (ptr->msound == MS_LEADER)       /* leader knows about portal */
         mtmp->mtrapseen |= (1L << (MAGIC_PORTAL - 1));
 
-    mtmp->dlevel = lev;
     mtmp->dx = COLNO;
     mtmp->dy = ROWNO;
     place_monster(mtmp, x, y, FALSE);
@@ -2214,8 +2191,11 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
 
         mon->carryinc = mread32(mf);
 
+        mon->oldcon = mread8(mf);
+        mon->oldwis = mread8(mf);
+
         /* Some reserved space for further expansion */
-        for (i = 0; i < 173; i++)
+        for (i = 0; i < 171; i++)
             (void) mread8(mf);
     }
 
@@ -2520,7 +2500,10 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
 
     mwrite32(mf, mon->carryinc);
 
-    for (i = 0; i < 173; i++)
+    mwrite8(mf, mon->oldcon);
+    mwrite8(mf, mon->oldwis);
+
+    for (i = 0; i < 171; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */

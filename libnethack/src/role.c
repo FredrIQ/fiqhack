@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,9 +51,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 10, 10, 7, 7, 7},
      {20, 20, 20, 10, 20, 10},
-     /* Init Lower Higher */
-     {11, 0, 0, 8, 1, 0},       /* Hit points */
-     {1, 0, 0, 1, 0, 1}, 14,    /* Energy */
      10, 5, 0, 2, 10, A_INT, SPE_MAGIC_MAPPING, -4},
     {{"Barbarian", 0}, {
                         {"Plunderer", "Plunderess"},
@@ -75,9 +72,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {16, 7, 7, 15, 16, 6},
      {30, 6, 7, 20, 30, 7},
-     /* Init Lower Higher */
-     {14, 0, 0, 10, 2, 0},      /* Hit points */
-     {1, 0, 0, 1, 0, 1}, 10,    /* Energy */
      10, 14, 0, 0, 8, A_INT, SPE_SPEED_MONSTER, -4},
     {{"Caveman", "Cavewoman"}, {
                                 {"Troglodyte", 0},
@@ -100,9 +94,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {10, 7, 7, 7, 8, 6},
      {30, 6, 7, 20, 30, 7},
-     /* Init Lower Higher */
-     {14, 0, 0, 8, 2, 0},       /* Hit points */
-     {1, 0, 0, 1, 0, 1}, 10,    /* Energy */
      10, 12, 0, 1, 8, A_INT, SPE_DIG, -4},
     {{"Healer", 0}, {
                      {"Rhizotomist", 0},
@@ -124,9 +115,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 7, 13, 7, 11, 16},
      {15, 20, 20, 15, 25, 5},
-     /* Init Lower Higher */
-     {11, 0, 0, 8, 1, 0},       /* Hit points */
-     {1, 4, 0, 1, 0, 2}, 20,    /* Energy */
      10, 3, -3, 2, 10, A_WIS, SPE_CURE_SICKNESS, -4},
     {{"Knight", 0}, {
                      {"Gallant", 0},
@@ -148,9 +136,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {13, 7, 14, 8, 10, 17},
      {30, 15, 15, 10, 20, 10},
-     /* Init Lower Higher */
-     {14, 0, 0, 8, 2, 0},       /* Hit points */
-     {1, 4, 0, 1, 0, 2}, 10,    /* Energy */
      10, 8, -2, 0, 9, A_WIS, SPE_TURN_UNDEAD, -4},
     {{"Monk", 0}, {
                    {"Candidate", 0},
@@ -174,9 +159,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {10, 7, 8, 8, 7, 7},
      {25, 10, 20, 20, 15, 10},
-     /* Init Lower Higher */
-     {12, 0, 0, 8, 1, 0},       /* Hit points */
-     {2, 2, 0, 2, 0, 2}, 10,    /* Energy */
      10, 8, -2, 2, 20, A_WIS, SPE_RESTORE_ABILITY, -4},
     {{"Priest", "Priestess"}, {
                                {"Aspirant", 0},
@@ -199,9 +181,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 7, 10, 7, 7, 7},
      {15, 10, 30, 15, 20, 10},
-     /* Init Lower Higher */
-     {12, 0, 0, 8, 1, 0},       /* Hit points */
-     {4, 3, 0, 2, 0, 2}, 10,    /* Energy */
      10, 3, -2, 2, 10, A_WIS, SPE_REMOVE_CURSE, -4},
     /* Note: Rogue precedes Ranger so that use of `-R' on the command line
        retains its traditional meaning. */
@@ -225,9 +204,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 7, 7, 10, 7, 6},
      {20, 10, 10, 30, 20, 10},
-     /* Init Lower Higher */
-     {10, 0, 0, 8, 1, 0},       /* Hit points */
-     {1, 0, 0, 1, 0, 1}, 11,    /* Energy */
      10, 8, 0, 1, 9, A_INT, SPE_DETECT_TREASURE, -4},
     {{"Ranger", 0}, {
                      {"Tenderfoot", 0},
@@ -250,9 +226,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {13, 13, 13, 9, 13, 7},
      {30, 10, 10, 20, 20, 10},
-     /* Init Lower Higher */
-     {13, 0, 0, 6, 1, 0},       /* Hit points */
-     {1, 0, 0, 1, 0, 1}, 12,    /* Energy */
      10, 9, 2, 1, 10, A_INT, SPE_INVISIBILITY, -4},
     {{"Samurai", 0}, {
                       {"Hatamoto", 0},  /* Banner Knight */
@@ -274,9 +247,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {10, 8, 7, 10, 17, 6},
      {30, 10, 8, 30, 14, 8},
-     /* Init Lower Higher */
-     {13, 0, 0, 8, 1, 0},       /* Hit points */
-     {1, 0, 0, 1, 0, 1}, 11,    /* Energy */
      10, 10, 0, 0, 8, A_INT, SPE_CLAIRVOYANCE, -4},
     {{"Tourist", 0}, {
                       {"Rambler", 0},
@@ -298,9 +268,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 10, 6, 7, 7, 10},
      {15, 10, 10, 15, 30, 20},
-     /* Init Lower Higher */
-     {8, 0, 0, 8, 0, 0},        /* Hit points */
-     {1, 0, 0, 1, 0, 1}, 14,    /* Energy */
      10, 5, 1, 2, 10, A_INT, SPE_CHARM_MONSTER, -4},
     {{"Valkyrie", 0}, {
                        {"Stripling", 0},
@@ -322,9 +289,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {10, 7, 7, 7, 10, 7},
      {30, 6, 7, 20, 30, 7},
-     /* Init Lower Higher */
-     {14, 0, 0, 8, 2, 0},       /* Hit points */
-     {1, 0, 0, 1, 0, 1}, 10,    /* Energy */
      10, 10, -2, 0, 9, A_WIS, SPE_CONE_OF_COLD, -4},
     {{"Wizard", 0}, {
                      {"Evoker", 0},
@@ -347,9 +311,6 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 10, 7, 7, 7, 7},
      {10, 30, 10, 20, 20, 10},
-     /* Init Lower Higher */
-     {10, 0, 0, 8, 1, 0},       /* Hit points */
-     {4, 3, 0, 2, 0, 3}, 12,    /* Energy */
      0, 1, 0, 3, 10, A_INT, SPE_MAGIC_MISSILE, -4},
 /* Array terminator */
     {{0, 0}}
@@ -374,10 +335,7 @@ const struct Race races[] = {
      /* Str Int Wis Dex Con Cha */
      {3, 3, 3, 3, 3, 3},
      {21, 18, 18, 18, 18, 18},
-     /* Init Lower Higher */
-     {2, 0, 0, 2, 1, 0},        /* Hit points */
-     {1, 0, 2, 0, 2, 0} /* Energy */
-     },
+    },
     {"elf", "elven", "elvenkind", "Elf",
      {0, 0},
      PM_ELF, PM_ELF_MUMMY, PM_ELF_ZOMBIE,
@@ -386,10 +344,7 @@ const struct Race races[] = {
      /* Str Int Wis Dex Con Cha */
      {3, 3, 3, 3, 3, 3},
      {18, 20, 20, 18, 16, 18},
-     /* Init Lower Higher */
-     {1, 0, 0, 1, 1, 0},        /* Hit points */
-     {2, 0, 3, 0, 3, 0} /* Energy */
-     },
+    },
     {"dwarf", "dwarven", "dwarvenkind", "Dwa",
      {0, 0},
      PM_DWARF, PM_DWARF_MUMMY, PM_DWARF_ZOMBIE,
@@ -398,10 +353,7 @@ const struct Race races[] = {
      /* Str Int Wis Dex Con Cha */
      {3, 3, 3, 3, 3, 3},
      {21, 16, 16, 20, 20, 16},
-     /* Init Lower Higher */
-     {4, 0, 0, 3, 2, 0},        /* Hit points */
-     {0, 0, 0, 0, 0, 0} /* Energy */
-     },
+    },
     {"gnome", "gnomish", "gnomehood", "Gno",
      {0, 0},
      PM_GNOME, PM_GNOME_MUMMY, PM_GNOME_ZOMBIE,
@@ -410,10 +362,7 @@ const struct Race races[] = {
      /* Str Int Wis Dex Con Cha */
      {3, 3, 3, 3, 3, 3},
      {19, 19, 18, 18, 18, 18},
-     /* Init Lower Higher */
-     {1, 0, 0, 1, 0, 0},        /* Hit points */
-     {2, 0, 2, 0, 2, 0} /* Energy */
-     },
+    },
     {"orc", "orcish", "orcdom", "Orc",
      {0, 0},
      PM_ORC, PM_ORC_MUMMY, PM_ORC_ZOMBIE,
@@ -422,10 +371,7 @@ const struct Race races[] = {
      /* Str Int Wis Dex Con Cha */
      {3, 3, 3, 3, 3, 3},
      {20, 16, 16, 18, 18, 16},
-     /* Init Lower Higher */
-     {1, 0, 0, 1, 0, 0},        /* Hit points */
-     {1, 0, 1, 0, 1, 0} /* Energy */
-     },
+    },
 /* Array terminator */
     {0, 0, 0, 0}
 };

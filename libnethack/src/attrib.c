@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,6 +18,10 @@ const char *const plusattr[] = {
 
 static int attr_bonus(const struct monst *, int);
 static void exerper(void);
+static xchar get_advmod(int, xchar, struct RoleAdvance,
+                        struct RoleAdvance);
+static boolean get_roleadv(const struct monst *, struct RoleAdvance *,
+                           struct RoleAdvance *, boolean);
 
 /* adjust an attribute; return TRUE if change is made, FALSE otherwise
 
@@ -490,59 +494,149 @@ adjabil(int oldlevel, int newlevel)
     }
 }
 
+static const struct RoleAdvance dummyadv = {0};
+
+/* Sets max HP and Pw when the attribute score changes
+   Only updates max, except that cur is ensured to not be
+   higher than max. The reason for this is to avoid being
+   able to recover HP or Pw by removing Con/Wis-boosting
+   items, reduce HP to 1 or Pw to 0, then putting it on,
+   to potentially get a net boost in current HP or Pw. */
+void
+update_hpen_attrib(struct monst *mon)
+{
+    /* If oldcon or oldwis is zero, silently set them up
+       appropriately and return */
+    if (!mon->oldcon || !mon->oldwis) {
+        mon->oldcon = acurr(mon, A_CON);
+        mon->oldwis = acurr(mon, A_WIS);
+        return;
+    }
+
+    if (mon->oldcon != acurr(mon, A_CON)) {
+        /* update HP */
+        int oldadv = get_advmod_total(mon->oldcon, mon, FALSE);
+        int newadv = get_advmod_total(acurr(mon, A_CON), mon, FALSE);
+        if (mon == &youmonst) {
+            u.uhpmax += (newadv - oldadv);
+            u.mhmax += (newadv - oldadv);
+            if (u.uhpmax < 1)
+                u.uhpmax = 1;
+            if (u.mhmax < 1)
+                u.mhmax = 1;
+            if (u.uhp > u.uhpmax)
+                u.uhp = u.uhpmax;
+            if (u.mh > u.mhmax)
+                u.mh = u.mhmax;
+        } else {
+            mon->mhpmax += (newadv - oldadv);
+            if (mon->mhpmax < 1)
+                mon->mhpmax = 1;
+            if (mon->mhp > mon->mhpmax)
+                mon->mhp = mon->mhpmax;
+        }
+
+        mon->oldcon = acurr(mon, A_CON);
+    }
+
+    if (mon->oldwis != acurr(mon, A_WIS)) {
+        /* update Pw */
+        int oldadv = get_advmod_total(mon->oldwis, mon, TRUE);
+        int newadv = get_advmod_total(acurr(mon, A_WIS), mon, TRUE);
+        mon->pwmax += (newadv - oldadv);
+        if (mon->pwmax < 0)
+            mon->pwmax = 0;
+        if (mon->pw > mon->pw)
+            mon->pw = mon->pw;
+
+        mon->oldwis = acurr(mon, A_WIS);
+    }
+}
+
+/* Returns total HP/Pw contributed only by the attribute
+   bonuses for the given attribute score */
+int
+get_advmod_total(int attrib, const struct monst *mon, boolean enadv)
+{
+    struct RoleAdvance roleadv;
+    struct RoleAdvance raceadv;
+    int xl;
+    get_roleadv(mon, &roleadv, &raceadv, enadv);
+    xl = m_mlev(mon);
+    if (mon != &youmonst)
+        xl++; /* Monster level starts at 0 */
+
+    int total = 0;
+    int i = 0;
+    for (i = 0; i < xl; i++)
+        total += get_advmod(i, attrib, roleadv, raceadv);
+    return total;
+}
 
 int
 newhp(void)
 {
-    int hp, conplus;
+    return mnewadv(&youmonst, FALSE);
+}
 
-
-    if (u.ulevel == 0) {
-        /* Initialize hit points */
-        hp = urole.hpadv.infix + urace.hpadv.infix;
-        if (urole.hpadv.inrnd > 0)
-            hp += 1 + rn2_on_rng(urole.hpadv.inrnd, rng_charstats_role);
-        if (urace.hpadv.inrnd > 0)
-            hp += 1 + rn2_on_rng(urace.hpadv.inrnd, rng_charstats_race);
-
-        /* Initialize alignment stuff */
+int
+mnewadv(struct monst *mon, boolean enadv)
+{
+    /* Why is this here? Alignment initialization */
+    if (mon == &youmonst && m_mlev(mon) == 0 && !enadv) {
         u.ualign.type = aligns[u.initalign].value;
         u.ualign.record = urole.initrecord;
-
-        return hp;
-    } else {
-        if (u.ulevel < urole.xlev) {
-            hp = urole.hpadv.lofix + urace.hpadv.lofix;
-            if (urole.hpadv.lornd > 0)
-                hp += 1 + rn2_on_rng(urole.hpadv.lornd, rng_charstats_role);
-            if (urace.hpadv.lornd > 0)
-                hp += 1 + rn2_on_rng(urace.hpadv.lornd, rng_charstats_race);
-        } else {
-            hp = urole.hpadv.hifix + urace.hpadv.hifix;
-            if (urole.hpadv.hirnd > 0)
-                hp += 1 + rn2_on_rng(urole.hpadv.hirnd, rng_charstats_role);
-            if (urace.hpadv.hirnd > 0)
-                hp += 1 + rn2_on_rng(urace.hpadv.hirnd, rng_charstats_race);
-        }
     }
 
-    if (ACURR(A_CON) <= 3)
-        conplus = -2;
-    else if (ACURR(A_CON) <= 6)
-        conplus = -1;
-    else if (ACURR(A_CON) <= 14)
-        conplus = 0;
-    else if (ACURR(A_CON) <= 16)
-        conplus = 1;
-    else if (ACURR(A_CON) == 17)
-        conplus = 2;
-    else if (ACURR(A_CON) == 18)
-        conplus = 3;
-    else
-        conplus = 4;
+    int attrib = acurr(mon, enadv ? A_WIS : A_CON);
+    struct RoleAdvance roleadv;
+    struct RoleAdvance raceadv;
+    get_roleadv(mon, &roleadv, &raceadv, enadv);
 
-    hp += conplus;
-    return (hp <= 0) ? 1 : hp;
+    return get_advmod(m_mlev(mon), attrib, roleadv, raceadv);
+}
+
+static xchar
+get_advmod(int level, xchar attrib, struct RoleAdvance roleadv,
+           struct RoleAdvance raceadv)
+{
+    if (!level)
+        return roleadv.init + raceadv.init;
+    if (attrib == 3)
+        return 0;
+
+    if (attrib < 7)
+        return roleadv.a4_6 + raceadv.a4_6;
+    if (attrib < 10)
+        return roleadv.a7_9 + raceadv.a7_9;
+    if (attrib < 13)
+        return roleadv.a10_12 + raceadv.a10_12;
+    if (attrib < 16)
+        return roleadv.a13_15 + raceadv.a13_15;
+    if (attrib < 19)
+        return roleadv.a16_18 + raceadv.a16_18;
+    if (attrib < 22)
+        return roleadv.a19_21 + raceadv.a19_21;
+    if (attrib < 25)
+        return roleadv.a22_24 + raceadv.a22_24;
+    return roleadv.a25 + raceadv.a25;
+}
+
+static boolean
+get_roleadv(const struct monst *mon, struct RoleAdvance *roleadv,
+            struct RoleAdvance *raceadv, boolean enadv)
+{
+    /* Players always use their base form's advancement, unless
+       polyinit is involved */
+    *roleadv = enadv ? mons[urole.num].enadv : mons[urole.num].hpadv;
+    *raceadv = enadv ? mons[urace.num].enadv : mons[urace.num].hpadv;
+
+    if (mon != &youmonst || flags.polyinit_mnum != NON_PM) {
+        *roleadv = enadv ? mon->data->enadv : mon->data->hpadv;
+        *raceadv = dummyadv;
+        if (is_mplayer(mon->data))
+            *raceadv = enadv ? mons[PM_HUMAN].enadv : mons[PM_HUMAN].hpadv;
+    }
 }
 
 /* This works on monsters, but since monsters lack proper attributes,

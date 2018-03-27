@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-28 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -558,12 +558,7 @@ u_init(microseconds birthday)
 
     u.ulevel = 0;       /* set up some of the initial attributes */
     u.uhp = u.uhpmax = newhp();
-    youmonst.pwmax = urole.enadv.infix + urace.enadv.infix;
-    if (urole.enadv.inrnd > 0)
-        youmonst.pwmax += 1 + rolern2(urole.enadv.inrnd);
-    if (urace.enadv.inrnd > 0)
-        youmonst.pwmax += 1 + racern2(urace.enadv.inrnd);
-    youmonst.pw = youmonst.pwmax;
+    youmonst.pw = youmonst.pwmax = mnewadv(&youmonst, TRUE);
     adjabil(0, 1);
     u.ulevel = u.ulevelmax = 1;
 

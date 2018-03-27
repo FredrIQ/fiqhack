@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1251,18 +1251,7 @@ artifact_hit_drainlife(struct monst *magr, struct monst *mdef, struct obj *otmp,
                 pline(msgc, "%s draws the life from %s!",
                       The(distant_name(otmp, xname)), mon_nam(mdef));
         }
-        if (mdef->m_lev == 0) {
-            *dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
-        } else {
-            int drain = rnd(8);
-
-            *dmgptr += drain;
-            mdef->mhpmax -= drain;
-            mdef->m_lev--;
-            drain /= 2;
-            if (drain)
-                healup(drain, 0, FALSE, FALSE);
-        }
+        mlosexp(magr, mdef, NULL, FALSE);
         return vis;
     } else {    /* youdefend */
         int oldhpmax = u.uhpmax;

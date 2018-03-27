@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -121,7 +121,33 @@ opm_name(const struct obj *obj)
 void
 set_mon_data(struct monst *mon, const struct permonst *ptr)
 {
+    int con, wis, oldhpadv, oldenadv;
+    const struct permonst *old_data = mon->data;
+    if (old_data) {
+        con = acurr(mon, A_CON);
+        wis = acurr(mon, A_WIS);
+
+        oldhpadv = get_advmod_total(acurr(mon, A_CON), mon, FALSE);
+        oldenadv = get_advmod_total(acurr(mon, A_WIS), mon, TRUE);
+    }
     mon->data = ptr;
+    if (mon != &youmonst && old_data) {
+        /* Keep HP modifier and change old HP growth to new.
+           Do the same with Pw. */
+        int newhpadv = get_advmod_total(acurr(mon, A_CON), mon, FALSE);
+        mon->mhpmax += (newhpadv - oldhpadv);
+        if (mon->mhpmax < 1)
+            mon->mhpmax = 1;
+        if (mon->mhp > mon->mhpmax)
+            mon->mhp = mon->mhpmax;
+
+        int newenadv = get_advmod_total(acurr(mon, A_WIS), mon, TRUE);
+        mon->pwmax += (newenadv - oldenadv);
+        if (mon->pwmax < 0)
+            mon->pwmax = 0;
+        if (mon->pw > mon->pwmax)
+            mon->pw = mon->pwmax;
+    }
 }
 
 

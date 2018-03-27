@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -675,6 +675,8 @@ mcalcdistress(void)
             mtmp->mcanmove = 1;
         if (mtmp->mfleetim && !--mtmp->mfleetim)
             mtmp->mflee = 0;
+
+        update_hpen_attrib(mtmp);
 
         /* Update displaced images */
         if (displacement(mtmp))
@@ -3839,35 +3841,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
         place_monster(mtmp, mtmp->mx, mtmp->my, TRUE);
     }
 
-    hpn = mtmp->mhp;
-    hpd = (mtmp->m_lev < 50) ? ((int)mtmp->m_lev) * 8 : mdat->mlevel;
-    if (!hpd)
-        hpd = 4;
-
-    mtmp->m_lev = adj_lev(&mtmp->dlevel->z, mdat);      /* new monster level */
-
-    mhp = (mtmp->m_lev < 50) ? ((int)mtmp->m_lev) * 8 : mdat->mlevel;
-    if (!mhp)
-        mhp = 4;
-
-    /* new hp: same fraction of max as before */
-    mtmp->mhp = (int)(((long)hpn * (long)mhp) / (long)hpd);
-    if (mtmp->mhp < 0)
-        mtmp->mhp = hpn;        /* overflow */
-/* Unlikely but not impossible; a 1HD creature with 1HP that changes into a
-   0HD creature will require this statement */
-    if (!mtmp->mhp)
-        mtmp->mhp = 1;
-
-/* and the same for maximum hit points */
-    hpn = mtmp->mhpmax;
-    mtmp->mhpmax = (int)(((long)hpn * (long)mhp) / (long)hpd);
-    if (mtmp->mhpmax < 0)
-        mtmp->mhpmax = hpn;     /* overflow */
-    if (!mtmp->mhpmax)
-        mtmp->mhpmax = 1;
-
-    /* take on the new form... */
+    /* take on the new form... also updates max hp */
     set_mon_data(mtmp, mdat);
 
     if (emits_light(olddata) != emits_light(mtmp->data)) {

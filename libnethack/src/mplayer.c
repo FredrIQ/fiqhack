@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -165,9 +165,14 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         struct obj *otmp;
 
         mtmp->m_lev = rn2_on_rng(16, rng) + (special ? 15 : 1);
-        mtmp->mhp = mtmp->mhpmax =
-            5 * mtmp->m_lev + rn2_on_rng(mtmp->m_lev * 5 + 1, rng) + 10 +
-            (special ? rn2_on_rng(50, rng) : 0);
+        mtmp->dlevel = lev;
+        mtmp->mhp = 0;
+        mtmp->mhpmax = 0;
+
+        /* TODO: lategame players should have higher attributes than
+           the defaults */
+        initialize_mon_hp(mtmp, rng);
+
         if (special) {
             get_mplname(lev, mtmp, nam);
             christen_monst(mtmp, nam);

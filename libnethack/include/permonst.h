@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -60,6 +60,10 @@ struct attack {
     uchar adtyp, damn, damd;
 };
 
+/* Generic advancement for monsters */
+#define HPADV {4,1,2,4,5,6,7,8,9}
+#define ENADV {0,1,1,2,2,3,3,4,4}
+
 /* Max # of attacks for any given monster.
  */
 
@@ -75,6 +79,23 @@ struct attack {
 # endif
 # include "monattk.h"
 # include "monflag.h"
+
+/* Moved from role.h because this is needed by monst.c */
+struct RoleAdvance {
+    /* HP/Pw bonus modifier from attributes.
+       An attribute of 3 gives 0, or what 4-6 gives, whicheveraaaaaaaaaaaaaaaaaaaa
+       is lower. HP is based off Con, Pw off Wis.
+       A bonus is applied retroactively. */
+    xchar init; /* Starting bonus/penalty on level 1 */
+    xchar a4_6;
+    xchar a7_9;
+    xchar a10_12;
+    xchar a13_15;
+    xchar a16_18;
+    xchar a19_21;
+    xchar a22_24;
+    xchar a25;
+};
 
 struct permonst {
     const char *mname;  /* full name */
@@ -95,6 +116,8 @@ struct permonst {
     unsigned int mflags1,       /* boolean bitflags */
         mflags2, mflags3;       /* more boolean bitflags */
     unsigned int mskill;        /* proficiency bitflags */
+    struct RoleAdvance hpadv;   /* HP advancement stats */
+    struct RoleAdvance enadv;   /* Pw advancement stats */
     uchar mresists;     /* resistances */
     uchar mconveys;     /* conveyed by eating */
     uchar mcolor;       /* color to use */

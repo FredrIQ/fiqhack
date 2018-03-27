@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
 #ifndef ROLE_H
 # define ROLE_H
 
@@ -21,13 +21,6 @@
 struct RoleName {
     const char *m;      /* name when character is male */
     const char *f;      /* when female; null if same as male */
-};
-
-struct RoleAdvance {
-    /* "fix" is the fixed amount, "rnd" is the random amount */
-    xchar infix, inrnd; /* at character initialization */
-    xchar lofix, lornd; /* gained per level < urole.xlev */
-    xchar hifix, hirnd; /* gained per level >= urole.xlev */
 };
 
 /*** Unified structure containing role information ***/
@@ -67,9 +60,6 @@ struct Role {
         /*** Attributes (from attrib.c and exper.c) ***/
     xchar attrbase[A_MAX];      /* lowest initial attributes */
     xchar attrdist[A_MAX];      /* distribution of initial attributes */
-    struct RoleAdvance hpadv;   /* hit point advancement */
-    struct RoleAdvance enadv;   /* energy advancement */
-    xchar xlev; /* cutoff experience level */
     xchar initrecord;   /* initial alignment record */
 
         /*** Spell statistics (from spell.c) ***/
@@ -124,8 +114,6 @@ struct Race {
         /*** Attributes ***/
     xchar attrmin[A_MAX];       /* minimum allowable attribute */
     xchar attrmax[A_MAX];       /* maximum allowable attribute */
-    struct RoleAdvance hpadv;   /* hit point advancement */
-    struct RoleAdvance enadv;   /* energy advancement */
 
         /*** Properties in variable-length arrays ***/
     /* intrinsics (see attrib.c) */
