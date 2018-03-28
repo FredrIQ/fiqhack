@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-28 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -354,6 +354,29 @@ doshriek(void)
     return 1;
 }
 
+static int
+dowarp(void)
+{
+    if (youmonst.mspec_used) {
+        pline(msgc_cancelled, "You must wait %d turn%s to warp.",
+              youmonst.mspec_used, youmonst.mspec_used == 1 ? "" : "s");
+        return 0;
+    }
+
+    if (In_endgame(&u.uz)) {
+        /* TODO: also restrict monsters */
+        pline(msgc_cancelled, "You can't warp here!");
+        return 0;
+    }
+
+    /* completely unrestricted teleportation */
+    int ret = tele_impl(TRUE, FALSE);
+    if (ret)
+        youmonst.mspec_used += 500; /* have to wait to do it again */
+
+    return ret;
+}
+
 /* Check to see if the given permonst has a polyform (#monster) ability.
 
    Return TRUE if they do, FALSE if they don't. Additionally, return the
@@ -431,6 +454,10 @@ has_polyform_ability(const struct permonst *pm,
         pa->description = "shriek";
         pa->directed = FALSE;
         pa->handler_undirected = doshriek;
+    } else if (is_covetous(pm)) {
+        pa->description = "warp";
+        pa->directed = FALSE;
+        pa->handler_undirected = dowarp;
     } else {
         return FALSE;
     }
