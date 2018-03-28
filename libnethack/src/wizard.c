@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -619,6 +619,10 @@ tactics(struct monst *mtmp)
     int x = COLNO;
     int y = ROWNO;
 
+    boolean warp_ok = TRUE;
+    if (mtmp->mspec_used || In_endgame(&lev->z))
+        warp_ok = FALSE;
+
     if (mtmp->mtame) {
         /* Harass monsters hostile to the player */
         for (target = monlist(lev); target; target = monnext(target)) {
@@ -635,8 +639,9 @@ tactics(struct monst *mtmp)
             }
         }
 
-        if (isok(x, y) &&
+        if (warp_ok && isok(x, y) &&
             (mclose < (BOLT_LIM * BOLT_LIM) ? rn2(4) : !rn2(4))) {
+            mtmp->mspec_used += 500;
             mnearto(mtmp, x, y, FALSE);
             return 0;
         }
@@ -660,7 +665,10 @@ tactics(struct monst *mtmp)
         }
 
         /* Otherwise, try to teleport to it and fallback to normal AI */
-        mnearto(mtmp, mtmp->sx, mtmp->sy, FALSE);
+        if (warp_ok) {
+            mtmp->mspec_used += 500;
+            mnearto(mtmp, mtmp->sx, mtmp->sy, FALSE);
+        }
         return 0;
     case st_mon: /* object in monster inventory */
         /* If we're tame and target is tame or player, usually run the normal AI */
@@ -679,7 +687,10 @@ tactics(struct monst *mtmp)
         }
 
         /* Otherwise, teleport to the target (only do it sometimes if we wont attack) */
-        mnearto(mtmp, mtmp->sx, mtmp->sy, FALSE);
+        if (warp_ok) {
+            mtmp->mspec_used += 500;
+            mnearto(mtmp, mtmp->sx, mtmp->sy, FALSE);
+        }
         return 0;
     case st_escape:   /* hide and recover */
         /* if wounded, hole up on or near the stairs (to block them) */
@@ -688,12 +699,17 @@ tactics(struct monst *mtmp)
         if (In_W_tower(mtmp->mx, mtmp->my, &u.uz) ||
             (mtmp->iswiz && isok(lev->upstair.sx, lev->upstair.sy) &&
              !mon_has_amulet(mtmp))) {
-            if (!rn2(3 + mtmp->mhp / 10))
+            if (warp_ok && !rn2(3 + mtmp->mhp / 10)) {
+                mtmp->mspec_used += 500;
                 rloc(mtmp, TRUE);
+            }
         } else if (isok(lev->upstair.sx, lev->upstair.sy) &&
                    (mtmp->mx != lev->upstair.sx ||
                     mtmp->my != lev->upstair.sy)) {
-            mnearto(mtmp, lev->upstair.sx, lev->upstair.sy, FALSE);
+            if (warp_ok) {
+                mtmp->mspec_used += 500;
+                mnearto(mtmp, lev->upstair.sx, lev->upstair.sy, FALSE);
+            }
         }
         if (distu(mtmp->mx, mtmp->my) > (BOLT_LIM * BOLT_LIM)) {
             /* if you're not around, cast healing spells
@@ -712,7 +728,8 @@ tactics(struct monst *mtmp)
 
     default:
         /* Sometimes, try to find pests we can harass */
-        if (!rn2(3)) {
+        if (warp_ok && !rn2(3)) {
+            mtmp->mspec_used += 500;
             rloc(mtmp, TRUE);
 
             /* Try to figure out where pests are */

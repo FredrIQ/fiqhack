@@ -374,7 +374,7 @@ dowarp(void)
     if (ret)
         youmonst.mspec_used += 500; /* have to wait to do it again */
 
-    return ret;
+    return 0;
 }
 
 /* Check to see if the given permonst has a polyform (#monster) ability.
