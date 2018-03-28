@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1624,7 +1624,7 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
                 genprob += align_shift(dlev, ptr);
                 maxgenprob += 5;
             }
-            if (flags & G_INDEPTH && genprob) {
+            if ((flags & G_INDEPTH) && genprob && tryct > 500) {
                 /* implement a rejection chance from the first check*/
                 int ood_distance = (int)monstr[mndx] - (int)maxmlev / 2;
                 if (ood_distance > 14)
