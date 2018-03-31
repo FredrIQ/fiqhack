@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-31 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -237,7 +237,7 @@ exercise(int i, boolean inc_or_dec)
         return; /* can't exercise these */
 
     /* no physical exercise while polymorphed; the body's temporary */
-    if (Upolyd && i != A_WIS)
+    if (Upolyd && flags.polyinit_mnum == NON_PM && i != A_WIS)
         return;
 
     int oldcap = near_capacity();
