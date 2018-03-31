@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -81,18 +81,14 @@ msummon(struct monst *mon, const d_level *dlev)
     }
 
     while (cnt > 0) {
-        mtmp = makemon(&mons[dtype], level, u.ux, u.uy,
-                       MM_CREATEMONSTER | MM_CMONSTER_M);
+        mtmp = makemon(&mons[dtype], level, m_mx(mon), m_my(mon),
+                       MM_CREATEMONSTER | MM_CMONSTER_M | MM_ADJACENTOK);
         if (mtmp) {
             /* alignment should match the summoner */
             mtmp->maligntyp = atyp;
             /* peaceful state should match too */
-            if (mon) {
-                if (mon->mpeaceful)
-                    sethostility(mtmp, FALSE, TRUE);
-                if (mon->mtame)
-                    tamedog(mtmp, NULL);
-            }
+            if (mon)
+                mtamedog(mon, mtmp, NULL);
         }
         cnt--;
     }
