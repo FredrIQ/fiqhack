@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,6 +28,18 @@ dosounds(void)
         return;
 
     hallu = Hallucination ? 1 : 0;
+
+    if (flags.easy && !rn2(2000)) {
+        static const char *const easy_msg[4] = {
+            "complaints about developers pandering to casuals.",
+            "things way too scary and hard for this mode.",
+            "discussions about challenge.",
+            "suggestions to try harder.",
+        };
+        int which = rn2(4);
+        You_hear(msgc_levelsound, "%s", easy_msg[which]);
+        /* No explain_msg. Sorry. */
+    }
 
     if (has_terrain(level, FOUNTAIN) && !rn2(400)) {
         static const char *const fountain_msg[4] = {

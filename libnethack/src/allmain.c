@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-28 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -660,6 +660,70 @@ normal_exit:
     return ret;
 }
 
+/* Events over the course of the game in easy mode */
+static void
+easy_event(void)
+{
+    if (!flags.easy)
+        return;
+
+    int itmp, i, ii;
+    switch (moves) {
+    default:
+        break;
+    case 2000:
+    case 4000:
+        i = -1; /* increment to 0 */
+        for (ii = A_MAX; ii > 0; ii--) {
+            i = ((moves == 4000) ? i + 1 : rn2(A_MAX));
+            /* only give "your X is already as high as it can get" message
+               on last attempt (except blessed potions) */
+            itmp = ((moves == 4000) || ii == 1) ? 0 : -1;
+            if (adjattrib(i, 1, itmp) && moves != 4000)
+                break;
+        }
+    case 6000:
+        pline(msgc_intrgain, "You feel hardy.");
+        set_property(&youmonst, POISON_RES, 0, TRUE);
+        break;
+    case 8000:
+        pline(msgc_intrgain, "You feel sensitive to hardships.");
+        set_property(&youmonst, WARNING, 0, FALSE);
+        set_property(&youmonst, SEE_INVIS, 0, FALSE);
+        break;
+    case 10000:
+        pline(msgc_intrgain, "You feel fit to take on any challenge!");
+        youmonst.mhitinc += 5;
+        youmonst.mdaminc += 5;
+        youmonst.mac += 5;
+        break;
+    case 12000:
+        pline(msgc_intrgain, "You feel like a king!"); /* "crowned" */
+        set_property(&youmonst, FIRE_RES, 0, TRUE);
+        set_property(&youmonst, COLD_RES, 0, TRUE);
+        set_property(&youmonst, SLEEP_RES, 0, TRUE);
+        set_property(&youmonst, SHOCK_RES, 0, TRUE);
+        set_property(&youmonst, ACID_RES, 0, TRUE);
+        set_property(&youmonst, SEE_INVIS, 0, FALSE);
+        break;
+    case 14000:
+        pline(msgc_intrgain, "Your sense of direction is perfected.");
+        do_mapping();
+        break;
+    case 16000:
+        pline(msgc_intrgain, "You feel extremly sensitive to difficulty.");
+        set_property(&youmonst, DETECT_MONSTERS, 0, FALSE);
+        break;
+    case 18000:
+        pline(msgc_statusbad, "You feel bored over the lack of challenge...");
+        break;
+    case 20000:
+        pline(msgc_fatal_predone, "You die from lack of challenge!");
+        done(DIED, killer_msg(DIED, "lack of challenge"));
+        /* NOTREACHED */ break;
+    }
+}
+
 static void
 you_moved(void)
 {
@@ -686,6 +750,9 @@ you_moved(void)
             monscanmove = movemon();
 
             update_obj_memories(level);
+            if (flags.easy && moves >= 14000)
+                do_mapping();
+
             /* Now both players and monsters have taken 1 more action than the
                global... */
 
@@ -768,6 +835,7 @@ you_moved(void)
             nh_timeout();
             run_regions(level);
             run_maintained_spells(level);
+            easy_event();
 
             if (u.ublesscnt)
                 u.ublesscnt--;

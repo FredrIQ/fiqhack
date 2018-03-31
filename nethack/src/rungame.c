@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -431,13 +431,15 @@ rungame(nh_bool net)
     /* Check to make sure that this game will be eligible for the high score
        table. If not, print a warning, to prevent accidental nonscoring
        games. */
-    if (playmode != MODE_NORMAL || (seedopt->value.s && *seedopt->value.s) ||
+    if ((playmode != MODE_NORMAL && playmode != MODE_EASY) ||
+        (seedopt->value.s && *seedopt->value.s) ||
         polyopt->value.e != -1) {
         char prompt[BUFSZ];
         snprintf(prompt, BUFSZ, "This game is not eligible for the high score "
                  "table due to starting in %s mode. Continue?",
                  playmode == MODE_EXPLORE ? "explore" :
                  playmode == MODE_WIZARD ? "debug" :
+                 playmode == MODE_EASY ? "easy" :
                  (seedopt->value.s && *seedopt->value.s) ? "set seed" :
                  (polyopt->value.e != -1) ? "polyinit" : "[unknown]");
         if (curses_yn_function_internal(prompt, "yn", 'y') != 'y')

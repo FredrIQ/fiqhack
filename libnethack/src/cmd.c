@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -824,6 +824,11 @@ dowelcome(const struct nh_cmd_arg *arg)
        the situation where a game was saved on a new moon and reloaded on a full
        moon, or something similar; the player will get only one message (the one
        for the time when it's loaded), not two.*/
+
+    if (flags.easy)
+        pline(msgc_intro, "You are in a mostly safe place, don't worry.");
+    else
+        pline(msgc_intro, "Game too hard? Try the new easy mode.");
 
     if (discover)
         pline(msgc_intro, "You are in non-scoring discovery mode.");
