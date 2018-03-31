@@ -3438,7 +3438,7 @@ setmangry(struct monst *mtmp)
         if (master->mtame) {
             /* this is not ok */
             pline(msgc_badidea, "%s doesn't appreciate it...",
-                  Monnam(mtmp));
+                  Monnam(master));
             if (Luck >= 0)
                 change_luck(-1);
             else {
