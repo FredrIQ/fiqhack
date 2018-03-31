@@ -3440,7 +3440,7 @@ setmangry(struct monst *mtmp)
             pline(msgc_badidea, "%s doesn't appreciate it...",
                   Monnam(master));
             if (Luck >= 0)
-                change_luck(-1);
+                change_luck(-5);
             else {
                 /* set master to peaceful so we can anger it */
                 sethostility(master, FALSE, TRUE);
