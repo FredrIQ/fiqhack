@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-03-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3439,9 +3439,7 @@ setmangry(struct monst *mtmp)
             /* this is not ok */
             pline(msgc_badidea, "%s doesn't appreciate it...",
                   Monnam(mtmp));
-            if (u.ualign.record >= 0)
-                adjalign(-1);
-            else if (Luck >= 0)
+            if (Luck >= 0)
                 change_luck(-1);
             else {
                 /* set master to peaceful so we can anger it */
