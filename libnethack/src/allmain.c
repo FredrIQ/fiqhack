@@ -717,10 +717,36 @@ easy_event(void)
         break;
     case 20000:
     default:
-        if (moves >= 20000) {
-            pline(msgc_fatal_predone, "You die from lack of challenge!");
-            done(DIED, killer_msg(DIED, "lack of challenge"));
+        if (moves % 2000)
+            break;
+
+        pline(msgc_statusbad, "%s challenger appears!",
+              moves >= 30000 ? "Several" : "A");
+        if (moves == 20000)
+            pline_implied(msgc_levelwarning, "This should make things "
+                          "more interesting.");
+
+        int challengers = (moves / 10000) - 1;
+        while (challengers--) {
+            struct monst *mon;
+            int pm = rn2(2) ? PM_ARCHON : PM_ARCH_LICH;
+            if (rn2(2)) {
+                /* random player monster */
+                pm = PM_ARCHEOLOGIST + rn2_on_rng(PM_WIZARD - PM_ARCHEOLOGIST + 1,
+                                                  rng_main);
+            }
+            mon = makemon(&mons[pm], level, u.ux, u.uy, NO_MM_FLAGS);
+            if (!mon) {
+                /* probably genocided arch-lich */
+                mon = makemon(&mons[PM_ARCHON], level, u.ux, u.uy, NO_MM_FLAGS);
+                if (!mon)
+                    break;
+            }
+
+            christen_monst(mon, "Challenger");
+            sethostility(mon, TRUE, TRUE);
         }
+
         break;
     }
 }
