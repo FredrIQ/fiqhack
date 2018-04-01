@@ -58,12 +58,12 @@ static const struct nh_enum_option movecommand_spec =
     { movecommand_list, listlen(movecommand_list) };
 
 static const struct nh_listitem mode_list[] = {
-    {MODE_EASY, "easy"},
     {MODE_NORMAL, "normal"},
     {MODE_EXPLORE, "explore"},
 #ifndef PUBLIC_SERVER
     {MODE_WIZARD, "debug"},
 #endif
+    {MODE_EASY, "easy"},
 };
 static const struct nh_enum_option mode_spec =
     { mode_list, listlen(mode_list) };
@@ -526,7 +526,7 @@ set_option(const char *name, union nh_optvalue value,
     else if (!strcmp("mode", option->name)) {
         flags.debug = (option->value.e == MODE_WIZARD);
         flags.explore = (option->value.e == MODE_EXPLORE);
-        flags.easy = (option->value.e = MODE_EASY);
+        flags.easy = (option->value.e == MODE_EASY);
     } else if (!strcmp("align", option->name)) {
         u.initalign = option->value.e;
     } else if (!strcmp("gender", option->name)) {
