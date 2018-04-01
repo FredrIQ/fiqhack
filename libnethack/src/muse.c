@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -829,11 +829,14 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         if (extra_nasty(mtmp->data))
                             helpful = FALSE;
                         /* Otherwise, hit dice OR player level if not polymorphed decides */
-                        if (mtmp == &youmonst && !Upolyd && u.ulevel >= 14)
+                        if (mtmp == &youmonst && !Upolyd &&
+                            u.ulevel >= MIN_QUEST_LEVEL)
                             helpful = FALSE;
-                        if (mtmp == &youmonst && Upolyd && mtmp->data->mlevel >= 14)
+                        if (mtmp == &youmonst && Upolyd &&
+                            mtmp->data->mlevel >= MIN_QUEST_LEVEL)
                             helpful = FALSE;
-                        if (mtmp != &youmonst && mtmp->data->mlevel >= 14)
+                        if (mtmp != &youmonst &&
+                            mtmp->data->mlevel >= MIN_QUEST_LEVEL)
                             helpful = FALSE;
                     }
                     /* Deathzapping Death will do no good. However, while a deathzap
