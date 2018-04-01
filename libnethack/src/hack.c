@@ -3310,9 +3310,7 @@ weight_cap(void)
     carrcap = 25 * (ACURR(A_STR) + ACURR(A_CON)) + 50;
     if (Upolyd) {
         /* consistent with can_carry() in mon.c */
-        if (youmonst.data->mlet == S_NYMPH)
-            carrcap = MAX_CARR_CAP;
-        else if (!youmonst.data->cwt)
+        if (!youmonst.data->cwt)
             carrcap = (carrcap * (long)youmonst.data->msize) / MZ_HUMAN;
         else if (!strongmonst(youmonst.data)
                  || (strongmonst(youmonst.data) &&
@@ -3355,6 +3353,9 @@ inv_weight_total(void)
 int
 minv_weight_total(const struct monst *mon)
 {
+    if (mon->data->mlet == S_NYMPH)
+        return 0;
+
     struct obj *obj = mon->minvent;
     int wt = 0;
 
