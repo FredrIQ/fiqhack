@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -38,9 +38,10 @@
 # define SPFX_DALIGN   0x1000000L /* attack bonus on non-aligned monsters */
 # define SPFX_DBONUS   0x1F00000L /* attack bonus mask */
 # define SPFX_XRAY     0x2000000L /* gives X-RAY vision to player */
-# define SPFX_REFLECT  0x4000000L/* Reflection */
-# define SPFX_WTREDUC  0x8000000L/* Reduced weight (halved) */
-# define SPFX_FREEACT 0x10000000L
+# define SPFX_REFLECT  0x4000000L /* Reflection */
+# define SPFX_WTREDUC  0x8000000L /* Reduced weight (halved) */
+# define SPFX_FREEACT 0x10000000L /* Free action (paralyzation resistance) */
+# define SPFX_MAXCON  0x20000000L /* Max constitution */
 
 
 struct artifact {

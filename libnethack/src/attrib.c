@@ -1,11 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-31 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*  attribute modification routines. */
 
 #include "hack.h"
+#include "artifact.h"
 #include "hungerstatus.h"
 
 /* part of the output on gain or loss of attribute */
@@ -667,9 +668,14 @@ acurr(const struct monst *mon, int x)
     }
     tmp += attr_bonus(mon, x);
 
-    if (x == A_CON && is_home_elemental(&mon->dlevel->z, mon->data))
-        return 25; /* very healthy when at home! */
-    else if (x == A_STR) {
+    if (x == A_CON) {
+        if (is_home_elemental(&mon->dlevel->z, mon->data))
+            return 25; /* very healthy when at home! */
+
+        struct obj *wep = m_mwep(mon);
+        if (spec_ability(wep, SPFX_MAXCON))
+            return 25;
+    } else if (x == A_STR) {
         struct obj *obj;
 
         /* check for the "power" obj property, only functions on
