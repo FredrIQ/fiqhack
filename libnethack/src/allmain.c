@@ -669,8 +669,6 @@ easy_event(void)
 
     int itmp, i, ii;
     switch (moves) {
-    default:
-        break;
     case 2000:
     case 4000:
         i = -1; /* increment to 0 */
@@ -718,9 +716,12 @@ easy_event(void)
         pline(msgc_statusbad, "You feel bored over the lack of challenge...");
         break;
     case 20000:
-        pline(msgc_fatal_predone, "You die from lack of challenge!");
-        done(DIED, killer_msg(DIED, "lack of challenge"));
-        /* NOTREACHED */ break;
+    default:
+        if (moves >= 20000) {
+            pline(msgc_fatal_predone, "You die from lack of challenge!");
+            done(DIED, killer_msg(DIED, "lack of challenge"));
+        }
+        break;
     }
 }
 
