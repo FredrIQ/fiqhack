@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -389,8 +389,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         if (resists_death(mtmp) || resists_magm(mtmp) ||
                             raylevel == P_UNSKILLED)
                             mlosexp(NULL, mtmp, "", FALSE);
-                        else
+                        else if (raylevel != P_MASTER)
                             mdam = mtmp->mhp / 2 + dice(6, 6);
+                        else
+                            mdam = mtmp->mhp * 2;
                     }
                     mtmp->mhp -= mdam;
                     mtmp->mhp -= (idamres + idamnonres);
@@ -440,8 +442,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     raylevel == P_UNSKILLED) {
                     losexp("drained by a death field",FALSE);
                     damu = 0;
-                } else
+                } else if (raylevel != P_MASTER)
                     damu = (Upolyd ? u.mh : u.uhp) / 2 + dice(6, 6);
+                else
+                    damu = (Upolyd ? u.mh : u.uhp) * 2;
             }
         }
         if (adtyp == AD_FIRE)
