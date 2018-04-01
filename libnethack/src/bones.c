@@ -171,8 +171,12 @@ drop_upon_death(struct monst *mtmp, struct obj *cont, boolean charmed)
         /* Only curse items if it wasn't a 25% charm roll */
         if (rn2(5) && !charmed)
             curse(otmp); /* Don't curse items if it was a normal player monster */
-        if (mtmp)
+        if (mtmp) {
+            /* Convert item knowledge to monster format */
+            otmp->mbknown = otmp->bknown;
+            otmp->mknown = otmp->known;
             add_to_minv(mtmp, otmp, NULL);
+        }
         else if (cont)
             add_to_container(cont, otmp);
         else
