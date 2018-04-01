@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -299,18 +299,25 @@ disclose(int how, boolean taken, long umoney)
                dignified with one. So here it is. --AIS */
             qbuf = "Do you want your possessions identified?";
 
+        struct obj *obj;
+
+        for (obj = youmonst.minvent; obj;
+             obj = obj->nobj) {
+            /* In case we're to leave bones, set monster knowledge bits.
+               Those will be reset in bones creation in case player leaves no
+               "living" trace of themselves. */
+            obj->mknown = obj->known;
+            obj->mbknown = obj->bknown;
+
+            discover_object(obj->otyp, TRUE, FALSE, TRUE);
+            obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
+            if (obj->oprops)
+                learn_oprop(obj, obj_properties(obj));
+        }
+
         if (!done_stopprint) {
             c = ask ? yn_function(qbuf, ynqchars, defquery) : defquery;
             if (c == 'y') {
-                struct obj *obj;
-
-                for (obj = youmonst.minvent; obj;
-                     obj = obj->nobj) {
-                    discover_object(obj->otyp, TRUE, FALSE, TRUE);
-                    obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
-                    if (obj->oprops)
-                        learn_oprop(obj, obj_properties(obj));
-                }
                 display_inventory(NULL, FALSE);
                 container_contents(youmonst.minvent, TRUE, TRUE, FALSE);
             }

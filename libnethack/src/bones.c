@@ -134,11 +134,26 @@ resetobjs(struct obj *ochain, boolean restore)
     }
 }
 
+static void
+clear_monster_object_knowledge(struct obj *chain)
+{
+    struct obj *obj;
+    for (obj = chain; obj; obj = obj->nobj) {
+        if (Has_contents(obj))
+            clear_monster_object_knowledge(obj);
+
+        obj->mknown = obj->mbknown = 0;
+    }
+}
 
 static void
 drop_upon_death(struct monst *mtmp, struct obj *cont, boolean charmed)
 {
     struct obj *otmp;
+
+    /* If no monster, clear monster knowledge of the objects, set in DYWYPI */
+    if (!mtmp)
+        clear_monster_object_knowledge(youmonst.minvent);
 
     /* This needs to come before we begin freeing objects from the inventory,
        or we'll panic when updating the cached list of items. */
@@ -171,12 +186,9 @@ drop_upon_death(struct monst *mtmp, struct obj *cont, boolean charmed)
         /* Only curse items if it wasn't a 25% charm roll */
         if (rn2(5) && !charmed)
             curse(otmp); /* Don't curse items if it was a normal player monster */
-        if (mtmp) {
-            /* Convert item knowledge to monster format */
-            otmp->mbknown = otmp->bknown;
-            otmp->mknown = otmp->known;
+
+        if (mtmp)
             add_to_minv(mtmp, otmp, NULL);
-        }
         else if (cont)
             add_to_container(cont, otmp);
         else
