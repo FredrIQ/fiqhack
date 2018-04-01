@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -209,7 +209,6 @@ static const struct propxl prop_from_experience[] = {
     {PM_VALKYRIE, 7, FAST},
     {PM_WIZARD, 15, WARNING},
     {PM_WIZARD, 17, TELEPORT_CONTROL},
-    {PM_ELF, 4, SLEEP_RES},
     {PM_SHIMMERING_DRAGON, 10, STUN_RES},
     {PM_RED_DRAGON, 10, INFRAVISION},
     {PM_RED_DRAGON, 10, WARNING},

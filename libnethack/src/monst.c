@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2442,7 +2442,7 @@ const struct permonst mons[] = {
          LVL(10, 12, 10, 2, -3), G_NOGEN,        /* for corpses */
          A(ATTK(AT_WEAP, AD_PHYS, 1, 8),
            NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
-         SIZ(WT_ELF, 350, 0, MS_HUMANOID, MZ_HUMAN), 0, MR_SLEEP,
+         SIZ(WT_ELF, 350, 0, MS_HUMANOID, MZ_HUMAN), MR_SLEEP, MR_SLEEP,
          M1_HUMANOID | M1_OMNIVORE | M1_SEE_INVIS,
          M2_NOPOLY | M2_ELF | M2_STRONG | M2_COLLECT,
          M3_INFRAVISION | M3_INFRAVISIBLE,
