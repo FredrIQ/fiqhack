@@ -82,7 +82,13 @@ msummon(struct monst *mon, const d_level *dlev)
     }
 
     while (cnt > 0) {
-        mtmp = makemon(&mons[dtype], level, m_mx(mon), m_my(mon),
+        int x = u.ux;
+        int y = u.uy;
+        if (mon) {
+            x = m_mx(mon);
+            y = m_my(mon);
+        }
+        mtmp = makemon(&mons[dtype], level, x, y,
                        MM_CREATEMONSTER | MM_CMONSTER_M | MM_ADJACENTOK);
         if (mtmp) {
             /* alignment should match the summoner */
