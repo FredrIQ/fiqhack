@@ -17,9 +17,8 @@ msummon(struct monst *mon, const d_level *dlev)
     aligntyp atyp;
     struct monst *mtmp;
 
-    d_level *mz = m_mz(mon);
-
     if (mon) {
+        d_level *mz = m_mz(mon);
         ptr = mon->data;
         if (dlev->dnum != mz->dnum ||
             dlev->dlevel != mz->dlevel)
