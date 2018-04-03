@@ -3425,19 +3425,28 @@ msetmangry(struct monst *offender, struct monst *victim)
 }
 
 void
+punish_elbereth(void)
+{
+    if (!sengr_at("Elbereth", u.ux, u.uy))
+        return;
+
+    pline(msgc_badidea, "You feel like a hypocrite.");
+
+    adjalign(-5);
+
+    if (!Blind)
+        pline(msgc_consequence, "The engraving beneath you fades.");
+    del_engr_at(level, u.ux, u.uy);
+}
+
+void
 setmangry(struct monst *mtmp)
 {
     if (idle(mtmp))
         mtmp->mstrategy = st_none;
 
-    if (!flags.mon_moving && sengr_at("Elbereth", u.ux, u.uy)) {
-        pline(msgc_badidea, "You feel like a hypocrite.");
-        adjalign(-5);
-
-        if (!Blind)
-            pline(msgc_consequence, "The engraving beneath you fades.");
-        del_engr_at(level, u.ux, u.uy);
-    }
+    if (!flags.mon_moving)
+        punish_elbereth();
 
     if (!mtmp->mpeaceful)
         return;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-03 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1236,6 +1236,7 @@ extern void set_displacement(struct monst *);
 extern void poisontell(int);
 extern void poisoned(struct monst *, const char *, int, const char *, int);
 extern void m_respond(struct monst *);
+extern void punish_elbereth(void);
 extern void setmangry(struct monst *);
 extern void msetmangry(struct monst *, struct monst *);
 extern void sethostility(struct monst *, boolean, boolean);

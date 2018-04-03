@@ -103,8 +103,14 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
                 peaceful++;
             /* then fall through */
         case uim_attackhostile:
-            if (peaceful == 0)
-                return uia_attack;
+            if (peaceful == 0) {
+                if (!sengr_at("Elbereth", u.ux, u.uy))
+                    return uia_attack;
+                pline(msgc_cancelled,
+                      "Doing this would violate the sancticity of Elbereth!");
+                pline(msgc_hint,
+                      "Use forcefight (usually on 'F') to fight anyway.");
+            }
             /* otherwise fall through */
         case uim_pacifist:
             if (!weird_attack && peaceful == 2) {
@@ -1937,6 +1943,10 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 (!uwep->cursed || !uwep->bknown) &&
                 (!uswapwep || !uswapwep->cursed || !uswapwep->bknown))
                 doswapweapon(arg);
+
+            /* This takes care of the case where an engraved Elbereth vanishes
+               by the time you have done the hostile action. */
+            punish_elbereth();
 
             /* Try to perform the attack itself. We've already established that
                the player's willing to perform the attack. */
