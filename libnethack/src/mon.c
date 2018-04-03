@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-31 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3429,6 +3429,16 @@ setmangry(struct monst *mtmp)
 {
     if (idle(mtmp))
         mtmp->mstrategy = st_none;
+
+    if (!flags.mon_moving && sengr_at("Elbereth", u.ux, u.uy)) {
+        pline(msgc_badidea, "You feel like a hypocrite.");
+        adjalign(-5);
+
+        if (!Blind)
+            pline(msgc_consequence, "The engraving beneath you fades.");
+        del_engr_at(level, u.ux, u.uy);
+    }
+
     if (!mtmp->mpeaceful)
         return;
     if (mtmp->mtame)
