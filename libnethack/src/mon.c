@@ -1726,7 +1726,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                 (lavaok || !is_lava(mlevel, nx, ny))) {
                 int dispx, dispy;
                 boolean checkobj = OBJ_AT(nx, ny);
-                boolean elbereth_activation = checkobj;
+                boolean elbereth_activation = FALSE;
 
                 /* Displacement also displaces the Elbereth/scare monster, as
                    long as you are visible. */
