@@ -1,23 +1,134 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-07 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-04 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
-static struct obj *find_objects(struct level *, struct obj *, int *, boolean *,
-                                const char *, struct nh_menulist *, int);
-static struct obj *findobj_prompt(int, const char *);
+/* Handles map memory of objects and traps to allow players to search for
+   objects they remember seeing. */
 
-/* Handles object memories to allow players to search for objects they remember
-   seeing. */
+static struct entity find_objects(struct level *, struct obj *, int *,
+                                   boolean *, const char *,
+                                   struct nh_menulist *, int);
+static struct entity findobj_prompt(int, const char *);
 
-static struct obj *
+/* A generic entity struct for merging objects, traps and dungeon features
+   into a single data type for handling the various possible kinds of
+   things you can find. */
+enum ent_typ {
+    ENT_NONE,
+    ENT_OBJ,
+    ENT_TRAP,
+};
+
+struct entity {
+    enum ent_typ typ;
+    union {
+        struct obj *obj;
+        struct trap *trap;
+    };
+
+    struct level *lev; /* NULL means part of your inventory */
+    int x;
+    int y;
+};
+
+/* Returns an object or trap in an entity form. */
+struct entity
+get_entity(struct level *lev, struct obj *obj, struct trap *trap)
+{
+    struct entity ent;
+    ent.lev = lev;
+
+    if (!obj) {
+        ent.typ = ENT_TRAP;
+        ent.trap = trap;
+        ent.x = trap->tx;
+        ent.y = trap->ty;
+    } else {
+        ent.typ = ENT_OBJ;
+        ent.obj = obj;
+        ent.x = obj->ox;
+        ent.y = obj->oy;
+    }
+
+    return ent;
+}
+
+/* Returns the name of an entity */
+static const char *
+entity_name(struct entity ent)
+{
+    struct level *lev = ent.lev;
+    struct obj *obj;
+    struct obj *upper;
+    const char *dname;
+
+    if (ent.typ == ENT_TRAP)
+        return trapexplain[ent.trap->ttyp - 1];
+
+    obj = ent.obj;
+    dname = distant_name(obj, cxname);
+
+    if (obj->where == OBJ_CONTAINED) {
+        upper = obj;
+        while (upper->memory != OM_MEMORY_LOST &&
+               upper->where == OBJ_CONTAINED)
+            upper = upper->ocontainer;
+        if (upper->memory == OM_MEMORY_LOST)
+            return NULL;
+
+        dname = msgprintf("%s (inside %s)", dname,
+                          distant_name(upper, cxname));
+    }
+
+    return dname;
+}
+
+/* Adds an entity to the search result menu */
+void
+add_entry(struct level *lev, int *found, boolean *did_header,
+          struct nh_menulist *menu, int getobj, const char *str,
+          struct entity ent)
+{
+    /* If we didn't find anything beforehand, inititalize
+       the window now. */
+    if (getobj) {
+        (*found)++;
+        return;
+    }
+
+    if (!*found) {
+        init_menulist(menu);
+        const char *buf = msgprintf("Searching for \"%s\".",
+                                    str);
+        add_menutext(menu, buf);
+    }
+    (*found)++;
+
+    /* If this is our first object/trap in level or inventory,
+       give a header. */
+    if (!*did_header) {
+        *did_header = TRUE;
+        add_menutext(menu, "");
+        const char *header = "Inventory";
+        if (lev)
+            header = describe_dungeon_level(lev);
+
+        add_menuheading(menu, header);
+    }
+
+    add_menuitem(menu, *found, entity_name(ent), 0, FALSE);
+}
+
+static struct entity
 find_objects(struct level *lev, struct obj *chain, int *found,
              boolean *did_header, const char *str,
              struct nh_menulist *menu, int getobj)
 {
-    struct obj *obj, *objfound, *upper;
+    struct obj *obj, *upper;
+    struct entity ent = {0};
     const char *dname;
     int oclass = ALL_CLASSES;
     if (strlen(str) == 1)
@@ -26,120 +137,106 @@ find_objects(struct level *lev, struct obj *chain, int *found,
         oclass = ALL_CLASSES;
 
     for (obj = chain; obj; obj = obj->nobj) {
-        dname = distant_name(obj, doname);
-        if (obj->where == OBJ_CONTAINED) {
-            /* See if any upper container was lost. */
-            upper = obj;
-            while (upper->memory != OM_MEMORY_LOST &&
-                   upper->where == OBJ_CONTAINED)
-                upper = upper->ocontainer;
-            if (upper->memory == OM_MEMORY_LOST)
-                continue;
-
-            dname = msgprintf("%s (inside %s)", dname,
-                              distant_name(upper, doname));
-        }
+        ent = get_entity(lev, obj, NULL);
+        dname = entity_name(ent);
+        if (!dname)
+            continue; /* inside a lost container */
 
         if (obj->memory == OM_MEMORY_LOST ||
             ((oclass == ALL_CLASSES && !strstri(dname, str)) ||
              (oclass != ALL_CLASSES && obj->oclass != oclass))) {
             if (Has_contents(obj)) {
-                objfound = find_objects(lev, obj->cobj, found,
-                                        did_header, str, menu,
-                                        getobj);
-                if (objfound)
-                    return objfound;
+                ent = find_objects(lev, obj->cobj, found,
+                                   did_header, str, menu,
+                                   getobj);
+                if (ent.typ != ENT_NONE)
+                    return ent;
             }
             continue;
         }
         /* We have a match. */
 
-        /* If we didn't find anything beforehand, inititalize
-           the window now. */
-        if (!*found && !getobj) {
-            init_menulist(menu);
-            const char *buf = msgprintf("Searching for \"%s\".",
-                                        str);
-            add_menutext(menu, buf);
-        }
-        (*found)++;
-        if (getobj) {
-            if (*found == getobj)
-                return obj;
-        } else {
-            /* If this is our first object in level or inventory,
-               give a header. */
-            if (!*did_header) {
-                *did_header = TRUE;
-                add_menutext(menu, "");
-                const char *header = "Inventory";
-                if (lev)
-                    header = describe_dungeon_level(lev);
+        add_entry(lev, found, did_header, menu, getobj, str, ent);
 
-                add_menuheading(menu, header);
-            }
-
-            add_menuitem(menu, *found, dname, 0, FALSE);
-        }
+        if (getobj && *found == getobj)
+            return ent;
 
         if (Has_contents(obj)) {
-            objfound = find_objects(lev, obj->cobj, found,
-                                    did_header, str, menu, getobj);
-            if (objfound)
-                return objfound;
+            ent = find_objects(lev, obj->cobj, found,
+                               did_header, str, menu, getobj);
+            if (ent.typ != ENT_NONE)
+                return ent;
         }
     }
 
-    return NULL;
+    if (lev) {
+        struct trap *trap;
+        for (trap = lev->lev_traps; trap; trap = trap->ntrap) {
+            ent = get_entity(lev, NULL, trap);
+            if (!trap->tseen)
+                continue;
+
+            dname = entity_name(ent);
+
+            if (!strstri(dname, str))
+                continue;
+
+            add_entry(lev, found, did_header, menu, getobj, str, ent);
+
+            if (getobj && *found == getobj)
+                return ent;
+        }
+    }
+
+    ent.typ = ENT_NONE;
+    return ent;
 }
 
-static struct obj *
+static struct entity
 findobj_prompt(int getobj, const char *str)
 {
     /* Find objects in levels */
     const char *buf;
     struct nh_menulist menu;
-    struct obj *objfound = NULL;
+    struct entity ent = {0};
     int found = 0;
     boolean did_header;
     int i;
     for (i = 0; i <= maxledgerno(); i++) {
         if (levels[i]) {
             did_header = FALSE;
-            objfound = find_objects(levels[i], levels[i]->memobjlist,
-                                    &found, &did_header, str, &menu,
-                                    getobj);
-            if (objfound)
-                return objfound;
+            ent = find_objects(levels[i], levels[i]->memobjlist,
+                               &found, &did_header, str, &menu,
+                               getobj);
+            if (ent.typ != ENT_NONE)
+                return ent;
         }
     }
 
     /* Find objects in player inventory. Useful in replaymode
        (containers) */
     did_header = FALSE;
-    objfound = find_objects(NULL, youmonst.meminvent, &found,
-                            &did_header, str, &menu, getobj);
-    if (objfound)
-        return objfound;
-
+    ent = find_objects(NULL, youmonst.meminvent, &found,
+                       &did_header, str, &menu, getobj);
     if (getobj)
-        return NULL;
+        return ent;
 
     if (!found) {
         pline(msgc_actionok, "Failed to find any objects.");
-        return 0;
+        ent.typ = ENT_NONE;
+        return ent;
     }
 
-    buf = msgprintf("Found %d object%s%s", found,
-                    found == 1 ? "" : "s",
-                    found >= 200 ? " (please be more specific)" :
-                    "");
+    buf = msgprintf("Found %d object%s", found,
+                    found == 1 ? "" : "s");
 
     const int *selected;
     int n;
     n = display_menu(&menu, buf, PICK_ONE, PLHINT_ANYWHERE, &selected);
-    if (n <= 0)
-        return NULL;
+    if (n <= 0) {
+        ent.typ = ENT_NONE;
+        return ent;
+    }
     return findobj_prompt(selected[0], str);
 }
 
@@ -147,32 +244,34 @@ int
 dofindobj(const struct nh_cmd_arg *arg)
 {
     const char *buf;
-    buf = getlin("Search for what objects (or enter a glyph)?", FALSE);
+    buf = getlin("Search for what objects, traps or glyph?", FALSE);
     if (!*buf || *buf == '\033')
         return 0;
 
-    struct obj *obj = findobj_prompt(0, buf);
-    struct obj *upper = obj; /* Points to uppermost container, or obj */
-    if (obj) {
-        while (upper->where == OBJ_CONTAINED)
+    struct entity ent = findobj_prompt(0, buf);
+    if (ent.typ != ENT_NONE) {
+        struct obj *obj = NULL;
+        if (ent.typ == ENT_OBJ)
+            obj = ent.obj;
+        struct obj *upper = obj; /* Points to uppermost container, or obj */
+        while (upper && upper->where == OBJ_CONTAINED)
             upper = upper->ocontainer;
-        if (upper->where == OBJ_INVENT) {
+        if (upper && upper->where == OBJ_INVENT) {
             if (obj == upper)
                 pline(msgc_cancelled, "Look in your inventory!");
             else
                 pline(msgc_actionok, "It's in %s %s.",
                       shk_your(upper), cxname(upper));
             return 0;
-        } else if (upper->where != OBJ_FLOOR) {
+        } else if (upper && upper->where != OBJ_FLOOR) {
             impossible("Where did %s go? %d",
                        killer_xname(upper), upper->where);
             return 0;
         }
 
-        struct level *lev = upper->olev;
+        struct level *lev = ent.lev;
         if (!lev) {
-            impossible("dofindobj: target obj olev is NULL "
-                       "but on the floor?");
+            impossible("dofindobj: target lev is NULL");
             return 0;
         }
 
@@ -189,21 +288,23 @@ dofindobj(const struct nh_cmd_arg *arg)
                   describe_dungeon_level(lev));
             notify_levelchange(&lev->z);
             flush_screen_nopos();
-            look_at_map(upper->ox, upper->oy);
+            look_at_map(ent.x, ent.y);
             level = old_level;
         }
 
         /* Display object position */
         cls();
         level = lev;
-        dbuf_set_memory(lev, upper->ox, upper->oy);
-        const char *dname = The(distant_name(obj, cxname));
-        const char *cdname = distant_name(upper, doname);
+        dbuf_set_memory(lev, ent.x, ent.y);
+        const char *dname = The(entity_name(ent));
+        const char *cdname = "";
+        if (upper)
+            cdname = distant_name(upper, doname);
         pline(msgc_actionok, "%s %s located here%s.", dname,
               vtense(dname, "are"), upper == obj ? "" :
               msgcat_many(", inside ", cdname, NULL));
         flush_screen_nopos();
-        look_at_map(upper->ox, upper->oy);
+        look_at_map(ent.x, ent.y);
         level = old_level;
         notify_levelchange(NULL);
         doredraw();
