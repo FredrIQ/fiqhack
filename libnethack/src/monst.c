@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -827,7 +827,8 @@ const struct permonst mons[] = {
         A(ATTK(AT_BUTT, AD_PHYS, 4, 8), ATTK(AT_BUTT, AD_PHYS, 4, 8),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(3800, 800, 0, MS_SILENT, MZ_LARGE), 0, 0,
-        M1_ANIMAL | M1_THICK_HIDE | M1_NOHANDS | M1_HERBIVORE,
+        M1_ANIMAL | M1_THICK_HIDE | M1_NOHANDS | M1_HERBIVORE |
+        M1_SEE_INVIS,
         M2_HOSTILE | M2_STRONG, M3_INFRAVISIBLE, 0, CLR_BLACK),
 /*
  * rodents
@@ -1620,7 +1621,7 @@ const struct permonst mons[] = {
         A(ATTK(AT_WEAP, AD_PHYS, 2, 12),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(2250, 750, 0, MS_BOAST, MZ_HUGE), MR_ELEC, MR_ELEC,
-        M1_HUMANOID | M1_CARNIVORE,
+        M1_HUMANOID | M1_CARNIVORE | M1_SEE_INVIS,
         M2_GIANT | M2_STRONG | M2_ROCKTHROW | M2_NASTY | M2_COLLECT | M2_JEWELS,
         M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_BASIC, CLR_BLUE),
     MON("ettin", S_GIANT,
@@ -1636,7 +1637,7 @@ const struct permonst mons[] = {
          A(ATTK(AT_WEAP, AD_PHYS, 2, 8), NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK,
            NO_ATTK),
          SIZ(2300, 900, 0, MS_SPELL, MZ_HUGE), 0, 0,
-         M1_FLY | M1_HUMANOID | M1_OMNIVORE,
+         M1_FLY | M1_HUMANOID | M1_OMNIVORE | M1_SEE_INVIS,
          M2_STRONG | M2_ROCKTHROW | M2_NASTY | M2_COLLECT | M2_MAGIC,
          M3_INFRAVISIBLE | M3_INFRAVISION | M3_SPELLCASTER,
          MP_WAND_EXPERT | MP_SATK_BASIC | MP_SHEA_BASIC | MP_SDIV_BASIC |
@@ -1647,7 +1648,7 @@ const struct permonst mons[] = {
         A(ATTK(AT_CLAW, AD_PHYS, 3, 10), ATTK(AT_CLAW, AD_PHYS, 3, 10),
           ATTK(AT_BUTT, AD_PHYS, 2, 8), NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(1500, 700, 0, MS_SILENT, MZ_LARGE), 0, 0,
-        M1_ANIMAL | M1_HUMANOID | M1_CARNIVORE,
+        M1_ANIMAL | M1_HUMANOID | M1_CARNIVORE | M1_SEE_INVIS,
         M2_HOSTILE | M2_STRONG | M2_NASTY, M3_INFRAVISIBLE | M3_INFRAVISION,
         MP_WAND_BASIC | MP_SESC_BASIC | MP_SMAT_SKILLED, CLR_BROWN),
 /* 'I' is a visual marker for all invisible monsters and must be unused */
@@ -1660,7 +1661,7 @@ const struct permonst mons[] = {
           ATTK(AT_CLAW, AD_PHYS, 2, 10), ATTK(AT_CLAW, AD_PHYS, 2, 10),
           NO_ATTK, NO_ATTK),
         SIZ(1300, 600, 0, MS_BURBLE, MZ_LARGE), 0, 0,
-        M1_ANIMAL | M1_FLY | M1_CARNIVORE,
+        M1_ANIMAL | M1_FLY | M1_CARNIVORE | M1_SEE_INVIS,
         M2_HOSTILE | M2_STRONG | M2_NASTY | M2_COLLECT, M3_INFRAVISIBLE,
         MP_WAND_BASIC, CLR_ORANGE),
 /*
@@ -1715,7 +1716,7 @@ const struct permonst mons[] = {
            NO_ATTK),
          SIZ(1200, 100, 0, MS_MUMBLE, MZ_HUMAN),
          MR_COLD | MR_SLEEP | MR_POISON, MR_COLD,
-         M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN,
+         M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN | M1_SEE_INVIS,
          M2_UNDEAD | M2_HOSTILE | M2_MAGIC, M3_INFRAVISION | M3_SPELLCASTER,
          MP_WAND_SKILLED | MP_SATK_SKILLED | MP_SHEA_BASIC | MP_SDIV_BASIC |
          MP_SENC_SKILLED | MP_SCLC_BASIC | MP_SESC_BASIC,
@@ -1726,7 +1727,7 @@ const struct permonst mons[] = {
            NO_ATTK),
          SIZ(1200, 100, 0, MS_MUMBLE, MZ_HUMAN),
          MR_FIRE | MR_COLD | MR_SLEEP | MR_POISON, MR_FIRE | MR_COLD,
-         M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN,
+         M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN | M1_SEE_INVIS,
          M2_UNDEAD | M2_HOSTILE | M2_MAGIC, M3_WANTSBOOK | M3_INFRAVISION |
          M3_SPELLCASTER,
          MP_WAND_SKILLED | MP_SATK_EXPERT | MP_SHEA_BASIC | MP_SDIV_BASIC |
@@ -1738,7 +1739,7 @@ const struct permonst mons[] = {
            NO_ATTK),
          SIZ(1200, 100, 0, MS_MUMBLE, MZ_HUMAN),
          MR_FIRE | MR_COLD | MR_SLEEP | MR_ELEC | MR_POISON, MR_FIRE | MR_COLD,
-         M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN,
+         M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN | M1_SEE_INVIS,
          M2_UNDEAD | M2_HOSTILE | M2_MAGIC, M3_WANTSBOOK | M3_INFRAVISION |
          M3_SPELLCASTER,
          MP_WAND_EXPERT | MP_SATK_EXPERT | MP_SHEA_BASIC | MP_SDIV_BASIC |
@@ -1978,7 +1979,7 @@ const struct permonst mons[] = {
         A(ATTK(AT_CLAW, AD_ENCH, 4, 4), ATTK(AT_NONE, AD_ENCH, 0, 0),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(750, 200, 0, MS_GROWL, MZ_LARGE), 0, 0,
-        M1_ANIMAL | M1_CARNIVORE, M2_HOSTILE,
+        M1_ANIMAL | M1_CARNIVORE | M1_SEE_INVIS, M2_HOSTILE,
         M3_INFRAVISIBLE, 0, CLR_BLUE),
 /*
  * Snakes
@@ -2074,7 +2075,7 @@ const struct permonst mons[] = {
         A(ATTK(AT_WEAP, AD_PHYS, 3, 6), ATTK(AT_CLAW, AD_PHYS, 2, 8),
           ATTK(AT_BITE, AD_PHYS, 2, 6), NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(1500, 400, 0, MS_GRUNT, MZ_LARGE), 0, 0,
-        M1_HUMANOID | M1_REGEN | M1_CARNIVORE,
+        M1_HUMANOID | M1_REGEN | M1_CARNIVORE | M1_SEE_INVIS,
         M2_STRONG | M2_STALK | M2_HOSTILE | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION | M3_SCENT, MP_WAND_SKILLED,
         HI_LORD),
@@ -2102,13 +2103,14 @@ const struct permonst mons[] = {
         M3_INFRAVISIBLE,
         MP_WAND_BASIC, CLR_RED),
     FMON("vampire lord", "vampire lady", S_VAMPIRE,
-        LVL(12, 14, 0, 50, -9), (G_GENO | G_NOCORPSE | 1),
-        A(ATTK(AT_CLAW, AD_PHYS, 1, 8), ATTK(AT_BITE, AD_DRLI, 1, 8),
-          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
-        SIZ(WT_HUMAN, 400, 0, MS_VAMPIRE, MZ_HUMAN), MR_SLEEP | MR_POISON, 0,
-        M1_FLY | M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN,
-        M2_UNDEAD | M2_STALK | M2_HOSTILE | M2_STRONG | M2_NASTY | M2_LORD,
-        M3_INFRAVISIBLE, MP_WAND_SKILLED, CLR_BLUE),
+         LVL(12, 14, 0, 50, -9), (G_GENO | G_NOCORPSE | 1),
+         A(ATTK(AT_CLAW, AD_PHYS, 1, 8), ATTK(AT_BITE, AD_DRLI, 1, 8),
+           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+         SIZ(WT_HUMAN, 400, 0, MS_VAMPIRE, MZ_HUMAN), MR_SLEEP | MR_POISON, 0,
+         M1_FLY | M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN |
+         M1_SEE_INVIS,
+         M2_UNDEAD | M2_STALK | M2_HOSTILE | M2_STRONG | M2_NASTY | M2_LORD,
+         M3_INFRAVISIBLE, MP_WAND_SKILLED, CLR_BLUE),
     MON("Vlad the Impaler", S_VAMPIRE,
         LVL(14, 18, -3, 80, -10), (G_NOGEN | G_NOCORPSE | G_UNIQ),
         A(ATTK(AT_WEAP, AD_PHYS, 1, 10), ATTK(AT_BITE, AD_DRLI, 1, 10),
@@ -2397,7 +2399,8 @@ const struct permonst mons[] = {
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(2000, 0, 0, MS_SILENT, MZ_LARGE),
         MR_FIRE | MR_COLD | MR_ELEC | MR_SLEEP | MR_POISON, 0,
-        M1_BREATHLESS | M1_MINDLESS | M1_HUMANOID | M1_THICK_HIDE | M1_POIS,
+        M1_BREATHLESS | M1_MINDLESS | M1_HUMANOID | M1_THICK_HIDE | M1_POIS |
+        M1_SEE_INVIS,
         M2_HOSTILE | M2_STRONG | M2_COLLECT, 0, 0, HI_METAL),
 /*
  * humans, including elves and were-critters
@@ -2754,8 +2757,8 @@ const struct permonst mons[] = {
           ATTK(AT_BITE, AD_PHYS, 2, 4), ATTK(AT_STNG, AD_COLD, 3, 4),
           NO_ATTK, NO_ATTK),
         SIZ(WT_HUMAN, 400, 0, MS_SILENT, MZ_LARGE),
-        MR_FIRE | MR_COLD | MR_POISON, 0, M1_SEE_INVIS | M1_POIS,
-        M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY,
+        MR_FIRE | MR_COLD | MR_POISON, 0, M1_SEE_INVIS | M1_POIS |
+        M1_SEE_INVIS, M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         MP_WAND_BASIC, CLR_WHITE),
     AMON("nalfeshnee", S_DEMON,
@@ -2764,7 +2767,8 @@ const struct permonst mons[] = {
            ATTK(AT_BITE, AD_PHYS, 2, 4), NO_ATTK, NO_ATTK, NO_ATTK),
          SIZ(WT_HUMAN, 400, 0, MS_SPELL, MZ_LARGE),
          MR_FIRE | MR_POISON, 0,
-         M1_HUMANOID | M1_POIS, M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY,
+         M1_HUMANOID | M1_POIS | M1_SEE_INVIS,
+         M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY,
          M3_INFRAVISIBLE | M3_INFRAVISION | M3_SPELLCASTER,
          MP_WAND_SKILLED | MP_SDIV_SKILLED | MP_SCLC_EXPERT,
          ADVS(HPADV, SPADV), HI_ZAP),
@@ -2927,7 +2931,8 @@ const struct permonst mons[] = {
         A(ATTK(AT_WEAP, AD_PHYS, 2, 6), ATTK(AT_WEAP, AD_PHYS, 2, 6),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(1500, 400, 0, MS_CUSS, MZ_HUMAN), MR_STONE, 0,
-        M1_HUMANOID, M2_NOPOLY | M2_STALK | M2_STRONG | M2_COLLECT,
+        M1_HUMANOID | M1_SEE_INVIS,
+        M2_NOPOLY | M2_STALK | M2_STRONG | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION, MP_WAND_SKILLED,
         CLR_ORANGE | HI_ULINE),
 /*
@@ -2970,7 +2975,7 @@ const struct permonst mons[] = {
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(200, 250, 0, MS_SILENT, MZ_HUGE), MR_ELEC, MR_ELEC,
         M1_SWIM | M1_AMPHIBIOUS | M1_ANIMAL | M1_SLITHY | M1_NOLIMBS |
-        M1_CARNIVORE | M1_OVIPAROUS | M1_NOTAKE,
+        M1_CARNIVORE | M1_OVIPAROUS | M1_SEE_INVIS | M1_NOTAKE,
         M2_HOSTILE, M3_INFRAVISIBLE, 0, CLR_BRIGHT_BLUE),
     MON("kraken", S_EEL,
         LVL(20, 3, 6, 0, -3), (G_GENO | G_NOGEN),
@@ -2978,8 +2983,8 @@ const struct permonst mons[] = {
           ATTK(AT_HUGS, AD_WRAP, 2, 6), ATTK(AT_BITE, AD_PHYS, 5, 4),
           NO_ATTK, NO_ATTK),
         SIZ(1800, 1000, 0, MS_SILENT, MZ_HUGE), 0, 0,
-        M1_SWIM | M1_AMPHIBIOUS | M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE,
-        M2_NOPOLY | M2_HOSTILE | M2_STRONG, M3_INFRAVISIBLE, 0,
+        M1_SWIM | M1_AMPHIBIOUS | M1_ANIMAL | M1_NOHANDS | M1_SEE_INVIS |
+        M1_CARNIVORE, M2_NOPOLY | M2_HOSTILE | M2_STRONG, M3_INFRAVISIBLE, 0,
         HI_LORD),
 /*
  * lizards, &c
