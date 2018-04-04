@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-04 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1363,6 +1363,7 @@ extern struct obj *mgetargobj(const struct musable *, const char *, const char *
 extern boolean mgetargspell(const struct musable *, int *);
 extern int mon_choose_dirtarget(const struct monst *, struct obj *, coord *);
 extern int mon_choose_spectarget(struct musable *, struct obj *, coord *);
+extern boolean find_digger(struct monst *, struct musable *);
 extern boolean find_unlocker(struct monst *, struct musable *);
 extern boolean find_item(struct monst *, struct musable *);
 extern boolean find_item_obj(struct obj *, struct musable *, boolean, int);

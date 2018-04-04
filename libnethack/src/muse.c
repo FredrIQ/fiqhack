@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-04 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1120,6 +1120,27 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc,
     else
         score = mon_choose_dirtarget(mon, obj, tc);
     return score;
+}
+
+/* Find a magical digging tool (wand/spell) */
+boolean
+find_digger(struct monst *mon, struct musable *m)
+{
+    init_musable(mon, m);
+
+    /* look for wands of digging */
+    if (find_item_obj(mon->minvent, m, FALSE, WAN_DIGGING))
+        return TRUE;
+
+    /* check if we can cast dig */
+    if (mon_castable(mon, SPE_DIG, TRUE) >= 80 &&
+        !cancelled(mon)) {
+        m->spell = SPE_DIG;
+        m->use = MUSE_SPE;
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 /* Find an unlocking tool */
