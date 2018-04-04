@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1478,14 +1478,11 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
     zlevel = level_difficulty(dlev);
     minmlev = zlevel / 6;
 
-    /* Determine the level of the strongest monster to make. The strength
-       of the initial inhabitants of the level does not depend on the
-       player level; instead, we assume that the player level is 1 up to
-       D:10, and dlevel - 10 thereafter (to estimate a lower bound). */
+    int xl = u.ulevel;
     if (in_mklev)
-        maxmlev = (zlevel <= 10 ? (zlevel + 1) / 2 : zlevel - 5);
-    else
-        maxmlev = (zlevel + u.ulevel) / 2;
+        xl = (zlevel * 2) / 3;
+
+    maxmlev = (zlevel + xl) / 2;
 
     boolean hell = In_hell(dlev);
     boolean rogue = Is_rogue_level(dlev);
