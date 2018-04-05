@@ -1,4 +1,4 @@
-# Last modified by Sean Hunt, 2014-02-16
+# Last modified by Fredrik Ljungdahl, 2018-04-05
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1992,1993 by Izchak Miller, David Cohrs,
 #                      and Timo Hakulinen
@@ -125,7 +125,7 @@ OBJECT:'`',"boulder",random
 
 
 MAZE:"air",' '
-FLAGS: noteleport,hardfloor,shortsighted
+FLAGS: noteleport,hardfloor
 # The following messages are somewhat obtuse, to make then
 # equally meaningful if the player can see or not.
 MESSAGE: "What a strange feeling!"
@@ -231,7 +231,7 @@ MONSTER:'v',"steam vortex",random,hostile
 
 
 MAZE:"fire",' '
-FLAGS: noteleport,hardfloor,shortsighted
+FLAGS: noteleport,hardfloor
 GEOMETRY:center,center
 # The player lands, upon arrival, in the
 # lower-right.  The location of the
@@ -382,7 +382,7 @@ OBJECT:'`',"boulder",random
 
 
 MAZE:"water",' '
-FLAGS: noteleport,hardfloor,shortsighted
+FLAGS: noteleport,hardfloor
 MESSAGE: "You find yourself suspended in an air bubble surrounded by water."
 GEOMETRY:center,center
 # The player lands upon arrival to an air bubble
@@ -514,10 +514,8 @@ ENDMAP
 RANDOM_PLACES:(23,9),(37,14),(51,9)
 # Where the player will land on arrival
 TELEPORT_REGION:(29,15,45,15),(30,15,44,15)
-# Lit courts
-REGION:(01,05,16,14),lit,"ordinary",filled,true
-REGION:(31,01,44,10),lit,"ordinary",filled,true
-REGION:(61,05,74,14),lit,"ordinary",filled,true
+# Entire plane is lit
+REGION:(00,00,74,19),lit,"ordinary"
 # A Sanctum for each alignment
 # The shrines' alignments are shuffled for
 # each game
