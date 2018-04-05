@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1471,8 +1471,8 @@ const struct permonst mons[] = {
         M2_STRONG | M2_NEUTER, 0, 0, CLR_BROWN),
     MON("water elemental", S_ELEMENTAL,
         LVL(8, 6, 2, 30, 0), (G_NOCORPSE | 1),
-        A(ATTK(AT_CLAW, AD_PHYS, 5, 6),
-          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        A(ATTK(AT_CLAW, AD_PHYS, 5, 6), ATTK(AT_ENGL, AD_WRAP, 1, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(2500, 0, 0, MS_SILENT, MZ_HUGE), MR_POISON | MR_STONE, 0,
         M1_NOEYES | M1_NOLIMBS | M1_NOHEAD | M1_MINDLESS | M1_AMPHIBIOUS |
         M1_SWIM | M1_UNSOLID,

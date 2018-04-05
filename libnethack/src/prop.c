@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -425,6 +425,12 @@ m_has_property(const struct monst *mon, enum youprop property,
                 (u_helpless(hm_unconscious) || u.ucreamed))
                 rv |= W_MASK(os_circumstance);
 
+            /* Suffocation from an engulfer */
+            if (property == STRANGLED && u.ustuck &&
+                !unbreathing(&youmonst) &&
+                attacktype_fordmg(u.ustuck->data, AT_ENGL, AD_WRAP))
+                rv |= W_MASK(os_circumstance);
+
             /* Riding allows you to inherit a few properties from steeds */
             if ((property == FLYING || property == SWIMMING ||
                  property == WWALKING || property == LEVITATION) &&
@@ -737,6 +743,22 @@ decrease_property_timers(struct monst *mon)
     }
 }
 
+/* Sets a suffocation timer if applicable. Used for being engulfed by water
+   elementals. */
+void
+set_suffocation(struct monst *mon)
+{
+    if (unbreathing(mon) || !(strangled(mon) & W_MASK(os_circumstance)))
+        return;
+
+    if (property_timeout(mon, STRANGLED))
+        return;
+
+    if (mon == &youmonst || canseemon(mon))
+        pline(msgc_fatal, "%s not breathe here!", M_verbs(mon, "can"));
+
+    set_property(mon, STRANGLED, acurr(mon, A_CON) / 2, TRUE);
+}
 
 /* Can this monster teleport at will?
    Any monster who has reached XL12 or more can teleport at will if they have teleportitis.
@@ -1749,7 +1771,8 @@ update_property(struct monst *mon, enum youprop prop,
                     msgc_fatal_predone : msgc_fatal);
         else if (mon->mtame)
             msgc = msgc_petfatal;
-        if (lost && slot != os_dectimeout) {
+
+        if (!(strangled(mon) & ~W_MASK(os_timeout))) {
             if (you || vis) { /* TODO: give a suitable message if unbreathing */
                 pline(you ? msgc_fatalavoid : msgc_monneutral,
                       "%s can breathe more easily!",
@@ -1764,14 +1787,18 @@ update_property(struct monst *mon, enum youprop prop,
         if (!lost && !redundant && slot != os_dectimeout) {
             if (you || vis)
                 pline(msgc, "It constricts %s throat!",
-                      you ? "your" : s_suffix(mon_nam(mon)));
-            set_property(&youmonst, STRANGLED, 5, TRUE);
+                      s_suffix(mon_nam(mon)));
+            set_property(mon, STRANGLED, acurr(mon, A_CON) / 2, TRUE);
         }
 
         if (you)
             exercise(A_STR, FALSE);
 
         if (lost) {
+            boolean drowned = FALSE;
+            if (!(strangled(mon) & W_WORN))
+                drowned = TRUE;
+
             if (you || vis)
                 pline(msgc, "%s suffocate%s.",
                       you ? "You" : Monnam(mon),
@@ -1779,14 +1806,29 @@ update_property(struct monst *mon, enum youprop prop,
             effect = TRUE;
             if (you)
                 done(SUFFOCATION, killer_msg(SUFFOCATION,
-                                             u.uburied ? "suffocation" : "strangulation"));
+                                             u.uburied ? "suffocation" :
+                                             drowned ? "drowning" :
+                                             "strangulation"));
             else
                 mondied(mon);
             break;
         }
 
         if (slot == os_dectimeout && (you || vis)) {
-            if (unbreathing(mon) || !rn2(50)) {
+            if (!(strangled(mon) & W_WORN)) {
+                if (timer == 4)
+                    pline(msgc, "%s starting to run out of breath.",
+                          M_verbs(mon, "are"));
+                else if (timer == 3)
+                    pline(msgc, "%s running out of breath.",
+                          M_verbs(mon, "are"));
+                else if (timer == 2)
+                    pline(msgc, "%s almost out of breath.",
+                          M_verbs(mon, "are"));
+                else if (timer == 1)
+                    pline(msgc, "%s will to breathe increases critically!",
+                          s_suffix(Monnam(mon)));
+            } else if (unbreathing(mon) || !rn2(50)) {
                 if (timer == 4)
                     pline(msgc, "%s %s is becoming constricted.",
                           you ? "Your" : s_suffix(Monnam(mon)),

@@ -1797,6 +1797,9 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         if (!diseasemu(mtmp->data, "You feel terribly sick."))
             tmp = 0;
         break;
+    case AD_WRAP:
+        set_suffocation(&youmonst);
+        break;
     default:
         tmp = 0;
         break;
