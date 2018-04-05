@@ -1668,7 +1668,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
 
     if (mtmp != u.ustuck)
         return 0;
-    if (u.uswldtim > 0)
+    if (u.uswldtim > 0 && mattk->adtyp == AD_DGST)
         u.uswldtim -= 1; /* what about slow digestion? */
 
     switch (mattk->adtyp) {
