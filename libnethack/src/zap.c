@@ -331,16 +331,42 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         known = TRUE;
         if (tele_restrict(mdef))
             break; /* noteleport */
-        if (level->flags.noteleport) {
-            /* master proficiency can bypass noteleport */
-            if (mdef == &youmonst)
-                safe_teleds(FALSE);
-            else
-                rloc(mdef, TRUE);
+
+        /* Use ox/oy on the wand as a sentinel for having selected a destination
+           for the monster to go on Master */
+        if (wandlevel == P_MASTER && !selfzap) {
+            /* just pick somewhere random if not the player for now... */
+            if (otmp->ox == COLNO) {
+                otmp->ox = rn2(COLNO);
+                otmp->oy = rn2(ROWNO);
+
+                if (magr == &youmonst) {
+                    coord tc;
+                    tc.x = mdef->mx;
+                    tc.y = mdef->my;
+                    pline(msgc_uiprompt, "Teleport targets where?",
+                          mon_nam(mdef));
+                    if (getpos(&tc, FALSE, "the teleport target", FALSE) !=
+                        NHCR_CLIENT_CANCEL) {
+                        otmp->ox = tc.x;
+                        otmp->oy = tc.y;
+                    }
+                }
+            }
+
+            if (mdef != &youmonst)
+                mnearto(mdef, otmp->ox, otmp->oy, FALSE);
+            else {
+                coord tc;
+                if (enexto(&tc, level, otmp->ox, otmp->oy, youmonst.data))
+                    teleds(tc.x, tc.y, FALSE);
+            }
+
             break;
         }
-        reveal_invis = !mon_tele(mdef, (level->flags.noteleport ?
-                                        FALSE : !!teleport_control(mdef)));
+
+        reveal_invis = !mon_tele(mdef, (wandlevel == P_MASTER ||
+                                        !!teleport_control(mdef)));
         break;
     case WAN_MAKE_INVISIBLE:
         if (wandlevel >= P_SKILLED && invisible(mdef))
@@ -2230,6 +2256,13 @@ zap_steed(struct obj *obj)
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         /* you go together */
+        if (getwandlevel(&youmonst, obj) == P_MASTER) {
+            mon_tele(&youmonst, TRUE);
+            if (obj->oclass != SPBOOK_CLASS)
+                tell_discovery(obj);
+            break;
+        }
+
         tele();
         if ((Teleport_control || (ox != u.ux && oy != u.uy)) &&
             obj->oclass != SPBOOK_CLASS)
@@ -2734,6 +2767,10 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj)
     int y = m_my(mon);
     if (obj->otyp == EXPENSIVE_CAMERA)
         tsym = tmpsym_init(DISP_BEAM, dbuf_effect(E_MISC, E_flashbeam));
+
+    /* Used as sentinel for teleport destination for hit teleported monsters */
+    obj->ox = COLNO;
+    obj->oy = ROWNO;
 
     while (range-- > 0) {
         x += dx;
