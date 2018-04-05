@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -743,7 +743,8 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 }
                 break;
             case WAN_TELEPORTATION:
-                if (oep && oep->engr_type != HEADSTONE) {
+                if (oep && oep->engr_type != HEADSTONE &&
+                    !level->flags.noteleport) {
                     if (!Blind)
                         pline(msgc_info, "The engraving on the %s vanishes!",
                               surface(u.ux, u.uy));

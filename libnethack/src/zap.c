@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-12 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -329,7 +329,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         known = TRUE;
-        if ((wandlevel < P_EXPERT || selfzap) && tele_restrict(mdef))
+        if (tele_restrict(mdef))
             break; /* noteleport */
         if (level->flags.noteleport) {
             /* master proficiency can bypass noteleport */
@@ -1873,7 +1873,8 @@ bhito(struct obj *obj, struct obj *otmp)
             break;
         case WAN_TELEPORTATION:
         case SPE_TELEPORT_AWAY:
-            rloco(obj);
+            if (!level->flags.noteleport)
+                rloco(obj);
             break;
         case WAN_UNDEAD_TURNING:
         case SPE_TURN_UNDEAD:
@@ -2509,7 +2510,8 @@ zap_updown(struct monst *mon, struct obj *obj, schar dz)
                 break;
             case WAN_TELEPORTATION:
             case SPE_TELEPORT_AWAY:
-                rloc_engr(e);
+                if (!level->flags.noteleport)
+                    rloc_engr(e);
                 break;
             case SPE_STONE_TO_FLESH:
                 if (e->engr_type == ENGRAVE) {
