@@ -1,11 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
-static boolean tele_jump_ok(int, int, int, int, struct level *);
 static boolean u_teleok(int, int, boolean, boolean wizard_tele);
 static int mon_choose_level(struct monst *);
 static void vault_tele(void);
@@ -207,7 +206,7 @@ full:
  * need to be augmented to allow deliberate passage in wizard mode, but
  * only for explicitly chosen destinations.)
  */
-static boolean
+boolean
 tele_jump_ok(int x1, int y1, int x2, int y2, struct level *lev)
 {
     if (lev->dndest.nlx != COLNO) {

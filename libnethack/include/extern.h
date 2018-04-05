@@ -1902,6 +1902,7 @@ extern boolean enexto(coord * cc, struct level *lev, xchar xx, xchar yy,
                       const struct permonst *mdat);
 extern boolean enexto_core(coord * cc, struct level *lev, xchar xx, xchar yy,
                            const struct permonst *mdat, unsigned entflags);
+extern boolean tele_jump_ok(int, int, int, int, struct level *);
 extern void teleds(int, int, boolean);
 extern boolean safe_teleds(boolean);
 extern boolean teleport_pet(struct monst *, boolean);

@@ -334,20 +334,26 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
 
         /* Use ox/oy on the wand as a sentinel for having selected a destination
            for the monster to go on Master */
-        if (wandlevel == P_MASTER && !selfzap) {
+        if (wandlevel == P_MASTER &&
+            (!selfzap || magr == &youmonst)) {
             /* just pick somewhere random if not the player for now... */
-            if (otmp->ox == COLNO) {
-                otmp->ox = rn2(COLNO);
-                otmp->oy = rn2(ROWNO);
+            if (otmp->ox == COLNO || selfzap) {
+                do {
+                    otmp->ox = rn2(COLNO);
+                    otmp->oy = rn2(ROWNO);
+                } while (!tele_jump_ok(m_mx(mdef), m_my(mdef),
+                                       otmp->ox, otmp->oy, level));
 
                 if (magr == &youmonst) {
                     coord tc;
-                    tc.x = mdef->mx;
-                    tc.y = mdef->my;
-                    pline(msgc_uiprompt, "Teleport targets where?",
-                          mon_nam(mdef));
+                    tc.x = m_mx(mdef);
+                    tc.y = m_my(mdef);
+                    pline(msgc_uiprompt, "Teleport%s where?",
+                          selfzap ? "" : " targets", mon_nam(mdef));
                     if (getpos(&tc, FALSE, "the teleport target", FALSE) !=
-                        NHCR_CLIENT_CANCEL) {
+                        NHCR_CLIENT_CANCEL &&
+                        tele_jump_ok(m_mx(mdef), m_my(mdef),
+                                     tc.x, tc.y, level)) {
                         otmp->ox = tc.x;
                         otmp->oy = tc.y;
                     }
