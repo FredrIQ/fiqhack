@@ -757,7 +757,7 @@ set_suffocation(struct monst *mon)
     if (mon == &youmonst || canseemon(mon))
         pline(msgc_fatal, "%s not breathe here!", M_verbs(mon, "can"));
 
-    set_property(mon, STRANGLED, acurr(mon, A_CON) / 2, TRUE);
+    set_property(mon, STRANGLED, (acurr(mon, A_CON) * 2 + 1) / 3, TRUE);
 }
 
 /* Can this monster teleport at will?
@@ -1788,7 +1788,7 @@ update_property(struct monst *mon, enum youprop prop,
             if (you || vis)
                 pline(msgc, "It constricts %s throat!",
                       s_suffix(mon_nam(mon)));
-            set_property(mon, STRANGLED, acurr(mon, A_CON) / 2, TRUE);
+            set_property(mon, STRANGLED, (acurr(mon, A_CON) * 2 + 1) / 3, TRUE);
         }
 
         if (you)
