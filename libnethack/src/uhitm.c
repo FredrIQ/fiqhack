@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1625,7 +1625,8 @@ damageum(struct monst *mdef, const struct attack *mattk)
                      (zombie_timer - 10), FALSE);
         break;
     case AD_SLOW:
-        if (negated || resists_slow(mdef))
+        if (cancelled(&youmonst) || rn2(4) || resists_slow(mdef) ||
+            defends(AD_SLOW, m_mwep(mdef)))
             break;
 
         inc_timeout(mdef, SLOW, tmp, FALSE);
