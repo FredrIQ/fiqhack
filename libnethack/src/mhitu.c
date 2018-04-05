@@ -220,6 +220,9 @@ expels(struct monst *mtmp,
     unstuck(mtmp);      /* ball&chain returned in unstuck() */
     mnexto(mtmp);
     newsym(u.ux, u.uy);
+    unset_suffocation(&youmonst);
+    mtmp->mcanmove = 0;
+    mtmp->mfrozen = 1;
     spoteffects(TRUE);
     /* to cover for a case where mtmp is not in a next square */
     if (um_dist(mtmp->mx, mtmp->my, 1))

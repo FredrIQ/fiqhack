@@ -1590,6 +1590,7 @@ extern boolean prop_wary(const struct monst *, struct monst *, enum youprop);
 extern int property_timeout(struct monst *, enum youprop);
 extern void decrease_property_timers(struct monst *);
 extern void set_suffocation(struct monst *);
+extern void unset_suffocation(struct monst *);
 extern boolean inc_timeout(struct monst *, enum youprop, int, boolean);
 extern boolean set_property(struct monst *, enum youprop, int, boolean);
 extern int update_property_polymorph(struct monst *, int);

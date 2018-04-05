@@ -760,6 +760,15 @@ set_suffocation(struct monst *mon)
     set_property(mon, STRANGLED, (acurr(mon, A_CON) * 2 + 1) / 3, TRUE);
 }
 
+void
+unset_suffocation(struct monst *mon)
+{
+    if (strangled(mon) & ~W_MASK(os_timeout))
+        return;
+
+    set_property(mon, STRANGLED, -2, FALSE);
+}
+
 /* Can this monster teleport at will?
    Any monster who has reached XL12 or more can teleport at will if they have teleportitis.
    If the monster has teleportitis in their natural form, they can always teleport at will.
