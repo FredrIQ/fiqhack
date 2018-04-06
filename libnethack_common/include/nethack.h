@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2015-11-23 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-06 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* this header defines the interface between libnethack and window ports
@@ -14,7 +14,7 @@
    here, if save/bones compatibility is not broken between versions.) */
 # define VERSION_MAJOR  4
 # define VERSION_MINOR  3
-# define PATCHLEVEL     0
+# define PATCHLEVEL     1
 
 # include "nethack_types.h"
 
