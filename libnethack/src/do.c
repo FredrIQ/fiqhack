@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -352,6 +352,10 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
     case RIN_INCREASE_DAMAGE:
         pline(msgc_info, "The water's force seems %ser now.",
               (obj->spe < 0) ? "small" : "great");
+        break;
+    case RIN_CARRYING:
+        pline(msgc_info, "The ring carries some excess water as it bounces "
+              "down the drainpipe.");
         break;
     case RIN_HUNGER:
         ideed = FALSE;
