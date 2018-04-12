@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -468,7 +468,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->udg_cnt);
     mwrite32(mf, y->next_attr_check);
     mwrite32(mf, y->ualign.record);
-    mwrite32(mf, y->ugangr);
+    mwrite32(mf, y->unused_ugangr);
     mwrite32(mf, y->ugifts);
     mwrite32(mf, y->ublessed);
     mwrite32(mf, save_encode_32(y->ublesscnt, -moves, -moves));

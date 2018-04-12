@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,7 +11,7 @@ static void costly_tin(const char *);
 static int eat_tin_one_turn(void);
 static const char *food_xname(struct obj *, boolean);
 static void choke(struct obj *);
-static void nutrition_calculations(struct obj *, unsigned *,
+static void nutrition_calculations(const struct obj *, unsigned *,
                                    unsigned *, unsigned *);
 static void touchfood(void);
 static void done_eating(boolean);
@@ -186,7 +186,7 @@ choke(struct obj *food)
    return the total amount of nutrition in the food, the length of time it takes
    to eat the food, and/or the amount of nutrition that is eaten per turn. */
 static void
-nutrition_calculations(struct obj *obj, unsigned *total,
+nutrition_calculations(const struct obj *obj, unsigned *total,
                        unsigned *timetaken, unsigned *perturn)
 {
     unsigned temp_total, temp_timetaken;
@@ -2244,8 +2244,7 @@ newuhs(boolean incr)
 boolean
 can_sacrifice(const struct obj *otmp)
 {
-    return (otmp->otyp == CORPSE || otmp->otyp == AMULET_OF_YENDOR ||
-            otmp->otyp == FAKE_AMULET_OF_YENDOR);
+    return !!piety_value(otmp);
 }
 
 static boolean
@@ -2347,12 +2346,12 @@ skipfloor:
        An arg of NULL means that we should use a nonrepeatable prompt, rather
        than a command argument. */
     if (arg)
-        otmp = getargobj(arg, feeding ?
+        otmp = getargobj(arg, feeding || sacrificing ?
                          (const char *)(allobj + (can_floorfood ? 0 : 2)) :
                          (const char *)(comestibles + (can_floorfood ? 0 : 2)),
                          verb);
     else
-        otmp = getobj(feeding ?
+        otmp = getobj(feeding || sacrificing ?
                       (const char *)(allobj + (can_floorfood ? 0 : 2)) :
                       (const char *)(comestibles + (can_floorfood ? 0 : 2)),
                       verb, FALSE);
@@ -2383,7 +2382,7 @@ vomit(struct monst *mon)
 }
 
 int
-eaten_stat(int base, struct obj *obj)
+eaten_stat(int base, const struct obj *obj)
 {
     unsigned uneaten_amt, full_amount;
 
@@ -2405,4 +2404,3 @@ eaten_stat(int base, struct obj *obj)
 }
 
 /*eat.c*/
-

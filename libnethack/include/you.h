@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -42,6 +42,7 @@ struct you {
     int unused_oldcap;  /* carry cap on previous turn */
     int unused_uen, unused_uenmax; /* magical energy (Pw) */
     struct skills unused_weapon_skills[P_NUM_SKILLS];
+    int unused_ugangr; /* if the gods are angry at you */
 
     xchar ux, uy;
     xchar tx, ty;       /* destination of travel */
@@ -77,7 +78,7 @@ struct you {
 
     /* uwhybusy is the reason for an occupation occuring (e.g.  "You stop
        uwhybusy.") This is undefined when flags.occupation is zero.
-    
+
        TODO: This needs a better memory allocation scheme. */
     char uwhybusy[BUFSZ];
 
@@ -151,7 +152,6 @@ struct you {
     /* on moonlit nights 11 */
 # define LUCKMIN        (-10)
     int uhp, uhpmax;
-    int ugangr; /* if the gods are angry at you */
     int ugifts; /* number of artifacts bestowed */
     int ublessed, ublesscnt;    /* blessing/duration from #pray */
     int umoney0; /* Starting gold, for score calculation purposes */

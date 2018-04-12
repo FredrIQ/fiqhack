@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -545,7 +545,7 @@ extern void newuhs(boolean);
 extern boolean can_sacrifice(const struct obj *);
 extern struct obj *floorfood(const char *, const struct nh_cmd_arg *);
 extern void vomit(struct monst *);
-extern int eaten_stat(int, struct obj *);
+extern int eaten_stat(int, const struct obj *);
 
 /* ### end.c ### */
 
@@ -1163,7 +1163,7 @@ extern void add_to_buried(struct obj *obj);
 extern struct obj *newobj(struct obj *);
 extern void dealloc_obj(struct obj *);
 extern void obj_ice_effects(struct level *, int, int, boolean);
-extern long peek_at_iced_corpse_age(struct obj *);
+extern long peek_at_iced_corpse_age(const struct obj *);
 extern void set_obj_level(struct level *lev, struct obj *obj);
 extern struct obj *restore_obj(struct memfile *mf);
 extern void save_obj(struct memfile *mf, struct obj *obj);
@@ -1555,6 +1555,13 @@ extern const char *align_gname(aligntyp);
 extern const char *halu_gname(aligntyp);
 extern const char *align_gtitle(aligntyp);
 extern void altar_wrath(int, int);
+extern int piety_value(const struct obj *);
+extern int gift_threshold(void);
+extern int crown_threshold(void);
+extern int get_piety(void);
+extern void set_piety(int);
+extern void add_piety(int);
+extern const char *piety_info(boolean);
 extern void set_prayreminder(struct monst *, enum pray_type);
 
 /* ### priest.c ### */

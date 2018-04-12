@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Izchak Miller, 1989.                             */
 /* Copyright (c) Fredrik Ljungdahl, 2015.                         */
@@ -155,6 +155,7 @@ struct eyou {
     enum pray_type prayed_result;
     char msg_hint[LAST_MSGH + 1];
     int oldmoves;
+    int piety;
 };
 
 struct ecache {

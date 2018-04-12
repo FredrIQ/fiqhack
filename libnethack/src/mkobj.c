@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1426,14 +1426,14 @@ obj_ice_effects(struct level *lev, int x, int y, boolean do_buried)
  * restarted etc.
  */
 long
-peek_at_iced_corpse_age(struct obj *otmp)
+peek_at_iced_corpse_age(const struct obj *obj)
 {
-    long age, retval = otmp->age;
+    long age, retval = obj->age;
 
-    if (otmp->otyp == CORPSE && ON_ICE(otmp)) {
+    if (obj->otyp == CORPSE && ON_ICE(obj)) {
         /* Adjust the age; must be same as obj_timer_checks() for off ice */
-        age = moves - otmp->age;
-        retval = otmp->age + (age / ROT_ICE_ADJUSTMENT);
+        age = moves - obj->age;
+        retval = obj->age + (age / ROT_ICE_ADJUSTMENT);
     }
     return retval;
 }

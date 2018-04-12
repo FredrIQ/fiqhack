@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -2927,15 +2927,17 @@ enlighten_mon(struct monst *mon, int final)
 #define mon_can(menu,mon,attr)        enl_msg(menu,monname,can,could,attr)
 #define mon_sees(menu,mon,attr)       enl_msg(menu,monname,see,saw,attr)
 #define mon_x(menu,mon,attr)          enl_msg(menu,monname,"","",attr)
-    
-    if (mon == &youmonst && flags.elbereth_enabled &&
-        u.uevent.uhand_of_elbereth) {
-        static const char *const hofe_titles[3] = {
-            "the Hand of Elbereth",
-            "the Envoy of Balance",
-            "the Glory of Arioch"
-        };
-        mon_is(&menu, mon, hofe_titles[u.uevent.uhand_of_elbereth - 1]);
+
+    if (mon == &youmonst) {
+        if (flags.elbereth_enabled && u.uevent.uhand_of_elbereth) {
+            static const char *const hofe_titles[3] = {
+                "the Hand of Elbereth",
+                "the Envoy of Balance",
+                "the Glory of Arioch"
+            };
+            mon_is(&menu, mon, hofe_titles[u.uevent.uhand_of_elbereth - 1]);
+        }
+
         if (u.ualign.record >= AR_PIOUS)
             mon_is(&menu, mon, "piously aligned");
         else if (u.ualign.record >= AR_DEVOUT)
@@ -3251,14 +3253,12 @@ enlighten_mon(struct monst *mon, int final)
         if (buf)
             add_menutext(&menu, buf);
 
-        if (u.ugangr) {
-            buf = msgprintf(
-                " %sangry with you",
-                u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
-            if (wizard)
-                buf = msgprintf("%s (%d)", buf, u.ugangr);
-            enl_msg(&menu, u_gname(), " is", " was", buf);
-        } else if (!final) {
+        buf = piety_info(final);
+        struct eyou *you = mx_eyou(&youmonst);
+        if (wizard)
+            buf = msgprintf("%s (%d)", buf, you->piety);
+        enl_msg(&menu, "", "", "", buf);
+        if (!final) {
             /*
             * We need to suppress this when the game is over, because death
             * can change the value calculated by can_pray(), potentially
