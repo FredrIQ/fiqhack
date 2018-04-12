@@ -884,12 +884,10 @@ pleased(aligntyp g_align)
        so special handling for it is superfluous
 
        Luck input means we can't balance this between games. */
-    if (pat_on_head) {
-        int result = rn2((Luck + 6) >> 1);
-        if (crown)
-            result = 9;
-
-        switch (result) {
+    if (crown)
+        gcrownu();
+    else if (pat_on_head) {
+        switch (rn2((Luck + 6) >> 1)) {
         case 0:
             break;
         case 1:
@@ -943,23 +941,18 @@ pleased(aligntyp g_align)
             break;
         case 3:
             /* takes 2 hints to get the music to enter the stronghold */
-            if (!u.uevent.uopened_dbridge) {
-                if (u.uevent.uheard_tune < 1) {
-                    godvoice(msgc_npcvoice, g_align, NULL);
-                    verbalize(msgc_npcvoice, "Hark, %s!",
-                              mortal_or_creature(youmonst.data, TRUE));
-                    verbalize
-                        (msgc_hint,
-                         "To enter the castle, thou must play the right tune!");
-                    u.uevent.uheard_tune++;
-                    break;
-                } else if (u.uevent.uheard_tune < 2) {
-                    You_hear(msgc_npcvoice, "a divine music...");
-                    pline(msgc_hint, "It sounds like:  \"%s\".",
-                          gamestate.castle_tune);
-                    u.uevent.uheard_tune++;
-                    break;
-                }
+            if (!u.uevent.uopened_dbridge && !u.uevent.uheard_tune) {
+                godvoice(msgc_npcvoice, g_align, NULL);
+                verbalize(msgc_npcvoice, "Hark, %s!",
+                          mortal_or_creature(youmonst.data, TRUE));
+                verbalize
+                    (msgc_hint,
+                     "To enter the castle, thou must play the right tune!");
+                You_hear(msgc_npcvoice, "a divine music...");
+                pline(msgc_hint, "It sounds like:  \"%s\".",
+                      gamestate.castle_tune);
+                u.uevent.uheard_tune++;
+                break;
             }
             /* Otherwise, falls into next case */
         case 2:
@@ -1043,15 +1036,10 @@ pleased(aligntyp g_align)
                       "and thus I grant thee the gift of %s!", prop);
             verbalize(msgc_aligngood, "Use it wisely in my name!");
             break;
+        case 6:
         case 7:
         case 8:
-        case 9:        /* KMH -- can occur during full moons */
-            if (flags.elbereth_enabled)
-                if (u.ualign.record >= PIOUS && !u.uevent.uhand_of_elbereth) {
-                    gcrownu();
-                    break;
-                }       /* else FALLTHRU */
-        case 6:
+        case 9:
             at_your_feet("An object");
             struct obj *otmp;
             int sp_no, trycnt = u.ulevel + 1;
