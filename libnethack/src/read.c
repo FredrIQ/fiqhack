@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1409,7 +1409,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         } else {
             int i, j, bd = confused ? 5 : 1;
             struct monst *mtmp;
-            
+
             for (i = -bd; i <= bd; i++) {
                 for (j = -bd; j <= bd; j++) {
                     if (!isok(m_mx(mon) + i, m_my(mon) + j))
@@ -1427,7 +1427,8 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             pline(you ? msgc_intrgain : msgc_monneutral,
                   "%s found a scroll of genocide!",
                   M_verbs(mon, "have"));
-            *known = TRUE;
+            makeknown(SCR_GENOCIDE);
+            *known = TRUE; /* redundant, but prevents doname shenanigans */
         }
         if (sobj->blessed)
             do_class_genocide(mon);
