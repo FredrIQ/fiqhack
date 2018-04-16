@@ -2923,7 +2923,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
             char old_ushops = *u.ushops;
             *u.ushops = *in_rooms(level, otmp->ox, otmp->oy, SHOPBASE);
             if (!*u.ushops)
-                u.ushops = old_ushops; /* prevent re-welcoming */
+                *u.ushops = old_ushops; /* prevent re-welcoming */
             pickup_object(otmp, 1L, FALSE);
             /* If pickup fails, leave it alone */
             newsym(cc.x, cc.y);
