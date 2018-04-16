@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-31 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1109,8 +1109,24 @@ struct obj *
 pick_obj(struct obj *otmp)
 {
     otmp->owt = weight(otmp);
+
+    struct obj *result;
+    int ox = otmp->ox;
+    int oy = otmp->oy;
+    boolean robshop = (!Engulfed && otmp != uball && costly_spot(ox, oy));
     obj_extract_self(otmp);
-    if (!Engulfed && otmp != uball && costly_spot(otmp->ox, otmp->oy)) {
+    if (otmp->olev == level)
+        newsym(ox, oy);
+
+    /* for shop items, addinv() needs to be after addtobill() (so that
+       object merger can take otmp->unpaid into account) but before
+       remote_robbery() (which calls rob_shop() which calls setpaid()
+       after moving costs of unpaid items to shop debt; setpaid()
+       calls clear_unpaid() for lots of object chains, but 'otmp' isn't
+       on any of those between obj_extract_self() and addinv(); for
+       3.6.0, 'otmp' remained flagged as an unpaid item in inventory
+       and triggered impossible() every time inventory was examined) */
+    if (robshop) {
         char saveushops[5], fakeshop[2];
 
         /* addtobill cares about your location rather than the object's;
@@ -1123,15 +1139,14 @@ pick_obj(struct obj *otmp)
         /* sets obj->unpaid if necessary */
         addtobill(otmp, TRUE, FALSE, FALSE);
         strcpy(u.ushops, saveushops);
-        /* if you're outside the shop, make shk notice */
-        if (!strchr(u.ushops, *fakeshop))
-            remote_burglary(otmp->ox, otmp->oy);
+        robshop = otmp->unpaid && !strchr(u.ushops, *fakeshop);
     }
-    if (otmp->no_charge)        /* only applies to objects outside invent */
-        otmp->no_charge = 0;
-    if (otmp->olev == level)
-        newsym(otmp->ox, otmp->oy);
-    return pickinv(otmp);        /* might merge it with other objects */
+
+    result = pickinv(otmp);
+    if (robshop)
+        remote_burglary(ox, oy);
+
+    return result;
 }
 
 /* Prints a message if encumbrance changed since the last check and
