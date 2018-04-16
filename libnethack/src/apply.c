@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2893,11 +2893,19 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         set_menuitem(&items[2], 3, MI_NORMAL, "", 0, FALSE);
         snprintf(items[2].caption, SIZE(items[2].caption), "the %s", surface(cc.x, cc.y));
 
-        if (display_menu
+        int n = display_menu
             (&(struct nh_menulist){.items = items, .icount = 3},
-             "Aim for what?", PICK_ONE, PLHINT_ANYWHERE, &selected) &&
-            rn2(P_SKILL(typ) > P_SKILLED ? 20 : 2))
+             "Aim for what?", PICK_ONE, PLHINT_ANYWHERE, &selected);
+        if (n == -1) {
+            pline(msgc_cancelled, "Never mind.");
+            return 0;
+        } else if (n > 0)
             tohit = selected[0];
+        else
+            tohit = 1; /* a mostly safe assumption... */
+
+        if (!rn2(P_SKILL(typ) > P_SKILLED ? 20 : 2))
+            tohit = 0;
     }
 
     /* What did you hit? */
@@ -2912,9 +2920,16 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
                message. */
             pline(msgc_occstart, "You snag an object from the %s!",
                   surface(cc.x, cc.y));
+            char old_ushops = *u.ushops;
+            *u.ushops = *in_rooms(level, otmp->ox, otmp->oy, SHOPBASE);
             pickup_object(otmp, 1L, FALSE);
             /* If pickup fails, leave it alone */
             newsym(cc.x, cc.y);
+            if (otmp->where == OBJ_INVENT) {
+                /* handle shop stealing */
+                check_special_room(FALSE);
+            } else
+                *u.ushops = old_ushops;
             return 1;
         }
         break;
