@@ -1501,7 +1501,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                             hcolor(u.ualign.type == A_LAWFUL ? "white" :
                                    u.ualign.type ? "black" : "gray"));
 
-                    if (rnl(u.ulevel) > 6 && u.ualign.record > 0 &&
+                    if (u.ualign.record > 0 &&
                         rnd(u.ualign.record) > (3 * ALIGNLIM) / 4)
                         summon_minion(altaralign, TRUE);
                     /* anger priest; test handles bones files */
