@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1173,6 +1173,8 @@ consume_offering(struct obj *otmp)
     else
         pline(msgc_actionok, "Your sacrifice is consumed in a %s!",
               u.ualign.type == A_LAWFUL ? "flash of light" : "burst of flame");
+    if (otmp->oclass == COIN_CLASS)
+        otmp->quan = 1;
     if (carried(otmp))
         useup(otmp);
     else
