@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1796,7 +1796,7 @@ spelleffects(boolean atme, struct musable *m, boolean prompt_maintenance)
         /* fall through */
     case SPE_CHARM_MONSTER:
     case SPE_MAGIC_MAPPING:
-    case SPE_CREATE_MONSTER:
+    case SPE_SUMMONING:
     case SPE_IDENTIFY:
     case SPE_CHARGING:
         seffects(mon, pseudo, &dummy);

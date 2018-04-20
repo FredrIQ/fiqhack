@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -283,7 +283,7 @@ mon_choose_recharge(struct monst *mon, int bcsign)
                     break;
                 case WAN_DEATH: /* offensive items below */
                     score += 3;
-                case WAN_CREATE_MONSTER:
+                case WAN_SUMMONING:
                     score += 3;
                 case WAN_SLEEP:
                     score += 3;
@@ -1357,16 +1357,71 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (you || vis)
             *known = TRUE;
         break;
-    case SCR_CREATE_MONSTER:
-    case SPE_CREATE_MONSTER:
-        if (create_critters
-            (1 + ((confused || sobj->cursed) ? 12 : 0) +
-             ((sobj->blessed ||
-               rn2(73)) ? 0 : rnd(4)), confused ? &mons[PM_ACID_BLOB] : NULL,
-             m_mx(mon), m_my(mon)))
+    case SCR_SUMMONING:
+    case SPE_SUMMONING:
+        if (you && !spell) {
+            pline(msgc_actionok, "This is a summoning scroll.");
+            makeknown(SCR_SUMMONING);
             *known = TRUE;
-        /* no need to flush monsters; we ask for identification only if the
-           monsters are not visible */
+        }
+
+        if (confused) {
+            /* Create an item instead */
+            obj = mkobj(level, 0, FALSE, rng_main);
+            obj->blessed = sobj->blessed;
+            obj->cursed = sobj->cursed;
+            if (you) {
+                hold_another_object(obj, "Oops!  %s awway from you",
+                                    The(aobjnam(obj, "slip")), NULL);
+                *known = TRUE;
+            } else {
+                if (vis) {
+                    pline(msgc_monneutral, "%s appears in %s %s!",
+                          distant_name(obj, Doname2),
+                          s_suffix(mon_nam(mon)),
+                          makeplural(mbodypart(mon, HAND)));
+                    *known = TRUE;
+                }
+                mpickobj(mon, obj, &obj);
+            }
+            break;
+        }
+
+        int duration;
+        if (!spell) {
+            duration = 10;
+            if (sobj->blessed)
+                duration = 20;
+            else if (sobj->cursed)
+                duration = 100;
+        } else {
+            duration = MP_SKILL(mon, spell_skilltype(sobj->otyp));
+            if (!duration)
+                duration = 1;
+            duration *= 5;
+        }
+
+        int demeanor = 1;
+        if (sobj->cursed) {
+            demeanor = -1;
+            if (you)
+                sobj->bknown = 1;
+            else {
+                sobj->mbknown = 1;
+                if (vis)
+                    sobj->bknown = 1;
+            }
+        }
+
+        int x = COLNO;
+        int y = ROWNO;
+        if (sobj->cursed) {
+            x = m_mx(mon);
+            y = m_my(mon);
+        }
+
+        if (create_critters(mon, 1, NULL, demeanor, duration, x, y))
+            *known = TRUE;
         break;
     case SCR_ENCHANT_WEAPON:
         if (twep && (twep->oclass == WEAPON_CLASS || is_weptool(twep))

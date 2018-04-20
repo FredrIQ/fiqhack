@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-06 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -952,7 +952,8 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
                           !!(In_endgame(&(lev->z)) || In_hell(&(lev->z))),
                           stats_rng, mmflags);
 
-    propagate(mndx, countbirth, FALSE);
+    if (!(mmflags & MM_SUMMON))
+        propagate(mndx, countbirth, FALSE);
 
     mtmp = newmonst();
     mx_ecache_new(mtmp);
@@ -1127,7 +1128,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
             place_worm_tail_randomly(mtmp, x, y, stats_rng);
     }
     set_malign(mtmp);   /* having finished peaceful changes */
-    if (anymon) {
+    if (anymon && !(mmflags & MM_SUMMON)) {
         if ((ptr->geno & G_SGROUP) && rn2_on_rng(2, stats_rng)) {
             m_initsgrp(mtmp, lev, mtmp->mx, mtmp->my, mmflags);
         } else if (ptr->geno & G_LGROUP) {
@@ -1179,29 +1180,62 @@ mbirth_limit(int mndx)
     return mndx == PM_NAZGUL ? 9 : mndx == PM_ERINYS ? 3 : MAXMONNO;
 }
 
-/* used for wand/scroll/spell of create monster zapped/read by player */
-/* returns TRUE iff you know monsters have been created */
+/* Used for wand/scroll/spell of create monster zapped/read.
+   Returns TRUE if you know monsters have been created.
+   demeanor: -1 (hostile), 0 (peaceful), 1 (tame), towards
+   user. */
 boolean
-create_critters(int cnt, const struct permonst *mptr, int x, int y)
-{       /* usually null; used for confused reading */
-    coord c;
+create_critters(struct monst *user, int cnt, const struct permonst *mptr,
+                int demeanor, int duration, int x, int y)
+{
+    coord cc;
     struct monst *mon;
     boolean known = FALSE;
-    boolean you = (x == u.ux && y == u.uy);
+    boolean you = (user == &youmonst);
+
+    if (x == COLNO) {
+        if (!you)
+            mon_choose_summon(user, &cc);
+        else {
+            cc.x = u.ux;
+            cc.y = u.uy;
+            pline(msgc_uiprompt,
+                  "Where would you like to summon the monster?");
+            getpos(&cc, TRUE, "summoning location", FALSE);
+        }
+        x = cc.x;
+        y = cc.y;
+    }
+
+    /* Don't allow summoned monsters to summon things that will outlive them */
+    if (!you && user->summoned && user->summoned < duration)
+        duration = user->summoned;
 
     while (cnt--) {
         /* if in water, try to encourage an aquatic monster by finding and then
            specifying another wet location */
         if (!mptr && is_pool(level, x, y) &&
-            enexto(&c, level, x, y, &mons[PM_GIANT_EEL]))
-            x = c.x, y = c.y;
+            enexto(&cc, level, x, y, &mons[PM_GIANT_EEL]))
+            x = cc.x, y = cc.y;
 
         mon = makemon(mptr, level, x, y,
-                      MM_CREATEMONSTER | NO_MINVENT |
+                      MM_CREATEMONSTER | NO_MINVENT | MM_SUMMON |
                       (you ? MM_CMONSTER_U : MM_CMONSTER_M) |
                       (you ? 0 : MM_ADJACENTOK));
-        if (mon && cansuspectmon(mon))
-            known = TRUE;
+        if (mon) {
+            if (cansuspectmon(mon))
+                known = TRUE;
+
+            mon->summoned = duration;
+            sethostility(mon, FALSE, TRUE);
+            if (demeanor < 0) {
+                msethostility(user, mon, TRUE, TRUE);
+                set_property(mon, FAST, duration, TRUE);
+            } else if (demeanor > 0 && you)
+                initedog(mon); /* Bypass usual restrictions */
+            else if (demeanor > 0)
+                mtamedog(user, mon, NULL);
+        }
     }
     return known;
 }
@@ -1274,7 +1308,7 @@ assign_spells(struct monst *mon, enum rng rng)
         else
             mon_addspell(mon, SPE_SLOW_MONSTER);
         mon_addspell(mon, SPE_PROTECTION);
-        mon_addspell(mon, SPE_CREATE_MONSTER);
+        mon_addspell(mon, SPE_SUMMONING);
         mon_addspell(mon, SPE_REMOVE_CURSE);
         mon_addspell(mon, SPE_CREATE_FAMILIAR);
         mon_addspell(mon, SPE_TURN_UNDEAD);
@@ -1297,7 +1331,7 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_DETECT_MONSTERS);
         mon_addspell(mon, SPE_SLOW_MONSTER);
         mon_addspell(mon, SPE_CHARGING);
-        mon_addspell(mon, SPE_CREATE_MONSTER);
+        mon_addspell(mon, SPE_SUMMONING);
         mon_addspell(mon, SPE_TURN_UNDEAD);
         mon_addspell(mon, SPE_SUMMON_NASTY);
         return;
@@ -1311,7 +1345,7 @@ assign_spells(struct monst *mon, enum rng rng)
         mon_addspell(mon, SPE_STONE_TO_FLESH);
         mon_addspell(mon, SPE_SLEEP);
         mon_addspell(mon, SPE_PROTECTION);
-        mon_addspell(mon, SPE_CREATE_MONSTER);
+        mon_addspell(mon, SPE_SUMMONING);
         mon_addspell(mon, SPE_JUMPING);
         mon_addspell(mon, SPE_SPEED_MONSTER);
         mon_addspell(mon, SPE_INVISIBILITY);
@@ -1324,7 +1358,7 @@ assign_spells(struct monst *mon, enum rng rng)
     case PM_DEMOGORGON:
         mon_addspell(mon, SPE_EXTRA_HEALING);
         mon_addspell(mon, SPE_SLOW_MONSTER);
-        mon_addspell(mon, SPE_CREATE_MONSTER);
+        mon_addspell(mon, SPE_SUMMONING);
         mon_addspell(mon, SPE_SPEED_MONSTER);
         return;
     case PM_MINION_OF_HUHETOTL:
@@ -2024,17 +2058,44 @@ set_mimic_sym(struct monst *mtmp, struct level *lev, enum rng rng)
 
 /* release a monster from a bag of tricks */
 void
-bagotricks(struct obj *bag)
+bagotricks(struct monst *mon, struct obj *bag)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
     if (!bag || bag->otyp != BAG_OF_TRICKS) {
         impossible("bad bag o' tricks");
     } else if (bag->spe < 1) {
-        pline(bag->known ? msgc_cancelled1 : msgc_failcurse,
-              "You feel an absence of magical power.");
-        bag->known = 1;
+        if (you)
+            pline(bag->known ? msgc_cancelled1 : msgc_failcurse,
+                  "You feel an absence of magical power.");
+        else if (vis)
+            pline(msgc_monneutral, "But nothing happens...");
+        if (you || vis)
+            bag->known = 1;
+        if (!you)
+            bag->mknown = 1;
     } else {
         consume_obj_charge(bag, TRUE);
-        if (create_critters(!rn2(23) ? rn1(7, 2) : 1, NULL, u.ux, u.uy))
+
+        int duration = 50;
+        int demeanor = 1;
+        int x = m_mx(mon);
+        int y = m_my(mon);
+        if (bag->blessed)
+            duration = 100;
+        else if (bag->cursed) {
+            duration = 500;
+            demeanor = -1;
+            if (you)
+                bag->bknown = 1;
+            else {
+                bag->mbknown = 1;
+                if (vis)
+                    bag->bknown = 1;
+            }
+        }
+
+        if (create_critters(mon, 1, NULL, demeanor, duration, x, y))
             tell_discovery(bag);
     }
 }
@@ -2191,8 +2252,10 @@ restore_mon(struct memfile *mf, struct monst *mtmp, struct level *l)
         mon->oldcon = mread8(mf);
         mon->oldwis = mread8(mf);
 
+        mon->summoned = save_decode_32(mread32(mf), -moves, l ? -l->lastmoves : 0);
+
         /* Some reserved space for further expansion */
-        for (i = 0; i < 171; i++)
+        for (i = 0; i < 167; i++)
             (void) mread8(mf);
     }
 
@@ -2500,7 +2563,9 @@ save_mon(struct memfile *mf, const struct monst *mon, const struct level *l)
     mwrite8(mf, mon->oldcon);
     mwrite8(mf, mon->oldwis);
 
-    for (i = 0; i < 171; i++)
+    mwrite32(mf, save_encode_32(mon->summoned, -moves, l ? -l->lastmoves : 0));
+
+    for (i = 0; i < 167; i++)
         mwrite8(mf, 0);
 
     /* just mark that the pointers had values */

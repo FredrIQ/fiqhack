@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2084,7 +2084,7 @@ zapnodir(struct monst *mon, struct obj *obj)
 {
     boolean known = FALSE;
     int wandlevel = 0;
-    int howmany;
+    int duration;
     int detectradius;
     boolean you = (mon == &youmonst);
     boolean vis = canseemon(mon);
@@ -2113,16 +2113,16 @@ zapnodir(struct monst *mon, struct obj *obj)
                 known = TRUE;
         }
         break;
-    case WAN_CREATE_MONSTER:
-        howmany = rn2(wandlevel == P_UNSKILLED ? 1  :
-                      wandlevel == P_BASIC     ? 2  :
-                      wandlevel == P_SKILLED   ? 4  :
-                      wandlevel == P_EXPERT    ? 8  :
-                      wandlevel == P_MASTER    ? 16 :
-                      1);
-        howmany++;
+    case WAN_SUMMONING:
+        duration = (wandlevel == P_UNSKILLED ? 5  :
+                    wandlevel == P_BASIC     ? 10 :
+                    wandlevel == P_SKILLED   ? 15 :
+                    wandlevel == P_EXPERT    ? 20 :
+                    wandlevel == P_MASTER    ? 25 :
+                    5);
+        duration++;
 
-        known = create_critters(howmany, NULL, m_mx(mon), m_my(mon));
+        known = create_critters(mon, 1, NULL, 1, duration, COLNO, ROWNO);
         break;
     case WAN_WISHING:
         if (you) {

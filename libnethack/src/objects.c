@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -771,7 +771,7 @@ const struct objclass const_objects[] = {
     SCROLL("scare monster",   "XIXAXA XOXAXA XUXAXA", 1,   35,  100),
     SCROLL("remove curse",    "PRATYAVAYAH",          1,   65,   80),
     SCROLL("enchant weapon",  "DAIYEN FOOELS",        1,   80,   60),
-    SCROLL("create monster",  "LEP GEX VEN ZEA",      1,   45,  200),
+    SCROLL("summoning",       "LEP GEX VEN ZEA",      1,   45,  200),
     SCROLL("taming",          "PRIRUTSENIE",          1,   15,  200),
     SCROLL("genocide",        "ELBIB YLOH",           1,   15,  300),
     SCROLL("light",           "VERR YED HORRE",       1,   90,   50),
@@ -854,7 +854,7 @@ const struct objclass const_objects[] = {
           IMMEDIATE, CLR_BRIGHT_GREEN, 's'),
     SPELL("wizard lock", "dark green", P_MATTER_SPELL, 30, 3, 2, 1,
           IMMEDIATE, CLR_GREEN, 'w'),
-    SPELL("create monster", "turquoise", P_CLERIC_SPELL, 35, 3, 2, 1,
+    SPELL("summoning", "turquoise", P_CLERIC_SPELL, 35, 3, 2, 1,
           NODIR, CLR_BRIGHT_CYAN, 'O'),
     SPELL("cause fear", "light blue", P_ENCHANTMENT_SPELL, 25, 3, 3, 1,
           NODIR, CLR_BRIGHT_BLUE, 'c'),
@@ -924,7 +924,7 @@ const struct objclass const_objects[] = {
     WAND("secret door detection", "balsa",
          50, 150, 1, NODIR, WOOD, HI_WOOD),
     WAND("enlightenment", "crystal", 15, 150, 1, NODIR, GLASS, HI_GLASS),
-    WAND("create monster", "maple", 45, 200, 1, NODIR, WOOD, HI_WOOD),
+    WAND("summoning", "maple", 45, 200, 1, NODIR, WOOD, HI_WOOD),
     WAND("wishing", "pine", 5, 500, 1, NODIR, WOOD, HI_WOOD),
     WAND("nothing", "oak", 25, 100, 0, IMMEDIATE, WOOD, HI_WOOD),
     WAND("striking", "ebony", 75, 150, 1, IMMEDIATE, WOOD, HI_WOOD),

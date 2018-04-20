@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -853,7 +853,7 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif, enum rng rng)
                using a separate RNG for wand of wishing charges */
             if (otmp->otyp == WAN_WISHING)
                 otmp->spe = 1 + rn2_on_rng(3, rng);
-            else if (otmp->otyp == WAN_CREATE_MONSTER)
+            else if (otmp->otyp == WAN_SUMMONING)
                 otmp->spe = rn2_on_rng(5, rng) + 4;
             else
                 otmp->spe = rn2_on_rng(5, rng) +
@@ -1526,6 +1526,11 @@ discard_minvent(struct monst *mtmp)
     struct obj *otmp;
 
     while ((otmp = mtmp->minvent) != 0) {
+        /* Since this is used as if the item never generated,
+           undo artifact generation */
+        if (otmp->oartifact)
+            artifact_exists(otmp, ox_name(otmp), ag_none);
+
         obj_extract_self(otmp);
         obfree(otmp, NULL);     /* dealloc_obj() isn't sufficient */
     }

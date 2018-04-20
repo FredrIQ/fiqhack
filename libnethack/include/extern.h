@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-12 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -905,7 +905,8 @@ extern boolean is_home_elemental(const struct d_level *dlev,
 extern struct monst *clone_mon(struct monst *, xchar, xchar);
 extern struct monst *makemon(const struct permonst *, struct level *lev, int,
                              int, int);
-extern boolean create_critters(int, const struct permonst *, int, int);
+extern boolean create_critters(struct monst *, int, const struct permonst *,
+                               int, int, int, int);
 extern const struct permonst *rndmonst(const d_level *, enum rng);
 extern const struct permonst *mkclass(const d_level *dlev, char, int, enum rng);
 extern int adj_lev(const d_level *dlev, const struct permonst *ptr);
@@ -919,7 +920,7 @@ extern void set_mimic_sym(struct monst *mtmp, struct level *lev, enum rng rng);
 extern int mbirth_limit(int);
 extern void mimic_hit_msg(struct monst *, short);
 extern void mkmonmoney(struct monst *, long, enum rng);
-extern void bagotricks(struct obj *);
+extern void bagotricks(struct monst *, struct obj *);
 extern boolean propagate(int, boolean, boolean);
 extern struct monst *restore_mon(struct memfile *mf, struct monst *mtmp,
                                  struct level *l);
@@ -1375,6 +1376,8 @@ extern int rnd_misc_item(struct monst *mon, enum rng rng);
 extern boolean searches_for_item(struct monst *, struct obj *);
 extern boolean mon_reflects(const struct monst *, const struct monst *,
                             boolean, const char *, const char *);
+extern void mon_choose_summon(const struct monst *, coord *);
+extern int hostility_score(const struct monst *, coord *);
 extern void you_aggravate(const struct monst *);
 
 /* ### music.c ### */
@@ -1904,7 +1907,7 @@ extern int def_char_to_monclass(char);
 
 /* ### teleport.c ### */
 
-extern boolean goodpos(struct level *lev, int, int, struct monst *, unsigned);
+extern boolean goodpos(struct level *lev, int, int, const struct monst *, unsigned);
 extern boolean enexto(coord * cc, struct level *lev, xchar xx, xchar yy,
                       const struct permonst *mdat);
 extern boolean enexto_core(coord * cc, struct level *lev, xchar xx, xchar yy,

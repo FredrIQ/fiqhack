@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3086,7 +3086,7 @@ do_break_wand(struct obj *obj, boolean intentional)
                                !can_dig_down(level)) ? PIT : HOLE);
             }
             continue;
-        } else if (obj->otyp == WAN_CREATE_MONSTER) {
+        } else if (obj->otyp == WAN_SUMMONING) {
             /* u.ux,u.uy creates it near you--x,y might create it in rock */
             makemon(NULL, level, u.ux, u.uy, MM_CREATEMONSTER | MM_CMONSTER_U);
             continue;
@@ -3196,7 +3196,7 @@ doapply(const struct nh_cmd_arg *arg)
             res = 0;
         break;
     case BAG_OF_TRICKS:
-        bagotricks(obj);
+        bagotricks(&youmonst, obj);
         break;
     case CAN_OF_GREASE:
         res = use_grease(obj);

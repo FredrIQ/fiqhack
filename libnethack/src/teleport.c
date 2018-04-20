@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,7 +25,7 @@ static void mvault_tele(struct monst *);
  * entire game, so logic order matters.
  */
 boolean
-goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
+goodpos(struct level *lev, int x, int y, const struct monst *mtmp, unsigned gpflags)
 {
     const struct permonst *mdat = NULL;
     boolean ignorewater = ((gpflags & MM_IGNOREWATER) != 0);

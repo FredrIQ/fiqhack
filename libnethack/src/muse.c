@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -515,7 +515,7 @@ mon_makewish(struct monst *mon)
         if (!(mon->misc_worn_check & W_MASK(os_amul)))
             wishtyp = AMULET_OF_LIFE_SAVING;
         else /* Not wand of death, that might be too harsh */
-            wishtyp = rn2(2) ? SCR_GENOCIDE : WAN_CREATE_MONSTER;
+            wishtyp = rn2(2) ? SCR_GENOCIDE : WAN_SUMMONING;
     }
 
     /* Wish decided -- perform the wish
@@ -2140,13 +2140,13 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
         return ret;
     }
 
-    if ((((otyp == WAN_CREATE_MONSTER ||
-           otyp == SPE_CREATE_MONSTER ||
-           otyp == SCR_CREATE_MONSTER ||
-           otyp == BAG_OF_TRICKS ||
-           (otyp == SCR_GENOCIDE && cursed)) &&
-          !mon->mpeaceful) || /* create monster makes no sense for peacefuls */
-         otyp == SPE_CREATE_FAMILIAR) &&
+    if ((otyp == SPE_CREATE_FAMILIAR ||
+         otyp == WAN_SUMMONING ||
+         otyp == SPE_SUMMONING ||
+         (otyp == SCR_SUMMONING && !cursed) ||
+         (otyp == BAG_OF_TRICKS && !cursed) ||
+         (otyp == SCR_GENOCIDE && cursed &&
+          !mon->mpeaceful)) &&
         close)
         return 1;
 
@@ -2341,16 +2341,7 @@ use_item(struct musable *m)
             pline(msgc_monneutral,
                   "%s reaches into %s!", Monnam(mon),
                   an(doname(obj)));
-        if (obj->spe < 1) {
-            if (vismon)
-                pline(msgc_failcurse, "But nothing happens...");
-            obj->mknown = 1; /* monster learns it's discharged */
-            return 2;
-        }
-        obj->spe--;
-        if (create_critters(!rn2(23) ? rn1(7, 2) : 1,
-                            NULL, mon->mx, mon->my))
-            tell_discovery(obj);
+        bagotricks(mon, obj);
         return 2;
     case MUSE_KEY:
         x = mon->mx + m->x; /* revert from delta */
@@ -2693,10 +2684,10 @@ try_again:
     case 8:
     case 10:
         if (!rn2_on_rng(4, rng))
-            return WAN_CREATE_MONSTER;
+            return WAN_SUMMONING;
         /* else FALLTHRU */
     case 2:
-        return SCR_CREATE_MONSTER;
+        return SCR_SUMMONING;
     case 3:
         return POT_HEALING;
     case 4:
@@ -2800,8 +2791,8 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp)
             digactualhole(x, y, BY_OBJECT,
                           (rn2(otmp->spe) < 3 ||
                            !can_dig_down(level)) ? PIT : HOLE);
-        } else if (otyp == WAN_CREATE_MONSTER)
-            makemon(NULL, level, otmp->ox, otmp->oy, MM_CREATEMONSTER | MM_CMONSTER_U);
+        } else if (otyp == WAN_SUMMONING)
+            create_critters(mtmp, 1, NULL, -1, 50, m_mx(mtmp), m_my(mtmp));
         else {
             bhit_at(mtmp, otmp, x, y, 10);
             bot(); /* blindness */
@@ -2848,7 +2839,7 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
         return POT_PARALYSIS;
     case 7:
         if (!rn2_on_rng(4, rng))
-            return WAN_CREATE_MONSTER;
+            return WAN_SUMMONING;
         /* fallthrough */
     case 8:
         return WAN_MAGIC_MISSILE;
@@ -2862,6 +2853,169 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
         return WAN_LIGHTNING;
     }
      /*NOTREACHED*/ return 0;
+}
+
+/* Specific contextr-specific AI actions */
+void
+mon_choose_summon(const struct monst *magr, coord *cc)
+{
+    int x, y, i;
+    struct monst *mtmp;
+    struct level *lev = m_dlevel(magr);
+
+    int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
+    int diry[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
+
+    /* If we're low on health, just summon on top of ourselves as defense. */
+    if ((magr->mhp * 100 / magr->mhpmax) <= 33) {
+        cc->x = magr->mx;
+        cc->y = magr->my;
+        return;
+    }
+
+    /* If not, find a nearby target, and try to strategically place monsters
+       such that we maximize the ability to surround the target. */
+
+    /* Find a target. */
+    int closest = 100; /* maximum mclose range */
+    struct monst *mdef = NULL;
+    for (mtmp = lev->monlist; mtmp; mtmp = monnext(mtmp)) {
+        if (mtmp != &youmonst && DEADMONSTER(mtmp))
+            continue;
+
+        if (magr == mtmp)
+            continue;
+
+        if (!mm_aggression(magr, mtmp, Conflict))
+            continue;
+
+        i = dist2(m_mx(magr), m_my(magr), m_mx(mtmp), m_my(mtmp));
+        if (i >= closest)
+            continue;
+
+        if (!(msensem(magr, mtmp) & (MSENSE_ANYVISION | MSENSE_ANYDETECT)))
+            continue;
+
+        closest = i;
+        mdef = mtmp;
+    }
+
+    /* If we didn't find any target, just make the user target itself. */
+    if (!mdef) {
+        cc->x = magr->mx;
+        cc->y = magr->my;
+        return;
+    }
+
+    /* Used to determine the score of centering on the target,
+       which will end up in a random location. We add +1 to
+       the worst case later because centering will never give
+       a score worse than the worst case otherwise.
+       Useful if we're limited on legal positions. */
+    int worst_case = 100;
+    int best_case = -100;
+    int score = 0;
+    int rndcnt = 0;
+
+    for (i = 0; i < 8; i++) {
+        cc->x = m_mx(mdef) + dirx[i];
+        cc->y = m_my(mdef) + diry[i];
+        if (!isok(cc->x, cc->y))
+            continue;
+
+        if (IS_ROCK(lev->locations[cc->x][cc->y].typ))
+            continue; /* will not end up where we want */
+
+        if (um_at(lev, cc->x, cc->y))
+            continue;
+
+        if (dist2(cc->x, cc->y, m_mx(magr), m_my(magr)) > 100)
+            continue; /* not a legal target */
+
+        score = hostility_score(mdef, cc);
+        worst_case = min(score, worst_case);
+
+        if (score > best_case || (score == best_case && rn2(++rndcnt))) {
+            x = cc->x;
+            y = cc->y;
+            if (score > best_case)
+                rndcnt = 0;
+            best_case = score;
+        }
+    }
+
+    /* If best case and worst case is the same, just select the target's
+       position directly. ">=" to catch the case where we didn't find any legal
+       position at all. */
+    if (worst_case >= best_case) {
+        cc->x = m_mx(mdef);
+        cc->y = m_my(mdef);
+        return;
+    }
+
+    cc->x = x;
+    cc->y = y;
+}
+
+/* Compute the target's surrouding hostility. This is done by computing a score
+   based on the amount of monsters surrounding right now x2, plus the amount of
+   surrounding monsters for each legal movement x1, +1 for hostile, -1 for tame
+   towards the target. Then select a valid location based on what increases the
+   hostility score the most. If cc isn't NULL, pretend that there is a hostile
+   monster on that location also. */
+int
+hostility_score(const struct monst *mdef, coord *cc)
+{
+    int x, y, ix, iy;
+    int res = 0;
+    int i, j;
+
+    int dirx[9] = { 0, 1, 1, 1, 0, -1, -1, -1, 0 };
+    int diry[9] = { 1, 1, 0, -1, -1, -1, 0, 1, 0 };
+
+    struct monst *mtmp;
+    struct level *lev = m_dlevel(mdef);
+    for (i = 0; i < 9; i++) {
+        x = m_mx(mdef) + dirx[i];
+        y = m_my(mdef) + diry[i];
+        if (!isok(x, y))
+            continue;
+
+        mtmp = um_at(lev, x, y);
+        if (mtmp && mtmp != mdef &&
+            (!mtmp->mpeaceful || (mtmp->mtame && mdef != &youmonst)))
+            continue;
+
+        if (!goodpos(lev, x, y, mdef, 0))
+            continue;
+
+        for (j = 0; j < 8; j++) {
+            ix = x + dirx[j];
+            iy = y + diry[j];
+            if (!isok(ix, iy))
+                continue;
+
+            mtmp = um_at(lev, ix, iy);
+            if (mtmp == mdef)
+                continue;
+
+            if (!mtmp) {
+                if (cc && cc->x == ix && cc->y == iy)
+                    res += (i == 8 ? 8 : 1);
+                continue;
+            }
+
+            if (tame_to(mtmp) == mdef || tame_to(mdef) == mtmp ||
+                (mtmp != &youmonst && mdef != &youmonst &&
+                 !mtmp->master && !mdef->master &&
+                 mtmp->mpeaceful == mdef->mpeaceful))
+                res -= (i == 8 ? 2 : 1);
+            else if (mm_aggression(mtmp, mdef, Conflict))
+                res += (i == 8 ? 8 : 1);
+        }
+    }
+
+    return res;
 }
 
 void
@@ -2984,7 +3138,7 @@ searches_for_item(struct monst *mon, struct obj *obj)
             typ == WAN_LIGHTNING ||
             typ == WAN_SLEEP ||
             typ == WAN_CANCELLATION ||
-            typ == WAN_CREATE_MONSTER ||
+            typ == WAN_SUMMONING ||
             typ == WAN_POLYMORPH ||
             typ == WAN_TELEPORTATION ||
             typ == WAN_DEATH ||
@@ -3013,7 +3167,7 @@ searches_for_item(struct monst *mon, struct obj *obj)
             typ == SCR_DESTROY_ARMOR ||
             typ == SCR_FIRE || /* for curing sliming only */
             typ == SCR_TELEPORTATION ||
-            typ == SCR_CREATE_MONSTER ||
+            typ == SCR_SUMMONING ||
             typ == SCR_TAMING ||
             typ == SCR_CHARGING ||
             typ == SCR_GENOCIDE ||

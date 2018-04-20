@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1605,12 +1605,10 @@ static const char wrpsym[] = {
    account for everything reasonable the player has; something unreasonable can
    still break the code. However, it's still a lot more accurate than "just add
    an s at the end", which Rogue uses...
-  
+
    Also used for plural monster names ("Wiped out all homunculi.")
    and body parts.
-  
-   Also misused by muse.c to convert 1st person present verbs to 2nd person.
-  
+
    The code here uses pretty much the same algorithm as 3.4.3, but has been
    rewritten to avoid code duplication and string mutation. The main body of the
    code now works on a "plurals dictionary" that gives suffixes and what they

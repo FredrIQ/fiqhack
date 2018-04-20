@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -639,6 +639,12 @@ mcalcdistress(void)
         /* Don't blame hero for monsters dying to intrinsics timing out or
            similar. */
         flags.mon_moving = mtmp->m_id;
+
+        if (mtmp->summoned == 1) {
+            mondied(mtmp);
+            continue;
+        } else if (mtmp->summoned)
+            mtmp->summoned--;
 
         /* must check non-moving monsters once/turn in case they managed to end
            up in liquid */
@@ -2223,6 +2229,11 @@ relmon(struct monst *mon)
 static void
 m_detach(struct monst *mtmp, const struct permonst *mptr)
 {       /* reflects mtmp->data _prior_ to mtmp's death */
+    if (!DEADMONSTER(mtmp)) {
+        impossible("Monster detached without dying?");
+        mtmp->deadmonster = 1;
+    }
+
     if (mtmp->mleashed)
         m_unleash(mtmp, FALSE);
     /* to prevent an infinite relobj-flooreffects-hmon-killed loop */
@@ -2246,10 +2257,6 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
     if (mtmp->wormno)
         wormgone(mtmp);
 
-    if (!DEADMONSTER(mtmp)) {
-        impossible("Monster detached without dying?");
-        mtmp->deadmonster = 1;
-    }
     mtmp->dlevel->flags.purge_monsters++;
 }
 
@@ -2343,7 +2350,6 @@ mondead(struct monst *mtmp)
 {
     const struct permonst *mptr;
     int tmp;
-    /* BUG: this doesn't work, figure out how to best fix it */
     boolean player_aware = cansuspectmon(mtmp);
 
     if (mx_egd(mtmp)) {
@@ -2378,52 +2384,59 @@ mondead(struct monst *mtmp)
     else if (mtmp->data == &mons[PM_WERERAT])
         set_mon_data(mtmp, &mons[PM_HUMAN_WERERAT]);
 
-    /* if MAXMONNO monsters of a given type have died, and it can be done,
-       extinguish that monster. mvitals[].died does double duty as total number
-       of dead monsters and as experience factor for the player killing more
-       monsters. this means that a dragon dying by other means reduces the
-       experience the player gets for killing a dragon directly; this is
-       probably not too bad, since the player likely finagled the first dead
-       dragon via ring of conflict or pets, and extinguishing based on only
-       player kills probably opens more avenues of abuse for rings of conflict
-       and such. */
-    tmp = monsndx(mtmp->data);
-    if (mvitals[tmp].died < 255)
-        mvitals[tmp].died++;
+    if (!mtmp->summoned) {
+        /* if MAXMONNO monsters of a given type have died, and it can be done,
+           extinguish that monster. mvitals[].died does double duty as total
+           number of dead monsters and as experience factor for the player
+           killing more monsters. this means that a dragon dying by other means
+           reduces the experience the player gets for killing a dragon directly;
+           this is probably not too bad, since the player likely finagled the
+           first dead dragon via ring of conflict or pets, and extinguishing
+           based on only player kills probably opens more avenues of abuse for
+           rings of conflict and such. */
+        tmp = monsndx(mtmp->data);
+        if (mvitals[tmp].died < 255)
+            mvitals[tmp].died++;
 
-    /* The subroutine checks whether the monster is actually one that should be
-     * livelogged.  It would be neat if there could be different message wording
-     * depending on whether the player perpetrated the kill or not, but we don't
-     * seem to have that information at this point; it's not really essential. */
-    livelog_unique_monster(mtmp);
+        /* The subroutine checks whether the monster is actually one that should
+           be livelogged.  It would be neat if there could be different message
+           wording depending on whether the player perpetrated the kill or not,
+           but we don't seem to have that information at this point; it's not
+           really essential. */
+        livelog_unique_monster(mtmp);
 
-    /* if it's a (possibly polymorphed) quest leader, mark him as dead */
-    if (mtmp->m_id == u.quest_status.leader_m_id)
-        u.quest_status.leader_is_dead = TRUE;
+        /* if it's a (possibly polymorphed) quest leader, mark him as dead */
+        if (mtmp->m_id == u.quest_status.leader_m_id)
+            u.quest_status.leader_is_dead = TRUE;
 
-    if (mtmp->data->mlet == S_KOP) {
-        /* Dead Kops may come back. */
-        switch (rnd(5)) {
-        case 1:        /* returns near the stairs */
-            makemon(mtmp->data, level, level->dnstair.sx, level->dnstair.sy,
-                    NO_MM_FLAGS);
-            break;
-        case 2:        /* randomly */
-            makemon(mtmp->data, level, COLNO, ROWNO, NO_MM_FLAGS);
-            break;
-        default:
-            break;
+        if (mtmp->data->mlet == S_KOP) {
+            /* Dead Kops may come back. */
+            switch (rnd(5)) {
+            case 1:        /* returns near the stairs */
+                makemon(mtmp->data, level, level->dnstair.sx, level->dnstair.sy,
+                        NO_MM_FLAGS);
+                break;
+            case 2:        /* randomly */
+                makemon(mtmp->data, level, COLNO, ROWNO, NO_MM_FLAGS);
+                break;
+            default:
+                break;
+            }
         }
+
+        if (mtmp->iswiz)
+            wizdead();
+        if (mtmp->data->msound == MS_NEMESIS)
+            nemdead();
     }
 
-    /* TODO: this is probably dead code */
-    if (player_aware)
+    if (player_aware) {
         level->locations[mtmp->mx][mtmp->my].mem_invis = FALSE;
+        if (mtmp->summoned)
+            pline(msgc_monneutral, "%s in a puff of logic.",
+                  M_verbs(mtmp, "disappear"));
+    }
 
-    if (mtmp->iswiz)
-        wizdead();
-    if (mtmp->data->msound == MS_NEMESIS)
-        nemdead();
     m_detach(mtmp, mptr);
 }
 
@@ -2488,6 +2501,9 @@ corpse_chance(struct monst *mon,
     if (LEVEL_SPECIFIC_NOCORPSE(mdat))
         return FALSE;
 
+    if (mon->summoned)
+        return FALSE;
+
     if (bigmonst(mdat) || mdat == &mons[PM_LIZARD]
         || is_golem(mdat)
         || is_mplayer(mdat)
@@ -2505,7 +2521,7 @@ mondied(struct monst *mdef)
     if (!DEADMONSTER(mdef))
         return; /* lifesaved */
 
-    if (corpse_chance(mdef, NULL, FALSE) &&
+    if (!mdef->summoned && corpse_chance(mdef, NULL, FALSE) &&
         (accessible(mdef->mx, mdef->my) || is_pool(level, mdef->mx, mdef->my)))
         make_corpse(mdef);
 }
@@ -2576,6 +2592,12 @@ monstone(struct monst *mdef)
     lifesaved_monster(mdef);
     if (!DEADMONSTER(mdef))
         return;
+
+    if (mdef->summoned) {
+        /* No statues for summoned monsters */
+        mondead(mdef);
+        return;
+    }
 
     mdef->mtrapped = 0; /* (see m_detach) */
 
@@ -2685,7 +2707,7 @@ monkilled(struct monst *magr, struct monst *mdef, const char *fltxt, int how)
     if (magr == &youmonst) {
         xkilled(mdef, xkill);
         return;
-    } else if (magr)
+    } else if (magr && !mdef->summoned)
         grow_up(magr, mdef);
 
     if (xkill & 2)
@@ -2735,6 +2757,11 @@ xkilled(struct monst *mtmp, int dest)
     if (mtmp == &youmonst) {
         panic("xkilled running on player?");
         return;
+    }
+
+    if (mtmp->summoned) {
+        dest |= 2;
+        stoned = FALSE;
     }
 
     int tmp, x = mtmp->mx, y = mtmp->my;
@@ -2801,7 +2828,7 @@ xkilled(struct monst *mtmp, int dest)
     }
 
     /* with lifesaving taken care of, history can record the heroic deed */
-    if ((mtmp->data->geno & G_UNIQ)) {
+    if ((mtmp->data->geno & G_UNIQ) && !mtmp->summoned) {
         historic_event(FALSE, FALSE, "killed %s %s.",
                        x_monnam(mtmp, ARTICLE_NONE, NULL, EXACT_NAME, TRUE),
                        hist_lev_name(&u.uz, TRUE));
@@ -2855,6 +2882,10 @@ xkilled(struct monst *mtmp, int dest)
     if (redisp)
         newsym(x, y);
 cleanup:
+    /* Don't give any lasting result if summoned. */
+    if (mtmp->summoned)
+        return;
+
     /* punish bad behaviour */
     if (is_human(mdat) && (!always_hostile(mdat) && mtmp->malign <= 0) &&
         (mndx < PM_ARCHEOLOGIST || mndx > PM_WIZARD) &&

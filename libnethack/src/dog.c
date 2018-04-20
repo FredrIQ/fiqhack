@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,6 +29,8 @@ initedog(struct monst *mtmp)
     edog->revivals = 0;
     edog->mhpmax_penalty = 0;
     edog->killed_by_u = 0;
+    if (isok(mtmp->mx, mtmp->my))
+        newsym(mtmp->mx, mtmp->my);
 }
 
 static int
@@ -496,6 +498,10 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
     /* might finish eating or be able to use special ability again */
     mtmp->meating -= min(imv, mtmp->meating);
     mtmp->mspec_used -= min(imv, mtmp->mspec_used);
+
+    /* don't tick down summoned to 0, we need it at 1 to unsummon */
+    if (mtmp->summoned)
+        mtmp->summoned -= min(imv, mtmp->summoned - 1);
 
     /* reduce tameness for every 150 moves you are separated */
     if (mtmp->mtame) {
