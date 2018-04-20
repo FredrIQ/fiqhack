@@ -911,16 +911,20 @@ revive(struct obj *obj)
                 set_property(mtmp, FAST, 0, TRUE);
             }
         } else {
+            mtmp = NULL;
             if (ox_monst(obj)) {
                 coord xy;
 
                 xy.x = x;
                 xy.y = y;
                 mtmp = montraits(obj, &xy);
-                mx_ecache_new(mtmp);
-                if (mtmp && mtmp->mtame && !isminion(mtmp))
-                    wary_dog(mtmp, TRUE);
-            } else
+                if (mtmp) {
+                    mx_ecache_new(mtmp);
+                    if (mtmp->mtame && !isminion(mtmp))
+                        wary_dog(mtmp, TRUE);
+                }
+            }
+            if (!mtmp)
                 mtmp = makemon(&mons[montype], level, x, y,
                                NO_MINVENT | MM_NOWAIT | MM_NOCOUNTBIRTH);
             if (mtmp) {
