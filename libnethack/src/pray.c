@@ -1483,7 +1483,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 pline_implied(
                     msgc_occstart, "You sense a conflict between %s and %s.",
                     u_gname(), a_gname());
-                if (rn2_on_rng(8 + u.ulevel, rng_altar_convert) > 5) {
+                if (rn2_on_rng(2000, rng_altar_convert) < value) {
                     struct monst *pri;
 
                     pline(msgc_intrgain, "You feel the power of %s increase.",
@@ -2144,8 +2144,11 @@ piety_value(const struct obj *obj)
         return nutr;
     }
 
-    if (obj->oclass == COIN_CLASS)
+    if (obj->oclass == COIN_CLASS) {
+        if (obj->quan < 4)
+            return -1; /* ridiculously small amount */
         return obj->quan / 4;
+    }
 
     if (obj->otyp == CORPSE) {
         int pm = obj->corpsenm;
