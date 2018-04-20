@@ -1433,6 +1433,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
         god_zaps_you(altaralign);
     } else if (value < 0) {     /* I don't think the gods are gonna like
                                    this... */
+        if (obj->oclass == COIN_CLASS)
+            godvoice(msgc_alignbad, altaralign, "Such a puny sacrifice?");
         gods_upset(altaralign);
     } else {
         int saved_luck = u.uluck;
