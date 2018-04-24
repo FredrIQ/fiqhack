@@ -996,7 +996,6 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
 
         switch (o->containment) {
             static struct obj *container = 0;
-            int old_spe;
 
             /* contents */
         case 1:
@@ -1010,11 +1009,7 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
             goto o_done;        /* don't stack, but do other cleanup */
             /* container */
         case 2:
-            /* Bypass the magic chest check in delete_contents */
-            old_spe = otmp->spe;
-            otmp->spe = 0;
             delete_contents(otmp);
-            otmp->spe = old_spe;
             container = otmp;
             break;
             /* nothing */
@@ -1521,9 +1516,8 @@ fill_room(struct level *lev, struct mkroom *croom, boolean prefilled)
                 c.x = croom->lx;
                 c.y = croom->ly;
             }
-            struct obj *chest = mksobj_at(CHEST, lev, c.x, c.y, TRUE, FALSE, mrng());
-            delete_contents(chest);
-            chest->spe = 4;
+            struct obj *chest = mksobj_at(MAGIC_CHEST, lev, c.x, c.y, TRUE,
+                                          FALSE, mrng());
             break;
         }
     }

@@ -135,8 +135,7 @@ CONTAINER:'(',"chest",place[0],uncursed,3
 OBJECT:'/',"wishing",contained
 # Prevent monsters from eating it.  (@'s never eat objects)
 ENGRAVING:place[0],burn,"Elbereth"
-# Magic chest
-CONTAINER:'(',"chest",(37,08),uncursed,4
+CONTAINER:'(',"magic chest",(37,08),uncursed,0
 # Traps
 TRAP:"trap door",(40,08)
 TRAP:"trap door",(44,08)

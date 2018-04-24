@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -596,6 +596,8 @@ const struct objclass const_objects[] = {
     CONT("large box",       NULL, 1,  0,  0,  40, 350,   8,    WOOD, HI_WOOD),
     CONT("chest",           NULL, 1,  0,  0,  35, 600,  16,    WOOD, HI_WOOD),
     CONT("ice box",         NULL, 1,  0,  0,   5, 900,  42, PLASTIC, CLR_WHITE),
+    CONT("magic chest",     NULL, 1,  1,  0,   0, 500, 900,    WOOD,
+         CLR_BRIGHT_MAGENTA),
     CONT("sack",           "bag", 0,  0,  0,  35,  15,   2,   CLOTH, HI_CLOTH),
     CONT("oilskin sack",   "bag", 0,  0,  0,   0,  15, 100,   CLOTH, HI_CLOTH),
     CONT("bag of holding", "bag", 0,  1,  0,  20,  15, 100,   CLOTH, HI_CLOTH),

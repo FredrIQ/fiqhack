@@ -317,7 +317,7 @@ struct obj {
 # define Is_box(otmp)   (otmp->otyp == LARGE_BOX || otmp->otyp == CHEST)
 # define Is_mbag(otmp)  (otmp->otyp == BAG_OF_HOLDING || \
                          otmp->otyp == BAG_OF_TRICKS)
-# define magic_chest(o) ((o)->otyp == CHEST && (o)->spe == 4)
+# define magic_chest(o) ((o)->otyp == MAGIC_CHEST)
 
 /* dragon gear */
 # define Is_dragon_scales(obj)  ((obj)->otyp >= GRAY_DRAGON_SCALES && \

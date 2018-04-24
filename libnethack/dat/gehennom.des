@@ -369,8 +369,7 @@ OBJECT:random,random,random
 OBJECT:random,random,random
 OBJECT:random,random,random
 OBJECT:random,random,random
-# Magic chest
-CONTAINER:'(',"chest",(41,11),uncursed,4
+CONTAINER:'(',"magic chest",(41,11),uncursed,0
 # The resident nasty
 MONSTER:'&',"Orcus",(33,15)
 # And its preferred companions

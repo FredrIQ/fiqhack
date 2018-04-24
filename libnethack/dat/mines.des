@@ -498,8 +498,7 @@ OBJECT: '`', "statue", (38,15), "gnome king", 1
 REGION:(29,02,33,04),lit,"temple"
 DOOR:closed,(31,05)
 ALTAR:(31,03),align[0],shrine
-# Magic chest
-CONTAINER:'(',"chest",(30,03),uncursed,4
+CONTAINER:'(',"magic chest",(30,03),uncursed,0
 
 
 # "Bustling Town" by Kelly Bailey
@@ -538,8 +537,7 @@ REGION:(23,1,25,3),lit,"shop"
 REGION:(22,12,24,13),lit,"food shop"
 REGION:(31,12,36,14),lit,"temple"
 ALTAR:(35,13),align[0],shrine
-# Magic chest
-CONTAINER:'(',"chest",(36,13),uncursed,4
+CONTAINER:'(',"magic chest",(36,13),uncursed,0
 
 DOOR:closed,(5,2)
 DOOR:locked,(4,8)
