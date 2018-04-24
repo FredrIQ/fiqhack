@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-02 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -805,7 +805,7 @@ dowelcome(const struct nh_cmd_arg *arg)
      */
     buf = "";
     if (new_game || u.ualignbase[A_ORIGINAL] != u.ualignbase[A_CURRENT])
-        buf = msgprintf("%s %s", buf, align_str(u.ualignbase[A_ORIGINAL]));
+        buf = msgprintf("%s %s", buf, align_str(u.ualignbase[A_CURRENT]));
     if (!urole.name.f &&
         (new_game ? (urole.allow & ROLE_GENDMASK) ==
          (ROLE_MALE | ROLE_FEMALE) : currentgend != u.initgend))
