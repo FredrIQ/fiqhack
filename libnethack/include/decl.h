@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -69,7 +69,6 @@ struct dgn_topology {    /* special dungeon levels for speed */
     d_level d_knox_level;
 };
 
-
 /* The big gamestate structure that holds all saved data. */
 extern struct gamestate {
 
@@ -101,6 +100,9 @@ extern struct gamestate {
         int current;
         struct fruit *chain;
     } fruits;
+
+    /* Magic chest content */
+    struct obj *chest;
 
     /* Unique IDs. TODO: move flags.ident here. TODO: Is this saved? If not, it
        should probably be a local rather than a global. */

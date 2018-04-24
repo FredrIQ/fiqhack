@@ -1,4 +1,4 @@
-# Last modified by Fredrik Ljungdahl, 2015-10-31
+# Last modified by Fredrik Ljungdahl, 2018-04-24
 #	Copyright (c) 1989 by Jean-Christophe Collet
 # NetHack may be freely redistributed.  See license for details.
 #
@@ -135,8 +135,8 @@ CONTAINER:'(',"chest",place[0],uncursed,3
 OBJECT:'/',"wishing",contained
 # Prevent monsters from eating it.  (@'s never eat objects)
 ENGRAVING:place[0],burn,"Elbereth"
-# The treasure of the lord
-OBJECT:'(',"chest",(37,08)
+# Magic chest
+CONTAINER:'(',"chest",(37,08),uncursed,4
 # Traps
 TRAP:"trap door",(40,08)
 TRAP:"trap door",(44,08)

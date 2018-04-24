@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -158,6 +158,9 @@ mkbox_cnts(struct obj *box, enum rng rng)
     struct obj *otmp;
 
     box->cobj = NULL;
+
+    if (magic_chest(box))
+        return;
 
     switch (box->otyp) {
     case ICE_BOX:
@@ -1844,7 +1847,7 @@ restore_obj(struct memfile *mf)
     otmp->cobj = mread8(mf) ? (void *)1 : NULL; /* set the pointer to 1 if
                                                    there will be contents */
 
-    if (flags.save_revision >= 2) {
+    if (flags.save_revision >= 2) { /* savemap: ignore */
         otmp->oprops = mread64(mf);
         otmp->oprops_known = mread64(mf);
         otmp->mem_o_id = mread32(mf);
@@ -1994,6 +1997,9 @@ save_obj(struct memfile *mf, struct obj *obj)
     mwrite8(mf, obj->timed);
     /* Saving the pointer itself is unneccessary, but we need to know if
        there is one in first place to save/restore */
+    if (magic_chest(obj) && !obj->memory)
+        obj->cobj = NULL;
+
     mwrite8(mf, obj->cobj ? 1 : 0);
 
     if (obj->oprops != obj_properties(obj)) {

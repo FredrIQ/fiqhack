@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -69,7 +69,7 @@ entity_name(struct entity ent)
         return trapexplain[ent.trap->ttyp - 1];
 
     obj = ent.obj;
-    dname = distant_name(obj, cxname);
+    dname = distant_name(obj, doname);
 
     if (obj->where == OBJ_CONTAINED) {
         upper = obj;
@@ -80,7 +80,7 @@ entity_name(struct entity ent)
             return NULL;
 
         dname = msgprintf("%s (inside %s)", dname,
-                          distant_name(upper, cxname));
+                          doname(upper));
     }
 
     return dname;
@@ -269,6 +269,12 @@ dofindobj(const struct nh_cmd_arg *arg)
             return 0;
         }
 
+        if (upper) {
+            ent.lev = upper->olev;
+            ent.x = upper->ox;
+            ent.y = upper->oy;
+        }
+
         struct level *lev = ent.lev;
         if (!lev) {
             impossible("dofindobj: target lev is NULL");
@@ -454,7 +460,11 @@ remembered_contained(const struct obj *obj)
     if (!obj)
         panic("remembered_contained: obj is NULL");
 
-    if (!obj->cknown)
+    boolean magic_chest = FALSE;
+    if (magic_chest(obj))
+        magic_chest = TRUE;
+
+    if (!obj->cknown && !magic_chest)
         return -1;
 
     /* If we're creating bones, memories has already
@@ -475,7 +485,11 @@ remembered_contained(const struct obj *obj)
         return -1;
 
     int ret = 0;
-    for (obj = memobj->cobj; obj; obj = obj->nobj)
+    struct obj *chain = memobj->cobj;
+    if (magic_chest)
+        chain = gamestate.chest;
+
+    for (obj = chain; obj; obj = obj->nobj)
         if (obj->memory == OM_MEMORY_OK)
             ret++;
     return ret;

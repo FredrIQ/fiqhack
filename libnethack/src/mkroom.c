@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -710,6 +710,9 @@ rest_room(struct memfile *mf, struct level *lev, struct mkroom *r)
     r->ly = mread8(mf);
     r->hy = mread8(mf);
     r->rtype = mread8(mf);
+    if (flags.save_revision < 19 && r->rtype >= 14)
+        r->rtype += 20;
+
     r->rlit = mread8(mf);
     r->doorct = mread8(mf);
     r->fdoor = mread8(mf);

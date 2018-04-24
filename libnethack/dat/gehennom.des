@@ -1,4 +1,4 @@
-# Last modified by Sean Hunt, 2014-02-16
+# Last modified by Fredrik Ljungdahl, 2018-04-24
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1992 by M. Stephenson and Izchak Miller
 # NetHack may be freely redistributed.  See license for details.
@@ -369,6 +369,8 @@ OBJECT:random,random,random
 OBJECT:random,random,random
 OBJECT:random,random,random
 OBJECT:random,random,random
+# Magic chest
+CONTAINER:'(',"chest",(41,11),uncursed,4
 # The resident nasty
 MONSTER:'&',"Orcus",(33,15)
 # And its preferred companions

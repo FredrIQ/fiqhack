@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -317,6 +317,7 @@ struct obj {
 # define Is_box(otmp)   (otmp->otyp == LARGE_BOX || otmp->otyp == CHEST)
 # define Is_mbag(otmp)  (otmp->otyp == BAG_OF_HOLDING || \
                          otmp->otyp == BAG_OF_TRICKS)
+# define magic_chest(o) ((o)->otyp == CHEST && (o)->spe == 4)
 
 /* dragon gear */
 # define Is_dragon_scales(obj)  ((obj)->otyp >= GRAY_DRAGON_SCALES && \

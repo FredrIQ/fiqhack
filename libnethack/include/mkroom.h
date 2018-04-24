@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -61,19 +61,21 @@ extern const struct shclass shtypes[];
 # define LEPREHALL      11      /* leprechaun hall (Tom Proudfoot) */
 # define COCKNEST       12      /* cockatrice nest (Tom Proudfoot) */
 # define ANTHOLE        13      /* ants (Tom Proudfoot) */
-# define SHOPBASE       14      /* everything above this is a shop */
-# define ARMORSHOP      15      /* specific shop defines for level compiler */
-# define SCROLLSHOP     16
-# define POTIONSHOP     17
-# define WEAPONSHOP     18
-# define FOODSHOP       19
-# define RINGSHOP       20
-# define WANDSHOP       21
-# define TOOLSHOP       22
-# define BOOKSHOP       23
-# define UNIQUESHOP     24      /* shops here & above not randomly gen'd. */
-# define CANDLESHOP     24
-# define MAXRTYPE       24      /* maximum valid room type */
+# define CHESTROOM      14      /* magic chest room */
+/* 20 unused spaces reserved for future use */
+# define SHOPBASE       34      /* everything above this is a shop */
+# define ARMORSHOP      35      /* specific shop defines for level compiler */
+# define SCROLLSHOP     36
+# define POTIONSHOP     37
+# define WEAPONSHOP     38
+# define FOODSHOP       39
+# define RINGSHOP       40
+# define WANDSHOP       41
+# define TOOLSHOP       42
+# define BOOKSHOP       43
+# define UNIQUESHOP     44      /* shops here & above not randomly gen'd. */
+# define CANDLESHOP     44
+# define MAXRTYPE       44      /* maximum valid room type */
 
 /* Special type for search_special() */
 # define ANY_TYPE       (-1)

@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2018-04-24
 #	Copyright (c) 1998-1999 by Kevin Hugo
 # NetHack may be freely redistributed.  See license for details.
 #
@@ -85,6 +85,8 @@ TRAP:"pit",(07,10)
 # A little help
 OBJECT:'?',"earth",(02,11)
 OBJECT:'?',"earth",(03,11)
+# Magic chest
+CONTAINER:'(',"chest",(01,07),uncursed,4
 
 # Random objects
 OBJECT:'%',random,random
@@ -149,6 +151,8 @@ TRAP:"pit",(06,08)
 # A little help
 OBJECT:'?',"earth",(01,09)
 OBJECT:'?',"earth",(02,09)
+# Magic chest
+CONTAINER:'(',"chest",(12,06),uncursed,4
 
 # Random objects
 OBJECT:'%',random,random

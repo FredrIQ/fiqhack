@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1490,6 +1490,7 @@ extern void add_objitem(struct nh_objlist *, enum nh_menuitem_role, int,
                         const char *, struct obj *, boolean);
 extern struct obj *pick_obj(struct obj *);
 extern int encumber_msg(int);
+extern void sync_magic_chest(struct obj *);
 extern int doloot(const struct nh_cmd_arg *);
 extern void observe_quantum_cat(struct obj *);
 extern int use_container(struct obj *, int, boolean, boolean);

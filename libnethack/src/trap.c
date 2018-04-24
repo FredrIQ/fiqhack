@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3078,7 +3078,7 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
     for (obj = chain; obj; obj = nobj) {
         nobj = here ? obj->nexthere : obj->nobj;
 
-        if (obj->oerodeproof)
+        if (obj->oerodeproof || magic_chest(obj))
             continue;
 
         /* object might light in a controlled manner */
@@ -3099,7 +3099,7 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
                 chance = 20;
                 break;
             }
-            if (!force && (Luck + 5) > rn2(chance))
+            if (!force && (Luck + 5) > rn2(chance + 1))
                 continue;
             /* Container is burnt up - dump contents out */
             if (in_sight)

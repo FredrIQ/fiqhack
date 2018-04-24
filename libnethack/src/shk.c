@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -723,6 +723,10 @@ onbill(const struct obj *obj, struct monst *shkp, boolean silent)
 void
 delete_contents(struct obj *obj)
 {
+    /* Don't delete magic chest content */
+    if (magic_chest(obj))
+        return;
+
     struct obj *curr;
 
     while ((curr = obj->cobj) != 0) {
@@ -1769,6 +1773,10 @@ find_oid(unsigned id)
     for (mon = turnstate.migrating_pets; mon; mon = mon->nmon)
         if ((obj = o_on(id, mon->minvent)))
             return obj;
+
+    /* search magic chest */
+    if ((obj = o_on(id, gamestate.chest)))
+        return obj;
 
     /* search all levels */
     for (i = 0; i <= maxledgerno(); i++)

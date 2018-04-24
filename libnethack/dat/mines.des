@@ -1,4 +1,4 @@
-# Last modified by Fredrik Ljungdahl, 2017-12-24
+# Last modified by Fredrik Ljungdahl, 2018-04-24
 #	Copyright (c) 1989-95 by Jean-Christophe Collet
 #	Copyright (c) 1991-95 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -105,7 +105,7 @@ SUBROOM: "ordinary", lit, (26,2), (3,3), "town"
 DOOR: false, closed, south, random
 MONSTER: 'G', "gnome lord", random
 
-SUBROOM: "ordinary", unlit, (25,10), (4,3), "town"
+SUBROOM: "chestroom", unlit, (25,10), (4,3), "town"
 DOOR: false, closed, north, random
 
 ROOM: "ordinary" , random, random, random, random
@@ -158,7 +158,7 @@ DOOR: false, closed, west, random
 SUBROOM: "ordinary", unlit, (19,0), (2,2), "town"
 DOOR: false, closed, south, random
 
-SUBROOM: "ordinary", random, (22,0), (2,2), "town"
+SUBROOM: "chestroom", random, (22,0), (2,2), "town"
 DOOR: false, locked, south, random
 MONSTER: 'G', "gnome", random
 
@@ -282,7 +282,7 @@ SUBROOM:"food shop",lit,(26,8),(3,2),"town"
 CHANCE:90
 DOOR:false,closed,west,random
 
-SUBROOM:"ordinary",random,(16,2),(2,2),"town"
+SUBROOM:"chestroom",random,(16,2),(2,2),"town"
 DOOR:false,closed,west,random
 
 SUBROOM:"ordinary",random,(19,2),(2,2),"town"
@@ -331,7 +331,7 @@ MONSTER: '@', "watch captain", random, peaceful
 SUBROOM:"book shop",lit,(4,2),(3,3),"town"
 DOOR: false,closed,south,random
 
-SUBROOM:"ordinary",random,(8,2),(2,2),"town"
+SUBROOM:"chestroom",random,(8,2),(2,2),"town"
 DOOR: false,closed,south,random
 
 SUBROOM:"temple",lit,(11,3),(5,4),"town"
@@ -498,6 +498,8 @@ OBJECT: '`', "statue", (38,15), "gnome king", 1
 REGION:(29,02,33,04),lit,"temple"
 DOOR:closed,(31,05)
 ALTAR:(31,03),align[0],shrine
+# Magic chest
+CONTAINER:'(',"chest",(30,03),uncursed,4
 
 
 # "Bustling Town" by Kelly Bailey
@@ -536,6 +538,8 @@ REGION:(23,1,25,3),lit,"shop"
 REGION:(22,12,24,13),lit,"food shop"
 REGION:(31,12,36,14),lit,"temple"
 ALTAR:(35,13),align[0],shrine
+# Magic chest
+CONTAINER:'(',"chest",(36,13),uncursed,4
 
 DOOR:closed,(5,2)
 DOOR:locked,(4,8)

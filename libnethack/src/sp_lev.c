@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-15 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -996,6 +996,7 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
 
         switch (o->containment) {
             static struct obj *container = 0;
+            int old_spe;
 
             /* contents */
         case 1:
@@ -1009,7 +1010,11 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
             goto o_done;        /* don't stack, but do other cleanup */
             /* container */
         case 2:
+            /* Bypass the magic chest check in delete_contents */
+            old_spe = otmp->spe;
+            otmp->spe = 0;
             delete_contents(otmp);
+            otmp->spe = old_spe;
             container = otmp;
             break;
             /* nothing */
@@ -1489,6 +1494,7 @@ fill_room(struct level *lev, struct mkroom *croom, boolean prefilled)
 
     if (!prefilled) {
         int x, y;
+        coord c;
 
         /* Shop ? */
         if (croom->rtype >= SHOPBASE) {
@@ -1509,6 +1515,15 @@ fill_room(struct level *lev, struct mkroom *croom, boolean prefilled)
         case MORGUE:
         case BARRACKS:
             fill_zoo(lev, croom, mrng());
+            break;
+        case CHESTROOM:
+            if (!somexy(lev, croom, &c, mrng())) {
+                c.x = croom->lx;
+                c.y = croom->ly;
+            }
+            struct obj *chest = mksobj_at(CHEST, lev, c.x, c.y, TRUE, FALSE, mrng());
+            delete_contents(chest);
+            chest->spe = 4;
             break;
         }
     }

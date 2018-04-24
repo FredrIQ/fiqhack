@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1151,7 +1151,8 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             /* try to use the chest */
             if (!bag || !monster_would_take_item(mon, obj) ||
                 !can_carry(mon, obj)) {
-                if (mpickstuff_dopickup(mon, obj, autopickup))
+                if (!magic_chest(obj) &&
+                    mpickstuff_dopickup(mon, obj, autopickup))
                     return TRUE;
                 continue; /* ignore the container */
             }
@@ -1331,6 +1332,9 @@ can_carry(struct monst *mtmp, struct obj *otmp)
 
     if (notake(mdat))
         return FALSE;   /* can't carry anything */
+
+    if (magic_chest(otmp))
+        return FALSE;
 
     if (otyp == CORPSE && touch_petrifies(&mons[otmp->corpsenm]) &&
         !(mtmp->misc_worn_check & W_MASK(os_armg)) && !resists_ston(mtmp))

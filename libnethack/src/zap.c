@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1186,7 +1186,8 @@ obj_resists(struct obj * obj, int ochance, int achance)
 {       /* percent chance for ordinary objects, artifacts */
     if (obj->otyp == AMULET_OF_YENDOR || obj->otyp == SPE_BOOK_OF_THE_DEAD ||
         obj->otyp == CANDELABRUM_OF_INVOCATION || obj->otyp == BELL_OF_OPENING
-        || (obj->otyp == CORPSE && is_rider(&mons[obj->corpsenm]))) {
+        || (obj->otyp == CORPSE && is_rider(&mons[obj->corpsenm])) ||
+        magic_chest(obj)) {
         return TRUE;
     } else {
         int chance = rn2(100);
@@ -1865,6 +1866,8 @@ bhito(struct obj *obj, struct obj *otmp)
                     observe_quantum_cat(obj);
                     quantum_cat = TRUE;
                 }
+
+                sync_magic_chest(obj);
                 if (!obj->cobj)
                     pline(msgc_info, "%s %sempty.", Tobjnam(obj, "are"),
                           quantum_cat ? "now " : "");
@@ -1909,7 +1912,7 @@ bhito(struct obj *obj, struct obj *otmp)
             break;
         case WAN_TELEPORTATION:
         case SPE_TELEPORT_AWAY:
-            if (!level->flags.noteleport)
+            if (!level->flags.noteleport && !magic_chest(obj))
                 rloco(obj);
             break;
         case WAN_UNDEAD_TURNING:

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,7 +10,7 @@
 
 static boolean no_bones_level(d_level *);
 static void goodfruit(int);
-static void resetobjs(struct obj *, boolean);
+static boolean resetobjs(struct obj *, boolean, boolean);
 static void drop_upon_death(struct monst *, struct obj *, boolean);
 
 
@@ -68,14 +68,31 @@ goodfruit(int id)
     }
 }
 
-static void
-resetobjs(struct obj *ochain, boolean restore)
-{
-    struct obj *otmp;
+/* Returns TRUE if we wiped the content of a container. In that case,
+   kill cobj. */
 
-    for (otmp = ochain; otmp; otmp = otmp->nobj) {
-        if (otmp->cobj)
-            resetobjs(otmp->cobj, restore);
+static boolean
+resetobjs(struct obj *ochain, boolean restore, boolean chest)
+{
+    struct obj *otmp, *nextotmp;
+
+    for (otmp = ochain; otmp; otmp = nextotmp) {
+        nextotmp = otmp->nobj;
+
+        /* If we're dealing with magic chest content, wipe it */
+        if (!chest && otmp->where == OBJ_CONTAINED &&
+            magic_chest(otmp))
+            chest = TRUE;
+
+        if (otmp->cobj) {
+            if (resetobjs(otmp->cobj, restore, chest))
+                otmp->cobj = NULL;
+        }
+
+        if (chest) {
+            dealloc_obj(otmp);
+            continue;
+        }
 
         if (((otmp->otyp != CORPSE || otmp->corpsenm < SPECIAL_PM)
              && otmp->otyp != STATUE)
@@ -132,6 +149,8 @@ resetobjs(struct obj *ochain, boolean restore)
             }
         }
     }
+
+    return chest;
 }
 
 static void
@@ -425,7 +444,8 @@ make_bones:
             (256 * u.initrole);
     }
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-        resetobjs(mtmp->minvent, FALSE);
+        resetobjs(mtmp->minvent, FALSE, FALSE);
+
         /* do not zero out m_ids for bones levels any more */
         mtmp->mlstmv = 0L;
         if (mtmp->mtame)
@@ -442,8 +462,8 @@ make_bones:
         cname = msg_from_string(ox_name(corpse));
     if (statue)
         sname = msg_from_string(ox_name(statue));
-    resetobjs(level->objlist, FALSE);
-    resetobjs(level->buriedobjlist, FALSE);
+    resetobjs(level->objlist, FALSE, FALSE);
+    resetobjs(level->buriedobjlist, FALSE, FALSE);
     if (corpse)
         christen_obj(corpse, cname);
     if (statue)
@@ -590,10 +610,10 @@ getbones(d_level *levnum)
                     mongone(mtmp);
                 else
                     /* to correctly reset named artifacts on the level */
-                    resetobjs(mtmp->minvent, TRUE);
+                    resetobjs(mtmp->minvent, TRUE, FALSE);
             }
-            resetobjs(lev->objlist, TRUE);
-            resetobjs(lev->buriedobjlist, TRUE);
+            resetobjs(lev->objlist, TRUE, FALSE);
+            resetobjs(lev->buriedobjlist, TRUE, FALSE);
         }
     }
     mfree(&mf);

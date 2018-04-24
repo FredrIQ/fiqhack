@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -959,6 +959,11 @@ lift_object(struct obj *obj, struct obj *container, long *cnt_p,
     if (obj->otyp == LOADSTONE)
         return 1;       /* lift regardless of current situation */
 
+    if (magic_chest(obj)) {
+        pline(msgc_yafm, "The chest is firmly attached to the floor.");
+        return -1;
+    }
+
     *cnt_p = carry_count(obj, container, *cnt_p, telekinesis, &old_wt, &new_wt);
     if (obj->otyp == BOULDER && throws_rocks(youmonst.data))
         *cnt_p = 1;
@@ -1262,6 +1267,29 @@ static boolean
 Is_container_func(const struct obj *otmp)
 {
     return Is_container(otmp);
+}
+
+/* Sync chest content if we're dealing with a magic chest.
+   Also used in general as a wrapper around
+   update_container_memory (used in the same circumstances) */
+void
+sync_magic_chest(struct obj *chest)
+{
+    if (magic_chest(chest)) {
+        /* Check the global magic chest chain */
+        struct obj *obj = gamestate.chest;
+
+        if (!obj || obj->ocontainer == chest) {
+            /* Chest itself has the most recent data. Use it. */
+            gamestate.chest = chest->cobj;
+        } else {
+            chest->cobj = gamestate.chest;
+            for (obj = chest->cobj; obj; obj = obj->nobj)
+                obj->ocontainer = chest;
+        }
+    }
+
+    update_container_memory(chest);
 }
 
 /* loot a container on the floor or loot saddle from mon. */
@@ -1952,6 +1980,9 @@ use_container(struct obj *obj, int held, boolean alreadyused,
         used = 1;
         quantum_cat = TRUE;     /* for adjusting "it's empty" message */
     }
+
+    sync_magic_chest(current_container);
+
     /* Count the number of contained objects. Sometimes toss objects if a cursed
        magic bag. Don't use a custom RNG: we can't know how many items were
        placed into the bag (and multiple games can't get the same bones file, so
@@ -1972,7 +2003,8 @@ use_container(struct obj *obj, int held, boolean alreadyused,
               loss, currency(loss));
     obj->owt = weight(obj);     /* in case any items were lost */
 
-    update_container_memory(current_container);
+    sync_magic_chest(current_container);
+
     if (!cnt)
         emptymsg = msgprintf("%s is %sempty.", Yname2(obj),
                              quantum_cat || loss ? "now " : "");
@@ -2004,15 +2036,15 @@ use_container(struct obj *obj, int held, boolean alreadyused,
                                    alreadyused, more_containers);
                 if (t == ':') {
                     container_contents(current_container, FALSE, FALSE, TRUE);
-                    update_container_memory(current_container);
+                    sync_magic_chest(current_container);
                 }
             } while (t == ':');
 
             if (!t || t == 'n') {
-                update_container_memory(current_container);
+                sync_magic_chest(current_container);
                 return 0;
             } else if (t == 'q') {
-                update_container_memory(current_container);
+                sync_magic_chest(current_container);
                 return -1; /* completely cancelled */
             }
 
@@ -2045,7 +2077,7 @@ use_container(struct obj *obj, int held, boolean alreadyused,
         /* nothing to put in, but some feedback is necessary */
         pline(msgc_info, "You don't have anything to %s.",
               loot_in_single ? "stash" : "put in");
-        update_container_memory(current_container);
+        sync_magic_chest(current_container);
         if (!loot_out)
             return used;
     }
@@ -2065,7 +2097,7 @@ use_container(struct obj *obj, int held, boolean alreadyused,
             break;
         case 'q':
         default:
-            update_container_memory(current_container);
+            sync_magic_chest(current_container);
             return used;
         }
     }
@@ -2093,7 +2125,7 @@ use_container(struct obj *obj, int held, boolean alreadyused,
                   quantum_cat ? "now " : "");
     }
 
-    update_container_memory(current_container);
+    sync_magic_chest(current_container);
     return used;
 }
 
