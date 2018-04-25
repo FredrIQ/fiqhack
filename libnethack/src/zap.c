@@ -4187,7 +4187,22 @@ retry:
         examine_object(otmp);
         if (otmp->otyp == MAGIC_CHEST) {
             pline(msgc_info, "%s.", Doname2(otmp));
-            dropy(otmp);
+            place_object(otmp, level, u.ux, u.uy);
+            int ox = otmp->ox;
+            int oy = otmp->oy;
+            int tries = 100;
+            struct level *lev = otmp->olev;
+            while (tries &&
+                   !(lev->locations[otmp->ox][otmp->oy].typ == ROOM ||
+                     (tries < 50 &&
+                      lev->locations[otmp->ox][otmp->oy].typ == CORR) ||
+                     t_at(lev, otmp->ox, otmp->oy))) {
+                tries--;
+                rloco(otmp);
+            }
+            lev->locations[otmp->ox][otmp->oy].flags |= W_NONDIGGABLE;
+            if (otmp->ox != ox || otmp->oy != oy)
+                pline(msgc_failrandom, "It %s!", otense(otmp, "move"));
         } else {
             /* The(aobjnam()) is safe since otmp is unidentified -dlc */
             hold_another_object(otmp,
