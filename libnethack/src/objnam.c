@@ -3249,15 +3249,17 @@ typfnd:
 
     /* more wishing abuse: don't allow wishing for certain artifacts */
     /* and make them pay; charge them for the wish anyway! */
-    if ((is_quest_artifact(otmp) ||
+    if (((is_quest_artifact(otmp) ||
          (otmp->oartifact &&
-          rn2_on_rng(nartifact_wished(), rng_artifact_wish))) && !wizard) {
+          rn2_on_rng(nartifact_wished(), rng_artifact_wish))) ||
+         (otmp->otyp == MAGIC_CHEST && In_endgame(&u.uz))) && !wizard) {
         artifact_exists(otmp, ox_name(otmp), ag_none);
         obfree(otmp, NULL);
         otmp = &zeroobj;
         if (!flags.mon_moving)
             pline(msgc_nospoil,
-                  "For a moment, you feel something in your %s, but it disappears!",
+                  "For a moment, you feel something in your %s, "
+                  "but it disappears!",
                   makeplural(body_part(HAND)));
     }
 
