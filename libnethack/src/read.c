@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2146,6 +2146,18 @@ do_class_genocide(struct monst *mon)
             continue;
         }
 
+        if (class) {
+            if (you)
+                historic_event(FALSE, TRUE,
+                               msgprintf("genocided class '%c'.",
+                                         def_monsyms[class]));
+            else
+                historic_event(FALSE, TRUE,
+                               msgprintf("let %s genocide class '%c'.",
+                                         k_monnam(mon),
+                                         def_monsyms[class]));
+        }
+
         for (i = LOW_PM; i < NUMMONS; i++) {
             if (mons[i].mlet == class) {
                 const char *nam = makeplural(mons[i].mname);
@@ -2418,6 +2430,16 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
         mvitals[mndx].mvflags |= (G_GENOD | G_NOCORPSE);
         pline(msgc_intrgain, "Wiped out %s%s.", which,
               (*which != 'a') ? buf : makeplural(buf));
+
+        if (you)
+            historic_event(FALSE, TRUE,
+                           msgprintf("genocided %s.",
+                                     makeplural(ptr->mname)));
+        else
+            historic_event(FALSE, TRUE,
+                           msgprintf("let %s genocide %s.",
+                                     k_monnam(mon),
+                                     makeplural(ptr->mname)));
 
         /* Do this before killing the player, just in case */
         kill_genocided_monsters();
