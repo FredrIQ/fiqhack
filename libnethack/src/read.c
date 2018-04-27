@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2175,7 +2175,7 @@ do_class_genocide(struct monst *mon)
                     update_inventory(); /* eggs & tins */
                     if (you)
                         break_conduct(conduct_genocide);
-                    pline(you ? msgc_intrgain : msgc_intrloss,
+                    pline(you ? msgc_intrgain : msgc_fatalavoid,
                           "Wiped out all %s.", nam);
                     if (Upolyd && i == u.umonnum) {
                         u.mh = -1;
@@ -2428,7 +2428,7 @@ do_genocide(struct monst *mon, int how, boolean known_cursed)
     if (how & REALLY) {
         /* setting no-corpse affects wishing and random tin generation */
         mvitals[mndx].mvflags |= (G_GENOD | G_NOCORPSE);
-        pline(msgc_intrgain, "Wiped out %s%s.", which,
+        pline(you ? msgc_intrgain : msgc_fatalavoid, "Wiped out %s%s.", which,
               (*which != 'a') ? buf : makeplural(buf));
 
         if (you)
