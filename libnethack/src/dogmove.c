@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -651,7 +651,8 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
         }
     } else
         appr = 1;       /* gtyp != UNDEF */
-    if (confused(mtmp))
+    if (estunned(mtmp) ||
+        ((confused(mtmp) || istunned(mtmp)) && !rn2(5)))
         appr = 0;
 
     /* If aiming for the master, locate them using strategy if possible.

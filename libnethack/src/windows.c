@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-09 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -167,7 +167,9 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
 
     turnstate.intended_dx = *dx;
     turnstate.intended_dy = *dy;
-    if (!*dz && (Stunned || (Confusion && !rn2(5))))
+    if (!*dz &&
+        (estunned(&youmonst) ||
+         ((confused(&youmonst) || istunned(&youmonst)) && !rn2(5))))
         confdir(dx, dy);
 
     return 1;

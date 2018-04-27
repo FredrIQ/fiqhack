@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-04 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -901,8 +901,10 @@ not_special:
     /* Calculate whether the monster wants to move towards or away from the goal
        (or neither). */
     appr = (mtmp->mflee || mtmp->mstrategy == st_escape) ? -1 : 1;
-    if (confused(mtmp) || (Engulfed && mtmp == u.ustuck) ||
-        mtmp->mstrategy == st_none)
+    if ((Engulfed && mtmp == u.ustuck) ||
+        mtmp->mstrategy == st_none ||
+        estunned(mtmp) ||
+        ((confused(mtmp) || istunned(mtmp)) && !rn2(5)))
         appr = 0;
 
     /* monsters with limited control of their actions */

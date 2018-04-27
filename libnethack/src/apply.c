@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -251,8 +251,10 @@ use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
         obj->bknown = TRUE;
         return res;
     }
-    if (Stunned || (Confusion && !rn2(5)))
+    if (estunned(&youmonst) ||
+        ((confused(&youmonst) || istunned(&youmonst)) && !rn2(5)))
         confdir(&dx, &dy);
+
     if (!dx && !dy) {
         mstatusline(&youmonst);
         return res;
@@ -2388,8 +2390,10 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    if (Stunned || (Confusion && !rn2(5)))
+    if (estunned(&youmonst) ||
+        ((confused(&youmonst) || istunned(&youmonst)) && !rn2(5)))
         confdir(&dx, &dy);
+
     rx = u.ux + dx;
     ry = u.uy + dy;
     mtmp = (isok(rx, ry)) ? m_at(level, rx, ry) : NULL;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1012,8 +1012,10 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
         enum msg_channel worse_msgc =
             (Stunned || Confusion) ? msgc_substitute : msgc_badidea;
 
-        if (Stunned || (Confusion && !rn2(5)))
+        if (estunned(&youmonst) ||
+            ((confused(&youmonst) || istunned(&youmonst)) && !rn2(5)))
             confdir(&dx, &dy);
+
         rx = u.ux + dx;
         ry = u.uy + dy;
         if (!isok(rx, ry)) {

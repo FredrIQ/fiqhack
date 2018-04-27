@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -71,6 +71,8 @@
 # define ifast(mon)             (ihas_property(mon, FAST))
 # define very_fast(mon)         (ehas_property(mon, FAST))
 # define stunned(mon)           (has_property(mon, STUNNED))
+# define istunned(mon)          (ihas_property(mon, STUNNED))
+# define estunned(mon)          (ehas_property(mon, STUNNED))
 # define confused(mon)          (has_property(mon, CONFUSION))
 # define sick(mon)              (has_property(mon, SICK))
 # define blind(mon)             (has_property(mon, BLINDED))
@@ -130,7 +132,7 @@
 # define is_flyer(ptr)          (((ptr)->mflags1 & M1_FLY) != 0L)
 # define is_floater(ptr)        ((ptr)->mlet == S_EYE)
 # define is_clinger(ptr)        (((ptr)->mflags1 & M1_CLING) != 0L)
-# define pm_swims(ptr)        (((ptr)->mflags1 & M1_SWIM) != 0L)
+# define pm_swims(ptr)          (((ptr)->mflags1 & M1_SWIM) != 0L)
 # define breathless(ptr)        (((ptr)->mflags1 & M1_BREATHLESS) != 0L)
 # define can_blow_instrument(ptr) \
                                 (!(breathless(ptr) && \
