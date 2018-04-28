@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,11 +39,11 @@ otyp_offset(int otyp)
         return 0;
 
     int ret = 0;
-    if (otyp >= 290 /* POT_WONDER */ && flags.save_revision < 4)
+    if ((otyp + ret) >= 290 /* POT_WONDER */ && flags.save_revision < 4)
         ret++;
-    if (otyp >= 157 /* RIN_CARRYING */ && flags.save_revision < 18)
+    if ((otyp + ret) >= 157 /* RIN_CARRYING */ && flags.save_revision < 18)
         ret++;
-    if (otyp >= 195 /* MAGIC_CHEST */ && flags.save_revision < 19)
+    if ((otyp + ret) >= 195 /* MAGIC_CHEST */ && flags.save_revision < 19)
         ret++;
     return ret;
 }
