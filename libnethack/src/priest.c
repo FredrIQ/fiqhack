@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -115,7 +115,8 @@ temple_occupied(char *array)
     char *ptr;
 
     for (ptr = array; *ptr; ptr++)
-        if (level->rooms[*ptr - ROOMOFFSET].rtype == TEMPLE)
+        if (level->rooms[*ptr - ROOMOFFSET].rtype == TEMPLE ||
+            level->rooms[*ptr - ROOMOFFSET].rtype == SEMINARY)
             return *ptr;
     return '\0';
 }
@@ -129,7 +130,8 @@ histemple_at(struct monst *priest, xchar x, xchar y)
 
     return ((boolean)
             (mx_epri(priest) &&
-             mx_epri(priest)->shroom == *in_rooms(level, x, y, TEMPLE) &&
+             (mx_epri(priest)->shroom == *in_rooms(level, x, y, TEMPLE) ||
+              mx_epri(priest)->shroom == *in_rooms(level, x, y, SEMINARY)) &&
              on_level(&(mx_epri(priest)->shrlevel), &u.uz)));
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1071,6 +1071,11 @@ extern int lminion(void);
 
 /* ### mklev.c ### */
 
+extern void mkfount(struct level *lev, int, struct mkroom *);
+extern void mksink(struct level *lev, struct mkroom *);
+extern void mkaltar(struct level *lev, struct mkroom *);
+extern void mkgrave(struct level *lev, struct mkroom *);
+extern int rand_roomtype(struct level *);
 extern struct level *alloc_level(d_level * levnum);
 extern void sort_rooms(struct level *lev);
 extern void add_room(struct level *lev, int, int, int, int, boolean, schar,
@@ -1096,7 +1101,8 @@ extern void remove_rooms(struct level *lev, int lx, int ly, int hx, int hy);
 
 /* ### mkmaze.c ### */
 
-extern void wallification(struct level *lev, int x1, int y1, int x2, int y2);
+extern void wallification(struct level *lev, int x1, int y1, int x2, int y2,
+                          boolean destroy_freestanding);
 extern void walkfrom(struct level *lev, int, int);
 extern void makemaz(struct level *lev, const char *, int *);
 extern void mazexy(struct level *lev, coord * cc);

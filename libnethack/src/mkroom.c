@@ -22,10 +22,16 @@ static struct mkroom *pick_room(struct level *lev, boolean strict, enum rng);
 static void mkshop(struct level *lev);
 static void mkzoo(struct level *lev, int type, enum rng rng);
 static void mkswamp(struct level *lev);
-static void mktemple(struct level *lev);
+static struct mkroom *mktemple(struct level *lev);
+static void mkseminary(struct level *lev);
+static void mksubmerged(struct level *lev);
+static void mkstatuary(struct level *lev);
 static coord *shrine_pos(struct level *lev, int roomno);
 static const struct permonst *morguemon(const d_level *dlev, enum rng rng);
 static const struct permonst *squadmon(const d_level *dlev);
+static const struct permonst *zoomon(const d_level *dlev, enum rng rng);
+static const struct permonst *demondenmon(const d_level *dlev, enum rng rng);
+static const struct permonst *abbatoirmon(const d_level *dlev, enum rng rng);
 static void save_room(struct memfile *mf, struct mkroom *);
 static void rest_room(struct memfile *mf, struct level *lev, struct mkroom *r);
 static boolean has_dnstairs(struct level *lev, struct mkroom *);
@@ -52,24 +58,29 @@ isbig(struct mkroom *sroom)
 void
 mkroom(struct level *lev, int roomtype)
 {
+    if (roomtype == OROOM)
+        return; /* not actually trying to make a special room */
+
     if (roomtype >= SHOPBASE)
-        mkshop(lev);    /* someday, we should be able to specify shop type */
+        mkshop(lev); /* someday, we should be able to specify shop type */
     else
         switch (roomtype) {
         case COURT:
-            mkzoo(lev, COURT, rng_for_level(&lev->z));
-            break;
         case ZOO:
-            mkzoo(lev, ZOO, rng_for_level(&lev->z));
+        case MORGUE:
+            /* uses level rng */
+            mkzoo(lev, roomtype, rng_for_level(&lev->z));
             break;
         case BEEHIVE:
-            mkzoo(lev, BEEHIVE, rng_main);
-            break;
-        case MORGUE:
-            mkzoo(lev, MORGUE, rng_for_level(&lev->z));
-            break;
         case BARRACKS:
-            mkzoo(lev, BARRACKS, rng_main);
+        case LEPREHALL:
+        case COCKNEST:
+        case ANTHOLE:
+        case DEMONDEN:
+        case LAVAROOM:
+        case ABBATOIR:
+            /* uses standard rng */
+            mkzoo(lev, roomtype, rng_main);
             break;
         case SWAMP:
             mkswamp(lev);
@@ -77,14 +88,14 @@ mkroom(struct level *lev, int roomtype)
         case TEMPLE:
             mktemple(lev);
             break;
-        case LEPREHALL:
-            mkzoo(lev, LEPREHALL, rng_main);
+        case SEMINARY:
+            mkseminary(lev);
             break;
-        case COCKNEST:
-            mkzoo(lev, COCKNEST, rng_main);
+        case SUBMERGED:
+            mksubmerged(lev);
             break;
-        case ANTHOLE:
-            mkzoo(lev, ANTHOLE, rng_main);
+        case STATUARY:
+            mkstatuary(lev);
             break;
         default:
             impossible("Tried to make a room of type %d.", roomtype);
@@ -185,7 +196,7 @@ mkzoo(struct level *lev, int type, enum rng rng)
 {
     struct mkroom *sroom;
 
-    if ((sroom = pick_room(lev, FALSE, rng)) != 0) {
+    if ((sroom = pick_room(lev, (type == LAVAROOM), rng)) != 0) {
         sroom->rtype = type;
         fill_zoo(lev, sroom, rng);
     }
@@ -199,7 +210,7 @@ mkzoo(struct level *lev, int type, enum rng rng)
 void
 fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
 {
-    struct monst *mon;
+    struct monst *mon = NULL;
     int sx, sy, i;
     int sh, tx, ty, goldlim, type = sroom->rtype;
     int rmno = (sroom - lev->rooms) + ROOMOFFSET;
@@ -266,19 +277,30 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
             /* don't place monster on explicitly placed throne */
             if (type == COURT && IS_THRONE(lev->locations[sx][sy].typ))
                 continue;
+
             /* create the appropriate room filler monster */
-            mon = makemon((type == COURT) ? courtmon(&lev->z, rng) :
-                          (type == BARRACKS) ? squadmon(&lev->z) :
-                          (type == MORGUE) ? morguemon(&lev->z, rng) :
-                          (type == BEEHIVE) ? (sx == tx && sy == ty ?
-                                               &mons[PM_QUEEN_BEE] :
-                                               &mons[PM_KILLER_BEE]) :
-                          (type == LEPREHALL) ? &mons[PM_LEPRECHAUN] :
-                          (type == COCKNEST) ? &mons[PM_COCKATRICE] :
-                          (type == ANTHOLE) ? antholemon(&lev->z) :
-                          NULL, lev, sx, sy,
-                          rng == rng_main ? NO_MM_FLAGS : MM_ALLLEVRNG);
-            /* All special rooms currently generate all their monsters asleep. */
+            mon = NULL;
+            const struct permonst *pm =
+                ((type == ZOO) ? zoomon(&lev->z, rng) :
+                 (type == COURT) ? courtmon(&lev->z, rng) :
+                 (type == BARRACKS) ? squadmon(&lev->z) :
+                 (type == MORGUE) ? morguemon(&lev->z, rng) :
+                 (type == BEEHIVE) ? (sx == tx && sy == ty ?
+                                      &mons[PM_QUEEN_BEE] :
+                                      &mons[PM_KILLER_BEE]) :
+                 (type == LEPREHALL) ? &mons[PM_LEPRECHAUN] :
+                 (type == COCKNEST) ? &mons[PM_COCKATRICE] :
+                 (type == ANTHOLE) ? antholemon(&lev->z) :
+                 (type == DEMONDEN) ? demondenmon(&lev->z, rng) :
+                 (type == ABBATOIR) ? abbatoirmon(&lev->z, rng) :
+                 (type == LAVAROOM &&
+                  !rn2_on_rng(5, rng)) ? &mons[PM_SALAMANDER] : NULL);
+            if (pm)
+                mon = makemon(pm, lev, sx, sy,
+                              rng == rng_main ? NO_MM_FLAGS : MM_ALLLEVRNG);
+
+            /* All special rooms currently generate all their monsters
+               asleep. */
             if (mon) {
                 mon->msleeping = 1;
                 if (type == COURT && mon->mpeaceful) {
@@ -336,6 +358,47 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
             case ANTHOLE:
                 if (!rn2_on_rng(3, rng))
                     mkobj_at(FOOD_CLASS, lev, sx, sy, FALSE, rng);
+                break;
+            case DEMONDEN:
+                if (mon) {
+                    if (!rn2_on_rng(3, rng)) {
+                        /* undo sleep */
+                        mon->msleeping = FALSE;
+                    }
+                    /* treasure */
+                    mkgold(rn2_on_rng(200, rng) + 10, lev, sx, sy, rng);
+                    for (i = rn2_on_rng(3, rng) + 1; i; i--)
+                        mkobj_at(rn2_on_rng(2, rng) ? RANDOM_CLASS : GEM_CLASS,
+                                 lev, sx, sy, TRUE, rng);
+                }
+                break;
+            case LAVAROOM:
+                if (rn2_on_rng(2, rng))
+                    lev->locations[sx][sy].typ = LAVAPOOL;
+                break;
+            case ABBATOIR:
+                /* scatter some corpses, leashes, knives, blood */
+                if (mon)
+                    mon->msleeping = 0;
+
+                if (!rn2_on_rng(7, rng)) {
+                    struct obj* sobj = mksobj_at(CORPSE, lev, sx, sy,
+                                                 TRUE, FALSE, rng);
+                    sobj->corpsenm = monsndx(zoomon(&lev->z, rng));
+                }
+                if (!rn2_on_rng(10, rng))
+                    mksobj_at(LEASH, lev, sx, sy, FALSE, FALSE, rng);
+
+                if (!rn2_on_rng(6, rng))
+                    mksobj_at(KNIFE, lev, sx, sy, TRUE, FALSE, rng);
+
+                if (!rn2(2)) {
+                    const char* bloodstains[] =
+                         { "/", "-", "\\", ".", "," ":" };
+                    make_engr_at(lev, sx, sy,
+                                 bloodstains[rn2(SIZE(bloodstains))],
+                                 0, ENGR_BLOOD);
+                }
                 break;
             }
         }
@@ -421,6 +484,44 @@ antholemon(const d_level * dlev)
     return (mvitals[mtyp].mvflags & G_GONE) ? NULL : &mons[mtyp];
 }
 
+/* Pick random zoo-like monsters. */
+static const struct permonst *
+zoomon(const d_level * dlev, enum rng rng)
+{
+    const struct permonst *pm;
+    int i;
+    for (i = 0; i < 100; i++) {
+        /* try to re-roll until finding an animal */
+        pm = rndmonst(dlev, rng);
+        if (is_animal(pm))
+            break;
+    }
+    return pm;
+}
+
+/* Pick random zoo-like monsters. */
+static const struct permonst *
+demondenmon(const d_level * dlev, enum rng rng)
+{
+    if (rn2_on_rng(4, rng))
+        return NULL;
+
+    if (rn2_on_rng(8, rng))
+        return mkclass(dlev, S_DEMON, 0, rng);
+    return mkclass(dlev, S_IMP, 0, rng);
+}
+
+static const struct permonst *
+abbatoirmon(const d_level * dlev, enum rng rng)
+{
+    if (rn2_on_rng(10, rng))
+        return NULL;
+
+    if (rn2_on_rng(6, rng))
+        return &mons[PM_MARILITH]; /* butcher */
+    return zoomon(dlev, rng); /* mon for slaughter */
+}
+
 /* Turn up to 5 ordinary rooms into swamp rooms.
    Swamps contain a checkerboard pattern of pools (except next to doors),
    F-class monsters, and possibly one sea monster, apiece. */
@@ -478,7 +579,7 @@ shrine_pos(struct level *lev, int roomno)
 
 /* Try and find a suitable room for a temple and if successful, create the
    temple with its altar and attendant priest. */
-static void
+static struct mkroom *
 mktemple(struct level *lev)
 {
     struct mkroom *sroom;
@@ -486,7 +587,7 @@ mktemple(struct level *lev)
     struct rm *loc;
 
     if (!(sroom = pick_room(lev, TRUE, rng_for_level(&lev->z))))
-        return;
+        return NULL;
 
     /* set up Priest and shrine */
     sroom->rtype = TEMPLE;
@@ -497,9 +598,133 @@ mktemple(struct level *lev)
     shrine_spot = shrine_pos(lev, (sroom - lev->rooms) + ROOMOFFSET);
     loc = &lev->locations[shrine_spot->x][shrine_spot->y];
     loc->typ = ALTAR;
-    loc->flags = induced_align(&lev->z, 80, rng_for_level(&lev->z));
+    loc->flags = (In_hell(&lev->z) ? AM_NONE :
+                  induced_align(&lev->z, 80, rng_for_level(&lev->z)));
     priestini(lev, sroom, shrine_spot->x, shrine_spot->y, FALSE);
     loc->flags |= AM_SHRINE;
+    return sroom;
+}
+
+/* Create a seminary - a temple containing the usual peaceful priest and some
+   roaming priests of the same god. */
+static void
+mkseminary(struct level *lev)
+{
+    enum rng rng = rng_for_level(&lev->z);
+    struct mkroom *sroom = mktemple(lev);
+    int i;
+    xchar x, y;
+    coord *ss; /* shrine spot */
+
+    if (!sroom) /* temple creation failed */
+        return;
+
+    /* get altar alignment, roaming priests should have the same */
+    ss = shrine_pos(lev, ((sroom - lev->rooms) + ROOMOFFSET));
+    if (lev->locations[ss->x][ss->y].typ != ALTAR) {
+        impossible("mkseminary: altar not present?");
+        return;
+    }
+    sroom->rtype = SEMINARY;
+
+    aligntyp altaralign =
+        Amask2align(lev->locations[ss->x][ss->y].flags & AM_MASK);
+
+    for (i = rn2_on_rng(4, rng) + 1; i; --i) {
+        x = somex(sroom, rng);
+        y = somey(sroom, rng);
+        if (MON_AT(lev, x, y)) {
+            i++;
+            continue;
+        }
+        /* peaceful if they're of your alignment */
+        mk_roamer(&mons[PM_ALIGNED_PRIEST], altaralign, lev, x, y,
+                  (u.ualign.type == altaralign), MM_ALLLEVRNG);
+    }
+}
+
+/* Create a submerged room - filled entirely with water, populated with sea
+   monsters and kelp and hidden treasure. */
+static void
+mksubmerged(struct level *lev)
+{
+    enum rng rng = rng_for_level(&lev->z);
+    struct mkroom *sroom;
+    struct obj *chest, *obj;
+    xchar x, y;
+
+    if (!(sroom = pick_room(lev, TRUE, rng)))
+        return;
+
+    sroom->rtype = SUBMERGED;
+
+    for (x = sroom->lx; x <= sroom->hx; x++) {
+        for (y = sroom->ly; y <= sroom->hy; y++) {
+            lev->locations[x][y].typ = MOAT;
+            if (!rn2(4)) {
+                makemon(!rn2_on_rng(8, rng) ? &mons[PM_KRAKEN] :
+                        !rn2_on_rng(4, rng) ? &mons[PM_PIRANHA] :
+                        !rn2_on_rng(3, rng) ? &mons[PM_SHARK] :
+                        !rn2_on_rng(2, rng) ? &mons[PM_ELECTRIC_EEL] :
+                        &mons[PM_GIANT_EEL], lev, x, y, MM_ALLLEVRNG);
+            }
+            if (!rn2(20)) {
+                mksobj_at(KELP_FROND, lev, x, y, TRUE, FALSE, rng);
+            }
+        }
+    }
+    x = somex(sroom, rng);
+    y = somey(sroom, rng);
+    chest = mksobj_at(CHEST, lev, x, y, TRUE, FALSE, rng);
+    obj = mksobj(lev, GOLD_PIECE, TRUE, FALSE, rng);
+    obj->quan = rn2_on_rng(1000, rng) + 1000;
+    add_to_container(chest, obj);
+    for (x = rn2_on_rng(10, rng); x > 0; --x) {
+        add_to_container(chest, mkobj(lev, GEM_CLASS, FALSE, rng));
+    }
+    if (!rn2_on_rng(10, rng)) {
+        add_to_container(chest, mksobj(lev, MAGIC_LAMP, TRUE, FALSE, rng));
+    }
+}
+
+/* Create a statuary room - eerily lined with empty statues of the player */
+static void
+mkstatuary(struct level *lev)
+{
+    enum rng rng = rng_for_level(&lev->z);
+    struct mkroom *sroom;
+    struct obj *statue;
+    xchar x, y, width, height;
+
+    if (!(sroom = pick_room(lev, FALSE, rng)))
+        return;
+
+    sroom->rtype = STATUARY;
+
+#define MKSTATUE(x, y)                                                  \
+    if (!nexttodoor(lev, x, y)) {                                       \
+        statue = mkcorpstat(STATUE, NULL, &mons[u.umonster], lev,       \
+                            x, y, 0, rng);                              \
+        oname(statue, u.uplname);                                       \
+    }
+
+    /* pick the longer dimension to place statues */
+    width = sroom->hx - sroom->lx;
+    height = sroom->hy - sroom->ly;
+    if (width > height || (width == height && rn2(2))) {
+        for (x = sroom->lx; x <= sroom->hx; x++) {
+            MKSTATUE(x, sroom->ly);
+            MKSTATUE(x, sroom->hy);
+        }
+    }
+    else {
+        for (y = sroom->ly; y <= sroom->hy; y++) {
+            MKSTATUE(sroom->lx, y);
+            MKSTATUE(sroom->hx, y);
+        }
+    }
+
+#undef MKSTATUE
 }
 
 /* Return TRUE if the given location is next to a door or a secret door in any

@@ -2699,7 +2699,7 @@ load_maze(struct level *lev, dlb * fd)
 
         walkfrom(lev, x, y);
     }
-    wallification(lev, 0, 0, COLNO - 1, ROWNO - 1);
+    wallification(lev, 0, 0, COLNO - 1, ROWNO - 1, FALSE);
 
     /* 
      * If there's a significant portion of maze unused by the special level,

@@ -9,10 +9,6 @@
 /* croom->lx etc are schar (width <= int), so % arith ensures that */
 /* conversion of result to int is reasonable */
 
-static void mkfount(struct level *lev, int, struct mkroom *);
-static void mksink(struct level *lev, struct mkroom *);
-static void mkaltar(struct level *lev, struct mkroom *);
-static void mkgrave(struct level *lev, struct mkroom *);
 static void makevtele(struct level *lev);
 static void makelevel(struct level *lev);
 static void mineralize(struct level *lev);
@@ -187,7 +183,7 @@ do_room_or_subroom(struct level *lev, struct mkroom *croom, int lowx, int lowy,
             lev->locations[lowx - 1][hiy + 1].typ = BLCORNER;
             lev->locations[hix + 1][hiy + 1].typ = BRCORNER;
         } else {        /* a subroom */
-            wallification(lev, lowx - 1, lowy - 1, hix + 1, hiy + 1);
+            wallification(lev, lowx - 1, lowy - 1, hix + 1, hiy + 1, FALSE);
         }
     }
 }
@@ -661,6 +657,70 @@ makevtele(struct level *lev)
     makeniche(lev, TELEP_TRAP);
 }
 
+/* Choose an appropriate special room type for the given level. */
+int
+rand_roomtype(struct level *lev)
+{
+    int u_depth = depth(&lev->z);
+    /* minimum number of rooms needed to allow a random special room */
+    int room_threshold = Is_branchlev(&lev->z) ? 4 : 3;
+    if (search_special(lev, VAULT))
+        room_threshold++;
+
+    if (!Inhell) {
+        if (u_depth > 1 && u_depth < depth(&medusa_level) &&
+            lev->nroom >= room_threshold && mrn2(u_depth) < 3)
+            return SHOPBASE; /* random shop */
+        else if (u_depth > 4 && !mrn2(6))
+            return COURT;
+        else if (u_depth > 5 && !mrn2(8) &&
+                 !(mvitals[PM_LEPRECHAUN].mvflags & G_GONE))
+            return LEPREHALL;
+        else if (u_depth > 6 && !mrn2(7))
+            return ZOO;
+        else if (u_depth > 8 && !mrn2(5))
+            return TEMPLE;
+        else if (u_depth > 9 && !mrn2(5) &&
+                 !(mvitals[PM_KILLER_BEE].mvflags & G_GONE))
+            return BEEHIVE;
+        else if (u_depth > 11 && !mrn2(6))
+            return MORGUE;
+        else if (u_depth > 12 && !mrn2(8) &&
+                 antholemon(&lev->z))
+            return ANTHOLE;
+        else if (u_depth > 14 && !mrn2(4) &&
+                 !(mvitals[PM_SOLDIER].mvflags & G_GONE))
+            return BARRACKS;
+        else if (u_depth > 15 && !mrn2(6))
+            return SWAMP;
+        else if (u_depth > 16 && !mrn2(8))
+            return COCKNEST;
+    } else {
+        /* Gehennom random special rooms */
+        /* provisionally: depth doesn't really matter too much since none of
+           these rooms have a wildly higher difficulty. */
+        int chance = mrn2(100);
+        if (chance < 25)
+            return MORGUE;
+        else if (chance < 48)
+            return DEMONDEN;
+        else if (chance < 63)
+            return SUBMERGED;
+        else if (chance < 78)
+            return LAVAROOM;
+        else if (chance < 83)
+            return ABBATOIR;
+        else if (chance < 93)
+            return SEMINARY;
+        else if (chance < 98)
+            return TEMPLE; /* Moloch temple */
+        else
+            return STATUARY;
+    }
+
+    return OROOM;
+}
+
 /* Allocate a new level structure and make sure its fields contain sane
  * initial vales.
  * Some of this is only necessary for some types of levels (maze, normal,
@@ -837,44 +897,12 @@ makelevel(struct level *lev)
         }
     }
 
-    {
-        /* Try to create one special room on the level.
-           The available special rooms depend on how deep you are.
-           If a special room is selected and fails to be created (e.g. it tried
-           to make a shop and failed because no room had exactly 1 door), it
-           won't try to create the other types of available special rooms. */
-        int u_depth = depth(&lev->z);
-
-        if (u_depth > 1 && u_depth < depth(&medusa_level) &&
-            lev->nroom >= room_threshold && mrn2(u_depth) < 3)
-            mkroom(lev, SHOPBASE);
-        else if (u_depth > 4 && !mrn2(6))
-            mkroom(lev, COURT);
-        else if (u_depth > 5 && !mrn2(8)) {
-            if (!(mvitals[PM_LEPRECHAUN].mvflags & G_GONE))
-                mkroom(lev, LEPREHALL);
-        } else if (u_depth > 6 && !mrn2(7))
-            mkroom(lev, ZOO);
-        else if (u_depth > 8 && !mrn2(5))
-            mkroom(lev, TEMPLE);
-        else if (u_depth > 9 && !mrn2(5)) {
-            if (!(mvitals[PM_KILLER_BEE].mvflags & G_GONE))
-                mkroom(lev, BEEHIVE);
-        } else if (u_depth > 11 && !mrn2(6))
-            mkroom(lev, MORGUE);
-        else if (u_depth > 12 && !mrn2(8)) {
-            if (antholemon(&lev->z))
-                mkroom(lev, ANTHOLE);
-        } else if (u_depth > 14 && !mrn2(4)) {
-            if (!(mvitals[PM_SOLDIER].mvflags & G_GONE))
-                mkroom(lev, BARRACKS);
-        } else if (u_depth > 15 && !mrn2(6)) {
-            mkroom(lev, SWAMP);
-        } else if (u_depth > 16 && !mrn2(8)) {
-            if (!(mvitals[PM_COCKATRICE].mvflags & G_GONE))
-                mkroom(lev, COCKNEST);
-        }
-    }
+    /* Try to create one special room on the level.
+       The available special rooms depend on how deep you are.
+       If a special room is selected and fails to be created (e.g. it tried
+       to make a shop and failed because no room had exactly 1 door), it
+       won't try to create the other types of available special rooms. */
+    mkroom(lev, rand_roomtype(lev));
 
 skip0:
     /* Place multi-dungeon branch. */
@@ -1544,7 +1572,7 @@ mkstairs(struct level *lev, xchar x, xchar y, char up, struct mkroom *croom)
    If mazeflag is TRUE, it will pick a random maze position; otherwise it will
    assume croom is non-null and will pick a random position inside it.
    May become a magic fountain with 1/7 chance. */
-static void
+void
 mkfount(struct level *lev, int mazeflag, struct mkroom *croom)
 {
     coord m;
@@ -1568,7 +1596,7 @@ mkfount(struct level *lev, int mazeflag, struct mkroom *croom)
 }
 
 /* Place a sink somewhere in croom. */
-static void
+void
 mksink(struct level *lev, struct mkroom *croom)
 {
     coord m;
@@ -1587,7 +1615,7 @@ mksink(struct level *lev, struct mkroom *croom)
 
 /* Place an altar somewhere in croom.
    Set its alignment randomly with uniform probability. */
-static void
+void
 mkaltar(struct level *lev, struct mkroom *croom)
 {
     coord m;
@@ -1608,7 +1636,10 @@ mkaltar(struct level *lev, struct mkroom *croom)
     lev->locations[m.x][m.y].typ = ALTAR;
 
     /* -1 - A_CHAOTIC, 0 - A_NEUTRAL, 1 - A_LAWFUL */
-    al = mrn2((int)A_LAWFUL + 2) - 1;
+    if (In_hell(&lev->z))
+        al = A_NONE;
+    else
+        al = mrn2((int)A_LAWFUL + 2) - 1;
     lev->locations[m.x][m.y].flags = Align2amask(al);
 }
 
@@ -1617,7 +1648,7 @@ mkaltar(struct level *lev, struct mkroom *croom)
         inscription is otherwise pulled from epitaph.
    1/3 of graves get gold placed on them.
    0-4 random cursed objects may be buried under the grave. */
-static void
+void
 mkgrave(struct level *lev, struct mkroom *croom)
 {
     coord m;
