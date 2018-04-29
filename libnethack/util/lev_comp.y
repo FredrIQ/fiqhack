@@ -1,5 +1,5 @@
 %{
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 #include "hack.h"
@@ -483,9 +483,9 @@ roomfill	: /* nothing */
 
 room_pos	: '(' INTEGER ',' INTEGER ')'
 		  {
-			if ( $2 < 1 || $2 > 5 ||
-			    $4 < 1 || $4 > 5 ) {
-			    yyerror("Room position should be between 1 & 5!");
+			if ( $2 < 0 || $2 > COLNO ||
+			    $4 < 0 || $4 > ROWNO ) {
+			    yyerror("Room position should be real coordinates!");
 			} else {
 			    current_coord.x = $2;
 			    current_coord.y = $4;

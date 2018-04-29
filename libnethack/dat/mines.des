@@ -1,4 +1,4 @@
-# Last modified by Fredrik Ljungdahl, 2018-04-24
+# Last modified by Fredrik Ljungdahl, 2018-04-29
 #	Copyright (c) 1989-95 by Jean-Christophe Collet
 #	Copyright (c) 1991-95 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -51,7 +51,7 @@ TRAP: random, random
 #
 LEVEL: "minetn-1"
 
-ROOM: "ordinary" , lit, (3,3), (center,center), (31,15)
+ROOM: "ordinary" , lit, (25,3), (left,top), (31,15)
 NAME: "town"
 FOUNTAIN: (13, 7)
 FOUNTAIN: (20, 7)
@@ -131,7 +131,7 @@ RANDOM_CORRIDORS
 # "Town Square"
 #
 LEVEL: "minetn-2"
-ROOM: "ordinary" , lit, (3,3), (center,center), (31,15)
+ROOM: "ordinary" , lit, (25,3), (left,top), (31,15)
 NAME: "town"
 FOUNTAIN: (17, 5)
 FOUNTAIN: (13, 8)
@@ -227,7 +227,7 @@ RANDOM_CORRIDORS
 # "Alley Town"
 #
 LEVEL: "minetn-3"
-ROOM: "ordinary",lit,(3,3),(center,center),(31,15)
+ROOM: "ordinary",lit,(25,3),(left,top),(31,15)
 NAME: "town"
 FOUNTAIN:(01,06)
 FOUNTAIN:(29,13)
@@ -318,7 +318,7 @@ RANDOM_CORRIDORS
 # "College Town"
 #
 LEVEL: "minetn-4"
-ROOM: "ordinary",lit,(3,3),(center,center),(30,15)
+ROOM: "ordinary",lit,(25,3),(left,top),(30,15)
 NAME: "town"
 FOUNTAIN:(08,07)
 FOUNTAIN:(18,07)
@@ -581,7 +581,7 @@ MONSTER: '@', "watch captain", random, peaceful
 # "Bazaar Town" by Kelly Bailey
 #
 LEVEL: "minetn-7"
-ROOM: "ordinary" , lit, (3,3), (center,center), (30,15)
+ROOM: "ordinary" , lit, (25,3), (left,top), (30,15)
 NAME: "town"
 FOUNTAIN: (12, 07)
 FOUNTAIN: (11, 13)

@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2018-04-29
 # NetHack may be freely redistributed.  See license for details.
 #
 # Oracle level
@@ -6,7 +6,7 @@
 
 LEVEL: "oracle"
 
-ROOM: "ordinary" , lit, (3,3), (center,center), (11,9)
+ROOM: "ordinary" , lit, (37,10), (center,center), (11,9)
 NAME: "central"
 OBJECT:'`',"statue",(0,0),"forest centaur",1
 OBJECT:'`',"statue",(0,8),"mountain centaur",1
