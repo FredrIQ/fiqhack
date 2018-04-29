@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-28 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -33,7 +33,7 @@ static boolean has_upstairs(struct level *lev, struct mkroom *);
 
 #define sq(x) ((x)*(x))
 
-
+/* Return TRUE if a room's rectangular floor area is larger than 20 */
 static boolean
 isbig(struct mkroom *sroom)
 {
@@ -147,8 +147,12 @@ mkshop(struct level *lev)
     stock_room(styp, lev, sroom);
 }
 
-
-/* pick an unused room, preferably with only one door */
+/* Select a room on the level that is suitable to place a special room in.
+   The room must be of ordinary type, and cannot contain the upstairs.
+   It cannot contain the downstairs either, unless strict is FALSE, in which
+   case it may allow it with 1/3 chance.
+   Rooms with exactly one door are heavily preferred; there is only a 1/5
+   chance of selecting a room with more doors than that. */
 static struct mkroom *
 pick_room(struct level *lev, boolean strict, enum rng rng)
 {
@@ -174,6 +178,8 @@ pick_room(struct level *lev, boolean strict, enum rng rng)
     return NULL;
 }
 
+/* Try to find a suitable room for a zoo of the given type and, if one can be
+   found, set its room type and call fill_zoo to stock it. */
 static void
 mkzoo(struct level *lev, int type, enum rng rng)
 {
@@ -185,6 +191,11 @@ mkzoo(struct level *lev, int type, enum rng rng)
     }
 }
 
+/* Populate one of the zoo-type rooms with monsters, objects, and possibly
+   dungeon features. Also set any appropriate level flags for level sound
+   purposes.
+   Currently, all of these involve placing a monster on every square of the
+   room, whereas objects may or may not be. */
 void
 fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
 {
@@ -199,12 +210,14 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
     sh = sroom->fdoor;
     switch (type) {
     case COURT:
+        /* Did a special level hardcode the throne in a given spot? */
         if (lev->flags.is_maze_lev) {
             for (tx = sroom->lx; tx <= sroom->hx; tx++)
                 for (ty = sroom->ly; ty <= sroom->hy; ty++)
                     if (IS_THRONE(lev->locations[tx][ty].typ))
                         goto throne_placed;
         }
+        /* If not, pick a random spot. */
         i = 100;
         do {    /* don't place throne on top of stairs */
             somexy(lev, sroom, &mm, rng);
@@ -232,8 +245,11 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
         goldlim = 500 * level_difficulty(&lev->z);
         break;
     }
+    /* fill room with monsters */
     for (sx = sroom->lx; sx <= sroom->hx; sx++)
         for (sy = sroom->ly; sy <= sroom->hy; sy++) {
+            /* Don't fill the square right next to the door, or any of the ones
+               along the same wall as the door if the room is rectangular. */
             if (sroom->irregular) {
                 if ((int)lev->locations[sx][sy].roomno != rmno ||
                     lev->locations[sx][sy].edge ||
@@ -250,6 +266,7 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
             /* don't place monster on explicitly placed throne */
             if (type == COURT && IS_THRONE(lev->locations[sx][sy].typ))
                 continue;
+            /* create the appropriate room filler monster */
             mon = makemon((type == COURT) ? courtmon(&lev->z, rng) :
                           (type == BARRACKS) ? squadmon(&lev->z) :
                           (type == MORGUE) ? morguemon(&lev->z, rng) :
@@ -261,14 +278,18 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
                           (type == ANTHOLE) ? antholemon(&lev->z) :
                           NULL, lev, sx, sy,
                           rng == rng_main ? NO_MM_FLAGS : MM_ALLLEVRNG);
+            /* All special rooms currently generate all their monsters asleep. */
             if (mon) {
                 mon->msleeping = 1;
-                if (type == COURT && mon->mpeaceful)
+                if (type == COURT && mon->mpeaceful) {
+                    /* Courts are also always hostile. */
                     sethostility(mon, TRUE, TRUE);
+                }
             }
             switch (type) {
             case ZOO:
             case LEPREHALL:
+                /* place floor gold */
                 if (sroom->doorct) {
                     int distval =
                         dist2(sx, sy, lev->doors[sh].x, lev->doors[sh].y);
@@ -281,6 +302,7 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
                 mkgold(10 + rn2_on_rng(i, rng), lev, sx, sy, rng);
                 break;
             case MORGUE:
+                /* corpses and chests and headstones */
                 if (!rn2_on_rng(5, rng))
                     mk_tt_object(lev, CORPSE, sx, sy);
                 if (!rn2_on_rng(10, rng))   /* lots of treasure */
@@ -331,7 +353,9 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
     }
 }
 
-/* make a swarm of undead around mm; uses the main RNG */
+/* Make a swarm of undead around mm.
+   Why is this in mkroom.c? It's only used when using cursed invocation
+   items. */
 void
 mkundead(struct level *lev, coord *mm, boolean revive_corpses, int mm_flags)
 {
@@ -350,6 +374,8 @@ mkundead(struct level *lev, coord *mm, boolean revive_corpses, int mm_flags)
     lev->flags.graveyard = TRUE;        /* reduced chance for undead corpse */
 }
 
+/* Return an appropriate undead monster type for generating in graveyards or
+   when raising the dead. */
 static const struct permonst *
 morguemon(const d_level *dlev, enum rng rng)
 {
@@ -372,6 +398,9 @@ morguemon(const d_level *dlev, enum rng rng)
         (i < 40) ? &mons[PM_WRAITH] : mkclass(dlev, S_ZOMBIE, 0, rng);
 }
 
+/* Return an appropriate ant monster type for an anthole.
+   This is deterministic, so that all ants on the same level (practically
+   speaking, in a single anthole) are the same type of ant. */
 const struct permonst *
 antholemon(const d_level * dlev)
 {
@@ -392,6 +421,9 @@ antholemon(const d_level * dlev)
     return (mvitals[mtyp].mvflags & G_GONE) ? NULL : &mons[mtyp];
 }
 
+/* Turn up to 5 ordinary rooms into swamp rooms.
+   Swamps contain a checkerboard pattern of pools (except next to doors),
+   F-class monsters, and possibly one sea monster, apiece. */
 static void
 mkswamp(struct level *lev)
 {
@@ -429,6 +461,10 @@ mkswamp(struct level *lev)
     }
 }
 
+/* Return the position within a room at which its altar should be placed, if it
+   is to be a temple. It will be the exact center of the room, unless the center
+   isn't actually a square, in which case it'll be offset one space to the
+   side. */
 static coord *
 shrine_pos(struct level *lev, int roomno)
 {
@@ -440,6 +476,8 @@ shrine_pos(struct level *lev, int roomno)
     return &buf;
 }
 
+/* Try and find a suitable room for a temple and if successful, create the
+   temple with its altar and attendant priest. */
 static void
 mktemple(struct level *lev)
 {
@@ -464,6 +502,8 @@ mktemple(struct level *lev)
     loc->flags |= AM_SHRINE;
 }
 
+/* Return TRUE if the given location is next to a door or a secret door in any
+   direction. */
 boolean
 nexttodoor(struct level * lev, int sx, int sy)
 {
@@ -481,6 +521,7 @@ nexttodoor(struct level * lev, int sx, int sy)
     return FALSE;
 }
 
+/* Return TRUE if the given room contains downstairs (regular or branch). */
 boolean
 has_dnstairs(struct level *lev, struct mkroom *sroom)
 {
@@ -491,6 +532,7 @@ has_dnstairs(struct level *lev, struct mkroom *sroom)
     return FALSE;
 }
 
+/* Return TRUE if the given room contains upstairs (regular or branch). */
 boolean
 has_upstairs(struct level *lev, struct mkroom *sroom)
 {
@@ -501,19 +543,24 @@ has_upstairs(struct level *lev, struct mkroom *sroom)
     return FALSE;
 }
 
-
+/* Return a random x coordinate within the x limits of a room. */
 int
 somex(struct mkroom *croom, enum rng rng)
 {
     return rn2_on_rng(croom->hx - croom->lx + 1, rng) + croom->lx;
 }
 
+/* Return a random y coordinate within the y limits of a room. */
 int
 somey(struct mkroom *croom, enum rng rng)
 {
     return rn2_on_rng(croom->hy - croom->ly + 1, rng) + croom->ly;
 }
 
+/* Return TRUE if the given position falls within both the x and y limits
+   of a room.
+   Assumes that the room is rectangular; this probably won't work on irregular
+   rooms. Also doesn't check roomno. */
 boolean
 inside_room(struct mkroom *croom, xchar x, xchar y)
 {
@@ -522,6 +569,9 @@ inside_room(struct mkroom *croom, xchar x, xchar y)
              y <= croom->hy + 1));
 }
 
+/* Populate c.x and c.y with some random coordinate inside the given room.
+   Return TRUE if it was able to do this successfully, and FALSE if it failed
+   for some reason. */
 boolean
 somexy(struct level *lev, struct mkroom *croom, coord *c, enum rng rng)
 {
@@ -596,7 +646,7 @@ search_special(struct level *lev, schar type)
     return NULL;
 }
 
-
+/* Return an appropriate monster type for generating in throne rooms. */
 const struct permonst *
 courtmon(const d_level *dlev, enum rng rng)
 {
@@ -635,6 +685,8 @@ static const struct {
     PM_CAPTAIN, 1}
 };
 
+/* Return an appropriate Yendorian Army monster type for generating in
+   barracks. They will generate with the percentage odds given above. */
 static const struct permonst *
 squadmon(const d_level *dlev)
 {       /* return soldier types. */

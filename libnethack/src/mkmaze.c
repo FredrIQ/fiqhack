@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,7 +23,10 @@ static const char * waterbody_impl(xchar x, xchar y, boolean article);
 
 static boolean bubble_up;
 
-
+/* Returns TRUE if the terrain at the given location is in-bounds and is a
+   wall, door, secret door, or iron bars.
+   Despite the name, any door will return TRUE here, even if it's open, broken,
+   or missing. */
 static boolean
 iswall(struct level *lev, int x, int y)
 {
@@ -36,6 +39,8 @@ iswall(struct level *lev, int x, int y)
             type == IRONBARS);
 }
 
+/* Same as iswall(), except also returns TRUE if the terrain at the given
+   location is stone. */
 static boolean
 iswall_or_stone(struct level *lev, int x, int y)
 {
@@ -188,6 +193,15 @@ wallification(struct level *lev, int x1, int y1, int x2, int y2)
         }
 }
 
+/* Returns TRUE if the spot two steps in dir direction from the given location
+   is:
+   1: Stone terrain.
+   2: More than 3 steps away from the left and top maze edges. (x=0 doesn't
+      exist, so it makes sense that the maze wall starts at x=3, but I'm not
+      sure why the upper wall can't start at y=0 and the maze at y=1).
+   3: Otherwise within the maze.
+   Used exclusively in walkfrom() to determine whether it should carve a path
+   to a new space. */
 static boolean
 okay(struct level *lev, int x, int y, int dir)
 {
@@ -199,7 +213,9 @@ okay(struct level *lev, int x, int y, int dir)
     return TRUE;
 }
 
-/* find random starting point for maze generation */
+/* Choose a random starting point for maze generation.
+   The point is guaranteed to be on the maze grid: that is, it must have odd x
+   and y coordinates and have 3 <= x < x_maze_max and 3 <= y < y_maze_max */
 static void
 maze0xy(coord *cc, enum rng rng)
 {
@@ -225,8 +241,9 @@ bad_location(struct level * lev, xchar x, xchar y, xchar lx, xchar ly, xchar hx,
                lev->locations[x][y].typ == AIR)));
 }
 
-/* pick a location in area (lx, ly, hx, hy) but not in (nlx, nly, nhx, nhy) */
-/* and place something (based on rtype) in that region */
+/* pick a location in area (lx, ly, hx, hy) but not in (nlx, nly, nhx, nhy)
+   and place something (based on rtype) in that region.
+   If lx = 0, it will try the whole level rather than a subregion. */
 void
 place_lregion(struct level *lev, xchar lx, xchar ly, xchar hx, xchar hy,
               xchar nlx, xchar nly, xchar nhx, xchar nhy, xchar rtype,
@@ -273,6 +290,12 @@ place_lregion(struct level *lev, xchar lx, xchar ly, xchar hx, xchar hy,
     impossible("Couldn't place lregion type %d!", rtype);
 }
 
+/* Try to place something based on rtype specifically at (x,y).
+   If the location is bad (occupied, has a trap, or is within the rectangle
+   nlx, nly, nhx, nhy), it'll fail, UNLESS oneshot is specified, in which case
+   it'll try to make it non-bad by removing a trap.
+   oneshot basically means we're only trying this space, so don't tell the
+   caller to try somewhere else. */
 static boolean
 put_lregion_here(struct level *lev, xchar x, xchar y, xchar nlx, xchar nly,
                  xchar nhx, xchar nhy, xchar rtype, boolean oneshot,
@@ -457,7 +480,16 @@ makemaz(struct level *lev, const char *s, int *smeq)
         mktrap(lev, 0, 1, NULL, NULL);
 }
 
-
+/* Main guts of the maze generator.
+   First converts this space to typ, unless it's a door (presumably for special
+   levels).
+   From the given location, search all four directions for a valid place to
+   carve a path (it must be STONE to be valid, see okay()).
+   If more than one direction can have a path carved, pick one randomly, carve
+   the path there, then recurse on it.
+   This algorithm is a depth-first search and is generally known as "Recursive
+   Backtracker". It tends to generate long twisty passages with some long and
+   some short twisty dead-end side branches. */
 void
 walkfrom(struct level *lev, int x, int y)
 {
@@ -507,9 +539,12 @@ move(int *x, int *y, int dir)
     }
 }
 
-
-/* Find a random point in generated corridors, so we don't create items in
-   moats, bunkers, or walls.*/
+/* Finds a random point in the maze area which has the designated floor type of
+   the maze (CORR if the corrmaze flag is set, ROOM otherwise).
+   This is to avoid creating items, monsters, and features in illegal terrain
+   like moats, bunkers, or walls.
+   Argument is a pointer to coord that will be set by this function.
+   Panics if it cannot find any valid points. */
 void
 mazexy(struct level *lev, coord * cc)
 {
@@ -625,6 +660,8 @@ bound_digging(struct level *lev)
             }
 }
 
+/* Creates a magic portal at the given location, pointing to the given dungeon
+   number and level. */
 void
 mkportal(struct level *lev, xchar x, xchar y, xchar todnum, xchar todlevel)
 {
@@ -1195,4 +1232,3 @@ mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boolean ini)
 }
 
 /*mkmaze.c*/
-
