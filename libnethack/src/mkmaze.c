@@ -563,6 +563,8 @@ maze_touchup_rooms(struct level *lev, int attempts)
             destroy_wall(lev, lev->rooms[i].hx + 1, y);
         }
     }
+
+    wallification(lev, 2, 2, x_maze_max, y_maze_max, TRUE);
 }
 
 void
@@ -686,7 +688,6 @@ makemaz(struct level *lev, const char *s, int *smeq)
     place_branch(lev, Is_branchlev(&lev->z), COLNO, ROWNO);
 
     maze_touchup_rooms(lev, mklev_rn2(3, lev));
-    wallification(lev, 2, 2, x_maze_max, y_maze_max, TRUE);
 
     for (x = 11 + mklev_rn2(8, lev); x; x--) {
         mazexy(lev, &mm);
