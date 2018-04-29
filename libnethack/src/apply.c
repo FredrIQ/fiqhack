@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1776,7 +1776,7 @@ use_unicorn_horn(struct monst *mon, struct obj *obj)
     int resist[] = {SICK_RES, 0, HALLUC_RES, 0, STUN_RES};
     int turns = rnd(100);
     boolean cursed = (obj && obj->cursed);
-    boolean blessed = (obj && obj->blessed);
+    boolean blessed = (!obj || obj->blessed);
     int cure = rn2_on_rng(5, cursed ? rng_cursed_unihorn : rng_main);
     boolean res = FALSE;
     boolean any_trouble = FALSE;
@@ -1832,8 +1832,9 @@ use_unicorn_horn(struct monst *mon, struct obj *obj)
             pline(msgc_actionok, "Nothing happens.");
     }
 
-    if (blessed && !rn2_on_rng(10, mon == &youmonst ? rng_unbless_unihorn :
-                               rng_main)) {
+    if (obj && blessed &&
+        !rn2_on_rng(10, mon == &youmonst ? rng_unbless_unihorn :
+                    rng_main)) {
         if (!blind(mon)) {
             if (mon == &youmonst) {
                 pline(msgc_itemloss, "%s %s %s.", Shk_Your(obj),
