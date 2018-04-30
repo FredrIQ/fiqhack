@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2018-04-30
 #	Copyright (c) 1990-95 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
 #
@@ -61,8 +61,6 @@ LEVEL:		"wizard1" "none" @ (11, 6)
 CHAINLEVEL:	"wizard2" "X" "wizard1" + (1, 0)
 CHAINLEVEL:	"wizard3" "Y" "wizard1" + (2, 0)
 LEVEL:		"orcus" "O" @ (10, 6)
-LEVEL:		"fakewiz1" "F" @ (-6,4)
-LEVEL:		"fakewiz2" "G" @ (-6,4)
 
 #
 #	The Mines of the Gnomes of Zurich.

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-25 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -346,12 +346,13 @@ minliquid(struct monst *mtmp)
 {
     boolean vis = (level && canseemon(mtmp));
     boolean inpool, inlava, infountain;
+    struct level *lev = mtmp->dlevel;
 
-    inpool = is_pool(level, mtmp->mx, mtmp->my) && !aboveliquid(mtmp) &&
+    inpool = is_pool(lev, mtmp->mx, mtmp->my) && !aboveliquid(mtmp) &&
         !waterwalks(mtmp);
     /* Not waterwalks() for lava, the source might burn up... */
-    inlava = is_lava(level, mtmp->mx, mtmp->my) && !aboveliquid(mtmp);
-    infountain = IS_FOUNTAIN(level->locations[mtmp->mx][mtmp->my].typ) &&
+    inlava = is_lava(lev, mtmp->mx, mtmp->my) && !aboveliquid(mtmp);
+    infountain = IS_FOUNTAIN(lev->locations[mtmp->mx][mtmp->my].typ) &&
         !levitates(mtmp);
 
     /* Flying and levitation keeps our steed out of the liquid */
@@ -370,7 +371,7 @@ minliquid(struct monst *mtmp)
     } else if (mtmp->data == &mons[PM_IRON_GOLEM] && inpool && !rn2(5)) {
         int dam = dice(2, 6);
 
-        if (level && cansee(mtmp->mx, mtmp->my))
+        if (level == lev && cansee(mtmp->mx, mtmp->my))
             pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                   "%s rusts.", Monnam(mtmp));
         mtmp->mhp -= dam;
@@ -418,7 +419,7 @@ minliquid(struct monst *mtmp)
                     if (mtmp->mhp <= 0)
                         mondied(mtmp);
                 } else {
-                    if (level && cansee(mtmp->mx, mtmp->my))
+                    if (level == lev && cansee(mtmp->mx, mtmp->my))
                         pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                               "%s %s.", Monnam(mtmp),
                               mtmp->data ==
@@ -457,7 +458,7 @@ minliquid(struct monst *mtmp)
            water damage to dead monsters' inventory, but survivors need to be
            handled here.  Swimmers are able to protect their stuff... */
         if (!is_clinger(mtmp->data) && !swims(mtmp)) {
-            if (level && cansee(mtmp->mx, mtmp->my) && !unbreathing(mtmp)) {
+            if (level == lev && cansee(mtmp->mx, mtmp->my) && !unbreathing(mtmp)) {
                 pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                       "%s drowns.", Monnam(mtmp));
             }
@@ -481,7 +482,7 @@ minliquid(struct monst *mtmp)
         }
     } else {
         /* but eels have a difficult time outside */
-        if (mtmp->data->mlet == S_EEL && !Is_waterlevel(&u.uz)) {
+        if (mtmp->data->mlet == S_EEL && !Is_waterlevel(&lev->z)) {
             if (mtmp->mhp >= 2)
                 mtmp->mhp--;
             monflee(mtmp, 2, FALSE, FALSE);

@@ -1,4 +1,4 @@
-# Last modified by Sean Hunt, 2014-02-16
+# Last modified by Fredrik Ljungdahl, 2018-04-30
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1992 by M. Stephenson and Izchak Miller
 # NetHack may be freely redistributed.  See license for details.
@@ -148,7 +148,7 @@ MAP
 |..|..|.........|..........|.
 |..S..|.}}}}}}}.|..........|.
 |..|..|.}}---}}.|-S--------|.
-|..|..|.}--.--}.|..|.......|.
+|..|..|.}--.--}.|..|.......S.
 |..|..|.}|...|}.|..|.......|.
 |..---|.}--.--}.|..|.......|.
 |.....|.}}---}}.|..|.......|.
@@ -160,7 +160,6 @@ STAIR:levregion(00,00,78,20),(0,0,28,12),up
 STAIR:levregion(00,00,78,20),(0,0,28,12),down
 BRANCH:levregion(00,00,78,20),(0,0,28,12)
 TELEPORT_REGION:levregion(00,00,78,20),(0,0,27,12)
-PORTAL:(25,11,25,11),levregion(),"fakewiz1"
 MAZEWALK:(28,09),east
 REGION:(07,03,15,11),unlit,"morgue",unfilled
 REGION:(17,06,18,11),unlit,"beehive"
@@ -212,8 +211,7 @@ OBJECT:'"',random,(11,07)
 
 
 # The former decoy wizard levels.
-# There are two of these, and we need to
-# distinguish between them for the portal.
+# No longer used in new games. They remain for older games.
 MAZE:"fakewiz1",random
 GEOMETRY:center,center
 MAP
@@ -230,7 +228,6 @@ STAIR:levregion(00,00,78,20),(0,0,8,7),up
 STAIR:levregion(00,00,78,20),(0,0,8,7),down
 BRANCH:levregion(00,00,78,20),(0,0,8,7)
 TELEPORT_REGION:levregion(00,00,78,20),(2,2,6,6)
-PORTAL:(4,4,4,4),levregion(),"wizard3"
 MAZEWALK:(08,05),east
 REGION:(04,03,06,06),unlit,"ordinary",unfilled,true
 MONSTER:'L',random,(04,04)
@@ -241,6 +238,8 @@ TRAP:"board",(04,03)
 TRAP:"board",(04,05)
 TRAP:"board",(03,04)
 TRAP:"board",(05,04)
+# treasures, new to replicate fakewiz2 now that the portal is gone
+OBJECT:'"',random,(04,04)
 
 
 MAZE:"fakewiz2",random

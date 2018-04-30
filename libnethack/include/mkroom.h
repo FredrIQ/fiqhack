@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -68,7 +68,8 @@ extern const struct shclass shtypes[];
 # define ABBATOIR       18      /* corpses, blood, leashes */
 # define STATUARY       19      /* lined with empty statues */
 # define SEMINARY       20      /* some roaming priests */
-/* 14 unused spaces reserved for future use */
+# define FAKEWIZ        21      /* fake Wizard's Tower */
+/* 13 unused spaces reserved for future use */
 # define SHOPBASE       34      /* everything above this is a shop */
 # define ARMORSHOP      35      /* specific shop defines for level compiler */
 # define SCROLLSHOP     36

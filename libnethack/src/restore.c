@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -27,6 +27,7 @@ static void freefruitchn(struct fruit *);
 static void ghostfruit(struct obj *);
 static void restgamestate(struct memfile *mf);
 static void reset_oattached_mids(boolean ghostly, struct level *lev);
+static void finalize_recover(void);
 
 /*
  * Save a mapping of IDs from ghost levels to the current level.  This
@@ -1127,6 +1128,9 @@ dorecover(struct memfile *mf)
 
     load_qtlist();      /* re-load the quest text info */
 
+    /* Final cleanup for old saves */
+    finalize_recover();
+
     program_state.restoring_binary_save = FALSE;
 
     flags.desync = FALSE;   /* desync the save if this was set to TRUE */
@@ -1142,6 +1146,43 @@ dorecover(struct memfile *mf)
 
     mf->pos = temp_pos;
     return 1;
+}
+
+static void
+finalize_recover(void)
+{
+    if (flags.save_revision == SAVE_REVISION)
+        return;
+
+    if (flags.save_revision < 20) {
+        struct level *lev = levels[ledger_no(&wiz3_level)];
+        if (lev) {
+            /* Kill off the portal and make an opening. */
+            struct trap *ttrap;
+            for (ttrap = level->lev_traps; ttrap; ttrap = ttrap->ntrap)
+                if (ttrap->ttyp == MAGIC_PORTAL)
+                    break;
+
+            if (ttrap)
+                deltrap(lev, ttrap);
+
+            /* Make an opening. Don't bother making it secret, that might
+               just confuse players on old saves... */
+            lev->locations[52][11].typ = ROOM;
+        }
+
+        lev = levels[ledger_no(&portal_level)];
+        if (lev) {
+            /* Kill off the portal */
+            struct trap *ttrap;
+            for (ttrap = level->lev_traps; ttrap; ttrap = ttrap->ntrap)
+                if (ttrap->ttyp == MAGIC_PORTAL)
+                    break;
+
+            if (ttrap)
+                deltrap(lev, ttrap);
+        }
+    }
 }
 
 void

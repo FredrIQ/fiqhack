@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,6 +26,7 @@ static struct mkroom *mktemple(struct level *lev);
 static void mkseminary(struct level *lev);
 static void mksubmerged(struct level *lev);
 static void mkstatuary(struct level *lev);
+static void mkfakewiz(struct level *lev);
 static coord *shrine_pos(struct level *lev, int roomno);
 static const struct permonst *morguemon(const d_level *dlev, enum rng rng);
 static const struct permonst *squadmon(const d_level *dlev);
@@ -96,6 +97,9 @@ mkroom(struct level *lev, int roomtype)
             break;
         case STATUARY:
             mkstatuary(lev);
+            break;
+        case FAKEWIZ:
+            mkfakewiz(lev);
             break;
         default:
             impossible("Tried to make a room of type %d.", roomtype);
@@ -661,14 +665,14 @@ mksubmerged(struct level *lev)
     for (x = sroom->lx; x <= sroom->hx; x++) {
         for (y = sroom->ly; y <= sroom->hy; y++) {
             lev->locations[x][y].typ = MOAT;
-            if (!rn2(4)) {
+            if (!rn2_on_rng(4, rng)) {
                 makemon(!rn2_on_rng(8, rng) ? &mons[PM_KRAKEN] :
                         !rn2_on_rng(4, rng) ? &mons[PM_PIRANHA] :
                         !rn2_on_rng(3, rng) ? &mons[PM_SHARK] :
                         !rn2_on_rng(2, rng) ? &mons[PM_ELECTRIC_EEL] :
                         &mons[PM_GIANT_EEL], lev, x, y, MM_ALLLEVRNG);
             }
-            if (!rn2(20)) {
+            if (!rn2_on_rng(20, rng)) {
                 mksobj_at(KELP_FROND, lev, x, y, TRUE, FALSE, rng);
             }
         }
@@ -725,6 +729,71 @@ mkstatuary(struct level *lev)
     }
 
 #undef MKSTATUE
+}
+
+/* Create a fake Wizard's Tower */
+static void
+mkfakewiz(struct level *lev)
+{
+    enum rng rng = rng_for_level(&lev->z);
+    struct mkroom *sroom;
+    xchar x, y, width, height;
+    int tries;
+
+    for (tries = 100; tries; tries--) {
+        sroom = pick_room(lev, TRUE, rng);
+        if (!sroom)
+            continue;
+
+        width = sroom->hx - sroom->lx;
+        height = sroom->hy - sroom->ly;
+        /* We need a certain width to create a fakewiz */
+        if (width < 7 || height < 7)
+            continue;
+        break;
+    }
+
+    if (!tries) {
+        mkzoo(lev, MORGUE, rng);
+        return;
+    }
+
+    sroom->rtype = FAKEWIZ;
+
+    /* Figure out center tile */
+    int cx = sroom->lx + width / 2;
+    int cy = sroom->ly + height / 2;
+
+    /* Add a demon, a vampire lord and a hell hound */
+    makemon(mkclass(&lev->z, S_DEMON, 0, rng_main), lev, cx, cy, MM_ALLLEVRNG);
+    makemon(&mons[PM_VAMPIRE_LORD], lev, cx, cy,
+            MM_ALLLEVRNG | MM_ADJACENTOK);
+    makemon(&mons[PM_HELL_HOUND], lev, cx, cy,
+            MM_ALLLEVRNG | MM_ADJACENTOK);
+
+    /* Construct the tower itself */
+    for (x = sroom->lx; x <= sroom->hx; x++) {
+        for (y = sroom->ly; y <= sroom->hy; y++) {
+            int dist = dist2(x, y, cx, cy);
+            int mdist = distmin(x, y, cx, cy);
+            if (!dist)
+                mkobj_at(AMULET_CLASS, lev, x, y, TRUE, rng);
+            else if (dist == 1)
+                maketrap(lev, x, y, SQKY_BOARD, rng);
+            else if (dist <= 7)
+                lev->locations[x][y].typ = VWALL;
+            else if (mdist <= (min(height, width) / 2)) {
+                lev->locations[x][y].typ = MOAT;
+                if (!rn2_on_rng(4, rng)) {
+                    makemon(!rn2_on_rng(8, rng) ? &mons[PM_KRAKEN] :
+                            !rn2_on_rng(4, rng) ? &mons[PM_PIRANHA] :
+                            !rn2_on_rng(3, rng) ? &mons[PM_SHARK] :
+                            !rn2_on_rng(2, rng) ? &mons[PM_ELECTRIC_EEL] :
+                            &mons[PM_GIANT_EEL], lev, x, y, MM_ALLLEVRNG);
+                }
+            }
+        }
+    }
 }
 
 /* Return TRUE if the given location is next to a door or a secret door in any

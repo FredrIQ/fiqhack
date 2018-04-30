@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,11 +20,23 @@ static boolean bad_location(struct level *lev, xchar x, xchar y, xchar lx,
                             xchar ly, xchar hx, xchar hy);
 static boolean maze_inbounds(xchar, xchar);
 static boolean maze_edge(xchar, xchar);
+static void maze_remove_deadends(struct level *);
 static boolean maze_room_ok(struct level *);
 static void maze_add_rooms(struct level *, int, int *);
 static void maze_touchup_rooms(struct level *, int);
 static const char * waterbody_impl(xchar x, xchar y, boolean article);
 
+/* adjust a coordinate one step in the specified direction */
+#define mz_move(X, Y, dir) \
+    do {                                                         \
+        switch (dir) {                                           \
+        case 0:  --(Y);  break;                                  \
+        case 1:  (X)++;  break;                                  \
+        case 2:  (Y)++;  break;                                  \
+        case 3:  --(X);  break;                                  \
+        default: panic("mz_move: bad direction %d", dir);        \
+        }                                                        \
+    } while (0)
 
 static boolean bubble_up;
 
@@ -369,6 +381,63 @@ maze_edge(xchar x, xchar y)
             !maze_inbounds(x, y - 1) || !maze_inbounds(x, y + 1));
 }
 
+/* Remove all dead ends from the maze.
+   Does this by looking for spots that have 3 or more directions in which they
+   are separated from another open space 2 squares away by some inaccessible
+   terrain. Then it picks a random one of these directions and replaces the
+   wall between them with whatever terrain typ is.
+   If it decides to remove the dead end in a direction that goes into a room,
+   create a door there instead. */
+void
+maze_remove_deadends(struct level *lev)
+{
+    char dirok[4];
+    int x, y, dir, idx, idx2, dx, dy, dx2, dy2;
+
+    dirok[0] = 0; /* lint suppression */
+    for (x = 2; x < x_maze_max; x++)
+        for (y = 2; y < y_maze_max; y++)
+            if (ACCESSIBLE(lev->locations[x][y].typ) &&
+                (x % 2) && (y % 2)) {
+                idx = idx2 = 0;
+                for (dir = 0; dir < 4; dir++) {
+                    /* note: mz_move() is a macro which modifies
+                       one of its first two parameters */
+                    dx = dx2 = x;
+                    dy = dy2 = y;
+                    mz_move(dx, dy, dir);
+                    if (!maze_inbounds(dx, dy)) {
+                        idx2++;
+                        continue;
+                    }
+                    mz_move(dx2, dy2, dir);
+                    mz_move(dx2, dy2, dir);
+                    if (!maze_inbounds(dx2, dy2)) {
+                        idx2++;
+                        continue;
+                    }
+                    if (!ACCESSIBLE(lev->locations[dx][dy].typ)
+                        && ACCESSIBLE(lev->locations[dx2][dy2].typ)) {
+                        dirok[idx++] = dir;
+                        idx2++;
+                    }
+                }
+                if (idx2 >= 3 && idx > 0) {
+                    dx = x;
+                    dy = y;
+                    dir = dirok[rn2(idx)];
+                    mz_move(dx, dy, dir);
+                    if (lev->locations[dx][dy].roomno != NO_ROOM) {
+                        dodoor(lev, dx, dy,
+                               &lev->rooms[lev->locations[dx][dy].roomno]);
+                    }
+                    else {
+                        lev->locations[dx][dy].typ = ROOM;
+                    }
+                }
+            }
+}
+
 static boolean
 maze_room_ok(struct level *lev)
 {
@@ -540,27 +609,30 @@ maze_touchup_rooms(struct level *lev, int attempts)
     for (; attempts; attempts--)
         mkroom(lev, rand_roomtype(lev));
     for (i = 0; i < lev->nroom; ++i) {
-        if (lev->rooms[i].rtype != OROOM) /* is it already special? */
-            continue;
-        /* probabilities here are deflated from makelevel() */
-        if (!rn2_on_rng(20, rng))
-            mkfount(lev, FALSE, &lev->rooms[i]);
-        if (!rn2_on_rng(80, rng))
-            mksink(lev, &lev->rooms[i]);
-        if (!rn2_on_rng(100, rng))
-            mkgrave(lev, &lev->rooms[i]);
-        if (!rn2_on_rng(100, rng))
-            mkaltar(lev, &lev->rooms[i]);
-
-        /* Remove the walls for this room. */
-        xchar x, y;
-        for (x = lev->rooms[i].lx; x <= lev->rooms[i].hx; x++) {
-            destroy_wall(lev, x, lev->rooms[i].ly - 1);
-            destroy_wall(lev, x, lev->rooms[i].hy + 1);
+        if (lev->rooms[i].rtype == OROOM) {
+            /* probabilities here are deflated from makelevel() */
+            if (!rn2_on_rng(20, rng))
+                mkfount(lev, FALSE, &lev->rooms[i]);
+            if (!rn2_on_rng(80, rng))
+                mksink(lev, &lev->rooms[i]);
+            if (!rn2_on_rng(100, rng))
+                mkgrave(lev, &lev->rooms[i]);
+            if (!rn2_on_rng(100, rng))
+                mkaltar(lev, &lev->rooms[i]);
         }
-        for (y = lev->rooms[i].ly; y <= lev->rooms[i].hy; y++) {
-            destroy_wall(lev, lev->rooms[i].lx - 1, y);
-            destroy_wall(lev, lev->rooms[i].hx + 1, y);
+
+        if (lev->rooms[i].rtype == OROOM ||
+            lev->rooms[i].rtype == FAKEWIZ) {
+            /* Remove the walls for this room. */
+            xchar x, y;
+            for (x = lev->rooms[i].lx; x <= lev->rooms[i].hx; x++) {
+                destroy_wall(lev, x, lev->rooms[i].ly - 1);
+                destroy_wall(lev, x, lev->rooms[i].hy + 1);
+            }
+            for (y = lev->rooms[i].ly; y <= lev->rooms[i].hy; y++) {
+                destroy_wall(lev, lev->rooms[i].lx - 1, y);
+                destroy_wall(lev, lev->rooms[i].hx + 1, y);
+            }
         }
     }
 
@@ -630,6 +702,10 @@ makemaz(struct level *lev, const char *s, int *smeq)
     } while (lev->locations[mm.x][mm.y].roomno != NO_ROOM);
 
     walkfrom(lev, mm.x, mm.y);
+
+    if (!mklev_rn2(5, lev))
+        maze_remove_deadends(lev);
+
     /* put a boulder at the maze center */
     mksobj_at(BOULDER, lev, (int)mm.x, (int)mm.y, TRUE, FALSE,
               rng_for_level(&lev->z));
