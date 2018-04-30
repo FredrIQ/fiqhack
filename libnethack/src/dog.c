@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-04-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -380,10 +380,11 @@ mon_arrive(struct monst *mtmp, boolean with_you)
         if (t) {
             xlocale = t->tx, ylocale = t->ty;
             break;
-        } else {
-            impossible("mon_arrive: no corresponding portal?");
         }
-     /*FALLTHRU*/ default:
+
+        /* used to give impossible, but old fakewiz levels might have had
+           their portal removed. Fallthrough */
+    default:
     case MIGR_RANDOM:
         xlocale = COLNO;
         ylocale = ROWNO;
