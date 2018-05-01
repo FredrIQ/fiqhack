@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-05-01 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1841,6 +1841,7 @@ extern void create_secret_door(struct level *lev, struct mkroom *croom,
 extern boolean dig_corridor(struct level *lev, coord *, coord *, boolean, schar,
                             schar);
 extern void fill_room(struct level *lev, struct mkroom *, boolean);
+extern void fix_stair_rooms(struct level *lev, boolean);
 extern boolean load_special(struct level *lev, const char *, int *);
 extern void fixup_special(struct level *lev);
 

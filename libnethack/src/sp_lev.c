@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-05-01 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,7 +29,6 @@ static void create_altar(struct level *lev, altar *, struct mkroom *);
 static void create_gold(struct level *lev, gold *, struct mkroom *);
 static void create_feature(struct level *lev, int, int, struct mkroom *, int);
 static boolean search_door(struct mkroom *, xchar *, xchar *, xchar, int);
-static void fix_stair_rooms(struct level *lev);
 static void create_corridor(struct level *lev, corridor *, int *);
 
 static boolean create_subroom(struct level *lev, struct mkroom *, xchar, xchar,
@@ -1458,17 +1457,15 @@ dig_corridor(struct level * lev, coord * org, coord * dest, boolean nxcor,
  * and dnstairs_room after the rooms have been sorted.  On normal levels,
  * stairs don't get created until _after_ sorting takes place.
  */
-static void
-fix_stair_rooms(struct level *lev)
+void
+fix_stair_rooms(struct level *lev, boolean allow_fail)
 {
     int i;
     struct mkroom *croom;
 
-    if (isok(lev->dnstair.sx, lev->dnstair.sy) &&
-        !((lev->dnstairs_room->lx <= lev->dnstair.sx &&
-           lev->dnstair.sx <= lev->dnstairs_room->hx) &&
-          (lev->dnstairs_room->ly <= lev->dnstair.sy &&
-           lev->dnstair.sy <= lev->dnstairs_room->hy))) {
+    if (!lev)
+        panic("?");
+    if (isok(lev->dnstair.sx, lev->dnstair.sy)) {
         for (i = 0; i < lev->nroom; i++) {
             croom = &lev->rooms[i];
             if ((croom->lx <= lev->dnstair.sx && lev->dnstair.sx <= croom->hx)
@@ -1478,14 +1475,10 @@ fix_stair_rooms(struct level *lev)
                 break;
             }
         }
-        if (i == lev->nroom)
+        if (i == lev->nroom && !allow_fail)
             panic("Couldn't find dnstair room in fix_stair_rooms!");
     }
-    if (isok(lev->upstair.sx, lev->upstair.sy) &&
-        !((lev->upstairs_room->lx <= lev->upstair.sx &&
-           lev->upstair.sx <= lev->upstairs_room->hx) &&
-          (lev->upstairs_room->ly <= lev->upstair.sy &&
-           lev->upstair.sy <= lev->upstairs_room->hy))) {
+    if (isok(lev->upstair.sx, lev->upstair.sy)) {
         for (i = 0; i < lev->nroom; i++) {
             croom = &lev->rooms[i];
             if ((croom->lx <= lev->upstair.sx && lev->upstair.sx <= croom->hx)
@@ -1495,8 +1488,21 @@ fix_stair_rooms(struct level *lev)
                 break;
             }
         }
-        if (i == lev->nroom)
+        if (i == lev->nroom && !allow_fail)
             panic("Couldn't find upstair room in fix_stair_rooms!");
+    }
+    if (isok(lev->sstairs.sx, lev->sstairs.sy)) {
+        for (i = 0; i < lev->nroom; i++) {
+            croom = &lev->rooms[i];
+            if ((croom->lx <= lev->sstairs.sx && lev->sstairs.sx <= croom->hx)
+                && (croom->ly <= lev->sstairs.sy &&
+                    lev->sstairs.sy <= croom->hy)) {
+                lev->sstairs_room = croom;
+                break;
+            }
+        }
+        if (i == lev->nroom && !allow_fail)
+            panic("Couldn't find sstairs room in fix_stair_rooms!");
     }
 }
 
@@ -1512,7 +1518,7 @@ create_corridor(struct level *lev, corridor *c, int *smeq)
 
     if (c->src.room == -1) {
         sort_rooms(lev);
-        fix_stair_rooms(lev);
+        fix_stair_rooms(lev, FALSE);
         makecorridors(lev, smeq);
         return;
     }
