@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-05-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -663,7 +663,15 @@ rand_roomtype(struct level *lev)
 {
     int u_depth = depth(&lev->z);
     /* minimum number of rooms needed to allow a random special room */
-    int room_threshold = Is_branchlev(&lev->z) ? 4 : 3;
+    int room_threshold = 1;
+    int i;
+    for (i = 0; i < lev->nroom; i++) {
+        if (&lev->rooms[i] == lev->upstairs_room ||
+            &lev->rooms[i] == lev->dnstairs_room ||
+            &lev->rooms[i] == lev->sstairs_room)
+            room_threshold++;
+    }
+
     if (search_special(lev, VAULT))
         room_threshold++;
 
