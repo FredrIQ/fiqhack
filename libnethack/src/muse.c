@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-06-04 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2759,7 +2759,7 @@ mon_break_wand(struct monst *mtmp, struct obj *otmp)
         otyp == WAN_COLD ||
         otyp == WAN_LIGHTNING ||
         otyp == WAN_MAGIC_MISSILE) {
-        explode(otmp->ox, otmp->oy, (otyp - WAN_MAGIC_MISSILE), damage, WAND_CLASS,
+        explode(otmp->ox, otmp->oy, -30 - (otyp - WAN_MAGIC_MISSILE), damage, WAND_CLASS,
                 expltype, NULL, 0);
         return;
     }
