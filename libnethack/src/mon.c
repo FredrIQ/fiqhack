@@ -3490,7 +3490,7 @@ setmangry(struct monst *mtmp)
     if (idle(mtmp))
         mtmp->mstrategy = st_none;
 
-    if (!flags.mon_moving)
+    if (!flags.mon_moving && !mtmp->mtame)
         punish_elbereth();
 
     if (!mtmp->mpeaceful)
