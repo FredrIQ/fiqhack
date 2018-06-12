@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-06-12 */
+/* Last modified by Fredrik Ljungdahl, 2018-06-13 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -872,12 +872,12 @@ pleased(aligntyp g_align)
         case 0:
             break;      /* your god blows you off, too bad */
         }
-
-        if (pat_on_head && actionmax >= 7 && u.ualign.record >= PIOUS &&
-            flags.elbereth_enabled && !u.uevent.uhand_of_elbereth &&
-            get_piety() >= crown_threshold())
-            crown = TRUE;
     }
+
+    if (pat_on_head && actionmax >= 7 && u.ualign.record >= PIOUS &&
+        flags.elbereth_enabled && !u.uevent.uhand_of_elbereth &&
+        get_piety() >= crown_threshold())
+        crown = TRUE;
 
     /* note: can't get pat_on_head unless all troubles have just been fixed or
        there were no troubles to begin with; hallucination won't be in effect
