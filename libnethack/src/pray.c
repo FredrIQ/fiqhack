@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-05-18 */
+/* Last modified by Fredrik Ljungdahl, 2018-06-12 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2180,7 +2180,7 @@ gift_threshold(void)
 {
     int cost = 10000;
     int i;
-    for (i = 1; i < u.ugifts; i++)
+    for (i = u.ugifts; i; i--)
         cost *= 2;
 
     return cost;
