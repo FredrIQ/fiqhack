@@ -874,7 +874,7 @@ pleased(aligntyp g_align)
         }
     }
 
-    if (pat_on_head && actionmax >= 7 && u.ualign.record >= PIOUS &&
+    if (pat_on_head && u.ualign.record >= PIOUS &&
         flags.elbereth_enabled && !u.uevent.uhand_of_elbereth &&
         get_piety() >= crown_threshold())
         crown = TRUE;
