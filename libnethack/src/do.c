@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-09 */
+/* Last modified by Fredrik Ljungdahl, 2018-06-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1721,11 +1721,12 @@ heal_legs(struct monst *mon, int side)
 
     if (you || vis)
         pline(you ? msgc_statusheal : msgc_monneutral,
-              "%s %s feel somewhat better.",
+              "%s %s feel%s somewhat better.",
               you ? "Your" : s_suffix(mon_nam(mon)),
               side == (LEFT_SIDE | RIGHT_SIDE) ?
               makeplural(mbodypart(mon, LEG)) :
-              mbodypart(mon, LEG));
+              mbodypart(mon, LEG),
+              side == (LEFT_SIDE | RIGHT_SIDE) ? "" : "s");
     set_property(mon, LWOUNDED_LEGS, -2, TRUE);
     set_property(mon, RWOUNDED_LEGS, -2, TRUE);
 
