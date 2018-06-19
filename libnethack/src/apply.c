@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-06-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1560,11 +1560,12 @@ validate_jump(const struct musable *m, coord *cc, boolean magic,
         long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
         unsigned traptype;
         struct trap *t = t_at(m_dlevel(mon), ox, oy);
-        traptype = (t->ttyp == PIT || t->ttyp == SPIKED_PIT ? TT_PIT :
-                    t->ttyp == BEAR_TRAP ? TT_BEARTRAP :
-                    t->ttyp == WEB ? TT_WEB : 0);
         if (you)
             traptype = u.utraptype;
+        else
+            traptype = (t->ttyp == PIT || t->ttyp == SPIKED_PIT ? TT_PIT :
+                        t->ttyp == BEAR_TRAP ? TT_BEARTRAP :
+                        t->ttyp == WEB ? TT_WEB : 0);
 
         switch (traptype) {
         case TT_BEARTRAP:
