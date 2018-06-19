@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-06-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -913,11 +913,41 @@ display_rip(int how, long umoney, const char *killer)
            u.uplname, umoney, killer, how, getyear());
 }
 
+static void
+watch_done_noreturn(void)
+{
+    while (1) {
+        struct nh_cmd_and_arg cmd;
+        int cmdidx;
+
+        do {
+            (*windowprocs.win_request_command)
+                (wizard, 1, flags.interrupted, &cmd,
+                 msg_request_command_callback);
+        } while (replay_delay());
+        cmdidx = get_command_idx(cmd.cmd);
+
+        if (cmdlist[cmdidx].flags & CMD_NOTIME) {
+            program_state.in_zero_time_command = TRUE;
+            command_input(cmdidx, &(cmd.arg));
+        } else {
+            if (!(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
+                cmdlist[cmdidx].func)
+                pline(msgc_cancelled, "Command '%s' is unavailable "
+                      "while watching.",
+                      cmd.cmd);
+        }
+    }
+}
+
 void
 done(int how, const char *killer)
 {
     if (check_survival(how))
         return;
+
+    if (program_state.followmode == FM_WATCH)
+        watch_done_noreturn();
 
     if (program_state.followmode == FM_REPLAY)
         replay_done_noreturn();
