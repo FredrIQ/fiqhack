@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-06-28 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -547,8 +547,8 @@ update_hpen_attrib(struct monst *mon)
         mon->pwmax += (newadv - oldadv);
         if (mon->pwmax < 0)
             mon->pwmax = 0;
-        if (mon->pw > mon->pw)
-            mon->pw = mon->pw;
+        if (mon->pw > mon->pwmax)
+            mon->pw = mon->pwmax;
 
         mon->oldwis = acurr(mon, A_WIS);
     }
