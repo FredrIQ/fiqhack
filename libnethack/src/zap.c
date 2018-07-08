@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-06-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-07-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -177,11 +177,12 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             break;
         }
 
-        inc_timeout(mdef, SLOW, dmg, FALSE);
+        int res = 0;
+        res |= inc_timeout(mdef, SLOW, dmg, FALSE);
         if (wandlevel == P_MASTER)
-            set_property(mdef, FAST, -2, TRUE);
+            res |= set_property(mdef, FAST, -2, TRUE);
         else if (wandlevel >= P_SKILLED)
-            set_property(mdef, FAST, -1, TRUE);
+            res |= set_property(mdef, FAST, -1, TRUE);
         if (!hityou)
             m_dowear(mdef, FALSE);      /* might want speed boots */
         if (Engulfed && (mdef == u.ustuck) && is_whirly(mdef->data)) {
@@ -193,6 +194,9 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
             expels(mdef, mdef->data, TRUE);
             known = TRUE;
         }
+
+        if (res)
+            known = TRUE;
         break;
     case SPE_SPEED_MONSTER:
         known = inc_timeout(mdef, FAST, rn1(100, 51), FALSE);
