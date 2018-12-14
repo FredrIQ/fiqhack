@@ -9,8 +9,8 @@
    objects they remember seeing. */
 
 static struct entity find_objects(struct level *, struct obj *, int *,
-                                   boolean *, const char *,
-                                   struct nh_menulist *, int);
+                                  boolean *, const char *,
+                                  struct nh_menulist *, int, int);
 static struct entity findobj_prompt(int, const char *);
 
 /* A generic entity struct for merging objects, traps and dungeon features
@@ -32,6 +32,7 @@ struct entity {
     struct level *lev; /* NULL means part of your inventory */
     int x;
     int y;
+    int where;
 };
 
 /* Returns an object or trap in an entity form. */
@@ -51,6 +52,7 @@ get_entity(struct level *lev, struct obj *obj, struct trap *trap)
         ent.obj = obj;
         ent.x = obj->ox;
         ent.y = obj->oy;
+        ent.where = obj->where;
     }
 
     return ent;
@@ -73,14 +75,15 @@ entity_name(struct entity ent)
 
     if (obj->where == OBJ_CONTAINED) {
         upper = obj;
-        while (upper->memory != OM_MEMORY_LOST &&
+        while (upper && upper->memory != OM_MEMORY_LOST &&
                upper->where == OBJ_CONTAINED)
             upper = upper->ocontainer;
-        if (upper->memory == OM_MEMORY_LOST)
+        if (upper && upper->memory == OM_MEMORY_LOST)
             return NULL;
 
-        dname = msgprintf("%s (inside %s)", dname,
-                          doname(upper));
+        if (upper)
+            dname = msgprintf("%s (inside %s)", dname,
+                              doname(upper));
     }
 
     return dname;
@@ -89,8 +92,8 @@ entity_name(struct entity ent)
 /* Adds an entity to the search result menu */
 void
 add_entry(struct level *lev, int *found, boolean *did_header,
-          struct nh_menulist *menu, int getobj, const char *str,
-          struct entity ent)
+          struct nh_menulist *menu, int depth, int getobj,
+          const char *str, struct entity ent)
 {
     /* If we didn't find anything beforehand, inititalize
        the window now. */
@@ -112,25 +115,34 @@ add_entry(struct level *lev, int *found, boolean *did_header,
     if (!*did_header) {
         *did_header = TRUE;
         add_menutext(menu, "");
-        const char *header = "Inventory";
+        const char *header;
+        if (ent.typ == ENT_OBJ && ent.where == OBJ_INVENT)
+            header = "Inventory";
+        else
+            header = "Magic chest";
         if (lev)
             header = describe_dungeon_level(lev);
 
         add_menuheading(menu, header);
     }
 
-    add_menuitem(menu, *found, entity_name(ent), 0, FALSE);
+    const char *depthstr = "";
+    while (depth--)
+        depthstr = msgcat(depthstr, "  ");
+
+    add_menuitem(menu, *found, msgcat(depthstr, entity_name(ent)), 0, FALSE);
 }
 
 static struct entity
 find_objects(struct level *lev, struct obj *chain, int *found,
              boolean *did_header, const char *str,
-             struct nh_menulist *menu, int getobj)
+             struct nh_menulist *menu, int depth, int getobj)
 {
     struct obj *obj, *upper;
     struct entity ent = {0};
     const char *dname;
     int oclass = ALL_CLASSES;
+
     if (strlen(str) == 1)
         oclass = def_char_to_objclass(*str);
     if (oclass == MAXOCLASSES)
@@ -145,10 +157,9 @@ find_objects(struct level *lev, struct obj *chain, int *found,
         if (obj->memory == OM_MEMORY_LOST ||
             ((oclass == ALL_CLASSES && !strstri(dname, str)) ||
              (oclass != ALL_CLASSES && obj->oclass != oclass))) {
-            if (Has_contents(obj)) {
-                ent = find_objects(lev, obj->cobj, found,
-                                   did_header, str, menu,
-                                   getobj);
+            if (Has_contents(obj) && obj->otyp != MAGIC_CHEST) {
+                ent = find_objects(lev, obj->cobj, found, did_header,
+                                   str, menu, depth + 1, getobj);
                 if (ent.typ != ENT_NONE)
                     return ent;
             }
@@ -156,14 +167,14 @@ find_objects(struct level *lev, struct obj *chain, int *found,
         }
         /* We have a match. */
 
-        add_entry(lev, found, did_header, menu, getobj, str, ent);
+        add_entry(lev, found, did_header, menu, depth, getobj, str, ent);
 
         if (getobj && *found == getobj)
             return ent;
 
-        if (Has_contents(obj)) {
-            ent = find_objects(lev, obj->cobj, found,
-                               did_header, str, menu, getobj);
+        if (Has_contents(obj) && obj->otyp != MAGIC_CHEST) {
+            ent = find_objects(lev, obj->cobj, found, did_header,
+                               str, menu, depth + 1, getobj);
             if (ent.typ != ENT_NONE)
                 return ent;
         }
@@ -181,7 +192,7 @@ find_objects(struct level *lev, struct obj *chain, int *found,
             if (!strstri(dname, str))
                 continue;
 
-            add_entry(lev, found, did_header, menu, getobj, str, ent);
+            add_entry(lev, found, did_header, menu, depth, getobj, str, ent);
 
             if (getobj && *found == getobj)
                 return ent;
@@ -207,7 +218,7 @@ findobj_prompt(int getobj, const char *str)
             did_header = FALSE;
             ent = find_objects(levels[i], levels[i]->memobjlist,
                                &found, &did_header, str, &menu,
-                               getobj);
+                               0, getobj);
             if (ent.typ != ENT_NONE)
                 return ent;
         }
@@ -216,8 +227,16 @@ findobj_prompt(int getobj, const char *str)
     /* Find objects in player inventory. Useful in replaymode
        (containers) */
     did_header = FALSE;
-    ent = find_objects(NULL, youmonst.meminvent, &found,
-                       &did_header, str, &menu, getobj);
+    if (ent.typ == ENT_NONE)
+        ent = find_objects(NULL, youmonst.meminvent, &found,
+                           &did_header, str, &menu, 0, getobj);
+
+    /* Find objects in magic chests */
+    did_header = FALSE;
+    if (ent.typ == ENT_NONE)
+        ent = find_objects(NULL, gamestate.chest, &found,
+                           &did_header, str, &menu, 0, getobj);
+
     if (getobj)
         return ent;
 
@@ -266,6 +285,9 @@ dofindobj(const struct nh_cmd_arg *arg)
         } else if (upper && upper->where != OBJ_FLOOR) {
             impossible("Where did %s go? %d",
                        killer_xname(upper), upper->where);
+            return 0;
+        } else if (obj->where == OBJ_CONTAINED) {
+            pline(msgc_cancelled, "It's inside any magic chest.");
             return 0;
         }
 
