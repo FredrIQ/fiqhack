@@ -7,6 +7,7 @@
 #include "mfndpos.h"
 #include <ctype.h>
 
+static boolean emergency_disrobe(boolean *);
 static boolean restrap(struct monst *);
 static int pick_animal(void);
 static int select_newcham_form(struct monst *);
@@ -458,6 +459,15 @@ minliquid(struct monst *mtmp)
            water damage to dead monsters' inventory, but survivors need to be
            handled here.  Swimmers are able to protect their stuff... */
         if (!is_clinger(mtmp->data) && !swims(mtmp)) {
+            if (!unbreathing(mtmp) && level == lev &&
+                cansee(mtmp->mx, mtmp->my)) {
+                pline(msgc_monneutral, "%s into the water!",
+                      M_verbs(mtmp,
+                              Is_waterlevel(m_mz(mtmp)) ? "plunge" : "fall"));
+                if (!Is_waterlevel(m_mz(mtmp)))
+                    pline(msgc_monneutral, "%s like a rock.",
+                          M_verbs(mtmp, "sink"));
+            }
             if (!unbreathing(mtmp) && teleportitis(mtmp) &&
                 !m_helpless(mtmp, hm_unconscious)) {
                 int ox, oy;
@@ -478,6 +488,8 @@ minliquid(struct monst *mtmp)
                     pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                           "The attempted teleport spell fails.");
             }
+            if (crawl_from_water(mtmp))
+                return 0;
             if (level == lev && cansee(mtmp->mx, mtmp->my) &&
                 !unbreathing(mtmp)) {
                 pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
@@ -509,6 +521,128 @@ minliquid(struct monst *mtmp)
         }
     }
     return 0;
+}
+
+/* Monster/player attempts to crawl out of water. Returns TRUE on success */
+boolean
+crawl_from_water(struct monst *mon)
+{
+    struct level *lev = m_dlevel(mon);
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || (lev == level && canseemon(mon)));
+    boolean pos_ok = FALSE;
+
+    if (m_helpless(mon, hm_unconscious)) {
+        if (you)
+            cancel_helplessness(hm_unconscious, "Suddenly, you wake up!");
+        else {
+            mon->msleeping = 0;
+            if (vis)
+                pline(msgc_monneutral, "Suddenly, %s up!",
+                      m_verbs(mon, "wake"));
+        }
+    }
+
+    if (m_helpless(mon, hm_all) || !mon->data->mmove)
+        return FALSE;
+
+    int i, x, y;
+    for (i = 0; i < 100; i++) {
+        x = rn1(3, m_mx(mon) - 1);
+        y = rn1(3, m_my(mon) - 1);
+        if (goodpos(lev, x, y, mon, 0)) {
+            pos_ok = TRUE;
+            break;
+        }
+    }
+
+    if (!pos_ok) {
+        for (x = m_mx(mon) - 1; !pos_ok && x <= m_mx(mon) + 1; x++)
+            for (y = m_my(mon) - 1; y <= m_my(mon) + 1; y++)
+                if (goodpos(lev, x, y, mon, 0)) {
+                    pos_ok = TRUE;
+                    break;
+                }
+    }
+
+    if (!pos_ok)
+        return FALSE;
+
+    boolean lost = FALSE;
+    boolean succ = TRUE;
+    if (you && !Is_waterlevel(&u.uz))
+        succ = emergency_disrobe(&lost);
+
+    if (vis) {
+        pline(msgc_occstart, "%s to crawl out of the water.",
+              M_verbs(mon, "try"));
+        if (lost)
+            pline(msgc_itemloss, "%s some of %s gear to lose weight...",
+                  M_verbs(mon, "dump"), mhis(mon));
+    }
+    if (!succ) {
+        if (vis)
+            pline(you ? msgc_fatal_predone : msgc_monneutral, "But in vain.");
+        return FALSE;
+    }
+
+    if (vis)
+        pline_implied(you ? msgc_fatalavoid : msgc_monneutral,
+                      "Pheew!  That was close.");
+    if (you)
+        teleds(x, y, TRUE);
+    else
+        rloc_to(mon, x, y);
+
+    return TRUE;
+}
+
+/* This function is potentially expensive - rolling
+   inventory list multiple times.  Luckily it's seldom needed.
+   Returns TRUE if disrobing made player unencumbered enough to
+   crawl out of the current predicament. */
+static boolean
+emergency_disrobe(boolean *lostsome)
+{
+    int invc = inv_cnt(FALSE);
+
+    while (near_capacity() > (Punished ? UNENCUMBERED : SLT_ENCUMBER)) {
+        struct obj *obj, *otmp = NULL;
+        int i;
+
+        /* Pick a random object */
+        if (invc > 0) {
+            i = rn2(invc);
+            for (obj = youmonst.minvent; obj; obj = obj->nobj) {
+                /* Undroppables are: body armor (including skin), boots, gloves,
+                   amulets, and rings because of the time and effort in removing
+                   them; and loadstones and other cursed stuff for obvious
+                   reasons. */
+                if (!
+                    ((obj->otyp == LOADSTONE && obj->cursed) || obj == uamul ||
+                     obj == uleft || obj == uright || obj == ublindf ||
+                     obj == uarm || obj == uarmc || obj == uarmg || obj == uarmf
+                     || obj == uarmu || (obj->cursed &&
+                                         (obj == uarmh || obj == uarms)) ||
+                     welded(obj)))
+                    otmp = obj;
+                /* reached the mark and found some stuff to drop? */
+                if (--i < 0 && otmp)
+                    break;
+
+                /* else continue */
+            }
+        }
+        if (!otmp)
+            return FALSE;       /* nothing to drop! */
+
+        if (otmp->owornmask)
+            remove_worn_item(otmp, FALSE);
+        *lostsome = TRUE;
+        dropx(otmp);
+        invc--;
+    }
+    return TRUE;
 }
 
 /* Called whenever a monster changes speed, and ensures that the number of

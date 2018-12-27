@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-05-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-28 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1198,6 +1198,7 @@ extern int undead_to_corpse(int);
 extern int genus(int, int);
 extern int pm_to_cham(int);
 extern int minliquid(struct monst *);
+extern boolean crawl_from_water(struct monst *);
 extern int movemon(void);
 extern int meatmetal(struct monst *);
 extern int meatobj(struct monst *);

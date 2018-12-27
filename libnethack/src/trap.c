@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-06-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,6 @@
 
 static void dofiretrap(struct monst *, struct obj *);
 static void domagictrap(struct monst *);
-static boolean emergency_disrobe(boolean *);
 static int untrap_prob(struct trap *ttmp);
 static void move_into_trap(struct trap *);
 static int try_disarm(struct trap *, boolean, schar, schar);
@@ -3337,56 +3336,6 @@ water_damage_chain(struct obj *obj, boolean here)
 }
 
 /*
- * This function is potentially expensive - rolling
- * inventory list multiple times.  Luckily it's seldom needed.
- * Returns TRUE if disrobing made player unencumbered enough to
- * crawl out of the current predicament.
- */
-static boolean
-emergency_disrobe(boolean * lostsome)
-{
-    int invc = inv_cnt(FALSE);
-
-    while (near_capacity() > (Punished ? UNENCUMBERED : SLT_ENCUMBER)) {
-        struct obj *obj, *otmp = NULL;
-        int i;
-
-        /* Pick a random object */
-        if (invc > 0) {
-            i = rn2(invc);
-            for (obj = youmonst.minvent; obj; obj = obj->nobj) {
-                /* Undroppables are: body armor (including skin), boots, gloves,
-                   amulets, and rings because of the time and effort in removing
-                   them; and loadstones and other cursed stuff for obvious
-                   reasons. */
-                if (!
-                    ((obj->otyp == LOADSTONE && obj->cursed) || obj == uamul ||
-                     obj == uleft || obj == uright || obj == ublindf ||
-                     obj == uarm || obj == uarmc || obj == uarmg || obj == uarmf
-                     || obj == uarmu || (obj->cursed &&
-                                         (obj == uarmh || obj == uarms)) ||
-                     welded(obj)))
-                    otmp = obj;
-                /* reached the mark and found some stuff to drop? */
-                if (--i < 0 && otmp)
-                    break;
-
-                /* else continue */
-            }
-        }
-        if (!otmp)
-            return FALSE;       /* nothing to drop! */
-
-        if (otmp->owornmask)
-            remove_worn_item(otmp, FALSE);
-        *lostsome = TRUE;
-        dropx(otmp);
-        invc--;
-    }
-    return TRUE;
-}
-
-/*
  *  return(TRUE) == player relocated
  */
 boolean
@@ -3473,49 +3422,11 @@ drown(void)
         if (!is_pool(level, u.ux, u.uy))
             return TRUE;
     }
-    crawl_ok = FALSE;
-    x = y = 0;  /* lint suppression */
-    /* if sleeping, wake up now so that we don't crawl out of water while still
-       asleep */
-    cancel_helplessness(hm_unconscious, "Suddenly you wake up!");
-    /* can't crawl if unable to move (crawl_ok flag stays false) */
-    if (u_helpless(hm_all) || (Upolyd && !youmonst.data->mmove))
-        goto crawl;
-    /* look around for a place to crawl to */
-    for (i = 0; i < 100; i++) {
-        x = rn1(3, u.ux - 1);
-        y = rn1(3, u.uy - 1);
-        if (goodpos(level, x, y, &youmonst, 0)) {
-            crawl_ok = TRUE;
-            goto crawl;
-        }
-    }
-    /* one more scan */
-    for (x = u.ux - 1; x <= u.ux + 1; x++)
-        for (y = u.uy - 1; y <= u.uy + 1; y++)
-            if (goodpos(level, x, y, &youmonst, 0)) {
-                crawl_ok = TRUE;
-                goto crawl;
-            }
-crawl:
-    if (crawl_ok) {
-        boolean lost = FALSE;
 
-        /* time to do some strip-tease... */
-        boolean succ = Is_waterlevel(&u.uz) ? TRUE : emergency_disrobe(&lost);
+    /* Try to crawl out */
+    if (crawl_from_water(&youmonst))
+        return TRUE;
 
-        pline(msgc_occstart, "You try to crawl out of the water.");
-        if (lost)
-            pline(msgc_itemloss,
-                  "You dump some of your gear to lose weight...");
-        if (succ) {
-            pline_implied(msgc_fatalavoid, "Pheew!  That was close.");
-            teleds(x, y, TRUE);
-            return TRUE;
-        }
-        /* still too much weight */
-        pline(msgc_fatal_predone, "But in vain.");
-    }
     u.uinwater = 1;
     pline(msgc_fatal_predone, "You drown.");
     done(DROWNING,
