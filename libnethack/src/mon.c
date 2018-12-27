@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-06-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -458,7 +458,28 @@ minliquid(struct monst *mtmp)
            water damage to dead monsters' inventory, but survivors need to be
            handled here.  Swimmers are able to protect their stuff... */
         if (!is_clinger(mtmp->data) && !swims(mtmp)) {
-            if (level == lev && cansee(mtmp->mx, mtmp->my) && !unbreathing(mtmp)) {
+            if (!unbreathing(mtmp) && teleportitis(mtmp) &&
+                !m_helpless(mtmp, hm_unconscious)) {
+                int ox, oy;
+                ox = mtmp->mx;
+                oy = mtmp->my;
+
+                if (level == lev && cansee(mtmp->mx, mtmp->my))
+                    pline(msgc_consequence,
+                          "%s a teleport spell.", M_verbs(mtmp, "attempt"));
+
+                mon_tele(mtmp, TRUE);
+                if ((mtmp->mx != ox || mtmp->my != oy) &&
+                    !is_pool(lev, mtmp->mx, mtmp->my))
+                    return 0;
+
+                if (level == lev && cansee(mtmp->mx, mtmp->my) &&
+                    mtmp->mx == ox && mtmp->my == oy)
+                    pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
+                          "The attempted teleport spell fails.");
+            }
+            if (level == lev && cansee(mtmp->mx, mtmp->my) &&
+                !unbreathing(mtmp)) {
                 pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                       "%s drowns.", Monnam(mtmp));
             }
@@ -474,8 +495,7 @@ minliquid(struct monst *mtmp)
                 if (!DEADMONSTER(mtmp)) {
                     rloc(mtmp, TRUE);
                     water_damage_chain(mtmp->minvent, FALSE);
-                    minliquid(mtmp);
-                    return 0;
+                    return minliquid(mtmp);
                 }
             }
             return DEADMONSTER(mtmp) ? 1 : 0;
