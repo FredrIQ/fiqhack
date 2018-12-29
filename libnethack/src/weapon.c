@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-02-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -867,19 +867,19 @@ skill_training_percent(int skill)
     int i;
 
     if (P_RESTRICTED(skill))
-	return 0;
+        return 0;
 
     for (i = P_SKILL(skill); i < P_MAX_SKILL(skill); i++) {
-	if (P_ADVANCE(skill) >= practice_needed_to_advance(i)) {
-	    percent += 100;
-	} else {
-	    int mintrain = (i == P_UNSKILLED) ? 0 :
-			   practice_needed_to_advance(i - 1);
-	    int partial = (P_ADVANCE(skill) - mintrain) * 100 /
-			  (practice_needed_to_advance(i) - mintrain);
-	    percent += min(partial, 100);
-	    break;
-	}
+        if (P_ADVANCE(skill) >= practice_needed_to_advance(i)) {
+            percent += 100;
+        } else {
+            int mintrain = (i == P_UNSKILLED) ? 0 :
+                practice_needed_to_advance(i - 1);
+            int partial = (P_ADVANCE(skill) - mintrain) * 100 /
+                (practice_needed_to_advance(i) - mintrain);
+            percent += min(partial, 100);
+            break;
+        }
     }
 
     return percent;
