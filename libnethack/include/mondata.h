@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -63,6 +63,7 @@
 # define aggravating(mon)       (has_property(mon, AGGRAVATE_MONSTER))
 # define conflicting(mon)       (has_property(mon, CONFLICT))
 # define protected(mon)         (has_property(mon, PROTECTION))
+# define spellprot(mon)         ((property_timeout(mon, PROTECTION) + 9) / 10)
 # define shapeshift_prot(mon)   (has_property(mon, PROT_FROM_SHAPE_CHANGERS))
 # define warned(mon)            (has_property(mon, WARNING))
 # define telepathic(mon)        (has_property(mon, TELEPAT))

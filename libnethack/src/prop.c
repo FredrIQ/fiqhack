@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -1384,7 +1384,7 @@ update_property(struct monst *mon, enum youprop prop,
             pline(you ? msgc_statusend : msgc_monneutral,
                   "The %s haze around %s %s.", hcolor("golden"),
                   you ? "you" : mon_nam(mon),
-                  m_mspellprot(mon) ? "becomes less dense" : "disappears");
+                  spellprot(mon) ? "becomes less dense" : "disappears");
             effect = TRUE;
         } else if (slot == os_outside && lost) {
             if (you)
@@ -3179,7 +3179,7 @@ enlighten_mon(struct monst *mon, int final)
         int prot = protbon(mon);
         if (mon == &youmonst)
             prot += u.ublessed;
-        prot += m_mspellprot(mon);
+        prot += spellprot(mon);
 
         if (prot < 0)
             mon_is(&menu, mon, "ineffectively protected");

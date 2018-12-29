@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-06-19 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1551,7 +1551,7 @@ find_item(struct monst *mon, struct musable *m)
         return TRUE;
     }
 
-    if (!m_mspellprot(mon) && !which_armor(mon, os_arm) &&
+    if (!spellprot(mon) && !which_armor(mon, os_arm) &&
         mon_castable(mon, SPE_PROTECTION, FALSE) &&
         !spell_maintained(mon, SPE_PROTECTION)) {
         m->use = MUSE_SPE;

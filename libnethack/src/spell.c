@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1232,7 +1232,7 @@ cast_protection(struct monst *mon, boolean autocast,
 
     if (which_armor(mon, os_arm)) {
         if (check_overprotection)
-            return !!m_mspellprot(mon);
+            return !!spellprot(mon);
 
         if (you)
             pline(msgc_failcurse, "Your body armor interferes with the spell.");
@@ -1246,8 +1246,8 @@ cast_protection(struct monst *mon, boolean autocast,
     /* Monsters can be level 0, ensure that no oddities occur if that is the case. */
     if (l == 0)
         l = 1;
-    int speac = m_mspellprot(mon);
-    int natac = find_mac(mon) + m_mspellprot(mon);
+    int speac = spellprot(mon);
+    int natac = find_mac(mon) + spellprot(mon);
     int gain;
 
     /* loglev=log2(u.ulevel)+1 (1..5) */
@@ -1293,7 +1293,7 @@ cast_protection(struct monst *mon, boolean autocast,
 
     if (gain > 0) {
         if (!blind(&youmonst) && (you || vis)) {
-            if (m_mspellprot(mon))
+            if (spellprot(mon))
                 pline(you ? msgc_statusextend : msgc_monneutral,
                       "The %s haze around %s becomes more dense.",
                       hcolor("golden"), you ? "you" : mon_nam(mon));
@@ -1305,14 +1305,14 @@ cast_protection(struct monst *mon, boolean autocast,
                       IS_STWALL(level->locations[u.ux][u.uy].typ) ? "stone" :
                       "air", mon_nam(mon), an(hcolor("golden")));
         } else if (you) {
-            if (m_mspellprot(mon))
+            if (spellprot(mon))
                 pline(msgc_statusgood, "Your skin begins feeling warmer.");
             else
                 pline(msgc_statusgood, "Your skin feels even hotter.");
         }
         /* Spell protection is implemented by using the timeout field of the
-           Protection intrinsic. m_mspellprot() then calculates AC from it. */
-        int cur_prot = m_mspellprot(mon);
+           Protection intrinsic. spellprot() then calculates AC from it. */
+        int cur_prot = spellprot(mon);
         cur_prot += gain;
         cur_prot *= 10;
         set_property(mon, PROTECTION, cur_prot, TRUE);
