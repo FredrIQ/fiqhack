@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-28 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -488,7 +488,7 @@ minliquid(struct monst *mtmp)
                     pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
                           "The attempted teleport spell fails.");
             }
-            if (crawl_from_water(mtmp))
+            if (!unbreathing(mtmp) && crawl_from_water(mtmp))
                 return 0;
             if (level == lev && cansee(mtmp->mx, mtmp->my) &&
                 !unbreathing(mtmp)) {
@@ -557,12 +557,17 @@ crawl_from_water(struct monst *mon)
     }
 
     if (!pos_ok) {
-        for (x = m_mx(mon) - 1; !pos_ok && x <= m_mx(mon) + 1; x++)
-            for (y = m_my(mon) - 1; y <= m_my(mon) + 1; y++)
+        for (x = m_mx(mon) - 1; x <= m_mx(mon) + 1; x++) {
+            for (y = m_my(mon) - 1; y <= m_my(mon) + 1; y++) {
                 if (goodpos(lev, x, y, mon, 0)) {
                     pos_ok = TRUE;
                     break;
                 }
+            }
+
+            if (pos_ok)
+                break;
+        }
     }
 
     if (!pos_ok)
