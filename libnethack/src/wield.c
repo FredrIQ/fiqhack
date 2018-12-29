@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-07 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,10 +53,6 @@
                             || is_weptool(optr)                         \
                             || (optr)->otyp == HEAVY_IRON_BALL)
 
-/* An item that will weld to the hands if wielded. */
-#define will_weld(optr)    ((optr)->cursed  &&                          \
-                            (sensible_wep(optr) || (optr)->otyp == TIN_OPENER))
-
 
 /*** Functions that place a given item in a slot ***/
 /* Proper usage includes:
@@ -96,6 +92,17 @@ setuwep(struct obj *obj)
     } else
         u.bashmsg = TRUE;        /* for "bare hands" message */
     update_inventory();
+}
+
+/* An item that will weld to the hands if wielded. */
+boolean
+will_weld(const struct obj *obj)
+{
+    if (!obj->cursed)
+        return FALSE;
+    if (obj->otyp == TIN_OPENER)
+        return TRUE;
+    return sensible_wep(obj);
 }
 
 /*

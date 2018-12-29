@@ -762,7 +762,7 @@ mon_wield_item(struct monst *mon)
         if (mon_visible(mon)) {
             pline(msgc_monneutral, "%s wields %s%s", Monnam(mon),
                   singular(obj, doname), mon->mtame ? "." : "!");
-            if (obj->cursed && obj->otyp != CORPSE) {
+            if (will_weld(obj)) {
                 pline(msgc_monneutral, "%s %s to %s %s!",
                       Tobjnam(obj, "weld"),
                       is_plural(obj) ? "themselves" : "itself",

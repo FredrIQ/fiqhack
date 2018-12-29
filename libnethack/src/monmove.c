@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -669,7 +669,7 @@ static const char magical[] = {
 boolean
 monster_would_take_item(struct monst *mtmp, struct obj *otmp)
 {
-    int pctload = (curr_mon_load(mtmp) * 100) / max_mon_load(mtmp);
+    int pctload = (minv_weight_total(mtmp) * 100) / max_mon_load(mtmp);
 
     if (is_unicorn(mtmp->data) && objects[otmp->otyp].oc_material != GEMSTONE)
         return FALSE;
@@ -684,7 +684,7 @@ monster_would_take_item(struct monst *mtmp, struct obj *otmp)
     if (likes_gold(mtmp->data) && otmp->otyp == GOLD_PIECE && pctload < 95)
         return TRUE;
     if (likes_gems(mtmp->data) && otmp->oclass == GEM_CLASS &&
-        otmp->otyp != ROCK && pctload < 85)
+        otmp->otyp != ROCK && otmp->otyp != LOADSTONE && pctload < 85)
         return TRUE;
     if (likes_objs(mtmp->data) && strchr(practical, otmp->oclass) &&
         pctload < 75)

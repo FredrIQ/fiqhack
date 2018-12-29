@@ -2383,7 +2383,7 @@ slip_or_trip(struct monst *mon)
     boolean on_foot = TRUE;
     int pctload = 0;
     if (!you)
-        pctload = (curr_mon_load(mon) * 100) / max_mon_load(mon);
+        pctload = (minv_weight_total(mon) * 100) / max_mon_load(mon);
     else
         pctload = (inv_weight_total() * 100) / weight_cap();
 

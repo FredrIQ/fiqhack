@@ -7,7 +7,7 @@
 #include "mfndpos.h"
 #include <ctype.h>
 
-static boolean emergency_disrobe(boolean *);
+static boolean emergency_disrobe(struct monst *, boolean *);
 static boolean restrap(struct monst *);
 static int pick_animal(void);
 static int select_newcham_form(struct monst *);
@@ -490,6 +490,8 @@ minliquid(struct monst *mtmp)
             }
             if (!unbreathing(mtmp) && crawl_from_water(mtmp))
                 return 0;
+            if (DEADMONSTER(mtmp))
+                return 1; /* petrified when taking off gloves */
             if (level == lev && cansee(mtmp->mx, mtmp->my) &&
                 !unbreathing(mtmp)) {
                 pline(mtmp->mtame ? msgc_petfatal : msgc_monneutral,
@@ -575,8 +577,11 @@ crawl_from_water(struct monst *mon)
 
     boolean lost = FALSE;
     boolean succ = TRUE;
-    if (you && !Is_waterlevel(&u.uz))
-        succ = emergency_disrobe(&lost);
+    if (!Is_waterlevel(&u.uz)) {
+        succ = emergency_disrobe(mon, &lost);
+        if (DEADMONSTER(mon))
+            return FALSE;
+    }
 
     if (vis) {
         pline(msgc_occstart, "%s to crawl out of the water.",
@@ -607,44 +612,91 @@ crawl_from_water(struct monst *mon)
    Returns TRUE if disrobing made player unencumbered enough to
    crawl out of the current predicament. */
 static boolean
-emergency_disrobe(boolean *lostsome)
+emergency_disrobe(struct monst *mon, boolean *lostsome)
 {
-    int invc = inv_cnt(FALSE);
+    struct level *lev = m_dlevel(mon);
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || (lev == level && canseemon(mon)));
+    struct obj *obj, *otmp;
+    int invc = 0;
+    for (obj = mon->minvent; obj; obj = obj->nobj) {
+        if ((obj->otyp == LOADSTONE && obj->cursed) ||
+            ((obj->owornmask & W_WORN) && obj->cursed) ||
+            (m_mwep(mon) == obj && will_weld(obj)) ||
+            (obj->owornmask & (W_WORN ^ (W_MASK(os_armh) | W_MASK(os_arms)))))
+            continue;
+        invc++;
+    }
 
-    while (near_capacity() > (Punished ? UNENCUMBERED : SLT_ENCUMBER)) {
-        struct obj *obj, *otmp = NULL;
-        int i;
+    int max_load;
+    if (mon == &youmonst) {
+        max_load = (weight_cap() * 15) / 10;
+        if (Punished)
+            max_load = weight_cap();
+    } else
+        max_load = (max_mon_load(mon) * 15) / 10;
+
+    int cur_load = minv_weight_total(mon);
+
+    for (; cur_load > max_load; cur_load = minv_weight_total(mon)) {
+        obj = NULL;
 
         /* Pick a random object */
+        int i;
         if (invc > 0) {
             i = rn2(invc);
-            for (obj = youmonst.minvent; obj; obj = obj->nobj) {
+            for (otmp = mon->minvent; otmp; otmp = otmp->nobj) {
                 /* Undroppables are: body armor (including skin), boots, gloves,
                    amulets, and rings because of the time and effort in removing
-                   them; and loadstones and other cursed stuff for obvious
-                   reasons. */
-                if (!
-                    ((obj->otyp == LOADSTONE && obj->cursed) || obj == uamul ||
-                     obj == uleft || obj == uright || obj == ublindf ||
-                     obj == uarm || obj == uarmc || obj == uarmg || obj == uarmf
-                     || obj == uarmu || (obj->cursed &&
-                                         (obj == uarmh || obj == uarms)) ||
-                     welded(obj)))
-                    otmp = obj;
+                   them; and cursed loadstones */
+                if ((otmp->otyp == LOADSTONE && otmp->cursed) ||
+                    ((otmp->owornmask & W_WORN) && otmp->cursed) ||
+                    (m_mwep(mon) == otmp && will_weld(otmp)) ||
+                    (otmp->owornmask & (W_WORN ^
+                                        (W_MASK(os_armh) | W_MASK(os_arms)))))
+                    continue;
+                obj = otmp;
                 /* reached the mark and found some stuff to drop? */
-                if (--i < 0 && otmp)
+                if (--i < 0 && obj)
                     break;
 
                 /* else continue */
             }
         }
-        if (!otmp)
+        if (!obj)
             return FALSE;       /* nothing to drop! */
 
-        if (otmp->owornmask)
-            remove_worn_item(otmp, FALSE);
+        if (obj->owornmask) {
+            if (you)
+                remove_worn_item(obj, FALSE);
+            else {
+                if (m_mwep(mon) == obj) {
+                    setmnotwielded(mon, obj);
+                    MON_NOWEP(mon);
+                } else {
+                    mon->misc_worn_check &= ~obj->owornmask;
+                    obj->owornmask = 0;
+                    update_property(mon, objects[obj->otyp].oc_oprop,
+                                    which_slot(obj));
+                    update_property_for_oprops(mon, obj, which_slot(obj));
+                    struct obj *weapon = m_mwep(mon);
+                    if (weapon && weapon->otyp == CORPSE &&
+                        touch_petrifies(&mons[weapon->corpsenm]))
+                        mselftouch(mon, "Losing gloves, ",
+                                   find_mid(lev, flags.mon_moving,
+                                            FM_EVERYWHERE));
+                }
+            }
+        }
+
+        if (DEADMONSTER(mon)) /* trice oops */
+            return FALSE;
+
         *lostsome = TRUE;
-        dropx(otmp);
+        if (you)
+            dropx(obj);
+        else
+            mdrop_obj(mon, obj, FALSE);
         invc--;
     }
     return TRUE;
@@ -1433,21 +1485,6 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
     return FALSE;
 }
 
-
-int
-curr_mon_load(const struct monst *mtmp)
-{
-    int curload = 0;
-    struct obj *obj;
-
-    for (obj = mtmp->minvent; obj; obj = obj->nobj) {
-        if (obj->otyp != BOULDER || !throws_rocks(mtmp->data))
-            curload += obj->owt;
-    }
-
-    return curload;
-}
-
 int
 max_mon_load(const struct monst *mtmp)
 {
@@ -1527,7 +1564,7 @@ can_carry(struct monst *mtmp, struct obj *otmp)
     if (mdat->mlet == S_NYMPH)
         return (boolean) (otmp->oclass != ROCK_CLASS);
 
-    if (curr_mon_load(mtmp) + newload > max_mon_load(mtmp))
+    if (minv_weight_total(mtmp) + newload > max_mon_load(mtmp))
         return FALSE;
 
     return TRUE;
@@ -1992,7 +2029,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                 if (nx != x && ny != y && bad_rock(mon, x, ny)
                     && bad_rock(mon, nx, y)
                     && ((bigmonst(mdat) && !can_ooze(mon)) ||
-                        (curr_mon_load(mon) > 600)))
+                        (minv_weight_total(mon) > 600)))
                     continue;
                 /* The monster avoids a particular type of trap if it's familiar
                    with the trap type. Pets get ALLOW_TRAPS and checking is done

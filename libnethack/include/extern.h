@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-28 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -693,6 +693,7 @@ extern int near_capacity(void);
 extern int calc_capacity(int);
 extern int max_capacity(void);
 extern boolean check_capacity(const char *);
+extern int minv_cnt(const struct monst *, boolean);
 extern int inv_cnt(boolean);
 extern long money_cnt(struct obj *);
 extern enum u_interaction_mode exploration_interaction_status(void);
@@ -1204,7 +1205,6 @@ extern int meatmetal(struct monst *);
 extern int meatobj(struct monst *);
 extern void mpickgold(struct monst *);
 extern boolean mpickstuff(struct monst *, boolean);
-extern int curr_mon_load(const struct monst *);
 extern int max_mon_load(const struct monst *);
 extern boolean can_carry(struct monst *, struct obj *);
 extern struct monst *tame_to(const struct monst *);
@@ -2129,6 +2129,7 @@ extern int canwieldobj(struct obj *, boolean, boolean, boolean);
 extern int canreadyobj(struct obj *, boolean, boolean, boolean);
 extern int ready_weapon(struct obj *);
 extern void setuwep(struct obj *);
+extern boolean will_weld(const struct obj *);
 extern void setuqwep(struct obj *);
 extern void setuswapwep(struct obj *);
 extern int dowield(const struct nh_cmd_arg *);

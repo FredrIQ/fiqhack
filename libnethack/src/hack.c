@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2256,7 +2256,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             u.ux = u.ux0, u.uy = u.uy0; /* didn't move after all */
         } else if (u.ux0 != x && u.uy0 != y && bad_rock(mtmp, x, u.uy0) &&
                    bad_rock(mtmp, u.ux0, y) &&
-                   (bigmonst(mtmp->data) || (curr_mon_load(mtmp) > 600))) {
+                   (bigmonst(mtmp->data) || (minv_weight_total(mtmp) > 600))) {
             /* can't swap places when pet won't fit thru the opening */
             u.ux = u.ux0, u.uy = u.uy0; /* didn't move after all */
             /* TODO: note that it's hard to fix this msgc_cancelled1 because
@@ -3444,19 +3444,24 @@ check_capacity(const char *str)
     return 0;
 }
 
+int
+minv_cnt(const struct monst *mon, boolean letter_only)
+{
+    struct obj *obj;
+    int ct = 0;
+    for (obj = mon->minvent; obj; obj = obj->nobj)
+        if (!letter_only ||
+            (letter(obj->invlet) ||
+             (mon != &youmonst && obj->oclass != COIN_CLASS)))
+            ct++;
+
+    return ct;
+}
 
 int
 inv_cnt(boolean letter_only)
 {
-    struct obj *otmp = youmonst.minvent;
-    int ct = 0;
-
-    while (otmp) {
-        if (letter(otmp->invlet) || !letter_only)
-            ct++;
-        otmp = otmp->nobj;
-    }
-    return ct;
+    return minv_cnt(&youmonst, letter_only);
 }
 
 
