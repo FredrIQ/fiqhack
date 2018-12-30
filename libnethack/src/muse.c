@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -68,9 +68,9 @@ arg_to_musable(const struct nh_cmd_arg *arg)
     struct musable m;
     init_musable(&youmonst, &m);
 
-    /* Set xyz. Note that currently, muse uses x/y/z both for directions and absolute
-       positions. So far, they have been mutually exclusive, but it is possible that
-       this changes later. */
+    /* Set xyz. Note that currently, muse uses x/y/z both for directions and
+       absolute positions. So far, they have been mutually exclusive, but it
+       is possible that this changes later. */
     if (arg->argtype & CMD_ARG_DIR)
         dir_to_delta(arg->dir, (schar *) &m.x, (schar *) &m.y, (schar *) &m.z);
     else if (arg->argtype & CMD_ARG_POS) {
@@ -79,8 +79,8 @@ arg_to_musable(const struct nh_cmd_arg *arg)
         m.z = 0;
     }
 
-    /* Set obj. &zeroobj is not particurly specific, but that's what getargobj() returns
-       in the same context... */
+    /* Set obj. &zeroobj is not particurly specific, but that's what
+       getargobj() returns in the same context... */
     if (arg->argtype & CMD_ARG_OBJ) {
         if (arg->invlet == '-' || arg->invlet == ',')
             m.obj = &zeroobj;
@@ -89,6 +89,10 @@ arg_to_musable(const struct nh_cmd_arg *arg)
                 if (m.obj->invlet == arg->invlet)
                     break;
     }
+
+    /* Set limit */
+    if (arg->argtype & CMD_ARG_LIMIT)
+        m.limit = arg->limit;
 
 /* from spell.c (TODO: these are pretty awkward in general, even in spell.c) */
 #define spellid(spell)   spl_book[spell].sp_id

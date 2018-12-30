@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-28 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -467,14 +467,7 @@ has_polyform_ability(const struct permonst *pm,
 /* The #monster command. Supported as a separate command for keystroke
    compatibility with older versions. Also called indirectly from the
    spellcasting code, to implement monster attacks. */
-int
-domonability(const struct nh_cmd_arg *arg)
-{
-    struct musable m = arg_to_musable(arg);
-    return mdomonability(&m);
-}
-int
-mdomonability(const struct musable *m)
+domonability(const struct musable *m)
 {
     struct polyform_ability pa;
     if (cancelled(&youmonst)) {

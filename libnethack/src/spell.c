@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1495,15 +1495,15 @@ spelleffects(boolean atme, struct musable *m, boolean prompt_maintenance)
                musable wrappers since spelleffects no longer take an arg... */
             switch (spell) {
             case SPID_PRAY:
-                return mdopray(m);
+                return dopray(m);
             case SPID_TURN:
-                return mdoturn(m);
+                return doturn(m);
             case SPID_RLOC:
-                return mdotele(m);
+                return dotele(m);
             case SPID_JUMP:
                 return jump(m, FALSE);
             case SPID_MONS:
-                return mdomonability(m);
+                return domonability(m);
             default:
                 impossible("Unknown spell number %d?", spell);
                 return 0;

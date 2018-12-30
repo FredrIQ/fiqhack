@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-06-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1713,13 +1713,7 @@ can_pray(boolean praying)
 }
 
 int
-dopray(const struct nh_cmd_arg *arg)
-{
-    struct musable m = arg_to_musable(arg);
-    return mdopray(&m);
-}
-int
-mdopray(struct musable *m)
+dopray(const struct musable *m)
 {
     /* Confirm accidental slips of Alt-P */
     if (flags.prayconfirm)
@@ -1815,13 +1809,7 @@ prayer_done(void)
 }
 
 int
-doturn(const struct nh_cmd_arg *arg)
-{
-    struct musable m = arg_to_musable(arg);
-    return mdoturn(&m);
-}
-int
-mdoturn(struct musable *m)
+doturn(const struct musable *m)
 {
     struct monst *mtmp, *mtmp2;
     int once, range, xlev;
@@ -1838,8 +1826,10 @@ mdoturn(struct musable *m)
 
             if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == SPE_TURN_UNDEAD &&
                 spellknow(sp_no) > 0) {
-                m->spell = SPE_TURN_UNDEAD;
-                return spelleffects(TRUE, m, FALSE);
+                /* m is const, so create a new musable */
+                struct musable m_new = *m;
+                m_new.spell = SPE_TURN_UNDEAD;
+                return spelleffects(TRUE, &m_new, FALSE);
             }
         }
 

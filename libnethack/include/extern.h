@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1521,8 +1521,7 @@ extern void set_uasmon(void);
 extern void change_sex(void);
 extern void polyself(boolean);
 extern int polymon(int, boolean);
-extern int domonability(const struct nh_cmd_arg *);
-extern int mdomonability(const struct musable *);
+extern int domonability(const struct musable *);
 extern boolean has_polyform_ability(const struct permonst *,
                                     struct polyform_ability *);
 extern boolean touched_monster(int);
@@ -1554,12 +1553,10 @@ extern const char *bottlename(void);
 
 extern int dosacrifice(const struct nh_cmd_arg *);
 extern boolean can_pray(boolean);
-extern int dopray(const struct nh_cmd_arg *);
-extern int mdopray(struct musable *);
+extern int dopray(const struct musable *);
 extern void prayer_done(void);
 extern const char *u_gname(void);
-extern int doturn(const struct nh_cmd_arg *);
-extern int mdoturn(struct musable *);
+extern int doturn(const struct musable *);
 extern const char *a_gname(void);
 extern const char *a_gname_at(xchar x, xchar y);
 extern const char *align_gname(aligntyp);
@@ -1927,8 +1924,7 @@ extern boolean safe_teleds(boolean);
 extern boolean teleport_pet(struct monst *, boolean);
 extern int tele(void);
 extern int tele_impl(boolean wizard_tele, boolean next_to_u);
-extern int dotele(const struct nh_cmd_arg *);
-extern int mdotele(struct musable *);
+extern int dotele(const struct musable *);
 extern void level_tele(void);
 extern void mon_level_tele(struct monst *mon);
 extern void level_tele_impl(struct monst *, boolean wizard_tele);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -176,6 +176,10 @@
 # define CMD_MAINMENU   (1 << 16)       /* command is related to the character
                                            or dungeon, and not available through
                                            itemactions */
+
+/* pass a musable instead of a nh_cmd_arg for this command */
+# define CMD_MUSABLE    (1 << 30)
+
 
 /* note that CMD_INTERNAL commands should be ones that cannot be used to cheat
    if they're nonetheless sent manually anyway */

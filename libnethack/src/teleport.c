@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-22 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -478,19 +478,8 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
     return 1;
 }
 
-/* TODO: Perhaps work out some way to let controlled teleport in on a
-   CMD_ARG_POS, but there are too many codeflow possibilities involved to make
-   that easy. For now, if dotele turns into the spell, we copy the argument on
-   to the spell-handling function (which currently ignores it), but the other
-   possible codepaths just lose it. */
 int
-dotele(const struct nh_cmd_arg *arg)
-{
-    struct musable m = arg_to_musable(arg);
-    return mdotele(&m);
-}
-int
-mdotele(struct musable *m)
+dotele(const struct musable *m)
 {
     struct trap *trap;
 
@@ -558,11 +547,10 @@ mdotele(struct musable *m)
 
         if (castit) {
             exercise(A_WIS, TRUE);
-            m->spell = SPE_TELEPORT_AWAY;
-            if (spelleffects(TRUE, m, FALSE))
-                return 1;
-            else
-                return 0;
+            /* m is const, so create a new musable */
+            struct musable m_new = *m;
+            m_new.spell = SPE_TELEPORT_AWAY;
+            return spelleffects(TRUE, &m_new, FALSE);
         } else
             youmonst.pw -= energy;
     }

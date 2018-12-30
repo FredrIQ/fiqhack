@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -223,7 +223,10 @@ struct cmd_desc {
     const char *desc;
     char defkey, altkey;
     boolean can_if_buried;
-    int (*func)(const struct nh_cmd_arg *);
+    union {
+        int (*cmdarg)(const struct nh_cmd_arg *);
+        int (*cmdmuse)(const struct musable *);
+    };
     unsigned int flags;
 };
 
