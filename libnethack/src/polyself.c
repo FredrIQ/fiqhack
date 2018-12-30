@@ -467,6 +467,7 @@ has_polyform_ability(const struct permonst *pm,
 /* The #monster command. Supported as a separate command for keystroke
    compatibility with older versions. Also called indirectly from the
    spellcasting code, to implement monster attacks. */
+int
 domonability(const struct musable *m)
 {
     struct polyform_ability pa;

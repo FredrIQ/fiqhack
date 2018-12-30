@@ -105,7 +105,6 @@ extern void use_unicorn_horn(struct monst *, struct obj *);
 extern boolean tinnable(const struct obj *);
 extern void fig_transform(void *, long);
 extern int unfixable_trouble_count(boolean);
-extern int do_break_wand(struct obj *, boolean);
 
 /* ### artifact.c ### */
 
@@ -2245,11 +2244,12 @@ extern int bhit_at(struct monst *, struct obj *, int, int, int);
 extern int bhito(struct obj *, struct obj *);
 extern void bhitinv(struct monst *, struct obj *);
 extern int bhitpile(struct monst *, struct obj *, int, int);
-extern void backfire(struct obj *);
+extern void backfire(struct monst *, struct obj *);
 extern int wrestable(struct obj *wand);
 extern int zappable(struct monst *, struct obj *);
 extern void zapnodir(struct monst *, struct obj *);
-extern int dozap(const struct nh_cmd_arg *);
+extern void break_wand(struct monst *, struct obj *);
+extern int dozap(const struct musable *);
 extern boolean cancel_monst(struct monst *, struct obj *, struct monst *,
                             boolean, boolean);
 extern void weffects(struct monst *, struct obj *, schar, schar, schar);

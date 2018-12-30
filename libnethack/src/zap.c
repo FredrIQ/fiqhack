@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-07-08 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2176,71 +2176,218 @@ zapnodir(struct monst *mon, struct obj *obj)
 
 
 void
-backfire(struct obj *otmp)
+backfire(struct monst *mon, struct obj *obj)
 {
-    otmp->in_use = TRUE;        /* in case losehp() is fatal */
-    if (otmp->oartifact) {
-        /*
-         * Artifacts aren't destroyed by a backfire, but the
-         * explosion is more violent.
-         */
-        pline(msgc_substitute,
-              "%s suddenly produces a violent outburst of energy!",
-              The(xname(otmp)));
-        losehp(dice(otmp->spe + 4, 8), killer_msg(DIED, "an outbursting wand"));
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
+    obj->in_use = TRUE;        /* in case losehp() is fatal */
+    if (obj->oartifact) {
+        /* Artifacts aren't destroyed by a backfire, but the
+           explosion is more violent. */
+        if (vis)
+            pline(msgc_substitute,
+                  "%s suddenly produces a violent outburst of energy!",
+                  The(xname(obj)));
+        if (you)
+            losehp(dice(obj->spe + 4, 8),
+                   killer_msg(DIED, "an outbursting wand"));
+        else {
+            mon->mhp -= dice(obj->spe + 4, 8);
+            if (mon->mhp <= 0)
+                mondied(mon);
+        }
+        obj->in_use = FALSE;
     } else {
-        pline(msgc_substitute, "%s suddenly explodes!", The(xname(otmp)));
-        do_break_wand(otmp, FALSE);
+        if (vis)
+            pline(msgc_substitute, "%s suddenly explodes!", The(xname(obj)));
+        else
+            You_hear(msgc_levelwarning, "a %s explosion.",
+                     distant(mon) ? "distant" : "nearby");
+        break_wand(mon, obj);
     }
+}
+
+
+#define BY_OBJECT       (NULL)
+
+/* return 1 if the wand is broken, hence some time elapsed */
+void
+break_wand(struct monst *mon, struct obj *obj)
+{
+    int i, x, y;
+    int dmg;
+    int expltype;
+    int otyp = obj->otyp;
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
+
+    obj->ox = m_mx(mon);
+    obj->oy = m_my(mon);
+    obj->in_use = TRUE; /* don't allow destroy_item to mess with it */
+
+    /* The following wands have no effect */
+    if (otyp == WAN_WISHING ||
+        otyp == WAN_NOTHING ||
+        otyp == WAN_OPENING ||
+        otyp == WAN_LOCKING ||
+        otyp == WAN_PROBING ||
+        otyp == WAN_ENLIGHTENMENT ||
+        otyp == WAN_SECRET_DOOR_DETECTION ||
+        obj->spe <= 0) {
+        if (vis)
+            pline(msgc_failcurse, "But nothing else happens...");
+        m_useup(mon, obj);
+        return;
+    }
+
+    /* damage */
+    dmg = obj->spe * 4;
+    if (otyp != WAN_MAGIC_MISSILE)
+        dmg *= 2;
+    if (otyp == WAN_DEATH || otyp == WAN_LIGHTNING)
+        dmg *= 2;
+
+    /* explosion color */
+    if (otyp == WAN_FIRE)
+        expltype = EXPL_FIERY;
+    else if (otyp == WAN_COLD)
+        expltype = EXPL_FROSTY;
+    else
+        expltype = EXPL_MAGICAL;
+
+    /* (non-sleep) ray explosions */
+    if (objects[otyp].oc_dir == RAY && otyp != WAN_SLEEP) {
+        explode(obj->ox, obj->oy,
+                you ? (otyp - WAN_MAGIC_MISSILE) :
+                -30 - (otyp - WAN_MAGIC_MISSILE), dmg, WAND_CLASS,
+                expltype, NULL, 0);
+        m_useup(mon, obj);
+        return;
+    }
+
+    if (otyp == WAN_STRIKING) {
+        if (vis)
+            pline(combat_msgc(NULL, mon, cr_hit),
+                  "A wall of force smashes down around %s!", mon_nam(mon));
+        dmg = dice(obj->spe + 1, 6);
+    }
+
+    explode(obj->ox, obj->oy, 0, rnd(dmg), WAND_CLASS, expltype, NULL, 0);
+
+    /* affect all tiles around the monster */
+    int shop_dmg = 0;
+    boolean hityou = FALSE; /* hit player last to avoid bones oddities */
+    for (i = 0; i <= 8; i++) {
+        x = obj->ox + xdir[i];
+        y = obj->oy + ydir[i];
+        if (!isok(x, y))
+            continue;
+
+        if (otyp == WAN_SUMMONING)
+            create_critters(mon, 1, NULL, -1, 50, m_mx(mon), m_my(mon));
+        else if (otyp == WAN_DIGGING) {
+            if (dig_check(NULL, msgc_mute, x, y)) {
+                if (IS_WALL(level->locations[x][y].typ) ||
+                    IS_DOOR(level->locations[x][y].typ)) {
+                    /* normally, pits and holes don't anger guards, but they do
+                       if it's a wall or door that's being dug */
+                    if (you)
+                        watch_warn(NULL, x, y, TRUE);
+                    if (*in_rooms(level, x, y, SHOPBASE)) {
+                        if (!you)
+                            add_damage(x, y, 0L);
+                        else
+                            shop_dmg = 1;
+                    }
+                }
+                digactualhole(x, y, NULL,
+                              (rn2(obj->spe) < 3 ||
+                               !can_dig_down(level)) ? PIT : HOLE);
+            }
+        } else {
+            if (x == u.ux && y == u.uy) {
+                hityou = TRUE;
+                continue;
+            }
+            int res_bhit = bhit_at(mon, obj, x, y, 10);
+            if (you && (res_bhit & BHIT_SHOPDAM))
+                shop_dmg = 2;
+        }
+    }
+    if (hityou) {
+        int res_bhit = bhit_at(mon, obj, u.ux, u.uy, 10);
+        if (you && (res_bhit & BHIT_SHOPDAM))
+            shop_dmg = 2;
+    }
+
+    if (shop_dmg)
+        pay_for_damage(shop_dmg == 1 ? "dig into" : "destroy", FALSE);
+
+    if (otyp == WAN_LIGHT)
+        litroom(mon, TRUE, obj, FALSE);
+    m_useup(mon, obj);
 }
 
 static const char zap_syms[] = { WAND_CLASS, 0 };
 
 int
-dozap(const struct nh_cmd_arg *arg)
+dozap(const struct musable *m)
 {
+    struct monst *mon = m->mon;
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
     schar dx = 0, dy = 0, dz = 0;
     struct obj *obj;
     int wandlevel;
 
-    if (check_capacity(NULL))
+    if (you && check_capacity(NULL))
         return 0;
 
-    obj = getargobj(arg, zap_syms, "zap");
+    obj = mgetargobj(m, zap_syms, "zap");
     if (!obj)
         return 0;
 
-    wandlevel = getwandlevel(&youmonst, obj);
+    wandlevel = getwandlevel(mon, obj);
     check_unpaid(obj);
 
-    if (obj->oartifact && !touch_artifact(obj, &youmonst))
+    if (obj->oartifact && !touch_artifact(obj, mon))
         return 1;
 
-    /* zappable addition done by GAN 11/03/86 */
-    if (!zappable(&youmonst, obj)) {       /* zappable prints the message itself */
+    if (!you) {
+        if (vis)
+            pline(combat_msgc(mon, NULL, cr_hit), "%s %s!",
+                  M_verbs(mon, "zap"), doname(obj));
+        else
+            You_hear(msgc_levelsound, "a %s zap.",
+                     distant(mon) ? "distant" : "nearby");
+    }
+
+    if (!zappable(mon, obj)) {
+        /* zappable prints the message itself */
     } else if (!wandlevel) {
-        backfire(obj);  /* the wand blows up in your face! */
-        exercise(A_STR, FALSE);
-        return 1;
+        backfire(mon, obj); /* the wand blows up in your face! */
+        if (you)
+            exercise(A_STR, FALSE);
+        return DEADMONSTER(mon) ? 2 : 1;
     } else if (!(objects[obj->otyp].oc_dir == NODIR) &&
-               !getargdir(arg, NULL, &dx, &dy, &dz)) {
-        if (!Blind)
+               !mgetargdir(m, NULL, &dx, &dy, &dz)) {
+        if (!Blind && vis)
             pline(msgc_itemloss, "%s glows and fades.", The(xname(obj)));
         /* make him pay for knowing !NODIR */
     } else {
-
-        /* Are we having fun yet? weffects -> buzz(obj->otyp) -> zhitm (temple
-           priest) -> attack -> hitum -> known_hitum -> ghod_hitsu ->
-           buzz(AD_ELEC) -> destroy_item(WAND_CLASS) -> useup -> obfree ->
-           dealloc_obj -> free(obj) */
+        /* The zapped wand can potentially be destroyed in corner cases:
+           zap hurts temple priest, temple god responds with lightning,
+           lightning hits and blows up the wand zapped. So track the wand in
+           case this happens. */
         turnstate.tracked[ttos_wand] = obj;
-        weffects(&youmonst, obj, dx, dy, dz);
+        weffects(mon, obj, dx, dy, dz);
         obj = turnstate.tracked[ttos_wand];
         turnstate.tracked[ttos_wand] = 0;
     }
     if (obj && obj->spe < 0) {
-        pline(msgc_itemloss, "%s to dust.", Tobjnam(obj, "turn"));
-        useup(obj);
+        if (vis)
+            pline(msgc_itemloss, "%s to dust.", Tobjnam(obj, "turn"));
+        m_useup(mon, obj);
     }
     update_inventory(); /* maybe used a charge */
     return 1;

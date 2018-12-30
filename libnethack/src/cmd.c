@@ -237,8 +237,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_EXT},
     {"whatis", "describe what a symbol means", '/', 0, TRUE, ARG(dowhatis),
      CMD_HELP | CMD_NOTIME | CMD_ARG_POS | CMD_ARG_STR | CMD_ARG_OBJ},
-    {"zap", "zap a wand to use its magic", 'z', 0, FALSE, ARG(dozap),
-     CMD_ARG_OBJ | CMD_ARG_DIR},
+    {"zap", "zap a wand to use its magic", 'z', 0, FALSE, MUSE(dozap),
+     CMD_ARG_OBJ | CMD_ARG_DIR | CMD_MUSABLE},
 
     {"move", "move one step", 0, 0, FALSE, ARG(domovecmd),
      CMD_ARG_DIR | CMD_MOVE | CMD_ARG_LIMIT},

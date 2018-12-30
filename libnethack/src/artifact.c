@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-03 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1453,9 +1453,31 @@ doinvoke(const struct nh_cmd_arg *arg)
     const struct artifact *oart = get_artifact(obj);
 
     if (!oart || !oart->inv_prop) {
-        if (obj->oclass == WAND_CLASS)
-            return do_break_wand(obj, TRUE);
-        else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
+        if (obj->oclass == WAND_CLASS) {
+            const char *the_wand, *confirm;
+            the_wand = yname(obj);
+            confirm = msgprintf("Are you really sure you want to break %s?",
+                                safe_qbuf("", sizeof
+                                          "Are you really sure you want to "
+                                          "break ?", the_wand,
+                                          ysimple_name(obj), "the wand"));
+            if (yn(confirm) == 'n')
+                return 0;
+            if (nohands(youmonst.data)) {
+                pline(msgc_cancelled, "You can't break %s without hands!",
+                      the_wand);
+                return 0;
+            } else if (ACURR(A_STR) < 10 || obj->oartifact) {
+                pline(msgc_cancelled,
+                      "You don't have the strength to break %s!", the_wand);
+                return 0;
+            }
+            pline(msgc_occstart,
+                  "Raising %s high above your %s, you break it in two!",
+                  the_wand, body_part(HEAD));
+            break_wand(&youmonst, obj);
+            return 1;
+        } else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
                  obj->otyp == BRASS_LANTERN)
             return dorub(&(struct nh_cmd_arg){.argtype = CMD_ARG_OBJ,
                                               .invlet = obj->invlet});

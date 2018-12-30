@@ -28,10 +28,8 @@ extern const int monstr[];
 
 static void mconfdir(const struct monst *, schar *, schar *);
 static int precheck(struct obj *obj, struct musable *m);
-static void mzapmsg(struct monst *, struct obj *, boolean);
 static void mreadmsg(struct monst *, struct obj *);
 static void mquaffmsg(struct monst *, struct obj *);
-static void mon_break_wand(struct monst *, struct obj *);
 static int find_item_score(const struct monst *, struct obj *, coord *, struct musable *);
 static int find_item_single(struct obj *, boolean, struct musable *, boolean, boolean);
 static boolean mon_allowed(int);
@@ -220,12 +218,9 @@ static int
 precheck(struct obj *obj, struct musable *m)
 {
     struct monst *mon = m->mon;
-    boolean vis;
-    int wandlevel;
 
     if (!obj)
         return 0;
-    vis = cansee(mon->mx, mon->my);
 
 #define POTION_OCCUPANT_CHANCE(n) (13 + 2*(n))  /* also in muse.c */
 
@@ -250,43 +245,7 @@ precheck(struct obj *obj, struct musable *m)
             return 2;
         }
     }
-    if (obj->oclass == WAND_CLASS) {
-        wandlevel = getwandlevel(mon, obj);
-        if (wandlevel == P_FAILURE) {
-            /* critical failure */
-            if (canhear()) {
-                if (vis)
-                    pline(msgc_itemloss,
-                          "%s zaps %s, which suddenly explodes!", Monnam(mon),
-                          an(xname(obj)));
-                else
-                    You_hear(msgc_itemloss,
-                             "a zap and an explosion in the distance.");
-            }
-            mon_break_wand(mon, obj);
-            m_useup(mon, obj);
-            m->use = MUSE_NONE;
-            return DEADMONSTER(mon) ? 1 : 2;
-        }
-    }
     return 0;
-}
-
-static void
-mzapmsg(struct monst *mtmp, struct obj *otmp, boolean self)
-{
-    if (!mon_visible(mtmp))
-        You_hear(msgc_levelsound, "a %s zap.",
-                 distant(mtmp) ? "distant" : "nearby");
-    else if (self)
-        pline(combat_msgc(mtmp, NULL, cr_hit), "%s zaps %sself with %s!",
-              Monnam(mtmp), mhim(mtmp), doname(otmp));
-    else {
-        /* TODO: channelize based on results */
-        pline(combat_msgc(mtmp, NULL, cr_hit), "%s zaps %s!",
-              Monnam(mtmp), an(xname(otmp)));
-        action_interrupted();
-    }
 }
 
 static void
@@ -2180,7 +2139,7 @@ use_item(struct musable *m)
     struct obj *container = NULL; /* for contained objects */
     struct rm *door; /* for muse_key */
     boolean btrapped;
-    int x, y;
+    int x, y, ret;
 
     if (oseen)
         examine_object(obj);
@@ -2217,20 +2176,8 @@ use_item(struct musable *m)
         m_useup(mon, obj);
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_WAN:
-        if (objects[obj->otyp].oc_dir != NODIR &&
-            !m->x && !m->y && !m->z)
-            mzapmsg(mon, obj, TRUE);
-        else
-            mzapmsg(mon, obj, FALSE);
-        if (zappable(mon, obj))
-            weffects(mon, obj, m->x, m->y, m->z);
-        if (obj && obj->spe < 0) {
-            if (oseen)
-                pline(msgc_itemloss,
-                      "%s to dust.", Tobjnam(obj, "turn"));
-            m_useup(mon, obj);
-        }
-        return DEADMONSTER(mon) ? 1 : 2;
+        ret = dozap(m);
+        return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_THROW:
         if (cansee(mon->mx, mon->my)) {
             obj->dknown = 1;
@@ -2707,104 +2654,6 @@ try_again:
             return WAN_DIGGING;
     }
      /*NOTREACHED*/ return 0;
-}
-
-/* Used for critical failures with wand use. Might also see
-   use if monsters learn to break wands intelligently.
-   FIXME: merge this with do_break_wand() */
-
-/* what? (investigate do_break_wand for this...) */
-#define BY_OBJECT       (NULL)
-static void
-mon_break_wand(struct monst *mtmp, struct obj *otmp)
-{
-    int i, x, y;
-    int damage;
-    int expltype;
-    int otyp;
-    boolean oseen = mon_visible(mtmp);
-
-    otyp = otmp->otyp;
-    otmp->ox = mtmp->mx;
-    otmp->oy = mtmp->my;
-
-    /* The following wands have no effect */
-    if (otyp == WAN_WISHING ||
-        otyp == WAN_NOTHING ||
-        otyp == WAN_OPENING ||
-        otyp == WAN_LOCKING ||
-        otyp == WAN_PROBING ||
-        otyp == WAN_ENLIGHTENMENT ||
-        otyp == WAN_SECRET_DOOR_DETECTION ||
-        otmp->spe <= 0) {
-        if (oseen)
-            pline(msgc_failcurse, "But nothing else happens...");
-        return;
-    }
-
-    /* damage */
-    damage = otmp->spe * 4;
-    if (otyp != WAN_MAGIC_MISSILE)
-        damage *= 2;
-    if (otyp == WAN_DEATH || otyp == WAN_LIGHTNING)
-        damage *= 2;
-
-    /* explosion color */
-    if (otyp == WAN_FIRE)
-        expltype = EXPL_FIERY;
-    else if (otyp == WAN_COLD)
-        expltype = EXPL_FROSTY; 
-    else
-        expltype = EXPL_MAGICAL;
-
-    /* (non-sleep) ray explosions */
-    if (otyp == WAN_DEATH ||
-        otyp == WAN_FIRE ||
-        otyp == WAN_COLD ||
-        otyp == WAN_LIGHTNING ||
-        otyp == WAN_MAGIC_MISSILE) {
-        explode(otmp->ox, otmp->oy, -30 - (otyp - WAN_MAGIC_MISSILE), damage, WAND_CLASS,
-                expltype, NULL, 0);
-        return;
-    }
-
-    if (otyp == WAN_STRIKING) {
-        if (oseen)
-            pline(msgc_monneutral,
-                  "A wall of force smashes down around %s!",
-                  mon_nam(mtmp));
-        damage = dice(1 + otmp->spe, 6);
-    }
-
-    explode(otmp->ox, otmp->oy, 0, rnd(damage), WAND_CLASS, expltype, NULL, 0);
-
-    /* affect all tiles around the monster */
-    for (i = 0; i <= 8; i++) {
-        bhitpos.x = x = otmp->ox + xdir[i];
-        bhitpos.y = y = otmp->oy + ydir[i];
-        if (!isok(x, y))
-            continue;
-
-        if (otyp == WAN_DIGGING && dig_check(BY_OBJECT, FALSE, x, y)) {
-            if (IS_WALL(level->locations[x][y].typ) ||
-                IS_DOOR(level->locations[x][y].typ)) {
-                /* add potential shop damage for fixing */
-                if (*in_rooms(level, x, y, SHOPBASE))
-                    add_damage(bhitpos.x, bhitpos.y, 0L);
-            }
-            digactualhole(x, y, BY_OBJECT,
-                          (rn2(otmp->spe) < 3 ||
-                           !can_dig_down(level)) ? PIT : HOLE);
-        } else if (otyp == WAN_SUMMONING)
-            create_critters(mtmp, 1, NULL, -1, 50, m_mx(mtmp), m_my(mtmp));
-        else {
-            bhit_at(mtmp, otmp, x, y, 10);
-            bot(); /* blindness */
-        }
-    }
-
-    if (otyp == WAN_LIGHT)
-        litroom(mtmp, TRUE, otmp, TRUE);     /* only needs to be done once */
 }
 
 int
