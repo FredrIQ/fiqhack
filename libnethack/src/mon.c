@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1284,7 +1284,7 @@ mpickstuff(struct monst *mon, boolean autopickup)
                unseen if we can */
             if (mon_castable(mon, SPE_DETECT_UNSEEN, TRUE) > 80) {
                 boxuse.spell = SPE_DETECT_UNSEEN;
-                boxuse.use = MUSE_SPE;
+                boxuse.use = MUSE_CAST;
             } else
                 find_item_obj(mon->minvent, &boxuse,
                               FALSE, WAN_SECRET_DOOR_DETECTION);
@@ -1478,7 +1478,7 @@ mpickstuff_dopickup(struct monst *mon, struct obj *container, boolean autopickup
             muse.y = 0;
             muse.z = 1;
             muse.spell = SPE_CANCELLATION;
-            muse.use = MUSE_SPE;
+            muse.use = MUSE_CAST;
             return use_item(&muse);
         }
     }
@@ -1780,7 +1780,7 @@ mon_jump(struct monst *mon, int x, int y)
             panic("Monster jump checks contradict each other.");
         }
         m.spell = SPE_JUMPING;
-        m.use = MUSE_SPE;
+        m.use = MUSE_CAST;
         return use_item(&m);
     }
 

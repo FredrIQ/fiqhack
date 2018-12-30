@@ -1857,7 +1857,7 @@ extern int study_book(struct obj *, const struct nh_cmd_arg *);
 extern void age_spells(void);
 extern void update_supernatural_abilities(void);
 extern boolean supernatural_ability_available(int);
-extern int docast(const struct nh_cmd_arg *);
+extern int docast(const struct musable *);
 extern int docastalias(const struct nh_cmd_arg *);
 extern boolean getspell(int *);
 extern int spell_skilltype(int);

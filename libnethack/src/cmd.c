@@ -85,7 +85,7 @@ const struct cmd_desc cmdlist[] = {
     {"autoexplore", "automatically explore until something happens", 'v', 0,
      FALSE, ARG(doautoexplore), 0},
     {"cast", "use a magical or supernatural ability", 'Z', 0, TRUE,
-     ARG(docast), CMD_ARG_SPELL | CMD_ARG_DIR | CMD_ARG_POS},
+     MUSE(docast), CMD_ARG_SPELL | CMD_ARG_DIR | CMD_ARG_POS | CMD_MUSABLE},
     {"castalias", "alias spells to single input", 0, 0, TRUE, ARG(docastalias),
      CMD_ARG_KEY},
     {"chat", "talk to someone", 'c', M('c'), TRUE, ARG(dotalk),

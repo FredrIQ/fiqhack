@@ -1024,14 +1024,14 @@ getspell(int *spell_no)
 
 /* the 'Z' command -- cast a spell */
 int
-docast(const struct nh_cmd_arg *arg)
+docast(const struct musable *m)
 {
-    struct musable m = arg_to_musable(arg);
     int spell = 0;
-
-    if (mgetargspell(&m, &spell)) {
-        m.spell = spell;
-        return spelleffects(FALSE, &m, TRUE);
+    if (mgetargspell(m, &spell)) {
+        /* m is const, so create a new musable */
+        struct musable m_new = *m;
+        m_new.spell = spell;
+        return spelleffects(FALSE, &m_new, TRUE);
     }
     return 0;
 }

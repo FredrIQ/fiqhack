@@ -25,11 +25,11 @@ enum monuse {
     MUSE_ASCEND,
 
     /* general items */
+    MUSE_CAST,
+    MUSE_ZAP,
     MUSE_SCR,
     MUSE_POT,
     MUSE_THROW,
-    MUSE_WAN,
-    MUSE_SPE,
     MUSE_CONTAINER,
     MUSE_EAT,
     MUSE_BOOK,

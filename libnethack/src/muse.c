@@ -36,6 +36,11 @@ static boolean mon_allowed(int);
 
 static int trapx, trapy;
 
+static int (*musecmd[NUM_MUSE])(const struct musable *) = {
+    [MUSE_CAST] = docast,
+    [MUSE_ZAP] = dozap,
+};
+
 void
 init_musable(struct monst *mon, struct musable *m)
 {
@@ -1099,7 +1104,7 @@ find_digger(struct monst *mon, struct musable *m)
     if (mon_castable(mon, SPE_DIG, TRUE) >= 80 &&
         !cancelled(mon)) {
         m->spell = SPE_DIG;
-        m->use = MUSE_SPE;
+        m->use = MUSE_CAST;
         return TRUE;
     }
 
@@ -1126,7 +1131,7 @@ find_unlocker(struct monst *mon, struct musable *m)
         (mon->mstrategy != st_ascend ||
          mon_castable(mon, SPE_KNOCK, FALSE))) {
         m->spell = SPE_KNOCK;
-        m->use = MUSE_SPE;
+        m->use = MUSE_CAST;
         return TRUE;
     }
 
@@ -1143,7 +1148,7 @@ find_unlocker(struct monst *mon, struct musable *m)
         else if (mon_castable(mon, SPE_DIG, FALSE))
             m->spell = SPE_DIG;
         if (m->spell) {
-            m->use = MUSE_SPE;
+            m->use = MUSE_CAST;
             return TRUE;
         }
     }
@@ -1232,7 +1237,7 @@ find_item(struct monst *mon, struct musable *m)
         /* cast s->f on self */
         if (mon_castable(mon, SPE_STONE_TO_FLESH, FALSE)) {
             m->spell = SPE_STONE_TO_FLESH;
-            m->use = MUSE_SPE;
+            m->use = MUSE_CAST;
             return TRUE;
         }
 
@@ -1257,7 +1262,7 @@ find_item(struct monst *mon, struct musable *m)
         /* polyself */
         if (mon_castable(mon, SPE_POLYMORPH, FALSE)) {
             m->spell = SPE_POLYMORPH;
-            m->use = MUSE_SPE;
+            m->use = MUSE_CAST;
             return TRUE;
         }
         if (!nohands(mon->data)) {
@@ -1272,7 +1277,7 @@ find_item(struct monst *mon, struct musable *m)
     if (sliming(mon)) {
         if (mon_castable(mon, SPE_CURE_SICKNESS, FALSE)) {
             m->spell = SPE_CURE_SICKNESS;
-            m->use = MUSE_SPE;
+            m->use = MUSE_CAST;
             return TRUE;
         }
         if (!nohands(mon->data) &&
@@ -1284,12 +1289,12 @@ find_item(struct monst *mon, struct musable *m)
         if (!nohands(mon->data) &&
             (obj = m_carrying(mon, WAN_FIRE))) {
             m->obj = obj;
-            m->use = MUSE_WAN;
+            m->use = MUSE_ZAP;
             return TRUE;
         }
         if (mon_castable(mon, SPE_FIREBALL, FALSE)) {
             m->spell = SPE_FIREBALL;
-            m->use = MUSE_SPE;
+            m->use = MUSE_CAST;
             if (MP_SKILL(mon, P_ATTACK_SPELL) >= P_SKILLED) {
                 /* target self -- for basic/unskilled and for wands, x/y is delta,
                    so there is no setting of it there, but it is needed here */
@@ -1308,7 +1313,7 @@ find_item(struct monst *mon, struct musable *m)
         if (sick(mon) || zombifying(mon)) {
             if (mon_castable(mon, SPE_CURE_SICKNESS, FALSE)) {
                 m->spell = SPE_CURE_SICKNESS;
-                m->use = MUSE_SPE;
+                m->use = MUSE_CAST;
                 return TRUE;
             }
         }
@@ -1353,7 +1358,7 @@ find_item(struct monst *mon, struct musable *m)
         mon->data != &mons[PM_PESTILENCE] && !telepathic(mon)) {
         if (mon_castable(mon, SPE_CURE_BLINDNESS, FALSE)) {
             m->spell = SPE_CURE_BLINDNESS;
-            m->use = MUSE_SPE;
+            m->use = MUSE_CAST;
             return TRUE;
         }
 
@@ -1390,12 +1395,12 @@ find_item(struct monst *mon, struct musable *m)
 
             if (mon_castable(mon, SPE_EXTRA_HEALING, FALSE)) {
                 m->spell = SPE_EXTRA_HEALING;
-                m->use = MUSE_SPE;
+                m->use = MUSE_CAST;
                 return TRUE;
             }
             if (mon_castable(mon, SPE_HEALING, FALSE)) {
                 m->spell = SPE_HEALING;
-                m->use = MUSE_SPE;
+                m->use = MUSE_CAST;
                 return TRUE;
             }
             if ((obj = m_carrying(mon, POT_EXTRA_HEALING)) ||
@@ -1499,14 +1504,14 @@ find_item(struct monst *mon, struct musable *m)
     /* Clone ourselves */
     if (flags.no_of_wizards == 1 && !flags.double_troubled &&
         mon_castable(mon, SPE_BOOK_OF_THE_DEAD, FALSE)) {
-        m->use = MUSE_SPE;
+        m->use = MUSE_CAST;
         m->spell = SPE_BOOK_OF_THE_DEAD; /* sentinel for double trouble */
         return TRUE;
     }
 
     if (!very_fast(mon) && !slow(mon) &&
         mon_castable(mon, SPE_SPEED_MONSTER, FALSE)) {
-        m->use = MUSE_SPE;
+        m->use = MUSE_CAST;
         m->spell = SPE_SPEED_MONSTER;
         m->x = 0;
         m->y = 0;
@@ -1517,7 +1522,7 @@ find_item(struct monst *mon, struct musable *m)
     if (!spellprot(mon) && !which_armor(mon, os_arm) &&
         mon_castable(mon, SPE_PROTECTION, FALSE) &&
         !spell_maintained(mon, SPE_PROTECTION)) {
-        m->use = MUSE_SPE;
+        m->use = MUSE_CAST;
         m->spell = SPE_PROTECTION;
         return TRUE;
     }
@@ -1565,7 +1570,7 @@ find_item(struct monst *mon, struct musable *m)
                 m->x = m2.x;
                 m->y = m2.y;
                 m->z = m2.z;
-                m->use = MUSE_SPE;
+                m->use = MUSE_CAST;
             }
         }
         obfree(obj, NULL);
@@ -1578,7 +1583,7 @@ find_item(struct monst *mon, struct musable *m)
             m->x = tc_best.x;
             m->y = tc_best.y;
             m->z = 0;
-            m->use = MUSE_SPE;
+            m->use = MUSE_CAST;
             m->spell = spell_best;
             return TRUE;
         }
@@ -1740,7 +1745,7 @@ find_item_obj(struct obj *chain, struct musable *m,
                 m->x = m2.x;
                 m->y = m2.y;
                 m->z = m2.z;
-                m->use = (obj->oclass == WAND_CLASS   ? MUSE_WAN  :
+                m->use = (obj->oclass == WAND_CLASS   ? MUSE_ZAP  :
                           obj->oclass == SCROLL_CLASS ? MUSE_SCR  :
                           obj->oclass == POTION_CLASS ? MUSE_POT  :
                           obj->oclass == SPBOOK_CLASS ? MUSE_BOOK :
@@ -1762,7 +1767,7 @@ find_item_obj(struct obj *chain, struct musable *m,
             m->x = tc_best.x;
             m->y = tc_best.y;
             m->z = 0;
-            m->use = (obj_best->oclass == WAND_CLASS   ? MUSE_WAN :
+            m->use = (obj_best->oclass == WAND_CLASS   ? MUSE_ZAP :
                       obj_best->oclass == SCROLL_CLASS ? MUSE_SCR :
                       obj_best->oclass == POTION_CLASS ? MUSE_THROW :
                       obj_best->oclass == TOOL_CLASS   ? MUSE_DIRHORN :
@@ -2125,7 +2130,7 @@ use_item(struct musable *m)
     struct obj *obj = m->obj;
     int i;
     if (obj &&
-        m->use != MUSE_SPE &&       /* MUSE_SPE deals with m->spell, not m->obj */
+        m->use != MUSE_CAST && /* MUSE_CAST deals with m->spell, not m->obj */
         m->use != MUSE_THROW && /* thrown potions never release ghosts/djinni */
         m->use != MUSE_CONTAINER && /* BoH vanish logic is performed in find_item_obj */
         (i = precheck(obj, m)))
@@ -2145,9 +2150,10 @@ use_item(struct musable *m)
         examine_object(obj);
 
     switch (m->use) {
-    case MUSE_SPE:
-        spelleffects(FALSE, m, TRUE);
-        return DEADMONSTER(mon) ? 1 : 2;
+    case MUSE_CAST:
+    case MUSE_ZAP:
+        ret = (*musecmd[m->use])(m);
+        return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_SCR:
         mreadmsg(mon, obj);
         obj->in_use = TRUE;
@@ -2175,9 +2181,6 @@ use_item(struct musable *m)
 
         m_useup(mon, obj);
         return DEADMONSTER(mon) ? 1 : 2;
-    case MUSE_WAN:
-        ret = dozap(m);
-        return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
     case MUSE_THROW:
         if (cansee(mon->mx, mon->my)) {
             obj->dknown = 1;
@@ -2192,7 +2195,7 @@ use_item(struct musable *m)
         dog_eat(mon, obj, mon->mx, mon->my, FALSE);
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_BOOK:
-        /* reading a book, not casting a spell, that is MUSE_SPE */
+        /* reading a book, not casting a spell, that is MUSE_CAST */
         if (!mon_study_book(mon, obj))
             return 0;
         return DEADMONSTER(mon) ? 1 : 2;
