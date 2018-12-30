@@ -918,24 +918,14 @@ movemon(void)
     struct monst *mtmp;
     boolean somebody_can_move = FALSE;
 
-    /*
-       Some of you may remember the former assertion here that because of
-       deaths and other actions, a simple one-pass algorithm wasn't possible
-       for movemon.  Deaths are no longer removed to the separate list fdmon;
-       they are simply left in the chain with hit points <= 0, to be cleaned up
-       at the end of the pass.
-
-       The only other actions which cause monsters to be removed from the chain
-       are level migrations and losedogs().  I believe losedogs() is a cleanup
-       routine not associated with monster movements, and monsters can only
-       affect level migrations on themselves, not others (hence the fetching of
-       nmon before moving the monster).  Currently, monsters can jump into
-       traps, read cursed scrolls of teleportation, and drink cursed potions of
-       raise level to change levels.  These are all reflexive at this point.
-       Should one monster be able to level teleport another, this scheme would
-       have problems. */
-
     for (mtmp = level->monlist; mtmp; mtmp = nmtmp) {
+        /* If the monster we are working on isn't on the level anymore, we need
+           to restart the iteration */
+        if (mtmp->dlevel != level) {
+            nmtmp = level->monlist;
+            continue;
+        }
+
         flags.mon_moving = mtmp->m_id;
         nmtmp = mtmp->nmon;
 
