@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -515,6 +515,30 @@ dochug(struct monst *mtmp)
         }
     }
 
+    /* Look for other monsters to fight (at a distance) */
+    if ((((attacktype(mtmp->data, AT_BREA) || attacktype(mtmp->data, AT_GAZE) ||
+           attacktype(mtmp->data, AT_SPIT)) && !mtmp->mspec_used) ||
+         (attacktype(mtmp->data, AT_WEAP) && select_rwep(mtmp) != 0)) &&
+        mtmp->mlstmv != moves && mtmp->mstrategy != st_ascend) {
+        struct monst *mtmp2 = mfind_target(mtmp, FALSE);
+
+        if (mtmp2) {
+            int tx = mtmp2->mx, ty = mtmp2->my;
+            if (mtmp2 == &youmonst) {
+                /* use muxy */
+                tx = mtmp->mux;
+                ty = mtmp->muy;
+            }
+
+            if (!monnear(mtmp, tx, ty)) {
+                if (mattackq(mtmp, tx, ty) & MM_AGR_DIED)
+                    return 1;       /* Oops. */
+
+                return 0; /* that was our move for the round */
+            }
+        }
+    }
+
     /* If monster is nearby you, and has to wield a weapon, do so.  This costs
        the monster a move unless the monster already wields a weapon (similar
        to players being able to switch weapon for free with x) */
@@ -537,30 +561,6 @@ dochug(struct monst *mtmp)
             mtmp->weapon_check = NEED_HTH_WEAPON;
             if (mon_wield_item(mtmp) != 0)
                 return 0;
-        }
-    }
-
-    /* Look for other monsters to fight (at a distance) */
-    if ((((attacktype(mtmp->data, AT_BREA) || attacktype(mtmp->data, AT_GAZE) ||
-           attacktype(mtmp->data, AT_SPIT)) && !mtmp->mspec_used) ||
-         (attacktype(mtmp->data, AT_WEAP) && select_rwep(mtmp) != 0)) &&
-        mtmp->mlstmv != moves && mtmp->mstrategy != st_ascend) {
-        struct monst *mtmp2 = mfind_target(mtmp, FALSE);
-
-        if (mtmp2) {
-            int tx = mtmp2->mx, ty = mtmp2->my;
-            if (mtmp2 == &youmonst) {
-                /* use muxy */
-                tx = mtmp->mux;
-                ty = mtmp->muy;
-            }
-
-            if (!monnear(mtmp, tx, ty)) {
-                if (mattackq(mtmp, tx, ty) & MM_AGR_DIED)
-                    return 1;       /* Oops. */
-
-                return 0; /* that was our move for the round */
-            }
         }
     }
 

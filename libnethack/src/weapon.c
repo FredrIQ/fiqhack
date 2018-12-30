@@ -782,10 +782,11 @@ mon_wield_item(struct monst *mon)
                       mbodypart(mon, HAND));
         }
         obj->owornmask = W_MASK(os_wep);
-        /* Allow monsters to switch weapon type as a free action, just like players
-           Note that this is not completely right if monster lacked an alternate weapon
-           but it is better than making monsters always need to spend a turn to swap which
-           is the more common occurence theoretically */
+        /* Allow monsters to switch weapon type as a free action, just like
+           players. Note that this is not completely right if monster lacked an
+           alternate weapon but it is better than making monsters always need
+           to spend a turn to swap which is the more common occurence
+           theoretically */
         if (mw_tmp)
             return 0;
         return 1;
