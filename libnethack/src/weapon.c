@@ -726,10 +726,10 @@ mon_wield_item(struct monst *mon)
             return 0;
         }
         /* Actually, this isn't necessary--as soon as the monster wields the
-           weapon, the weapon welds itself, so the monster can know it's cursed 
+           weapon, the weapon welds itself, so the monster can know it's cursed
            and needn't even bother trying. Still.... */
-        if (mw_tmp && mw_tmp->cursed && mw_tmp->otyp != CORPSE) {
-            if (mon_visible(mon)) {
+        if (mw_tmp && mw_tmp->cursed && will_weld(mw_tmp)) {
+            if (!mw_tmp->mbknown && mon_visible(mon)) {
                 const char *welded_buf;
                 const char *mon_hand = mbodypart(mon, HAND);
 
@@ -753,6 +753,7 @@ mon_wield_item(struct monst *mon)
                 }
                 mw_tmp->bknown = 1;
             }
+            mw_tmp->mbknown = 1;
             mon->weapon_check = NO_WEAPON_WANTED;
             return 1;
         }
