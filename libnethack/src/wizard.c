@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -848,6 +848,8 @@ nasty(struct monst *mcast, coord bypos)
             tmp = (u.ulevel > 3) ? u.ulevel / 3 : 1; /* just in case -- rph */
         else {
             tmp = m_mlev(mcast) / 5;
+            if (tmp < 1)
+                tmp = 1;
         }
         for (i = rnd(tmp); i > 0; --i) {
             int makeindex;
