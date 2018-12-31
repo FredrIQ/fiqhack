@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1824,6 +1824,10 @@ overview_is_interesting(const struct level *lev, const struct overview_info *oi)
 
     /* interesting if you're on this level */
     if (lev == level)
+        return TRUE;
+
+    /* interesting if it is a sokoban level for (Un)solved check */
+    if (In_sokoban(&lev->z))
         return TRUE;
 
     /* interesting if it is named ("stash", "danger, demon!") */
