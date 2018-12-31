@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-06-14 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -287,48 +287,65 @@ djinni_from_bottle(struct monst *mon, struct obj *obj)
 
 /* "Quaffing is like drinking, except you spill more." -- Terry Pratchett */
 int
-dodrink(const struct nh_cmd_arg *arg)
+dodrink(const struct musable *m)
 {
+    struct monst *mon = m->mon;
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
     struct obj *potion;
     const char *potion_descr;
-    void (*terrain) (void) = 0;
+    boolean fountain = FALSE;
+    boolean sink = FALSE;
 
-    if (strangled(&youmonst)) {
+    if (strangled(mon)) {
         pline(msgc_cancelled,
-              "If you can't breathe air, how can you drink liquid?");
+              "If %s can't breathe air, how can %s drink liquid?",
+              mon_nam(mon), mhe(mon));
         return 0;
     }
     /* Is there a fountain to drink from here? */
-    if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) && !Engulfed &&
-        !levitates(&youmonst)) {
-        terrain = drinkfountain;
-    }
+    if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) &&
+        (!you || !Engulfed) && !levitates(&youmonst))
+        fountain = TRUE;
+
     /* Or a kitchen sink? */
-    if (IS_SINK(level->locations[u.ux][u.uy].typ) && !Engulfed) {
-        terrain = drinksink;
-    }
+    if (IS_SINK(level->locations[u.ux][u.uy].typ) &&
+        (!you || !Engulfed) && !levitates(&youmonst))
+        sink = TRUE;
 
     /* Or are you surrounded by water? */
-    if (Underwater && !Engulfed) {
+    if (you && Underwater && !Engulfed) {
         if (yn("Drink the water around you?") == 'y') {
-            pline(msgc_cancelled1, "Do you know what lives in this water?!");
-            return 1;
+            pline(msgc_yafm, "Do you know what lives in this water?!");
+            return 0;
         }
     }
 
-    potion = getargobj(arg, terrain ? beverages_and_fountains : beverages,
-                       "drink");
+    potion = mgetargobj(m, fountain || sink ?
+                        beverages_and_fountains : beverages, "drink");
     if (!potion)
         return 0;
 
     if (potion == &zeroobj) {
-        if (!terrain)
-            return 0;   /* sanity; should be impossible */
-        terrain();
+        if (fountain)
+            drinkfountain(mon);
+        else if (sink)
+            drinksink(mon);
+        else
+            return 0;
         return 1;
     }
 
     potion->in_use = TRUE;      /* you've opened the stopper */
+
+    if (!you) {
+        if (vis) {
+            potion->dknown = 1;
+            pline(combat_msgc(mon, NULL, cr_hit), "%s %s!",
+                  M_verbs(mon, "drink"), singular(potion, doname));
+        } else
+            You_hear(msgc_levelsound, "a chugging sound.");
+    }
 
 #define POTION_OCCUPANT_CHANCE(n) (13 + 2*(n))  /* also in muse.c */
 
@@ -337,53 +354,61 @@ dodrink(const struct nh_cmd_arg *arg)
         if (!strcmp(potion_descr, "milky") &&
             !(mvitals[PM_GHOST].mvflags & G_GONE) &&
             !rn2(POTION_OCCUPANT_CHANCE(mvitals[PM_GHOST].born))) {
-            ghost_from_bottle(&youmonst);
-            useup(potion);
+            ghost_from_bottle(mon);
+            m_useup(mon, potion);
             return 1;
         } else if (!strcmp(potion_descr, "smoky") &&
                    !(mvitals[PM_DJINNI].mvflags & G_GONE) &&
                    !rn2_on_rng(POTION_OCCUPANT_CHANCE(mvitals[PM_DJINNI].born),
-                               rng_smoky_potion)) {
-            djinni_from_bottle(&youmonst, potion);
-            useup(potion);
+                               you ? rng_smoky_potion : rng_main)) {
+            djinni_from_bottle(mon, potion);
+            m_useup(mon, potion);
             return 1;
         }
     }
-    return dopotion(potion);
+    return dopotion(&youmonst, potion);
 }
 
 
 int
-dopotion(struct obj *otmp)
+dopotion(struct monst *mon, struct obj *obj)
 {
+    boolean you = (mon == &youmonst);
+    boolean vis = (you || canseemon(mon));
     int retval;
 
-    if (otmp == uwep) {
+    if (m_mwep(mon) == obj) {
         /* Unwield the potion to avoid a crash if its effect causes the player
            to drop it. We don't print a message here; setuwep doesn't either. */
-        setuwep(0);
+        if (you)
+            setuwep(0);
+        else {
+            MON_NOWEP(mon);
+            obj->owornmask = 0;
+        }
     }
 
-    otmp->in_use = TRUE;
+    obj->in_use = TRUE;
     int nothing = 0;
     int unkn = 0;
-    if ((retval = peffects(&youmonst, otmp, &nothing, &unkn)) >= 0)
+    if ((retval = peffects(mon, obj, &nothing, &unkn)) >= 0)
         return retval;
 
     if (nothing) {
         unkn++;
-        pline(msgc_nospoil,
-              "You have a %s feeling for a moment, then it passes.",
-              Hallucination ? "normal" : "peculiar");
+        if (you)
+            pline(msgc_nospoil,
+                  "You have a %s feeling for a moment, then it passes.",
+                  Hallucination ? "normal" : "peculiar");
     }
-    if (otmp->dknown && !objects[otmp->otyp].oc_name_known) {
+    if (obj->dknown && !objects[obj->otyp].oc_name_known && vis) {
         if (!unkn) {
-            tell_discovery(otmp);
+            tell_discovery(obj);
             more_experienced(0, 10);
-        } else if (!objects[otmp->otyp].oc_uname)
-            docall(otmp);
+        } else if (!objects[obj->otyp].oc_uname)
+            docall(obj);
     }
-    useup(otmp);
+    m_useup(mon, obj);
     return 1;
 }
 

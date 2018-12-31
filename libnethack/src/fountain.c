@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -234,8 +234,13 @@ dryup(xchar x, xchar y, boolean isyou)
 }
 
 void
-drinkfountain(void)
+drinkfountain(struct monst *mon)
 {
+    if (mon != &youmonst) {
+        impossible("Monster drinking from a fountain?");
+        return;
+    }
+
     /* What happens when you drink from a fountain? */
     boolean mgkftn = (level->locations[u.ux][u.uy].blessedftn == 1);
     int fate = rn2_on_rng(30, (mgkftn && u.uluck >= 0) ?
@@ -538,8 +543,13 @@ breaksink(int x, int y)
 }
 
 void
-drinksink(void)
+drinksink(struct monst *mon)
 {
+    if (mon != &youmonst) {
+        impossible("Monster drinking from a sink?");
+        return;
+    }
+
     struct obj *otmp;
     struct monst *mtmp;
 
@@ -593,7 +603,7 @@ drinksink(void)
         otmp->dknown = !(Blind || Hallucination);
         otmp->quan++;   /* Avoid panic upon useup() */
         otmp->fromsink = 1;     /* kludge for docall() */
-        dopotion(otmp);
+        dopotion(&youmonst, otmp);
         obfree(otmp, NULL);
         break;
     case 5:

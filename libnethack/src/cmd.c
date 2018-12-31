@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -99,8 +99,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_EXT | CMD_ARG_OBJ},
     {"discoveries", "show your knowledge about items", '\\', 0, TRUE,
      ARG(dodiscovered), CMD_NOTIME | CMD_MAINMENU},
-    {"drink", "quaff a potion", 'q', 0, FALSE, ARG(dodrink),
-     CMD_ARG_OBJ},
+    {"drink", "quaff a potion", 'q', 0, FALSE, MUSE(dodrink),
+     CMD_ARG_OBJ | CMD_MUSABLE},
     {"drop", "drop one item", 'd', 0, FALSE, ARG(dodrop),
      CMD_ARG_OBJ},
     {"eat", "eat an item from inventory or the floor", 'e', 0, FALSE,

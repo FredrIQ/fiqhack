@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -27,9 +27,7 @@ extern const int monstr[];
  */
 
 static void mconfdir(const struct monst *, schar *, schar *);
-static int precheck(struct obj *obj, struct musable *m);
 static void mreadmsg(struct monst *, struct obj *);
-static void mquaffmsg(struct monst *, struct obj *);
 static int find_item_score(const struct monst *, struct obj *, coord *, struct musable *);
 static int find_item_single(struct obj *, boolean, struct musable *, boolean, boolean);
 static boolean mon_allowed(int);
@@ -38,6 +36,7 @@ static int trapx, trapy;
 
 static int (*musecmd[NUM_MUSE])(const struct musable *) = {
     [MUSE_CAST] = docast,
+    [MUSE_QUAFF] = dodrink,
     [MUSE_ZAP] = dozap,
 };
 
@@ -216,43 +215,6 @@ mgetargspell(const struct musable *m, int *spell_no)
     return getspell(spell_no);
 }
 
-/* Any preliminary checks which may result in the monster being unable to use
-   the item.  Returns 0 if nothing happened, 2 if the monster can't do anything
-   (i.e. it teleported) and 1 if it's dead. */
-static int
-precheck(struct obj *obj, struct musable *m)
-{
-    struct monst *mon = m->mon;
-
-    if (!obj)
-        return 0;
-
-#define POTION_OCCUPANT_CHANCE(n) (13 + 2*(n))  /* also in muse.c */
-
-    if (obj->oclass == POTION_CLASS) {
-        const char *potion_descr;
-        potion_descr = OBJ_DESCR(objects[obj->otyp]);
-
-        if (!strcmp(potion_descr, "milky") &&
-            !(mvitals[PM_GHOST].mvflags & G_GONE) &&
-            !rn2(POTION_OCCUPANT_CHANCE(mvitals[PM_GHOST].born))) {
-            mquaffmsg(mon, obj);
-            ghost_from_bottle(mon);
-            m_useup(mon, obj);
-            return 2;
-        } else if (!strcmp(potion_descr, "smoky") &&
-                   !(mvitals[PM_DJINNI].mvflags & G_GONE) &&
-                   !rn2(POTION_OCCUPANT_CHANCE(mvitals[PM_DJINNI].born))) {
-            /* not rng_smoky_potion; that's for wishes that players will get */
-            mquaffmsg(mon, obj);
-            djinni_from_bottle(mon, obj);
-            m_useup(mon, obj);
-            return 2;
-        }
-    }
-    return 0;
-}
-
 static void
 mreadmsg(struct monst *mtmp, struct obj *otmp)
 {
@@ -294,18 +256,6 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
               "Being confused, %s mispronounces the magic words...",
               vismon ? mon_nam(mtmp) : mhe(mtmp));
 }
-
-static void
-mquaffmsg(struct monst *mtmp, struct obj *otmp)
-{
-    if (mon_visible(mtmp)) {
-        otmp->dknown = 1;
-        pline(combat_msgc(mtmp, NULL, cr_hit), "%s drinks %s!",
-              Monnam(mtmp), singular(otmp, doname));
-    } else
-        You_hear(msgc_levelsound, "a chugging sound.");
-}
-
 
 /* Monster wishes.
    Balance considerations: Undead wishing can only be performed latergame
@@ -1367,7 +1317,7 @@ find_item(struct monst *mon, struct musable *m)
             (obj = m_carrying(mon, POT_EXTRA_HEALING)) ||
             (obj = m_carrying(mon, POT_FULL_HEALING))) {
             m->obj = obj;
-            m->use = MUSE_POT;
+            m->use = MUSE_QUAFF;
             return TRUE;
         }
     }
@@ -1379,7 +1329,7 @@ find_item(struct monst *mon, struct musable *m)
         if ((obj = m_carrying(mon, POT_GAIN_ENERGY)) &&
             (!obj->cursed || !obj->mbknown)) {
             m->obj = obj;
-            m->use = MUSE_POT;
+            m->use = MUSE_QUAFF;
             return TRUE;
         }
     }
@@ -1389,7 +1339,7 @@ find_item(struct monst *mon, struct musable *m)
         if (!nohands(mon->data)) {
             if ((obj = m_carrying(mon, POT_FULL_HEALING))) {
                 m->obj = obj;
-                m->use = MUSE_POT;
+                m->use = MUSE_QUAFF;
                 return TRUE;
             }
 
@@ -1406,7 +1356,7 @@ find_item(struct monst *mon, struct musable *m)
             if ((obj = m_carrying(mon, POT_EXTRA_HEALING)) ||
                 (obj = m_carrying(mon, POT_HEALING))) {
                 m->obj = obj;
-                m->use = MUSE_POT;
+                m->use = MUSE_QUAFF;
                 return TRUE;
             }
         }
@@ -1747,7 +1697,7 @@ find_item_obj(struct obj *chain, struct musable *m,
                 m->z = m2.z;
                 m->use = (obj->oclass == WAND_CLASS   ? MUSE_ZAP  :
                           obj->oclass == SCROLL_CLASS ? MUSE_SCR  :
-                          obj->oclass == POTION_CLASS ? MUSE_POT  :
+                          obj->oclass == POTION_CLASS ? MUSE_QUAFF  :
                           obj->oclass == SPBOOK_CLASS ? MUSE_BOOK :
                           obj->oclass == FOOD_CLASS   ? MUSE_EAT  :
                           obj->otyp == SKELETON_KEY   ? MUSE_KEY  :
@@ -2129,12 +2079,6 @@ use_item(struct musable *m)
     struct monst *mon = m->mon;
     struct obj *obj = m->obj;
     int i;
-    if (obj &&
-        m->use != MUSE_CAST && /* MUSE_CAST deals with m->spell, not m->obj */
-        m->use != MUSE_THROW && /* thrown potions never release ghosts/djinni */
-        m->use != MUSE_CONTAINER && /* BoH vanish logic is performed in find_item_obj */
-        (i = precheck(obj, m)))
-        return i;
     boolean vis = cansee(mon->mx, mon->my);
     boolean vismon = mon_visible(mon);
     boolean oseen = obj && vismon;
@@ -2151,6 +2095,7 @@ use_item(struct musable *m)
 
     switch (m->use) {
     case MUSE_CAST:
+    case MUSE_QUAFF:
     case MUSE_ZAP:
         ret = (*musecmd[m->use])(m);
         return DEADMONSTER(mon) ? 1 : ret ? 2 : 0;
@@ -2170,16 +2115,6 @@ use_item(struct musable *m)
             else
                 obj->in_use = FALSE;
         }
-        return DEADMONSTER(mon) ? 1 : 2;
-    case MUSE_POT:
-        mquaffmsg(mon, obj);
-        int nothing = 0; /* nothing happened (pelicular feeling) */
-        int unkn = 0; /* unknown for other reasons */
-        peffects(mon, obj, &nothing, &unkn);
-        if (!nothing && !unkn && oseen)
-            tell_discovery(obj);
-
-        m_useup(mon, obj);
         return DEADMONSTER(mon) ? 1 : 2;
     case MUSE_THROW:
         if (cansee(mon->mx, mon->my)) {

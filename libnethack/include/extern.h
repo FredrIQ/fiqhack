@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -646,10 +646,10 @@ extern boolean wish_available(int, int *);
 extern void floating_above(const char *);
 extern void dogushforth(int);
 extern void dryup(xchar, xchar, boolean);
-extern void drinkfountain(void);
+extern void drinkfountain(struct monst *);
 extern void dipfountain(struct obj *);
 extern void breaksink(int, int);
-extern void drinksink(void);
+extern void drinksink(struct monst *);
 
 /* ### hack.c ### */
 
@@ -1535,8 +1535,8 @@ extern void ugolemeffects(int, int);
 
 extern void eyepline(const char *, const char *);
 extern void make_sick(struct monst *, long, const char *, boolean, int);
-extern int dodrink(const struct nh_cmd_arg *);
-extern int dopotion(struct obj *);
+extern int dodrink(const struct musable *);
+extern int dopotion(struct monst *, struct obj *);
 extern int peffects(struct monst *, struct obj *, int *, int *);
 extern boolean healup(int, int, boolean, boolean);
 extern void strange_feeling(struct obj *, const char *);
