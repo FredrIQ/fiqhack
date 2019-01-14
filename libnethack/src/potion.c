@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
+/* Last modified by Fredrik Ljungdahl, 2019-01-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -304,13 +304,13 @@ dodrink(const struct musable *m)
         return 0;
     }
     /* Is there a fountain to drink from here? */
-    if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) &&
-        (!you || !Engulfed) && !levitates(&youmonst))
+    if (IS_FOUNTAIN(level->locations[m_mx(mon)][m_my(mon)].typ) &&
+        (!you || !Engulfed) && !levitates(mon))
         fountain = TRUE;
 
     /* Or a kitchen sink? */
-    if (IS_SINK(level->locations[u.ux][u.uy].typ) &&
-        (!you || !Engulfed) && !levitates(&youmonst))
+    if (IS_SINK(level->locations[m_mx(mon)][m_my(mon)].typ) &&
+        (!you || !Engulfed) && !levitates(mon))
         sink = TRUE;
 
     /* Or are you surrounded by water? */
@@ -366,7 +366,7 @@ dodrink(const struct musable *m)
             return 1;
         }
     }
-    return dopotion(&youmonst, potion);
+    return dopotion(mon, potion);
 }
 
 
