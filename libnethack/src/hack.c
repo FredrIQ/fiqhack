@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
+/* Last modified by Fredrik Ljungdahl, 2019-01-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -104,10 +104,15 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
             /* then fall through */
         case uim_attackhostile:
             if (peaceful == 0) {
-                if (!sengr_at("Elbereth", u.ux, u.uy))
+                if (mtmp && check_caitiff(mtmp, TRUE)) {
+                    pline(msgc_cancelled,
+                          "Doing this would violate the Knight honor code!");
+                } else if (!sengr_at("Elbereth", u.ux, u.uy))
                     return uia_attack;
-                pline(msgc_cancelled,
-                      "Doing this would violate the sancticity of Elbereth!");
+                else
+                    pline(msgc_cancelled,
+                          "Doing this would violate "
+                          "the sancticity of Elbereth!");
                 pline(msgc_hint,
                       "Use forcefight (usually on 'F') to fight anyway.");
             }

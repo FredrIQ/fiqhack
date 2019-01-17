@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2019-01-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,15 +26,20 @@ static boolean shade_aware(struct obj *);
 /*
  * It is unchivalrous for a knight to attack the defenseless or from behind.
  */
-void
-check_caitiff(struct monst *mtmp)
+boolean
+check_caitiff(struct monst *mtmp, boolean check_only)
 {
     if (Role_if(PM_KNIGHT) && u.ualign.type == A_LAWFUL &&
         (!mtmp->mcanmove || mtmp->msleeping || (mtmp->mflee && !mtmp->mavenge))
         && u.ualign.record > -10) {
-        pline(msgc_alignbad, "You caitiff!");
-        adjalign(-1);
+        if (!check_only) {
+            pline(msgc_alignbad, "You caitiff!");
+            adjalign(-1);
+        }
+        return TRUE;
     }
+
+    return FALSE;
 }
 
 schar
@@ -47,7 +52,7 @@ find_roll_to_hit(struct monst *mtmp)
         1 + Luck + abon() + find_mac(mtmp) + hitbon(&youmonst) +
         maybe_polyd(youmonst.data->mlevel, u.ulevel);
 
-    check_caitiff(mtmp);
+    check_caitiff(mtmp, FALSE);
 
     /* attacking peaceful creatures is bad for the samurai's giri */
     if (Role_if(PM_SAMURAI) && mtmp->mpeaceful && u.ualign.record > -10) {

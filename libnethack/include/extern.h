@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
+/* Last modified by Fredrik Ljungdahl, 2019-01-17 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2040,7 +2040,7 @@ extern void u_init_inv_skills(void);
 
 /* ### uhitm.c ### */
 
-extern void check_caitiff(struct monst *);
+extern boolean check_caitiff(struct monst *, boolean);
 extern schar find_roll_to_hit(struct monst *);
 extern enum attack_check_status attack(struct monst *, schar, schar, boolean);
 extern boolean hmon(struct monst *, struct obj *, int, int);
