@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
+/* Last modified by Fredrik Ljungdahl, 2019-02-16 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -715,7 +715,7 @@ const struct objclass const_objects[] = {
     FOOD("slime mold", 75, 1, 5, 0, VEGGY, 250, HI_ORGANIC),
 
 /* people food */
-    FOOD("lump of royal jelly", 0, 1, 2, 0, VEGGY, 200, CLR_YELLOW),
+    FOOD("lump of royal jelly", 0, 1, 2, 0, VEGGY, 200, CLR_MAGENTA),
     FOOD("cream pie", 25, 1, 10, 0, VEGGY, 100, CLR_WHITE),
     FOOD("candy bar", 13, 1, 2, 0, VEGGY, 100, CLR_BROWN),
     FOOD("fortune cookie", 55, 1, 1, 0, VEGGY, 40, CLR_YELLOW),
