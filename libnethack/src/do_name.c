@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-12 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -263,17 +263,20 @@ do_naming(const struct nh_cmd_arg *arg)
 
     init_menulist(&menu);
 
-    /* group_accel settings are for keystroke-compatibility with nethack.alt.org
-       (which uses a/b/c/d); they shouldn't show in the interface because
-       there's no good reason to use them other than muscle memory */
+    /* group_accel settings are for keystroke-compatibility with vanilla 3.6.x;
+       they shouldn't show in the interface because therer's no good reason to
+       use them other than muscle memory. 3.6.x also has floor naming, which we
+       have by #name, then ',' rather than 3.6.x's getpos floor naming. */
     add_menuitem(&menu, 1, "Name a monster", 'C', FALSE);
-    menu.items[menu.icount-1].group_accel = 'a';
+    menu.items[menu.icount-1].group_accel = 'm';
     add_menuitem(&menu, 2, "Name the current level", 'f', FALSE);
+    menu.items[menu.icount-1].group_accel = 'a';
     add_menuitem(&menu, 3, "Name an individual item", 'y', FALSE);
-    menu.items[menu.icount-1].group_accel = 'b';
+    menu.items[menu.icount-1].group_accel = 'i';
     add_menuitem(&menu, 4, "Name all items of a certain type", 'n', FALSE);
-    menu.items[menu.icount-1].group_accel = 'c';
+    menu.items[menu.icount-1].group_accel = 'o';
     add_menuitem(&menu, 5, "Name an item type by appearance", 'A', FALSE);
+    menu.items[menu.icount-1].group_accel = 'd';
     if (flags.recently_broken_otyp != STRANGE_OBJECT) {
         const char *buf;
 
