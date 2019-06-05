@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-09-11 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-05 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -609,21 +609,43 @@ get_advmod(int level, xchar attrib, struct RoleAdvance roleadv,
     if (attrib == 3)
         return 0;
 
+    int mod = 0;
     if (attrib < 7)
-        return roleadv.a4_6 + raceadv.a4_6;
+        mod = roleadv.a4_6 + raceadv.a4_6;
     if (attrib < 10)
-        return roleadv.a7_9 + raceadv.a7_9;
+        mod = roleadv.a7_9 + raceadv.a7_9;
     if (attrib < 13)
-        return roleadv.a10_12 + raceadv.a10_12;
+        mod = roleadv.a10_12 + raceadv.a10_12;
     if (attrib < 16)
-        return roleadv.a13_15 + raceadv.a13_15;
+        mod = roleadv.a13_15 + raceadv.a13_15;
     if (attrib < 19)
-        return roleadv.a16_18 + raceadv.a16_18;
+        mod = roleadv.a16_18 + raceadv.a16_18;
     if (attrib < 22)
-        return roleadv.a19_21 + raceadv.a19_21;
+        mod = roleadv.a19_21 + raceadv.a19_21;
     if (attrib < 25)
-        return roleadv.a22_24 + raceadv.a22_24;
-    return roleadv.a25 + raceadv.a25;
+        mod = roleadv.a22_24 + raceadv.a22_24;
+    else
+        mod = roleadv.a25 + raceadv.a25;
+
+    /* Players growing up from 1->2 has level set to 1 here, 2->1 likewise.
+       Monsters are set as one level above their actual level when leeling up
+       since they start at XL0. */
+    int i;
+    int mod_old = 0;
+    int mod_new = 0;
+    for (i = 1; i <= level; i++) {
+        mod_old = mod_new;
+        if (level < 10)
+            mod_new += 150 * mod;
+        else if (level < 20)
+            mod_new += 100 * mod;
+        else
+            mod_new += 50 * mod;
+    }
+
+    mod_old /= 100;
+    mod_new /= 100;
+    return mod_new - mod_old;
 }
 
 static boolean
