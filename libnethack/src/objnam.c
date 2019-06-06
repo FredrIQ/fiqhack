@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-25 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -909,7 +909,7 @@ doname_base(const struct obj *obj, boolean with_price)
            Tourists always ID shop objects. */
         if ((Role_if(PM_TOURIST) ||
              (obj->oclass != ARMOR_CLASS && obj->oclass != WEAPON_CLASS)) &&
-            obj->oclass != GEM_CLASS) {
+            (obj->oclass != GEM_CLASS || is_graystone(obj))) {
             int i;
             boolean id = TRUE;
 
@@ -917,10 +917,26 @@ doname_base(const struct obj *obj, boolean with_price)
                 for (i = 0; i < NUM_OBJECTS; i++) {
                     if (i == obj->otyp)
                         continue;
-                    if (objects[i].oc_cost == objects[obj->otyp].oc_cost &&
-                        objects[i].oc_class == objects[obj->otyp].oc_class &&
-                        objects[i].oc_weight == objects[obj->otyp].oc_weight)
-                        id = FALSE;
+                    if (objects[i].oc_cost != objects[obj->otyp].oc_cost ||
+                        objects[i].oc_class != objects[obj->otyp].oc_class ||
+                        objects[i].oc_weight != objects[obj->otyp].oc_weight)
+                        continue;
+
+                    /* If we don't know the appearance, we can't distinguish */
+                    if (obj->dknown) {
+                        /* Skip items we've already identified */
+                        if (objects[i].oc_name_known)
+                            continue;
+
+                        /* Skip items with fixed appearances */
+                        if (i == POT_WATER ||
+                            i == SCR_BLANK_PAPER ||
+                            i == SPE_BLANK_PAPER)
+                            continue;
+                    }
+
+                    id = FALSE;
+                    break;
                 }
             }
 
