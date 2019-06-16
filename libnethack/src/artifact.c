@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -336,7 +336,7 @@ restrict_name(struct obj * otmp, const char *name)
     if (!strncmpi(name, "the ", 4))
         name += 4;
 
-    /* Since almost every artifact is SPFX_RESTR, it doesn't cost us much to do 
+    /* Since almost every artifact is SPFX_RESTR, it doesn't cost us much to do
        the string comparison before the spfx check. Bug fix: don't name
        multiple elven daggers "Sting". */
     for (a = artilist + 1; a->otyp; a++) {
