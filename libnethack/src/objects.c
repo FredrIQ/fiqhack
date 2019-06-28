@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-02-16 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -36,7 +36,7 @@ struct monst {
 /* first pass -- object descriptive text */
 # define OBJ(name,desc) name,desc
 # define OBJECT(obj,bits,prp,sym,prob,dly,wt,cost,sdam,ldam,oc1,oc2,nut,color) \
-             {obj}
+    {obj}
 
 const struct objdescr obj_descr[] = {
 #else
@@ -45,8 +45,8 @@ const struct objdescr obj_descr[] = {
 # define BITS(nmkn,mrg,uskn,ctnr,mgc,chrg,uniq,nwsh,big,tuf,dir,sub,mtrl) \
         nmkn,mrg,uskn,0,mgc,chrg,uniq,nwsh,0,big,tuf,dir,mtrl,sub
 # define OBJECT(obj,bits,prp,sym,prob,dly,wt,cost,sdam,ldam,oc1,oc2,nut,color) \
-        {0, 0, NULL, bits, prp, sym, dly, COLOR_FIELD(color) \
-         prob, wt, cost, sdam, ldam, oc1, oc2, nut}
+    {0, 0, 0, NULL, bits, prp, sym, dly, COLOR_FIELD(color)             \
+     prob, wt, cost, sdam, ldam, oc1, oc2, nut}
 # define HARDGEM(n) (n >= 8)
 
 struct objclass *objects;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -745,10 +745,13 @@ extern struct obj *getobj(const char *let, const char *word, boolean isarg);
 extern boolean validate_object(struct obj *obj, const char *lets,
                                const char *word);
 extern void fully_identify_obj(struct obj *);
+extern int get_identification_class(unsigned);
+extern void partial_obj_discovery(unsigned, unsigned);
 extern void identify_pack(struct monst *, int, int);
 extern void prinv(const char *, struct obj *, long);
 extern const char *xprname(
     struct obj *, const char *, char, boolean, long, long);
+extern int doidcheck(const struct nh_cmd_arg *);
 extern int ddoinv(const struct nh_cmd_arg *);
 extern char display_inventory(const char *, boolean);
 extern void update_inventory(void);
@@ -1769,6 +1772,8 @@ extern void finish_paybill(void);
 extern struct obj *find_oid(unsigned id);
 extern struct obj *find_oid_lev(struct level *lev, unsigned id);
 extern int shop_item_cost(const struct obj *obj);
+extern boolean price_identification_ok(unsigned);
+extern long get_static_cost(unsigned, boolean, boolean);
 extern long contained_cost(const struct obj *, struct monst *, long, boolean,
                            boolean);
 extern long contained_gold(struct obj *);

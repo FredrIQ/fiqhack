@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-15 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1326,7 +1326,142 @@ menu_identify(int id_limit, int skill)
     }
 }
 
-/* dialog with user to identify a given number of items; 0 means all */
+static const struct obdisc ob_disc[] = {
+    {POT_CONFUSION, OBD_POTHARM, 1},
+    {POT_BLINDNESS, OBD_POTHARM, 1},
+    {POT_HALLUCINATION, OBD_POTHARM, 1},
+    {POT_SEE_INVISIBLE, OBD_POTFJSI, 1},
+    {POT_HEALING, OBD_POTHEAL, 1},
+    {POT_EXTRA_HEALING, OBD_POTHEAL, 1},
+    {POT_MONSTER_DETECTION, OBD_STRANGE, 1},
+    {POT_OBJECT_DETECTION, OBD_STRANGE, 1},
+    {POT_FULL_HEALING, OBD_POTHEAL, 1},
+    {POT_POLYMORPH, OBD_POTPOLY, 1},
+    {POT_WONDER, OBD_POTWOND, 1},
+    {POT_BOOZE, OBD_POTFJBO, 1},
+    {POT_SICKNESS, OBD_POTHARM | OBD_POTSICK, 2},
+    {POT_FRUIT_JUICE, OBD_POTFJSI | OBD_POTFJBO, 1},
+    {SCR_ENCHANT_WEAPON, OBD_STRANGE, 1},
+    {SCR_ENCHANT_ARMOR, OBD_STRANGE, 1},
+    {SCR_DESTROY_ARMOR, OBD_STRANGE, 1},
+    {SCR_GOLD_DETECTION, OBD_STRANGE, 1},
+    {SCR_FOOD_DETECTION, OBD_STRANGE, 1},
+    {WAN_MAKE_INVISIBLE, OBD_ENGRAVE, 1},
+    {WAN_TELEPORTATION, OBD_ENGRAVE, 1},
+    {WAN_CANCELLATION, OBD_ENGRAVE, 1},
+};
+
+/* Returns false for identical appearances -- gray stones, bags, etc */
+static boolean
+unique_appearance(unsigned otyp)
+{
+    const char *appearances = OBJ_XDESCR(objects[otyp]);
+    int i;
+    for (i = 1; i < NUM_OBJECTS; i++)
+        if (objects[i].oc_class == objects[otyp].oc_class && i != otyp &&
+            !strcmp(appearances, OBJ_XDESCR(objects[i])))
+            return FALSE;
+    return TRUE;
+}
+
+static int
+get_possibilities(unsigned otyp, int objposs[NUM_OBJECTS])
+{
+    int idclass = get_identification_class(otyp);
+    if (!idclass)
+        return 0;
+    if (objects[otyp].oc_name_known) {
+        objposs[otyp] = objects[otyp].oc_prob;
+        return 1;
+    }
+
+    int i;
+    int n = 0;
+    for (i = 1; i < NUM_OBJECTS; i++) {
+        objposs[i] = -1;
+        if (objects[i].oc_class != objects[otyp].oc_class)
+            continue;
+
+        if (objects[i].oc_name_known)
+            continue;
+
+        if (objects[i].oc_weight != objects[otyp].oc_weight)
+            continue;
+
+        if (!OBJ_NAME(objects[i]))
+            continue;
+
+        if (idclass == OID_NOTUNIQUE) {
+            if (strcmp(OBJ_XDESCR(objects[i]), OBJ_XDESCR(objects[otyp])))
+                continue;
+        } else if (idclass != get_identification_class(i))
+            continue;
+
+        n++;
+        objposs[i] = objects[i].oc_prob;
+    }
+
+    return n;
+}
+
+/* Returns nonzero if this kind of object is useful to formally ID. */
+int
+get_identification_class(unsigned otyp)
+{
+    if (!unique_appearance(otyp))
+        return OID_NOTUNIQUE;
+
+    switch (objects[otyp].oc_class) {
+    case ARMOR_CLASS:
+        if (otyp >= HELMET && otyp <= HELM_OF_TELEPATHY)
+            return OID_HELM;
+        if (otyp >= LEATHER_GLOVES && otyp <= GAUNTLETS_OF_DEXTERITY)
+            return OID_GLOVES;
+        if (otyp >= CLOAK_OF_PROTECTION && otyp <= CLOAK_OF_DISPLACEMENT)
+            return OID_CLOAK;
+        if (otyp >= SPEED_BOOTS && otyp <= LEVITATION_BOOTS)
+            return OID_BOOTS;
+        return OID_NONE;
+    case RING_CLASS:
+    case AMULET_CLASS:
+    case SCROLL_CLASS:
+    case SPBOOK_CLASS:
+        if (!objects[otyp].oc_magic || objects[otyp].oc_unique)
+            return OID_NONE;
+        return OID_OK;
+    case POTION_CLASS:
+    case WAND_CLASS:
+    case GEM_CLASS:
+        if (otyp == POT_WATER || otyp == ROCK)
+            return OID_NONE;
+        return OID_OK;
+    default:
+        return OID_NONE;
+    }
+
+    return OID_NONE;
+}
+
+/* Discover something about an object (base price, engrave message, etc) */
+void
+partial_obj_discovery(unsigned otyp, unsigned obdflag)
+{
+}
+
+static void
+chain_identify(struct monst *mon, struct obj *chain, int skill)
+{
+    struct obj *obj;
+    for (obj = chain; obj; obj = obj->nobj) {
+        if (mon == &youmonst && not_fully_identified_core(obj, FALSE, skill))
+            identify(mon, obj, skill);
+        if (Has_contents(obj))
+            chain_identify(mon, obj->cobj, skill);
+    }
+}
+
+/* dialog with user to identify a given number of items; 0 means all, -1 means
+   identify the whole inventory recursively (including container content) */
 void
 identify_pack(struct monst *mon, int id_limit,
               int skill)
@@ -1360,7 +1495,9 @@ identify_pack(struct monst *mon, int id_limit,
         }
     }
 
-    if (!unid_cnt) {
+    if (id_limit < 0)
+        chain_identify(mon, mon->minvent, skill);
+    else if (!unid_cnt) {
         if (you)
             pline(any_unid_cnt ? msgc_failcurse : msgc_info,
                   "You have already identified all of your possessions%s.",
@@ -1478,7 +1615,91 @@ xprname(struct obj *obj, const char *txt, /* text to print instead of obj */
     return li;
 }
 
+/* the 'I' command */
+int
+doidcheck(const struct nh_cmd_arg *arg)
+{
+    struct object_pick *pick_list;
+    int n = 0;
+    const char *buf;
+    struct obj *obj;
 
+    for (obj = youmonst.minvent; obj; obj = obj->nobj) {
+        if (not_fully_identified1(obj))
+            n++;
+    }
+
+    if (!n) {
+        pline(msgc_info, "You have already identified the type of all objects "
+              "in your inventory!");
+        return 0;
+    }
+
+    buf = msgprintf("What object do you want to investigate?");
+
+    n = query_objlist(buf, youmonst.minvent,
+                      SIGNAL_NOMENU | USE_INVLET | INVORDER_SORT,
+                      &pick_list, PICK_ONE, not_fully_identified1);
+
+    if (n <= 0)
+        return 0;
+
+    obj = pick_list[0].obj;
+
+    if (!obj->dknown) {
+        pline(msgc_failcurse, "You don't know how that looks like!");
+        return 0;
+    }
+
+    if (!get_identification_class(obj->otyp)) {
+        pline(msgc_failcurse, "That object is already sufficiently known.");
+        return 0;
+    }
+
+    int objposs[NUM_OBJECTS] = {0};
+    get_possibilities(obj->otyp, objposs);
+
+    int i;
+    int totprob = 0;
+    for (i = 1; i < NUM_OBJECTS; i++) {
+        if (objposs[i] != -1)
+            totprob += objposs[i];
+    }
+
+    if (!totprob)
+        totprob = 1;
+
+    struct nh_menulist menu;
+    const int *selection;
+
+    init_menulist(&menu);
+    add_menu_txt(&menu, "Possibilities for the object are listed below.",
+                 MI_NORMAL);
+    add_menu_txt(&menu, "Percentages are generation probabilities assuming "
+                 "regular item generation.", MI_NORMAL);
+    add_menu_txt(&menu, "", MI_NORMAL);
+
+    for (i = 1; i < NUM_OBJECTS; i++) {
+        if (objposs[i] != -1) {
+            const char *chancebuf = "0";
+            int chance = objposs[i];
+            if (chance > 0) {
+                if ((chance * 100 / totprob) < 1)
+                    chancebuf = "<1";
+                else
+                    chancebuf = msgprintf("%d", chance * 100 / totprob);
+            }
+            buf = msgprintf("%s (%s%)",
+                            OBJ_NAME(objects[i]), chancebuf);
+            add_menu_txt(&menu, buf, MI_NORMAL);
+        }
+    }
+
+    display_menu(&menu, msgcat("Possible descriptions for ", an(cxname(obj))),
+                 PICK_ONE, PLHINT_ANYWHERE, &selection);
+
+    return 0;
+}
 
 /* the 'i' command */
 int

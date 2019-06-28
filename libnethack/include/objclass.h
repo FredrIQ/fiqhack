@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,9 +10,50 @@
 
 /* definition of a class of objects */
 
+/* Object identification class, for several shuffles within the same
+   object class (this happens with armor) */
+enum oidclass {
+    OID_NONE,
+    OID_NOTUNIQUE,
+    OID_OK,
+    OID_HELM,
+    OID_GLOVES,
+    OID_CLOAK,
+    OID_BOOTS,
+};
+
+# define OBD_LOWSELL 0x0001 /* shop prices */
+# define OBD_HISELL  0x0002
+# define OBD_ANYSELL 0x0003
+# define OBD_LOWBUY  0x0004
+# define OBD_HIBUY   0x0008
+# define OBD_ANYBUY  0x000c
+# define OBD_ANYSHOP 0x000f
+# define OBD_STRANGE 0x0010 /* strange feeling */
+# define OBD_WEIGHT  0x0020 /* how heavy an object is */
+# define OBD_POTSICK 0x0040 /* dipping weapons */
+# define OBD_POTHEAL 0x0080
+# define OBD_POTPOLY 0x0100 /* dipping anything into poly */
+# define OBD_POTHARM 0x0200 /* dipping unicorn horn */
+# define OBD_POTWOND 0x0400 /* adding/removing object properties */
+# define OBD_POTFJSI 0x0800 /* fruit juice or see invisible (drinking) */
+# define OBD_POTFJBO 0x1000 /* fruit juice or booze (delicatessen) */
+# define OBD_ENGRAVE 0x0040 /* engraving with a wand or gem (hardness) */
+# define OBD_SINK    0x0040 /* dropped in a sink */
+# define OBD_BLNSINK 0x0080 /* dropped in a sink while blind */
+# define OBD_CANLOOT 0x0040 /* not bag of tricks */
+
+struct obdisc {
+    unsigned otyp;
+    unsigned data; /* bitfield of discovery data covered by this entry */
+    int num; /* parameter for discovery data */
+};
+
 struct objclass {
     short oc_name_idx;  /* index of actual name */
     short oc_descr_idx; /* description when name unknown */
+    unsigned discovery_data; /* what the player has discovered about the item */
+
     char *oc_uname;     /* called by user */
     unsigned oc_name_known:1;
     unsigned oc_merge:1;        /* merge otherwise equal objects */
@@ -194,5 +235,5 @@ struct fruit {
 
 # define OBJ_NAME(obj)  (obj_descr[(obj).oc_name_idx].oc_name)
 # define OBJ_DESCR(obj) (obj_descr[(obj).oc_descr_idx].oc_descr)
+# define OBJ_XDESCR(obj) (OBJ_DESCR(obj) ? OBJ_DESCR(obj) : OBJ_NAME(obj))
 #endif /* OBJCLASS_H */
-

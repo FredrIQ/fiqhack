@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1819,6 +1819,77 @@ shop_item_cost(const struct obj *obj)
     return cost;
 }
 
+static boolean
+may_price_id(struct obj *obj)
+{
+    if (!get_identification_class(obj->otyp))
+        return FALSE;
+
+    /* Cancelled wands have a base price of 0 */
+    if (obj->oclass == WAND_CLASS && obj->spe < 0)
+        return FALSE;
+
+    return price_identification_ok(obj->otyp);
+}
+
+/* Returns TRUE if this object type is subject to price identification.
+   Price identification can also deal with armor on a per-object basis to
+   forbid some cases (enchantment can make some prices ambiguous) and to
+   forbid price checking cancelled wands (whose base price is always 0) */
+boolean
+price_identification_ok(unsigned otyp)
+{
+    /* Price ID useless */
+    if (!get_identification_class(otyp))
+        return FALSE;
+
+    /* Gems can't realibly be price-identified, but gray stones can */
+    if (!strcmp(OBJ_XDESCR(objects[otyp]), "gray stone"))
+        return TRUE;
+    if (objects[otyp].oc_class == GEM_CLASS)
+        return FALSE;
+
+    /* Everything else can be price-identified */
+    return TRUE;
+}
+
+/* Returns a static price for the item with or without the dummy tax for
+   not knowing the base type. Used to determine if base price is possibly
+   ambiguous (for example, an 80zm scroll might be 60 with surcharge, but
+   a 200zm scroll can't be a surcharged 133zm scroll because those don't
+   exist). Returns 0 if we should ignore base price identification for
+   this kind of item. */
+long
+get_static_cost(unsigned otyp, boolean selling, boolean dummy_tax)
+{
+    if (!price_identification_ok(otyp))
+        return 0;
+
+    int cost = objects[otyp].oc_cost;
+    if (!cost) {
+        if (selling)
+            return 0;
+        cost = 5;
+    }
+
+    if (selling) {
+        if ((Role_if(PM_TOURIST) && u.ulevel < (MAXULEV / 2)) ||
+            (uarmu && !uarm && !uarmc) ||
+            (uarmh && uarmh->otyp == DUNCE_CAP))
+            cost /= 3;
+        else
+            cost /= 2;
+    }
+
+    if (dummy_tax) {
+        if (!selling)
+            cost += cost / 3;
+        else
+            cost -= cost / 4;
+    }
+
+    return cost;
+}
 
 /* calculate the value that the shk will charge for [one of] an object */
 static long

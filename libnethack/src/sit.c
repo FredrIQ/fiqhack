@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-13 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -286,8 +286,7 @@ dosit(const struct nh_cmd_arg *arg)
                 pline(msgc_youdiscover, "You are granted an insight!");
                 if (youmonst.minvent)
                     /* rn2(5) agrees w/seffects() */
-                    identify_pack(&youmonst, rn2_on_rng(5, rng_throne_result),
-                                  P_EXPERT);
+                    identify_pack(&youmonst, -1, P_EXPERT);
                 else
                     rn2_on_rng(5, rng_throne_result); /* to match */
                 break;
