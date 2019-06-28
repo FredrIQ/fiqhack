@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-06-05 */
+/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -612,17 +612,17 @@ get_advmod(int level, xchar attrib, struct RoleAdvance roleadv,
     int mod = 0;
     if (attrib < 7)
         mod = roleadv.a4_6 + raceadv.a4_6;
-    if (attrib < 10)
+    else if (attrib < 10)
         mod = roleadv.a7_9 + raceadv.a7_9;
-    if (attrib < 13)
+    else if (attrib < 13)
         mod = roleadv.a10_12 + raceadv.a10_12;
-    if (attrib < 16)
+    else if (attrib < 16)
         mod = roleadv.a13_15 + raceadv.a13_15;
-    if (attrib < 19)
+    else if (attrib < 19)
         mod = roleadv.a16_18 + raceadv.a16_18;
-    if (attrib < 22)
+    else if (attrib < 22)
         mod = roleadv.a19_21 + raceadv.a19_21;
-    if (attrib < 25)
+    else if (attrib < 25)
         mod = roleadv.a22_24 + raceadv.a22_24;
     else
         mod = roleadv.a25 + raceadv.a25;
