@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -759,6 +759,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 if (!objects[otmp->otyp].oc_name_known) {
                     pline_implied(msgc_info, "This %s is a wand of digging!",
                                   xname(otmp));
+                    makeknown(WAN_DIGGING);
                     doknown = TRUE;
                 }
                 if (!Blind)
@@ -779,6 +780,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 if (!objects[otmp->otyp].oc_name_known) {
                     pline_implied(msgc_info, "This %s is a wand of fire!",
                                   xname(otmp));
+                    makeknown(WAN_FIRE);
                     doknown = TRUE;
                 }
                 post_engr_text = Blind ?
@@ -792,6 +794,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                     pline_implied(msgc_info,
                                   "This %s is a wand of lightning!",
                                   xname(otmp));
+                    makeknown(WAN_LIGHTNING);
                     doknown = TRUE;
                 }
                 if (!Blind) {
@@ -800,7 +803,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 } else
                     post_engr_text = "You hear crackling!";
                 break;
-            
+
                 /* type = MARK wands */
                 /* type = ENGR_BLOOD wands */
             }
@@ -816,7 +819,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             }
         }
         break;
-    
+
     case WEAPON_CLASS:
         if (is_blade(otmp)) {
             if ((int)otmp->spe > -3)

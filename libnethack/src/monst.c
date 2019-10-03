@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-05 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -50,9 +50,9 @@
 #define FMON(nam,fnam,sym,lvl,gen,atk,siz,mr1,mr2,flg1,flg2,flg3,mp,col) \
     {nam,fnam,sym,lvl,gen,atk,siz,flg1,flg2,flg3,mp,NOADV,mr1,mr2,col}
 #define AMON(nam,sym,lvl,gen,atk,siz,mr1,mr2,flg1,flg2,flg3,mp,adv,col) \
-        {nam,nam,sym,lvl,gen,atk,siz,flg1,flg2,flg3,mp,adv,mr1,mr2,col}
+    {nam,nam,sym,lvl,gen,atk,siz,flg1,flg2,flg3,mp,adv,mr1,mr2,col}
 #define AFMON(nam,fnam,sym,lvl,gen,atk,siz,mr1,mr2,flg1,flg2,flg3,mp,adv,col) \
-             {nam,fnam,sym,lvl,gen,atk,siz,flg1,flg2,flg3,mp,adv,mr1,mr2,col}
+    {nam,fnam,sym,lvl,gen,atk,siz,flg1,flg2,flg3,mp,adv,mr1,mr2,col}
 /* LVL() and SIZ() collect several fields to cut down on # of args for MON() */
 #define LVL(lvl,mov,ac,mr,aln) lvl,mov,ac,mr,aln
 #define SIZ(wt,nut,pxl,snd,siz) wt,nut,pxl,snd,siz
