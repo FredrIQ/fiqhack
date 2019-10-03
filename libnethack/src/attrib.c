@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -21,8 +21,8 @@ static int attr_bonus(const struct monst *, int);
 static void exerper(void);
 static xchar get_advmod(int, xchar, struct RoleAdvance,
                         struct RoleAdvance);
-static boolean get_roleadv(const struct monst *, struct RoleAdvance *,
-                           struct RoleAdvance *, boolean);
+static void get_roleadv(const struct monst *, struct RoleAdvance *,
+                        struct RoleAdvance *, boolean);
 
 /* adjust an attribute; return TRUE if change is made, FALSE otherwise
 
@@ -648,7 +648,7 @@ get_advmod(int level, xchar attrib, struct RoleAdvance roleadv,
     return mod_new - mod_old;
 }
 
-static boolean
+static void
 get_roleadv(const struct monst *mon, struct RoleAdvance *roleadv,
             struct RoleAdvance *raceadv, boolean enadv)
 {

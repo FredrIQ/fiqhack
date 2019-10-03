@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2078,7 +2078,6 @@ use_item(struct musable *m)
 {
     struct monst *mon = m->mon;
     struct obj *obj = m->obj;
-    int i;
     boolean vis = cansee(mon->mx, mon->my);
     boolean vismon = mon_visible(mon);
     boolean oseen = obj && vismon;
@@ -2650,7 +2649,7 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
 void
 mon_choose_summon(const struct monst *magr, coord *cc)
 {
-    int x, y, i;
+    int x = COLNO, y = ROWNO, i;
     struct monst *mtmp;
     struct level *lev = m_dlevel(magr);
 

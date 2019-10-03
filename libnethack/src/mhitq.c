@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-31 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -42,7 +42,7 @@ wildmiss(struct monst *mtmp, const struct attack *mattk)
             break;
         }
         /* otherwise fall through */
- 
+
     case mar_guessing_invis:
 
         ;
@@ -260,7 +260,7 @@ mpreattack(struct monst *magr, struct monst *mdef, boolean range2)
         return FALSE;
 
     /* Special demon handling code */
-    if (!magr->cham && is_demon(mdat) && !range2 &
+    if (!magr->cham && is_demon(mdat) && !range2 &&
         magr->data != &mons[PM_BALROG] &&
         magr->data != &mons[PM_INCUBUS] &&
         !(m_mwep(mdef) && m_mwep(mdef)->oartifact == ART_DEMONBANE))
