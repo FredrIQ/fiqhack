@@ -1,10 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-11-04 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 #include <limits.h>
+
+static void draw_hints(enum keyreq_context);
 
 /* Prints a string to a window. Any keys specified in single-quotes, e.g.
    "Press 'y' for Yes", will be underlined and mouse-activated. The same goes
@@ -90,6 +92,22 @@ draw_extrawin(enum keyreq_context context)
     if (!ui_flags.ingame)
         return;
 
+    /* If not using hints by default, draw hints anyway in getpos */
+    if (context == krc_getpos && settings.extrawin != EW_CONTROLS)
+        draw_hints(context);
+
+    switch (settings.extrawin) {
+    case EW_CONTROLS:
+        draw_hints(context);
+        break;
+    default:
+        break;
+    }
+}
+
+static void
+draw_hints(enum keyreq_context context)
+{
     /* Which window do we draw our hints onto? Nearly always, it's extrawin.
        However, during getpos() calls, the hints are particularly important
        (because this is how farlooking is done with keyboard controls), so we
@@ -102,10 +120,14 @@ draw_extrawin(enum keyreq_context context)
     int y = 0;
 
     WINDOW *win = extrawin;
-    if (!y_remaining && context == krc_getpos) {
+    if (context == krc_getpos &&
+        (!y_remaining || settings.extrawin != EW_CONTROLS)) {
         y_remaining = ui_flags.statusheight;
         win = statuswin;
     }
+
+    if (context != krc_getpos && settings.extrawin != EW_CONTROLS)
+        return;
 
     if (!y_remaining)
         return;

@@ -24,7 +24,7 @@ install: all
 	install -m 644 tilesets/dat/textascii.nh4ct $(DESTDIR)$(DATADIR)/textascii.nh4ct
 	install -m 644 tilesets/dat/textunicode.nh4ct $(DESTDIR)$(DATADIR)/textunicode.nh4ct
 
-CFLAGS = -g -O2
+CFLAGS = -g -O2 -Wall
 CXXFLAGS = -g -O2
 
 CFLAGS += --std=c11 -DAIMAKE_NORETURN=_Noreturn -DWHEREIS
