@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -61,6 +61,9 @@ explode(int x, int y, int type, /* the same as in zap.c */
     int explmask[3][3];
 
     int whattype = abs(type) % 10;
+
+    struct monst *offender = find_mid(level, flags.mon_moving,
+                                      FM_EVERYWHERE);
 
     /* 0=normal explosion, 1=do shieldeff, 2=do nothing */
     boolean shopdamage = FALSE;
@@ -181,13 +184,23 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     impossible("explosion type %d?", adtyp);
                     break;
                 }
+
+                /* Skilled+ wand users are immune to their own explosions */
+                if (raylevel && offender == &youmonst &&
+                    MP_SKILL(&youmonst, P_WANDS) >= P_SKILLED)
+                    explmask[i][j] = 2;
             }
+
             /* can be both you and mtmp if you're swallowed */
             mtmp = m_at(level, i + x - 1, j + y - 1);
             if (!mtmp && i + x - 1 == u.ux && j + y - 1 == u.uy)
                 mtmp = u.usteed;
+
             if (mtmp) {
-                if (DEADMONSTER(mtmp))
+                if (DEADMONSTER(mtmp) ||
+                    (raylevel && offender == mtmp &&
+                     MP_SKILL(mtmp, P_WANDS) >= P_SKILLED) ||
+                    (mtmp == u.usteed && explmask[i][j] == 2))
                     explmask[i][j] = 2;
                 else
                     switch (adtyp) {
@@ -464,9 +477,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
 
         if (u.uhp <= 0 || (Upolyd && u.mh <= 0)) {
             int death = adtyp == AD_FIRE ? BURNING : DIED;
-
-            struct monst *offender = find_mid(level, flags.mon_moving,
-                                              FM_EVERYWHERE);
 
             /* Maybe the item destruction killed */
             if (item_dmg && item_dmg >= rnd(damu + item_dmg))
