@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1349,7 +1349,22 @@ static const struct obdisc ob_disc[] = {
     {WAN_MAKE_INVISIBLE, OBD_ENGRAVE, 1},
     {WAN_TELEPORTATION, OBD_ENGRAVE, 1},
     {WAN_CANCELLATION, OBD_ENGRAVE, 1},
+    {STRANGE_OBJECT, 0, 0},
 };
+
+static int
+get_obd(unsigned otyp, unsigned obdflag)
+{
+    /* Special case: gem hardness checks gem hardness instead of using a
+       hardcoded list (TODO) */
+
+    const struct obdisc *obd;
+    for (obd = ob_disc; obd->otyp != STRANGE_OBJECT; obd++)
+        if (obd->flag == obdflag)
+            return obd->num;
+
+    return 0;
+}
 
 /* Returns false for identical appearances -- gray stones, bags, etc */
 static boolean
@@ -1371,14 +1386,18 @@ get_possibilities(unsigned otyp, int objposs[NUM_OBJECTS])
     if (!idclass)
         return 0;
     if (objects[otyp].oc_name_known) {
-        objposs[otyp] = objects[otyp].oc_prob;
+        if (objposs)
+            objposs[otyp] = objects[otyp].oc_prob;
+
         return 1;
     }
 
     int i;
     int n = 0;
     for (i = 1; i < NUM_OBJECTS; i++) {
-        objposs[i] = -1;
+        if (objposs)
+            objposs[i] = -1;
+
         if (objects[i].oc_class != objects[otyp].oc_class)
             continue;
 
@@ -1398,7 +1417,8 @@ get_possibilities(unsigned otyp, int objposs[NUM_OBJECTS])
             continue;
 
         n++;
-        objposs[i] = objects[i].oc_prob;
+        if (objposs)
+            objposs[i] = objects[i].oc_prob;
     }
 
     return n;
@@ -1446,6 +1466,12 @@ get_identification_class(unsigned otyp)
 void
 partial_obj_discovery(unsigned otyp, unsigned obdflag)
 {
+    objects[otyp].discovery_data |= obdflag;
+    if (!objects[otyp].oc_name_known &&
+        get_possibilities(otyp, NULL) == 1) {
+        makeknown(otyp);
+        pline(msgc_youdiscover, "You discovered %s!", OBJ_NAME(objects[otyp]));
+    }
 }
 
 static void
