@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2630,17 +2630,17 @@ rnd_offensive_item(struct monst *mtmp, enum rng rng)
     case 7:
         if (!rn2_on_rng(4, rng))
             return WAN_SUMMONING;
-        /* fallthrough */
+        return WAN_SPEED_MONSTER;
     case 8:
-        return WAN_MAGIC_MISSILE;
-    case 9:
         return WAN_SLEEP;
-    case 10:
+    case 9:
         return WAN_FIRE;
-    case 11:
+    case 10:
         return WAN_COLD;
-    case 12:
+    case 11:
         return WAN_LIGHTNING;
+    case 12:
+        return WAN_MAGIC_MISSILE;
     }
      /*NOTREACHED*/ return 0;
 }
