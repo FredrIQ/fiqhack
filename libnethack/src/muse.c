@@ -1453,7 +1453,8 @@ find_item(struct monst *mon, struct musable *m)
 
     /* Clone ourselves */
     if (flags.no_of_wizards == 1 && !flags.double_troubled &&
-        mon_castable(mon, SPE_BOOK_OF_THE_DEAD, FALSE)) {
+        mon_castable(mon, SPE_BOOK_OF_THE_DEAD, FALSE) &&
+        !has_property(mon, CLONING)) {
         m->use = MUSE_CAST;
         m->spell = SPE_BOOK_OF_THE_DEAD; /* sentinel for double trouble */
         return TRUE;
