@@ -499,6 +499,8 @@ draw_hints(enum keyreq_context context)
         if (!ui_flags.sidebarwidth)
             hintcmd("inventory", "inventory");
 
+        /* Note that this will not find the wizport alias (used to be bound to
+           ctrl+f, which is now default binding for find) */
         hintcmd("find", "search remembered objects");
 
         if (ui_flags.current_followmode == FM_REPLAY)
