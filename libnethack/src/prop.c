@@ -2246,32 +2246,33 @@ update_property(struct monst *mon, enum youprop prop,
                 break;
             }
             if (you || vis) {
-                pline(you && timer > 40 ? msgc_statusbad :
+                pline(you && timer > TERMINAL_ZOMBIE ? msgc_statusbad :
                       you ? msgc_fatal :
                       mon->mtame ? msgc_petfatal :
                       msgc_monneutral,
                       "%s a %s zombification disease%s",
-                      M_verbs(mon, "attain"), timer > 40 ? "minor" : "major",
-                      timer > 40 ? "." : "!");
+                      M_verbs(mon, "attain"),
+                      timer > TERMINAL_ZOMBIE ? "minor" : "major",
+                      timer > TERMINAL_ZOMBIE ? "." : "!");
                 effect = TRUE;
             }
             break;
         }
         if (slot == os_inctimeout) { /* actually a decrease from being hit */
             if (you || vis) {
-                pline(you && timer > 40 ? msgc_statusbad :
+                pline(you && timer > TERMINAL_ZOMBIE ? msgc_statusbad :
                       you ? msgc_fatal :
                       mon->mtame ? msgc_petfatal :
                       msgc_monneutral,
                       "%s zombification disease builds up%s",
                       s_suffix(Monnam(mon)),
-                      timer > 40 ? "." : " critically!");
+                      timer > TERMINAL_ZOMBIE ? "." : " critically!");
                 effect = TRUE;
             }
             break;
         }
         if (slot == os_dectimeout) {
-            if (timer == 40) {
+            if (timer == TERMINAL_ZOMBIE) {
                 if (you || vis)
                     pline(you ? msgc_fatal :
                           mon->mtame ? msgc_petfatal :
@@ -2281,7 +2282,7 @@ update_property(struct monst *mon, enum youprop prop,
                 effect = TRUE;
                 break;
             }
-            if (timer > 40 && !rn2(10)) {
+            if (timer > TERMINAL_ZOMBIE && !rn2(10)) {
                 timer += 100;
                 if (timer > 200)
                     set_property(mon, prop, -2, FALSE);

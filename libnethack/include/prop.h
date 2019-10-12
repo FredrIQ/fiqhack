@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,6 +8,9 @@
 
 # include "compilers.h"
 # include <limits.h>
+
+/* turning point of zombification no longer going away naturally */
+#define TERMINAL_ZOMBIE 40
 
 /*** What the properties are ***/
 /* Please do not change any of these numbers (although you can feel free to add
