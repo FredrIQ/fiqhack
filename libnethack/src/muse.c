@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-13 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1103,6 +1103,34 @@ find_unlocker(struct monst *mon, struct musable *m)
         }
     }
     return FALSE;
+}
+
+/* Returns closest target hostile to mon up to range_limit */
+struct monst *
+find_closest_target(struct monst *mon, int range_limit)
+{
+    int hostrange = 0;
+    struct monst *mtmp;
+    struct monst *mclose = NULL;
+
+    for (mtmp = monlist(mon->dlevel); mtmp; mtmp = monnext(mtmp)) {
+        if (DEADMONSTER(mtmp) || mon == mtmp ||
+            !mm_aggression(mon, mtmp, Conflict) ||
+            !msensem(mon, mtmp))
+            continue;
+        if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
+            m_cansee(mon, mtmp->mx, mtmp->my)) {
+            if (!hostrange ||
+                hostrange > distmin(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
+                hostrange = distmin(mon->mx, mon->my, mtmp->mx, mtmp->my);
+                mclose = mtmp;
+            }
+        }
+    }
+
+    if (mclose && hostrange > range_limit)
+        mclose = NULL; /* no close targets */
+    return mclose;
 }
 
 /* TODO: Move traps/stair use/etc to seperate logic (traps should be handled in pathfinding),

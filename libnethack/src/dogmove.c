@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-27 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -540,7 +540,7 @@ dog_invent(struct monst *mtmp, struct edog *edog, int udist)
  * returns -1/0/1 (dog's desire to approach player) or -2 (abort move)
  */
 static int
-dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
+dog_goal(struct monst *mon, struct edog *edog, int after, int udist,
          int whappr)
 {
     int omx, omy;
@@ -551,19 +551,25 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
     enum dogfood gtyp;
 
     /* Steeds don't move on their own will */
-    if (mtmp == u.usteed)
+    if (mon == u.usteed)
         return -2;
 
-    omx = mtmp->mx;
-    omy = mtmp->my;
+    omx = mon->mx;
+    omy = mon->my;
 
     in_masters_sight = couldsee(omx, omy);
-    dog_has_minvent = (DROPPABLES(mtmp) != 0);
+    dog_has_minvent = (DROPPABLES(mon) != 0);
 
-    if (!edog || mtmp->mleashed) {      /* he's not going anywhere... */
+    struct monst *mclose;
+    if (!edog || mon->mleashed ||
+        (edog->whistletime && (moves - edog->whistletime) < 100)) {
         gtyp = df_apport;
         gx = u.ux;
         gy = u.uy;
+    } else if ((mclose = find_closest_target(mon, 20))) {
+        gtyp = df_apport;
+        gx = mclose->mx;
+        gy = mclose->my;
     } else {
 #define DDIST(x,y) (dist2(x,y,omx,omy))
 #define SQSRCHRADIUS 5
@@ -588,7 +594,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
             nx = obj->ox;
             ny = obj->oy;
             if (nx >= min_x && nx <= max_x && ny >= min_y && ny <= max_y) {
-                otyp = dogfood(mtmp, obj);
+                otyp = dogfood(mon, obj);
                 if (edog->hungrytime >+ moves + DOG_SATIATED)
                     otyp = df_nofood;
 
@@ -600,8 +606,8 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
                     !(edog->mhpmax_penalty && otyp > df_manfood))
                     continue;
                 /* skip completely unreacheable goals */
-                if (!could_reach_item(mtmp, nx, ny) ||
-                    !can_reach_location(mtmp, mtmp->mx, mtmp->my, nx, ny))
+                if (!could_reach_item(mon, nx, ny) ||
+                    !can_reach_location(mon, mon->mx, mon->my, nx, ny))
                     continue;
                 if (otyp > df_manfood) {
                     if (otyp > gtyp || DDIST(nx, ny) < DDIST(gx, gy)) {
@@ -610,13 +616,13 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
                         gtyp = otyp;
                     }
                 } else if (gtyp == df_nofood && in_masters_sight &&
-                           ((can_use = could_use_item(mtmp, obj)) &&
+                           ((can_use = could_use_item(mon, obj)) &&
                             !dog_has_minvent) &&
                            (!level->locations[omx][omy].lit ||
                             level->locations[u.ux][u.uy].lit) &&
-                           (otyp == df_manfood || m_cansee(mtmp, nx, ny)) &&
+                           (otyp == df_manfood || m_cansee(mon, nx, ny)) &&
                            (can_use || edog->apport > rn2(8)) &&
-                           can_carry(mtmp, obj)) {
+                           can_carry(mon, obj)) {
                     gx = nx;
                     gy = ny;
                     gtyp = df_apport;
@@ -632,7 +638,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
         gy = u.uy;
         if (after && udist <= 4 && gx == u.ux && gy == u.uy)
             return -2;
-        appr = (udist >= 9) ? 1 : (mtmp->mflee) ? -1 : 0;
+        appr = (udist >= 9) ? 1 : (mon->mflee) ? -1 : 0;
         if (udist > 1) {
             if (!IS_ROOM(level->locations[u.ux][u.uy].typ) || !rn2(4) || whappr
                 || (dog_has_minvent && rn2(edog->apport)))
@@ -642,7 +648,7 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
         if (appr == 0) {
             obj = youmonst.minvent;
             while (obj) {
-                if (dogfood(mtmp, obj) == df_treat) {
+                if (dogfood(mon, obj) == df_treat) {
                     appr = 1;
                     break;
                 }
@@ -651,8 +657,8 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
         }
     } else
         appr = 1;       /* gtyp != UNDEF */
-    if (estunned(mtmp) ||
-        ((confused(mtmp) || istunned(mtmp)) && !rn2(5)))
+    if (estunned(mon) ||
+        ((confused(mon) || istunned(mon)) && !rn2(5)))
         appr = 0;
 
     /* If aiming for the master, locate them using strategy if possible.
@@ -660,12 +666,12 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
        happen because set_apparxy gives pets perfect knowledge of where
        their master is.) */
     if (gx == u.ux && gy == u.uy && !in_masters_sight) {
-        if (st_target(mtmp)) {
-            gx = mtmp->sx;
-            gy = mtmp->sy;
+        if (st_target(mon)) {
+            gx = mon->sx;
+            gy = mon->sy;
         } else {
-            gx = mtmp->mx;
-            gy = mtmp->my;
+            gx = mon->mx;
+            gy = mon->my;
         }
     }
     return appr;
