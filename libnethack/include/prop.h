@@ -10,7 +10,7 @@
 # include <limits.h>
 
 /* turning point of zombification no longer going away naturally */
-#define TERMINAL_ZOMBIE 40
+#define TERMINAL_ZOMBIE 50
 
 /*** What the properties are ***/
 /* Please do not change any of these numbers (although you can feel free to add
