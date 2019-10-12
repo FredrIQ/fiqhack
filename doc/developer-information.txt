@@ -1,5 +1,5 @@
 About this document:
-Last modified by Fredrik Ljungdahl, 2015-11-03
+Last modified by Fredrik Ljungdahl, 2019-10-13
 
 Copyright (C) 2015 Alex Smith.
 
@@ -335,7 +335,7 @@ There are a couple of special cases:
     being used to mark the location of debug code that should not be
     committed.  (Thus, searching for `//` comments can be used to find
     and remove debug code before a commit.)
-    
+
   * Some language features, such as `snprintf`, are (despite being
     standard) buggy on Windows and thus need to be avoided on that
     basis.  (You should probably be using `msgprintf` in NetHack 4
