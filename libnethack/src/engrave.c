@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -806,6 +806,17 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
                 /* type = MARK wands */
                 /* type = ENGR_BLOOD wands */
+            }
+
+            /* Partial formal discovery for existing engravings */
+            if (oep && !Blind && oep->engr_type != HEADSTONE) {
+                unsigned flag =
+                    ((level->flags.noteleport &&
+                      oep->engr_type == BURN) ? OBD_BTXENGR :
+                     level->flags.noteleport ? OBD_TXENGR :
+                     oep->engr_type == BURN ? OBD_BXENGR :
+                     OBD_XENGR);
+                partial_obj_discovery(otmp->otyp, flag);
             }
         } else { /* i.e. not zappable */
             if (!can_reach_floor()) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,6 +39,16 @@ enum oidclass {
 # define OBD_POTFJSI 0x0800 /* fruit juice or see invisible (drinking) */
 # define OBD_POTFJBO 0x1000 /* fruit juice or booze (delicatessen) */
 # define OBD_ENGRAVE 0x0040 /* engraving with a wand or gem (hardness) */
+# define OBD_BLNENGR 0x0080 /* engraving while blind */
+# define OBD_XENGR   0x0100 /* engraving with existing generic engraving */
+# define OBD_BXENGR  0x0200 /* existing burned engraving */
+# define OBD_TXENGR  0x0400 /* existing noteleport engraving */
+# define OBD_BTXENGR 0x0800 /* existing burned noteleport engraving */
+# define OBD_ABXENGR 0x0a00 /* any existing burned engraving */
+# define OBD_ATXENGR 0x0c00 /* any existing noteleport engraving */
+# define OBD_AXENGR  0x0f00 /* any existing engraving */
+# define OBD_DENGR   0x1000 /* didn't engrave anything */
+# define OBD_BDENGR  0x2000 /* didn't engrave anything (blind) */
 # define OBD_SINK    0x0040 /* dropped in a sink */
 # define OBD_BLNSINK 0x0080 /* dropped in a sink while blind */
 # define OBD_CANLOOT 0x0040 /* not bag of tricks */

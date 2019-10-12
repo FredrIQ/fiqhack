@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1346,9 +1346,28 @@ static const struct obdisc ob_disc[] = {
     {SCR_DESTROY_ARMOR, OBD_STRANGE, 1},
     {SCR_GOLD_DETECTION, OBD_STRANGE, 1},
     {SCR_FOOD_DETECTION, OBD_STRANGE, 1},
-    {WAN_MAKE_INVISIBLE, OBD_ENGRAVE, 1},
-    {WAN_TELEPORTATION, OBD_ENGRAVE, 1},
-    {WAN_CANCELLATION, OBD_ENGRAVE, 1},
+    /* always auto-IDs */
+    {WAN_LIGHT, OBD_DENGR | OBD_ENGRAVE, 1}, /* only when not blind */
+    {WAN_WISHING, OBD_BDENGR | OBD_DENGR | OBD_ENGRAVE | OBD_BLNENGR, 1},
+    {WAN_ENLIGHTENMENT, OBD_BDENGR | OBD_DENGR | OBD_ENGRAVE | OBD_BLNENGR, 1},
+    {WAN_DIGGING, OBD_BDENGR | OBD_DENGR | OBD_ENGRAVE | OBD_BLNENGR, 1},
+    {WAN_FIRE, OBD_BDENGR | OBD_DENGR | OBD_ENGRAVE | OBD_BLNENGR, 1},
+    {WAN_LIGHTNING, OBD_BDENGR | OBD_DENGR | OBD_ENGRAVE | OBD_BLNENGR, 1},
+    /* vanish wands */
+    {WAN_MAKE_INVISIBLE, OBD_AXENGR, 2},
+    {WAN_TELEPORTATION, OBD_XENGR | OBD_BXENGR, 2}, /* fails on noteleport */
+    {WAN_CANCELLATION, OBD_AXENGR, 2},
+    {WAN_COLD, OBD_ABXENGR, 2}, /* only vanishes burned engravings */
+    /* stops bugs */
+    {WAN_SLEEP, OBD_ENGRAVE, 3},
+    {WAN_DEATH, OBD_ENGRAVE, 3},
+    /* unique */
+    {WAN_POLYMORPH, OBD_AXENGR, 4},
+    {WAN_STRIKING, OBD_ENGRAVE | OBD_BLNENGR, 5},
+    {WAN_SLOW_MONSTER, OBD_ENGRAVE, 6},
+    {WAN_SPEED_MONSTER, OBD_ENGRAVE, 7},
+    {WAN_MAGIC_MISSILE, OBD_ENGRAVE, 8},
+    {WAN_COLD, OBD_ENGRAVE, 9},
     {STRANGE_OBJECT, 0, 0},
 };
 
@@ -1356,11 +1375,14 @@ static int
 get_obd(unsigned otyp, unsigned obdflag)
 {
     /* Special case: gem hardness checks gem hardness instead of using a
-       hardcoded list (TODO) */
+       hardcoded list */
+    if (objects[otyp].oc_class == GEM_CLASS &&
+        (obdflag & (OBD_ENGRAVE | OBD_BLNENGR)))
+        return (objects[otyp].oc_tough ? 2 : 1);
 
     const struct obdisc *obd;
     for (obd = ob_disc; obd->otyp != STRANGE_OBJECT; obd++)
-        if (obd->flag == obdflag)
+        if (obd->flag & obdflag)
             return obd->num;
 
     return 0;
