@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-26 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -62,6 +62,12 @@ sendmail(void)
     curses_getline("What do you want to send?", &msg, mailstr_callback);
     if (!msg[0] || msg[0] == '\033')
         return;
+
+    if (strlen(msg) > 80) {
+        curses_print_message(0, 0, player.moves, msgc_cancelled,
+                             "Mail must be 80 characters or less.");
+        return;
+    }
 
     mb = fopen(box, "a");
     if (!mb) {
