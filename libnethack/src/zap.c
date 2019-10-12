@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3889,6 +3889,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
                 if (u.uinwater) {       /* not just `if (Underwater)' */
                     /* leave the no longer existent water */
                     u.uinwater = 0;
+                    unset_suffocation(&youmonst);
                     u.uundetected = 0;
                     doredraw();
                     turnstate.vision_full_recalc = TRUE;

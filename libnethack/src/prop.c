@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -426,9 +426,10 @@ m_has_property(const struct monst *mon, enum youprop property,
                 rv |= W_MASK(os_circumstance);
 
             /* Suffocation from an engulfer */
-            if (property == STRANGLED && u.ustuck &&
-                !unbreathing(&youmonst) &&
-                attacktype_fordmg(u.ustuck->data, AT_ENGL, AD_WRAP))
+            if (property == STRANGLED && !unbreathing(&youmonst) &&
+                ((u.ustuck &&
+                  attacktype_fordmg(u.ustuck->data, AT_ENGL, AD_WRAP)) ||
+                 (u.uinwater && !swims(&youmonst))))
                 rv |= W_MASK(os_circumstance);
 
             /* Riding allows you to inherit a few properties from steeds */
@@ -749,6 +750,8 @@ decrease_property_timers(struct monst *mon)
 void
 set_suffocation(struct monst *mon)
 {
+    clear_property_cache(mon, STRANGLED);
+
     if (unbreathing(mon) || !(strangled(mon) & W_MASK(os_circumstance)))
         return;
 
@@ -764,6 +767,8 @@ set_suffocation(struct monst *mon)
 void
 unset_suffocation(struct monst *mon)
 {
+    clear_property_cache(mon, STRANGLED);
+
     if (strangled(mon) & ~W_MASK(os_timeout))
         return;
 
@@ -1814,10 +1819,17 @@ update_property(struct monst *mon, enum youprop prop,
                       you ? "You" : Monnam(mon),
                       you ? "" : "s");
             effect = TRUE;
-            if (you)
+            if (you && drowned)
+                done(DROWNING,
+                     killer_msg(DROWNING,
+                                u.ustuck &&
+                                attacktype_fordmg(u.ustuck->data, AT_ENGL,
+                                                  AD_WRAP) ? "a monster" :
+                                Is_waterlevel(&u.uz) ? "the Plane of Water" :
+                                a_waterbody(u.ux, u.uy)));
+            else if (you)
                 done(SUFFOCATION, killer_msg(SUFFOCATION,
                                              u.uburied ? "suffocation" :
-                                             drowned ? "drowning" :
                                              "strangulation"));
             else
                 mondied(mon);

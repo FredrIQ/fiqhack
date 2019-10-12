@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3385,72 +3385,26 @@ drown(void)
         unleash_all();
     }
 
-    if (unbreathing(&youmonst) || swims(&youmonst)) {
-        if (!swims(&youmonst)) {
-            pline_implied(msgc_playerimmune, "But you aren't drowning.");
-            if (!Is_waterlevel(&u.uz)) {
-                if (Hallucination)
-                    pline_implied(msgc_consequence,
-                                  "Your keel hits the bottom.");
-                else
-                    pline_implied(msgc_consequence, "You touch bottom.");
-            }
+    if (!swims(&youmonst)) {
+        if (!Is_waterlevel(&u.uz)) {
+            if (Hallucination)
+                pline_implied(msgc_consequence,
+                              "Your keel hits the bottom.");
+            else
+                pline_implied(msgc_consequence, "You touch bottom.");
         }
-        if (Punished) {
-            unplacebc();
-            placebc();
-        }
-        vision_recalc(2);       /* unsee old position */
-        u.uinwater = 1;
-        under_water(1);
-        turnstate.vision_full_recalc = TRUE;
-        return FALSE;
-    }
-    if (teleportitis(&youmonst) &&
-        !u_helpless(hm_unconscious) && (teleport_control(&youmonst) ||
-                                        rn2(3) < Luck + 2)) {
-        pline(msgc_consequence,
-              "You attempt a teleport spell."); /* utcsri!carroll */
-        if (!level->flags.noteleport) {
-            struct musable m =
-                arg_to_musable(&(struct nh_cmd_arg){.argtype = 0});
-            dotele(&m);
-            if (!is_pool(level, u.ux, u.uy))
-                return TRUE;
-        } else
-            pline(msgc_failcurse, "The attempted teleport spell fails.");
-    }
-    if (u.usteed) {
-        dismount_steed(DISMOUNT_GENERIC);
-        if (!is_pool(level, u.ux, u.uy))
-            return TRUE;
     }
 
-    /* Try to crawl out */
-    if (crawl_from_water(&youmonst))
-        return TRUE;
-
+    if (Punished) {
+        unplacebc();
+        placebc();
+    }
+    vision_recalc(2);       /* unsee old position */
     u.uinwater = 1;
-    pline(msgc_fatal_predone, "You drown.");
-    done(DROWNING,
-         killer_msg(DROWNING,
-                    Is_waterlevel(&u.uz) ? "the Plane of Water"
-                                         : a_waterbody(u.ux, u.uy)));
-    /* oops, we're still alive.  better get out of the water. */
-    while (!safe_teleds(TRUE)) {
-        pline(msgc_fatal_predone, "You're still drowning.");
-        done(DROWNING,
-             killer_msg(DROWNING,
-                        msgcat(Is_waterlevel(&u.uz) ? "the Plane of Water"
-                               : a_waterbody(u.ux, u.uy),
-                               " despite being life-saved")));
-    }
-    if (u.uinwater) {
-        u.uinwater = 0;
-        pline(msgc_statusheal, "You find yourself back %s.",
-              Is_waterlevel(&u.uz) ? "in an air bubble" : "on land");
-    }
-    return TRUE;
+    set_suffocation(&youmonst);
+    under_water(1);
+    turnstate.vision_full_recalc = TRUE;
+    return FALSE;
 }
 
 void

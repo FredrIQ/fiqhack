@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -661,7 +661,7 @@ recharge(struct monst *mon, struct obj *obj, int curse_bless)
         default:
             goto not_chargable;
         }       /* switch */
-        
+
     } else {
     not_chargable:
         if (you)
@@ -1215,7 +1215,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         if (you) {
             int ct = 0;
             struct monst *mtmp;
-            
+
             for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
                 if (DEADMONSTER(mtmp))
                     continue;
@@ -1279,7 +1279,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             pline(you ? msgc_itemrepair : msgc_monneutral,
                   "You feel like someone is helping %s.",
                   you ? "you" : mon_nam(mon));
-        
+
         if (sobj->cursed && (you || vis))
             pline(you ? msgc_failcurse : msgc_monneutral,
                   "The scroll disintegrates.");
@@ -1290,11 +1290,11 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             struct obj *mquiver = NULL;
             for (obj = mon->minvent; obj; obj = obj->nobj) {
                 long wornmask;
-                
+
                 /* gold isn't subject to cursing and blessing */
                 if (obj->oclass == COIN_CLASS)
                     continue;
-                
+
                 wornmask = obj->owornmask & W_MASKABLE;
                 if (wornmask && !sobj->blessed) {
                     /* handle a couple of special cases; we don't allow
