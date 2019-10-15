@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-15 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1435,6 +1435,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                                    this... */
         if (obj->oclass == COIN_CLASS)
             godvoice(msgc_alignbad, altaralign, "Such a puny sacrifice?");
+        change_luck(-3);
         gods_upset(altaralign);
     } else {
         int saved_luck = u.uluck;
