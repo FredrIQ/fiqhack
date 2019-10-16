@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-05-10 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -241,9 +241,16 @@ can_make_bones(d_level *lev)
     int rn2chance = rn2(1 + (depth(lev) >> 2));
     turnstate.generating_bones = FALSE;
 
-    if (depth(lev) <= 0 ||      /* bulletproofing for endgame */
-        (!rn2chance             /* fewer ghosts on low levels */
-         && !wizard))
+    /* Don't make bones in the endgame */
+    if (depth(lev) <= 0)
+        return FALSE;
+
+    /* Everything else should allow bones in wizmode */
+    if (wizard)
+        return TRUE;
+
+    /* Make bones less common on shallow depths */
+    if (!rn2chance)
         return FALSE;
     /* don't let multiple restarts generate multiple copies of objects in bones
        files */
@@ -399,8 +406,10 @@ make_bones:
         m_dowear(mtmp, TRUE);
         level = oldlev;
 
-        if (charmed)
+        if (charmed) {
             mtmp->msleeping = TRUE;
+            mtmp->mstrategy = st_close;
+        }
     }
     if (mtmp) {
         mtmp->m_lev = (u.ulevel ? u.ulevel : 1);
