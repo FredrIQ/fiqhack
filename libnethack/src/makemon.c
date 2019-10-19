@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1202,6 +1202,7 @@ create_critters(struct monst *user, int cnt, const struct permonst *mptr,
             pline(msgc_uiprompt,
                   "Where would you like to summon the monster?");
             getpos(&cc, TRUE, "summoning location", FALSE);
+            known = TRUE;
         }
         x = cc.x;
         y = cc.y;
