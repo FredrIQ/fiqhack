@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-13 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -247,7 +247,13 @@ fightm(struct monst *mon)
         if (!isok(x, y))
             continue;
 
-        mtmp = m_at(level, x, y);
+        /* Don't use mvismon_at -- we want to allow monsters to successfully
+           attack displaced monsters sometimes... */
+        if (x == mtmp->mux && y == mtmp->muy)
+            mtmp = &youmonst;
+        else
+            mtmp = m_at(level, x, y);
+
         if (!mtmp || (!mm_aggression(mon, mtmp, Conflict) && !conflicted &&
                       !mercy))
             continue;
@@ -260,6 +266,12 @@ fightm(struct monst *mon)
     }
 
     if (mdef) {
+        /* If we selected the player, return. This is to avoid us ignoring
+           the hero when next to us, while keeping full AI running when
+           this happens. */
+        if (mdef == &youmonst)
+            return 0;
+
         /* TODO: why are these needed... */
         bhitpos.x = mdef->mx;
         bhitpos.y = mdef->my;
