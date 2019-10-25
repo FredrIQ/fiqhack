@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-15 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-25 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1486,7 +1486,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 pline_implied(
                     msgc_occstart, "You sense a conflict between %s and %s.",
                     u_gname(), a_gname());
-                if (rn2_on_rng(2000, rng_altar_convert) < value) {
+                if (rn2_on_rng(1200, rng_altar_convert) < value) {
                     struct monst *pri;
 
                     pline(msgc_intrgain, "You feel the power of %s increase.",
@@ -1515,9 +1515,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     pline(msgc_failrandom,
                           "Unluckily, you feel the power of %s decrease.",
                           u_gname());
-                    change_luck(-1);
                     exercise(A_WIS, FALSE);
-                    if (rnl(u.ulevel) > 6 && u.ualign.record > 0 &&
+                    if (u.ualign.record > 0 &&
                         rnd(u.ualign.record) > (7 * ALIGNLIM) / 8)
                         summon_minion(altaralign, TRUE);
                 }
