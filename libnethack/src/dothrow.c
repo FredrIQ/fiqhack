@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-20 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -139,6 +139,9 @@ throw_obj(struct obj *obj, const struct nh_cmd_arg *arg,
         default:
             break;      /* No bonus */
         }
+        /* ...or using an artifact launcher... */
+        if (ammo_and_launcher(obj, uwep) && uwep && uwep->oartifact)
+            multishot++;
     }
 
     if ((long)multishot > obj->quan)
@@ -1089,6 +1092,10 @@ throwit(struct obj *obj, struct obj *stack,
         obj->otyp == BOOMERANG)
         returning = TRUE;
 
+    if (uwep && ammo_and_launcher(obj, uwep) &&
+        uwep->oartifact == ART_LONGBOW_OF_DIANA)
+        returning = TRUE;
+
     obj->was_thrown = 1;
     if ((obj->cursed || obj->greased) && (dx || dy) && !rn2(7)) {
         boolean slipok = TRUE;
@@ -1239,13 +1246,17 @@ throwit(struct obj *obj, struct obj *stack,
             mpickobj(u.ustuck, obj, NULL);
     } else {
         /* the code following might become part of dropy() */
-        if (returning && !impaired && (obj->oartifact || rn2(ACURR(A_DEX)))) {
-            /* we must be wearing Gauntlets of Power to get here */
+        if (returning && !impaired &&
+            (obj->oartifact || rn2(ACURR(A_DEX)) ||
+             (uwep && uwep->oartifact == ART_LONGBOW_OF_DIANA &&
+              ammo_and_launcher(obj, uwep)))) {
             sho_obj_return_to_u(obj, dx, dy);   /* display its flight */
 
             int dmg = rn2(10);
 
-            if (rn2(ACURR(A_DEX))) {
+            if (rn2(ACURR(A_DEX)) ||
+                (uwep && uwep->oartifact == ART_LONGBOW_OF_DIANA &&
+                 ammo_and_launcher(obj, uwep))) {
                 pline(msgc_actionok, "%s to your hand!",
                       Tobjnam(obj, "return"));
                 obj = pickinv(obj);
@@ -1414,7 +1425,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
     int dieroll = rnd(20);
 
     /* Differences from melee weapons: Dex still gives a bonus, but strength
-       does not. Polymorphed players lacking attacks may still throw. There's a 
+       does not. Polymorphed players lacking attacks may still throw. There's a
        base -1 to hit. No bonuses for fleeing or stunned targets (they don't
        dodge melee blows as readily, but dodging arrows is hard anyway). Not
        affected by traps, etc. Certain items which don't in themselves do
@@ -1437,7 +1448,7 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
     if (disttmp < -4)
         disttmp = -4;
     tmp += disttmp;
-    
+
     /* gloves are a hinderance to proper use of bows */
     if (uarmg && uwep && objects[uwep->otyp].oc_skill == P_BOW) {
         switch (uarmg->otyp) {
@@ -1573,12 +1584,23 @@ thitmonst(struct monst *mon, struct obj *obj, struct obj *stack)
                 cutworm(mon, bhitpos.x, bhitpos.y, obj);
             }
             exercise(A_DEX, TRUE);
+
+            /* The longbow makes things immune to mulching */
+            boolean immune = FALSE;
+            if (uwep && ammo_and_launcher(obj, uwep) &&
+                uwep->oartifact == ART_LONGBOW_OF_DIANA)
+                immune = TRUE;
+
+            /* Ammo of detonation never returns */
+            if ((obj_properties(obj) & opm_detonate))
+                immune = FALSE;
+
             /* projectiles other than magic stones sometimes disappear when
                thrown */
             if (objects[otyp].oc_skill < P_NONE &&
                 objects[otyp].oc_skill > -P_BOOMERANG &&
-                !objects[otyp].oc_magic) {
-                /* we were breaking 2/3 of everything unconditionally. we still 
+                !objects[otyp].oc_magic && immune) {
+                /* we were breaking 2/3 of everything unconditionally. we still
                    don't want anything to survive unconditionally, but we need
                    ammo to stay around longer on average. */
                 int broken, chance;
