@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -231,7 +231,7 @@ dosit(const struct nh_cmd_arg *arg)
             case 7:
             {
                 int cnt = rn2_on_rng(10, rng_throne_result);
-                
+
                 pline(msgc_npcvoice, "A voice echoes:");
                 verbalize(msgc_levelwarning,
                           "Thy audience hath been summoned, %s!",
@@ -359,9 +359,18 @@ rndcurse(struct monst *mtmp, struct monst *magr)
     cnt = rn2_on_rng(18, rng);
     saddle = (you && !rn2_on_rng(4, rng));
 
+    if ((otmp = m_carrying_artifact(mtmp, ART_HEART_OF_AHRIMAN)) &&
+        otmp->where != OBJ_CONTAINED) {
+        if (you || vis)
+            pline(combat_msgc(magr, mtmp, cr_immune),
+                  "You feel a malignant aura surround "
+                  "the magic-absorbing gem completely.");
+        return;
+    }
+
     if ((otmp = m_mwep(mtmp)) && otmp->oartifact == ART_MAGICBANE) {
         if (you || vis)
-            pline(combat_msgc(magr, mtmp, cr_miss),
+            pline(combat_msgc(magr, mtmp, cr_resist),
                   "You feel a malignant aura surround the magic-absorbing %s.",
                   otmp->otyp == QUARTERSTAFF ? "staff" : "blade");
         cnt = rn2_on_rng(6, rng);

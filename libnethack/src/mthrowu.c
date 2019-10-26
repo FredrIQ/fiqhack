@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1028,26 +1028,35 @@ lined_up(const struct monst *mtmp)
     return linedup(mtmp->mux, mtmp->muy, mtmp->mx, mtmp->my);
 }
 
+struct obj *
+m_carrying_artifact(const struct monst *mon, int art)
+{
+    return m_carrying_recursive(mon, mon->minvent,
+                                art, TRUE, FALSE);
+}
+
 /* Check if a monster is carrying a particular item. */
 struct obj *
 m_carrying(const struct monst *mon, int type)
 {
     return m_carrying_recursive(mon, mon->minvent,
-                                type, FALSE);
+                                type, FALSE, FALSE);
 }
 
 /* Check if a monster is carrying a particular item, recursively. */
 struct obj *
 m_carrying_recursive(const struct monst *mon, struct obj *chain,
-                     int type, boolean recursive)
+                     int type, boolean artifact, boolean recursive)
 {
     struct obj *otmp;
     struct obj *cotmp = NULL;
 
     for (otmp = chain; otmp; otmp = otmp->nobj) {
         if (Has_contents(otmp) && recursive)
-            cotmp = m_carrying_recursive(mon, otmp->cobj, type, recursive);
-        if (otmp->otyp == type)
+            cotmp = m_carrying_recursive(mon, otmp->cobj, type, artifact,
+                                         recursive);
+        if ((!artifact && otmp->otyp == type) ||
+            (artifact && otmp->oartifact == type))
             return otmp;
     }
     return cotmp ? cotmp : NULL;
