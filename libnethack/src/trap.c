@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -691,7 +691,16 @@ dotrap(struct trap *trap, unsigned trflags)
     boolean webmsgok = (!(trflags & NOWEBMSG));
     boolean forcebungle = (trflags & FORCEBUNGLE);
 
+    boolean immune =
+        !!m_carrying_artifact(&youmonst, ART_MASTER_KEY_OF_THIEVERY);
+
     action_interrupted();
+
+    if (!already_seen && immune && ttype != VIBRATING_SQUARE) {
+        seetrap(trap);
+        pline(msgc_info, "There is %s here.", an(trapexplain[ttype - 1]));
+        already_seen = TRUE;
+    }
 
     /* KMH -- You can't escape the Sokoban level traps */
     if (Sokoban &&
@@ -714,9 +723,10 @@ dotrap(struct trap *trap, unsigned trflags)
             return;
         }
         if (!Fumbling && ttype != MAGIC_PORTAL && ttype != VIBRATING_SQUARE &&
-            ttype != ANTI_MAGIC && !forcebungle &&
-            (!rn2(5) || ((ttype == PIT || ttype == SPIKED_PIT) &&
-                         is_clinger(youmonst.data)))) {
+            (ttype != ANTI_MAGIC || immune) && !forcebungle &&
+            (immune || !rn2(5) ||
+             ((ttype == PIT || ttype == SPIKED_PIT) &&
+              is_clinger(youmonst.data)))) {
             pline(msgc_nonmongood, "You escape %s %s.",
                   (ttype == ARROW_TRAP &&
                    !trap->madeby_u) ? "an" : a_your[trap->madeby_u],
@@ -1875,6 +1885,8 @@ mintrap(struct monst *mtmp)
     struct obj *otmp;
     struct monst *culprit = trap && trap->madeby_u ? &youmonst : NULL;
 
+    boolean immune = !!m_carrying_artifact(mtmp, ART_MASTER_KEY_OF_THIEVERY);
+
     if (!trap) {
         mtmp->mtrapped = 0;     /* perhaps teleported? */
     } else if (mtmp->mtrapped) {        /* is currently in the trap */
@@ -1922,6 +1934,9 @@ mintrap(struct monst *mtmp)
             ((tt == HOLE || tt == PIT) && Sokoban && !trap->madeby_u);
         const char *fallverb;
 
+        if (immune)
+            mtmp->mtrapseen |= (1 << (tt - 1));
+
         /* true when called from dotrap, inescapable is not an option */
         if (mtmp == u.usteed)
             inescapable = TRUE;
@@ -1929,7 +1944,7 @@ mintrap(struct monst *mtmp)
             ((mtmp->mtrapseen & (1 << (tt - 1))) != 0 ||
              (tt == HOLE && !mindless(mtmp->data)))) {
             /* it has been in such a trap - perhaps it escapes */
-            if (rn2(4))
+            if (immune || !rn2(5))
                 return 0;
         } else {
             mtmp->mtrapseen |= (1 << (tt - 1));
@@ -4116,6 +4131,8 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
     const char *msg;
     coord cc;
 
+    boolean immune = !!m_carrying_artifact(mon, ART_MASTER_KEY_OF_THIEVERY);
+
     if (get_obj_location(obj, &cc.x, &cc.y, 0)) /* might be carried */
         obj->ox = cc.x, obj->oy = cc.y;
 
@@ -4126,7 +4143,8 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
                       disarm ? "%s set%s it off!" : "%s trigger%s a trap!",
                       you ? "You" : Monnam(mon), you ? "" : "s");
     win_pause_output(P_MESSAGE);
-    if (mluck > -13 && rn2(13 + mluck) > 7) {     /* saved by luck */
+    if (immune ||
+        (mluck > -13 && rn2(13 + mluck) > 7)) {     /* saved by luck */
         /* trap went off, but good luck prevents damage */
         switch (rn2(13)) {
         case 12:
@@ -4446,11 +4464,19 @@ b_trapped(const char *item, int bodypart)
 
     pline(msgc_substitute, "KABOOM!!  %s was booby-trapped!", The(item));
     wake_nearby(FALSE);
+
+    if (m_carrying_artifact(&youmonst, ART_MASTER_KEY_OF_THIEVERY)) {
+        pline(combat_msgc(NULL, &youmonst, cr_immune),
+              "But your artifact shields you.");
+        return;
+    }
+
     losehp(dmg, killer_msg(DIED, "an explosion"));
     exercise(A_STR, FALSE);
     if (bodypart)
         exercise(A_CON, FALSE);
-    inc_timeout(&youmonst, STUNNED, dmg, FALSE);
+    if (!resists_stun(&youmonst))
+        inc_timeout(&youmonst, STUNNED, dmg, FALSE);
 }
 
 /* Monster is hit by trap. */

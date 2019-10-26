@@ -359,8 +359,7 @@ rndcurse(struct monst *mtmp, struct monst *magr)
     cnt = rn2_on_rng(18, rng);
     saddle = (you && !rn2_on_rng(4, rng));
 
-    if ((otmp = m_carrying_artifact(mtmp, ART_HEART_OF_AHRIMAN)) &&
-        otmp->where != OBJ_CONTAINED) {
+    if (m_carrying_artifact(mtmp, ART_HEART_OF_AHRIMAN)) {
         if (you || vis)
             pline(combat_msgc(magr, mtmp, cr_immune),
                   "You feel a malignant aura surround "
