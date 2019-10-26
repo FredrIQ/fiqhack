@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-14 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) Fredrik Ljungdahl, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,7 +11,7 @@
 static struct entity find_objects(struct level *, struct obj *, int *,
                                   boolean *, const char *,
                                   struct nh_menulist *, int, int);
-static struct entity findobj_prompt(int, const char *);
+static struct entity findobj_prompt(int, const char *, boolean);
 
 /* A generic entity struct for merging objects, traps and dungeon features
    into a single data type for handling the various possible kinds of
@@ -142,8 +142,13 @@ find_objects(struct level *lev, struct obj *chain, int *found,
     struct entity ent = {0};
     const char *dname;
     int oclass = ALL_CLASSES;
+    boolean cur_lev = FALSE;
 
-    if (strlen(str) == 1)
+    if (!strcmp(str, ".")) {
+        if (lev != level)
+            return ent;
+        cur_lev = TRUE;
+    } else if (strlen(str) == 1)
         oclass = def_char_to_objclass(*str);
     if (oclass == MAXOCLASSES)
         oclass = ALL_CLASSES;
@@ -155,8 +160,9 @@ find_objects(struct level *lev, struct obj *chain, int *found,
             continue; /* inside a lost container */
 
         if (obj->memory == OM_MEMORY_LOST ||
-            ((oclass == ALL_CLASSES && !strstri(dname, str)) ||
-             (oclass != ALL_CLASSES && obj->oclass != oclass))) {
+            (!cur_lev &&
+             (((oclass == ALL_CLASSES && !strstri(dname, str)) ||
+               (oclass != ALL_CLASSES && obj->oclass != oclass))))) {
             if (Has_contents(obj) && obj->otyp != MAGIC_CHEST) {
                 ent = find_objects(lev, obj->cobj, found, did_header,
                                    str, menu, depth + 1, getobj);
@@ -189,7 +195,7 @@ find_objects(struct level *lev, struct obj *chain, int *found,
 
             dname = entity_name(ent);
 
-            if (!strstri(dname, str))
+            if (!cur_lev && !strstri(dname, str))
                 continue;
 
             add_entry(lev, found, did_header, menu, depth, getobj, str, ent);
@@ -204,7 +210,7 @@ find_objects(struct level *lev, struct obj *chain, int *found,
 }
 
 static struct entity
-findobj_prompt(int getobj, const char *str)
+findobj_prompt(int getobj, const char *str, boolean omni)
 {
     /* Find objects in levels */
     const char *buf;
@@ -256,18 +262,22 @@ findobj_prompt(int getobj, const char *str)
         ent.typ = ENT_NONE;
         return ent;
     }
-    return findobj_prompt(selected[0], str);
+    return findobj_prompt(selected[0], str, omni);
 }
 
 int
 dofindobj(const struct nh_cmd_arg *arg)
 {
+    boolean omni = FALSE;
+    if (wizard && yn("Omniscient searching?"))
+        omni = TRUE;
+
     const char *buf;
     buf = getlin("Search for what objects, traps or glyph?", FALSE);
     if (!*buf || *buf == '\033')
         return 0;
 
-    struct entity ent = findobj_prompt(0, buf);
+    struct entity ent = findobj_prompt(0, buf, omni);
     if (ent.typ != ENT_NONE) {
         struct obj *obj = NULL;
         if (ent.typ == ENT_OBJ)
