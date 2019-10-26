@@ -239,7 +239,7 @@ static const struct artifact const_artilist[] = {
       (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_SPEAK),
       (SPFX_WARN | SPFX_TCTRL | SPFX_HPHDAM), 0,
       NO_ATTK, NO_DFNS, NO_CARY,
-      UNTRAP, A_CHAOTIC, PM_ROGUE, NON_PM, 3500L),
+      CREATE_PORTAL, A_CHAOTIC, PM_ROGUE, NON_PM, 3500L),
 
     A("The Tsurugi of Muramasa", TSURUGI,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_BEHEAD | SPFX_LUCK), 0, 0,

@@ -695,8 +695,6 @@ spoilartinvoke(struct artifact *art)
         return "<span class=\"invoke invokehealing\">healing</span>";
     case ENERGY_BOOST:
         return "<span class=\"invoke invokeenergyboost\">power</span>";
-    case UNTRAP:
-        return "<span class=\"invoke invokeuntrap\">untrap</span>";
     case CHARGE_OBJ:
         return "<span class=\"invoke invokecharging\">charging</span>";
     case LEV_TELE:

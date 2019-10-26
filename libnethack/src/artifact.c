@@ -1583,13 +1583,6 @@ arti_invoke(struct obj *obj)
                     goto nothing_special;
                 break;
             }
-        case UNTRAP:{
-                if (!untrap(&(struct nh_cmd_arg){.argtype = 0}, TRUE)) {
-                    obj->age = 0; /* don't charge for changing their mind */
-                    return 0;
-                }
-                break;
-            }
         case CHARGE_OBJ:{
                 struct obj *otmp = getobj(recharge_type, "charge", FALSE);
                 boolean b_effect;

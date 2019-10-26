@@ -74,12 +74,11 @@ enum artigen_type {
 # define TAMING         (LAST_PROP+1)
 # define HEALING        (LAST_PROP+2)
 # define ENERGY_BOOST   (LAST_PROP+3)
-# define UNTRAP         (LAST_PROP+4)
-# define CHARGE_OBJ     (LAST_PROP+5)
-# define LEV_TELE       (LAST_PROP+6)
-# define CREATE_PORTAL  (LAST_PROP+7)
-# define ENLIGHTENING   (LAST_PROP+8)
-# define CREATE_AMMO    (LAST_PROP+9)
-# define SELF_UNCURSE   (LAST_PROP+10)
+# define CHARGE_OBJ     (LAST_PROP+4)
+# define LEV_TELE       (LAST_PROP+5)
+# define CREATE_PORTAL  (LAST_PROP+6)
+# define ENLIGHTENING   (LAST_PROP+7)
+# define CREATE_AMMO    (LAST_PROP+8)
+# define SELF_UNCURSE   (LAST_PROP+9)
 
 #endif /* ARTIFACT_H */
