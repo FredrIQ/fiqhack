@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* File opening code based on the xlogfile code. */
 /* Object-looping code based on makedefs.c */
 /* Concept based on Autospoil, by Cristan Szmajda
@@ -187,23 +187,23 @@ spoilversus(struct artifact *art)
 {
     const struct permonst *pm;
     /* Other Relevant SPFX_ things: DBONUS */
-    if (!(art->spfx & (SPFX_DBONUS | SPFX_ATTK))) {
+    if (!(art->spfx & SPFX_DBONUS)) {
         return (art->attk.adtyp == AD_PHYS) ? "vs all" : "vs none";
-    } else if (art->spfx & SPFX_DMONS) {
+    } else if (DBONUS(art, SPFX_DMONS)) {
         pm = &mons[(int)art->mtype];
         return msgprintf("vs %s", pm->mname);
         // TODO: improve on this
-    } else if (art->spfx & SPFX_DCLAS) {
+    } else if (DBONUS(art, SPFX_DCLAS)) {
         return msgprintf("vs %c - %s",
                          ((char) def_monsyms[(int) art->mtype]),
                          monexplain[(int) art->mtype]);
-    } else if (art->spfx & SPFX_DFLAG1) {
+    } else if (DBONUS(art, SPFX_DFLAG1)) {
         return msgprintf("vs %s", spoilmonflagone(art->mtype));
-    } else if (art->spfx & SPFX_DFLAG2) {
+    } else if (DBONUS(art, SPFX_DFLAG2)) {
         return msgprintf("vs %s", spoilmonflagtwo(art->mtype));
-    } else if (art->spfx & SPFX_DALIGN) {
+    } else if (DBONUS(art, SPFX_DALIGN)) {
         return "vs cross-aligned";
-    } else if (art->spfx & SPFX_ATTK) {
+    } else if (DBONUS(art, SPFX_ATTK)) {
         return "vs non-resistant";
     }
     return "N/A";
@@ -637,8 +637,8 @@ spoilarteffects(struct artifact *art, unsigned long spfx, struct attack attk)
                       "<span class=\"spfx spfxseek\">+n search</span> " : ""),
                      ((spfx & SPFX_WARN) ?
                       "<span class=\"spfx spfxwarn\">warn</span> " : ""),
-                     ((spfx & SPFX_DRLI) ?
-                      "<span class=\"spfx spfxdrli\">drain</span>" : ""),
+                     ((spfx & SPFX_FLYING) ?
+                      "<span class=\"spfx spfxflying\">flying</span> " : ""),
                      ((spfx & SPFX_SEARCH) ?
                       "<span class=\"spfx spfxsearch\">autosrch</span> " : ""),
                      ((spfx & SPFX_BEHEAD) ?
@@ -649,8 +649,9 @@ spoilarteffects(struct artifact *art, unsigned long spfx, struct attack attk)
                                 "halres</abbr>"): ""),
                      ((spfx & SPFX_ESP) ?
                       "<span class=\"spfx spfxesp\">ESP</span> " : ""),
-                     ((spfx & SPFX_STLTH) ?
-                      "<span class=\"spfx spfxstealth\">stealth</span> " : ""),
+                     ((spfx & SPFX_DISPLACE) ?
+                      "<span class=\"spfx spfxdisplace\">displace</span> " :
+                      ""),
                      ((spfx & SPFX_REGEN) ?
                       "<span class=\"spfx spfxregen\">regen</span> " : ""),
                      ((spfx & SPFX_EREGEN) ?
@@ -710,8 +711,8 @@ spoilartinvoke(struct artifact *art)
     /* For now I'm just doing the ones used by existing artifacts. */
     case INVIS:
         return "<span class=\"invoke invokeinvis\">invisibility</span>";
-    case LEVITATION:
-        return "<span class=\"invoke invokelev\">levitation</span>";
+    case DETECT_MONSTERS:
+        return "<span class=\"invoke invokemondet\">monster detection</span>";
     case CONFLICT:
         return "<span class=\"invoke invokeconflict\">conflict</span>";
 

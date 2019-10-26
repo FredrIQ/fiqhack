@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,32 +17,32 @@
 # define SPFX_SPEAK    0x0000008L /* item can speak (not implemented) */
 # define SPFX_SEEK     0x0000010L /* item helps you search for things */
 # define SPFX_WARN     0x0000020L /* item warns you of danger */
-# define SPFX_ATTK     0x0000040L /* item has a special attack (attk) */
+# define SPFX_FLYING   0x0000040L /* Flight */
 # define SPFX_DEFN     0x0000080L /* item has a special defence (defn) */
-# define SPFX_DRLI     0x0000100L /* drains a level from monsters */
+# define SPFX_MAXCON   0x0000100L /* Max constitution */
 # define SPFX_SEARCH   0x0000200L /* helps searching */
 # define SPFX_BEHEAD   0x0000400L /* beheads monsters */
 # define SPFX_HALRES   0x0000800L /* blocks hallucinations */
 # define SPFX_ESP      0x0001000L /* ESP (like amulet of ESP) */
-# define SPFX_STLTH    0x0002000L /* Stealth */
+# define SPFX_DISPLACE 0x0002000L /* Displacement */
 # define SPFX_REGEN    0x0004000L /* Regeneration */
 # define SPFX_EREGEN   0x0008000L /* Energy Regeneration */
 # define SPFX_HSPDAM   0x0010000L /* 1/2 spell damage (on player) in combat */
 # define SPFX_HPHDAM   0x0020000L /* 1/2 physical damage (on player) in combat */
 # define SPFX_TCTRL    0x0040000L /* Teleportation Control */
 # define SPFX_LUCK     0x0080000L /* Increase Luck (like Luckstone) */
+# define DBONUS(wep, typ) (((wep)->spfx & SPFX_DBONUS) == typ)
 # define SPFX_DMONS    0x0100000L /* attack bonus on one monster type */
 # define SPFX_DCLAS    0x0200000L /* attack bonus on monsters w/ symbol mtype */
-# define SPFX_DFLAG1   0x0400000L /* attack bonus on monsters w/ mflags1 flag */
-# define SPFX_DFLAG2   0x0800000L /* attack bonus on monsters w/ mflags2 flag */
-# define SPFX_DALIGN   0x1000000L /* attack bonus on non-aligned monsters */
-# define SPFX_DBONUS   0x1F00000L /* attack bonus mask */
-# define SPFX_XRAY     0x2000000L /* gives X-RAY vision to player */
-# define SPFX_REFLECT  0x4000000L /* Reflection */
-# define SPFX_WTREDUC  0x8000000L /* Reduced weight (halved) */
-# define SPFX_FREEACT 0x10000000L /* Free action (paralyzation resistance) */
-# define SPFX_MAXCON  0x20000000L /* Max constitution */
-
+# define SPFX_DFLAG1   0x0300000L /* attack bonus on monsters w/ mflags1 flag */
+# define SPFX_DFLAG2   0x0400000L /* attack bonus on monsters w/ mflags2 flag */
+# define SPFX_DALIGN   0x0500000L /* attack bonus on non-aligned monsters */
+# define SPFX_ATTK     0x0600000L /* item has a special attack (attk) */
+# define SPFX_DBONUS   0x0700000L /* attack bonus mask */
+# define SPFX_XRAY     0x0800000L /* gives X-RAY vision to player */
+# define SPFX_REFLECT  0x1000000L /* Reflection */
+# define SPFX_WTREDUC  0x2000000L /* Reduced weight (halved) */
+# define SPFX_FREEACT  0x4000000L /* Free action (paralyzation resistance) */
 
 struct artifact {
     const char *name;

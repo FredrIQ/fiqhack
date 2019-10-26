@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1693,6 +1693,10 @@ hito_stone_to_flesh(struct obj *obj)
 
     if (objects[obj->otyp].oc_material != MINERAL &&
         objects[obj->otyp].oc_material != GEMSTONE)
+        return 0;
+
+    /* Heart of Ahriman usually resists; ordinary items rarely do */
+    if (obj_resists(obj, 1, 99))
         return 0;
 
     /* add more if stone objects are added.. */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -86,7 +86,7 @@ static const struct artifact const_artilist[] = {
  *      providing 8 more.
  */
     A("Stormbringer", RUNESWORD,
-      (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN | SPFX_INTEL | SPFX_DRLI), 0, 0,
+      (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN | SPFX_INTEL), 0, 0,
       DRLI(5, 2), DRLI(0, 0), NO_CARY, 0, A_CHAOTIC, NON_PM, NON_PM, 8000L),
 /*
  *      Mjollnir will return to the hand of the wielder when thrown
@@ -196,11 +196,12 @@ static const struct artifact const_artilist[] = {
       NO_ATTK, NO_DFNS, CARY(AD_MAGM),
       INVIS, A_LAWFUL, PM_ARCHEOLOGIST, NON_PM, 2500L),
 
-    A("The Heart of Ahriman", LUCKSTONE,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL), SPFX_STLTH, 0,
+    A("The Heart of Ahriman", RUBY,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_LUCK),
+      (SPFX_DISPLACE | SPFX_FLYING), 0,
       /* this stone does double damage if used as a projectile weapon */
       PHYS(5, 0), NO_DFNS, NO_CARY,
-      LEVITATION, A_NEUTRAL, PM_BARBARIAN, NON_PM, 2500L),
+      DETECT_MONSTERS, A_NEUTRAL, PM_BARBARIAN, NON_PM, 2500L),
 
     A("The Sceptre of Might", MACE,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_DALIGN), 0, 0,
@@ -208,8 +209,7 @@ static const struct artifact const_artilist[] = {
       CONFLICT, A_LAWFUL, PM_CAVEMAN, NON_PM, 2500L),
 
     A("The Staff of Aesculapius", QUARTERSTAFF,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_ATTK | SPFX_INTEL | SPFX_DRLI |
-       SPFX_REGEN), 0, 0,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_ATTK | SPFX_INTEL | SPFX_REGEN), 0, 0,
       DRLI(0, 0), DRLI(0, 0), NO_CARY,
       HEALING, A_NEUTRAL, PM_HEALER, NON_PM, 5000L),
 

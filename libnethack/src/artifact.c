@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-06-16 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -368,7 +368,8 @@ attacks(int adtyp, struct obj *otmp)
         uint64_t props = obj_properties(otmp);
         if ((adtyp == AD_FIRE && (props & opm_fire)) ||
             (adtyp == AD_COLD && (props & opm_frost)) ||
-            (adtyp == AD_ELEC && (props & opm_shock)))
+            (adtyp == AD_ELEC && (props & opm_shock)) ||
+            (adtyp == AD_DRLI && (props & opm_drain)))
             return TRUE;
         return FALSE;
     }
@@ -567,18 +568,19 @@ static boolean
 spfx_provides_extrinsic(const struct obj *obj, unsigned long spfx,
                         int extrinsic, int *warntype)
 {
-    if ((spfx & SPFX_SEARCH  && extrinsic == SEARCHING) ||
-        (spfx & SPFX_ESP     && extrinsic == TELEPAT) ||
-        (spfx & SPFX_STLTH   && extrinsic == STEALTH) ||
-        (spfx & SPFX_REGEN   && extrinsic == REGENERATION) ||
-        (spfx & SPFX_TCTRL   && extrinsic == TELEPORT_CONTROL) ||
-        (spfx & SPFX_EREGEN  && extrinsic == ENERGY_REGENERATION) ||
-        (spfx & SPFX_HSPDAM  && extrinsic == HALF_SPDAM) ||
-        (spfx & SPFX_HPHDAM  && extrinsic == HALF_PHDAM) ||
-        (spfx & SPFX_HALRES  && extrinsic == HALLUC_RES) ||
-        (spfx & SPFX_REFLECT && extrinsic == REFLECTING) ||
-        (spfx & SPFX_XRAY    && extrinsic == XRAY_VISION) ||
-        (spfx & SPFX_FREEACT && extrinsic == FREE_ACTION))
+    if ((spfx & SPFX_FLYING   && extrinsic == FLYING) ||
+        (spfx & SPFX_SEARCH   && extrinsic == SEARCHING) ||
+        (spfx & SPFX_ESP      && extrinsic == TELEPAT) ||
+        (spfx & SPFX_DISPLACE && extrinsic == DISPLACED) ||
+        (spfx & SPFX_REGEN    && extrinsic == REGENERATION) ||
+        (spfx & SPFX_TCTRL    && extrinsic == TELEPORT_CONTROL) ||
+        (spfx & SPFX_EREGEN   && extrinsic == ENERGY_REGENERATION) ||
+        (spfx & SPFX_HSPDAM   && extrinsic == HALF_SPDAM) ||
+        (spfx & SPFX_HPHDAM   && extrinsic == HALF_PHDAM) ||
+        (spfx & SPFX_HALRES   && extrinsic == HALLUC_RES) ||
+        (spfx & SPFX_REFLECT  && extrinsic == REFLECTING) ||
+        (spfx & SPFX_XRAY     && extrinsic == XRAY_VISION) ||
+        (spfx & SPFX_FREEACT  && extrinsic == FREE_ACTION))
         return TRUE;
 
     if (spfx & SPFX_WARN) {
@@ -669,7 +671,6 @@ touch_artifact(struct obj *obj, const struct monst *mon)
     return 1;
 }
 
-
 /* Decide whether an artifact's special attacks apply against mtmp.
    Returns 0 (doesn't apply), 1 (applies partially), 2 (applies completely) */
 static int
@@ -684,22 +685,22 @@ spec_applies(const struct artifact *weap, const struct monst *mtmp)
     yours = (mtmp == &youmonst);
     ptr = mtmp->data;
 
-    if (weap->spfx & SPFX_DMONS) {
+    if (DBONUS(weap, SPFX_DMONS)) {
         return (ptr == &mons[(int)weap->mtype]) ? 2 : 0;
-    } else if (weap->spfx & SPFX_DCLAS) {
+    } else if (DBONUS(weap, SPFX_DCLAS)) {
         return (weap->mtype == (unsigned long)ptr->mlet) ? 2 : 0;
-    } else if (weap->spfx & SPFX_DFLAG1) {
+    } else if (DBONUS(weap, SPFX_DFLAG1)) {
         return ((ptr->mflags1 & weap->mtype) != 0L) ? 2 : 0;
-    } else if (weap->spfx & SPFX_DFLAG2) {
+    } else if (DBONUS(weap, SPFX_DFLAG2)) {
         return (((ptr->mflags2 & weap->mtype) ||
                  (yours &&
                   ((!Upolyd && (urace.selfmask & weap->mtype)) ||
                    ((weap->mtype & M2_WERE) && u.ulycn >= LOW_PM))))) ? 2 : 0;
-    } else if (weap->spfx & SPFX_DALIGN) {
+    } else if (DBONUS(weap, SPFX_DALIGN)) {
         return (yours ? (u.ualign.type != weap->alignment) :
                 (ptr->maligntyp == A_NONE ||
                  sgn(ptr->maligntyp) != weap->alignment)) ? 2 : 0;
-    } else if (weap->spfx & SPFX_ATTK) {
+    } else if (DBONUS(weap, SPFX_ATTK)) {
         struct obj *defending_weapon = (yours ? uwep : MON_WEP(mtmp));
 
         if (defending_weapon && defending_weapon->oartifact &&
@@ -1422,8 +1423,7 @@ artifact_hit(struct monst *magr, struct monst *mdef, struct obj *otmp,
     }
 
     /* Stormbringer */
-    if ((props & opm_drain) ||
-        (otmp->oartifact && spec_ability(otmp, SPFX_DRLI))) {
+    if (attacks(AD_DRLI, otmp)) {
         res = (artifact_hit_drainlife(magr, mdef, otmp,
                                       dmgptr) || res);
         if (otmp->oartifact)
@@ -1727,6 +1727,7 @@ arti_invoke(struct obj *obj)
                       "but nothing seems to happen.");
             return 1;
         }
+
         switch (oart->inv_prop) {
         case CONFLICT:
             if (on)
@@ -1735,15 +1736,15 @@ arti_invoke(struct obj *obj)
                 pline(msgc_statusend,
                       "You feel the tension decrease around you.");
             break;
-        case LEVITATION:
+        case DETECT_MONSTERS:
             if (on) {
                 /* first is to override the timer since it kills any
                    intrinsic levi */
-                set_property(&youmonst, LEVITATION, -2, TRUE);
-                set_property(&youmonst, LEVITATION, 0, FALSE);
-                spoteffects(FALSE);
+                set_property(&youmonst, DETECT_MONSTERS, -2, TRUE);
+                set_property(&youmonst, DETECT_MONSTERS, 0, FALSE);
+                pline(msgc_statusgood, "You detect the presence of monsters.");
             } else
-                set_property(&youmonst, LEVITATION, -2, FALSE);
+                set_property(&youmonst, DETECT_MONSTERS, -2, FALSE);
             break;
         case INVIS:
             if (BInvis || Blind)
