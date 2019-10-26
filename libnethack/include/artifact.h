@@ -18,7 +18,7 @@
 # define SPFX_SEEK     0x0000010L /* item helps you search for things */
 # define SPFX_WARN     0x0000020L /* item warns you of danger */
 # define SPFX_FLYING   0x0000040L /* Flight */
-# define SPFX_DEFN     0x0000080L /* item has a special defence (defn) */
+# define SPFX_FREEACT  0x0000080L /* Free action (paralyzation resistance) */
 # define SPFX_MAXCON   0x0000100L /* Max constitution */
 # define SPFX_SEARCH   0x0000200L /* helps searching */
 # define SPFX_BEHEAD   0x0000400L /* beheads monsters */
@@ -42,7 +42,6 @@
 # define SPFX_XRAY     0x0800000L /* gives X-RAY vision to player */
 # define SPFX_REFLECT  0x1000000L /* Reflection */
 # define SPFX_WTREDUC  0x2000000L /* Reduced weight (halved) */
-# define SPFX_FREEACT  0x4000000L /* Free action (paralyzation resistance) */
 
 struct artifact {
     const char *name;

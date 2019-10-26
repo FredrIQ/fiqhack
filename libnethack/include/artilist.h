@@ -79,14 +79,14 @@ static const struct artifact const_artilist[] = {
  */
 
     A("Excalibur", LONG_SWORD,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_DEFN | SPFX_INTEL), 0, 0,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL), 0, 0,
       PHYS(5, 10), DRLI(0, 0), NO_CARY, 0, A_LAWFUL, PM_KNIGHT, NON_PM, 4000L),
 /*
  *      Stormbringer only has a 2 because it can drain a level,
  *      providing 8 more.
  */
     A("Stormbringer", RUNESWORD,
-      (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN | SPFX_INTEL), 0, 0,
+      (SPFX_RESTR | SPFX_ATTK | SPFX_INTEL), 0, 0,
       DRLI(5, 2), DRLI(0, 0), NO_CARY, 0, A_CHAOTIC, NON_PM, NON_PM, 8000L),
 /*
  *      Mjollnir will return to the hand of the wielder when thrown
@@ -124,16 +124,16 @@ static const struct artifact const_artilist[] = {
  *      unbalances victims in addition to doing some damage.
  */
     A("Magicbane", QUARTERSTAFF,
-      (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN), 0, 0,
+      (SPFX_RESTR | SPFX_ATTK), 0, 0,
       STUN(3, 4), DFNS(AD_MAGM), NO_CARY, 0, A_NEUTRAL, PM_WIZARD, NON_PM,
       3500L),
 
     A("Frost Brand", LONG_SWORD,
-      (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN), 0, 0,
+      (SPFX_RESTR | SPFX_ATTK), 0, 0,
       COLD(5, 0), COLD(0, 0), NO_CARY, 0, A_NONE, NON_PM, NON_PM, 3000L),
 
     A("Fire Brand", LONG_SWORD,
-      (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN), 0, 0,
+      (SPFX_RESTR | SPFX_ATTK), 0, 0,
       FIRE(5, 0), FIRE(0, 0), NO_CARY, 0, A_NONE, NON_PM, NON_PM, 3000L),
 
     A("Dragonbane", LANCE,
@@ -225,8 +225,9 @@ static const struct artifact const_artilist[] = {
       ENLIGHTENING, A_NEUTRAL, PM_MONK, NON_PM, 2500L),
 
     A("The Mitre of Holiness", HELM_OF_BRILLIANCE,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL), 0, M2_UNDEAD,
-      NO_ATTK, NO_DFNS, CARY(AD_FIRE),
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL),
+      0, M2_UNDEAD,
+      NO_ATTK, DFNS(AD_MAGM), CARY(AD_FIRE),
       ENERGY_BOOST, A_LAWFUL, PM_PRIEST, NON_PM, 2000L),
 
     A("The Longbow of Diana", BOW,
@@ -246,7 +247,7 @@ static const struct artifact const_artilist[] = {
       SELF_UNCURSE, A_LAWFUL, PM_SAMURAI, NON_PM, 4500L),
 
     A("The Platinum Yendorian Express Card", CREDIT_CARD,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_DEFN),
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL),
       (SPFX_ESP | SPFX_HSPDAM), 0,
       NO_ATTK, NO_DFNS, CARY(AD_MAGM),
       CHARGE_OBJ, A_NEUTRAL, PM_TOURIST, NON_PM, 7000L),

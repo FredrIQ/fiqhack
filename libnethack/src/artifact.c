@@ -1572,12 +1572,10 @@ arti_invoke(struct obj *obj)
                 break;
             }
         case ENERGY_BOOST:{
-                int epboost = (youmonst.pwmax + 1 - youmonst.pw) / 2;
+                int epboost = (youmonst.pwmax - youmonst.pw);
 
-                if (epboost > 120)
-                    epboost = 120;      /* arbitrary */
-                else if (epboost < 12)
-                    epboost = youmonst.pwmax - youmonst.pw;
+                if (epboost > 400)
+                    epboost = 400;      /* arbitrary */
                 if (epboost) {
                     pline(msgc_statusgood, "You feel re-energized.");
                     youmonst.pw += epboost;
@@ -1587,8 +1585,7 @@ arti_invoke(struct obj *obj)
             }
         case UNTRAP:{
                 if (!untrap(&(struct nh_cmd_arg){.argtype = 0}, TRUE)) {
-                    obj->age = 0;       /* don't charge for changing their mind 
-                                         */
+                    obj->age = 0; /* don't charge for changing their mind */
                     return 0;
                 }
                 break;
