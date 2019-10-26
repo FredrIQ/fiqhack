@@ -669,7 +669,7 @@ get_obj_location(const struct obj *obj, xchar * xp, xchar * yp, int locflags)
         *yp = obj->oy;
         return TRUE;
     case OBJ_MINVENT:
-        if (isok(obj->ocarry->mx, obj->ocarry->my)) {
+        if (isok(m_mx(obj->ocarry), m_my(obj->ocarry))) {
             *xp = obj->ocarry->mx;
             *yp = obj->ocarry->my;
             return TRUE;
@@ -3220,7 +3220,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                 if (reflecting(mon) && !selfzap) {
                     if (you || vis) {
                         shieldeff(sx, sy);
-                        if (raylevel >= P_SKILLED) {
+                        if (!hyperreflecting(mon) && raylevel >= P_SKILLED) {
                             if (blind(&youmonst))
                                 pline(combat_msgc(magr, mon, cr_resist),
                                       "%s is disrupted by something!", The(fltxt));

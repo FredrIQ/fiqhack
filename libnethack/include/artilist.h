@@ -214,7 +214,8 @@ static const struct artifact const_artilist[] = {
       HEALING, A_NEUTRAL, PM_HEALER, NON_PM, 5000L),
 
     A("The Magic Mirror of Merlin", MIRROR,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_SPEAK), SPFX_ESP, 0,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_SPEAK),
+      (SPFX_ESP | SPFX_REFLECT), 0,
       NO_ATTK, NO_DFNS, CARY(AD_MAGM),
       0, A_LAWFUL, PM_KNIGHT, NON_PM, 1500L),
 

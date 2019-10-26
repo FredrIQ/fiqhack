@@ -12,8 +12,6 @@ static boolean qlined_up(const struct monst *mtmp, int ax, int ay,
 static boolean m_beam_ok(const struct monst *, int, int, struct monst **,
                          boolean);
 
-#define URETREATING(x,y) (distmin(u.ux,u.uy,x,y) > distmin(u.ux0,u.uy0,x,y))
-
 #define POLE_LIM 5      /* How far monsters can use pole-weapons */
 
 /*

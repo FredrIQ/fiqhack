@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -513,6 +513,10 @@ has_immunity(const struct monst *mon, enum youprop property)
         if (amul && amul->otyp == AMULET_OF_RESTFUL_SLEEP)
             rv &= ~W_MASK(os_amul);
     }
+
+    /* Total reflection is only conferred by the Magic Mirror */
+    if (property == REFLECTING)
+        return (rv & W_MASK(os_carried));
 
     if (!(rv & FROMFORM))
         return (rv & EXTRINSIC);
@@ -2693,7 +2697,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        or for the telepathy to be extrinsic and the viewer within BOLT_LIM. */
     if (!mindless(viewee->data) && !m_helpless(viewer, hm_unconscious)) {
         unsigned telepathy_reason = telepathic(viewer);
-        boolean strong_telepathy = has_immunity(viewer, TELEPAT);
+        boolean strong_telepathy = strongly_telepathic(viewer);
         if ((telepathy_reason && blinded) ||
             (strong_telepathy &&
              distance <= BOLT_LIM * BOLT_LIM))
@@ -2746,7 +2750,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     if (!mindless(viewer->data) && !m_helpless(viewer, hm_unconscious) &&
         !mindless(viewee->data) && !(sensemethod & MSENSE_TELEPATHY)) {
         unsigned itelepat = (telepathic(viewer) | telepathic(viewee));
-        unsigned etelepat = has_immunity(viewer, TELEPAT);
+        unsigned etelepat = strongly_telepathic(viewer);
         etelepat |= has_immunity(viewee, TELEPAT);
         if (telepathic(viewer) && telepathic(viewee))
             sensemethod |= MSENSE_TEAMTELEPATHY;
@@ -2820,10 +2824,10 @@ msensem(const struct monst *viewer, const struct monst *viewee)
        we need to disable the displacement flag since it only affects monsters who
        sense another with only normal/invis/infra/xray and where the displaced image
        isn't on the monster itself */
-    if ((sensemethod & MSENSE_DISPLACED) &&
-        ((sensemethod & ~(MSENSE_ANYVISION | MSENSE_DISPLACED |
-                          MSENSEF_KNOWNINVIS)) ||
-         (dx == m_mx(viewer) && dy == m_my(viewer))) ||
+    if (((sensemethod & MSENSE_DISPLACED) &&
+         ((sensemethod & ~(MSENSE_ANYVISION | MSENSE_DISPLACED |
+                           MSENSEF_KNOWNINVIS)))) ||
+        (dx == m_mx(viewer) && dy == m_my(viewer)) ||
         viewerhostility == vieweehostility) {
         sensemethod &= ~MSENSE_DISPLACED;
     }
@@ -2834,10 +2838,9 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
 /* Enlightenment and conduct */
 static const char
-     You_[] = "You ", are[] = "are ", were[] = "were ", have[] =
-    "have ", had[] = "had ", can[] = "can ", could[] = "could ";
+    You_[] = "You ", were[] = "were ", have[] = "have ";
 static const char
-     have_been[] = "have been ", have_never[] = "have never ", never[] =
+    have_been[] = "have been ", have_never[] = "have never ", never[] =
     "never ";
 
 #define enl_msg(menu,prefix,present,past,suffix) \
@@ -2928,10 +2931,10 @@ enlighten_mon(struct monst *mon, int final)
     const char *title;
     const char *buf;
     struct nh_menulist menu;
-    
+
     init_menulist(&menu);
     title = final ? "Final Attributes:" : "Current Attributes:";
-    
+
     const char *monname = Monnam(mon);
     const char *is = (mon == &youmonst ? " are " : " is ");
     const char *was = (mon == &youmonst ? " were " : " was ");
@@ -3078,7 +3081,9 @@ enlighten_mon(struct monst *mon, int final)
         /*** Vision and senses ***/
     if (see_invisible(mon))
         mon_sees(&menu, mon, "invisible");
-    if (telepathic(mon))
+    if (strongly_telepathic(mon))
+        mon_is(&menu, mon, "strongly telepathic");
+    else if (telepathic(mon))
         mon_is(&menu, mon, "telepathic");
     if (warned(mon))
         mon_is(&menu, mon, "warned");
@@ -3233,7 +3238,9 @@ enlighten_mon(struct monst *mon, int final)
         mon_is(&menu, mon, "fast");
     if (slow(mon))
         mon_is(&menu, mon, "slow");
-    if (reflecting(mon))
+    if (hyperreflecting(mon))
+        mon_has(&menu, mon, "total reflection");
+    else if (reflecting(mon))
         mon_has(&menu, mon, "reflection");
     if (free_action(mon))
         mon_has(&menu, mon, "free action");

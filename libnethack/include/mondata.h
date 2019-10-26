@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-29 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,6 +39,7 @@
 # define immune_to_poison(mon)  (has_immunity(mon, POISON_RES))
 # define immune_to_acid(mon)    (has_immunity(mon, ACID_RES))
 # define reflecting(mon)        (has_property(mon, REFLECTING))
+# define hyperreflecting(mon)   (has_immunity(mon, REFLECTING))
 # define half_spell_dam(mon)    (has_property(mon, HALF_SPDAM))
 # define half_phys_dam(mon)     (has_property(mon, HALF_PHDAM))
 # define displacement(mon)      (has_property(mon, DISPLACED))
@@ -67,6 +68,7 @@
 # define shapeshift_prot(mon)   (has_property(mon, PROT_FROM_SHAPE_CHANGERS))
 # define warned(mon)            (has_property(mon, WARNING))
 # define telepathic(mon)        (has_property(mon, TELEPAT))
+# define strongly_telepathic(mon) (has_immunity(mon, TELEPAT))
 # define fast(mon)              (has_property(mon, FAST))
 /* ifast: whether or not you have intrinsic fast in particular */
 # define ifast(mon)             (ihas_property(mon, FAST))
