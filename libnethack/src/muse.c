@@ -1137,46 +1137,10 @@ find_item(struct monst *mon, struct musable *m)
     boolean immobile = (mon->data->mmove == 0);
     coord tc;
     int fraction;
+    struct monst *mtmp;
     m->x = 0;
     m->y = 0;
     m->z = 0;
-
-    /* Find amount of hostiles seen/sensed and the closest one */
-    int hostvis = 0;
-    int hostsense = 0;
-    int hostrange = 0;
-    struct monst *mtmp;
-    struct monst *mclose = NULL;
-    if (mm_aggression(mon, &youmonst, Conflict) && msensem(mon, &youmonst)) {
-        hostsense++;
-        if (m_cansee(mon, u.ux, u.uy) ||
-            (msensem(mon, &youmonst) & MSENSE_ANYVISION)) {
-            hostvis++;
-            hostrange = dist2(mon->mx, mon->my, u.ux, u.uy);
-            mclose = &youmonst;
-        }
-    }
-
-    for (mtmp = mon->dlevel->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (DEADMONSTER(mtmp) ||
-            !mm_aggression(mon, mtmp, Conflict) ||
-            !msensem(mon, mtmp))
-            continue;
-        hostsense++;
-        if (m_cansee(mon, mtmp->mx, mtmp->my) ||
-            (msensem(mon, mtmp) & MSENSE_ANYVISION)) {
-            hostvis++;
-            if (!hostrange ||
-                hostrange > dist2(mon->mx, mon->my, mtmp->mx, mtmp->my)) {
-                hostrange = dist2(mon->mx, mon->my, mtmp->mx, mtmp->my);
-                mclose = mtmp;
-            }
-        }
-    }
-
-    /* range of 100 is the cap on fireball, cone of cold and summon nasty */
-    if (mclose && hostrange > 100)
-        mclose = NULL; /* no close targets */
 
     m->obj = NULL;
     m->spell = 0;
@@ -1315,7 +1279,7 @@ find_item(struct monst *mon, struct musable *m)
     /* It so happens there are two unrelated cases when we might want to check
        specifically for healing alone.  The first is when the monster is blind
        (healing cures blindness).  The second is when the monster is peaceful;
-       then we don't want to flee the player, and by coincidence healing is all 
+       then we don't want to flee the player, and by coincidence healing is all
        there is that doesn't involve fleeing. These would be hard to combine
        because of the control flow. Pestilence won't use healing even when
        blind. */
@@ -1505,6 +1469,50 @@ find_item(struct monst *mon, struct musable *m)
     struct musable m2; /* for find_item_single */
     init_musable(m->mon, &m2);
     int usable = 0;
+
+    /* If we lack hands and spells, do nothing. This avoids us having to
+       do the "is any monster close to us?" checks if we aren't actually
+       going to use the data. Somewhat significant perf impact... */
+    if (nohands(mon->data)) {
+        boolean any_spell = FALSE;
+        for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++)
+            if (mon_castable(mon, spell, TRUE)) {
+                any_spell = TRUE;
+                break;
+            }
+
+        if (!any_spell)
+            return FALSE;
+    }
+
+    /* Find amount of hostiles seen/sensed and the closest one */
+    int hostvis = 0;
+    int hostsense = 0;
+    int hostrange = 0;
+    struct monst *mclose = NULL;
+    for (mtmp = monlist(mon->dlevel); mtmp; mtmp = monnext(mtmp)) {
+        int sense;
+        if (DEADMONSTER(mtmp) ||
+            !mm_aggression(mon, mtmp, Conflict) ||
+            !(sense = msensem(mon, mtmp)))
+            continue;
+        hostsense++;
+        if (m_cansee(mon, mtmp->mx, mtmp->my) ||
+            (sense & MSENSE_ANYVISION)) {
+            hostvis++;
+            if (!hostrange ||
+                hostrange > dist2(m_mx(mon), m_my(mon),
+                                  m_mx(mtmp), m_my(mtmp))) {
+                hostrange = dist2(m_mx(mon), m_my(mon),
+                                  m_mx(mtmp), m_my(mtmp));
+                mclose = mtmp;
+            }
+        }
+    }
+
+    /* range of 100 is the cap on fireball, cone of cold and summon nasty */
+    if (mclose && hostrange > 100)
+        mclose = NULL; /* no close targets */
 
     /* Spell handling */
     for (spell = SPE_DIG; spell != SPE_BLANK_PAPER; spell++) {
@@ -2763,7 +2771,7 @@ mon_choose_summon(const struct monst *magr, coord *cc)
     cc->y = y;
 }
 
-/* Compute the target's surrouding hostility. This is done by computing a score
+/* Compute the target's surrounding hostility. This is done by computing a score
    based on the amount of monsters surrounding right now x2, plus the amount of
    surrounding monsters for each legal movement x1, +1 for hostile, -1 for tame
    towards the target. Then select a valid location based on what increases the
