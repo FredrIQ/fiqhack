@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-09 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -275,6 +275,20 @@ target_on(int mask, struct monst *mtmp)
     return FALSE;
 }
 
+boolean
+obj_interesting(struct monst *mon, struct obj *obj)
+{
+    return (((monster_would_take_item(mon, obj) &&
+              can_carry(mon, obj)) ||
+             ((Is_box(obj) || obj->otyp == ICE_BOX) &&
+              !obj->mknown && !nohands(mon->data) &&
+              !is_animal(mon->data) &&
+              !mindless(mon->data))) &&
+            (throws_rocks(mon->data) ||
+             !sobj_at(BOULDER, level, obj->ox, obj->oy)) &&
+            !onscary(obj->ox, obj->oy, mon));
+}
+
 /* Work out what this monster wants to be doing, and set its mstrategy field
    appropriately. magical_target is set if the monster should be magically aware
    of your position (typically due to someone casting "aggravate").
@@ -544,15 +558,7 @@ strategy(struct monst *mtmp, boolean magical_target)
                 /* distmin is *much* faster than distmap, and distmap will never
                    give a smaller result, so try distmin first. */
                 int curr;
-                if (((monster_would_take_item(mtmp, otmp) &&
-                      can_carry(mtmp, otmp)) ||
-                     ((Is_box(otmp) || otmp->otyp == ICE_BOX) &&
-                      !otmp->mknown && !nohands(mtmp->data) &&
-                      !is_animal(mtmp->data) &&
-                      !mindless(mtmp->data))) &&
-                    (throws_rocks(mtmp->data) ||
-                     !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
-                    !onscary(otmp->ox, otmp->oy, mtmp) &&
+                if (obj_interesting(mtmp, otmp) &&
                     distmin(mtmp->mx, mtmp->my, otmp->ox, otmp->oy) <= minr &&
                     (curr = distmap(&ds, otmp->ox, otmp->oy)) <= minr) {
                     minr = curr - 1;

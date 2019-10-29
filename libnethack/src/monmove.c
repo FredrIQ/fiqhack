@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -986,9 +986,11 @@ not_special:
     if (jump)
         flag |= ALLOW_JUMP;
     {
-        int i, nx, ny, nearer, distance_tie;
+        int i, nx, ny, better, score_tie;
         int cnt, chcnt;
-        int ndist, nidist;
+        int ndist = 0;
+        int score = 0;
+        int score_best = 0;
         coord poss[ROWNO * COLNO];
         int ogx = gx;
         int ogy = gy;
@@ -1029,7 +1031,9 @@ not_special:
             ds.mmflags |= MM_IGNOREDOORS;
         if (flag & ALLOW_PEACEFUL)
             ds.mmflags |= MM_IGNOREPEACE;
-        nidist = distmap(&ds, omx, omy);
+        score_best = distmap(&ds, omx, omy);
+        if (appr == 1) /* more is better for score, appr=1 wants low dist */
+            score_best = -score_best;
 
         /* Check if we can actually force lineup */
         if (forceline) {
@@ -1072,22 +1076,39 @@ not_special:
                 nx = poss[i].x;
                 ny = poss[i].y;
 
+                score = 0;
+
+                /* Give a bonus to items the monster wants */
+                struct obj *obj;
+                for (obj = mtmp->dlevel->objects[nx][ny]; obj;
+                     obj = obj->nexthere)
+                    if (obj_interesting(mtmp, obj))
+                        score += 2;
+
+                /* I want to make some monsters who lack ranged attacks attempt
+                   to avoid being in line with hostile monsters (out of fear
+                   for ranged attacks), but doing that for everyone would lead
+                   to frustration. Figure out a good way to limit this
+                   strategy. */
+
                 ndist = distmap(&ds, nx, ny);
+                score += (appr == 1 ? -ndist : ndist);
 
-                nearer = (ndist < nidist);
-                distance_tie = (ndist == nidist);
+                better = (score > score_best);
+                score_tie = (score == score_best);
 
-                if ((appr == 1 && nearer) ||
-                    (appr == -1 && !nearer && !distance_tie) ||
-                    (appr && distance_tie && !rn2(++chcnt)) ||
-                    (!appr && !rn2(++chcnt)) || !mmoved) {
+                if (!mmoved ||
+                    (!appr && !rn2(++chcnt)) ||
+                    (appr &&
+                     ((score_tie && !rn2(++chcnt)) ||
+                      better))) {
                     nix = nx;
                     niy = ny;
-                    nidist = ndist;
+                    score_best = score;
                     chi = i;
                     mmoved = 1;
 
-                    if (appr && !distance_tie)
+                    if (appr && !score_tie)
                         chcnt = 1;
                 }
             }

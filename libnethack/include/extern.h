@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2179,6 +2179,7 @@ extern int mon_has_special(const struct monst *);
 extern boolean mon_has_arti(const struct monst *, short);
 extern boolean target_on(int, struct monst *);
 extern int tactics(struct monst *);
+extern boolean obj_interesting(struct monst *, struct obj *);
 extern void strategy(struct monst *, boolean);
 extern boolean covetous_sense(const struct monst *, const struct monst *);
 extern void aggravate(void);
