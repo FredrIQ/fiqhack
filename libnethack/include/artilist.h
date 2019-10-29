@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -225,7 +225,7 @@ static const struct artifact const_artilist[] = {
       ENLIGHTENING, A_NEUTRAL, PM_MONK, NON_PM, 2500L),
 
     A("The Mitre of Holiness", HELM_OF_BRILLIANCE,
-      (SPFX_NOGEN | SPFX_RESTR | SPFX_DFLAG2 | SPFX_INTEL),
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_WARN | SPFX_DFLAG2 | SPFX_INTEL),
       0, M2_UNDEAD,
       NO_ATTK, DFNS(AD_MAGM), CARY(AD_FIRE),
       ENERGY_BOOST, A_LAWFUL, PM_PRIEST, NON_PM, 2000L),

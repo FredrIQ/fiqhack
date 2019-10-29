@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -3096,9 +3096,12 @@ enlighten_mon(struct monst *mon, int final)
     if (warned_of_mon(mon)) {
         int warntype = mworn_warntype(mon);
         buf = msgcat("aware of the presence of ",
-                    (warntype & M2_ORC) ? "orcs" :
-                    (warntype & M2_DEMON) ? "demons" :
-                    "something");
+                     ((warntype & M2_ORC) && (warntype & M2_UNDEAD)) ?
+                     "orcs and undead" : /* Sting + Mitre */
+                     (warntype & M2_ORC) ? "orcs" :
+                     (warntype & M2_DEMON) ? "demons" :
+                     (warntype & M2_UNDEAD) ? "undead" :
+                     "something");
         mon_is(&menu, mon, buf);
     }
     if (warned_of_undead(mon))
