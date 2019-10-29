@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2015-04-03
+! Last modified by Fredrik Ljungdahl, 2019-10-29
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed. See license for details.
 !
@@ -19,7 +19,7 @@ boulder: gray '0'
 
 ! Corpse/statue/figurine substitutions.
 sub corpse *: basefg '%'
-sub statue *: gray '`'
+sub statue *: basefg '`'
 sub figurine *: gray '('
 
 ! Stairs and portals have red backgrounds (that show through).
