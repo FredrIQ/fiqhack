@@ -822,19 +822,6 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                 }
                 score += tilescore;
             }
-            /* kludge: for deathzaps, avoid zapping you if tame to avoid YAAD */
-            /* no bounce handling here -- it simplifies the code, and bouncing here is an edge case */
-            if ((obj->otyp == SPE_FINGER_OF_DEATH ||
-                 obj->otyp == WAN_DEATH) &&
-                mon->mtame) {
-                range = BOLT_LIM;
-                while (--range) {
-                    sx += cx;
-                    sy += cy;
-                    if (sx == u.ux && sy == u.uy)
-                        score = 0;
-                }
-            }
             if (score > score_best) {
                 cc->x = dx;
                 cc->y = dy;
