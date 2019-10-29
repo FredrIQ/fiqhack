@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1144,20 +1144,120 @@ Is_branchlev(const d_level * lev)
     return NULL;
 }
 
+/* Returns the d_level num floors away down (negative num goes up) from lev.
+   The path it uses is as follows: it tries a direct path, then tries to use
+   the parent dungeon (lower dnum) using branch connections until it ultimately
+   stops. */
+d_level
+get_level_destination(struct level *lev, int num)
+{
+    d_level ores = level->z;
+    d_level res = ores;
+    d_level bres;
+    int total_dunlevs = find_dungeon(&res).num_dunlevs;
+    int current_depth = depth(&res);
+    int goal_depth = current_depth + num;
+    while (current_depth != goal_depth) {
+        current_depth = depth(&res);
+
+        /* Going upwards */
+        if (current_depth > goal_depth) {
+            /* Can we continue upwards within the same dungeon? */
+            if (res.dlevel > 1) {
+                res.dlevel--;
+                continue;
+            }
+
+            /* Otherwise, find a parent branch. */
+            branch *br;
+            boolean found = FALSE;
+            for (; res.dlevel <= total_dunlevs; res.dlevel++) {
+                /* is this dungeon level a branch in first place? */
+                br = Is_branchlev(&res);
+                if (!br || br->type == BR_PORTAL)
+                    continue;
+
+                bres = br->end1;
+                if (on_level(&res, &br->end1))
+                    bres = br->end2;
+
+                /* Is this a child branch, or the Castle-Valley connection? */
+                if (bres.dnum > res.dnum &&
+                    (bres.dnum > 1 || res.dnum > 1))
+                    continue;
+
+                /* Found a parent branch. Continue on from this */
+                found = TRUE;
+                break;
+            }
+
+            if (found) {
+                res = bres;
+                total_dunlevs = find_dungeon(&res).num_dunlevs;
+                continue;
+            }
+
+            /* Can't go further! */
+            break;
+        }
+
+        /* Going downwards */
+        if (current_depth < goal_depth) {
+            if (res.dlevel < total_dunlevs) {
+                res.dlevel++;
+                continue;
+            }
+
+            branch *br;
+            boolean found = FALSE;
+            for (; res.dlevel >= 1; res.dlevel--) {
+                br = Is_branchlev(&res);
+                if (!br || br->type == BR_PORTAL)
+                    continue;
+
+                bres = br->end1;
+                if (on_level(&res, &br->end1))
+                    bres = br->end2;
+
+                if (bres.dnum > res.dnum &&
+                    (bres.dnum > 1 || res.dnum > 1))
+                    continue;
+
+                found = TRUE;
+                break;
+            }
+
+            if (found) {
+                res = bres;
+                total_dunlevs = find_dungeon(&res).num_dunlevs;
+                continue;
+            }
+
+            break;
+        }
+
+        /* Failed to go on */
+        break;
+    }
+
+    if (ores.dnum == res.dnum && ores.dlevel == res.dlevel)
+        impossible("get_level_destination: unable to find goal?");
+
+    return res;
+}
+
 /* goto the next level (or appropriate dungeon) */
 void
-next_level(boolean at_stairs)
+next_level(int num, boolean at_stairs)
 {
     if (at_stairs && u.ux == level->sstairs.sx && u.uy == level->sstairs.sy) {
         /* Taking a down dungeon branch. */
         goto_level(&level->sstairs.tolev, at_stairs, FALSE, FALSE);
     } else {
         /* Going down a stairs or jump in a trap door. */
-        d_level newlevel;
+        d_level dlev = get_level_destination(level, num);
 
-        newlevel.dnum = u.uz.dnum;
-        newlevel.dlevel = u.uz.dlevel + 1;
-        goto_level(&newlevel, at_stairs, !at_stairs, FALSE);
+        goto_level(&dlev, at_stairs, !at_stairs, FALSE);
     }
 }
 
@@ -1257,15 +1357,32 @@ On_stairs(xchar x, xchar y)
 }
 
 boolean
-Is_botlevel(const d_level * lev)
+Is_botlevel(const d_level *lev)
 {
     return (lev->dlevel == find_dungeon(lev).num_dunlevs);
 }
 
+/* Returns TRUE if we can't logically go down in this level. Used to be
+   unconditional if we're at the final level of a branch, but if the
+   final level has a downstairs (or ladder), we can still continue.
+   This can still be disabled on a per-level basis by making the floor
+   undiggable ("hardfloor"). */
 boolean
-can_dig_down(const struct level * lev)
+is_bottom(const struct level *lev)
 {
-    return (!lev->flags.hardfloor && !Is_botlevel(&lev->z) &&
+    if (!Is_botlevel(&lev->z))
+        return FALSE;
+
+    branch *br = Is_branchlev(&lev->z);
+    if (!br || br->type == BR_PORTAL)
+        return FALSE;
+    return (on_level(&lev->z, &br->end1) ? br->end1_up : !br->end1_up);
+}
+
+boolean
+can_dig_down(const struct level *lev)
+{
+    return (!lev->flags.hardfloor && !is_bottom(lev) &&
             !Invocation_lev(&lev->z));
 }
 

@@ -1,4 +1,4 @@
-# Last modified by Fredrik Ljungdahl, 2018-04-24
+# Last modified by Fredrik Ljungdahl, 2019-10-29
 #	Copyright (c) 1998-1999 by Kevin Hugo
 # NetHack may be freely redistributed.  See license for details.
 #
@@ -33,7 +33,7 @@
 
 ### Bottom (first) level of Sokoban ###
 MAZE:"soko4-1",' '
-FLAGS:noteleport,hardfloor
+FLAGS:noteleport
 GEOMETRY:center,center
 #12345678901234567890123456789012345678901234567890
 MAP
@@ -72,15 +72,15 @@ OBJECT:'`',"boulder",(08,10)
 OBJECT:'`',"boulder",(10,10)
 
 # Traps
-TRAP:"pit",(03,06)
-TRAP:"pit",(04,06)
-TRAP:"pit",(05,06)
-TRAP:"pit",(02,08)
-TRAP:"pit",(02,09)
-TRAP:"pit",(04,10)
-TRAP:"pit",(05,10)
-TRAP:"pit",(06,10)
-TRAP:"pit",(07,10)
+TRAP:"hole",(03,06)
+TRAP:"hole",(04,06)
+TRAP:"hole",(05,06)
+TRAP:"hole",(02,08)
+TRAP:"hole",(02,09)
+TRAP:"hole",(04,10)
+TRAP:"hole",(05,10)
+TRAP:"hole",(06,10)
+TRAP:"hole",(07,10)
 
 # A little help
 OBJECT:'?',"earth",(02,11)
@@ -97,7 +97,7 @@ OBJECT:'/',random,random
 
 
 MAZE:"soko4-2",' '
-FLAGS:noteleport,hardfloor
+FLAGS:noteleport
 GEOMETRY:center,center
 #12345678901234567890123456789012345678901234567890
 MAP
@@ -136,16 +136,16 @@ OBJECT:'`',"boulder",(09,08)
 OBJECT:'`',"boulder",(10,08)
 
 # Traps
-TRAP:"pit",(01,02)
-TRAP:"pit",(01,03)
-TRAP:"pit",(01,04)
-TRAP:"pit",(01,05)
-TRAP:"pit",(01,06)
-TRAP:"pit",(01,07)
-TRAP:"pit",(03,08)
-TRAP:"pit",(04,08)
-TRAP:"pit",(05,08)
-TRAP:"pit",(06,08)
+TRAP:"hole",(01,02)
+TRAP:"hole",(01,03)
+TRAP:"hole",(01,04)
+TRAP:"hole",(01,05)
+TRAP:"hole",(01,06)
+TRAP:"hole",(01,07)
+TRAP:"hole",(03,08)
+TRAP:"hole",(04,08)
+TRAP:"hole",(05,08)
+TRAP:"hole",(06,08)
 
 # A little help
 OBJECT:'?',"earth",(01,09)

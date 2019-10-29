@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -416,7 +416,7 @@ fall_through(boolean td)
 {       /* td == TRUE : trap door or hole */
     d_level dtmp;
     const char *dont_fall = NULL;
-    int newlevel = dunlev(&u.uz);
+    int newlevel = 0;
     const char *msgbuf;
 
     /* KMH -- You can't escape the Sokoban level traps */
@@ -425,8 +425,7 @@ fall_through(boolean td)
 
     do
         newlevel++;
-    while (!rn2_on_rng(4, rng_trapdoor_result) &&
-           newlevel < dunlevs_in_dungeon(&u.uz));
+    while (!rn2_on_rng(4, rng_trapdoor_result));
 
     if (td) {
         struct trap *t = t_at(level, u.ux, u.uy);
@@ -467,12 +466,8 @@ fall_through(boolean td)
 
     if (*u.ushops)
         shopdig(1);
-    if (Is_stronghold(&u.uz)) {
-        find_hell(&dtmp);
-    } else {
-        dtmp.dnum = u.uz.dnum;
-        dtmp.dlevel = newlevel;
-    }
+
+    dtmp = get_level_destination(level, newlevel);
     if (!td)
         msgbuf = msgprintf("The hole in the %s above you closes up.",
                            ceiling(u.ux, u.uy));
