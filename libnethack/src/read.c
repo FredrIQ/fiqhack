@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2019-10-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1280,10 +1280,14 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                   "You feel like someone is helping %s.",
                   you ? "you" : mon_nam(mon));
 
-        if (sobj->cursed && (you || vis))
-            pline(you ? msgc_failcurse : msgc_monneutral,
-                  "The scroll disintegrates.");
-        else {
+        if (sobj->cursed) {
+            /* In case uncursing gets a new effect -- cursed scrolls merely just
+               uncurse themselves. */
+            uncurse(sobj);
+            if (you || vis)
+                pline(you ? msgc_failcurse : msgc_monneutral,
+                      "The scroll disintegrates.");
+        } else {
             /* Monsters has no concept of a quiver -- try to emulate one here. This is done as follows:
                - Monster is wielding a sling: uncurse 1st found stackable gems
                - Otherwise: uncurse 1st found stackable weapon that isn't already wielded */
