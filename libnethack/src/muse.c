@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2020-01-08 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1922,7 +1922,7 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
             && !Sokoban_lev(m_dlevel(mon))
             /* digging wouldn't be effective; assume they know that */
             && !(lev->locations[x][y].flags & W_NONDIGGABLE)
-            && !(Is_botlevel(m_mz(mon)) || In_endgame(m_mz(mon)))
+            && !(is_bottom(m_dlevel(mon)) || In_endgame(m_mz(mon)))
             && !(is_ice(lev, x, y) || is_pool(lev, x, y) || is_lava(lev, x, y))
             && (!(mon->data == &mons[PM_VLAD_THE_IMPALER]
                   || In_V_tower(m_mz(mon))))) {
@@ -2315,7 +2315,7 @@ use_item(struct musable *m)
     case MUSE_TRAPDOOR:
         /* trap doors on "bottom" levels of dungeons are rock-drop trap doors,
            not holes in the floor.  We check here for safety. */
-        if (Is_botlevel(&u.uz))
+        if (is_bottom(m_dlevel(mon)))
             return 0;
         if (vis) {
             struct trap *t;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-30 */
+/* Last modified by Fredrik Ljungdahl, 2020-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1407,8 +1407,10 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
         /* A bones level may move from its original location. We need to make
          * sure it's set to the correct new location. */
         lev->z.dnum = ledger_to_dnum(levnum);
-        if (mread8(mf) != lev->z.dnum)
-            panic("Restoring level into wrong dungeon!");
+        int read_dnum = mread8(mf);
+        if (read_dnum != lev->z.dnum)
+            panic("Restoring level into wrong dungeon (%d vs %d)!",
+                  read_dnum, lev->z.dnum);
         lev->z.dlevel = ledger_to_dlev(levnum);
         (void) mread8(mf); /* ignore the dlevel in the bones file */
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2020-01-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -674,7 +674,7 @@ digactualhole(int x, int y, struct monst *mon, int ttyp)
 
                     if (Is_stronghold(m_mz(target))) {
                         assign_level(&tolevel, &valley_level);
-                    } else if (Is_botlevel(&u.uz)) {
+                    } else if (is_bottom(m_dlevel(target))) {
                         /* TODO: I can't figure out what this does or if the
                            canseemon() is the correct check. */
                         if (canseemon(target))
