@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-31 */
+/* Last modified by Fredrik Ljungdahl, 2020-04-19 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -284,10 +284,10 @@ drinkfountain(struct monst *mon)
         /* note: must match dipfountain() so that wishes and the like line up
            between dippers and quaffers */
         switch (fate) {
-        case 16:       /* Curse items */ 
+        case 16:       /* Curse items */
         {
             struct obj *obj;
-            
+
             pline(msgc_itemloss, "This water's no good!");
             morehungry(rn1(20, 11));
             exercise(A_CON, FALSE);

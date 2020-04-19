@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-11-11 */
+/* Last modified by Fredrik Ljungdahl, 2020-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -216,8 +216,11 @@ nhlib_parse_autopickup_rules(const char *str)
         sscanf(start, "(\"%39[^,],%d,%u,%u);", out->rules[i].pattern,
                &out->rules[i].oclass, &buc, &action);
         /* since %[ in sscanf requires a nonempty match, we allowed it to match
-           the closing '"' of the rule. Remove that now. */
-        out->rules[i].pattern[strlen(out->rules[i].pattern) - 1] = '\0';
+           the closing '"' of the rule. Remove that now. Also, sanity check
+           for empty pattern. */
+        int len = strlen(out->rules[i].pattern);
+        if (len > 0)
+            out->rules[i].pattern[len - 1] = '\0';
         out->rules[i].buc = (enum nh_bucstatus)buc;
         out->rules[i].action = (enum autopickup_action)action;
         i++;
