@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2020-05-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -252,6 +252,69 @@ do_tname(const struct nh_cmd_arg *arg)
 }
 
 int
+do_fname(const struct nh_cmd_arg *arg)
+{
+    coord cc;
+    struct obj *memobj;
+    struct obj *obj;
+    struct nh_objlist objlist = {0};
+    struct level *lev = m_dlevel(&youmonst);
+    int num_objects = 0;
+    const struct nh_objresult *selected = NULL;
+
+    if (Hallucination) {
+        pline(msgc_cancelled, "You would never recognize it anyway.");
+        return 0;
+    }
+    cc.x = u.ux;
+    cc.y = u.uy;
+    if (getargpos(arg, &cc, FALSE, "the monster you want to name") ==
+        NHCR_CLIENT_CANCEL || cc.x < 0)
+        return 0;
+
+    for (memobj = lev->memobjects[cc.x][cc.y]; memobj;
+         memobj = memobj->nexthere) {
+        num_objects++;
+        obj = memobj;
+        add_objitem(&objlist, MI_NORMAL, num_objects,
+                    distant_name(memobj, doname), memobj, FALSE);
+    }
+
+    if (!num_objects) {
+        pline(msgc_cancelled, "There doesn't seem to be any object %s.",
+              (cc.x == u.ux && cc.y == u.uy) ? "under you" : "there");
+        return 0;
+    }
+
+    if (num_objects > 1) {
+        int n = display_objects(&objlist, "Name which object?", PICK_ONE,
+                                PLHINT_CONTAINER, &selected);
+        if (n <= 0)
+            return 0;
+        n = selected[0].id;
+        obj = lev->memobjects[cc.x][cc.y];
+        while (--n)
+            obj = obj->nexthere;
+    }
+
+    if (!obj)
+        return 0;
+
+    if (obj) {
+        /* behave as if examining it in inventory; this might set dknown if it
+           was picked up while blind and the hero can now see */
+        examine_object(obj);
+
+        if (!obj->dknown) {
+            pline(msgc_cancelled, "You would never recognize another one.");
+            return 0;
+        }
+        docall_inner(arg, obj->otyp);
+    }
+    return 0;
+}
+
+int
 do_naming(const struct nh_cmd_arg *arg)
 {
     int n;
@@ -263,29 +326,31 @@ do_naming(const struct nh_cmd_arg *arg)
 
     init_menulist(&menu);
 
-    /* group_accel settings are for keystroke-compatibility with vanilla 3.6.x;
-       they shouldn't show in the interface because therer's no good reason to
-       use them other than muscle memory. 3.6.x also has floor naming, which we
-       have by #name, then ',' rather than 3.6.x's getpos floor naming. */
-    add_menuitem(&menu, 1, "Name a monster", 'C', FALSE);
-    menu.items[menu.icount-1].group_accel = 'm';
-    add_menuitem(&menu, 2, "Name the current level", 'f', FALSE);
-    menu.items[menu.icount-1].group_accel = 'a';
-    add_menuitem(&menu, 3, "Name an individual item", 'y', FALSE);
-    menu.items[menu.icount-1].group_accel = 'i';
-    add_menuitem(&menu, 4, "Name all items of a certain type", 'n', FALSE);
-    menu.items[menu.icount-1].group_accel = 'o';
-    add_menuitem(&menu, 5, "Name an item type by appearance", 'A', FALSE);
-    menu.items[menu.icount-1].group_accel = 'd';
+    /* Default (visible) accelerators are the same as in vanilla 3.6.x.
+       We also keep the old NH4 accelerators as aliases for muscle
+       memory reasons. */
+    add_menuitem(&menu, 1, "a monster", 'm', FALSE);
+    menu.items[menu.icount-1].group_accel = 'C';
+    add_menuitem(&menu, 2, "a particular object in inventory", 'i', FALSE);
+    menu.items[menu.icount-1].group_accel = 'y';
+    add_menuitem(&menu, 3, "the type of an object in inventory", 'o', FALSE);
+    menu.items[menu.icount-1].group_accel = 'n';
+    add_menuitem(&menu, 4, "the type of an object upon the floor", 'f', FALSE);
+    menu.items[menu.icount-1].group_accel = ',';
+    add_menuitem(&menu, 5, "the appearance for an object type", 'A', FALSE);
+    menu.items[menu.icount-1].group_accel = 'd'; // closest 3.6.x approximation
+    add_menuitem(&menu, 6, "record an annotation for the current level", 'a',
+                 FALSE);
+    menu.items[menu.icount-1].group_accel = 'l';
     if (flags.recently_broken_otyp != STRANGE_OBJECT) {
         const char *buf;
 
         buf = msgprintf("Name %s (recently used)",
                         an(obj_typename(flags.recently_broken_otyp)));
-        add_menuitem(&menu, 6, buf, 'V', FALSE);
+        add_menuitem(&menu, 7, buf, 'V', FALSE);
     }
 
-    n = display_menu(&menu, "What do you wish to name?",
+    n = display_menu(&menu, "What do you want to name?",
                      PICK_ONE, PLHINT_ANYWHERE, &selected);
     if (n > 0)
         n = selected[0] - 1;
@@ -300,15 +365,15 @@ do_naming(const struct nh_cmd_arg *arg)
         break;
 
     case 1:
-        donamelevel(&(struct nh_cmd_arg){.argtype = 0});
-        break;
-
-    case 2:
         do_oname(&(struct nh_cmd_arg){.argtype = 0});
         break;
 
-    case 3:
+    case 2:
         do_tname(&(struct nh_cmd_arg){.argtype = 0});
+        break;
+
+    case 3:
+        do_fname(&(struct nh_cmd_arg){.argtype = 0});
         break;
 
     case 4:
@@ -364,6 +429,9 @@ do_naming(const struct nh_cmd_arg *arg)
         break;
 
     case 5:
+        donamelevel(&(struct nh_cmd_arg){.argtype = 0});
+        break;
+    case 6:
         docall_inner(&(struct nh_cmd_arg){.argtype = 0},
                      flags.recently_broken_otyp);
         break;
