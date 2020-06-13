@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2020-06-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -616,7 +616,6 @@ emergency_disrobe(struct monst *mon, boolean *lostsome)
 {
     struct level *lev = m_dlevel(mon);
     boolean you = (mon == &youmonst);
-    boolean vis = (you || (lev == level && canseemon(mon)));
     struct obj *obj, *otmp;
     int invc = 0;
     for (obj = mon->minvent; obj; obj = obj->nobj) {
@@ -695,8 +694,10 @@ emergency_disrobe(struct monst *mon, boolean *lostsome)
         *lostsome = TRUE;
         if (you)
             dropx(obj);
-        else
+        else {
+            obj_extract_self(obj);
             mdrop_obj(mon, obj, FALSE);
+        }
         invc--;
     }
     return TRUE;
@@ -4027,7 +4028,6 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
                              polymorph */
         boolean msg)      /* "The oldmon turns into a newmon!" */
 {
-    int mhp, hpn, hpd;
     int mndx, tryct;
     const struct permonst *olddata = mtmp->data;
     const char *oldname = NULL; /* initialize because gcc can't figure out that
