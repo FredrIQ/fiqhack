@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-25 */
+/* Last modified by Fredrik Ljungdahl, 2020-06-15 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1147,9 +1147,6 @@ gods_upset(aligntyp g_align)
     add_piety(g_align == u.ualign.type ? -1000 : 100);
     angrygods(g_align);
 }
-
-static const char sacrifice_types[] = { FOOD_CLASS, AMULET_CLASS, COIN_CLASS,
-                                        0 };
 
 static void
 consume_offering(struct obj *otmp)
