@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-06-06 */
+/* Last modified by Fredrik Ljungdahl, 2020-06-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3092,20 +3092,20 @@ typfnd:
             }
             break;
         case FIGURINE:
-            if (!(mons[mntmp].geno & G_UNIQ)
-                && !is_human(&mons[mntmp]))
+            if (!(mons[mntmp].geno & G_UNIQ) && !is_human(&mons[mntmp]))
                 otmp->corpsenm = mntmp;
-                otmp->spe &= ~OPM_GENDER;
-                if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
-                    otmp->spe |= OPM_FEMALE;
-                else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
-                    otmp->spe |= OPM_MALE;
-                else if (female)
-                    otmp->spe |= OPM_FEMALE;
-                else if (male)
-                    otmp->spe |= OPM_MALE;
-                else
-                    otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
+
+            otmp->spe &= ~OPM_GENDER;
+            if (mons[otmp->corpsenm].mflags2 & M2_FEMALE)
+                otmp->spe |= OPM_FEMALE;
+            else if (mons[otmp->corpsenm].mflags2 & M2_MALE)
+                otmp->spe |= OPM_MALE;
+            else if (female)
+                otmp->spe |= OPM_FEMALE;
+            else if (male)
+                otmp->spe |= OPM_MALE;
+            else
+                otmp->spe |= rn2(2) ? OPM_MALE : OPM_FEMALE;
             break;
         case EGG:
             mntmp = can_be_hatched(mntmp);

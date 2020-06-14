@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2020-06-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "artifact.h"
 #include "lev.h"
 #include "trietable.h"
 #include <stdint.h>
@@ -310,6 +311,25 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
             /* restore container back pointers */
             for (otmp3 = otmp->cobj; otmp3; otmp3 = otmp3->nobj)
                 otmp3->ocontainer = otmp;
+        }
+
+        /* fix Heart of Ahriman issues */
+        if (flags.save_revision < 21 && Role_if(PM_BARBARIAN) &&
+            u.quest_status.made_goal && otmp->otyp == LUCKSTONE &&
+            !otmp->oartifact && ox_name(otmp) &&
+            !strcmp(ox_name(otmp), "The Heart of Ahriman")) {
+            otmp->otyp = RUBY;
+            if (!otmp->mem_o_id || otmp->memory == OM_NO_MEMORY) {
+                short otyp;
+                const char *aname = artifact_name(ox_name(otmp), &otyp);
+                if (aname && otyp == otmp->otyp) {
+                    otmp = oname(otmp, aname);
+                    if (otmp->oartifact) {
+                        artifact_exists(otmp, ox_name(otmp), ag_other);
+                        otmp->quan = 1L;
+                    }
+                }
+            }
         }
     }
 }
