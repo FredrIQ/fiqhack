@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-06-15 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-05 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -665,7 +665,7 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
                 !objects[spellbook->otyp].oc_uname && vis)
                 docall(spellbook);
             m_useup(mon, spellbook);
-        } 
+        }
         return -1;
     } else if (confused) {
         if (!confused_book(mon, spellbook)) {
@@ -759,25 +759,6 @@ run_maintained_spells(struct level *lev)
                     pline(msgc_intrloss, "You can no longer maintain %s.",
                           splname);
 
-                spell_unmaintain(mon, spell);
-                continue;
-            }
-
-            /* If an attempted cast fails 5 times in a row,
-               unmaintain the spell. */
-            int chance = percent_success(mon, spell);
-            int tries = 5;
-            while (tries) {
-                if (rnd(100) > chance) {
-                    tries--;
-                    continue;
-                }
-                break;
-            }
-            if (!tries) {
-                if (mon == &youmonst)
-                    pline(msgc_intrloss, "Your limited ability with %s causes "
-                          "you to fumble and lose maintaining of it!", splname);
                 spell_unmaintain(mon, spell);
                 continue;
             }
