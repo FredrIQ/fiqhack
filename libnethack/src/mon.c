@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-06-13 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -710,13 +710,6 @@ emergency_disrobe(struct monst *mon, boolean *lostsome)
 void
 adjust_move_offset(struct monst *mon, int oldspeed, int newspeed)
 {
-    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
-
-       If the offset wasn't initialized, leave it alone, so that we know it's
-       still uninitialized. */
-    if (mon->moveoffset >= NORMAL_SPEED)
-        return;
-
     /* Increasing the speed value by 1 effectively increases the offset by 1 for
        each turn on the turn counter, based on the formula used. We thus need to
        decrease the offset by the speed increase times the turn counter. All
@@ -736,15 +729,6 @@ adjust_move_offset(struct monst *mon, int oldspeed, int newspeed)
 int
 can_act_this_turn(struct monst *mon)
 {
-    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
-
-       The movement structures might not have been set correctly for this turn,
-       if we're loading an old save. Detect that this has happened using
-       youmonst.moveoffset >= 12, and give the player 1 action and monsters no
-       actions this turn. */
-    if (youmonst.moveoffset >= NORMAL_SPEED)
-        return mon == &youmonst && flags.actions == 0;
-
     /* Work out how many actions the player has this turn. Each monster has a
        range of 12 possible values for movement points that turn. The low end
        of the range is given by mcalcmove... */

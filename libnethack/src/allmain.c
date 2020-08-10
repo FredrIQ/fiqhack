@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-12-30 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -834,20 +834,6 @@ you_moved(void)
 
             /* Adjust the move offset for the change in speed. */
             adjust_move_offset(&youmonst, oldmoveamt, u.moveamt);
-
-            /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
-
-               If we're loading a 4.3-beta1 save, then youmonst.moveamt may have
-               been set incorrectly. The game detects this by seeing whether
-               youmonst.moveoffset >= 12 (which it never can be, under normal
-               circumstances, but which it will be in a 4.3-beta1 save because
-               you need 12 movement points for the code to reach the point where
-               it runs neutral_turnstate_tasks). We're about to set
-               youmonst.moveamt correctly, so we need to set youmonst.moveoffset
-               correctly too to let can_act_this_turn know to use it. */
-            if (youmonst.moveoffset >= 12) {
-                youmonst.moveoffset = 0;
-            }
 
             settrack();
 
