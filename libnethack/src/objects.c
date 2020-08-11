@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-12 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -776,7 +776,7 @@ const struct objclass const_objects[] = {
     SCROLL("summoning",       "LEP GEX VEN ZEA",      1,   45,  200),
     SCROLL("taming",          "PRIRUTSENIE",          1,   15,  200),
     SCROLL("genocide",        "ELBIB YLOH",           1,   15,  300),
-    SCROLL("light",           "VERR YED HORRE",       1,   90,   50),
+    SCROLL("light",           "VERR YED HORRE",       1,   60,   50),
     SCROLL("teleportation",   "VENZAR BORGAVVE",      1,   55,  100),
     SCROLL("gold detection",  "THARR",                1,   33,  100),
     SCROLL("food detection",  "YUM YUM",              1,   25,  100),
@@ -788,7 +788,7 @@ const struct objclass const_objects[] = {
     SCROLL("punishment",      "VE FORBRYDERNE",       1,   15,  300),
     SCROLL("charging",        "HACKEM MUCHE",         1,   15,  300),
     SCROLL("stinking cloud",  "VELOX NEB",            1,   15,  300),
-    SCROLL(NULL,              "FOOBIE BLETCH",        1,    0,  100),
+    SCROLL("recall",          "FOOBIE BLETCH",        1,   30,  200),
     SCROLL(NULL,              "TEMOV",                1,    0,  100),
     SCROLL(NULL,              "GARVEN DEH",           1,    0,  100),
     SCROLL(NULL,              "READ ME",              1,    0,  100),

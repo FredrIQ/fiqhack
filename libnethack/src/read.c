@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-30 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,6 +11,7 @@
 static const char readable[] = { ALL_CLASSES, 0 };
 static const char all_count[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
 
+static boolean recall_mon(struct monst *, struct monst *);
 static void wand_explode(struct monst *, struct obj *);
 static void do_class_genocide(struct monst *);
 static int mon_choose_reverse_genocide(struct monst *);
@@ -1862,10 +1863,220 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             create_gas_cloud(level, cc.x, cc.y, 3 + bcsign(sobj),
                              8 + 4 * bcsign(sobj));
         break;
+    case SCR_RECALL:
+        /* First, check for Amulet of Yendor on confused reader,
+           since it will always block the teleportation (inter-level or not) */
+        if (confused && mon_has_amulet(mon)) {
+            if (you || vis)
+                pline(you ? msgc_failcurse : msgc_monneutral,
+                      "%s for a moment.", M_verbs(mon, "shudder"));
+            break;
+        }
+
+        struct monst *mtmp;
+        int i;
+        boolean result;
+
+        /* Blessed scrolls perform inter-level recall */
+        if (sobj->blessed) {
+            /* First handle migrating mons */
+            for (mtmp = migrating_mons; mtmp; mtmp = mtmp->nmon) {
+                if (DEADMONSTER(mtmp))
+                    continue;
+
+                if (tame_to(mtmp) != mon)
+                    continue;
+
+                if (!confused && mon_has_amulet(mtmp))
+                    continue;
+
+                if (confused)
+                    result = recall_mon(mtmp, mon);
+                else
+                    result = recall_mon(mon, mtmp);
+
+                if (result)
+                    *known = TRUE;
+
+                /* If we're confused, we only perform the recalling once. */
+                if (confused)
+                    return 0;
+            }
+
+            /* Otherwise, iterate the levels array */
+            for (i = 0; i <= maxledgerno(); i++) {
+                if (!levels[i] || levels[i] == level)
+                    continue;
+
+                for (mtmp = levels[i]->monlist; mtmp; mtmp = monnext(mtmp)) {
+                    if (DEADMONSTER(mtmp))
+                        continue;
+
+                    if (tame_to(mtmp) != mon)
+                        continue;
+
+                    if (!confused && mon_has_amulet(mtmp))
+                        continue;
+
+                    if (confused)
+                        result = recall_mon(mtmp, mon);
+                    else
+                        result = recall_mon(mon, mtmp);
+
+                    if (result)
+                        *known = TRUE;
+
+                    if (confused)
+                        return 0;
+                }
+            }
+        }
+
+        /* Iterate the monster list for this level */
+        for (mtmp = level->monlist; mtmp; mtmp = monnext(mtmp)) {
+            if (DEADMONSTER(mtmp))
+                continue;
+
+            if (sobj->cursed) {
+                if (you && mtmp->mpeaceful)
+                    continue;
+                if (!you && !mm_aggression(mon, mtmp, Conflict))
+                    continue;
+            } else if (tame_to(mtmp) != mon)
+                continue;
+
+            if (confused)
+                result = recall_mon(mtmp, mon);
+            else
+                result = recall_mon(mon, mtmp);
+
+            if (result)
+                *known = TRUE;
+
+            if (confused)
+                return 0;
+        }
+
+        if (*known)
+            break;
+        if (you) {
+            strange_feeling(sobj, "You feel lonely.");
+            return 1;
+        } else if (vis)
+            pline(msgc_monneutral, "%s lonely.", M_verbs(mon, "feel"));
+        break;
     default:
         impossible("What weird effect is this? (%u)", sobj->otyp);
     }
     return 0;
+}
+
+/* Move a monster to another, possibly in another level */
+static boolean
+recall_mon(struct monst *recaller, struct monst *target)
+{
+    struct level *rlev = m_dlevel(recaller);
+    struct level *tlev = m_dlevel(target);
+    d_level newlev;
+    coord cc;
+    xchar xyloc;
+    boolean result = FALSE;
+    boolean recallmsg = FALSE;
+    boolean interlevel = FALSE;
+
+    if (result && tlev == level) {
+        pline(msgc_info, "%s recalled.", M_verbs(target, "are"));
+        recallmsg = TRUE;
+    }
+
+    if ((rlev == level && (recaller == &youmonst || canseemon(recaller))) ||
+        (tlev == level && (target == &youmonst || canseemon(target))))
+        result = TRUE;
+
+    if (rlev)
+        newlev = rlev->z;
+    else {
+        newlev.dnum = recaller->mux;
+        newlev.dlevel = recaller->muy;
+    }
+
+    /* In case of inter-level transportation, schedule a migration */
+    if (rlev != tlev) {
+        interlevel = TRUE;
+        if (target == &youmonst) {
+            goto_level(&newlev, FALSE, FALSE, FALSE);
+
+            /* may have changed */
+            rlev = m_dlevel(recaller);
+            tlev = m_dlevel(target);
+        } else {
+            cc.x = m_mx(recaller);
+            cc.y = m_my(recaller);
+            xyloc = MIGR_EXACT_XY;
+
+            /* If moving to a currently migrating mon, dest x/y is elsewhere */
+            if (target->my == ROWNO) {
+                cc.x = recaller->xlocale;
+                cc.y = recaller->ylocale;
+                xyloc = recaller->xyloc;
+            }
+
+            /* If already migrating, just change the destination */
+            if (target->my == ROWNO) {
+                target->xlocale = cc.x;
+                target->ylocale = cc.y;
+                target->xyloc = xyloc;
+                target->mux = newlev.dnum;
+                target->muy = newlev.dlevel;
+            } else
+                migrate_to_level(target, ledger_no(&newlev), xyloc, &cc);
+        }
+    }
+
+    /* If we're not in the target level, we're done */
+    if (rlev != level)
+        return result;
+
+    /* Process mon arrival */
+    struct monst *mtmp, *mtmp0 = NULL, *mtmp2;
+    for (mtmp = migrating_mons; mtmp; mtmp = mtmp2) {
+        mtmp2 = mtmp->nmon;
+        if (mtmp == recaller || mtmp == target) {
+            if (mtmp == migrating_mons)
+                migrating_mons = mtmp->nmon;
+            else
+                mtmp0->nmon = mtmp->nmon;
+            mon_arrive(mtmp, FALSE);
+        } else
+            mtmp0 = mtmp;
+    }
+
+    if (result && !recallmsg)
+        pline(msgc_info, "%s recalled.", M_verbs(target, "are"));
+
+    /* Don't do anything in case we somehow can't warp to the recaller */
+    if (recaller != &youmonst &&
+        (DEADMONSTER(recaller) || recaller->my == ROWNO))
+        return result;
+
+    /* Finally, handle intra-level transportation. This is blocked by a level
+       being noteleport, unless the monster was recalled from a different
+       level. */
+    if (rlev->flags.noteleport && !interlevel) {
+        if (tele_restrict(target))
+            result = TRUE;
+        return result;
+    }
+
+    if (!enexto(&cc, rlev, m_mx(recaller), m_my(recaller), target->data))
+        return result;
+
+    if (target == &youmonst)
+        teleds(cc.x, cc.y, FALSE);
+    else
+        rloc_to(target, cc.x, cc.y);
+
+    return result;
 }
 
 static void

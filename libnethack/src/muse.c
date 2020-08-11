@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-12 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1960,6 +1960,8 @@ find_item_single(struct obj *obj, boolean spell, struct musable *m, boolean clos
                     return mon_has_amulet(mon) ? 2 : 1;
 
             if (otyp == SCR_GENOCIDE && !cursed)
+                return 1;
+            if (otyp == SCR_RECALL && !cursed && !tele_wary(mon))
                 return 1;
         }
     }
