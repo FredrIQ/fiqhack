@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-06-28 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1827,6 +1827,7 @@ doquit(const struct nh_cmd_arg *arg)
 {
     struct nh_menulist menu;
     const int *selection;
+    int res;
 
     init_menulist(&menu);
     add_menu_item(&menu, '!', "Abandon the game.", '!', FALSE);
@@ -1839,17 +1840,16 @@ doquit(const struct nh_cmd_arg *arg)
     add_menu_txt(&menu, "game, not even from an earlier save file.", MI_NORMAL);
     add_menu_txt(&menu, "", MI_NORMAL);
     add_menu_item(&menu, 'n', "Keep playing.", 'n', FALSE);
-    display_menu(&menu, "Do you want to stop playing?", PICK_ONE,
-                 PLHINT_URGENT, &selection);
-
-    if (*selection == '!') {
+    res = display_menu(&menu, "Do you want to stop playing?", PICK_ONE,
+                       PLHINT_URGENT, &selection);
+    if (res > 0 && *selection == '!') {
         /* do a 2nd confirmation, just in case */
         init_menulist(&menu);
         add_menu_item(&menu, 'n', "No, I want to keep playing", 'n', FALSE);
         add_menu_item(&menu, 'y', "Yes, delete the save file", 'y', FALSE);
-        display_menu(&menu, "Do you want to stop playing?", PICK_ONE,
-                     PLHINT_URGENT, &selection);
-        if (*selection == 'y')
+        res = display_menu(&menu, "Do you want to stop playing?", PICK_ONE,
+                           PLHINT_URGENT, &selection);
+        if (res > 0 && *selection == 'y')
             done(QUIT, NULL);
     }
 
