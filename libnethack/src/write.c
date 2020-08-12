@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-20 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-12 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -27,6 +27,7 @@ cost(struct obj *otmp)
     case SCR_DESTROY_ARMOR:
     case SCR_SUMMONING:
     case SCR_PUNISHMENT:
+    case SCR_RECALL:
         return 10;
 /*      break; */
     case SCR_CONFUSE_MONSTER:

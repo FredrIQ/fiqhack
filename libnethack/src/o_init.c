@@ -11,7 +11,8 @@ static void shuffle_all(void);
 static boolean interesting_to_discover(int);
 
 /* Returns TRUE if the object is new. Also change otyp_offset.
-   Use constants, not raw numbers. */
+   Use constants, not raw numbers.
+   Scrolls of recall aren't needed here since it reuses an appearance. */
 boolean
 is_new_object(int otyp)
 {
@@ -31,7 +32,8 @@ is_new_object(int otyp)
    offset the otyp over time with new revisions.
    Use the raw numbers, not constants, since constants can
    change in new revisions, but we need to keep the offset
-   change constant. Also change is_new_object. */
+   change constant. Also change is_new_object.
+   Scrolls of recall aren't needed here since it reuses an appearance. */
 int
 otyp_offset(int otyp)
 {
