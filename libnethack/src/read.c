@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-12 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1908,7 +1908,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
                 if (!levels[i] || levels[i] == level)
                     continue;
 
-                for (mtmp = levels[i]->monlist; mtmp; mtmp = monnext(mtmp)) {
+                for (mtmp = monlist(levels[i]); mtmp; mtmp = monnext(mtmp)) {
                     if (DEADMONSTER(mtmp))
                         continue;
 
@@ -1933,7 +1933,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
         }
 
         /* Iterate the monster list for this level */
-        for (mtmp = level->monlist; mtmp; mtmp = monnext(mtmp)) {
+        for (mtmp = monlist(level); mtmp; mtmp = monnext(mtmp)) {
             if (DEADMONSTER(mtmp))
                 continue;
 
