@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-23 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1605,7 +1605,7 @@ extern void restpriest(struct monst *, boolean);
 extern boolean teleport_at_will(const struct monst *);
 extern unsigned levitates_at_will(const struct monst *, boolean, boolean);
 extern unsigned mon_remove_levitation(struct monst *, boolean);
-extern void gremlin_curse(struct monst *);
+extern enum youprop gremlin_curse(struct monst *);
 extern boolean obj_affects(const struct monst *, struct monst *, struct obj *);
 extern boolean prop_wary(const struct monst *, struct monst *, enum youprop);
 extern int property_timeout(struct monst *, enum youprop);

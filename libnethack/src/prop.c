@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-23 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -928,7 +928,7 @@ mon_remove_levitation(struct monst *mon, boolean forced)
 }
 
 /* Gremlin attack. Removes a random intrinsic. */
-void
+enum youprop
 gremlin_curse(struct monst *mon)
 {
     int i;
@@ -937,13 +937,13 @@ gremlin_curse(struct monst *mon)
         prop = rnd(LAST_PROP);
         if (m_has_property(mon, prop, W_MASK(os_outside), TRUE)) {
             set_property(mon, prop, -1, FALSE);
-            return;
+            return prop;
         }
     }
     if (mon == &youmonst || canseemon(mon))
         pline(combat_msgc(NULL, mon, cr_miss),
               "But nothing happens.");
-    return;
+    return NO_PROP;
 }
 
 /* Sets a property.

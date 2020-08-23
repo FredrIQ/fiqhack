@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-03 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1444,7 +1444,9 @@ damageum(struct monst *mdef, const struct attack *mattk)
             } else {
                 pline(combat_msgc(&youmonst, mdef, cr_hit),
                       "You chuckle.");
-                gremlin_curse(mdef);
+                enum youprop prop = gremlin_curse(mdef);
+                if (prop)
+                    set_property(&youmonst, prop, 0, FALSE);
             }
         }
         tmp = 0;
