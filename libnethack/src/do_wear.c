@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-26 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -888,11 +888,12 @@ equip_heartbeat(void)
                 ready_weapon(NULL);
                 if (desired != &zeroobj && !(desired->owornmask & W_EQUIP))
                     setuswapwep(desired == &zeroobj ? NULL : desired);
-                    if (desired == &zeroobj)
-                        pline(msgc_actionboring,
-                              "You have no secondary weapon readied.");
-                    else
-                        prinv(NULL, desired, 0L);
+
+                if (desired == &zeroobj)
+                    pline(msgc_actionboring,
+                          "You have no secondary weapon readied.");
+                else
+                    prinv(NULL, desired, 0L);
             }
             /* If we swapped the object we wanted into a slot, remember that
                the slot no longer has a desire to change. */
@@ -1884,9 +1885,9 @@ doequip(const struct nh_cmd_arg *arg)
             add_menuitem(
                 &menu, os_last_slot+1 + 3,
                 "Remove all equipment", 'T', FALSE);
-            
+
             n = display_menu(&menu, "Your Equipment",
-                             PICK_ONE, PLHINT_INVENTORY, &selected);
+                             PICK_ONE, PLHINT_ANYWHERE, &selected);
             if (n <= 0) /* no selection made */
                 return 0;
         } else

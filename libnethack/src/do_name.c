@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-05-01 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -422,7 +422,7 @@ do_naming(const struct nh_cmd_arg *arg)
         }
         n = display_menu(&menu,
                          "Name items with which appearance?", PICK_ONE,
-                         PLHINT_INVENTORY, &selected);
+                         PLHINT_ANYWHERE, &selected);
         if (n == 1)
             docall_inner(&(struct nh_cmd_arg){.argtype = 0},
                          selected[0]);
