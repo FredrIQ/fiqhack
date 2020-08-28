@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -777,6 +777,9 @@ u_init_inv_skills(void)
         break;
     }
 
+    /* pre-ID oil as it's easy to check anyway */
+    knows_object(POT_OIL);
+
     if (trobj_list)
         free(trobj_list);
 
@@ -912,7 +915,7 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
             if (obj->otyp == SPLINT_MAIL && Role_if(PM_SAMURAI))
                 obj->oerodeproof = obj->rknown = 1;
         } else {        /* UNDEF_TYP */
-            /* 
+            /*
              * For random objects, do not create certain overly powerful
              * items: wand of wishing, ring of levitation, or the
              * polymorph/polymorph control combination.  Specific objects,
@@ -955,7 +958,7 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
             if (objects[otyp].oc_charged && obj->spe <= 0)
                 obj->spe = rne_on_rng(3, rng);
 
-            /* Heavily relies on the fact that 1) we create wands before rings, 
+            /* Heavily relies on the fact that 1) we create wands before rings,
                2) that we create rings before spellbooks, and that 3) not more
                than 1 object of a particular symbol is to be prohibited.  (For
                more objects, we need more nocreate variables...) */
@@ -1006,9 +1009,6 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
         if (OBJ_DESCR(objects[otyp]) && obj->known)
             knows_object(otyp);
 
-        /* pre-ID oil as it's easy to check anyway */
-        knows_object(POT_OIL);
-
         if (obj->oclass == ARMOR_CLASS) {
             long mask;
             if (is_shield(obj) && uswapwep)
@@ -1018,7 +1018,7 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
                Just in case we generate it like that. This relies on the fact
                that we don't give the player cursed items in starting
                inventory.
-            
+
                TODO: Does this provide numerical extrinsics, like brilliance?
                The situation nonetheless probably can't currently come up. */
             if (canwearobj(obj, &mask, FALSE, TRUE, TRUE) && mask & W_ARMOR)
@@ -1036,8 +1036,11 @@ ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
             else if (!uswapwep)
                 setuswapwep(obj);
         }
-        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER)
+        if (obj->oclass == SPBOOK_CLASS && obj->otyp != SPE_BLANK_PAPER) {
             gotspell[obj->otyp] = 1;
+            initialspell(obj);
+            useup(obj);
+        }
 
         if (--trquan)
             continue;   /* make a similar object */
