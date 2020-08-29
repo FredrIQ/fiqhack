@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-06-15 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-29 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2265,6 +2265,7 @@ set_prayreminder(struct monst *mon, enum pray_type result)
 
     you->last_pray_action = moves;
     you->prayed_result = result;
+    you->postpray_wishes = 0;
 }
 
 /*pray.c*/

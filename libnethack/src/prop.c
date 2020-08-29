@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-23 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-29 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -2879,10 +2879,16 @@ last_blesscnt_effect(const struct monst *mon)
 
     int turns = moves - you->last_pray_action;
 
+    const char *wishtxt = "";
+    if (you->postpray_wishes)
+        wishtxt = msgprintf(", and used %d wish%s since then",
+                            you->postpray_wishes,
+                            you->postpray_wishes == 1 ? "" : "es");
+
     const char *turns_ago = "just now.";
     if (turns)
-        turns_ago = msgprintf("%d turn%s ago.", turns,
-                              turns == 1 ? "" : "s");
+        turns_ago = msgprintf("%d turn%s ago%s.", turns,
+                              turns == 1 ? "" : "s", wishtxt);
     const char *what = "last prayed";
     if (you->prayed_result == pty_anger)
         what = msgprintf("angered %s god", mhis(mon));

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-28 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-29 */
 /* Copyright (c) Fredrik Ljungdahl, 2015. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -292,8 +292,9 @@ restore_mextra(struct memfile *mf, struct monst *mon)
 
         mx->eyou->oldmoves = mread32(mf);
         mx->eyou->piety = mread32(mf);
+        mx->eyou->postpray_wishes = mread32(mf);
 
-        for (i = 0; i < 990; i++)
+        for (i = 0; i < 986; i++)
             mread8(mf);
     }
     if (extyp & MX_EDOG) {
@@ -420,8 +421,9 @@ save_mextra(struct memfile *mf, const struct monst *mon)
 
         mwrite32(mf, mx->eyou->oldmoves);
         mwrite32(mf, mx->eyou->piety);
+        mwrite32(mf, mx->eyou->postpray_wishes);
 
-        for (i = 0; i < 990; i++)
+        for (i = 0; i < 986; i++)
             mwrite8(mf, 0);
     }
     if (extyp & MX_EDOG) {
