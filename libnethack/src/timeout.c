@@ -1217,6 +1217,8 @@ obj_is_local(struct obj *obj)
     case OBJ_BURIED:
         return TRUE;
     case OBJ_CONTAINED:
+        if (!obj->ocontainer) /* magic chest obj */
+            return FALSE;
         return obj_is_local(obj->ocontainer);
     case OBJ_MINVENT:
         return mon_is_local(obj->ocarry);

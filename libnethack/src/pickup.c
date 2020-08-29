@@ -1634,7 +1634,8 @@ mbag_explodes(struct obj *obj, int depthin)
 /* in_container(), and out_container() from askchain() and use_container(). */
 static struct obj *current_container;
 
-#define Icebox (current_container->otyp == ICE_BOX)
+#define Icebox ((current_container->otyp == ICE_BOX) || \
+                (magic_chest(current_container)))
 
 /* Returns: -1 to stop, 1 item was inserted, 0 item was not inserted. */
 static int
@@ -1705,6 +1706,16 @@ in_container(struct obj *obj)
     if (obj->otyp == CORPSE) {
         if (feel_cockatrice(obj, TRUE, "stashing away"))
             return -1;
+    }
+
+    /* auto-revive monsters if trying to put them in magic chests */
+    if (magic_chest(current_container) &&
+        report_timer(level, REVIVE_MON, obj)) {
+        if (revive_corpse(obj)) {
+            /* Stop any multi-looting. */
+            helpless(1, hr_afraid, "startled by a reviving monster", NULL);
+            return -1;
+        }
     }
 
     /* boxes, boulders, and big statues can't fit into any container */
