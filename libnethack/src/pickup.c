@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-23 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1273,23 +1273,25 @@ Is_container_func(const struct obj *otmp)
    Also used in general as a wrapper around
    update_container_memory (used in the same circumstances) */
 void
-sync_magic_chest(struct obj *chest)
+sync_magic_chest(struct obj *chest, boolean close)
 {
     if (magic_chest(chest)) {
         /* Check the global magic chest chain */
         struct obj *obj = gamestate.chest;
 
-        if (!obj || obj->ocontainer == chest) {
+        if (close) {
             /* Chest itself has the most recent data. Use it. */
+            for (obj = chest->cobj; obj; obj = obj->nobj)
+                obj->ocontainer = NULL;
             gamestate.chest = chest->cobj;
+            chest->cobj = NULL;
         } else {
             chest->cobj = gamestate.chest;
             for (obj = chest->cobj; obj; obj = obj->nobj)
                 obj->ocontainer = chest;
         }
-    }
-
-    update_container_memory(chest);
+    } else
+        update_container_memory(chest);
 }
 
 /* loot a container on the floor or loot saddle from mon. */
@@ -1981,7 +1983,7 @@ use_container(struct obj *obj, int held, boolean alreadyused,
         quantum_cat = TRUE;     /* for adjusting "it's empty" message */
     }
 
-    sync_magic_chest(current_container);
+    sync_magic_chest(current_container, FALSE);
 
     /* Count the number of contained objects. Sometimes toss objects if a cursed
        magic bag. Don't use a custom RNG: we can't know how many items were
@@ -2002,8 +2004,6 @@ use_container(struct obj *obj, int held, boolean alreadyused,
         pline(msgc_unpaid, "You owe %ld %s for lost merchandise.",
               loss, currency(loss));
     obj->owt = weight(obj);     /* in case any items were lost */
-
-    sync_magic_chest(current_container);
 
     if (!cnt)
         emptymsg = msgprintf("%s is %sempty.", Yname2(obj),
@@ -2034,17 +2034,15 @@ use_container(struct obj *obj, int held, boolean alreadyused,
             do {
                 t = in_or_out_menu(menuprompt, current_container, outokay, inokay,
                                    alreadyused, more_containers);
-                if (t == ':') {
+                if (t == ':')
                     container_contents(current_container, FALSE, FALSE, TRUE);
-                    sync_magic_chest(current_container);
-                }
             } while (t == ':');
 
             if (!t || t == 'n') {
-                sync_magic_chest(current_container);
+                sync_magic_chest(current_container, TRUE);
                 return 0;
             } else if (t == 'q') {
-                sync_magic_chest(current_container);
+                sync_magic_chest(current_container, TRUE);
                 return -1; /* completely cancelled */
             }
 
@@ -2077,9 +2075,10 @@ use_container(struct obj *obj, int held, boolean alreadyused,
         /* nothing to put in, but some feedback is necessary */
         pline(msgc_info, "You don't have anything to %s.",
               loot_in_single ? "stash" : "put in");
-        sync_magic_chest(current_container);
-        if (!loot_out)
+        if (!loot_out) {
+            sync_magic_chest(current_container, TRUE);
             return used;
+        }
     }
     if (flags.menu_style != MENU_FULL) {
         qbuf = "Do you wish to put something in?";
@@ -2097,7 +2096,7 @@ use_container(struct obj *obj, int held, boolean alreadyused,
             break;
         case 'q':
         default:
-            sync_magic_chest(current_container);
+            sync_magic_chest(current_container, TRUE);
             return used;
         }
     }
@@ -2125,7 +2124,7 @@ use_container(struct obj *obj, int held, boolean alreadyused,
                   quantum_cat ? "now " : "");
     }
 
-    sync_magic_chest(current_container);
+    sync_magic_chest(current_container, TRUE);
     return used;
 }
 

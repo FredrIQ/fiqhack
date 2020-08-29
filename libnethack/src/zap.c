@@ -1874,7 +1874,7 @@ bhito(struct obj *obj, struct obj *otmp)
                     quantum_cat = TRUE;
                 }
 
-                sync_magic_chest(obj);
+                sync_magic_chest(obj, FALSE);
                 if (!obj->cobj)
                     pline(msgc_info, "%s %sempty.", Tobjnam(obj, "are"),
                           quantum_cat ? "now " : "");
@@ -1886,6 +1886,7 @@ bhito(struct obj *obj, struct obj *otmp)
                         o->dknown = 1;  /* "seen", even if blind */
                     container_contents(obj, FALSE, FALSE, TRUE);
                 }
+                sync_magic_chest(obj, TRUE);
                 res = 1;
             }
             if (res)
