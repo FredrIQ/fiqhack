@@ -81,16 +81,10 @@ watch_on_duty(struct monst *mtmp)
 int
 dochugw(struct monst *mtmp)
 {
-    unsigned oldsense = msensem(&youmonst, mtmp);
+    boolean oldspot = canspotmon(mtmp);
     int x = mtmp->mx, y = mtmp->my;
     int rd = dochug(mtmp);
-    unsigned newsense = msensem(&youmonst, mtmp);
-
-    /* Treat xray as a detection sense since it pierces LOS */
-    boolean oldvis = !!(oldsense & (MSENSE_ANYVISION & ~MSENSE_XRAY));
-    boolean newvis = !!(newsense & (MSENSE_ANYVISION & ~MSENSE_XRAY));
-    boolean olddet = !!(oldsense & (MSENSE_ANYDETECT | MSENSE_XRAY));
-    boolean newdet = !!(newsense & (MSENSE_ANYDETECT | MSENSE_XRAY));
+    boolean newspot = canspotmon(mtmp);
 
     /* a similar check is in monster_nearby() in hack.c */
     /* check whether hero notices monster and stops current activity */
@@ -98,12 +92,12 @@ dochugw(struct monst *mtmp)
         /* it's close enough to be a threat */
         distu(mtmp->mx, mtmp->my) <= (BOLT_LIM + 1) * (BOLT_LIM + 1) &&
         /* and either couldn't see it before, or it was too far away */
-        ((!oldvis && !olddet) || !couldsee(x, y) ||
+        (!oldspot || !couldsee(x, y) ||
          distu(x, y) > (BOLT_LIM + 1) * (BOLT_LIM + 1)) &&
         /* can see it now, or sense it and would normally see it
 
            TODO: This can spoil the existence of walls in dark areas. */
-        (newvis || newdet) && couldsee(mtmp->mx, mtmp->my) &&
+        newspot && couldsee(mtmp->mx, mtmp->my) &&
         mtmp->mcanmove && (!noattacks(mtmp->data) || Hallucination) &&
         !onscary(u.ux, u.uy, mtmp))
         action_interrupted();
