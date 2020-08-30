@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-01-17 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,10 +221,20 @@ resolve_uim(enum u_interaction_mode uim, boolean weird_attack, xchar x, xchar y)
         }
 
         if (known_harmful_trap(&youmonst, x, y)) {
-            pline(msgc_cancelled, "There's a trap there!");
-            pline(msgc_controlhelp,
-                  "(Use the 'moveonly' command to move there anyway.)");
-            return uia_halt;
+            /* If we're moving boulders, we can't use moveonly. Thus,
+               in that case, fallback to using a prompt. */
+            if (l->mem_obj == BOULDER + 1) {
+                /* there's a reason we avoid prompts normally; force a --More--
+                   to grab the player's attention and remove typos */
+                pline(msgc_fatalavoid, "There's a boulder on a trap there!");
+                if (yn(msgprintf("Push it away from the trap?")) != 'y')
+                    return uia_halt;
+            } else {
+                pline(msgc_cancelled, "There's a trap there!");
+                pline(msgc_controlhelp,
+                      "(Use the 'moveonly' command to move there anyway.)");
+                return uia_halt;
+            }
         }
 
         if (l->mem_bg >= S_stone && l->mem_bg <= S_trwall &&
