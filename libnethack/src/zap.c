@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-29 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -200,6 +200,7 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
         break;
     case SPE_SPEED_MONSTER:
         known = inc_timeout(mdef, FAST, rn1(100, 51), FALSE);
+        wake = FALSE;
         break;
     case WAN_SPEED_MONSTER:
         dmg = dice(2, 20);
@@ -378,9 +379,11 @@ bhitm(struct monst *magr, struct monst *mdef, struct obj *otmp, int range)
                                         !!teleport_control(mdef)));
         break;
     case WAN_MAKE_INVISIBLE:
-        if (wandlevel >= P_SKILLED && invisible(mdef))
+        wake = FALSE;
+        if (wandlevel >= P_SKILLED && invisible(mdef)) {
             known = set_property(mdef, INVIS, -2, FALSE);
-        else if (wandlevel == P_UNSKILLED)
+            wake = TRUE;
+        } else if (wandlevel == P_UNSKILLED)
             known = inc_timeout(mdef, INVIS, rnd(50), FALSE);
         else
             known = set_property(mdef, INVIS, 0, FALSE);
