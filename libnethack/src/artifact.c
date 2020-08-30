@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -643,6 +643,10 @@ touch_artifact(struct obj *obj, const struct monst *mon)
         tmp = *oart;
         tmp.spfx &= SPFX_DBONUS;
         badalign = spec_applies(&tmp, mon);
+
+        /* Only blast bane targets, not mons lacking an elemental resistance */
+        if (badalign < 3)
+            badalign = 0;
     }
 
     if (((badclass || badalign) && self_willed) ||
@@ -673,7 +677,8 @@ touch_artifact(struct obj *obj, const struct monst *mon)
 }
 
 /* Decide whether an artifact's special attacks apply against mtmp.
-   Returns 0 (doesn't apply), 1 (applies partially), 2 (applies completely) */
+   Returns 0 (doesn't apply), 1 (applies partially), 2 (applies completely),
+   3 (apply completely + blast user) */
 static int
 spec_applies(const struct artifact *weap, const struct monst *mtmp)
 {
@@ -687,20 +692,20 @@ spec_applies(const struct artifact *weap, const struct monst *mtmp)
     ptr = mtmp->data;
 
     if (DBONUS(weap, SPFX_DMONS)) {
-        return (ptr == &mons[(int)weap->mtype]) ? 2 : 0;
+        return (ptr == &mons[(int)weap->mtype]) ? 3 : 0;
     } else if (DBONUS(weap, SPFX_DCLAS)) {
-        return (weap->mtype == (unsigned long)ptr->mlet) ? 2 : 0;
+        return (weap->mtype == (unsigned long)ptr->mlet) ? 3 : 0;
     } else if (DBONUS(weap, SPFX_DFLAG1)) {
-        return ((ptr->mflags1 & weap->mtype) != 0L) ? 2 : 0;
+        return ((ptr->mflags1 & weap->mtype) != 0L) ? 3 : 0;
     } else if (DBONUS(weap, SPFX_DFLAG2)) {
         return (((ptr->mflags2 & weap->mtype) ||
                  (yours &&
                   ((!Upolyd && (urace.selfmask & weap->mtype)) ||
-                   ((weap->mtype & M2_WERE) && u.ulycn >= LOW_PM))))) ? 2 : 0;
+                   ((weap->mtype & M2_WERE) && u.ulycn >= LOW_PM))))) ? 3 : 0;
     } else if (DBONUS(weap, SPFX_DALIGN)) {
         return (yours ? (u.ualign.type != weap->alignment) :
                 (ptr->maligntyp == A_NONE ||
-                 sgn(ptr->maligntyp) != weap->alignment)) ? 2 : 0;
+                 sgn(ptr->maligntyp) != weap->alignment)) ? 3 : 0;
     } else if (DBONUS(weap, SPFX_ATTK)) {
         struct obj *defending_weapon = (yours ? uwep : MON_WEP(mtmp));
 
