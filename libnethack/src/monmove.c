@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2020-08-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -81,26 +81,31 @@ watch_on_duty(struct monst *mtmp)
 int
 dochugw(struct monst *mtmp)
 {
-    /* BUG[?]: cansee() will not work on tiles seen by xray, thus check for
-       previous seen by xray seperately. */
-    boolean already_saw_xray = !!((sensemon(mtmp)) & MSENSE_XRAY);
+    unsigned oldsense = msensem(&youmonst, mtmp);
     int x = mtmp->mx, y = mtmp->my;
-    boolean already_saw_mon = canspotmon(mtmp);
     int rd = dochug(mtmp);
+    unsigned newsense = msensem(&youmonst, mtmp);
+
+    /* Treat xray as a detection sense since it pierces LOS */
+    boolean oldvis = !!(oldsense & (MSENSE_ANYVISION & ~MSENSE_XRAY));
+    boolean newvis = !!(newsense & (MSENSE_ANYVISION & ~MSENSE_XRAY));
+    boolean olddet = !!(oldsense & (MSENSE_ANYDETECT | MSENSE_XRAY));
+    boolean newdet = !!(newsense & (MSENSE_ANYDETECT | MSENSE_XRAY));
 
     /* a similar check is in monster_nearby() in hack.c */
     /* check whether hero notices monster and stops current activity */
-    if (!rd && !Confusion && (!mtmp->mpeaceful || Hallucination) &&
+    if (!rd && (!mtmp->mpeaceful || Hallucination) &&
         /* it's close enough to be a threat */
         distu(mtmp->mx, mtmp->my) <= (BOLT_LIM + 1) * (BOLT_LIM + 1) &&
         /* and either couldn't see it before, or it was too far away */
-        (!already_saw_mon || (!couldsee(x, y) && !already_saw_xray) ||
+        ((!oldvis && !olddet) || !couldsee(x, y) ||
          distu(x, y) > (BOLT_LIM + 1) * (BOLT_LIM + 1)) &&
         /* can see it now, or sense it and would normally see it
 
            TODO: This can spoil the existence of walls in dark areas. */
-        (canseemon(mtmp) || (sensemon(mtmp) && couldsee(mtmp->mx, mtmp->my))) &&
-        mtmp->mcanmove && !noattacks(mtmp->data) && !onscary(u.ux, u.uy, mtmp))
+        (newvis || newdet) && couldsee(mtmp->mx, mtmp->my) &&
+        mtmp->mcanmove && (!noattacks(mtmp->data) || Hallucination) &&
+        !onscary(u.ux, u.uy, mtmp))
         action_interrupted();
 
     return rd;
