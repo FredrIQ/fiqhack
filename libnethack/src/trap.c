@@ -4396,6 +4396,11 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
 struct trap *
 t_at(struct level *lev, int x, int y)
 {
+    if (!isok(x, y)) {
+        impossible("t_at: invalid x,y %d,%d", x, y);
+        return NULL;
+    }
+
     return lev->traps[x][y];
 }
 
