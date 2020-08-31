@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-29 */
+/* Last modified by Fredrik Ljungdahl, 2020-09-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -314,6 +314,7 @@ maketrap(struct level *lev, int x, int y, int typ, enum rng rng)
         ttmp->ty = y;
         ttmp->launch.x = -1;    /* force error if used before set */
         ttmp->launch.y = -1;
+        lev->traps[x][y] = ttmp;
     }
     ttmp->ttyp = typ;
     switch (typ) {
@@ -4395,14 +4396,7 @@ chest_trap(struct monst *mon, struct obj *obj, int bodypart, boolean disarm)
 struct trap *
 t_at(struct level *lev, int x, int y)
 {
-    struct trap *trap = lev->lev_traps;
-
-    while (trap) {
-        if (trap->tx == x && trap->ty == y)
-            return trap;
-        trap = trap->ntrap;
-    }
-    return NULL;
+    return lev->traps[x][y];
 }
 
 
@@ -4418,6 +4412,8 @@ deltrap(struct level *lev, struct trap *trap)
             ;
         ttmp->ntrap = trap->ntrap;
     }
+
+    lev->traps[trap->tx][trap->ty] = NULL;
     dealloc_trap(trap);
 
     check_sokoban_completion(lev, FALSE);

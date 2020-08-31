@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-06-15 */
+/* Last modified by Fredrik Ljungdahl, 2020-09-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1301,8 +1301,8 @@ restore_location(struct memfile *mf, struct rm *loc)
 }
 
 
-static struct trap *
-restore_traps(struct memfile *mf)
+static void
+restore_traps(struct level *lev, struct memfile *mf)
 {
     struct trap *trap, *first = NULL, *prev = NULL;
     unsigned int count, tflags;
@@ -1334,9 +1334,10 @@ restore_traps(struct memfile *mf)
         else
             prev->ntrap = trap;
         prev = trap;
+        lev->traps[trap->tx][trap->ty] = trap;
     }
 
-    return first;
+    lev->lev_traps = first;
 }
 
 
@@ -1511,7 +1512,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     }
 
     rest_worm(mf, lev); /* restore worm information */
-    lev->lev_traps = restore_traps(mf);
+    restore_traps(lev, mf);
     if (flags.save_revision < 17)
         check_sokoban_completion(lev, TRUE);
 
