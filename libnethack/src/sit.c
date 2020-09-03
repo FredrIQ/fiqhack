@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2020-09-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -299,7 +299,7 @@ dosit(const struct nh_cmd_arg *arg)
                 break;
             }
         } else {
-            if (is_prince(youmonst.data))
+            if (is_prince(youmonst.data) || u.uevent.uhand_of_elbereth)
                 pline(msgc_failrandom, "You feel very comfortable here.");
             else
                 pline(msgc_failrandom, "You feel somehow out of place...");
