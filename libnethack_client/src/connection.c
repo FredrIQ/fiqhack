@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Fredrik Ljungdahl, 2020-09-24 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -159,7 +159,7 @@ receive_json_msg(void)
             do {
                 ret = select(sockfd + 1, &rfds, NULL, NULL, &tv);
             } while (ret == -1 && errno == EINTR);
-            
+
             if (ret <= 0) {
                 unread_message_startptr = unread_message_endptr =
                     unread_messages;
@@ -380,7 +380,7 @@ nhnet_get_socket_fd(void)
    which is signal-safe, and it's not unreasonable to want to call it directly
    from a SIGIO handler. You should handle the signal in the normal way instead,
    via bouncing it off your event loop.) */
-void 
+void
 nhnet_check_socket_fd(void)
 {
     json_t *j = receive_json_msg();
