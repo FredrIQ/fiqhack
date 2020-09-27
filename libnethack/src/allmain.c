@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-10 */
+/* Last modified by Fredrik Ljungdahl, 2020-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -974,6 +974,33 @@ you_moved(void)
                         else
                             you_were();
                         change = 0;
+                    }
+                }
+
+                /* handle opposite alignment */
+                boolean oppalign = FALSE;
+                if (uarmh && uarmh->otyp == HELM_OF_OPPOSITE_ALIGNMENT)
+                    oppalign = TRUE;
+
+                /* Possibly decrement alignment record until conversion.
+                   Frozen at the quest start level. */
+                if (qstart_level.dnum != u.uz.dnum &&
+                    (oppalign && u.ualign.type == u.ualignbase[A_CURRENT]) ||
+                    (!oppalign && u.ualign.type != u.ualignbase[A_CURRENT])) {
+                    u.ualign.record--;
+                    if (u.ualign.record == -90)
+                        pline(msgc_alignbad, "You feel your morals changing.");
+
+                    if (u.ualign.record <= -100) {
+                        /* (temporary) conversion */
+                        if (!oppalign)
+                            u.ualign.type = u.ualignbase[A_CURRENT];
+                        else if (u.ualign.type == A_NEUTRAL)
+                            u.ualign.type = rn2_on_rng(2, rng_helm_alignment) ?
+                                A_CHAOTIC : A_LAWFUL;
+                        else
+                            u.ualign.type = -(u.ualign.type);
+                        process_conversion();
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-23 */
+/* Last modified by Fredrik Ljungdahl, 2020-09-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -318,16 +318,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         makeknown(otyp);
         break;
     case HELM_OF_OPPOSITE_ALIGNMENT:
-        if (!equipping)
-            u.ualign.type = u.ualignbase[A_CURRENT];
-        else if (u.ualign.type == A_NEUTRAL)
-            u.ualign.type = rn2_on_rng(2, rng_helm_alignment) ?
-                A_CHAOTIC : A_LAWFUL;
-        else
-            u.ualign.type = -(u.ualign.type);
-        u.ualign.record = -1;   /* consistent with altar conversion */
-        u.ublessed = 0; /* lose the appropriate god's protection */
-        /* Run makeknown() only after printing messages */
         /*FALLTHRU*/
     case DUNCE_CAP:
         if (equipping && !o->cursed) {
@@ -348,7 +338,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
                   (ABASE(A_INT) + ATEMP(A_INT)) ?
                   "like sitting in a corner" : "giddy");
         } else if (otyp == HELM_OF_OPPOSITE_ALIGNMENT) {
-            pline(bad_msgc, "Your mind oscillates briefly.");
+            pline(bad_msgc, "Your mind oscillates.");
         }
         makeknown(otyp);
         break;
@@ -1400,18 +1390,6 @@ canwearobj(struct obj *otmp, long *mask,
             /* (flimsy exception matches polyself handling) */
             pline(msgc, "The %s won't fit over your horn%s.", helmet_name(otmp),
                   plur(num_horns(youmonst.data)));
-            return FALSE;
-        }
-        if (otmp->otyp == HELM_OF_OPPOSITE_ALIGNMENT &&
-            qstart_level.dnum == u.uz.dnum && spoil) {   /* in quest */
-            if (u.ualignbase[A_CURRENT] == u.ualignbase[A_ORIGINAL])
-                pline(msgc,
-                      "You narrowly avoid losing all chance at your goal.");
-            else    /* converted */
-                pline(msgc, "You are suddenly overcome with shame "
-                      "and change your mind.");
-            u.ublessed = 0; /* lose your god's protection */
-            makeknown(otmp->otyp);
             return FALSE;
         }
         break;

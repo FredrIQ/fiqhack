@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-29 */
+/* Last modified by Fredrik Ljungdahl, 2020-09-27 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1179,6 +1179,18 @@ consume_offering(struct obj *otmp)
     exercise(A_WIS, TRUE);
 }
 
+void
+process_conversion(void)
+{
+    u.ualign.record = -1;
+    u.ublessed = 0; /* lose divine protection */
+    set_piety(0); /* no piety with the new god */
+    pline(msgc_intrgain,
+          "You have a sudden sense of a new direction!");
+    change_luck(-3);
+    u.ublesscnt += 300;
+    set_prayreminder(&youmonst, pty_conversion);
+}
 
 int
 dosacrifice(const struct nh_cmd_arg *arg)
@@ -1456,16 +1468,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                         u.ualignbase[A_CURRENT] = altaralign;
                     else
                         u.ualign.type = u.ualignbase[A_CURRENT] = altaralign;
-                    u.ublessed = 0;
-                    set_piety(0);
-
-                    pline(msgc_intrgain,
-                          "You have a sudden sense of a new direction.");
-                    /* Beware, Conversion is costly */
-                    change_luck(-3);
-                    u.ublesscnt += 300;
-                    set_prayreminder(&youmonst, pty_conversion);
-                    adjalign((int)(u.ualignbase[A_ORIGINAL] * (ALIGNLIM / 2)));
+                    process_conversion();
                 } else {
                     add_piety(-3000);
                     adjalign(-5);
