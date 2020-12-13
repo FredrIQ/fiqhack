@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-30 */
+/* Last modified by Fredrik Ljungdahl, 2020-12-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3113,6 +3113,44 @@ zap_hit_check(int ac, int type)
     return (3 - chance) < ac + spell_bonus;
 }
 
+void
+raybounce(struct level *lev, int *dx, int *dy, xchar sx, xchar sy,
+          xchar lsx, xchar lsy)
+{
+    int bounce = 0;
+    uchar rmn;
+
+    if (*dx && *dy && rn2(20)) {
+        if (isok(sx, lsy) &&
+            ZAP_POS(rmn = lev->locations[sx][lsy].typ) &&
+            !closed_door(lev, sx, lsy) &&
+            (IS_ROOM(rmn) ||
+             (isok(sx + *dx, lsy) &&
+              ZAP_POS(lev->locations[sx + *dx][lsy].typ))))
+            bounce = 1;
+        if (isok(lsx, sy) &&
+            ZAP_POS(rmn = lev->locations[lsx][sy].typ) &&
+            !closed_door(lev, lsx, sy) &&
+            (IS_ROOM(rmn) ||
+             (isok(lsx, sy + *dy) &&
+              ZAP_POS(lev->locations[lsx][sy + *dy].typ))))
+            if (!bounce || rn2(2))
+                bounce = 2;
+    }
+
+    switch (bounce) {
+    case 0:
+        *dx *= -1;
+        /* fallthrough... */
+    case 1:
+        *dy *= -1;
+        break;
+    case 2:
+        *dx *= -1;
+        break;
+    }
+}
+
 /* type ==   0 to   9 : you shooting a wand */
 /* type ==  10 to  19 : you casting a spell */
 /* type ==  20 to  29 : you breathing as a monster */
@@ -3272,8 +3310,6 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
 
         if (!ZAP_POS(loc->typ) ||
             (closed_door(level, sx, sy) && (range >= 0))) {
-            int bounce;
-            uchar rmn;
 
         make_bounce:
             if (buzztyp == ZT_SPELL(ZT_FIRE)) {
@@ -3281,42 +3317,12 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy, int raylevel)
                 sy = lsy;
                 break;  /* fireballs explode before the wall */
             }
-            bounce = 0;
             range--;
             if (range && isok(lsx, lsy) && cansee(lsx, lsy))
                 pline(msgc_consequence, "%s bounces!", The(fltxt));
-            if (!dx || !dy || !rn2(20)) {
-                dx = -dx;
-                dy = -dy;
-            } else {
-                if (isok(sx, lsy) &&
-                    ZAP_POS(rmn = level->locations[sx][lsy].typ) &&
-                    !closed_door(level, sx, lsy) &&
-                    (IS_ROOM(rmn) ||
-                     (isok(sx + dx, lsy) &&
-                      ZAP_POS(level->locations[sx + dx][lsy].typ))))
-                    bounce = 1;
-                if (isok(lsx, sy) &&
-                    ZAP_POS(rmn = level->locations[lsx][sy].typ) &&
-                    !closed_door(level, lsx, sy) &&
-                    (IS_ROOM(rmn) ||
-                     (isok(lsx, sy + dy) &&
-                      ZAP_POS(level->locations[lsx][sy + dy].typ))))
-                    if (!bounce || rn2(2))
-                        bounce = 2;
+            raybounce(level, &dx, &dy, sx, sy, lsx, lsy);
 
-                switch (bounce) {
-                case 0:
-                    dx = -dx;   /* fall into... */
-                case 1:
-                    dy = -dy;
-                    break;
-                case 2:
-                    dx = -dx;
-                    break;
-                }
-                tmpsym_change(tsym, zapdir_to_effect(dx, dy, abstype));
-            }
+            tmpsym_change(tsym, zapdir_to_effect(dx, dy, abstype));
         }
     }
     tmpsym_end(tsym);

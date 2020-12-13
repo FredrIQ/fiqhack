@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-12 */
+/* Last modified by Fredrik Ljungdahl, 2020-12-13 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -642,46 +642,12 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                 if (!isok(sx, sy) || !(loc = &level->locations[sx][sy])->typ ||
                     !ZAP_POS(loc->typ) || closed_door(level, sx, sy)) {
                     range--;
-                    if ((!wand && !spell) || oc_dir != RAY || obj->otyp == SPE_FIREBALL)
+                    if ((!wand && !spell) || oc_dir != RAY ||
+                        obj->otyp == SPE_FIREBALL)
                         break;
-                    if (range > 0) { /* bounce */
-                        /* maybe only allow some monsters to visualize raybouncing?
-                           TODO: I have no idea how this code actually works, but I
-                           have a feeling that it could be simplified. As-is, it's
-                           copied straight from buzz(), and I know that it works. */
-                        int bounce = 0;
-                        uchar rmn;
-                        if (!cx || !cy || !rn2(20)) {
-                            cx = -cx;
-                            cy = -cy;
-                        } else {
-                            if (isok(sx, lsy) &&
-                                ZAP_POS(rmn = level->locations[sx][lsy].typ) &&
-                                !closed_door(level, sx, lsy) &&
-                                (IS_ROOM(rmn) ||
-                                 (isok(sx + dx, lsy) &&
-                                  ZAP_POS(level->locations[sx + dx][lsy].typ))))
-                                bounce = 1;
-                            if (isok(lsx, sy) &&
-                                ZAP_POS(rmn = level->locations[lsx][sy].typ) &&
-                                !closed_door(level, lsx, sy) &&
-                                (IS_ROOM(rmn) ||
-                                 (isok(lsx, sy + dy) &&
-                                  ZAP_POS(level->locations[lsx][sy + dy].typ))))
-                                if (!bounce || rn2(2))
-                                    bounce = 2;
-                            switch (bounce) {
-                            case 0:
-                                cx = -cx;   /* fall into... */
-                            case 1:
-                                cy = -cy;
-                                break;
-                            case 2:
-                                cx = -cx;
-                                break;
-                            }
-                        }
-                    }
+
+                    if (range > 0)
+                        raybounce(mon->dlevel, &cx, &cy, sx, sy, lsx, lsy);
                     continue;
                 }
                 mtmp = m_at(mon->dlevel, sx, sy);
