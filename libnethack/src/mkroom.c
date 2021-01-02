@@ -314,8 +314,17 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
             case LEPREHALL:
                 /* place floor gold */
                 goldtiles++;
-                obj = mkgold(1, lev, sx, sy, rng);
-                obj->in_use = TRUE; /* so we can fix gold amount later */
+                mkgold_inuse(1, lev, sx, sy, rng);
+
+                /* More gold at edges, especially at corners */
+                if (iswall(lev, sx-1, sy) || iswall(lev, sx+1, sy)) {
+                    goldtiles += 3;
+                    mkgold_inuse(3, lev, sx, sy, rng);
+                }
+                if (iswall(lev, sx, sy-1) || iswall(lev, sx, sy+1)) {
+                    goldtiles += 3;
+                    mkgold_inuse(3, lev, sx, sy, rng);
+                }
                 break;
             case MORGUE:
                 /* corpses and chests and headstones */
@@ -419,7 +428,7 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
                 if (obj->otyp != GOLD_PIECE)
                     panic("Flagged object isn't gold?");
 
-                int rndgold = rn2_on_rng(rndgoldmax, rng);
+                int rndgold = rn2_on_rng(rndgoldmax, rng) * obj->quan;
                 if (rndgold)
                     mkgold(rndgold, lev, obj->ox, obj->oy, rng);
             }

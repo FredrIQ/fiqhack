@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2021-01-02 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1106,6 +1106,7 @@ extern void remove_rooms(struct level *lev, int lx, int ly, int hx, int hy);
 
 /* ### mkmaze.c ### */
 
+extern boolean iswall(struct level *lev, int x, int y);
 extern void wallification(struct level *lev, int x1, int y1, int x2, int y2,
                           boolean destroy_freestanding);
 extern void walkfrom(struct level *lev, int, int);
@@ -1146,6 +1147,8 @@ extern void bill_dummy_object(struct obj *);
 extern int bcsign(struct obj *);
 extern int weight(struct obj *);
 extern struct obj *mkgold(long amount, struct level *, int x, int y, enum rng);
+extern struct obj *mkgold_inuse(long amount, struct level *, int x, int y,
+                                enum rng);
 extern struct obj *mkcorpstat(int objtype, struct monst *mtmp,
                               const struct permonst *ptr, struct level *lev,
                               int x, int y, boolean init, enum rng);

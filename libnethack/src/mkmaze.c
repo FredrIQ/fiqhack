@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-11-08 */
+/* Last modified by Fredrik Ljungdahl, 2021-01-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,6 @@
 #include "sp_lev.h"
 #include "lev.h"        /* save & restore info */
 
-static boolean iswall(struct level *lev, int x, int y);
 static boolean iswall_or_stone(struct level *lev, int x, int y);
 static boolean is_solid(struct level *lev, int x, int y);
 static int extend_spine(int[3][3], int, int, int);
@@ -44,7 +43,7 @@ static boolean bubble_up;
    wall, door, secret door, or iron bars.
    Despite the name, any door will return TRUE here, even if it's open, broken,
    or missing. */
-static boolean
+boolean
 iswall(struct level *lev, int x, int y)
 {
     int type;
