@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-30 */
+/* Last modified by Fredrik Ljungdahl, 2021-01-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -215,12 +215,13 @@ void
 fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
 {
     struct monst *mon = NULL;
+    struct obj *obj = NULL;
     int sx, sy, i;
-    int sh, tx, ty, goldlim, type = sroom->rtype;
+    int sh, tx, ty, goldtiles, type = sroom->rtype;
     int rmno = (sroom - lev->rooms) + ROOMOFFSET;
     coord mm;
 
-    tx = ty = goldlim = 0;
+    tx = ty = goldtiles = 0;
 
     sh = sroom->fdoor;
     switch (type) {
@@ -254,10 +255,6 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
                 ty = mm.y;
             }
         }
-        break;
-    case ZOO:
-    case LEPREHALL:
-        goldlim = 500 * level_difficulty(&lev->z);
         break;
     }
     /* fill room with monsters */
@@ -316,16 +313,9 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
             case ZOO:
             case LEPREHALL:
                 /* place floor gold */
-                if (sroom->doorct) {
-                    int distval =
-                        dist2(sx, sy, lev->doors[sh].x, lev->doors[sh].y);
-                    i = sq(distval);
-                } else
-                    i = goldlim;
-                if (i >= goldlim)
-                    i = 5 * level_difficulty(&lev->z);
-                goldlim -= i;
-                mkgold(10 + rn2_on_rng(i, rng), lev, sx, sy, rng);
+                goldtiles++;
+                obj = mkgold(1, lev, sx, sy, rng);
+                obj->in_use = TRUE; /* so we can fix gold amount later */
                 break;
             case MORGUE:
                 /* corpses and chests and headstones */
@@ -417,6 +407,23 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
         /* the royal coffers */
         chest = mksobj_at(CHEST, lev, mm.x, mm.y, TRUE, FALSE, rng);
         chest->spe = 2;     /* so it can be found later */
+    }
+
+    if (goldtiles) {
+        int rndgoldmax = 500 * level_difficulty(&lev->z) * 2 / goldtiles;
+
+        /* Iterate through all gold we generated beforehand and fix amounts */
+        for (obj = lev->objlist; obj; obj = obj->nobj) {
+            if (obj->in_use) {
+                obj->in_use = FALSE;
+                if (obj->otyp != GOLD_PIECE)
+                    panic("Flagged object isn't gold?");
+
+                int rndgold = rn2_on_rng(rndgoldmax, rng);
+                if (rndgold)
+                    mkgold(rndgold, lev, obj->ox, obj->oy, rng);
+            }
+        }
     }
 }
 
