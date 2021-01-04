@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1991-92 by M. Stephenson, P. Winner
 # NetHack may be freely redistributed.  See license for details.
@@ -54,7 +54,7 @@ DOOR:closed,(50,06)
 # Lord Sato
 MONSTER:'@',"Lord Sato",(20,04)
 # The treasure of Lord Sato
-OBJECT:'(',"chest",(20,04)
+CONTAINER:'(',"magic chest",(20,04),uncursed,0
 # roshi guards for the audience chamber
 MONSTER:'@',"roshi",(18,04)
 MONSTER:'@',"roshi",(18,05)

@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1991-2 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -47,7 +47,7 @@ DOOR:locked,(43,10)
 # Norn
 MONSTER:'@',"Norn",(35,10)
 # The treasure of the Norn
-OBJECT:'(',"chest",(36,10)
+CONTAINER:'(',"magic chest",(36,10),uncursed,0
 # valkyrie guards for the audience chamber
 MONSTER:'@',"warrior",(27,08)
 MONSTER:'@',"warrior",(27,09)

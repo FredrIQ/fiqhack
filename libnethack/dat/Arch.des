@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1991 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -70,7 +70,7 @@ DOOR:locked,(49,14)
 # Lord Carnarvon
 MONSTER:'@',"Lord Carnarvon",(25,10)
 # The treasure of Lord Carnarvon
-OBJECT:'(',"chest",(25,10)
+CONTAINER:'(',"magic chest",(24,10),uncursed,0
 # student guards for the audience chamber
 MONSTER:'@',"student",(26,09)
 MONSTER:'@',"student",(27,09)

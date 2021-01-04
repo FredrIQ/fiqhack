@@ -1,4 +1,4 @@
-# Last modified by Sean Hunt, 2014-02-16
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1992 by Dean Luick
 # NetHack may be freely redistributed.  See license for details.
 #
@@ -98,7 +98,7 @@ DOOR: closed, (68,18)
 # Master of Thieves
 MONSTER:'@',"Master of Thieves",(36,11)
 # The treasure of Master of Thieves
-OBJECT:'(',"chest",(36,11)
+CONTAINER:'(',"magic chest",(36,11),uncursed,0
 # thug guards, room #1
 MONSTER:'@',"thug",(28,10)
 MONSTER:'@',"thug",(29,11)

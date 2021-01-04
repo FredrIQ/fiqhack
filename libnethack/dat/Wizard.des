@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1992 by David Cohrs
 # NetHack may be freely redistributed.  See license for details.
 #
@@ -54,7 +54,7 @@ DOOR:locked,(20,10)
 # Neferet the Green, the quest leader
 MONSTER:'@',"Neferet the Green",(23,05)
 # The treasure of the quest leader
-OBJECT:'(',"chest",(24,05)
+CONTAINER:'(',"magic chest",(24,05),uncursed,0
 # apprentice guards for the audience chamber
 MONSTER:'@',"apprentice",(30,07)
 MONSTER:'@',"apprentice",(24,06)

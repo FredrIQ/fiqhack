@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1991 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -54,7 +54,7 @@ ALTAR:(36,02),coaligned,shrine
 # Shaman Karnov
 MONSTER:'@',"Shaman Karnov",(35,02)
 # The treasure of Shaman Karnov
-OBJECT:'(',"chest",(34,02)
+CONTAINER:'(',"magic chest",(34,02),uncursed,0
 # neanderthal guards for the audience chamber
 MONSTER:'@',"neanderthal",(20,03)
 MONSTER:'@',"neanderthal",(20,02)

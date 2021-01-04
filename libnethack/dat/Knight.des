@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1991,92 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -62,7 +62,7 @@ DOOR:closed,(45,12)
 # King Arthur
 MONSTER:'@',"King Arthur",(09,07)
 # The treasure of King Arthur
-OBJECT:'(',"chest",(09,07)
+CONTAINER:'(',"magic chest",(09,07),uncursed,0
 # knight guards for the watchrooms
 MONSTER:'@',"knight",(04,02),peaceful
 MONSTER:'@',"knight",(04,13),peaceful

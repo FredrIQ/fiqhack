@@ -1,4 +1,4 @@
-# Last modified by Fredrik Ljungdahl, 2020-06-15
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1991 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -60,7 +60,7 @@ DOOR:open,(28,05)
 # Elder
 MONSTER:'@',"Pelias",(10,07)
 # The treasure of Pelias
-OBJECT:'(',"chest",(09,05)
+CONTAINER:'(',"magic chest",(09,05),uncursed,0
 # chieftain guards for the audience chamber
 MONSTER:'@',"chieftain",(10,05)
 MONSTER:'@',"chieftain",(10,09)

@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1991-2 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -63,7 +63,8 @@ DOOR:closed,(52,14)
 ALTAR:(28,09),noalign,altar
 # The Grand Master
 MONSTER:'@',"Grand Master",(28,10)
-# No treasure chest!
+# The magic chest
+CONTAINER:'(',"magic chest",(29,11),uncursed,0
 # guards for the audience chamber
 MONSTER:'@',"abbot",(32,07)
 MONSTER:'@',"abbot",(32,08)

@@ -1,4 +1,4 @@
-# Last modified by Fredrik Ljungdahl, 2017-11-02
+# Last modified by Fredrik Ljungdahl, 2021-01-04
 #	Copyright (c) 1989 by Jean-Christophe Collet
 #	Copyright (c) 1991,92 by M. Stephenson, P. Winner
 # NetHack may be freely redistributed.  See license for details.
@@ -96,7 +96,7 @@ MONSTER: 'C',random,random
 # Twoflower
 MONSTER:'@',"Twoflower",(64,03)
 # The treasure of Twoflower
-OBJECT:'(',"chest",(64,03)
+CONTAINER:'(',"magic chest",(64,03),uncursed,0
 # guides for the audience chamber
 MONSTER:'@',"guide",(29,03)
 MONSTER:'@',"guide",(32,04)
