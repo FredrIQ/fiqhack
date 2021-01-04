@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2017-12-31 */
+/* Last modified by Fredrik Ljungdahl, 2021-01-04 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -199,15 +199,15 @@ draw_map(int cx, int cy)
             /* make the map mouse-active for left clicks, middle/right clicks
                (which are interchangeable, because some terminals don't allow
                right clicks), and hovers */
-            wset_mouse_event(mapwin, uncursed_mbutton_left, KEY_MAX + 256 + 
+            wset_mouse_event(mapwin, uncursed_mbutton_left, KEY_MAX + 256 +
                              (ROWNO * COLNO * 0) + x + y * COLNO, KEY_CODE_YES);
-            wset_mouse_event(mapwin, uncursed_mbutton_middle, KEY_MAX + 256 + 
+            wset_mouse_event(mapwin, uncursed_mbutton_middle, KEY_MAX + 256 +
                              (ROWNO * COLNO * 1) + x + y * COLNO, KEY_CODE_YES);
-            wset_mouse_event(mapwin, uncursed_mbutton_right, KEY_MAX + 256 + 
+            wset_mouse_event(mapwin, uncursed_mbutton_right, KEY_MAX + 256 +
                              (ROWNO * COLNO * 1) + x + y * COLNO, KEY_CODE_YES);
-            wset_mouse_event(mapwin, uncursed_mbutton_hover, KEY_MAX + 256 + 
+            wset_mouse_event(mapwin, uncursed_mbutton_hover, KEY_MAX + 256 +
                              (ROWNO * COLNO * 2) + x + y * COLNO, KEY_CODE_YES);
-            
+
             /* draw the tile first, because doing that doesn't move the cursor;
                backgrounds are special because they can be composed from
                multiple tiles (e.g. furthest background + fountain) */
