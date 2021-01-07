@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-21 */
+/* Last modified by Fredrik Ljungdahl, 2021-01-07 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "lz4.h"
+#include "lz4hc.h"
 #include "hack.h"
 #include "patchlevel.h"
 #include "iomodes.h"
@@ -497,7 +498,7 @@ base64_encode_binary(const unsigned char *in, char *out, int len,
     unsigned char *o = malloc(olen);
 
     if (!no_compression) {
-        olen = LZ4_compress_default(in, o, len, olen);
+        olen = LZ4_compress_HC(in, o, len, olen, 12);
         if (!olen) {
             free(o);
             panic("Could not compress input data (%lu)!", olen);

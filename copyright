@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Fredrik Ljungdahl, 2017-12-26
+Last-Modified: Last modified by Fredrik Ljungdahl, 2021-01-07
 Comment:
  .
  This file is Copyright (C) Alex Smith 2013-2015, except as explained below
@@ -150,13 +150,17 @@ Files: libnethack/include/extern.h
 License: NGPL
 Copyright: Copyright (c) Steve Creps, 1988
 
+Files: libnethack/include/lz4.h
+License: BSD-2
+Copyright: Copyright (C) 2011-2020, Yann Collet.
+
+Files: libnethack/include/lz4hc.h
+License: BSD-2
+Copyright: Copyright (C) 2011-2020, Yann Collet.
+
 Files: libnethack/include/magic.h
 License: NGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
-
-Files: libnethack/include/lz4.h
-License: BSD-2
-Copyright: Copyright (C) 2011-2017, Yann Collet.
 
 Files: libnethack/include/memfile.h
 License: NGPL
@@ -304,7 +308,11 @@ Copyright: Copyright (c) Daniel Thaler, 2011
 
 Files: libnethack/src/lz4.c
 License: BSD-2
-Copyright: Copyright (C) 2011-2017, Yann Collet.
+Copyright: Copyright (C) 2011-2020, Yann Collet.
+
+Files: libnethack/src/lz4hc.c
+License: BSD-2
+Copyright: Copyright (C) 2011-2020, Yann Collet.
 
 Files: libnethack/src/memfile.c
 License: NGPL
