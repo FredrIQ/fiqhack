@@ -205,7 +205,8 @@ static const struct {
       { "Breath", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
       { "Slime", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
       { "Petrify", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
-      { "Zombie!", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
+      { "Zombie!", CLR_MAGENTA, CLR_MAGENTA },
+      { "Zombie!!!", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
       { NULL, 0 }
 };
 
