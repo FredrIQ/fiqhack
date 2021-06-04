@@ -291,8 +291,10 @@ make_player_info(struct nh_player_info *pi)
     if (petrifying(&youmonst))     /* 11 */
         strncpy(pi->statusitems[pi->nr_items++], "Petrify", ITEMLEN);
     if (zombie_timer) {
-        if (zombie_timer > 40)
+        if (zombie_timer > TERMINAL_ZOMBIE)
             strncpy(pi->statusitems[pi->nr_items++], "Zombie", ITEMLEN);
+        else if (zombie_timer < TERMINAL_ZOMBIE / 2)
+            strncpy(pi->statusitems[pi->nr_items++], "Zombie!!!", ITEMLEN);
         else
             strncpy(pi->statusitems[pi->nr_items++], "Zombie!", ITEMLEN);
     }
