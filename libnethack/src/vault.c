@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-16 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -93,6 +93,8 @@ grddead(struct monst *grd)
 
     if (!dispose) {
         /* see comment by newpos in gd_move() */
+        /* Drop inventory upon death */
+        relobj(grd, 0, FALSE);
         remove_monster(level, grd->mx, grd->my);
         newsym(grd->mx, grd->my);
         grd->mx = COLNO;
@@ -780,8 +782,10 @@ newpos:
 
         see_guard = canspotmon(grd);
         wallify_vault(grd);
-        remove_monster(level, grd->mx, grd->my);
-        newsym(grd->mx, grd->my);
+        if (isok(grd->mx, grd->my)) {
+            remove_monster(level, grd->mx, grd->my);
+            newsym(grd->mx, grd->my);
+        }
         grd->mx = COLNO;
         grd->my = ROWNO;
         egrd->ogx = grd->mx;
