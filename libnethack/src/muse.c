@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-12-13 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-12 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2506,7 +2506,7 @@ use_item(struct musable *m)
             pline(mtmp == &youmonst ? msgc_itemloss :
                   combat_msgc(mon, mtmp, cr_hit),
                   "%s yanks %s from %s %s!", Monnam(mon), the_weapon,
-                  s_suffix(mon_nam(mon)), hand);
+                  s_suffix(mon_nam(mtmp)), hand);
             place_object(otmp, level, mon->mx, mon->my);
             break;
         case 2:    /* onto floor beneath you */
