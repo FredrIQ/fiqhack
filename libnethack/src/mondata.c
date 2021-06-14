@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -56,6 +56,17 @@ new_mvitals(int pm)
     mvitals[pm].mvflags = mons[pm].geno & G_NOCORPSE;
 }
 
+static boolean
+pm_onegender(int pm)
+{
+    if (pm < LOW_PM || pm >= NUMMONS) {
+        impossible("pm_onegender: pm out of range (%d)", pm);
+        return FALSE;
+    }
+
+    return !!(mons[pm].mflags2 & M2_ONEGENDER);
+}
+
 /* Returns male name of monster */
 const char *
 pm_male(int pm)
@@ -107,7 +118,7 @@ opm_name(const struct obj *obj)
 {
     int gender = obj_gender(obj);
     if (!strcmp(pm_male(obj->corpsenm), pm_female(obj->corpsenm)) &&
-        gender != 2) {
+        gender != 2 && !pm_onegender(obj->corpsenm)) {
         if (gender == 1)
             return msgprintf("female %s", pm_female(obj->corpsenm));
         return msgprintf("male %s", pm_male(obj->corpsenm));

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-06-12 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-14 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2134,7 +2134,8 @@ use_item(struct musable *m)
             if (cansee(mon->mx, mon->my))
                 pline(msgc_monneutral,
                       "%s removes %s from %s %s.", Monnam(mon),
-                      an(xname(obj)), mhis(mon), xname(container));
+                      distant_name(obj, doname), mhis(mon),
+                      distant_name(container, xname));
             return 2;
         }
         /* for stashing stuff */
@@ -2168,7 +2169,8 @@ use_item(struct musable *m)
                               "%s stashes %s item%s in %s %s.", Monnam(mon),
                               contained > 5 ? "several" :
                               contained > 1 ? "a few" :
-                              "an", contained != 1 ? "s" : "", mhis(mon), xname(obj));
+                              "an", contained != 1 ? "s" : "", mhis(mon),
+                              distant_name(obj, xname));
                     return 2;
                 }
                 impossible("monster wanted to stash objects, but there was nothing to stash?");
@@ -2238,7 +2240,7 @@ use_item(struct musable *m)
                 pline(msgc_levelwarning, "%s %s %s.", Monnam(mon),
                       otmp->otyp == SKELETON_KEY ? "unlocks" :
                       "succeeds in picking the lock on",
-                      an(xname(otmp)));
+                      an(distant_name(otmp, xname)));
             if (otmp->otrapped)
                 chest_trap(mon, otmp, FINGER, FALSE);
             return DEADMONSTER(mon) ? 1 : 2; /* in case chest trap killed */

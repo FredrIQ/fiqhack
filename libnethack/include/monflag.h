@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-01-08 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-14 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -164,6 +164,7 @@
 # define M2_MALE         0x00010000L    /* always male */
 # define M2_FEMALE       0x00020000L    /* always female */
 # define M2_NEUTER       0x00040000L    /* neither male nor female */
+# define M2_ONEGENDER    0x00070000L    /* always one specific gender */
 # define M2_PNAME        0x00080000L    /* monster name is a proper name */
 # define M2_HOSTILE      0x00100000L    /* always starts hostile */
 # define M2_PEACEFUL     0x00200000L    /* always starts peaceful */
