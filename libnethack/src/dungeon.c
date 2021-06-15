@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1239,6 +1239,10 @@ get_level_destination(struct level *lev, int num)
         /* Failed to go on */
         break;
     }
+
+    /* Don't allow access to the Sanctum before we've done the invocation. */
+    if (Is_sanctum(&res) && !u.uevent.invoked)
+        res.dlevel--;
 
     if (ores.dnum == res.dnum && ores.dlevel == res.dlevel)
         impossible("get_level_destination: unable to find goal?");
