@@ -605,6 +605,11 @@ tt_oname(struct obj *otmp)
     if (!otmp)
         return NULL;
 
+    /* If we're playing setseed, we shouldn't load from topten since it would
+       throw off the RNG. */
+    if (*flags.setseed)
+        return NULL;
+
     if (log_want_replay('R')) {
         if (log_replay_input(0, "R!"))
             goto record_fail;
