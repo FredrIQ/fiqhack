@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-01-07 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-18 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1342,8 +1342,8 @@ zero_time_checks(void)
     return FALSE;
 }
 
-/* Bones files must also be logged, since they are an input into the game
-   state */
+/* Bones or topten data must also be logged, since they are an input into the
+   game state */
 void
 log_record_bones(struct memfile *mf)
 {
@@ -1356,6 +1356,21 @@ log_record_bones(struct memfile *mf)
     log_binary(mf->buf, mf->len);
     lprintf("\x0a");
 
+    stop_updating_logfile(1);
+}
+
+void
+log_record_topten(const char *pltypstr, const char *plname)
+{
+    if (zero_time_checks())
+        return;
+
+    char encoded_name[BUFSZ];
+    base64_encode(plname, encoded_name);
+
+    start_updating_logfile(FALSE);
+    lprintf("R%s%s", pltypstr, encoded_name);
+    lprintf("\x0a");
     stop_updating_logfile(1);
 }
 
@@ -1608,6 +1623,35 @@ log_replay_bones(struct memfile *mf)
     stop_replaying_logfile();
 
     free(logline);
+
+    return TRUE;
+}
+
+boolean
+log_replay_topten(const char **pltypstr, const char **plname)
+{
+    char typstr[13];
+    char encoded_name[BUFSZ]; /* fits base64-encoded player name */
+    char name[BUFSZ];
+    int ret;
+
+    char *logline = start_replaying_logfile('R');
+    if (!logline)
+        return FALSE;
+
+    /* Split the string up into 2 parts: combination string and base64 name */
+    ret = sscanf(logline, "R%12s%255s", typstr, encoded_name);
+
+    stop_replaying_logfile();
+    free(logline);
+
+    if (ret != 2)
+        return FALSE;
+
+    base64_decode(encoded_name, name, sizeof (name - 1));
+
+    *pltypstr = msg_from_string(typstr);
+    *plname = msg_from_string(name);
 
     return TRUE;
 }

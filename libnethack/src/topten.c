@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,7 +51,7 @@ static void fill_topten_entry(struct toptenentry *newtt, int how,
                               const char *killer);
 static boolean toptenlist_insert(struct toptenentry *ttlist,
                                  struct toptenentry *newtt);
-static int classmon(char *plch, boolean fem);
+static int classmon(char *plch);
 static void topten_death_description(struct toptenentry *in, char *outbuf);
 static void fill_nh_score_entry(struct toptenentry *in,
                                 struct nh_topten_entry *out, int rank,
@@ -562,9 +562,8 @@ update_topten(int how, const char *killer, unsigned long carried,
     free(toptenlist);
 }
 
-
 static int
-classmon(char *plch, boolean fem)
+classmon(char *plch)
 {
     int i;
 
@@ -590,40 +589,81 @@ struct obj *
 tt_oname(struct obj *otmp)
 {
     int rank, fd;
-    struct toptenentry *toptenlist, *tt;
+    struct toptenentry *toptenlist = NULL;
+    struct toptenentry *tt;
+
+    /* Player name */
+    const char *plname;
+
+    /* Player combination string, e.g. "WizGnoMalNeu" */
+    const char *pltypstr;
+    int pltypres;
+
+    /* Only plrole/plrace/plgend/plalign is filled with actual data in stt. */
+    struct toptenentry stt;
 
     if (!otmp)
         return NULL;
 
-    fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
-    if (fd < 0)
-        return NULL;   /* the topten list is missing */
+    if (log_want_replay('R')) {
+        if (log_replay_input(0, "R!"))
+            goto record_fail;
+        else if (!log_replay_topten(&pltypstr, &plname)) {
+            log_replay_no_more_options();
+        }
+    } else {
+        fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
+        if (fd < 0)
+            goto record_fail;
 
-    toptenlist = read_topten(fd, 100);  /* load the top 100 scores */
-    close(fd);
+        toptenlist = read_topten(fd, 100);  /* load the top 100 scores */
+        close(fd);
 
-    /* try to find a valid entry, reducing the value range for rank each time */
-    rank = rn2(100);
-    while (!validentry(toptenlist[rank]) && rank)
-        rank = rn2(rank);
+        /* try to find a valid entry, reducing the value range for rank each
+           time */
+        rank = rn2(100);
+        while (!validentry(toptenlist[rank]) && rank)
+            rank = rn2(rank);
 
-    tt = &toptenlist[rank];
+        tt = &toptenlist[rank];
 
-    if (!validentry(toptenlist[rank]))
-        otmp = NULL;    /* the topten list is empty */
-    else {
-        /* reset timer in case corpse started out as lizard or troll */
-        if (otmp->otyp == CORPSE)
-            obj_stop_timers(otmp);
-        otmp->corpsenm = classmon(tt->plrole, (tt->plgend[0] == 'F'));
-        otmp->owt = weight(otmp);
-        otmp = oname(otmp, tt->name);
-        if (otmp->otyp == CORPSE)
-            start_corpse_timeout(otmp);
+        if (!validentry(toptenlist[rank])) {
+            free(toptenlist);
+            goto record_fail;
+        }
+
+        plname = msg_from_string(tt->name);
+        pltypstr = msgprintf("%s%s%s%s", tt->plrole, tt->plrace, tt->plgend,
+                             tt->plalign);
     }
 
-    free(toptenlist);
+    log_record_topten(pltypstr, plname);
+
+    /* Interpret pltypstr data */
+    pltypres = sscanf(pltypstr, "%3s%3s%3s%3s", stt.plrole, stt.plrace,
+                      stt.plgend, stt.plalign);
+    if (pltypres != 4)
+        panic("Invalid record input from save: %s", pltypstr);
+
+    /* reset timer in case corpse started out as lizard or troll */
+    if (otmp->otyp == CORPSE)
+        obj_stop_timers(otmp);
+
+    otmp->corpsenm = classmon(stt.plrole);
+    otmp->spe |= (stt.plgend[0] == 'F' ? OPM_FEMALE : OPM_MALE);
+    otmp->owt = weight(otmp);
+    otmp = oname(otmp, plname);
+    if (otmp->otyp == CORPSE)
+        start_corpse_timeout(otmp);
+
+    if (toptenlist)
+        free(toptenlist);
+
     return otmp;
+
+record_fail:
+    log_record_input("R!");
+    return NULL;
 }
 
 

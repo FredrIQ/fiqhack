@@ -856,7 +856,9 @@ extern long get_log_start_of_turn_offset(void);
 extern void log_maybe_undo_quit(void);
 
 extern void log_record_bones(struct memfile *mf);
+extern void log_record_topten(const char *, const char *);
 extern boolean log_replay_bones(struct memfile *mf);
+extern boolean log_replay_topten(const char **, const char **);
 extern void log_record_input(const char *, ...) PRINTFLIKE(1,2);
 extern boolean log_replay_input(int, const char *, ...) SCANFLIKE(2,3);
 extern void log_record_line(const char *);
