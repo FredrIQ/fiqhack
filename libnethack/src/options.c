@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-01 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -590,7 +590,32 @@ nh_set_option(const char *name, union nh_optvalue value)
 
     API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(FALSE);
 
+    /* Option changes are effectively notime commands, so send interrupt
+       if necessary. Copied from allmain. */
+    if (flags.incomplete || !flags.interrupted || flags.occupation) {
+        flags.incomplete = FALSE;
+        flags.interrupted = FALSE;
+        flags.occupation = occ_none;
+
+        log_record_command("interrupt",
+                           &(struct nh_cmd_arg){.argtype = 0});
+        log_time_line();
+        command_input(get_command_idx("interrupt"),
+                      &(struct nh_cmd_arg){.argtype = 0});
+        neutral_turnstate_tasks();
+    }
+
     rv = set_option(name, value, NULL);
+
+    /* If the option change was successful, record it in the logfile. */
+    if (rv) {
+        log_record_command("options",
+                           &(struct nh_cmd_arg){.argtype = 0});
+        log_time_line();
+        command_input(get_command_idx("options"),
+                      &(struct nh_cmd_arg){.argtype = 0});
+        neutral_turnstate_tasks();
+    }
 
     API_EXIT();
     return rv;
