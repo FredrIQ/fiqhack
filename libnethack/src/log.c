@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-06-18 */
+/* Last modified by Fredrik Ljungdahl, 2021-06-22 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2546,8 +2546,7 @@ replay_count_actions(boolean load_checkpoints)
             continue;
         }
 
-        if (*logline >= 'a' && *logline <= 'z' &&
-            (strcmp("interrupt", logline)))
+        if (*logline >= 'a' && *logline <= 'z')
             res++;
 
         program_state.end_of_gamestate_location = get_log_offset();
@@ -2581,8 +2580,7 @@ replay_next_cmd(char cmd[BUFSZ])
          logline;
          free(logline), get_log_offset(),
              (logline = lgetline_malloc(program_state.logfile)))
-        if (*logline >= 'a' && *logline <= 'z' &&
-            (strcmp("interrupt", logline)))
+        if (*logline >= 'a' && *logline <= 'z')
             break;
 
     if (!logline)
