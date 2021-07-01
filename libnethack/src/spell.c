@@ -95,14 +95,14 @@ static int spellcost(const struct monst *, int);
  *      Arc map masters (SPE_MAGIC_MAPPING)
  *      Bar fugue/berserker (SPE_SPEED_MONSTER)
  *      Cav born to dig (SPE_DIG)
- *      Hea to heal (SPE_CURE_SICKNESS)
+ *      Hea to make friends (SPE_CHARM_MONSTER)
  *      Kni to turn back evil (SPE_TURN_UNDEAD)
  *      Mon to preserve their abilities (SPE_RESTORE_ABILITY)
  *      Pri to bless (SPE_REMOVE_CURSE)
  *      Ran to hide (SPE_INVISIBILITY)
  *      Rog to find loot (SPE_DETECT_TREASURE)
  *      Sam to be At One (SPE_CLAIRVOYANCE)
- *      Tou to smile (SPE_CHARM_MONSTER)
+ *      Tou to cross the ocean (SPE_LEVITATION)
  *      Val control the cold (SPE_CONE_OF_COLD)
  *      Wiz all really, but SPE_MAGIC_MISSILE is their party trick
  *
