@@ -3555,7 +3555,7 @@ show_conduct(int final)
             enl_msg(&menu, You_, "have not wished", "did not wish",
                     " for any artifacts");
         else {
-            buf = msgprintf("wished for your your first artifact on turn %d",
+            buf = msgprintf("wished for your first artifact on turn %d",
                             u.uconduct_time[conduct_artiwish]);
             you_have_X(&menu, buf);
         }
