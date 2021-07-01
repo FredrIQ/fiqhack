@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-01-02 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -340,7 +340,7 @@ obj_properties(const struct obj *obj)
              obj->oclass == RING_CLASS)
         props &= opm_jewelry;
     else
-        props &= opm_oilskin; /* misc leather objects */
+        props &= opm_container;
 
     /* These make no sense on non-enchantable objects */
     if (!objects[obj->otyp].oc_charged)
@@ -1147,9 +1147,13 @@ weight(struct obj *obj)
         return wt;
     } else if (obj->oclass == FOOD_CLASS && obj->oeaten) {
         return eaten_stat((int)obj->quan * wt, obj);
-    } else if (obj->oclass == COIN_CLASS)
+    } else if (obj->oclass == COIN_CLASS) {
+        /* Containers of greed make contained gold weightless. */
+        if (obj->where == OBJ_CONTAINED &&
+            (obj_properties(obj->ocontainer) & opm_greed))
+            return 0;
         return (int)((obj->quan + 50L) / 100L);
-    else if (obj->otyp == HEAVY_IRON_BALL && obj->owt != 0)
+    } else if (obj->otyp == HEAVY_IRON_BALL && obj->owt != 0)
         return (int)(obj->owt); /* kludge for "very" heavy iron ball */
     else if (obj->otyp == CANDELABRUM_OF_INVOCATION)
         return (wt + obj->spe * objects[TALLOW_CANDLE].oc_weight);

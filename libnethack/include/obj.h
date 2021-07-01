@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-04-24 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -178,7 +178,10 @@ struct obj {
 #define opm_mercy        0x0000000000200000LLU
 #define opm_carrying     0x0000000000400000LLU
 #define opm_nasty        0x0000000000800000LLU
-#define opm_all          0x0000000000ffffffLLU
+#define opm_greed        0x0000000001000000LLU
+#define opm_discovery    0x0000000002000000LLU
+#define opm_freezer      0x0000000004000000LLU
+#define opm_all          0x0000000007ffffffLLU
 /* Don't have any properties that depend on update_property in
    potential weapon slots, weapon properties aren't updated
    properly. */
@@ -194,6 +197,8 @@ struct obj {
                    opm_speed | opm_power | opm_displacement |   \
                    opm_clairvoyant | opm_fumble | opm_carrying)
 #define opm_jewelry (opm_any | opm_spe)
+#define opm_container (opm_oilskin | opm_greed | opm_discovery |    \
+                       opm_freezer)
 
 
 /* Weapons and weapon-tools */

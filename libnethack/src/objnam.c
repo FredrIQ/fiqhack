@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-06-15 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -114,6 +114,7 @@ struct opropdesc {
     const char *shorthand; /* for 3+ properties */
     const char *suffix;
     const char *suffix_armor;
+    const char *desc; /* For non-properties (which are handled seperately) */
 };
 
 /* shorthand/suffix_armor uses prefix/suffix if empty */
@@ -135,24 +136,35 @@ static const struct opropdesc prop_desc[] = {
     {opm_drain, DRAIN_RES, "thirsty", "drain", NULL,
      "drain resistance"},
     {opm_speed, FAST, NULL, NULL, "speed", NULL},
-    {opm_oilskin, 0, "oilskin", NULL, NULL, NULL},
-    {opm_power, 0, NULL, NULL, "power", NULL},
-    {opm_dexterity, 0, NULL, "dex", "dexterity", NULL},
-    {opm_brilliance, 0, NULL, "brill", "brilliance", NULL},
+    {opm_oilskin, WATERPROOF, "oilskin", NULL, NULL, NULL,
+     "Acts like a permanent layer of grease"},
+    {opm_power, 0, NULL, NULL, "power", NULL, "Sets Strength to 25"},
+    {opm_dexterity, 0, NULL, "dex", "dexterity", NULL,
+     "Increases Dexterity by enchantment"},
+    {opm_brilliance, 0, NULL, "brill", "brilliance", NULL,
+     "Increases Intelligence and Wisdom by enchantment"},
     {opm_displacement, DISPLACED, NULL, "displace",
      "displacement", NULL},
     {opm_clairvoyant, CLAIRVOYANT, NULL, "clairvoyant",
      "clairvoyance", NULL},
     {opm_mercy, 0, NULL, NULL,
-     "mercy", NULL},
+     "mercy", NULL, "Heals targets and autocurses when wielded"},
     {opm_carrying, 0, NULL, "carry",
-     "carrying", NULL},
-    {opm_nasty, 0, "nasty", NULL, NULL, NULL},
+     "carrying", NULL, "Increases carrying capacity"},
+    {opm_nasty, 0, "nasty", NULL, NULL, NULL,
+     "Deals 2d6 additional damage but damages the user by 1d6 each use"},
+    {opm_greed, 0, NULL, NULL, "greed", NULL,
+     "Makes contained gold weightless, but may fail to take out objects"},
+    {opm_discovery, 0, NULL, "id", "discovery", NULL,
+     "Identifies base type of stashed items"},
+    {opm_freezer, 0, "refrigerating", "freeze", NULL, NULL,
+     "Prevents stashed corpses from rotting"},
     /* these below use "versus x" instead of "of x" for armor,
        checked via opm_vorpal */
-    {opm_vorpal, 0, "vorpal", NULL, NULL, "beheading"},
+    {opm_vorpal, 0, "vorpal", NULL, NULL, "beheading",
+     "Has a small chance of beheading the target if hit"},
     {opm_detonate, 0, NULL, "detonate", "detonation",
-     "explosions"},
+     "explosions", "Explodes upon hitting a target"},
     {opm_none, 0, NULL, NULL, NULL, NULL},
 };
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-06-13 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1634,8 +1634,9 @@ mbag_explodes(struct obj *obj, int depthin)
 /* in_container(), and out_container() from askchain() and use_container(). */
 static struct obj *current_container;
 
-#define Icebox ((current_container->otyp == ICE_BOX) || \
-                (magic_chest(current_container)))
+#define Icebox ((current_container->otyp == ICE_BOX) ||             \
+                (magic_chest(current_container)) ||                 \
+                (obj_properties(current_container) & opm_freezer))
 
 /* Returns: -1 to stop, 1 item was inserted, 0 item was not inserted. */
 static int
@@ -1665,7 +1666,7 @@ in_container(struct obj *obj)
 
     if (obj->owornmask & W_WORN) {
         pline_once(msgc_yafm, "You cannot %s something you are wearing.",
-                   Icebox && !magic_chest(current_container) ?
+                   current_container->otyp == ICE_BOX ?
                    "refrigerate" : "stash");
         return 0;
     } else if ((obj->otyp == LOADSTONE) && obj->cursed) {
@@ -1792,6 +1793,15 @@ in_container(struct obj *obj)
             sellobj(obj, current_container->ox, current_container->oy);
         add_to_container(current_container, obj);
         current_container->owt = weight(current_container);
+
+        if (!objects[obj->otyp].oc_name_known && obj->oclass != COIN_CLASS &&
+            (obj_properties(current_container) & opm_discovery)) {
+            tell_discovery(obj);
+            learn_oprop(current_container, opm_discovery);
+        }
+
+        if (obj->oclass == COIN_CLASS)
+            learn_oprop(current_container, opm_greed);
     }
     /* gold needs this, and freeinv() many lines above may cause the
        encumbrance to disappear from the status, so just always update status
@@ -1864,8 +1874,10 @@ out_container(struct obj *obj)
              MOD_ENCUMBER ? "You have a little trouble removing" :
              "You have much trouble removing") : NULL, otmp, count);
 
-    if (is_gold)
+    if (is_gold) {
+        learn_oprop(current_container, opm_greed);
         bot();  /* update character's gold piece count immediately */
+    }
 
     return 1;
 }
@@ -2144,6 +2156,14 @@ use_container(struct obj *obj, int held, boolean alreadyused,
 static int
 menu_loot(int retry, struct obj *container, boolean put_in)
 {
+    if (!put_in && (obj_properties(container) & opm_greed) &&
+        rn2(2)) {
+        pline(msgc_failrandom, "%s to loot the greedy bag!",
+              M_verbs(&youmonst, "fail"));
+        learn_oprop(container, opm_greed);
+        return 1;
+    }
+
     int n, i, n_looted = 0;
     boolean all_categories = TRUE, loot_everything = FALSE;
     const char *buf;
