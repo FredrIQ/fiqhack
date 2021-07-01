@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-31 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -174,6 +174,8 @@ regen_rate(const struct monst *mon, boolean energy)
 
     if (energy)
         regen -= maintenance_pw_drain(mon);
+    else if (zombifying(mon))
+        regen = 0;
 
     return regen;
 }
