@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-08-09 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-05 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2231,32 +2231,14 @@ dump_spells(void)
 
 /* Note: only gives sensible results if SPELL_IS_FROM_SPELLBOOK(spell)
    Potentially we could expand this to prayer and the like, but that'd need a
-   rewrite of the prayer success code (and mathematical analysis of rnz)
-   TODO: this formula is stupid, look into a potential rework of it */
+   rewrite of the prayer success code (and mathematical analysis of rnz) */
 static int
 percent_success(const struct monst *mon, int spell)
 {
     /* Intrinsic and learned ability are combined to calculate the probability
        of player's success at cast a given spell. */
-    int chance, splcaster, special, statused;
-    int difficulty;
-    int skill;
+    int chance = urole.spelbase;
     boolean you = (mon == &youmonst);
-
-    /* Calculate intrinsic ability (splcaster) */
-
-    statused = acurr(mon, you ? urole.spelstat : A_INT);
-    if (you) {
-        splcaster = urole.spelbase;
-        special = urole.spelheal;
-    } else if (!mon->iswiz) {
-        splcaster = spellcaster(mon->data) ? 3 : 8;
-        special = mon->data == &mons[PM_NURSE] ? -3 : -1;
-    } else {
-        /* Wizard of Yendor has superior spellcasting skills */
-        splcaster = 1;
-        special = -3;
-    }
     struct obj *wep = m_mwep(mon);
     struct obj *arm = which_armor(mon, os_arm);
     struct obj *armc = which_armor(mon, os_armc);
@@ -2264,102 +2246,42 @@ percent_success(const struct monst *mon, int spell)
     struct obj *armh = which_armor(mon, os_armh);
     struct obj *armg = which_armor(mon, os_armg);
     struct obj *armf = which_armor(mon, os_armf);
-    int spelarmr = you ? urole.spelarmr : 10;
-    int spelshld = you ? urole.spelshld : 1;
-    int xl = you ? u.ulevel : mon->m_lev;
+    int skill = MP_SKILL(mon, spell_skilltype(spell));
+    xchar intel = acurr(mon, A_INT);
+    if (mon->iswiz)
+        chance = 70;
+    else if (!you)
+        chance = spellcaster(mon->data) ? 50 : 20;
 
-    /* Quarterstaves enhance spellcasting */
-    if (wep && wep->otyp == QUARTERSTAFF)
-        splcaster -= spelarmr;
+    /* Count both restricted and unskilled as unskilled. */
+    if (!skill)
+        skill++;
 
-    if (arm && is_metallic(arm))
-        splcaster += (armc &&
-                      armc->otyp ==
-                      ROBE) ? spelarmr / 2 : spelarmr;
-    else if (armc && armc->otyp == ROBE)
-        splcaster -= spelarmr;
-    if (arms)
-        splcaster += spelshld;
-
-    if (armh && is_metallic(armh))
-        if (armh->otyp != HELM_OF_BRILLIANCE)
-            splcaster += uarmhbon;
-
-    /* Yes, uarm*bon is right, they're defined as fixed values */
-    if (armg && is_metallic(armg))
-        splcaster += uarmgbon;
-    if (armf && is_metallic(armf))
-        splcaster += uarmfbon;
-
-    if (you && spell == urole.spelspec)
-        splcaster += urole.spelsbon;
-
-
-    /* `healing spell' bonus */
-    if (spell == SPE_HEALING ||
-        spell == SPE_EXTRA_HEALING ||
-        spell == SPE_CURE_BLINDNESS ||
-        spell == SPE_CURE_SICKNESS ||
-        spell == SPE_RESTORE_ABILITY ||
-        spell == SPE_REMOVE_CURSE)
-        splcaster += special;
-
-    if (splcaster > 20)
-        splcaster = 20;
-
-    /* Calculate learned ability */
-
-    /* Players basic likelihood of being able to cast any spell is based of
-       their `magic' statistic. (Int or Wis) */
-    chance = 11 * statused / 2;
-
-    /*
-     * High level spells are harder.  Easier for higher level casters.
-     * The difficulty is based on the hero's level and their skill level
-     * in that spell type.
-     */
-    skill = MP_SKILL(mon, spell_skilltype(spell));
-    skill = max(skill, P_UNSKILLED) - 1;        /* unskilled => 0 */
-    difficulty = (objects[spell].oc_level - 1) * 4 - ((skill * 6) + (xl / 3) + 1);
-
-    if (difficulty > 0) {
-        /* Player is too low level or unskilled. */
-        chance -= isqrt(900 * difficulty + 2000);
-    } else {
-        /* Player is above level.  Learning continues, but the law of
-           diminishing returns sets in quickly for low-level spells.  That is,
-           a player quickly gains no advantage for raising level. */
-        int learning = 15 * -difficulty / objects[spell].oc_level;
-
-        chance += learning > 20 ? 20 : learning;
+    chance += m_mlev(mon) * 5;
+    if (intel < 20) {
+        if ((wep && wep->otyp == QUARTERSTAFF) ||
+            (armc && armc->otyp == ROBE))
+            intel = min(20, intel + 5);
     }
-
-    /* Clamp the chance: >18 stat and advanced learning only help to a limit,
-       while chances below "hopeless" only raise the specter of overflowing
-       16-bit ints (and permit wearing a shield to raise the chances :-). */
-    if (chance < 0)
-        chance = 0;
-    if (chance > 120)
-        chance = 120;
-
-    /* Wearing anything but a light shield makes it very awkward to cast a
-       spell.  The penalty is not quite so bad for the player's role-specific
-       spell. Double worn shield weight to undo the weight halving. */
-    if (arms && (weight(arms) * 2) > (int)objects[SMALL_SHIELD].oc_weight &&
-        mon->data->mlet != S_ANGEL) {
-        if (you && spell == urole.spelspec) {
-            chance /= 2;
-        } else {
-            chance /= 4;
-        }
+    chance += intel * 5;
+    chance -= objects[spell].oc_level * 25;
+    if (arm && hampers_casting(arm))
+        chance -= 50;
+    if (arms && !(obj_properties(arms) & opm_brilliance)) {
+        chance -= 15;
+        if (objects[arms->otyp].oc_bulky)
+            chance -= 15;
+        if (is_metallic(arms))
+            chance -= 15;
     }
+    if (armh && hampers_casting(armh))
+        chance -= 20;
+    if (armg && hampers_casting(armg))
+        chance -= 35;
+    if (armf && hampers_casting(armf))
+        chance -= 10;
 
-    /* Finally, chance (based on player intell/wisdom and level) is combined
-       with ability (based on player intrinsics and encumbrances).  No matter
-       how intelligent/wise and advanced a player is, intrinsics and
-       encumbrance can prevent casting; and no matter how able, learning is
-       always required. */
-    chance = chance * (20 - splcaster) / 15 - splcaster;
+    chance = min(chance, (skill + 1) * 20);
 
     /* Clamp to percentile */
     if (chance > 100)

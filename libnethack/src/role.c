@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,7 +51,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 10, 10, 7, 7, 7},
      {20, 20, 20, 10, 20, 10},
-     10, 5, 0, 2, 10, A_INT, SPE_MAGIC_MAPPING, -4},
+     10, 30, SPE_MAGIC_MAPPING},
     {{"Barbarian", 0}, {
                         {"Plunderer", "Plunderess"},
                         {"Pillager", 0},
@@ -72,7 +72,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {16, 7, 7, 15, 16, 6},
      {30, 6, 7, 20, 30, 7},
-     10, 14, 0, 0, 8, A_INT, SPE_SPEED_MONSTER, -4},
+     10, 0, SPE_SPEED_MONSTER},
     {{"Caveman", "Cavewoman"}, {
                                 {"Troglodyte", 0},
                                 {"Aborigine", 0},
@@ -94,7 +94,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {10, 7, 7, 7, 8, 6},
      {30, 6, 7, 20, 30, 7},
-     10, 12, 0, 1, 8, A_INT, SPE_DIG, -4},
+     10, 5, SPE_DIG},
     {{"Healer", 0}, {
                      {"Rhizotomist", 0},
                      {"Empiric", 0},
@@ -115,7 +115,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 7, 13, 7, 11, 16},
      {15, 20, 20, 15, 25, 5},
-     10, 3, -3, 2, 10, A_WIS, SPE_CURE_SICKNESS, -4},
+     10, 40, SPE_CURE_SICKNESS},
     {{"Knight", 0}, {
                      {"Gallant", 0},
                      {"Esquire", 0},
@@ -136,7 +136,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {13, 7, 14, 8, 10, 17},
      {30, 15, 15, 10, 20, 10},
-     10, 8, -2, 0, 9, A_WIS, SPE_TURN_UNDEAD, -4},
+     10, 15, SPE_TURN_UNDEAD},
     {{"Monk", 0}, {
                    {"Candidate", 0},
                    {"Novice", 0},
@@ -159,7 +159,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {10, 7, 8, 8, 7, 7},
      {25, 10, 20, 20, 15, 10},
-     10, 8, -2, 2, 20, A_WIS, SPE_RESTORE_ABILITY, -4},
+     10, 35, SPE_RESTORE_ABILITY},
     {{"Priest", "Priestess"}, {
                                {"Aspirant", 0},
                                {"Acolyte", 0},
@@ -181,7 +181,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 7, 10, 7, 7, 7},
      {15, 10, 30, 15, 20, 10},
-     10, 3, -2, 2, 10, A_WIS, SPE_REMOVE_CURSE, -4},
+     10, 40, SPE_REMOVE_CURSE},
     /* Note: Rogue precedes Ranger so that use of `-R' on the command line
        retains its traditional meaning. */
     {{"Rogue", 0}, {
@@ -204,7 +204,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 7, 7, 10, 7, 6},
      {20, 10, 10, 30, 20, 10},
-     10, 8, 0, 1, 9, A_INT, SPE_DETECT_TREASURE, -4},
+     10, 15, SPE_DETECT_TREASURE},
     {{"Ranger", 0}, {
                      {"Tenderfoot", 0},
                      {"Lookout", 0},
@@ -226,7 +226,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {13, 13, 13, 9, 13, 7},
      {30, 10, 10, 20, 20, 10},
-     10, 9, 2, 1, 10, A_INT, SPE_INVISIBILITY, -4},
+     10, 10, SPE_INVISIBILITY},
     {{"Samurai", 0}, {
                       {"Hatamoto", 0},  /* Banner Knight */
                       {"Ronin", 0},     /* no allegiance */
@@ -247,7 +247,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {10, 8, 7, 10, 17, 6},
      {30, 10, 8, 30, 14, 8},
-     10, 10, 0, 0, 8, A_INT, SPE_CLAIRVOYANCE, -4},
+     10, 10, SPE_CLAIRVOYANCE},
     {{"Tourist", 0}, {
                       {"Rambler", 0},
                       {"Sightseer", 0},
@@ -268,7 +268,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 10, 6, 7, 7, 10},
      {15, 10, 10, 15, 30, 20},
-     10, 5, 1, 2, 10, A_INT, SPE_CHARM_MONSTER, -4},
+     10, 20, SPE_CHARM_MONSTER},
     {{"Valkyrie", 0}, {
                        {"Stripling", 0},
                        {"Skirmisher", 0},
@@ -289,7 +289,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {10, 7, 7, 7, 10, 7},
      {30, 6, 7, 20, 30, 7},
-     10, 10, -2, 0, 9, A_WIS, SPE_CONE_OF_COLD, -4},
+     10, 25, SPE_CONE_OF_COLD},
     {{"Wizard", 0}, {
                      {"Evoker", 0},
                      {"Conjurer", 0},
@@ -311,7 +311,7 @@ const struct Role roles[] = {
      /* Str Int Wis Dex Con Cha */
      {7, 10, 7, 7, 7, 7},
      {10, 30, 10, 20, 20, 10},
-     0, 1, 0, 3, 10, A_INT, SPE_MAGIC_MISSILE, -4},
+     0, 50, SPE_MAGIC_MISSILE},
 /* Array terminator */
     {{0, 0}}
 };

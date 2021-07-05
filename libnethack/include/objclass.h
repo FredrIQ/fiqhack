@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-12 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -122,6 +122,9 @@ struct objclass {
 # define is_organic(otmp)       (objects[otmp->otyp].oc_material <= WOOD)
 # define is_metallic(otmp)      (objects[otmp->otyp].oc_material >= IRON && \
                                  objects[otmp->otyp].oc_material <= MITHRIL)
+# define hampers_casting(otmp)  (is_metallic(otmp) &&                   \
+                                 otmp->otyp != HELM_OF_BRILLIANCE &&    \
+                                 !(obj_properties(otmp) & opm_brilliance))
 
 /* primary damage: fire/rust/--- */
 /* is_flammable(otmp), is_rottable(otmp) in mkobj.c */

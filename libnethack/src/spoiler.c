@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2019-10-26 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-05 */
 /* File opening code based on the xlogfile code. */
 /* Object-looping code based on makedefs.c */
 /* Concept based on Autospoil, by Cristan Szmajda
@@ -878,11 +878,8 @@ spoilspellpenalty(const char *class, const char *label, int p)
 static const char *
 spoilrolespellcasting(int i)
 {
-    return msgprintf("<span class=\"rolespellcasting\">%s %s %s %s</span>",
-                     spoilspellpenalty("base", "Base", roles[i].spelbase),
-                     spoilspellpenalty("armr", "Armor",  roles[i].spelarmr),
-                     spoilspellpenalty("shld", "Shield", roles[i].spelshld),
-                     spoilspellpenalty("heal", "Heal", roles[i].spelheal));
+    return msgprintf("<span class=\"rolespellcasting\">%s</span>",
+                     spoilspellpenalty("base", "Base", roles[i].spelbase));
 }
 
 static const char *

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2018-03-27 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-05 */
 #ifndef ROLE_H
 # define ROLE_H
 
@@ -63,13 +63,8 @@ struct Role {
     xchar initrecord;   /* initial alignment record */
 
         /*** Spell statistics (from spell.c) ***/
-    int spelbase;       /* base spellcasting penalty */
-    int spelheal;       /* penalty (-bonus) for healing spells */
-    int spelshld;       /* penalty for wearing any shield */
-    int spelarmr;       /* penalty for wearing metal armor */
-    int spelstat;       /* which stat (A_) is used */
+    int spelbase;       /* base spellcasting ability */
     int spelspec;       /* spell (SPE_) the class excels at */
-    int spelsbon;       /* penalty (-bonus) for that spell */
 
         /*** Properties in variable-length arrays ***/
     /* intrinsics (see attrib.c) */
