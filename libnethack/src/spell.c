@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-07-05 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-07 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2254,8 +2254,8 @@ percent_success(const struct monst *mon, int spell)
         chance = spellcaster(mon->data) ? 50 : 20;
 
     /* Count both restricted and unskilled as unskilled. */
-    if (!skill)
-        skill++;
+    if (skill = P_ISRESTRICTED)
+        skill = P_UNSKILLED;
 
     chance += m_mlev(mon) * 5;
     if (intel < 20) {

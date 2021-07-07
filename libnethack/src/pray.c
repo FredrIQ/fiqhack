@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2020-09-27 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-07 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2130,16 +2130,16 @@ piety_value(const struct obj *obj)
 
         int nutr = objects[obj->otyp].oc_nutrition;
 
-        prob /= 15;
+        prob /= 50;
         prob++;
         nutr /= prob;
         return nutr;
     }
 
     if (obj->oclass == COIN_CLASS) {
-        if (obj->quan < 4)
+        if (obj->quan < 2)
             return -1; /* ridiculously small amount */
-        return obj->quan / 4;
+        return obj->quan / 2;
     }
 
     if (obj->otyp == CORPSE) {
@@ -2154,7 +2154,7 @@ piety_value(const struct obj *obj)
            bonus below. */
         if (is_unicorn(&mons[pm]))
             value += 5; /* bad alignment combinations handled elsewhere */
-        value *= 100;
+        value *= 150;
         if (obj->oeaten)
             value = eaten_stat(value, obj);
 
