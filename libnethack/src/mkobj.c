@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-07-01 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -339,8 +339,10 @@ obj_properties(const struct obj *obj)
     else if (obj->oclass == AMULET_CLASS ||
              obj->oclass == RING_CLASS)
         props &= opm_jewelry;
-    else
+    else if (Is_container(obj) && obj->otyp != BAG_OF_TRICKS)
         props &= opm_container;
+    else
+        return 0;
 
     /* These make no sense on non-enchantable objects */
     if (!objects[obj->otyp].oc_charged)
@@ -1199,6 +1201,7 @@ mkgold_inuse(long amount, struct level *lev, int x, int y, enum rng rng)
 {
     struct obj *obj = mkgold(amount, lev, x, y, rng);
     obj->in_use = TRUE;
+    return obj;
 }
 
 /* return TRUE if the corpse has special timing */

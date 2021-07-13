@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-07-01 */
+/* Last modified by Fredrik Ljungdahl, 2021-07-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2260,6 +2260,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
                     !strncmpi(bp+13, " of magic resistance", 20)) &&
                    strncmpi(bp, "oilskin sack", 12)) {
             props |= opm_oilskin;
+        } else if (!strncmpi(bp, "refrigerating ", l = 14)) {
+            props |= opm_freezer;
         } else
             break;
         bp += l;
@@ -2491,6 +2493,10 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
                 props |= opm_mercy;
             } else if (!strncmpi(p + of, "carrying", l=8)) {
                 props |= opm_carrying;
+            } else if (!strncmpi(p + of, "greed", l=5)) {
+                props |= opm_greed;
+            } else if (!strncmpi(p + of, "discovery", l=9)) {
+                props |= opm_discovery;
             } else
                 l = 0;
 
