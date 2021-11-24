@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-07-13 */
+/* Last modified by Fredrik Ljungdahl, 2021-11-24 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1376,7 +1376,8 @@ mon_castable(const struct monst *mon, int spell, boolean theoretical)
         return 0;
 
     int pw_cost = spellcost(mon, spell);
-    if (!theoretical && mon->pw < pw_cost)
+    if ((!theoretical && mon->pw < pw_cost) ||
+        mon->pwmax < pw_cost)
         return 0;
 
     /* If we're low on Pw, cast more rarely */
