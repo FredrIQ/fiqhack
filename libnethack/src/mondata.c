@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-06-14 */
+/* Last modified by Fredrik Ljungdahl, 2022-06-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -112,12 +112,13 @@ pm_name(const struct monst *mon)
     return pm_male(pm);
 }
 
-/* Returns male or female name for object mon appropriately. */
+/* Returns male or female name for object mon appropriately.
+   Only shown in wizard mode. */
 const char *
 opm_name(const struct obj *obj)
 {
     int gender = obj_gender(obj);
-    if (!strcmp(pm_male(obj->corpsenm), pm_female(obj->corpsenm)) &&
+    if (wizard && !strcmp(pm_male(obj->corpsenm), pm_female(obj->corpsenm)) &&
         gender != 2 && !pm_onegender(obj->corpsenm)) {
         if (gender == 1)
             return msgprintf("female %s", pm_female(obj->corpsenm));
@@ -138,21 +139,21 @@ set_mon_data(struct monst *mon, const struct permonst *ptr)
         con = acurr(mon, A_CON);
         wis = acurr(mon, A_WIS);
 
-        oldhpadv = get_advmod_total(acurr(mon, A_CON), mon, FALSE);
-        oldenadv = get_advmod_total(acurr(mon, A_WIS), mon, TRUE);
+        oldhpadv = get_advmod_total(con, mon, FALSE);
+        oldenadv = get_advmod_total(wis, mon, TRUE);
     }
     mon->data = ptr;
     if (mon != &youmonst && old_data) {
         /* Keep HP modifier and change old HP growth to new.
            Do the same with Pw. */
-        int newhpadv = get_advmod_total(acurr(mon, A_CON), mon, FALSE);
+        int newhpadv = get_advmod_total(con, mon, FALSE);
         mon->mhpmax += (newhpadv - oldhpadv);
         if (mon->mhpmax < 1)
             mon->mhpmax = 1;
         if (mon->mhp > mon->mhpmax)
             mon->mhp = mon->mhpmax;
 
-        int newenadv = get_advmod_total(acurr(mon, A_WIS), mon, TRUE);
+        int newenadv = get_advmod_total(wis, mon, TRUE);
         mon->pwmax += (newenadv - oldenadv);
         if (mon->pwmax < 0)
             mon->pwmax = 0;
