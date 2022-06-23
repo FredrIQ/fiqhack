@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Fredrik Ljungdahl, 2021-09-20 */
+/* Last modified by Fredrik Ljungdahl, 2022-06-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2256,11 +2256,14 @@ break_wand(struct monst *mon, struct obj *obj)
         expltype = EXPL_FIERY;
     else if (otyp == WAN_COLD)
         expltype = EXPL_FROSTY;
+    else if (otyp == WAN_DIGGING)
+        expltype = EXPL_MUDDY;
     else
         expltype = EXPL_MAGICAL;
 
-    /* (non-sleep) ray explosions */
-    if (objects[otyp].oc_dir == RAY && otyp != WAN_SLEEP) {
+    /* (non-sleep/digging) ray explosions */
+    if (objects[otyp].oc_dir == RAY && otyp != WAN_SLEEP &&
+        otyp != WAN_DIGGING) {
         explode(obj->ox, obj->oy,
                 you ? (otyp - WAN_MAGIC_MISSILE) :
                 -30 - (otyp - WAN_MAGIC_MISSILE), dmg, WAND_CLASS,
@@ -2280,6 +2283,7 @@ break_wand(struct monst *mon, struct obj *obj)
             NULL, 0);
 
     /* affect all tiles around the monster */
+    int res_bhit = 0;
     int shop_dmg = 0;
     boolean hityou = FALSE; /* hit player last to avoid bones oddities */
     for (i = 0; i <= 8; i++) {
@@ -2314,16 +2318,14 @@ break_wand(struct monst *mon, struct obj *obj)
                 hityou = TRUE;
                 continue;
             }
-            int res_bhit = bhit_at(mon, obj, x, y, 10);
-            if (you && (res_bhit & BHIT_SHOPDAM))
-                shop_dmg = 2;
+            res_bhit |= bhit_at(mon, obj, x, y, 10);
         }
     }
-    if (hityou) {
-        int res_bhit = bhit_at(mon, obj, u.ux, u.uy, 10);
-        if (you && (res_bhit & BHIT_SHOPDAM))
-            shop_dmg = 2;
-    }
+    if (hityou)
+        res_bhit |= bhit_at(mon, obj, u.ux, u.uy, 10);
+
+    if (you && (res_bhit & BHIT_SHOPDAM))
+        shop_dmg = 2;
 
     if (shop_dmg)
         pay_for_damage(shop_dmg == 1 ? "dig into" : "destroy", FALSE);
