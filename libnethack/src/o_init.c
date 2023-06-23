@@ -410,6 +410,8 @@ tell_discovery(struct obj *obj)
         return;
 
     makeknown(obj->otyp);
+    if (!flags.msg_hints)
+        return;
 
     /* Temporary mark as dknown so we can announce it properly. */
     boolean save_dknown = obj->dknown;
