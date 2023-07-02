@@ -17,6 +17,7 @@ static short which_arti(int);
 static struct monst *other_mon_has_arti(struct monst *, short);
 static struct obj *on_ground(short, xchar, xchar, const struct monst *);
 static boolean you_have(int);
+static boolean findwarp(struct monst *, int, coord *);
 
 static const int nasties[] = {
     PM_COCKATRICE, PM_ETTIN, PM_STALKER, PM_MINOTAUR, PM_RED_DRAGON,
@@ -605,6 +606,155 @@ strategy(struct monst *mtmp, boolean magical_target)
        happened to be. */
 }
 
+static const int coveted[] = {
+    M3_WANTSAMUL, M3_WANTSARTI, M3_WANTSBELL, M3_WANTSCAND, M3_WANTSBOOK
+};
+
+static const char *const coveted_name[] = {
+    "the Amulet", "your artifact", "the Bell", "the Candelabrum", "the Book"
+};
+
+/* Returns true upon a successful warp. dest indicates which item to warp to
+   if multiple choices are available, 0 if we should check what options are
+   available. Returns amount of valid items, or dest if successful warp. */
+int
+warp(struct monst *mon, int dest)
+{
+    coord cc;
+    int i;
+    struct nh_menulist menu;
+    int valid_items = 0;
+    int orig_x = m_mx(mon);
+    int orig_y = m_my(mon);
+
+    /* Does this monster covet anything? */
+    if (!is_covetous(mon->data)) {
+        impossible("warp: mon not covetus?");
+        return 0;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(coveted); i++) {
+        if (findwarp(mon, coveted[i], &cc)) {
+            valid_items++;
+
+            /* Are we just checking, or actually trying to warp? */
+            if (valid_items == dest) {
+                /* Warp to the target object. */
+                if (mon != &youmonst)
+                    mnearto(mon, cc.x, cc.y, FALSE);
+                else {
+                    if (goodpos(m_dlevel(mon), cc.x, cc.y, mon, 0))
+                        teleds(cc.x, cc.y, FALSE);
+                    else if (enexto(&cc, m_dlevel(mon), cc.x, cc.y, mon->data))
+                        teleds(cc.x, cc.y, FALSE);
+                }
+
+                if (orig_x != m_mx(mon) || orig_y != m_my(mon)) {
+                    if (mon == &youmonst)
+                        pline(msgc_actionok, "Warped to %s.",
+                              coveted_name[i]);
+                    mon->mspec_used++;
+                    return dest;
+                } else {
+                    if (mon == &youmonst)
+                        pline(msgc_failcurse, "Failed to warp!");
+                    return 0;
+                }
+            } else if (!dest) {
+                if (valid_items == 1)
+                    init_menulist(&menu);
+                add_menuitem(&menu, valid_items, coveted_name[i], 0, FALSE);
+            }
+        }
+    }
+
+    if (!dest && valid_items) {
+        if (mon == &youmonst) {
+            const int *selected;
+            int n;
+            n = display_menu(&menu, "Warp to which object?", PICK_ONE,
+                             PLHINT_ANYWHERE, &selected);
+            if (n <= 0)
+                return 0;
+
+            return warp(mon, selected[0]);
+        } else {
+            /* Try to warp to all items in order until one succeeds. */
+            for (i = 1; i <= valid_items; i++)
+                if ((dest = warp(mon, i)))
+                    return dest;
+
+            return 0;
+        }
+    }
+
+    if (mon == &youmonst)
+        pline(msgc_failcurse, "No coveted objects found!");
+    return 0;
+}
+
+/* Find the coveted object type from mask, within mon's dungeon level. */
+static boolean
+findwarp(struct monst *mon, int mask, coord *cc)
+{
+    struct obj *obj;
+    struct obj *found = NULL;
+    int otyp = -1;
+    int arti = -1;
+    if (mask & M3_WANTSARTI)
+        arti = urole.questarti;
+    else
+        otyp = which_arti(mask);
+
+    struct level *lev = m_dlevel(mon);
+
+    /* First, check if the object exists on the level. */
+    for (obj = lev->objlist; obj; obj = obj->nobj)
+        if (obj->otyp == otyp || obj->oartifact == arti)
+            found = obj;
+
+    /* Then, check if it's buried. */
+    if (!found)
+        for (obj = lev->buriedobjlist; obj; obj = obj->nobj)
+            if (obj->otyp == otyp || obj->oartifact == arti)
+                found = obj;
+
+    /* Finally, check monster inventories. */
+    struct monst *carrier;
+    if (!found) {
+        for (carrier = monlist(lev); carrier; carrier = monnext(carrier)) {
+            /* Ignore ourselves. */
+            if (mon == carrier)
+                continue;
+
+            if (otyp)
+                found = m_carrying(carrier, otyp);
+            else
+                found = m_carrying_artifact(carrier, arti);
+
+            /* Did the monster carry the target object? */
+            if (found) {
+                /* A meditating Rodney is left alone unless you are the one
+                   coveting the object. */
+                if (carrier->data != &mons[PM_WIZARD_OF_YENDOR] ||
+                    mon == &youmonst || !idle(carrier)) {
+                    cc->x = m_mx(carrier);
+                    cc->y = m_my(carrier);
+                    return TRUE;
+                }
+            }
+        }
+    } else {
+        /* We found it while looking at the level map or buried objects. */
+        cc->x = found->ox;
+        cc->y = found->oy;
+        return TRUE;
+    }
+
+    /* Failed to find the object... */
+    return FALSE;
+}
+
 /*
  * How a covetous monster interprets the strategy fields.
  *
@@ -625,33 +775,7 @@ tactics(struct monst *mtmp)
     int x = COLNO;
     int y = ROWNO;
 
-    boolean warp_ok = TRUE;
-    if (mtmp->mspec_used || In_endgame(&lev->z))
-        warp_ok = FALSE;
-
-    if (mtmp->mtame) {
-        /* Harass monsters hostile to the player */
-        for (target = monlist(lev); target; target = monnext(target)) {
-            if (DEADMONSTER(target))
-                continue;
-
-            if (mm_aggression(mtmp, target, Conflict) &&
-                msensem(mtmp, target)) {
-                if (mclose > dist2(u.ux, u.uy, m_mx(target), m_my(target))) {
-                    mclose = dist2(u.ux, u.uy, m_mx(target), m_my(target));
-                    x = m_mx(target);
-                    y = m_my(target);
-                }
-            }
-        }
-
-        if (warp_ok && isok(x, y) &&
-            (mclose < (BOLT_LIM * BOLT_LIM) ? rn2(4) : !rn2(4))) {
-            mtmp->mspec_used += 500;
-            mnearto(mtmp, x, y, FALSE);
-            return 0;
-        }
-    }
+    boolean warp_ok = !mtmp->mspec_used;
 
     long strat = mtmp->mstrategy;
     struct obj *obj;
@@ -671,10 +795,8 @@ tactics(struct monst *mtmp)
         }
 
         /* Otherwise, try to teleport to it and fallback to normal AI */
-        if (warp_ok) {
-            mtmp->mspec_used += 500;
-            mnearto(mtmp, mtmp->sx, mtmp->sy, FALSE);
-        }
+        if (warp_ok)
+            warp(mtmp, 0);
         return 0;
     case st_mon: /* object in monster inventory */
         /* If we're tame and target is tame or player, usually run the normal AI */
@@ -693,30 +815,13 @@ tactics(struct monst *mtmp)
         }
 
         /* Otherwise, teleport to the target (only do it sometimes if we wont attack) */
-        if (warp_ok) {
-            mtmp->mspec_used += 500;
-            mnearto(mtmp, mtmp->sx, mtmp->sy, FALSE);
-        }
+        if (warp_ok)
+            warp(mtmp, 0);
         return 0;
     case st_escape:   /* hide and recover */
         /* if wounded, hole up on or near the stairs (to block them) */
         /* unless, of course, there are no stairs (e.g. endlevel) */
         mtmp->mavenge = 1;      /* covetous monsters attack while fleeing */
-        if (In_W_tower(mtmp->mx, mtmp->my, &u.uz) ||
-            (mtmp->iswiz && isok(lev->upstair.sx, lev->upstair.sy) &&
-             !mon_has_amulet(mtmp))) {
-            if (warp_ok && !rn2(3 + mtmp->mhp / 10)) {
-                mtmp->mspec_used += 500;
-                rloc(mtmp, TRUE);
-            }
-        } else if (isok(lev->upstair.sx, lev->upstair.sy) &&
-                   (mtmp->mx != lev->upstair.sx ||
-                    mtmp->my != lev->upstair.sy)) {
-            if (warp_ok) {
-                mtmp->mspec_used += 500;
-                mnearto(mtmp, lev->upstair.sx, lev->upstair.sy, FALSE);
-            }
-        }
         if (distu(mtmp->mx, mtmp->my) > (BOLT_LIM * BOLT_LIM)) {
             /* if you're not around, cast healing spells
 
@@ -733,29 +838,6 @@ tactics(struct monst *mtmp)
         }
 
     default:
-        /* Sometimes, try to find pests we can harass */
-        if (warp_ok && !rn2(3)) {
-            mtmp->mspec_used += 500;
-            rloc(mtmp, TRUE);
-
-            /* Try to figure out where pests are */
-            for (target = monlist(lev); target; target = monnext(target)) {
-                if (DEADMONSTER(target))
-                    continue;
-
-                if (mm_aggression(mtmp, target, Conflict) &&
-                    msensem(mtmp, target)) {
-                    x = m_mx(target);
-                    y = m_my(target);
-                    break;
-                }
-            }
-
-            if (isok(x, y))
-                mnearto(mtmp, x, y, FALSE);
-            return 0;
-        }
-
         /* Use normal AI */
         return 0;
     }

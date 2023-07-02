@@ -369,11 +369,8 @@ dowarp(void)
         return 0;
     }
 
-    /* completely unrestricted teleportation */
-    int ret = tele_impl(TRUE, FALSE);
-    if (ret)
-        youmonst.mspec_used += 500; /* have to wait to do it again */
-
+    /* Perform covetous warp. */
+    warp(&youmonst, 0);
     return 0;
 }
 

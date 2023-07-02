@@ -2188,6 +2188,7 @@ extern boolean target_on(int, struct monst *);
 extern int tactics(struct monst *);
 extern boolean obj_interesting(struct monst *, struct obj *);
 extern void strategy(struct monst *, boolean);
+extern int warp(struct monst *, int);
 extern boolean covetous_sense(const struct monst *, const struct monst *);
 extern void aggravate(void);
 extern void clonewiz(void);
