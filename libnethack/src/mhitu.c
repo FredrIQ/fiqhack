@@ -323,7 +323,7 @@ mattacku(struct monst *mtmp)
                 return 0;
             /* Let your steed retaliate */
             if (u.usteed &&
-                (mm_aggression(u.usteed, mtmp, Conflict) & ALLOW_MELEE))
+                (mm_aggression(u.usteed, mtmp, FALSE) & ALLOW_MELEE))
                 return !!(mattackm(u.usteed, mtmp) & MM_DEF_DIED);
             return 0;
         }
@@ -538,7 +538,7 @@ mattacku(struct monst *mtmp)
         case AT_BUTT:
         case AT_TENT:
             if (!ranged &&
-                (!MON_WEP(mtmp) || confused(mtmp) || Conflict ||
+                (!MON_WEP(mtmp) || confused(mtmp) ||
                  !touch_petrifies(youmonst.data))) {
                 if (tmp > (j = rnd(20 + i))) {
                     if (mattk->aatyp != AT_KICK ||

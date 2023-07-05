@@ -1402,10 +1402,6 @@ eataccessory(struct monst *mon, struct obj *otmp)
             if (!objects[typ].oc_oprop)
                 break;  /* should never happen */
 
-            /* disallow conflict for monsters */
-            if (typ == RIN_CONFLICT && !you)
-                break;
-
             if (typ == AMULET_OF_RESTFUL_SLEEP)
                 set_property(mon, SLEEP_RES, 0, FALSE); /* give this too */
 

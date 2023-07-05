@@ -1039,6 +1039,7 @@ extern int sleep_monst(struct monst *, struct monst *, int, int);
 extern void slept_monst(struct monst *);
 extern long attk_protection(int);
 extern void mrustm (struct monst *magr, struct monst *mdef, struct obj *obj);
+extern void do_conflict(struct level *);
 extern void do_at_area(struct level *);
 
 /* ### mhitq.c ### */

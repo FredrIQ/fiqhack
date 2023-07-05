@@ -113,7 +113,7 @@ onscary(int x, int y, const struct monst *mtmp)
     if (mx_eshk(mtmp) || mx_egd(mtmp) || mtmp->iswiz || blind(mtmp) ||
         mtmp->mpeaceful || mtmp->data->mlet == S_HUMAN || is_lminion(mtmp) ||
         mtmp->data == &mons[PM_ANGEL] || is_rider(mtmp->data) ||
-        (mtmp->data->geno & G_UNIQ) || Conflict)
+        (mtmp->data->geno & G_UNIQ))
         return FALSE;
 
     return (boolean) (sobj_at(SCR_SCARE_MONSTER, level, x, y)
@@ -481,8 +481,7 @@ dochug(struct monst *mtmp)
             pline(msgc_levelwarning,
                   "You sense a faint wave of psychic energy.");
         else {
-            if (!mtmp->mpeaceful || (Conflict &&
-                                     !resist(&youmonst, mtmp, RING_CLASS, 0, 0))) {
+            if (!mtmp->mpeaceful) {
                 boolean m_sen = sensemon(mtmp);
 
                 if (!u.uinvulnerable &&
@@ -556,7 +555,7 @@ dochug(struct monst *mtmp)
     /* If monster is nearby you, and has to wield a weapon, do so.  This costs
        the monster a move unless the monster already wields a weapon (similar
        to players being able to switch weapon for free with x) */
-    if ((!mtmp->mpeaceful || Conflict) && inrange &&
+    if (!mtmp->mpeaceful && inrange &&
         (engulfing_u(mtmp) ||
          dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= 8) &&
         attacktype(mdat, AT_WEAP)) {
@@ -602,8 +601,8 @@ dochug(struct monst *mtmp)
         (invisible(mtmp) && !rn2(3)) ||
         (mdat->mlet == S_LEPRECHAUN && !ygold &&
          (lepgold || rn2(2))) || (is_wanderer(mdat) && !rn2(4)) ||
-        (Conflict && !mtmp->iswiz) || (blind(mtmp) && !rn2(4)) ||
-        mtmp->mpeaceful || mtmp->mstrategy == st_ascend) {
+        (blind(mtmp) && !rn2(4)) || mtmp->mpeaceful ||
+        mtmp->mstrategy == st_ascend) {
         tmp = m_move(mtmp, 0);
         distfleeck(mtmp, &inrange, &nearby, &scared);   /* recalc */
 
@@ -646,13 +645,13 @@ dochug(struct monst *mtmp)
        to or attack the player's apparent location. We don't know which, and we
        don't know what's there. Stun and confusion are checked by m_move, which
        won't fall through here unless the player's apparent square happened to
-       be selected by the movement randomizer. Thus, we do a hostile/conflict
-       check in order to ensure that the monster is willing to attack, then tell
-       it to attack the square it believes the player to be on. We also check to
-       make sure that the monster's physically capable of attacking the square,
-       and that the monster hasn't used its turn already (tmp == 3). */
+       be selected by the movement randomizer. Thus, we do a hostile check in
+       order to ensure that the monster is willing to attack, then tell it to
+       attack the square it believes the player to be on. We also check to make
+       sure that the monster's physically capable of attacking the square, and
+       that the monster hasn't used its turn already (tmp == 3). */
 
-    if (!mtmp->mpeaceful || (Conflict && !resist(&youmonst, mtmp, RING_CLASS, 0, 0))) {
+    if (!mtmp->mpeaceful) {
         if (nearby && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3 &&
             aware_of_u(mtmp))
             if (engulfing_u(mtmp) ? mattackq(mtmp, u.ux, u.uy) :
@@ -736,7 +735,7 @@ itsstuck(struct monst *mtmp)
  * 0: Did not move, but can still attack and do other stuff.
  *    Returning this value will (in the current codebase) cause the monster to
  *    immediately attempt a melee or ranged attack on the player, if it's in a
- *    state (hostile/conflicted) in which it doesn't mind doing that, and it's
+ *    state (hostile) in which it doesn't mind doing that, and it's
  *    on a map square from which it's physically capable of doing that.
  * 1: Moved
  * 2: Monster died.
@@ -947,8 +946,7 @@ not_special:
 
     /* don't tunnel if hostile and close enough to prefer a weapon */
     if (can_tunnel && needspick(ptr) &&
-        ((!mtmp->mpeaceful || Conflict) &&
-         dist2(mtmp->mx, mtmp->my, gx, gy) <= 8))
+        (!mtmp->mpeaceful && dist2(mtmp->mx, mtmp->my, gx, gy) <= 8))
         can_tunnel = FALSE;
 
     int jump = jump_ok(mtmp);
@@ -956,7 +954,7 @@ not_special:
     nix = omx;
     niy = omy;
     flag = 0L;
-    if (mtmp->mpeaceful && (!Conflict || resist(&youmonst, mtmp, RING_CLASS, 0, 0)))
+    if (mtmp->mpeaceful)
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
         flag |= ALLOW_MUXY;
@@ -1226,10 +1224,7 @@ not_special:
            2 - It may mistake the monster for your (displaced) image.
 
            Pets get taken care of above and shouldn't reach this code. Conflict
-           does not turn on the mm_aggression flag, so isn't taken care of here
-           either (although it affects this code by turning off the sanity
-           checks on it, meanining that, say, a monster can kill itself via
-           passive damage). */
+           can cause a monster to kill itself via passive damage. */
         if (info[chi] & ALLOW_MELEE)
             return mattackq(mtmp, nix, niy);
 

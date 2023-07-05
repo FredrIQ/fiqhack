@@ -218,19 +218,19 @@ int
 fightm(struct monst *mon)
 {
     int result;
-    boolean conflicted = (Conflict && !resist(&youmonst, mon, RING_CLASS, 0, 0) &&
-                          m_canseeu(mon) && distu(mon->mx, mon->my) < (BOLT_LIM * BOLT_LIM));
     boolean mercy = FALSE;
-    if (mon->mw && (obj_properties(mon->mw) & opm_mercy) &&
-        mon->mw->mknown)
+    struct obj *wep = m_mwep(mon);
+    if (wep && (obj_properties(wep) & opm_mercy) &&
+        (mon == &youmonst ? wep->known : wep->mknown))
         mercy = TRUE;
 
-    /* perhaps we're holding it... */
-    if (itsstuck(mon))
+    /* perhaps it's stuck... */
+    if ((mon == &youmonst && u.ustuck) ||
+        (mon != &youmonst && itsstuck(mon)))
         return 0;
 
     /* ignore tame monsters for now, it has its' own movement logic alltogether */
-    if (mon->mtame)
+    if (flags.mon_moving != -1 && (mon == &youmonst || mon->mtame))
         return 0;
 
     int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
@@ -242,30 +242,57 @@ fightm(struct monst *mon)
     int nummon = 0;
     struct monst *mdef = NULL;
     for (i = 0; i < 8; i++) {
-        x = mon->mx + dirx[i];
-        y = mon->my + diry[i];
+        x = m_mx(mon) + dirx[i];
+        y = m_my(mon) + diry[i];
         if (!isok(x, y))
             continue;
 
         /* Don't use mvismon_at -- we want to allow monsters to successfully
            attack displaced monsters sometimes... */
-        if (x == mon->mux && y == mon->muy)
-            mtmp = &youmonst;
-        else
-            mtmp = m_at(level, x, y);
+        if (mon != &youmonst) {
+            if (x == mon->mux && y == mon->muy)
+                mtmp = &youmonst;
+            else
+                mtmp = m_at(level, x, y);
+        }
 
-        if (!mtmp || (!mm_aggression(mon, mtmp, Conflict) && !conflicted &&
-                      !mercy))
-            continue;
-        if (mercy && mon->mpeaceful != (mtmp == &youmonst ? 1 :
-                                        mtmp->mpeaceful))
-            continue;
+        if (flags.mon_moving != -1) {
+            if (!mtmp || (!mm_aggression(mon, mtmp, FALSE) && !mercy))
+                continue;
+            if (mercy && mon->mpeaceful != (mtmp == &youmonst ? 1 :
+                                            mtmp->mpeaceful))
+                continue;
+        } else {
+            /* Conflict doesn't care where the monster thinks the player is. */
+            if (x == u.ux && y == u.uy)
+                mtmp = &youmonst;
+            else
+                mtmp = m_at(level, x, y);
+        }
 
-        if (!rn2(++nummon))
+        if (mtmp && !rn2(++nummon))
             mdef = mtmp;
     }
 
     if (mdef) {
+        /* Use mattackq if this was Conflict-induced. */
+        if (flags.mon_moving == -1) {
+            /* Do nothing if we have no attacks. */
+            if ((mon != &youmonst || Upolyd) && noattacks(mon->data))
+                return 0;
+
+            if (mon == &youmonst) {
+                if (near_capacity() >= EXT_ENCUMBER)
+                    return 0;
+
+                attack(mdef, m_mx(mdef) - u.ux, m_my(mdef) - u.uy, TRUE);
+                return 1;
+            } else {
+                mattackq(mon, m_mx(mdef), m_my(mdef));
+                return 1;
+            }
+        }
+
         /* If we selected the player, return. This is to avoid us ignoring
            the hero when next to us, while keeping full AI running when
            this happens. */
@@ -284,8 +311,7 @@ fightm(struct monst *mon)
             (Engulfed && mon == u.ustuck && mattacku(mon)))
             return 1; /* monster died */
 
-        /* Allow attacked monsters a chance to hit back. Primarily to
-           allow monsters that resist conflict to respond.
+        /* Allow attacked monsters a chance to hit back.
 
            Note: in 4.3, this no longer costs movement points, because
            it throws off the turn alternation.
@@ -471,9 +497,8 @@ mattackm(struct monst *magr, struct monst *mdef)
                 break;  /* might have more ranged attacks */
             }
             /* Monsters won't attack cockatrices physically if they have a
-               weapon instead.  This instinct doesn't work for players, or
-               under conflict or confusion. */
-            if (!confused(magr) && !Conflict && !resists_ston(magr) &&
+               weapon instead. */
+            if (!confused(magr) && !resists_ston(magr) &&
                 otmp && mattk->aatyp != AT_WEAP &&
                 touch_petrifies(mdef->data)) {
                 strike = 0;
@@ -2282,6 +2307,59 @@ assess_dmg:
     return mdead | mhit;
 }
 
+/* Activate Conflict. */
+void
+do_conflict(struct level *lev)
+{
+    struct monst *magr;
+    struct monst *mdef;
+    uint64_t area[COLNO+1][ROWNO];
+    boolean any_conflict = FALSE;
+    memset(area, 0, sizeof area);
+    area[COLNO][0] = 1;
+
+    for (magr = monlist(lev); magr; magr = monnext(magr)) {
+        if (!conflicting(magr))
+            continue;
+
+        any_conflict = TRUE;
+
+        /* do_clear_area will include the location we are standing on, which we
+           don't want. So restore previous state afterwards. */
+        uint64_t prev_magr = area[m_mx(magr)][m_my(magr)];
+        do_clear_area(m_mx(magr), m_my(magr), 8, set_at_area, &area);
+        area[m_mx(magr)][m_my(magr)] = prev_magr;
+    }
+
+    if (!any_conflict)
+        return;
+
+    /* Proc Conflict. */
+    int x;
+    int y;
+    for (x = 0; x < COLNO; x++) {
+        for (y = 0; y < ROWNO; y++) {
+            /* is this area affected by Conflict? */
+            if (!area[x][y])
+                continue;
+
+            /* is there a monster here */
+            mdef = m_at(lev, x, y);
+            if (!mdef && x == u.ux && y == u.uy && lev == level)
+                mdef = &youmonst;
+            if (!mdef)
+                continue;
+
+            /* The monster might resist Conflict. */
+            if (mdef != &youmonst && resist(NULL, mdef, RING_CLASS, 0, 0))
+                continue;
+
+            /* Find a nearby monster. */
+            fightm(mdef);
+        }
+    }
+}
+
 /* Perform AT_AREA logic (e.g. area of effect "auras" for certain monsters.
    AT_AREA defines certain "auras" from certain monsters with an
    area-of-effect. For example, floating eyes make monsters within a certain
@@ -2290,12 +2368,11 @@ void
 do_at_area(struct level *lev)
 {
     struct monst *magr, *mdef;
+    uint64_t area[COLNO+1][ROWNO];
     struct monst *areamons[64];
     const struct attack *areaatk[64];
-    uint64_t area[COLNO+1][ROWNO];
     int i = 0;
 
-    /* Clear area from earlier invocations */
     memset(area, 0, sizeof area);
 
     /* Iterate the monlist, looking for AT_AREA. If one is found, perform a

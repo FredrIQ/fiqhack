@@ -1968,8 +1968,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                 } else {
                     if (MON_AT(mlevel, nx, ny)) {
                         struct monst *mtmp2 = m_at(mlevel, nx, ny);
-                        long mmflag = flag | mm_aggression(mon, mtmp2,
-                                                           Conflict);
+                        long mmflag = flag | mm_aggression(mon, mtmp2, FALSE);
 
                         swarmcount++;
 
@@ -2172,11 +2171,13 @@ do_grudge(const struct permonst *pm1, const struct permonst *pm2)
    that Warning works correctly on monsters. The latter is naturally has to be a
    guess, because we have no way to predict the player's actions in advance; we
    assume that for the purposes of Warning, the player would attack any monster
-   that would attack them, unless pacifist. */
+   that would attack them, unless pacifist.
+
+   theoretical is used when we would ideally want to attack a monster, but we
+   refrain from doing so because doing so would be stupid (trice, etc). */
 long
-mm_aggression(const struct monst *magr, /* monster that might attack */
-              const struct monst *mdef, /* the monster it might attack */
-              boolean conflicted)
+mm_aggression(const struct monst *magr, const struct monst *mdef,
+              boolean theoretical)
 {
     const struct permonst *ma = magr->data;
     const struct permonst *md = mdef->data;
@@ -2196,7 +2197,7 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     /* anti-stupidity checks moved here from dog_move, so that hostile monsters
        benefit from the improved AI when attacking pets too: */
 
-    if (!conflicted) {
+    if (!theoretical) {
         /* monsters have a 9/10 chance of rejecting an attack on a monster that
            would paralyze them; in a change from 3.4.3, they don't check whether
            a floating eye they're attacking is blind (because it's not obvious
@@ -2284,7 +2285,7 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     /* Inherit master's aggressions */
     struct monst *master = tame_to(magr);
     if (master && master != &youmonst)
-        return mm_aggression(master, mdef, conflicted);
+        return mm_aggression(master, mdef, theoretical);
     return 0L;
 }
 
@@ -2958,8 +2959,9 @@ xkilled(struct monst *mtmp, int dest)
     mtmp->mhp = -1; /* assumed by this code in 3.4.3; paranoia that some
                        similar assumptions still exist in the code */
 
-    /* KMH, conduct */
-    break_conduct(conduct_killer);
+    /* KMH, conduct. Not if Conflict-induced, though. */
+    if (flags.mon_moving != -1)
+        break_conduct(conduct_killer);
 
     if (dest & 1) {
         const char *verb = nonliving(mtmp->data) ? "destroy" : "kill";
@@ -2991,7 +2993,7 @@ xkilled(struct monst *mtmp, int dest)
                          */
 
     /* your pet knows who just killed it...watch out */
-    if (mtmp->mtame && !isminion(mtmp))
+    if (mtmp->mtame && !isminion(mtmp) && flags.mon_moving != -1)
         mx_edog(mtmp)->killed_by_u = 1;
 
     /* dispose of monster and make cadaver */
@@ -3012,9 +3014,10 @@ xkilled(struct monst *mtmp, int dest)
 
     /* with lifesaving taken care of, history can record the heroic deed */
     if ((mtmp->data->geno & G_UNIQ) && !mtmp->summoned) {
-        historic_event(FALSE, FALSE, "killed %s %s.",
+        historic_event(FALSE, FALSE, "killed %s %s%s.",
                        x_monnam(mtmp, ARTICLE_NONE, NULL, EXACT_NAME, TRUE),
-                       hist_lev_name(&u.uz, TRUE));
+                       hist_lev_name(&u.uz, TRUE),
+                       flags.mon_moving == -1 ? " while conflicted" : "");
     }
 
     /* delete any "remembered invisible" (etc.) remains from the dead monster
@@ -3034,7 +3037,7 @@ xkilled(struct monst *mtmp, int dest)
         goto cleanup;
 
     /* might be here after swallowed */
-    if (((x != u.ux) || (y != u.uy)) && !rn2(6) &&
+    if (((x != u.ux) || (y != u.uy)) && !rn2(6) && flags.mon_moving != -1 &&
         !(mvitals[mndx].mvflags & G_NOCORPSE) && mdat->mlet != S_KOP) {
         int typ;
 
@@ -3070,19 +3073,18 @@ xkilled(struct monst *mtmp, int dest)
         newsym(x, y);
 
 cleanup:
-    /* Don't give any lasting result if summoned. */
-    if (mtmp->summoned)
+    /* Don't give any lasting result if summoned or if the kill was Conflict-
+       induced. */
+    if (mtmp->summoned || flags.mon_moving == -1)
         return;
 
     /* punish bad behaviour */
     if (is_human(mdat) && (!always_hostile(mdat) && mtmp->malign <= 0) &&
         (mndx < PM_ARCHEOLOGIST || mndx > PM_WIZARD) &&
         u.ualign.type != A_CHAOTIC) {
-        set_property(&youmonst, TELEPAT, -1, TRUE);
+        set_property(&youmonst, TELEPAT, -1, TRUE); /* handles vision recalc */
         change_luck(-2);
         pline(msgc_alignbad, "You murderer!");
-        if (Blind && !Blind_telepat)
-            see_monsters(FALSE);     /* Can't sense monsters any more. */
     }
     if ((mtmp->mpeaceful && !rn2(2)) || mtmp->mtame)
         change_luck(-1);
@@ -3669,6 +3671,9 @@ setmangry(struct monst *mtmp)
 
     if (idle(mtmp))
         mtmp->mstrategy = st_none;
+
+    if (flags.mon_moving == -1)
+        return;
 
     if (!flags.mon_moving && !mtmp->mtame)
         punish_elbereth();

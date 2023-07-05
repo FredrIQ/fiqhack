@@ -1466,7 +1466,7 @@ validate_jump(const struct musable *m, coord *cc, boolean magic,
         bpline(msgc_cancelled, show, "This calls for swimming, not jumping!");
         return 0;
     } else if (mon == u.ustuck || (you && u.ustuck)) {
-        if (u.ustuck->mtame && !Conflict && !confused(u.ustuck)) {
+        if (u.ustuck->mtame && !confused(u.ustuck)) {
             if (!checking) {
                 bpline(msgc_actionok, show, "%s free from %s.",
                        M_verbs(mon, "pull"), !you ? "you" : mon_nam(u.ustuck));
@@ -1474,7 +1474,7 @@ validate_jump(const struct musable *m, coord *cc, boolean magic,
                 return 2;
             }
         } else {
-            /* TODO: this spoils something (no conflict/pet confusion) under
+            /* TODO: this spoils something (no pet confusion) under
                some circumstances, which shouldn't be the case for
                msgc_cancelled */
             bpline(msgc_cancelled, show, "You cannot escape from %s!",

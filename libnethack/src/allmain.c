@@ -812,6 +812,10 @@ you_moved(void)
             mcalcdistress();    /* adjust monsters' trap, blind, etc */
             do_at_area(level);  /* perform AT_AREA attacks */
 
+            flags.mon_moving = -1; /* Don't credit anyone for attacks. */
+            do_conflict(level);
+            flags.mon_moving = 0;
+
             /* No actions have happened yet this turn. (Combined with the change
                in 'moves', this effectively gives monsters and player a new
                movement point ration by changing the inputs to

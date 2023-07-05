@@ -744,7 +744,7 @@ mon_choose_dirtarget(const struct monst *mon, struct obj *obj, coord *cc)
                         /* -40 or +40 depending on helpfulness */
                         tilescore += (helpful ? 60 : -60);
                     /* target is hostile */
-                    else if (mm_aggression(mon, mtmp, Conflict))
+                    else if (mm_aggression(mon, mtmp, FALSE))
                         tilescore += (helpful ? -10 : 20);
                     /* ally/peaceful -- we can't just perform "else" here, because pets
                        would heal hostiles that are too dangerous for it to target */
@@ -887,7 +887,7 @@ mon_choose_spectarget(struct musable *m, struct obj *obj, coord *cc)
                     else if (!mcanspotmon(mon, mtmp))
                         continue;
                     /* target is hostile */
-                    else if (mm_aggression(mon, mtmp, Conflict))
+                    else if (mm_aggression(mon, mtmp, FALSE))
                         tilescore += 20;
                     /* ally/peaceful */
                     else if ((mtmp == &youmonst && mon->mpeaceful) ||
@@ -929,7 +929,7 @@ summon_nasty_score(struct musable *m, coord *tc)
 
         x = m_mx(target);
         y = m_my(target);
-        if (mm_aggression(mon, target, Conflict) && msensem(mon, target) &&
+        if (mm_aggression(mon, target, FALSE) && msensem(mon, target) &&
             throwspell(TRUE, TRUE, &x, &y, m)) {
             tc->x = x;
             tc->y = y;
@@ -963,7 +963,7 @@ find_item_score(const struct monst *mon, struct obj *obj, coord *tc,
                     if (x != u.ux || y != u.uy)
                         continue;
                 }
-                if (!mm_aggression(mon, mtmp, Conflict))
+                if (!mm_aggression(mon, mtmp, FALSE))
                     continue;
                 if (otyp == BULLWHIP && m_mwep(mtmp)) {
                     tc->x = x;
@@ -1068,7 +1068,7 @@ find_closest_target(struct monst *mon, int range_limit)
 
     for (mtmp = monlist(mon->dlevel); mtmp; mtmp = monnext(mtmp)) {
         if (DEADMONSTER(mtmp) || mon == mtmp ||
-            !mm_aggression(mon, mtmp, Conflict) ||
+            !mm_aggression(mon, mtmp, FALSE) ||
             !msensem(mon, mtmp))
             continue;
         if ((msensem(mon, mtmp) & MSENSE_ANYVISION) ||
@@ -1459,7 +1459,7 @@ find_item(struct monst *mon, struct musable *m)
     for (mtmp = monlist(mon->dlevel); mtmp; mtmp = monnext(mtmp)) {
         int sense;
         if (DEADMONSTER(mtmp) ||
-            !mm_aggression(mon, mtmp, Conflict) ||
+            !mm_aggression(mon, mtmp, FALSE) ||
             !(sense = msensem(mon, mtmp)))
             continue;
         hostsense++;
@@ -2670,7 +2670,7 @@ mon_choose_summon(const struct monst *magr, coord *cc)
         if (magr == mtmp)
             continue;
 
-        if (!mm_aggression(magr, mtmp, Conflict))
+        if (!mm_aggression(magr, mtmp, FALSE))
             continue;
 
         i = dist2(m_mx(magr), m_my(magr), m_mx(mtmp), m_my(mtmp));
@@ -2794,7 +2794,7 @@ hostility_score(const struct monst *mdef, coord *cc)
                  !mtmp->master && !mdef->master &&
                  mtmp->mpeaceful == mdef->mpeaceful))
                 res -= (i == 8 ? 2 : 1);
-            else if (mm_aggression(mtmp, mdef, Conflict))
+            else if (mm_aggression(mtmp, mdef, FALSE))
                 res += (i == 8 ? 8 : 1);
         }
     }

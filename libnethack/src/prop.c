@@ -1360,8 +1360,6 @@ update_property(struct monst *mon, enum youprop prop,
         }
         break;
     case CONFLICT:
-        /* Monsters should not be causing conflict. Just
-           in case it happens anyway, alert the player. */
         if (!you) {
             pline(msgc_levelwarning,
                   lost ? "You feel as if a conflict disappeared." :

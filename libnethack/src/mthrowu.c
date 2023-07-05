@@ -808,7 +808,7 @@ m_beam_ok(const struct monst *magr, int dx, int dy,
            the above MS_LEADER case). */
         if (mat && (msensem(magr, mat) & ~MSENSE_ITEMMIMIC) &&
             !confused(magr)) {
-            if ((mm_aggression(magr, mat, Conflict) & ALLOW_RANGED) &&
+            if ((mm_aggression(magr, mat, FALSE) & ALLOW_RANGED) &&
                 !helpful) {
                 /* we want to target this monster */
                 if (mdef)

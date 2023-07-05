@@ -112,7 +112,7 @@ wildmiss(struct monst *mtmp, const struct attack *mattk)
 
 
 /* mattackq: monster attacks a square
-   
+
    This function is called when the monster believes it's attacking something,
    but might potentially be mistaken about what's actually there. Returns 1 if
    the monster dies during the attack, 0 otherwise.
@@ -135,13 +135,13 @@ mattackq(struct monst *mtmp, int x, int y)
     /* From monmove.c: handle monster counterattacks. */
     if (mdef) {
 
-        notonhead = mdef && (mdef->mx != x || mdef->my != y);
+        notonhead = mdef && (m_mx(mdef) != x || m_my(mdef) != y);
         int mstatus = mattackm(mtmp, mdef) & MM_AGR_DIED;
         notonhead = 0;
 
         if (mstatus & MM_AGR_DIED)  /* aggressor died */
             return 2;
-        
+
         if ((mstatus & MM_HIT) && !(mstatus & MM_DEF_DIED) && rn2(4)) {
             notonhead = 0;
             mstatus = mattackm(mdef, mtmp);        /* return attack */

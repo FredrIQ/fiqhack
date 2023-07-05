@@ -407,7 +407,8 @@ grow_up(struct monst *mtmp,   /* `mtmp' might "grow up" into a bigger version */
     if (DEADMONSTER(mtmp))
         return NULL;
 
-    if (victim && victim->summoned)
+    /* No credit for summoned monsters, or if this was Conflict-induced. */
+    if ((victim && victim->summoned) || flags.mon_moving == -1)
         return ptr;
 
     /* note: none of the monsters with special hit point calculations have both

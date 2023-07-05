@@ -1791,7 +1791,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                 /* If holder is asleep or paralyzed: 37.5% chance of getting
                    away, 12.5% chance of waking/releasing it; otherwise: 7.5%
                    chance of getting away. [strength ought to be a factor] If
-                   holder is tame and there is no conflict, guaranteed escape.
+                   holder is tame, guaranteed escape.
                    */
                 switch (rn2(!u.ustuck->mcanmove ? 8 : 40)) {
                 case 0:
@@ -1809,7 +1809,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                         u.ustuck->msleeping = 0;
                     }
                 /*FALLTHRU*/ default:
-                    if (u.ustuck->mtame && !Conflict && !confused(u.ustuck))
+                    if (u.ustuck->mtame && !confused(u.ustuck))
                         goto pull_free;
                     pline(msgc_failrandom, "You cannot escape from %s!",
                           mon_nam(u.ustuck));

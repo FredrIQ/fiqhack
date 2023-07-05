@@ -1940,7 +1940,7 @@ seffects(struct monst *mon, struct obj *sobj, boolean *known)
             if (sobj->cursed) {
                 if (you && mtmp->mpeaceful)
                     continue;
-                if (!you && !mm_aggression(mon, mtmp, Conflict))
+                if (!you && !mm_aggression(mon, mtmp, FALSE))
                     continue;
             } else if (tame_to(mtmp) != mon)
                 continue;

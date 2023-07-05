@@ -716,14 +716,10 @@ dog_move(struct monst *mtmp, int after)
         return 2;       /* starved */
 
     udist = distu(omx, omy);
-    /* Let steeds eat and maybe throw rider during Conflict */
-    if (mtmp == u.usteed) {
-        if (Conflict && !resist(&youmonst, mtmp, RING_CLASS, 0, 0)) {
-            dismount_steed(DISMOUNT_THROWN);
-            return 1;
-        }
+    /* Let steeds eat */
+    if (mtmp == u.usteed)
         udist = 1;
-    } else if (!udist)
+    else if (!udist)
         /* maybe we tamed him while being swallowed --jgm */
         return 0;
 
@@ -755,33 +751,29 @@ dog_move(struct monst *mtmp, int after)
         allowflags |= ALLOW_BARS;
     if (throws_rocks(mtmp->data))
         allowflags |= ALLOW_ROCK;
-    if (Conflict && !resist(&youmonst, mtmp, RING_CLASS, 0, 0)) {
-        allowflags |= ALLOW_MUXY | ALLOW_MELEE;
-        if (!has_edog) {
-            coord mm;
+    if (Conflict && !has_edog) {
+        coord mm;
 
-            /* Guardian angel refuses to be conflicted; rather, it disappears,
-               angrily, and sends in some nasties */
-            if (canspotmon(mtmp)) {
-                pline(msgc_npcvoice, "%s rebukes you, saying:", Monnam(mtmp));
-                verbalize(msgc_petfatal,
-                          "Since you desire conflict, have some more!");
-            }
-            mongone(mtmp);
-            i = rnd(4);
-            while (i--) {
-                mm.x = u.ux;
-                mm.y = u.uy;
-                if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL]))
-                    mk_roamer(&mons[PM_ANGEL], u.ualign.type, level, mm.x, mm.y,
-                              FALSE, NO_MM_FLAGS);
-            }
-            return 2;
-
+        /* Guardian angel refuses to be conflicted; rather, it disappears,
+           angrily, and sends in some nasties */
+        if (canspotmon(mtmp)) {
+            pline(msgc_npcvoice, "%s rebukes you, saying:", Monnam(mtmp));
+            verbalize(msgc_petfatal,
+                      "Since you desire conflict, have some more!");
         }
+        mongone(mtmp);
+        i = rnd(4);
+        while (i--) {
+            mm.x = u.ux;
+            mm.y = u.uy;
+            if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL]))
+                mk_roamer(&mons[PM_ANGEL], u.ualign.type, level, mm.x, mm.y,
+                          FALSE, NO_MM_FLAGS);
+        }
+        return 2;
+
     }
-    if (!Conflict && !confused(mtmp) && mtmp == u.ustuck &&
-        !sticks(youmonst.data)) {
+    if (!confused(mtmp) && mtmp == u.ustuck && !sticks(youmonst.data)) {
         unstuck(mtmp);  /* swallowed case handled above */
         pline(msgc_petneutral, "You get released!");
     }
