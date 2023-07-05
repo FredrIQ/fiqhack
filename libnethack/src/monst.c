@@ -2574,7 +2574,7 @@ const struct permonst mons[] = {
         M1_HUMANOID | M1_OMNIVORE,
         M2_NOPOLY | M2_HUMAN | M2_MERC | M2_STALK | M2_HOSTILE | M2_STRONG |
         M2_COLLECT,
-        M3_INFRAVISIBLE, MP_WAND_SKILLED, CLR_RED),
+        M3_INFRAVISIBLE, MP_WAND_BASIC, CLR_RED),
     MON("sergeant", S_HUMAN,
         LVL(8, 10, 10, 5, -3), (G_SGROUP | G_GENO | 1),
         A(ATTK(AT_WEAP, AD_PHYS, 2, 6),

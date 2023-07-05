@@ -3373,6 +3373,3 @@ mimic_obj_name(const struct monst *mtmp)
     }
     return "whatcha-may-callit";
 }
-
-/*objnam.c*/
-
