@@ -368,7 +368,7 @@ print_missed_turncount(boolean silent)
 
     int oldmoves = you->oldmoves;
     you->oldmoves = moves;
-    if (!silent && oldmoves && (moves - oldmoves) > 1)
+    if (!silent && flags.displayturns && oldmoves && (moves - oldmoves) > 1)
         pline(msgc_actionboring, "[%d turns]", moves - oldmoves);
 }
 

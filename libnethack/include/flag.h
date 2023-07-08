@@ -254,6 +254,7 @@ struct flag {
     boolean debug;      /* in debugging mode */
 # define wizard  flags.debug
     boolean desync;     /* set this to desync the save */
+    boolean displayturns; /* whether to display [N turns] or not */
     boolean easy;       /* easy mode enabled */
     boolean explore;    /* in exploration mode */
 # define discover flags.explore

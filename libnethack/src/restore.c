@@ -1034,6 +1034,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->autounlock = mread8(mf);
     f->msg_hints = mread8(mf);
     f->easy = mread8(mf);
+    f->displayturns = mread8(mf);
 
     /* Ignore the padding added in save.c */
     for (i = 0; i < 95; i++)
