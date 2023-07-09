@@ -909,7 +909,7 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
                 /* uncursed - chance to fail */
                 int read_ability = study_rate(&youmonst, spellbook);
                 /* only wizards know if a spell is too difficult */
-                if (Role_if(PM_WIZARD) && read_ability < 20 && !confused) {
+                if (read_ability < 20 && !confused) {
                     const char *qbuf;
 
                     qbuf = msgprintf("This spellbook is %sdifficult to "
