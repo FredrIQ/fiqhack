@@ -675,7 +675,7 @@ struct nh_cmd_and_arg {
     struct nh_cmd_arg arg;
 };
 
-/* various extra information that the character knows, and the 
+/* various extra information that the character knows, and the
    windowport might want to display */
 # define NH_BRANDING_STEPPED   0x0001
 # define NH_BRANDING_LOCKED    0x0002
@@ -686,6 +686,7 @@ struct nh_cmd_and_arg {
 # define NH_BRANDING_LIT       0x0040   /* a square that is permanently lit */
 # define NH_BRANDING_TEMP_LIT  0x0080   /* a square that is temporarily lit */
 # define NH_BRANDING_PILE      0x0100   /* an object pile */
+# define NH_BRANDING_SECONDARY 0x0200   /* secondary branch colors (wiztower) */
 /* monster attitude could go here, but is in monflags instead as
    that's a more appropriate place */
 

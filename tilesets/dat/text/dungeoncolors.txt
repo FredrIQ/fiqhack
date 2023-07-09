@@ -13,6 +13,7 @@
 
 sub mine walls *; sub bar sub questfill2 walls *; sub bar sub questgoal walls *; sub cav sub questfill1 walls *; sub cav sub questlocate walls *; sub cav sub questfill2 walls *: brown basechar
 sub gehennom walls *; sub pri sub questfill2 walls *; sub pri sub questgoal walls *: orange basechar
+sub gehennom sub secondary walls *: bright_magenta basechar
 sub knox walls *: white basechar
 sub sokoban walls *: bright_blue basechar
 sub vlad walls *: brown basechar
@@ -91,6 +92,8 @@ sub mine sub unlit the floor of a room; sub arc sub questfill1 sub unlit the flo
 ! "Gehennom floor" / "Red floor": red, magenta, orange, bright_magenta
 sub gehennom the floor of a room; sub cav sub questgoal the floor of a room; sub mon sub questfill2 the floor of a room; sub mon sub questgoal the floor of a room; sub val sub questlocate the floor of a room; sub val sub questfill2 the floor of a room; sub val sub questgoal the floor of a room: orange basechar
 sub gehennom sub unlit the floor of a room; sub cav sub questgoal sub unlit the floor of a room; sub mon sub questfill2 sub unlit the floor of a room; sub mon sub questgoal sub unlit the floor of a room; sub val sub questlocate sub unlit the floor of a room; sub val sub questfill2 sub unlit the floor of a room; sub val sub questgoal sub unlit the floor of a room: red basechar
+sub gehennom sub secondary the floor of a room: bright_magenta basechar
+sub gehennom sub secondary sub unlit the floor of a room: magenta basechar
 
 ! "Blue floor": blue, cyan, bright_blue, bright_magenta
 sub ran sub questgoal the floor of a room; sub rog sub questgoal the floor of a room: bright_blue basechar

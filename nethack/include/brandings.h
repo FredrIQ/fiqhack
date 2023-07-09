@@ -96,7 +96,9 @@ extern const char *const nhcurses_branding_names[(int)nhcurses_branding_count];
 #define NHCURSES_SUB_STATUE   (1ULL << (LDM_COUNT + 3))
 #define NHCURSES_SUB_FIGURINE (1ULL << (LDM_COUNT + 4))
 
-#define LDM_ROLE_0            (LDM_COUNT + 5)
+#define NHCURSES_SUB_SECONDARY (1ULL << (LDM_COUNT + 5))
+
+#define LDM_ROLE_0            (LDM_COUNT + 6)
 #define LDM_ROLE_COUNT        13
 #define LDM_GENDER_0          (LDM_ROLE_0 + LDM_ROLE_COUNT)
 #define LDM_GENDER_COUNT      2

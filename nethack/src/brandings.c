@@ -64,6 +64,9 @@ const char *const nhcurses_sub_names[] = {
     [LDM_COUNT + 3] = "statue",
     [LDM_COUNT + 4] = "figurine",
 
+    /* Secondary branch colors (e.g. wiztower) */
+    [LDM_COUNT + 5] = "secondary",
+
     /* These represent /quests/, and so affect terrain. This gives some
        awkwardness with gender-specific player-monster names, so we truncate to
        the first three characters (which works in English,

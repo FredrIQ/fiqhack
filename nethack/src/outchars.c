@@ -235,6 +235,9 @@ dbe_substitution(struct nh_dbuf_entry *dbe)
 
     s |= (dbe->branding & lit_branding) ? NHCURSES_SUB_LIT : NHCURSES_SUB_UNLIT;
 
+    if (settings.dungeoncolor && (dbe->branding & NH_BRANDING_SECONDARY))
+        s |= NHCURSES_SUB_SECONDARY;
+
     /* Corpses/statues/figurines have their own substitution (that's turned off
        on layers above "object" by map.c to avoid substituting a monster that's
        standing on a corpse or statue). */

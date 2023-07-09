@@ -1565,6 +1565,9 @@ dbuf_branding(struct level *lev, int x, int y)
     if (loc->pile)
         b |= NH_BRANDING_PILE;
 
+    if (In_W_tower(x, y, &(lev->z)))
+        b |= NH_BRANDING_SECONDARY;
+
     return b;
 }
 
