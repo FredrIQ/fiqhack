@@ -623,15 +623,12 @@ mon_study_book(struct monst *mon, struct obj *spellbook)
     else if (!spellbook->blessed) {
         /* uncursed - chance to fail */
         int read_ability = study_rate(mon, spellbook);
-        /* only wizards know if a spell is too difficult */
-        if (spellcaster(mon->data)) {
-            if (read_ability < 12) {
-                if (vis)
-                    pline(msgc_info,
-                          "%s realizes the difficulty of the book "
-                          "and puts it down.", Monnam(mon));
-                return 0;
-            }
+        if (read_ability < 12) {
+            if (vis)
+                pline(msgc_info,
+                      "%s realizes the difficulty of the book "
+                      "and puts it down.", Monnam(mon));
+            return 0;
         }
         /* it's up to random luck now */
         if (rnd(20) > read_ability) {
@@ -908,7 +905,6 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
             } else {
                 /* uncursed - chance to fail */
                 int read_ability = study_rate(&youmonst, spellbook);
-                /* only wizards know if a spell is too difficult */
                 if (read_ability < 20 && !confused) {
                     const char *qbuf;
 
