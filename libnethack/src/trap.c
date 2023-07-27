@@ -3234,14 +3234,14 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
         if (you)
             update_inventory();
         return 1;
-    } else if (Is_container(obj) && !Is_box(obj) &&
+    } else if (!force && mon && waterproof(mon))
+        return 0;
+    else if (Is_container(obj) && !Is_box(obj) &&
                ((obj->otyp != OILSKIN_SACK &&
                  !(props & opm_oilskin)) ||
                 (obj->cursed && !rn2(3)))) {
         return water_damage_chain(obj->cobj, FALSE);
-    } else if (!force && mon && waterproof(mon))
-        return 0;
-    else if (!force && (Luck + 5) > rn2(20)) {
+    } else if (!force && (Luck + 5) > rn2(20)) {
         /* chance per item of sustaining damage: max luck (full moon): 5%
             max luck (elsewhen): 10% avg luck (Luck==0): 75% awful luck
             (Luck<-4): 100% */
