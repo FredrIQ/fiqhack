@@ -2959,8 +2959,7 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj)
         int ret = bhit_at(mon, obj, x, y, range);
 
         /* boulders block vision, so make them block camera flashes too... */
-        if (sobj_at(BOULDER, lev, x, y) ||
-            (ret & BHIT_OBSTRUCT))
+        if (ret & BHIT_OBSTRUCT)
             range = 0;
 
         /* camera flashes aren't bothered by objects otherwise */
@@ -3094,7 +3093,8 @@ bhit_at(struct monst *mon, struct obj *obj, int x, int y, int range)
     /* Is the rest of the range obstructed? */
     if (!ZAP_POS(typ) ||
         (IS_DOOR(typ) &&
-         (lev->locations[x][y].flags & (D_LOCKED | D_CLOSED))))
+         (lev->locations[x][y].flags & (D_LOCKED | D_CLOSED))) ||
+        obj->otyp == EXPENSIVE_CAMERA && sobj_at(BOULDER, lev, x, y))
         ret |= BHIT_OBSTRUCT;
 
     return ret;
