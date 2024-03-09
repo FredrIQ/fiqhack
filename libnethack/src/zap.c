@@ -2958,10 +2958,10 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj)
 
         int ret = bhit_at(mon, obj, x, y, range);
 
-        /* boulders block vision, so make them block camera flashes too... */
         if (ret & BHIT_OBSTRUCT)
             range = 0;
 
+        /* camera flashes aren't bothered by objects */
         if (obj->otyp != EXPENSIVE_CAMERA && (ret & BHIT_OBJ))
             range--;
 
