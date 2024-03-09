@@ -2962,7 +2962,6 @@ bhit(struct monst *mon, int dx, int dy, int range, struct obj *obj)
         if (ret & BHIT_OBSTRUCT)
             range = 0;
 
-        /* camera flashes aren't bothered by objects otherwise */
         if (obj->otyp != EXPENSIVE_CAMERA && (ret & BHIT_OBJ))
             range--;
 
