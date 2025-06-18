@@ -260,7 +260,7 @@ struct obj {
                               objects[otmp->otyp].oc_skill >= -P_SHURIKEN && \
                               objects[otmp->otyp].oc_skill <= -P_BOW)
 # define uslinging()         (uwep && objects[uwep->otyp].oc_skill == P_SLING)
-# define is_wep(otmp)        (((otmp)->oclass == WEAPON_CLASS) \
+# define is_wep(otmp)        (((otmp)->oclass == WEAPON_CLASS)          \
                                  ? !(is_launcher((otmp)) || is_ammo((otmp)) || \
                                      is_missile((otmp)) || \
                                      (is_pole((otmp)) && !u.usteed)) \
@@ -396,6 +396,8 @@ struct obj {
 /* helpers, simple enough to be macros */
 # define is_plural(o)   ((o)->quan > 1 || \
                          (o)->oartifact == ART_EYES_OF_THE_OVERWORLD)
+#define olev(o) ((o)->where == OBJ_INVENT ? level : \
+                 (o)->where == OBJ_MINVENT ? (o)->ocarry->dlevel : (o)->olev)
 
 /* Flags for get_obj_location(). */
 # define CONTAINED_TOO  0x1

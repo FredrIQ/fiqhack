@@ -82,7 +82,7 @@ attach_egg_hatch_timeout(struct obj *egg)
     int i;
 
     /* stop previous timer, if any */
-    stop_timer(egg->olev, HATCH_EGG, egg);
+    stop_timer(olev(egg), HATCH_EGG, egg);
 
     /*
      * Decide if and when to hatch the egg.  The old hatch_it() code tried
@@ -93,7 +93,7 @@ attach_egg_hatch_timeout(struct obj *egg)
     for (i = (MAX_EGG_HATCH_TIME - 50) + 1; i <= MAX_EGG_HATCH_TIME; i++)
         if (rnd(i) > 150) {
             /* egg will hatch */
-            start_timer(egg->olev, (long)i, TIMER_OBJECT, HATCH_EGG, egg);
+            start_timer(olev(egg), (long)i, TIMER_OBJECT, HATCH_EGG, egg);
             break;
         }
 }
@@ -103,7 +103,7 @@ void
 kill_egg(struct obj *egg)
 {
     /* stop previous timer, if any */
-    stop_timer(egg->olev, HATCH_EGG, egg);
+    stop_timer(olev(egg), HATCH_EGG, egg);
 }
 
 /* timer callback routine: hatch the given egg */
@@ -232,7 +232,7 @@ hatch_egg(void *arg, long timeout)
             learn_egg_type(mnum);
 
         /* Sanity check. */
-        if (egg->olev != level)
+        if (olev(egg) != level)
             impossible("Egg hatched off-level?");
 
         if (egg->quan > 0) {
@@ -240,8 +240,8 @@ hatch_egg(void *arg, long timeout)
             attach_egg_hatch_timeout(egg);
             if (egg->timed) {
                 /* replace ordinary egg timeout with a short one */
-                stop_timer(egg->olev, HATCH_EGG, egg);
-                start_timer(egg->olev, (long)rnd(12), TIMER_OBJECT, HATCH_EGG,
+                stop_timer(olev(egg), HATCH_EGG, egg);
+                start_timer(olev(egg), (long)rnd(12), TIMER_OBJECT, HATCH_EGG,
                             egg);
             }
         } else if (carried(egg)) {
@@ -274,14 +274,14 @@ attach_fig_transform_timeout(struct obj *figurine)
     int i;
 
     /* stop previous timer, if any */
-    stop_timer(figurine->olev, FIG_TRANSFORM, figurine);
+    stop_timer(olev(figurine), FIG_TRANSFORM, figurine);
 
     /*
      * Decide when to transform the figurine.
      */
     i = rnd(9000) + 200;
     /* figurine will transform */
-    start_timer(figurine->olev, (long)i, TIMER_OBJECT, FIG_TRANSFORM, figurine);
+    start_timer(olev(figurine), (long)i, TIMER_OBJECT, FIG_TRANSFORM, figurine);
 }
 
 /* Print a lamp flicker message with tailer. */
@@ -687,7 +687,7 @@ begin_burn(struct obj *obj, boolean already_lit)
     }
 
     if (do_timer) {
-        if (start_timer(obj->olev, turns, TIMER_OBJECT, BURN_OBJECT, obj)) {
+        if (start_timer(olev(obj), turns, TIMER_OBJECT, BURN_OBJECT, obj)) {
             obj->lamplit = 1;
             obj->age -= turns;
             if (carried(obj) && !already_lit)
@@ -704,7 +704,7 @@ begin_burn(struct obj *obj, boolean already_lit)
         xchar x, y;
 
         if (get_obj_location(obj, &x, &y, CONTAINED_TOO | BURIED_TOO))
-            new_light_source(level, x, y, radius, LS_OBJECT, obj);
+            new_light_source(olev(obj), x, y, radius, LS_OBJECT, obj);
         else
             impossible("begin_burn: can't get obj position");
     }
@@ -727,11 +727,11 @@ end_burn(struct obj *obj, boolean timer_attached)
 
     if (!timer_attached) {
         /* [DS] Cleanup explicitly, since timer cleanup won't happen */
-        del_light_source(obj->olev, LS_OBJECT, obj);
+        del_light_source(olev(obj), LS_OBJECT, obj);
         obj->lamplit = 0;
         if (obj->where == OBJ_INVENT)
             update_inventory();
-    } else if (!stop_timer(obj->olev, BURN_OBJECT, obj))
+    } else if (!stop_timer(olev(obj), BURN_OBJECT, obj))
         impossible("end_burn: obj %s not timed!", xname(obj));
 }
 
@@ -749,7 +749,7 @@ cleanup_burn(void *arg, long expire_time)
         return;
     }
 
-    del_light_source(obj->olev, LS_OBJECT, arg);
+    del_light_source(olev(obj), LS_OBJECT, arg);
 
     /* restore unused time */
     obj->age += expire_time - moves;
@@ -1050,7 +1050,7 @@ obj_move_timers(struct obj *src, struct obj *dest)
     int count;
     timer_element *curr;
 
-    for (count = 0, curr = src->olev->lev_timers; curr; curr = curr->next)
+    for (count = 0, curr = olev(src)->lev_timers; curr; curr = curr->next)
         if (curr->kind == TIMER_OBJECT && curr->arg == src) {
             curr->arg = dest;
             dest->timed++;
@@ -1070,10 +1070,10 @@ obj_split_timers(struct obj *src, struct obj *dest)
 {
     timer_element *curr, *next_timer = 0;
 
-    for (curr = src->olev->lev_timers; curr; curr = next_timer) {
+    for (curr = olev(src)->lev_timers; curr; curr = next_timer) {
         next_timer = curr->next;        /* things may be inserted */
         if (curr->kind == TIMER_OBJECT && curr->arg == src) {
-            start_timer(dest->olev, curr->timeout - moves, TIMER_OBJECT,
+            start_timer(olev(src), curr->timeout - moves, TIMER_OBJECT,
                         curr->func_index, dest);
         }
     }
@@ -1089,15 +1089,15 @@ obj_stop_timers(struct obj *obj)
 {
     timer_element *curr, *prev, *next_timer = 0;
 
-    if (!obj->olev)
+    if (!olev(obj))
         panic("obj_stop_timers: no olev?");
-    for (prev = 0, curr = obj->olev->lev_timers; curr; curr = next_timer) {
+    for (prev = 0, curr = olev(obj)->lev_timers; curr; curr = next_timer) {
         next_timer = curr->next;
         if (curr->kind == TIMER_OBJECT && curr->arg == obj) {
             if (prev)
                 prev->next = curr->next;
             else
-                obj->olev->lev_timers = curr->next;
+                olev(obj)->lev_timers = curr->next;
             if (timeout_funcs[curr->func_index].cleanup)
                 (*timeout_funcs[curr->func_index].cleanup)(
                     curr->arg, curr->timeout);
