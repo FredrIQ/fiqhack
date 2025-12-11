@@ -891,4 +891,55 @@ racial_exception(struct monst *mon, struct obj *obj)
     return 0;
 }
 
+/* Remove an object from a monster's inventory. */
+void
+extract_from_minvent(
+    struct monst *mon,
+    struct obj *obj,
+    boolean do_extrinsics,  /* whether to call update_mon_extrinsics */
+    boolean silently)       /* doesn't affect all possible messages,
+                             * just update_mon_extrinsics's */
+{
+    long unwornmask = obj->owornmask;
+
+    /*
+     * At its core this is just obj_extract_self(), but it also handles
+     * any updates that need to happen if the gear is equipped or in
+     * some other sort of state that needs handling.
+     * Note that like obj_extract_self(), this leaves obj free.
+     */
+
+    if (obj->where != OBJ_MINVENT) {
+        impossible("extract_from_minvent called on object not in minvent");
+        obj_extract_self(obj); /* free it anyway to avoid a panic */
+        return;
+    }
+    /* handle gold dragon scales/scale-mail (lit when worn) before clearing
+       obj->owornmask because artifact_light() expects that to be W_ARM */
+    if ((unwornmask & (W_MASK(os_arm) | W_MASK(os_armc))) != 0 && obj->lamplit
+        && artifact_light(obj))
+        end_burn(obj, FALSE);
+
+    obj_extract_self(obj);
+    obj->owornmask = 0L;
+    if (unwornmask) {
+        obj->owt = weight(obj); /* reset armor to base weight */
+        if (!DEADMONSTER(mon)) {
+            if (do_extrinsics) {
+                //update_mon_extrinsics(mon, obj, FALSE, silently);
+                update_property_for_oprops(mon, obj, which_slot(obj));
+            }
+            mselftouch(mon, NULL, &youmonst);
+        }
+        mon->misc_worn_check &= ~unwornmask;
+        /* give monster a chance to wear other equipment on its next
+           move instead of waiting until it picks something up */
+        check_gear_next_turn(mon);
+    }
+    obj_no_longer_held(obj);
+    if (unwornmask & W_MASK(os_wep)) {
+        mwepgone(mon); /* unwields and sets weapon_check to NEED_WEAPON */
+    }
+}
+
 /*worn.c*/

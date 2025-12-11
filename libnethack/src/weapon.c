@@ -800,6 +800,18 @@ mon_wield_item(struct monst *mon)
     return 0;
 }
 
+/* force monster to stop wielding current weapon, if any */
+void
+mwepgone(struct monst *mon)
+{
+    struct obj *mwep = MON_WEP(mon);
+
+    if (mwep) {
+        setmnotwielded(mon, mwep);
+        mon->weapon_check = NEED_WEAPON;
+    }
+}
+
 /* attack bonus for strength & dexterity */
 int
 abon(void)
