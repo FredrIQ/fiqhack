@@ -1639,6 +1639,7 @@ exchange_objects_with_mon(struct monst *mtmp, boolean taking)
                 }
                 mtmp->mfrozen = m_delay;
                 /* unwear the item now */
+                update_property(mtmp, objects[otmp->otyp].oc_oprop, which_slot(otmp));
                 update_property_for_oprops(mtmp, otmp, which_slot(otmp));
                 if (mtmp->mfrozen) { /* might be 0 */
                     mtmp->mcanmove = 0;

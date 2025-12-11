@@ -4425,6 +4425,11 @@ check_gear_next_turn(struct monst *mon)
     mon->misc_worn_check |= W_MASKABLE;
     mon->misc_worn_check |= W_RING;
     mon->misc_worn_check |= W_ARTIFACT;
+    if (attacktype(mon->data, AT_WEAP) && mon->weapon_check == NEED_WEAPON) {
+        mon->weapon_check = NEED_HTH_WEAPON;
+        mon_wield_item(mon);
+    }
+    m_dowear(mon, FALSE);
 }
 
 /*mon.c*/

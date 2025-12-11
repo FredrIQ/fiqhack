@@ -920,23 +920,23 @@ extract_from_minvent(
         && artifact_light(obj))
         end_burn(obj, FALSE);
 
-    obj_extract_self(obj);
     obj->owornmask = 0L;
     if (unwornmask) {
         obj->owt = weight(obj); /* reset armor to base weight */
+        mon->misc_worn_check &= ~unwornmask;
         if (!DEADMONSTER(mon)) {
             if (do_extrinsics) {
-                //update_mon_extrinsics(mon, obj, FALSE, silently);
+                update_property(mon, objects[obj->otyp].oc_oprop, which_slot(obj));
                 update_property_for_oprops(mon, obj, which_slot(obj));
             }
             mselftouch(mon, NULL, &youmonst);
         }
-        mon->misc_worn_check &= ~unwornmask;
         /* give monster a chance to wear other equipment on its next
            move instead of waiting until it picks something up */
         check_gear_next_turn(mon);
     }
     obj_no_longer_held(obj);
+    obj_extract_self(obj);
     if (unwornmask & W_MASK(os_wep)) {
         mwepgone(mon); /* unwields and sets weapon_check to NEED_WEAPON */
     }

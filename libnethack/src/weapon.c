@@ -1580,6 +1580,8 @@ setmnotwielded(struct monst *mon, struct obj *obj)
                   s_suffix(mon_nam(mon)), mbodypart(mon, HAND),
                   otense(obj, "stop"));
     }
+    if (MON_WEP(mon) == obj)
+        MON_NOWEP(mon);
     obj->owornmask &= ~W_MASK(os_wep);
 }
 
