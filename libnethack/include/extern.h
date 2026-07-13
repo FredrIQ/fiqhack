@@ -540,6 +540,7 @@ extern int doeat(const struct nh_cmd_arg *);
 extern enum corpserot corpse_rot_status(struct obj *, boolean);
 extern int eatcorpse(struct monst *, struct obj *);
 extern void eatspecial(struct monst *, int, struct obj *);
+extern void fpostfx(struct monst *, struct obj *);
 extern void gethungry(void);
 extern void morehungry(int);
 extern void newuhs(boolean);

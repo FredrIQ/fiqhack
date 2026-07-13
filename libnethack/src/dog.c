@@ -774,6 +774,21 @@ dogfood(const struct monst *mon, struct obj *obj)
         if (!carni && !herbi)
             return obj->cursed ? df_nofood : df_apport;
 
+        /* They are willing to eat things that cure a condition. */
+        if (petrifying(mon) && obj->otyp == CORPSE &&
+            (obj->corpsenm == PM_LIZARD ||
+             (acidic(pm) &&
+              (obj->corpsenm != PM_GREEN_SLIME ||
+               likes_fire(mon->data) || mon->data == &mons[PM_GREEN_SLIME]))))
+            return df_treat;
+
+        if (obj->otyp == EUCALYPTUS_LEAF && !obj->cursed &&
+            (sick(mon) || zombifying(mon)))
+            return df_treat;
+
+        if (blind(mon) && obj->otyp == CARROT)
+            return df_good;
+
         /* a starving pet will eat almost anything */
         starving = (mon->mtame && !isminion(mon) &&
                     mx_edog(mon)->mhpmax_penalty);

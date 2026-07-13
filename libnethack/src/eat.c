@@ -22,7 +22,6 @@ static void cpostfx(struct monst *, int);
 static boolean start_tin(struct obj *);
 static void fprefx(struct obj *);
 static void accessory_has_effect(struct monst *, struct obj *);
-static void fpostfx(struct obj *);
 static int edibility_prompts(struct obj *);
 static int rottenfood(struct obj *);
 static void eataccessory(struct monst *, struct obj *);
@@ -335,7 +334,7 @@ done_eating(boolean message)
     if (otmp->otyp == CORPSE)
         cpostfx(&youmonst, otmp->corpsenm);
     else
-        fpostfx(otmp);
+        fpostfx(&youmonst, otmp);
 
     if (carried(otmp))
         useup(otmp);
@@ -1583,59 +1582,61 @@ foodword(struct obj *otmp)
 
 /* called after consuming (non-corpse) food */
 /* TODO: make this work on monsters */
-static void
-fpostfx(struct obj *otmp)
+void
+fpostfx(struct monst *mon, struct obj *obj)
 {
-    switch (otmp->otyp) {
+    boolean you = (mon == &youmonst);
+    switch (obj->otyp) {
     case SPRIG_OF_WOLFSBANE:
-        if (u.ulycn >= LOW_PM || is_were(youmonst.data))
+        if (you && u.ulycn >= LOW_PM || is_were(youmonst.data))
             you_unwere(TRUE);
         break;
     case CARROT:
-        set_property(&youmonst, BLINDED, -2, FALSE);
+        set_property(mon, BLINDED, -2, FALSE);
         break;
     case FORTUNE_COOKIE:
-        outrumor(bcsign(otmp), BY_COOKIE);
-        if (!Blind)
-            break_conduct(conduct_illiterate);
+        if (you) {
+            outrumor(bcsign(obj), BY_COOKIE);
+            if (!Blind)
+                break_conduct(conduct_illiterate);
+        }
         break;
     case LUMP_OF_ROYAL_JELLY:
-        /* This stuff seems to be VERY healthy! */
-        gainstr(otmp, 0);
-        if (Upolyd) {
-            u.mh += otmp->cursed ? -rnd(20) : rnd(20);
-            if (u.mh > u.mhmax) {
+        if (you)
+            gainstr(obj, 0);
+
+        if (obj->cursed) {
+            mlosehp(NULL, mon, rnd(20), "rotten jelly", AD_DRST,
+                    killer_msg(POISONING, "a rotten lump of royal jelly"));
+            break;
+        }
+
+        if (leg_hurt(mon))
+            heal_legs(mon, leg_hurtsides(mon));
+
+        if (you)
+            healup(rnd(20), !rn2(17), FALSE, FALSE);
+        else {
+            mon->mhp += rnd(20);
+            if (mon->mhp > mon->mhpmax) {
                 if (!rn2(17))
-                    u.mhmax++;
-                u.mh = u.mhmax;
-            } else if (u.mh <= 0) {
-                rehumanize(POISONING, "a rotten lump of royal jelly");
-            }
-        } else {
-            u.uhp += otmp->cursed ? -rnd(20) : rnd(20);
-            if (u.uhp > u.uhpmax) {
-                if (!rn2(17))
-                    u.uhpmax++;
-                u.uhp = u.uhpmax;
-            } else if (u.uhp <= 0) {
-                done(POISONING,
-                     killer_msg(POISONING, "a rotten lump of royal jelly"));
+                    mon->mhpmax++;
+                mon->mhp = mon->mhpmax;
             }
         }
-        if (!otmp->cursed && leg_hurt(&youmonst))
-            heal_legs(&youmonst, leg_hurtsides(&youmonst));
         break;
     case EGG:
-        if (!petrifying(&youmonst) && touched_monster(otmp->corpsenm)) {
-            set_property(&youmonst, STONED, 5, TRUE);
-            set_delayed_killer(STONING, killer_msg_obj(STONING, otmp));
+        if (!petrifying(mon) && touched_monster(obj->corpsenm)) {
+            set_property(mon, STONED, 5, TRUE);
+            if (you)
+                set_delayed_killer(STONING, killer_msg_obj(STONING, obj));
         }
         break;
     case EUCALYPTUS_LEAF:
-        if (!otmp->cursed) {
-            set_property(&youmonst, SICK, -2, FALSE);
-            set_property(&youmonst, ZOMBIE, -2, FALSE);
-            set_property(&youmonst, VOMITING, -2, FALSE);
+        if (!obj->cursed) {
+            set_property(mon, SICK, -2, FALSE);
+            set_property(mon, ZOMBIE, -2, FALSE);
+            set_property(mon, VOMITING, -2, FALSE);
         }
         break;
     }

@@ -1416,6 +1416,10 @@ potionhit(struct monst *mon, struct obj *obj, struct monst *magr)
         case POT_FULL_HEALING:
             if (mon->data == &mons[PM_PESTILENCE])
                 goto do_illness;
+            else if (obj->otyp == POT_FULL_HEALING && !obj->cursed) {
+                set_property(mon, SICK, -2, FALSE);
+                set_property(mon, ZOMBIE, -2, FALSE);
+            }
          /*FALLTHRU*/ case POT_RESTORE_ABILITY:
         case POT_GAIN_ABILITY:
         do_healing:

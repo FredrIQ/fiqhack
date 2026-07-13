@@ -384,11 +384,14 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
         return 1;
     } else if (obj->otyp == CORPSE)
         eatcorpse(mtmp, obj); /* performs useup/etc */
-    else if (obj->quan > 1L) {
-        obj->quan--;
-        obj->owt = weight(obj);
-    } else
-        delobj(obj);
+    else {
+        fpostfx(mtmp, obj);
+        if (obj->quan > 1L) {
+            obj->quan--;
+            obj->owt = weight(obj);
+        } else
+            delobj(obj);
+    }
 
     return DEADMONSTER(mtmp) ? 2 : 1;
 }
