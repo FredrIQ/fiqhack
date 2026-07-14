@@ -950,7 +950,7 @@ gulpmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     int status;
     struct obj *obj;
 
-    if (mdef->data->msize >= MZ_HUGE)
+    if (mdef->data->msize >= MZ_HUGE || magr == u.usteed || mdef != u.usteed)
         return MM_MISS;
 
     if (vis)
