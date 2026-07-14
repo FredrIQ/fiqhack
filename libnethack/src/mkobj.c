@@ -1739,6 +1739,9 @@ add_to_buried(struct obj *obj)
 static void
 container_weight(struct obj *container)
 {
+    if (!container)
+        panic("container_weight: container is NULL");
+
     container->owt = weight(container);
     if (container->where == OBJ_CONTAINED)
         container_weight(container->ocontainer);

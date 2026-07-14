@@ -1116,6 +1116,9 @@ insert_timer(struct level *lev, timer_element * gnu)
 {
     timer_element *curr, *prev;
 
+    if (!lev)
+        panic("insert_timer: lev is NULL");
+
     for (prev = 0, curr = lev->lev_timers; curr; prev = curr, curr = curr->next)
         /* For most purposes, > vs. >= has little effect. Using >=, however,
            ensures that we load timers in the same order as when they were saved
