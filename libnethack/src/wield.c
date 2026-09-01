@@ -719,6 +719,16 @@ weldmsg(enum msg_channel msgc, struct obj *obj)
           (const char *)makeplural(body_part(HAND)) : body_part(HAND));
 }
 
+/* test whether monster's wielded weapon is stuck to hand/paw/whatever */
+int
+mwelded(struct obj *obj)
+{
+    /* caller is responsible for making sure this is a monster's item */
+    if (obj && (obj->owornmask & W_MASK(os_wep)) && will_weld(obj))
+        return 1;
+    return 0;
+}
+
 /* Unwields all weapons silently. */
 void
 unwield_weapons_silently(void)

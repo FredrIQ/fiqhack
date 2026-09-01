@@ -4416,4 +4416,20 @@ mimic_hit_msg(struct monst *mtmp, short otyp)
     }
 }
 
+/* setting misc_worn_check's I_SPECIAL bit flags a monster to reassess
+   and potentially re-equip gear at the start of its next move;
+   this hides the details of that */
+void
+check_gear_next_turn(struct monst *mon)
+{
+    mon->misc_worn_check |= W_MASKABLE;
+    mon->misc_worn_check |= W_RING;
+    mon->misc_worn_check |= W_ARTIFACT;
+    if (attacktype(mon->data, AT_WEAP) && mon->weapon_check == NEED_WEAPON) {
+        mon->weapon_check = NEED_HTH_WEAPON;
+        mon_wield_item(mon);
+    }
+    m_dowear(mon, FALSE);
+}
+
 /*mon.c*/

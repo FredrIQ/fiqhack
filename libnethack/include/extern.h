@@ -429,6 +429,7 @@ extern void wary_dog(struct monst *, boolean);
 
 /* ### dogmove.c ### */
 
+extern struct obj *DROPPABLES(struct monst *);
 extern int dog_nutrition(struct monst *, struct obj *);
 extern int dog_eat(struct monst *, struct obj *, int, int, boolean);
 extern int dog_move(struct monst *, int);
@@ -1279,6 +1280,7 @@ extern boolean angry_guards(boolean);
 extern void pacify_guards(void);
 extern long mm_aggression(const struct monst *, const struct monst *, boolean);
 extern boolean grudge(const struct permonst *, const struct permonst *);
+extern void check_gear_next_turn(struct monst *);
 
 /* ### mondata.c ### */
 
@@ -2152,11 +2154,13 @@ extern int can_twoweapon(void);
 extern void drop_uswapwep(void);
 extern int dotwoweapon(const struct nh_cmd_arg *);
 extern void uwepgone(void);
+extern void mwepgone(struct monst *);
 extern void uswapwepgone(void);
 extern void uqwepgone(void);
 extern void untwoweapon(void);
 extern int chwepon(struct monst *, struct obj *, int);
 extern int welded(struct obj *);
+extern int mwelded(struct obj *);
 extern void weldmsg(enum msg_channel, struct obj *);
 extern void setmnotwielded(struct monst *, struct obj *);
 extern void unwield_weapons_silently(void);
@@ -2239,6 +2243,7 @@ extern void m_dowear(struct monst *, boolean);
 extern struct obj *which_armor(const struct monst *, enum objslot);
 extern void mon_break_armor(struct monst *, boolean);
 extern int racial_exception(struct monst *, struct obj *);
+extern void extract_from_minvent(struct monst *, struct obj *, boolean, boolean);
 extern int extra_pref(const struct monst *, struct obj *);
 
 /* ### write.c ### */

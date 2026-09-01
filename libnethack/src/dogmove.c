@@ -13,7 +13,6 @@ static boolean dog_hunger(struct monst *, struct edog *);
 static int dog_invent(struct monst *, struct edog *, int);
 static int dog_goal(struct monst *, struct edog *, int, int, int);
 
-static struct obj *DROPPABLES(struct monst *);
 static boolean can_reach_location(struct monst *, xchar, xchar, xchar, xchar);
 static boolean could_reach_item(struct monst *, xchar, xchar);
 static boolean is_better_armor(const struct monst *mtmp, struct obj *otmp);
@@ -186,7 +185,7 @@ pet_wants_object(const struct pet_weapons *p, struct obj *obj)
     return FALSE;
 }
 
-static struct obj *
+struct obj *
 DROPPABLES(struct monst *mon)
 {
     struct obj *obj;
